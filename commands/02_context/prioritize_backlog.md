@@ -2,6 +2,7 @@
 name: prioritize_backlog
 description: Prioritize (MoSCoW) and estimate (Fibonacci) user stories with dependencies and assumptions
 argument-hint: USER_STORIES file path or use default {{DOCS}}/internal/product/USER_STORIES_INITIAL.md
+model: opus
 ---
 
 # Prioritize and Estimate Product Backlog

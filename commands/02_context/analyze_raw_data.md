@@ -2,6 +2,7 @@
 name: analyze_raw_data
 description: Extract insights with triangulation
 argument-hint: transcripts, notes, feedback files
+model: sonnet
 ---
 
 # Analyze Raw Data

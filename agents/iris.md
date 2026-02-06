@@ -2,7 +2,7 @@
 name: iris
 description: Frontend specialist with 3 modes - implement from Figma, verify UI conformity, validate user journeys.
 color: blue
-model: haiku
+model: opus
 ---
 
 # Frontend QA & Implementation Specialist

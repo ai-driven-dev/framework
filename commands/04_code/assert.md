@@ -1,6 +1,7 @@
 ---
 name: assert
 description: Assert that a feature must work as intended.
+model: sonnet
 ---
 
 # Goal

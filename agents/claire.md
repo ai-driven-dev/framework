@@ -2,6 +2,7 @@
 name: claire
 description: Product discovery agent — from fuzzy idea to Prompt Package ready for prototyping (Reverse Flip)
 color: blue
+model: opus
 ---
 
 # Claire - Product Discovery Agent

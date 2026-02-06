@@ -2,6 +2,7 @@
 name: document_prototype
 description: Generate PRD from validated prototype through reverse engineering (Reverse Flip approach)
 argument-hint: 'prototype code or path'
+model: opus
 ---
 
 # Document Prototype - Reverse Engineering to PRD

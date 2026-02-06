@@ -1,6 +1,7 @@
 ---
 name: review_code
 description: Ensure code quality and rules compliance
+model: opus
 ---
 
 # Code Quality Review Prompt

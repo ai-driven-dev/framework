@@ -1,6 +1,7 @@
 ---
 name: generate_agent
 description: Generates a customized agent based on user-defined parameters.
+model: sonnet
 ---
 
 # Goal

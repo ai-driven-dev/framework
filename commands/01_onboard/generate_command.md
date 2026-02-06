@@ -2,6 +2,7 @@
 name: generate_command
 description: Generate optimized, action-oriented prompts using best practices and structured template
 argument-hint: The command details to generate the prompt for
+model: sonnet
 ---
 
 # Generate Optimized Prompt Command

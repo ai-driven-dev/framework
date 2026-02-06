@@ -1,6 +1,7 @@
 ---
 name: tag
 description: Create and push git tag with semantic versioning
+model: sonnet
 ---
 
 # Tag Prompt

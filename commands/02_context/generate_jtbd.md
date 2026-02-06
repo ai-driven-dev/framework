@@ -2,6 +2,7 @@
 name: generate_jtbd
 description: Formulate JTBD from personas
 argument-hint: (uses previous personas)
+model: sonnet
 ---
 
 # Generate JTBD

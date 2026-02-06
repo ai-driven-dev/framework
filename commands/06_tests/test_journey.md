@@ -2,6 +2,7 @@
 name: test_journey
 description: Test a user journey end-to-end by navigating and validating each step in the browser.
 argument-hint: The user journey steps to validate and the URL to test on.
+model: opus
 ---
 
 # Goal

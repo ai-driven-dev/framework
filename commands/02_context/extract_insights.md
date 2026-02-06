@@ -2,6 +2,7 @@
 name: extract_insights
 description: Extract user insights, personas, and JTBD from raw data sources
 argument-hint: sources/ folder OR specific files (interviews, feedback, notes)
+model: opus
 ---
 
 # Extract Insights

@@ -2,6 +2,7 @@
 name: prepare_proto
 description: Generate structured prompts for AI prototyping tools (Bolt, Lovable, v0)
 argument-hint: brainstorm output or feature brief
+model: sonnet
 ---
 
 # Goal

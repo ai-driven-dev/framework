@@ -2,6 +2,7 @@
 name: isolate
 description: Create an isolated worktree automatically for manual work, then cleanup
 argument-hint: Optional context or branch name hint
+model: sonnet
 ---
 
 # Isolate Prompt

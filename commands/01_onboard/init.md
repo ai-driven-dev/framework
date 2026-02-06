@@ -1,6 +1,7 @@
 ---
 name: init
 description: Create or update the memory bank files to reflect the current state of the codebase
+model: opus
 ---
 
 # Init

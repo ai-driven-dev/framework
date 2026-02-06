@@ -1,6 +1,7 @@
 ---
 name: martin
 description: Every time you need to run a command to ensure code is correct, still builds are that tests pass, you must call this agent.
+model: sonnet
 ---
 
 # Code Checker Agent

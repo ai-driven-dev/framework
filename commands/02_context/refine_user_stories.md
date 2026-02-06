@@ -2,6 +2,7 @@
 name: refine_user_stories
 description: Refine user stories with Gherkin acceptance criteria, INVEST validation, DoR checklist, and NFRs
 argument-hint: USER_STORIES file path or use default {{DOCS}}/internal/product/USER_STORIES.md
+model: opus
 ---
 
 # Refine User Stories for Implementation Readiness

@@ -1,6 +1,7 @@
 ---
 name: learn
 description: Update memory bank or rules with new information or requirements.
+model: sonnet
 ---
 
 # Learn Prompt

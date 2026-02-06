@@ -1,6 +1,7 @@
 ---
 name: write
 description: Iterate on test creation and improvement until perfect test passes with best practices
+model: sonnet
 ---
 
 # Perfect Test Iterator Prompt

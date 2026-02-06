@@ -2,6 +2,7 @@
 name: implementation_readiness
 description: Validate that specification is complete and ready for development handoff
 argument-hint: <path-to-prd> or use current docs/product/
+model: sonnet
 ---
 
 # Implementation Readiness

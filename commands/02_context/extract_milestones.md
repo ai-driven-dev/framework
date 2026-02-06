@@ -2,6 +2,7 @@
 name: extract_milestones
 description: Split PRD into deliverable milestones with complexity analysis
 argument-hint: PRD content or file path
+model: opus
 ---
 
 # Extract Milestones

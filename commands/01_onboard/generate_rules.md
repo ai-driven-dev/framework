@@ -3,6 +3,7 @@ name: generate_rules
 description: Generate or modify coding rules for the project's rule-based architecture system
 argument-hints:
   - "Which coding rules would you like to generate or update for this project?"
+model: sonnet
 ---
 
 # Generate Rules

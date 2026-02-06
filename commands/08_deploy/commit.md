@@ -2,6 +2,7 @@
 name: commit
 description: Create git commit with proper message format
 argument-hint: auto
+model: sonnet
 ---
 
 # Commit Prompt

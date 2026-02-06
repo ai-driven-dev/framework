@@ -2,6 +2,7 @@
 name: generate_backlog_initial
 description: Generate initial product backlog (Epics + User Stories) from validated PRD
 argument-hint: PRD file path or use default {{DOCS}}/internal/product/PRD.md
+model: sonnet
 ---
 
 # Generate Initial Product Backlog

@@ -2,6 +2,7 @@
 name: improve_prompt
 description: Verify and improve existing prompts against best practices
 argument-hint: Path to the prompt file to improve
+model: opus
 ---
 
 # Improve Prompt

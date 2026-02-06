@@ -1,6 +1,7 @@
 ---
 name: brainstorm
 description: Create an interactive brainstorming session to refine feature requests with the user.
+model: opus
 ---
 
 # Goal

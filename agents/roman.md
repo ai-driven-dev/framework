@@ -2,6 +2,7 @@
 name: roman
 description: Backlog generation agent — from validated PRD to implementation-ready backlog
 color: green
+model: opus
 ---
 
 # Roman - Backlog Generation Agent

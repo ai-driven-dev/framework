@@ -2,6 +2,7 @@
 name: generate_personas
 description: Create detailed user personas with 3 variations (Optimist, Skeptic, Power User)
 argument-hint: [product/audience] OR (uses previous empathy maps)
+model: sonnet
 ---
 
 # Generate Personas

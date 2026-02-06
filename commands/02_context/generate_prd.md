@@ -2,6 +2,7 @@
 name: generate_prd
 description: Generate or update a PRD from a feature idea through systematic questioning
 argument-hint: "new <feature>" or "update <prd-path> <changes>"
+model: opus
 ---
 
 # Generate PRD - Product Requirements Document

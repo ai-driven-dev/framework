@@ -2,6 +2,7 @@
 name: brainstorm_features
 description: Generate 5-7 feature ideas from Brief + Research for prototyping
 argument-hint: BRIEF.md + RESEARCH_REPORT.md
+model: opus
 ---
 
 # Brainstorm Features

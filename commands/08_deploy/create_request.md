@@ -1,6 +1,7 @@
 ---
 name: create_request
 description: Create PR (GitHub) or MR (GitLab) with filled template
+model: sonnet
 ---
 
 # Create Request Prompt

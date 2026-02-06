@@ -2,6 +2,7 @@
 name: plan
 description: Generate technical implementation plans from requirements
 argument-hint: requirements (GitHub issue URL or raw text)
+model: opus
 ---
 
 # Goal

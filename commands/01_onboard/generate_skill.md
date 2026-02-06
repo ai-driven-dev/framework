@@ -2,6 +2,7 @@
 name: generate_skill
 description: Generate a customized skill based on repeated patterns and user workflows.
 argument-hint: Description of the workflow to package as a skill
+model: opus
 ---
 
 # Goal

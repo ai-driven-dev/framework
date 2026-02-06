@@ -2,6 +2,7 @@
 name: gap_analysis
 description: Analyze specs for edge cases, gaps, inconsistencies, SMART compliance, and implementation leakage before development
 argument-hint: <prd-path> or paste specs inline
+model: opus
 ---
 
 # Gap Analysis Prompt

@@ -2,6 +2,7 @@
 name: assert_frontend
 description: Assert a frontend feature works as intended.
 argument-hint: The frontend behavior you need to assert and validate.
+model: opus
 ---
 
 # Goal

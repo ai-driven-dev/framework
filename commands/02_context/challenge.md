@@ -1,6 +1,7 @@
 ---
 name: challenge
 description: Rethink and challenge previous work for improvements
+model: opus
 ---
 
 # Challenge

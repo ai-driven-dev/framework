@@ -1,6 +1,7 @@
 ---
 name: mermaid
 description: When need to generate Mermaid diagrams
+model: sonnet
 ---
 
 # Goal

@@ -3,6 +3,7 @@ name: kent
 description: Use this agent when explicitly asked to perform test-driven development.
 docs:
     https://tidyfirst.substack.com/p/augmented-coding-beyond-the-vibes
+model: sonnet
 ---
 
 # TDD prompts for Kent Beck's Test-Driven Development (TDD) and Tidy First principles

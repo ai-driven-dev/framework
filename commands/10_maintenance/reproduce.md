@@ -2,6 +2,7 @@
 name: reproduce
 description: Fix bugs with test-driven workflow from issue to PR
 argument-hint: Bug description or issue number
+model: sonnet
 ---
 
 # Bug Fix Workflow

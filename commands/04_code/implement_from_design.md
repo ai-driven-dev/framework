@@ -2,6 +2,7 @@
 name: implement_from_design
 description: Implement a frontend component from a Figma design with pixel-perfect accuracy.
 argument-hint: The Figma file URL and frame/component to implement.
+model: opus
 ---
 
 # Goal

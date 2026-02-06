@@ -2,6 +2,7 @@
 name: generate_empathy
 description: Generate empathy maps from insights
 argument-hint: (uses previous insights)
+model: sonnet
 ---
 
 # Generate Empathy Maps

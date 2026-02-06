@@ -1,6 +1,7 @@
 ---
 name: list_untested
 description: List all untested behaviors in codebase
+model: sonnet
 ---
 
 # List untested behaviors

@@ -1,6 +1,7 @@
 ---
 name: debug
 description: Debug issue to find root cause.
+model: opus
 ---
 
 # Goal

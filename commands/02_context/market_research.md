@@ -2,6 +2,7 @@
 name: market_research
 description: Structure raw market research into validated RESEARCH_REPORT.md with triangulation
 argument-hint: pasted research report OR file path to research
+model: sonnet
 ---
 
 # Market Research

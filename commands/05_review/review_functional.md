@@ -2,6 +2,7 @@
 name: review_functional
 description: Use this agent when you need to browse current project web application, getting browser console, screenshot, navigating across the app...
 argument-hint: The technical plan to base the review on
+model: opus
 ---
 
 # Goal

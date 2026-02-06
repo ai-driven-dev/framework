@@ -2,6 +2,7 @@
 name: create_user_stories
 description: Create user stories through iterative questioning
 argument-hint: Feature description or requirements for user story generation
+model: sonnet
 ---
 
 # Create perfect User Stories for a developer

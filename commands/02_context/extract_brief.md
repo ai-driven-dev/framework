@@ -2,6 +2,7 @@
 name: extract_brief
 description: Extract light Brief from brain dump - strategic intent for prototyping (Reverse Flip)
 argument-hint: brain_dump.md
+model: sonnet
 ---
 
 # Extract Brief

@@ -1,6 +1,7 @@
 ---
 name: security_refactor
 description: Identify and fix security vulnerabilities
+model: opus
 ---
 
 # Security Refactor Prompt

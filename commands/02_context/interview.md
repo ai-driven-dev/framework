@@ -2,6 +2,7 @@
 name: interview
 description: Interview the PM or simulate a persona interview
 argument-hint: topic/idea to explore
+model: opus
 ---
 
 # Interview

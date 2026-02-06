@@ -1,6 +1,7 @@
 ---
 name: performance
 description: Optimize code for better performance
+model: opus
 ---
 
 # Performance Optimization Prompt

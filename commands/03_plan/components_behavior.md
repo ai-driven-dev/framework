@@ -2,6 +2,7 @@
 name: components_behavior
 description: Define the expected behavior of frontend components into a state machine format.
 argument-hints: names of the components to define behavior for.
+model: sonnet
 ---
 
 # Goal

@@ -2,6 +2,7 @@
 name: jira_info
 description: Get JIRA ticket info from current branch
 argument-hint: Jira URL or number
+model: haiku
 ---
 
 # JIRA Info Prompt

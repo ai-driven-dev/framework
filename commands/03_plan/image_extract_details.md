@@ -2,6 +2,7 @@
 name: image_extract_details
 description: Analyze image to identify and extract main components with hierarchical organization
 argument-hint: the image to analyze
+model: opus
 ---
 
 # Goal
