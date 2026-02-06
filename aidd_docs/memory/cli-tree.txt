@@ -1,0 +1,133 @@
+## 2026-01-19: Tree of project `cli/src`
+
+cli/src
+├── __tests__
+│   ├── domain
+│   │   ├── install
+│   │   │   └── component-selections.test.ts
+│   │   ├── plugins
+│   │   │   ├── aidd-framework
+│   │   │   │   └── config.e2e.test.ts
+│   │   │   ├── claude-code
+│   │   │   │   └── config.e2e.test.ts
+│   │   │   ├── copilot
+│   │   │   │   └── config.e2e.test.ts
+│   │   │   ├── cursor
+│   │   │   │   └── config.e2e.test.ts
+│   │   │   ├── docs
+│   │   │   │   └── config.e2e.test.ts
+│   │   │   ├── github
+│   │   │   │   └── config.e2e.test.ts
+│   │   │   ├── vscode
+│   │   │   │   ├── config.e2e.test.ts
+│   │   │   │   └── merge.e2e.test.ts
+│   │   │   └── windsurf
+│   │   │       └── config.e2e.test.ts
+│   │   └── policies
+│   │       ├── copy-if-missing.test.ts
+│   │       ├── copy-overwrite-with-backup.test.ts
+│   │       ├── helpers.ts
+│   │       ├── merge-json.test.ts
+│   │       └── primitives
+│   │           ├── copy-with-suffix.e2e.test.ts
+│   │           └── symlink-relative.test.ts
+│   ├── global-setup.ts
+│   ├── infra
+│   │   └── tree.test.ts
+│   ├── scripts
+│   │   └── summarize-markdown.test.ts
+│   └── utils
+│       ├── filesystem-ops-new.ts
+│       ├── shell.test.ts
+│       ├── slow-test-helpers.ts
+│       ├── test-guards.ts
+│       └── test-utils.ts
+├── app
+│   ├── commands
+│   │   ├── install-package.e2e.test.ts
+│   │   ├── install.ts
+│   │   ├── worktree.e2e.test.ts
+│   │   └── worktree.ts
+│   ├── constants
+│   │   └── app-info.ts
+│   ├── install
+│   │   ├── configuration.service.ts
+│   │   ├── create-installer.ts
+│   │   ├── install-options.ts
+│   │   ├── install.controller.ts
+│   │   ├── installation-orchestrator.ts
+│   │   └── prompt.service.ts
+│   └── ui
+│       └── display.service.ts
+├── cli.ts
+├── domain
+│   ├── constants
+│   │   └── messages.ts
+│   ├── install
+│   │   ├── component-selection.ts
+│   │   ├── component-selections.ts
+│   │   ├── config-contracts.ts
+│   │   ├── conflict-detector.ts
+│   │   ├── plugin-catalog.ts
+│   │   ├── plugin-config.ts
+│   │   └── prompt-sections.ts
+│   ├── plugins
+│   │   ├── aidd-framework-config.ts
+│   │   ├── claude-code-config.ts
+│   │   ├── copilot-config.ts
+│   │   ├── cursor-config.ts
+│   │   ├── docs-config.ts
+│   │   ├── github-config.ts
+│   │   ├── vscode-config.ts
+│   │   └── windsurf-config.ts
+│   ├── policies
+│   │   ├── attempt.ts
+│   │   ├── installation-policy.ts
+│   │   ├── policy-ids.ts
+│   │   ├── policy-options.ts
+│   │   ├── primitives
+│   │   │   ├── copy-hard.ts
+│   │   │   ├── copy-if-missing.ts
+│   │   │   ├── copy-overwrite-with-backup.ts
+│   │   │   ├── copy-with-suffix.ts
+│   │   │   ├── create-file.ts
+│   │   │   ├── merge-json.ts
+│   │   │   ├── merge-text.ts
+│   │   │   ├── mkdir.ts
+│   │   │   ├── overwrite-backup.ts
+│   │   │   ├── run-package-install.ts
+│   │   │   ├── symlink-absolute.ts
+│   │   │   └── symlink-relative.ts
+│   │   └── rollback-data.ts
+│   ├── registry
+│   │   ├── plugin-registry.ts
+│   │   └── policy-registry.ts
+│   ├── utils
+│   │   └── jsonc.ts
+│   └── worktree
+│       ├── command-result.ts
+│       └── worktree-session.ts
+├── index.ts
+└── infra
+    ├── assets
+    │   └── asset-locator.ts
+    ├── config
+    │   ├── asset-paths.ts
+    │   ├── asset-validator.ts
+    │   └── environment-validator.ts
+    ├── constants
+    │   ├── errors.ts
+    │   ├── markers.ts
+    │   └── paths.ts
+    ├── fs
+    │   ├── copy-manager.ts
+    │   ├── file-system-adapter.ts
+    │   └── symlink-manager.ts
+    ├── git
+    │   └── git-repository.ts
+    ├── shell
+    │   └── resolve-shell-command.ts
+    └── utils
+        ├── aidd-paths.ts
+        ├── platform.e2e.test.ts
+        └── platform.ts

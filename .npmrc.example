@@ -1,0 +1,5 @@
+# GitHub Package Registry Configuration
+# Copy this file to .npmrc and replace YOUR_TOKEN_HERE with your actual token
+
+@ai-driven-dev:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=YOUR_TOKEN_HERE

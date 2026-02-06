@@ -1,0 +1,34 @@
+{
+	"$schema": "https://unpkg.com/knip@5/schema.json",
+	"entry": [
+		"src/cli.ts!",
+		"src/index.ts!",
+		"src/app/**/*.ts!",
+		"src/domain/**/*.ts!",
+		"src/infra/**/*.ts!"
+	],
+	"project": ["src/**/*.ts"],
+	"ignore": ["dist/**", "node_modules/**", "coverage/**"],
+	"ignoreExportsUsedInFile": true,
+	"includeEntryExports": true,
+	"typescript": {
+		"config": "tsconfig.json"
+	},
+	"vitest": {
+		"config": "vitest.config.ts"
+	},
+	"rules": {
+		"files": "error",
+		"dependencies": "error",
+		"unlisted": "error",
+		"binaries": "error",
+		"unresolved": "error",
+		"exports": "error",
+		"nsExports": "error",
+		"classMembers": "error",
+		"types": "error",
+		"nsTypes": "error",
+		"enumMembers": "error",
+		"duplicates": "error"
+	}
+}

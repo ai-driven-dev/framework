@@ -1,0 +1,71 @@
+{
+	"name": "@ai-driven-dev/aidd",
+	"version": "1.9.5",
+	"packageManager": "pnpm@10.11.0",
+	"description": "AI-Driven Development CLI - AIDD framework in projects",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"bin": {
+		"aidd": "./dist/cli.js"
+	},
+	"files": ["dist/**/*", "README.md"],
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"engines": {
+		"node": ">=20.0.0",
+		"pnpm": ">=9.0.0"
+	},
+	"keywords": ["ai-driven-dev", "cli", "aidd"],
+	"author": "AIDD Team",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ai-driven-dev/aidd.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ai-driven-dev/aidd/issues"
+	},
+	"homepage": "https://github.com/ai-driven-dev/aidd#readme",
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
+	"scripts": {
+		"build": "tsup",
+		"lint": "pnpm exec biome check .",
+		"lint:fix": "pnpm exec biome check --apply-unsafe .",
+		"format": "pnpm exec biome check --fix --unsafe .",
+		"typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters",
+		"test:watch": "VITEST_UNIT=1 vitest",
+		"test": "rm -rf dist ../output-tests && pnpm run build && vitest run",
+		"test:full": "RUN_PACK_E2E=1 pnpm run test",
+		"test:unit": "VITEST_UNIT=1 vitest run",
+		"test:pack": "RUN_PACK_E2E=1 vitest run src/app/commands/install-package.e2e.test.ts",
+		"test:debug": "rm -rf dist ../output-tests && pnpm run build && vitest run --reporter=verbose --reporter=json --outputFile=../output-tests/results.json",
+		"knip": "knip",
+		"knip:production": "knip --production",
+		"jscpd": "jscpd --config .jscpd.json --exitCode 1",
+		"prepublishOnly": "pnpm run typecheck && pnpm test && pnpm run build",
+		"prepack": "pnpm run build",
+		"install:local": "pnpm install ; pnpm run build ; pnpm link",
+		"install:local:packed": "pnpm run build && pnpm pack && pnpm install -g \"$(pwd)\"/ai-driven-dev-aidd-*.tgz && rm -v ai-driven-dev-aidd-*.tgz"
+	},
+	"dependencies": {
+		"commander": "^12.0.0",
+		"inquirer": "^9.2.15"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@types/inquirer": "^9.0.7",
+		"@types/node": "^20.11.16",
+		"jscpd": "^4.0.5",
+		"knip": "^5.63.0",
+		"tsup": "^8.0.1",
+		"typescript": "^5.3.3",
+		"vitest": "^2.1.0"
+	}
+}
