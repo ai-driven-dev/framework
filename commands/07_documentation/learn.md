@@ -1,0 +1,95 @@
+---
+name: learn
+description: Update memory bank or rules with new information or requirements.
+---
+
+# Learn Prompt
+
+## Goal
+
+Capture and store new learnings from recently implemented feature in memory bank, decisions, or coding rules, because our context might be outdated.
+
+## Resources
+
+### Doc content
+
+```shell
+! ls -1tr {{DOCS}}/
+```
+
+#### Decision & ADR Template
+
+```markdown
+@{{DOCS}}/templates/dev/decision.md
+```
+
+```markdown
+@{{DOCS}}/templates/dev/adr.md
+```
+
+## Rules
+
+- Less is more, documentation needs to be concise and to the point.
+- Avoid putting too much information.
+- Focus on important changes or non-alignments with existing doc.
+
+## Steps
+
+### Phase 0: Gather Context
+
+List all files in `{{DOCS}}/` and pin relevant ones for reference:
+
+```shell
+! ls -1tr {{DOCS}}/
+```
+
+### Phase 1: Auto-Analysis (AI answers these questions)
+
+AI analyzes the recent changes and answers these questions itself:
+
+1. **What worked well?**
+   - AI identifies effective patterns in the code
+   - AI notes successful approaches used
+
+2. **What didn't work or required multiple attempts?**
+   - AI identifies corrections that were made
+   - AI notes areas where initial approach changed
+
+3. **What decisions were made and why?**
+   - AI extracts technical choices from the code
+   - AI infers reasoning from patterns used
+
+4. **What patterns or approaches should be reused?**
+   - AI identifies reusable solutions
+   - AI notes conventions worth keeping
+
+5. **What should be avoided next time?**
+   - AI identifies anti-patterns encountered
+   - AI notes pitfalls discovered
+
+Then AI asks user:
+
+> "Here's my analysis. Which decisions should I save to the decisions folder?"
+> Here is the recommended decisions to save:
+>
+> 1. ...
+
+### Phase 2: Categorize Learnings
+
+AI categorizes each learning by destination, goal is to update the files caused by the decision.
+
+| Category      | Destination                     | Examples                                |
+| ------------- | ------------------------------- | --------------------------------------- |
+| **Decisions** | `{{DOCS}}/internal/decisions/` | Tech decisions                          |
+| **Rules**     | `{{TOOLS}}/rules/`              | Coding conventions, patterns to enforce |
+| **Skills**    | `{{TOOLS}}/skills/`             | Reusable prompts, workflows             |
+| **Memory**    | `{{DOCS}}/memory/`             | Project context, stack updates          |
+
+Propose where to save each learning.
+
+### Phase 3: Create/Update Files
+
+1. **Decisions** → Create file in `{{DOCS}}/internal/decisions/XXX-<title>.md` using decision template + update ADR table in `ADR.md`
+2. **Rules** → Update or create rule file
+3. **Skills** → Create skill file if new pattern
+4. **Memory** → Update relevant memory file
