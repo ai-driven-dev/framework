@@ -4,7 +4,7 @@ Bienvenue dans le guide de contribution du CLI AIDD !
 
 > **Notre mission** : Rendre l'AI-Driven Development accessible avec un package complet pour les développeurs.
 
-> **Rôles et permissions** : Voir le [CONTRIBUTING principal](../CONTRIBUTING.md#rôles)
+> **Rôles et permissions** : Voir le [CONTRIBUTING principal](https://github.com/ai-driven-dev/aidd/blob/main/CONTRIBUTING.md#rôles)
 
 ---
 

@@ -24,7 +24,7 @@ npm install -g @ai-driven-dev/aidd
 
 ## ✨ Qu'est-ce que AIDD CLI ?
 
-AIDD CLI installe le [framework AI-Driven Development](../framework/README.md) sur vos projets avec un workflow de configuration personnalisé.
+AIDD CLI installe le [framework AI-Driven Development](https://github.com/ai-driven-dev/aidd-framework/blob/main/README.md) sur vos projets avec un workflow de configuration personnalisé.
 
 **Ce qui est installé :**
 
@@ -178,4 +178,4 @@ aidd --version
 
 ---
 
-← [Retour au repo principal](../README.md)
+← [Retour au repo principal](https://github.com/ai-driven-dev/aidd/blob/main/README.md)
