@@ -58,7 +58,7 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
 | `aidd` | [command.md](../../aidd_docs/templates/aidd/command.md) | `<generated-action-oriented-description>` | `<generated-argument-hint-if-applicable>` |
 | `aidd` | [master_plan.md](../../aidd_docs/templates/aidd/master_plan.md) | `Parent plan template orchestrating multiple child plans with validation gates` | - |
 | `aidd` | [plan.md](../../aidd_docs/templates/aidd/plan.md) | `Feature implementation plan template` | - |
-| `aidd` | [prompt.md](../../aidd_docs/templates/aidd/prompt.md) | `Custom prompt template example` | - |
+| `aidd` | [prompt.md](../../aidd_docs/templates/aidd/prompts/prompt.md) | `Custom prompt template example` | - |
 | `aidd` | [review_code.md](../../aidd_docs/templates/aidd/review_code.md) | - | - |
 | `aidd` | [rule.md](../../aidd_docs/templates/aidd/rule.md) | `< One line. Comprehensive description that provides full context and clearly indicates when this rule should be applied. Include key scenarios, impacted areas, and why following this rule is important. While being thorough, remain focused and relevant. The description should be detailed enough that the agent can confidently determine whether to apply the rule in any given situation.>` | - |
 | `aidd` | [skill.md](../../aidd_docs/templates/aidd/skill.md) | `<What it does - actions, capabilities>. Use when <trigger phrases, contexts, file types, user intents>.` | - |
