@@ -1,4 +1,6 @@
-# 📦 AI-Driven Development CLI
+# 📦 AI-Driven Development CLI (outdated)
+
+> Nous travaillons activement à sa refonte, en attendant rendez-vous sur [le framework AIDD](https://github.com/ai-driven-dev/aidd-framework).
 
 [![npm version](https://img.shields.io/badge/npm-v1.9.5-blue)](https://github.com/ai-driven-dev/aidd/pkgs/npm/aidd)
 ![beta](https://img.shields.io/badge/status-beta-yellow)
@@ -12,13 +14,20 @@ npm install -g @ai-driven-dev/aidd
 
 ## 📑 Sommaire
 
-- [Qu'est-ce que AIDD CLI ?](#-quest-ce-que-aidd-cli-)
-- [Démarrage rapide](#-démarrage-rapide)
-- [IDEs supportés](#-ides-supportés)
-- [Commandes](#-commandes)
-- [Structure générée](#-structure-générée)
-- [Installation détaillée](#-installation-détaillée)
-- [Contribuer](#-contribuer)
+- [📑 Sommaire](#-sommaire)
+- [✨ Qu'est-ce que AIDD CLI ?](#-quest-ce-que-aidd-cli-)
+- [🚀 Démarrage rapide](#-démarrage-rapide)
+- [🎯 IDEs supportés](#-ides-supportés)
+- [🔧 Commandes](#-commandes)
+  - [`aidd install`](#aidd-install)
+  - [`aidd worktree`](#aidd-worktree)
+- [📁 Structure générée](#-structure-générée)
+  - [Contenu par IDE](#contenu-par-ide)
+- [🔑 Installation détaillée](#-installation-détaillée)
+  - [1. Créer un Personal Access Token](#1-créer-un-personal-access-token)
+  - [2. Configurer npm](#2-configurer-npm)
+  - [3. Installer](#3-installer)
+- [👌 Contribuer](#-contribuer)
 
 ---
 
@@ -28,15 +37,15 @@ AIDD CLI installe le [framework AI-Driven Development](https://github.com/ai-dri
 
 **Ce qui est installé :**
 
-| Composant | Description |
-|-----------|-------------|
-| **Commands** | Commandes SDLC par phase (`/plan`, `/implement`, `/review`...) |
-| **Agents** | Agents spécialisés (alexia, claire, kent, martin...) |
-| **Rules** | Règles de codage appliquées automatiquement |
-| **Skills** | Capacités réutilisables |
-| **Templates** | Modèles de documents (PRD, plans, user stories...) |
-| **Memory Bank** | Fichiers de contexte projet (CLAUDE.md, AGENTS.md) |
-| **MCP Config** | Configuration des serveurs MCP |
+| Composant       | Description                                                    |
+| --------------- | -------------------------------------------------------------- |
+| **Commands**    | Commandes SDLC par phase (`/plan`, `/implement`, `/review`...) |
+| **Agents**      | Agents spécialisés (alexia, claire, kent, martin...)           |
+| **Rules**       | Règles de codage appliquées automatiquement                    |
+| **Skills**      | Capacités réutilisables                                        |
+| **Templates**   | Modèles de documents (PRD, plans, user stories...)             |
+| **Memory Bank** | Fichiers de contexte projet (CLAUDE.md, AGENTS.md)             |
+| **MCP Config**  | Configuration des serveurs MCP                                 |
 
 ---
 
@@ -59,11 +68,11 @@ aidd install
 
 ## 🎯 IDEs supportés
 
-| IDE | Status | Commands | Agents | Rules | MCP |
-|-----|:------:|:--------:|:------:|:-----:|:---:|
-| [Claude Code](https://claude.ai/code) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| [GitHub Copilot](https://github.com/features/copilot) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| [Cursor](https://cursor.so) | 🔶 | ✅ | ⚠️ | ✅ | ✅ |
+| IDE                                                   | Status | Commands | Agents | Rules | MCP |
+| ----------------------------------------------------- | :----: | :------: | :----: | :---: | :-: |
+| [Claude Code](https://claude.ai/code)                 |   ✅   |    ✅    |   ✅   |  ✅   | ✅  |
+| [GitHub Copilot](https://github.com/features/copilot) |   ✅   |    ✅    |   ✅   |  ✅   | ✅  |
+| [Cursor](https://cursor.so)                           |   🔶   |    ✅    |   ⚠️   |  ✅   | ✅  |
 
 ---
 
@@ -73,13 +82,13 @@ aidd install
 
 Installation interactive du framework.
 
-| Option | Description |
-|--------|-------------|
-| `--auto` | Installation automatique avec les défauts |
-| `--full` | Installation complète (tous les composants) |
-| `--force` | Écrase les fichiers existants |
-| `--dry-run` | Prévisualise sans appliquer |
-| `--verbose` | Logs détaillés |
+| Option      | Description                                 |
+| ----------- | ------------------------------------------- |
+| `--auto`    | Installation automatique avec les défauts   |
+| `--full`    | Installation complète (tous les composants) |
+| `--force`   | Écrase les fichiers existants               |
+| `--dry-run` | Prévisualise sans appliquer                 |
+| `--verbose` | Logs détaillés                              |
 
 ### `aidd worktree`
 
@@ -135,12 +144,12 @@ your-project/
 
 ### Contenu par IDE
 
-| Dossier | Claude Code | Cursor | Copilot |
-|---------|:-----------:|:------:|:-------:|
-| `.claude/` | ✅ | - | - |
-| `.cursor/` | - | ✅ | - |
-| `.github/` | - | - | ✅ |
-| `aidd_docs/` | ✅ | ✅ | ✅ |
+| Dossier      | Claude Code | Cursor | Copilot |
+| ------------ | :---------: | :----: | :-----: |
+| `.claude/`   |     ✅      |   -    |    -    |
+| `.cursor/`   |      -      |   ✅   |    -    |
+| `.github/`   |      -      |   -    |   ✅    |
+| `aidd_docs/` |     ✅      |   ✅   |   ✅    |
 
 ---
 
