@@ -26,8 +26,8 @@ Every change requires a **Pull Request**. Changes impact all teams using the fra
 
 When adding or modifying content, always follow the existing templates:
 
-| Content | Template                    | Examples    |
-| ------- | --------------------------- | ----------- |
+| Content | Template                              | Examples    |
+| ------- | ------------------------------------- | ----------- |
 | Agent   | `aidd_docs/templates/aidd/agent.md`   | `agents/`   |
 | Command | `aidd_docs/templates/aidd/command.md` | `commands/` |
 | Skill   | `aidd_docs/templates/aidd/skill.md`   | `skills/`   |
@@ -43,11 +43,11 @@ The framework must remain **tool-agnostic** — the CLI handles all syntactic ad
 
 ### Placeholders
 
-| Placeholder  | Role                                                      | Resolution                         |
-| ------------ | --------------------------------------------------------- | ---------------------------------- |
-| `{{TOOLS}}/` | Tool-specific content (commands, agents, rules, etc)      | `.claude/`, `.cursor/`, `.github/` |
-| `{{DOCS}}/`  | Documentation (templates, memory, tasks, etc)             | `aidd_docs/`                       |
-| `$ARGUMENTS` | User input in commands                                    | Value provided at runtime          |
+| Placeholder  | Role                                                 | Resolution                         |
+| ------------ | ---------------------------------------------------- | ---------------------------------- |
+| `{{TOOLS}}/` | Tool-specific content (commands, agents, rules, etc) | `.claude/`, `.cursor/`, `.github/` |
+| `{{DOCS}}/`  | Documentation (templates, memory, tasks, etc)        | `aidd_docs/`                       |
+| `$ARGUMENTS` | User input in commands                               | Value provided at runtime          |
 
 For file inclusions, use `@{{TOOLS}}/path` or `@{{DOCS}}/path`: the CLI rewrites these paths based on the target tool.
 

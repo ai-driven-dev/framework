@@ -2,10 +2,6 @@
 
 > Build fast. Ship with confidence.
 
-- Release: 2024-06-15
-- Version: 3.0.0
-- Website: <https://www.ai-driven-dev.com>
-
 ---
 
 ## 📁 Structure
@@ -22,14 +18,14 @@ framework/
 └── templates/    # Document templates (aidd, dev, pm, vcs)
 ```
 
-| Directory    | Description                                                         |
-| ------------ | ------------------------------------------------------------------- |
-| `agents/`    | Autonomous AI agents, specialized by development lifecycle phase    |
-| `commands/`  | SDLC commands organized by phase (onboarding → deploy)              |
-| `rules/`     | Coding rules automatically applied based on context (globs)         |
-| `skills/`    | Complete packaged workflows (command chains)                        |
-| `templates/` | Document templates by usage (dev, pm, vcs, docs)                    |
-| `config/`    | Configuration files (MCP, IDE)                                      |
+| Directory    | Description                                                      |
+| ------------ | ---------------------------------------------------------------- |
+| `agents/`    | Autonomous AI agents, specialized by development lifecycle phase |
+| `commands/`  | SDLC commands organized by phase (onboarding → deploy)           |
+| `rules/`     | Coding rules automatically applied based on context (globs)      |
+| `skills/`    | Complete packaged workflows (command chains)                     |
+| `templates/` | Document templates by usage (dev, pm, vcs, docs)                 |
+| `config/`    | Configuration files (MCP, IDE)                                   |
 
 > See the [full catalog](./CATALOG.md) for an exhaustive list of all framework elements.
 
@@ -37,11 +33,11 @@ framework/
 
 ## 🧠 LLM Tiers
 
-| Tier   | Label        | Example Models           | Usage                                                                  | Relative Cost |
-| ------ | ------------ | ------------------------ | ---------------------------------------------------------------------- | ------------- |
-| **T1** | **Fast**     | Claude Haiku, Grok Fast  | Mechanical, deterministic tasks, templates, git ops                    | 1x            |
-| **T2** | **Balanced** | Claude Sonnet, GPT Codex | Implementation, structured analysis, validation, code generation       | 8x            |
-| **T3** | **Thinking** | Claude Opus, GPT 5.2     | Deep reasoning, synthesis, planning, orchestration, onboarding         | 30x           |
+| Tier   | Label        | Example Models           | Usage                                                            | Relative Cost |
+| ------ | ------------ | ------------------------ | ---------------------------------------------------------------- | ------------- |
+| **T1** | **Fast**     | Claude Haiku, Grok Fast  | Mechanical, deterministic tasks, templates, git ops              | 1x            |
+| **T2** | **Balanced** | Claude Sonnet, GPT Codex | Implementation, structured analysis, validation, code generation | 8x            |
+| **T3** | **Thinking** | Claude Opus, GPT 5.2     | Deep reasoning, synthesis, planning, orchestration, onboarding   | 30x           |
 
 ---
 
@@ -72,16 +68,18 @@ project/
 
 ## 🔄 Framework Flow Map
 
-| Step      | Prompt(s)                             | When to use                             |
-| --------- | ------------------------------------- | --------------------------------------- |
-| Clarify   | `/brainstorm`                         | Clarify a fuzzy need before coding      |
-| Issue     | `/new_issue`                          | Create a GitHub issue from requirements |
-| Plan      | `/plan`                               | Build the technical plan                |
-| Isolate   | `/isolate`                            | Create an isolated worktree             |
-| Build     | `/implement` + `/assert` + `/commit`  | Implement, verify, and commit per phase |
-| Review    | `/review_code` + `/review_functional` | Review quality and behavior             |
-| PR        | `/create_request`                     | Open a pull request                     |
-| Learn     | `/learn`                              | Update memory and rules                 |
+Flow map is available here in the [aidd_docs](./aidd_docs/README.md).
+
+| Step    | Prompt(s)                             | When to use                             |
+| ------- | ------------------------------------- | --------------------------------------- |
+| Clarify | `/brainstorm`                         | Clarify a fuzzy need before coding      |
+| Issue   | `/new_issue`                          | Create a GitHub issue from requirements |
+| Plan    | `/plan`                               | Build the technical plan                |
+| Isolate | `/isolate`                            | Create an isolated worktree             |
+| Build   | `/implement` + `/assert` + `/commit`  | Implement, verify, and commit per phase |
+| Review  | `/review_code` + `/review_functional` | Review quality and behavior             |
+| PR      | `/create_request`                     | Open a pull request                     |
+| Learn   | `/learn`                              | Update memory and rules                 |
 
 ---
 

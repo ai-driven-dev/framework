@@ -41,10 +41,6 @@ Project documentation and templates for AI-assisted development.
 
 `/brainstorm` → `/new_issue` → `/plan` → `/isolate` → `/implement` + `/assert` + `/commit` → `/review_code` + `/review_functional` + `/create_request` → `/learn`
 
-### Agent-driven flow
-
-`@claire` → `@roman` → `@alexia` → `@martin`
-
 ## Catalog
 
 See [`CATALOG.md`](CATALOG.md) for the full reference (commands, agents, what's installed, templates).
