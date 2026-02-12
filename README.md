@@ -98,16 +98,6 @@ This repository follows [Semantic Versioning](https://semver.org/) with automate
 1. Every push to `main` with conventional commits triggers a **Release PR** (changelog + version bump)
 2. When the Release PR is merged → GitHub Release + tag + downloadable tarball
 
-**Download a release:**
-
-```bash
-# Latest release
-gh release download --repo ai-driven-dev/aidd-framework
-
-# Specific version
-gh release download v3.1.0 --repo ai-driven-dev/aidd-framework
-```
-
 The tarball contains only the framework content: `agents/`, `commands/`, `config/`, `rules/`, `skills/`, `templates/`, `aidd_docs/`.
 
 ---
