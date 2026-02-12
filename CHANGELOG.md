@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.0.1](https://github.com/ai-driven-dev/aidd-framework/compare/v3.0.0...v3.0.1) (2026-02-12)
+
+
+### Documentation
+
+* add changelog and align versioning configuration ([9555e46](https://github.com/ai-driven-dev/aidd-framework/commit/9555e46f60e8272ad29eab8ecfe2a314dbaba520))
+* add versioning and contribution guidelines ([a3d0c25](https://github.com/ai-driven-dev/aidd-framework/commit/a3d0c255e48db3358c48599f8480c86f25d1e6df))
+
+
+### Miscellaneous
+
+* remove config.yml ([e6aaa47](https://github.com/ai-driven-dev/aidd-framework/commit/e6aaa47a7f6df1fe35f3f4cc5c02b7f5c65b5c29))
+
 ## [3.0.0](https://github.com/ai-driven-dev/aidd-framework/releases/tag/v3.0.0) (2026-02-12)
 
 Initial release of the AIDD Framework as a standalone repository with automated versioning.
