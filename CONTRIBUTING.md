@@ -23,7 +23,7 @@ This repository uses [Conventional Commits](https://www.conventionalcommits.org/
 
 **Every commit message must follow this format:**
 
-```
+```text
 <type>: <description>
 ```
 
@@ -31,10 +31,17 @@ This repository uses [Conventional Commits](https://www.conventionalcommits.org/
 | --- | --- | --- |
 | `feat` | New feature (agent, command, rule, skill, template) | Minor |
 | `fix` | Bug fix or correction | Patch |
+| `perf` | Performance improvement | Patch |
+| `revert` | Revert a previous commit | Patch |
 | `docs` | Documentation only | None |
-| `refactor` | Code restructuring without behavior change | None |
-| `chore` | Maintenance, CI, tooling | None |
-| `feat!` | Breaking change (renamed files, removed content) | **Major** |
+| `style` | Formatting, whitespace | None |
+| `refactor` | Restructuring without behavior change | None |
+| `test` | Adding or updating tests | None |
+| `build` | Build system or external dependencies | None |
+| `ci` | CI/CD configuration | None |
+| `chore` | Maintenance, tooling | None |
+
+**Breaking changes:** add `!` after any type to trigger a **major** version bump (e.g., `feat!:`, `fix!:`, `refactor!:`). Use this when renaming files, removing content, or changing structure in a way that breaks existing setups.
 
 **Examples:**
 
@@ -42,7 +49,7 @@ This repository uses [Conventional Commits](https://www.conventionalcommits.org/
 git commit -m "feat: add new debug command"
 git commit -m "fix: correct placeholder syntax in plan command"
 git commit -m "docs: update contribution guide"
-git commit -m "feat!: rename agents/ structure"
+git commit -m "refactor!: rename agents/ directory structure"
 ```
 
 > PR titles are also validated against this convention. A PR with an invalid title will fail the `lint-pr` check.
