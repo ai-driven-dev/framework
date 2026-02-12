@@ -83,6 +83,35 @@ Flow map is available here in the [aidd_docs](./aidd_docs/README.md).
 
 ---
 
+## 🏷️ Versioning
+
+This repository follows [Semantic Versioning](https://semver.org/) with automated releases via [Release Please](https://github.com/googleapis/release-please).
+
+| Commit type | Version bump | Example |
+| --- | --- | --- |
+| `fix:` | Patch | 3.0.0 → 3.0.1 |
+| `feat:` | Minor | 3.0.0 → 3.1.0 |
+| `feat!:` / `BREAKING CHANGE:` | Major | 3.0.0 → 4.0.0 |
+
+**How it works:**
+
+1. Every push to `main` with conventional commits triggers a **Release PR** (changelog + version bump)
+2. When the Release PR is merged → GitHub Release + tag + downloadable tarball
+
+**Download a release:**
+
+```bash
+# Latest release
+gh release download --repo ai-driven-dev/aidd-framework
+
+# Specific version
+gh release download v3.1.0 --repo ai-driven-dev/aidd-framework
+```
+
+The tarball contains only the framework content: `agents/`, `commands/`, `config/`, `rules/`, `skills/`, `templates/`, `aidd_docs/`.
+
+---
+
 ## 👌 Contributing
 
 To add or modify elements (agents, commands, rules, skills, or templates), see the [contribution guide](./CONTRIBUTING.md).

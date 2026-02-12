@@ -38,8 +38,12 @@ jobs:
           tar czf "${ARCHIVE}" \
             --exclude='.git' \
             --exclude='.github' \
+            --exclude='.gitignore' \
+            --exclude='.release-please-manifest.json' \
+            --exclude='release-please-config.json' \
             --exclude='dist' \
             --exclude='CONTRIBUTING.md' \
+            --exclude='README.md' \
             .
 
           echo "ARCHIVE=${ARCHIVE}" >> "$GITHUB_ENV"

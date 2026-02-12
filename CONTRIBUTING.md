@@ -6,6 +6,7 @@ This guide explains how to contribute to the AIDD framework — the source of tr
 
 ---
 
+- [Commit conventions](#commit-conventions)
 - [Contribution process](#contribution-process)
 - [Existing templates](#existing-templates)
 - [Syntax and conventions](#syntax-and-conventions)
@@ -16,9 +17,43 @@ This guide explains how to contribute to the AIDD framework — the source of tr
 
 ---
 
+## Commit conventions
+
+This repository uses [Conventional Commits](https://www.conventionalcommits.org/) to automate versioning and changelog generation via [Release Please](https://github.com/googleapis/release-please).
+
+**Every commit message must follow this format:**
+
+```
+<type>: <description>
+```
+
+| Type | Purpose | Version bump |
+| --- | --- | --- |
+| `feat` | New feature (agent, command, rule, skill, template) | Minor |
+| `fix` | Bug fix or correction | Patch |
+| `docs` | Documentation only | None |
+| `refactor` | Code restructuring without behavior change | None |
+| `chore` | Maintenance, CI, tooling | None |
+| `feat!` | Breaking change (renamed files, removed content) | **Major** |
+
+**Examples:**
+
+```bash
+git commit -m "feat: add new debug command"
+git commit -m "fix: correct placeholder syntax in plan command"
+git commit -m "docs: update contribution guide"
+git commit -m "feat!: rename agents/ structure"
+```
+
+> PR titles are also validated against this convention. A PR with an invalid title will fail the `lint-pr` check.
+
+---
+
 ## Contribution process
 
-Every change requires a **Pull Request**. Changes impact all teams using the framework and must be reviewed before merge.
+Every change requires a **Pull Request** with a conventional commit title (see above). PRs are squash-merged using the PR title as the commit message.
+
+Changes impact all teams using the framework and must be reviewed before merge.
 
 ---
 
