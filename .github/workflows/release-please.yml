@@ -33,7 +33,7 @@ jobs:
       - name: Build tarball
         run: |
           VERSION="${{ needs.release-please.outputs.version }}"
-          ARCHIVE="aidd-framework-${VERSION}.tar.gz"
+          ARCHIVE="/tmp/aidd-framework-${VERSION}.tar.gz"
 
           tar czf "${ARCHIVE}" \
             --exclude='.git' \
