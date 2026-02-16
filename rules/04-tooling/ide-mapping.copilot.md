@@ -1,5 +1,5 @@
 ---
-applyTo: "{{TOOLS}}/rules/**/*.md,{{TOOLS}}/rules/**/*.mdc"
+applyTo: "**/*.md,**/*.mdc"
 ---
 
 # GitHub Copilot — Syntax Reference
@@ -12,7 +12,7 @@ applyTo: "{{TOOLS}}/rules/**/*.md,{{TOOLS}}/rules/**/*.mdc"
 | **Prompts**      | `.github/prompts/*.prompt.md`            |
 | **Instructions** | `.github/instructions/*.instructions.md` |
 | **Skills**       | `.github/skills/`                        |
-| **Context**      | `AGENTS.md`                              |
+| **Context**      | `.github/copilot-instructions.md`        |
 
 ## File Creation Conventions
 
@@ -25,7 +25,7 @@ When creating new files, follow these flat naming conventions (no subfolders):
 
 ## Include Syntax
 
-Use relative markdown links to reference other files:
+ALWAYS use relative markdown links to reference other files:
 
 ```text
 [<display-text>](<relative-path-to-file>)

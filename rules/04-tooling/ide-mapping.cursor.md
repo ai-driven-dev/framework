@@ -1,6 +1,6 @@
 ---
 description: Cursor file locations, syntax and frontmatter reference
-globs: ["{{TOOLS}}/rules/**/*.md", "{{TOOLS}}/rules/**/*.mdc"]
+globs: ["**/*.md", "**/*.mdc"]
 ---
 
 # Cursor — Syntax Reference

@@ -1,7 +1,7 @@
 ---
 paths:
-  - "{{TOOLS}}/rules/**/*.md"
-  - "{{TOOLS}}/rules/**/*.mdc"
+  - "**/*.md"
+  - "**/*.mdc"
 ---
 
 # Claude Code — Syntax Reference
