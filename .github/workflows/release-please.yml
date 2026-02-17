@@ -30,12 +30,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build tarball
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build distributions
+        run: node scripts/sync-dist.js
+
+      - name: Build source tarball
         run: |
           VERSION="${{ needs.release-please.outputs.version }}"
-          ARCHIVE="/tmp/aidd-framework-${VERSION}.tar.gz"
-
-          tar czf "${ARCHIVE}" \
+          tar czf "/tmp/aidd-framework-${VERSION}.tar.gz" \
             --exclude='.git' \
             --exclude='.github' \
             --exclude='.gitignore' \
@@ -46,12 +51,23 @@ jobs:
             --exclude='README.md' \
             .
 
-          echo "ARCHIVE=${ARCHIVE}" >> "$GITHUB_ENV"
+      - name: Build per-tool tarballs
+        run: |
+          VERSION="${{ needs.release-please.outputs.version }}"
+          for tool in claude cursor copilot; do
+            tar czf "/tmp/aidd-${tool}-${VERSION}.tar.gz" \
+              -C dist/${tool} .
+          done
 
-      - name: Attach tarball to release
+      - name: Attach tarballs to release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload "${{ needs.release-please.outputs.tag_name }}" \
-            "${ARCHIVE}" \
+          VERSION="${{ needs.release-please.outputs.version }}"
+          TAG="${{ needs.release-please.outputs.tag_name }}"
+          gh release upload "${TAG}" \
+            "/tmp/aidd-framework-${VERSION}.tar.gz" \
+            "/tmp/aidd-claude-${VERSION}.tar.gz" \
+            "/tmp/aidd-cursor-${VERSION}.tar.gz" \
+            "/tmp/aidd-copilot-${VERSION}.tar.gz" \
             --clobber
