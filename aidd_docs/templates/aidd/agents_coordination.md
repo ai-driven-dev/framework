@@ -8,7 +8,11 @@ description: Multi-agent coordination and workflows template
 | AGENT NAME | ROLE DESCRIPTION                                                                   | RESPONSIBILITIES                                                                                                                        | STATUS |
 | ---------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | `alexia`   | Autonomous end-to-end feature implementation without human intervention             | - Implement features end-to-end without asking questions <br> - Make all implementation decisions autonomously based on project rules    | prod   |
-| `claire`   | PM discovery agent - from fuzzy idea to actionable backlog                          | - Transform fuzzy requests into crystal-clear requirements <br> - Guide PMs through full discovery flow with iterative questioning       | prod   |
+| `claire`   | Product Discovery — clarifies fuzzy ideas into actionable briefs                    | - Transform fuzzy ideas via Brain Dump → Brief → Research → Prompt Package <br> - Clarify ambiguities at any project stage              | prod   |
+| `oriane`   | PM Orchestrator — orchestrates all product workflows                   | - Ask user to choose greenfield or brownfield, then run the appropriate pipeline <br> - Call skills sequentially with challenge gates                  | prod   |
+| `ariane`   | Architect/Design — handles technical architecture and design                      | - Make justified architecture decisions from PRD and constraints <br> - Create design systems and implementation plans                   | prod   |
+| `eva`      | Impact Evaluator — evaluates decision impacts globally                              | - Assess impacts across 5 dimensions (technical, business, users, regulatory, operational) <br> - Provide structured impact reports     | prod   |
+| `justine`  | Clarity challenger — challenges deliverables and identifies gaps                    | - Ensure no deliverable moves forward until clear and complete <br> - Cover 95% of ambiguities through iterative questioning            | prod   |
 | `kent`     | TDD & Tidy First development guide                                                 | - Drive the Red → Green → Refactor TDD cycle <br> - Separate structural changes from behavioral changes                                | prod   |
 | `iris`     | Frontend specialist - implement from Figma, verify UI conformity, validate journeys | - Implement components from Figma designs <br> - Verify UI conformity and validate user journeys                                        | prod   |
 | `martin`   | Code quality and validation agent                                                  | - Run commands to validate build, lint and tests <br> - Enforce coding assertions and module-specific rules                             | prod   |
@@ -19,10 +23,16 @@ description: Multi-agent coordination and workflows template
 
 ```mermaid
 graph LR
-    claire -->|requirements| alexia
+    claire -->|structured brief| oriane
+    oriane -->|PM deliverables| ariane
+    oriane -->|challenge| justine
+    oriane -->|evaluate impact| eva
+    ariane -->|challenge| justine
+    ariane -->|evaluate impact| eva
+    ariane -->|implementation| alexia
+    ariane -->|TDD| kent
     alexia -->|implementation| martin
     alexia -->|frontend| iris
-    alexia -->|TDD| kent
     kent -->|code to validate| martin
     iris -->|validated UI| martin
 ```
@@ -40,12 +50,55 @@ Use-cases :
 
 ### `claire`
 
-> Use Claire when you need to transform a vague feature request into crystal-clear requirements before planning.
+> Use Claire when you have a fuzzy idea and need to structure it into an actionable brief.
 
 Use-cases :
 
-- **Fuzzy requests** : Turn incomplete or ambiguous feature ideas into comprehensive requirements.
-- **Discovery phase** : Systematically uncover edge cases, constraints, and missing context through iterative questioning.
+- **Fuzzy ideas** : Transform vague ideas via Brain Dump → Brief → Research → Prompt Package.
+- **Clarification** : Clarify ambiguous requirements at any stage of a project.
+- **Discovery phase** : Conduct market research and generate personas from data.
+
+### `oriane`
+
+> Use Oriane when you need to orchestrate a full product workflow (greenfield or brownfield).
+
+Use-cases :
+
+- **Greenfield projects** : Run the full Constitution → Discovery → PRD → User Stories pipeline, then hand off to ariane.
+- **Brownfield evolution** : Run the System Overview → Change Brief → User Stories pipeline, then hand off to ariane.
+- **Explicit choice** : Oriane asks the user whether the project is greenfield or brownfield, then runs the appropriate workflow.
+- **Skills** : `create-constitution`, `create-product-brief`, `create-prd`, `create-user-stories`, `create-system-overview`, `create-change-brief`, `greenfield-workflow`, `brownfield-workflow`.
+
+### `ariane`
+
+> Use Ariane when you need technical architecture decisions, design system creation, or implementation planning.
+
+Use-cases :
+
+- **Greenfield architecture** : Run Architecture Decision → Design System → Extract Milestones pipeline.
+- **Brownfield architecture** : Run Architecture Impact → Design System Update → Impact Plan pipeline.
+- **Technical decisions** : Make justified architecture decisions linked to functional requirements.
+- **Skills** : `architecture-decision`, `design-system`, `extract-milestones`, `architecture-impact`, `design-system-update`, `impact-plan`.
+
+### `eva`
+
+> Use Éva when you need to evaluate the global impact of a decision or change.
+
+Use-cases :
+
+- **Impact assessment** : Evaluate impacts across 5 dimensions (technical, business, users, regulatory, operational).
+- **Alternative comparison** : Compare multiple approaches with a structured impact matrix.
+- **Decision support** : Get a GO / GO with mitigations / NO-GO recommendation.
+- **Skills** : None (standalone evaluation service callable by oriane, ariane, or any user).
+
+### `justine`
+
+> Use Justine when you need to challenge deliverables, find gaps, and ensure everything is justified before moving forward.
+
+Use-cases :
+
+- **Deliverable review** : Challenge any product deliverable for completeness, contradictions, and missing elements.
+- **Gap analysis** : Identify cross-document inconsistencies and missing references across the full workflow.
 
 ### `kent`
 

@@ -1,6 +1,7 @@
 ---
 name: kent
 description: Use this agent when explicitly asked to perform test-driven development.
+color: blue
 docs: https://tidyfirst.substack.com/p/augmented-coding-beyond-the-vibes
 model: sonnet
 ---
