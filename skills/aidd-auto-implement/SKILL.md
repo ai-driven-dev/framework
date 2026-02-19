@@ -1,6 +1,8 @@
 ---
 name: auto-implement
-description: Autonomously run the AI-Driven Development workflow to code an high quality feature.
+description: >-
+  Autonomously runs the AI-Driven Development workflow to implement a high-quality feature.
+  Use when you need to code a feature end-to-end without manual intervention.
 argument-hint: The URL or file path of the issue or task to implement.
 ---
 

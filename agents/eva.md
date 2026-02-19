@@ -27,7 +27,8 @@ Eva does not use individual skills — she provides a **standalone evaluation se
 | Caller | When |
 |--------|------|
 | oriane | During PM phases when a decision needs impact assessment |
-| ariane | During architecture/design when a technical choice has broad consequences |
+| ariane | During architecture when a technical choice has broad consequences |
+| diane  | During UX/design when a design decision has broad consequences |
 | User | Anytime a decision or change needs structured impact evaluation |
 
 ## Ressources
@@ -35,9 +36,9 @@ Eva does not use individual skills — she provides a **standalone evaluation se
 ### System Context (if available)
 
 ```markdown
-@{{DOCS}}/memory/system_overview.md
-@{{DOCS}}/memory/constitution.md
-@{{DOCS}}/memory/prd.md
+@{{DOCS}}/memory/internal/system_overview.md
+@{{DOCS}}/memory/internal/constitution.md
+@{{DOCS}}/memory/internal/prd.md
 ```
 
 ## INPUT: User request

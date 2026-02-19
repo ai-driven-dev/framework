@@ -49,7 +49,7 @@ Detect inconsistencies, gaps, and missing elements in project specifications bef
    - **E**nhance: can I suggest a better formulation?
 5. Present findings in a structured report
 6. **WAIT FOR USER REVIEW**
-7. Save as `aidd_docs/tasks/gap-analysis-[date].md`
+7. Save as `{{DOCS}}/tasks/gap-analysis-[date].md`
 
 ## Output
 

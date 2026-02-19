@@ -25,6 +25,13 @@ argument-hint: N/A
 - Confidence: {Confidence}
 - Time to implement: {Time to implement}
 
+## Progress
+
+<!-- Workflow will populate this checklist and update it as steps complete -->
+
+- [ ] Step 0: Clarification
+- [ ] Step 1: ...
+
 ## Existing files
 
 - @{affected files path}

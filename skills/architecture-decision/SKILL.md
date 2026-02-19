@@ -1,7 +1,7 @@
 ---
 name: architecture-decision
 description: >-
-  Generate justified architecture decisions from PRD and project constraints.
+  Generates justified architecture decisions from PRD and project constraints.
   Use when you need to make and document technical architecture choices for a new project.
 ---
 
@@ -70,7 +70,7 @@ flowchart LR
 1. Apply anti-over-engineering check: is this the simplest architecture that works?
 2. Present for review
 3. **WAIT FOR USER APPROVAL**
-4. Save as `aidd_docs/memory/architecture.md`
+4. Save as `{{DOCS}}/memory/internal/architecture.md`
 
 **Success criteria:** Architecture validated, anti-over-engineering check passed
 
@@ -78,7 +78,7 @@ flowchart LR
 
 | Type     | Path                                           | Description            |
 | -------- | ---------------------------------------------- | ---------------------- |
-| Input    | `aidd_docs/memory/constitution.md`            | Project constraints    |
-| Input    | `aidd_docs/memory/prd.md`                     | Product requirements   |
-| Template | `aidd_docs/templates/aidd/memory/architecture.md` | Architecture template |
-| Template | `aidd_docs/templates/dev/adr.md`              | ADR template           |
+| Input    | `{{DOCS}}/memory/internal/constitution.md`            | Project constraints    |
+| Input    | `{{DOCS}}/memory/internal/prd.md`                     | Product requirements   |
+| Template | `{{DOCS}}/templates/aidd/memory/architecture.md` | Architecture template |
+| Template | `{{DOCS}}/templates/dev/adr.md`              | ADR template           |

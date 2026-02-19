@@ -1,7 +1,7 @@
 ---
 name: architecture-impact
 description: >-
-  Analyze the precise impact of a brownfield change on existing architecture.
+  Analyzes the precise impact of a brownfield change on existing architecture.
   Use when you need to map impacted modules and plan migrations for an evolution.
 ---
 
@@ -80,12 +80,12 @@ flowchart LR
 
 1. Present impact analysis for review
 2. **WAIT FOR USER APPROVAL**
-3. Save as `aidd_docs/tasks/architecture-impact.md`
+3. Save as `{{DOCS}}/tasks/YYYY-MM-DD-{change-name}/architecture-impact.md`
 
 **Success criteria:** Impact analysis validated and saved
 
 ## Resources
 
-| Type  | Path                                     | Description          |
-| ----- | ---------------------------------------- | -------------------- |
-| Input | `aidd_docs/memory/system_overview.md`   | System overview      |
+| Type  | Path                                           | Description     |
+| ----- | ---------------------------------------------- | --------------- |
+| Input | `{{DOCS}}/memory/internal/system_overview.md` | System overview |

@@ -1,8 +1,8 @@
 ---
 name: design-system
 description: >-
-  Generate a design system with components, guidelines and patterns from PRD user journeys.
-  Use when you need to create UI/UX patterns, components, and guidelines for a new project.
+  Generates a design system with components, guidelines, and patterns from PRD user journeys.
+  Use when you need to create UI/UX foundations for a new project.
 ---
 
 # Design System
@@ -73,7 +73,7 @@ flowchart LR
 1. Create wireframes for key MVP screens (main view, critical form, empty state, error state)
 2. Present for review
 3. **WAIT FOR USER APPROVAL**
-4. Save as `aidd_docs/memory/design_system.md`
+4. Save as `{{DOCS}}/memory/internal/design_system.md`
 
 **Success criteria:** Wireframes created, design system validated and saved
 
@@ -81,4 +81,4 @@ flowchart LR
 
 | Type  | Path                       | Description          |
 | ----- | -------------------------- | -------------------- |
-| Input | `aidd_docs/memory/prd.md` | Product requirements |
+| Input | `{{DOCS}}/memory/internal/prd.md` | Product requirements |

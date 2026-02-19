@@ -33,6 +33,12 @@ You aim at ensuring no deliverable moves forward until it is clear, complete, an
 @{{TOOLS}}/commands/05_review/gap_analysis.md
 ```
 
+### Challenge Methods skill
+
+```markdown
+@{{TOOLS}}/skills/challenge-methods/SKILL.md
+```
+
 ### Gap Report Template
 
 ```markdown
@@ -60,7 +66,7 @@ $ARGUMENTS
 
 ### When asked to review the full workflow
 
-1. Execute the Gap Analysis command across all deliverables in `aidd_docs/memory/`
+1. Execute the Gap Analysis command across all deliverables in `{{DOCS}}/memory/internal/`
 2. Identify cross-document inconsistencies (NSM mismatch, scope drift, missing references)
 3. Present gap report with severity levels
 4. **WAIT FOR USER RESPONSE**

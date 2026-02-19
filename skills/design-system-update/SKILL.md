@@ -1,7 +1,7 @@
 ---
 name: design-system-update
 description: >-
-  Audit existing UI patterns and generate a design system update plan for brownfield evolution.
+  Audits existing UI patterns and generates a design system update plan for brownfield evolution.
   Use when you need to integrate new components without breaking visual consistency.
 ---
 
@@ -66,7 +66,7 @@ flowchart LR
 
 1. Present the update plan for review
 2. **WAIT FOR USER APPROVAL**
-3. Save as `aidd_docs/tasks/design-system-update.md`
+3. Save as `{{DOCS}}/tasks/YYYY-MM-DD-{change-name}/design-system-update.md`
 
 **Success criteria:** Design system update validated and saved
 
@@ -74,5 +74,5 @@ flowchart LR
 
 | Type  | Path                                     | Description           |
 | ----- | ---------------------------------------- | --------------------- |
-| Input | `aidd_docs/memory/change_brief.md`     | Change brief (brownfield) or `prd.md` (greenfield) |
-| Input | `aidd_docs/memory/design_system.md`    | Existing design system (if available) |
+| Input | `{{DOCS}}/memory/internal/change_brief.md`     | Change brief (brownfield) or `prd.md` (greenfield) |
+| Input | `{{DOCS}}/memory/internal/design_system.md`    | Existing design system (if available) |
