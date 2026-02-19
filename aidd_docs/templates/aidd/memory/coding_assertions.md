@@ -21,6 +21,9 @@ scope: all
 
 ## Commands to run
 
+- `Before commit`: minimal check to build a feature
+- `Before push`: heavier check ran before push
+
 ### Before commit
 
 <!--

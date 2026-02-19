@@ -8,6 +8,16 @@ model: sonnet
 
 Assert that this feature works as intended.
 
+## Resources
+
+### Coding assertions
+
+Based on the current context, use relevant coding assertions to validate correctness.
+
+```markdown
+@{{DOCS}}/templates/aidd/memory/coding_assertions.md
+```
+
 ## Rules
 
 - Do not stop until the feature works as intended.
@@ -16,7 +26,6 @@ Assert that this feature works as intended.
 
 Iterate over those steps until the feature work as intended.
 
-1. List CODING ASSERTIONS to validate the feature.
-2. For each assertion, fix any issues preventing it from passing.
-   1. After fixing, re-run this assertion to confirm it passes.
+1. For each assertion, fix any issues preventing it from passing.
+2. After fixing, re-run this assertion to confirm it passes.
 3. Once all assertions pass, re-run all the checks again to ensure every assertion is passing.
