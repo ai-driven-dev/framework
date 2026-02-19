@@ -35,6 +35,7 @@
 		"registry": "https://npm.pkg.github.com"
 	},
 	"scripts": {
+		"prepare": "lefthook install || true",
 		"build": "tsup",
 		"lint": "pnpm exec biome check .",
 		"lint:fix": "pnpm exec biome check --apply-unsafe .",
@@ -60,6 +61,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
+		"lefthook": "^1.13.1",
 		"@types/inquirer": "^9.0.7",
 		"@types/node": "^20.11.16",
 		"jscpd": "^4.0.5",
