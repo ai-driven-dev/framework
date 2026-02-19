@@ -1,5 +1,5 @@
 ---
-name: auto-accept
+name: auto_accept
 description: "Auto-accept proposed changes without asking for confirmation."
 ---
 

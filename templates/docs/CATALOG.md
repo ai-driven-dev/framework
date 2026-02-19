@@ -29,6 +29,8 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
 - [`scripts`](#scripts)
 - [`skills`](#skills)
   - [`skills/aidd-auto-implement`](#skillsaidd-auto-implement)
+- [`templates`](#templates)
+  - [`templates/docs`](#templatesdocs)
 
 ---
 
@@ -39,7 +41,7 @@ No files found.
 
 | File | Description | Docs |
 |------|---|---|
-| [alexia.md](../../agents/alexia.md) | `Autonomous end-to-end feature implementation without human intervention` | - |
+| [alexia.md](../../agents/alexia.md) | `Act like the USER to autonomously end-to-end implementation without human intervention` | - |
 | [claire.md](../../agents/claire.md) | `Clarity challenger — challenges and questions until the request is ultra-clear` | - |
 | [iris.md](../../agents/iris.md) | `Frontend specialist with 3 modes - implement from Figma, verify UI conformity, validate user journeys.` | - |
 | [kent.md](../../agents/kent.md) | `Use this agent when explicitly asked to perform test-driven development.` | `https://tidyfirst.substack.com/p/augmented-coding-beyond-the-vibes` |
@@ -174,7 +176,7 @@ No files found.
 
 | File | Description | Argument Hint |
 |------|---|---|
-| [codebase_audit.md](../../commands/09_refactor/codebase_audit.md) | `Perform deep codebase analysis for technical debt and improvements` | `Scope to audit (optional - defaults to full codebase)` |
+| [audit.md](../../commands/09_refactor/audit.md) | `Perform deep codebase analysis for technical debt and improvements` | `Scope to audit (optional - defaults to full codebase)` |
 | [performance.md](../../commands/09_refactor/performance.md) | `Optimize code for better performance` | - |
 | [security_refactor.md](../../commands/09_refactor/security_refactor.md) | `Identify and fix security vulnerabilities` | - |
 
@@ -218,4 +220,12 @@ No files found.
 | File | Description | Argument Hint |
 |------|---|---|
 | [SKILL.md](../../skills/aidd-auto-implement/SKILL.md) | `Autonomously run the AI-Driven Development workflow to code an high quality feature.` | `The URL or file path of the issue or task to implement.` |
+
+### `templates`
+
+#### `templates/docs`
+
+| File |
+|------|
+| [CATALOG.md](CATALOG.md) |
 
