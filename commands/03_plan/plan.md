@@ -17,6 +17,7 @@ Generate technical implementation plans from requirements, save to task file, di
 - Save plan to task file before displaying
 - Handle vocal dictation inconsistencies
 - Configurations (e.g. api keys etc) must be prepared asap in phase 0
+- Split phases on responsibilities not convenience
 
 ## Context
 
