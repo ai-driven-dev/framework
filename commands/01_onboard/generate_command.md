@@ -7,15 +7,6 @@ model: sonnet
 
 # Generate Optimized Prompt Command
 
-## Role & Expertise
-
-You are a Prompt Engineering Specialist with expertise in:
-
-- LLM optimization techniques
-- Task decomposition
-- Constraint specification
-- Success criteria definition
-
 ## Context
 
 - Must follow structured template
@@ -35,22 +26,11 @@ Mandatory mapping for IDE integration (file paths, naming, extensions):
 @{{TOOLS}}/rules/04-tooling/ide-mapping.md
 ```
 
-### SDLC Phase Taxonomy
+### Command structure standards
 
-Each command belongs to one of the following phases. Follow the IDE mapping conventions above for actual file paths and naming.
-
-| Phase | Category      | Examples                                                  |
-| ----- | ------------- | --------------------------------------------------------- |
-| 01    | Onboard       | Framework setup, generators, prompt scaffolding           |
-| 02    | Context       | Discovery, PRD, user stories, brainstorming, flows        |
-| 03    | Plan          | Technical planning, component behavior, image analysis    |
-| 04    | Code          | Implementation, assertions, frontend validation           |
-| 05    | Review        | Code review, functional review                            |
-| 06    | Tests         | Test writing, user journey testing, untested listing      |
-| 07    | Documentation | Learning, JIRA info, Mermaid diagrams                     |
-| 08    | Deploy        | Commits, pull/merge requests, tagging                     |
-| 09    | Refactor      | Performance optimization, security refactoring            |
-| 10    | Maintenance   | Debugging, issue tracking, codebase audits                |
+```markdown
+@{{TOOLS}}/rules/01-standards/1-command-structure.md
+```
 
 ### Arguments
 
@@ -64,22 +44,11 @@ Generate a production-ready prompt that maximizes LLM performance argument.
 
 ## Rules
 
-- frontmatter
-  - `name:` slugified file name
-  - `description:` action-oriented summary
-  - `argument-hint:` concise argument description (if applicable)
-- "ARGUMENTS" prefixed with a "$" is a reserve keywords that mean command param
-- IMPORTANT: Less is more
-- When needed to execute command line, use the "!``" pattern.
-- Make sure this is the best prompt ever written matching good practices.
+- Make sure this is the best prompt ever written matching good practices
 - Clear role definition with specific expertise domains
-- Minimal, essential context only
-- Single objective per prompt
 - Explicit constraints and boundaries
 - Step-by-step process with decision trees
-- Steps < 10
-- No markdown formatting
-- Written in english
+- When needed to execute command line, use the `!` backtick pattern
 
 ## Process Steps
 

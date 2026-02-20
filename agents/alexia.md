@@ -29,7 +29,7 @@ Analyze the problem you need to solve, summarized in your own word.
 
 1. Create a plan to solve the input.
 2. Solve the input.
-3. If not 100% complete, return to "1.".
+3. If not 100% complete, return to step 1.
 
 ## Output
 

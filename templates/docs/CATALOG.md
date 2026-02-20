@@ -108,6 +108,7 @@ No files found.
 | File | Description | Argument Hint |
 |------|---|---|
 | [generate_agent.md](../../commands/01_onboard/generate_agent.md) | `Generates a customized agent based on user-defined parameters.` | - |
+| [generate_architecture.md](../../commands/01_onboard/generate_architecture.md) | `Generate project architecture with agents, skills, coordination diagram, and optional rules/commands for code projects` | `Project description and domain requirements` |
 | [generate_command.md](../../commands/01_onboard/generate_command.md) | `Generate optimized, action-oriented prompts using best practices and structured template` | `The command details to generate the prompt for` |
 | [generate_rules.md](../../commands/01_onboard/generate_rules.md) | `Generate or modify coding rules manually or auto-scan the codebase to propose rules` | `Rule topic to write, or 'auto' to scan codebase and propose rules` |
 | [generate_skill.md](../../commands/01_onboard/generate_skill.md) | `Generate a customized skill based on repeated patterns and user workflows.` | `Description of the workflow to package as a skill` |
@@ -198,6 +199,7 @@ No files found.
 
 | File | Description |
 |------|---|
+| [1-command-structure.md](../../rules/01-standards/1-command-structure.md) | `Standards for naming, organizing, and writing command files. Apply when creating or editing any command file.` |
 | [1-mermaid.md](../../rules/01-standards/1-mermaid.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` |
 | [1-rule-structure.md](../../rules/01-standards/1-rule-structure.md) | `Standards for naming and organizing .md rule files. Apply when creating new rule files or deciding on file placement.` |
 | [1-rule-writing.md](../../rules/01-standards/1-rule-writing.md) | `Standards for writing .md coding rule content. Apply when creating, editing, or reviewing any rule file.` |
