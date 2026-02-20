@@ -7,30 +7,23 @@ AIDD structures your AI coding assistant with commands, agents, rules, and memor
   - [Framework Structure](#framework-structure)
   - [Your Learning Path](#your-learning-path)
 - [🏗️ Phase 1 — Setup \& Initialization](#️-phase-1--setup--initialization)
-  - [Install the Framework](#install-the-framework)
-  - [Initialize Your Project](#initialize-your-project)
-  - [Review Your Memory Files](#review-your-memory-files)
+  - [Step by Step](#step-by-step)
 - [⚙️ Phase 2 — Configure Your Project](#️-phase-2--configure-your-project)
-  - [Audit Your Codebase](#audit-your-codebase)
-  - [Generate Coding Rules](#generate-coding-rules)
-  - [Validate Your Setup](#validate-your-setup)
+  - [Step by Step](#step-by-step-1)
   - [Which Flow Should I Use?](#which-flow-should-i-use)
 - [🔺 Phase 3 — Minimal Flow](#-phase-3--minimal-flow)
   - [The 4-Command Loop](#the-4-command-loop)
-  - [Step by Step](#step-by-step)
-  - [Add Tests](#add-tests)
+  - [Step by Step](#step-by-step-2)
 - [🔷 Phase 4 — Standard Flow](#-phase-4--standard-flow)
   - [When to Use Standard Flow](#when-to-use-standard-flow)
+  - [Step by Step](#step-by-step-3)
   - [Working with Tickets](#working-with-tickets)
-  - [Implement with Isolation](#implement-with-isolation)
   - [Review and Ship](#review-and-ship)
   - [Master Plans](#master-plans)
   - [Meet `@martin` and `@kent`](#meet-martin-and-kent)
 - [🟢 Phase 5 — Full Flow](#-phase-5--full-flow)
-  - [Discovery](#discovery)
-  - [Frontend Workflows](#frontend-workflows)
-  - [Full Review](#full-review)
-  - [Validate \& Ship](#validate--ship)
+  - [Step by Step](#step-by-step-4)
+  - [Frontend Toolkit](#frontend-toolkit)
   - [Autonomous Mode](#autonomous-mode)
 - [🔧 Phase 6 — Maintenance \& Evolution](#-phase-6--maintenance--evolution)
   - [Fix a Bug](#fix-a-bug)
@@ -111,53 +104,36 @@ Start at Phase 1, follow the setup, then use the **Flow Selector** to jump to th
 
 > **New commands:** `/init`
 
-### Install the Framework
+### Step by Step
 
-Make sure you installed [the AI-Driven Development framework]({{DOCS}}/templates/docs/INSTALL.md).
+1. Install [the AI-Driven Development framework]({{DOCS}}/templates/docs/INSTALL.md).
 
-### Initialize Your Project
+2. Analyze your project and generate memory files.
 
-`/init` — Analyze your project and generate memory files in `{{DOCS}}/memory/`:
+   ```text
+   /init
+   # → Generated 7 memory files in {{DOCS}}/memory/
+   ```
 
-| 📄 File                | 🎯 Purpose                                  |
-| ---------------------- | ------------------------------------------- |
-| `project_brief.md`     | Vision, objectives, what the project does   |
-| `architecture.md`      | Tech stack, patterns, folder structure      |
-| `codebase_map.md`      | Key files, entry points, dependencies       |
-| `coding_assertions.md` | Linting, formatting, type checking commands |
-| `testing.md`           | Test framework, patterns, coverage targets  |
-| `deployment.md`        | CI/CD, environments, infrastructure         |
-| `vcs.md`               | Branching model, commit conventions         |
+   | 📄 File                | 🎯 Purpose                                  |
+   | ---------------------- | ------------------------------------------- |
+   | `project_brief.md`     | Vision, objectives, what the project does   |
+   | `architecture.md`      | Tech stack, patterns, folder structure      |
+   | `codebase_map.md`      | Key files, entry points, dependencies       |
+   | `coding_assertions.md` | Linting, formatting, type checking commands |
+   | `testing.md`           | Test framework, patterns, coverage targets  |
+   | `deployment.md`        | CI/CD, environments, infrastructure         |
+   | `vcs.md`               | Branching model, commit conventions         |
 
-The AI reads these files on every conversation start — accurate context means better code.
+   The AI reads these files on every conversation start — accurate context means better code.
 
-### Review Your Memory Files
-
-After initialization, **review and manually correct** each generated file in `{{DOCS}}/memory/`. The AI gives you a solid first draft, but you know your project best. The more accurate your memory files, the better every command performs.
+3. **Review and manually correct** each generated file in `{{DOCS}}/memory/`. The AI gives you a solid first draft, but you know your project best. The more accurate your memory files, the better every command performs.
 
 Your AI knows the project. But it doesn't know your conventions yet. Before building anything, configure the rules.
 
 ## ⚙️ Phase 2 — Configure Your Project
 
 > **New commands:** `/audit`, `/generate_rules`, `/assert`
-
-### Audit Your Codebase
-
-`/audit` — Deep analysis of your codebase. Identifies technical debt, inconsistencies, missing patterns, and improvement opportunities. This gives you a baseline before establishing rules.
-
-### Generate Coding Rules
-
-`/generate_rules` — Create rules the AI will follow automatically. Rules enforce naming conventions, file structure patterns, import ordering, and any project-specific standard you care about. Rules are auto-loaded by file glob matching — the AI picks up the right rules when editing matching files.
-
-Example:
-
-```text
-/generate_rules "We use camelCase for variables, PascalCase for components, and barrel exports for every module"
-```
-
-### Validate Your Setup
-
-`/assert` — Verify everything works: tests pass, types check, build succeeds, linter is clean. This command becomes your safety net throughout the entire workflow.
 
 ```mermaid
 graph LR
@@ -167,6 +143,29 @@ graph LR
     V -->|Pass| Ready["✅ Ready to build"]
     V -->|Fail| Fix["Fix issues"] --> V
 ```
+
+### Step by Step
+
+1. Deep analysis of your codebase — identifies technical debt, inconsistencies, and improvement opportunities.
+
+   ```text
+   /audit
+   # → 12 findings: 3 critical, 5 warnings, 4 suggestions
+   ```
+
+2. Create rules the AI will follow automatically. Rules are auto-loaded by file glob matching.
+
+   ```text
+   /generate_rules "We use camelCase for variables, PascalCase for components, and barrel exports for every module"
+   # → Created 3 rules in .claude/rules/
+   ```
+
+3. Verify everything works — tests pass, types check, build succeeds, linter is clean. This becomes your safety net throughout the entire workflow.
+
+   ```text
+   /assert
+   # → Tests ✅, Types ✅, Build ✅, Lint ✅
+   ```
 
 Your project is configured, assertions pass. Now pick the right workflow for your task.
 
@@ -209,34 +208,40 @@ graph LR
 
 ### Step by Step
 
-```text
-/plan "Add a rate limiter to the /api/auth endpoint"
-# → {{DOCS}}/tasks/add-rate-limiter.md
-```
+1. Describe your task — pass a description, a GitHub issue URL, or raw requirements.
 
-```text
-/implement
-# Reads {{DOCS}}/tasks/add-rate-limiter.md, implements phase by phase
-```
+   ```text
+   /plan "Add a rate limiter to the /api/auth endpoint"
+   # → {{DOCS}}/tasks/add-rate-limiter.md
+   ```
 
-```text
-/commit
-# → feat(auth): add rate limiter to /api/auth endpoint
-```
+2. Implement the plan phase by phase. The AI reads the plan and follows your project rules.
 
-```text
-/learn "We now use middleware-based rate limiting with Redis backing"
-# → Updated memory/architecture.md
-```
+   ```text
+   /implement
+   # Reads {{DOCS}}/tasks/add-rate-limiter.md, implements phase by phase
+   ```
 
-### Add Tests
+3. Commit with a standardized message following your `vcs.md` conventions.
 
-**`/test`** lists untested behaviors then iterates on test creation until tests pass with best practices. Use it as an optional extension after the loop when the feature needs test coverage.
+   ```text
+   /commit
+   # → feat(auth): add rate limiter to /api/auth endpoint
+   ```
 
-```text
-/test
-# → Lists untested behaviors, creates tests, iterates until green
-```
+4. Capture what changed — routes knowledge to memory files, rules, or skills automatically.
+
+   ```text
+   /learn "We now use middleware-based rate limiting with Redis backing"
+   # → Updated memory/architecture.md
+   ```
+
+5. (Optional) Add tests — lists untested behaviors then iterates on test creation until green.
+
+   ```text
+   /test
+   # → Lists untested behaviors, creates tests, iterates until green
+   ```
 
 > **When to stop:** If `/plan` returns < 90% confidence → re-run with more context. If `/implement` fails after 3 iterations → debug manually. If needs review → Phase 4.
 
@@ -244,7 +249,7 @@ The 4-command loop handles clear, small tasks. When you need validation, review,
 
 ## 🔷 Phase 4 — Standard Flow
 
-> **New commands:** `/ticket_info`, `/new_issue`, `/create_user_stories`, `/isolate`, `/review_code`, `/create_request`
+> **New commands:** `/ticket_info`, `/new_issue`, `/create_user_stories`, `/review_code`, `/create_request`
 > **New agents:** `@martin`, `@kent`
 
 The standard workflow for ticket-driven development. Adds validation, code review, and collaboration on top of the minimal loop.
@@ -255,62 +260,6 @@ The standard workflow for ticket-driven development. Adds validation, code revie
 - Changes span multiple files
 - A pull request is expected
 - Code quality matters (review, assertions)
-
-### Working with Tickets
-
-**`/ticket_info`** — Pull context from your ticketing tool (GitHub, Jira, Linear). Pass a URL or ticket number.
-
-```text
-/ticket_info "https://github.com/org/repo/issues/42"
-```
-
-**`/new_issue`** — Create a GitHub issue with interactive template filling. Use this to defer work you discover mid-feature.
-
-**`/create_user_stories`** — Generate user stories through iterative questioning. Useful when a ticket is too high-level for direct planning.
-
-### Implement with Isolation
-
-**`/isolate`** — Create an isolated git worktree for manual work. Useful when you need to work on a separate branch without disrupting your current state.
-
-Then run `/implement` → `/assert` as in Phase 3.
-
-### Review and Ship
-
-**`/review_code`** — Analyze the git diff against project rules. Catches convention violations, potential bugs, and structural issues before the PR.
-
-**`/create_request`** — Create a draft PR (GitHub) or MR (GitLab) with a filled template.
-
-### Master Plans
-
-When `/plan` evaluates a feature as complex (complexity score >= 3), it produces a **master plan** that decomposes the work into sequential child plans. Each child plan uses the standard plan template and must be validated before the next one starts.
-
-Master plan structure:
-
-```text
-{{DOCS}}/tasks/
-├── feature-x-master-plan.md     # Parent plan: overview, risk score, child plan list
-├── feature-x-part-1.md          # Child plan 1 (implement first, validate, then...)
-├── feature-x-part-2.md          # Child plan 2 (blocked until part 1 validated)
-└── feature-x-part-3.md          # Child plan 3 (blocked until part 2 validated)
-```
-
-Execution is sequential: each child plan must pass `/assert` before the next one starts.
-
-### Meet `@martin` and `@kent`
-
-Agents are specialized AI personas you invoke for focused tasks. They loop on their task until completion.
-
-**`@martin`** — Code quality and validation agent. Call Martin every time you need to verify the codebase still builds, tests pass, and coding rules are respected.
-
-```text
-@martin Run all assertions on the current changes.
-```
-
-**`@kent`** — TDD and Tidy First agent. Call Kent when you want strict Red → Green → Refactor discipline. He separates structural changes from behavioral changes.
-
-```text
-@kent Write tests for the UserService class, then implement the missing methods using TDD.
-```
 
 ```mermaid
 graph LR
@@ -329,6 +278,96 @@ graph LR
     M["@martin"] -.->|"Validate"| A
 ```
 
+### Step by Step
+
+1. Pull context from your ticketing tool (GitHub, Jira, Linear). Pass a URL or ticket number.
+
+   ```text
+   /ticket_info "https://github.com/org/repo/issues/42"
+   # → Extracted: title, acceptance criteria, labels, assignees
+   ```
+
+2. Generate a plan from the ticket context.
+
+   ```text
+   /plan
+   # → {{DOCS}}/tasks/add-rate-limiter.md (reads ticket context)
+   ```
+
+3. Implement the plan phase by phase — `/assert` runs between each.
+
+   ```text
+   /implement
+   # Implements phase by phase, runs /assert between each
+   ```
+
+4. Validate the codebase with `@martin`.
+
+   ```text
+   @martin Run all assertions on the current changes.
+   # → Build ✅, Tests ✅, Lint ✅, Types ✅
+   ```
+
+5. Review the diff against project rules.
+
+   ```text
+   /review_code
+   # → 2 issues: missing error handling in middleware, naming convention on variable
+   ```
+
+6. Commit with a standardized message.
+
+   ```text
+   /commit
+   # → feat(auth): add rate limiter to /api/auth endpoint
+   ```
+
+7. Create a pull request with a filled template.
+
+   ```text
+   /create_request
+   # → PR #43 created (draft) with filled template
+   ```
+
+### Working with Tickets
+
+- **`/new_issue`** — Create a GitHub issue with interactive template filling. Use this to defer work you discover mid-feature.
+
+- **`/create_user_stories`** — Generate user stories through iterative questioning. Useful when a ticket is too high-level for direct planning.
+
+### Review and Ship
+
+- **`/review_code`** — Analyze the git diff against project rules. Catches convention violations, potential bugs, and structural issues before the PR.
+
+- **`/create_request`** — Create a draft PR (GitHub) or MR (GitLab) with a filled template.
+
+### Master Plans
+
+When `/plan` evaluates a feature as complex (complexity score >= 3), it produces a **master plan** that decomposes the work into sequential child plans. Each child plan uses the standard plan template and must be validated before the next one starts.
+
+```text
+{{DOCS}}/tasks/
+├── feature-x-master-plan.md     # Parent plan: overview, risk score, child plan list
+├── feature-x-part-1.md          # Child plan 1 (implement first, validate, then...)
+├── feature-x-part-2.md          # Child plan 2 (blocked until part 1 validated)
+└── feature-x-part-3.md          # Child plan 3 (blocked until part 2 validated)
+```
+
+Execution is sequential: each child plan must pass `/assert` before the next one starts.
+
+### Meet `@martin` and `@kent`
+
+Agents are specialized AI personas you invoke for focused tasks. They loop on their task until completion.
+
+- **`@martin`** — Code quality and validation agent. Call Martin every time you need to verify the codebase still builds, tests pass, and coding rules are respected.
+
+- **`@kent`** — TDD and Tidy First agent. Call Kent when you want strict Red → Green → Refactor discipline. He separates structural changes from behavioral changes.
+
+```text
+@kent Write tests for the UserService class, then implement the missing methods using TDD.
+# → Red: 3 failing tests → Green: all pass → Refactor: extracted helper
+```
+
 > **When to stop:** If `/assert` fails after 5 cycles → `/debug` (Phase 6). If `/review_code` finds structural issues → refactor first. If the plan keeps getting rejected → `/brainstorm` (Phase 5).
 
 Standard flow gets you productive. For vague requirements, multi-module features, or frontend precision, you need the full arsenal.
@@ -340,60 +379,6 @@ Standard flow gets you productive. For vague requirements, multi-module features
 > **New agents:** `@claire`, `@iris`, `@alexia`
 
 The complete workflow for complex features. Adds discovery, frontend-specific tools, functional review, and autonomous execution.
-
-### Discovery
-
-**`/brainstorm`** — Interactive Q&A session to refine requirements. Use when the request is vague or you need to explore options before planning.
-
-**`@claire`** — Clarity challenger agent. Claire questions everything until the request is precise. She transforms fuzzy ideas into actionable requirements through iterative questioning.
-
-```text
-@claire I want to add a notification system to the app.
-```
-
-Claire will ask about delivery channels, triggers, user preferences, persistence, and edge cases until the spec is clear enough to plan.
-
-**`/challenge`** — Rethink and challenge previous work for improvements. Use after implementation to verify your approach.
-
-### Frontend Workflows
-
-**`@iris`** — Frontend specialist agent with 3 modes: implement from Figma, verify UI conformity, validate user journeys.
-
-```text
-@iris Implement the dashboard sidebar from this Figma frame.
-```
-
-**`/components_behavior`** — Define expected behavior of frontend components as state machines. Useful for complex interactive components.
-
-**`/image_extract_details`** — Analyze a design image to extract components, hierarchy, spacing, and color values.
-
-**`/implement_from_design`** — Implement a frontend component from a Figma design with pixel-perfect accuracy.
-
-**`/assert_frontend`** — Assert that a frontend feature works as intended. Visual and behavioral validation.
-
-### Full Review
-
-**`/review_functional`** — Browse the project web application, capture screenshots, read console output, and validate each step against the plan.
-
-**`/test_journey`** — Test a complete user journey end-to-end by navigating and validating each step in the browser.
-
-### Validate & Ship
-
-**`/test`** — List untested behaviors and iterate on test creation. Identifies gaps then fills them.
-
-**`/tag`** — Create and push a git tag with semantic versioning.
-
-### Autonomous Mode
-
-**`@alexia`** — Autonomous end-to-end implementation agent. Alexia implements entire features from request to completion without asking questions. She makes all decisions autonomously based on project rules.
-
-```text
-@alexia Implement the user notification preferences page based on issue #42.
-```
-
-Use Alexia for well-defined features when you want minimal supervision. If she produces non-conforming code after 3 iterations, switch back to guided mode.
-
-> **Parallel work:** Use `/isolate` to create isolated git worktrees for parallel features, and `/run_projection` to preview a proposed solution before committing to it.
 
 ```mermaid
 graph TD
@@ -418,6 +403,95 @@ graph TD
     M["@martin"] -.->|"Validate"| AB
 ```
 
+### Step by Step
+
+1. Clarify requirements — `@claire` challenges until the request is precise.
+
+   ```text
+   @claire I want to add a notification system to the app.
+   # → 5 clarifying questions: channels, triggers, user preferences, persistence, edge cases
+   ```
+
+2. Explore options before planning.
+
+   ```text
+   /brainstorm
+   # → 3 approaches compared: WebSocket push, SSE, polling
+   ```
+
+3. Plan the feature.
+
+   ```text
+   /plan
+   # → {{DOCS}}/tasks/add-notifications.md
+   ```
+
+4. Implement — backend with `/implement`, frontend with `@iris` from design.
+
+   ```text
+   @iris Implement the notification preferences panel from this Figma frame.
+   # → Component created with responsive layout, pixel-perfect match
+   ```
+
+5. Assert frontend behavior.
+
+   ```text
+   /assert_frontend
+   # → Visual match ✅, interactions ✅, responsive ✅
+   ```
+
+6. Review — code quality and functional validation.
+
+   ```text
+   /review_code
+   # → 1 issue: missing error boundary on notification list
+   ```
+
+   ```text
+   /review_functional
+   # → Screenshots captured, all steps match plan ✅
+   ```
+
+7. Ship — commit, pull request, tag.
+
+   ```text
+   /commit
+   # → feat(notifications): add user notification preferences
+   ```
+
+   ```text
+   /create_request
+   # → PR #44 created (draft) with filled template
+   ```
+
+   ```text
+   /tag v1.3.0
+   # → Tag v1.3.0 created and pushed
+   ```
+
+### Frontend Toolkit
+
+These commands are available for frontend-specific workflows:
+
+- **`/components_behavior`** — Define component behavior as state machines
+- **`/image_extract_details`** — Extract components, spacing, colors from a design image
+- **`/implement_from_design`** — Implement a component from Figma with pixel-perfect accuracy
+- **`/assert_frontend`** — Visual and behavioral validation of frontend features
+- **`/test_journey`** — Test a complete user journey end-to-end in the browser
+
+### Autonomous Mode
+
+**`@alexia`** — Autonomous end-to-end implementation agent. She implements entire features from request to completion without asking questions.
+
+```text
+@alexia Implement the user notification preferences page based on issue #42.
+# → Full implementation: plan → code → tests → commit → PR (no questions asked)
+```
+
+Use Alexia for well-defined features when you want minimal supervision. If she produces non-conforming code after 3 iterations, switch back to guided mode.
+
+> **Parallel work:** Use `/run_projection` to preview a proposed solution before committing to it.
+
 ```mermaid
 graph LR
     claire -->|"requirements"| alexia
@@ -434,12 +508,7 @@ Features ship. Software lives. Bugs, tech debt, security, and framework evolutio
 
 ## 🔧 Phase 6 — Maintenance & Evolution
 
-> **New commands:**
->
-> - `/debug`, `/reproduce`, `/reflect_issue`
-> - `/performance`, `/security_refactor`
-> - `/assert_architecture`, `/mermaid`
-> - `/generate_agent`, `/generate_command`, `/generate_skill`, `/generate_architecture`, `/improve_prompt`
+> **New commands:** `/debug`, `/reproduce`, `/reflect_issue`, `/performance`, `/security_refactor`, `/assert_architecture`, `/mermaid`, `/generate_agent`, `/generate_command`, `/generate_skill`, `/generate_architecture`
 
 ### Fix a Bug
 
@@ -462,37 +531,80 @@ graph TD
     H -->|"Defer"| NI["/new_issue"]
 ```
 
-**Unknown cause:** `/debug` generates hypotheses with confidence scores. Fix the highest-confidence hypothesis first.
+1. Identify the bug type and start investigating.
 
-**Reproducible bug:** `/reproduce` creates a failing test first, then applies a minimal fix.
+   ```text
+   /debug
+   # → 3 hypotheses: race condition (85%), missing null check (60%), stale cache (30%)
+   ```
 
-**Stuck?** `/reflect_issue` takes a step back — reflects on possible sources, identifies likely causes, and adds validation logs before attempting another fix.
+   ```text
+   /reproduce
+   # → Failing test created: "should reject concurrent auth requests"
+   ```
 
-**Defer:** If the bug is low-priority or out of scope, `/new_issue` creates a GitHub issue to track it for later.
+2. If stuck, step back and reflect.
 
-**Both paths converge:** minimal fix → `/assert` → `/commit` → `/learn` → `/create_request`.
+   ```text
+   /reflect_issue
+   # → New angle: check middleware ordering — rate limiter runs after auth
+   ```
 
-> **When to stop (bugs):** If `/debug` exhausts all hypotheses → `/reflect_issue` for a fresh perspective. If still stuck → `/new_issue` to defer and move on.
+3. Apply the fix, validate, and ship.
+
+   ```text
+   /assert
+   # → Tests ✅, Types ✅, Build ✅, Lint ✅
+   ```
+
+   ```text
+   /commit
+   # → fix(auth): resolve race condition in rate limiter middleware
+   ```
+
+4. If low-priority, defer to a new issue.
+
+   ```text
+   /new_issue
+   # → Issue #45 created: "Investigate edge case in concurrent token refresh"
+   ```
+
+> **When to stop:** If `/debug` exhausts all hypotheses → `/reflect_issue` for a fresh perspective. If still stuck → `/new_issue` to defer and move on.
 
 ### Refactor & Improve
 
-**`/audit`** — Re-run at any time to assess current technical debt and find improvement opportunities.
+- **`/audit`** — Re-run at any time to assess current technical debt and find improvement opportunities.
 
-**`/performance`** — Optimize code for better performance. Identifies bottlenecks and applies targeted optimizations.
+- **`/performance`** — Optimize code for better performance. Identifies bottlenecks and applies targeted optimizations.
 
-**`/security_refactor`** — Identify and fix security vulnerabilities following OWASP guidelines.
+  ```text
+  /performance
+  # → 3 bottlenecks found: N+1 query, missing index, unoptimized loop
+  ```
+
+- **`/security_refactor`** — Identify and fix security vulnerabilities following OWASP guidelines.
 
 ### Architecture Validation
 
-**`/assert_architecture`** — Verify that code conforms to architecture diagrams, ADRs, and project structure. Use after refactors or when onboarding to verify structural integrity.
+- **`/assert_architecture`** — Verify that code conforms to architecture diagrams, ADRs, and project structure. Use after refactors or when onboarding to verify structural integrity.
 
-**`/assert_frontend`** — Validate frontend-specific architecture and component structure.
+  ```text
+  /assert_architecture
+  # → 2 violations: circular dependency in services/, missing ADR for cache layer
+  ```
+
+- **`/assert_frontend`** — Validate frontend-specific architecture and component structure.
 
 ### Documentation
 
-**`/learn`** — Capture new patterns, decisions, or conventions into memory, rules, or skills.
+- **`/learn`** — Capture new patterns, decisions, or conventions into memory, rules, or skills.
 
-**`/mermaid`** — Generate Mermaid diagrams to document architecture, flows, or data models.
+- **`/mermaid`** — Generate Mermaid diagrams to document architecture, flows, or data models.
+
+  ```text
+  /mermaid
+  # → Generated sequence diagram in {{DOCS}}/memory/architecture.md
+  ```
 
 ### Evolve Your Framework
 
@@ -505,7 +617,6 @@ The framework itself is customizable. Use these commands to extend it as your pr
 | `/generate_command`      | Custom slash command                    | One-off action you repeat often                |
 | `/generate_skill`        | Reusable workflow package               | Pattern repeats 2-3x with 90%+ identical steps |
 | `/generate_architecture` | Full project architecture               | New project or major restructuring             |
-| `/improve_prompt`        | Improved existing prompt                | Existing command underperforms                 |
 
 An agent defines _who_ does the work (role, scope, behavior). A skill defines _how_ to do the work (workflow, conventions, scripts). Agents can load skills; skills can be used by multiple agents.
 

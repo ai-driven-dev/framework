@@ -96,7 +96,6 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
 | [generate_command.md](../../commands/01_onboard/generate_command.md) | `Generate optimized, action-oriented prompts using best practices and structured template` | `The command details to generate the prompt for`                            |
 | [generate_rules.md](../../commands/01_onboard/generate_rules.md)     | `Generate or modify coding rules for the project's rule-based architecture system`         | `Which coding rules would you like to generate or update for this project?` |
 | [generate_skill.md](../../commands/01_onboard/generate_skill.md)     | `Generate a customized skill based on repeated patterns and user workflows.`               | `Description of the workflow to package as a skill`                         |
-| [improve_prompt.md](../../commands/01_onboard/improve_prompt.md)     | `Verify and improve existing prompts against best practices`                               | `Path to the prompt file to improve`                                        |
 | [init.md](../../commands/01_onboard/init.md)                         | `Create or update the memory bank files to reflect the current state of the codebase`      | -                                                                           |
 
 #### `commands/02_context`
@@ -125,7 +124,6 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
 | [assert.md](../../commands/04_code/assert.md)                               | `Assert that a feature must work as intended.`                                                  | -                                                        |
 | [implement_from_design.md](../../commands/04_code/implement_from_design.md) | `Implement a frontend component from a Figma design with pixel-perfect accuracy.`               | `The Figma file URL and frame/component to implement.`   |
 | [implement.md](../../commands/04_code/implement.md)                         | `Implement plan following project rules with validation`                                        | `The technical plan to implement`                        |
-| [isolate.md](../../commands/04_code/isolate.md)                             | `Create an isolated worktree automatically for manual work, then cleanup`                       | `Optional context or branch name hint`                   |
 | [run_projection.md](../../commands/04_code/run_projection.md)               | `Project the solution you mentioned on a part of the codebase so we can see if this will work.` | -                                                        |
 
 #### `commands/05_review`
