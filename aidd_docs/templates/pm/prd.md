@@ -1,6 +1,6 @@
 ---
 name: prd
-description: Product Requirements Document template (15 sections)
+description: Product Requirements Document template (16 sections)
 argument-hint: N/A
 ---
 
@@ -50,11 +50,6 @@ argument-hint: N/A
 - BG1: [Revenue/growth goal]
 - BG2: [User acquisition/retention]
 
-### Technical Goals
-
-- TG1: [Performance/scalability]
-- TG2: [Security/reliability]
-
 ### User Goals
 
 - UG1: [User experience improvement]
@@ -70,10 +65,6 @@ Group of identified features to build:
 
 - FR1.1: [Specific requirement]
 - FR1.2: [Specific requirement]
-
-#### User Stories
-
-- As a [user type], I want to [action] so that [benefit]
 
 ## 5. Acceptance Criteria
 
@@ -138,26 +129,23 @@ For every given features:
 
 ## 8. Technical Architecture
 
-### Tech Stack
+> This section captures constraints and integration requirements. Detailed technical decisions (stack, data model, component design) belong in `architecture.md`.
 
-- **Frontend**: [Framework, UI library]
-- **Backend**: [Language, framework]
-- **Database**: [Type, specific system]
-- **Infrastructure**: [Cloud, containers]
-- **External Services**: [APIs, SaaS]
+### Constraints
 
-### Data Model
-
-```
-[Key entities and relationships]
-[Data flow diagram if needed]
-```
+- [Performance constraint from NFRs driving architecture]
+- [Security/compliance constraint]
+- [Team/budget constraint from constitution]
 
 ### Integration Points
 
 - **Internal APIs**: [List]
 - **External APIs**: [List with rate limits]
 - **Data Sources**: [Databases, files, streams]
+
+### High-Level Approach
+
+[1-2 sentence summary of the architectural direction. Full details in `architecture.md`.]
 
 ## 9. User Experience
 
@@ -290,6 +278,15 @@ flowchart LR
 | ---------------- | ----------- |
 | [Anti-pattern X] | [Why never] |
 | [Anti-pattern Y] | [Why never] |
+
+## 16. Assumptions
+
+> Hypotheses taken as true for this PRD. If any assumption is invalidated, the impacted sections must be revisited.
+
+| ID | Assumption | Impact if wrong | Validation method |
+|----|-----------|----------------|-------------------|
+| A1 | [Assumption about users, market, or technology] | [Which sections/decisions are affected] | [How to validate: user research, spike, data analysis] |
+| A2 | [Assumption] | [Impact] | [Validation] |
 
 ---
 

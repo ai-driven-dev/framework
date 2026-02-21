@@ -20,6 +20,12 @@ Produce a complete UX copy document covering voice & tone guidelines, error mess
 - No placeholder copy — every string is production-ready
 - Requirements started from $ARGUMENTS
 
+### Scope Boundary
+
+**This deliverable is the single source of truth for ALL user-facing text** — error messages, empty states, tooltips, onboarding copy, CTAs, confirmation messages, notification text.
+
+Do NOT copy text from `design_system.md`. Instead, use the design system for structural context (which components exist, which states they have) and write the definitive copy here.
+
 ## Quick Start
 
 ```text
@@ -91,8 +97,9 @@ flowchart LR
 
 ## Resources
 
-| Type  | Path                                      | Description          |
-| ----- | ----------------------------------------- | -------------------- |
-| Input | `{{DOCS}}/memory/internal/prd.md`               | Product requirements |
-| Input | `{{DOCS}}/memory/internal/user_flows.md`        | User flows           |
-| Input | `{{DOCS}}/memory/internal/design_system.md`     | Design system        |
+| Type     | Path                                          | Description          |
+| -------- | --------------------------------------------- | -------------------- |
+| Input    | `{{DOCS}}/memory/internal/prd.md`             | Product requirements |
+| Input    | `{{DOCS}}/memory/internal/user_flows.md`      | User flows           |
+| Input    | `{{DOCS}}/memory/internal/design_system.md`   | Design system        |
+| Template | `{{DOCS}}/templates/ux/ux_copy.md`            | UX copy template     |

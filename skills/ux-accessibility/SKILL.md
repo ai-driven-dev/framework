@@ -20,6 +20,10 @@ Produce an actionable accessibility specification for every component in the des
 - Contrast ratios must be verified against design tokens
 - Requirements started from $ARGUMENTS
 
+### Scope Boundary
+
+**Reference design tokens, do not redefine them.** When specifying contrast ratios, reference the token name from `design_system.md` (e.g., "color.primary on color.surface") rather than restating hex values. This ensures a single source of truth for visual tokens.
+
 ## Quick Start
 
 ```text
@@ -84,7 +88,8 @@ flowchart LR
 
 ## Resources
 
-| Type  | Path                                      | Description        |
-| ----- | ----------------------------------------- | ------------------ |
-| Input | `{{DOCS}}/memory/internal/design_system.md`     | Design system      |
-| Input | `{{DOCS}}/memory/internal/user_flows.md`        | User flows         |
+| Type     | Path                                              | Description              |
+| -------- | ------------------------------------------------- | ------------------------ |
+| Input    | `{{DOCS}}/memory/internal/design_system.md`       | Design system            |
+| Input    | `{{DOCS}}/memory/internal/user_flows.md`          | User flows               |
+| Template | `{{DOCS}}/templates/ux/accessibility_spec.md`     | Accessibility template   |

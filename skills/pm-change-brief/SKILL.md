@@ -48,10 +48,13 @@ flowchart LR
 **Do:**
 
 1. Draft the change brief with as-is, to-be, impact, and preserved behaviors
-2. Calculate RICE score for prioritization
-3. Identify regression risks
+2. Add **Success Criteria** — measurable conditions for the change to be considered done
+3. Add **Scope Boundary** — what is explicitly in-scope and out-of-scope for this change
+4. Add **Assumptions** — hypotheses taken as true; if invalidated, which sections must be revisited
+5. Calculate RICE score for prioritization
+6. Identify regression risks
 
-**Success criteria:** All sections completed, risks identified
+**Success criteria:** All sections completed including success criteria, scope boundary, and assumptions; risks identified
 
 ### Step 3: Review & Save
 
@@ -65,9 +68,10 @@ flowchart LR
 
 ## Resources
 
-| Type  | Path                                     | Description          |
-| ----- | ---------------------------------------- | -------------------- |
-| Input | `{{DOCS}}/memory/internal/system_overview.md`   | System overview      |
+| Type     | Path                                          | Description          |
+| -------- | --------------------------------------------- | -------------------- |
+| Input    | `{{DOCS}}/memory/internal/system_overview.md` | System overview      |
+| Template | `{{DOCS}}/templates/pm/change_brief.md`       | Change brief template |
 
 ### Output Template
 
@@ -102,6 +106,23 @@ flowchart LR
 | Confidence | /10 |
 | Effort | /10 |
 | **RICE Score** | (R x I x C) / E |
+
+## Success Criteria
+| Criterion | Measurement | Target |
+| --- | --- | --- |
+| [What must be true] | [How to measure] | [Threshold] |
+
+## Scope Boundary
+### In Scope
+- [What this change includes]
+
+### Out of Scope
+- [What is explicitly excluded from this change]
+
+## Assumptions
+| ID | Assumption | Impact if wrong | Validation |
+| --- | --- | --- | --- |
+| A1 | [Hypothesis] | [Impact] | [How to validate] |
 
 ## Identified Risks
 [Potential regressions and side effects]

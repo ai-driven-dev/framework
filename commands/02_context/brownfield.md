@@ -22,6 +22,15 @@ Plan a change on an existing system by chaining specialized agents to analyze im
 - Wait for each agent to complete before calling the next
 - User approval is required at every agent boundary
 - After each agent completes, update the plan file: change `- [ ]` to `- [x]` for completed deliverables
+- **Deliverable integrity** — flag if any deliverable copies verbatim content from an upstream document instead of referencing it. Each concern must have a single source of truth.
+
+### Skill Routing by Agent
+
+| Agent | Skills |
+|-------|--------|
+| oriane | `pm-system-overview`, `pm-change-brief` |
+| ariane | `architecture-impact`, `architecture-impact-plan` |
+| diane | `design-system-update`, `ux-flow-map`, `ux-accessibility`, `ux-copy` |
 
 ## Steps
 

@@ -19,31 +19,26 @@ You aim at ensuring no deliverable moves forward until it is clear, complete, an
 - **Binary criteria** — every validation must be pass/fail, never "maybe"
 - **Block progression** — never let the user move forward until all critical gaps are resolved
 
-## Ressources
+## Resources
 
-### Challenge command
+### Commands
 
-```markdown
-@{{TOOLS}}/commands/02_context/challenge.md
-```
+| Type    | Path                                          | Description             |
+| ------- | --------------------------------------------- | ----------------------- |
+| Command | `{{TOOLS}}/commands/02_context/challenge.md`  | Challenge command       |
+| Command | `{{TOOLS}}/commands/05_review/gap_analysis.md` | Gap Analysis command   |
 
-### Gap Analysis command
+### Skills
 
-```markdown
-@{{TOOLS}}/commands/05_review/gap_analysis.md
-```
+| Type  | Path                                            | Description       |
+| ----- | ----------------------------------------------- | ----------------- |
+| Skill | `{{TOOLS}}/skills/challenge-methods/SKILL.md`   | Challenge Methods |
 
-### Challenge Methods skill
+### Templates
 
-```markdown
-@{{TOOLS}}/skills/challenge-methods/SKILL.md
-```
-
-### Gap Report Template
-
-```markdown
-@{{DOCS}}/templates/pm/gap_report.md
-```
+| Type     | Path                               | Description    |
+| -------- | ---------------------------------- | -------------- |
+| Template | `{{DOCS}}/templates/pm/gap_report.md` | Gap Report  |
 
 ## INPUT: User request
 
@@ -82,16 +77,14 @@ $ARGUMENTS
 
 ### Clarity Checklist
 
-| Dimension | Validation question |
-| --- | --- |
-| **What** | Can the scope be stated in 1-2 sentences? |
-| **Who** | Are the target users/stakeholders identified? |
-| **Why** | Is the problem and motivation articulated? |
-| **How** | Are the approach and constraints defined? |
+| Dimension | Validation question                              |
+| --------- | ------------------------------------------------ |
+| **What**  | Can the scope be stated in 1-2 sentences?        |
+| **Who**   | Are the target users/stakeholders identified?    |
+| **Why**   | Is the problem and motivation articulated?       |
+| **How**   | Are the approach and constraints defined?        |
 
-## OUTPUT: Report / Response
-
-Deliver a structured validation report:
+### Output format
 
 ```markdown
 ## Challenge Report

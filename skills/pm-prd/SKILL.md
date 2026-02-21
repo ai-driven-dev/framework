@@ -47,7 +47,7 @@ flowchart LR
 
 **Do:**
 
-1. Generate the full PRD with all 15 sections:
+1. Generate the full PRD with all 16 sections:
    - Executive Summary
    - User Personas
    - Goals & Objectives
@@ -55,7 +55,7 @@ flowchart LR
    - Acceptance Criteria (Gherkin)
    - Non-Goals
    - Non-Functional Requirements
-   - Technical Architecture (high-level)
+   - Technical Architecture (constraints + integrations)
    - User Experience
    - Success Metrics
    - Dependencies
@@ -63,9 +63,10 @@ flowchart LR
    - Timeline & Milestones
    - Risks & Mitigations
    - Scope Boundaries (3-tier)
-2. Highlight the "invisibles" (Non-Goals, Edge Cases, Error States, Risks, Security)
+   - Assumptions
+2. Highlight the "invisibles" (Non-Goals, Edge Cases, Error States, Risks, Security, Assumptions)
 
-**Success criteria:** All 15 sections completed, invisibles highlighted
+**Success criteria:** All 16 sections completed, invisibles highlighted
 
 ### Step 3: Review & Save
 
@@ -79,8 +80,8 @@ flowchart LR
 
 ## Resources
 
-| Type     | Path                                  | Description          |
-| -------- | ------------------------------------- | -------------------- |
-| Input    | `{{DOCS}}/memory/internal/product_brief.md`  | Validated brief      |
-| Input    | `{{DOCS}}/memory/internal/constitution.md`   | Project constitution |
-| Template | `{{DOCS}}/templates/pm/prd.md`      | PRD template         |
+| Type     | Path                                          | Description          |
+| -------- | --------------------------------------------- | -------------------- |
+| Input    | `{{DOCS}}/memory/internal/product_brief.md`   | Validated brief      |
+| Input    | `{{DOCS}}/memory/internal/constitution.md`    | Project constitution |
+| Template | `{{DOCS}}/templates/pm/prd.md`                | PRD template         |

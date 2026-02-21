@@ -19,6 +19,17 @@ Create a coherent and reusable set of UI/UX patterns, components, and guidelines
 - Design tokens (colors, typography, spacing) must be defined before components
 - Requirements started from $ARGUMENTS
 
+### Scope Boundary
+
+**In scope: visual patterns ONLY** — tokens, component structure, variants, states, layouts, navigation patterns, wireframes.
+
+**Out of scope** (owned by other deliverables):
+- Error message catalogues, exact user-facing text → `ux_copy.md`
+- Exact prompt/tooltip/CTA wording → `ux_copy.md`
+- Detailed ARIA roles, keyboard navigation sequences, focus management rules → `accessibility_spec.md`
+
+When documenting component states (error, empty, loading), describe the **structural pattern** (e.g., "displays an error banner with icon + message + retry action") without writing the exact copy.
+
 ## Quick Start
 
 ```text
@@ -79,6 +90,7 @@ flowchart LR
 
 ## Resources
 
-| Type  | Path                       | Description          |
-| ----- | -------------------------- | -------------------- |
-| Input | `{{DOCS}}/memory/internal/prd.md` | Product requirements |
+| Type     | Path                                      | Description          |
+| -------- | ----------------------------------------- | -------------------- |
+| Input    | `{{DOCS}}/memory/internal/prd.md`         | Product requirements |
+| Template | `{{DOCS}}/templates/ux/design_system.md`  | Design system template |

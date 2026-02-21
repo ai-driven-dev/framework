@@ -19,6 +19,10 @@ Produce a structured architecture document where every technical choice is justi
 - Anti-pattern: choosing tech by preference instead of by need
 - Requirements started from $ARGUMENTS
 
+### Scope Boundary
+
+**Reference constitution constraints by name, do not restate the values.** When a decision is driven by a constitution constraint (e.g., budget, team size, compliance), cite the constraint name and reference the constitution document instead of copying the full constraint definition.
+
 ## Quick Start
 
 ```text

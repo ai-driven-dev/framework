@@ -22,6 +22,7 @@ Transform a raw idea into a complete implementation plan by chaining specialized
 - Wait for each agent to complete before calling the next
 - User approval is required at every agent boundary
 - After each agent completes, update the plan file: change `- [ ]` to `- [x]` for completed deliverables
+- **Deliverable integrity** — flag if any deliverable copies verbatim content from an upstream document instead of referencing it. Each concern must have a single source of truth.
 
 ## Steps
 

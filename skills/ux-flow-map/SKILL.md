@@ -19,6 +19,10 @@ Produce a complete map of user flows covering every state: happy path, error, em
 - Edge cases are not optional — they are the main deliverable
 - Requirements started from $ARGUMENTS
 
+### Scope Boundary
+
+**Document transitions, not copy.** For each state, document the **type of response** (error, confirmation, redirect) and the **recovery path**, but not the exact user-facing text. Exact wording is owned by `ux_copy.md`.
+
 ## Quick Start
 
 ```text
@@ -79,7 +83,8 @@ flowchart LR
 
 ## Resources
 
-| Type  | Path                              | Description          |
-| ----- | --------------------------------- | -------------------- |
-| Input | `{{DOCS}}/memory/internal/prd.md`       | Product requirements |
-| Input | `{{DOCS}}/memory/internal/user_stories.md` | User stories         |
+| Type     | Path                                          | Description          |
+| -------- | --------------------------------------------- | -------------------- |
+| Input    | `{{DOCS}}/memory/internal/prd.md`             | Product requirements |
+| Input    | `{{DOCS}}/memory/internal/user_stories.md`    | User stories         |
+| Template | `{{DOCS}}/templates/ux/user_flows.md`         | User flows template  |

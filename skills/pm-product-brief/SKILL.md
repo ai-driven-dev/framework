@@ -46,11 +46,17 @@ flowchart LR
 
 **Do:**
 
-1. **WAIT FOR USER RESPONSE** — user provides research data (interviews, surveys, market data)
-2. Synthesize research findings: frustrations, patterns, unmet needs
-3. Conduct competitive analysis: table stakes, differentiators, value map
+1. Conduct online research on public sources relevant to the hypotheses:
+   - User reviews and ratings on existing solutions
+   - Forum discussions, community Q&A, social media mentions
+   - Industry reports and market data
+   - Competitor documentation, pricing, positioning
+2. Synthesize online research findings: recurring frustrations, unmet needs, market signals
+3. **WAIT FOR USER RESPONSE** — user provides field research data (interviews, surveys, observations) to complement online findings
+4. Cross-reference online and field data: identify which patterns are systemic vs local
+5. Conduct competitive analysis: table stakes, differentiators, value map
 
-**Success criteria:** Research synthesized, competitive landscape mapped
+**Success criteria:** Online and field research synthesized, competitive landscape mapped
 
 ### Step 3: Challenge Gate
 

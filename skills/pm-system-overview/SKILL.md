@@ -18,6 +18,7 @@ Create a pragmatic, up-to-date overview of an existing system by analyzing the c
 - Focus on what matters for evolution decisions
 - Keep the document actionable, not exhaustive
 - This is a living document that should be updated regularly
+- **Drift detection** — if `architecture.md` exists, compare it against the actual codebase. Flag discrepancies between documented architecture and implemented reality (outdated tech versions, missing modules, undocumented services).
 
 ## Quick Start
 
