@@ -1,5 +1,50 @@
 # Changelog
 
+## [3.2.0](https://github.com/ai-driven-dev/aidd-framework/compare/v3.1.0...v3.2.0) (2026-02-20)
+
+
+### Features
+
+* add ASCII user journey diagram for improved understanding and validation in implementation plans ([a2587f0](https://github.com/ai-driven-dev/aidd-framework/commit/a2587f0d8ed4f006a806c1afc9e9e6682b55e35c))
+* add assert_architecture command to verify code conformity with architecture standards ([5e02c67](https://github.com/ai-driven-dev/aidd-framework/commit/5e02c670699705924d21470f605e0b58280dfea9))
+* add confidence level prompt to challenge output and update plan rules for configuration preparation ([6c5c8e1](https://github.com/ai-driven-dev/aidd-framework/commit/6c5c8e1bdb90d2e80f7e0ae43ecd827513f952b5))
+* add generate_architecture command and establish command structure standards ([52cc952](https://github.com/ai-driven-dev/aidd-framework/commit/52cc9524817851c02c6d355848961188d1cdc6a3))
+* add guideline to split phases based on responsibilities in plan generation ([09403fe](https://github.com/ai-driven-dev/aidd-framework/commit/09403febdf91ea49a4eacd9ba1594e0e192afa09))
+* add JSONC comment stripping and .vscode/settings.json generation for Claude tool ([1ddac51](https://github.com/ai-driven-dev/aidd-framework/commit/1ddac51f1a9204e0f4a7f0896a5f0802970d2851))
+* add lefthook child-to-parent delegation + auto-install ([6527e6d](https://github.com/ai-driven-dev/aidd-framework/commit/6527e6d4494fd6c484be219815472014a9a97ccc))
+* enhance documentation for challenge skill and add mermaid generation rules ([2e3ab24](https://github.com/ai-driven-dev/aidd-framework/commit/2e3ab24f91e11509e70d77a8a541e9331946e922))
+* enhance run_projection documentation to emphasize file architecture relevance ([f051c03](https://github.com/ai-driven-dev/aidd-framework/commit/f051c03f25d7ddc083cd437a19a424b31495e852))
+* remove improve_prompt and isolate commands from the framework catalog ([b969e79](https://github.com/ai-driven-dev/aidd-framework/commit/b969e79dc2542fbb643fdf9789b9b227ba083347))
+
+
+### Bug Fixes
+
+* update mermaid diagram labels for clarity in README ([1680d7e](https://github.com/ai-driven-dev/aidd-framework/commit/1680d7ed4e338ad97d28392283749de134673f2a))
+
+
+### Documentation
+
+* add rules section to audit.md for codebase analysis ([bad8dc3](https://github.com/ai-driven-dev/aidd-framework/commit/bad8dc3d7dd81dcc95551ff5d4a26cd444f61f5b))
+
+
+### Refactoring
+
+* clarify correctness criteria and improve section headings in challenge documentation ([6958244](https://github.com/ai-driven-dev/aidd-framework/commit/695824430af7fbed2793f9794a33e8b578765670))
+* enhance clarity in user journey documentation by adding warnings and task instructions ([fc9688d](https://github.com/ai-driven-dev/aidd-framework/commit/fc9688d719e4f68fcc5671fd90e13d170acbf4d8))
+* enhance implementation guidelines by adding a decisive rule and clarifying agent usage ([c55ba37](https://github.com/ai-driven-dev/aidd-framework/commit/c55ba37a312b124a459f3c1102a2f672a46bd220))
+* enhance user journey visualization by updating diagram syntax and improving task planning steps ([354a985](https://github.com/ai-driven-dev/aidd-framework/commit/354a985d1997a31f3e7a89e8c84002cd98f64ce4))
+* improve VCS guidelines formatting and enhance clarity in plan generation steps ([c4e8bfa](https://github.com/ai-driven-dev/aidd-framework/commit/c4e8bfadb260d8a5b063fe846acd66fe499e3298))
+* standardize naming convention for auto-accept command and enhance catalog documentation ([99c515f](https://github.com/ai-driven-dev/aidd-framework/commit/99c515f180e8cf786704f57e7f5382faee92d824))
+* update descriptions and streamline instruction steps for Alexia and Auto-Implement agents ([a50eaf8](https://github.com/ai-driven-dev/aidd-framework/commit/a50eaf8ee806dd26ca3855ea01ec2b2302ac5efc))
+* update documentation for Kent and Martin agents, enhance coding assertions, and improve implementation process clarity ([ba0ed37](https://github.com/ai-driven-dev/aidd-framework/commit/ba0ed379794d0825c134d97659dbef354216044b))
+* update mcp.json structure and enhance config format validation in tests ([e5d8d41](https://github.com/ai-driven-dev/aidd-framework/commit/e5d8d416c727a74210939553939d375a71b6dffe))
+* update paths in VSCode settings for instruction templates ([5772d76](https://github.com/ai-driven-dev/aidd-framework/commit/5772d76a7115046a1438f0e52886277af0d50b2c))
+
+
+### Miscellaneous
+
+* add node_modules/ and .specstory/ to .gitignore ([bb77d3a](https://github.com/ai-driven-dev/aidd-framework/commit/bb77d3a12b5b06e158a85bc47b61c4a8cfd80848))
+
 ## [3.1.0](https://github.com/ai-driven-dev/aidd-framework/compare/v3.0.1...v3.1.0) (2026-02-17)
 
 
