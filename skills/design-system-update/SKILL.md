@@ -19,6 +19,7 @@ Audit existing UI patterns and generate a coherent design system update plan tha
 - WCAG AA accessibility is mandatory for every addition
 - Navigation coherence must be preserved
 - Requirements started from $ARGUMENTS
+- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
 
 ## Quick Start
 
@@ -30,7 +31,7 @@ Audit and update the design system for the new dashboard feature
 
 ```mermaid
 flowchart LR
-    A[Read change brief] --> B[Audit existing components] --> C[Identify new needs] --> D[Specify new components] --> E[Update guidelines] --> F[Verify navigation] --> G[Review] --> H[Save design-system-update.md]
+    A[Read change brief] --> B[Audit existing components] --> C[Identify new needs] --> D[Specify new components] --> E[Update guidelines] --> F[Verify navigation] --> G[Challenge gate] --> H[Review] --> I[Save design-system-update.md]
 ```
 
 ### Step 1: Audit Existing Components
@@ -60,7 +61,21 @@ flowchart LR
 
 **Success criteria:** Guidelines updated, navigation coherence verified
 
-### Step 4: Review & Save
+### Step 4: Challenge Gate
+
+**Do:**
+
+1. Verify the design system update against these criteria:
+   - New components use existing design tokens (colors, spacing, fonts)
+   - No contradictory interaction patterns between old and new components
+   - Navigation remains coherent (breadcrumbs, URLs, responsive, transitions)
+   - WCAG AA accessibility maintained on every addition
+   - Migration plan defined for replaced components (if applicable)
+
+**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+
+
+### Step 5: Review & Save
 
 **Do:**
 

@@ -19,6 +19,7 @@ Break down the PRD and backlog into sequenced, measurable milestones with GO/NO-
 - Every milestone has binary GO/NO-GO criteria (no "maybe")
 - Maximize parallelization between streams (backend, frontend, infra)
 - Requirements started from $ARGUMENTS
+- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
 
 ## Quick Start
 
@@ -30,7 +31,7 @@ Extract milestones from our PRD and user stories
 
 ```mermaid
 flowchart LR
-    A[Read PRD & stories] --> B[Group into milestones] --> C[Define GO/NO-GO] --> D[Gantt chart] --> E[Critical path] --> F[Validate constraints] --> G[Review] --> H[Save milestones.md]
+    A[Read PRD & stories] --> B[Group into milestones] --> C[Define GO/NO-GO] --> D[Gantt chart] --> E[Critical path] --> F[Validate constraints] --> G[Challenge gate] --> H[Review] --> I[Save milestones.md]
 ```
 
 ### Step 1: Map Epics to Milestones
@@ -72,7 +73,22 @@ flowchart LR
 
 **Success criteria:** Gantt chart generated, critical path identified, constraints validated
 
-### Step 4: Review & Save
+### Step 4: Challenge Gate
+
+**Do:**
+
+1. Verify the milestones against these criteria:
+   - Total effort compatible with constitution constraints (budget, deadline)
+   - No circular dependencies in the dependency graph
+   - Parallelization maximized between streams (backend, frontend, infra)
+   - Each milestone has binary GO/NO-GO criteria (not "maybe")
+   - MVP is minimum viable scope, not a disguised V1
+   - Contingency buffer included (20-30%)
+
+**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+
+
+### Step 5: Review & Save
 
 **Do:**
 

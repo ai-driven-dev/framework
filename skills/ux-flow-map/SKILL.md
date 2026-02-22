@@ -18,6 +18,7 @@ Produce a complete map of user flows covering every state: happy path, error, em
 - Each decision point must document both branches (success and failure)
 - Edge cases are not optional — they are the main deliverable
 - Requirements started from $ARGUMENTS
+- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
 
 ### Scope Boundary
 
@@ -33,7 +34,7 @@ Map user flows from our PRD
 
 ```mermaid
 flowchart LR
-    A[Read PRD] --> B[Identify core flows] --> C[Map happy paths] --> D[Add error states] --> E[Add empty/loading/offline] --> F[Add permission/first-time] --> G[Review] --> H[Save user_flows.md]
+    A[Read PRD] --> B[Identify core flows] --> C[Map happy paths] --> D[Add error states] --> E[Add empty/loading/offline] --> F[Add permission/first-time] --> G[Challenge gate] --> H[Review] --> I[Save user_flows.md]
 ```
 
 ### Step 1: Identify Core Flows
@@ -71,7 +72,21 @@ flowchart LR
 
 **Success criteria:** Every step in every flow has all 6 states documented
 
-### Step 4: Review & Save
+### Step 4: Challenge Gate
+
+**Do:**
+
+1. Verify the flow map against these criteria:
+   - Every flow covers ALL states: happy, error, empty, loading, permission, offline, first-time
+   - Each decision point documents both branches (success and failure)
+   - Recovery paths documented for every error state
+   - All flows derived from PRD features (no invented flows)
+   - Scope boundary respected: transitions and states only, no exact user-facing copy
+
+**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+
+
+### Step 5: Review & Save
 
 **Do:**
 

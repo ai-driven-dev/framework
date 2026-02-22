@@ -19,6 +19,7 @@ Transform a validated product brief into a comprehensive PRD with all sections n
 - Scope in 3 tiers: MVP / Next Release / Never
 - No technical implementation details (that's architecture)
 - Requirements started from $ARGUMENTS
+- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
 
 ## Quick Start
 
@@ -30,7 +31,7 @@ Generate the PRD from our product brief
 
 ```mermaid
 flowchart LR
-    A[Read brief] --> B[Clarify priorities] --> C[Generate PRD sections] --> D[Highlight invisibles] --> E[Review & approve] --> F[Save prd.md]
+    A[Read brief] --> B[Clarify priorities] --> C[Generate PRD sections] --> D[Highlight invisibles] --> E[Challenge gate] --> F[Review & approve] --> G[Save prd.md]
 ```
 
 ### Step 1: Read & Clarify
@@ -68,7 +69,21 @@ flowchart LR
 
 **Success criteria:** All 16 sections completed, invisibles highlighted
 
-### Step 3: Review & Save
+### Step 3: Challenge Gate
+
+**Do:**
+
+1. Verify the PRD against these criteria:
+   - Every feature justified by the North Star Metric
+   - Acceptance criteria in Gherkin for every feature (happy path + error + boundary)
+   - Non-Goals section is explicit and non-empty
+   - 3-tier scope clearly defined (MVP / Next Release / Never)
+   - Invisibles highlighted: edge cases, error states, security implications, assumptions
+
+**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+
+
+### Step 4: Review & Save
 
 **Do:**
 

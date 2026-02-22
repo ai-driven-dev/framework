@@ -19,6 +19,7 @@ Produce an actionable accessibility specification for every component in the des
 - Focus management must cover modals, drawers, dynamic content
 - Contrast ratios must be verified against design tokens
 - Requirements started from $ARGUMENTS
+- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
 
 ### Scope Boundary
 
@@ -34,7 +35,7 @@ Generate accessibility specs from our design system
 
 ```mermaid
 flowchart LR
-    A[Read design system] --> B[Inventory components] --> C[ARIA specification] --> D[Keyboard navigation] --> E[Focus management] --> F[Contrast audit] --> G[Review] --> H[Save accessibility_spec.md]
+    A[Read design system] --> B[Inventory components] --> C[ARIA specification] --> D[Keyboard navigation] --> E[Focus management] --> F[Contrast audit] --> G[Challenge gate] --> H[Review] --> I[Save accessibility_spec.md]
 ```
 
 ### Step 1: Inventory Interactive Components
@@ -76,7 +77,22 @@ flowchart LR
 
 **Success criteria:** Focus management rules defined, contrast ratios verified
 
-### Step 4: Review & Save
+### Step 4: Challenge Gate
+
+**Do:**
+
+1. Verify the accessibility spec against these criteria:
+   - Every interactive component has explicit ARIA roles and attributes
+   - Keyboard navigation specified for every interactive component
+   - Focus management covers modals, drawers, and dynamic content
+   - Contrast ratios verified against design tokens (4.5:1 text, 3:1 components)
+   - WCAG AA minimum met across all components (AAA documented where achievable)
+   - Scope boundary respected: references design tokens, does not redefine them
+
+**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+
+
+### Step 5: Review & Save
 
 **Do:**
 

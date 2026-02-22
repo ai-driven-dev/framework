@@ -19,6 +19,7 @@ Transform a raw idea into a structured constitution document that frames the pro
 - Constraints must be binary (negotiable or not)
 - Anti-over-engineering rules are mandatory
 - Requirements started from $ARGUMENTS
+- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
 
 ## Quick Start
 
@@ -30,7 +31,7 @@ Create a constitution for my SaaS project management tool
 
 ```mermaid
 flowchart LR
-    A[Analyze idea] --> B[Ask clarifying questions] --> C[Wait for response] --> D[Draft constitution] --> E[Review & approve] --> F[Save constitution.md]
+    A[Analyze idea] --> B[Ask clarifying questions] --> C[Wait for response] --> D[Draft constitution] --> E[Review & approve] --> F[Challenge gate] --> G[Save constitution.md]
 ```
 
 ### Step 1: Analyze & Clarify
@@ -53,7 +54,21 @@ flowchart LR
 
 **Success criteria:** All sections completed, assumptions flagged
 
-### Step 3: Save
+### Step 3: Challenge Gate
+
+**Do:**
+
+1. Verify the constitution against these criteria:
+   - Vision clear in one sentence — a new team member understands the project without additional context
+   - NSM is measurable, actionable, and not a vanity metric (not page views, not downloads)
+   - Non-negotiable constraints listed with consequences if violated
+   - Anti-over-engineering rules are concrete and actionable (not generic platitudes)
+   - Key stakeholders identified with what each validates
+
+**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+
+
+### Step 4: Save
 
 **Do:**
 
@@ -65,36 +80,4 @@ flowchart LR
 
 | Type     | Path                                      | Description                  |
 | -------- | ----------------------------------------- | ---------------------------- |
-| Template | `{{DOCS}}/templates/pm/constitution.md`  | Constitution template below  |
-
-### Constitution Template
-
-```markdown
-# Constitution - [Project Name]
-
-## Vision
-[1-2 clear sentences]
-
-## North Star Metric
-- **Metric**: [precise definition]
-- **Success threshold**: [target value]
-- **Measurement method**: [how to measure]
-
-## Non-negotiable Constraints
-| Category | Constraint | Justification |
-| --- | --- | --- |
-| Technical | ... | ... |
-| Quality | ... | ... |
-| Security | ... | ... |
-| Budget | ... | ... |
-| Timeline | ... | ... |
-
-## Decision Rules
-1. [Rule 1]
-2. [Rule 2]
-3. [Rule 3]
-
-## Anti-over-engineering
-- [Principle 1]
-- [Principle 2]
-```
+| Template | `{{DOCS}}/templates/pm/constitution.md`  | Constitution template |

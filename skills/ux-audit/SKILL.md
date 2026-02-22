@@ -19,6 +19,7 @@ Evaluate an existing product against Nielsen's 10 usability heuristics. Produce 
 - Prioritization uses impact vs effort matrix
 - Evidence-based — cite specific screens, flows, or code patterns
 - Requirements started from $ARGUMENTS
+- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
 
 ## Quick Start
 
@@ -30,7 +31,7 @@ Audit the UX of our application
 
 ```mermaid
 flowchart LR
-    A[Gather inputs] --> B[Evaluate 10 heuristics] --> C[Score severity] --> D[Prioritization matrix] --> E[Recommendations] --> F[Review] --> G[Save ux-audit.md]
+    A[Gather inputs] --> B[Evaluate 10 heuristics] --> C[Score severity] --> D[Prioritization matrix] --> E[Recommendations] --> F[Challenge gate] --> G[Review] --> H[Save ux-audit.md]
 ```
 
 ### Step 1: Gather Inputs
@@ -80,7 +81,21 @@ flowchart LR
 
 **Success criteria:** All findings scored and plotted on the prioritization matrix
 
-### Step 4: Review & Save
+### Step 4: Challenge Gate
+
+**Do:**
+
+1. Verify the UX audit against these criteria:
+   - All 10 Nielsen heuristics evaluated with specific findings (no heuristic skipped)
+   - Severity scored on 0-4 scale for every finding
+   - Prioritization matrix (impact × effort) complete with all findings plotted
+   - Every finding has a concrete, actionable recommendation (not just a diagnosis)
+   - Evidence-based: specific screens, flows, or code patterns cited for each finding
+
+**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+
+
+### Step 5: Review & Save
 
 **Do:**
 

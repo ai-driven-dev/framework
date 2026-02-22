@@ -18,6 +18,7 @@ Map every module, service, and data structure impacted by a brownfield change, c
 - Zero-downtime migrations by default, justify any downtime
 - Breaking changes require explicit versioning strategy
 - Requirements started from $ARGUMENTS
+- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
 
 ## Quick Start
 
@@ -29,7 +30,7 @@ Analyze the architecture impact of adding multi-tenant support
 
 ```mermaid
 flowchart LR
-    A[Read change brief] --> B[Identify impacted modules] --> C[Impact tree diagram] --> D[Evolution strategy] --> E[Migration plan] --> F[API versioning] --> G[Review] --> H[Save architecture-impact.md]
+    A[Read change brief] --> B[Identify impacted modules] --> C[Impact tree diagram] --> D[Evolution strategy] --> E[Migration plan] --> F[API versioning] --> G[Challenge gate] --> H[Review] --> I[Save architecture-impact.md]
 ```
 
 ### Step 1: Identify Impacted Modules
@@ -61,20 +62,39 @@ flowchart LR
 
 **Do:**
 
-1. Choose evolution strategy using decision tree:
+1. Classify each change as breaking or non-breaking:
+   - **Breaking**: removes or renames a public interface, changes behavior of existing endpoints, modifies data format, drops backward compatibility
+   - **Non-breaking**: adds new endpoints/fields, extends behavior without changing existing contracts
+   - For breaking changes: define versioning strategy (URL versioning, header versioning, sunset period) and stakeholder communication timeline
+2. Choose evolution strategy using decision tree:
    - Feature Flags → for reversible changes on critical flows
    - Strangler Fig → for complete module replacement
    - Branch by Abstraction → for interface refactoring
    - Big Bang → only for simple, isolated changes
-2. Plan data migrations (if any):
-   - Incremental steps (add → dual-write → backfill → switch → cleanup)
-   - Rollback procedure for each step
-   - Zero-downtime validation
-3. Define API versioning strategy for breaking changes
+3. Plan data migrations at strategy level (if any):
+   - Incremental phases (add → dual-write → backfill → switch → cleanup)
+   - Rollback strategy for each phase
+   - Zero-downtime validation approach
+   - No SQL scripts or implementation code — describe the strategy, not the queries
 
 **Success criteria:** Strategy chosen and justified, migration plan with rollback procedures
 
-### Step 4: Review & Save
+### Step 4: Challenge Gate
+
+**Do:**
+
+1. Verify the impact analysis against these criteria:
+   - All impacted modules identified at every dependency level (direct, indirect, transitive)
+   - Impact tree complete with severity coloring per module
+   - Breaking changes classified with versioning strategy and communication timeline
+   - Evolution strategy chosen and justified (Feature Flags / Strangler Fig / Branch by Abstraction / Big Bang)
+   - Migration plan includes rollback procedure for each phase
+   - Zero-downtime validated (or downtime justified and communicated)
+
+**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+
+
+### Step 5: Review & Save
 
 **Do:**
 

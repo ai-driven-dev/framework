@@ -19,6 +19,7 @@ Create a pragmatic, up-to-date overview of an existing system by analyzing the c
 - Keep the document actionable, not exhaustive
 - This is a living document that should be updated regularly
 - **Drift detection** — if `architecture.md` exists, compare it against the actual codebase. Flag discrepancies between documented architecture and implemented reality (outdated tech versions, missing modules, undocumented services).
+- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
 
 ## Quick Start
 
@@ -30,7 +31,7 @@ Analyze the existing system and create a system overview
 
 ```mermaid
 flowchart LR
-    A[Scan project] --> B[Identify modules] --> C[Map flows] --> D[Detect pain points] --> E[Generate overview] --> F[Review] --> G[Save system_overview.md]
+    A[Scan project] --> B[Identify modules] --> C[Map flows] --> D[Detect pain points] --> E[Challenge gate] --> F[Generate overview] --> G[Review] --> H[Save system_overview.md]
 ```
 
 ### Step 1: Scan & Analyze
@@ -53,7 +54,21 @@ flowchart LR
 
 **Success criteria:** Pain points identified and prioritized
 
-### Step 3: Generate & Review
+### Step 3: Challenge Gate
+
+**Do:**
+
+1. Verify the system overview against these criteria:
+   - Main modules mapped with health indicator (tests, debt, stability)
+   - Critical flows documented with happy path AND error cases
+   - Internal and external dependencies inventoried with coupling/risk levels
+   - Pain points prioritized by business impact × frequency
+   - Performance baseline documented (response times, error rate, throughput)
+
+**Success criteria:** All criteria pass. Flag any failing criterion with confidence level (Verified/Probable/Uncertain).
+
+
+### Step 4: Generate & Review
 
 **Do:**
 
@@ -66,36 +81,7 @@ flowchart LR
 
 ## Resources
 
-| Type   | Path                                       | Description             |
-| ------ | ------------------------------------------ | ----------------------- |
-| Output | `{{DOCS}}/memory/internal/system_overview.md`     | Generated overview      |
-
-### Output Template
-
-```markdown
-# System Overview - [Project Name]
-
-## Tech Stack
-[Languages, frameworks, versions, infrastructure]
-
-## Main Modules
-[Table + Mermaid diagram of modules and their relationships]
-
-## Critical Flows
-[Sequence diagrams for each critical flow]
-
-## Dependencies
-### Internal
-[Module dependency table with coupling levels]
-### External
-[Third-party services with versions and alternatives]
-
-## Pain Points
-[Prioritized table: severity, business impact, affected modules]
-
-## Known Limitations
-[What the system cannot do today]
-
-## Key Metrics
-[Performance, availability, usage if available]
-```
+| Type     | Path                                              | Description        |
+| -------- | ------------------------------------------------- | ------------------ |
+| Output   | `{{DOCS}}/memory/internal/system_overview.md`     | Generated overview |
+| Template | `{{DOCS}}/templates/pm/system_overview.md`        | Overview template  |

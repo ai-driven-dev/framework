@@ -18,6 +18,7 @@ Produce a structured architecture document where every technical choice is justi
 - Document trade-offs explicitly, not just the chosen option
 - Anti-pattern: choosing tech by preference instead of by need
 - Requirements started from $ARGUMENTS
+- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
 
 ### Scope Boundary
 
@@ -33,7 +34,7 @@ Make architecture decisions based on our PRD
 
 ```mermaid
 flowchart LR
-    A[Read PRD & constitution] --> B[Extract requirements] --> C[Evaluate options] --> D[Component diagram] --> E[Data model] --> F[API contracts] --> G[Anti-overeng check] --> H[Review] --> I[Save architecture.md]
+    A[Read PRD & constitution] --> B[Extract requirements] --> C[Evaluate options] --> D[Component diagram] --> E[Data model] --> F[API contracts] --> G[Challenge gate] --> H[Review] --> I[Save architecture.md]
 ```
 
 ### Step 1: Extract Requirements
@@ -62,21 +63,34 @@ flowchart LR
 
 1. Generate component diagram (Mermaid) showing main modules and their interactions
 2. Generate data model (ERD in Mermaid) from core entities
-3. Define API contracts for main endpoints
+3. Define API contracts at interface level (HTTP method, path, purpose, input/output concepts) — no request/response body examples or code snippets
 4. Choose infrastructure based on NFR requirements
 
 **Success criteria:** Diagrams and contracts complete
 
-### Step 4: Validate & Save
+### Step 4: Challenge Gate
 
 **Do:**
 
-1. Apply anti-over-engineering check: is this the simplest architecture that works?
-2. Present for review
-3. **WAIT FOR USER APPROVAL**
-4. Save as `{{DOCS}}/memory/internal/architecture.md`
+1. Verify the architecture against these criteria:
+   - Every technology choice linked to a functional need or NFR (not team preference)
+   - Trade-offs documented for each decision (not just the chosen option)
+   - Anti-over-engineering: this is the simplest architecture that meets requirements
+   - Data model covers all core entities from the PRD
+   - API contracts consistent with user stories
 
-**Success criteria:** Architecture validated, anti-over-engineering check passed
+**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+
+
+### Step 5: Review & Save
+
+**Do:**
+
+1. Present for review
+2. **WAIT FOR USER APPROVAL**
+3. Save as `{{DOCS}}/memory/internal/architecture.md`
+
+**Success criteria:** Architecture validated and saved
 
 ## Resources
 

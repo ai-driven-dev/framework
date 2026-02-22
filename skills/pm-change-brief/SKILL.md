@@ -18,6 +18,7 @@ Clarify the gap between current behavior (as-is) and expected behavior (to-be) f
 - Quantify business impact when possible
 - One change brief per feature or coherent block of changes
 - Requirements started from $ARGUMENTS
+- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
 
 ## Quick Start
 
@@ -29,7 +30,7 @@ Create a change brief for adding multi-tenant support
 
 ```mermaid
 flowchart LR
-    A[Analyze request] --> B[Document as-is] --> C[Clarify to-be] --> D[Draft brief] --> E[Calculate RICE] --> F[Review] --> G[Save change-brief.md]
+    A[Analyze request] --> B[Document as-is] --> C[Clarify to-be] --> D[Draft brief] --> E[Calculate RICE] --> F[Challenge gate] --> G[Review] --> H[Save change-brief.md]
 ```
 
 ### Step 1: Analyze & Document Current State
@@ -56,7 +57,22 @@ flowchart LR
 
 **Success criteria:** All sections completed including success criteria, scope boundary, and assumptions; risks identified
 
-### Step 3: Review & Save
+### Step 3: Challenge Gate
+
+**Do:**
+
+1. Verify the change brief against these criteria:
+   - As-is behavior documented from code/data, not assumed
+   - To-be behavior is precise and testable (not vague aspirations)
+   - What does NOT change is explicitly listed
+   - RICE score calculated with realistic scores (not inflated)
+   - Regression risks identified for each proposed change
+   - Success criteria are measurable and binary
+
+**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+
+
+### Step 4: Review & Save
 
 **Do:**
 
@@ -72,58 +88,3 @@ flowchart LR
 | -------- | --------------------------------------------- | -------------------- |
 | Input    | `{{DOCS}}/memory/internal/system_overview.md` | System overview      |
 | Template | `{{DOCS}}/templates/pm/change_brief.md`       | Change brief template |
-
-### Output Template
-
-```markdown
-# Change Brief - [Change Name]
-
-## Context
-[Origin of the request and justification]
-
-## Current Behavior (As-Is)
-[Factual description of the current flow]
-
-## Expected Behavior (To-Be)
-[Precise description of the target flow]
-
-## What Does NOT Change
-[Behaviors explicitly preserved]
-
-## Business Impact
-| Dimension | Impact |
-| --- | --- |
-| Users | [Who is affected] |
-| Revenue | [Financial impact] |
-| Operations | [Support impact] |
-| Technical | [Debt reduced/added] |
-
-## RICE Score
-| Criterion | Score |
-| --- | --- |
-| Reach | /10 |
-| Impact | /10 |
-| Confidence | /10 |
-| Effort | /10 |
-| **RICE Score** | (R x I x C) / E |
-
-## Success Criteria
-| Criterion | Measurement | Target |
-| --- | --- | --- |
-| [What must be true] | [How to measure] | [Threshold] |
-
-## Scope Boundary
-### In Scope
-- [What this change includes]
-
-### Out of Scope
-- [What is explicitly excluded from this change]
-
-## Assumptions
-| ID | Assumption | Impact if wrong | Validation |
-| --- | --- | --- | --- |
-| A1 | [Hypothesis] | [Impact] | [How to validate] |
-
-## Identified Risks
-[Potential regressions and side effects]
-```

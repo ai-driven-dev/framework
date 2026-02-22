@@ -15,6 +15,7 @@ Generate well-structured user stories from PRD features, organized by epic, thro
 
 - No technical aspect, focus on user needs
 - Requirements started from $ARGUMENTS
+- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
 - Lean, concise approach
 - 3 max questions per iteration
 - Sort by implementation priority
@@ -57,7 +58,7 @@ Create user stories for the epic "Authentication"
 
 ```mermaid
 flowchart LR
-    A[Identify epics] --> B[Clarify per epic] --> C[Write stories] --> D[Validate INVEST] --> E[Define DoD] --> F[Save]
+    A[Identify epics] --> B[Clarify per epic] --> C[Write stories] --> D[Validate INVEST] --> E[Define DoD] --> F[Challenge gate] --> G[Save]
 ```
 
 ### Step 1: Identify Epics from PRD
@@ -94,7 +95,22 @@ flowchart LR
 
 **Success criteria:** DoD defined and applicable to all stories
 
-### Step 4: Save
+### Step 4: Challenge Gate
+
+**Do:**
+
+1. Verify the backlog against these criteria:
+   - All MVP epics justified by the North Star Metric
+   - No story exceeds 13 points without a planned split
+   - Gherkin acceptance criteria present for every story
+   - INVEST checklist passed for every story
+   - Blocking spikes identified and time-boxed (1-2 days max)
+   - Definition of Done defined at project level
+
+**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+
+
+### Step 5: Save
 
 **Do:**
 

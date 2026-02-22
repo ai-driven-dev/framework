@@ -18,6 +18,7 @@ Create a coherent and reusable set of UI/UX patterns, components, and guidelines
 - Reuse before creating: check if an existing component can be adapted
 - Design tokens (colors, typography, spacing) must be defined before components
 - Requirements started from $ARGUMENTS
+- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
 
 ### Scope Boundary
 
@@ -40,7 +41,7 @@ Create a design system from our PRD
 
 ```mermaid
 flowchart LR
-    A[Read PRD] --> B[Map journeys to screens] --> C[Identify components] --> D[Define tokens] --> E[Document components] --> F[Navigation patterns] --> G[Wireframes] --> H[Review] --> I[Save design_system.md]
+    A[Read PRD] --> B[Map journeys to screens] --> C[Identify components] --> D[Define tokens] --> E[Document components] --> F[Navigation patterns] --> G[Challenge gate] --> H[Wireframes] --> I[Review] --> J[Save design_system.md]
 ```
 
 ### Step 1: Map Journeys
@@ -77,7 +78,21 @@ flowchart LR
 
 **Success criteria:** Each component fully documented with variants, states, accessibility
 
-### Step 4: Wireframes & Review
+### Step 4: Challenge Gate
+
+**Do:**
+
+1. Verify the design system against these criteria:
+   - Components derived from actual user journeys (not invented)
+   - WCAG AA accessibility verified for every component (contrast, keyboard, ARIA)
+   - Design tokens defined before components (colors, typography, spacing)
+   - Navigation patterns coherent across all screens
+   - Scope boundary respected: visual patterns only, no UX copy or detailed ARIA specs
+
+**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+
+
+### Step 5: Wireframes & Review
 
 **Do:**
 

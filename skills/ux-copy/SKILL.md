@@ -19,6 +19,7 @@ Produce a complete UX copy document covering voice & tone guidelines, error mess
 - Empty states must guide the user toward the next action
 - No placeholder copy — every string is production-ready
 - Requirements started from $ARGUMENTS
+- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
 
 ### Scope Boundary
 
@@ -36,7 +37,7 @@ Generate UX copy from our PRD and user flows
 
 ```mermaid
 flowchart LR
-    A[Read PRD + flows + DS] --> B[Define voice & tone] --> C[Error messages] --> D[Empty states] --> E[Tooltips & onboarding] --> F[CTAs] --> G[Review] --> H[Save ux_copy.md]
+    A[Read PRD + flows + DS] --> B[Define voice & tone] --> C[Error messages] --> D[Empty states] --> E[Tooltips & onboarding] --> F[CTAs] --> G[Challenge gate] --> H[Review] --> I[Save ux_copy.md]
 ```
 
 ### Step 1: Define Voice & Tone
@@ -85,7 +86,22 @@ flowchart LR
 
 **Success criteria:** Complete copy set with i18n keys for tooltips, onboarding, CTAs
 
-### Step 4: Review & Save
+### Step 4: Challenge Gate
+
+**Do:**
+
+1. Verify the UX copy against these criteria:
+   - Voice & tone defined with do/don't examples before any copy is written
+   - All error messages are actionable (tell user what to do, not just what went wrong)
+   - All empty states guide user toward the next action
+   - All strings have i18n translation keys
+   - Copy is production-ready (no placeholder text)
+   - Tone consistent across all contexts (success, error, empty, onboarding)
+
+**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+
+
+### Step 5: Review & Save
 
 **Do:**
 

@@ -84,19 +84,10 @@ $ARGUMENTS
 | **Why**   | Is the problem and motivation articulated?       |
 | **How**   | Are the approach and constraints defined?        |
 
-### Output format
+## OUTPUT: Report
+
+Follow the challenge report template:
 
 ```markdown
-## Challenge Report
-
-### Blockers (must fix before proceeding)
-- [ ] [Issue description] — [which deliverable] — [why it blocks]
-
-### Warnings (should fix)
-- [ ] [Issue description] — [which deliverable] — [risk if ignored]
-
-### Passed
-- [x] [What was validated successfully]
-
-### Verdict: GO / NO-GO
+@{{DOCS}}/templates/pm/challenge_report.md
 ```

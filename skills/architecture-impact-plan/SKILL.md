@@ -19,6 +19,7 @@ Produce a concrete, incremental deployment plan with feature flags, progressive 
 - Monitoring must compare before/after baselines
 - Criteria for progression between rollout phases must be measurable and binary
 - Requirements started from $ARGUMENTS
+- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
 
 ## Quick Start
 
@@ -30,7 +31,7 @@ Generate an impact plan for the architecture changes
 
 ```mermaid
 flowchart LR
-    A[Read impact analysis] --> B[Define sequence] --> C[Feature flags] --> D[Rollout stages] --> E[Rollback procedures] --> F[Monitoring dashboard] --> G[Review] --> H[Save impact-plan.md]
+    A[Read impact analysis] --> B[Define sequence] --> C[Feature flags] --> D[Rollout stages] --> E[Rollback procedures] --> F[Challenge gate] --> G[Monitoring dashboard] --> H[Review] --> I[Save impact-plan.md]
 ```
 
 ### Step 1: Define Implementation Sequence
@@ -57,6 +58,7 @@ flowchart LR
    - Default value (always OFF)
    - TTL (planned removal date)
    - Rollback behavior
+   - Describe flags at specification level — no implementation code or SDK usage examples
 
 **Success criteria:** All flags documented with TTL and rollback behavior
 
@@ -71,10 +73,29 @@ flowchart LR
    - Full (100%)
 2. Set progression criteria for each stage (error rate, latency, business metrics)
 3. Document rollback procedure: step-by-step actions, estimated time, data loss assessment
+4. Assess rollback reversibility for each component:
+   - **Fully reversible**: feature flag toggle, code revert (no data change)
+   - **Partially reversible**: data migration with rollback script (potential data loss window)
+   - **Irreversible**: destructive data migration, third-party integration changes — requires extended canary phase and explicit stakeholder sign-off
 
 **Success criteria:** Rollout stages defined with binary progression criteria, rollback procedure documented
 
-### Step 4: Monitoring & Review
+### Step 4: Challenge Gate
+
+**Do:**
+
+1. Verify the impact plan against these criteria:
+   - All critical changes behind feature flags with documented TTL
+   - Progressive rollout stages defined with binary progression criteria
+   - Rollback achievable in under 5 minutes (or irreversibility acknowledged with extended canary)
+   - Rollback reversibility assessed per component (fully / partially / irreversible)
+   - Monitoring dashboard defined with before/after baselines
+   - No big bang deployment on critical flows
+
+**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+
+
+### Step 5: Monitoring & Review
 
 **Do:**
 
