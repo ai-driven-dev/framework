@@ -1,5 +1,5 @@
 ---
-name: ux-copy
+name: ux-copywriting
 description: >-
   Generates i18n-ready microcopy: voice & tone guidelines, error messages, empty states, tooltips, onboarding, CTAs.
   Use when you need consistent UX writing across the entire product.
@@ -13,13 +13,13 @@ Produce a complete UX copy document covering voice & tone guidelines, error mess
 
 ## Rules
 
-- All copy must be i18n-ready with translation keys
+- All copy must be i18n-ready — every string MUST have a translation key, no exceptions
 - Voice & tone must be defined before any copy is written
 - Error messages must be actionable — tell the user what to do, not just what went wrong
 - Empty states must guide the user toward the next action
 - No placeholder copy — every string is production-ready
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
+- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ### Scope Boundary
 
@@ -37,21 +37,22 @@ Generate UX copy from our PRD and user flows
 
 ```mermaid
 flowchart LR
-    A[Read PRD + flows + DS] --> B[Define voice & tone] --> C[Error messages] --> D[Empty states] --> E[Tooltips & onboarding] --> F[CTAs] --> G[Challenge gate] --> H[Review] --> I[Save ux_copy.md]
+    A[Read PRD + flows + DS] --> B[Define voice & tone] --> C[Error messages] --> D[Empty states] --> E[Tooltips & onboarding] --> F[CTAs] --> G[Challenge gate] --> H[Save ux_copy.md]
 ```
 
 ### Step 1: Define Voice & Tone
 
 **Do:**
 
-1. Read the PRD, user flows, and design system from $ARGUMENTS or referenced files
-2. Define the product voice (personality traits: professional, friendly, technical, casual, etc.)
-3. Define tone variations by context:
+1. Read the template from Resources. Follow its exact structure — same headings, same table columns, same formats. Do not add, remove, or rename sections.
+2. Read the PRD, user flows, and design system from $ARGUMENTS or referenced files
+3. Define the product voice (personality traits: professional, friendly, technical, casual, etc.)
+4. Define tone variations by context:
    - Success: celebratory but not excessive
    - Error: empathetic and actionable
    - Empty state: encouraging and guiding
    - Onboarding: welcoming and clear
-4. Provide do/don't examples for each tone
+5. Provide do/don't examples for each tone
 
 **Success criteria:** Voice & tone guidelines defined with concrete examples
 
@@ -90,26 +91,20 @@ flowchart LR
 
 **Do:**
 
-1. Verify the UX copy against these criteria:
-   - Voice & tone defined with do/don't examples before any copy is written
-   - All error messages are actionable (tell user what to do, not just what went wrong)
-   - All empty states guide user toward the next action
-   - All strings have i18n translation keys
-   - Copy is production-ready (no placeholder text)
-   - Tone consistent across all contexts (success, error, empty, onboarding)
+1. Read the template from Resources
+2. Verify every template section exists in the output with the exact same heading name and no section was added beyond what the template defines
+3. Verify format requirements:
+   - All strings have i18n translation keys per template key format
 
-**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+**Success criteria:** All template sections present and format requirements met. If any section is missing or any format is wrong, STOP — fix it. Do NOT proceed until structurally complete.
 
-
-### Step 5: Review & Save
+### Step 5: Save
 
 **Do:**
 
-1. Present the complete UX copy document for review
-2. **WAIT FOR USER APPROVAL**
-3. Save as `{{DOCS}}/memory/internal/ux_copy.md`
+1. Save as `{{DOCS}}/memory/internal/ux_copy.md`
 
-**Success criteria:** UX copy validated and saved
+**Success criteria:** File saved and accessible
 
 ## Resources
 

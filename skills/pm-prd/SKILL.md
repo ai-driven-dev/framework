@@ -14,12 +14,13 @@ Transform a validated product brief into a comprehensive PRD with all sections n
 ## Rules
 
 - Every feature must be justified by the North Star Metric
-- Acceptance criteria in Gherkin format (Given/When/Then)
+- Acceptance criteria MUST use Given/When/Then Gherkin syntax as shown in the template. Tables are NOT a valid substitute.
 - Non-Goals section is mandatory (not optional)
 - Scope in 3 tiers: MVP / Next Release / Never
 - No technical implementation details (that's architecture)
+- All template sections are mandatory in the output. For content already covered by constitution or brief, write a 1-2 sentence summary + reference link — never omit the section entirely.
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
+- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 
@@ -31,7 +32,7 @@ Generate the PRD from our product brief
 
 ```mermaid
 flowchart LR
-    A[Read brief] --> B[Clarify priorities] --> C[Generate PRD sections] --> D[Highlight invisibles] --> E[Challenge gate] --> F[Review & approve] --> G[Save prd.md]
+    A[Read brief] --> B[Clarify priorities] --> C[Generate PRD sections] --> D[Highlight invisibles] --> E[Challenge gate] --> F[Save prd.md]
 ```
 
 ### Step 1: Read & Clarify
@@ -48,50 +49,30 @@ flowchart LR
 
 **Do:**
 
-1. Generate the full PRD with all 16 sections:
-   - Executive Summary
-   - User Personas
-   - Goals & Objectives
-   - Core Features
-   - Acceptance Criteria (Gherkin)
-   - Non-Goals
-   - Non-Functional Requirements
-   - Technical Architecture (constraints + integrations)
-   - User Experience
-   - Success Metrics
-   - Dependencies
-   - Experiments / A/B Testing
-   - Timeline & Milestones
-   - Risks & Mitigations
-   - Scope Boundaries (3-tier)
-   - Assumptions
+1. Read the template from Resources. Follow its exact structure — same headings, same table columns, same formats. Do not add, remove, or rename sections.
 2. Highlight the "invisibles" (Non-Goals, Edge Cases, Error States, Risks, Security, Assumptions)
 
-**Success criteria:** All 16 sections completed, invisibles highlighted
+**Success criteria:** All template sections completed, invisibles highlighted
 
 ### Step 3: Challenge Gate
 
 **Do:**
 
-1. Verify the PRD against these criteria:
-   - Every feature justified by the North Star Metric
-   - Acceptance criteria in Gherkin for every feature (happy path + error + boundary)
-   - Non-Goals section is explicit and non-empty
-   - 3-tier scope clearly defined (MVP / Next Release / Never)
-   - Invisibles highlighted: edge cases, error states, security implications, assumptions
+1. Read the template from Resources
+2. Verify every template section exists in the output with the exact same heading name and no section was added beyond what the template defines
+3. Verify format requirements:
+   - Acceptance criteria in Given/When/Then Gherkin format
+   - Scope in 3 tiers (MVP / Next Release / Never)
 
-**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+**Success criteria:** All template sections present and format requirements met. If any section is missing or any format is wrong, STOP — fix it. Do NOT proceed until structurally complete.
 
-
-### Step 4: Review & Save
+### Step 4: Save
 
 **Do:**
 
-1. Present for review
-2. **WAIT FOR USER APPROVAL**
-3. Save as `{{DOCS}}/memory/internal/prd.md`
+1. Save as `{{DOCS}}/memory/internal/prd.md`
 
-**Success criteria:** PRD validated and saved
+**Success criteria:** File saved and accessible
 
 ## Resources
 

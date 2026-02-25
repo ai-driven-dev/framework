@@ -18,7 +18,8 @@ Validate that the right problem is being solved for the right people, then synth
 - Competitive analysis must identify table stakes AND differentiators
 - The product brief is generated ONLY after challenge gate passes
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
+- When $ARGUMENTS references a detailed existing specification, treat it as validation data. Extract hypotheses from it and mark them as pre-validated. Competitive analysis and persona definition still apply — use the specification as the primary source.
+- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 
@@ -30,7 +31,7 @@ Create a product brief based on our constitution
 
 ```mermaid
 flowchart LR
-    A[Read constitution] --> B[Extract hypotheses] --> C[Online research] --> D[Interview guide] --> E[Synthesize field data] --> F[Competitive analysis] --> G[Challenge gate] --> H[Generate brief] --> I[Save product_brief.md]
+    A[Read constitution] --> B[Extract hypotheses] --> C[Online research] --> D[Interview guide] --> E[Synthesize field data] --> F[Competitive analysis] --> G[Challenge gate] --> H[Save product_brief.md]
 ```
 
 ### Step 1: Extract Hypotheses
@@ -88,24 +89,20 @@ flowchart LR
 
 **Do:**
 
-1. Verify the discovery results against these criteria:
-   - Problem validated by real data (interviews, reviews, market signals) — not assumed
-   - Primary persona defined and backed by research (not invented)
-   - At least 1 differentiator vs competition validated by the value map
-   - Critical hypotheses all tested — any untested hypothesis flagged with risk level
-   - No unresolved blocking objection
+1. Read the template from Resources
+2. Verify every template section exists in the output with the exact same heading name and no section was added beyond what the template defines
+3. Verify format requirements: (none — structure only for this skill)
 
-**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before generating the brief.
+**Success criteria:** All template sections present and format requirements met. If any section is missing or any format is wrong, STOP — fix it. Do NOT proceed until structurally complete.
 
-### Step 5: Generate Brief
+### Step 5: Save
 
 **Do:**
 
-1. Generate the product brief with all sections
-2. **WAIT FOR USER APPROVAL**
-3. Save as `{{DOCS}}/memory/internal/product_brief.md`
+1. Read the template from Resources. Follow its exact structure — same headings, same table columns, same formats. Do not add, remove, or rename sections.
+2. Save as `{{DOCS}}/memory/internal/product_brief.md`
 
-**Success criteria:** Product brief validated and saved
+**Success criteria:** File saved and accessible
 
 ## Resources
 

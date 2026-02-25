@@ -1,5 +1,5 @@
 ---
-name: design-system
+name: ux-design-system
 description: >-
   Generates a design system with components, guidelines, and patterns from PRD user journeys.
   Use when you need to create UI/UX foundations for a new project.
@@ -18,7 +18,7 @@ Create a coherent and reusable set of UI/UX patterns, components, and guidelines
 - Reuse before creating: check if an existing component can be adapted
 - Design tokens (colors, typography, spacing) must be defined before components
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
+- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ### Scope Boundary
 
@@ -41,7 +41,7 @@ Create a design system from our PRD
 
 ```mermaid
 flowchart LR
-    A[Read PRD] --> B[Map journeys to screens] --> C[Identify components] --> D[Define tokens] --> E[Document components] --> F[Navigation patterns] --> G[Challenge gate] --> H[Wireframes] --> I[Review] --> J[Save design_system.md]
+    A[Read PRD] --> B[Map journeys to screens] --> C[Identify components] --> D[Define tokens] --> E[Document components] --> F[Navigation patterns] --> G[Challenge gate] --> H[Wireframes] --> I[Save design_system.md]
 ```
 
 ### Step 1: Map Journeys
@@ -58,50 +58,39 @@ flowchart LR
 
 **Do:**
 
-1. Define design tokens:
-   - Color palette (with WCAG AA contrast verification)
-   - Typography scale (h1-h6, body, caption)
-   - Spacing system (4px base grid)
-   - Border radius, shadows, transitions
+1. Read the template from Resources. Follow its exact structure — same headings, same table columns, same formats. Do not add, remove, or rename sections.
+2. Define all design tokens following the template. All token categories are mandatory.
 
-**Success criteria:** All tokens defined with accessibility compliance
+**Success criteria:** All template token categories defined with accessibility compliance
 
 ### Step 3: Document Components
 
 **Do:**
 
-1. For each component, document:
-   - Variants (primary, secondary, ghost, danger)
-   - States (default, hover, active, disabled, loading, error)
-   - Accessibility requirements (labels, keyboard nav, focus)
-2. Define navigation patterns (sidebar, top nav, tabs, breadcrumbs)
+1. For each component, document all aspects from the template (variants, states, accessibility)
+2. Define navigation patterns
 
-**Success criteria:** Each component fully documented with variants, states, accessibility
+**Success criteria:** Each component fully documented per template, navigation patterns defined
 
 ### Step 4: Challenge Gate
 
 **Do:**
 
-1. Verify the design system against these criteria:
-   - Components derived from actual user journeys (not invented)
-   - WCAG AA accessibility verified for every component (contrast, keyboard, ARIA)
-   - Design tokens defined before components (colors, typography, spacing)
-   - Navigation patterns coherent across all screens
-   - Scope boundary respected: visual patterns only, no UX copy or detailed ARIA specs
+1. Read the template from Resources
+2. Verify every template section exists in the output with the exact same heading name and no section was added beyond what the template defines
+3. Verify format requirements:
+   - WCAG AA contrast ratios documented per color token
 
-**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+**Success criteria:** All template sections present and format requirements met. If any section is missing or any format is wrong, STOP — fix it. Do NOT proceed until structurally complete.
 
-
-### Step 5: Wireframes & Review
+### Step 5: Wireframes & Save
 
 **Do:**
 
 1. Create wireframes for key MVP screens (main view, critical form, empty state, error state)
-2. Present for review
-3. **WAIT FOR USER APPROVAL**
-4. Save as `{{DOCS}}/memory/internal/design_system.md`
+2. Save as `{{DOCS}}/memory/internal/design_system.md`
 
-**Success criteria:** Wireframes created, design system validated and saved
+**Success criteria:** Wireframes created, file saved and accessible
 
 ## Resources
 

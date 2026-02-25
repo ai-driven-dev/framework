@@ -15,6 +15,7 @@ description: >-
 
 - <Constraint or convention to follow>
 - <Another rule>
+- **Standalone usage** — when invoked directly (not through an orchestrator), present the deliverable, ask for user approval, then run `/challenge` for adversarial review
 
 ## Quick Start
 

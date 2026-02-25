@@ -1,5 +1,5 @@
 ---
-name: design-system-update
+name: ux-design-system-update
 description: >-
   Audits existing UI patterns and generates a design system update plan for brownfield evolution.
   Use when you need to integrate new components without breaking visual consistency.
@@ -19,7 +19,7 @@ Audit existing UI patterns and generate a coherent design system update plan tha
 - WCAG AA accessibility is mandatory for every addition
 - Navigation coherence must be preserved
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
+- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 
@@ -31,7 +31,7 @@ Audit and update the design system for the new dashboard feature
 
 ```mermaid
 flowchart LR
-    A[Read change brief] --> B[Audit existing components] --> C[Identify new needs] --> D[Specify new components] --> E[Update guidelines] --> F[Verify navigation] --> G[Challenge gate] --> H[Review] --> I[Save design-system-update.md]
+    A[Read change brief] --> B[Audit existing components] --> C[Identify new needs] --> D[Specify new components] --> E[Update guidelines] --> F[Verify navigation] --> G[Challenge gate] --> H[Save design-system-update.md]
 ```
 
 ### Step 1: Audit Existing Components
@@ -72,18 +72,15 @@ flowchart LR
    - WCAG AA accessibility maintained on every addition
    - Migration plan defined for replaced components (if applicable)
 
-**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+**Success criteria:** All criteria pass. If any criterion fails, STOP — list each failing criterion with what is missing or incorrect. Iterate with the user until every criterion passes. Do NOT proceed to the next step until the gate is fully passed.
 
-
-### Step 5: Review & Save
+### Step 5: Save
 
 **Do:**
 
-1. Present the update plan for review
-2. **WAIT FOR USER APPROVAL**
-3. Save as `{{DOCS}}/tasks/YYYY-MM-DD-{change-name}/design-system-update.md`
+1. Save as `{{DOCS}}/tasks/YYYY-MM-DD-{change-name}/design-system-update.md`
 
-**Success criteria:** Design system update validated and saved
+**Success criteria:** File saved and accessible
 
 ## Resources
 

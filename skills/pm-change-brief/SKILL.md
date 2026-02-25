@@ -18,7 +18,7 @@ Clarify the gap between current behavior (as-is) and expected behavior (to-be) f
 - Quantify business impact when possible
 - One change brief per feature or coherent block of changes
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
+- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 
@@ -30,7 +30,7 @@ Create a change brief for adding multi-tenant support
 
 ```mermaid
 flowchart LR
-    A[Analyze request] --> B[Document as-is] --> C[Clarify to-be] --> D[Draft brief] --> E[Calculate RICE] --> F[Challenge gate] --> G[Review] --> H[Save change-brief.md]
+    A[Analyze request] --> B[Document as-is] --> C[Clarify to-be] --> D[Draft brief] --> E[Calculate RICE] --> F[Challenge gate] --> G[Save change-brief.md]
 ```
 
 ### Step 1: Analyze & Document Current State
@@ -38,9 +38,10 @@ flowchart LR
 **Do:**
 
 1. Analyze the change request from $ARGUMENTS
-2. Document the current behavior (as-is) by reading relevant code
-3. Ask clarifying questions about the expected behavior (to-be)
-4. **WAIT FOR USER RESPONSE**
+2. If `prd.md` or `constitution.md` exist, read them to enrich the "What Does NOT Change" section with product-level preservation context and to ground success criteria in project constraints and values
+3. Document the current behavior (as-is) by reading relevant code
+4. Ask clarifying questions about the expected behavior (to-be)
+5. **WAIT FOR USER RESPONSE**
 
 **Success criteria:** Current behavior documented, target behavior understood
 
@@ -48,43 +49,35 @@ flowchart LR
 
 **Do:**
 
-1. Draft the change brief with as-is, to-be, impact, and preserved behaviors
-2. Add **Success Criteria** — measurable conditions for the change to be considered done
-3. Add **Scope Boundary** — what is explicitly in-scope and out-of-scope for this change
-4. Add **Assumptions** — hypotheses taken as true; if invalidated, which sections must be revisited
-5. Calculate RICE score for prioritization
-6. Identify regression risks
+1. Read the template from Resources. Follow its exact structure — same headings, same table columns, same formats. Do not add, remove, or rename sections.
+2. Calculate RICE score for prioritization
+3. Identify regression risks
 
-**Success criteria:** All sections completed including success criteria, scope boundary, and assumptions; risks identified
+**Success criteria:** All template sections completed, RICE calculated, risks identified
 
 ### Step 3: Challenge Gate
 
 **Do:**
 
-1. Verify the change brief against these criteria:
-   - As-is behavior documented from code/data, not assumed
-   - To-be behavior is precise and testable (not vague aspirations)
-   - What does NOT change is explicitly listed
-   - RICE score calculated with realistic scores (not inflated)
-   - Regression risks identified for each proposed change
-   - Success criteria are measurable and binary
+1. Read the template from Resources
+2. Verify every template section exists in the output with the exact same heading name and no section was added beyond what the template defines
+3. Verify format requirements: (none — structure only for this skill)
 
-**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+**Success criteria:** All template sections present and format requirements met. If any section is missing or any format is wrong, STOP — fix it. Do NOT proceed until structurally complete.
 
-
-### Step 4: Review & Save
+### Step 4: Save
 
 **Do:**
 
-1. Present for review
-2. **WAIT FOR USER APPROVAL**
-3. Save as `{{DOCS}}/tasks/YYYY-MM-DD-{change-name}/change-brief.md`
+1. Save as `{{DOCS}}/tasks/YYYY-MM-DD-{change-name}/change-brief.md`
 
-**Success criteria:** Change brief validated and saved
+**Success criteria:** File saved and accessible
 
 ## Resources
 
-| Type     | Path                                          | Description          |
-| -------- | --------------------------------------------- | -------------------- |
-| Input    | `{{DOCS}}/memory/internal/system_overview.md` | System overview      |
-| Template | `{{DOCS}}/templates/pm/change_brief.md`       | Change brief template |
+| Type     | Path                                          | Description                              |
+| -------- | --------------------------------------------- | ---------------------------------------- |
+| Input    | `{{DOCS}}/memory/internal/system_overview.md` | System overview                          |
+| Input    | `{{DOCS}}/memory/internal/prd.md`             | Product spec (if available)              |
+| Input    | `{{DOCS}}/memory/internal/constitution.md`    | Project constraints & values (if available) |
+| Template | `{{DOCS}}/templates/pm/change_brief.md`       | Change brief template                    |

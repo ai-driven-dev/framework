@@ -12,8 +12,8 @@ description: Multi-agent coordination and workflows template
 | `oriane`   | PM Orchestrator — orchestrates all product workflows                   | - Run PM skills sequentially with challenge gates <br> - Adapt flow based on existing deliverables and user request                  | prod   |
 | `ariane`   | Architect — handles technical architecture and implementation planning            | - Make justified architecture decisions from PRD and constraints <br> - Create implementation plans                                      | prod   |
 | `diane`    | UX Designer — handles design systems, user flows, accessibility, UX copy          | - Create and maintain design systems <br> - Map user flows, spec accessibility, write UX copy, audit UX                                 | prod   |
-| `eva`      | Impact Evaluator — evaluates decision impacts globally                              | - Assess impacts across 5 dimensions (technical, business, users, regulatory, operational) <br> - Provide structured impact reports     | prod   |
-| `justine`  | Clarity challenger — challenges deliverables and identifies gaps                    | - Ensure no deliverable moves forward until clear and complete <br> - Cover 95% of ambiguities through iterative questioning            | prod   |
+| `eva`      | Impact Evaluator — evaluates impacts of ideas, decisions, and deliverables globally | - Assess impacts across 5 dimensions (technical, business, users, regulatory, operational) <br> - Provide structured impact reports     | prod   |
+| `justine`  | Challenger — challenges ideas, decisions, and deliverables using structured methods | - Challenge whatever is put in front of her using structured methods <br> - Block progression until all critical gaps are resolved        | prod   |
 | `kent`     | TDD & Tidy First development guide                                                 | - Drive the Red → Green → Refactor TDD cycle <br> - Separate structural changes from behavioral changes                                | prod   |
 | `iris`     | Frontend specialist - implement from Figma, verify UI conformity, validate journeys | - Implement components from Figma designs <br> - Verify UI conformity and validate user journeys                                        | prod   |
 | `martin`   | Code quality and validation agent                                                  | - Run commands to validate build, lint and tests <br> - Enforce coding assertions and module-specific rules                             | prod   |
@@ -69,9 +69,9 @@ Use-cases :
 Use-cases :
 
 - **Greenfield projects** : Run the full Constitution → Discovery → PRD → User Stories pipeline.
-- **Brownfield evolution** : Run the System Overview → Change Brief → User Stories pipeline.
+- **Brownfield evolution** : Run the System Overview → Change Brief → Change Spec pipeline.
 - **Adaptive** : Oriane detects existing deliverables, skips completed steps, and adapts to the user's request.
-- **Skills** : `pm-constitution`, `pm-product-brief`, `pm-prd`, `pm-user-stories`, `pm-system-overview`, `pm-change-brief`.
+- **Skills** : `pm-constitution`, `pm-product-brief`, `pm-prd`, `pm-user-stories`, `pm-system-overview`, `pm-change-brief`, `pm-change-spec`.
 
 ### `ariane`
 
@@ -95,11 +95,11 @@ Use-cases :
 - **Accessibility** : Generate actionable a11y specifications per component.
 - **UX copy** : Generate i18n-ready microcopy for the entire product.
 - **UX audit** : Evaluate an existing product against Nielsen's 10 heuristics.
-- **Skills** : `design-system`, `design-system-update`, `ux-flow-map`, `ux-accessibility`, `ux-copy`, `ux-audit`.
+- **Skills** : `ux-design-system`, `ux-design-system-update`, `ux-flow-map`, `ux-flow-update`, `ux-accessibility`, `ux-accessibility-update`, `ux-copywriting`, `ux-copywriting-update`, `ux-audit`.
 
 ### `eva`
 
-> Use Éva when you need to evaluate the global impact of a decision or change.
+> Use Éva when you need to evaluate the global impact of whatever is in front of you — ideas, decisions, deliverables, changes.
 
 Use-cases :
 
@@ -110,11 +110,12 @@ Use-cases :
 
 ### `justine`
 
-> Use Justine when you need to challenge deliverables, find gaps, and ensure everything is justified before moving forward.
+> Use Justine when you need to challenge anything — ideas, decisions, deliverables, scope, trade-offs.
 
 Use-cases :
 
-- **Deliverable review** : Challenge any product deliverable for completeness, contradictions, and missing elements.
+- **Deliverable review** : Challenge any deliverable for completeness, contradictions, and missing elements.
+- **Idea/decision challenge** : Question assumptions, scope decisions, trade-offs before committing.
 - **Gap analysis** : Identify cross-document inconsistencies and missing references across the full workflow.
 
 ### `kent`
