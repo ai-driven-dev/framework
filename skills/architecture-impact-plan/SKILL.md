@@ -19,7 +19,7 @@ Produce a concrete, incremental deployment plan with feature flags, progressive 
 - Monitoring must compare before/after baselines
 - Criteria for progression between rollout phases must be measurable and binary
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
+- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 
@@ -31,7 +31,7 @@ Generate an impact plan for the architecture changes
 
 ```mermaid
 flowchart LR
-    A[Read impact analysis] --> B[Define sequence] --> C[Feature flags] --> D[Rollout stages] --> E[Rollback procedures] --> F[Challenge gate] --> G[Monitoring dashboard] --> H[Review] --> I[Save impact-plan.md]
+    A[Read impact analysis] --> B[Define sequence] --> C[Feature flags] --> D[Rollout stages] --> E[Rollback procedures] --> F[Challenge gate] --> G[Monitoring dashboard] --> H[Save impact-plan.md]
 ```
 
 ### Step 1: Define Implementation Sequence
@@ -39,7 +39,8 @@ flowchart LR
 **Do:**
 
 1. Read the architecture impact analysis from $ARGUMENTS or referenced files
-2. Define implementation sequence ordered by risk (highest risk first):
+2. If `milestones.md` exists, read it to align the rollout plan with the initial milestone sequencing — reuse phase boundaries where possible and flag divergences
+3. Define implementation sequence ordered by risk (highest risk first):
    - Phase 1: Feature flags setup + infrastructure preparation
    - Phase 2: Data migrations (behind flags)
    - Phase 3: Code changes (behind flags)
@@ -92,23 +93,21 @@ flowchart LR
    - Monitoring dashboard defined with before/after baselines
    - No big bang deployment on critical flows
 
-**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+**Success criteria:** All criteria pass. If any criterion fails, STOP — list each failing criterion with what is missing or incorrect. Iterate with the user until every criterion passes. Do NOT proceed to the next step until the gate is fully passed.
 
-
-### Step 5: Monitoring & Review
+### Step 5: Monitoring & Save
 
 **Do:**
 
 1. Define monitoring dashboard: before/after baseline, flag status, error tracking, alert thresholds
-2. Present for review
-3. **WAIT FOR USER APPROVAL**
-4. Save as `{{DOCS}}/tasks/YYYY-MM-DD-{change-name}/impact-plan.md`
+2. Save as `{{DOCS}}/tasks/YYYY-MM-DD-{change-name}/impact-plan.md`
 
-**Success criteria:** Monitoring defined, impact plan validated and saved
+**Success criteria:** Monitoring defined, file saved and accessible
 
 ## Resources
 
-| Type  | Path                                      | Description          |
-| ----- | ----------------------------------------- | -------------------- |
-| Input | `{{DOCS}}/tasks/YYYY-MM-DD-{change-name}/architecture-impact.md` | Impact analysis      |
-| Input | `{{DOCS}}/memory/internal/system_overview.md`    | System overview      |
+| Type  | Path                                                             | Description                             |
+| ----- | ---------------------------------------------------------------- | --------------------------------------- |
+| Input | `{{DOCS}}/tasks/YYYY-MM-DD-{change-name}/architecture-impact.md` | Impact analysis                         |
+| Input | `{{DOCS}}/memory/internal/system_overview.md`                    | System overview                         |
+| Input | `{{DOCS}}/memory/internal/milestones.md`                         | Initial milestone sequencing (if available) |

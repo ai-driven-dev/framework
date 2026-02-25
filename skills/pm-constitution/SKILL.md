@@ -19,7 +19,7 @@ Transform a raw idea into a structured constitution document that frames the pro
 - Constraints must be binary (negotiable or not)
 - Anti-over-engineering rules are mandatory
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
+- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 
@@ -31,7 +31,7 @@ Create a constitution for my SaaS project management tool
 
 ```mermaid
 flowchart LR
-    A[Analyze idea] --> B[Ask clarifying questions] --> C[Wait for response] --> D[Draft constitution] --> E[Review & approve] --> F[Challenge gate] --> G[Save constitution.md]
+    A[Analyze idea] --> B[Ask clarifying questions] --> C[Wait for response] --> D[Draft constitution] --> E[Challenge gate] --> F[Save constitution.md]
 ```
 
 ### Step 1: Analyze & Clarify
@@ -48,25 +48,21 @@ flowchart LR
 
 **Do:**
 
-1. Draft the constitution with all sections using the template below
-2. Present for review, highlighting any assumptions made
-3. **WAIT FOR USER APPROVAL**
+1. Read the template from Resources. Follow its exact structure — same headings, same table columns, same formats. Do not add, remove, or rename sections.
+2. Fill in each placeholder (`[...]`) with project-specific content
+3. Highlight any assumptions made
 
-**Success criteria:** All sections completed, assumptions flagged
+**Success criteria:** All template sections completed with exact heading names preserved, assumptions flagged
 
 ### Step 3: Challenge Gate
 
 **Do:**
 
-1. Verify the constitution against these criteria:
-   - Vision clear in one sentence — a new team member understands the project without additional context
-   - NSM is measurable, actionable, and not a vanity metric (not page views, not downloads)
-   - Non-negotiable constraints listed with consequences if violated
-   - Anti-over-engineering rules are concrete and actionable (not generic platitudes)
-   - Key stakeholders identified with what each validates
+1. Read the template from Resources
+2. Verify every template section exists in the output with the exact same heading name and no section was added beyond what the template defines
+3. Verify format requirements: (none — structure only for this skill)
 
-**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
-
+**Success criteria:** All template sections present and format requirements met. If any section is missing or any format is wrong, STOP — fix it. Do NOT proceed until structurally complete.
 
 ### Step 4: Save
 

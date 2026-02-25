@@ -18,7 +18,7 @@ Produce a structured architecture document where every technical choice is justi
 - Document trade-offs explicitly, not just the chosen option
 - Anti-pattern: choosing tech by preference instead of by need
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
+- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ### Scope Boundary
 
@@ -34,7 +34,7 @@ Make architecture decisions based on our PRD
 
 ```mermaid
 flowchart LR
-    A[Read PRD & constitution] --> B[Extract requirements] --> C[Evaluate options] --> D[Component diagram] --> E[Data model] --> F[API contracts] --> G[Challenge gate] --> H[Review] --> I[Save architecture.md]
+    A[Read PRD & constitution] --> B[Extract requirements] --> C[Evaluate options] --> D[Component diagram] --> E[Data model] --> F[API contracts] --> G[Challenge gate] --> H[Save architecture.md]
 ```
 
 ### Step 1: Extract Requirements
@@ -50,7 +50,8 @@ flowchart LR
 
 **Do:**
 
-1. For each decision area (stack, components, data model, API, infrastructure):
+1. Read the template from Resources. Follow its exact structure — same headings, same table columns, same formats. Do not add, remove, or rename sections.
+2. For each decision area (stack, components, data model, API, infrastructure):
    - List 2-3 options with pros/cons
    - Score each option against constraints using a weighted matrix
    - Recommend the best option with justification
@@ -72,25 +73,20 @@ flowchart LR
 
 **Do:**
 
-1. Verify the architecture against these criteria:
-   - Every technology choice linked to a functional need or NFR (not team preference)
-   - Trade-offs documented for each decision (not just the chosen option)
-   - Anti-over-engineering: this is the simplest architecture that meets requirements
-   - Data model covers all core entities from the PRD
-   - API contracts consistent with user stories
+1. Read the template from Resources
+2. Verify every template section exists in the output with the exact same heading name and no section was added beyond what the template defines
+3. Verify format requirements:
+   - Trade-offs in weighted matrix format
 
-**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+**Success criteria:** All template sections present and format requirements met. If any section is missing or any format is wrong, STOP — fix it. Do NOT proceed until structurally complete.
 
-
-### Step 5: Review & Save
+### Step 5: Save
 
 **Do:**
 
-1. Present for review
-2. **WAIT FOR USER APPROVAL**
-3. Save as `{{DOCS}}/memory/internal/architecture.md`
+1. Save as `{{DOCS}}/memory/internal/architecture.md`
 
-**Success criteria:** Architecture validated and saved
+**Success criteria:** File saved and accessible
 
 ## Resources
 

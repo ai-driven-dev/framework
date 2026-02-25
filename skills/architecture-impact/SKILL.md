@@ -18,7 +18,7 @@ Map every module, service, and data structure impacted by a brownfield change, c
 - Zero-downtime migrations by default, justify any downtime
 - Breaking changes require explicit versioning strategy
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
+- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 
@@ -30,7 +30,7 @@ Analyze the architecture impact of adding multi-tenant support
 
 ```mermaid
 flowchart LR
-    A[Read change brief] --> B[Identify impacted modules] --> C[Impact tree diagram] --> D[Evolution strategy] --> E[Migration plan] --> F[API versioning] --> G[Challenge gate] --> H[Review] --> I[Save architecture-impact.md]
+    A[Read change brief] --> B[Identify impacted modules] --> C[Impact tree diagram] --> D[Evolution strategy] --> E[Migration plan] --> F[API versioning] --> G[Challenge gate] --> H[Save architecture-impact.md]
 ```
 
 ### Step 1: Identify Impacted Modules
@@ -38,7 +38,8 @@ flowchart LR
 **Do:**
 
 1. Read the change brief/PRD and system overview
-2. Identify all impacted modules:
+2. If `architecture.md` exists, read it to understand initial design decisions and their constraints — use this to assess whether the proposed change aligns with or diverges from existing architectural rationale
+3. Identify all impacted modules:
    - **Direct**: modules that are modified
    - **Indirect**: modules that depend on modified ones
    - **Transitive**: modules that depend on indirect ones
@@ -91,21 +92,19 @@ flowchart LR
    - Migration plan includes rollback procedure for each phase
    - Zero-downtime validated (or downtime justified and communicated)
 
-**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+**Success criteria:** All criteria pass. If any criterion fails, STOP — list each failing criterion with what is missing or incorrect. Iterate with the user until every criterion passes. Do NOT proceed to the next step until the gate is fully passed.
 
-
-### Step 5: Review & Save
+### Step 5: Save
 
 **Do:**
 
-1. Present impact analysis for review
-2. **WAIT FOR USER APPROVAL**
-3. Save as `{{DOCS}}/tasks/YYYY-MM-DD-{change-name}/architecture-impact.md`
+1. Save as `{{DOCS}}/tasks/YYYY-MM-DD-{change-name}/architecture-impact.md`
 
-**Success criteria:** Impact analysis validated and saved
+**Success criteria:** File saved and accessible
 
 ## Resources
 
-| Type  | Path                                           | Description     |
-| ----- | ---------------------------------------------- | --------------- |
-| Input | `{{DOCS}}/memory/internal/system_overview.md` | System overview |
+| Type  | Path                                           | Description                                  |
+| ----- | ---------------------------------------------- | -------------------------------------------- |
+| Input | `{{DOCS}}/memory/internal/system_overview.md`  | System overview                              |
+| Input | `{{DOCS}}/memory/internal/architecture.md`     | Initial architecture decisions (if available) |

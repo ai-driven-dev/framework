@@ -19,7 +19,7 @@ Evaluate an existing product against Nielsen's 10 usability heuristics. Produce 
 - Prioritization uses impact vs effort matrix
 - Evidence-based — cite specific screens, flows, or code patterns
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
+- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 
@@ -31,7 +31,7 @@ Audit the UX of our application
 
 ```mermaid
 flowchart LR
-    A[Gather inputs] --> B[Evaluate 10 heuristics] --> C[Score severity] --> D[Prioritization matrix] --> E[Recommendations] --> F[Challenge gate] --> G[Review] --> H[Save ux-audit.md]
+    A[Gather inputs] --> B[Evaluate 10 heuristics] --> C[Score severity] --> D[Prioritization matrix] --> E[Recommendations] --> F[Challenge gate] --> G[Save ux-audit.md]
 ```
 
 ### Step 1: Gather Inputs
@@ -92,18 +92,15 @@ flowchart LR
    - Every finding has a concrete, actionable recommendation (not just a diagnosis)
    - Evidence-based: specific screens, flows, or code patterns cited for each finding
 
-**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+**Success criteria:** All criteria pass. If any criterion fails, STOP — list each failing criterion with what is missing or incorrect. Iterate with the user until every criterion passes. Do NOT proceed to the next step until the gate is fully passed.
 
-
-### Step 5: Review & Save
+### Step 5: Save
 
 **Do:**
 
-1. Present the audit report with findings, scores, and prioritized recommendations
-2. **WAIT FOR USER APPROVAL**
-3. Save as `{{DOCS}}/tasks/YYYY-MM-DD-{audit}/ux-audit.md`
+1. Save as `{{DOCS}}/tasks/YYYY-MM-DD-{audit}/ux-audit.md`
 
-**Success criteria:** UX audit validated and saved
+**Success criteria:** File saved and accessible
 
 ## Resources
 

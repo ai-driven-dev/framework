@@ -18,11 +18,15 @@ Produce a complete map of user flows covering every state: happy path, error, em
 - Each decision point must document both branches (success and failure)
 - Edge cases are not optional — they are the main deliverable
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
+- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ### Scope Boundary
 
 **Document transitions, not copy.** For each state, document the **type of response** (error, confirmation, redirect) and the **recovery path**, but not the exact user-facing text. Exact wording is owned by `ux_copy.md`.
+
+- **DO:** "Error → actionable error message on stderr with recovery guidance"
+- **DON'T:** "Error → `Authentication failed. Run gh auth login to authenticate, or provide a token via --token or AIDD_TOKEN.`"
+- The exact text is owned by `ux_copy.md`. Here, document WHAT type of response and HOW to recover, not the exact wording.
 
 ## Quick Start
 
@@ -34,7 +38,7 @@ Map user flows from our PRD
 
 ```mermaid
 flowchart LR
-    A[Read PRD] --> B[Identify core flows] --> C[Map happy paths] --> D[Add error states] --> E[Add empty/loading/offline] --> F[Add permission/first-time] --> G[Challenge gate] --> H[Review] --> I[Save user_flows.md]
+    A[Read PRD] --> B[Identify core flows] --> C[Map happy paths] --> D[Add error states] --> E[Add empty/loading/offline] --> F[Add permission/first-time] --> G[Challenge gate] --> H[Save user_flows.md]
 ```
 
 ### Step 1: Identify Core Flows
@@ -51,9 +55,10 @@ flowchart LR
 
 **Do:**
 
-1. For each flow, document the happy path step by step
-2. Include screen transitions, user actions, and system responses
-3. Use Mermaid flowcharts to visualize each flow
+1. Read the template from Resources. Follow its exact structure — same headings, same table columns, same formats. Do not add, remove, or rename sections.
+2. For each flow, document the happy path step by step
+3. Include screen transitions, user actions, and system responses
+4. Use Mermaid flowcharts to visualize each flow
 
 **Success criteria:** Every flow has a complete happy path documented
 
@@ -76,25 +81,21 @@ flowchart LR
 
 **Do:**
 
-1. Verify the flow map against these criteria:
-   - Every flow covers ALL states: happy, error, empty, loading, permission, offline, first-time
-   - Each decision point documents both branches (success and failure)
-   - Recovery paths documented for every error state
-   - All flows derived from PRD features (no invented flows)
-   - Scope boundary respected: transitions and states only, no exact user-facing copy
+1. Read the template from Resources
+2. Verify every template section exists in the output with the exact same heading name and no section was added beyond what the template defines
+3. Verify format requirements:
+   - State tables use response types, not exact copy
+   - Mermaid flowcharts present for each flow
 
-**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+**Success criteria:** All template sections present and format requirements met. If any section is missing or any format is wrong, STOP — fix it. Do NOT proceed until structurally complete.
 
-
-### Step 5: Review & Save
+### Step 5: Save
 
 **Do:**
 
-1. Present the complete flow map for review
-2. **WAIT FOR USER APPROVAL**
-3. Save as `{{DOCS}}/memory/internal/user_flows.md`
+1. Save as `{{DOCS}}/memory/internal/user_flows.md`
 
-**Success criteria:** Flow map validated and saved
+**Success criteria:** File saved and accessible
 
 ## Resources
 

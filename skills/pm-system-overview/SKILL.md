@@ -19,7 +19,7 @@ Create a pragmatic, up-to-date overview of an existing system by analyzing the c
 - Keep the document actionable, not exhaustive
 - This is a living document that should be updated regularly
 - **Drift detection** — if `architecture.md` exists, compare it against the actual codebase. Flag discrepancies between documented architecture and implemented reality (outdated tech versions, missing modules, undocumented services).
-- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
+- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 
@@ -31,7 +31,7 @@ Analyze the existing system and create a system overview
 
 ```mermaid
 flowchart LR
-    A[Scan project] --> B[Identify modules] --> C[Map flows] --> D[Detect pain points] --> E[Challenge gate] --> F[Generate overview] --> G[Review] --> H[Save system_overview.md]
+    A[Scan project] --> B[Identify modules] --> C[Map flows] --> D[Detect pain points] --> E[Challenge gate] --> F[Generate overview] --> G[Save system_overview.md]
 ```
 
 ### Step 1: Scan & Analyze
@@ -58,26 +58,22 @@ flowchart LR
 
 **Do:**
 
-1. Verify the system overview against these criteria:
-   - Main modules mapped with health indicator (tests, debt, stability)
-   - Critical flows documented with happy path AND error cases
-   - Internal and external dependencies inventoried with coupling/risk levels
-   - Pain points prioritized by business impact × frequency
-   - Performance baseline documented (response times, error rate, throughput)
+1. Read the template from Resources
+2. Verify every template section exists in the output with the exact same heading name and no section was added beyond what the template defines
+3. Verify format requirements:
+   - Confidence levels (Verified/Probable/Uncertain) annotated on findings
 
-**Success criteria:** All criteria pass. Flag any failing criterion with confidence level (Verified/Probable/Uncertain).
+**Success criteria:** All template sections present and format requirements met. If any section is missing or any format is wrong, STOP — fix it. Do NOT proceed until structurally complete.
 
-
-### Step 4: Generate & Review
+### Step 4: Generate & Save
 
 **Do:**
 
-1. Generate a system overview with Mermaid diagrams
-2. Present findings with confidence levels
-3. **WAIT FOR USER REVIEW**
-4. Save as `{{DOCS}}/memory/internal/system_overview.md`
+1. Read the template from Resources. Follow its exact structure — same headings, same table columns, same formats. Do not add, remove, or rename sections.
+2. Generate a system overview with Mermaid diagrams
+3. Save as `{{DOCS}}/memory/internal/system_overview.md`
 
-**Success criteria:** System overview validated and saved
+**Success criteria:** File saved and accessible
 
 ## Resources
 

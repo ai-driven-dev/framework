@@ -15,7 +15,7 @@ Generate well-structured user stories from PRD features, organized by epic, thro
 
 - No technical aspect, focus on user needs
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
+- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 - Lean, concise approach
 - 3 max questions per iteration
 - Sort by implementation priority
@@ -76,11 +76,12 @@ flowchart LR
 
 **Do:**
 
-1. For each epic (starting with MVP), ask clarifying questions (3 max per iteration)
-2. Write stories in canonical format: "As a [persona], I want [action] so that [benefit]"
-3. Add Gherkin acceptance criteria (happy path + error + boundary)
-4. Estimate each story in Fibonacci (1, 2, 3, 5, 8) — flag any story > 8 for splitting
-5. Validate each story against INVEST checklist and Definition of Ready
+1. Read the template from Resources. Follow its exact structure — same headings, same table columns, same formats. Do not add, remove, or rename sections.
+2. For each epic (starting with MVP), ask clarifying questions (3 max per iteration)
+3. Write stories in canonical format: "As a [persona], I want [action] so that [benefit]"
+4. Add Gherkin acceptance criteria (happy path + error + boundary)
+5. Estimate each story in Fibonacci (1, 2, 3, 5, 8) — flag any story > 8 for splitting
+6. Validate each story against INVEST checklist and Definition of Ready
 
 **Success criteria:** All stories pass INVEST checklist and Definition of Ready
 
@@ -99,16 +100,14 @@ flowchart LR
 
 **Do:**
 
-1. Verify the backlog against these criteria:
-   - All MVP epics justified by the North Star Metric
-   - No story exceeds 13 points without a planned split
-   - Gherkin acceptance criteria present for every story
-   - INVEST checklist passed for every story
-   - Blocking spikes identified and time-boxed (1-2 days max)
-   - Definition of Done defined at project level
+1. Read the template from Resources
+2. Verify every template section exists in the output with the exact same heading name and no section was added beyond what the template defines
+3. Verify format requirements:
+   - Stories in "As a [persona], I want [action] so that [benefit]" format
+   - Acceptance criteria in Given/When/Then Gherkin format
+   - Estimation in Fibonacci (1, 2, 3, 5, 8, 13)
 
-**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
-
+**Success criteria:** All template sections present and format requirements met. If any section is missing or any format is wrong, STOP — fix it. Do NOT proceed until structurally complete.
 
 ### Step 5: Save
 

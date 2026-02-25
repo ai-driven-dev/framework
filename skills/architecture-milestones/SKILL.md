@@ -19,7 +19,7 @@ Break down the PRD and backlog into sequenced, measurable milestones with GO/NO-
 - Every milestone has binary GO/NO-GO criteria (no "maybe")
 - Maximize parallelization between streams (backend, frontend, infra)
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when not orchestrated, run `/challenge` after saving for adversarial review
+- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 
@@ -31,7 +31,7 @@ Extract milestones from our PRD and user stories
 
 ```mermaid
 flowchart LR
-    A[Read PRD & stories] --> B[Group into milestones] --> C[Define GO/NO-GO] --> D[Gantt chart] --> E[Critical path] --> F[Validate constraints] --> G[Challenge gate] --> H[Review] --> I[Save milestones.md]
+    A[Read PRD & stories] --> B[Group into milestones] --> C[Define GO/NO-GO] --> D[Gantt chart] --> E[Critical path] --> F[Validate constraints] --> G[Challenge gate] --> H[Save milestones.md]
 ```
 
 ### Step 1: Map Epics to Milestones
@@ -51,17 +51,10 @@ flowchart LR
 
 **Do:**
 
-1. For each milestone, define:
-   - Objective (what is delivered and demonstrable)
-   - Epics & stories included (with story points per epic)
-   - GO/NO-GO criteria (measurable and binary)
-   - Dependencies (what must be done before)
-2. Calculate velocity and sprint estimation:
-   - Estimated velocity (points/sprint)
-   - Sprints per milestone (total points / velocity + buffer)
-   - Contingency buffer (20-30%)
+1. Read the template from Resources. Follow its exact structure — same headings, same table columns, same formats. Do not add, remove, or rename sections.
+2. Calculate velocity and sprint estimation per milestone
 
-**Success criteria:** Each milestone fully defined with epic mapping, velocity estimation, and binary GO/NO-GO criteria
+**Success criteria:** Each milestone fully defined per template, velocity estimated
 
 ### Step 3: Plan & Validate
 
@@ -77,26 +70,20 @@ flowchart LR
 
 **Do:**
 
-1. Verify the milestones against these criteria:
-   - Total effort compatible with constitution constraints (budget, deadline)
-   - No circular dependencies in the dependency graph
-   - Parallelization maximized between streams (backend, frontend, infra)
-   - Each milestone has binary GO/NO-GO criteria (not "maybe")
-   - MVP is minimum viable scope, not a disguised V1
-   - Contingency buffer included (20-30%)
+1. Read the template from Resources
+2. Verify every template section exists in the output with the exact same heading name and no section was added beyond what the template defines
+3. Verify format requirements:
+   - GO/NO-GO criteria binary (pass/fail, not "maybe")
 
-**Success criteria:** All criteria pass. Flag any failing criterion for user resolution before saving.
+**Success criteria:** All template sections present and format requirements met. If any section is missing or any format is wrong, STOP — fix it. Do NOT proceed until structurally complete.
 
-
-### Step 5: Review & Save
+### Step 5: Save
 
 **Do:**
 
-1. Present for review
-2. **WAIT FOR USER APPROVAL**
-3. Save as `{{DOCS}}/memory/internal/milestones.md`
+1. Save as `{{DOCS}}/memory/internal/milestones.md`
 
-**Success criteria:** Milestones validated and saved
+**Success criteria:** File saved and accessible
 
 ## Resources
 
