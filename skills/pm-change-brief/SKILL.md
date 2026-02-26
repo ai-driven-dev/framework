@@ -18,7 +18,6 @@ Clarify the gap between current behavior (as-is) and expected behavior (to-be) f
 - Quantify business impact when possible
 - One change brief per feature or coherent block of changes
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 

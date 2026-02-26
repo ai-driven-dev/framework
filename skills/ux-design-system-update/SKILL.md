@@ -19,7 +19,6 @@ Audit existing UI patterns and generate a coherent design system update plan tha
 - WCAG AA accessibility is mandatory for every addition
 - Navigation coherence must be preserved
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 

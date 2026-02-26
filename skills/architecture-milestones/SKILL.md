@@ -19,7 +19,6 @@ Break down the PRD and backlog into sequenced, measurable milestones with GO/NO-
 - Every milestone has binary GO/NO-GO criteria (no "maybe")
 - Maximize parallelization between streams (backend, frontend, infra)
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 

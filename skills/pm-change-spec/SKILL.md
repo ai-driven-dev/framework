@@ -21,7 +21,6 @@ Produce a detailed specification of what changes and what stays, with brownfield
 - **Brownfield estimation** — effort includes integration cost, not just intrinsic complexity
 - **NFR impact** — assess performance, security, availability, scalability, maintainability
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 

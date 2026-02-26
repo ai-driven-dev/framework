@@ -18,7 +18,6 @@ Map every module, service, and data structure impacted by a brownfield change, c
 - Zero-downtime migrations by default, justify any downtime
 - Breaking changes require explicit versioning strategy
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 

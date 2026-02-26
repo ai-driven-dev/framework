@@ -19,7 +19,6 @@ Produce a complete UX copy document covering voice & tone guidelines, error mess
 - Empty states must guide the user toward the next action
 - No placeholder copy — every string is production-ready
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ### Scope Boundary
 

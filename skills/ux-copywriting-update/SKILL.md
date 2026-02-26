@@ -20,7 +20,6 @@ Produce UX copy for screens and states that are new or modified by the change: e
 - Empty states must guide user toward next action
 - No placeholder copy — every string is production-ready
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 

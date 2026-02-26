@@ -18,7 +18,6 @@ Produce a structured architecture document where every technical choice is justi
 - Document trade-offs explicitly, not just the chosen option
 - Anti-pattern: choosing tech by preference instead of by need
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ### Scope Boundary
 

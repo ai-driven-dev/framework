@@ -18,7 +18,6 @@ Produce a complete map of user flows covering every state: happy path, error, em
 - Each decision point must document both branches (success and failure)
 - Edge cases are not optional — they are the main deliverable
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ### Scope Boundary
 

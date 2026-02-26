@@ -19,7 +19,6 @@ Produce a concrete, incremental deployment plan with feature flags, progressive 
 - Monitoring must compare before/after baselines
 - Criteria for progression between rollout phases must be measurable and binary
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 

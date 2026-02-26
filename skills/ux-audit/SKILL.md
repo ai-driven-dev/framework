@@ -19,7 +19,6 @@ Evaluate an existing product against Nielsen's 10 usability heuristics. Produce 
 - Prioritization uses impact vs effort matrix
 - Evidence-based — cite specific screens, flows, or code patterns
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 

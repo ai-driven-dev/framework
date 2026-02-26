@@ -13,13 +13,12 @@ Transform a raw idea into a structured constitution document that frames the pro
 
 ## Rules
 
-- Focus on strategic framing, not implementation details
-- Keep the constitution to 1-2 pages maximum
+- ALWAYS focus on strategic framing, not implementation details
+- Keep the constitution high-level and timeless, it should guide decision-making for the entire project lifecycle, not just the next steps
 - Every objective must be measurable
 - Constraints must be binary (negotiable or not)
 - Anti-over-engineering rules are mandatory
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 

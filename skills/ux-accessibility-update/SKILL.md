@@ -21,7 +21,6 @@ Produce actionable accessibility specifications for components that are new or m
 - **Reference design tokens, do not redefine them** — reference token names from design-system-update or existing design_system.md
 - **Preservation awareness** — note where new components interact with existing accessible patterns
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 

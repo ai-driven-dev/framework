@@ -19,7 +19,6 @@ Produce an actionable accessibility specification for every component in the des
 - Focus management must cover modals, drawers, dynamic content
 - Contrast ratios must be verified against design tokens
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ### Scope Boundary
 

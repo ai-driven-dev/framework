@@ -20,7 +20,6 @@ Transform a validated product brief into a comprehensive PRD with all sections n
 - No technical implementation details (that's architecture)
 - All template sections are mandatory in the output. For content already covered by constitution or brief, write a 1-2 sentence summary + reference link — never omit the section entirely.
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 

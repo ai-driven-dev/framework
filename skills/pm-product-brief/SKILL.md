@@ -19,7 +19,6 @@ Validate that the right problem is being solved for the right people, then synth
 - The product brief is generated ONLY after challenge gate passes
 - Requirements started from $ARGUMENTS
 - When $ARGUMENTS references a detailed existing specification, treat it as validation data. Extract hypotheses from it and mark them as pre-validated. Competitive analysis and persona definition still apply — use the specification as the primary source.
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 

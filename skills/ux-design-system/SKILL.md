@@ -18,7 +18,6 @@ Create a coherent and reusable set of UI/UX patterns, components, and guidelines
 - Reuse before creating: check if an existing component can be adapted
 - Design tokens (colors, typography, spacing) must be defined before components
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ### Scope Boundary
 

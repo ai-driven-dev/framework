@@ -19,7 +19,6 @@ Map only the user flows impacted by the change, covering all states: happy path,
 - **Preservation awareness** — explicitly note where modified flows connect to preserved (unchanged) flows
 - **Document transitions, not copy** — document the TYPE of response and RECOVERY path, not exact user-facing text (owned by ux-copywriting-update)
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 
 ## Quick Start
 

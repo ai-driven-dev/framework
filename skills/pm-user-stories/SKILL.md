@@ -15,7 +15,6 @@ Generate well-structured user stories from PRD features, organized by epic, thro
 
 - No technical aspect, focus on user needs
 - Requirements started from $ARGUMENTS
-- **Standalone usage** — when invoked directly (not through an agent), present the deliverable and ask for user approval
 - Lean, concise approach
 - 3 max questions per iteration
 - Sort by implementation priority
