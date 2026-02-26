@@ -15,6 +15,9 @@ Transform a raw idea into a structured constitution document that frames the pro
 
 - ALWAYS focus on strategic framing, not implementation details
 - Keep the constitution high-level and timeless, it should guide decision-making for the entire project lifecycle, not just the next steps
+- **Business language** — write in business/product terms, never in technical terms (no stack, no framework, no infra). Technical choices belong in architecture-decision.
+- **No solutioning** — describe the problem and constraints, not the solutions. "Support 10k simultaneous users" yes, "Use Redis for caching" no.
+- **User-centric framing** — objectives and constraints must be expressed from the user's or business's perspective, not the developer's
 - Every objective must be measurable
 - Constraints must be binary (negotiable or not)
 - Anti-over-engineering rules are mandatory
@@ -38,10 +41,10 @@ flowchart LR
 **Do:**
 
 1. Analyze the idea and business context from $ARGUMENTS
-2. Ask clarifying questions about vision, target users, and known constraints
+2. Ask clarifying questions focused on: vision, target users, business model, market context, success criteria, and known constraints. Stay at business/product level — no technical questions at this stage.
 3. **WAIT FOR USER RESPONSE**
 
-**Success criteria:** All key dimensions understood (vision, users, constraints, metrics)
+**Success criteria:** All key dimensions understood (vision, users, business constraints, success metrics)
 
 ### Step 2: Draft Constitution
 
