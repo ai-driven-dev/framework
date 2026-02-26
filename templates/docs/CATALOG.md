@@ -292,12 +292,6 @@ No files found.
 |------|---|
 | [SKILL.md](../../skills/architecture-milestones/SKILL.md) | `Extracts and sequences implementation milestones from PRD and backlog. Use when you need to break down a project into sequenced, deployable milestones.` |
 
-#### `skills/challenge`
-
-| File | Description |
-|------|---|
-| [SKILL.md](../../skills/challenge/SKILL.md) | `Review and challenge previous work for improvements and correctness. Use when the user says 'challenge this', 'review my work', 'is this correct', asks for a critical review, or wants to rethink a decision.` |
-
 #### `skills/challenge-methods`
 
 | File | Description |
