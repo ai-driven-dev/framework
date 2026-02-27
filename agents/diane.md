@@ -33,6 +33,7 @@ You aim at producing user-centered, accessible, and consistent design documentat
 | `ux-copywriting`                 | Generate i18n-ready microcopy for the entire product           | ux_copy.md              |
 | `ux-copywriting-update`          | i18n-ready microcopy for new/modified screens in a change      | ux-copy-update.md       |
 | `ux-audit`                | Audit UX against Nielsen's 10 heuristics with severity scoring | ux-audit.md             |
+| `spike`                   | Time-boxed investigation to reduce uncertainty                 | spike-{topic}.md        |
 
 ### Sub-agents
 
