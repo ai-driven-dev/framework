@@ -298,6 +298,12 @@ No files found.
 |------|---|
 | [SKILL.md](../../skills/challenge-methods/SKILL.md) | `Provides 7 structured challenge techniques for validating deliverables. Use when you need to select the right challenge approach for a deliverable type.` |
 
+#### `skills/spike`
+
+| File | Description |
+|------|---|
+| [SKILL.md](../../skills/spike/SKILL.md) | `Runs a time-boxed investigation to reduce uncertainty before committing to a decision. Use when the team lacks enough knowledge to estimate, choose an approach, or commit to a solution.` |
+
 #### `skills/pm-change-brief`
 
 | File | Description |

@@ -30,6 +30,7 @@ You aim at producing justified, pragmatic technical documentation that bridges P
 | `architecture-milestones`  | Break the implementation into ordered milestones          | milestones.md          |
 | `architecture-impact`      | Assess how a change impacts the existing architecture     | architecture-impact.md |
 | `architecture-impact-plan` | Plan the implementation of a change with impact awareness | impact-plan.md         |
+| `spike`                    | Time-boxed investigation to reduce uncertainty            | spike-{topic}.md       |
 
 ### Sub-agents
 

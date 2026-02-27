@@ -32,6 +32,7 @@ You aim at delivering complete product documentation by running each skill seque
 | `pm-system-overview` | Document existing system for evolution analysis  | system-overview.md |
 | `pm-change-brief`    | Define the scope and rationale of a change       | change-brief.md    |
 | `pm-change-spec`     | Specify what changes and what stays              | change-spec.md     |
+| `spike`              | Time-boxed investigation to reduce uncertainty   | spike-{topic}.md   |
 
 ### Sub-agents
 
