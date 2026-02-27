@@ -119,7 +119,7 @@ flowchart TB
     S5["<b>4. Présenter</b> au user<br/>Livrable + rapport Justine + Eva si appelée"]
     S6{"<b>5. Approved ?</b>"}
     S6N["Itérer :<br/>corrections → re-run"]
-    S7["<b>6. Déduplication amont</b><br/>Alléger les docs amont si contenu dupliqué"]
+    S7["<b>6. Réconciliation amont</b><br/>Dédupliquer + mettre à jour<br/>les docs impactés"]
     S8["<b>7. Proceed</b> → next skill"]
 
     S1 --> S2 --> S3

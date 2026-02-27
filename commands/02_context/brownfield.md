@@ -44,7 +44,7 @@ When running skills for an agent phase, follow this protocol for each skill:
 5. **Present** the deliverable to the user with justine's challenge report (and eva's impact assessment if called)
 6. **STOP. Ask: "Do you approve this deliverable?"** — do NOT continue until explicit approval
 7. **Iterate if needed** — if not approved, make changes and re-run justine (+ eva if applicable) (return to step 2)
-8. **Upstream deduplication** — check if upstream documents contain content now owned by this deliverable. If so, propose lightening them (replace duplicated content with a reference + 1-line summary). Present changes to user before saving.
+8. **Upstream reconciliation** — check if upstream deliverables need updating: deduplicate content now owned by this deliverable, and propagate any new constraints that impact upstream docs (e.g., architecture impact → new change-spec stories). Present changes to user before saving.
 9. **Proceed** to next skill
 
 ## Steps
