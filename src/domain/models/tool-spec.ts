@@ -1,0 +1,65 @@
+import type { ContentSection } from "./framework-descriptor.js";
+
+export enum ToolId {
+  Claude = "claude",
+  Cursor = "cursor",
+  Copilot = "copilot",
+}
+
+const TOOLS_PLACEHOLDER = "{{TOOLS}}/";
+const DOCS_PLACEHOLDER = "{{DOCS}}/";
+const AT_TOOLS_PLACEHOLDER = "@{{TOOLS}}/";
+const AT_DOCS_PLACEHOLDER = "@{{DOCS}}/";
+
+export abstract class ToolSpec {
+  abstract readonly toolId: ToolId;
+  abstract readonly directory: string;
+
+  rewriteContent(content: string, docsDir: string): string {
+    return content
+      .replaceAll(AT_TOOLS_PLACEHOLDER, this.rewriteAtToolsInclude())
+      .replaceAll(AT_DOCS_PLACEHOLDER, this.rewriteAtDocsInclude(docsDir))
+      .replaceAll(TOOLS_PLACEHOLDER, this.directory)
+      .replaceAll(DOCS_PLACEHOLDER, `${docsDir}/`);
+  }
+
+  convertFrontmatter(frontmatter: Record<string, unknown>): Record<string, unknown> {
+    return this.convertPaths(frontmatter);
+  }
+
+  buildFilePath(section: ContentSection, fileName: string): string {
+    return `${this.directory}${section.directory.replace(/^content\//, "")}/${fileName}`;
+  }
+
+  shouldFlatten(_section: ContentSection): boolean {
+    return false;
+  }
+
+  getConfigOutputPath(_configName: string, _sourcePath: string): string | null {
+    return null;
+  }
+
+  reverseRewriteContent(content: string, docsDir: string): string {
+    return content
+      .replaceAll(this.rewriteAtToolsInclude(), AT_TOOLS_PLACEHOLDER)
+      .replaceAll(this.rewriteAtDocsInclude(docsDir), AT_DOCS_PLACEHOLDER)
+      .replaceAll(this.directory, TOOLS_PLACEHOLDER)
+      .replaceAll(`${docsDir}/`, DOCS_PLACEHOLDER);
+  }
+
+  reverseConvertFrontmatter(frontmatter: Record<string, unknown>): Record<string, unknown> {
+    return this.reversePaths(frontmatter);
+  }
+
+  protected rewriteAtToolsInclude(): string {
+    return `@${this.directory}`;
+  }
+
+  protected rewriteAtDocsInclude(docsDir: string): string {
+    return `@${docsDir}/`;
+  }
+
+  protected abstract convertPaths(frontmatter: Record<string, unknown>): Record<string, unknown>;
+
+  protected abstract reversePaths(frontmatter: Record<string, unknown>): Record<string, unknown>;
+}

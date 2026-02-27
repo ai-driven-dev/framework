@@ -1,0 +1,33 @@
+{
+  "version": "3.0.0",
+  "content": {
+    "agents": {
+      "directory": "content/agents",
+      "organizationType": "flat",
+      "entryFile": null
+    },
+    "commands": {
+      "directory": "content/commands",
+      "organizationType": "phased",
+      "entryFile": null
+    },
+    "rules": {
+      "directory": "content/rules",
+      "organizationType": "categorized",
+      "entryFile": null
+    },
+    "skills": {
+      "directory": "content/skills",
+      "organizationType": "subfoldered",
+      "entryFile": "SKILL.md"
+    }
+  },
+  "templates": {
+    "memoryBank": "templates/memory-bank.md",
+    "docsReadme": "templates/docs-readme.md"
+  },
+  "config": {
+    "mcp": ".mcp.json",
+    "vscodeDir": ".vscode"
+  }
+}
