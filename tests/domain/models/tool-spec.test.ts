@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { ContentSection } from "../../../src/domain/models/framework-descriptor.js";
-import { ToolId, ToolSpec } from "../../../src/domain/models/tool-spec.js";
+import { ToolId } from "../../../src/domain/models/tool-id.js";
+import { ToolSpec } from "../../../src/domain/models/tool-spec.js";
 
 class TestToolSpec extends ToolSpec {
   readonly toolId = ToolId.Claude;
   readonly directory = ".test/";
 
-  protected convertPaths(frontmatter: Record<string, unknown>): Record<string, unknown> {
+  convertFrontmatter(frontmatter: Record<string, unknown>): Record<string, unknown> {
     const paths = frontmatter.paths;
     if (!Array.isArray(paths)) return frontmatter;
     return { ...frontmatter, scope: paths };
@@ -65,7 +66,7 @@ describe("ToolSpec", () => {
   });
 
   describe("convertFrontmatter()", () => {
-    it("delegates to convertPaths", () => {
+    it("delegates to convertFrontmatter", () => {
       const result = spec.convertFrontmatter({ paths: ["src/**/*.ts"] });
       expect(result).toHaveProperty("scope");
     });

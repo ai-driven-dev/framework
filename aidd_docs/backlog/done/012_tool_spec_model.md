@@ -39,12 +39,13 @@ Implement the ToolSpec base model with its core methods. This ticket defines the
 - Reverse operations (`reverseRewriteContent`, `reverseConvertFrontmatter`) are NOT implemented — deferred to M7 (ticket 070).
 
 ## Files to Create/Modify
-- `src/domain/models/tool-spec.ts` -- ToolSpec model, ToolId enum
+- `src/domain/models/tool-id.ts` -- ToolId enum (standalone)
+- `src/domain/models/tool-spec.ts` -- ToolSpec abstract class
 - `tests/domain/models/tool-spec.test.ts` -- core behavior tests
 
 ## Tests
 - rewriteContent replaces all placeholder variants correctly
-- convertFrontmatter delegates to convertPaths
+- convertFrontmatter is the direct abstract method (no indirection)
 - buildFilePath produces correct tool-relative paths for flat and nested sections
 - getMemoryBankOutputPath returns null for base class (unknown names)
 

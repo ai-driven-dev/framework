@@ -702,7 +702,8 @@ src/
       tracked-file.ts
       file-hash.ts                # Value object: equals()
       framework-descriptor.ts     # Value object: content section lookup
-      tool-spec.ts                # Rich value object: rewriteContent, convertFrontmatter, buildFilePath, getConfigOutputPath, getMemoryBankOutputPath
+      tool-id.ts                  # Enum: ToolId (claude, cursor, copilot)
+      tool-spec.ts                # Abstract class: rewriteContent, convertFrontmatter, buildFilePath, getConfigOutputPath, getMemoryBankOutputPath
       distribution.ts             # Aggregate: generate()
       generated-file.ts           # Value object
       status-report.ts            # Value object

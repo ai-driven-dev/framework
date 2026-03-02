@@ -1,5 +1,6 @@
 import type { ContentSection } from "../models/framework-descriptor.js";
-import { ToolId, ToolSpec } from "../models/tool-spec.js";
+import { ToolId } from "../models/tool-id.js";
+import { ToolSpec } from "../models/tool-spec.js";
 
 export class ClaudeToolSpec extends ToolSpec {
   readonly toolId = ToolId.Claude;
@@ -23,7 +24,7 @@ export class ClaudeToolSpec extends ToolSpec {
         const rest = fileName.slice(slashIdx + 1);
         const phase = phaseDir.match(/^(\d+)/)?.[1];
         if (phase) {
-          return `.claude/commands/aidd/${phase}/${rest}`;
+          return `${this.commandsDir(phase)}${rest}`;
         }
       }
     }
@@ -35,11 +36,15 @@ export class ClaudeToolSpec extends ToolSpec {
       .rewriteContent(content, docsDir)
       .replace(
         /@\.claude\/commands\/(\d+)[_][^/]+\//g,
-        (_, phase) => `@.claude/commands/aidd/${phase}/`
+        (_, phase) => `@${this.commandsDir(phase)}`
       );
   }
 
-  protected convertPaths(frontmatter: Record<string, unknown>): Record<string, unknown> {
+  private commandsDir(phase: string): string {
+    return `.claude/commands/aidd/${phase}/`;
+  }
+
+  convertFrontmatter(frontmatter: Record<string, unknown>): Record<string, unknown> {
     return frontmatter;
   }
 }

@@ -92,7 +92,8 @@ M1 and M2 can overlap partially (infrastructure adapters can start once domain p
 | --------------------------------------- | ------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `domain/models/manifest.ts`             | Domain | Aggregate root    | `addTool`, `removeTool`, `computeStatus`, `hasTool`, `getToolVersion`                                                          |
 | `domain/models/distribution.ts`         | Domain | Aggregate         | `generate(framework, toolSpec, docsDir): GeneratedFile[]`                                                                      |
-| `domain/models/tool-spec.ts`            | Domain | Rich value object | `rewriteContent`, `convertFrontmatter`, `reverseRewriteContent`, `reverseConvertFrontmatter`, `buildFilePath`, `getConfigOutputPath` |
+| `domain/models/tool-id.ts`              | Domain | Enum              | `ToolId` enum: Claude, Cursor, Copilot                                                                                               |
+| `domain/models/tool-spec.ts`            | Domain | Abstract class    | `rewriteContent`, `convertFrontmatter`, `buildFilePath`, `getConfigOutputPath`, `getMemoryBankOutputPath`                            |
 | `domain/models/framework-descriptor.ts` | Domain | Value object      | Content section lookup, template/config references                                                                             |
 | `domain/models/file-hash.ts`            | Domain | Value object      | `equals()` comparison                                                                                                          |
 | `domain/models/status-report.ts`        | Domain | Value object      | Per-tool lists of modified/deleted/untracked files                                                                             |

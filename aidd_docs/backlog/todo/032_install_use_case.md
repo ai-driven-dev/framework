@@ -33,6 +33,7 @@ Implement InstallUseCase with distribution generation for all three tools, conte
 - **UX Copy source of truth**: ALL user-facing text MUST use exact copy from `aidd_docs/memory/internal/ux_copy.md`. Use keys: `error.install.*`, `success.install`, `success.install.multi`, `progress.install.generating`, `help.install.description`.
 - **User flows reference**: Consult `aidd_docs/memory/internal/user_flows.md` section 2.3 for install flow state table and recovery paths.
 - InstallUseCase receives ports via constructor injection (FrameworkResolver, FrameworkLoader, FileSystem, ManifestRepository, Hasher, Logger).
+- `ToolId` is defined in `src/domain/models/tool-id.ts` (not `tool-spec.ts`). Import from there.
 - ToolSpec instances are resolved from ToolId via a factory or registry.
 - Distribution.generate() produces GeneratedFile[] that the use case writes via FileSystem.
 - The `--force` flag is passed as a boolean option.

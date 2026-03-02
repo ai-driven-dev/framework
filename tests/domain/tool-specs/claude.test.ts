@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ContentSection } from "../../../src/domain/models/framework-descriptor.js";
-import { ToolId } from "../../../src/domain/models/tool-spec.js";
+import { ToolId } from "../../../src/domain/models/tool-id.js";
 import { claudeToolSpec } from "../../../src/domain/tool-specs/claude.js";
 
 const agentsSection: ContentSection = {

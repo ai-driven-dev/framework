@@ -1,4 +1,4 @@
-import type { ToolId } from "./tool-spec.js";
+import type { ToolId } from "./tool-id.js";
 import type { TrackedFile } from "./tracked-file.js";
 
 export interface ToolEntry {

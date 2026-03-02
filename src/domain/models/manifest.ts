@@ -3,7 +3,7 @@ import { FileHash } from "./file-hash.js";
 import type { GeneratedFile } from "./generated-file.js";
 import { StatusReport } from "./status-report.js";
 import type { ToolEntry } from "./tool-entry.js";
-import { ToolId } from "./tool-spec.js";
+import { ToolId } from "./tool-id.js";
 import type { TrackedFile } from "./tracked-file.js";
 
 const MANIFEST_VERSION = "1";

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { FileHash } from "../../../src/domain/models/file-hash.js";
 import { GeneratedFile } from "../../../src/domain/models/generated-file.js";
 import { Manifest } from "../../../src/domain/models/manifest.js";
-import { ToolId } from "../../../src/domain/models/tool-spec.js";
+import { ToolId } from "../../../src/domain/models/tool-id.js";
 
 const makeHash = (hex: string): FileHash => new FileHash(hex.padEnd(32, "0"));
 

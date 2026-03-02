@@ -1,5 +1,6 @@
 import type { ContentSection } from "../models/framework-descriptor.js";
-import { ToolId, ToolSpec } from "../models/tool-spec.js";
+import { ToolId } from "../models/tool-id.js";
+import { ToolSpec } from "../models/tool-spec.js";
 
 export class CursorToolSpec extends ToolSpec {
   readonly toolId = ToolId.Cursor;
@@ -23,7 +24,7 @@ export class CursorToolSpec extends ToolSpec {
     return null;
   }
 
-  protected convertPaths(frontmatter: Record<string, unknown>): Record<string, unknown> {
+  convertFrontmatter(frontmatter: Record<string, unknown>): Record<string, unknown> {
     const { paths, ...rest } = frontmatter;
     if (!Array.isArray(paths)) {
       return { ...frontmatter, alwaysApply: false };

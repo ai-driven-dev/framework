@@ -1,10 +1,5 @@
 import type { ContentSection } from "./framework-descriptor.js";
-
-export enum ToolId {
-  Claude = "claude",
-  Cursor = "cursor",
-  Copilot = "copilot",
-}
+import type { ToolId } from "./tool-id.js";
 
 const TOOLS_PLACEHOLDER = "{{TOOLS}}/";
 const DOCS_PLACEHOLDER = "{{DOCS}}/";
@@ -17,14 +12,10 @@ export abstract class ToolSpec {
 
   rewriteContent(content: string, docsDir: string): string {
     return content
-      .replaceAll(AT_TOOLS_PLACEHOLDER, this.rewriteAtToolsInclude())
-      .replaceAll(AT_DOCS_PLACEHOLDER, this.rewriteAtDocsInclude(docsDir))
+      .replaceAll(AT_TOOLS_PLACEHOLDER, `@${this.directory}`)
+      .replaceAll(AT_DOCS_PLACEHOLDER, `@${docsDir}/`)
       .replaceAll(TOOLS_PLACEHOLDER, this.directory)
       .replaceAll(DOCS_PLACEHOLDER, `${docsDir}/`);
-  }
-
-  convertFrontmatter(frontmatter: Record<string, unknown>): Record<string, unknown> {
-    return this.convertPaths(frontmatter);
   }
 
   buildFilePath(section: ContentSection, fileName: string): string {
@@ -39,13 +30,5 @@ export abstract class ToolSpec {
     return null;
   }
 
-  protected rewriteAtToolsInclude(): string {
-    return `@${this.directory}`;
-  }
-
-  protected rewriteAtDocsInclude(docsDir: string): string {
-    return `@${docsDir}/`;
-  }
-
-  protected abstract convertPaths(frontmatter: Record<string, unknown>): Record<string, unknown>;
+  abstract convertFrontmatter(frontmatter: Record<string, unknown>): Record<string, unknown>;
 }
