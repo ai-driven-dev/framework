@@ -54,8 +54,5 @@ describe("ConflictSet", () => {
     expect(set.hasConflicts()).toBe(false);
   });
 
-  it("applyResolutions() throws as a stub (v3.1+ seam)", () => {
-    const set = new ConflictSet([]);
-    expect(() => set.applyResolutions(new Map())).toThrow();
-  });
+
 });

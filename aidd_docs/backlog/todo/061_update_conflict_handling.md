@@ -28,6 +28,7 @@ Implement ConflictSet classification in UpdateUseCase, wire PrompterAdapter with
 
 ## Technical Notes
 - **UX Copy source of truth**: ALL user-facing text MUST use exact copy from `aidd_docs/memory/internal/ux_copy.md`. Use keys: `prompt.update.*` (file_modified, choice, option_keep, option_overwrite, option_diff, summary).
+- `ConflictSet.applyResolutions()` does NOT exist in the codebase — it was removed as YAGNI in M1 refactor pass 2. This ticket must CREATE it from scratch alongside its tests.
 - ConflictSet.classify() from domain (ticket 016 stubs) now gets full implementation.
 - PrompterAdapter: first real use of @inquirer/prompts. Import `confirm` and `select` from `@inquirer/prompts`.
 - Classification uses 3 hashes: manifestHash (last known), diskHash (current on disk), newHash (from new distribution).

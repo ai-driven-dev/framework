@@ -56,19 +56,15 @@ export class Manifest {
   }
 
   addTool(toolId: ToolId, version: string, files: GeneratedFile[]): void {
-    const trackedFiles: TrackedFile[] = files.map((f) => ({
-      relativePath: f.relativePath,
-      hash: f.hash,
-    }));
-    this._tools.set(toolId, { toolId, version, files: trackedFiles });
+    this._tools.set(toolId, { toolId, version, files: this.toTrackedFiles(files) });
   }
 
   addDocs(version: string, files: GeneratedFile[]): void {
-    const trackedFiles: TrackedFile[] = files.map((f) => ({
-      relativePath: f.relativePath,
-      hash: f.hash,
-    }));
-    this._docs = { version, files: trackedFiles };
+    this._docs = { version, files: this.toTrackedFiles(files) };
+  }
+
+  private toTrackedFiles(files: GeneratedFile[]): TrackedFile[] {
+    return files.map((f) => ({ relativePath: f.relativePath, hash: f.hash }));
   }
 
   removeTool(toolId: ToolId): void {
@@ -87,40 +83,25 @@ export class Manifest {
   }
 
   computeStatus(diskHashes: Map<string, FileHash>): StatusReport {
-    const allManifestPaths = new Set<string>();
+    const allTracked = [
+      ...Array.from(this._tools.values()).flatMap((e) => [...e.files]),
+      ...(this._docs?.files ?? []),
+    ];
+
+    const allManifestPaths = new Set(allTracked.map((f) => f.relativePath));
     const modified: string[] = [];
     const deleted: string[] = [];
 
-    for (const entry of this._tools.values()) {
-      for (const file of entry.files) {
-        allManifestPaths.add(file.relativePath);
-        const diskHash = diskHashes.get(file.relativePath);
-        if (diskHash === undefined) {
-          deleted.push(file.relativePath);
-        } else if (!diskHash.equals(file.hash)) {
-          modified.push(file.relativePath);
-        }
+    for (const file of allTracked) {
+      const diskHash = diskHashes.get(file.relativePath);
+      if (diskHash === undefined) {
+        deleted.push(file.relativePath);
+      } else if (!diskHash.equals(file.hash)) {
+        modified.push(file.relativePath);
       }
     }
 
-    if (this._docs !== null) {
-      for (const file of this._docs.files) {
-        allManifestPaths.add(file.relativePath);
-        const diskHash = diskHashes.get(file.relativePath);
-        if (diskHash === undefined) {
-          deleted.push(file.relativePath);
-        } else if (!diskHash.equals(file.hash)) {
-          modified.push(file.relativePath);
-        }
-      }
-    }
-
-    const untracked: string[] = [];
-    for (const path of diskHashes.keys()) {
-      if (!allManifestPaths.has(path)) {
-        untracked.push(path);
-      }
-    }
+    const untracked = [...diskHashes.keys()].filter((p) => !allManifestPaths.has(p));
 
     return new StatusReport({ modified, deleted, untracked });
   }

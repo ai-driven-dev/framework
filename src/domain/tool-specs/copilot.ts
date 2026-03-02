@@ -11,25 +11,25 @@ export class CopilotToolSpec extends ToolSpec {
       case "agents": {
         const base = fileName.split("/").at(-1) ?? fileName;
         const name = base.endsWith(".md") ? `${base.slice(0, -3)}.agent.md` : base;
-        return `.github/agents/${name}`;
+        return `${this.directory}agents/${name}`;
       }
       case "commands": {
-        const flat = flattenFileName(section, fileName, ".prompt.md");
-        return `.github/prompts/${flat}`;
+        const flat = flattenFileName(fileName, ".prompt.md");
+        return `${this.directory}prompts/${flat}`;
       }
       case "rules": {
-        const flat = flattenFileName(section, fileName, ".instructions.md");
-        return `.github/instructions/${flat}`;
+        const flat = flattenFileName(fileName, ".instructions.md");
+        return `${this.directory}instructions/${flat}`;
       }
       case "skills":
-        return `.github/skills/${fileName}`;
+        return `${this.directory}skills/${fileName}`;
       default:
-        return `.github/${fileName}`;
+        return `${this.directory}${fileName}`;
     }
   }
 
   override getMemoryBankOutputPath(templateName: string): string | null {
-    if (templateName === "agentsMd") return ".github/copilot-instructions.md";
+    if (templateName === "agentsMd") return `${this.directory}copilot-instructions.md`;
     return null;
   }
 
@@ -56,7 +56,7 @@ export class CopilotToolSpec extends ToolSpec {
   }
 }
 
-function flattenFileName(_section: ContentSection, fileName: string, targetExt: string): string {
+function flattenFileName(fileName: string, targetExt: string): string {
   const parts = fileName.split("/");
   const baseName = parts[parts.length - 1];
   const withExt = addTargetExtension(baseName, targetExt);

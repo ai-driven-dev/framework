@@ -86,29 +86,19 @@ export class FrameworkDescriptor {
       };
     });
 
-    const templateRefs: TemplateRef[] = [];
-    if (raw.templates !== null && typeof raw.templates === "object") {
-      for (const [name, path] of Object.entries(raw.templates as Record<string, unknown>)) {
-        if (typeof path === "string") {
-          templateRefs.push({ name, path });
-        }
-      }
-    }
-
-    const configRefs: ConfigRef[] = [];
-    if (raw.config !== null && typeof raw.config === "object") {
-      for (const [name, path] of Object.entries(raw.config as Record<string, unknown>)) {
-        if (typeof path === "string") {
-          configRefs.push({ name, path });
-        }
-      }
-    }
-
     return new FrameworkDescriptor({
       version: raw.version,
       contentSections,
-      templateRefs,
-      configRefs,
+      templateRefs: parseNamedRefs(raw, "templates"),
+      configRefs: parseNamedRefs(raw, "config"),
     });
   }
+}
+
+function parseNamedRefs(raw: Record<string, unknown>, field: string): { name: string; path: string }[] {
+  const value = raw[field];
+  if (value === null || typeof value !== "object") return [];
+  return Object.entries(value as Record<string, unknown>)
+    .filter((entry): entry is [string, string] => typeof entry[1] === "string")
+    .map(([name, path]) => ({ name, path }));
 }

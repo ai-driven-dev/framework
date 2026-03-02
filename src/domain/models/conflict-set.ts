@@ -49,8 +49,4 @@ export class ConflictSet {
   hasConflicts(): boolean {
     return this._conflicts.some((c) => c.type !== ConflictType.None);
   }
-
-  applyResolutions(_resolutions: Map<string, ConflictType>): void {
-    throw new Error("ConflictSet.applyResolutions() is not yet implemented (v3.1+ seam).");
-  }
 }
