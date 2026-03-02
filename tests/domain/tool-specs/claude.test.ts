@@ -5,15 +5,19 @@ import { claudeToolSpec } from "../../../src/domain/tool-specs/claude.js";
 
 const agentsSection: ContentSection = {
   name: "agents",
-  directory: "content/agents",
-  organizationType: "flat",
+  directory: "agents",
+  entryFile: null,
+};
+
+const commandsSection: ContentSection = {
+  name: "commands",
+  directory: "commands",
   entryFile: null,
 };
 
 const rulesSection: ContentSection = {
   name: "rules",
-  directory: "content/rules",
-  organizationType: "categorized",
+  directory: "rules",
   entryFile: null,
 };
 
@@ -24,6 +28,22 @@ describe("ClaudeToolSpec", () => {
 
   it("has directory .claude/", () => {
     expect(claudeToolSpec.directory).toBe(".claude/");
+  });
+
+  describe("getConfigOutputPath()", () => {
+    it("returns .mcp.json for mcp config", () => {
+      expect(claudeToolSpec.getConfigOutputPath("mcp", "config/mcp.json")).toBe(".mcp.json");
+    });
+
+    it("returns .mcp.json regardless of source path", () => {
+      expect(claudeToolSpec.getConfigOutputPath("mcp", ".mcp.json")).toBe(".mcp.json");
+      expect(claudeToolSpec.getConfigOutputPath("mcp", "some/other/path.json")).toBe(".mcp.json");
+    });
+
+    it("returns null for unknown config names", () => {
+      expect(claudeToolSpec.getConfigOutputPath("vscodeDir", "config/.vscode")).toBeNull();
+      expect(claudeToolSpec.getConfigOutputPath("unknown", "any/path")).toBeNull();
+    });
   });
 
   describe("rewriteContent()", () => {
@@ -41,6 +61,14 @@ describe("ClaudeToolSpec", () => {
       const result = claudeToolSpec.rewriteContent("@{{TOOLS}}/rules/naming.md", "aidd_docs");
       expect(result).toBe("@.claude/rules/naming.md");
     });
+
+    it("rewrites @{{TOOLS}}/commands/ to @.claude/commands/aidd/{phase}/", () => {
+      const result = claudeToolSpec.rewriteContent(
+        "@{{TOOLS}}/commands/04_code/implement.md",
+        "aidd_docs"
+      );
+      expect(result).toBe("@.claude/commands/aidd/04/implement.md");
+    });
   });
 
   describe("convertFrontmatter()", () => {
@@ -57,6 +85,16 @@ describe("ClaudeToolSpec", () => {
     });
   });
 
+  describe("getMemoryBankOutputPath()", () => {
+    it("returns CLAUDE.md for agentsMd template", () => {
+      expect(claudeToolSpec.getMemoryBankOutputPath("agentsMd")).toBe("CLAUDE.md");
+    });
+
+    it("returns null for unknown template names", () => {
+      expect(claudeToolSpec.getMemoryBankOutputPath("unknown")).toBeNull();
+    });
+  });
+
   describe("buildFilePath()", () => {
     it("builds path for agents section", () => {
       const path = claudeToolSpec.buildFilePath(agentsSection, "code-reviewer.md");
@@ -67,15 +105,18 @@ describe("ClaudeToolSpec", () => {
       const path = claudeToolSpec.buildFilePath(rulesSection, "01-standards/naming.md");
       expect(path).toBe(".claude/rules/01-standards/naming.md");
     });
-  });
 
-  describe("shouldFlatten()", () => {
-    it("returns false for agents", () => {
-      expect(claudeToolSpec.shouldFlatten(agentsSection)).toBe(false);
+    it("builds commands path with aidd brand prefix and phase number", () => {
+      const path = claudeToolSpec.buildFilePath(commandsSection, "04_code/implement.md");
+      expect(path).toBe(".claude/commands/aidd/04/implement.md");
     });
 
-    it("returns false for rules", () => {
-      expect(claudeToolSpec.shouldFlatten(rulesSection)).toBe(false);
+    it("handles two-digit phase in commands", () => {
+      const path = claudeToolSpec.buildFilePath(
+        commandsSection,
+        "02_context/create_user_stories.md"
+      );
+      expect(path).toBe(".claude/commands/aidd/02/create_user_stories.md");
     });
   });
 });

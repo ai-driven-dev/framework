@@ -30,10 +30,10 @@ Polish Copilot-specific handling (flattening, VS Code merge) and prepare npm pac
 
 ## Technical Notes
 - **UX Copy source of truth**: ALL user-facing text MUST use exact copy from `aidd_docs/memory/internal/ux_copy.md`. Use keys: `warn.copilot.name_collision`, `warn.vscode.merge_conflict`, `help.program.description`.
-- Copilot flattening is handled by ToolSpec.shouldFlatten() and ToolSpec.buildFilePath() from ticket 013.
-- This ticket verifies the integration end-to-end, not just unit level.
-- VS Code merge uses FileSystemAdapter.mergeJsonFile() from ticket 024.
-- Collision detection: collect all output file names, detect duplicates, apply prefix.
+- Copilot flattening is handled entirely within `CopilotToolSpec.buildFilePath()` — already implemented in M1 (ticket 013). `buildFilePath` always adds the phase/category numeric prefix (e.g., `04-implement.prompt.md`). This prevents most collisions by design.
+- **Collision detection is at use case level, not in `buildFilePath`**: after calling `generateDistribution()`, the InstallUseCase collects all output `relativePath` values, detects duplicates (same flattened name from different phase subdirs with same number), applies a more specific prefix, and emits a warning. `buildFilePath` itself does not detect collisions.
+- Memory bank files (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md) are handled via `ToolSpec.getMemoryBankOutputPath()` in `generateDistribution()` — already implemented in M1.
+- VS Code merge uses `FileSystemAdapter.mergeJsonFile()` from ticket 024 — called directly by the InstallUseCase, not by `generateDistribution()`.
 - npm packaging: `"bin": {"aidd": "dist/cli.js"}`, `"files": ["dist"]`.
 
 ## Files to Create/Modify

@@ -28,27 +28,15 @@ export abstract class ToolSpec {
   }
 
   buildFilePath(section: ContentSection, fileName: string): string {
-    return `${this.directory}${section.directory.replace(/^content\//, "")}/${fileName}`;
-  }
-
-  shouldFlatten(_section: ContentSection): boolean {
-    return false;
+    return `${this.directory}${section.directory}/${fileName}`;
   }
 
   getConfigOutputPath(_configName: string, _sourcePath: string): string | null {
     return null;
   }
 
-  reverseRewriteContent(content: string, docsDir: string): string {
-    return content
-      .replaceAll(this.rewriteAtToolsInclude(), AT_TOOLS_PLACEHOLDER)
-      .replaceAll(this.rewriteAtDocsInclude(docsDir), AT_DOCS_PLACEHOLDER)
-      .replaceAll(this.directory, TOOLS_PLACEHOLDER)
-      .replaceAll(`${docsDir}/`, DOCS_PLACEHOLDER);
-  }
-
-  reverseConvertFrontmatter(frontmatter: Record<string, unknown>): Record<string, unknown> {
-    return this.reversePaths(frontmatter);
+  getMemoryBankOutputPath(_templateName: string): string | null {
+    return null;
   }
 
   protected rewriteAtToolsInclude(): string {
@@ -60,6 +48,4 @@ export abstract class ToolSpec {
   }
 
   protected abstract convertPaths(frontmatter: Record<string, unknown>): Record<string, unknown>;
-
-  protected abstract reversePaths(frontmatter: Record<string, unknown>): Record<string, unknown>;
 }

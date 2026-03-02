@@ -39,7 +39,7 @@ describe("framework.json fixture", () => {
   const fixturePath = resolve(root, "tests/fixtures/framework.json");
   const descriptor = JSON.parse(readFileSync(fixturePath, "utf-8")) as {
     version: unknown;
-    content: Record<string, { directory: string; organizationType: string }>;
+    content: Record<string, { directory: string }>;
     templates: unknown;
     config: unknown;
   };
@@ -60,7 +60,6 @@ describe("framework.json fixture", () => {
     for (const section of sections) {
       expect(descriptor.content).toHaveProperty(section);
       expect(descriptor.content[section]).toHaveProperty("directory");
-      expect(descriptor.content[section]).toHaveProperty("organizationType");
     }
   });
 

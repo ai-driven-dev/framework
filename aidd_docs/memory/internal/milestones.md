@@ -92,7 +92,7 @@ M1 and M2 can overlap partially (infrastructure adapters can start once domain p
 | --------------------------------------- | ------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `domain/models/manifest.ts`             | Domain | Aggregate root    | `addTool`, `removeTool`, `computeStatus`, `hasTool`, `getToolVersion`                                                          |
 | `domain/models/distribution.ts`         | Domain | Aggregate         | `generate(framework, toolSpec, docsDir): GeneratedFile[]`                                                                      |
-| `domain/models/tool-spec.ts`            | Domain | Rich value object | `rewriteContent`, `convertFrontmatter`, `reverseRewriteContent`, `reverseConvertFrontmatter`, `buildFilePath`, `shouldFlatten` |
+| `domain/models/tool-spec.ts`            | Domain | Rich value object | `rewriteContent`, `convertFrontmatter`, `reverseRewriteContent`, `reverseConvertFrontmatter`, `buildFilePath`, `getConfigOutputPath` |
 | `domain/models/framework-descriptor.ts` | Domain | Value object      | Content section lookup, template/config references                                                                             |
 | `domain/models/file-hash.ts`            | Domain | Value object      | `equals()` comparison                                                                                                          |
 | `domain/models/status-report.ts`        | Domain | Value object      | Per-tool lists of modified/deleted/untracked files                                                                             |
@@ -112,7 +112,7 @@ M1 and M2 can overlap partially (infrastructure adapters can start once domain p
 - [ ] `ToolSpec.rewriteContent()` handles placeholder replacement (`{{TOOLS}}/`, `{{DOCS}}/`, `@{{TOOLS}}/`, `@{{DOCS}}/`)
 - [ ] `ToolSpec.convertFrontmatter()` converts between tool-specific formats (paths, globs/alwaysApply, applyTo)
 - [ ] `ToolSpec.reverseRewriteContent()` and `ToolSpec.reverseConvertFrontmatter()` stubs exist and are tested (return canonical form or throw "not implemented" for non-trivial cases)
-- [ ] Copilot `shouldFlatten()` returns true for commands and rules; collision auto-prefix logic works
+- [ ] Copilot `buildFilePath()` flattens commands and rules to single directory level; collision auto-prefix logic works
 - [ ] `Manifest.computeStatus()` correctly classifies files as unmodified/modified/deleted/untracked
 - [ ] `FileHash.equals()` works for value comparison
 - [ ] All port interfaces are defined (compilation check, no implementation yet)

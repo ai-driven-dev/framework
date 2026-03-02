@@ -1,33 +1,28 @@
 {
-  "version": "3.0.0",
+  "version": "3.2.2",
   "content": {
     "agents": {
-      "directory": "content/agents",
-      "organizationType": "flat",
+      "directory": "agents",
       "entryFile": null
     },
     "commands": {
-      "directory": "content/commands",
-      "organizationType": "phased",
+      "directory": "commands",
       "entryFile": null
     },
     "rules": {
-      "directory": "content/rules",
-      "organizationType": "categorized",
+      "directory": "rules",
       "entryFile": null
     },
     "skills": {
-      "directory": "content/skills",
-      "organizationType": "subfoldered",
+      "directory": "skills",
       "entryFile": "SKILL.md"
     }
   },
   "templates": {
-    "memoryBank": "templates/memory-bank.md",
-    "docsReadme": "templates/docs-readme.md"
+    "agentsMd": "aidd_docs/templates/AGENTS.md"
   },
   "config": {
-    "mcp": ".mcp.json",
-    "vscodeDir": ".vscode"
+    "mcp": "config/mcp.json",
+    "vscodeDir": "config/.vscode"
   }
 }

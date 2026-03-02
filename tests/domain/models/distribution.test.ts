@@ -40,7 +40,7 @@ function loadDir(base: string, current: string, map: Map<string, string>): void 
       loadDir(base, fullPath, map);
     } else {
       const relPath = fullPath.slice(base.length + 1).replaceAll("\\", "/");
-      map.set(`content/${relPath}`, readFileSync(fullPath, "utf-8"));
+      map.set(relPath, readFileSync(fullPath, "utf-8"));
     }
   }
 }
@@ -186,7 +186,7 @@ describe("generateDistribution()", () => {
 
   it("rewrites {{TOOLS}}/ placeholder in content", () => {
     hashCounter = 0;
-    const singleFileMap = new Map([["content/agents/test.md", "path: {{TOOLS}}/agents/"]]);
+    const singleFileMap = new Map([["agents/test.md", "path: {{TOOLS}}/agents/"]]);
     const files = generateDistribution(
       framework,
       claudeToolSpec,
@@ -201,7 +201,7 @@ describe("generateDistribution()", () => {
   it("converts frontmatter for Cursor: paths -> globs", () => {
     hashCounter = 0;
     const singleFileMap = new Map([
-      ["content/rules/01-standards/naming.md", '---\npaths:\n  - "src/**/*.ts"\n---\n\n# Naming'],
+      ["rules/01-standards/naming.md", '---\npaths:\n  - "src/**/*.ts"\n---\n\n# Naming'],
     ]);
     const files = generateDistribution(
       framework,
@@ -215,9 +215,9 @@ describe("generateDistribution()", () => {
     expect(files[0]?.content).not.toContain("paths:");
   });
 
-  it("includes MCP config for Claude at .mcp.json", () => {
+  it("includes MCP config for Claude at .mcp.json regardless of source path", () => {
     hashCounter = 0;
-    const withConfig = new Map([...contentFiles, [".mcp.json", '{"mcpServers":{}}']]);
+    const withConfig = new Map([...contentFiles, ["config/mcp.json", '{"mcpServers":{}}']]);
     const files = generateDistribution(
       framework,
       claudeToolSpec,
@@ -225,13 +225,13 @@ describe("generateDistribution()", () => {
       withConfig,
       stubHasher
     );
-    const mcp = files.find((f) => f.relativePath === ".mcp.json");
-    expect(mcp).toBeDefined();
+    expect(files.find((f) => f.relativePath === ".mcp.json")).toBeDefined();
+    expect(files.find((f) => f.relativePath === "config/mcp.json")).toBeUndefined();
   });
 
   it("includes MCP config for Cursor at .cursor/mcp.json", () => {
     hashCounter = 0;
-    const withConfig = new Map([...contentFiles, [".mcp.json", '{"mcpServers":{}}']]);
+    const withConfig = new Map([...contentFiles, ["config/mcp.json", '{"mcpServers":{}}']]);
     const files = generateDistribution(
       framework,
       cursorToolSpec,
@@ -243,9 +243,122 @@ describe("generateDistribution()", () => {
     expect(mcp).toBeDefined();
   });
 
+  it("Claude commands land in .claude/commands/aidd/{phase}/ subdirectory", () => {
+    hashCounter = 0;
+    const files = generateDistribution(
+      framework,
+      claudeToolSpec,
+      "aidd_docs",
+      contentFiles,
+      stubHasher
+    );
+    const commandFiles = files.filter((f) => f.relativePath.includes("commands"));
+    expect(commandFiles).toHaveLength(3);
+    for (const f of commandFiles) {
+      expect(f.relativePath).toMatch(/^\.claude\/commands\/aidd\/\d+\//);
+    }
+  });
+
+  it("Claude generates exactly 12 files from fixture content (3 per section)", () => {
+    hashCounter = 0;
+    const files = generateDistribution(
+      framework,
+      claudeToolSpec,
+      "aidd_docs",
+      contentFiles,
+      stubHasher
+    );
+    expect(files).toHaveLength(12);
+  });
+
+  it("Cursor generates exactly 12 files from fixture content (3 per section)", () => {
+    hashCounter = 0;
+    const files = generateDistribution(
+      framework,
+      cursorToolSpec,
+      "aidd_docs",
+      contentFiles,
+      stubHasher
+    );
+    expect(files).toHaveLength(12);
+  });
+
+  it("Copilot generates exactly 12 files from fixture content (3 per section)", () => {
+    hashCounter = 0;
+    const files = generateDistribution(
+      framework,
+      copilotToolSpec,
+      "aidd_docs",
+      contentFiles,
+      stubHasher
+    );
+    expect(files).toHaveLength(12);
+  });
+
+  it("Claude rewrites @{{TOOLS}}/commands/ to @.claude/commands/aidd/{phase}/", () => {
+    hashCounter = 0;
+    const withInclude = new Map([["agents/test.md", "@{{TOOLS}}/commands/04_code/implement.md"]]);
+    const files = generateDistribution(
+      framework,
+      claudeToolSpec,
+      "aidd_docs",
+      withInclude,
+      stubHasher
+    );
+    expect(files[0]?.content).toBe("@.claude/commands/aidd/04/implement.md");
+  });
+
+  it("includes memory bank as CLAUDE.md for Claude", () => {
+    hashCounter = 0;
+    const withTemplate = new Map([
+      ...contentFiles,
+      ["aidd_docs/templates/AGENTS.md", "# Memory Bank\n"],
+    ]);
+    const files = generateDistribution(
+      framework,
+      claudeToolSpec,
+      "aidd_docs",
+      withTemplate,
+      stubHasher
+    );
+    expect(files.find((f) => f.relativePath === "CLAUDE.md")).toBeDefined();
+  });
+
+  it("includes memory bank as AGENTS.md for Cursor", () => {
+    hashCounter = 0;
+    const withTemplate = new Map([
+      ...contentFiles,
+      ["aidd_docs/templates/AGENTS.md", "# Memory Bank\n"],
+    ]);
+    const files = generateDistribution(
+      framework,
+      cursorToolSpec,
+      "aidd_docs",
+      withTemplate,
+      stubHasher
+    );
+    expect(files.find((f) => f.relativePath === "AGENTS.md")).toBeDefined();
+  });
+
+  it("includes memory bank as .github/copilot-instructions.md for Copilot", () => {
+    hashCounter = 0;
+    const withTemplate = new Map([
+      ...contentFiles,
+      ["aidd_docs/templates/AGENTS.md", "# Memory Bank\n"],
+    ]);
+    const files = generateDistribution(
+      framework,
+      copilotToolSpec,
+      "aidd_docs",
+      withTemplate,
+      stubHasher
+    );
+    expect(files.find((f) => f.relativePath === ".github/copilot-instructions.md")).toBeDefined();
+  });
+
   it("does not include MCP config for Copilot", () => {
     hashCounter = 0;
-    const withConfig = new Map([...contentFiles, [".mcp.json", '{"mcpServers":{}}']]);
+    const withConfig = new Map([...contentFiles, ["config/mcp.json", '{"mcpServers":{}}']]);
     const files = generateDistribution(
       framework,
       copilotToolSpec,

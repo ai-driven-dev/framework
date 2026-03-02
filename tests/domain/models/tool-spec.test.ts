@@ -11,20 +11,13 @@ class TestToolSpec extends ToolSpec {
     if (!Array.isArray(paths)) return frontmatter;
     return { ...frontmatter, scope: paths };
   }
-
-  protected reversePaths(frontmatter: Record<string, unknown>): Record<string, unknown> {
-    const scope = frontmatter.scope;
-    if (!Array.isArray(scope)) return frontmatter;
-    return { ...frontmatter, paths: scope };
-  }
 }
 
 const spec = new TestToolSpec();
 
 const agentsSection: ContentSection = {
   name: "agents",
-  directory: "content/agents",
-  organizationType: "flat",
+  directory: "agents",
   entryFile: null,
 };
 
@@ -79,7 +72,7 @@ describe("ToolSpec", () => {
   });
 
   describe("buildFilePath()", () => {
-    it("produces tool-relative path stripping content/ prefix", () => {
+    it("produces tool-relative path from section directory", () => {
       const path = spec.buildFilePath(agentsSection, "code-reviewer.md");
       expect(path).toBe(".test/agents/code-reviewer.md");
     });
@@ -87,8 +80,7 @@ describe("ToolSpec", () => {
     it("works for nested sections", () => {
       const section: ContentSection = {
         name: "rules",
-        directory: "content/rules",
-        organizationType: "categorized",
+        directory: "rules",
         entryFile: null,
       };
       const path = spec.buildFilePath(section, "01-standards/naming.md");
@@ -96,31 +88,10 @@ describe("ToolSpec", () => {
     });
   });
 
-  describe("shouldFlatten()", () => {
-    it("returns false by default", () => {
-      expect(spec.shouldFlatten(agentsSection)).toBe(false);
-    });
-  });
-
-  describe("reverseRewriteContent()", () => {
-    it("reverses tool directory back to {{TOOLS}}/ placeholder", () => {
-      const forward = spec.rewriteContent("path: {{TOOLS}}/agents/", "aidd_docs");
-      const reversed = spec.reverseRewriteContent(forward, "aidd_docs");
-      expect(reversed).toContain("{{TOOLS}}/");
-    });
-
-    it("reverses docsDir back to {{DOCS}}/ placeholder", () => {
-      const forward = spec.rewriteContent("ref: {{DOCS}}/memory/", "aidd_docs");
-      const reversed = spec.reverseRewriteContent(forward, "aidd_docs");
-      expect(reversed).toContain("{{DOCS}}/");
-    });
-  });
-
-  describe("reverseConvertFrontmatter()", () => {
-    it("reverses converted frontmatter back to original shape", () => {
-      const converted = spec.convertFrontmatter({ paths: ["src/**/*.ts"] });
-      const reversed = spec.reverseConvertFrontmatter(converted);
-      expect(reversed).toHaveProperty("paths");
+  describe("getMemoryBankOutputPath()", () => {
+    it("returns null by default for unknown template names", () => {
+      expect(spec.getMemoryBankOutputPath("agentsMd")).toBeNull();
+      expect(spec.getMemoryBankOutputPath("unknown")).toBeNull();
     });
   });
 });

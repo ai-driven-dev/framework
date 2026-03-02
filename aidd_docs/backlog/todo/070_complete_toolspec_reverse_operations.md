@@ -10,45 +10,52 @@ blockedBy: [063]
 # 070: Complete ToolSpec reverse operations for sync
 
 ## Context
-The sync command needs to reverse-rewrite tool-specific content back to canonical format before forward-rewriting it to another tool. The `reverseRewriteContent` and `reverseConvertFrontmatter` methods were stubbed in ticket 012. This ticket provides the full implementation.
+The sync command needs to reverse-rewrite tool-specific content back to canonical format before forward-rewriting it to another tool. These reverse operations are NOT yet implemented — deferred to this milestone (M7).
+
+**To implement:**
+- Base class `reverseRewriteContent()`: reverses `@.tool/path` → `@{{TOOLS}}/path` and `docsDir/` → `{{DOCS}}/`
+- `CopilotToolSpec.reverseRewriteContent()`: reverses markdown links `[label](.github/path)` → `@{{TOOLS}}/path`
+- `reverseConvertFrontmatter()` for all 3 tools: Claude (passthrough), Cursor (globs/alwaysApply → paths), Copilot (applyTo → paths)
+
+**Known lossiness to address:**
+- Claude commands reversal is lossy: `@.claude/commands/aidd/04/implement.md` cannot be reversed to `@{{TOOLS}}/commands/04_code/implement.md` because the subdirectory label (`04_code`) is discarded by the forward rewrite. Only the phase number is preserved.
+- Copilot flattened path reversal is also lossy: `[file.md](.github/prompts/04-implement.prompt.md)` cannot be reversed to the original `@{{TOOLS}}/commands/04_code/implement.md`.
 
 ## Scope
-Implement full reverse operations for all three ToolSpecs (Claude, Cursor, Copilot). This is the spike identified in milestones.md ("Reverse-rewrite feasibility", 2 days).
+Complete the remaining reverse operation work needed for sync: lossless round-trip validation, cross-tool propagation tests, and resolution of the known lossy cases (feasibility spike).
 
 ## Acceptance Criteria
-- [ ] `reverseRewriteContent(content, docsDir)` for Claude: converts `@.claude/path` back to `@{{TOOLS}}/path`, `.claude/` back to `{{TOOLS}}/`
-- [ ] `reverseRewriteContent(content, docsDir)` for Cursor: converts `@.cursor/path` back to `@{{TOOLS}}/path`, `.cursor/` back to `{{TOOLS}}/`
-- [ ] `reverseRewriteContent(content, docsDir)` for Copilot: converts markdown links back to `@{{TOOLS}}/path`, `.github/` back to `{{TOOLS}}/`
-- [ ] `reverseConvertFrontmatter()` for Claude: converts `paths:` back to canonical scope
-- [ ] `reverseConvertFrontmatter()` for Cursor: converts `globs:`+`alwaysApply:` back to canonical
-- [ ] `reverseConvertFrontmatter()` for Copilot: converts `applyTo:` back to canonical
-- [ ] Round-trip: `rewrite(reverse(content))` produces equivalent output (within the tool)
-- [ ] Cross-tool: `forward(reverse(content))` from Claude to Cursor produces correct Cursor content
-- [ ] Reverse rewrite is lossless for all content types in the framework fixture
+- [ ] `reverseRewriteContent(content, docsDir)` implemented in base class for Claude/Cursor (@ include tools)
+- [ ] `reverseRewriteContent` overridden in CopilotToolSpec for markdown link → @ conversion
+- [ ] `reverseConvertFrontmatter` implemented for all 3 tools (Claude passthrough, Cursor globs→paths, Copilot applyTo→paths)
+- [ ] Round-trip: `rewriteContent(reverseRewriteContent(content))` produces equivalent output for all fixture files — Claude (non-command content), Cursor, and Copilot
+- [ ] Cross-tool: `forwardRewrite(reverseRewrite(content, sourceTool), targetTool)` produces correct target tool content
+- [ ] Claude commands lossy reversal: explicit decision — either document as out-of-scope for sync, or implement a lossless path mapping registry
+- [ ] Copilot flattened paths lossy reversal: same decision point
+- [ ] Reverse rewrite is lossless for all non-lossy content types in the framework fixture
+- [ ] If lossless is not achievable for some cases, they are explicitly documented and excluded from sync scope
 
 ## Technical Notes
-- The reverse of `rewriteContent` must handle user-added content that uses tool-specific paths.
-- Copilot reverse from markdown links is the trickiest case -- `[name](path)` back to `@path`.
-- Losslessness test: `reverseRewrite(rewriteContent(canonical))` should equal `canonical` for all fixture files.
-- If lossless reverse is not achievable for some content, document the limitation clearly.
+- Start with `reverseRewriteContent` base class: reverse `@{directory}path` → `@{{TOOLS}}/path` and `{docsDir}/` → `{{DOCS}}/`.
+- Copilot override: reverse `[label](.github/path)` → `@{{TOOLS}}/path` and `[label](docsDir/path)` → `@{{DOCS}}/path`.
+- The lossy cases (Claude commands `04_code/` label, Copilot flattened paths) are the spike from milestones.md ("Reverse-rewrite feasibility, 2 days"). If lossless is not achievable, sync scope is limited to non-command, non-rule content (memory bank, agents only).
+- Files to NOT sync (excluded regardless): memory bank, MCP config, VS Code files, docs.
 
 ## Files to Create/Modify
-- `src/domain/models/tool-spec.ts` -- replace reverseRewriteContent/reverseConvertFrontmatter stubs
-- `src/domain/tool-specs/claude.ts` -- Claude reverse implementation
-- `src/domain/tool-specs/cursor.ts` -- Cursor reverse implementation
-- `src/domain/tool-specs/copilot.ts` -- Copilot reverse implementation
-- `tests/domain/models/tool-spec.test.ts` -- reverse operation tests
-- `tests/domain/tool-specs/reverse-roundtrip.test.ts` -- round-trip losslessness tests
+- `src/domain/models/tool-spec.ts` -- add `reverseRewriteContent`, `reverseConvertFrontmatter`, `reversePaths` abstract
+- `src/domain/tool-specs/claude.ts` -- `reversePaths` (passthrough) + command path reversal (if feasible)
+- `src/domain/tool-specs/cursor.ts` -- `reversePaths` (globs → paths)
+- `src/domain/tool-specs/copilot.ts` -- `reversePaths` (applyTo → paths) + `reverseRewriteContent` override
+- `tests/domain/tool-specs/reverse-roundtrip.test.ts` -- round-trip losslessness tests (new file)
+- Update existing tool-spec tests as needed
 
 ## Tests
-- Claude reverse rewrite: tool paths -> canonical
-- Cursor reverse rewrite: tool paths -> canonical
-- Copilot reverse rewrite: markdown links -> canonical
-- Claude reverse frontmatter: paths -> canonical
-- Cursor reverse frontmatter: globs/alwaysApply -> canonical
-- Copilot reverse frontmatter: applyTo -> canonical
-- Round-trip losslessness for all fixture content files
-- Cross-tool: Claude -> canonical -> Cursor produces correct output
+- Round-trip: forward → reverse → forward produces idempotent output (per tool)
+- Cross-tool: Claude → canonical → Cursor produces correct Cursor content
+- Claude agents round-trip lossless
+- Cursor agents round-trip lossless
+- Copilot agents round-trip lossless (non-flattened)
+- Claude command reversal: explicit test for lossy case with documented behavior
 
 ## Done When
 - [ ] All acceptance criteria checked

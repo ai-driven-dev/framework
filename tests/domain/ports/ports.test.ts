@@ -50,7 +50,7 @@ describe("Port interface type-level tests", () => {
         descriptor: FrameworkDescriptor.fromJson({
           version: "3.0.0",
           content: {
-            agents: { directory: "content/agents", organizationType: "flat", entryFile: null },
+            agents: { directory: "agents", entryFile: null },
           },
         }),
         contentFiles: new Map(),

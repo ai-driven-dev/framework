@@ -58,5 +58,21 @@ export function generateDistribution(
     );
   }
 
+  for (const templateRef of framework.templateRefs) {
+    const rawContent = contentFiles.get(templateRef.path);
+    if (rawContent === undefined) continue;
+
+    const outputPath = toolSpec.getMemoryBankOutputPath(templateRef.name);
+    if (outputPath === null) continue;
+
+    results.push(
+      new GeneratedFile({
+        relativePath: outputPath,
+        content: rawContent,
+        hash: hasher.hash(rawContent),
+      })
+    );
+  }
+
   return results;
 }

@@ -5,29 +5,25 @@ import { copilotToolSpec } from "../../../src/domain/tool-specs/copilot.js";
 
 const agentsSection: ContentSection = {
   name: "agents",
-  directory: "content/agents",
-  organizationType: "flat",
+  directory: "agents",
   entryFile: null,
 };
 
 const commandsSection: ContentSection = {
   name: "commands",
-  directory: "content/commands",
-  organizationType: "phased",
+  directory: "commands",
   entryFile: null,
 };
 
 const rulesSection: ContentSection = {
   name: "rules",
-  directory: "content/rules",
-  organizationType: "categorized",
+  directory: "rules",
   entryFile: null,
 };
 
 const skillsSection: ContentSection = {
   name: "skills",
-  directory: "content/skills",
-  organizationType: "subfoldered",
+  directory: "skills",
   entryFile: "SKILL.md",
 };
 
@@ -38,24 +34,6 @@ describe("CopilotToolSpec", () => {
 
   it("has directory .github/", () => {
     expect(copilotToolSpec.directory).toBe(".github/");
-  });
-
-  describe("shouldFlatten()", () => {
-    it("returns true for commands", () => {
-      expect(copilotToolSpec.shouldFlatten(commandsSection)).toBe(true);
-    });
-
-    it("returns true for rules", () => {
-      expect(copilotToolSpec.shouldFlatten(rulesSection)).toBe(true);
-    });
-
-    it("returns false for agents", () => {
-      expect(copilotToolSpec.shouldFlatten(agentsSection)).toBe(false);
-    });
-
-    it("returns false for skills", () => {
-      expect(copilotToolSpec.shouldFlatten(skillsSection)).toBe(false);
-    });
   });
 
   describe("rewriteContent()", () => {
@@ -103,18 +81,15 @@ describe("CopilotToolSpec", () => {
     });
   });
 
-  describe("reverseConvertFrontmatter()", () => {
-    it("reverses applyTo: back to paths:", () => {
-      const converted = copilotToolSpec.convertFrontmatter({ paths: ["src/**/*.ts"] });
-      const reversed = copilotToolSpec.reverseConvertFrontmatter(converted);
-      expect(reversed).toHaveProperty("paths");
-      expect(reversed).not.toHaveProperty("applyTo");
+  describe("getMemoryBankOutputPath()", () => {
+    it("returns .github/copilot-instructions.md for agentsMd template", () => {
+      expect(copilotToolSpec.getMemoryBankOutputPath("agentsMd")).toBe(
+        ".github/copilot-instructions.md"
+      );
     });
 
-    it("returns empty paths for ** applyTo", () => {
-      const reversed = copilotToolSpec.reverseConvertFrontmatter({ applyTo: "**" });
-      expect(reversed).not.toHaveProperty("applyTo");
-      expect(reversed).not.toHaveProperty("paths");
+    it("returns null for unknown template names", () => {
+      expect(copilotToolSpec.getMemoryBankOutputPath("unknown")).toBeNull();
     });
   });
 

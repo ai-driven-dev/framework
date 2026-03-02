@@ -24,7 +24,7 @@ Define all 8 port interfaces. Also implement ConflictSet (v3.1+ seam with stubs)
 - [ ] `Hasher` port: `hash(content: string): FileHash`
 - [ ] `Prompter` port: `confirm(message): Promise<boolean>`, `select(message, choices): Promise<string>`, `checkbox(message, choices): Promise<string[]>`
 - [ ] `Logger` port: `debug(message)`, `info(message)`, `warn(message)`
-- [ ] `ConflictSet` value object with stubbed methods: `classify()`, `getConflicts()`, `applyResolutions()` -- tested stubs for v3.1+ seam
+- [x] `ConflictSet` value object: `classifyConflict(manifestHash, diskHash, newHash)` standalone function returning `ConflictType`, `getConflicts()` returns conflict entries, `applyResolutions()` throws `"not yet implemented (v3.1+ seam)"` -- explicit throw is correct, not a silent stub
 - [ ] All ports are TypeScript interfaces (not classes)
 - [ ] All ports live in `src/domain/ports/`
 - [ ] ConflictSet compiles and has test coverage for stub behavior
@@ -53,7 +53,7 @@ Define all 8 port interfaces. Also implement ConflictSet (v3.1+ seam with stubs)
 - All port interfaces compile without error (type-level test)
 - ConflictSet.classify() returns correct ConflictType for each combination
 - ConflictSet.getConflicts() returns conflict files
-- ConflictSet stubs throw or return safe defaults for unimplemented paths
+- ConflictSet.applyResolutions() throws (v3.1+ seam, not silent stub — fail loud)
 
 ## Done When
 - [ ] All acceptance criteria checked

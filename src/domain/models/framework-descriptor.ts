@@ -1,9 +1,6 @@
-export type OrganizationType = "flat" | "phased" | "categorized" | "subfoldered";
-
 export interface ContentSection {
   readonly name: string;
   readonly directory: string;
-  readonly organizationType: OrganizationType;
   readonly entryFile: string | null;
 }
 
@@ -15,17 +12,6 @@ export interface TemplateRef {
 export interface ConfigRef {
   readonly name: string;
   readonly path: string;
-}
-
-const ORGANIZATION_TYPES = new Set<OrganizationType>([
-  "flat",
-  "phased",
-  "categorized",
-  "subfoldered",
-]);
-
-function isOrganizationType(value: unknown): value is OrganizationType {
-  return typeof value === "string" && ORGANIZATION_TYPES.has(value as OrganizationType);
 }
 
 export class FrameworkDescriptor {
@@ -90,18 +76,12 @@ export class FrameworkDescriptor {
       if (typeof s.directory !== "string") {
         throw new Error(`Invalid framework.json: content section '${name}' missing 'directory'.`);
       }
-      if (!isOrganizationType(s.organizationType)) {
-        throw new Error(
-          `Invalid framework.json: content section '${name}' has invalid 'organizationType': ${String(s.organizationType)}.`
-        );
-      }
       const entryFile =
         s.entryFile === null || s.entryFile === undefined ? null : String(s.entryFile);
 
       return {
         name,
         directory: s.directory,
-        organizationType: s.organizationType,
         entryFile,
       };
     });

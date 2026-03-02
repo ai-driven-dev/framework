@@ -1,15 +1,9 @@
 import type { ContentSection } from "../models/framework-descriptor.js";
 import { ToolId, ToolSpec } from "../models/tool-spec.js";
 
-const FLATTENED_SECTIONS = new Set(["commands", "rules"]);
-
 export class CopilotToolSpec extends ToolSpec {
   readonly toolId = ToolId.Copilot;
   readonly directory = ".github/";
-
-  shouldFlatten(section: ContentSection): boolean {
-    return FLATTENED_SECTIONS.has(section.name);
-  }
 
   buildFilePath(section: ContentSection, fileName: string): string {
     switch (section.name) {
@@ -31,6 +25,11 @@ export class CopilotToolSpec extends ToolSpec {
       default:
         return `.github/${fileName}`;
     }
+  }
+
+  override getMemoryBankOutputPath(templateName: string): string | null {
+    if (templateName === "agentsMd") return ".github/copilot-instructions.md";
+    return null;
   }
 
   override rewriteContent(content: string, docsDir: string): string {
@@ -55,14 +54,9 @@ export class CopilotToolSpec extends ToolSpec {
     return { ...rest, applyTo: paths[0] };
   }
 
-  protected reversePaths(frontmatter: Record<string, unknown>): Record<string, unknown> {
-    const { applyTo, ...rest } = frontmatter;
-    if (typeof applyTo !== "string" || applyTo === "**") return rest;
-    return { ...rest, paths: [applyTo] };
-  }
 }
 
-function flattenFileName(section: ContentSection, fileName: string, targetExt: string): string {
+function flattenFileName(_section: ContentSection, fileName: string, targetExt: string): string {
   const parts = fileName.split("/");
   const baseName = parts[parts.length - 1];
   const withExt = addTargetExtension(baseName, targetExt);

@@ -5,15 +5,13 @@ import { cursorToolSpec } from "../../../src/domain/tool-specs/cursor.js";
 
 const rulesSection: ContentSection = {
   name: "rules",
-  directory: "content/rules",
-  organizationType: "categorized",
+  directory: "rules",
   entryFile: null,
 };
 
 const agentsSection: ContentSection = {
   name: "agents",
-  directory: "content/agents",
-  organizationType: "flat",
+  directory: "agents",
   entryFile: null,
 };
 
@@ -55,12 +53,13 @@ describe("CursorToolSpec", () => {
     });
   });
 
-  describe("reverseConvertFrontmatter()", () => {
-    it("reverses globs: back to paths:", () => {
-      const converted = cursorToolSpec.convertFrontmatter({ paths: ["src/**/*.ts"] });
-      const reversed = cursorToolSpec.reverseConvertFrontmatter(converted);
-      expect(reversed).toHaveProperty("paths");
-      expect(reversed).not.toHaveProperty("globs");
+  describe("getMemoryBankOutputPath()", () => {
+    it("returns AGENTS.md for agentsMd template", () => {
+      expect(cursorToolSpec.getMemoryBankOutputPath("agentsMd")).toBe("AGENTS.md");
+    });
+
+    it("returns null for unknown template names", () => {
+      expect(cursorToolSpec.getMemoryBankOutputPath("unknown")).toBeNull();
     });
   });
 
@@ -73,13 +72,6 @@ describe("CursorToolSpec", () => {
     it("keeps .md extension for non-rules sections", () => {
       const path = cursorToolSpec.buildFilePath(agentsSection, "code-reviewer.md");
       expect(path).toBe(".cursor/agents/code-reviewer.md");
-    });
-  });
-
-  describe("shouldFlatten()", () => {
-    it("returns false for all sections", () => {
-      expect(cursorToolSpec.shouldFlatten(agentsSection)).toBe(false);
-      expect(cursorToolSpec.shouldFlatten(rulesSection)).toBe(false);
     });
   });
 });

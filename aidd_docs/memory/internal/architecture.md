@@ -265,8 +265,8 @@ graph TB
 
     subgraph DOMAIN["Domain Layer (Business Logic)"]
         MAN[Manifest<br>Aggregate root: tools, hashes,<br>versions, docs config<br>computeStatus · addTool · removeTool]
-        DIST[Distribution<br>Aggregate: generates tool files<br>generate · toGeneratedFiles]
-        TS[ToolSpec<br>Rich value object: tool conventions<br>rewriteContent · convertFrontmatter<br>reverseRewriteContent · reverseConvertFrontmatter<br>buildFilePath · shouldFlatten]
+        DIST[Distribution<br>generateDistribution() standalone function<br>produces GeneratedFile[] per tool]
+        TS[ToolSpec<br>Rich value object: tool conventions<br>rewriteContent · convertFrontmatter<br>buildFilePath · getConfigOutputPath · getMemoryBankOutputPath]
         HASH[FileHash<br>Value object for<br>change detection]
         FW[FrameworkDescriptor<br>Parsed framework.json<br>content layout]
         SET[Settings<br>Value object: repo, docsDir,<br>verbose with defaults]
@@ -338,8 +338,8 @@ Zero infrastructure imports. Rich domain objects own their behavior — no anemi
 | Module                | Type              | Responsibility & Behavior                                                      | Driven by               |
 | --------------------- | ----------------- | ------------------------------------------------------------------------------ | ----------------------- |
 | Manifest              | Aggregate root    | Tracks tools, file hashes, versions, docs config. **Behavior:** `addTool(toolId, version, files)`, `removeTool(toolId)`, `computeStatus(diskHashes): StatusReport` (diffs manifest hashes against disk, classifies files as modified/deleted/added), `hasTool(toolId)`, `getToolVersion(toolId)`. | PRD Section 8, Constitution quality constraint |
-| Distribution          | Aggregate         | Generates tool-specific file sets from framework content. **Behavior:** `generate(framework: FrameworkDescriptor, toolSpec: ToolSpec, docsDir: string): GeneratedFile[]` — iterates framework content sections, delegates per-file rewriting to `toolSpec`, produces output file set with computed hashes. | PRD F3                 |
-| ToolSpec              | Rich value object | Describes a tool's conventions and owns all tool-specific transformations. **v3.0 behavior:** `rewriteContent(content, docsDir): string` (placeholder replacement for `$DOCS_DIR`/`$TOOL_DIR`, include syntax conversion `@path` vs markdown link), `convertFrontmatter(frontmatter): Frontmatter` (converts between paths/globs/applyTo scope formats), `buildFilePath(contentSection, fileName): string`, `shouldFlatten(contentSection): boolean`. **v3.1+ behavior:** `reverseRewriteContent(content, docsDir): string` (tool-specific back to canonical), `reverseConvertFrontmatter(frontmatter): Frontmatter` (tool format back to canonical). Each tool (Claude, Cursor, Copilot) has distinct directory layouts, file extensions, and scope formats. | Constitution extensibility constraint |
+| Distribution          | Standalone function | Generates tool-specific file sets from framework content. **Behavior:** `generateDistribution(framework, toolSpec, docsDir, contentFiles, hasher): GeneratedFile[]` — iterates content sections, template refs (memory bank via `toolSpec.getMemoryBankOutputPath()`), and config refs (MCP via `toolSpec.getConfigOutputPath()`); delegates per-file rewriting to `toolSpec`; raw copy for templates and configs. | PRD F3 |
+| ToolSpec              | Rich value object | Describes a tool's conventions and owns all tool-specific transformations. **v3.0 behavior:** `rewriteContent(content, docsDir): string` (placeholder replacement for `$DOCS_DIR`/`$TOOL_DIR`, include syntax conversion `@path` vs markdown link), `convertFrontmatter(frontmatter): Frontmatter` (converts between paths/globs/applyTo scope formats), `buildFilePath(contentSection, fileName): string` (full output path logic including any flattening for Copilot), `getConfigOutputPath(configName, sourcePath): string | null`. **v3.1+ behavior:** `reverseRewriteContent(content, docsDir): string` (tool-specific back to canonical), `reverseConvertFrontmatter(frontmatter): Frontmatter` (tool format back to canonical). Each tool (Claude, Cursor, Copilot) has distinct directory layouts, file extensions, and scope formats. | Constitution extensibility constraint |
 | FileHash              | Value object      | Wraps a hash string with equality comparison (`equals(other)`).                | Constitution quality constraint |
 | FrameworkDescriptor   | Value object      | Parsed representation of framework.json. Locates content directories, templates, and config file references. | Constitution Decision Rule 3 |
 | StatusReport          | Value object      | Result of `Manifest.computeStatus()`: per-tool lists of modified, deleted, and untracked files. | PRD F5               |
@@ -472,8 +472,6 @@ erDiagram
         string memoryBankPath "CLAUDE.md | AGENTS.md | .github/copilot-instructions.md"
         string mcpConfigPath ".mcp.json | .cursor/mcp.json | null"
         string includeSyntaxPrefix "@ prefix | @ prefix | markdown link"
-        boolean flattenCommands "false | false | true"
-        boolean flattenRules "false | false | true"
     }
 
     FrontmatterFormat {
@@ -704,7 +702,7 @@ src/
       tracked-file.ts
       file-hash.ts                # Value object: equals()
       framework-descriptor.ts     # Value object: content section lookup
-      tool-spec.ts                # Rich value object: rewriteContent, convertFrontmatter, buildFilePath, shouldFlatten
+      tool-spec.ts                # Rich value object: rewriteContent, convertFrontmatter, buildFilePath, getConfigOutputPath, getMemoryBankOutputPath
       distribution.ts             # Aggregate: generate()
       generated-file.ts           # Value object
       status-report.ts            # Value object
@@ -887,8 +885,8 @@ sequenceDiagram
 | Addition           | Location              | Purpose                                               |
 | ------------------ | --------------------- | ----------------------------------------------------- |
 | ConflictSet        | Domain model          | Three-way diff (manifest vs disk vs new) with resolution application |
-| reverseRewriteContent | ToolSpec method     | Tool-specific content back to canonical form          |
-| reverseConvertFrontmatter | ToolSpec method | Tool-specific frontmatter back to canonical format    |
+| reverseRewriteContent | ToolSpec method (M7) | Tool-specific content back to canonical form — NOT YET IMPLEMENTED, deferred to ticket 070 |
+| reverseConvertFrontmatter | ToolSpec method (M7) | Tool-specific frontmatter back to canonical format — NOT YET IMPLEMENTED, deferred to ticket 070 |
 | Prompter port      | Domain port           | Abstract interactive prompts, implemented by inquirer or silent adapter |
 | PrompterAdapter    | Infrastructure        | @inquirer/prompts: confirm, select, checkbox          |
 | SilentPrompterAdapter | Infrastructure     | Auto-accepts all prompts (CI, tests, --force)         |

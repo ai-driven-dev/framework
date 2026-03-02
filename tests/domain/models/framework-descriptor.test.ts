@@ -12,7 +12,7 @@ describe("FrameworkDescriptor", () => {
   describe("fromJson()", () => {
     it("constructs from valid fixture data", () => {
       const descriptor = FrameworkDescriptor.fromJson(fixtureData);
-      expect(descriptor.version).toBe("3.0.0");
+      expect(descriptor.version).toBe("3.2.2");
     });
 
     it("throws on null input", () => {
@@ -22,7 +22,7 @@ describe("FrameworkDescriptor", () => {
     it("throws on missing version", () => {
       expect(() =>
         FrameworkDescriptor.fromJson({
-          content: { agents: { directory: "x", organizationType: "flat", entryFile: null } },
+          content: { agents: { directory: "x", entryFile: null } },
         })
       ).toThrow(/version/);
     });
@@ -31,7 +31,7 @@ describe("FrameworkDescriptor", () => {
       expect(() =>
         FrameworkDescriptor.fromJson({
           version: "",
-          content: { agents: { directory: "x", organizationType: "flat", entryFile: null } },
+          content: { agents: { directory: "x", entryFile: null } },
         })
       ).toThrow(/version/);
     });
@@ -45,15 +45,6 @@ describe("FrameworkDescriptor", () => {
         /content/
       );
     });
-
-    it("throws on invalid organizationType", () => {
-      expect(() =>
-        FrameworkDescriptor.fromJson({
-          version: "1.0.0",
-          content: { agents: { directory: "x", organizationType: "invalid", entryFile: null } },
-        })
-      ).toThrow(/organizationType/);
-    });
   });
 
   describe("getContentSection()", () => {
@@ -63,27 +54,25 @@ describe("FrameworkDescriptor", () => {
       const section = descriptor.getContentSection("agents");
       expect(section).toBeDefined();
       expect(section?.name).toBe("agents");
-      expect(section?.directory).toBe("content/agents");
-      expect(section?.organizationType).toBe("flat");
+      expect(section?.directory).toBe("agents");
       expect(section?.entryFile).toBeNull();
     });
 
     it("returns commands section", () => {
       const section = descriptor.getContentSection("commands");
       expect(section).toBeDefined();
-      expect(section?.organizationType).toBe("phased");
+      expect(section?.directory).toBe("commands");
     });
 
     it("returns rules section", () => {
       const section = descriptor.getContentSection("rules");
       expect(section).toBeDefined();
-      expect(section?.organizationType).toBe("categorized");
+      expect(section?.directory).toBe("rules");
     });
 
     it("returns skills section with entryFile", () => {
       const section = descriptor.getContentSection("skills");
       expect(section).toBeDefined();
-      expect(section?.organizationType).toBe("subfoldered");
       expect(section?.entryFile).toBe("SKILL.md");
     });
 
@@ -95,16 +84,10 @@ describe("FrameworkDescriptor", () => {
   describe("getTemplate()", () => {
     const descriptor = FrameworkDescriptor.fromJson(fixtureData);
 
-    it("returns memoryBank template", () => {
-      const template = descriptor.getTemplate("memoryBank");
+    it("returns agentsMd template", () => {
+      const template = descriptor.getTemplate("agentsMd");
       expect(template).toBeDefined();
-      expect(template?.path).toBe("templates/memory-bank.md");
-    });
-
-    it("returns docsReadme template", () => {
-      const template = descriptor.getTemplate("docsReadme");
-      expect(template).toBeDefined();
-      expect(template?.path).toBe("templates/docs-readme.md");
+      expect(template?.path).toBe("aidd_docs/templates/AGENTS.md");
     });
 
     it("returns undefined for unknown template name", () => {
@@ -118,13 +101,13 @@ describe("FrameworkDescriptor", () => {
     it("returns mcp config", () => {
       const config = descriptor.getConfig("mcp");
       expect(config).toBeDefined();
-      expect(config?.path).toBe(".mcp.json");
+      expect(config?.path).toBe("config/mcp.json");
     });
 
     it("returns vscodeDir config", () => {
       const config = descriptor.getConfig("vscodeDir");
       expect(config).toBeDefined();
-      expect(config?.path).toBe(".vscode");
+      expect(config?.path).toBe("config/.vscode");
     });
 
     it("returns undefined for unknown config name", () => {
