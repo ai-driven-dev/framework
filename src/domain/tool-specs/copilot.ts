@@ -53,7 +53,6 @@ export class CopilotToolSpec extends ToolSpec {
     }
     return { ...rest, applyTo: paths[0] };
   }
-
 }
 
 function flattenFileName(_section: ContentSection, fileName: string, targetExt: string): string {

@@ -30,7 +30,6 @@ export class CursorToolSpec extends ToolSpec {
     }
     return { ...rest, globs: paths, alwaysApply: false };
   }
-
 }
 
 export const cursorToolSpec = new CursorToolSpec();
