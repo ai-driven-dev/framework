@@ -130,6 +130,10 @@ export class Manifest {
     return files.map((f) => ({ relativePath: f.relativePath, hash: f.hash.value }));
   }
 
+  private static parseTrackedFiles(files: TrackedFileData[]): TrackedFile[] {
+    return files.map((f) => ({ relativePath: f.relativePath, hash: new FileHash(f.hash) }));
+  }
+
   static fromJSON(data: unknown): Manifest {
     if (data === null || typeof data !== "object") {
       throw new Error("Invalid manifest data: expected an object.");
@@ -154,10 +158,7 @@ export class Manifest {
         tools.set(toolId, {
           toolId,
           version: entry.version,
-          files: entry.files.map((f) => ({
-            relativePath: f.relativePath,
-            hash: new FileHash(f.hash),
-          })),
+          files: Manifest.parseTrackedFiles(entry.files),
         });
       }
     }
@@ -167,10 +168,7 @@ export class Manifest {
       const docsRaw = raw.docs as DocsEntryData;
       docs = {
         version: docsRaw.version,
-        files: docsRaw.files.map((f) => ({
-          relativePath: f.relativePath,
-          hash: new FileHash(f.hash),
-        })),
+        files: Manifest.parseTrackedFiles(docsRaw.files),
       };
     }
 

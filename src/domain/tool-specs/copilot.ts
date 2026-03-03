@@ -9,7 +9,7 @@ export class CopilotToolSpec extends ToolSpec {
   buildFilePath(section: ContentSection, fileName: string): string {
     switch (section.name) {
       case "agents": {
-        const base = fileName.split("/").at(-1) ?? fileName;
+        const base = basename(fileName);
         const name = base.endsWith(".md") ? `${base.slice(0, -3)}.agent.md` : base;
         return `${this.directory}agents/${name}`;
       }
@@ -36,12 +36,10 @@ export class CopilotToolSpec extends ToolSpec {
   override rewriteContent(content: string, docsDir: string): string {
     return content
       .replace(/@\{\{TOOLS\}\}\/(\S+)/g, (_match, path: string) => {
-        const filename = path.split("/").at(-1) ?? path;
-        return `[${filename}](${this.directory}${path})`;
+        return `[${basename(path)}](${this.directory}${path})`;
       })
       .replace(/@\{\{DOCS\}\}\/(\S+)/g, (_match, path: string) => {
-        const filename = path.split("/").at(-1) ?? path;
-        return `[${filename}](${docsDir}/${path})`;
+        return `[${basename(path)}](${docsDir}/${path})`;
       })
       .replaceAll("{{TOOLS}}/", this.directory)
       .replaceAll("{{DOCS}}/", `${docsDir}/`);
@@ -54,6 +52,10 @@ export class CopilotToolSpec extends ToolSpec {
     }
     return { ...rest, applyTo: paths[0] };
   }
+}
+
+function basename(path: string): string {
+  return path.split("/").at(-1) ?? path;
 }
 
 function flattenFileName(fileName: string, targetExt: string): string {

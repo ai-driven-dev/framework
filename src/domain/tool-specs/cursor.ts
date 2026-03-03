@@ -15,7 +15,7 @@ export class CursorToolSpec extends ToolSpec {
   }
 
   override getConfigOutputPath(configName: string): string | null {
-    if (configName === "mcp") return ".cursor/mcp.json";
+    if (configName === "mcp") return `${this.directory}mcp.json`;
     return null;
   }
 

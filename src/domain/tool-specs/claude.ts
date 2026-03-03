@@ -41,7 +41,7 @@ export class ClaudeToolSpec extends ToolSpec {
   }
 
   private commandsDir(phase: string): string {
-    return `.claude/commands/aidd/${phase}/`;
+    return `${this.directory}commands/aidd/${phase}/`;
   }
 
   convertFrontmatter(frontmatter: Record<string, unknown>): Record<string, unknown> {
