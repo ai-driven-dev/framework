@@ -90,6 +90,6 @@ flowchart LR
 
 ## Resources
 
-| Type     | Path                                    | Description      |
-| -------- | --------------------------------------- | ---------------- |
-| Template | `{{DOCS}}/templates/aidd/spike.md`     | Spike template   |
+| Type     | Path                               | Description    |
+| -------- | ---------------------------------- | -------------- |
+| Template | `{{DOCS}}/templates/aidd/spike.md` | Spike template |

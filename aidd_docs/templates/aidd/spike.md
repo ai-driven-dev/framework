@@ -1,7 +1,6 @@
 ---
 name: spike
 description: Spike report template - time-boxed investigation to reduce uncertainty
-argument-hint: N/A
 ---
 
 # Spike — [Title]
@@ -35,12 +34,12 @@ argument-hint: N/A
 
 ## Comparison
 
-| Criteria | Approach 1 | Approach 2 |
-| --- | --- | --- |
-| Feasibility | ... | ... |
-| Effort | ... | ... |
-| Risk | ... | ... |
-| Alignment with constraints | ... | ... |
+| Criteria                   | Approach 1 | Approach 2 |
+| -------------------------- | ---------- | ---------- |
+| Feasibility                | ...        | ...        |
+| Effort                     | ...        | ...        |
+| Risk                       | ...        | ...        |
+| Alignment with constraints | ...        | ...        |
 
 ## Recommendation
 

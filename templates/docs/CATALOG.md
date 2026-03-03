@@ -34,7 +34,6 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
   - [`skills/architecture-impact`](#skillsarchitecture-impact)
   - [`skills/architecture-impact-plan`](#skillsarchitecture-impact-plan)
   - [`skills/architecture-milestones`](#skillsarchitecture-milestones)
-  - [`skills/challenge`](#skillschallenge)
   - [`skills/challenge-methods`](#skillschallenge-methods)
   - [`skills/pm-change-brief`](#skillspm-change-brief)
   - [`skills/pm-change-spec`](#skillspm-change-spec)
@@ -43,6 +42,7 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
   - [`skills/pm-product-brief`](#skillspm-product-brief)
   - [`skills/pm-system-overview`](#skillspm-system-overview)
   - [`skills/pm-user-stories`](#skillspm-user-stories)
+  - [`skills/spike`](#skillsspike)
   - [`skills/ux-accessibility`](#skillsux-accessibility)
   - [`skills/ux-accessibility-update`](#skillsux-accessibility-update)
   - [`skills/ux-audit`](#skillsux-audit)
@@ -82,6 +82,7 @@ No files found.
 
 | File |
 |------|
+| [CATALOG.md](../../aidd_docs/CATALOG.md) |
 | [CONTRIBUTING.md](../../aidd_docs/CONTRIBUTING.md) |
 | [README.md](../../aidd_docs/README.md) |
 
@@ -98,33 +99,22 @@ No files found.
 | `aidd` | [master_plan.md](../../aidd_docs/templates/aidd/master_plan.md) | `Parent plan template orchestrating multiple child plans with validation gates` | - |
 | `aidd` | [plan.md](../../aidd_docs/templates/aidd/plan.md) | `Feature implementation plan template` | - |
 | `aidd` | [prompt.md](../../aidd_docs/templates/aidd/prompt.md) | `Custom prompt template example` | - |
-| `aidd` | [review_code.md](../../aidd_docs/templates/aidd/review_code.md) | - | - |
 | `aidd` | [rule.md](../../aidd_docs/templates/aidd/rule.md) | `< One line. Comprehensive description that provides full context and clearly indicates when this rule should be applied. Include key scenarios, impacted areas, and why following this rule is important. While being thorough, remain focused and relevant. The description should be detailed enough that the agent can confidently determine whether to apply the rule in any given situation.>` | - |
 | `aidd` | [skill.md](../../aidd_docs/templates/aidd/skill.md) | `<What it does - actions, capabilities>. Use when <trigger phrases, contexts, file types, user intents>.` | - |
+| `aidd` | [spike.md](../../aidd_docs/templates/aidd/spike.md) | `Spike report template - time-boxed investigation to reduce uncertainty` | - |
 | `aidd` | [task.md](../../aidd_docs/templates/aidd/task.md) | `Task tracking system to ensure all tasks are categorized and addressed` | - |
 | `dev` | [adr.md](../../aidd_docs/templates/dev/adr.md) | `Architecture Decision Record template` | - |
 | `dev` | [code_review.md](../../aidd_docs/templates/dev/code_review.md) | `Code review checklist and scoring template` | - |
 | `dev` | [decision.md](../../aidd_docs/templates/dev/decision.md) | `Individual decision record template` | `<title>` |
+| `dev` | [review_code.md](../../aidd_docs/templates/dev/review_code.md) | `Code review checklist and scoring template` | - |
 | `dev` | [tech_choice.md](../../aidd_docs/templates/dev/tech_choice.md) | `Technology selection and comparison template` | - |
-| `docs` | [CATALOG.md](../../aidd_docs/templates/docs/CATALOG.md) | - | - |
-| `docs` | [INSTALL.md](../../aidd_docs/templates/docs/INSTALL.md) | - | - |
-| `pm` | [brief.md](../../aidd_docs/templates/pm/brief.md) | - | - |
 | `pm` | [challenge_report.md](../../aidd_docs/templates/pm/challenge_report.md) | - | - |
 | `pm` | [change_brief.md](../../aidd_docs/templates/pm/change_brief.md) | `Change brief template for brownfield evolutions` | - |
 | `pm` | [constitution.md](../../aidd_docs/templates/pm/constitution.md) | `Project constitution template - strategic framing document` | - |
-| `pm` | [discovery_package.md](../../aidd_docs/templates/pm/discovery_package.md) | - | - |
 | `pm` | [dod.md](../../aidd_docs/templates/pm/dod.md) | `Project-level Definition of Done applied to all user stories` | - |
 | `pm` | [epic.md](../../aidd_docs/templates/pm/epic.md) | `Template for structuring an epic with its user stories, estimation and scope tier` | - |
-| `pm` | [gap_report.md](../../aidd_docs/templates/pm/gap_report.md) | `Template for gap analysis report` | - |
 | `pm` | [impact_report.md](../../aidd_docs/templates/pm/impact_report.md) | - | - |
-| `pm` | [implementation_readiness.md](../../aidd_docs/templates/pm/implementation_readiness.md) | `Template for implementation readiness checklist and Go/No-Go decision` | - |
-| `pm` | [interview_transcript.md](../../aidd_docs/templates/pm/interview_transcript.md) | - | - |
-| `pm` | [jtbd.md](../../aidd_docs/templates/pm/jtbd.md) | - | - |
-| `pm` | [milestones.md](../../aidd_docs/templates/pm/milestones.md) | `Template for deliverable milestones with go/no-go criteria` | - |
-| `pm` | [persona.md](../../aidd_docs/templates/pm/persona.md) | - | - |
-| `pm` | [post-mortem.md](../../aidd_docs/templates/pm/post-mortem.md) | `Issue tracking template with fix plan` | - |
 | `pm` | [prd.md](../../aidd_docs/templates/pm/prd.md) | `Product Requirements Document template (16 sections)` | - |
-| `pm` | [research_report.md](../../aidd_docs/templates/pm/research_report.md) | `Template for structured research findings` | - |
 | `pm` | [system_overview.md](../../aidd_docs/templates/pm/system_overview.md) | - | - |
 | `pm` | [user_story.md](../../aidd_docs/templates/pm/user_story.md) | `Template for defining user stories with estimation and acceptance criteria` | - |
 | `ux` | [accessibility_spec.md](../../aidd_docs/templates/ux/accessibility_spec.md) | `Accessibility specification template — ARIA, keyboard, focus, contrast` | - |
@@ -165,8 +155,9 @@ No files found.
 | [brainstorm.md](../../commands/02_context/brainstorm.md) | `Interactive brainstorming session to clarify and refine feature requests` | - |
 | [brownfield.md](../../commands/02_context/brownfield.md) | `Run the brownfield evolution workflow by chaining agents from change request to impact plan` | - |
 | [challenge.md](../../commands/02_context/challenge.md) | `Rethink and challenge previous work for improvements` | - |
+| [create_user_stories.md](../../commands/02_context/create_user_stories.md) | `Create user stories through iterative questioning` | `[Feature description or requirements for user story generation]` |
 | [greenfield.md](../../commands/02_context/greenfield.md) | `Run the full greenfield workflow by chaining agents from idea to implementation plan` | - |
-| [ticket_info.md](../../commands/02_context/ticket_info.md) | `Get ticket information from the project's ticketing tool` | `Ticket URL or number` |
+| [ticket_info.md](../../commands/02_context/ticket_info.md) | `Get ticket information from the project's ticketing tool` | `[Ticket URL or number]` |
 
 #### `commands/03_plan`
 
@@ -201,7 +192,7 @@ No files found.
 | File | Description | Argument Hint |
 |------|---|---|
 | [test_journey.md](../../commands/06_tests/test_journey.md) | `Test a user journey end-to-end by navigating and validating each step in the browser.` | `The user journey steps to validate and the URL to test on.` |
-| [test.md](../../commands/06_tests/test.md) | `List untested behaviors and iterate on test creation until tests pass with best practices` | - |
+| [test.md](../../commands/06_tests/test.md) | `List untested behaviors and iterate on test creation until tests pass with best practices` | `[things you want to test]` |
 
 #### `commands/07_documentation`
 
@@ -298,12 +289,6 @@ No files found.
 |------|---|
 | [SKILL.md](../../skills/challenge-methods/SKILL.md) | `Provides 7 structured challenge techniques for validating deliverables. Use when you need to select the right challenge approach for a deliverable type.` |
 
-#### `skills/spike`
-
-| File | Description |
-|------|---|
-| [SKILL.md](../../skills/spike/SKILL.md) | `Runs a time-boxed investigation to reduce uncertainty before committing to a decision. Use when the team lacks enough knowledge to estimate, choose an approach, or commit to a solution.` |
-
 #### `skills/pm-change-brief`
 
 | File | Description |
@@ -345,6 +330,12 @@ No files found.
 | File | Description |
 |------|---|
 | [SKILL.md](../../skills/pm-user-stories/SKILL.md) | `Creates user stories through iterative questioning using the INVEST checklist. Use when you need well-structured user stories from feature requirements.` |
+
+#### `skills/spike`
+
+| File | Description |
+|------|---|
+| [SKILL.md](../../skills/spike/SKILL.md) | `Runs a time-boxed investigation to reduce uncertainty before committing to a decision. Use when the team lacks enough knowledge to estimate, choose an approach, or commit to a solution.` |
 
 #### `skills/ux-accessibility`
 

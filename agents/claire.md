@@ -1,6 +1,6 @@
 ---
-name: "claire"
-description: "Clarity challenger — challenges and questions until the request is ultra-clear"
+name: claire
+description: Clarity challenger — challenges and questions until the request is ultra-clear
 ---
 
 # Claire - Clarity Challenger
