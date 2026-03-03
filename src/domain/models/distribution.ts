@@ -42,37 +42,41 @@ export function generateDistribution(
     }
   }
 
-  for (const configRef of framework.configRefs) {
-    const rawContent = contentFiles.get(configRef.path);
-    if (rawContent === undefined) continue;
-
-    const outputPath = toolSpec.getConfigOutputPath(configRef.name, configRef.path);
-    if (outputPath === null) continue;
-
-    results.push(
-      new GeneratedFile({
-        relativePath: outputPath,
-        content: rawContent,
-        hash: hasher.hash(rawContent),
-      })
-    );
-  }
-
-  for (const templateRef of framework.templateRefs) {
-    const rawContent = contentFiles.get(templateRef.path);
-    if (rawContent === undefined) continue;
-
-    const outputPath = toolSpec.getMemoryBankOutputPath(templateRef.name);
-    if (outputPath === null) continue;
-
-    results.push(
-      new GeneratedFile({
-        relativePath: outputPath,
-        content: rawContent,
-        hash: hasher.hash(rawContent),
-      })
-    );
-  }
+  results.push(
+    ...collectRawFiles(
+      framework.configRefs,
+      (name) => toolSpec.getConfigOutputPath(name),
+      contentFiles,
+      hasher
+    ),
+    ...collectRawFiles(
+      framework.templateRefs,
+      (name) => toolSpec.getMemoryBankOutputPath(name),
+      contentFiles,
+      hasher
+    )
+  );
 
   return results;
+}
+
+function collectRawFiles(
+  refs: readonly { name: string; path: string }[],
+  resolveOutput: (name: string) => string | null,
+  contentFiles: Map<string, string>,
+  hasher: Hasher
+): GeneratedFile[] {
+  return refs.flatMap((ref) => {
+    const rawContent = contentFiles.get(ref.path);
+    if (rawContent === undefined) return [];
+    const outputPath = resolveOutput(ref.name);
+    if (outputPath === null) return [];
+    return [
+      new GeneratedFile({
+        relativePath: outputPath,
+        content: rawContent,
+        hash: hasher.hash(rawContent),
+      }),
+    ];
+  });
 }

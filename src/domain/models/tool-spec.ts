@@ -22,7 +22,7 @@ export abstract class ToolSpec {
     return `${this.directory}${section.directory}/${fileName}`;
   }
 
-  getConfigOutputPath(_configName: string, _sourcePath: string): string | null {
+  getConfigOutputPath(_configName: string): string | null {
     return null;
   }
 

@@ -6,7 +6,7 @@ export class ClaudeToolSpec extends ToolSpec {
   readonly toolId = ToolId.Claude;
   readonly directory = ".claude/";
 
-  override getConfigOutputPath(configName: string, _sourcePath: string): string | null {
+  override getConfigOutputPath(configName: string): string | null {
     if (configName === "mcp") return ".mcp.json";
     return null;
   }

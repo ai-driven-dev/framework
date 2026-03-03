@@ -35,13 +35,13 @@ describe("classifyConflict()", () => {
 });
 
 describe("ConflictSet", () => {
-  it("getConflicts() returns the conflict entries", () => {
+  it("conflicts holds the conflict entries", () => {
     const conflicts = [
       { relativePath: "a.md", type: ConflictType.LocalModified },
       { relativePath: "b.md", type: ConflictType.None },
     ];
     const set = new ConflictSet(conflicts);
-    expect(set.getConflicts()).toHaveLength(2);
+    expect(set.conflicts).toHaveLength(2);
   });
 
   it("hasConflicts() returns true when there are non-None conflicts", () => {
@@ -53,6 +53,4 @@ describe("ConflictSet", () => {
     const set = new ConflictSet([{ relativePath: "a.md", type: ConflictType.None }]);
     expect(set.hasConflicts()).toBe(false);
   });
-
-
 });

@@ -32,17 +32,12 @@ describe("ClaudeToolSpec", () => {
 
   describe("getConfigOutputPath()", () => {
     it("returns .mcp.json for mcp config", () => {
-      expect(claudeToolSpec.getConfigOutputPath("mcp", "config/mcp.json")).toBe(".mcp.json");
-    });
-
-    it("returns .mcp.json regardless of source path", () => {
-      expect(claudeToolSpec.getConfigOutputPath("mcp", ".mcp.json")).toBe(".mcp.json");
-      expect(claudeToolSpec.getConfigOutputPath("mcp", "some/other/path.json")).toBe(".mcp.json");
+      expect(claudeToolSpec.getConfigOutputPath("mcp")).toBe(".mcp.json");
     });
 
     it("returns null for unknown config names", () => {
-      expect(claudeToolSpec.getConfigOutputPath("vscodeDir", "config/.vscode")).toBeNull();
-      expect(claudeToolSpec.getConfigOutputPath("unknown", "any/path")).toBeNull();
+      expect(claudeToolSpec.getConfigOutputPath("vscodeDir")).toBeNull();
+      expect(claudeToolSpec.getConfigOutputPath("unknown")).toBeNull();
     });
   });
 

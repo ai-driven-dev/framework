@@ -36,17 +36,13 @@ export function classifyConflict(
 }
 
 export class ConflictSet {
-  private readonly _conflicts: ConflictEntry[];
+  readonly conflicts: readonly ConflictEntry[];
 
   constructor(conflicts: ConflictEntry[]) {
-    this._conflicts = [...conflicts];
-  }
-
-  getConflicts(): readonly ConflictEntry[] {
-    return this._conflicts;
+    this.conflicts = [...conflicts];
   }
 
   hasConflicts(): boolean {
-    return this._conflicts.some((c) => c.type !== ConflictType.None);
+    return this.conflicts.some((c) => c.type !== ConflictType.None);
   }
 }

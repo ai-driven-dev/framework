@@ -112,10 +112,7 @@ export class Manifest {
       tools[toolId] = {
         toolId: entry.toolId,
         version: entry.version,
-        files: entry.files.map((f) => ({
-          relativePath: f.relativePath,
-          hash: f.hash.value,
-        })),
+        files: this.toTrackedFileData(entry.files),
       };
     }
 
@@ -124,15 +121,13 @@ export class Manifest {
       ...(this.docsDir !== undefined ? { docsDir: this.docsDir } : {}),
       tools,
       docs: this._docs
-        ? {
-            version: this._docs.version,
-            files: this._docs.files.map((f) => ({
-              relativePath: f.relativePath,
-              hash: f.hash.value,
-            })),
-          }
+        ? { version: this._docs.version, files: this.toTrackedFileData(this._docs.files) }
         : null,
     };
+  }
+
+  private toTrackedFileData(files: readonly TrackedFile[]): TrackedFileData[] {
+    return files.map((f) => ({ relativePath: f.relativePath, hash: f.hash.value }));
   }
 
   static fromJSON(data: unknown): Manifest {

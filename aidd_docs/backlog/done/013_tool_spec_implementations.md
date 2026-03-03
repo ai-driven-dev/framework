@@ -53,6 +53,7 @@ Create the three ToolSpec implementations (Claude, Cursor, Copilot) with their s
 - Copilot: agents in `.github/agents/`, commands in `.github/prompts/`, rules in `.github/instructions/`, skills in `.github/skills/`; flattening applied to commands/rules.
 - Copilot multi-paths: `convertFrontmatter` takes only `paths[0]` for `applyTo` — multiple paths are lossy by design (Copilot supports a single glob per file).
 - Copilot collision detection (distinct subdirs producing same flattened name): NOT implemented here. Current `buildFilePath` always prefixes with leading numeric segment, preventing most collisions but not all (e.g., two files with same name in same phase). Full collision detection with warning is M5 scope (ticket 053).
+- `getConfigOutputPath(configName: string)` takes a single parameter — `sourcePath` was removed as YAGNI (never used by any implementation).
 - Reverse operations (`reverseRewriteContent`, `reverseConvertFrontmatter`) are NOT implemented for any tool — deferred to M7 (ticket 070).
 
 ## Files to Create/Modify
