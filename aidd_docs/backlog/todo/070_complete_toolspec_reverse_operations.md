@@ -36,6 +36,7 @@ Complete the remaining reverse operation work needed for sync: lossless round-tr
 - [ ] If lossless is not achievable for some cases, they are explicitly documented and excluded from sync scope
 
 ## Technical Notes
+- `reverseRewriteContent` and `reverseConvertFrontmatter` do NOT exist in the codebase — they were removed as YAGNI in M1 refactor pass 2. This ticket must CREATE them from scratch (not "complete" existing stubs).
 - Start with `reverseRewriteContent` base class: reverse `@{directory}path` → `@{{TOOLS}}/path` and `{docsDir}/` → `{{DOCS}}/`.
 - Copilot override: reverse `[label](.github/path)` → `@{{TOOLS}}/path` and `[label](docsDir/path)` → `@{{DOCS}}/path`.
 - The lossy cases (Claude commands `04_code/` label, Copilot flattened paths) are the spike from milestones.md ("Reverse-rewrite feasibility, 2 days"). If lossless is not achievable, sync scope is limited to non-command, non-rule content (memory bank, agents only).

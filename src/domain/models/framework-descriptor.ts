@@ -95,7 +95,10 @@ export class FrameworkDescriptor {
   }
 }
 
-function parseNamedRefs(raw: Record<string, unknown>, field: string): { name: string; path: string }[] {
+function parseNamedRefs(
+  raw: Record<string, unknown>,
+  field: string
+): { name: string; path: string }[] {
   const value = raw[field];
   if (value === null || typeof value !== "object") return [];
   return Object.entries(value as Record<string, unknown>)
