@@ -1,0 +1,183 @@
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
+import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
+
+describe("FileSystemAdapter", () => {
+  let tempDir: string;
+  let fs: FileSystemAdapter;
+
+  beforeEach(async () => {
+    tempDir = join(tmpdir(), `fs-adapter-test-${Date.now()}`);
+    await mkdir(tempDir, { recursive: true });
+    fs = new FileSystemAdapter(new HasherAdapter());
+  });
+
+  afterEach(async () => {
+    await rm(tempDir, { recursive: true, force: true });
+  });
+
+  describe("writeFile()", () => {
+    it("writes file content", async () => {
+      const path = join(tempDir, "test.txt");
+      await fs.writeFile(path, "hello");
+      const content = await readFile(path, "utf-8");
+      expect(content).toBe("hello");
+    });
+
+    it("creates parent directories recursively", async () => {
+      const path = join(tempDir, "a", "b", "c", "test.txt");
+      await fs.writeFile(path, "nested");
+      const content = await readFile(path, "utf-8");
+      expect(content).toBe("nested");
+    });
+  });
+
+  describe("readFile()", () => {
+    it("returns file content as string", async () => {
+      const path = join(tempDir, "read.txt");
+      await writeFile(path, "content to read", "utf-8");
+      const result = await fs.readFile(path);
+      expect(result).toBe("content to read");
+    });
+  });
+
+  describe("deleteFile()", () => {
+    it("removes an existing file", async () => {
+      const path = join(tempDir, "to-delete.txt");
+      await writeFile(path, "data", "utf-8");
+      await fs.deleteFile(path);
+      expect(await fs.fileExists(path)).toBe(false);
+    });
+
+    it("does not throw when file is missing", async () => {
+      const path = join(tempDir, "nonexistent.txt");
+      await expect(fs.deleteFile(path)).resolves.toBeUndefined();
+    });
+  });
+
+  describe("createDirectory()", () => {
+    it("creates directory recursively", async () => {
+      const path = join(tempDir, "x", "y", "z");
+      await fs.createDirectory(path);
+      expect(await fs.fileExists(path)).toBe(true);
+    });
+  });
+
+  describe("deleteEmptyDirectories()", () => {
+    it("removes empty directory", async () => {
+      const dir = join(tempDir, "empty");
+      await mkdir(dir);
+      await fs.deleteEmptyDirectories(dir);
+      expect(await fs.fileExists(dir)).toBe(false);
+    });
+
+    it("removes chain of empty directories", async () => {
+      const inner = join(tempDir, "outer", "inner");
+      await mkdir(inner, { recursive: true });
+      await fs.deleteEmptyDirectories(inner);
+      expect(await fs.fileExists(join(tempDir, "outer"))).toBe(false);
+    });
+
+    it("stops when directory is not empty", async () => {
+      const outer = join(tempDir, "outer2");
+      const inner = join(outer, "inner");
+      const sibling = join(outer, "sibling.txt");
+      await mkdir(inner, { recursive: true });
+      await writeFile(sibling, "content", "utf-8");
+
+      await fs.deleteEmptyDirectories(inner);
+      expect(await fs.fileExists(inner)).toBe(false);
+      expect(await fs.fileExists(outer)).toBe(true);
+    });
+  });
+
+  describe("listDirectory()", () => {
+    it("lists all files recursively with relative paths", async () => {
+      await fs.writeFile(join(tempDir, "a.txt"), "a");
+      await fs.writeFile(join(tempDir, "sub", "b.txt"), "b");
+      await fs.writeFile(join(tempDir, "sub", "deep", "c.txt"), "c");
+
+      const files = await fs.listDirectory(tempDir);
+      expect(files).toContain("a.txt");
+      expect(files).toContain(join("sub", "b.txt"));
+      expect(files).toContain(join("sub", "deep", "c.txt"));
+    });
+  });
+
+  describe("fileExists()", () => {
+    it("returns true for existing file", async () => {
+      const path = join(tempDir, "exists.txt");
+      await writeFile(path, "", "utf-8");
+      expect(await fs.fileExists(path)).toBe(true);
+    });
+
+    it("returns false for missing file", async () => {
+      expect(await fs.fileExists(join(tempDir, "missing.txt"))).toBe(false);
+    });
+
+    it("returns true for existing directory", async () => {
+      expect(await fs.fileExists(tempDir)).toBe(true);
+    });
+  });
+
+  describe("readFileHash()", () => {
+    it("returns hash of file content", async () => {
+      const path = join(tempDir, "hash-me.txt");
+      await writeFile(path, "hashable content", "utf-8");
+      const hash = await fs.readFileHash(path);
+      expect(hash.value).toMatch(/^[0-9a-f]{32}$/);
+    });
+  });
+
+  describe("mergeJsonFile()", () => {
+    it("creates file if it does not exist", async () => {
+      const path = join(tempDir, "new.json");
+      await fs.mergeJsonFile(path, { key: "value" });
+      const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+      expect(result).toEqual({ key: "value" });
+    });
+
+    it("merges new keys into existing JSON", async () => {
+      const path = join(tempDir, "merge.json");
+      await writeFile(path, JSON.stringify({ existing: "data" }), "utf-8");
+      await fs.mergeJsonFile(path, { newKey: "newValue" });
+      const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+      expect(result.existing).toBe("data");
+      expect(result.newKey).toBe("newValue");
+    });
+
+    it("scalar values from new data override existing", async () => {
+      const path = join(tempDir, "override.json");
+      await writeFile(path, JSON.stringify({ key: "old" }), "utf-8");
+      await fs.mergeJsonFile(path, { key: "new" });
+      const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+      expect(result.key).toBe("new");
+    });
+
+    it("deep merges nested objects", async () => {
+      const path = join(tempDir, "deep.json");
+      await writeFile(path, JSON.stringify({ outer: { a: 1, b: 2 } }), "utf-8");
+      await fs.mergeJsonFile(path, { outer: { b: 99, c: 3 } });
+      const result = JSON.parse(await readFile(path, "utf-8")) as {
+        outer: Record<string, number>;
+      };
+      expect(result.outer.a).toBe(1);
+      expect(result.outer.b).toBe(99);
+      expect(result.outer.c).toBe(3);
+    });
+
+    it("deduplicates merged arrays", async () => {
+      const path = join(tempDir, "arrays.json");
+      await writeFile(path, JSON.stringify({ items: ["a", "b"] }), "utf-8");
+      await fs.mergeJsonFile(path, { items: ["b", "c"] });
+      const result = JSON.parse(await readFile(path, "utf-8")) as { items: string[] };
+      expect(result.items).toContain("a");
+      expect(result.items).toContain("b");
+      expect(result.items).toContain("c");
+      expect(result.items.filter((x) => x === "b")).toHaveLength(1);
+    });
+  });
+});
