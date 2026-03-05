@@ -13,6 +13,44 @@
 * clarify mermaid node ID and label naming rules ([94f4611](https://github.com/ai-driven-dev/aidd-framework/commit/94f46112fd070e21c550e2e98b20516d92dc2034)), closes [#10](https://github.com/ai-driven-dev/aidd-framework/issues/10)
 * correct review_code template path from aidd/ to dev/ ([4118de9](https://github.com/ai-driven-dev/aidd-framework/commit/4118de932c308185da71f471ea5f78545fe93cd2)), closes [#11](https://github.com/ai-driven-dev/aidd-framework/issues/11)
 * exclude non-essential files from release tarball ([a4871f2](https://github.com/ai-driven-dev/aidd-framework/commit/a4871f2bdd302b5eba45ac0f69f1f58df6ecf5fb))
+* remove empty templates/ from tarball include list ([d06ac8b](https://github.com/ai-driven-dev/aidd-framework/commit/d06ac8bb4967740ace0e785c3fef88e2e5a03cd9))
+* switch tarball to include-based approach and reset version to 3.2.2 ([5a6276c](https://github.com/ai-driven-dev/aidd-framework/commit/5a6276cc92fd98efc4a0fee4beab755bfb738490))
+* update globs to include Markdown files for Mermaid diagram rules ([91727cf](https://github.com/ai-driven-dev/aidd-framework/commit/91727cf9920066241b8f18b925c915854290ca73))
+
+
+### Build
+
+* exclude dev files from tarball and add version.txt ([e25d77d](https://github.com/ai-driven-dev/aidd-framework/commit/e25d77da254ac982c9c27fa25cd33203391e8f61))
+
+
+### Miscellaneous
+
+* **main:** release 3.2.3 ([2ec6412](https://github.com/ai-driven-dev/aidd-framework/commit/2ec64128273a55694a2f5ef282b17d33a77d199a))
+* **main:** release 3.2.3 ([d624b9f](https://github.com/ai-driven-dev/aidd-framework/commit/d624b9f8332c1565cf639fce9940275b1bfe96bc))
+* **main:** release 3.3.0 ([3d56acf](https://github.com/ai-driven-dev/aidd-framework/commit/3d56acff3565b3ce4587c9a216af9532f245b7e7))
+* **main:** release 3.3.0 ([e5ba343](https://github.com/ai-driven-dev/aidd-framework/commit/e5ba3437b15092f4cf12ed667ca8d578ea485243))
+* **main:** release 4.0.0 ([e8c3ee2](https://github.com/ai-driven-dev/aidd-framework/commit/e8c3ee2a2618da94c98905fe8edbbbb10c6bc17f))
+* **main:** release 4.0.0 ([584477a](https://github.com/ai-driven-dev/aidd-framework/commit/584477a36bdada60aaf69135c48497a5128a173f))
+* reset version to 3.2.2 to bridge gap from deleted malware releases ([541e210](https://github.com/ai-driven-dev/aidd-framework/commit/541e2108b807c47906cd70233dc6a15f6c09590c))
+
+
+### CI
+
+* add statuses write permission to lint-pr workflow ([4ad953f](https://github.com/ai-driven-dev/aidd-framework/commit/4ad953fbf4dd455c3a8d2999ff5fc956d6766d1a))
+
+## [3.3.0](https://github.com/ai-driven-dev/aidd-framework/compare/v3.2.2...v3.3.0) (2026-03-05)
+
+
+### Features
+
+* add golden principles for agent guidelines ([3e84550](https://github.com/ai-driven-dev/aidd-framework/commit/3e84550a90cccab14edeb0a2d2ce5da11c5d4412))
+
+
+### Bug Fixes
+
+* clarify mermaid node ID and label naming rules ([94f4611](https://github.com/ai-driven-dev/aidd-framework/commit/94f46112fd070e21c550e2e98b20516d92dc2034)), closes [#10](https://github.com/ai-driven-dev/aidd-framework/issues/10)
+* correct review_code template path from aidd/ to dev/ ([4118de9](https://github.com/ai-driven-dev/aidd-framework/commit/4118de932c308185da71f471ea5f78545fe93cd2)), closes [#11](https://github.com/ai-driven-dev/aidd-framework/issues/11)
+* exclude non-essential files from release tarball ([a4871f2](https://github.com/ai-driven-dev/aidd-framework/commit/a4871f2bdd302b5eba45ac0f69f1f58df6ecf5fb))
 * switch tarball to include-based approach and reset version to 3.2.2 ([5a6276c](https://github.com/ai-driven-dev/aidd-framework/commit/5a6276cc92fd98efc4a0fee4beab755bfb738490))
 * update globs to include Markdown files for Mermaid diagram rules ([91727cf](https://github.com/ai-driven-dev/aidd-framework/commit/91727cf9920066241b8f18b925c915854290ca73))
 
