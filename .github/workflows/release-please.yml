@@ -41,24 +41,14 @@ jobs:
         run: |
           VERSION="${{ needs.release-please.outputs.version }}"
           tar czf "/tmp/aidd-framework-${VERSION}.tar.gz" \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='.gitignore' \
-            --exclude='.release-please-manifest.json' \
-            --exclude='release-please-config.json' \
-            --exclude='dist' \
-            --exclude='CONTRIBUTING.md' \
-            --exclude='README.md' \
-            --exclude='CHANGELOG.md' \
-            --exclude='package.json' \
-            --exclude='lefthook.yml' \
-            --exclude='*lock*' \
-            --exclude='preinstall.js' \
-            --exclude='node_modules' \
-            --exclude='.specstory' \
-            --exclude='scripts' \
-            --exclude='release-please-config.json' \
-            .
+            agents/ \
+            commands/ \
+            config/ \
+            rules/ \
+            skills/ \
+            templates/ \
+            aidd_docs/ \
+            version.txt
 
       - name: Build per-tool tarballs
         run: |
