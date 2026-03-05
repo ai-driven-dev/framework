@@ -1,54 +1,38 @@
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { FrameworkDescriptor } from "../../../src/domain/models/framework-descriptor.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const fixturePath = resolve(__dirname, "../../fixtures/framework.json");
-const fixtureData = JSON.parse(readFileSync(fixturePath, "utf-8")) as unknown;
+function makeDescriptor() {
+  return new FrameworkDescriptor({
+    version: "3.2.2",
+    contentSections: [
+      { name: "agents", directory: "agents", entryFile: null },
+      { name: "commands", directory: "commands", entryFile: null },
+      { name: "rules", directory: "rules", entryFile: null },
+      { name: "skills", directory: "skills", entryFile: "SKILL.md" },
+    ],
+    templateRefs: [{ name: "agentsMd", path: "aidd_docs/templates/AGENTS.md" }],
+    configRefs: [
+      { name: "mcp", path: "config/mcp.json" },
+      { name: "vscodeDir", path: "config/.vscode" },
+    ],
+  });
+}
 
 describe("FrameworkDescriptor", () => {
-  describe("fromJson()", () => {
-    it("constructs from valid fixture data", () => {
-      const descriptor = FrameworkDescriptor.fromJson(fixtureData);
-      expect(descriptor.version).toBe("3.2.2");
+  describe("constructor", () => {
+    it("stores version", () => {
+      const d = makeDescriptor();
+      expect(d.version).toBe("3.2.2");
     });
 
-    it("throws on null input", () => {
-      expect(() => FrameworkDescriptor.fromJson(null)).toThrow();
-    });
-
-    it("throws on missing version", () => {
-      expect(() =>
-        FrameworkDescriptor.fromJson({
-          content: { agents: { directory: "x", entryFile: null } },
-        })
-      ).toThrow(/version/);
-    });
-
-    it("throws on empty version string", () => {
-      expect(() =>
-        FrameworkDescriptor.fromJson({
-          version: "",
-          content: { agents: { directory: "x", entryFile: null } },
-        })
-      ).toThrow(/version/);
-    });
-
-    it("throws on missing content", () => {
-      expect(() => FrameworkDescriptor.fromJson({ version: "1.0.0" })).toThrow(/content/);
-    });
-
-    it("throws on empty content sections", () => {
-      expect(() => FrameworkDescriptor.fromJson({ version: "1.0.0", content: {} })).toThrow(
-        /content/
-      );
+    it("freezes contentSections", () => {
+      const d = makeDescriptor();
+      expect(Object.isFrozen(d.contentSections)).toBe(true);
     });
   });
 
   describe("getContentSection()", () => {
-    const descriptor = FrameworkDescriptor.fromJson(fixtureData);
+    const descriptor = makeDescriptor();
 
     it("returns agents section", () => {
       const section = descriptor.getContentSection("agents");
@@ -82,7 +66,7 @@ describe("FrameworkDescriptor", () => {
   });
 
   describe("getTemplate()", () => {
-    const descriptor = FrameworkDescriptor.fromJson(fixtureData);
+    const descriptor = makeDescriptor();
 
     it("returns agentsMd template", () => {
       const template = descriptor.getTemplate("agentsMd");
@@ -96,7 +80,7 @@ describe("FrameworkDescriptor", () => {
   });
 
   describe("getConfig()", () => {
-    const descriptor = FrameworkDescriptor.fromJson(fixtureData);
+    const descriptor = makeDescriptor();
 
     it("returns mcp config", () => {
       const config = descriptor.getConfig("mcp");

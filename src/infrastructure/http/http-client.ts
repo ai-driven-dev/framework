@@ -4,6 +4,7 @@ import * as https from "node:https";
 
 export interface HttpGetOptions {
   token?: string;
+  accept?: string;
 }
 
 export interface HttpResponse {
@@ -21,10 +22,10 @@ function collectBuffer(response: IncomingMessage): Promise<Buffer> {
   });
 }
 
-function buildHeaders(token?: string): Record<string, string> {
+function buildHeaders(token?: string, accept?: string): Record<string, string> {
   const headers: Record<string, string> = {
     "User-Agent": "aidd-cli",
-    Accept: "application/vnd.github+json, application/octet-stream, */*",
+    Accept: accept ?? "application/vnd.github+json",
   };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -32,7 +33,7 @@ function buildHeaders(token?: string): Record<string, string> {
   return headers;
 }
 
-function doGet(url: string, token?: string): Promise<IncomingMessage> {
+function doGet(url: string, token?: string, accept?: string): Promise<IncomingMessage> {
   return new Promise((resolve, reject) => {
     const parsed = new URL(url);
     const transport = parsed.protocol === "https:" ? https : http;
@@ -42,7 +43,7 @@ function doGet(url: string, token?: string): Promise<IncomingMessage> {
         port: parsed.port || undefined,
         path: parsed.pathname + parsed.search,
         method: "GET",
-        headers: buildHeaders(token),
+        headers: buildHeaders(token, accept),
       },
       resolve
     );
@@ -53,7 +54,7 @@ function doGet(url: string, token?: string): Promise<IncomingMessage> {
 
 export class HttpClient {
   async get(url: string, options?: HttpGetOptions): Promise<HttpResponse> {
-    const response = await doGet(url, options?.token);
+    const response = await doGet(url, options?.token, options?.accept);
     const statusCode = response.statusCode ?? 0;
 
     if (statusCode === 302 || statusCode === 301) {
@@ -63,7 +64,8 @@ export class HttpClient {
       }
       // Consume the body to free the socket
       await collectBuffer(response);
-      const redirected = await doGet(location, options?.token);
+      // Do not forward token or accept: redirect targets (S3/CDN) use signed URLs
+      const redirected = await doGet(location);
       return this.parseResponse(redirected, location);
     }
 

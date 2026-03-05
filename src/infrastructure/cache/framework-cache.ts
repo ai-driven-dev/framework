@@ -19,7 +19,7 @@ export class FrameworkCache {
   async has(version: string): Promise<boolean> {
     const dir = this.cacheDir(version);
     try {
-      await Promise.all([access(join(dir, MARKER_FILE)), access(join(dir, "framework.json"))]);
+      await access(join(dir, MARKER_FILE));
       return true;
     } catch {
       return false;

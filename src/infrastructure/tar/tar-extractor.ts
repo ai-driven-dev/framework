@@ -20,18 +20,13 @@ export class TarExtractor {
   private async findFrameworkRoot(targetDir: string): Promise<string> {
     const entries = await readdir(targetDir, { withFileTypes: true });
     const dirs = entries.filter((e) => e.isDirectory());
+    const files = entries.filter((e) => e.isFile());
 
-    if (dirs.length === 1 && entries.filter((e) => e.isFile()).length === 0) {
+    if (dirs.length === 1 && files.length === 0) {
       // Single-directory nesting: GitHub wraps in `org-repo-sha/`
-      const nested = join(targetDir, dirs[0].name);
-      return this.findFrameworkRoot(nested);
+      return this.findFrameworkRoot(join(targetDir, dirs[0].name));
     }
 
-    const hasFrameworkJson = entries.some((e) => e.isFile() && e.name === "framework.json");
-    if (hasFrameworkJson) {
-      return targetDir;
-    }
-
-    throw new Error(`framework.json not found in extracted tarball. Searched in '${targetDir}'.`);
+    return targetDir;
   }
 }

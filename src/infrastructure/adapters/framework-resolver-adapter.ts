@@ -1,8 +1,9 @@
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type {
+  FrameworkResolved,
   FrameworkResolver,
   FrameworkResolverOptions,
 } from "../../domain/ports/framework-resolver.js";
@@ -13,7 +14,7 @@ import type { TarExtractor } from "../tar/tar-extractor.js";
 
 interface GithubRelease {
   tag_name: string;
-  assets: Array<{ name: string; browser_download_url: string }>;
+  assets: Array<{ id: number; name: string }>;
 }
 
 export interface FrameworkResolverAdapterConfig {
@@ -22,7 +23,6 @@ export interface FrameworkResolverAdapterConfig {
   githubApiBase?: string;
 }
 
-const DEFAULT_REPO = "ai-driven-dev/aidd-framework";
 const DEFAULT_GITHUB_API_BASE = "https://api.github.com";
 
 export class FrameworkResolverAdapter implements FrameworkResolver {
@@ -34,21 +34,24 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
     private readonly http: HttpClient,
     private readonly tar: TarExtractor,
     private readonly cache: FrameworkCache,
-    config?: FrameworkResolverAdapterConfig,
+    config: FrameworkResolverAdapterConfig,
     private readonly logger?: Logger
   ) {
-    this.defaultRepo = config?.defaultRepo ?? DEFAULT_REPO;
-    this.defaultToken = config?.defaultToken;
-    this.githubApiBase = config?.githubApiBase ?? DEFAULT_GITHUB_API_BASE;
+    this.defaultRepo = config.defaultRepo;
+    this.defaultToken = config.defaultToken;
+    this.githubApiBase = config.githubApiBase ?? DEFAULT_GITHUB_API_BASE;
   }
 
-  async resolve(options: FrameworkResolverOptions): Promise<string> {
+  async resolve(options: FrameworkResolverOptions): Promise<FrameworkResolved> {
     if (options.localPath) {
-      return options.localPath;
+      const version = await readVersionFile(options.localPath);
+      return { path: options.localPath, version, source: "local" };
     }
 
     if (options.tarballPath) {
-      return this.resolveLocalTarball(options.tarballPath);
+      const path = await this.resolveLocalTarball(options.tarballPath);
+      const version = await readVersionFile(path);
+      return { path, version, source: "local" };
     }
 
     return this.resolveRemote(options);
@@ -73,7 +76,7 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
     }
   }
 
-  private async resolveRemote(options: FrameworkResolverOptions): Promise<string> {
+  private async resolveRemote(options: FrameworkResolverOptions): Promise<FrameworkResolved> {
     const repo = options.repo ?? this.defaultRepo;
     const token = options.token ?? this.defaultToken;
 
@@ -91,16 +94,17 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
 
       if (await this.cache.has(version)) {
         this.logger?.debug(`Cache hit for version ${version}`);
-        return this.cache.get(version);
+        return { path: this.cache.get(version), version, source: "cache" };
       }
 
-      return this.downloadAndCache(release, version, token);
+      const path = await this.downloadAndCache(release, version, token);
+      return { path, version, source: "download" };
     }
 
     const cachedVersion = await this.cache.getLatestCached();
     if (cachedVersion !== null) {
       this.logger?.warn(`Network unavailable. Using cached framework version ${cachedVersion}.`);
-      return this.cache.get(cachedVersion);
+      return { path: this.cache.get(cachedVersion), version: cachedVersion, source: "cache" };
     }
 
     throw new Error(
@@ -119,10 +123,11 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
     version: string,
     token?: string
   ): Promise<string> {
-    const assetUrl = this.findTarballUrl(release);
+    const assetId = this.findTarballAssetId(release);
+    const assetUrl = `${this.githubApiBase}/repos/${this.defaultRepo}/releases/assets/${assetId}`;
     this.logger?.debug(`Downloading framework version ${version} from ${assetUrl}`);
 
-    const response = await this.http.get(assetUrl, { token });
+    const response = await this.http.get(assetUrl, { token, accept: "application/octet-stream" });
     if (!Buffer.isBuffer(response.body)) {
       throw new Error("Downloaded file is not a valid tarball");
     }
@@ -146,15 +151,26 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
     }
   }
 
-  private findTarballUrl(release: GithubRelease): string {
+  private findTarballAssetId(release: GithubRelease): number {
     const tarball = release.assets.find(
-      (a) => a.name.endsWith(".tar.gz") || a.name.endsWith(".tgz")
+      (a) =>
+        a.name.startsWith("aidd-framework") &&
+        (a.name.endsWith(".tar.gz") || a.name.endsWith(".tgz"))
     );
     if (!tarball) {
       throw new Error(
         `No tarball asset found in release ${release.tag_name}. Assets: ${release.assets.map((a) => a.name).join(", ")}`
       );
     }
-    return tarball.browser_download_url;
+    return tarball.id;
+  }
+}
+
+async function readVersionFile(frameworkPath: string): Promise<string> {
+  try {
+    const content = await readFile(join(frameworkPath, "version.txt"), "utf-8");
+    return content.trim();
+  } catch {
+    return "local";
   }
 }

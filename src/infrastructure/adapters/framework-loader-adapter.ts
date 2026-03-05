@@ -2,27 +2,72 @@ import type { Dirent } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { FrameworkDescriptor } from "../../domain/models/framework-descriptor.js";
+import type {
+  ConfigRef,
+  ContentSection,
+  TemplateRef,
+} from "../../domain/models/framework-descriptor.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 
+const CONTENT_SECTIONS: readonly ContentSection[] = [
+  { name: "agents", directory: "agents", entryFile: null },
+  { name: "commands", directory: "commands", entryFile: null },
+  { name: "rules", directory: "rules", entryFile: null },
+  { name: "skills", directory: "skills", entryFile: "SKILL.md" },
+];
+
+const TEMPLATE_REFS: readonly TemplateRef[] = [
+  { name: "agentsMd", path: "aidd_docs/templates/AGENTS.md" },
+];
+
+const CONFIG_REFS: readonly ConfigRef[] = [
+  { name: "mcp", path: "config/mcp.json" },
+  { name: "vscodeExtensions", path: "config/.vscode/extensions.json" },
+  { name: "vscodeKeybindings", path: "config/.vscode/keybindings.json" },
+  { name: "vscodeSettings", path: "config/.vscode/settings.json" },
+];
+
+const DOCS_DIR = "aidd_docs";
+
 export class FrameworkLoaderAdapter implements FrameworkLoader {
-  async loadFromDirectory(path: string): Promise<{
+  async loadFromDirectory(
+    path: string,
+    version: string
+  ): Promise<{
     descriptor: FrameworkDescriptor;
     contentFiles: Map<string, string>;
+    docsFiles: Map<string, string>;
   }> {
-    const frameworkJsonPath = join(path, "framework.json");
-    let rawJson: unknown;
-    try {
-      const raw = await readFile(frameworkJsonPath, "utf-8");
-      rawJson = JSON.parse(raw);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to read framework.json from '${path}': ${message}`);
+    const descriptor = new FrameworkDescriptor({
+      version,
+      contentSections: [...CONTENT_SECTIONS],
+      templateRefs: [...TEMPLATE_REFS],
+      configRefs: [...CONFIG_REFS],
+    });
+
+    const contentFiles = await this.loadContentFiles(path, descriptor);
+    const templatePaths = new Set(descriptor.templateRefs.map((r) => r.path));
+    const docsFiles = await this.loadDocsFiles(path, templatePaths);
+
+    return { descriptor, contentFiles, docsFiles };
+  }
+
+  private async loadDocsFiles(
+    frameworkPath: string,
+    excludePaths: ReadonlySet<string>
+  ): Promise<Map<string, string>> {
+    const docsDir = join(frameworkPath, DOCS_DIR);
+    const files = new Map<string, string>();
+    const allFiles = await this.collectFiles(docsDir);
+
+    for (const filePath of allFiles) {
+      const relPath = relative(frameworkPath, filePath).replaceAll("\\", "/");
+      if (excludePaths.has(relPath)) continue;
+      const content = filePath.endsWith(".gitkeep") ? "" : await readFile(filePath, "utf-8");
+      files.set(relPath, content);
     }
 
-    const descriptor = FrameworkDescriptor.fromJson(rawJson);
-    const contentFiles = await this.loadContentFiles(path, descriptor);
-
-    return { descriptor, contentFiles };
+    return files;
   }
 
   private async loadContentFiles(
@@ -36,9 +81,19 @@ export class FrameworkLoaderAdapter implements FrameworkLoader {
       const files = await this.collectFiles(sectionDir);
 
       for (const filePath of files) {
-        const relativePath = relative(basePath, filePath);
+        const relativePath = relative(basePath, filePath).replaceAll("\\", "/");
         const content = await readFile(filePath, "utf-8");
         contentFiles.set(relativePath, content);
+      }
+    }
+
+    for (const ref of [...descriptor.templateRefs, ...descriptor.configRefs]) {
+      const filePath = join(basePath, ref.path);
+      try {
+        const content = await readFile(filePath, "utf-8");
+        contentFiles.set(ref.path, content);
+      } catch {
+        // skip missing optional refs
       }
     }
 

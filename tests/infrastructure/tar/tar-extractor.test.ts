@@ -28,15 +28,12 @@ describe("TarExtractor", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  describe("flat extraction (framework.json at root)", () => {
-    it("extracts tarball and returns directory with framework.json", async () => {
+  describe("flat extraction", () => {
+    it("extracts tarball and returns the directory root", async () => {
       const sourceDir = join(tempDir, "framework");
       await mkdir(sourceDir);
-      await writeFile(
-        join(sourceDir, "framework.json"),
-        '{"version":"1.0.0","content":{},"templates":{},"config":{}}'
-      );
       await writeFile(join(sourceDir, "readme.md"), "hello");
+      await writeFile(join(sourceDir, "rules.md"), "rules");
 
       const tarball = join(tempDir, "framework.tar.gz");
       await createTarball(sourceDir, tarball);
@@ -53,10 +50,7 @@ describe("TarExtractor", () => {
     it("detects GitHub-style wrapping and returns inner framework root", async () => {
       const wrapperDir = join(tempDir, "org-repo-abc123");
       await mkdir(wrapperDir);
-      await writeFile(
-        join(wrapperDir, "framework.json"),
-        '{"version":"2.0.0","content":{},"templates":{},"config":{}}'
-      );
+      await writeFile(join(wrapperDir, "readme.md"), "content");
 
       const tarball = join(tempDir, "github-release.tar.gz");
       await createTarball(wrapperDir, tarball);
@@ -72,10 +66,7 @@ describe("TarExtractor", () => {
       const outerDir = join(tempDir, "outer");
       const innerDir = join(outerDir, "inner");
       await mkdir(innerDir, { recursive: true });
-      await writeFile(
-        join(innerDir, "framework.json"),
-        '{"version":"1.0.0","content":{},"templates":{},"config":{}}'
-      );
+      await writeFile(join(innerDir, "readme.md"), "content");
 
       const tarball = join(tempDir, "double-nested.tar.gz");
       await execFileAsync("tar", ["czf", tarball, "-C", tempDir, "outer"]);
@@ -98,22 +89,6 @@ describe("TarExtractor", () => {
 
       await expect(extractor.extract(fakeTarball, extractDir)).rejects.toThrow(
         "Failed to extract tarball"
-      );
-    });
-
-    it("throws when framework.json is not found", async () => {
-      const sourceDir = join(tempDir, "no-framework");
-      await mkdir(sourceDir);
-      await writeFile(join(sourceDir, "some-file.txt"), "content");
-
-      const tarball = join(tempDir, "no-framework.tar.gz");
-      await createTarball(sourceDir, tarball);
-
-      const extractDir = join(tempDir, "extracted");
-      await mkdir(extractDir);
-
-      await expect(extractor.extract(tarball, extractDir)).rejects.toThrow(
-        "framework.json not found"
       );
     });
   });

@@ -90,5 +90,12 @@ function parseScalar(value: string): unknown {
   if (value === "true") return true;
   if (value === "false") return false;
   if (value === "null" || value === "~") return null;
+  if (value.startsWith("[") && value.endsWith("]")) {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
+  }
   return value;
 }

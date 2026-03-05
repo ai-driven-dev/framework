@@ -1,12 +1,11 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { Settings } from "../../domain/models/settings.js";
-import type { SettingsRepository } from "../../domain/ports/settings-repository.js";
 
 const SETTINGS_FILENAME = "settings.json";
 const AIDD_DIR = ".aidd";
 
-export class SettingsRepositoryAdapter implements SettingsRepository {
+export class SettingsRepositoryAdapter {
   constructor(private readonly projectRoot: string) {}
 
   private get settingsPath(): string {

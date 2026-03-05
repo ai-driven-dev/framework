@@ -11,7 +11,7 @@ pre-commit:
         if [ -f "$PARENT_DIR/lefthook.yml" ]; then
           echo "🔄 Running parent repo hooks..."
           export LEFTHOOK_CHILD=1
-          cd "$PARENT_DIR" && pnpm exec lefthook run pre-commit --force || echo "⚠️  Parent hooks reported issues (non-blocking)"
+          cd "$PARENT_DIR" && pnpm exec lefthook run pre-commit --force
         else
           echo "⚠️  Parent repo not found, skipping hooks"
         fi
@@ -28,7 +28,7 @@ pre-push:
         if [ -f "$PARENT_DIR/lefthook.yml" ]; then
           echo "🔄 Running parent repo hooks..."
           export LEFTHOOK_CHILD=1
-          cd "$PARENT_DIR" && pnpm exec lefthook run pre-push --force || echo "⚠️  Parent hooks reported issues (non-blocking)"
+          cd "$PARENT_DIR" && pnpm exec lefthook run pre-push --force
         else
           echo "⚠️  Parent repo not found, skipping hooks"
         fi

@@ -41,7 +41,7 @@ describe("FrameworkCache", () => {
   });
 
   describe("has()", () => {
-    it("returns true when both marker and framework.json exist", async () => {
+    it("returns true when marker exists", async () => {
       const sourceDir = await createFrameworkDir(testCacheBase, "source");
       await cache.put("2.0.0", sourceDir);
 
@@ -55,17 +55,9 @@ describe("FrameworkCache", () => {
     it("returns false when marker is missing", async () => {
       const dir = join(testCacheBase, "3.0.0");
       await mkdir(dir, { recursive: true });
-      await writeFile(join(dir, "framework.json"), "{}");
+      await writeFile(join(dir, "agents"), "");
 
       expect(await cache.has("3.0.0")).toBe(false);
-    });
-
-    it("returns false when framework.json is missing", async () => {
-      const dir = join(testCacheBase, "4.0.0");
-      await mkdir(dir, { recursive: true });
-      await writeFile(join(dir, ".aidd-extracted"), "");
-
-      expect(await cache.has("4.0.0")).toBe(false);
     });
   });
 

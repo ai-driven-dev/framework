@@ -28,10 +28,6 @@ describe("HttpClient", () => {
     client = new HttpClient();
   });
 
-  afterEach(() => {
-    client = new HttpClient();
-  });
-
   describe("GET JSON response", () => {
     it("returns parsed JSON body", async () => {
       const { url, close } = await startServer((_req, res) => {

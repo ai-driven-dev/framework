@@ -16,18 +16,4 @@ describe("GeneratedFile", () => {
     expect(file.content).toBe("# Code Reviewer");
     expect(file.hash).toBe(hash);
   });
-
-  it("properties are readonly at the type level", () => {
-    const file = new GeneratedFile({
-      relativePath: "some/path.md",
-      content: "content",
-      hash,
-    });
-
-    // TypeScript readonly is compile-time enforcement.
-    // Verify properties remain unchanged after construction.
-    expect(file.relativePath).toBe("some/path.md");
-    expect(file.content).toBe("content");
-    expect(file.hash).toBe(hash);
-  });
 });

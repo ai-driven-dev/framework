@@ -5,7 +5,7 @@ export class LoggerAdapter implements Logger {
 
   debug(message: string): void {
     if (this.verbose) {
-      process.stderr.write(`${message}\n`);
+      process.stderr.write(`[verbose] ${message}\n`);
     }
   }
 

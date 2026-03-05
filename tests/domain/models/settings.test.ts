@@ -9,13 +9,6 @@ describe("Settings", () => {
     expect(settings.verbose).toBe(false);
   });
 
-  it("uses defaults when empty object provided", () => {
-    const settings = new Settings({});
-    expect(settings.repo).toBe("ai-driven-dev/aidd-framework");
-    expect(settings.docsDir).toBe("aidd_docs");
-    expect(settings.verbose).toBe(false);
-  });
-
   it("overrides repo when provided", () => {
     const settings = new Settings({ repo: "my-org/my-repo" });
     expect(settings.repo).toBe("my-org/my-repo");

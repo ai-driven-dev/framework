@@ -72,9 +72,10 @@ describe("FrameworkResolverAdapter", () => {
       const localPath = join(tempDir, "local-framework");
       await mkdir(localPath);
 
-      const adapter = new FrameworkResolverAdapter(http, tar, cache);
+      const adapter = new FrameworkResolverAdapter(http, tar, cache, { defaultRepo: "unused" });
       const result = await adapter.resolve({ localPath });
-      expect(result).toBe(localPath);
+      expect(result.path).toBe(localPath);
+      expect(result.version).toBe("local");
     });
   });
 
@@ -82,16 +83,17 @@ describe("FrameworkResolverAdapter", () => {
     it("extracts tarball and returns framework root", async () => {
       const { tarballPath } = await createFrameworkTarball(tempDir, "1.0.0");
 
-      const adapter = new FrameworkResolverAdapter(http, tar, cache);
+      const adapter = new FrameworkResolverAdapter(http, tar, cache, { defaultRepo: "unused" });
       const result = await adapter.resolve({ tarballPath });
-      expect(result).toMatch(/framework-1\.0\.0/);
+      expect(result.path).toMatch(/framework-1\.0\.0/);
+      expect(result.version).toBe("local");
     });
 
     it("throws on invalid tarball", async () => {
       const fakeTarball = join(tempDir, "fake.tar.gz");
       await writeFile(fakeTarball, "not a tarball");
 
-      const adapter = new FrameworkResolverAdapter(http, tar, cache);
+      const adapter = new FrameworkResolverAdapter(http, tar, cache, { defaultRepo: "unused" });
       await expect(adapter.resolve({ tarballPath: fakeTarball })).rejects.toThrow(
         "Failed to extract tarball"
       );
@@ -127,7 +129,8 @@ describe("FrameworkResolverAdapter", () => {
         });
 
         const result = await adapter.resolve({});
-        expect(result).toContain("3.0.0");
+        expect(result.path).toContain("3.0.0");
+        expect(result.version).toBe("3.0.0");
         expect(tarballRequested).toBe(false);
       } finally {
         await close();
@@ -147,7 +150,10 @@ describe("FrameworkResolverAdapter", () => {
             JSON.stringify({
               tag_name: "v6.0.0",
               assets: [
-                { name: "framework-6.0.0.tar.gz", browser_download_url: `${serverUrl}/tarball` },
+                {
+                  name: "aidd-framework-6.0.0.tar.gz",
+                  browser_download_url: `${serverUrl}/tarball`,
+                },
               ],
             })
           );
@@ -164,7 +170,8 @@ describe("FrameworkResolverAdapter", () => {
         });
 
         const result = await adapter.resolve({});
-        expect(result).toMatch(/6\.0\.0/);
+        expect(result.path).toMatch(/6\.0\.0/);
+        expect(result.version).toBe("6.0.0");
         expect(await cache.has("6.0.0")).toBe(true);
       } finally {
         await close();
@@ -193,7 +200,8 @@ describe("FrameworkResolverAdapter", () => {
       );
 
       const result = await adapter.resolve({});
-      expect(result).toContain("4.0.0");
+      expect(result.path).toContain("4.0.0");
+      expect(result.version).toBe("4.0.0");
       expect(warnings.some((w) => w.includes("Network unavailable"))).toBe(true);
     });
 

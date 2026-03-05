@@ -18,7 +18,11 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
-    "format": "biome format --write ."
+    "format": "biome format --write .",
+    "knip:production": "knip --production",
+    "jscpd": "jscpd src/",
+    "pack:local": "pnpm build && pnpm pack --pack-destination ./dist",
+    "install:local": "pnpm run pack:local && npm install -g ./dist/ai-driven-dev-aidd-cli-$(node -p \"require('./package.json').version\").tgz --force"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.0.0",
@@ -27,6 +31,8 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
     "@types/node": "^24.0.0",
+    "jscpd": "^4.0.0",
+    "knip": "^5.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^2.0.0"

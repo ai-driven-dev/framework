@@ -26,13 +26,6 @@ describe("TokenResolver", () => {
       );
       expect(token).toBe("flag-token");
     });
-
-    it("flag takes priority over env var", () => {
-      const token = withEnv({ AIDD_TOKEN: "env-token" }, () =>
-        resolver.resolve({ flag: "flag-token" })
-      );
-      expect(token).toBe("flag-token");
-    });
   });
 
   describe("env var resolution", () => {

@@ -1,17 +1,29 @@
-import type { DocsEntry } from "./docs-entry.js";
 import { FileHash } from "./file-hash.js";
 import type { GeneratedFile } from "./generated-file.js";
-import { StatusReport } from "./status-report.js";
-import type { ToolEntry } from "./tool-entry.js";
-import { ToolId } from "./tool-id.js";
-import type { TrackedFile } from "./tracked-file.js";
+import { type ToolId, VALID_TOOL_IDS } from "./tool-config.js";
 
 const MANIFEST_VERSION = "1";
 const DEFAULT_DOCS_DIR = "aidd_docs";
 
+interface TrackedFile {
+  readonly relativePath: string;
+  readonly hash: FileHash;
+}
+
+interface DocsEntry {
+  readonly version: string;
+  readonly files: readonly TrackedFile[];
+}
+
+interface ToolEntry {
+  readonly toolId: ToolId;
+  readonly version: string;
+  readonly files: readonly TrackedFile[];
+}
+
 interface ManifestData {
   version: string;
-  docsDir?: string;
+  docsDir: string;
   tools: Record<string, ToolEntryData>;
   docs: DocsEntryData | null;
 }
@@ -35,12 +47,12 @@ interface TrackedFileData {
 export class Manifest {
   private readonly _tools: Map<ToolId, ToolEntry>;
   private _docs: DocsEntry | null;
-  readonly docsDir: string | undefined;
+  readonly docsDir: string;
 
   private constructor(params: {
     tools: Map<ToolId, ToolEntry>;
     docs: DocsEntry | null;
-    docsDir?: string;
+    docsDir: string;
   }) {
     this._tools = new Map(params.tools);
     this._docs = params.docs;
@@ -51,7 +63,7 @@ export class Manifest {
     return new Manifest({
       tools: new Map(),
       docs: null,
-      docsDir: docsDir !== DEFAULT_DOCS_DIR ? docsDir : undefined,
+      docsDir: docsDir ?? DEFAULT_DOCS_DIR,
     });
   }
 
@@ -82,30 +94,6 @@ export class Manifest {
     return this._tools.get(toolId)?.version;
   }
 
-  computeStatus(diskHashes: Map<string, FileHash>): StatusReport {
-    const allTracked = [
-      ...Array.from(this._tools.values()).flatMap((e) => [...e.files]),
-      ...(this._docs?.files ?? []),
-    ];
-
-    const allManifestPaths = new Set(allTracked.map((f) => f.relativePath));
-    const modified: string[] = [];
-    const deleted: string[] = [];
-
-    for (const file of allTracked) {
-      const diskHash = diskHashes.get(file.relativePath);
-      if (diskHash === undefined) {
-        deleted.push(file.relativePath);
-      } else if (!diskHash.equals(file.hash)) {
-        modified.push(file.relativePath);
-      }
-    }
-
-    const untracked = [...diskHashes.keys()].filter((p) => !allManifestPaths.has(p));
-
-    return new StatusReport({ modified, deleted, untracked });
-  }
-
   toJSON(): ManifestData {
     const tools: Record<string, ToolEntryData> = {};
     for (const [toolId, entry] of this._tools.entries()) {
@@ -118,7 +106,7 @@ export class Manifest {
 
     return {
       version: MANIFEST_VERSION,
-      ...(this.docsDir !== undefined ? { docsDir: this.docsDir } : {}),
+      docsDir: this.docsDir ?? DEFAULT_DOCS_DIR,
       tools,
       docs: this._docs
         ? { version: this._docs.version, files: this.toTrackedFileData(this._docs.files) }
@@ -151,7 +139,7 @@ export class Manifest {
     if (raw.tools !== null && typeof raw.tools === "object") {
       for (const [key, value] of Object.entries(raw.tools as Record<string, unknown>)) {
         const toolId = key as ToolId;
-        if (!Object.values(ToolId).includes(toolId)) {
+        if (!VALID_TOOL_IDS.includes(toolId)) {
           throw new Error(`Invalid tool id in manifest: '${key}'.`);
         }
         const entry = value as ToolEntryData;
@@ -172,7 +160,7 @@ export class Manifest {
       };
     }
 
-    const docsDir = typeof raw.docsDir === "string" ? raw.docsDir : undefined;
+    const docsDir = typeof raw.docsDir === "string" ? raw.docsDir : DEFAULT_DOCS_DIR;
 
     return new Manifest({ tools, docs, docsDir });
   }

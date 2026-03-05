@@ -5,20 +5,20 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { FrameworkLoaderAdapter } from "../../src/infrastructure/adapters/framework-loader-adapter.js";
-import { FrameworkCache } from "../../src/infrastructure/cache/framework-cache.js";
 import { FrameworkResolverAdapter } from "../../src/infrastructure/adapters/framework-resolver-adapter.js";
+import { FrameworkCache } from "../../src/infrastructure/cache/framework-cache.js";
 import { HttpClient } from "../../src/infrastructure/http/http-client.js";
 import { TarExtractor } from "../../src/infrastructure/tar/tar-extractor.js";
 
 const execFileAsync = promisify(execFile);
 
-const EXAMPLE_DIR = join(process.cwd(), "example", "aidd-framework-3.2.2");
-const EXAMPLE_VERSION = "3.2.2";
+const EXAMPLE_DIR = join(process.cwd(), "tests", "fixtures", "framework");
+const EXAMPLE_VERSION = "1.0.0";
 
-describe("example/aidd-framework-3.2.2 — direct directory loading", () => {
-  it("parses framework.json descriptor correctly", async () => {
+describe("tests/fixtures/framework — direct directory loading", () => {
+  it("builds descriptor from convention with correct sections", async () => {
     const loader = new FrameworkLoaderAdapter();
-    const { descriptor } = await loader.loadFromDirectory(EXAMPLE_DIR);
+    const { descriptor } = await loader.loadFromDirectory(EXAMPLE_DIR, EXAMPLE_VERSION);
 
     expect(descriptor.version).toBe(EXAMPLE_VERSION);
 
@@ -36,7 +36,7 @@ describe("example/aidd-framework-3.2.2 — direct directory loading", () => {
 
   it("loads all 4 content sections", async () => {
     const loader = new FrameworkLoaderAdapter();
-    const { contentFiles } = await loader.loadFromDirectory(EXAMPLE_DIR);
+    const { contentFiles } = await loader.loadFromDirectory(EXAMPLE_DIR, EXAMPLE_VERSION);
 
     const paths = [...contentFiles.keys()];
     expect(contentFiles.size).toBeGreaterThan(0);
@@ -48,7 +48,7 @@ describe("example/aidd-framework-3.2.2 — direct directory loading", () => {
 
   it("preserves phase and subfolder structure in file keys", async () => {
     const loader = new FrameworkLoaderAdapter();
-    const { contentFiles } = await loader.loadFromDirectory(EXAMPLE_DIR);
+    const { contentFiles } = await loader.loadFromDirectory(EXAMPLE_DIR, EXAMPLE_VERSION);
 
     const paths = [...contentFiles.keys()];
     expect(paths.some((p) => /^commands\/\d+_/.test(p))).toBe(true);
@@ -57,7 +57,7 @@ describe("example/aidd-framework-3.2.2 — direct directory loading", () => {
 
   it("content files have non-empty string content", async () => {
     const loader = new FrameworkLoaderAdapter();
-    const { contentFiles } = await loader.loadFromDirectory(EXAMPLE_DIR);
+    const { contentFiles } = await loader.loadFromDirectory(EXAMPLE_DIR, EXAMPLE_VERSION);
 
     for (const [path, content] of contentFiles.entries()) {
       expect(typeof content, `${path} should be a string`).toBe("string");
@@ -68,7 +68,7 @@ describe("example/aidd-framework-3.2.2 — direct directory loading", () => {
   });
 });
 
-describe("example/aidd-framework-3.2.2 — full resolver chain via tarball", () => {
+describe("tests/fixtures/framework — full resolver chain via tarball", () => {
   let tempDir: string;
   let tarballPath: string;
   let cacheDir: string;
@@ -78,13 +78,13 @@ describe("example/aidd-framework-3.2.2 — full resolver chain via tarball", () 
     cacheDir = join(tempDir, "cache");
     await mkdir(cacheDir, { recursive: true });
 
-    tarballPath = join(tempDir, `aidd-framework-${EXAMPLE_VERSION}.tar.gz`);
+    tarballPath = join(tempDir, `framework-${EXAMPLE_VERSION}.tar.gz`);
     await execFileAsync("tar", [
       "czf",
       tarballPath,
       "-C",
-      join(process.cwd(), "example"),
-      `aidd-framework-${EXAMPLE_VERSION}`,
+      join(process.cwd(), "tests", "fixtures"),
+      "framework",
     ]);
   });
 
@@ -92,33 +92,37 @@ describe("example/aidd-framework-3.2.2 — full resolver chain via tarball", () 
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  it("resolves local tarball and returns framework root with framework.json", async () => {
+  it("resolves local tarball and loads framework content", async () => {
     const resolver = new FrameworkResolverAdapter(
       new HttpClient(),
       new TarExtractor(),
-      new FrameworkCache(cacheDir)
+      new FrameworkCache(cacheDir),
+      { defaultRepo: "unused" }
     );
 
-    const resolvedPath = await resolver.resolve({ tarballPath });
+    const { path, version } = await resolver.resolve({ tarballPath });
 
     const loader = new FrameworkLoaderAdapter();
-    const { descriptor } = await loader.loadFromDirectory(resolvedPath);
-    expect(descriptor.version).toBe(EXAMPLE_VERSION);
+    const { descriptor, contentFiles } = await loader.loadFromDirectory(path, version);
+    expect(descriptor.contentSections.length).toBeGreaterThan(0);
+    expect(contentFiles.size).toBeGreaterThan(0);
   });
 
   it("caches the resolved framework and returns cached path on second resolve", async () => {
     const cache = new FrameworkCache(cacheDir);
-    const resolver = new FrameworkResolverAdapter(new HttpClient(), new TarExtractor(), cache);
+    const resolver = new FrameworkResolverAdapter(new HttpClient(), new TarExtractor(), cache, {
+      defaultRepo: "unused",
+    });
 
-    const first = await resolver.resolve({ tarballPath });
+    const { path: first, version } = await resolver.resolve({ tarballPath });
     await cache.put(EXAMPLE_VERSION, first);
 
     expect(await cache.has(EXAMPLE_VERSION)).toBe(true);
     const cachedPath = cache.get(EXAMPLE_VERSION);
 
     const loader = new FrameworkLoaderAdapter();
-    const { descriptor, contentFiles } = await loader.loadFromDirectory(cachedPath);
-    expect(descriptor.version).toBe(EXAMPLE_VERSION);
+    const { descriptor, contentFiles } = await loader.loadFromDirectory(cachedPath, version);
+    expect(descriptor.contentSections.length).toBeGreaterThan(0);
     expect(contentFiles.size).toBeGreaterThan(0);
   });
 
@@ -126,14 +130,15 @@ describe("example/aidd-framework-3.2.2 — full resolver chain via tarball", () 
     const resolver = new FrameworkResolverAdapter(
       new HttpClient(),
       new TarExtractor(),
-      new FrameworkCache(cacheDir)
+      new FrameworkCache(cacheDir),
+      { defaultRepo: "unused" }
     );
 
-    const resolvedPath = await resolver.resolve({ tarballPath });
+    const { path: resolvedPath, version } = await resolver.resolve({ tarballPath });
     const loader = new FrameworkLoaderAdapter();
 
-    const fromTarball = await loader.loadFromDirectory(resolvedPath);
-    const fromDir = await loader.loadFromDirectory(EXAMPLE_DIR);
+    const fromTarball = await loader.loadFromDirectory(resolvedPath, version);
+    const fromDir = await loader.loadFromDirectory(EXAMPLE_DIR, EXAMPLE_VERSION);
 
     expect(fromTarball.contentFiles.size).toBe(fromDir.contentFiles.size);
     expect([...fromTarball.contentFiles.keys()].sort()).toEqual(

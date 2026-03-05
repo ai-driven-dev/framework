@@ -1,21 +1,23 @@
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { generateDistribution } from "../../../src/domain/models/distribution.js";
 import { FileHash } from "../../../src/domain/models/file-hash.js";
 import { FrameworkDescriptor } from "../../../src/domain/models/framework-descriptor.js";
 import type { Hasher } from "../../../src/domain/ports/hasher.js";
-import { claudeToolSpec } from "../../../src/domain/tool-specs/claude.js";
-import { copilotToolSpec } from "../../../src/domain/tool-specs/copilot.js";
-import { cursorToolSpec } from "../../../src/domain/tool-specs/cursor.js";
+import { claudeToolConfig } from "../../../src/domain/tools/claude.js";
+import { copilotToolConfig } from "../../../src/domain/tools/copilot.js";
+import { cursorToolConfig } from "../../../src/domain/tools/cursor.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const fixturesDir = resolve(__dirname, "../../fixtures");
-const frameworkData = JSON.parse(
-  readFileSync(join(fixturesDir, "framework.json"), "utf-8")
-) as unknown;
-const framework = FrameworkDescriptor.fromJson(frameworkData);
+const framework = new FrameworkDescriptor({
+  version: "3.2.2",
+  contentSections: [
+    { name: "agents", directory: "agents", entryFile: null },
+    { name: "commands", directory: "commands", entryFile: null },
+    { name: "rules", directory: "rules", entryFile: null },
+    { name: "skills", directory: "skills", entryFile: "SKILL.md" },
+  ],
+  templateRefs: [{ name: "agentsMd", path: "aidd_docs/templates/AGENTS.md" }],
+  configRefs: [{ name: "mcp", path: "config/mcp.json" }],
+});
 
 let hashCounter = 0;
 const stubHasher: Hasher = {
@@ -26,33 +28,31 @@ const stubHasher: Hasher = {
   },
 };
 
-function loadFixtureContentFiles(): Map<string, string> {
-  const map = new Map<string, string>();
-  loadDir(join(fixturesDir, "content"), join(fixturesDir, "content"), map);
-  return map;
-}
-
-function loadDir(base: string, current: string, map: Map<string, string>): void {
-  for (const entry of readdirSync(current)) {
-    const fullPath = join(current, entry);
-    const stat = statSync(fullPath);
-    if (stat.isDirectory()) {
-      loadDir(base, fullPath, map);
-    } else {
-      const relPath = fullPath.slice(base.length + 1).replaceAll("\\", "/");
-      map.set(relPath, readFileSync(fullPath, "utf-8"));
-    }
-  }
-}
-
-const contentFiles = loadFixtureContentFiles();
+// 3 per section = 12 files total; rules include paths: to pass copilot shouldProcess filter
+const contentFiles = new Map<string, string>([
+  ["agents/code-reviewer.md", "# Code Reviewer"],
+  ["agents/refactor-guide.md", "# Refactor Guide"],
+  ["agents/test-writer.md", "# Test Writer"],
+  ["commands/04_code/implement.md", "# Implement"],
+  ["commands/06_tests/write-tests.md", "# Write Tests"],
+  ["commands/08_deploy/commit.md", "# Commit"],
+  ["rules/01-standards/naming.md", '---\npaths:\n  - "src/**/*.ts"\n---\n\n# Naming'],
+  [
+    "rules/01-standards/no-silent-errors.md",
+    '---\npaths:\n  - "src/**/*.ts"\n---\n\n# No Silent Errors',
+  ],
+  ["rules/04-tooling/biome.md", '---\npaths:\n  - "src/**/*.ts"\n---\n\n# Biome'],
+  ["skills/commit/SKILL.md", "# Commit Skill"],
+  ["skills/debug/SKILL.md", "# Debug Skill"],
+  ["skills/review-pr/SKILL.md", "# Review PR Skill"],
+]);
 
 describe("generateDistribution()", () => {
   it("produces files for Claude ToolSpec", () => {
     hashCounter = 0;
     const files = generateDistribution(
       framework,
-      claudeToolSpec,
+      claudeToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher
@@ -67,7 +67,7 @@ describe("generateDistribution()", () => {
     hashCounter = 0;
     const files = generateDistribution(
       framework,
-      cursorToolSpec,
+      cursorToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher
@@ -82,14 +82,16 @@ describe("generateDistribution()", () => {
     hashCounter = 0;
     const files = generateDistribution(
       framework,
-      copilotToolSpec,
+      copilotToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher
     );
     expect(files.length).toBeGreaterThan(0);
     for (const f of files) {
-      expect(f.relativePath.startsWith(".github/")).toBe(true);
+      expect(f.relativePath.startsWith(".github/") || f.relativePath.startsWith(".vscode/")).toBe(
+        true
+      );
     }
   });
 
@@ -97,7 +99,7 @@ describe("generateDistribution()", () => {
     hashCounter = 0;
     const files = generateDistribution(
       framework,
-      copilotToolSpec,
+      copilotToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher
@@ -113,7 +115,7 @@ describe("generateDistribution()", () => {
     hashCounter = 0;
     const files = generateDistribution(
       framework,
-      copilotToolSpec,
+      copilotToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher
@@ -129,7 +131,7 @@ describe("generateDistribution()", () => {
     hashCounter = 0;
     const files = generateDistribution(
       framework,
-      copilotToolSpec,
+      copilotToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher
@@ -145,7 +147,7 @@ describe("generateDistribution()", () => {
     hashCounter = 0;
     const files = generateDistribution(
       framework,
-      copilotToolSpec,
+      copilotToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher
@@ -158,7 +160,7 @@ describe("generateDistribution()", () => {
     hashCounter = 0;
     const files = generateDistribution(
       framework,
-      claudeToolSpec,
+      claudeToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher
@@ -173,7 +175,7 @@ describe("generateDistribution()", () => {
     hashCounter = 0;
     const files = generateDistribution(
       framework,
-      claudeToolSpec,
+      claudeToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher
@@ -189,13 +191,35 @@ describe("generateDistribution()", () => {
     const singleFileMap = new Map([["agents/test.md", "path: {{TOOLS}}/agents/"]]);
     const files = generateDistribution(
       framework,
-      claudeToolSpec,
+      claudeToolConfig,
       "aidd_docs",
       singleFileMap,
       stubHasher
     );
     expect(files[0]?.content).toContain(".claude/");
     expect(files[0]?.content).not.toContain("{{TOOLS}}");
+  });
+
+  it("excludes tool-specific files not belonging to the active tool", () => {
+    hashCounter = 0;
+    const withToolFiles = new Map([
+      ["rules/04-tooling/ide-mapping.claude.md", "---\npaths:\n---\n# Claude"],
+      ["rules/04-tooling/ide-mapping.cursor.md", "---\nalwaysApply: true\n---\n# Cursor"],
+      ["rules/04-tooling/ide-mapping.copilot.md", "---\napplyTo: '**'\n---\n# Copilot"],
+      ["rules/01-standards/generic.md", "# Generic rule"],
+    ]);
+    const claudeFiles = generateDistribution(
+      framework,
+      claudeToolConfig,
+      "aidd_docs",
+      withToolFiles,
+      stubHasher
+    );
+    const claudePaths = claudeFiles.map((f) => f.relativePath);
+    expect(claudePaths.some((p) => p.endsWith("04-tooling/ide-mapping.md"))).toBe(true);
+    expect(claudePaths.some((p) => p.includes("ide-mapping.cursor"))).toBe(false);
+    expect(claudePaths.some((p) => p.includes("ide-mapping.copilot"))).toBe(false);
+    expect(claudePaths.some((p) => p.includes("generic.md"))).toBe(true);
   });
 
   it("converts frontmatter for Cursor: paths -> globs", () => {
@@ -205,7 +229,7 @@ describe("generateDistribution()", () => {
     ]);
     const files = generateDistribution(
       framework,
-      cursorToolSpec,
+      cursorToolConfig,
       "aidd_docs",
       singleFileMap,
       stubHasher
@@ -215,12 +239,32 @@ describe("generateDistribution()", () => {
     expect(files[0]?.content).not.toContain("paths:");
   });
 
+  it("converts cursor-style frontmatter to Claude paths format", () => {
+    hashCounter = 0;
+    const singleFileMap = new Map([
+      [
+        "rules/01-standards/naming.md",
+        "---\ndescription: Standards\nalwaysApply: false\n---\n\n# Naming",
+      ],
+    ]);
+    const files = generateDistribution(
+      framework,
+      claudeToolConfig,
+      "aidd_docs",
+      singleFileMap,
+      stubHasher
+    );
+    expect(files[0]?.content).toContain("paths:");
+    expect(files[0]?.content).not.toContain("description:");
+    expect(files[0]?.content).not.toContain("alwaysApply:");
+  });
+
   it("includes MCP config for Claude at .mcp.json regardless of source path", () => {
     hashCounter = 0;
     const withConfig = new Map([...contentFiles, ["config/mcp.json", '{"mcpServers":{}}']]);
     const files = generateDistribution(
       framework,
-      claudeToolSpec,
+      claudeToolConfig,
       "aidd_docs",
       withConfig,
       stubHasher
@@ -234,7 +278,7 @@ describe("generateDistribution()", () => {
     const withConfig = new Map([...contentFiles, ["config/mcp.json", '{"mcpServers":{}}']]);
     const files = generateDistribution(
       framework,
-      cursorToolSpec,
+      cursorToolConfig,
       "aidd_docs",
       withConfig,
       stubHasher
@@ -247,7 +291,7 @@ describe("generateDistribution()", () => {
     hashCounter = 0;
     const files = generateDistribution(
       framework,
-      claudeToolSpec,
+      claudeToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher
@@ -263,7 +307,7 @@ describe("generateDistribution()", () => {
     hashCounter = 0;
     const files = generateDistribution(
       framework,
-      claudeToolSpec,
+      claudeToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher
@@ -275,7 +319,7 @@ describe("generateDistribution()", () => {
     hashCounter = 0;
     const files = generateDistribution(
       framework,
-      cursorToolSpec,
+      cursorToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher
@@ -287,7 +331,7 @@ describe("generateDistribution()", () => {
     hashCounter = 0;
     const files = generateDistribution(
       framework,
-      copilotToolSpec,
+      copilotToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher
@@ -300,12 +344,13 @@ describe("generateDistribution()", () => {
     const withInclude = new Map([["agents/test.md", "@{{TOOLS}}/commands/04_code/implement.md"]]);
     const files = generateDistribution(
       framework,
-      claudeToolSpec,
+      claudeToolConfig,
       "aidd_docs",
       withInclude,
       stubHasher
     );
-    expect(files[0]?.content).toBe("@.claude/commands/aidd/04/implement.md");
+    expect(files[0]?.content).toContain("@.claude/commands/aidd/04/implement.md");
+    expect(files[0]?.content).not.toContain("@{{TOOLS}}");
   });
 
   it("includes memory bank as CLAUDE.md for Claude", () => {
@@ -316,7 +361,7 @@ describe("generateDistribution()", () => {
     ]);
     const files = generateDistribution(
       framework,
-      claudeToolSpec,
+      claudeToolConfig,
       "aidd_docs",
       withTemplate,
       stubHasher
@@ -332,7 +377,7 @@ describe("generateDistribution()", () => {
     ]);
     const files = generateDistribution(
       framework,
-      cursorToolSpec,
+      cursorToolConfig,
       "aidd_docs",
       withTemplate,
       stubHasher
@@ -348,7 +393,7 @@ describe("generateDistribution()", () => {
     ]);
     const files = generateDistribution(
       framework,
-      copilotToolSpec,
+      copilotToolConfig,
       "aidd_docs",
       withTemplate,
       stubHasher
@@ -356,17 +401,17 @@ describe("generateDistribution()", () => {
     expect(files.find((f) => f.relativePath === ".github/copilot-instructions.md")).toBeDefined();
   });
 
-  it("does not include MCP config for Copilot", () => {
+  it("includes MCP config for Copilot at .vscode/mcp.json", () => {
     hashCounter = 0;
     const withConfig = new Map([...contentFiles, ["config/mcp.json", '{"mcpServers":{}}']]);
     const files = generateDistribution(
       framework,
-      copilotToolSpec,
+      copilotToolConfig,
       "aidd_docs",
       withConfig,
       stubHasher
     );
-    const mcp = files.find((f) => f.relativePath?.includes("mcp"));
-    expect(mcp).toBeUndefined();
+    const mcp = files.find((f) => f.relativePath === ".vscode/mcp.json");
+    expect(mcp).toBeDefined();
   });
 });

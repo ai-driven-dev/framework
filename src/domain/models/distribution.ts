@@ -2,11 +2,11 @@ import type { Hasher } from "../ports/hasher.js";
 import type { FrameworkDescriptor } from "./framework-descriptor.js";
 import { parseFrontmatter, serializeFrontmatter } from "./frontmatter.js";
 import { GeneratedFile } from "./generated-file.js";
-import type { ToolSpec } from "./tool-spec.js";
+import { type ToolConfig, acceptsFile } from "./tool-config.js";
 
 export function generateDistribution(
   framework: FrameworkDescriptor,
-  toolSpec: ToolSpec,
+  toolConfig: ToolConfig,
   docsDir: string,
   contentFiles: Map<string, string>,
   hasher: Hasher
@@ -19,18 +19,25 @@ export function generateDistribution(
 
       const relativeFileName = filePath.slice(`${section.directory}/`.length);
 
+      if (!acceptsFile(toolConfig, relativeFileName)) continue;
+
       if (section.entryFile !== null) {
         const basename = relativeFileName.split("/").at(-1) ?? relativeFileName;
         if (basename !== section.entryFile) continue;
       }
 
-      const { frontmatter, body } = parseFrontmatter(rawContent);
+      const outputPath = toolConfig.buildFilePath(section, relativeFileName);
+      if (outputPath === null) continue;
 
-      const convertedFrontmatter = toolSpec.convertFrontmatter(frontmatter);
-      const rewrittenBody = toolSpec.rewriteContent(body, docsDir);
+      const rewrittenRaw = toolConfig.rewriteContent(rawContent, docsDir);
+      const { frontmatter, body } = parseFrontmatter(rewrittenRaw);
+
+      if (toolConfig.shouldProcess?.(section, frontmatter) === false) continue;
+
+      const convertedFrontmatter = toolConfig.convertFrontmatter(frontmatter, section);
+      const rewrittenBody = body;
 
       const outputContent = serializeFrontmatter(convertedFrontmatter, rewrittenBody);
-      const outputPath = toolSpec.buildFilePath(section, relativeFileName);
 
       results.push(
         new GeneratedFile({
@@ -45,19 +52,51 @@ export function generateDistribution(
   results.push(
     ...collectRawFiles(
       framework.configRefs,
-      (name) => toolSpec.getConfigOutputPath(name),
+      (name) => toolConfig.getConfigOutputPath(name),
       contentFiles,
       hasher
     ),
-    ...collectRawFiles(
-      framework.templateRefs,
-      (name) => toolSpec.getMemoryBankOutputPath(name),
-      contentFiles,
-      hasher
-    )
+    ...collectMemoryBankFiles(framework.templateRefs, toolConfig, docsDir, contentFiles, hasher)
   );
 
-  return results;
+  return removeRedundantGitkeeps(results);
+}
+
+function removeRedundantGitkeeps(files: GeneratedFile[]): GeneratedFile[] {
+  const nonEmptyDirs = new Set(
+    files
+      .filter((f) => !f.relativePath.endsWith("/.gitkeep"))
+      .map((f) => f.relativePath.split("/").slice(0, -1).join("/"))
+  );
+  return files.filter((f) => {
+    if (!f.relativePath.endsWith("/.gitkeep")) return true;
+    const dir = f.relativePath.split("/").slice(0, -1).join("/");
+    return !nonEmptyDirs.has(dir);
+  });
+}
+
+function collectMemoryBankFiles(
+  refs: readonly { name: string; path: string }[],
+  toolConfig: ToolConfig,
+  docsDir: string,
+  contentFiles: Map<string, string>,
+  hasher: Hasher
+): GeneratedFile[] {
+  return refs.flatMap((ref) => {
+    const rawContent = contentFiles.get(ref.path);
+    if (rawContent === undefined) return [];
+    const outputPath = toolConfig.getMemoryBankOutputPath(ref.name);
+    if (outputPath === null) return [];
+    const rewrite = toolConfig.rewriteMemoryBankContent ?? toolConfig.rewriteContent;
+    const rewritten = rewrite(rawContent, docsDir);
+    return [
+      new GeneratedFile({
+        relativePath: outputPath,
+        content: rewritten,
+        hash: hasher.hash(rewritten),
+      }),
+    ];
+  });
 }
 
 function collectRawFiles(
