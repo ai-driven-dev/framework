@@ -98,7 +98,7 @@ This repository follows [Semantic Versioning](https://semver.org/) with automate
 1. Every push to `main` with conventional commits triggers a **Release PR** (changelog + version bump)
 2. When the Release PR is merged → GitHub Release + tag + downloadable tarball
 
-The tarball contains only the framework content: `agents/`, `commands/`, `config/`, `rules/`, `skills/`, `templates/`, `aidd_docs/`.
+The tarball contains only the framework content: `agents/`, `commands/`, `config/`, `rules/`, `skills/`, `templates/`, `aidd_docs/`, `version.txt`.
 
 ---
 

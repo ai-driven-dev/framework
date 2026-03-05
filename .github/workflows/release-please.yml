@@ -49,6 +49,11 @@ jobs:
             --exclude='dist' \
             --exclude='CONTRIBUTING.md' \
             --exclude='README.md' \
+            --exclude='package.json' \
+            --exclude='lefthook.yml' \
+            --exclude='*lock*' \
+            --exclude='preinstall.js' \
+            --exclude='node_modules' \
             .
 
       - name: Build per-tool tarballs
