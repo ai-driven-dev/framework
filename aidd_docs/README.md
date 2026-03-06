@@ -111,15 +111,20 @@ my-project/
 This guide follows a progressive structure. Each phase builds on the previous one and introduces new commands as they become relevant.
 
 ```mermaid
-graph LR
-    P1["🏗️ Phase 1 Setup"] --> P2["⚙️ Phase 2 Configure"] --> FS{"🗺️ Flow Selector"}
-    FS --> P3["🔺 Phase 3 Minimal"]
-    FS --> P4["🔷 Phase 4 Standard"]
-    FS --> P5["🟢 Phase 5 Full"]
-    P3 --> P4 --> P5 --> P6["🔧 Phase 6 Maintenance"]
+flowchart TD
+    S["🏠 <b>Initialization</b><br/><small><code>/init</code> · generate memory files</small>"]
+    S --> B["🧠 <b>Configuration</b><br/><small><code>/audit</code> → <code>/generate_rules</code> → <code>/assert</code></small>"]
+    B --> CTX["📋 <b>Context</b><br/><small><code>/ticket_info</code> · <code>/brainstorm</code></small>"]
+    CTX --> P["🗺️ <b>Plan & Implement</b><br/><small><code>/plan</code> → <code>/implement</code> → <code>/review_code</code> → <code>/commit</code></small>"]
+    P --> T["🧪 <b>Test & Learn</b><br/><small><code>/test</code> → <code>/assert</code> → <code>/learn</code></small>"]
+    T -. "@agent: tests fail → fix & retry" .-> P
+    T --> SH["🚀 <b>Ship</b><br/><small><code>/create_request</code> · CLI / MCP</small>"]
+    SH --> DBG["🔧 <b>Debug & Evolve</b><br/><small><code>/debug</code> → <code>/generate_rules</code> · <code>/new_issue</code></small>"]
+    DBG -. "evolve rules" .-> B
+    DBG -. "next ticket" .-> CTX
 ```
 
-Start at Phase 1, follow the setup, then use the **Flow Selector** to jump to the phase that matches your task.
+Start at **Initialization**, then follow the path step by step. Each box shows the key commands you'll use at that stage.
 
 ## 🏗️ Phase 1 — Setup & Initialization
 

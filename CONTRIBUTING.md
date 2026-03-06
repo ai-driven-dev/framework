@@ -6,6 +6,7 @@ This guide explains how to contribute to the AIDD framework — the source of tr
 
 ---
 
+- [Releases](#releases)
 - [Commit conventions](#commit-conventions)
 - [Contribution process](#contribution-process)
 - [Existing templates](#existing-templates)
@@ -17,6 +18,25 @@ This guide explains how to contribute to the AIDD framework — the source of tr
 
 ---
 
+---
+
+## Releases
+
+This repository follows [Semantic Versioning](https://semver.org/) with automated releases via [Release Please](https://github.com/googleapis/release-please).
+
+| Commit type                   | Version bump | Example       |
+| ----------------------------- | ------------ | ------------- |
+| `fix:`                        | Patch        | 3.0.0 → 3.0.1 |
+| `feat:`                       | Minor        | 3.0.0 → 3.1.0 |
+| `feat!:` / `BREAKING CHANGE:` | Major        | 3.0.0 → 4.0.0 |
+
+**How it works:**
+
+1. Every push to `main` with conventional commits triggers a **Release PR** (changelog + version bump)
+2. When the Release PR is merged → GitHub Release + tag + downloadable tarball
+
+The tarball contains only the framework content: `agents/`, `commands/`, `config/`, `rules/`, `skills/`, `templates/`, `aidd_docs/`, `version.txt`.
+
 ## Commit conventions
 
 This repository uses [Conventional Commits](https://www.conventionalcommits.org/) to automate versioning and changelog generation via [Release Please](https://github.com/googleapis/release-please).
@@ -27,19 +47,19 @@ This repository uses [Conventional Commits](https://www.conventionalcommits.org/
 <type>: <description>
 ```
 
-| Type | Purpose | Version bump |
-| --- | --- | --- |
-| `feat` | New feature (agent, command, rule, skill, template) | Minor |
-| `fix` | Bug fix or correction | Patch |
-| `perf` | Performance improvement | Patch |
-| `revert` | Revert a previous commit | Patch |
-| `docs` | Documentation, templates | None |
-| `style` | Formatting, whitespace | None |
-| `refactor` | Restructuring without behavior change | None |
-| `test` | Adding or updating tests | None |
-| `build` | Build system or external dependencies | None |
-| `ci` | CI/CD configuration | None |
-| `chore` | Maintenance, tooling | None |
+| Type       | Purpose                                             | Version bump |
+| ---------- | --------------------------------------------------- | ------------ |
+| `feat`     | New feature (agent, command, rule, skill, template) | Minor        |
+| `fix`      | Bug fix or correction                               | Patch        |
+| `perf`     | Performance improvement                             | Patch        |
+| `revert`   | Revert a previous commit                            | Patch        |
+| `docs`     | Documentation, templates                            | None         |
+| `style`    | Formatting, whitespace                              | None         |
+| `refactor` | Restructuring without behavior change               | None         |
+| `test`     | Adding or updating tests                            | None         |
+| `build`    | Build system or external dependencies               | None         |
+| `ci`       | CI/CD configuration                                 | None         |
+| `chore`    | Maintenance, tooling                                | None         |
 
 **Breaking changes:** add `!` after any type to trigger a **major** version bump (e.g., `feat!:`, `fix!:`, `refactor!:`). Use this when renaming files, removing content, or changing structure in a way that breaks existing setups.
 
