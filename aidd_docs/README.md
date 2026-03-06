@@ -8,6 +8,7 @@ AIDD structures your AI coding assistant with commands, agents, rules, and memor
   - [Your AI-Driven Dev path](#your-ai-driven-dev-path)
 - [🏗️ Phase 1 — Setup \& Initialization](#️-phase-1--setup--initialization)
   - [Step by Step](#step-by-step)
+  - [Guidelines](#guidelines)
 - [⚙️ Phase 2 — Configure Your Project](#️-phase-2--configure-your-project)
   - [Step by Step](#step-by-step-1)
   - [Which Flow Should I Use?](#which-flow-should-i-use)
@@ -161,6 +162,18 @@ Start at **Initialization**, then follow the path step by step. Each box shows t
 3. **Review and manually correct** each generated file in `{{DOCS}}/memory/`. The AI gives you a solid first draft, but you know your project best. The more accurate your memory files, the better every command performs.
 
 Your AI knows the project. But it doesn't know your conventions yet. Before building anything, configure the rules.
+
+### Guidelines
+
+There are 3 guideline files to help you integrate the AI-Driven Development lifecycle.
+
+| 🤖 `/AGENTS.md`               | ⭐ `/aidd_docs/GOLDEN_PRINCIPLES.md`             | 👤 `/aidd_docs/GUIDELINES.md`        |
+| ----------------------------- | ------------------------------------------------ | ------------------------------------ |
+| AI agent behavior and memory. | High-level coding / AI-driven development rules. | How to use AI-Driven Dev as a human. |
+
+> Only `GUIDELINES.md` is meant for you to read. The other two are for the AI — they contain instructions and rules that the AI follows on every conversation.
+>
+> You can customize them, but be careful not to break the AI's reasoning process.
 
 ## ⚙️ Phase 2 — Configure Your Project
 

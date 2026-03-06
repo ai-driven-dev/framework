@@ -11,6 +11,8 @@ argument-hint: N/A
 - Replace placeholders (`{variables}`) with actual user inputs.
 - Define flow of the feature, from start to end.
 - Interpret comments on this file to help you fill it.
+- Each phase MUST have acceptance criteria.
+- During implementation, the AI may amend this plan. Every AI change MUST be prefixed with 🤖 and include a brief rationale.
 -->
 
 # Instruction: {title}
@@ -40,18 +42,37 @@ flowchart TD
   A[TODO]
 ```
 
+## Risk register
+
+<!-- Top technical risks that could derail implementation. Identify them upfront so the plan accounts for them. -->
+
+| Risk     | Impact                        | Mitigation                            |
+| -------- | ----------------------------- | ------------------------------------- |
+| {risk 1} | {what breaks if this happens} | {how the plan prevents or handles it} |
+
 ## Implementation phases
 
-### {Phase n}
+### Phase {n}: {name}
 
 > {straight to point goal}
+
+#### Tasks
 
 1. {ultra concise task1, with logical ordering}
 2. {...}
 3. {...}
 
-## Validation flow
+#### Acceptance criteria
 
-<!-- What would a REAL user do to 100% validate the feature? -->
+- [ ] {verifiable boolean condition 1}
+- [ ] {verifiable boolean condition 2}
+
+## Amendments
+
+<!-- AI-initiated changes during implementation. Each entry is prefixed with 🤖. -->
+
+## Validation flow demonstration
+
+<!-- A short demo showing the feature works end-to-end, what a REAL user would do to 100% validate the feature. -->
 
 1. {Step 1...}

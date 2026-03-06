@@ -43,7 +43,7 @@ No files found.
 
 | File | Description | Docs |
 |------|---|---|
-| [alexia.md](../agents/alexia.md) | `Act like the USER to autonomously end-to-end implementation without human intervention` | - |
+| [alexia.md](../agents/alexia.md) | `Act like the USER to autonomously do the asked task without human intervention` | - |
 | [claire.md](../agents/claire.md) | `Clarity challenger — challenges and questions until the request is ultra-clear` | - |
 | [iris.md](../agents/iris.md) | `Frontend specialist with 3 modes - implement from Figma, verify UI conformity, validate user journeys.` | - |
 | [kent.md](../agents/kent.md) | `Use this agent when explicitly asked to perform test-driven development.` | `https://tidyfirst.substack.com/p/augmented-coding-beyond-the-vibes` |
@@ -55,6 +55,7 @@ No files found.
 |------|
 | [CATALOG.md](CATALOG.md) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| [GUIDELINES.md](GUIDELINES.md) |
 | [README.md](README.md) |
 
 #### `aidd_docs/templates`
@@ -65,11 +66,13 @@ No files found.
 | `aidd` | [agent.md](templates/aidd/agent.md) | `<when-this-agent-needs-to-be-called>` | - |
 | `aidd` | [agents_coordination.md](templates/aidd/agents_coordination.md) | `Multi-agent coordination and workflows template` | - |
 | `aidd` | [command.md](templates/aidd/command.md) | `<generated-action-oriented-description>` | `<generated-argument-hint-if-applicable>` |
+| `aidd` | [golden_principles.md](templates/aidd/golden_principles.md) | - | - |
 | `aidd` | [master_plan.md](templates/aidd/master_plan.md) | `Parent plan template orchestrating multiple child plans with validation gates` | - |
 | `aidd` | [plan.md](templates/aidd/plan.md) | `Feature implementation plan template` | - |
-| `aidd` | [prompt.md](templates/aidd/prompt.md) | `Custom prompt template example` | - |
 | `aidd` | [rule.md](templates/aidd/rule.md) | `< One line. Comprehensive description that provides full context and clearly indicates when this rule should be applied. Include key scenarios, impacted areas, and why following this rule is important. While being thorough, remain focused and relevant. The description should be detailed enough that the agent can confidently determine whether to apply the rule in any given situation.>` | - |
 | `aidd` | [skill.md](templates/aidd/skill.md) | `<What it does - actions, capabilities>. Use when <trigger phrases, contexts, file types, user intents>.` | - |
+| `aidd` | [spec.md](templates/aidd/spec.md) | `Frozen specification template for autonomous feature implementation` | - |
+| `aidd` | [status.md](templates/aidd/status.md) | `Living status file for tracking feature implementation progress` | - |
 | `aidd` | [task.md](templates/aidd/task.md) | `Task tracking system to ensure all tasks are categorized and addressed` | - |
 | `dev` | [adr.md](templates/dev/adr.md) | `Architecture Decision Record template` | - |
 | `dev` | [code_review.md](templates/dev/code_review.md) | `Code review checklist and scoring template` | - |
@@ -77,6 +80,7 @@ No files found.
 | `dev` | [review_code.md](templates/dev/review_code.md) | `Code review checklist and scoring template` | - |
 | `dev` | [review_functional.md](templates/dev/review_functional.md) | `Functional review report template` | - |
 | `dev` | [tech_choice.md](templates/dev/tech_choice.md) | `Technology selection and comparison template` | - |
+| `docs` | [INSTALL.md](templates/docs/INSTALL.md) | - | - |
 | `pm` | [prd.md](templates/pm/prd.md) | `Product Requirements Document template (15 sections)` | - |
 | `pm` | [user_story.md](templates/pm/user_story.md) | `Template for defining user stories with estimation and acceptance criteria` | - |
 | `vcs` | [branch.md](templates/vcs/branch.md) | `VCS branch naming convention template` | - |
@@ -214,7 +218,7 @@ No files found.
 
 | File | Description | Argument Hint |
 |------|---|---|
-| [SKILL.md](../skills/aidd-auto-implement/SKILL.md) | `Autonomously run the AI-Driven Development workflow to code an high quality feature.` | `The URL or file path of the issue or task to implement.` |
+| [SKILL.md](../skills/aidd-auto-implement/SKILL.md) | `Autonomously run the AI-Driven Development workflow to code a high quality feature using durable project memory.` | `The URL or file path of the issue or task to implement.` |
 
 #### `skills/challenge`
 
