@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -37,10 +37,9 @@ describe("ensureInitialized()", () => {
     return { hasher, fs, manifestRepo, loader, logger };
   }
 
-  it("returns existing manifest without running init when already initialized", async () => {
+  it("does not overwrite existing files when already initialized", async () => {
     const deps = buildDeps();
 
-    // First call initializes
     await ensureInitialized(deps.manifestRepo, deps.fs, deps.loader, deps.hasher, deps.logger, {
       frameworkPath: FIXTURE_DIR,
       version: "test",
@@ -48,30 +47,19 @@ describe("ensureInitialized()", () => {
       projectRoot,
     });
 
-    // Second call must return existing manifest (not re-init)
-    const logged: string[] = [];
-    const trackingLogger = {
-      debug: (_msg: string) => {},
-      info: (msg: string) => logged.push(msg),
-      warn: (_msg: string) => {},
-    };
+    // Write a sentinel file that re-init would overwrite
+    const sentinelPath = join(projectRoot, "aidd_docs", "sentinel.txt");
+    await writeFile(sentinelPath, "user-created", "utf-8");
 
-    const manifest = await ensureInitialized(
-      deps.manifestRepo,
-      deps.fs,
-      deps.loader,
-      deps.hasher,
-      trackingLogger,
-      {
-        frameworkPath: FIXTURE_DIR,
-        version: "test",
-        docsDir: "aidd_docs",
-        projectRoot,
-      }
-    );
+    await ensureInitialized(deps.manifestRepo, deps.fs, deps.loader, deps.hasher, deps.logger, {
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
 
-    expect(manifest).not.toBeNull();
-    expect(logged).toHaveLength(0); // no "Initializing docs first" message
+    const contentAfter = await readFile(sentinelPath, "utf-8");
+    expect(contentAfter).toBe("user-created");
   });
 
   it("runs init and returns new manifest when not initialized", async () => {
@@ -91,25 +79,6 @@ describe("ensureInitialized()", () => {
       }
     );
 
-    expect(manifest).not.toBeNull();
-  });
-
-  it("logs info message when auto-initializing", async () => {
-    const deps = buildDeps();
-    const infoMessages: string[] = [];
-    const trackingLogger = {
-      debug: (_msg: string) => {},
-      info: (msg: string) => infoMessages.push(msg),
-      warn: (_msg: string) => {},
-    };
-
-    await ensureInitialized(deps.manifestRepo, deps.fs, deps.loader, deps.hasher, trackingLogger, {
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    expect(infoMessages.some((m) => m.includes("Initializing docs first"))).toBe(true);
+    expect(manifest?.docsDir).toBe("aidd_docs");
   });
 });

@@ -1,41 +1,36 @@
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
-import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
-import { FrameworkLoaderAdapter } from "../../../src/infrastructure/adapters/framework-loader-adapter.js";
-import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
-import { ManifestRepositoryAdapter } from "../../../src/infrastructure/adapters/manifest-repository-adapter.js";
-
-const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/framework");
+import type { ToolId } from "../../../src/domain/models/tool-config.js";
+import {
+  FIXTURE_DIR,
+  buildDeps,
+  cleanupTempProject,
+  createTempProject,
+  installTool,
+} from "./helpers.js";
 
 describe("InitUseCase", () => {
   let tempDir: string;
   let projectRoot: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(join(tmpdir(), "aidd-init-test-"));
-    projectRoot = join(tempDir, "project");
-    await mkdir(projectRoot, { recursive: true });
+    ({ tempDir, projectRoot } = await createTempProject());
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempProject(tempDir);
   });
 
   function buildUseCase() {
-    const hasher = new HasherAdapter();
-    const fs = new FileSystemAdapter(hasher);
-    const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
-    const loader = new FrameworkLoaderAdapter();
-    return new InitUseCase(fs, manifestRepo, loader, hasher);
+    const { fs, manifestRepo, loader, hasher, logger } = buildDeps(projectRoot);
+    return new InitUseCase(fs, manifestRepo, loader, hasher, logger);
   }
 
   it("creates the docs directory from framework templates", async () => {
-    const useCase = buildUseCase();
-    const result = await useCase.execute({
+    const result = await buildUseCase().execute({
       frameworkPath: FIXTURE_DIR,
       version: "test",
       docsDir: "aidd_docs",
@@ -46,57 +41,37 @@ describe("InitUseCase", () => {
     expect(result.docsDir).toBe("aidd_docs");
   });
 
-  it("creates the manifest at .aidd/config.json", async () => {
-    const useCase = buildUseCase();
-    await useCase.execute({
+  it("creates the manifest at .aidd/manifest.json", async () => {
+    await buildUseCase().execute({
       frameworkPath: FIXTURE_DIR,
       version: "test",
       docsDir: "aidd_docs",
       projectRoot,
     });
 
-    const manifestPath = join(projectRoot, ".aidd", "config.json");
-    const raw = await readFile(manifestPath, "utf-8");
-    const data = JSON.parse(raw) as { version: string; docs: unknown };
-    expect(data.version).toBe("1");
+    const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+    const data = JSON.parse(raw) as { version: number; docs: unknown };
+    expect(data.version).toBe(1);
     expect(data.docs).not.toBeNull();
   });
 
-  it("always stores docsDir in manifest, even when default", async () => {
-    const useCase = buildUseCase();
-    await useCase.execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    const manifestPath = join(projectRoot, ".aidd", "config.json");
-    const raw = await readFile(manifestPath, "utf-8");
-    const data = JSON.parse(raw) as Record<string, unknown>;
-    expect(data.docsDir).toBe("aidd_docs");
-  });
-
-  it("stores custom docsDir in manifest", async () => {
-    const useCase = buildUseCase();
-    await useCase.execute({
+  it("stores docsDir in manifest", async () => {
+    await buildUseCase().execute({
       frameworkPath: FIXTURE_DIR,
       version: "test",
       docsDir: "my_docs",
       projectRoot,
     });
 
-    const manifestPath = join(projectRoot, ".aidd", "config.json");
-    const raw = await readFile(manifestPath, "utf-8");
+    const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
     const data = JSON.parse(raw) as Record<string, unknown>;
     expect(data.docsDir).toBe("my_docs");
   });
 
-  it("proceeds when .aidd/ exists but no config.json", async () => {
+  it("proceeds when .aidd/ exists but no manifest.json", async () => {
     await mkdir(join(projectRoot, ".aidd"), { recursive: true });
 
-    const useCase = buildUseCase();
-    const result = await useCase.execute({
+    const result = await buildUseCase().execute({
       frameworkPath: FIXTURE_DIR,
       version: "test",
       docsDir: "aidd_docs",
@@ -104,16 +79,14 @@ describe("InitUseCase", () => {
     });
 
     expect(result.fileCount).toBeGreaterThan(0);
-    expect(existsSync(join(projectRoot, ".aidd", "config.json"))).toBe(true);
+    expect(existsSync(join(projectRoot, ".aidd", "manifest.json"))).toBe(true);
   });
 
   it("throws when docs directory already exists", async () => {
-    const docsPath = join(projectRoot, "aidd_docs");
-    await mkdir(docsPath, { recursive: true });
+    await mkdir(join(projectRoot, "aidd_docs"), { recursive: true });
 
-    const useCase = buildUseCase();
     await expect(
-      useCase.execute({
+      buildUseCase().execute({
         frameworkPath: FIXTURE_DIR,
         version: "test",
         docsDir: "aidd_docs",
@@ -122,19 +95,196 @@ describe("InitUseCase", () => {
     ).rejects.toThrow("aidd_docs");
   });
 
-  it("creates files in custom docs dir", async () => {
-    const useCase = buildUseCase();
-    await useCase.execute({
+  describe("--force", () => {
+    it("re-copies templates when docs dir exists", async () => {
+      await buildUseCase().execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+      const result = await buildUseCase().execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        force: true,
+      });
+      expect(result.fileCount).toBeGreaterThan(0);
+    });
+
+    it("skips files with identical content (no-write optimization)", async () => {
+      await buildUseCase().execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+      const warnings: string[] = [];
+      const { fs, manifestRepo, loader, hasher } = buildDeps(projectRoot);
+      const logger = { debug: () => {}, info: () => {}, warn: (m: string) => warnings.push(m) };
+      const useCase = new InitUseCase(fs, manifestRepo, loader, hasher, logger);
+      await useCase.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        force: true,
+      });
+      expect(warnings).toHaveLength(0);
+    });
+
+    it("overwrites and warns for modified files", async () => {
+      await buildUseCase().execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+      const manifestBefore = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const firstFile = (
+        JSON.parse(manifestBefore) as { docs: { files: { relativePath: string }[] } }
+      ).docs.files[0];
+      await writeFile(join(projectRoot, firstFile.relativePath), "modified content", "utf-8");
+
+      const warnings: string[] = [];
+      const { fs, manifestRepo, loader, hasher } = buildDeps(projectRoot);
+      const logger = { debug: () => {}, info: () => {}, warn: (m: string) => warnings.push(m) };
+      await new InitUseCase(fs, manifestRepo, loader, hasher, logger).execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        force: true,
+      });
+      expect(warnings.some((w) => w.includes("Overwriting modified file"))).toBe(true);
+    });
+
+    it("updates manifest docs section with new hashes", async () => {
+      await buildUseCase().execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+      await buildUseCase().execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test-v2",
+        docsDir: "aidd_docs",
+        projectRoot,
+        force: true,
+      });
+      const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const data = JSON.parse(raw) as { docs: { version: string } };
+      expect(data.docs.version).toBe("test-v2");
+    });
+
+    it("does not touch tool distributions", async () => {
+      const { fs, manifestRepo, loader, hasher, logger } = buildDeps(projectRoot);
+      const initUseCase = new InitUseCase(fs, manifestRepo, loader, hasher, logger);
+      await initUseCase.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+      const { InstallUseCase } = await import(
+        "../../../src/application/use-cases/install-use-case.js"
+      );
+      const installUseCase = new InstallUseCase(fs, manifestRepo, loader, hasher, logger);
+      await installUseCase.execute({
+        toolIds: ["claude" as import("../../../src/domain/models/tool-config.js").ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+      const rawBefore = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const toolsBefore = (JSON.parse(rawBefore) as { tools: Record<string, unknown> }).tools;
+
+      await initUseCase.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        force: true,
+      });
+
+      const rawAfter = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const toolsAfter = (JSON.parse(rawAfter) as { tools: Record<string, unknown> }).tools;
+      expect(JSON.stringify(toolsAfter)).toBe(JSON.stringify(toolsBefore));
+    });
+
+    it("fails with guidance when no manifest exists", async () => {
+      await expect(
+        buildUseCase().execute({
+          frameworkPath: FIXTURE_DIR,
+          version: "test",
+          docsDir: "aidd_docs",
+          projectRoot,
+          force: true,
+        })
+      ).rejects.toThrow("No AIDD installation found");
+    });
+  });
+
+  it("creates CATALOG.md in docsDir after init", async () => {
+    const deps = buildDeps(projectRoot);
+    await buildUseCase().execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    const catalogPath = join(projectRoot, "aidd_docs", "CATALOG.md");
+    expect(existsSync(catalogPath)).toBe(true);
+
+    const content = await readFile(catalogPath, "utf-8");
+    expect(content).toContain("# AIDD Framework Catalog");
+    expect(content).toContain("Generated by `aidd`");
+  });
+
+  it("CATALOG.md from framework is NOT tracked in the manifest after init", async () => {
+    await buildUseCase().execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+    expect(raw).not.toContain("CATALOG.md");
+  });
+
+  it("rejects re-init when manifest already exists, even with a different docs dir", async () => {
+    await buildUseCase().execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    await expect(
+      buildUseCase().execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "my_docs",
+        projectRoot,
+      })
+    ).rejects.toThrow("Already initialized");
+  });
+
+  it("creates files under a custom docs directory", async () => {
+    await buildUseCase().execute({
       frameworkPath: FIXTURE_DIR,
       version: "test",
       docsDir: "my_docs",
       projectRoot,
     });
 
-    const manifestPath = join(projectRoot, ".aidd", "config.json");
-    const raw = await readFile(manifestPath, "utf-8");
+    const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
     const data = JSON.parse(raw) as { docs: { files: { relativePath: string }[] } };
-    const paths = data.docs.files.map((f) => f.relativePath);
-    expect(paths.some((p) => p.startsWith("my_docs/"))).toBe(true);
+    expect(data.docs.files.some((f) => f.relativePath.startsWith("my_docs/"))).toBe(true);
   });
 });
