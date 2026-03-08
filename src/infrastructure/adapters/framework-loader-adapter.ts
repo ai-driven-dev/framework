@@ -109,7 +109,10 @@ export class FrameworkLoaderAdapter implements FrameworkLoader {
       return results;
     }
 
+    const OS_FILES = new Set([".DS_Store", "Thumbs.db"]);
+
     for (const entry of entries) {
+      if (OS_FILES.has(entry.name)) continue;
       const fullPath = join(dir, entry.name);
       if (entry.isDirectory()) {
         const nested = await this.collectFiles(fullPath);

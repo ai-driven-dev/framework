@@ -87,7 +87,11 @@ export class FileSystemAdapter implements FileSystem {
     return this.hasher.hash(content);
   }
 
-  async mergeJsonFile(path: string, data: Record<string, unknown>): Promise<void> {
+  async deleteDirectory(path: string): Promise<void> {
+    await rm(path, { recursive: true, force: true });
+  }
+
+  async mergeJsonFile(path: string, content: string): Promise<void> {
     let existing: Record<string, unknown> = {};
 
     try {
@@ -97,7 +101,8 @@ export class FileSystemAdapter implements FileSystem {
       // File missing or invalid JSON — start from empty
     }
 
-    const merged = deepMerge(existing, data);
+    const incoming = JSON.parse(stripJsoncComments(content)) as Record<string, unknown>;
+    const merged = deepMerge(existing, incoming);
     await this.writeFile(path, JSON.stringify(merged, null, 2));
   }
 }
@@ -112,9 +117,9 @@ function deepMerge(
     const existing = result[key];
 
     if (Array.isArray(value) && Array.isArray(existing)) {
-      // Deduplicate arrays
+      // Deduplicate arrays by JSON-serialized key — works for both primitives and objects
       const combined = [...existing, ...value];
-      result[key] = [...new Set(combined)];
+      result[key] = [...new Map(combined.map((v) => [JSON.stringify(v), v])).values()];
     } else if (isPlainObject(value) && isPlainObject(existing)) {
       result[key] = deepMerge(
         existing as Record<string, unknown>,
@@ -131,4 +136,50 @@ function deepMerge(
 
 function isPlainObject(value: unknown): boolean {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function stripJsoncComments(content: string): string {
+  let result = "";
+  let i = 0;
+  let inString = false;
+
+  while (i < content.length) {
+    const ch = content[i];
+
+    if (inString) {
+      if (ch === "\\") {
+        result += ch + content[i + 1];
+        i += 2;
+        continue;
+      }
+      if (ch === '"') inString = false;
+      result += ch;
+      i++;
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+      result += ch;
+      i++;
+      continue;
+    }
+
+    if (ch === "/" && content[i + 1] === "/") {
+      while (i < content.length && content[i] !== "\n") i++;
+      continue;
+    }
+
+    if (ch === "/" && content[i + 1] === "*") {
+      i += 2;
+      while (i < content.length && !(content[i] === "*" && content[i + 1] === "/")) i++;
+      i += 2;
+      continue;
+    }
+
+    result += ch;
+    i++;
+  }
+
+  return result;
 }

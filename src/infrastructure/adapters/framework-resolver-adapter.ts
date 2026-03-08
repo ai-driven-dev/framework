@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, stat, writeFile } from "node:fs/promises";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -24,6 +24,13 @@ export interface FrameworkResolverAdapterConfig {
 }
 
 const DEFAULT_GITHUB_API_BASE = "https://api.github.com";
+const REPO_FORMAT_REGEX = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
+
+export function validateRepoFormat(repo: string): void {
+  if (!REPO_FORMAT_REGEX.test(repo)) {
+    throw new Error("Invalid repository format. Expected: owner/repo");
+  }
+}
 
 export class FrameworkResolverAdapter implements FrameworkResolver {
   private readonly defaultRepo: string;
@@ -44,6 +51,11 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
 
   async resolve(options: FrameworkResolverOptions): Promise<FrameworkResolved> {
     if (options.localPath) {
+      try {
+        await stat(options.localPath);
+      } catch {
+        throw new Error(`Framework path does not exist: ${options.localPath}`);
+      }
       const version = await readVersionFile(options.localPath);
       return { path: options.localPath, version, source: "local" };
     }
@@ -57,13 +69,9 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
     return this.resolveRemote(options);
   }
 
-  async getLatestVersion(): Promise<string | null> {
-    try {
-      const release = await this.fetchLatestRelease(this.defaultRepo, this.defaultToken);
-      return release.tag_name;
-    } catch {
-      return null;
-    }
+  async fetchLatestVersion(): Promise<string> {
+    const release = await this.fetchLatestRelease(this.defaultRepo, this.defaultToken);
+    return release.tag_name;
   }
 
   private async resolveLocalTarball(tarballPath: string): Promise<string> {
@@ -78,14 +86,24 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
 
   private async resolveRemote(options: FrameworkResolverOptions): Promise<FrameworkResolved> {
     const repo = options.repo ?? this.defaultRepo;
+    validateRepoFormat(repo);
     const token = options.token ?? this.defaultToken;
+
+    const normalizedTag = options.version?.startsWith("v")
+      ? options.version
+      : options.version
+        ? `v${options.version}`
+        : undefined;
 
     let release: GithubRelease | null = null;
     let networkError: Error | null = null;
 
     try {
-      release = await this.fetchLatestRelease(repo, token);
+      release = normalizedTag
+        ? await this.fetchReleaseByTag(repo, normalizedTag, token)
+        : await this.fetchLatestRelease(repo, token);
     } catch (error) {
+      if (normalizedTag) throw new Error(`Framework release not found: ${normalizedTag}`);
       networkError = error instanceof Error ? error : new Error(String(error));
     }
 
@@ -93,23 +111,22 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
       const version = release.tag_name.replace(/^v/, "");
 
       if (await this.cache.has(version)) {
-        this.logger?.debug(`Cache hit for version ${version}`);
+        this.logger?.info(`Using cached framework v${version}`);
         return { path: this.cache.get(version), version, source: "cache" };
       }
 
-      const path = await this.downloadAndCache(release, version, token);
+      this.logger?.info(`Downloading framework v${version}...`);
+      const path = await this.downloadAndCache(repo, release, version, token);
       return { path, version, source: "download" };
     }
 
     const cachedVersion = await this.cache.getLatestCached();
     if (cachedVersion !== null) {
-      this.logger?.warn(`Network unavailable. Using cached framework version ${cachedVersion}.`);
+      this.logger?.warn(`Network unavailable. Using cached framework v${cachedVersion}.`);
       return { path: this.cache.get(cachedVersion), version: cachedVersion, source: "cache" };
     }
 
-    throw new Error(
-      `Cannot resolve framework: network unavailable and no cached version found.${networkError ? ` Cause: ${networkError.message}` : ""}`
-    );
+    throw new Error("Cannot reach the framework source. Check your network connection.");
   }
 
   private async fetchLatestRelease(repo: string, token?: string): Promise<GithubRelease> {
@@ -118,14 +135,25 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
     return response.body as GithubRelease;
   }
 
+  private async fetchReleaseByTag(
+    repo: string,
+    tag: string,
+    token?: string
+  ): Promise<GithubRelease> {
+    const url = `${this.githubApiBase}/repos/${repo}/releases/tags/${tag}`;
+    const response = await this.http.get(url, { token });
+    return response.body as GithubRelease;
+  }
+
   private async downloadAndCache(
+    repo: string,
     release: GithubRelease,
     version: string,
     token?: string
   ): Promise<string> {
     const assetId = this.findTarballAssetId(release);
-    const assetUrl = `${this.githubApiBase}/repos/${this.defaultRepo}/releases/assets/${assetId}`;
-    this.logger?.debug(`Downloading framework version ${version} from ${assetUrl}`);
+    const assetUrl = `${this.githubApiBase}/repos/${repo}/releases/assets/${assetId}`;
+    this.logger?.debug(`Asset URL: ${assetUrl}`);
 
     const response = await this.http.get(assetUrl, { token, accept: "application/octet-stream" });
     if (!Buffer.isBuffer(response.body)) {
@@ -140,6 +168,7 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
 
       const extractDir = await mkdtemp(join(tmpdir(), "aidd-extract-"));
       try {
+        this.logger?.info("Extracting framework...");
         const frameworkRoot = await this.tar.extract(tarballPath, extractDir);
         await this.cache.put(version, frameworkRoot);
         return this.cache.get(version);

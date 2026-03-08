@@ -1,4 +1,8 @@
 import { join } from "node:path";
+import "../domain/tools/claude.js";
+import "../domain/tools/copilot.js";
+import "../domain/tools/cursor.js";
+import { CLIOutput } from "../application/output.js";
 import type { Settings } from "../domain/models/settings.js";
 import type { FileSystem } from "../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../domain/ports/framework-loader.js";
@@ -8,9 +12,11 @@ import type { Logger } from "../domain/ports/logger.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import { FileSystemAdapter } from "./adapters/file-system-adapter.js";
 import { FrameworkLoaderAdapter } from "./adapters/framework-loader-adapter.js";
-import { FrameworkResolverAdapter } from "./adapters/framework-resolver-adapter.js";
+import {
+  FrameworkResolverAdapter,
+  validateRepoFormat,
+} from "./adapters/framework-resolver-adapter.js";
 import { HasherAdapter } from "./adapters/hasher-adapter.js";
-import { LoggerAdapter } from "./adapters/logger-adapter.js";
 import { ManifestRepositoryAdapter } from "./adapters/manifest-repository-adapter.js";
 import { SettingsRepositoryAdapter } from "./adapters/settings-repository-adapter.js";
 import { TokenResolver } from "./auth/token-resolver.js";
@@ -35,15 +41,23 @@ export interface Deps {
   settings: Settings;
 }
 
-export async function createDeps(projectRoot: string, options: GlobalOptions): Promise<Deps> {
+export async function createDeps(
+  projectRoot: string,
+  options: GlobalOptions,
+  output?: CLIOutput
+): Promise<Deps> {
   const hasher = new HasherAdapter();
   const fs = new FileSystemAdapter(hasher);
-  const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
   const loader = new FrameworkLoaderAdapter();
-  const logger = new LoggerAdapter(options.verbose);
+  const logger = output ?? new CLIOutput(options.verbose);
+  const manifestRepo = new ManifestRepositoryAdapter(projectRoot, logger);
   const settingsRepo = new SettingsRepositoryAdapter(projectRoot);
   const settings = await settingsRepo.load();
-  const effectiveRepo = options.repo ?? settings.repo;
+  const repoFromFlag = options.repo ?? process.env.AIDD_REPO;
+  if (repoFromFlag !== undefined) {
+    validateRepoFormat(repoFromFlag);
+  }
+  const effectiveRepo = repoFromFlag ?? settings.repo;
   const cacheDir = join(projectRoot, ".aidd", "cache");
   const http = new HttpClient();
   const tar = new TarExtractor();
