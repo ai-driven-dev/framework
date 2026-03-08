@@ -3,8 +3,13 @@
   "version": "3.0.0",
   "description": "AI-Driven Development CLI — distribute the AIDD framework across AI coding assistants",
   "type": "module",
+  "main": "dist/cli.js",
   "bin": {
     "aidd": "dist/cli.js"
+  },
+  "files": ["dist", "README.md"],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "engines": {
     "node": ">=24",
@@ -22,7 +27,8 @@
     "knip:production": "knip --production",
     "jscpd": "jscpd src/",
     "pack:local": "pnpm build && pnpm pack --pack-destination ./dist",
-    "install:local": "pnpm run pack:local && npm install -g ./dist/ai-driven-dev-aidd-cli-$(node -p \"require('./package.json').version\").tgz --force"
+    "install:local": "pnpm run pack:local && npm install -g ./dist/ai-driven-dev-aidd-cli-$(node -p \"require('./package.json').version\").tgz --force",
+    "prepare": "lefthook install"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.0.0",
@@ -30,9 +36,12 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
     "@types/node": "^24.0.0",
     "jscpd": "^4.0.0",
     "knip": "^5.0.0",
+    "lefthook": "^1.13.1",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^2.0.0"
