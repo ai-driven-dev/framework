@@ -1,44 +1,51 @@
-import { readFileSync } from "node:fs";
-import { platform } from "node:os";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import type { Logger } from "../domain/ports/logger.js";
 
-function getPackageVersion(): string {
-  try {
-    const currentDir = dirname(fileURLToPath(import.meta.url));
-    const pkgPath = join(currentDir, "..", "package.json");
-    const raw = readFileSync(pkgPath, "utf-8");
-    const pkg = JSON.parse(raw) as { version: string };
-    return pkg.version;
-  } catch {
-    return "0.0.0";
+export class CLIOutput implements Logger {
+  readonly verbose: boolean;
+
+  constructor(verbose = false) {
+    this.verbose = verbose || process.env.AIDD_VERBOSE === "true";
   }
-}
 
-export function formatVersion(): string {
-  const version = getPackageVersion();
-  const nodeVersion = process.versions.node;
-  const arch = process.arch;
-  const os = platform();
-  return `aidd/${version} node/${nodeVersion} ${os}-${arch}`;
-}
+  // Logger interface — used by use-cases and infrastructure adapters
 
-export function printSuccess(message: string): void {
-  process.stdout.write(`${message}\n`);
-}
+  debug(message: string): void {
+    if (this.verbose) process.stderr.write(`[verbose] ${message}\n`);
+  }
 
-export function printError(message: string): void {
-  process.stderr.write(`Error: ${message}\n`);
-}
+  info(message: string): void {
+    process.stdout.write(`${message}\n`);
+  }
 
-export function printWarning(message: string): void {
-  process.stderr.write(`Warning: ${message}\n`);
-}
+  warn(message: string): void {
+    process.stderr.write(`Warning: ${message}\n`);
+  }
 
-export function printVerbose(message: string): void {
-  process.stderr.write(`[verbose] ${message}\n`);
-}
+  // Command output
 
-export function printProgress(message: string): void {
-  process.stderr.write(`${message}\n`);
+  print(message: string): void {
+    process.stdout.write(`${message}\n`);
+  }
+
+  success(message: string): void {
+    process.stdout.write(`${message}\n`);
+  }
+
+  error(message: string): void {
+    process.stderr.write(`Error: ${message}\n`);
+  }
+
+  exit(error: unknown): never {
+    this.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+
+  validateTools(toolIds: string[], validIds: readonly string[]): void {
+    const invalid = toolIds.filter((t) => !validIds.includes(t));
+    if (invalid.length === 0) return;
+    for (const toolId of invalid) {
+      this.error(`Unknown tool: ${toolId}. Valid tools: ${validIds.join(", ")}`);
+    }
+    process.exit(1);
+  }
 }

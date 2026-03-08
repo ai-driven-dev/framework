@@ -24,7 +24,7 @@ export async function ensureInitialized(
   const existing = await manifestRepo.load();
   if (existing !== null) return existing;
   logger.info("No installation found. Initializing docs first...");
-  const initUseCase = new InitUseCase(fs, manifestRepo, loader, hasher);
+  const initUseCase = new InitUseCase(fs, manifestRepo, loader, hasher, logger);
   const result = await initUseCase.execute({
     frameworkPath: options.frameworkPath,
     version: options.version,

@@ -4,6 +4,7 @@ import type { Logger } from "../../domain/ports/logger.js";
 
 interface ResolveOptions {
   framework?: string;
+  release?: string;
 }
 
 export async function resolveFramework(
@@ -18,11 +19,5 @@ export async function resolveFramework(
       isTarball ? { tarballPath: options.framework } : { localPath: options.framework }
     );
   }
-  const resolved = await resolver.resolve({});
-  if (resolved.source === "download") {
-    logger.info("Downloading framework...");
-  } else if (resolved.source === "cache") {
-    logger.debug(`Using cached framework version ${resolved.version}`);
-  }
-  return resolved;
+  return resolver.resolve(options.release ? { version: options.release } : {});
 }

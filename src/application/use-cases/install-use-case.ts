@@ -1,15 +1,14 @@
 import { join } from "node:path";
 import { generateDistribution } from "../../domain/models/distribution.js";
-import type { GeneratedFile } from "../../domain/models/generated-file.js";
+import { GeneratedFile } from "../../domain/models/generated-file.js";
+import type { Manifest } from "../../domain/models/manifest.js";
 import { type ToolId, VALID_TOOL_IDS, getToolConfig } from "../../domain/models/tool-config.js";
-import "../../domain/tools/claude.js";
-import "../../domain/tools/copilot.js";
-import "../../domain/tools/cursor.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import { writeCatalog } from "./catalog-use-case.js";
 
 export interface InstallOptions {
   toolIds: ToolId[];
@@ -25,6 +24,7 @@ export interface InstallToolResult {
   fileCount: number;
   files: GeneratedFile[];
   skipped: boolean;
+  warnings: string[];
 }
 
 export class InstallUseCase {
@@ -39,20 +39,15 @@ export class InstallUseCase {
   async execute(options: InstallOptions): Promise<InstallToolResult[]> {
     const { toolIds, frameworkPath, version, docsDir, projectRoot, force = false } = options;
 
-    const validTools = VALID_TOOL_IDS.join(", ");
-
     if (toolIds.length === 0) {
-      throw new Error(`At least one tool ID is required. Valid tools: ${validTools}`);
-    }
-
-    const unknownTools = toolIds.filter((id) => !VALID_TOOL_IDS.includes(id));
-    if (unknownTools.length > 0) {
-      throw new Error(`Unknown tool: ${unknownTools.join(", ")}. Valid tools: ${validTools}`);
+      throw new Error(
+        `At least one tool ID is required. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
+      );
     }
 
     const manifest = await this.manifestRepo.load();
     if (manifest === null) {
-      throw new Error("No manifest found. Run aidd init first.");
+      throw new Error("No AIDD installation found. Run `aidd init` first.");
     }
 
     const { descriptor, contentFiles } = await this.loader.loadFromDirectory(
@@ -64,11 +59,21 @@ export class InstallUseCase {
 
     for (const toolId of toolIds) {
       if (manifest.hasTool(toolId) && !force) {
-        results.push({ toolId, fileCount: 0, files: [], skipped: true });
+        results.push({ toolId, fileCount: 0, files: [], skipped: true, warnings: [] });
         continue;
       }
 
       const config = getToolConfig(toolId);
+      const warnings: string[] = [];
+
+      if (!manifest.hasTool(toolId) && force) {
+        const toolDir = join(projectRoot, config.directory);
+        if (await this.fs.fileExists(toolDir)) {
+          warnings.push(
+            `Directory ${config.directory} exists but tool is not in manifest. Files will be overwritten.`
+          );
+        }
+      }
 
       this.logger.info(`Generating ${toolId} distribution...`);
 
@@ -80,23 +85,49 @@ export class InstallUseCase {
         this.hasher
       );
 
-      for (const file of generated) {
-        const outputPath = join(projectRoot, file.relativePath);
-        await this.fs.writeFile(outputPath, file.content);
-      }
-
-      manifest.addTool(toolId, descriptor.version, generated);
+      const finalFiles = await this.writeToolFiles(generated, projectRoot, manifest);
+      manifest.addTool(toolId, descriptor.version, finalFiles);
 
       results.push({
         toolId,
         fileCount: generated.length,
         files: generated,
         skipped: false,
+        warnings,
       });
     }
 
     await this.manifestRepo.save(manifest);
+    await writeCatalog(manifest, docsDir, projectRoot, this.fs);
 
     return results;
+  }
+
+  private async writeToolFiles(
+    generated: GeneratedFile[],
+    projectRoot: string,
+    manifest: Manifest
+  ): Promise<GeneratedFile[]> {
+    const finalFiles: GeneratedFile[] = [];
+    for (const file of generated) {
+      const outputPath = join(projectRoot, file.relativePath);
+      if (file.merge) {
+        await this.fs.mergeJsonFile(outputPath, file.content);
+        const diskHash = await this.fs.readFileHash(outputPath);
+        manifest.syncFileHashAcrossTools(file.relativePath, diskHash);
+        finalFiles.push(
+          new GeneratedFile({
+            relativePath: file.relativePath,
+            content: file.content,
+            hash: diskHash,
+            merge: true,
+          })
+        );
+      } else {
+        await this.fs.writeFile(outputPath, file.content);
+        finalFiles.push(file);
+      }
+    }
+    return finalFiles;
   }
 }

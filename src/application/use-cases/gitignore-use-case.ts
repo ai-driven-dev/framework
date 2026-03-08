@@ -23,4 +23,25 @@ export class GitignoreUseCase {
     const toAppend = existing.endsWith("\n") || existing === "" ? "" : "\n";
     await this.fs.writeFile(gitignorePath, `${existing}${toAppend}${missing.join("\n")}\n`);
   }
+
+  async remove(projectRoot: string, entries: string[]): Promise<void> {
+    const gitignorePath = `${projectRoot}/${GITIGNORE_FILENAME}`;
+
+    let existing = "";
+    try {
+      existing = await this.fs.readFile(gitignorePath);
+    } catch {
+      return;
+    }
+
+    const entrySet = new Set(entries);
+    const filtered = existing
+      .split("\n")
+      .filter((line) => !entrySet.has(line.trim()))
+      .join("\n");
+
+    if (filtered === existing) return;
+
+    await this.fs.writeFile(gitignorePath, filtered);
+  }
 }
