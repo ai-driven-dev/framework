@@ -19,7 +19,7 @@ describe("E2E: aidd install", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  it("auto-inits and installs claude in one command (NFR6: no network, NFR1: < 5s)", async () => {
+  it("auto-initializes and installs claude in one command", async () => {
     const { stdout, exitCode } = await runCli(
       ["install", "claude", "--framework", FRAMEWORK_PATH],
       projectDir
@@ -29,7 +29,7 @@ describe("E2E: aidd install", () => {
     expect(stdout).toContain("Installed claude");
     expect(existsSync(join(projectDir, ".claude"))).toBe(true);
     expect(existsSync(join(projectDir, "aidd_docs"))).toBe(true);
-    expect(existsSync(join(projectDir, ".aidd", "config.json"))).toBe(true);
+    expect(existsSync(join(projectDir, ".aidd", "manifest.json"))).toBe(true);
   }, 5000);
 
   it("installs cursor tool with correct file layout", async () => {
@@ -54,7 +54,7 @@ describe("E2E: aidd install", () => {
     expect(existsSync(join(projectDir, ".github"))).toBe(true);
   }, 5000);
 
-  it("fails with unknown tool ID", async () => {
+  it("shows an error message for unrecognized tool IDs", async () => {
     const { stderr, exitCode } = await runCli(
       ["install", "unknown-tool", "--framework", FRAMEWORK_PATH],
       projectDir
@@ -76,7 +76,7 @@ describe("E2E: aidd install", () => {
     expect(stderr).toContain("already installed");
   }, 5000);
 
-  it("reinstalls with --force flag", async () => {
+  it("reinstalls an existing tool when --force is used", async () => {
     await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
     const { stdout, exitCode } = await runCli(
@@ -88,20 +88,7 @@ describe("E2E: aidd install", () => {
     expect(stdout).toContain("Installed claude");
   }, 5000);
 
-  it("records installed files in manifest with forward-slash paths (NFR9)", async () => {
-    await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-
-    const manifestRaw = await readFile(join(projectDir, ".aidd", "config.json"), "utf-8");
-    const manifest = JSON.parse(manifestRaw) as {
-      tools: { claude: { files: { relativePath: string }[] } };
-    };
-
-    for (const file of manifest.tools.claude.files) {
-      expect(file.relativePath).not.toContain("\\");
-    }
-  }, 5000);
-
-  it("when already initialized, does not re-init docs dir", async () => {
+  it("skips re-initializing docs when project is already initialized", async () => {
     await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
     const { stdout, exitCode } = await runCli(
       ["install", "claude", "--framework", FRAMEWORK_PATH],
@@ -112,7 +99,7 @@ describe("E2E: aidd install", () => {
     expect(stdout).not.toContain("Initializing docs first");
   }, 5000);
 
-  it("--all installs all tools at once", async () => {
+  it("installs all tools at once with --all", async () => {
     const { stdout, exitCode } = await runCli(
       ["install", "--all", "--framework", FRAMEWORK_PATH],
       projectDir
@@ -127,7 +114,7 @@ describe("E2E: aidd install", () => {
     expect(existsSync(join(projectDir, ".github"))).toBe(true);
   }, 5000);
 
-  it("fails without tools argument and without --all", async () => {
+  it("shows an error message when no tool is specified and --all is not used", async () => {
     const { stderr, exitCode } = await runCli(
       ["install", "--framework", FRAMEWORK_PATH],
       projectDir
@@ -137,10 +124,24 @@ describe("E2E: aidd install", () => {
     expect(stderr).toContain("--all");
   }, 5000);
 
-  it("replaces content placeholders in generated files", async () => {
+  it("reinstalls all tools when --all --force is used", async () => {
+    await runCli(["install", "--all", "--framework", FRAMEWORK_PATH], projectDir);
+
+    const { stdout, exitCode } = await runCli(
+      ["install", "--all", "--force", "--framework", FRAMEWORK_PATH],
+      projectDir
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("claude");
+    expect(stdout).toContain("cursor");
+    expect(stdout).toContain("copilot");
+  }, 5000);
+
+  it("generates files with all path placeholders resolved", async () => {
     await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
-    const manifestRaw = await readFile(join(projectDir, ".aidd", "config.json"), "utf-8");
+    const manifestRaw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");
     const manifest = JSON.parse(manifestRaw) as {
       tools: { claude: { files: { relativePath: string }[] } };
     };

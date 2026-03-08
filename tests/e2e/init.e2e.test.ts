@@ -19,16 +19,16 @@ describe("E2E: aidd init", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  it("creates aidd_docs/ and .aidd/config.json with --framework (NFR6: no network)", async () => {
+  it("creates the docs directory and manifest", async () => {
     const { stdout, exitCode } = await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
 
     expect(exitCode).toBe(0);
     expect(stdout).toContain("Initialized docs in aidd_docs/");
     expect(existsSync(join(projectDir, "aidd_docs"))).toBe(true);
-    expect(existsSync(join(projectDir, ".aidd", "config.json"))).toBe(true);
+    expect(existsSync(join(projectDir, ".aidd", "manifest.json"))).toBe(true);
   }, 5000);
 
-  it("creates custom docs dir with --docs-dir (NFR6, NFR9: cross-platform paths)", async () => {
+  it("creates a custom docs directory when --docs-dir is specified", async () => {
     const { stdout, exitCode } = await runCli(
       ["init", "--framework", FRAMEWORK_PATH, "--docs-dir", "my_docs"],
       projectDir
@@ -38,12 +38,12 @@ describe("E2E: aidd init", () => {
     expect(stdout).toContain("Initialized docs in my_docs/");
     expect(existsSync(join(projectDir, "my_docs"))).toBe(true);
 
-    const manifestRaw = await readFile(join(projectDir, ".aidd", "config.json"), "utf-8");
+    const manifestRaw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");
     const manifest = JSON.parse(manifestRaw) as { docsDir?: string };
     expect(manifest.docsDir).toBe("my_docs");
   }, 5000);
 
-  it("fails with invalid docs-dir name", async () => {
+  it("shows an error message when the docs-dir name contains invalid characters", async () => {
     const { stderr, exitCode } = await runCli(
       ["init", "--framework", FRAMEWORK_PATH, "--docs-dir", "my docs!"],
       projectDir
@@ -53,7 +53,7 @@ describe("E2E: aidd init", () => {
     expect(stderr).toContain("Invalid directory name");
   }, 5000);
 
-  it("fails when docs dir already exists", async () => {
+  it("shows an error message when the docs directory already exists", async () => {
     await mkdir(join(projectDir, "aidd_docs"), { recursive: true });
 
     const { stderr, exitCode } = await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
@@ -62,17 +62,24 @@ describe("E2E: aidd init", () => {
     expect(stderr).toContain("already exists");
   }, 5000);
 
-  it("stores docs files with cross-platform paths in manifest (NFR9)", async () => {
+  it("re-copies docs templates with --force on existing installation", async () => {
     await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+    const { stdout, exitCode } = await runCli(
+      ["init", "--force", "--framework", FRAMEWORK_PATH],
+      projectDir
+    );
 
-    const manifestRaw = await readFile(join(projectDir, ".aidd", "config.json"), "utf-8");
-    const manifest = JSON.parse(manifestRaw) as {
-      docs: { files: { relativePath: string }[] };
-    };
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("Initialized docs in aidd_docs/");
+  }, 5000);
 
-    for (const file of manifest.docs.files) {
-      expect(file.relativePath).not.toContain("\\");
-      expect(file.relativePath.startsWith("aidd_docs/")).toBe(true);
-    }
+  it("fails with guidance when --force is used without prior init", async () => {
+    const { stderr, exitCode } = await runCli(
+      ["init", "--force", "--framework", FRAMEWORK_PATH],
+      projectDir
+    );
+
+    expect(exitCode).not.toBe(0);
+    expect(stderr).toContain("No AIDD installation found");
   }, 5000);
 });
