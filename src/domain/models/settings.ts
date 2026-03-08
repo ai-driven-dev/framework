@@ -1,5 +1,5 @@
 const DEFAULT_REPO = "ai-driven-dev/aidd-framework";
-const DEFAULT_DOCS_DIR = "aidd_docs";
+export const DEFAULT_DOCS_DIR = "aidd_docs";
 
 export class Settings {
   readonly repo: string;

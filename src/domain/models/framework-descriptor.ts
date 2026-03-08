@@ -1,3 +1,22 @@
+export const TOOLS_PLACEHOLDER = "{{TOOLS}}/";
+export const DOCS_PLACEHOLDER = "{{DOCS}}/";
+export const AT_TOOLS_PLACEHOLDER = "@{{TOOLS}}/";
+export const AT_DOCS_PLACEHOLDER = "@{{DOCS}}/";
+
+export const SECTION_COMMANDS = "commands";
+export const SECTION_RULES = "rules";
+export const SECTION_AGENTS = "agents";
+export const SECTION_SKILLS = "skills";
+
+export const CONFIG_MCP = "mcp";
+export const CONFIG_VSCODE_SETTINGS = "vscodeSettings";
+export const CONFIG_VSCODE_EXTENSIONS = "vscodeExtensions";
+export const CONFIG_VSCODE_KEYBINDINGS = "vscodeKeybindings";
+
+export const TEMPLATE_AGENTS_MD = "agentsMd";
+
+export const GITKEEP_FILE = ".gitkeep";
+
 export interface ContentSection {
   readonly name: string;
   readonly directory: string;

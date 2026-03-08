@@ -26,7 +26,7 @@ export function parseFrontmatter(content: string): {
 
 export function serializeFrontmatter(frontmatter: Record<string, unknown>, body: string): string {
   if (Object.keys(frontmatter).length === 0) {
-    return body;
+    return body.replace(/^\n/, "");
   }
 
   const lines = [FRONTMATTER_DELIMITER];
@@ -35,12 +35,22 @@ export function serializeFrontmatter(frontmatter: Record<string, unknown>, body:
     if (Array.isArray(value)) {
       lines.push(`${key}:`);
       for (const item of value) {
-        lines.push(`  - ${String(item)}`);
+        const s = String(item);
+        // Glob patterns (*, ?, {) are syntactically ambiguous in YAML — quote them to prevent misinterpretation.
+        lines.push(
+          s.includes("*") || s.includes("?") || s.startsWith("{") ? `  - "${s}"` : `  - ${s}`
+        );
       }
     } else if (typeof value === "boolean") {
       lines.push(`${key}: ${value}`);
     } else {
-      lines.push(`${key}: ${String(value)}`);
+      const s = String(value);
+      // JSON-array strings (e.g. from cursor globs) are emitted raw so they stay as YAML inline arrays.
+      if (s.startsWith("[") && s.endsWith("]")) {
+        lines.push(`${key}: ${s}`);
+      } else {
+        lines.push(`${key}: '${s.replaceAll("'", "''")}'`);
+      }
     }
   }
 
@@ -51,39 +61,61 @@ export function serializeFrontmatter(frontmatter: Record<string, unknown>, body:
 
 function parseYamlLike(lines: string[]): Record<string, unknown> {
   const result: Record<string, unknown> = {};
-  let currentKey: string | null = null;
-  let currentList: string[] | null = null;
-
-  for (const line of lines) {
-    const listItemMatch = /^\s{2,}-\s+(.+)$/.exec(line);
-    const keyValueMatch = /^(\w[\w-]*):\s*(.*)$/.exec(line);
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
     const keyOnlyMatch = /^(\w[\w-]*):\s*$/.exec(line);
-
-    if (listItemMatch && currentKey !== null) {
-      if (currentList === null) {
-        currentList = [];
-        result[currentKey] = currentList;
-      }
-      currentList.push(listItemMatch[1].trim());
-    } else if (keyOnlyMatch) {
-      if (currentList !== null && currentKey !== null) {
-        result[currentKey] = currentList;
-      }
-      currentKey = keyOnlyMatch[1];
-      currentList = [];
-      result[currentKey] = currentList;
+    const keyValueMatch = /^(\w[\w-]*):\s*(.+)$/.exec(line);
+    if (keyOnlyMatch) {
+      const { items, next } = collectListBlock(lines, i + 1);
+      result[keyOnlyMatch[1]] = items;
+      i = next;
     } else if (keyValueMatch) {
-      if (currentList !== null && currentKey !== null) {
-        result[currentKey] = currentList;
-        currentList = null;
-      }
-      currentKey = keyValueMatch[1];
       const rawValue = keyValueMatch[2].trim();
-      result[currentKey] = parseScalar(rawValue);
+      if (isBlockScalarIndicator(rawValue)) {
+        const { value, next } = collectScalarBlock(lines, i + 1, rawValue.startsWith(">"));
+        result[keyValueMatch[1]] = value;
+        i = next;
+      } else {
+        result[keyValueMatch[1]] = parseScalar(rawValue);
+        i++;
+      }
+    } else {
+      i++;
     }
   }
-
   return result;
+}
+
+function collectListBlock(lines: string[], start: number): { items: string[]; next: number } {
+  const items: string[] = [];
+  let i = start;
+  while (i < lines.length) {
+    const match = /^\s{2,}-\s+(.+)$/.exec(lines[i]);
+    if (!match) break;
+    items.push(match[1].trim());
+    i++;
+  }
+  return { items, next: i };
+}
+
+function collectScalarBlock(
+  lines: string[],
+  start: number,
+  folded: boolean
+): { value: string; next: number } {
+  const collected: string[] = [];
+  let i = start;
+  while (i < lines.length && /^\s+/.test(lines[i])) {
+    collected.push(lines[i].trim());
+    i++;
+  }
+  const value = folded ? collected.join(" ").trimEnd() : collected.join("\n").trimEnd();
+  return { value, next: i };
+}
+
+function isBlockScalarIndicator(s: string): boolean {
+  return s === ">-" || s === ">" || s === "|-" || s === "|";
 }
 
 function parseScalar(value: string): unknown {
@@ -96,6 +128,12 @@ function parseScalar(value: string): unknown {
     } catch {
       return value;
     }
+  }
+  if (value.length > 1 && value.startsWith("'") && value.endsWith("'")) {
+    return value.slice(1, -1).replaceAll("''", "'");
+  }
+  if (value.length > 1 && value.startsWith('"') && value.endsWith('"')) {
+    return value.slice(1, -1).replaceAll('\\"', '"');
   }
   return value;
 }

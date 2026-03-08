@@ -1,19 +1,45 @@
-import type { ContentSection } from "./framework-descriptor.js";
-
 export type ToolId = "claude" | "cursor" | "copilot";
 export const VALID_TOOL_IDS: readonly ToolId[] = ["claude", "cursor", "copilot"];
+
+export interface SectionHandler {
+  buildFilePath(fileName: string): string | null;
+  convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown>;
+}
+
+export interface CommandsHandler {
+  buildFilePath(fileName: string): string | null;
+  convertFrontmatter(
+    fm: Record<string, unknown>,
+    relativeFileName: string
+  ): Record<string, unknown>;
+}
+
+export interface RulesHandler {
+  buildFilePath(fileName: string): string | null;
+  convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown>;
+}
+
+export interface ConfigHandler {
+  outputPath(configName: string): string | null;
+  shouldMerge(configName: string): boolean;
+}
+
+export interface MemoryBankHandler {
+  outputPath(templateName: string): string | null;
+  rewriteContent(content: string, docsDir: string): string;
+}
 
 export interface ToolConfig {
   readonly toolId: ToolId;
   readonly directory: string;
   readonly toolSuffix: string;
-  buildFilePath(section: ContentSection, fileName: string): string | null;
   rewriteContent(content: string, docsDir: string): string;
-  convertFrontmatter(fm: Record<string, unknown>, section: ContentSection): Record<string, unknown>;
-  getConfigOutputPath(configName: string): string | null;
-  getMemoryBankOutputPath(templateName: string): string | null;
-  shouldProcess?(section: ContentSection, frontmatter: Record<string, unknown>): boolean;
-  rewriteMemoryBankContent?(content: string, docsDir: string): string;
+  agents(): SectionHandler;
+  commands(): CommandsHandler;
+  rules(): RulesHandler;
+  skills(): SectionHandler;
+  config(): ConfigHandler;
+  memoryBank(): MemoryBankHandler;
 }
 
 const TOOL_SUFFIXES = VALID_TOOL_IDS.map((id) => `.${id}.md`);
@@ -32,6 +58,9 @@ export function stripToolSuffix(suffix: string, fileName: string): string {
   return `${dir}${stripped}`;
 }
 
+// Global singleton registry. Side effect on import: each tool file (claude.ts, cursor.ts, copilot.ts)
+// calls registerTool() at module level. Tests import tool configs directly and do not use this registry,
+// so no reset mechanism is needed in practice.
 const TOOL_REGISTRY = new Map<ToolId, ToolConfig>();
 
 export function registerTool(config: ToolConfig): void {

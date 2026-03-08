@@ -1,9 +1,9 @@
 import { FileHash } from "./file-hash.js";
 import type { GeneratedFile } from "./generated-file.js";
+import { DEFAULT_DOCS_DIR } from "./settings.js";
 import { type ToolId, VALID_TOOL_IDS } from "./tool-config.js";
 
-const MANIFEST_VERSION = "1";
-const DEFAULT_DOCS_DIR = "aidd_docs";
+const MANIFEST_VERSION = 1;
 
 interface TrackedFile {
   readonly relativePath: string;
@@ -22,7 +22,7 @@ interface ToolEntry {
 }
 
 interface ManifestData {
-  version: string;
+  version: number;
   docsDir: string;
   tools: Record<string, ToolEntryData>;
   docs: DocsEntryData | null;
@@ -71,12 +71,42 @@ export class Manifest {
     this._tools.set(toolId, { toolId, version, files: this.toTrackedFiles(files) });
   }
 
+  syncFileHashAcrossTools(relativePath: string, hash: FileHash): void {
+    for (const [toolId, entry] of this._tools.entries()) {
+      const idx = entry.files.findIndex((f) => f.relativePath === relativePath);
+      if (idx === -1) continue;
+      const files = [...entry.files];
+      files[idx] = { relativePath, hash };
+      this._tools.set(toolId, { ...entry, files });
+    }
+  }
+
   addDocs(version: string, files: GeneratedFile[]): void {
     this._docs = { version, files: this.toTrackedFiles(files) };
   }
 
   private toTrackedFiles(files: GeneratedFile[]): TrackedFile[] {
     return files.map((f) => ({ relativePath: f.relativePath, hash: f.hash }));
+  }
+
+  getInstalledToolIds(): ToolId[] {
+    return [...this._tools.keys()];
+  }
+
+  getToolFiles(toolId: ToolId): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
+    return this._tools.get(toolId)?.files ?? [];
+  }
+
+  getDocsFiles(): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
+    return this._docs?.files ?? [];
+  }
+
+  getDocsVersion(): string | undefined {
+    return this._docs?.version;
+  }
+
+  hasDocs(): boolean {
+    return this._docs !== null;
   }
 
   removeTool(toolId: ToolId): void {
@@ -94,6 +124,16 @@ export class Manifest {
     return this._tools.get(toolId)?.version;
   }
 
+  getInstalledDirectories(): Set<string> {
+    const dirs = new Set<string>();
+    for (const entry of this._tools.values()) {
+      for (const file of entry.files) {
+        dirs.add(`${file.relativePath.split("/")[0]}/`);
+      }
+    }
+    return dirs;
+  }
+
   toJSON(): ManifestData {
     const tools: Record<string, ToolEntryData> = {};
     for (const [toolId, entry] of this._tools.entries()) {
@@ -106,7 +146,7 @@ export class Manifest {
 
     return {
       version: MANIFEST_VERSION,
-      docsDir: this.docsDir ?? DEFAULT_DOCS_DIR,
+      docsDir: this.docsDir,
       tools,
       docs: this._docs
         ? { version: this._docs.version, files: this.toTrackedFileData(this._docs.files) }
@@ -131,7 +171,7 @@ export class Manifest {
 
     if (raw.version !== MANIFEST_VERSION) {
       throw new Error(
-        `Unsupported manifest version: "${String(raw.version)}". Expected "${MANIFEST_VERSION}".`
+        `Unsupported manifest version: ${String(raw.version)}. Expected ${MANIFEST_VERSION}.`
       );
     }
 

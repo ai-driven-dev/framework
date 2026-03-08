@@ -3,6 +3,7 @@ export interface FrameworkResolverOptions {
   tarballPath?: string;
   repo?: string;
   token?: string;
+  version?: string;
 }
 
 export type FrameworkSource = "local" | "cache" | "download";
@@ -15,4 +16,5 @@ export interface FrameworkResolved {
 
 export interface FrameworkResolver {
   resolve(options: FrameworkResolverOptions): Promise<FrameworkResolved>;
+  fetchLatestVersion(): Promise<string>;
 }

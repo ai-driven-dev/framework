@@ -9,5 +9,6 @@ export interface FileSystem {
   listDirectory(path: string): Promise<string[]>;
   fileExists(path: string): Promise<boolean>;
   readFileHash(path: string): Promise<FileHash>;
-  mergeJsonFile(path: string, data: Record<string, unknown>): Promise<void>;
+  mergeJsonFile(path: string, content: string): Promise<void>;
+  deleteDirectory(path: string): Promise<void>;
 }

@@ -1,10 +1,22 @@
-import type { ContentSection } from "../models/framework-descriptor.js";
-import { type ToolConfig, registerTool, stripToolSuffix } from "../models/tool-config.js";
-
-const TOOLS_PLACEHOLDER = "{{TOOLS}}/";
-const DOCS_PLACEHOLDER = "{{DOCS}}/";
-const AT_TOOLS_PLACEHOLDER = "@{{TOOLS}}/";
-const AT_DOCS_PLACEHOLDER = "@{{DOCS}}/";
+import {
+  AT_DOCS_PLACEHOLDER,
+  AT_TOOLS_PLACEHOLDER,
+  CONFIG_MCP,
+  CONFIG_VSCODE_SETTINGS,
+  DOCS_PLACEHOLDER,
+  TEMPLATE_AGENTS_MD,
+  TOOLS_PLACEHOLDER,
+} from "../models/framework-descriptor.js";
+import {
+  type CommandsHandler,
+  type ConfigHandler,
+  type MemoryBankHandler,
+  type RulesHandler,
+  type SectionHandler,
+  type ToolConfig,
+  registerTool,
+  stripToolSuffix,
+} from "../models/tool-config.js";
 
 const DIRECTORY = ".claude/";
 const TOOL_SUFFIX = ".claude.md";
@@ -18,21 +30,6 @@ export const claudeToolConfig: ToolConfig = {
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
 
-  buildFilePath(section: ContentSection, fileName: string): string {
-    if (section.name === "commands") {
-      const slashIdx = fileName.indexOf("/");
-      if (slashIdx !== -1) {
-        const phaseDir = fileName.slice(0, slashIdx);
-        const rest = fileName.slice(slashIdx + 1);
-        const phase = phaseDir.match(/^(\d+)/)?.[1];
-        if (phase) {
-          return `${commandsDir(phase)}${rest}`;
-        }
-      }
-    }
-    return `${DIRECTORY}${section.directory}/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
-  },
-
   rewriteContent(content: string, docsDir: string): string {
     return content
       .replaceAll(AT_TOOLS_PLACEHOLDER, `@${DIRECTORY}`)
@@ -42,27 +39,97 @@ export const claudeToolConfig: ToolConfig = {
       .replace(/@\.claude\/commands\/(\d+)[_][^/]+\//g, (_, phase) => `@${commandsDir(phase)}`);
   },
 
-  convertFrontmatter(
-    frontmatter: Record<string, unknown>,
-    section: ContentSection
-  ): Record<string, unknown> {
-    if (section.name !== "rules") return frontmatter;
-    if ("paths" in frontmatter) return { paths: frontmatter.paths };
-    if ("globs" in frontmatter) return { paths: frontmatter.globs };
-    if (frontmatter.alwaysApply === true) return {};
-    if ("alwaysApply" in frontmatter) return { paths: [] };
-    return {};
+  agents(): SectionHandler {
+    return {
+      buildFilePath(fileName: string): string {
+        return `${DIRECTORY}agents/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
+      },
+      convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+        return { name: fm.name, description: fm.description };
+      },
+    };
   },
 
-  getConfigOutputPath(configName: string): string | null {
-    if (configName === "mcp") return ".mcp.json";
-    if (configName === "vscodeSettings") return ".vscode/settings.json";
-    return null;
+  commands(): CommandsHandler {
+    return {
+      buildFilePath(fileName: string): string | null {
+        const slashIdx = fileName.indexOf("/");
+        if (slashIdx !== -1) {
+          const phaseDir = fileName.slice(0, slashIdx);
+          const rest = fileName.slice(slashIdx + 1);
+          const phase = phaseDir.match(/^(\d+)/)?.[1];
+          if (phase) {
+            return `${commandsDir(phase)}${rest}`;
+          }
+        }
+        return `${DIRECTORY}commands/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
+      },
+      convertFrontmatter(
+        fm: Record<string, unknown>,
+        relativeFileName: string
+      ): Record<string, unknown> {
+        const phase = relativeFileName.split("/")[0]?.match(/^(\d+)/)?.[1];
+        const baseName = String(fm.name ?? "");
+        const name = phase ? `aidd:${phase}:${baseName}` : baseName;
+        const result: Record<string, unknown> = { name, description: fm.description };
+        if (fm["argument-hint"] !== undefined) result["argument-hint"] = fm["argument-hint"];
+        return result;
+      },
+    };
   },
 
-  getMemoryBankOutputPath(templateName: string): string | null {
-    if (templateName === "agentsMd") return "CLAUDE.md";
-    return null;
+  rules(): RulesHandler {
+    return {
+      buildFilePath(fileName: string): string {
+        return `${DIRECTORY}rules/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
+      },
+      convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+        if ("paths" in fm) {
+          const paths = fm.paths;
+          if (Array.isArray(paths) && paths.length === 0) return {};
+          return { paths };
+        }
+        if ("globs" in fm) return { paths: fm.globs };
+        if ("alwaysApply" in fm) return {};
+        return {};
+      },
+    };
+  },
+
+  skills(): SectionHandler {
+    return {
+      buildFilePath(fileName: string): string {
+        return `${DIRECTORY}skills/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
+      },
+      convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+        return fm;
+      },
+    };
+  },
+
+  config(): ConfigHandler {
+    return {
+      outputPath(configName: string): string | null {
+        if (configName === CONFIG_MCP) return ".mcp.json";
+        if (configName === CONFIG_VSCODE_SETTINGS) return ".vscode/settings.json";
+        return null;
+      },
+      shouldMerge(configName: string): boolean {
+        return configName === CONFIG_VSCODE_SETTINGS;
+      },
+    };
+  },
+
+  memoryBank(): MemoryBankHandler {
+    return {
+      outputPath(templateName: string): string | null {
+        if (templateName === TEMPLATE_AGENTS_MD) return "CLAUDE.md";
+        return null;
+      },
+      rewriteContent(content: string, docsDir: string): string {
+        return claudeToolConfig.rewriteContent(content, docsDir);
+      },
+    };
   },
 };
 

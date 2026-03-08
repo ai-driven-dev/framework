@@ -1,9 +1,32 @@
-import type { ContentSection } from "../models/framework-descriptor.js";
+import {
+  AT_DOCS_PLACEHOLDER,
+  AT_TOOLS_PLACEHOLDER,
+  CONFIG_MCP,
+  CONFIG_VSCODE_EXTENSIONS,
+  CONFIG_VSCODE_KEYBINDINGS,
+  CONFIG_VSCODE_SETTINGS,
+  DOCS_PLACEHOLDER,
+  GITKEEP_FILE,
+  TEMPLATE_AGENTS_MD,
+  TOOLS_PLACEHOLDER,
+} from "../models/framework-descriptor.js";
 import { parseFrontmatter } from "../models/frontmatter.js";
-import { type ToolConfig, registerTool } from "../models/tool-config.js";
+import {
+  type CommandsHandler,
+  type ConfigHandler,
+  type MemoryBankHandler,
+  type RulesHandler,
+  type SectionHandler,
+  type ToolConfig,
+  registerTool,
+} from "../models/tool-config.js";
 
 const DIRECTORY = ".github/";
 const TOOL_SUFFIX = ".copilot.md";
+
+const EXT_AGENT = ".agent.md";
+const EXT_PROMPT = ".prompt.md";
+const EXT_INSTRUCTIONS = ".instructions.md";
 
 function basename(path: string): string {
   return path.split("/").at(-1) ?? path;
@@ -48,16 +71,124 @@ function addTargetExtension(baseName: string, targetExt: string): string {
   return `${withoutMd}${targetExt}`;
 }
 
+function escapedRegex(literal: string): string {
+  return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+const agentsHandler: SectionHandler = {
+  buildFilePath(fileName: string): string | null {
+    const base = basename(fileName);
+    if (base === GITKEEP_FILE) return null;
+    const name = base.endsWith(".md") ? `${base.slice(0, -3)}${EXT_AGENT}` : base;
+    return `${DIRECTORY}agents/${name}`;
+  },
+  convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+    return { name: fm.name, description: fm.description };
+  },
+};
+
+const commandsHandler: CommandsHandler = {
+  buildFilePath(fileName: string): string | null {
+    const base = basename(fileName);
+    if (base === GITKEEP_FILE) return null;
+    const flat = flattenFileName(fileName, EXT_PROMPT);
+    return `${DIRECTORY}prompts/${flat}`;
+  },
+  convertFrontmatter(
+    fm: Record<string, unknown>,
+    relativeFileName: string
+  ): Record<string, unknown> {
+    const phase = relativeFileName.split("/")[0]?.match(/^(\d+)/)?.[1];
+    const baseName = String(fm.name ?? "");
+    const name = phase ? `aidd_${phase}_${baseName}` : baseName;
+    const result: Record<string, unknown> = { name, description: fm.description };
+    if (fm["argument-hint"] !== undefined) result["argument-hint"] = fm["argument-hint"];
+    return result;
+  },
+};
+
+const rulesHandler: RulesHandler = {
+  buildFilePath(fileName: string): string | null {
+    const base = basename(fileName);
+    if (base === GITKEEP_FILE) return null;
+    const flat = flattenFileName(fileName, EXT_INSTRUCTIONS, {
+      toolSuffix: TOOL_SUFFIX,
+      stripNumericPrefix: true,
+    });
+    return `${DIRECTORY}instructions/${flat}`;
+  },
+  convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+    if (fm.alwaysApply === false) return {};
+    const { paths, globs } = fm;
+    const patterns = Array.isArray(paths) ? paths : Array.isArray(globs) ? globs : null;
+    if (patterns === null || patterns.length === 0) return { applyTo: "**" };
+    return { applyTo: patterns.join(",") };
+  },
+};
+
+const skillsHandler: SectionHandler = {
+  buildFilePath(fileName: string): string | null {
+    const base = basename(fileName);
+    if (base === GITKEEP_FILE) return null;
+    return `${DIRECTORY}skills/${fileName}`;
+  },
+  convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+    return fm;
+  },
+};
+
+function resolveInstalledPath(path: string): string {
+  if (path.startsWith("agents/")) {
+    const subPath = path.slice("agents/".length);
+    if (subPath === "" || subPath.endsWith("/")) return `${DIRECTORY}agents/${subPath}`;
+    return agentsHandler.buildFilePath(subPath) ?? `${DIRECTORY}${path}`;
+  }
+  if (path.startsWith("commands/")) {
+    const subPath = path.slice("commands/".length);
+    if (subPath === "" || subPath.endsWith("/")) return `${DIRECTORY}prompts/${subPath}`;
+    return commandsHandler.buildFilePath(subPath) ?? `${DIRECTORY}${path}`;
+  }
+  if (path.startsWith("rules/")) {
+    const subPath = path.slice("rules/".length);
+    if (subPath === "" || subPath.endsWith("/")) return `${DIRECTORY}instructions/${subPath}`;
+    return rulesHandler.buildFilePath(subPath) ?? `${DIRECTORY}${path}`;
+  }
+  if (path.startsWith("skills/")) {
+    const subPath = path.slice("skills/".length);
+    if (subPath === "" || subPath.endsWith("/")) return `${DIRECTORY}skills/${subPath}`;
+    return skillsHandler.buildFilePath(subPath) ?? `${DIRECTORY}${path}`;
+  }
+  // Unknown section: fall back to raw directory-prefixed path.
+  // If a new section is added to the framework, this produces a predictable
+  // default rather than silently dropping the reference.
+  return `${DIRECTORY}${path}`;
+}
+
 function rewriteCopilotContent(content: string, docsDir: string): string {
-  return content
-    .replace(/@\{\{TOOLS\}\}\/(\S+)/g, (_match, path: string) => {
-      return `[${basename(path)}](${DIRECTORY}${path})`;
-    })
-    .replace(/@\{\{DOCS\}\}\/(\S+)/g, (_match, path: string) => {
-      return `[${basename(path)}](${docsDir}/${path})`;
-    })
-    .replaceAll("{{TOOLS}}/", DIRECTORY)
-    .replaceAll("{{DOCS}}/", `${docsDir}/`);
+  return (
+    content
+      .replace(
+        new RegExp(`${escapedRegex(AT_TOOLS_PLACEHOLDER)}([^\\s\`'">,]+)`, "g"),
+        (_match, path: string) => {
+          const fullPath = resolveInstalledPath(path);
+          return `[${fullPath}](../../${fullPath})`;
+        }
+      )
+      .replace(
+        new RegExp(`${escapedRegex(AT_DOCS_PLACEHOLDER)}([^\\s\`'">,]+)`, "g"),
+        (_match, path: string) => {
+          return `[${docsDir}/${path}](../../${docsDir}/${path})`;
+        }
+      )
+      // {{TOOLS}}/ (without @) replaces directory prefix only — used for path references in frontmatter or prose.
+      // @{{TOOLS}}/ (with @) resolves to a full installed path via resolveInstalledPath — used for @-include syntax.
+      .replaceAll("{{TOOLS}}/agents/", `${DIRECTORY}agents/`)
+      .replaceAll("{{TOOLS}}/commands/", `${DIRECTORY}prompts/`)
+      .replaceAll("{{TOOLS}}/rules/", `${DIRECTORY}instructions/`)
+      .replaceAll("{{TOOLS}}/skills/", `${DIRECTORY}skills/`)
+      .replaceAll(TOOLS_PLACEHOLDER, DIRECTORY)
+      .replaceAll(DOCS_PLACEHOLDER, `${docsDir}/`)
+  );
 }
 
 export const copilotToolConfig: ToolConfig = {
@@ -65,72 +196,55 @@ export const copilotToolConfig: ToolConfig = {
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
 
-  buildFilePath(section: ContentSection, fileName: string): string | null {
-    const base = basename(fileName);
-    if (base === ".gitkeep") return null;
-
-    switch (section.name) {
-      case "agents": {
-        const name = base.endsWith(".md") ? `${base.slice(0, -3)}.agent.md` : base;
-        return `${DIRECTORY}agents/${name}`;
-      }
-      case "commands": {
-        const flat = flattenFileName(fileName, ".prompt.md");
-        return `${DIRECTORY}prompts/${flat}`;
-      }
-      case "rules": {
-        const flat = flattenFileName(fileName, ".instructions.md", {
-          toolSuffix: TOOL_SUFFIX,
-          stripNumericPrefix: true,
-        });
-        return `${DIRECTORY}instructions/${flat}`;
-      }
-      case "skills":
-        return `${DIRECTORY}skills/${fileName}`;
-      default:
-        return `${DIRECTORY}${fileName}`;
-    }
-  },
-
   rewriteContent: rewriteCopilotContent,
 
-  convertFrontmatter(
-    frontmatter: Record<string, unknown>,
-    section: ContentSection
-  ): Record<string, unknown> {
-    if (section.name !== "rules") return frontmatter;
-    const { paths, globs } = frontmatter;
-    const patterns = Array.isArray(paths) ? paths : Array.isArray(globs) ? globs : null;
-    if (patterns === null || patterns.length === 0) return { applyTo: "**" };
-    return { applyTo: `"${patterns.join(",")}"` };
+  agents(): SectionHandler {
+    return agentsHandler;
   },
 
-  getConfigOutputPath(configName: string): string | null {
-    if (configName === "mcp") return ".vscode/mcp.json";
-    if (configName === "vscodeExtensions") return ".vscode/extensions.json";
-    if (configName === "vscodeKeybindings") return ".vscode/keybindings.json";
-    if (configName === "vscodeSettings") return ".vscode/settings.json";
-    return null;
+  commands(): CommandsHandler {
+    return commandsHandler;
   },
 
-  getMemoryBankOutputPath(templateName: string): string | null {
-    if (templateName === "agentsMd") return `${DIRECTORY}copilot-instructions.md`;
-    return null;
+  rules(): RulesHandler {
+    return rulesHandler;
   },
 
-  rewriteMemoryBankContent(content: string, docsDir: string): string {
-    const rewritten = rewriteCopilotContent(content, docsDir);
-    const { body } = parseFrontmatter(rewritten);
-    return body.replace(new RegExp(`\\]\\(${docsDir}/`, "g"), `](../${docsDir}/`);
+  skills(): SectionHandler {
+    return skillsHandler;
   },
 
-  shouldProcess(section: ContentSection, frontmatter: Record<string, unknown>): boolean {
-    if (section.name !== "rules") return true;
-    const hasGlobs =
-      (Array.isArray(frontmatter.globs) && frontmatter.globs.length > 0) ||
-      (Array.isArray(frontmatter.paths) && frontmatter.paths.length > 0);
-    const alwaysApply = frontmatter.alwaysApply === true || frontmatter.applyTo !== undefined;
-    return hasGlobs || alwaysApply;
+  config(): ConfigHandler {
+    return {
+      outputPath(configName: string): string | null {
+        if (configName === CONFIG_MCP) return ".vscode/mcp.json";
+        if (configName === CONFIG_VSCODE_EXTENSIONS) return ".vscode/extensions.json";
+        if (configName === CONFIG_VSCODE_KEYBINDINGS) return ".vscode/keybindings.json";
+        if (configName === CONFIG_VSCODE_SETTINGS) return ".vscode/settings.json";
+        return null;
+      },
+      shouldMerge(configName: string): boolean {
+        return configName === CONFIG_VSCODE_SETTINGS;
+      },
+    };
+  },
+
+  memoryBank(): MemoryBankHandler {
+    return {
+      outputPath(templateName: string): string | null {
+        if (templateName === TEMPLATE_AGENTS_MD) return `${DIRECTORY}copilot-instructions.md`;
+        return null;
+      },
+      rewriteContent(content: string, docsDir: string): string {
+        const rewritten = rewriteCopilotContent(content, docsDir);
+        const { body } = parseFrontmatter(rewritten);
+        return body
+          .replace(/^\n+/, "")
+          .replace(/^# AGENTS\.md[ \t]*\n/, "# Copilot Instructions\n")
+          .replace(/\]\(\.\.\/\.\.\//g, "](../")
+          .replace(new RegExp(`\\]\\(${docsDir}/`, "g"), `](../${docsDir}/`);
+      },
+    };
   },
 };
 
