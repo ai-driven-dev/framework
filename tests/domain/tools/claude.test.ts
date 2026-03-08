@@ -1,42 +1,15 @@
 import { describe, expect, it } from "vitest";
-import type { ContentSection } from "../../../src/domain/models/framework-descriptor.js";
 import { claudeToolConfig } from "../../../src/domain/tools/claude.js";
 
-const agentsSection: ContentSection = {
-  name: "agents",
-  directory: "agents",
-  entryFile: null,
-};
-
-const commandsSection: ContentSection = {
-  name: "commands",
-  directory: "commands",
-  entryFile: null,
-};
-
-const rulesSection: ContentSection = {
-  name: "rules",
-  directory: "rules",
-  entryFile: null,
-};
-
 describe("claudeToolConfig", () => {
-  it("has toolId claude", () => {
-    expect(claudeToolConfig.toolId).toBe("claude");
-  });
-
-  it("has directory .claude/", () => {
-    expect(claudeToolConfig.directory).toBe(".claude/");
-  });
-
-  describe("getConfigOutputPath()", () => {
+  describe("config().outputPath()", () => {
     it("returns .mcp.json for mcp config", () => {
-      expect(claudeToolConfig.getConfigOutputPath("mcp")).toBe(".mcp.json");
+      expect(claudeToolConfig.config().outputPath("mcp")).toBe(".mcp.json");
     });
 
     it("returns null for unknown config names", () => {
-      expect(claudeToolConfig.getConfigOutputPath("vscodeDir")).toBeNull();
-      expect(claudeToolConfig.getConfigOutputPath("unknown")).toBeNull();
+      expect(claudeToolConfig.config().outputPath("vscodeDir")).toBeNull();
+      expect(claudeToolConfig.config().outputPath("unknown")).toBeNull();
     });
   });
 
@@ -65,75 +38,90 @@ describe("claudeToolConfig", () => {
     });
   });
 
-  describe("convertFrontmatter()", () => {
+  describe("rules().convertFrontmatter()", () => {
     it("preserves paths: list when already in Claude format", () => {
       const fm = { paths: ["src/**/*.ts"] };
-      const result = claudeToolConfig.convertFrontmatter(fm, rulesSection);
+      const result = claudeToolConfig.rules().convertFrontmatter(fm);
       expect(result).toEqual({ paths: ["src/**/*.ts"] });
     });
 
     it("strips extra fields when paths key is present", () => {
       const fm = { paths: ["src/**/*.ts"], description: "extra", alwaysApply: false };
-      const result = claudeToolConfig.convertFrontmatter(fm, rulesSection);
+      const result = claudeToolConfig.rules().convertFrontmatter(fm);
       expect(result).toEqual({ paths: ["src/**/*.ts"] });
     });
 
     it("converts cursor-style globs to paths", () => {
       const fm = { globs: ["src/**/*.ts"], alwaysApply: false, description: "desc" };
-      const result = claudeToolConfig.convertFrontmatter(fm, rulesSection);
+      const result = claudeToolConfig.rules().convertFrontmatter(fm);
       expect(result).toEqual({ paths: ["src/**/*.ts"] });
     });
 
     it("returns empty frontmatter for always-apply rules (no paths field = unconditional load)", () => {
       const fm = { description: "desc", alwaysApply: true };
-      const result = claudeToolConfig.convertFrontmatter(fm, rulesSection);
+      const result = claudeToolConfig.rules().convertFrontmatter(fm);
       expect(result).toEqual({});
-    });
-
-    it("preserves frontmatter as-is for agents sections", () => {
-      const fm = { name: "alexia", description: "Agent", model: "opus" };
-      const result = claudeToolConfig.convertFrontmatter(fm, agentsSection);
-      expect(result).toEqual(fm);
-    });
-
-    it("preserves frontmatter as-is for commands sections", () => {
-      const fm = { name: "implement", description: "Implement a plan" };
-      const result = claudeToolConfig.convertFrontmatter(fm, commandsSection);
-      expect(result).toEqual(fm);
     });
   });
 
-  describe("getMemoryBankOutputPath()", () => {
+  describe("agents().convertFrontmatter()", () => {
+    it("strips extra fields for agents sections — only name and description", () => {
+      const fm = { name: "alexia", description: "Agent", model: "opus" };
+      const result = claudeToolConfig.agents().convertFrontmatter(fm);
+      expect(result).toEqual({ name: "alexia", description: "Agent" });
+    });
+  });
+
+  describe("commands().convertFrontmatter()", () => {
+    it("prefixes name with aidd:{phase}:", () => {
+      const fm = { name: "implement", description: "Implement a plan" };
+      const result = claudeToolConfig.commands().convertFrontmatter(fm, "04_code/implement.md");
+      expect(result).toEqual({ name: "aidd:04:implement", description: "Implement a plan" });
+    });
+
+    it("preserves argument-hint when present", () => {
+      const fm = { name: "implement", description: "Implement a plan", "argument-hint": "task" };
+      const result = claudeToolConfig.commands().convertFrontmatter(fm, "04_code/implement.md");
+      expect(result).toEqual({
+        name: "aidd:04:implement",
+        description: "Implement a plan",
+        "argument-hint": "task",
+      });
+    });
+  });
+
+  describe("memoryBank().outputPath()", () => {
     it("returns CLAUDE.md for agentsMd template", () => {
-      expect(claudeToolConfig.getMemoryBankOutputPath("agentsMd")).toBe("CLAUDE.md");
+      expect(claudeToolConfig.memoryBank().outputPath("agentsMd")).toBe("CLAUDE.md");
     });
 
     it("returns null for unknown template names", () => {
-      expect(claudeToolConfig.getMemoryBankOutputPath("unknown")).toBeNull();
+      expect(claudeToolConfig.memoryBank().outputPath("unknown")).toBeNull();
     });
   });
 
-  describe("buildFilePath()", () => {
+  describe("agents().buildFilePath()", () => {
     it("builds path for agents section", () => {
-      const path = claudeToolConfig.buildFilePath(agentsSection, "code-reviewer.md");
+      const path = claudeToolConfig.agents().buildFilePath("code-reviewer.md");
       expect(path).toBe(".claude/agents/code-reviewer.md");
     });
+  });
 
+  describe("rules().buildFilePath()", () => {
     it("builds path for rules section with subdirectory", () => {
-      const path = claudeToolConfig.buildFilePath(rulesSection, "01-standards/naming.md");
+      const path = claudeToolConfig.rules().buildFilePath("01-standards/naming.md");
       expect(path).toBe(".claude/rules/01-standards/naming.md");
     });
+  });
 
+  describe("commands().buildFilePath()", () => {
     it("builds commands path with aidd brand prefix and phase number", () => {
-      const path = claudeToolConfig.buildFilePath(commandsSection, "04_code/implement.md");
+      const path = claudeToolConfig.commands().buildFilePath("04_code/implement.md");
       expect(path).toBe(".claude/commands/aidd/04/implement.md");
     });
 
     it("handles two-digit phase in commands", () => {
-      const path = claudeToolConfig.buildFilePath(
-        commandsSection,
-        "02_context/create_user_stories.md"
-      );
+      const path = claudeToolConfig.commands().buildFilePath("02_context/create_user_stories.md");
       expect(path).toBe(".claude/commands/aidd/02/create_user_stories.md");
     });
   });

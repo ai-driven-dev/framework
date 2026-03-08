@@ -6,7 +6,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { FrameworkResolverAdapter } from "../../../src/infrastructure/adapters/framework-resolver-adapter.js";
+import {
+  FrameworkResolverAdapter,
+  validateRepoFormat,
+} from "../../../src/infrastructure/adapters/framework-resolver-adapter.js";
 import { FrameworkCache } from "../../../src/infrastructure/cache/framework-cache.js";
 import { HttpClient } from "../../../src/infrastructure/http/http-client.js";
 import { TarExtractor } from "../../../src/infrastructure/tar/tar-extractor.js";
@@ -179,6 +182,97 @@ describe("FrameworkResolverAdapter", () => {
     });
   });
 
+  describe("remote resolution with --release", () => {
+    it("returns from cache when tag is already cached", async () => {
+      const { frameworkDir } = await createFrameworkTarball(tempDir, "3.1.0");
+      await cache.put("3.1.0", frameworkDir);
+
+      let tarballRequested = false;
+      const { url: serverUrl, close } = await startHttpServer((_req, res) => {
+        if (_req.url?.includes("/releases/tags/v3.1.0")) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              tag_name: "v3.1.0",
+              assets: [{ id: 1, name: "aidd-framework-3.1.0.tar.gz" }],
+            })
+          );
+        } else {
+          tarballRequested = true;
+          res.writeHead(200, { "Content-Type": "application/octet-stream" });
+          res.end(Buffer.alloc(0));
+        }
+      });
+
+      try {
+        const adapter = new FrameworkResolverAdapter(http, tar, cache, {
+          defaultRepo: "test/repo",
+          githubApiBase: serverUrl,
+        });
+
+        const result = await adapter.resolve({ version: "v3.1.0" });
+        expect(result.version).toBe("3.1.0");
+        expect(result.source).toBe("cache");
+        expect(tarballRequested).toBe(false);
+      } finally {
+        await close();
+      }
+    });
+
+    it("downloads and caches when tag is not cached", async () => {
+      const { tarballPath } = await createFrameworkTarball(tempDir, "3.1.0");
+      const tarballBuffer = await readFile(tarballPath);
+
+      const { url: serverUrl, close } = await startHttpServer((_req, res) => {
+        if (_req.url?.includes("/releases/tags/v3.1.0")) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              tag_name: "v3.1.0",
+              assets: [{ id: 42, name: "aidd-framework-3.1.0.tar.gz" }],
+            })
+          );
+        } else {
+          res.writeHead(200, { "Content-Type": "application/octet-stream" });
+          res.end(tarballBuffer);
+        }
+      });
+
+      try {
+        const adapter = new FrameworkResolverAdapter(http, tar, cache, {
+          defaultRepo: "test/repo",
+          githubApiBase: serverUrl,
+        });
+
+        const result = await adapter.resolve({ version: "v3.1.0" });
+        expect(result.version).toBe("3.1.0");
+        expect(await cache.has("3.1.0")).toBe(true);
+      } finally {
+        await close();
+      }
+    });
+
+    it("throws 'Framework release not found' when tag does not exist", async () => {
+      const { url: serverUrl, close } = await startHttpServer((_req, res) => {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ message: "Not Found" }));
+      });
+
+      try {
+        const adapter = new FrameworkResolverAdapter(http, tar, cache, {
+          defaultRepo: "test/repo",
+          githubApiBase: serverUrl,
+        });
+
+        await expect(adapter.resolve({ version: "v9.9.9" })).rejects.toThrow(
+          "Framework release not found: v9.9.9"
+        );
+      } finally {
+        await close();
+      }
+    });
+  });
+
   describe("offline fallback", () => {
     it("falls back to latest cached version on network failure", async () => {
       const { frameworkDir } = await createFrameworkTarball(tempDir, "4.0.0");
@@ -211,11 +305,28 @@ describe("FrameworkResolverAdapter", () => {
         githubApiBase: "http://localhost:1",
       });
 
-      await expect(adapter.resolve({})).rejects.toThrow("Cannot resolve framework");
+      await expect(adapter.resolve({})).rejects.toThrow("Cannot reach the framework source");
     });
   });
 
-  describe("getLatestVersion()", () => {
+  describe("validateRepoFormat()", () => {
+    it("accepts valid owner/repo format", () => {
+      expect(() => validateRepoFormat("owner/repo")).not.toThrow();
+      expect(() => validateRepoFormat("ai-driven-dev/aidd-framework")).not.toThrow();
+      expect(() => validateRepoFormat("my_org/my.repo")).not.toThrow();
+    });
+
+    it("throws for invalid owner/repo format", () => {
+      expect(() => validateRepoFormat("invalid")).toThrow("Invalid repository format");
+      expect(() => validateRepoFormat("owner/repo/extra")).toThrow("Invalid repository format");
+      expect(() => validateRepoFormat("")).toThrow("Invalid repository format");
+      expect(() => validateRepoFormat("owner!/repo")).toThrow("Invalid repository format");
+      expect(() => validateRepoFormat("/repo")).toThrow("Invalid repository format");
+      expect(() => validateRepoFormat("owner/")).toThrow("Invalid repository format");
+    });
+  });
+
+  describe("fetchLatestVersion()", () => {
     it("returns tag_name from GitHub API", async () => {
       const { url: serverUrl, close } = await startHttpServer((_req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
@@ -228,20 +339,19 @@ describe("FrameworkResolverAdapter", () => {
           githubApiBase: serverUrl,
         });
 
-        const version = await adapter.getLatestVersion();
+        const version = await adapter.fetchLatestVersion();
         expect(version).toBe("v5.0.0");
       } finally {
         await close();
       }
     });
 
-    it("returns null on network failure", async () => {
+    it("propagates network error", async () => {
       const adapter = new FrameworkResolverAdapter(http, tar, cache, {
         defaultRepo: "test/repo",
         githubApiBase: "http://localhost:1",
       });
-      const version = await adapter.getLatestVersion();
-      expect(version).toBeNull();
+      await expect(adapter.fetchLatestVersion()).rejects.toThrow();
     });
   });
 });

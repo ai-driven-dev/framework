@@ -21,23 +21,14 @@ describe("FileHash", () => {
     expect(a.equals(b)).toBe(false);
   });
 
-  it("rejects a string that is too short", () => {
+  it("rejects strings not exactly 32 characters", () => {
     expect(() => new FileHash("abc123")).toThrow();
-  });
-
-  it("rejects a string that is too long", () => {
     expect(() => new FileHash(`${validHash}a`)).toThrow();
-  });
-
-  it("rejects a string with non-hex characters", () => {
-    expect(() => new FileHash("g41d8cd98f00b204e9800998ecf8427e")).toThrow();
-  });
-
-  it("rejects uppercase hex characters", () => {
-    expect(() => new FileHash("D41D8CD98F00B204E9800998ECF8427E")).toThrow();
-  });
-
-  it("rejects empty string", () => {
     expect(() => new FileHash("")).toThrow();
+  });
+
+  it("rejects non-lowercase-hex characters", () => {
+    expect(() => new FileHash("g41d8cd98f00b204e9800998ecf8427e")).toThrow();
+    expect(() => new FileHash("D41D8CD98F00B204E9800998ECF8427E")).toThrow();
   });
 });

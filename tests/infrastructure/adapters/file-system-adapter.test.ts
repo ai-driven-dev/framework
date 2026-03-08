@@ -135,7 +135,7 @@ describe("FileSystemAdapter", () => {
   describe("mergeJsonFile()", () => {
     it("creates file if it does not exist", async () => {
       const path = join(tempDir, "new.json");
-      await fs.mergeJsonFile(path, { key: "value" });
+      await fs.mergeJsonFile(path, JSON.stringify({ key: "value" }));
       const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
       expect(result).toEqual({ key: "value" });
     });
@@ -143,7 +143,7 @@ describe("FileSystemAdapter", () => {
     it("merges new keys into existing JSON", async () => {
       const path = join(tempDir, "merge.json");
       await writeFile(path, JSON.stringify({ existing: "data" }), "utf-8");
-      await fs.mergeJsonFile(path, { newKey: "newValue" });
+      await fs.mergeJsonFile(path, JSON.stringify({ newKey: "newValue" }));
       const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
       expect(result.existing).toBe("data");
       expect(result.newKey).toBe("newValue");
@@ -152,7 +152,7 @@ describe("FileSystemAdapter", () => {
     it("scalar values from new data override existing", async () => {
       const path = join(tempDir, "override.json");
       await writeFile(path, JSON.stringify({ key: "old" }), "utf-8");
-      await fs.mergeJsonFile(path, { key: "new" });
+      await fs.mergeJsonFile(path, JSON.stringify({ key: "new" }));
       const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
       expect(result.key).toBe("new");
     });
@@ -160,7 +160,7 @@ describe("FileSystemAdapter", () => {
     it("deep merges nested objects", async () => {
       const path = join(tempDir, "deep.json");
       await writeFile(path, JSON.stringify({ outer: { a: 1, b: 2 } }), "utf-8");
-      await fs.mergeJsonFile(path, { outer: { b: 99, c: 3 } });
+      await fs.mergeJsonFile(path, JSON.stringify({ outer: { b: 99, c: 3 } }));
       const result = JSON.parse(await readFile(path, "utf-8")) as {
         outer: Record<string, number>;
       };
@@ -172,12 +172,38 @@ describe("FileSystemAdapter", () => {
     it("deduplicates merged arrays", async () => {
       const path = join(tempDir, "arrays.json");
       await writeFile(path, JSON.stringify({ items: ["a", "b"] }), "utf-8");
-      await fs.mergeJsonFile(path, { items: ["b", "c"] });
+      await fs.mergeJsonFile(path, JSON.stringify({ items: ["b", "c"] }));
       const result = JSON.parse(await readFile(path, "utf-8")) as { items: string[] };
       expect(result.items).toContain("a");
       expect(result.items).toContain("b");
       expect(result.items).toContain("c");
       expect(result.items.filter((x) => x === "b")).toHaveLength(1);
+    });
+
+    it("deduplicates merged arrays of objects by value", async () => {
+      const path = join(tempDir, "obj-arrays.json");
+      const entry = { file: "aidd_docs/templates/vcs/pull_request.md" };
+      await writeFile(path, JSON.stringify({ instructions: [entry] }), "utf-8");
+      await fs.mergeJsonFile(path, JSON.stringify({ instructions: [entry] }));
+      const result = JSON.parse(await readFile(path, "utf-8")) as {
+        instructions: (typeof entry)[];
+      };
+      expect(result.instructions).toHaveLength(1);
+      expect(result.instructions[0]).toEqual(entry);
+    });
+
+    it("strips JSONC comments before merging", async () => {
+      const path = join(tempDir, "jsonc.json");
+      const jsonc = `{
+  // single-line comment
+  "key": "value",
+  /* block comment */
+  "other": true
+}`;
+      await fs.mergeJsonFile(path, jsonc);
+      const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+      expect(result.key).toBe("value");
+      expect(result.other).toBe(true);
     });
   });
 });

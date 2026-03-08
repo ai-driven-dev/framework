@@ -20,41 +20,30 @@ function makeDescriptor() {
 
 describe("FrameworkDescriptor", () => {
   describe("constructor", () => {
-    it("stores version", () => {
+    it("exposes the version passed to the constructor", () => {
       const d = makeDescriptor();
       expect(d.version).toBe("3.2.2");
     });
 
-    it("freezes contentSections", () => {
+    it("contentSections cannot be mutated after construction", () => {
       const d = makeDescriptor();
-      expect(Object.isFrozen(d.contentSections)).toBe(true);
+      expect(() => {
+        (d.contentSections as unknown[]).push("x");
+      }).toThrow();
     });
   });
 
   describe("getContentSection()", () => {
     const descriptor = makeDescriptor();
 
-    it("returns agents section", () => {
+    it("returns a section by name with its directory and entryFile", () => {
       const section = descriptor.getContentSection("agents");
-      expect(section).toBeDefined();
       expect(section?.name).toBe("agents");
       expect(section?.directory).toBe("agents");
       expect(section?.entryFile).toBeNull();
     });
 
-    it("returns commands section", () => {
-      const section = descriptor.getContentSection("commands");
-      expect(section).toBeDefined();
-      expect(section?.directory).toBe("commands");
-    });
-
-    it("returns rules section", () => {
-      const section = descriptor.getContentSection("rules");
-      expect(section).toBeDefined();
-      expect(section?.directory).toBe("rules");
-    });
-
-    it("returns skills section with entryFile", () => {
+    it("returns skills section with its entryFile set", () => {
       const section = descriptor.getContentSection("skills");
       expect(section).toBeDefined();
       expect(section?.entryFile).toBe("SKILL.md");

@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
 
@@ -22,10 +21,10 @@ describe("HasherAdapter", () => {
     expect(a.value).not.toBe(b.value);
   });
 
-  it("matches expected MD5 value for known input", () => {
-    const expected = createHash("md5").update("test", "utf-8").digest("hex");
+  it("matches known MD5 value for a fixed input", () => {
+    // MD5("test") = 098f6bcd4621d373cade4e832627b4f6
     const result = hasher.hash("test");
-    expect(result.value).toBe(expected);
+    expect(result.value).toBe("098f6bcd4621d373cade4e832627b4f6");
   });
 
   it("handles empty string", () => {

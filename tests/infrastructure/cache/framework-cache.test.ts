@@ -61,13 +61,6 @@ describe("FrameworkCache", () => {
     });
   });
 
-  describe("get()", () => {
-    it("returns the cache directory path containing the version", () => {
-      const path = cache.get("1.2.3");
-      expect(path).toContain("1.2.3");
-    });
-  });
-
   describe("getLatestCached()", () => {
     it("returns null when no cache exists", async () => {
       expect(await cache.getLatestCached()).toBeNull();

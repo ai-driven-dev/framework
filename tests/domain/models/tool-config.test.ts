@@ -14,11 +14,17 @@ const makeStubConfig = (toolId: ToolId, toolSuffix: string): ToolConfig => ({
   toolId,
   directory: `.${toolId}/`,
   toolSuffix,
-  buildFilePath: (section, fileName) => `${section.directory}/${fileName}`,
   rewriteContent: (content) => content,
-  convertFrontmatter: (fm) => fm,
-  getConfigOutputPath: () => null,
-  getMemoryBankOutputPath: () => null,
+  agents: () => ({ buildFilePath: (f) => f, convertFrontmatter: (fm) => fm }),
+  commands: () => ({ buildFilePath: (f) => f, convertFrontmatter: (fm) => fm }),
+  rules: () => ({
+    buildFilePath: (f) => f,
+    convertFrontmatter: (fm) => fm,
+    shouldProcess: () => true,
+  }),
+  skills: () => ({ buildFilePath: (f) => f, convertFrontmatter: (fm) => fm }),
+  config: () => ({ outputPath: () => null, shouldMerge: () => false }),
+  memoryBank: () => ({ outputPath: () => null, rewriteContent: (c) => c }),
 });
 
 describe("VALID_TOOL_IDS", () => {
@@ -77,7 +83,7 @@ describe("registry", () => {
   });
 
   it("getToolConfig() throws for unregistered tool", () => {
-    expect(() => getToolConfig("copilot" as ToolId)).toThrow(/not registered/);
+    expect(() => getToolConfig("nonexistent-tool" as ToolId)).toThrow(/not registered/);
   });
 
   it("getAllRegisteredTools() returns a copy", () => {

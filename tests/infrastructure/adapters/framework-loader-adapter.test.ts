@@ -97,6 +97,62 @@ describe("FrameworkLoaderAdapter", () => {
     });
   });
 
+  describe("with the real test fixture", () => {
+    const FIXTURE_DIR = join(process.cwd(), "tests", "fixtures", "framework");
+    const FIXTURE_VERSION = "1.0.0";
+
+    it("loads all 4 content sections from the fixture", async () => {
+      const { contentFiles } = await loader.loadFromDirectory(FIXTURE_DIR, FIXTURE_VERSION);
+      const paths = [...contentFiles.keys()];
+      expect(paths.some((p) => p.startsWith("agents/"))).toBe(true);
+      expect(paths.some((p) => p.startsWith("commands/"))).toBe(true);
+      expect(paths.some((p) => p.startsWith("rules/"))).toBe(true);
+      expect(paths.some((p) => p.startsWith("skills/"))).toBe(true);
+    });
+
+    it("preserves phase subfolder structure and skill entry file paths", async () => {
+      const { contentFiles } = await loader.loadFromDirectory(FIXTURE_DIR, FIXTURE_VERSION);
+      const paths = [...contentFiles.keys()];
+      expect(paths.some((p) => /^commands\/\d+_/.test(p))).toBe(true);
+      expect(paths.some((p) => /^skills\/.+\/SKILL\.md$/.test(p))).toBe(true);
+    });
+  });
+
+  describe("OS file filtering", () => {
+    it("excludes .DS_Store files from content sections", async () => {
+      await createDir(join(tempDir, "agents"));
+      await writeFile(join(tempDir, "agents", "my-agent.md"), "# Agent", "utf-8");
+      await writeFile(join(tempDir, "agents", ".DS_Store"), Buffer.alloc(0));
+
+      const { contentFiles } = await loader.loadFromDirectory(tempDir, "1.0.0");
+      const keys = [...contentFiles.keys()];
+      expect(keys.some((k) => k.includes(".DS_Store"))).toBe(false);
+      expect(contentFiles.has(join("agents", "my-agent.md"))).toBe(true);
+    });
+
+    it("excludes Thumbs.db files from content sections", async () => {
+      await createDir(join(tempDir, "rules"));
+      await writeFile(join(tempDir, "rules", "rule.md"), "# Rule", "utf-8");
+      await writeFile(join(tempDir, "rules", "Thumbs.db"), Buffer.alloc(0));
+
+      const { contentFiles } = await loader.loadFromDirectory(tempDir, "1.0.0");
+      const keys = [...contentFiles.keys()];
+      expect(keys.some((k) => k.includes("Thumbs.db"))).toBe(false);
+    });
+
+    it("excludes .DS_Store from docs files", async () => {
+      const docsDir = join(tempDir, "aidd_docs");
+      await createDir(docsDir);
+      await writeFile(join(docsDir, "README.md"), "# Docs", "utf-8");
+      await writeFile(join(docsDir, ".DS_Store"), Buffer.alloc(0));
+
+      const { docsFiles } = await loader.loadFromDirectory(tempDir, "1.0.0");
+      const keys = [...docsFiles.keys()];
+      expect(keys.some((k) => k.includes(".DS_Store"))).toBe(false);
+      expect(docsFiles.has(join("aidd_docs", "README.md"))).toBe(true);
+    });
+  });
+
   describe("docsFiles loading", () => {
     it("includes .gitkeep files with empty string content", async () => {
       const docsDir = join(tempDir, "aidd_docs", "memory", "internal");
