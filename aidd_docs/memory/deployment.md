@@ -1,28 +1,36 @@
 # Deployment
 
-## Project Structure
-
-```plaintext
-.                            # repo root (cli/)
-├── lefthook.yml             # Git hooks delegation to parent monorepo
-├── package.json             # npm package metadata
-└── src/
-    └── cli.ts               # CLI entry point
-```
-
 ## Environment Variables
 
-### Required Environment Variables
+- `AIDD_TOKEN` — authentication token for GitHub Packages (private registry)
+- `AIDD_REPO` — custom framework repository override in `owner/repo` format (optional)
 
-- `AIDD_TOKEN` — authentication token for GitHub Packages (private registry), required to install/publish the package
-- `AIDD_REPO` — custom framework repository override (optional)
+## Build & Publish
 
-## Deployment Process
+- Build: `pnpm build` → `dist/cli.js` (tsup, ESM bundle)
+- Local install test: `pnpm run install:local` (packs and installs globally via npm)
+- Publish: `pnpm publish` targeting GitHub Packages registry (`@ai-driven-dev` scope)
+- Runtime requirements: Node.js >= 24, pnpm >= 9
 
-- Package: `@ai-driven-dev/aidd-cli`, distributed via GitHub Packages (private, community-gated)
-- Publish: `pnpm publish` targeting the GitHub Packages registry
-- Runtime requirement: Node.js >= 20, pnpm >= 9
-- Git hooks: lefthook delegates `pre-commit` and `pre-push` to parent monorepo via `pnpm exec lefthook run <hook>`
-- No CI/CD pipeline in this repository (no `.github/workflows/`)
+## Git Hooks
+
+- lefthook delegates `pre-commit` and `pre-push` to parent monorepo via `pnpm exec lefthook run <hook>`
+- commitlint validates commit message format on commit
+
+## CI/CD
+
+- `.github/workflows/ci-commitlint.yml` — commitlint on push to `main` and all PRs
 - No containerization
-- No monitoring or logging infrastructure
+- No monitoring infrastructure
+
+## Scripts
+
+| Script | Purpose |
+| --- | --- |
+| `pnpm build` | tsup production build |
+| `pnpm test` | build + vitest run (all tests) |
+| `pnpm typecheck` | tsc --noEmit |
+| `pnpm lint` | biome check |
+| `pnpm format` | biome format --write |
+| `pnpm pack:local` | build + pack to dist/ |
+| `pnpm install:local` | pack + npm install -g |

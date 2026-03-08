@@ -65,7 +65,7 @@ AIDD CLI is a developer tool for a paid community of AI-assisted developers. The
 
 | Key                               | Message                                                     | Recovery action                   | Context                                 |
 | --------------------------------- | ----------------------------------------------------------- | --------------------------------- | --------------------------------------- |
-| `error.install.no_args`           | At least one tool ID is required. Valid tools: {validTools} | Provide one or more tool IDs      | `aidd install` called with no arguments |
+| `error.install.no_args`           | Specify at least one tool or use --all. Valid tools: {validTools} | Provide one or more tool IDs or use `--all` | `aidd install` called with no arguments |
 | `error.install.unknown_tool`      | Unknown tool: {toolId}. Valid tools: {validTools}           | Use a valid tool ID from the list | Invalid tool ID provided                |
 | `error.install.already_installed` | {toolId} is already installed. Use `--force` to reinstall.  | Add `--force` flag to overwrite   | Tool already in manifest, no `--force`  |
 
@@ -73,7 +73,7 @@ AIDD CLI is a developer tool for a paid community of AI-assisted developers. The
 
 | Key                             | Message                                                                    | Recovery action                         | Context                                    |
 | ------------------------------- | -------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------ |
-| `error.uninstall.no_args`       | At least one tool ID is required. Valid tools: claude, cursor, copilot     | Provide one or more tool IDs            | `aidd uninstall` called with no arguments  |
+| `error.uninstall.no_args`       | Specify at least one tool or use --all. Valid tools: claude, cursor, copilot | Provide one or more tool IDs or use `--all` | `aidd uninstall` called with no arguments  |
 | `error.uninstall.not_installed` | {toolId} is not installed                                                  | Check installed tools via `aidd status` | Tool not in manifest                       |
 | `error.uninstall.no_manifest`   | No AIDD installation found. Run `aidd init` first.                         | Initialize AIDD                         | No `.aidd` directory or manifest           |
 
@@ -97,12 +97,28 @@ AIDD CLI is a developer tool for a paid community of AI-assisted developers. The
 | --------------------------------- | --------------------------------------------------------------------------------- | ----------------- | ------------------------------------- |
 | `error.doctor.manifest_corrupted` | Manifest is corrupted (invalid JSON). Run `aidd clean --force` and re-initialize. | Clean and re-init | `.aidd/config.json` is not valid JSON |
 
+### Cache Errors (v3.2+)
+
+| Key                            | Message                                  | Recovery action                | Context                              |
+| ------------------------------ | ---------------------------------------- | ------------------------------ | ------------------------------------ |
+| `error.cache.version_not_found`| Version {version} is not cached          | Check available versions with `aidd cache` | Specified version not in cache |
+
+### Config Errors (v3.2+)
+
+| Key                            | Message                                                                                           | Recovery action                        | Context                                            |
+| ------------------------------ | ------------------------------------------------------------------------------------------------- | -------------------------------------- | -------------------------------------------------- |
+| `error.config.unknown_key`     | Unknown setting: {key}. Valid keys: {validKeys}                                                   | Use a valid key from the list          | Unknown key in `get` or `set`                      |
+| `error.config.token_forbidden` | token cannot be stored in settings for security reasons. Use --token or AIDD_TOKEN instead.       | Use flag or env var for token          | Attempt to `set token`                             |
+| `error.config.docs_dir_readonly`| docsDir cannot be changed after init. Run `aidd clean --force` and `aidd init --docs-dir {value}` to reset. | Reset installation to change docs dir | Attempt to `set docsDir` after init               |
+| `error.config.no_manifest`     | No AIDD installation found. Run `aidd init` first.                                                | Initialize AIDD                        | `config set` called with no `.aidd/` directory    |
+
 ### Update Errors (v3.1+)
 
-| Key                               | Message                                            | Recovery action                         | Context                                 |
-| --------------------------------- | -------------------------------------------------- | --------------------------------------- | --------------------------------------- |
-| `error.update.no_manifest`        | No AIDD installation found. Run `aidd init` first. | Initialize AIDD                         | No manifest exists                      |
-| `error.update.tool_not_installed` | {toolId} is not installed                          | Check installed tools via `aidd status` | Update requested for non-installed tool |
+| Key                                  | Message                                                                      | Recovery action                         | Context                                        |
+| ------------------------------------ | ---------------------------------------------------------------------------- | --------------------------------------- | ---------------------------------------------- |
+| `error.update.no_manifest`           | No AIDD installation found. Run `aidd init` first.                           | Initialize AIDD                         | No manifest exists                             |
+| `error.update.tool_not_installed`    | {toolId} is not installed                                                    | Check installed tools via `aidd status` | Update requested for non-installed tool        |
+| `error.update.dry_run_force_conflict`| --dry-run and --force are mutually exclusive                                  | Use one flag at a time                  | Both --dry-run and --force provided            |
 
 ### Restore Errors (v3.1+)
 
@@ -132,6 +148,7 @@ AIDD CLI is a developer tool for a paid community of AI-assisted developers. The
 | `warn.install.dir_exists_not_in_manifest` | Directory {dir} exists but tool is not in manifest. Files will be overwritten.              | Tool directory on disk but not tracked                        |
 | `warn.restore.version_unavailable`        | Version {version} is no longer available. Restoring from latest ({latestVersion}).          | Pinned version not found remotely during restore              |
 | `warn.update.version_mismatch`            | Tools installed at different versions: {toolVersionList}. Updating all to v{latestVersion}. | Multiple tools at different framework versions                |
+| `warn.init.force_overwrite`               | Overwriting modified file: {filePath}                                                       | `init --force` overwrites a docs file the user had modified   |
 
 ---
 
@@ -147,11 +164,16 @@ AIDD CLI is a developer tool for a paid community of AI-assisted developers. The
 | `success.clean`             | Cleaned all AIDD files ({fileCount} files removed)                           | Clean --force completed         |
 | `success.doctor.healthy`    | Installation is healthy ({fileCount} files tracked across {toolCount} tools) | Doctor finds no issues          |
 | `success.status.in_sync`    | All files are in sync                                                        | Status finds no drift           |
+| `success.release_pin`       | Using framework release {version}                                            | --release flag resolved         |
 | `success.update`            | Updated to v{version} ({added} added, {changed} changed, {removed} removed)  | Update completed                |
 | `success.restore`           | Restored {fileCount} files to framework version                              | Restore completed               |
 | `success.restore.in_sync`   | All files are in sync. Nothing to restore.                                   | Nothing to restore              |
 | `success.update.up_to_date` | Already up to date (v{version})                                              | No newer version available      |
 | `success.sync`              | Synced {fileCount} files from {source} to {targets}                          | Sync completed                  |
+| `success.cache.cleared`     | Cache cleared ({count} version(s) removed)                                   | `cache --clear` completed       |
+| `success.cache.cleared_version` | Cache cleared for v{version}                                             | `cache --clear --version` completed |
+| `success.config.set`        | Set {key} = {value}                                                          | `config set` completed          |
+| `success.doctor.fixed`      | {fixedCount} issue(s) fixed. Run `aidd doctor` to verify.                   | `doctor --fix` completed        |
 
 ---
 
@@ -171,6 +193,7 @@ AIDD CLI is a developer tool for a paid community of AI-assisted developers. The
 | `progress.doctor.checking`       | Checking installation health...                   | Doctor check in progress               |
 | `progress.restore.regenerating`  | Restoring {toolId} files from v{version}...       | File regeneration during restore       |
 | `progress.sync.propagating`      | Propagating changes from {sourceToolId}...        | Change propagation during sync         |
+| `progress.doctor.fixing`         | Fixing {issueCount} issue(s)...                   | `doctor --fix` remediation in progress |
 
 ---
 
@@ -181,6 +204,7 @@ AIDD CLI is a developer tool for a paid community of AI-assisted developers. The
 | `empty.clean.nothing`          | Nothing to clean. No AIDD installation found.                 | `aidd clean` with no manifest           |
 | `empty.doctor.not_initialized` | No AIDD installation found. Run `aidd init` first.             | `aidd doctor` with no `.aidd` directory |
 | `empty.status.no_tools`        | No tools installed. Run `aidd install <tool>` to get started. | Manifest exists but no tool entries     |
+| `empty.cache.nothing`          | No cached framework versions found.                           | `aidd cache` with empty cache directory |
 
 ---
 
@@ -200,6 +224,8 @@ AIDD CLI is a developer tool for a paid community of AI-assisted developers. The
 | `help.update.description`    | Update installed distributions to the latest framework version      | `aidd update` (v3.1+)     |
 | `help.restore.description`   | Restore modified files to their original framework version          | `aidd restore` (v3.1+)    |
 | `help.sync.description`      | Propagate changes from one tool to all other installed tools        | `aidd sync` (v3.1+)       |
+| `help.cache.description`     | List or clear cached framework versions                             | `aidd cache` (v3.2+)      |
+| `help.config.description`    | Get or set project-level CLI settings                               | `aidd config` (v3.2+)     |
 
 ### Argument and Option Descriptions
 
@@ -222,6 +248,10 @@ AIDD CLI is a developer tool for a paid community of AI-assisted developers. The
 | `help.opt.tool`      | Filter output to a specific tool                       | status                                |
 | `help.opt.source`    | Source tool for change propagation                     | sync                                  |
 | `help.opt.target`    | Target tool for change propagation                     | sync                                  |
+| `help.opt.dry_run`   | Preview changes without writing or deleting any files  | update                                |
+| `help.opt.release`   | Specific framework release tag to use (e.g., v3.2.0)  | global flag                           |
+| `help.opt.list`      | List cached framework versions                         | cache                                 |
+| `help.opt.clear`     | Remove cached framework versions                       | cache                                 |
 
 ### Version Output
 
@@ -290,6 +320,8 @@ These are not copy strings but structural conventions that ensure consistency ac
 | Warning prefix               | `Warning:`              | `Warning: Network unavailable.`           |
 | Verbose prefix               | `[verbose]`             | `[verbose] Cache hit: v3.2.0`             |
 | Indentation                  | 2 spaces                | File lists indented under section headers |
+| Status legend                | `Legend: ~ modified  - deleted  + added` | Shown once at end of `aidd status` output when drift exists |
+| Verbose tool header          | `[verbose] Tool: {toolId}` | Shown per tool during `aidd install --verbose` |
 
 ---
 
@@ -316,3 +348,37 @@ These are not copy strings but structural conventions that ensure consistency ac
 | `prompt.sync.option_target`      | Keep {targetToolId} version                                      | Choice option: use target tool version              |
 | `prompt.sync.option_skip`        | Skip this file                                                   | Choice option: leave file unchanged                 |
 | `prompt.sync.summary`            | {propagated} propagated, {conflicts} conflicts resolved, {skipped} skipped | Aggregate summary after sync completes        |
+
+---
+
+## 13. Update Dry-Run Preview Copy (v3.1+)
+
+| Key                            | Message                                                                                          | Context                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| `update.preview.header`        | The following changes would be applied:                                                          | Dry-run header                            |
+| `update.preview.tool_line`     | {toolId}: {added} to add, {changed} to change, {removed} to remove                              | Per-tool line in dry-run                  |
+| `update.preview.conflict_note` | {filePath} [conflict — user-modified]                                                            | File flagged as conflicting in dry-run    |
+| `update.preview.summary`       | Would apply {total} change(s) across {toolCount} tool(s). Run without --dry-run to apply.       | Aggregate summary for dry-run             |
+| `update.preview.no_changes`    | Already up to date ({version}). No changes to apply.                                            | Dry-run with no newer version             |
+
+---
+
+## 14. Cache Output Copy (v3.2+)
+
+| Key                        | Message                                 | Context                              |
+| -------------------------- | --------------------------------------- | ------------------------------------ |
+| `cache.info.header`        | Cached framework versions:              | Header for `aidd cache` list output  |
+| `cache.info.line`          | v{version} ({size})                     | Per-version line in cache list       |
+
+---
+
+## 15. Config Output Copy (v3.2+)
+
+| Key                        | Message                                 | Context                              |
+| -------------------------- | --------------------------------------- | ------------------------------------ |
+| `config.list.header`       | Current settings ({source} = source of value): | Header for `aidd config list`  |
+| `config.list.line`         | {key} = {value}  [{source}]             | Per-setting line in config list      |
+| `config.list.source.flag`  | flag                                    | Value comes from a CLI flag          |
+| `config.list.source.env`   | env                                     | Value comes from an environment variable |
+| `config.list.source.file`  | file                                    | Value comes from `.aidd/settings.json` |
+| `config.list.source.default` | default                               | Value is the built-in default        |
