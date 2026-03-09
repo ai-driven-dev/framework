@@ -3,8 +3,8 @@
 ## Status
 
 - `src/` — fully implemented, v3.0.0 shipped (tickets 001-084 done)
-- `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle, ~75 KB)
-- `tests/` — 404 tests, 39 files, all passing
+- `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle, ~88 KB)
+- `tests/` — 417 tests, 40 files, all passing
 - Next milestone: v3.1 (tickets 060-072: update, restore, sync)
 
 ## Source Layout
@@ -20,6 +20,7 @@ src/
 │   │   ├── install.ts
 │   │   ├── status.ts
 │   │   └── uninstall.ts
+│   ├── check-update.ts                 # printUpdateBanner() — shared header banner for all commands
 │   ├── output.ts                       # All stdout/stderr formatting
 │   └── use-cases/
 │       ├── catalog-use-case.ts              # writeCatalog() — writes aidd_docs/CATALOG.md
