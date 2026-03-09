@@ -27,7 +27,7 @@ describe("ManifestRepositoryAdapter", () => {
   });
 
   describe("save() + load() roundtrip", () => {
-    it("saves manifest and loads it back correctly", async () => {
+    it("persists and restores manifest without data loss", async () => {
       const manifest = Manifest.create("my_docs");
       await adapter.save(manifest);
 
@@ -37,7 +37,7 @@ describe("ManifestRepositoryAdapter", () => {
       expect(loaded?.getInstalledToolIds()).toHaveLength(0);
     });
 
-    it("persists manifest with docsDir", async () => {
+    it("preserves custom docs directory in persisted manifest", async () => {
       const manifest = Manifest.create("custom_docs");
       await adapter.save(manifest);
 
@@ -47,7 +47,7 @@ describe("ManifestRepositoryAdapter", () => {
   });
 
   describe("delete()", () => {
-    it("removes the manifest file", async () => {
+    it("deletes manifest file from disk", async () => {
       const manifest = Manifest.create();
       await adapter.save(manifest);
 
@@ -57,7 +57,7 @@ describe("ManifestRepositoryAdapter", () => {
       expect(result).toBeNull();
     });
 
-    it("removes .aidd/ directory if it becomes empty after deletion", async () => {
+    it("prunes empty .aidd/ directory after manifest deletion", async () => {
       const manifest = Manifest.create();
       await adapter.save(manifest);
 
@@ -68,13 +68,13 @@ describe("ManifestRepositoryAdapter", () => {
       expect(existsSync(aiddDir)).toBe(false);
     });
 
-    it("does not throw when manifest does not exist", async () => {
+    it("silently succeeds when no manifest to delete", async () => {
       await expect(adapter.delete()).resolves.toBeUndefined();
     });
   });
 
   describe("manifest persistence", () => {
-    it("creates directory if missing", async () => {
+    it("creates .aidd/ directory if it does not exist", async () => {
       const manifest = Manifest.create();
       await adapter.save(manifest);
 
@@ -84,7 +84,7 @@ describe("ManifestRepositoryAdapter", () => {
   });
 
   describe("manifest migration on load", () => {
-    it("loads v0 manifest (no version) and auto-migrates it to current version", async () => {
+    it("migrates v0 manifest and writes v1 schema to disk", async () => {
       const aiddDir = join(tempDir, ".aidd");
       await mkdir(aiddDir, { recursive: true });
       const v0Manifest = JSON.stringify({
@@ -113,7 +113,7 @@ describe("ManifestRepositoryAdapter", () => {
       expect(loaded?.getInstalledToolIds()).toHaveLength(0);
     });
 
-    it("loads v0 manifest and returns a manifest with version 1 after migration", async () => {
+    it("migrated v0 manifest is readable with current schema", async () => {
       const aiddDir = join(tempDir, ".aidd");
       await mkdir(aiddDir, { recursive: true });
       const v0Manifest = JSON.stringify({

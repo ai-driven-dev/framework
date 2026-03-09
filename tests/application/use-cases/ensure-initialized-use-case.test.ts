@@ -37,7 +37,7 @@ describe("ensureInitialized()", () => {
     return { hasher, fs, manifestRepo, loader, logger };
   }
 
-  it("does not overwrite existing files when already initialized", async () => {
+  it("preserves existing docs when project is already initialized", async () => {
     const deps = buildDeps();
 
     await ensureInitialized(deps.manifestRepo, deps.fs, deps.loader, deps.hasher, deps.logger, {
@@ -62,7 +62,7 @@ describe("ensureInitialized()", () => {
     expect(contentAfter).toBe("user-created");
   });
 
-  it("runs init and returns new manifest when not initialized", async () => {
+  it("auto-initializes project when no manifest exists", async () => {
     const deps = buildDeps();
 
     const manifest = await ensureInitialized(

@@ -55,7 +55,7 @@ describe("UninstallUseCase", () => {
     expect(existsSync(join(projectRoot, ".cursor"))).toBe(false);
   });
 
-  it("updates manifest after uninstall", async () => {
+  it("no longer tracks removed tool files", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
     await installTool(deps, projectRoot, "claude" as ToolId);
@@ -68,7 +68,7 @@ describe("UninstallUseCase", () => {
     expect(data.tools.claude).toBeUndefined();
   });
 
-  it("shows an error message when uninstalling a non-installed tool", async () => {
+  it("fails if tool is not installed", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
@@ -125,7 +125,7 @@ describe("UninstallUseCase", () => {
     expect(afterContent).toContain("# AIDD Framework Catalog");
   });
 
-  it("shows an error message when no installation is found", async () => {
+  it("fails if project is not initialized", async () => {
     const deps = buildDeps(projectRoot);
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
     await expect(useCase.execute({ toolIds: ["claude" as ToolId], projectRoot })).rejects.toThrow(

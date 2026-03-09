@@ -100,7 +100,7 @@ describe("DoctorUseCase", () => {
     expect(report.issues).toHaveLength(0);
   });
 
-  it("throws when manifest JSON is corrupted", async () => {
+  it("fails when manifest is corrupted", async () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
@@ -112,7 +112,7 @@ describe("DoctorUseCase", () => {
     await expect(useCase.execute({ projectRoot })).rejects.toThrow("Manifest is corrupted");
   });
 
-  it("throws when no manifest exists", async () => {
+  it("fails if project is not initialized", async () => {
     const deps = buildDeps(projectRoot);
 
     const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
@@ -120,7 +120,7 @@ describe("DoctorUseCase", () => {
     await expect(useCase.execute({ projectRoot })).rejects.toThrow("No AIDD installation found");
   });
 
-  it("reports warning for orphaned directory not in manifest", async () => {
+  it("warns about tool directory not registered in manifest", async () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude" as ToolId);
 

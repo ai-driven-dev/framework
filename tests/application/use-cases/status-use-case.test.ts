@@ -65,7 +65,7 @@ describe("StatusUseCase", () => {
     await cleanupTempProject(tempDir);
   });
 
-  it("reports inSync when all files match", async () => {
+  it("reports all files in sync when nothing changed", async () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
@@ -155,7 +155,7 @@ describe("StatusUseCase", () => {
     expect(added?.relativePath).toContain("extra-untracked-file.md");
   });
 
-  it("throws when no manifest exists", async () => {
+  it("fails if project is not initialized", async () => {
     const deps = buildDeps(projectRoot);
 
     const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
@@ -163,7 +163,7 @@ describe("StatusUseCase", () => {
     await expect(useCase.execute({ projectRoot })).rejects.toThrow("No AIDD installation found");
   });
 
-  it("returns empty tools array when no tools installed", async () => {
+  it("reports no drift when no tools are installed", async () => {
     const deps = buildDeps(projectRoot);
     const initUseCase = new InitUseCase(
       deps.fs,
@@ -187,7 +187,7 @@ describe("StatusUseCase", () => {
   });
 
   describe("version check", () => {
-    it("sets updateAvailable when a newer version exists", async () => {
+    it("detects newer version and marks update available", async () => {
       const deps = buildDeps(projectRoot);
       await initAndInstallWithVersion(deps, projectRoot, "claude" as ToolId, "1.0.0");
 
@@ -205,7 +205,7 @@ describe("StatusUseCase", () => {
       expect(tool.updateAvailable?.current).toBe("1.0.0");
     });
 
-    it("does not set updateAvailable when already up to date", async () => {
+    it("does not flag update when already on latest version", async () => {
       const deps = buildDeps(projectRoot);
       await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
@@ -220,7 +220,7 @@ describe("StatusUseCase", () => {
       expect(report.tools[0].updateAvailable).toBeUndefined();
     });
 
-    it("swallows network error silently — drift report unaffected", async () => {
+    it("ignores network errors and still reports drift", async () => {
       const deps = buildDeps(projectRoot);
       await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
@@ -236,7 +236,7 @@ describe("StatusUseCase", () => {
       expect(report.tools[0].updateAvailable).toBeUndefined();
     });
 
-    it("reports update available after init-only (no tools installed)", async () => {
+    it("detects docs update even when no tools are installed", async () => {
       const deps = buildDeps(projectRoot);
       const initUseCase = new InitUseCase(
         deps.fs,
@@ -266,7 +266,7 @@ describe("StatusUseCase", () => {
       expect(report.docs?.updateAvailable?.latest).toBe("99.0.0");
     });
 
-    it("respects --tool filter: only checks the filtered tool", async () => {
+    it("limits version check to filtered tool", async () => {
       const deps = buildDeps(projectRoot);
       await initAndInstallWithVersion(deps, projectRoot, "claude" as ToolId, "1.0.0");
 

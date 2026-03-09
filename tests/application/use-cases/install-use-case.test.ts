@@ -49,7 +49,7 @@ describe("InstallUseCase", () => {
     expect(result[0].skipped).toBe(false);
   });
 
-  it("records installed tool in manifest", async () => {
+  it("tracks installed tool files for drift detection", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
@@ -165,7 +165,7 @@ describe("InstallUseCase", () => {
     expect(data.tools.cursor).toBeDefined();
   });
 
-  it("emits warning when force-installing tool with orphaned directory not in manifest", async () => {
+  it("warns about untracked directory when force-installing", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
@@ -195,7 +195,7 @@ describe("InstallUseCase", () => {
     expect(result[0].warnings[0]).toContain("not in manifest");
   });
 
-  it("does not emit orphaned dir warning when tool is already in manifest with --force", async () => {
+  it("silently reinstalls already-tracked tool with --force", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
@@ -229,7 +229,7 @@ describe("InstallUseCase", () => {
     expect(result[0].warnings).toEqual([]);
   });
 
-  it("skipped result has empty warnings array", async () => {
+  it("skipped tool produces no warnings", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
@@ -260,7 +260,7 @@ describe("InstallUseCase", () => {
     expect(result[0].warnings).toEqual([]);
   });
 
-  it("syncs shared merged file hash across tools in same install run", async () => {
+  it("no drift for shared merged file after multi-tool install", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
@@ -294,7 +294,7 @@ describe("InstallUseCase", () => {
     expect(claudeFile?.hash).toBe(copilotFile?.hash);
   });
 
-  it("syncs shared merged file hash when tools are installed in separate runs", async () => {
+  it("no drift for shared merged file across sequential installs", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
@@ -337,7 +337,7 @@ describe("InstallUseCase", () => {
     expect(claudeFile?.hash).toBe(copilotFile?.hash);
   });
 
-  it("writes CATALOG.md after install with correct tool directory reference", async () => {
+  it("generates CATALOG.md with links to installed tool files", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
@@ -364,7 +364,7 @@ describe("InstallUseCase", () => {
     expect(content).toContain("../.claude/");
   });
 
-  it("CATALOG.md is not tracked in the manifest after install", async () => {
+  it("does not track CATALOG.md as an installed file", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
@@ -388,7 +388,7 @@ describe("InstallUseCase", () => {
     expect(raw).not.toContain("CATALOG.md");
   });
 
-  it("throws when no tool IDs provided", async () => {
+  it("fails when called with no tool IDs", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
