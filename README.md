@@ -52,12 +52,12 @@ Le **AIDD CLI** (`@ai-driven-dev/aidd-cli`) est l'installateur TypeScript du fra
 
 ## Installation
 
-Le package est privé et hébergé sur GitHub Packages. Il requiert un token d'accès AIDD.
+Le package est hébergé sur GitHub Packages. Il requiert un [token GitHub](https://github.com/settings/tokens/new) avec le scope **`read:packages`**.
 
 **macOS / Linux / WSL :**
 
 ```bash
-# Configurer le registre GitHub Packages
+# Configurer le registre GitHub Packages (token avec scope read:packages)
 echo "@ai-driven-dev:registry=https://npm.pkg.github.com" >> ~/.npmrc
 echo "//npm.pkg.github.com/:_authToken=<YOUR_TOKEN>" >> ~/.npmrc
 
@@ -71,6 +71,7 @@ aidd --version
 **Windows (PowerShell) :**
 
 ```powershell
+# Token GitHub avec scope read:packages requis
 npm config set @ai-driven-dev:registry https://npm.pkg.github.com
 npm config set //npm.pkg.github.com/:_authToken <YOUR_TOKEN>
 
