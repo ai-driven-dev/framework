@@ -38,7 +38,7 @@ jobs:
       - name: Install CLI
         run: |
           npm config set @ai-driven-dev:registry https://npm.pkg.github.com
-          npm config set //npm.pkg.github.com/:_authToken ${{ github.token }}
+          npm config set //npm.pkg.github.com/:_authToken ${{ secrets.PACKAGES_TOKEN }}
           npm install -g @ai-driven-dev/aidd-cli
 
       - name: Build distributions
