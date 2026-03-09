@@ -50,7 +50,7 @@ export async function createDeps(
   const fs = new FileSystemAdapter(hasher);
   const loader = new FrameworkLoaderAdapter();
   const logger = output ?? new CLIOutput(options.verbose);
-  const manifestRepo = new ManifestRepositoryAdapter(projectRoot, logger);
+  const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
   const settingsRepo = new SettingsRepositoryAdapter(projectRoot);
   const settings = await settingsRepo.load();
   const repoFromFlag = options.repo ?? process.env.AIDD_REPO;

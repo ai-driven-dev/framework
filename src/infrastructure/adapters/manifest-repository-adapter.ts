@@ -2,16 +2,12 @@ import { mkdir, readFile, readdir, rm, rmdir, writeFile } from "node:fs/promises
 import { join } from "node:path";
 import { Manifest } from "../../domain/models/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
-import { CURRENT_MANIFEST_VERSION, applyMigrations } from "../migrations/manifest-migrations.js";
 
 const MANIFEST_FILENAME = "manifest.json";
 const AIDD_DIR = ".aidd";
 
 export class ManifestRepositoryAdapter implements ManifestRepository {
-  constructor(
-    private readonly projectRoot: string,
-    private readonly logger?: { info(msg: string): void }
-  ) {}
+  constructor(private readonly projectRoot: string) {}
 
   private get manifestPath(): string {
     return join(this.projectRoot, AIDD_DIR, MANIFEST_FILENAME);
@@ -30,14 +26,7 @@ export class ManifestRepositoryAdapter implements ManifestRepository {
     }
 
     const parsed = JSON.parse(raw) as Record<string, unknown>;
-    const originalVersion = typeof parsed.version === "number" ? parsed.version : 0;
-    const migrated = applyMigrations(parsed, this.logger);
-
-    if (typeof migrated.version === "number" && migrated.version !== originalVersion) {
-      await this.save(Manifest.fromJSON(migrated));
-    }
-
-    return Manifest.fromJSON(migrated);
+    return Manifest.fromJSON(parsed);
   }
 
   async save(manifest: Manifest): Promise<void> {

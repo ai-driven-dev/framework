@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { printUpdateBanner } from "../../src/application/check-update.js";
+import { InitUseCase } from "../../src/application/use-cases/init-use-case.js";
+import { InstallUseCase } from "../../src/application/use-cases/install-use-case.js";
+import type { ToolId } from "../../src/domain/models/tool-config.js";
 import type { FrameworkResolver } from "../../src/domain/ports/framework-resolver.js";
 import type { Logger } from "../../src/domain/ports/logger.js";
 import {
@@ -10,9 +13,6 @@ import {
   initAndInstall,
   initProject,
 } from "./use-cases/helpers.js";
-import type { ToolId } from "../../src/domain/models/tool-config.js";
-import { InitUseCase } from "../../src/application/use-cases/init-use-case.js";
-import { InstallUseCase } from "../../src/application/use-cases/install-use-case.js";
 
 function makeLogger(): { logger: Logger; logs: string[] } {
   const logs: string[] = [];

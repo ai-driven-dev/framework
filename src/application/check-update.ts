@@ -33,7 +33,7 @@ export async function printUpdateBanner(
 
     if (!docsOutdated && !toolsOutdated) return;
 
-    const current = (docsVersion ?? toolVersion)!.replace(/^v/, "");
+    const current = (docsVersion ?? toolVersion)?.replace(/^v/, "");
     logger.info(`\nUpdate available: v${current} → v${latest}`);
     if (docsOutdated) logger.info("Run `aidd init --force` to update docs.");
     if (toolsOutdated) logger.info("Run `aidd install --all` to update tools.");
