@@ -1,5 +1,8 @@
 # Dependencies
 node_modules/
+.specstory/
+.pnp/
+.pnp.js
 
 # Build output
 dist/
