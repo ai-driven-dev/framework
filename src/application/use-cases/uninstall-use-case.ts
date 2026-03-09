@@ -1,0 +1,67 @@
+import { dirname, join } from "node:path";
+import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
+import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { Logger } from "../../domain/ports/logger.js";
+import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import { writeCatalog } from "./catalog-use-case.js";
+
+export interface UninstallOptions {
+  toolIds: ToolId[];
+  projectRoot: string;
+}
+
+export interface UninstallToolResult {
+  toolId: ToolId;
+  fileCount: number;
+  deletedFiles: string[];
+}
+
+export class UninstallUseCase {
+  constructor(
+    private readonly fs: FileSystem,
+    private readonly manifestRepo: ManifestRepository,
+    private readonly logger: Logger
+  ) {}
+
+  async execute(options: UninstallOptions): Promise<UninstallToolResult[]> {
+    const { toolIds, projectRoot } = options;
+
+    if (toolIds.length === 0) {
+      throw new Error(
+        `At least one tool ID is required. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
+      );
+    }
+
+    const manifest = await this.manifestRepo.load();
+    if (manifest === null) {
+      throw new Error("No AIDD installation found. Run `aidd init` first.");
+    }
+
+    const results: UninstallToolResult[] = [];
+
+    for (const toolId of toolIds) {
+      if (!manifest.hasTool(toolId)) {
+        throw new Error(`${toolId} is not installed`);
+      }
+
+      this.logger.info(`Removing ${toolId} files...`);
+
+      const files = manifest.getToolFiles(toolId);
+      const deletedFiles: string[] = [];
+
+      for (const file of files) {
+        const fullPath = join(projectRoot, file.relativePath);
+        await this.fs.deleteFile(fullPath);
+        deletedFiles.push(file.relativePath);
+        await this.fs.deleteEmptyDirectories(dirname(fullPath));
+      }
+
+      manifest.removeTool(toolId);
+      results.push({ toolId, fileCount: deletedFiles.length, deletedFiles });
+    }
+
+    await this.manifestRepo.save(manifest);
+    await writeCatalog(manifest, manifest.docsDir, projectRoot, this.fs);
+    return results;
+  }
+}

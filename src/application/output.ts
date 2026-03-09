@@ -1,0 +1,51 @@
+import type { Logger } from "../domain/ports/logger.js";
+
+export class CLIOutput implements Logger {
+  readonly verbose: boolean;
+
+  constructor(verbose = false) {
+    this.verbose = verbose || process.env.AIDD_VERBOSE === "true";
+  }
+
+  // Logger interface — used by use-cases and infrastructure adapters
+
+  debug(message: string): void {
+    if (this.verbose) process.stderr.write(`[verbose] ${message}\n`);
+  }
+
+  info(message: string): void {
+    process.stdout.write(`${message}\n`);
+  }
+
+  warn(message: string): void {
+    process.stderr.write(`Warning: ${message}\n`);
+  }
+
+  // Command output
+
+  print(message: string): void {
+    process.stdout.write(`${message}\n`);
+  }
+
+  success(message: string): void {
+    process.stdout.write(`${message}\n`);
+  }
+
+  error(message: string): void {
+    process.stderr.write(`Error: ${message}\n`);
+  }
+
+  exit(error: unknown): never {
+    this.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+
+  validateTools(toolIds: string[], validIds: readonly string[]): void {
+    const invalid = toolIds.filter((t) => !validIds.includes(t));
+    if (invalid.length === 0) return;
+    for (const toolId of invalid) {
+      this.error(`Unknown tool: ${toolId}. Valid tools: ${validIds.join(", ")}`);
+    }
+    process.exit(1);
+  }
+}

@@ -1,73 +1,49 @@
 {
-	"name": "@ai-driven-dev/aidd",
-	"version": "1.9.5",
-	"packageManager": "pnpm@10.11.0",
-	"description": "AI-Driven Development CLI - AIDD framework in projects",
-	"type": "module",
-	"main": "./dist/index.js",
-	"types": "./dist/index.d.ts",
-	"bin": {
-		"aidd": "./dist/cli.js"
-	},
-	"files": ["dist/**/*", "README.md"],
-	"exports": {
-		".": {
-			"import": "./dist/index.js",
-			"types": "./dist/index.d.ts"
-		}
-	},
-	"engines": {
-		"node": ">=20.0.0",
-		"pnpm": ">=9.0.0"
-	},
-	"keywords": ["ai-driven-dev", "cli", "aidd"],
-	"author": "AIDD Team",
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/ai-driven-dev/aidd.git"
-	},
-	"bugs": {
-		"url": "https://github.com/ai-driven-dev/aidd/issues"
-	},
-	"homepage": "https://github.com/ai-driven-dev/aidd#readme",
-	"publishConfig": {
-		"registry": "https://npm.pkg.github.com"
-	},
-	"scripts": {
-		"prepare": "lefthook install || true",
-		"build": "tsup",
-		"lint": "pnpm exec biome check .",
-		"lint:fix": "pnpm exec biome check --apply-unsafe .",
-		"format": "pnpm exec biome check --fix --unsafe .",
-		"typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters",
-		"test:watch": "VITEST_UNIT=1 vitest",
-		"test": "rm -rf dist ../output-tests && pnpm run build && vitest run",
-		"test:full": "RUN_PACK_E2E=1 pnpm run test",
-		"test:unit": "VITEST_UNIT=1 vitest run",
-		"test:pack": "RUN_PACK_E2E=1 vitest run src/app/commands/install-package.e2e.test.ts",
-		"test:debug": "rm -rf dist ../output-tests && pnpm run build && vitest run --reporter=verbose --reporter=json --outputFile=../output-tests/results.json",
-		"knip": "knip",
-		"knip:production": "knip --production",
-		"jscpd": "jscpd --config .jscpd.json --exitCode 1",
-		"prepublishOnly": "pnpm run typecheck && pnpm test && pnpm run build",
-		"prepack": "pnpm run build",
-		"install:local": "pnpm install ; pnpm run build ; pnpm link",
-		"install:local:packed": "pnpm run build && pnpm pack && pnpm install -g \"$(pwd)\"/ai-driven-dev-aidd-*.tgz && rm -v ai-driven-dev-aidd-*.tgz"
-	},
-	"dependencies": {
-		"commander": "^12.0.0",
-		"inquirer": "^9.2.15"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^1.9.4",
-		"lefthook": "^1.13.1",
-		"@types/inquirer": "^9.0.7",
-		"@types/node": "^20.11.16",
-		"jscpd": "^4.0.5",
-		"knip": "^5.63.0",
-		"tsup": "^8.0.1",
-		"typescript": "^5.3.3",
-		"vitest": "^2.1.0"
-	}
+  "name": "@ai-driven-dev/aidd-cli",
+  "version": "3.0.0",
+  "description": "AI-Driven Development CLI — distribute the AIDD framework across AI coding assistants",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "aidd": "dist/cli.js"
+  },
+  "files": ["dist", "README.md"],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "engines": {
+    "node": ">=24",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "pnpm build && vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "knip:production": "knip --production",
+    "jscpd": "jscpd src/",
+    "pack:local": "pnpm build && pnpm pack --pack-destination ./dist",
+    "install:local": "pnpm run pack:local && npm install -g ./dist/ai-driven-dev-aidd-cli-$(node -p \"require('./package.json').version\").tgz --force",
+    "prepare": "lefthook install"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.0.0",
+    "commander": "^12.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "@types/node": "^24.0.0",
+    "jscpd": "^4.0.0",
+    "knip": "^5.0.0",
+    "lefthook": "^1.13.1",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.0"
+  }
 }

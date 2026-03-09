@@ -11,7 +11,7 @@ Bienvenue dans le guide de contribution du CLI AIDD !
 - [Liens utiles](#liens-utiles)
 - [Comment contribuer](#comment-contribuer)
   - [1. Signaler des issues](#1-signaler-des-issues)
-    - [Créer une issue parfaite](#créer-une-issue-parfaite)
+    - [Créer une issue](#créer-une-issue)
     - [Projet (choisir CLI)](#projet-choisir-cli)
   - [2. Améliorer la documentation](#2-améliorer-la-documentation)
   - [3. Développer des fonctionnalités](#3-développer-des-fonctionnalités)
@@ -55,7 +55,7 @@ Utilisez les templates disponibles :
 - 🐛 **Bug Report** : Signaler un bug ou comportement inattendu
 - ✨ **Feature Request** : Proposer une nouvelle fonctionnalité
 
-#### Créer une issue parfaite
+#### Créer une issue
 
 | **Catégorie** | **Élément** | **Description**                           |
 | ------------- | ----------- | ----------------------------------------- |
@@ -69,19 +69,19 @@ Utilisez les templates disponibles :
 
 Vous devez toujours spécifier le projet et les métadonnées pertinentes :
 
-| **Catégorie**   | **Élément**   | **Description**                                             |
-| --------------- | ------------- | ----------------------------------------------------------- |
-| **Status**      | `Todo`        | À la création de l'issue                                    |
-|                 | `In progress` | Merci de respecter ceci 🙏                                  |
-|                 | `Done`        | Mergé dans `main`                                           |
-| **Complexité**  | `XS`          | Documentation                                               |
-|                 | `S`           | Petit fix ou amélioration                                   |
-|                 | `M`           | Fonctionnalité simple                                       |
-|                 | `L`           | Nécessite réflexion sur l'implémentation                    |
-|                 | `XL`          | Sujet complexe à discuter avec les coachs                   |
-| **Priorité**    | `urgent`      | À corriger MAINTENANT ou demain                             |
-|                 | `must-have`   | Sans ça, c'est pénible                                      |
-|                 | `should-have` | Pas obligatoire du tout mais on aimerait bien               |
+| **Catégorie**  | **Élément**   | **Description**                               |
+| -------------- | ------------- | --------------------------------------------- |
+| **Status**     | `Todo`        | À la création de l'issue                      |
+|                | `In progress` | Merci de respecter ceci 🙏                    |
+|                | `Done`        | Mergé dans `main`                             |
+| **Complexité** | `XS`          | Documentation                                 |
+|                | `S`           | Petit fix ou amélioration                     |
+|                | `M`           | Fonctionnalité simple                         |
+|                | `L`           | Nécessite réflexion sur l'implémentation      |
+|                | `XL`          | Sujet complexe à discuter avec les coachs     |
+| **Priorité**   | `urgent`      | À corriger MAINTENANT ou demain               |
+|                | `must-have`   | Sans ça, c'est pénible                        |
+|                | `should-have` | Pas obligatoire du tout mais on aimerait bien |
 
 ### 2. Améliorer la documentation
 
@@ -112,7 +112,7 @@ Les améliorations de documentation sont toujours bienvenues ! Typos, clarificat
 
 ### Prérequis
 
-- **Node.js** : >= 20.0.0
+- **Node.js** : >= 24.0.0
 - **pnpm** : >= 9.0.0
 - **Git** : Dernière version
 - **Accès GitHub** : Personal Access Token avec le scope `read:packages`
@@ -220,12 +220,12 @@ chore(ci): optimize test workflow
 
 Utilisez AIDD CLI pour construire AIDD CLI 😈
 
-**Utiliser les prompts AIDD :**
+**Utiliser les commandes AIDD :**
 
 ```bash
-/ide:04_code:implement "<technical plan>"
-/ide:06_tests:write
-/ide:05_review:review_code
+/implement "<technical plan>"
+/test
+/review_code
 ```
 
 ### 4. Tester localement
@@ -249,17 +249,16 @@ aidd install
 
 Nous visons une suite de tests de qualité professionnelle, toutes les contributions doivent inclure des tests.
 
-| **Commande**      | **Objectif**                   | **Quand l'utiliser**        |
-| ----------------- | ------------------------------ | --------------------------- |
-| `pnpm test:unit`  | Tests unitaires uniquement     | Dev local, hook pre-commit  |
-| `pnpm test`       | Tests E2E complets             | Avant push, CI              |
-| `pnpm test:full`  | E2E complets avec pack         | Avant push, validation      |
-| `pnpm test:watch` | Mode watch pour tests unitaires | Développement actif         |
-| `pnpm test:debug` | E2E avec sortie verbeuse       | Débogage                    |
+| **Commande**      | **Objectif**                  | **Quand l'utiliser** |
+| ----------------- | ----------------------------- | -------------------- |
+| `pnpm test`       | Build + tous les tests (E2E)  | Avant push, CI       |
+| `pnpm test:watch` | Mode watch (tests sans build) | Développement actif  |
+| `pnpm typecheck`  | Vérification TypeScript       | Avant commit         |
+| `pnpm lint`       | Lint + format (biome)         | Avant commit         |
 
 ### 6. Processus de Pull Request
 
-1. Pusher votre branche et ouvrir une PR vers `main` depuis le template `.github/pull_request_template.md`.
+1. Pusher votre branche et ouvrir une PR vers `main` — le template `.github/pull_request_template.md` sera appliqué automatiquement.
 2. Assigner les reviewers (`Baptiste`, puis `Alex` si nécessaire).
 
 ---

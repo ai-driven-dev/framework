@@ -1,190 +1,245 @@
-# 📦 AI-Driven Development CLI (outdated)
+# 📦 AIDD CLI v3.0
 
-> Nous travaillons activement à sa refonte, en attendant rendez-vous sur [le framework AIDD](https://github.com/ai-driven-dev/aidd-framework).
+Le **AIDD CLI** (`@ai-driven-dev/aidd-cli`) est l'installateur TypeScript du framework AI-Driven Development. Il distribue le framework AIDD de manière cohérente à travers plusieurs assistants IA (Claude Code, Cursor, GitHub Copilot), en générant les fichiers spécifiques à chaque outil et en suivant chaque installation via un manifeste basé sur des hashes MD5.
 
-[![npm version](https://img.shields.io/badge/npm-v1.9.5-blue)](https://github.com/ai-driven-dev/aidd/pkgs/npm/aidd)
-![beta](https://img.shields.io/badge/status-beta-yellow)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
+- [Fonctionnalités](#fonctionnalités)
+- [Prérequis](#prérequis)
+- [Installation](#installation)
+- [Utiliser le token AIDD](#utiliser-le-token-aidd)
+- [Commandes](#commandes)
+  - [`aidd init`](#aidd-init)
+  - [Première utilisation](#première-utilisation)
+  - [`aidd status`](#aidd-status)
+  - [`aidd doctor`](#aidd-doctor)
+  - [`aidd uninstall`](#aidd-uninstall)
+  - [`aidd clean`](#aidd-clean)
+  - [Options globales](#options-globales)
+- [Architecture](#architecture)
+- [Développement](#développement)
+- [Contribuer](#contribuer)
+- [Licence](#licence)
 
-> Installe et configure le framework AI-Driven Development sur vos projets pour les IDEs IA les plus populaires.
+## Fonctionnalités
 
-```bash
-npm install -g @ai-driven-dev/aidd
-```
+| Commande                    | Description                                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `aidd init [--force]`       | Initialise la structure `aidd_docs/` et le manifeste (`--force` recopie les templates docs sans clean) |
+| `aidd install <tools...>`   | Génère les fichiers spécifiques à chaque outil (`--all`, `--force`)                                    |
+| `aidd uninstall <tools...>` | Supprime les fichiers d'un outil proprement (`--all`)                                                  |
+| `aidd status [--tool]`      | Dérive fichiers vs manifest : `~` modifié, `-` supprimé, `+` ajouté                                    |
+| `aidd doctor`               | Intégrité structurelle : manifest, répertoires orphelins, références cassées                           |
+| `aidd clean [--force]`      | Supprime toutes les traces AIDD (dry-run sans `--force`)                                               |
+| `aidd update`               | Met à jour les distributions vers la dernière version du framework (v3.1+)                             |
+| `aidd restore <tool>`       | Restaure les fichiers modifiés à leur version d'origine (v3.1+)                                        |
+| `aidd sync --source <tool>` | Propage les modifications d'un outil vers les autres (v3.1+)                                           |
+| `aidd cache`                | Liste ou supprime les versions du framework en cache (v3.2+)                                           |
+| `aidd config get/set`       | Lit ou modifie les paramètres du projet (v3.2+)                                                        |
 
-## 📑 Sommaire
+**Options globales :** `--verbose`, `--token`, `--repo`, `--framework`, `--release`, `--release`
 
-- [📑 Sommaire](#-sommaire)
-- [✨ Qu'est-ce que AIDD CLI ?](#-quest-ce-que-aidd-cli-)
-- [🚀 Démarrage rapide](#-démarrage-rapide)
-- [🎯 IDEs supportés](#-ides-supportés)
-- [🔧 Commandes](#-commandes)
-  - [`aidd install`](#aidd-install)
-  - [`aidd worktree`](#aidd-worktree)
-- [📁 Structure générée](#-structure-générée)
-  - [Contenu par IDE](#contenu-par-ide)
-- [🔑 Installation détaillée](#-installation-détaillée)
-  - [1. Créer un Personal Access Token](#1-créer-un-personal-access-token)
-  - [2. Configurer npm](#2-configurer-npm)
-  - [3. Installer](#3-installer)
-- [👌 Contribuer](#-contribuer)
+**Outils supportés :** Claude Code · Cursor · GitHub Copilot
 
----
+## Prérequis
 
-## ✨ Qu'est-ce que AIDD CLI ?
+| Prérequis                | Version | Notes                                                                             |
+| ------------------------ | ------- | --------------------------------------------------------------------------------- |
+| **Node.js**              | >= 24   | [nodejs.org](https://nodejs.org) — LTS depuis octobre 2024                        |
+| **Token AIDD**           | —       | Requis pour télécharger le framework                                              |
+| **tar**                  | —       | Préinstallé sur macOS, Linux, WSL et Windows 10 1803+                             |
+| **gh CLI** _(optionnel)_ | —       | Si installé et authentifié (`gh auth login`), le token est résolu automatiquement |
 
-AIDD CLI installe le [framework AI-Driven Development](https://github.com/ai-driven-dev/aidd-framework/blob/main/README.md) sur vos projets avec un workflow de configuration personnalisé.
+> **Windows :** fonctionne nativement sous Windows 10 1803+ (PowerShell ou cmd) et sous WSL. `tar.exe` est fourni par Windows. En cas de problème de permissions avec `npm install -g`, utiliser un terminal administrateur ou WSL.
 
-**Ce qui est installé :**
+## Installation
 
-| Composant       | Description                                                    |
-| --------------- | -------------------------------------------------------------- |
-| **Commands**    | Commandes SDLC par phase (`/plan`, `/implement`, `/review`...) |
-| **Agents**      | Agents spécialisés (alexia, claire, kent, martin...)           |
-| **Rules**       | Règles de codage appliquées automatiquement                    |
-| **Skills**      | Capacités réutilisables                                        |
-| **Templates**   | Modèles de documents (PRD, plans, user stories...)             |
-| **Memory Bank** | Fichiers de contexte projet (CLAUDE.md, AGENTS.md)             |
-| **MCP Config**  | Configuration des serveurs MCP                                 |
+Le package est privé et hébergé sur GitHub Packages. Il requiert un token d'accès AIDD.
 
----
-
-## 🚀 Démarrage rapide
-
-> Guide complet : [GETTING_STARTED.md](./docs/GETTING_STARTED.md)
-
-```bash
-# 1. Installer globalement
-npm install -g @ai-driven-dev/aidd
-
-# 2. Dans votre projet
-cd your-project
-
-# 3. Lancer l'installation
-aidd install
-```
-
----
-
-## 🎯 IDEs supportés
-
-| IDE                                                   | Status | Commands | Agents | Rules | MCP |
-| ----------------------------------------------------- | :----: | :------: | :----: | :---: | :-: |
-| [Claude Code](https://claude.ai/code)                 |   ✅   |    ✅    |   ✅   |  ✅   | ✅  |
-| [GitHub Copilot](https://github.com/features/copilot) |   ✅   |    ✅    |   ✅   |  ✅   | ✅  |
-| [Cursor](https://cursor.so)                           |   🔶   |    ✅    |   ⚠️   |  ✅   | ✅  |
-
----
-
-## 🔧 Commandes
-
-### `aidd install`
-
-Installation interactive du framework.
-
-| Option      | Description                                 |
-| ----------- | ------------------------------------------- |
-| `--auto`    | Installation automatique avec les défauts   |
-| `--full`    | Installation complète (tous les composants) |
-| `--force`   | Écrase les fichiers existants               |
-| `--dry-run` | Prévisualise sans appliquer                 |
-| `--verbose` | Logs détaillés                              |
-
-### `aidd worktree`
-
-Crée un worktree Git temporaire pour exécuter des commandes en isolation.
+**macOS / Linux / WSL :**
 
 ```bash
-aidd worktree "pnpm test"
-aidd worktree "feat/my-feature" "pnpm run build"
-```
+# Configurer le registre GitHub Packages
+echo "@ai-driven-dev:registry=https://npm.pkg.github.com" >> ~/.npmrc
+echo "//npm.pkg.github.com/:_authToken=<YOUR_TOKEN>" >> ~/.npmrc
 
----
+# Installer globalement
+npm install -g @ai-driven-dev/aidd-cli
 
-## 📁 Structure générée
-
-Après installation, votre projet contient :
-
-```text
-your-project/
-├── .aidd/
-│   └── config.yml              # Configuration AIDD
-│
-├── .claude/                     # Hard copies pour Claude Code
-│   ├── agents/
-│   ├── commands/               # Par phase (01_onboard → 10_maintenance)
-│   ├── rules/
-│   └── skills/
-│
-├── .cursor/                     # Hard copies pour Cursor
-│   ├── agents/
-│   ├── commands/
-│   ├── rules/
-│   └── skills/
-│
-├── .github/                     # Hard copies pour GitHub Copilot
-│   ├── agents/                 # *.agent.md
-│   ├── instructions/           # *.instructions.md (rules)
-│   ├── prompts/                # *.prompt.md (commands)
-│   ├── skills/
-│   └── copilot-instructions.md
-│
-├── .vscode/
-│   └── mcp.json                # MCP config (Copilot)
-│
-├── aidd_docs/                   # Documentation projet
-│   ├── memory/                 # Contexte projet (internal/, external/)
-│   ├── tasks/                  # Historique des tâches
-│   └── templates/              # Modèles de documents
-│
-├── .mcp.json                    # MCP config (Claude Code)
-├── CLAUDE.md                    # Memory bank (Claude Code)
-└── AGENTS.md                    # Memory bank (Cursor)
-```
-
-### Contenu par IDE
-
-| Dossier      | Claude Code | Cursor | Copilot |
-| ------------ | :---------: | :----: | :-----: |
-| `.claude/`   |     ✅      |   -    |    -    |
-| `.cursor/`   |      -      |   ✅   |    -    |
-| `.github/`   |      -      |   -    |   ✅    |
-| `aidd_docs/` |     ✅      |   ✅   |   ✅    |
-
----
-
-## 🔑 Installation détaillée
-
-> Package privé, réservé aux membres Core Team.
-
-### 1. Créer un Personal Access Token
-
-1. [GitHub Settings > Tokens](https://github.com/settings/tokens)
-2. **Generate new token (classic)**
-3. Scope : ✅ `read:packages`
-4. Copier le token
-
-### 2. Configurer npm
-
-```bash
-# ~/.npmrc
-@ai-driven-dev:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=ghp_your_token_here
-```
-
-### 3. Installer
-
-```bash
-npm install -g @ai-driven-dev/aidd
+# Vérifier l'installation
 aidd --version
 ```
 
+**Windows (PowerShell) :**
+
+```powershell
+npm config set @ai-driven-dev:registry https://npm.pkg.github.com
+npm config set //npm.pkg.github.com/:_authToken <YOUR_TOKEN>
+
+npm install -g @ai-driven-dev/aidd-cli
+aidd --version
+```
+
+## Utiliser le token AIDD
+
+Le token est requis à chaque téléchargement du framework (commandes `init` et `install`). Trois façons de le fournir :
+
+**Option 1 — Variable d'environnement (recommandé)**
+
+```bash
+export AIDD_TOKEN=<YOUR_TOKEN>
+aidd install claude
+```
+
+Ajouter à `~/.bashrc`, `~/.zshrc` ou `~/.profile` pour le rendre persistant.
+
+**Option 2 — gh CLI (si déjà installé)**
+
+```bash
+gh auth login   # une seule fois
+aidd install claude   # le token est résolu automatiquement
+```
+
+**Option 3 — Flag inline**
+
+```bash
+aidd install claude --token <YOUR_TOKEN>
+```
+
+## Commandes
+
+### `aidd init`
+
+Initialise la structure `aidd_docs/` et le manifeste `.aidd/manifest.json`.
+
+```bash
+aidd init                        # première initialisation
+aidd init --docs-dir my_docs    # répertoire docs personnalisé
+aidd init --force                # recopie les templates docs sans clean (préserve les outils installés)
+```
+
+### Première utilisation
+
+```bash
+# 1. Initialiser la structure docs (aidd_docs/ + manifest)
+aidd init
+
+# 2. Installer pour un ou plusieurs outils
+aidd install claude cursor
+
+# Ou tout installer d'un coup
+aidd install --all
+```
+
+> `aidd install` appelle automatiquement `init` si aucun manifeste n'existe.
+
+### `aidd status`
+
+Compare les fichiers sur le disque avec le manifeste et affiche les écarts par outil.
+
+```bash
+aidd status                      # tous les outils
+aidd status --tool claude        # filtrer par outil
+```
+
+Légende : `~` modifié · `-` supprimé · `+` ajouté (présent sur disque, non tracké)
+
+### `aidd doctor`
+
+Vérifie l'intégrité structurelle de l'installation. Retourne le code 1 en cas de problème (compatible CI).
+
+```bash
+aidd doctor
+```
+
+Détecte :
+
+- Manifest absent ou corrompu (JSON invalide)
+- Répertoires d'outils présents sur le disque mais non trackés dans le manifest (orphelins)
+- Références cassées dans les fichiers `.md`/`.mdc` trackés (`@path` pour Claude/Cursor, liens markdown pour Copilot)
+
+> Les fichiers supprimés ou modifiés localement sont du drift, pas des problèmes structurels — utiliser `aidd status` pour les voir.
+
+### `aidd uninstall`
+
+Supprime les fichiers d'un outil et retire ses entrées du manifest.
+
+```bash
+aidd uninstall cursor
+aidd uninstall --all             # tous les outils installés
+```
+
+### `aidd clean`
+
+Supprime toutes les traces AIDD du projet (fichiers générés + manifest).
+
+```bash
+aidd clean                       # dry-run : affiche ce qui sera supprimé
+aidd clean --force               # suppression effective
+```
+
+### Options globales
+
+```bash
+aidd install claude --verbose            # logs détaillés
+aidd install claude --token <token>      # token explicite
+aidd install claude --repo owner/repo    # framework alternatif
+aidd install claude --framework ./local  # framework local (dev/test)
+aidd install claude --release v3.2.0    # version spécifique du framework
+```
+
+**Variables d'environnement :**
+
+| Variable       | Description                                 |
+| -------------- | ------------------------------------------- |
+| `AIDD_TOKEN`   | Token d'authentification GitHub Packages    |
+| `AIDD_REPO`    | Dépôt framework personnalisé (`owner/repo`) |
+| `AIDD_VERBOSE` | Mode verbeux (`true`/`false`)               |
+
+## Architecture
+
+Architecture 3 couches (Domain → Application → Infrastructure) :
+
+```
+src/
+├── cli.ts                    # Point d'entrée commander
+├── domain/                   # Modèles métier + ports + tool-configs
+├── application/              # Use cases + commandes commander
+└── infrastructure/           # Adaptateurs + HTTP + cache + auth
+```
+
+Pour plus de détails, voir [aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md).
+
+## Développement
+
+```bash
+# Prérequis supplémentaires pour le dev : pnpm >= 9
+
+# Installer les dépendances
+pnpm install
+
+# Build
+pnpm build
+
+# Tests (build + vitest)
+pnpm test
+
+# Typecheck + lint
+pnpm typecheck && pnpm lint
+
+# Test local du CLI
+pnpm run install:local
+aidd --version
+```
+
+## Contribuer
+
+Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour le guide de contribution complet.
+
+Les contributions de code sont ouvertes aux membres **Obsidian+** certifiés.
+
+## Licence
+
+Dépôt privé pour tous les membres de l'équipe AIDD.
+
 ---
 
-## 👌 Contribuer
-
-[Guide de contribution](./CONTRIBUTING.md)
-
----
-
-← [Retour au repo principal](https://github.com/ai-driven-dev/aidd/blob/main/README.md)
+← [Retour au repo principal](https://github.com/ai-driven-dev/aidd)

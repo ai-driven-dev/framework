@@ -1,0 +1,25 @@
+{
+  "recommendations": [
+    // Code Spell Checker (English),
+    "streetsidesoftware.code-spell-checker",
+    // Code Spell Checker (French)
+    "streetsidesoftware.code-spell-checker-french",
+    // Docker support
+    "ms-azuretools.vscode-docker",
+    // GitLens
+    "eamodio.gitlens",
+    // Markdown All in One
+    "yzhang.markdown-all-in-one",
+    // Markdown Linting
+    "davidanson.vscode-markdownlint",
+    // Mermaid Preview
+    "MermaidChart.vscode-mermaid-chart",
+    // Rainbow CSV
+    "mechatroner.rainbow-csv",
+    // RepoMix
+    "DorianMassoulier.repomix-runner",
+    // SpecStory
+    "specstory.specstory-vscode"
+  ],
+  "unwantedRecommendations": []
+}

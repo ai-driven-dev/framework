@@ -32,3 +32,9 @@ pre-push:
         else
           echo "⚠️  Parent repo not found, skipping hooks"
         fi
+
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm exec commitlint --edit {1}
+

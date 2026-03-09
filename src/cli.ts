@@ -1,59 +1,42 @@
-#!/usr/bin/env node
-
+import { readFileSync } from "node:fs";
+import { platform } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Command } from "commander";
-import { installCommand } from "./app/commands/install.js";
-import { worktreeCommand } from "./app/commands/worktree.js";
+import { registerCleanCommand } from "./application/commands/clean.js";
+import { registerDoctorCommand } from "./application/commands/doctor.js";
+import { registerInitCommand } from "./application/commands/init.js";
+import { registerInstallCommand } from "./application/commands/install.js";
+import { registerStatusCommand } from "./application/commands/status.js";
+import { registerUninstallCommand } from "./application/commands/uninstall.js";
 
-const program = new Command()
-	.name("aidd")
-	.description("AI-Driven Development CLI - Install AIDD framework in projects")
-	.version("1.9.7");
+function formatVersion(): string {
+  try {
+    const pkgPath = join(dirname(fileURLToPath(import.meta.url)), "..", "package.json");
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf-8")) as { version: string };
+    return `aidd/${pkg.version} node/${process.versions.node} ${platform()}-${process.arch}`;
+  } catch {
+    return `aidd/UNKNOWN node/${process.versions.node} ${platform()}-${process.arch}`;
+  }
+}
 
-program
-	.command("install")
-	.description("Install AIDD framework in target project")
-	.option(
-		"-d, --directory <path>",
-		"Installation directory (default: current directory)",
-	)
-	.option("--skip-framework", "Skip AIDD framework installation (use existing)")
-	.option("--dry-run", "Preview changes without applying them")
-	.option("-v, --verbose", "Enable verbose output for detailed logging")
-	.option(
-		"--force",
-		"Overwrite existing configuration without asking for confirmation",
-	)
-	.option(
-		"--full",
-		"Install all components without interactive prompts (for testing)",
-	)
-	.option("--auto", "Automatic installation with optimized selection")
-	.action(async (options) => {
-		const result = await installCommand(options);
-		if (!result.success) {
-			process.exit(1);
-		}
-	});
+const program = new Command();
 
 program
-	.command("worktree")
-	.description(
-		"Create temporary git worktree and run command (optional name, required command)",
-	)
-	.argument(
-		"<name-or-command>",
-		"Worktree name (if two args) or command (if one arg)",
-	)
-	.argument("[command]", "Command to run (if name provided)")
-	.action(async (nameOrCommand, command) => {
-		// If only one argument is provided, it's the command
-		// If two arguments are provided, first is name, second is command
-		const result = command
-			? await worktreeCommand(nameOrCommand, command)
-			: await worktreeCommand(nameOrCommand);
-		if (!result.success) {
-			process.exit(1);
-		}
-	});
+  .name("aidd")
+  .description("Generate AI coding assistant configurations from the AIDD framework")
+  .version(formatVersion(), "-V, --version", "Show version number")
+  .option("--verbose", "Show detailed diagnostic output", false)
+  .option("--repo <owner/repo>", "GitHub repository in owner/repo format")
+  .option("--token <token>", "GitHub authentication token")
+  .option("--framework <path>", "Path to a local framework directory or tarball")
+  .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)");
 
-program.parse();
+registerInitCommand(program);
+registerInstallCommand(program);
+registerUninstallCommand(program);
+registerStatusCommand(program);
+registerCleanCommand(program);
+registerDoctorCommand(program);
+
+program.parse(process.argv);
