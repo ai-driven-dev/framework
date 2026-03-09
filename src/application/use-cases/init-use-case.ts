@@ -46,7 +46,7 @@ export class InitUseCase {
     } else {
       if (existing !== null) {
         throw new Error(
-          `Already initialized (docs in "${existing.docsDir}"). Run \`aidd clean\` first to re-initialize.`
+          `Already initialized (docs in "${existing.docsDir}"). Use \`aidd init --force\` to re-copy docs, or \`aidd clean --force\` to reset completely.`
         );
       }
       const docsDirPath = join(projectRoot, docsDir);
