@@ -72,7 +72,7 @@ We have decided to put those into categories that serve the **Software Developme
 | 09    | Refactor      | Performance optimization, security refactoring         |
 | 10    | Maintenance   | Debugging, issue tracking, codebase audits             |
 
-> See more here: [Command SDLC phases]({{TOOLS}}/rules/01-standards/1-command-structure.md) — the 10 phases from Onboard to Maintenance
+> See more here: [CATALOG.md]({{DOCS}}/CATALOG.md) — the 10 phases from Onboard to Maintenance
 
 ### Framework Structure
 
@@ -200,7 +200,7 @@ Your project is configured, assertions pass. Now pick the right workflow for you
 
 #### Where will rules be stored?
 
-> See full [Rule categories]({{TOOLS}}/rules/01-standards/1-rule-structure.md) — the 10 rule directories from Architecture to Other
+> See full [CATALOG.md]({{DOCS}}/CATALOG.md) — the 10 rule directories from Architecture to Other
 
 | #    | Category                   | Content                     | Examples                        |
 | ---- | -------------------------- | --------------------------- | ------------------------------- |
