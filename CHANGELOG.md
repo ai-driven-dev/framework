@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.1](https://github.com/ai-driven-dev/aidd-framework/compare/v3.4.0...v3.4.1) (2026-03-09)
+
+
+### Bug Fixes
+
+* use PACKAGES_TOKEN secret for GitHub Packages auth ([7785719](https://github.com/ai-driven-dev/aidd-framework/commit/7785719487631ab1278da83545451ffe67171a2d))
+
 ## [3.4.0](https://github.com/ai-driven-dev/aidd-framework/compare/v3.3.4...v3.4.0) (2026-03-09)
 
 
