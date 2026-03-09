@@ -1,13 +1,16 @@
 {
   "name": "@ai-driven-dev/aidd-cli",
-  "version": "1.9.6",
+  "version": "2.0.0",
   "description": "AI-Driven Development CLI — distribute the AIDD framework across AI coding assistants",
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
     "aidd": "dist/cli.js"
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
