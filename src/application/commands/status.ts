@@ -44,49 +44,52 @@ export function registerStatusCommand(program: Command): void {
         const hasUpdates =
           report.tools.some((t) => t.updateAvailable) || !!report.docs?.updateAvailable;
 
-        if (report.tools.length === 0 && !filterToolId) {
-          output.print("No tools installed. Run `aidd install <tool>` to get started.");
-          if (!hasUpdates && report.inSync) return;
-        } else if (report.inSync) {
-          output.success("All files are in sync");
-          if (!hasUpdates) return;
+        if (hasUpdates) {
+          for (const tool of report.tools) {
+            if (tool.updateAvailable) {
+              output.print(
+                `${tool.toolId}: Update available: v${tool.updateAvailable.current} -> v${tool.updateAvailable.latest}`
+              );
+            }
+          }
+          if (report.docs?.updateAvailable) {
+            output.print(
+              `docs: Update available: v${report.docs.updateAvailable.current} -> v${report.docs.updateAvailable.latest}`
+            );
+          }
+          const docsOutdated = !!report.docs?.updateAvailable;
+          const toolsOutdated = report.tools.some((t) => t.updateAvailable);
+          if (docsOutdated) output.print("Run `aidd init --force` to update docs.");
+          if (toolsOutdated) output.print("Run `aidd install --all` to update tools.");
+          output.print("");
         }
 
-        if (!report.inSync) {
-          for (const tool of report.tools) {
-            if (tool.drifted.length === 0) continue;
-            output.print(`\n${tool.toolId} (v${tool.version}):`);
-            for (const file of tool.drifted) {
-              output.print(`  ${STATUS_SYMBOL[file.status]} ${file.relativePath}`);
-            }
-            printDriftStats(output, tool.drifted);
-          }
-
-          if (report.docs && report.docs.drifted.length > 0) {
-            output.print(`\ndocs (v${report.docs.version}):`);
-            for (const file of report.docs.drifted) {
-              output.print(`  ${STATUS_SYMBOL[file.status]} ${file.relativePath}`);
-            }
-            printDriftStats(output, report.docs.drifted);
-          }
+        if (report.tools.length === 0 && !filterToolId) {
+          output.print("No tools installed. Run `aidd install <tool>` to get started.");
+          if (report.inSync) return;
+        } else if (report.inSync) {
+          output.success("All files are in sync");
+          return;
         }
 
         for (const tool of report.tools) {
-          if (tool.updateAvailable) {
-            output.print(
-              `${tool.toolId}: Update available: v${tool.updateAvailable.current} -> v${tool.updateAvailable.latest}`
-            );
+          if (tool.drifted.length === 0) continue;
+          output.print(`\n${tool.toolId} (v${tool.version}):`);
+          for (const file of tool.drifted) {
+            output.print(`  ${STATUS_SYMBOL[file.status]} ${file.relativePath}`);
           }
-        }
-        if (report.docs?.updateAvailable) {
-          output.print(
-            `docs: Update available: v${report.docs.updateAvailable.current} -> v${report.docs.updateAvailable.latest}`
-          );
+          printDriftStats(output, tool.drifted);
         }
 
-        if (!report.inSync) {
-          output.print("\nLegend: ~ modified  - deleted  + added");
+        if (report.docs && report.docs.drifted.length > 0) {
+          output.print(`\ndocs (v${report.docs.version}):`);
+          for (const file of report.docs.drifted) {
+            output.print(`  ${STATUS_SYMBOL[file.status]} ${file.relativePath}`);
+          }
+          printDriftStats(output, report.docs.drifted);
         }
+
+        output.print("\nLegend: ~ modified  - deleted  + added");
       } catch (error) {
         output.exit(error);
       }

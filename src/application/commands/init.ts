@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
+import { printUpdateBanner } from "../check-update.js";
 import { CLIOutput } from "../output.js";
 import { InitUseCase } from "../use-cases/init-use-case.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
@@ -46,6 +47,7 @@ export function registerInitCommand(program: Command): void {
           },
           output
         );
+        await printUpdateBanner(deps.resolver, deps.manifestRepo, output);
         const { path: frameworkPath, version } = await resolveFramework(
           deps.resolver,
           deps.logger,

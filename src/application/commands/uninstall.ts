@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
+import { printUpdateBanner } from "../check-update.js";
 import { CLIOutput } from "../output.js";
 import { UninstallUseCase } from "../use-cases/uninstall-use-case.js";
 
@@ -29,6 +30,8 @@ export function registerUninstallCommand(program: Command): void {
 
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
+
+        await printUpdateBanner(deps.resolver, deps.manifestRepo, output);
 
         let toolIds: ToolId[];
         if (cmdOptions.all) {

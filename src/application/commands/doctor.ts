@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
+import { printUpdateBanner } from "../check-update.js";
 import { CLIOutput } from "../output.js";
 import { DoctorUseCase } from "../use-cases/doctor-use-case.js";
 
@@ -15,6 +16,9 @@ export function registerDoctorCommand(program: Command): void {
 
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
+
+        await printUpdateBanner(deps.resolver, deps.manifestRepo, output);
+
         const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
         const report = await useCase.execute({ projectRoot });
 
