@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.3.4](https://github.com/ai-driven-dev/aidd-framework/compare/v3.3.3...v3.3.4) (2026-03-09)
+
+
+### Bug Fixes
+
+* update link to CATALOG.md in README ([6a9c2e7](https://github.com/ai-driven-dev/aidd-framework/commit/6a9c2e7c2aab121b7f76632c8eae3f27586c626b))
+* update links to CATALOG.md in README for consistency ([5990084](https://github.com/ai-driven-dev/aidd-framework/commit/59900843ebc5cddf9d653f75409ab2e7fbd54d84))
+
 ## [3.3.3](https://github.com/ai-driven-dev/aidd-framework/compare/v3.3.2...v3.3.3) (2026-03-07)
 
 
