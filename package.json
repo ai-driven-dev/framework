@@ -1,6 +1,7 @@
 {
   "private": true,
   "scripts": {
+    "build": "bash scripts/build-dist.sh",
     "prepare": "lefthook install || true"
   },
   "devDependencies": {

@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  packages: read
 
 jobs:
   release-please:
@@ -34,8 +35,14 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install CLI
+        run: |
+          npm config set @ai-driven-dev:registry https://npm.pkg.github.com
+          npm config set //npm.pkg.github.com/:_authToken ${{ github.token }}
+          npm install -g @ai-driven-dev/aidd-cli
+
       - name: Build distributions
-        run: node scripts/sync-dist.js
+        run: bash scripts/build-dist.sh
 
       - name: Build source tarball
         run: |
@@ -54,7 +61,9 @@ jobs:
           VERSION="${{ needs.release-please.outputs.version }}"
           for tool in claude cursor copilot; do
             tar czf "/tmp/aidd-${tool}-${VERSION}.tar.gz" \
-              -C dist/${tool} .
+              -C dist/${tool} \
+              --exclude='.aidd' \
+              .
           done
 
       - name: Attach tarballs to release
