@@ -1,6 +1,6 @@
 # 📦 AIDD CLI v3.0
 
-Le **AIDD CLI** (`@ai-driven-dev/aidd-cli`) est l'installateur TypeScript du framework AI-Driven Development. Il distribue le framework AIDD de manière cohérente à travers plusieurs assistants IA (Claude Code, Cursor, GitHub Copilot), en générant les fichiers spécifiques à chaque outil et en suivant chaque installation via un manifeste basé sur des hashes MD5.
+Le **AIDD CLI** (`@ai-driven-dev/cli`) est l'installateur TypeScript du framework AI-Driven Development. Il distribue le framework AIDD de manière cohérente à travers plusieurs assistants IA (Claude Code, Cursor, GitHub Copilot), en générant les fichiers spécifiques à chaque outil et en suivant chaque installation via un manifeste basé sur des hashes MD5.
 
 - [Fonctionnalités](#fonctionnalités)
 - [Prérequis](#prérequis)
@@ -62,7 +62,7 @@ echo "@ai-driven-dev:registry=https://npm.pkg.github.com" >> ~/.npmrc
 echo "//npm.pkg.github.com/:_authToken=<YOUR_TOKEN>" >> ~/.npmrc
 
 # Installer globalement
-npm install -g @ai-driven-dev/aidd-cli
+npm install -g @ai-driven-dev/cli
 
 # Vérifier l'installation
 aidd --version
@@ -75,7 +75,7 @@ aidd --version
 npm config set @ai-driven-dev:registry https://npm.pkg.github.com
 npm config set //npm.pkg.github.com/:_authToken <YOUR_TOKEN>
 
-npm install -g @ai-driven-dev/aidd-cli
+npm install -g @ai-driven-dev/cli
 aidd --version
 ```
 

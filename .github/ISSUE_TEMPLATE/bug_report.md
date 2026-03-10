@@ -32,7 +32,7 @@ aidd <command> [options]
 
 - OS : <!-- macOS / Linux / Windows -->
 - Node.js : <!-- node --version -->
-- aidd-cli : <!-- aidd --version -->
+- @ai-driven-dev/cli : <!-- aidd --version -->
 - Outil cible : <!-- claude / cursor / copilot -->
 
 ## Contexte supplémentaire

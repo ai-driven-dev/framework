@@ -1,5 +1,5 @@
 {
-  "name": "@ai-driven-dev/aidd-cli",
+  "name": "@ai-driven-dev/cli",
   "version": "2.1.0",
   "description": "AI-Driven Development CLI — distribute the AIDD framework across AI coding assistants",
   "type": "module",
@@ -27,7 +27,7 @@
     "knip:production": "knip --production",
     "jscpd": "jscpd src/",
     "pack:local": "pnpm build && pnpm pack --pack-destination ./dist",
-    "install:local": "pnpm run pack:local && npm install -g ./dist/ai-driven-dev-aidd-cli-$(node -p \"require('./package.json').version\").tgz --force",
+    "install:local": "pnpm run pack:local && npm install -g ./dist/ai-driven-dev-cli-$(node -p \"require('./package.json').version\").tgz --force",
     "prepare": "lefthook install"
   },
   "dependencies": {

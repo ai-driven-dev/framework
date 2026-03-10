@@ -101,7 +101,7 @@ tests/
 
 ## Non-source Files
 
-- `package.json` — `@ai-driven-dev/aidd-cli` v3.0.0, GitHub Packages registry, Node >= 24
+- `package.json` — `@ai-driven-dev/cli` v3.0.0, GitHub Packages registry, Node >= 24
 - `tsup.config.ts` — single ESM bundle, target node20 (build target, runtime requires node >= 24)
 - `vitest.config.ts` — test runner with path aliases
 - `biome.json` — lint + format config
