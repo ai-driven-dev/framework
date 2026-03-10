@@ -47,19 +47,19 @@ This repository uses [Conventional Commits](https://www.conventionalcommits.org/
 <type>: <description>
 ```
 
-| Type       | Purpose                                             | Version bump |
-| ---------- | --------------------------------------------------- | ------------ |
-| `feat`     | New feature (agent, command, rule, skill, template) | Minor        |
-| `fix`      | Bug fix or correction                               | Patch        |
-| `perf`     | Performance improvement                             | Patch        |
-| `revert`   | Revert a previous commit                            | Patch        |
-| `docs`     | Documentation, templates                            | None         |
-| `style`    | Formatting, whitespace                              | None         |
-| `refactor` | Restructuring without behavior change               | None         |
-| `test`     | Adding or updating tests                            | None         |
-| `build`    | Build system or external dependencies               | None         |
-| `ci`       | CI/CD configuration                                 | None         |
-| `chore`    | Maintenance, tooling                                | None         |
+| Type       | Purpose                                             | Version bump | Changelog |
+| ---------- | --------------------------------------------------- | ------------ | --------- |
+| `feat`     | New feature (agent, command, rule, skill, template) | Minor        | ✅        |
+| `fix`      | Bug fix or correction                               | Patch        | ✅        |
+| `perf`     | Performance improvement                             | Patch        | ✅        |
+| `revert`   | Revert a previous commit                            | Patch        | ✅        |
+| `docs`     | Documentation, templates                            | None         | ✅        |
+| `refactor` | Restructuring without behavior change               | None         | ✅        |
+| `style`    | Formatting, whitespace                              | None         | —         |
+| `test`     | Adding or updating tests                            | None         | —         |
+| `build`    | Build system or external dependencies               | None         | —         |
+| `ci`       | CI/CD configuration                                 | None         | —         |
+| `chore`    | Maintenance, tooling                                | None         | —         |
 
 **Breaking changes:** add `!` after any type to trigger a **major** version bump (e.g., `feat!:`, `fix!:`, `refactor!:`). Use this when renaming files, removing content, or changing structure in a way that breaks existing setups.
 
