@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-- **Package**: `@ai-driven-dev/aidd-cli` v3.0.0
+- **Package**: `@ai-driven-dev/cli` v3.0.0
 - **Vision**: Distribute a canonical AI-Driven Development framework consistently across multiple AI coding assistants, eliminating manual tool-specific adaptation
 - **Mission**: CLI that resolves the AIDD framework from remote/local sources, generates tool-specific file distributions with content rewriting and frontmatter conversion, and tracks every generated file in a hash-based manifest
 

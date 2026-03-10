@@ -2,7 +2,7 @@
 
 ## Summary
 
-- **Project**: AIDD CLI (@ai-driven-dev/aidd-cli)
+- **Project**: AIDD CLI (@ai-driven-dev/cli)
 - **Started**: 2026-02-26
 - **Status**: In progress
 
