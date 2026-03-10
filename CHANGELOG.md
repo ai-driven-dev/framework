@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.4.4](https://github.com/ai-driven-dev/aidd-framework/compare/v3.4.3...v3.4.4) (2026-03-10)
+
+
+### Bug Fixes
+
+* remove unnecessary metadata from IDE mapping files ([839d8f1](https://github.com/ai-driven-dev/aidd-framework/commit/839d8f1d121dbb44e9f3710627ffbbdfdd4d2f04))
+
+
+### Documentation
+
+* **contributing:** clarify which commit types appear in changelog ([501ff07](https://github.com/ai-driven-dev/aidd-framework/commit/501ff075535b828586f4122417ed6902dd23d68d))
+
 ## [3.4.3](https://github.com/ai-driven-dev/aidd-framework/compare/v3.4.2...v3.4.3) (2026-03-10)
 
 
