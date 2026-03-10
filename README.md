@@ -21,19 +21,19 @@ The **AIDD CLI** (`@ai-driven-dev/aidd-cli`) is the TypeScript installer for the
 
 ## Features
 
-| Command                     | Description                                                                                                  |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `aidd init [--force]`       | Initializes the `aidd_docs/` structure and the manifest (`--force` copies doc templates without clean)       |
-| `aidd install <tools...>`   | Generates tool-specific files (`--all`, `--force`)                                                           |
-| `aidd uninstall <tools...>` | Cleanly removes a tool's files (`--all`)                                                                     |
-| `aidd status [--tool]`      | Diffs files vs manifest: `~` modified, `-` deleted, `+` added                                               |
-| `aidd doctor`               | Structural integrity check: manifest, orphan directories, broken references                                  |
-| `aidd clean [--force]`      | Removes all AIDD traces (dry-run without `--force`)                                                          |
-| `aidd update`               | Updates distributions to the latest framework version (v3.1+)                                               |
-| `aidd restore <tool>`       | Restores modified files to their original version (v3.1+)                                                    |
-| `aidd sync --source <tool>` | Propagates changes from one tool to the others (v3.1+)                                                       |
-| `aidd cache`                | Lists or removes cached framework versions (v3.2+)                                                           |
-| `aidd config get/set`       | Reads or updates manifest config: `docsDir` (w), `repo` (w), `tools` (r) (v3.2+)                            |
+| Command                     | Description                                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `aidd init [--force]`       | Initializes the `aidd_docs/` structure and the manifest (`--force` copies doc templates without clean) |
+| `aidd install <tools...>`   | Generates tool-specific files (`--all`, `--force`)                                                     |
+| `aidd uninstall <tools...>` | Cleanly removes a tool's files (`--all`)                                                               |
+| `aidd status [--tool]`      | Diffs files vs manifest: `~` modified, `-` deleted, `+` added                                          |
+| `aidd doctor`               | Structural integrity check: manifest, orphan directories, broken references                            |
+| `aidd clean [--force]`      | Removes all AIDD traces (dry-run without `--force`)                                                    |
+| `aidd update`               | Updates distributions to the latest framework version (v3.1+)                                          |
+| `aidd restore <tool>`       | Restores modified files to their original version (v3.1+)                                              |
+| `aidd sync --source <tool>` | Propagates changes from one tool to the others (v3.1+)                                                 |
+| `aidd cache`                | Lists or removes cached framework versions (v3.2+)                                                     |
+| `aidd config get/set`       | Reads or updates manifest config: `docsDir` (w), `repo` (w), `tools` (r) (v3.2+)                       |
 
 **Global options:** `--verbose`, `--token`, `--repo`, `--framework`, `--release`
 
@@ -41,12 +41,12 @@ The **AIDD CLI** (`@ai-driven-dev/aidd-cli`) is the TypeScript installer for the
 
 ## Prerequisites
 
-| Prerequisite             | Version | Notes                                                                                  |
-| ------------------------ | ------- | -------------------------------------------------------------------------------------- |
-| **Node.js**              | >= 24   | [nodejs.org](https://nodejs.org) — LTS since October 2024                              |
-| **AIDD Token**           | —       | Required to download the framework                                                     |
-| **tar**                  | —       | Pre-installed on macOS, Linux, WSL and Windows 10 1803+                                |
-| **gh CLI** _(optional)_  | —       | If installed and authenticated (`gh auth login`), the token is resolved automatically  |
+| Prerequisite            | Version | Notes                                                                                 |
+| ----------------------- | ------- | ------------------------------------------------------------------------------------- |
+| **Node.js**             | >= 24   | [nodejs.org](https://nodejs.org) — LTS since October 2024                             |
+| **AIDD Token**          | —       | GitHub token with **`repo`** scope — required to download the framework               |
+| **tar**                 | —       | Pre-installed on macOS, Linux, WSL and Windows 10 1803+                               |
+| **gh CLI** _(optional)_ | —       | If installed and authenticated (`gh auth login`), the token is resolved automatically |
 
 > **Windows:** works natively on Windows 10 1803+ (PowerShell or cmd) and on WSL. `tar.exe` is provided by Windows. If you encounter permission issues with `npm install -g`, use an administrator terminal or WSL.
 
@@ -81,7 +81,7 @@ aidd --version
 
 ## Using the AIDD token
 
-The token is required each time the framework is downloaded (`init` and `install` commands). Three ways to provide it:
+The token is required each time the framework is downloaded (`init` and `install` commands). It must have the **`repo`** scope (the framework repository is private — `read:packages` is not sufficient). Three ways to provide it:
 
 **Option 1 — Environment variable (recommended)**
 
@@ -189,11 +189,11 @@ aidd install claude --release v3.2.0    # specific framework version
 
 **Environment variables:**
 
-| Variable       | Description                                  |
-| -------------- | -------------------------------------------- |
-| `AIDD_TOKEN`   | GitHub Packages authentication token         |
-| `AIDD_REPO`    | Custom framework repository (`owner/repo`)   |
-| `AIDD_VERBOSE` | Verbose mode (`true`/`false`)                |
+| Variable       | Description                                |
+| -------------- | ------------------------------------------ |
+| `AIDD_TOKEN`   | GitHub Packages authentication token       |
+| `AIDD_REPO`    | Custom framework repository (`owner/repo`) |
+| `AIDD_VERBOSE` | Verbose mode (`true`/`false`)              |
 
 ## Architecture
 
