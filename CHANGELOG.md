@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.3](https://github.com/ai-driven-dev/aidd-framework/compare/v3.4.2...v3.4.3) (2026-03-10)
+
+
+### Documentation
+
+* update README links to use relative paths and remove unnecessary markdown block ([2ff99ec](https://github.com/ai-driven-dev/aidd-framework/commit/2ff99ec66364061a5814296bdc430871a01aec35))
+
 ## [3.4.2](https://github.com/ai-driven-dev/aidd-framework/compare/v3.4.1...v3.4.2) (2026-03-09)
 
 
