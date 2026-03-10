@@ -548,4 +548,75 @@ run_cmd "$P" config --help
 ask
 
 # ─────────────────────────────────────────────
+# ADOPT
+# ─────────────────────────────────────────────
+P_ADOPT="$(new_project "adopt-test")"
+
+step "64" "init quand .claude/ existe sans manifest — redirigé vers adopt" \
+  "Erreur : 'AIDD files detected. Use \`aidd adopt\`'"
+mkdir -p "$P_ADOPT/.claude"
+run_cmd "$P_ADOPT" init $FW_OPT
+ask
+
+step "65" "adopt — aucun dossier outil détecté" \
+  "Erreur : 'No AIDD directories found. Run \`aidd init\` instead.'"
+P_ADOPT_EMPTY="$(new_project "adopt-empty")"
+run_cmd "$P_ADOPT_EMPTY" adopt $FW_OPT
+ask
+
+step "66" "adopt — manifest déjà existant" \
+  "Erreur : 'Already initialized. Use \`aidd update\` to upgrade.'"
+P_ADOPT_EXISTING="$(new_project "adopt-existing")"
+silent_cmd "$P_ADOPT_EXISTING" init $FW_OPT
+silent_cmd "$P_ADOPT_EXISTING" install claude $FW_OPT
+run_cmd "$P_ADOPT_EXISTING" adopt $FW_OPT --force
+ask
+
+step "67" "adopt --force — .claude/ préexistant, crée le manifest" \
+  "Manifest créé, fichiers écrits ou sauvegardés, CATALOG.md généré"
+run_cmd "$P_ADOPT" adopt $FW_OPT --force --verbose
+[[ -f "$P_ADOPT/.aidd/manifest.json" ]] && echo -e "  ${GREEN}✓ manifest.json créé${RESET}" || echo -e "  ${RED}✗ manifest.json manquant${RESET}"
+[[ -f "$P_ADOPT/aidd_docs/CATALOG.md" ]] && echo -e "  ${GREEN}✓ CATALOG.md généré${RESET}" || echo -e "  ${RED}✗ CATALOG.md manquant${RESET}"
+ask
+
+step "68" "adopt --force puis status — aucune dérive" \
+  "status affiche 'in sync' pour claude"
+run_cmd "$P_ADOPT" status $FW_OPT
+ask
+
+step "69" "adopt --force — fichiers orphelins signalés, non supprimés" \
+  "Warning orphan + fichier toujours présent sur disque"
+P_ADOPT_ORPHAN="$(new_project "adopt-orphan")"
+silent_cmd "$P_ADOPT_ORPHAN" init $FW_OPT
+silent_cmd "$P_ADOPT_ORPHAN" install claude $FW_OPT
+echo "my custom rule" > "$P_ADOPT_ORPHAN/.claude/rules/user-custom.md"
+rm -rf "$P_ADOPT_ORPHAN/.aidd"
+run_cmd "$P_ADOPT_ORPHAN" adopt $FW_OPT --force --verbose
+[[ -f "$P_ADOPT_ORPHAN/.claude/rules/user-custom.md" ]] && echo -e "  ${GREEN}✓ fichier orphelin conservé${RESET}" || echo -e "  ${RED}✗ fichier orphelin supprimé (pas censé)${RESET}"
+ask
+
+step "70" "adopt --force — .claude/ + .cursor/ → deux outils adoptés" \
+  "manifest.tools contient claude ET cursor"
+P_ADOPT_MULTI="$(new_project "adopt-multi")"
+silent_cmd "$P_ADOPT_MULTI" init $FW_OPT
+silent_cmd "$P_ADOPT_MULTI" install claude $FW_OPT
+silent_cmd "$P_ADOPT_MULTI" install cursor $FW_OPT
+rm -rf "$P_ADOPT_MULTI/.aidd"
+run_cmd "$P_ADOPT_MULTI" adopt $FW_OPT --force --verbose
+python3 -c "
+import json, sys
+d = json.load(open('$P_ADOPT_MULTI/.aidd/manifest.json'))
+tools = list(d.get('tools', {}).keys())
+print('  tools:', ', '.join(tools))
+ok = 'claude' in tools and 'cursor' in tools
+sys.exit(0 if ok else 1)
+" && echo -e "  ${GREEN}✓ claude + cursor adoptés${RESET}" || echo -e "  ${RED}✗ un outil manquant dans le manifest${RESET}"
+ask
+
+step "71" "adopt --help — affiche l'aide de la commande" \
+  "Affiche description + options --force"
+run_cmd "$P" adopt --help
+ask
+
+# ─────────────────────────────────────────────
 summary
