@@ -39,6 +39,15 @@ export const cursorToolConfig: ToolConfig = {
       .replace(/(@\.cursor\/rules\/[^\s]+)\.md\b/g, "$1.mdc");
   },
 
+  reverseRewriteContent(content: string, docsDir: string): string {
+    return content
+      .replace(/(@\.cursor\/rules\/[^\s]+)\.mdc\b/g, "$1.md")
+      .replaceAll(`@${DIRECTORY}`, AT_TOOLS_PLACEHOLDER)
+      .replaceAll(`@${docsDir}/`, AT_DOCS_PLACEHOLDER)
+      .replaceAll(DIRECTORY, TOOLS_PLACEHOLDER)
+      .replaceAll(`${docsDir}/`, DOCS_PLACEHOLDER);
+  },
+
   agents(): SectionHandler {
     return {
       buildFilePath(fileName: string): string {

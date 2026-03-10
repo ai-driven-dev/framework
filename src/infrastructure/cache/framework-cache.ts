@@ -1,6 +1,7 @@
-import { access, cp, mkdir, readdir, writeFile } from "node:fs/promises";
+import { access, cp, mkdir, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { compareSemver, isSemver } from "../../domain/models/semver.js";
 
 const DEFAULT_CACHE_BASE = join(tmpdir(), "aidd-cache");
 const MARKER_FILE = ".aidd-extracted";
@@ -37,6 +38,51 @@ export class FrameworkCache {
     await writeFile(join(target, MARKER_FILE), "");
   }
 
+  async list(): Promise<Array<{ version: string; path: string; size: number }>> {
+    let entries: string[];
+    try {
+      entries = await readdir(this.base);
+    } catch {
+      return [];
+    }
+
+    const versions = entries.filter(isSemver);
+    const result: Array<{ version: string; path: string; size: number }> = [];
+
+    for (const version of versions) {
+      const dir = this.cacheDir(version);
+      try {
+        const size = await getDirSize(dir);
+        result.push({ version, path: dir, size });
+      } catch {
+        // skip unreadable entries
+      }
+    }
+
+    result.sort((a, b) => compareSemver(a.version, b.version));
+    return result;
+  }
+
+  async clear(version?: string): Promise<void> {
+    if (version !== undefined) {
+      const exists = await this.has(version);
+      if (!exists) throw new Error(`No cached framework found for version '${version}'.`);
+      await rm(this.cacheDir(version), { recursive: true, force: true });
+      return;
+    }
+
+    let entries: string[];
+    try {
+      entries = await readdir(this.base);
+    } catch {
+      return;
+    }
+
+    for (const entry of entries.filter(isSemver)) {
+      await rm(join(this.base, entry), { recursive: true, force: true });
+    }
+  }
+
   async getLatestCached(): Promise<string | null> {
     let entries: string[];
     try {
@@ -53,18 +99,17 @@ export class FrameworkCache {
   }
 }
 
-function isSemver(s: string): boolean {
-  return /^\d+\.\d+\.\d+/.test(s);
-}
-
-function compareSemver(a: string, b: string): number {
-  const [aMaj, aMin, aPatch] = parseSemver(a);
-  const [bMaj, bMin, bPatch] = parseSemver(b);
-  return aMaj - bMaj || aMin - bMin || aPatch - bPatch;
-}
-
-function parseSemver(v: string): [number, number, number] {
-  const match = v.match(/^(\d+)\.(\d+)\.(\d+)/);
-  if (!match) return [0, 0, 0];
-  return [Number(match[1]), Number(match[2]), Number(match[3])];
+async function getDirSize(dir: string): Promise<number> {
+  let total = 0;
+  const entries = await readdir(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      total += await getDirSize(full);
+    } else {
+      const s = await stat(full);
+      total += s.size;
+    }
+  }
+  return total;
 }

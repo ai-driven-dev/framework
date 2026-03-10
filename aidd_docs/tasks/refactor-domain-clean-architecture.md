@@ -29,113 +29,113 @@ Tickets referencing `reverseRewriteContent`: 070, 071 — unaffected by these re
 
 ### Code changes
 
-- [x] `src/domain/models/tool-spec.ts` — supprimer la méthode publique `convertFrontmatter()`, renommer `protected abstract convertPaths()` en `public abstract convertFrontmatter()`
-- [x] `src/domain/tool-specs/claude.ts` — renommer `protected convertPaths()` en `public convertFrontmatter()`
-- [x] `src/domain/tool-specs/cursor.ts` — renommer `protected convertPaths()` en `public convertFrontmatter()`
-- [x] `src/domain/tool-specs/copilot.ts` — renommer `protected convertPaths()` en `public convertFrontmatter()`
+- [x] `src/domain/models/tool-spec.ts` — remove public method `convertFrontmatter()`, rename `protected abstract convertPaths()` to `public abstract convertFrontmatter()`
+- [x] `src/domain/tool-specs/claude.ts` — rename `protected convertPaths()` to `public convertFrontmatter()`
+- [x] `src/domain/tool-specs/cursor.ts` — rename `protected convertPaths()` to `public convertFrontmatter()`
+- [x] `src/domain/tool-specs/copilot.ts` — rename `protected convertPaths()` to `public convertFrontmatter()`
 
 ### Tests
 
-- [x] `tests/domain/models/tool-spec.test.ts` — renommer `protected convertPaths` dans `TestToolSpec` en `public convertFrontmatter`
+- [x] `tests/domain/models/tool-spec.test.ts` — rename `protected convertPaths` in `TestToolSpec` to `public convertFrontmatter`
 - [x] `pnpm test` passe (172 tests)
 - [x] `pnpm typecheck` passe
 
 ### Documentation
 
-- [x] Aucun changement requis (API publique inchangée)
+- [x] No changes required (public API unchanged)
 
 ---
 
-## R2 — DRY violation dans `ClaudeToolSpec` — chemin commands dupliqué
+## R2 — DRY violation in `ClaudeToolSpec` — commands path duplicated
 
-**Smell:** DRY violation — `.claude/commands/aidd/${phase}/` encodé deux fois dans `buildFilePath` et `rewriteContent`.
+**Smell:** DRY violation — `.claude/commands/aidd/${phase}/` encoded twice in `buildFilePath` and `rewriteContent`.
 
-**Rule violated:** Don't Repeat Yourself — un changement de structure requiert deux modifications.
+**Rule violated:** Don't Repeat Yourself — a structure change requires two modifications.
 
 ### Code changes
 
-- [x] `src/domain/tool-specs/claude.ts` — extraire une méthode privée `commandsDir(phase: string): string` retournant `.claude/commands/aidd/${phase}/`
-- [x] `src/domain/tool-specs/claude.ts` — remplacer les deux occurrences du pattern hardcodé par des appels à cette méthode
+- [x] `src/domain/tool-specs/claude.ts` — extract a private method `commandsDir(phase: string): string` returning `.claude/commands/aidd/${phase}/`
+- [x] `src/domain/tool-specs/claude.ts` — replace the two occurrences of the hardcoded pattern with calls to this method
 
 ### Tests
 
-- [x] `pnpm test` passe (comportement identique, 172 tests)
-- [x] `pnpm typecheck` passe
+- [x] `pnpm test` passes (identical behavior, 172 tests)
+- [x] `pnpm typecheck` passes
 
 ### Documentation
 
-- [x] Aucun changement requis (comportement inchangé)
+- [x] No changes required (behavior unchanged)
 
 ---
 
-## R3 — Supprimer les hooks protégés morts `rewriteAtToolsInclude` / `rewriteAtDocsInclude`
+## R3 — Remove dead protected hooks `rewriteAtToolsInclude` / `rewriteAtDocsInclude`
 
-**Smell:** Dead Code (pour Copilot) + Faux contrat Template Method — Copilot override complètement `rewriteContent` sans appeler `super`, rendant ces hooks inutilisables pour lui.
+**Smell:** Dead Code (for Copilot) + False Template Method contract — Copilot completely overrides `rewriteContent` without calling `super`, making these hooks unusable for it.
 
-**Rule violated:** Liskov Substitution — la base expose un contrat d'extension que Copilot ignore.
+**Rule violated:** Liskov Substitution — the base exposes an extension contract that Copilot ignores.
 
-**Décision:** Inline dans `rewriteContent` base class, supprimer les méthodes `protected`.
+**Decision:** Inline into `rewriteContent` base class, remove `protected` methods.
 
 ### Code changes
 
-- [x] `src/domain/models/tool-spec.ts` — inliner `this.rewriteAtToolsInclude()` → `` `@${this.directory}` `` directement dans `rewriteContent`
-- [x] `src/domain/models/tool-spec.ts` — inliner `this.rewriteAtDocsInclude(docsDir)` → `` `@${docsDir}/` `` directement dans `rewriteContent`
-- [x] `src/domain/models/tool-spec.ts` — supprimer les deux méthodes `protected rewriteAtToolsInclude()` et `protected rewriteAtDocsInclude()`
+- [x] `src/domain/models/tool-spec.ts` — inline `this.rewriteAtToolsInclude()` → `` `@${this.directory}` `` directly in `rewriteContent`
+- [x] `src/domain/models/tool-spec.ts` — inline `this.rewriteAtDocsInclude(docsDir)` → `` `@${docsDir}/` `` directly in `rewriteContent`
+- [x] `src/domain/models/tool-spec.ts` — remove the two methods `protected rewriteAtToolsInclude()` and `protected rewriteAtDocsInclude()`
 
 ### Tests
 
-- [x] Vérifier qu'aucun test n'appelle directement ces méthodes protégées (grep)
-- [x] `pnpm test` passe (172 tests)
-- [x] `pnpm typecheck` passe
+- [x] Verify no test directly calls these protected methods (grep)
+- [x] `pnpm test` passes (172 tests)
+- [x] `pnpm typecheck` passes
 
 ### Documentation
 
-- [x] Aucun changement requis
+- [x] No changes required
 
 ---
 
-## R4 — Déplacer `ToolId` dans son propre fichier
+## R4 — Move `ToolId` to its own file
 
-**Smell:** Violation Open/Closed + couplage de responsabilités — ajouter un outil force à modifier `tool-spec.ts` (la classe abstraite), et `manifest.ts` / `tool-entry.ts` importent un enum depuis un fichier qui définit une classe abstraite sans rapport.
+**Smell:** Open/Closed violation + responsibility coupling — adding a tool forces modifying `tool-spec.ts` (the abstract class), and `manifest.ts` / `tool-entry.ts` import an enum from a file that defines an unrelated abstract class.
 
-**Rule violated:** Single Responsibility — `tool-spec.ts` définit à la fois l'enum des identifiants et la classe abstraite de comportement.
+**Rule violated:** Single Responsibility — `tool-spec.ts` defines both the identifier enum and the abstract behavior class.
 
-**Décision:** Créer `src/domain/models/tool-id.ts` avec uniquement l'enum. Pas de re-export depuis `tool-spec.ts` (clean break — aucun code application/infra/présentation n'existe encore).
+**Decision:** Create `src/domain/models/tool-id.ts` with only the enum. No re-export from `tool-spec.ts` (clean break — no application/infra/presentation code exists yet).
 
 ### Code changes
 
-- [x] Créer `src/domain/models/tool-id.ts` avec l'enum `ToolId { Claude, Cursor, Copilot }`
-- [x] `src/domain/models/tool-spec.ts` — supprimer la définition de `ToolId`, importer depuis `./tool-id.js`
-- [x] `src/domain/models/manifest.ts` — mettre à jour l'import `ToolId` vers `./tool-id.js`
-- [x] `src/domain/models/tool-entry.ts` — mettre à jour l'import `ToolId` vers `./tool-id.js`
-- [x] `src/domain/tool-specs/claude.ts` — mettre à jour l'import `ToolId` vers `../models/tool-id.js`
-- [x] `src/domain/tool-specs/cursor.ts` — mettre à jour l'import `ToolId` vers `../models/tool-id.js`
-- [x] `src/domain/tool-specs/copilot.ts` — mettre à jour l'import `ToolId` vers `../models/tool-id.js`
+- [x] Create `src/domain/models/tool-id.ts` with the enum `ToolId { Claude, Cursor, Copilot }`
+- [x] `src/domain/models/tool-spec.ts` — remove the `ToolId` definition, import from `./tool-id.js`
+- [x] `src/domain/models/manifest.ts` — update `ToolId` import to `./tool-id.js`
+- [x] `src/domain/models/tool-entry.ts` — update `ToolId` import to `./tool-id.js`
+- [x] `src/domain/tool-specs/claude.ts` — update `ToolId` import to `../models/tool-id.js`
+- [x] `src/domain/tool-specs/cursor.ts` — update `ToolId` import to `../models/tool-id.js`
+- [x] `src/domain/tool-specs/copilot.ts` — update `ToolId` import to `../models/tool-id.js`
 
 ### Tests
 
-- [x] `tests/domain/models/tool-spec.test.ts` — mettre à jour l'import `ToolId` vers `../../../src/domain/models/tool-id.js`
-- [x] `tests/domain/models/manifest.test.ts` — mettre à jour l'import `ToolId` vers `../../../src/domain/models/tool-id.js`
-- [x] `tests/domain/tool-specs/claude.test.ts` — mettre à jour l'import `ToolId` vers `../../../src/domain/models/tool-id.js`
-- [x] `tests/domain/tool-specs/cursor.test.ts` — mettre à jour l'import `ToolId` vers `../../../src/domain/models/tool-id.js`
-- [x] `tests/domain/tool-specs/copilot.test.ts` — mettre à jour l'import `ToolId` vers `../../../src/domain/models/tool-id.js`
-- [x] `pnpm test` passe (172 tests)
-- [x] `pnpm typecheck` passe
+- [x] `tests/domain/models/tool-spec.test.ts` — update `ToolId` import to `../../../src/domain/models/tool-id.js`
+- [x] `tests/domain/models/manifest.test.ts` — update `ToolId` import to `../../../src/domain/models/tool-id.js`
+- [x] `tests/domain/tool-specs/claude.test.ts` — update `ToolId` import to `../../../src/domain/models/tool-id.js`
+- [x] `tests/domain/tool-specs/cursor.test.ts` — update `ToolId` import to `../../../src/domain/models/tool-id.js`
+- [x] `tests/domain/tool-specs/copilot.test.ts` — update `ToolId` import to `../../../src/domain/models/tool-id.js`
+- [x] `pnpm test` passes (172 tests)
+- [x] `pnpm typecheck` passes
 
 ### Documentation
 
-- [x] `aidd_docs/memory/internal/architecture.md` — ajouter `tool-id.ts` dans le Directory Structure et dans le composant ToolId du diagramme
-- [x] `aidd_docs/memory/internal/milestones.md` — M1 Key Deliverables: séparer `tool-id.ts` de `tool-spec.ts` dans la table
-- [x] `aidd_docs/backlog/done/012_tool_spec_model.md` — noter que `ToolId` est dans `tool-id.ts`
-- [x] `aidd_docs/backlog/todo/032_install_use_case.md` — Technical Notes: `ToolId` importé depuis `tool-id.ts`
+- [x] `aidd_docs/memory/internal/architecture.md` — add `tool-id.ts` in the Directory Structure and in the ToolId component of the diagram
+- [x] `aidd_docs/memory/internal/milestones.md` — M1 Key Deliverables: separate `tool-id.ts` from `tool-spec.ts` in the table
+- [x] `aidd_docs/backlog/done/012_tool_spec_model.md` — note that `ToolId` is in `tool-id.ts`
+- [x] `aidd_docs/backlog/todo/032_install_use_case.md` — Technical Notes: `ToolId` imported from `tool-id.ts`
 
 ---
 
-## Validation finale
+## Final validation
 
-- [x] `pnpm test` — 172 tests passent
-- [x] `pnpm typecheck` — 0 erreurs
+- [x] `pnpm test` — 172 tests pass
+- [x] `pnpm typecheck` — 0 errors
 - [x] `pnpm lint` — 0 violations
-- [x] `git grep "convertPaths"` retourne zéro résultat (dead name supprimé)
-- [x] `git grep "rewriteAtToolsInclude\|rewriteAtDocsInclude"` retourne zéro résultat (uniquement dans un fichier de review historique)
-- [x] `git grep "from.*tool-spec.*ToolId\|ToolId.*from.*tool-spec"` retourne zéro résultat (clean break vérifié)
+- [x] `git grep "convertPaths"` returns zero results (dead name removed)
+- [x] `git grep "rewriteAtToolsInclude\|rewriteAtDocsInclude"` returns zero results (only in a historical review file)
+- [x] `git grep "from.*tool-spec.*ToolId\|ToolId.*from.*tool-spec"` returns zero results (clean break verified)

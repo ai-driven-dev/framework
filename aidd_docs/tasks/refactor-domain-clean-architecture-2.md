@@ -10,161 +10,161 @@
 
 | Refactor | M6 impact | Other |
 |---|---|---|
-| S1: Remove `applyResolutions` stub | ticket 061 doit CRÉER `applyResolutions()` (non déjà présente en codebase) | aucun |
-| S2: `toTrackedFiles` extraction | aucun (internal Manifest) | aucun |
-| S3: `computeStatus` flatten | aucun (internal Manifest) | aucun |
-| S4: Supprimer `_section` param mort | aucun (internal copilot.ts) | aucun |
-| S5: `parseNamedRefs` extraction | aucun (internal FrameworkDescriptor) | aucun |
-| S6: `this.directory` dans Copilot | aucun (comportement identique) | aucun |
+| S1: Remove `applyResolutions` stub | ticket 061 must CREATE `applyResolutions()` (not already present in codebase) | none |
+| S2: `toTrackedFiles` extraction | none (internal Manifest) | none |
+| S3: `computeStatus` flatten | none (internal Manifest) | none |
+| S4: Remove dead `_section` param | none (internal copilot.ts) | none |
+| S5: `parseNamedRefs` extraction | none (internal FrameworkDescriptor) | none |
+| S6: `this.directory` in Copilot | none (identical behavior) | none |
 
-Ticket référençant `ConflictSet.applyResolutions`: 061 — note ajoutée dans Technical Notes.
+Ticket referencing `ConflictSet.applyResolutions`: 061 — note added in Technical Notes.
 
 ---
 
-## S1 — YAGNI : supprimer `ConflictSet.applyResolutions()` stub
+## S1 — YAGNI: remove `ConflictSet.applyResolutions()` stub
 
-**Smell:** Dead Code + Speculative Generalization — méthode publique non implémentée avec `throw new Error("not yet implemented")` et paramètre `_resolutions` jamais utilisé.
+**Smell:** Dead Code + Speculative Generalization — unimplemented public method with `throw new Error("not yet implemented")` and `_resolutions` parameter never used.
 
-**Rule violated:** YAGNI. Les stubs pour milestone future polluent le contrat public actuel.
+**Rule violated:** YAGNI. Stubs for future milestones pollute the current public contract.
 
 ### Code changes
 
-- [x] `src/domain/models/conflict-set.ts` — supprimer la méthode `applyResolutions(_resolutions: Map<string, ConflictType>): void`
+- [x] `src/domain/models/conflict-set.ts` — remove the method `applyResolutions(_resolutions: Map<string, ConflictType>): void`
 
 ### Tests
 
-- [x] Vérifier qu'aucun test n'appelle `applyResolutions` (`git grep "applyResolutions"`)
-- [x] `pnpm test` passe (172 tests)
-- [x] `pnpm typecheck` passe
+- [x] Verify no test calls `applyResolutions` (`git grep "applyResolutions"`)
+- [x] `pnpm test` passes (172 tests)
+- [x] `pnpm typecheck` passes
 
 ### Documentation
 
-- [x] `aidd_docs/backlog/todo/061_update_conflict_handling.md` — Technical Notes: préciser que `applyResolutions()` n'existe pas encore et doit être CRÉÉE dans ce ticket
+- [x] `aidd_docs/backlog/todo/061_update_conflict_handling.md` — Technical Notes: clarify that `applyResolutions()` does not yet exist and must be CREATED in this ticket
 
 ---
 
-## S2 — DRY : extraire `toTrackedFiles()` dans `Manifest`
+## S2 — DRY: extract `toTrackedFiles()` in `Manifest`
 
-**Smell:** DRY violation — la projection `GeneratedFile[] → TrackedFile[]` est copiée à l'identique dans `addTool` et `addDocs`.
+**Smell:** DRY violation — the `GeneratedFile[] → TrackedFile[]` projection is copied identically in `addTool` and `addDocs`.
 
-**Rule violated:** Don't Repeat Yourself — un changement de mapping requiert deux modifications.
+**Rule violated:** Don't Repeat Yourself — a mapping change requires two modifications.
 
 ### Code changes
 
-- [x] `src/domain/models/manifest.ts` — extraire une méthode privée `toTrackedFiles(files: GeneratedFile[]): TrackedFile[]`
-- [x] `src/domain/models/manifest.ts` — remplacer les deux `.map()` inline dans `addTool` et `addDocs` par des appels à cette méthode
+- [x] `src/domain/models/manifest.ts` — extract a private method `toTrackedFiles(files: GeneratedFile[]): TrackedFile[]`
+- [x] `src/domain/models/manifest.ts` — replace the two inline `.map()` calls in `addTool` and `addDocs` with calls to this method
 
 ### Tests
 
-- [x] `pnpm test` passe (comportement identique, 172 tests)
-- [x] `pnpm typecheck` passe
+- [x] `pnpm test` passes (identical behavior, 172 tests)
+- [x] `pnpm typecheck` passes
 
 ### Documentation
 
-- [x] Aucun changement requis (API publique inchangée)
+- [x] No changes required (public API unchanged)
 
 ---
 
-## S3 — DRY : aplatir les tracked files dans `computeStatus()`
+## S3 — DRY: flatten tracked files in `computeStatus()`
 
-**Smell:** DRY violation — la boucle de classification (`add/modified/deleted`) est dupliquée pour les tools et les docs avec un corps identique.
+**Smell:** DRY violation — the classification loop (`add/modified/deleted`) is duplicated for tools and docs with an identical body.
 
 **Rule violated:** Don't Repeat Yourself.
 
 ### Code changes
 
-- [x] `src/domain/models/manifest.ts` — dans `computeStatus`, aplatir toutes les tracked files en une seule collection avant d'itérer :
+- [x] `src/domain/models/manifest.ts` — in `computeStatus`, flatten all tracked files into a single collection before iterating:
   ```typescript
   const allTracked = [
     ...Array.from(this._tools.values()).flatMap((e) => [...e.files]),
     ...(this._docs?.files ?? []),
   ];
   ```
-- [x] Dériver `allManifestPaths` depuis `allTracked` en un seul `new Set(allTracked.map(f => f.relativePath))`
-- [x] Supprimer la boucle dupliquée pour `this._docs`
+- [x] Derive `allManifestPaths` from `allTracked` with a single `new Set(allTracked.map(f => f.relativePath))`
+- [x] Remove the duplicated loop for `this._docs`
 
 ### Tests
 
-- [x] `pnpm test` passe (172 tests)
-- [x] `pnpm typecheck` passe
+- [x] `pnpm test` passes (172 tests)
+- [x] `pnpm typecheck` passes
 
 ### Documentation
 
-- [x] Aucun changement requis
+- [x] No changes required
 
 ---
 
-## S4 — Dead param : supprimer `_section` dans `flattenFileName`
+## S4 — Dead param: remove `_section` in `flattenFileName`
 
-**Smell:** Dead Code — paramètre `_section: ContentSection` déclaré mais jamais utilisé dans le corps.
+**Smell:** Dead Code — `_section: ContentSection` parameter declared but never used in the body.
 
 **Rule violated:** Remove Dead Code.
 
 ### Code changes
 
-- [x] `src/domain/tool-specs/copilot.ts` — supprimer le paramètre `_section` de `flattenFileName`
-- [x] `src/domain/tool-specs/copilot.ts` — mettre à jour les 2 call sites (lignes `commands` et `rules` dans `buildFilePath`) pour ne plus passer `section`
-- [x] Supprimer l'import `ContentSection` dans `copilot.ts` si devenu orphelin
+- [x] `src/domain/tool-specs/copilot.ts` — remove the `_section` parameter from `flattenFileName`
+- [x] `src/domain/tool-specs/copilot.ts` — update the 2 call sites (lines `commands` and `rules` in `buildFilePath`) to no longer pass `section`
+- [x] Remove the `ContentSection` import in `copilot.ts` if it becomes orphaned
 
 ### Tests
 
-- [x] `pnpm test` passe (172 tests)
-- [x] `pnpm typecheck` passe
+- [x] `pnpm test` passes (172 tests)
+- [x] `pnpm typecheck` passes
 
 ### Documentation
 
-- [x] Aucun changement requis (comportement inchangé)
+- [x] No changes required (behavior unchanged)
 
 ---
 
-## S5 — DRY : extraire `parseNamedRefs()` dans `FrameworkDescriptor.fromJson()`
+## S5 — DRY: extract `parseNamedRefs()` in `FrameworkDescriptor.fromJson()`
 
-**Smell:** DRY violation — les deux boucles de parsing `templateRefs` et `configRefs` sont structurellement identiques (même guard, même `Object.entries`, même `typeof path === "string"` check).
+**Smell:** DRY violation — the two parsing loops for `templateRefs` and `configRefs` are structurally identical (same guard, same `Object.entries`, same `typeof path === "string"` check).
 
 **Rule violated:** Don't Repeat Yourself.
 
 ### Code changes
 
-- [x] `src/domain/models/framework-descriptor.ts` — extraire une fonction locale `parseNamedRefs(raw: unknown, field: string): { name: string; path: string }[]`
-- [x] `src/domain/models/framework-descriptor.ts` — remplacer les deux boucles par `parseNamedRefs(raw, "templates")` et `parseNamedRefs(raw, "config")`
+- [x] `src/domain/models/framework-descriptor.ts` — extract a local function `parseNamedRefs(raw: unknown, field: string): { name: string; path: string }[]`
+- [x] `src/domain/models/framework-descriptor.ts` — replace the two loops with `parseNamedRefs(raw, "templates")` and `parseNamedRefs(raw, "config")`
 
 ### Tests
 
-- [x] `pnpm test` passe (172 tests)
-- [x] `pnpm typecheck` passe
+- [x] `pnpm test` passes (172 tests)
+- [x] `pnpm typecheck` passes
 
 ### Documentation
 
-- [x] Aucun changement requis
+- [x] No changes required
 
 ---
 
-## S6 — Magic String : utiliser `this.directory` dans `CopilotToolSpec.buildFilePath()`
+## S6 — Magic String: use `this.directory` in `CopilotToolSpec.buildFilePath()`
 
-**Smell:** Magic String — `.github/` est codé en dur 5 fois dans `buildFilePath` au lieu d'utiliser `this.directory`. Un changement de `directory` ne serait pas reflété.
+**Smell:** Magic String — `.github/` is hardcoded 5 times in `buildFilePath` instead of using `this.directory`. A change to `directory` would not be reflected.
 
 **Rule violated:** Use your own fields — a class must not duplicate the literal value of its own property.
 
 ### Code changes
 
-- [x] `src/domain/tool-specs/copilot.ts` — dans `buildFilePath`, remplacer chaque occurrence de `.github/` par `${this.directory}` (5 cas : agents, prompts, instructions, skills, default)
+- [x] `src/domain/tool-specs/copilot.ts` — in `buildFilePath`, replace each occurrence of `.github/` with `${this.directory}` (5 cases: agents, prompts, instructions, skills, default)
 
 ### Tests
 
-- [x] `pnpm test` passe (comportement identique — `this.directory === ".github/"`, 172 tests)
-- [x] `pnpm typecheck` passe
+- [x] `pnpm test` passes (identical behavior — `this.directory === ".github/"`, 172 tests)
+- [x] `pnpm typecheck` passes
 
 ### Documentation
 
-- [x] Aucun changement requis
+- [x] No changes required
 
 ---
 
-## Validation finale
+## Final validation
 
-- [x] `pnpm test` — 171 tests passent (1 stub supprimé)
-- [x] `pnpm typecheck` — 0 erreurs
+- [x] `pnpm test` — 171 tests pass (1 stub removed)
+- [x] `pnpm typecheck` — 0 errors
 - [x] `pnpm lint` — 0 violations
-- [x] `git grep "applyResolutions"` retourne zéro résultat dans `src/`
-- [x] `git grep '\.github\/'` dans `copilot.ts` retourne uniquement la déclaration `readonly directory`
-- [x] `git grep "_section"` dans `copilot.ts` retourne zéro résultat
+- [x] `git grep "applyResolutions"` returns zero results in `src/`
+- [x] `git grep '\.github\/'` in `copilot.ts` returns only the `readonly directory` declaration
+- [x] `git grep "_section"` in `copilot.ts` returns zero results

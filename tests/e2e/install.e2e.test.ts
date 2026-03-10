@@ -19,20 +19,19 @@ describe("E2E: aidd install", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  it("auto-initializes and installs claude in one command", async () => {
-    const { stdout, exitCode } = await runCli(
+  it("requires init first — aborts with clear error on uninitialized project", async () => {
+    const { stderr, exitCode } = await runCli(
       ["install", "claude", "--framework", FRAMEWORK_PATH],
       projectDir
     );
 
-    expect(exitCode).toBe(0);
-    expect(stdout).toContain("Installed claude");
-    expect(existsSync(join(projectDir, ".claude"))).toBe(true);
-    expect(existsSync(join(projectDir, "aidd_docs"))).toBe(true);
-    expect(existsSync(join(projectDir, ".aidd", "manifest.json"))).toBe(true);
+    expect(exitCode).not.toBe(0);
+    expect(stderr).toContain("No AIDD installation found");
+    expect(existsSync(join(projectDir, ".claude"))).toBe(false);
   }, 5000);
 
   it("installs cursor tool with correct file layout", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
     const { stdout, exitCode } = await runCli(
       ["install", "cursor", "--framework", FRAMEWORK_PATH],
       projectDir
@@ -44,6 +43,7 @@ describe("E2E: aidd install", () => {
   }, 5000);
 
   it("installs copilot tool with correct file layout", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
     const { stdout, exitCode } = await runCli(
       ["install", "copilot", "--framework", FRAMEWORK_PATH],
       projectDir
@@ -55,6 +55,7 @@ describe("E2E: aidd install", () => {
   }, 5000);
 
   it("shows an error message for unrecognized tool IDs", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
     const { stderr, exitCode } = await runCli(
       ["install", "unknown-tool", "--framework", FRAMEWORK_PATH],
       projectDir
@@ -65,6 +66,7 @@ describe("E2E: aidd install", () => {
   }, 5000);
 
   it("skips already installed tool without --force", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
     await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
     const { stderr, exitCode } = await runCli(
@@ -77,6 +79,7 @@ describe("E2E: aidd install", () => {
   }, 5000);
 
   it("reinstalls an existing tool when --force is used", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
     await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
     const { stdout, exitCode } = await runCli(
@@ -88,18 +91,8 @@ describe("E2E: aidd install", () => {
     expect(stdout).toContain("Installed claude");
   }, 5000);
 
-  it("skips re-initializing docs when project is already initialized", async () => {
-    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-    const { stdout, exitCode } = await runCli(
-      ["install", "claude", "--framework", FRAMEWORK_PATH],
-      projectDir
-    );
-
-    expect(exitCode).toBe(0);
-    expect(stdout).not.toContain("Initializing docs first");
-  }, 5000);
-
   it("installs all tools at once with --all", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
     const { stdout, exitCode } = await runCli(
       ["install", "--all", "--framework", FRAMEWORK_PATH],
       projectDir
@@ -125,6 +118,7 @@ describe("E2E: aidd install", () => {
   }, 5000);
 
   it("reinstalls all tools when --all --force is used", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
     await runCli(["install", "--all", "--framework", FRAMEWORK_PATH], projectDir);
 
     const { stdout, exitCode } = await runCli(
@@ -138,7 +132,35 @@ describe("E2E: aidd install", () => {
     expect(stdout).toContain("copilot");
   }, 5000);
 
+  it("uses custom docs-dir from manifest when installing", async () => {
+    // init with custom docs dir
+    const { exitCode: initExit } = await runCli(
+      ["init", "--framework", FRAMEWORK_PATH, "--docs-dir", "my_docs"],
+      projectDir
+    );
+    expect(initExit).toBe(0);
+    expect(existsSync(join(projectDir, "my_docs"))).toBe(true);
+
+    // install claude - should use my_docs/ not aidd_docs/ (reads docsDir from manifest)
+    const { exitCode: installExit } = await runCli(
+      ["install", "claude", "--framework", FRAMEWORK_PATH],
+      projectDir
+    );
+    expect(installExit).toBe(0);
+
+    // my_docs directory must still exist (was not replaced by aidd_docs)
+    expect(existsSync(join(projectDir, "my_docs"))).toBe(true);
+    // aidd_docs must not exist (install did not re-create with default name)
+    expect(existsSync(join(projectDir, "aidd_docs"))).toBe(false);
+
+    // manifest records my_docs as the docsDir
+    const manifestRaw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");
+    const manifest = JSON.parse(manifestRaw) as { docsDir: string };
+    expect(manifest.docsDir).toBe("my_docs");
+  }, 5000);
+
   it("generates files with all path placeholders resolved", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
     await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
     const manifestRaw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");

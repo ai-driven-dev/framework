@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
@@ -178,7 +178,8 @@ describe("DoctorUseCase", () => {
     const installResult = await initAndInstall(deps, projectRoot, "copilot" as ToolId);
 
     const firstFile = installResult.files.find((f) => f.relativePath.endsWith(".md"));
-    if (!firstFile) return; // guard: copilot installs .md files
+    expect(firstFile).toBeDefined();
+    if (!firstFile) throw new Error("copilot fixture must install at least one .md file");
 
     await writeFile(
       join(projectRoot, firstFile.relativePath),
@@ -235,7 +236,8 @@ describe("DoctorUseCase", () => {
     const installResult = await initAndInstall(deps, projectRoot, "copilot" as ToolId);
 
     const firstFile = installResult.files.find((f) => f.relativePath.endsWith(".md"));
-    if (!firstFile) return;
+    expect(firstFile).toBeDefined();
+    if (!firstFile) throw new Error("copilot fixture must install at least one .md file");
 
     await writeFile(
       join(projectRoot, firstFile.relativePath),
@@ -265,5 +267,20 @@ describe("DoctorUseCase", () => {
     const report = await useCase.execute({ projectRoot });
 
     expect(report.issues.every((i) => !i.message.includes("example.md"))).toBe(true);
+  });
+
+  it("reports an error when the docs directory is missing from disk", async () => {
+    const deps = buildDeps(projectRoot);
+    await initAndInstall(deps, projectRoot, "claude" as ToolId);
+
+    await rm(join(projectRoot, "aidd_docs"), { recursive: true, force: true });
+
+    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const report = await useCase.execute({ projectRoot });
+
+    const issue = report.issues.find((i) => i.message.includes("does not exist on disk"));
+    expect(issue).toBeDefined();
+    expect(issue?.severity).toBe("error");
+    expect(report.healthy).toBe(false);
   });
 });

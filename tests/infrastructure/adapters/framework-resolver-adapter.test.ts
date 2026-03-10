@@ -71,7 +71,7 @@ describe("FrameworkResolverAdapter", () => {
   });
 
   describe("local directory resolution", () => {
-    it("returns localPath directly without network access", async () => {
+    it("uses localPath directly without network access", async () => {
       const localPath = join(tempDir, "local-framework");
       await mkdir(localPath);
 
@@ -92,7 +92,7 @@ describe("FrameworkResolverAdapter", () => {
       expect(result.version).toBe("local");
     });
 
-    it("throws on invalid tarball", async () => {
+    it("reports a clear error on invalid tarball", async () => {
       const fakeTarball = join(tempDir, "fake.tar.gz");
       await writeFile(fakeTarball, "not a tarball");
 
@@ -252,7 +252,7 @@ describe("FrameworkResolverAdapter", () => {
       }
     });
 
-    it("throws 'Framework release not found' when tag does not exist", async () => {
+    it("reports release not found when tag does not exist on GitHub", async () => {
       const { url: serverUrl, close } = await startHttpServer((_req, res) => {
         res.writeHead(404, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ message: "Not Found" }));
@@ -299,7 +299,7 @@ describe("FrameworkResolverAdapter", () => {
       expect(warnings.some((w) => w.includes("Network unavailable"))).toBe(true);
     });
 
-    it("throws when network fails and no cache exists", async () => {
+    it("aborts when network fails and no local cache is available", async () => {
       const adapter = new FrameworkResolverAdapter(http, tar, cache, {
         defaultRepo: "test/repo",
         githubApiBase: "http://localhost:1",
@@ -316,7 +316,7 @@ describe("FrameworkResolverAdapter", () => {
       expect(() => validateRepoFormat("my_org/my.repo")).not.toThrow();
     });
 
-    it("throws for invalid owner/repo format", () => {
+    it("rejects invalid repository format", () => {
       expect(() => validateRepoFormat("invalid")).toThrow("Invalid repository format");
       expect(() => validateRepoFormat("owner/repo/extra")).toThrow("Invalid repository format");
       expect(() => validateRepoFormat("")).toThrow("Invalid repository format");
@@ -327,7 +327,7 @@ describe("FrameworkResolverAdapter", () => {
   });
 
   describe("fetchLatestVersion()", () => {
-    it("returns tag_name from GitHub API", async () => {
+    it("fetches latest version tag from GitHub API", async () => {
       const { url: serverUrl, close } = await startHttpServer((_req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ tag_name: "v5.0.0", assets: [] }));

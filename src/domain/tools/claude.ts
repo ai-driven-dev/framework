@@ -39,6 +39,14 @@ export const claudeToolConfig: ToolConfig = {
       .replace(/@\.claude\/commands\/(\d+)[_][^/]+\//g, (_, phase) => `@${commandsDir(phase)}`);
   },
 
+  reverseRewriteContent(content: string, docsDir: string): string {
+    return content
+      .replaceAll(`@${DIRECTORY}`, AT_TOOLS_PLACEHOLDER)
+      .replaceAll(`@${docsDir}/`, AT_DOCS_PLACEHOLDER)
+      .replaceAll(DIRECTORY, TOOLS_PLACEHOLDER)
+      .replaceAll(`${docsDir}/`, DOCS_PLACEHOLDER);
+  },
+
   agents(): SectionHandler {
     return {
       buildFilePath(fileName: string): string {

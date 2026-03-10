@@ -1,8 +1,8 @@
 # AIDD CLI -- Backlog de developpement
 
-> Plan d'execution complet pour AIDD CLI v3.0 (MVP), v3.1+ et v3.2+.
+> Plan d'execution complet pour AIDD CLI v3.0 (MVP), v3.1+ v3.2+ et v3.3.
 > Genere depuis : milestones.md, user_stories.md, architecture.md, prd.md.
-> **46 tickets** (37 originaux + 054 migration + 055 release pin + 056 status update check + 064 update dry-run + 080-083 M8 ergonomics).
+> **47 tickets** (37 originaux + 054 migration + 055 release pin + 056 status update check + 064 update dry-run + 080-083 M8 ergonomics + 085 adopt command).
 
 ---
 
@@ -92,6 +92,7 @@ Suivi de sections : Context, Scope, Acceptance Criteria, Technical Notes, Files 
 | **M6**    | Update & Restore                 | 17     | 4      | v3.1+ | 060 -- 064           |
 | **M7**    | Cross-Tool Sync                  | 10     | 5      | v3.1+ | 070 -- 072           |
 | **M8**    | Ergonomics & Tooling             | 10     | 6      | v3.2+ | 080 -- 083           |
+| **M9**    | Manual Installation Migration    | 5      | 7      | v3.3  | 085 ✅               |
 
 **Chemin critique :** M0 -> M1 -> M2 -> M3 -> M4 -> M5 -> M6 -> M7 -> M8
 
@@ -161,6 +162,9 @@ M8: (parallelisable entre eux, debloquable apres M5)
     056 -> 081 (config management)
     056 -> 082 (init --force)
     056 -> 083 (doctor --fix)
+
+M9: (debloquable apres M5, independant de M6-M8)
+    085 (adopt command)
 ```
 
 Note : les branches paralleles sont visibles dans M1 (015 et 014 convergent vers 016) et M2 (021 et 022 convergent vers 023). L'agent ne doit pas attendre 014 pour commencer 015, ni 021 pour commencer 022. Les tickets M8 (080-083) sont independants entre eux et peuvent etre pris dans n'importe quel ordre.

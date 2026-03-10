@@ -1,14 +1,14 @@
 # AIDD CLI — User Stories
 
-> Backlog complet du projet AIDD CLI v3.0 et v3.1+, organisé par epics.
-> North Star Metric : 70% d'adoption communautaire dans les 6 mois.
-> Vélocité : 20 pts/sprint — Sprint : 2 semaines.
+> Complete backlog for the AIDD CLI v3.0 and v3.1+ project, organized by epics.
+> North Star Metric: 70% community adoption within 6 months.
+> Velocity: 20 pts/sprint — Sprint: 2 weeks.
 
 ---
 
 # Epic: Framework Resolution
 
-> Permettre au CLI de télécharger, extraire, mettre en cache et charger le framework canonique depuis une source distante, un tarball local ou un répertoire local.
+> Allow the CLI to download, extract, cache and load the canonical framework from a remote source, a local tarball, or a local directory.
 
 ## Scope Tier
 
@@ -16,11 +16,11 @@
 
 ## Justification NSM
 
-Sans résolution du framework, aucune commande ne peut fonctionner. C'est la fondation technique sur laquelle reposent init, install et toutes les commandes suivantes. Adoption = 0% sans cette brique.
+Without framework resolution, no command can work. This is the technical foundation on which init, install and all subsequent commands depend. Adoption = 0% without this building block.
 
 ## User Stories
 
-| ID     | User Story                                                                                                                               | Points | Priorité | Status |
+| ID     | User Story                                                                                                                               | Points | Priority | Status |
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------- | ------ |
 | US-001 | As a developer, I want the CLI to download the latest framework from GitHub so that I always work with the most recent community content | 5      | Must     | ⬜     |
 | US-002 | As a developer, I want to point the CLI to a local directory or tarball so that I can work offline or test unreleased framework versions | 3      | Must     | ⬜     |
@@ -29,45 +29,45 @@ Sans résolution du framework, aucune commande ne peut fonctionner. C'est la fon
 | US-005 | As a developer, I want the CLI to auto-detect my GitHub token so that I do not have to pass credentials manually every time              | 2      | Should   | ⬜     |
 | US-026 | As a developer, I want to specify a custom framework repository so that I can use a fork or private variant of the framework             | 2      | Should   | ⬜     |
 
-**Légende** : ⬜ Pending | 🔄 In Progress | ✅ Done | ⏭️ Skipped
+**Legend** : ⬜ Pending | 🔄 In Progress | ✅ Done | ⏭️ Skipped
 
-## Estimation totale
+## Total Estimate
 
-| Métrique            | Valeur                               |
-| ------------------- | ------------------------------------ |
-| **Stories**         | 6                                    |
-| **Points totaux**   | 17                                   |
-| **Sprints estimés** | 1 (vélocité estimée : 20 pts/sprint) |
+| Metric              | Value                                    |
+| ------------------- | ---------------------------------------- |
+| **Stories**         | 6                                        |
+| **Total points**    | 17                                       |
+| **Estimated sprints** | 1 (estimated velocity: 20 pts/sprint)  |
 
-## Critères d'acceptation (niveau epic)
+## Acceptance Criteria (epic level)
 
 - [ ] The CLI resolves a framework from remote, tarball, and local directory sources
 - [ ] Caching prevents redundant downloads across sessions
 - [ ] Offline fallback works when a cache exists
 - [ ] Auth token is never written to disk or logged
 
-## Dépendances
+## Dependencies
 
-| Dépendance                       | Type      | Bloquant ?                  |
+| Dependency                       | Type      | Blocking?                   |
 | -------------------------------- | --------- | --------------------------- |
-| GitHub Releases API availability | Externe   | Non (local fallback exists) |
-| framework.json descriptor schema | Technique | Oui                         |
+| GitHub Releases API availability | External  | No (local fallback exists)  |
+| framework.json descriptor schema | Technical | Yes                         |
 
-## Spikes associés
+## Associated Spikes
 
-| Spike                            | Objectif                                                               | Time-box | Status |
+| Spike                            | Objective                                                              | Time-box | Status |
 | -------------------------------- | ---------------------------------------------------------------------- | -------- | ------ |
-| GitHub tarball nesting detection | Validate single-directory nesting pattern across different GitHub orgs | 1 jour   | ⬜     |
+| GitHub tarball nesting detection | Validate single-directory nesting pattern across different GitHub orgs | 1 day    | ⬜     |
 
 ---
 
 ## Validation
 
-- [x] Justification NSM documentée
-- [x] Toutes les stories respectent INVEST
-- [x] Acceptance criteria Gherkin pour chaque story
-- [x] Estimation totale < 13 points par story
-- [x] Dépendances identifiées et plan de mitigation
+- [x] NSM justification documented
+- [x] All stories follow INVEST
+- [x] Gherkin acceptance criteria for each story
+- [x] Total estimate < 13 points per story
+- [x] Dependencies identified and mitigation plan in place
 
 ---
 
@@ -77,7 +77,7 @@ Sans résolution du framework, aucune commande ne peut fonctionner. C'est la fon
 **I want** the CLI to download the latest framework from GitHub
 **So that** I always work with the most recent community content
 
-| Estimation | Priorité | Epic                 |
+| Estimate   | Priority | Epic                 |
 | ---------- | -------- | -------------------- |
 | 5 pts      | Must     | Framework Resolution |
 
@@ -128,7 +128,7 @@ Scenario: Remote download completes within timeout
 **I want** to point the CLI to a local directory or tarball
 **So that** I can work offline or test unreleased framework versions
 
-| Estimation | Priorité | Epic                 |
+| Estimate   | Priority | Epic                 |
 | ---------- | -------- | -------------------- |
 | 3 pts      | Must     | Framework Resolution |
 
@@ -165,7 +165,7 @@ Scenario: Missing framework descriptor in local directory
 **I want** the CLI to cache downloaded frameworks
 **So that** repeated commands do not trigger redundant downloads
 
-| Estimation | Priorité | Epic                 |
+| Estimate   | Priority | Epic                 |
 | ---------- | -------- | -------------------- |
 | 3 pts      | Must     | Framework Resolution |
 
@@ -201,7 +201,7 @@ Scenario: Cache corrupted — framework.json missing
 **I want** the CLI to fall back to a cached version when the network is unavailable
 **So that** I can keep working offline
 
-| Estimation | Priorité | Epic                 |
+| Estimate   | Priority | Epic                 |
 | ---------- | -------- | -------------------- |
 | 2 pts      | Must     | Framework Resolution |
 
@@ -239,7 +239,7 @@ Scenario: Invalid tarball from network
 **I want** the CLI to auto-detect my GitHub token
 **So that** I do not have to pass credentials manually every time
 
-| Estimation | Priorité | Epic                 |
+| Estimate   | Priority | Epic                 |
 | ---------- | -------- | -------------------- |
 | 2 pts      | Should   | Framework Resolution |
 
@@ -278,7 +278,7 @@ Scenario: gh auth token hangs
 **I want** to specify a custom framework repository
 **So that** I can use a fork or private variant of the framework
 
-| Estimation | Priorité | Epic                 |
+| Estimate   | Priority | Epic                 |
 | ---------- | -------- | -------------------- |
 | 2 pts      | Should   | Framework Resolution |
 
@@ -317,7 +317,7 @@ Scenario: Invalid repository format
 
 # Epic: Docs Initialization
 
-> Permettre au développeur d'initialiser la structure de documentation partagée du projet en une seule commande.
+> Allow the developer to initialize the project's shared documentation structure in a single command.
 
 ## Scope Tier
 
@@ -325,52 +325,52 @@ Scenario: Invalid repository format
 
 ## Justification NSM
 
-L'initialisation est le point d'entrée du CLI. Une première expérience fluide et rapide est déterminante pour l'adoption. Si init échoue ou déroute, l'utilisateur n'ira jamais jusqu'à install.
+Initialization is the CLI's entry point. A smooth and fast first experience is critical for adoption. If init fails or confuses the user, they will never proceed to install.
 
 ## User Stories
 
-| ID     | User Story                                                                                                                                        | Points | Priorité | Status |
+| ID     | User Story                                                                                                                                        | Points | Priority | Status |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------- | ------ |
 | US-006 | As a developer, I want to run a single command to set up the shared docs structure so that I do not have to create files and directories manually | 3      | Must     | ⬜     |
 | US-007 | As a developer, I want to choose a custom docs directory name so that it fits my project conventions                                              | 2      | Should   | ⬜     |
 
-**Légende** : ⬜ Pending | 🔄 In Progress | ✅ Done | ⏭️ Skipped
+**Legend** : ⬜ Pending | 🔄 In Progress | ✅ Done | ⏭️ Skipped
 
-## Estimation totale
+## Total Estimate
 
-| Métrique            | Valeur                               |
-| ------------------- | ------------------------------------ |
-| **Stories**         | 2                                    |
-| **Points totaux**   | 5                                    |
-| **Sprints estimés** | 1 (vélocité estimée : 20 pts/sprint) |
+| Metric              | Value                                    |
+| ------------------- | ---------------------------------------- |
+| **Stories**         | 2                                        |
+| **Total points**    | 5                                        |
+| **Estimated sprints** | 1 (estimated velocity: 20 pts/sprint)  |
 
-## Critères d'acceptation (niveau epic)
+## Acceptance Criteria (epic level)
 
 - [ ] aidd init creates the docs directory with templates from the framework
 - [ ] A manifest (.aidd/config.json) is created and tracks docs files with hashes
 - [ ] Custom docs directory name is persisted in the manifest
 
-## Dépendances
+## Dependencies
 
-| Dépendance                 | Type      | Bloquant ? |
-| -------------------------- | --------- | ---------- |
-| Epic: Framework Resolution | Technique | Oui        |
+| Dependency                 | Type      | Blocking? |
+| -------------------------- | --------- | --------- |
+| Epic: Framework Resolution | Technical | Yes       |
 
-## Spikes associés
+## Associated Spikes
 
-| Spike | Objectif | Time-box | Status |
-| ----- | -------- | -------- | ------ |
-| —     | —        | —        | —      |
+| Spike | Objective | Time-box | Status |
+| ----- | --------- | -------- | ------ |
+| —     | —         | —        | —      |
 
 ---
 
 ## Validation
 
-- [x] Justification NSM documentée
-- [x] Toutes les stories respectent INVEST
-- [x] Acceptance criteria Gherkin pour chaque story
-- [x] Estimation totale < 13 points par story
-- [x] Dépendances identifiées et plan de mitigation
+- [x] NSM justification documented
+- [x] All stories follow INVEST
+- [x] Gherkin acceptance criteria for each story
+- [x] Total estimate < 13 points per story
+- [x] Dependencies identified and mitigation plan in place
 
 ---
 
@@ -380,7 +380,7 @@ L'initialisation est le point d'entrée du CLI. Une première expérience fluide
 **I want** to run a single command to set up the shared docs structure
 **So that** I do not have to create files and directories manually
 
-| Estimation | Priorité | Epic                |
+| Estimate   | Priority | Epic                |
 | ---------- | -------- | ------------------- |
 | 3 pts      | Must     | Docs Initialization |
 
@@ -420,7 +420,7 @@ Scenario: .aidd/ directory exists from partial init without manifest
 **I want** to choose a custom docs directory name
 **So that** it fits my project conventions
 
-| Estimation | Priorité | Epic                |
+| Estimate   | Priority | Epic                |
 | ---------- | -------- | ------------------- |
 | 2 pts      | Should   | Docs Initialization |
 
@@ -452,7 +452,7 @@ Scenario: --docs-dir only accepted by init
 
 # Epic: Tool Distribution
 
-> Permettre au développeur de générer les fichiers de configuration spécifiques à chaque outil AI à partir du framework canonique.
+> Allow the developer to generate the configuration files specific to each AI tool from the canonical framework.
 
 ## Scope Tier
 
@@ -460,57 +460,57 @@ Scenario: --docs-dir only accepted by init
 
 ## Justification NSM
 
-C'est la proposition de valeur principale du CLI. L'installation en une commande est le principal levier d'adoption. Sans distribution fonctionnelle, le produit n'a pas de raison d'exister.
+This is the CLI's core value proposition. One-command installation is the primary driver of adoption. Without a working distribution, the product has no reason to exist.
 
 ## User Stories
 
-| ID     | User Story                                                                                                                                                          | Points | Priorité | Status |
+| ID     | User Story                                                                                                                                                          | Points | Priority | Status |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------- | ------ |
 | US-008 | As a developer, I want to install the framework for one or more AI tools in a single command so that I do not have to manually create and adapt configuration files | 8      | Must     | ⬜     |
 | US-010 | As a developer, I want the CLI to auto-initialize docs if no manifest exists when I run install so that I do not have to remember to run init first                 | 2      | Must     | ⬜     |
 | US-011 | As a developer, I want to force-reinstall a tool so that I can regenerate all files from the latest framework version                                               | 2      | Should   | ⬜     |
 | US-012 | As a developer, I want the CLI to handle Copilot-specific flattening and VS Code config merging so that Copilot integration works seamlessly                        | 3      | Must     | ⬜     |
 
-**Légende** : ⬜ Pending | 🔄 In Progress | ✅ Done | ⏭️ Skipped
+**Legend** : ⬜ Pending | 🔄 In Progress | ✅ Done | ⏭️ Skipped
 
-## Estimation totale
+## Total Estimate
 
-| Métrique            | Valeur                               |
-| ------------------- | ------------------------------------ |
-| **Stories**         | 4                                    |
-| **Points totaux**   | 15                                   |
-| **Sprints estimés** | 1 (vélocité estimée : 20 pts/sprint) |
+| Metric              | Value                                    |
+| ------------------- | ---------------------------------------- |
+| **Stories**         | 4                                        |
+| **Total points**    | 15                                       |
+| **Estimated sprints** | 1 (estimated velocity: 20 pts/sprint)  |
 
-## Critères d'acceptation (niveau epic)
+## Acceptance Criteria (epic level)
 
 - [ ] aidd install generates correct distributions for Claude, Cursor, and Copilot
 - [ ] Content placeholders, frontmatter, and include syntax are correctly rewritten per tool
 - [ ] All generated files are tracked in the manifest with correct hashes
 - [ ] Copilot flattening handles name collisions with auto-prefix
 
-## Dépendances
+## Dependencies
 
-| Dépendance                 | Type      | Bloquant ?                 |
+| Dependency                 | Type      | Blocking?                  |
 | -------------------------- | --------- | -------------------------- |
-| Epic: Framework Resolution | Technique | Oui                        |
-| Epic: Docs Initialization  | Technique | Non (auto-init handles it) |
+| Epic: Framework Resolution | Technical | Yes                        |
+| Epic: Docs Initialization  | Technical | No (auto-init handles it)  |
 
-## Spikes associés
+## Associated Spikes
 
-| Spike                       | Objectif                                                                       | Time-box | Status |
+| Spike                       | Objective                                                                      | Time-box | Status |
 | --------------------------- | ------------------------------------------------------------------------------ | -------- | ------ |
-| Copilot flattening strategy | Validate auto-prefix approach on real framework with potential name collisions | 1 jour   | ⬜     |
-| VS Code settings.json merge | Validate deep merge strategy for array values (append vs deduplicate)          | 1 jour   | ⬜     |
+| Copilot flattening strategy | Validate auto-prefix approach on real framework with potential name collisions | 1 day    | ⬜     |
+| VS Code settings.json merge | Validate deep merge strategy for array values (append vs deduplicate)          | 1 day    | ⬜     |
 
 ---
 
 ## Validation
 
-- [x] Justification NSM documentée
-- [x] Toutes les stories respectent INVEST
-- [x] Acceptance criteria Gherkin pour chaque story
-- [x] Estimation totale < 13 points par story
-- [x] Dépendances identifiées et plan de mitigation
+- [x] NSM justification documented
+- [x] All stories follow INVEST
+- [x] Gherkin acceptance criteria for each story
+- [x] Total estimate < 13 points per story
+- [x] Dependencies identified and mitigation plan in place
 
 ---
 
@@ -520,7 +520,7 @@ C'est la proposition de valeur principale du CLI. L'installation en une commande
 **I want** to install the framework for one or more AI tools in a single command
 **So that** I do not have to manually create and adapt configuration files
 
-| Estimation | Priorité | Epic              |
+| Estimate   | Priority | Epic              |
 | ---------- | -------- | ----------------- |
 | 8 pts      | Must     | Tool Distribution |
 
@@ -579,7 +579,7 @@ Scenario: Copilot-specific content rewriting
 **I want** the CLI to auto-initialize docs if no manifest exists when I run install
 **So that** I do not have to remember to run init first
 
-| Estimation | Priorité | Epic              |
+| Estimate   | Priority | Epic              |
 | ---------- | -------- | ----------------- |
 | 2 pts      | Must     | Tool Distribution |
 
@@ -619,7 +619,7 @@ Scenario: Manifest already exists
 **I want** to force-reinstall a tool
 **So that** I can regenerate all files from the latest framework version
 
-| Estimation | Priorité | Epic              |
+| Estimate   | Priority | Epic              |
 | ---------- | -------- | ----------------- |
 | 2 pts      | Should   | Tool Distribution |
 
@@ -655,7 +655,7 @@ Scenario: Force install when tool directory exists but not in manifest
 **I want** the CLI to handle Copilot-specific flattening and VS Code config merging
 **So that** Copilot integration works seamlessly
 
-| Estimation | Priorité | Epic              |
+| Estimate   | Priority | Epic              |
 | ---------- | -------- | ----------------- |
 | 3 pts      | Must     | Tool Distribution |
 
@@ -689,7 +689,7 @@ Scenario: VS Code settings.json merge with existing user content
 
 # Epic: Lifecycle Management
 
-> Permettre au développeur de gérer le cycle de vie complet de son installation AIDD : désinstallation d'un outil, vérification de l'état, nettoyage global et diagnostics.
+> Allow the developer to manage the full lifecycle of their AIDD installation: tool uninstallation, status checking, global cleanup, and diagnostics.
 
 ## Scope Tier
 
@@ -697,11 +697,11 @@ Scenario: VS Code settings.json merge with existing user content
 
 ## Justification NSM
 
-Les commandes de cycle de vie (uninstall, status, clean, doctor) construisent la confiance. Un développeur qui sait pouvoir désinstaller proprement et diagnostiquer les problèmes adopte le CLI avec moins d'hésitation.
+Lifecycle commands (uninstall, status, clean, doctor) build trust. A developer who knows they can cleanly uninstall and diagnose problems will adopt the CLI with less hesitation.
 
 ## User Stories
 
-| ID     | User Story                                                                                                                                         | Points | Priorité | Status |
+| ID     | User Story                                                                                                                                         | Points | Priority | Status |
 | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------- | ------ |
 | US-013 | As a developer, I want to uninstall a tool's configuration without affecting other tools or docs so that I can safely remove tools I no longer use | 3      | Must     | ⬜     |
 | US-014 | As a developer, I want to see at a glance which files have drifted from the installed framework version so that I know what has changed            | 5      | Must     | ⬜     |
@@ -711,17 +711,17 @@ Les commandes de cycle de vie (uninstall, status, clean, doctor) construisent la
 | US-018 | As a developer, I want verbose output on any command so that I can debug framework resolution and file operation issues                            | 2      | Should   | ⬜     |
 | US-027 | As a developer, I want to configure CLI defaults in a project settings file so that I do not have to repeat flags on every command                 | 2      | Should   | ⬜     |
 
-**Légende** : ⬜ Pending | 🔄 In Progress | ✅ Done | ⏭️ Skipped
+**Legend** : ⬜ Pending | 🔄 In Progress | ✅ Done | ⏭️ Skipped
 
-## Estimation totale
+## Total Estimate
 
-| Métrique            | Valeur                               |
-| ------------------- | ------------------------------------ |
-| **Stories**         | 7                                    |
-| **Points totaux**   | 19                                   |
-| **Sprints estimés** | 1 (vélocité estimée : 20 pts/sprint) |
+| Metric              | Value                                    |
+| ------------------- | ---------------------------------------- |
+| **Stories**         | 7                                        |
+| **Total points**    | 19                                       |
+| **Estimated sprints** | 1 (estimated velocity: 20 pts/sprint)  |
 
-## Critères d'acceptation (niveau epic)
+## Acceptance Criteria (epic level)
 
 - [ ] Uninstall removes only the target tool's files and updates the manifest
 - [ ] Status accurately classifies files as unmodified, modified, deleted, or added
@@ -730,28 +730,28 @@ Les commandes de cycle de vie (uninstall, status, clean, doctor) construisent la
 - [ ] Verbose mode outputs diagnostics to stderr without polluting stdout
 - [ ] Settings file (.aidd/settings.json) stores project-level defaults with correct resolution priority
 
-## Dépendances
+## Dependencies
 
-| Dépendance                | Type      | Bloquant ?                                               |
+| Dependency                | Type      | Blocking?                                                |
 | ------------------------- | --------- | -------------------------------------------------------- |
-| Epic: Tool Distribution   | Technique | Oui (tools must be installed to uninstall/status/doctor) |
-| Epic: Docs Initialization | Technique | Oui (manifest must exist)                                |
+| Epic: Tool Distribution   | Technical | Yes (tools must be installed to uninstall/status/doctor) |
+| Epic: Docs Initialization | Technical | Yes (manifest must exist)                                |
 
-## Spikes associés
+## Associated Spikes
 
-| Spike | Objectif | Time-box | Status |
-| ----- | -------- | -------- | ------ |
-| —     | —        | —        | —      |
+| Spike | Objective | Time-box | Status |
+| ----- | --------- | -------- | ------ |
+| —     | —         | —        | —      |
 
 ---
 
 ## Validation
 
-- [x] Justification NSM documentée
-- [x] Toutes les stories respectent INVEST
-- [x] Acceptance criteria Gherkin pour chaque story
-- [x] Estimation totale < 13 points par story
-- [x] Dépendances identifiées et plan de mitigation
+- [x] NSM justification documented
+- [x] All stories follow INVEST
+- [x] Gherkin acceptance criteria for each story
+- [x] Total estimate < 13 points per story
+- [x] Dependencies identified and mitigation plan in place
 
 ---
 
@@ -761,7 +761,7 @@ Les commandes de cycle de vie (uninstall, status, clean, doctor) construisent la
 **I want** to uninstall a tool's configuration without affecting other tools or docs
 **So that** I can safely remove tools I no longer use
 
-| Estimation | Priorité | Epic                 |
+| Estimate   | Priority | Epic                 |
 | ---------- | -------- | -------------------- |
 | 3 pts      | Must     | Lifecycle Management |
 
@@ -807,7 +807,7 @@ Scenario: Some tracked files already manually deleted
 **I want** to see at a glance which files have drifted from the installed framework version
 **So that** I know what has changed
 
-| Estimation | Priorité | Epic                 |
+| Estimate   | Priority | Epic                 |
 | ---------- | -------- | -------------------- |
 | 5 pts      | Must     | Lifecycle Management |
 
@@ -863,7 +863,7 @@ Scenario: Status version check with network failure
 **I want** to filter status output by tool
 **So that** I can focus on a specific tool's drift
 
-| Estimation | Priorité | Epic                 |
+| Estimate   | Priority | Epic                 |
 | ---------- | -------- | -------------------- |
 | 1 pts      | Should   | Lifecycle Management |
 
@@ -900,7 +900,7 @@ Scenario: --tool with non-installed tool
 **I want** to remove all AIDD traces from my project in a single command
 **So that** I can cleanly abandon or reset the installation
 
-| Estimation | Priorité | Epic                 |
+| Estimate   | Priority | Epic                 |
 | ---------- | -------- | -------------------- |
 | 3 pts      | Must     | Lifecycle Management |
 
@@ -945,7 +945,7 @@ Scenario: Nothing to clean
 **I want** to run a health check on my installation
 **So that** I can detect corrupted manifests, orphaned directories and fix them
 
-| Estimation | Priorité | Epic                 |
+| Estimate   | Priority | Epic                 |
 | ---------- | -------- | -------------------- |
 | 3 pts      | Must     | Lifecycle Management |
 
@@ -990,7 +990,7 @@ Scenario: No manifest
 **I want** verbose output on any command
 **So that** I can debug framework resolution and file operation issues
 
-| Estimation | Priorité | Epic                 |
+| Estimate   | Priority | Epic                 |
 | ---------- | -------- | -------------------- |
 | 2 pts      | Should   | Lifecycle Management |
 
@@ -1031,7 +1031,7 @@ Scenario: Without verbose no diagnostic output
 **I want** to configure CLI defaults in a project settings file
 **So that** I do not have to repeat flags on every command
 
-| Estimation | Priorité | Epic                 |
+| Estimate   | Priority | Epic                 |
 | ---------- | -------- | -------------------- |
 | 2 pts      | Should   | Lifecycle Management |
 
@@ -1071,7 +1071,7 @@ Scenario: Token is never stored in settings file
 
 # Epic: Framework Updates
 
-> Permettre au développeur de mettre à jour ses distributions installées vers la dernière version du framework et de restaurer des fichiers modifiés à leur version d'origine.
+> Allow the developer to update their installed distributions to the latest framework version and restore modified files to their original version.
 
 ## Scope Tier
 
@@ -1079,55 +1079,55 @@ Scenario: Token is never stored in settings file
 
 ## Justification NSM
 
-Les mises à jour sont le second levier d'adoption durable. Un utilisateur qui ne peut pas mettre à jour facilement abandonnera le CLI quand le framework évoluera. Promotion conditionnée à adoption > 30%.
+Updates are the second driver of long-term adoption. A user who cannot update easily will abandon the CLI when the framework evolves. Promotion conditional on adoption > 30%.
 
 ## User Stories
 
-| ID     | User Story                                                                                                                                                     | Points | Priorité | Status |
+| ID     | User Story                                                                                                                                                     | Points | Priority | Status |
 | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------- | ------ |
 | US-019 | As a developer, I want to update my installed distributions to the latest framework version so that I benefit from community improvements without manual work  | 5      | Should   | ⬜     |
 | US-020 | As a developer, I want the update to detect my local modifications and let me choose whether to keep or overwrite them so that I do not lose my customizations | 5      | Should   | ⬜     |
 | US-021 | As a developer, I want to restore specific files to their original framework version so that I can undo accidental changes                                     | 5      | Should   | ⬜     |
 
-**Légende** : ⬜ Pending | 🔄 In Progress | ✅ Done | ⏭️ Skipped
+**Legend** : ⬜ Pending | 🔄 In Progress | ✅ Done | ⏭️ Skipped
 
-## Estimation totale
+## Total Estimate
 
-| Métrique            | Valeur                               |
-| ------------------- | ------------------------------------ |
-| **Stories**         | 3                                    |
-| **Points totaux**   | 15                                   |
-| **Sprints estimés** | 1 (vélocité estimée : 20 pts/sprint) |
+| Metric              | Value                                    |
+| ------------------- | ---------------------------------------- |
+| **Stories**         | 3                                        |
+| **Total points**    | 15                                       |
+| **Estimated sprints** | 1 (estimated velocity: 20 pts/sprint)  |
 
-## Critères d'acceptation (niveau epic)
+## Acceptance Criteria (epic level)
 
 - [ ] Update downloads the latest framework and applies a diff to each installed tool
 - [ ] User-modified files are detected and handled interactively (or forced)
 - [ ] Restore regenerates files from the pinned framework version
 - [ ] Manifest is updated with new hashes and versions after update/restore
 
-## Dépendances
+## Dependencies
 
-| Dépendance                          | Type      | Bloquant ?                                      |
+| Dependency                          | Type      | Blocking?                                       |
 | ----------------------------------- | --------- | ----------------------------------------------- |
-| Epic: Lifecycle Management (status) | Technique | Oui (drift detection needed for update/restore) |
-| Community adoption > 30%            | Business  | Oui (promotion trigger)                         |
+| Epic: Lifecycle Management (status) | Technical | Yes (drift detection needed for update/restore) |
+| Community adoption > 30%            | Business  | Yes (promotion trigger)                         |
 
-## Spikes associés
+## Associated Spikes
 
-| Spike                | Objectif                                                                                     | Time-box | Status |
+| Spike                | Objective                                                                                    | Time-box | Status |
 | -------------------- | -------------------------------------------------------------------------------------------- | -------- | ------ |
-| Update diff strategy | Validate added/removed/changed/unchanged classification on real framework version transition | 1 jour   | ⬜     |
+| Update diff strategy | Validate added/removed/changed/unchanged classification on real framework version transition | 1 day    | ⬜     |
 
 ---
 
 ## Validation
 
-- [x] Justification NSM documentée
-- [x] Toutes les stories respectent INVEST
-- [x] Acceptance criteria Gherkin pour chaque story
-- [x] Estimation totale < 13 points par story
-- [x] Dépendances identifiées et plan de mitigation
+- [x] NSM justification documented
+- [x] All stories follow INVEST
+- [x] Gherkin acceptance criteria for each story
+- [x] Total estimate < 13 points per story
+- [x] Dependencies identified and mitigation plan in place
 
 ---
 
@@ -1137,7 +1137,7 @@ Les mises à jour sont le second levier d'adoption durable. Un utilisateur qui n
 **I want** to update my installed distributions to the latest framework version
 **So that** I benefit from community improvements without manual work
 
-| Estimation | Priorité | Epic              |
+| Estimate   | Priority | Epic              |
 | ---------- | -------- | ----------------- |
 | 5 pts      | Should   | Framework Updates |
 
@@ -1179,7 +1179,7 @@ Scenario: No manifest exists
 **I want** the update to detect my local modifications and let me choose whether to keep or overwrite them
 **So that** I do not lose my customizations
 
-| Estimation | Priorité | Epic              |
+| Estimate   | Priority | Epic              |
 | ---------- | -------- | ----------------- |
 | 5 pts      | Should   | Framework Updates |
 
@@ -1219,7 +1219,7 @@ Scenario: Update without modified files skips prompts
 **I want** to restore specific files to their original framework version
 **So that** I can undo accidental changes
 
-| Estimation | Priorité | Epic              |
+| Estimate   | Priority | Epic              |
 | ---------- | -------- | ----------------- |
 | 5 pts      | Should   | Framework Updates |
 
@@ -1268,7 +1268,7 @@ Scenario: Nothing to restore
 
 # Epic: Cross-Tool Sync
 
-> Permettre au développeur de propager ses modifications d'un outil vers tous les autres outils installés.
+> Allow the developer to propagate their changes from one tool to all other installed tools.
 
 ## Scope Tier
 
@@ -1276,56 +1276,56 @@ Scenario: Nothing to restore
 
 ## Justification NSM
 
-Le sync est le différenciateur pour les utilisateurs multi-outils. Propager un changement fait dans Claude vers Cursor et Copilot en une commande élimine la dernière friction majeure. Promotion conditionnée à l'adoption multi-tool confirmée.
+Sync is the differentiator for multi-tool users. Propagating a change made in Claude to Cursor and Copilot in a single command eliminates the last major friction. Promotion conditional on confirmed multi-tool adoption.
 
 ## User Stories
 
-| ID     | User Story                                                                                                                                                  | Points | Priorité | Status |
+| ID     | User Story                                                                                                                                                  | Points | Priority | Status |
 | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------- | ------ |
 | US-023 | As a developer, I want to propagate my changes from one tool to all other installed tools so that my customizations stay consistent across my AI assistants | 5      | Could    | ⬜     |
 | US-024 | As a developer, I want the CLI to detect conflicts when the target tool also has modifications so that I do not accidentally overwrite other changes        | 3      | Could    | ⬜     |
 | US-025 | As a developer, I want to sync to a specific target tool instead of all so that I can control exactly where changes propagate                               | 2      | Could    | ⬜     |
 
-**Légende** : ⬜ Pending | 🔄 In Progress | ✅ Done | ⏭️ Skipped
+**Legend** : ⬜ Pending | 🔄 In Progress | ✅ Done | ⏭️ Skipped
 
-## Estimation totale
+## Total Estimate
 
-| Métrique            | Valeur                               |
-| ------------------- | ------------------------------------ |
-| **Stories**         | 3                                    |
-| **Points totaux**   | 10                                   |
-| **Sprints estimés** | 1 (vélocité estimée : 20 pts/sprint) |
+| Metric              | Value                                    |
+| ------------------- | ---------------------------------------- |
+| **Stories**         | 3                                        |
+| **Total points**    | 10                                       |
+| **Estimated sprints** | 1 (estimated velocity: 20 pts/sprint)  |
 
-## Critères d'acceptation (niveau epic)
+## Acceptance Criteria (epic level)
 
 - [ ] Sync reverse-rewrites source tool content to canonical format, then forward-rewrites to each target
 - [ ] Conflicts are detected and reported, not silently overwritten
 - [ ] Memory bank files, MCP config, docs, VS Code files, and manifest are never propagated
 - [ ] Requires at least 2 installed tools
 
-## Dépendances
+## Dependencies
 
-| Dépendance                                  | Type      | Bloquant ?              |
+| Dependency                                  | Type      | Blocking?               |
 | ------------------------------------------- | --------- | ----------------------- |
-| Epic: Tool Distribution (content rewriting) | Technique | Oui                     |
-| Epic: Lifecycle Management (status)         | Technique | Oui                     |
-| Community multi-tool usage confirmation     | Business  | Oui (promotion trigger) |
+| Epic: Tool Distribution (content rewriting) | Technical | Yes                     |
+| Epic: Lifecycle Management (status)         | Technical | Yes                     |
+| Community multi-tool usage confirmation     | Business  | Yes (promotion trigger) |
 
-## Spikes associés
+## Associated Spikes
 
-| Spike                       | Objectif                                                                                    | Time-box | Status |
+| Spike                       | Objective                                                                                   | Time-box | Status |
 | --------------------------- | ------------------------------------------------------------------------------------------- | -------- | ------ |
-| Reverse-rewrite feasibility | Validate that tool-specific content can be losslessly reverse-rewritten to canonical format | 2 jours  | ⬜     |
+| Reverse-rewrite feasibility | Validate that tool-specific content can be losslessly reverse-rewritten to canonical format | 2 days   | ⬜     |
 
 ---
 
 ## Validation
 
-- [x] Justification NSM documentée
-- [x] Toutes les stories respectent INVEST
-- [x] Acceptance criteria Gherkin pour chaque story
-- [x] Estimation totale < 13 points par story
-- [x] Dépendances identifiées et plan de mitigation
+- [x] NSM justification documented
+- [x] All stories follow INVEST
+- [x] Gherkin acceptance criteria for each story
+- [x] Total estimate < 13 points per story
+- [x] Dependencies identified and mitigation plan in place
 
 ---
 
@@ -1335,7 +1335,7 @@ Le sync est le différenciateur pour les utilisateurs multi-outils. Propager un 
 **I want** to propagate my changes from one tool to all other installed tools
 **So that** my customizations stay consistent across my AI assistants
 
-| Estimation | Priorité | Epic            |
+| Estimate   | Priority | Epic            |
 | ---------- | -------- | --------------- |
 | 5 pts      | Could    | Cross-Tool Sync |
 
@@ -1382,7 +1382,7 @@ Scenario: Excluded files are never propagated
 **I want** the CLI to detect conflicts when the target tool also has modifications
 **So that** I do not accidentally overwrite other changes
 
-| Estimation | Priorité | Epic            |
+| Estimate   | Priority | Epic            |
 | ---------- | -------- | --------------- |
 | 3 pts      | Could    | Cross-Tool Sync |
 
@@ -1423,7 +1423,7 @@ Scenario: No conflicts
 **I want** to sync to a specific target tool instead of all
 **So that** I can control exactly where changes propagate
 
-| Estimation | Priorité | Epic            |
+| Estimate   | Priority | Epic            |
 | ---------- | -------- | --------------- |
 | 2 pts      | Could    | Cross-Tool Sync |
 
@@ -1454,78 +1454,185 @@ Scenario: Source and target are the same
 
 ---
 
+# Epic: Manual Installation Migration
+
+> Allow a developer who installed the AIDD framework manually (before the CLI was available) to migrate to CLI-managed state in a single command.
+
+## Scope Tier
+
+**v3.3**
+
+## Justification NSM
+
+The CLI launched after the community had already adopted the framework manually. Without an adoption path, early adopters cannot migrate to CLI-managed state and benefit from update, restore, and sync. This is a direct adoption unlock.
+
+## User Stories
+
+| ID     | User Story                                                                                                                                              | Points | Priority | Status |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------- | ------ |
+| US-028 | As a developer who installed the framework manually, I want to run `aidd adopt` so that my existing files are brought under CLI management without loss | 5      | Must     | ⬜     |
+
+**Legend** : ⬜ Pending | 🔄 In Progress | ✅ Done | ⏭️ Skipped
+
+## Total Estimate
+
+| Metric              | Value                                   |
+| ------------------- | --------------------------------------- |
+| **Stories**         | 1                                       |
+| **Total points**    | 5                                       |
+| **Estimated sprints** | < 1 (estimated velocity: 20 pts/sprint) |
+
+## Acceptance Criteria (epic level)
+
+- [ ] `aidd adopt` detects installed tools without a manifest
+- [ ] Conflict handling matches `aidd update` behavior
+- [ ] Manifest is created with correct post-write hashes
+- [ ] `aidd init` redirects to `aidd adopt` when existing files are detected
+
+## Dependencies
+
+| Dependency              | Type      | Blocking? |
+| ----------------------- | --------- | --------- |
+| UpdateUseCase (M6)      | Technical | No (reuse pattern, not code) |
+| FrameworkResolver (M2)  | Technical | Yes       |
+
+---
+
+## US-028: "Migrate manual framework installation to CLI-managed state"
+
+**As a** developer who installed the AIDD framework manually
+**I want** to run `aidd adopt`
+**So that** my existing files are brought under CLI management and I can use update, restore, and sync
+
+| Estimate | Priority | Epic                          |
+| -------- | -------- | ----------------------------- |
+| 5 pts    | Must     | Manual Installation Migration |
+
+### Acceptance Criteria
+
+```gherkin
+Scenario: Adopt with existing files — no conflicts (user accepts all)
+  Given a project with .claude/ and aidd_docs/ files but no .aidd/manifest.json
+  When the user runs aidd adopt
+  Then the CLI detects claude as an installed tool
+  And downloads the latest framework
+  And prompts for each file that exists on disk
+  And writes each file the user accepts to overwrite
+  And creates .aidd/manifest.json with post-write hashes
+  And reports a summary of written and kept files
+
+Scenario: Adopt with --force
+  Given a project with manually installed files and no manifest
+  When the user runs aidd adopt --force
+  Then all files are overwritten without prompting
+  And a .backup copy is created for each overwritten file
+  And the manifest is created
+
+Scenario: Orphan files not in framework
+  Given a project with custom files not present in the framework distribution
+  When the user runs aidd adopt
+  Then the custom files are not touched
+  And a warning is logged for each orphan file
+
+Scenario: aidd init blocked when files exist
+  Given a project with existing .claude/ directory
+  When the user runs aidd init
+  Then the CLI exits with error "AIDD files detected. Use `aidd adopt` to migrate your existing installation."
+
+Scenario: aidd status clean after adopt
+  Given aidd adopt completed successfully
+  When the user runs aidd status
+  Then all tracked files are reported as in sync
+```
+
+### Dependencies
+
+- UpdateUseCase conflict handling pattern (M6)
+- FrameworkResolver (M2)
+
+---
+
 # Backlog Summary
 
-## Points par epic
+## Points per epic
 
-| Epic                 | Scope | Stories | Points | Sprints |
-| -------------------- | ----- | ------- | ------ | ------- |
-| Framework Resolution | MVP   | 6       | 17     | 1       |
-| Docs Initialization  | MVP   | 2       | 5      | < 1     |
-| Tool Distribution    | MVP   | 4       | 15     | 1       |
-| Lifecycle Management | MVP   | 7       | 19     | 1       |
-| Framework Updates    | v3.1+ | 3       | 15     | 1       |
-| Cross-Tool Sync      | v3.1+ | 3       | 10     | < 1     |
-| **Total**            |       | **25**  | **81** | **~4**  |
+| Epic                          | Scope | Stories | Points | Sprints |
+| ----------------------------- | ----- | ------- | ------ | ------- |
+| Framework Resolution          | MVP   | 6       | 17     | 1       |
+| Docs Initialization           | MVP   | 2       | 5      | < 1     |
+| Tool Distribution             | MVP   | 4       | 15     | 1       |
+| Lifecycle Management          | MVP   | 7       | 19     | 1       |
+| Framework Updates             | v3.1+ | 3       | 15     | 1       |
+| Cross-Tool Sync               | v3.1+ | 3       | 10     | < 1     |
+| Manual Installation Migration | v3.3  | 1       | 5      | < 1     |
+| **Total**                     |       | **26**  | **86** | **~5**  |
 
 ## MVP Breakdown
 
-| Métrique                | Valeur                       |
+| Metric                  | Value                        |
 | ----------------------- | ---------------------------- |
 | **Stories MVP**         | 19                           |
 | **Points MVP**          | 56                           |
-| **Sprints MVP estimés** | 3 (vélocité : 20 pts/sprint) |
+| **Estimated MVP sprints** | 3 (velocity: 20 pts/sprint) |
 
 ## v3.1+ Breakdown
 
-| Métrique                  | Valeur                       |
+| Metric                    | Value                        |
 | ------------------------- | ---------------------------- |
 | **Stories v3.1+**         | 6                            |
 | **Points v3.1+**          | 25                           |
-| **Sprints v3.1+ estimés** | 2 (vélocité : 20 pts/sprint) |
+| **Estimated v3.1+ sprints** | 2 (velocity: 20 pts/sprint) |
+
+## v3.3 Breakdown
+
+| Metric                    | Value                        |
+| ------------------------- | ---------------------------- |
+| **Stories v3.3**          | 1                            |
+| **Points v3.3**           | 5                            |
+| **Estimated v3.3 sprints** | < 1 (velocity: 20 pts/sprint) |
 
 ---
 
 # Definition of Done
 
-> Critères de qualité applicables à **toutes** les user stories du projet. Une story n'est "done" que si **tous** ces critères sont satisfaits.
+> Quality criteria applicable to **all** user stories in the project. A story is only "done" if **all** these criteria are met.
 
-## Critères standard
+## Standard Criteria
 
-| #   | Critère                 | Description                                                               | Vérifié par |
-| --- | ----------------------- | ------------------------------------------------------------------------- | ----------- |
-| 1   | **Acceptance criteria** | Tous les scénarios Gherkin de la story passent                            | PM / QA     |
-| 2   | **Code review**         | Le code a été revu et approuvé par au moins 1 pair                        | Dev         |
-| 3   | **Tests**               | Tests unitaires et/ou E2E écrits et passants                              | Dev / QA    |
-| 4   | **Documentation**       | Documentation technique mise à jour si nécessaire                         | Dev         |
-| 5   | **Déploiement**         | La story passe `pnpm validate` et un smoke test manuel sur un projet réel | Dev         |
+| #   | Criterion               | Description                                                                      | Verified by |
+| --- | ----------------------- | -------------------------------------------------------------------------------- | ----------- |
+| 1   | **Acceptance criteria** | All Gherkin scenarios for the story pass                                         | PM / QA     |
+| 2   | **Code review**         | Code has been reviewed and approved by at least 1 peer                           | Dev         |
+| 3   | **Tests**               | Unit and/or E2E tests written and passing                                        | Dev / QA    |
+| 4   | **Documentation**       | Technical documentation updated if needed                                        | Dev         |
+| 5   | **Deployment**          | The story passes `pnpm validate` and a manual smoke test on a real project       | Dev         |
 
-## Critères spécifiques au projet
+## Project-Specific Criteria
 
-| #   | Critère                | Description                                                                                                        | Vérifié par    |
-| --- | ---------------------- | ------------------------------------------------------------------------------------------------------------------ | -------------- |
-| 6   | **Zero data loss**     | L'opération ne supprime jamais de fichier non suivi par le manifest sauf action explicite de l'utilisateur         | Dev / QA       |
-| 7   | **Performance**        | Les opérations locales s'exécutent en < 5 secondes pour un framework standard (~100 fichiers)                      | Dev            |
-| 8   | **Error messages**     | Chaque erreur inclut un message actionnable indiquant comment résoudre le problème                                 | Dev / QA       |
-| 9   | **Token security**     | Aucun token d'authentification n'est écrit sur disque, loggé en stdout/stderr ou inclus dans les messages d'erreur | Dev / Security |
-| 10  | **Cross-platform**     | La story fonctionne sur macOS, Linux et WSL                                                                        | Dev / QA       |
-| 11  | **Clean Architecture** | Le domain layer n'a aucun import d'infrastructure                                                                  | Dev            |
-| 12  | **Dependency limit**   | Maximum 2 dépendances runtime directes respecté                                                                    | Dev            |
-| 13  | **Manifest compat**    | Si le format du manifest change, la migration automatique des installations existantes est implémentée             | Dev            |
-| 14  | **No hardcoded paths** | Le domain layer utilise le framework descriptor, jamais de chemins en dur (agents/, commands/, etc.)               | Dev            |
+| #   | Criterion              | Description                                                                                                          | Verified by    |
+| --- | ---------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------- |
+| 6   | **Zero data loss**     | The operation never deletes a file not tracked by the manifest unless the user explicitly requests it                | Dev / QA       |
+| 7   | **Performance**        | Local operations complete in < 5 seconds for a standard framework (~100 files)                                       | Dev            |
+| 8   | **Error messages**     | Every error includes an actionable message indicating how to resolve the problem                                     | Dev / QA       |
+| 9   | **Token security**     | No authentication token is written to disk, logged to stdout/stderr, or included in error messages                   | Dev / Security |
+| 10  | **Cross-platform**     | The story works on macOS, Linux, and WSL                                                                             | Dev / QA       |
+| 11  | **Clean Architecture** | The domain layer has no infrastructure imports                                                                       | Dev            |
+| 12  | **Dependency limit**   | Maximum 2 direct runtime dependencies respected                                                                      | Dev            |
+| 13  | **Manifest compat**    | If the manifest format changes, automatic migration of existing installations is implemented                         | Dev            |
+| 14  | **No hardcoded paths** | The domain layer uses the framework descriptor, never hardcoded paths (agents/, commands/, etc.)                     | Dev            |
 
 ## Exceptions
 
-| Type de story | Critères ajustés                     | Raison                              |
-| ------------- | ------------------------------------ | ----------------------------------- |
-| **Spike**     | Pas de tests, livrable = rapport     | Investigation, pas d'implémentation |
-| **Prototype** | Pas de code review, pas de tests E2E | Jetable par design                  |
+| Story type    | Adjusted criteria                      | Reason                                    |
+| ------------- | -------------------------------------- | ----------------------------------------- |
+| **Spike**     | No tests, deliverable = report         | Investigation, no implementation          |
+| **Prototype** | No code review, no E2E tests           | Throwaway by design                       |
 
 ---
 
 ## Validation
 
-- [ ] DoD validée par l'équipe (PM + Dev Lead + QA)
-- [ ] Critères mesurables et vérifiables
-- [ ] Exceptions documentées et limitées
-- [ ] DoD accessible à toute l'équipe
+- [ ] DoD validated by the team (PM + Dev Lead + QA)
+- [ ] Criteria are measurable and verifiable
+- [ ] Exceptions documented and limited
+- [ ] DoD accessible to the entire team

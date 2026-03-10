@@ -17,6 +17,19 @@ interface GithubRelease {
   assets: Array<{ id: number; name: string }>;
 }
 
+function parseGithubRelease(body: unknown, url: string): GithubRelease {
+  if (
+    body === null ||
+    typeof body !== "object" ||
+    !("tag_name" in body) ||
+    typeof (body as Record<string, unknown>).tag_name !== "string" ||
+    !Array.isArray((body as Record<string, unknown>).assets)
+  ) {
+    throw new Error(`Unexpected GitHub API response from ${url}`);
+  }
+  return body as GithubRelease;
+}
+
 export interface FrameworkResolverAdapterConfig {
   defaultRepo: string;
   defaultToken?: string;
@@ -132,7 +145,7 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
   private async fetchLatestRelease(repo: string, token?: string): Promise<GithubRelease> {
     const url = `${this.githubApiBase}/repos/${repo}/releases/latest`;
     const response = await this.http.get(url, { token });
-    return response.body as GithubRelease;
+    return parseGithubRelease(response.body, url);
   }
 
   private async fetchReleaseByTag(
@@ -142,7 +155,7 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
   ): Promise<GithubRelease> {
     const url = `${this.githubApiBase}/repos/${repo}/releases/tags/${tag}`;
     const response = await this.http.get(url, { token });
-    return response.body as GithubRelease;
+    return parseGithubRelease(response.body, url);
   }
 
   private async downloadAndCache(

@@ -21,3 +21,22 @@ export async function resolveFramework(
   }
   return resolver.resolve(options.release ? { version: options.release } : {});
 }
+
+export async function resolveFrameworkWithFallback(
+  resolver: FrameworkResolver,
+  logger: Logger,
+  options: ResolveOptions & { pinnedVersion?: string }
+): Promise<FrameworkResolved> {
+  // Local path bypasses version pinning entirely — no fallback applies.
+  if (options.framework) {
+    return resolveFramework(resolver, logger, { framework: options.framework });
+  }
+  try {
+    return await resolveFramework(resolver, logger, {
+      release: options.pinnedVersion ?? options.release,
+    });
+  } catch {
+    logger.warn("Pinned version unavailable, falling back to latest.");
+    return resolveFramework(resolver, logger, {});
+  }
+}

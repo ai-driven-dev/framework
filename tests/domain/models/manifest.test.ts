@@ -47,7 +47,7 @@ describe("Manifest", () => {
       expect(manifest.hasTool("cursor" as ToolId)).toBe(true);
     });
 
-    it("throws when removing a non-existent tool", () => {
+    it("aborts when removing a tool that is not installed", () => {
       const manifest = Manifest.create();
       expect(() => manifest.removeTool("claude" as ToolId)).toThrow();
     });
@@ -80,7 +80,7 @@ describe("Manifest", () => {
   });
 
   describe("serialization round-trip", () => {
-    it("fromJSON() throws on unsupported manifest version", () => {
+    it("fromJSON() rejects unsupported manifest version", () => {
       const manifest = Manifest.create();
       manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
       const json = manifest.toJSON();
@@ -126,7 +126,7 @@ describe("Manifest", () => {
       expect(restoredJson.tools.claude.files[0].hash).toBe(`aabbcc${"0".repeat(26)}`);
     });
 
-    it("fromJSON() throws on invalid data", () => {
+    it("fromJSON() reports an error on invalid data", () => {
       expect(() => Manifest.fromJSON(null)).toThrow();
     });
   });

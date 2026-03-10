@@ -18,7 +18,7 @@ describe("CleanUseCase", () => {
     await cleanupTempProject(tempDir);
   });
 
-  it("returns empty result when no manifest exists", async () => {
+  it("reports nothing to clean when project is not initialized", async () => {
     const deps = buildDeps(projectRoot);
 
     const useCase = new CleanUseCase(deps.fs, deps.manifestRepo, deps.logger);
@@ -36,7 +36,7 @@ describe("CleanUseCase", () => {
     const result = await useCase.execute({ projectRoot, force: false });
 
     expect(result.dryRun).toBe(true);
-    expect(result.preview.totalFileCount).toBe(9);
+    expect(result.preview.totalFileCount).toBe(12);
     expect(result.fileCount).toBe(0);
     // Files should still exist
     expect(existsSync(join(projectRoot, ".claude"))).toBe(true);
@@ -51,7 +51,7 @@ describe("CleanUseCase", () => {
     const result = await useCase.execute({ projectRoot, force: true });
 
     expect(result.dryRun).toBe(false);
-    expect(result.fileCount).toBe(9);
+    expect(result.fileCount).toBe(12);
     expect(existsSync(join(projectRoot, ".claude"))).toBe(false);
     expect(existsSync(join(projectRoot, ".aidd"))).toBe(false);
   });

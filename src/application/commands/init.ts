@@ -66,6 +66,7 @@ export function registerInitCommand(program: Command): void {
           docsDir,
           projectRoot,
           force: cmdOptions.force,
+          repo: globalOptions.repo,
         });
         output.success(`Initialized docs in ${result.docsDir}/ (${result.fileCount} files)`);
       } catch (error) {

@@ -1,0 +1,135 @@
+import type { Command } from "commander";
+import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
+import { createDeps } from "../../infrastructure/deps.js";
+import { printUpdateBanner } from "../check-update.js";
+import { CLIOutput } from "../output.js";
+import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
+import { SyncUseCase } from "../use-cases/sync-use-case.js";
+
+export function registerSyncCommand(program: Command): void {
+  program
+    .command("sync")
+    .description("Propagate local modifications from one tool to others")
+    .requiredOption("--source <tool>", "Source tool to sync from")
+    .option("--target <tool>", "Target tool to sync to (default: all other installed tools)")
+    .option("-f, --force", "Overwrite conflicting files without prompting", false)
+    .action(async (cmdOptions: { source: string; target?: string; force: boolean }) => {
+      const globalOptions = program.opts<{
+        verbose: boolean;
+        repo?: string;
+        token?: string;
+        framework?: string;
+        release?: string;
+      }>();
+
+      const verbose = globalOptions.verbose ?? false;
+      const output = new CLIOutput(verbose);
+      const projectRoot = process.cwd();
+
+      try {
+        const deps = await createDeps(
+          projectRoot,
+          {
+            verbose,
+            repo: globalOptions.repo,
+            token: globalOptions.token,
+            framework: globalOptions.framework,
+          },
+          output
+        );
+
+        output.validateTools([cmdOptions.source], VALID_TOOL_IDS);
+        if (cmdOptions.target) {
+          output.validateTools([cmdOptions.target], VALID_TOOL_IDS);
+        }
+
+        await printUpdateBanner(deps.resolver, deps.manifestRepo, output);
+
+        const manifest = await deps.manifestRepo.load();
+        if (manifest === null) {
+          output.error("No AIDD installation found. Run `aidd init` first.");
+          process.exit(1);
+        }
+
+        const sourceTool = cmdOptions.source as ToolId;
+        const pinnedVersion = manifest.getToolVersion(sourceTool);
+
+        const { path: frameworkPath, version } = await resolveFramework(
+          deps.resolver,
+          deps.logger,
+          { framework: globalOptions.framework, release: pinnedVersion ?? globalOptions.release }
+        );
+
+        const docsDir = manifest.docsDir;
+        const targetTools: ToolId[] | undefined = cmdOptions.target
+          ? [cmdOptions.target as ToolId]
+          : undefined;
+
+        const syncUseCase = new SyncUseCase(
+          deps.fs,
+          deps.manifestRepo,
+          deps.loader,
+          deps.hasher,
+          deps.logger
+        );
+
+        const result = await syncUseCase.execute({
+          projectRoot,
+          docsDir,
+          frameworkPath,
+          version,
+          sourceTool,
+          targetTools,
+          force: cmdOptions.force,
+        });
+
+        const totalWritten = result.tools.reduce(
+          (sum, t) => sum + t.files.filter((f) => f.written).length,
+          0
+        );
+        const totalDeleted = result.tools.reduce(
+          (sum, t) => sum + t.files.filter((f) => f.deleted).length,
+          0
+        );
+        const totalConflicts = result.tools.reduce(
+          (sum, t) => sum + t.files.filter((f) => f.conflict && !f.written).length,
+          0
+        );
+        const totalSkipped = result.tools.reduce(
+          (sum, t) => sum + t.files.filter((f) => f.skipped).length,
+          0
+        );
+
+        if (totalWritten === 0 && totalDeleted === 0 && totalConflicts === 0) {
+          output.success(
+            totalSkipped > 0
+              ? `Nothing to sync — ${totalSkipped} file(s) already identical.`
+              : "Nothing to sync — no modified files found in source tool."
+          );
+          return;
+        }
+
+        if (verbose) {
+          for (const tool of result.tools) {
+            output.debug(`Target: ${tool.targetToolId}`);
+            for (const f of tool.files) {
+              if (f.written) output.debug(`  synced: ${f.relativePath}`);
+              else if (f.deleted) output.debug(`  deleted: ${f.relativePath}`);
+              else if (f.conflict) output.debug(`  conflict (skipped): ${f.relativePath}`);
+              else if (f.skipped) output.debug(`  identical (skipped): ${f.relativePath}`);
+            }
+          }
+        }
+
+        if (totalConflicts > 0) {
+          output.warn(`${totalConflicts} conflict(s) skipped. Use --force to overwrite.`);
+        }
+
+        output.success(
+          `Synced ${totalWritten} file(s), deleted ${totalDeleted} file(s) from ${sourceTool}`
+        );
+      } catch (error) {
+        output.exit(error);
+      }
+    });
+}

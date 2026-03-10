@@ -3,7 +3,6 @@ import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js"
 import { createDeps } from "../../infrastructure/deps.js";
 import { printUpdateBanner } from "../check-update.js";
 import { CLIOutput } from "../output.js";
-import { ensureInitialized } from "../use-cases/ensure-initialized-use-case.js";
 import { InstallUseCase } from "../use-cases/install-use-case.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
 
@@ -61,14 +60,11 @@ export function registerInstallCommand(program: Command): void {
           { framework: globalOptions.framework, release: globalOptions.release }
         );
 
-        const manifest = await ensureInitialized(
-          deps.manifestRepo,
-          deps.fs,
-          deps.loader,
-          deps.hasher,
-          deps.logger,
-          { frameworkPath, version, docsDir: deps.settings.docsDir, projectRoot }
-        );
+        const manifest = await deps.manifestRepo.load();
+        if (manifest === null) {
+          output.error("No AIDD installation found. Run `aidd init` first.");
+          process.exit(1);
+        }
 
         const docsDir = manifest.docsDir;
         const installUseCase = new InstallUseCase(

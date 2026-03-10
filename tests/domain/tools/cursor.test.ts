@@ -49,6 +49,29 @@ describe("cursorToolConfig", () => {
     });
   });
 
+  describe("reverseRewriteContent()", () => {
+    it("reverses @.cursor/ to @{{TOOLS}}/", () => {
+      const input = "See @.cursor/agents/alexia.md for more";
+      const result = cursorToolConfig.reverseRewriteContent(input, "aidd_docs");
+      expect(result).toContain("@{{TOOLS}}/agents/alexia.md");
+    });
+
+    it("reverses .mdc extension back to .md in @-references", () => {
+      const input = "@.cursor/rules/01-standards/naming.mdc";
+      const result = cursorToolConfig.reverseRewriteContent(input, "aidd_docs");
+      expect(result).toContain("@{{TOOLS}}/rules/01-standards/naming.md");
+      expect(result).not.toContain(".mdc");
+    });
+
+    it("roundtrip: rewrite then reverse produces canonical content", () => {
+      const canonical = "Use @{{TOOLS}}/agents/alexia.md and @{{DOCS}}/CATALOG.md";
+      const rewritten = cursorToolConfig.rewriteContent(canonical, "aidd_docs");
+      const reversed = cursorToolConfig.reverseRewriteContent(rewritten, "aidd_docs");
+      expect(reversed).toContain("@{{TOOLS}}/agents/alexia.md");
+      expect(reversed).toContain("@{{DOCS}}/CATALOG.md");
+    });
+  });
+
   describe("memoryBank().outputPath()", () => {
     it("returns AGENTS.md for agentsMd template", () => {
       expect(cursorToolConfig.memoryBank().outputPath("agentsMd")).toBe("AGENTS.md");

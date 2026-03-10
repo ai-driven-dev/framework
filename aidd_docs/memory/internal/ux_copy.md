@@ -103,14 +103,22 @@ AIDD CLI is a developer tool for a paid community of AI-assisted developers. The
 | ------------------------------ | ---------------------------------------- | ------------------------------ | ------------------------------------ |
 | `error.cache.version_not_found`| Version {version} is not cached          | Check available versions with `aidd cache` | Specified version not in cache |
 
-### Config Errors (v3.2+)
+### Config Errors
 
-| Key                            | Message                                                                                           | Recovery action                        | Context                                            |
-| ------------------------------ | ------------------------------------------------------------------------------------------------- | -------------------------------------- | -------------------------------------------------- |
-| `error.config.unknown_key`     | Unknown setting: {key}. Valid keys: {validKeys}                                                   | Use a valid key from the list          | Unknown key in `get` or `set`                      |
-| `error.config.token_forbidden` | token cannot be stored in settings for security reasons. Use --token or AIDD_TOKEN instead.       | Use flag or env var for token          | Attempt to `set token`                             |
-| `error.config.docs_dir_readonly`| docsDir cannot be changed after init. Run `aidd clean --force` and `aidd init --docs-dir {value}` to reset. | Reset installation to change docs dir | Attempt to `set docsDir` after init               |
-| `error.config.no_manifest`     | No AIDD installation found. Run `aidd init` first.                                                | Initialize AIDD                        | `config set` called with no `.aidd/` directory    |
+| Key                             | Message                                                                    | Recovery action                  | Context                                         |
+| ------------------------------- | -------------------------------------------------------------------------- | -------------------------------- | ----------------------------------------------- |
+| `error.config.unknown_key`      | Unknown key '{key}'. Valid keys: {validKeys}.                              | Use a valid key from the list    | Unknown key in `get` or `set`                   |
+| `error.config.readonly_key`     | '{key}' is read-only. Use the appropriate aidd command to change it.       | Use `install`/`uninstall` etc.   | Attempt to `set tools` or other read-only key   |
+| `error.config.no_manifest`      | No AIDD installation found. Run `aidd init` first.                         | Initialize AIDD                  | `config` called with no manifest                |
+| `error.config.no_tty`           | Confirmation required. Use --force to skip in non-interactive mode.        | Add `--force`                    | `config set` in non-TTY without `--force`       |
+
+### Config Warnings
+
+| Key                             | Message                                                                                              | Context                                      |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `info.config.dir_found`         | Directory '{value}' found on disk. Updating manifest.                                               | New docsDir already exists on disk           |
+| `warn.config.dir_missing`       | Directory '{value}' does not exist on disk.                                                          | New docsDir not found on disk                |
+| `warn.config.move_manually`     | Move your docs manually from '{old}' to '{new}' before running other commands.                       | Shown alongside dir_missing warning          |
 
 ### Update Errors (v3.1+)
 
@@ -372,13 +380,14 @@ These are not copy strings but structural conventions that ensure consistency ac
 
 ---
 
-## 15. Config Output Copy (v3.2+)
+## 15. Config Output Copy
 
-| Key                        | Message                                 | Context                              |
-| -------------------------- | --------------------------------------- | ------------------------------------ |
-| `config.list.header`       | Current settings ({source} = source of value): | Header for `aidd config list`  |
-| `config.list.line`         | {key} = {value}  [{source}]             | Per-setting line in config list      |
-| `config.list.source.flag`  | flag                                    | Value comes from a CLI flag          |
-| `config.list.source.env`   | env                                     | Value comes from an environment variable |
-| `config.list.source.file`  | file                                    | Value comes from `.aidd/settings.json` |
-| `config.list.source.default` | default                               | Value is the built-in default        |
+| Key                          | Message                                                     | Context                                     |
+| ---------------------------- | ----------------------------------------------------------- | ------------------------------------------- |
+| `config.list.docsDir`        | docsDir = {value}                                           | `config list` — docs directory line         |
+| `config.list.tools`          | tools   = {value}                                           | `config list` — installed tools line        |
+| `config.list.tools.none`     | (none)                                                      | No tools installed                          |
+| `config.set.noop`            | docsDir is already '{value}'.                               | `config set docsDir` — value unchanged      |
+| `config.set.confirm`         | Change docsDir from '{old}' to '{new}'?                     | Interactive confirmation prompt             |
+| `config.set.aborted`         | Aborted.                                                    | User declined confirmation                  |
+| `config.set.success`         | docsDir updated to '{value}'.                               | `config set docsDir` succeeded              |

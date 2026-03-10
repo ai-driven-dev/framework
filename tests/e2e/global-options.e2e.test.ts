@@ -25,7 +25,7 @@ describe("E2E: aidd global options", () => {
     expect(stdout).toMatch(/^aidd\/\d+\.\d+\.\d+ node\/\d+\.\d+\.\d+/);
   }, 5000);
 
-  it("--help lists all 6 commands", async () => {
+  it("--help lists all registered commands", async () => {
     const { stdout, exitCode } = await runCli(["--help"], projectDir);
 
     expect(exitCode).toBe(0);
@@ -35,6 +35,11 @@ describe("E2E: aidd global options", () => {
     expect(stdout).toContain("status");
     expect(stdout).toContain("clean");
     expect(stdout).toContain("doctor");
+    expect(stdout).toContain("update");
+    expect(stdout).toContain("restore");
+    expect(stdout).toContain("sync");
+    expect(stdout).toContain("cache");
+    expect(stdout).toContain("config");
   }, 5000);
 
   it("shows an error message for unrecognized commands", async () => {
@@ -45,6 +50,8 @@ describe("E2E: aidd global options", () => {
   }, 5000);
 
   it("--verbose install lists installed files", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+
     const { stderr, exitCode } = await runCli(
       ["--verbose", "install", "claude", "--framework", FRAMEWORK_PATH],
       projectDir

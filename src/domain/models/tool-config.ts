@@ -34,6 +34,7 @@ export interface ToolConfig {
   readonly directory: string;
   readonly toolSuffix: string;
   rewriteContent(content: string, docsDir: string): string;
+  reverseRewriteContent(content: string, docsDir: string): string;
   agents(): SectionHandler;
   commands(): CommandsHandler;
   rules(): RulesHandler;

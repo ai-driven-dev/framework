@@ -188,14 +188,14 @@ M1 and M2 can overlap partially (infrastructure adapters can start once domain p
 | US-006 | Initialize docs structure               | 3      |
 | US-007 | Custom docs directory name              | 2      |
 | US-008 | Install framework for one or more tools | 8      |
-| US-010 | Auto-initialize on install              | 2      |
+| ~~US-010~~ | ~~Auto-initialize on install~~ — **REMOVED** (install now requires prior `aidd init`, aborts with error if manifest absent) | ~~2~~ |
 
 ### Key Deliverables
 
 | Module                                      | Layer        | Responsibility                                                                                                                  |
 | ------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------- |
 | `application/use-cases/init-use-case.ts`    | Application  | Resolve framework -> copy docs templates -> hash -> create manifest                                                             |
-| `application/use-cases/install-use-case.ts` | Application  | Check manifest -> auto-init if missing -> resolve framework -> generate distribution per tool -> write files -> update manifest |
+| `application/use-cases/install-use-case.ts` | Application  | Check manifest (abort if missing) -> resolve framework -> generate distribution per tool -> write files -> update manifest |
 | `presentation/commands/init.ts`             | Presentation | Commander registration for `aidd init`, `--docs-dir` flag, dependency wiring                                                    |
 | `presentation/commands/install.ts`          | Presentation | Commander registration for `aidd install <tools...>`, `--force`/`--framework`/`--repo`/`--token` flags                          |
 | `presentation/presenter.ts`                 | Presentation | Output formatting for init and install results                                                                                  |
@@ -407,6 +407,41 @@ The `reverseRewriteContent` and `reverseConvertFrontmatter` methods on ToolSpec 
 
 ---
 
+## M9: Manual Installation Migration (v3.3)
+
+**Goal:** Deliver `aidd adopt` to allow users who installed the framework manually to migrate to CLI-managed state without losing their customizations.
+
+**Sprint:** 6
+
+**Points:** 5
+
+### User Stories
+
+| ID     | Story                                                  | Points |
+| ------ | ------------------------------------------------------ | ------ |
+| US-028 | Migrate manual framework installation to CLI-managed   | 5      |
+
+### Key Deliverables
+
+| Module                                       | Layer        | Responsibility                                                                                    |
+| -------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------- |
+| `application/use-cases/adopt-use-case.ts`    | Application  | Detect installed tools -> download framework -> apply format -> handle conflicts -> create manifest |
+| `presentation/commands/adopt.ts`             | Presentation | Commander registration for `aidd adopt`, `--force` flag                                           |
+
+### Acceptance Criteria
+
+- [ ] `aidd init` on a project with existing AIDD files blocks with message: "AIDD files detected. Use `aidd adopt` to migrate."
+- [ ] `aidd adopt` auto-detects installed tools from existing directories (`.claude/`, `.cursor/`, `.github/`)
+- [ ] `aidd adopt` downloads the latest framework version (or `--release` if specified)
+- [ ] Each existing file is treated as a conflict candidate (no prior manifest hash) → prompt keep/overwrite + backup if overwrite
+- [ ] `aidd adopt --force` overwrites all without prompting
+- [ ] Files on disk not in framework distribution → warning (doctor-style), not touched
+- [ ] Manifest created with post-write hashes after adopt completes
+- [ ] Output summarizes: files written, files kept, backups created, orphan warnings
+- [ ] E2E test: manually-placed files -> `aidd adopt` -> manifest created -> `aidd status` shows in-sync
+
+---
+
 ## Summary
 
 | Milestone | Goal                       | Stories                                                | Points | Cumulative Pts | Sprint | Scope |
@@ -419,6 +454,7 @@ The `reverseRewriteContent` and `reverseConvertFrontmatter` methods on ToolSpec 
 | **M5**    | Cross-cutting & polish     | US-005, US-011, US-012, US-015, US-018, US-026, US-027 | 14     | 56             | 3      | MVP   |
 | **M6**    | Update & Restore           | US-019, US-020, US-021                                 | 15     | 71             | 4      | v3.1+ |
 | **M7**    | Cross-Tool Sync            | US-023, US-024, US-025                                 | 10     | 81             | 5      | v3.1+ |
+| **M9**    | Manual Installation Migration | US-028                                              | 5      | 86             | 6      | v3.3  |
 
 ### Story-to-Milestone Allocation
 
@@ -451,7 +487,8 @@ Every user story is assigned to exactly one milestone. No story appears in more 
 | US-025    | 2      | M7        | Targeted sync                                       |
 | US-026    | 2      | M5        | Custom repo is cross-cutting                        |
 | US-027    | 2      | M5        | Settings file is cross-cutting                      |
-| **Total** | **81** |           |                                                     |
+| US-028    | 5      | M9        | Manual installation migration                       |
+| **Total** | **86** |           |                                                     |
 
 ### Sprint Planning View
 
@@ -463,8 +500,9 @@ Every user story is assigned to exactly one milestone. No story appears in more 
 | Sprint 3 | M4 + M5          | 28     | 56         | 28 points across two sprints of capacity (40 pts). Spike days (reverse-rewrite feasibility, 2 days) reduce effective capacity to ~36 pts. Comfortable fit.               |
 | Sprint 4 | M6               | 15     | 71         |                                                                                                                                                                          |
 | Sprint 5 | M7               | 10     | 81         | Reverse-rewrite spike (2 days) reduces effective capacity to ~16 pts.                                                                                                    |
+| Sprint 6 | M9               | 5      | 86         | Adopt command — reuses update conflict handling, no new infrastructure needed.                                                                                            |
 
-MVP delivered at end of Sprint 3 (56 points). v3.1+ delivered at end of Sprint 5 (81 points total).
+MVP delivered at end of Sprint 3 (56 points). v3.1+ delivered at end of Sprint 5 (81 points total). v3.3 delivered at end of Sprint 6 (86 points total).
 
 ### Risk Factors
 

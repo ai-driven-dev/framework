@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Signaler un bug ou comportement inattendu
+about: Report a bug or unexpected behavior
 title: "fix: "
 labels: bug
 assignees: ""
@@ -8,33 +8,33 @@ assignees: ""
 
 ## Description
 
-<!-- Décrivez clairement le bug. Qu'est-ce qui se passe ? Qu'est-ce qui devrait se passer ? -->
+<!-- Clearly describe the bug. What happens? What should happen? -->
 
-## Commande exécutée
+## Command executed
 
 ```bash
 aidd <command> [options]
 ```
 
-## Comportement attendu
+## Expected behavior
 
-<!-- Ce qui devrait se passer -->
+<!-- What should happen -->
 
-## Comportement observé
+## Observed behavior
 
-<!-- Ce qui se passe réellement, incluant les messages d'erreur -->
+<!-- What actually happens, including error messages -->
 
 ```
 <error output here>
 ```
 
-## Environnement
+## Environment
 
-- OS : <!-- macOS / Linux / Windows -->
-- Node.js : <!-- node --version -->
-- @ai-driven-dev/cli : <!-- aidd --version -->
-- Outil cible : <!-- claude / cursor / copilot -->
+- OS: <!-- macOS / Linux / Windows -->
+- Node.js: <!-- node --version -->
+- aidd-cli: <!-- aidd --version -->
+- Target tool: <!-- claude / cursor / copilot -->
 
-## Contexte supplémentaire
+## Additional context
 
-<!-- Logs verbose (`--verbose`), .aidd/manifest.json tronqué, etc. -->
+<!-- Verbose logs (`--verbose`), truncated .aidd/manifest.json, etc. -->

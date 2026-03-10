@@ -82,5 +82,4 @@ describe("ManifestRepositoryAdapter", () => {
       expect(existsSync(join(tempDir, ".aidd", "manifest.json"))).toBe(true);
     });
   });
-
 });

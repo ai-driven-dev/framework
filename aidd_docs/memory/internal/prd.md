@@ -776,7 +776,7 @@ aidd (CLI binary)
 
 ### Key User Flows
 
-1. **First-time setup**: `aidd install claude` → auto-inits docs → downloads framework → generates Claude distribution → done
+1. **First-time setup**: `aidd init` → `aidd install claude` → downloads framework → generates Claude distribution → done
 2. **Adding another tool**: `aidd install cursor` → downloads framework → generates Cursor distribution → done
 3. **Checking drift**: `aidd status` → shows modified/deleted/added files per tool
 4. **Removing a tool**: `aidd uninstall cursor` → deletes Cursor files → updates manifest → docs untouched

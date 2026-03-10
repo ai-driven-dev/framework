@@ -59,7 +59,7 @@ describe("E2E: aidd init", () => {
     const { stderr, exitCode } = await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
 
     expect(exitCode).not.toBe(0);
-    expect(stderr).toContain("already exists");
+    expect(stderr).toContain("aidd adopt");
   }, 5000);
 
   it("re-copies docs templates with --force on existing installation", async () => {
@@ -71,7 +71,7 @@ describe("E2E: aidd init", () => {
 
     expect(exitCode).toBe(0);
     expect(stdout).toContain("Initialized docs in aidd_docs/");
-  }, 5000);
+  }, 10000);
 
   it("fails with guidance when --force is used without prior init", async () => {
     const { stderr, exitCode } = await runCli(

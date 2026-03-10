@@ -9,6 +9,8 @@ import type {
 } from "../../domain/models/framework-descriptor.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 
+const OS_FILES = new Set([".DS_Store", "Thumbs.db"]);
+
 const CONTENT_SECTIONS: readonly ContentSection[] = [
   { name: "agents", directory: "agents", entryFile: null },
   { name: "commands", directory: "commands", entryFile: null },
@@ -108,8 +110,6 @@ export class FrameworkLoaderAdapter implements FrameworkLoader {
     } catch {
       return results;
     }
-
-    const OS_FILES = new Set([".DS_Store", "Thumbs.db"]);
 
     for (const entry of entries) {
       if (OS_FILES.has(entry.name)) continue;

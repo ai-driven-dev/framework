@@ -36,7 +36,7 @@ describe("FileSystemAdapter", () => {
   });
 
   describe("readFile()", () => {
-    it("returns file content as string", async () => {
+    it("reads and provides file content as string", async () => {
       const path = join(tempDir, "read.txt");
       await writeFile(path, "content to read", "utf-8");
       const result = await fs.readFile(path);
@@ -52,7 +52,7 @@ describe("FileSystemAdapter", () => {
       expect(await fs.fileExists(path)).toBe(false);
     });
 
-    it("does not throw when file is missing", async () => {
+    it("handles missing file gracefully", async () => {
       const path = join(tempDir, "nonexistent.txt");
       await expect(fs.deleteFile(path)).resolves.toBeUndefined();
     });
@@ -108,17 +108,17 @@ describe("FileSystemAdapter", () => {
   });
 
   describe("fileExists()", () => {
-    it("returns true for existing file", async () => {
+    it("confirms an existing file is found", async () => {
       const path = join(tempDir, "exists.txt");
       await writeFile(path, "", "utf-8");
       expect(await fs.fileExists(path)).toBe(true);
     });
 
-    it("returns false for missing file", async () => {
+    it("confirms a missing file is not found", async () => {
       expect(await fs.fileExists(join(tempDir, "missing.txt"))).toBe(false);
     });
 
-    it("returns true for existing directory", async () => {
+    it("confirms an existing directory is found", async () => {
       expect(await fs.fileExists(tempDir)).toBe(true);
     });
   });

@@ -191,12 +191,44 @@ function rewriteCopilotContent(content: string, docsDir: string): string {
   );
 }
 
+function reverseCopilotContent(content: string, docsDir: string): string {
+  return content
+    .replace(
+      /\[\.github\/agents\/([^\]]+)\]\([^)]+\)/g,
+      (_match, path: string) => `${AT_TOOLS_PLACEHOLDER}agents/${path}`
+    )
+    .replace(
+      /\[\.github\/prompts\/([^\]]+)\]\([^)]+\)/g,
+      (_match, path: string) => `${AT_TOOLS_PLACEHOLDER}commands/${path}`
+    )
+    .replace(
+      /\[\.github\/instructions\/([^\]]+)\]\([^)]+\)/g,
+      (_match, path: string) => `${AT_TOOLS_PLACEHOLDER}rules/${path}`
+    )
+    .replace(
+      /\[\.github\/skills\/([^\]]+)\]\([^)]+\)/g,
+      (_match, path: string) => `${AT_TOOLS_PLACEHOLDER}skills/${path}`
+    )
+    .replace(
+      new RegExp(`\\[${escapedRegex(docsDir)}\\/([^\\]]+)\\]\\([^)]+\\)`, "g"),
+      (_match: string, path: string) => `${AT_DOCS_PLACEHOLDER}${path}`
+    )
+    .replaceAll(`${DIRECTORY}agents/`, `${TOOLS_PLACEHOLDER}agents/`)
+    .replaceAll(`${DIRECTORY}prompts/`, `${TOOLS_PLACEHOLDER}commands/`)
+    .replaceAll(`${DIRECTORY}instructions/`, `${TOOLS_PLACEHOLDER}rules/`)
+    .replaceAll(`${DIRECTORY}skills/`, `${TOOLS_PLACEHOLDER}skills/`)
+    .replaceAll(DIRECTORY, TOOLS_PLACEHOLDER)
+    .replaceAll(`${docsDir}/`, DOCS_PLACEHOLDER);
+}
+
 export const copilotToolConfig: ToolConfig = {
   toolId: "copilot",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
 
   rewriteContent: rewriteCopilotContent,
+
+  reverseRewriteContent: reverseCopilotContent,
 
   agents(): SectionHandler {
     return agentsHandler;

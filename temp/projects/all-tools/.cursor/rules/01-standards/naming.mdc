@@ -1,0 +1,10 @@
+---
+globs: ["\"src/**/*.ts\""]
+alwaysApply: false
+---
+
+# Naming Conventions
+
+- Files: kebab-case
+- Functions: camelCase
+- Types/Interfaces: PascalCase

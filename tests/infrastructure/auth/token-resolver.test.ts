@@ -20,7 +20,7 @@ describe("TokenResolver", () => {
   const resolver = new TokenResolver();
 
   describe("flag resolution", () => {
-    it("returns flag value when flag is provided", () => {
+    it("uses flag token when flag is provided", () => {
       const token = withEnv({ AIDD_TOKEN: "env-token" }, () =>
         resolver.resolve({ flag: "flag-token" })
       );
@@ -29,14 +29,14 @@ describe("TokenResolver", () => {
   });
 
   describe("env var resolution", () => {
-    it("returns env var when no flag is provided", () => {
+    it("uses env var token when no flag is provided", () => {
       const token = withEnv({ AIDD_TOKEN: "env-secret" }, () => resolver.resolve());
       expect(token).toBe("env-secret");
     });
   });
 
   describe("gh auth token fallback", () => {
-    it("does not throw when gh is unavailable", () => {
+    it("falls back gracefully when gh CLI is unavailable", () => {
       const original = process.env.AIDD_TOKEN;
       process.env.AIDD_TOKEN = undefined;
       try {

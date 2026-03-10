@@ -80,7 +80,7 @@ describe("TarExtractor", () => {
   });
 
   describe("error handling", () => {
-    it("throws clear error on invalid tarball", async () => {
+    it("reports a clear error on invalid tarball", async () => {
       const fakeTarball = join(tempDir, "fake.tar.gz");
       await writeFile(fakeTarball, "this is not a tarball");
 

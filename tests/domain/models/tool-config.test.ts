@@ -15,6 +15,7 @@ const makeStubConfig = (toolId: ToolId, toolSuffix: string): ToolConfig => ({
   directory: `.${toolId}/`,
   toolSuffix,
   rewriteContent: (content) => content,
+  reverseRewriteContent: (content) => content,
   agents: () => ({ buildFilePath: (f) => f, convertFrontmatter: (fm) => fm }),
   commands: () => ({ buildFilePath: (f) => f, convertFrontmatter: (fm) => fm }),
   rules: () => ({

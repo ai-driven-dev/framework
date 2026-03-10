@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import type { FileHash } from "../../domain/models/file-hash.js";
+import { compareSemver } from "../../domain/models/semver.js";
 import { type ToolId, getToolConfig } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkResolver } from "../../domain/ports/framework-resolver.js";
@@ -37,15 +38,7 @@ export interface StatusOptions {
   filterToolId?: ToolId;
 }
 
-export function compareSemver(a: string, b: string): -1 | 0 | 1 {
-  const parse = (v: string) => v.replace(/^v/, "").split(".").map(Number);
-  const [aMajor = 0, aMinor = 0, aPatch = 0] = parse(a);
-  const [bMajor = 0, bMinor = 0, bPatch = 0] = parse(b);
-  if (aMajor !== bMajor) return aMajor < bMajor ? -1 : 1;
-  if (aMinor !== bMinor) return aMinor < bMinor ? -1 : 1;
-  if (aPatch !== bPatch) return aPatch < bPatch ? -1 : 1;
-  return 0;
-}
+export { compareSemver };
 
 export class StatusUseCase {
   constructor(
@@ -83,6 +76,7 @@ export class StatusUseCase {
       if (toolDirExists) {
         const diskFiles = await this.fs.listDirectory(toolDir);
         for (const diskRelPath of diskFiles) {
+          if (diskRelPath.endsWith(".backup")) continue;
           const fullRelPath = `${config.directory}${diskRelPath}`;
           if (!trackedSet.has(fullRelPath)) {
             drifted.push({ relativePath: fullRelPath, status: "added" });

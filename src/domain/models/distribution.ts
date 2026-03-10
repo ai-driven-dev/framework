@@ -47,7 +47,12 @@ export function generateDistribution(
 
       if (relativeFileName.endsWith(GITKEEP_FILE)) {
         results.push(
-          new GeneratedFile({ relativePath: outputPath, content: "", hash: hasher.hash("") })
+          new GeneratedFile({
+            relativePath: outputPath,
+            content: "",
+            hash: hasher.hash(""),
+            frameworkPath: filePath,
+          })
         );
         continue;
       }
@@ -67,6 +72,7 @@ export function generateDistribution(
           relativePath: outputPath,
           content: outputContent,
           hash: hasher.hash(outputContent),
+          frameworkPath: filePath,
         })
       );
     }
@@ -135,6 +141,7 @@ function collectMemoryBankFiles(
         relativePath: outputPath,
         content: rewritten,
         hash: hasher.hash(rewritten),
+        frameworkPath: ref.path,
       }),
     ];
   });
@@ -158,6 +165,7 @@ function collectRawFiles(
         content: rawContent,
         hash: hasher.hash(rawContent),
         merge: shouldMerge(ref.name),
+        frameworkPath: ref.path,
       }),
     ];
   });

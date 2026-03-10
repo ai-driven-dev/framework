@@ -1,7 +1,8 @@
 import { FileHash } from "./file-hash.js";
 import type { GeneratedFile } from "./generated-file.js";
-import { DEFAULT_DOCS_DIR } from "./settings.js";
 import { type ToolId, VALID_TOOL_IDS } from "./tool-config.js";
+
+const DEFAULT_DOCS_DIR = "aidd_docs";
 
 const MANIFEST_VERSION = 1;
 
@@ -24,6 +25,7 @@ interface ToolEntry {
 interface ManifestData {
   version: number;
   docsDir: string;
+  repo?: string;
   tools: Record<string, ToolEntryData>;
   docs: DocsEntryData | null;
 }
@@ -48,22 +50,26 @@ export class Manifest {
   private readonly _tools: Map<ToolId, ToolEntry>;
   private _docs: DocsEntry | null;
   readonly docsDir: string;
+  readonly repo?: string;
 
   private constructor(params: {
     tools: Map<ToolId, ToolEntry>;
     docs: DocsEntry | null;
     docsDir: string;
+    repo?: string;
   }) {
     this._tools = new Map(params.tools);
     this._docs = params.docs;
     this.docsDir = params.docsDir;
+    this.repo = params.repo;
   }
 
-  static create(docsDir?: string): Manifest {
+  static create(docsDir?: string, repo?: string): Manifest {
     return new Manifest({
       tools: new Map(),
       docs: null,
       docsDir: docsDir ?? DEFAULT_DOCS_DIR,
+      repo,
     });
   }
 
@@ -120,6 +126,24 @@ export class Manifest {
     return this._tools.has(toolId);
   }
 
+  withDocsDir(newDocsDir: string): Manifest {
+    return new Manifest({
+      tools: new Map(this._tools),
+      docs: this._docs,
+      docsDir: newDocsDir,
+      repo: this.repo,
+    });
+  }
+
+  withRepo(newRepo: string): Manifest {
+    return new Manifest({
+      tools: new Map(this._tools),
+      docs: this._docs,
+      docsDir: this.docsDir,
+      repo: newRepo,
+    });
+  }
+
   getToolVersion(toolId: ToolId): string | undefined {
     return this._tools.get(toolId)?.version;
   }
@@ -147,6 +171,7 @@ export class Manifest {
     return {
       version: MANIFEST_VERSION,
       docsDir: this.docsDir,
+      ...(this.repo !== undefined && { repo: this.repo }),
       tools,
       docs: this._docs
         ? { version: this._docs.version, files: this.toTrackedFileData(this._docs.files) }
@@ -201,7 +226,8 @@ export class Manifest {
     }
 
     const docsDir = typeof raw.docsDir === "string" ? raw.docsDir : DEFAULT_DOCS_DIR;
+    const repo = typeof raw.repo === "string" ? raw.repo : undefined;
 
-    return new Manifest({ tools, docs, docsDir });
+    return new Manifest({ tools, docs, docsDir, repo });
   }
 }

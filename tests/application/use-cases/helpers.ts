@@ -8,10 +8,40 @@ import { CLIOutput } from "../../../src/application/output.js";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
 import { InstallUseCase } from "../../../src/application/use-cases/install-use-case.js";
 import type { ToolId } from "../../../src/domain/models/tool-config.js";
+import type { Prompter } from "../../../src/domain/ports/prompter.js";
 import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
 import { FrameworkLoaderAdapter } from "../../../src/infrastructure/adapters/framework-loader-adapter.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
 import { ManifestRepositoryAdapter } from "../../../src/infrastructure/adapters/manifest-repository-adapter.js";
+import { SilentPrompterAdapter } from "../../../src/infrastructure/adapters/prompter-adapter.js";
+
+export { SilentPrompterAdapter as OverwritePrompter };
+
+export class KeepPrompter implements Prompter {
+  async resolveConflict(
+    _relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite"> {
+    return "keep";
+  }
+}
+
+export class RecordingPrompter implements Prompter {
+  readonly calls: Array<{ relativePath: string; reason: "deleted" | "modified" }> = [];
+  private readonly response: "keep" | "overwrite";
+
+  constructor(response: "keep" | "overwrite" = "overwrite") {
+    this.response = response;
+  }
+
+  async resolveConflict(
+    relativePath: string,
+    reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite"> {
+    this.calls.push({ relativePath, reason });
+    return this.response;
+  }
+}
 
 export const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/framework");
 

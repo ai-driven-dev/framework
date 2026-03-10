@@ -90,6 +90,40 @@ describe("claudeToolConfig", () => {
     });
   });
 
+  describe("reverseRewriteContent()", () => {
+    it("reverses @.claude/ to @{{TOOLS}}/", () => {
+      const input = "See @.claude/agents/alexia.md for more";
+      const result = claudeToolConfig.reverseRewriteContent(input, "aidd_docs");
+      expect(result).toContain("@{{TOOLS}}/agents/alexia.md");
+      expect(result).not.toContain("@.claude/");
+    });
+
+    it("reverses aidd_docs/ to {{DOCS}}/", () => {
+      const input = "See aidd_docs/memory/project_brief.md";
+      const result = claudeToolConfig.reverseRewriteContent(input, "aidd_docs");
+      expect(result).toContain("{{DOCS}}/memory/project_brief.md");
+    });
+
+    it("reverses @aidd_docs/ to @{{DOCS}}/", () => {
+      const input = "@aidd_docs/CATALOG.md";
+      const result = claudeToolConfig.reverseRewriteContent(input, "aidd_docs");
+      expect(result).toBe("@{{DOCS}}/CATALOG.md");
+    });
+
+    it("roundtrip: rewrite then reverse produces canonical content", () => {
+      const canonical =
+        "Use @{{TOOLS}}/agents/alexia.md and {{TOOLS}}/rules/ and @{{DOCS}}/CATALOG.md";
+      const rewritten = claudeToolConfig.rewriteContent(canonical, "aidd_docs");
+      const reversed = claudeToolConfig.reverseRewriteContent(rewritten, "aidd_docs");
+      // The roundtrip should recover the original canonical form
+      // Note: command path transformations (@.claude/commands/aidd/01/) are not perfectly reversible
+      // but placeholder substitutions must roundtrip
+      expect(reversed).toContain("@{{TOOLS}}/agents/alexia.md");
+      expect(reversed).toContain("{{TOOLS}}/rules/");
+      expect(reversed).toContain("@{{DOCS}}/CATALOG.md");
+    });
+  });
+
   describe("memoryBank().outputPath()", () => {
     it("returns CLAUDE.md for agentsMd template", () => {
       expect(claudeToolConfig.memoryBank().outputPath("agentsMd")).toBe("CLAUDE.md");

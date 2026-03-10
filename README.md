@@ -1,77 +1,77 @@
 # 📦 AIDD CLI v3.0
 
-Le **AIDD CLI** (`@ai-driven-dev/cli`) est l'installateur TypeScript du framework AI-Driven Development. Il distribue le framework AIDD de manière cohérente à travers plusieurs assistants IA (Claude Code, Cursor, GitHub Copilot), en générant les fichiers spécifiques à chaque outil et en suivant chaque installation via un manifeste basé sur des hashes MD5.
+The **AIDD CLI** (`@ai-driven-dev/aidd-cli`) is the TypeScript installer for the AI-Driven Development framework. It distributes the AIDD framework consistently across multiple AI assistants (Claude Code, Cursor, GitHub Copilot), generating tool-specific files and tracking each installation via an MD5-hash-based manifest.
 
-- [Fonctionnalités](#fonctionnalités)
-- [Prérequis](#prérequis)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
 - [Installation](#installation)
-- [Utiliser le token AIDD](#utiliser-le-token-aidd)
-- [Commandes](#commandes)
+- [Using the AIDD token](#using-the-aidd-token)
+- [Commands](#commands)
   - [`aidd init`](#aidd-init)
-  - [Première utilisation](#première-utilisation)
+  - [First use](#first-use)
   - [`aidd status`](#aidd-status)
   - [`aidd doctor`](#aidd-doctor)
   - [`aidd uninstall`](#aidd-uninstall)
   - [`aidd clean`](#aidd-clean)
-  - [Options globales](#options-globales)
+  - [Global options](#global-options)
 - [Architecture](#architecture)
-- [Développement](#développement)
-- [Contribuer](#contribuer)
-- [Licence](#licence)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
 
-## Fonctionnalités
+## Features
 
-| Commande                    | Description                                                                                            |
-| --------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `aidd init [--force]`       | Initialise la structure `aidd_docs/` et le manifeste (`--force` recopie les templates docs sans clean) |
-| `aidd install <tools...>`   | Génère les fichiers spécifiques à chaque outil (`--all`, `--force`)                                    |
-| `aidd uninstall <tools...>` | Supprime les fichiers d'un outil proprement (`--all`)                                                  |
-| `aidd status [--tool]`      | Dérive fichiers vs manifest : `~` modifié, `-` supprimé, `+` ajouté                                    |
-| `aidd doctor`               | Intégrité structurelle : manifest, répertoires orphelins, références cassées                           |
-| `aidd clean [--force]`      | Supprime toutes les traces AIDD (dry-run sans `--force`)                                               |
-| `aidd update`               | Met à jour les distributions vers la dernière version du framework (v3.1+)                             |
-| `aidd restore <tool>`       | Restaure les fichiers modifiés à leur version d'origine (v3.1+)                                        |
-| `aidd sync --source <tool>` | Propage les modifications d'un outil vers les autres (v3.1+)                                           |
-| `aidd cache`                | Liste ou supprime les versions du framework en cache (v3.2+)                                           |
-| `aidd config get/set`       | Lit ou modifie les paramètres du projet (v3.2+)                                                        |
+| Command                     | Description                                                                                                  |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `aidd init [--force]`       | Initializes the `aidd_docs/` structure and the manifest (`--force` copies doc templates without clean)       |
+| `aidd install <tools...>`   | Generates tool-specific files (`--all`, `--force`)                                                           |
+| `aidd uninstall <tools...>` | Cleanly removes a tool's files (`--all`)                                                                     |
+| `aidd status [--tool]`      | Diffs files vs manifest: `~` modified, `-` deleted, `+` added                                               |
+| `aidd doctor`               | Structural integrity check: manifest, orphan directories, broken references                                  |
+| `aidd clean [--force]`      | Removes all AIDD traces (dry-run without `--force`)                                                          |
+| `aidd update`               | Updates distributions to the latest framework version (v3.1+)                                               |
+| `aidd restore <tool>`       | Restores modified files to their original version (v3.1+)                                                    |
+| `aidd sync --source <tool>` | Propagates changes from one tool to the others (v3.1+)                                                       |
+| `aidd cache`                | Lists or removes cached framework versions (v3.2+)                                                           |
+| `aidd config get/set`       | Reads or updates manifest config: `docsDir` (w), `repo` (w), `tools` (r) (v3.2+)                            |
 
-**Options globales :** `--verbose`, `--token`, `--repo`, `--framework`, `--release`, `--release`
+**Global options:** `--verbose`, `--token`, `--repo`, `--framework`, `--release`
 
-**Outils supportés :** Claude Code · Cursor · GitHub Copilot
+**Supported tools:** Claude Code · Cursor · GitHub Copilot
 
-## Prérequis
+## Prerequisites
 
-| Prérequis                | Version | Notes                                                                             |
-| ------------------------ | ------- | --------------------------------------------------------------------------------- |
-| **Node.js**              | >= 24   | [nodejs.org](https://nodejs.org) — LTS depuis octobre 2024                        |
-| **Token AIDD**           | —       | Requis pour télécharger le framework                                              |
-| **tar**                  | —       | Préinstallé sur macOS, Linux, WSL et Windows 10 1803+                             |
-| **gh CLI** _(optionnel)_ | —       | Si installé et authentifié (`gh auth login`), le token est résolu automatiquement |
+| Prerequisite             | Version | Notes                                                                                  |
+| ------------------------ | ------- | -------------------------------------------------------------------------------------- |
+| **Node.js**              | >= 24   | [nodejs.org](https://nodejs.org) — LTS since October 2024                              |
+| **AIDD Token**           | —       | Required to download the framework                                                     |
+| **tar**                  | —       | Pre-installed on macOS, Linux, WSL and Windows 10 1803+                                |
+| **gh CLI** _(optional)_  | —       | If installed and authenticated (`gh auth login`), the token is resolved automatically  |
 
-> **Windows :** fonctionne nativement sous Windows 10 1803+ (PowerShell ou cmd) et sous WSL. `tar.exe` est fourni par Windows. En cas de problème de permissions avec `npm install -g`, utiliser un terminal administrateur ou WSL.
+> **Windows:** works natively on Windows 10 1803+ (PowerShell or cmd) and on WSL. `tar.exe` is provided by Windows. If you encounter permission issues with `npm install -g`, use an administrator terminal or WSL.
 
 ## Installation
 
-Le package est hébergé sur GitHub Packages. Il requiert un [token GitHub](https://github.com/settings/tokens/new) avec le scope **`read:packages`**.
+The package is hosted on GitHub Packages. It requires a [GitHub token](https://github.com/settings/tokens/new) with the **`read:packages`** scope.
 
-**macOS / Linux / WSL :**
+**macOS / Linux / WSL:**
 
 ```bash
-# Configurer le registre GitHub Packages (token avec scope read:packages)
+# Configure the GitHub Packages registry (token with read:packages scope)
 echo "@ai-driven-dev:registry=https://npm.pkg.github.com" >> ~/.npmrc
 echo "//npm.pkg.github.com/:_authToken=<YOUR_TOKEN>" >> ~/.npmrc
 
-# Installer globalement
-npm install -g @ai-driven-dev/cli
+# Install globally
+npm install -g @ai-driven-dev/aidd-cli
 
-# Vérifier l'installation
+# Verify installation
 aidd --version
 ```
 
-**Windows (PowerShell) :**
+**Windows (PowerShell):**
 
 ```powershell
-# Token GitHub avec scope read:packages requis
+# GitHub token with read:packages scope required
 npm config set @ai-driven-dev:registry https://npm.pkg.github.com
 npm config set //npm.pkg.github.com/:_authToken <YOUR_TOKEN>
 
@@ -79,142 +79,142 @@ npm install -g @ai-driven-dev/cli
 aidd --version
 ```
 
-## Utiliser le token AIDD
+## Using the AIDD token
 
-Le token est requis à chaque téléchargement du framework (commandes `init` et `install`). Trois façons de le fournir :
+The token is required each time the framework is downloaded (`init` and `install` commands). Three ways to provide it:
 
-**Option 1 — Variable d'environnement (recommandé)**
+**Option 1 — Environment variable (recommended)**
 
 ```bash
 export AIDD_TOKEN=<YOUR_TOKEN>
 aidd install claude
 ```
 
-Ajouter à `~/.bashrc`, `~/.zshrc` ou `~/.profile` pour le rendre persistant.
+Add to `~/.bashrc`, `~/.zshrc` or `~/.profile` to make it persistent.
 
-**Option 2 — gh CLI (si déjà installé)**
+**Option 2 — gh CLI (if already installed)**
 
 ```bash
-gh auth login   # une seule fois
-aidd install claude   # le token est résolu automatiquement
+gh auth login   # once only
+aidd install claude   # token is resolved automatically
 ```
 
-**Option 3 — Flag inline**
+**Option 3 — Inline flag**
 
 ```bash
 aidd install claude --token <YOUR_TOKEN>
 ```
 
-## Commandes
+## Commands
 
 ### `aidd init`
 
-Initialise la structure `aidd_docs/` et le manifeste `.aidd/manifest.json`.
+Initializes the `aidd_docs/` structure and the `.aidd/manifest.json` manifest.
 
 ```bash
-aidd init                        # première initialisation
-aidd init --docs-dir my_docs    # répertoire docs personnalisé
-aidd init --force                # recopie les templates docs sans clean (préserve les outils installés)
+aidd init                        # first initialization
+aidd init --docs-dir my_docs    # custom docs directory
+aidd init --force                # copies doc templates without clean (preserves installed tools)
 ```
 
-### Première utilisation
+### First use
 
 ```bash
-# 1. Initialiser la structure docs (aidd_docs/ + manifest)
+# 1. Initialize the docs structure (aidd_docs/ + manifest)
 aidd init
 
-# 2. Installer pour un ou plusieurs outils
+# 2. Install for one or more tools
 aidd install claude cursor
 
-# Ou tout installer d'un coup
+# Or install everything at once
 aidd install --all
 ```
 
-> `aidd install` appelle automatiquement `init` si aucun manifeste n'existe.
+> `aidd install` requires a prior `aidd init`. It will abort with a clear error if no manifest exists.
 
 ### `aidd status`
 
-Compare les fichiers sur le disque avec le manifeste et affiche les écarts par outil.
+Compares files on disk with the manifest and displays differences per tool.
 
 ```bash
-aidd status                      # tous les outils
-aidd status --tool claude        # filtrer par outil
+aidd status                      # all tools
+aidd status --tool claude        # filter by tool
 ```
 
-Légende : `~` modifié · `-` supprimé · `+` ajouté (présent sur disque, non tracké)
+Legend: `~` modified · `-` deleted · `+` added (present on disk, not tracked)
 
 ### `aidd doctor`
 
-Vérifie l'intégrité structurelle de l'installation. Retourne le code 1 en cas de problème (compatible CI).
+Checks the structural integrity of the installation. Returns exit code 1 on issues (CI-compatible).
 
 ```bash
 aidd doctor
 ```
 
-Détecte :
+Detects:
 
-- Manifest absent ou corrompu (JSON invalide)
-- Répertoires d'outils présents sur le disque mais non trackés dans le manifest (orphelins)
-- Références cassées dans les fichiers `.md`/`.mdc` trackés (`@path` pour Claude/Cursor, liens markdown pour Copilot)
+- Missing or corrupted manifest (invalid JSON)
+- Tool directories present on disk but not tracked in the manifest (orphans)
+- Broken references in tracked `.md`/`.mdc` files (`@path` for Claude/Cursor, markdown links for Copilot)
 
-> Les fichiers supprimés ou modifiés localement sont du drift, pas des problèmes structurels — utiliser `aidd status` pour les voir.
+> Locally deleted or modified files are drift, not structural issues — use `aidd status` to see them.
 
 ### `aidd uninstall`
 
-Supprime les fichiers d'un outil et retire ses entrées du manifest.
+Removes a tool's files and removes its entries from the manifest.
 
 ```bash
 aidd uninstall cursor
-aidd uninstall --all             # tous les outils installés
+aidd uninstall --all             # all installed tools
 ```
 
 ### `aidd clean`
 
-Supprime toutes les traces AIDD du projet (fichiers générés + manifest).
+Removes all AIDD traces from the project (generated files + manifest).
 
 ```bash
-aidd clean                       # dry-run : affiche ce qui sera supprimé
-aidd clean --force               # suppression effective
+aidd clean                       # dry-run: shows what will be removed
+aidd clean --force               # actual removal
 ```
 
-### Options globales
+### Global options
 
 ```bash
-aidd install claude --verbose            # logs détaillés
-aidd install claude --token <token>      # token explicite
-aidd install claude --repo owner/repo    # framework alternatif
-aidd install claude --framework ./local  # framework local (dev/test)
-aidd install claude --release v3.2.0    # version spécifique du framework
+aidd install claude --verbose            # detailed logs
+aidd install claude --token <token>      # explicit token
+aidd install claude --repo owner/repo    # alternative framework
+aidd install claude --framework ./local  # local framework (dev/test)
+aidd install claude --release v3.2.0    # specific framework version
 ```
 
-**Variables d'environnement :**
+**Environment variables:**
 
-| Variable       | Description                                 |
-| -------------- | ------------------------------------------- |
-| `AIDD_TOKEN`   | Token d'authentification GitHub Packages    |
-| `AIDD_REPO`    | Dépôt framework personnalisé (`owner/repo`) |
-| `AIDD_VERBOSE` | Mode verbeux (`true`/`false`)               |
+| Variable       | Description                                  |
+| -------------- | -------------------------------------------- |
+| `AIDD_TOKEN`   | GitHub Packages authentication token         |
+| `AIDD_REPO`    | Custom framework repository (`owner/repo`)   |
+| `AIDD_VERBOSE` | Verbose mode (`true`/`false`)                |
 
 ## Architecture
 
-Architecture 3 couches (Domain → Application → Infrastructure) :
+3-layer architecture (Domain → Application → Infrastructure):
 
 ```
 src/
-├── cli.ts                    # Point d'entrée commander
-├── domain/                   # Modèles métier + ports + tool-configs
-├── application/              # Use cases + commandes commander
-└── infrastructure/           # Adaptateurs + HTTP + cache + auth
+├── cli.ts                    # Commander entry point
+├── domain/                   # Business models + ports + tool-configs
+├── application/              # Use cases + commander commands
+└── infrastructure/           # Adapters + HTTP + cache + auth
 ```
 
-Pour plus de détails, voir [aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md).
+For more details, see [aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md).
 
-## Développement
+## Development
 
 ```bash
-# Prérequis supplémentaires pour le dev : pnpm >= 9
+# Additional dev prerequisite: pnpm >= 9
 
-# Installer les dépendances
+# Install dependencies
 pnpm install
 
 # Build
@@ -226,21 +226,21 @@ pnpm test
 # Typecheck + lint
 pnpm typecheck && pnpm lint
 
-# Test local du CLI
+# Local CLI test
 pnpm run install:local
 aidd --version
 ```
 
-## Contribuer
+## Contributing
 
-Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour le guide de contribution complet.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide.
 
-Les contributions de code sont ouvertes aux membres **Obsidian+** certifiés.
+Code contributions are open to certified **Obsidian+** members.
 
-## Licence
+## License
 
-Dépôt privé pour tous les membres de l'équipe AIDD.
+Private repository for all AIDD team members.
 
 ---
 
-← [Retour au repo principal](https://github.com/ai-driven-dev/aidd)
+← [Back to main repo](https://github.com/ai-driven-dev/aidd)

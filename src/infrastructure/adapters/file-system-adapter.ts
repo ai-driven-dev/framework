@@ -97,8 +97,11 @@ export class FileSystemAdapter implements FileSystem {
     try {
       const raw = await readFile(path, "utf-8");
       existing = JSON.parse(raw) as Record<string, unknown>;
-    } catch {
-      // File missing or invalid JSON — start from empty
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code !== "ENOENT") {
+        throw new Error(`Cannot parse existing JSON at ${path}: ${(err as Error).message}`);
+      }
     }
 
     const incoming = JSON.parse(stripJsoncComments(content)) as Record<string, unknown>;

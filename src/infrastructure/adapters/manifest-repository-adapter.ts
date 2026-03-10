@@ -25,8 +25,7 @@ export class ManifestRepositoryAdapter implements ManifestRepository {
       return null;
     }
 
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-    return Manifest.fromJSON(parsed);
+    return Manifest.fromJSON(JSON.parse(raw));
   }
 
   async save(manifest: Manifest): Promise<void> {

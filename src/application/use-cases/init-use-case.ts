@@ -17,6 +17,7 @@ export interface InitOptions {
   docsDir: string;
   projectRoot: string;
   force?: boolean;
+  repo?: string;
 }
 
 export interface InitResult {
@@ -35,7 +36,7 @@ export class InitUseCase {
   ) {}
 
   async execute(options: InitOptions): Promise<InitResult> {
-    const { frameworkPath, version, docsDir, projectRoot, force = false } = options;
+    const { frameworkPath, version, docsDir, projectRoot, force = false, repo } = options;
 
     const existing = await this.manifestRepo.load();
 
@@ -49,9 +50,19 @@ export class InitUseCase {
           `Already initialized (docs in "${existing.docsDir}"). Use \`aidd init --force\` to re-copy docs, or \`aidd clean --force\` to reset completely.`
         );
       }
-      const docsDirPath = join(projectRoot, docsDir);
-      if (await this.fs.fileExists(docsDirPath)) {
-        throw new Error(`Directory "${docsDir}" already exists`);
+      const aiddSignals = [
+        join(projectRoot, ".aidd"),
+        join(projectRoot, docsDir),
+        join(projectRoot, ".claude"),
+        join(projectRoot, ".cursor"),
+        join(projectRoot, ".github", "copilot-instructions.md"),
+      ];
+      for (const signalPath of aiddSignals) {
+        if (await this.fs.fileExists(signalPath)) {
+          throw new Error(
+            "AIDD files detected. Use `aidd adopt` to migrate your existing installation."
+          );
+        }
       }
     }
 
@@ -80,7 +91,7 @@ export class InitUseCase {
       generated.push(new GeneratedFile({ relativePath: outputRelPath, content, hash: newHash }));
     }
 
-    const manifest = force && existing !== null ? existing : Manifest.create(resolvedDocsDir);
+    const manifest = force && existing !== null ? existing : Manifest.create(resolvedDocsDir, repo);
     manifest.addDocs(descriptor.version, generated);
     await this.manifestRepo.save(manifest);
     await writeCatalog(manifest, resolvedDocsDir, projectRoot, this.fs);

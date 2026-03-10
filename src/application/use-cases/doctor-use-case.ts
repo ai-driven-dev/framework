@@ -92,6 +92,7 @@ export class DoctorUseCase {
     const docsFiles = manifest.getDocsFiles();
     allTrackedFiles.push(...docsFiles.map((f) => ({ ...f, toolId: null })));
 
+    issues.push(...(await this.checkDocsDirectory(manifest, projectRoot)));
     issues.push(...(await this.checkOrphanedDirectories(manifest, projectRoot)));
     issues.push(...(await this.checkBrokenReferences(allTrackedFiles, projectRoot)));
 
@@ -101,6 +102,25 @@ export class DoctorUseCase {
       docsFileCount: docsFiles.length,
       issues,
     };
+  }
+
+  private async checkDocsDirectory(
+    manifest: Manifest,
+    projectRoot: string
+  ): Promise<DoctorIssue[]> {
+    const issues: DoctorIssue[] = [];
+    const manifestDocsDir = manifest.docsDir;
+    const docsDirPath = join(projectRoot, manifestDocsDir);
+
+    if (!(await this.fs.fileExists(docsDirPath))) {
+      issues.push({
+        severity: "error",
+        message: `Docs directory '${manifestDocsDir}' does not exist on disk`,
+        fix: "Run `aidd init --force` to recreate the docs directory.",
+      });
+    }
+
+    return issues;
   }
 
   private async checkOrphanedDirectories(
@@ -132,7 +152,7 @@ export class DoctorUseCase {
     const issues: DoctorIssue[] = [];
 
     for (const file of files) {
-      if (!file.relativePath.match(/\.m(d|dc)$/)) continue;
+      if (!file.relativePath.match(/\.(md|mdc)$/)) continue;
 
       const fullPath = join(projectRoot, file.relativePath);
       if (!(await this.fs.fileExists(fullPath))) continue;

@@ -1,13 +1,13 @@
 # Code Review — Domain Layer Audit
 
-Audit du layer domain (`src/domain/`) orienté clean architecture, simplicity, composition.
+Audit of the domain layer (`src/domain/`) focused on clean architecture, simplicity, and composition.
 
 - Status: findings only — no code changes
 - Confidence: 9/10
 
 ## Findings Summary
 
-4 catégories de problèmes : God Interface, Duplication, État mutable global, Parsing trop complexe.
+4 categories of issues: God Interface, Duplication, Global mutable state, Overly complex parsing.
 
 ---
 
@@ -15,13 +15,13 @@ Audit du layer domain (`src/domain/`) orienté clean architecture, simplicity, c
 
 ### Potentially Unnecessary Elements
 
-- [🟢] **`rewrittenBody` alias** `distribution.ts:44` `const rewrittenBody = body` est un no-op — la variable est assignée mais jamais transformée. Renommée immédiatement body. (Supprimer l'alias)
-- [🟢] **`escapedRegex`** `copilot.ts:71` Utilitaire interne pour échapper une regex. Utilisé une seule fois pour les placeholders connus — la valeur échappée est constante, calculer dynamiquement n'apporte rien. (Précalculer comme constante ou inliner)
+- [🟢] **`rewrittenBody` alias** `distribution.ts:44` `const rewrittenBody = body` is a no-op — the variable is assigned but never transformed. Immediately renamed to body. (Remove the alias)
+- [🟢] **`escapedRegex`** `copilot.ts:71` Internal utility to escape a regex. Used once for known placeholders — the escaped value is constant, computing it dynamically adds nothing. (Pre-compute as a constant or inline)
 
 ### Standards Compliance
 
-- [🟢] Naming conventions ok — camelCase fonctions, PascalCase classes, UPPER_CASE constantes
-- [🟡] **`argument-hint` avec tiret** `claude.ts:65, copilot.ts:160` Accès via `frontmatter["argument-hint"]` car tiret interdit en identifiant. La clé vient du framework source (convention YAML). Acceptable mais fragile — aucun typage fort.
+- [🟢] Naming conventions ok — camelCase functions, PascalCase classes, UPPER_CASE constants
+- [🟡] **`argument-hint` with hyphen** `claude.ts:65, copilot.ts:160` Accessed via `frontmatter["argument-hint"]` because hyphens are not valid in identifiers. The key comes from the source framework (YAML convention). Acceptable but fragile — no strong typing.
 
 ### Architecture
 
@@ -29,30 +29,30 @@ Audit du layer domain (`src/domain/`) orienté clean architecture, simplicity, c
 
 **`src/domain/models/tool-config.ts:6-18`**
 
-L'interface mélange 6 responsabilités distinctes en un seul contrat :
+The interface mixes 6 distinct responsibilities into a single contract:
 
-| Responsabilité | Méthode |
+| Responsibility | Method |
 |---|---|
-| Identité du tool | `toolId`, `directory`, `toolSuffix` |
+| Tool identity | `toolId`, `directory`, `toolSuffix` |
 | Path par section | `buildFilePath(section, fileName)` |
-| Réécriture contenu | `rewriteContent`, `rewriteMemoryBankContent?` |
+| Content rewrite | `rewriteContent`, `rewriteMemoryBankContent?` |
 | Conversion frontmatter | `convertFrontmatter(fm, section, relativeFileName?)` |
 | Filtrage | `shouldProcess?(section, frontmatter)` |
 | Config files | `getConfigOutputPath`, `shouldMergeConfig?` |
 | Memory bank | `getMemoryBankOutputPath` |
 
-Conséquence directe : chaque méthode fait du dispatch interne sur `section.name` :
+Direct consequence: every method does internal dispatch on `section.name`:
 
 ```ts
-// Dans claude.ts, cursor.ts, copilot.ts — toujours le même pattern
+// In claude.ts, cursor.ts, copilot.ts — always the same pattern
 if (section.name === SECTION_AGENTS) { ... }
 if (section.name === SECTION_COMMANDS) { ... }
 if (section.name !== SECTION_RULES) return frontmatter;
 ```
 
-Le polymorphisme est aplati en if-chain impérative. Chaque nouveau section type force une modification dans chaque tool.
+Polymorphism is flattened into an imperative if-chain. Each new section type forces a modification in every tool.
 
-**Proposition** : décomposer par sujet fonctionnel.
+**Proposal** : decompose by functional subject.
 
 ```ts
 interface SectionHandler {
@@ -75,13 +75,13 @@ interface ToolConfig {
 }
 ```
 
-Bénéfices :
-- Plus de `section.name` branching dans les implémentations
-- Chaque handler est isolé et testable indépendamment
-- `shouldProcess` co-localisé avec `rules()` — le seul handler qui l'utilise
-- `rewriteMemoryBankContent?` devient optionnel dans son contexte naturel
+Benefits:
+- No more `section.name` branching in implementations
+- Each handler is isolated and independently testable
+- `shouldProcess` co-located with `rules()` — the only handler that uses it
+- `rewriteMemoryBankContent?` becomes optional in its natural context
 
-#### A2 — Méthodes optionnelles cassent le contrat [🟡]
+#### A2 — Optional methods break the contract [🟡]
 
 **`tool-config.ts:14,16,17`**
 
@@ -91,7 +91,7 @@ shouldProcess?(section: ContentSection, frontmatter: Record<string, unknown>): b
 rewriteMemoryBankContent?(content: string, docsDir: string): string;
 ```
 
-Trois méthodes optionnelles avec `?.` dans les callsites. Leur absence a une valeur par défaut implicite (`false`, `true`, `rewriteContent`). Ces défauts devraient être explicites dans l'interface ou dans une base implementation, pas éparpillés dans les callsites.
+Three optional methods with `?.` in callsites. Their absence has an implicit default value (`false`, `true`, `rewriteContent`). These defaults should be explicit in the interface or a base implementation, not scattered across callsites.
 
 **`distribution.ts:97`** : `const rewrite = toolConfig.rewriteMemoryBankContent ?? toolConfig.rewriteContent;` — ce fallback est du glue code.
 
@@ -103,13 +103,13 @@ Trois méthodes optionnelles avec `?.` dans les callsites. Leur absence a une va
 convertFrontmatter(fm, section, relativeFileName?): Record<string, unknown>
 ```
 
-`relativeFileName?` est optionnel parce qu'il n't est utilisé que pour les commandes (extraction du numéro de phase). C'est une fuite d'implémentation dans l'interface. Avec la décomposition par sujet, `commands().convertFrontmatter(fm, relativeFileName)` est naturel — pas de param optionnel.
+`relativeFileName?` is optional because it is only used for commands (phase number extraction). This is an implementation leak into the interface. With per-subject decomposition, `commands().convertFrontmatter(fm, relativeFileName)` is natural — no optional param.
 
 #### A4 — `toolPathToInstalledPath` duplique `buildFilePath` [🔴]
 
 **`copilot.ts:75-94`**
 
-`toolPathToInstalledPath` et `buildFilePath` implémentent la même logique de mapping chemin framework → chemin copilot, mais pour deux usages différents (path de fichier vs référence dans le contenu). Ils doivent rester en sync manuellement.
+`toolPathToInstalledPath` and `buildFilePath` implement the same framework path → copilot path mapping logic, but for two different usages (file path vs content reference). They must be kept in sync manually.
 
 ```ts
 // buildFilePath pour rules:
@@ -121,15 +121,15 @@ flattenFileName(fileName, EXT_INSTRUCTIONS, { stripNumericPrefix: true })
 // → instructions/01-mermaid.instructions.md (sans DIRECTORY prefix)
 ```
 
-La seule différence est le préfixe `DIRECTORY`. Cette duplication est le symptôme de `rewriteContent` qui ne peut pas appeler `buildFilePath` parce qu'il n'a pas accès à la `section`. Avec des handlers par section, `rules().buildFilePath(fileName)` serait appelable directement depuis `rewriteContent`.
+The only difference is the `DIRECTORY` prefix. This duplication is a symptom of `rewriteContent` not being able to call `buildFilePath` because it has no access to the `section`. With per-section handlers, `rules().buildFilePath(fileName)` would be callable directly from `rewriteContent`.
 
-#### A5 — Extraction du numéro de phase dupliquée [🟡]
+#### A5 — Phase number extraction duplicated [🟡]
 
 **`claude.ts:34`, `claude.ts:61`, `copilot.ts:156`**
 
-Le pattern `segment.match(/^(\d+)/)?.[1]` pour extraire le numéro de phase apparaît 3 fois. Une fonction `extractPhase(dirSegment: string): string | undefined` devrait exister.
+The `segment.match(/^(\d+)/)?.[1]` pattern to extract the phase number appears 3 times. An `extractPhase(dirSegment: string): string | undefined` function should exist.
 
-#### A6 — Agent frontmatter stripping identique dans les 3 tools [🟡]
+#### A6 — Agent frontmatter stripping identical across all 3 tools [🟡]
 
 **`claude.ts:58`, `cursor.ts:47`, `copilot.ts:153`**
 
@@ -137,7 +137,7 @@ Le pattern `segment.match(/^(\d+)/)?.[1]` pour extraire le numéro de phase appa
 return { name: frontmatter.name, description: frontmatter.description };
 ```
 
-Ligne identique dans les 3 outils. Candidat à une fonction partagée `agentFrontmatter(fm)`.
+Identical line in all 3 tools. Candidate for a shared `agentFrontmatter(fm)` function.
 
 #### A7 — Registre global mutable [🟡]
 
@@ -148,37 +148,37 @@ const TOOL_REGISTRY = new Map<ToolId, ToolConfig>();
 export function registerTool(config: ToolConfig): void { ... }
 ```
 
-Side effect à l'import : chaque fichier `claude.ts`, `cursor.ts`, `copilot.ts` appelle `registerTool(...)` en bas de fichier. Le registre est un singleton global mutable — impossible à reset entre tests sans modifier le module.
+Side effect on import: each file `claude.ts`, `cursor.ts`, `copilot.ts` calls `registerTool(...)` at the bottom. The registry is a mutable global singleton — impossible to reset between tests without modifying the module.
 
-En pratique les tests n'ont pas besoin du registre (ils importent directement `claudeToolConfig`), mais c'est une fragilité architecturale si on veut tester en isolation.
+In practice tests do not need the registry (they import `claudeToolConfig` directly), but it is an architectural fragility if isolation testing is ever needed.
 
 ### Code Health
 
 - [🟢] **Tailles de fichiers** — `copilot.ts` 208 lignes (ok), `claude.ts` 96, `cursor.ts` 68. Dans les limites.
-- [🟢] **`distribution.ts`** — 131 lignes, bien découpé en fonctions helper.
-- [🟡] **`parseYamlLike`** `frontmatter.ts:53-121` — 68 lignes avec une machine à états (blockScalar + list + keyValue). Trois modes entrelacés avec des variables partagées (`currentKey`, `currentList`, `blockScalarKey`...). Fonctionnel mais dense. Candidat à découpage : `parseBlockScalar`, `parseListItems` séparés.
-- [🟡] **`serializeFrontmatter` — détection de glob** `frontmatter.ts:39` `s.includes("*") || s.includes("?") || s.startsWith("{")` — logic de quoting spécifique aux globs dans le serializer générique. Cela n'appartient pas à `frontmatter.ts` — c'est une préoccupation du `ToolConfig.rules()`.
-- [🟢] **Cyclomatic complexity** — acceptable partout sauf `parseYamlLike` (>10 branches)
+- [🟢] **`distribution.ts`** — 131 lines, well split into helper functions.
+- [🟡] **`parseYamlLike`** `frontmatter.ts:53-121` — 68 lines with a state machine (blockScalar + list + keyValue). Three interleaved modes with shared variables (`currentKey`, `currentList`, `blockScalarKey`...). Functional but dense. Candidate for splitting: separate `parseBlockScalar`, `parseListItems`.
+- [🟡] **`serializeFrontmatter` — glob detection** `frontmatter.ts:39` `s.includes("*") || s.includes("?") || s.startsWith("{")` — glob-specific quoting logic inside the generic serializer. This does not belong in `frontmatter.ts` — it is a concern of `ToolConfig.rules()`.
+- [🟢] **Cyclomatic complexity** — acceptable everywhere except `parseYamlLike` (>10 branches)
 - [🟢] **Error handling** — throw early, messages explicites, pas de silent failures
-- [🟢] **No magic numbers/strings** — toutes les constantes nommées dans `framework-descriptor.ts`
+- [🟢] **No magic numbers/strings** — all constants named in `framework-descriptor.ts`
 
 ### Manque de tests importants
 
-- [🔴] **Snapshot tests absents** — aucun test snapshot sur la sortie complète de `generateDistribution`. Les tests actuels vérifient des propriétés partielles (`toContain`, `toBe`). Un snapshot sur le contenu complet d'un fichier généré attraperait toute régression.
-- [🟡] **`toolPathToInstalledPath` non testé directement** `copilot.ts:75` — uniquement couvert indirectement via `rewriteContent`. Si la logique diverge de `buildFilePath`, aucun test ne l'attrape.
-- [🟡] **`parseYamlLike` block scalars** — le bloc `>-` est récemment ajouté, couvert par un seul cas implicite via les SKILL.md. Mérite des tests dédiés (edge cases : `|-`, bloc vide, indentation variable).
-- [🟢] **`serializeFrontmatter` round-trip** — pas de test de parse → serialize → parse. Un tel test attraperait les régressions de quoting.
+- [🔴] **Snapshot tests absent** — no snapshot test on the full output of `generateDistribution`. Current tests check partial properties (`toContain`, `toBe`). A snapshot on the full content of a generated file would catch any regression.
+- [🟡] **`toolPathToInstalledPath` not directly tested** `copilot.ts:75` — only covered indirectly via `rewriteContent`. If the logic diverges from `buildFilePath`, no test catches it.
+- [🟡] **`parseYamlLike` block scalars** — the `>-` block was recently added, covered by a single implicit case via SKILL.md. Deserves dedicated tests (edge cases: `|-`, empty block, variable indentation).
+- [🟢] **`serializeFrontmatter` round-trip** — no parse → serialize → parse test. Such a test would catch quoting regressions.
 
 ---
 
 ## Final Review
 
-- **Score**: 7/10 — Architecture fonctionnelle, logique correcte, mais `ToolConfig` est une God Interface qui génère de la duplication et des couplages implicites entre section dispatch et méthodes.
-- **Feedback**: La suggestion de l'utilisateur (décomposer par sujet fonctionnel `agents()`, `commands()`, `rules()`...) est la bonne direction. Elle éliminerait les if-chains, les paramètres optionnels de fuite, et la duplication `toolPathToInstalledPath`/`buildFilePath`.
+- **Score**: 7/10 — Functional architecture, correct logic, but `ToolConfig` is a God Interface that generates duplication and implicit coupling between section dispatch and methods.
+- **Feedback**: The user's suggestion (decompose by functional subject `agents()`, `commands()`, `rules()`...) is the right direction. It would eliminate if-chains, leaking optional parameters, and the `toolPathToInstalledPath`/`buildFilePath` duplication.
 - **Follow-up Actions**:
-  1. Ajouter snapshot tests avant tout refactoring (filet de sécurité)
-  2. Décomposer `ToolConfig` en handlers par section fonctionnelle
-  3. Extraire `extractPhase()` et `agentFrontmatter()` comme helpers partagés
-  4. Déplacer la détection de glob hors de `serializeFrontmatter`
-  5. Simplifier `parseYamlLike` en séparant les modes de parsing
-- **Additional Notes**: Le refactoring doit être sécurisé par snapshots AVANT tout changement structurel. La surface de comportement observable est la sortie de `generateDistribution` — c'est là que les snapshots doivent porter.
+  1. Add snapshot tests before any refactoring (safety net)
+  2. Decompose `ToolConfig` into handlers per functional section
+  3. Extract `extractPhase()` and `agentFrontmatter()` as shared helpers
+  4. Move glob detection out of `serializeFrontmatter`
+  5. Simplify `parseYamlLike` by separating parsing modes
+- **Additional Notes**: The refactoring must be secured by snapshots BEFORE any structural change. The observable behavior surface is the output of `generateDistribution` — that is where snapshots must apply.

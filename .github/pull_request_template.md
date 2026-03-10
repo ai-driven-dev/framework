@@ -1,13 +1,13 @@
 # Description
 
-<!-- Résumez les changements effectués et le problème résolu. Référencez l'issue avec "Closes #NNN". -->
+<!-- Summarize the changes made and the problem solved. Reference the issue with "Closes #NNN". -->
 
 Closes #
 
-## Type de changement
+## Type of change
 
 - [ ] Bug fix (`fix:`)
-- [ ] Nouvelle fonctionnalité (`feat:`)
+- [ ] New feature (`feat:`)
 - [ ] Refactoring (`refactor:`)
 - [ ] Documentation (`docs:`)
 - [ ] Tests (`test:`)
@@ -15,18 +15,18 @@ Closes #
 
 ## Checklist
 
-- [ ] `pnpm typecheck` passe
-- [ ] `pnpm lint` passe
-- [ ] `pnpm test` passe (build + vitest)
-- [ ] Tests ajoutés ou mis à jour
-- [ ] Documentation mise à jour si nécessaire
+- [ ] `pnpm typecheck` passes
+- [ ] `pnpm lint` passes
+- [ ] `pnpm test` passes (build + vitest)
+- [ ] Tests added or updated
+- [ ] Documentation updated if necessary
 
-## Tests effectués
+## Tests performed
 
-<!-- Décrivez comment vous avez testé vos changements. -->
+<!-- Describe how you tested your changes. -->
 
 ```bash
-# Exemple de test local
+# Local test example
 pnpm run install:local
 aidd install claude --framework ./example/aidd-framework-3.2.3
 ```

@@ -68,21 +68,20 @@ describe("InitUseCase", () => {
     expect(data.docsDir).toBe("my_docs");
   });
 
-  it("proceeds when .aidd/ exists but no manifest.json", async () => {
+  it("aborts with adopt guidance when .aidd/ exists but no manifest.json", async () => {
     await mkdir(join(projectRoot, ".aidd"), { recursive: true });
 
-    const result = await buildUseCase().execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    expect(result.fileCount).toBeGreaterThan(0);
-    expect(existsSync(join(projectRoot, ".aidd", "manifest.json"))).toBe(true);
+    await expect(
+      buildUseCase().execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      })
+    ).rejects.toThrow("aidd adopt");
   });
 
-  it("throws when docs directory already exists", async () => {
+  it("aborts with adopt guidance when docs directory already exists", async () => {
     await mkdir(join(projectRoot, "aidd_docs"), { recursive: true });
 
     await expect(
@@ -92,7 +91,20 @@ describe("InitUseCase", () => {
         docsDir: "aidd_docs",
         projectRoot,
       })
-    ).rejects.toThrow("aidd_docs");
+    ).rejects.toThrow("aidd adopt");
+  });
+
+  it("aborts with adopt guidance when .claude/ exists", async () => {
+    await mkdir(join(projectRoot, ".claude"), { recursive: true });
+
+    await expect(
+      buildUseCase().execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      })
+    ).rejects.toThrow("AIDD files detected");
   });
 
   describe("--force", () => {
@@ -229,7 +241,6 @@ describe("InitUseCase", () => {
   });
 
   it("creates CATALOG.md in docsDir after init", async () => {
-    const deps = buildDeps(projectRoot);
     await buildUseCase().execute({
       frameworkPath: FIXTURE_DIR,
       version: "test",

@@ -1,30 +1,30 @@
 ---
 name: Feature Request
-about: Proposer une nouvelle fonctionnalité ou amélioration
+about: Propose a new feature or improvement
 title: "feat: "
 labels: feature
 assignees: ""
 ---
 
-## Problème à résoudre
+## Problem to solve
 
-<!-- Quel problème cette fonctionnalité résout-elle ? Ex : "Actuellement, je dois faire X manuellement..." -->
+<!-- What problem does this feature solve? E.g.: "Currently, I have to do X manually..." -->
 
-## Solution proposée
+## Proposed solution
 
-<!-- Décrivez la fonctionnalité souhaitée. Comment devrait-elle fonctionner ? -->
+<!-- Describe the desired feature. How should it work? -->
 
-## Comportement attendu
+## Expected behavior
 
 ```bash
-# Exemple de commande / usage
+# Example command / usage
 aidd <proposed-command>
 ```
 
-## Alternatives envisagées
+## Considered alternatives
 
-<!-- Y a-t-il d'autres approches possibles ? Pourquoi cette solution est-elle préférable ? -->
+<!-- Are there other possible approaches? Why is this solution preferable? -->
 
-## Contexte supplémentaire
+## Additional context
 
-<!-- Liens, captures d'écran, cas d'usage spécifiques... -->
+<!-- Links, screenshots, specific use cases... -->

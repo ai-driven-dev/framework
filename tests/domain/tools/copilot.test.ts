@@ -169,4 +169,44 @@ describe("copilotToolConfig", () => {
       expect(copilotToolConfig.rules().convertFrontmatter({ alwaysApply: false })).toEqual({});
     });
   });
+
+  describe("reverseRewriteContent()", () => {
+    it("reverses markdown link for agents to @{{TOOLS}}/agents/", () => {
+      const input = "[.github/agents/alexia.agent.md](../../.github/agents/alexia.agent.md)";
+      const result = copilotToolConfig.reverseRewriteContent(input, "aidd_docs");
+      expect(result).toContain("@{{TOOLS}}/agents/alexia.agent.md");
+    });
+
+    it("reverses markdown link for prompts to @{{TOOLS}}/commands/", () => {
+      const input =
+        "[.github/prompts/01-implement.prompt.md](../../.github/prompts/01-implement.prompt.md)";
+      const result = copilotToolConfig.reverseRewriteContent(input, "aidd_docs");
+      expect(result).toContain("@{{TOOLS}}/commands/01-implement.prompt.md");
+    });
+
+    it("reverses markdown link for instructions to @{{TOOLS}}/rules/", () => {
+      const input =
+        "[.github/instructions/naming.instructions.md](../../.github/instructions/naming.instructions.md)";
+      const result = copilotToolConfig.reverseRewriteContent(input, "aidd_docs");
+      expect(result).toContain("@{{TOOLS}}/rules/naming.instructions.md");
+    });
+
+    it("reverses markdown link for skills to @{{TOOLS}}/skills/", () => {
+      const input = "[.github/skills/foo/SKILL.md](../../.github/skills/foo/SKILL.md)";
+      const result = copilotToolConfig.reverseRewriteContent(input, "aidd_docs");
+      expect(result).toContain("@{{TOOLS}}/skills/foo/SKILL.md");
+    });
+
+    it("reverses docs markdown link to @{{DOCS}}/", () => {
+      const input = "[aidd_docs/memory/CATALOG.md](../../aidd_docs/memory/CATALOG.md)";
+      const result = copilotToolConfig.reverseRewriteContent(input, "aidd_docs");
+      expect(result).toContain("@{{DOCS}}/memory/CATALOG.md");
+    });
+
+    it("reverses .github/prompts/ plain text to {{TOOLS}}/commands/", () => {
+      const input = "Located at .github/prompts/implement.prompt.md";
+      const result = copilotToolConfig.reverseRewriteContent(input, "aidd_docs");
+      expect(result).toContain("{{TOOLS}}/commands/");
+    });
+  });
 });

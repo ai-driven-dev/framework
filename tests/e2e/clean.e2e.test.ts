@@ -20,6 +20,7 @@ describe("E2E: aidd clean", () => {
   });
 
   it("previews files to remove without deleting them", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
     await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
     const { stdout, exitCode } = await runCli(["clean"], projectDir);
@@ -31,6 +32,7 @@ describe("E2E: aidd clean", () => {
   }, 5000);
 
   it("deletes all installed files and manifest when --force is used", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
     await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
     const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
@@ -49,6 +51,7 @@ describe("E2E: aidd clean", () => {
   }, 5000);
 
   it("lists tool names and file counts in dry-run preview output", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
     await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
     const { stdout, exitCode } = await runCli(["clean"], projectDir);
@@ -57,6 +60,20 @@ describe("E2E: aidd clean", () => {
     expect(stdout).toContain("claude");
     expect(stdout).toMatch(/\d+ files?/);
   }, 5000);
+
+  it("removes all tool directories when multiple tools are installed", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+    await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+    await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
+
+    const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("Cleaned");
+
+    expect(existsSync(join(projectDir, ".claude"))).toBe(false);
+    expect(existsSync(join(projectDir, ".cursor"))).toBe(false);
+    expect(existsSync(join(projectDir, ".aidd"))).toBe(false);
+  }, 10000);
 
   it("removes docs and manifest when only init was run", async () => {
     await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);

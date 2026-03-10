@@ -29,7 +29,7 @@ describe("HttpClient", () => {
   });
 
   describe("GET JSON response", () => {
-    it("returns parsed JSON body", async () => {
+    it("parses and provides JSON body from response", async () => {
       const { url, close } = await startServer((_req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ tag_name: "v1.0.0" }));
@@ -78,7 +78,7 @@ describe("HttpClient", () => {
   });
 
   describe("GET binary response", () => {
-    it("returns Buffer for non-JSON content", async () => {
+    it("provides raw Buffer for non-JSON content", async () => {
       const content = Buffer.from("binary data here");
       const { url, close } = await startServer((_req, res) => {
         res.writeHead(200, { "Content-Type": "application/octet-stream" });
@@ -120,7 +120,7 @@ describe("HttpClient", () => {
   });
 
   describe("error handling", () => {
-    it("throws on 401", async () => {
+    it("reports unauthorized error when server responds 401", async () => {
       const { url, close } = await startServer((_req, res) => {
         res.writeHead(401);
         res.end();
@@ -133,7 +133,7 @@ describe("HttpClient", () => {
       }
     });
 
-    it("throws on 403", async () => {
+    it("reports unauthorized error when server responds 403", async () => {
       const { url, close } = await startServer((_req, res) => {
         res.writeHead(403);
         res.end();
@@ -146,7 +146,7 @@ describe("HttpClient", () => {
       }
     });
 
-    it("throws on 404", async () => {
+    it("reports not found when resource does not exist", async () => {
       const { url, close } = await startServer((_req, res) => {
         res.writeHead(404);
         res.end();
@@ -159,7 +159,7 @@ describe("HttpClient", () => {
       }
     });
 
-    it("throws on unexpected status code", async () => {
+    it("reports an error on unexpected status code", async () => {
       const { url, close } = await startServer((_req, res) => {
         res.writeHead(500);
         res.end();

@@ -3,7 +3,6 @@ import "../domain/tools/claude.js";
 import "../domain/tools/copilot.js";
 import "../domain/tools/cursor.js";
 import { CLIOutput } from "../application/output.js";
-import type { Settings } from "../domain/models/settings.js";
 import type { FileSystem } from "../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../domain/ports/framework-loader.js";
 import type { FrameworkResolver } from "../domain/ports/framework-resolver.js";
@@ -18,7 +17,6 @@ import {
 } from "./adapters/framework-resolver-adapter.js";
 import { HasherAdapter } from "./adapters/hasher-adapter.js";
 import { ManifestRepositoryAdapter } from "./adapters/manifest-repository-adapter.js";
-import { SettingsRepositoryAdapter } from "./adapters/settings-repository-adapter.js";
 import { TokenResolver } from "./auth/token-resolver.js";
 import { FrameworkCache } from "./cache/framework-cache.js";
 import { HttpClient } from "./http/http-client.js";
@@ -38,7 +36,6 @@ export interface Deps {
   hasher: Hasher;
   logger: Logger;
   resolver: FrameworkResolver;
-  settings: Settings;
 }
 
 export async function createDeps(
@@ -51,13 +48,12 @@ export async function createDeps(
   const loader = new FrameworkLoaderAdapter();
   const logger = output ?? new CLIOutput(options.verbose);
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
-  const settingsRepo = new SettingsRepositoryAdapter(projectRoot);
-  const settings = await settingsRepo.load();
   const repoFromFlag = options.repo ?? process.env.AIDD_REPO;
   if (repoFromFlag !== undefined) {
     validateRepoFormat(repoFromFlag);
   }
-  const effectiveRepo = repoFromFlag ?? settings.repo;
+  const manifestForRepo = await manifestRepo.load().catch(() => null);
+  const effectiveRepo = repoFromFlag ?? manifestForRepo?.repo ?? "ai-driven-dev/aidd-framework";
   const cacheDir = join(projectRoot, ".aidd", "cache");
   const http = new HttpClient();
   const tar = new TarExtractor();
@@ -74,5 +70,5 @@ export async function createDeps(
     },
     logger
   );
-  return { fs, manifestRepo, loader, hasher, logger, resolver, settings };
+  return { fs, manifestRepo, loader, hasher, logger, resolver };
 }

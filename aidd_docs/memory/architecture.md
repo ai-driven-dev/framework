@@ -31,7 +31,7 @@ flowchart LR
 - HTTP via `node:https` (no `fetch` wrapper libraries)
 - Framework layout is hardcoded in `FrameworkLoaderAdapter` (`CONTENT_SECTIONS`, `TEMPLATE_REFS`, `CONFIG_REFS`). No `framework.json` file — `FrameworkDescriptor` is a code model built by the adapter, not parsed from a file.
 - Manifest stored as JSON at `.aidd/manifest.json` — aggregate root tracking every installed file with its MD5 hash
-- Settings stored at `.aidd/settings.json` — user preferences with defaults
+- No settings file — project configuration is via CLI flags (`--repo`, `--verbose`) or env vars (`AIDD_REPO`, `AIDD_VERBOSE`)
 - Domain layer has zero infrastructure imports (enforced in tests)
 - Migration system in `infrastructure/migrations/` for manifest schema evolution
 
@@ -40,9 +40,9 @@ flowchart LR
 ```mermaid
 flowchart TD
     subgraph APP["Application"]
-        CMD_FILES["commands: init, install, uninstall, status, clean, doctor"]
+        CMD_FILES["commands: adopt, init, install, uninstall, status, clean, doctor, update, restore, sync, cache, config"]
         OUTPUT["output.ts"]
-        USECASES["use-cases: init, install, uninstall, status, clean, doctor, catalog"]
+        USECASES["use-cases: adopt, init, install, uninstall, status, clean, doctor, catalog"]
     end
     subgraph DOM["Domain"]
         MODELS["models: Manifest, Distribution, Catalog, ToolConfig, FileHash, GeneratedFile"]
@@ -50,7 +50,7 @@ flowchart TD
         TOOLS["tools: claude, cursor, copilot"]
     end
     subgraph INFRA["Infrastructure"]
-        ADAPTERS["adapters: filesystem, manifest, settings, logger, framework-loader, framework-resolver, hasher"]
+        ADAPTERS["adapters: filesystem, manifest, logger, framework-loader, framework-resolver, hasher"]
         HTTP["http-client.ts"]
         TAR["tar-extractor.ts"]
         CACHE["framework-cache.ts"]
@@ -79,7 +79,7 @@ flowchart TD
 
 ## ToolConfig Interface (domain/models/tool-config.ts)
 
-`ToolConfig` est décomposé en handlers par sujet fonctionnel. Chaque tool (`claude`, `cursor`, `copilot`) implémente cette interface dans `domain/tools/`.
+`ToolConfig` is decomposed into handlers by functional subject. Each tool (`claude`, `cursor`, `copilot`) implements this interface in `domain/tools/`.
 
 ```ts
 interface ToolConfig {
@@ -96,9 +96,9 @@ interface ToolConfig {
 }
 ```
 
-- `distribution.ts` dispatch via handlers — plus d'`if (section.name === X)` dans les tools
-- `copilot.ts` handlers nommés (`agentsHandler`, `rulesHandler`...) réutilisés dans `rewriteContent` — pas de duplication de logique de mapping chemin
-- `frontmatter.ts` — `parseYamlLike` index-based (3 sous-fonctions autonomes), `serializeFrontmatter` émet les JSON-array strings raw (pas de single-quote wrap)
+- `distribution.ts` dispatches via handlers — no more `if (section.name === X)` in tools
+- `copilot.ts` named handlers (`agentsHandler`, `rulesHandler`...) reused in `rewriteContent` — no duplication of path mapping logic
+- `frontmatter.ts` — `parseYamlLike` index-based (3 autonomous sub-functions), `serializeFrontmatter` emits JSON-array strings raw (no single-quote wrap)
 
 ## Services Communication
 
@@ -154,13 +154,13 @@ flowchart TD
 src/
 ├── cli.ts                          # Entry point (commander program)
 ├── application/
-│   ├── commands/                   # init.ts, install.ts, uninstall.ts, status.ts, clean.ts, doctor.ts
+│   ├── commands/                   # adopt.ts, init.ts, install.ts, uninstall.ts, status.ts, clean.ts, doctor.ts, update.ts, restore.ts, sync.ts, cache.ts, config.ts
 │   ├── output.ts                   # Output formatting (replaces presenter.ts)
-│   └── use-cases/                  # init, install, uninstall, status, clean, doctor, catalog
-│                                   # + ensure-initialized, gitignore, resolve-framework (shared)
+│   └── use-cases/                  # adopt, init, install, uninstall, status, clean, doctor, catalog
+│                                   # + gitignore, resolve-framework (shared)
 ├── domain/
 │   ├── models/                     # Manifest, Distribution, Catalog, ToolConfig, FileHash, GeneratedFile,
-│   │                               #   FrameworkDescriptor, Frontmatter, Settings
+│   │                               #   FrameworkDescriptor, Frontmatter
 │   ├── ports/                      # ManifestRepository, FileSystem, FrameworkLoader,
 │   │                               #   FrameworkResolver, Hasher, Logger
 │   └── tools/                      # claude.ts, cursor.ts, copilot.ts
@@ -176,16 +176,25 @@ src/
 
 ## Known Design Behaviors
 
-- `install` calls `ensureInitialized()`: auto-runs `init` if no manifest exists, then proceeds with install. Logged as `info`.
+- `adopt` bootstraps a manifest for projects with pre-existing AIDD files installed manually. Auto-detects tools from disk signals (`.claude/` → claude, `.cursor/` → cursor, `.github/copilot-instructions.md` → copilot). Conflict handling: writes new files directly, backs up + overwrites existing with `--force`, or prompts keep/overwrite without `--force`. Orphan files (on disk but not in framework distribution) are warned but never deleted. Throws if manifest already exists ("use `aidd update`") or no tool dirs detected ("run `aidd init` instead").
+- `init` guards against pre-existing AIDD signals (`.aidd/`, docsDir, `.claude/`, `.cursor/`, `.github/copilot-instructions.md`) — throws "AIDD files detected. Use `aidd adopt`" if any present and no manifest exists.
+- `install` requires an existing manifest (created by `aidd init`). Aborts with "No AIDD installation found. Run `aidd init` first." if manifest is absent. No auto-init.
 - `init --force` re-copies docs templates into the existing docs directory without a full clean+reinit. Skips files with identical content (hash check), warns and overwrites modified files. Does not touch tool distributions. Requires a prior `aidd init` (throws if no manifest).
 - `init` on an already-initialized project (no `--force`) throws: "Use `aidd init --force` to re-copy docs, or `aidd clean --force` to reset completely."
 - `clean` without `--force` is a **dry-run** (returns preview only, no files deleted).
 - `doctor` checks structural integrity only: manifest absent/corrupted (throws), orphaned tool directories (warning). Exits 1 on any issue — by design for CI composability. Missing or modified files are drift, not structural problems — use `status` for that.
 - `doctor` checks broken references: iterates manifest-tracked `.md`/`.mdc` files, extracts references from their content, and verifies each referenced file exists on disk. `@path` syntax is checked for all tracked files (project-root-relative). Markdown links `[text](path)` are also checked for all tracked files, resolved relative to the file's own directory (so `../../foo.md` resolves correctly for files in subdirectories). Directory-only paths (no extension, trailing `/`) are skipped. For `@path` extraction: fenced blocks with a non-markdown language specifier (e.g. ` ```text ```, ` ```ts ```) are stripped (documentation examples), but plain ` ``` ` and ` ```markdown ``` ` blocks are NOT stripped — Claude Code resolves `@` includes inside them. Inline code always stripped.
-- `status` detects 3 drift types: `modified` (hash mismatch), `deleted` (missing from disk), `added` (on disk but not tracked). Also performs a best-effort version check via `FrameworkResolver.fetchLatestVersion()` — network failure is swallowed silently. Non-semver versions (e.g., `"local"`, `"test"`) are excluded from comparison. `compareSemver(a, b)` is exported from `status-use-case.ts` (3-part integer comparison, handles `v` prefix). Update info is shown **first** (before drift), per-section (docs → `aidd init --force`, tools → `aidd install --all`).
+- `status` detects 3 drift types: `modified` (hash mismatch), `deleted` (missing from disk), `added` (on disk but not tracked). Files ending in `.backup` are excluded from the untracked-file scan (backup files created by `adopt`/`update`/`restore` must not show as drift). Also performs a best-effort version check via `FrameworkResolver.fetchLatestVersion()` — network failure is swallowed silently. Non-semver versions (e.g., `"local"`, `"test"`) are excluded from comparison. `compareSemver(a, b)` is exported from `status-use-case.ts` (3-part integer comparison, handles `v` prefix). Update info is shown **first** (before drift), per-section (docs → `aidd init --force`, tools → `aidd install --all`).
 - `check-update.ts` (`application/check-update.ts`): `printUpdateBanner(resolver, manifestRepo, logger)` — shared best-effort update check used by all commands as a header (before the main action). Reads version from manifest (docs first, then any tool), compares with latest semver, prints context-aware guidance: `aidd init --force` for outdated docs, `aidd install --all` for outdated tools. Silent on null manifest, non-semver versions, or resolver errors.
 - Multi-tool shared files (e.g. `.vscode/settings.json`): both `claude` and `copilot` merge into it. After each merge, `manifest.syncFileHashAcrossTools()` updates all tool entries tracking that path to the final disk hash — no false drift in `status`.
-- Settings `.aidd/settings.json`: `token` key is explicitly ignored when loading (security — tokens must come from `--token` flag or `AIDD_TOKEN` env).
-- Default framework repo: `ai-driven-dev/aidd-framework` (defined in `settings.ts`).
+- Framework repo resolution: `--repo` flag > `AIDD_REPO` env > `manifest.repo` (persisted per project) > default `ai-driven-dev/aidd-framework`. Set once via `aidd init --repo` or `aidd config set repo`.
 - Claude commands path: `.claude/commands/aidd/{phase}/` where phase is extracted from `01_onboard` → `01`, `04_code` → `04`, etc.
 - `CATALOG.md` is generated (not installed): after every `init`, `install`, and `uninstall`, `writeCatalog()` writes `{docsDir}/CATALOG.md` with markdown tables linking to each installed file. The framework's own `CATALOG.md` is skipped during `init` docs installation. CATALOG is never tracked in the manifest (no drift). `clean --force` deletes it explicitly alongside the manifest-tracked docs files.
+- `update` diffs the new framework distribution against the manifest (not disk): `added` = new file, `removed` = deleted file, `changed` = content differs (+ conflict if user also modified disk). `--dry-run` computes diff without writing. `--force` overwrites conflicts without prompting. Merged files (e.g., `.vscode/settings.json`) are always re-applied silently regardless of conflict status.
+- `restore` detects `modified` (disk hash ≠ manifest hash) and `deleted` files. Uses pinned version from manifest; falls back to latest with warning if pinned version unavailable. `--tool` scopes to a single tool. Manifest is updated in one `addTool()` call after all restores complete (not per-file — avoids manifest corruption on multi-file restore). Without `--force`, prompts interactively via `Prompter.resolveConflict(path, reason)` where `reason` is `"deleted"` or `"modified"` — message differs accordingly. Aborts with exit 1 if non-TTY and `--force` is not set ("Restore requires --force in non-interactive mode").
+- `sync` propagates local modifications from source tool to target tools via `reverseRewriteContent()` (tool-specific → canonical) then `rewriteContent()` (canonical → target). Files matched by `frameworkPath` field set on `GeneratedFile` during distribution generation. Excluded from sync: memory bank files, MCP configs, VS Code files, docs, `.aidd/`. Conflict = target file also modified; skip unless `--force`. Requires ≥ 2 installed tools.
+- `cache list` shows semver-versioned cache entries at `.aidd/cache/` with path and size. `cache clear [version]` removes one specific version; `cache clear` or `cache clear --all` removes all cached versions. `--all` and a version argument are mutually exclusive (exit 1).
+- `config list/get/set` — backed by manifest (no `settings.json`). Readable: `docsDir`, `repo`, `tools`. Writable: `docsDir` (checks if new dir exists on disk; warning + confirmation if not), `repo` (validated `owner/repo` format + confirmation). `tools` is read-only (use `install`/`uninstall`). Non-TTY without `--force` → exit 1. `init --repo` persists repo to manifest at creation time.
+- `doctor --fix` resolves framework then runs `RestoreUseCase` with force for all installed tools to restore deleted/modified tracked files. Orphaned directories are NOT auto-fixable. Re-runs doctor after fix to report remaining issues.
+- `reverseRewriteContent(content, docsDir): string` added to `ToolConfig` interface. Each tool implements it as the inverse of `rewriteContent`. Copilot's reverse handles `.github/agents/`, `.github/prompts/`, `.github/instructions/`, `.github/skills/` markdown link patterns.
+- `GeneratedFile.frameworkPath?: string` — set during `generateDistribution()` to track which original framework file produced each generated file. Used by sync to match source↔target files across tools.

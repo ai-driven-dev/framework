@@ -1,159 +1,159 @@
-# Guide de contribution - AIDD CLI
+# Contribution guide - AIDD CLI
 
-Bienvenue dans le guide de contribution du CLI AIDD !
+Welcome to the AIDD CLI contribution guide!
 
-> **Notre mission** : Rendre l'AI-Driven Development accessible avec un package complet pour les développeurs.
+> **Our mission**: Make AI-Driven Development accessible with a complete package for developers.
 
-> **Rôles et permissions** : Voir le [CONTRIBUTING principal](https://github.com/ai-driven-dev/aidd/blob/main/CONTRIBUTING.md#rôles)
-
----
-
-- [Liens utiles](#liens-utiles)
-- [Comment contribuer](#comment-contribuer)
-  - [1. Signaler des issues](#1-signaler-des-issues)
-    - [Créer une issue](#créer-une-issue)
-    - [Projet (choisir CLI)](#projet-choisir-cli)
-  - [2. Améliorer la documentation](#2-améliorer-la-documentation)
-  - [3. Développer des fonctionnalités](#3-développer-des-fonctionnalités)
-  - [4. Reviewer des Pull Requests](#4-reviewer-des-pull-requests)
-  - [5. Merger des Pull Requests](#5-merger-des-pull-requests)
-- [Setup de développement](#setup-de-développement)
-  - [Prérequis](#prérequis)
-  - [Authentification GitHub Packages](#authentification-github-packages)
-  - [Cloner le dépôt](#cloner-le-dépôt)
-  - [Installer les dépendances](#installer-les-dépendances)
-- [Workflow de développement](#workflow-de-développement)
-  - [1. Trouver une fonctionnalité](#1-trouver-une-fonctionnalité)
-  - [2. Créer une branche](#2-créer-une-branche)
-  - [Format des messages de commit](#format-des-messages-de-commit)
-  - [3. Développer la fonctionnalité](#3-développer-la-fonctionnalité)
-  - [4. Tester localement](#4-tester-localement)
-  - [5. Écrire des tests](#5-écrire-des-tests)
-  - [6. Processus de Pull Request](#6-processus-de-pull-request)
-- [Publication](#publication)
-  - [Prérequis publication](#prérequis-publication)
-  - [Processus de publication](#processus-de-publication)
+> **Roles and permissions**: See the [main CONTRIBUTING](https://github.com/ai-driven-dev/aidd/blob/main/CONTRIBUTING.md#rôles)
 
 ---
 
-## Liens utiles
+- [Useful links](#useful-links)
+- [How to contribute](#how-to-contribute)
+  - [1. Reporting issues](#1-reporting-issues)
+    - [Create an issue](#create-an-issue)
+    - [Project (choose CLI)](#project-choose-cli)
+  - [2. Improving documentation](#2-improving-documentation)
+  - [3. Developing features](#3-developing-features)
+  - [4. Reviewing Pull Requests](#4-reviewing-pull-requests)
+  - [5. Merging Pull Requests](#5-merging-pull-requests)
+- [Development setup](#development-setup)
+  - [Prerequisites](#prerequisites)
+  - [GitHub Packages authentication](#github-packages-authentication)
+  - [Clone the repository](#clone-the-repository)
+  - [Install dependencies](#install-dependencies)
+- [Development workflow](#development-workflow)
+  - [1. Find a feature](#1-find-a-feature)
+  - [2. Create a branch](#2-create-a-branch)
+  - [Commit message format](#commit-message-format)
+  - [3. Develop the feature](#3-develop-the-feature)
+  - [4. Test locally](#4-test-locally)
+  - [5. Write tests](#5-write-tests)
+  - [6. Pull Request process](#6-pull-request-process)
+- [Publishing](#publishing)
+  - [Publishing prerequisites](#publishing-prerequisites)
+  - [Publishing process](#publishing-process)
+
+---
+
+## Useful links
 
 - [Roadmap](https://github.com/orgs/ai-driven-dev/projects/5)
 - [Releases](https://github.com/ai-driven-dev/aidd/releases)
-- [Issues signalées](https://github.com/ai-driven-dev/aidd/issues)
+- [Reported issues](https://github.com/ai-driven-dev/aidd/issues)
 
 ---
 
-## Comment contribuer
+## How to contribute
 
-### 1. Signaler des issues
+### 1. Reporting issues
 
-**[Créer une issue](https://github.com/ai-driven-dev/aidd/issues/new/choose)**
+**[Create an issue](https://github.com/ai-driven-dev/aidd/issues/new/choose)**
 
-Utilisez les templates disponibles :
+Use the available templates:
 
-- 🐛 **Bug Report** : Signaler un bug ou comportement inattendu
-- ✨ **Feature Request** : Proposer une nouvelle fonctionnalité
+- 🐛 **Bug Report**: Report a bug or unexpected behavior
+- ✨ **Feature Request**: Propose a new feature
 
-#### Créer une issue
+#### Create an issue
 
-| **Catégorie** | **Élément** | **Description**                           |
-| ------------- | ----------- | ----------------------------------------- |
-| **Labels**    | `blocked`   | Approbation ou clarifications nécessaires |
-|               | `ready`     | 100% prêt pour le développement           |
-| **Type**      | `bug`       | Rapport de bug                            |
-|               | `feature`   | Demande de fonctionnalité                 |
-|               | `task`      | Tâche, question ou documentation          |
+| **Category** | **Item**  | **Description**                         |
+| ------------ | --------- | --------------------------------------- |
+| **Labels**   | `blocked` | Approval or clarifications needed       |
+|              | `ready`   | 100% ready for development              |
+| **Type**     | `bug`     | Bug report                              |
+|              | `feature` | Feature request                         |
+|              | `task`    | Task, question or documentation         |
 
-#### Projet (choisir CLI)
+#### Project (choose CLI)
 
-Vous devez toujours spécifier le projet et les métadonnées pertinentes :
+You must always specify the project and relevant metadata:
 
-| **Catégorie**  | **Élément**   | **Description**                               |
-| -------------- | ------------- | --------------------------------------------- |
-| **Status**     | `Todo`        | À la création de l'issue                      |
-|                | `In progress` | Merci de respecter ceci 🙏                    |
-|                | `Done`        | Mergé dans `main`                             |
-| **Complexité** | `XS`          | Documentation                                 |
-|                | `S`           | Petit fix ou amélioration                     |
-|                | `M`           | Fonctionnalité simple                         |
-|                | `L`           | Nécessite réflexion sur l'implémentation      |
-|                | `XL`          | Sujet complexe à discuter avec les coachs     |
-| **Priorité**   | `urgent`      | À corriger MAINTENANT ou demain               |
-|                | `must-have`   | Sans ça, c'est pénible                        |
-|                | `should-have` | Pas obligatoire du tout mais on aimerait bien |
+| **Category**   | **Item**      | **Description**                                 |
+| -------------- | ------------- | ----------------------------------------------- |
+| **Status**     | `Todo`        | At issue creation                               |
+|                | `In progress` | Please respect this 🙏                          |
+|                | `Done`        | Merged into `main`                              |
+| **Complexity** | `XS`          | Documentation                                   |
+|                | `S`           | Small fix or improvement                        |
+|                | `M`           | Simple feature                                  |
+|                | `L`           | Requires thinking about implementation          |
+|                | `XL`          | Complex topic to discuss with coaches           |
+| **Priority**   | `urgent`      | To fix NOW or tomorrow                          |
+|                | `must-have`   | Without this, it's painful                      |
+|                | `should-have` | Not strictly required but would be nice to have |
 
-### 2. Améliorer la documentation
+### 2. Improving documentation
 
-Les améliorations de documentation sont toujours bienvenues ! Typos, clarifications, exemples manquants...
+Documentation improvements are always welcome! Typos, clarifications, missing examples...
 
-- **Petites corrections** (typos, formatage) : PR directe sans issue
-- **Ajouts majeurs** : Créer d'abord une issue pour en discuter
+- **Small corrections** (typos, formatting): direct PR without an issue
+- **Major additions**: Create an issue first to discuss it
 
-### 3. Développer des fonctionnalités
+### 3. Developing features
 
-> Les contributions de code sont ouvertes aux membres Obsidian+ certifiés avec le flow AIDD.
+> Code contributions are open to certified Obsidian+ members using the AIDD flow.
 
-### 4. Reviewer des Pull Requests
+### 4. Reviewing Pull Requests
 
-> Les reviews de code sont effectuées par les Coachs pour assurer qualité et cohérence.
+> Code reviews are performed by Coaches to ensure quality and consistency.
 
-1. Utilisez les outils de review GitHub pour laisser des commentaires et suggestions.
-2. Renvoyez la PR à l'auteur pour modifications si nécessaire.
-3. Approuvez la PR quand vous êtes satisfait.
+1. Use GitHub's review tools to leave comments and suggestions.
+2. Send the PR back to the author for changes if necessary.
+3. Approve the PR when you are satisfied.
 
-### 5. Merger des Pull Requests
+### 5. Merging Pull Requests
 
-> Seuls Baptiste et Alex peuvent merger les PRs vers `main`.
+> Only Baptiste and Alex can merge PRs into `main`.
 
 ---
 
-## Setup de développement
+## Development setup
 
-### Prérequis
+### Prerequisites
 
-- **Node.js** : >= 24.0.0
-- **pnpm** : >= 9.0.0
-- **Git** : Dernière version
-- **Accès GitHub** : Personal Access Token avec le scope `read:packages`
+- **Node.js**: >= 24.0.0
+- **pnpm**: >= 9.0.0
+- **Git**: Latest version
+- **GitHub access**: Personal Access Token with the `read:packages` scope
 
-### Authentification GitHub Packages
+### GitHub Packages authentication
 
-Le package `@ai-driven-dev/aidd` est privé et hébergé sur GitHub Packages.
+The `@ai-driven-dev/aidd` package is private and hosted on GitHub Packages.
 
-**1. Créer un Personal Access Token :**
+**1. Create a Personal Access Token:**
 
-1. Aller dans [GitHub Settings > Tokens (classic)](https://github.com/settings/tokens)
-2. Cliquer sur **"Generate new token (classic)"**
-3. Configurer :
-   - **Note** : `AIDD CLI - Read`
-   - **Scopes** : ✅ `read:packages`
-4. Copier le token immédiatement
+1. Go to [GitHub Settings > Tokens (classic)](https://github.com/settings/tokens)
+2. Click on **"Generate new token (classic)"**
+3. Configure:
+   - **Note**: `AIDD CLI - Read`
+   - **Scopes**: ✅ `read:packages`
+4. Copy the token immediately
 
-**2. Configurer npm :**
+**2. Configure npm:**
 
 ```bash
-# Éditer ~/.npmrc
+# Edit ~/.npmrc
 vim ~/.npmrc
 
-# Ajouter ces lignes :
+# Add these lines:
 @ai-driven-dev:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=ghp_your_actual_token_here
 ```
 
-### Cloner le dépôt
+### Clone the repository
 
-AIDD peut être utilisé comme submodule Git. Toujours cloner avec `--recurse-submodules` :
+AIDD can be used as a Git submodule. Always clone with `--recurse-submodules`:
 
 ```bash
 git clone --recurse-submodules git@github.com:ai-driven-dev/aidd.git
 cd aidd/cli
 
-# Si déjà cloné sans les submodules
+# If already cloned without submodules
 git submodule update --init --recursive
 ```
 
-### Installer les dépendances
+### Install dependencies
 
 ```bash
 pnpm install
@@ -161,43 +161,43 @@ pnpm install
 
 ---
 
-## Workflow de développement
+## Development workflow
 
-### 1. Trouver une fonctionnalité
+### 1. Find a feature
 
-**📌 [Consulter le Project Board](https://github.com/orgs/ai-driven-dev/projects/5)**
+**📌 [Check the Project Board](https://github.com/orgs/ai-driven-dev/projects/5)**
 
-1. Ouvrir la release en cours.
-2. Chercher les issues dans la colonne **Ready**.
-3. S'assigner sur une issue.
-4. La passer en `In Progress`.
-5. Créer une branche depuis `main`.
-6. Utiliser le CLI.
-7. Écrire les tests.
-8. Tester localement.
-9. Ouvrir une PR.
-10. Assigner les reviewers : `Baptiste`.
+1. Open the current release.
+2. Look for issues in the **Ready** column.
+3. Assign yourself to an issue.
+4. Move it to `In Progress`.
+5. Create a branch from `main`.
+6. Use the CLI.
+7. Write tests.
+8. Test locally.
+9. Open a PR.
+10. Assign reviewers: `Baptiste`.
 
-### 2. Créer une branche
+### 2. Create a branch
 
 ```bash
-# Branche de fonctionnalité
+# Feature branch
 git checkout -b feat/your-feature-name
 
-# Branche de correction
+# Fix branch
 git checkout -b fix/bug-description
 ```
 
-### Format des messages de commit
+### Commit message format
 
-Suivre les conventional commits :
+Follow conventional commits:
 
 ```bash
-# Fonctionnalités
+# Features
 feat: add worktree command with auto-cleanup
 feat(install): add --skip-framework option
 
-# Corrections
+# Fixes
 fix: resolve symlink creation on Windows
 fix(prompts): correct template path resolution
 
@@ -216,11 +216,11 @@ chore: update dependencies
 chore(ci): optimize test workflow
 ```
 
-### 3. Développer la fonctionnalité
+### 3. Develop the feature
 
-Utilisez AIDD CLI pour construire AIDD CLI 😈
+Use AIDD CLI to build AIDD CLI 😈
 
-**Utiliser les commandes AIDD :**
+**Use AIDD commands:**
 
 ```bash
 /implement "<technical plan>"
@@ -228,63 +228,63 @@ Utilisez AIDD CLI pour construire AIDD CLI 😈
 /review_code
 ```
 
-### 4. Tester localement
+### 4. Test locally
 
-Ceci installera votre version locale du CLI globalement pour les tests :
+This will install your local version of the CLI globally for testing:
 
 ```bash
-# Tester le CLI localement
+# Test the CLI locally
 pnpm run install:local
 
-# Créer un dossier de test
+# Create a test folder
 cd ../output-tests
 mkdir test-directory
 cd test-directory
 
-# Tester votre version locale du CLI
+# Test your local version of the CLI
 aidd install
 ```
 
-### 5. Écrire des tests
+### 5. Write tests
 
-Nous visons une suite de tests de qualité professionnelle, toutes les contributions doivent inclure des tests.
+We aim for a professional-quality test suite; all contributions must include tests.
 
-| **Commande**      | **Objectif**                  | **Quand l'utiliser** |
-| ----------------- | ----------------------------- | -------------------- |
-| `pnpm test`       | Build + tous les tests (E2E)  | Avant push, CI       |
-| `pnpm test:watch` | Mode watch (tests sans build) | Développement actif  |
-| `pnpm typecheck`  | Vérification TypeScript       | Avant commit         |
-| `pnpm lint`       | Lint + format (biome)         | Avant commit         |
+| **Command**       | **Purpose**                   | **When to use**     |
+| ----------------- | ----------------------------- | ------------------- |
+| `pnpm test`       | Build + all tests (E2E)       | Before push, CI     |
+| `pnpm test:watch` | Watch mode (tests without build) | Active development |
+| `pnpm typecheck`  | TypeScript check              | Before commit       |
+| `pnpm lint`       | Lint + format (biome)         | Before commit       |
 
-### 6. Processus de Pull Request
+### 6. Pull Request process
 
-1. Pusher votre branche et ouvrir une PR vers `main` — le template `.github/pull_request_template.md` sera appliqué automatiquement.
-2. Assigner les reviewers (`Baptiste`, puis `Alex` si nécessaire).
+1. Push your branch and open a PR to `main` — the `.github/pull_request_template.md` template will be applied automatically.
+2. Assign reviewers (`Baptiste`, then `Alex` if necessary).
 
 ---
 
-## Publication
+## Publishing
 
-> Cette section est réservée aux mainteneurs avec droits de publication (Alex uniquement).
+> This section is reserved for maintainers with publishing rights (Alex only).
 >
-> Le CLI étant fortement lié aux cours de formation AIDD, Alex doit toujours être informé des changements avant publication.
+> As the CLI is closely tied to AIDD training courses, Alex must always be informed of changes before publishing.
 
-### Prérequis publication
+### Publishing prerequisites
 
-- **GitHub CLI** : Authentifié avec `gh`
-- **Permissions sur le dépôt** : Créer des releases
-- **Authentification NPM** : Configurée pour GitHub Packages
+- **GitHub CLI**: Authenticated with `gh`
+- **Repository permissions**: Create releases
+- **NPM authentication**: Configured for GitHub Packages
 
-### Processus de publication
+### Publishing process
 
-Utiliser le flow de release :
+Use the release flow:
 
 ```bash
 /flows:release
 ```
 
-**Important** : Cette commande met à jour tous les numéros de version. Ne jamais modifier manuellement `package.json`.
+**Important**: This command updates all version numbers. Never manually edit `package.json`.
 
 ---
 
-← [Retour au CLI](./README.md)
+← [Back to CLI](./README.md)
