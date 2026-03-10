@@ -15,3 +15,4 @@ dist/
 
 # Local overrides (e.g. .claude/ralph-loop.local.md)
 *.local.md
+temp/projects/
