@@ -4,7 +4,13 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AdoptUseCase } from "../../../src/application/use-cases/adopt-use-case.js";
-import { buildDeps, cleanupTempProject, createTempProject, initAndInstall } from "./helpers.js";
+import {
+  FIXTURE_DIR,
+  buildDeps,
+  cleanupTempProject,
+  createTempProject,
+  initAndInstall,
+} from "./helpers.js";
 
 describe("AdoptUseCase", () => {
   let tempDir: string;
@@ -20,10 +26,10 @@ describe("AdoptUseCase", () => {
 
   function buildUseCase() {
     const deps = buildDeps(projectRoot);
-    return new AdoptUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    return new AdoptUseCase(deps.fs, deps.manifestRepo, deps.loader, deps.hasher, deps.logger);
   }
 
-  const DEFAULT_OPTS = { docsDir: "aidd_docs", version: "3.3.3" };
+  const DEFAULT_OPTS = { frameworkPath: FIXTURE_DIR, docsDir: "aidd_docs", version: "3.3.3" };
 
   it("throws on unknown tool id", async () => {
     await expect(
@@ -52,7 +58,8 @@ describe("AdoptUseCase", () => {
     ).rejects.toThrow("Directory '.claude/' not found for tool 'claude'");
   });
 
-  it("registers all files on disk without modifying them", async () => {
+  it("only registers files on disk that match the framework distribution", async () => {
+    // naming.md is in the fixture distribution; style.md is not
     await mkdir(join(projectRoot, ".claude", "rules", "01-standards"), { recursive: true });
     await writeFile(join(projectRoot, ".claude", "rules", "01-standards", "naming.md"), "# Naming");
     await writeFile(join(projectRoot, ".claude", "rules", "01-standards", "style.md"), "# Style");
@@ -63,11 +70,9 @@ describe("AdoptUseCase", () => {
       projectRoot,
     });
 
-    expect(result.tools).toHaveLength(1);
-    expect(result.tools[0].toolId).toBe("claude");
-    expect(result.totalRegistered).toBe(2);
     expect(result.tools[0].registered).toContain(".claude/rules/01-standards/naming.md");
-    expect(result.tools[0].registered).toContain(".claude/rules/01-standards/style.md");
+    expect(result.tools[0].registered).not.toContain(".claude/rules/01-standards/style.md");
+    // files on disk are not modified
     expect(
       await readFile(join(projectRoot, ".claude", "rules", "01-standards", "naming.md"), "utf-8")
     ).toBe("# Naming");
@@ -76,7 +81,7 @@ describe("AdoptUseCase", () => {
   it("stores the exact disk hash in the manifest", async () => {
     const fileContent = "some content";
     await mkdir(join(projectRoot, ".claude"), { recursive: true });
-    await writeFile(join(projectRoot, ".claude", "CLAUDE.md"), fileContent);
+    await writeFile(join(projectRoot, "CLAUDE.md"), fileContent);
 
     await buildUseCase().execute({ ...DEFAULT_OPTS, toolIds: ["claude"], projectRoot });
 
@@ -85,7 +90,7 @@ describe("AdoptUseCase", () => {
     ) as {
       tools: Record<string, { files: Array<{ relativePath: string; hash: string }> }>;
     };
-    const entry = data.tools.claude.files.find((f) => f.relativePath === ".claude/CLAUDE.md");
+    const entry = data.tools.claude.files.find((f) => f.relativePath === "CLAUDE.md");
     expect(entry).toBeDefined();
     expect(entry?.hash).toBe(createHash("md5").update(fileContent).digest("hex"));
   });
@@ -115,10 +120,11 @@ describe("AdoptUseCase", () => {
     expect(existsSync(join(projectRoot, ".aidd", "config.json"))).toBe(false);
   });
 
-  it("registers docs directory when present", async () => {
+  it("registers docs files that match the framework distribution", async () => {
     await mkdir(join(projectRoot, ".claude"), { recursive: true });
     await writeFile(join(projectRoot, ".claude", "CLAUDE.md"), "content");
     await mkdir(join(projectRoot, "aidd_docs", "memory"), { recursive: true });
+    // README.md is in the fixture docs distribution; notes.md is not
     await writeFile(join(projectRoot, "aidd_docs", "README.md"), "# Docs");
     await writeFile(join(projectRoot, "aidd_docs", "memory", "notes.md"), "notes");
 
@@ -128,7 +134,13 @@ describe("AdoptUseCase", () => {
       projectRoot,
     });
 
-    expect(result.docsRegistered).toBe(2);
+    expect(result.docsRegistered).toBeGreaterThanOrEqual(1);
+    const manifestData = JSON.parse(
+      await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8")
+    ) as { docs: { files: Array<{ relativePath: string }> } };
+    const registeredPaths = manifestData.docs.files.map((f) => f.relativePath);
+    expect(registeredPaths).toContain("aidd_docs/README.md");
+    expect(registeredPaths).not.toContain("aidd_docs/memory/notes.md");
   });
 
   it("registers docs dir as empty when present but contains no files", async () => {
@@ -147,7 +159,7 @@ describe("AdoptUseCase", () => {
 
   it("registers multiple tools independently", async () => {
     await mkdir(join(projectRoot, ".claude"), { recursive: true });
-    await writeFile(join(projectRoot, ".claude", "CLAUDE.md"), "content");
+    await writeFile(join(projectRoot, "CLAUDE.md"), "content");
     await mkdir(join(projectRoot, ".github"), { recursive: true });
     await writeFile(join(projectRoot, ".github", "copilot-instructions.md"), "# Copilot");
 
@@ -158,13 +170,16 @@ describe("AdoptUseCase", () => {
     });
 
     expect(result.tools.map((t) => t.toolId)).toEqual(["claude", "copilot"]);
-    expect(result.tools.find((t) => t.toolId === "claude")?.registered).toHaveLength(1);
-    expect(result.tools.find((t) => t.toolId === "copilot")?.registered).toHaveLength(1);
+    expect(result.tools.find((t) => t.toolId === "claude")?.registered).toContain("CLAUDE.md");
+    expect(result.tools.find((t) => t.toolId === "copilot")?.registered).toContain(
+      ".github/copilot-instructions.md"
+    );
   });
 
-  it("registers user custom files alongside framework files", async () => {
-    await mkdir(join(projectRoot, ".claude", "rules"), { recursive: true });
-    await writeFile(join(projectRoot, ".claude", "rules", "framework.md"), "# Framework");
+  it("ignores user files not in the framework distribution", async () => {
+    await mkdir(join(projectRoot, ".claude", "rules", "01-standards"), { recursive: true });
+    // naming.md is in fixture distribution; my-custom.md is not
+    await writeFile(join(projectRoot, ".claude", "rules", "01-standards", "naming.md"), "# Naming");
     await writeFile(join(projectRoot, ".claude", "rules", "my-custom.md"), "# Custom");
 
     const result = await buildUseCase().execute({
@@ -173,9 +188,8 @@ describe("AdoptUseCase", () => {
       projectRoot,
     });
 
-    expect(result.tools[0].registered).toHaveLength(2);
-    expect(result.tools[0].registered).toContain(".claude/rules/my-custom.md");
-    expect(result.tools[0].registered).toContain(".claude/rules/framework.md");
+    expect(result.tools[0].registered).toContain(".claude/rules/01-standards/naming.md");
+    expect(result.tools[0].registered).not.toContain(".claude/rules/my-custom.md");
   });
 
   it("creates CATALOG.md after adoption", async () => {

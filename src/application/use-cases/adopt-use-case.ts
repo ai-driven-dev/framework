@@ -1,14 +1,19 @@
 import { join } from "node:path";
+import { generateDistribution } from "../../domain/models/distribution.js";
+import { buildDocsDistribution } from "../../domain/models/docs-transform.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import { Manifest } from "../../domain/models/manifest.js";
 import { type ToolId, VALID_TOOL_IDS, getToolConfig } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
+import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { writeCatalog } from "./catalog-use-case.js";
 
 interface AdoptOptions {
   toolIds: ToolId[];
+  frameworkPath: string;
   docsDir: string;
   projectRoot: string;
   version: string;
@@ -29,11 +34,13 @@ export class AdoptUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
+    private readonly loader: FrameworkLoader,
+    private readonly hasher: Hasher,
     private readonly logger: Logger
   ) {}
 
   async execute(options: AdoptOptions): Promise<AdoptResult> {
-    const { toolIds, docsDir, projectRoot, version } = options;
+    const { toolIds, frameworkPath, docsDir, projectRoot, version } = options;
 
     const invalid = toolIds.filter((t) => !VALID_TOOL_IDS.includes(t));
     if (invalid.length > 0) {
@@ -53,6 +60,11 @@ export class AdoptUseCase {
 
     await this.deleteLegacyConfig(projectRoot);
 
+    const { descriptor, contentFiles, docsFiles } = await this.loader.loadFromDirectory(
+      frameworkPath,
+      version
+    );
+
     const manifest = Manifest.create(docsDir);
     const toolResults: AdoptToolResult[] = [];
 
@@ -65,11 +77,14 @@ export class AdoptUseCase {
         throw new Error(`Directory '${config.directory}' not found for tool '${toolId}'.`);
       }
 
-      const registeredFiles = await this.scanAndHashDirectory(
-        toolDir,
-        config.directory,
-        projectRoot
+      const distribution = generateDistribution(
+        descriptor,
+        config,
+        docsDir,
+        contentFiles,
+        this.hasher
       );
+      const registeredFiles = await this.matchDistributionToDisk(distribution, projectRoot);
       manifest.addTool(toolId, version, registeredFiles);
       toolResults.push({ toolId, registered: registeredFiles.map((f) => f.relativePath) });
     }
@@ -78,7 +93,8 @@ export class AdoptUseCase {
     const docsAbsDir = join(projectRoot, docsDir);
     if (await this.fs.fileExists(docsAbsDir)) {
       this.logger.info("Adopting docs...");
-      const registeredFiles = await this.scanAndHashDirectory(docsAbsDir, docsDir, projectRoot);
+      const docsDistribution = buildDocsDistribution(docsFiles, docsDir, this.hasher);
+      const registeredFiles = await this.matchDistributionToDisk(docsDistribution, projectRoot);
       manifest.addDocs(version, registeredFiles);
       docsRegistered = registeredFiles.length;
     }
@@ -89,13 +105,13 @@ export class AdoptUseCase {
     const catalogAbsPath = join(projectRoot, catalogRelPath);
     if (await this.fs.fileExists(catalogAbsPath)) {
       const catalogHash = await this.fs.readFileHash(catalogAbsPath);
-      const docsFiles = manifest.getDocsFiles();
-      const updatedDocsFiles = docsFiles.map((f) =>
+      const currentDocsFiles = manifest.getDocsFiles();
+      const updatedDocsFiles = currentDocsFiles.map((f) =>
         f.relativePath === catalogRelPath
           ? new GeneratedFile({ relativePath: f.relativePath, content: "", hash: catalogHash })
           : new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash })
       );
-      if (!docsFiles.some((f) => f.relativePath === catalogRelPath)) {
+      if (!currentDocsFiles.some((f) => f.relativePath === catalogRelPath)) {
         updatedDocsFiles.push(
           new GeneratedFile({ relativePath: catalogRelPath, content: "", hash: catalogHash })
         );
@@ -112,30 +128,31 @@ export class AdoptUseCase {
     };
   }
 
+  private async matchDistributionToDisk(
+    distribution: GeneratedFile[],
+    projectRoot: string
+  ): Promise<GeneratedFile[]> {
+    const result: GeneratedFile[] = [];
+    for (const distFile of distribution) {
+      const absolutePath = join(projectRoot, distFile.relativePath);
+      if (!(await this.fs.fileExists(absolutePath))) continue;
+      const hash = await this.fs.readFileHash(absolutePath);
+      result.push(
+        new GeneratedFile({
+          relativePath: distFile.relativePath,
+          content: "",
+          hash,
+          frameworkPath: distFile.frameworkPath,
+        })
+      );
+    }
+    return result;
+  }
+
   private async deleteLegacyConfig(projectRoot: string): Promise<void> {
     const configPath = join(projectRoot, ".aidd", "config.json");
     if (await this.fs.fileExists(configPath)) {
       await this.fs.deleteFile(configPath);
     }
-  }
-
-  private async scanAndHashDirectory(
-    absoluteDir: string,
-    relativePrefix: string,
-    projectRoot: string
-  ): Promise<GeneratedFile[]> {
-    const diskFiles = await this.fs.listDirectory(absoluteDir);
-    const separator = relativePrefix.endsWith("/") ? "" : "/";
-    const result: GeneratedFile[] = [];
-
-    for (const diskRelative of diskFiles) {
-      const relativePath = `${relativePrefix}${separator}${diskRelative}`;
-      const absolutePath = join(projectRoot, relativePath);
-      const hash = await this.fs.readFileHash(absolutePath);
-      // content is intentionally empty: adopt only records hashes, never reads file content
-      result.push(new GeneratedFile({ relativePath, content: "", hash }));
-    }
-
-    return result;
   }
 }

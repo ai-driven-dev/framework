@@ -18,7 +18,7 @@ describe.concurrent("E2E: aidd adopt", () => {
     }
   }, 10000);
 
-  it("fails when --release is missing", async () => {
+  it("fails when neither --release nor --framework is provided", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
     try {
       const { exitCode, stderr } = await runCli(["adopt", "--tools", "claude"], projectDir);
@@ -46,7 +46,7 @@ describe.concurrent("E2E: aidd adopt", () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
     try {
       const { exitCode, stderr } = await runCli(
-        ["--release", "3.3.3", "adopt", "--tools", "unknown-tool"],
+        ["--framework", FRAMEWORK_PATH, "adopt", "--tools", "unknown-tool"],
         projectDir
       );
 
@@ -61,7 +61,7 @@ describe.concurrent("E2E: aidd adopt", () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
     try {
       const { exitCode, stderr } = await runCli(
-        ["--release", "3.3.3", "adopt", "--tools", "claude"],
+        ["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude"],
         projectDir
       );
 
@@ -79,7 +79,7 @@ describe.concurrent("E2E: aidd adopt", () => {
       await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
       const { exitCode, stderr } = await runCli(
-        ["--release", "3.3.3", "adopt", "--tools", "claude"],
+        ["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude"],
         projectDir
       );
 
@@ -98,7 +98,7 @@ describe.concurrent("E2E: aidd adopt", () => {
       await rm(join(projectDir, ".aidd"), { recursive: true, force: true });
 
       const { stdout, exitCode } = await runCli(
-        ["--release", "test", "adopt", "--tools", "claude"],
+        ["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude"],
         projectDir
       );
 
@@ -117,7 +117,7 @@ describe.concurrent("E2E: aidd adopt", () => {
       await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
       await rm(join(projectDir, ".aidd"), { recursive: true, force: true });
 
-      await runCli(["--release", "test", "adopt", "--tools", "claude"], projectDir);
+      await runCli(["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude"], projectDir);
 
       const { stdout, exitCode } = await runCli(
         ["status", "--framework", FRAMEWORK_PATH],
@@ -140,7 +140,7 @@ describe.concurrent("E2E: aidd adopt", () => {
       await rm(join(projectDir, ".aidd"), { recursive: true, force: true });
 
       const { stdout, exitCode } = await runCli(
-        ["--release", "test", "adopt", "--tools", "claude,cursor"],
+        ["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude,cursor"],
         projectDir
       );
 
@@ -167,7 +167,7 @@ describe.concurrent("E2E: aidd adopt", () => {
       await rm(join(projectDir, ".aidd"), { recursive: true, force: true });
 
       const { stdout, exitCode } = await runCli(
-        ["--release", "test", "adopt", "--tools", "claude,cursor,copilot"],
+        ["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude,cursor,copilot"],
         projectDir
       );
 
@@ -193,10 +193,31 @@ describe.concurrent("E2E: aidd adopt", () => {
       await rm(join(projectDir, ".aidd", "manifest.json"));
       await writeFile(join(projectDir, ".aidd", "config.json"), "{}");
 
-      await runCli(["--release", "test", "adopt", "--tools", "claude"], projectDir);
+      await runCli(["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude"], projectDir);
 
       expect(existsSync(join(projectDir, ".aidd", "config.json"))).toBe(false);
       expect(existsSync(join(projectDir, ".aidd", "manifest.json"))).toBe(true);
+    } finally {
+      await cleanup();
+    }
+  }, 15000);
+
+  it("does not register user files not in the framework distribution", async () => {
+    const { projectDir, cleanup } = await createTestEnv("adopt");
+    try {
+      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      // Add a user file outside the framework distribution
+      await writeFile(join(projectDir, ".claude", "rules", "my-custom.md"), "# Custom rule");
+      await rm(join(projectDir, ".aidd"), { recursive: true, force: true });
+
+      await runCli(["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude"], projectDir);
+
+      const manifest = JSON.parse(
+        await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8")
+      ) as { tools: Record<string, { files: Array<{ relativePath: string }> }> };
+      const registeredPaths = manifest.tools.claude.files.map((f) => f.relativePath);
+      expect(registeredPaths).not.toContain(".claude/rules/my-custom.md");
     } finally {
       await cleanup();
     }

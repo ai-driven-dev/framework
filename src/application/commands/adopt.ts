@@ -3,6 +3,7 @@ import type { ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { CLIOutput } from "../output.js";
 import { AdoptUseCase } from "../use-cases/adopt-use-case.js";
+import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
 
 export function registerAdoptCommand(program: Command): void {
   program
@@ -20,6 +21,7 @@ export function registerAdoptCommand(program: Command): void {
         verbose: boolean;
         repo?: string;
         token?: string;
+        framework?: string;
         release?: string;
       }>();
       const verbose = globalOptions.verbose;
@@ -27,9 +29,9 @@ export function registerAdoptCommand(program: Command): void {
       const projectRoot = process.cwd();
 
       try {
-        if (!globalOptions.release) {
+        if (!globalOptions.release && !globalOptions.framework) {
           throw new Error(
-            "--release <version> is required for adopt. Example: aidd adopt --release 3.3.3 --tools claude"
+            "--release <version> or --framework <path> is required for adopt. Example: aidd --release 3.3.3 adopt --tools claude"
           );
         }
 
@@ -40,11 +42,24 @@ export function registerAdoptCommand(program: Command): void {
           output
         );
 
-        const result = await new AdoptUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
+        const { path: frameworkPath, version } = await resolveFramework(
+          deps.resolver,
+          deps.logger,
+          { framework: globalOptions.framework, release: globalOptions.release }
+        );
+
+        const result = await new AdoptUseCase(
+          deps.fs,
+          deps.manifestRepo,
+          deps.loader,
+          deps.hasher,
+          deps.logger
+        ).execute({
           toolIds,
+          frameworkPath,
           docsDir: cmdOptions.docsDir,
           projectRoot,
-          version: globalOptions.release,
+          version,
         });
 
         if (verbose) {
@@ -55,7 +70,7 @@ export function registerAdoptCommand(program: Command): void {
         }
 
         output.success(
-          `Adopted ${result.tools.length} tool(s) at version ${globalOptions.release}: ${result.totalRegistered} files registered, ${result.docsRegistered} docs registered`
+          `Adopted ${result.tools.length} tool(s) at version ${version}: ${result.totalRegistered} files registered, ${result.docsRegistered} docs registered`
         );
       } catch (error) {
         output.exit(error);
