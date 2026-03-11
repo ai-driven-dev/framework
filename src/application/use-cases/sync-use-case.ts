@@ -1,13 +1,13 @@
 import { join } from "node:path";
-import { generateDistribution } from "../../domain/models/distribution.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../domain/models/frontmatter.js";
 import {
-  type UserFileSection,
+  type UserFileSectionKey,
   type ToolId,
   getToolConfig,
+  type ToolConfig,
+  type SectionHandler,
 } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
-import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -15,8 +15,6 @@ import type { ManifestRepository } from "../../domain/ports/manifest-repository.
 export interface SyncOptions {
   projectRoot: string;
   docsDir: string;
-  frameworkPath: string;
-  version: string;
   sourceTool: ToolId;
   targetTools?: ToolId[];
   force?: boolean;
@@ -41,46 +39,33 @@ export interface SyncResult {
   tools: SyncToolResult[];
 }
 
-function getSectionFromFrameworkPath(frameworkPath: string): UserFileSection | null {
-  if (frameworkPath.startsWith("agents/")) return "agents";
-  if (frameworkPath.startsWith("commands/")) return "commands";
-  if (frameworkPath.startsWith("rules/")) return "rules";
-  if (frameworkPath.startsWith("skills/")) return "skills";
+function getSectionKeyFromFrameworkPath(frameworkPath: string): UserFileSectionKey | null {
+  if (frameworkPath.startsWith("agents/"))
+    return { section: "agents", key: frameworkPath.slice("agents/".length) };
+  if (frameworkPath.startsWith("commands/"))
+    return { section: "commands", key: frameworkPath.slice("commands/".length) };
+  if (frameworkPath.startsWith("rules/"))
+    return { section: "rules", key: frameworkPath.slice("rules/".length) };
+  if (frameworkPath.startsWith("skills/"))
+    return { section: "skills", key: frameworkPath.slice("skills/".length) };
   return null;
 }
 
 function transformContent(
   content: string,
-  sourceConfig: ReturnType<typeof getToolConfig>,
-  targetConfig: ReturnType<typeof getToolConfig>,
-  section: UserFileSection | null,
-  frameworkPath: string,
+  sourceConfig: ToolConfig,
+  targetConfig: ToolConfig,
+  sectionKey: UserFileSectionKey,
   docsDir: string
 ): string {
-  if (section === null) {
-    const canonical = sourceConfig.reverseRewriteContent(content, docsDir);
-    return targetConfig.rewriteContent(canonical, docsDir);
-  }
-
   const { frontmatter, body } = parseFrontmatter(content);
 
-  const canonicalFrontmatter = sourceConfig[section]().reverseConvertFrontmatter(frontmatter);
-
-  // relativeFileName is the path relative to the section directory (e.g. "04_code/implement.md")
-  // needed by convertFrontmatter for commands to extract the phase prefix
-  const sectionPrefix = `${section}/`;
-  const relativeFileName = frameworkPath.startsWith(sectionPrefix)
-    ? frameworkPath.slice(sectionPrefix.length)
-    : frameworkPath;
+  const canonicalFrontmatter = sourceConfig[sectionKey.section]().reverseConvertFrontmatter(frontmatter);
 
   const targetFrontmatter =
-    section === "commands"
-      ? targetConfig.commands().convertFrontmatter(canonicalFrontmatter, relativeFileName)
-      : (
-          targetConfig[section]() as {
-            convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown>;
-          }
-        ).convertFrontmatter(canonicalFrontmatter);
+    sectionKey.section === "commands"
+      ? targetConfig.commands().convertFrontmatter(canonicalFrontmatter, sectionKey.key)
+      : (targetConfig[sectionKey.section]() as SectionHandler).convertFrontmatter(canonicalFrontmatter);
 
   const canonicalBody = sourceConfig.reverseRewriteContent(body, docsDir);
   const targetBody = targetConfig.rewriteContent(canonicalBody, docsDir);
@@ -105,11 +90,14 @@ function isExcluded(relativePath: string, docsDir: string): boolean {
   return false;
 }
 
+function buildTargetPath(targetConfig: ToolConfig, sectionKey: UserFileSectionKey): string | null {
+  return targetConfig[sectionKey.section]().buildFilePath(sectionKey.key);
+}
+
 export class SyncUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
     private readonly logger: Logger
   ) {}
@@ -118,8 +106,6 @@ export class SyncUseCase {
     const {
       projectRoot,
       docsDir,
-      frameworkPath,
-      version,
       sourceTool,
       force = false,
       includeUserFiles = false,
@@ -154,19 +140,7 @@ export class SyncUseCase {
       }
     }
 
-    const { descriptor, contentFiles } = await this.loader.loadFromDirectory(
-      frameworkPath,
-      version
-    );
-
     const sourceConfig = getToolConfig(sourceTool);
-    const sourceDistribution = generateDistribution(
-      descriptor,
-      sourceConfig,
-      docsDir,
-      contentFiles,
-      this.hasher
-    );
     const sourceManifestFiles = manifest.getToolFiles(sourceTool);
     const sourceManifestMap = new Map(sourceManifestFiles.map((f) => [f.relativePath, f.hash]));
 
@@ -176,31 +150,23 @@ export class SyncUseCase {
       this.logger.info(`Syncing ${sourceTool} → ${targetToolId}...`);
 
       const targetConfig = getToolConfig(targetToolId);
-      const targetDistribution = generateDistribution(
-        descriptor,
-        targetConfig,
-        docsDir,
-        contentFiles,
-        this.hasher
-      );
-      const targetDistByFrameworkPath = new Map(
-        targetDistribution
-          .filter((f): f is typeof f & { frameworkPath: string } => f.frameworkPath !== undefined)
-          .map((f) => [f.frameworkPath, f])
-      );
 
       const targetManifestFiles = manifest.getToolFiles(targetToolId);
       const targetManifestMap = new Map(targetManifestFiles.map((f) => [f.relativePath, f.hash]));
+      const targetByFrameworkPath = new Map(
+        targetManifestFiles
+          .filter((f): f is typeof f & { frameworkPath: string } => f.frameworkPath !== undefined)
+          .map((f) => [f.frameworkPath, f.relativePath])
+      );
 
       const fileResults: SyncFileResult[] = [];
 
       await this.propagateModified({
-        sourceDistribution,
-        sourceManifestMap,
+        sourceManifestFiles,
         sourceConfig,
         targetConfig,
-        targetDistByFrameworkPath,
         targetManifestMap,
+        targetByFrameworkPath,
         fileResults,
         projectRoot,
         docsDir,
@@ -208,11 +174,9 @@ export class SyncUseCase {
       });
 
       await this.propagateAdded({
-        sourceDistribution,
         sourceManifestMap,
         sourceConfig,
         targetConfig,
-        targetDistByFrameworkPath,
         fileResults,
         projectRoot,
         docsDir,
@@ -220,9 +184,8 @@ export class SyncUseCase {
       });
 
       await this.propagateDeleted({
-        sourceDistribution,
         sourceManifestFiles,
-        targetDistByFrameworkPath,
+        targetByFrameworkPath,
         fileResults,
         projectRoot,
         docsDir,
@@ -235,60 +198,49 @@ export class SyncUseCase {
   }
 
   private async propagateModified(ctx: {
-    sourceDistribution: ReturnType<typeof generateDistribution>;
-    sourceManifestMap: Map<string, { value: string }>;
-    sourceConfig: ReturnType<typeof getToolConfig>;
-    targetConfig: ReturnType<typeof getToolConfig>;
-    targetDistByFrameworkPath: Map<string, { relativePath: string }>;
+    sourceManifestFiles: ReadonlyArray<{ relativePath: string; hash: { value: string }; frameworkPath?: string }>;
+    sourceConfig: ToolConfig;
+    targetConfig: ToolConfig;
     targetManifestMap: Map<string, { value: string }>;
+    targetByFrameworkPath: Map<string, string>;
     fileResults: SyncFileResult[];
     projectRoot: string;
     docsDir: string;
     force: boolean;
   }): Promise<void> {
     const {
-      sourceDistribution,
-      sourceManifestMap,
+      sourceManifestFiles,
       sourceConfig,
       targetConfig,
-      targetDistByFrameworkPath,
       targetManifestMap,
+      targetByFrameworkPath,
       fileResults,
       projectRoot,
       docsDir,
       force,
     } = ctx;
 
-    for (const sourceFile of sourceDistribution) {
-      if (isExcluded(sourceFile.relativePath, docsDir)) continue;
+    for (const sourceManifestFile of sourceManifestFiles) {
+      const { relativePath, hash: manifestHash, frameworkPath } = sourceManifestFile;
 
-      const manifestHash = sourceManifestMap.get(sourceFile.relativePath);
-      if (manifestHash === undefined) continue;
+      if (isExcluded(relativePath, docsDir)) continue;
+      if (frameworkPath === undefined) continue;
 
-      const diskSourcePath = join(projectRoot, sourceFile.relativePath);
-      const diskSourceExists = await this.fs.fileExists(diskSourcePath);
-      if (!diskSourceExists) continue;
+      const diskSourcePath = join(projectRoot, relativePath);
+      if (!(await this.fs.fileExists(diskSourcePath))) continue;
 
       const diskSourceHash = await this.fs.readFileHash(diskSourcePath);
       if (diskSourceHash.value === manifestHash.value) continue;
 
-      if (sourceFile.frameworkPath === undefined) continue;
+      const sectionKey = getSectionKeyFromFrameworkPath(frameworkPath);
+      if (sectionKey === null) continue;
 
-      const correspondingTarget = targetDistByFrameworkPath.get(sourceFile.frameworkPath);
-      if (correspondingTarget === undefined) continue;
+      const targetRelativePath = targetByFrameworkPath.get(frameworkPath);
+      if (targetRelativePath === undefined) continue;
 
       const diskSourceContent = await this.fs.readFile(diskSourcePath);
-      const section = getSectionFromFrameworkPath(sourceFile.frameworkPath);
-      const targetContent = transformContent(
-        diskSourceContent,
-        sourceConfig,
-        targetConfig,
-        section,
-        sourceFile.frameworkPath,
-        docsDir
-      );
+      const targetContent = transformContent(diskSourceContent, sourceConfig, targetConfig, sectionKey, docsDir);
 
-      const targetRelativePath = correspondingTarget.relativePath;
       const diskTargetPath = join(projectRoot, targetRelativePath);
       const diskTargetExists = await this.fs.fileExists(diskTargetPath);
 
@@ -335,29 +287,26 @@ export class SyncUseCase {
   }
 
   private async propagateAdded(ctx: {
-    sourceDistribution: ReturnType<typeof generateDistribution>;
     sourceManifestMap: Map<string, { value: string }>;
-    sourceConfig: ReturnType<typeof getToolConfig>;
-    targetConfig: ReturnType<typeof getToolConfig>;
-    targetDistByFrameworkPath: Map<string, { relativePath: string }>;
+    sourceConfig: ToolConfig;
+    targetConfig: ToolConfig;
     fileResults: SyncFileResult[];
     projectRoot: string;
     docsDir: string;
     includeUserFiles: boolean;
   }): Promise<void> {
     const {
-      sourceDistribution,
       sourceManifestMap,
       sourceConfig,
       targetConfig,
-      targetDistByFrameworkPath,
       fileResults,
       projectRoot,
       docsDir,
       includeUserFiles,
     } = ctx;
 
-    const sourceDistByPath = new Map(sourceDistribution.map((f) => [f.relativePath, f]));
+    if (!includeUserFiles) return;
+
     const sourceDirExists = await this.fs.fileExists(join(projectRoot, sourceConfig.directory));
     if (!sourceDirExists) return;
 
@@ -367,67 +316,29 @@ export class SyncUseCase {
       if (isExcluded(sourceRelativePath, docsDir)) continue;
       if (sourceManifestMap.has(sourceRelativePath)) continue;
 
-      const sourceDistFile = sourceDistByPath.get(sourceRelativePath);
-      if (sourceDistFile?.frameworkPath === undefined) {
-        if (!includeUserFiles) continue;
+      const sectionKey = sourceConfig.detectUserFileSectionKey(sourceRelativePath);
+      if (sectionKey === null) continue;
 
-        const userKey = sourceConfig.detectUserFileSectionKey(sourceRelativePath);
-        if (userKey === null) continue;
-
-        const targetRelativePath = targetConfig[userKey.section]().buildFilePath(userKey.key);
-        if (targetRelativePath === null) continue;
-
-        const diskSourceContent = await this.fs.readFile(join(projectRoot, sourceRelativePath));
-        const targetContent = transformContent(
-          diskSourceContent,
-          sourceConfig,
-          targetConfig,
-          userKey.section,
-          userKey.key,
-          docsDir
-        );
-
-        const diskTargetPath = join(projectRoot, targetRelativePath);
-        const diskTargetExists = await this.fs.fileExists(diskTargetPath);
-        if (diskTargetExists) {
-          const current = await this.fs.readFile(diskTargetPath);
-          if (current === targetContent) {
-            fileResults.push({
-              relativePath: targetRelativePath,
-              conflict: false,
-              skipped: true,
-              written: false,
-            });
-            continue;
-          }
-        }
-
-        await this.fs.writeFile(diskTargetPath, targetContent);
-        fileResults.push({
-          relativePath: targetRelativePath,
-          conflict: false,
-          skipped: false,
-          written: true,
-        });
-        continue;
-      }
-
-      const correspondingTarget = targetDistByFrameworkPath.get(sourceDistFile.frameworkPath);
-      if (correspondingTarget === undefined) continue;
+      const targetRelativePath = buildTargetPath(targetConfig, sectionKey);
+      if (targetRelativePath === null) continue;
 
       const diskSourceContent = await this.fs.readFile(join(projectRoot, sourceRelativePath));
-      const addedSection = getSectionFromFrameworkPath(sourceDistFile.frameworkPath);
-      const targetContent = transformContent(
-        diskSourceContent,
-        sourceConfig,
-        targetConfig,
-        addedSection,
-        sourceDistFile.frameworkPath,
-        docsDir
-      );
+      const targetContent = transformContent(diskSourceContent, sourceConfig, targetConfig, sectionKey, docsDir);
 
-      const targetRelativePath = correspondingTarget.relativePath;
       const diskTargetPath = join(projectRoot, targetRelativePath);
+      const diskTargetExists = await this.fs.fileExists(diskTargetPath);
+      if (diskTargetExists) {
+        const current = await this.fs.readFile(diskTargetPath);
+        if (current === targetContent) {
+          fileResults.push({
+            relativePath: targetRelativePath,
+            conflict: false,
+            skipped: true,
+            written: false,
+          });
+          continue;
+        }
+      }
 
       await this.fs.writeFile(diskTargetPath, targetContent);
       fileResults.push({
@@ -440,41 +351,32 @@ export class SyncUseCase {
   }
 
   private async propagateDeleted(ctx: {
-    sourceDistribution: ReturnType<typeof generateDistribution>;
-    sourceManifestFiles: ReadonlyArray<{ relativePath: string; hash: { value: string } }>;
-    targetDistByFrameworkPath: Map<string, { relativePath: string }>;
+    sourceManifestFiles: ReadonlyArray<{ relativePath: string; frameworkPath?: string }>;
+    targetByFrameworkPath: Map<string, string>;
     fileResults: SyncFileResult[];
     projectRoot: string;
     docsDir: string;
   }): Promise<void> {
     const {
-      sourceDistribution,
       sourceManifestFiles,
-      targetDistByFrameworkPath,
+      targetByFrameworkPath,
       fileResults,
       projectRoot,
       docsDir,
     } = ctx;
 
-    const sourceDistByPath = new Map(sourceDistribution.map((f) => [f.relativePath, f]));
-
     for (const sourceManifestFile of sourceManifestFiles) {
-      if (isExcluded(sourceManifestFile.relativePath, docsDir)) continue;
-      const diskSourceExists = await this.fs.fileExists(
-        join(projectRoot, sourceManifestFile.relativePath)
-      );
-      if (diskSourceExists) continue;
+      const { relativePath, frameworkPath } = sourceManifestFile;
+      if (isExcluded(relativePath, docsDir)) continue;
+      if (frameworkPath === undefined) continue;
 
-      const sourceDistFile = sourceDistByPath.get(sourceManifestFile.relativePath);
-      if (sourceDistFile?.frameworkPath === undefined) continue;
+      if (await this.fs.fileExists(join(projectRoot, relativePath))) continue;
 
-      const correspondingTarget = targetDistByFrameworkPath.get(sourceDistFile.frameworkPath);
-      if (correspondingTarget === undefined) continue;
+      const targetRelativePath = targetByFrameworkPath.get(frameworkPath);
+      if (targetRelativePath === undefined) continue;
 
-      const targetRelativePath = correspondingTarget.relativePath;
       const diskTargetPath = join(projectRoot, targetRelativePath);
-      const diskTargetExists = await this.fs.fileExists(diskTargetPath);
-      if (!diskTargetExists) continue;
+      if (!(await this.fs.fileExists(diskTargetPath))) continue;
 
       await this.fs.deleteFile(diskTargetPath);
       fileResults.push({

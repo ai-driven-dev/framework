@@ -9,6 +9,7 @@ const MANIFEST_VERSION = 1;
 interface TrackedFile {
   readonly relativePath: string;
   readonly hash: FileHash;
+  readonly frameworkPath?: string;
 }
 
 interface DocsEntry {
@@ -44,6 +45,7 @@ interface DocsEntryData {
 interface TrackedFileData {
   relativePath: string;
   hash: string;
+  frameworkPath?: string;
 }
 
 export class Manifest {
@@ -92,14 +94,18 @@ export class Manifest {
   }
 
   private toTrackedFiles(files: GeneratedFile[]): TrackedFile[] {
-    return files.map((f) => ({ relativePath: f.relativePath, hash: f.hash }));
+    return files.map((f) => ({
+      relativePath: f.relativePath,
+      hash: f.hash,
+      ...(f.frameworkPath !== undefined && { frameworkPath: f.frameworkPath }),
+    }));
   }
 
   getInstalledToolIds(): ToolId[] {
     return [...this._tools.keys()];
   }
 
-  getToolFiles(toolId: ToolId): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
+  getToolFiles(toolId: ToolId): ReadonlyArray<{ relativePath: string; hash: FileHash; frameworkPath?: string }> {
     return this._tools.get(toolId)?.files ?? [];
   }
 
@@ -180,11 +186,19 @@ export class Manifest {
   }
 
   private toTrackedFileData(files: readonly TrackedFile[]): TrackedFileData[] {
-    return files.map((f) => ({ relativePath: f.relativePath, hash: f.hash.value }));
+    return files.map((f) => ({
+      relativePath: f.relativePath,
+      hash: f.hash.value,
+      ...(f.frameworkPath !== undefined && { frameworkPath: f.frameworkPath }),
+    }));
   }
 
   private static parseTrackedFiles(files: TrackedFileData[]): TrackedFile[] {
-    return files.map((f) => ({ relativePath: f.relativePath, hash: new FileHash(f.hash) }));
+    return files.map((f) => ({
+      relativePath: f.relativePath,
+      hash: new FileHash(f.hash),
+      ...(f.frameworkPath !== undefined && { frameworkPath: f.frameworkPath }),
+    }));
   }
 
   static fromJSON(data: unknown): Manifest {

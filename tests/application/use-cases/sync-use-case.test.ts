@@ -4,7 +4,6 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SyncUseCase } from "../../../src/application/use-cases/sync-use-case.js";
 import {
-  FIXTURE_DIR,
   buildDeps,
   cleanupTempProject,
   createTempProject,
@@ -29,7 +28,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -38,8 +36,6 @@ describe("SyncUseCase", () => {
       useCase.execute({
         projectRoot,
         docsDir: "aidd_docs",
-        frameworkPath: FIXTURE_DIR,
-        version: "test",
         sourceTool: "claude",
       })
     ).rejects.toThrow("No AIDD installation found");
@@ -53,7 +49,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -62,8 +57,6 @@ describe("SyncUseCase", () => {
       useCase.execute({
         projectRoot,
         docsDir: "aidd_docs",
-        frameworkPath: FIXTURE_DIR,
-        version: "test",
         sourceTool: "claude",
       })
     ).rejects.toThrow("Source tool 'claude' is not installed");
@@ -77,7 +70,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -86,8 +78,6 @@ describe("SyncUseCase", () => {
       useCase.execute({
         projectRoot,
         docsDir: "aidd_docs",
-        frameworkPath: FIXTURE_DIR,
-        version: "test",
         sourceTool: "claude",
       })
     ).rejects.toThrow("Sync requires at least 2 installed tools");
@@ -102,7 +92,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -111,8 +100,6 @@ describe("SyncUseCase", () => {
       useCase.execute({
         projectRoot,
         docsDir: "aidd_docs",
-        frameworkPath: FIXTURE_DIR,
-        version: "test",
         sourceTool: "claude",
         targetTools: ["claude"],
       })
@@ -128,7 +115,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -136,8 +122,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
     });
 
@@ -161,7 +145,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -169,8 +152,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["cursor"],
     });
@@ -203,15 +184,12 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["cursor"],
     });
@@ -242,15 +220,12 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["cursor"],
       force: true,
@@ -277,15 +252,12 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
     });
 
@@ -312,15 +284,12 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
     await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["cursor"],
     });
@@ -345,15 +314,12 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
     await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["cursor"],
     });
@@ -361,8 +327,6 @@ describe("SyncUseCase", () => {
     const result2 = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["cursor"],
     });
@@ -383,7 +347,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -391,8 +354,6 @@ describe("SyncUseCase", () => {
     await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["cursor"],
     });
@@ -413,7 +374,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -421,8 +381,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["cursor"],
     });
@@ -444,7 +402,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -463,8 +420,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["copilot"],
       force: true,
@@ -493,7 +448,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -501,8 +455,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["copilot"],
     });
@@ -527,7 +479,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -535,8 +486,6 @@ describe("SyncUseCase", () => {
     await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["copilot"],
     });
@@ -560,7 +509,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -568,8 +516,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "cursor",
       targetTools: ["claude"],
     });
@@ -601,7 +547,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -609,8 +554,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "cursor",
       targetTools: ["copilot"],
     });
@@ -635,7 +578,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -643,8 +585,6 @@ describe("SyncUseCase", () => {
     await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "cursor",
       targetTools: ["claude"],
     });
@@ -665,7 +605,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -673,8 +612,6 @@ describe("SyncUseCase", () => {
     await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "cursor",
       targetTools: ["copilot"],
     });
@@ -698,7 +635,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -706,8 +642,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "copilot",
       targetTools: ["claude"],
     });
@@ -738,7 +672,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -746,8 +679,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "copilot",
       targetTools: ["cursor"],
     });
@@ -772,7 +703,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -780,8 +710,6 @@ describe("SyncUseCase", () => {
     await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "copilot",
       targetTools: ["claude"],
     });
@@ -802,7 +730,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -810,8 +737,6 @@ describe("SyncUseCase", () => {
     await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "copilot",
       targetTools: ["cursor"],
     });
@@ -838,7 +763,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -846,8 +770,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["cursor"],
     });
@@ -875,7 +797,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -883,8 +804,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["cursor"],
       includeUserFiles: true,
@@ -911,7 +830,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -919,8 +837,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["cursor"],
       includeUserFiles: true,
@@ -947,7 +863,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -955,8 +870,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["cursor"],
       includeUserFiles: true,
@@ -986,7 +899,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -994,8 +906,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["copilot"],
       includeUserFiles: true,
@@ -1022,7 +932,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -1030,8 +939,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["copilot"],
       includeUserFiles: true,
@@ -1062,7 +969,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -1070,8 +976,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["copilot"],
       includeUserFiles: true,
@@ -1102,7 +1006,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -1110,8 +1013,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "cursor",
       targetTools: ["claude"],
       includeUserFiles: true,
@@ -1141,7 +1042,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -1149,8 +1049,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "cursor",
       targetTools: ["claude"],
       includeUserFiles: true,
@@ -1177,7 +1075,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -1185,8 +1082,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "cursor",
       targetTools: ["copilot"],
       includeUserFiles: true,
@@ -1216,7 +1111,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -1224,8 +1118,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "copilot",
       targetTools: ["claude"],
       includeUserFiles: true,
@@ -1252,7 +1144,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -1260,8 +1151,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "copilot",
       targetTools: ["cursor"],
       includeUserFiles: true,
@@ -1291,7 +1180,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -1300,8 +1188,6 @@ describe("SyncUseCase", () => {
     await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["cursor"],
       includeUserFiles: true,
@@ -1311,8 +1197,6 @@ describe("SyncUseCase", () => {
     const result2 = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["cursor"],
       includeUserFiles: true,
@@ -1338,7 +1222,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -1346,8 +1229,6 @@ describe("SyncUseCase", () => {
     await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["cursor"],
       includeUserFiles: true,
@@ -1377,7 +1258,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -1385,8 +1265,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["cursor"],
     });
@@ -1416,7 +1294,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -1424,8 +1301,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "cursor",
       targetTools: ["claude"],
     });
@@ -1455,7 +1330,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -1463,8 +1337,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "claude",
       targetTools: ["copilot"],
     });
@@ -1494,7 +1366,6 @@ describe("SyncUseCase", () => {
     const useCase = new SyncUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger
     );
@@ -1502,8 +1373,6 @@ describe("SyncUseCase", () => {
     const result = await useCase.execute({
       projectRoot,
       docsDir: "aidd_docs",
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
       sourceTool: "cursor",
       targetTools: ["copilot"],
     });

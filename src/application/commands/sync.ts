@@ -2,7 +2,6 @@ import type { Command } from "commander";
 import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { CLIOutput } from "../output.js";
-import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
 import { SyncUseCase } from "../use-cases/sync-use-case.js";
 
 export function registerSyncCommand(program: Command): void {
@@ -56,14 +55,6 @@ export function registerSyncCommand(program: Command): void {
           }
 
           const sourceTool = cmdOptions.source as ToolId;
-          const pinnedVersion = manifest.getToolVersion(sourceTool);
-
-          const { path: frameworkPath, version } = await resolveFramework(
-            deps.resolver,
-            deps.logger,
-            { framework: globalOptions.framework, release: pinnedVersion ?? globalOptions.release }
-          );
-
           const docsDir = manifest.docsDir;
           const targetTools: ToolId[] | undefined = cmdOptions.target
             ? [cmdOptions.target as ToolId]
@@ -72,7 +63,6 @@ export function registerSyncCommand(program: Command): void {
           const syncUseCase = new SyncUseCase(
             deps.fs,
             deps.manifestRepo,
-            deps.loader,
             deps.hasher,
             deps.logger
           );
@@ -80,8 +70,6 @@ export function registerSyncCommand(program: Command): void {
           const result = await syncUseCase.execute({
             projectRoot,
             docsDir,
-            frameworkPath,
-            version,
             sourceTool,
             targetTools,
             force: cmdOptions.force,
