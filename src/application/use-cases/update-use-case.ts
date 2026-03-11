@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { generateDistribution } from "../../domain/models/distribution.js";
 import { buildDocsDistribution } from "../../domain/models/docs-transform.js";
+import type { FileHash } from "../../domain/models/file-hash.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
 import { type ToolId, getToolConfig } from "../../domain/models/tool-config.js";
@@ -110,12 +111,14 @@ export class UpdateUseCase {
       let result: ApplyDiffResult = { kept: [], written: [], deleted: [], backedUp: [] };
 
       if (!dryRun) {
+        const mergedHashMap = new Map<string, FileHash>();
         for (const newFile of newDistribution) {
           if (!newFile.merge) continue;
           const outputPath = join(projectRoot, newFile.relativePath);
           await this.fs.mergeJsonFile(outputPath, newFile.content);
           const diskHash = await this.fs.readFileHash(outputPath);
           manifest.syncFileHashAcrossTools(newFile.relativePath, diskHash);
+          mergedHashMap.set(newFile.relativePath, diskHash);
         }
 
         result = await this.applyDiff(diff, newDistMap, projectRoot, force);
@@ -132,9 +135,10 @@ export class UpdateUseCase {
           );
         const mergedFiles = manifestFiles
           .filter((f) => newDistMap.get(f.relativePath)?.merge === true)
-          .map(
-            (f) => new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash })
-          );
+          .map((f) => {
+            const hash = mergedHashMap.get(f.relativePath) ?? f.hash;
+            return new GeneratedFile({ relativePath: f.relativePath, content: "", hash });
+          });
 
         manifest.addTool(toolId, version, [...nonMergedFinal, ...keptFiles, ...mergedFiles]);
       }
