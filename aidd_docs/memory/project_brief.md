@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-- **Package**: `@ai-driven-dev/aidd-cli` v3.0.0
+- **Package**: `@ai-driven-dev/cli` v2.4.1
 - **Vision**: Distribute a canonical AI-Driven Development framework consistently across multiple AI coding assistants, eliminating manual tool-specific adaptation
 - **Mission**: CLI that resolves the AIDD framework from remote/local sources, generates tool-specific file distributions with content rewriting and frontmatter conversion, and tracks every generated file in a hash-based manifest
 
@@ -28,7 +28,7 @@
 | Distribution | Tool-specific generated output (files rewritten per tool conventions) |
 | Manifest | `.aidd/manifest.json` — hash-based tracking of every installed file |
 | ToolConfig | Per-tool configuration: output paths, frontmatter conversion, merge rules |
-| Framework Descriptor | `framework.json` — describes the canonical framework's file layout |
+| Framework Descriptor | Code model built by `FrameworkLoaderAdapter` — no `framework.json` file |
 | Drift | Installed file modified locally vs. what was written at install time |
 | Init | Bootstrap: creates `aidd_docs/` structure + manifest |
 | Install | Generates and writes tool-specific distribution files |

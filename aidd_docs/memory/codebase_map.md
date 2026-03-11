@@ -4,7 +4,7 @@
 
 - `src/` — fully implemented through v3.2 + adopt command (all milestones M0-M7 + v3.2 features + adopt done)
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
-- `tests/` — 561 tests, 46 files, all passing
+- `tests/` — 582 tests, 46 files, all passing
 - Next: vNext interactive mode (not yet specified — do not implement until vision is stabilized)
 
 ## Source Layout
@@ -117,7 +117,7 @@ tests/
 ## Non-source Files
 
 - No `settings.json` — all project config is in the manifest (`docsDir`, `repo`) or via flags/env vars
-- `package.json` — `@ai-driven-dev/aidd-cli` v3.0.0, GitHub Packages registry, Node >= 24
+- `package.json` — `@ai-driven-dev/cli` v2.4.1, GitHub Packages registry, Node >= 24
 - `tsup.config.ts` — single ESM bundle, target node20 (build target, runtime requires node >= 24)
 - `vitest.config.ts` — test runner with path aliases
 - `biome.json` — lint + format config
