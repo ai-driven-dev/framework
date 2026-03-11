@@ -6,237 +6,202 @@ Code contributions are open to certified **Obsidian+** members using the AIDD de
 
 ---
 
-- [Who can contribute](#who-can-contribute)
-- [Useful links](#useful-links)
-- [Types of contributions](#types-of-contributions)
-  - [Reporting issues](#reporting-issues)
-  - [Improving documentation](#improving-documentation)
-  - [Developing features](#developing-features)
-- [Development setup](#development-setup)
-  - [Prerequisites](#prerequisites)
-  - [Clone the repository](#clone-the-repository)
-  - [Install and build](#install-and-build)
-- [Development workflow](#development-workflow)
-  - [1. Find a task](#1-find-a-task)
-  - [2. Create a branch](#2-create-a-branch)
-  - [3. Develop](#3-develop)
-  - [4. Run the full test suite](#4-run-the-full-test-suite)
-  - [5. Test the CLI locally _(optional)_](#5-test-the-cli-locally-optional)
-  - [6. Open a Pull Request](#6-open-a-pull-request)
-- [Standards](#standards)
-  - [Commit message format](#commit-message-format)
-  - [Code quality](#code-quality)
-  - [CI checks](#ci-checks)
-- [Pull Request process](#pull-request-process)
-- [Publishing](#publishing)
-
----
-
 ## Who can contribute
 
-| Action               | Who                        |
-| -------------------- | -------------------------- |
-| Report issues        | Any AIDD member            |
-| Improve docs         | Any AIDD member            |
-| Develop features     | Certified Obsidian+ members |
-| Review PRs           | Coaches                    |
-| Merge PRs to `main`  | Baptiste only              |
+| Action              | Who                         |
+| ------------------- | --------------------------- |
+| Report issues       | Any AIDD member             |
+| Improve docs        | Any AIDD member             |
+| Develop features    | Certified Obsidian+ members |
+| Review PRs          | Coaches                     |
+| Merge PRs to `main` | Baptiste only               |
 
 ---
 
-## Useful links
+## Architecture
 
-- [Roadmap](https://github.com/orgs/ai-driven-dev/projects/5)
-- [Issues](https://github.com/ai-driven-dev/aidd-cli/issues)
-- [Releases](https://github.com/ai-driven-dev/aidd-cli/releases)
-- [Roles & permissions](https://github.com/ai-driven-dev/aidd-cli/blob/main/CONTRIBUTING.md#rôles)
+3-layer clean architecture — understand this before contributing code.
 
----
+```
+src/
+├── cli.ts                    # Commander entry point
+├── domain/                   # Business models, port interfaces, tool configs
+├── application/              # Use cases + commander commands + output formatting
+└── infrastructure/           # Port implementations: filesystem, HTTP, cache, auth
+```
 
-## Types of contributions
+**Rules:**
+- Domain has zero infrastructure imports (enforced in tests)
+- Use cases live in `application/use-cases/`, commands in `application/commands/`
+- New runtime dependencies require explicit justification — max 2 allowed (`commander`, `@inquirer/prompts`)
 
-### Reporting issues
-
-**[Create an issue](https://github.com/ai-driven-dev/aidd-cli/issues/new/choose)** using the available templates:
-
-- 🐛 **Bug Report** — unexpected behavior
-- ✨ **Feature Request** — new feature proposal
-
-**Labels to set:**
-
-| Category       | Value         | Description                                     |
-| -------------- | ------------- | ----------------------------------------------- |
-| **Type**       | `bug`         | Bug report                                      |
-|                | `feature`     | Feature request                                 |
-|                | `task`        | Task, question or documentation                 |
-| **Labels**     | `blocked`     | Needs approval or clarification                 |
-|                | `ready`       | Ready for development                           |
-| **Status**     | `Todo`        | At issue creation                               |
-|                | `In progress` | While developing                                |
-|                | `Done`        | Merged into `main`                              |
-| **Complexity** | `XS`          | Documentation only                              |
-|                | `S`           | Small fix or improvement                        |
-|                | `M`           | Simple feature                                  |
-|                | `L`           | Requires design thinking                        |
-|                | `XL`          | Complex — discuss with coaches first            |
-| **Priority**   | `urgent`      | Fix now or tomorrow                             |
-|                | `must-have`   | Painful without it                              |
-|                | `should-have` | Nice to have                                    |
-
-### Improving documentation
-
-- **Typos / formatting:** direct PR, no issue needed
-- **Major additions or restructuring:** open an issue first
-
-### Developing features
-
-> Use the AIDD development flow at every step — this project is built with AIDD.
+For full details: [aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)
 
 ---
 
 ## Development setup
 
-### Prerequisites
+**Prerequisites:** Node.js >= 24, pnpm >= 9, Git
 
-- **Node.js** >= 24.0.0
-- **pnpm** >= 9.0.0
-- **Git** — latest version
-
-No private registry token is needed — all dependencies are on the public npm registry.
-
-### Clone the repository
-
-The CLI lives as a submodule inside the main `aidd` monorepo. Always clone with `--recurse-submodules`:
+No private registry token needed — all dependencies are on the public npm registry.
 
 ```bash
 git clone git@github.com:ai-driven-dev/aidd-cli.git
 cd aidd-cli
+
+pnpm install    # install dependencies + set up git hooks (lefthook)
+pnpm build      # compile to dist/cli.js
 ```
 
-### Install and build
-
-```bash
-pnpm install     # install dependencies + set up git hooks (lefthook)
-pnpm build       # compile to dist/cli.js
-```
-
-> `pnpm install` automatically installs [Lefthook](https://github.com/evilmartians/lefthook) git hooks via the `prepare` script. Hooks delegate to the parent monorepo and run commitlint on commit.
+> `pnpm install` automatically installs [Lefthook](https://github.com/evilmartians/lefthook) git hooks via the `prepare` script. Hooks run commitlint on commit and the full test suite on push.
 
 ---
 
 ## Development workflow
 
-### 1. Find a task
+### 1. Pick a task
 
 **[Open the project board](https://github.com/orgs/ai-driven-dev/projects/5)**
 
-1. Look for issues in the **Ready** column.
-2. Assign yourself and move it to `In Progress`.
+Pick an issue from the **Ready** column, assign yourself, move it to `In Progress`.
 
 ### 2. Create a branch
 
 ```bash
-git checkout -b feat/your-feature-name   # feature
+git checkout -b feat/your-feature-name   # new feature
 git checkout -b fix/bug-description      # bug fix
+git checkout -b docs/what-you-updated    # documentation
 ```
 
-### 3. Develop
+### 3. Write tests first
 
-Use the AIDD flow throughout development — this project is built with its own tooling.
+All contributions require tests. For bug fixes, write a failing test before touching the implementation.
 
 ```bash
-pnpm test:watch          # run tests in watch mode while developing (no build step)
-pnpm typecheck           # TypeScript check
-pnpm lint                # lint + format check (biome)
-pnpm knip:production     # detect unused exports and dependencies
-pnpm jscpd               # detect code duplication in src/
+pnpm test:watch     # run tests in watch mode while developing
 ```
 
-### 4. Run the full test suite
+**Never mock functional behavior in tests.** Use real filesystem operations via temp directories (see existing e2e tests for patterns).
+
+Coverage thresholds apply to the business logic layer (use-cases, domain models, tools, infrastructure adapters). Commands and entrypoint are tested via e2e only and excluded from thresholds.
+
+### 4. Implement
+
+Use the AIDD flow throughout — this project is built with its own tooling.
 
 ```bash
-pnpm test                    # build + full test suite (unit + e2e)
+pnpm typecheck          # TypeScript check
+pnpm lint               # lint + format (biome)
+pnpm knip:production    # detect unused exports and dependencies
+pnpm jscpd              # detect code duplication in src/
+```
+
+**Code standards:**
+- Throw early — no silent errors
+- Small, single-responsibility functions
+- No duplication — abstract only when it appears 3+ times
+- No comments on obvious code — make the code self-explanatory
+- Only comment genuinely tricky logic
+
+### 5. Run the full suite
+
+```bash
+pnpm test                    # build + full suite (unit + e2e)
 pnpm test -- --coverage      # same + coverage report with thresholds
 ```
 
-All contributions must include tests. Never mock functional behavior in tests.
+All CI checks must pass locally before pushing.
 
-Coverage is measured on the business logic layer (use-cases, domain models, tools, infrastructure adapters). Files tested exclusively via E2E (commands, ports, entrypoint) are excluded from the thresholds.
-
-### 5. Test the CLI locally _(optional)_
-
-If you want to test the compiled CLI manually before opening a PR:
+### 6. Test the CLI manually _(optional)_
 
 ```bash
 pnpm run install:local      # build + install globally
 
-# Then test in a scratch directory
 mkdir /tmp/aidd-test && cd /tmp/aidd-test
 aidd init
 aidd install claude
 ```
 
-### 6. Open a Pull Request
+### 7. Open a Pull Request
 
-Push your branch and open a PR to `main`. The `.github/pull_request_template.md` template is applied automatically. Assign **Baptiste** as reviewer.
+Push your branch and open a PR to `main`. The PR template is applied automatically. Assign **Baptiste** as reviewer.
 
 ---
 
-## Standards
+## Commit message format
 
-### Commit message format
+Follow [Conventional Commits](https://www.conventionalcommits.org/). The type determines whether a release is triggered.
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
+| Type | When to use | Triggers release |
+| --- | --- | --- |
+| `feat` | New user-facing feature | Yes (minor) |
+| `fix` | Bug fix in CLI behavior | Yes (patch) |
+| `perf` | Performance improvement | Yes (patch) |
+| `refactor` | Internal refactoring, no behavior change | No |
+| `test` | Adding or updating tests | No |
+| `docs` | Documentation only | No |
+| `ci` | CI/CD changes | No |
+| `chore` | Maintenance, dependency updates | No |
+| `style` | Formatting, no logic change | No |
 
 ```bash
 feat: add restore --docs flag
-feat(install): support --skip-framework option
-fix: resolve symlink creation on Windows
 fix(status): correct hash comparison for merged files
 docs: update adopt command examples
-refactor: simplify manifest migration logic
-test: add e2e tests for sync command
-chore: update dependencies
+ci: add coverage thresholds to pipeline
 ```
 
-### Code quality
+> Use `fix(ci):` only if the fix is a CI-related **bug fix**. Prefer `ci:` for CI improvements — `fix(ci):` triggers a release.
 
-- No silent errors — throw early
-- No duplication
-- Small, single-responsibility functions
-- No comments on obvious code — make the code self-explanatory
-- Only comment genuinely tricky logic
+---
 
-### CI checks
+## CI checks
 
-Every PR triggers the following jobs automatically:
+Every PR triggers:
 
 | Job | Command | Blocking |
-| --- | ------- | -------- |
-| Typecheck | `pnpm typecheck` | yes |
-| Lint | `pnpm lint` | yes |
-| Test & Coverage | `pnpm test -- --coverage` | yes |
-| Dead code (knip) | `pnpm knip:production` | no — warning only |
-| Duplication (jscpd) | `pnpm jscpd` | no — warning only |
+| --- | --- | --- |
+| Commitlint | — | Yes |
+| Typecheck | `pnpm typecheck` | Yes |
+| Lint | `pnpm lint` | Yes |
+| Test & Coverage | `pnpm test -- --coverage` | Yes |
+| Dead code | `pnpm knip:production` | No |
+| Duplication | `pnpm jscpd` | No |
 
-All blocking jobs must pass before a PR can be merged.
+All blocking jobs must pass before merge.
 
 ---
 
 ## Pull Request process
 
-1. Open a PR to `main` with the filled template.
-2. Assign **Baptiste** as reviewer (add **Alex** if needed).
-3. Address review comments.
+1. Fill the PR template (description, test plan, checklist).
+2. Assign **Baptiste** as reviewer.
+3. Address review comments — don't close threads yourself.
 4. Baptiste merges when approved.
+
+PRs targeting `main` directly are not accepted without review.
+
+---
+
+## Reporting issues
+
+**[Create an issue](https://github.com/ai-driven-dev/aidd-cli/issues/new/choose)** using the templates:
+
+- 🐛 **Bug Report** — unexpected behavior
+- ✨ **Feature Request** — new feature proposal
+
+Set the appropriate labels (type, priority, complexity) when creating the issue.
 
 ---
 
 ## Publishing
 
-Publishing is **fully automated**. There is no manual release step.
+Fully automated — no manual steps.
 
-When a PR is merged into `main`, [Release Please](https://github.com/googleapis/release-please) opens or updates a release PR that bumps the version and updates the changelog based on conventional commits. Merging that release PR triggers the publish workflow automatically.
+1. Merge a PR into `main`
+2. [Release Please](https://github.com/googleapis/release-please) opens/updates a release PR based on conventional commits
+3. Merging the release PR creates a GitHub release
+4. The publish workflow automatically publishes to GitHub Packages
 
 > Never manually edit `package.json` version fields.
 

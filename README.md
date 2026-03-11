@@ -296,37 +296,6 @@ aidd install claude --release v3.4.0    # pin a specific framework version
 
 ---
 
-## Development
-
-```bash
-# Additional prerequisite: pnpm >= 9
-
-pnpm install              # install dependencies
-pnpm build                # compile to dist/cli.js
-pnpm test                 # build + all tests
-pnpm typecheck            # TypeScript check
-pnpm lint                 # lint + format (biome)
-pnpm run install:local    # install local build globally for manual testing
-```
-
----
-
-## Architecture
-
-3-layer clean architecture (Domain → Application → Infrastructure):
-
-```
-src/
-├── cli.ts                    # Commander entry point
-├── domain/                   # Business models, ports, tool configs
-├── application/              # Use cases + commander commands
-└── infrastructure/           # Adapters, HTTP, cache, auth
-```
-
-For more details, see [aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md).
-
----
-
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide.
