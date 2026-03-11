@@ -8,33 +8,30 @@ The **AIDD CLI** (`@ai-driven-dev/cli`) distributes the [AI-Driven Development F
 
 ## Prerequisites
 
-| Prerequisite             | Version | Notes                                                                               |
-| ------------------------ | ------- | ----------------------------------------------------------------------------------- |
-| **Node.js**              | >= 24   | [nodejs.org](https://nodejs.org)                                                    |
-| **npm registry token**   | —       | GitHub token with `read:packages` scope — required once to install the CLI via npm  |
-| **AIDD framework token** | —       | GitHub token with `repo` scope — required each time the CLI downloads the framework |
-| **tar**                  | —       | Pre-installed on macOS, Linux, WSL and Windows 10 1803+                             |
-| **gh CLI** _(optional)_  | —       | If installed and authenticated (`gh auth login`), replaces the AIDD framework token |
+| Prerequisite            | Version | Notes                                                   |
+| ----------------------- | ------- | ------------------------------------------------------- |
+| **Node.js**             | >= 24   | [nodejs.org](https://nodejs.org)                        |
+| **tar**                 | —       | Pre-installed on macOS, Linux, WSL and Windows 10 1803+ |
+| **gh CLI** _(optional)_ | —       | Replaces the AIDD framework token if authenticated      |
 
 > **Windows:** works natively on Windows 10 1803+ (PowerShell or cmd) and on WSL.
 > If you encounter permission issues with `npm install -g`, use an administrator terminal or WSL.
 
 ---
 
-## Installation
+## Authentication
+
+Two tokens are required with different responsibilities.
+
+### Token 1 — npm registry (one-time setup)
+
+Required **once** to install the CLI from GitHub Packages. Create a [GitHub Personal Access Token](https://github.com/settings/tokens/new) with the **`read:packages`** scope, then add it to your `~/.npmrc`:
 
 **macOS / Linux / WSL:**
 
 ```bash
-# Configure the GitHub Packages registry (token with read:packages scope)
 echo "@ai-driven-dev:registry=https://npm.pkg.github.com" >> ~/.npmrc
 echo "//npm.pkg.github.com/:_authToken=<YOUR_NPM_TOKEN>" >> ~/.npmrc
-
-# Install globally
-npm install -g @ai-driven-dev/cli
-
-# Verify
-aidd --version
 ```
 
 **Windows (PowerShell):**
@@ -42,26 +39,11 @@ aidd --version
 ```powershell
 npm config set @ai-driven-dev:registry https://npm.pkg.github.com
 npm config set //npm.pkg.github.com/:_authToken <YOUR_NPM_TOKEN>
-
-npm install -g @ai-driven-dev/cli
-aidd --version
 ```
-
----
-
-## Authentication
-
-There are two distinct tokens with different responsibilities.
-
-### Token 1 — npm registry (one-time)
-
-Required **once** to install the CLI package from GitHub Packages.
-
-Create a [GitHub Personal Access Token](https://github.com/settings/tokens/new) with the **`read:packages`** scope and add it to your `~/.npmrc` as shown in the [Installation](#installation) section above.
 
 ### Token 2 — AIDD framework (runtime)
 
-Required **each time** the CLI downloads the framework (on `init`, `install`, `update`, `restore`, `adopt`). The framework repository is private — this token must have the **`repo`** scope.
+Required each time the CLI downloads the framework (`init`, `install`, `update`, `restore`, `adopt`). The framework repository is private — this token must have the **`repo`** scope.
 
 **Option 1 — Environment variable (recommended)**
 
@@ -87,6 +69,17 @@ Token resolution order: `--token` flag > `AIDD_TOKEN` env > `gh auth token`.
 
 ---
 
+## Installation
+
+```bash
+npm install -g @ai-driven-dev/cli
+
+# Verify
+aidd --version
+```
+
+---
+
 ## Quickstart
 
 ```bash
@@ -96,8 +89,8 @@ aidd init
 # 2. Install for one or more tools
 aidd install claude cursor
 
-# Or all tools at once
-aidd install --all
+# 3. Verify the installation
+aidd status
 ```
 
 > `aidd install` requires a prior `aidd init`. It will abort with a clear error if no manifest exists.
@@ -106,29 +99,18 @@ aidd install --all
 
 ## User Flows
 
-### New project
-
-```bash
-aidd init                       # create aidd_docs/ structure + .aidd/manifest.json
-aidd install claude cursor      # generate tool-specific files
-aidd status                     # verify the installation
-```
-
 ### Migrating from a manual install
 
 If you already have AIDD files installed manually (no `.aidd/manifest.json`), use `adopt` to bootstrap a manifest from what's on disk — no download, no overwrite.
 
 ```bash
-# Scan existing files and create a manifest without touching anything
 aidd adopt --tools claude --release v3.4.0
 
-# If you have files for multiple tools
+# Multiple tools
 aidd adopt --tools claude cursor --release v3.4.0
 ```
 
-`--release` (global flag) is required: it pins the version the manifest will record.
-
-After adoption, run `aidd status` to see drift and `aidd update` to align with the latest framework version.
+`--release` is required: it pins the version the manifest will record. After adoption, run `aidd status` to see drift and `aidd update` to align with the latest framework version.
 
 ### Updating the framework
 
@@ -143,26 +125,22 @@ aidd update --force             # overwrite conflicts without prompting
 
 ### Restoring modified files
 
-If you have modified framework files locally and want to revert them:
-
 ```bash
-aidd status                     # identify modified (~) files
-aidd restore claude             # restore all modified/deleted files for a tool
-aidd restore --docs             # restore docs only
+aidd status                          # identify modified (~) files
+aidd restore claude                  # restore all modified/deleted files for a tool
+aidd restore --docs                  # restore docs only
 aidd restore claude rules/naming.md  # restore a specific file
-aidd restore claude --force     # skip confirmation prompts (CI-safe)
+aidd restore claude --force          # skip confirmation prompts (CI-safe)
 ```
 
 Restore uses the version pinned in the manifest. It does not touch untracked files.
 
 ### Syncing changes across tools
 
-If you modify a framework file for one tool and want to propagate that change to the others:
-
 ```bash
-aidd sync --source claude               # propagate claude changes to all other installed tools
+aidd sync --source claude                  # propagate claude changes to all other tools
 aidd sync --source claude --target cursor  # propagate to a specific tool only
-aidd sync --source claude --force       # overwrite conflicting target files
+aidd sync --source claude --force          # overwrite conflicting target files
 ```
 
 Excluded from sync: memory bank files, MCP configs, VS Code settings, docs.
@@ -177,8 +155,6 @@ aidd uninstall --all            # uninstall all tools
 ---
 
 ## Commands
-
-### Overview
 
 | Command                      | Description                                                        | Key options                                  |
 | ---------------------------- | ------------------------------------------------------------------ | -------------------------------------------- |
@@ -195,10 +171,6 @@ aidd uninstall --all            # uninstall all tools
 | `aidd cache list\|clear`     | List or remove cached framework versions                           | `--all`, `[version]`                         |
 | `aidd config list\|get\|set` | Read or update manifest-backed config (`docsDir`, `repo`, `tools`) | `--force`                                    |
 
-### Core
-
-_Setup and teardown of an AIDD installation._
-
 ### `aidd init`
 
 Creates the `aidd_docs/` structure and the `.aidd/manifest.json` manifest. Must be run before `install`.
@@ -209,7 +181,7 @@ aidd init --docs-dir my_docs    # custom docs directory
 aidd init --force               # re-copy doc templates into existing docs dir (preserves tool files)
 ```
 
-> On a project with existing AIDD signals but no manifest, init will abort and suggest `aidd adopt` instead.
+> On a project with existing AIDD signals but no manifest, `init` will abort and suggest `aidd adopt` instead.
 
 ### `aidd install`
 
@@ -230,10 +202,6 @@ Removes a tool's generated files and updates the manifest.
 aidd uninstall cursor
 aidd uninstall --all
 ```
-
-### Monitoring
-
-_Observe the state of your installation._
 
 ### `aidd status`
 
@@ -259,10 +227,6 @@ Detects: missing or corrupted manifest, orphaned tool directories, broken `@path
 
 > Drift (modified/deleted files) is not a structural issue — use `aidd status` for that.
 
-### Lifecycle
-
-_Keep your installation aligned with the framework over time._
-
 ### `aidd update`
 
 Downloads the latest framework version and applies changes. See [Updating the framework](#updating-the-framework) for examples.
@@ -278,10 +242,6 @@ Propagates local modifications from one tool's files to the others via reverse +
 ### `aidd adopt`
 
 Bootstraps a manifest for projects with existing manually installed AIDD files. See [Migrating from a manual install](#migrating-from-a-manual-install) for examples.
-
-### Utilities
-
-_Maintenance and configuration._
 
 ### `aidd clean`
 
@@ -336,6 +296,21 @@ aidd install claude --release v3.4.0    # pin a specific framework version
 
 ---
 
+## Development
+
+```bash
+# Additional prerequisite: pnpm >= 9
+
+pnpm install              # install dependencies
+pnpm build                # compile to dist/cli.js
+pnpm test                 # build + all tests
+pnpm typecheck            # TypeScript check
+pnpm lint                 # lint + format (biome)
+pnpm run install:local    # install local build globally for manual testing
+```
+
+---
+
 ## Architecture
 
 3-layer clean architecture (Domain → Application → Infrastructure):
@@ -349,21 +324,6 @@ src/
 ```
 
 For more details, see [aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md).
-
----
-
-## Development
-
-```bash
-# Additional prerequisite: pnpm >= 9
-
-pnpm install              # install dependencies
-pnpm build                # compile to dist/cli.js
-pnpm test                 # build + all tests
-pnpm typecheck            # TypeScript check
-pnpm lint                 # lint + format (biome)
-pnpm run install:local    # install local build globally for manual testing
-```
 
 ---
 
