@@ -44,6 +44,7 @@
     "lefthook": "^1.13.1",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "vitest": "^2.0.0"
   }
 }

@@ -7,6 +7,24 @@ export default defineConfig({
     environment: "node",
     include: ["tests/**/*.test.ts", "src/**/*.test.ts"],
     testTimeout: 30000,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json-summary"],
+      include: ["src/**/*.ts"],
+      exclude: [
+        "src/cli.ts",
+        "src/application/commands/**",
+        "src/domain/ports/**",
+        "src/infrastructure/deps.ts",
+        "src/infrastructure/auth/**",
+      ],
+      thresholds: {
+        statements: 85,
+        branches: 80,
+        functions: 90,
+        lines: 85,
+      },
+    },
   },
   resolve: {
     alias: {
