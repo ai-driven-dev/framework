@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.4.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.3.0...v2.4.0) (2026-03-11)
+
+
+### Features
+
+* display ASCII banner when aidd is run without arguments ([d3b7f24](https://github.com/ai-driven-dev/aidd-cli/commit/d3b7f24dfed2900ccbb5aa6cea40c32ad7962d02))
+* merge ascii banner from worktree ([0170bee](https://github.com/ai-driven-dev/aidd-cli/commit/0170bee3cf9ca669be83a6ae8137431706c48d5e))
+
+
+### Performance
+
+* **tests:** parallelize e2e tests within files to halve total runtime ([48a0fad](https://github.com/ai-driven-dev/aidd-cli/commit/48a0fadca6afc070021fa12fa8a0c47f53419643))
+
+
+### Refactoring
+
+* **sync:** remove framework loading — use manifest frameworkPath as canonical key ([6bba237](https://github.com/ai-driven-dev/aidd-cli/commit/6bba2373feab15e38a96358a0378a0909e5b7a16))
+
 ## [2.3.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.2.0...v2.3.0) (2026-03-11)
 
 
