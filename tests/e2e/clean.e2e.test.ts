@@ -1,88 +1,103 @@
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { FRAMEWORK_PATH, runCli } from "./helpers.js";
+import { describe, expect, it } from "vitest";
+import { FRAMEWORK_PATH, createTestEnv, runCli } from "./helpers.js";
 
-describe("E2E: aidd clean", () => {
-  let tempDir: string;
-  let projectDir: string;
-
-  beforeEach(async () => {
-    tempDir = await mkdtemp(join(tmpdir(), "aidd-e2e-clean-"));
-    projectDir = join(tempDir, "project");
-    await mkdir(projectDir, { recursive: true });
-  });
-
-  afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
-  });
-
+describe.concurrent("E2E: aidd clean", () => {
   it("previews files to remove without deleting them", async () => {
-    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-    await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+    const { projectDir, cleanup } = await createTestEnv("clean");
+    try {
+      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
-    const { stdout, exitCode } = await runCli(["clean"], projectDir);
+      const { stdout, exitCode } = await runCli(["clean"], projectDir);
 
-    expect(exitCode).toBe(0);
-    expect(stdout).toContain("--force");
-    expect(existsSync(join(projectDir, ".claude"))).toBe(true);
-    expect(existsSync(join(projectDir, ".aidd"))).toBe(true);
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("--force");
+      expect(existsSync(join(projectDir, ".claude"))).toBe(true);
+      expect(existsSync(join(projectDir, ".aidd"))).toBe(true);
+    } finally {
+      await cleanup();
+    }
   }, 5000);
 
   it("deletes all installed files and manifest when --force is used", async () => {
-    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-    await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+    const { projectDir, cleanup } = await createTestEnv("clean");
+    try {
+      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
-    const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
+      const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
 
-    expect(exitCode).toBe(0);
-    expect(stdout).toContain("Cleaned all AIDD files");
-    expect(existsSync(join(projectDir, ".claude"))).toBe(false);
-    expect(existsSync(join(projectDir, ".aidd"))).toBe(false);
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Cleaned all AIDD files");
+      expect(existsSync(join(projectDir, ".claude"))).toBe(false);
+      expect(existsSync(join(projectDir, ".aidd"))).toBe(false);
+    } finally {
+      await cleanup();
+    }
   }, 5000);
 
   it("reports nothing to clean when not initialized", async () => {
-    const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
+    const { projectDir, cleanup } = await createTestEnv("clean");
+    try {
+      const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
 
-    expect(exitCode).toBe(0);
-    expect(stdout).toContain("Nothing to clean");
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Nothing to clean");
+    } finally {
+      await cleanup();
+    }
   }, 5000);
 
   it("lists tool names and file counts in dry-run preview output", async () => {
-    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-    await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+    const { projectDir, cleanup } = await createTestEnv("clean");
+    try {
+      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
-    const { stdout, exitCode } = await runCli(["clean"], projectDir);
+      const { stdout, exitCode } = await runCli(["clean"], projectDir);
 
-    expect(exitCode).toBe(0);
-    expect(stdout).toContain("claude");
-    expect(stdout).toMatch(/\d+ files?/);
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("claude");
+      expect(stdout).toMatch(/\d+ files?/);
+    } finally {
+      await cleanup();
+    }
   }, 5000);
 
   it("removes all tool directories when multiple tools are installed", async () => {
-    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-    await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-    await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
+    const { projectDir, cleanup } = await createTestEnv("clean");
+    try {
+      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
 
-    const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
-    expect(exitCode).toBe(0);
-    expect(stdout).toContain("Cleaned");
+      const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Cleaned");
 
-    expect(existsSync(join(projectDir, ".claude"))).toBe(false);
-    expect(existsSync(join(projectDir, ".cursor"))).toBe(false);
-    expect(existsSync(join(projectDir, ".aidd"))).toBe(false);
+      expect(existsSync(join(projectDir, ".claude"))).toBe(false);
+      expect(existsSync(join(projectDir, ".cursor"))).toBe(false);
+      expect(existsSync(join(projectDir, ".aidd"))).toBe(false);
+    } finally {
+      await cleanup();
+    }
   }, 10000);
 
   it("removes docs and manifest when only init was run", async () => {
-    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+    const { projectDir, cleanup } = await createTestEnv("clean");
+    try {
+      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
 
-    const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
+      const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
 
-    expect(exitCode).toBe(0);
-    expect(stdout).toContain("Cleaned");
-    expect(existsSync(join(projectDir, "aidd_docs"))).toBe(false);
-    expect(existsSync(join(projectDir, ".aidd"))).toBe(false);
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Cleaned");
+      expect(existsSync(join(projectDir, "aidd_docs"))).toBe(false);
+      expect(existsSync(join(projectDir, ".aidd"))).toBe(false);
+    } finally {
+      await cleanup();
+    }
   }, 5000);
 });
