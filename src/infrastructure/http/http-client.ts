@@ -2,12 +2,12 @@ import type { IncomingMessage } from "node:http";
 import * as http from "node:http";
 import * as https from "node:https";
 
-export interface HttpGetOptions {
+interface HttpGetOptions {
   token?: string;
   accept?: string;
 }
 
-export interface HttpResponse {
+interface HttpResponse {
   body: Buffer | unknown;
   statusCode: number;
   contentType: string;

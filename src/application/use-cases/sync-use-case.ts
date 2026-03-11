@@ -1,18 +1,18 @@
 import { join } from "node:path";
 import { parseFrontmatter, serializeFrontmatter } from "../../domain/models/frontmatter.js";
 import {
-  type UserFileSectionKey,
-  type ToolId,
-  getToolConfig,
-  type ToolConfig,
   type SectionHandler,
+  type ToolConfig,
+  type ToolId,
+  type UserFileSectionKey,
+  getToolConfig,
 } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 
-export interface SyncOptions {
+interface SyncOptions {
   projectRoot: string;
   docsDir: string;
   sourceTool: ToolId;
@@ -21,7 +21,7 @@ export interface SyncOptions {
   includeUserFiles?: boolean;
 }
 
-export interface SyncFileResult {
+interface SyncFileResult {
   relativePath: string;
   conflict: boolean;
   skipped: boolean;
@@ -29,12 +29,12 @@ export interface SyncFileResult {
   deleted?: boolean;
 }
 
-export interface SyncToolResult {
+interface SyncToolResult {
   targetToolId: ToolId;
   files: SyncFileResult[];
 }
 
-export interface SyncResult {
+interface SyncResult {
   sourceTool: ToolId;
   tools: SyncToolResult[];
 }

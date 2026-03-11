@@ -10,7 +10,7 @@ import type { ManifestRepository } from "../../domain/ports/manifest-repository.
 import { writeCatalog } from "./catalog-use-case.js";
 import { GitignoreUseCase } from "./gitignore-use-case.js";
 
-export interface InitOptions {
+interface InitOptions {
   frameworkPath: string;
   version: string;
   docsDir: string;
@@ -20,7 +20,7 @@ export interface InitOptions {
   repo?: string;
 }
 
-export interface InitResult {
+interface InitResult {
   docsDir: string;
   fileCount: number;
   manifest: Manifest;

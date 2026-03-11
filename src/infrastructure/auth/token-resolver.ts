@@ -1,7 +1,7 @@
 import { execSync } from "node:child_process";
 import type { Logger } from "../../domain/ports/logger.js";
 
-export interface TokenResolverOptions {
+interface TokenResolverOptions {
   flag?: string;
   logger?: Logger;
 }

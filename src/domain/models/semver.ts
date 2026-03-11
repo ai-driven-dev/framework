@@ -1,4 +1,4 @@
-export function parseSemver(v: string): [number, number, number] {
+function parseSemver(v: string): [number, number, number] {
   const match = v.match(/^v?(\d+)\.(\d+)\.(\d+)/);
   if (!match) return [0, 0, 0];
   return [Number(match[1]), Number(match[2]), Number(match[3])];

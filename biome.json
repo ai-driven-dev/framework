@@ -22,6 +22,6 @@
     }
   },
   "files": {
-    "ignore": ["dist/**", "node_modules/**", "example/**"]
+    "ignore": ["dist/**", "node_modules/**", "example/**", ".claude/worktrees/**", "temp/**"]
   }
 }

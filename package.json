@@ -7,10 +7,7 @@
   "bin": {
     "aidd": "dist/cli.js"
   },
-  "files": [
-    "dist",
-    "README.md"
-  ],
+  "files": ["dist", "README.md"],
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },

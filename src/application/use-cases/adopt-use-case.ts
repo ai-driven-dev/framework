@@ -7,19 +7,19 @@ import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { writeCatalog } from "./catalog-use-case.js";
 
-export interface AdoptOptions {
+interface AdoptOptions {
   toolIds: ToolId[];
   docsDir: string;
   projectRoot: string;
   version: string;
 }
 
-export interface AdoptToolResult {
+interface AdoptToolResult {
   toolId: ToolId;
   registered: string[];
 }
 
-export interface AdoptResult {
+interface AdoptResult {
   tools: AdoptToolResult[];
   totalRegistered: number;
   docsRegistered: number;

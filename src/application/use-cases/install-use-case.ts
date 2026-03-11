@@ -10,7 +10,7 @@ import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { writeCatalog } from "./catalog-use-case.js";
 
-export interface InstallOptions {
+interface InstallOptions {
   toolIds: ToolId[];
   frameworkPath: string;
   version: string;

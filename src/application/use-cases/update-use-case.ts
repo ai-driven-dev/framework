@@ -1,6 +1,6 @@
 import { join } from "node:path";
-import { buildDocsDistribution } from "../../domain/models/docs-transform.js";
 import { generateDistribution } from "../../domain/models/distribution.js";
+import { buildDocsDistribution } from "../../domain/models/docs-transform.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
 import { type ToolId, getToolConfig } from "../../domain/models/tool-config.js";
@@ -12,7 +12,7 @@ import type { ManifestRepository } from "../../domain/ports/manifest-repository.
 import type { Prompter } from "../../domain/ports/prompter.js";
 import { writeCatalog } from "./catalog-use-case.js";
 
-export interface UpdateOptions {
+interface UpdateOptions {
   frameworkPath: string;
   version: string;
   docsDir: string;
@@ -23,15 +23,15 @@ export interface UpdateOptions {
   dryRun?: boolean;
 }
 
-export type FileDiffKind = "added" | "removed" | "changed" | "unchanged";
+type FileDiffKind = "added" | "removed" | "changed" | "unchanged";
 
-export interface FileDiff {
+interface FileDiff {
   relativePath: string;
   kind: FileDiffKind;
   conflict?: boolean;
 }
 
-export interface UpdateSectionResult {
+interface UpdateSectionResult {
   alreadyUpToDate: boolean;
   dryRun: boolean;
   diff: FileDiff[];
@@ -41,13 +41,13 @@ export interface UpdateSectionResult {
   backedUp: string[];
 }
 
-export interface UpdateToolResult extends UpdateSectionResult {
+interface UpdateToolResult extends UpdateSectionResult {
   toolId: ToolId;
 }
 
-export type DocsUpdateResult = UpdateSectionResult;
+type DocsUpdateResult = UpdateSectionResult;
 
-export interface UpdateResult {
+interface UpdateResult {
   alreadyUpToDate: boolean;
   dryRun: boolean;
   tools: UpdateToolResult[];

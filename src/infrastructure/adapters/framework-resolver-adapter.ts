@@ -30,7 +30,7 @@ function parseGithubRelease(body: unknown, url: string): GithubRelease {
   return body as GithubRelease;
 }
 
-export interface FrameworkResolverAdapterConfig {
+interface FrameworkResolverAdapterConfig {
   defaultRepo: string;
   defaultToken?: string;
   githubApiBase?: string;

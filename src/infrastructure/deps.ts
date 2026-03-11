@@ -22,14 +22,14 @@ import { FrameworkCache } from "./cache/framework-cache.js";
 import { HttpClient } from "./http/http-client.js";
 import { TarExtractor } from "./tar/tar-extractor.js";
 
-export interface GlobalOptions {
+interface GlobalOptions {
   verbose: boolean;
   repo?: string;
   token?: string;
   framework?: string;
 }
 
-export interface Deps {
+interface Deps {
   fs: FileSystem;
   manifestRepo: ManifestRepository;
   loader: FrameworkLoader;

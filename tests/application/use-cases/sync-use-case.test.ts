@@ -382,9 +382,9 @@ describe("SyncUseCase", () => {
     });
 
     expect(
-      result.tools.flatMap((t) => t.files.filter((f) => f.written)).some((f) =>
-        f.relativePath.includes("my-custom-agent")
-      )
+      result.tools
+        .flatMap((t) => t.files.filter((f) => f.written))
+        .some((f) => f.relativePath.includes("my-custom-agent"))
     ).toBe(true);
 
     const content = await readFile(join(projectRoot, ".cursor/agents/my-custom-agent.md"), "utf-8");
@@ -465,10 +465,7 @@ describe("SyncUseCase", () => {
       includeUserFiles: true,
     });
 
-    const content = await readFile(
-      join(projectRoot, ".cursor/skills/my-skill/SKILL.md"),
-      "utf-8"
-    );
+    const content = await readFile(join(projectRoot, ".cursor/skills/my-skill/SKILL.md"), "utf-8");
     expect(content).toContain("Custom skill content.");
   });
 

@@ -5,27 +5,27 @@ import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 
-export type IssueSeverity = "info" | "warning" | "error";
+type IssueSeverity = "info" | "warning" | "error";
 
-export interface DoctorIssue {
+interface DoctorIssue {
   severity: IssueSeverity;
   message: string;
   fix: string;
 }
 
-export interface ToolHealth {
+interface ToolHealth {
   toolId: ToolId;
   fileCount: number;
 }
 
-export interface DoctorReport {
+interface DoctorReport {
   healthy: boolean;
   toolHealth: ToolHealth[];
   docsFileCount: number;
   issues: DoctorIssue[];
 }
 
-export interface DoctorOptions {
+interface DoctorOptions {
   projectRoot: string;
 }
 

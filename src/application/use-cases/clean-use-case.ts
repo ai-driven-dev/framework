@@ -5,18 +5,18 @@ import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { GitignoreUseCase } from "./gitignore-use-case.js";
 
-export interface CleanOptions {
+interface CleanOptions {
   projectRoot: string;
   force: boolean;
 }
 
-export interface CleanPreview {
+interface CleanPreview {
   tools: Array<{ toolId: ToolId; fileCount: number }>;
   docsFileCount: number;
   totalFileCount: number;
 }
 
-export interface CleanResult {
+interface CleanResult {
   dryRun: boolean;
   preview: CleanPreview;
   fileCount: number;

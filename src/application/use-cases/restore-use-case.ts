@@ -1,8 +1,8 @@
 import { join } from "node:path";
-import { buildDocsDistribution } from "../../domain/models/docs-transform.js";
 import { generateDistribution } from "../../domain/models/distribution.js";
+import { buildDocsDistribution } from "../../domain/models/docs-transform.js";
+import type { FileHash } from "../../domain/models/file-hash.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
-import { FileHash } from "../../domain/models/file-hash.js";
 import type { Manifest } from "../../domain/models/manifest.js";
 import { type ToolId, getToolConfig } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
@@ -12,7 +12,7 @@ import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 
-export interface RestoreOptions {
+interface RestoreOptions {
   frameworkPath: string;
   version: string;
   docsDir: string;
@@ -24,20 +24,20 @@ export interface RestoreOptions {
   manifest?: Manifest;
 }
 
-export interface RestoreToolResult {
+interface RestoreToolResult {
   toolId: ToolId;
   nothingToRestore: boolean;
   restored: string[];
   kept: string[];
 }
 
-export interface RestoreDocsResult {
+interface RestoreDocsResult {
   nothingToRestore: boolean;
   restored: string[];
   kept: string[];
 }
 
-export interface RestoreResult {
+interface RestoreResult {
   tools: RestoreToolResult[];
   docs: RestoreDocsResult | null;
 }

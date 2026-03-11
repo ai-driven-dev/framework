@@ -6,31 +6,31 @@ import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 
-export type FileStatusKind = "modified" | "deleted" | "added";
+type FileStatusKind = "modified" | "deleted" | "added";
 
-export interface FileDrift {
+interface FileDrift {
   relativePath: string;
   status: FileStatusKind;
 }
 
-export interface ToolStatus {
+interface ToolStatus {
   toolId: ToolId;
   version: string;
   drifted: FileDrift[];
 }
 
-export interface DocsStatus {
+interface DocsStatus {
   version: string;
   drifted: FileDrift[];
 }
 
-export interface StatusReport {
+interface StatusReport {
   tools: ToolStatus[];
   docs: DocsStatus | null;
   inSync: boolean;
 }
 
-export interface StatusOptions {
+interface StatusOptions {
   projectRoot: string;
   filterToolId?: ToolId;
   filterDocs?: boolean;
