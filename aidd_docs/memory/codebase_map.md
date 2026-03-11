@@ -4,7 +4,7 @@
 
 - `src/` — fully implemented through v3.2 + adopt command (all milestones M0-M7 + v3.2 features + adopt done)
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
-- `tests/` — 528 tests, 46 files, all passing
+- `tests/` — 561 tests, 46 files, all passing
 - Next: vNext interactive mode (not yet specified — do not implement until vision is stabilized)
 
 ## Source Layout
@@ -14,22 +14,22 @@ src/
 ├── cli.ts                              # commander program, global --verbose / --repo / --token / --framework / --release
 ├── application/
 │   ├── commands/                       # commander command registrations
-│   │   ├── adopt.ts                    # aidd adopt [--force]
+│   │   ├── adopt.ts                    # aidd adopt --tools <tools> (+ global --release required)
 │   │   ├── cache.ts                    # aidd cache list / clear
 │   │   ├── config.ts                   # aidd config list/get/set (manifest-backed; docsDir + repo writable, tools read-only)
 │   │   ├── clean.ts
-│   │   ├── doctor.ts                   # includes --fix flag
+│   │   ├── doctor.ts                   # aidd doctor (analysis + output only, no --fix)
 │   │   ├── init.ts                     # includes --force flag
 │   │   ├── install.ts
-│   │   ├── restore.ts                  # aidd restore [files] [--tool] [--force]
+│   │   ├── restore.ts                  # aidd restore [files] [--tool] [--docs] [--force]
 │   │   ├── status.ts
 │   │   ├── sync.ts                     # aidd sync --source <tool> [--target] [--force]
 │   │   ├── uninstall.ts
-│   │   └── update.ts                   # aidd update [--force] [--dry-run]
-│   ├── check-update.ts                 # printUpdateBanner() — shared header banner for all commands
+│   │   └── update.ts                   # aidd update [--force] [--dry-run] [--tool] [--docs]
+│   ├── check-update.ts                 # printUpdateBanner() — called via commander preAction hook in cli.ts
 │   ├── output.ts                       # All stdout/stderr formatting
 │   └── use-cases/
-│       ├── adopt-use-case.ts               # bootstrap manifest from pre-existing AIDD files
+│       ├── adopt-use-case.ts               # scan disk files + hash as-is → manifest (no download, no conflict resolution; deletes legacy config.json)
 │       ├── catalog-use-case.ts              # writeCatalog() — writes aidd_docs/CATALOG.md
 │       ├── clean-use-case.ts
 │       ├── doctor-use-case.ts

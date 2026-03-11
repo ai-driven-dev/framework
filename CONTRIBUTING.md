@@ -1,110 +1,95 @@
-# Contribution guide - AIDD CLI
+# Contributing to AIDD CLI
 
-Welcome to the AIDD CLI contribution guide!
+> **Mission:** Make AI-Driven Development accessible with a complete, consistent package for developers.
 
-> **Our mission**: Make AI-Driven Development accessible with a complete package for developers.
-
-> **Roles and permissions**: See the [main CONTRIBUTING](https://github.com/ai-driven-dev/aidd/blob/main/CONTRIBUTING.md#rôles)
+Code contributions are open to certified **Obsidian+** members using the AIDD development flow.
 
 ---
 
+- [Who can contribute](#who-can-contribute)
 - [Useful links](#useful-links)
-- [How to contribute](#how-to-contribute)
-  - [1. Reporting issues](#1-reporting-issues)
-    - [Create an issue](#create-an-issue)
-    - [Project (choose CLI)](#project-choose-cli)
-  - [2. Improving documentation](#2-improving-documentation)
-  - [3. Developing features](#3-developing-features)
-  - [4. Reviewing Pull Requests](#4-reviewing-pull-requests)
-  - [5. Merging Pull Requests](#5-merging-pull-requests)
+- [Types of contributions](#types-of-contributions)
+  - [Reporting issues](#reporting-issues)
+  - [Improving documentation](#improving-documentation)
+  - [Developing features](#developing-features)
 - [Development setup](#development-setup)
   - [Prerequisites](#prerequisites)
-  - [GitHub Packages authentication](#github-packages-authentication)
   - [Clone the repository](#clone-the-repository)
-  - [Install dependencies](#install-dependencies)
+  - [Install and build](#install-and-build)
 - [Development workflow](#development-workflow)
-  - [1. Find a feature](#1-find-a-feature)
+  - [1. Find a task](#1-find-a-task)
   - [2. Create a branch](#2-create-a-branch)
+  - [3. Develop](#3-develop)
+  - [4. Run the full test suite](#4-run-the-full-test-suite)
+  - [5. Test the CLI locally _(optional)_](#5-test-the-cli-locally-optional)
+  - [6. Open a Pull Request](#6-open-a-pull-request)
+- [Standards](#standards)
   - [Commit message format](#commit-message-format)
-  - [3. Develop the feature](#3-develop-the-feature)
-  - [4. Test locally](#4-test-locally)
-  - [5. Write tests](#5-write-tests)
-  - [6. Pull Request process](#6-pull-request-process)
+  - [Code quality](#code-quality)
+- [Pull Request process](#pull-request-process)
 - [Publishing](#publishing)
-  - [Publishing prerequisites](#publishing-prerequisites)
-  - [Publishing process](#publishing-process)
+
+---
+
+## Who can contribute
+
+| Action               | Who                        |
+| -------------------- | -------------------------- |
+| Report issues        | Any AIDD member            |
+| Improve docs         | Any AIDD member            |
+| Develop features     | Certified Obsidian+ members |
+| Review PRs           | Coaches                    |
+| Merge PRs to `main`  | Baptiste only              |
 
 ---
 
 ## Useful links
 
 - [Roadmap](https://github.com/orgs/ai-driven-dev/projects/5)
-- [Releases](https://github.com/ai-driven-dev/aidd/releases)
-- [Reported issues](https://github.com/ai-driven-dev/aidd/issues)
+- [Issues](https://github.com/ai-driven-dev/aidd-cli/issues)
+- [Releases](https://github.com/ai-driven-dev/aidd-cli/releases)
+- [Roles & permissions](https://github.com/ai-driven-dev/aidd-cli/blob/main/CONTRIBUTING.md#rôles)
 
 ---
 
-## How to contribute
+## Types of contributions
 
-### 1. Reporting issues
+### Reporting issues
 
-**[Create an issue](https://github.com/ai-driven-dev/aidd/issues/new/choose)**
+**[Create an issue](https://github.com/ai-driven-dev/aidd-cli/issues/new/choose)** using the available templates:
 
-Use the available templates:
+- 🐛 **Bug Report** — unexpected behavior
+- ✨ **Feature Request** — new feature proposal
 
-- 🐛 **Bug Report**: Report a bug or unexpected behavior
-- ✨ **Feature Request**: Propose a new feature
+**Labels to set:**
 
-#### Create an issue
-
-| **Category** | **Item**  | **Description**                         |
-| ------------ | --------- | --------------------------------------- |
-| **Labels**   | `blocked` | Approval or clarifications needed       |
-|              | `ready`   | 100% ready for development              |
-| **Type**     | `bug`     | Bug report                              |
-|              | `feature` | Feature request                         |
-|              | `task`    | Task, question or documentation         |
-
-#### Project (choose CLI)
-
-You must always specify the project and relevant metadata:
-
-| **Category**   | **Item**      | **Description**                                 |
+| Category       | Value         | Description                                     |
 | -------------- | ------------- | ----------------------------------------------- |
+| **Type**       | `bug`         | Bug report                                      |
+|                | `feature`     | Feature request                                 |
+|                | `task`        | Task, question or documentation                 |
+| **Labels**     | `blocked`     | Needs approval or clarification                 |
+|                | `ready`       | Ready for development                           |
 | **Status**     | `Todo`        | At issue creation                               |
-|                | `In progress` | Please respect this 🙏                          |
+|                | `In progress` | While developing                                |
 |                | `Done`        | Merged into `main`                              |
-| **Complexity** | `XS`          | Documentation                                   |
+| **Complexity** | `XS`          | Documentation only                              |
 |                | `S`           | Small fix or improvement                        |
 |                | `M`           | Simple feature                                  |
-|                | `L`           | Requires thinking about implementation          |
-|                | `XL`          | Complex topic to discuss with coaches           |
-| **Priority**   | `urgent`      | To fix NOW or tomorrow                          |
-|                | `must-have`   | Without this, it's painful                      |
-|                | `should-have` | Not strictly required but would be nice to have |
+|                | `L`           | Requires design thinking                        |
+|                | `XL`          | Complex — discuss with coaches first            |
+| **Priority**   | `urgent`      | Fix now or tomorrow                             |
+|                | `must-have`   | Painful without it                              |
+|                | `should-have` | Nice to have                                    |
 
-### 2. Improving documentation
+### Improving documentation
 
-Documentation improvements are always welcome! Typos, clarifications, missing examples...
+- **Typos / formatting:** direct PR, no issue needed
+- **Major additions or restructuring:** open an issue first
 
-- **Small corrections** (typos, formatting): direct PR without an issue
-- **Major additions**: Create an issue first to discuss it
+### Developing features
 
-### 3. Developing features
-
-> Code contributions are open to certified Obsidian+ members using the AIDD flow.
-
-### 4. Reviewing Pull Requests
-
-> Code reviews are performed by Coaches to ensure quality and consistency.
-
-1. Use GitHub's review tools to leave comments and suggestions.
-2. Send the PR back to the author for changes if necessary.
-3. Approve the PR when you are satisfied.
-
-### 5. Merging Pull Requests
-
-> Only Baptiste and Alex can merge PRs into `main`.
+> Use the AIDD development flow at every step — this project is built with AIDD.
 
 ---
 
@@ -112,178 +97,126 @@ Documentation improvements are always welcome! Typos, clarifications, missing ex
 
 ### Prerequisites
 
-- **Node.js**: >= 24.0.0
-- **pnpm**: >= 9.0.0
-- **Git**: Latest version
-- **GitHub access**: Personal Access Token with the `read:packages` scope
+- **Node.js** >= 24.0.0
+- **pnpm** >= 9.0.0
+- **Git** — latest version
 
-### GitHub Packages authentication
-
-The `@ai-driven-dev/aidd` package is private and hosted on GitHub Packages.
-
-**1. Create a Personal Access Token:**
-
-1. Go to [GitHub Settings > Tokens (classic)](https://github.com/settings/tokens)
-2. Click on **"Generate new token (classic)"**
-3. Configure:
-   - **Note**: `AIDD CLI - Read`
-   - **Scopes**: ✅ `read:packages`
-4. Copy the token immediately
-
-**2. Configure npm:**
-
-```bash
-# Edit ~/.npmrc
-vim ~/.npmrc
-
-# Add these lines:
-@ai-driven-dev:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=ghp_your_actual_token_here
-```
+No private registry token is needed — all dependencies are on the public npm registry.
 
 ### Clone the repository
 
-AIDD can be used as a Git submodule. Always clone with `--recurse-submodules`:
+The CLI lives as a submodule inside the main `aidd` monorepo. Always clone with `--recurse-submodules`:
 
 ```bash
-git clone --recurse-submodules git@github.com:ai-driven-dev/aidd.git
-cd aidd/cli
-
-# If already cloned without submodules
-git submodule update --init --recursive
+git clone git@github.com:ai-driven-dev/aidd-cli.git
+cd aidd-cli
 ```
 
-### Install dependencies
+### Install and build
 
 ```bash
-pnpm install
+pnpm install     # install dependencies
+pnpm build       # compile to dist/cli.js
 ```
 
 ---
 
 ## Development workflow
 
-### 1. Find a feature
+### 1. Find a task
 
-**📌 [Check the Project Board](https://github.com/orgs/ai-driven-dev/projects/5)**
+**[Open the project board](https://github.com/orgs/ai-driven-dev/projects/5)**
 
-1. Open the current release.
-2. Look for issues in the **Ready** column.
-3. Assign yourself to an issue.
-4. Move it to `In Progress`.
-5. Create a branch from `main`.
-6. Use the CLI.
-7. Write tests.
-8. Test locally.
-9. Open a PR.
-10. Assign reviewers: `Baptiste`.
+1. Look for issues in the **Ready** column.
+2. Assign yourself and move it to `In Progress`.
 
 ### 2. Create a branch
 
 ```bash
-# Feature branch
-git checkout -b feat/your-feature-name
-
-# Fix branch
-git checkout -b fix/bug-description
+git checkout -b feat/your-feature-name   # feature
+git checkout -b fix/bug-description      # bug fix
 ```
+
+### 3. Develop
+
+Use the AIDD flow throughout development — this project is built with its own tooling.
+
+```bash
+pnpm test:watch     # run tests in watch mode while developing (no build step)
+pnpm typecheck      # TypeScript check
+pnpm lint           # lint + format (biome)
+```
+
+### 4. Run the full test suite
+
+```bash
+pnpm test           # build + full test suite (unit + e2e)
+```
+
+All contributions must include tests. Never mock functional behavior in tests.
+
+### 5. Test the CLI locally _(optional)_
+
+If you want to test the compiled CLI manually before opening a PR:
+
+```bash
+pnpm run install:local      # build + install globally
+
+# Then test in a scratch directory
+mkdir /tmp/aidd-test && cd /tmp/aidd-test
+aidd init
+aidd install claude
+```
+
+### 6. Open a Pull Request
+
+Push your branch and open a PR to `main`. The `.github/pull_request_template.md` template is applied automatically. Assign **Baptiste** as reviewer.
+
+---
+
+## Standards
 
 ### Commit message format
 
-Follow conventional commits:
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```bash
-# Features
-feat: add worktree command with auto-cleanup
-feat(install): add --skip-framework option
-
-# Fixes
+feat: add restore --docs flag
+feat(install): support --skip-framework option
 fix: resolve symlink creation on Windows
-fix(prompts): correct template path resolution
-
-# Documentation
-docs: update installation guide
-docs(contributing): clarify testing process
-
-# Refactoring
-refactor: simplify policy registry logic
-
-# Tests
-test: add e2e tests for worktree command
-
-# Maintenance
+fix(status): correct hash comparison for merged files
+docs: update adopt command examples
+refactor: simplify manifest migration logic
+test: add e2e tests for sync command
 chore: update dependencies
-chore(ci): optimize test workflow
 ```
 
-### 3. Develop the feature
+### Code quality
 
-Use AIDD CLI to build AIDD CLI 😈
+- No silent errors — throw early
+- No duplication
+- Small, single-responsibility functions
+- No comments on obvious code — make the code self-explanatory
+- Only comment genuinely tricky logic
 
-**Use AIDD commands:**
+---
 
-```bash
-/implement "<technical plan>"
-/test
-/review_code
-```
+## Pull Request process
 
-### 4. Test locally
-
-This will install your local version of the CLI globally for testing:
-
-```bash
-# Test the CLI locally
-pnpm run install:local
-
-# Create a test folder
-cd ../output-tests
-mkdir test-directory
-cd test-directory
-
-# Test your local version of the CLI
-aidd install
-```
-
-### 5. Write tests
-
-We aim for a professional-quality test suite; all contributions must include tests.
-
-| **Command**       | **Purpose**                   | **When to use**     |
-| ----------------- | ----------------------------- | ------------------- |
-| `pnpm test`       | Build + all tests (E2E)       | Before push, CI     |
-| `pnpm test:watch` | Watch mode (tests without build) | Active development |
-| `pnpm typecheck`  | TypeScript check              | Before commit       |
-| `pnpm lint`       | Lint + format (biome)         | Before commit       |
-
-### 6. Pull Request process
-
-1. Push your branch and open a PR to `main` — the `.github/pull_request_template.md` template will be applied automatically.
-2. Assign reviewers (`Baptiste`, then `Alex` if necessary).
+1. Open a PR to `main` with the filled template.
+2. Assign **Baptiste** as reviewer (add **Alex** if needed).
+3. Address review comments.
+4. Baptiste merges when approved.
 
 ---
 
 ## Publishing
 
-> This section is reserved for maintainers with publishing rights (Alex only).
->
-> As the CLI is closely tied to AIDD training courses, Alex must always be informed of changes before publishing.
+Publishing is **fully automated**. There is no manual release step.
 
-### Publishing prerequisites
+When a PR is merged into `main`, [Release Please](https://github.com/googleapis/release-please) opens or updates a release PR that bumps the version and updates the changelog based on conventional commits. Merging that release PR triggers the publish workflow automatically.
 
-- **GitHub CLI**: Authenticated with `gh`
-- **Repository permissions**: Create releases
-- **NPM authentication**: Configured for GitHub Packages
-
-### Publishing process
-
-Use the release flow:
-
-```bash
-/flows:release
-```
-
-**Important**: This command updates all version numbers. Never manually edit `package.json`.
+> Never manually edit `package.json` version fields.
 
 ---
 

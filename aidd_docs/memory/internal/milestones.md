@@ -425,20 +425,19 @@ The `reverseRewriteContent` and `reverseConvertFrontmatter` methods on ToolSpec 
 
 | Module                                       | Layer        | Responsibility                                                                                    |
 | -------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------- |
-| `application/use-cases/adopt-use-case.ts`    | Application  | Detect installed tools -> download framework -> apply format -> handle conflicts -> create manifest |
-| `presentation/commands/adopt.ts`             | Presentation | Commander registration for `aidd adopt`, `--force` flag                                           |
+| `application/use-cases/adopt-use-case.ts`    | Application  | Scan disk files → hash as-is → create manifest (no download, no conflict resolution) |
+| `application/commands/adopt.ts`              | Presentation | Commander registration for `aidd adopt --tools <tools>` (+ global `--release` required) |
 
 ### Acceptance Criteria
 
-- [ ] `aidd init` on a project with existing AIDD files blocks with message: "AIDD files detected. Use `aidd adopt` to migrate."
-- [ ] `aidd adopt` auto-detects installed tools from existing directories (`.claude/`, `.cursor/`, `.github/`)
-- [ ] `aidd adopt` downloads the latest framework version (or `--release` if specified)
-- [ ] Each existing file is treated as a conflict candidate (no prior manifest hash) → prompt keep/overwrite + backup if overwrite
-- [ ] `aidd adopt --force` overwrites all without prompting
-- [ ] Files on disk not in framework distribution → warning (doctor-style), not touched
-- [ ] Manifest created with post-write hashes after adopt completes
-- [ ] Output summarizes: files written, files kept, backups created, orphan warnings
-- [ ] E2E test: manually-placed files -> `aidd adopt` -> manifest created -> `aidd status` shows in-sync
+- [x] `aidd init` on a project with existing AIDD files blocks with message: "AIDD files detected. Use `aidd adopt` to migrate."
+- [x] `aidd adopt --tools <tools>` requires explicit tool list (claude, cursor, copilot)
+- [x] Global `--release` required to declare installed version
+- [x] Disk files scanned and hashed as-is — no download, no prompts, no conflict resolution
+- [x] Legacy `.aidd/config.json` deleted if present
+- [x] Manifest created with disk hashes (manifest hash == disk hash → `aidd update` auto-applies without conflicts)
+- [x] Output summarizes: tools adopted, files registered, docs registered
+- [x] E2E test: manually-placed files → `aidd adopt` → manifest created → `aidd status` shows in-sync
 
 ---
 

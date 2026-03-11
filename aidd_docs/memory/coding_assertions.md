@@ -10,7 +10,7 @@
 - No duplication — eliminate ruthlessly, reuse existing code
 - Domain layer has zero infrastructure imports
 - Max 2 runtime dependencies: `commander`, `@inquirer/prompts`
-- 4-layer architecture respected: Domain → Application → Infrastructure → Presentation
+- 3-layer architecture respected: Domain → Application → Infrastructure (no Presentation layer — output formatting lives in `application/output.ts`)
 
 ## Steps to follow
 

@@ -14,7 +14,7 @@
   - **Unit** — domain models and use-cases, mocked ports via `vi.fn()`
   - **Adapter** — infrastructure adapters with real temp directories
   - **E2E** — full CLI binary (`dist/cli.js`) invoked via `child_process`, real temp dirs
-- E2E covers: init, install, uninstall, status, clean, doctor + lifecycle + global options
+- E2E covers: init, install, uninstall, status, clean, doctor, update, restore, sync, cache, config, adopt + lifecycle + global options
 
 ## Test Execution Process
 

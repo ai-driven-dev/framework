@@ -1470,7 +1470,7 @@ The CLI launched after the community had already adopted the framework manually.
 
 | ID     | User Story                                                                                                                                              | Points | Priority | Status |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------- | ------ |
-| US-028 | As a developer who installed the framework manually, I want to run `aidd adopt` so that my existing files are brought under CLI management without loss | 5      | Must     | ⬜     |
+| US-028 | As a developer who installed the framework manually, I want to run `aidd adopt` so that my existing files are brought under CLI management without loss | 5      | Must     | ✅     |
 
 **Legend** : ⬜ Pending | 🔄 In Progress | ✅ Done | ⏭️ Skipped
 
@@ -1484,10 +1484,12 @@ The CLI launched after the community had already adopted the framework manually.
 
 ## Acceptance Criteria (epic level)
 
-- [ ] `aidd adopt` detects installed tools without a manifest
-- [ ] Conflict handling matches `aidd update` behavior
-- [ ] Manifest is created with correct post-write hashes
-- [ ] `aidd init` redirects to `aidd adopt` when existing files are detected
+- [x] `aidd adopt --tools <tools>` requires explicit tool list (no auto-detection)
+- [x] `--release` global flag required to specify installed version
+- [x] Manifest is created with disk hashes as-is (no download, no conflict resolution)
+- [x] Legacy `config.json` is deleted if present
+- [x] `aidd status` reports in-sync after adopt (manifest hash == disk hash)
+- [x] `aidd init` redirects to `aidd adopt` when existing files are detected
 
 ## Dependencies
 
@@ -1511,28 +1513,23 @@ The CLI launched after the community had already adopted the framework manually.
 ### Acceptance Criteria
 
 ```gherkin
-Scenario: Adopt with existing files — no conflicts (user accepts all)
+Scenario: Adopt manually installed claude files
   Given a project with .claude/ and aidd_docs/ files but no .aidd/manifest.json
-  When the user runs aidd adopt
-  Then the CLI detects claude as an installed tool
-  And downloads the latest framework
-  And prompts for each file that exists on disk
-  And writes each file the user accepts to overwrite
-  And creates .aidd/manifest.json with post-write hashes
-  And reports a summary of written and kept files
+  When the user runs aidd --release 3.3.3 adopt --tools claude
+  Then the CLI scans .claude/ and aidd_docs/ on disk
+  And creates .aidd/manifest.json with the exact disk hashes
+  And reports the number of files registered
 
-Scenario: Adopt with --force
-  Given a project with manually installed files and no manifest
-  When the user runs aidd adopt --force
-  Then all files are overwritten without prompting
-  And a .backup copy is created for each overwritten file
-  And the manifest is created
+Scenario: Adopt multiple tools
+  Given a project with .claude/ and .cursor/ directories
+  When the user runs aidd --release 3.3.3 adopt --tools claude,cursor
+  Then both tools are registered in the manifest
 
-Scenario: Orphan files not in framework
-  Given a project with custom files not present in the framework distribution
-  When the user runs aidd adopt
-  Then the custom files are not touched
-  And a warning is logged for each orphan file
+Scenario: Legacy config.json is cleaned up
+  Given a project with .claude/ and .aidd/config.json (legacy format)
+  When the user runs aidd --release 3.3.3 adopt --tools claude
+  Then .aidd/config.json is deleted
+  And .aidd/manifest.json is created
 
 Scenario: aidd init blocked when files exist
   Given a project with existing .claude/ directory
@@ -1540,7 +1537,7 @@ Scenario: aidd init blocked when files exist
   Then the CLI exits with error "AIDD files detected. Use `aidd adopt` to migrate your existing installation."
 
 Scenario: aidd status clean after adopt
-  Given aidd adopt completed successfully
+  Given aidd adopt completed successfully with the correct --release version
   When the user runs aidd status
   Then all tracked files are reported as in sync
 ```
