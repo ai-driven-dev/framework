@@ -6,45 +6,6 @@ The **AIDD CLI** (`@ai-driven-dev/cli`) distributes the [AI-Driven Development F
 
 ---
 
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Authentication](#authentication)
-  - [Token 1 — npm registry (one-time)](#token-1--npm-registry-one-time)
-  - [Token 2 — AIDD framework (runtime)](#token-2--aidd-framework-runtime)
-- [Quickstart](#quickstart)
-- [User Flows](#user-flows)
-  - [New project](#new-project)
-  - [Migrating from a manual install](#migrating-from-a-manual-install)
-  - [Updating the framework](#updating-the-framework)
-  - [Restoring modified files](#restoring-modified-files)
-  - [Syncing changes across tools](#syncing-changes-across-tools)
-  - [Uninstalling a tool](#uninstalling-a-tool)
-- [Commands](#commands)
-  - [Overview](#overview)
-  - [Core](#core)
-  - [`aidd init`](#aidd-init)
-  - [`aidd install`](#aidd-install)
-  - [`aidd uninstall`](#aidd-uninstall)
-  - [Monitoring](#monitoring)
-  - [`aidd status`](#aidd-status)
-  - [`aidd doctor`](#aidd-doctor)
-  - [Lifecycle](#lifecycle)
-  - [`aidd update`](#aidd-update)
-  - [`aidd restore`](#aidd-restore)
-  - [`aidd sync`](#aidd-sync)
-  - [`aidd adopt`](#aidd-adopt)
-  - [Utilities](#utilities)
-  - [`aidd clean`](#aidd-clean)
-  - [`aidd cache`](#aidd-cache)
-  - [`aidd config`](#aidd-config)
-- [Global Options](#global-options)
-- [Architecture](#architecture)
-- [Development](#development)
-- [Contributing](#contributing)
-- [License](#license)
-
----
-
 ## Prerequisites
 
 | Prerequisite             | Version | Notes                                                                               |
