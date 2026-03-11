@@ -1,0 +1,1049 @@
+{
+  "version": 1,
+  "docsDir": "aidd_docs",
+  "tools": {
+    "claude": {
+      "toolId": "claude",
+      "version": "3.4.4",
+      "files": [
+        {
+          "relativePath": ".claude/agents/alexia.md",
+          "hash": "00ca4493df4c20eebe7299821d97e9a8",
+          "frameworkPath": "agents/alexia.md"
+        },
+        {
+          "relativePath": ".claude/agents/claire.md",
+          "hash": "c7b5d6e491a3e8e412e1d1336e0e8d3b",
+          "frameworkPath": "agents/claire.md"
+        },
+        {
+          "relativePath": ".claude/agents/iris.md",
+          "hash": "25748c38db549431e1045fe5544eefb3",
+          "frameworkPath": "agents/iris.md"
+        },
+        {
+          "relativePath": ".claude/agents/kent.md",
+          "hash": "fe3d9f919f6095b2e5df36d785ee2ca7",
+          "frameworkPath": "agents/kent.md"
+        },
+        {
+          "relativePath": ".claude/agents/martin.md",
+          "hash": "c0f3fa8681ae3752520bb3c78f0f1d3c",
+          "frameworkPath": "agents/martin.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/00/auto_accept.md",
+          "hash": "e3b65f30e16a4b7f903ccee5417eb9bb",
+          "frameworkPath": "commands/00_behavior/auto_accept.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/01/generate_agent.md",
+          "hash": "edf471b90379bd36886488517f0540ad",
+          "frameworkPath": "commands/01_onboard/generate_agent.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/01/generate_architecture.md",
+          "hash": "7bfd410f1699ea2bde252b2d916f7942",
+          "frameworkPath": "commands/01_onboard/generate_architecture.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/01/generate_command.md",
+          "hash": "4d20650c2565f1b93b7f5e8d38b320a0",
+          "frameworkPath": "commands/01_onboard/generate_command.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/01/generate_rules.md",
+          "hash": "ecb0e56d667b1690d9248e18696045f2",
+          "frameworkPath": "commands/01_onboard/generate_rules.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/01/generate_skill.md",
+          "hash": "e2f315ea50e04f807c99e387e0e36559",
+          "frameworkPath": "commands/01_onboard/generate_skill.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/01/init.md",
+          "hash": "f5983b0055d09a933fac3700107265df",
+          "frameworkPath": "commands/01_onboard/init.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/02/brainstorm.md",
+          "hash": "c021913ba490c33e7c3ae486bc9debd7",
+          "frameworkPath": "commands/02_context/brainstorm.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/02/challenge.md",
+          "hash": "b4f821c288f1f00324f2e03ebe434c52",
+          "frameworkPath": "commands/02_context/challenge.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/02/create_user_stories.md",
+          "hash": "30bb5440c4e2b641e5915c7079e784af",
+          "frameworkPath": "commands/02_context/create_user_stories.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/02/ticket_info.md",
+          "hash": "dfd8d8cf324b41f96819267553b494ef",
+          "frameworkPath": "commands/02_context/ticket_info.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/03/components_behavior.md",
+          "hash": "59d4f9c58f58641234ec7b5eb1ade23a",
+          "frameworkPath": "commands/03_plan/components_behavior.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/03/image_extract_details.md",
+          "hash": "50050752c3963337d07cacd5b1b06604",
+          "frameworkPath": "commands/03_plan/image_extract_details.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/03/plan.md",
+          "hash": "4a0eea8a85e29fe988fa28bdc3f17f5d",
+          "frameworkPath": "commands/03_plan/plan.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/04/assert.md",
+          "hash": "79d13a20c4dcfec3867384790532a63d",
+          "frameworkPath": "commands/04_code/assert.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/04/assert_architecture.md",
+          "hash": "d4fc31d0aacbf14237dede42ca761f5c",
+          "frameworkPath": "commands/04_code/assert_architecture.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/04/assert_frontend.md",
+          "hash": "a2e3eb60df69493198934a7baddf78cf",
+          "frameworkPath": "commands/04_code/assert_frontend.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/04/implement.md",
+          "hash": "5dd879e7635aafd2531f6353254a10ca",
+          "frameworkPath": "commands/04_code/implement.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/04/implement_from_design.md",
+          "hash": "8e81ce87c2acf90238f3cb4e35db8eb1",
+          "frameworkPath": "commands/04_code/implement_from_design.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/04/run_projection.md",
+          "hash": "4d1f6fe1fd005053787146cef4130375",
+          "frameworkPath": "commands/04_code/run_projection.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/05/review_code.md",
+          "hash": "c16ff0945e352fea4042bc83ecaf078c",
+          "frameworkPath": "commands/05_review/review_code.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/05/review_functional.md",
+          "hash": "59a037922f1969941a423e75ea9eba78",
+          "frameworkPath": "commands/05_review/review_functional.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/06/test.md",
+          "hash": "ad0a768532ab076a6c93a2dd70e15a64",
+          "frameworkPath": "commands/06_tests/test.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/06/test_journey.md",
+          "hash": "ec8483f8609f752bbd2ff40ae88b66ac",
+          "frameworkPath": "commands/06_tests/test_journey.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/07/learn.md",
+          "hash": "c3dd83512a88398f4f4c109ac18c1ab8",
+          "frameworkPath": "commands/07_documentation/learn.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/07/mermaid.md",
+          "hash": "e95fba65e42919f00be6527dd93b102a",
+          "frameworkPath": "commands/07_documentation/mermaid.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/08/commit.md",
+          "hash": "c70f98cc5f63b5fbd9c1fc68c7e33126",
+          "frameworkPath": "commands/08_deploy/commit.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/08/create_request.md",
+          "hash": "a40a18a18f8f5d97afc624537f200e07",
+          "frameworkPath": "commands/08_deploy/create_request.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/08/tag.md",
+          "hash": "4048ebcdb7d7b47cf8d8b70b8f90ce7d",
+          "frameworkPath": "commands/08_deploy/tag.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/09/audit.md",
+          "hash": "557dee8342e50904986e555aad605d6f",
+          "frameworkPath": "commands/09_refactor/audit.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/09/performance.md",
+          "hash": "5c8bcc6345b0e083591dbfda4a747719",
+          "frameworkPath": "commands/09_refactor/performance.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/09/security_refactor.md",
+          "hash": "592ded9a53727621d12ef890ec8ca6be",
+          "frameworkPath": "commands/09_refactor/security_refactor.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/10/debug.md",
+          "hash": "02654bc5c9d2799f694d0e08e72e5e71",
+          "frameworkPath": "commands/10_maintenance/debug.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/10/new_issue.md",
+          "hash": "77de2921252ea34954aece4360dca6c7",
+          "frameworkPath": "commands/10_maintenance/new_issue.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/10/reflect_issue.md",
+          "hash": "7d0c7dc719103bdcb133e1d0f0520589",
+          "frameworkPath": "commands/10_maintenance/reflect_issue.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/10/reproduce.md",
+          "hash": "3d7fc8de4d25a128dd9227b7395b4818",
+          "frameworkPath": "commands/10_maintenance/reproduce.md"
+        },
+        {
+          "relativePath": ".claude/rules/00-architecture/.gitkeep",
+          "hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "frameworkPath": "rules/00-architecture/.gitkeep"
+        },
+        {
+          "relativePath": ".claude/rules/01-standards/1-command-structure.md",
+          "hash": "7f273b4eb10e3e610c8124cddb1bb3c5",
+          "frameworkPath": "rules/01-standards/1-command-structure.md"
+        },
+        {
+          "relativePath": ".claude/rules/01-standards/1-mermaid.md",
+          "hash": "f37a8ccc3b2bd1779edcabeb45cf05c5",
+          "frameworkPath": "rules/01-standards/1-mermaid.md"
+        },
+        {
+          "relativePath": ".claude/rules/01-standards/1-rule-structure.md",
+          "hash": "e8391b0ff1350fbb483c5ca3785ed400",
+          "frameworkPath": "rules/01-standards/1-rule-structure.md"
+        },
+        {
+          "relativePath": ".claude/rules/01-standards/1-rule-writing.md",
+          "hash": "08e161084103eff1fbfaa23dfb63ef51",
+          "frameworkPath": "rules/01-standards/1-rule-writing.md"
+        },
+        {
+          "relativePath": ".claude/rules/02-programming-languages/.gitkeep",
+          "hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "frameworkPath": "rules/02-programming-languages/.gitkeep"
+        },
+        {
+          "relativePath": ".claude/rules/03-frameworks-and-libraries/.gitkeep",
+          "hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "frameworkPath": "rules/03-frameworks-and-libraries/.gitkeep"
+        },
+        {
+          "relativePath": ".claude/rules/04-tooling/ide-mapping.md",
+          "hash": "41d6e89c8fdad36383f9a2c21199f740",
+          "frameworkPath": "rules/04-tooling/ide-mapping.claude.md"
+        },
+        {
+          "relativePath": ".claude/rules/05-testing/.gitkeep",
+          "hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "frameworkPath": "rules/05-testing/.gitkeep"
+        },
+        {
+          "relativePath": ".claude/rules/06-design-patterns/.gitkeep",
+          "hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "frameworkPath": "rules/06-design-patterns/.gitkeep"
+        },
+        {
+          "relativePath": ".claude/rules/07-quality/.gitkeep",
+          "hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "frameworkPath": "rules/07-quality/.gitkeep"
+        },
+        {
+          "relativePath": ".claude/rules/08-domain/.gitkeep",
+          "hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "frameworkPath": "rules/08-domain/.gitkeep"
+        },
+        {
+          "relativePath": ".claude/rules/09-other/.gitkeep",
+          "hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "frameworkPath": "rules/09-other/.gitkeep"
+        },
+        {
+          "relativePath": ".claude/skills/aidd-auto-implement/SKILL.md",
+          "hash": "210518f8adb23a49b0866b894a75904a",
+          "frameworkPath": "skills/aidd-auto-implement/SKILL.md"
+        },
+        {
+          "relativePath": ".claude/skills/challenge/SKILL.md",
+          "hash": "cc7734d36c2d1f7ab08e4b720d907aea",
+          "frameworkPath": "skills/challenge/SKILL.md"
+        },
+        {
+          "relativePath": ".mcp.json",
+          "hash": "1522c3279d4454b8fd1af8456279e19e",
+          "frameworkPath": "config/mcp.json"
+        },
+        {
+          "relativePath": ".vscode/settings.json",
+          "hash": "0b7389fcac352084d5ada3c03328a27f"
+        },
+        {
+          "relativePath": "CLAUDE.md",
+          "hash": "6fccad127d79a2bcdc9f4e76e8e4ffe7",
+          "frameworkPath": "aidd_docs/templates/AGENTS.md"
+        }
+      ]
+    },
+    "cursor": {
+      "toolId": "cursor",
+      "version": "3.4.4",
+      "files": [
+        {
+          "relativePath": ".cursor/agents/alexia.md",
+          "hash": "00ca4493df4c20eebe7299821d97e9a8",
+          "frameworkPath": "agents/alexia.md"
+        },
+        {
+          "relativePath": ".cursor/agents/claire.md",
+          "hash": "c7b5d6e491a3e8e412e1d1336e0e8d3b",
+          "frameworkPath": "agents/claire.md"
+        },
+        {
+          "relativePath": ".cursor/agents/iris.md",
+          "hash": "7f3fec3616c094c6973aab82a3f61d33",
+          "frameworkPath": "agents/iris.md"
+        },
+        {
+          "relativePath": ".cursor/agents/kent.md",
+          "hash": "fe3d9f919f6095b2e5df36d785ee2ca7",
+          "frameworkPath": "agents/kent.md"
+        },
+        {
+          "relativePath": ".cursor/agents/martin.md",
+          "hash": "8a1df0b3a31e9ebe6b4d72bbdc312834",
+          "frameworkPath": "agents/martin.md"
+        },
+        {
+          "relativePath": ".cursor/commands/00_behavior/auto_accept.md",
+          "hash": "875ad49c678dbcfec0f998bfcdd38fd9",
+          "frameworkPath": "commands/00_behavior/auto_accept.md"
+        },
+        {
+          "relativePath": ".cursor/commands/01_onboard/generate_agent.md",
+          "hash": "aa101038c1d1979555703926ab360d70",
+          "frameworkPath": "commands/01_onboard/generate_agent.md"
+        },
+        {
+          "relativePath": ".cursor/commands/01_onboard/generate_architecture.md",
+          "hash": "cfc10e7f74cd8844fb9ebfa165aed847",
+          "frameworkPath": "commands/01_onboard/generate_architecture.md"
+        },
+        {
+          "relativePath": ".cursor/commands/01_onboard/generate_command.md",
+          "hash": "4c4c6e8976fc539d4b96e143dc8a8e47",
+          "frameworkPath": "commands/01_onboard/generate_command.md"
+        },
+        {
+          "relativePath": ".cursor/commands/01_onboard/generate_rules.md",
+          "hash": "0d3ba51960a393eefd0721b65e77a067",
+          "frameworkPath": "commands/01_onboard/generate_rules.md"
+        },
+        {
+          "relativePath": ".cursor/commands/01_onboard/generate_skill.md",
+          "hash": "b5fc0bc39462c1122d227089e05da938",
+          "frameworkPath": "commands/01_onboard/generate_skill.md"
+        },
+        {
+          "relativePath": ".cursor/commands/01_onboard/init.md",
+          "hash": "a21fc0334800c2dde8dc5b0702ebd6e4",
+          "frameworkPath": "commands/01_onboard/init.md"
+        },
+        {
+          "relativePath": ".cursor/commands/02_context/brainstorm.md",
+          "hash": "bccc7c88928f4b4dfadff89962858448",
+          "frameworkPath": "commands/02_context/brainstorm.md"
+        },
+        {
+          "relativePath": ".cursor/commands/02_context/challenge.md",
+          "hash": "e527be4112ec9b138a9e9ca1f2c98ab5",
+          "frameworkPath": "commands/02_context/challenge.md"
+        },
+        {
+          "relativePath": ".cursor/commands/02_context/create_user_stories.md",
+          "hash": "fb51cdcee2c5c747bc601094e981aad4",
+          "frameworkPath": "commands/02_context/create_user_stories.md"
+        },
+        {
+          "relativePath": ".cursor/commands/02_context/ticket_info.md",
+          "hash": "92c578a0eaaed35c4cf250a0c3dca8a3",
+          "frameworkPath": "commands/02_context/ticket_info.md"
+        },
+        {
+          "relativePath": ".cursor/commands/03_plan/components_behavior.md",
+          "hash": "558b48a58dca80b6ed60dd891a3d4026",
+          "frameworkPath": "commands/03_plan/components_behavior.md"
+        },
+        {
+          "relativePath": ".cursor/commands/03_plan/image_extract_details.md",
+          "hash": "12414d935efd07f36d53d59cfb766579",
+          "frameworkPath": "commands/03_plan/image_extract_details.md"
+        },
+        {
+          "relativePath": ".cursor/commands/03_plan/plan.md",
+          "hash": "9e899094a9359f999bcaf7bc6d72365d",
+          "frameworkPath": "commands/03_plan/plan.md"
+        },
+        {
+          "relativePath": ".cursor/commands/04_code/assert.md",
+          "hash": "1ab539dc049070df773cccf332db1b5b",
+          "frameworkPath": "commands/04_code/assert.md"
+        },
+        {
+          "relativePath": ".cursor/commands/04_code/assert_architecture.md",
+          "hash": "bc4c7e3a76b14a267eae03978d40900e",
+          "frameworkPath": "commands/04_code/assert_architecture.md"
+        },
+        {
+          "relativePath": ".cursor/commands/04_code/assert_frontend.md",
+          "hash": "0e73d132e01f9b0619ebdc11441ccc8e",
+          "frameworkPath": "commands/04_code/assert_frontend.md"
+        },
+        {
+          "relativePath": ".cursor/commands/04_code/implement.md",
+          "hash": "da3e95ff4262d82627e955c715c0664c",
+          "frameworkPath": "commands/04_code/implement.md"
+        },
+        {
+          "relativePath": ".cursor/commands/04_code/implement_from_design.md",
+          "hash": "8712c07455d4796eb780dca002d099de",
+          "frameworkPath": "commands/04_code/implement_from_design.md"
+        },
+        {
+          "relativePath": ".cursor/commands/04_code/run_projection.md",
+          "hash": "bd54431bd29c287e0a6dd9dbe5a1d41e",
+          "frameworkPath": "commands/04_code/run_projection.md"
+        },
+        {
+          "relativePath": ".cursor/commands/05_review/review_code.md",
+          "hash": "09d88c17cb438450553afdd7fdf1682e",
+          "frameworkPath": "commands/05_review/review_code.md"
+        },
+        {
+          "relativePath": ".cursor/commands/05_review/review_functional.md",
+          "hash": "8c0bf2bee4883892d2ae08e80dab4ae6",
+          "frameworkPath": "commands/05_review/review_functional.md"
+        },
+        {
+          "relativePath": ".cursor/commands/06_tests/test.md",
+          "hash": "16a205df7d6dcd3edf52a5249298d71d",
+          "frameworkPath": "commands/06_tests/test.md"
+        },
+        {
+          "relativePath": ".cursor/commands/06_tests/test_journey.md",
+          "hash": "de8b0351c34af1c202c502cb529f677e",
+          "frameworkPath": "commands/06_tests/test_journey.md"
+        },
+        {
+          "relativePath": ".cursor/commands/07_documentation/learn.md",
+          "hash": "da33654dcd9fb5e5e5a67c2be6fba201",
+          "frameworkPath": "commands/07_documentation/learn.md"
+        },
+        {
+          "relativePath": ".cursor/commands/07_documentation/mermaid.md",
+          "hash": "f4ac8560c40c855f16ee5aff6a96531e",
+          "frameworkPath": "commands/07_documentation/mermaid.md"
+        },
+        {
+          "relativePath": ".cursor/commands/08_deploy/commit.md",
+          "hash": "f59497d322e70355faa1b0d9ef4a8bf3",
+          "frameworkPath": "commands/08_deploy/commit.md"
+        },
+        {
+          "relativePath": ".cursor/commands/08_deploy/create_request.md",
+          "hash": "ab2009906bba227dc7f6628f40cd9834",
+          "frameworkPath": "commands/08_deploy/create_request.md"
+        },
+        {
+          "relativePath": ".cursor/commands/08_deploy/tag.md",
+          "hash": "beead01b3f061811d2780ea2149a9e5f",
+          "frameworkPath": "commands/08_deploy/tag.md"
+        },
+        {
+          "relativePath": ".cursor/commands/09_refactor/audit.md",
+          "hash": "94364f945aac045af631a7d439492013",
+          "frameworkPath": "commands/09_refactor/audit.md"
+        },
+        {
+          "relativePath": ".cursor/commands/09_refactor/performance.md",
+          "hash": "486bb59b5cc83d188d2bb41c2d4a59ef",
+          "frameworkPath": "commands/09_refactor/performance.md"
+        },
+        {
+          "relativePath": ".cursor/commands/09_refactor/security_refactor.md",
+          "hash": "a6601671d65ef8476faa133aed8a0fb0",
+          "frameworkPath": "commands/09_refactor/security_refactor.md"
+        },
+        {
+          "relativePath": ".cursor/commands/10_maintenance/debug.md",
+          "hash": "fae9d99e1cc0997d9a328490bef0f6e5",
+          "frameworkPath": "commands/10_maintenance/debug.md"
+        },
+        {
+          "relativePath": ".cursor/commands/10_maintenance/new_issue.md",
+          "hash": "e5903ff058e10c391205d4a3b9dc534b",
+          "frameworkPath": "commands/10_maintenance/new_issue.md"
+        },
+        {
+          "relativePath": ".cursor/commands/10_maintenance/reflect_issue.md",
+          "hash": "bb2f82aaa3a882a1f03658f122e9b724",
+          "frameworkPath": "commands/10_maintenance/reflect_issue.md"
+        },
+        {
+          "relativePath": ".cursor/commands/10_maintenance/reproduce.md",
+          "hash": "d2e0faf3810bfa4067011af7e6a59d40",
+          "frameworkPath": "commands/10_maintenance/reproduce.md"
+        },
+        {
+          "relativePath": ".cursor/rules/00-architecture/.gitkeep",
+          "hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "frameworkPath": "rules/00-architecture/.gitkeep"
+        },
+        {
+          "relativePath": ".cursor/rules/01-standards/1-command-structure.mdc",
+          "hash": "7f273b4eb10e3e610c8124cddb1bb3c5",
+          "frameworkPath": "rules/01-standards/1-command-structure.md"
+        },
+        {
+          "relativePath": ".cursor/rules/01-standards/1-mermaid.mdc",
+          "hash": "c7515986e3b292e57d344bca11638601",
+          "frameworkPath": "rules/01-standards/1-mermaid.md"
+        },
+        {
+          "relativePath": ".cursor/rules/01-standards/1-rule-structure.mdc",
+          "hash": "0c499e41a1186d8c9f1e1499f38af86d",
+          "frameworkPath": "rules/01-standards/1-rule-structure.md"
+        },
+        {
+          "relativePath": ".cursor/rules/01-standards/1-rule-writing.mdc",
+          "hash": "68a1221e4fb4cbec4e4120192a8cd4fa",
+          "frameworkPath": "rules/01-standards/1-rule-writing.md"
+        },
+        {
+          "relativePath": ".cursor/rules/02-programming-languages/.gitkeep",
+          "hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "frameworkPath": "rules/02-programming-languages/.gitkeep"
+        },
+        {
+          "relativePath": ".cursor/rules/03-frameworks-and-libraries/.gitkeep",
+          "hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "frameworkPath": "rules/03-frameworks-and-libraries/.gitkeep"
+        },
+        {
+          "relativePath": ".cursor/rules/04-tooling/ide-mapping.mdc",
+          "hash": "eb19463b78024ccd4ac17234eb6c08db",
+          "frameworkPath": "rules/04-tooling/ide-mapping.cursor.md"
+        },
+        {
+          "relativePath": ".cursor/rules/05-testing/.gitkeep",
+          "hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "frameworkPath": "rules/05-testing/.gitkeep"
+        },
+        {
+          "relativePath": ".cursor/rules/06-design-patterns/.gitkeep",
+          "hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "frameworkPath": "rules/06-design-patterns/.gitkeep"
+        },
+        {
+          "relativePath": ".cursor/rules/07-quality/.gitkeep",
+          "hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "frameworkPath": "rules/07-quality/.gitkeep"
+        },
+        {
+          "relativePath": ".cursor/rules/08-domain/.gitkeep",
+          "hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "frameworkPath": "rules/08-domain/.gitkeep"
+        },
+        {
+          "relativePath": ".cursor/rules/09-other/.gitkeep",
+          "hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "frameworkPath": "rules/09-other/.gitkeep"
+        },
+        {
+          "relativePath": ".cursor/skills/aidd-auto-implement/SKILL.md",
+          "hash": "ac44a3036048f1c2cc2b10e4cad43d38",
+          "frameworkPath": "skills/aidd-auto-implement/SKILL.md"
+        },
+        {
+          "relativePath": ".cursor/skills/challenge/SKILL.md",
+          "hash": "1bf73436c341855c3571490c2daab27b",
+          "frameworkPath": "skills/challenge/SKILL.md"
+        },
+        {
+          "relativePath": ".cursor/mcp.json",
+          "hash": "1522c3279d4454b8fd1af8456279e19e",
+          "frameworkPath": "config/mcp.json"
+        },
+        {
+          "relativePath": "AGENTS.md",
+          "hash": "6fccad127d79a2bcdc9f4e76e8e4ffe7",
+          "frameworkPath": "aidd_docs/templates/AGENTS.md"
+        }
+      ]
+    },
+    "copilot": {
+      "toolId": "copilot",
+      "version": "3.4.4",
+      "files": [
+        {
+          "relativePath": ".github/agents/alexia.agent.md",
+          "hash": "00ca4493df4c20eebe7299821d97e9a8",
+          "frameworkPath": "agents/alexia.md"
+        },
+        {
+          "relativePath": ".github/agents/claire.agent.md",
+          "hash": "c7b5d6e491a3e8e412e1d1336e0e8d3b",
+          "frameworkPath": "agents/claire.md"
+        },
+        {
+          "relativePath": ".github/agents/iris.agent.md",
+          "hash": "8e429098757315a7bba89b9c11c2aaac",
+          "frameworkPath": "agents/iris.md"
+        },
+        {
+          "relativePath": ".github/agents/kent.agent.md",
+          "hash": "fe3d9f919f6095b2e5df36d785ee2ca7",
+          "frameworkPath": "agents/kent.md"
+        },
+        {
+          "relativePath": ".github/agents/martin.agent.md",
+          "hash": "6404959ca3cf264ca2469b9551acea41",
+          "frameworkPath": "agents/martin.md"
+        },
+        {
+          "relativePath": ".github/prompts/00-auto-accept.prompt.md",
+          "hash": "a67f785a9f6a821271d3597113ffff80",
+          "frameworkPath": "commands/00_behavior/auto_accept.md"
+        },
+        {
+          "relativePath": ".github/prompts/01-generate-agent.prompt.md",
+          "hash": "fec32c4a39ae9f4c80078b1f4ff80cc1",
+          "frameworkPath": "commands/01_onboard/generate_agent.md"
+        },
+        {
+          "relativePath": ".github/prompts/01-generate-architecture.prompt.md",
+          "hash": "854da19ec92160944896f5550a27a252",
+          "frameworkPath": "commands/01_onboard/generate_architecture.md"
+        },
+        {
+          "relativePath": ".github/prompts/01-generate-command.prompt.md",
+          "hash": "1c76126bde696128410ffd3a3193e395",
+          "frameworkPath": "commands/01_onboard/generate_command.md"
+        },
+        {
+          "relativePath": ".github/prompts/01-generate-rules.prompt.md",
+          "hash": "dc8a41fcd41d0e295f360bad3e43316c",
+          "frameworkPath": "commands/01_onboard/generate_rules.md"
+        },
+        {
+          "relativePath": ".github/prompts/01-generate-skill.prompt.md",
+          "hash": "a4c896e42e39a8415f3237e0993f6fd3",
+          "frameworkPath": "commands/01_onboard/generate_skill.md"
+        },
+        {
+          "relativePath": ".github/prompts/01-init.prompt.md",
+          "hash": "656dc03d0d71c691c99483a99ae5c02f",
+          "frameworkPath": "commands/01_onboard/init.md"
+        },
+        {
+          "relativePath": ".github/prompts/02-brainstorm.prompt.md",
+          "hash": "93d8cb50be659d2a10ea9400882a933b",
+          "frameworkPath": "commands/02_context/brainstorm.md"
+        },
+        {
+          "relativePath": ".github/prompts/02-challenge.prompt.md",
+          "hash": "b4a2c580aeb05cc7eb9a3fda09a5fafa",
+          "frameworkPath": "commands/02_context/challenge.md"
+        },
+        {
+          "relativePath": ".github/prompts/02-create-user-stories.prompt.md",
+          "hash": "93684abb7f1fef772e593f4398d00db0",
+          "frameworkPath": "commands/02_context/create_user_stories.md"
+        },
+        {
+          "relativePath": ".github/prompts/02-ticket-info.prompt.md",
+          "hash": "c1ee14a56fceae7f5db80cba90730448",
+          "frameworkPath": "commands/02_context/ticket_info.md"
+        },
+        {
+          "relativePath": ".github/prompts/03-components-behavior.prompt.md",
+          "hash": "d5de6055dff4419b1bfc847147eb56cc",
+          "frameworkPath": "commands/03_plan/components_behavior.md"
+        },
+        {
+          "relativePath": ".github/prompts/03-image-extract-details.prompt.md",
+          "hash": "43af6c75a74d2580eb0a9edf0e0b78d3",
+          "frameworkPath": "commands/03_plan/image_extract_details.md"
+        },
+        {
+          "relativePath": ".github/prompts/03-plan.prompt.md",
+          "hash": "6a71fabe618c3f6d76f7290e92aed6d6",
+          "frameworkPath": "commands/03_plan/plan.md"
+        },
+        {
+          "relativePath": ".github/prompts/04-assert.prompt.md",
+          "hash": "86f9d2f460ce0d430e37ed24b6c2b282",
+          "frameworkPath": "commands/04_code/assert.md"
+        },
+        {
+          "relativePath": ".github/prompts/04-assert-architecture.prompt.md",
+          "hash": "a4aebce1ac58ad3e13b38fb8beb856b4",
+          "frameworkPath": "commands/04_code/assert_architecture.md"
+        },
+        {
+          "relativePath": ".github/prompts/04-assert-frontend.prompt.md",
+          "hash": "d06a950cf8c1d7b96b52ef816e00f5f0",
+          "frameworkPath": "commands/04_code/assert_frontend.md"
+        },
+        {
+          "relativePath": ".github/prompts/04-implement.prompt.md",
+          "hash": "8232e6a6d8b1d0c81f59360a44df0466",
+          "frameworkPath": "commands/04_code/implement.md"
+        },
+        {
+          "relativePath": ".github/prompts/04-implement-from-design.prompt.md",
+          "hash": "0e0afd9f993fac53cdfb1cd71ccefdee",
+          "frameworkPath": "commands/04_code/implement_from_design.md"
+        },
+        {
+          "relativePath": ".github/prompts/04-run-projection.prompt.md",
+          "hash": "fff8c595bbc3ff97ed4cb698728c8664",
+          "frameworkPath": "commands/04_code/run_projection.md"
+        },
+        {
+          "relativePath": ".github/prompts/05-review-code.prompt.md",
+          "hash": "96598969aff67169c6e0fe0f52550641",
+          "frameworkPath": "commands/05_review/review_code.md"
+        },
+        {
+          "relativePath": ".github/prompts/05-review-functional.prompt.md",
+          "hash": "4a37e00fdaf7f29eaaa5965a69ae66e3",
+          "frameworkPath": "commands/05_review/review_functional.md"
+        },
+        {
+          "relativePath": ".github/prompts/06-test.prompt.md",
+          "hash": "d8a962738049eb7c660c1df8b3bfd72f",
+          "frameworkPath": "commands/06_tests/test.md"
+        },
+        {
+          "relativePath": ".github/prompts/06-test-journey.prompt.md",
+          "hash": "c62be77d8da46b833a7774b9f92724a6",
+          "frameworkPath": "commands/06_tests/test_journey.md"
+        },
+        {
+          "relativePath": ".github/prompts/07-learn.prompt.md",
+          "hash": "056bddf279b50da55646f6994caf2dc7",
+          "frameworkPath": "commands/07_documentation/learn.md"
+        },
+        {
+          "relativePath": ".github/prompts/07-mermaid.prompt.md",
+          "hash": "f7f480a4c5f2ae8b0987adf4f0c2bb10",
+          "frameworkPath": "commands/07_documentation/mermaid.md"
+        },
+        {
+          "relativePath": ".github/prompts/08-commit.prompt.md",
+          "hash": "6a9379fe78b53fcb7efb9e55500d1284",
+          "frameworkPath": "commands/08_deploy/commit.md"
+        },
+        {
+          "relativePath": ".github/prompts/08-create-request.prompt.md",
+          "hash": "0d1740beda7817bcb7b04af96817af3c",
+          "frameworkPath": "commands/08_deploy/create_request.md"
+        },
+        {
+          "relativePath": ".github/prompts/08-tag.prompt.md",
+          "hash": "4d33e62556add82087a897b08be02082",
+          "frameworkPath": "commands/08_deploy/tag.md"
+        },
+        {
+          "relativePath": ".github/prompts/09-audit.prompt.md",
+          "hash": "d0fbdd7111767334bdc2c6d34a0c5154",
+          "frameworkPath": "commands/09_refactor/audit.md"
+        },
+        {
+          "relativePath": ".github/prompts/09-performance.prompt.md",
+          "hash": "0d7f9a29b24497ef79a1c0798fbdc9b4",
+          "frameworkPath": "commands/09_refactor/performance.md"
+        },
+        {
+          "relativePath": ".github/prompts/09-security-refactor.prompt.md",
+          "hash": "c3c50f901196701522f75006c4c5a28f",
+          "frameworkPath": "commands/09_refactor/security_refactor.md"
+        },
+        {
+          "relativePath": ".github/prompts/10-debug.prompt.md",
+          "hash": "c54bfb0493303ccfad79ee8b3c1abd33",
+          "frameworkPath": "commands/10_maintenance/debug.md"
+        },
+        {
+          "relativePath": ".github/prompts/10-new-issue.prompt.md",
+          "hash": "13cd837717aaafe151b667ab335215e0",
+          "frameworkPath": "commands/10_maintenance/new_issue.md"
+        },
+        {
+          "relativePath": ".github/prompts/10-reflect-issue.prompt.md",
+          "hash": "0c3d126824cbe8636936b1c5b45a1acb",
+          "frameworkPath": "commands/10_maintenance/reflect_issue.md"
+        },
+        {
+          "relativePath": ".github/prompts/10-reproduce.prompt.md",
+          "hash": "8f7d27e62418d1e6823594faad62be76",
+          "frameworkPath": "commands/10_maintenance/reproduce.md"
+        },
+        {
+          "relativePath": ".github/instructions/01-command-structure.instructions.md",
+          "hash": "7f273b4eb10e3e610c8124cddb1bb3c5",
+          "frameworkPath": "rules/01-standards/1-command-structure.md"
+        },
+        {
+          "relativePath": ".github/instructions/01-mermaid.instructions.md",
+          "hash": "efc2524c67b309e8296091322551cd03",
+          "frameworkPath": "rules/01-standards/1-mermaid.md"
+        },
+        {
+          "relativePath": ".github/instructions/01-rule-structure.instructions.md",
+          "hash": "78bbae6873cec0cb8d188853fcba6be5",
+          "frameworkPath": "rules/01-standards/1-rule-structure.md"
+        },
+        {
+          "relativePath": ".github/instructions/01-rule-writing.instructions.md",
+          "hash": "95da61c50d4368fc009e903b2f7dbd8e",
+          "frameworkPath": "rules/01-standards/1-rule-writing.md"
+        },
+        {
+          "relativePath": ".github/instructions/04-ide-mapping.instructions.md",
+          "hash": "e71970bd65c2336c7aacd131b7bbe0c9",
+          "frameworkPath": "rules/04-tooling/ide-mapping.copilot.md"
+        },
+        {
+          "relativePath": ".github/skills/aidd-auto-implement/SKILL.md",
+          "hash": "dbdfff54d3999b25786017a2efa61702",
+          "frameworkPath": "skills/aidd-auto-implement/SKILL.md"
+        },
+        {
+          "relativePath": ".github/skills/challenge/SKILL.md",
+          "hash": "bf2d30a2b278d14df971d88312787b67",
+          "frameworkPath": "skills/challenge/SKILL.md"
+        },
+        {
+          "relativePath": ".vscode/mcp.json",
+          "hash": "1522c3279d4454b8fd1af8456279e19e",
+          "frameworkPath": "config/mcp.json"
+        },
+        {
+          "relativePath": ".vscode/extensions.json",
+          "hash": "7f4d7fdd71f6d21b976586ced209a914",
+          "frameworkPath": "config/.vscode/extensions.json"
+        },
+        {
+          "relativePath": ".vscode/keybindings.json",
+          "hash": "252f131294070a38b6cf12ec5609ca07",
+          "frameworkPath": "config/.vscode/keybindings.json"
+        },
+        {
+          "relativePath": ".vscode/settings.json",
+          "hash": "0b7389fcac352084d5ada3c03328a27f"
+        },
+        {
+          "relativePath": ".github/copilot-instructions.md",
+          "hash": "87183bf7ea38c5ba310034e3e6e2aaf1",
+          "frameworkPath": "aidd_docs/templates/AGENTS.md"
+        }
+      ]
+    }
+  },
+  "docs": {
+    "version": "3.4.4",
+    "files": [
+      {
+        "relativePath": "aidd_docs/CONTRIBUTING.md",
+        "hash": "00dbbd007a85ef29f6c1897b8602b733"
+      },
+      {
+        "relativePath": "aidd_docs/README.md",
+        "hash": "1f94b502f73cff8d4bcc6b6b1338c254"
+      },
+      {
+        "relativePath": "aidd_docs/memory/external/.gitkeep",
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relativePath": "aidd_docs/memory/internal/.gitkeep",
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relativePath": "aidd_docs/tasks/.gitkeep",
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/agent.md",
+        "hash": "1dfbaaa27ffda2318c23bba9777a89a7"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/agents_coordination.md",
+        "hash": "3993408dc736b6e8dc670f07ebe7a169"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/command.md",
+        "hash": "060042216eb32c70532e8b21c30245f9"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/master_plan.md",
+        "hash": "0dc25d287f14ffd56b9e68551381b001"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/memory/architecture.md",
+        "hash": "8849b48a858e4f1b67963d024c2b43f1"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/memory/codebase_map.md",
+        "hash": "39eaf08994298ee903eee83675bd2c4d"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/memory/coding_assertions.md",
+        "hash": "ade0db3bd98d5b020eba3dfa8ad7d78b"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/memory/deployment.md",
+        "hash": "29a20f5e5bda748716b82841264d3df7"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/memory/golden_principles.md",
+        "hash": "698b3776c364ece0470990ba2a7656eb"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/memory/internal/api_docs.md",
+        "hash": "8613368e09894e1214476edf321a9c60"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/memory/internal/backend_communication.md",
+        "hash": "173786f1d8c2e4de6a45505992ca43ef"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/memory/internal/browsing.md",
+        "hash": "7fdf8a59acabb42626a8f5e396f49017"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/memory/internal/database.md",
+        "hash": "2541b84ebceb856b5d9e2fc9f6a7e08a"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/memory/internal/design.md",
+        "hash": "ba4fdd1420f8555aa1ed52766953f45f"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/memory/internal/forms.md",
+        "hash": "00ed9bf243d220a80432b8aec7fd18a2"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/memory/project_brief.md",
+        "hash": "90d0415bce11b6167684cea548e4a23e"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/memory/testing.md",
+        "hash": "f7b1c8b4eb517631ebb4a45f96c6b3bc"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/memory/vcs.md",
+        "hash": "6f99710116c6f413167b6325774cb843"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/plan.md",
+        "hash": "9cf210a7ce183dde48413195d513e670"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/prompt.md",
+        "hash": "0f937dc0cd0e1e7e6c5545de8c4e9cfc"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/rule.md",
+        "hash": "abdc0cc41a711ada2e88a3c052c627a5"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/skill.md",
+        "hash": "7d1f753c388feabed174364d760d5c84"
+      },
+      {
+        "relativePath": "aidd_docs/templates/aidd/task.md",
+        "hash": "fcce34071d1fe9804914abd459a87c7e"
+      },
+      {
+        "relativePath": "aidd_docs/templates/dev/adr.md",
+        "hash": "f90091c3f42abe42f034f9a25f143f03"
+      },
+      {
+        "relativePath": "aidd_docs/templates/dev/code_review.md",
+        "hash": "1f6b8099d457c30852880757db90ef5e"
+      },
+      {
+        "relativePath": "aidd_docs/templates/dev/decision.md",
+        "hash": "3addc7ffad726f6d80ae611565e0e720"
+      },
+      {
+        "relativePath": "aidd_docs/templates/dev/review_code.md",
+        "hash": "40957d1ebfa40e7c39a6078034c15e70"
+      },
+      {
+        "relativePath": "aidd_docs/templates/dev/tech_choice.md",
+        "hash": "7372335de874251c1fd4950bb5ca020b"
+      },
+      {
+        "relativePath": "aidd_docs/templates/domain/.gitkeep",
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relativePath": "aidd_docs/templates/pm/prd.md",
+        "hash": "497631695eb55658576dec86636e8a7f"
+      },
+      {
+        "relativePath": "aidd_docs/templates/pm/user_story.md",
+        "hash": "5c8c1eda55750d4537838c7d71680119"
+      },
+      {
+        "relativePath": "aidd_docs/templates/vcs/CONTRIBUTING.md",
+        "hash": "613ec5b0416d7ae5f982e208f060beb4"
+      },
+      {
+        "relativePath": "aidd_docs/templates/vcs/README.md",
+        "hash": "2623a26fc638dc4693f1670bf971650a"
+      },
+      {
+        "relativePath": "aidd_docs/templates/vcs/branch.md",
+        "hash": "a084f945bef0bd928d21cdd8bf348ccc"
+      },
+      {
+        "relativePath": "aidd_docs/templates/vcs/commit.md",
+        "hash": "d4914e391e7f6621f0486d9665334935"
+      },
+      {
+        "relativePath": "aidd_docs/templates/vcs/issue.md",
+        "hash": "74eed09de8da701db75723ce5896b103"
+      },
+      {
+        "relativePath": "aidd_docs/templates/vcs/pull_request.md",
+        "hash": "03ef8b312e1ba40e704cf0d65f914021"
+      },
+      {
+        "relativePath": "aidd_docs/templates/vcs/release.md",
+        "hash": "3a82a1224d2b32dabfc9206894306ea0"
+      }
+    ]
+  }
+}
