@@ -15,6 +15,10 @@ pre-commit:
         else
           echo "⚠️  Parent repo not found, skipping hooks"
         fi
+    biome:
+      run: pnpm lint
+    typecheck:
+      run: pnpm typecheck
 
 pre-push:
   commands:
@@ -32,6 +36,10 @@ pre-push:
         else
           echo "⚠️  Parent repo not found, skipping hooks"
         fi
+    knip:
+      run: pnpm knip:production
+    test:
+      run: pnpm test
 
 commit-msg:
   commands:
