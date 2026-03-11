@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.3.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.2.0...v2.3.0) (2026-03-11)
+
+
+### Features
+
+* **adopt:** add adopt command for manual installation migration ([b34bc6b](https://github.com/ai-driven-dev/aidd-cli/commit/b34bc6b5361ecdce9652a4d6f2ba28f994d24c40))
+* **cli:** add update, restore, sync, cache, config and doctor-fix commands ([095c311](https://github.com/ai-driven-dev/aidd-cli/commit/095c311eca47086619485ac9ee58cd901dfe7117))
+* **sync:** add docs distribution and cross-tool bidirectional format conversion ([2f04dba](https://github.com/ai-driven-dev/aidd-cli/commit/2f04dba5e3c0bca4b0610aa2d5233d063c44eaba))
+
+
+### Documentation
+
+* **readme:** clarify AIDD_TOKEN requires repo scope not read:packages ([327b91d](https://github.com/ai-driven-dev/aidd-cli/commit/327b91d36564f90030d5babd56d90d0047032830))
+* update memory, backlog and task files for M6-M9 ([1d7444e](https://github.com/ai-driven-dev/aidd-cli/commit/1d7444ec1b41a6c11b8596b6bda73881dc601b50))
+* update README, CONTRIBUTING and memory for M9 milestone ([f77c5be](https://github.com/ai-driven-dev/aidd-cli/commit/f77c5be96c7b236f041b2316b26963299157027b))
+
 ## [2.2.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.1.0...v2.2.0) (2026-03-10)
 
 
