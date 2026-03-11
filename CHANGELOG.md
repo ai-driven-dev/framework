@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.1](https://github.com/ai-driven-dev/aidd-cli/compare/v2.4.0...v2.4.1) (2026-03-11)
+
+
+### Bug Fixes
+
+* **ci:** exclude package.json from biome formatter to avoid release-please conflicts ([0435abd](https://github.com/ai-driven-dev/aidd-cli/commit/0435abdc60b7a84bb0617779c24cc7c5f764677a))
+
 ## [2.4.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.3.0...v2.4.0) (2026-03-11)
 
 
