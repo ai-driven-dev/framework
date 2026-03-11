@@ -1,9 +1,17 @@
 export type ToolId = "claude" | "cursor" | "copilot";
 export const VALID_TOOL_IDS: readonly ToolId[] = ["claude", "cursor", "copilot"];
 
+export type UserFileSection = "agents" | "commands" | "rules" | "skills";
+
+export interface UserFileSectionKey {
+  section: UserFileSection;
+  key: string;
+}
+
 export interface SectionHandler {
   buildFilePath(fileName: string): string | null;
   convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown>;
+  reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown>;
 }
 
 export interface CommandsHandler {
@@ -12,11 +20,13 @@ export interface CommandsHandler {
     fm: Record<string, unknown>,
     relativeFileName: string
   ): Record<string, unknown>;
+  reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown>;
 }
 
 export interface RulesHandler {
   buildFilePath(fileName: string): string | null;
   convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown>;
+  reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown>;
 }
 
 export interface ConfigHandler {
@@ -41,6 +51,7 @@ export interface ToolConfig {
   skills(): SectionHandler;
   config(): ConfigHandler;
   memoryBank(): MemoryBankHandler;
+  detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null;
 }
 
 const TOOL_SUFFIXES = VALID_TOOL_IDS.map((id) => `.${id}.md`);

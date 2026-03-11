@@ -93,7 +93,7 @@ function collectListBlock(lines: string[], start: number): { items: string[]; ne
   while (i < lines.length) {
     const match = /^\s{2,}-\s+(.+)$/.exec(lines[i]);
     if (!match) break;
-    items.push(match[1].trim());
+    items.push(String(parseScalar(match[1].trim())));
     i++;
   }
   return { items, next: i };

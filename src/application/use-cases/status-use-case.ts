@@ -3,7 +3,6 @@ import type { FileHash } from "../../domain/models/file-hash.js";
 import { compareSemver } from "../../domain/models/semver.js";
 import { type ToolId, getToolConfig } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
-import type { FrameworkResolver } from "../../domain/ports/framework-resolver.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 
@@ -18,13 +17,11 @@ export interface ToolStatus {
   toolId: ToolId;
   version: string;
   drifted: FileDrift[];
-  updateAvailable?: { current: string; latest: string };
 }
 
 export interface DocsStatus {
   version: string;
   drifted: FileDrift[];
-  updateAvailable?: { current: string; latest: string };
 }
 
 export interface StatusReport {
@@ -36,6 +33,7 @@ export interface StatusReport {
 export interface StatusOptions {
   projectRoot: string;
   filterToolId?: ToolId;
+  filterDocs?: boolean;
 }
 
 export { compareSemver };
@@ -44,12 +42,11 @@ export class StatusUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    private readonly logger: Logger,
-    private readonly resolver?: FrameworkResolver
+    private readonly logger: Logger
   ) {}
 
   async execute(options: StatusOptions): Promise<StatusReport> {
-    const { projectRoot, filterToolId } = options;
+    const { projectRoot, filterToolId, filterDocs } = options;
 
     const manifest = await this.manifestRepo.load();
     if (manifest === null) {
@@ -60,7 +57,8 @@ export class StatusUseCase {
       throw new Error(`${filterToolId} is not installed`);
     }
 
-    const installedToolIds = filterToolId ? [filterToolId] : manifest.getInstalledToolIds();
+    const installedToolIds =
+      filterDocs ? [] : filterToolId ? [filterToolId] : manifest.getInstalledToolIds();
 
     const tools: ToolStatus[] = [];
     for (const toolId of installedToolIds) {
@@ -88,44 +86,34 @@ export class StatusUseCase {
     }
 
     let docs: DocsStatus | null = null;
-    if (!filterToolId && manifest.hasDocs()) {
+    if ((filterDocs || !filterToolId) && manifest.hasDocs()) {
       const docsVersion = manifest.getDocsVersion() ?? "unknown";
       const docsFiles = manifest.getDocsFiles();
       const drifted = await this.checkTrackedFiles(docsFiles, projectRoot);
+      const catalogPath = join(projectRoot, manifest.docsDir, "CATALOG.md");
+      if (!(await this.fs.fileExists(catalogPath))) {
+        drifted.push({ relativePath: `${manifest.docsDir}/CATALOG.md`, status: "deleted" });
+      }
+      const trackedDocsSet = new Set(docsFiles.map((f) => f.relativePath));
+      const docsDir = join(projectRoot, manifest.docsDir);
+      if (await this.fs.fileExists(docsDir)) {
+        const diskFiles = await this.fs.listDirectory(docsDir);
+        for (const diskRelPath of diskFiles) {
+          if (diskRelPath.endsWith(".backup")) continue;
+          if (diskRelPath === "CATALOG.md") continue;
+          const fullRelPath = `${manifest.docsDir}/${diskRelPath}`;
+          if (!trackedDocsSet.has(fullRelPath)) {
+            drifted.push({ relativePath: fullRelPath, status: "added" });
+          }
+        }
+      }
       docs = { version: docsVersion, drifted };
     }
 
     const inSync =
       tools.every((t) => t.drifted.length === 0) && (docs === null || docs.drifted.length === 0);
 
-    const latestVersion = await this.fetchLatestSemver();
-    if (latestVersion !== null) {
-      for (const tool of tools) {
-        const current = tool.version.replace(/^v/, "");
-        if (/^\d+\.\d+\.\d+$/.test(current) && compareSemver(current, latestVersion) < 0) {
-          tool.updateAvailable = { current, latest: latestVersion };
-        }
-      }
-      if (docs) {
-        const current = docs.version.replace(/^v/, "");
-        if (/^\d+\.\d+\.\d+$/.test(current) && compareSemver(current, latestVersion) < 0) {
-          docs.updateAvailable = { current, latest: latestVersion };
-        }
-      }
-    }
-
     return { tools, docs, inSync };
-  }
-
-  private async fetchLatestSemver(): Promise<string | null> {
-    if (!this.resolver) return null;
-    try {
-      const tagName = await this.resolver.fetchLatestVersion();
-      return tagName.replace(/^v/, "");
-    } catch (error) {
-      this.logger.debug(`Version check skipped: ${error}`);
-      return null;
-    }
   }
 
   private async checkTrackedFiles(

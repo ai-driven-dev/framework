@@ -43,13 +43,25 @@ export class UninstallUseCase {
       if (!manifest.hasTool(toolId)) {
         throw new Error(`${toolId} is not installed`);
       }
+    }
 
+    for (const toolId of toolIds) {
       this.logger.info(`Removing ${toolId} files...`);
+
+      const remainingToolIds = manifest
+        .getInstalledToolIds()
+        .filter((id) => id !== toolId && !toolIds.includes(id));
+      const sharedPaths = new Set(
+        remainingToolIds.flatMap((id) =>
+          manifest.getToolFiles(id).map((f) => f.relativePath)
+        )
+      );
 
       const files = manifest.getToolFiles(toolId);
       const deletedFiles: string[] = [];
 
       for (const file of files) {
+        if (sharedPaths.has(file.relativePath)) continue;
         const fullPath = join(projectRoot, file.relativePath);
         await this.fs.deleteFile(fullPath);
         deletedFiles.push(file.relativePath);

@@ -1,7 +1,6 @@
 import type { Command } from "commander";
 import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
-import { printUpdateBanner } from "../check-update.js";
 import { CLIOutput } from "../output.js";
 import { InstallUseCase } from "../use-cases/install-use-case.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
@@ -51,8 +50,6 @@ export function registerInstallCommand(program: Command): void {
         );
 
         output.validateTools(toolIds, VALID_TOOL_IDS);
-
-        await printUpdateBanner(deps.resolver, deps.manifestRepo, output);
 
         const { path: frameworkPath, version } = await resolveFramework(
           deps.resolver,

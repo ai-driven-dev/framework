@@ -1,7 +1,11 @@
 import { join } from "node:path";
 import { generateDistribution } from "../../domain/models/distribution.js";
-import { GeneratedFile } from "../../domain/models/generated-file.js";
-import { type ToolId, getToolConfig } from "../../domain/models/tool-config.js";
+import { parseFrontmatter, serializeFrontmatter } from "../../domain/models/frontmatter.js";
+import {
+  type UserFileSection,
+  type ToolId,
+  getToolConfig,
+} from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
@@ -16,6 +20,7 @@ export interface SyncOptions {
   sourceTool: ToolId;
   targetTools?: ToolId[];
   force?: boolean;
+  includeUserFiles?: boolean;
 }
 
 export interface SyncFileResult {
@@ -34,6 +39,50 @@ export interface SyncToolResult {
 export interface SyncResult {
   sourceTool: ToolId;
   tools: SyncToolResult[];
+}
+
+function getSectionFromFrameworkPath(frameworkPath: string): UserFileSection | null {
+  if (frameworkPath.startsWith("agents/")) return "agents";
+  if (frameworkPath.startsWith("commands/")) return "commands";
+  if (frameworkPath.startsWith("rules/")) return "rules";
+  if (frameworkPath.startsWith("skills/")) return "skills";
+  return null;
+}
+
+function transformContent(
+  content: string,
+  sourceConfig: ReturnType<typeof getToolConfig>,
+  targetConfig: ReturnType<typeof getToolConfig>,
+  section: UserFileSection | null,
+  frameworkPath: string,
+  docsDir: string
+): string {
+  if (section === null) {
+    const canonical = sourceConfig.reverseRewriteContent(content, docsDir);
+    return targetConfig.rewriteContent(canonical, docsDir);
+  }
+
+  const { frontmatter, body } = parseFrontmatter(content);
+
+  const canonicalFrontmatter =
+    sourceConfig[section]().reverseConvertFrontmatter(frontmatter);
+
+  // relativeFileName is the path relative to the section directory (e.g. "04_code/implement.md")
+  // needed by convertFrontmatter for commands to extract the phase prefix
+  const sectionPrefix = `${section}/`;
+  const relativeFileName = frameworkPath.startsWith(sectionPrefix)
+    ? frameworkPath.slice(sectionPrefix.length)
+    : frameworkPath;
+
+  const targetFrontmatter =
+    section === "commands"
+      ? targetConfig.commands().convertFrontmatter(canonicalFrontmatter, relativeFileName)
+      : (targetConfig[section]() as { convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> }).convertFrontmatter(canonicalFrontmatter);
+
+  const canonicalBody = sourceConfig.reverseRewriteContent(body, docsDir);
+  const targetBody = targetConfig.rewriteContent(canonicalBody, docsDir);
+
+  return serializeFrontmatter(targetFrontmatter, targetBody);
 }
 
 const EXCLUDED_FILES = new Set([
@@ -63,7 +112,15 @@ export class SyncUseCase {
   ) {}
 
   async execute(options: SyncOptions): Promise<SyncResult> {
-    const { projectRoot, docsDir, frameworkPath, version, sourceTool, force = false } = options;
+    const {
+      projectRoot,
+      docsDir,
+      frameworkPath,
+      version,
+      sourceTool,
+      force = false,
+      includeUserFiles = false,
+    } = options;
 
     const manifest = await this.manifestRepo.load();
     if (manifest === null) {
@@ -133,12 +190,6 @@ export class SyncUseCase {
       const targetManifestMap = new Map(targetManifestFiles.map((f) => [f.relativePath, f.hash]));
 
       const fileResults: SyncFileResult[] = [];
-      const updatedTargetFiles = new Map(
-        targetManifestFiles.map((f) => [
-          f.relativePath,
-          new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash }),
-        ])
-      );
 
       await this.propagateModified({
         sourceDistribution,
@@ -147,7 +198,6 @@ export class SyncUseCase {
         targetConfig,
         targetDistByFrameworkPath,
         targetManifestMap,
-        updatedTargetFiles,
         fileResults,
         projectRoot,
         docsDir,
@@ -160,32 +210,23 @@ export class SyncUseCase {
         sourceConfig,
         targetConfig,
         targetDistByFrameworkPath,
-        updatedTargetFiles,
         fileResults,
         projectRoot,
         docsDir,
+        includeUserFiles,
       });
 
       await this.propagateDeleted({
         sourceDistribution,
         sourceManifestFiles,
         targetDistByFrameworkPath,
-        updatedTargetFiles,
         fileResults,
         projectRoot,
         docsDir,
       });
 
-      if (fileResults.some((f) => f.written || f.deleted)) {
-        manifest.addTool(targetToolId, manifest.getToolVersion(targetToolId) ?? version, [
-          ...updatedTargetFiles.values(),
-        ]);
-      }
-
       toolResults.push({ targetToolId, files: fileResults });
     }
-
-    await this.manifestRepo.save(manifest);
 
     return { sourceTool, tools: toolResults };
   }
@@ -197,7 +238,6 @@ export class SyncUseCase {
     targetConfig: ReturnType<typeof getToolConfig>;
     targetDistByFrameworkPath: Map<string, { relativePath: string }>;
     targetManifestMap: Map<string, { value: string }>;
-    updatedTargetFiles: Map<string, GeneratedFile>;
     fileResults: SyncFileResult[];
     projectRoot: string;
     docsDir: string;
@@ -210,7 +250,6 @@ export class SyncUseCase {
       targetConfig,
       targetDistByFrameworkPath,
       targetManifestMap,
-      updatedTargetFiles,
       fileResults,
       projectRoot,
       docsDir,
@@ -236,8 +275,15 @@ export class SyncUseCase {
       if (correspondingTarget === undefined) continue;
 
       const diskSourceContent = await this.fs.readFile(diskSourcePath);
-      const canonicalContent = sourceConfig.reverseRewriteContent(diskSourceContent, docsDir);
-      const targetContent = targetConfig.rewriteContent(canonicalContent, docsDir);
+      const section = getSectionFromFrameworkPath(sourceFile.frameworkPath);
+      const targetContent = transformContent(
+        diskSourceContent,
+        sourceConfig,
+        targetConfig,
+        section,
+        sourceFile.frameworkPath,
+        docsDir
+      );
 
       const targetRelativePath = correspondingTarget.relativePath;
       const diskTargetPath = join(projectRoot, targetRelativePath);
@@ -276,15 +322,6 @@ export class SyncUseCase {
       }
 
       await this.fs.writeFile(diskTargetPath, targetContent);
-      const newHash = await this.fs.readFileHash(diskTargetPath);
-      updatedTargetFiles.set(
-        targetRelativePath,
-        new GeneratedFile({
-          relativePath: targetRelativePath,
-          content: targetContent,
-          hash: newHash,
-        })
-      );
       fileResults.push({
         relativePath: targetRelativePath,
         conflict,
@@ -300,10 +337,10 @@ export class SyncUseCase {
     sourceConfig: ReturnType<typeof getToolConfig>;
     targetConfig: ReturnType<typeof getToolConfig>;
     targetDistByFrameworkPath: Map<string, { relativePath: string }>;
-    updatedTargetFiles: Map<string, GeneratedFile>;
     fileResults: SyncFileResult[];
     projectRoot: string;
     docsDir: string;
+    includeUserFiles: boolean;
   }): Promise<void> {
     const {
       sourceDistribution,
@@ -311,10 +348,10 @@ export class SyncUseCase {
       sourceConfig,
       targetConfig,
       targetDistByFrameworkPath,
-      updatedTargetFiles,
       fileResults,
       projectRoot,
       docsDir,
+      includeUserFiles,
     } = ctx;
 
     const sourceDistByPath = new Map(sourceDistribution.map((f) => [f.relativePath, f]));
@@ -328,28 +365,68 @@ export class SyncUseCase {
       if (sourceManifestMap.has(sourceRelativePath)) continue;
 
       const sourceDistFile = sourceDistByPath.get(sourceRelativePath);
-      if (sourceDistFile?.frameworkPath === undefined) continue;
+      if (sourceDistFile?.frameworkPath === undefined) {
+        if (!includeUserFiles) continue;
+
+        const userKey = sourceConfig.detectUserFileSectionKey(sourceRelativePath);
+        if (userKey === null) continue;
+
+        const targetRelativePath = targetConfig[userKey.section]().buildFilePath(userKey.key);
+        if (targetRelativePath === null) continue;
+
+        const diskSourceContent = await this.fs.readFile(join(projectRoot, sourceRelativePath));
+        const targetContent = transformContent(
+          diskSourceContent,
+          sourceConfig,
+          targetConfig,
+          userKey.section,
+          userKey.key,
+          docsDir
+        );
+
+        const diskTargetPath = join(projectRoot, targetRelativePath);
+        const diskTargetExists = await this.fs.fileExists(diskTargetPath);
+        if (diskTargetExists) {
+          const current = await this.fs.readFile(diskTargetPath);
+          if (current === targetContent) {
+            fileResults.push({
+              relativePath: targetRelativePath,
+              conflict: false,
+              skipped: true,
+              written: false,
+            });
+            continue;
+          }
+        }
+
+        await this.fs.writeFile(diskTargetPath, targetContent);
+        fileResults.push({
+          relativePath: targetRelativePath,
+          conflict: false,
+          skipped: false,
+          written: true,
+        });
+        continue;
+      }
 
       const correspondingTarget = targetDistByFrameworkPath.get(sourceDistFile.frameworkPath);
       if (correspondingTarget === undefined) continue;
 
       const diskSourceContent = await this.fs.readFile(join(projectRoot, sourceRelativePath));
-      const canonicalContent = sourceConfig.reverseRewriteContent(diskSourceContent, docsDir);
-      const targetContent = targetConfig.rewriteContent(canonicalContent, docsDir);
+      const addedSection = getSectionFromFrameworkPath(sourceDistFile.frameworkPath);
+      const targetContent = transformContent(
+        diskSourceContent,
+        sourceConfig,
+        targetConfig,
+        addedSection,
+        sourceDistFile.frameworkPath,
+        docsDir
+      );
 
       const targetRelativePath = correspondingTarget.relativePath;
       const diskTargetPath = join(projectRoot, targetRelativePath);
 
       await this.fs.writeFile(diskTargetPath, targetContent);
-      const newHash = await this.fs.readFileHash(diskTargetPath);
-      updatedTargetFiles.set(
-        targetRelativePath,
-        new GeneratedFile({
-          relativePath: targetRelativePath,
-          content: targetContent,
-          hash: newHash,
-        })
-      );
       fileResults.push({
         relativePath: targetRelativePath,
         conflict: false,
@@ -363,7 +440,6 @@ export class SyncUseCase {
     sourceDistribution: ReturnType<typeof generateDistribution>;
     sourceManifestFiles: ReadonlyArray<{ relativePath: string; hash: { value: string } }>;
     targetDistByFrameworkPath: Map<string, { relativePath: string }>;
-    updatedTargetFiles: Map<string, GeneratedFile>;
     fileResults: SyncFileResult[];
     projectRoot: string;
     docsDir: string;
@@ -372,7 +448,6 @@ export class SyncUseCase {
       sourceDistribution,
       sourceManifestFiles,
       targetDistByFrameworkPath,
-      updatedTargetFiles,
       fileResults,
       projectRoot,
       docsDir,
@@ -399,7 +474,6 @@ export class SyncUseCase {
       if (!diskTargetExists) continue;
 
       await this.fs.deleteFile(diskTargetPath);
-      updatedTargetFiles.delete(targetRelativePath);
       fileResults.push({
         relativePath: targetRelativePath,
         conflict: false,

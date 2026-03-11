@@ -14,6 +14,7 @@ import {
   type RulesHandler,
   type SectionHandler,
   type ToolConfig,
+  type UserFileSectionKey,
   registerTool,
   stripToolSuffix,
 } from "../models/tool-config.js";
@@ -36,7 +37,10 @@ export const claudeToolConfig: ToolConfig = {
       .replaceAll(AT_DOCS_PLACEHOLDER, `@${docsDir}/`)
       .replaceAll(TOOLS_PLACEHOLDER, DIRECTORY)
       .replaceAll(DOCS_PLACEHOLDER, `${docsDir}/`)
-      .replace(/@\.claude\/commands\/(\d+)[_][^/]+\//g, (_, phase) => `@${commandsDir(phase)}`);
+      .replace(
+        /(@?)\.claude\/commands\/(\d+)[_][^/]+\//g,
+        (_, at, phase) => `${at}${commandsDir(phase)}`
+      );
   },
 
   reverseRewriteContent(content: string, docsDir: string): string {
@@ -53,6 +57,9 @@ export const claudeToolConfig: ToolConfig = {
         return `${DIRECTORY}agents/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
       },
       convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+        return { name: fm.name, description: fm.description };
+      },
+      reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
         return { name: fm.name, description: fm.description };
       },
     };
@@ -83,6 +90,14 @@ export const claudeToolConfig: ToolConfig = {
         if (fm["argument-hint"] !== undefined) result["argument-hint"] = fm["argument-hint"];
         return result;
       },
+      reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+        const rawName = String(fm.name ?? "");
+        const match = /^aidd:\d+:(.+)$/.exec(rawName);
+        const name = match ? match[1] : rawName;
+        const result: Record<string, unknown> = { name, description: fm.description };
+        if (fm["argument-hint"] !== undefined) result["argument-hint"] = fm["argument-hint"];
+        return result;
+      },
     };
   },
 
@@ -101,6 +116,9 @@ export const claudeToolConfig: ToolConfig = {
         if ("alwaysApply" in fm) return {};
         return {};
       },
+      reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+        return Array.isArray(fm.paths) && fm.paths.length > 0 ? { paths: fm.paths } : {};
+      },
     };
   },
 
@@ -110,6 +128,9 @@ export const claudeToolConfig: ToolConfig = {
         return `${DIRECTORY}skills/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
       },
       convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+        return fm;
+      },
+      reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
         return fm;
       },
     };
@@ -138,6 +159,20 @@ export const claudeToolConfig: ToolConfig = {
         return claudeToolConfig.rewriteContent(content, docsDir);
       },
     };
+  },
+
+  detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null {
+    const prefixes: [string, "agents" | "commands" | "rules" | "skills"][] = [
+      [`${DIRECTORY}agents/`, "agents"],
+      [`${DIRECTORY}commands/aidd/`, "commands"],
+      [`${DIRECTORY}rules/`, "rules"],
+      [`${DIRECTORY}skills/`, "skills"],
+    ];
+    for (const [prefix, section] of prefixes) {
+      if (relativePath.startsWith(prefix))
+        return { section, key: relativePath.slice(prefix.length) };
+    }
+    return null;
   },
 };
 

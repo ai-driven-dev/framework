@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { remapDocsPath, rewriteDocsContent } from "../../domain/models/docs-transform.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import { Manifest } from "../../domain/models/manifest.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
@@ -9,12 +10,11 @@ import type { ManifestRepository } from "../../domain/ports/manifest-repository.
 import { writeCatalog } from "./catalog-use-case.js";
 import { GitignoreUseCase } from "./gitignore-use-case.js";
 
-const FRAMEWORK_DOCS_PREFIX = "aidd_docs";
-
 export interface InitOptions {
   frameworkPath: string;
   version: string;
   docsDir: string;
+  explicitDocsDir?: string;
   projectRoot: string;
   force?: boolean;
   repo?: string;
@@ -35,39 +35,50 @@ export class InitUseCase {
     private readonly logger: Logger
   ) {}
 
-  async execute(options: InitOptions): Promise<InitResult> {
-    const { frameworkPath, version, docsDir, projectRoot, force = false, repo } = options;
-
+  async checkPreconditions(
+    options: Pick<InitOptions, "docsDir" | "projectRoot" | "force">
+  ): Promise<void> {
+    const { docsDir, projectRoot, force = false } = options;
     const existing = await this.manifestRepo.load();
 
     if (force) {
       if (existing === null) {
         throw new Error("No AIDD installation found. Run `aidd init` first.");
       }
-    } else {
-      if (existing !== null) {
-        throw new Error(
-          `Already initialized (docs in "${existing.docsDir}"). Use \`aidd init --force\` to re-copy docs, or \`aidd clean --force\` to reset completely.`
-        );
-      }
-      const aiddSignals = [
-        join(projectRoot, ".aidd"),
-        join(projectRoot, docsDir),
-        join(projectRoot, ".claude"),
-        join(projectRoot, ".cursor"),
-        join(projectRoot, ".github", "copilot-instructions.md"),
-      ];
-      for (const signalPath of aiddSignals) {
-        if (await this.fs.fileExists(signalPath)) {
-          throw new Error(
-            "AIDD files detected. Use `aidd adopt` to migrate your existing installation."
-          );
-        }
-      }
+      return;
     }
 
-    // After the guards above, existing is non-null in force mode and null in non-force mode.
-    const resolvedDocsDir = force && existing !== null ? existing.docsDir : docsDir;
+    if (existing !== null) {
+      throw new Error(
+        `Already initialized (docs in "${existing.docsDir}"). Use \`aidd init --force\` to re-copy docs, or \`aidd clean --force\` to reset completely.`
+      );
+    }
+
+    const aiddSignals = [
+      join(projectRoot, docsDir),
+      join(projectRoot, ".claude"),
+      join(projectRoot, ".cursor"),
+      join(projectRoot, ".github", "copilot-instructions.md"),
+    ];
+    for (const signalPath of aiddSignals) {
+      if (await this.fs.fileExists(signalPath)) {
+        throw new Error(
+          "AIDD files detected. Use `aidd adopt` to migrate your existing installation."
+        );
+      }
+    }
+  }
+
+  async execute(options: InitOptions): Promise<InitResult> {
+    const { frameworkPath, version, docsDir, explicitDocsDir, projectRoot, force = false, repo } =
+      options;
+
+    const existing = await this.manifestRepo.load();
+
+    // After checkPreconditions: existing is non-null in force mode and null in non-force mode.
+    // In --force mode: use explicitly provided --docs-dir if given; otherwise keep existing.
+    const resolvedDocsDir =
+      force && existing !== null && explicitDocsDir === undefined ? existing.docsDir : docsDir;
     const { descriptor, docsFiles } = await this.loader.loadFromDirectory(frameworkPath, version);
 
     const generated: GeneratedFile[] = [];
@@ -91,7 +102,19 @@ export class InitUseCase {
       generated.push(new GeneratedFile({ relativePath: outputRelPath, content, hash: newHash }));
     }
 
-    const manifest = force && existing !== null ? existing : Manifest.create(resolvedDocsDir, repo);
+    if (force && existing !== null) {
+      const newPaths = new Set(generated.map((f) => f.relativePath));
+      for (const oldFile of existing.getDocsFiles()) {
+        if (!newPaths.has(oldFile.relativePath)) {
+          await this.fs.deleteFile(join(projectRoot, oldFile.relativePath));
+        }
+      }
+    }
+
+    const manifest =
+      force && existing !== null
+        ? existing.withDocsDir(resolvedDocsDir)
+        : Manifest.create(resolvedDocsDir, repo);
     manifest.addDocs(descriptor.version, generated);
     await this.manifestRepo.save(manifest);
     await writeCatalog(manifest, resolvedDocsDir, projectRoot, this.fs);
@@ -102,15 +125,4 @@ export class InitUseCase {
 
     return { docsDir: resolvedDocsDir, fileCount: generated.length, manifest };
   }
-}
-
-function remapDocsPath(frameworkRelPath: string, docsDir: string): string {
-  if (frameworkRelPath.startsWith(`${FRAMEWORK_DOCS_PREFIX}/`)) {
-    return `${docsDir}/${frameworkRelPath.slice(FRAMEWORK_DOCS_PREFIX.length + 1)}`;
-  }
-  return frameworkRelPath;
-}
-
-function rewriteDocsContent(content: string, docsDir: string): string {
-  return content.replaceAll("{{DOCS}}/", `${docsDir}/`).replaceAll("{{TOOLS}}/", `${docsDir}/`);
 }

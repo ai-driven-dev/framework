@@ -3,6 +3,7 @@ import { platform } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
+import { printUpdateBanner } from "./application/check-update.js";
 import { registerAdoptCommand } from "./application/commands/adopt.js";
 import { registerCacheCommand } from "./application/commands/cache.js";
 import { registerCleanCommand } from "./application/commands/clean.js";
@@ -15,6 +16,8 @@ import { registerStatusCommand } from "./application/commands/status.js";
 import { registerSyncCommand } from "./application/commands/sync.js";
 import { registerUninstallCommand } from "./application/commands/uninstall.js";
 import { registerUpdateCommand } from "./application/commands/update.js";
+import { CLIOutput } from "./application/output.js";
+import { createDeps } from "./infrastructure/deps.js";
 
 function formatVersion(): string {
   try {
@@ -50,5 +53,12 @@ registerDoctorCommand(program);
 registerUpdateCommand(program);
 registerRestoreCommand(program);
 registerSyncCommand(program);
+
+program.hook("preAction", async () => {
+  const opts = program.opts<{ verbose?: boolean; repo?: string; token?: string }>();
+  const output = new CLIOutput(opts.verbose ?? false);
+  const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false, repo: opts.repo, token: opts.token }, output).catch(() => null);
+  if (deps) await printUpdateBanner(deps.resolver, deps.manifestRepo, output);
+});
 
 program.parse(process.argv);

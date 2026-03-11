@@ -5,7 +5,6 @@ import {
   SilentPrompterAdapter,
 } from "../../infrastructure/adapters/prompter-adapter.js";
 import { createDeps } from "../../infrastructure/deps.js";
-import { printUpdateBanner } from "../check-update.js";
 import { CLIOutput } from "../output.js";
 import { resolveFrameworkWithFallback } from "../use-cases/resolve-framework-use-case.js";
 import { RestoreUseCase } from "../use-cases/restore-use-case.js";
@@ -13,11 +12,12 @@ import { RestoreUseCase } from "../use-cases/restore-use-case.js";
 export function registerRestoreCommand(program: Command): void {
   program
     .command("restore")
-    .description("Restore tool files to their framework version")
+    .description("Restore files to their framework version")
     .argument("[files...]", "Specific file paths to restore (relative paths)")
     .option("-f, --force", "Restore without prompting", false)
     .option("--tool <tool>", "Limit restore to a specific tool")
-    .action(async (fileArgs: string[], cmdOptions: { force: boolean; tool?: string }) => {
+    .option("--docs", "Limit restore to docs only")
+    .action(async (fileArgs: string[], cmdOptions: { force: boolean; tool?: string; docs?: boolean }) => {
       const globalOptions = program.opts<{
         verbose: boolean;
         repo?: string;
@@ -30,6 +30,10 @@ export function registerRestoreCommand(program: Command): void {
       const output = new CLIOutput(verbose);
       const projectRoot = process.cwd();
 
+      if (cmdOptions.tool !== undefined && cmdOptions.docs) {
+        output.error("--tool and --docs are mutually exclusive");
+        process.exit(1);
+      }
       if (cmdOptions.tool !== undefined) {
         output.validateTools([cmdOptions.tool], VALID_TOOL_IDS);
       }
@@ -46,13 +50,13 @@ export function registerRestoreCommand(program: Command): void {
           output
         );
 
-        await printUpdateBanner(deps.resolver, deps.manifestRepo, output);
-
         const manifest = await deps.manifestRepo.load();
         if (manifest === null) {
           output.error("No AIDD installation found. Run `aidd init` first.");
           process.exit(1);
         }
+
+        const docsOnly = cmdOptions.docs ?? false;
 
         const pinnedVersion = cmdOptions.tool
           ? manifest.getToolVersion(cmdOptions.tool as ToolId)
@@ -95,35 +99,40 @@ export function registerRestoreCommand(program: Command): void {
           docsDir: manifest.docsDir,
           projectRoot,
           toolIds,
+          docsOnly,
           files: fileArgs.length > 0 ? fileArgs : undefined,
           force: cmdOptions.force,
           manifest,
         });
 
-        const nothingDone = result.tools.every((t) => t.nothingToRestore);
+        const nothingDone =
+          result.tools.every((t) => t.nothingToRestore) &&
+          (result.docs === null || result.docs.nothingToRestore);
 
         if (nothingDone) {
           output.success("Nothing to restore — all files are unmodified.");
           return;
         }
 
-        const totalRestored = result.tools.reduce((sum, t) => sum + t.restored.length, 0);
-        const totalKept = result.tools.reduce((sum, t) => sum + t.kept.length, 0);
-        const totalRemoved = result.tools.reduce((sum, t) => sum + t.removed.length, 0);
-
-        if (verbose) {
-          for (const tool of result.tools) {
-            if (tool.nothingToRestore) continue;
-            output.debug(`Tool: ${tool.toolId}`);
-            for (const f of tool.restored) output.debug(`  restored: ${f}`);
-            for (const f of tool.kept) output.debug(`  kept: ${f}`);
-            for (const f of tool.removed) output.debug(`  removed: ${f}`);
-          }
+        for (const tool of result.tools) {
+          if (tool.nothingToRestore) continue;
+          output.info(`\n${tool.toolId}:`);
+          for (const f of tool.restored) output.info(`  + ${f}`);
+          for (const f of tool.kept) output.info(`  ~ kept: ${f}`);
+        }
+        if (result.docs && !result.docs.nothingToRestore) {
+          output.info("\ndocs:");
+          for (const f of result.docs.restored) output.info(`  + ${f}`);
+          for (const f of result.docs.kept) output.info(`  ~ kept: ${f}`);
         }
 
-        output.success(
-          `Restored ${totalRestored} file(s), kept ${totalKept} file(s), removed ${totalRemoved} untracked file(s)`
-        );
+        const totalRestored =
+          result.tools.reduce((sum, t) => sum + t.restored.length, 0) +
+          (result.docs?.restored.length ?? 0);
+        const totalKept =
+          result.tools.reduce((sum, t) => sum + t.kept.length, 0) + (result.docs?.kept.length ?? 0);
+
+        output.success(`\nRestored ${totalRestored} file(s), kept ${totalKept} file(s)`);
       } catch (error) {
         output.exit(error);
       }

@@ -22,7 +22,8 @@ export function registerStatusCommand(program: Command): void {
     .command("status")
     .description("Show drift between disk files and the manifest")
     .option("--tool <toolId>", "Filter output to a specific tool")
-    .action(async (cmdOptions: { tool?: string }) => {
+    .option("--docs", "Filter output to docs only")
+    .action(async (cmdOptions: { tool?: string; docs?: boolean }) => {
       const globalOptions = program.opts<{ verbose: boolean; repo?: string; token?: string }>();
       const verbose = globalOptions.verbose ?? false;
       const output = new CLIOutput(verbose);
@@ -35,34 +36,15 @@ export function registerStatusCommand(program: Command): void {
           output
         );
 
+        if (cmdOptions.tool !== undefined && cmdOptions.docs) {
+          throw new Error("--tool and --docs are mutually exclusive");
+        }
         if (cmdOptions.tool !== undefined) output.validateTools([cmdOptions.tool], VALID_TOOL_IDS);
         const filterToolId = cmdOptions.tool as ToolId | undefined;
+        const filterDocs = cmdOptions.docs ?? false;
 
-        const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.resolver);
-        const report = await useCase.execute({ projectRoot, filterToolId });
-
-        const hasUpdates =
-          report.tools.some((t) => t.updateAvailable) || !!report.docs?.updateAvailable;
-
-        if (hasUpdates) {
-          for (const tool of report.tools) {
-            if (tool.updateAvailable) {
-              output.print(
-                `${tool.toolId}: Update available: v${tool.updateAvailable.current} -> v${tool.updateAvailable.latest}`
-              );
-            }
-          }
-          if (report.docs?.updateAvailable) {
-            output.print(
-              `docs: Update available: v${report.docs.updateAvailable.current} -> v${report.docs.updateAvailable.latest}`
-            );
-          }
-          const docsOutdated = !!report.docs?.updateAvailable;
-          const toolsOutdated = report.tools.some((t) => t.updateAvailable);
-          if (docsOutdated) output.print("Run `aidd init --force` to update docs.");
-          if (toolsOutdated) output.print("Run `aidd install --all` to update tools.");
-          output.print("");
-        }
+        const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
+        const report = await useCase.execute({ projectRoot, filterToolId, filterDocs });
 
         if (report.tools.length === 0 && !filterToolId) {
           output.print("No tools installed. Run `aidd install <tool>` to get started.");

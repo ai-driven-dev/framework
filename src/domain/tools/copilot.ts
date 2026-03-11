@@ -18,6 +18,7 @@ import {
   type RulesHandler,
   type SectionHandler,
   type ToolConfig,
+  type UserFileSectionKey,
   registerTool,
 } from "../models/tool-config.js";
 
@@ -85,6 +86,9 @@ const agentsHandler: SectionHandler = {
   convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
     return { name: fm.name, description: fm.description };
   },
+  reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+    return { name: fm.name, description: fm.description };
+  },
 };
 
 const commandsHandler: CommandsHandler = {
@@ -105,6 +109,14 @@ const commandsHandler: CommandsHandler = {
     if (fm["argument-hint"] !== undefined) result["argument-hint"] = fm["argument-hint"];
     return result;
   },
+  reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+    const rawName = String(fm.name ?? "");
+    const match = /^aidd_\d+_(.+)$/.exec(rawName);
+    const name = match ? match[1] : rawName;
+    const result: Record<string, unknown> = { name, description: fm.description };
+    if (fm["argument-hint"] !== undefined) result["argument-hint"] = fm["argument-hint"];
+    return result;
+  },
 };
 
 const rulesHandler: RulesHandler = {
@@ -118,11 +130,18 @@ const rulesHandler: RulesHandler = {
     return `${DIRECTORY}instructions/${flat}`;
   },
   convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-    if (fm.alwaysApply === false) return {};
     const { paths, globs } = fm;
     const patterns = Array.isArray(paths) ? paths : Array.isArray(globs) ? globs : null;
-    if (patterns === null || patterns.length === 0) return { applyTo: "**" };
-    return { applyTo: patterns.join(",") };
+    if (patterns !== null && patterns.length > 0) return { applyTo: patterns.join(",") };
+    return {};
+  },
+  reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+    const { applyTo } = fm;
+    if (typeof applyTo === "string" && applyTo !== "**") {
+      return { paths: applyTo.split(",").map((s) => s.trim()) };
+    }
+    // applyTo: "**" or absent → no paths (always apply)
+    return {};
   },
 };
 
@@ -133,6 +152,9 @@ const skillsHandler: SectionHandler = {
     return `${DIRECTORY}skills/${fileName}`;
   },
   convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+    return fm;
+  },
+  reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
     return fm;
   },
 };
@@ -183,7 +205,10 @@ function rewriteCopilotContent(content: string, docsDir: string): string {
       // {{TOOLS}}/ (without @) replaces directory prefix only — used for path references in frontmatter or prose.
       // @{{TOOLS}}/ (with @) resolves to a full installed path via resolveInstalledPath — used for @-include syntax.
       .replaceAll("{{TOOLS}}/agents/", `${DIRECTORY}agents/`)
-      .replaceAll("{{TOOLS}}/commands/", `${DIRECTORY}prompts/`)
+      .replace(/\{\{TOOLS\}\}\/commands\/([^\s\n`'">,]+)/g, (_match, path: string) => {
+        const flat = flattenFileName(path, EXT_PROMPT);
+        return `${DIRECTORY}prompts/${flat}`;
+      })
       .replaceAll("{{TOOLS}}/rules/", `${DIRECTORY}instructions/`)
       .replaceAll("{{TOOLS}}/skills/", `${DIRECTORY}skills/`)
       .replaceAll(TOOLS_PLACEHOLDER, DIRECTORY)
@@ -277,6 +302,19 @@ export const copilotToolConfig: ToolConfig = {
           .replace(new RegExp(`\\]\\(${docsDir}/`, "g"), `](../${docsDir}/`);
       },
     };
+  },
+
+  detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null {
+    if (relativePath.startsWith(`${DIRECTORY}agents/`)) {
+      const base = relativePath.slice(`${DIRECTORY}agents/`.length);
+      const key = base.endsWith(EXT_AGENT) ? `${base.slice(0, -EXT_AGENT.length)}.md` : base;
+      return { section: "agents", key };
+    }
+    if (relativePath.startsWith(`${DIRECTORY}skills/`)) {
+      return { section: "skills", key: relativePath.slice(`${DIRECTORY}skills/`.length) };
+    }
+    // commands (prompts) and rules (instructions) use flattenFileName which is not reversible
+    return null;
   },
 };
 

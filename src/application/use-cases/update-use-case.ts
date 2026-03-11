@@ -1,6 +1,8 @@
 import { join } from "node:path";
+import { buildDocsDistribution } from "../../domain/models/docs-transform.js";
 import { generateDistribution } from "../../domain/models/distribution.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
+import type { Manifest } from "../../domain/models/manifest.js";
 import { type ToolId, getToolConfig } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
@@ -15,6 +17,8 @@ export interface UpdateOptions {
   version: string;
   docsDir: string;
   projectRoot: string;
+  toolIds?: ToolId[];
+  docsOnly?: boolean;
   force?: boolean;
   dryRun?: boolean;
 }
@@ -27,8 +31,7 @@ export interface FileDiff {
   conflict?: boolean;
 }
 
-export interface UpdateToolResult {
-  toolId: ToolId;
+export interface UpdateSectionResult {
   alreadyUpToDate: boolean;
   dryRun: boolean;
   diff: FileDiff[];
@@ -38,10 +41,24 @@ export interface UpdateToolResult {
   backedUp: string[];
 }
 
+export interface UpdateToolResult extends UpdateSectionResult {
+  toolId: ToolId;
+}
+
+export type DocsUpdateResult = UpdateSectionResult;
+
 export interface UpdateResult {
   alreadyUpToDate: boolean;
   dryRun: boolean;
   tools: UpdateToolResult[];
+  docs: DocsUpdateResult | null;
+}
+
+interface ApplyDiffResult {
+  kept: string[];
+  written: string[];
+  deleted: string[];
+  backedUp: string[];
 }
 
 export class UpdateUseCase {
@@ -56,45 +73,34 @@ export class UpdateUseCase {
 
   async execute(options: UpdateOptions): Promise<UpdateResult> {
     const { frameworkPath, version, docsDir, projectRoot, force = false, dryRun = false } = options;
+    const docsOnly = options.docsOnly ?? false;
 
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) {
-      throw new Error("No AIDD installation found. Run `aidd init` first.");
-    }
+    if (manifest === null) throw new Error("No AIDD installation found. Run `aidd init` first.");
 
-    const { descriptor, contentFiles } = await this.loader.loadFromDirectory(
-      frameworkPath,
-      version
-    );
+    const { descriptor, contentFiles, docsFiles } = await this.loader.loadFromDirectory(frameworkPath, version);
 
-    const installedToolIds = manifest.getInstalledToolIds();
     const toolResults: UpdateToolResult[] = [];
 
-    for (const toolId of installedToolIds) {
+    const effectiveToolIds = docsOnly
+      ? []
+      : options.toolIds && options.toolIds.length > 0
+        ? options.toolIds
+        : manifest.getInstalledToolIds();
+
+    for (const toolId of effectiveToolIds) {
       this.logger.info(`Checking ${toolId} for updates...`);
 
       const config = getToolConfig(toolId);
       const manifestFiles = manifest.getToolFiles(toolId);
       const manifestMap = new Map(manifestFiles.map((f) => [f.relativePath, f.hash]));
-
-      const newDistribution = generateDistribution(
-        descriptor,
-        config,
-        docsDir,
-        contentFiles,
-        this.hasher
-      );
+      const newDistribution = generateDistribution(descriptor, config, docsDir, contentFiles, this.hasher);
       const newDistMap = new Map(newDistribution.map((f) => [f.relativePath, f]));
-
       const diff = await this.computeDiff(newDistribution, newDistMap, manifestMap, projectRoot);
 
-      const kept: string[] = [];
-      const written: string[] = [];
-      const deleted: string[] = [];
-      const backedUp: string[] = [];
+      let result: ApplyDiffResult = { kept: [], written: [], deleted: [], backedUp: [] };
 
       if (!dryRun) {
-        // Always re-apply merged files silently
         for (const newFile of newDistribution) {
           if (!newFile.merge) continue;
           const outputPath = join(projectRoot, newFile.relativePath);
@@ -103,86 +109,129 @@ export class UpdateUseCase {
           manifest.syncFileHashAcrossTools(newFile.relativePath, diskHash);
         }
 
-        for (const entry of diff) {
-          if (entry.kind === "added") {
-            const newFile = newDistMap.get(entry.relativePath);
-            if (!newFile)
-              throw new Error(`Missing new file in distribution: ${entry.relativePath}`);
-            await this.fs.writeFile(join(projectRoot, entry.relativePath), newFile.content);
-            written.push(entry.relativePath);
-          } else if (entry.kind === "removed") {
-            await this.fs.deleteFile(join(projectRoot, entry.relativePath));
-            deleted.push(entry.relativePath);
-          } else if (entry.kind === "changed") {
-            if (entry.conflict && !force) {
-              const decision = await this.prompter.resolveConflict(entry.relativePath, "modified");
-              if (decision === "keep") {
-                kept.push(entry.relativePath);
-                continue;
-              }
-            }
-            if (entry.conflict) {
-              const diskPath = join(projectRoot, entry.relativePath);
-              const diskContent = await this.fs.readFile(diskPath);
-              await this.fs.writeFile(`${diskPath}.backup`, diskContent);
-              backedUp.push(`${entry.relativePath}.backup`);
-            }
-            const newFile = newDistMap.get(entry.relativePath);
-            if (!newFile)
-              throw new Error(`Missing new file in distribution: ${entry.relativePath}`);
-            await this.fs.writeFile(join(projectRoot, entry.relativePath), newFile.content);
-            written.push(entry.relativePath);
-          }
-        }
+        result = await this.applyDiff(diff, newDistMap, projectRoot, force);
 
-        // Build final manifest file list from new distribution (non-merged) + kept files
         const nonMergedFinal = newDistribution
           .filter((f) => !f.merge)
-          .filter((f) => !deleted.includes(f.relativePath) && !kept.includes(f.relativePath));
-
+          .filter((f) => !result.deleted.includes(f.relativePath) && !result.kept.includes(f.relativePath));
         const keptFiles = manifestFiles
-          .filter((f) => kept.includes(f.relativePath))
-          .map(
-            (f) => new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash })
-          );
-
-        // Merged files are already updated in manifest via syncFileHashAcrossTools;
-        // re-add them from the manifest to preserve their updated hashes.
+          .filter((f) => result.kept.includes(f.relativePath))
+          .map((f) => new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash }));
         const mergedFiles = manifestFiles
           .filter((f) => newDistMap.get(f.relativePath)?.merge === true)
-          .map(
-            (f) => new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash })
-          );
+          .map((f) => new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash }));
 
         manifest.addTool(toolId, version, [...nonMergedFinal, ...keptFiles, ...mergedFiles]);
       }
 
-      const hasChanges = diff.some((d) => d.kind !== "unchanged");
-
       toolResults.push({
         toolId,
-        alreadyUpToDate: !hasChanges,
+        alreadyUpToDate: !diff.some((d) => d.kind !== "unchanged"),
         dryRun,
         diff,
-        kept,
-        written,
-        deleted,
-        backedUp,
+        ...result,
       });
     }
+
+    const hasExplicitToolFilter = !docsOnly && options.toolIds !== undefined && options.toolIds.length > 0;
+    const docsResult = hasExplicitToolFilter
+      ? null
+      : await this.updateDocs(manifest, docsFiles, docsDir, projectRoot, version, force, dryRun);
 
     if (!dryRun) {
       await this.manifestRepo.save(manifest);
       await writeCatalog(manifest, docsDir, projectRoot, this.fs);
     }
 
-    const allUpToDate = toolResults.every((r) => r.alreadyUpToDate);
-
     return {
-      alreadyUpToDate: allUpToDate,
+      alreadyUpToDate: toolResults.every((r) => r.alreadyUpToDate) && (docsResult === null || docsResult.alreadyUpToDate),
       dryRun,
       tools: toolResults,
+      docs: docsResult,
     };
+  }
+
+  private async updateDocs(
+    manifest: Manifest,
+    docsFiles: Map<string, string>,
+    docsDir: string,
+    projectRoot: string,
+    version: string,
+    force: boolean,
+    dryRun: boolean
+  ): Promise<DocsUpdateResult | null> {
+    if (!manifest.hasDocs()) return null;
+
+    this.logger.info("Checking docs for updates...");
+
+    const newDistribution = buildDocsDistribution(docsFiles, docsDir, this.hasher);
+    const newDistMap = new Map(newDistribution.map((f) => [f.relativePath, f]));
+    const manifestFiles = manifest.getDocsFiles();
+    const manifestMap = new Map(manifestFiles.map((f) => [f.relativePath, f.hash]));
+    const diff = await this.computeDiff(newDistribution, newDistMap, manifestMap, projectRoot);
+
+    let result: ApplyDiffResult = { kept: [], written: [], deleted: [], backedUp: [] };
+
+    if (!dryRun) {
+      result = await this.applyDiff(diff, newDistMap, projectRoot, force);
+
+      const finalFiles = newDistribution
+        .filter((f) => !result.deleted.includes(f.relativePath) && !result.kept.includes(f.relativePath));
+      const keptFiles = manifestFiles
+        .filter((f) => result.kept.includes(f.relativePath))
+        .map((f) => new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash }));
+      manifest.addDocs(version, [...finalFiles, ...keptFiles]);
+    }
+
+    return {
+      alreadyUpToDate: !diff.some((d) => d.kind !== "unchanged"),
+      dryRun,
+      diff,
+      ...result,
+    };
+  }
+
+  private async applyDiff(
+    diff: FileDiff[],
+    distMap: Map<string, GeneratedFile>,
+    projectRoot: string,
+    force: boolean
+  ): Promise<ApplyDiffResult> {
+    const kept: string[] = [];
+    const written: string[] = [];
+    const deleted: string[] = [];
+    const backedUp: string[] = [];
+
+    for (const entry of diff) {
+      if (entry.kind === "added") {
+        const newFile = distMap.get(entry.relativePath);
+        if (!newFile) throw new Error(`Missing new file in distribution: ${entry.relativePath}`);
+        await this.fs.writeFile(join(projectRoot, entry.relativePath), newFile.content);
+        written.push(entry.relativePath);
+      } else if (entry.kind === "removed") {
+        await this.fs.deleteFile(join(projectRoot, entry.relativePath));
+        deleted.push(entry.relativePath);
+      } else if (entry.kind === "changed") {
+        if (entry.conflict && !force) {
+          const decision = await this.prompter.resolveConflict(entry.relativePath, "modified");
+          if (decision === "keep") {
+            kept.push(entry.relativePath);
+            continue;
+          }
+        }
+        if (entry.conflict) {
+          const diskPath = join(projectRoot, entry.relativePath);
+          await this.fs.writeFile(`${diskPath}.backup`, await this.fs.readFile(diskPath));
+          backedUp.push(`${entry.relativePath}.backup`);
+        }
+        const newFile = distMap.get(entry.relativePath);
+        if (!newFile) throw new Error(`Missing new file in distribution: ${entry.relativePath}`);
+        await this.fs.writeFile(join(projectRoot, entry.relativePath), newFile.content);
+        written.push(entry.relativePath);
+      }
+    }
+
+    return { kept, written, deleted, backedUp };
   }
 
   private async computeDiff(
@@ -194,10 +243,7 @@ export class UpdateUseCase {
     const diff: FileDiff[] = [];
 
     for (const newFile of newDistribution) {
-      // Merged files (e.g. vscode settings) are always silently re-applied;
-      // their manifest hash is post-merge and can't be compared to raw content hash.
       if (newFile.merge) continue;
-
       const manifestHash = manifestMap.get(newFile.relativePath);
       if (manifestHash === undefined) {
         diff.push({ relativePath: newFile.relativePath, kind: "added" });
@@ -211,14 +257,23 @@ export class UpdateUseCase {
         }
         diff.push({ relativePath: newFile.relativePath, kind: "changed", conflict });
       } else {
-        diff.push({ relativePath: newFile.relativePath, kind: "unchanged" });
+        const diskPath = join(projectRoot, newFile.relativePath);
+        const diskExists = await this.fs.fileExists(diskPath);
+        if (!diskExists) {
+          diff.push({ relativePath: newFile.relativePath, kind: "changed", conflict: false });
+        } else {
+          const diskHash = await this.fs.readFileHash(diskPath);
+          if (diskHash.value !== manifestHash.value) {
+            diff.push({ relativePath: newFile.relativePath, kind: "changed", conflict: true });
+          } else {
+            diff.push({ relativePath: newFile.relativePath, kind: "unchanged" });
+          }
+        }
       }
     }
 
     for (const [relativePath] of manifestMap) {
-      if (!newDistMap.has(relativePath)) {
-        diff.push({ relativePath, kind: "removed" });
-      }
+      if (!newDistMap.has(relativePath)) diff.push({ relativePath, kind: "removed" });
     }
 
     return diff;

@@ -1,6 +1,5 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
-import { printUpdateBanner } from "../check-update.js";
 import { CLIOutput } from "../output.js";
 import { CleanUseCase } from "../use-cases/clean-use-case.js";
 
@@ -17,8 +16,6 @@ export function registerCleanCommand(program: Command): void {
 
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-
-        await printUpdateBanner(deps.resolver, deps.manifestRepo, output);
 
         const useCase = new CleanUseCase(deps.fs, deps.manifestRepo, deps.logger);
         const result = await useCase.execute({ projectRoot, force: cmdOptions.force });

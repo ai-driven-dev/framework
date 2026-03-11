@@ -85,6 +85,15 @@ export class InstallUseCase {
         this.hasher
       );
 
+      if (manifest.hasTool(toolId)) {
+        const newPaths = new Set(generated.map((f) => f.relativePath));
+        for (const oldFile of manifest.getToolFiles(toolId)) {
+          if (!newPaths.has(oldFile.relativePath)) {
+            await this.fs.deleteFile(join(projectRoot, oldFile.relativePath));
+          }
+        }
+      }
+
       const finalFiles = await this.writeToolFiles(generated, projectRoot, manifest);
       manifest.addTool(toolId, descriptor.version, finalFiles);
 

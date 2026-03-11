@@ -1,6 +1,5 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
-import { printUpdateBanner } from "../check-update.js";
 import { CLIOutput } from "../output.js";
 import { InitUseCase } from "../use-cases/init-use-case.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
@@ -12,9 +11,9 @@ export function registerInitCommand(program: Command): void {
   program
     .command("init")
     .description("Initialize the shared documentation structure")
-    .option("--docs-dir <name>", "Custom documentation directory name", DEFAULT_DOCS_DIR)
+    .option("--docs-dir <name>", "Custom documentation directory name")
     .option("--force", "Re-copy docs templates into existing docs directory", false)
-    .action(async (cmdOptions: { docsDir: string; force: boolean }) => {
+    .action(async (cmdOptions: { docsDir?: string; force: boolean }) => {
       const globalOptions = program.opts<{
         verbose: boolean;
         repo?: string;
@@ -23,7 +22,8 @@ export function registerInitCommand(program: Command): void {
         release?: string;
       }>();
 
-      const docsDir = cmdOptions.docsDir;
+      const explicitDocsDir = cmdOptions.docsDir;
+      const docsDir = explicitDocsDir ?? DEFAULT_DOCS_DIR;
       const verbose = globalOptions.verbose ?? false;
       const output = new CLIOutput(verbose);
 
@@ -47,12 +47,6 @@ export function registerInitCommand(program: Command): void {
           },
           output
         );
-        await printUpdateBanner(deps.resolver, deps.manifestRepo, output);
-        const { path: frameworkPath, version } = await resolveFramework(
-          deps.resolver,
-          deps.logger,
-          { framework: globalOptions.framework, release: globalOptions.release }
-        );
         const useCase = new InitUseCase(
           deps.fs,
           deps.manifestRepo,
@@ -60,10 +54,17 @@ export function registerInitCommand(program: Command): void {
           deps.hasher,
           deps.logger
         );
+        await useCase.checkPreconditions({ docsDir, projectRoot, force: cmdOptions.force });
+        const { path: frameworkPath, version } = await resolveFramework(
+          deps.resolver,
+          deps.logger,
+          { framework: globalOptions.framework, release: globalOptions.release }
+        );
         const result = await useCase.execute({
           frameworkPath,
           version,
           docsDir,
+          explicitDocsDir,
           projectRoot,
           force: cmdOptions.force,
           repo: globalOptions.repo,
