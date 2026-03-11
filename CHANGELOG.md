@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.4.2](https://github.com/ai-driven-dev/aidd-cli/compare/v2.4.1...v2.4.2) (2026-03-11)
+
+
+### Documentation
+
+* **memory:** update package version and test count in documentation ([4e79dec](https://github.com/ai-driven-dev/aidd-cli/commit/4e79dece8727b76c687d736ec51744d8f426f494))
+* remove manual TOC in favor of GitHub native TOC ([5929cfb](https://github.com/ai-driven-dev/aidd-cli/commit/5929cfb0089bf8f5a20a55b6aee326e750dd96ee))
+* restructure README and rewrite CONTRIBUTING ([37fec2b](https://github.com/ai-driven-dev/aidd-cli/commit/37fec2bee0b2aebc48911fa38c09e1c8a516d1f2))
+* restructure README for first-time user clarity ([4eec873](https://github.com/ai-driven-dev/aidd-cli/commit/4eec87368ab30ed96c39398279509fe4b3017965))
+
 ## [2.4.1](https://github.com/ai-driven-dev/aidd-cli/compare/v2.4.0...v2.4.1) (2026-03-11)
 
 
