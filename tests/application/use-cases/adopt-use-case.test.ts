@@ -1,5 +1,5 @@
-import { existsSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -87,7 +87,7 @@ describe("AdoptUseCase", () => {
     };
     const entry = data.tools.claude.files.find((f) => f.relativePath === ".claude/CLAUDE.md");
     expect(entry).toBeDefined();
-    expect(entry!.hash).toBe(createHash("md5").update(fileContent).digest("hex"));
+    expect(entry?.hash).toBe(createHash("md5").update(fileContent).digest("hex"));
   });
 
   it("stores the provided version in the manifest", async () => {
@@ -158,8 +158,8 @@ describe("AdoptUseCase", () => {
     });
 
     expect(result.tools.map((t) => t.toolId)).toEqual(["claude", "copilot"]);
-    expect(result.tools.find((t) => t.toolId === "claude")!.registered).toHaveLength(1);
-    expect(result.tools.find((t) => t.toolId === "copilot")!.registered).toHaveLength(1);
+    expect(result.tools.find((t) => t.toolId === "claude")?.registered).toHaveLength(1);
+    expect(result.tools.find((t) => t.toolId === "copilot")?.registered).toHaveLength(1);
   });
 
   it("registers user custom files alongside framework files", async () => {

@@ -2,8 +2,8 @@ import { join } from "node:path";
 import { generateDistribution } from "../../domain/models/distribution.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../domain/models/frontmatter.js";
 import {
-  type UserFileSection,
   type ToolId,
+  type UserFileSection,
   getToolConfig,
 } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";

@@ -1,6 +1,6 @@
 import type { Command } from "commander";
+import type { ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
-import { type ToolId } from "../../domain/models/tool-config.js";
 import { CLIOutput } from "../output.js";
 import { AdoptUseCase } from "../use-cases/adopt-use-case.js";
 
