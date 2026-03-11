@@ -105,7 +105,9 @@ export class Manifest {
     return [...this._tools.keys()];
   }
 
-  getToolFiles(toolId: ToolId): ReadonlyArray<{ relativePath: string; hash: FileHash; frameworkPath?: string }> {
+  getToolFiles(
+    toolId: ToolId
+  ): ReadonlyArray<{ relativePath: string; hash: FileHash; frameworkPath?: string }> {
     return this._tools.get(toolId)?.files ?? [];
   }
 

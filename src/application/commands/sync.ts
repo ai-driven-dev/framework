@@ -60,12 +60,7 @@ export function registerSyncCommand(program: Command): void {
             ? [cmdOptions.target as ToolId]
             : undefined;
 
-          const syncUseCase = new SyncUseCase(
-            deps.fs,
-            deps.manifestRepo,
-            deps.hasher,
-            deps.logger
-          );
+          const syncUseCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
 
           const result = await syncUseCase.execute({
             projectRoot,

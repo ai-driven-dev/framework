@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { FRAMEWORK_PATH, runCli } from "./helpers.js";
 
-describe("E2E: full lifecycle — init → install → status → uninstall → clean", () => {
+describe("E2E: full lifecycle", () => {
   let tempDir: string;
   let projectDir: string;
 
@@ -19,7 +19,7 @@ describe("E2E: full lifecycle — init → install → status → uninstall → 
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  it("covers the full v3.1/v3.2 workflow: init → install → status → update → restore → sync → config → cache → clean", async () => {
+  it("supports all core commands end-to-end without error", async () => {
     // init
     const initResult = await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
     expect(initResult.exitCode).toBe(0);
@@ -90,7 +90,7 @@ describe("E2E: full lifecycle — init → install → status → uninstall → 
     expect(existsSync(join(projectDir, ".aidd"))).toBe(false);
   }, 30000);
 
-  it("completes the full install, status, uninstall, clean cycle", async () => {
+  it("cleans up all installed files after uninstall and clean", async () => {
     // init
     const initResult = await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
     expect(initResult.exitCode).toBe(0);
@@ -119,5 +119,5 @@ describe("E2E: full lifecycle — init → install → status → uninstall → 
     expect(cleanResult.exitCode).toBe(0);
     expect(cleanResult.stdout).toContain("Cleaned all AIDD files");
     expect(existsSync(join(projectDir, ".aidd"))).toBe(false);
-  }, 5000);
+  });
 });

@@ -60,12 +60,15 @@ function transformContent(
 ): string {
   const { frontmatter, body } = parseFrontmatter(content);
 
-  const canonicalFrontmatter = sourceConfig[sectionKey.section]().reverseConvertFrontmatter(frontmatter);
+  const canonicalFrontmatter =
+    sourceConfig[sectionKey.section]().reverseConvertFrontmatter(frontmatter);
 
   const targetFrontmatter =
     sectionKey.section === "commands"
       ? targetConfig.commands().convertFrontmatter(canonicalFrontmatter, sectionKey.key)
-      : (targetConfig[sectionKey.section]() as SectionHandler).convertFrontmatter(canonicalFrontmatter);
+      : (targetConfig[sectionKey.section]() as SectionHandler).convertFrontmatter(
+          canonicalFrontmatter
+        );
 
   const canonicalBody = sourceConfig.reverseRewriteContent(body, docsDir);
   const targetBody = targetConfig.rewriteContent(canonicalBody, docsDir);
@@ -103,13 +106,7 @@ export class SyncUseCase {
   ) {}
 
   async execute(options: SyncOptions): Promise<SyncResult> {
-    const {
-      projectRoot,
-      docsDir,
-      sourceTool,
-      force = false,
-      includeUserFiles = false,
-    } = options;
+    const { projectRoot, docsDir, sourceTool, force = false, includeUserFiles = false } = options;
 
     const manifest = await this.manifestRepo.load();
     if (manifest === null) {
@@ -198,7 +195,11 @@ export class SyncUseCase {
   }
 
   private async propagateModified(ctx: {
-    sourceManifestFiles: ReadonlyArray<{ relativePath: string; hash: { value: string }; frameworkPath?: string }>;
+    sourceManifestFiles: ReadonlyArray<{
+      relativePath: string;
+      hash: { value: string };
+      frameworkPath?: string;
+    }>;
     sourceConfig: ToolConfig;
     targetConfig: ToolConfig;
     targetManifestMap: Map<string, { value: string }>;
@@ -239,7 +240,13 @@ export class SyncUseCase {
       if (targetRelativePath === undefined) continue;
 
       const diskSourceContent = await this.fs.readFile(diskSourcePath);
-      const targetContent = transformContent(diskSourceContent, sourceConfig, targetConfig, sectionKey, docsDir);
+      const targetContent = transformContent(
+        diskSourceContent,
+        sourceConfig,
+        targetConfig,
+        sectionKey,
+        docsDir
+      );
 
       const diskTargetPath = join(projectRoot, targetRelativePath);
       const diskTargetExists = await this.fs.fileExists(diskTargetPath);
@@ -323,7 +330,13 @@ export class SyncUseCase {
       if (targetRelativePath === null) continue;
 
       const diskSourceContent = await this.fs.readFile(join(projectRoot, sourceRelativePath));
-      const targetContent = transformContent(diskSourceContent, sourceConfig, targetConfig, sectionKey, docsDir);
+      const targetContent = transformContent(
+        diskSourceContent,
+        sourceConfig,
+        targetConfig,
+        sectionKey,
+        docsDir
+      );
 
       const diskTargetPath = join(projectRoot, targetRelativePath);
       const diskTargetExists = await this.fs.fileExists(diskTargetPath);
@@ -357,13 +370,7 @@ export class SyncUseCase {
     projectRoot: string;
     docsDir: string;
   }): Promise<void> {
-    const {
-      sourceManifestFiles,
-      targetByFrameworkPath,
-      fileResults,
-      projectRoot,
-      docsDir,
-    } = ctx;
+    const { sourceManifestFiles, targetByFrameworkPath, fileResults, projectRoot, docsDir } = ctx;
 
     for (const sourceManifestFile of sourceManifestFiles) {
       const { relativePath, frameworkPath } = sourceManifestFile;
