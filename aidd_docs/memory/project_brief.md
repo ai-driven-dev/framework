@@ -40,7 +40,7 @@
 | `aidd init` | `--force`, `--repo` | Create `aidd_docs/` structure and manifest. `--force` re-copies docs without full reset. |
 | `aidd install <tools...>` | `--all`, `--force` | Generate and write tool-specific distribution files. |
 | `aidd uninstall <tools...>` | `--all` | Remove tool files and update manifest. |
-| `aidd adopt` | `--tools <tools>` (required), `--docs-dir` (opt) + global `--release` (required) | Bootstrap manifest for projects with pre-existing manually installed AIDD files. Scans disk as-is, no download, no conflict resolution. Deletes legacy `config.json` if present. |
+| `aidd adopt` | `--tools <tools>` (required), `--docs-dir` (opt) + global `--release` or `--framework` (one required) | Bootstrap manifest for projects with pre-existing manually installed AIDD files. Registers only framework files (matching the distribution); user files are left untracked and untouched by all other commands. No file writes. |
 | `aidd status` | `--tool`, `--docs` | Show drift (modified/deleted/added) between disk and manifest. |
 | `aidd update` | `--force`, `--dry-run`, `--tool`, `--docs` | Diff and apply new framework version. `--tool`/`--docs` scope to one section. |
 | `aidd restore` | `--force`, `--tool`, `--docs`, `[files...]` | Restore modified/deleted files from pinned version. |
