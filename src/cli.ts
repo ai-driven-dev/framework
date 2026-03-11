@@ -19,6 +19,20 @@ import { registerUpdateCommand } from "./application/commands/update.js";
 import { CLIOutput } from "./application/output.js";
 import { createDeps } from "./infrastructure/deps.js";
 
+function printBanner(): void {
+  if (!process.stdout.isTTY) return;
+  process.stdout.write(`
+  █████╗ ██╗██████╗ ██████╗
+ ██╔══██╗██║██╔══██╗██╔══██╗
+ ███████║██║██║  ██║██║  ██║
+ ██╔══██║██║██║  ██║██║  ██║
+ ██║  ██║██║██████╔╝██████╔╝
+ ╚═╝  ╚═╝╚═╝╚═════╝ ╚═════╝
+
+ AI-Driven Development CLI
+\n`);
+}
+
 function formatVersion(): string {
   try {
     const pkgPath = join(dirname(fileURLToPath(import.meta.url)), "..", "package.json");
@@ -64,5 +78,9 @@ program.hook("preAction", async () => {
   ).catch(() => null);
   if (deps) await printUpdateBanner(deps.resolver, deps.manifestRepo, output);
 });
+
+if (process.argv.slice(2).length === 0) {
+  printBanner();
+}
 
 program.parse(process.argv);
