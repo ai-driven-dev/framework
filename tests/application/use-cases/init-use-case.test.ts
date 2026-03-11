@@ -68,43 +68,83 @@ describe("InitUseCase", () => {
     expect(data.docsDir).toBe("my_docs");
   });
 
-  it("aborts with adopt guidance when .aidd/ exists but no manifest.json", async () => {
-    await mkdir(join(projectRoot, ".aidd"), { recursive: true });
+  describe("checkPreconditions", () => {
+    it("passes when directory is truly empty", async () => {
+      await expect(
+        buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
+      ).resolves.toBeUndefined();
+    });
 
-    await expect(
-      buildUseCase().execute({
+    it("passes when only .aidd/cache/ exists (created by resolver before init runs)", async () => {
+      await mkdir(join(projectRoot, ".aidd", "cache"), { recursive: true });
+
+      await expect(
+        buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
+      ).resolves.toBeUndefined();
+    });
+
+    it("aborts with adopt guidance when docs directory already exists", async () => {
+      await mkdir(join(projectRoot, "aidd_docs"), { recursive: true });
+
+      await expect(
+        buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
+      ).rejects.toThrow("aidd adopt");
+    });
+
+    it("aborts with adopt guidance when .claude/ exists", async () => {
+      await mkdir(join(projectRoot, ".claude"), { recursive: true });
+
+      await expect(
+        buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
+      ).rejects.toThrow("AIDD files detected");
+    });
+
+    it("aborts when already initialized without --force", async () => {
+      await buildUseCase().execute({
         frameworkPath: FIXTURE_DIR,
         version: "test",
         docsDir: "aidd_docs",
         projectRoot,
-      })
-    ).rejects.toThrow("aidd adopt");
-  });
+      });
 
-  it("aborts with adopt guidance when docs directory already exists", async () => {
-    await mkdir(join(projectRoot, "aidd_docs"), { recursive: true });
+      await expect(
+        buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
+      ).rejects.toThrow("Already initialized");
+    });
 
-    await expect(
-      buildUseCase().execute({
+    it("shows recovery options when already initialized", async () => {
+      await buildUseCase().execute({
         frameworkPath: FIXTURE_DIR,
         version: "test",
         docsDir: "aidd_docs",
         projectRoot,
-      })
-    ).rejects.toThrow("aidd adopt");
-  });
+      });
 
-  it("aborts with adopt guidance when .claude/ exists", async () => {
-    await mkdir(join(projectRoot, ".claude"), { recursive: true });
+      await expect(
+        buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
+      ).rejects.toThrow(
+        /aidd init --force.*aidd clean --force|aidd clean --force.*aidd init --force/
+      );
+    });
 
-    await expect(
-      buildUseCase().execute({
+    it("--force: fails with guidance when no manifest exists", async () => {
+      await expect(
+        buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot, force: true })
+      ).rejects.toThrow("No AIDD installation found");
+    });
+
+    it("--force: passes when manifest exists", async () => {
+      await buildUseCase().execute({
         frameworkPath: FIXTURE_DIR,
         version: "test",
         docsDir: "aidd_docs",
         projectRoot,
-      })
-    ).rejects.toThrow("AIDD files detected");
+      });
+
+      await expect(
+        buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot, force: true })
+      ).resolves.toBeUndefined();
+    });
   });
 
   describe("--force", () => {
@@ -191,6 +231,82 @@ describe("InitUseCase", () => {
       expect(data.docs.version).toBe("test-v2");
     });
 
+    it("uses existing docsDir when --force without explicit --docs-dir", async () => {
+      await buildUseCase().execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "my_docs",
+        projectRoot,
+      });
+      const result = await buildUseCase().execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        // explicitDocsDir not set → should fall back to existing.docsDir ("my_docs")
+        projectRoot,
+        force: true,
+      });
+      expect(result.docsDir).toBe("my_docs");
+      const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const data = JSON.parse(raw) as Record<string, unknown>;
+      expect(data.docsDir).toBe("my_docs");
+    });
+
+    it("moves docs to new dir when --force with explicit --docs-dir", async () => {
+      await buildUseCase().execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+      const result = await buildUseCase().execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "docs",
+        explicitDocsDir: "docs",
+        projectRoot,
+        force: true,
+      });
+      expect(result.docsDir).toBe("docs");
+      const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const data = JSON.parse(raw) as Record<string, unknown>;
+      expect(data.docsDir).toBe("docs");
+      expect(existsSync(join(projectRoot, "docs"))).toBe(true);
+    });
+
+    it("deletes docs files from old version that are absent in new framework", async () => {
+      const { fs, manifestRepo, loader, hasher, logger } = buildDeps(projectRoot);
+      const useCase = new InitUseCase(fs, manifestRepo, loader, hasher, logger);
+
+      await useCase.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      // Inject an extra tracked docs file that the new framework won't have
+      const extraPath = join(projectRoot, "aidd_docs", "old-file.md");
+      await writeFile(extraPath, "old content");
+      const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const data = JSON.parse(raw) as {
+        docs: { version: string; files: { relativePath: string; hash: string }[] };
+      };
+      data.docs.files.push({ relativePath: "aidd_docs/old-file.md", hash: "a".repeat(32) });
+      await writeFile(join(projectRoot, ".aidd", "manifest.json"), JSON.stringify(data));
+
+      // Force re-init with same fixture (which doesn't include old-file.md)
+      await useCase.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test-v2",
+        docsDir: "aidd_docs",
+        projectRoot,
+        force: true,
+      });
+
+      expect(existsSync(extraPath)).toBe(false);
+    });
+
     it("does not touch tool distributions", async () => {
       const { fs, manifestRepo, loader, hasher, logger } = buildDeps(projectRoot);
       const initUseCase = new InitUseCase(fs, manifestRepo, loader, hasher, logger);
@@ -226,18 +342,6 @@ describe("InitUseCase", () => {
       const toolsAfter = (JSON.parse(rawAfter) as { tools: Record<string, unknown> }).tools;
       expect(JSON.stringify(toolsAfter)).toBe(JSON.stringify(toolsBefore));
     });
-
-    it("fails with guidance when no manifest exists", async () => {
-      await expect(
-        buildUseCase().execute({
-          frameworkPath: FIXTURE_DIR,
-          version: "test",
-          docsDir: "aidd_docs",
-          projectRoot,
-          force: true,
-        })
-      ).rejects.toThrow("No AIDD installation found");
-    });
   });
 
   it("creates CATALOG.md in docsDir after init", async () => {
@@ -266,44 +370,6 @@ describe("InitUseCase", () => {
 
     const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
     expect(raw).not.toContain("CATALOG.md");
-  });
-
-  it("fails if already initialized without --force", async () => {
-    await buildUseCase().execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    await expect(
-      buildUseCase().execute({
-        frameworkPath: FIXTURE_DIR,
-        version: "test",
-        docsDir: "my_docs",
-        projectRoot,
-      })
-    ).rejects.toThrow("Already initialized");
-  });
-
-  it("shows recovery options when already initialized", async () => {
-    await buildUseCase().execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    await expect(
-      buildUseCase().execute({
-        frameworkPath: FIXTURE_DIR,
-        version: "test",
-        docsDir: "aidd_docs",
-        projectRoot,
-      })
-    ).rejects.toThrow(
-      /aidd init --force.*aidd clean --force|aidd clean --force.*aidd init --force/
-    );
   });
 
   it("creates files under a custom docs directory", async () => {

@@ -44,6 +44,7 @@ export class RecordingPrompter implements Prompter {
 }
 
 export const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/framework");
+export const FIXTURE_DIR_V2 = join(process.cwd(), "tests/fixtures/framework-v2");
 
 export function buildDeps(projectRoot: string) {
   const hasher = new HasherAdapter();

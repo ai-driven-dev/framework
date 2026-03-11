@@ -30,6 +30,19 @@ describe("E2E: aidd install", () => {
     expect(existsSync(join(projectDir, ".claude"))).toBe(false);
   }, 5000);
 
+  it("installs claude tool with correct file layout", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+    const { stdout, exitCode } = await runCli(
+      ["install", "claude", "--framework", FRAMEWORK_PATH],
+      projectDir
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("Installed claude");
+    expect(existsSync(join(projectDir, ".claude"))).toBe(true);
+    expect(existsSync(join(projectDir, ".aidd", "manifest.json"))).toBe(true);
+  }, 5000);
+
   it("installs cursor tool with correct file layout", async () => {
     await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
     const { stdout, exitCode } = await runCli(

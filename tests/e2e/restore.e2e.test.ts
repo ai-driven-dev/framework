@@ -159,12 +159,42 @@ describe("E2E: aidd restore", () => {
     expect(namingAfter).not.toBe(customNamingContent);
   }, 10000);
 
-  it("removes untracked files in tool directory during restore", async () => {
+  it("preserves untracked files in tool directory during restore", async () => {
     await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
     await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
     const untrackedPath = join(projectDir, ".claude", "rules", "user-extra.md");
     await writeFile(untrackedPath, "user added file");
+
+    const { exitCode } = await runCli(
+      ["restore", "--framework", FRAMEWORK_PATH, "--force"],
+      projectDir
+    );
+
+    expect(exitCode).toBe(0);
+    expect(existsSync(untrackedPath)).toBe(true);
+  }, 10000);
+
+  it("fails with 'Restore requires --force' in non-interactive mode", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+    await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+
+    const { stderr, exitCode } = await runCli(
+      ["restore", "--framework", FRAMEWORK_PATH],
+      projectDir
+    );
+
+    expect(exitCode).not.toBe(0);
+    expect(stderr).toContain("Restore requires --force in non-interactive mode");
+  }, 10000);
+
+  it("restores a deleted docs file with --force", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+    await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+
+    const readmePath = join(projectDir, "aidd_docs", "README.md");
+    await rm(readmePath, { force: true });
+    expect(existsSync(readmePath)).toBe(false);
 
     const { stdout, exitCode } = await runCli(
       ["restore", "--framework", FRAMEWORK_PATH, "--force"],
@@ -172,7 +202,28 @@ describe("E2E: aidd restore", () => {
     );
 
     expect(exitCode).toBe(0);
-    expect(existsSync(untrackedPath)).toBe(false);
+    expect(stdout).toContain("Restored");
+    expect(existsSync(readmePath)).toBe(true);
+  }, 10000);
+
+  it("restores a modified docs file with --force", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+    await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+
+    const readmePath = join(projectDir, "aidd_docs", "README.md");
+    const originalContent = await readFile(readmePath, "utf-8");
+    await writeFile(readmePath, "custom docs content", "utf-8");
+
+    const { stdout, exitCode } = await runCli(
+      ["restore", "--framework", FRAMEWORK_PATH, "--force"],
+      projectDir
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("Restored");
+
+    const afterContent = await readFile(readmePath, "utf-8");
+    expect(afterContent).toBe(originalContent);
   }, 10000);
 
   it("shows usage with --help", async () => {

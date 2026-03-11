@@ -260,12 +260,12 @@ describe("generateDistribution()", () => {
     expect(files[0]?.content).toContain("# Naming");
   });
 
-  it("installs copilot rule with alwaysApply: false (no applyTo in output)", () => {
+  it("installs copilot rule with globs + alwaysApply: false as applyTo", () => {
     hashCounter = 0;
     const singleFileMap = new Map([
       [
         "rules/01-standards/command-structure.md",
-        "---\ndescription: Standards\nalwaysApply: false\n---\n\n# Command Structure",
+        '---\ndescription: Standards\nglobs: ["{{TOOLS}}/rules/**/*.md"]\nalwaysApply: false\n---\n\n# Command Structure',
       ],
     ]);
     const files = generateDistribution(
@@ -279,7 +279,7 @@ describe("generateDistribution()", () => {
     expect(files[0]?.relativePath).toBe(
       ".github/instructions/01-command-structure.instructions.md"
     );
-    expect(files[0]?.content).not.toContain("applyTo:");
+    expect(files[0]?.content).toContain("applyTo:");
     expect(files[0]?.content).toContain("# Command Structure");
   });
 
@@ -478,7 +478,7 @@ describe("generateDistribution() snapshots", () => {
       stubHasher
     );
     const rule = files.find((f) => f.relativePath.includes("rules/"));
-    expect(rule?.content).toEqual('---\npaths:\n  - ""src/**/*.ts""\n---\n\n# Naming\n');
+    expect(rule?.content).toEqual('---\npaths:\n  - "src/**/*.ts"\n---\n\n# Naming\n');
   });
 
   it("Claude — skills content is rewritten correctly", () => {
@@ -563,7 +563,7 @@ describe("generateDistribution() snapshots", () => {
     );
     const rule = files.find((f) => f.relativePath.includes("rules/"));
     expect(rule?.content).toEqual(
-      '---\ndescription: \'Naming standards\'\nglobs: ["\\"src/**/*.ts\\""]\nalwaysApply: false\n---\n\n# Naming\n'
+      "---\ndescription: 'Naming standards'\nglobs: [\"src/**/*.ts\"]\nalwaysApply: false\n---\n\n# Naming\n"
     );
   });
 
@@ -648,7 +648,7 @@ describe("generateDistribution() snapshots", () => {
       stubHasher
     );
     const rule = files.find((f) => f.relativePath.startsWith(".github/instructions/"));
-    expect(rule?.content).toEqual("---\napplyTo: '\"src/**/*.ts\"'\n---\n\n# Naming\n");
+    expect(rule?.content).toEqual("---\napplyTo: 'src/**/*.ts'\n---\n\n# Naming\n");
   });
 
   it("Copilot — skills content is rewritten correctly", () => {

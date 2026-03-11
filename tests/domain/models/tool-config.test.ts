@@ -16,16 +16,29 @@ const makeStubConfig = (toolId: ToolId, toolSuffix: string): ToolConfig => ({
   toolSuffix,
   rewriteContent: (content) => content,
   reverseRewriteContent: (content) => content,
-  agents: () => ({ buildFilePath: (f) => f, convertFrontmatter: (fm) => fm }),
-  commands: () => ({ buildFilePath: (f) => f, convertFrontmatter: (fm) => fm }),
+  agents: () => ({
+    buildFilePath: (f) => f,
+    convertFrontmatter: (fm) => fm,
+    reverseConvertFrontmatter: (fm) => fm,
+  }),
+  commands: () => ({
+    buildFilePath: (f) => f,
+    convertFrontmatter: (fm) => fm,
+    reverseConvertFrontmatter: (fm) => fm,
+  }),
   rules: () => ({
     buildFilePath: (f) => f,
     convertFrontmatter: (fm) => fm,
-    shouldProcess: () => true,
+    reverseConvertFrontmatter: (fm) => fm,
   }),
-  skills: () => ({ buildFilePath: (f) => f, convertFrontmatter: (fm) => fm }),
+  skills: () => ({
+    buildFilePath: (f) => f,
+    convertFrontmatter: (fm) => fm,
+    reverseConvertFrontmatter: (fm) => fm,
+  }),
   config: () => ({ outputPath: () => null, shouldMerge: () => false }),
   memoryBank: () => ({ outputPath: () => null, rewriteContent: (c) => c }),
+  detectUserFileSectionKey: () => null,
 });
 
 describe("VALID_TOOL_IDS", () => {

@@ -122,7 +122,7 @@ describe("printUpdateBanner", () => {
     expect(logs).toHaveLength(0);
   });
 
-  it("shows docs update command when docs are outdated", async () => {
+  it("shows 'aidd update --docs' when only docs are outdated", async () => {
     const deps = buildDeps(projectRoot);
     await initWithVersion(deps, projectRoot, "3.0.0");
     const { logger, logs } = makeLogger();
@@ -130,11 +130,11 @@ describe("printUpdateBanner", () => {
     await printUpdateBanner(makeResolver("v3.1.0"), deps.manifestRepo, logger);
 
     expect(logs.some((l) => l.includes("Update available"))).toBe(true);
-    expect(logs.some((l) => l.includes("aidd init --force"))).toBe(true);
-    expect(logs.some((l) => l.includes("aidd install --all"))).toBe(false);
+    expect(logs.some((l) => l.includes("aidd update --docs"))).toBe(true);
+    expect(logs.some((l) => l.includes("aidd update") && !l.includes("--docs"))).toBe(false);
   });
 
-  it("shows tools update command when tools are outdated", async () => {
+  it("shows 'aidd update' when only tools are outdated", async () => {
     const deps = buildDeps(projectRoot);
     await initWithVersion(deps, projectRoot, "3.1.0");
     await installWithVersion(deps, projectRoot, "3.0.0");
@@ -143,11 +143,11 @@ describe("printUpdateBanner", () => {
     await printUpdateBanner(makeResolver("v3.1.0"), deps.manifestRepo, logger);
 
     expect(logs.some((l) => l.includes("Update available"))).toBe(true);
-    expect(logs.some((l) => l.includes("aidd install --all"))).toBe(true);
-    expect(logs.some((l) => l.includes("aidd init --force"))).toBe(false);
+    expect(logs.some((l) => l.includes("aidd update"))).toBe(true);
+    expect(logs.some((l) => l.includes("--docs"))).toBe(false);
   });
 
-  it("shows both update commands when docs and tools are outdated", async () => {
+  it("shows 'aidd update' when both docs and tools are outdated", async () => {
     const deps = buildDeps(projectRoot);
     await initWithVersion(deps, projectRoot, "3.0.0");
     await installWithVersion(deps, projectRoot, "3.0.0");
@@ -156,7 +156,7 @@ describe("printUpdateBanner", () => {
     await printUpdateBanner(makeResolver("v3.1.0"), deps.manifestRepo, logger);
 
     expect(logs.some((l) => l.includes("Update available"))).toBe(true);
-    expect(logs.some((l) => l.includes("aidd init --force"))).toBe(true);
-    expect(logs.some((l) => l.includes("aidd install --all"))).toBe(true);
+    expect(logs.some((l) => l.includes("aidd update") && !l.includes("--docs"))).toBe(true);
+    expect(logs.some((l) => l.includes("--docs"))).toBe(false);
   });
 });

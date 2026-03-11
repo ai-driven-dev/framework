@@ -125,6 +125,21 @@ describe("UninstallUseCase", () => {
     expect(afterContent).toContain("# AIDD Framework Catalog");
   });
 
+  it("does not delete shared files when one of two tools sharing them is uninstalled", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+    await installTool(deps, projectRoot, "claude" as ToolId);
+    await installTool(deps, projectRoot, "copilot" as ToolId);
+
+    const sharedFile = join(projectRoot, ".vscode", "settings.json");
+    expect(existsSync(sharedFile)).toBe(true);
+
+    const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot });
+
+    expect(existsSync(sharedFile)).toBe(true);
+  });
+
   it("fails if project is not initialized", async () => {
     const deps = buildDeps(projectRoot);
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);

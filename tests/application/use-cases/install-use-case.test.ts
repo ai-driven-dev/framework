@@ -6,6 +6,7 @@ import { InstallUseCase } from "../../../src/application/use-cases/install-use-c
 import type { ToolId } from "../../../src/domain/models/tool-config.js";
 import {
   FIXTURE_DIR,
+  FIXTURE_DIR_V2,
   buildDeps,
   cleanupTempProject,
   createTempProject,
@@ -409,5 +410,41 @@ describe("InstallUseCase", () => {
         projectRoot,
       })
     ).rejects.toThrow("At least one tool ID is required");
+  });
+
+  it("deletes tool files from old version that are absent in new framework when --force", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const useCase = new InstallUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger
+    );
+
+    // Install with FIXTURE_DIR_V2 first (has assert.md, no code-reviewer.md)
+    await useCase.execute({
+      toolIds: ["claude" as ToolId],
+      frameworkPath: FIXTURE_DIR_V2,
+      version: "test-v2",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+    const assertPath = join(projectRoot, ".claude/commands/aidd/04/assert.md");
+    expect(existsSync(assertPath)).toBe(true);
+
+    // Reinstall with FIXTURE_DIR (no assert.md) using --force
+    await useCase.execute({
+      toolIds: ["claude" as ToolId],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+      force: true,
+    });
+
+    expect(existsSync(assertPath)).toBe(false);
   });
 });

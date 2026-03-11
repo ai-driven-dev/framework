@@ -49,6 +49,24 @@ describe("E2E: aidd global options", () => {
     expect(stderr).toContain("unknown command");
   }, 5000);
 
+  it("init --help shows init-specific options", async () => {
+    const { stdout, exitCode } = await runCli(["init", "--help"], projectDir);
+
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("init");
+    expect(stdout).toContain("--force");
+    expect(stdout).toContain("--docs-dir");
+  }, 5000);
+
+  it("config --help shows config subcommands", async () => {
+    const { stdout, exitCode } = await runCli(["config", "--help"], projectDir);
+
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("list");
+    expect(stdout).toContain("get");
+    expect(stdout).toContain("set");
+  }, 5000);
+
   it("--verbose install lists installed files", async () => {
     await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
 

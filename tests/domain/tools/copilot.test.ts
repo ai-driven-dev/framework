@@ -51,14 +51,14 @@ describe("copilotToolConfig", () => {
       expect(result).not.toHaveProperty("paths");
     });
 
-    it("uses ** when paths is empty", () => {
+    it("returns empty frontmatter when paths is empty", () => {
       const result = copilotToolConfig.rules().convertFrontmatter({ paths: [] });
-      expect(result).toHaveProperty("applyTo", "**");
+      expect(result).toEqual({});
     });
 
-    it("uses ** for rules when no paths or globs", () => {
+    it("returns empty frontmatter when no paths or globs (always apply)", () => {
       const result = copilotToolConfig.rules().convertFrontmatter({});
-      expect(result).toHaveProperty("applyTo", "**");
+      expect(result).toEqual({});
     });
   });
 
@@ -165,8 +165,17 @@ describe("copilotToolConfig", () => {
   });
 
   describe("rules().convertFrontmatter() — alwaysApply", () => {
-    it("returns empty frontmatter when alwaysApply is false", () => {
+    it("returns empty frontmatter when alwaysApply is false without patterns", () => {
       expect(copilotToolConfig.rules().convertFrontmatter({ alwaysApply: false })).toEqual({});
+    });
+
+    it("converts globs + alwaysApply: false from framework to applyTo", () => {
+      expect(
+        copilotToolConfig.rules().convertFrontmatter({
+          globs: ["{{TOOLS}}/rules/**/*.md"],
+          alwaysApply: false,
+        })
+      ).toEqual({ applyTo: "{{TOOLS}}/rules/**/*.md" });
     });
   });
 

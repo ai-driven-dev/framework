@@ -25,11 +25,11 @@ describe("cursorToolConfig", () => {
       expect(result).toEqual({ globs: '["src/**/*.ts"]', alwaysApply: false });
     });
 
-    it("keeps alwaysApply: true for rules without paths (always apply)", () => {
+    it("returns empty frontmatter for rules without paths (always apply)", () => {
       const result = cursorToolConfig
         .rules()
         .convertFrontmatter({ description: "desc", alwaysApply: true });
-      expect(result).toEqual({ description: "desc", alwaysApply: true });
+      expect(result).toEqual({});
     });
   });
 

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { UpdateUseCase } from "../../../src/application/use-cases/update-use-case.js";
 import {
   FIXTURE_DIR,
+  FIXTURE_DIR_V2,
   KeepPrompter,
   OverwritePrompter,
   buildDeps,
@@ -12,6 +13,7 @@ import {
   createTempProject,
   initAndInstall,
   initProject,
+  installTool,
 } from "./helpers.js";
 
 describe("UpdateUseCase", () => {
@@ -352,5 +354,311 @@ describe("UpdateUseCase", () => {
 
     expect(result.tools.length).toBeGreaterThan(0);
     expect(result.tools[0].toolId).toBe("claude");
+  });
+
+  it("docs: detects and writes changed docs file when updating to newer framework", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const useCase = new UpdateUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new OverwritePrompter()
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR_V2,
+      version: "test-v2",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    expect(result.docs).not.toBeNull();
+    expect(result.docs?.alreadyUpToDate).toBe(false);
+    expect(result.docs?.written.length).toBeGreaterThan(0);
+    // README.md was changed in v2
+    expect(result.docs?.written.some((f) => f.includes("README.md"))).toBe(true);
+
+    const readmePath = join(projectRoot, "aidd_docs/README.md");
+    const content = await readFile(readmePath, "utf-8");
+    expect(content).toContain("v2 Update");
+  });
+
+  it("docs: reports alreadyUpToDate when docs have not changed", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const useCase = new UpdateUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new OverwritePrompter()
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    expect(result.docs).not.toBeNull();
+    expect(result.docs?.alreadyUpToDate).toBe(true);
+    expect(result.docs?.written).toHaveLength(0);
+  });
+
+  it("docs: creates backup when user-modified docs file conflicts with framework update", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    // Simulate user modifying README.md
+    const readmePath = join(projectRoot, "aidd_docs/README.md");
+    await writeFile(readmePath, "user modified docs content");
+
+    const useCase = new UpdateUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new OverwritePrompter()
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR_V2,
+      version: "test-v2",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    expect(result.docs?.backedUp.some((f) => f.includes("README.md"))).toBe(true);
+    expect(existsSync(`${readmePath}.backup`)).toBe(true);
+    const backupContent = await readFile(`${readmePath}.backup`, "utf-8");
+    expect(backupContent).toBe("user modified docs content");
+  });
+
+  it("docs: keeps user-modified docs file when prompter returns keep", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const readmePath = join(projectRoot, "aidd_docs/README.md");
+    await writeFile(readmePath, "user modified docs content");
+
+    const useCase = new UpdateUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new KeepPrompter()
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR_V2,
+      version: "test-v2",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    expect(result.docs?.kept.some((f) => f.includes("README.md"))).toBe(true);
+    const content = await readFile(readmePath, "utf-8");
+    expect(content).toBe("user modified docs content");
+  });
+
+  it("toolIds filter limits update to specific tool and skips docs", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+    await installTool(deps, projectRoot, "claude");
+    await installTool(deps, projectRoot, "cursor");
+
+    const readmePath = join(projectRoot, "aidd_docs/README.md");
+    await writeFile(readmePath, "modified readme");
+
+    const useCase = new UpdateUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new OverwritePrompter()
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+      toolIds: ["claude"],
+    });
+
+    // only the specified tool is processed
+    expect(result.tools).toHaveLength(1);
+    expect(result.tools[0].toolId).toBe("claude");
+
+    // docs must be null when explicit toolIds filter is active
+    expect(result.docs).toBeNull();
+
+    // docs file must remain modified
+    const content = await readFile(readmePath, "utf-8");
+    expect(content).toBe("modified readme");
+  });
+
+  it("docsOnly=true skips all tools and updates docs", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+    await installTool(deps, projectRoot, "claude");
+
+    const useCase = new UpdateUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new OverwritePrompter()
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR_V2,
+      version: "test-v2",
+      docsDir: "aidd_docs",
+      projectRoot,
+      docsOnly: true,
+    });
+
+    // tools must be skipped entirely
+    expect(result.tools).toHaveLength(0);
+
+    // docs must be processed and updated
+    expect(result.docs).not.toBeNull();
+    expect(result.docs?.written.some((f) => f.includes("README.md"))).toBe(true);
+  });
+
+  it("re-installs a file deleted on disk even when unchanged in framework", async () => {
+    const deps = buildDeps(projectRoot);
+    await initAndInstall(deps, projectRoot, "claude");
+
+    const rulePath = join(projectRoot, ".claude/rules/01-standards/naming.md");
+    const { unlink } = await import("node:fs/promises");
+    await unlink(rulePath);
+
+    const useCase = new UpdateUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new OverwritePrompter()
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    const toolResult = result.tools.find((t) => t.toolId === "claude");
+    expect(toolResult?.written).toContain(".claude/rules/01-standards/naming.md");
+    expect(existsSync(rulePath)).toBe(true);
+  });
+
+  it("treats disk-modified file as conflict when unchanged in framework", async () => {
+    const deps = buildDeps(projectRoot);
+    await initAndInstall(deps, projectRoot, "claude");
+
+    const rulePath = join(projectRoot, ".claude/rules/01-standards/naming.md");
+    await writeFile(rulePath, "user modified rule content");
+
+    const useCase = new UpdateUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new OverwritePrompter()
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+      force: true,
+    });
+
+    const toolResult = result.tools.find((t) => t.toolId === "claude");
+    const ruleDiff = toolResult?.diff.find(
+      (d) => d.relativePath === ".claude/rules/01-standards/naming.md"
+    );
+    expect(ruleDiff?.kind).toBe("changed");
+    expect(ruleDiff?.conflict).toBe(true);
+    expect(toolResult?.backedUp.some((f) => f.includes("naming.md"))).toBe(true);
+    expect(toolResult?.written).toContain(".claude/rules/01-standards/naming.md");
+  });
+
+  it("docs: re-installs a docs file deleted on disk even when unchanged in framework", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const readmePath = join(projectRoot, "aidd_docs/README.md");
+    const { unlink } = await import("node:fs/promises");
+    await unlink(readmePath);
+
+    const useCase = new UpdateUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new OverwritePrompter()
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    expect(result.docs?.written.some((f) => f.includes("README.md"))).toBe(true);
+    expect(existsSync(readmePath)).toBe(true);
+  });
+
+  it("docs: returns null for docs when manifest has no docs", async () => {
+    const deps = buildDeps(projectRoot);
+    await initAndInstall(deps, projectRoot, "claude");
+
+    // Strip docs from manifest to simulate a manifest without docs tracking
+    const manifestPath = join(projectRoot, ".aidd", "manifest.json");
+    const rawManifest = await readFile(manifestPath, "utf-8");
+    const manifestData = JSON.parse(rawManifest) as Record<string, unknown>;
+    manifestData.docs = null;
+    await writeFile(manifestPath, JSON.stringify(manifestData));
+
+    const manifest = await deps.manifestRepo.load();
+    expect(manifest?.hasDocs()).toBe(false);
+
+    const useCase = new UpdateUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new OverwritePrompter()
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    expect(result.docs).toBeNull();
   });
 });

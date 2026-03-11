@@ -43,7 +43,7 @@ describe("E2E: aidd init", () => {
     expect(manifest.docsDir).toBe("my_docs");
   }, 5000);
 
-  it("shows an error message when the docs-dir name contains invalid characters", async () => {
+  it("shows an error when the docs-dir name contains invalid characters", async () => {
     const { stderr, exitCode } = await runCli(
       ["init", "--framework", FRAMEWORK_PATH, "--docs-dir", "my docs!"],
       projectDir
@@ -53,7 +53,7 @@ describe("E2E: aidd init", () => {
     expect(stderr).toContain("Invalid directory name");
   }, 5000);
 
-  it("shows an error message when the docs directory already exists", async () => {
+  it("shows an error when the docs directory already exists without a manifest", async () => {
     await mkdir(join(projectDir, "aidd_docs"), { recursive: true });
 
     const { stderr, exitCode } = await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
@@ -61,6 +61,35 @@ describe("E2E: aidd init", () => {
     expect(exitCode).not.toBe(0);
     expect(stderr).toContain("aidd adopt");
   }, 5000);
+
+  it("shows an error when .claude/ exists without a manifest", async () => {
+    await mkdir(join(projectDir, ".claude"), { recursive: true });
+
+    const { stderr, exitCode } = await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+
+    expect(exitCode).not.toBe(0);
+    expect(stderr).toContain("aidd adopt");
+  }, 5000);
+
+  it("succeeds when only .aidd/cache/ exists from a previous interrupted run", async () => {
+    await mkdir(join(projectDir, ".aidd", "cache"), { recursive: true });
+
+    const { stdout, exitCode } = await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("Initialized docs in aidd_docs/");
+    expect(existsSync(join(projectDir, ".aidd", "manifest.json"))).toBe(true);
+  }, 5000);
+
+  it("fails with guidance when already initialized without --force", async () => {
+    await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+
+    const { stderr, exitCode } = await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+
+    expect(exitCode).not.toBe(0);
+    expect(stderr).toContain("Already initialized");
+    expect(stderr).toContain("aidd init --force");
+  }, 10000);
 
   it("re-copies docs templates with --force on existing installation", async () => {
     await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);

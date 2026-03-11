@@ -298,37 +298,7 @@ describe("RestoreUseCase", () => {
     expect(ruleContent).not.toBe("modified rule");
   });
 
-  it("removes untracked files in tool directory when no files filter is set", async () => {
-    const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
-
-    const untrackedPath = join(projectRoot, ".claude/rules/user-added-rule.md");
-    await mkdir(join(projectRoot, ".claude/rules"), { recursive: true });
-    await writeFile(untrackedPath, "user added content");
-
-    const useCase = new RestoreUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger,
-      new OverwritePrompter()
-    );
-
-    const result = await useCase.execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-      force: true,
-    });
-
-    expect(existsSync(untrackedPath)).toBe(false);
-    const toolResult = result.tools.find((t) => t.toolId === "claude");
-    expect(toolResult?.removed).toContain(".claude/rules/user-added-rule.md");
-  });
-
-  it("does not remove untracked files when files filter is provided", async () => {
+  it("does not remove untracked files in tool directory", async () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude");
 
@@ -351,7 +321,6 @@ describe("RestoreUseCase", () => {
       docsDir: "aidd_docs",
       projectRoot,
       force: true,
-      files: [".claude/rules/01-standards/naming.md"],
     });
 
     expect(existsSync(untrackedPath)).toBe(true);
@@ -461,5 +430,189 @@ describe("RestoreUseCase", () => {
     // No false drift: disk hash matches manifest hash for restored file
     const diskHash = await deps.fs.readFileHash(claudeMdPath);
     expect(diskHash.value).toBe(claudeEntry?.hash.value);
+  });
+
+  it("docs: restores a deleted docs file with force", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const readmePath = join(projectRoot, "aidd_docs/README.md");
+    await rm(readmePath);
+    expect(existsSync(readmePath)).toBe(false);
+
+    const useCase = new RestoreUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new OverwritePrompter()
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+      force: true,
+    });
+
+    expect(existsSync(readmePath)).toBe(true);
+    expect(result.docs?.restored.some((f) => f.includes("README.md"))).toBe(true);
+  });
+
+  it("docs: restores a modified docs file with force", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const readmePath = join(projectRoot, "aidd_docs/README.md");
+    const original = await readFile(readmePath, "utf-8");
+    await writeFile(readmePath, "user modified docs content");
+
+    const useCase = new RestoreUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new OverwritePrompter()
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+      force: true,
+    });
+
+    const contentAfter = await readFile(readmePath, "utf-8");
+    expect(contentAfter).toBe(original);
+    expect(result.docs?.restored.some((f) => f.includes("README.md"))).toBe(true);
+  });
+
+  it("docs: keeps modified docs file when prompter returns keep", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const readmePath = join(projectRoot, "aidd_docs/README.md");
+    await writeFile(readmePath, "user modified docs content");
+
+    const useCase = new RestoreUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new KeepPrompter()
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    const content = await readFile(readmePath, "utf-8");
+    expect(content).toBe("user modified docs content");
+    expect(result.docs?.kept.some((f) => f.includes("README.md"))).toBe(true);
+  });
+
+  it("docs: skips docs restore when explicit toolIds filter is set", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+    await installTool(deps, projectRoot, "claude");
+
+    const readmePath = join(projectRoot, "aidd_docs/README.md");
+    await writeFile(readmePath, "user modified docs content");
+
+    const useCase = new RestoreUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new OverwritePrompter()
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+      toolIds: ["claude"],
+      force: true,
+    });
+
+    // docs should not be restored when toolIds filter is active
+    expect(result.docs).toBeNull();
+    const content = await readFile(readmePath, "utf-8");
+    expect(content).toBe("user modified docs content");
+  });
+
+  it("docs: returns nothingToRestore when docs files are unmodified", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const useCase = new RestoreUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new OverwritePrompter()
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+      force: true,
+    });
+
+    expect(result.docs?.nothingToRestore).toBe(true);
+    expect(result.docs?.restored).toHaveLength(0);
+  });
+
+  it("docsOnly=true skips all tools and restores docs regardless of toolIds", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+    await installTool(deps, projectRoot, "claude");
+
+    const claudeMdPath = join(projectRoot, "CLAUDE.md");
+    const readmePath = join(projectRoot, "aidd_docs/README.md");
+    await writeFile(claudeMdPath, "modified claude");
+    await writeFile(readmePath, "modified readme");
+
+    const useCase = new RestoreUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new OverwritePrompter()
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+      docsOnly: true,
+      force: true,
+    });
+
+    // tools must be skipped entirely
+    expect(result.tools).toHaveLength(0);
+
+    // docs must have been restored
+    expect(result.docs).not.toBeNull();
+    expect(result.docs?.restored.some((f) => f.includes("README.md"))).toBe(true);
+
+    // tool file must remain modified
+    const claudeContent = await readFile(claudeMdPath, "utf-8");
+    expect(claudeContent).toBe("modified claude");
   });
 });

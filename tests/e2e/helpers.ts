@@ -6,6 +6,7 @@ const execFileAsync = promisify(execFile);
 
 export const CLI_PATH = resolve(process.cwd(), "dist/cli.js");
 export const FRAMEWORK_PATH = resolve(process.cwd(), "tests/fixtures/framework");
+export const FRAMEWORK_V2_PATH = resolve(process.cwd(), "tests/fixtures/framework-v2");
 
 export async function runCli(
   args: string[],

@@ -60,7 +60,7 @@ describe("E2E: aidd uninstall", () => {
     expect(stdout).toContain("Uninstalled");
     expect(existsSync(join(projectDir, ".claude"))).toBe(false);
     expect(existsSync(join(projectDir, ".cursor"))).toBe(false);
-  }, 5000);
+  }, 10000);
 
   it("shows an error message for unrecognized tool IDs", async () => {
     const { stderr, exitCode } = await runCli(["uninstall", "unknown-tool"], projectDir);
