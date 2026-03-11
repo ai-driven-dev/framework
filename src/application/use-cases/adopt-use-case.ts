@@ -37,7 +37,9 @@ export class AdoptUseCase {
 
     const invalid = toolIds.filter((t) => !VALID_TOOL_IDS.includes(t));
     if (invalid.length > 0) {
-      throw new Error(`Unknown tool(s): ${invalid.join(", ")}. Valid tools: ${VALID_TOOL_IDS.join(", ")}`);
+      throw new Error(
+        `Unknown tool(s): ${invalid.join(", ")}. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
+      );
     }
 
     if (toolIds.length === 0) {
@@ -63,7 +65,11 @@ export class AdoptUseCase {
         throw new Error(`Directory '${config.directory}' not found for tool '${toolId}'.`);
       }
 
-      const registeredFiles = await this.scanAndHashDirectory(toolDir, config.directory, projectRoot);
+      const registeredFiles = await this.scanAndHashDirectory(
+        toolDir,
+        config.directory,
+        projectRoot
+      );
       manifest.addTool(toolId, version, registeredFiles);
       toolResults.push({ toolId, registered: registeredFiles.map((f) => f.relativePath) });
     }
@@ -90,7 +96,9 @@ export class AdoptUseCase {
           : new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash })
       );
       if (!docsFiles.some((f) => f.relativePath === catalogRelPath)) {
-        updatedDocsFiles.push(new GeneratedFile({ relativePath: catalogRelPath, content: "", hash: catalogHash }));
+        updatedDocsFiles.push(
+          new GeneratedFile({ relativePath: catalogRelPath, content: "", hash: catalogHash })
+        );
       }
       manifest.addDocs(manifest.getDocsVersion() ?? version, updatedDocsFiles);
     }

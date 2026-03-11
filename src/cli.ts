@@ -57,7 +57,11 @@ registerSyncCommand(program);
 program.hook("preAction", async () => {
   const opts = program.opts<{ verbose?: boolean; repo?: string; token?: string }>();
   const output = new CLIOutput(opts.verbose ?? false);
-  const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false, repo: opts.repo, token: opts.token }, output).catch(() => null);
+  const deps = await createDeps(
+    process.cwd(),
+    { verbose: opts.verbose ?? false, repo: opts.repo, token: opts.token },
+    output
+  ).catch(() => null);
   if (deps) await printUpdateBanner(deps.resolver, deps.manifestRepo, output);
 });
 

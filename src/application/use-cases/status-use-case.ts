@@ -57,8 +57,11 @@ export class StatusUseCase {
       throw new Error(`${filterToolId} is not installed`);
     }
 
-    const installedToolIds =
-      filterDocs ? [] : filterToolId ? [filterToolId] : manifest.getInstalledToolIds();
+    const installedToolIds = filterDocs
+      ? []
+      : filterToolId
+        ? [filterToolId]
+        : manifest.getInstalledToolIds();
 
     const tools: ToolStatus[] = [];
     for (const toolId of installedToolIds) {

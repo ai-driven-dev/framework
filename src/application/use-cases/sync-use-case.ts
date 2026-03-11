@@ -64,8 +64,7 @@ function transformContent(
 
   const { frontmatter, body } = parseFrontmatter(content);
 
-  const canonicalFrontmatter =
-    sourceConfig[section]().reverseConvertFrontmatter(frontmatter);
+  const canonicalFrontmatter = sourceConfig[section]().reverseConvertFrontmatter(frontmatter);
 
   // relativeFileName is the path relative to the section directory (e.g. "04_code/implement.md")
   // needed by convertFrontmatter for commands to extract the phase prefix
@@ -77,7 +76,11 @@ function transformContent(
   const targetFrontmatter =
     section === "commands"
       ? targetConfig.commands().convertFrontmatter(canonicalFrontmatter, relativeFileName)
-      : (targetConfig[section]() as { convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> }).convertFrontmatter(canonicalFrontmatter);
+      : (
+          targetConfig[section]() as {
+            convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown>;
+          }
+        ).convertFrontmatter(canonicalFrontmatter);
 
   const canonicalBody = sourceConfig.reverseRewriteContent(body, docsDir);
   const targetBody = targetConfig.rewriteContent(canonicalBody, docsDir);

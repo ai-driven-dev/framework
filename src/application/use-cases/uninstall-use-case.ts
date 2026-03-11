@@ -52,9 +52,7 @@ export class UninstallUseCase {
         .getInstalledToolIds()
         .filter((id) => id !== toolId && !toolIds.includes(id));
       const sharedPaths = new Set(
-        remainingToolIds.flatMap((id) =>
-          manifest.getToolFiles(id).map((f) => f.relativePath)
-        )
+        remainingToolIds.flatMap((id) => manifest.getToolFiles(id).map((f) => f.relativePath))
       );
 
       const files = manifest.getToolFiles(toolId);

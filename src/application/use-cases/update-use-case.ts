@@ -78,7 +78,10 @@ export class UpdateUseCase {
     const manifest = await this.manifestRepo.load();
     if (manifest === null) throw new Error("No AIDD installation found. Run `aidd init` first.");
 
-    const { descriptor, contentFiles, docsFiles } = await this.loader.loadFromDirectory(frameworkPath, version);
+    const { descriptor, contentFiles, docsFiles } = await this.loader.loadFromDirectory(
+      frameworkPath,
+      version
+    );
 
     const toolResults: UpdateToolResult[] = [];
 
@@ -94,7 +97,13 @@ export class UpdateUseCase {
       const config = getToolConfig(toolId);
       const manifestFiles = manifest.getToolFiles(toolId);
       const manifestMap = new Map(manifestFiles.map((f) => [f.relativePath, f.hash]));
-      const newDistribution = generateDistribution(descriptor, config, docsDir, contentFiles, this.hasher);
+      const newDistribution = generateDistribution(
+        descriptor,
+        config,
+        docsDir,
+        contentFiles,
+        this.hasher
+      );
       const newDistMap = new Map(newDistribution.map((f) => [f.relativePath, f]));
       const diff = await this.computeDiff(newDistribution, newDistMap, manifestMap, projectRoot);
 
@@ -113,13 +122,19 @@ export class UpdateUseCase {
 
         const nonMergedFinal = newDistribution
           .filter((f) => !f.merge)
-          .filter((f) => !result.deleted.includes(f.relativePath) && !result.kept.includes(f.relativePath));
+          .filter(
+            (f) => !result.deleted.includes(f.relativePath) && !result.kept.includes(f.relativePath)
+          );
         const keptFiles = manifestFiles
           .filter((f) => result.kept.includes(f.relativePath))
-          .map((f) => new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash }));
+          .map(
+            (f) => new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash })
+          );
         const mergedFiles = manifestFiles
           .filter((f) => newDistMap.get(f.relativePath)?.merge === true)
-          .map((f) => new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash }));
+          .map(
+            (f) => new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash })
+          );
 
         manifest.addTool(toolId, version, [...nonMergedFinal, ...keptFiles, ...mergedFiles]);
       }
@@ -133,7 +148,8 @@ export class UpdateUseCase {
       });
     }
 
-    const hasExplicitToolFilter = !docsOnly && options.toolIds !== undefined && options.toolIds.length > 0;
+    const hasExplicitToolFilter =
+      !docsOnly && options.toolIds !== undefined && options.toolIds.length > 0;
     const docsResult = hasExplicitToolFilter
       ? null
       : await this.updateDocs(manifest, docsFiles, docsDir, projectRoot, version, force, dryRun);
@@ -144,7 +160,9 @@ export class UpdateUseCase {
     }
 
     return {
-      alreadyUpToDate: toolResults.every((r) => r.alreadyUpToDate) && (docsResult === null || docsResult.alreadyUpToDate),
+      alreadyUpToDate:
+        toolResults.every((r) => r.alreadyUpToDate) &&
+        (docsResult === null || docsResult.alreadyUpToDate),
       dryRun,
       tools: toolResults,
       docs: docsResult,
@@ -175,8 +193,9 @@ export class UpdateUseCase {
     if (!dryRun) {
       result = await this.applyDiff(diff, newDistMap, projectRoot, force);
 
-      const finalFiles = newDistribution
-        .filter((f) => !result.deleted.includes(f.relativePath) && !result.kept.includes(f.relativePath));
+      const finalFiles = newDistribution.filter(
+        (f) => !result.deleted.includes(f.relativePath) && !result.kept.includes(f.relativePath)
+      );
       const keptFiles = manifestFiles
         .filter((f) => result.kept.includes(f.relativePath))
         .map((f) => new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash }));

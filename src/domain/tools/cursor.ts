@@ -93,7 +93,11 @@ export const cursorToolConfig: ToolConfig = {
         if (patterns === null || patterns.length === 0) return {};
         const result: Record<string, unknown> = {};
         if (description !== undefined) result.description = description;
-        return { ...result, globs: JSON.stringify(patterns).replace(/,/g, ", "), alwaysApply: false };
+        return {
+          ...result,
+          globs: JSON.stringify(patterns).replace(/,/g, ", "),
+          alwaysApply: false,
+        };
       },
       reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
         const { globs } = fm;

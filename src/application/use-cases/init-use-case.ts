@@ -70,8 +70,15 @@ export class InitUseCase {
   }
 
   async execute(options: InitOptions): Promise<InitResult> {
-    const { frameworkPath, version, docsDir, explicitDocsDir, projectRoot, force = false, repo } =
-      options;
+    const {
+      frameworkPath,
+      version,
+      docsDir,
+      explicitDocsDir,
+      projectRoot,
+      force = false,
+      repo,
+    } = options;
 
     const existing = await this.manifestRepo.load();
 

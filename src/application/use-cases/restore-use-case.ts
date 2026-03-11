@@ -78,7 +78,10 @@ export class RestoreUseCase {
         ? options.toolIds
         : manifest.getInstalledToolIds();
 
-    const { descriptor, contentFiles, docsFiles } = await this.loader.loadFromDirectory(frameworkPath, version);
+    const { descriptor, contentFiles, docsFiles } = await this.loader.loadFromDirectory(
+      frameworkPath,
+      version
+    );
 
     const toolResults: RestoreToolResult[] = [];
 
@@ -87,7 +90,13 @@ export class RestoreUseCase {
 
       const config = getToolConfig(toolId);
       const manifestFiles = manifest.getToolFiles(toolId);
-      const distribution = generateDistribution(descriptor, config, docsDir, contentFiles, this.hasher);
+      const distribution = generateDistribution(
+        descriptor,
+        config,
+        docsDir,
+        contentFiles,
+        this.hasher
+      );
       const distMap = new Map(distribution.map((f) => [f.relativePath, f]));
 
       const drift = await this.collectDrift(manifestFiles, distMap, projectRoot, fileFilter);
@@ -115,10 +124,19 @@ export class RestoreUseCase {
       toolResults.push({ toolId, nothingToRestore: false, restored, kept });
     }
 
-    const hasExplicitToolFilter = !docsOnly && options.toolIds !== undefined && options.toolIds.length > 0;
+    const hasExplicitToolFilter =
+      !docsOnly && options.toolIds !== undefined && options.toolIds.length > 0;
     const docsResult = hasExplicitToolFilter
       ? null
-      : await this.restoreDocs(manifest, docsFiles, docsDir, projectRoot, version, force, fileFilter);
+      : await this.restoreDocs(
+          manifest,
+          docsFiles,
+          docsDir,
+          projectRoot,
+          version,
+          force,
+          fileFilter
+        );
 
     const hasChanges =
       toolResults.some((t) => t.restored.length > 0) ||
@@ -186,14 +204,24 @@ export class RestoreUseCase {
 
       if (!diskExists) {
         const distFile = distMap.get(manifestFile.relativePath);
-        if (distFile) drift.push({ relativePath: manifestFile.relativePath, content: distFile.content, reason: "deleted" });
+        if (distFile)
+          drift.push({
+            relativePath: manifestFile.relativePath,
+            content: distFile.content,
+            reason: "deleted",
+          });
         continue;
       }
 
       const diskHash = await this.fs.readFileHash(diskPath);
       if (diskHash.value !== manifestFile.hash.value) {
         const distFile = distMap.get(manifestFile.relativePath);
-        if (distFile) drift.push({ relativePath: manifestFile.relativePath, content: distFile.content, reason: "modified" });
+        if (distFile)
+          drift.push({
+            relativePath: manifestFile.relativePath,
+            content: distFile.content,
+            reason: "modified",
+          });
       }
     }
 
@@ -226,7 +254,6 @@ export class RestoreUseCase {
 
     return { restored, kept, updatedHashMap };
   }
-
 }
 
 function buildFileFilter(files: string[] | undefined): ((p: string) => boolean) | null {
