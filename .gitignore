@@ -7,6 +7,9 @@ node_modules/
 # Build output
 dist/
 
+# Test coverage
+coverage/
+
 # AI conversation history
 .specstory/
 

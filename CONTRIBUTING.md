@@ -26,6 +26,7 @@ Code contributions are open to certified **Obsidian+** members using the AIDD de
 - [Standards](#standards)
   - [Commit message format](#commit-message-format)
   - [Code quality](#code-quality)
+  - [CI checks](#ci-checks)
 - [Pull Request process](#pull-request-process)
 - [Publishing](#publishing)
 
@@ -115,9 +116,11 @@ cd aidd-cli
 ### Install and build
 
 ```bash
-pnpm install     # install dependencies
+pnpm install     # install dependencies + set up git hooks (lefthook)
 pnpm build       # compile to dist/cli.js
 ```
+
+> `pnpm install` automatically installs [Lefthook](https://github.com/evilmartians/lefthook) git hooks via the `prepare` script. Hooks delegate to the parent monorepo and run commitlint on commit.
 
 ---
 
@@ -142,18 +145,23 @@ git checkout -b fix/bug-description      # bug fix
 Use the AIDD flow throughout development — this project is built with its own tooling.
 
 ```bash
-pnpm test:watch     # run tests in watch mode while developing (no build step)
-pnpm typecheck      # TypeScript check
-pnpm lint           # lint + format (biome)
+pnpm test:watch          # run tests in watch mode while developing (no build step)
+pnpm typecheck           # TypeScript check
+pnpm lint                # lint + format check (biome)
+pnpm knip:production     # detect unused exports and dependencies
+pnpm jscpd               # detect code duplication in src/
 ```
 
 ### 4. Run the full test suite
 
 ```bash
-pnpm test           # build + full test suite (unit + e2e)
+pnpm test                    # build + full test suite (unit + e2e)
+pnpm test -- --coverage      # same + coverage report with thresholds
 ```
 
 All contributions must include tests. Never mock functional behavior in tests.
+
+Coverage is measured on the business logic layer (use-cases, domain models, tools, infrastructure adapters). Files tested exclusively via E2E (commands, ports, entrypoint) are excluded from the thresholds.
 
 ### 5. Test the CLI locally _(optional)_
 
@@ -198,6 +206,20 @@ chore: update dependencies
 - Small, single-responsibility functions
 - No comments on obvious code — make the code self-explanatory
 - Only comment genuinely tricky logic
+
+### CI checks
+
+Every PR triggers the following jobs automatically:
+
+| Job | Command | Blocking |
+| --- | ------- | -------- |
+| Typecheck | `pnpm typecheck` | yes |
+| Lint | `pnpm lint` | yes |
+| Test & Coverage | `pnpm test -- --coverage` | yes |
+| Dead code (knip) | `pnpm knip:production` | no — warning only |
+| Duplication (jscpd) | `pnpm jscpd` | no — warning only |
+
+All blocking jobs must pass before a PR can be merged.
 
 ---
 
