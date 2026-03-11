@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.5.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.4.2...v2.5.0) (2026-03-11)
+
+
+### Features
+
+* **adopt:** resolve framework at adoption to classify framework vs user files ([88fcce3](https://github.com/ai-driven-dev/aidd-cli/commit/88fcce32b5f01f45e73b7dc4a575c178cd94cfbe))
+
+
+### Bug Fixes
+
+* **update:** prevent stale merge-file hash in manifest after update ([270dbb3](https://github.com/ai-driven-dev/aidd-cli/commit/270dbb3bc8ac5b40602f2c4554fe9370233132b9))
+
+
+### Documentation
+
+* **memory:** update memory documentation to reflect current behavior ([bdac76b](https://github.com/ai-driven-dev/aidd-cli/commit/bdac76bc395f115710499adb659c59ed42dc3a4f))
+
 ## [2.4.2](https://github.com/ai-driven-dev/aidd-cli/compare/v2.4.1...v2.4.2) (2026-03-11)
 
 
