@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.7.2](https://github.com/ai-driven-dev/aidd-cli/compare/v2.7.1...v2.7.2) (2026-03-16)
+
+
+### Bug Fixes
+
+* **opencode:** use remote type instead of sse for url-based MCP servers ([#34](https://github.com/ai-driven-dev/aidd-cli/issues/34)) ([5e4d97c](https://github.com/ai-driven-dev/aidd-cli/commit/5e4d97c4577c6a2e9d97dd81418abc579b8d2700))
+
 ## [2.7.1](https://github.com/ai-driven-dev/aidd-cli/compare/v2.7.0...v2.7.1) (2026-03-16)
 
 
