@@ -119,7 +119,13 @@ pnpm run install:local      # build + install globally
 
 mkdir /tmp/aidd-test && cd /tmp/aidd-test
 aidd init
-aidd install claude
+
+aidd install                        # all tools
+aidd install claude                 # single tool
+aidd install claude cursor          # multiple tools
+aidd install --force                # reinstall (overwrite existing)
+
+ls .claude/                         # verify output was generated
 ```
 
 ### 7. Open a Pull Request
