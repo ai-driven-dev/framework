@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.7.1](https://github.com/ai-driven-dev/aidd-cli/compare/v2.7.0...v2.7.1) (2026-03-16)
+
+
+### Bug Fixes
+
+* **resolver:** surface HTTP cause and auth hint on tag lookup failure ([c069d13](https://github.com/ai-driven-dev/aidd-cli/commit/c069d135668f3d35cee182ac621962a56150e647))
+* **resolver:** surface HTTP cause and auth hint on tag lookup failure ([28bf567](https://github.com/ai-driven-dev/aidd-cli/commit/28bf567961dbe7a01eecf016358eea914c627c92)), closes [#25](https://github.com/ai-driven-dev/aidd-cli/issues/25)
+
 ## [2.7.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.6.0...v2.7.0) (2026-03-16)
 
 
