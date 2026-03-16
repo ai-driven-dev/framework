@@ -20,3 +20,4 @@ coverage/
 *.local.md
 temp/projects/
 temp/
+.claude/worktrees/
