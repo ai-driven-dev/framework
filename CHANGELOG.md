@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.7.3](https://github.com/ai-driven-dev/aidd-cli/compare/v2.7.2...v2.7.3) (2026-03-16)
+
+
+### Bug Fixes
+
+* **cli:** make self-update PM-agnostic and notify on CLI version outdated ([1984a54](https://github.com/ai-driven-dev/aidd-cli/commit/1984a54778e7778dff3f87ccd3476dd3d7c8116c))
+
 ## [2.7.2](https://github.com/ai-driven-dev/aidd-cli/compare/v2.7.1...v2.7.2) (2026-03-16)
 
 
