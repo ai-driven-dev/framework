@@ -12,15 +12,15 @@ import {
 } from "../models/framework-descriptor.js";
 import { parseFrontmatter } from "../models/frontmatter.js";
 import {
+  agentNameFromFrontmatter,
   type CommandsHandler,
   type ConfigHandler,
   type MemoryBankHandler,
   type RulesHandler,
+  registerTool,
   type SectionHandler,
   type ToolConfig,
   type UserFileSectionKey,
-  agentNameFromFrontmatter,
-  registerTool,
 } from "../models/tool-config.js";
 
 const DIRECTORY = ".github/";

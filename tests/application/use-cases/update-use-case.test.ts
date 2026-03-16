@@ -4,16 +4,16 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { UpdateUseCase } from "../../../src/application/use-cases/update-use-case.js";
 import {
-  FIXTURE_DIR,
-  FIXTURE_DIR_V2,
-  KeepPrompter,
-  OverwritePrompter,
   buildDeps,
   cleanupTempProject,
   createTempProject,
+  FIXTURE_DIR,
+  FIXTURE_DIR_V2,
   initAndInstall,
   initProject,
   installTool,
+  KeepPrompter,
+  OverwritePrompter,
 } from "./helpers.js";
 
 describe("UpdateUseCase", () => {

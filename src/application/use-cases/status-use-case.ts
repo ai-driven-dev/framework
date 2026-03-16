@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import type { FileHash } from "../../domain/models/file-hash.js";
 import { compareSemver } from "../../domain/models/semver.js";
-import { type ToolId, getToolConfig } from "../../domain/models/tool-config.js";
+import { getToolConfig, type ToolId } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";

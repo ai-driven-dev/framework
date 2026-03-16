@@ -1,12 +1,12 @@
 import type { Dirent } from "node:fs";
-import { readFile, readdir } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
-import { FrameworkDescriptor } from "../../domain/models/framework-descriptor.js";
 import type {
   ConfigRef,
   ContentSection,
   TemplateRef,
 } from "../../domain/models/framework-descriptor.js";
+import { FrameworkDescriptor } from "../../domain/models/framework-descriptor.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 
 const OS_FILES = new Set([".DS_Store", "Thumbs.db"]);

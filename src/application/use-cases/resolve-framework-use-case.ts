@@ -1,5 +1,7 @@
-import type { FrameworkResolved } from "../../domain/ports/framework-resolver.js";
-import type { FrameworkResolver } from "../../domain/ports/framework-resolver.js";
+import type {
+  FrameworkResolved,
+  FrameworkResolver,
+} from "../../domain/ports/framework-resolver.js";
 import type { Logger } from "../../domain/ports/logger.js";
 
 interface ResolveOptions {

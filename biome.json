@@ -1,8 +1,6 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
+  "$schema": "https://biomejs.dev/schemas/2.4.7/schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
@@ -22,18 +20,20 @@
     }
   },
   "files": {
-    "ignore": [
-      "dist/**",
-      "node_modules/**",
-      "example/**",
-      ".claude/worktrees/**",
-      "temp/**",
-      "coverage/**"
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/node_modules",
+      "!**/example",
+      "!**/.claude/worktrees",
+      "!**/temp",
+      "!**/coverage",
+      "!**/.aidd/cache"
     ]
   },
   "overrides": [
     {
-      "include": ["package.json"],
+      "includes": ["**/package.json"],
       "formatter": { "enabled": false }
     }
   ]

@@ -4,16 +4,16 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RestoreUseCase } from "../../../src/application/use-cases/restore-use-case.js";
 import {
-  FIXTURE_DIR,
-  KeepPrompter,
-  OverwritePrompter,
-  RecordingPrompter,
   buildDeps,
   cleanupTempProject,
   createTempProject,
+  FIXTURE_DIR,
   initAndInstall,
   initProject,
   installTool,
+  KeepPrompter,
+  OverwritePrompter,
+  RecordingPrompter,
 } from "./helpers.js";
 
 describe("RestoreUseCase", () => {

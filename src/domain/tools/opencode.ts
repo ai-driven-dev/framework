@@ -12,11 +12,11 @@ import {
   type ConfigHandler,
   type MemoryBankHandler,
   type RulesHandler,
+  registerTool,
   type SectionHandler,
+  stripToolSuffix,
   type ToolConfig,
   type UserFileSectionKey,
-  registerTool,
-  stripToolSuffix,
 } from "../models/tool-config.js";
 
 const DIRECTORY = ".opencode/";

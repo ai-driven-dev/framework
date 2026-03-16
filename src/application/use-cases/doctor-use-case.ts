@@ -1,6 +1,6 @@
 import { dirname, join, normalize } from "node:path";
 import type { Manifest } from "../../domain/models/manifest.js";
-import { type ToolId, getAllRegisteredTools } from "../../domain/models/tool-config.js";
+import { getAllRegisteredTools, type ToolId } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -31,7 +31,7 @@ interface DoctorOptions {
 
 const CODE_FENCE_WITH_LANG_RE = /```(?!markdown\b|md\b)(\w+)[^\n]*\n[\s\S]*?```/gm;
 const INLINE_CODE_RE = /`[^`\n]+`/g;
-const AT_PATH_RE = /@([\w.\-]+(?:\/[\w.\-]+)+)/g;
+const AT_PATH_RE = /@([\w.-]+(?:\/[\w.-]+)+)/g;
 const MARKDOWN_LINK_RE = /\[[^\]]*\]\(([^)#\s]+)\)/g;
 function stripNonMarkdownCodeBlocks(content: string): string {
   return content.replace(CODE_FENCE_WITH_LANG_RE, "").replace(INLINE_CODE_RE, "");

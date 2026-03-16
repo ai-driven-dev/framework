@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FRAMEWORK_PATH, createTestEnv, runCli } from "./helpers.js";
+import { createTestEnv, FRAMEWORK_PATH, runCli } from "./helpers.js";
 
 describe.concurrent("E2E: aidd adopt", () => {
   it("shows usage with --help", async () => {

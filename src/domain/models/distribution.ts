@@ -1,4 +1,5 @@
 import type { Hasher } from "../ports/hasher.js";
+import type { FrameworkDescriptor } from "./framework-descriptor.js";
 import {
   GITKEEP_FILE,
   SECTION_AGENTS,
@@ -6,15 +7,14 @@ import {
   SECTION_RULES,
   SECTION_SKILLS,
 } from "./framework-descriptor.js";
-import type { FrameworkDescriptor } from "./framework-descriptor.js";
 import { parseFrontmatter, serializeFrontmatter } from "./frontmatter.js";
 import { GeneratedFile } from "./generated-file.js";
 import {
+  acceptsFile,
   type CommandsHandler,
   type RulesHandler,
   type SectionHandler,
   type ToolConfig,
-  acceptsFile,
 } from "./tool-config.js";
 
 export function generateDistribution(
