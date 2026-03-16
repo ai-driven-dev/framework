@@ -10,6 +10,7 @@ import {
   createTempProject,
   FIXTURE_DIR,
   initAndInstall,
+  linuxPlatform,
 } from "./helpers.js";
 
 describe("AdoptUseCase", () => {
@@ -26,10 +27,21 @@ describe("AdoptUseCase", () => {
 
   function buildUseCase() {
     const deps = buildDeps(projectRoot);
-    return new AdoptUseCase(deps.fs, deps.manifestRepo, deps.loader, deps.hasher, deps.logger);
+    return new AdoptUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      linuxPlatform
+    );
   }
 
-  const DEFAULT_OPTS = { frameworkPath: FIXTURE_DIR, docsDir: "aidd_docs", version: "3.3.3" };
+  const DEFAULT_OPTS = {
+    frameworkPath: FIXTURE_DIR,
+    docsDir: "aidd_docs",
+    version: "3.3.3",
+  };
 
   it("throws on unknown tool id", async () => {
     await expect(

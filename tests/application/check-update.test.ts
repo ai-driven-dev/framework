@@ -12,6 +12,9 @@ import {
   cleanupTempProject,
   createTempProject,
   FIXTURE_DIR,
+  initAndInstall,
+  initProject,
+  linuxPlatform,
 } from "./use-cases/helpers.js";
 
 function makeLogger(): { logger: Logger; logs: string[] } {
@@ -67,7 +70,8 @@ async function installWithVersion(
     deps.manifestRepo,
     deps.loader,
     deps.hasher,
-    deps.logger
+    deps.logger,
+    linuxPlatform
   );
   await useCase.execute({
     toolIds: ["claude" as ToolId],

@@ -13,6 +13,7 @@ import {
   initProject,
   installTool,
   KeepPrompter,
+  linuxPlatform,
   OverwritePrompter,
 } from "./helpers.js";
 
@@ -38,7 +39,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -60,7 +62,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      linuxPlatform
     );
 
     await expect(
@@ -83,7 +86,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -132,7 +136,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -180,7 +185,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new KeepPrompter()
+      new KeepPrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -224,7 +230,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      linuxPlatform
     );
     const result = await useCase.execute({
       frameworkPath: FIXTURE_DIR,
@@ -268,7 +275,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -314,7 +322,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new KeepPrompter()
+      new KeepPrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -342,7 +351,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -366,7 +376,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -397,7 +408,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -426,7 +438,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -455,7 +468,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new KeepPrompter()
+      new KeepPrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -485,7 +499,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -519,7 +534,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -552,7 +568,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -580,7 +597,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -615,7 +633,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -649,7 +668,8 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      linuxPlatform
     );
 
     const result = await useCase.execute({

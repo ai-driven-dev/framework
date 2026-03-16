@@ -13,6 +13,7 @@ import {
   FIXTURE_DIR,
   initAndInstall,
   initProject,
+  linuxPlatform,
 } from "./helpers.js";
 
 describe("StatusUseCase", () => {
@@ -79,7 +80,8 @@ describe("StatusUseCase", () => {
       deps.manifestRepo,
       deps.loader,
       deps.hasher,
-      deps.logger
+      deps.logger,
+      linuxPlatform
     );
     await installUseCase.execute({
       toolIds: ["claude" as ToolId, "copilot" as ToolId],

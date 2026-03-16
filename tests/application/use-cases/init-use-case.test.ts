@@ -3,7 +3,15 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
-import { buildDeps, cleanupTempProject, createTempProject, FIXTURE_DIR } from "./helpers.js";
+import type { ToolId } from "../../../src/domain/models/tool-config.js";
+import {
+  buildDeps,
+  cleanupTempProject,
+  createTempProject,
+  FIXTURE_DIR,
+  installTool,
+  linuxPlatform,
+} from "./helpers.js";
 
 describe("InitUseCase", () => {
   let tempDir: string;
@@ -312,7 +320,14 @@ describe("InitUseCase", () => {
       const { InstallUseCase } = await import(
         "../../../src/application/use-cases/install-use-case.js"
       );
-      const installUseCase = new InstallUseCase(fs, manifestRepo, loader, hasher, logger);
+      const installUseCase = new InstallUseCase(
+        fs,
+        manifestRepo,
+        loader,
+        hasher,
+        logger,
+        linuxPlatform
+      );
       await installUseCase.execute({
         toolIds: ["claude" as import("../../../src/domain/models/tool-config.js").ToolId],
         frameworkPath: FIXTURE_DIR,
