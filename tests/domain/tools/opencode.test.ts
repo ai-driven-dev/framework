@@ -203,16 +203,16 @@ describe("opencodeToolConfig", () => {
       expect(() => transform("mcp", "[]")).toThrow("MCP config must be a JSON object");
     });
 
-    it("transforms url-based server to SSE format", () => {
+    it("transforms url-based server to remote format", () => {
       const input = JSON.stringify({
         mcpServers: { figma: { url: "https://mcp.figma.com/mcp", type: "http" } },
       });
       expect(JSON.parse(transform("mcp", input))).toEqual({
-        mcp: { figma: { type: "sse", url: "https://mcp.figma.com/mcp", enabled: true } },
+        mcp: { figma: { type: "remote", url: "https://mcp.figma.com/mcp", enabled: true } },
       });
     });
 
-    it("handles mixed local and SSE servers in the same config", () => {
+    it("handles mixed local and remote servers in the same config", () => {
       const input = JSON.stringify({
         mcpServers: {
           local: { command: "npx", args: ["-y", "pkg"] },
@@ -221,7 +221,7 @@ describe("opencodeToolConfig", () => {
       });
       const result = JSON.parse(transform("mcp", input));
       expect(result.mcp.local.type).toBe("local");
-      expect(result.mcp.remote.type).toBe("sse");
+      expect(result.mcp.remote.type).toBe("remote");
     });
 
     it("throws when a server has neither command nor url", () => {

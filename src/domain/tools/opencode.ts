@@ -33,13 +33,13 @@ interface OpencodeMcpLocalServer {
   environment?: Record<string, string>;
 }
 
-interface OpencodeMcpSseServer {
-  type: "sse";
+interface OpencodeMcpRemoteServer {
+  type: "remote";
   url: string;
   enabled: boolean;
 }
 
-type OpencodeMcpServer = OpencodeMcpLocalServer | OpencodeMcpSseServer;
+type OpencodeMcpServer = OpencodeMcpLocalServer | OpencodeMcpRemoteServer;
 
 function transformMcpToOpencode(content: string): string {
   let parsed: { mcpServers?: Record<string, RawServer> };
@@ -66,7 +66,7 @@ function transformMcpToOpencode(content: string): string {
       if (env && Object.keys(env).length > 0) local.environment = env;
       mcp[name] = local;
     } else if ("url" in server) {
-      mcp[name] = { type: "sse", url: server.url, enabled: true };
+      mcp[name] = { type: "remote", url: server.url, enabled: true };
     } else {
       throw new Error(`MCP server "${name}" must have either a "command" or "url" field`);
     }
