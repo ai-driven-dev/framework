@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.0](https://github.com/ai-driven-dev/aidd-framework/compare/v3.5.0...v3.6.0) (2026-03-16)
+
+
+### Features
+
+* **tooling:** add opencode to build-dist script ([cb8a1a7](https://github.com/ai-driven-dev/aidd-framework/commit/cb8a1a75679ab3474fb9dcdcb9e612157b6c4424))
+
 ## [3.5.0](https://github.com/ai-driven-dev/aidd-framework/compare/v3.4.4...v3.5.0) (2026-03-16)
 
 
