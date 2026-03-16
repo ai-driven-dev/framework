@@ -1,5 +1,6 @@
 import type { Hasher } from "../ports/hasher.js";
 import type { Platform } from "../ports/platform.js";
+import type { FrameworkDescriptor } from "./framework-descriptor.js";
 import {
   CONFIG_MCP,
   GITKEEP_FILE,
@@ -8,16 +9,15 @@ import {
   SECTION_RULES,
   SECTION_SKILLS,
 } from "./framework-descriptor.js";
-import type { FrameworkDescriptor } from "./framework-descriptor.js";
 import { parseFrontmatter, serializeFrontmatter } from "./frontmatter.js";
 import { GeneratedFile } from "./generated-file.js";
 import { transformFor as mcpTransformFor } from "./mcp.js";
 import {
+  acceptsFile,
   type CommandsHandler,
   type RulesHandler,
   type SectionHandler,
   type ToolConfig,
-  acceptsFile,
 } from "./tool-config.js";
 
 type ContentTransform = (content: string) => string;

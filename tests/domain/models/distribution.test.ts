@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { assert, describe, expect, it } from "vitest";
 import { generateDistribution } from "../../../src/domain/models/distribution.js";
 import { FileHash } from "../../../src/domain/models/file-hash.js";
 import { FrameworkDescriptor } from "../../../src/domain/models/framework-descriptor.js";
@@ -7,6 +7,7 @@ import type { Platform } from "../../../src/domain/ports/platform.js";
 import { claudeToolConfig } from "../../../src/domain/tools/claude.js";
 import { copilotToolConfig } from "../../../src/domain/tools/copilot.js";
 import { cursorToolConfig } from "../../../src/domain/tools/cursor.js";
+import { opencodeToolConfig } from "../../../src/domain/tools/opencode.js";
 
 const linuxPlatform: Platform = { current: () => "linux" };
 const win32Platform: Platform = { current: () => "win32" };
