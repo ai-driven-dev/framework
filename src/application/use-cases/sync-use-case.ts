@@ -67,7 +67,8 @@ function transformContent(
     sectionKey.section === "commands"
       ? targetConfig.commands().convertFrontmatter(canonicalFrontmatter, sectionKey.key)
       : (targetConfig[sectionKey.section]() as SectionHandler).convertFrontmatter(
-          canonicalFrontmatter
+          canonicalFrontmatter,
+          sectionKey.key
         );
 
   const canonicalBody = sourceConfig.reverseRewriteContent(body, docsDir);
@@ -83,6 +84,7 @@ const EXCLUDED_FILES = new Set([
   ".mcp.json",
   ".cursor/mcp.json",
   ".vscode/mcp.json",
+  "opencode.json",
 ]);
 
 function isExcluded(relativePath: string, docsDir: string): boolean {

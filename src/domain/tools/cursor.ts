@@ -14,6 +14,7 @@ import {
   type SectionHandler,
   type ToolConfig,
   type UserFileSectionKey,
+  agentNameFromFrontmatter,
   registerTool,
   stripToolSuffix,
 } from "../models/tool-config.js";
@@ -54,8 +55,8 @@ export const cursorToolConfig: ToolConfig = {
       buildFilePath(fileName: string): string {
         return `${DIRECTORY}agents/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
       },
-      convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-        return { name: fm.name, description: fm.description };
+      convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {
+        return { name: agentNameFromFrontmatter(fm, fileName), description: fm.description };
       },
       reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
         return { name: fm.name, description: fm.description };

@@ -22,11 +22,15 @@ const TEMPLATE_REFS: readonly TemplateRef[] = [
   { name: "agentsMd", path: "aidd_docs/templates/AGENTS.md" },
 ];
 
+// Order matters for OpenCode: "mcp" must come before "opencode" because both map to
+// opencode.json (merged sequentially). The transformed MCP content is written first;
+// the opencode config is merged on top, so its keys take precedence on conflict.
 const CONFIG_REFS: readonly ConfigRef[] = [
   { name: "mcp", path: "config/mcp.json" },
   { name: "vscodeExtensions", path: "config/.vscode/extensions.json" },
   { name: "vscodeKeybindings", path: "config/.vscode/keybindings.json" },
   { name: "vscodeSettings", path: "config/.vscode/settings.json" },
+  { name: "opencode", path: "config/opencode.json" },
 ];
 
 const DOCS_DIR = "aidd_docs";

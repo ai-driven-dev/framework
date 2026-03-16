@@ -29,7 +29,7 @@ describe.concurrent("E2E: aidd config", () => {
       } finally {
         await cleanup();
       }
-    }, 10000);
+    });
 
     it("shows (none) for tools when nothing installed", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
@@ -42,7 +42,7 @@ describe.concurrent("E2E: aidd config", () => {
       } finally {
         await cleanup();
       }
-    }, 10000);
+    });
   });
 
   describe("config get", () => {
@@ -57,7 +57,7 @@ describe.concurrent("E2E: aidd config", () => {
       } finally {
         await cleanup();
       }
-    }, 10000);
+    });
 
     it("returns default repo when not explicitly set", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
@@ -70,7 +70,7 @@ describe.concurrent("E2E: aidd config", () => {
       } finally {
         await cleanup();
       }
-    }, 10000);
+    });
 
     it("returns repo saved during init --repo", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
@@ -86,7 +86,7 @@ describe.concurrent("E2E: aidd config", () => {
       } finally {
         await cleanup();
       }
-    }, 10000);
+    });
 
     it("returns installed tools list", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
@@ -100,7 +100,7 @@ describe.concurrent("E2E: aidd config", () => {
       } finally {
         await cleanup();
       }
-    }, 10000);
+    });
 
     it("fails on unknown key", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
@@ -113,7 +113,7 @@ describe.concurrent("E2E: aidd config", () => {
       } finally {
         await cleanup();
       }
-    }, 10000);
+    });
   });
 
   describe("config set", () => {
@@ -133,7 +133,7 @@ describe.concurrent("E2E: aidd config", () => {
       } finally {
         await cleanup();
       }
-    }, 10000);
+    });
 
     it("is a no-op when value is unchanged", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
@@ -149,7 +149,7 @@ describe.concurrent("E2E: aidd config", () => {
       } finally {
         await cleanup();
       }
-    }, 10000);
+    });
 
     it("rejects write without --force in non-interactive mode", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
@@ -165,7 +165,7 @@ describe.concurrent("E2E: aidd config", () => {
       } finally {
         await cleanup();
       }
-    }, 10000);
+    });
 
     it("rejects write on read-only key", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
@@ -181,7 +181,7 @@ describe.concurrent("E2E: aidd config", () => {
       } finally {
         await cleanup();
       }
-    }, 10000);
+    });
 
     it("rejects write on unknown key", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
@@ -197,7 +197,7 @@ describe.concurrent("E2E: aidd config", () => {
       } finally {
         await cleanup();
       }
-    }, 10000);
+    });
 
     it("shows warning when new directory does not exist on disk", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
@@ -213,7 +213,7 @@ describe.concurrent("E2E: aidd config", () => {
       } finally {
         await cleanup();
       }
-    }, 10000);
+    });
 
     it("shows no warning when new directory already exists on disk", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
@@ -231,7 +231,7 @@ describe.concurrent("E2E: aidd config", () => {
       } finally {
         await cleanup();
       }
-    }, 10000);
+    });
 
     it("updates repo in manifest with --force", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
@@ -249,7 +249,7 @@ describe.concurrent("E2E: aidd config", () => {
       } finally {
         await cleanup();
       }
-    }, 10000);
+    });
 
     it("rejects invalid repo format", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
@@ -265,7 +265,7 @@ describe.concurrent("E2E: aidd config", () => {
       } finally {
         await cleanup();
       }
-    }, 10000);
+    });
 
     it("fails when no manifest exists", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");

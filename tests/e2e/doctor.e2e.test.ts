@@ -17,7 +17,7 @@ describe.concurrent("E2E: aidd doctor", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("shows an error message when the manifest JSON is corrupted", async () => {
     const { projectDir, cleanup } = await createTestEnv("doctor");
@@ -33,7 +33,7 @@ describe.concurrent("E2E: aidd doctor", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("shows an error message when the project is not initialized", async () => {
     const { projectDir, cleanup } = await createTestEnv("doctor");
@@ -45,7 +45,7 @@ describe.concurrent("E2E: aidd doctor", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("reports a warning for a broken @path reference in a tracked file", async () => {
     const { projectDir, cleanup } = await createTestEnv("doctor");
@@ -66,7 +66,7 @@ describe.concurrent("E2E: aidd doctor", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("reports an error when the docs directory is missing from disk", async () => {
     const { projectDir, cleanup } = await createTestEnv("doctor");
@@ -82,7 +82,7 @@ describe.concurrent("E2E: aidd doctor", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("reports orphaned directories as a warning", async () => {
     const { projectDir, cleanup } = await createTestEnv("doctor");
@@ -99,5 +99,5 @@ describe.concurrent("E2E: aidd doctor", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 });

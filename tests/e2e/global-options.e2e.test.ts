@@ -12,7 +12,7 @@ describe.concurrent("E2E: aidd global options", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("--help lists all registered commands", async () => {
     const { projectDir, cleanup } = await createTestEnv("global");
@@ -31,10 +31,11 @@ describe.concurrent("E2E: aidd global options", () => {
       expect(stdout).toContain("sync");
       expect(stdout).toContain("cache");
       expect(stdout).toContain("config");
+      expect(stdout).toContain("self-update");
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("shows an error message for unrecognized commands", async () => {
     const { projectDir, cleanup } = await createTestEnv("global");
@@ -46,7 +47,7 @@ describe.concurrent("E2E: aidd global options", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("init --help shows init-specific options", async () => {
     const { projectDir, cleanup } = await createTestEnv("global");
@@ -60,7 +61,7 @@ describe.concurrent("E2E: aidd global options", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("config --help shows config subcommands", async () => {
     const { projectDir, cleanup } = await createTestEnv("global");
@@ -74,7 +75,7 @@ describe.concurrent("E2E: aidd global options", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("--verbose install lists installed files", async () => {
     const { projectDir, cleanup } = await createTestEnv("global");
@@ -91,5 +92,5 @@ describe.concurrent("E2E: aidd global options", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 });

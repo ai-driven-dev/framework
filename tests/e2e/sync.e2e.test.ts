@@ -18,7 +18,7 @@ describe.concurrent("E2E: aidd sync", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("fails when source tool is not installed", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
@@ -37,7 +37,7 @@ describe.concurrent("E2E: aidd sync", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("fails with 'at least 2 installed tools' when only claude is installed", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
@@ -55,7 +55,7 @@ describe.concurrent("E2E: aidd sync", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("fails when source and target are the same tool", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
@@ -74,7 +74,7 @@ describe.concurrent("E2E: aidd sync", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("reports nothing to sync when claude has no modifications", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
@@ -93,7 +93,7 @@ describe.concurrent("E2E: aidd sync", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("syncs a modified rule file from claude to cursor", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
@@ -128,7 +128,7 @@ describe.concurrent("E2E: aidd sync", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("propagates deletion from source to target", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
@@ -153,7 +153,7 @@ describe.concurrent("E2E: aidd sync", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("propagates modification from source to all installed tools when no --target is given", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
@@ -188,7 +188,7 @@ describe.concurrent("E2E: aidd sync", () => {
     } finally {
       await cleanup();
     }
-  }, 15000);
+  });
 
   it("fails when target tool is installed but a different target is specified that is not installed", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
@@ -208,7 +208,7 @@ describe.concurrent("E2E: aidd sync", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("force-syncs from claude to cursor without blocking on conflict", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
@@ -243,7 +243,7 @@ describe.concurrent("E2E: aidd sync", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("shows usage with --help", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
@@ -255,7 +255,7 @@ describe.concurrent("E2E: aidd sync", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("syncs user agent from claude to cursor with --include-user-files", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
@@ -294,7 +294,7 @@ describe.concurrent("E2E: aidd sync", () => {
     } finally {
       await cleanup();
     }
-  }, 15000);
+  });
 
   it("syncs a modified rule from claude to copilot (framework file MODIFIED)", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
@@ -334,5 +334,5 @@ describe.concurrent("E2E: aidd sync", () => {
     } finally {
       await cleanup();
     }
-  }, 15000);
+  });
 });

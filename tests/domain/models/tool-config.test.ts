@@ -42,8 +42,8 @@ const makeStubConfig = (toolId: ToolId, toolSuffix: string): ToolConfig => ({
 });
 
 describe("VALID_TOOL_IDS", () => {
-  it("contains exactly claude, cursor, copilot", () => {
-    expect(VALID_TOOL_IDS).toEqual(["claude", "cursor", "copilot"]);
+  it("contains exactly claude, cursor, copilot, opencode", () => {
+    expect(VALID_TOOL_IDS).toEqual(["claude", "cursor", "copilot", "opencode"]);
   });
 });
 

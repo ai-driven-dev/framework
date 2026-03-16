@@ -1,5 +1,28 @@
 # Changelog
 
+## [2.7.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.6.0...v2.7.0) (2026-03-16)
+
+
+### Features
+
+* **install:** add OpenCode plugin support ([#24](https://github.com/ai-driven-dev/aidd-cli/issues/24)) ([a48c61c](https://github.com/ai-driven-dev/aidd-cli/commit/a48c61c28da1c557b0c6ccc5f180dade34e04184))
+
+## [2.6.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.5.0...v2.6.0) (2026-03-13)
+
+
+### Features
+
+* **cli:** add aidd self-update command ([2b42a03](https://github.com/ai-driven-dev/aidd-cli/commit/2b42a0361a0d967f06b87437569fd83787e64289))
+* **cli:** add aidd self-update command ([92d7765](https://github.com/ai-driven-dev/aidd-cli/commit/92d7765c4ab092cc04a9d11199c8b6f7269eea88))
+* **self-update:** add self-update command with clean architecture ([f5fecb3](https://github.com/ai-driven-dev/aidd-cli/commit/f5fecb3083708455487e416a518409509c932c5a))
+
+
+### Refactoring
+
+* **self-update:** apply clean architecture ([2694e8d](https://github.com/ai-driven-dev/aidd-cli/commit/2694e8d191b7bcf8737d45eefa5d4f4b4e22039b))
+* **self-update:** extract use case, fix pkg path, clean tests ([1232408](https://github.com/ai-driven-dev/aidd-cli/commit/12324089754162e23255c5b13054376b49952760))
+* **self-update:** read version from bundled package.json import ([3d54ce5](https://github.com/ai-driven-dev/aidd-cli/commit/3d54ce552fa1a70f45cea3bb9e85708c84e8aaa3))
+
 ## [2.5.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.4.2...v2.5.0) (2026-03-11)
 
 

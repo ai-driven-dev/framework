@@ -49,6 +49,7 @@
 | `aidd clean` | `--force` | Remove all AIDD files. Dry-run without `--force`. |
 | `aidd cache list/clear` | `--all`, `[version]` | List or clear cached framework versions. |
 | `aidd config list/get/set` | `--force` | Manifest-backed config. Writable: `docsDir`, `repo`. Read-only: `tools`. |
+| `aidd self-update` | `--check`, `--dry-run`, `--force` | Update the aidd CLI itself to the latest version. `--check` shows if newer version is available without installing. `--dry-run` previews without installing. `--force` reinstalls even if already up to date. Uses GitHub Releases API for version check and changelog. |
 | Global flags | `--verbose`, `--token`, `--repo`, `--framework`, `--release` | Apply to all commands. |
 
 ## vNext — Vision (unspecified)

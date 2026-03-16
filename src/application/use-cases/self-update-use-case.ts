@@ -1,0 +1,47 @@
+import { compareSemver } from "../../domain/models/semver.js";
+import type { CliUpdater } from "../../domain/ports/cli-updater.js";
+import type { CurrentVersionProvider } from "../../domain/ports/current-version-provider.js";
+
+export interface SelfUpdateInput {
+  check: boolean;
+  dryRun: boolean;
+  force: boolean;
+}
+
+export type SelfUpdateResult =
+  | { kind: "up-to-date"; version: string }
+  | { kind: "check-available"; latestVersion: string; currentVersion: string }
+  | { kind: "check-current"; version: string }
+  | { kind: "dry-run"; latestVersion: string }
+  | { kind: "updated"; latestVersion: string; changelog?: string };
+
+export class SelfUpdateUseCase {
+  constructor(
+    private readonly updater: CliUpdater,
+    private readonly versionProvider: CurrentVersionProvider
+  ) {}
+
+  async execute(input: SelfUpdateInput): Promise<SelfUpdateResult> {
+    const currentVersion = this.versionProvider.get();
+    const { version: latestVersion, changelog } = await this.updater.fetchLatestRelease();
+    const outdated = compareSemver(currentVersion, latestVersion) < 0;
+
+    if (input.check) {
+      if (outdated) {
+        return { kind: "check-available", latestVersion, currentVersion };
+      }
+      return { kind: "check-current", version: currentVersion };
+    }
+
+    if (!outdated && !input.force) {
+      return { kind: "up-to-date", version: currentVersion };
+    }
+
+    if (input.dryRun) {
+      return { kind: "dry-run", latestVersion };
+    }
+
+    this.updater.install();
+    return { kind: "updated", latestVersion, changelog };
+  }
+}

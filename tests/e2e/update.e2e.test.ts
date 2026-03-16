@@ -23,7 +23,7 @@ describe.concurrent("E2E: aidd update", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("reports 'Already up to date' when same version is installed and no files changed", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
@@ -41,7 +41,7 @@ describe.concurrent("E2E: aidd update", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("applies added and changed files when updating to a newer framework", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
@@ -69,7 +69,7 @@ describe.concurrent("E2E: aidd update", () => {
     } finally {
       await cleanup();
     }
-  }, 15000);
+  });
 
   it("removes files that no longer exist in the newer framework", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
@@ -87,7 +87,7 @@ describe.concurrent("E2E: aidd update", () => {
     } finally {
       await cleanup();
     }
-  }, 15000);
+  });
 
   it("creates a .backup when updating a user-modified file", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
@@ -118,7 +118,7 @@ describe.concurrent("E2E: aidd update", () => {
     } finally {
       await cleanup();
     }
-  }, 15000);
+  });
 
   it("does not write files with --dry-run but shows what would change", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
@@ -149,7 +149,7 @@ describe.concurrent("E2E: aidd update", () => {
     } finally {
       await cleanup();
     }
-  }, 15000);
+  });
 
   it("overwrites conflicts without prompting with --force", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
@@ -171,7 +171,7 @@ describe.concurrent("E2E: aidd update", () => {
     } finally {
       await cleanup();
     }
-  }, 15000);
+  });
 
   it("updates docs files when upgrading to a newer framework", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
@@ -193,7 +193,7 @@ describe.concurrent("E2E: aidd update", () => {
     } finally {
       await cleanup();
     }
-  }, 15000);
+  });
 
   it("shows usage with --help", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
@@ -205,5 +205,5 @@ describe.concurrent("E2E: aidd update", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 });

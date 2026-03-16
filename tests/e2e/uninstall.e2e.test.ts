@@ -66,7 +66,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("shows an error message for unrecognized tool IDs", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
@@ -130,7 +130,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("warns when --all is set with explicit tool IDs", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");

@@ -2,13 +2,18 @@ import { join } from "node:path";
 import "../domain/tools/claude.js";
 import "../domain/tools/copilot.js";
 import "../domain/tools/cursor.js";
+import "../domain/tools/opencode.js";
 import { CLIOutput } from "../application/output.js";
+import type { CliUpdater } from "../domain/ports/cli-updater.js";
+import type { CurrentVersionProvider } from "../domain/ports/current-version-provider.js";
 import type { FileSystem } from "../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../domain/ports/framework-loader.js";
 import type { FrameworkResolver } from "../domain/ports/framework-resolver.js";
 import type { Hasher } from "../domain/ports/hasher.js";
 import type { Logger } from "../domain/ports/logger.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
+import { CliUpdaterAdapter } from "./adapters/cli-updater-adapter.js";
+import { CurrentVersionAdapter } from "./adapters/current-version-adapter.js";
 import { FileSystemAdapter } from "./adapters/file-system-adapter.js";
 import { FrameworkLoaderAdapter } from "./adapters/framework-loader-adapter.js";
 import {
@@ -36,6 +41,8 @@ interface Deps {
   hasher: Hasher;
   logger: Logger;
   resolver: FrameworkResolver;
+  cliUpdater: CliUpdater;
+  currentVersionProvider: CurrentVersionProvider;
 }
 
 export async function createDeps(
@@ -70,5 +77,7 @@ export async function createDeps(
     },
     logger
   );
-  return { fs, manifestRepo, loader, hasher, logger, resolver };
+  const cliUpdater = new CliUpdaterAdapter(http, { token: token ?? undefined });
+  const currentVersionProvider = new CurrentVersionAdapter();
+  return { fs, manifestRepo, loader, hasher, logger, resolver, cliUpdater, currentVersionProvider };
 }

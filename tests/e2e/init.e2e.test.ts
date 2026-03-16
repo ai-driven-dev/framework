@@ -20,7 +20,7 @@ describe.concurrent("E2E: aidd init", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("creates a custom docs directory when --docs-dir is specified", async () => {
     const { projectDir, cleanup } = await createTestEnv("init");
@@ -40,7 +40,7 @@ describe.concurrent("E2E: aidd init", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("shows an error when the docs-dir name contains invalid characters", async () => {
     const { projectDir, cleanup } = await createTestEnv("init");
@@ -55,7 +55,7 @@ describe.concurrent("E2E: aidd init", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("shows an error when the docs directory already exists without a manifest", async () => {
     const { projectDir, cleanup } = await createTestEnv("init");
@@ -72,7 +72,7 @@ describe.concurrent("E2E: aidd init", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("shows an error when .claude/ exists without a manifest", async () => {
     const { projectDir, cleanup } = await createTestEnv("init");
@@ -89,7 +89,7 @@ describe.concurrent("E2E: aidd init", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("succeeds when only .aidd/cache/ exists from a previous interrupted run", async () => {
     const { projectDir, cleanup } = await createTestEnv("init");
@@ -107,7 +107,7 @@ describe.concurrent("E2E: aidd init", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("fails with guidance when already initialized without --force", async () => {
     const { projectDir, cleanup } = await createTestEnv("init");
@@ -125,7 +125,7 @@ describe.concurrent("E2E: aidd init", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("re-copies docs templates with --force on existing installation", async () => {
     const { projectDir, cleanup } = await createTestEnv("init");
@@ -141,7 +141,7 @@ describe.concurrent("E2E: aidd init", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("fails with guidance when --force is used without prior init", async () => {
     const { projectDir, cleanup } = await createTestEnv("init");
@@ -156,5 +156,5 @@ describe.concurrent("E2E: aidd init", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 });

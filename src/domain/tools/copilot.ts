@@ -19,6 +19,7 @@ import {
   type SectionHandler,
   type ToolConfig,
   type UserFileSectionKey,
+  agentNameFromFrontmatter,
   registerTool,
 } from "../models/tool-config.js";
 
@@ -83,8 +84,8 @@ const agentsHandler: SectionHandler = {
     const name = base.endsWith(".md") ? `${base.slice(0, -3)}${EXT_AGENT}` : base;
     return `${DIRECTORY}agents/${name}`;
   },
-  convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-    return { name: fm.name, description: fm.description };
+  convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {
+    return { name: agentNameFromFrontmatter(fm, fileName), description: fm.description };
   },
   reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
     return { name: fm.name, description: fm.description };

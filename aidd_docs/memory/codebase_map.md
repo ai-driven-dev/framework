@@ -2,9 +2,9 @@
 
 ## Status
 
-- `src/` — fully implemented through v3.2 + adopt command (all milestones M0-M7 + v3.2 features + adopt done)
+- `src/` — fully implemented through v3.2 + adopt + self-update commands
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
-- `tests/` — 583 tests, 46 files, all passing
+- `tests/` — 584 tests, 47 files, all passing
 - Next: vNext interactive mode (not yet specified — do not implement until vision is stabilized)
 
 ## Source Layout
@@ -23,6 +23,7 @@ src/
 │   │   ├── install.ts                  # aidd install <tools> [--all] [--force]
 │   │   ├── restore.ts                  # aidd restore [files] [--tool] [--docs] [--force]
 │   │   ├── status.ts                   # aidd status [--tool] [--docs]
+│   │   ├── self-update.ts              # aidd self-update [--check] [--dry-run] [--force]
 │   │   ├── sync.ts                     # aidd sync --source <tool> [--target] [--force]
 │   │   ├── uninstall.ts                # aidd uninstall <tools> [--all]
 │   │   └── update.ts                   # aidd update [--force] [--dry-run] [--tool] [--docs]
@@ -106,6 +107,7 @@ tests/
 │   ├── sync.e2e.test.ts
 │   ├── cache.e2e.test.ts
 │   ├── config.e2e.test.ts
+│   ├── self-update.e2e.test.ts
 │   ├── lifecycle.e2e.test.ts            # full lifecycle including v3.1/v3.2 commands
 │   └── global-options.e2e.test.ts
 ├── fixtures/                           # shared test data (example framework)

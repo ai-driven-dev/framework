@@ -12,6 +12,7 @@ export const CONFIG_MCP = "mcp";
 export const CONFIG_VSCODE_SETTINGS = "vscodeSettings";
 export const CONFIG_VSCODE_EXTENSIONS = "vscodeExtensions";
 export const CONFIG_VSCODE_KEYBINDINGS = "vscodeKeybindings";
+export const CONFIG_OPENCODE = "opencode";
 
 export const TEMPLATE_AGENTS_MD = "agentsMd";
 

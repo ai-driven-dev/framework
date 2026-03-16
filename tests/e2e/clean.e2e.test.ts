@@ -19,7 +19,7 @@ describe.concurrent("E2E: aidd clean", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("deletes all installed files and manifest when --force is used", async () => {
     const { projectDir, cleanup } = await createTestEnv("clean");
@@ -36,7 +36,7 @@ describe.concurrent("E2E: aidd clean", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("reports nothing to clean when not initialized", async () => {
     const { projectDir, cleanup } = await createTestEnv("clean");
@@ -48,7 +48,7 @@ describe.concurrent("E2E: aidd clean", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("lists tool names and file counts in dry-run preview output", async () => {
     const { projectDir, cleanup } = await createTestEnv("clean");
@@ -64,7 +64,7 @@ describe.concurrent("E2E: aidd clean", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 
   it("removes all tool directories when multiple tools are installed", async () => {
     const { projectDir, cleanup } = await createTestEnv("clean");
@@ -83,7 +83,7 @@ describe.concurrent("E2E: aidd clean", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("removes docs and manifest when only init was run", async () => {
     const { projectDir, cleanup } = await createTestEnv("clean");
@@ -99,5 +99,5 @@ describe.concurrent("E2E: aidd clean", () => {
     } finally {
       await cleanup();
     }
-  }, 5000);
+  });
 });

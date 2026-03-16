@@ -78,11 +78,13 @@ export function generateDistribution(
     }
   }
 
+  const configHandler = toolConfig.config();
   results.push(
     ...collectRawFiles(
       framework.configRefs,
-      (name) => toolConfig.config().outputPath(name),
-      (name) => toolConfig.config().shouldMerge(name),
+      (name) => configHandler.outputPath(name),
+      (name) => configHandler.shouldMerge(name),
+      configHandler.transformContent?.bind(configHandler),
       contentFiles,
       hasher
     ),
@@ -151,6 +153,7 @@ function collectRawFiles(
   refs: readonly { name: string; path: string }[],
   resolveOutput: (name: string) => string | null,
   shouldMerge: (name: string) => boolean,
+  transformContent: ((name: string, content: string) => string) | undefined,
   contentFiles: Map<string, string>,
   hasher: Hasher
 ): GeneratedFile[] {
@@ -159,11 +162,12 @@ function collectRawFiles(
     if (rawContent === undefined) return [];
     const outputPath = resolveOutput(ref.name);
     if (outputPath === null) return [];
+    const content = transformContent ? transformContent(ref.name, rawContent) : rawContent;
     return [
       new GeneratedFile({
         relativePath: outputPath,
-        content: rawContent,
-        hash: hasher.hash(rawContent),
+        content,
+        hash: hasher.hash(content),
         merge: shouldMerge(ref.name),
         frameworkPath: ref.path,
       }),

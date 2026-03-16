@@ -79,7 +79,7 @@ describe.concurrent("E2E: full lifecycle", () => {
     } finally {
       await cleanup();
     }
-  }, 30000);
+  });
 
   it("cleans up all installed files after uninstall and clean", async () => {
     const { projectDir, cleanup } = await createTestEnv("lifecycle");

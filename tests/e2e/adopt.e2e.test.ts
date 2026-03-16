@@ -16,7 +16,7 @@ describe.concurrent("E2E: aidd adopt", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("fails when neither --release nor --framework is provided", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
@@ -28,7 +28,7 @@ describe.concurrent("E2E: aidd adopt", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("fails when --tools is missing", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
@@ -40,7 +40,7 @@ describe.concurrent("E2E: aidd adopt", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("fails with unknown tool name", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
@@ -55,7 +55,7 @@ describe.concurrent("E2E: aidd adopt", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("fails when specified tool directory does not exist", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
@@ -70,7 +70,7 @@ describe.concurrent("E2E: aidd adopt", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("fails with 'Already initialized' when manifest already exists", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
@@ -88,7 +88,7 @@ describe.concurrent("E2E: aidd adopt", () => {
     } finally {
       await cleanup();
     }
-  }, 15000);
+  });
 
   it("creates manifest from manually installed .claude/ files", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
@@ -108,7 +108,7 @@ describe.concurrent("E2E: aidd adopt", () => {
     } finally {
       await cleanup();
     }
-  }, 15000);
+  });
 
   it("status shows no drift after adopt (manifest hash matches disk)", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
@@ -129,7 +129,7 @@ describe.concurrent("E2E: aidd adopt", () => {
     } finally {
       await cleanup();
     }
-  }, 20000);
+  });
 
   it("adopts multiple tools (claude + cursor) when specified", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
@@ -155,7 +155,7 @@ describe.concurrent("E2E: aidd adopt", () => {
     } finally {
       await cleanup();
     }
-  }, 20000);
+  });
 
   it("adopts all three tools (claude + cursor + copilot) when specified", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
@@ -183,7 +183,7 @@ describe.concurrent("E2E: aidd adopt", () => {
     } finally {
       await cleanup();
     }
-  }, 20000);
+  });
 
   it("deletes legacy config.json during adoption", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
@@ -200,7 +200,7 @@ describe.concurrent("E2E: aidd adopt", () => {
     } finally {
       await cleanup();
     }
-  }, 15000);
+  });
 
   it("does not register user files not in the framework distribution", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
@@ -221,5 +221,5 @@ describe.concurrent("E2E: aidd adopt", () => {
     } finally {
       await cleanup();
     }
-  }, 15000);
+  });
 });

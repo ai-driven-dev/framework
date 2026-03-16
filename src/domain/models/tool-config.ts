@@ -1,5 +1,5 @@
-export type ToolId = "claude" | "cursor" | "copilot";
-export const VALID_TOOL_IDS: readonly ToolId[] = ["claude", "cursor", "copilot"];
+export type ToolId = "claude" | "cursor" | "copilot" | "opencode";
+export const VALID_TOOL_IDS: readonly ToolId[] = ["claude", "cursor", "copilot", "opencode"];
 
 export type UserFileSection = "agents" | "commands" | "rules" | "skills";
 
@@ -10,7 +10,7 @@ export interface UserFileSectionKey {
 
 export interface SectionHandler {
   buildFilePath(fileName: string): string | null;
-  convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown>;
+  convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown>;
   reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown>;
 }
 
@@ -32,6 +32,7 @@ export interface RulesHandler {
 export interface ConfigHandler {
   outputPath(configName: string): string | null;
   shouldMerge(configName: string): boolean;
+  transformContent?(configName: string, content: string): string;
 }
 
 export interface MemoryBankHandler {
@@ -52,6 +53,15 @@ export interface ToolConfig {
   config(): ConfigHandler;
   memoryBank(): MemoryBankHandler;
   detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null;
+}
+
+export function agentNameFromFrontmatter(
+  fm: Record<string, unknown>,
+  fileName?: string
+): string | undefined {
+  const base = fileName?.split("/").at(-1);
+  const name = fm.name ?? base?.replace(/\.md$/, "");
+  return typeof name === "string" ? name : undefined;
 }
 
 const TOOL_SUFFIXES = VALID_TOOL_IDS.map((id) => `.${id}.md`);

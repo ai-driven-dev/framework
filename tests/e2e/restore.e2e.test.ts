@@ -18,7 +18,7 @@ describe.concurrent("E2E: aidd restore", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("reports 'Nothing to restore' when no files are modified", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
@@ -36,7 +36,7 @@ describe.concurrent("E2E: aidd restore", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("restores a modified file with --force", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
@@ -62,7 +62,7 @@ describe.concurrent("E2E: aidd restore", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("recreates a deleted file with --force", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
@@ -85,7 +85,7 @@ describe.concurrent("E2E: aidd restore", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("restores only a specific file when path is given as argument", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
@@ -117,7 +117,7 @@ describe.concurrent("E2E: aidd restore", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("--tool flag limits restore scope to specified tool only", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
@@ -146,7 +146,7 @@ describe.concurrent("E2E: aidd restore", () => {
     } finally {
       await cleanup();
     }
-  }, 15000);
+  });
 
   it("restores all files in a directory when directory prefix is given", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
@@ -178,7 +178,7 @@ describe.concurrent("E2E: aidd restore", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("preserves untracked files in tool directory during restore", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
@@ -199,7 +199,7 @@ describe.concurrent("E2E: aidd restore", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("fails with 'Restore requires --force' in non-interactive mode", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
@@ -217,7 +217,7 @@ describe.concurrent("E2E: aidd restore", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("restores a deleted docs file with --force", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
@@ -240,7 +240,7 @@ describe.concurrent("E2E: aidd restore", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("restores a modified docs file with --force", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
@@ -265,7 +265,7 @@ describe.concurrent("E2E: aidd restore", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 
   it("shows usage with --help", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
@@ -277,5 +277,5 @@ describe.concurrent("E2E: aidd restore", () => {
     } finally {
       await cleanup();
     }
-  }, 10000);
+  });
 });
