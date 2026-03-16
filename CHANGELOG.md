@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.0](https://github.com/ai-driven-dev/aidd-framework/compare/v3.4.4...v3.5.0) (2026-03-16)
+
+
+### Features
+
+* **tooling:** add OpenCode config and syntax reference ([a70f3d0](https://github.com/ai-driven-dev/aidd-framework/commit/a70f3d0383f5f48604a29fa209fe69eb8465c7e7))
+
 ## [3.4.4](https://github.com/ai-driven-dev/aidd-framework/compare/v3.4.3...v3.4.4) (2026-03-10)
 
 
