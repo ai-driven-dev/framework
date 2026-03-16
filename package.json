@@ -1,6 +1,6 @@
 {
   "name": "@ai-driven-dev/cli",
-  "version": "2.7.2",
+  "version": "2.7.3",
   "description": "AI-Driven Development CLI — distribute the AIDD framework across AI coding assistants",
   "type": "module",
   "main": "dist/cli.js",
