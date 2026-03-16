@@ -252,7 +252,7 @@ describe("FrameworkResolverAdapter", () => {
       }
     });
 
-    it("reports release not found when tag does not exist on GitHub", async () => {
+    it("reports release not found with HTTP cause and auth hint when tag returns 404", async () => {
       const { url: serverUrl, close } = await startHttpServer((_req, res) => {
         res.writeHead(404, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ message: "Not Found" }));
@@ -265,7 +265,7 @@ describe("FrameworkResolverAdapter", () => {
         });
 
         await expect(adapter.resolve({ version: "v9.9.9" })).rejects.toThrow(
-          "Framework release not found: v9.9.9"
+          /Framework release not found: v9\.9\.9\. Resource not found \(HTTP 404\).*The repository may be private.*gh CLI/
         );
       } finally {
         await close();

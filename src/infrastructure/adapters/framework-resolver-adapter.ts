@@ -116,7 +116,16 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
         ? await this.fetchReleaseByTag(repo, normalizedTag, token)
         : await this.fetchLatestRelease(repo, token);
     } catch (error) {
-      if (normalizedTag) throw new Error(`Framework release not found: ${normalizedTag}`);
+      if (normalizedTag) {
+        const cause = error instanceof Error ? error.message : String(error);
+        // GitHub returns HTTP 404 for private repos when unauthenticated, not 401/403.
+        // Token resolution order: --token flag > AIDD_TOKEN env > gh auth token.
+        // Run `gh auth status` to verify gh CLI authentication.
+        const authHint = cause.includes("HTTP 404")
+          ? " The repository may be private — authenticate via gh CLI, or provide a token via --token or AIDD_TOKEN."
+          : "";
+        throw new Error(`Framework release not found: ${normalizedTag}. ${cause}.${authHint}`);
+      }
       networkError = error instanceof Error ? error : new Error(String(error));
     }
 
