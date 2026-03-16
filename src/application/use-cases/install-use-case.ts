@@ -8,6 +8,7 @@ import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import type { Platform } from "../../domain/ports/platform.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
 
 interface InstallOptions {
@@ -33,7 +34,8 @@ export class InstallUseCase {
     private readonly manifestRepo: ManifestRepository,
     private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
-    private readonly logger: Logger
+    private readonly logger: Logger,
+    private readonly platform: Platform
   ) {}
 
   async execute(options: InstallOptions): Promise<InstallToolResult[]> {
@@ -82,7 +84,8 @@ export class InstallUseCase {
         config,
         docsDir,
         contentFiles,
-        this.hasher
+        this.hasher,
+        this.platform
       );
 
       if (manifest.hasTool(toolId)) {

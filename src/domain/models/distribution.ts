@@ -1,28 +1,34 @@
 import type { Hasher } from "../ports/hasher.js";
-import type { FrameworkDescriptor } from "./framework-descriptor.js";
+import type { Platform } from "../ports/platform.js";
 import {
+  CONFIG_MCP,
   GITKEEP_FILE,
   SECTION_AGENTS,
   SECTION_COMMANDS,
   SECTION_RULES,
   SECTION_SKILLS,
 } from "./framework-descriptor.js";
+import type { FrameworkDescriptor } from "./framework-descriptor.js";
 import { parseFrontmatter, serializeFrontmatter } from "./frontmatter.js";
 import { GeneratedFile } from "./generated-file.js";
+import { transformFor as mcpTransformFor } from "./mcp.js";
 import {
-  acceptsFile,
   type CommandsHandler,
   type RulesHandler,
   type SectionHandler,
   type ToolConfig,
+  acceptsFile,
 } from "./tool-config.js";
+
+type ContentTransform = (content: string) => string;
 
 export function generateDistribution(
   framework: FrameworkDescriptor,
   toolConfig: ToolConfig,
   docsDir: string,
   contentFiles: Map<string, string>,
-  hasher: Hasher
+  hasher: Hasher,
+  platform: Platform
 ): GeneratedFile[] {
   const results: GeneratedFile[] = [];
 
@@ -79,6 +85,11 @@ export function generateDistribution(
   }
 
   const configHandler = toolConfig.config();
+  const current = platform.current();
+  const transforms = new Map<string, ContentTransform>();
+  const mcpTransform = mcpTransformFor(current);
+  if (mcpTransform) transforms.set(CONFIG_MCP, mcpTransform);
+
   results.push(
     ...collectRawFiles(
       framework.configRefs,
@@ -86,7 +97,8 @@ export function generateDistribution(
       (name) => configHandler.shouldMerge(name),
       configHandler.transformContent?.bind(configHandler),
       contentFiles,
-      hasher
+      hasher,
+      transforms
     ),
     ...collectMemoryBankFiles(framework.templateRefs, toolConfig, docsDir, contentFiles, hasher)
   );
@@ -155,14 +167,16 @@ function collectRawFiles(
   shouldMerge: (name: string) => boolean,
   transformContent: ((name: string, content: string) => string) | undefined,
   contentFiles: Map<string, string>,
-  hasher: Hasher
+  hasher: Hasher,
+  transforms: Map<string, ContentTransform>
 ): GeneratedFile[] {
   return refs.flatMap((ref) => {
     const rawContent = contentFiles.get(ref.path);
     if (rawContent === undefined) return [];
     const outputPath = resolveOutput(ref.name);
     if (outputPath === null) return [];
-    const content = transformContent ? transformContent(ref.name, rawContent) : rawContent;
+    const toolContent = transformContent ? transformContent(ref.name, rawContent) : rawContent;
+    const content = transforms.get(ref.name)?.(toolContent) ?? toolContent;
     return [
       new GeneratedFile({
         relativePath: outputPath,

@@ -53,7 +53,8 @@ export function registerAdoptCommand(program: Command): void {
           deps.manifestRepo,
           deps.loader,
           deps.hasher,
-          deps.logger
+          deps.logger,
+          deps.platform
         ).execute({
           toolIds,
           frameworkPath,
