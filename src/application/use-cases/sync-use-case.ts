@@ -1,11 +1,11 @@
 import { join } from "node:path";
 import { parseFrontmatter, serializeFrontmatter } from "../../domain/models/frontmatter.js";
 import {
+  getToolConfig,
   type SectionHandler,
   type ToolConfig,
   type ToolId,
   type UserFileSectionKey,
-  getToolConfig,
 } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Hasher } from "../../domain/ports/hasher.js";

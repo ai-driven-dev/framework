@@ -1,7 +1,7 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FRAMEWORK_PATH, createTestEnv, runCli } from "./helpers.js";
+import { createTestEnv, FRAMEWORK_PATH, runCli } from "./helpers.js";
 
 describe.concurrent("E2E: aidd doctor", () => {
   it("reports a healthy installation after a fresh install", async () => {

@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FRAMEWORK_PATH, createTestEnv, runCli } from "./helpers.js";
+import { createTestEnv, FRAMEWORK_PATH, runCli } from "./helpers.js";
 
 describe.concurrent("E2E: aidd init", () => {
   it("creates the docs directory and manifest", async () => {

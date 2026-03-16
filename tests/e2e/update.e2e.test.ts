@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FRAMEWORK_PATH, FRAMEWORK_V2_PATH, createTestEnv, runCli } from "./helpers.js";
+import { createTestEnv, FRAMEWORK_PATH, FRAMEWORK_V2_PATH, runCli } from "./helpers.js";
 
 // framework-v2 vs framework changes:
 //   changed: rules/01-standards/naming.md (added "Constants: UPPER_SNAKE_CASE" line)

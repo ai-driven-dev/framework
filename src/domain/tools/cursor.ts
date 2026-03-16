@@ -7,16 +7,16 @@ import {
   TOOLS_PLACEHOLDER,
 } from "../models/framework-descriptor.js";
 import {
+  agentNameFromFrontmatter,
   type CommandsHandler,
   type ConfigHandler,
   type MemoryBankHandler,
   type RulesHandler,
+  registerTool,
   type SectionHandler,
+  stripToolSuffix,
   type ToolConfig,
   type UserFileSectionKey,
-  agentNameFromFrontmatter,
-  registerTool,
-  stripToolSuffix,
 } from "../models/tool-config.js";
 
 const DIRECTORY = ".cursor/";

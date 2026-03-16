@@ -5,11 +5,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { InstallUseCase } from "../../../src/application/use-cases/install-use-case.js";
 import type { ToolId } from "../../../src/domain/models/tool-config.js";
 import {
-  FIXTURE_DIR,
-  FIXTURE_DIR_V2,
   buildDeps,
   cleanupTempProject,
   createTempProject,
+  FIXTURE_DIR,
+  FIXTURE_DIR_V2,
   initProject,
 } from "./helpers.js";
 

@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  type ToolConfig,
-  type ToolId,
-  VALID_TOOL_IDS,
   acceptsFile,
   getAllRegisteredTools,
   getToolConfig,
   registerTool,
   stripToolSuffix,
+  type ToolConfig,
+  type ToolId,
+  VALID_TOOL_IDS,
 } from "../../../src/domain/models/tool-config.js";
 
 const makeStubConfig = (toolId: ToolId, toolSuffix: string): ToolConfig => ({
