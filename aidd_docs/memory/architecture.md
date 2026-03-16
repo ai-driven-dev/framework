@@ -47,7 +47,7 @@ flowchart TD
     subgraph DOM["Domain"]
         MODELS["models: Manifest, Distribution, Catalog, ToolConfig, FileHash, GeneratedFile"]
         PORTS["ports: interfaces"]
-        TOOLS["tools: claude, cursor, copilot"]
+        TOOLS["tools: claude, cursor, copilot, opencode"]
     end
     subgraph INFRA["Infrastructure"]
         ADAPTERS["adapters: filesystem, manifest, logger, framework-loader, framework-resolver, hasher"]
@@ -142,11 +142,12 @@ flowchart TD
 | `claude` | `CLAUDE.md` | `.mcp.json` | `.claude/agents/` | `.claude/commands/aidd/` | `.claude/rules/` (`.md`) | `.claude/skills/` |
 | `cursor` | `AGENTS.md` | `.cursor/mcp.json` | `.cursor/agents/` | `.cursor/commands/{original-dir}/` | `.cursor/rules/` (`.mdc`) | `.cursor/skills/` |
 | `copilot` | `.github/copilot-instructions.md` | — | `.github/agents/*.agent.md` | `.github/prompts/*.prompt.md` | `.github/instructions/*.instructions.md` | `.github/skills/*/SKILL.md` |
+| `opencode` | `AGENTS.md` | `opencode.json` (merged, transforms `.mcp.json` to opencode format) | `.opencode/agents/` | `.opencode/commands/` | `.opencode/rules/` (`.opencode.md`) | `.opencode/skills/` |
 
-- `claude` — frontmatter scope: `paths:` list; include syntax: `@.claude/path`
 - `claude` — frontmatter scope: `paths:` list; include syntax: `@.claude/path`
 - `cursor` — frontmatter scope: `globs:` (JSON-array string) + `alwaysApply:`; rules use `.mdc` extension; commands preserve `argument-hint`
 - `copilot` — frontmatter scope: `applyTo:`; file flattening applied to commands/rules; includes rewritten as markdown links; copilot-specific rules may use `applyTo` directly in source frontmatter
+- `opencode` — frontmatter: description-only (no `name` field; filename used as name); suffix `.opencode.md`; MCP config transformed from standard `.mcp.json` to `{ mcp: { name: { type, command/url, enabled } } }` format; URL-based servers use `type: "remote"`
 
 ## Directory Structure
 
@@ -163,7 +164,7 @@ src/
 │   │                               #   FrameworkDescriptor, Frontmatter
 │   ├── ports/                      # ManifestRepository, FileSystem, FrameworkLoader,
 │   │                               #   FrameworkResolver, Hasher, Logger
-│   └── tools/                      # claude.ts, cursor.ts, copilot.ts
+│   └── tools/                      # claude.ts, cursor.ts, copilot.ts, opencode.ts
 └── infrastructure/
     ├── adapters/                   # All port implementations
     ├── auth/                       # token-resolver.ts

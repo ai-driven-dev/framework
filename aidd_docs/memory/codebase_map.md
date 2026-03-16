@@ -2,9 +2,9 @@
 
 ## Status
 
-- `src/` — fully implemented through v3.2 + adopt + self-update commands
+- `src/` — fully implemented through v3.2 + adopt + self-update + opencode tool (v2.7.x) commands
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
-- `tests/` — 584 tests, 47 files, all passing
+- `tests/` — 637 tests, 50 files, all passing
 - Next: vNext interactive mode (not yet specified — do not implement until vision is stabilized)
 
 ## Source Layout
@@ -64,7 +64,8 @@ src/
 │   └── tools/
 │       ├── claude.ts
 │       ├── copilot.ts
-│       └── cursor.ts
+│       ├── cursor.ts
+│       └── opencode.ts
 └── infrastructure/
     ├── adapters/
     │   ├── file-system-adapter.ts       # mergeJsonFile (strips JSONC comments + deep-merge)
@@ -93,7 +94,7 @@ src/
 tests/
 ├── application/use-cases/              # unit tests per use-case (vi.fn() mocked ports)
 ├── domain/models/                      # pure value object tests
-├── domain/tools/                       # tool config unit tests
+├── domain/tools/                       # tool config unit tests (claude, copilot, cursor, opencode)
 ├── e2e/                                # full CLI e2e via child_process + temp dirs
 │   ├── adopt.e2e.test.ts
 │   ├── init.e2e.test.ts
@@ -119,7 +120,7 @@ tests/
 ## Non-source Files
 
 - No `settings.json` — all project config is in the manifest (`docsDir`, `repo`) or via flags/env vars
-- `package.json` — `@ai-driven-dev/cli` v2.4.1, GitHub Packages registry, Node >= 24
+- `package.json` — `@ai-driven-dev/cli` v2.7.3, GitHub Packages registry, Node >= 24
 - `tsup.config.ts` — single ESM bundle, target node20 (build target, runtime requires node >= 24)
 - `vitest.config.ts` — test runner with path aliases
 - `biome.json` — lint + format config

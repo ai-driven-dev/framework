@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-- **Package**: `@ai-driven-dev/cli` v2.4.1
+- **Package**: `@ai-driven-dev/cli` v2.7.3
 - **Vision**: Distribute a canonical AI-Driven Development framework consistently across multiple AI coding assistants, eliminating manual tool-specific adaptation
 - **Mission**: CLI that resolves the AIDD framework from remote/local sources, generates tool-specific file distributions with content rewriting and frontmatter conversion, and tracks every generated file in a hash-based manifest
 
@@ -11,7 +11,7 @@
 - Community product gated by GitHub authentication token
 - CLI is the distribution backbone — not a generic scaffolding tool
 - Framework assets: agents, commands, rules, skills, templates
-- Supported tools: Claude Code, Cursor, GitHub Copilot
+- Supported tools: Claude Code, Cursor, GitHub Copilot, OpenCode
 
 ## Core Domain
 
@@ -27,7 +27,7 @@
 | Framework | Canonical set of agents, commands, rules, skills, templates |
 | Distribution | Tool-specific generated output (files rewritten per tool conventions) |
 | Manifest | `.aidd/manifest.json` — hash-based tracking of every installed file |
-| ToolConfig | Per-tool configuration: output paths, frontmatter conversion, merge rules |
+| ToolConfig | Per-tool configuration: output paths, frontmatter conversion, merge rules. Tools: `claude` → `.claude/`, `cursor` → `.cursor/`, `copilot` → `.github/`, `opencode` → `.opencode/` |
 | Framework Descriptor | Code model built by `FrameworkLoaderAdapter` — no `framework.json` file |
 | Drift | Installed file modified locally vs. what was written at install time |
 | Init | Bootstrap: creates `aidd_docs/` structure + manifest |
