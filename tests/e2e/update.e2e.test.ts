@@ -179,10 +179,7 @@ describe.concurrent("E2E: aidd update", () => {
       await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
-      const { stdout, exitCode } = await runCli(
-        ["update", "--framework", FRAMEWORK_V2_PATH],
-        projectDir
-      );
+      const { exitCode } = await runCli(["update", "--framework", FRAMEWORK_V2_PATH], projectDir);
 
       expect(exitCode).toBe(0);
 

@@ -6,7 +6,7 @@ import type { CurrentVersionProvider } from "../../../src/domain/ports/current-v
 function makeUseCase(
   currentVersion: string,
   latestVersion: string,
-  installFn = vi.fn()
+  installFn = vi.fn().mockReturnValue("/usr/local/bin/aidd")
 ): { useCase: SelfUpdateUseCase; installFn: ReturnType<typeof vi.fn> } {
   const versionProvider: CurrentVersionProvider = { get: vi.fn().mockReturnValue(currentVersion) };
   const updater: CliUpdater = {
@@ -58,6 +58,7 @@ describe("SelfUpdateUseCase", () => {
         kind: "updated",
         latestVersion: "2.6.0",
         changelog: "Release notes",
+        binaryPath: "/usr/local/bin/aidd",
       });
       expect(installFn).toHaveBeenCalledOnce();
     });
@@ -80,6 +81,7 @@ describe("SelfUpdateUseCase", () => {
         kind: "updated",
         latestVersion: "2.5.0",
         changelog: "Release notes",
+        binaryPath: "/usr/local/bin/aidd",
       });
       expect(installFn).toHaveBeenCalledOnce();
     });

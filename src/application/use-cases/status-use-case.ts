@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import type { FileHash } from "../../domain/models/file-hash.js";
-import { compareSemver } from "../../domain/models/semver.js";
 import { getToolConfig, type ToolId } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
@@ -36,13 +35,11 @@ interface StatusOptions {
   filterDocs?: boolean;
 }
 
-export { compareSemver };
-
 export class StatusUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    private readonly logger: Logger
+    readonly _logger: Logger
   ) {}
 
   async execute(options: StatusOptions): Promise<StatusReport> {

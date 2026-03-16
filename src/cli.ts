@@ -72,7 +72,14 @@ program.hook("preAction", async () => {
     { verbose: opts.verbose ?? false, repo: opts.repo, token: opts.token },
     output
   ).catch(() => null);
-  if (deps) await printUpdateBanner(deps.resolver, deps.manifestRepo, output);
+  if (deps)
+    await printUpdateBanner(
+      deps.cliUpdater,
+      deps.currentVersionProvider,
+      deps.resolver,
+      deps.manifestRepo,
+      output
+    );
 });
 
 if (process.argv.slice(2).length === 0) {

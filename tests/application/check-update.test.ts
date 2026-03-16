@@ -3,6 +3,8 @@ import { printUpdateBanner } from "../../src/application/check-update.js";
 import { InitUseCase } from "../../src/application/use-cases/init-use-case.js";
 import { InstallUseCase } from "../../src/application/use-cases/install-use-case.js";
 import type { ToolId } from "../../src/domain/models/tool-config.js";
+import type { CliUpdater } from "../../src/domain/ports/cli-updater.js";
+import type { CurrentVersionProvider } from "../../src/domain/ports/current-version-provider.js";
 import type { FrameworkResolver } from "../../src/domain/ports/framework-resolver.js";
 import type { Logger } from "../../src/domain/ports/logger.js";
 import {
@@ -10,8 +12,6 @@ import {
   cleanupTempProject,
   createTempProject,
   FIXTURE_DIR,
-  initAndInstall,
-  initProject,
 } from "./use-cases/helpers.js";
 
 function makeLogger(): { logger: Logger; logs: string[] } {
@@ -29,6 +29,17 @@ function makeResolver(latestVersion: string): FrameworkResolver {
     resolve: vi.fn(),
     fetchLatestVersion: vi.fn().mockResolvedValue(latestVersion),
   };
+}
+
+function makeCliUpdater(latestVersion: string): CliUpdater {
+  return {
+    fetchLatestRelease: vi.fn().mockResolvedValue({ version: latestVersion, changelog: "" }),
+    install: vi.fn().mockReturnValue("/usr/local/bin/aidd"),
+  };
+}
+
+function makeCurrentVersionProvider(version: string): CurrentVersionProvider {
+  return { get: () => version };
 }
 
 async function initWithVersion(
@@ -83,7 +94,13 @@ describe("printUpdateBanner", () => {
     const deps = buildDeps(projectRoot);
     const { logger, logs } = makeLogger();
 
-    await printUpdateBanner(makeResolver("v3.0.0"), deps.manifestRepo, logger);
+    await printUpdateBanner(
+      makeCliUpdater("v1.0.0"),
+      makeCurrentVersionProvider("1.0.0"),
+      makeResolver("v3.0.0"),
+      deps.manifestRepo,
+      logger
+    );
 
     expect(logs).toHaveLength(0);
   });
@@ -93,7 +110,13 @@ describe("printUpdateBanner", () => {
     await initWithVersion(deps, projectRoot, "local");
     const { logger, logs } = makeLogger();
 
-    await printUpdateBanner(makeResolver("v3.0.0"), deps.manifestRepo, logger);
+    await printUpdateBanner(
+      makeCliUpdater("v1.0.0"),
+      makeCurrentVersionProvider("1.0.0"),
+      makeResolver("v3.0.0"),
+      deps.manifestRepo,
+      logger
+    );
 
     expect(logs).toHaveLength(0);
   });
@@ -103,7 +126,13 @@ describe("printUpdateBanner", () => {
     await initWithVersion(deps, projectRoot, "3.0.0");
     const { logger, logs } = makeLogger();
 
-    await printUpdateBanner(makeResolver("v3.0.0"), deps.manifestRepo, logger);
+    await printUpdateBanner(
+      makeCliUpdater("v1.0.0"),
+      makeCurrentVersionProvider("1.0.0"),
+      makeResolver("v3.0.0"),
+      deps.manifestRepo,
+      logger
+    );
 
     expect(logs).toHaveLength(0);
   });
@@ -117,7 +146,13 @@ describe("printUpdateBanner", () => {
       fetchLatestVersion: vi.fn().mockRejectedValue(new Error("network failure")),
     };
 
-    await printUpdateBanner(resolver, deps.manifestRepo, logger);
+    await printUpdateBanner(
+      makeCliUpdater("v1.0.0"),
+      makeCurrentVersionProvider("1.0.0"),
+      resolver,
+      deps.manifestRepo,
+      logger
+    );
 
     expect(logs).toHaveLength(0);
   });
@@ -127,7 +162,13 @@ describe("printUpdateBanner", () => {
     await initWithVersion(deps, projectRoot, "3.0.0");
     const { logger, logs } = makeLogger();
 
-    await printUpdateBanner(makeResolver("v3.1.0"), deps.manifestRepo, logger);
+    await printUpdateBanner(
+      makeCliUpdater("v1.0.0"),
+      makeCurrentVersionProvider("1.0.0"),
+      makeResolver("v3.1.0"),
+      deps.manifestRepo,
+      logger
+    );
 
     expect(logs.some((l) => l.includes("Update available"))).toBe(true);
     expect(logs.some((l) => l.includes("aidd update --docs"))).toBe(true);
@@ -140,7 +181,13 @@ describe("printUpdateBanner", () => {
     await installWithVersion(deps, projectRoot, "3.0.0");
     const { logger, logs } = makeLogger();
 
-    await printUpdateBanner(makeResolver("v3.1.0"), deps.manifestRepo, logger);
+    await printUpdateBanner(
+      makeCliUpdater("v1.0.0"),
+      makeCurrentVersionProvider("1.0.0"),
+      makeResolver("v3.1.0"),
+      deps.manifestRepo,
+      logger
+    );
 
     expect(logs.some((l) => l.includes("Update available"))).toBe(true);
     expect(logs.some((l) => l.includes("aidd update"))).toBe(true);
@@ -153,10 +200,51 @@ describe("printUpdateBanner", () => {
     await installWithVersion(deps, projectRoot, "3.0.0");
     const { logger, logs } = makeLogger();
 
-    await printUpdateBanner(makeResolver("v3.1.0"), deps.manifestRepo, logger);
+    await printUpdateBanner(
+      makeCliUpdater("v1.0.0"),
+      makeCurrentVersionProvider("1.0.0"),
+      makeResolver("v3.1.0"),
+      deps.manifestRepo,
+      logger
+    );
 
     expect(logs.some((l) => l.includes("Update available"))).toBe(true);
     expect(logs.some((l) => l.includes("aidd update") && !l.includes("--docs"))).toBe(true);
     expect(logs.some((l) => l.includes("--docs"))).toBe(false);
+  });
+
+  it("shows CLI update when CLI is outdated", async () => {
+    const deps = buildDeps(projectRoot);
+    const { logger, logs } = makeLogger();
+
+    await printUpdateBanner(
+      makeCliUpdater("v2.0.0"),
+      makeCurrentVersionProvider("1.0.0"),
+      makeResolver("v3.0.0"),
+      deps.manifestRepo,
+      logger
+    );
+
+    expect(logs.some((l) => l.includes("CLI update available"))).toBe(true);
+    expect(logs.some((l) => l.includes("aidd self-update"))).toBe(true);
+  });
+
+  it("stays silent for CLI when CLI check fails", async () => {
+    const deps = buildDeps(projectRoot);
+    const { logger, logs } = makeLogger();
+    const failingCliUpdater: CliUpdater = {
+      fetchLatestRelease: vi.fn().mockRejectedValue(new Error("network failure")),
+      install: vi.fn().mockReturnValue("/usr/local/bin/aidd"),
+    };
+
+    await printUpdateBanner(
+      failingCliUpdater,
+      makeCurrentVersionProvider("1.0.0"),
+      makeResolver("v3.0.0"),
+      deps.manifestRepo,
+      logger
+    );
+
+    expect(logs).toHaveLength(0);
   });
 });

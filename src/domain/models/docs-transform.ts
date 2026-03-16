@@ -1,5 +1,4 @@
 import type { Hasher } from "../ports/hasher.js";
-import type { FileHash } from "./file-hash.js";
 import { GeneratedFile } from "./generated-file.js";
 
 const FRAMEWORK_DOCS_PREFIX = "aidd_docs";

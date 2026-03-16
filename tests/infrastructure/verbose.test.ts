@@ -1,7 +1,4 @@
-import { mkdir, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { CLIOutput } from "../../src/application/output.js";
 
 describe("CLIOutput AIDD_VERBOSE env var", () => {

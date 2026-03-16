@@ -78,6 +78,8 @@ npm install -g @ai-driven-dev/cli
 aidd --version
 ```
 
+> Run `which aidd` to identify the active binary and use the matching package manager (`npm`, `pnpm`, `yarn`, `bun`). Never pass `--registry` to the install command — set it in `~/.npmrc` as a scoped override.
+
 ---
 
 ## Quickstart

@@ -13,7 +13,7 @@ export type SelfUpdateResult =
   | { kind: "check-available"; latestVersion: string; currentVersion: string }
   | { kind: "check-current"; version: string }
   | { kind: "dry-run"; latestVersion: string }
-  | { kind: "updated"; latestVersion: string; changelog?: string };
+  | { kind: "updated"; latestVersion: string; changelog?: string; binaryPath?: string };
 
 export class SelfUpdateUseCase {
   constructor(
@@ -41,7 +41,7 @@ export class SelfUpdateUseCase {
       return { kind: "dry-run", latestVersion };
     }
 
-    this.updater.install();
-    return { kind: "updated", latestVersion, changelog };
+    const binaryPath = this.updater.install();
+    return { kind: "updated", latestVersion, changelog, binaryPath };
   }
 }

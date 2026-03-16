@@ -41,12 +41,14 @@ export function registerSelfUpdateCommand(program: Command): void {
           case "dry-run":
             output.info(`Would install @ai-driven-dev/cli@${result.latestVersion}`);
             break;
-          case "updated":
-            output.success(`Successfully updated to version ${result.latestVersion}`);
+          case "updated": {
+            const binaryPart = result.binaryPath ? ` (${result.binaryPath})` : "";
+            output.success(`Successfully updated to version ${result.latestVersion}${binaryPart}`);
             if (result.changelog) {
               output.info(`\nChangelog:\n${result.changelog}`);
             }
             break;
+          }
         }
       } catch (error) {
         output.exit(error);

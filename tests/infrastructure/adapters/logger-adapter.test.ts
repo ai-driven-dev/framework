@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { CLIOutput } from "../../../src/application/output.js";
 
 describe("CLIOutput", () => {

@@ -5,5 +5,5 @@ export interface CliRelease {
 
 export interface CliUpdater {
   fetchLatestRelease(): Promise<CliRelease>;
-  install(): void;
+  install(): string;
 }

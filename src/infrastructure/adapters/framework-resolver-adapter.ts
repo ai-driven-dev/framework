@@ -108,7 +108,7 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
         : undefined;
 
     let release: GithubRelease | null = null;
-    let networkError: Error | null = null;
+    let _networkError: Error | null = null;
 
     try {
       release = normalizedTag
@@ -125,7 +125,7 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
           : "";
         throw new Error(`Framework release not found: ${normalizedTag}. ${cause}.${authHint}`);
       }
-      networkError = error instanceof Error ? error : new Error(String(error));
+      _networkError = error instanceof Error ? error : new Error(String(error));
     }
 
     if (release !== null) {

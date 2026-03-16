@@ -103,7 +103,7 @@ export class SyncUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    private readonly hasher: Hasher,
+    readonly _hasher: Hasher,
     private readonly logger: Logger
   ) {}
 

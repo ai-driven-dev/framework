@@ -60,7 +60,7 @@ export class DoctorUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    private readonly logger: Logger
+    readonly _logger: Logger
   ) {}
 
   async execute(options: DoctorOptions): Promise<DoctorReport> {
