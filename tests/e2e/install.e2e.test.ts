@@ -138,9 +138,11 @@ describe.concurrent("E2E: aidd install", () => {
       expect(stdout).toContain("claude");
       expect(stdout).toContain("cursor");
       expect(stdout).toContain("copilot");
+      expect(stdout).toContain("opencode");
       expect(existsSync(join(projectDir, ".claude"))).toBe(true);
       expect(existsSync(join(projectDir, ".cursor"))).toBe(true);
       expect(existsSync(join(projectDir, ".github"))).toBe(true);
+      expect(existsSync(join(projectDir, ".opencode"))).toBe(true);
     } finally {
       await cleanup();
     }
@@ -176,6 +178,7 @@ describe.concurrent("E2E: aidd install", () => {
       expect(stdout).toContain("claude");
       expect(stdout).toContain("cursor");
       expect(stdout).toContain("copilot");
+      expect(stdout).toContain("opencode");
     } finally {
       await cleanup();
     }
