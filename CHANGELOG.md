@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.9.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.8.0...v2.9.0) (2026-03-17)
+
+
+### Features
+
+* **mcp:** platform-aware MCP config transform for Windows ([bb70aa3](https://github.com/ai-driven-dev/aidd-cli/commit/bb70aa336e60987cb8ca065726451f497223f551))
+
+
+### Bug Fixes
+
+* **lint:** fix Biome v2 worktree path exclusion and unused imports ([9e88227](https://github.com/ai-driven-dev/aidd-cli/commit/9e8822706bfaac5efa9cd8f29a68451e672c98bb))
+
+
+### Documentation
+
+* **tasks:** add implementation plan for MCP platform adaptation ([5777685](https://github.com/ai-driven-dev/aidd-cli/commit/57776856d77cec36db70e79875feef0da3bf6d41))
+
+
+### Refactoring
+
+* **distribution:** inject Platform port, delegate transform ownership to domain models ([302d35b](https://github.com/ai-driven-dev/aidd-cli/commit/302d35b5c2f7a577181201994b1afa00cd001868))
+
 ## [2.8.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.7.3...v2.8.0) (2026-03-17)
 
 
