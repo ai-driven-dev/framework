@@ -3,13 +3,11 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
-import type { ToolId } from "../../../src/domain/models/tool-config.js";
 import {
   buildDeps,
   cleanupTempProject,
   createTempProject,
   FIXTURE_DIR,
-  installTool,
   linuxPlatform,
 } from "./helpers.js";
 

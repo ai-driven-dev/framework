@@ -12,8 +12,6 @@ import {
   cleanupTempProject,
   createTempProject,
   FIXTURE_DIR,
-  initAndInstall,
-  initProject,
   linuxPlatform,
 } from "./use-cases/helpers.js";
 
