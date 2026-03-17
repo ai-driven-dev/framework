@@ -7,7 +7,7 @@ import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
-import { writeCatalog } from "./catalog-use-case.js";
+import { CatalogUseCase } from "./catalog-use-case.js";
 import { GitignoreUseCase } from "./gitignore-use-case.js";
 
 interface InitOptions {
@@ -124,7 +124,7 @@ export class InitUseCase {
         : Manifest.create(resolvedDocsDir, repo);
     manifest.addDocs(descriptor.version, generated);
     await this.manifestRepo.save(manifest);
-    await writeCatalog(manifest, resolvedDocsDir, projectRoot, this.fs);
+    await new CatalogUseCase(this.fs).execute({ manifest, docsDir: resolvedDocsDir, projectRoot });
 
     if (!force) {
       await new GitignoreUseCase(this.fs).execute(projectRoot, [".aidd/cache/"]);

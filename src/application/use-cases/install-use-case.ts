@@ -8,7 +8,7 @@ import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
-import { writeCatalog } from "./catalog-use-case.js";
+import { CatalogUseCase } from "./catalog-use-case.js";
 
 interface InstallOptions {
   toolIds: ToolId[];
@@ -107,7 +107,7 @@ export class InstallUseCase {
     }
 
     await this.manifestRepo.save(manifest);
-    await writeCatalog(manifest, docsDir, projectRoot, this.fs);
+    await new CatalogUseCase(this.fs).execute({ manifest, docsDir, projectRoot });
 
     return results;
   }
