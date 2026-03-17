@@ -249,4 +249,20 @@ describe("printUpdateBanner", () => {
 
     expect(logs).toHaveLength(0);
   });
+
+  it("skips CLI update banner when skipCliCheck is true", async () => {
+    const deps = buildDeps(projectRoot);
+    const { logger, logs } = makeLogger();
+
+    await printUpdateBanner(
+      makeCliUpdater("v2.0.0"),
+      makeCurrentVersionProvider("1.0.0"),
+      makeResolver("v3.0.0"),
+      deps.manifestRepo,
+      logger,
+      true
+    );
+
+    expect(logs.some((l) => l.includes("CLI update available"))).toBe(false);
+  });
 });

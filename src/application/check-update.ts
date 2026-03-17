@@ -14,19 +14,22 @@ export async function printUpdateBanner(
   currentVersionProvider: CurrentVersionProvider,
   resolver: FrameworkResolver,
   manifestRepo: ManifestRepository,
-  logger: Logger
+  logger: Logger,
+  skipCliCheck = false
 ): Promise<void> {
-  try {
-    const current = currentVersionProvider.get();
-    const { version: latest } = await cliUpdater.fetchLatestRelease();
-    if (isOutdated(current, latest)) {
-      logger.info(
-        `\nCLI update available: v${current.replace(/^v/, "")} → v${latest.replace(/^v/, "")}`
-      );
-      logger.info("Run `aidd self-update`.");
+  if (!skipCliCheck) {
+    try {
+      const current = currentVersionProvider.get();
+      const { version: latest } = await cliUpdater.fetchLatestRelease();
+      if (isOutdated(current, latest)) {
+        logger.info(
+          `\nCLI update available: v${current.replace(/^v/, "")} → v${latest.replace(/^v/, "")}`
+        );
+        logger.info("Run `aidd self-update`.");
+      }
+    } catch (err) {
+      logger.debug(`CLI update check failed: ${err instanceof Error ? err.message : String(err)}`);
     }
-  } catch {
-    // silent — best-effort check
   }
 
   try {
@@ -53,7 +56,9 @@ export async function printUpdateBanner(
     if (docsOutdated && toolsOutdated) logger.info("Run `aidd update` to update docs and tools.");
     else if (docsOutdated) logger.info("Run `aidd update --docs` to update docs.");
     else if (toolsOutdated) logger.info("Run `aidd update` to update tools.");
-  } catch {
-    // silent — best-effort check
+  } catch (err) {
+    logger.debug(
+      `Framework update check failed: ${err instanceof Error ? err.message : String(err)}`
+    );
   }
 }

@@ -64,7 +64,7 @@ registerRestoreCommand(program);
 registerSyncCommand(program);
 registerSelfUpdateCommand(program);
 
-program.hook("preAction", async () => {
+program.hook("preAction", async (_thisCommand, actionCommand) => {
   const opts = program.opts<{ verbose?: boolean; repo?: string; token?: string }>();
   const output = new CLIOutput(opts.verbose ?? false);
   const deps = await createDeps(
@@ -78,7 +78,8 @@ program.hook("preAction", async () => {
       deps.currentVersionProvider,
       deps.resolver,
       deps.manifestRepo,
-      output
+      output,
+      actionCommand.name() === "self-update"
     );
 });
 
