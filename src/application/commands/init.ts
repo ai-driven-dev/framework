@@ -54,7 +54,12 @@ export function registerInitCommand(program: Command): void {
           deps.hasher,
           deps.logger
         );
-        await useCase.checkPreconditions({ docsDir, projectRoot, force: cmdOptions.force });
+        await useCase.checkPreconditions({
+          docsDir,
+          projectRoot,
+          force: cmdOptions.force,
+          repo: globalOptions.repo,
+        });
         const { path: frameworkPath, version } = await resolveFramework(
           deps.resolver,
           deps.logger,

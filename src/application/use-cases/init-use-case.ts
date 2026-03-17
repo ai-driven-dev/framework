@@ -7,6 +7,7 @@ import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import { AiddFilesDetectedError, NoManifestError } from "../errors.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
 import { GitignoreUseCase } from "./gitignore-use-case.js";
 
@@ -36,14 +37,14 @@ export class InitUseCase {
   ) {}
 
   async checkPreconditions(
-    options: Pick<InitOptions, "docsDir" | "projectRoot" | "force">
+    options: Pick<InitOptions, "docsDir" | "projectRoot" | "force" | "repo">
   ): Promise<void> {
-    const { docsDir, projectRoot, force = false } = options;
+    const { docsDir, projectRoot, force = false, repo } = options;
     const existing = await this.manifestRepo.load();
 
     if (force) {
       if (existing === null) {
-        throw new Error("No AIDD installation found. Run `aidd init` first.");
+        throw new NoManifestError(repo);
       }
       return;
     }
@@ -59,12 +60,12 @@ export class InitUseCase {
       join(projectRoot, ".claude"),
       join(projectRoot, ".cursor"),
       join(projectRoot, ".github", "copilot-instructions.md"),
+      join(projectRoot, ".opencode"),
+      join(projectRoot, "AGENTS.md"),
     ];
     for (const signalPath of aiddSignals) {
       if (await this.fs.fileExists(signalPath)) {
-        throw new Error(
-          "AIDD files detected. Use `aidd adopt` to migrate your existing installation."
-        );
+        throw new AiddFilesDetectedError(repo);
       }
     }
   }

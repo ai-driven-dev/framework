@@ -4,6 +4,7 @@ import { getAllRegisteredTools, type ToolId } from "../../domain/models/tool-con
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import { NoManifestError } from "../errors.js";
 
 type IssueSeverity = "info" | "warning" | "error";
 
@@ -27,6 +28,7 @@ interface DoctorReport {
 
 interface DoctorOptions {
   projectRoot: string;
+  repo?: string;
 }
 
 const CODE_FENCE_WITH_LANG_RE = /```(?!markdown\b|md\b)(\w+)[^\n]*\n[\s\S]*?```/gm;
@@ -64,7 +66,7 @@ export class DoctorUseCase {
   ) {}
 
   async execute(options: DoctorOptions): Promise<DoctorReport> {
-    const { projectRoot } = options;
+    const { projectRoot, repo } = options;
 
     let manifest: Manifest | null;
     try {
@@ -76,7 +78,7 @@ export class DoctorUseCase {
     }
 
     if (manifest === null) {
-      throw new Error("No AIDD installation found. Run `aidd init` first.");
+      throw new NoManifestError(repo);
     }
 
     const issues: DoctorIssue[] = [];

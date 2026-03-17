@@ -11,6 +11,7 @@ import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import { NoManifestError } from "../errors.js";
 
 interface SyncOptions {
   projectRoot: string;
@@ -19,6 +20,7 @@ interface SyncOptions {
   targetTools?: ToolId[];
   force?: boolean;
   includeUserFiles?: boolean;
+  repo?: string;
 }
 
 interface SyncFileResult {
@@ -108,11 +110,18 @@ export class SyncUseCase {
   ) {}
 
   async execute(options: SyncOptions): Promise<SyncResult> {
-    const { projectRoot, docsDir, sourceTool, force = false, includeUserFiles = false } = options;
+    const {
+      projectRoot,
+      docsDir,
+      sourceTool,
+      force = false,
+      includeUserFiles = false,
+      repo,
+    } = options;
 
     const manifest = await this.manifestRepo.load();
     if (manifest === null) {
-      throw new Error("No AIDD installation found. Run `aidd init` first.");
+      throw new NoManifestError(repo);
     }
 
     if (!manifest.hasTool(sourceTool)) {

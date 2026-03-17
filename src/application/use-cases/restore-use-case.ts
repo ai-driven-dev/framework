@@ -12,6 +12,7 @@ import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
+import { NoManifestError } from "../errors.js";
 
 interface RestoreOptions {
   frameworkPath: string;
@@ -23,6 +24,7 @@ interface RestoreOptions {
   files?: string[];
   force?: boolean;
   manifest?: Manifest;
+  repo?: string;
 }
 
 interface RestoreToolResult {
@@ -67,12 +69,12 @@ export class RestoreUseCase {
   ) {}
 
   async execute(options: RestoreOptions): Promise<RestoreResult> {
-    const { frameworkPath, version, docsDir, projectRoot, force = false } = options;
+    const { frameworkPath, version, docsDir, projectRoot, force = false, repo } = options;
     const docsOnly = options.docsOnly ?? false;
     const fileFilter = buildFileFilter(options.files);
 
     const manifest = options.manifest ?? (await this.manifestRepo.load());
-    if (manifest === null) throw new Error("No AIDD installation found. Run `aidd init` first.");
+    if (manifest === null) throw new NoManifestError(repo);
 
     const toolIds = docsOnly
       ? []

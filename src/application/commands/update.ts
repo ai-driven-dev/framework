@@ -5,6 +5,7 @@ import {
   SilentPrompterAdapter,
 } from "../../infrastructure/adapters/prompter-adapter.js";
 import { createDeps } from "../../infrastructure/deps.js";
+import { NoManifestError } from "../errors.js";
 import { CLIOutput } from "../output.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
 import { UpdateUseCase } from "../use-cases/update-use-case.js";
@@ -53,8 +54,7 @@ export function registerUpdateCommand(program: Command): void {
 
           const manifest = await deps.manifestRepo.load();
           if (manifest === null) {
-            output.error("No AIDD installation found. Run `aidd init` first.");
-            process.exit(1);
+            throw new NoManifestError(globalOptions.repo);
           }
 
           const { path: frameworkPath, version } = await resolveFramework(
@@ -86,6 +86,7 @@ export function registerUpdateCommand(program: Command): void {
             docsOnly: cmdOptions.docs ?? false,
             force: cmdOptions.force,
             dryRun: cmdOptions.dryRun,
+            repo: globalOptions.repo,
           });
 
           if (result.alreadyUpToDate) {

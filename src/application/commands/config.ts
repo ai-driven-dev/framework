@@ -2,6 +2,7 @@ import { confirm } from "@inquirer/prompts";
 import { Command } from "commander";
 import { validateRepoFormat } from "../../infrastructure/adapters/framework-resolver-adapter.js";
 import { createDeps } from "../../infrastructure/deps.js";
+import { NoManifestError } from "../errors.js";
 import { CLIOutput } from "../output.js";
 
 const DEFAULT_REPO = "ai-driven-dev/aidd-framework";
@@ -29,8 +30,7 @@ export function registerConfigCommand(program: Command): void {
           output
         );
         const manifest = await deps.manifestRepo.load();
-        if (manifest === null)
-          throw new Error("No AIDD installation found. Run `aidd init` first.");
+        if (manifest === null) throw new NoManifestError();
         output.print(`docsDir = ${manifest.docsDir}`);
         output.print(`repo    = ${manifest.repo ?? DEFAULT_REPO}`);
         output.print(`tools   = ${manifest.getInstalledToolIds().join(", ") || "(none)"}`);
@@ -57,8 +57,7 @@ export function registerConfigCommand(program: Command): void {
           output
         );
         const manifest = await deps.manifestRepo.load();
-        if (manifest === null)
-          throw new Error("No AIDD installation found. Run `aidd init` first.");
+        if (manifest === null) throw new NoManifestError();
         if (key === "docsDir") output.print(manifest.docsDir);
         else if (key === "repo") output.print(manifest.repo ?? DEFAULT_REPO);
         else output.print(manifest.getInstalledToolIds().join(", "));
@@ -93,8 +92,7 @@ export function registerConfigCommand(program: Command): void {
           output
         );
         const manifest = await deps.manifestRepo.load();
-        if (manifest === null)
-          throw new Error("No AIDD installation found. Run `aidd init` first.");
+        if (manifest === null) throw new NoManifestError();
 
         if (key === "repo") {
           validateRepoFormat(value);

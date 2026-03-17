@@ -32,7 +32,7 @@ export function registerDoctorCommand(program: Command): void {
         );
 
         const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
-        const report = await useCase.execute({ projectRoot });
+        const report = await useCase.execute({ projectRoot, repo: globalOptions.repo });
 
         if (report.healthy) {
           const totalFiles =
