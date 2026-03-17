@@ -12,6 +12,7 @@ import type { FrameworkResolver } from "../domain/ports/framework-resolver.js";
 import type { Hasher } from "../domain/ports/hasher.js";
 import type { Logger } from "../domain/ports/logger.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
+import type { Platform } from "../domain/ports/platform.js";
 import { CliUpdaterAdapter } from "./adapters/cli-updater-adapter.js";
 import { CurrentVersionAdapter } from "./adapters/current-version-adapter.js";
 import { FileSystemAdapter } from "./adapters/file-system-adapter.js";
@@ -22,6 +23,7 @@ import {
 } from "./adapters/framework-resolver-adapter.js";
 import { HasherAdapter } from "./adapters/hasher-adapter.js";
 import { ManifestRepositoryAdapter } from "./adapters/manifest-repository-adapter.js";
+import { PlatformAdapter } from "./adapters/platform-adapter.js";
 import { TokenResolver } from "./auth/token-resolver.js";
 import { FrameworkCache } from "./cache/framework-cache.js";
 import { HttpClient } from "./http/http-client.js";
@@ -43,6 +45,7 @@ interface Deps {
   resolver: FrameworkResolver;
   cliUpdater: CliUpdater;
   currentVersionProvider: CurrentVersionProvider;
+  platform: Platform;
 }
 
 export async function createDeps(
@@ -79,5 +82,16 @@ export async function createDeps(
   );
   const cliUpdater = new CliUpdaterAdapter(http, { token: token ?? undefined });
   const currentVersionProvider = new CurrentVersionAdapter();
-  return { fs, manifestRepo, loader, hasher, logger, resolver, cliUpdater, currentVersionProvider };
+  const platform = new PlatformAdapter();
+  return {
+    fs,
+    manifestRepo,
+    loader,
+    hasher,
+    logger,
+    resolver,
+    cliUpdater,
+    currentVersionProvider,
+    platform,
+  };
 }

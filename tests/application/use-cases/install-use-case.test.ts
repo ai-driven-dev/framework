@@ -11,7 +11,11 @@ import {
   FIXTURE_DIR,
   FIXTURE_DIR_V2,
   initProject,
+  linuxPlatform,
+  win32Platform,
 } from "./helpers.js";
+
+const FIXTURE_DIR_WIN32 = join(process.cwd(), "tests/fixtures/framework-win32");
 
 describe("InstallUseCase", () => {
   let tempDir: string;
@@ -34,7 +38,8 @@ describe("InstallUseCase", () => {
       deps.manifestRepo,
       deps.loader,
       deps.hasher,
-      deps.logger
+      deps.logger,
+      linuxPlatform
     );
     const result = await useCase.execute({
       toolIds: ["claude" as ToolId],
@@ -59,7 +64,8 @@ describe("InstallUseCase", () => {
       deps.manifestRepo,
       deps.loader,
       deps.hasher,
-      deps.logger
+      deps.logger,
+      linuxPlatform
     );
     await useCase.execute({
       toolIds: ["claude" as ToolId],
@@ -84,7 +90,8 @@ describe("InstallUseCase", () => {
       deps.manifestRepo,
       deps.loader,
       deps.hasher,
-      deps.logger
+      deps.logger,
+      linuxPlatform
     );
     await useCase.execute({
       toolIds: ["claude" as ToolId],
@@ -116,7 +123,8 @@ describe("InstallUseCase", () => {
       deps.manifestRepo,
       deps.loader,
       deps.hasher,
-      deps.logger
+      deps.logger,
+      linuxPlatform
     );
     await useCase.execute({
       toolIds: ["claude" as ToolId],
@@ -148,7 +156,8 @@ describe("InstallUseCase", () => {
       deps.manifestRepo,
       deps.loader,
       deps.hasher,
-      deps.logger
+      deps.logger,
+      linuxPlatform
     );
     const result = await useCase.execute({
       toolIds: ["claude" as ToolId, "cursor" as ToolId],
@@ -179,7 +188,8 @@ describe("InstallUseCase", () => {
       deps.manifestRepo,
       deps.loader,
       deps.hasher,
-      deps.logger
+      deps.logger,
+      linuxPlatform
     );
 
     const result = await useCase.execute({
@@ -205,7 +215,8 @@ describe("InstallUseCase", () => {
       deps.manifestRepo,
       deps.loader,
       deps.hasher,
-      deps.logger
+      deps.logger,
+      linuxPlatform
     );
 
     // Install first to get it in manifest
@@ -239,7 +250,8 @@ describe("InstallUseCase", () => {
       deps.manifestRepo,
       deps.loader,
       deps.hasher,
-      deps.logger
+      deps.logger,
+      linuxPlatform
     );
     // Install first
     await useCase.execute({
@@ -270,7 +282,8 @@ describe("InstallUseCase", () => {
       deps.manifestRepo,
       deps.loader,
       deps.hasher,
-      deps.logger
+      deps.logger,
+      linuxPlatform
     );
     await useCase.execute({
       toolIds: ["claude" as ToolId, "copilot" as ToolId],
@@ -304,7 +317,8 @@ describe("InstallUseCase", () => {
       deps.manifestRepo,
       deps.loader,
       deps.hasher,
-      deps.logger
+      deps.logger,
+      linuxPlatform
     );
 
     await useCase.execute({
@@ -347,7 +361,8 @@ describe("InstallUseCase", () => {
       deps.manifestRepo,
       deps.loader,
       deps.hasher,
-      deps.logger
+      deps.logger,
+      linuxPlatform
     );
     await useCase.execute({
       toolIds: ["claude" as ToolId],
@@ -374,7 +389,8 @@ describe("InstallUseCase", () => {
       deps.manifestRepo,
       deps.loader,
       deps.hasher,
-      deps.logger
+      deps.logger,
+      linuxPlatform
     );
     await useCase.execute({
       toolIds: ["claude" as ToolId],
@@ -398,7 +414,8 @@ describe("InstallUseCase", () => {
       deps.manifestRepo,
       deps.loader,
       deps.hasher,
-      deps.logger
+      deps.logger,
+      linuxPlatform
     );
 
     await expect(
@@ -421,7 +438,8 @@ describe("InstallUseCase", () => {
       deps.manifestRepo,
       deps.loader,
       deps.hasher,
-      deps.logger
+      deps.logger,
+      linuxPlatform
     );
 
     // Install with FIXTURE_DIR_V2 first (has assert.md, no code-reviewer.md)
@@ -446,5 +464,32 @@ describe("InstallUseCase", () => {
     });
 
     expect(existsSync(assertPath)).toBe(false);
+  });
+
+  it("adapts MCP config for win32 platform", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const useCase = new InstallUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      win32Platform
+    );
+    await useCase.execute({
+      toolIds: ["claude" as ToolId],
+      frameworkPath: FIXTURE_DIR_WIN32,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    const mcpContent = await readFile(join(projectRoot, ".mcp.json"), "utf-8");
+    type McpServer = { command: string; args: string[] };
+    const mcp = JSON.parse(mcpContent) as { mcpServers: Record<string, McpServer> };
+    expect(mcp.mcpServers.myServer.command).toBe("cmd");
+    expect(mcp.mcpServers.myServer.args).toEqual(["/c", "npx", "-y", "my-mcp-pkg"]);
   });
 });

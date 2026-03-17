@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { remapDocsPath, rewriteDocsContent } from "../../domain/models/docs-transform.js";
+import { remapDocsPath, rewriteDocsContent } from "../../domain/models/docs.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import { Manifest } from "../../domain/models/manifest.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";

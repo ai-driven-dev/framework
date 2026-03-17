@@ -8,12 +8,16 @@ import { CLIOutput } from "../../../src/application/output.js";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
 import { InstallUseCase } from "../../../src/application/use-cases/install-use-case.js";
 import type { ToolId } from "../../../src/domain/models/tool-config.js";
+import type { Platform } from "../../../src/domain/ports/platform.js";
 import type { Prompter } from "../../../src/domain/ports/prompter.js";
 import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
 import { FrameworkLoaderAdapter } from "../../../src/infrastructure/adapters/framework-loader-adapter.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
 import { ManifestRepositoryAdapter } from "../../../src/infrastructure/adapters/manifest-repository-adapter.js";
 import { SilentPrompterAdapter } from "../../../src/infrastructure/adapters/prompter-adapter.js";
+
+export const linuxPlatform: Platform = { current: () => "linux" };
+export const win32Platform: Platform = { current: () => "win32" };
 
 export { SilentPrompterAdapter as OverwritePrompter };
 
@@ -95,7 +99,8 @@ export async function installTool(
     deps.manifestRepo,
     deps.loader,
     deps.hasher,
-    deps.logger
+    deps.logger,
+    linuxPlatform
   );
   const results = await installUseCase.execute({
     toolIds: [toolId],

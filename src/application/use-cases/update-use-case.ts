@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { generateDistribution } from "../../domain/models/distribution.js";
-import { buildDocsDistribution } from "../../domain/models/docs-transform.js";
+import { buildDocsDistribution } from "../../domain/models/docs.js";
 import type { FileHash } from "../../domain/models/file-hash.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
@@ -10,6 +10,7 @@ import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
 
@@ -69,7 +70,8 @@ export class UpdateUseCase {
     private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
-    private readonly prompter: Prompter
+    private readonly prompter: Prompter,
+    private readonly platform: Platform
   ) {}
 
   async execute(options: UpdateOptions): Promise<UpdateResult> {
@@ -103,7 +105,8 @@ export class UpdateUseCase {
         config,
         docsDir,
         contentFiles,
-        this.hasher
+        this.hasher,
+        this.platform
       );
       const newDistMap = new Map(newDistribution.map((f) => [f.relativePath, f]));
       const diff = await this.computeDiff(newDistribution, newDistMap, manifestMap, projectRoot);

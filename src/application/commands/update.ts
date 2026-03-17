@@ -73,7 +73,8 @@ export function registerUpdateCommand(program: Command): void {
             deps.loader,
             deps.hasher,
             deps.logger,
-            prompter
+            prompter,
+            deps.platform
           );
 
           const result = await updateUseCase.execute({

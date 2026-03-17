@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { generateDistribution } from "../../domain/models/distribution.js";
-import { buildDocsDistribution } from "../../domain/models/docs-transform.js";
+import { buildDocsDistribution } from "../../domain/models/docs.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import { Manifest } from "../../domain/models/manifest.js";
 import { getToolConfig, type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
@@ -9,6 +9,7 @@ import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import type { Platform } from "../../domain/ports/platform.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
 
 interface AdoptOptions {
@@ -36,7 +37,8 @@ export class AdoptUseCase {
     private readonly manifestRepo: ManifestRepository,
     private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
-    private readonly logger: Logger
+    private readonly logger: Logger,
+    private readonly platform: Platform
   ) {}
 
   async execute(options: AdoptOptions): Promise<AdoptResult> {
@@ -82,7 +84,8 @@ export class AdoptUseCase {
         config,
         docsDir,
         contentFiles,
-        this.hasher
+        this.hasher,
+        this.platform
       );
       const registeredFiles = await this.matchDistributionToDisk(distribution, projectRoot);
       manifest.addTool(toolId, version, registeredFiles);

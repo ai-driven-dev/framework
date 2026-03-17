@@ -69,7 +69,8 @@ export function registerInstallCommand(program: Command): void {
           deps.manifestRepo,
           deps.loader,
           deps.hasher,
-          deps.logger
+          deps.logger,
+          deps.platform
         );
 
         const results = await installUseCase.execute({
