@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.8.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.7.3...v2.8.0) (2026-03-17)
+
+
+### Features
+
+* **rules:** add and refine coding rules across all categories ([38c6f9a](https://github.com/ai-driven-dev/aidd-cli/commit/38c6f9aec3de5e5c0c64430980dd4b543fba432a))
+
+
+### Documentation
+
+* improve manual testing scenarios in CONTRIBUTING.md ([9339bcb](https://github.com/ai-driven-dev/aidd-cli/commit/9339bcb77a467febe671889bc644abf96856747d))
+* improve manual testing scenarios in CONTRIBUTING.md ([f2d6db1](https://github.com/ai-driven-dev/aidd-cli/commit/f2d6db12b0875cfb13ceeaa143c1e6bbe1e14451)), closes [#12](https://github.com/ai-driven-dev/aidd-cli/issues/12)
+* **memory:** add opencode tool and update version to v2.7.3 ([97b4671](https://github.com/ai-driven-dev/aidd-cli/commit/97b4671fa6c50111f30556348942948efc62ef52))
+
+
+### Refactoring
+
+* **use-cases:** convert writeCatalog function to CatalogUseCase class ([18fd0de](https://github.com/ai-driven-dev/aidd-cli/commit/18fd0de4cca288d9db0d73d68e63d75c060a383f))
+
 ## [2.7.3](https://github.com/ai-driven-dev/aidd-cli/compare/v2.7.2...v2.7.3) (2026-03-16)
 
 
