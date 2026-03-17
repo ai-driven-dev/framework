@@ -44,7 +44,8 @@ describe.concurrent("E2E: aidd uninstall", () => {
       const { stderr, exitCode } = await runCli(["uninstall", "claude"], projectDir);
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("No AIDD installation found");
+      expect(stderr).toContain("No AIDD manifest found");
+      expect(stderr).toContain("aidd adopt --from");
     } finally {
       await cleanup();
     }

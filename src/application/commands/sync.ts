@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
+import { NoManifestError } from "../errors.js";
 import { CLIOutput } from "../output.js";
 import { SyncUseCase } from "../use-cases/sync-use-case.js";
 
@@ -8,7 +9,7 @@ export function registerSyncCommand(program: Command): void {
   program
     .command("sync")
     .description("Propagate local modifications from one tool to others")
-    .requiredOption("--source <tool>", "Source tool to sync from")
+    .requiredOption("--source <tool>", "(required) Source tool to sync from")
     .option("--target <tool>", "Target tool to sync to (default: all other installed tools)")
     .option("-f, --force", "Overwrite conflicting files without prompting", false)
     .option("--include-user-files", "Also sync user-created files not tracked in manifest", false)
@@ -50,8 +51,7 @@ export function registerSyncCommand(program: Command): void {
 
           const manifest = await deps.manifestRepo.load();
           if (manifest === null) {
-            output.error("No AIDD installation found. Run `aidd init` first.");
-            process.exit(1);
+            throw new NoManifestError(globalOptions.repo);
           }
 
           const sourceTool = cmdOptions.source as ToolId;
@@ -69,6 +69,7 @@ export function registerSyncCommand(program: Command): void {
             targetTools,
             force: cmdOptions.force,
             includeUserFiles: cmdOptions.includeUserFiles,
+            repo: globalOptions.repo,
           });
 
           const totalWritten = result.tools.reduce(

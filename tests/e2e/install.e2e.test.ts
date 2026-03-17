@@ -14,7 +14,7 @@ describe.concurrent("E2E: aidd install", () => {
       );
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("No AIDD installation found");
+      expect(stderr).toContain("No AIDD manifest found");
       expect(existsSync(join(projectDir, ".claude"))).toBe(false);
     } finally {
       await cleanup();

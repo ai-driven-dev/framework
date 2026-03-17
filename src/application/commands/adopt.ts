@@ -1,6 +1,7 @@
 import type { Command } from "commander";
-import type { ToolId } from "../../domain/models/tool-config.js";
+import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
+import { AdoptRequiresVersionError } from "../errors.js";
 import { CLIOutput } from "../output.js";
 import { AdoptUseCase } from "../use-cases/adopt-use-case.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
@@ -13,10 +14,14 @@ export function registerAdoptCommand(program: Command): void {
     )
     .requiredOption(
       "-t, --tools <tools>",
-      "Comma-separated list of installed tools (claude, cursor, copilot)"
+      "(required) Comma-separated list of installed tools (claude, cursor, copilot)"
     )
     .option("-d, --docs-dir <dir>", "Documentation directory", "aidd_docs")
-    .action(async (cmdOptions: { tools: string; docsDir: string }) => {
+    .option(
+      "--from <version|path>",
+      "(required) Framework version (e.g. 3.6.0) or local path to adopt against"
+    )
+    .action(async (cmdOptions: { tools: string; docsDir: string; from?: string }) => {
       const globalOptions = program.opts<{
         verbose: boolean;
         repo?: string;
@@ -28,14 +33,16 @@ export function registerAdoptCommand(program: Command): void {
       const output = new CLIOutput(verbose);
       const projectRoot = process.cwd();
 
+      const from = cmdOptions.from ?? globalOptions.release ?? globalOptions.framework;
+
       try {
-        if (!globalOptions.release && !globalOptions.framework) {
-          throw new Error(
-            "--release <version> or --framework <path> is required for adopt. Example: aidd --release 3.3.3 adopt --tools claude"
-          );
+        if (!from) {
+          throw new AdoptRequiresVersionError(globalOptions.repo);
         }
 
         const toolIds = cmdOptions.tools.split(",").map((t) => t.trim()) as ToolId[];
+        output.validateTools(toolIds, VALID_TOOL_IDS);
+
         const deps = await createDeps(
           projectRoot,
           { verbose, repo: globalOptions.repo, token: globalOptions.token },
@@ -45,7 +52,7 @@ export function registerAdoptCommand(program: Command): void {
         const { path: frameworkPath, version } = await resolveFramework(
           deps.resolver,
           deps.logger,
-          { framework: globalOptions.framework, release: globalOptions.release }
+          { from }
         );
 
         const result = await new AdoptUseCase(

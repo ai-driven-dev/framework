@@ -154,7 +154,9 @@ describe("StatusUseCase", () => {
 
     const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
 
-    await expect(useCase.execute({ projectRoot })).rejects.toThrow("No AIDD installation found");
+    await expect(useCase.execute({ projectRoot })).rejects.toThrow(
+      "aidd adopt --from <version> --tools <tool>"
+    );
   });
 
   it("reports no drift when no tools are installed", async () => {

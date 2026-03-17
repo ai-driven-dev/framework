@@ -89,7 +89,7 @@ describe("InitUseCase", () => {
 
       await expect(
         buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
-      ).rejects.toThrow("aidd adopt");
+      ).rejects.toThrow("Check available tags for:");
     });
 
     it("aborts with adopt guidance when .claude/ exists", async () => {
@@ -97,7 +97,44 @@ describe("InitUseCase", () => {
 
       await expect(
         buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
-      ).rejects.toThrow("AIDD files detected");
+      ).rejects.toThrow("Check available tags for:");
+    });
+
+    it("aborts with adopt guidance when .opencode/ exists", async () => {
+      await mkdir(join(projectRoot, ".opencode"), { recursive: true });
+
+      await expect(
+        buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
+      ).rejects.toThrow("AIDD files detected but no manifest found");
+    });
+
+    it("aborts with adopt guidance when AGENTS.md exists", async () => {
+      const { writeFile } = await import("node:fs/promises");
+      await writeFile(join(projectRoot, "AGENTS.md"), "# Agents");
+
+      await expect(
+        buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
+      ).rejects.toThrow("AIDD files detected but no manifest found");
+    });
+
+    it("error message contains recovery command when AIDD files detected", async () => {
+      await mkdir(join(projectRoot, ".opencode"), { recursive: true });
+
+      await expect(
+        buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
+      ).rejects.toThrow("aidd adopt --from <version> --tools <tool>");
+    });
+
+    it("uses custom repo in AiddFilesDetectedError", async () => {
+      await mkdir(join(projectRoot, ".opencode"), { recursive: true });
+
+      await expect(
+        buildUseCase().checkPreconditions({
+          docsDir: "aidd_docs",
+          projectRoot,
+          repo: "myorg/my-repo",
+        })
+      ).rejects.toThrow("Check available tags for: myorg/my-repo");
     });
 
     it("aborts when already initialized without --force", async () => {
@@ -131,7 +168,7 @@ describe("InitUseCase", () => {
     it("--force: fails with guidance when no manifest exists", async () => {
       await expect(
         buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot, force: true })
-      ).rejects.toThrow("No AIDD installation found");
+      ).rejects.toThrow("No AIDD manifest found");
     });
 
     it("--force: passes when manifest exists", async () => {

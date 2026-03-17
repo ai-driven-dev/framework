@@ -14,7 +14,7 @@ describe.concurrent("E2E: aidd restore", () => {
       );
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("No AIDD installation found");
+      expect(stderr).toContain("No AIDD manifest found");
     } finally {
       await cleanup();
     }

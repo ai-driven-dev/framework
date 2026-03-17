@@ -118,7 +118,23 @@ describe.concurrent("E2E: aidd status", () => {
       const { stderr, exitCode } = await runCli(["status"], projectDir);
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("No AIDD installation found");
+      expect(stderr).toContain("No AIDD manifest found");
+      expect(stderr).toContain("aidd adopt --from");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("uses custom --repo in NoManifestError when project is not initialized", async () => {
+    const { projectDir, cleanup } = await createTestEnv("status");
+    try {
+      const { stderr, exitCode } = await runCli(
+        ["--repo", "myorg/my-framework", "status"],
+        projectDir
+      );
+
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toContain("Check available tags for: myorg/my-framework");
     } finally {
       await cleanup();
     }
