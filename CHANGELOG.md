@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.9.1](https://github.com/ai-driven-dev/aidd-cli/compare/v2.9.0...v2.9.1) (2026-03-17)
+
+
+### Bug Fixes
+
+* **check-update:** suppress CLI banner on self-update and log failures in verbose ([e9cf288](https://github.com/ai-driven-dev/aidd-cli/commit/e9cf288adb760d1fd3abd531910395c5eac06e66))
+* **check-update:** suppress CLI banner on self-update and log failures in verbose mode ([ce4099a](https://github.com/ai-driven-dev/aidd-cli/commit/ce4099ada6902e0977d398bf3f4088e113032911))
+* **cli:** surface actionable recovery when AIDD files exist without manifest ([#41](https://github.com/ai-driven-dev/aidd-cli/issues/41)) ([a4f43e0](https://github.com/ai-driven-dev/aidd-cli/commit/a4f43e09fca85fca21b77ed303e7ad2ebadb2738))
+
 ## [2.9.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.8.0...v2.9.0) (2026-03-17)
 
 
