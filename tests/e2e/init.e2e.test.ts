@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createTestEnv, FRAMEWORK_PATH, runCli } from "./helpers.js";
@@ -68,7 +68,8 @@ describe.concurrent("E2E: aidd init", () => {
       );
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("aidd adopt");
+      expect(stderr).toContain("AIDD files detected but no manifest found");
+      expect(stderr).toContain("aidd adopt --from");
     } finally {
       await cleanup();
     }
@@ -85,7 +86,46 @@ describe.concurrent("E2E: aidd init", () => {
       );
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("aidd adopt");
+      expect(stderr).toContain("AIDD files detected but no manifest found");
+      expect(stderr).toContain("aidd adopt --from");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("shows an error when .opencode/ exists without a manifest", async () => {
+    const { projectDir, cleanup } = await createTestEnv("init");
+    try {
+      await mkdir(join(projectDir, ".opencode"), { recursive: true });
+
+      const { stderr, exitCode } = await runCli(
+        ["init", "--framework", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toContain("AIDD files detected but no manifest found");
+      expect(stderr).toContain("aidd adopt --from");
+      expect(stderr).toContain("Check available tags for:");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("shows an error when AGENTS.md exists without a manifest", async () => {
+    const { projectDir, cleanup } = await createTestEnv("init");
+    try {
+      await writeFile(join(projectDir, "AGENTS.md"), "# Agents");
+
+      const { stderr, exitCode } = await runCli(
+        ["init", "--framework", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toContain("AIDD files detected but no manifest found");
+      expect(stderr).toContain("aidd adopt --from");
+      expect(stderr).toContain("Check available tags for:");
     } finally {
       await cleanup();
     }
@@ -152,7 +192,7 @@ describe.concurrent("E2E: aidd init", () => {
       );
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("No AIDD installation found");
+      expect(stderr).toContain("No AIDD manifest found");
     } finally {
       await cleanup();
     }

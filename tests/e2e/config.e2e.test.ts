@@ -10,7 +10,7 @@ describe.concurrent("E2E: aidd config", () => {
       try {
         const { stderr, exitCode } = await runCli(["config", "list"], projectDir);
         expect(exitCode).toBe(1);
-        expect(stderr).toContain("No AIDD installation found");
+        expect(stderr).toContain("No AIDD manifest found");
       } finally {
         await cleanup();
       }
@@ -275,7 +275,7 @@ describe.concurrent("E2E: aidd config", () => {
           projectDir
         );
         expect(exitCode).toBe(1);
-        expect(stderr).toContain("No AIDD installation found");
+        expect(stderr).toContain("No AIDD manifest found");
       } finally {
         await cleanup();
       }

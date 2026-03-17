@@ -3,11 +3,13 @@ import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js"
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import { NoManifestError } from "../errors.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
 
 interface UninstallOptions {
   toolIds: ToolId[];
   projectRoot: string;
+  repo?: string;
 }
 
 interface UninstallToolResult {
@@ -24,7 +26,7 @@ export class UninstallUseCase {
   ) {}
 
   async execute(options: UninstallOptions): Promise<UninstallToolResult[]> {
-    const { toolIds, projectRoot } = options;
+    const { toolIds, projectRoot, repo } = options;
 
     if (toolIds.length === 0) {
       throw new Error(
@@ -34,7 +36,7 @@ export class UninstallUseCase {
 
     const manifest = await this.manifestRepo.load();
     if (manifest === null) {
-      throw new Error("No AIDD installation found. Run `aidd init` first.");
+      throw new NoManifestError(repo);
     }
 
     const results: UninstallToolResult[] = [];

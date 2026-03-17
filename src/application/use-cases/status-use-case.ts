@@ -4,6 +4,7 @@ import { getToolConfig, type ToolId } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import { NoManifestError } from "../errors.js";
 
 type FileStatusKind = "modified" | "deleted" | "added";
 
@@ -33,6 +34,7 @@ interface StatusOptions {
   projectRoot: string;
   filterToolId?: ToolId;
   filterDocs?: boolean;
+  repo?: string;
 }
 
 export class StatusUseCase {
@@ -43,11 +45,11 @@ export class StatusUseCase {
   ) {}
 
   async execute(options: StatusOptions): Promise<StatusReport> {
-    const { projectRoot, filterToolId, filterDocs } = options;
+    const { projectRoot, filterToolId, filterDocs, repo } = options;
 
     const manifest = await this.manifestRepo.load();
     if (manifest === null) {
-      throw new Error("No AIDD installation found. Run `aidd init` first.");
+      throw new NoManifestError(repo);
     }
 
     if (filterToolId && !manifest.hasTool(filterToolId)) {

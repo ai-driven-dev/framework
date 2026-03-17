@@ -9,6 +9,7 @@ import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../domain/ports/platform.js";
+import { NoManifestError } from "../errors.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
 
 interface InstallOptions {
@@ -18,6 +19,7 @@ interface InstallOptions {
   docsDir: string;
   projectRoot: string;
   force?: boolean;
+  repo?: string;
 }
 
 export interface InstallToolResult {
@@ -39,7 +41,7 @@ export class InstallUseCase {
   ) {}
 
   async execute(options: InstallOptions): Promise<InstallToolResult[]> {
-    const { toolIds, frameworkPath, version, docsDir, projectRoot, force = false } = options;
+    const { toolIds, frameworkPath, version, docsDir, projectRoot, force = false, repo } = options;
 
     if (toolIds.length === 0) {
       throw new Error(
@@ -49,7 +51,7 @@ export class InstallUseCase {
 
     const manifest = await this.manifestRepo.load();
     if (manifest === null) {
-      throw new Error("No AIDD installation found. Run `aidd init` first.");
+      throw new NoManifestError(repo);
     }
 
     const { descriptor, contentFiles } = await this.loader.loadFromDirectory(

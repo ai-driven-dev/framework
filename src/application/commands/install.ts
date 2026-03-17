@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
+import { NoManifestError } from "../errors.js";
 import { CLIOutput } from "../output.js";
 import { InstallUseCase } from "../use-cases/install-use-case.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
@@ -59,8 +60,7 @@ export function registerInstallCommand(program: Command): void {
 
         const manifest = await deps.manifestRepo.load();
         if (manifest === null) {
-          output.error("No AIDD installation found. Run `aidd init` first.");
-          process.exit(1);
+          throw new NoManifestError(globalOptions.repo);
         }
 
         const docsDir = manifest.docsDir;
@@ -80,6 +80,7 @@ export function registerInstallCommand(program: Command): void {
           docsDir,
           projectRoot,
           force: cmdOptions.force,
+          repo: globalOptions.repo,
         });
 
         const installed = results.filter((r) => !r.skipped);

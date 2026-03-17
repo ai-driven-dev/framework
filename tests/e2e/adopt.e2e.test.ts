@@ -18,13 +18,14 @@ describe.concurrent("E2E: aidd adopt", () => {
     }
   });
 
-  it("fails when neither --release nor --framework is provided", async () => {
+  it("fails when --from is not provided", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
     try {
       const { exitCode, stderr } = await runCli(["adopt", "--tools", "claude"], projectDir);
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("--release");
+      expect(stderr).toContain("--from <version|path> is required for adopt");
+      expect(stderr).toContain("Check available tags for:");
     } finally {
       await cleanup();
     }
@@ -33,7 +34,7 @@ describe.concurrent("E2E: aidd adopt", () => {
   it("fails when --tools is missing", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
     try {
-      const { exitCode, stderr } = await runCli(["--release", "3.3.3", "adopt"], projectDir);
+      const { exitCode, stderr } = await runCli(["adopt", "--from", "3.3.3"], projectDir);
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("--tools");
@@ -46,7 +47,7 @@ describe.concurrent("E2E: aidd adopt", () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
     try {
       const { exitCode, stderr } = await runCli(
-        ["--framework", FRAMEWORK_PATH, "adopt", "--tools", "unknown-tool"],
+        ["adopt", "--from", FRAMEWORK_PATH, "--tools", "unknown-tool"],
         projectDir
       );
 
@@ -61,7 +62,7 @@ describe.concurrent("E2E: aidd adopt", () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
     try {
       const { exitCode, stderr } = await runCli(
-        ["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude"],
+        ["adopt", "--from", FRAMEWORK_PATH, "--tools", "claude"],
         projectDir
       );
 
@@ -79,7 +80,7 @@ describe.concurrent("E2E: aidd adopt", () => {
       await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
       const { exitCode, stderr } = await runCli(
-        ["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude"],
+        ["adopt", "--from", FRAMEWORK_PATH, "--tools", "claude"],
         projectDir
       );
 
@@ -98,7 +99,7 @@ describe.concurrent("E2E: aidd adopt", () => {
       await rm(join(projectDir, ".aidd"), { recursive: true, force: true });
 
       const { stdout, exitCode } = await runCli(
-        ["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude"],
+        ["adopt", "--from", FRAMEWORK_PATH, "--tools", "claude"],
         projectDir
       );
 
@@ -117,7 +118,7 @@ describe.concurrent("E2E: aidd adopt", () => {
       await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
       await rm(join(projectDir, ".aidd"), { recursive: true, force: true });
 
-      await runCli(["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude"], projectDir);
+      await runCli(["adopt", "--from", FRAMEWORK_PATH, "--tools", "claude"], projectDir);
 
       const { stdout, exitCode } = await runCli(
         ["status", "--framework", FRAMEWORK_PATH],
@@ -140,7 +141,7 @@ describe.concurrent("E2E: aidd adopt", () => {
       await rm(join(projectDir, ".aidd"), { recursive: true, force: true });
 
       const { stdout, exitCode } = await runCli(
-        ["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude,cursor"],
+        ["adopt", "--from", FRAMEWORK_PATH, "--tools", "claude,cursor"],
         projectDir
       );
 
@@ -167,7 +168,7 @@ describe.concurrent("E2E: aidd adopt", () => {
       await rm(join(projectDir, ".aidd"), { recursive: true, force: true });
 
       const { stdout, exitCode } = await runCli(
-        ["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude,cursor,copilot"],
+        ["adopt", "--from", FRAMEWORK_PATH, "--tools", "claude,cursor,copilot"],
         projectDir
       );
 
@@ -193,7 +194,7 @@ describe.concurrent("E2E: aidd adopt", () => {
       await rm(join(projectDir, ".aidd", "manifest.json"));
       await writeFile(join(projectDir, ".aidd", "config.json"), "{}");
 
-      await runCli(["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude"], projectDir);
+      await runCli(["adopt", "--from", FRAMEWORK_PATH, "--tools", "claude"], projectDir);
 
       expect(existsSync(join(projectDir, ".aidd", "config.json"))).toBe(false);
       expect(existsSync(join(projectDir, ".aidd", "manifest.json"))).toBe(true);
@@ -211,13 +212,68 @@ describe.concurrent("E2E: aidd adopt", () => {
       await writeFile(join(projectDir, ".claude", "rules", "my-custom.md"), "# Custom rule");
       await rm(join(projectDir, ".aidd"), { recursive: true, force: true });
 
-      await runCli(["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude"], projectDir);
+      await runCli(["adopt", "--from", FRAMEWORK_PATH, "--tools", "claude"], projectDir);
 
       const manifest = JSON.parse(
         await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8")
       ) as { tools: Record<string, { files: Array<{ relativePath: string }> }> };
       const registeredPaths = manifest.tools.claude.files.map((f) => f.relativePath);
       expect(registeredPaths).not.toContain(".claude/rules/my-custom.md");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("backward compat: global --release flag works as --from", async () => {
+    const { projectDir, cleanup } = await createTestEnv("adopt");
+    try {
+      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      const { rm } = await import("node:fs/promises");
+      await rm(`${projectDir}/.aidd`, { recursive: true, force: true });
+
+      const { stdout, exitCode } = await runCli(
+        ["--release", FRAMEWORK_PATH, "adopt", "--tools", "claude"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Adopted");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("backward compat: global --framework flag works as --from local path", async () => {
+    const { projectDir, cleanup } = await createTestEnv("adopt");
+    try {
+      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      const { rm } = await import("node:fs/promises");
+      await rm(`${projectDir}/.aidd`, { recursive: true, force: true });
+
+      const { stdout, exitCode } = await runCli(
+        ["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Adopted");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("custom --repo propagates to AdoptRequiresVersionError", async () => {
+    const { projectDir, cleanup } = await createTestEnv("adopt");
+    try {
+      const { exitCode, stderr } = await runCli(
+        ["--repo", "myorg/my-framework", "adopt", "--tools", "claude"],
+        projectDir
+      );
+
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toContain("Check available tags for: myorg/my-framework");
     } finally {
       await cleanup();
     }

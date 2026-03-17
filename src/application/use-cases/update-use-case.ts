@@ -12,6 +12,7 @@ import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
+import { NoManifestError } from "../errors.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
 
 interface UpdateOptions {
@@ -23,6 +24,7 @@ interface UpdateOptions {
   docsOnly?: boolean;
   force?: boolean;
   dryRun?: boolean;
+  repo?: string;
 }
 
 type FileDiffKind = "added" | "removed" | "changed" | "unchanged";
@@ -75,11 +77,19 @@ export class UpdateUseCase {
   ) {}
 
   async execute(options: UpdateOptions): Promise<UpdateResult> {
-    const { frameworkPath, version, docsDir, projectRoot, force = false, dryRun = false } = options;
+    const {
+      frameworkPath,
+      version,
+      docsDir,
+      projectRoot,
+      force = false,
+      dryRun = false,
+      repo,
+    } = options;
     const docsOnly = options.docsOnly ?? false;
 
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) throw new Error("No AIDD installation found. Run `aidd init` first.");
+    if (manifest === null) throw new NoManifestError(repo);
 
     const { descriptor, contentFiles, docsFiles } = await this.loader.loadFromDirectory(
       frameworkPath,

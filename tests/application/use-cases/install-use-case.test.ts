@@ -492,4 +492,27 @@ describe("InstallUseCase", () => {
     expect(mcp.mcpServers.myServer.command).toBe("cmd");
     expect(mcp.mcpServers.myServer.args).toEqual(["/c", "npx", "-y", "my-mcp-pkg"]);
   });
+
+  it("fails if project is not initialized", async () => {
+    const deps = buildDeps(projectRoot);
+
+    const useCase = new InstallUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      linuxPlatform
+    );
+
+    await expect(
+      useCase.execute({
+        toolIds: ["claude" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      })
+    ).rejects.toThrow("aidd adopt --from <version> --tools <tool>");
+  });
 });

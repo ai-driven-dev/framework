@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
+import { NoManifestError } from "../errors.js";
 import { CLIOutput } from "../output.js";
 import { UninstallUseCase } from "../use-cases/uninstall-use-case.js";
 
@@ -11,7 +12,7 @@ export function registerUninstallCommand(program: Command): void {
     .argument("[tools...]", "Tool IDs to uninstall (e.g., claude, cursor, copilot)")
     .option("-a, --all", "Uninstall all installed tools", false)
     .action(async (toolArgs: string[], cmdOptions: { all: boolean }) => {
-      const globalOptions = program.opts<{ verbose: boolean }>();
+      const globalOptions = program.opts<{ verbose: boolean; repo?: string }>();
       const verbose = globalOptions.verbose ?? false;
       const output = new CLIOutput(verbose);
       const projectRoot = process.cwd();
@@ -33,7 +34,7 @@ export function registerUninstallCommand(program: Command): void {
         let toolIds: ToolId[];
         if (cmdOptions.all) {
           const manifest = await deps.manifestRepo.load();
-          if (!manifest) throw new Error("No AIDD installation found. Run `aidd init` first.");
+          if (!manifest) throw new NoManifestError(globalOptions.repo);
           toolIds = manifest.getInstalledToolIds();
           if (toolIds.length === 0) {
             output.success("No tools installed. Run `aidd install <tool>` to get started.");
@@ -45,7 +46,7 @@ export function registerUninstallCommand(program: Command): void {
         }
 
         const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-        const results = await useCase.execute({ toolIds, projectRoot });
+        const results = await useCase.execute({ toolIds, projectRoot, repo: globalOptions.repo });
 
         const totalFileCount = results.reduce((sum, r) => sum + r.fileCount, 0);
 

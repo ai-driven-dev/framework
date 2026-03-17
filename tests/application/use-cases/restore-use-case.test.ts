@@ -48,7 +48,7 @@ describe("RestoreUseCase", () => {
         docsDir: "aidd_docs",
         projectRoot,
       })
-    ).rejects.toThrow("No AIDD installation found");
+    ).rejects.toThrow("aidd adopt --from <version> --tools <tool>");
   });
 
   it("reports nothing to restore when files are unmodified", async () => {

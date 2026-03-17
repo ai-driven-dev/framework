@@ -41,7 +41,7 @@ describe.concurrent("E2E: aidd doctor", () => {
       const { stderr, exitCode } = await runCli(["doctor"], projectDir);
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("No AIDD installation found");
+      expect(stderr).toContain("No AIDD manifest found");
     } finally {
       await cleanup();
     }
