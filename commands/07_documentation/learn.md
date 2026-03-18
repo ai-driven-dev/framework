@@ -12,6 +12,12 @@ Capture and store new learnings from recently implemented feature in memory bank
 
 ## Resources
 
+### IDE syntax reference
+
+```md
+@{{TOOLS}}/rules/04-tooling/ide-mapping.md
+```
+
 ### Doc content
 
 ```shell
@@ -97,3 +103,7 @@ Propose where to save each learning.
 1. Create file in `{{DOCS}}/internal/decisions/XXX-<title>.md` using decision template
 2. Update ADR table in `ADR.md`
 3. Create/update files in their categories as needed
+
+### Phase 4: Sync memory references
+
+Execute `.aidd/scripts/update_memory.mjs` to sync memory references in context files

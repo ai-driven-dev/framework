@@ -63,6 +63,12 @@ All templates are in:
 @{{TOOLS}}/rules/01-standards/1-mermaid.md
 ```
 
+### IDE syntax reference
+
+```md
+@{{TOOLS}}/rules/04-tooling/ide-mapping.md
+```
+
 ## Steps
 
 1. Check if memory bank already exists in `{{DOCS}}/memory/` folder:
@@ -73,3 +79,4 @@ All templates are in:
 4. Spawn parallel task sub-agents for each template files
 5. Write generated files to `{{DOCS}}/memory/`
 6. Launch an agent to review all files for consistency and accuracy
+7. Execute `.aidd/scripts/update_memory.mjs` to sync memory references in context files

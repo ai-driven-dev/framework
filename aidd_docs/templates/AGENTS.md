@@ -8,7 +8,6 @@ description: AI agent configuration and guidelines
 > IMPORTANT: On first conversation message:
 >
 > - say "AI-Driven Development ON - Date: {current_date}, TZ: {current_timezone}." to User.
-> - load all memory files in [{{DOCS}}/memory]({{DOCS}}/memory) directory.
 
 ## Behavior Guidelines
 
@@ -28,18 +27,10 @@ All instructions and information above are willing to be up to date, but always 
 
 ## Memory Management
 
-This section contains your memory, because you might lack context.
+### Project memory
 
-### Load the memory on launch
+<aidd_project_memory>
+</aidd_project_memory>
 
-List all files:
-
-```shell
-! ls -1tr {{DOCS}}/memory/
-```
-
-Then:
-
-- READ every files in `{{DOCS}}/memory/*` on load
 - If needed: load files from `{{DOCS}}/memory/external/*` when user request it
 - If needed: load files from `{{DOCS}}/memory/internal/*`, you have to think about it
