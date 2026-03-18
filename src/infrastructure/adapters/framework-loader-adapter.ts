@@ -30,7 +30,7 @@ const CONFIG_REFS: readonly ConfigRef[] = [
   { name: "vscodeExtensions", path: "config/.vscode/extensions.json" },
   { name: "vscodeKeybindings", path: "config/.vscode/keybindings.json" },
   { name: "vscodeSettings", path: "config/.vscode/settings.json" },
-  { name: "opencode", path: "config/opencode.json" },
+  { name: "opencode", path: "config/.opencode/opencode.json" },
 ];
 
 const DOCS_DIR = "aidd_docs";
