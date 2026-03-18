@@ -682,7 +682,7 @@ describe("generateDistribution() snapshots", () => {
     );
     const cmd = files.find((f) => f.relativePath.includes("commands/"));
     expect(cmd?.content).toEqual(
-      "---\nname: 'implement'\ndescription: 'Implement a plan'\nargument-hint: 'task description'\n---\n\n# Implement\n\nReference: @.cursor/commands/04_code/implement.md\n"
+      "---\nname: 'aidd:04:implement'\ndescription: 'Implement a plan'\nargument-hint: 'task description'\n---\n\n# Implement\n\nReference: @.cursor/commands/aidd/04/implement.md\n"
     );
   });
 
@@ -774,7 +774,7 @@ describe("generateDistribution() snapshots", () => {
     );
     const cmd = files.find((f) => f.relativePath.startsWith(".github/prompts/"));
     expect(cmd?.content).toEqual(
-      "---\nname: 'aidd_04_implement'\ndescription: 'Implement a plan'\nargument-hint: 'task description'\n---\n\n# Implement\n\nReference: [.github/prompts/04-implement.prompt.md](../../.github/prompts/04-implement.prompt.md)\n"
+      "---\nname: 'aidd:04:implement'\ndescription: 'Implement a plan'\nargument-hint: 'task description'\n---\n\n# Implement\n\nReference: [.github/prompts/04-implement.prompt.md](../../.github/prompts/04-implement.prompt.md)\n"
     );
   });
 

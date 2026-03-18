@@ -71,18 +71,43 @@ describe("opencodeToolConfig", () => {
     });
   });
 
-  describe("commands().buildFilePath()", () => {
-    it("builds path under .opencode/commands/", () => {
+  describe("commands output path", () => {
+    it("builds AIDD-namespaced path under .opencode/commands/aidd/<phase>/", () => {
       const path = opencodeToolConfig.commands().buildFilePath("04_code/implement.md");
-      expect(path).toBe(".opencode/commands/04_code/implement.md");
+      expect(path).toBe(".opencode/commands/aidd/04/implement.md");
+    });
+
+    it("falls back to aidd/<baseName> for top-level files without a phase directory", () => {
+      const path = opencodeToolConfig.commands().buildFilePath("implement.md");
+      expect(path).toBe(".opencode/commands/aidd/implement.md");
     });
   });
 
   describe("commands().convertFrontmatter()", () => {
-    it("outputs only description — name comes from filename in OpenCode", () => {
+    it("emits name prefixed with aidd:<phase>: and description", () => {
       const fm = { name: "implement", description: "Implement a plan", model: "gpt-4o" };
       const result = opencodeToolConfig.commands().convertFrontmatter(fm, "04_code/implement.md");
-      expect(result).toEqual({ description: "Implement a plan" });
+      expect(result).toEqual({ name: "aidd:04:implement", description: "Implement a plan" });
+    });
+
+    it("emits bare name when relativeFileName has no leading-digit phase", () => {
+      const fm = { name: "implement", description: "Implement a plan" };
+      const result = opencodeToolConfig.commands().convertFrontmatter(fm, "implement.md");
+      expect(result).toEqual({ name: "implement", description: "Implement a plan" });
+    });
+  });
+
+  describe("commands().reverseConvertFrontmatter()", () => {
+    it("strips aidd:<phase>: prefix from name", () => {
+      const fm = { name: "aidd:04:implement", description: "Implement a plan" };
+      const result = opencodeToolConfig.commands().reverseConvertFrontmatter(fm);
+      expect(result).toEqual({ name: "implement", description: "Implement a plan" });
+    });
+
+    it("preserves name unchanged when prefix is absent", () => {
+      const fm = { name: "implement", description: "Implement a plan" };
+      const result = opencodeToolConfig.commands().reverseConvertFrontmatter(fm);
+      expect(result).toEqual({ name: "implement", description: "Implement a plan" });
     });
   });
 
@@ -262,11 +287,11 @@ describe("opencodeToolConfig", () => {
       expect(key).toEqual({ section: "agents", key: "alexia.md" });
     });
 
-    it("detects commands section", () => {
+    it("detects commands section and strips aidd/ prefix", () => {
       const key = opencodeToolConfig.detectUserFileSectionKey(
-        ".opencode/commands/04_code/implement.md"
+        ".opencode/commands/aidd/04/implement.md"
       );
-      expect(key).toEqual({ section: "commands", key: "04_code/implement.md" });
+      expect(key).toEqual({ section: "commands", key: "04/implement.md" });
     });
 
     it("detects rules section", () => {

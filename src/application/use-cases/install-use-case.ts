@@ -122,14 +122,15 @@ export class InstallUseCase {
     projectRoot: string,
     manifest: Manifest
   ): Promise<GeneratedFile[]> {
-    const finalFiles: GeneratedFile[] = [];
+    const filesByPath = new Map<string, GeneratedFile>();
     for (const file of generated) {
       const outputPath = join(projectRoot, file.relativePath);
       if (file.merge) {
         await this.fs.mergeJsonFile(outputPath, file.content);
         const diskHash = await this.fs.readFileHash(outputPath);
         manifest.syncFileHashAcrossTools(file.relativePath, diskHash);
-        finalFiles.push(
+        filesByPath.set(
+          file.relativePath,
           new GeneratedFile({
             relativePath: file.relativePath,
             content: file.content,
@@ -139,9 +140,9 @@ export class InstallUseCase {
         );
       } else {
         await this.fs.writeFile(outputPath, file.content);
-        finalFiles.push(file);
+        filesByPath.set(file.relativePath, file);
       }
     }
-    return finalFiles;
+    return [...filesByPath.values()];
   }
 }

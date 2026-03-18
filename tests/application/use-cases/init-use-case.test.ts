@@ -90,41 +90,78 @@ describe("InitUseCase", () => {
       ).rejects.toThrow("Check available tags for:");
     });
 
-    it("aborts with adopt guidance when .claude/ exists", async () => {
-      await mkdir(join(projectRoot, ".claude"), { recursive: true });
+    it("aborts with adopt guidance when .claude/ contains AIDD frontmatter", async () => {
+      const commandDir = join(projectRoot, ".claude", "commands", "aidd", "02");
+      await mkdir(commandDir, { recursive: true });
+      await writeFile(
+        join(commandDir, "brainstorm.md"),
+        "---\nname: aidd:02:brainstorm\ndescription: test\n---\nbody"
+      );
 
       await expect(
         buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
       ).rejects.toThrow("Check available tags for:");
     });
 
-    it("aborts with adopt guidance when .opencode/ exists", async () => {
-      await mkdir(join(projectRoot, ".opencode"), { recursive: true });
+    it("aborts with adopt guidance when .opencode/ contains AIDD frontmatter", async () => {
+      const commandDir = join(projectRoot, ".opencode", "commands", "aidd", "02");
+      await mkdir(commandDir, { recursive: true });
+      await writeFile(
+        join(commandDir, "brainstorm.md"),
+        "---\nname: aidd:02:brainstorm\ndescription: test\n---\nbody"
+      );
 
       await expect(
         buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
       ).rejects.toThrow("AIDD files detected but no manifest found");
     });
 
-    it("aborts with adopt guidance when AGENTS.md exists", async () => {
-      const { writeFile } = await import("node:fs/promises");
-      await writeFile(join(projectRoot, "AGENTS.md"), "# Agents");
+    it("passes when .claude/ exists without AIDD frontmatter", async () => {
+      const commandDir = join(projectRoot, ".claude", "commands");
+      await mkdir(commandDir, { recursive: true });
+      await writeFile(
+        join(commandDir, "my-command.md"),
+        "---\nname: my-command\ndescription: custom\n---\nbody"
+      );
 
       await expect(
         buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
-      ).rejects.toThrow("AIDD files detected but no manifest found");
+      ).resolves.toBeUndefined();
     });
 
     it("error message contains recovery command when AIDD files detected", async () => {
-      await mkdir(join(projectRoot, ".opencode"), { recursive: true });
+      const commandDir = join(projectRoot, ".opencode", "commands", "aidd", "02");
+      await mkdir(commandDir, { recursive: true });
+      await writeFile(
+        join(commandDir, "brainstorm.md"),
+        "---\nname: aidd:02:brainstorm\ndescription: test\n---\nbody"
+      );
 
       await expect(
         buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
       ).rejects.toThrow("aidd adopt --from <version> --tools <tool>");
     });
 
+    it("aborts when .github/prompts/ contains legacy underscore-format AIDD frontmatter", async () => {
+      const promptsDir = join(projectRoot, ".github", "prompts");
+      await mkdir(promptsDir, { recursive: true });
+      await writeFile(
+        join(promptsDir, "aidd_02_brainstorm.prompt.md"),
+        "---\nname: aidd_02_brainstorm\ndescription: test\n---\nbody"
+      );
+
+      await expect(
+        buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
+      ).rejects.toThrow("AIDD files detected but no manifest found");
+    });
+
     it("uses custom repo in AiddFilesDetectedError", async () => {
-      await mkdir(join(projectRoot, ".opencode"), { recursive: true });
+      const commandDir = join(projectRoot, ".opencode", "commands", "aidd", "02");
+      await mkdir(commandDir, { recursive: true });
+      await writeFile(
+        join(commandDir, "brainstorm.md"),
+        "---\nname: aidd:02:brainstorm\ndescription: test\n---\nbody"
+      );
 
       await expect(
         buildUseCase().checkPreconditions({

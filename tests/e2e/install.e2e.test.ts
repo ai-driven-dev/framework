@@ -163,6 +163,21 @@ describe.concurrent("E2E: aidd install", () => {
     }
   });
 
+  it("shows no drift in status after installing all tools at once", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install");
+    try {
+      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "--all", "--framework", FRAMEWORK_PATH], projectDir);
+      const { stdout, exitCode } = await runCli(["status"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).not.toContain("modified");
+      expect(stdout).not.toContain("deleted");
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("reinstalls all tools when --all --force is used", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {

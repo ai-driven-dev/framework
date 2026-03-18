@@ -19,8 +19,8 @@ function makeLogger(): { logger: Logger; logs: string[] } {
   const logs: string[] = [];
   const logger: Logger = {
     debug: () => {},
-    info: (m: string) => logs.push(m),
-    warn: () => {},
+    info: () => {},
+    warn: (m: string) => logs.push(m),
   };
   return { logger, logs };
 }

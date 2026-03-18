@@ -22,10 +22,10 @@ export async function printUpdateBanner(
       const current = currentVersionProvider.get();
       const { version: latest } = await cliUpdater.fetchLatestRelease();
       if (isOutdated(current, latest)) {
-        logger.info(
+        logger.warn(
           `\nCLI update available: v${current.replace(/^v/, "")} → v${latest.replace(/^v/, "")}`
         );
-        logger.info("Run `aidd self-update`.");
+        logger.warn("Run `aidd self-update`.");
       }
     } catch (err) {
       logger.debug(`CLI update check failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -52,10 +52,10 @@ export async function printUpdateBanner(
     if (!docsOutdated && !toolsOutdated) return;
 
     const current = (docsVersion ?? toolVersion) as string;
-    logger.info(`\nUpdate available: v${current.replace(/^v/, "")} → v${latest.replace(/^v/, "")}`);
-    if (docsOutdated && toolsOutdated) logger.info("Run `aidd update` to update docs and tools.");
-    else if (docsOutdated) logger.info("Run `aidd update --docs` to update docs.");
-    else if (toolsOutdated) logger.info("Run `aidd update` to update tools.");
+    logger.warn(`\nUpdate available: v${current.replace(/^v/, "")} → v${latest.replace(/^v/, "")}`);
+    if (docsOutdated && toolsOutdated) logger.warn("Run `aidd update` to update docs and tools.");
+    else if (docsOutdated) logger.warn("Run `aidd update --docs` to update docs.");
+    else if (toolsOutdated) logger.warn("Run `aidd update` to update tools.");
   } catch (err) {
     logger.debug(
       `Framework update check failed: ${err instanceof Error ? err.message : String(err)}`

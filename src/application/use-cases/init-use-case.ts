@@ -55,19 +55,36 @@ export class InitUseCase {
       );
     }
 
-    const aiddSignals = [
-      join(projectRoot, docsDir),
-      join(projectRoot, ".claude"),
-      join(projectRoot, ".cursor"),
-      join(projectRoot, ".github", "copilot-instructions.md"),
-      join(projectRoot, ".opencode"),
-      join(projectRoot, "AGENTS.md"),
+    if (await this.fs.fileExists(join(projectRoot, docsDir))) {
+      throw new AiddFilesDetectedError(repo);
+    }
+
+    if (await this.hasAiddSignals(projectRoot)) {
+      throw new AiddFilesDetectedError(repo);
+    }
+  }
+
+  private async hasAiddSignals(projectRoot: string): Promise<boolean> {
+    // Only commands dirs are scanned: rules/ and agents/ never contain `name: aidd:` frontmatter,
+    // so scanning them would produce false negatives or require broader pattern matching.
+    // Matches both current colon format (aidd:02:name) and legacy underscore format (aidd_02_name).
+    const signalDirs = [
+      ".claude/commands",
+      ".cursor/commands",
+      ".opencode/commands",
+      ".github/prompts",
     ];
-    for (const signalPath of aiddSignals) {
-      if (await this.fs.fileExists(signalPath)) {
-        throw new AiddFilesDetectedError(repo);
+    for (const dir of signalDirs) {
+      const dirPath = join(projectRoot, dir);
+      if (!(await this.fs.fileExists(dirPath))) continue;
+      const files = await this.fs.listDirectory(dirPath);
+      for (const filePath of files) {
+        if (!filePath.endsWith(".md")) continue;
+        const content = await this.fs.readFile(join(dirPath, filePath));
+        if (/^name:\s*['"]?aidd[_:]/m.test(content)) return true;
       }
     }
+    return false;
   }
 
   async execute(options: InitOptions): Promise<InitResult> {

@@ -12,13 +12,15 @@ import {
 } from "../models/framework-descriptor.js";
 import { parseFrontmatter } from "../models/frontmatter.js";
 import {
-  agentNameFromFrontmatter,
   type CommandsHandler,
   type ConfigHandler,
   type MemoryBankHandler,
+  namedAgentsFrontmatter,
+  passthroughFrontmatter,
   type RulesHandler,
   registerTool,
   type SectionHandler,
+  standardCommandFrontmatter,
   type ToolConfig,
   type UserFileSectionKey,
 } from "../models/tool-config.js";
@@ -84,12 +86,7 @@ const agentsHandler: SectionHandler = {
     const name = base.endsWith(".md") ? `${base.slice(0, -3)}${EXT_AGENT}` : base;
     return `${DIRECTORY}agents/${name}`;
   },
-  convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {
-    return { name: agentNameFromFrontmatter(fm, fileName), description: fm.description };
-  },
-  reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-    return { name: fm.name, description: fm.description };
-  },
+  ...namedAgentsFrontmatter,
 };
 
 const commandsHandler: CommandsHandler = {
@@ -99,25 +96,7 @@ const commandsHandler: CommandsHandler = {
     const flat = flattenFileName(fileName, EXT_PROMPT);
     return `${DIRECTORY}prompts/${flat}`;
   },
-  convertFrontmatter(
-    fm: Record<string, unknown>,
-    relativeFileName: string
-  ): Record<string, unknown> {
-    const phase = relativeFileName.split("/")[0]?.match(/^(\d+)/)?.[1];
-    const baseName = String(fm.name ?? "");
-    const name = phase ? `aidd_${phase}_${baseName}` : baseName;
-    const result: Record<string, unknown> = { name, description: fm.description };
-    if (fm["argument-hint"] !== undefined) result["argument-hint"] = fm["argument-hint"];
-    return result;
-  },
-  reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-    const rawName = String(fm.name ?? "");
-    const match = /^aidd_\d+_(.+)$/.exec(rawName);
-    const name = match ? match[1] : rawName;
-    const result: Record<string, unknown> = { name, description: fm.description };
-    if (fm["argument-hint"] !== undefined) result["argument-hint"] = fm["argument-hint"];
-    return result;
-  },
+  ...standardCommandFrontmatter,
 };
 
 const rulesHandler: RulesHandler = {
@@ -152,12 +131,7 @@ const skillsHandler: SectionHandler = {
     if (base === GITKEEP_FILE) return null;
     return `${DIRECTORY}skills/${fileName}`;
   },
-  convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-    return fm;
-  },
-  reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-    return fm;
-  },
+  ...passthroughFrontmatter,
 };
 
 function resolveInstalledPath(path: string): string {

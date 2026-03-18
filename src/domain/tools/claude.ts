@@ -1,17 +1,18 @@
 import {
-  AT_DOCS_PLACEHOLDER,
-  AT_TOOLS_PLACEHOLDER,
   CONFIG_MCP,
   CONFIG_VSCODE_SETTINGS,
-  DOCS_PLACEHOLDER,
   TEMPLATE_AGENTS_MD,
-  TOOLS_PLACEHOLDER,
 } from "../models/framework-descriptor.js";
 import {
-  agentNameFromFrontmatter,
+  baseReverseRewriteContent,
+  baseRewriteContent,
+  buildStandardCommandsHandler,
   type CommandsHandler,
   type ConfigHandler,
+  detectSectionKeyFromPrefixes,
   type MemoryBankHandler,
+  namedAgentsSectionHandler,
+  passthroughSkillsHandler,
   type RulesHandler,
   registerTool,
   type SectionHandler,
@@ -33,73 +34,33 @@ export const claudeToolConfig: ToolConfig = {
   toolSuffix: TOOL_SUFFIX,
 
   rewriteContent(content: string, docsDir: string): string {
-    return content
-      .replaceAll(AT_TOOLS_PLACEHOLDER, `@${DIRECTORY}`)
-      .replaceAll(AT_DOCS_PLACEHOLDER, `@${docsDir}/`)
-      .replaceAll(TOOLS_PLACEHOLDER, DIRECTORY)
-      .replaceAll(DOCS_PLACEHOLDER, `${docsDir}/`)
-      .replace(
-        /(@?)\.claude\/commands\/(\d+)[_][^/]+\//g,
-        (_, at, phase) => `${at}${commandsDir(phase)}`
-      );
+    return baseRewriteContent(content, DIRECTORY, docsDir).replace(
+      /(@?)\.claude\/commands\/(\d+)[_][^/]+\//g,
+      (_, at, phase) => `${at}${commandsDir(phase)}`
+    );
   },
 
   reverseRewriteContent(content: string, docsDir: string): string {
-    return content
-      .replaceAll(`@${DIRECTORY}`, AT_TOOLS_PLACEHOLDER)
-      .replaceAll(`@${docsDir}/`, AT_DOCS_PLACEHOLDER)
-      .replaceAll(DIRECTORY, TOOLS_PLACEHOLDER)
-      .replaceAll(`${docsDir}/`, DOCS_PLACEHOLDER);
+    return baseReverseRewriteContent(content, DIRECTORY, docsDir);
   },
 
   agents(): SectionHandler {
-    return {
-      buildFilePath(fileName: string): string {
-        return `${DIRECTORY}agents/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
-      },
-      convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {
-        return { name: agentNameFromFrontmatter(fm, fileName), description: fm.description };
-      },
-      reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-        return { name: fm.name, description: fm.description };
-      },
-    };
+    return namedAgentsSectionHandler(DIRECTORY, TOOL_SUFFIX);
   },
 
   commands(): CommandsHandler {
-    return {
-      buildFilePath(fileName: string): string | null {
-        const slashIdx = fileName.indexOf("/");
-        if (slashIdx !== -1) {
-          const phaseDir = fileName.slice(0, slashIdx);
-          const rest = fileName.slice(slashIdx + 1);
-          const phase = phaseDir.match(/^(\d+)/)?.[1];
-          if (phase) {
-            return `${commandsDir(phase)}${rest}`;
-          }
+    return buildStandardCommandsHandler((fileName: string): string | null => {
+      const slashIdx = fileName.indexOf("/");
+      if (slashIdx !== -1) {
+        const phaseDir = fileName.slice(0, slashIdx);
+        const rest = fileName.slice(slashIdx + 1);
+        const phase = phaseDir.match(/^(\d+)/)?.[1];
+        if (phase) {
+          return `${commandsDir(phase)}${rest}`;
         }
-        return `${DIRECTORY}commands/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
-      },
-      convertFrontmatter(
-        fm: Record<string, unknown>,
-        relativeFileName: string
-      ): Record<string, unknown> {
-        const phase = relativeFileName.split("/")[0]?.match(/^(\d+)/)?.[1];
-        const baseName = String(fm.name ?? "");
-        const name = phase ? `aidd:${phase}:${baseName}` : baseName;
-        const result: Record<string, unknown> = { name, description: fm.description };
-        if (fm["argument-hint"] !== undefined) result["argument-hint"] = fm["argument-hint"];
-        return result;
-      },
-      reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-        const rawName = String(fm.name ?? "");
-        const match = /^aidd:\d+:(.+)$/.exec(rawName);
-        const name = match ? match[1] : rawName;
-        const result: Record<string, unknown> = { name, description: fm.description };
-        if (fm["argument-hint"] !== undefined) result["argument-hint"] = fm["argument-hint"];
-        return result;
-      },
-    };
+      }
+      return `${DIRECTORY}commands/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
+    });
   },
 
   rules(): RulesHandler {
@@ -124,17 +85,7 @@ export const claudeToolConfig: ToolConfig = {
   },
 
   skills(): SectionHandler {
-    return {
-      buildFilePath(fileName: string): string {
-        return `${DIRECTORY}skills/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
-      },
-      convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-        return fm;
-      },
-      reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-        return fm;
-      },
-    };
+    return passthroughSkillsHandler(DIRECTORY, TOOL_SUFFIX);
   },
 
   config(): ConfigHandler {
@@ -163,17 +114,12 @@ export const claudeToolConfig: ToolConfig = {
   },
 
   detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null {
-    const prefixes: [string, "agents" | "commands" | "rules" | "skills"][] = [
+    return detectSectionKeyFromPrefixes(relativePath, [
       [`${DIRECTORY}agents/`, "agents"],
       [`${DIRECTORY}commands/aidd/`, "commands"],
       [`${DIRECTORY}rules/`, "rules"],
       [`${DIRECTORY}skills/`, "skills"],
-    ];
-    for (const [prefix, section] of prefixes) {
-      if (relativePath.startsWith(prefix))
-        return { section, key: relativePath.slice(prefix.length) };
-    }
-    return null;
+    ]);
   },
 };
 

@@ -78,7 +78,11 @@ describe.concurrent("E2E: aidd init", () => {
   it("shows an error when .claude/ exists without a manifest", async () => {
     const { projectDir, cleanup } = await createTestEnv("init");
     try {
-      await mkdir(join(projectDir, ".claude"), { recursive: true });
+      await mkdir(join(projectDir, ".claude", "commands", "aidd", "04"), { recursive: true });
+      await writeFile(
+        join(projectDir, ".claude", "commands", "aidd", "04", "implement.md"),
+        "---\nname: 'aidd:04:implement'\ndescription: Implement a plan\n---\n\n# Implement\n"
+      );
 
       const { stderr, exitCode } = await runCli(
         ["init", "--framework", FRAMEWORK_PATH],
@@ -96,7 +100,11 @@ describe.concurrent("E2E: aidd init", () => {
   it("shows an error when .opencode/ exists without a manifest", async () => {
     const { projectDir, cleanup } = await createTestEnv("init");
     try {
-      await mkdir(join(projectDir, ".opencode"), { recursive: true });
+      await mkdir(join(projectDir, ".opencode", "commands", "aidd", "04"), { recursive: true });
+      await writeFile(
+        join(projectDir, ".opencode", "commands", "aidd", "04", "implement.md"),
+        "---\nname: 'aidd:04:implement'\ndescription: Implement a plan\n---\n\n# Implement\n"
+      );
 
       const { stderr, exitCode } = await runCli(
         ["init", "--framework", FRAMEWORK_PATH],
@@ -115,6 +123,11 @@ describe.concurrent("E2E: aidd init", () => {
   it("shows an error when AGENTS.md exists without a manifest", async () => {
     const { projectDir, cleanup } = await createTestEnv("init");
     try {
+      await mkdir(join(projectDir, ".claude", "commands", "aidd", "04"), { recursive: true });
+      await writeFile(
+        join(projectDir, ".claude", "commands", "aidd", "04", "implement.md"),
+        "---\nname: 'aidd:04:implement'\ndescription: Implement a plan\n---\n\n# Implement\n"
+      );
       await writeFile(join(projectDir, "AGENTS.md"), "# Agents");
 
       const { stderr, exitCode } = await runCli(

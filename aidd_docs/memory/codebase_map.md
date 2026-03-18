@@ -2,10 +2,22 @@
 
 ## Status
 
-- `src/` — fully implemented through v3.2 + adopt + self-update + opencode tool (v2.7.x) commands
+- `src/` — fully implemented through v3.2 + adopt + self-update + opencode tool + AIDD branding signals
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
-- `tests/` — 637 tests, 50 files, all passing
+- `tests/` — 684 tests, all passing
 - Next: vNext interactive mode (not yet specified — do not implement until vision is stabilized)
+
+## Command Output Paths (per tool)
+
+| Tool | Commands path | Frontmatter name |
+|------|--------------|-----------------|
+| `claude` | `.claude/commands/aidd/<phase>/<name>.md` | `name: aidd:<phase>:<name>` |
+| `cursor` | `.cursor/commands/aidd/<phase>/<name>.md` | `name: aidd:<phase>:<name>` |
+| `opencode` | `.opencode/commands/aidd/<phase>/<name>.md` | `name: aidd:<phase>:<name>` |
+| `copilot` | `.github/prompts/aidd_<phase>_<name>.prompt.md` | `name: aidd:<phase>:<name>` |
+
+- Phase is extracted from leading digits in source dir name (e.g. `02_context` → `02`)
+- `buildAiddCommandFilePath(dir, fileName)` in `tool-config.ts` is the shared helper
 
 ## Source Layout
 

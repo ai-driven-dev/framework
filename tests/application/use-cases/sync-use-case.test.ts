@@ -612,11 +612,10 @@ describe("SyncUseCase", () => {
     expect(result.tools[0].files.filter((f) => f.written).length).toBeGreaterThan(0);
 
     const content = await readFile(
-      join(projectRoot, ".cursor/commands/04_code/implement.md"),
+      join(projectRoot, ".cursor/commands/aidd/04/implement.md"),
       "utf-8"
     );
-    expect(content).toContain("name: 'implement'");
-    expect(content).not.toContain("aidd:04:");
+    expect(content).toContain("name: 'aidd:04:implement'");
     expect(content).toContain("Modified command content.");
   });
 
@@ -627,8 +626,8 @@ describe("SyncUseCase", () => {
     await installTool(deps, projectRoot, "claude");
 
     await writeFile(
-      join(projectRoot, ".cursor/commands/04_code/implement.md"),
-      "---\nname: 'implement'\ndescription: Implement a feature.\n---\n\nModified cursor command.\n"
+      join(projectRoot, ".cursor/commands/aidd/04/implement.md"),
+      "---\nname: 'aidd:04:implement'\ndescription: Implement a feature.\n---\n\nModified cursor command.\n"
     );
 
     const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);

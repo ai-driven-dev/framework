@@ -1,18 +1,17 @@
+import { CONFIG_MCP, CONFIG_OPENCODE, TEMPLATE_AGENTS_MD } from "../models/framework-descriptor.js";
 import {
-  AT_DOCS_PLACEHOLDER,
-  AT_TOOLS_PLACEHOLDER,
-  CONFIG_MCP,
-  CONFIG_OPENCODE,
-  DOCS_PLACEHOLDER,
-  TEMPLATE_AGENTS_MD,
-  TOOLS_PLACEHOLDER,
-} from "../models/framework-descriptor.js";
-import {
+  baseReverseRewriteContent,
+  baseRewriteContent,
+  buildAiddCommandFilePath,
   type CommandsHandler,
   type ConfigHandler,
+  convertCommandFrontmatterNoHint,
+  detectSectionKeyFromPrefixes,
   type MemoryBankHandler,
+  passthroughSkillsHandler,
   type RulesHandler,
   registerTool,
+  reverseConvertCommandFrontmatterNoHint,
   type SectionHandler,
   stripToolSuffix,
   type ToolConfig,
@@ -88,19 +87,11 @@ export const opencodeToolConfig: ToolConfig = {
   toolSuffix: TOOL_SUFFIX,
 
   rewriteContent(content: string, docsDir: string): string {
-    return content
-      .replaceAll(AT_TOOLS_PLACEHOLDER, `@${DIRECTORY}`)
-      .replaceAll(AT_DOCS_PLACEHOLDER, `@${docsDir}/`)
-      .replaceAll(TOOLS_PLACEHOLDER, DIRECTORY)
-      .replaceAll(DOCS_PLACEHOLDER, `${docsDir}/`);
+    return baseRewriteContent(content, DIRECTORY, docsDir);
   },
 
   reverseRewriteContent(content: string, docsDir: string): string {
-    return content
-      .replaceAll(`@${DIRECTORY}`, AT_TOOLS_PLACEHOLDER)
-      .replaceAll(`@${docsDir}/`, AT_DOCS_PLACEHOLDER)
-      .replaceAll(DIRECTORY, TOOLS_PLACEHOLDER)
-      .replaceAll(`${docsDir}/`, DOCS_PLACEHOLDER);
+    return baseReverseRewriteContent(content, DIRECTORY, docsDir);
   },
 
   agents(): SectionHandler {
@@ -112,8 +103,16 @@ export const opencodeToolConfig: ToolConfig = {
 
   commands(): CommandsHandler {
     return {
-      buildFilePath: (fileName) => `${DIRECTORY}commands/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
-      ...descriptionOnlyFrontmatter,
+      buildFilePath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
+      convertFrontmatter(
+        fm: Record<string, unknown>,
+        relativeFileName: string
+      ): Record<string, unknown> {
+        return convertCommandFrontmatterNoHint(fm, relativeFileName);
+      },
+      reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+        return reverseConvertCommandFrontmatterNoHint(fm);
+      },
     };
   },
 
@@ -136,17 +135,7 @@ export const opencodeToolConfig: ToolConfig = {
   },
 
   skills(): SectionHandler {
-    return {
-      buildFilePath(fileName: string): string {
-        return `${DIRECTORY}skills/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
-      },
-      convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-        return fm;
-      },
-      reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-        return fm;
-      },
-    };
+    return passthroughSkillsHandler(DIRECTORY, TOOL_SUFFIX);
   },
 
   config(): ConfigHandler {
@@ -179,17 +168,12 @@ export const opencodeToolConfig: ToolConfig = {
   },
 
   detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null {
-    const prefixes: [string, "agents" | "commands" | "rules" | "skills"][] = [
+    return detectSectionKeyFromPrefixes(relativePath, [
       [`${DIRECTORY}agents/`, "agents"],
-      [`${DIRECTORY}commands/`, "commands"],
+      [`${DIRECTORY}commands/aidd/`, "commands"],
       [`${DIRECTORY}rules/`, "rules"],
       [`${DIRECTORY}skills/`, "skills"],
-    ];
-    for (const [prefix, section] of prefixes) {
-      if (relativePath.startsWith(prefix))
-        return { section, key: relativePath.slice(prefix.length) };
-    }
-    return null;
+    ]);
   },
 };
 

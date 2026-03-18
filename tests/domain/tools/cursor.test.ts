@@ -17,6 +17,14 @@ describe("cursorToolConfig", () => {
       const result = cursorToolConfig.rewriteContent("@{{TOOLS}}/rules/naming.md", "aidd_docs");
       expect(result).toBe("@.cursor/rules/naming.mdc");
     });
+
+    it("rewrites old-style @.cursor/commands/<phase>_<dir>/file to @.cursor/commands/aidd/<phase>/file", () => {
+      const result = cursorToolConfig.rewriteContent(
+        "See @.cursor/commands/04_code/implement.md for reference",
+        "aidd_docs"
+      );
+      expect(result).toBe("See @.cursor/commands/aidd/04/implement.md for reference");
+    });
   });
 
   describe("rules().convertFrontmatter()", () => {
@@ -42,10 +50,31 @@ describe("cursorToolConfig", () => {
   });
 
   describe("commands().convertFrontmatter()", () => {
-    it("strips extra fields for commands — only name and description", () => {
+    it("prefixes name with aidd:<phase>: and strips extra fields", () => {
       const fm = { name: "implement", description: "Implement", model: "sonnet" };
       const result = cursorToolConfig.commands().convertFrontmatter(fm, "04_code/implement.md");
-      expect(result).toEqual({ name: "implement", description: "Implement" });
+      expect(result).toEqual({ name: "aidd:04:implement", description: "Implement" });
+    });
+  });
+
+  describe("commands output path", () => {
+    it("maps phase-prefixed path to aidd/<phase>/ subfolder", () => {
+      const path = cursorToolConfig.commands().buildFilePath("04_code/implement.md");
+      expect(path).toBe(".cursor/commands/aidd/04/implement.md");
+    });
+
+    it("maps top-level file to aidd/ subfolder without phase", () => {
+      const path = cursorToolConfig.commands().buildFilePath("commit.md");
+      expect(path).toBe(".cursor/commands/aidd/commit.md");
+    });
+  });
+
+  describe("commands().reverseConvertFrontmatter()", () => {
+    it("strips aidd:<phase>: prefix from name", () => {
+      const result = cursorToolConfig
+        .commands()
+        .reverseConvertFrontmatter({ name: "aidd:04:implement", description: "Impl" });
+      expect(result).toEqual({ name: "implement", description: "Impl" });
     });
   });
 

@@ -1,16 +1,15 @@
+import { CONFIG_MCP, TEMPLATE_AGENTS_MD } from "../models/framework-descriptor.js";
 import {
-  AT_DOCS_PLACEHOLDER,
-  AT_TOOLS_PLACEHOLDER,
-  CONFIG_MCP,
-  DOCS_PLACEHOLDER,
-  TEMPLATE_AGENTS_MD,
-  TOOLS_PLACEHOLDER,
-} from "../models/framework-descriptor.js";
-import {
-  agentNameFromFrontmatter,
+  baseReverseRewriteContent,
+  baseRewriteContent,
+  buildAiddCommandFilePath,
+  buildStandardCommandsHandler,
   type CommandsHandler,
   type ConfigHandler,
+  detectSectionKeyFromPrefixes,
   type MemoryBankHandler,
+  namedAgentsSectionHandler,
+  passthroughSkillsHandler,
   type RulesHandler,
   registerTool,
   type SectionHandler,
@@ -33,53 +32,27 @@ export const cursorToolConfig: ToolConfig = {
   toolSuffix: TOOL_SUFFIX,
 
   rewriteContent(content: string, docsDir: string): string {
-    return content
-      .replaceAll(AT_TOOLS_PLACEHOLDER, `@${DIRECTORY}`)
-      .replaceAll(AT_DOCS_PLACEHOLDER, `@${docsDir}/`)
-      .replaceAll(TOOLS_PLACEHOLDER, DIRECTORY)
-      .replaceAll(DOCS_PLACEHOLDER, `${docsDir}/`)
+    return baseRewriteContent(content, DIRECTORY, docsDir)
+      .replace(/(@\.cursor\/commands\/)(\d+)[_-][^/]+\/([^\s]+)/g, "$1aidd/$2/$3")
       .replace(/(@\.cursor\/rules\/[^\s]+)\.md\b/g, "$1.mdc");
   },
 
   reverseRewriteContent(content: string, docsDir: string): string {
-    return content
-      .replace(/(@\.cursor\/rules\/[^\s]+)\.mdc\b/g, "$1.md")
-      .replaceAll(`@${DIRECTORY}`, AT_TOOLS_PLACEHOLDER)
-      .replaceAll(`@${docsDir}/`, AT_DOCS_PLACEHOLDER)
-      .replaceAll(DIRECTORY, TOOLS_PLACEHOLDER)
-      .replaceAll(`${docsDir}/`, DOCS_PLACEHOLDER);
+    return baseReverseRewriteContent(
+      content.replace(/(@\.cursor\/rules\/[^\s]+)\.mdc\b/g, "$1.md"),
+      DIRECTORY,
+      docsDir
+    );
   },
 
   agents(): SectionHandler {
-    return {
-      buildFilePath(fileName: string): string {
-        return `${DIRECTORY}agents/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
-      },
-      convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {
-        return { name: agentNameFromFrontmatter(fm, fileName), description: fm.description };
-      },
-      reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-        return { name: fm.name, description: fm.description };
-      },
-    };
+    return namedAgentsSectionHandler(DIRECTORY, TOOL_SUFFIX);
   },
 
   commands(): CommandsHandler {
-    return {
-      buildFilePath(fileName: string): string {
-        return `${DIRECTORY}commands/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
-      },
-      convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-        const result: Record<string, unknown> = { name: fm.name, description: fm.description };
-        if (fm["argument-hint"] !== undefined) result["argument-hint"] = fm["argument-hint"];
-        return result;
-      },
-      reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-        const result: Record<string, unknown> = { name: fm.name, description: fm.description };
-        if (fm["argument-hint"] !== undefined) result["argument-hint"] = fm["argument-hint"];
-        return result;
-      },
-    };
+    return buildStandardCommandsHandler((fileName) =>
+      buildAiddCommandFilePath(DIRECTORY, fileName)
+    );
   },
 
   rules(): RulesHandler {
@@ -117,17 +90,7 @@ export const cursorToolConfig: ToolConfig = {
   },
 
   skills(): SectionHandler {
-    return {
-      buildFilePath(fileName: string): string {
-        return `${DIRECTORY}skills/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
-      },
-      convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-        return fm;
-      },
-      reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-        return fm;
-      },
-    };
+    return passthroughSkillsHandler(DIRECTORY, TOOL_SUFFIX);
   },
 
   config(): ConfigHandler {
@@ -155,20 +118,15 @@ export const cursorToolConfig: ToolConfig = {
   },
 
   detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null {
-    if (relativePath.startsWith(`${DIRECTORY}agents/`)) {
-      return { section: "agents", key: relativePath.slice(`${DIRECTORY}agents/`.length) };
-    }
-    if (relativePath.startsWith(`${DIRECTORY}commands/`)) {
-      return { section: "commands", key: relativePath.slice(`${DIRECTORY}commands/`.length) };
-    }
     if (relativePath.startsWith(`${DIRECTORY}rules/`)) {
       const key = relativePath.slice(`${DIRECTORY}rules/`.length);
       return { section: "rules", key: key.endsWith(".mdc") ? `${key.slice(0, -4)}.md` : key };
     }
-    if (relativePath.startsWith(`${DIRECTORY}skills/`)) {
-      return { section: "skills", key: relativePath.slice(`${DIRECTORY}skills/`.length) };
-    }
-    return null;
+    return detectSectionKeyFromPrefixes(relativePath, [
+      [`${DIRECTORY}agents/`, "agents"],
+      [`${DIRECTORY}commands/aidd/`, "commands"],
+      [`${DIRECTORY}skills/`, "skills"],
+    ]);
   },
 };
 
