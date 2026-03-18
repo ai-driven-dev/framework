@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 
-const execFileAsync = promisify(execFile);
+export const execFileAsync = promisify(execFile);
 
 export const CLI_PATH = resolve(process.cwd(), "dist/cli.js");
 export const FRAMEWORK_PATH = resolve(process.cwd(), "tests/fixtures/framework");

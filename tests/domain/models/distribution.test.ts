@@ -22,6 +22,7 @@ const framework = new FrameworkDescriptor({
   ],
   templateRefs: [{ name: "agentsMd", path: "aidd_docs/templates/AGENTS.md" }],
   configRefs: [{ name: "mcp", path: "config/mcp.json" }],
+  scriptRefs: [],
 });
 
 let hashCounter = 0;
@@ -470,6 +471,7 @@ describe("generateDistribution()", () => {
         contentSections: [],
         templateRefs: [],
         configRefs: [{ name: "mcp", path: "config/mcp.json" }],
+        scriptRefs: [],
       });
       const files = generateDistribution(
         opencodeFramework,
@@ -509,6 +511,7 @@ describe("generateDistribution()", () => {
           { name: "mcp", path: "config/mcp.json" },
           { name: "opencode", path: "config/opencode.json" },
         ],
+        scriptRefs: [],
       });
       const files = generateDistribution(
         opencodeFramework,
@@ -562,6 +565,7 @@ describe("generateDistribution() snapshots", () => {
     ],
     templateRefs: [{ name: "agentsMd", path: "aidd_docs/templates/AGENTS.md" }],
     configRefs: [{ name: "mcp", path: "config/mcp.json" }],
+    scriptRefs: [],
   });
 
   it("Claude — agents content is rewritten correctly", () => {

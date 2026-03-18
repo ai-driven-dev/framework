@@ -14,6 +14,7 @@ import {
   installTool,
   KeepPrompter,
   linuxPlatform,
+  noGit,
   OverwritePrompter,
 } from "./helpers.js";
 
@@ -39,6 +40,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new OverwritePrompter(),
       linuxPlatform
     );
@@ -62,6 +64,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new OverwritePrompter(),
       linuxPlatform
     );
@@ -86,6 +89,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new OverwritePrompter(),
       linuxPlatform
     );
@@ -136,6 +140,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new OverwritePrompter(),
       linuxPlatform
     );
@@ -185,6 +190,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new KeepPrompter(),
       linuxPlatform
     );
@@ -230,6 +236,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new OverwritePrompter(),
       linuxPlatform
     );
@@ -275,6 +282,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new OverwritePrompter(),
       linuxPlatform
     );
@@ -322,6 +330,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new KeepPrompter(),
       linuxPlatform
     );
@@ -351,6 +360,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new OverwritePrompter(),
       linuxPlatform
     );
@@ -376,6 +386,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new OverwritePrompter(),
       linuxPlatform
     );
@@ -408,6 +419,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new OverwritePrompter(),
       linuxPlatform
     );
@@ -438,6 +450,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new OverwritePrompter(),
       linuxPlatform
     );
@@ -468,6 +481,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new KeepPrompter(),
       linuxPlatform
     );
@@ -499,6 +513,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new OverwritePrompter(),
       linuxPlatform
     );
@@ -534,6 +549,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new OverwritePrompter(),
       linuxPlatform
     );
@@ -568,6 +584,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new OverwritePrompter(),
       linuxPlatform
     );
@@ -597,6 +614,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new OverwritePrompter(),
       linuxPlatform
     );
@@ -633,6 +651,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new OverwritePrompter(),
       linuxPlatform
     );
@@ -668,6 +687,7 @@ describe("UpdateUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       new OverwritePrompter(),
       linuxPlatform
     );

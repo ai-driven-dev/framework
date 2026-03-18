@@ -12,6 +12,7 @@ import {
   FIXTURE_DIR_V2,
   initProject,
   linuxPlatform,
+  noGit,
   win32Platform,
 } from "./helpers.js";
 
@@ -39,6 +40,7 @@ describe("InstallUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       linuxPlatform
     );
     const result = await useCase.execute({
@@ -65,6 +67,7 @@ describe("InstallUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       linuxPlatform
     );
     await useCase.execute({
@@ -91,6 +94,7 @@ describe("InstallUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       linuxPlatform
     );
     await useCase.execute({
@@ -124,6 +128,7 @@ describe("InstallUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       linuxPlatform
     );
     await useCase.execute({
@@ -157,6 +162,7 @@ describe("InstallUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       linuxPlatform
     );
     const result = await useCase.execute({
@@ -189,6 +195,7 @@ describe("InstallUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       linuxPlatform
     );
 
@@ -216,6 +223,7 @@ describe("InstallUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       linuxPlatform
     );
 
@@ -251,6 +259,7 @@ describe("InstallUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       linuxPlatform
     );
     // Install first
@@ -283,6 +292,7 @@ describe("InstallUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       linuxPlatform
     );
     await useCase.execute({
@@ -318,6 +328,7 @@ describe("InstallUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       linuxPlatform
     );
 
@@ -362,6 +373,7 @@ describe("InstallUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       linuxPlatform
     );
     await useCase.execute({
@@ -390,6 +402,7 @@ describe("InstallUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       linuxPlatform
     );
     await useCase.execute({
@@ -415,6 +428,7 @@ describe("InstallUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       linuxPlatform
     );
 
@@ -439,6 +453,7 @@ describe("InstallUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       linuxPlatform
     );
 
@@ -476,6 +491,7 @@ describe("InstallUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       win32Platform
     );
     await useCase.execute({
@@ -502,6 +518,7 @@ describe("InstallUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       linuxPlatform
     );
 

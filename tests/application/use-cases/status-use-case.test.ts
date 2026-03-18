@@ -14,6 +14,7 @@ import {
   initAndInstall,
   initProject,
   linuxPlatform,
+  noGit,
 } from "./helpers.js";
 
 describe("StatusUseCase", () => {
@@ -81,6 +82,7 @@ describe("StatusUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
+      noGit,
       linuxPlatform
     );
     await installUseCase.execute({
