@@ -4,6 +4,7 @@ import { join, relative } from "node:path";
 import type {
   ConfigRef,
   ContentSection,
+  ScriptRef,
   TemplateRef,
 } from "../../domain/models/framework-descriptor.js";
 import { FrameworkDescriptor } from "../../domain/models/framework-descriptor.js";
@@ -33,6 +34,10 @@ const CONFIG_REFS: readonly ConfigRef[] = [
   { name: "opencode", path: "config/.opencode/opencode.json" },
 ];
 
+const SCRIPT_REFS: readonly ScriptRef[] = [
+  { name: "updateMemory", path: "config/scripts/update_memory.mjs", invocation: "node" },
+];
+
 const DOCS_DIR = "aidd_docs";
 
 export class FrameworkLoaderAdapter implements FrameworkLoader {
@@ -49,6 +54,7 @@ export class FrameworkLoaderAdapter implements FrameworkLoader {
       contentSections: [...CONTENT_SECTIONS],
       templateRefs: [...TEMPLATE_REFS],
       configRefs: [...CONFIG_REFS],
+      scriptRefs: [...SCRIPT_REFS],
     });
 
     const contentFiles = await this.loadContentFiles(path, descriptor);
@@ -93,7 +99,11 @@ export class FrameworkLoaderAdapter implements FrameworkLoader {
       }
     }
 
-    for (const ref of [...descriptor.templateRefs, ...descriptor.configRefs]) {
+    for (const ref of [
+      ...descriptor.templateRefs,
+      ...descriptor.configRefs,
+      ...descriptor.scriptRefs,
+    ]) {
       const filePath = join(basePath, ref.path);
       try {
         const content = await readFile(filePath, "utf-8");

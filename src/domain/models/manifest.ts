@@ -17,10 +17,20 @@ interface DocsEntry {
   readonly files: readonly TrackedFile[];
 }
 
+interface ScriptsEntry {
+  readonly version: string;
+  readonly files: readonly TrackedFile[];
+}
+
 interface ToolEntry {
   readonly toolId: ToolId;
   readonly version: string;
   readonly files: readonly TrackedFile[];
+}
+
+interface ScriptsEntryData {
+  version: string;
+  files: TrackedFileData[];
 }
 
 interface ManifestData {
@@ -29,6 +39,7 @@ interface ManifestData {
   repo?: string;
   tools: Record<string, ToolEntryData>;
   docs: DocsEntryData | null;
+  scripts: ScriptsEntryData | null;
 }
 
 interface ToolEntryData {
@@ -51,17 +62,20 @@ interface TrackedFileData {
 export class Manifest {
   private readonly _tools: Map<ToolId, ToolEntry>;
   private _docs: DocsEntry | null;
+  private _scripts: ScriptsEntry | null;
   readonly docsDir: string;
   readonly repo?: string;
 
   private constructor(params: {
     tools: Map<ToolId, ToolEntry>;
     docs: DocsEntry | null;
+    scripts: ScriptsEntry | null;
     docsDir: string;
     repo?: string;
   }) {
     this._tools = new Map(params.tools);
     this._docs = params.docs;
+    this._scripts = params.scripts;
     this.docsDir = params.docsDir;
     this.repo = params.repo;
   }
@@ -70,6 +84,7 @@ export class Manifest {
     return new Manifest({
       tools: new Map(),
       docs: null,
+      scripts: null,
       docsDir: docsDir ?? DEFAULT_DOCS_DIR,
       repo,
     });
@@ -91,6 +106,22 @@ export class Manifest {
 
   addDocs(version: string, files: GeneratedFile[]): void {
     this._docs = { version, files: this.toTrackedFiles(files) };
+  }
+
+  addScripts(version: string, files: GeneratedFile[]): void {
+    this._scripts = { version, files: this.toTrackedFiles(files) };
+  }
+
+  getScriptsFiles(): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
+    return this._scripts?.files ?? [];
+  }
+
+  getScriptsVersion(): string | undefined {
+    return this._scripts?.version;
+  }
+
+  hasScripts(): boolean {
+    return this._scripts !== null;
   }
 
   private toTrackedFiles(files: GeneratedFile[]): TrackedFile[] {
@@ -138,6 +169,7 @@ export class Manifest {
     return new Manifest({
       tools: new Map(this._tools),
       docs: this._docs,
+      scripts: this._scripts,
       docsDir: newDocsDir,
       repo: this.repo,
     });
@@ -147,6 +179,7 @@ export class Manifest {
     return new Manifest({
       tools: new Map(this._tools),
       docs: this._docs,
+      scripts: this._scripts,
       docsDir: this.docsDir,
       repo: newRepo,
     });
@@ -183,6 +216,9 @@ export class Manifest {
       tools,
       docs: this._docs
         ? { version: this._docs.version, files: this.toTrackedFileData(this._docs.files) }
+        : null,
+      scripts: this._scripts
+        ? { version: this._scripts.version, files: this.toTrackedFileData(this._scripts.files) }
         : null,
     };
   }
@@ -244,6 +280,15 @@ export class Manifest {
     const docsDir = typeof raw.docsDir === "string" ? raw.docsDir : DEFAULT_DOCS_DIR;
     const repo = typeof raw.repo === "string" ? raw.repo : undefined;
 
-    return new Manifest({ tools, docs, docsDir, repo });
+    let scripts: ScriptsEntry | null = null;
+    if (raw.scripts !== null && raw.scripts !== undefined && typeof raw.scripts === "object") {
+      const scriptsRaw = raw.scripts as ScriptsEntryData;
+      scripts = {
+        version: scriptsRaw.version,
+        files: Manifest.parseTrackedFiles(scriptsRaw.files),
+      };
+    }
+
+    return new Manifest({ tools, docs, scripts, docsDir, repo });
   }
 }

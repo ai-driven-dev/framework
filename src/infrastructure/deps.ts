@@ -9,6 +9,7 @@ import type { CurrentVersionProvider } from "../domain/ports/current-version-pro
 import type { FileSystem } from "../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../domain/ports/framework-loader.js";
 import type { FrameworkResolver } from "../domain/ports/framework-resolver.js";
+import type { Git } from "../domain/ports/git.js";
 import type { Hasher } from "../domain/ports/hasher.js";
 import type { Logger } from "../domain/ports/logger.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
@@ -21,6 +22,7 @@ import {
   FrameworkResolverAdapter,
   validateRepoFormat,
 } from "./adapters/framework-resolver-adapter.js";
+import { GitAdapter } from "./adapters/git-adapter.js";
 import { HasherAdapter } from "./adapters/hasher-adapter.js";
 import { ManifestRepositoryAdapter } from "./adapters/manifest-repository-adapter.js";
 import { PlatformAdapter } from "./adapters/platform-adapter.js";
@@ -45,6 +47,7 @@ interface Deps {
   resolver: FrameworkResolver;
   cliUpdater: CliUpdater;
   currentVersionProvider: CurrentVersionProvider;
+  git: Git;
   platform: Platform;
 }
 
@@ -82,6 +85,7 @@ export async function createDeps(
   );
   const cliUpdater = new CliUpdaterAdapter(http, { token: token ?? undefined });
   const currentVersionProvider = new CurrentVersionAdapter();
+  const git = new GitAdapter(fs);
   const platform = new PlatformAdapter();
   return {
     fs,
@@ -92,6 +96,7 @@ export async function createDeps(
     resolver,
     cliUpdater,
     currentVersionProvider,
+    git,
     platform,
   };
 }
