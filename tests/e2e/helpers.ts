@@ -6,6 +6,20 @@ import { promisify } from "node:util";
 
 export const execFileAsync = promisify(execFile);
 
+const GIT_ENV_VARS = [
+  "GIT_DIR",
+  "GIT_WORK_TREE",
+  "GIT_INDEX_FILE",
+  "GIT_COMMON_DIR",
+  "GIT_OBJECT_DIRECTORY",
+];
+
+export async function gitInit(cwd: string): Promise<void> {
+  const env = { ...process.env };
+  for (const key of GIT_ENV_VARS) delete env[key];
+  await execFileAsync("git", ["init"], { cwd, env });
+}
+
 export const CLI_PATH = resolve(process.cwd(), "dist/cli.js");
 export const FRAMEWORK_PATH = resolve(process.cwd(), "tests/fixtures/framework");
 export const FRAMEWORK_V2_PATH = resolve(process.cwd(), "tests/fixtures/framework-v2");

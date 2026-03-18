@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { chmod, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, execFileAsync, FRAMEWORK_PATH, runCli } from "./helpers.js";
+import { createTestEnv, FRAMEWORK_PATH, gitInit, runCli } from "./helpers.js";
 
 describe.concurrent("E2E: aidd install", () => {
   it("requires init first — aborts with clear error on uninitialized project", async () => {
@@ -260,7 +260,7 @@ describe.concurrent("E2E: aidd install", () => {
   it("installs git pre-commit hook when .git directory is present", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
-      await execFileAsync("git", ["init"], { cwd: projectDir });
+      await gitInit(projectDir);
       await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
@@ -276,7 +276,7 @@ describe.concurrent("E2E: aidd install", () => {
   it("appends to existing pre-commit hook without replacing it", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
-      await execFileAsync("git", ["init"], { cwd: projectDir });
+      await gitInit(projectDir);
 
       const gitHookPath = join(projectDir, ".git", "hooks", "pre-commit");
       await writeFile(gitHookPath, "#!/bin/sh\necho 'existing hook'\n");
@@ -296,7 +296,7 @@ describe.concurrent("E2E: aidd install", () => {
   it("does not append to pre-commit hook twice (idempotent)", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
-      await execFileAsync("git", ["init"], { cwd: projectDir });
+      await gitInit(projectDir);
       await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "claude", "--force", "--framework", FRAMEWORK_PATH], projectDir);
