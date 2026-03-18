@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.10.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.9.2...v2.10.0) (2026-03-18)
+
+
+### Features
+
+* **tools:** aidd-branded commands namespacing and frontmatter-based init signals ([#49](https://github.com/ai-driven-dev/aidd-cli/issues/49)) ([19ea07e](https://github.com/ai-driven-dev/aidd-cli/commit/19ea07eb7dfd233bbf476e72d412afcf4e0bd56e))
+
 ## [2.9.2](https://github.com/ai-driven-dev/aidd-cli/compare/v2.9.1...v2.9.2) (2026-03-18)
 
 
