@@ -12,12 +12,6 @@ Capture and store new learnings from recently implemented feature in memory bank
 
 ## Resources
 
-### IDE syntax reference
-
-```md
-@{{TOOLS}}/rules/04-tooling/ide-mapping.md
-```
-
 ### Doc content
 
 ```shell

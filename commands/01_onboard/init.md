@@ -63,12 +63,6 @@ All templates are in:
 @{{TOOLS}}/rules/01-standards/1-mermaid.md
 ```
 
-### IDE syntax reference
-
-```md
-@{{TOOLS}}/rules/04-tooling/ide-mapping.md
-```
-
 ## Steps
 
 1. Check if memory bank already exists in `{{DOCS}}/memory/` folder:
