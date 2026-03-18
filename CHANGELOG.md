@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.9.2](https://github.com/ai-driven-dev/aidd-cli/compare/v2.9.1...v2.9.2) (2026-03-18)
+
+
+### Bug Fixes
+
+* **opencode:** align CONFIG_REFS path with framework convention ([23673c7](https://github.com/ai-driven-dev/aidd-cli/commit/23673c73c07864ccb2717a45c28030efe0604ac7))
+* **opencode:** opencode.json missing instructions field ([cd6bbac](https://github.com/ai-driven-dev/aidd-cli/commit/cd6bbac6b737463b91163d92d255bfe5bf8e100b))
+
+
+### Documentation
+
+* **adr:** add DEC-001 framework config path convention ([ce758b8](https://github.com/ai-driven-dev/aidd-cli/commit/ce758b87b30ebd7014126180aa42d1e2974160c6))
+
 ## [2.9.1](https://github.com/ai-driven-dev/aidd-cli/compare/v2.9.0...v2.9.1) (2026-03-17)
 
 
