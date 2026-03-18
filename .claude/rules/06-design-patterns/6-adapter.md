@@ -9,3 +9,4 @@ paths:
 - Implements one port interface
 - No business logic — I/O translation only
 - All dependencies injected via constructor, typed as port interfaces
+- Owns all technical constants for its integration domain: runtime names, OS-level strings, protocol details, system file paths
