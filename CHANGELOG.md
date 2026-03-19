@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.7.0](https://github.com/ai-driven-dev/aidd-framework/compare/v3.6.0...v3.7.0) (2026-03-19)
+
+
+### Features
+
+* **memory:** add update_memory script and sync &lt;aidd_project_memory&gt; block ([ebaca02](https://github.com/ai-driven-dev/aidd-framework/commit/ebaca0262b21b087fbc39b00f7a3ef949cdca623))
+* **memory:** add update_memory script and sync aidd_project_memory block ([f950ee5](https://github.com/ai-driven-dev/aidd-framework/commit/f950ee5d8ad00a0b5b7efd86d465cc6173769ddb))
+
 ## [3.6.0](https://github.com/ai-driven-dev/aidd-framework/compare/v3.5.0...v3.6.0) (2026-03-16)
 
 
