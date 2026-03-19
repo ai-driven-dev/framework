@@ -30,6 +30,7 @@ export const cursorToolConfig: ToolConfig = {
   toolId: "cursor",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
+  signalDir: ".cursor/commands",
 
   rewriteContent(content: string, docsDir: string): string {
     return baseRewriteContent(content, DIRECTORY, docsDir)

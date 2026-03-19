@@ -1,7 +1,3 @@
----
-paths:
----
-
 # Command file structure
 
 ## File naming
@@ -21,18 +17,18 @@ paths:
 
 Each command belongs to one phase:
 
-| Phase | Category      | Examples                                                  |
-| ----- | ------------- | --------------------------------------------------------- |
-| 01    | Onboard       | Framework setup, generators, prompt scaffolding           |
-| 02    | Context       | Discovery, PRD, user stories, brainstorming, flows        |
-| 03    | Plan          | Technical planning, component behavior, image analysis    |
-| 04    | Code          | Implementation, assertions, frontend validation           |
-| 05    | Review        | Code review, functional review                            |
-| 06    | Tests         | Test writing, user journey testing, untested listing      |
-| 07    | Documentation | Learning, JIRA info, Mermaid diagrams                     |
-| 08    | Deploy        | Commits, pull/merge requests, tagging                     |
-| 09    | Refactor      | Performance optimization, security refactoring            |
-| 10    | Maintenance   | Debugging, issue tracking, codebase audits                |
+| Phase | Category        | Examples                                               |
+| ----- | --------------- | ------------------------------------------------------ |
+| `01`  | `onboard`       | Framework setup, generators, prompt scaffolding        |
+| `02`  | `context`       | Discovery, PRD, user stories, brainstorming, flows     |
+| `03`  | `plan`          | Technical planning, component behavior, image analysis |
+| `04`  | `code`          | Implementation, assertions, frontend validation        |
+| `05`  | `review`        | Code review, functional review                         |
+| `06`  | `tests`         | Test writing, user journey testing, untested listing   |
+| `07`  | `documentation` | Learning, JIRA info, Mermaid diagrams                  |
+| `08`  | `deploy`        | Commits, pull/merge requests, tagging                  |
+| `09`  | `refactor`      | Performance optimization, security refactoring         |
+| `10`  | `maintenance`   | Debugging, issue tracking, codebase audits             |
 
 ## Content rules
 

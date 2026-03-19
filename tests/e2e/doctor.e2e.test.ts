@@ -90,7 +90,13 @@ describe.concurrent("E2E: aidd doctor", () => {
       await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
 
-      await mkdir(join(projectDir, ".cursor"), { recursive: true });
+      // hasToolSignals checks signalDir (.cursor/commands) for .md files with aidd: frontmatter
+      await mkdir(join(projectDir, ".cursor", "commands"), { recursive: true });
+      await writeFile(
+        join(projectDir, ".cursor", "commands", "plan.md"),
+        "---\nname: aidd:03:plan\ndescription: Plan feature\n---\nContent here.\n",
+        "utf-8"
+      );
 
       const { stderr, exitCode } = await runCli(["doctor"], projectDir);
 

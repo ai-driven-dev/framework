@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { remapDocsPath, rewriteDocsContent } from "../../domain/models/docs.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import { Manifest } from "../../domain/models/manifest.js";
+import { getAllRegisteredTools, hasToolSignals } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
@@ -65,24 +66,8 @@ export class InitUseCase {
   }
 
   private async hasAiddSignals(projectRoot: string): Promise<boolean> {
-    // Only commands dirs are scanned: rules/ and agents/ never contain `name: aidd:` frontmatter,
-    // so scanning them would produce false negatives or require broader pattern matching.
-    // Matches both current colon format (aidd:02:name) and legacy underscore format (aidd_02_name).
-    const signalDirs = [
-      ".claude/commands",
-      ".cursor/commands",
-      ".opencode/commands",
-      ".github/prompts",
-    ];
-    for (const dir of signalDirs) {
-      const dirPath = join(projectRoot, dir);
-      if (!(await this.fs.fileExists(dirPath))) continue;
-      const files = await this.fs.listDirectory(dirPath);
-      for (const filePath of files) {
-        if (!filePath.endsWith(".md")) continue;
-        const content = await this.fs.readFile(join(dirPath, filePath));
-        if (/^name:\s*['"]?aidd[_:]/m.test(content)) return true;
-      }
+    for (const tool of getAllRegisteredTools().values()) {
+      if (await hasToolSignals(this.fs, tool, projectRoot)) return true;
     }
     return false;
   }

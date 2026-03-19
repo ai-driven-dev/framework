@@ -14,6 +14,7 @@ const makeStubConfig = (toolId: ToolId, toolSuffix: string): ToolConfig => ({
   toolId,
   directory: `.${toolId}/`,
   toolSuffix,
+  signalDir: `.${toolId}/commands`,
   rewriteContent: (content) => content,
   reverseRewriteContent: (content) => content,
   agents: () => ({

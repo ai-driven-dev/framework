@@ -13,12 +13,6 @@ scope: all
 
 **A feature is really completed if ALL of the above are satisfied: if not, iterate to fix all until all are green.**
 
-## Steps to follow
-
-1. Check their is no duplication
-2. Ensure code is re-used
-3. Run all those commands, in order to ensure code is perfect.
-
 ## Commands to run
 
 - `Before commit`: minimal check to build a feature
@@ -33,14 +27,13 @@ Example:
 - typecheck
 - lint
 - unit tests
-</aidd_instructions>
--->
 
+Example to go further:
 - format
 - unused code detection
 - duplication
 
-</rule_for_ai_to_delete>
+</aidd_instructions>
 -->
 
 ```markdown

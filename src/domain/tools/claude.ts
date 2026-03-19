@@ -32,6 +32,7 @@ export const claudeToolConfig: ToolConfig = {
   toolId: "claude",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
+  signalDir: ".claude/commands",
 
   rewriteContent(content: string, docsDir: string): string {
     return baseRewriteContent(content, DIRECTORY, docsDir).replace(

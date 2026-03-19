@@ -1,7 +1,7 @@
 ---
 name: 'aidd:04:assert_architecture'
 description: 'Verify code conforms to architecture diagrams, ADRs, and project structure.'
-argument-hint: '[Optional scope to verify (module, service, or layer name)]'
+argument-hint: [Optional scope to verify (module, service, or layer name)]
 ---
 
 # Assert Architecture Prompt

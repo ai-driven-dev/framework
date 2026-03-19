@@ -1,6 +1,10 @@
 import { dirname, join, normalize } from "node:path";
 import type { Manifest } from "../../domain/models/manifest.js";
-import { getAllRegisteredTools, type ToolId } from "../../domain/models/tool-config.js";
+import {
+  getAllRegisteredTools,
+  hasToolSignals,
+  type ToolId,
+} from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -95,8 +99,9 @@ export class DoctorUseCase {
     allTrackedFiles.push(...docsFiles.map((f) => ({ ...f, toolId: null })));
 
     issues.push(...(await this.checkDocsDirectory(manifest, projectRoot)));
-    issues.push(...(await this.checkOrphanedDirectories(manifest, projectRoot)));
+    issues.push(...(await this.checkMissingTrackedFiles(allTrackedFiles, projectRoot)));
     issues.push(...(await this.checkBrokenReferences(allTrackedFiles, projectRoot)));
+    issues.push(...(await this.checkOrphanedDirectories(manifest, projectRoot)));
 
     return {
       healthy: issues.length === 0,
@@ -125,22 +130,40 @@ export class DoctorUseCase {
     return issues;
   }
 
+  private async checkMissingTrackedFiles(
+    files: ReadonlyArray<{ relativePath: string; toolId: ToolId | null }>,
+    projectRoot: string
+  ): Promise<DoctorIssue[]> {
+    const issues: DoctorIssue[] = [];
+    for (const file of files) {
+      const fullPath = join(projectRoot, file.relativePath);
+      if (!(await this.fs.fileExists(fullPath))) {
+        issues.push({
+          severity: "error",
+          message: `Missing tracked file: ${file.relativePath}`,
+          fix: `Restore the file or run \`aidd restore\` to reinstall tracked files.`,
+        });
+      }
+    }
+    return issues;
+  }
+
   private async checkOrphanedDirectories(
     manifest: Manifest,
     projectRoot: string
   ): Promise<DoctorIssue[]> {
     const issues: DoctorIssue[] = [];
-    const knownToolDirs = [...getAllRegisteredTools().values()].map((c) => c.directory);
     const installedToolDirs = manifest.getInstalledDirectories();
 
-    for (const knownDir of knownToolDirs) {
-      const exists = await this.fs.fileExists(join(projectRoot, knownDir));
-      if (exists && !installedToolDirs.has(knownDir)) {
-        issues.push({
-          severity: "warning",
-          message: `Orphaned directory: ${knownDir} (not tracked in manifest)`,
-          fix: "Remove the directory manually, or run `aidd install <tool>` to track it.",
-        });
+    for (const tool of getAllRegisteredTools().values()) {
+      if (await hasToolSignals(this.fs, tool, projectRoot)) {
+        if (!installedToolDirs.has(tool.directory)) {
+          issues.push({
+            severity: "warning",
+            message: `Orphaned directory: ${tool.directory} (not tracked in manifest)`,
+            fix: "Remove the directory manually, or run `aidd install <tool>` to track it.",
+          });
+        }
       }
     }
 

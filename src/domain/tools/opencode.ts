@@ -89,6 +89,7 @@ export const opencodeToolConfig: ToolConfig = {
   toolId: "opencode",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
+  signalDir: ".opencode/commands",
 
   rewriteContent(content: string, docsDir: string): string {
     return baseRewriteContent(content, DIRECTORY, docsDir);

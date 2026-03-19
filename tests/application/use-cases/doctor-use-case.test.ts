@@ -126,9 +126,14 @@ describe("DoctorUseCase", () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
-    // Create an orphaned .cursor directory (cursor is not installed)
-    await mkdir(join(projectRoot, ".cursor"), { recursive: true });
-    await writeFile(join(projectRoot, ".cursor", "some-file.md"), "orphaned", "utf-8");
+    // Create an orphaned .cursor/commands directory (cursor is not installed).
+    // hasToolSignals checks signalDir (.cursor/commands) for .md files with aidd: frontmatter.
+    await mkdir(join(projectRoot, ".cursor", "commands"), { recursive: true });
+    await writeFile(
+      join(projectRoot, ".cursor", "commands", "plan.md"),
+      "---\nname: aidd:03:plan\ndescription: Plan feature\n---\nContent here.\n",
+      "utf-8"
+    );
 
     const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
     const report = await useCase.execute({ projectRoot });
@@ -284,5 +289,87 @@ describe("DoctorUseCase", () => {
     expect(issue).toBeDefined();
     expect(issue?.severity).toBe("error");
     expect(report.healthy).toBe(false);
+  });
+
+  describe("orphan and missing file checks", () => {
+    it("does not warn about standard GitHub directories when Copilot is not installed", async () => {
+      const deps = buildDeps(projectRoot);
+      await initAndInstall(deps, projectRoot, "claude" as ToolId);
+
+      // Create a .github directory with non-aidd content (no aidd: name in frontmatter)
+      await mkdir(join(projectRoot, ".github", "workflows"), { recursive: true });
+      await writeFile(
+        join(projectRoot, ".github", "workflows", "ci.yml"),
+        "name: CI\non: push\njobs:\n  build:\n    runs-on: ubuntu-latest\n",
+        "utf-8"
+      );
+
+      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+      const report = await useCase.execute({ projectRoot });
+
+      const githubOrphanIssue = report.issues.find(
+        (i) => i.message.includes(".github/") && i.message.includes("Orphaned")
+      );
+      expect(githubOrphanIssue).toBeUndefined();
+    });
+
+    it("warns when Copilot files are present on disk but not tracked in the manifest", async () => {
+      const deps = buildDeps(projectRoot);
+      await initAndInstall(deps, projectRoot, "claude" as ToolId);
+
+      // Create .github/prompts/ with an aidd-named prompt file (not tracked in manifest)
+      await mkdir(join(projectRoot, ".github", "prompts"), { recursive: true });
+      await writeFile(
+        join(projectRoot, ".github", "prompts", "plan.prompt.md"),
+        "---\nname: aidd:01:plan\ndescription: Plan feature\n---\nContent here.\n",
+        "utf-8"
+      );
+
+      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+      const report = await useCase.execute({ projectRoot });
+
+      const orphanIssues = report.issues.filter(
+        (i) => i.message.includes(".github/") && i.message.includes("Orphaned")
+      );
+      expect(orphanIssues).toHaveLength(1);
+      expect(orphanIssues[0].severity).toBe("warning");
+    });
+
+    it("does not warn about non-aidd files found in Copilot directories", async () => {
+      const deps = buildDeps(projectRoot);
+      await initAndInstall(deps, projectRoot, "claude" as ToolId);
+
+      // Create .github/prompts/ with a non-aidd prompt file
+      await mkdir(join(projectRoot, ".github", "prompts"), { recursive: true });
+      await writeFile(
+        join(projectRoot, ".github", "prompts", "custom.prompt.md"),
+        "---\nname: my-custom-prompt\ndescription: A custom prompt\n---\nContent here.\n",
+        "utf-8"
+      );
+
+      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+      const report = await useCase.execute({ projectRoot });
+
+      const githubOrphanIssue = report.issues.find(
+        (i) => i.message.includes(".github/") && i.message.includes("Orphaned")
+      );
+      expect(githubOrphanIssue).toBeUndefined();
+    });
+
+    it("reports an error when a tracked file has been deleted from disk", async () => {
+      const deps = buildDeps(projectRoot);
+      const installResult = await initAndInstall(deps, projectRoot, "claude" as ToolId);
+
+      // Delete one tracked file from disk without removing it from the manifest
+      const trackedFile = installResult.files[0];
+      await rm(join(projectRoot, trackedFile.relativePath), { force: true });
+
+      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+      const report = await useCase.execute({ projectRoot });
+
+      const missingIssue = report.issues.find((i) => i.message.includes("Missing tracked file"));
+      expect(missingIssue).toBeDefined();
+      expect(missingIssue?.severity).toBe("error");
+    });
   });
 });

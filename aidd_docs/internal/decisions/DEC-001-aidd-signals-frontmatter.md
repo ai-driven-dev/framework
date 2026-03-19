@@ -11,7 +11,7 @@ argument-hint: N/A
 | ID      | DEC-001                     |
 | Date    | 2026-03-18                  |
 | Feature | aidd-branding-signals       |
-| Status  | Accepted                    |
+| Status  | Superseded by DEC-003       |
 
 ## Context
 
@@ -19,7 +19,9 @@ argument-hint: N/A
 
 ## Decision
 
-Detect AIDD presence by scanning frontmatter `name: aidd:` in tool command directories (`.claude/commands/`, `.cursor/commands/`, `.opencode/commands/`, `.github/prompts/`), implemented as a private `hasAiddSignals()` method in `InitUseCase`. `docsDir` existence is checked first as a fast path.
+Detect AIDD presence by scanning frontmatter `name: aidd:` in tool command directories (`.claude/commands/`, `.cursor/commands/`, `.opencode/commands/`, `.github/prompts/`). `docsDir` existence is checked first as a fast path.
+
+Originally implemented as a private `hasAiddSignals()` method in `InitUseCase` with a hardcoded directory list. Superseded by DEC-003: logic moved to `hasToolSignals()` in `domain/models/tool-config.ts`, directories derived from `ToolConfig.signalDir`.
 
 ## Alternatives Considered
 

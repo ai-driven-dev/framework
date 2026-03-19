@@ -10,6 +10,7 @@ scope: all
 - Main Branch: `<main, master, trunk>`
 - Platform: `<gitlab, github, bitbucket>`
 - CLI or MCP: `<gh, glab, bb-cli, mcp...>`
+- Ticketing Tool: `<linear, confluence, jira>`
 
 ## Branch Naming Convention
 

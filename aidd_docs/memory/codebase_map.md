@@ -2,9 +2,9 @@
 
 ## Status
 
-- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals
+- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
-- `tests/` — 686 tests, all passing
+- `tests/` — 690 tests, all passing
 - Next: vNext interactive mode (not yet specified — do not implement until vision is stabilized)
 
 ## Command Output Paths (per tool)
@@ -18,6 +18,8 @@
 
 - Phase is extracted from leading digits in source dir name (e.g. `02_context` → `02`)
 - `buildAiddCommandFilePath(dir, fileName)` in `tool-config.ts` is the shared helper
+- `ToolConfig.signalDir` — directory to scan for aidd frontmatter per tool (used by `hasToolSignals()`)
+- `hasToolSignals(fs, config, projectRoot)` in `tool-config.ts` — shared signal detection for init and doctor
 
 ## Source Layout
 

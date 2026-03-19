@@ -1,7 +1,7 @@
 ---
 name: 'aidd:10:new_issue'
 description: 'Create GitHub issues with interactive template filling'
-argument-hint: '"Describe the problem you want to create an issue for"'
+argument-hint: 'Describe the problem you want to create an issue for'
 ---
 
 # Issue Generator Prompt

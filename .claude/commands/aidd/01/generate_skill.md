@@ -57,24 +57,25 @@ Mandatory mapping for IDE integration (file paths, naming, extensions):
 
 ## Process Steps
 
+1. **Auto-detect IDE**: Check which IDE folders exist and ask user to confirm
 
-1. **Identify the pattern**
+2. **Identify the pattern**
    - Verify that the same instructions have been given to the AI at least 2-3 times
    - Confirm that 90% of instructions are identical between usages
    - Ensure the task requires specific conventions
 
-2. **Ask clarifying questions**
+3. **Ask clarifying questions**
    - What triggers/contexts should activate this skill?
    - What keywords does the user naturally use?
    - Are there scripts or references to include?
 
-3. **Structure the skill**: respect the given template
+4. **Structure the skill**: respect the given template
 
-4. **Validate with user**
+5. **Validate with user**
    - Display the generated SKILL.md
    - Request confirmation before writing
    - Propose folder: `.claude/skills/<skill-name>/`
 
-5. **Output**
+6. **Output**
    - Write to `.claude/skills/<skill-name>/SKILL.md`
    - Add `references/` folder if > 500 lines

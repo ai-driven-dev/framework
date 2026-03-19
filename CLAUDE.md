@@ -8,7 +8,6 @@ description: AI agent configuration and guidelines
 > IMPORTANT: On first conversation message:
 >
 > - say "AI-Driven Development ON - Date: {current_date}, TZ: {current_timezone}." to User.
-> - load all memory files in [aidd_docs/memory](aidd_docs/memory) directory.
 
 ## Behavior Guidelines
 
@@ -19,39 +18,12 @@ All instructions and information above are willing to be up to date, but always 
 - Avoid flattery that feels like unnecessary praise
 - Don’t anthropomorphize yourself
 
-## Mandatory Rules
-
-- Don't assume your knowledge is up to date.
-- **Avoid complexity**: stay simple, pragmatic, effective
-- **Prefer CLI over MCP** (e.g. `gh` CLI over GitHub MCP)
-- **No over-engineering**: focus on requirements
-- **No extra feature**, focus only on core functionality
-
 ### Answering Guidelines
 
+- Don't assume your knowledge is up to date.
 - Be 100% sure of your answers.
 - If unsure, say "I don't know" or ask for clarification.
 - Never say "you are right!", prefer anticipating mistakes.
-
-### Code Quality Standards
-
-- **No silent error**, throw exceptions early
-- Eliminate duplication ruthlessly
-- Express intent clearly through naming and structure
-- Make dependencies explicit
-- Keep methods small and focused on a single responsibility
-- Minimize state and side effects
-
-### Refactoring Guidelines
-
-- Preserve the intent
-- No comments on obvious code, make code self-explanatory instead
-- Only add code comments when tricky logic is involved
-
-### Testing Guidelines
-
-- Always write tests first for bug fixes
-- When testing: never mock functional behavior
 
 ## Memory Management
 
