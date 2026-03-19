@@ -76,8 +76,12 @@ function transformMcpToOpencode(content: string): string {
 
 // OpenCode uses filename as name for agents and commands — no name field in frontmatter.
 // Sync round-trips (opencode → other tools) lose the name; it is recovered from the filename.
+// mode: subagent is required by OpenCode to register agents as subagents.
 const descriptionOnlyFrontmatter = {
-  convertFrontmatter: (fm: Record<string, unknown>) => ({ description: fm.description }),
+  convertFrontmatter: (fm: Record<string, unknown>) => ({
+    description: fm.description,
+    mode: "subagent",
+  }),
   reverseConvertFrontmatter: (fm: Record<string, unknown>) => ({ description: fm.description }),
 };
 

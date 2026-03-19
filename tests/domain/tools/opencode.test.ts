@@ -54,19 +54,20 @@ describe("opencodeToolConfig", () => {
   });
 
   describe("agents().convertFrontmatter()", () => {
-    it("outputs only description — name comes from filename in OpenCode", () => {
-      const fm = { name: "alexia", description: "Act like the user", mode: "subagent" };
+    it("adds mode subagent to OpenCode agent frontmatter", () => {
+      const fm = { name: "alexia", description: "Act like the user" };
       const result = opencodeToolConfig.agents().convertFrontmatter(fm);
-      expect(result).toEqual({ description: "Act like the user" });
+      expect(result).toEqual({ description: "Act like the user", mode: "subagent" });
     });
 
-    it("sync round-trip: name is not recoverable from opencode frontmatter (known trade-off)", () => {
-      // claude → opencode drops name (filename is the name in OpenCode).
-      // opencode → claude reverse cannot recover name from frontmatter alone.
+    it("does not carry OpenCode specific fields back to canonical format", () => {
+      // claude → opencode drops name (filename is the name in OpenCode), adds mode: subagent.
+      // opencode → claude reverse strips mode and cannot recover name from frontmatter alone.
       const claudeFm = { name: "alexia", description: "Act like the user" };
       const opencodeFm = opencodeToolConfig.agents().convertFrontmatter(claudeFm);
       const canonical = opencodeToolConfig.agents().reverseConvertFrontmatter(opencodeFm);
       expect(canonical).not.toHaveProperty("name");
+      expect(canonical).not.toHaveProperty("mode");
       expect(canonical).toEqual({ description: "Act like the user" });
     });
   });
