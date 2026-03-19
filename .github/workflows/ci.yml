@@ -63,7 +63,7 @@ jobs:
           npm config set @ai-driven-dev:registry https://npm.pkg.github.com
           npm config set //npm.pkg.github.com/:_authToken ${{ secrets.PACKAGES_TOKEN }}
           npm cache clean --force
-          npm install -g @ai-driven-dev/aidd-cli@latest
+          npm install -g @ai-driven-dev/cli@latest
 
       - name: Build distributions
         run: bash scripts/build-dist.sh

@@ -6,7 +6,7 @@ FRAMEWORK_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 if command -v aidd &>/dev/null; then
   CLI="aidd"
 else
-  echo "Error: aidd CLI not found. Install it with: npm install -g @ai-driven-dev/aidd-cli" >&2
+  echo "Error: aidd CLI not found. Install it with: npm install -g @ai-driven-dev/cli" >&2
   exit 1
 fi
 
@@ -17,6 +17,7 @@ for tool in claude cursor copilot opencode; do
   rm -rf "$TARGET"
   mkdir -p "$TARGET"
   cd "$TARGET"
+  "$CLI" --framework "$FRAMEWORK_ROOT" init
   "$CLI" --framework "$FRAMEWORK_ROOT" install "$tool" --force
   cd "$FRAMEWORK_ROOT"
 done
