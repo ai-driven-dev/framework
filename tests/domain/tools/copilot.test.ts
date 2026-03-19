@@ -3,12 +3,12 @@ import { copilotToolConfig } from "../../../src/domain/tools/copilot.js";
 
 describe("copilotToolConfig", () => {
   describe("rewriteContent()", () => {
-    it("replaces {{TOOLS}}/ with .github/", () => {
+    it("installed content uses the .github/ tool directory path", () => {
       const result = copilotToolConfig.rewriteContent("{{TOOLS}}/agents/", "aidd_docs");
       expect(result).toBe(".github/agents/");
     });
 
-    it("replaces {{DOCS}}/ with docsDir/", () => {
+    it("installed content uses the configured docs directory path", () => {
       const result = copilotToolConfig.rewriteContent("{{DOCS}}/memory/", "aidd_docs");
       expect(result).toBe("aidd_docs/memory/");
     });

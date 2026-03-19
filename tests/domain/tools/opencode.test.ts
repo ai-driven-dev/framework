@@ -3,29 +3,37 @@ import { opencodeToolConfig } from "../../../src/domain/tools/opencode.js";
 
 describe("opencodeToolConfig", () => {
   describe("rewriteContent()", () => {
-    it("replaces {{TOOLS}}/ with .opencode/", () => {
+    it("installed content uses the .opencode/ tool directory path", () => {
       const result = opencodeToolConfig.rewriteContent("{{TOOLS}}/agents/", "aidd_docs");
       expect(result).toBe(".opencode/agents/");
     });
 
-    it("replaces {{DOCS}}/ with docsDir/", () => {
+    it("installed content uses the configured docs directory path", () => {
       const result = opencodeToolConfig.rewriteContent("{{DOCS}}/memory/", "aidd_docs");
       expect(result).toBe("aidd_docs/memory/");
     });
 
-    it("replaces @{{TOOLS}}/ with @.opencode/", () => {
+    it("include references in installed content point to the tool directory", () => {
       const result = opencodeToolConfig.rewriteContent("@{{TOOLS}}/agents/alexia.md", "aidd_docs");
       expect(result).toBe("@.opencode/agents/alexia.md");
     });
 
-    it("replaces @{{DOCS}}/ with @docsDir/", () => {
+    it("include references in installed content point to the docs directory", () => {
       const result = opencodeToolConfig.rewriteContent("@{{DOCS}}/memory/project.md", "aidd_docs");
       expect(result).toBe("@aidd_docs/memory/project.md");
+    });
+
+    it("command cross-references in installed content use the AIDD-namespaced path", () => {
+      const result = opencodeToolConfig.rewriteContent(
+        "@{{TOOLS}}/commands/04_code/assert.md",
+        "aidd_docs"
+      );
+      expect(result).toBe("@.opencode/commands/aidd/04/assert.md");
     });
   });
 
   describe("reverseRewriteContent()", () => {
-    it("reverses @.opencode/ to @{{TOOLS}}/", () => {
+    it("tool include paths are restored to canonical placeholders when syncing back", () => {
       const result = opencodeToolConfig.reverseRewriteContent(
         "@.opencode/agents/alexia.md",
         "aidd_docs"

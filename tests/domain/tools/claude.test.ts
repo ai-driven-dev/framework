@@ -14,22 +14,22 @@ describe("claudeToolConfig", () => {
   });
 
   describe("rewriteContent()", () => {
-    it("replaces {{TOOLS}}/ with .claude/", () => {
+    it("installed content uses the .claude/ tool directory path", () => {
       const result = claudeToolConfig.rewriteContent("{{TOOLS}}/agents/", "aidd_docs");
       expect(result).toBe(".claude/agents/");
     });
 
-    it("replaces {{DOCS}}/ with docsDir/", () => {
+    it("installed content uses the configured docs directory path", () => {
       const result = claudeToolConfig.rewriteContent("{{DOCS}}/memory/", "aidd_docs");
       expect(result).toBe("aidd_docs/memory/");
     });
 
-    it("replaces @{{TOOLS}}/ with @.claude/", () => {
+    it("include references in installed content point to the tool directory", () => {
       const result = claudeToolConfig.rewriteContent("@{{TOOLS}}/rules/naming.md", "aidd_docs");
       expect(result).toBe("@.claude/rules/naming.md");
     });
 
-    it("rewrites @{{TOOLS}}/commands/ to @.claude/commands/aidd/{phase}/", () => {
+    it("command cross-references in installed content use the AIDD-namespaced path", () => {
       const result = claudeToolConfig.rewriteContent(
         "@{{TOOLS}}/commands/04_code/implement.md",
         "aidd_docs"
@@ -91,20 +91,20 @@ describe("claudeToolConfig", () => {
   });
 
   describe("reverseRewriteContent()", () => {
-    it("reverses @.claude/ to @{{TOOLS}}/", () => {
+    it("tool include paths are restored to canonical placeholders when syncing back", () => {
       const input = "See @.claude/agents/alexia.md for more";
       const result = claudeToolConfig.reverseRewriteContent(input, "aidd_docs");
       expect(result).toContain("@{{TOOLS}}/agents/alexia.md");
       expect(result).not.toContain("@.claude/");
     });
 
-    it("reverses aidd_docs/ to {{DOCS}}/", () => {
+    it("docs directory paths are restored to canonical placeholders when syncing back", () => {
       const input = "See aidd_docs/memory/project_brief.md";
       const result = claudeToolConfig.reverseRewriteContent(input, "aidd_docs");
       expect(result).toContain("{{DOCS}}/memory/project_brief.md");
     });
 
-    it("reverses @aidd_docs/ to @{{DOCS}}/", () => {
+    it("docs include paths are restored to canonical placeholders when syncing back", () => {
       const input = "@aidd_docs/CATALOG.md";
       const result = claudeToolConfig.reverseRewriteContent(input, "aidd_docs");
       expect(result).toBe("@{{DOCS}}/CATALOG.md");

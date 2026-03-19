@@ -3,22 +3,22 @@ import { cursorToolConfig } from "../../../src/domain/tools/cursor.js";
 
 describe("cursorToolConfig", () => {
   describe("rewriteContent()", () => {
-    it("replaces {{TOOLS}}/ with .cursor/", () => {
+    it("installed content uses the .cursor/ tool directory path", () => {
       const result = cursorToolConfig.rewriteContent("{{TOOLS}}/rules/", "aidd_docs");
       expect(result).toBe(".cursor/rules/");
     });
 
-    it("replaces {{DOCS}}/ with docsDir/", () => {
+    it("installed content uses the configured docs directory path", () => {
       const result = cursorToolConfig.rewriteContent("{{DOCS}}/memory/", "aidd_docs");
       expect(result).toBe("aidd_docs/memory/");
     });
 
-    it("replaces @{{TOOLS}}/ with @.cursor/ and converts rules .md to .mdc", () => {
+    it("rule include references in installed content use .mdc extension for Cursor", () => {
       const result = cursorToolConfig.rewriteContent("@{{TOOLS}}/rules/naming.md", "aidd_docs");
       expect(result).toBe("@.cursor/rules/naming.mdc");
     });
 
-    it("rewrites old-style @.cursor/commands/<phase>_<dir>/file to @.cursor/commands/aidd/<phase>/file", () => {
+    it("command cross-references in installed content use the AIDD-namespaced path", () => {
       const result = cursorToolConfig.rewriteContent(
         "See @.cursor/commands/04_code/implement.md for reference",
         "aidd_docs"
