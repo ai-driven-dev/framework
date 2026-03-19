@@ -2,7 +2,7 @@
 
 The **AIDD CLI** (`@ai-driven-dev/cli`) distributes the [AI-Driven Development Framework](https://github.com/ai-driven-dev/aidd-framework) consistently across AI coding assistants. It downloads a canonical framework from GitHub, rewrites files to match each tool's conventions, and tracks every installed file in a hash-based manifest to detect drift.
 
-**Supported tools:** Claude Code · Cursor · GitHub Copilot
+**Supported tools:** Claude Code · Cursor · GitHub Copilot · OpenCode
 
 ---
 
@@ -43,7 +43,7 @@ npm config set //npm.pkg.github.com/:_authToken <YOUR_NPM_TOKEN>
 
 ### Token 2 — AIDD framework (runtime)
 
-Required each time the CLI downloads the framework (`init`, `install`, `update`, `restore`, `adopt`). The framework repository is private — this token must have the **`repo`** scope.
+Required each time the CLI downloads the framework (`init`, `install`, `update`, `restore`, `adopt`). The framework repository is private — create a [GitHub Personal Access Token](https://github.com/settings/tokens/new) with the **`repo`** scope.
 
 **Option 1 — Environment variable (recommended)**
 
@@ -106,13 +106,16 @@ aidd status
 If you already have AIDD files installed manually (no `.aidd/manifest.json`), use `adopt` to bootstrap a manifest from what's on disk — no download, no overwrite.
 
 ```bash
-aidd adopt --tools claude --release v3.4.0
+aidd adopt --tools claude --from v3.4.0
 
 # Multiple tools
-aidd adopt --tools claude cursor --release v3.4.0
+aidd adopt --tools claude,cursor --from v3.4.0
+
+# Local framework path
+aidd adopt --tools claude --from /path/to/framework
 ```
 
-`--release` is required: it pins the version the manifest will record. After adoption, run `aidd status` to see drift and `aidd update` to align with the latest framework version.
+`--from <version|path>` is required: it pins the version the manifest will record. After adoption, run `aidd status` to see drift and `aidd update` to align with the latest framework version.
 
 ### Updating the framework
 
@@ -158,20 +161,21 @@ aidd uninstall --all            # uninstall all tools
 
 ## Commands
 
-| Command                      | Description                                                        | Key options                                  |
-| ---------------------------- | ------------------------------------------------------------------ | -------------------------------------------- |
-| `aidd init`                  | Create `aidd_docs/` structure and manifest                         | `--force`, `--docs-dir`, `--repo`            |
-| `aidd install <tools...>`    | Generate and write tool-specific files                             | `--all`, `--force`                           |
-| `aidd uninstall <tools...>`  | Remove tool files and update manifest                              | `--all`                                      |
-| `aidd adopt`                 | Bootstrap manifest for existing manual installations               | `--tools` (required) + global `--release`    |
-| `aidd status`                | Show drift between disk and manifest + available update            | `--tool`, `--docs`                           |
-| `aidd doctor`                | Structural integrity check — exits 1 on issues (CI-safe)           | —                                            |
-| `aidd update`                | Apply new framework version                                        | `--force`, `--dry-run`, `--tool`, `--docs`   |
-| `aidd restore [files...]`    | Revert modified/deleted files to the pinned framework version      | `--force`, `--tool`, `--docs`                |
-| `aidd sync`                  | Propagate local changes from one tool to the others                | `--source` (required), `--target`, `--force` |
-| `aidd clean`                 | Remove all AIDD files — dry-run without `--force`                  | `--force`                                    |
-| `aidd cache list\|clear`     | List or remove cached framework versions                           | `--all`, `[version]`                         |
-| `aidd config list\|get\|set` | Read or update manifest-backed config (`docsDir`, `repo`, `tools`) | `--force`                                    |
+| Command                      | Description                                                        | Key options                                               |
+| ---------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------- |
+| `aidd init`                  | Create `aidd_docs/` structure and manifest                         | `--force`, `--docs-dir`, `--repo`                         |
+| `aidd install <tools...>`    | Generate and write tool-specific files                             | `--all`, `--force`                                        |
+| `aidd uninstall <tools...>`  | Remove tool files and update manifest                              | `--all`                                                   |
+| `aidd adopt`                 | Bootstrap manifest for existing manual installations               | `--tools` (required), `--from <version\|path>` (required) |
+| `aidd status`                | Show drift between disk and manifest + available update            | `--tool`, `--docs`                                        |
+| `aidd doctor`                | Structural integrity check — exits 1 on issues (CI-safe)           | —                                                         |
+| `aidd update`                | Apply new framework version                                        | `--force`, `--dry-run`, `--tool`, `--docs`                |
+| `aidd restore [files...]`    | Revert modified/deleted files to the pinned framework version      | `--force`, `--tool`, `--docs`                             |
+| `aidd sync`                  | Propagate local changes from one tool to the others                | `--source` (required), `--target`, `--force`              |
+| `aidd clean`                 | Remove all AIDD files — dry-run without `--force`                  | `--force`                                                 |
+| `aidd cache list\|clear`     | List or remove cached framework versions                           | `--all`, `[version]`                                      |
+| `aidd config list\|get\|set` | Read or update manifest-backed config (`docsDir`, `repo`, `tools`) | `--force`                                                 |
+| `aidd self-update`           | Update the CLI itself to the latest version                        | `--check`, `--dry-run`, `--force`                         |
 
 ### `aidd init`
 
@@ -191,7 +195,7 @@ Generates and writes tool-specific distribution files (agents, commands, rules, 
 
 ```bash
 aidd install claude
-aidd install claude cursor copilot
+aidd install claude cursor copilot opencode
 aidd install --all              # all supported tools
 aidd install claude --force     # overwrite existing files
 ```
@@ -252,6 +256,17 @@ Removes all AIDD-generated files and the manifest.
 ```bash
 aidd clean                      # dry-run: shows what will be removed
 aidd clean --force              # actual removal
+```
+
+### `aidd self-update`
+
+Updates the CLI itself to the latest published version.
+
+```bash
+aidd self-update                # install latest version
+aidd self-update --check        # check availability without installing
+aidd self-update --dry-run      # preview without installing
+aidd self-update --force        # reinstall even if already up to date
 ```
 
 ### `aidd cache`

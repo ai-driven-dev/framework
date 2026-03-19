@@ -40,17 +40,17 @@ flowchart LR
 ```mermaid
 flowchart TD
     subgraph APP["Application"]
-        CMD_FILES["commands: adopt, init, install, uninstall, status, clean, doctor, update, restore, sync, cache, config"]
+        CMD_FILES["commands: adopt, init, install, uninstall, status, clean, doctor, update, restore, sync, cache, config, self-update"]
         OUTPUT["output.ts"]
-        USECASES["use-cases: adopt, init, install, uninstall, status, clean, doctor, catalog, restore, update, sync, gitignore, resolve-framework"]
+        USECASES["use-cases: adopt, init, install, uninstall, status, clean, doctor, catalog, restore, update, sync, gitignore, resolve-framework, self-update"]
     end
     subgraph DOM["Domain"]
-        MODELS["models: Manifest, Distribution, Catalog, ToolConfig, FileHash, GeneratedFile"]
+        MODELS["models: Manifest, Distribution, Catalog, ToolConfig, FileHash, GeneratedFile, Docs, Mcp, Semver"]
         PORTS["ports: interfaces"]
         TOOLS["tools: claude, cursor, copilot, opencode"]
     end
     subgraph INFRA["Infrastructure"]
-        ADAPTERS["adapters: filesystem, manifest, logger, framework-loader, framework-resolver, hasher"]
+        ADAPTERS["adapters: filesystem, manifest, logger, framework-loader, framework-resolver, hasher, cli-updater, current-version, platform"]
         HTTP["http-client.ts"]
         TAR["tar-extractor.ts"]
         CACHE["framework-cache.ts"]
@@ -76,6 +76,9 @@ flowchart TD
 - `FrameworkResolver` — resolve framework from remote (GitHub Releases), local path, or tarball; `fetchLatestVersion()` fetches only the latest tag (no download) for update checks
 - `Hasher` — compute MD5 hashes
 - `Logger` — 3 methods: `debug()` (stderr, only in verbose), `info()` (stdout, always), `warn()` (stderr, always)
+- `CliUpdater` — `fetchLatestRelease()`, `install()`; used by self-update command to check and apply CLI version
+- `CurrentVersionProvider` — `get()` returns current CLI version string from package.json at runtime
+- `Platform` — `current()` returns platform identifier; used for Windows-specific MCP config transformations
 
 ## ToolConfig Interface (domain/models/tool-config.ts)
 
@@ -147,7 +150,7 @@ flowchart TD
 - `claude` — frontmatter scope: `paths:` list; include syntax: `@.claude/path`; commands `name: aidd:<phase>:<name>`
 - `cursor` — frontmatter scope: `globs:` (JSON-array string) + `alwaysApply:`; rules use `.mdc` extension; commands `name: aidd:<phase>:<name>`; call by filename
 - `copilot` — frontmatter scope: `applyTo:`; file flattening applied to commands/rules; includes rewritten as markdown links; commands `name: aidd:<phase>:<name>`; no subfolder support
-- `opencode` — commands `name: aidd:<phase>:<name>` + description; call by path (`aidd/<phase>/<name>`); rules description-only; suffix `.opencode.md`; MCP config transformed to `{ mcp: { name: { type, command/url, enabled } } }`
+- `opencode` — commands `name: aidd:<phase>:<name>` + description; call by path (`aidd/<phase>/<name>`); rules description-only; suffix `.opencode.md`; MCP config transformed to `{ mcp: { name: { type, command/url, enabled } } }`; agents frontmatter always includes `mode: "subagent"` (required by OpenCode to register as subagent); sync reverse-convert strips `mode` (known trade-off: not recovered on round-trip)
 
 ## AIDD Signal Detection (init)
 
@@ -159,15 +162,15 @@ flowchart TD
 src/
 ├── cli.ts                          # Entry point (commander program)
 ├── application/
-│   ├── commands/                   # adopt.ts, init.ts, install.ts, uninstall.ts, status.ts, clean.ts, doctor.ts, update.ts, restore.ts, sync.ts, cache.ts, config.ts
+│   ├── commands/                   # adopt.ts, init.ts, install.ts, uninstall.ts, status.ts, clean.ts, doctor.ts, update.ts, restore.ts, sync.ts, cache.ts, config.ts, self-update.ts
 │   ├── output.ts                   # Output formatting (replaces presenter.ts)
 │   └── use-cases/                  # adopt, init, install, uninstall, status, clean, doctor, catalog
-│                                   # + gitignore, resolve-framework (shared)
+│                                   # + gitignore, resolve-framework, self-update (shared)
 ├── domain/
 │   ├── models/                     # Manifest, Distribution, Catalog, ToolConfig, FileHash, GeneratedFile,
-│   │                               #   FrameworkDescriptor, Frontmatter
+│   │                               #   FrameworkDescriptor, Frontmatter, Docs, Mcp, Semver
 │   ├── ports/                      # ManifestRepository, FileSystem, FrameworkLoader,
-│   │                               #   FrameworkResolver, Hasher, Logger
+│   │                               #   FrameworkResolver, Hasher, Logger, CliUpdater, CurrentVersionProvider, Platform
 │   └── tools/                      # claude.ts, cursor.ts, copilot.ts, opencode.ts
 └── infrastructure/
     ├── adapters/                   # All port implementations
@@ -181,7 +184,7 @@ src/
 
 ## Known Design Behaviors
 
-- `adopt` bootstraps a manifest for projects with pre-existing AIDD files installed manually. Requires `--release <version>` OR `--framework <path>` (one mandatory). Downloads the framework, generates the per-tool distribution, and registers only disk files whose paths match the distribution. Files on disk not in the distribution are user files — untracked, never touched by any other command. No file writes — scan only. Throws if manifest already exists.
+- `adopt` bootstraps a manifest for projects with pre-existing AIDD files installed manually. Requires `--from <version|path>` (also accepts global `--release` or `--framework` as fallback). Downloads the framework, generates the per-tool distribution, and registers only disk files whose paths match the distribution. Files on disk not in the distribution are user files — untracked, never touched by any other command. No file writes — scan only. Throws if manifest already exists.
 - `init` throws if any AIDD signals are detected on disk (`.aidd/`, docsDir, tool directories) and no manifest exists — use `aidd adopt` instead.
 - `init --force` re-copies docs templates into the existing docs directory without a full reset. Does not touch tool distributions.
 - `install` requires an existing manifest. Aborts if absent — no auto-init.

@@ -2,9 +2,9 @@
 
 ## Status
 
-- `src/` — fully implemented through v3.2 + adopt + self-update + opencode tool + AIDD branding signals
+- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
-- `tests/` — 684 tests, all passing
+- `tests/` — 686 tests, all passing
 - Next: vNext interactive mode (not yet specified — do not implement until vision is stabilized)
 
 ## Command Output Paths (per tool)
@@ -51,6 +51,7 @@ src/
 │       ├── install-use-case.ts
 │       ├── resolve-framework-use-case.ts   # shared: framework resolution (remote/local)
 │       ├── restore-use-case.ts
+│       ├── self-update-use-case.ts         # update CLI binary to latest release
 │       ├── status-use-case.ts
 │       ├── sync-use-case.ts
 │       ├── uninstall-use-case.ts
@@ -59,19 +60,25 @@ src/
 │   ├── models/
 │   │   ├── catalog.ts                  # generateCatalogContent() — pure function, no I/O
 │   │   ├── distribution.ts             # GeneratedFile[] per tool
+│   │   ├── docs.ts                     # documentation distribution: path remapping, content rewriting
 │   │   ├── file-hash.ts                # MD5 value object
 │   │   ├── framework-descriptor.ts     # framework layout code model (no framework.json file)
 │   │   ├── frontmatter.ts              # frontmatter parsing/conversion
 │   │   ├── generated-file.ts           # file + hash + merge flag
 │   │   ├── manifest.ts                 # aggregate root (persisted at .aidd/manifest.json); fields: docsDir, repo?, tools, docs
+│   │   ├── mcp.ts                      # MCP config transformation for Windows command path fixes
+│   │   ├── semver.ts                   # semantic version parsing & comparison for update checks
 │   │   └── tool-config.ts              # per-tool output path / frontmatter rules
 │   ├── ports/
+│   │   ├── cli-updater.ts              # fetchLatestRelease(), install() — used by self-update
+│   │   ├── current-version-provider.ts # get() returns current CLI version string
 │   │   ├── file-system.ts
 │   │   ├── framework-loader.ts
 │   │   ├── framework-resolver.ts
 │   │   ├── hasher.ts
 │   │   ├── logger.ts
 │   │   ├── manifest-repository.ts
+│   │   ├── platform.ts                 # current() returns platform identifier for MCP transforms
 │   │   └── prompter.ts                 # resolveConflict(path, reason: "deleted"|"modified") for restore
 │   └── tools/
 │       ├── claude.ts
@@ -80,12 +87,15 @@ src/
 │       └── opencode.ts
 └── infrastructure/
     ├── adapters/
+    │   ├── cli-updater-adapter.ts       # GitHub CLI Release API for self-update
+    │   ├── current-version-adapter.ts   # reads package.json version at runtime
     │   ├── file-system-adapter.ts       # mergeJsonFile (strips JSONC comments + deep-merge)
     │   ├── framework-loader-adapter.ts
     │   ├── framework-resolver-adapter.ts
     │   ├── hasher-adapter.ts            # MD5 via node:crypto
     │   ├── logger-adapter.ts
     │   ├── manifest-repository-adapter.ts
+    │   ├── platform-adapter.ts          # node:os wrapper for platform detection
     │   └── prompter-adapter.ts          # SilentPrompterAdapter + InquirerPrompterAdapter (TTY guard)
     ├── auth/
     │   └── token-resolver.ts            # --token > AIDD_TOKEN > gh auth token
@@ -132,7 +142,7 @@ tests/
 ## Non-source Files
 
 - No `settings.json` — all project config is in the manifest (`docsDir`, `repo`) or via flags/env vars
-- `package.json` — `@ai-driven-dev/cli` v2.7.3, GitHub Packages registry, Node >= 24
+- `package.json` — `@ai-driven-dev/cli` v2.10.0, GitHub Packages registry, Node >= 24
 - `tsup.config.ts` — single ESM bundle, target node20 (build target, runtime requires node >= 24)
 - `vitest.config.ts` — test runner with path aliases
 - `biome.json` — lint + format config
