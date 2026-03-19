@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { chmod, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, FRAMEWORK_PATH, runCli } from "./helpers.js";
+import { createTestEnv, FRAMEWORK_PATH, gitInit, runCli } from "./helpers.js";
 
 describe.concurrent("E2E: aidd install", () => {
   it("requires init first — aborts with clear error on uninitialized project", async () => {
@@ -247,6 +247,78 @@ describe.concurrent("E2E: aidd install", () => {
         expect(content).not.toContain("{{TOOLS}}/");
         expect(content).not.toContain("{{DOCS}}/");
       }
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("installs memory update script after tool install", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install");
+    try {
+      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+
+      expect(existsSync(join(projectDir, ".aidd", "scripts", "update_memory.mjs"))).toBe(true);
+      expect(existsSync(join(projectDir, ".aidd", "hooks", "pre-commit"))).toBe(true);
+
+      const hookContent = await readFile(join(projectDir, ".aidd", "hooks", "pre-commit"), "utf-8");
+      expect(hookContent).toContain("node .aidd/scripts/update_memory.mjs");
+
+      const manifestRaw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");
+      const manifest = JSON.parse(manifestRaw) as { scripts: unknown };
+      expect(manifest.scripts).not.toBeNull();
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("installs git pre-commit hook when .git directory is present", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install");
+    try {
+      await gitInit(projectDir);
+      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+
+      expect(existsSync(join(projectDir, ".git", "hooks", "pre-commit"))).toBe(true);
+
+      const hookContent = await readFile(join(projectDir, ".git", "hooks", "pre-commit"), "utf-8");
+      expect(hookContent).toContain("sh .aidd/hooks/pre-commit");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("appends to existing pre-commit hook without replacing it", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install");
+    try {
+      await gitInit(projectDir);
+
+      const gitHookPath = join(projectDir, ".git", "hooks", "pre-commit");
+      await writeFile(gitHookPath, "#!/bin/sh\necho 'existing hook'\n");
+      await chmod(gitHookPath, 0o755);
+
+      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+
+      const hookContent = await readFile(gitHookPath, "utf-8");
+      expect(hookContent).toContain("echo 'existing hook'");
+      expect(hookContent).toContain("sh .aidd/hooks/pre-commit");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("does not append to pre-commit hook twice (idempotent)", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install");
+    try {
+      await gitInit(projectDir);
+      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--force", "--framework", FRAMEWORK_PATH], projectDir);
+
+      const hookContent = await readFile(join(projectDir, ".git", "hooks", "pre-commit"), "utf-8");
+      const occurrences = hookContent.split("sh .aidd/hooks/pre-commit").length - 1;
+      expect(occurrences).toBe(1);
     } finally {
       await cleanup();
     }

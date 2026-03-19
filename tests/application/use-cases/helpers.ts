@@ -9,6 +9,7 @@ import { CLIOutput } from "../../../src/application/output.js";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
 import { InstallUseCase } from "../../../src/application/use-cases/install-use-case.js";
 import type { ToolId } from "../../../src/domain/models/tool-config.js";
+import type { Git } from "../../../src/domain/ports/git.js";
 import type { Platform } from "../../../src/domain/ports/platform.js";
 import type { Prompter } from "../../../src/domain/ports/prompter.js";
 import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
@@ -19,6 +20,7 @@ import { SilentPrompterAdapter } from "../../../src/infrastructure/adapters/prom
 
 export const linuxPlatform: Platform = { current: () => "linux" };
 export const win32Platform: Platform = { current: () => "win32" };
+export const noGit: Git = { installPreCommitDelegate: async () => {} };
 
 export { SilentPrompterAdapter as OverwritePrompter };
 
@@ -101,6 +103,7 @@ export async function installTool(
     deps.loader,
     deps.hasher,
     deps.logger,
+    noGit,
     linuxPlatform
   );
   const results = await installUseCase.execute({

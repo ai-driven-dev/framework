@@ -203,4 +203,28 @@ describe.concurrent("E2E: aidd update", () => {
       await cleanup();
     }
   });
+
+  it("updates memory script when framework has a newer version", async () => {
+    const { projectDir, cleanup } = await createTestEnv("update");
+    try {
+      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+
+      const v1Content = await readFile(
+        join(projectDir, ".aidd", "scripts", "update_memory.mjs"),
+        "utf-8"
+      );
+
+      await runCli(["update", "--framework", FRAMEWORK_V2_PATH], projectDir);
+
+      const v2Content = await readFile(
+        join(projectDir, ".aidd", "scripts", "update_memory.mjs"),
+        "utf-8"
+      );
+
+      expect(v1Content).not.toBe(v2Content);
+    } finally {
+      await cleanup();
+    }
+  });
 });

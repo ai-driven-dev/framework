@@ -4,7 +4,21 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 
-const execFileAsync = promisify(execFile);
+export const execFileAsync = promisify(execFile);
+
+const GIT_ENV_VARS = [
+  "GIT_DIR",
+  "GIT_WORK_TREE",
+  "GIT_INDEX_FILE",
+  "GIT_COMMON_DIR",
+  "GIT_OBJECT_DIRECTORY",
+];
+
+export async function gitInit(cwd: string): Promise<void> {
+  const env = { ...process.env };
+  for (const key of GIT_ENV_VARS) delete env[key];
+  await execFileAsync("git", ["init"], { cwd, env });
+}
 
 export const CLI_PATH = resolve(process.cwd(), "dist/cli.js");
 export const FRAMEWORK_PATH = resolve(process.cwd(), "tests/fixtures/framework");

@@ -73,6 +73,7 @@ export function registerUpdateCommand(program: Command): void {
             deps.loader,
             deps.hasher,
             deps.logger,
+            deps.git,
             prompter,
             deps.platform
           );

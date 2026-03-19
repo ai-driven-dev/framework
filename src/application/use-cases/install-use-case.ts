@@ -5,12 +5,14 @@ import type { Manifest } from "../../domain/models/manifest.js";
 import { getToolConfig, type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
+import type { Git } from "../../domain/ports/git.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../domain/ports/platform.js";
 import { NoManifestError } from "../errors.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
+import { MemoryScriptUseCase } from "./memory-script-use-case.js";
 
 interface InstallOptions {
   toolIds: ToolId[];
@@ -37,6 +39,7 @@ export class InstallUseCase {
     private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
+    private readonly git: Git,
     private readonly platform: Platform
   ) {}
 
@@ -110,6 +113,14 @@ export class InstallUseCase {
         warnings,
       });
     }
+
+    await new MemoryScriptUseCase(this.fs, this.hasher, this.git).execute({
+      projectRoot,
+      version,
+      descriptor,
+      contentFiles,
+      manifest,
+    });
 
     await this.manifestRepo.save(manifest);
     await new CatalogUseCase(this.fs).execute({ manifest, docsDir, projectRoot });

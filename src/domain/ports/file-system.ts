@@ -11,4 +11,5 @@ export interface FileSystem {
   readFileHash(path: string): Promise<FileHash>;
   mergeJsonFile(path: string, content: string): Promise<void>;
   deleteDirectory(path: string): Promise<void>;
+  chmodExecutable(path: string): Promise<void>;
 }

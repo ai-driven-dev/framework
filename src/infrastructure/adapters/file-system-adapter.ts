@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, rm, rmdir, stat, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readdir, readFile, rm, rmdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import type { FileHash } from "../../domain/models/file-hash.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
@@ -89,6 +89,10 @@ export class FileSystemAdapter implements FileSystem {
 
   async deleteDirectory(path: string): Promise<void> {
     await rm(path, { recursive: true, force: true });
+  }
+
+  async chmodExecutable(path: string): Promise<void> {
+    await chmod(path, 0o755);
   }
 
   async mergeJsonFile(path: string, content: string): Promise<void> {
