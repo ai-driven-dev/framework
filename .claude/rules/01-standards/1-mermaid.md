@@ -1,6 +1,7 @@
 ---
 paths:
   - "**/*.mmd"
+  - "**/*.md"
 ---
 
 # Mermaid generation rules
@@ -8,7 +9,6 @@ paths:
 ## Header
 
 - Always have title in schema using "---" to define it
-- ONLY in `.mmd` files — do NOT use "---" title blocks in Markdown (`.md`) files, they break most renderers
 
 ## Global
 
@@ -28,17 +28,17 @@ paths:
 - Declare elements only (no links) at top
 - Consistent naming throughout
 - Descriptive names (no "A", "B")
-- Use `ID["Label with spaces"]` format — never bare quoted strings as node IDs
+- Node IDs: unquoted alphanumeric (`MyNode`, not `"MyNode"`)
+- Labels: in brackets with quotes (`MyNode["My Label"]`)
 - Replace ":" with "$" in state names
 
 ## Links
 
 - Links made at bottom of diagram
 - Use direction when possible
-- `A -->|text| B` for labeled links (pipe syntax)
-- `A --> B` for unlabeled links
-- `A -.-> B` for conditional links
-- `A ==> B` for self-loops
+- "A -- text --> B" for regular links
+- "A -.-> B" for conditional links
+- "A ==> B" for self-loops
 
 ## Styles
 

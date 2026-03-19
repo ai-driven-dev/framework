@@ -1,7 +1,7 @@
 ---
 name: 'aidd:01:generate_rules'
 description: 'Generate or modify coding rules manually or auto-scan the codebase to propose rules'
-argument-hint: '"Rule topic to write, or ''auto'' to scan codebase and propose rules"'
+argument-hint: 'Rule topic to write, or ''auto'' to scan codebase and propose rules'
 ---
 
 # Generate Rules
@@ -87,15 +87,15 @@ $ARGUMENTS
 
 ### Step 2B: Manual mode — User-guided
 
-6. Remind project context: tech stack, versions, architecture, existing rules
-7. Define categories, 1 file per category
-8. Look for existing rules to update
-9. Plan the new rule(s) structure:
+1. Remind project context: tech stack, versions, architecture, existing rules
+2. Define categories, 1 file per category
+3. Look for existing rules to update
+4. Plan the new rule(s) structure:
    - File
    - Define groups and sub-groups
    - Display proposed architecture
-10. **Wait for user approval** before proceeding
-11. → Go to Step 3
+5. **Wait for user approval** before proceeding
+6. → Go to Step 3
 
 ### Step 3: Generate
 

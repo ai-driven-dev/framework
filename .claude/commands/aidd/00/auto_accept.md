@@ -1,6 +1,6 @@
 ---
 name: 'aidd:00:auto_accept'
-description: '"Auto-accept proposed changes without asking for confirmation."'
+description: 'Auto-accept proposed changes without asking for confirmation.'
 ---
 
 # Auto-accept

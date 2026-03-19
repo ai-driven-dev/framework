@@ -17,12 +17,12 @@ Detect the mode based on the user's request:
 
 #### Resources
 
-- Extract components from image: `@.claude/commands/03_plan/image_extract_details.md`
+- Extract components from image: `@.claude/commands/aidd/03/image_extract_details.md`
 
 #### Instruction steps
 
 ```text
-@.claude/commands/04_code/implement_from_design.md
+@.claude/commands/aidd/04/implement_from_design.md
 ```
 
 ### Mode 2: Verify UI Conformity
@@ -32,7 +32,7 @@ Detect the mode based on the user's request:
 #### Instruction steps
 
 ```text
-@.claude/commands/04_code/assert_frontend.md
+@.claude/commands/aidd/04/assert_frontend.md
 ```
 
 ### Mode 3: Verify User Journey
@@ -42,7 +42,7 @@ Detect the mode based on the user's request:
 #### Instruction steps
 
 ```text
-@.claude/commands/06_tests/test_journey.md
+@.claude/commands/aidd/06/test_journey.md
 ```
 
 ## Input format

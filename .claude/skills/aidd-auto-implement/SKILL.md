@@ -1,6 +1,7 @@
 ---
 name: 'auto-implement'
-description: 'Autonomously runs the AI-Driven Development workflow to implement a high-quality feature. Use when you need to code a feature end-to-end without manual intervention.'
+description: 'Autonomously run the AI-Driven Development workflow to code an high quality feature.'
+argument-hint: 'The URL or file path of the issue or task to implement.'
 ---
 
 # Auto Implement
@@ -23,11 +24,11 @@ Autonomously code a high quality feature.
 
 ### Steps
 
-4. Brainstorm implementation approach: .claude/commands/02_context/brainstorm.md
-5. Generate technical plan: .claude/commands/03_plan/plan.md
-6. Implement changes: .claude/commands/04_code/implement.md
-7. Run tests: Execute test suite if applicable
-8. Commit changes: .claude/commands/08_deploy/commit.md
-9. Code review: .claude/commands/05_review/review_code.md
-10. Functional review: .claude/commands/05_review/review_functional.md
-11. Create PR: .claude/commands/08_deploy/create_request.md
+1. Brainstorm implementation approach: .claude/commands/aidd/02/brainstorm.md
+2. Generate technical plan: .claude/commands/aidd/03/plan.md
+3. Implement changes: .claude/commands/aidd/04/implement.md
+4. Run tests: Execute test suite if applicable
+5. Commit changes: .claude/commands/aidd/08/commit.md
+6. Code review: .claude/commands/aidd/05/review_code.md
+7. Functional review: .claude/commands/aidd/05/review_functional.md
+8. Create PR: .claude/commands/aidd/08/create_request.md

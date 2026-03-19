@@ -23,7 +23,7 @@ Fill a PR/MR template with recent changes in the current branch and create a req
 ### Contributing
 
 ```markdown
-@aidd_docs/templates/vcs/CONTRIBUTING.md
+@CONTRIBUTING.md
 ```
 
 ### Use this template

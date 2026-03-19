@@ -27,7 +27,7 @@ Review code changes against project rules and identify quality violations.
 ### Review template
 
 ```markdown
-@aidd_docs/templates/aidd/review_code.md
+@aidd_docs/templates/dev/review_code.md
 ```
 
 ## Process steps

@@ -11,6 +11,12 @@ Capture and store new learnings from recently implemented feature in memory bank
 
 ## Resources
 
+### IDE syntax reference
+
+```md
+@.claude/rules/04-tooling/ide-mapping.md
+```
+
 ### Doc content
 
 ```shell
@@ -32,7 +38,7 @@ Capture and store new learnings from recently implemented feature in memory bank
 - Less is more, documentation needs to be concise and to the point.
 - Avoid putting too much information.
 - Focus on important changes or non-alignments with existing doc.
-- Documentation MUST BE up-to-date
+- Memory should ALWAYS be up-to-date
 
 ## Steps
 
@@ -43,6 +49,8 @@ List all files in `aidd_docs/` and pin relevant ones for reference:
 ```shell
 ! ls -1tr aidd_docs/
 ```
+
+> You should be able to show the user which files need to be updated.
 
 ### Phase 1: Auto-Analysis (AI answers these questions)
 
@@ -79,18 +87,22 @@ Then AI asks user:
 
 AI categorizes each learning by destination, goal is to update the files caused by the decision.
 
-| Category      | Destination                    | Examples                                |
-| ------------- | ------------------------------ | --------------------------------------- |
-| **Decisions** | `aidd_docs/internal/decisions/` | Tech decisions                          |
-| **Rules**     | `.claude/rules/`             | Coding conventions, patterns to enforce |
-| **Skills**    | `.claude/skills/`            | Reusable prompts, workflows             |
-| **Memory**    | `aidd_docs/memory/`             | Project context, stack updates          |
-| **Templates** | `aidd_docs/templates/`          | Project templates                       |
+| Category               | Destination                    | Examples                                |
+| ---------------------- | ------------------------------ | --------------------------------------- |
+| **Decisions**          | `aidd_docs/internal/decisions/` | Tech decisions                          |
+| **Memory** (mandatory) | `aidd_docs/memory/`             | Project context, stack updates          |
+| **Rules**              | `.claude/rules/`             | Coding conventions, patterns to enforce |
+| **Skills**             | `.claude/skills/`            | Reusable prompts, workflows             |
+| **Templates**          | `aidd_docs/templates/`          | Project templates                       |
 
 Propose where to save each learning.
 
 ### Phase 3: Create/Update Files
 
-6. Create file in `aidd_docs/internal/decisions/XXX-<title>.md` using decision template
-7. Update ADR table in `ADR.md`
-8. Create/update files in their categories as needed
+1. Create file in `aidd_docs/internal/decisions/XXX-<title>.md` using decision template
+2. Update ADR table in `ADR.md`
+3. Create/update files in their categories as needed
+
+### Phase 4: Sync memory references
+
+Sync memory references in context files

@@ -1,7 +1,3 @@
----
-paths:
----
-
 # Claude Code — Syntax Reference
 
 ## File Locations
@@ -62,4 +58,4 @@ paths:
 
 ## MCP Configuration
 
-File: `.mcp.json` at project root. Servers wrapped with `{ "mcpServers": {...} }`.
+File: `.mcp.json` at project root. Servers declared at root level (no wrapper key).

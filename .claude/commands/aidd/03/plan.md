@@ -17,6 +17,7 @@ Generate technical implementation plans from requirements, save to task file, di
 - Handle vocal dictation inconsistencies
 - Configurations (e.g. api keys etc) must be prepared asap in phase 0
 - Split phases on responsibilities not convenience
+- `?` is optional, like ticket number (if applicable)
 
 ## Context
 
@@ -71,47 +72,47 @@ You will try to fine "what could go wrong?" and anticipate as early as possible 
 
 Spawn a new sub-agent task to:
 
-5. **Explore the codebase** to inform plan generation
-6. **List implicit assumptions** about the user's infrastructure
-7. **Verify API feasibility** before committing to an approach
-8. **Find flag blockers early** identify issues and risks that will certainly occur during implementation if not addressed in the plan.
-9. **Check against official documentation** to validate assumptions and identify potential issues
+1. **Explore the codebase** to inform plan generation
+2. **List implicit assumptions** about the user's infrastructure
+3. **Verify API feasibility** before committing to an approach
+4. **Find flag blockers early** identify issues and risks that will certainly occur during implementation if not addressed in the plan.
+5. **Check against official documentation** to validate assumptions and identify potential issues
 
 ### Step 4: Task Planning
 
 > Define main phases, do not mention specific files, have macro-level vision.
 
-10. **Wait for user validation** regarding main phases, YOU MUST BOTH AGREED BEFORE PROCEEDING NEXT.
-11. Analyze requirements to identify main implementation phases
-12. For each phase, create minimal, specific, actionable tasks
-13. Ensure comprehensive coverage of all requirements
+1. **Wait for user validation** regarding main phases, YOU MUST BOTH AGREED BEFORE PROCEEDING NEXT.
+2. Analyze requirements to identify main implementation phases
+3. For each phase, create minimal, specific, actionable tasks
+4. Ensure comprehensive coverage of all requirements
 
 ### Step 4: Generate and Save Implementation Plan
 
-14. Use current !`date`
-15. Determine feature name from requirements
-16. Insert user journey in mermaid syntax in plan for better visualization and validation
-17. Fill the appropriate template based on decisions
-18. **Save to file**:
-   - Simple plan: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<feature_name>.md`
-   - Master plan: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<feature_name>-master.md`
-   - Child plans: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<feature_name>-part-N.md`
-19. Display saved file path to user
+1. Use current !`date`
+2. Determine feature name from requirements
+3. Insert user journey in mermaid syntax in plan for better visualization and validation
+4. Fill the appropriate template based on decisions
+5. **Save to file**:
+   - Simple plan: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>.md`
+   - Master plan: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>-master.md`
+   - Child plans: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>-part-N.md`
+6. Display saved file path to user
 
 ### Step 5: Quality Assurance
 
-20. Verify plan addresses all requirements
-21. Check for potential challenges and obstacles
-22. Evaluate confidence (0-10 scale):
+1. Verify plan addresses all requirements
+2. Check for potential challenges and obstacles
+3. Evaluate confidence (0-10 scale):
    - ✅ Reasons for high confidence
    - ❌ Reasons for low confidence / risks
-23. Ensure minimum confidence score of 9/10
-24. Add confidence assessment to plan
+4. Ensure minimum confidence score of 9/10
+5. Add confidence assessment to plan
 
 ### Step 6: Display and Confirm
 
-25. Display the complete generated plan to user
-26. Show confidence assessment
-27. Highlight any risks or concerns
-28. Plan is now ready for implementation, challenge it with User
-29. **WAIT FOR USER APPROVAL** before implementation
+1. Display the complete generated plan to user
+2. Show confidence assessment
+3. Highlight any risks or concerns
+4. Plan is now ready for implementation, challenge it with User
+5. **WAIT FOR USER APPROVAL** before implementation

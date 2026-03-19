@@ -17,11 +17,11 @@ argument-hint: 'Project description and domain requirements'
 ### Core generators
 
 ```markdown
-@.claude/commands/01_onboard/generate_agent.md
+@.claude/commands/aidd/01/generate_agent.md
 ```
 
 ```markdown
-@.claude/commands/01_onboard/generate_skill.md
+@.claude/commands/aidd/01/generate_skill.md
 ```
 
 ### Coordination template
@@ -45,7 +45,7 @@ argument-hint: 'Project description and domain requirements'
 ### Command generator
 
 ```markdown
-@.claude/commands/01_onboard/generate_command.md
+@.claude/commands/aidd/01/generate_command.md
 ```
 
 ### Command structure standards

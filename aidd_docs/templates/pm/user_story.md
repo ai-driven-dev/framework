@@ -12,18 +12,9 @@ argument-hint: N/A
 **I want** [action]
 **So that** [outcome]
 
-| Estimation | Priorité | Epic |
-|---|---|---|
-| [1/2/3/5/8] pts | Must / Should / Could | [Epic Name] |
-
 ### Acceptance Criteria
 
 ```gherkin
-Scenario: [Happy path]
-  Given [nominal context]
-  When [action]
-  Then [expected result]
-
 Scenario: [Error condition]
   Given [error context]
   When [error trigger]
@@ -34,7 +25,3 @@ Scenario: [Boundary condition]
   When [edge action]
   Then [expected behavior]
 ```
-
-### Dependencies
-
-- [Other stories, APIs, or services this story depends on]
