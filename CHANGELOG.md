@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.1](https://github.com/ai-driven-dev/aidd-framework/compare/v3.7.0...v3.7.1) (2026-03-19)
+
+
+### Bug Fixes
+
+* **plan:** remove implementation references from steps ([4637864](https://github.com/ai-driven-dev/aidd-framework/commit/46378641a05bfd8dfd5acea033b9f78193efb4ea))
+
 ## [3.7.0](https://github.com/ai-driven-dev/aidd-framework/compare/v3.6.0...v3.7.0) (2026-03-19)
 
 
