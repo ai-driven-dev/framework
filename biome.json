@@ -25,10 +25,13 @@
       "!**/dist",
       "!**/node_modules",
       "!**/example",
-      "!.claude/worktrees",
       "!**/temp",
       "!**/coverage",
-      "!**/.aidd/cache"
+      "!.aidd",
+      "!.claude",
+      "!.cursor",
+      "!.opencode",
+      "!.vscode"
     ]
   },
   "overrides": [
