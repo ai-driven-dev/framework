@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.11.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.10.2...v2.11.0) (2026-03-19)
+
+
+### Features
+
+* **memory:** install update_memory script and git hook on install/update ([0bdc869](https://github.com/ai-driven-dev/aidd-cli/commit/0bdc869984ecb5984f8214f20cf7eb07974d1155))
+
+
+### Bug Fixes
+
+* **opencode:** normalize command cross-references to installed AIDD path ([fd69e3e](https://github.com/ai-driven-dev/aidd-cli/commit/fd69e3ee0c9eff4bef0c656ba6944c00caf95532))
+* **opencode:** normalize command cross-references to installed AIDD path ([fd4d87d](https://github.com/ai-driven-dev/aidd-cli/commit/fd4d87dbdc8b483e8bc9586b4cb13a01b91f0e6c))
+
 ## [2.10.2](https://github.com/ai-driven-dev/aidd-cli/compare/v2.10.1...v2.10.2) (2026-03-19)
 
 
