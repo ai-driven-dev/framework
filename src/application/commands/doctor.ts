@@ -45,7 +45,12 @@ export function registerDoctorCommand(program: Command): void {
         }
 
         for (const issue of report.issues) {
-          output.warn(`${issue.message}\n  Fix: ${issue.fix}`);
+          const text = `${issue.message}\n  Fix: ${issue.fix}`;
+          if (issue.severity === "error") {
+            output.error(text);
+          } else {
+            output.warn(text);
+          }
         }
         process.exit(1);
       } catch (error) {

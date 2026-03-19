@@ -1,3 +1,5 @@
+import { join } from "node:path";
+import type { FileSystem } from "../ports/file-system.js";
 import {
   AT_DOCS_PLACEHOLDER,
   AT_TOOLS_PLACEHOLDER,
@@ -51,6 +53,7 @@ export interface ToolConfig {
   readonly toolId: ToolId;
   readonly directory: string;
   readonly toolSuffix: string;
+  readonly signalDir: string;
   rewriteContent(content: string, docsDir: string): string;
   reverseRewriteContent(content: string, docsDir: string): string;
   agents(): SectionHandler;
@@ -251,4 +254,20 @@ export function buildStandardCommandsHandler(
     buildFilePath,
     ...standardCommandFrontmatter,
   };
+}
+
+export async function hasToolSignals(
+  fs: FileSystem,
+  config: ToolConfig,
+  projectRoot: string
+): Promise<boolean> {
+  const dir = join(projectRoot, config.signalDir);
+  if (!(await fs.fileExists(dir))) return false;
+  const files = await fs.listDirectory(dir);
+  for (const filePath of files) {
+    if (!filePath.endsWith(".md")) continue;
+    const content = await fs.readFile(join(dir, filePath));
+    if (/^name:\s*['"]?aidd[_:]/m.test(content)) return true;
+  }
+  return false;
 }

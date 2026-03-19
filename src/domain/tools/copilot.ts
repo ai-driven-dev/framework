@@ -225,6 +225,7 @@ export const copilotToolConfig: ToolConfig = {
   toolId: "copilot",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
+  signalDir: ".github/prompts",
 
   rewriteContent: rewriteCopilotContent,
 
