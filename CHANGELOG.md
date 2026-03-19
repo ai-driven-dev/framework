@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.10.1](https://github.com/ai-driven-dev/aidd-cli/compare/v2.10.0...v2.10.1) (2026-03-19)
+
+
+### Bug Fixes
+
+* **tools:** emit mode:subagent in opencode agent frontmatter ([5bec7b3](https://github.com/ai-driven-dev/aidd-cli/commit/5bec7b3e4a6303400e4cf977fa8b6ccdadb796b4))
+
+
+### Documentation
+
+* update README and memory for v2.10.0 ([ef07cc8](https://github.com/ai-driven-dev/aidd-cli/commit/ef07cc8bc53f6893c3ca0fe0dcaa78eabd3136da))
+
 ## [2.10.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.9.2...v2.10.0) (2026-03-18)
 
 
