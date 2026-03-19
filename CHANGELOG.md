@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.10.2](https://github.com/ai-driven-dev/aidd-cli/compare/v2.10.1...v2.10.2) (2026-03-19)
+
+
+### Bug Fixes
+
+* **doctor:** replace directory existence check with aidd signal detection ([64ab8ab](https://github.com/ai-driven-dev/aidd-cli/commit/64ab8ab3bf9749e6adb5153c4106fa42527963be))
+* **doctor:** signal-based orphan detection + biome scope fix ([85f30d0](https://github.com/ai-driven-dev/aidd-cli/commit/85f30d0b64af9a0ca50bae4cd253729a8ac4fb0b))
+
+
+### Documentation
+
+* **adr:** record decisions for doctor signal detection ([46bb981](https://github.com/ai-driven-dev/aidd-cli/commit/46bb9815cf40cddfc8af9635dedb3db59b1f9ea8))
+
 ## [2.10.1](https://github.com/ai-driven-dev/aidd-cli/compare/v2.10.0...v2.10.1) (2026-03-19)
 
 
