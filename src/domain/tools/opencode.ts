@@ -92,7 +92,10 @@ export const opencodeToolConfig: ToolConfig = {
   signalDir: ".opencode/commands",
 
   rewriteContent(content: string, docsDir: string): string {
-    return baseRewriteContent(content, DIRECTORY, docsDir);
+    return baseRewriteContent(content, DIRECTORY, docsDir).replace(
+      /(@\.opencode\/commands\/)(\d+)[_-][^/]+\/([^\s]+)/g,
+      "$1aidd/$2/$3"
+    );
   },
 
   reverseRewriteContent(content: string, docsDir: string): string {
