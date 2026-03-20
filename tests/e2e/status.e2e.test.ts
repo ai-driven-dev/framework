@@ -158,4 +158,41 @@ describe.concurrent("E2E: aidd status", () => {
       await cleanup();
     }
   });
+
+  it("filters status output to docs only with --docs", async () => {
+    const { projectDir, cleanup } = await createTestEnv("status");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      // modify a docs file to create drift
+      const trackedPath = join(projectDir, "aidd_docs", "tasks", ".gitkeep");
+      await writeFile(trackedPath, "modified docs", "utf-8");
+
+      const { stdout, exitCode } = await runCli(["status", "--docs"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("docs");
+      expect(stdout).not.toContain("claude");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("exits with error when --tool and --docs are both specified", async () => {
+    const { projectDir, cleanup } = await createTestEnv("status");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stderr, exitCode } = await runCli(
+        ["status", "--tool", "claude", "--docs"],
+        projectDir
+      );
+
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toContain("mutually exclusive");
+    } finally {
+      await cleanup();
+    }
+  });
 });

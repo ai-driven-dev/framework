@@ -274,4 +274,52 @@ describe.concurrent("E2E: aidd restore", () => {
       await cleanup();
     }
   });
+
+  it("--docs scope limits restore to docs files only", async () => {
+    const { projectDir, cleanup } = await createTestEnv("restore");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      const claudeMdPath = join(projectDir, "CLAUDE.md");
+      const readmePath = join(projectDir, "aidd_docs", "README.md");
+      const originalReadme = await readFile(readmePath, "utf-8");
+
+      await writeFile(claudeMdPath, "modified claude", "utf-8");
+      await writeFile(readmePath, "modified readme", "utf-8");
+
+      const { stdout, exitCode } = await runCli(
+        ["restore", "--docs", "--force", "--path", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Restored");
+
+      // docs file should be restored
+      const readmeAfter = await readFile(readmePath, "utf-8");
+      expect(readmeAfter).toBe(originalReadme);
+
+      // claude tool file should remain modified (not in docs scope)
+      const claudeAfter = await readFile(claudeMdPath, "utf-8");
+      expect(claudeAfter).toBe("modified claude");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("exits with error when --tool and --docs are both specified", async () => {
+    const { projectDir, cleanup } = await createTestEnv("restore");
+    try {
+      const { stderr, exitCode } = await runCli(
+        ["restore", "--tool", "claude", "--docs", "--path", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toContain("mutually exclusive");
+    } finally {
+      await cleanup();
+    }
+  });
 });

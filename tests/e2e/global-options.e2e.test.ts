@@ -92,4 +92,18 @@ describe.concurrent("E2E: aidd global options", () => {
       await cleanup();
     }
   });
+
+  it("--help does not show hidden commands (adopt, init)", async () => {
+    const { projectDir, cleanup } = await createTestEnv("global");
+    try {
+      const { stdout, exitCode } = await runCli(["--help"], projectDir);
+
+      expect(exitCode).toBe(0);
+      // adopt and init are hidden via _hidden=true in cli.ts
+      expect(stdout).not.toContain("  adopt");
+      expect(stdout).not.toContain("  init");
+    } finally {
+      await cleanup();
+    }
+  });
 });

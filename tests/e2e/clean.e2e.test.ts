@@ -100,4 +100,21 @@ describe.concurrent("E2E: aidd clean", () => {
       await cleanup();
     }
   });
+
+  it("shows 'Would remove' summary in non-interactive mode without --force", async () => {
+    const { projectDir, cleanup } = await createTestEnv("clean");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      // runCli always runs non-TTY (child process without TTY)
+      const { stdout, exitCode } = await runCli(["clean"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Would remove");
+      expect(stdout).toContain("--force");
+    } finally {
+      await cleanup();
+    }
+  });
 });

@@ -320,4 +320,38 @@ describe.concurrent("E2E: aidd install", () => {
       await cleanup();
     }
   });
+
+  it("installs opencode tool with correct file layout", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      const { stdout, exitCode } = await runCli(
+        ["install", "opencode", "--path", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Installed opencode");
+      expect(existsSync(join(projectDir, ".opencode"))).toBe(true);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("warns and ignores explicit tool IDs when --all is set", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stderr, exitCode } = await runCli(
+        ["install", "--all", "claude", "--path", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stderr).toContain("ignoring specified tools");
+    } finally {
+      await cleanup();
+    }
+  });
 });

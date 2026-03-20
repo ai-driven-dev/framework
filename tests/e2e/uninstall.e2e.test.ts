@@ -147,4 +147,18 @@ describe.concurrent("E2E: aidd uninstall", () => {
       await cleanup();
     }
   });
+
+  it("reports success when --all is used but no tools are installed", async () => {
+    const { projectDir, cleanup } = await createTestEnv("uninstall");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stdout, exitCode } = await runCli(["uninstall", "--all"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("No tools installed");
+    } finally {
+      await cleanup();
+    }
+  });
 });

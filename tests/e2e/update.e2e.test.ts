@@ -223,4 +223,84 @@ describe.concurrent("E2E: aidd update", () => {
       await cleanup();
     }
   });
+
+  it("exits with error when --tool and --docs are both specified", async () => {
+    const { projectDir, cleanup } = await createTestEnv("update");
+    try {
+      const { stderr, exitCode } = await runCli(
+        ["update", "--path", FRAMEWORK_PATH, "--tool", "claude", "--docs"],
+        projectDir
+      );
+
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toContain("mutually exclusive");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--tool scope updates only the specified tool", async () => {
+    const { projectDir, cleanup } = await createTestEnv("update");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
+
+      const cursorNamingBefore = await readFile(
+        join(projectDir, ".cursor", "rules", "01-standards", "naming.mdc"),
+        "utf-8"
+      );
+
+      const { stdout, exitCode } = await runCli(
+        ["update", "--path", FRAMEWORK_V2_PATH, "--tool", "claude"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      // claude should have been updated (new file from v2 added)
+      expect(existsSync(join(projectDir, ".claude", "commands", "aidd", "04", "assert.md"))).toBe(
+        true
+      );
+      // cursor naming file should be unchanged
+      const cursorNamingAfter = await readFile(
+        join(projectDir, ".cursor", "rules", "01-standards", "naming.mdc"),
+        "utf-8"
+      );
+      expect(cursorNamingAfter).toBe(cursorNamingBefore);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--docs scope updates only docs files", async () => {
+    const { projectDir, cleanup } = await createTestEnv("update");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      const claudeNamingBefore = await readFile(
+        join(projectDir, ".claude", "rules", "01-standards", "naming.md"),
+        "utf-8"
+      );
+
+      const { exitCode } = await runCli(
+        ["update", "--path", FRAMEWORK_V2_PATH, "--docs"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      // claude naming file should be unchanged (docs scope only)
+      const claudeNamingAfter = await readFile(
+        join(projectDir, ".claude", "rules", "01-standards", "naming.md"),
+        "utf-8"
+      );
+      expect(claudeNamingAfter).toBe(claudeNamingBefore);
+      // docs README should be updated from v2
+      const readmePath = join(projectDir, "aidd_docs", "README.md");
+      const readmeContent = await readFile(readmePath, "utf-8");
+      expect(readmeContent).toContain("v2 Update");
+    } finally {
+      await cleanup();
+    }
+  });
 });
