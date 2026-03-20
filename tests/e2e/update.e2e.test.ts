@@ -131,7 +131,7 @@ describe.concurrent("E2E: aidd update", () => {
       );
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("Dry run");
+      expect(stdout).toContain("The following changes would be applied");
 
       // section header format: "\nclaude (v<version>):" and "\ndocs (v<version>):"
       expect(stdout).toMatch(/claude \(v[^)]+\):/);
@@ -251,7 +251,7 @@ describe.concurrent("E2E: aidd update", () => {
         "utf-8"
       );
 
-      const { stdout, exitCode } = await runCli(
+      const { exitCode } = await runCli(
         ["update", "--path", FRAMEWORK_V2_PATH, "--tool", "claude"],
         projectDir
       );

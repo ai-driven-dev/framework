@@ -54,7 +54,7 @@ export function registerConfigCommand(program: Command): void {
         let resolvedKey = key;
         if (resolvedKey === undefined) {
           if (!process.stdout.isTTY) {
-            output.error("config get requires a key argument in non-interactive mode.");
+            output.error("aidd config get requires a key argument in non-interactive mode.");
             process.exit(1);
           }
           resolvedKey = await deps.prompter.select(
@@ -104,7 +104,9 @@ export function registerConfigCommand(program: Command): void {
 
           if (resolvedKey === undefined || resolvedValue === undefined) {
             if (!process.stdout.isTTY) {
-              output.error("config set requires key and value arguments in non-interactive mode.");
+              output.error(
+                "aidd config set requires key and value arguments in non-interactive mode."
+              );
               process.exit(1);
             }
             if (resolvedKey === undefined) {
@@ -157,7 +159,7 @@ export function registerConfigCommand(program: Command): void {
               }
             }
             await deps.manifestRepo.save(manifest.withRepo(resolvedValue));
-            output.success(`repo updated to '${resolvedValue}'.`);
+            output.success(`Set repo = ${resolvedValue}`);
             return;
           }
 
@@ -193,7 +195,7 @@ export function registerConfigCommand(program: Command): void {
           }
 
           await deps.manifestRepo.save(manifest.withDocsDir(resolvedValue));
-          output.success(`docsDir updated to '${resolvedValue}'.`);
+          output.success(`Set docsDir = ${resolvedValue}`);
         } catch (error) {
           output.exit(error);
         }

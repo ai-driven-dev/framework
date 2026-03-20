@@ -100,8 +100,10 @@ export function registerAdoptCommand(program: Command): void {
           }
         }
 
+        const toolNames = result.tools.map((t) => t.toolId).join(", ");
+        const toolCount = result.tools.length;
         output.success(
-          `Adopted ${result.tools.length} tool(s) at version ${version}: ${result.totalRegistered} files registered, ${result.docsRegistered} docs registered`
+          `Adopted ${toolNames} (v${version}): ${result.totalRegistered} ${result.totalRegistered === 1 ? "file" : "files"} registered across ${toolCount} ${toolCount === 1 ? "tool" : "tools"}`
         );
       } catch (error) {
         output.exit(error);

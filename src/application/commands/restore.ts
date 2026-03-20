@@ -166,18 +166,23 @@ export function registerRestoreCommand(program: Command): void {
 
           for (const tool of result.tools) {
             if (tool.nothingToRestore) continue;
-            output.info(`\n${tool.toolId}:`);
-            for (const f of tool.restored) output.info(`  + ${f}`);
-            for (const f of tool.kept) output.info(`  ~ kept: ${f}`);
+            output.print("");
+            output.print(`${tool.toolId}:`);
+            for (const f of tool.restored) output.print(`  + ${f}`);
+            for (const f of tool.kept) output.print(`  ~ kept: ${f}`);
           }
           if (result.docs && !result.docs.nothingToRestore) {
-            output.info("\ndocs:");
-            for (const f of result.docs.restored) output.info(`  + ${f}`);
-            for (const f of result.docs.kept) output.info(`  ~ kept: ${f}`);
+            output.print("");
+            output.print("docs:");
+            for (const f of result.docs.restored) output.print(`  + ${f}`);
+            for (const f of result.docs.kept) output.print(`  ~ kept: ${f}`);
           }
 
+          const restored = result.totalRestored;
+          const kept = result.totalKept;
+          output.print("");
           output.success(
-            `\nRestored ${result.totalRestored} file(s), kept ${result.totalKept} file(s)`
+            `Restored ${restored} ${restored === 1 ? "file" : "files"}, kept ${kept} ${kept === 1 ? "file" : "files"}`
           );
         } catch (error) {
           output.exit(error);
