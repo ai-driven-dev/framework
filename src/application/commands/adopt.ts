@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import { Manifest } from "../../domain/models/manifest.js";
 import {
   assertValidToolIds,
   type ToolId,
@@ -20,7 +21,7 @@ export function registerAdoptCommand(program: Command): void {
       "-t, --tools <tools>",
       "Comma-separated list of installed tools (claude, cursor, copilot)"
     )
-    .option("-d, --docs-dir <dir>", "Documentation directory", "aidd_docs")
+    .option("-d, --docs-dir <dir>", "Documentation directory", Manifest.DEFAULT_DOCS_DIR)
     .option(
       "--from <version|path>",
       "(required) Framework version (e.g. 3.6.0) or local path to adopt against"
@@ -37,6 +38,11 @@ export function registerAdoptCommand(program: Command): void {
       const output = new CLIOutput(verbose);
       const projectRoot = process.cwd();
 
+      if (!cmdOptions.tools && !process.stdout.isTTY) {
+        output.error("aidd adopt requires --tools in non-interactive mode.");
+        process.exit(1);
+      }
+
       try {
         const deps = await createDeps(
           projectRoot,
@@ -50,39 +56,21 @@ export function registerAdoptCommand(program: Command): void {
           toolIds = cmdOptions.tools.split(",").map((t) => t.trim()) as ToolId[];
           assertValidToolIds(toolIds);
         } else {
-          if (!process.stdout.isTTY) {
-            output.error("aidd adopt requires --tools in non-interactive mode.");
-            process.exit(1);
-          }
-
           const choices = VALID_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }));
-
           const selected = await deps.prompter.checkbox(
             "Which tools do you want to adopt?",
             choices
           );
-
-          if (selected.length === 0) {
-            output.error("No tools selected.");
-            process.exit(1);
-          }
-
+          if (selected.length === 0) throw new Error("No tools selected.");
           toolIds = selected as ToolId[];
         }
 
         let from = cmdOptions.from ?? globalOptions.release ?? globalOptions.framework;
 
         if (!from) {
-          if (!process.stdout.isTTY) {
-            throw new AdoptRequiresVersionError(globalOptions.repo);
-          }
-
+          if (!process.stdout.isTTY) throw new AdoptRequiresVersionError(globalOptions.repo);
           const answer = await deps.prompter.input("Framework version tag or local path:", "");
-
-          if (!answer) {
-            throw new AdoptRequiresVersionError(globalOptions.repo);
-          }
-
+          if (!answer) throw new AdoptRequiresVersionError(globalOptions.repo);
           from = answer;
         }
 

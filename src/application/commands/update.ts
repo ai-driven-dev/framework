@@ -193,16 +193,8 @@ export function registerUpdateCommand(program: Command): void {
             for (const f of result.docs.backedUp) output.info(`  ~ backup: ${f}`);
           }
 
-          const totalWritten =
-            result.tools.reduce((sum, t) => sum + t.written.length, 0) +
-            (result.docs?.written.length ?? 0);
-          const totalDeleted =
-            result.tools.reduce((sum, t) => sum + t.deleted.length, 0) +
-            (result.docs?.deleted.length ?? 0);
-          const toolCount = result.tools.filter((t) => !t.alreadyUpToDate).length;
-
           output.success(
-            `\nUpdated ${totalWritten} files, deleted ${totalDeleted} files across ${toolCount} tool(s)`
+            `\nUpdated ${result.totalWritten} files, deleted ${result.totalDeleted} files across ${result.toolCount} tool(s)`
           );
         } catch (error) {
           output.exit(error);

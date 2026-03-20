@@ -1,11 +1,9 @@
 import { join } from "node:path";
 import { Command } from "commander";
-import { validateRepoFormat } from "../../domain/models/manifest.js";
+import { Manifest, validateRepoFormat } from "../../domain/models/manifest.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { NoManifestError } from "../errors.js";
 import { CLIOutput } from "../output.js";
-
-const DEFAULT_REPO = "ai-driven-dev/aidd-framework";
 
 type ReadableKey = "docsDir" | "repo" | "tools";
 type WritableKey = "docsDir" | "repo";
@@ -32,7 +30,7 @@ export function registerConfigCommand(program: Command): void {
         const manifest = await deps.manifestRepo.load();
         if (manifest === null) throw new NoManifestError();
         output.print(`docsDir = ${manifest.docsDir}`);
-        output.print(`repo    = ${manifest.repo ?? DEFAULT_REPO}`);
+        output.print(`repo    = ${manifest.repo ?? Manifest.DEFAULT_REPO}`);
         output.print(`tools   = ${manifest.getInstalledToolIds().join(", ") || "(none)"}`);
       } catch (error) {
         output.exit(error);
@@ -72,7 +70,7 @@ export function registerConfigCommand(program: Command): void {
         const manifest = await deps.manifestRepo.load();
         if (manifest === null) throw new NoManifestError();
         if (resolvedKey === "docsDir") output.print(manifest.docsDir);
-        else if (resolvedKey === "repo") output.print(manifest.repo ?? DEFAULT_REPO);
+        else if (resolvedKey === "repo") output.print(manifest.repo ?? Manifest.DEFAULT_REPO);
         else output.print(manifest.getInstalledToolIds().join(", "));
       } catch (error) {
         output.exit(error);
@@ -118,7 +116,7 @@ export function registerConfigCommand(program: Command): void {
             const manifest = await deps.manifestRepo.load();
             if (manifest === null) throw new NoManifestError();
             const currentValue =
-              resolvedKey === "repo" ? (manifest.repo ?? DEFAULT_REPO) : manifest.docsDir;
+              resolvedKey === "repo" ? (manifest.repo ?? Manifest.DEFAULT_REPO) : manifest.docsDir;
             resolvedValue = await deps.prompter.input("New value:", currentValue);
           }
 
@@ -140,7 +138,7 @@ export function registerConfigCommand(program: Command): void {
 
           if (resolvedKey === "repo") {
             validateRepoFormat(resolvedValue);
-            const current = manifest.repo ?? DEFAULT_REPO;
+            const current = manifest.repo ?? Manifest.DEFAULT_REPO;
             if (resolvedValue === current) {
               output.print(`repo is already '${resolvedValue}'.`);
               return;

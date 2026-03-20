@@ -31,6 +31,11 @@ export function registerSyncCommand(program: Command): void {
         const output = new CLIOutput(verbose);
         const projectRoot = process.cwd();
 
+        if (!cmdOptions.source && !process.stdout.isTTY) {
+          output.error("--source is required in non-interactive mode.");
+          process.exit(1);
+        }
+
         try {
           const deps = await createDeps(
             projectRoot,
@@ -51,11 +56,6 @@ export function registerSyncCommand(program: Command): void {
           let targetTools: ToolId[] | undefined;
 
           if (cmdOptions.source === undefined) {
-            if (!process.stdout.isTTY) {
-              output.error("--source is required in non-interactive mode.");
-              process.exit(1);
-            }
-
             const installedIds = manifest.getInstalledToolIds();
             if (installedIds.length < 2) {
               output.error("At least 2 tools must be installed to use sync.");
@@ -89,11 +89,7 @@ export function registerSyncCommand(program: Command): void {
               .map((id) => ({ name: id, value: id as ToolId }));
 
             targetTools = await deps.prompter.checkbox("Target tools?", targetChoices);
-
-            if (targetTools.length === 0) {
-              output.error("No target tools selected.");
-              process.exit(1);
-            }
+            if (targetTools.length === 0) throw new Error("No target tools selected.");
           } else {
             assertValidToolIds([cmdOptions.source]);
             if (cmdOptions.target) {
@@ -117,22 +113,7 @@ export function registerSyncCommand(program: Command): void {
             repo: globalOptions.repo,
           });
 
-          const totalWritten = result.tools.reduce(
-            (sum, t) => sum + t.files.filter((f) => f.written).length,
-            0
-          );
-          const totalDeleted = result.tools.reduce(
-            (sum, t) => sum + t.files.filter((f) => f.deleted).length,
-            0
-          );
-          const totalConflicts = result.tools.reduce(
-            (sum, t) => sum + t.files.filter((f) => f.conflict && !f.written).length,
-            0
-          );
-          const totalSkipped = result.tools.reduce(
-            (sum, t) => sum + t.files.filter((f) => f.skipped).length,
-            0
-          );
+          const { totalWritten, totalDeleted, totalConflicts, totalSkipped } = result;
 
           if (totalWritten === 0 && totalDeleted === 0 && totalConflicts === 0) {
             output.success(

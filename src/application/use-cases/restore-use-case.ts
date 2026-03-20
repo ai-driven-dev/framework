@@ -43,6 +43,8 @@ interface RestoreDocsResult {
 interface RestoreResult {
   tools: RestoreToolResult[];
   docs: RestoreDocsResult | null;
+  totalRestored: number;
+  totalKept: number;
 }
 
 interface DriftEntry {
@@ -149,7 +151,12 @@ export class RestoreUseCase {
 
     if (hasChanges) await this.manifestRepo.save(manifest);
 
-    return { tools: toolResults, docs: docsResult };
+    const totalRestored =
+      toolResults.reduce((s, t) => s + t.restored.length, 0) + (docsResult?.restored.length ?? 0);
+    const totalKept =
+      toolResults.reduce((s, t) => s + t.kept.length, 0) + (docsResult?.kept.length ?? 0);
+
+    return { tools: toolResults, docs: docsResult, totalRestored, totalKept };
   }
 
   private async restoreDocs(

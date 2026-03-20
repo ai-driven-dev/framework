@@ -1,11 +1,9 @@
 import type { Command } from "commander";
+import { Manifest } from "../../domain/models/manifest.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { CLIOutput } from "../output.js";
 import { InitUseCase } from "../use-cases/init-use-case.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
-
-const VALID_DOCS_DIR = /^[a-zA-Z0-9_-]+$/;
-const DEFAULT_DOCS_DIR = "aidd_docs";
 
 export function registerInitCommand(program: Command): void {
   program
@@ -49,7 +47,7 @@ export function registerInitCommand(program: Command): void {
           if (explicitDocsDir === undefined && !cmdOptions.force && process.stdout.isTTY) {
             const docsDirInput = await deps.prompter.input(
               "Documentation directory name:",
-              DEFAULT_DOCS_DIR
+              Manifest.DEFAULT_DOCS_DIR
             );
             explicitDocsDir = docsDirInput;
             const repoInput = await deps.prompter.input(
@@ -61,14 +59,8 @@ export function registerInitCommand(program: Command): void {
             }
           }
 
-          const docsDir = explicitDocsDir ?? DEFAULT_DOCS_DIR;
-
-          if (!VALID_DOCS_DIR.test(docsDir) || docsDir.includes("..")) {
-            output.error(
-              `Invalid directory name: "${docsDir}". Use alphanumeric characters, hyphens, and underscores only.`
-            );
-            process.exit(1);
-          }
+          const docsDir = explicitDocsDir ?? Manifest.DEFAULT_DOCS_DIR;
+          Manifest.validateDocsDir(docsDir);
 
           const useCase = new InitUseCase(
             deps.fs,

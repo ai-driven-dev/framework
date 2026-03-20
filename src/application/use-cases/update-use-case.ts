@@ -58,6 +58,10 @@ interface UpdateResult {
   dryRun: boolean;
   tools: UpdateToolResult[];
   docs: DocsUpdateResult | null;
+  totalWritten: number;
+  totalDeleted: number;
+  toolCount: number;
+  diffSummary: { added: number; changed: number; removed: number };
 }
 
 interface ApplyDiffResult {
@@ -187,6 +191,21 @@ export class UpdateUseCase {
       await new CatalogUseCase(this.fs).execute({ manifest, docsDir, projectRoot });
     }
 
+    const totalWritten =
+      toolResults.reduce((s, t) => s + t.written.length, 0) + (docsResult?.written.length ?? 0);
+    const totalDeleted =
+      toolResults.reduce((s, t) => s + t.deleted.length, 0) + (docsResult?.deleted.length ?? 0);
+    const toolCount = toolResults.filter((t) => !t.alreadyUpToDate).length;
+
+    const countDiffKind = (kind: string) =>
+      toolResults.reduce((s, t) => s + t.diff.filter((d) => d.kind === kind).length, 0) +
+      (docsResult?.diff.filter((d) => d.kind === kind).length ?? 0);
+    const diffSummary = {
+      added: countDiffKind("added"),
+      changed: countDiffKind("changed"),
+      removed: countDiffKind("removed"),
+    };
+
     return {
       alreadyUpToDate:
         toolResults.every((r) => r.alreadyUpToDate) &&
@@ -194,6 +213,10 @@ export class UpdateUseCase {
       dryRun,
       tools: toolResults,
       docs: docsResult,
+      totalWritten,
+      totalDeleted,
+      toolCount,
+      diffSummary,
     };
   }
 

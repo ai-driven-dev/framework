@@ -38,6 +38,11 @@ export function registerInstallCommand(program: Command): void {
           output.warn(`--all is set; ignoring specified tools: ${toolArgs.join(", ")}`);
         }
 
+        if (!cmdOptions.all && toolArgs.length === 0 && !process.stdout.isTTY) {
+          output.error("aidd install requires tool arguments or --all in non-interactive mode.");
+          process.exit(1);
+        }
+
         try {
           const deps = await createDeps(
             projectRoot,
@@ -64,13 +69,6 @@ export function registerInstallCommand(program: Command): void {
           } else if (toolArgs.length > 0) {
             toolIds = toolArgs as ToolId[];
           } else {
-            if (!process.stdout.isTTY) {
-              output.error(
-                "aidd install requires tool arguments or --all in non-interactive mode."
-              );
-              process.exit(1);
-            }
-
             const installedIds = manifest?.getInstalledToolIds() ?? [];
 
             const choices = VALID_TOOL_IDS.map((id) =>
@@ -84,11 +82,7 @@ export function registerInstallCommand(program: Command): void {
               choices
             );
 
-            if (selected.length === 0) {
-              output.error("No tools selected.");
-              process.exit(1);
-            }
-
+            if (selected.length === 0) throw new Error("No tools selected.");
             toolIds = selected as ToolId[];
           }
 

@@ -39,6 +39,10 @@ interface SyncToolResult {
 interface SyncResult {
   sourceTool: ToolId;
   tools: SyncToolResult[];
+  totalWritten: number;
+  totalDeleted: number;
+  totalConflicts: number;
+  totalSkipped: number;
 }
 
 function getSectionKeyFromFrameworkPath(frameworkPath: string): UserFileSectionKey | null {
@@ -202,7 +206,31 @@ export class SyncUseCase {
       toolResults.push({ targetToolId, files: fileResults });
     }
 
-    return { sourceTool, tools: toolResults };
+    const totalWritten = toolResults.reduce(
+      (s, t) => s + t.files.filter((f) => f.written).length,
+      0
+    );
+    const totalDeleted = toolResults.reduce(
+      (s, t) => s + t.files.filter((f) => f.deleted).length,
+      0
+    );
+    const totalConflicts = toolResults.reduce(
+      (s, t) => s + t.files.filter((f) => f.conflict && !f.written).length,
+      0
+    );
+    const totalSkipped = toolResults.reduce(
+      (s, t) => s + t.files.filter((f) => f.skipped).length,
+      0
+    );
+
+    return {
+      sourceTool,
+      tools: toolResults,
+      totalWritten,
+      totalDeleted,
+      totalConflicts,
+      totalSkipped,
+    };
   }
 
   private async propagateModified(ctx: {

@@ -64,6 +64,11 @@ export function registerRestoreCommand(program: Command): void {
             throw new NoManifestError(globalOptions.repo);
           }
 
+          if (!cmdOptions.force && !process.stdout.isTTY) {
+            output.error("Restore requires --force in non-interactive mode.");
+            process.exit(1);
+          }
+
           const docsOnly = cmdOptions.docs ?? false;
 
           const pinnedVersion = cmdOptions.tool
@@ -82,11 +87,6 @@ export function registerRestoreCommand(program: Command): void {
           const toolIds: ToolId[] | undefined = cmdOptions.tool
             ? [cmdOptions.tool as ToolId]
             : undefined;
-
-          if (!cmdOptions.force && !process.stdout.isTTY) {
-            output.error("Restore requires --force in non-interactive mode.");
-            process.exit(1);
-          }
 
           let effectiveFiles: string[] | undefined = fileArgs.length > 0 ? fileArgs : undefined;
 
@@ -179,14 +179,9 @@ export function registerRestoreCommand(program: Command): void {
             for (const f of result.docs.kept) output.info(`  ~ kept: ${f}`);
           }
 
-          const totalRestored =
-            result.tools.reduce((sum, t) => sum + t.restored.length, 0) +
-            (result.docs?.restored.length ?? 0);
-          const totalKept =
-            result.tools.reduce((sum, t) => sum + t.kept.length, 0) +
-            (result.docs?.kept.length ?? 0);
-
-          output.success(`\nRestored ${totalRestored} file(s), kept ${totalKept} file(s)`);
+          output.success(
+            `\nRestored ${result.totalRestored} file(s), kept ${result.totalKept} file(s)`
+          );
         } catch (error) {
           output.exit(error);
         }
