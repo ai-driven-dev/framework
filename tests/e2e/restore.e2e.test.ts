@@ -198,16 +198,18 @@ describe.concurrent("E2E: aidd restore", () => {
     }
   });
 
-  it("fails with 'Restore requires --force' in non-interactive mode", async () => {
+  it("fails with '--force' hint when modified files exist in non-interactive mode", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
     try {
       await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
+      await writeFile(join(projectDir, "CLAUDE.md"), "user modified content");
+
       const { stderr, exitCode } = await runCli(["restore", "--path", FRAMEWORK_PATH], projectDir);
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("Restore requires --force in non-interactive mode");
+      expect(stderr).toContain("--force");
     } finally {
       await cleanup();
     }

@@ -23,6 +23,7 @@ interface RestoreOptions {
   docsOnly?: boolean;
   files?: string[];
   force?: boolean;
+  interactive?: boolean;
   manifest?: Manifest;
   repo?: string;
 }
@@ -71,7 +72,15 @@ export class RestoreUseCase {
   ) {}
 
   async execute(options: RestoreOptions): Promise<RestoreResult> {
-    const { frameworkPath, version, docsDir, projectRoot, force = false, repo } = options;
+    const {
+      frameworkPath,
+      version,
+      docsDir,
+      projectRoot,
+      force = false,
+      interactive = false,
+      repo,
+    } = options;
     const docsOnly = options.docsOnly ?? false;
     const fileFilter = buildFileFilter(options.files);
 
@@ -117,7 +126,8 @@ export class RestoreUseCase {
         drift,
         new Map(manifestFiles.map((f) => [f.relativePath, f.hash])),
         projectRoot,
-        force
+        force,
+        interactive
       );
 
       manifest.addTool(
@@ -142,6 +152,7 @@ export class RestoreUseCase {
           projectRoot,
           version,
           force,
+          interactive,
           fileFilter
         );
 
@@ -166,6 +177,7 @@ export class RestoreUseCase {
     projectRoot: string,
     version: string,
     force: boolean,
+    interactive: boolean,
     fileFilter: ((p: string) => boolean) | null
   ): Promise<RestoreDocsResult | null> {
     const docsManifestFiles = manifest.getDocsFiles();
@@ -187,7 +199,8 @@ export class RestoreUseCase {
       drift,
       new Map(docsManifestFiles.map((f) => [f.relativePath, f.hash])),
       projectRoot,
-      force
+      force,
+      interactive
     );
 
     manifest.addDocs(
@@ -244,18 +257,24 @@ export class RestoreUseCase {
     drift: DriftEntry[],
     initialHashMap: Map<string, FileHash>,
     projectRoot: string,
-    force: boolean
+    force: boolean,
+    interactive: boolean
   ): Promise<RestorationResult> {
     const restored: string[] = [];
     const kept: string[] = [];
     const updatedHashMap = new Map(initialHashMap);
 
     for (const { relativePath, content, reason } of drift) {
-      if (!force && reason === "modified") {
-        const decision = await this.prompter.resolveConflict(relativePath, reason);
-        if (decision === "keep") {
-          kept.push(relativePath);
-          continue;
+      if (reason === "modified") {
+        if (!force && !interactive) {
+          throw new Error(`Use --force to overwrite modified files in non-interactive mode.`);
+        }
+        if (!force && interactive) {
+          const decision = await this.prompter.resolveConflict(relativePath, reason);
+          if (decision === "keep") {
+            kept.push(relativePath);
+            continue;
+          }
         }
       }
       await this.fs.writeFile(join(projectRoot, relativePath), content);

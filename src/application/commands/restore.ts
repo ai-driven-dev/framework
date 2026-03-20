@@ -64,11 +64,6 @@ export function registerRestoreCommand(program: Command): void {
             throw new NoManifestError(globalOptions.repo);
           }
 
-          if (!cmdOptions.force && !process.stdout.isTTY) {
-            output.error("Restore requires --force in non-interactive mode.");
-            process.exit(1);
-          }
-
           const docsOnly = cmdOptions.docs ?? false;
 
           const pinnedVersion = cmdOptions.tool
@@ -90,12 +85,13 @@ export function registerRestoreCommand(program: Command): void {
 
           let effectiveFiles: string[] | undefined = fileArgs.length > 0 ? fileArgs : undefined;
 
+          const isTTY = process.stdout.isTTY;
           const isInteractive =
             fileArgs.length === 0 &&
             cmdOptions.tool === undefined &&
             !cmdOptions.docs &&
             !cmdOptions.force &&
-            process.stdout.isTTY;
+            isTTY;
 
           if (isInteractive) {
             const statusUseCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
@@ -154,6 +150,7 @@ export function registerRestoreCommand(program: Command): void {
             docsOnly,
             files: effectiveFiles,
             force: isInteractive ? true : cmdOptions.force,
+            interactive: isTTY,
             manifest,
             repo: globalOptions.repo,
           });
