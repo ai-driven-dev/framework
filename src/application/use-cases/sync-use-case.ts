@@ -148,6 +148,22 @@ export class SyncUseCase {
         projectRoot
       );
 
+      const hasAnyChanges = installedIds.some((id) => {
+        const { modified, deleted } = modCounts[id] ?? { modified: 0, deleted: 0 };
+        return modified > 0 || deleted > 0;
+      });
+
+      if (!hasAnyChanges) {
+        return {
+          sourceTool: installedIds[0] as ToolId,
+          tools: [],
+          totalWritten: 0,
+          totalDeleted: 0,
+          totalConflicts: 0,
+          totalSkipped: 0,
+        };
+      }
+
       const sourceChoices = installedIds.map((id) => {
         const { modified, deleted } = modCounts[id] ?? { modified: 0, deleted: 0 };
         const hasChanges = modified > 0 || deleted > 0;
