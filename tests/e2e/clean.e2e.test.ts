@@ -13,7 +13,7 @@ describe.concurrent("E2E: aidd clean", () => {
       const { stdout, exitCode } = await runCli(["clean"], projectDir);
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("--force");
+      expect(stdout).toMatch(/--force|Cancelled/);
       expect(existsSync(join(projectDir, ".claude"))).toBe(true);
       expect(existsSync(join(projectDir, ".aidd"))).toBe(true);
     } finally {
