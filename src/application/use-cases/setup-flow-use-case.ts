@@ -81,16 +81,29 @@ export class SetupFlowUseCase {
 
         const existingManifest = await this.manifestRepo.load();
         const knownRepo = existingManifest?.repo ?? repo;
-        const repoDefault = knownRepo ? `https://github.com/${knownRepo}` : "";
-        const repoInput = await this.prompter.input(
-          "Framework repository (owner/repo or GitHub URL, leave blank to skip):",
-          repoDefault
+        const sourceDefault = path ?? (knownRepo ? `https://github.com/${knownRepo}` : "");
+        const sourceInput = await this.prompter.input(
+          "Framework source (GitHub URL, owner/repo, or local path):",
+          sourceDefault
         );
-        const interactiveRepo =
-          repoInput !== "" ? repoInput.replace(/^https?:\/\/github\.com\//, "").trim() : repo;
+
+        let interactivePath: string | undefined;
+        let interactiveRepo: string | undefined;
+
+        if (sourceInput !== "") {
+          if (
+            sourceInput.startsWith("/") ||
+            sourceInput.startsWith("./") ||
+            sourceInput.startsWith("../")
+          ) {
+            interactivePath = sourceInput;
+          } else {
+            interactiveRepo = sourceInput.replace(/^https?:\/\/github\.com\//, "").trim();
+          }
+        }
 
         let resolvedRelease: string | undefined;
-        if (!path && !release) {
+        if (!interactivePath && !release) {
           if (interactiveRepo) {
             const latestTag = await this.resolver
               .fetchLatestVersion(interactiveRepo)
@@ -109,7 +122,11 @@ export class SetupFlowUseCase {
         const { path: frameworkPath, version } = await resolveFramework(
           this.resolver,
           this.logger,
-          { path, release: resolvedRelease ?? release, repo: interactiveRepo }
+          {
+            path: interactivePath ?? path,
+            release: resolvedRelease ?? release,
+            repo: interactiveRepo,
+          }
         );
 
         const initResult = await new InitUseCase(
