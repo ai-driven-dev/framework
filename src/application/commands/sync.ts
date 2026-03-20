@@ -30,7 +30,9 @@ export function registerSyncCommand(program: Command): void {
         const projectRoot = process.cwd();
 
         if (!cmdOptions.source && !process.stdout.isTTY) {
-          output.error("--source is required in non-interactive mode.");
+          output.error(
+            "--source <tool> is required. Usage: aidd sync --source <tool> [--target <tool>]"
+          );
           process.exit(1);
         }
 
@@ -78,8 +80,8 @@ export function registerSyncCommand(program: Command): void {
           if (totalWritten === 0 && totalDeleted === 0 && totalConflicts === 0) {
             output.success(
               totalSkipped > 0
-                ? `Nothing to sync — ${totalSkipped} file(s) already identical.`
-                : "Nothing to sync — no modified files found in source tool."
+                ? `Nothing to sync — ${totalSkipped} ${totalSkipped === 1 ? "file" : "files"} already identical.`
+                : "Nothing to sync — source tool has no modified files."
             );
             return;
           }
@@ -101,7 +103,7 @@ export function registerSyncCommand(program: Command): void {
           }
 
           output.success(
-            `Synced ${totalWritten} file(s), deleted ${totalDeleted} file(s) from ${result.sourceTool}`
+            `Synced ${totalWritten} ${totalWritten === 1 ? "file" : "files"}, deleted ${totalDeleted} ${totalDeleted === 1 ? "file" : "files"} from ${result.sourceTool}`
           );
         } catch (error) {
           output.exit(error);

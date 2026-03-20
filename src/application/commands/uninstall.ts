@@ -62,8 +62,8 @@ export function registerUninstallCommand(program: Command): void {
           );
 
           if (selected.length === 0) {
-            output.error("No tools selected.");
-            process.exit(1);
+            output.print("No tools selected.");
+            return;
           }
 
           toolIds = selected as ToolId[];

@@ -89,7 +89,8 @@ function buildCacheCommand(program: Command): Command {
           for (const v of selected) {
             await cache.clear(v);
           }
-          output.success(`Cleared ${selected.length} cached version(s)`);
+          const count = selected.length;
+          output.success(`Cleared ${count} cached ${count === 1 ? "version" : "versions"}`);
         }
       } catch (error) {
         output.exit(error);

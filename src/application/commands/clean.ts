@@ -40,10 +40,10 @@ export function registerCleanCommand(program: Command): void {
           output.print("  manifest: .aidd/");
           const toolCount = result.preview.tools.length;
           if (process.stdout.isTTY) {
-            output.info("Cancelled.");
+            output.print("No files removed.");
           } else {
             output.success(
-              `Would remove ${result.preview.totalFileCount} files across ${toolCount} ${toolCount === 1 ? "tool" : "tools"}. Use --force to confirm.`
+              `Would remove ${result.preview.totalFileCount} ${result.preview.totalFileCount === 1 ? "file" : "files"} across ${toolCount} ${toolCount === 1 ? "tool" : "tools"}. Use --force to confirm.`
             );
           }
           return;

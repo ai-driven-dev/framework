@@ -116,7 +116,6 @@ export function registerInstallCommand(program: Command): void {
             const toolList = installed.map((r) => r.toolId).join(", ");
             output.success(`Installed ${toolList} (${totalFiles} files)`);
           }
-          output.info("Run `aidd status` to inspect your installation.");
         } catch (error) {
           output.exit(error);
         }

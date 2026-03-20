@@ -111,6 +111,8 @@ AIDD CLI is a developer tool for a paid community of AI-assisted developers. The
 | `error.config.readonly_key`     | '{key}' is read-only. Use the appropriate aidd command to change it.       | Use `install`/`uninstall` etc.   | Attempt to `set tools` or other read-only key   |
 | `error.config.no_manifest`      | No AIDD installation found. Run `aidd init` first.                         | Initialize AIDD                  | `config` called with no manifest                |
 | `error.config.no_tty`           | Confirmation required. Use --force to skip in non-interactive mode.        | Add `--force`                    | `config set` in non-TTY without `--force`       |
+| `error.config.get_no_tty`       | aidd config get requires a key argument in non-interactive mode.            | Provide key argument             | `config get` in non-TTY without key arg         |
+| `error.config.set_no_tty`       | aidd config set requires key and value arguments in non-interactive mode.   | Provide key and value args       | `config set` in non-TTY without args            |
 
 ### Config Warnings
 
@@ -138,7 +140,7 @@ AIDD CLI is a developer tool for a paid community of AI-assisted developers. The
 
 | Key                              | Message                                                                            | Recovery action                                      | Context                                    |
 | -------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------ |
-| `error.sync.no_source`           | --source <tool> is required. Usage: aidd sync --source <tool> [--target <tool>]   | Provide --source flag                                | `aidd sync` called without --source        |
+| `error.sync.no_source`           | --source \<tool> is required. Usage: aidd sync --source \<tool> [--target \<tool>] | Provide --source flag                                | `aidd sync` called without --source in non-interactive mode |
 | `error.sync.too_few_tools`       | Sync requires at least 2 installed tools                                           | Install another tool first                           | Fewer than 2 tools installed               |
 | `error.sync.same_source_target`  | Source and target must be different tools                                           | Use a different tool for --target                    | --source and --target reference same tool  |
 | `error.sync.source_not_installed`| {toolId} is not installed. Installed tools: {installedList}                         | Install the tool first or use an installed tool      | --source references non-installed tool     |
@@ -173,15 +175,17 @@ AIDD CLI is a developer tool for a paid community of AI-assisted developers. The
 | `success.doctor.healthy`    | Installation is healthy ({fileCount} files tracked across {toolCount} tools) | Doctor finds no issues          |
 | `success.status.in_sync`    | All files are in sync                                                        | Status finds no drift           |
 | `success.release_pin`       | Using framework release {version}                                            | --release flag resolved         |
-| `success.update`            | Updated to v{version} ({added} added, {changed} changed, {removed} removed)  | Update completed                |
-| `success.restore`           | Restored {fileCount} files to framework version                              | Restore completed               |
-| `success.restore.in_sync`   | All files are in sync. Nothing to restore.                                   | Nothing to restore              |
+| `success.update`            | Updated {written} files, deleted {deleted} files across {toolCount} tools    | Update completed                |
+| `success.restore`           | Restored {fileCount} files, kept {keptCount} files                           | Restore completed               |
+| `success.restore.in_sync`   | Nothing to restore — all files are unmodified.                               | Nothing to restore              |
 | `success.update.up_to_date` | Already up to date (v{version})                                              | No newer version available      |
-| `success.sync`              | Synced {fileCount} files from {source} to {targets}                          | Sync completed                  |
-| `success.cache.cleared`     | Cache cleared ({count} version(s) removed)                                   | `cache --clear` completed       |
-| `success.cache.cleared_version` | Cache cleared for v{version}                                             | `cache --clear --version` completed |
+| `success.sync`              | Synced {written} files, deleted {deleted} files from {source}                | Sync completed                  |
+| `success.adopt`             | Adopted {toolList} (v{version}): {fileCount} files registered across {toolCount} tools | Adopt completed        |
+| `success.cache.cleared`     | Cleared {count} cached versions                                              | `cache clear --all` completed   |
+| `success.cache.cleared_version` | Cleared cache for version {version}                                      | `cache clear <version>` completed |
+| `success.cache.cleared_multi`   | Cleared {count} cached versions                                          | Interactive multi-select clear  |
 | `success.config.set`        | Set {key} = {value}                                                          | `config set` completed          |
-| `success.doctor.fixed`      | {fixedCount} issue(s) fixed. Run `aidd doctor` to verify.                   | `doctor --fix` completed        |
+| `success.doctor.fixed`      | {fixedCount} issues fixed. Run `aidd doctor` to verify.                      | `doctor --fix` completed        |
 
 ---
 
@@ -307,8 +311,9 @@ Example: `aidd/3.2.0 node/20.11.0 darwin-arm64`
 | `clean.preview.tool_line`     | {toolId}: {fileCount} files    | Per-tool line in dry-run |
 | `clean.preview.docs_line`     | docs: {fileCount} files        | Docs line in dry-run     |
 | `clean.preview.manifest_line` | manifest: .aidd/               | Manifest directory line  |
-| `clean.preview.total`         | Total: {totalFileCount} files                                                  | Total line in dry-run              |
-| `clean.preview.summary`       | Would remove {count} files across {toolCount} tools. Use --force to confirm.   | Aggregate summary for dry-run      |
+| `clean.preview.total`         | (not shown — count included in summary)                                        | Total folded into summary line     |
+| `clean.preview.summary`       | Would remove {count} files across {toolCount} tools. Use --force to confirm.   | Non-interactive dry-run summary    |
+| `clean.preview.cancelled`     | No files removed.                                                              | Interactive — user declined prompt |
 
 ---
 
@@ -323,13 +328,16 @@ These are not copy strings but structural conventions that ensure consistency ac
 | Status indicator: modified   | `~`                     | `~ .claude/rules/1-command.md`          |
 | Status indicator: deleted    | `-`                     | `- .claude/agents/old.md`               |
 | Status indicator: unmodified | (not shown)             | Files in sync are not listed              |
-| Section separator            | Empty line              | Between tool sections in status/doctor    |
+| Section separator            | Empty line before header| Before each tool/docs section in update, restore, dry-run |
 | Error prefix                 | `Error:`                | `Error: Authentication failed.`           |
 | Warning prefix               | `Warning:`              | `Warning: Network unavailable.`           |
 | Verbose prefix               | `[verbose]`             | `[verbose] Cache hit: v3.2.0`             |
 | Indentation                  | 2 spaces                | File lists indented under section headers |
 | Status legend                | `Legend: ~ modified  - deleted  + added` | Shown once at end of `aidd status` output when drift exists |
-| Verbose tool header          | `[verbose] Tool: {toolId}` | Shown per tool during `aidd install --verbose` |
+| Verbose tool header          | `[verbose] Tool: {toolId}` | Shown per tool during `aidd install --verbose`  |
+| Kept file indicator          | `~ kept: {filePath}`       | File kept (user version) during update/restore  |
+| Backup file indicator        | `~ backup: {filePath}`     | File backed up during update                    |
+| Pluralization                | proper plural only         | Never use `(s)` suffix — write `file` or `files`|
 
 ---
 
@@ -363,11 +371,13 @@ These are not copy strings but structural conventions that ensure consistency ac
 
 | Key                            | Message                                                                                          | Context                                   |
 | ------------------------------ | ------------------------------------------------------------------------------------------------ | ----------------------------------------- |
-| `update.preview.header`        | The following changes would be applied:                                                          | Dry-run header                            |
-| `update.preview.tool_line`     | {toolId}: {added} to add, {changed} to change, {removed} to remove                              | Per-tool line in dry-run                  |
-| `update.preview.conflict_note` | {filePath} [conflict — user-modified]                                                            | File flagged as conflicting in dry-run    |
-| `update.preview.summary`       | Would apply {total} change(s) across {toolCount} tool(s). Run without --dry-run to apply.       | Aggregate summary for dry-run             |
-| `update.preview.no_changes`    | Already up to date ({version}). No changes to apply.                                            | Dry-run with no newer version             |
+| `update.preview.header`        | The following changes would be applied:                                                    | Dry-run header                              |
+| `update.preview.file_added`    | `  + {filePath}`                                                                           | Added file in dry-run                       |
+| `update.preview.file_removed`  | `  - {filePath}`                                                                           | Removed file in dry-run                     |
+| `update.preview.file_changed`  | `  ~ {filePath}`                                                                           | Changed file in dry-run                     |
+| `update.preview.conflict_note` | `  ~ {filePath} [conflict]`                                                                | File conflicting in dry-run (user-modified) |
+| `update.preview.summary`       | Would apply {total} changes across {toolCount} tools. Run without --dry-run to apply.      | Aggregate summary for dry-run               |
+| `update.preview.no_changes`    | Already up to date (v{version})                                                            | Dry-run or actual update with no new version|
 
 ---
 

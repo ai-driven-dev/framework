@@ -143,7 +143,7 @@ describe.concurrent("E2E: aidd adopt", () => {
       );
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("2 tool(s)");
+      expect(stdout).toContain("2 tools");
 
       const manifest = JSON.parse(
         await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8")
@@ -170,7 +170,7 @@ describe.concurrent("E2E: aidd adopt", () => {
       );
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("3 tool(s)");
+      expect(stdout).toContain("3 tools");
 
       const manifest = JSON.parse(
         await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8")

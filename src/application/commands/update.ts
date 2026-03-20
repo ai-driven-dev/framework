@@ -94,47 +94,68 @@ export function registerUpdateCommand(program: Command): void {
           }
 
           if (result.dryRun) {
-            output.info("Dry run — no files written.");
+            const DRY_RUN_SYMBOL: Record<string, string> = {
+              added: "+",
+              removed: "-",
+              changed: "~",
+            };
+            output.print("The following changes would be applied:");
+            let totalChanges = 0;
             for (const tool of result.tools) {
               const changed = tool.diff.filter((d) => d.kind !== "unchanged");
               if (changed.length === 0) continue;
-              output.info(`\n${tool.toolId} (v${version}):`);
+              output.print("");
+              output.print(`${tool.toolId} (v${version}):`);
               for (const diff of changed) {
+                const symbol = DRY_RUN_SYMBOL[diff.kind] ?? "~";
                 const conflict = diff.conflict ? " [conflict]" : "";
-                output.info(`  [${diff.kind}]${conflict} ${diff.relativePath}`);
+                output.print(`  ${symbol} ${diff.relativePath}${conflict}`);
+                totalChanges++;
               }
             }
             if (result.docs) {
               const changed = result.docs.diff.filter((d) => d.kind !== "unchanged");
               if (changed.length > 0) {
-                output.info(`\ndocs (v${version}):`);
+                output.print("");
+                output.print(`docs (v${version}):`);
                 for (const diff of changed) {
+                  const symbol = DRY_RUN_SYMBOL[diff.kind] ?? "~";
                   const conflict = diff.conflict ? " [conflict]" : "";
-                  output.info(`  [${diff.kind}]${conflict} ${diff.relativePath}`);
+                  output.print(`  ${symbol} ${diff.relativePath}${conflict}`);
+                  totalChanges++;
                 }
               }
             }
+            const toolCount = result.toolCount;
+            output.print("");
+            output.print(
+              `Would apply ${totalChanges} ${totalChanges === 1 ? "change" : "changes"} across ${toolCount} ${toolCount === 1 ? "tool" : "tools"}. Run without --dry-run to apply.`
+            );
             return;
           }
 
           for (const tool of result.tools) {
             if (tool.alreadyUpToDate) continue;
-            output.info(`\n${tool.toolId} (v${version}):`);
-            for (const f of tool.written) output.info(`  + ${f}`);
-            for (const f of tool.deleted) output.info(`  - ${f}`);
-            for (const f of tool.kept) output.info(`  ~ kept: ${f}`);
-            for (const f of tool.backedUp) output.info(`  ~ backup: ${f}`);
+            output.print("");
+            output.print(`${tool.toolId} (v${version}):`);
+            for (const f of tool.written) output.print(`  + ${f}`);
+            for (const f of tool.deleted) output.print(`  - ${f}`);
+            for (const f of tool.kept) output.print(`  ~ kept: ${f}`);
+            for (const f of tool.backedUp) output.print(`  ~ backup: ${f}`);
           }
           if (result.docs && !result.docs.alreadyUpToDate) {
-            output.info(`\ndocs (v${version}):`);
-            for (const f of result.docs.written) output.info(`  + ${f}`);
-            for (const f of result.docs.deleted) output.info(`  - ${f}`);
-            for (const f of result.docs.kept) output.info(`  ~ kept: ${f}`);
-            for (const f of result.docs.backedUp) output.info(`  ~ backup: ${f}`);
+            output.print("");
+            output.print(`docs (v${version}):`);
+            for (const f of result.docs.written) output.print(`  + ${f}`);
+            for (const f of result.docs.deleted) output.print(`  - ${f}`);
+            for (const f of result.docs.kept) output.print(`  ~ kept: ${f}`);
+            for (const f of result.docs.backedUp) output.print(`  ~ backup: ${f}`);
           }
 
+          const toolCount = result.toolCount;
+          output.print("");
           output.success(
-            `\nUpdated ${result.totalWritten} files, deleted ${result.totalDeleted} files across ${result.toolCount} tool(s)`
+            `Updated ${result.totalWritten} ${result.totalWritten === 1 ? "file" : "files"}, deleted ${result.totalDeleted} ${result.totalDeleted === 1 ? "file" : "files"} across ${toolCount} ${toolCount === 1 ? "tool" : "tools"}`
           );
         } catch (error) {
           output.exit(error);
