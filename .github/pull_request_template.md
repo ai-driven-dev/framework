@@ -28,5 +28,5 @@ Closes #
 ```bash
 # Local test example
 pnpm run install:local
-aidd install claude --framework ./example/aidd-framework-3.2.3
+aidd install claude --path ./example/aidd-framework-3.2.3
 ```

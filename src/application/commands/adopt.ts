@@ -1,5 +1,10 @@
 import type { Command } from "commander";
-import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
+import { Manifest } from "../../domain/models/manifest.js";
+import {
+  assertValidToolIds,
+  type ToolId,
+  VALID_TOOL_IDS,
+} from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { AdoptRequiresVersionError } from "../errors.js";
 import { CLIOutput } from "../output.js";
@@ -12,42 +17,60 @@ export function registerAdoptCommand(program: Command): void {
     .description(
       "Bootstrap a manifest for projects with pre-existing AIDD files installed manually"
     )
-    .requiredOption(
+    .option(
       "-t, --tools <tools>",
-      "(required) Comma-separated list of installed tools (claude, cursor, copilot)"
+      "Comma-separated list of installed tools (claude, cursor, copilot)"
     )
-    .option("-d, --docs-dir <dir>", "Documentation directory", "aidd_docs")
+    .option("-d, --docs-dir <dir>", "Documentation directory", Manifest.DEFAULT_DOCS_DIR)
     .option(
       "--from <version|path>",
       "(required) Framework version (e.g. 3.6.0) or local path to adopt against"
     )
-    .action(async (cmdOptions: { tools: string; docsDir: string; from?: string }) => {
+    .action(async (cmdOptions: { tools?: string; docsDir: string; from?: string }) => {
       const globalOptions = program.opts<{
         verbose: boolean;
         repo?: string;
         token?: string;
-        framework?: string;
-        release?: string;
       }>();
       const verbose = globalOptions.verbose;
       const output = new CLIOutput(verbose);
       const projectRoot = process.cwd();
 
-      const from = cmdOptions.from ?? globalOptions.release ?? globalOptions.framework;
+      if (!cmdOptions.tools && !process.stdout.isTTY) {
+        output.error("aidd adopt requires --tools in non-interactive mode.");
+        process.exit(1);
+      }
 
       try {
-        if (!from) {
-          throw new AdoptRequiresVersionError(globalOptions.repo);
-        }
-
-        const toolIds = cmdOptions.tools.split(",").map((t) => t.trim()) as ToolId[];
-        output.validateTools(toolIds, VALID_TOOL_IDS);
-
         const deps = await createDeps(
           projectRoot,
           { verbose, repo: globalOptions.repo, token: globalOptions.token },
           output
         );
+
+        let toolIds: ToolId[];
+
+        if (cmdOptions.tools) {
+          toolIds = cmdOptions.tools.split(",").map((t) => t.trim()) as ToolId[];
+          assertValidToolIds(toolIds);
+        } else {
+          const choices = VALID_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }));
+          const selected = await deps.prompter.checkbox(
+            "Which tools do you want to adopt?",
+            choices
+          );
+          if (selected.length === 0) throw new Error("No tools selected.");
+          toolIds = selected as ToolId[];
+        }
+
+        let from = cmdOptions.from;
+
+        if (!from) {
+          if (!process.stdout.isTTY) throw new AdoptRequiresVersionError(globalOptions.repo);
+          const answer = await deps.prompter.input("Framework version tag or local path:", "");
+          if (!answer) throw new AdoptRequiresVersionError(globalOptions.repo);
+          from = answer;
+        }
 
         const { path: frameworkPath, version } = await resolveFramework(
           deps.resolver,

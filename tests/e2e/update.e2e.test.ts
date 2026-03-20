@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -13,10 +13,7 @@ describe.concurrent("E2E: aidd update", () => {
   it("fails with 'No AIDD installation found' when no manifest exists", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
-      const { stderr, exitCode } = await runCli(
-        ["update", "--framework", FRAMEWORK_PATH],
-        projectDir
-      );
+      const { stderr, exitCode } = await runCli(["update", "--path", FRAMEWORK_PATH], projectDir);
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("No AIDD manifest found");
@@ -28,13 +25,10 @@ describe.concurrent("E2E: aidd update", () => {
   it("reports 'Already up to date' when same version is installed and no files changed", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
-      const { stdout, exitCode } = await runCli(
-        ["update", "--framework", FRAMEWORK_PATH],
-        projectDir
-      );
+      const { stdout, exitCode } = await runCli(["update", "--path", FRAMEWORK_PATH], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Already up to date");
@@ -46,11 +40,11 @@ describe.concurrent("E2E: aidd update", () => {
   it("applies added and changed files when updating to a newer framework", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(
-        ["update", "--framework", FRAMEWORK_V2_PATH],
+        ["update", "--path", FRAMEWORK_V2_PATH],
         projectDir
       );
 
@@ -74,13 +68,13 @@ describe.concurrent("E2E: aidd update", () => {
   it("removes files that no longer exist in the newer framework", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       // agent exists after v1 install
       expect(existsSync(join(projectDir, ".claude", "agents", "code-reviewer.md"))).toBe(true);
 
-      await runCli(["update", "--framework", FRAMEWORK_V2_PATH], projectDir);
+      await runCli(["update", "--path", FRAMEWORK_V2_PATH], projectDir);
 
       // agent removed in v2
       expect(existsSync(join(projectDir, ".claude", "agents", "code-reviewer.md"))).toBe(false);
@@ -92,22 +86,24 @@ describe.concurrent("E2E: aidd update", () => {
   it("creates a .backup when updating a user-modified file", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const namingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
       await writeFile(namingPath, "# my custom naming rules\n");
 
       const { stdout, exitCode } = await runCli(
-        ["update", "--framework", FRAMEWORK_V2_PATH, "--force"],
+        ["update", "--path", FRAMEWORK_V2_PATH, "--force"],
         projectDir
       );
 
       expect(exitCode).toBe(0);
       expect(stdout).toMatch(/Updated \d+ files/);
 
-      const backupPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md.backup");
-      expect(existsSync(backupPath)).toBe(true);
+      const rulesDir = join(projectDir, ".claude", "rules", "01-standards");
+      const backupFile = readdirSync(rulesDir).find((f) => f.startsWith("naming.md.bak."));
+      expect(backupFile).toBeDefined();
+      const backupPath = join(rulesDir, backupFile as string);
 
       const backupContent = await readFile(backupPath, "utf-8");
       expect(backupContent).toBe("# my custom naming rules\n");
@@ -123,14 +119,14 @@ describe.concurrent("E2E: aidd update", () => {
   it("does not write files with --dry-run but shows what would change", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const namingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
       const contentBefore = await readFile(namingPath, "utf-8");
 
       const { stdout, exitCode } = await runCli(
-        ["update", "--framework", FRAMEWORK_V2_PATH, "--dry-run"],
+        ["update", "--path", FRAMEWORK_V2_PATH, "--dry-run"],
         projectDir
       );
 
@@ -154,14 +150,14 @@ describe.concurrent("E2E: aidd update", () => {
   it("overwrites conflicts without prompting with --force", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const namingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
       await writeFile(namingPath, "# my custom naming rules\n");
 
       const { exitCode } = await runCli(
-        ["update", "--framework", FRAMEWORK_V2_PATH, "--force"],
+        ["update", "--path", FRAMEWORK_V2_PATH, "--force"],
         projectDir
       );
 
@@ -176,10 +172,10 @@ describe.concurrent("E2E: aidd update", () => {
   it("updates docs files when upgrading to a newer framework", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
-      const { exitCode } = await runCli(["update", "--framework", FRAMEWORK_V2_PATH], projectDir);
+      const { exitCode } = await runCli(["update", "--path", FRAMEWORK_V2_PATH], projectDir);
 
       expect(exitCode).toBe(0);
 
@@ -207,15 +203,15 @@ describe.concurrent("E2E: aidd update", () => {
   it("updates memory script when framework has a newer version", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const v1Content = await readFile(
         join(projectDir, ".aidd", "scripts", "update_memory.mjs"),
         "utf-8"
       );
 
-      await runCli(["update", "--framework", FRAMEWORK_V2_PATH], projectDir);
+      await runCli(["update", "--path", FRAMEWORK_V2_PATH], projectDir);
 
       const v2Content = await readFile(
         join(projectDir, ".aidd", "scripts", "update_memory.mjs"),
@@ -223,6 +219,86 @@ describe.concurrent("E2E: aidd update", () => {
       );
 
       expect(v1Content).not.toBe(v2Content);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("exits with error when --tool and --docs are both specified", async () => {
+    const { projectDir, cleanup } = await createTestEnv("update");
+    try {
+      const { stderr, exitCode } = await runCli(
+        ["update", "--path", FRAMEWORK_PATH, "--tool", "claude", "--docs"],
+        projectDir
+      );
+
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toContain("mutually exclusive");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--tool scope updates only the specified tool", async () => {
+    const { projectDir, cleanup } = await createTestEnv("update");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
+
+      const cursorNamingBefore = await readFile(
+        join(projectDir, ".cursor", "rules", "01-standards", "naming.mdc"),
+        "utf-8"
+      );
+
+      const { stdout, exitCode } = await runCli(
+        ["update", "--path", FRAMEWORK_V2_PATH, "--tool", "claude"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      // claude should have been updated (new file from v2 added)
+      expect(existsSync(join(projectDir, ".claude", "commands", "aidd", "04", "assert.md"))).toBe(
+        true
+      );
+      // cursor naming file should be unchanged
+      const cursorNamingAfter = await readFile(
+        join(projectDir, ".cursor", "rules", "01-standards", "naming.mdc"),
+        "utf-8"
+      );
+      expect(cursorNamingAfter).toBe(cursorNamingBefore);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--docs scope updates only docs files", async () => {
+    const { projectDir, cleanup } = await createTestEnv("update");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      const claudeNamingBefore = await readFile(
+        join(projectDir, ".claude", "rules", "01-standards", "naming.md"),
+        "utf-8"
+      );
+
+      const { exitCode } = await runCli(
+        ["update", "--path", FRAMEWORK_V2_PATH, "--docs"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      // claude naming file should be unchanged (docs scope only)
+      const claudeNamingAfter = await readFile(
+        join(projectDir, ".claude", "rules", "01-standards", "naming.md"),
+        "utf-8"
+      );
+      expect(claudeNamingAfter).toBe(claudeNamingBefore);
+      // docs README should be updated from v2
+      const readmePath = join(projectDir, "aidd_docs", "README.md");
+      const readmeContent = await readFile(readmePath, "utf-8");
+      expect(readmeContent).toContain("v2 Update");
     } finally {
       await cleanup();
     }

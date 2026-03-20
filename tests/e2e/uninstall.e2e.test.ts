@@ -8,9 +8,9 @@ describe.concurrent("E2E: aidd uninstall", () => {
   it("removes a tool's files without touching other installed tools", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["uninstall", "claude"], projectDir);
 
@@ -26,8 +26,8 @@ describe.concurrent("E2E: aidd uninstall", () => {
   it("shows an error message when uninstalling a tool that is not installed", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stderr, exitCode } = await runCli(["uninstall", "cursor"], projectDir);
 
@@ -45,7 +45,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("No AIDD manifest found");
-      expect(stderr).toContain("aidd adopt --from");
+      expect(stderr).toContain("aidd setup");
     } finally {
       await cleanup();
     }
@@ -54,9 +54,9 @@ describe.concurrent("E2E: aidd uninstall", () => {
   it("removes multiple tools in one command", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["uninstall", "claude", "cursor"], projectDir);
 
@@ -81,16 +81,16 @@ describe.concurrent("E2E: aidd uninstall", () => {
     }
   });
 
-  it("shows an error message when no tool is specified and --all is not used", async () => {
+  it("exits with error in non-interactive mode when no tool is specified and --all is not used", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stderr, exitCode } = await runCli(["uninstall"], projectDir);
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("--all");
+      expect(stderr).toContain("non-interactive mode");
     } finally {
       await cleanup();
     }
@@ -99,8 +99,8 @@ describe.concurrent("E2E: aidd uninstall", () => {
   it("uninstalls all tools at once with --all", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "--all", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "--all", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["uninstall", "--all"], projectDir);
 
@@ -119,9 +119,9 @@ describe.concurrent("E2E: aidd uninstall", () => {
   it("manifest correctly reflects remaining tools after partial uninstall", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["uninstall", "claude"], projectDir);
 
       const manifestRaw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");
@@ -136,13 +136,27 @@ describe.concurrent("E2E: aidd uninstall", () => {
   it("warns when --all is set with explicit tool IDs", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "--all", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "--all", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stderr, exitCode } = await runCli(["uninstall", "--all", "claude"], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stderr).toContain("ignoring specified tools");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("reports success when --all is used but no tools are installed", async () => {
+    const { projectDir, cleanup } = await createTestEnv("uninstall");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stdout, exitCode } = await runCli(["uninstall", "--all"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("No tools installed");
     } finally {
       await cleanup();
     }

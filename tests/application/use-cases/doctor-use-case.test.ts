@@ -117,9 +117,7 @@ describe("DoctorUseCase", () => {
 
     const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
 
-    await expect(useCase.execute({ projectRoot })).rejects.toThrow(
-      "aidd adopt --from <version> --tools <tool>"
-    );
+    await expect(useCase.execute({ projectRoot })).rejects.toThrow("aidd setup");
   });
 
   it("warns about tool directory not registered in manifest", async () => {

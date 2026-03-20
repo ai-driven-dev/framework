@@ -1,14 +1,12 @@
 import type { Command } from "commander";
-import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
-import {
-  InquirerPrompterAdapter,
-  SilentPrompterAdapter,
-} from "../../infrastructure/adapters/prompter-adapter.js";
+import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
+
 import { createDeps } from "../../infrastructure/deps.js";
 import { NoManifestError } from "../errors.js";
 import { CLIOutput } from "../output.js";
 import { resolveFrameworkWithFallback } from "../use-cases/resolve-framework-use-case.js";
 import { RestoreUseCase } from "../use-cases/restore-use-case.js";
+import { StatusUseCase } from "../use-cases/status-use-case.js";
 
 export function registerRestoreCommand(program: Command): void {
   program
@@ -18,14 +16,23 @@ export function registerRestoreCommand(program: Command): void {
     .option("-f, --force", "Restore without prompting", false)
     .option("--tool <tool>", "Limit restore to a specific tool")
     .option("--docs", "Limit restore to docs only")
+    .option("--path <path>", "Path to a local framework directory or tarball")
+    .option("--release <tag>", "Specific framework release tag to restore against (e.g., v3.2.0)")
     .action(
-      async (fileArgs: string[], cmdOptions: { force: boolean; tool?: string; docs?: boolean }) => {
+      async (
+        fileArgs: string[],
+        cmdOptions: {
+          force: boolean;
+          tool?: string;
+          docs?: boolean;
+          path?: string;
+          release?: string;
+        }
+      ) => {
         const globalOptions = program.opts<{
           verbose: boolean;
           repo?: string;
           token?: string;
-          framework?: string;
-          release?: string;
         }>();
 
         const verbose = globalOptions.verbose ?? false;
@@ -36,18 +43,18 @@ export function registerRestoreCommand(program: Command): void {
           output.error("--tool and --docs are mutually exclusive");
           process.exit(1);
         }
-        if (cmdOptions.tool !== undefined) {
-          output.validateTools([cmdOptions.tool], VALID_TOOL_IDS);
-        }
 
         try {
+          if (cmdOptions.tool !== undefined) {
+            assertValidToolIds([cmdOptions.tool]);
+          }
+
           const deps = await createDeps(
             projectRoot,
             {
               verbose,
               repo: globalOptions.repo,
               token: globalOptions.token,
-              framework: globalOptions.framework,
             },
             output
           );
@@ -69,21 +76,60 @@ export function registerRestoreCommand(program: Command): void {
           const { path: frameworkPath, version } = await resolveFrameworkWithFallback(
             deps.resolver,
             deps.logger,
-            { framework: globalOptions.framework, pinnedVersion, release: globalOptions.release }
+            { path: cmdOptions.path, pinnedVersion, release: cmdOptions.release }
           );
 
           const toolIds: ToolId[] | undefined = cmdOptions.tool
             ? [cmdOptions.tool as ToolId]
             : undefined;
 
-          if (!cmdOptions.force && !process.stdout.isTTY) {
-            output.error("Restore requires --force in non-interactive mode.");
-            process.exit(1);
+          let effectiveFiles: string[] | undefined = fileArgs.length > 0 ? fileArgs : undefined;
+
+          const isTTY = process.stdout.isTTY;
+          const isInteractive =
+            fileArgs.length === 0 &&
+            cmdOptions.tool === undefined &&
+            !cmdOptions.docs &&
+            !cmdOptions.force &&
+            isTTY;
+
+          if (isInteractive) {
+            const statusUseCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
+            const statusReport = await statusUseCase.execute({
+              projectRoot,
+              repo: globalOptions.repo,
+            });
+
+            const driftedFiles = [
+              ...statusReport.tools.flatMap((t) =>
+                t.drifted
+                  .filter((d) => d.status === "modified" || d.status === "deleted")
+                  .map((d) => d.relativePath)
+              ),
+              ...(statusReport.docs?.drifted
+                .filter((d) => d.status === "modified" || d.status === "deleted")
+                .map((d) => d.relativePath) ?? []),
+            ];
+
+            if (driftedFiles.length === 0) {
+              output.info("Nothing to restore.");
+              return;
+            }
+
+            const selected = await deps.prompter.checkbox(
+              "Select files to restore:",
+              driftedFiles.map((f) => ({ name: f, value: f }))
+            );
+
+            if (selected.length === 0) {
+              output.info("No files selected.");
+              return;
+            }
+
+            effectiveFiles = selected;
           }
 
-          const prompter = cmdOptions.force
-            ? new SilentPrompterAdapter()
-            : new InquirerPrompterAdapter();
+          const prompter = deps.prompter;
 
           const restoreUseCase = new RestoreUseCase(
             deps.fs,
@@ -102,8 +148,9 @@ export function registerRestoreCommand(program: Command): void {
             projectRoot,
             toolIds,
             docsOnly,
-            files: fileArgs.length > 0 ? fileArgs : undefined,
-            force: cmdOptions.force,
+            files: effectiveFiles,
+            force: isInteractive ? true : cmdOptions.force,
+            interactive: isTTY,
             manifest,
             repo: globalOptions.repo,
           });
@@ -129,14 +176,9 @@ export function registerRestoreCommand(program: Command): void {
             for (const f of result.docs.kept) output.info(`  ~ kept: ${f}`);
           }
 
-          const totalRestored =
-            result.tools.reduce((sum, t) => sum + t.restored.length, 0) +
-            (result.docs?.restored.length ?? 0);
-          const totalKept =
-            result.tools.reduce((sum, t) => sum + t.kept.length, 0) +
-            (result.docs?.kept.length ?? 0);
-
-          output.success(`\nRestored ${totalRestored} file(s), kept ${totalKept} file(s)`);
+          output.success(
+            `\nRestored ${result.totalRestored} file(s), kept ${result.totalKept} file(s)`
+          );
         } catch (error) {
           output.exit(error);
         }

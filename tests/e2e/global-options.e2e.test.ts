@@ -20,7 +20,6 @@ describe.concurrent("E2E: aidd global options", () => {
       const { stdout, exitCode } = await runCli(["--help"], projectDir);
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("init");
       expect(stdout).toContain("install");
       expect(stdout).toContain("uninstall");
       expect(stdout).toContain("status");
@@ -80,15 +79,29 @@ describe.concurrent("E2E: aidd global options", () => {
   it("--verbose install lists installed files", async () => {
     const { projectDir, cleanup } = await createTestEnv("global");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stderr, exitCode } = await runCli(
-        ["--verbose", "install", "claude", "--framework", FRAMEWORK_PATH],
+        ["--verbose", "install", "claude", "--path", FRAMEWORK_PATH],
         projectDir
       );
 
       expect(exitCode).toBe(0);
       expect(stderr).toMatch(/\+ .+/);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--help does not show hidden commands (adopt, init)", async () => {
+    const { projectDir, cleanup } = await createTestEnv("global");
+    try {
+      const { stdout, exitCode } = await runCli(["--help"], projectDir);
+
+      expect(exitCode).toBe(0);
+      // adopt and init are hidden via _hidden=true in cli.ts
+      expect(stdout).not.toContain("  adopt");
+      expect(stdout).not.toContain("  init");
     } finally {
       await cleanup();
     }

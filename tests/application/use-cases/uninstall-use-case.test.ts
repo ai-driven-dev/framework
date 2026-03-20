@@ -144,7 +144,7 @@ describe("UninstallUseCase", () => {
     const deps = buildDeps(projectRoot);
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
     await expect(useCase.execute({ toolIds: ["claude" as ToolId], projectRoot })).rejects.toThrow(
-      "aidd adopt --from <version> --tools <tool>"
+      "aidd setup"
     );
   });
 });

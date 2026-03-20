@@ -2,7 +2,12 @@ import { join } from "node:path";
 import { generateDistribution } from "../../domain/models/distribution.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
-import { getToolConfig, type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
+import {
+  assertValidToolIds,
+  getToolConfig,
+  type ToolId,
+  VALID_TOOL_IDS,
+} from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { Git } from "../../domain/ports/git.js";
@@ -10,18 +15,21 @@ import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../domain/ports/platform.js";
+import type { Prompter } from "../../domain/ports/prompter.js";
 import { NoManifestError } from "../errors.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
 import { MemoryScriptUseCase } from "./memory-script-use-case.js";
 
 interface InstallOptions {
-  toolIds: ToolId[];
+  toolIds?: ToolId[];
+  all?: boolean;
   frameworkPath: string;
   version: string;
-  docsDir: string;
+  docsDir?: string;
   projectRoot: string;
   force?: boolean;
   repo?: string;
+  interactive?: boolean;
 }
 
 export interface InstallToolResult {
@@ -40,22 +48,44 @@ export class InstallUseCase {
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly git: Git,
-    private readonly platform: Platform
+    private readonly platform: Platform,
+    private readonly prompter?: Prompter
   ) {}
 
   async execute(options: InstallOptions): Promise<InstallToolResult[]> {
-    const { toolIds, frameworkPath, version, docsDir, projectRoot, force = false, repo } = options;
-
-    if (toolIds.length === 0) {
-      throw new Error(
-        `At least one tool ID is required. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
-      );
-    }
+    const { frameworkPath, version, projectRoot, force = false, repo } = options;
+    const interactive = options.interactive ?? false;
 
     const manifest = await this.manifestRepo.load();
     if (manifest === null) {
       throw new NoManifestError(repo);
     }
+
+    const docsDir = options.docsDir ?? manifest.docsDir;
+
+    let toolIds: ToolId[];
+
+    if (options.all) {
+      toolIds = [...VALID_TOOL_IDS];
+    } else if (options.toolIds !== undefined && options.toolIds.length > 0) {
+      toolIds = options.toolIds;
+    } else if (interactive && this.prompter !== undefined) {
+      const installedIds = manifest.getInstalledToolIds();
+      const choices = VALID_TOOL_IDS.map((id) =>
+        installedIds.includes(id)
+          ? { name: id, value: id, checked: true, disabled: "(already installed)" }
+          : { name: id, value: id, checked: false }
+      );
+      const selected = await this.prompter.checkbox("Which tools do you want to install?", choices);
+      if (selected.length === 0) throw new Error("No tools selected.");
+      toolIds = selected as ToolId[];
+    } else {
+      throw new Error(
+        `At least one tool ID is required. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
+      );
+    }
+
+    assertValidToolIds(toolIds);
 
     const { descriptor, contentFiles } = await this.loader.loadFromDirectory(
       frameworkPath,

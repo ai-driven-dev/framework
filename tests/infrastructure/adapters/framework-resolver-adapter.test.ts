@@ -6,10 +6,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  FrameworkResolverAdapter,
-  validateRepoFormat,
-} from "../../../src/infrastructure/adapters/framework-resolver-adapter.js";
+import { validateRepoFormat } from "../../../src/domain/models/manifest.js";
+import { FrameworkResolverAdapter } from "../../../src/infrastructure/adapters/framework-resolver-adapter.js";
 import { FrameworkCache } from "../../../src/infrastructure/cache/framework-cache.js";
 import { HttpClient } from "../../../src/infrastructure/http/http-client.js";
 import { TarExtractor } from "../../../src/infrastructure/tar/tar-extractor.js";

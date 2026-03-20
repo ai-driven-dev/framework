@@ -137,7 +137,7 @@ flowchart TD
 2. Unit `init-use-case.test.ts`: add case for init guard (AIDD dirs present, no manifest → correct error).
 3. E2E `adopt.e2e.test.ts`:
    - Seed a project with manually-placed framework files (copy from fixture dir without manifest).
-   - Run `aidd adopt --framework <fixture> --force`.
+   - Run `aidd adopt --path <fixture> --force`.
    - Assert `.aidd/manifest.json` exists.
    - Run `aidd status` → assert output shows no drift (all in-sync).
 

@@ -1,11 +1,6 @@
 import type { Command } from "commander";
-import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
-import {
-  InquirerPrompterAdapter,
-  SilentPrompterAdapter,
-} from "../../infrastructure/adapters/prompter-adapter.js";
+import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
-import { NoManifestError } from "../errors.js";
 import { CLIOutput } from "../output.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
 import { UpdateUseCase } from "../use-cases/update-use-case.js";
@@ -18,14 +13,21 @@ export function registerUpdateCommand(program: Command): void {
     .option("--dry-run", "Preview changes without writing files", false)
     .option("--tool <tool>", "Limit update to a specific tool")
     .option("--docs", "Limit update to docs only")
+    .option("--path <path>", "Path to a local framework directory or tarball")
+    .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
     .action(
-      async (cmdOptions: { force: boolean; dryRun: boolean; tool?: string; docs?: boolean }) => {
+      async (cmdOptions: {
+        force: boolean;
+        dryRun: boolean;
+        tool?: string;
+        docs?: boolean;
+        path?: string;
+        release?: string;
+      }) => {
         const globalOptions = program.opts<{
           verbose: boolean;
           repo?: string;
           token?: string;
-          framework?: string;
-          release?: string;
         }>();
 
         const verbose = globalOptions.verbose ?? false;
@@ -36,36 +38,27 @@ export function registerUpdateCommand(program: Command): void {
           output.error("--tool and --docs are mutually exclusive");
           process.exit(1);
         }
-        if (cmdOptions.tool !== undefined) {
-          output.validateTools([cmdOptions.tool], VALID_TOOL_IDS);
-        }
 
         try {
+          if (cmdOptions.tool !== undefined) {
+            assertValidToolIds([cmdOptions.tool]);
+          }
+
           const deps = await createDeps(
             projectRoot,
             {
               verbose,
               repo: globalOptions.repo,
               token: globalOptions.token,
-              framework: globalOptions.framework,
             },
             output
           );
 
-          const manifest = await deps.manifestRepo.load();
-          if (manifest === null) {
-            throw new NoManifestError(globalOptions.repo);
-          }
-
           const { path: frameworkPath, version } = await resolveFramework(
             deps.resolver,
             deps.logger,
-            { framework: globalOptions.framework, release: globalOptions.release }
+            { path: cmdOptions.path, release: cmdOptions.release }
           );
-
-          const prompter = cmdOptions.force
-            ? new SilentPrompterAdapter()
-            : new InquirerPrompterAdapter();
 
           const updateUseCase = new UpdateUseCase(
             deps.fs,
@@ -74,21 +67,26 @@ export function registerUpdateCommand(program: Command): void {
             deps.hasher,
             deps.logger,
             deps.git,
-            prompter,
-            deps.platform
+            deps.platform,
+            deps.prompter
           );
 
           const result = await updateUseCase.execute({
             frameworkPath,
             version,
-            docsDir: manifest.docsDir,
             projectRoot,
             toolIds: cmdOptions.tool ? [cmdOptions.tool as ToolId] : undefined,
             docsOnly: cmdOptions.docs ?? false,
             force: cmdOptions.force,
             dryRun: cmdOptions.dryRun,
             repo: globalOptions.repo,
+            interactive: process.stdout.isTTY,
           });
+
+          if (result.cancelled) {
+            output.info("Update cancelled.");
+            return;
+          }
 
           if (result.alreadyUpToDate) {
             output.success(`Already up to date (v${version})`);
@@ -135,16 +133,8 @@ export function registerUpdateCommand(program: Command): void {
             for (const f of result.docs.backedUp) output.info(`  ~ backup: ${f}`);
           }
 
-          const totalWritten =
-            result.tools.reduce((sum, t) => sum + t.written.length, 0) +
-            (result.docs?.written.length ?? 0);
-          const totalDeleted =
-            result.tools.reduce((sum, t) => sum + t.deleted.length, 0) +
-            (result.docs?.deleted.length ?? 0);
-          const toolCount = result.tools.filter((t) => !t.alreadyUpToDate).length;
-
           output.success(
-            `\nUpdated ${totalWritten} files, deleted ${totalDeleted} files across ${toolCount} tool(s)`
+            `\nUpdated ${result.totalWritten} files, deleted ${result.totalDeleted} files across ${result.toolCount} tool(s)`
           );
         } catch (error) {
           output.exit(error);

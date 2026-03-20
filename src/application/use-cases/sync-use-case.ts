@@ -11,16 +11,18 @@ import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import type { Prompter } from "../../domain/ports/prompter.js";
 import { NoManifestError } from "../errors.js";
 
 interface SyncOptions {
   projectRoot: string;
-  docsDir: string;
-  sourceTool: ToolId;
+  docsDir?: string;
+  sourceTool?: ToolId;
   targetTools?: ToolId[];
   force?: boolean;
   includeUserFiles?: boolean;
   repo?: string;
+  interactive?: boolean;
 }
 
 interface SyncFileResult {
@@ -39,6 +41,10 @@ interface SyncToolResult {
 interface SyncResult {
   sourceTool: ToolId;
   tools: SyncToolResult[];
+  totalWritten: number;
+  totalDeleted: number;
+  totalConflicts: number;
+  totalSkipped: number;
 }
 
 function getSectionKeyFromFrameworkPath(frameworkPath: string): UserFileSectionKey | null {
@@ -106,45 +112,105 @@ export class SyncUseCase {
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
     readonly _hasher: Hasher,
-    private readonly logger: Logger
+    private readonly logger: Logger,
+    private readonly prompter?: Prompter
   ) {}
 
   async execute(options: SyncOptions): Promise<SyncResult> {
-    const {
-      projectRoot,
-      docsDir,
-      sourceTool,
-      force = false,
-      includeUserFiles = false,
-      repo,
-    } = options;
+    const { projectRoot, force = false, includeUserFiles = false, repo } = options;
+    const interactive = options.interactive ?? false;
 
     const manifest = await this.manifestRepo.load();
     if (manifest === null) {
       throw new NoManifestError(repo);
     }
 
-    if (!manifest.hasTool(sourceTool)) {
-      throw new Error(`Source tool '${sourceTool}' is not installed.`);
-    }
+    const docsDir = options.docsDir ?? manifest.docsDir;
 
-    const installedToolIds = manifest.getInstalledToolIds();
+    let sourceTool: ToolId;
+    let targetTools: ToolId[] | undefined = options.targetTools;
 
-    if (installedToolIds.length < 2) {
-      throw new Error("Sync requires at least 2 installed tools.");
-    }
-
-    const targetTools =
-      options.targetTools && options.targetTools.length > 0
-        ? options.targetTools
-        : installedToolIds.filter((id) => id !== sourceTool);
-
-    for (const target of targetTools) {
-      if (target === sourceTool) {
-        throw new Error("Source and target cannot be the same tool.");
+    if (options.sourceTool === undefined) {
+      if (!interactive || this.prompter === undefined) {
+        throw new Error("Source tool required in non-interactive mode.");
       }
-      if (!manifest.hasTool(target)) {
-        throw new Error(`Target tool '${target}' is not installed.`);
+
+      const { SyncStatusUseCase } = await import("./sync-status-use-case.js");
+      const installedIds = manifest.getInstalledToolIds();
+
+      if (installedIds.length < 2) {
+        throw new Error("Sync requires at least 2 installed tools.");
+      }
+
+      const modCounts = await new SyncStatusUseCase(this.fs).execute(
+        manifest,
+        installedIds as ToolId[],
+        projectRoot
+      );
+
+      const hasAnyChanges = installedIds.some((id) => {
+        const { modified, deleted } = modCounts[id] ?? { modified: 0, deleted: 0 };
+        return modified > 0 || deleted > 0;
+      });
+
+      if (!hasAnyChanges) {
+        return {
+          sourceTool: installedIds[0] as ToolId,
+          tools: [],
+          totalWritten: 0,
+          totalDeleted: 0,
+          totalConflicts: 0,
+          totalSkipped: 0,
+        };
+      }
+
+      const sourceChoices = installedIds.map((id) => {
+        const { modified, deleted } = modCounts[id] ?? { modified: 0, deleted: 0 };
+        const hasChanges = modified > 0 || deleted > 0;
+        const parts: string[] = [];
+        if (modified > 0) parts.push(`${modified} modified`);
+        if (deleted > 0) parts.push(`${deleted} deleted`);
+        const label = hasChanges ? ` (${parts.join(", ")})` : "";
+        return {
+          name: `${id}${label}`,
+          value: id as ToolId,
+          disabled: hasChanges ? false : "(no changes)",
+        };
+      });
+
+      sourceTool = await this.prompter.select("Source tool to sync from?", sourceChoices);
+
+      const targetChoices = installedIds
+        .filter((id) => id !== sourceTool)
+        .map((id) => ({ name: id, value: id as ToolId }));
+
+      targetTools = await this.prompter.checkbox("Target tools?", targetChoices);
+      if (targetTools.length === 0) throw new Error("No target tools selected.");
+    } else {
+      sourceTool = options.sourceTool;
+
+      if (!manifest.hasTool(sourceTool)) {
+        throw new Error(`Source tool '${sourceTool}' is not installed.`);
+      }
+
+      const installedToolIds = manifest.getInstalledToolIds();
+
+      if (installedToolIds.length < 2) {
+        throw new Error("Sync requires at least 2 installed tools.");
+      }
+
+      targetTools =
+        targetTools && targetTools.length > 0
+          ? targetTools
+          : installedToolIds.filter((id) => id !== sourceTool);
+
+      for (const target of targetTools) {
+        if (target === sourceTool) {
+          throw new Error("Source and target cannot be the same tool.");
+        }
+        if (!manifest.hasTool(target)) {
+          throw new Error(`Target tool '${target}' is not installed.`);
+        }
       }
     }
 
@@ -154,7 +220,7 @@ export class SyncUseCase {
 
     const toolResults: SyncToolResult[] = [];
 
-    for (const targetToolId of targetTools) {
+    for (const targetToolId of targetTools ?? []) {
       this.logger.info(`Syncing ${sourceTool} → ${targetToolId}...`);
 
       const targetConfig = getToolConfig(targetToolId);
@@ -202,7 +268,31 @@ export class SyncUseCase {
       toolResults.push({ targetToolId, files: fileResults });
     }
 
-    return { sourceTool, tools: toolResults };
+    const totalWritten = toolResults.reduce(
+      (s, t) => s + t.files.filter((f) => f.written).length,
+      0
+    );
+    const totalDeleted = toolResults.reduce(
+      (s, t) => s + t.files.filter((f) => f.deleted).length,
+      0
+    );
+    const totalConflicts = toolResults.reduce(
+      (s, t) => s + t.files.filter((f) => f.conflict && !f.written).length,
+      0
+    );
+    const totalSkipped = toolResults.reduce(
+      (s, t) => s + t.files.filter((f) => f.skipped).length,
+      0
+    );
+
+    return {
+      sourceTool,
+      tools: toolResults,
+      totalWritten,
+      totalDeleted,
+      totalConflicts,
+      totalSkipped,
+    };
   }
 
   private async propagateModified(ctx: {

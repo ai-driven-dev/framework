@@ -530,6 +530,6 @@ describe("InstallUseCase", () => {
         docsDir: "aidd_docs",
         projectRoot,
       })
-    ).rejects.toThrow("aidd adopt --from <version> --tools <tool>");
+    ).rejects.toThrow("aidd setup");
   });
 });

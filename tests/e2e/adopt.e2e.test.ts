@@ -76,8 +76,8 @@ describe.concurrent("E2E: aidd adopt", () => {
   it("fails with 'Already initialized' when manifest already exists", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { exitCode, stderr } = await runCli(
         ["adopt", "--from", FRAMEWORK_PATH, "--tools", "claude"],
@@ -94,8 +94,8 @@ describe.concurrent("E2E: aidd adopt", () => {
   it("creates manifest from manually installed .claude/ files", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await rm(join(projectDir, ".aidd"), { recursive: true, force: true });
 
       const { stdout, exitCode } = await runCli(
@@ -114,16 +114,13 @@ describe.concurrent("E2E: aidd adopt", () => {
   it("status shows no drift after adopt (manifest hash matches disk)", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await rm(join(projectDir, ".aidd"), { recursive: true, force: true });
 
       await runCli(["adopt", "--from", FRAMEWORK_PATH, "--tools", "claude"], projectDir);
 
-      const { stdout, exitCode } = await runCli(
-        ["status", "--framework", FRAMEWORK_PATH],
-        projectDir
-      );
+      const { stdout, exitCode } = await runCli(["status"], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("in sync");
@@ -135,9 +132,9 @@ describe.concurrent("E2E: aidd adopt", () => {
   it("adopts multiple tools (claude + cursor) when specified", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
       await rm(join(projectDir, ".aidd"), { recursive: true, force: true });
 
       const { stdout, exitCode } = await runCli(
@@ -161,10 +158,10 @@ describe.concurrent("E2E: aidd adopt", () => {
   it("adopts all three tools (claude + cursor + copilot) when specified", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "copilot", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "copilot", "--path", FRAMEWORK_PATH], projectDir);
       await rm(join(projectDir, ".aidd"), { recursive: true, force: true });
 
       const { stdout, exitCode } = await runCli(
@@ -189,8 +186,8 @@ describe.concurrent("E2E: aidd adopt", () => {
   it("deletes legacy config.json during adoption", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await rm(join(projectDir, ".aidd", "manifest.json"));
       await writeFile(join(projectDir, ".aidd", "config.json"), "{}");
 
@@ -206,8 +203,8 @@ describe.concurrent("E2E: aidd adopt", () => {
   it("does not register user files not in the framework distribution", async () => {
     const { projectDir, cleanup } = await createTestEnv("adopt");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
       // Add a user file outside the framework distribution
       await writeFile(join(projectDir, ".claude", "rules", "my-custom.md"), "# Custom rule");
       await rm(join(projectDir, ".aidd"), { recursive: true, force: true });
@@ -219,46 +216,6 @@ describe.concurrent("E2E: aidd adopt", () => {
       ) as { tools: Record<string, { files: Array<{ relativePath: string }> }> };
       const registeredPaths = manifest.tools.claude.files.map((f) => f.relativePath);
       expect(registeredPaths).not.toContain(".claude/rules/my-custom.md");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("backward compat: global --release flag works as --from", async () => {
-    const { projectDir, cleanup } = await createTestEnv("adopt");
-    try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      const { rm } = await import("node:fs/promises");
-      await rm(`${projectDir}/.aidd`, { recursive: true, force: true });
-
-      const { stdout, exitCode } = await runCli(
-        ["--release", FRAMEWORK_PATH, "adopt", "--tools", "claude"],
-        projectDir
-      );
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("Adopted");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("backward compat: global --framework flag works as --from local path", async () => {
-    const { projectDir, cleanup } = await createTestEnv("adopt");
-    try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      const { rm } = await import("node:fs/promises");
-      await rm(`${projectDir}/.aidd`, { recursive: true, force: true });
-
-      const { stdout, exitCode } = await runCli(
-        ["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude"],
-        projectDir
-      );
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("Adopted");
     } finally {
       await cleanup();
     }

@@ -7,8 +7,8 @@ describe.concurrent("E2E: aidd status", () => {
   it("reports all files in sync after a fresh install", async () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["status"], projectDir);
 
@@ -22,8 +22,8 @@ describe.concurrent("E2E: aidd status", () => {
   it("reports a modified file as drifted", async () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       await writeFile(join(projectDir, "CLAUDE.md"), "modified content by user", "utf-8");
 
@@ -39,8 +39,8 @@ describe.concurrent("E2E: aidd status", () => {
   it("reports a deleted file as missing", async () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       await rm(join(projectDir, "CLAUDE.md"), { force: true });
 
@@ -56,9 +56,9 @@ describe.concurrent("E2E: aidd status", () => {
   it("filters status output to a specific tool with --tool", async () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["status", "--tool", "claude"], projectDir);
 
@@ -73,8 +73,8 @@ describe.concurrent("E2E: aidd status", () => {
   it("reports an untracked file in tool directory as added", async () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       await writeFile(join(projectDir, ".claude", "untracked-file.md"), "extra content", "utf-8");
 
@@ -103,7 +103,7 @@ describe.concurrent("E2E: aidd status", () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
       // init only (no install)
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
       const { stderr, exitCode } = await runCli(["status", "--tool", "cursor"], projectDir);
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("cursor"); // mentions the tool in error
@@ -119,7 +119,7 @@ describe.concurrent("E2E: aidd status", () => {
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("No AIDD manifest found");
-      expect(stderr).toContain("aidd adopt --from");
+      expect(stderr).toContain("aidd setup");
     } finally {
       await cleanup();
     }
@@ -134,7 +134,7 @@ describe.concurrent("E2E: aidd status", () => {
       );
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("Check available tags for: myorg/my-framework");
+      expect(stderr).toContain("myorg/my-framework");
     } finally {
       await cleanup();
     }
@@ -143,7 +143,7 @@ describe.concurrent("E2E: aidd status", () => {
   it("reports docs drift when no tools are installed", async () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
 
       // aidd_docs/tasks/.gitkeep is a tracked docs file in the test fixture
       const trackedPath = join(projectDir, "aidd_docs", "tasks", ".gitkeep");
@@ -154,6 +154,43 @@ describe.concurrent("E2E: aidd status", () => {
       expect(exitCode).toBe(0);
       expect(stdout).toContain("docs");
       expect(stdout).toContain("~");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("filters status output to docs only with --docs", async () => {
+    const { projectDir, cleanup } = await createTestEnv("status");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      // modify a docs file to create drift
+      const trackedPath = join(projectDir, "aidd_docs", "tasks", ".gitkeep");
+      await writeFile(trackedPath, "modified docs", "utf-8");
+
+      const { stdout, exitCode } = await runCli(["status", "--docs"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("docs");
+      expect(stdout).not.toContain("claude");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("exits with error when --tool and --docs are both specified", async () => {
+    const { projectDir, cleanup } = await createTestEnv("status");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stderr, exitCode } = await runCli(
+        ["status", "--tool", "claude", "--docs"],
+        projectDir
+      );
+
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toContain("mutually exclusive");
     } finally {
       await cleanup();
     }

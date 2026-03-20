@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { UpdateUseCase } from "../../../src/application/use-cases/update-use-case.js";
 import {
+  BackupPrompter,
   buildDeps,
   cleanupTempProject,
   createTempProject,
@@ -16,6 +17,7 @@ import {
   linuxPlatform,
   noGit,
   OverwritePrompter,
+  SkipPrompter,
 } from "./helpers.js";
 
 describe("UpdateUseCase", () => {
@@ -41,8 +43,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -65,8 +67,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     await expect(
@@ -76,7 +78,7 @@ describe("UpdateUseCase", () => {
         docsDir: "aidd_docs",
         projectRoot,
       })
-    ).rejects.toThrow("aidd adopt --from <version> --tools <tool>");
+    ).rejects.toThrow("aidd setup");
   });
 
   it("dry run returns dryRun=true and writes nothing", async () => {
@@ -90,8 +92,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -141,8 +143,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -191,8 +193,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new KeepPrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new SkipPrompter()
     );
 
     const result = await useCase.execute({
@@ -237,8 +239,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
     const result = await useCase.execute({
       frameworkPath: FIXTURE_DIR,
@@ -283,8 +285,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new BackupPrompter()
     );
 
     const result = await useCase.execute({
@@ -296,9 +298,11 @@ describe("UpdateUseCase", () => {
 
     const toolResult = result.tools.find((t) => t.toolId === "claude");
     expect(toolResult?.backedUp.length).toBeGreaterThan(0);
-    expect(toolResult?.backedUp[0]).toContain(".backup");
+    expect(toolResult?.backedUp[0]).toMatch(/naming\.md\.bak\.\d{8}T\d{6}/);
 
-    const backupPath = join(projectRoot, ".claude/rules/01-standards/naming.md.backup");
+    const backedUpRelative = toolResult?.backedUp[0];
+    if (!backedUpRelative) throw new Error("Expected a backed up path");
+    const backupPath = join(projectRoot, backedUpRelative);
     const backupContent = await readFile(backupPath, "utf-8");
     expect(backupContent).toBe("user modified rule content");
   });
@@ -331,8 +335,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new KeepPrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new KeepPrompter()
     );
 
     const result = await useCase.execute({
@@ -361,8 +365,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -387,8 +391,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -420,8 +424,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -451,8 +455,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new BackupPrompter()
     );
 
     const result = await useCase.execute({
@@ -463,8 +467,11 @@ describe("UpdateUseCase", () => {
     });
 
     expect(result.docs?.backedUp.some((f) => f.includes("README.md"))).toBe(true);
-    expect(existsSync(`${readmePath}.backup`)).toBe(true);
-    const backupContent = await readFile(`${readmePath}.backup`, "utf-8");
+    const backedUpRelative = result.docs?.backedUp.find((f) => f.includes("README.md"));
+    if (!backedUpRelative) throw new Error("Expected a backed up README.md path");
+    const backupPath = join(projectRoot, backedUpRelative);
+    expect(existsSync(backupPath)).toBe(true);
+    const backupContent = await readFile(backupPath, "utf-8");
     expect(backupContent).toBe("user modified docs content");
   });
 
@@ -482,8 +489,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new KeepPrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new SkipPrompter()
     );
 
     const result = await useCase.execute({
@@ -514,8 +521,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -550,8 +557,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -585,8 +592,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -615,8 +622,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -652,8 +659,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -688,8 +695,8 @@ describe("UpdateUseCase", () => {
       deps.hasher,
       deps.logger,
       noGit,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({

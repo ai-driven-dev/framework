@@ -15,18 +15,20 @@ import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import { NoManifestError } from "../errors.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
+import { ConflictResolutionUseCase } from "./conflict-resolution-use-case.js";
 import { MemoryScriptUseCase } from "./memory-script-use-case.js";
 
 interface UpdateOptions {
   frameworkPath: string;
   version: string;
-  docsDir: string;
+  docsDir?: string;
   projectRoot: string;
   toolIds?: ToolId[];
   docsOnly?: boolean;
   force?: boolean;
   dryRun?: boolean;
   repo?: string;
+  interactive?: boolean;
 }
 
 type FileDiffKind = "added" | "removed" | "changed" | "unchanged";
@@ -53,11 +55,17 @@ interface UpdateToolResult extends UpdateSectionResult {
 
 type DocsUpdateResult = UpdateSectionResult;
 
-interface UpdateResult {
+export interface UpdateResult {
   alreadyUpToDate: boolean;
   dryRun: boolean;
   tools: UpdateToolResult[];
   docs: DocsUpdateResult | null;
+  totalWritten: number;
+  totalDeleted: number;
+  toolCount: number;
+  diffSummary: { added: number; changed: number; removed: number };
+  cancelled?: boolean;
+  version?: string;
 }
 
 interface ApplyDiffResult {
@@ -65,6 +73,12 @@ interface ApplyDiffResult {
   written: string[];
   deleted: string[];
   backedUp: string[];
+}
+
+interface InternalUpdateOptions {
+  dryRun: boolean;
+  force: boolean;
+  conflictResolution: ConflictResolutionUseCase;
 }
 
 export class UpdateUseCase {
@@ -75,24 +89,88 @@ export class UpdateUseCase {
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly git: Git,
-    private readonly prompter: Prompter,
-    private readonly platform: Platform
+    private readonly platform: Platform,
+    private readonly prompter: Prompter
   ) {}
 
   async execute(options: UpdateOptions): Promise<UpdateResult> {
-    const {
-      frameworkPath,
-      version,
-      docsDir,
-      projectRoot,
-      force = false,
-      dryRun = false,
-      repo,
-    } = options;
+    const { force = false, dryRun = false } = options;
+    const interactive = options.interactive ?? false;
+    const conflictResolution = new ConflictResolutionUseCase(this.prompter);
+
+    const isInteractive =
+      interactive &&
+      !force &&
+      !dryRun &&
+      options.toolIds === undefined &&
+      !(options.docsOnly ?? false);
+
+    if (isInteractive) {
+      const dryRunResult = await this.executeInternal(options, {
+        dryRun: true,
+        force: false,
+        conflictResolution,
+      });
+
+      const changedTools = dryRunResult.tools.filter((t) =>
+        t.diff.some((d) => d.kind !== "unchanged")
+      );
+      const docsChanged = dryRunResult.docs?.diff.some((d) => d.kind !== "unchanged") ?? false;
+
+      if (changedTools.length === 0 && !docsChanged) {
+        // Content unchanged, but still run to bump manifest version so the
+        // update banner doesn't keep reporting this version as outdated.
+        return this.executeInternal(
+          { ...options, force: true },
+          { dryRun: false, force: true, conflictResolution }
+        ).then((r) => ({ ...r, cancelled: false, version: options.version }));
+      }
+
+      const scopeChoices = [
+        { name: "All", value: "all" },
+        ...changedTools.map((t) => ({ name: `${t.toolId} only`, value: `tool:${t.toolId}` })),
+        ...(docsChanged ? [{ name: "docs only", value: "docs" }] : []),
+      ];
+
+      const scopeSelection = await this.prompter.select("What to update?", scopeChoices);
+      const confirmed = await this.prompter.confirm("Apply update?");
+
+      if (!confirmed) {
+        return { ...dryRunResult, cancelled: true, version: options.version };
+      }
+
+      let toolIds: ToolId[] | undefined;
+      let docsOnly = false;
+      if (scopeSelection === "docs") {
+        docsOnly = true;
+      } else if (scopeSelection.startsWith("tool:")) {
+        toolIds = [scopeSelection.slice(5) as ToolId];
+      }
+
+      return this.executeInternal(
+        { ...options, toolIds, docsOnly, force: true },
+        { dryRun: false, force: true, conflictResolution }
+      ).then((r) => ({ ...r, cancelled: false, version: options.version }));
+    }
+
+    return this.executeInternal(options, { dryRun, force, conflictResolution }).then((r) => ({
+      ...r,
+      version: options.version,
+    }));
+  }
+
+  private async executeInternal(
+    options: UpdateOptions,
+    internal: InternalUpdateOptions
+  ): Promise<UpdateResult> {
+    const { frameworkPath, version, projectRoot, repo } = options;
+    const { dryRun, force, conflictResolution } = internal;
     const docsOnly = options.docsOnly ?? false;
 
     const manifest = await this.manifestRepo.load();
     if (manifest === null) throw new NoManifestError(repo);
+
+    const docsDir = options.docsDir ?? manifest.docsDir;
 
     const { descriptor, contentFiles, docsFiles } = await this.loader.loadFromDirectory(
       frameworkPath,
@@ -108,7 +186,7 @@ export class UpdateUseCase {
         : manifest.getInstalledToolIds();
 
     for (const toolId of effectiveToolIds) {
-      this.logger.info(`Checking ${toolId} for updates...`);
+      this.logger.debug(`Checking ${toolId} for updates...`);
 
       const config = getToolConfig(toolId);
       const manifestFiles = manifest.getToolFiles(toolId);
@@ -137,7 +215,8 @@ export class UpdateUseCase {
           mergedHashMap.set(newFile.relativePath, diskHash);
         }
 
-        result = await this.applyDiff(diff, newDistMap, projectRoot, force);
+        const conflictDecisions = await this.resolveConflicts(diff, force, conflictResolution);
+        result = await this.applyDiff(diff, newDistMap, projectRoot, conflictDecisions);
 
         const nonMergedFinal = newDistribution
           .filter((f) => !f.merge)
@@ -172,7 +251,16 @@ export class UpdateUseCase {
       !docsOnly && options.toolIds !== undefined && options.toolIds.length > 0;
     const docsResult = hasExplicitToolFilter
       ? null
-      : await this.updateDocs(manifest, docsFiles, docsDir, projectRoot, version, force, dryRun);
+      : await this.updateDocs(
+          manifest,
+          docsFiles,
+          docsDir,
+          projectRoot,
+          version,
+          force,
+          dryRun,
+          conflictResolution
+        );
 
     if (!dryRun) {
       await new MemoryScriptUseCase(this.fs, this.hasher, this.git).execute({
@@ -186,6 +274,21 @@ export class UpdateUseCase {
       await new CatalogUseCase(this.fs).execute({ manifest, docsDir, projectRoot });
     }
 
+    const totalWritten =
+      toolResults.reduce((s, t) => s + t.written.length, 0) + (docsResult?.written.length ?? 0);
+    const totalDeleted =
+      toolResults.reduce((s, t) => s + t.deleted.length, 0) + (docsResult?.deleted.length ?? 0);
+    const toolCount = toolResults.filter((t) => !t.alreadyUpToDate).length;
+
+    const countDiffKind = (kind: string) =>
+      toolResults.reduce((s, t) => s + t.diff.filter((d) => d.kind === kind).length, 0) +
+      (docsResult?.diff.filter((d) => d.kind === kind).length ?? 0);
+    const diffSummary = {
+      added: countDiffKind("added"),
+      changed: countDiffKind("changed"),
+      removed: countDiffKind("removed"),
+    };
+
     return {
       alreadyUpToDate:
         toolResults.every((r) => r.alreadyUpToDate) &&
@@ -193,6 +296,10 @@ export class UpdateUseCase {
       dryRun,
       tools: toolResults,
       docs: docsResult,
+      totalWritten,
+      totalDeleted,
+      toolCount,
+      diffSummary,
     };
   }
 
@@ -203,11 +310,12 @@ export class UpdateUseCase {
     projectRoot: string,
     version: string,
     force: boolean,
-    dryRun: boolean
+    dryRun: boolean,
+    conflictResolution: ConflictResolutionUseCase
   ): Promise<DocsUpdateResult | null> {
     if (!manifest.hasDocs()) return null;
 
-    this.logger.info("Checking docs for updates...");
+    this.logger.debug("Checking docs for updates...");
 
     const newDistribution = buildDocsDistribution(docsFiles, docsDir, this.hasher);
     const newDistMap = new Map(newDistribution.map((f) => [f.relativePath, f]));
@@ -218,7 +326,8 @@ export class UpdateUseCase {
     let result: ApplyDiffResult = { kept: [], written: [], deleted: [], backedUp: [] };
 
     if (!dryRun) {
-      result = await this.applyDiff(diff, newDistMap, projectRoot, force);
+      const conflictDecisions = await this.resolveConflicts(diff, force, conflictResolution);
+      result = await this.applyDiff(diff, newDistMap, projectRoot, conflictDecisions);
 
       const finalFiles = newDistribution.filter(
         (f) => !result.deleted.includes(f.relativePath) && !result.kept.includes(f.relativePath)
@@ -237,11 +346,26 @@ export class UpdateUseCase {
     };
   }
 
+  private async resolveConflicts(
+    diff: FileDiff[],
+    force: boolean,
+    conflictResolution: ConflictResolutionUseCase
+  ): Promise<Map<string, "overwrite" | "skip" | "backup">> {
+    const conflictPaths = diff
+      .filter((e) => (e.kind === "changed" || e.kind === "removed") && e.conflict)
+      .map((e) => e.relativePath);
+    if (conflictPaths.length === 0) return new Map();
+    if (force) {
+      return new Map(conflictPaths.map((p) => [p, "backup"]));
+    }
+    return conflictResolution.execute(conflictPaths);
+  }
+
   private async applyDiff(
     diff: FileDiff[],
     distMap: Map<string, GeneratedFile>,
     projectRoot: string,
-    force: boolean
+    conflictDecisions: Map<string, "overwrite" | "skip" | "backup">
   ): Promise<ApplyDiffResult> {
     const kept: string[] = [];
     const written: string[] = [];
@@ -255,20 +379,31 @@ export class UpdateUseCase {
         await this.fs.writeFile(join(projectRoot, entry.relativePath), newFile.content);
         written.push(entry.relativePath);
       } else if (entry.kind === "removed") {
+        if (entry.conflict) {
+          const decision = conflictDecisions.get(entry.relativePath) ?? "overwrite";
+          if (decision === "skip") {
+            // User keeps their modified version on disk as an untracked file.
+            // Excluded from the new manifest automatically (not in newDistribution).
+            continue;
+          }
+          if (decision === "backup") {
+            const backupPath = await this.fs.backup(join(projectRoot, entry.relativePath));
+            backedUp.push(backupPath.replace(`${projectRoot}/`, ""));
+          }
+        }
         await this.fs.deleteFile(join(projectRoot, entry.relativePath));
         deleted.push(entry.relativePath);
       } else if (entry.kind === "changed") {
-        if (entry.conflict && !force) {
-          const decision = await this.prompter.resolveConflict(entry.relativePath, "modified");
-          if (decision === "keep") {
+        if (entry.conflict) {
+          const decision = conflictDecisions.get(entry.relativePath) ?? "overwrite";
+          if (decision === "skip") {
             kept.push(entry.relativePath);
             continue;
           }
-        }
-        if (entry.conflict) {
-          const diskPath = join(projectRoot, entry.relativePath);
-          await this.fs.writeFile(`${diskPath}.backup`, await this.fs.readFile(diskPath));
-          backedUp.push(`${entry.relativePath}.backup`);
+          if (decision === "backup") {
+            const backupPath = await this.fs.backup(join(projectRoot, entry.relativePath));
+            backedUp.push(backupPath.replace(`${projectRoot}/`, ""));
+          }
         }
         const newFile = distMap.get(entry.relativePath);
         if (!newFile) throw new Error(`Missing new file in distribution: ${entry.relativePath}`);
@@ -283,7 +418,7 @@ export class UpdateUseCase {
   private async computeDiff(
     newDistribution: GeneratedFile[],
     newDistMap: Map<string, GeneratedFile>,
-    manifestMap: Map<string, { value: string }>,
+    manifestMap: Map<string, FileHash>,
     projectRoot: string
   ): Promise<FileDiff[]> {
     const diff: FileDiff[] = [];
@@ -294,13 +429,10 @@ export class UpdateUseCase {
       if (manifestHash === undefined) {
         diff.push({ relativePath: newFile.relativePath, kind: "added" });
       } else if (newFile.hash.value !== manifestHash.value) {
-        const diskPath = join(projectRoot, newFile.relativePath);
-        const diskExists = await this.fs.fileExists(diskPath);
-        let conflict = false;
-        if (diskExists) {
-          const diskHash = await this.fs.readFileHash(diskPath);
-          conflict = diskHash.value !== manifestHash.value;
-        }
+        const conflict = await this.fs.hasLocalChanges(
+          join(projectRoot, newFile.relativePath),
+          manifestHash
+        );
         diff.push({ relativePath: newFile.relativePath, kind: "changed", conflict });
       } else {
         const diskPath = join(projectRoot, newFile.relativePath);
@@ -308,18 +440,24 @@ export class UpdateUseCase {
         if (!diskExists) {
           diff.push({ relativePath: newFile.relativePath, kind: "changed", conflict: false });
         } else {
-          const diskHash = await this.fs.readFileHash(diskPath);
-          if (diskHash.value !== manifestHash.value) {
-            diff.push({ relativePath: newFile.relativePath, kind: "changed", conflict: true });
-          } else {
-            diff.push({ relativePath: newFile.relativePath, kind: "unchanged" });
-          }
+          const conflict = await this.fs.hasLocalChanges(diskPath, manifestHash);
+          diff.push({
+            relativePath: newFile.relativePath,
+            kind: conflict ? "changed" : "unchanged",
+            conflict,
+          });
         }
       }
     }
 
-    for (const [relativePath] of manifestMap) {
-      if (!newDistMap.has(relativePath)) diff.push({ relativePath, kind: "removed" });
+    for (const [relativePath, manifestHash] of manifestMap) {
+      if (!newDistMap.has(relativePath)) {
+        const conflict = await this.fs.hasLocalChanges(
+          join(projectRoot, relativePath),
+          manifestHash
+        );
+        diff.push({ relativePath, kind: "removed", conflict });
+      }
     }
 
     return diff;

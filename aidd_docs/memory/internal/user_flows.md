@@ -80,7 +80,7 @@ flowchart TD
 | Error                         | Recovery action                                                  | Destination                     |
 | ----------------------------- | ---------------------------------------------------------------- | ------------------------------- |
 | Auth failure on private repo  | Run `gh auth login`, or provide `--token` or `AIDD_TOKEN`        | Retry same command              |
-| Network failure, no cache     | Check network connection, or use `--framework` with local source | Retry same command              |
+| Network failure, no cache     | Check network connection, or use `--path` with local source | Retry same command              |
 | Network failure, cache exists | Automatic fallback to cached version (warning displayed)         | Continues with cached framework |
 | Invalid tarball               | Re-download or provide a valid `.tar.gz`                         | Retry same command              |
 | No framework.json             | Verify framework source contains descriptor                      | Fix source and retry            |
@@ -443,7 +443,7 @@ flowchart TD
 | Tool not installed            | Check installed tools via `aidd status`                       | `aidd status`              |
 | User-modified files skipped   | Use `--force` to overwrite user-modified files                | Retry with `--force`       |
 | Pinned version unavailable    | Run `aidd update` to upgrade to latest, then restore          | `aidd update`              |
-| Network failure               | Check network or use `--framework` with local source          | Retry same command         |
+| Network failure               | Check network or use `--path` with local source          | Retry same command         |
 
 ---
 

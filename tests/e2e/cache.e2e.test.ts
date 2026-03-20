@@ -18,7 +18,7 @@ describe.concurrent("E2E: aidd cache", () => {
     it("lists a cached version after install", async () => {
       const { projectDir, cleanup } = await createTestEnv("cache");
       try {
-        await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+        await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
         // The framework path is local, so cache uses "local" as version key
         // Cache list only shows semver versions, so it may be empty for local
@@ -31,13 +31,25 @@ describe.concurrent("E2E: aidd cache", () => {
   });
 
   describe("cache clear", () => {
-    it("clears all versions without error when cache is empty", async () => {
+    it("clears all versions without error when cache is empty (--all)", async () => {
       const { projectDir, cleanup } = await createTestEnv("cache");
       try {
-        const { exitCode, stdout } = await runCli(["cache", "clear"], projectDir);
+        const { exitCode, stdout } = await runCli(["cache", "clear", "--all"], projectDir);
 
         expect(exitCode).toBe(0);
         expect(stdout).toContain("Cleared all cached framework versions");
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it("exits 1 in non-TTY when no version and no --all", async () => {
+      const { projectDir, cleanup } = await createTestEnv("cache");
+      try {
+        const { exitCode, stderr } = await runCli(["cache", "clear"], projectDir);
+
+        expect(exitCode).toBe(1);
+        expect(stderr).toContain("non-interactive mode");
       } finally {
         await cleanup();
       }

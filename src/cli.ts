@@ -10,6 +10,7 @@ import { registerInitCommand } from "./application/commands/init.js";
 import { registerInstallCommand } from "./application/commands/install.js";
 import { registerRestoreCommand } from "./application/commands/restore.js";
 import { registerSelfUpdateCommand } from "./application/commands/self-update.js";
+import { registerSetupCommand } from "./application/commands/setup.js";
 import { registerStatusCommand } from "./application/commands/status.js";
 import { registerSyncCommand } from "./application/commands/sync.js";
 import { registerUninstallCommand } from "./application/commands/uninstall.js";
@@ -46,15 +47,21 @@ program
   .version(formatVersion(currentVersion), "-V, --version", "Show version number")
   .option("--verbose", "Show detailed diagnostic output", false)
   .option("--repo <owner/repo>", "GitHub repository in owner/repo format")
-  .option("--token <token>", "GitHub authentication token")
-  .option("--framework <path>", "Path to a local framework directory or tarball")
-  .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)");
+  .option("--token <token>", "GitHub authentication token");
 
 registerAdoptCommand(program);
 registerCacheCommand(program);
 registerConfigCommand(program);
 registerInitCommand(program);
 registerInstallCommand(program);
+
+// Hide legacy entry points — setup orchestrates these flows now
+for (const name of ["adopt", "init"]) {
+  const cmd = program.commands.find((c) => c.name() === name) as
+    | (Command & { _hidden: boolean })
+    | undefined;
+  if (cmd) cmd._hidden = true;
+}
 registerUninstallCommand(program);
 registerStatusCommand(program);
 registerCleanCommand(program);
@@ -63,6 +70,7 @@ registerUpdateCommand(program);
 registerRestoreCommand(program);
 registerSyncCommand(program);
 registerSelfUpdateCommand(program);
+registerSetupCommand(program);
 
 program.hook("preAction", async (_thisCommand, actionCommand) => {
   const opts = program.opts<{ verbose?: boolean; repo?: string; token?: string }>();
@@ -72,15 +80,18 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
     { verbose: opts.verbose ?? false, repo: opts.repo, token: opts.token },
     output
   ).catch(() => null);
-  if (deps)
+  if (deps) {
+    const cmd = actionCommand.name();
     await printUpdateBanner(
       deps.cliUpdater,
       deps.currentVersionProvider,
       deps.resolver,
       deps.manifestRepo,
       output,
-      actionCommand.name() === "self-update"
+      cmd === "self-update",
+      ["self-update", "update", "setup"].includes(cmd)
     );
+  }
 });
 
 if (process.argv.slice(2).length === 0) {

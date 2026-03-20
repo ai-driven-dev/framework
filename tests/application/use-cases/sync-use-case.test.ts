@@ -35,7 +35,7 @@ describe("SyncUseCase", () => {
         docsDir: "aidd_docs",
         sourceTool: "claude",
       })
-    ).rejects.toThrow("aidd adopt --from <version> --tools <tool>");
+    ).rejects.toThrow("aidd setup");
   });
 
   it("aborts if source tool is not installed", async () => {

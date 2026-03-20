@@ -31,6 +31,100 @@ export class KeepPrompter implements Prompter {
   ): Promise<"keep" | "overwrite"> {
     return "keep";
   }
+
+  async confirm(_message: string): Promise<boolean> {
+    return true;
+  }
+
+  async input(_message: string, defaultValue?: string): Promise<string> {
+    return defaultValue ?? "";
+  }
+
+  async select<T>(
+    _message: string,
+    choices: Array<{ name: string; value: T; disabled?: boolean }>
+  ): Promise<T> {
+    const first = choices.find((c) => !c.disabled);
+    if (first === undefined) {
+      throw new Error("No enabled choices available");
+    }
+    return first.value;
+  }
+
+  async checkbox<T>(
+    _message: string,
+    choices: Array<{ name: string; value: T; checked?: boolean; disabled?: boolean | string }>
+  ): Promise<T[]> {
+    return choices.filter((c) => c.checked === true && !c.disabled).map((c) => c.value);
+  }
+}
+
+abstract class QueuedSelectPrompter implements Prompter {
+  private readonly selectQueue: string[];
+  private selectIdx = 0;
+
+  constructor(selectQueue: string[]) {
+    this.selectQueue = selectQueue;
+  }
+
+  abstract resolveConflict(
+    relativePath: string,
+    reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite">;
+
+  async confirm(_message: string): Promise<boolean> {
+    return true;
+  }
+
+  async input(_message: string, defaultValue?: string): Promise<string> {
+    return defaultValue ?? "";
+  }
+
+  async select<T>(
+    _message: string,
+    choices: Array<{ name: string; value: T; disabled?: boolean }>
+  ): Promise<T> {
+    const response =
+      this.selectQueue[this.selectIdx] ?? this.selectQueue[this.selectQueue.length - 1];
+    this.selectIdx++;
+    const match = choices.find((c) => !c.disabled && String(c.value) === response);
+    if (match === undefined)
+      throw new Error(`${this.constructor.name}: no match for "${response}" in choices`);
+    return match.value;
+  }
+
+  async checkbox<T>(
+    _message: string,
+    choices: Array<{ name: string; value: T; checked?: boolean; disabled?: boolean | string }>
+  ): Promise<T[]> {
+    return choices.filter((c) => c.checked === true && !c.disabled).map((c) => c.value);
+  }
+}
+
+export class SkipPrompter extends QueuedSelectPrompter {
+  constructor() {
+    super(["global", "skip all"]);
+  }
+
+  async resolveConflict(
+    _relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite"> {
+    return "keep";
+  }
+}
+
+export class BackupPrompter extends QueuedSelectPrompter {
+  constructor() {
+    super(["global", "backup all"]);
+  }
+
+  async resolveConflict(
+    _relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite"> {
+    return "overwrite";
+  }
 }
 
 export class RecordingPrompter implements Prompter {
@@ -47,6 +141,32 @@ export class RecordingPrompter implements Prompter {
   ): Promise<"keep" | "overwrite"> {
     this.calls.push({ relativePath, reason });
     return this.response;
+  }
+
+  async confirm(_message: string): Promise<boolean> {
+    return true;
+  }
+
+  async input(_message: string, defaultValue?: string): Promise<string> {
+    return defaultValue ?? "";
+  }
+
+  async select<T>(
+    _message: string,
+    choices: Array<{ name: string; value: T; disabled?: boolean }>
+  ): Promise<T> {
+    const first = choices.find((c) => !c.disabled);
+    if (first === undefined) {
+      throw new Error("No enabled choices available");
+    }
+    return first.value;
+  }
+
+  async checkbox<T>(
+    _message: string,
+    choices: Array<{ name: string; value: T; checked?: boolean; disabled?: boolean | string }>
+  ): Promise<T[]> {
+    return choices.filter((c) => c.checked === true && !c.disabled).map((c) => c.value);
   }
 }
 
@@ -82,7 +202,8 @@ export async function initProject(
     deps.manifestRepo,
     deps.loader,
     deps.hasher,
-    deps.logger
+    deps.logger,
+    new SilentPrompterAdapter()
   );
   await initUseCase.execute({
     frameworkPath: FIXTURE_DIR,
@@ -104,7 +225,8 @@ export async function installTool(
     deps.hasher,
     deps.logger,
     noGit,
-    linuxPlatform
+    linuxPlatform,
+    new SilentPrompterAdapter()
   );
   const results = await installUseCase.execute({
     toolIds: [toolId],

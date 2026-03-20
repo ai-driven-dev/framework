@@ -48,7 +48,7 @@ describe("RestoreUseCase", () => {
         docsDir: "aidd_docs",
         projectRoot,
       })
-    ).rejects.toThrow("aidd adopt --from <version> --tools <tool>");
+    ).rejects.toThrow("aidd setup");
   });
 
   it("reports nothing to restore when files are unmodified", async () => {
@@ -158,6 +158,7 @@ describe("RestoreUseCase", () => {
       version: "test",
       docsDir: "aidd_docs",
       projectRoot,
+      interactive: true,
     });
 
     const contentAfter = await readFile(claudeMdPath, "utf-8");
@@ -337,7 +338,66 @@ describe("RestoreUseCase", () => {
     expect(existsSync(untrackedPath)).toBe(true);
   });
 
-  it("passes reason 'deleted' to prompter when file is missing from disk", async () => {
+  it("restores deleted files in non-interactive mode without --force", async () => {
+    const deps = buildDeps(projectRoot);
+    await initAndInstall(deps, projectRoot, "claude");
+
+    const claudeMdPath = join(projectRoot, "CLAUDE.md");
+    await rm(claudeMdPath);
+
+    const useCase = new RestoreUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new OverwritePrompter(),
+      linuxPlatform
+    );
+
+    const result = await useCase.execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+      interactive: false,
+      force: false,
+    });
+
+    expect(existsSync(claudeMdPath)).toBe(true);
+    expect(result.tools[0].restored.length).toBeGreaterThan(0);
+  });
+
+  it("throws when modified files exist in non-interactive mode without --force", async () => {
+    const deps = buildDeps(projectRoot);
+    await initAndInstall(deps, projectRoot, "claude");
+
+    const claudeMdPath = join(projectRoot, "CLAUDE.md");
+    await writeFile(claudeMdPath, "user modified content");
+
+    const useCase = new RestoreUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      new OverwritePrompter(),
+      linuxPlatform
+    );
+
+    await expect(
+      useCase.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        interactive: false,
+        force: false,
+      })
+    ).rejects.toThrow("--force");
+  });
+
+  it("restores deleted files without prompting the user", async () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude");
 
@@ -363,8 +423,8 @@ describe("RestoreUseCase", () => {
     });
 
     const call = prompter.calls.find((c) => c.relativePath === "CLAUDE.md");
-    expect(call).toBeDefined();
-    expect(call?.reason).toBe("deleted");
+    expect(call).toBeUndefined();
+    expect(existsSync(claudeMdPath)).toBe(true);
   });
 
   it("passes reason 'modified' to prompter when file is changed on disk", async () => {
@@ -390,6 +450,7 @@ describe("RestoreUseCase", () => {
       version: "test",
       docsDir: "aidd_docs",
       projectRoot,
+      interactive: true,
     });
 
     const call = prompter.calls.find((c) => c.relativePath === "CLAUDE.md");
@@ -529,6 +590,7 @@ describe("RestoreUseCase", () => {
       version: "test",
       docsDir: "aidd_docs",
       projectRoot,
+      interactive: true,
     });
 
     const content = await readFile(readmePath, "utf-8");

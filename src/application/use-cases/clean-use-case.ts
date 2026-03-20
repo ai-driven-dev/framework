@@ -3,11 +3,13 @@ import type { ToolId } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import type { Prompter } from "../../domain/ports/prompter.js";
 import { GitignoreUseCase } from "./gitignore-use-case.js";
 
 interface CleanOptions {
   projectRoot: string;
   force: boolean;
+  interactive?: boolean;
 }
 
 interface CleanPreview {
@@ -26,7 +28,8 @@ export class CleanUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    private readonly logger: Logger
+    private readonly logger: Logger,
+    private readonly prompter?: Prompter
   ) {}
 
   async execute(options: CleanOptions): Promise<CleanResult> {
@@ -49,7 +52,12 @@ export class CleanUseCase {
     const preview: CleanPreview = { tools, docsFileCount, totalFileCount };
 
     if (!options.force) {
-      return { dryRun: true, preview, fileCount: 0 };
+      if (options.interactive && this.prompter) {
+        const confirmed = await this.prompter.confirm("Remove all AIDD files?");
+        if (!confirmed) return { dryRun: true, preview, fileCount: 0 };
+      } else {
+        return { dryRun: true, preview, fileCount: 0 };
+      }
     }
 
     let deleted = 0;

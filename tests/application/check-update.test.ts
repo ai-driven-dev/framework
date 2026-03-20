@@ -30,6 +30,7 @@ function makeResolver(latestVersion: string): FrameworkResolver {
   return {
     resolve: vi.fn(),
     fetchLatestVersion: vi.fn().mockResolvedValue(latestVersion),
+    getDefaultRepo: vi.fn().mockReturnValue(undefined),
   };
 }
 
@@ -148,6 +149,7 @@ describe("printUpdateBanner", () => {
     const resolver: FrameworkResolver = {
       resolve: vi.fn(),
       fetchLatestVersion: vi.fn().mockRejectedValue(new Error("network failure")),
+      getDefaultRepo: vi.fn().mockReturnValue(undefined),
     };
 
     await printUpdateBanner(
@@ -161,7 +163,7 @@ describe("printUpdateBanner", () => {
     expect(logs).toHaveLength(0);
   });
 
-  it("shows 'aidd update --docs' when only docs are outdated", async () => {
+  it("shows 'aidd update' when only docs are outdated", async () => {
     const deps = buildDeps(projectRoot);
     await initWithVersion(deps, projectRoot, "3.0.0");
     const { logger, logs } = makeLogger();
@@ -175,8 +177,8 @@ describe("printUpdateBanner", () => {
     );
 
     expect(logs.some((l) => l.includes("Update available"))).toBe(true);
-    expect(logs.some((l) => l.includes("aidd update --docs"))).toBe(true);
-    expect(logs.some((l) => l.includes("aidd update") && !l.includes("--docs"))).toBe(false);
+    expect(logs.some((l) => l.includes("aidd update"))).toBe(true);
+    expect(logs.some((l) => l.includes("--docs"))).toBe(false);
   });
 
   it("shows 'aidd update' when only tools are outdated", async () => {

@@ -2,9 +2,16 @@ import { FileHash } from "./file-hash.js";
 import type { GeneratedFile } from "./generated-file.js";
 import { type ToolId, VALID_TOOL_IDS } from "./tool-config.js";
 
-const DEFAULT_DOCS_DIR = "aidd_docs";
-
 const MANIFEST_VERSION = 1;
+
+const REPO_FORMAT_REGEX = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
+const DOCS_DIR_REGEX = /^[a-zA-Z0-9_-]+$/;
+
+export function validateRepoFormat(repo: string): void {
+  if (!REPO_FORMAT_REGEX.test(repo)) {
+    throw new Error("Invalid repository format. Expected: owner/repo");
+  }
+}
 
 interface TrackedFile {
   readonly relativePath: string;
@@ -60,6 +67,17 @@ interface TrackedFileData {
 }
 
 export class Manifest {
+  static readonly DEFAULT_DOCS_DIR = "aidd_docs";
+  static readonly DEFAULT_REPO = "ai-driven-dev/aidd-framework";
+
+  static validateDocsDir(name: string): void {
+    if (!DOCS_DIR_REGEX.test(name) || name.includes("..")) {
+      throw new Error(
+        `Invalid directory name: "${name}". Use alphanumeric characters, hyphens, and underscores only.`
+      );
+    }
+  }
+
   private readonly _tools: Map<ToolId, ToolEntry>;
   private _docs: DocsEntry | null;
   private _scripts: ScriptsEntry | null;
@@ -85,7 +103,7 @@ export class Manifest {
       tools: new Map(),
       docs: null,
       scripts: null,
-      docsDir: docsDir ?? DEFAULT_DOCS_DIR,
+      docsDir: docsDir ?? Manifest.DEFAULT_DOCS_DIR,
       repo,
     });
   }
@@ -277,7 +295,7 @@ export class Manifest {
       };
     }
 
-    const docsDir = typeof raw.docsDir === "string" ? raw.docsDir : DEFAULT_DOCS_DIR;
+    const docsDir = typeof raw.docsDir === "string" ? raw.docsDir : Manifest.DEFAULT_DOCS_DIR;
     const repo = typeof raw.repo === "string" ? raw.repo : undefined;
 
     let scripts: ScriptsEntry | null = null;

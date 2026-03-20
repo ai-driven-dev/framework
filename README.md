@@ -161,21 +161,20 @@ aidd uninstall --all            # uninstall all tools
 
 ## Commands
 
-| Command                      | Description                                                        | Key options                                               |
-| ---------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------- |
-| `aidd init`                  | Create `aidd_docs/` structure and manifest                         | `--force`, `--docs-dir`, `--repo`                         |
-| `aidd install <tools...>`    | Generate and write tool-specific files                             | `--all`, `--force`                                        |
-| `aidd uninstall <tools...>`  | Remove tool files and update manifest                              | `--all`                                                   |
-| `aidd adopt`                 | Bootstrap manifest for existing manual installations               | `--tools` (required), `--from <version\|path>` (required) |
-| `aidd status`                | Show drift between disk and manifest + available update            | `--tool`, `--docs`                                        |
-| `aidd doctor`                | Structural integrity check — exits 1 on issues (CI-safe)           | —                                                         |
-| `aidd update`                | Apply new framework version                                        | `--force`, `--dry-run`, `--tool`, `--docs`                |
-| `aidd restore [files...]`    | Revert modified/deleted files to the pinned framework version      | `--force`, `--tool`, `--docs`                             |
-| `aidd sync`                  | Propagate local changes from one tool to the others                | `--source` (required), `--target`, `--force`              |
-| `aidd clean`                 | Remove all AIDD files — dry-run without `--force`                  | `--force`                                                 |
-| `aidd cache list\|clear`     | List or remove cached framework versions                           | `--all`, `[version]`                                      |
-| `aidd config list\|get\|set` | Read or update manifest-backed config (`docsDir`, `repo`, `tools`) | `--force`                                                 |
-| `aidd self-update`           | Update the CLI itself to the latest version                        | `--check`, `--dry-run`, `--force`                         |
+| Command                      | Description                                                        | Key options                                  |
+| ---------------------------- | ------------------------------------------------------------------ | -------------------------------------------- |
+| `aidd setup`                 | Interactive onboarding: init, adopt, install, or update as needed  | `--release`, `--repo`, `--path`              |
+| `aidd install <tools...>`    | Generate and write tool-specific files (requires existing manifest) | `--all`, `--force`, `--release`, `--path`   |
+| `aidd uninstall <tools...>`  | Remove tool files and update manifest                              | `--all`                                      |
+| `aidd status`                | Show drift between disk and manifest + available update            | `--tool`, `--docs`                           |
+| `aidd doctor`                | Structural integrity check — exits 1 on issues (CI-safe)           | —                                            |
+| `aidd update`                | Apply new framework version                                        | `--force`, `--dry-run`, `--tool`, `--docs`, `--release`, `--path` |
+| `aidd restore [files...]`    | Revert modified/deleted files to the pinned framework version      | `--force`, `--tool`, `--docs`, `--release`, `--path` |
+| `aidd sync`                  | Propagate local changes from one tool to the others                | `--source` (required), `--target`, `--force` |
+| `aidd clean`                 | Remove all AIDD files — dry-run without `--force`                  | `--force`                                    |
+| `aidd cache list\|clear`     | List or remove cached framework versions                           | `--all`, `[version]`                         |
+| `aidd config list\|get\|set` | Read or update manifest-backed config (`docsDir`, `repo`, `tools`) | `--force`                                    |
+| `aidd self-update`           | Update the CLI itself to the latest version                        | `--check`, `--dry-run`, `--force`            |
 
 ### `aidd init`
 
@@ -193,11 +192,14 @@ aidd init --force               # re-copy doc templates into existing docs dir (
 
 Generates and writes tool-specific distribution files (agents, commands, rules, skills, config).
 
+> Requires an existing AIDD project (manifest). For first-time setup, use `aidd setup` instead.
+
 ```bash
 aidd install claude
 aidd install claude cursor copilot opencode
-aidd install --all              # all supported tools
-aidd install claude --force     # overwrite existing files
+aidd install --all                          # all supported tools
+aidd install claude --force                 # overwrite existing files
+aidd install claude --release v3.4.0       # pin a specific framework version
 ```
 
 ### `aidd uninstall`
@@ -293,14 +295,22 @@ aidd config set repo owner/repo # update repo (writable: docsDir, repo)
 
 ---
 
-## Global Options
+## Options
+
+### Global (all commands)
 
 ```bash
-aidd install claude --verbose            # detailed logs
-aidd install claude --token <token>      # explicit AIDD framework token
-aidd install claude --repo owner/repo    # alternative framework repository
-aidd install claude --framework ./local  # local framework path (dev/testing)
-aidd install claude --release v3.4.0    # pin a specific framework version
+aidd update --verbose                    # detailed logs
+aidd update --token <token>              # explicit AIDD framework token
+aidd update --repo owner/repo            # alternative framework repository
+```
+
+### Framework source (setup, install, update, restore)
+
+```bash
+aidd setup --release v3.4.0             # pin a specific framework version (first-time)
+aidd update --release v3.4.0            # pin a specific framework version (existing project)
+aidd update --path ./local              # local framework path (dev/testing)
 ```
 
 **Environment variables:**

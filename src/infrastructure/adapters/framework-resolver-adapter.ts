@@ -1,6 +1,8 @@
 import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { NoFrameworkSourceError } from "../../domain/errors.js";
+import { validateRepoFormat } from "../../domain/models/manifest.js";
 import type {
   FrameworkResolved,
   FrameworkResolver,
@@ -36,13 +38,6 @@ interface FrameworkResolverAdapterConfig {
 }
 
 const DEFAULT_GITHUB_API_BASE = "https://api.github.com";
-const REPO_FORMAT_REGEX = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
-
-export function validateRepoFormat(repo: string): void {
-  if (!REPO_FORMAT_REGEX.test(repo)) {
-    throw new Error("Invalid repository format. Expected: owner/repo");
-  }
-}
 
 export class FrameworkResolverAdapter implements FrameworkResolver {
   private readonly defaultRepo: string;
@@ -78,12 +73,19 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
       return { path, version, source: "local" };
     }
 
+    // No local source — check remote is configured
+    const repo = options.repo ?? this.defaultRepo;
+    if (!repo) throw new NoFrameworkSourceError();
     return this.resolveRemote(options);
   }
 
-  async fetchLatestVersion(): Promise<string> {
-    const release = await this.fetchLatestRelease(this.defaultRepo, this.defaultToken);
+  async fetchLatestVersion(repo?: string): Promise<string> {
+    const release = await this.fetchLatestRelease(repo ?? this.defaultRepo, this.defaultToken);
     return release.tag_name;
+  }
+
+  getDefaultRepo(): string | undefined {
+    return this.defaultRepo || undefined;
   }
 
   private async resolveLocalTarball(tarballPath: string): Promise<string> {
@@ -132,11 +134,11 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
       const version = release.tag_name.replace(/^v/, "");
 
       if (await this.cache.has(version)) {
-        this.logger?.info(`Using cached framework v${version}`);
+        this.logger?.debug(`Using cached framework v${version}`);
         return { path: this.cache.get(version), version, source: "cache" };
       }
 
-      this.logger?.info(`Downloading framework v${version}...`);
+      this.logger?.debug(`Downloading framework v${version}...`);
       const path = await this.downloadAndCache(repo, release, version, token);
       return { path, version, source: "download" };
     }
@@ -189,7 +191,7 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
 
       const extractDir = await mkdtemp(join(tmpdir(), "aidd-extract-"));
       try {
-        this.logger?.info("Extracting framework...");
+        this.logger?.debug("Extracting framework...");
         const frameworkRoot = await this.tar.extract(tarballPath, extractDir);
         await this.cache.put(version, frameworkRoot);
         return this.cache.get(version);

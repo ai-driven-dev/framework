@@ -70,7 +70,7 @@ Group of identified features to build:
 
 ### F1: Framework Resolution
 
-- FR1.1: Resolve the framework source in priority order: remote tarball (default) > local tarball (--framework path.tar.gz) > local directory (--framework path/)
+- FR1.1: Resolve the framework source in priority order: remote tarball (default) > local tarball (--path path.tar.gz) > local directory (--path path/)
 - FR1.2: For remote source, resolve the repository from --repo flag > AIDD_REPO env var > manifest stored value > default (ai-driven-dev/aidd-framework)
 - FR1.3: For remote source, resolve the auth token from --token flag > AIDD_TOKEN env var > `gh auth token` output (3s timeout) > no token
 - FR1.4: Call GitHub Releases API to get the latest version, download the release asset tarball, extract it
@@ -181,7 +181,7 @@ Group of identified features to build:
 Scenario: Remote framework download and caching
   Given no cached framework exists for the latest version
   And a valid auth token is available via gh auth token
-  When the CLI resolves the framework source with no --framework flag
+  When the CLI resolves the framework source with no --path flag
   Then it calls the GitHub Releases API with the auth token
   And downloads the release asset tarball
   And extracts it to the cache directory
@@ -195,12 +195,12 @@ Scenario: Cached framework reuse
   And loads directly from the cache directory
 
 Scenario: Local directory framework
-  Given --framework points to a directory containing framework.json
+  Given --path points to a directory containing framework.json
   When the CLI resolves the framework source
   Then it loads directly from that directory without downloading
 
 Scenario: Local tarball framework
-  Given --framework points to a .tar.gz file containing a framework
+  Given --path points to a .tar.gz file containing a framework
   When the CLI resolves the framework source
   Then it extracts the tarball to a temporary directory
   And detects the framework root inside it
@@ -241,7 +241,7 @@ Scenario: Network failure with existing cache
   And warns "Network unavailable. Using cached framework v3.1.0"
 
 Scenario: Invalid tarball
-  Given --framework points to a file that is not a valid .tar.gz
+  Given --path points to a file that is not a valid .tar.gz
   When the CLI attempts to extract it
   Then it fails with "Downloaded file is not a valid tarball"
 
@@ -251,7 +251,7 @@ Scenario: Missing framework descriptor in archive
   Then it fails with "No framework descriptor found in the downloaded archive"
 
 Scenario: Missing framework descriptor in local directory
-  Given --framework points to a directory that exists but contains no framework.json
+  Given --path points to a directory that exists but contains no framework.json
   When the CLI attempts to load the framework
   Then it fails with "No framework descriptor found in the specified directory"
 ```
@@ -833,8 +833,8 @@ aidd (CLI binary)
 
 | Dependency               | Provider | Status    | Fallback                            |
 | ------------------------ | -------- | --------- | ----------------------------------- |
-| GitHub Releases API      | GitHub   | Available | --framework flag with local source  |
-| GitHub release asset CDN | GitHub   | Available | --framework flag with local tarball |
+| GitHub Releases API      | GitHub   | Available | --path flag with local source  |
+| GitHub release asset CDN | GitHub   | Available | --path flag with local tarball |
 | gh CLI (optional)        | GitHub   | Available | --token flag or AIDD_TOKEN env var  |
 
 ## 12. Experiments / A/B Testing

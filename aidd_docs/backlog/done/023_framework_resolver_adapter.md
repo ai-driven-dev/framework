@@ -16,9 +16,9 @@ The FrameworkResolverAdapter is the main infrastructure component that composes 
 Implement the full resolve() and getLatestVersion() methods with all source types and offline fallback.
 
 ## Acceptance Criteria
-- [ ] `resolve()` with no `--framework` flag: downloads from GitHub Releases API, extracts, caches, returns local dir
-- [ ] `resolve()` with `--framework` pointing to a directory: loads directly, no download
-- [ ] `resolve()` with `--framework` pointing to a `.tar.gz` file: extracts to temp dir, detects framework root
+- [ ] `resolve()` with no `--path` flag: downloads from GitHub Releases API, extracts, caches, returns local dir
+- [ ] `resolve()` with `--path` pointing to a directory: loads directly, no download
+- [ ] `resolve()` with `--path` pointing to a `.tar.gz` file: extracts to temp dir, detects framework root
 - [ ] Remote download: calls GitHub Releases API for latest release, downloads tarball asset
 - [ ] Cache hit: skips download when cache is valid for the requested version
 - [ ] Offline fallback: network failure + existing cache -> use latest cached version with warning

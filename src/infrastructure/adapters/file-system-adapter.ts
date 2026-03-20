@@ -1,4 +1,14 @@
-import { chmod, mkdir, readdir, readFile, rm, rmdir, stat, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  copyFile,
+  mkdir,
+  readdir,
+  readFile,
+  rm,
+  rmdir,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import type { FileHash } from "../../domain/models/file-hash.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
@@ -93,6 +103,22 @@ export class FileSystemAdapter implements FileSystem {
 
   async chmodExecutable(path: string): Promise<void> {
     await chmod(path, 0o755);
+  }
+
+  async hasLocalChanges(path: string, knownHash: FileHash): Promise<boolean> {
+    if (!(await this.fileExists(path))) return false;
+    const diskHash = await this.readFileHash(path);
+    return diskHash.value !== knownHash.value;
+  }
+
+  async backup(absolutePath: string): Promise<string> {
+    const timestamp = new Date()
+      .toISOString()
+      .slice(0, 19)
+      .replace(/[^0-9T]/g, "");
+    const backupPath = `${absolutePath}.bak.${timestamp}`;
+    await copyFile(absolutePath, backupPath);
+    return backupPath;
   }
 
   async mergeJsonFile(path: string, content: string): Promise<void> {

@@ -1,13 +1,9 @@
 import { join } from "node:path";
 import { Command } from "commander";
+import { formatBytes } from "../../domain/models/file-size.js";
 import { FrameworkCache } from "../../infrastructure/cache/framework-cache.js";
+import { createDeps } from "../../infrastructure/deps.js";
 import { CLIOutput } from "../output.js";
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 function buildCacheCommand(program: Command): Command {
   const cacheCmd = new Command("cache").description("Manage the local framework version cache");
@@ -59,9 +55,41 @@ function buildCacheCommand(program: Command): Command {
         if (version !== undefined) {
           await cache.clear(version);
           output.success(`Cleared cache for version ${version}`);
-        } else {
+        } else if (cmdOptions.all) {
           await cache.clear();
           output.success("Cleared all cached framework versions");
+        } else {
+          if (!process.stdout.isTTY) {
+            output.error("Specify a version or --all in non-interactive mode.");
+            process.exit(1);
+          }
+
+          const deps = await createDeps(projectRoot, { verbose }, output);
+
+          const entries = await cache.list();
+          if (entries.length === 0) {
+            output.info("No cached versions.");
+            return;
+          }
+
+          const selected = await deps.prompter.checkbox(
+            "Select versions to clear:",
+            entries.map((e) => ({ name: e.version, value: e.version }))
+          );
+
+          if (selected.length === 0) {
+            return;
+          }
+
+          const confirmed = await deps.prompter.confirm("Delete selected versions?");
+          if (!confirmed) {
+            return;
+          }
+
+          for (const v of selected) {
+            await cache.clear(v);
+          }
+          output.success(`Cleared ${selected.length} cached version(s)`);
         }
       } catch (error) {
         output.exit(error);

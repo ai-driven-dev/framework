@@ -17,8 +17,12 @@ export function registerCleanCommand(program: Command): void {
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
 
-        const useCase = new CleanUseCase(deps.fs, deps.manifestRepo, deps.logger);
-        const result = await useCase.execute({ projectRoot, force: cmdOptions.force });
+        const useCase = new CleanUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.prompter);
+        const result = await useCase.execute({
+          projectRoot,
+          force: cmdOptions.force,
+          interactive: process.stdout.isTTY,
+        });
 
         if (result.preview.totalFileCount === 0 && !result.dryRun) {
           output.success("Nothing to clean. No AIDD installation found.");
@@ -35,9 +39,13 @@ export function registerCleanCommand(program: Command): void {
           }
           output.print("  manifest: .aidd/");
           const toolCount = result.preview.tools.length;
-          output.success(
-            `Would remove ${result.preview.totalFileCount} files across ${toolCount} ${toolCount === 1 ? "tool" : "tools"}. Use --force to confirm.`
-          );
+          if (process.stdout.isTTY) {
+            output.info("Cancelled.");
+          } else {
+            output.success(
+              `Would remove ${result.preview.totalFileCount} files across ${toolCount} ${toolCount === 1 ? "tool" : "tools"}. Use --force to confirm.`
+            );
+          }
           return;
         }
 

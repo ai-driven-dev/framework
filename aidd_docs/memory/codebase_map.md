@@ -25,10 +25,10 @@
 
 ```plaintext
 src/
-├── cli.ts                              # commander program, global --verbose / --repo / --token / --framework / --release
+├── cli.ts                              # commander program, global --verbose / --repo / --token
 ├── application/
 │   ├── commands/                       # commander command registrations
-│   │   ├── adopt.ts                    # aidd adopt --tools <tools> (--release or --framework required)
+│   │   ├── adopt.ts                    # aidd adopt --tools <tools> (--release or --path required)
 │   │   ├── cache.ts                    # aidd cache list / clear
 │   │   ├── config.ts                   # aidd config list/get/set
 │   │   ├── clean.ts                    # aidd clean [--force]

@@ -20,15 +20,15 @@ The cache layer already supports version-keyed lookups — only the resolution p
 ## Scope
 
 Add `--release <tag>` as a global CLI option. Applies to remote resolution only.
-Ignored (with no side effect) when `--framework <path>` is also set (local path takes precedence).
-Does NOT affect `--framework` local/tarball paths, nor any other command.
+Ignored (with no side effect) when `--path <path>` is also set (local path takes precedence).
+Does NOT affect `--path` local/tarball paths, nor any other command.
 
 ## Acceptance Criteria
 
 - [ ] `aidd install claude --release v3.2.0` downloads and installs framework v3.2.0
 - [ ] `aidd init --release v3.2.0` initialises using framework v3.2.0
 - [ ] Cache is hit on second call with same version tag (no re-download)
-- [ ] `--release` combined with `--framework <path>` is silently ignored (local wins)
+- [ ] `--release` combined with `--path <path>` is silently ignored (local wins)
 - [ ] Non-existent tag throws: `Framework release not found: <tag>`
 - [ ] `v`-prefix is normalized for cache key (e.g., `v3.2.0` → cache key `3.2.0`)
 
@@ -58,7 +58,7 @@ instead of the local `repo` variable. Fix it in the same method edit — it sile
 
 ### 1. `src/cli.ts`
 
-Add one line after the existing `--framework` option:
+Add one line after the existing `--path` option:
 
 ```ts
 .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
@@ -164,12 +164,12 @@ New `describe("remote resolution with --release")` block — 3 cases:
 
 ### `tests/application/use-cases/resolve-framework-use-case.test.ts`
 
-In existing `describe("without --framework (remote resolution)")` block — 2 new cases:
+In existing `describe("without --path (remote resolution)")` block — 2 new cases:
 
 1. **passes version to resolver** — call with `{ release: "v3.1.0" }`, spy on `resolve()` opts
    → assert `receivedOptions.version === "v3.1.0"`
 
-2. **version ignored when --framework set** — call with `{ framework: "/some/path", release: "v3.1.0" }`
+2. **version ignored when --path set** — call with `{ framework: "/some/path", release: "v3.1.0" }`
    → assert `receivedOptions.localPath` is set, `receivedOptions.version` is undefined
 
 ## Documentation to Update (2 files)
@@ -181,7 +181,7 @@ In "Options globales" code block, add:
 aidd install claude --release v3.2.0  # version spécifique du framework
 ```
 
-In global options list (`--verbose`, `--token`, `--repo`, `--framework`), add `--release`.
+In global options list (`--verbose`, `--token`, `--repo`, `--path`), add `--release`.
 
 ### `aidd_docs/memory/architecture.md`
 

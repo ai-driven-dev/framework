@@ -37,7 +37,7 @@ Add `--fix` flag to `DoctorUseCase` and the doctor command. Auto-fix only safe, 
 - `DoctorUseCase` returns a list of issues with a `fixable: boolean` field on each. Currently issues are only formatted in the command layer. Add `fixable: 'install-force' | 'none'` discrimination to the issue type.
 - Auto-fix for missing files: call `InstallUseCase` with `force: true` scoped to the affected tool. This requires `InstallUseCase` to be injectable into `DoctorUseCase` — or handled at the command level by running a sub-command after doctor report.
 - Prefer command-level orchestration: command calls `DoctorUseCase.execute()` to get issues, then calls `InstallUseCase.execute({tools: [toolId], force: true})` for each fixable issue. Cleaner dependency graph, no circular use-case references.
-- Framework must be resolvable for the install sub-call: `--framework`, `--repo`, `--token` global options must be passed through to the install sub-call when `--fix` is active.
+- Framework must be resolvable for the install sub-call: `--path`, `--repo`, `--token` global options must be passed through to the install sub-call when `--fix` is active.
 
 ## Files to Create/Modify
 

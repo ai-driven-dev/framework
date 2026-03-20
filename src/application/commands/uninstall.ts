@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
+import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { NoManifestError } from "../errors.js";
 import { CLIOutput } from "../output.js";
@@ -17,13 +17,6 @@ export function registerUninstallCommand(program: Command): void {
       const output = new CLIOutput(verbose);
       const projectRoot = process.cwd();
 
-      if (!cmdOptions.all && toolArgs.length === 0) {
-        output.error(
-          `Specify at least one tool or use --all. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
-        );
-        process.exit(1);
-      }
-
       if (cmdOptions.all && toolArgs.length > 0) {
         output.warn(`--all is set; ignoring specified tools: ${toolArgs.join(", ")}`);
       }
@@ -32,6 +25,7 @@ export function registerUninstallCommand(program: Command): void {
         const deps = await createDeps(projectRoot, { verbose }, output);
 
         let toolIds: ToolId[];
+
         if (cmdOptions.all) {
           const manifest = await deps.manifestRepo.load();
           if (!manifest) throw new NoManifestError(globalOptions.repo);
@@ -40,9 +34,39 @@ export function registerUninstallCommand(program: Command): void {
             output.success("No tools installed. Run `aidd install <tool>` to get started.");
             return;
           }
-        } else {
+        } else if (toolArgs.length > 0) {
           toolIds = toolArgs as ToolId[];
-          output.validateTools(toolIds, VALID_TOOL_IDS);
+          assertValidToolIds(toolIds);
+        } else {
+          if (!process.stdout.isTTY) {
+            output.error(
+              "aidd uninstall requires tool arguments or --all in non-interactive mode."
+            );
+            process.exit(1);
+          }
+
+          const manifest = await deps.manifestRepo.load();
+          if (!manifest) throw new NoManifestError(globalOptions.repo);
+
+          const installedIds = manifest.getInstalledToolIds();
+          if (installedIds.length === 0) {
+            output.error("No tools installed.");
+            process.exit(1);
+          }
+
+          const choices = installedIds.map((id) => ({ name: id, value: id, checked: false }));
+
+          const selected = await deps.prompter.checkbox(
+            "Which tools do you want to uninstall?",
+            choices
+          );
+
+          if (selected.length === 0) {
+            output.error("No tools selected.");
+            process.exit(1);
+          }
+
+          toolIds = selected as ToolId[];
         }
 
         const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
