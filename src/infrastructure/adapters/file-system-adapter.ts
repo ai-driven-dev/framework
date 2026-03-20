@@ -105,6 +105,12 @@ export class FileSystemAdapter implements FileSystem {
     await chmod(path, 0o755);
   }
 
+  async hasLocalChanges(path: string, knownHash: FileHash): Promise<boolean> {
+    if (!(await this.fileExists(path))) return false;
+    const diskHash = await this.readFileHash(path);
+    return diskHash.value !== knownHash.value;
+  }
+
   async backup(absolutePath: string): Promise<string> {
     const timestamp = new Date()
       .toISOString()

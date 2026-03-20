@@ -13,4 +13,5 @@ export interface FileSystem {
   deleteDirectory(path: string): Promise<void>;
   chmodExecutable(path: string): Promise<void>;
   backup(absolutePath: string): Promise<string>;
+  hasLocalChanges(path: string, knownHash: FileHash): Promise<boolean>;
 }

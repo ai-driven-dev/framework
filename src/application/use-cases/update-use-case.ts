@@ -347,7 +347,7 @@ export class UpdateUseCase {
     conflictResolution: ConflictResolutionUseCase
   ): Promise<Map<string, "overwrite" | "skip" | "backup">> {
     const conflictPaths = diff
-      .filter((e) => e.kind === "changed" && e.conflict)
+      .filter((e) => (e.kind === "changed" || e.kind === "removed") && e.conflict)
       .map((e) => e.relativePath);
     if (conflictPaths.length === 0) return new Map();
     if (force) {
@@ -374,18 +374,29 @@ export class UpdateUseCase {
         await this.fs.writeFile(join(projectRoot, entry.relativePath), newFile.content);
         written.push(entry.relativePath);
       } else if (entry.kind === "removed") {
+        if (entry.conflict) {
+          const decision = conflictDecisions.get(entry.relativePath) ?? "overwrite";
+          if (decision === "skip") {
+            // User keeps their modified version on disk as an untracked file.
+            // Excluded from the new manifest automatically (not in newDistribution).
+            continue;
+          }
+          if (decision === "backup") {
+            const backupPath = await this.fs.backup(join(projectRoot, entry.relativePath));
+            backedUp.push(backupPath.replace(`${projectRoot}/`, ""));
+          }
+        }
         await this.fs.deleteFile(join(projectRoot, entry.relativePath));
         deleted.push(entry.relativePath);
       } else if (entry.kind === "changed") {
         if (entry.conflict) {
-          const diskPath = join(projectRoot, entry.relativePath);
           const decision = conflictDecisions.get(entry.relativePath) ?? "overwrite";
           if (decision === "skip") {
             kept.push(entry.relativePath);
             continue;
           }
           if (decision === "backup") {
-            const backupPath = await this.fs.backup(diskPath);
+            const backupPath = await this.fs.backup(join(projectRoot, entry.relativePath));
             backedUp.push(backupPath.replace(`${projectRoot}/`, ""));
           }
         }
@@ -402,7 +413,7 @@ export class UpdateUseCase {
   private async computeDiff(
     newDistribution: GeneratedFile[],
     newDistMap: Map<string, GeneratedFile>,
-    manifestMap: Map<string, { value: string }>,
+    manifestMap: Map<string, FileHash>,
     projectRoot: string
   ): Promise<FileDiff[]> {
     const diff: FileDiff[] = [];
@@ -413,13 +424,10 @@ export class UpdateUseCase {
       if (manifestHash === undefined) {
         diff.push({ relativePath: newFile.relativePath, kind: "added" });
       } else if (newFile.hash.value !== manifestHash.value) {
-        const diskPath = join(projectRoot, newFile.relativePath);
-        const diskExists = await this.fs.fileExists(diskPath);
-        let conflict = false;
-        if (diskExists) {
-          const diskHash = await this.fs.readFileHash(diskPath);
-          conflict = diskHash.value !== manifestHash.value;
-        }
+        const conflict = await this.fs.hasLocalChanges(
+          join(projectRoot, newFile.relativePath),
+          manifestHash
+        );
         diff.push({ relativePath: newFile.relativePath, kind: "changed", conflict });
       } else {
         const diskPath = join(projectRoot, newFile.relativePath);
@@ -427,18 +435,24 @@ export class UpdateUseCase {
         if (!diskExists) {
           diff.push({ relativePath: newFile.relativePath, kind: "changed", conflict: false });
         } else {
-          const diskHash = await this.fs.readFileHash(diskPath);
-          if (diskHash.value !== manifestHash.value) {
-            diff.push({ relativePath: newFile.relativePath, kind: "changed", conflict: true });
-          } else {
-            diff.push({ relativePath: newFile.relativePath, kind: "unchanged" });
-          }
+          const conflict = await this.fs.hasLocalChanges(diskPath, manifestHash);
+          diff.push({
+            relativePath: newFile.relativePath,
+            kind: conflict ? "changed" : "unchanged",
+            conflict,
+          });
         }
       }
     }
 
-    for (const [relativePath] of manifestMap) {
-      if (!newDistMap.has(relativePath)) diff.push({ relativePath, kind: "removed" });
+    for (const [relativePath, manifestHash] of manifestMap) {
+      if (!newDistMap.has(relativePath)) {
+        const conflict = await this.fs.hasLocalChanges(
+          join(projectRoot, relativePath),
+          manifestHash
+        );
+        diff.push({ relativePath, kind: "removed", conflict });
+      }
     }
 
     return diff;
