@@ -79,8 +79,8 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
     return this.resolveRemote(options);
   }
 
-  async fetchLatestVersion(): Promise<string> {
-    const release = await this.fetchLatestRelease(this.defaultRepo, this.defaultToken);
+  async fetchLatestVersion(repo?: string): Promise<string> {
+    const release = await this.fetchLatestRelease(repo ?? this.defaultRepo, this.defaultToken);
     return release.tag_name;
   }
 

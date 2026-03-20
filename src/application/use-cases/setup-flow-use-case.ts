@@ -92,7 +92,9 @@ export class SetupFlowUseCase {
         let resolvedRelease: string | undefined;
         if (!path && !release) {
           if (interactiveRepo) {
-            const latestTag = await this.resolver.fetchLatestVersion().catch(() => "");
+            const latestTag = await this.resolver
+              .fetchLatestVersion(interactiveRepo)
+              .catch(() => "");
             if (latestTag) {
               resolvedRelease = await this.prompter.input(
                 `Framework release tag (latest: ${latestTag}):`,

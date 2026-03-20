@@ -38,7 +38,7 @@ export class SetupUseCase {
     }
 
     try {
-      const latestVersion = await this.resolver.fetchLatestVersion();
+      const latestVersion = await this.resolver.fetchLatestVersion(manifest.repo);
       const installedVersions = installedIds
         .map((id) => manifest.getToolVersion(id))
         .filter((v): v is string => v !== undefined);
