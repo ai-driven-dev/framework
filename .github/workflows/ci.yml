@@ -86,7 +86,7 @@ jobs:
           for tool in claude cursor copilot opencode; do
             tar czf "/tmp/aidd-${tool}-${VERSION}.tar.gz" \
               -C dist/${tool} \
-              --exclude='.aidd' \
+              --exclude='.aidd/cache' \
               .
           done
 
