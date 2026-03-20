@@ -118,7 +118,12 @@ export class UpdateUseCase {
       const docsChanged = dryRunResult.docs?.diff.some((d) => d.kind !== "unchanged") ?? false;
 
       if (changedTools.length === 0 && !docsChanged) {
-        return { ...dryRunResult, cancelled: false, version: options.version };
+        // Content unchanged, but still run to bump manifest version so the
+        // update banner doesn't keep reporting this version as outdated.
+        return this.executeInternal(
+          { ...options, force: true },
+          { dryRun: false, force: true, conflictResolution }
+        ).then((r) => ({ ...r, cancelled: false, version: options.version }));
       }
 
       const scopeChoices = [
