@@ -76,291 +76,272 @@ export class SetupUseCase {
   ) {}
 
   async execute(options: SetupOptions): Promise<SetupResult> {
-    const { projectRoot, path, release, repo } = options;
-    const state = await detectSetupState(this.manifestRepo, this.fs, this.resolver, projectRoot);
-
+    const state = await detectSetupState(
+      this.manifestRepo,
+      this.fs,
+      this.resolver,
+      options.projectRoot
+    );
     switch (state.kind) {
-      case "needs-init": {
-        const docsDirInput = await this.prompter.input(
-          "Documentation directory name:",
-          Manifest.DEFAULT_DOCS_DIR
-        );
-        const docsDir = docsDirInput || Manifest.DEFAULT_DOCS_DIR;
-        Manifest.validateDocsDir(docsDir);
+      case "needs-init":
+        return this.handleInit(options);
+      case "needs-adopt":
+        return this.handleAdopt(options);
+      case "needs-install":
+        return this.handleInstall(options);
+      case "needs-update":
+        return this.handleUpdate(options);
+      case "up-to-date":
+        return this.handleUpToDate(options);
+    }
+  }
 
-        const existingManifest = await this.manifestRepo.load();
-        const sourceDefault =
-          path ?? existingManifest?.repo ?? this.resolver.getDefaultRepo() ?? "";
-        const sourceInput = await this.prompter.input(
-          "Framework source (owner/repo or local path):",
-          sourceDefault
-        );
+  private async handleInit(options: SetupOptions): Promise<SetupResult> {
+    const { projectRoot, path, release, repo } = options;
 
-        let interactivePath: string | undefined;
-        let interactiveRepo: string | undefined;
+    const docsDirInput = await this.prompter.input(
+      "Documentation directory name:",
+      Manifest.DEFAULT_DOCS_DIR
+    );
+    const docsDir = docsDirInput || Manifest.DEFAULT_DOCS_DIR;
+    Manifest.validateDocsDir(docsDir);
 
-        if (sourceInput !== "") {
-          if (
-            sourceInput.startsWith("/") ||
-            sourceInput.startsWith("./") ||
-            sourceInput.startsWith("../")
-          ) {
-            interactivePath = sourceInput;
-          } else {
-            interactiveRepo = sourceInput;
-          }
-        }
+    const existingManifest = await this.manifestRepo.load();
+    const sourceDefault = path ?? existingManifest?.repo ?? this.resolver.getDefaultRepo() ?? "";
+    const sourceInput = await this.prompter.input(
+      "Framework source (owner/repo or local path):",
+      sourceDefault
+    );
 
-        let resolvedRelease: string | undefined;
-        if (!interactivePath && !release) {
-          if (interactiveRepo) {
-            const latestTag = await this.resolver
-              .fetchLatestVersion(interactiveRepo)
-              .catch(() => "");
-            if (latestTag) {
-              resolvedRelease = await this.prompter.input(
-                `Framework release tag (latest: ${latestTag}):`,
-                latestTag
-              );
-            } else {
-              resolvedRelease = await this.prompter.input("Framework release tag:", "");
-            }
-          }
-        }
+    let interactivePath: string | undefined;
+    let interactiveRepo: string | undefined;
 
-        const { path: frameworkPath, version } = await resolveFramework(
-          this.resolver,
-          this.logger,
-          {
-            path: interactivePath ?? path,
-            release: resolvedRelease ?? release,
-            repo: interactiveRepo,
-          }
-        );
-
-        const initResult = await new InitUseCase(
-          this.fs,
-          this.manifestRepo,
-          this.loader,
-          this.hasher,
-          this.logger
-        ).execute({
-          frameworkPath,
-          version,
-          docsDir,
-          explicitDocsDir: docsDirInput,
-          projectRoot,
-          force: false,
-          repo: interactiveRepo,
-        });
-
-        const installResults = await new InstallUseCase(
-          this.fs,
-          this.manifestRepo,
-          this.loader,
-          this.hasher,
-          this.logger,
-          this.git,
-          this.platform,
-          this.prompter
-        ).execute({
-          frameworkPath,
-          version,
-          projectRoot,
-          repo,
-          interactive: true,
-        });
-
-        return {
-          kind: "initialized",
-          docsDir: initResult.docsDir,
-          fileCount: initResult.fileCount,
-          install: { results: installResults },
-        };
-      }
-
-      case "needs-adopt": {
-        const choices = VALID_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }));
-        const selected = await this.prompter.checkbox("Which tools do you want to adopt?", choices);
-        if (selected.length === 0) throw new Error("No tools selected.");
-
-        const fromInput = await this.prompter.input("Framework version tag or local path:", "");
-        if (!fromInput) throw new AdoptRequiresVersionError(repo);
-
-        const { path: frameworkPath, version } = await resolveFramework(
-          this.resolver,
-          this.logger,
-          {
-            from: fromInput,
-          }
-        );
-
-        const adoptResult = await new AdoptUseCase(
-          this.fs,
-          this.manifestRepo,
-          this.loader,
-          this.hasher,
-          this.logger,
-          this.platform
-        ).execute({
-          toolIds: selected as ToolId[],
-          frameworkPath,
-          docsDir: Manifest.DEFAULT_DOCS_DIR,
-          projectRoot,
-          version,
-        });
-
-        return {
-          kind: "adopted",
-          version,
-          toolCount: adoptResult.tools.length,
-          totalRegistered: adoptResult.totalRegistered,
-          docsRegistered: adoptResult.docsRegistered,
-        };
-      }
-
-      case "needs-install": {
-        const { path: frameworkPath, version } = await resolveFramework(
-          this.resolver,
-          this.logger,
-          {
-            path,
-            release,
-            repo,
-          }
-        );
-
-        const installResults = await new InstallUseCase(
-          this.fs,
-          this.manifestRepo,
-          this.loader,
-          this.hasher,
-          this.logger,
-          this.git,
-          this.platform,
-          this.prompter
-        ).execute({
-          frameworkPath,
-          version,
-          projectRoot,
-          repo,
-          interactive: true,
-        });
-
-        return { kind: "installed", install: { results: installResults } };
-      }
-
-      case "needs-update": {
-        const { path: frameworkPath, version } = await resolveFramework(
-          this.resolver,
-          this.logger,
-          {
-            path,
-            release,
-            repo,
-          }
-        );
-
-        const updateResult = await new UpdateUseCase(
-          this.fs,
-          this.manifestRepo,
-          this.loader,
-          this.hasher,
-          this.logger,
-          this.git,
-          this.platform,
-          this.prompter
-        ).execute({
-          frameworkPath,
-          version,
-          projectRoot,
-          interactive: true,
-          repo,
-        });
-
-        if (updateResult.cancelled) {
-          return { kind: "update-cancelled" };
-        }
-
-        const updatedManifest = await this.manifestRepo.load();
-        const updatedInstalledIds = updatedManifest?.getInstalledToolIds() ?? [];
-        const missingTools = VALID_TOOL_IDS.filter((id) => !updatedInstalledIds.includes(id));
-
-        let additionalInstall: InstallSummary | undefined;
-        if (missingTools.length > 0) {
-          const wantsMore = await this.prompter.confirm("Install additional tools?");
-          if (wantsMore) {
-            const installResults = await new InstallUseCase(
-              this.fs,
-              this.manifestRepo,
-              this.loader,
-              this.hasher,
-              this.logger,
-              this.git,
-              this.platform,
-              this.prompter
-            ).execute({
-              frameworkPath,
-              version,
-              projectRoot,
-              repo,
-              interactive: true,
-            });
-            additionalInstall = { results: installResults };
-          }
-        }
-
-        return {
-          kind: "updated",
-          version,
-          totalWritten: updateResult.totalWritten,
-          totalDeleted: updateResult.totalDeleted,
-          toolCount: updateResult.toolCount,
-          additionalInstall,
-        };
-      }
-
-      case "up-to-date": {
-        const manifest = await this.manifestRepo.load();
-        const installedIds = manifest?.getInstalledToolIds() ?? [];
-        const missingTools = VALID_TOOL_IDS.filter((id) => !installedIds.includes(id));
-
-        if (missingTools.length > 0) {
-          const wantsMore = await this.prompter.confirm("Install additional tools?");
-          if (wantsMore) {
-            const { path: frameworkPath, version } = await resolveFramework(
-              this.resolver,
-              this.logger,
-              { path, release, repo }
-            );
-            const installResults = await new InstallUseCase(
-              this.fs,
-              this.manifestRepo,
-              this.loader,
-              this.hasher,
-              this.logger,
-              this.git,
-              this.platform,
-              this.prompter
-            ).execute({
-              frameworkPath,
-              version,
-              projectRoot,
-              repo,
-              interactive: true,
-            });
-            return {
-              kind: "up-to-date",
-              hasAdditionalTools: true,
-              additionalInstall: { results: installResults },
-            };
-          }
-          return { kind: "up-to-date", hasAdditionalTools: true };
-        }
-
-        return { kind: "up-to-date", hasAdditionalTools: false };
+    if (sourceInput !== "") {
+      if (
+        sourceInput.startsWith("/") ||
+        sourceInput.startsWith("./") ||
+        sourceInput.startsWith("../")
+      ) {
+        interactivePath = sourceInput;
+      } else {
+        interactiveRepo = sourceInput;
       }
     }
+
+    let resolvedRelease: string | undefined;
+    if (!interactivePath && !release && interactiveRepo) {
+      const latestTag = await this.resolver.fetchLatestVersion(interactiveRepo).catch(() => "");
+      if (latestTag) {
+        resolvedRelease = await this.prompter.input(
+          `Framework release tag (latest: ${latestTag}):`,
+          latestTag
+        );
+      } else {
+        resolvedRelease = await this.prompter.input("Framework release tag:", "");
+      }
+    }
+
+    const { path: frameworkPath, version } = await resolveFramework(this.resolver, this.logger, {
+      path: interactivePath ?? path,
+      release: resolvedRelease ?? release,
+      repo: interactiveRepo,
+    });
+
+    const initResult = await new InitUseCase(
+      this.fs,
+      this.manifestRepo,
+      this.loader,
+      this.hasher,
+      this.logger
+    ).execute({
+      frameworkPath,
+      version,
+      docsDir,
+      explicitDocsDir: docsDirInput,
+      projectRoot,
+      force: false,
+      repo: interactiveRepo,
+    });
+
+    const installResults = await this.runInstall(frameworkPath, version, projectRoot, repo);
+
+    return {
+      kind: "initialized",
+      docsDir: initResult.docsDir,
+      fileCount: initResult.fileCount,
+      install: { results: installResults },
+    };
+  }
+
+  private async handleAdopt(options: SetupOptions): Promise<SetupResult> {
+    const { projectRoot, repo } = options;
+
+    const choices = VALID_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }));
+    const selected = await this.prompter.checkbox("Which tools do you want to adopt?", choices);
+    if (selected.length === 0) throw new Error("No tools selected.");
+
+    const fromInput = await this.prompter.input("Framework version tag or local path:", "");
+    if (!fromInput) throw new AdoptRequiresVersionError(repo);
+
+    const { path: frameworkPath, version } = await resolveFramework(this.resolver, this.logger, {
+      from: fromInput,
+    });
+
+    const adoptResult = await new AdoptUseCase(
+      this.fs,
+      this.manifestRepo,
+      this.loader,
+      this.hasher,
+      this.logger,
+      this.platform
+    ).execute({
+      toolIds: selected as ToolId[],
+      frameworkPath,
+      docsDir: Manifest.DEFAULT_DOCS_DIR,
+      projectRoot,
+      version,
+    });
+
+    return {
+      kind: "adopted",
+      version,
+      toolCount: adoptResult.tools.length,
+      totalRegistered: adoptResult.totalRegistered,
+      docsRegistered: adoptResult.docsRegistered,
+    };
+  }
+
+  private async handleInstall(options: SetupOptions): Promise<SetupResult> {
+    const { projectRoot, path, release, repo } = options;
+
+    const { path: frameworkPath, version } = await resolveFramework(this.resolver, this.logger, {
+      path,
+      release,
+      repo,
+    });
+
+    const installResults = await this.runInstall(frameworkPath, version, projectRoot, repo);
+
+    return { kind: "installed", install: { results: installResults } };
+  }
+
+  private async handleUpdate(options: SetupOptions): Promise<SetupResult> {
+    const { projectRoot, path, release, repo } = options;
+
+    const { path: frameworkPath, version } = await resolveFramework(this.resolver, this.logger, {
+      path,
+      release,
+      repo,
+    });
+
+    const updateResult = await new UpdateUseCase(
+      this.fs,
+      this.manifestRepo,
+      this.loader,
+      this.hasher,
+      this.logger,
+      this.git,
+      this.platform,
+      this.prompter
+    ).execute({
+      frameworkPath,
+      version,
+      projectRoot,
+      interactive: true,
+      repo,
+    });
+
+    if (updateResult.cancelled) {
+      return { kind: "update-cancelled" };
+    }
+
+    const updatedManifest = await this.manifestRepo.load();
+    const updatedInstalledIds = updatedManifest?.getInstalledToolIds() ?? [];
+    const missingTools = VALID_TOOL_IDS.filter((id) => !updatedInstalledIds.includes(id));
+    const additionalInstall = await this.offerAdditionalInstall(
+      missingTools.length > 0,
+      frameworkPath,
+      version,
+      projectRoot,
+      repo
+    );
+
+    return {
+      kind: "updated",
+      version,
+      totalWritten: updateResult.totalWritten,
+      totalDeleted: updateResult.totalDeleted,
+      toolCount: updateResult.toolCount,
+      additionalInstall,
+    };
+  }
+
+  private async handleUpToDate(options: SetupOptions): Promise<SetupResult> {
+    const { projectRoot, path, release, repo } = options;
+
+    const manifest = await this.manifestRepo.load();
+    const installedIds = manifest?.getInstalledToolIds() ?? [];
+    const missingTools = VALID_TOOL_IDS.filter((id) => !installedIds.includes(id));
+
+    if (missingTools.length === 0) {
+      return { kind: "up-to-date", hasAdditionalTools: false };
+    }
+
+    const wantsMore = await this.prompter.confirm("Install additional tools?");
+    if (!wantsMore) {
+      return { kind: "up-to-date", hasAdditionalTools: true };
+    }
+
+    const { path: frameworkPath, version } = await resolveFramework(this.resolver, this.logger, {
+      path,
+      release,
+      repo,
+    });
+    const installResults = await this.runInstall(frameworkPath, version, projectRoot, repo);
+
+    return {
+      kind: "up-to-date",
+      hasAdditionalTools: true,
+      additionalInstall: { results: installResults },
+    };
+  }
+
+  private async offerAdditionalInstall(
+    hasMissing: boolean,
+    frameworkPath: string,
+    version: string,
+    projectRoot: string,
+    repo: string | undefined
+  ): Promise<InstallSummary | undefined> {
+    if (!hasMissing) return undefined;
+    const wantsMore = await this.prompter.confirm("Install additional tools?");
+    if (!wantsMore) return undefined;
+    const installResults = await this.runInstall(frameworkPath, version, projectRoot, repo);
+    return { results: installResults };
+  }
+
+  private async runInstall(
+    frameworkPath: string,
+    version: string,
+    projectRoot: string,
+    repo: string | undefined
+  ): Promise<InstallToolResult[]> {
+    return new InstallUseCase(
+      this.fs,
+      this.manifestRepo,
+      this.loader,
+      this.hasher,
+      this.logger,
+      this.git,
+      this.platform,
+      this.prompter
+    ).execute({
+      frameworkPath,
+      version,
+      projectRoot,
+      repo,
+      interactive: true,
+    });
   }
 }
 
