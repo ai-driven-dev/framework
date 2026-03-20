@@ -30,6 +30,7 @@ function makeResolver(latestVersion: string): FrameworkResolver {
   return {
     resolve: vi.fn(),
     fetchLatestVersion: vi.fn().mockResolvedValue(latestVersion),
+    getDefaultRepo: vi.fn().mockReturnValue(undefined),
   };
 }
 
@@ -148,6 +149,7 @@ describe("printUpdateBanner", () => {
     const resolver: FrameworkResolver = {
       resolve: vi.fn(),
       fetchLatestVersion: vi.fn().mockRejectedValue(new Error("network failure")),
+      getDefaultRepo: vi.fn().mockReturnValue(undefined),
     };
 
     await printUpdateBanner(

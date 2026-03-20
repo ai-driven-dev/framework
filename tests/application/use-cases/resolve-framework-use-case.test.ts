@@ -21,6 +21,7 @@ function makeResolver(result: FrameworkResolved) {
   return {
     resolve: async () => result,
     fetchLatestVersion: stubFetchLatestVersion,
+    getDefaultRepo: () => undefined,
   };
 }
 

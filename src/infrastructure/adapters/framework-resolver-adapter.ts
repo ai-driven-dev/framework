@@ -84,6 +84,10 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
     return release.tag_name;
   }
 
+  getDefaultRepo(): string | undefined {
+    return this.defaultRepo || undefined;
+  }
+
   private async resolveLocalTarball(tarballPath: string): Promise<string> {
     const tempDir = await mkdtemp(join(tmpdir(), "aidd-extract-"));
     try {

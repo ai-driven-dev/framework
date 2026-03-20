@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
 import { CLIOutput } from "../output.js";
 import type { InstallToolResult } from "../use-cases/install-use-case.js";
-import { SetupFlowUseCase } from "../use-cases/setup-flow-use-case.js";
+import { SetupUseCase } from "../use-cases/setup-use-case.js";
 
 function displayInstall(output: CLIOutput, results: InstallToolResult[], verbose: boolean): void {
   const skipped = results.filter((r) => r.skipped);
@@ -53,7 +53,7 @@ export function registerSetupCommand(program: Command): void {
           output
         );
 
-        const setupFlowUseCase = new SetupFlowUseCase(
+        const result = await new SetupUseCase(
           deps.fs,
           deps.manifestRepo,
           deps.loader,
@@ -63,9 +63,7 @@ export function registerSetupCommand(program: Command): void {
           deps.platform,
           deps.prompter,
           deps.resolver
-        );
-
-        const result = await setupFlowUseCase.execute({
+        ).execute({
           projectRoot,
           path: cmdOptions.path,
           release: cmdOptions.release,

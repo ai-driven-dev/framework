@@ -17,4 +17,5 @@ export interface FrameworkResolved {
 export interface FrameworkResolver {
   resolve(options: FrameworkResolverOptions): Promise<FrameworkResolved>;
   fetchLatestVersion(repo?: string): Promise<string>;
+  getDefaultRepo(): string | undefined;
 }

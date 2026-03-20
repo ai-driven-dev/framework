@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { SetupUseCase } from "../../../src/application/use-cases/setup-use-case.js";
+import { detectSetupState } from "../../../src/application/use-cases/setup-use-case.js";
 import type { FrameworkResolver } from "../../../src/domain/ports/framework-resolver.js";
 import {
   buildDeps,
@@ -11,7 +11,7 @@ import {
   initProject,
 } from "./helpers.js";
 
-describe("SetupUseCase — state detection", () => {
+describe("detectSetupState", () => {
   let tempDir: string;
   let projectRoot: string;
 
@@ -29,15 +29,15 @@ describe("SetupUseCase — state detection", () => {
       fetchLatestVersion: opts.throws
         ? vi.fn().mockRejectedValue(new Error("network failure"))
         : vi.fn().mockResolvedValue(opts.latestVersion ?? "v1.0.0"),
+      getDefaultRepo: vi.fn().mockReturnValue(undefined),
     };
   }
 
   it("returns needs-init when no manifest and no AIDD signals", async () => {
     const deps = buildDeps(projectRoot);
     const resolver = makeResolver({ latestVersion: "v1.0.0" });
-    const useCase = new SetupUseCase(deps.manifestRepo, deps.fs, resolver);
 
-    const state = await useCase.execute({ projectRoot });
+    const state = await detectSetupState(deps.manifestRepo, deps.fs, resolver, projectRoot);
     expect(state.kind).toBe("needs-init");
   });
 
@@ -48,9 +48,8 @@ describe("SetupUseCase — state detection", () => {
 
     const deps = buildDeps(projectRoot);
     const resolver = makeResolver({ latestVersion: "v1.0.0" });
-    const useCase = new SetupUseCase(deps.manifestRepo, deps.fs, resolver);
 
-    const state = await useCase.execute({ projectRoot });
+    const state = await detectSetupState(deps.manifestRepo, deps.fs, resolver, projectRoot);
     expect(state.kind).toBe("needs-adopt");
   });
 
@@ -59,9 +58,8 @@ describe("SetupUseCase — state detection", () => {
     await initProject(deps, projectRoot);
 
     const resolver = makeResolver({ latestVersion: "v1.0.0" });
-    const useCase = new SetupUseCase(deps.manifestRepo, deps.fs, resolver);
 
-    const state = await useCase.execute({ projectRoot });
+    const state = await detectSetupState(deps.manifestRepo, deps.fs, resolver, projectRoot);
     expect(state.kind).toBe("needs-install");
   });
 
@@ -70,9 +68,8 @@ describe("SetupUseCase — state detection", () => {
     await initAndInstall(deps, projectRoot, "claude");
 
     const resolver = makeResolver({ latestVersion: "v9.9.9" });
-    const useCase = new SetupUseCase(deps.manifestRepo, deps.fs, resolver);
 
-    const state = await useCase.execute({ projectRoot });
+    const state = await detectSetupState(deps.manifestRepo, deps.fs, resolver, projectRoot);
     expect(state.kind).toBe("needs-update");
     if (state.kind === "needs-update") {
       expect(state.latestVersion).toBe("v9.9.9");
@@ -85,9 +82,8 @@ describe("SetupUseCase — state detection", () => {
     await initAndInstall(deps, projectRoot, "claude");
 
     const resolver = makeResolver({ latestVersion: "test" });
-    const useCase = new SetupUseCase(deps.manifestRepo, deps.fs, resolver);
 
-    const state = await useCase.execute({ projectRoot });
+    const state = await detectSetupState(deps.manifestRepo, deps.fs, resolver, projectRoot);
     expect(state.kind).toBe("up-to-date");
   });
 
@@ -96,9 +92,8 @@ describe("SetupUseCase — state detection", () => {
     await initAndInstall(deps, projectRoot, "claude");
 
     const resolver = makeResolver({ throws: true });
-    const useCase = new SetupUseCase(deps.manifestRepo, deps.fs, resolver);
 
-    const state = await useCase.execute({ projectRoot });
+    const state = await detectSetupState(deps.manifestRepo, deps.fs, resolver, projectRoot);
     expect(state.kind).toBe("up-to-date");
   });
 });

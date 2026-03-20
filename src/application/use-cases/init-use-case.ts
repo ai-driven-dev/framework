@@ -91,13 +91,12 @@ export class InitUseCase {
       );
       docsDir = docsDirInput || Manifest.DEFAULT_DOCS_DIR;
       explicitDocsDir = docsDir;
-      const repoDefault = options.repo ? `https://github.com/${options.repo}` : "";
       const repoInput = await this.prompter.input(
-        "Framework repository (owner/repo or GitHub URL, leave blank to skip):",
-        repoDefault
+        "Framework repository (owner/repo, leave blank to skip):",
+        options.repo ?? ""
       );
       if (repoInput !== "") {
-        repo = repoInput.replace(/^https?:\/\/github\.com\//, "").trim();
+        repo = repoInput.trim();
       }
     }
 
