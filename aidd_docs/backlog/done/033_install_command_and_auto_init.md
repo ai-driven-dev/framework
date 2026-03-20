@@ -17,7 +17,7 @@ Create the install command presentation layer and implement auto-init logic.
 
 ## Acceptance Criteria
 - [ ] `aidd install <tools...>` registered with commander accepting variadic tool argument
-- [ ] Flags: `--force`, `--framework <path>` (local directory or tarball)
+- [ ] Flags: `--force`, `--path <path>` (local directory or tarball)
 - [ ] Auto-init: when no manifest exists, runs init automatically with default docs dir
 - [ ] Auto-init reports: "No installation found. Initializing docs first..."
 - [ ] Auto-init does NOT use custom docs dir (user must run `aidd init --docs-dir` first)
@@ -31,7 +31,7 @@ Create the install command presentation layer and implement auto-init logic.
 - **UX Copy source of truth**: ALL user-facing text MUST use exact copy from `aidd_docs/memory/internal/ux_copy.md`. Use keys: `progress.init.auto` ("No installation found. Initializing docs first..."), `error.install.*`, `success.install.*`.
 - **User flows reference**: Consult `aidd_docs/memory/internal/user_flows.md` section 2.1 (first-time setup / auto-init + install) for the complete flow.
 - Auto-init: check if ManifestRepository.load() returns null. If so, call InitUseCase.execute() first.
-- The `--framework` flag overrides remote resolution with a local source.
+- The `--path` flag overrides remote resolution with a local source.
 - Commander variadic argument: `.argument('<tools...>')`.
 - Dependency wiring: create all adapters, inject into InstallUseCase.
 
@@ -45,7 +45,7 @@ Create the install command presentation layer and implement auto-init logic.
 - Auto-init skipped when manifest exists
 - Multiple tools parsed from variadic argument
 - --force flag passed to use case
-- --framework flag overrides source
+- --path flag overrides source
 - Error messages are user-friendly
 
 ## Done When

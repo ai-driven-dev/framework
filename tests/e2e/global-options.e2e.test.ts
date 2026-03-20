@@ -79,10 +79,10 @@ describe.concurrent("E2E: aidd global options", () => {
   it("--verbose install lists installed files", async () => {
     const { projectDir, cleanup } = await createTestEnv("global");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stderr, exitCode } = await runCli(
-        ["--verbose", "install", "claude", "--framework", FRAMEWORK_PATH],
+        ["--verbose", "install", "claude", "--path", FRAMEWORK_PATH],
         projectDir
       );
 

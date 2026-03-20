@@ -16,7 +16,7 @@ export function registerRestoreCommand(program: Command): void {
     .option("-f, --force", "Restore without prompting", false)
     .option("--tool <tool>", "Limit restore to a specific tool")
     .option("--docs", "Limit restore to docs only")
-    .option("--framework <path>", "Path to a local framework directory or tarball")
+    .option("--path <path>", "Path to a local framework directory or tarball")
     .option("--release <tag>", "Specific framework release tag to restore against (e.g., v3.2.0)")
     .action(
       async (
@@ -25,7 +25,7 @@ export function registerRestoreCommand(program: Command): void {
           force: boolean;
           tool?: string;
           docs?: boolean;
-          framework?: string;
+          path?: string;
           release?: string;
         }
       ) => {
@@ -81,7 +81,7 @@ export function registerRestoreCommand(program: Command): void {
           const { path: frameworkPath, version } = await resolveFrameworkWithFallback(
             deps.resolver,
             deps.logger,
-            { framework: cmdOptions.framework, pinnedVersion, release: cmdOptions.release }
+            { path: cmdOptions.path, pinnedVersion, release: cmdOptions.release }
           );
 
           const toolIds: ToolId[] | undefined = cmdOptions.tool

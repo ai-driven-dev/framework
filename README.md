@@ -163,13 +163,13 @@ aidd uninstall --all            # uninstall all tools
 
 | Command                      | Description                                                        | Key options                                  |
 | ---------------------------- | ------------------------------------------------------------------ | -------------------------------------------- |
-| `aidd setup`                 | Interactive onboarding: init, adopt, install, or update as needed  | `--release`, `--repo`, `--framework`         |
-| `aidd install <tools...>`    | Generate and write tool-specific files (requires existing manifest) | `--all`, `--force`, `--release`, `--framework` |
+| `aidd setup`                 | Interactive onboarding: init, adopt, install, or update as needed  | `--release`, `--repo`, `--path`              |
+| `aidd install <tools...>`    | Generate and write tool-specific files (requires existing manifest) | `--all`, `--force`, `--release`, `--path`   |
 | `aidd uninstall <tools...>`  | Remove tool files and update manifest                              | `--all`                                      |
 | `aidd status`                | Show drift between disk and manifest + available update            | `--tool`, `--docs`                           |
 | `aidd doctor`                | Structural integrity check — exits 1 on issues (CI-safe)           | —                                            |
-| `aidd update`                | Apply new framework version                                        | `--force`, `--dry-run`, `--tool`, `--docs`, `--release`, `--framework` |
-| `aidd restore [files...]`    | Revert modified/deleted files to the pinned framework version      | `--force`, `--tool`, `--docs`, `--release`, `--framework` |
+| `aidd update`                | Apply new framework version                                        | `--force`, `--dry-run`, `--tool`, `--docs`, `--release`, `--path` |
+| `aidd restore [files...]`    | Revert modified/deleted files to the pinned framework version      | `--force`, `--tool`, `--docs`, `--release`, `--path` |
 | `aidd sync`                  | Propagate local changes from one tool to the others                | `--source` (required), `--target`, `--force` |
 | `aidd clean`                 | Remove all AIDD files — dry-run without `--force`                  | `--force`                                    |
 | `aidd cache list\|clear`     | List or remove cached framework versions                           | `--all`, `[version]`                         |
@@ -310,7 +310,7 @@ aidd update --repo owner/repo            # alternative framework repository
 ```bash
 aidd setup --release v3.4.0             # pin a specific framework version (first-time)
 aidd update --release v3.4.0            # pin a specific framework version (existing project)
-aidd update --framework ./local         # local framework path (dev/testing)
+aidd update --path ./local              # local framework path (dev/testing)
 ```
 
 **Environment variables:**

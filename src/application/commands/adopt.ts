@@ -31,8 +31,6 @@ export function registerAdoptCommand(program: Command): void {
         verbose: boolean;
         repo?: string;
         token?: string;
-        framework?: string;
-        release?: string;
       }>();
       const verbose = globalOptions.verbose;
       const output = new CLIOutput(verbose);
@@ -65,7 +63,7 @@ export function registerAdoptCommand(program: Command): void {
           toolIds = selected as ToolId[];
         }
 
-        let from = cmdOptions.from ?? globalOptions.release ?? globalOptions.framework;
+        let from = cmdOptions.from;
 
         if (!from) {
           if (!process.stdout.isTTY) throw new AdoptRequiresVersionError(globalOptions.repo);

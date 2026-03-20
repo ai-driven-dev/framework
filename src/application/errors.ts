@@ -1,5 +1,7 @@
 import { Manifest } from "../domain/models/manifest.js";
 
+export { NoFrameworkSourceError } from "../domain/errors.js";
+
 export class NoManifestError extends Error {
   constructor(repo = Manifest.DEFAULT_REPO) {
     super(

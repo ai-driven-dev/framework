@@ -9,7 +9,7 @@ describe.concurrent("E2E: aidd install", () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
       const { stderr, exitCode } = await runCli(
-        ["install", "claude", "--framework", FRAMEWORK_PATH],
+        ["install", "claude", "--path", FRAMEWORK_PATH],
         projectDir
       );
 
@@ -24,9 +24,9 @@ describe.concurrent("E2E: aidd install", () => {
   it("installs claude tool with correct file layout", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
       const { stdout, exitCode } = await runCli(
-        ["install", "claude", "--framework", FRAMEWORK_PATH],
+        ["install", "claude", "--path", FRAMEWORK_PATH],
         projectDir
       );
 
@@ -42,9 +42,9 @@ describe.concurrent("E2E: aidd install", () => {
   it("installs cursor tool with correct file layout", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
       const { stdout, exitCode } = await runCli(
-        ["install", "cursor", "--framework", FRAMEWORK_PATH],
+        ["install", "cursor", "--path", FRAMEWORK_PATH],
         projectDir
       );
 
@@ -59,9 +59,9 @@ describe.concurrent("E2E: aidd install", () => {
   it("installs copilot tool with correct file layout", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
       const { stdout, exitCode } = await runCli(
-        ["install", "copilot", "--framework", FRAMEWORK_PATH],
+        ["install", "copilot", "--path", FRAMEWORK_PATH],
         projectDir
       );
 
@@ -76,9 +76,9 @@ describe.concurrent("E2E: aidd install", () => {
   it("shows an error message for unrecognized tool IDs", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
       const { stderr, exitCode } = await runCli(
-        ["install", "unknown-tool", "--framework", FRAMEWORK_PATH],
+        ["install", "unknown-tool", "--path", FRAMEWORK_PATH],
         projectDir
       );
 
@@ -92,11 +92,11 @@ describe.concurrent("E2E: aidd install", () => {
   it("skips already installed tool without --force", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stderr, exitCode } = await runCli(
-        ["install", "claude", "--framework", FRAMEWORK_PATH],
+        ["install", "claude", "--path", FRAMEWORK_PATH],
         projectDir
       );
 
@@ -110,11 +110,11 @@ describe.concurrent("E2E: aidd install", () => {
   it("reinstalls an existing tool when --force is used", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(
-        ["install", "claude", "--force", "--framework", FRAMEWORK_PATH],
+        ["install", "claude", "--force", "--path", FRAMEWORK_PATH],
         projectDir
       );
 
@@ -128,9 +128,9 @@ describe.concurrent("E2E: aidd install", () => {
   it("installs all tools at once with --all", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
       const { stdout, exitCode } = await runCli(
-        ["install", "--all", "--framework", FRAMEWORK_PATH],
+        ["install", "--all", "--path", FRAMEWORK_PATH],
         projectDir
       );
 
@@ -151,10 +151,7 @@ describe.concurrent("E2E: aidd install", () => {
   it("exits with error in non-interactive mode when no tool is specified and --all is not used", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
-      const { stderr, exitCode } = await runCli(
-        ["install", "--framework", FRAMEWORK_PATH],
-        projectDir
-      );
+      const { stderr, exitCode } = await runCli(["install", "--path", FRAMEWORK_PATH], projectDir);
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("non-interactive mode");
@@ -166,8 +163,8 @@ describe.concurrent("E2E: aidd install", () => {
   it("shows no drift in status after installing all tools at once", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "--all", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "--all", "--path", FRAMEWORK_PATH], projectDir);
       const { stdout, exitCode } = await runCli(["status"], projectDir);
 
       expect(exitCode).toBe(0);
@@ -181,11 +178,11 @@ describe.concurrent("E2E: aidd install", () => {
   it("reinstalls all tools when --all --force is used", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "--all", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "--all", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(
-        ["install", "--all", "--force", "--framework", FRAMEWORK_PATH],
+        ["install", "--all", "--force", "--path", FRAMEWORK_PATH],
         projectDir
       );
 
@@ -204,7 +201,7 @@ describe.concurrent("E2E: aidd install", () => {
     try {
       // init with custom docs dir
       const { exitCode: initExit } = await runCli(
-        ["init", "--framework", FRAMEWORK_PATH, "--docs-dir", "my_docs"],
+        ["init", "--path", FRAMEWORK_PATH, "--docs-dir", "my_docs"],
         projectDir
       );
       expect(initExit).toBe(0);
@@ -212,7 +209,7 @@ describe.concurrent("E2E: aidd install", () => {
 
       // install claude - should use my_docs/ not aidd_docs/ (reads docsDir from manifest)
       const { exitCode: installExit } = await runCli(
-        ["install", "claude", "--framework", FRAMEWORK_PATH],
+        ["install", "claude", "--path", FRAMEWORK_PATH],
         projectDir
       );
       expect(installExit).toBe(0);
@@ -234,8 +231,8 @@ describe.concurrent("E2E: aidd install", () => {
   it("generates files with all path placeholders resolved", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const manifestRaw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");
       const manifest = JSON.parse(manifestRaw) as {
@@ -255,8 +252,8 @@ describe.concurrent("E2E: aidd install", () => {
   it("installs memory update script after tool install", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       expect(existsSync(join(projectDir, ".aidd", "scripts", "update_memory.mjs"))).toBe(true);
       expect(existsSync(join(projectDir, ".aidd", "hooks", "pre-commit"))).toBe(true);
@@ -276,8 +273,8 @@ describe.concurrent("E2E: aidd install", () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
       await gitInit(projectDir);
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       expect(existsSync(join(projectDir, ".git", "hooks", "pre-commit"))).toBe(true);
 
@@ -297,8 +294,8 @@ describe.concurrent("E2E: aidd install", () => {
       await writeFile(gitHookPath, "#!/bin/sh\necho 'existing hook'\n");
       await chmod(gitHookPath, 0o755);
 
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const hookContent = await readFile(gitHookPath, "utf-8");
       expect(hookContent).toContain("echo 'existing hook'");
@@ -312,9 +309,9 @@ describe.concurrent("E2E: aidd install", () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
       await gitInit(projectDir);
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--force", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--force", "--path", FRAMEWORK_PATH], projectDir);
 
       const hookContent = await readFile(join(projectDir, ".git", "hooks", "pre-commit"), "utf-8");
       const occurrences = hookContent.split("sh .aidd/hooks/pre-commit").length - 1;

@@ -5,7 +5,8 @@ import type {
 import type { Logger } from "../../domain/ports/logger.js";
 
 interface ResolveOptions {
-  framework?: string;
+  path?: string;
+  repo?: string;
   release?: string;
   from?: string;
 }
@@ -29,14 +30,17 @@ export async function resolveFramework(
     return resolveFramework(
       resolver,
       logger,
-      isLocalPath(options.from) ? { framework: options.from } : { release: options.from }
+      isLocalPath(options.from) ? { path: options.from } : { release: options.from }
     );
   }
-  if (options.framework) {
-    logger.debug(`Using local framework: ${options.framework}`);
-    const isTarball = options.framework.endsWith(".tar.gz") || options.framework.endsWith(".tgz");
+  if (options.path) {
+    if (options.repo) {
+      logger.info(`Using local framework at ${options.path} (remote source ignored)`);
+    }
+    logger.debug(`Using local framework: ${options.path}`);
+    const isTarball = options.path.endsWith(".tar.gz") || options.path.endsWith(".tgz");
     return resolver.resolve(
-      isTarball ? { tarballPath: options.framework } : { localPath: options.framework }
+      isTarball ? { tarballPath: options.path } : { localPath: options.path }
     );
   }
   return resolver.resolve(options.release ? { version: options.release } : {});
@@ -48,8 +52,8 @@ export async function resolveFrameworkWithFallback(
   options: ResolveOptions & { pinnedVersion?: string }
 ): Promise<FrameworkResolved> {
   // Local path bypasses version pinning entirely — no fallback applies.
-  if (options.framework) {
-    return resolveFramework(resolver, logger, { framework: options.framework });
+  if (options.path) {
+    return resolveFramework(resolver, logger, { path: options.path });
   }
   try {
     return await resolveFramework(resolver, logger, {

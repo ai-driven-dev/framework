@@ -87,7 +87,7 @@ Without framework resolution, no command can work. This is the technical foundat
 Scenario: Remote framework download and caching
   Given no cached framework exists for the latest version
   And a valid auth token is available
-  When the CLI resolves the framework source with no --framework flag
+  When the CLI resolves the framework source with no --path flag
   Then it calls the GitHub Releases API
   And downloads the release asset tarball
   And extracts it to the cache directory
@@ -136,19 +136,19 @@ Scenario: Remote download completes within timeout
 
 ```gherkin
 Scenario: Local directory framework
-  Given --framework points to a directory containing framework.json
+  Given --path points to a directory containing framework.json
   When the CLI resolves the framework source
   Then it loads directly from that directory without downloading
 
 Scenario: Local tarball framework
-  Given --framework points to a .tar.gz file containing a framework
+  Given --path points to a .tar.gz file containing a framework
   When the CLI resolves the framework source
   Then it extracts the tarball to a temporary directory
   And detects the framework root inside it
   And loads from the extracted directory
 
 Scenario: Missing framework descriptor in local directory
-  Given --framework points to a directory that exists but contains no framework.json
+  Given --path points to a directory that exists but contains no framework.json
   When the CLI attempts to load the framework
   Then it fails with "No framework descriptor found in the specified directory"
 ```

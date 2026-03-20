@@ -159,8 +159,8 @@ M1 and M2 can overlap partially (infrastructure adapters can start once domain p
 ### Acceptance Criteria
 
 - [ ] `FrameworkResolverAdapter.resolve()` downloads from GitHub Releases API, extracts tarball, detects single-directory nesting
-- [ ] `FrameworkResolverAdapter.resolve()` loads from a local directory when `--framework` points to a directory
-- [ ] `FrameworkResolverAdapter.resolve()` extracts a local tarball when `--framework` points to a .tar.gz
+- [ ] `FrameworkResolverAdapter.resolve()` loads from a local directory when `--path` points to a directory
+- [ ] `FrameworkResolverAdapter.resolve()` extracts a local tarball when `--path` points to a .tar.gz
 - [ ] Cache reuse: second resolve for same version skips download (marker + framework.json check)
 - [ ] Cache corruption: missing marker or framework.json triggers re-download
 - [ ] Offline fallback: network failure with existing cache falls back to latest cached version
@@ -197,7 +197,7 @@ M1 and M2 can overlap partially (infrastructure adapters can start once domain p
 | `application/use-cases/init-use-case.ts`    | Application  | Resolve framework -> copy docs templates -> hash -> create manifest                                                             |
 | `application/use-cases/install-use-case.ts` | Application  | Check manifest (abort if missing) -> resolve framework -> generate distribution per tool -> write files -> update manifest |
 | `presentation/commands/init.ts`             | Presentation | Commander registration for `aidd init`, `--docs-dir` flag, dependency wiring                                                    |
-| `presentation/commands/install.ts`          | Presentation | Commander registration for `aidd install <tools...>`, `--force`/`--framework`/`--repo`/`--token` flags                          |
+| `presentation/commands/install.ts`          | Presentation | Commander registration for `aidd install <tools...>`, `--force`/`--path`/`--repo`/`--token` flags                          |
 | `presentation/presenter.ts`                 | Presentation | Output formatting for init and install results                                                                                  |
 | `src/cli.ts`                                | Presentation | Commander program entry point with global options (`--verbose`)                                                                 |
 

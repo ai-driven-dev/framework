@@ -12,12 +12,12 @@ export function registerInstallCommand(program: Command): void {
     .argument("[tools...]", "Tool IDs to operate on (e.g., claude, cursor, copilot)")
     .option("-f, --force", "Overwrite already-installed tool", false)
     .option("-a, --all", "Install all available tools", false)
-    .option("--framework <path>", "Path to a local framework directory or tarball")
+    .option("--path <path>", "Path to a local framework directory or tarball")
     .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
     .action(
       async (
         toolArgs: string[],
-        cmdOptions: { force: boolean; all: boolean; framework?: string; release?: string }
+        cmdOptions: { force: boolean; all: boolean; path?: string; release?: string }
       ) => {
         const globalOptions = program.opts<{
           verbose: boolean;
@@ -56,7 +56,7 @@ export function registerInstallCommand(program: Command): void {
           const { path: frameworkPath, version } = await resolveFramework(
             deps.resolver,
             deps.logger,
-            { framework: cmdOptions.framework, release: cmdOptions.release }
+            { path: cmdOptions.path, release: cmdOptions.release }
           );
 
           const toolIds: ToolId[] | undefined =

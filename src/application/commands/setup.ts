@@ -27,9 +27,9 @@ export function registerSetupCommand(program: Command): void {
   program
     .command("setup")
     .description("Interactively set up or update the project to a correct state")
-    .option("--framework <path>", "Path to a local framework directory or tarball")
+    .option("--path <path>", "Path to a local framework directory or tarball")
     .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
-    .action(async (cmdOptions: { framework?: string; release?: string }) => {
+    .action(async (cmdOptions: { path?: string; release?: string }) => {
       if (!process.stdout.isTTY) {
         const output = new CLIOutput(false);
         output.error("aidd setup requires an interactive TTY.");
@@ -67,7 +67,7 @@ export function registerSetupCommand(program: Command): void {
 
         const result = await setupFlowUseCase.execute({
           projectRoot,
-          framework: cmdOptions.framework,
+          path: cmdOptions.path,
           release: cmdOptions.release,
           repo: globalOptions.repo,
         });

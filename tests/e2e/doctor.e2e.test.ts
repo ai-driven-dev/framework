@@ -7,8 +7,8 @@ describe.concurrent("E2E: aidd doctor", () => {
   it("reports a healthy installation after a fresh install", async () => {
     const { projectDir, cleanup } = await createTestEnv("doctor");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["doctor"], projectDir);
 
@@ -22,8 +22,8 @@ describe.concurrent("E2E: aidd doctor", () => {
   it("shows an error message when the manifest JSON is corrupted", async () => {
     const { projectDir, cleanup } = await createTestEnv("doctor");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await writeFile(join(projectDir, ".aidd", "manifest.json"), "{ not valid json", "utf-8");
 
       const { stderr, exitCode } = await runCli(["doctor"], projectDir);
@@ -50,8 +50,8 @@ describe.concurrent("E2E: aidd doctor", () => {
   it("reports a warning for a broken @path reference in a tracked file", async () => {
     const { projectDir, cleanup } = await createTestEnv("doctor");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       await writeFile(
         join(projectDir, ".claude", "agents", "code-reviewer.md"),
@@ -71,8 +71,8 @@ describe.concurrent("E2E: aidd doctor", () => {
   it("reports an error when the docs directory is missing from disk", async () => {
     const { projectDir, cleanup } = await createTestEnv("doctor");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await rm(join(projectDir, "aidd_docs"), { recursive: true, force: true });
 
       const { stderr, exitCode } = await runCli(["doctor"], projectDir);
@@ -87,8 +87,8 @@ describe.concurrent("E2E: aidd doctor", () => {
   it("reports orphaned directories as a warning", async () => {
     const { projectDir, cleanup } = await createTestEnv("doctor");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       // hasToolSignals checks signalDir (.cursor/commands) for .md files with aidd: frontmatter
       await mkdir(join(projectDir, ".cursor", "commands"), { recursive: true });

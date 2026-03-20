@@ -18,7 +18,7 @@ describe.concurrent("E2E: aidd cache", () => {
     it("lists a cached version after install", async () => {
       const { projectDir, cleanup } = await createTestEnv("cache");
       try {
-        await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+        await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
         // The framework path is local, so cache uses "local" as version key
         // Cache list only shows semver versions, so it may be empty for local

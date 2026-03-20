@@ -9,19 +9,19 @@ describe.concurrent("E2E: full lifecycle", () => {
     const { projectDir, cleanup } = await createTestEnv("lifecycle");
     try {
       // init
-      const initResult = await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      const initResult = await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
       expect(initResult.exitCode).toBe(0);
 
       // install claude and cursor
       const installClaudeResult = await runCli(
-        ["install", "claude", "--framework", FRAMEWORK_PATH],
+        ["install", "claude", "--path", FRAMEWORK_PATH],
         projectDir
       );
       expect(installClaudeResult.exitCode).toBe(0);
       expect(installClaudeResult.stdout).toContain("Installed claude");
 
       const installCursorResult = await runCli(
-        ["install", "cursor", "--framework", FRAMEWORK_PATH],
+        ["install", "cursor", "--path", FRAMEWORK_PATH],
         projectDir
       );
       expect(installCursorResult.exitCode).toBe(0);
@@ -33,7 +33,7 @@ describe.concurrent("E2E: full lifecycle", () => {
       expect(statusSyncResult.stdout).toContain("All files are in sync");
 
       // update — already up to date
-      const updateResult = await runCli(["update", "--framework", FRAMEWORK_PATH], projectDir);
+      const updateResult = await runCli(["update", "--path", FRAMEWORK_PATH], projectDir);
       expect(updateResult.exitCode).toBe(0);
       expect(updateResult.stdout).toContain("Already up to date");
 
@@ -48,7 +48,7 @@ describe.concurrent("E2E: full lifecycle", () => {
 
       // restore --force brings it back in sync
       const restoreResult = await runCli(
-        ["restore", "--force", "--framework", FRAMEWORK_PATH],
+        ["restore", "--force", "--path", FRAMEWORK_PATH],
         projectDir
       );
       expect(restoreResult.exitCode).toBe(0);
@@ -82,12 +82,12 @@ describe.concurrent("E2E: full lifecycle", () => {
     const { projectDir, cleanup } = await createTestEnv("lifecycle");
     try {
       // init
-      const initResult = await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      const initResult = await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
       expect(initResult.exitCode).toBe(0);
 
       // install claude
       const installResult = await runCli(
-        ["install", "claude", "--framework", FRAMEWORK_PATH],
+        ["install", "claude", "--path", FRAMEWORK_PATH],
         projectDir
       );
       expect(installResult.exitCode).toBe(0);

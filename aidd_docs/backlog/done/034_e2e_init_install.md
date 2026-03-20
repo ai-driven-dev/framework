@@ -19,16 +19,16 @@ Write E2E tests that exercise: init -> install -> verify file content -> verify 
 - [ ] E2E test: `aidd init` creates docs directory and manifest from fixture framework
 - [ ] E2E test: `aidd init --docs-dir custom` uses custom name
 - [ ] E2E test: `aidd init` on existing docs dir fails
-- [ ] E2E test: `aidd install claude --framework <fixture>` generates Claude files with correct content
-- [ ] E2E test: `aidd install cursor --framework <fixture>` generates Cursor files
-- [ ] E2E test: `aidd install copilot --framework <fixture>` generates Copilot files with flattening
-- [ ] E2E test: `aidd install claude cursor copilot --framework <fixture>` generates all three
+- [ ] E2E test: `aidd install claude --path <fixture>` generates Claude files with correct content
+- [ ] E2E test: `aidd install cursor --path <fixture>` generates Cursor files
+- [ ] E2E test: `aidd install copilot --path <fixture>` generates Copilot files with flattening
+- [ ] E2E test: `aidd install claude cursor copilot --path <fixture>` generates all three
 - [ ] E2E test: auto-init triggers when running install without prior init
 - [ ] E2E test: install already-installed tool without --force reports message
 - [ ] All E2E tests use temp directories and clean up after themselves
 - [ ] E2E tests verify: file content (placeholders replaced), frontmatter format, manifest entries and hashes
 - [ ] NFR1: `aidd init` and `aidd install` complete in < 5 seconds with local framework fixture (~100 files)
-- [ ] NFR6: No network requests made when using `--framework` local source (verify no HTTP calls)
+- [ ] NFR6: No network requests made when using `--path` local source (verify no HTTP calls)
 - [ ] NFR9: Tests pass on macOS, Linux, and WSL (no platform-specific path assumptions, use `path.join` not string concatenation)
 
 ## Technical Notes

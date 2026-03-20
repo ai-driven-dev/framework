@@ -8,10 +8,7 @@ describe.concurrent("E2E: aidd init", () => {
   it("creates the docs directory and manifest", async () => {
     const { projectDir, cleanup } = await createTestEnv("init");
     try {
-      const { stdout, exitCode } = await runCli(
-        ["init", "--framework", FRAMEWORK_PATH],
-        projectDir
-      );
+      const { stdout, exitCode } = await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Initialized docs in aidd_docs/");
@@ -26,7 +23,7 @@ describe.concurrent("E2E: aidd init", () => {
     const { projectDir, cleanup } = await createTestEnv("init");
     try {
       const { stdout, exitCode } = await runCli(
-        ["init", "--framework", FRAMEWORK_PATH, "--docs-dir", "my_docs"],
+        ["init", "--path", FRAMEWORK_PATH, "--docs-dir", "my_docs"],
         projectDir
       );
 
@@ -46,7 +43,7 @@ describe.concurrent("E2E: aidd init", () => {
     const { projectDir, cleanup } = await createTestEnv("init");
     try {
       const { stderr, exitCode } = await runCli(
-        ["init", "--framework", FRAMEWORK_PATH, "--docs-dir", "my docs!"],
+        ["init", "--path", FRAMEWORK_PATH, "--docs-dir", "my docs!"],
         projectDir
       );
 
@@ -62,10 +59,7 @@ describe.concurrent("E2E: aidd init", () => {
     try {
       await mkdir(join(projectDir, "aidd_docs"), { recursive: true });
 
-      const { stderr, exitCode } = await runCli(
-        ["init", "--framework", FRAMEWORK_PATH],
-        projectDir
-      );
+      const { stderr, exitCode } = await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("AIDD files detected but no manifest found");
@@ -84,10 +78,7 @@ describe.concurrent("E2E: aidd init", () => {
         "---\nname: 'aidd:04:implement'\ndescription: Implement a plan\n---\n\n# Implement\n"
       );
 
-      const { stderr, exitCode } = await runCli(
-        ["init", "--framework", FRAMEWORK_PATH],
-        projectDir
-      );
+      const { stderr, exitCode } = await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("AIDD files detected but no manifest found");
@@ -106,10 +97,7 @@ describe.concurrent("E2E: aidd init", () => {
         "---\nname: 'aidd:04:implement'\ndescription: Implement a plan\n---\n\n# Implement\n"
       );
 
-      const { stderr, exitCode } = await runCli(
-        ["init", "--framework", FRAMEWORK_PATH],
-        projectDir
-      );
+      const { stderr, exitCode } = await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("AIDD files detected but no manifest found");
@@ -130,10 +118,7 @@ describe.concurrent("E2E: aidd init", () => {
       );
       await writeFile(join(projectDir, "AGENTS.md"), "# Agents");
 
-      const { stderr, exitCode } = await runCli(
-        ["init", "--framework", FRAMEWORK_PATH],
-        projectDir
-      );
+      const { stderr, exitCode } = await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("AIDD files detected but no manifest found");
@@ -149,10 +134,7 @@ describe.concurrent("E2E: aidd init", () => {
     try {
       await mkdir(join(projectDir, ".aidd", "cache"), { recursive: true });
 
-      const { stdout, exitCode } = await runCli(
-        ["init", "--framework", FRAMEWORK_PATH],
-        projectDir
-      );
+      const { stdout, exitCode } = await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Initialized docs in aidd_docs/");
@@ -165,12 +147,9 @@ describe.concurrent("E2E: aidd init", () => {
   it("fails with guidance when already initialized without --force", async () => {
     const { projectDir, cleanup } = await createTestEnv("init");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
 
-      const { stderr, exitCode } = await runCli(
-        ["init", "--framework", FRAMEWORK_PATH],
-        projectDir
-      );
+      const { stderr, exitCode } = await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("Already initialized");
@@ -183,9 +162,9 @@ describe.concurrent("E2E: aidd init", () => {
   it("re-copies docs templates with --force on existing installation", async () => {
     const { projectDir, cleanup } = await createTestEnv("init");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
       const { stdout, exitCode } = await runCli(
-        ["init", "--force", "--framework", FRAMEWORK_PATH],
+        ["init", "--force", "--path", FRAMEWORK_PATH],
         projectDir
       );
 
@@ -200,12 +179,27 @@ describe.concurrent("E2E: aidd init", () => {
     const { projectDir, cleanup } = await createTestEnv("init");
     try {
       const { stderr, exitCode } = await runCli(
-        ["init", "--force", "--framework", FRAMEWORK_PATH],
+        ["init", "--force", "--path", FRAMEWORK_PATH],
         projectDir
       );
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("No AIDD manifest found");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("warns that remote source is ignored when --path overrides --repo", async () => {
+    const { projectDir, cleanup } = await createTestEnv("init");
+    try {
+      const { stdout, exitCode } = await runCli(
+        ["--repo", "ai-driven-dev/le-prompt-parfait", "init", "--path", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("remote source ignored");
     } finally {
       await cleanup();
     }

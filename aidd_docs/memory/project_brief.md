@@ -37,19 +37,19 @@
 
 | Command | Flags | Description |
 | --- | --- | --- |
-| `aidd setup` | `--release`, `--framework` | Interactive onboarding. Detects state and runs init + install, adopt, install, or update as needed. Requires TTY. |
-| `aidd install <tools...>` | `--all`, `--force`, `--release`, `--framework` | Generate and write tool-specific distribution files. Requires existing manifest. |
+| `aidd setup` | `--release`, `--path` | Interactive onboarding. Detects state and runs init + install, adopt, install, or update as needed. Requires TTY. |
+| `aidd install <tools...>` | `--all`, `--force`, `--release`, `--path` | Generate and write tool-specific distribution files. Requires existing manifest. |
 | `aidd uninstall <tools...>` | `--all` | Remove tool files and update manifest. |
 | `aidd status` | `--tool`, `--docs` | Show drift (modified/deleted/added) between disk and manifest. |
-| `aidd update` | `--force`, `--dry-run`, `--tool`, `--docs`, `--release`, `--framework` | Diff and apply new framework version. `--tool`/`--docs` scope to one section. |
-| `aidd restore` | `--force`, `--tool`, `--docs`, `[files...]`, `--release`, `--framework` | Restore modified/deleted files from pinned version. |
+| `aidd update` | `--force`, `--dry-run`, `--tool`, `--docs`, `--release`, `--path` | Diff and apply new framework version. `--tool`/`--docs` scope to one section. |
+| `aidd restore` | `--force`, `--tool`, `--docs`, `[files...]`, `--release`, `--path` | Restore modified/deleted files from pinned version. |
 | `aidd sync` | `--source`, `--target`, `--force` | Propagate local changes from one tool to others. |
 | `aidd doctor` | — | Check structural integrity: manifest, orphaned dirs, broken references. Exits 1 on any issue. |
 | `aidd clean` | `--force` | Remove all AIDD files. Dry-run without `--force`. |
 | `aidd cache list/clear` | `--all`, `[version]` | List or clear cached framework versions. |
 | `aidd config list/get/set` | `--force` | Manifest-backed config. Writable: `docsDir`, `repo`. Read-only: `tools`. |
 | `aidd self-update` | `--check`, `--dry-run`, `--force` | Update the aidd CLI itself to the latest version. `--check` shows if newer version is available without installing. `--dry-run` previews without installing. `--force` reinstalls even if already up to date. Uses GitHub Releases API for version check and changelog. |
-| Global flags | `--verbose`, `--token`, `--repo` | Apply to all commands. `--framework` and `--release` are command-level options on `setup`, `install`, `update`, `restore`. |
+| Global flags | `--verbose`, `--token`, `--repo` | Apply to all commands. `--path` and `--release` are command-level options on `setup`, `install`, `update`, `restore`. |
 
 ## vNext — Vision (unspecified)
 

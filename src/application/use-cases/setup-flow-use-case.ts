@@ -20,7 +20,7 @@ import { UpdateUseCase } from "./update-use-case.js";
 
 interface SetupFlowOptions {
   projectRoot: string;
-  framework?: string;
+  path?: string;
   release?: string;
   repo?: string;
 }
@@ -64,7 +64,7 @@ export class SetupFlowUseCase {
   ) {}
 
   async execute(options: SetupFlowOptions): Promise<SetupFlowResult> {
-    const { projectRoot, framework, release, repo } = options;
+    const { projectRoot, path, release, repo } = options;
 
     const state = await new SetupUseCase(this.manifestRepo, this.fs, this.resolver).execute({
       projectRoot,
@@ -79,16 +79,35 @@ export class SetupFlowUseCase {
         const docsDir = docsDirInput || Manifest.DEFAULT_DOCS_DIR;
         Manifest.validateDocsDir(docsDir);
 
+        const existingManifest = await this.manifestRepo.load();
+        const knownRepo = existingManifest?.repo ?? repo;
+        const repoDefault = knownRepo ? `https://github.com/${knownRepo}` : "";
         const repoInput = await this.prompter.input(
-          "Framework repository (owner/repo, leave blank to skip):",
-          ""
+          "Framework repository (owner/repo or GitHub URL, leave blank to skip):",
+          repoDefault
         );
-        const interactiveRepo = repoInput !== "" ? repoInput : repo;
+        const interactiveRepo =
+          repoInput !== "" ? repoInput.replace(/^https?:\/\/github\.com\//, "").trim() : repo;
+
+        let resolvedRelease: string | undefined;
+        if (!path && !release) {
+          if (interactiveRepo) {
+            const latestTag = await this.resolver.fetchLatestVersion().catch(() => "");
+            if (latestTag) {
+              resolvedRelease = await this.prompter.input(
+                `Framework release tag (latest: ${latestTag}):`,
+                latestTag
+              );
+            } else {
+              resolvedRelease = await this.prompter.input("Framework release tag:", "");
+            }
+          }
+        }
 
         const { path: frameworkPath, version } = await resolveFramework(
           this.resolver,
           this.logger,
-          { framework, release }
+          { path, release: resolvedRelease ?? release, repo: interactiveRepo }
         );
 
         const initResult = await new InitUseCase(
@@ -174,7 +193,7 @@ export class SetupFlowUseCase {
         const { path: frameworkPath, version } = await resolveFramework(
           this.resolver,
           this.logger,
-          { framework, release }
+          { path, release, repo }
         );
 
         const installResults = await new InstallUseCase(
@@ -201,7 +220,7 @@ export class SetupFlowUseCase {
         const { path: frameworkPath, version } = await resolveFramework(
           this.resolver,
           this.logger,
-          { framework, release }
+          { path, release, repo }
         );
 
         const updateResult = await new UpdateUseCase(
@@ -274,7 +293,7 @@ export class SetupFlowUseCase {
             const { path: frameworkPath, version } = await resolveFramework(
               this.resolver,
               this.logger,
-              { framework, release }
+              { path, release, repo }
             );
             const installResults = await new InstallUseCase(
               this.fs,

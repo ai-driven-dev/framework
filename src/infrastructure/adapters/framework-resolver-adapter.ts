@@ -1,6 +1,7 @@
 import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { NoFrameworkSourceError } from "../../domain/errors.js";
 import { validateRepoFormat } from "../../domain/models/manifest.js";
 import type {
   FrameworkResolved,
@@ -72,6 +73,9 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
       return { path, version, source: "local" };
     }
 
+    // No local source — check remote is configured
+    const repo = options.repo ?? this.defaultRepo;
+    if (!repo) throw new NoFrameworkSourceError();
     return this.resolveRemote(options);
   }
 

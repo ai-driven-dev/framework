@@ -13,7 +13,7 @@ export function registerUpdateCommand(program: Command): void {
     .option("--dry-run", "Preview changes without writing files", false)
     .option("--tool <tool>", "Limit update to a specific tool")
     .option("--docs", "Limit update to docs only")
-    .option("--framework <path>", "Path to a local framework directory or tarball")
+    .option("--path <path>", "Path to a local framework directory or tarball")
     .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
     .action(
       async (cmdOptions: {
@@ -21,7 +21,7 @@ export function registerUpdateCommand(program: Command): void {
         dryRun: boolean;
         tool?: string;
         docs?: boolean;
-        framework?: string;
+        path?: string;
         release?: string;
       }) => {
         const globalOptions = program.opts<{
@@ -57,7 +57,7 @@ export function registerUpdateCommand(program: Command): void {
           const { path: frameworkPath, version } = await resolveFramework(
             deps.resolver,
             deps.logger,
-            { framework: cmdOptions.framework, release: cmdOptions.release }
+            { path: cmdOptions.path, release: cmdOptions.release }
           );
 
           const updateUseCase = new UpdateUseCase(

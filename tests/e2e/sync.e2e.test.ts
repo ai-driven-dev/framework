@@ -8,7 +8,7 @@ describe.concurrent("E2E: aidd sync", () => {
   it("exits with error when --source receives an unrecognized tool ID", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stderr, exitCode } = await runCli(["sync", "--source", "unknown-tool"], projectDir);
 
@@ -22,7 +22,7 @@ describe.concurrent("E2E: aidd sync", () => {
   it("exits with error when --target receives an unrecognized tool ID", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stderr, exitCode } = await runCli(
         ["sync", "--source", "claude", "--target", "unknown-tool"],
@@ -51,9 +51,9 @@ describe.concurrent("E2E: aidd sync", () => {
   it("fails when source tool is not installed", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "copilot", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "copilot", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stderr, exitCode } = await runCli(["sync", "--source", "claude"], projectDir);
 
@@ -67,8 +67,8 @@ describe.concurrent("E2E: aidd sync", () => {
   it("fails with 'at least 2 installed tools' when only claude is installed", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stderr, exitCode } = await runCli(["sync", "--source", "claude"], projectDir);
 
@@ -82,9 +82,9 @@ describe.concurrent("E2E: aidd sync", () => {
   it("fails when source and target are the same tool", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stderr, exitCode } = await runCli(
         ["sync", "--source", "claude", "--target", "claude"],
@@ -101,9 +101,9 @@ describe.concurrent("E2E: aidd sync", () => {
   it("reports nothing to sync when claude has no modifications", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["sync", "--source", "claude"], projectDir);
 
@@ -117,9 +117,9 @@ describe.concurrent("E2E: aidd sync", () => {
   it("syncs a modified rule file from claude to cursor", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
       const claudeNamingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
       await writeFile(claudeNamingPath, "# Custom naming rules\nmodified content", "utf-8");
@@ -143,9 +143,9 @@ describe.concurrent("E2E: aidd sync", () => {
   it("propagates deletion from source to target", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
       const claudeNamingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
       await rm(claudeNamingPath, { force: true });
@@ -168,10 +168,10 @@ describe.concurrent("E2E: aidd sync", () => {
   it("propagates modification from source to all installed tools when no --target is given", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "copilot", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "copilot", "--path", FRAMEWORK_PATH], projectDir);
 
       const claudeNamingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
       await writeFile(claudeNamingPath, "# Broadcast sync\nmodified content", "utf-8");
@@ -203,9 +203,9 @@ describe.concurrent("E2E: aidd sync", () => {
   it("fails when target tool is installed but a different target is specified that is not installed", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stderr, exitCode } = await runCli(
         ["sync", "--source", "claude", "--target", "copilot"],
@@ -223,9 +223,9 @@ describe.concurrent("E2E: aidd sync", () => {
   it("force-syncs from claude to cursor without blocking on conflict", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
       const claudeNamingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
       await writeFile(claudeNamingPath, "# Force sync\noverridden content", "utf-8");
@@ -261,9 +261,9 @@ describe.concurrent("E2E: aidd sync", () => {
   it("syncs user agent from claude to cursor with --include-user-files", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
       const userAgentPath = join(projectDir, ".claude", "agents", "my-custom-agent.md");
       await writeFile(
@@ -291,9 +291,9 @@ describe.concurrent("E2E: aidd sync", () => {
   it("syncs a modified rule from claude to copilot (framework file MODIFIED)", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "copilot", "--framework", FRAMEWORK_PATH], projectDir);
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "copilot", "--path", FRAMEWORK_PATH], projectDir);
 
       const claudeNamingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
       await writeFile(claudeNamingPath, "# Copilot sync test\nmodified content", "utf-8");

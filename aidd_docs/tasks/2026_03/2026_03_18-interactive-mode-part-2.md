@@ -100,7 +100,7 @@ flowchart TD
 3. Show checkbox of all supported tools (none pre-checked, none disabled)
 4. Abort if user selects nothing
 5. Ask: "Framework version tag or local path?" (`input`, no default)
-6. Detect if input looks like a path (starts with `/`, `./`, `../`) → map to `--framework`; else → map to `--release`
+6. Detect if input looks like a path (starts with `/`, `./`, `../`) → map to `--path`; else → map to `--release`
 7. Proceed with existing adopt use-case logic
 
 ### Phase 4: Tests

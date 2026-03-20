@@ -185,7 +185,7 @@ src/
 ## Known Design Behaviors
 
 - `setup` is the single onboarding entry point. It detects project state (needs-init, needs-adopt, needs-install, needs-update, up-to-date) and dispatches to the appropriate internal use-case. Requires an interactive TTY. See DEC-003, DEC-004.
-- `adopt` (internal use-case only, no CLI command) bootstraps a manifest for projects with pre-existing AIDD files installed manually. Triggered by `aidd setup` which passes `--release`/`--framework` from its own command-level options. Downloads the framework, generates the per-tool distribution, and registers only disk files whose paths match the distribution. Files on disk not in the distribution are user files — untracked, never touched by any other command. No file writes — scan only. Throws if manifest already exists.
+- `adopt` (internal use-case only, no CLI command) bootstraps a manifest for projects with pre-existing AIDD files installed manually. Triggered by `aidd setup` which passes `--release`/`--path` from its own command-level options. Downloads the framework, generates the per-tool distribution, and registers only disk files whose paths match the distribution. Files on disk not in the distribution are user files — untracked, never touched by any other command. No file writes — scan only. Throws if manifest already exists.
 - `init` (internal use-case only, no CLI command) throws if any AIDD signals are detected on disk (`.aidd/`, docsDir, tool directories) and no manifest exists.
 - `init --force` re-copies docs templates into the existing docs directory without a full reset. Does not touch tool distributions.
 - `install` requires an existing manifest. Aborts if absent — no auto-init.

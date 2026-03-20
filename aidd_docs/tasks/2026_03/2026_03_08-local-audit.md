@@ -33,26 +33,26 @@ All 404 tests pass cleanly. The build (tsup) succeeds in ~17ms producing `dist/c
 | `aidd uninstall --help` | Command help | PASS | Shows tools arg, --all |
 | `aidd clean --help` | Command help | PASS | Shows --force |
 | **INIT** | | | |
-| `aidd init --framework <path>` | Fresh init | PASS | Creates aidd_docs/, .aidd/manifest.json, .gitignore |
-| `aidd init --framework <path>` (again) | Re-run on existing | PASS | Error: "Already initialized..." exits 1 |
-| `aidd init --force --framework <path>` | Force re-copy | PASS | Re-copies docs files, warns on modified |
+| `aidd init --path <path>` | Fresh init | PASS | Creates aidd_docs/, .aidd/manifest.json, .gitignore |
+| `aidd init --path <path>` (again) | Re-run on existing | PASS | Error: "Already initialized..." exits 1 |
+| `aidd init --force --path <path>` | Force re-copy | PASS | Re-copies docs files, warns on modified |
 | `aidd init --force` (no prior init) | Force without init | PASS | Error: "No AIDD installation found" exits 1 |
 | `aidd init --docs-dir my_docs` | Custom docs dir | PASS | Creates my_docs/, manifest records docsDir |
 | `aidd init --docs-dir "my docs!"` | Invalid dir name | PASS | Error: "Invalid directory name" exits 1 |
-| `aidd --verbose init --framework <path>` | Verbose mode | PASS | Shows token resolution and framework path |
+| `aidd --verbose init --path <path>` | Verbose mode | PASS | Shows token resolution and framework path |
 | **INSTALL** | | | |
-| `aidd install claude --framework <path>` | Single tool | PASS | Creates .claude/, 61 files, auto-inits |
-| `aidd install cursor --framework <path>` | Single tool | PASS | Creates .cursor/, 60 files |
-| `aidd install copilot --framework <path>` | Single tool | PASS | Creates .github/, 55 files |
-| `aidd install --all --framework <path>` | All tools | PASS | 176 files, CATALOG.md generated |
-| `aidd install claude cursor --framework <path>` | Multiple tools | PASS | 121 files |
-| `aidd install claude --force --framework <path>` | Force reinstall | PASS | Overwrites without error |
-| `aidd install claude --framework <path>` (already installed) | Skip reinstall | PASS | Warning: "already installed. Use --force" |
-| `aidd install claude --framework <path>` (no manifest) | Auto-init | PASS | "No installation found. Initializing docs first..." |
-| `aidd install --verbose claude --framework <path>` | Verbose mode | PASS | Lists every file being written |
+| `aidd install claude --path <path>` | Single tool | PASS | Creates .claude/, 61 files, auto-inits |
+| `aidd install cursor --path <path>` | Single tool | PASS | Creates .cursor/, 60 files |
+| `aidd install copilot --path <path>` | Single tool | PASS | Creates .github/, 55 files |
+| `aidd install --all --path <path>` | All tools | PASS | 176 files, CATALOG.md generated |
+| `aidd install claude cursor --path <path>` | Multiple tools | PASS | 121 files |
+| `aidd install claude --force --path <path>` | Force reinstall | PASS | Overwrites without error |
+| `aidd install claude --path <path>` (already installed) | Skip reinstall | PASS | Warning: "already installed. Use --force" |
+| `aidd install claude --path <path>` (no manifest) | Auto-init | PASS | "No installation found. Initializing docs first..." |
+| `aidd install --verbose claude --path <path>` | Verbose mode | PASS | Lists every file being written |
 | `aidd install invalidtool` | Invalid tool | PASS | Error: "Unknown tool: invalidtool" exits 1 |
 | `aidd install` (no tools, no --all) | Missing args | PASS | Error: "Specify at least one tool or use --all" exits 1 |
-| `aidd install --framework /nonexistent` | Invalid path | PASS | Error: "Framework path does not exist" exits 1 |
+| `aidd install --path /nonexistent` | Invalid path | PASS | Error: "Framework path does not exist" exits 1 |
 | **UNINSTALL** | | | |
 | `aidd uninstall claude` | Single tool | PASS | Removes .claude/, 61 files removed |
 | `aidd uninstall cursor copilot` | Multiple tools | PASS | 115 files removed |
@@ -89,8 +89,8 @@ All 404 tests pass cleanly. The build (tsup) succeeds in ~17ms producing `dist/c
 | `aidd doctor` (orphaned directory) | Orphaned dir | PASS | Warns, exits 1 |
 | `aidd --verbose doctor` | Verbose | PASS | Shows token resolution before checks |
 | **GLOBAL OPTIONS** | | | |
-| `aidd --verbose init --framework <path>` | Verbose at global level | PASS | Works same as placing verbose before subcommand |
-| `aidd --release v3.3.3 install --all --framework <path>` | Release tag override | PASS | Installs with v3.3.3 tag in manifest |
+| `aidd --verbose init --path <path>` | Verbose at global level | PASS | Works same as placing verbose before subcommand |
+| `aidd --release v3.3.3 install --all --path <path>` | Release tag override | PASS | Installs with v3.3.3 tag in manifest |
 | `AIDD_VERBOSE=true aidd install ...` | Env var verbose | PASS | Activates verbose output |
 | **EDGE CASES** | | | |
 | Full lifecycle (init → install → status → uninstall → clean) | Complete flow | PASS | All steps succeed |
@@ -135,7 +135,7 @@ But `doctor` resolves this relative link from the file's own directory (`aidd_do
 
 ```bash
 mkdir /tmp/fresh-project && cd /tmp/fresh-project
-aidd install --all --framework example/aidd-framework-3.3.3
+aidd install --all --path example/aidd-framework-3.3.3
 aidd doctor
 # → 6 warnings, exits 1
 ```
@@ -192,7 +192,7 @@ But the actual file is at `.claude/rules/01-standards/1-command-structure.md`. T
 
 ```bash
 mkdir /tmp/test && cd /tmp/test
-aidd init --framework example/aidd-framework-3.3.3
+aidd init --path example/aidd-framework-3.3.3
 cat .gitignore   # contains: .aidd/cache/
 aidd clean --force
 cat .gitignore   # still contains: .aidd/cache/ (stale)
@@ -208,16 +208,16 @@ cat .gitignore   # still contains: .aidd/cache/ (stale)
 
 **Component:** `src/infrastructure/adapters/framework-loader-adapter.ts`, `collectFiles()`
 
-**Description:** The framework loader has no filtering for OS-specific files. When using `--framework` with a local macOS directory that contains `.DS_Store` files (macOS Finder metadata), those files are installed into the project and tracked in the manifest and CATALOG.md.
+**Description:** The framework loader has no filtering for OS-specific files. When using `--path` with a local macOS directory that contains `.DS_Store` files (macOS Finder metadata), those files are installed into the project and tracked in the manifest and CATALOG.md.
 
-**Observed:** After `aidd install --all --framework example/aidd-framework-3.3.3`:
+**Observed:** After `aidd install --all --path example/aidd-framework-3.3.3`:
 - `.claude/commands/.DS_Store` installed
 - `.claude/rules/.DS_Store` installed
 - `aidd_docs/.DS_Store` installed
 - `aidd_docs/templates/.DS_Store` installed
 - All four appear in CATALOG.md
 
-**Impact:** Low when using GitHub Releases (tarballs don't include `.DS_Store`). However, any user using `--framework` with a local macOS directory will pollute their project with metadata files.
+**Impact:** Low when using GitHub Releases (tarballs don't include `.DS_Store`). However, any user using `--path` with a local macOS directory will pollute their project with metadata files.
 
 **Fix:** Add a filter in `collectFiles()` to skip `.DS_Store` and other OS-specific files (`.DS_Store`, `Thumbs.db`, etc.).
 
@@ -252,10 +252,10 @@ cat .gitignore   # still contains: .aidd/cache/ (stale)
 | `aidd uninstall --all` with nothing installed | PASS | Graceful: "No tools installed" |
 | Reinstall (after uninstall, without --force) | PASS | Allowed — correct since tool was uninstalled |
 | `aidd install --all` → `uninstall --all` → `install --all` | PASS | Full cycle works cleanly |
-| `aidd --release v3.3.3 install` with local `--framework` | PASS | Version applied to manifest; local path used |
+| `aidd --release v3.3.3 install` with local `--path` | PASS | Version applied to manifest; local path used |
 | `AIDD_VERBOSE=true` env variable | PASS | Activates verbose without `--verbose` flag |
 | `aidd status` update-available check | INFO | Silent when network unavailable; no error |
-| Invalid `--framework` path | PASS | "Framework path does not exist" exits 1 |
+| Invalid `--path` path | PASS | "Framework path does not exist" exits 1 |
 
 ---
 

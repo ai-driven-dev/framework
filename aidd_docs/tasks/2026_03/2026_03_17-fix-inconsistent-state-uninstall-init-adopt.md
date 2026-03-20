@@ -55,8 +55,8 @@ flowchart TD
   A[User has untracked AIDD files, no manifest] --> B{Command run}
   B -->|aidd uninstall --all| C["Error: No manifest found.\nUnmanaged AIDD files detected.\nRun: aidd --release VERSION adopt --tools TOOL\nFind versions at: github.com/ai-driven-dev/aidd-framework/tags"]
   B -->|aidd init| D["Error: AIDD files detected.\nRun: aidd --release VERSION adopt --tools TOOL\nFind versions at: github.com/ai-driven-dev/aidd-framework/tags"]
-  B -->|aidd adopt --help| E["Description surfaces: requires global --release VERSION or --framework PATH"]
-  B -->|aidd adopt --tools claude without --release| F["Error: --release VERSION or --framework PATH is required.\nExample: aidd --release 3.6.0 adopt --tools claude\nFind versions at: github.com/ai-driven-dev/aidd-framework/tags"]
+  B -->|aidd adopt --help| E["Description surfaces: requires global --release VERSION or --path PATH"]
+  B -->|aidd adopt --tools claude without --release| F["Error: --release VERSION or --path PATH is required.\nExample: aidd --release 3.6.0 adopt --tools claude\nFind versions at: github.com/ai-driven-dev/aidd-framework/tags"]
   C --> G[User runs: aidd --release 3.6.0 adopt --tools claude]
   D --> G
   E --> G
@@ -72,7 +72,7 @@ flowchart TD
 
 1. In `init-use-case.ts` `checkPreconditions`: update the "AIDD files detected" error to include the full recovery command hint and where to find the version.
 2. In `uninstall.ts` command: update the "No AIDD installation found" error (when `manifest === null` in `--all` branch) to acknowledge unmanaged files and point to `adopt`.
-3. In `adopt.ts` command: update the command description to surface that `--release VERSION` or `--framework PATH` global option is required. Update the example version in the error from `3.3.3` to a less specific placeholder or a more current example.
+3. In `adopt.ts` command: update the command description to surface that `--release VERSION` or `--path PATH` global option is required. Update the example version in the error from `3.3.3` to a less specific placeholder or a more current example.
 
 ### Phase 2: Update tests
 
@@ -86,6 +86,6 @@ flowchart TD
 
 1. Run `aidd uninstall --all` in a project with no manifest but with `.claude/` present → error message mentions `adopt` and includes example command with version hint.
 2. Run `aidd init` in a project with existing `.claude/` and no manifest → error message includes full ready-to-run `adopt` command.
-3. Run `aidd adopt --help` → description mentions `--release` or `--framework` is required.
+3. Run `aidd adopt --help` → description mentions `--release` or `--path` is required.
 4. Run `aidd adopt --tools claude` (without `--release`) → error includes correct example and link to versions page.
 5. Run `pnpm test` → all 637+ tests pass.

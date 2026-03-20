@@ -10,15 +10,10 @@ export function registerInitCommand(program: Command): void {
     .description("Initialize the shared documentation structure")
     .option("--docs-dir <name>", "Custom documentation directory name")
     .option("--force", "Re-copy docs templates into existing docs directory", false)
-    .option("--framework <path>", "Path to a local framework directory or tarball")
+    .option("--path <path>", "Path to a local framework directory or tarball")
     .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
     .action(
-      async (cmdOptions: {
-        docsDir?: string;
-        force: boolean;
-        framework?: string;
-        release?: string;
-      }) => {
+      async (cmdOptions: { docsDir?: string; force: boolean; path?: string; release?: string }) => {
         const globalOptions = program.opts<{
           verbose: boolean;
           repo?: string;
@@ -43,7 +38,7 @@ export function registerInitCommand(program: Command): void {
           const { path: frameworkPath, version } = await resolveFramework(
             deps.resolver,
             deps.logger,
-            { framework: cmdOptions.framework, release: cmdOptions.release }
+            { path: cmdOptions.path, release: cmdOptions.release, repo: globalOptions.repo }
           );
 
           const useCase = new InitUseCase(
