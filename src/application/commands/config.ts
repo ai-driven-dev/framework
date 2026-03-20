@@ -1,6 +1,6 @@
-import { confirm } from "@inquirer/prompts";
+import { join } from "node:path";
 import { Command } from "commander";
-import { validateRepoFormat } from "../../infrastructure/adapters/framework-resolver-adapter.js";
+import { validateRepoFormat } from "../../domain/models/manifest.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { NoManifestError } from "../errors.js";
 import { CLIOutput } from "../output.js";
@@ -40,26 +40,39 @@ export function registerConfigCommand(program: Command): void {
     });
 
   configCmd
-    .command("get <key>")
+    .command("get [key]")
     .description(`Get a configuration value (readable: ${READABLE_KEYS.join(", ")})`)
-    .action(async (key: string) => {
+    .action(async (key: string | undefined) => {
       const globalOptions = program.opts<{ verbose: boolean }>();
       const output = new CLIOutput(globalOptions.verbose ?? false);
       const projectRoot = process.cwd();
       try {
-        if (!READABLE_KEYS.includes(key as ReadableKey)) {
-          output.error(`Unknown key '${key}'. Valid keys: ${READABLE_KEYS.join(", ")}.`);
-          process.exit(1);
-        }
         const deps = await createDeps(
           projectRoot,
           { verbose: globalOptions.verbose ?? false },
           output
         );
+
+        let resolvedKey = key;
+        if (resolvedKey === undefined) {
+          if (!process.stdout.isTTY) {
+            output.error("config get requires a key argument in non-interactive mode.");
+            process.exit(1);
+          }
+          resolvedKey = await deps.prompter.select(
+            "Which config key?",
+            READABLE_KEYS.map((k) => ({ name: k, value: k }))
+          );
+        }
+
+        if (!READABLE_KEYS.includes(resolvedKey as ReadableKey)) {
+          output.error(`Unknown key '${resolvedKey}'. Valid keys: ${READABLE_KEYS.join(", ")}.`);
+          process.exit(1);
+        }
         const manifest = await deps.manifestRepo.load();
         if (manifest === null) throw new NoManifestError();
-        if (key === "docsDir") output.print(manifest.docsDir);
-        else if (key === "repo") output.print(manifest.repo ?? DEFAULT_REPO);
+        if (resolvedKey === "docsDir") output.print(manifest.docsDir);
+        else if (resolvedKey === "repo") output.print(manifest.repo ?? DEFAULT_REPO);
         else output.print(manifest.getInstalledToolIds().join(", "));
       } catch (error) {
         output.exit(error);
@@ -67,96 +80,127 @@ export function registerConfigCommand(program: Command): void {
     });
 
   configCmd
-    .command("set <key> <value>")
+    .command("set [key] [value]")
     .description(
       `Update a configuration value in the manifest (writable: ${WRITABLE_KEYS.join(", ")})`
     )
     .option("-f, --force", "Skip confirmation prompt", false)
-    .action(async (key: string, value: string, cmdOptions: { force: boolean }) => {
-      const globalOptions = program.opts<{ verbose: boolean }>();
-      const output = new CLIOutput(globalOptions.verbose ?? false);
-      const projectRoot = process.cwd();
-      try {
-        if (!WRITABLE_KEYS.includes(key as WritableKey)) {
-          if (READABLE_KEYS.includes(key as ReadableKey)) {
-            output.error(`'${key}' is read-only. Use the appropriate aidd command to change it.`);
-          } else {
-            output.error(`Unknown key '${key}'. Writable keys: ${WRITABLE_KEYS.join(", ")}.`);
+    .action(
+      async (
+        key: string | undefined,
+        value: string | undefined,
+        cmdOptions: { force: boolean }
+      ) => {
+        const globalOptions = program.opts<{ verbose: boolean }>();
+        const output = new CLIOutput(globalOptions.verbose ?? false);
+        const projectRoot = process.cwd();
+        try {
+          const deps = await createDeps(
+            projectRoot,
+            { verbose: globalOptions.verbose ?? false },
+            output
+          );
+
+          let resolvedKey = key;
+          let resolvedValue = value;
+
+          if (resolvedKey === undefined || resolvedValue === undefined) {
+            if (!process.stdout.isTTY) {
+              output.error("config set requires key and value arguments in non-interactive mode.");
+              process.exit(1);
+            }
+            if (resolvedKey === undefined) {
+              resolvedKey = await deps.prompter.select(
+                "Which config key to set?",
+                WRITABLE_KEYS.map((k) => ({ name: k, value: k }))
+              );
+            }
+            const manifest = await deps.manifestRepo.load();
+            if (manifest === null) throw new NoManifestError();
+            const currentValue =
+              resolvedKey === "repo" ? (manifest.repo ?? DEFAULT_REPO) : manifest.docsDir;
+            resolvedValue = await deps.prompter.input("New value:", currentValue);
           }
-          process.exit(1);
-        }
 
-        const deps = await createDeps(
-          projectRoot,
-          { verbose: globalOptions.verbose ?? false },
-          output
-        );
-        const manifest = await deps.manifestRepo.load();
-        if (manifest === null) throw new NoManifestError();
+          if (!WRITABLE_KEYS.includes(resolvedKey as WritableKey)) {
+            if (READABLE_KEYS.includes(resolvedKey as ReadableKey)) {
+              output.error(
+                `'${resolvedKey}' is read-only. Use the appropriate aidd command to change it.`
+              );
+            } else {
+              output.error(
+                `Unknown key '${resolvedKey}'. Writable keys: ${WRITABLE_KEYS.join(", ")}.`
+              );
+            }
+            process.exit(1);
+          }
 
-        if (key === "repo") {
-          validateRepoFormat(value);
-          const current = manifest.repo ?? DEFAULT_REPO;
-          if (value === current) {
-            output.print(`repo is already '${value}'.`);
+          const manifest = await deps.manifestRepo.load();
+          if (manifest === null) throw new NoManifestError();
+
+          if (resolvedKey === "repo") {
+            validateRepoFormat(resolvedValue);
+            const current = manifest.repo ?? DEFAULT_REPO;
+            if (resolvedValue === current) {
+              output.print(`repo is already '${resolvedValue}'.`);
+              return;
+            }
+            if (!cmdOptions.force) {
+              if (!process.stdout.isTTY) {
+                output.error("Confirmation required. Use --force to skip in non-interactive mode.");
+                process.exit(1);
+              }
+              const confirmed = await deps.prompter.confirm(
+                `Change repo from '${current}' to '${resolvedValue}'?`
+              );
+              if (!confirmed) {
+                output.print("Aborted.");
+                return;
+              }
+            }
+            await deps.manifestRepo.save(manifest.withRepo(resolvedValue));
+            output.success(`repo updated to '${resolvedValue}'.`);
             return;
           }
+
+          // resolvedKey === "docsDir"
+          if (resolvedValue === manifest.docsDir) {
+            output.print(`docsDir is already '${resolvedValue}'.`);
+            return;
+          }
+
+          const newDirExists = await deps.fs.fileExists(join(projectRoot, resolvedValue));
+
+          if (newDirExists) {
+            output.print(`Directory '${resolvedValue}' found on disk. Updating manifest.`);
+          } else {
+            output.warn(`Directory '${resolvedValue}' does not exist on disk.`);
+            output.warn(
+              `Move your docs manually from '${manifest.docsDir}' to '${resolvedValue}' before running other commands.`
+            );
+          }
+
           if (!cmdOptions.force) {
             if (!process.stdout.isTTY) {
               output.error("Confirmation required. Use --force to skip in non-interactive mode.");
               process.exit(1);
             }
-            const confirmed = await confirm({
-              message: `Change repo from '${current}' to '${value}'?`,
-            });
+            const confirmed = await deps.prompter.confirm(
+              `Change docsDir from '${manifest.docsDir}' to '${resolvedValue}'?`
+            );
             if (!confirmed) {
               output.print("Aborted.");
               return;
             }
           }
-          await deps.manifestRepo.save(manifest.withRepo(value));
-          output.success(`repo updated to '${value}'.`);
-          return;
+
+          await deps.manifestRepo.save(manifest.withDocsDir(resolvedValue));
+          output.success(`docsDir updated to '${resolvedValue}'.`);
+        } catch (error) {
+          output.exit(error);
         }
-
-        // key === "docsDir"
-        if (value === manifest.docsDir) {
-          output.print(`docsDir is already '${value}'.`);
-          return;
-        }
-
-        const { join } = await import("node:path");
-        const newDirExists = await deps.fs.fileExists(join(projectRoot, value));
-
-        if (newDirExists) {
-          output.print(`Directory '${value}' found on disk. Updating manifest.`);
-        } else {
-          output.warn(`Directory '${value}' does not exist on disk.`);
-          output.warn(
-            `Move your docs manually from '${manifest.docsDir}' to '${value}' before running other commands.`
-          );
-        }
-
-        if (!cmdOptions.force) {
-          if (!process.stdout.isTTY) {
-            output.error("Confirmation required. Use --force to skip in non-interactive mode.");
-            process.exit(1);
-          }
-          const confirmed = await confirm({
-            message: `Change docsDir from '${manifest.docsDir}' to '${value}'?`,
-          });
-          if (!confirmed) {
-            output.print("Aborted.");
-            return;
-          }
-        }
-
-        await deps.manifestRepo.save(manifest.withDocsDir(value));
-        output.success(`docsDir updated to '${value}'.`);
-      } catch (error) {
-        output.exit(error);
       }
-    });
+    );
 
   program.addCommand(configCmd);
 }

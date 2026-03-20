@@ -12,8 +12,6 @@ export function registerDoctorCommand(program: Command): void {
         verbose: boolean;
         repo?: string;
         token?: string;
-        framework?: string;
-        release?: string;
       }>();
       const verbose = globalOptions.verbose ?? false;
       const output = new CLIOutput(verbose);
@@ -26,7 +24,6 @@ export function registerDoctorCommand(program: Command): void {
             verbose,
             repo: globalOptions.repo,
             token: globalOptions.token,
-            framework: globalOptions.framework,
           },
           output
         );

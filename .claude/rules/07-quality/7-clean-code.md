@@ -41,6 +41,5 @@ paths:
 ## Single responsibility
 
 - One reason to change per function, class, and file
-- Functions ≤ 20 lines
-- Extract private methods or sub-classes for each responsibility
+- Extract private methods for each distinct operation
 - If it needs a comment to explain "what", split it

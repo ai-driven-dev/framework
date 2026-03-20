@@ -3,7 +3,7 @@ const DEFAULT_REPO = "ai-driven-dev/aidd-framework";
 export class NoManifestError extends Error {
   constructor(repo = DEFAULT_REPO) {
     super(
-      `No AIDD manifest found. If you have manually installed AIDD files, run:\n  aidd adopt --from <version> --tools <tool>\nCheck available tags for: ${repo}`
+      `No AIDD manifest found. Run \`aidd setup\` to initialize your project.\nRepository: ${repo}`
     );
     this.name = "NoManifestError";
   }
@@ -12,7 +12,7 @@ export class NoManifestError extends Error {
 export class AiddFilesDetectedError extends Error {
   constructor(repo = DEFAULT_REPO) {
     super(
-      `AIDD files detected but no manifest found.\nTo register existing files, run:\n  aidd adopt --from <version> --tools <tool>\nCheck available tags for: ${repo}`
+      `AIDD files detected but no manifest found.\nRun \`aidd setup\` to register existing files.\nRepository: ${repo}`
     );
     this.name = "AiddFilesDetectedError";
   }

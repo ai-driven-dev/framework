@@ -20,7 +20,6 @@ describe.concurrent("E2E: aidd global options", () => {
       const { stdout, exitCode } = await runCli(["--help"], projectDir);
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("init");
       expect(stdout).toContain("install");
       expect(stdout).toContain("uninstall");
       expect(stdout).toContain("status");

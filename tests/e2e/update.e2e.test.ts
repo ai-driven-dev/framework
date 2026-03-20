@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -106,8 +106,10 @@ describe.concurrent("E2E: aidd update", () => {
       expect(exitCode).toBe(0);
       expect(stdout).toMatch(/Updated \d+ files/);
 
-      const backupPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md.backup");
-      expect(existsSync(backupPath)).toBe(true);
+      const rulesDir = join(projectDir, ".claude", "rules", "01-standards");
+      const backupFile = readdirSync(rulesDir).find((f) => f.startsWith("naming.md.bak."));
+      expect(backupFile).toBeDefined();
+      const backupPath = join(rulesDir, backupFile as string);
 
       const backupContent = await readFile(backupPath, "utf-8");
       expect(backupContent).toBe("# my custom naming rules\n");

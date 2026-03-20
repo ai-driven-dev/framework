@@ -119,7 +119,7 @@ describe.concurrent("E2E: aidd status", () => {
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("No AIDD manifest found");
-      expect(stderr).toContain("aidd adopt --from");
+      expect(stderr).toContain("aidd setup");
     } finally {
       await cleanup();
     }
@@ -134,7 +134,7 @@ describe.concurrent("E2E: aidd status", () => {
       );
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("Check available tags for: myorg/my-framework");
+      expect(stderr).toContain("myorg/my-framework");
     } finally {
       await cleanup();
     }

@@ -69,7 +69,7 @@ describe.concurrent("E2E: aidd init", () => {
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("AIDD files detected but no manifest found");
-      expect(stderr).toContain("aidd adopt --from");
+      expect(stderr).toContain("aidd setup");
     } finally {
       await cleanup();
     }
@@ -91,7 +91,7 @@ describe.concurrent("E2E: aidd init", () => {
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("AIDD files detected but no manifest found");
-      expect(stderr).toContain("aidd adopt --from");
+      expect(stderr).toContain("aidd setup");
     } finally {
       await cleanup();
     }
@@ -113,8 +113,8 @@ describe.concurrent("E2E: aidd init", () => {
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("AIDD files detected but no manifest found");
-      expect(stderr).toContain("aidd adopt --from");
-      expect(stderr).toContain("Check available tags for:");
+      expect(stderr).toContain("aidd setup");
+      expect(stderr).toContain("Repository:");
     } finally {
       await cleanup();
     }
@@ -137,8 +137,8 @@ describe.concurrent("E2E: aidd init", () => {
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("AIDD files detected but no manifest found");
-      expect(stderr).toContain("aidd adopt --from");
-      expect(stderr).toContain("Check available tags for:");
+      expect(stderr).toContain("aidd setup");
+      expect(stderr).toContain("Repository:");
     } finally {
       await cleanup();
     }

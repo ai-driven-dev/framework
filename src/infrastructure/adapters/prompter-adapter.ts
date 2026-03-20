@@ -1,5 +1,10 @@
-import { select } from "@inquirer/prompts";
+import { checkbox, confirm, input, select } from "@inquirer/prompts";
 import type { Prompter } from "../../domain/ports/prompter.js";
+
+type PromptContext = {
+  input?: NodeJS.ReadableStream;
+  output?: NodeJS.WritableStream;
+};
 
 export class SilentPrompterAdapter implements Prompter {
   async resolveConflict(
@@ -8,20 +13,94 @@ export class SilentPrompterAdapter implements Prompter {
   ): Promise<"keep" | "overwrite"> {
     return "overwrite";
   }
+
+  async confirm(_message: string): Promise<boolean> {
+    return true;
+  }
+
+  async input(_message: string, defaultValue?: string): Promise<string> {
+    return defaultValue ?? "";
+  }
+
+  async select<T>(
+    _message: string,
+    choices: Array<{ name: string; value: T; disabled?: boolean | string }>
+  ): Promise<T> {
+    const first = choices.find((c) => !c.disabled);
+    if (first === undefined) {
+      throw new Error("No enabled choices available");
+    }
+    return first.value;
+  }
+
+  async checkbox<T>(
+    _message: string,
+    choices: Array<{ name: string; value: T; checked?: boolean; disabled?: boolean | string }>
+  ): Promise<T[]> {
+    return choices.filter((c) => c.checked === true && !c.disabled).map((c) => c.value);
+  }
 }
 
 export class InquirerPrompterAdapter implements Prompter {
+  constructor(private readonly context?: PromptContext) {}
+
   async resolveConflict(
     relativePath: string,
     reason: "deleted" | "modified"
   ): Promise<"keep" | "overwrite"> {
     const description = reason === "deleted" ? "was deleted" : "was locally modified";
-    return select({
-      message: `Conflict: ${relativePath} ${description}. What do you want to do?`,
-      choices: [
-        { name: "Overwrite with latest version", value: "overwrite" as const },
-        { name: "Keep my local version", value: "keep" as const },
-      ],
-    });
+    return select(
+      {
+        message: `Conflict: ${relativePath} ${description}. What do you want to do?`,
+        choices: [
+          { name: "Overwrite with latest version", value: "overwrite" as const },
+          { name: "Keep my local version", value: "keep" as const },
+        ],
+      },
+      this.context
+    );
+  }
+
+  async confirm(message: string): Promise<boolean> {
+    return confirm({ message, default: false }, this.context);
+  }
+
+  async input(message: string, defaultValue?: string): Promise<string> {
+    return input({ message, default: defaultValue }, this.context);
+  }
+
+  async select<T>(
+    message: string,
+    choices: Array<{ name: string; value: T; disabled?: boolean | string }>
+  ): Promise<T> {
+    return select(
+      {
+        message,
+        choices: choices.map((c) => ({
+          name: c.name,
+          value: c.value,
+          disabled: c.disabled === true ? "Disabled" : c.disabled || false,
+        })),
+      },
+      this.context
+    );
+  }
+
+  async checkbox<T>(
+    message: string,
+    choices: Array<{ name: string; value: T; checked?: boolean; disabled?: boolean | string }>
+  ): Promise<T[]> {
+    return checkbox(
+      {
+        message,
+        choices: choices.map((c) => ({
+          name: c.name,
+          value: c.value,
+          checked: c.checked,
+          disabled: c.disabled,
+        })),
+      },
+      this.context
+    );
   }
 }

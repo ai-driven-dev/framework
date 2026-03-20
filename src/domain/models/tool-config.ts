@@ -10,6 +10,14 @@ import {
 export type ToolId = "claude" | "cursor" | "copilot" | "opencode";
 export const VALID_TOOL_IDS: readonly ToolId[] = ["claude", "cursor", "copilot", "opencode"];
 
+export function assertValidToolIds(toolIds: string[]): void {
+  const invalid = toolIds.filter((t) => !VALID_TOOL_IDS.includes(t as ToolId));
+  if (invalid.length === 0) return;
+  throw new Error(
+    `Unknown tool(s): ${invalid.join(", ")}. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
+  );
+}
+
 export type UserFileSection = "agents" | "commands" | "rules" | "skills";
 
 export interface UserFileSectionKey {

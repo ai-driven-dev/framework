@@ -6,6 +6,14 @@ const DEFAULT_DOCS_DIR = "aidd_docs";
 
 const MANIFEST_VERSION = 1;
 
+const REPO_FORMAT_REGEX = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
+
+export function validateRepoFormat(repo: string): void {
+  if (!REPO_FORMAT_REGEX.test(repo)) {
+    throw new Error("Invalid repository format. Expected: owner/repo");
+  }
+}
+
 interface TrackedFile {
   readonly relativePath: string;
   readonly hash: FileHash;

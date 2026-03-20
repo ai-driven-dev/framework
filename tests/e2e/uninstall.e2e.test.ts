@@ -45,7 +45,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("No AIDD manifest found");
-      expect(stderr).toContain("aidd adopt --from");
+      expect(stderr).toContain("aidd setup");
     } finally {
       await cleanup();
     }
@@ -81,7 +81,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
     }
   });
 
-  it("shows an error message when no tool is specified and --all is not used", async () => {
+  it("exits with error in non-interactive mode when no tool is specified and --all is not used", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
       await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
@@ -90,7 +90,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
       const { stderr, exitCode } = await runCli(["uninstall"], projectDir);
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("--all");
+      expect(stderr).toContain("non-interactive mode");
     } finally {
       await cleanup();
     }

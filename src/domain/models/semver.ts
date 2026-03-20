@@ -5,7 +5,7 @@ function parseSemver(v: string): [number, number, number] {
 }
 
 export function isSemver(s: string): boolean {
-  return /^\d+\.\d+\.\d+/.test(s);
+  return /^v?\d+\.\d+\.\d+/.test(s);
 }
 
 export function compareSemver(a: string, b: string): -1 | 0 | 1 {

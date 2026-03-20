@@ -60,10 +60,7 @@ describe.concurrent("E2E: full lifecycle", () => {
       expect(statusAfterRestoreResult.stdout).toContain("All files are in sync");
 
       // sync --source claude — nothing to sync (no modifications)
-      const syncResult = await runCli(
-        ["sync", "--source", "claude", "--framework", FRAMEWORK_PATH],
-        projectDir
-      );
+      const syncResult = await runCli(["sync", "--source", "claude"], projectDir);
       expect(syncResult.exitCode).toBe(0);
       expect(syncResult.stdout).toContain("Nothing to sync");
 

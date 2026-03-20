@@ -1,12 +1,9 @@
 import type { Command } from "commander";
-import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
-import {
-  InquirerPrompterAdapter,
-  SilentPrompterAdapter,
-} from "../../infrastructure/adapters/prompter-adapter.js";
+import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { NoManifestError } from "../errors.js";
 import { CLIOutput } from "../output.js";
+import { ConflictResolutionUseCase } from "../use-cases/conflict-resolution-use-case.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
 import { UpdateUseCase } from "../use-cases/update-use-case.js";
 
@@ -18,14 +15,21 @@ export function registerUpdateCommand(program: Command): void {
     .option("--dry-run", "Preview changes without writing files", false)
     .option("--tool <tool>", "Limit update to a specific tool")
     .option("--docs", "Limit update to docs only")
+    .option("--framework <path>", "Path to a local framework directory or tarball")
+    .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
     .action(
-      async (cmdOptions: { force: boolean; dryRun: boolean; tool?: string; docs?: boolean }) => {
+      async (cmdOptions: {
+        force: boolean;
+        dryRun: boolean;
+        tool?: string;
+        docs?: boolean;
+        framework?: string;
+        release?: string;
+      }) => {
         const globalOptions = program.opts<{
           verbose: boolean;
           repo?: string;
           token?: string;
-          framework?: string;
-          release?: string;
         }>();
 
         const verbose = globalOptions.verbose ?? false;
@@ -36,18 +40,18 @@ export function registerUpdateCommand(program: Command): void {
           output.error("--tool and --docs are mutually exclusive");
           process.exit(1);
         }
-        if (cmdOptions.tool !== undefined) {
-          output.validateTools([cmdOptions.tool], VALID_TOOL_IDS);
-        }
 
         try {
+          if (cmdOptions.tool !== undefined) {
+            assertValidToolIds([cmdOptions.tool]);
+          }
+
           const deps = await createDeps(
             projectRoot,
             {
               verbose,
               repo: globalOptions.repo,
               token: globalOptions.token,
-              framework: globalOptions.framework,
             },
             output
           );
@@ -60,13 +64,23 @@ export function registerUpdateCommand(program: Command): void {
           const { path: frameworkPath, version } = await resolveFramework(
             deps.resolver,
             deps.logger,
-            { framework: globalOptions.framework, release: globalOptions.release }
+            { framework: cmdOptions.framework, release: cmdOptions.release }
           );
 
-          const prompter = cmdOptions.force
-            ? new SilentPrompterAdapter()
-            : new InquirerPrompterAdapter();
+          const isInteractive =
+            !cmdOptions.force &&
+            !cmdOptions.dryRun &&
+            cmdOptions.tool === undefined &&
+            !cmdOptions.docs &&
+            process.stdout.isTTY;
 
+          let resolvedToolIds: ToolId[] | undefined = cmdOptions.tool
+            ? [cmdOptions.tool as ToolId]
+            : undefined;
+          let resolvedDocsOnly = cmdOptions.docs ?? false;
+          let resolvedForce = cmdOptions.force;
+
+          const conflictResolution = new ConflictResolutionUseCase(deps.prompter);
           const updateUseCase = new UpdateUseCase(
             deps.fs,
             deps.manifestRepo,
@@ -74,18 +88,62 @@ export function registerUpdateCommand(program: Command): void {
             deps.hasher,
             deps.logger,
             deps.git,
-            prompter,
-            deps.platform
+            deps.platform,
+            conflictResolution
           );
+
+          if (isInteractive) {
+            const dryRunResult = await updateUseCase.execute({
+              frameworkPath,
+              version,
+              docsDir: manifest.docsDir,
+              projectRoot,
+              dryRun: true,
+              force: false,
+              repo: globalOptions.repo,
+            });
+
+            const changedTools = dryRunResult.tools.filter((t) =>
+              t.diff.some((d) => d.kind !== "unchanged")
+            );
+            const docsChanged =
+              dryRunResult.docs?.diff.some((d) => d.kind !== "unchanged") ?? false;
+
+            if (changedTools.length === 0 && !docsChanged) {
+              output.success(`Already up to date (v${version})`);
+              return;
+            }
+
+            const scopeChoices = [
+              { name: "All", value: "all" },
+              ...changedTools.map((t) => ({ name: `${t.toolId} only`, value: `tool:${t.toolId}` })),
+              ...(docsChanged ? [{ name: "docs only", value: "docs" }] : []),
+            ];
+
+            const scopeSelection = await deps.prompter.select("What to update?", scopeChoices);
+            const confirmed = await deps.prompter.confirm("Apply update?");
+
+            if (!confirmed) {
+              output.info("Update cancelled.");
+              return;
+            }
+
+            if (scopeSelection === "docs") {
+              resolvedDocsOnly = true;
+            } else if (scopeSelection.startsWith("tool:")) {
+              resolvedToolIds = [scopeSelection.slice(5) as ToolId];
+            }
+            resolvedForce = true;
+          }
 
           const result = await updateUseCase.execute({
             frameworkPath,
             version,
             docsDir: manifest.docsDir,
             projectRoot,
-            toolIds: cmdOptions.tool ? [cmdOptions.tool as ToolId] : undefined,
-            docsOnly: cmdOptions.docs ?? false,
-            force: cmdOptions.force,
+            toolIds: resolvedToolIds,
+            docsOnly: resolvedDocsOnly,
+            force: resolvedForce,
             dryRun: cmdOptions.dryRun,
             repo: globalOptions.repo,
           });

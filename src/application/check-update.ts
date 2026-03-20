@@ -15,7 +15,8 @@ export async function printUpdateBanner(
   resolver: FrameworkResolver,
   manifestRepo: ManifestRepository,
   logger: Logger,
-  skipCliCheck = false
+  skipCliCheck = false,
+  skipFrameworkCheck = false
 ): Promise<void> {
   if (!skipCliCheck) {
     try {
@@ -23,7 +24,7 @@ export async function printUpdateBanner(
       const { version: latest } = await cliUpdater.fetchLatestRelease();
       if (isOutdated(current, latest)) {
         logger.warn(
-          `\nCLI update available: v${current.replace(/^v/, "")} → v${latest.replace(/^v/, "")}`
+          `CLI update available: v${current.replace(/^v/, "")} → v${latest.replace(/^v/, "")}`
         );
         logger.warn("Run `aidd self-update`.");
       }
@@ -31,6 +32,8 @@ export async function printUpdateBanner(
       logger.debug(`CLI update check failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
+
+  if (skipFrameworkCheck) return;
 
   try {
     const manifest = await manifestRepo.load();
@@ -52,7 +55,7 @@ export async function printUpdateBanner(
     if (!docsOutdated && !toolsOutdated) return;
 
     const current = (docsVersion ?? toolVersion) as string;
-    logger.warn(`\nUpdate available: v${current.replace(/^v/, "")} → v${latest.replace(/^v/, "")}`);
+    logger.warn(`Update available: v${current.replace(/^v/, "")} → v${latest.replace(/^v/, "")}`);
     if (docsOutdated && toolsOutdated) logger.warn("Run `aidd update` to update docs and tools.");
     else if (docsOutdated) logger.warn("Run `aidd update --docs` to update docs.");
     else if (toolsOutdated) logger.warn("Run `aidd update` to update tools.");

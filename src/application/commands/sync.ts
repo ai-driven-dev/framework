@@ -1,21 +1,22 @@
 import type { Command } from "commander";
-import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
+import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { NoManifestError } from "../errors.js";
 import { CLIOutput } from "../output.js";
+import { SyncStatusUseCase } from "../use-cases/sync-status-use-case.js";
 import { SyncUseCase } from "../use-cases/sync-use-case.js";
 
 export function registerSyncCommand(program: Command): void {
   program
     .command("sync")
     .description("Propagate local modifications from one tool to others")
-    .requiredOption("--source <tool>", "(required) Source tool to sync from")
+    .option("--source <tool>", "Source tool to sync from")
     .option("--target <tool>", "Target tool to sync to (default: all other installed tools)")
     .option("-f, --force", "Overwrite conflicting files without prompting", false)
     .option("--include-user-files", "Also sync user-created files not tracked in manifest", false)
     .action(
       async (cmdOptions: {
-        source: string;
+        source?: string;
         target?: string;
         force: boolean;
         includeUserFiles: boolean;
@@ -24,8 +25,6 @@ export function registerSyncCommand(program: Command): void {
           verbose: boolean;
           repo?: string;
           token?: string;
-          framework?: string;
-          release?: string;
         }>();
 
         const verbose = globalOptions.verbose ?? false;
@@ -39,26 +38,72 @@ export function registerSyncCommand(program: Command): void {
               verbose,
               repo: globalOptions.repo,
               token: globalOptions.token,
-              framework: globalOptions.framework,
             },
             output
           );
-
-          output.validateTools([cmdOptions.source], VALID_TOOL_IDS);
-          if (cmdOptions.target) {
-            output.validateTools([cmdOptions.target], VALID_TOOL_IDS);
-          }
 
           const manifest = await deps.manifestRepo.load();
           if (manifest === null) {
             throw new NoManifestError(globalOptions.repo);
           }
 
-          const sourceTool = cmdOptions.source as ToolId;
+          let sourceTool: ToolId;
+          let targetTools: ToolId[] | undefined;
+
+          if (cmdOptions.source === undefined) {
+            if (!process.stdout.isTTY) {
+              output.error("--source is required in non-interactive mode.");
+              process.exit(1);
+            }
+
+            const installedIds = manifest.getInstalledToolIds();
+            if (installedIds.length < 2) {
+              output.error("At least 2 tools must be installed to use sync.");
+              process.exit(1);
+            }
+
+            const modCounts = await new SyncStatusUseCase(deps.fs).execute(
+              manifest,
+              installedIds as ToolId[],
+              projectRoot
+            );
+
+            const sourceChoices = installedIds.map((id) => {
+              const { modified, deleted } = modCounts[id] ?? { modified: 0, deleted: 0 };
+              const hasChanges = modified > 0 || deleted > 0;
+              const parts: string[] = [];
+              if (modified > 0) parts.push(`${modified} modified`);
+              if (deleted > 0) parts.push(`${deleted} deleted`);
+              const label = hasChanges ? ` (${parts.join(", ")})` : "";
+              return {
+                name: `${id}${label}`,
+                value: id as ToolId,
+                disabled: hasChanges ? false : "(no changes)",
+              };
+            });
+
+            sourceTool = await deps.prompter.select("Source tool to sync from?", sourceChoices);
+
+            const targetChoices = installedIds
+              .filter((id) => id !== sourceTool)
+              .map((id) => ({ name: id, value: id as ToolId }));
+
+            targetTools = await deps.prompter.checkbox("Target tools?", targetChoices);
+
+            if (targetTools.length === 0) {
+              output.error("No target tools selected.");
+              process.exit(1);
+            }
+          } else {
+            assertValidToolIds([cmdOptions.source]);
+            if (cmdOptions.target) {
+              assertValidToolIds([cmdOptions.target]);
+            }
+            sourceTool = cmdOptions.source as ToolId;
+            targetTools = cmdOptions.target ? [cmdOptions.target as ToolId] : undefined;
+          }
+
           const docsDir = manifest.docsDir;
-          const targetTools: ToolId[] | undefined = cmdOptions.target
-            ? [cmdOptions.target as ToolId]
-            : undefined;
 
           const syncUseCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
 

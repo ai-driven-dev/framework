@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
+import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { CLIOutput } from "../output.js";
 import { StatusUseCase } from "../use-cases/status-use-case.js";
@@ -39,7 +39,7 @@ export function registerStatusCommand(program: Command): void {
         if (cmdOptions.tool !== undefined && cmdOptions.docs) {
           throw new Error("--tool and --docs are mutually exclusive");
         }
-        if (cmdOptions.tool !== undefined) output.validateTools([cmdOptions.tool], VALID_TOOL_IDS);
+        if (cmdOptions.tool !== undefined) assertValidToolIds([cmdOptions.tool]);
         const filterToolId = cmdOptions.tool as ToolId | undefined;
         const filterDocs = cmdOptions.docs ?? false;
 

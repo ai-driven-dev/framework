@@ -13,70 +13,94 @@ export function registerInitCommand(program: Command): void {
     .description("Initialize the shared documentation structure")
     .option("--docs-dir <name>", "Custom documentation directory name")
     .option("--force", "Re-copy docs templates into existing docs directory", false)
-    .action(async (cmdOptions: { docsDir?: string; force: boolean }) => {
-      const globalOptions = program.opts<{
-        verbose: boolean;
-        repo?: string;
-        token?: string;
+    .option("--framework <path>", "Path to a local framework directory or tarball")
+    .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
+    .action(
+      async (cmdOptions: {
+        docsDir?: string;
+        force: boolean;
         framework?: string;
         release?: string;
-      }>();
+      }) => {
+        const globalOptions = program.opts<{
+          verbose: boolean;
+          repo?: string;
+          token?: string;
+        }>();
 
-      const explicitDocsDir = cmdOptions.docsDir;
-      const docsDir = explicitDocsDir ?? DEFAULT_DOCS_DIR;
-      const verbose = globalOptions.verbose ?? false;
-      const output = new CLIOutput(verbose);
+        const verbose = globalOptions.verbose ?? false;
+        const output = new CLIOutput(verbose);
+        const projectRoot = process.cwd();
 
-      if (!VALID_DOCS_DIR.test(docsDir) || docsDir.includes("..")) {
-        output.error(
-          `Invalid directory name: "${docsDir}". Use alphanumeric characters, hyphens, and underscores only.`
-        );
-        process.exit(1);
+        try {
+          const deps = await createDeps(
+            projectRoot,
+            {
+              verbose,
+              repo: globalOptions.repo,
+              token: globalOptions.token,
+            },
+            output
+          );
+
+          let explicitDocsDir = cmdOptions.docsDir;
+          let interactiveRepo: string | undefined = globalOptions.repo;
+
+          if (explicitDocsDir === undefined && !cmdOptions.force && process.stdout.isTTY) {
+            const docsDirInput = await deps.prompter.input(
+              "Documentation directory name:",
+              DEFAULT_DOCS_DIR
+            );
+            explicitDocsDir = docsDirInput;
+            const repoInput = await deps.prompter.input(
+              "Framework repository (owner/repo, leave blank to skip):",
+              ""
+            );
+            if (repoInput !== "") {
+              interactiveRepo = repoInput;
+            }
+          }
+
+          const docsDir = explicitDocsDir ?? DEFAULT_DOCS_DIR;
+
+          if (!VALID_DOCS_DIR.test(docsDir) || docsDir.includes("..")) {
+            output.error(
+              `Invalid directory name: "${docsDir}". Use alphanumeric characters, hyphens, and underscores only.`
+            );
+            process.exit(1);
+          }
+
+          const useCase = new InitUseCase(
+            deps.fs,
+            deps.manifestRepo,
+            deps.loader,
+            deps.hasher,
+            deps.logger
+          );
+          await useCase.checkPreconditions({
+            docsDir,
+            projectRoot,
+            force: cmdOptions.force,
+            repo: interactiveRepo,
+          });
+          const { path: frameworkPath, version } = await resolveFramework(
+            deps.resolver,
+            deps.logger,
+            { framework: cmdOptions.framework, release: cmdOptions.release }
+          );
+          const result = await useCase.execute({
+            frameworkPath,
+            version,
+            docsDir,
+            explicitDocsDir,
+            projectRoot,
+            force: cmdOptions.force,
+            repo: interactiveRepo,
+          });
+          output.success(`Initialized docs in ${result.docsDir}/ (${result.fileCount} files)`);
+        } catch (error) {
+          output.exit(error);
+        }
       }
-
-      const projectRoot = process.cwd();
-
-      try {
-        const deps = await createDeps(
-          projectRoot,
-          {
-            verbose,
-            repo: globalOptions.repo,
-            token: globalOptions.token,
-            framework: globalOptions.framework,
-          },
-          output
-        );
-        const useCase = new InitUseCase(
-          deps.fs,
-          deps.manifestRepo,
-          deps.loader,
-          deps.hasher,
-          deps.logger
-        );
-        await useCase.checkPreconditions({
-          docsDir,
-          projectRoot,
-          force: cmdOptions.force,
-          repo: globalOptions.repo,
-        });
-        const { path: frameworkPath, version } = await resolveFramework(
-          deps.resolver,
-          deps.logger,
-          { framework: globalOptions.framework, release: globalOptions.release }
-        );
-        const result = await useCase.execute({
-          frameworkPath,
-          version,
-          docsDir,
-          explicitDocsDir,
-          projectRoot,
-          force: cmdOptions.force,
-          repo: globalOptions.repo,
-        });
-        output.success(`Initialized docs in ${result.docsDir}/ (${result.fileCount} files)`);
-      } catch (error) {
-        output.exit(error);
-      }
-    });
+    );
 }

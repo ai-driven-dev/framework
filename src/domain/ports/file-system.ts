@@ -12,4 +12,5 @@ export interface FileSystem {
   mergeJsonFile(path: string, content: string): Promise<void>;
   deleteDirectory(path: string): Promise<void>;
   chmodExecutable(path: string): Promise<void>;
+  backup(absolutePath: string): Promise<string>;
 }

@@ -12,9 +12,9 @@ import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../domain/ports/platform.js";
-import type { Prompter } from "../../domain/ports/prompter.js";
 import { NoManifestError } from "../errors.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
+import type { ConflictResolutionUseCase } from "./conflict-resolution-use-case.js";
 import { MemoryScriptUseCase } from "./memory-script-use-case.js";
 
 interface UpdateOptions {
@@ -75,8 +75,8 @@ export class UpdateUseCase {
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly git: Git,
-    private readonly prompter: Prompter,
-    private readonly platform: Platform
+    private readonly platform: Platform,
+    private readonly conflictResolution: ConflictResolutionUseCase
   ) {}
 
   async execute(options: UpdateOptions): Promise<UpdateResult> {
@@ -108,7 +108,7 @@ export class UpdateUseCase {
         : manifest.getInstalledToolIds();
 
     for (const toolId of effectiveToolIds) {
-      this.logger.info(`Checking ${toolId} for updates...`);
+      this.logger.debug(`Checking ${toolId} for updates...`);
 
       const config = getToolConfig(toolId);
       const manifestFiles = manifest.getToolFiles(toolId);
@@ -137,7 +137,8 @@ export class UpdateUseCase {
           mergedHashMap.set(newFile.relativePath, diskHash);
         }
 
-        result = await this.applyDiff(diff, newDistMap, projectRoot, force);
+        const conflictDecisions = await this.resolveConflicts(diff, force);
+        result = await this.applyDiff(diff, newDistMap, projectRoot, conflictDecisions);
 
         const nonMergedFinal = newDistribution
           .filter((f) => !f.merge)
@@ -207,7 +208,7 @@ export class UpdateUseCase {
   ): Promise<DocsUpdateResult | null> {
     if (!manifest.hasDocs()) return null;
 
-    this.logger.info("Checking docs for updates...");
+    this.logger.debug("Checking docs for updates...");
 
     const newDistribution = buildDocsDistribution(docsFiles, docsDir, this.hasher);
     const newDistMap = new Map(newDistribution.map((f) => [f.relativePath, f]));
@@ -218,7 +219,8 @@ export class UpdateUseCase {
     let result: ApplyDiffResult = { kept: [], written: [], deleted: [], backedUp: [] };
 
     if (!dryRun) {
-      result = await this.applyDiff(diff, newDistMap, projectRoot, force);
+      const conflictDecisions = await this.resolveConflicts(diff, force);
+      result = await this.applyDiff(diff, newDistMap, projectRoot, conflictDecisions);
 
       const finalFiles = newDistribution.filter(
         (f) => !result.deleted.includes(f.relativePath) && !result.kept.includes(f.relativePath)
@@ -237,11 +239,25 @@ export class UpdateUseCase {
     };
   }
 
+  private async resolveConflicts(
+    diff: FileDiff[],
+    force: boolean
+  ): Promise<Map<string, "overwrite" | "skip" | "backup">> {
+    const conflictPaths = diff
+      .filter((e) => e.kind === "changed" && e.conflict)
+      .map((e) => e.relativePath);
+    if (conflictPaths.length === 0) return new Map();
+    if (force) {
+      return new Map(conflictPaths.map((p) => [p, "backup"]));
+    }
+    return this.conflictResolution.execute(conflictPaths);
+  }
+
   private async applyDiff(
     diff: FileDiff[],
     distMap: Map<string, GeneratedFile>,
     projectRoot: string,
-    force: boolean
+    conflictDecisions: Map<string, "overwrite" | "skip" | "backup">
   ): Promise<ApplyDiffResult> {
     const kept: string[] = [];
     const written: string[] = [];
@@ -258,17 +274,17 @@ export class UpdateUseCase {
         await this.fs.deleteFile(join(projectRoot, entry.relativePath));
         deleted.push(entry.relativePath);
       } else if (entry.kind === "changed") {
-        if (entry.conflict && !force) {
-          const decision = await this.prompter.resolveConflict(entry.relativePath, "modified");
-          if (decision === "keep") {
+        if (entry.conflict) {
+          const diskPath = join(projectRoot, entry.relativePath);
+          const decision = conflictDecisions.get(entry.relativePath) ?? "overwrite";
+          if (decision === "skip") {
             kept.push(entry.relativePath);
             continue;
           }
-        }
-        if (entry.conflict) {
-          const diskPath = join(projectRoot, entry.relativePath);
-          await this.fs.writeFile(`${diskPath}.backup`, await this.fs.readFile(diskPath));
-          backedUp.push(`${entry.relativePath}.backup`);
+          if (decision === "backup") {
+            const backupPath = await this.fs.backup(diskPath);
+            backedUp.push(backupPath.replace(`${projectRoot}/`, ""));
+          }
         }
         const newFile = distMap.get(entry.relativePath);
         if (!newFile) throw new Error(`Missing new file in distribution: ${entry.relativePath}`);

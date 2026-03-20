@@ -4,6 +4,7 @@ import "../domain/tools/copilot.js";
 import "../domain/tools/cursor.js";
 import "../domain/tools/opencode.js";
 import { CLIOutput } from "../application/output.js";
+import { validateRepoFormat } from "../domain/models/manifest.js";
 import type { CliUpdater } from "../domain/ports/cli-updater.js";
 import type { CurrentVersionProvider } from "../domain/ports/current-version-provider.js";
 import type { FileSystem } from "../domain/ports/file-system.js";
@@ -14,18 +15,17 @@ import type { Hasher } from "../domain/ports/hasher.js";
 import type { Logger } from "../domain/ports/logger.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import type { Platform } from "../domain/ports/platform.js";
+import type { Prompter } from "../domain/ports/prompter.js";
 import { CliUpdaterAdapter } from "./adapters/cli-updater-adapter.js";
 import { CurrentVersionAdapter } from "./adapters/current-version-adapter.js";
 import { FileSystemAdapter } from "./adapters/file-system-adapter.js";
 import { FrameworkLoaderAdapter } from "./adapters/framework-loader-adapter.js";
-import {
-  FrameworkResolverAdapter,
-  validateRepoFormat,
-} from "./adapters/framework-resolver-adapter.js";
+import { FrameworkResolverAdapter } from "./adapters/framework-resolver-adapter.js";
 import { GitAdapter } from "./adapters/git-adapter.js";
 import { HasherAdapter } from "./adapters/hasher-adapter.js";
 import { ManifestRepositoryAdapter } from "./adapters/manifest-repository-adapter.js";
 import { PlatformAdapter } from "./adapters/platform-adapter.js";
+import { InquirerPrompterAdapter, SilentPrompterAdapter } from "./adapters/prompter-adapter.js";
 import { TokenResolver } from "./auth/token-resolver.js";
 import { FrameworkCache } from "./cache/framework-cache.js";
 import { HttpClient } from "./http/http-client.js";
@@ -35,7 +35,6 @@ interface GlobalOptions {
   verbose: boolean;
   repo?: string;
   token?: string;
-  framework?: string;
 }
 
 interface Deps {
@@ -49,6 +48,7 @@ interface Deps {
   currentVersionProvider: CurrentVersionProvider;
   git: Git;
   platform: Platform;
+  prompter: Prompter;
 }
 
 export async function createDeps(
@@ -87,6 +87,9 @@ export async function createDeps(
   const currentVersionProvider = new CurrentVersionAdapter();
   const git = new GitAdapter(fs);
   const platform = new PlatformAdapter();
+  const prompter = process.stdout.isTTY
+    ? new InquirerPrompterAdapter()
+    : new SilentPrompterAdapter();
   return {
     fs,
     manifestRepo,
@@ -98,5 +101,6 @@ export async function createDeps(
     currentVersionProvider,
     git,
     platform,
+    prompter,
   };
 }

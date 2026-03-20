@@ -148,7 +148,7 @@ describe.concurrent("E2E: aidd install", () => {
     }
   });
 
-  it("shows an error message when no tool is specified and --all is not used", async () => {
+  it("exits with error in non-interactive mode when no tool is specified and --all is not used", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
       const { stderr, exitCode } = await runCli(
@@ -157,7 +157,7 @@ describe.concurrent("E2E: aidd install", () => {
       );
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("--all");
+      expect(stderr).toContain("non-interactive mode");
     } finally {
       await cleanup();
     }

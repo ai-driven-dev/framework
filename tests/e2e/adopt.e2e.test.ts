@@ -120,10 +120,7 @@ describe.concurrent("E2E: aidd adopt", () => {
 
       await runCli(["adopt", "--from", FRAMEWORK_PATH, "--tools", "claude"], projectDir);
 
-      const { stdout, exitCode } = await runCli(
-        ["status", "--framework", FRAMEWORK_PATH],
-        projectDir
-      );
+      const { stdout, exitCode } = await runCli(["status"], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("in sync");
@@ -219,46 +216,6 @@ describe.concurrent("E2E: aidd adopt", () => {
       ) as { tools: Record<string, { files: Array<{ relativePath: string }> }> };
       const registeredPaths = manifest.tools.claude.files.map((f) => f.relativePath);
       expect(registeredPaths).not.toContain(".claude/rules/my-custom.md");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("backward compat: global --release flag works as --from", async () => {
-    const { projectDir, cleanup } = await createTestEnv("adopt");
-    try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      const { rm } = await import("node:fs/promises");
-      await rm(`${projectDir}/.aidd`, { recursive: true, force: true });
-
-      const { stdout, exitCode } = await runCli(
-        ["--release", FRAMEWORK_PATH, "adopt", "--tools", "claude"],
-        projectDir
-      );
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("Adopted");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("backward compat: global --framework flag works as --from local path", async () => {
-    const { projectDir, cleanup } = await createTestEnv("adopt");
-    try {
-      await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "claude", "--framework", FRAMEWORK_PATH], projectDir);
-      const { rm } = await import("node:fs/promises");
-      await rm(`${projectDir}/.aidd`, { recursive: true, force: true });
-
-      const { stdout, exitCode } = await runCli(
-        ["--framework", FRAMEWORK_PATH, "adopt", "--tools", "claude"],
-        projectDir
-      );
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("Adopted");
     } finally {
       await cleanup();
     }

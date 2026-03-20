@@ -33,4 +33,3 @@ paths:
 ## Exceptions
 
 - `CLIOutput` (Logger adapter) lives in `application/`, not `infrastructure/`
-- Prompter adapters are instantiated directly in `commands/` for conditional TTY logic

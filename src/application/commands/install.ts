@@ -1,5 +1,9 @@
 import type { Command } from "commander";
-import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
+import {
+  assertValidToolIds,
+  type ToolId,
+  VALID_TOOL_IDS,
+} from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { NoManifestError } from "../errors.js";
 import { CLIOutput } from "../output.js";
@@ -13,111 +17,144 @@ export function registerInstallCommand(program: Command): void {
     .argument("[tools...]", "Tool IDs to operate on (e.g., claude, cursor, copilot)")
     .option("-f, --force", "Overwrite already-installed tool", false)
     .option("-a, --all", "Install all available tools", false)
-    .action(async (toolArgs: string[], cmdOptions: { force: boolean; all: boolean }) => {
-      const globalOptions = program.opts<{
-        verbose: boolean;
-        repo?: string;
-        token?: string;
-        framework?: string;
-        release?: string;
-      }>();
+    .option("--framework <path>", "Path to a local framework directory or tarball")
+    .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
+    .action(
+      async (
+        toolArgs: string[],
+        cmdOptions: { force: boolean; all: boolean; framework?: string; release?: string }
+      ) => {
+        const globalOptions = program.opts<{
+          verbose: boolean;
+          repo?: string;
+          token?: string;
+        }>();
 
-      const verbose = globalOptions.verbose ?? false;
-      const output = new CLIOutput(verbose);
-      const projectRoot = process.cwd();
+        const verbose = globalOptions.verbose ?? false;
+        const output = new CLIOutput(verbose);
+        const projectRoot = process.cwd();
 
-      if (!cmdOptions.all && toolArgs.length === 0) {
-        output.error(
-          `Specify at least one tool or use --all. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
-        );
-        process.exit(1);
-      }
-
-      if (cmdOptions.all && toolArgs.length > 0) {
-        output.warn(`--all is set; ignoring specified tools: ${toolArgs.join(", ")}`);
-      }
-      const toolIds: ToolId[] = cmdOptions.all ? [...VALID_TOOL_IDS] : (toolArgs as ToolId[]);
-
-      try {
-        const deps = await createDeps(
-          projectRoot,
-          {
-            verbose,
-            repo: globalOptions.repo,
-            token: globalOptions.token,
-            framework: globalOptions.framework,
-          },
-          output
-        );
-
-        output.validateTools(toolIds, VALID_TOOL_IDS);
-
-        const { path: frameworkPath, version } = await resolveFramework(
-          deps.resolver,
-          deps.logger,
-          { framework: globalOptions.framework, release: globalOptions.release }
-        );
-
-        const manifest = await deps.manifestRepo.load();
-        if (manifest === null) {
-          throw new NoManifestError(globalOptions.repo);
+        if (cmdOptions.all && toolArgs.length > 0) {
+          output.warn(`--all is set; ignoring specified tools: ${toolArgs.join(", ")}`);
         }
 
-        const docsDir = manifest.docsDir;
-        const installUseCase = new InstallUseCase(
-          deps.fs,
-          deps.manifestRepo,
-          deps.loader,
-          deps.hasher,
-          deps.logger,
-          deps.git,
-          deps.platform
-        );
+        try {
+          const deps = await createDeps(
+            projectRoot,
+            {
+              verbose,
+              repo: globalOptions.repo,
+              token: globalOptions.token,
+            },
+            output
+          );
 
-        const results = await installUseCase.execute({
-          toolIds,
-          frameworkPath,
-          version,
-          docsDir,
-          projectRoot,
-          force: cmdOptions.force,
-          repo: globalOptions.repo,
-        });
+          const manifest = await deps.manifestRepo.load();
 
-        const installed = results.filter((r) => !r.skipped);
-        const skipped = results.filter((r) => r.skipped);
+          const { path: frameworkPath, version } = await resolveFramework(
+            deps.resolver,
+            deps.logger,
+            { framework: cmdOptions.framework, release: cmdOptions.release }
+          );
 
-        for (const result of skipped) {
-          output.warn(`${result.toolId} is already installed. Use \`--force\` to reinstall.`);
-        }
+          let toolIds: ToolId[];
 
-        for (const result of installed) {
-          for (const warning of result.warnings) {
-            output.warn(warning);
+          if (cmdOptions.all) {
+            toolIds = [...VALID_TOOL_IDS];
+          } else if (toolArgs.length > 0) {
+            toolIds = toolArgs as ToolId[];
+          } else {
+            if (!process.stdout.isTTY) {
+              output.error(
+                "aidd install requires tool arguments or --all in non-interactive mode."
+              );
+              process.exit(1);
+            }
+
+            const installedIds = manifest?.getInstalledToolIds() ?? [];
+
+            const choices = VALID_TOOL_IDS.map((id) =>
+              installedIds.includes(id)
+                ? { name: id, value: id, checked: true, disabled: "(already installed)" }
+                : { name: id, value: id, checked: false }
+            );
+
+            const selected = await deps.prompter.checkbox(
+              "Which tools do you want to install?",
+              choices
+            );
+
+            if (selected.length === 0) {
+              output.error("No tools selected.");
+              process.exit(1);
+            }
+
+            toolIds = selected as ToolId[];
           }
-        }
 
-        if (installed.length === 0) return;
+          assertValidToolIds(toolIds);
 
-        const totalFiles = installed.reduce((sum, r) => sum + r.fileCount, 0);
+          if (manifest === null) {
+            throw new NoManifestError(globalOptions.repo);
+          }
 
-        if (verbose) {
+          const docsDir = manifest.docsDir;
+          const installUseCase = new InstallUseCase(
+            deps.fs,
+            deps.manifestRepo,
+            deps.loader,
+            deps.hasher,
+            deps.logger,
+            deps.git,
+            deps.platform
+          );
+
+          const results = await installUseCase.execute({
+            toolIds,
+            frameworkPath,
+            version,
+            docsDir,
+            projectRoot,
+            force: cmdOptions.force,
+            repo: globalOptions.repo,
+          });
+
+          const skipped = results.filter((r) => r.skipped);
+          const installed = results.filter((r) => !r.skipped);
+
+          for (const result of skipped) {
+            output.warn(`${result.toolId} is already installed. Use \`--force\` to reinstall.`);
+          }
+
           for (const result of installed) {
-            output.debug(`Tool: ${result.toolId}`);
-            for (const file of result.files) {
-              output.debug(`  + ${file.relativePath}`);
+            for (const warning of result.warnings) {
+              output.warn(warning);
             }
           }
-        }
 
-        if (installed.length === 1) {
-          output.success(`Installed ${installed[0].toolId} (${installed[0].fileCount} files)`);
-        } else {
-          const toolList = installed.map((r) => r.toolId).join(", ");
-          output.success(`Installed ${toolList} (${totalFiles} files)`);
+          if (installed.length === 0) return;
+
+          const totalFiles = installed.reduce((sum, r) => sum + r.fileCount, 0);
+
+          if (verbose) {
+            for (const result of installed) {
+              output.debug(`Tool: ${result.toolId}`);
+              for (const file of result.files) {
+                output.debug(`  + ${file.relativePath}`);
+              }
+            }
+          }
+
+          if (installed.length === 1) {
+            output.success(`Installed ${installed[0].toolId} (${installed[0].fileCount} files)`);
+          } else {
+            const toolList = installed.map((r) => r.toolId).join(", ");
+            output.success(`Installed ${toolList} (${totalFiles} files)`);
+          }
+          output.info("Run `aidd status` to inspect your installation.");
+        } catch (error) {
+          output.exit(error);
         }
-      } catch (error) {
-        output.exit(error);
       }
-    });
+    );
 }

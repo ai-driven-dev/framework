@@ -39,13 +39,4 @@ export class CLIOutput implements Logger {
     this.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
-
-  validateTools(toolIds: string[], validIds: readonly string[]): void {
-    const invalid = toolIds.filter((t) => !validIds.includes(t));
-    if (invalid.length === 0) return;
-    for (const toolId of invalid) {
-      this.error(`Unknown tool: ${toolId}. Valid tools: ${validIds.join(", ")}`);
-    }
-    process.exit(1);
-  }
 }

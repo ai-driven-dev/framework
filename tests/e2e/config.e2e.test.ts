@@ -46,6 +46,19 @@ describe.concurrent("E2E: aidd config", () => {
   });
 
   describe("config get", () => {
+    it("exits with error when no key is provided in non-interactive mode", async () => {
+      const { projectDir, cleanup } = await createTestEnv("config");
+      try {
+        await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+
+        const { stderr, exitCode } = await runCli(["config", "get"], projectDir);
+        expect(exitCode).toBe(1);
+        expect(stderr).toContain("non-interactive mode");
+      } finally {
+        await cleanup();
+      }
+    });
+
     it("returns docsDir from manifest", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
@@ -117,6 +130,19 @@ describe.concurrent("E2E: aidd config", () => {
   });
 
   describe("config set", () => {
+    it("exits with error when no arguments are provided in non-interactive mode", async () => {
+      const { projectDir, cleanup } = await createTestEnv("config");
+      try {
+        await runCli(["init", "--framework", FRAMEWORK_PATH], projectDir);
+
+        const { stderr, exitCode } = await runCli(["config", "set"], projectDir);
+        expect(exitCode).toBe(1);
+        expect(stderr).toContain("non-interactive mode");
+      } finally {
+        await cleanup();
+      }
+    });
+
     it("updates docsDir in manifest with --force", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {

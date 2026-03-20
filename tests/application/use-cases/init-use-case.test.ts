@@ -88,7 +88,7 @@ describe("InitUseCase", () => {
 
       await expect(
         buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
-      ).rejects.toThrow("Check available tags for:");
+      ).rejects.toThrow("Repository:");
     });
 
     it("aborts with adopt guidance when .claude/ contains AIDD frontmatter", async () => {
@@ -101,7 +101,7 @@ describe("InitUseCase", () => {
 
       await expect(
         buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
-      ).rejects.toThrow("Check available tags for:");
+      ).rejects.toThrow("Repository:");
     });
 
     it("aborts with adopt guidance when .opencode/ contains AIDD frontmatter", async () => {
@@ -140,7 +140,7 @@ describe("InitUseCase", () => {
 
       await expect(
         buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
-      ).rejects.toThrow("aidd adopt --from <version> --tools <tool>");
+      ).rejects.toThrow("aidd setup");
     });
 
     it("aborts when .github/prompts/ contains legacy underscore-format AIDD frontmatter", async () => {
@@ -170,7 +170,7 @@ describe("InitUseCase", () => {
           projectRoot,
           repo: "myorg/my-repo",
         })
-      ).rejects.toThrow("Check available tags for: myorg/my-repo");
+      ).rejects.toThrow("myorg/my-repo");
     });
 
     it("aborts when already initialized without --force", async () => {
