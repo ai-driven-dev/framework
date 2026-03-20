@@ -56,9 +56,7 @@ export async function printUpdateBanner(
 
     const current = (docsVersion ?? toolVersion) as string;
     logger.warn(`Update available: v${current.replace(/^v/, "")} → v${latest.replace(/^v/, "")}`);
-    if (docsOutdated && toolsOutdated) logger.warn("Run `aidd update` to update docs and tools.");
-    else if (docsOutdated) logger.warn("Run `aidd update --docs` to update docs.");
-    else if (toolsOutdated) logger.warn("Run `aidd update` to update tools.");
+    logger.warn("Run `aidd update` to update.");
   } catch (err) {
     logger.debug(
       `Framework update check failed: ${err instanceof Error ? err.message : String(err)}`
