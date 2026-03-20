@@ -251,7 +251,7 @@ export class RestoreUseCase {
     const updatedHashMap = new Map(initialHashMap);
 
     for (const { relativePath, content, reason } of drift) {
-      if (!force) {
+      if (!force && reason === "modified") {
         const decision = await this.prompter.resolveConflict(relativePath, reason);
         if (decision === "keep") {
           kept.push(relativePath);
