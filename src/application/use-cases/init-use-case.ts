@@ -8,6 +8,7 @@ import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import type { Prompter } from "../../domain/ports/prompter.js";
 import { AiddFilesDetectedError, NoManifestError } from "../errors.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
 import { GitignoreUseCase } from "./gitignore-use-case.js";
@@ -15,11 +16,12 @@ import { GitignoreUseCase } from "./gitignore-use-case.js";
 interface InitOptions {
   frameworkPath: string;
   version: string;
-  docsDir: string;
+  docsDir?: string;
   explicitDocsDir?: string;
   projectRoot: string;
   force?: boolean;
   repo?: string;
+  interactive?: boolean;
 }
 
 interface InitResult {
@@ -34,13 +36,15 @@ export class InitUseCase {
     private readonly manifestRepo: ManifestRepository,
     private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
-    private readonly logger: Logger
+    private readonly logger: Logger,
+    private readonly prompter?: Prompter
   ) {}
 
   async checkPreconditions(
     options: Pick<InitOptions, "docsDir" | "projectRoot" | "force" | "repo">
   ): Promise<void> {
     const { docsDir, projectRoot, force = false, repo } = options;
+    const resolvedDocsDir = docsDir ?? Manifest.DEFAULT_DOCS_DIR;
     const existing = await this.manifestRepo.load();
 
     if (force) {
@@ -56,7 +60,7 @@ export class InitUseCase {
       );
     }
 
-    if (await this.fs.fileExists(join(projectRoot, docsDir))) {
+    if (await this.fs.fileExists(join(projectRoot, resolvedDocsDir))) {
       throw new AiddFilesDetectedError(repo);
     }
 
@@ -73,22 +77,40 @@ export class InitUseCase {
   }
 
   async execute(options: InitOptions): Promise<InitResult> {
-    const {
-      frameworkPath,
-      version,
-      docsDir,
-      explicitDocsDir,
-      projectRoot,
-      force = false,
-      repo,
-    } = options;
+    const { frameworkPath, version, projectRoot, force = false } = options;
+    const interactive = options.interactive ?? false;
+
+    let docsDir = options.docsDir;
+    let explicitDocsDir = options.explicitDocsDir;
+    let repo = options.repo;
+
+    if (interactive && !force && docsDir === undefined && this.prompter !== undefined) {
+      const docsDirInput = await this.prompter.input(
+        "Documentation directory name:",
+        Manifest.DEFAULT_DOCS_DIR
+      );
+      docsDir = docsDirInput || Manifest.DEFAULT_DOCS_DIR;
+      explicitDocsDir = docsDir;
+      const repoInput = await this.prompter.input(
+        "Framework repository (owner/repo, leave blank to skip):",
+        ""
+      );
+      if (repoInput !== "") repo = repoInput;
+    }
+
+    const resolvedInputDocsDir = docsDir ?? Manifest.DEFAULT_DOCS_DIR;
+    Manifest.validateDocsDir(resolvedInputDocsDir);
+
+    await this.checkPreconditions({ docsDir: resolvedInputDocsDir, projectRoot, force, repo });
 
     const existing = await this.manifestRepo.load();
 
-    // After checkPreconditions: existing is non-null in force mode and null in non-force mode.
     // In --force mode: use explicitly provided --docs-dir if given; otherwise keep existing.
     const resolvedDocsDir =
-      force && existing !== null && explicitDocsDir === undefined ? existing.docsDir : docsDir;
+      force && existing !== null && explicitDocsDir === undefined
+        ? existing.docsDir
+        : resolvedInputDocsDir;
+
     const { descriptor, docsFiles } = await this.loader.loadFromDirectory(frameworkPath, version);
 
     const generated: GeneratedFile[] = [];

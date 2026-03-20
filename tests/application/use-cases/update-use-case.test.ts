@@ -2,7 +2,6 @@ import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ConflictResolutionUseCase } from "../../../src/application/use-cases/conflict-resolution-use-case.js";
 import { UpdateUseCase } from "../../../src/application/use-cases/update-use-case.js";
 import {
   BackupPrompter,
@@ -45,7 +44,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new OverwritePrompter())
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -69,7 +68,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new OverwritePrompter())
+      new OverwritePrompter()
     );
 
     await expect(
@@ -94,7 +93,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new OverwritePrompter())
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -145,7 +144,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new OverwritePrompter())
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -195,7 +194,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new SkipPrompter())
+      new SkipPrompter()
     );
 
     const result = await useCase.execute({
@@ -241,7 +240,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new OverwritePrompter())
+      new OverwritePrompter()
     );
     const result = await useCase.execute({
       frameworkPath: FIXTURE_DIR,
@@ -287,7 +286,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new BackupPrompter())
+      new BackupPrompter()
     );
 
     const result = await useCase.execute({
@@ -337,7 +336,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new KeepPrompter())
+      new KeepPrompter()
     );
 
     const result = await useCase.execute({
@@ -367,7 +366,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new OverwritePrompter())
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -393,7 +392,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new OverwritePrompter())
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -426,7 +425,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new OverwritePrompter())
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -457,7 +456,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new BackupPrompter())
+      new BackupPrompter()
     );
 
     const result = await useCase.execute({
@@ -491,7 +490,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new SkipPrompter())
+      new SkipPrompter()
     );
 
     const result = await useCase.execute({
@@ -523,7 +522,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new OverwritePrompter())
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -559,7 +558,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new OverwritePrompter())
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -594,7 +593,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new OverwritePrompter())
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -624,7 +623,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new OverwritePrompter())
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -661,7 +660,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new OverwritePrompter())
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -697,7 +696,7 @@ describe("UpdateUseCase", () => {
       deps.logger,
       noGit,
       linuxPlatform,
-      new ConflictResolutionUseCase(new OverwritePrompter())
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({

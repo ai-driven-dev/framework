@@ -1,5 +1,4 @@
 import type { Command } from "commander";
-import { Manifest } from "../../domain/models/manifest.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { CLIOutput } from "../output.js";
 import { InitUseCase } from "../use-cases/init-use-case.js";
@@ -41,53 +40,30 @@ export function registerInitCommand(program: Command): void {
             output
           );
 
-          let explicitDocsDir = cmdOptions.docsDir;
-          let interactiveRepo: string | undefined = globalOptions.repo;
-
-          if (explicitDocsDir === undefined && !cmdOptions.force && process.stdout.isTTY) {
-            const docsDirInput = await deps.prompter.input(
-              "Documentation directory name:",
-              Manifest.DEFAULT_DOCS_DIR
-            );
-            explicitDocsDir = docsDirInput;
-            const repoInput = await deps.prompter.input(
-              "Framework repository (owner/repo, leave blank to skip):",
-              ""
-            );
-            if (repoInput !== "") {
-              interactiveRepo = repoInput;
-            }
-          }
-
-          const docsDir = explicitDocsDir ?? Manifest.DEFAULT_DOCS_DIR;
-          Manifest.validateDocsDir(docsDir);
+          const { path: frameworkPath, version } = await resolveFramework(
+            deps.resolver,
+            deps.logger,
+            { framework: cmdOptions.framework, release: cmdOptions.release }
+          );
 
           const useCase = new InitUseCase(
             deps.fs,
             deps.manifestRepo,
             deps.loader,
             deps.hasher,
-            deps.logger
-          );
-          await useCase.checkPreconditions({
-            docsDir,
-            projectRoot,
-            force: cmdOptions.force,
-            repo: interactiveRepo,
-          });
-          const { path: frameworkPath, version } = await resolveFramework(
-            deps.resolver,
             deps.logger,
-            { framework: cmdOptions.framework, release: cmdOptions.release }
+            deps.prompter
           );
+
           const result = await useCase.execute({
             frameworkPath,
             version,
-            docsDir,
-            explicitDocsDir,
+            docsDir: cmdOptions.docsDir,
+            explicitDocsDir: cmdOptions.docsDir,
             projectRoot,
             force: cmdOptions.force,
-            repo: interactiveRepo,
+            repo: globalOptions.repo,
+            interactive: process.stdout.isTTY,
           });
           output.success(`Initialized docs in ${result.docsDir}/ (${result.fileCount} files)`);
         } catch (error) {

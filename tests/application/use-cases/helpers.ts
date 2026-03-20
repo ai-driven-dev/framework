@@ -202,7 +202,8 @@ export async function initProject(
     deps.manifestRepo,
     deps.loader,
     deps.hasher,
-    deps.logger
+    deps.logger,
+    new SilentPrompterAdapter()
   );
   await initUseCase.execute({
     frameworkPath: FIXTURE_DIR,
@@ -224,7 +225,8 @@ export async function installTool(
     deps.hasher,
     deps.logger,
     noGit,
-    linuxPlatform
+    linuxPlatform,
+    new SilentPrompterAdapter()
   );
   const results = await installUseCase.execute({
     toolIds: [toolId],

@@ -1,11 +1,6 @@
 import type { Command } from "commander";
-import {
-  assertValidToolIds,
-  type ToolId,
-  VALID_TOOL_IDS,
-} from "../../domain/models/tool-config.js";
+import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
-import { NoManifestError } from "../errors.js";
 import { CLIOutput } from "../output.js";
 import { InstallUseCase } from "../use-cases/install-use-case.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
@@ -44,6 +39,10 @@ export function registerInstallCommand(program: Command): void {
         }
 
         try {
+          if (toolArgs.length > 0 && !cmdOptions.all) {
+            assertValidToolIds(toolArgs as ToolId[]);
+          }
+
           const deps = await createDeps(
             projectRoot,
             {
@@ -54,45 +53,15 @@ export function registerInstallCommand(program: Command): void {
             output
           );
 
-          const manifest = await deps.manifestRepo.load();
-
           const { path: frameworkPath, version } = await resolveFramework(
             deps.resolver,
             deps.logger,
             { framework: cmdOptions.framework, release: cmdOptions.release }
           );
 
-          let toolIds: ToolId[];
+          const toolIds: ToolId[] | undefined =
+            !cmdOptions.all && toolArgs.length > 0 ? (toolArgs as ToolId[]) : undefined;
 
-          if (cmdOptions.all) {
-            toolIds = [...VALID_TOOL_IDS];
-          } else if (toolArgs.length > 0) {
-            toolIds = toolArgs as ToolId[];
-          } else {
-            const installedIds = manifest?.getInstalledToolIds() ?? [];
-
-            const choices = VALID_TOOL_IDS.map((id) =>
-              installedIds.includes(id)
-                ? { name: id, value: id, checked: true, disabled: "(already installed)" }
-                : { name: id, value: id, checked: false }
-            );
-
-            const selected = await deps.prompter.checkbox(
-              "Which tools do you want to install?",
-              choices
-            );
-
-            if (selected.length === 0) throw new Error("No tools selected.");
-            toolIds = selected as ToolId[];
-          }
-
-          assertValidToolIds(toolIds);
-
-          if (manifest === null) {
-            throw new NoManifestError(globalOptions.repo);
-          }
-
-          const docsDir = manifest.docsDir;
           const installUseCase = new InstallUseCase(
             deps.fs,
             deps.manifestRepo,
@@ -100,17 +69,19 @@ export function registerInstallCommand(program: Command): void {
             deps.hasher,
             deps.logger,
             deps.git,
-            deps.platform
+            deps.platform,
+            deps.prompter
           );
 
           const results = await installUseCase.execute({
             toolIds,
+            all: cmdOptions.all,
             frameworkPath,
             version,
-            docsDir,
             projectRoot,
             force: cmdOptions.force,
             repo: globalOptions.repo,
+            interactive: process.stdout.isTTY,
           });
 
           const skipped = results.filter((r) => r.skipped);

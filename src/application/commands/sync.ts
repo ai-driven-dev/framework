@@ -1,9 +1,7 @@
 import type { Command } from "commander";
 import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
-import { NoManifestError } from "../errors.js";
 import { CLIOutput } from "../output.js";
-import { SyncStatusUseCase } from "../use-cases/sync-status-use-case.js";
 import { SyncUseCase } from "../use-cases/sync-use-case.js";
 
 export function registerSyncCommand(program: Command): void {
@@ -37,6 +35,13 @@ export function registerSyncCommand(program: Command): void {
         }
 
         try {
+          if (cmdOptions.source !== undefined) {
+            assertValidToolIds([cmdOptions.source]);
+          }
+          if (cmdOptions.target !== undefined) {
+            assertValidToolIds([cmdOptions.target]);
+          }
+
           const deps = await createDeps(
             projectRoot,
             {
@@ -47,70 +52,25 @@ export function registerSyncCommand(program: Command): void {
             output
           );
 
-          const manifest = await deps.manifestRepo.load();
-          if (manifest === null) {
-            throw new NoManifestError(globalOptions.repo);
-          }
+          const sourceTool = cmdOptions.source as ToolId | undefined;
+          const targetTools = cmdOptions.target ? [cmdOptions.target as ToolId] : undefined;
 
-          let sourceTool: ToolId;
-          let targetTools: ToolId[] | undefined;
-
-          if (cmdOptions.source === undefined) {
-            const installedIds = manifest.getInstalledToolIds();
-            if (installedIds.length < 2) {
-              output.error("At least 2 tools must be installed to use sync.");
-              process.exit(1);
-            }
-
-            const modCounts = await new SyncStatusUseCase(deps.fs).execute(
-              manifest,
-              installedIds as ToolId[],
-              projectRoot
-            );
-
-            const sourceChoices = installedIds.map((id) => {
-              const { modified, deleted } = modCounts[id] ?? { modified: 0, deleted: 0 };
-              const hasChanges = modified > 0 || deleted > 0;
-              const parts: string[] = [];
-              if (modified > 0) parts.push(`${modified} modified`);
-              if (deleted > 0) parts.push(`${deleted} deleted`);
-              const label = hasChanges ? ` (${parts.join(", ")})` : "";
-              return {
-                name: `${id}${label}`,
-                value: id as ToolId,
-                disabled: hasChanges ? false : "(no changes)",
-              };
-            });
-
-            sourceTool = await deps.prompter.select("Source tool to sync from?", sourceChoices);
-
-            const targetChoices = installedIds
-              .filter((id) => id !== sourceTool)
-              .map((id) => ({ name: id, value: id as ToolId }));
-
-            targetTools = await deps.prompter.checkbox("Target tools?", targetChoices);
-            if (targetTools.length === 0) throw new Error("No target tools selected.");
-          } else {
-            assertValidToolIds([cmdOptions.source]);
-            if (cmdOptions.target) {
-              assertValidToolIds([cmdOptions.target]);
-            }
-            sourceTool = cmdOptions.source as ToolId;
-            targetTools = cmdOptions.target ? [cmdOptions.target as ToolId] : undefined;
-          }
-
-          const docsDir = manifest.docsDir;
-
-          const syncUseCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+          const syncUseCase = new SyncUseCase(
+            deps.fs,
+            deps.manifestRepo,
+            deps.hasher,
+            deps.logger,
+            deps.prompter
+          );
 
           const result = await syncUseCase.execute({
             projectRoot,
-            docsDir,
             sourceTool,
             targetTools,
             force: cmdOptions.force,
             includeUserFiles: cmdOptions.includeUserFiles,
             repo: globalOptions.repo,
+            interactive: process.stdout.isTTY,
           });
 
           const { totalWritten, totalDeleted, totalConflicts, totalSkipped } = result;
@@ -141,7 +101,7 @@ export function registerSyncCommand(program: Command): void {
           }
 
           output.success(
-            `Synced ${totalWritten} file(s), deleted ${totalDeleted} file(s) from ${sourceTool}`
+            `Synced ${totalWritten} file(s), deleted ${totalDeleted} file(s) from ${result.sourceTool}`
           );
         } catch (error) {
           output.exit(error);
