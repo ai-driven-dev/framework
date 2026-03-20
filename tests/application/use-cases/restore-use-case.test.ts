@@ -337,7 +337,7 @@ describe("RestoreUseCase", () => {
     expect(existsSync(untrackedPath)).toBe(true);
   });
 
-  it("passes reason 'deleted' to prompter when file is missing from disk", async () => {
+  it("restores deleted files without prompting the user", async () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude");
 
@@ -363,8 +363,8 @@ describe("RestoreUseCase", () => {
     });
 
     const call = prompter.calls.find((c) => c.relativePath === "CLAUDE.md");
-    expect(call).toBeDefined();
-    expect(call?.reason).toBe("deleted");
+    expect(call).toBeUndefined();
+    expect(existsSync(claudeMdPath)).toBe(true);
   });
 
   it("passes reason 'modified' to prompter when file is changed on disk", async () => {
