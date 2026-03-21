@@ -1,0 +1,235 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AuthLoginUseCase } from "../../../src/application/use-cases/auth-login-use-case.js";
+import type { ExternalTokenProvider } from "../../../src/domain/ports/external-token-provider.js";
+import type { AuthStorage } from "../../../src/infrastructure/auth/auth-storage.js";
+import { makeTempAuthStorage } from "../../helpers/auth.js";
+
+describe("AuthLoginUseCase", () => {
+  let tempDir: string;
+  let storage: AuthStorage;
+  let cleanup: () => Promise<void>;
+
+  beforeEach(async () => {
+    ({ tempDir, storage, cleanup } = await makeTempAuthStorage("auth-login-test"));
+  });
+
+  afterEach(async () => {
+    await cleanup();
+  });
+
+  function makeHttpGet(login: string) {
+    return async (_url: string, _token: string): Promise<{ login: string }> => ({
+      login,
+    });
+  }
+
+  function makeFailingHttpGet(statusCode: number) {
+    return async (): Promise<{ login: string }> => {
+      throw new Error(
+        `Authentication failed (HTTP ${statusCode}). Run aidd auth login to authenticate.`
+      );
+    };
+  }
+
+  function makeExternalProvider(token: string | null): ExternalTokenProvider {
+    return { resolve: () => token };
+  }
+
+  describe("flag-based (non-interactive)", () => {
+    it("stores token config at user level when method=token and level=user", async () => {
+      const useCase = new AuthLoginUseCase(
+        storage,
+        makeHttpGet("octocat"),
+        makeExternalProvider(null)
+      );
+      const result = await useCase.execute({
+        method: "token",
+        token: "ghp_abc123",
+        level: "user",
+        projectRoot: tempDir,
+        interactive: false,
+      });
+
+      expect(result.login).toBe("octocat");
+      expect(result.method).toBe("token");
+      expect(result.level).toBe("user");
+
+      const storedConfig = await storage.read(storage.userConfigPath());
+      expect(storedConfig).not.toBeNull();
+      expect(storedConfig?.token).toBe("ghp_abc123");
+      expect(storedConfig?.method).toBe("token");
+    });
+
+    it("stores gh config at project level when method=gh and level=project", async () => {
+      const useCase = new AuthLoginUseCase(
+        storage,
+        makeHttpGet("octocat"),
+        makeExternalProvider("ghp_from_gh_cli")
+      );
+      const result = await useCase.execute({
+        method: "gh",
+        level: "project",
+        projectRoot: tempDir,
+        interactive: false,
+      });
+
+      expect(result.level).toBe("project");
+      expect(result.method).toBe("gh");
+      const projectPath = storage.projectConfigPath(tempDir);
+      const storedConfig = await storage.read(projectPath);
+      expect(storedConfig).not.toBeNull();
+      expect(storedConfig?.method).toBe("gh");
+    });
+
+    it("throws when gh CLI is unavailable and method=gh", async () => {
+      const useCase = new AuthLoginUseCase(
+        storage,
+        makeHttpGet("octocat"),
+        makeExternalProvider(null)
+      );
+      await expect(
+        useCase.execute({
+          method: "gh",
+          level: "user",
+          projectRoot: tempDir,
+          interactive: false,
+        })
+      ).rejects.toThrow(/gh CLI is not installed/);
+    });
+
+    it("throws when token is invalid (HTTP 401)", async () => {
+      const useCase = new AuthLoginUseCase(
+        storage,
+        makeFailingHttpGet(401),
+        makeExternalProvider(null)
+      );
+      await expect(
+        useCase.execute({
+          method: "token",
+          token: "bad-token",
+          level: "user",
+          projectRoot: tempDir,
+          interactive: false,
+        })
+      ).rejects.toThrow(/Authentication failed/);
+    });
+
+    it("throws when method is missing in non-interactive mode", async () => {
+      const useCase = new AuthLoginUseCase(
+        storage,
+        makeHttpGet("octocat"),
+        makeExternalProvider(null)
+      );
+      await expect(
+        useCase.execute({
+          level: "user",
+          projectRoot: tempDir,
+          interactive: false,
+        })
+      ).rejects.toThrow(/method is required/);
+    });
+
+    it("throws when level is missing in non-interactive mode", async () => {
+      const useCase = new AuthLoginUseCase(
+        storage,
+        makeHttpGet("octocat"),
+        makeExternalProvider(null)
+      );
+      await expect(
+        useCase.execute({
+          method: "token",
+          token: "ghp_abc",
+          projectRoot: tempDir,
+          interactive: false,
+        })
+      ).rejects.toThrow(/level is required/);
+    });
+  });
+
+  describe("interactive mode", () => {
+    it("prompts for method and level when both missing", async () => {
+      const tokenPrompter = {
+        select: async <T>(_message: string, choices: Array<{ name: string; value: T }>) => {
+          return choices[1].value; // "token" is index 1, "user" is index 0
+        },
+        confirm: async (_msg: string) => false,
+      };
+
+      const useCase = new AuthLoginUseCase(
+        storage,
+        makeHttpGet("octocat"),
+        makeExternalProvider(null)
+      );
+      const result = await useCase.execute({
+        token: "ghp_interactive",
+        projectRoot: tempDir,
+        interactive: true,
+        prompter: tokenPrompter,
+      });
+
+      expect(result.method).toBe("token");
+    });
+  });
+
+  describe(".gitignore integration", () => {
+    it("appends .aidd/auth.json to .gitignore when confirmed", async () => {
+      const gitignorePath = join(tempDir, ".gitignore");
+      const { writeFile } = await import("node:fs/promises");
+      await writeFile(gitignorePath, "node_modules\n");
+
+      const prompter = {
+        select: async <T>(_msg: string, choices: Array<{ name: string; value: T }>) =>
+          choices[0].value,
+        confirm: async (_msg: string) => true,
+      };
+
+      const useCase = new AuthLoginUseCase(
+        storage,
+        makeHttpGet("octocat"),
+        makeExternalProvider(null)
+      );
+      await useCase.execute({
+        method: "token",
+        token: "ghp_abc",
+        level: "project",
+        projectRoot: tempDir,
+        interactive: true,
+        prompter,
+      });
+
+      const content = await readFile(gitignorePath, "utf-8");
+      expect(content).toContain(".aidd/auth.json");
+    });
+
+    it("does not add to .gitignore when already present", async () => {
+      const gitignorePath = join(tempDir, ".gitignore");
+      const { writeFile } = await import("node:fs/promises");
+      await writeFile(gitignorePath, ".aidd/auth.json\n");
+
+      const confirmCalled = vi.fn().mockResolvedValue(false);
+      const prompter = {
+        select: async <T>(_msg: string, choices: Array<{ name: string; value: T }>) =>
+          choices[0].value,
+        confirm: confirmCalled,
+      };
+
+      const useCase = new AuthLoginUseCase(
+        storage,
+        makeHttpGet("octocat"),
+        makeExternalProvider(null)
+      );
+      await useCase.execute({
+        method: "token",
+        token: "ghp_abc",
+        level: "project",
+        projectRoot: tempDir,
+        interactive: true,
+        prompter,
+      });
+
+      expect(confirmCalled).not.toHaveBeenCalled();
+    });
+  });
+});
