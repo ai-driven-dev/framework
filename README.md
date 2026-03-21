@@ -12,60 +12,10 @@ The **AIDD CLI** (`@ai-driven-dev/cli`) distributes the [AI-Driven Development F
 | ----------------------- | ------- | ------------------------------------------------------- |
 | **Node.js**             | >= 24   | [nodejs.org](https://nodejs.org)                        |
 | **tar**                 | —       | Pre-installed on macOS, Linux, WSL and Windows 10 1803+ |
-| **gh CLI** _(optional)_ | —       | Replaces the AIDD framework token if authenticated      |
+| **gh CLI** _(optional)_ | —       | Can be used as an authentication method via `aidd auth login --gh` |
 
 > **Windows:** works natively on Windows 10 1803+ (PowerShell or cmd) and on WSL.
 > If you encounter permission issues with `npm install -g`, use an administrator terminal or WSL.
-
----
-
-## Authentication
-
-Two tokens are required with different responsibilities.
-
-### Token 1 — npm registry (one-time setup)
-
-Required **once** to install the CLI from GitHub Packages. Create a [GitHub Personal Access Token](https://github.com/settings/tokens/new) with the **`read:packages`** scope, then add it to your `~/.npmrc`:
-
-**macOS / Linux / WSL:**
-
-```bash
-echo "@ai-driven-dev:registry=https://npm.pkg.github.com" >> ~/.npmrc
-echo "//npm.pkg.github.com/:_authToken=<YOUR_NPM_TOKEN>" >> ~/.npmrc
-```
-
-**Windows (PowerShell):**
-
-```powershell
-npm config set @ai-driven-dev:registry https://npm.pkg.github.com
-npm config set //npm.pkg.github.com/:_authToken <YOUR_NPM_TOKEN>
-```
-
-### Token 2 — AIDD framework (runtime)
-
-Required each time the CLI downloads the framework (`init`, `install`, `update`, `restore`, `adopt`). The framework repository is private — create a [GitHub Personal Access Token](https://github.com/settings/tokens/new) with the **`repo`** scope.
-
-**Option 1 — Environment variable (recommended)**
-
-```bash
-export AIDD_TOKEN=<YOUR_FRAMEWORK_TOKEN>
-```
-
-Add to `~/.bashrc`, `~/.zshrc`, or `~/.profile` to make it persistent.
-
-**Option 2 — gh CLI**
-
-```bash
-gh auth login   # once only — token is resolved automatically afterwards
-```
-
-**Option 3 — Inline flag**
-
-```bash
-aidd install claude --token <YOUR_FRAMEWORK_TOKEN>
-```
-
-Token resolution order: `--token` flag > `AIDD_TOKEN` env > `gh auth token`.
 
 ---
 
@@ -78,24 +28,80 @@ npm install -g @ai-driven-dev/cli
 aidd --version
 ```
 
-> Run `which aidd` to identify the active binary and use the matching package manager (`npm`, `pnpm`, `yarn`, `bun`). Never pass `--registry` to the install command — set it in `~/.npmrc` as a scoped override.
+> Run `which aidd` to identify the active binary and use the matching package manager (`npm`, `pnpm`, `yarn`, `bun`).
+
+---
+
+## Authentication
+
+The AIDD framework repository requires a GitHub token. Authenticate once with `aidd auth login` — the credential is stored securely in `~/.config/aidd/auth.json` (permissions `600`).
+
+### Method 1 — Personal Access Token (recommended)
+
+Create a [GitHub Personal Access Token](https://github.com/settings/tokens/new) with the **`repo`** scope, then:
+
+```bash
+aidd auth login --token <YOUR_TOKEN> --level user
+```
+
+### Method 2 — GitHub CLI
+
+```bash
+gh auth login              # authenticate gh CLI once
+aidd auth login --gh --level user
+```
+
+The token is resolved at runtime via `gh auth token` — no token is stored in the AIDD config.
+
+### Method 3 — Environment variable
+
+```bash
+export AIDD_TOKEN=<YOUR_TOKEN>
+```
+
+Add to `~/.bashrc`, `~/.zshrc`, or `~/.profile` to make it persistent. Takes precedence over all stored credentials.
+
+### Token resolution order
+
+`AIDD_TOKEN` env → project `.aidd/auth.json` → user `~/.config/aidd/auth.json` → `gh auth token` (only if stored config uses `method: "gh"`)
+
+### Storage levels
+
+| Level     | File                          | Use case                                    |
+| --------- | ----------------------------- | ------------------------------------------- |
+| `user`    | `~/.config/aidd/auth.json`    | Shared across all projects (default)        |
+| `project` | `.aidd/auth.json`             | Per-project credential (add to `.gitignore`) |
+
+### Auth commands
+
+```bash
+aidd auth login --token <TOKEN> --level user    # store a PAT
+aidd auth login --gh --level user               # use gh CLI token
+aidd auth status                                # check current auth (exit 1 if not authenticated)
+aidd auth logout                                # remove stored credential
+```
 
 ---
 
 ## Quickstart
 
 ```bash
+# Authenticate first
+aidd auth login --token <YOUR_TOKEN> --level user
+
+# Run interactive setup (init + install in one step)
+aidd setup
+
+# Or manually:
 # 1. Initialize the docs structure and the manifest
-aidd init
+# aidd init
 
 # 2. Install for one or more tools
-aidd install claude cursor
+# aidd install claude cursor
 
 # 3. Verify the installation
 aidd status
 ```
-
-> `aidd install` requires a prior `aidd init`. It will abort with a clear error if no manifest exists.
 
 ---
 
@@ -111,7 +117,7 @@ aidd adopt --tools claude --from v3.4.0
 # Multiple tools
 aidd adopt --tools claude,cursor --from v3.4.0
 
-# Local framework path
+# Local framework path (no auth required)
 aidd adopt --tools claude --from /path/to/framework
 ```
 
@@ -123,7 +129,7 @@ aidd adopt --tools claude --from /path/to/framework
 aidd status                     # see what changed (drift + available update)
 aidd update                     # update all tools and docs to the latest version
 aidd update --dry-run           # preview changes without applying them
-aidd update --tool claude       # update a single tool only
+aidd update --tool claude       # update a single tool only (must already be installed)
 aidd update --docs              # update docs only
 aidd update --force             # overwrite conflicts without prompting
 ```
@@ -163,11 +169,12 @@ aidd uninstall --all            # uninstall all tools
 
 | Command                      | Description                                                        | Key options                                  |
 | ---------------------------- | ------------------------------------------------------------------ | -------------------------------------------- |
+| `aidd auth`                  | Manage authentication (login, logout, status)                      | `--token`, `--gh`, `--level`                 |
 | `aidd setup`                 | Interactive onboarding: init, adopt, install, or update as needed  | `--release`, `--repo`, `--path`              |
 | `aidd install <tools...>`    | Generate and write tool-specific files (requires existing manifest) | `--all`, `--force`, `--release`, `--path`   |
 | `aidd uninstall <tools...>`  | Remove tool files and update manifest                              | `--all`                                      |
 | `aidd status`                | Show drift between disk and manifest + available update            | `--tool`, `--docs`                           |
-| `aidd doctor`                | Structural integrity check — exits 1 on issues (CI-safe)           | —                                            |
+| `aidd doctor`                | Structural integrity check — exits 1 on errors or warnings         | —                                            |
 | `aidd update`                | Apply new framework version                                        | `--force`, `--dry-run`, `--tool`, `--docs`, `--release`, `--path` |
 | `aidd restore [files...]`    | Revert modified/deleted files to the pinned framework version      | `--force`, `--tool`, `--docs`, `--release`, `--path` |
 | `aidd sync`                  | Propagate local changes from one tool to the others                | `--source` (required), `--target`, `--force` |
@@ -176,17 +183,29 @@ aidd uninstall --all            # uninstall all tools
 | `aidd config list\|get\|set` | Read or update manifest-backed config (`docsDir`, `repo`, `tools`) | `--force`                                    |
 | `aidd self-update`           | Update the CLI itself to the latest version                        | `--check`, `--dry-run`, `--force`            |
 
-### `aidd init`
+### `aidd auth`
 
-Creates the `aidd_docs/` structure and the `.aidd/manifest.json` manifest. Must be run before `install`.
+Manages stored GitHub credentials used to download the framework.
 
 ```bash
-aidd init                       # fresh initialization
-aidd init --docs-dir my_docs    # custom docs directory
-aidd init --force               # re-copy doc templates into existing docs dir (preserves tool files)
+aidd auth login --token <TOKEN> --level user     # store a PAT at user level
+aidd auth login --token <TOKEN> --level project  # store a PAT at project level
+aidd auth login --gh --level user                # use gh CLI as token source
+aidd auth status                                 # show current auth (exit 1 if not authenticated)
+aidd auth logout                                 # remove the active credential
 ```
 
-> On a project with existing AIDD signals but no manifest, `init` will abort and suggest `aidd adopt` instead.
+Credentials are stored in JSON files with `600` permissions. The `project` level stores in `.aidd/auth.json` — add it to `.gitignore` to avoid committing secrets.
+
+### `aidd setup`
+
+Interactive onboarding for new and existing projects. Detects the current state and guides through init, install, or update as appropriate.
+
+```bash
+aidd setup
+aidd setup --release v3.4.0    # pin a specific framework version
+aidd setup --path ./local      # use a local framework copy
+```
 
 ### `aidd install`
 
@@ -225,7 +244,7 @@ Legend: `~` modified · `-` deleted · `+` untracked (on disk, not in manifest)
 
 ### `aidd doctor`
 
-Checks structural integrity. Exits with code 1 if issues are found (CI-compatible).
+Checks structural integrity. Exits 1 if errors or warnings are found; exits 0 with a warning message if only the auth credential is missing (non-blocking in CI).
 
 ```bash
 aidd doctor
@@ -239,6 +258,8 @@ Detects: missing or corrupted manifest, orphaned tool directories, broken `@path
 
 Downloads the latest framework version and applies changes. See [Updating the framework](#updating-the-framework) for examples.
 
+> `--tool <name>` only updates tools already present in the manifest. Use `aidd install <tool>` to add a new tool.
+
 ### `aidd restore`
 
 Reverts modified or deleted files to the framework version pinned in the manifest. See [Restoring modified files](#restoring-modified-files) for examples.
@@ -250,6 +271,8 @@ Propagates local modifications from one tool's files to the others via reverse +
 ### `aidd adopt`
 
 Bootstraps a manifest for projects with existing manually installed AIDD files. See [Migrating from a manual install](#migrating-from-a-manual-install) for examples.
+
+> Auth is not required when `--from` is a local path.
 
 ### `aidd clean`
 
@@ -300,9 +323,8 @@ aidd config set repo owner/repo # update repo (writable: docsDir, repo)
 ### Global (all commands)
 
 ```bash
-aidd update --verbose                    # detailed logs
-aidd update --token <token>              # explicit AIDD framework token
-aidd update --repo owner/repo            # alternative framework repository
+aidd update --verbose           # detailed logs
+aidd update --repo owner/repo   # alternative framework repository
 ```
 
 ### Framework source (setup, install, update, restore)
@@ -315,11 +337,11 @@ aidd update --path ./local              # local framework path (dev/testing)
 
 **Environment variables:**
 
-| Variable       | Description                                |
-| -------------- | ------------------------------------------ |
-| `AIDD_TOKEN`   | AIDD framework token (`repo` scope)        |
-| `AIDD_REPO`    | Custom framework repository (`owner/repo`) |
-| `AIDD_VERBOSE` | Verbose mode (`true`/`false`)              |
+| Variable       | Description                                                             |
+| -------------- | ----------------------------------------------------------------------- |
+| `AIDD_TOKEN`   | GitHub token with `repo` scope — takes precedence over stored credentials |
+| `AIDD_REPO`    | Custom framework repository (`owner/repo`)                              |
+| `AIDD_VERBOSE` | Verbose mode (`true`/`false`)                                           |
 
 ---
 

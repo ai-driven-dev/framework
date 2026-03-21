@@ -44,12 +44,13 @@
 | `aidd update` | `--force`, `--dry-run`, `--tool`, `--docs`, `--release`, `--path` | Diff and apply new framework version. `--tool`/`--docs` scope to one section. |
 | `aidd restore` | `--force`, `--tool`, `--docs`, `[files...]`, `--release`, `--path` | Restore modified/deleted files from pinned version. |
 | `aidd sync` | `--source`, `--target`, `--force` | Propagate local changes from one tool to others. |
-| `aidd doctor` | — | Check structural integrity: manifest, orphaned dirs, broken references. Exits 1 on any issue. |
+| `aidd doctor` | — | Check structural integrity: manifest, orphaned dirs, broken references. Auth warning = exit 0 (info). Exits 1 on warning/error issues. |
 | `aidd clean` | `--force` | Remove all AIDD files. Dry-run without `--force`. |
 | `aidd cache list/clear` | `--all`, `[version]` | List or clear cached framework versions. |
 | `aidd config list/get/set` | `--force` | Manifest-backed config. Writable: `docsDir`, `repo`. Read-only: `tools`. |
 | `aidd self-update` | `--check`, `--dry-run`, `--force` | Update the aidd CLI itself to the latest version. `--check` shows if newer version is available without installing. `--dry-run` previews without installing. `--force` reinstalls even if already up to date. Uses GitHub Releases API for version check and changelog. |
-| Global flags | `--verbose`, `--token`, `--repo` | Apply to all commands. `--path` and `--release` are command-level options on `setup`, `install`, `update`, `restore`. |
+| `aidd auth login/logout/status` | `--token`, `--gh`, `--level` | Manage stored GitHub credentials. `--token` is auth-command-only (not global). |
+| Global flags | `--verbose`, `--repo` | Apply to all commands. `--path` and `--release` are command-level options on `setup`, `install`, `update`, `restore`. |
 
 ## vNext — Vision (unspecified)
 

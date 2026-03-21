@@ -40,9 +40,9 @@ flowchart LR
 ```mermaid
 flowchart TD
     subgraph APP["Application"]
-        CMD_FILES["commands: adopt, init, install, uninstall, status, clean, doctor, update, restore, sync, cache, config, self-update"]
+        CMD_FILES["commands: auth, adopt, init, install, uninstall, status, clean, doctor, update, restore, sync, cache, config, self-update, setup"]
         OUTPUT["output.ts"]
-        USECASES["use-cases: adopt, init, install, uninstall, status, clean, doctor, catalog, restore, update, sync, gitignore, resolve-framework, self-update"]
+        USECASES["use-cases: auth-login, auth-logout, auth-status, adopt, init, install, uninstall, status, clean, doctor, catalog, restore, update, sync, gitignore, resolve-framework, self-update"]
     end
     subgraph DOM["Domain"]
         MODELS["models: Manifest, Distribution, Catalog, ToolConfig, FileHash, GeneratedFile, Docs, Mcp, Semver"]
@@ -50,11 +50,11 @@ flowchart TD
         TOOLS["tools: claude, cursor, copilot, opencode"]
     end
     subgraph INFRA["Infrastructure"]
-        ADAPTERS["adapters: filesystem, manifest, logger, framework-loader, framework-resolver, hasher, cli-updater, current-version, platform"]
+        ADAPTERS["adapters: filesystem, manifest, logger, framework-loader, framework-resolver, hasher, cli-updater, current-version, platform, gh-cli"]
         HTTP["http-client.ts"]
         TAR["tar-extractor.ts"]
         CACHE["framework-cache.ts"]
-        TOKEN["token-resolver.ts"]
+        AUTH["auth/: auth-reader.ts, auth-storage.ts"]
         MIG["migrations/manifest-migrations.ts"]
     end
     CMD_FILES -->|calls| USECASES
@@ -70,6 +70,8 @@ flowchart TD
 
 ## Domain Ports
 
+- `AuthTokenProvider` — `resolve(): Promise<string | null>`; implemented by `AuthReader`
+- `ExternalTokenProvider` — `resolve(): string | null`; implemented by `GhCliAdapter` (calls `gh auth token` with 3s timeout)
 - `ManifestRepository` — read/write `.aidd/manifest.json`; `load()` returns `null` if not found; `delete()` removes file + `.aidd/` dir if empty
 - `FileSystem` — read/write/delete/merge/hash files; `mergeJsonFile()` strips JSONC comments then deep-merges
 - `FrameworkLoader` — build `FrameworkDescriptor` from hardcoded layout, read content directories
@@ -110,7 +112,6 @@ interface ToolConfig {
 ```mermaid
 flowchart TD
     User["User"] -->|aidd install tools| InstallCmd["InstallCommand"]
-    InstallCmd -->|resolves token| TokenRes["TokenResolver"]
     InstallCmd -->|calls| InstallUC["InstallUseCase"]
     InstallUC -->|resolves framework| FrameworkRes["FrameworkResolver"]
     FrameworkRes -->|downloads release| GH["GitHub Releases API"]
@@ -130,13 +131,16 @@ flowchart TD
 
 - Latest: `https://api.github.com/repos/<owner>/<repo>/releases/latest`
 - By tag: `https://api.github.com/repos/<owner>/<repo>/releases/tags/<tag>` (used by `--release`)
-- Auth: Bearer token from `--token` flag, `AIDD_TOKEN` env, or `gh auth token` (3s timeout fallback)
+- Auth: Bearer token resolved by `AuthReader` (see Token Resolution Priority)
 - Response: tarball URL downloaded via `node:https`, extracted with `node:child_process` (shells to system `tar`)
 - Override: `--repo owner/repo` flag or `AIDD_REPO` env var for custom framework repository
 
 ## Token Resolution Priority
 
-`--token` flag > `AIDD_TOKEN` env > `gh auth token` (3s timeout) > none
+`AIDD_TOKEN` env > project `.aidd/auth.json` > user `~/.config/aidd/auth.json` > `gh auth token` (only when stored config uses `method: "gh"`) > none
+
+Auth is stored by `aidd auth login`. Credentials written to JSON files with `600` permissions.
+New ports: `AuthTokenProvider` (resolve chain), `ExternalTokenProvider` (CLI-based token, impl: `GhCliAdapter`).
 
 ## Supported Tools
 
@@ -174,7 +178,7 @@ src/
 │   └── tools/                      # claude.ts, cursor.ts, copilot.ts, opencode.ts
 └── infrastructure/
     ├── adapters/                   # All port implementations
-    ├── auth/                       # token-resolver.ts
+    ├── auth/                       # auth-reader.ts, auth-storage.ts
     ├── cache/                      # framework-cache.ts
     ├── deps.ts                     # Dependency wiring
     ├── http/                       # http-client.ts
@@ -190,7 +194,7 @@ src/
 - `init --force` re-copies docs templates into the existing docs directory without a full reset. Does not touch tool distributions.
 - `install` requires an existing manifest. Aborts if absent — no auto-init.
 - `clean` without `--force` is a dry-run (preview only, no files deleted).
-- `doctor` checks structural integrity only: manifest, orphaned tool directories, and broken `@path`/markdown link references in tracked files. Exits 1 on any issue. Missing or modified files are drift — use `status`.
+- `doctor` checks structural integrity only: manifest, orphaned tool directories, and broken `@path`/markdown link references in tracked files. Missing auth is reported as `severity: "info"` (exit 0). Exits 1 on warning/error severity issues. Missing or modified files are drift — use `status`.
 - `status` detects 3 drift types: `modified` (hash mismatch), `deleted` (missing from disk), `added` (on disk but not tracked). Also performs a best-effort version check — network failure is silently ignored. `--tool` or `--docs` scopes output to one section.
 - A version check banner is printed before every command — silent on network errors or missing manifest.
 - Multi-tool shared files (e.g. `.vscode/settings.json`): merged by both `claude` and `copilot`. Manifest hash updated to final disk state after each merge — no false drift in `status`.
