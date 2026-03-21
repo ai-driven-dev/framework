@@ -24,17 +24,13 @@ export function registerStatusCommand(program: Command): void {
     .option("--tool <toolId>", "Filter output to a specific tool")
     .option("--docs", "Filter output to docs only")
     .action(async (cmdOptions: { tool?: string; docs?: boolean }) => {
-      const globalOptions = program.opts<{ verbose: boolean; repo?: string; token?: string }>();
+      const globalOptions = program.opts<{ verbose: boolean; repo?: string }>();
       const verbose = globalOptions.verbose ?? false;
       const output = new CLIOutput(verbose);
       const projectRoot = process.cwd();
 
       try {
-        const deps = await createDeps(
-          projectRoot,
-          { verbose, repo: globalOptions.repo, token: globalOptions.token },
-          output
-        );
+        const deps = await createDeps(projectRoot, { verbose, repo: globalOptions.repo }, output);
 
         if (cmdOptions.tool !== undefined && cmdOptions.docs) {
           throw new Error("--tool and --docs are mutually exclusive");

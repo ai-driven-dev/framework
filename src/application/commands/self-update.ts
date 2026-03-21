@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
 import { CLIOutput } from "../output.js";
+import { requireAuth } from "../require-auth.js";
 import { SelfUpdateUseCase } from "../use-cases/self-update-use-case.js";
 
 export function registerSelfUpdateCommand(program: Command): void {
@@ -11,15 +12,17 @@ export function registerSelfUpdateCommand(program: Command): void {
     .option("--dry-run", "Preview the update without installing", false)
     .option("-f, --force", "Reinstall even if already up to date", false)
     .action(async (cmdOptions: { check: boolean; dryRun: boolean; force: boolean }) => {
-      const globalOptions = program.opts<{ verbose?: boolean; token?: string }>();
+      const globalOptions = program.opts<{ verbose?: boolean }>();
       const output = new CLIOutput(globalOptions.verbose ?? false);
 
       try {
         const deps = await createDeps(
           process.cwd(),
-          { verbose: globalOptions.verbose ?? false, token: globalOptions.token },
+          { verbose: globalOptions.verbose ?? false },
           output
         );
+
+        await requireAuth(deps.authReader);
 
         const useCase = new SelfUpdateUseCase(deps.cliUpdater, deps.currentVersionProvider);
         const result = await useCase.execute({

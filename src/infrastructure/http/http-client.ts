@@ -79,7 +79,7 @@ export class HttpClient {
     if (statusCode === 401 || statusCode === 403) {
       await collectBuffer(response);
       throw new Error(
-        `Authentication failed (HTTP ${statusCode}). Provide a valid token via --token or AIDD_TOKEN.`
+        `Authentication failed (HTTP ${statusCode}). Run aidd auth login to authenticate.`
       );
     }
 

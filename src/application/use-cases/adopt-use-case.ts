@@ -88,6 +88,12 @@ export class AdoptUseCase {
         this.platform
       );
       const registeredFiles = await this.matchDistributionToDisk(distribution, projectRoot);
+      if (registeredFiles.length === 0) {
+        this.logger.warn(
+          `No recognized framework files found for '${toolId}' in '${config.directory}'. ` +
+            `Run \`aidd install ${toolId}\` to install the tool from scratch.`
+        );
+      }
       manifest.addTool(toolId, version, registeredFiles);
       toolResults.push({ toolId, registered: registeredFiles.map((f) => f.relativePath) });
     }

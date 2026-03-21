@@ -22,7 +22,6 @@ export function registerSyncCommand(program: Command): void {
         const globalOptions = program.opts<{
           verbose: boolean;
           repo?: string;
-          token?: string;
         }>();
 
         const verbose = globalOptions.verbose ?? false;
@@ -49,7 +48,6 @@ export function registerSyncCommand(program: Command): void {
             {
               verbose,
               repo: globalOptions.repo,
-              token: globalOptions.token,
             },
             output
           );

@@ -5,6 +5,7 @@ import {
   hasToolSignals,
   type ToolId,
 } from "../../domain/models/tool-config.js";
+import type { AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -66,7 +67,8 @@ export class DoctorUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    readonly _logger: Logger
+    readonly _logger: Logger,
+    private readonly authReader?: AuthTokenProvider
   ) {}
 
   async execute(options: DoctorOptions): Promise<DoctorReport> {
@@ -102,9 +104,10 @@ export class DoctorUseCase {
     issues.push(...(await this.checkMissingTrackedFiles(allTrackedFiles, projectRoot)));
     issues.push(...(await this.checkBrokenReferences(allTrackedFiles, projectRoot)));
     issues.push(...(await this.checkOrphanedDirectories(manifest, projectRoot)));
+    issues.push(...(await this.checkAuth()));
 
     return {
-      healthy: issues.length === 0,
+      healthy: issues.filter((i) => i.severity !== "info").length === 0,
       toolHealth,
       docsFileCount: docsFiles.length,
       issues,
@@ -168,6 +171,21 @@ export class DoctorUseCase {
     }
 
     return issues;
+  }
+
+  private async checkAuth(): Promise<DoctorIssue[]> {
+    if (!this.authReader) return [];
+    const token = await this.authReader.resolve();
+    if (token === null) {
+      return [
+        {
+          severity: "info",
+          message: "Not authenticated",
+          fix: "Run aidd auth login",
+        },
+      ];
+    }
+    return [];
   }
 
   private async checkBrokenReferences(
