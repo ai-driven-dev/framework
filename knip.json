@@ -1,4 +1,9 @@
 {
-  "ignore": [".claude/worktrees/**", "tests/**/helpers.ts", "tests/fixtures/**"],
+  "ignore": [
+    ".claude/worktrees/**",
+    "tests/**/helpers.ts",
+    "tests/helpers/**",
+    "tests/fixtures/**"
+  ],
   "ignoreExportsUsedInFile": true
 }
