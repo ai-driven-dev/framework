@@ -31,7 +31,8 @@
       "!.claude",
       "!.cursor",
       "!.opencode",
-      "!.vscode"
+      "!.vscode",
+      "!setup-test"
     ]
   },
   "overrides": [

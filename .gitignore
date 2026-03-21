@@ -21,3 +21,4 @@ coverage/
 temp/projects/
 temp/
 .claude/worktrees/
+setup-test/
