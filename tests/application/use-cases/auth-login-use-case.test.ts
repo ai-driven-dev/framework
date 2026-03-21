@@ -155,6 +155,7 @@ describe("AuthLoginUseCase", () => {
           return choices[1].value; // "token" is index 1, "user" is index 0
         },
         confirm: async (_msg: string) => false,
+        input: async (_msg: string) => "ghp_interactive",
       };
 
       const useCase = new AuthLoginUseCase(
@@ -171,6 +172,54 @@ describe("AuthLoginUseCase", () => {
 
       expect(result.method).toBe("token");
     });
+
+    it("prompts for token when method=token selected interactively and no --token flag", async () => {
+      const inputCalled = vi.fn().mockResolvedValue("ghp_prompted");
+      const prompter = {
+        select: async <T>(_msg: string, choices: Array<{ name: string; value: T }>) =>
+          choices[0].value, // first choice each time: method=gh but we override below
+        confirm: async (_msg: string) => false,
+        input: inputCalled,
+      };
+
+      const useCase = new AuthLoginUseCase(
+        storage,
+        makeHttpGet("octocat"),
+        makeExternalProvider(null)
+      );
+      const result = await useCase.execute({
+        method: "token",
+        level: "user",
+        projectRoot: tempDir,
+        interactive: true,
+        prompter,
+      });
+
+      expect(inputCalled).toHaveBeenCalledOnce();
+      expect(result.method).toBe("token");
+    });
+
+    it("throws when token input is empty in interactive mode", async () => {
+      const useCase = new AuthLoginUseCase(
+        storage,
+        makeHttpGet("octocat"),
+        makeExternalProvider(null)
+      );
+      await expect(
+        useCase.execute({
+          method: "token",
+          level: "user",
+          projectRoot: tempDir,
+          interactive: true,
+          prompter: {
+            select: async <T>(_msg: string, choices: Array<{ name: string; value: T }>) =>
+              choices[0].value,
+            confirm: async (_msg: string) => false,
+            input: async (_msg: string) => "",
+          },
+        })
+      ).rejects.toThrow(/empty/);
+    });
   });
 
   describe(".gitignore integration", () => {
@@ -183,6 +232,7 @@ describe("AuthLoginUseCase", () => {
         select: async <T>(_msg: string, choices: Array<{ name: string; value: T }>) =>
           choices[0].value,
         confirm: async (_msg: string) => true,
+        input: async (_msg: string) => "",
       };
 
       const useCase = new AuthLoginUseCase(
@@ -213,6 +263,7 @@ describe("AuthLoginUseCase", () => {
         select: async <T>(_msg: string, choices: Array<{ name: string; value: T }>) =>
           choices[0].value,
         confirm: confirmCalled,
+        input: async (_msg: string) => "",
       };
 
       const useCase = new AuthLoginUseCase(

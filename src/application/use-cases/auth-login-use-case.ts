@@ -7,6 +7,7 @@ import type { AuthStorage } from "../../infrastructure/auth/auth-storage.js";
 interface Prompter {
   select<T>(message: string, choices: Array<{ name: string; value: T }>): Promise<T>;
   confirm(message: string): Promise<boolean>;
+  input(message: string): Promise<string>;
 }
 
 interface AuthLoginOptions {
@@ -62,10 +63,15 @@ export class AuthLoginUseCase {
       }
       resolvedToken = ghToken;
     } else {
-      if (!options.token) {
+      let token = options.token;
+      if (!token && options.interactive && options.prompter) {
+        token = await options.prompter.input("Paste your GitHub Personal Access Token:");
+        if (!token) throw new Error("Token cannot be empty.");
+      }
+      if (!token) {
         throw new Error("--token <value> is required when using token method.");
       }
-      resolvedToken = options.token;
+      resolvedToken = token;
     }
 
     const login = await this.httpGet("https://api.github.com/user", resolvedToken).then(
