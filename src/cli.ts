@@ -2,6 +2,7 @@ import { platform } from "node:os";
 import { Command } from "commander";
 import { printUpdateBanner } from "./application/check-update.js";
 import { registerAdoptCommand } from "./application/commands/adopt.js";
+import { registerAuthCommand } from "./application/commands/auth.js";
 import { registerCacheCommand } from "./application/commands/cache.js";
 import { registerCleanCommand } from "./application/commands/clean.js";
 import { registerConfigCommand } from "./application/commands/config.js";
@@ -46,10 +47,10 @@ program
   .description("Generate AI coding assistant configurations from the AIDD framework")
   .version(formatVersion(currentVersion), "-V, --version", "Show version number")
   .option("--verbose", "Show detailed diagnostic output", false)
-  .option("--repo <owner/repo>", "GitHub repository in owner/repo format")
-  .option("--token <token>", "GitHub authentication token");
+  .option("--repo <owner/repo>", "GitHub repository in owner/repo format");
 
 registerAdoptCommand(program);
+registerAuthCommand(program);
 registerCacheCommand(program);
 registerConfigCommand(program);
 registerInitCommand(program);
@@ -73,11 +74,11 @@ registerSelfUpdateCommand(program);
 registerSetupCommand(program);
 
 program.hook("preAction", async (_thisCommand, actionCommand) => {
-  const opts = program.opts<{ verbose?: boolean; repo?: string; token?: string }>();
+  const opts = program.opts<{ verbose?: boolean; repo?: string }>();
   const output = new CLIOutput(opts.verbose ?? false);
   const deps = await createDeps(
     process.cwd(),
-    { verbose: opts.verbose ?? false, repo: opts.repo, token: opts.token },
+    { verbose: opts.verbose ?? false, repo: opts.repo },
     output
   ).catch(() => null);
   if (deps) {

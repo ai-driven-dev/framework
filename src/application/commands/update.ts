@@ -2,6 +2,7 @@ import type { Command } from "commander";
 import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { CLIOutput } from "../output.js";
+import { requireAuth } from "../require-auth.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
 import { UpdateUseCase } from "../use-cases/update-use-case.js";
 
@@ -27,7 +28,6 @@ export function registerUpdateCommand(program: Command): void {
         const globalOptions = program.opts<{
           verbose: boolean;
           repo?: string;
-          token?: string;
         }>();
 
         const verbose = globalOptions.verbose ?? false;
@@ -49,10 +49,11 @@ export function registerUpdateCommand(program: Command): void {
             {
               verbose,
               repo: globalOptions.repo,
-              token: globalOptions.token,
             },
             output
           );
+
+          if (!cmdOptions.path) await requireAuth(deps.authReader);
 
           const { path: frameworkPath, version } = await resolveFramework(
             deps.resolver,

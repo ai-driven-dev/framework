@@ -4,6 +4,7 @@ import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config
 import { createDeps } from "../../infrastructure/deps.js";
 import { NoManifestError } from "../errors.js";
 import { CLIOutput } from "../output.js";
+import { requireAuth } from "../require-auth.js";
 import { resolveFrameworkWithFallback } from "../use-cases/resolve-framework-use-case.js";
 import { RestoreUseCase } from "../use-cases/restore-use-case.js";
 import { StatusUseCase } from "../use-cases/status-use-case.js";
@@ -32,7 +33,6 @@ export function registerRestoreCommand(program: Command): void {
         const globalOptions = program.opts<{
           verbose: boolean;
           repo?: string;
-          token?: string;
         }>();
 
         const verbose = globalOptions.verbose ?? false;
@@ -54,7 +54,6 @@ export function registerRestoreCommand(program: Command): void {
             {
               verbose,
               repo: globalOptions.repo,
-              token: globalOptions.token,
             },
             output
           );
@@ -72,6 +71,8 @@ export function registerRestoreCommand(program: Command): void {
                 .getInstalledToolIds()
                 .map((id) => manifest.getToolVersion(id))
                 .find((v) => v !== undefined);
+
+          if (!cmdOptions.path) await requireAuth(deps.authReader);
 
           const { path: frameworkPath, version } = await resolveFrameworkWithFallback(
             deps.resolver,

@@ -11,7 +11,6 @@ export function registerDoctorCommand(program: Command): void {
       const globalOptions = program.opts<{
         verbose: boolean;
         repo?: string;
-        token?: string;
       }>();
       const verbose = globalOptions.verbose ?? false;
       const output = new CLIOutput(verbose);
@@ -23,13 +22,16 @@ export function registerDoctorCommand(program: Command): void {
           {
             verbose,
             repo: globalOptions.repo,
-            token: globalOptions.token,
           },
           output
         );
 
-        const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+        const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.authReader);
         const report = await useCase.execute({ projectRoot, repo: globalOptions.repo });
+
+        for (const issue of report.issues.filter((i) => i.severity === "info")) {
+          output.warn(`${issue.message}\n  Fix: ${issue.fix}`);
+        }
 
         if (report.healthy) {
           const totalFiles =
@@ -41,7 +43,7 @@ export function registerDoctorCommand(program: Command): void {
           return;
         }
 
-        for (const issue of report.issues) {
+        for (const issue of report.issues.filter((i) => i.severity !== "info")) {
           const text = `${issue.message}\n  Fix: ${issue.fix}`;
           if (issue.severity === "error") {
             output.error(text);

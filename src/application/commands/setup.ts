@@ -39,7 +39,6 @@ export function registerSetupCommand(program: Command): void {
       const globalOptions = program.opts<{
         verbose: boolean;
         repo?: string;
-        token?: string;
       }>();
 
       const verbose = globalOptions.verbose ?? false;
@@ -47,11 +46,7 @@ export function registerSetupCommand(program: Command): void {
       const projectRoot = process.cwd();
 
       try {
-        const deps = await createDeps(
-          projectRoot,
-          { verbose, repo: globalOptions.repo, token: globalOptions.token },
-          output
-        );
+        const deps = await createDeps(projectRoot, { verbose, repo: globalOptions.repo }, output);
 
         const result = await new SetupUseCase(
           deps.fs,
@@ -62,7 +57,8 @@ export function registerSetupCommand(program: Command): void {
           deps.git,
           deps.platform,
           deps.prompter,
-          deps.resolver
+          deps.resolver,
+          deps.authReader
         ).execute({
           projectRoot,
           path: cmdOptions.path,

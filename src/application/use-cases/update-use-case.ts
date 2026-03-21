@@ -179,6 +179,16 @@ export class UpdateUseCase {
 
     const toolResults: UpdateToolResult[] = [];
 
+    if (options.toolIds && options.toolIds.length > 0) {
+      const installedIds = new Set(manifest.getInstalledToolIds());
+      const notInstalled = options.toolIds.filter((id) => !installedIds.has(id));
+      if (notInstalled.length > 0) {
+        throw new Error(
+          `${notInstalled.join(", ")} ${notInstalled.length === 1 ? "is" : "are"} not installed. Use \`aidd install ${notInstalled.join(" ")}\` first.`
+        );
+      }
+    }
+
     const effectiveToolIds = docsOnly
       ? []
       : options.toolIds && options.toolIds.length > 0

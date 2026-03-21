@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
 import { CLIOutput } from "../output.js";
+import { requireAuth } from "../require-auth.js";
 import { InitUseCase } from "../use-cases/init-use-case.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
 
@@ -17,7 +18,6 @@ export function registerInitCommand(program: Command): void {
         const globalOptions = program.opts<{
           verbose: boolean;
           repo?: string;
-          token?: string;
         }>();
 
         const verbose = globalOptions.verbose ?? false;
@@ -30,10 +30,11 @@ export function registerInitCommand(program: Command): void {
             {
               verbose,
               repo: globalOptions.repo,
-              token: globalOptions.token,
             },
             output
           );
+
+          if (!cmdOptions.path) await requireAuth(deps.authReader);
 
           const { path: frameworkPath, version } = await resolveFramework(
             deps.resolver,

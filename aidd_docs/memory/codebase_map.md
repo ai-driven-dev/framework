@@ -25,9 +25,10 @@
 
 ```plaintext
 src/
-├── cli.ts                              # commander program, global --verbose / --repo / --token
+├── cli.ts                              # commander program, global --verbose / --repo
 ├── application/
 │   ├── commands/                       # commander command registrations
+│   │   ├── auth.ts                     # aidd auth login/logout/status
 │   │   ├── adopt.ts                    # aidd adopt --tools <tools> (--release or --path required)
 │   │   ├── cache.ts                    # aidd cache list / clear
 │   │   ├── config.ts                   # aidd config list/get/set
@@ -43,7 +44,11 @@ src/
 │   │   └── update.ts                   # aidd update [--force] [--dry-run] [--tool] [--docs]
 │   ├── check-update.ts                 # printUpdateBanner() — called via commander preAction hook in cli.ts
 │   ├── output.ts                       # All stdout/stderr formatting
+│   ├── require-auth.ts                 # requireAuth(authReader) — throws if no token
 │   └── use-cases/
+│       ├── auth-login-use-case.ts          # store PAT or gh CLI config; validates token via GitHub API
+│       ├── auth-logout-use-case.ts         # remove stored credential
+│       ├── auth-status-use-case.ts         # check current auth and validate token
 │       ├── adopt-use-case.ts               # registers framework files from disk; user files ignored
 │       ├── catalog-use-case.ts             # generates CATALOG.md
 │       ├── clean-use-case.ts
@@ -71,7 +76,11 @@ src/
 │   │   ├── mcp.ts                      # MCP config transformation for Windows command path fixes
 │   │   ├── semver.ts                   # semantic version parsing & comparison for update checks
 │   │   └── tool-config.ts              # per-tool output path / frontmatter rules
+│   ├── models/
+│   │   └── auth-config.ts              # AuthConfig { version, method, level, token?, createdAt }
 │   ├── ports/
+│   │   ├── auth-token-provider.ts      # resolve(): Promise<string | null> — implemented by AuthReader
+│   │   ├── external-token-provider.ts  # resolve(): string | null — implemented by GhCliAdapter
 │   │   ├── cli-updater.ts              # fetchLatestRelease(), install() — used by self-update
 │   │   ├── current-version-provider.ts # get() returns current CLI version string
 │   │   ├── file-system.ts
@@ -89,6 +98,7 @@ src/
 │       └── opencode.ts
 └── infrastructure/
     ├── adapters/
+    │   ├── gh-cli-adapter.ts            # ExternalTokenProvider — calls `gh auth token` (3s timeout)
     │   ├── cli-updater-adapter.ts       # GitHub CLI Release API for self-update
     │   ├── current-version-adapter.ts   # reads package.json version at runtime
     │   ├── file-system-adapter.ts       # mergeJsonFile (strips JSONC comments + deep-merge)
@@ -100,7 +110,8 @@ src/
     │   ├── platform-adapter.ts          # node:os wrapper for platform detection
     │   └── prompter-adapter.ts          # SilentPrompterAdapter + InquirerPrompterAdapter (TTY guard)
     ├── auth/
-    │   └── token-resolver.ts            # --token > AIDD_TOKEN > gh auth token
+    │   ├── auth-reader.ts               # AuthTokenProvider impl — AIDD_TOKEN > project > user > gh (only if method=gh)
+    │   └── auth-storage.ts              # read/write ~/.config/aidd/auth.json or .aidd/auth.json (chmod 600)
     ├── cache/
     │   └── framework-cache.ts           # per-version cache in .aidd/cache/
     ├── deps.ts                          # dependency injection wiring

@@ -6,6 +6,7 @@ import {
   type ToolId,
   VALID_TOOL_IDS,
 } from "../../domain/models/tool-config.js";
+import type { AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { FrameworkResolver } from "../../domain/ports/framework-resolver.js";
@@ -16,6 +17,7 @@ import type { ManifestRepository } from "../../domain/ports/manifest-repository.
 import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import { AdoptRequiresVersionError } from "../errors.js";
+import { requireAuth } from "../require-auth.js";
 import { AdoptUseCase } from "./adopt-use-case.js";
 import { InitUseCase } from "./init-use-case.js";
 import type { InstallToolResult } from "./install-use-case.js";
@@ -72,10 +74,15 @@ export class SetupUseCase {
     private readonly git: Git,
     private readonly platform: Platform,
     private readonly prompter: Prompter,
-    private readonly resolver: FrameworkResolver
+    private readonly resolver: FrameworkResolver,
+    private readonly authReader?: AuthTokenProvider
   ) {}
 
   async execute(options: SetupOptions): Promise<SetupResult> {
+    if (this.authReader) {
+      await requireAuth(this.authReader);
+    }
+
     const state = await detectSetupState(
       this.manifestRepo,
       this.fs,

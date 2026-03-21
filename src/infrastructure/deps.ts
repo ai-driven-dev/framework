@@ -21,12 +21,14 @@ import { CurrentVersionAdapter } from "./adapters/current-version-adapter.js";
 import { FileSystemAdapter } from "./adapters/file-system-adapter.js";
 import { FrameworkLoaderAdapter } from "./adapters/framework-loader-adapter.js";
 import { FrameworkResolverAdapter } from "./adapters/framework-resolver-adapter.js";
+import { GhCliAdapter } from "./adapters/gh-cli-adapter.js";
 import { GitAdapter } from "./adapters/git-adapter.js";
 import { HasherAdapter } from "./adapters/hasher-adapter.js";
 import { ManifestRepositoryAdapter } from "./adapters/manifest-repository-adapter.js";
 import { PlatformAdapter } from "./adapters/platform-adapter.js";
 import { InquirerPrompterAdapter, SilentPrompterAdapter } from "./adapters/prompter-adapter.js";
-import { TokenResolver } from "./auth/token-resolver.js";
+import { AuthReader } from "./auth/auth-reader.js";
+import { AuthStorage } from "./auth/auth-storage.js";
 import { FrameworkCache } from "./cache/framework-cache.js";
 import { HttpClient } from "./http/http-client.js";
 import { TarExtractor } from "./tar/tar-extractor.js";
@@ -34,7 +36,6 @@ import { TarExtractor } from "./tar/tar-extractor.js";
 interface GlobalOptions {
   verbose: boolean;
   repo?: string;
-  token?: string;
 }
 
 interface Deps {
@@ -49,6 +50,8 @@ interface Deps {
   git: Git;
   platform: Platform;
   prompter: Prompter;
+  authReader: AuthReader;
+  authStorage: AuthStorage;
 }
 
 export async function createDeps(
@@ -71,8 +74,10 @@ export async function createDeps(
   const http = new HttpClient();
   const tar = new TarExtractor();
   const cache = new FrameworkCache(cacheDir);
-  const tokenResolver = new TokenResolver();
-  const token = tokenResolver.resolve({ flag: options.token, logger });
+  const authStorage = new AuthStorage();
+  const ghCliAdapter = new GhCliAdapter();
+  const authReader = new AuthReader(authStorage, projectRoot, logger, ghCliAdapter);
+  const token = await authReader.resolve();
   const resolver = new FrameworkResolverAdapter(
     http,
     tar,
@@ -102,5 +107,7 @@ export async function createDeps(
     git,
     platform,
     prompter,
+    authReader,
+    authStorage,
   };
 }

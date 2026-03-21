@@ -8,6 +8,7 @@ import {
 import { createDeps } from "../../infrastructure/deps.js";
 import { AdoptRequiresVersionError } from "../errors.js";
 import { CLIOutput } from "../output.js";
+import { requireAuth } from "../require-auth.js";
 import { AdoptUseCase } from "../use-cases/adopt-use-case.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
 
@@ -30,7 +31,6 @@ export function registerAdoptCommand(program: Command): void {
       const globalOptions = program.opts<{
         verbose: boolean;
         repo?: string;
-        token?: string;
       }>();
       const verbose = globalOptions.verbose;
       const output = new CLIOutput(verbose);
@@ -42,11 +42,7 @@ export function registerAdoptCommand(program: Command): void {
       }
 
       try {
-        const deps = await createDeps(
-          projectRoot,
-          { verbose, repo: globalOptions.repo, token: globalOptions.token },
-          output
-        );
+        const deps = await createDeps(projectRoot, { verbose, repo: globalOptions.repo }, output);
 
         let toolIds: ToolId[];
 
@@ -71,6 +67,14 @@ export function registerAdoptCommand(program: Command): void {
           if (!answer) throw new AdoptRequiresVersionError(globalOptions.repo);
           from = answer;
         }
+
+        const isLocalFrom =
+          from.startsWith("/") ||
+          from.startsWith("./") ||
+          from.startsWith("../") ||
+          from.endsWith(".tar.gz") ||
+          from.endsWith(".tgz");
+        if (!isLocalFrom) await requireAuth(deps.authReader);
 
         const { path: frameworkPath, version } = await resolveFramework(
           deps.resolver,
