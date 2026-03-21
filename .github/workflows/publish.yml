@@ -29,6 +29,11 @@ jobs:
           scope: "@ai-driven-dev"
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      # Publish to GitHub Packages (primary registry)
       - run: pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Publish to npm public registry
+      - run: pnpm publish --no-git-checks --registry https://registry.npmjs.org
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
