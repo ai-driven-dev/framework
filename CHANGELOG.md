@@ -1,5 +1,62 @@
 # Changelog
 
+## [2.12.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.11.0...v2.12.0) (2026-03-22)
+
+
+### Features
+
+* add 1.5s pause after banner to let user read it ([98ce223](https://github.com/ai-driven-dev/aidd-cli/commit/98ce2231b9147a6f7d3550a3e275abe3d6dc4444))
+* add AI-Driven Dev label above logo in corner frame ([31bf641](https://github.com/ai-driven-dev/aidd-cli/commit/31bf641e4e9351347bceee2bcf1539025aa9a5f4))
+* animated ANSI banner with glitch effect on CLI launch ([2f6f43e](https://github.com/ai-driven-dev/aidd-cli/commit/2f6f43e2c34d78b2f84275966fb0f942070da6ac))
+* animated ANSI banner with glitch effect on CLI launch ([#64](https://github.com/ai-driven-dev/aidd-cli/issues/64)) ([9b62bb6](https://github.com/ai-driven-dev/aidd-cli/commit/9b62bb62b02f323da3463705fa1c9241b0797152))
+* any keypress skips the entire banner animation ([3ec92cd](https://github.com/ai-driven-dev/aidd-cli/commit/3ec92cdc53a3f668174be9a18078bf55748d0692))
+* **auth:** add aidd auth login/logout/status and centralize token resolution ([77188ee](https://github.com/ai-driven-dev/aidd-cli/commit/77188eeca8df776d8cf6eaf64730b92f203162ad))
+* **auth:** add auth login/logout/status command and use-cases ([2a70557](https://github.com/ai-driven-dev/aidd-cli/commit/2a70557bdfce78f30517d41ee84a9f70520d2b85))
+* **auth:** add AuthConfig, AuthStorage, AuthReader and GhCliAdapter ([d3d13cc](https://github.com/ai-driven-dev/aidd-cli/commit/d3d13ccafb679b2d0afeaa3f9e42c1f67fc10d09)), closes [#54](https://github.com/ai-driven-dev/aidd-cli/issues/54)
+* **auth:** wire AuthReader into all commands and remove --token flag ([fd598d6](https://github.com/ai-driven-dev/aidd-cli/commit/fd598d6f0f3415f8aea5dce6e57de06308e3cee8))
+* **cli:** rename --framework to --path and clarify framework source ([929f421](https://github.com/ai-driven-dev/aidd-cli/commit/929f4216be475b291aff94560e4de5c2e1ac460c))
+* **interactive:** add interactive menus for CLI commands ([89c91e8](https://github.com/ai-driven-dev/aidd-cli/commit/89c91e85f210e8945bd957c0fe8b25876e95060c))
+* **interactive:** add interactive menus for setup, install, and update commands ([ef8de5e](https://github.com/ai-driven-dev/aidd-cli/commit/ef8de5e06b7e6f57c63a073e3b5e583e1245aab7)), closes [#13](https://github.com/ai-driven-dev/aidd-cli/issues/13)
+* monochrome color scheme + move label below logo + add DEC-005/006 ([f77e7a7](https://github.com/ai-driven-dev/aidd-cli/commit/f77e7a793bad9064c43f5b5e097252e2722ea9ea))
+* restrict banner to no-args and --help only ([c267438](https://github.com/ai-driven-dev/aidd-cli/commit/c26743874c5c76470f77cd0e30c72cf05ac5705c))
+* reveal title and info box line by line after logo animation ([10fb354](https://github.com/ai-driven-dev/aidd-cli/commit/10fb354581e0edddc9d4bb2c705a11c16983c10a))
+* show animated banner on every interactive TTY session ([9508c08](https://github.com/ai-driven-dev/aidd-cli/commit/9508c083b476294d92029b185d8597c5af899251))
+* skip banner pause on any keypress ([2abd2ec](https://github.com/ai-driven-dev/aidd-cli/commit/2abd2eccaaaa059c549751caf529a51341d523ce))
+* wrap logo in corner frame, info box below (Copilot-style layout) ([1743a90](https://github.com/ai-driven-dev/aidd-cli/commit/1743a900b367e89b1270f2ac33fbaa2641db540c))
+
+
+### Bug Fixes
+
+* **auth:** prompt for token in interactive login when --token not provided ([ba271e8](https://github.com/ai-driven-dev/aidd-cli/commit/ba271e8932790dfb8f2cf052f8dbf5e5f1faf2a5))
+* **clean:** add interactive confirmation instead of requiring --force ([8c3d370](https://github.com/ai-driven-dev/aidd-cli/commit/8c3d3703ac637d50833212ef53b395fbda5e3bd0))
+* **install:** ensure .gitignore is updated on install and update ([b4762ea](https://github.com/ai-driven-dev/aidd-cli/commit/b4762eabf2ed4ecc239c343d714a11cc7b5a633a))
+* **restore:** allow non-interactive restore of deleted files without --force ([da3be6b](https://github.com/ai-driven-dev/aidd-cli/commit/da3be6b44011ecbb1787c134759d0d0d71f41ceb))
+* **restore:** auto-restore deleted files without prompting for conflict ([98ac4e0](https://github.com/ai-driven-dev/aidd-cli/commit/98ac4e03745350404b731a177c41568abb79c8df))
+* **setup:** pass repo to fetchLatestVersion so release default is correct ([dd9c68d](https://github.com/ai-driven-dev/aidd-cli/commit/dd9c68d45cfb007a1dcdabea40aa212accaa1eee))
+* **setup:** show version prompt and support local path in needs-init flow ([305c785](https://github.com/ai-driven-dev/aidd-cli/commit/305c785928c6b18b99d6dbc64746ac852fa297c9))
+* **sync:** exit gracefully when no tools have local modifications in interactive mode ([684e4b7](https://github.com/ai-driven-dev/aidd-cli/commit/684e4b74fd75ab02d589a2b239f321b6d6ef32a8))
+* **update:** bump manifest version when content unchanged in interactive mode ([4a29622](https://github.com/ai-driven-dev/aidd-cli/commit/4a296223664c476a6edc062f4cda1ac927317513))
+* **update:** prompt when framework removes a user-modified file ([43b5472](https://github.com/ai-driven-dev/aidd-cli/commit/43b54727719585994d102b019bb14d918b05deb4))
+* **update:** simplify update banner to always suggest aidd update ([2c27912](https://github.com/ai-driven-dev/aidd-cli/commit/2c27912b6008a7614e02e18d76c14640d1f4f1d1))
+
+
+### Documentation
+
+* **auth:** update README and memory bank for auth feature ([61e19bd](https://github.com/ai-driven-dev/aidd-cli/commit/61e19bd9d352f16bda0a985c337ca8b848d2efad))
+* **ux:** align ux_copy.md with actual message implementation ([9e385cb](https://github.com/ai-driven-dev/aidd-cli/commit/9e385cb11e64c3c7a21674050098ce19f723dbd3))
+
+
+### Refactoring
+
+* **commands:** extract parseGlobalOptions helper, deduplicate tool-config ([8609851](https://github.com/ai-driven-dev/aidd-cli/commit/8609851d4635c5ff542be75e9e973dfe7a382a47))
+* **commands:** push orchestration into use-cases, one use-case per command ([73b53cd](https://github.com/ai-driven-dev/aidd-cli/commit/73b53cd33ae70efcd199942c5b8b1d19a3536d5e))
+* **commands:** strip business logic from command handlers ([d97f3c9](https://github.com/ai-driven-dev/aidd-cli/commit/d97f3c9296020136c243c693ce6525b9a47d7a11))
+* extract banner into BannerUseCase with inject WriteStream ([bea0826](https://github.com/ai-driven-dev/aidd-cli/commit/bea082630d2f48f217d7556457d6f1b74dfbdd8e))
+* **setup:** extract private method per switch case ([df2ce4b](https://github.com/ai-driven-dev/aidd-cli/commit/df2ce4ba5960777af150a455fee8c78fb6a052d0))
+* **setup:** merge setup-flow into setup-use-case ([6554926](https://github.com/ai-driven-dev/aidd-cli/commit/6554926e4b1f2844def37ae5ab59d84bd937a01b))
+* **ux:** normalize user-facing messages across all CLI commands ([4e73132](https://github.com/ai-driven-dev/aidd-cli/commit/4e7313242be6bec2f95a4162c7c48a404ced48cb))
+* **ux:** normalize user-facing messages across all CLI commands ([cc1cb34](https://github.com/ai-driven-dev/aidd-cli/commit/cc1cb34e05b0da641d79ba3b3e3d0e7832ba370a))
+
 ## [2.11.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.10.2...v2.11.0) (2026-03-19)
 
 
