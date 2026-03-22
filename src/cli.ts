@@ -39,7 +39,8 @@ const logoLines = [
   `  ${D}╚═╝  ╚═╝╚═╝╚═════╝ ╚═════╝${R}`,
 ];
 
-const ANSI_RE = new RegExp("\x1b\\[[0-9;]*m", "g");
+// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional — strips ANSI escape codes
+const ANSI_RE = /\u001b\[[0-9;]*m/g;
 const strippedLines = logoLines.map((l) => l.replace(ANSI_RE, ""));
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
@@ -162,9 +163,6 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
   }
 });
 
-const args = process.argv.slice(2);
-if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
-  await printBanner();
-}
+await printBanner();
 
 program.parse(process.argv);
