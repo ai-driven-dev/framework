@@ -12,3 +12,5 @@ This file contains the key architectural decisions made during the project, alon
 | 2026-03-19 | DEC-004 | [Doctor checks both directions manifest↔disk](./decisions/DEC-004-doctor-bidirectional-checks.md) | missing tracked files now surface as errors |
 | 2026-03-22 | DEC-005 | [BannerUseCase with injected WriteStream](./decisions/DEC-005-banner-use-case-injected-stream.md) | testable banner without global stdout side-effects |
 | 2026-03-22 | DEC-006 | [Shared skip signal for interruptible animations](./decisions/DEC-006-shared-skip-signal-animation.md) | any keypress skips entire animation instantly |
+| 2026-03-22 | DEC-007 | [isFileTracked() as guard before writing untracked file](./decisions/DEC-007-isfiletracked-guard-before-write.md) | Manifest is canonical oracle for AIDD file ownership |
+| 2026-03-22 | DEC-008 | [Skip untracked user files during install and update](./decisions/DEC-008-skip-untracked-user-files-on-install-update.md) | user files at colliding paths preserved unconditionally |
