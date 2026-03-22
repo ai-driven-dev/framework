@@ -68,6 +68,7 @@ export class BannerUseCase {
     // --- Part 1: logo in corner frame ---
     write("\n");
     write(`${frameTop}\n`);
+    write(`    ${D}AI-Driven Dev${R}\n`);
     write("\n");
 
     const rows = logoLines.length;
