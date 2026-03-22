@@ -93,5 +93,7 @@ export class BannerUseCase {
       write(`${line}\n`);
       await sleep(40);
     }
+
+    await sleep(1500);
   }
 }
