@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.13.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.12.0...v2.13.0) (2026-03-22)
+
+
+### Features
+
+* **manifest:** add isFileTracked() to detect if a path is owned by AIDD ([1a0b5c2](https://github.com/ai-driven-dev/aidd-cli/commit/1a0b5c22d8735f833b6a58679ae42da43124b489))
+
+
+### Bug Fixes
+
+* **install:** skip pre-existing user files to prevent silent overwrite ([88604fa](https://github.com/ai-driven-dev/aidd-cli/commit/88604fae32f4773e271e64c715833df0d59a7525))
+* prevent silent overwrite of user files during install and update ([10270dd](https://github.com/ai-driven-dev/aidd-cli/commit/10270dd455178ab45440b4a187c0bbb3c5257516))
+* **update:** skip pre-existing user files when framework introduces new file ([7cfb08c](https://github.com/ai-driven-dev/aidd-cli/commit/7cfb08c8932fd87b1cb98ed941e64f94d80c8608))
+
+
+### Documentation
+
+* record DEC-007/008 and update memory for user file protection ([2f017de](https://github.com/ai-driven-dev/aidd-cli/commit/2f017ded413124aec8e46e7647ccf1fad57030a9))
+
 ## [2.12.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.11.0...v2.12.0) (2026-03-22)
 
 
