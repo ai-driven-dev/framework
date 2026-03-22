@@ -28,6 +28,22 @@ function boxLine(styledText: string, textVis: number): string {
   return `  ${D}│${R}  ${styledText}${" ".repeat(padding)}  ${D}│${R}`;
 }
 
+function waitForKeypress(): Promise<void> {
+  return new Promise((resolve) => {
+    if (!process.stdin.isTTY) {
+      resolve();
+      return;
+    }
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.once("data", () => {
+      process.stdin.setRawMode(false);
+      process.stdin.pause();
+      resolve();
+    });
+  });
+}
+
 export class BannerUseCase {
   constructor(private readonly out: NodeJS.WriteStream = process.stdout) {}
 
@@ -94,6 +110,6 @@ export class BannerUseCase {
       await sleep(40);
     }
 
-    await sleep(1500);
+    await Promise.race([sleep(1500), waitForKeypress()]);
   }
 }
