@@ -183,6 +183,21 @@ export class Manifest {
     return this._tools.has(toolId);
   }
 
+  isFileTracked(relativePath: string): boolean {
+    for (const entry of this._tools.values()) {
+      if (entry.files.some((f) => f.relativePath === relativePath)) {
+        return true;
+      }
+    }
+    if (this._docs?.files.some((f) => f.relativePath === relativePath)) {
+      return true;
+    }
+    if (this._scripts?.files.some((f) => f.relativePath === relativePath)) {
+      return true;
+    }
+    return false;
+  }
+
   withDocsDir(newDocsDir: string): Manifest {
     return new Manifest({
       tools: new Map(this._tools),

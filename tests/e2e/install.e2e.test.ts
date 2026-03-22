@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { chmod, readFile, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createTestEnv, FRAMEWORK_PATH, gitInit, runCli } from "./helpers.js";
@@ -350,6 +350,94 @@ describe.concurrent("E2E: aidd install", () => {
 
       expect(exitCode).toBe(0);
       expect(stderr).toContain("ignoring specified tools");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("preserves pre-existing user file in rules section", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      const userFilePath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
+      await mkdir(join(projectDir, ".claude", "rules", "01-standards"), { recursive: true });
+      await writeFile(userFilePath, "user naming rule");
+
+      const { stderr, exitCode } = await runCli(
+        ["install", "claude", "--path", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      const content = await readFile(userFilePath, "utf-8");
+      expect(content).toBe("user naming rule");
+      expect(stderr).toContain("naming.md");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("preserves pre-existing user file in commands section", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      const userFilePath = join(projectDir, ".claude", "commands", "aidd", "04", "implement.md");
+      await mkdir(join(projectDir, ".claude", "commands", "aidd", "04"), { recursive: true });
+      await writeFile(userFilePath, "user implement command");
+
+      const { stderr, exitCode } = await runCli(
+        ["install", "claude", "--path", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      const content = await readFile(userFilePath, "utf-8");
+      expect(content).toBe("user implement command");
+      expect(stderr).toContain("implement.md");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("preserves pre-existing user file in agents section", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      const userFilePath = join(projectDir, ".claude", "agents", "code-reviewer.md");
+      await mkdir(join(projectDir, ".claude", "agents"), { recursive: true });
+      await writeFile(userFilePath, "user agent");
+
+      const { stderr, exitCode } = await runCli(
+        ["install", "claude", "--path", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      const content = await readFile(userFilePath, "utf-8");
+      expect(content).toBe("user agent");
+      expect(stderr).toContain("code-reviewer.md");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("preserves pre-existing user file in skills section", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install");
+    try {
+      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      const userFilePath = join(projectDir, ".claude", "skills", "commit", "SKILL.md");
+      await mkdir(join(projectDir, ".claude", "skills", "commit"), { recursive: true });
+      await writeFile(userFilePath, "user skill");
+
+      const { stderr, exitCode } = await runCli(
+        ["install", "claude", "--path", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      const content = await readFile(userFilePath, "utf-8");
+      expect(content).toBe("user skill");
+      expect(stderr).toContain("SKILL.md");
     } finally {
       await cleanup();
     }

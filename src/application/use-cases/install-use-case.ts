@@ -133,7 +133,16 @@ export class InstallUseCase {
         }
       }
 
-      const finalFiles = await this.writeToolFiles(generated, projectRoot, manifest);
+      const { files: finalFiles, userFileConflicts } = await this.writeToolFiles(
+        generated,
+        projectRoot,
+        manifest
+      );
+      for (const relativePath of userFileConflicts) {
+        warnings.push(
+          `\`${relativePath}\` already exists and was not installed by AIDD — skipped to preserve user file`
+        );
+      }
       manifest.addTool(toolId, descriptor.version, finalFiles);
 
       results.push({
@@ -164,8 +173,9 @@ export class InstallUseCase {
     generated: GeneratedFile[],
     projectRoot: string,
     manifest: Manifest
-  ): Promise<GeneratedFile[]> {
+  ): Promise<{ files: GeneratedFile[]; userFileConflicts: string[] }> {
     const filesByPath = new Map<string, GeneratedFile>();
+    const userFileConflicts: string[] = [];
     for (const file of generated) {
       const outputPath = join(projectRoot, file.relativePath);
       if (file.merge) {
@@ -182,10 +192,14 @@ export class InstallUseCase {
           })
         );
       } else {
+        if ((await this.fs.fileExists(outputPath)) && !manifest.isFileTracked(file.relativePath)) {
+          userFileConflicts.push(file.relativePath);
+          continue;
+        }
         await this.fs.writeFile(outputPath, file.content);
         filesByPath.set(file.relativePath, file);
       }
     }
-    return [...filesByPath.values()];
+    return { files: [...filesByPath.values()], userFileConflicts };
   }
 }

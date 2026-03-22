@@ -192,7 +192,8 @@ src/
 - `adopt` (internal use-case only, no CLI command) bootstraps a manifest for projects with pre-existing AIDD files installed manually. Triggered by `aidd setup` which passes `--release`/`--path` from its own command-level options. Downloads the framework, generates the per-tool distribution, and registers only disk files whose paths match the distribution. Files on disk not in the distribution are user files — untracked, never touched by any other command. No file writes — scan only. Throws if manifest already exists.
 - `init` (internal use-case only, no CLI command) throws if any AIDD signals are detected on disk (`.aidd/`, docsDir, tool directories) and no manifest exists.
 - `init --force` re-copies docs templates into the existing docs directory without a full reset. Does not touch tool distributions.
-- `install` requires an existing manifest. Aborts if absent — no auto-init.
+- `install` requires an existing manifest. Aborts if absent — no auto-init. During install, any file that already exists on disk and is not tracked in the manifest is skipped with a warning — never overwritten. See DEC-007, DEC-008.
+- `update` applies the same user-file protection for `added` diff entries: if a new framework file collides with a pre-existing untracked file, the write is skipped with a warning. See DEC-008.
 - `clean` without `--force` is a dry-run (preview only, no files deleted).
 - `doctor` checks structural integrity only: manifest, orphaned tool directories, and broken `@path`/markdown link references in tracked files. Missing auth is reported as `severity: "info"` (exit 0). Exits 1 on warning/error severity issues. Missing or modified files are drift — use `status`.
 - `status` detects 3 drift types: `modified` (hash mismatch), `deleted` (missing from disk), `added` (on disk but not tracked). Also performs a best-effort version check — network failure is silently ignored. `--tool` or `--docs` scopes output to one section.
