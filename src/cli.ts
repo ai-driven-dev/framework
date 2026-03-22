@@ -163,6 +163,9 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
   }
 });
 
-await printBanner();
+const args = process.argv.slice(2);
+if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
+  await printBanner();
+}
 
 program.parse(process.argv);
