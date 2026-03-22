@@ -1,6 +1,7 @@
-const B = "\x1b[38;2;78;78;249m";
-const P = "\x1b[38;2;221;84;117m";
-const G = "\x1b[38;2;102;204;153m";
+const B = "\x1b[38;2;78;78;249m"; // primary — AIDD blue #4E4EF9
+const P = "\x1b[38;2;221;84;117m"; // glitch only — pink #DD5475
+const G = "\x1b[38;2;102;204;153m"; // positive highlight — green #66CC99
+const _N = "\x1b[38;2;10;10;40m"; // secondary — near-black navy
 const D = "\x1b[2m";
 const R = "\x1b[0m";
 const BOLD = "\x1b[1m";
@@ -9,11 +10,11 @@ const GLITCH = "█▓▒░▄▀■□▪▫◆◇○●▌▐";
 const glitchChar = (): string => GLITCH[Math.floor(Math.random() * GLITCH.length)];
 
 const logoLines = [
-  `  ${B}█████╗ ${P}██╗${B}██████╗ ${P}██████╗${R}`,
-  `  ${B}██╔══██╗${P}██║${B}██╔══██╗${P}██╔══██╗${R}`,
-  `  ${B}███████║${P}██║${B}██║  ██║${P}██║  ██║${R}`,
-  `  ${B}██╔══██║${P}██║${B}██║  ██║${P}██║  ██║${R}`,
-  `  ${B}██║  ██║${P}██║${B}██████╔╝${P}██████╔╝${R}`,
+  `  ${B}█████╗ ██╗██████╗ ██████╗${R}`,
+  `  ${B}██╔══██╗██║██╔══██╗██╔══██╗${R}`,
+  `  ${B}███████║██║██║  ██║██║  ██║${R}`,
+  `  ${B}██╔══██║██║██║  ██║██║  ██║${R}`,
+  `  ${B}██║  ██║██║██████╔╝██████╔╝${R}`,
   `  ${D}╚═╝  ╚═╝╚═╝╚═════╝ ╚═════╝${R}`,
 ];
 
@@ -27,12 +28,12 @@ const strippedLines = logoLines.map((l) => l.replace(ANSI_RE, ""));
 const INNER = 44;
 const FRAME_GAP = INNER - 4; // 40
 
-const frameTop = `  ${D}┌──${" ".repeat(FRAME_GAP)}──┐${R}`;
-const frameBot = `  ${D}└──${" ".repeat(FRAME_GAP)}──┘${R}`;
+const frameTop = `  ${B}┌──${" ".repeat(FRAME_GAP)}──┐${R}`;
+const frameBot = `  ${B}└──${" ".repeat(FRAME_GAP)}──┘${R}`;
 
 function boxLine(styledText: string, textVis: number): string {
   const padding = INNER - 4 - textVis;
-  return `  ${D}│${R}  ${styledText}${" ".repeat(padding)}  ${D}│${R}`;
+  return `  ${B}│${R}  ${styledText}${" ".repeat(padding)}  ${B}│${R}`;
 }
 
 function waitForKeypress(): Promise<void> {
@@ -68,7 +69,6 @@ export class BannerUseCase {
     // --- Part 1: logo in corner frame ---
     write("\n");
     write(`${frameTop}\n`);
-    write(`    ${D}AI-Driven Dev${R}\n`);
     write("\n");
 
     const rows = logoLines.length;
@@ -104,22 +104,23 @@ export class BannerUseCase {
     }
 
     write("\n");
+    write(`    ${D}AI-Driven Dev${R}\n`);
     write(`${frameBot}\n`);
 
     await sleep(300);
 
     // --- Part 2: info box ---
     const dashes = "─".repeat(INNER);
-    const empty = `  ${D}│${R}${" ".repeat(INNER)}${D}│${R}`;
+    const empty = `  ${B}│${R}${" ".repeat(INNER)}${B}│${R}`;
 
     const box = [
       ``,
-      `  ${D}┌${dashes}┐${R}`,
+      `  ${B}┌${dashes}┐${R}`,
       empty,
       boxLine(`${G}${BOLD}AI-Driven Development${R}`, 21),
       boxLine(`${D}The methodology for AI coders.${R}`, 30),
       empty,
-      `  ${D}└${dashes}┘${R}`,
+      `  ${B}└${dashes}┘${R}`,
       ``,
     ];
 

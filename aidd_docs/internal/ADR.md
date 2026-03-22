@@ -10,3 +10,5 @@ This file contains the key architectural decisions made during the project, alon
 | 2026-03-18 | DEC-002 | [Tool helpers in tool-config.ts](./decisions/DEC-002-tool-helpers-in-tool-config.md)   | single source for tool config logic, no shared.* files    |
 | 2026-03-19 | DEC-003 | [signalDir on ToolConfig, hasToolSignals in domain](./decisions/DEC-003-signal-dir-in-tool-config.md) | signal detection shared between init and doctor via domain |
 | 2026-03-19 | DEC-004 | [Doctor checks both directions manifest↔disk](./decisions/DEC-004-doctor-bidirectional-checks.md) | missing tracked files now surface as errors |
+| 2026-03-22 | DEC-005 | [BannerUseCase with injected WriteStream](./decisions/DEC-005-banner-use-case-injected-stream.md) | testable banner without global stdout side-effects |
+| 2026-03-22 | DEC-006 | [Shared skip signal for interruptible animations](./decisions/DEC-006-shared-skip-signal-animation.md) | any keypress skips entire animation instantly |
