@@ -136,6 +136,33 @@ describe("Manifest", () => {
     makeFile("aidd_docs/memory/project.md", "445566"),
   ];
 
+  describe("isFileTracked()", () => {
+    it("returns true for a file tracked by a tool", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
+      expect(manifest.isFileTracked(".claude/agents/code-reviewer.md")).toBe(true);
+    });
+
+    it("returns false for a file not in the manifest", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
+      expect(manifest.isFileTracked("some/unknown/file.md")).toBe(false);
+    });
+
+    it("returns true for a file tracked by docs", () => {
+      const manifest = Manifest.create();
+      manifest.addDocs("3.0.0", docsFiles);
+      expect(manifest.isFileTracked("aidd_docs/CLAUDE.md")).toBe(true);
+    });
+
+    it("returns true for a file tracked by scripts", () => {
+      const manifest = Manifest.create();
+      const scriptsFiles = [makeFile("scripts/setup.sh", "778899")];
+      manifest.addScripts("1.0.0", scriptsFiles);
+      expect(manifest.isFileTracked("scripts/setup.sh")).toBe(true);
+    });
+  });
+
   describe("addDocs()", () => {
     it("adds docs entry with tracked files", () => {
       const manifest = Manifest.create();
