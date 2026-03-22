@@ -3,10 +3,10 @@ import { GhCliAdapter } from "../../infrastructure/adapters/gh-cli-adapter.js";
 import { AuthReader } from "../../infrastructure/auth/auth-reader.js";
 import { AuthStorage } from "../../infrastructure/auth/auth-storage.js";
 import { HttpClient } from "../../infrastructure/http/http-client.js";
-import { CLIOutput } from "../output.js";
 import { AuthLoginUseCase } from "../use-cases/auth-login-use-case.js";
 import { AuthLogoutUseCase } from "../use-cases/auth-logout-use-case.js";
 import { AuthStatusUseCase } from "../use-cases/auth-status-use-case.js";
+import { parseGlobalOptions } from "./global-options.js";
 
 function makeHttpGet(http: HttpClient) {
   return async (url: string, token: string): Promise<{ login: string }> => {
@@ -30,9 +30,7 @@ export function registerAuthCommand(program: Command): void {
     .option("--token <value>", "Personal access token")
     .option("--level <user|project>", "Storage level (user or project)")
     .action(async (cmdOptions: { gh: boolean; token?: string; level?: string }) => {
-      const globalOptions = program.opts<{ verbose?: boolean }>();
-      const output = new CLIOutput(globalOptions.verbose ?? false);
-      const projectRoot = process.cwd();
+      const { output, projectRoot } = parseGlobalOptions(program);
 
       try {
         const storage = new AuthStorage();
@@ -83,9 +81,7 @@ export function registerAuthCommand(program: Command): void {
     .command("logout")
     .description("Remove stored authentication")
     .action(async () => {
-      const globalOptions = program.opts<{ verbose?: boolean }>();
-      const output = new CLIOutput(globalOptions.verbose ?? false);
-      const projectRoot = process.cwd();
+      const { output, projectRoot } = parseGlobalOptions(program);
 
       try {
         const storage = new AuthStorage();
@@ -111,9 +107,7 @@ export function registerAuthCommand(program: Command): void {
     .command("status")
     .description("Show authentication status")
     .action(async () => {
-      const globalOptions = program.opts<{ verbose?: boolean }>();
-      const output = new CLIOutput(globalOptions.verbose ?? false);
-      const projectRoot = process.cwd();
+      const { output, projectRoot } = parseGlobalOptions(program);
 
       try {
         const storage = new AuthStorage();

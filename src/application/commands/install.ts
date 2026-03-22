@@ -1,10 +1,10 @@
 import type { Command } from "commander";
 import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
-import { CLIOutput } from "../output.js";
 import { requireAuth } from "../require-auth.js";
 import { InstallUseCase } from "../use-cases/install-use-case.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
+import { parseGlobalOptions } from "./global-options.js";
 
 export function registerInstallCommand(program: Command): void {
   program
@@ -20,14 +20,7 @@ export function registerInstallCommand(program: Command): void {
         toolArgs: string[],
         cmdOptions: { force: boolean; all: boolean; path?: string; release?: string }
       ) => {
-        const globalOptions = program.opts<{
-          verbose: boolean;
-          repo?: string;
-        }>();
-
-        const verbose = globalOptions.verbose ?? false;
-        const output = new CLIOutput(verbose);
-        const projectRoot = process.cwd();
+        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
 
         if (cmdOptions.all && toolArgs.length > 0) {
           output.warn(`--all is set; ignoring specified tools: ${toolArgs.join(", ")}`);
@@ -38,14 +31,7 @@ export function registerInstallCommand(program: Command): void {
             assertValidToolIds(toolArgs as ToolId[]);
           }
 
-          const deps = await createDeps(
-            projectRoot,
-            {
-              verbose,
-              repo: globalOptions.repo,
-            },
-            output
-          );
+          const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
           if (!cmdOptions.path) await requireAuth(deps.authReader);
 
@@ -81,7 +67,7 @@ export function registerInstallCommand(program: Command): void {
             version,
             projectRoot,
             force: cmdOptions.force,
-            repo: globalOptions.repo,
+            repo,
             interactive: process.stdout.isTTY,
           });
 

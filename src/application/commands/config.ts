@@ -3,7 +3,7 @@ import { Command } from "commander";
 import { Manifest, validateRepoFormat } from "../../domain/models/manifest.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { NoManifestError } from "../errors.js";
-import { CLIOutput } from "../output.js";
+import { parseGlobalOptions } from "./global-options.js";
 
 type ReadableKey = "docsDir" | "repo" | "tools";
 type WritableKey = "docsDir" | "repo";
@@ -18,15 +18,9 @@ export function registerConfigCommand(program: Command): void {
     .command("list")
     .description("Show all configuration values from the manifest")
     .action(async () => {
-      const globalOptions = program.opts<{ verbose: boolean }>();
-      const output = new CLIOutput(globalOptions.verbose ?? false);
-      const projectRoot = process.cwd();
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       try {
-        const deps = await createDeps(
-          projectRoot,
-          { verbose: globalOptions.verbose ?? false },
-          output
-        );
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const manifest = await deps.manifestRepo.load();
         if (manifest === null) throw new NoManifestError();
         output.print(`docsDir = ${manifest.docsDir}`);
@@ -41,15 +35,9 @@ export function registerConfigCommand(program: Command): void {
     .command("get [key]")
     .description(`Get a configuration value (readable: ${READABLE_KEYS.join(", ")})`)
     .action(async (key: string | undefined) => {
-      const globalOptions = program.opts<{ verbose: boolean }>();
-      const output = new CLIOutput(globalOptions.verbose ?? false);
-      const projectRoot = process.cwd();
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       try {
-        const deps = await createDeps(
-          projectRoot,
-          { verbose: globalOptions.verbose ?? false },
-          output
-        );
+        const deps = await createDeps(projectRoot, { verbose }, output);
 
         let resolvedKey = key;
         if (resolvedKey === undefined) {
@@ -89,15 +77,9 @@ export function registerConfigCommand(program: Command): void {
         value: string | undefined,
         cmdOptions: { force: boolean }
       ) => {
-        const globalOptions = program.opts<{ verbose: boolean }>();
-        const output = new CLIOutput(globalOptions.verbose ?? false);
-        const projectRoot = process.cwd();
+        const { verbose, output, projectRoot } = parseGlobalOptions(program);
         try {
-          const deps = await createDeps(
-            projectRoot,
-            { verbose: globalOptions.verbose ?? false },
-            output
-          );
+          const deps = await createDeps(projectRoot, { verbose }, output);
 
           let resolvedKey = key;
           let resolvedValue = value;

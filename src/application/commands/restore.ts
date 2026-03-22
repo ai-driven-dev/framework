@@ -3,11 +3,11 @@ import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config
 
 import { createDeps } from "../../infrastructure/deps.js";
 import { NoManifestError } from "../errors.js";
-import { CLIOutput } from "../output.js";
 import { requireAuth } from "../require-auth.js";
 import { resolveFrameworkWithFallback } from "../use-cases/resolve-framework-use-case.js";
 import { RestoreUseCase } from "../use-cases/restore-use-case.js";
 import { StatusUseCase } from "../use-cases/status-use-case.js";
+import { parseGlobalOptions } from "./global-options.js";
 
 export function registerRestoreCommand(program: Command): void {
   program
@@ -30,14 +30,7 @@ export function registerRestoreCommand(program: Command): void {
           release?: string;
         }
       ) => {
-        const globalOptions = program.opts<{
-          verbose: boolean;
-          repo?: string;
-        }>();
-
-        const verbose = globalOptions.verbose ?? false;
-        const output = new CLIOutput(verbose);
-        const projectRoot = process.cwd();
+        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
 
         if (cmdOptions.tool !== undefined && cmdOptions.docs) {
           output.error("--tool and --docs are mutually exclusive");
@@ -49,18 +42,11 @@ export function registerRestoreCommand(program: Command): void {
             assertValidToolIds([cmdOptions.tool]);
           }
 
-          const deps = await createDeps(
-            projectRoot,
-            {
-              verbose,
-              repo: globalOptions.repo,
-            },
-            output
-          );
+          const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
           const manifest = await deps.manifestRepo.load();
           if (manifest === null) {
-            throw new NoManifestError(globalOptions.repo);
+            throw new NoManifestError(repo);
           }
 
           const docsOnly = cmdOptions.docs ?? false;
@@ -98,7 +84,7 @@ export function registerRestoreCommand(program: Command): void {
             const statusUseCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
             const statusReport = await statusUseCase.execute({
               projectRoot,
-              repo: globalOptions.repo,
+              repo: repo,
             });
 
             const driftedFiles = [
@@ -153,7 +139,7 @@ export function registerRestoreCommand(program: Command): void {
             force: isInteractive ? true : cmdOptions.force,
             interactive: isTTY,
             manifest,
-            repo: globalOptions.repo,
+            repo: repo,
           });
 
           const nothingDone =

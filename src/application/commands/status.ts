@@ -1,8 +1,9 @@
 import type { Command } from "commander";
 import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
-import { CLIOutput } from "../output.js";
+import type { CLIOutput } from "../output.js";
 import { StatusUseCase } from "../use-cases/status-use-case.js";
+import { parseGlobalOptions } from "./global-options.js";
 
 const STATUS_SYMBOL: Record<string, string> = {
   modified: "~",
@@ -24,13 +25,10 @@ export function registerStatusCommand(program: Command): void {
     .option("--tool <toolId>", "Filter output to a specific tool")
     .option("--docs", "Filter output to docs only")
     .action(async (cmdOptions: { tool?: string; docs?: boolean }) => {
-      const globalOptions = program.opts<{ verbose: boolean; repo?: string }>();
-      const verbose = globalOptions.verbose ?? false;
-      const output = new CLIOutput(verbose);
-      const projectRoot = process.cwd();
+      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
 
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo: globalOptions.repo }, output);
+        const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
         if (cmdOptions.tool !== undefined && cmdOptions.docs) {
           throw new Error("--tool and --docs are mutually exclusive");
@@ -44,7 +42,7 @@ export function registerStatusCommand(program: Command): void {
           projectRoot,
           filterToolId,
           filterDocs,
-          repo: globalOptions.repo,
+          repo,
         });
 
         if (report.tools.length === 0 && !filterToolId) {

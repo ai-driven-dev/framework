@@ -3,6 +3,7 @@ import { createDeps } from "../../infrastructure/deps.js";
 import { CLIOutput } from "../output.js";
 import type { InstallToolResult } from "../use-cases/install-use-case.js";
 import { SetupUseCase } from "../use-cases/setup-use-case.js";
+import { parseGlobalOptions } from "./global-options.js";
 
 function displayInstall(output: CLIOutput, results: InstallToolResult[], verbose: boolean): void {
   const skipped = results.filter((r) => r.skipped);
@@ -36,17 +37,10 @@ export function registerSetupCommand(program: Command): void {
         process.exit(1);
       }
 
-      const globalOptions = program.opts<{
-        verbose: boolean;
-        repo?: string;
-      }>();
-
-      const verbose = globalOptions.verbose ?? false;
-      const output = new CLIOutput(verbose);
-      const projectRoot = process.cwd();
+      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
 
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo: globalOptions.repo }, output);
+        const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
         const result = await new SetupUseCase(
           deps.fs,
@@ -63,7 +57,7 @@ export function registerSetupCommand(program: Command): void {
           projectRoot,
           path: cmdOptions.path,
           release: cmdOptions.release,
-          repo: globalOptions.repo,
+          repo,
         });
 
         switch (result.kind) {

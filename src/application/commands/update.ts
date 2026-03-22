@@ -1,10 +1,10 @@
 import type { Command } from "commander";
 import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
-import { CLIOutput } from "../output.js";
 import { requireAuth } from "../require-auth.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
 import { UpdateUseCase } from "../use-cases/update-use-case.js";
+import { parseGlobalOptions } from "./global-options.js";
 
 export function registerUpdateCommand(program: Command): void {
   program
@@ -25,14 +25,7 @@ export function registerUpdateCommand(program: Command): void {
         path?: string;
         release?: string;
       }) => {
-        const globalOptions = program.opts<{
-          verbose: boolean;
-          repo?: string;
-        }>();
-
-        const verbose = globalOptions.verbose ?? false;
-        const output = new CLIOutput(verbose);
-        const projectRoot = process.cwd();
+        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
 
         if (cmdOptions.tool !== undefined && cmdOptions.docs) {
           output.error("--tool and --docs are mutually exclusive");
@@ -44,14 +37,7 @@ export function registerUpdateCommand(program: Command): void {
             assertValidToolIds([cmdOptions.tool]);
           }
 
-          const deps = await createDeps(
-            projectRoot,
-            {
-              verbose,
-              repo: globalOptions.repo,
-            },
-            output
-          );
+          const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
           if (!cmdOptions.path) await requireAuth(deps.authReader);
 
@@ -80,7 +66,7 @@ export function registerUpdateCommand(program: Command): void {
             docsOnly: cmdOptions.docs ?? false,
             force: cmdOptions.force,
             dryRun: cmdOptions.dryRun,
-            repo: globalOptions.repo,
+            repo: repo,
             interactive: process.stdout.isTTY,
           });
 

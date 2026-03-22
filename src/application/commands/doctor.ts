@@ -1,33 +1,20 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
-import { CLIOutput } from "../output.js";
 import { DoctorUseCase } from "../use-cases/doctor-use-case.js";
+import { parseGlobalOptions } from "./global-options.js";
 
 export function registerDoctorCommand(program: Command): void {
   program
     .command("doctor")
     .description("Check installation health and detect issues")
     .action(async () => {
-      const globalOptions = program.opts<{
-        verbose: boolean;
-        repo?: string;
-      }>();
-      const verbose = globalOptions.verbose ?? false;
-      const output = new CLIOutput(verbose);
-      const projectRoot = process.cwd();
+      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
 
       try {
-        const deps = await createDeps(
-          projectRoot,
-          {
-            verbose,
-            repo: globalOptions.repo,
-          },
-          output
-        );
+        const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
         const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.authReader);
-        const report = await useCase.execute({ projectRoot, repo: globalOptions.repo });
+        const report = await useCase.execute({ projectRoot, repo });
 
         for (const issue of report.issues.filter((i) => i.severity === "info")) {
           output.warn(`${issue.message}\n  Fix: ${issue.fix}`);

@@ -1,8 +1,8 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
-import { CLIOutput } from "../output.js";
 import { requireAuth } from "../require-auth.js";
 import { SelfUpdateUseCase } from "../use-cases/self-update-use-case.js";
+import { parseGlobalOptions } from "./global-options.js";
 
 export function registerSelfUpdateCommand(program: Command): void {
   program
@@ -12,15 +12,10 @@ export function registerSelfUpdateCommand(program: Command): void {
     .option("--dry-run", "Preview the update without installing", false)
     .option("-f, --force", "Reinstall even if already up to date", false)
     .action(async (cmdOptions: { check: boolean; dryRun: boolean; force: boolean }) => {
-      const globalOptions = program.opts<{ verbose?: boolean }>();
-      const output = new CLIOutput(globalOptions.verbose ?? false);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
 
       try {
-        const deps = await createDeps(
-          process.cwd(),
-          { verbose: globalOptions.verbose ?? false },
-          output
-        );
+        const deps = await createDeps(projectRoot, { verbose }, output);
 
         await requireAuth(deps.authReader);
 

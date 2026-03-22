@@ -173,14 +173,24 @@ export function passthroughSkillsHandler(directory: string, toolSuffix: string):
   };
 }
 
+function buildCommandName(fm: Record<string, unknown>, relativeFileName: string): string {
+  const phase = relativeFileName.split("/")[0]?.match(/^(\d+)/)?.[1];
+  const baseName = String(fm.name ?? "");
+  return phase ? `aidd:${phase}:${baseName}` : baseName;
+}
+
+function stripCommandNamePrefix(fm: Record<string, unknown>): string {
+  const rawName = String(fm.name ?? "");
+  const match = /^aidd:\d+:(.+)$/.exec(rawName);
+  return match ? match[1] : rawName;
+}
+
 // Used by claude, cursor, copilot — includes argument-hint when present.
 export function convertCommandFrontmatter(
   fm: Record<string, unknown>,
   relativeFileName: string
 ): Record<string, unknown> {
-  const phase = relativeFileName.split("/")[0]?.match(/^(\d+)/)?.[1];
-  const baseName = String(fm.name ?? "");
-  const name = phase ? `aidd:${phase}:${baseName}` : baseName;
+  const name = buildCommandName(fm, relativeFileName);
   const result: Record<string, unknown> = { name, description: fm.description };
   if (fm["argument-hint"] !== undefined) result["argument-hint"] = fm["argument-hint"];
   return result;
@@ -191,9 +201,7 @@ export function convertCommandFrontmatterNoHint(
   fm: Record<string, unknown>,
   relativeFileName: string
 ): Record<string, unknown> {
-  const phase = relativeFileName.split("/")[0]?.match(/^(\d+)/)?.[1];
-  const baseName = String(fm.name ?? "");
-  const name = phase ? `aidd:${phase}:${baseName}` : baseName;
+  const name = buildCommandName(fm, relativeFileName);
   return { name, description: fm.description };
 }
 
@@ -201,9 +209,7 @@ export function convertCommandFrontmatterNoHint(
 export function reverseConvertCommandFrontmatter(
   fm: Record<string, unknown>
 ): Record<string, unknown> {
-  const rawName = String(fm.name ?? "");
-  const match = /^aidd:\d+:(.+)$/.exec(rawName);
-  const name = match ? match[1] : rawName;
+  const name = stripCommandNamePrefix(fm);
   const result: Record<string, unknown> = { name, description: fm.description };
   if (fm["argument-hint"] !== undefined) result["argument-hint"] = fm["argument-hint"];
   return result;
@@ -213,9 +219,7 @@ export function reverseConvertCommandFrontmatter(
 export function reverseConvertCommandFrontmatterNoHint(
   fm: Record<string, unknown>
 ): Record<string, unknown> {
-  const rawName = String(fm.name ?? "");
-  const match = /^aidd:\d+:(.+)$/.exec(rawName);
-  const name = match ? match[1] : rawName;
+  const name = stripCommandNamePrefix(fm);
   return { name, description: fm.description };
 }
 

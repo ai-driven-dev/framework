@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
-import { CLIOutput } from "../output.js";
 import { CleanUseCase } from "../use-cases/clean-use-case.js";
+import { parseGlobalOptions } from "./global-options.js";
 
 export function registerCleanCommand(program: Command): void {
   program
@@ -9,10 +9,7 @@ export function registerCleanCommand(program: Command): void {
     .description("Remove all AIDD-managed files from the project")
     .option("--force", "Confirm file removal (skip dry-run)", false)
     .action(async (cmdOptions: { force: boolean }) => {
-      const globalOptions = program.opts<{ verbose: boolean }>();
-      const verbose = globalOptions.verbose ?? false;
-      const output = new CLIOutput(verbose);
-      const projectRoot = process.cwd();
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
 
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);

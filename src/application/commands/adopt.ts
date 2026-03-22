@@ -7,10 +7,10 @@ import {
 } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { AdoptRequiresVersionError } from "../errors.js";
-import { CLIOutput } from "../output.js";
 import { requireAuth } from "../require-auth.js";
 import { AdoptUseCase } from "../use-cases/adopt-use-case.js";
 import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
+import { parseGlobalOptions } from "./global-options.js";
 
 export function registerAdoptCommand(program: Command): void {
   program
@@ -28,13 +28,7 @@ export function registerAdoptCommand(program: Command): void {
       "(required) Framework version (e.g. 3.6.0) or local path to adopt against"
     )
     .action(async (cmdOptions: { tools?: string; docsDir: string; from?: string }) => {
-      const globalOptions = program.opts<{
-        verbose: boolean;
-        repo?: string;
-      }>();
-      const verbose = globalOptions.verbose;
-      const output = new CLIOutput(verbose);
-      const projectRoot = process.cwd();
+      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
 
       if (!cmdOptions.tools && !process.stdout.isTTY) {
         output.error("aidd adopt requires --tools in non-interactive mode.");
@@ -42,7 +36,7 @@ export function registerAdoptCommand(program: Command): void {
       }
 
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo: globalOptions.repo }, output);
+        const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
         let toolIds: ToolId[];
 
@@ -62,9 +56,9 @@ export function registerAdoptCommand(program: Command): void {
         let from = cmdOptions.from;
 
         if (!from) {
-          if (!process.stdout.isTTY) throw new AdoptRequiresVersionError(globalOptions.repo);
+          if (!process.stdout.isTTY) throw new AdoptRequiresVersionError(repo);
           const answer = await deps.prompter.input("Framework version tag or local path:", "");
-          if (!answer) throw new AdoptRequiresVersionError(globalOptions.repo);
+          if (!answer) throw new AdoptRequiresVersionError(repo);
           from = answer;
         }
 

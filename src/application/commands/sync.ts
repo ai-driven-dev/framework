@@ -1,8 +1,8 @@
 import type { Command } from "commander";
 import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
-import { CLIOutput } from "../output.js";
 import { SyncUseCase } from "../use-cases/sync-use-case.js";
+import { parseGlobalOptions } from "./global-options.js";
 
 export function registerSyncCommand(program: Command): void {
   program
@@ -19,14 +19,7 @@ export function registerSyncCommand(program: Command): void {
         force: boolean;
         includeUserFiles: boolean;
       }) => {
-        const globalOptions = program.opts<{
-          verbose: boolean;
-          repo?: string;
-        }>();
-
-        const verbose = globalOptions.verbose ?? false;
-        const output = new CLIOutput(verbose);
-        const projectRoot = process.cwd();
+        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
 
         if (!cmdOptions.source && !process.stdout.isTTY) {
           output.error(
@@ -43,14 +36,7 @@ export function registerSyncCommand(program: Command): void {
             assertValidToolIds([cmdOptions.target]);
           }
 
-          const deps = await createDeps(
-            projectRoot,
-            {
-              verbose,
-              repo: globalOptions.repo,
-            },
-            output
-          );
+          const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
           const sourceTool = cmdOptions.source as ToolId | undefined;
           const targetTools = cmdOptions.target ? [cmdOptions.target as ToolId] : undefined;
@@ -69,7 +55,7 @@ export function registerSyncCommand(program: Command): void {
             targetTools,
             force: cmdOptions.force,
             includeUserFiles: cmdOptions.includeUserFiles,
-            repo: globalOptions.repo,
+            repo: repo,
             interactive: process.stdout.isTTY,
           });
 
