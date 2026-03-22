@@ -17,22 +17,9 @@ import { registerSyncCommand } from "./application/commands/sync.js";
 import { registerUninstallCommand } from "./application/commands/uninstall.js";
 import { registerUpdateCommand } from "./application/commands/update.js";
 import { CLIOutput } from "./application/output.js";
+import { BannerUseCase } from "./application/use-cases/banner-use-case.js";
 import { CurrentVersionAdapter } from "./infrastructure/adapters/current-version-adapter.js";
 import { createDeps } from "./infrastructure/deps.js";
-
-function printBanner(): void {
-  if (!process.stdout.isTTY) return;
-  process.stdout.write(`
-  █████╗ ██╗██████╗ ██████╗
- ██╔══██╗██║██╔══██╗██╔══██╗
- ███████║██║██║  ██║██║  ██║
- ██╔══██║██║██║  ██║██║  ██║
- ██║  ██║██║██████╔╝██████╔╝
- ╚═╝  ╚═╝╚═╝╚═════╝ ╚═════╝
-
- AI-Driven Development CLI
-\n`);
-}
 
 function formatVersion(version: string): string {
   return `aidd/${version} node/${process.versions.node} ${platform()}-${process.arch}`;
@@ -95,8 +82,9 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
   }
 });
 
-if (process.argv.slice(2).length === 0) {
-  printBanner();
+const args = process.argv.slice(2);
+if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
+  await new BannerUseCase().execute();
 }
 
 program.parse(process.argv);
