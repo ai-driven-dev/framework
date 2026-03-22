@@ -53,7 +53,10 @@ export class BannerUseCase {
     const write = (s: string): void => {
       this.out.write(s);
     };
-    const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+    const raw = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+    const skip = waitForKeypress();
+    const sleep = (ms: number): Promise<void> => Promise.race([raw(ms), skip]);
 
     write("\n");
     const rows = logoLines.length;
@@ -110,6 +113,6 @@ export class BannerUseCase {
       await sleep(40);
     }
 
-    await Promise.race([sleep(1500), waitForKeypress()]);
+    await sleep(1500);
   }
 }
