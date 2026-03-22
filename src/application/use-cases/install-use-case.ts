@@ -18,6 +18,7 @@ import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import { NoManifestError } from "../errors.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
+import { GitignoreUseCase } from "./gitignore-use-case.js";
 import { MemoryScriptUseCase } from "./memory-script-use-case.js";
 
 interface InstallOptions {
@@ -154,6 +155,7 @@ export class InstallUseCase {
 
     await this.manifestRepo.save(manifest);
     await new CatalogUseCase(this.fs).execute({ manifest, docsDir, projectRoot });
+    await new GitignoreUseCase(this.fs).execute(projectRoot, [".aidd/cache/"]);
 
     return results;
   }

@@ -16,6 +16,7 @@ import type { Prompter } from "../../domain/ports/prompter.js";
 import { NoManifestError } from "../errors.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
 import { ConflictResolutionUseCase } from "./conflict-resolution-use-case.js";
+import { GitignoreUseCase } from "./gitignore-use-case.js";
 import { MemoryScriptUseCase } from "./memory-script-use-case.js";
 
 interface UpdateOptions {
@@ -282,6 +283,7 @@ export class UpdateUseCase {
       });
       await this.manifestRepo.save(manifest);
       await new CatalogUseCase(this.fs).execute({ manifest, docsDir, projectRoot });
+      await new GitignoreUseCase(this.fs).execute(projectRoot, [".aidd/cache/"]);
     }
 
     const totalWritten =
