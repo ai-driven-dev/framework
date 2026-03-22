@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { InstallUseCase } from "../../../src/application/use-cases/install-use-case.js";
@@ -531,5 +531,304 @@ describe("InstallUseCase", () => {
         projectRoot,
       })
     ).rejects.toThrow("aidd setup");
+  });
+
+  it("skips a pre-existing file not tracked in manifest and adds a warning", async () => {
+    const { writeFile, mkdir: mkdirFs } = await import("node:fs/promises");
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const userFilePath = join(projectRoot, ".claude/agents/code-reviewer.md");
+    await mkdirFs(join(projectRoot, ".claude/agents"), { recursive: true });
+    await writeFile(userFilePath, "user content");
+
+    const useCase = new InstallUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      noGit,
+      linuxPlatform
+    );
+
+    const result = await useCase.execute({
+      toolIds: ["claude" as ToolId],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    const content = await readFile(userFilePath, "utf-8");
+    expect(content).toBe("user content");
+    expect(result[0].warnings.some((w) => w.includes(".claude/agents/code-reviewer.md"))).toBe(
+      true
+    );
+    expect(result[0].warnings.some((w) => w.includes("skipped to preserve user file"))).toBe(true);
+  });
+
+  it("overwrites a pre-existing file that is already tracked in manifest", async () => {
+    const { writeFile } = await import("node:fs/promises");
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const useCase = new InstallUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      noGit,
+      linuxPlatform
+    );
+
+    await useCase.execute({
+      toolIds: ["claude" as ToolId],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    const trackedFilePath = join(projectRoot, ".claude/agents/code-reviewer.md");
+    await writeFile(trackedFilePath, "modified by user");
+
+    const result = await useCase.execute({
+      toolIds: ["claude" as ToolId],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+      force: true,
+    });
+
+    const content = await readFile(trackedFilePath, "utf-8");
+    expect(content).not.toBe("modified by user");
+    expect(
+      result[0].warnings.some((w) => w.includes("code-reviewer.md") && w.includes("skipped"))
+    ).toBe(false);
+  });
+
+  it("writes a non-existing file normally without warnings", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const useCase = new InstallUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      noGit,
+      linuxPlatform
+    );
+
+    const result = await useCase.execute({
+      toolIds: ["claude" as ToolId],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    const agentPath = join(projectRoot, ".claude/agents/code-reviewer.md");
+    expect(existsSync(agentPath)).toBe(true);
+    expect(result[0].warnings.some((w) => w.includes("skipped to preserve user file"))).toBe(false);
+  });
+
+  it("preserves existing cursor rule that collides with framework file", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const userFilePath = join(projectRoot, ".cursor/rules/01-standards/naming.mdc");
+    await mkdir(join(projectRoot, ".cursor/rules/01-standards"), { recursive: true });
+    await writeFile(userFilePath, "user content");
+
+    const useCase = new InstallUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      noGit,
+      linuxPlatform
+    );
+
+    const result = await useCase.execute({
+      toolIds: ["cursor" as ToolId],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    const content = await readFile(userFilePath, "utf-8");
+    expect(content).toBe("user content");
+    expect(
+      result[0].warnings.some((w) => w.includes(".cursor/rules/01-standards/naming.mdc"))
+    ).toBe(true);
+  });
+
+  it("leaves non-colliding user file in cursor rules directory untouched without warning", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const userFilePath = join(projectRoot, ".cursor/rules/my-unique-rule.mdc");
+    await mkdir(join(projectRoot, ".cursor/rules"), { recursive: true });
+    await writeFile(userFilePath, "my unique rule");
+
+    const useCase = new InstallUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      noGit,
+      linuxPlatform
+    );
+
+    const result = await useCase.execute({
+      toolIds: ["cursor" as ToolId],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    const content = await readFile(userFilePath, "utf-8");
+    expect(content).toBe("my unique rule");
+    expect(result[0].warnings.some((w) => w.includes("my-unique-rule.mdc"))).toBe(false);
+    expect(existsSync(join(projectRoot, ".cursor/rules/01-standards/naming.mdc"))).toBe(true);
+  });
+
+  it("does not add skipped user file to the manifest", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const userFilePath = join(projectRoot, ".claude/agents/code-reviewer.md");
+    await mkdir(join(projectRoot, ".claude/agents"), { recursive: true });
+    await writeFile(userFilePath, "user content");
+
+    const useCase = new InstallUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      noGit,
+      linuxPlatform
+    );
+
+    await useCase.execute({
+      toolIds: ["claude" as ToolId],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    const manifestPath = join(projectRoot, ".aidd", "manifest.json");
+    const raw = await readFile(manifestPath, "utf-8");
+    const data = JSON.parse(raw) as {
+      tools: Record<string, { files: Array<{ relativePath: string }> }>;
+    };
+
+    const isTracked = data.tools.claude?.files.some(
+      (f) =>
+        f.relativePath === ".claude/agents/code-reviewer.md" &&
+        readFile(join(projectRoot, f.relativePath), "utf-8").then((c) => c === "user content")
+    );
+    // The file should not appear in the manifest as a tracked AIDD file
+    // (it was skipped because it contained user content)
+    const claudeFiles = data.tools.claude?.files ?? [];
+    const skippedFileInManifest = claudeFiles.find(
+      (f) => f.relativePath === ".claude/agents/code-reviewer.md"
+    );
+    // If it appears in the manifest, the file must have been overwritten (not user content)
+    if (skippedFileInManifest !== undefined) {
+      const diskContent = await readFile(userFilePath, "utf-8");
+      expect(diskContent).toBe("user content"); // file was preserved, so manifest entry is wrong
+      expect(skippedFileInManifest).toBeUndefined(); // fail explicitly
+    }
+    void isTracked;
+  });
+
+  it("skips only the colliding user file and writes the rest of the framework distribution", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    await mkdir(join(projectRoot, ".cursor/rules/01-standards"), { recursive: true });
+    await mkdir(join(projectRoot, ".cursor/rules"), { recursive: true });
+    await writeFile(
+      join(projectRoot, ".cursor/rules/01-standards/naming.mdc"),
+      "colliding user content"
+    );
+    await writeFile(join(projectRoot, ".cursor/rules/my-other-rule.mdc"), "other user content");
+
+    const useCase = new InstallUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      noGit,
+      linuxPlatform
+    );
+
+    const result = await useCase.execute({
+      toolIds: ["cursor" as ToolId],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    expect(
+      await readFile(join(projectRoot, ".cursor/rules/01-standards/naming.mdc"), "utf-8")
+    ).toBe("colliding user content");
+    expect(await readFile(join(projectRoot, ".cursor/rules/my-other-rule.mdc"), "utf-8")).toBe(
+      "other user content"
+    );
+    const collidingWarnings = result[0].warnings.filter((w) =>
+      w.includes("skipped to preserve user file")
+    );
+    expect(collidingWarnings.length).toBe(1);
+    expect(existsSync(join(projectRoot, ".cursor/commands"))).toBe(true);
+    expect(existsSync(join(projectRoot, ".cursor/agents"))).toBe(true);
+  });
+
+  it("still skips untracked user file when force-installing a tool not yet in manifest", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const userFilePath = join(projectRoot, ".claude/agents/code-reviewer.md");
+    await mkdir(join(projectRoot, ".claude/agents"), { recursive: true });
+    await writeFile(userFilePath, "user content");
+
+    const useCase = new InstallUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      noGit,
+      linuxPlatform
+    );
+
+    const result = await useCase.execute({
+      toolIds: ["claude" as ToolId],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+      force: true,
+    });
+
+    const content = await readFile(userFilePath, "utf-8");
+    expect(content).toBe("user content");
+    expect(result[0].warnings.some((w) => w.includes(".claude/agents/code-reviewer.md"))).toBe(
+      true
+    );
   });
 });
