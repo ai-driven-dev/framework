@@ -88,18 +88,27 @@ async function printBanner(): Promise<void> {
     await sleep(30);
   }
 
-  await sleep(300);
+  await sleep(200);
 
   const dashes = "─".repeat(INNER);
   const empty = `  ${D}│${R}${" ".repeat(INNER)}${D}│${R}`;
 
-  process.stdout.write(`\n  ${BOLD}AI-Driven Dev${R}\n\n`);
-  process.stdout.write(`  ${D}┌${dashes}┐${R}\n`);
-  process.stdout.write(`${empty}\n`);
-  process.stdout.write(`${boxLine(`${G}${BOLD}AI-Driven Development${R}`, 21)}\n`);
-  process.stdout.write(`${boxLine(`${D}The methodology for AI coders.${R}`, 30)}\n`);
-  process.stdout.write(`${empty}\n`);
-  process.stdout.write(`  ${D}└${dashes}┘${R}\n\n`);
+  const boxLines = [
+    `\n  ${BOLD}AI-Driven Dev${R}\n`,
+    ``,
+    `  ${D}┌${dashes}┐${R}`,
+    empty,
+    boxLine(`${G}${BOLD}AI-Driven Development${R}`, 21),
+    boxLine(`${D}The methodology for AI coders.${R}`, 30),
+    empty,
+    `  ${D}└${dashes}┘${R}`,
+    ``,
+  ];
+
+  for (const line of boxLines) {
+    process.stdout.write(`${line}\n`);
+    await sleep(40);
+  }
 }
 
 function formatVersion(version: string): string {
