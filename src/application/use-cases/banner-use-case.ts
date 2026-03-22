@@ -21,7 +21,14 @@ const logoLines = [
 const ANSI_RE = /\u001b\[[0-9;]*m/g;
 const strippedLines = logoLines.map((l) => l.replace(ANSI_RE, ""));
 
+// Both the logo frame and the info box share the same visual width (48 chars total)
+// Frame: "  ┌──" + 40 spaces + "──┐" = 48
+// Box:   "  ┌"   + 44 dashes  + "┐"  = 48
 const INNER = 44;
+const FRAME_GAP = INNER - 4; // 40
+
+const frameTop = `  ${D}┌──${" ".repeat(FRAME_GAP)}──┐${R}`;
+const frameBot = `  ${D}└──${" ".repeat(FRAME_GAP)}──┘${R}`;
 
 function boxLine(styledText: string, textVis: number): string {
   const padding = INNER - 4 - textVis;
@@ -58,7 +65,11 @@ export class BannerUseCase {
     const skip = waitForKeypress();
     const sleep = (ms: number): Promise<void> => Promise.race([raw(ms), skip]);
 
+    // --- Part 1: logo in corner frame ---
     write("\n");
+    write(`${frameTop}\n`);
+    write("\n");
+
     const rows = logoLines.length;
 
     const passes: [number, string][] = [
@@ -91,13 +102,16 @@ export class BannerUseCase {
       await sleep(30);
     }
 
-    await sleep(200);
+    write("\n");
+    write(`${frameBot}\n`);
 
+    await sleep(300);
+
+    // --- Part 2: info box ---
     const dashes = "─".repeat(INNER);
     const empty = `  ${D}│${R}${" ".repeat(INNER)}${D}│${R}`;
 
     const box = [
-      `\n  ${BOLD}AI-Driven Dev${R}\n`,
       ``,
       `  ${D}┌${dashes}┐${R}`,
       empty,
