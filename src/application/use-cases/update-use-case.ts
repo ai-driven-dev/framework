@@ -48,6 +48,7 @@ interface UpdateSectionResult {
   written: string[];
   deleted: string[];
   backedUp: string[];
+  userFileConflicts: string[];
 }
 
 interface UpdateToolResult extends UpdateSectionResult {
@@ -74,6 +75,7 @@ interface ApplyDiffResult {
   written: string[];
   deleted: string[];
   backedUp: string[];
+  userFileConflicts: string[];
 }
 
 interface InternalUpdateOptions {
@@ -213,7 +215,13 @@ export class UpdateUseCase {
       const newDistMap = new Map(newDistribution.map((f) => [f.relativePath, f]));
       const diff = await this.computeDiff(newDistribution, newDistMap, manifestMap, projectRoot);
 
-      let result: ApplyDiffResult = { kept: [], written: [], deleted: [], backedUp: [] };
+      let result: ApplyDiffResult = {
+        kept: [],
+        written: [],
+        deleted: [],
+        backedUp: [],
+        userFileConflicts: [],
+      };
 
       if (!dryRun) {
         const mergedHashMap = new Map<string, FileHash>();
@@ -227,12 +235,20 @@ export class UpdateUseCase {
         }
 
         const conflictDecisions = await this.resolveConflicts(diff, force, conflictResolution);
-        result = await this.applyDiff(diff, newDistMap, projectRoot, conflictDecisions);
+        result = await this.applyDiff(diff, newDistMap, projectRoot, conflictDecisions, manifest);
+        for (const relativePath of result.userFileConflicts) {
+          this.logger.warn(
+            `\`${relativePath}\` already exists and was not installed by AIDD — skipped to preserve user file`
+          );
+        }
 
         const nonMergedFinal = newDistribution
           .filter((f) => !f.merge)
           .filter(
-            (f) => !result.deleted.includes(f.relativePath) && !result.kept.includes(f.relativePath)
+            (f) =>
+              !result.deleted.includes(f.relativePath) &&
+              !result.kept.includes(f.relativePath) &&
+              !result.userFileConflicts.includes(f.relativePath)
           );
         const keptFiles = manifestFiles
           .filter((f) => result.kept.includes(f.relativePath))
@@ -335,14 +351,28 @@ export class UpdateUseCase {
     const manifestMap = new Map(manifestFiles.map((f) => [f.relativePath, f.hash]));
     const diff = await this.computeDiff(newDistribution, newDistMap, manifestMap, projectRoot);
 
-    let result: ApplyDiffResult = { kept: [], written: [], deleted: [], backedUp: [] };
+    let result: ApplyDiffResult = {
+      kept: [],
+      written: [],
+      deleted: [],
+      backedUp: [],
+      userFileConflicts: [],
+    };
 
     if (!dryRun) {
       const conflictDecisions = await this.resolveConflicts(diff, force, conflictResolution);
-      result = await this.applyDiff(diff, newDistMap, projectRoot, conflictDecisions);
+      result = await this.applyDiff(diff, newDistMap, projectRoot, conflictDecisions, manifest);
+      for (const relativePath of result.userFileConflicts) {
+        this.logger.warn(
+          `\`${relativePath}\` already exists and was not installed by AIDD — skipped to preserve user file`
+        );
+      }
 
       const finalFiles = newDistribution.filter(
-        (f) => !result.deleted.includes(f.relativePath) && !result.kept.includes(f.relativePath)
+        (f) =>
+          !result.deleted.includes(f.relativePath) &&
+          !result.kept.includes(f.relativePath) &&
+          !result.userFileConflicts.includes(f.relativePath)
       );
       const keptFiles = manifestFiles
         .filter((f) => result.kept.includes(f.relativePath))
@@ -377,18 +407,25 @@ export class UpdateUseCase {
     diff: FileDiff[],
     distMap: Map<string, GeneratedFile>,
     projectRoot: string,
-    conflictDecisions: Map<string, "overwrite" | "skip" | "backup">
+    conflictDecisions: Map<string, "overwrite" | "skip" | "backup">,
+    manifest: Manifest
   ): Promise<ApplyDiffResult> {
     const kept: string[] = [];
     const written: string[] = [];
     const deleted: string[] = [];
     const backedUp: string[] = [];
+    const userFileConflicts: string[] = [];
 
     for (const entry of diff) {
       if (entry.kind === "added") {
         const newFile = distMap.get(entry.relativePath);
         if (!newFile) throw new Error(`Missing new file in distribution: ${entry.relativePath}`);
-        await this.fs.writeFile(join(projectRoot, entry.relativePath), newFile.content);
+        const outputPath = join(projectRoot, entry.relativePath);
+        if ((await this.fs.fileExists(outputPath)) && !manifest.isFileTracked(entry.relativePath)) {
+          userFileConflicts.push(entry.relativePath);
+          continue;
+        }
+        await this.fs.writeFile(outputPath, newFile.content);
         written.push(entry.relativePath);
       } else if (entry.kind === "removed") {
         if (entry.conflict) {
@@ -424,7 +461,7 @@ export class UpdateUseCase {
       }
     }
 
-    return { kept, written, deleted, backedUp };
+    return { kept, written, deleted, backedUp, userFileConflicts };
   }
 
   private async computeDiff(

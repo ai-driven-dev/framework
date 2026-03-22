@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { UpdateUseCase } from "../../../src/application/use-cases/update-use-case.js";
@@ -672,6 +672,36 @@ describe("UpdateUseCase", () => {
 
     expect(result.docs?.written.some((f) => f.includes("README.md"))).toBe(true);
     expect(existsSync(readmePath)).toBe(true);
+  });
+
+  it("does not overwrite a pre-existing user file when the framework adds it as a new file", async () => {
+    const deps = buildDeps(projectRoot);
+    await initAndInstall(deps, projectRoot, "claude");
+
+    const assertPath = join(projectRoot, ".claude/commands/aidd/04/assert.md");
+    await mkdir(join(projectRoot, ".claude/commands/aidd/04"), { recursive: true });
+    await writeFile(assertPath, "user content");
+
+    const useCase = new UpdateUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      noGit,
+      linuxPlatform,
+      new OverwritePrompter()
+    );
+
+    await useCase.execute({
+      frameworkPath: FIXTURE_DIR_V2,
+      version: "test-v2",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    const content = await readFile(assertPath, "utf-8");
+    expect(content).toBe("user content");
   });
 
   it("docs: returns null for docs when manifest has no docs", async () => {
