@@ -1,7 +1,6 @@
 const B = "\x1b[38;2;78;78;249m"; // primary — AIDD blue #4E4EF9
 const P = "\x1b[38;2;221;84;117m"; // glitch only — pink #DD5475
 const G = "\x1b[38;2;102;204;153m"; // positive highlight — green #66CC99
-const _N = "\x1b[38;2;10;10;40m"; // secondary — near-black navy
 const D = "\x1b[2m";
 const R = "\x1b[0m";
 const BOLD = "\x1b[1m";
