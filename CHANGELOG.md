@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.13.1](https://github.com/ai-driven-dev/aidd-cli/compare/v2.13.0...v2.13.1) (2026-03-23)
+## [2.13.2](https://github.com/ai-driven-dev/aidd-cli/compare/v2.13.1...v2.13.2) (2026-03-23)
 
 
 ### Bug Fixes
