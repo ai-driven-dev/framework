@@ -207,14 +207,14 @@ describe.concurrent("E2E: aidd update", () => {
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const v1Content = await readFile(
-        join(projectDir, ".aidd", "scripts", "update_memory.mjs"),
+        join(projectDir, ".aidd", "scripts", "update_memory.js"),
         "utf-8"
       );
 
       await runCli(["update", "--path", FRAMEWORK_V2_PATH], projectDir);
 
       const v2Content = await readFile(
-        join(projectDir, ".aidd", "scripts", "update_memory.mjs"),
+        join(projectDir, ".aidd", "scripts", "update_memory.js"),
         "utf-8"
       );
 

@@ -255,11 +255,11 @@ describe.concurrent("E2E: aidd install", () => {
       await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
-      expect(existsSync(join(projectDir, ".aidd", "scripts", "update_memory.mjs"))).toBe(true);
+      expect(existsSync(join(projectDir, ".aidd", "scripts", "update_memory.js"))).toBe(true);
       expect(existsSync(join(projectDir, ".aidd", "hooks", "pre-commit"))).toBe(true);
 
       const hookContent = await readFile(join(projectDir, ".aidd", "hooks", "pre-commit"), "utf-8");
-      expect(hookContent).toContain("node .aidd/scripts/update_memory.mjs");
+      expect(hookContent).toContain("node .aidd/scripts/update_memory.js");
 
       const manifestRaw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");
       const manifest = JSON.parse(manifestRaw) as { scripts: unknown };

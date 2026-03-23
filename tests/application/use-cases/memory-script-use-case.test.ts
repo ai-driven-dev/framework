@@ -13,7 +13,7 @@ import { buildDeps, cleanupTempProject, createTempProject } from "./helpers.js";
 
 const SCRIPT_CONTENT = "// update memory script\nconsole.log('running');\n";
 const VERSION = "1.0.0";
-const SCRIPT_REF_PATH = "config/scripts/update_memory.mjs";
+const SCRIPT_REF_PATH = "config/scripts/update_memory.js";
 
 function makeDescriptor(): FrameworkDescriptor {
   return new FrameworkDescriptor({
