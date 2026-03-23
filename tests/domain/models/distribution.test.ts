@@ -257,7 +257,7 @@ describe("generateDistribution()", () => {
     expect(files[0]?.content).not.toContain("paths:");
   });
 
-  it("strips frontmatter for rules with alwaysApply: false and no paths", () => {
+  it("keeps description for claude rules with alwaysApply false and no paths", () => {
     hashCounter = 0;
     const singleFileMap = new Map([
       [
@@ -274,8 +274,8 @@ describe("generateDistribution()", () => {
       linuxPlatform
     );
     expect(files[0]?.content).not.toContain("paths:");
-    expect(files[0]?.content).not.toContain("description:");
     expect(files[0]?.content).not.toContain("alwaysApply:");
+    expect(files[0]?.content).toContain("description: 'Standards'");
     expect(files[0]?.content).toContain("# Naming");
   });
 
