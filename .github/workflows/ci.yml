@@ -140,7 +140,12 @@ jobs:
       - run: pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Reconfigure Node for npm registry (setup-node rewrites .npmrc auth)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
       # Publish to npm public registry
-      - run: pnpm publish --no-git-checks --registry https://registry.npmjs.org
+      - run: pnpm publish --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
