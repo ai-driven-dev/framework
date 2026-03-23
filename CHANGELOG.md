@@ -8,6 +8,19 @@
 * **auth:** detect outdated gh CLI and suggest upgrade ([a69d39b](https://github.com/ai-driven-dev/aidd-cli/commit/a69d39baa07623ef13cc6c64eeb2c7f68f457fed))
 * **auth:** remove speculative version number from outdated gh error message ([72c9c87](https://github.com/ai-driven-dev/aidd-cli/commit/72c9c87684909cd511725a77b5458a1981f92360))
 * **auth:** surface real gh auth token errors instead of generic message ([ee42ab6](https://github.com/ai-driven-dev/aidd-cli/commit/ee42ab62033b6db9f216e0d754c587c7fd4084c5)), closes [#25](https://github.com/ai-driven-dev/aidd-cli/issues/25)
+* **distribution:** preserve description in rules with alwaysApply false ([657499a](https://github.com/ai-driven-dev/aidd-cli/commit/657499ae6841ac70776025a6aa9db4f94cd46e77))
+* **scripts:** rename update_memory.mjs to update_memory.js ([5315d77](https://github.com/ai-driven-dev/aidd-cli/commit/5315d777ee3add52250ead67e25e602a0133fa51))
+* **scripts:** rename update_memory.mjs to update_memory.js in framework-v2 fixture ([a7b272a](https://github.com/ai-driven-dev/aidd-cli/commit/a7b272a4697ad76297f257a90bad88dacdece1bc))
+* **scripts:** update remaining .mjs references to .js in tests ([1015b31](https://github.com/ai-driven-dev/aidd-cli/commit/1015b3195470af4227a42830e0c4d2c002cff342))
+
+## [2.13.1](https://github.com/ai-driven-dev/aidd-cli/compare/v2.13.0...v2.13.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* **auth:** detect outdated gh CLI and suggest upgrade ([a69d39b](https://github.com/ai-driven-dev/aidd-cli/commit/a69d39baa07623ef13cc6c64eeb2c7f68f457fed))
+* **auth:** remove speculative version number from outdated gh error message ([72c9c87](https://github.com/ai-driven-dev/aidd-cli/commit/72c9c87684909cd511725a77b5458a1981f92360))
+* **auth:** surface real gh auth token errors instead of generic message ([ee42ab6](https://github.com/ai-driven-dev/aidd-cli/commit/ee42ab62033b6db9f216e0d754c587c7fd4084c5)), closes [#25](https://github.com/ai-driven-dev/aidd-cli/issues/25)
 
 ## [2.13.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.12.0...v2.13.0) (2026-03-22)
 
