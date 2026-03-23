@@ -1,5 +1,6 @@
 {
   "ignore": [
+    "demo/**",
     ".claude/worktrees/**",
     "tests/**/helpers.ts",
     "tests/helpers/**",

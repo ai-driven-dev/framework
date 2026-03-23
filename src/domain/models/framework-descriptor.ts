@@ -19,6 +19,7 @@ export const TEMPLATE_AGENTS_MD = "agentsMd";
 export const SCRIPT_UPDATE_MEMORY = "updateMemory";
 
 export const GITKEEP_FILE = ".gitkeep";
+export const FRAMEWORK_CONFIG_PREFIX = "config/";
 
 export interface ContentSection {
   readonly name: string;
