@@ -18,7 +18,7 @@ export class GhCliAdapter implements ExternalTokenProvider {
       const detail = result.stderr?.trim() ?? "";
       if (detail.includes("unknown command")) {
         throw new Error(
-          'gh CLI is too old to support "gh auth token". Update gh CLI from https://cli.github.com (v2.13+ required).'
+          'gh CLI is too old to support "gh auth token". Install the latest version from https://cli.github.com'
         );
       }
       throw new Error(
