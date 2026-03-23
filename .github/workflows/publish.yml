@@ -40,6 +40,6 @@ jobs:
       - name: Publish to npm
         run: |
           printf "registry=https://registry.npmjs.org\n//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n" > .npmrc
-          pnpm publish --no-git-checks --access public --provenance
+          pnpm publish --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
