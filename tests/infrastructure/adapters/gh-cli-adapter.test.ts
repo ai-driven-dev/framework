@@ -58,4 +58,15 @@ describe("GhCliAdapter", () => {
 
     expect(() => new GhCliAdapter().resolve()).toThrow("exited with code 1");
   });
+
+  it("throws an upgrade hint when gh is too old and does not support the token subcommand", () => {
+    mockSpawnSync.mockReturnValue(
+      makeResult({
+        status: 1,
+        stderr: 'unknown command "token" for "gh auth"',
+      })
+    );
+
+    expect(() => new GhCliAdapter().resolve()).toThrow("gh CLI is too old to support");
+  });
 });
