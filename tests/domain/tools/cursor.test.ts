@@ -39,6 +39,17 @@ describe("cursorToolConfig", () => {
         .convertFrontmatter({ description: "desc", alwaysApply: true });
       expect(result).toEqual({});
     });
+
+    it("keeps description and alwaysApply false when no globs are specified", () => {
+      const result = cursorToolConfig.rules().convertFrontmatter({
+        description: "Apply when editing command files.",
+        alwaysApply: false,
+      });
+      expect(result).toEqual({
+        description: "Apply when editing command files.",
+        alwaysApply: false,
+      });
+    });
   });
 
   describe("agents().convertFrontmatter()", () => {

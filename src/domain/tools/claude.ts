@@ -76,7 +76,12 @@ export const claudeToolConfig: ToolConfig = {
           return { paths };
         }
         if ("globs" in fm) return { paths: fm.globs };
-        if ("alwaysApply" in fm) return {};
+        if ("alwaysApply" in fm) {
+          if (fm.alwaysApply === false && fm.description !== undefined) {
+            return { description: fm.description };
+          }
+          return {};
+        }
         return {};
       },
       reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {

@@ -62,6 +62,12 @@ describe("claudeToolConfig", () => {
       const result = claudeToolConfig.rules().convertFrontmatter(fm);
       expect(result).toEqual({});
     });
+
+    it("keeps description when alwaysApply is false and no paths are specified", () => {
+      const fm = { description: "Apply when editing command files.", alwaysApply: false };
+      const result = claudeToolConfig.rules().convertFrontmatter(fm);
+      expect(result).toEqual({ description: "Apply when editing command files." });
+    });
   });
 
   describe("agents().convertFrontmatter()", () => {

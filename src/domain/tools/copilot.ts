@@ -113,6 +113,9 @@ const rulesHandler: RulesHandler = {
     const { paths, globs } = fm;
     const patterns = Array.isArray(paths) ? paths : Array.isArray(globs) ? globs : null;
     if (patterns !== null && patterns.length > 0) return { applyTo: patterns.join(",") };
+    if (fm.alwaysApply === false && fm.description !== undefined) {
+      return { description: fm.description };
+    }
     return {};
   },
   reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {

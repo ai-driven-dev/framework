@@ -128,7 +128,7 @@ describe("opencodeToolConfig", () => {
   });
 
   describe("rules().convertFrontmatter()", () => {
-    it("returns empty frontmatter regardless of input", () => {
+    it("returns empty frontmatter regardless of input (paths, always-apply)", () => {
       const result = opencodeToolConfig.rules().convertFrontmatter({ paths: ["src/**/*.ts"] });
       expect(result).toEqual({});
     });
@@ -136,6 +136,14 @@ describe("opencodeToolConfig", () => {
     it("returns empty frontmatter for always-apply rules", () => {
       const result = opencodeToolConfig.rules().convertFrontmatter({ description: "always" });
       expect(result).toEqual({});
+    });
+
+    it("keeps description when alwaysApply is false and no paths are specified", () => {
+      const result = opencodeToolConfig.rules().convertFrontmatter({
+        description: "Apply when editing command files.",
+        alwaysApply: false,
+      });
+      expect(result).toEqual({ description: "Apply when editing command files." });
     });
   });
 

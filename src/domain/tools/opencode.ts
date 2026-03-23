@@ -133,7 +133,10 @@ export const opencodeToolConfig: ToolConfig = {
       buildFilePath(fileName: string): string {
         return `${DIRECTORY}rules/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
       },
-      convertFrontmatter(_fm: Record<string, unknown>): Record<string, unknown> {
+      convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+        if (fm.alwaysApply === false && fm.description !== undefined) {
+          return { description: fm.description };
+        }
         return {};
       },
       reverseConvertFrontmatter(_fm: Record<string, unknown>): Record<string, unknown> {

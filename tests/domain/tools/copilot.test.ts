@@ -165,8 +165,17 @@ describe("copilotToolConfig", () => {
   });
 
   describe("rules().convertFrontmatter() — alwaysApply", () => {
-    it("returns empty frontmatter when alwaysApply is false without patterns", () => {
+    it("returns empty frontmatter when alwaysApply is false without patterns and no description", () => {
       expect(copilotToolConfig.rules().convertFrontmatter({ alwaysApply: false })).toEqual({});
+    });
+
+    it("keeps description when alwaysApply is false and no patterns are specified", () => {
+      expect(
+        copilotToolConfig.rules().convertFrontmatter({
+          description: "Apply when editing command files.",
+          alwaysApply: false,
+        })
+      ).toEqual({ description: "Apply when editing command files." });
     });
 
     it("converts globs + alwaysApply: false from framework to applyTo", () => {

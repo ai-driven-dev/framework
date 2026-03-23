@@ -65,7 +65,12 @@ export const cursorToolConfig: ToolConfig = {
       convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
         const { paths, globs, description } = fm;
         const patterns = Array.isArray(paths) ? paths : Array.isArray(globs) ? globs : null;
-        if (patterns === null || patterns.length === 0) return {};
+        if (patterns === null || patterns.length === 0) {
+          if (fm.alwaysApply === false && description !== undefined) {
+            return { description, alwaysApply: false };
+          }
+          return {};
+        }
         const result: Record<string, unknown> = {};
         if (description !== undefined) result.description = description;
         return {
