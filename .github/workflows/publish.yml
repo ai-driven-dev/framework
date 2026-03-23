@@ -40,8 +40,10 @@ jobs:
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
-      # Remove GitHub Packages scope override so @ai-driven-dev resolves to npmjs.org
-      - run: sed -i '/@ai-driven-dev:registry/d' "$NPM_CONFIG_USERCONFIG"
+      # Remove GitHub Packages scope override from both user and project npmrc
+      - run: |
+          sed -i '/@ai-driven-dev:registry/d' "$NPM_CONFIG_USERCONFIG"
+          sed -i '/@ai-driven-dev:registry/d' .npmrc 2>/dev/null || true
       # Publish to npm (granular access token, --provenance adds SLSA attestation)
       - run: pnpm publish --no-git-checks --access public --provenance
         env:
