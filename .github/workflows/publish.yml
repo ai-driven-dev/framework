@@ -40,10 +40,10 @@ jobs:
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
-      # Overwrite npmrc to target only registry.npmjs.org (removes GitHub Packages scope override)
+      # Replace project .npmrc to remove GitHub Packages scope override, then publish to npmjs.org
       - run: |
           printf "registry=https://registry.npmjs.org\n//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n" > "$NPM_CONFIG_USERCONFIG"
-          sed -i '/@ai-driven-dev:registry/d' .npmrc 2>/dev/null || true
+          printf "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n" > .npmrc
           pnpm publish --no-git-checks --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
