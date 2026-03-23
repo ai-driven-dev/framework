@@ -388,7 +388,7 @@ describe("InstallUseCase", () => {
     expect(existsSync(catalogPath)).toBe(true);
 
     const content = await readFile(catalogPath, "utf-8");
-    expect(content).toContain("## Claude");
+    expect(content).toContain("### `agents`");
     expect(content).toContain("../.claude/");
   });
 

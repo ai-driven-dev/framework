@@ -115,13 +115,13 @@ describe("UninstallUseCase", () => {
 
     const catalogPath = join(projectRoot, "aidd_docs", "CATALOG.md");
     const beforeContent = await readFile(catalogPath, "utf-8");
-    expect(beforeContent).toContain("## Claude");
+    expect(beforeContent).toContain("### `agents`");
 
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
     await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot });
 
     const afterContent = await readFile(catalogPath, "utf-8");
-    expect(afterContent).not.toContain("## Claude");
+    expect(afterContent).not.toContain("### `agents`");
     expect(afterContent).toContain("# AIDD Framework Catalog");
   });
 
