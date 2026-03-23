@@ -21,12 +21,10 @@ The **AIDD CLI** (`@ai-driven-dev/cli`) distributes the [AI-Driven Development F
 
 ## Installation
 
-### Method 1 — npm (public, recommended)
-
-Available on [npmjs.org](https://www.npmjs.com/package/@ai-driven-dev/cli) — no authentication required.
+Available on [npmjs.org](https://www.npmjs.com/package/@ai-driven-dev/cli).
 
 ```bash
-# npm
+# npm (recommended)
 npm install -g @ai-driven-dev/cli
 
 # or with pnpm / yarn / bun
@@ -37,23 +35,6 @@ aidd --version
 ```
 
 > Run `which aidd` to identify the active binary and use the matching package manager (`npm`, `pnpm`, `yarn`, `bun`).
-
-### Method 2 — GitHub Packages (private registry)
-
-Available on [GitHub Packages](https://github.com/ai-driven-dev/aidd-cli/packages). Requires a [GitHub Personal Access Token](https://github.com/settings/tokens/new) with the **`read:packages`** scope.
-
-1. Create a `.npmrc` file in your home directory (`~/.npmrc`) or project root:
-
-```
-@ai-driven-dev:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
-```
-
-2. Install:
-
-```bash
-npm install -g @ai-driven-dev/cli
-```
 
 ---
 
