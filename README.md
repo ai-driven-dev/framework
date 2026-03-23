@@ -10,7 +10,7 @@ The **AIDD CLI** (`@ai-driven-dev/cli`) distributes the [AI-Driven Development F
 
 | Prerequisite            | Version | Notes                                                   |
 | ----------------------- | ------- | ------------------------------------------------------- |
-| **Node.js**             | >= 24   | [nodejs.org](https://nodejs.org)                        |
+| **Node.js**             | >= 20   | [nodejs.org](https://nodejs.org)                        |
 | **tar**                 | —       | Pre-installed on macOS, Linux, WSL and Windows 10 1803+ |
 | **gh CLI** _(optional)_ | —       | Can be used as an authentication method via `aidd auth login --gh` |
 
@@ -21,8 +21,14 @@ The **AIDD CLI** (`@ai-driven-dev/cli`) distributes the [AI-Driven Development F
 
 ## Installation
 
+Available on [npm](https://www.npmjs.com/package/@ai-driven-dev/cli) and [GitHub Packages](https://github.com/ai-driven-dev/aidd-cli/packages).
+
 ```bash
+# npm (recommended)
 npm install -g @ai-driven-dev/cli
+
+# or with pnpm / yarn / bun
+pnpm add -g @ai-driven-dev/cli
 
 # Verify
 aidd --version
