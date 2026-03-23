@@ -145,10 +145,11 @@ jobs:
           pnpm publish --no-git-checks
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # Publish to npm (overwrite .npmrc to target only registry.npmjs.org)
+      # Publish to npm (overwrite .npmrc and strip publishConfig.registry if present)
       - name: Publish to npm
         run: |
           printf "registry=https://registry.npmjs.org\n//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n" > .npmrc
+          npm pkg delete publishConfig.registry
           pnpm publish --no-git-checks --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
