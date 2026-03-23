@@ -124,6 +124,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [release-please]
     if: needs.release-please.outputs.release_created == 'true'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write # required for npm Trusted Publishing (OIDC)
     steps:
       - uses: actions/checkout@v4
         with:
@@ -136,7 +140,7 @@ jobs:
           scope: "@ai-driven-dev"
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      # Publish to GitHub Packages (primary registry)
+      # Publish to GitHub Packages
       - run: pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -145,7 +149,5 @@ jobs:
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
-      # Publish to npm public registry
-      - run: pnpm publish --no-git-checks --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # Publish to npm via Trusted Publishing (OIDC — no token needed)
+      - run: pnpm publish --no-git-checks --access public --provenance
