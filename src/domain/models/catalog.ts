@@ -22,7 +22,10 @@ export function generateCatalogContent(files: CatalogFile[], docsDir: string): s
 
   let sectionsContent = "";
   for (const section of sortedSections) {
-    sectionsContent += generateSection(section, sections.get(section)!, docsDir);
+    const sectionFiles = sections.get(section);
+    if (sectionFiles !== undefined) {
+      sectionsContent += generateSection(section, sectionFiles, docsDir);
+    }
   }
 
   const toc = generateToc(sectionsContent);
@@ -33,14 +36,17 @@ function groupBySection(files: CatalogFile[]): Map<string, CatalogFile[]> {
   const sections = new Map<string, CatalogFile[]>();
   for (const file of files) {
     const section = file.frameworkPath.split("/")[0] ?? "other";
-    if (!sections.has(section)) sections.set(section, []);
-    sections.get(section)!.push(file);
+    let bucket = sections.get(section);
+    if (bucket === undefined) {
+      bucket = [];
+      sections.set(section, bucket);
+    }
+    bucket.push(file);
   }
   return sections;
 }
 
 function generateSection(section: string, files: CatalogFile[], docsDir: string): string {
-  // Strip the first path component (section name) to get relative paths within section
   const sectionFiles = files.map((f) => ({
     ...f,
     pathInSection: f.frameworkPath.slice(section.length + 1),
@@ -54,12 +60,13 @@ function generateSection(section: string, files: CatalogFile[], docsDir: string)
   });
 
   if (sortedSubgroups.length === 1 && sortedSubgroups[0] === "_root") {
-    return `### \`${section}\`\n\n${generateTable(subgroups.get("_root")!, docsDir)}\n`;
+    const rootFiles = subgroups.get("_root") ?? [];
+    return `### \`${section}\`\n\n${generateTable(rootFiles, docsDir)}\n`;
   }
 
   let content = `### \`${section}\`\n\n`;
   for (const subgroup of sortedSubgroups) {
-    const groupFiles = subgroups.get(subgroup)!;
+    const groupFiles = subgroups.get(subgroup) ?? [];
     if (subgroup === "_root") {
       content += `${generateTable(groupFiles, docsDir)}\n`;
     } else {
@@ -76,8 +83,12 @@ function groupBySubfolder(
   for (const file of files) {
     const parts = file.pathInSection.split("/");
     const subfolder = parts.length > 1 ? parts[0] : "_root";
-    if (!groups.has(subfolder)) groups.set(subfolder, []);
-    groups.get(subfolder)!.push(file);
+    let bucket = groups.get(subfolder);
+    if (bucket === undefined) {
+      bucket = [];
+      groups.set(subfolder, bucket);
+    }
+    bucket.push(file);
   }
   return groups;
 }
@@ -89,8 +100,12 @@ function generateTable(
   // Group entries by frameworkPath so the same file across multiple tools appears on one row
   const grouped = new Map<string, Array<CatalogFile & { pathInSection: string }>>();
   for (const file of files) {
-    if (!grouped.has(file.frameworkPath)) grouped.set(file.frameworkPath, []);
-    grouped.get(file.frameworkPath)!.push(file);
+    let bucket = grouped.get(file.frameworkPath);
+    if (bucket === undefined) {
+      bucket = [];
+      grouped.set(file.frameworkPath, bucket);
+    }
+    bucket.push(file);
   }
 
   const multiTool = [...grouped.values()].some((entries) => entries.length > 1);
@@ -115,8 +130,10 @@ function generateTable(
   let table = `| File |${installedHeader}${colHeaders}\n`;
   table += `|------|${installedSep}${colSepSuffix}\n`;
 
-  for (const [, entries] of grouped) {
-    const representative = entries[0]!;
+  for (const entries of grouped.values()) {
+    const representative = entries[0];
+    if (representative === undefined) continue;
+
     const label = representative.frameworkPath.split("/").at(-1) ?? representative.frameworkPath;
 
     const fileCell = multiTool

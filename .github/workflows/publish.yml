@@ -30,8 +30,9 @@ jobs:
           scope: "@ai-driven-dev"
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      # Publish to GitHub Packages
+      # Publish to GitHub Packages (continue on error in case version already exists)
       - run: pnpm publish --no-git-checks
+        continue-on-error: true
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # Reconfigure Node for npm registry (setup-node rewrites .npmrc auth)
