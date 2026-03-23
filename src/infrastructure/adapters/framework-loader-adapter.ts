@@ -35,7 +35,7 @@ const CONFIG_REFS: readonly ConfigRef[] = [
 ];
 
 const SCRIPT_REFS: readonly ScriptRef[] = [
-  { name: "updateMemory", path: "config/scripts/update_memory.mjs", invocation: "node" },
+  { name: "updateMemory", path: "config/scripts/update_memory.js", invocation: "node" },
 ];
 
 const DOCS_DIR = "aidd_docs";

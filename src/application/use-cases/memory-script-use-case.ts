@@ -7,7 +7,7 @@ import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Git } from "../../domain/ports/git.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 
-export const SCRIPT_RELATIVE_PATH = ".aidd/scripts/update_memory.mjs";
+export const SCRIPT_RELATIVE_PATH = ".aidd/scripts/update_memory.js";
 const AIDD_HOOK_RELATIVE_PATH = ".aidd/hooks/pre-commit";
 const HOOK_HEADER = "#!/bin/sh";
 
