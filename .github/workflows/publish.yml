@@ -39,7 +39,7 @@ jobs:
       # Publish to npm
       - name: Publish to npm
         run: |
-          printf "# @ai-driven-dev/cli\n\nAI-Driven Development CLI.\n\n\`\`\`bash\nnpm install -g @ai-driven-dev/cli\n\`\`\`\n" > README.md
+          printf "" > README.md
           printf "registry=https://registry.npmjs.org\n//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n" > .npmrc
           pnpm publish --no-git-checks --access public
         env:
