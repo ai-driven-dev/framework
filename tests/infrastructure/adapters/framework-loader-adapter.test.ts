@@ -151,6 +151,19 @@ describe("FrameworkLoaderAdapter", () => {
       expect(keys.some((k) => k.includes(".DS_Store"))).toBe(false);
       expect(docsFiles.has(join("aidd_docs", "README.md"))).toBe(true);
     });
+
+    it("excludes AppleDouble ._* files from content sections", async () => {
+      await createDir(join(tempDir, "rules"));
+      await writeFile(join(tempDir, "rules", "rule.md"), "# Rule", "utf-8");
+      await writeFile(join(tempDir, "rules", "._.DS_Store"), Buffer.alloc(0));
+      await writeFile(join(tempDir, "rules", "._rule.md"), Buffer.alloc(0));
+
+      const { contentFiles } = await loader.loadFromDirectory(tempDir, "1.0.0");
+      const keys = [...contentFiles.keys()];
+      expect(keys.some((k) => k.includes("._.DS_Store"))).toBe(false);
+      expect(keys.some((k) => k.includes("._rule.md"))).toBe(false);
+      expect(contentFiles.has(join("rules", "rule.md"))).toBe(true);
+    });
   });
 
   describe("docsFiles loading", () => {
