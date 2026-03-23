@@ -149,7 +149,10 @@ jobs:
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
-      # Publish to npm (granular access token, --provenance adds SLSA attestation)
-      - run: pnpm publish --no-git-checks --access public --provenance
+      # Overwrite npmrc to target only registry.npmjs.org (removes GitHub Packages scope override)
+      - run: |
+          printf "registry=https://registry.npmjs.org\n//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n" > "$NPM_CONFIG_USERCONFIG"
+          sed -i '/@ai-driven-dev:registry/d' .npmrc 2>/dev/null || true
+          pnpm publish --no-git-checks --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
