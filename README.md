@@ -95,39 +95,20 @@ aidd auth logout                                # remove stored credential
 # Authenticate first
 aidd auth login --token <YOUR_TOKEN> --level user
 
-# Run interactive setup (init + install in one step)
+# Run interactive setup
 aidd setup
 
 # Or manually:
-# 1. Initialize the docs structure and the manifest
-# aidd init
-
-# 2. Install for one or more tools
+# 1. Install for one or more tools
 # aidd install claude cursor
 
-# 3. Verify the installation
+# 2. Verify the installation
 aidd status
 ```
 
 ---
 
 ## User Flows
-
-### Migrating from a manual install
-
-If you already have AIDD files installed manually (no `.aidd/manifest.json`), use `adopt` to bootstrap a manifest from what's on disk — no download, no overwrite.
-
-```bash
-aidd adopt --tools claude --from v3.4.0
-
-# Multiple tools
-aidd adopt --tools claude,cursor --from v3.4.0
-
-# Local framework path (no auth required)
-aidd adopt --tools claude --from /path/to/framework
-```
-
-`--from <version|path>` is required: it pins the version the manifest will record. After adoption, run `aidd status` to see drift and `aidd update` to align with the latest framework version.
 
 ### Updating the framework
 
@@ -176,7 +157,7 @@ aidd uninstall --all            # uninstall all tools
 | Command                      | Description                                                        | Key options                                  |
 | ---------------------------- | ------------------------------------------------------------------ | -------------------------------------------- |
 | `aidd auth`                  | Manage authentication (login, logout, status)                      | `--token`, `--gh`, `--level`                 |
-| `aidd setup`                 | Interactive onboarding: init, adopt, install, or update as needed  | `--release`, `--repo`, `--path`              |
+| `aidd setup`                 | Interactive onboarding: install or update as needed                | `--release`, `--repo`, `--path`              |
 | `aidd install <tools...>`    | Generate and write tool-specific files (requires existing manifest) | `--all`, `--force`, `--release`, `--path`   |
 | `aidd uninstall <tools...>`  | Remove tool files and update manifest                              | `--all`                                      |
 | `aidd status`                | Show drift between disk and manifest + available update            | `--tool`, `--docs`                           |
@@ -273,12 +254,6 @@ Reverts modified or deleted files to the framework version pinned in the manifes
 ### `aidd sync`
 
 Propagates local modifications from one tool's files to the others via reverse + forward content rewriting. See [Syncing changes across tools](#syncing-changes-across-tools) for examples.
-
-### `aidd adopt`
-
-Bootstraps a manifest for projects with existing manually installed AIDD files. See [Migrating from a manual install](#migrating-from-a-manual-install) for examples.
-
-> Auth is not required when `--from` is a local path.
 
 ### `aidd clean`
 
