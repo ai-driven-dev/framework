@@ -11,9 +11,6 @@
     "dist",
     "README.md"
   ],
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
   "engines": {
     "node": ">=24",
     "pnpm": ">=9"
