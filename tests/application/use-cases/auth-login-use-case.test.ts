@@ -83,6 +83,25 @@ describe("AuthLoginUseCase", () => {
       expect(storedConfig?.method).toBe("gh");
     });
 
+    it("propagates error when gh auth token fails (keyring, exit code, etc.)", async () => {
+      const throwingProvider: ExternalTokenProvider = {
+        resolve: () => {
+          throw new Error(
+            "gh auth token failed: could not retrieve credentials from system keyring"
+          );
+        },
+      };
+      const useCase = new AuthLoginUseCase(storage, makeHttpGet("octocat"), throwingProvider);
+      await expect(
+        useCase.execute({
+          method: "gh",
+          level: "user",
+          projectRoot: tempDir,
+          interactive: false,
+        })
+      ).rejects.toThrow(/gh auth token failed/);
+    });
+
     it("throws when gh CLI is unavailable and method=gh", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
