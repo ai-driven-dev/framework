@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.13.3](https://github.com/ai-driven-dev/aidd-cli/compare/v2.13.2...v2.13.3) (2026-03-23)
+
+
+### Bug Fixes
+
+* **loader:** filter AppleDouble ._* files from framework content ([d094d31](https://github.com/ai-driven-dev/aidd-cli/commit/d094d3117c090bb91bf07a8bc434664cebb25f5f))
+* **loader:** filter AppleDouble ._* files from framework content ([024736d](https://github.com/ai-driven-dev/aidd-cli/commit/024736d9ba5499394d9e79cb3205627e6db57351)), closes [#86](https://github.com/ai-driven-dev/aidd-cli/issues/86)
+
+
+### Documentation
+
+* **readme:** add GitHub Packages install method with .npmrc and token instructions ([2df982c](https://github.com/ai-driven-dev/aidd-cli/commit/2df982c681a907dbda55dc564bde06546b29d5fc))
+* **readme:** remove GitHub Packages install method, keep public npm only ([ada7852](https://github.com/ai-driven-dev/aidd-cli/commit/ada78529d57bd0b47eb814a228da0693f236863f))
+* **readme:** remove init and adopt references (commands no longer available) ([9b6b7b0](https://github.com/ai-driven-dev/aidd-cli/commit/9b6b7b0ef251848d0fdffee784e8e0314fec3ac8))
+
 ## [2.13.2](https://github.com/ai-driven-dev/aidd-cli/compare/v2.13.1...v2.13.2) (2026-03-23)
 
 
