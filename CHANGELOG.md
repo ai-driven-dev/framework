@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.13.1](https://github.com/ai-driven-dev/aidd-cli/compare/v2.13.0...v2.13.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* **auth:** detect outdated gh CLI and suggest upgrade ([a69d39b](https://github.com/ai-driven-dev/aidd-cli/commit/a69d39baa07623ef13cc6c64eeb2c7f68f457fed))
+* **auth:** remove speculative version number from outdated gh error message ([72c9c87](https://github.com/ai-driven-dev/aidd-cli/commit/72c9c87684909cd511725a77b5458a1981f92360))
+* **auth:** surface real gh auth token errors instead of generic message ([ee42ab6](https://github.com/ai-driven-dev/aidd-cli/commit/ee42ab62033b6db9f216e0d754c587c7fd4084c5)), closes [#25](https://github.com/ai-driven-dev/aidd-cli/issues/25)
+
 ## [2.13.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.12.0...v2.13.0) (2026-03-22)
 
 
