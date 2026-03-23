@@ -28,7 +28,7 @@ jobs:
           node-version: "24"
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      # Publish to GitHub Packages (write .npmrc manually to avoid setup-node scope leak)
+      # Publish to GitHub Packages
       - name: Publish to GitHub Packages
         continue-on-error: true
         run: |
@@ -36,11 +36,10 @@ jobs:
           pnpm publish --no-git-checks
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # Publish to npm (overwrite .npmrc and strip publishConfig.registry if present)
+      # Publish to npm (--provenance adds SLSA attestation via OIDC)
       - name: Publish to npm
         run: |
           printf "registry=https://registry.npmjs.org\n//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n" > .npmrc
-          npm pkg delete publishConfig.registry
           pnpm publish --no-git-checks --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
