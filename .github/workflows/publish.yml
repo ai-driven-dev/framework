@@ -12,7 +12,7 @@ on:
 permissions:
   contents: read
   packages: write
-  id-token: write # required for npm Trusted Publishing (OIDC)
+  id-token: write # required for npm provenance (OIDC)
 
 jobs:
   publish:
@@ -26,24 +26,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-          registry-url: "https://npm.pkg.github.com"
-          scope: "@ai-driven-dev"
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      # Publish to GitHub Packages (continue on error in case version already exists)
-      - run: pnpm publish --no-git-checks
+      # Publish to GitHub Packages (write .npmrc manually to avoid setup-node scope leak)
+      - name: Publish to GitHub Packages
         continue-on-error: true
+        run: |
+          printf "@ai-driven-dev:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}\n" > .npmrc
+          pnpm publish --no-git-checks
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # Reconfigure Node for npm registry (setup-node rewrites .npmrc auth)
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          registry-url: "https://registry.npmjs.org"
-      # Replace project .npmrc to remove GitHub Packages scope override, then publish to npmjs.org
-      - run: |
-          printf "registry=https://registry.npmjs.org\n//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n" > "$NPM_CONFIG_USERCONFIG"
-          printf "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n" > .npmrc
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Publish to npm (overwrite .npmrc to target only registry.npmjs.org)
+      - name: Publish to npm
+        run: |
+          printf "registry=https://registry.npmjs.org\n//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n" > .npmrc
           pnpm publish --no-git-checks --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
