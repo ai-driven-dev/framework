@@ -126,7 +126,7 @@ export class FrameworkLoaderAdapter implements FrameworkLoader {
     }
 
     for (const entry of entries) {
-      if (OS_FILES.has(entry.name)) continue;
+      if (OS_FILES.has(entry.name) || entry.name.startsWith("._")) continue;
       const fullPath = join(dir, entry.name);
       if (entry.isDirectory()) {
         const nested = await this.collectFiles(fullPath);
