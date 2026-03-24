@@ -156,8 +156,6 @@ jobs:
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
-      - name: Debug npmrc
-        run: cat .npmrc || echo "no .npmrc"
       - name: Publish to npm
         run: |
           rm -f .npmrc
