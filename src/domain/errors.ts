@@ -6,3 +6,10 @@ export class NoFrameworkSourceError extends Error {
     this.name = "NoFrameworkSourceError";
   }
 }
+
+export class ConfigConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ConfigConflictError";
+  }
+}

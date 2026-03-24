@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { ConfigConflictError } from "../errors.js";
 import { CONFIG_MCP, CONFIG_OPENCODE, TEMPLATE_AGENTS_MD } from "../models/framework-descriptor.js";
 import {
   baseReverseRewriteContent,
@@ -152,36 +153,33 @@ export const opencodeToolConfig: ToolConfig = {
   },
 
   config(): ConfigHandler {
-    return {
+    const OPENCODE_JSON = "opencode.json";
+    const OPENCODE_JSONC = "opencode.jsonc";
+    const handler: ConfigHandler = {
       outputPath(configName: string): string | null {
-        if (configName === CONFIG_OPENCODE) return "opencode.json";
-        if (configName === CONFIG_MCP) return "opencode.json";
+        if (configName === CONFIG_OPENCODE || configName === CONFIG_MCP) return OPENCODE_JSON;
         return null;
       },
       shouldMerge(configName: string): boolean {
-        return configName === CONFIG_OPENCODE || configName === CONFIG_MCP;
+        return handler.outputPath(configName) !== null;
       },
       transformContent(configName: string, content: string): string {
         if (configName === CONFIG_MCP) return transformMcpToOpencode(content);
         return content;
       },
-      async resolveOutputPath(
-        configName: string,
-        projectRoot: string,
-        fs: FileSystem
-      ): Promise<string | null> {
-        if (configName !== CONFIG_OPENCODE && configName !== CONFIG_MCP) return null;
-        const jsonExists = await fs.fileExists(join(projectRoot, "opencode.json"));
-        const jsoncExists = await fs.fileExists(join(projectRoot, "opencode.jsonc"));
-        if (jsonExists && jsoncExists) {
-          throw new Error(
-            "Both opencode.json and opencode.jsonc exist. Remove one before continuing."
+      async resolveOutputPath(configName, projectRoot, fs): Promise<string | null> {
+        if (handler.outputPath(configName) === null) return null;
+        const jsonExists = await fs.fileExists(join(projectRoot, OPENCODE_JSON));
+        const jsoncExists = await fs.fileExists(join(projectRoot, OPENCODE_JSONC));
+        if (jsonExists && jsoncExists)
+          throw new ConfigConflictError(
+            `Both ${OPENCODE_JSON} and ${OPENCODE_JSONC} exist. Remove one before continuing.`
           );
-        }
-        if (jsoncExists) return "opencode.jsonc";
-        return "opencode.json";
+        if (jsoncExists) return OPENCODE_JSONC;
+        return OPENCODE_JSON;
       },
     };
+    return handler;
   },
 
   memoryBank(): MemoryBankHandler {
