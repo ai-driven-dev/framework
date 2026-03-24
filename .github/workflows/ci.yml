@@ -156,8 +156,11 @@ jobs:
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
+      - name: Debug npmrc
+        run: cat .npmrc || echo "no .npmrc"
       - name: Publish to npm
         run: |
+          rm -f .npmrc
           printf "# @ai-driven-dev/cli\n\nAI-Driven Development CLI — distribute the AIDD framework across AI coding assistants.\n\n\`\`\`bash\nnpm install -g @ai-driven-dev/cli\n\`\`\`\n" > README.md
           pnpm publish --no-git-checks --access public
         env:
