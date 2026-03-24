@@ -157,7 +157,7 @@ aidd uninstall --all            # uninstall all tools
 | Command                      | Description                                                        | Key options                                  |
 | ---------------------------- | ------------------------------------------------------------------ | -------------------------------------------- |
 | `aidd auth`                  | Manage authentication (login, logout, status)                      | `--token`, `--gh`, `--level`                 |
-| `aidd setup`                 | Interactive onboarding: install or update as needed                | `--release`, `--repo`, `--path`              |
+| `aidd setup`                 | Set up or update the project — interactive by default, scriptable with flags | `--release`, `--path`, `--tools`, `--all-tools`, `--docs-dir`, `--from` |
 | `aidd install <tools...>`    | Generate and write tool-specific files (requires existing manifest) | `--all`, `--force`, `--release`, `--path`   |
 | `aidd uninstall <tools...>`  | Remove tool files and update manifest                              | `--all`                                      |
 | `aidd status`                | Show drift between disk and manifest + available update            | `--tool`, `--docs`                           |
@@ -186,13 +186,19 @@ Credentials are stored in JSON files with `600` permissions. The `project` level
 
 ### `aidd setup`
 
-Interactive onboarding for new and existing projects. Detects the current state and guides through init, install, or update as appropriate.
+Detects the current project state and runs the appropriate flow (init, adopt, install, or update). Interactive by default; fully scriptable when tool flags are provided.
 
 ```bash
-aidd setup
-aidd setup --release v3.4.0    # pin a specific framework version
-aidd setup --path ./local      # use a local framework copy
+aidd setup                                      # interactive guided setup
+aidd setup --release v3.4.0                     # pin a specific framework version
+aidd setup --path ./local                       # use a local framework copy
+aidd setup --all-tools                          # non-interactive: init + install all tools
+aidd setup --tools claude,cursor                # non-interactive: init + install specific tools
+aidd setup --tools claude --from v3.2.0         # non-interactive adopt (existing tool files)
+aidd setup --docs-dir my_docs                   # custom documentation directory
 ```
+
+Passing `--all-tools` or `--tools` disables interactive prompts — values with defaults (docs dir, repo, release) are resolved automatically. For `adopt` state, `--from` is required.
 
 ### `aidd install`
 

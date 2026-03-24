@@ -1,24 +1,9 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, runCli } from "./helpers.js";
-
-// Note: aidd setup is intentionally interactive-only (TTY guard at entry).
-// Since runCli spawns a subprocess without a TTY, all state-branch flows
-// (needs-init, needs-adopt, needs-install, needs-update, up-to-date) cannot
-// be tested via E2E. State detection is covered by SetupUseCase unit tests.
+import { createTestEnv, FRAMEWORK_PATH, runCli } from "./helpers.js";
 
 describe.concurrent("E2E: aidd setup", () => {
-  it("exits 1 with error when stdout is not a TTY (non-interactive mode)", async () => {
-    const { projectDir, cleanup } = await createTestEnv("setup-non-tty");
-    try {
-      const { stderr, exitCode } = await runCli(["setup"], projectDir);
-
-      expect(exitCode).toBe(1);
-      expect(stderr).toContain("requires an interactive TTY");
-    } finally {
-      await cleanup();
-    }
-  });
-
   it("shows usage with --help", async () => {
     const { projectDir, cleanup } = await createTestEnv("setup-help");
     try {
@@ -26,6 +11,40 @@ describe.concurrent("E2E: aidd setup", () => {
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("setup");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("needs-init state, non-interactive, no extra flags — succeeds with exit 0", async () => {
+    const { projectDir, cleanup } = await createTestEnv("setup-init-noninteractive");
+    try {
+      const { exitCode } = await runCli(
+        ["setup", "--path", FRAMEWORK_PATH, "--release", "test"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("needs-adopt state, non-interactive, missing --from — exits 1 with error", async () => {
+    const { projectDir, cleanup } = await createTestEnv("setup-adopt-no-from");
+    try {
+      // Create an AIDD signal file so detectSetupState returns needs-adopt
+      const commandDir = join(projectDir, ".claude", "commands");
+      await mkdir(commandDir, { recursive: true });
+      await writeFile(
+        join(commandDir, "implement.md"),
+        "---\nname: aidd:04:implement\ndescription: test\n---\nbody"
+      );
+
+      const { stderr, exitCode } = await runCli(["setup", "--tools", "claude"], projectDir);
+
+      expect(exitCode).toBe(1);
+      expect(stderr.toLowerCase()).toMatch(/from|adopt/);
     } finally {
       await cleanup();
     }

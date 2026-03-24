@@ -117,6 +117,9 @@ export class SetupUseCase {
       docsDir = options.docsDir;
       explicitDocsDir = options.docsDir;
       Manifest.validateDocsDir(docsDir);
+    } else if (!options.interactive) {
+      docsDir = Manifest.DEFAULT_DOCS_DIR;
+      explicitDocsDir = "";
     } else {
       const docsDirInput = await this.prompter.input(
         "Documentation directory name:",
@@ -141,10 +144,9 @@ export class SetupUseCase {
     } else {
       const existingManifest = await this.manifestRepo.load();
       const sourceDefault = existingManifest?.repo ?? this.resolver.getDefaultRepo() ?? "";
-      const sourceInput = await this.prompter.input(
-        "Framework source (owner/repo or local path):",
-        sourceDefault
-      );
+      const sourceInput = options.interactive
+        ? await this.prompter.input("Framework source (owner/repo or local path):", sourceDefault)
+        : sourceDefault;
       if (sourceInput) {
         if (isLocalPath(sourceInput)) {
           frameworkPath = sourceInput;
@@ -156,14 +158,20 @@ export class SetupUseCase {
 
     let resolvedRelease = release;
     if (!frameworkPath && !release) {
-      const latest = await this.resolver.fetchLatestVersion(frameworkRepo).catch(() => "");
-      resolvedRelease =
-        (await this.prompter.input(
-          latest ? `Framework release tag (latest: ${latest}):` : "Framework release tag:",
-          latest
-        )) ||
-        latest ||
-        undefined;
+      if (options.interactive) {
+        const latest = await this.resolver.fetchLatestVersion(frameworkRepo).catch(() => "");
+        resolvedRelease =
+          (await this.prompter.input(
+            latest ? `Framework release tag (latest: ${latest}):` : "Framework release tag:",
+            latest
+          )) ||
+          latest ||
+          undefined;
+      } else {
+        resolvedRelease = await this.resolver
+          .fetchLatestVersion(frameworkRepo)
+          .catch(() => undefined);
+      }
     }
 
     const resolved = await this.frameworkResolver.execute({
@@ -208,6 +216,15 @@ export class SetupUseCase {
 
   private async handleAdopt(options: SetupOptions): Promise<SetupResult> {
     const { projectRoot, repo } = options;
+
+    if (!options.interactive) {
+      if (!options.toolIds || options.toolIds.length === 0) {
+        throw new Error("--tools <ids> is required for adopt in non-interactive mode.");
+      }
+      if (options.from === undefined) {
+        throw new AdoptRequiresVersionError(repo);
+      }
+    }
 
     let selected: ToolId[];
     if (options.toolIds !== undefined && options.toolIds.length > 0) {
@@ -302,7 +319,7 @@ export class SetupUseCase {
       frameworkPath,
       version,
       projectRoot,
-      interactive: true,
+      interactive: options.interactive ?? false,
       repo,
     });
 
@@ -318,7 +335,8 @@ export class SetupUseCase {
       frameworkPath,
       version,
       projectRoot,
-      repo
+      repo,
+      options.interactive
     );
 
     return {
@@ -340,6 +358,10 @@ export class SetupUseCase {
 
     if (missingTools.length === 0) {
       return { kind: "up-to-date", hasAdditionalTools: false };
+    }
+
+    if (!options.interactive) {
+      return { kind: "up-to-date", hasAdditionalTools: true };
     }
 
     const wantsMore = await this.prompter.confirm("Install additional tools?");
@@ -373,9 +395,11 @@ export class SetupUseCase {
     frameworkPath: string,
     version: string,
     projectRoot: string,
-    repo: string | undefined
+    repo: string | undefined,
+    interactive?: boolean
   ): Promise<InstallSummary | undefined> {
     if (!hasMissing) return undefined;
+    if (!interactive) return undefined;
     const wantsMore = await this.prompter.confirm("Install additional tools?");
     if (!wantsMore) return undefined;
     const installResults = await this.runInstall(
