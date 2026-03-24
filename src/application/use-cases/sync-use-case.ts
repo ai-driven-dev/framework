@@ -93,6 +93,7 @@ const EXCLUDED_FILES = new Set([
   ".cursor/mcp.json",
   ".vscode/mcp.json",
   "opencode.json",
+  "opencode.jsonc",
 ]);
 
 function isExcluded(relativePath: string, docsDir: string): boolean {

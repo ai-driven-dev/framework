@@ -79,13 +79,15 @@ export class AdoptUseCase {
         throw new Error(`Directory '${config.directory}' not found for tool '${toolId}'.`);
       }
 
-      const distribution = generateDistribution(
+      const distribution = await generateDistribution(
         descriptor,
         config,
         docsDir,
         contentFiles,
         this.hasher,
-        this.platform
+        this.platform,
+        projectRoot,
+        this.fs
       );
       const registeredFiles = await this.matchDistributionToDisk(distribution, projectRoot);
       if (registeredFiles.length === 0) {

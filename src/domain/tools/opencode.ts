@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { CONFIG_MCP, CONFIG_OPENCODE, TEMPLATE_AGENTS_MD } from "../models/framework-descriptor.js";
 import {
   baseReverseRewriteContent,
@@ -17,6 +18,7 @@ import {
   type ToolConfig,
   type UserFileSectionKey,
 } from "../models/tool-config.js";
+import type { FileSystem } from "../ports/file-system.js";
 
 const DIRECTORY = ".opencode/";
 const TOOL_SUFFIX = ".opencode.md";
@@ -162,6 +164,22 @@ export const opencodeToolConfig: ToolConfig = {
       transformContent(configName: string, content: string): string {
         if (configName === CONFIG_MCP) return transformMcpToOpencode(content);
         return content;
+      },
+      async resolveOutputPath(
+        configName: string,
+        projectRoot: string,
+        fs: FileSystem
+      ): Promise<string | null> {
+        if (configName !== CONFIG_OPENCODE && configName !== CONFIG_MCP) return null;
+        const jsonExists = await fs.fileExists(join(projectRoot, "opencode.json"));
+        const jsoncExists = await fs.fileExists(join(projectRoot, "opencode.jsonc"));
+        if (jsonExists && jsoncExists) {
+          throw new Error(
+            "Both opencode.json and opencode.jsonc exist. Remove one before continuing."
+          );
+        }
+        if (jsoncExists) return "opencode.jsonc";
+        return "opencode.json";
       },
     };
   },

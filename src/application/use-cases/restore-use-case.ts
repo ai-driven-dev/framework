@@ -105,13 +105,15 @@ export class RestoreUseCase {
 
       const config = getToolConfig(toolId);
       const manifestFiles = manifest.getToolFiles(toolId);
-      const distribution = generateDistribution(
+      const distribution = await generateDistribution(
         descriptor,
         config,
         docsDir,
         contentFiles,
         this.hasher,
-        this.platform
+        this.platform,
+        projectRoot,
+        this.fs
       );
       const distMap = new Map(distribution.map((f) => [f.relativePath, f]));
 

@@ -50,6 +50,11 @@ export interface ConfigHandler {
   outputPath(configName: string): string | null;
   shouldMerge(configName: string): boolean;
   transformContent?(configName: string, content: string): string;
+  resolveOutputPath?(
+    configName: string,
+    projectRoot: string,
+    fs: FileSystem
+  ): Promise<string | null>;
 }
 
 export interface MemoryBankHandler {

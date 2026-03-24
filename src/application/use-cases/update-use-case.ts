@@ -204,13 +204,15 @@ export class UpdateUseCase {
       const config = getToolConfig(toolId);
       const manifestFiles = manifest.getToolFiles(toolId);
       const manifestMap = new Map(manifestFiles.map((f) => [f.relativePath, f.hash]));
-      const newDistribution = generateDistribution(
+      const newDistribution = await generateDistribution(
         descriptor,
         config,
         docsDir,
         contentFiles,
         this.hasher,
-        this.platform
+        this.platform,
+        projectRoot,
+        this.fs
       );
       const newDistMap = new Map(newDistribution.map((f) => [f.relativePath, f]));
       const diff = await this.computeDiff(newDistribution, newDistMap, manifestMap, projectRoot);
