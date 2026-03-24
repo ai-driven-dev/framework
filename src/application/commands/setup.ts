@@ -1,6 +1,11 @@
 import type { Command } from "commander";
+import {
+  assertValidToolIds,
+  type ToolId,
+  VALID_TOOL_IDS,
+} from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
-import { CLIOutput } from "../output.js";
+import type { CLIOutput } from "../output.js";
 import type { InstallToolResult } from "../use-cases/install-use-case.js";
 import { SetupUseCase } from "../use-cases/setup-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
@@ -30,85 +35,107 @@ export function registerSetupCommand(program: Command): void {
     .description("Interactively set up or update the project to a correct state")
     .option("--path <path>", "Path to a local framework directory or tarball")
     .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
-    .action(async (cmdOptions: { path?: string; release?: string }) => {
-      if (!process.stdout.isTTY) {
-        const output = new CLIOutput(false);
-        output.error("aidd setup requires an interactive TTY.");
-        process.exit(1);
-      }
+    .option("--docs-dir <dir>", "Documentation directory name (default: aidd_docs)")
+    .option("--tools <ids>", "Comma-separated tool IDs to install (e.g., claude,cursor)")
+    .option("--all-tools", "Install all available tools")
+    .option(
+      "--from <version>",
+      "Framework version already installed, required for adopt (e.g., v3.2.0)"
+    )
+    .action(
+      async (cmdOptions: {
+        path?: string;
+        release?: string;
+        docsDir?: string;
+        tools?: string;
+        allTools?: boolean;
+        from?: string;
+      }) => {
+        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
 
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
-
-      try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
-
-        const result = await new SetupUseCase(
-          deps.fs,
-          deps.manifestRepo,
-          deps.loader,
-          deps.hasher,
-          deps.logger,
-          deps.git,
-          deps.platform,
-          deps.prompter,
-          deps.resolver,
-          deps.authReader
-        ).execute({
-          projectRoot,
-          path: cmdOptions.path,
-          release: cmdOptions.release,
-          repo,
-          interactive: true,
-        });
-
-        switch (result.kind) {
-          case "initialized": {
-            output.success(`Initialized docs in ${result.docsDir}/ (${result.fileCount} files)`);
-            displayInstall(output, result.install.results, verbose);
-            break;
+        try {
+          const rawToolIds = cmdOptions.allTools
+            ? [...VALID_TOOL_IDS]
+            : cmdOptions.tools
+              ? (cmdOptions.tools.split(",").map((s) => s.trim()) as ToolId[])
+              : undefined;
+          if (rawToolIds && rawToolIds.length > 0) {
+            assertValidToolIds(rawToolIds);
           }
 
-          case "adopted": {
-            output.success(
-              `Adopted ${result.toolCount} tool(s) at version ${result.version}: ${result.totalRegistered} files registered, ${result.docsRegistered} docs registered`
-            );
-            break;
-          }
+          const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
-          case "installed": {
-            displayInstall(output, result.install.results, verbose);
-            break;
-          }
+          const result = await new SetupUseCase(
+            deps.fs,
+            deps.manifestRepo,
+            deps.loader,
+            deps.hasher,
+            deps.logger,
+            deps.git,
+            deps.platform,
+            deps.prompter,
+            deps.resolver,
+            deps.authReader
+          ).execute({
+            projectRoot,
+            path: cmdOptions.path,
+            release: cmdOptions.release,
+            repo,
+            interactive: process.stdout.isTTY,
+            docsDir: cmdOptions.docsDir,
+            toolIds: rawToolIds,
+            from: cmdOptions.from,
+          });
 
-          case "update-cancelled": {
-            output.info("Update cancelled.");
-            break;
-          }
-
-          case "updated": {
-            output.success(
-              `Updated ${result.totalWritten} files, deleted ${result.totalDeleted} files across ${result.toolCount} tool(s)`
-            );
-            if (result.additionalInstall) {
-              displayInstall(output, result.additionalInstall.results, verbose);
+          switch (result.kind) {
+            case "initialized": {
+              output.success(`Initialized docs in ${result.docsDir}/ (${result.fileCount} files)`);
+              displayInstall(output, result.install.results, verbose);
+              break;
             }
-            break;
-          }
 
-          case "up-to-date": {
-            if (result.hasAdditionalTools) {
-              output.info("All installed tools are up to date.");
-            } else {
-              output.info("Project is up to date.");
+            case "adopted": {
+              output.success(
+                `Adopted ${result.toolCount} tool(s) at version ${result.version}: ${result.totalRegistered} files registered, ${result.docsRegistered} docs registered`
+              );
+              break;
             }
-            if (result.additionalInstall) {
-              displayInstall(output, result.additionalInstall.results, verbose);
+
+            case "installed": {
+              displayInstall(output, result.install.results, verbose);
+              break;
             }
-            break;
+
+            case "update-cancelled": {
+              output.info("Update cancelled.");
+              break;
+            }
+
+            case "updated": {
+              output.success(
+                `Updated ${result.totalWritten} files, deleted ${result.totalDeleted} files across ${result.toolCount} tool(s)`
+              );
+              if (result.additionalInstall) {
+                displayInstall(output, result.additionalInstall.results, verbose);
+              }
+              break;
+            }
+
+            case "up-to-date": {
+              if (result.hasAdditionalTools) {
+                output.info("All installed tools are up to date.");
+              } else {
+                output.info("Project is up to date.");
+              }
+              if (result.additionalInstall) {
+                displayInstall(output, result.additionalInstall.results, verbose);
+              }
+              break;
+            }
           }
+        } catch (error) {
+          output.exit(error);
         }
-      } catch (error) {
-        output.exit(error);
       }
-    });
+    );
 }
