@@ -49,7 +49,7 @@ describe("SetupUseCase", () => {
     );
   }
 
-  it("handleAdopt non-interactive without toolIds — throws error mentioning --tools", async () => {
+  it("adopt state, non-interactive, no --tools provided — throws with --tools hint", async () => {
     // Create an AIDD signal file so detectSetupState returns needs-adopt
     const commandDir = join(projectRoot, ".claude", "commands");
     await mkdir(commandDir, { recursive: true });
@@ -70,7 +70,7 @@ describe("SetupUseCase", () => {
     ).rejects.toThrow("--tools");
   });
 
-  it("handleUpToDate non-interactive — returns up-to-date without prompting", async () => {
+  it("up-to-date project, non-interactive — skips additional install prompt and returns up-to-date", async () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude");
 

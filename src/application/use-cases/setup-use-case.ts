@@ -141,23 +141,12 @@ export class SetupUseCase {
           frameworkRepo = options.path;
         }
       }
-    } else if (!options.interactive) {
-      const existingManifest = await this.manifestRepo.load();
-      const sourceDefault = existingManifest?.repo ?? this.resolver.getDefaultRepo() ?? "";
-      if (sourceDefault) {
-        if (isLocalPath(sourceDefault)) {
-          frameworkPath = sourceDefault;
-        } else {
-          frameworkRepo = sourceDefault;
-        }
-      }
     } else {
       const existingManifest = await this.manifestRepo.load();
       const sourceDefault = existingManifest?.repo ?? this.resolver.getDefaultRepo() ?? "";
-      const sourceInput = await this.prompter.input(
-        "Framework source (owner/repo or local path):",
-        sourceDefault
-      );
+      const sourceInput = options.interactive
+        ? await this.prompter.input("Framework source (owner/repo or local path):", sourceDefault)
+        : sourceDefault;
       if (sourceInput) {
         if (isLocalPath(sourceInput)) {
           frameworkPath = sourceInput;

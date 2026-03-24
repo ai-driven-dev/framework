@@ -32,7 +32,7 @@ function displayInstall(output: CLIOutput, results: InstallToolResult[], verbose
 export function registerSetupCommand(program: Command): void {
   program
     .command("setup")
-    .description("Interactively set up or update the project to a correct state")
+    .description("Set up or update the project to a correct state")
     .option("--path <path>", "Path to a local framework directory or tarball")
     .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
     .option("--docs-dir <dir>", "Documentation directory name (default: aidd_docs)")
@@ -53,16 +53,21 @@ export function registerSetupCommand(program: Command): void {
       }) => {
         const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
 
-        try {
-          const rawToolIds = cmdOptions.allTools
-            ? [...VALID_TOOL_IDS]
-            : cmdOptions.tools
-              ? (cmdOptions.tools.split(",").map((s) => s.trim()) as ToolId[])
-              : undefined;
-          if (rawToolIds && rawToolIds.length > 0) {
+        const rawToolIds = cmdOptions.allTools
+          ? [...VALID_TOOL_IDS]
+          : cmdOptions.tools
+            ? (cmdOptions.tools.split(",").map((s) => s.trim()) as ToolId[])
+            : undefined;
+        if (rawToolIds && rawToolIds.length > 0) {
+          try {
             assertValidToolIds(rawToolIds);
+          } catch (e) {
+            output.error(e instanceof Error ? e.message : String(e));
+            process.exit(1);
           }
+        }
 
+        try {
           const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
           const result = await new SetupUseCase(
