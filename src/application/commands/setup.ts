@@ -68,11 +68,7 @@ export function registerSetupCommand(program: Command): void {
         }
 
         try {
-          const hasScriptingFlags = !!(
-            cmdOptions.allTools ||
-            cmdOptions.tools ||
-            cmdOptions.from !== undefined
-          );
+          const hasScriptingFlags = !!(cmdOptions.allTools || cmdOptions.tools);
           const interactive = process.stdout.isTTY && !hasScriptingFlags;
 
           const deps = await createDeps(projectRoot, { verbose, repo }, output);
