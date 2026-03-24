@@ -1,5 +1,30 @@
 # Changelog
 
+## [3.1.0](https://github.com/ai-driven-dev/aidd-cli/compare/v3.0.0...v3.1.0) (2026-03-24)
+
+
+### Features
+
+* **setup:** add non-interactive mode support ([368520d](https://github.com/ai-driven-dev/aidd-cli/commit/368520d6e68bfafad683643840d26a6d5e34172c))
+* **setup:** add non-interactive mode support ([651c034](https://github.com/ai-driven-dev/aidd-cli/commit/651c034cd3a22a8df930e98b1b69dd3b2160eaa2))
+
+
+### Bug Fixes
+
+* **setup:** disable prompts when scripting flags are provided ([3076c08](https://github.com/ai-driven-dev/aidd-cli/commit/3076c080d1e3b49679121abd613addbf9ed84491))
+* **setup:** only --all-tools and --tools suppress interactive prompts ([d34d267](https://github.com/ai-driven-dev/aidd-cli/commit/d34d267fa01f995411b2ff8cbcaa1f8c2e8ca234))
+* **setup:** remove --docs-dir from scripting flags detection ([5babd58](https://github.com/ai-driven-dev/aidd-cli/commit/5babd585ab540918ade15a8d0570268c7964d986))
+
+
+### Documentation
+
+* **setup:** document non-interactive flags and update project brief ([796e7d3](https://github.com/ai-driven-dev/aidd-cli/commit/796e7d32be58ddeb3a8f11e41617e42632f6a3f8))
+
+
+### Refactoring
+
+* **setup:** fix review issues — move flag guard, dedup source resolution, rename tests ([5d33588](https://github.com/ai-driven-dev/aidd-cli/commit/5d33588496062d9b45b954a31c8920746b48d3b2))
+
 ## [3.0.0](https://github.com/ai-driven-dev/aidd-cli/compare/v2.13.4...v3.0.0) (2026-03-24)
 
 
