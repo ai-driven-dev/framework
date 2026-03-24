@@ -17,3 +17,4 @@ This file contains the key architectural decisions made during the project, alon
 | 2026-03-24 | DEC-009 | [Remove init and adopt CLI commands](./decisions/DEC-009-remove-init-adopt-commands.md) | setup is sole entry point; hidden commands removed |
 | 2026-03-24 | DEC-010 | [SetupUseCase non-interactive options](./decisions/DEC-010-setup-non-interactive-options.md) | programmatic use without prompter mocking |
 | 2026-03-24 | DEC-011 | [ResolveFrameworkUseCase and RequireAuthUseCase](./decisions/DEC-011-resolve-framework-require-auth-use-cases.md) | plain functions replaced by classes; auth delegated, no duplication |
+| 2026-03-24 | DEC-012 | [ConfigHandler.resolveOutputPath for runtime path resolution](./decisions/DEC-012-config-handler-resolve-output-path.md) | generateDistribution async; use cases stay tool-agnostic |

@@ -2,6 +2,7 @@ import { assert, describe, expect, it } from "vitest";
 import { generateDistribution } from "../../../src/domain/models/distribution.js";
 import { FileHash } from "../../../src/domain/models/file-hash.js";
 import { FrameworkDescriptor } from "../../../src/domain/models/framework-descriptor.js";
+import type { FileSystem } from "../../../src/domain/ports/file-system.js";
 import type { Hasher } from "../../../src/domain/ports/hasher.js";
 import type { Platform } from "../../../src/domain/ports/platform.js";
 import { claudeToolConfig } from "../../../src/domain/tools/claude.js";
@@ -34,6 +35,24 @@ const stubHasher: Hasher = {
   },
 };
 
+const stubFs: FileSystem = {
+  fileExists: async (_path: string): Promise<boolean> => false,
+  writeFile: async (_path: string, _content: string): Promise<void> => {},
+  deleteFile: async (_path: string): Promise<void> => {},
+  createDirectory: async (_path: string): Promise<void> => {},
+  deleteEmptyDirectories: async (_path: string): Promise<void> => {},
+  readFile: async (_path: string): Promise<string> => "",
+  listDirectory: async (_path: string): Promise<string[]> => [],
+  readFileHash: async (_path: string): Promise<FileHash> => new FileHash("0".repeat(32)),
+  mergeJsonFile: async (_path: string, _content: string): Promise<void> => {},
+  deleteDirectory: async (_path: string): Promise<void> => {},
+  chmodExecutable: async (_path: string): Promise<void> => {},
+  backup: async (_absolutePath: string): Promise<string> => _absolutePath,
+  hasLocalChanges: async (_path: string, _knownHash: FileHash): Promise<boolean> => false,
+};
+
+const stubProjectRoot = "/";
+
 // 3 per section = 12 files total
 const contentFiles = new Map<string, string>([
   ["agents/code-reviewer.md", "# Code Reviewer"],
@@ -54,15 +73,17 @@ const contentFiles = new Map<string, string>([
 ]);
 
 describe("generateDistribution()", () => {
-  it("produces files for Claude ToolSpec", () => {
+  it("produces files for Claude ToolSpec", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       claudeToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     expect(files.length).toBe(12);
     for (const f of files) {
@@ -70,15 +91,17 @@ describe("generateDistribution()", () => {
     }
   });
 
-  it("produces files for Cursor ToolSpec", () => {
+  it("produces files for Cursor ToolSpec", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       cursorToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     expect(files.length).toBe(12);
     for (const f of files) {
@@ -86,15 +109,17 @@ describe("generateDistribution()", () => {
     }
   });
 
-  it("produces files for Copilot ToolSpec", () => {
+  it("produces files for Copilot ToolSpec", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       copilotToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     expect(files.length).toBe(12);
     for (const f of files) {
@@ -104,15 +129,17 @@ describe("generateDistribution()", () => {
     }
   });
 
-  it("Copilot agents go to .github/agents/ with .agent.md extension", () => {
+  it("Copilot agents go to .github/agents/ with .agent.md extension", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       copilotToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const agentFiles = files.filter((f) => f.relativePath.startsWith(".github/agents/"));
     expect(agentFiles.length).toBeGreaterThan(0);
@@ -121,15 +148,17 @@ describe("generateDistribution()", () => {
     }
   });
 
-  it("Copilot commands go to .github/prompts/ with .prompt.md extension", () => {
+  it("Copilot commands go to .github/prompts/ with .prompt.md extension", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       copilotToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const promptFiles = files.filter((f) => f.relativePath.startsWith(".github/prompts/"));
     expect(promptFiles.length).toBeGreaterThan(0);
@@ -138,15 +167,17 @@ describe("generateDistribution()", () => {
     }
   });
 
-  it("Copilot rules go to .github/instructions/ with .instructions.md extension", () => {
+  it("Copilot rules go to .github/instructions/ with .instructions.md extension", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       copilotToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const ruleFiles = files.filter((f) => f.relativePath.startsWith(".github/instructions/"));
     expect(ruleFiles.length).toBeGreaterThan(0);
@@ -155,29 +186,33 @@ describe("generateDistribution()", () => {
     }
   });
 
-  it("Copilot skills go to .github/skills/", () => {
+  it("Copilot skills go to .github/skills/", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       copilotToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const skillFiles = files.filter((f) => f.relativePath.startsWith(".github/skills/"));
     expect(skillFiles.length).toBeGreaterThan(0);
   });
 
-  it("each generated file has a FileHash", () => {
+  it("each generated file has a FileHash", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       claudeToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     for (const f of files) {
       expect(f.hash).toBeDefined();
@@ -185,15 +220,17 @@ describe("generateDistribution()", () => {
     }
   });
 
-  it("skills section only includes SKILL.md entryFile", () => {
+  it("skills section only includes SKILL.md entryFile", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       claudeToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const skillFiles = files.filter((f) => f.relativePath.includes("skills"));
     for (const f of skillFiles) {
@@ -201,22 +238,24 @@ describe("generateDistribution()", () => {
     }
   });
 
-  it("rewrites {{TOOLS}}/ placeholder in content", () => {
+  it("rewrites {{TOOLS}}/ placeholder in content", async () => {
     hashCounter = 0;
     const singleFileMap = new Map([["agents/test.md", "path: {{TOOLS}}/agents/"]]);
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       claudeToolConfig,
       "aidd_docs",
       singleFileMap,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     expect(files[0]?.content).toContain(".claude/");
     expect(files[0]?.content).not.toContain("{{TOOLS}}");
   });
 
-  it("excludes tool-specific files not belonging to the active tool", () => {
+  it("excludes tool-specific files not belonging to the active tool", async () => {
     hashCounter = 0;
     const withToolFiles = new Map([
       ["rules/04-tooling/ide-mapping.claude.md", "---\npaths:\n---\n# Claude"],
@@ -224,13 +263,15 @@ describe("generateDistribution()", () => {
       ["rules/04-tooling/ide-mapping.copilot.md", "---\napplyTo: '**'\n---\n# Copilot"],
       ["rules/01-standards/generic.md", "# Generic rule"],
     ]);
-    const claudeFiles = generateDistribution(
+    const claudeFiles = await generateDistribution(
       framework,
       claudeToolConfig,
       "aidd_docs",
       withToolFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const claudePaths = claudeFiles.map((f) => f.relativePath);
     expect(claudePaths.some((p) => p.endsWith("04-tooling/ide-mapping.md"))).toBe(true);
@@ -239,25 +280,27 @@ describe("generateDistribution()", () => {
     expect(claudePaths.some((p) => p.includes("generic.md"))).toBe(true);
   });
 
-  it("converts frontmatter for Cursor: paths -> globs", () => {
+  it("converts frontmatter for Cursor: paths -> globs", async () => {
     hashCounter = 0;
     const singleFileMap = new Map([
       ["rules/01-standards/naming.md", '---\npaths:\n  - "src/**/*.ts"\n---\n\n# Naming'],
     ]);
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       cursorToolConfig,
       "aidd_docs",
       singleFileMap,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     expect(files[0]?.content).toContain("globs:");
     expect(files[0]?.content).toContain("alwaysApply:");
     expect(files[0]?.content).not.toContain("paths:");
   });
 
-  it("keeps description for claude rules with alwaysApply false and no paths", () => {
+  it("keeps description for claude rules with alwaysApply false and no paths", async () => {
     hashCounter = 0;
     const singleFileMap = new Map([
       [
@@ -265,13 +308,15 @@ describe("generateDistribution()", () => {
         "---\ndescription: Standards\nalwaysApply: false\n---\n\n# Naming",
       ],
     ]);
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       claudeToolConfig,
       "aidd_docs",
       singleFileMap,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     expect(files[0]?.content).not.toContain("paths:");
     expect(files[0]?.content).not.toContain("alwaysApply:");
@@ -279,7 +324,7 @@ describe("generateDistribution()", () => {
     expect(files[0]?.content).toContain("# Naming");
   });
 
-  it("installs copilot rule with globs + alwaysApply: false as applyTo", () => {
+  it("installs copilot rule with globs + alwaysApply: false as applyTo", async () => {
     hashCounter = 0;
     const singleFileMap = new Map([
       [
@@ -287,13 +332,15 @@ describe("generateDistribution()", () => {
         '---\ndescription: Standards\nglobs: ["{{TOOLS}}/rules/**/*.md"]\nalwaysApply: false\n---\n\n# Command Structure',
       ],
     ]);
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       copilotToolConfig,
       "aidd_docs",
       singleFileMap,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     expect(files.length).toBe(1);
     expect(files[0]?.relativePath).toBe(
@@ -303,49 +350,55 @@ describe("generateDistribution()", () => {
     expect(files[0]?.content).toContain("# Command Structure");
   });
 
-  it("includes MCP config for Claude at .mcp.json regardless of source path", () => {
+  it("includes MCP config for Claude at .mcp.json regardless of source path", async () => {
     hashCounter = 0;
     const withConfig = new Map([...contentFiles, ["config/mcp.json", '{"mcpServers":{}}']]);
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       claudeToolConfig,
       "aidd_docs",
       withConfig,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     expect(files.find((f) => f.relativePath === ".mcp.json")).toBeDefined();
     expect(files.find((f) => f.relativePath === "config/mcp.json")).toBeUndefined();
   });
 
-  it("includes MCP config for Cursor at .cursor/mcp.json", () => {
+  it("includes MCP config for Cursor at .cursor/mcp.json", async () => {
     hashCounter = 0;
     const withConfig = new Map([...contentFiles, ["config/mcp.json", '{"mcpServers":{}}']]);
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       cursorToolConfig,
       "aidd_docs",
       withConfig,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const mcp = files.find((f) => f.relativePath === ".cursor/mcp.json");
     expect(mcp).toBeDefined();
   });
 
-  it("transforms MCP npx command on win32 platform", () => {
+  it("transforms MCP npx command on win32 platform", async () => {
     hashCounter = 0;
     const mcpContent = JSON.stringify({
       mcpServers: { myServer: { command: "npx", args: ["-y", "my-pkg"] } },
     });
     const withConfig = new Map([...contentFiles, ["config/mcp.json", mcpContent]]);
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       claudeToolConfig,
       "aidd_docs",
       withConfig,
       stubHasher,
-      win32Platform
+      win32Platform,
+      stubProjectRoot,
+      stubFs
     );
     const mcp = files.find((f) => f.relativePath === ".mcp.json");
     expect(mcp).toBeDefined();
@@ -354,15 +407,17 @@ describe("generateDistribution()", () => {
     expect(parsed.mcpServers.myServer.args).toEqual(["/c", "npx", "-y", "my-pkg"]);
   });
 
-  it("Claude commands land in .claude/commands/aidd/{phase}/ subdirectory", () => {
+  it("Claude commands land in .claude/commands/aidd/{phase}/ subdirectory", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       claudeToolConfig,
       "aidd_docs",
       contentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const commandFiles = files.filter((f) => f.relativePath.includes("commands"));
     expect(commandFiles).toHaveLength(3);
@@ -371,89 +426,99 @@ describe("generateDistribution()", () => {
     }
   });
 
-  it("Claude rewrites @{{TOOLS}}/commands/ to @.claude/commands/aidd/{phase}/", () => {
+  it("Claude rewrites @{{TOOLS}}/commands/ to @.claude/commands/aidd/{phase}/", async () => {
     hashCounter = 0;
     const withInclude = new Map([["agents/test.md", "@{{TOOLS}}/commands/04_code/implement.md"]]);
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       claudeToolConfig,
       "aidd_docs",
       withInclude,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     expect(files[0]?.content).toContain("@.claude/commands/aidd/04/implement.md");
     expect(files[0]?.content).not.toContain("@{{TOOLS}}");
   });
 
-  it("includes memory bank as CLAUDE.md for Claude", () => {
+  it("includes memory bank as CLAUDE.md for Claude", async () => {
     hashCounter = 0;
     const withTemplate = new Map([
       ...contentFiles,
       ["aidd_docs/templates/AGENTS.md", "# Memory Bank\n"],
     ]);
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       claudeToolConfig,
       "aidd_docs",
       withTemplate,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     expect(files.find((f) => f.relativePath === "CLAUDE.md")).toBeDefined();
   });
 
-  it("includes memory bank as AGENTS.md for Cursor", () => {
+  it("includes memory bank as AGENTS.md for Cursor", async () => {
     hashCounter = 0;
     const withTemplate = new Map([
       ...contentFiles,
       ["aidd_docs/templates/AGENTS.md", "# Memory Bank\n"],
     ]);
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       cursorToolConfig,
       "aidd_docs",
       withTemplate,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     expect(files.find((f) => f.relativePath === "AGENTS.md")).toBeDefined();
   });
 
-  it("includes memory bank as .github/copilot-instructions.md for Copilot", () => {
+  it("includes memory bank as .github/copilot-instructions.md for Copilot", async () => {
     hashCounter = 0;
     const withTemplate = new Map([
       ...contentFiles,
       ["aidd_docs/templates/AGENTS.md", "# Memory Bank\n"],
     ]);
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       copilotToolConfig,
       "aidd_docs",
       withTemplate,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     expect(files.find((f) => f.relativePath === ".github/copilot-instructions.md")).toBeDefined();
   });
 
-  it("includes MCP config for Copilot at .vscode/mcp.json", () => {
+  it("includes MCP config for Copilot at .vscode/mcp.json", async () => {
     hashCounter = 0;
     const withConfig = new Map([...contentFiles, ["config/mcp.json", '{"mcpServers":{}}']]);
-    const files = generateDistribution(
+    const files = await generateDistribution(
       framework,
       copilotToolConfig,
       "aidd_docs",
       withConfig,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const mcp = files.find((f) => f.relativePath === ".vscode/mcp.json");
     expect(mcp).toBeDefined();
   });
 
   describe("OpenCode", () => {
-    it("transforms MCP servers to OpenCode format in opencode.json", () => {
+    it("transforms MCP servers to OpenCode format in opencode.json", async () => {
       hashCounter = 0;
       const withMcp = new Map([
         ...contentFiles,
@@ -473,13 +538,15 @@ describe("generateDistribution()", () => {
         configRefs: [{ name: "mcp", path: "config/mcp.json" }],
         scriptRefs: [],
       });
-      const files = generateDistribution(
+      const files = await generateDistribution(
         opencodeFramework,
         opencodeToolConfig,
         "aidd_docs",
         withMcp,
         stubHasher,
-        linuxPlatform
+        linuxPlatform,
+        stubProjectRoot,
+        stubFs
       );
       const mcpFile = files.find((f) => f.relativePath === "opencode.json");
       assert(mcpFile !== undefined, "opencode.json not generated");
@@ -496,7 +563,7 @@ describe("generateDistribution()", () => {
       });
     });
 
-    it("opencode settings and MCP config both contribute to opencode.json", () => {
+    it("opencode settings and MCP config both contribute to opencode.json", async () => {
       hashCounter = 0;
       const withBothConfigs = new Map([
         ...contentFiles,
@@ -513,13 +580,15 @@ describe("generateDistribution()", () => {
         ],
         scriptRefs: [],
       });
-      const files = generateDistribution(
+      const files = await generateDistribution(
         opencodeFramework,
         opencodeToolConfig,
         "aidd_docs",
         withBothConfigs,
         stubHasher,
-        linuxPlatform
+        linuxPlatform,
+        stubProjectRoot,
+        stubFs
       );
       const opencodeJsonFiles = files.filter((f) => f.relativePath === "opencode.json");
       expect(opencodeJsonFiles).toHaveLength(2);
@@ -568,15 +637,17 @@ describe("generateDistribution() snapshots", () => {
     scriptRefs: [],
   });
 
-  it("Claude — agents content is rewritten correctly", () => {
+  it("Claude — agents content is rewritten correctly", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       claudeToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const agent = files.find((f) => f.relativePath.includes("agents/"));
     expect(agent?.content).toEqual(
@@ -584,15 +655,17 @@ describe("generateDistribution() snapshots", () => {
     );
   });
 
-  it("Claude — commands content is rewritten correctly", () => {
+  it("Claude — commands content is rewritten correctly", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       claudeToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const cmd = files.find((f) => f.relativePath.includes("commands/"));
     expect(cmd?.content).toEqual(
@@ -600,57 +673,65 @@ describe("generateDistribution() snapshots", () => {
     );
   });
 
-  it("Claude — rules content is rewritten correctly", () => {
+  it("Claude — rules content is rewritten correctly", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       claudeToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const rule = files.find((f) => f.relativePath.includes("rules/"));
     expect(rule?.content).toEqual('---\npaths:\n  - "src/**/*.ts"\n---\n\n# Naming\n');
   });
 
-  it("Claude — skills content is rewritten correctly", () => {
+  it("Claude — skills content is rewritten correctly", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       claudeToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const skill = files.find((f) => f.relativePath.includes("skills/"));
     expect(skill?.content).toEqual("# Commit Skill\n\nUse .claude/agents/ for agents.\n");
   });
 
-  it("Claude — config content is passed through unchanged", () => {
+  it("Claude — config content is passed through unchanged", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       claudeToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const config = files.find((f) => f.relativePath === ".mcp.json");
     expect(config?.content).toEqual('{"mcpServers":{}}');
   });
 
-  it("Claude — memoryBank content is rewritten correctly", () => {
+  it("Claude — memoryBank content is rewritten correctly", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       claudeToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const mem = files.find((f) => f.relativePath === "CLAUDE.md");
     expect(mem?.content).toEqual(
@@ -658,15 +739,17 @@ describe("generateDistribution() snapshots", () => {
     );
   });
 
-  it("Cursor — agents content is rewritten correctly", () => {
+  it("Cursor — agents content is rewritten correctly", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       cursorToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const agent = files.find((f) => f.relativePath.includes("agents/"));
     expect(agent?.content).toEqual(
@@ -674,15 +757,17 @@ describe("generateDistribution() snapshots", () => {
     );
   });
 
-  it("Cursor — commands content is rewritten correctly", () => {
+  it("Cursor — commands content is rewritten correctly", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       cursorToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const cmd = files.find((f) => f.relativePath.includes("commands/"));
     expect(cmd?.content).toEqual(
@@ -690,15 +775,17 @@ describe("generateDistribution() snapshots", () => {
     );
   });
 
-  it("Cursor — rules content is rewritten correctly", () => {
+  it("Cursor — rules content is rewritten correctly", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       cursorToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const rule = files.find((f) => f.relativePath.includes("rules/"));
     expect(rule?.content).toEqual(
@@ -706,43 +793,49 @@ describe("generateDistribution() snapshots", () => {
     );
   });
 
-  it("Cursor — skills content is rewritten correctly", () => {
+  it("Cursor — skills content is rewritten correctly", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       cursorToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const skill = files.find((f) => f.relativePath.includes("skills/"));
     expect(skill?.content).toEqual("# Commit Skill\n\nUse .cursor/agents/ for agents.\n");
   });
 
-  it("Cursor — config content is passed through unchanged", () => {
+  it("Cursor — config content is passed through unchanged", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       cursorToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const config = files.find((f) => f.relativePath === ".cursor/mcp.json");
     expect(config?.content).toEqual('{"mcpServers":{}}');
   });
 
-  it("Cursor — memoryBank content is rewritten correctly", () => {
+  it("Cursor — memoryBank content is rewritten correctly", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       cursorToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const mem = files.find((f) => f.relativePath === "AGENTS.md");
     expect(mem?.content).toEqual(
@@ -750,15 +843,17 @@ describe("generateDistribution() snapshots", () => {
     );
   });
 
-  it("Copilot — agents content is rewritten correctly", () => {
+  it("Copilot — agents content is rewritten correctly", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       copilotToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const agent = files.find((f) => f.relativePath.startsWith(".github/agents/"));
     expect(agent?.content).toEqual(
@@ -766,15 +861,17 @@ describe("generateDistribution() snapshots", () => {
     );
   });
 
-  it("Copilot — commands content is rewritten correctly", () => {
+  it("Copilot — commands content is rewritten correctly", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       copilotToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const cmd = files.find((f) => f.relativePath.startsWith(".github/prompts/"));
     expect(cmd?.content).toEqual(
@@ -782,57 +879,65 @@ describe("generateDistribution() snapshots", () => {
     );
   });
 
-  it("Copilot — rules content is rewritten correctly", () => {
+  it("Copilot — rules content is rewritten correctly", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       copilotToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const rule = files.find((f) => f.relativePath.startsWith(".github/instructions/"));
     expect(rule?.content).toEqual("---\napplyTo: 'src/**/*.ts'\n---\n\n# Naming\n");
   });
 
-  it("Copilot — skills content is rewritten correctly", () => {
+  it("Copilot — skills content is rewritten correctly", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       copilotToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const skill = files.find((f) => f.relativePath.startsWith(".github/skills/"));
     expect(skill?.content).toEqual("# Commit Skill\n\nUse .github/agents/ for agents.\n");
   });
 
-  it("Copilot — config content is passed through unchanged", () => {
+  it("Copilot — config content is passed through unchanged", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       copilotToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const config = files.find((f) => f.relativePath === ".vscode/mcp.json");
     expect(config?.content).toEqual('{"mcpServers":{}}');
   });
 
-  it("Copilot — memoryBank content is rewritten correctly", () => {
+  it("Copilot — memoryBank content is rewritten correctly", async () => {
     hashCounter = 0;
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       copilotToolConfig,
       "aidd_docs",
       snapshotContentFiles,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     const mem = files.find((f) => f.relativePath === ".github/copilot-instructions.md");
     expect(mem?.content).toEqual(
@@ -840,23 +945,25 @@ describe("generateDistribution() snapshots", () => {
     );
   });
 
-  it("Copilot rewrites @{{TOOLS}}/skills/ reference in body", () => {
+  it("Copilot rewrites @{{TOOLS}}/skills/ reference in body", async () => {
     hashCounter = 0;
     const withRef = new Map([["agents/test.md", "@{{TOOLS}}/skills/commit/SKILL.md"]]);
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       copilotToolConfig,
       "aidd_docs",
       withRef,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     expect(files[0]?.content).toEqual(
       "---\nname: 'undefined'\ndescription: 'undefined'\n---\n[.github/skills/commit/SKILL.md](../../.github/skills/commit/SKILL.md)"
     );
   });
 
-  it("Copilot rewrites @{{TOOLS}}/commands/ reference in body", () => {
+  it("Copilot rewrites @{{TOOLS}}/commands/ reference in body", async () => {
     hashCounter = 0;
     const withRef = new Map([
       [
@@ -864,13 +971,15 @@ describe("generateDistribution() snapshots", () => {
         "@{{TOOLS}}/commands/04_code/implement.md and @{{TOOLS}}/rules/01-standards/naming.md",
       ],
     ]);
-    const files = generateDistribution(
+    const files = await generateDistribution(
       snapshotFramework,
       copilotToolConfig,
       "aidd_docs",
       withRef,
       stubHasher,
-      linuxPlatform
+      linuxPlatform,
+      stubProjectRoot,
+      stubFs
     );
     expect(files[0]?.content).toEqual(
       "---\nname: 'undefined'\ndescription: 'undefined'\n---\n[.github/prompts/04-implement.prompt.md](../../.github/prompts/04-implement.prompt.md) and [.github/instructions/01-naming.instructions.md](../../.github/instructions/01-naming.instructions.md)"

@@ -115,13 +115,15 @@ export class InstallUseCase {
 
       this.logger.info(`Generating ${toolId} distribution...`);
 
-      const generated = generateDistribution(
+      const generated = await generateDistribution(
         descriptor,
         config,
         docsDir,
         contentFiles,
         this.hasher,
-        this.platform
+        this.platform,
+        projectRoot,
+        this.fs
       );
 
       if (manifest.hasTool(toolId)) {

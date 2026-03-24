@@ -17,6 +17,8 @@ paths:
 - Orchestrate domain operations end-to-end
 - Return a typed result object
 - Throw on invalid input or domain errors — never catch internally
+- No tool-specific logic — tool names (`opencode`, `cursor`, etc.), tool file names, or per-tool decisions must not appear here
+- If a tool needs runtime behavior (e.g. dynamic output path), extend the relevant domain interface (`ConfigHandler`, etc.) and implement it in the tool's domain file
 
 ## Domain Model (`src/domain/models/`)
 

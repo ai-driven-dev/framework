@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { ConfigConflictError } from "../../../src/domain/errors.js";
+import type { FileSystem } from "../../../src/domain/ports/file-system.js";
 import { opencodeToolConfig } from "../../../src/domain/tools/opencode.js";
+
+function makeFs(existingPaths: string[]): FileSystem {
+  return {
+    fileExists: async (path: string) => existingPaths.some((p) => path.endsWith(p)),
+  } as unknown as FileSystem;
+}
 
 describe("opencodeToolConfig", () => {
   describe("rewriteContent()", () => {
@@ -276,6 +284,38 @@ describe("opencodeToolConfig", () => {
     it("returns non-mcp content unchanged", () => {
       const content = '{"instructions":[".opencode/rules/**/*.md"]}';
       expect(transform("opencode", content)).toBe(content);
+    });
+  });
+
+  describe("config().resolveOutputPath()", () => {
+    const PROJECT_ROOT = "/project";
+    const configHandler = opencodeToolConfig.config();
+
+    async function resolve(configName: string, fs: FileSystem): Promise<string | null> {
+      if (!configHandler.resolveOutputPath) throw new Error("resolveOutputPath not defined");
+      return configHandler.resolveOutputPath(configName, PROJECT_ROOT, fs);
+    }
+
+    it("returns opencode.json when neither config file exists", async () => {
+      expect(await resolve("opencode", makeFs([]))).toBe("opencode.json");
+    });
+
+    it("returns opencode.json when only opencode.json exists", async () => {
+      expect(await resolve("opencode", makeFs(["opencode.json"]))).toBe("opencode.json");
+    });
+
+    it("returns opencode.jsonc when only opencode.jsonc exists", async () => {
+      expect(await resolve("opencode", makeFs(["opencode.jsonc"]))).toBe("opencode.jsonc");
+    });
+
+    it("throws ConfigConflictError when both opencode.json and opencode.jsonc exist", async () => {
+      await expect(
+        resolve("opencode", makeFs(["opencode.json", "opencode.jsonc"]))
+      ).rejects.toThrow(ConfigConflictError);
+    });
+
+    it("returns null for a config name that is not handled", async () => {
+      expect(await resolve("unknown", makeFs([]))).toBeNull();
     });
   });
 

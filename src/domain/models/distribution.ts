@@ -1,3 +1,4 @@
+import type { FileSystem } from "../ports/file-system.js";
 import type { Hasher } from "../ports/hasher.js";
 import type { Platform } from "../ports/platform.js";
 import type { FrameworkDescriptor } from "./framework-descriptor.js";
@@ -22,14 +23,16 @@ import {
 
 type ContentTransform = (content: string) => string;
 
-export function generateDistribution(
+export async function generateDistribution(
   framework: FrameworkDescriptor,
   toolConfig: ToolConfig,
   docsDir: string,
   contentFiles: Map<string, string>,
   hasher: Hasher,
-  platform: Platform
-): GeneratedFile[] {
+  platform: Platform,
+  projectRoot: string,
+  fs: FileSystem
+): Promise<GeneratedFile[]> {
   const results: GeneratedFile[] = [];
 
   for (const section of framework.contentSections) {
@@ -90,16 +93,23 @@ export function generateDistribution(
   const mcpTransform = mcpTransformFor(current);
   if (mcpTransform) transforms.set(CONFIG_MCP, mcpTransform);
 
+  const resolveOutput = async (name: string): Promise<string | null> => {
+    if (configHandler.resolveOutputPath) {
+      return configHandler.resolveOutputPath(name, projectRoot, fs);
+    }
+    return configHandler.outputPath(name);
+  };
+
   results.push(
-    ...collectRawFiles(
+    ...(await collectRawFiles(
       framework.configRefs,
-      (name) => configHandler.outputPath(name),
+      resolveOutput,
       (name) => configHandler.shouldMerge(name),
       configHandler.transformContent?.bind(configHandler),
       contentFiles,
       hasher,
       transforms
-    ),
+    )),
     ...collectMemoryBankFiles(framework.templateRefs, toolConfig, docsDir, contentFiles, hasher)
   );
 
@@ -161,30 +171,32 @@ function collectMemoryBankFiles(
   });
 }
 
-function collectRawFiles(
+async function collectRawFiles(
   refs: readonly { name: string; path: string }[],
-  resolveOutput: (name: string) => string | null,
+  resolveOutput: (name: string) => Promise<string | null>,
   shouldMerge: (name: string) => boolean,
   transformContent: ((name: string, content: string) => string) | undefined,
   contentFiles: Map<string, string>,
   hasher: Hasher,
   transforms: Map<string, ContentTransform>
-): GeneratedFile[] {
-  return refs.flatMap((ref) => {
+): Promise<GeneratedFile[]> {
+  const results: GeneratedFile[] = [];
+  for (const ref of refs) {
     const rawContent = contentFiles.get(ref.path);
-    if (rawContent === undefined) return [];
-    const outputPath = resolveOutput(ref.name);
-    if (outputPath === null) return [];
+    if (rawContent === undefined) continue;
+    const outputPath = await resolveOutput(ref.name);
+    if (outputPath === null) continue;
     const toolContent = transformContent ? transformContent(ref.name, rawContent) : rawContent;
     const content = transforms.get(ref.name)?.(toolContent) ?? toolContent;
-    return [
+    results.push(
       new GeneratedFile({
         relativePath: outputPath,
         content,
         hash: hasher.hash(content),
         merge: shouldMerge(ref.name),
         frameworkPath: ref.path,
-      }),
-    ];
-  });
+      })
+    );
+  }
+  return results;
 }
