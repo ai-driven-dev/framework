@@ -68,6 +68,14 @@ export function registerSetupCommand(program: Command): void {
         }
 
         try {
+          const hasScriptingFlags = !!(
+            cmdOptions.allTools ||
+            cmdOptions.tools ||
+            cmdOptions.from !== undefined ||
+            cmdOptions.docsDir !== undefined
+          );
+          const interactive = process.stdout.isTTY && !hasScriptingFlags;
+
           const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
           const result = await new SetupUseCase(
@@ -86,7 +94,7 @@ export function registerSetupCommand(program: Command): void {
             path: cmdOptions.path,
             release: cmdOptions.release,
             repo,
-            interactive: process.stdout.isTTY,
+            interactive,
             docsDir: cmdOptions.docsDir,
             toolIds: rawToolIds,
             from: cmdOptions.from,
