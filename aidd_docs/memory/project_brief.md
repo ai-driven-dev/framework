@@ -37,7 +37,7 @@
 
 | Command | Flags | Description |
 | --- | --- | --- |
-| `aidd setup` | `--release`, `--path` | Interactive onboarding. Detects state and runs init + install, adopt, install, or update as needed. Requires TTY. |
+| `aidd setup` | `--release`, `--path`, `--tools`, `--all-tools`, `--docs-dir`, `--from` | Detects state and runs init + install, adopt, install, or update. Interactive by default; non-interactive when `--tools` or `--all-tools` is provided. |
 | `aidd install <tools...>` | `--all`, `--force`, `--release`, `--path` | Generate and write tool-specific distribution files. Requires existing manifest. |
 | `aidd uninstall <tools...>` | `--all` | Remove tool files and update manifest. |
 | `aidd status` | `--tool`, `--docs` | Show drift (modified/deleted/added) between disk and manifest. |
@@ -54,10 +54,10 @@
 
 ## vNext — Vision (unspecified)
 
-**Interactive / non-interactive mode:**
+**Interactive / non-interactive mode (implemented):**
 
-- No flag = interactive mode: step-by-step guidance via `@inquirer/prompts` (tool selection, confirmation, sub-part selection)
-- With flags = non-interactive mode: current behavior, CI/scripting compatible
+- No flag = interactive mode: step-by-step guidance via `@inquirer/prompts`
+- `--tools` or `--all-tools` = non-interactive mode: prompts suppressed, defaults auto-resolved, CI/scripting compatible
 
 **Installation granularity (to be specified):**
 
