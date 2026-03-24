@@ -40,9 +40,9 @@ flowchart LR
 ```mermaid
 flowchart TD
     subgraph APP["Application"]
-        CMD_FILES["commands: auth, adopt, init, install, uninstall, status, clean, doctor, update, restore, sync, cache, config, self-update, setup"]
+        CMD_FILES["commands: auth, install, uninstall, status, clean, doctor, update, restore, sync, cache, config, self-update, setup"]
         OUTPUT["output.ts"]
-        USECASES["use-cases: auth-login, auth-logout, auth-status, adopt, init, install, uninstall, status, clean, doctor, catalog, restore, update, sync, gitignore, resolve-framework, self-update"]
+        USECASES["use-cases: auth-login, auth-logout, auth-status, adopt, init, install, uninstall, status, clean, doctor, catalog, restore, update, sync, gitignore, resolve-framework, require-auth, self-update, setup"]
     end
     subgraph DOM["Domain"]
         MODELS["models: Manifest, Distribution, Catalog, ToolConfig, FileHash, GeneratedFile, Docs, Mcp, Semver"]
@@ -185,6 +185,12 @@ src/
     ├── migrations/                 # manifest-migrations.ts
     └── tar/                        # tar-extractor.ts
 ```
+
+## Use Case Notes
+
+- `ResolveFrameworkUseCase` handles framework resolution and conditional auth: for remote sources it delegates to `RequireAuthUseCase`; for local paths auth is never called. Exposes `isLocalSource` as a public static method for callers that need pre-classification.
+- `RequireAuthUseCase` is the single source of auth validation logic. All commands and `SetupUseCase` delegate auth through this class — no duplicated auth checks.
+- 13 commands total. `setup` is the interactive entry point for init/adopt/update flows; `init` and `adopt` are internal use cases only (no CLI commands). See DEC-009, DEC-010, DEC-011.
 
 ## Known Design Behaviors
 

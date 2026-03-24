@@ -3,8 +3,7 @@ import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config
 
 import { createDeps } from "../../infrastructure/deps.js";
 import { NoManifestError } from "../errors.js";
-import { requireAuth } from "../require-auth.js";
-import { resolveFrameworkWithFallback } from "../use-cases/resolve-framework-use-case.js";
+import { ResolveFrameworkUseCase } from "../use-cases/resolve-framework-use-case.js";
 import { RestoreUseCase } from "../use-cases/restore-use-case.js";
 import { StatusUseCase } from "../use-cases/status-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
@@ -58,13 +57,11 @@ export function registerRestoreCommand(program: Command): void {
                 .map((id) => manifest.getToolVersion(id))
                 .find((v) => v !== undefined);
 
-          if (!cmdOptions.path) await requireAuth(deps.authReader);
-
-          const { path: frameworkPath, version } = await resolveFrameworkWithFallback(
+          const { path: frameworkPath, version } = await new ResolveFrameworkUseCase(
             deps.resolver,
             deps.logger,
-            { path: cmdOptions.path, pinnedVersion, release: cmdOptions.release }
-          );
+            deps.authReader
+          ).execute({ path: cmdOptions.path, pinnedVersion, release: cmdOptions.release });
 
           const toolIds: ToolId[] | undefined = cmdOptions.tool
             ? [cmdOptions.tool as ToolId]

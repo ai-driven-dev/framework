@@ -58,6 +58,7 @@ export function registerSetupCommand(program: Command): void {
           path: cmdOptions.path,
           release: cmdOptions.release,
           repo,
+          interactive: true,
         });
 
         switch (result.kind) {

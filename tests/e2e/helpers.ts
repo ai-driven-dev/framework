@@ -4,10 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { CLIOutput } from "../../src/application/output.js";
-import { AdoptUseCase } from "../../src/application/use-cases/adopt-use-case.js";
-import { InitUseCase } from "../../src/application/use-cases/init-use-case.js";
-import { resolveFramework } from "../../src/application/use-cases/resolve-framework-use-case.js";
-import { Manifest } from "../../src/domain/models/manifest.js";
+import { SetupUseCase } from "../../src/application/use-cases/setup-use-case.js";
 import type { ToolId } from "../../src/domain/models/tool-config.js";
 import { createDeps } from "../../src/infrastructure/deps.js";
 
@@ -64,22 +61,25 @@ export async function runCli(
 export async function initProject(
   projectDir: string,
   frameworkPath: string,
-  options?: { docsDir?: string; repo?: string; force?: boolean }
+  options?: { docsDir?: string; repo?: string }
 ): Promise<void> {
   const output = new CLIOutput(false);
   const deps = await createDeps(projectDir, { verbose: false }, output);
-  const { path: resolvedPath, version } = await resolveFramework(deps.resolver, deps.logger, {
-    path: frameworkPath,
-  });
-  await new InitUseCase(deps.fs, deps.manifestRepo, deps.loader, deps.hasher, deps.logger).execute({
-    frameworkPath: resolvedPath,
-    version,
+  await new SetupUseCase(
+    deps.fs,
+    deps.manifestRepo,
+    deps.loader,
+    deps.hasher,
+    deps.logger,
+    deps.git,
+    deps.platform,
+    deps.prompter,
+    deps.resolver
+  ).execute({
     projectRoot: projectDir,
-    interactive: false,
+    path: frameworkPath,
     docsDir: options?.docsDir,
-    explicitDocsDir: options?.docsDir,
     repo: options?.repo,
-    force: options?.force,
   });
 }
 
@@ -90,21 +90,15 @@ export async function adoptProject(
 ): Promise<void> {
   const output = new CLIOutput(false);
   const deps = await createDeps(projectDir, { verbose: false }, output);
-  const { path: resolvedPath, version } = await resolveFramework(deps.resolver, deps.logger, {
-    path: frameworkPath,
-  });
-  await new AdoptUseCase(
+  await new SetupUseCase(
     deps.fs,
     deps.manifestRepo,
     deps.loader,
     deps.hasher,
     deps.logger,
-    deps.platform
-  ).execute({
-    toolIds,
-    frameworkPath: resolvedPath,
-    docsDir: Manifest.DEFAULT_DOCS_DIR,
-    projectRoot: projectDir,
-    version,
-  });
+    deps.git,
+    deps.platform,
+    deps.prompter,
+    deps.resolver
+  ).execute({ projectRoot: projectDir, path: frameworkPath, toolIds, from: frameworkPath });
 }

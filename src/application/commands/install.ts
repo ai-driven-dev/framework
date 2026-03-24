@@ -1,9 +1,8 @@
 import type { Command } from "commander";
 import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
-import { requireAuth } from "../require-auth.js";
 import { InstallUseCase } from "../use-cases/install-use-case.js";
-import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
+import { ResolveFrameworkUseCase } from "../use-cases/resolve-framework-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 export function registerInstallCommand(program: Command): void {
@@ -33,18 +32,16 @@ export function registerInstallCommand(program: Command): void {
 
           const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
-          if (!cmdOptions.path) await requireAuth(deps.authReader);
-
           if (!cmdOptions.all && toolArgs.length === 0 && !process.stdout.isTTY) {
             output.error("aidd install requires tool arguments or --all in non-interactive mode.");
             process.exit(1);
           }
 
-          const { path: frameworkPath, version } = await resolveFramework(
+          const { path: frameworkPath, version } = await new ResolveFrameworkUseCase(
             deps.resolver,
             deps.logger,
-            { path: cmdOptions.path, release: cmdOptions.release }
-          );
+            deps.authReader
+          ).execute({ path: cmdOptions.path, release: cmdOptions.release });
 
           const toolIds: ToolId[] | undefined =
             !cmdOptions.all && toolArgs.length > 0 ? (toolArgs as ToolId[]) : undefined;

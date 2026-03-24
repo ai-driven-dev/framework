@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
-import { requireAuth } from "../require-auth.js";
+import { RequireAuthUseCase } from "../use-cases/require-auth-use-case.js";
 import { SelfUpdateUseCase } from "../use-cases/self-update-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
@@ -17,7 +17,7 @@ export function registerSelfUpdateCommand(program: Command): void {
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
 
-        await requireAuth(deps.authReader);
+        await new RequireAuthUseCase(deps.authReader).execute();
 
         const useCase = new SelfUpdateUseCase(deps.cliUpdater, deps.currentVersionProvider);
         const result = await useCase.execute({

@@ -14,3 +14,6 @@ This file contains the key architectural decisions made during the project, alon
 | 2026-03-22 | DEC-006 | [Shared skip signal for interruptible animations](./decisions/DEC-006-shared-skip-signal-animation.md) | any keypress skips entire animation instantly |
 | 2026-03-22 | DEC-007 | [isFileTracked() as guard before writing untracked file](./decisions/DEC-007-isfiletracked-guard-before-write.md) | Manifest is canonical oracle for AIDD file ownership |
 | 2026-03-22 | DEC-008 | [Skip untracked user files during install and update](./decisions/DEC-008-skip-untracked-user-files-on-install-update.md) | user files at colliding paths preserved unconditionally |
+| 2026-03-24 | DEC-009 | [Remove init and adopt CLI commands](./decisions/DEC-009-remove-init-adopt-commands.md) | setup is sole entry point; hidden commands removed |
+| 2026-03-24 | DEC-010 | [SetupUseCase non-interactive options](./decisions/DEC-010-setup-non-interactive-options.md) | programmatic use without prompter mocking |
+| 2026-03-24 | DEC-011 | [ResolveFrameworkUseCase and RequireAuthUseCase](./decisions/DEC-011-resolve-framework-require-auth-use-cases.md) | plain functions replaced by classes; auth delegated, no duplication |

@@ -1,3 +1,4 @@
+import { isLocalPath } from "../../domain/models/framework-path.js";
 import { Manifest } from "../../domain/models/manifest.js";
 import { compareSemver, isSemver } from "../../domain/models/semver.js";
 import {
@@ -17,12 +18,11 @@ import type { ManifestRepository } from "../../domain/ports/manifest-repository.
 import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import { AdoptRequiresVersionError } from "../errors.js";
-import { requireAuth } from "../require-auth.js";
 import { AdoptUseCase } from "./adopt-use-case.js";
 import { InitUseCase } from "./init-use-case.js";
 import type { InstallToolResult } from "./install-use-case.js";
 import { InstallUseCase } from "./install-use-case.js";
-import { resolveFramework } from "./resolve-framework-use-case.js";
+import { ResolveFrameworkUseCase } from "./resolve-framework-use-case.js";
 import { UpdateUseCase } from "./update-use-case.js";
 
 interface SetupOptions {
@@ -30,6 +30,11 @@ interface SetupOptions {
   path?: string;
   release?: string;
   repo?: string;
+  // Non-interactive overrides: when provided, matching prompts are skipped
+  docsDir?: string;
+  toolIds?: ToolId[];
+  from?: string;
+  interactive?: boolean;
 }
 
 interface InstallSummary {
@@ -65,6 +70,8 @@ export type SetupState =
   | { kind: "up-to-date" };
 
 export class SetupUseCase {
+  private readonly frameworkResolver: ResolveFrameworkUseCase;
+
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
@@ -75,14 +82,12 @@ export class SetupUseCase {
     private readonly platform: Platform,
     private readonly prompter: Prompter,
     private readonly resolver: FrameworkResolver,
-    private readonly authReader?: AuthTokenProvider
-  ) {}
+    authReader?: AuthTokenProvider
+  ) {
+    this.frameworkResolver = new ResolveFrameworkUseCase(resolver, logger, authReader);
+  }
 
   async execute(options: SetupOptions): Promise<SetupResult> {
-    if (this.authReader) {
-      await requireAuth(this.authReader);
-    }
-
     const state = await detectSetupState(
       this.manifestRepo,
       this.fs,
@@ -104,55 +109,69 @@ export class SetupUseCase {
   }
 
   private async handleInit(options: SetupOptions): Promise<SetupResult> {
-    const { projectRoot, path, release, repo } = options;
+    const { projectRoot, release, repo } = options;
 
-    const docsDirInput = await this.prompter.input(
-      "Documentation directory name:",
-      Manifest.DEFAULT_DOCS_DIR
-    );
-    const docsDir = docsDirInput || Manifest.DEFAULT_DOCS_DIR;
-    Manifest.validateDocsDir(docsDir);
+    let docsDir: string;
+    let explicitDocsDir: string;
+    if (options.docsDir !== undefined) {
+      docsDir = options.docsDir;
+      explicitDocsDir = options.docsDir;
+      Manifest.validateDocsDir(docsDir);
+    } else {
+      const docsDirInput = await this.prompter.input(
+        "Documentation directory name:",
+        Manifest.DEFAULT_DOCS_DIR
+      );
+      docsDir = docsDirInput || Manifest.DEFAULT_DOCS_DIR;
+      explicitDocsDir = docsDirInput;
+      Manifest.validateDocsDir(docsDir);
+    }
 
-    const existingManifest = await this.manifestRepo.load();
-    const sourceDefault = path ?? existingManifest?.repo ?? this.resolver.getDefaultRepo() ?? "";
-    const sourceInput = await this.prompter.input(
-      "Framework source (owner/repo or local path):",
-      sourceDefault
-    );
+    let frameworkPath: string | undefined;
+    let frameworkRepo: string | undefined;
 
-    let interactivePath: string | undefined;
-    let interactiveRepo: string | undefined;
-
-    if (sourceInput !== "") {
-      if (
-        sourceInput.startsWith("/") ||
-        sourceInput.startsWith("./") ||
-        sourceInput.startsWith("../")
-      ) {
-        interactivePath = sourceInput;
-      } else {
-        interactiveRepo = sourceInput;
+    if (options.path !== undefined) {
+      if (options.path) {
+        if (isLocalPath(options.path)) {
+          frameworkPath = options.path;
+        } else {
+          frameworkRepo = options.path;
+        }
+      }
+    } else {
+      const existingManifest = await this.manifestRepo.load();
+      const sourceDefault = existingManifest?.repo ?? this.resolver.getDefaultRepo() ?? "";
+      const sourceInput = await this.prompter.input(
+        "Framework source (owner/repo or local path):",
+        sourceDefault
+      );
+      if (sourceInput) {
+        if (isLocalPath(sourceInput)) {
+          frameworkPath = sourceInput;
+        } else {
+          frameworkRepo = sourceInput;
+        }
       }
     }
 
-    let resolvedRelease: string | undefined;
-    if (!interactivePath && !release && interactiveRepo) {
-      const latestTag = await this.resolver.fetchLatestVersion(interactiveRepo).catch(() => "");
-      if (latestTag) {
-        resolvedRelease = await this.prompter.input(
-          `Framework release tag (latest: ${latestTag}):`,
-          latestTag
-        );
-      } else {
-        resolvedRelease = await this.prompter.input("Framework release tag:", "");
-      }
+    let resolvedRelease = release;
+    if (!frameworkPath && !release) {
+      const latest = await this.resolver.fetchLatestVersion(frameworkRepo).catch(() => "");
+      resolvedRelease =
+        (await this.prompter.input(
+          latest ? `Framework release tag (latest: ${latest}):` : "Framework release tag:",
+          latest
+        )) ||
+        latest ||
+        undefined;
     }
 
-    const { path: frameworkPath, version } = await resolveFramework(this.resolver, this.logger, {
-      path: interactivePath ?? path,
-      release: resolvedRelease ?? release,
-      repo: interactiveRepo,
+    const resolved = await this.frameworkResolver.execute({
+      path: frameworkPath,
+      release: resolvedRelease,
     });
+
+    const repoForManifest = frameworkRepo ?? repo;
 
     const initResult = await new InitUseCase(
       this.fs,
@@ -161,16 +180,23 @@ export class SetupUseCase {
       this.hasher,
       this.logger
     ).execute({
-      frameworkPath,
-      version,
+      frameworkPath: resolved.path,
+      version: resolved.version,
       docsDir,
-      explicitDocsDir: docsDirInput,
+      explicitDocsDir,
       projectRoot,
       force: false,
-      repo: interactiveRepo,
+      repo: repoForManifest,
     });
 
-    const installResults = await this.runInstall(frameworkPath, version, projectRoot, repo);
+    const installResults = await this.runInstall(
+      resolved.path,
+      resolved.version,
+      projectRoot,
+      repoForManifest,
+      options.toolIds,
+      options.interactive
+    );
 
     return {
       kind: "initialized",
@@ -183,14 +209,29 @@ export class SetupUseCase {
   private async handleAdopt(options: SetupOptions): Promise<SetupResult> {
     const { projectRoot, repo } = options;
 
-    const choices = VALID_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }));
-    const selected = await this.prompter.checkbox("Which tools do you want to adopt?", choices);
-    if (selected.length === 0) throw new Error("No tools selected.");
+    let selected: ToolId[];
+    if (options.toolIds !== undefined && options.toolIds.length > 0) {
+      selected = options.toolIds;
+    } else {
+      const choices = VALID_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }));
+      const checkedIds = await this.prompter.checkbox("Which tools do you want to adopt?", choices);
+      if (checkedIds.length === 0) throw new Error("No tools selected.");
+      selected = checkedIds as ToolId[];
+    }
 
-    const fromInput = await this.prompter.input("Framework version tag or local path:", "");
-    if (!fromInput) throw new AdoptRequiresVersionError(repo);
+    let fromInput: string;
+    if (options.from !== undefined) {
+      fromInput = options.from;
+      if (!fromInput) throw new AdoptRequiresVersionError(repo);
+    } else {
+      fromInput = await this.prompter.input(
+        "Which version of the framework do you already have installed? (e.g. v1.2.3 or local path):",
+        ""
+      );
+      if (!fromInput) throw new AdoptRequiresVersionError(repo);
+    }
 
-    const { path: frameworkPath, version } = await resolveFramework(this.resolver, this.logger, {
+    const { path: frameworkPath, version } = await this.frameworkResolver.execute({
       from: fromInput,
     });
 
@@ -221,13 +262,20 @@ export class SetupUseCase {
   private async handleInstall(options: SetupOptions): Promise<SetupResult> {
     const { projectRoot, path, release, repo } = options;
 
-    const { path: frameworkPath, version } = await resolveFramework(this.resolver, this.logger, {
+    const { path: frameworkPath, version } = await this.frameworkResolver.execute({
       path,
       release,
       repo,
     });
 
-    const installResults = await this.runInstall(frameworkPath, version, projectRoot, repo);
+    const installResults = await this.runInstall(
+      frameworkPath,
+      version,
+      projectRoot,
+      repo,
+      options.toolIds,
+      options.interactive
+    );
 
     return { kind: "installed", install: { results: installResults } };
   }
@@ -235,7 +283,7 @@ export class SetupUseCase {
   private async handleUpdate(options: SetupOptions): Promise<SetupResult> {
     const { projectRoot, path, release, repo } = options;
 
-    const { path: frameworkPath, version } = await resolveFramework(this.resolver, this.logger, {
+    const { path: frameworkPath, version } = await this.frameworkResolver.execute({
       path,
       release,
       repo,
@@ -299,12 +347,19 @@ export class SetupUseCase {
       return { kind: "up-to-date", hasAdditionalTools: true };
     }
 
-    const { path: frameworkPath, version } = await resolveFramework(this.resolver, this.logger, {
+    const { path: frameworkPath, version } = await this.frameworkResolver.execute({
       path,
       release,
       repo,
     });
-    const installResults = await this.runInstall(frameworkPath, version, projectRoot, repo);
+    const installResults = await this.runInstall(
+      frameworkPath,
+      version,
+      projectRoot,
+      repo,
+      undefined,
+      true
+    );
 
     return {
       kind: "up-to-date",
@@ -323,7 +378,14 @@ export class SetupUseCase {
     if (!hasMissing) return undefined;
     const wantsMore = await this.prompter.confirm("Install additional tools?");
     if (!wantsMore) return undefined;
-    const installResults = await this.runInstall(frameworkPath, version, projectRoot, repo);
+    const installResults = await this.runInstall(
+      frameworkPath,
+      version,
+      projectRoot,
+      repo,
+      undefined,
+      true
+    );
     return { results: installResults };
   }
 
@@ -331,8 +393,14 @@ export class SetupUseCase {
     frameworkPath: string,
     version: string,
     projectRoot: string,
-    repo: string | undefined
+    repo: string | undefined,
+    toolIds?: ToolId[],
+    interactive?: boolean
   ): Promise<InstallToolResult[]> {
+    const isInteractive = interactive ?? false;
+    if (!isInteractive && (toolIds === undefined || toolIds.length === 0)) {
+      return [];
+    }
     return new InstallUseCase(
       this.fs,
       this.manifestRepo,
@@ -347,7 +415,8 @@ export class SetupUseCase {
       version,
       projectRoot,
       repo,
-      interactive: true,
+      toolIds,
+      interactive: isInteractive,
     });
   }
 }

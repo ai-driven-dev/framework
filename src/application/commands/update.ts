@@ -1,8 +1,7 @@
 import type { Command } from "commander";
 import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
-import { requireAuth } from "../require-auth.js";
-import { resolveFramework } from "../use-cases/resolve-framework-use-case.js";
+import { ResolveFrameworkUseCase } from "../use-cases/resolve-framework-use-case.js";
 import { UpdateUseCase } from "../use-cases/update-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
@@ -39,13 +38,11 @@ export function registerUpdateCommand(program: Command): void {
 
           const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
-          if (!cmdOptions.path) await requireAuth(deps.authReader);
-
-          const { path: frameworkPath, version } = await resolveFramework(
+          const { path: frameworkPath, version } = await new ResolveFrameworkUseCase(
             deps.resolver,
             deps.logger,
-            { path: cmdOptions.path, release: cmdOptions.release }
-          );
+            deps.authReader
+          ).execute({ path: cmdOptions.path, release: cmdOptions.release });
 
           const updateUseCase = new UpdateUseCase(
             deps.fs,

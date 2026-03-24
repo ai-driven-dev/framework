@@ -2,7 +2,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { resolveFramework } from "../../../src/application/use-cases/resolve-framework-use-case.js";
+import { ResolveFrameworkUseCase } from "../../../src/application/use-cases/resolve-framework-use-case.js";
 import type { FrameworkResolved } from "../../../src/domain/ports/framework-resolver.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/framework");
@@ -25,7 +25,7 @@ function makeResolver(result: FrameworkResolved) {
   };
 }
 
-describe("resolveFramework()", () => {
+describe("ResolveFrameworkUseCase", () => {
   let tempDir: string;
 
   beforeEach(async () => {
@@ -40,7 +40,9 @@ describe("resolveFramework()", () => {
     it("uses local directory as framework source", async () => {
       const resolver = makeResolver({ path: FIXTURE_DIR, version: "local", source: "local" });
 
-      const result = await resolveFramework(resolver, makeLogger(), { path: FIXTURE_DIR });
+      const result = await new ResolveFrameworkUseCase(resolver, makeLogger()).execute({
+        path: FIXTURE_DIR,
+      });
 
       expect(result.path).toBe(FIXTURE_DIR);
       expect(result.version).toBe("local");
@@ -55,7 +57,9 @@ describe("resolveFramework()", () => {
 
       const resolver = makeResolver({ path: tempDir, version: "local", source: "local" });
 
-      const result = await resolveFramework(resolver, makeLogger(), { path: tarball });
+      const result = await new ResolveFrameworkUseCase(resolver, makeLogger()).execute({
+        path: tarball,
+      });
 
       expect(result.path).toBe(tempDir);
       expect(result.version).toBe("local");
@@ -68,7 +72,9 @@ describe("resolveFramework()", () => {
 
       const resolver = makeResolver({ path: tempDir, version: "local", source: "local" });
 
-      const result = await resolveFramework(resolver, makeLogger(), { path: tarball });
+      const result = await new ResolveFrameworkUseCase(resolver, makeLogger()).execute({
+        path: tarball,
+      });
 
       expect(result.path).toBe(tempDir);
       expect(result.source).toBe("local");
@@ -79,7 +85,9 @@ describe("resolveFramework()", () => {
     it("treats a version string as release", async () => {
       const resolver = makeResolver({ path: FIXTURE_DIR, version: "3.6.0", source: "cache" });
 
-      const result = await resolveFramework(resolver, makeLogger(), { from: "3.6.0" });
+      const result = await new ResolveFrameworkUseCase(resolver, makeLogger()).execute({
+        from: "3.6.0",
+      });
 
       expect(result.version).toBe("3.6.0");
     });
@@ -87,7 +95,9 @@ describe("resolveFramework()", () => {
     it("treats an absolute path as local framework", async () => {
       const resolver = makeResolver({ path: FIXTURE_DIR, version: "local", source: "local" });
 
-      const result = await resolveFramework(resolver, makeLogger(), { from: FIXTURE_DIR });
+      const result = await new ResolveFrameworkUseCase(resolver, makeLogger()).execute({
+        from: FIXTURE_DIR,
+      });
 
       expect(result.source).toBe("local");
     });
@@ -95,7 +105,9 @@ describe("resolveFramework()", () => {
     it("treats a relative ./ path as local framework", async () => {
       const resolver = makeResolver({ path: FIXTURE_DIR, version: "local", source: "local" });
 
-      const result = await resolveFramework(resolver, makeLogger(), { from: "./some/path" });
+      const result = await new ResolveFrameworkUseCase(resolver, makeLogger()).execute({
+        from: "./some/path",
+      });
 
       expect(result.source).toBe("local");
     });
@@ -103,7 +115,9 @@ describe("resolveFramework()", () => {
     it("treats a ../ path as local framework", async () => {
       const resolver = makeResolver({ path: FIXTURE_DIR, version: "local", source: "local" });
 
-      const result = await resolveFramework(resolver, makeLogger(), { from: "../some/path" });
+      const result = await new ResolveFrameworkUseCase(resolver, makeLogger()).execute({
+        from: "../some/path",
+      });
 
       expect(result.source).toBe("local");
     });
@@ -111,7 +125,7 @@ describe("resolveFramework()", () => {
     it("treats a .tar.gz path as local framework", async () => {
       const resolver = makeResolver({ path: tempDir, version: "local", source: "local" });
 
-      const result = await resolveFramework(resolver, makeLogger(), {
+      const result = await new ResolveFrameworkUseCase(resolver, makeLogger()).execute({
         from: "/some/framework.tar.gz",
       });
 
@@ -121,7 +135,7 @@ describe("resolveFramework()", () => {
     it("treats a .tgz path as local framework", async () => {
       const resolver = makeResolver({ path: tempDir, version: "local", source: "local" });
 
-      const result = await resolveFramework(resolver, makeLogger(), {
+      const result = await new ResolveFrameworkUseCase(resolver, makeLogger()).execute({
         from: "/some/framework.tgz",
       });
 
@@ -131,7 +145,7 @@ describe("resolveFramework()", () => {
     it("takes precedence over release and framework when all three are set", async () => {
       const resolver = makeResolver({ path: FIXTURE_DIR, version: "3.6.0", source: "cache" });
 
-      const result = await resolveFramework(resolver, makeLogger(), {
+      const result = await new ResolveFrameworkUseCase(resolver, makeLogger()).execute({
         from: "3.6.0",
         release: "2.0.0",
         path: "/other/path",
@@ -145,7 +159,7 @@ describe("resolveFramework()", () => {
     it("uses cached framework when available", async () => {
       const resolver = makeResolver({ path: FIXTURE_DIR, version: "3.0.0", source: "cache" });
 
-      const result = await resolveFramework(resolver, makeLogger(), {});
+      const result = await new ResolveFrameworkUseCase(resolver, makeLogger()).execute({});
 
       expect(result.path).toBe(FIXTURE_DIR);
       expect(result.version).toBe("3.0.0");
@@ -155,7 +169,7 @@ describe("resolveFramework()", () => {
     it("downloads framework from remote when not cached", async () => {
       const resolver = makeResolver({ path: FIXTURE_DIR, version: "3.0.0", source: "download" });
 
-      const result = await resolveFramework(resolver, makeLogger(), {});
+      const result = await new ResolveFrameworkUseCase(resolver, makeLogger()).execute({});
 
       expect(result.path).toBe(FIXTURE_DIR);
       expect(result.version).toBe("3.0.0");
@@ -165,7 +179,9 @@ describe("resolveFramework()", () => {
     it("pins to specified release tag when --release is set", async () => {
       const resolver = makeResolver({ path: FIXTURE_DIR, version: "3.1.0", source: "cache" });
 
-      const result = await resolveFramework(resolver, makeLogger(), { release: "v3.1.0" });
+      const result = await new ResolveFrameworkUseCase(resolver, makeLogger()).execute({
+        release: "v3.1.0",
+      });
 
       expect(result.path).toBe(FIXTURE_DIR);
       expect(result.version).toBe("3.1.0");
@@ -175,7 +191,7 @@ describe("resolveFramework()", () => {
     it("prefers local framework over --release when both are specified", async () => {
       const resolver = makeResolver({ path: FIXTURE_DIR, version: "local", source: "local" });
 
-      const result = await resolveFramework(resolver, makeLogger(), {
+      const result = await new ResolveFrameworkUseCase(resolver, makeLogger()).execute({
         path: FIXTURE_DIR,
         release: "v3.1.0",
       });
