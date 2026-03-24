@@ -71,8 +71,7 @@ export function registerSetupCommand(program: Command): void {
           const hasScriptingFlags = !!(
             cmdOptions.allTools ||
             cmdOptions.tools ||
-            cmdOptions.from !== undefined ||
-            cmdOptions.docsDir !== undefined
+            cmdOptions.from !== undefined
           );
           const interactive = process.stdout.isTTY && !hasScriptingFlags;
 
