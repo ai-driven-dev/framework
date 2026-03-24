@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, FRAMEWORK_PATH, runCli } from "./helpers.js";
+import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
 
 describe.concurrent("E2E: aidd restore", () => {
   it("fails with 'No AIDD installation found' when no manifest exists", async () => {
@@ -20,7 +20,7 @@ describe.concurrent("E2E: aidd restore", () => {
   it("reports 'Nothing to restore' when no files are modified", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(
@@ -38,7 +38,7 @@ describe.concurrent("E2E: aidd restore", () => {
   it("restores a modified file with --force", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const claudeMdPath = join(projectDir, "CLAUDE.md");
@@ -64,7 +64,7 @@ describe.concurrent("E2E: aidd restore", () => {
   it("recreates a deleted file with --force", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const namingFilePath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
@@ -87,7 +87,7 @@ describe.concurrent("E2E: aidd restore", () => {
   it("restores only a specific file when path is given as argument", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const claudeMdPath = join(projectDir, "CLAUDE.md");
@@ -119,7 +119,7 @@ describe.concurrent("E2E: aidd restore", () => {
   it("--tool flag limits restore scope to specified tool only", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
@@ -148,7 +148,7 @@ describe.concurrent("E2E: aidd restore", () => {
   it("restores all files in a directory when directory prefix is given", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const claudeMdPath = join(projectDir, "CLAUDE.md");
@@ -180,7 +180,7 @@ describe.concurrent("E2E: aidd restore", () => {
   it("preserves untracked files in tool directory during restore", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const untrackedPath = join(projectDir, ".claude", "rules", "user-extra.md");
@@ -201,7 +201,7 @@ describe.concurrent("E2E: aidd restore", () => {
   it("fails with '--force' hint when modified files exist in non-interactive mode", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       await writeFile(join(projectDir, "CLAUDE.md"), "user modified content");
@@ -218,7 +218,7 @@ describe.concurrent("E2E: aidd restore", () => {
   it("restores a deleted docs file with --force", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const readmePath = join(projectDir, "aidd_docs", "README.md");
@@ -241,7 +241,7 @@ describe.concurrent("E2E: aidd restore", () => {
   it("restores a modified docs file with --force", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const readmePath = join(projectDir, "aidd_docs", "README.md");
@@ -278,7 +278,7 @@ describe.concurrent("E2E: aidd restore", () => {
   it("--docs scope limits restore to docs files only", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const claudeMdPath = join(projectDir, "CLAUDE.md");

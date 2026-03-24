@@ -2,13 +2,13 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, FRAMEWORK_PATH, runCli } from "./helpers.js";
+import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
 
 describe.concurrent("E2E: aidd uninstall", () => {
   it("removes a tool's files without touching other installed tools", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
@@ -26,7 +26,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
   it("shows an error message when uninstalling a tool that is not installed", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stderr, exitCode } = await runCli(["uninstall", "cursor"], projectDir);
@@ -54,7 +54,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
   it("removes multiple tools in one command", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
@@ -84,7 +84,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
   it("exits with error in non-interactive mode when no tool is specified and --all is not used", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stderr, exitCode } = await runCli(["uninstall"], projectDir);
@@ -99,7 +99,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
   it("uninstalls all tools at once with --all", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "--all", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["uninstall", "--all"], projectDir);
@@ -119,7 +119,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
   it("manifest correctly reflects remaining tools after partial uninstall", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["uninstall", "claude"], projectDir);
@@ -136,7 +136,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
   it("warns when --all is set with explicit tool IDs", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "--all", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stderr, exitCode } = await runCli(["uninstall", "--all", "claude"], projectDir);
@@ -151,7 +151,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
   it("reports success when --all is used but no tools are installed", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
 
       const { stdout, exitCode } = await runCli(["uninstall", "--all"], projectDir);
 

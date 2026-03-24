@@ -1,7 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, FRAMEWORK_PATH, runCli } from "./helpers.js";
+import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
 
 describe.concurrent("E2E: aidd config", () => {
   describe("config list", () => {
@@ -19,7 +19,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("shows docsDir and tools from manifest", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
         await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
         const { stdout, exitCode } = await runCli(["config", "list"], projectDir);
@@ -34,7 +34,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("shows (none) for tools when nothing installed", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
 
         const { stdout, exitCode } = await runCli(["config", "list"], projectDir);
         expect(exitCode).toBe(0);
@@ -49,7 +49,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("exits with error when no key is provided in non-interactive mode", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
 
         const { stderr, exitCode } = await runCli(["config", "get"], projectDir);
         expect(exitCode).toBe(1);
@@ -62,7 +62,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("returns docsDir from manifest", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
 
         const { stdout, exitCode } = await runCli(["config", "get", "docsDir"], projectDir);
         expect(exitCode).toBe(0);
@@ -75,7 +75,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("returns default repo when not explicitly set", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
 
         const { stdout, exitCode } = await runCli(["config", "get", "repo"], projectDir);
         expect(exitCode).toBe(0);
@@ -88,10 +88,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("returns repo saved during init --repo", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(
-          ["init", "--path", FRAMEWORK_PATH, "--repo", "my-org/my-framework"],
-          projectDir
-        );
+        await initProject(projectDir, FRAMEWORK_PATH, { repo: "my-org/my-framework" });
 
         const { stdout, exitCode } = await runCli(["config", "get", "repo"], projectDir);
         expect(exitCode).toBe(0);
@@ -104,7 +101,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("returns installed tools list", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
         await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
         const { stdout, exitCode } = await runCli(["config", "get", "tools"], projectDir);
@@ -118,7 +115,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("fails on unknown key", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
 
         const { stderr, exitCode } = await runCli(["config", "get", "unknown"], projectDir);
         expect(exitCode).toBe(1);
@@ -133,7 +130,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("exits with error when no arguments are provided in non-interactive mode", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
 
         const { stderr, exitCode } = await runCli(["config", "set"], projectDir);
         expect(exitCode).toBe(1);
@@ -146,7 +143,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("updates docsDir in manifest with --force", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
 
         const { exitCode } = await runCli(
           ["config", "set", "docsDir", "my_docs", "--force"],
@@ -164,7 +161,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("is a no-op when value is unchanged", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
 
         const { stdout, exitCode } = await runCli(
           ["config", "set", "docsDir", "aidd_docs", "--force"],
@@ -180,7 +177,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("rejects write without --force in non-interactive mode", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
 
         const { stderr, exitCode } = await runCli(
           ["config", "set", "docsDir", "my_docs"],
@@ -196,7 +193,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("rejects write on read-only key", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
 
         const { stderr, exitCode } = await runCli(
           ["config", "set", "tools", "claude", "--force"],
@@ -212,7 +209,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("rejects write on unknown key", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
 
         const { stderr, exitCode } = await runCli(
           ["config", "set", "verbose", "true", "--force"],
@@ -228,7 +225,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("shows warning when new directory does not exist on disk", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
 
         const { stderr } = await runCli(
           ["config", "set", "docsDir", "my_docs", "--force"],
@@ -244,7 +241,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("shows no warning when new directory already exists on disk", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
         await mkdir(join(projectDir, "my_docs"), { recursive: true });
 
         const { stdout, stderr } = await runCli(
@@ -262,7 +259,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("updates repo in manifest with --force", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
 
         const { exitCode } = await runCli(
           ["config", "set", "repo", "my-org/custom-framework", "--force"],
@@ -280,7 +277,7 @@ describe.concurrent("E2E: aidd config", () => {
     it("rejects invalid repo format", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
-        await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+        await initProject(projectDir, FRAMEWORK_PATH);
 
         const { stderr, exitCode } = await runCli(
           ["config", "set", "repo", "not-valid", "--force"],

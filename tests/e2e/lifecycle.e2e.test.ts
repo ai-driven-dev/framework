@@ -2,15 +2,14 @@ import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, FRAMEWORK_PATH, runCli } from "./helpers.js";
+import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
 
 describe.concurrent("E2E: full lifecycle", () => {
   it("supports all core commands end-to-end without error", async () => {
     const { projectDir, cleanup } = await createTestEnv("lifecycle");
     try {
       // init
-      const initResult = await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
-      expect(initResult.exitCode).toBe(0);
+      await initProject(projectDir, FRAMEWORK_PATH);
 
       // install claude and cursor
       const installClaudeResult = await runCli(
@@ -82,8 +81,7 @@ describe.concurrent("E2E: full lifecycle", () => {
     const { projectDir, cleanup } = await createTestEnv("lifecycle");
     try {
       // init
-      const initResult = await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
-      expect(initResult.exitCode).toBe(0);
+      await initProject(projectDir, FRAMEWORK_PATH);
 
       // install claude
       const installResult = await runCli(

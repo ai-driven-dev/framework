@@ -3,6 +3,13 @@ import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
+import { CLIOutput } from "../../src/application/output.js";
+import { AdoptUseCase } from "../../src/application/use-cases/adopt-use-case.js";
+import { InitUseCase } from "../../src/application/use-cases/init-use-case.js";
+import { resolveFramework } from "../../src/application/use-cases/resolve-framework-use-case.js";
+import { Manifest } from "../../src/domain/models/manifest.js";
+import type { ToolId } from "../../src/domain/models/tool-config.js";
+import { createDeps } from "../../src/infrastructure/deps.js";
 
 export const execFileAsync = promisify(execFile);
 
@@ -52,4 +59,52 @@ export async function runCli(
       exitCode: err.code ?? 1,
     };
   }
+}
+
+export async function initProject(
+  projectDir: string,
+  frameworkPath: string,
+  options?: { docsDir?: string; repo?: string; force?: boolean }
+): Promise<void> {
+  const output = new CLIOutput(false);
+  const deps = await createDeps(projectDir, { verbose: false }, output);
+  const { path: resolvedPath, version } = await resolveFramework(deps.resolver, deps.logger, {
+    path: frameworkPath,
+  });
+  await new InitUseCase(deps.fs, deps.manifestRepo, deps.loader, deps.hasher, deps.logger).execute({
+    frameworkPath: resolvedPath,
+    version,
+    projectRoot: projectDir,
+    interactive: false,
+    docsDir: options?.docsDir,
+    explicitDocsDir: options?.docsDir,
+    repo: options?.repo,
+    force: options?.force,
+  });
+}
+
+export async function adoptProject(
+  projectDir: string,
+  frameworkPath: string,
+  toolIds: ToolId[]
+): Promise<void> {
+  const output = new CLIOutput(false);
+  const deps = await createDeps(projectDir, { verbose: false }, output);
+  const { path: resolvedPath, version } = await resolveFramework(deps.resolver, deps.logger, {
+    path: frameworkPath,
+  });
+  await new AdoptUseCase(
+    deps.fs,
+    deps.manifestRepo,
+    deps.loader,
+    deps.hasher,
+    deps.logger,
+    deps.platform
+  ).execute({
+    toolIds,
+    frameworkPath: resolvedPath,
+    docsDir: Manifest.DEFAULT_DOCS_DIR,
+    projectRoot: projectDir,
+    version,
+  });
 }

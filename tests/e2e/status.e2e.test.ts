@@ -1,13 +1,13 @@
 import { rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, FRAMEWORK_PATH, runCli } from "./helpers.js";
+import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
 
 describe.concurrent("E2E: aidd status", () => {
   it("reports all files in sync after a fresh install", async () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["status"], projectDir);
@@ -22,7 +22,7 @@ describe.concurrent("E2E: aidd status", () => {
   it("reports a modified file as drifted", async () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       await writeFile(join(projectDir, "CLAUDE.md"), "modified content by user", "utf-8");
@@ -39,7 +39,7 @@ describe.concurrent("E2E: aidd status", () => {
   it("reports a deleted file as missing", async () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       await rm(join(projectDir, "CLAUDE.md"), { force: true });
@@ -56,7 +56,7 @@ describe.concurrent("E2E: aidd status", () => {
   it("filters status output to a specific tool with --tool", async () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
@@ -73,7 +73,7 @@ describe.concurrent("E2E: aidd status", () => {
   it("reports an untracked file in tool directory as added", async () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       await writeFile(join(projectDir, ".claude", "untracked-file.md"), "extra content", "utf-8");
@@ -103,7 +103,7 @@ describe.concurrent("E2E: aidd status", () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
       // init only (no install)
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       const { stderr, exitCode } = await runCli(["status", "--tool", "cursor"], projectDir);
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("cursor"); // mentions the tool in error
@@ -143,7 +143,7 @@ describe.concurrent("E2E: aidd status", () => {
   it("reports docs drift when no tools are installed", async () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
 
       // aidd_docs/tasks/.gitkeep is a tracked docs file in the test fixture
       const trackedPath = join(projectDir, "aidd_docs", "tasks", ".gitkeep");
@@ -162,7 +162,7 @@ describe.concurrent("E2E: aidd status", () => {
   it("filters status output to docs only with --docs", async () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       // modify a docs file to create drift
@@ -182,7 +182,7 @@ describe.concurrent("E2E: aidd status", () => {
   it("exits with error when --tool and --docs are both specified", async () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
 
       const { stderr, exitCode } = await runCli(
         ["status", "--tool", "claude", "--docs"],

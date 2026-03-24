@@ -1,13 +1,11 @@
 import { platform } from "node:os";
 import { Command } from "commander";
 import { printUpdateBanner } from "./application/check-update.js";
-import { registerAdoptCommand } from "./application/commands/adopt.js";
 import { registerAuthCommand } from "./application/commands/auth.js";
 import { registerCacheCommand } from "./application/commands/cache.js";
 import { registerCleanCommand } from "./application/commands/clean.js";
 import { registerConfigCommand } from "./application/commands/config.js";
 import { registerDoctorCommand } from "./application/commands/doctor.js";
-import { registerInitCommand } from "./application/commands/init.js";
 import { registerInstallCommand } from "./application/commands/install.js";
 import { registerRestoreCommand } from "./application/commands/restore.js";
 import { registerSelfUpdateCommand } from "./application/commands/self-update.js";
@@ -36,20 +34,10 @@ program
   .option("--verbose", "Show detailed diagnostic output", false)
   .option("--repo <owner/repo>", "GitHub repository in owner/repo format");
 
-registerAdoptCommand(program);
 registerAuthCommand(program);
 registerCacheCommand(program);
 registerConfigCommand(program);
-registerInitCommand(program);
 registerInstallCommand(program);
-
-// Hide legacy entry points — setup orchestrates these flows now
-for (const name of ["adopt", "init"]) {
-  const cmd = program.commands.find((c) => c.name() === name) as
-    | (Command & { _hidden: boolean })
-    | undefined;
-  if (cmd) cmd._hidden = true;
-}
 registerUninstallCommand(program);
 registerStatusCommand(program);
 registerCleanCommand(program);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createTestEnv, FRAMEWORK_PATH, runCli } from "./helpers.js";
+import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
 
 describe.concurrent("E2E: aidd global options", () => {
   it("--version outputs version in aidd/{semver} format", async () => {
@@ -48,20 +48,6 @@ describe.concurrent("E2E: aidd global options", () => {
     }
   });
 
-  it("init --help shows init-specific options", async () => {
-    const { projectDir, cleanup } = await createTestEnv("global");
-    try {
-      const { stdout, exitCode } = await runCli(["init", "--help"], projectDir);
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("init");
-      expect(stdout).toContain("--force");
-      expect(stdout).toContain("--docs-dir");
-    } finally {
-      await cleanup();
-    }
-  });
-
   it("config --help shows config subcommands", async () => {
     const { projectDir, cleanup } = await createTestEnv("global");
     try {
@@ -79,7 +65,7 @@ describe.concurrent("E2E: aidd global options", () => {
   it("--verbose install lists installed files", async () => {
     const { projectDir, cleanup } = await createTestEnv("global");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
 
       const { stderr, exitCode } = await runCli(
         ["--verbose", "install", "claude", "--path", FRAMEWORK_PATH],
@@ -93,13 +79,12 @@ describe.concurrent("E2E: aidd global options", () => {
     }
   });
 
-  it("--help does not show hidden commands (adopt, init)", async () => {
+  it("--help does not show adopt or init commands", async () => {
     const { projectDir, cleanup } = await createTestEnv("global");
     try {
       const { stdout, exitCode } = await runCli(["--help"], projectDir);
 
       expect(exitCode).toBe(0);
-      // adopt and init are hidden via _hidden=true in cli.ts
       expect(stdout).not.toContain("  adopt");
       expect(stdout).not.toContain("  init");
     } finally {

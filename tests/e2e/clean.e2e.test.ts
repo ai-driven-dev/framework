@@ -1,13 +1,13 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, FRAMEWORK_PATH, runCli } from "./helpers.js";
+import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
 
 describe.concurrent("E2E: aidd clean", () => {
   it("previews files to remove without deleting them", async () => {
     const { projectDir, cleanup } = await createTestEnv("clean");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["clean"], projectDir);
@@ -24,7 +24,7 @@ describe.concurrent("E2E: aidd clean", () => {
   it("deletes all installed files and manifest when --force is used", async () => {
     const { projectDir, cleanup } = await createTestEnv("clean");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
@@ -53,7 +53,7 @@ describe.concurrent("E2E: aidd clean", () => {
   it("lists tool names and file counts in dry-run preview output", async () => {
     const { projectDir, cleanup } = await createTestEnv("clean");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["clean"], projectDir);
@@ -69,7 +69,7 @@ describe.concurrent("E2E: aidd clean", () => {
   it("removes all tool directories when multiple tools are installed", async () => {
     const { projectDir, cleanup } = await createTestEnv("clean");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
@@ -88,7 +88,7 @@ describe.concurrent("E2E: aidd clean", () => {
   it("removes docs and manifest when only init was run", async () => {
     const { projectDir, cleanup } = await createTestEnv("clean");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
 
       const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
 
@@ -104,7 +104,7 @@ describe.concurrent("E2E: aidd clean", () => {
   it("shows 'Would remove' summary in non-interactive mode without --force", async () => {
     const { projectDir, cleanup } = await createTestEnv("clean");
     try {
-      await runCli(["init", "--path", FRAMEWORK_PATH], projectDir);
+      await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       // runCli always runs non-TTY (child process without TTY)
