@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.13.4](https://github.com/ai-driven-dev/aidd-cli/compare/v2.13.3...v2.13.4) (2026-03-24)
+
+
+### Refactoring
+
+* **cli:** remove init and adopt commands, add programmatic test helpers ([#95](https://github.com/ai-driven-dev/aidd-cli/issues/95)) ([4204dfb](https://github.com/ai-driven-dev/aidd-cli/commit/4204dfb72bdb22cae609d71a141d5852c108a67a))
+* **setup:** add non-interactive options to SetupUseCase ([#97](https://github.com/ai-driven-dev/aidd-cli/issues/97)) ([e97129a](https://github.com/ai-driven-dev/aidd-cli/commit/e97129afc55108b09b9d4bac8929e7f240755610))
+
 ## [2.13.3](https://github.com/ai-driven-dev/aidd-cli/compare/v2.13.2...v2.13.3) (2026-03-23)
 
 
