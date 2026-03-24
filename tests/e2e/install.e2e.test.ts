@@ -438,4 +438,44 @@ describe.concurrent("E2E: aidd install", () => {
       await cleanup();
     }
   });
+
+  it("writes opencode config to opencode.jsonc when that file already exists before install", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      const jsoncPath = join(projectDir, "opencode.jsonc");
+      await writeFile(jsoncPath, "{}");
+
+      const { exitCode } = await runCli(
+        ["install", "opencode", "--path", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(existsSync(jsoncPath)).toBe(true);
+      expect(existsSync(join(projectDir, "opencode.json"))).toBe(false);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("exits with error when both opencode.json and opencode.jsonc exist before install", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await writeFile(join(projectDir, "opencode.json"), "{}");
+      await writeFile(join(projectDir, "opencode.jsonc"), "{}");
+
+      const { stderr, exitCode } = await runCli(
+        ["install", "opencode", "--path", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toContain("opencode.json");
+      expect(stderr).toContain("opencode.jsonc");
+    } finally {
+      await cleanup();
+    }
+  });
 });

@@ -19,7 +19,6 @@ import {
   type ToolConfig,
   type UserFileSectionKey,
 } from "../models/tool-config.js";
-import type { FileSystem } from "../ports/file-system.js";
 
 const DIRECTORY = ".opencode/";
 const TOOL_SUFFIX = ".opencode.md";
