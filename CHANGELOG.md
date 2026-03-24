@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.7.3](https://github.com/ai-driven-dev/aidd-framework/compare/v3.7.2...v3.7.3) (2026-03-24)
+
+
+### Bug Fixes
+
+* **ci:** update build-dist.sh to use current CLI API ([29b301a](https://github.com/ai-driven-dev/aidd-framework/commit/29b301a42e3cf287f1fccc3d9744089bb5e28ea1))
+* **memory:** convert update_memory script to CommonJS and add ls fallback ([5a31567](https://github.com/ai-driven-dev/aidd-framework/commit/5a3156785eda21f10578d7b869e55c7e719dc482))
+
+
+### Documentation
+
+* add reporting issues section with issue templates ([428bfc0](https://github.com/ai-driven-dev/aidd-framework/commit/428bfc06edecb555a5513d966c00e468d3a20549))
+* **release:** add pm.2 discord README and CHANGELOG entry ([1beba46](https://github.com/ai-driven-dev/aidd-framework/commit/1beba466392596996ee23c82a7f87e380aba2485))
+* **rules:** add frontmatter description to ide-mapping files ([eb1dd38](https://github.com/ai-driven-dev/aidd-framework/commit/eb1dd38c5763bb7258b79f6f077b1058afd1e639))
+
 ## [3.7.1-pm.2](https://github.com/ai-driven-dev/aidd-framework/releases/tag/v3.7.1-pm.2) (2026-03-22) — Beta pre-release
 
 > ⚠️ Pre-release expérimentale. Pas proposée automatiquement aux utilisateurs existants.
