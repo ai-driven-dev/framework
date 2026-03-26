@@ -244,5 +244,57 @@ describe("FileSystemAdapter", () => {
       expect(result.key).toBe("value");
       expect(result.other).toBe(true);
     });
+
+    it("strips trailing commas in incoming content before merging", async () => {
+      const path = join(tempDir, "trailing-incoming.json");
+      const jsonc = `{
+  "key": "value",
+  "nested": {
+    "a": 1,
+  },
+}`;
+      await fs.mergeJsonFile(path, jsonc);
+      const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+      expect(result.key).toBe("value");
+      expect((result.nested as Record<string, number>).a).toBe(1);
+    });
+
+    it("tolerates JSONC trailing commas in an existing file", async () => {
+      const path = join(tempDir, "existing-jsonc.json");
+      const existingWithTrailingComma = `{
+  "keep": "me",
+  "nested": {
+    "a": 1,
+  }
+}`;
+      await writeFile(path, existingWithTrailingComma, "utf-8");
+      await fs.mergeJsonFile(path, JSON.stringify({ added: true }));
+      const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+      expect(result.keep).toBe("me");
+      expect(result.added).toBe(true);
+    });
+
+    it("tolerates comments and trailing commas in an existing .jsonc file", async () => {
+      const path = join(tempDir, "opencode.jsonc");
+      const existingJsonc = `{
+  // provider config
+  "model": "neogen/swe-dev",
+  "provider": {
+    "neogen": {
+      "npm": "@ai-sdk/openai-compatible",
+      /* base URL */
+      "options": {
+        "baseURL": "https://neogen.example.com/api",
+      },
+    },
+  },
+}`;
+      await writeFile(path, existingJsonc, "utf-8");
+      await fs.mergeJsonFile(path, JSON.stringify({ share: "disabled" }));
+      const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+      expect(result.model).toBe("neogen/swe-dev");
+      expect(result.share).toBe("disabled");
+      expect((result.provider as Record<string, unknown>).neogen).toBeDefined();
+    });
   });
 });

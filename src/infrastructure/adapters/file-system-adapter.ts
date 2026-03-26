@@ -126,7 +126,7 @@ export class FileSystemAdapter implements FileSystem {
 
     try {
       const raw = await readFile(path, "utf-8");
-      existing = JSON.parse(raw) as Record<string, unknown>;
+      existing = JSON.parse(stripJsoncComments(raw)) as Record<string, unknown>;
     } catch (err) {
       const code = (err as NodeJS.ErrnoException).code;
       if (code !== "ENOENT") {
@@ -208,6 +208,15 @@ function stripJsoncComments(content: string): string {
       while (i < content.length && !(content[i] === "*" && content[i + 1] === "/")) i++;
       i += 2;
       continue;
+    }
+
+    if (ch === ",") {
+      let j = i + 1;
+      while (j < content.length && " \t\n\r".includes(content[j])) j++;
+      if (content[j] === "}" || content[j] === "]") {
+        i++;
+        continue;
+      }
     }
 
     result += ch;
