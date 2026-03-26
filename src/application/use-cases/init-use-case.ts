@@ -78,52 +78,110 @@ export class InitUseCase {
 
   async execute(options: InitOptions): Promise<InitResult> {
     const { frameworkPath, version, projectRoot, force = false } = options;
-    const interactive = options.interactive ?? false;
 
-    let docsDir = options.docsDir;
-    let explicitDocsDir = options.explicitDocsDir;
-    let repo = options.repo;
-
-    if (interactive && !force && docsDir === undefined && this.prompter !== undefined) {
-      const docsDirInput = await this.prompter.input(
-        "Documentation directory name:",
-        Manifest.DEFAULT_DOCS_DIR
-      );
-      docsDir = docsDirInput || Manifest.DEFAULT_DOCS_DIR;
-      explicitDocsDir = docsDir;
-      const repoInput = await this.prompter.input(
-        "Framework repository (owner/repo, leave blank to skip):",
-        options.repo ?? ""
-      );
-      if (repoInput !== "") {
-        repo = repoInput.trim();
-      }
-    }
-
+    const { docsDir, explicitDocsDir, repo } = await this.resolveInitConfig(options);
     const resolvedInputDocsDir = docsDir ?? Manifest.DEFAULT_DOCS_DIR;
     Manifest.validateDocsDir(resolvedInputDocsDir);
 
-    await this.checkPreconditions({ docsDir: resolvedInputDocsDir, projectRoot, force, repo });
-
     const existing = await this.manifestRepo.load();
-
-    // In --force mode: use explicitly provided --docs-dir if given; otherwise keep existing.
+    await this.checkPreconditions({ docsDir: resolvedInputDocsDir, projectRoot, force, repo });
     const resolvedDocsDir =
       force && existing !== null && explicitDocsDir === undefined
         ? existing.docsDir
         : resolvedInputDocsDir;
 
     const { descriptor, docsFiles } = await this.loader.loadFromDirectory(frameworkPath, version);
+    const generated = await this.writeDocsFiles(
+      docsFiles,
+      resolvedDocsDir,
+      projectRoot,
+      force,
+      existing
+    );
+    if (force && existing !== null)
+      await this.removeStaleDocsFiles(generated, existing, projectRoot);
 
+    const manifest = this.buildManifest(existing, resolvedDocsDir, repo, force);
+    manifest.addDocs(descriptor.version, generated);
+    await this.persistInit(manifest, resolvedDocsDir, projectRoot, force);
+    return { docsDir: resolvedDocsDir, fileCount: generated.length, manifest };
+  }
+
+  private buildManifest(
+    existing: Manifest | null,
+    resolvedDocsDir: string,
+    repo: string | undefined,
+    force: boolean
+  ): Manifest {
+    return force && existing !== null
+      ? existing.withDocsDir(resolvedDocsDir)
+      : Manifest.create(resolvedDocsDir, repo);
+  }
+
+  /** Saves manifest, regenerates catalog, and conditionally adds gitignore entry. */
+  private async persistInit(
+    manifest: Manifest,
+    docsDir: string,
+    projectRoot: string,
+    force: boolean
+  ): Promise<void> {
+    // Init calls save + catalog + gitignore directly (3 of the 4 post-install steps).
+    // MemoryScriptUseCase is intentionally absent here: no tools are installed during init,
+    // so there is no memory bank content to write. PostInstallPipelineUseCase is used by
+    // InstallUseCase and UpdateUseCase where tool installation has already happened.
+    await this.manifestRepo.save(manifest);
+    await new CatalogUseCase(this.fs).execute({ manifest, docsDir, projectRoot });
+    if (!force) {
+      await new GitignoreUseCase(this.fs).execute(projectRoot, [".aidd/cache/"]);
+    }
+  }
+
+  /** Resolves interactive config (docsDir, repo) if prompted, otherwise uses options as-is. */
+  private async resolveInitConfig(
+    options: InitOptions
+  ): Promise<{ docsDir?: string; explicitDocsDir?: string; repo?: string }> {
+    const interactive = options.interactive ?? false;
+    const force = options.force ?? false;
+
+    if (!interactive || force || options.docsDir !== undefined || this.prompter === undefined) {
+      return {
+        docsDir: options.docsDir,
+        explicitDocsDir: options.explicitDocsDir,
+        repo: options.repo,
+      };
+    }
+
+    const docsDirInput = await this.prompter.input(
+      "Documentation directory name:",
+      Manifest.DEFAULT_DOCS_DIR
+    );
+    const docsDir = docsDirInput || Manifest.DEFAULT_DOCS_DIR;
+    const repoInput = await this.prompter.input(
+      "Framework repository (owner/repo, leave blank to skip):",
+      options.repo ?? ""
+    );
+    const repo = repoInput !== "" ? repoInput.trim() : options.repo;
+
+    return { docsDir, explicitDocsDir: docsDir, repo };
+  }
+
+  /** Writes docs files to disk, skipping CATALOG.md. Returns the list of generated files. */
+  private async writeDocsFiles(
+    docsFiles: Map<string, string>,
+    docsDir: string,
+    projectRoot: string,
+    force: boolean,
+    existing: Manifest | null
+  ): Promise<GeneratedFile[]> {
     const generated: GeneratedFile[] = [];
     for (const [frameworkRelPath, rawContent] of docsFiles.entries()) {
       if (frameworkRelPath.endsWith("CATALOG.md")) continue;
-      const outputRelPath = remapDocsPath(frameworkRelPath, resolvedDocsDir);
+      const outputRelPath = remapDocsPath(frameworkRelPath, docsDir);
       const outputPath = join(projectRoot, outputRelPath);
-      const content = rewriteDocsContent(rawContent, resolvedDocsDir);
+      const content = rewriteDocsContent(rawContent, docsDir);
       const newHash = this.hasher.hash(content);
 
-      if (force && (await this.fs.fileExists(outputPath))) {
+      if (force && existing !== null && (await this.fs.fileExists(outputPath))) {
         const diskHash = await this.fs.readFileHash(outputPath);
         if (!diskHash.equals(newHash)) {
           this.logger.warn(`Overwriting modified file: ${outputRelPath}`);
@@ -135,28 +193,19 @@ export class InitUseCase {
 
       generated.push(new GeneratedFile({ relativePath: outputRelPath, content, hash: newHash }));
     }
+    return generated;
+  }
 
-    if (force && existing !== null) {
-      const newPaths = new Set(generated.map((f) => f.relativePath));
-      for (const oldFile of existing.getDocsFiles()) {
-        if (!newPaths.has(oldFile.relativePath)) {
-          await this.fs.deleteFile(join(projectRoot, oldFile.relativePath));
-        }
+  private async removeStaleDocsFiles(
+    generated: GeneratedFile[],
+    existing: Manifest,
+    projectRoot: string
+  ): Promise<void> {
+    const newPaths = new Set(generated.map((f) => f.relativePath));
+    for (const oldFile of existing.getDocsFiles()) {
+      if (!newPaths.has(oldFile.relativePath)) {
+        await this.fs.deleteFile(join(projectRoot, oldFile.relativePath));
       }
     }
-
-    const manifest =
-      force && existing !== null
-        ? existing.withDocsDir(resolvedDocsDir)
-        : Manifest.create(resolvedDocsDir, repo);
-    manifest.addDocs(descriptor.version, generated);
-    await this.manifestRepo.save(manifest);
-    await new CatalogUseCase(this.fs).execute({ manifest, docsDir: resolvedDocsDir, projectRoot });
-
-    if (!force) {
-      await new GitignoreUseCase(this.fs).execute(projectRoot, [".aidd/cache/"]);
-    }
-
-    return { docsDir: resolvedDocsDir, fileCount: generated.length, manifest };
   }
 }

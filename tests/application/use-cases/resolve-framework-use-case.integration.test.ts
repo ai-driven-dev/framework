@@ -25,7 +25,7 @@ function makeResolver(result: FrameworkResolved) {
   };
 }
 
-describe("ResolveFrameworkUseCase", () => {
+describe("framework resolver", () => {
   let tempDir: string;
 
   beforeEach(async () => {

@@ -57,7 +57,7 @@ function makeGit(hooksDir: string | null): Git {
   };
 }
 
-describe("MemoryScriptUseCase", () => {
+describe("memory script", () => {
   let tempDir: string;
   let projectRoot: string;
 

@@ -59,7 +59,7 @@ describe.concurrent("E2E: aidd config", () => {
       }
     });
 
-    it("returns docsDir from manifest", async () => {
+    it("shows docsDir from manifest", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
         await initProject(projectDir, FRAMEWORK_PATH);
@@ -72,7 +72,7 @@ describe.concurrent("E2E: aidd config", () => {
       }
     });
 
-    it("returns default repo when not explicitly set", async () => {
+    it("shows default repo when not explicitly set", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
         await initProject(projectDir, FRAMEWORK_PATH);
@@ -85,7 +85,7 @@ describe.concurrent("E2E: aidd config", () => {
       }
     });
 
-    it("returns repo saved during init --repo", async () => {
+    it("shows custom repo saved during init --repo", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
         await initProject(projectDir, FRAMEWORK_PATH, { repo: "my-org/my-framework" });
@@ -98,7 +98,7 @@ describe.concurrent("E2E: aidd config", () => {
       }
     });
 
-    it("returns installed tools list", async () => {
+    it("shows installed tools list", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
         await initProject(projectDir, FRAMEWORK_PATH);

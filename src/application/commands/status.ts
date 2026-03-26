@@ -45,7 +45,7 @@ export function registerStatusCommand(program: Command): void {
           repo,
         });
 
-        if (report.tools.length === 0 && !filterToolId) {
+        if (report.tools.length === 0 && !filterToolId && !filterDocs) {
           output.print("No tools installed. Run `aidd install <tool>` to get started.");
           if (report.inSync) return;
         } else if (report.inSync) {

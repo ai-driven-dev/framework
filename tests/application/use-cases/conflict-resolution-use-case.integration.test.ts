@@ -19,8 +19,8 @@ function buildMockPrompter(selectResponses: string[]): Prompter & { selectCallCo
   return prompter;
 }
 
-describe("ConflictResolutionUseCase", () => {
-  it("returns empty map when no paths given", async () => {
+describe("conflict resolution", () => {
+  it("produces no decisions when no paths given", async () => {
     const prompter = buildMockPrompter([]);
     const useCase = new ConflictResolutionUseCase(prompter);
 

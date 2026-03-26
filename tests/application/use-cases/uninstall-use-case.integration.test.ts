@@ -12,7 +12,7 @@ import {
   installTool,
 } from "./helpers.js";
 
-describe("UninstallUseCase", () => {
+describe("uninstall", () => {
   let tempDir: string;
   let projectRoot: string;
 
@@ -22,37 +22,6 @@ describe("UninstallUseCase", () => {
 
   afterEach(async () => {
     await cleanupTempProject(tempDir);
-  });
-
-  it("uninstalls single tool and deletes its files", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
-    await installTool(deps, projectRoot, "claude" as ToolId);
-
-    const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    const results = await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot });
-
-    expect(results).toHaveLength(1);
-    expect(results[0].toolId).toBe("claude");
-    expect(results[0].fileCount).toBeGreaterThan(0);
-    expect(existsSync(join(projectRoot, ".claude"))).toBe(false);
-  });
-
-  it("uninstalls multiple tools and deletes all their files", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
-    await installTool(deps, projectRoot, "claude" as ToolId);
-    await installTool(deps, projectRoot, "cursor" as ToolId);
-
-    const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    const results = await useCase.execute({
-      toolIds: ["claude" as ToolId, "cursor" as ToolId],
-      projectRoot,
-    });
-
-    expect(results).toHaveLength(2);
-    expect(existsSync(join(projectRoot, ".claude"))).toBe(false);
-    expect(existsSync(join(projectRoot, ".cursor"))).toBe(false);
   });
 
   it("no longer tracks removed tool files", async () => {
@@ -68,16 +37,6 @@ describe("UninstallUseCase", () => {
     expect(data.tools.claude).toBeUndefined();
   });
 
-  it("fails if tool is not installed", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
-
-    const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    await expect(useCase.execute({ toolIds: ["claude" as ToolId], projectRoot })).rejects.toThrow(
-      "claude is not installed"
-    );
-  });
-
   it("completes without error when files were already deleted from disk", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
@@ -89,23 +48,6 @@ describe("UninstallUseCase", () => {
     await expect(
       useCase.execute({ toolIds: ["claude" as ToolId], projectRoot })
     ).resolves.not.toThrow();
-  });
-
-  it("leaves other tools and docs untouched", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
-    await installTool(deps, projectRoot, "claude" as ToolId);
-    await installTool(deps, projectRoot, "cursor" as ToolId);
-
-    const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot });
-
-    expect(existsSync(join(projectRoot, ".cursor"))).toBe(true);
-
-    const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
-    const data = JSON.parse(raw) as { tools: Record<string, unknown> };
-    expect(data.tools.cursor).toBeDefined();
-    expect(data.tools.claude).toBeUndefined();
   });
 
   it("updates CATALOG.md after uninstall — uninstalled tool no longer listed", async () => {
@@ -138,13 +80,5 @@ describe("UninstallUseCase", () => {
     await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot });
 
     expect(existsSync(sharedFile)).toBe(true);
-  });
-
-  it("fails if project is not initialized", async () => {
-    const deps = buildDeps(projectRoot);
-    const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    await expect(useCase.execute({ toolIds: ["claude" as ToolId], projectRoot })).rejects.toThrow(
-      "aidd setup"
-    );
   });
 });

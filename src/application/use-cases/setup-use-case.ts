@@ -1,12 +1,6 @@
 import { isLocalPath } from "../../domain/models/framework-path.js";
 import { Manifest } from "../../domain/models/manifest.js";
-import { compareSemver, isSemver } from "../../domain/models/semver.js";
-import {
-  getAllRegisteredTools,
-  hasToolSignals,
-  type ToolId,
-  VALID_TOOL_IDS,
-} from "../../domain/models/tool-config.js";
+import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
 import type { AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
@@ -23,7 +17,10 @@ import { InitUseCase } from "./init-use-case.js";
 import type { InstallToolResult } from "./install-use-case.js";
 import { InstallUseCase } from "./install-use-case.js";
 import { ResolveFrameworkUseCase } from "./resolve-framework-use-case.js";
+import { SetupStateDetector } from "./shared/setup-state-detector.js";
 import { UpdateUseCase } from "./update-use-case.js";
+
+export type { SetupState } from "./shared/setup-state-detector.js";
 
 interface SetupOptions {
   projectRoot: string;
@@ -62,13 +59,6 @@ export type SetupResult =
     }
   | { kind: "up-to-date"; hasAdditionalTools: boolean; additionalInstall?: InstallSummary };
 
-export type SetupState =
-  | { kind: "needs-init" }
-  | { kind: "needs-adopt" }
-  | { kind: "needs-install" }
-  | { kind: "needs-update"; currentVersion: string; latestVersion: string }
-  | { kind: "up-to-date" };
-
 export class SetupUseCase {
   private readonly frameworkResolver: ResolveFrameworkUseCase;
 
@@ -88,10 +78,7 @@ export class SetupUseCase {
   }
 
   async execute(options: SetupOptions): Promise<SetupResult> {
-    const state = await detectSetupState(
-      this.manifestRepo,
-      this.fs,
-      this.resolver,
+    const state = await new SetupStateDetector(this.manifestRepo, this.fs, this.resolver).detect(
       options.projectRoot
     );
     switch (state.kind) {
@@ -109,94 +96,25 @@ export class SetupUseCase {
   }
 
   private async handleInit(options: SetupOptions): Promise<SetupResult> {
-    const { projectRoot, release, repo } = options;
+    const { projectRoot, repo } = options;
 
-    let docsDir: string;
-    let explicitDocsDir: string;
-    if (options.docsDir !== undefined) {
-      docsDir = options.docsDir;
-      explicitDocsDir = options.docsDir;
-      Manifest.validateDocsDir(docsDir);
-    } else if (!options.interactive) {
-      docsDir = Manifest.DEFAULT_DOCS_DIR;
-      explicitDocsDir = "";
-    } else {
-      const docsDirInput = await this.prompter.input(
-        "Documentation directory name:",
-        Manifest.DEFAULT_DOCS_DIR
-      );
-      docsDir = docsDirInput || Manifest.DEFAULT_DOCS_DIR;
-      explicitDocsDir = docsDirInput;
-      Manifest.validateDocsDir(docsDir);
-    }
-
-    let frameworkPath: string | undefined;
-    let frameworkRepo: string | undefined;
-
-    if (options.path !== undefined) {
-      if (options.path) {
-        if (isLocalPath(options.path)) {
-          frameworkPath = options.path;
-        } else {
-          frameworkRepo = options.path;
-        }
-      }
-    } else {
-      const existingManifest = await this.manifestRepo.load();
-      const sourceDefault = existingManifest?.repo ?? this.resolver.getDefaultRepo() ?? "";
-      const sourceInput = options.interactive
-        ? await this.prompter.input("Framework source (owner/repo or local path):", sourceDefault)
-        : sourceDefault;
-      if (sourceInput) {
-        if (isLocalPath(sourceInput)) {
-          frameworkPath = sourceInput;
-        } else {
-          frameworkRepo = sourceInput;
-        }
-      }
-    }
-
-    let resolvedRelease = release;
-    if (!frameworkPath && !release) {
-      if (options.interactive) {
-        const latest = await this.resolver.fetchLatestVersion(frameworkRepo).catch(() => "");
-        resolvedRelease =
-          (await this.prompter.input(
-            latest ? `Framework release tag (latest: ${latest}):` : "Framework release tag:",
-            latest
-          )) ||
-          latest ||
-          undefined;
-      } else {
-        resolvedRelease = await this.resolver
-          .fetchLatestVersion(frameworkRepo)
-          .catch(() => undefined);
-      }
-    }
-
+    const { docsDir, explicitDocsDir } = await this.resolveDocsDir(options);
+    const { frameworkPath, frameworkRepo } = await this.resolveFrameworkSource(options);
+    const resolvedRelease = await this.resolveRelease(frameworkRepo, options);
     const resolved = await this.frameworkResolver.execute({
       path: frameworkPath,
       release: resolvedRelease,
     });
-
     const repoForManifest = frameworkRepo ?? repo;
 
-    const initResult = await new InitUseCase(
-      this.fs,
-      this.manifestRepo,
-      this.loader,
-      this.hasher,
-      this.logger
-    ).execute({
-      frameworkPath: resolved.path,
-      version: resolved.version,
+    const initResult = await this.runInit(
+      resolved.path,
+      resolved.version,
       docsDir,
       explicitDocsDir,
       projectRoot,
-      force: false,
-      repo: repoForManifest,
-    });
-
+      repoForManifest
+    );
     const installResults = await this.runInstall(
       resolved.path,
       resolved.version,
@@ -214,58 +132,99 @@ export class SetupUseCase {
     };
   }
 
-  private async handleAdopt(options: SetupOptions): Promise<SetupResult> {
-    const { projectRoot, repo } = options;
-
-    if (!options.interactive) {
-      if (!options.toolIds || options.toolIds.length === 0) {
-        throw new Error("--tools <ids> is required for adopt in non-interactive mode.");
-      }
-      if (options.from === undefined) {
-        throw new AdoptRequiresVersionError(repo);
-      }
-    }
-
-    let selected: ToolId[];
-    if (options.toolIds !== undefined && options.toolIds.length > 0) {
-      selected = options.toolIds;
-    } else {
-      const choices = VALID_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }));
-      const checkedIds = await this.prompter.checkbox("Which tools do you want to adopt?", choices);
-      if (checkedIds.length === 0) throw new Error("No tools selected.");
-      selected = checkedIds as ToolId[];
-    }
-
-    let fromInput: string;
-    if (options.from !== undefined) {
-      fromInput = options.from;
-      if (!fromInput) throw new AdoptRequiresVersionError(repo);
-    } else {
-      fromInput = await this.prompter.input(
-        "Which version of the framework do you already have installed? (e.g. v1.2.3 or local path):",
-        ""
-      );
-      if (!fromInput) throw new AdoptRequiresVersionError(repo);
-    }
-
-    const { path: frameworkPath, version } = await this.frameworkResolver.execute({
-      from: fromInput,
-    });
-
-    const adoptResult = await new AdoptUseCase(
+  private async runInit(
+    frameworkPath: string,
+    version: string,
+    docsDir: string,
+    explicitDocsDir: string,
+    projectRoot: string,
+    repo: string | undefined
+  ): Promise<{ docsDir: string; fileCount: number }> {
+    return new InitUseCase(
       this.fs,
       this.manifestRepo,
       this.loader,
       this.hasher,
-      this.logger,
-      this.platform
+      this.logger
     ).execute({
-      toolIds: selected as ToolId[],
       frameworkPath,
-      docsDir: Manifest.DEFAULT_DOCS_DIR,
-      projectRoot,
       version,
+      docsDir,
+      explicitDocsDir,
+      projectRoot,
+      force: false,
+      repo,
     });
+  }
+
+  private async resolveDocsDir(
+    options: SetupOptions
+  ): Promise<{ docsDir: string; explicitDocsDir: string }> {
+    if (options.docsDir !== undefined) {
+      Manifest.validateDocsDir(options.docsDir);
+      return { docsDir: options.docsDir, explicitDocsDir: options.docsDir };
+    }
+    if (!options.interactive) {
+      return { docsDir: Manifest.DEFAULT_DOCS_DIR, explicitDocsDir: "" };
+    }
+    const docsDirInput = await this.prompter.input(
+      "Documentation directory name:",
+      Manifest.DEFAULT_DOCS_DIR
+    );
+    const docsDir = docsDirInput || Manifest.DEFAULT_DOCS_DIR;
+    Manifest.validateDocsDir(docsDir);
+    return { docsDir, explicitDocsDir: docsDirInput };
+  }
+
+  private async resolveFrameworkSource(
+    options: SetupOptions
+  ): Promise<{ frameworkPath?: string; frameworkRepo?: string }> {
+    if (options.path !== undefined) {
+      if (!options.path) return {};
+      if (isLocalPath(options.path)) return { frameworkPath: options.path };
+      return { frameworkRepo: options.path };
+    }
+    const existingManifest = await this.manifestRepo.load();
+    const sourceDefault = existingManifest?.repo ?? this.resolver.getDefaultRepo() ?? "";
+    const sourceInput = options.interactive
+      ? await this.prompter.input("Framework source (owner/repo or local path):", sourceDefault)
+      : sourceDefault;
+    if (!sourceInput) return {};
+    if (isLocalPath(sourceInput)) return { frameworkPath: sourceInput };
+    return { frameworkRepo: sourceInput };
+  }
+
+  private async resolveRelease(
+    frameworkRepo: string | undefined,
+    options: SetupOptions
+  ): Promise<string | undefined> {
+    if (options.path && isLocalPath(options.path)) return options.release;
+    if (options.release) return options.release;
+    if (options.interactive) {
+      const latest = await this.resolver.fetchLatestVersion(frameworkRepo).catch(() => "");
+      const label = latest
+        ? `Framework release tag (latest: ${latest}):`
+        : "Framework release tag:";
+      return (await this.prompter.input(label, latest)) || latest || undefined;
+    }
+    return this.resolver.fetchLatestVersion(frameworkRepo).catch(() => undefined);
+  }
+
+  private async handleAdopt(options: SetupOptions): Promise<SetupResult> {
+    const { projectRoot, repo } = options;
+    this.validateAdoptNonInteractive(options, repo);
+
+    const selected = await this.resolveAdoptTools(options);
+    const fromInput = await this.resolveAdoptFrom(options, repo);
+    const { path: frameworkPath, version } = await this.frameworkResolver.execute({
+      from: fromInput,
+    });
+    const adoptResult = await this.runAdopt(
+      selected as ToolId[],
+      frameworkPath,
+      projectRoot,
+      version
+    );
 
     return {
       kind: "adopted",
@@ -274,6 +233,64 @@ export class SetupUseCase {
       totalRegistered: adoptResult.totalRegistered,
       docsRegistered: adoptResult.docsRegistered,
     };
+  }
+
+  private validateAdoptNonInteractive(options: SetupOptions, repo: string | undefined): void {
+    if (!options.interactive) {
+      if (!options.toolIds || options.toolIds.length === 0) {
+        throw new Error("--tools <ids> is required for adopt in non-interactive mode.");
+      }
+      if (options.from === undefined) throw new AdoptRequiresVersionError(repo);
+    }
+  }
+
+  private async runAdopt(
+    toolIds: ToolId[],
+    frameworkPath: string,
+    projectRoot: string,
+    version: string
+  ): Promise<{
+    tools: { registered: string[] }[];
+    totalRegistered: number;
+    docsRegistered: number;
+  }> {
+    return new AdoptUseCase(
+      this.fs,
+      this.manifestRepo,
+      this.loader,
+      this.hasher,
+      this.logger,
+      this.platform
+    ).execute({
+      toolIds,
+      frameworkPath,
+      docsDir: Manifest.DEFAULT_DOCS_DIR,
+      projectRoot,
+      version,
+    });
+  }
+
+  private async resolveAdoptTools(options: SetupOptions): Promise<ToolId[]> {
+    if (options.toolIds !== undefined && options.toolIds.length > 0) {
+      return options.toolIds;
+    }
+    const choices = VALID_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }));
+    const checkedIds = await this.prompter.checkbox("Which tools do you want to adopt?", choices);
+    if (checkedIds.length === 0) throw new Error("No tools selected.");
+    return checkedIds as ToolId[];
+  }
+
+  private async resolveAdoptFrom(options: SetupOptions, repo: string | undefined): Promise<string> {
+    if (options.from !== undefined) {
+      if (!options.from) throw new AdoptRequiresVersionError(repo);
+      return options.from;
+    }
+    const fromInput = await this.prompter.input(
+      "Which version of the framework do you already have installed? (e.g. v1.2.3 or local path):",
+      ""
+    );
+    if (!fromInput) throw new AdoptRequiresVersionError(repo);
+    return fromInput;
   }
 
   private async handleInstall(options: SetupOptions): Promise<SetupResult> {
@@ -299,7 +316,6 @@ export class SetupUseCase {
 
   private async handleUpdate(options: SetupOptions): Promise<SetupResult> {
     const { projectRoot, path, release, repo } = options;
-
     const { path: frameworkPath, version } = await this.frameworkResolver.execute({
       path,
       release,
@@ -323,10 +339,26 @@ export class SetupUseCase {
       repo,
     });
 
-    if (updateResult.cancelled) {
-      return { kind: "update-cancelled" };
-    }
+    if (updateResult.cancelled) return { kind: "update-cancelled" };
 
+    return this.buildUpdateResult(
+      updateResult,
+      frameworkPath,
+      version,
+      projectRoot,
+      repo,
+      options.interactive
+    );
+  }
+
+  private async buildUpdateResult(
+    updateResult: { totalWritten: number; totalDeleted: number; toolCount: number },
+    frameworkPath: string,
+    version: string,
+    projectRoot: string,
+    repo: string | undefined,
+    interactive?: boolean
+  ): Promise<SetupResult> {
     const updatedManifest = await this.manifestRepo.load();
     const updatedInstalledIds = updatedManifest?.getInstalledToolIds() ?? [];
     const missingTools = VALID_TOOL_IDS.filter((id) => !updatedInstalledIds.includes(id));
@@ -336,9 +368,8 @@ export class SetupUseCase {
       version,
       projectRoot,
       repo,
-      options.interactive
+      interactive
     );
-
     return {
       kind: "updated",
       version,
@@ -356,19 +387,21 @@ export class SetupUseCase {
     const installedIds = manifest?.getInstalledToolIds() ?? [];
     const missingTools = VALID_TOOL_IDS.filter((id) => !installedIds.includes(id));
 
-    if (missingTools.length === 0) {
-      return { kind: "up-to-date", hasAdditionalTools: false };
-    }
-
-    if (!options.interactive) {
-      return { kind: "up-to-date", hasAdditionalTools: true };
-    }
+    if (missingTools.length === 0) return { kind: "up-to-date", hasAdditionalTools: false };
+    if (!options.interactive) return { kind: "up-to-date", hasAdditionalTools: true };
 
     const wantsMore = await this.prompter.confirm("Install additional tools?");
-    if (!wantsMore) {
-      return { kind: "up-to-date", hasAdditionalTools: true };
-    }
+    if (!wantsMore) return { kind: "up-to-date", hasAdditionalTools: true };
 
+    return this.installAdditionalTools(path, release, repo, projectRoot);
+  }
+
+  private async installAdditionalTools(
+    path: string | undefined,
+    release: string | undefined,
+    repo: string | undefined,
+    projectRoot: string
+  ): Promise<SetupResult> {
     const { path: frameworkPath, version } = await this.frameworkResolver.execute({
       path,
       release,
@@ -382,7 +415,6 @@ export class SetupUseCase {
       undefined,
       true
     );
-
     return {
       kind: "up-to-date",
       hasAdditionalTools: true,
@@ -443,43 +475,4 @@ export class SetupUseCase {
       interactive: isInteractive,
     });
   }
-}
-
-export async function detectSetupState(
-  manifestRepo: ManifestRepository,
-  fs: FileSystem,
-  resolver: FrameworkResolver,
-  projectRoot: string
-): Promise<SetupState> {
-  const manifest = await manifestRepo.load();
-
-  if (manifest === null) {
-    for (const tool of getAllRegisteredTools().values()) {
-      if (await hasToolSignals(fs, tool, projectRoot)) return { kind: "needs-adopt" };
-    }
-    return { kind: "needs-init" };
-  }
-
-  const installedIds = manifest.getInstalledToolIds();
-  if (installedIds.length === 0) {
-    return { kind: "needs-install" };
-  }
-
-  try {
-    const latestVersion = await resolver.fetchLatestVersion(manifest.repo);
-    const installedVersions = installedIds
-      .map((id) => manifest.getToolVersion(id))
-      .filter((v): v is string => v !== undefined);
-    const currentVersion = installedVersions[0] ?? "unknown";
-    const needsUpdate =
-      isSemver(latestVersion) &&
-      installedVersions.some((v) => !isSemver(v) || compareSemver(v, latestVersion) < 0);
-    if (needsUpdate) {
-      return { kind: "needs-update", currentVersion, latestVersion };
-    }
-  } catch {
-    // Network failure → treat as up-to-date
-  }
-
-  return { kind: "up-to-date" };
 }

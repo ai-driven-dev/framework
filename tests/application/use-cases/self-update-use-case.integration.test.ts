@@ -18,9 +18,9 @@ function makeUseCase(
   return { useCase: new SelfUpdateUseCase(updater, versionProvider), installFn };
 }
 
-describe("SelfUpdateUseCase", () => {
+describe("self-update", () => {
   describe("--check", () => {
-    it("returns check-available when a newer version exists", async () => {
+    it("reports a newer version is available when running --check", async () => {
       const { useCase } = makeUseCase("2.5.0", "2.6.0");
       const result = await useCase.execute({ check: true, dryRun: false, force: false });
       expect(result).toEqual({
@@ -30,7 +30,7 @@ describe("SelfUpdateUseCase", () => {
       });
     });
 
-    it("returns check-current when already on latest", async () => {
+    it("reports already on latest when running --check with matching version", async () => {
       const { useCase } = makeUseCase("2.5.0", "2.5.0");
       const result = await useCase.execute({ check: true, dryRun: false, force: false });
       expect(result).toEqual({ kind: "check-current", version: "2.5.0" });
@@ -44,7 +44,7 @@ describe("SelfUpdateUseCase", () => {
   });
 
   describe("no flags", () => {
-    it("returns up-to-date when already on latest", async () => {
+    it("skips install and reports up-to-date when already on latest version", async () => {
       const { useCase, installFn } = makeUseCase("2.5.0", "2.5.0");
       const result = await useCase.execute({ check: false, dryRun: false, force: false });
       expect(result).toEqual({ kind: "up-to-date", version: "2.5.0" });
@@ -65,7 +65,7 @@ describe("SelfUpdateUseCase", () => {
   });
 
   describe("--dry-run", () => {
-    it("returns dry-run result without installing", async () => {
+    it("previews the latest version without installing when --dry-run is set", async () => {
       const { useCase, installFn } = makeUseCase("2.5.0", "2.6.0");
       const result = await useCase.execute({ check: false, dryRun: true, force: false });
       expect(result).toEqual({ kind: "dry-run", latestVersion: "2.6.0" });

@@ -13,7 +13,7 @@ import {
   linuxPlatform,
 } from "./helpers.js";
 
-describe("AdoptUseCase", () => {
+describe("adopt", () => {
   let tempDir: string;
   let projectRoot: string;
 
@@ -43,13 +43,13 @@ describe("AdoptUseCase", () => {
     version: "3.3.3",
   };
 
-  it("throws on unknown tool id", async () => {
+  it("fails with unknown tool error when tool id is not recognized", async () => {
     await expect(
       buildUseCase().execute({ ...DEFAULT_OPTS, toolIds: ["unknown" as never], projectRoot })
     ).rejects.toThrow("Unknown tool");
   });
 
-  it("throws when toolIds is empty", async () => {
+  it("fails when no tools are specified", async () => {
     await expect(
       buildUseCase().execute({ ...DEFAULT_OPTS, toolIds: [], projectRoot })
     ).rejects.toThrow("No tools specified");
@@ -64,7 +64,7 @@ describe("AdoptUseCase", () => {
     ).rejects.toThrow("Already initialized");
   });
 
-  it("throws if specified tool directory does not exist", async () => {
+  it("fails when the tool directory does not exist on disk", async () => {
     await expect(
       buildUseCase().execute({ ...DEFAULT_OPTS, toolIds: ["claude"], projectRoot })
     ).rejects.toThrow("Directory '.claude/' not found for tool 'claude'");

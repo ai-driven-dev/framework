@@ -12,7 +12,7 @@ import {
   noGit,
 } from "./helpers.js";
 
-describe("InitUseCase", () => {
+describe("init", () => {
   let tempDir: string;
   let projectRoot: string;
 

@@ -17,9 +17,7 @@ import type { ManifestRepository } from "../../domain/ports/manifest-repository.
 import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import { NoManifestError } from "../errors.js";
-import { CatalogUseCase } from "./catalog-use-case.js";
-import { GitignoreUseCase } from "./gitignore-use-case.js";
-import { MemoryScriptUseCase } from "./memory-script-use-case.js";
+import { PostInstallPipelineUseCase } from "./shared/post-install-pipeline-use-case.js";
 
 interface InstallOptions {
   toolIds?: ToolId[];
@@ -55,120 +53,163 @@ export class InstallUseCase {
 
   async execute(options: InstallOptions): Promise<InstallToolResult[]> {
     const { frameworkPath, version, projectRoot, force = false, repo } = options;
-    const interactive = options.interactive ?? false;
 
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) {
-      throw new NoManifestError(repo);
-    }
+    if (manifest === null) throw new NoManifestError(repo);
 
     const docsDir = options.docsDir ?? manifest.docsDir;
-
-    let toolIds: ToolId[];
-
-    if (options.all) {
-      toolIds = [...VALID_TOOL_IDS];
-    } else if (options.toolIds !== undefined && options.toolIds.length > 0) {
-      toolIds = options.toolIds;
-    } else if (interactive && this.prompter !== undefined) {
-      const installedIds = manifest.getInstalledToolIds();
-      const choices = VALID_TOOL_IDS.map((id) =>
-        installedIds.includes(id)
-          ? { name: id, value: id, checked: true, disabled: "(already installed)" }
-          : { name: id, value: id, checked: false }
-      );
-      const selected = await this.prompter.checkbox("Which tools do you want to install?", choices);
-      if (selected.length === 0) throw new Error("No tools selected.");
-      toolIds = selected as ToolId[];
-    } else {
-      throw new Error(
-        `At least one tool ID is required. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
-      );
-    }
-
+    const toolIds = await this.resolveToolIds(options, manifest);
     assertValidToolIds(toolIds);
 
     const { descriptor, contentFiles } = await this.loader.loadFromDirectory(
       frameworkPath,
       version
     );
-
-    const results: InstallToolResult[] = [];
-
-    for (const toolId of toolIds) {
-      if (manifest.hasTool(toolId) && !force) {
-        results.push({ toolId, fileCount: 0, files: [], skipped: true, warnings: [] });
-        continue;
-      }
-
-      const config = getToolConfig(toolId);
-      const warnings: string[] = [];
-
-      if (!manifest.hasTool(toolId) && force) {
-        const toolDir = join(projectRoot, config.directory);
-        if (await this.fs.fileExists(toolDir)) {
-          warnings.push(
-            `Directory ${config.directory} exists but tool is not in manifest. Files will be overwritten.`
-          );
-        }
-      }
-
-      this.logger.info(`Generating ${toolId} distribution...`);
-
-      const generated = await generateDistribution(
-        descriptor,
-        config,
-        docsDir,
-        contentFiles,
-        this.hasher,
-        this.platform,
-        projectRoot,
-        this.fs
-      );
-
-      if (manifest.hasTool(toolId)) {
-        const newPaths = new Set(generated.map((f) => f.relativePath));
-        for (const oldFile of manifest.getToolFiles(toolId)) {
-          if (!newPaths.has(oldFile.relativePath)) {
-            await this.fs.deleteFile(join(projectRoot, oldFile.relativePath));
-          }
-        }
-      }
-
-      const { files: finalFiles, userFileConflicts } = await this.writeToolFiles(
-        generated,
-        projectRoot,
-        manifest
-      );
-      for (const relativePath of userFileConflicts) {
-        warnings.push(
-          `\`${relativePath}\` already exists and was not installed by AIDD — skipped to preserve user file`
-        );
-      }
-      manifest.addTool(toolId, descriptor.version, finalFiles);
-
-      results.push({
-        toolId,
-        fileCount: generated.length,
-        files: generated,
-        skipped: false,
-        warnings,
-      });
-    }
-
-    await new MemoryScriptUseCase(this.fs, this.hasher, this.git).execute({
-      projectRoot,
-      version,
+    const results = await this.installAllTools(
+      toolIds,
+      manifest,
       descriptor,
       contentFiles,
-      manifest,
-    });
+      docsDir,
+      projectRoot,
+      force
+    );
 
-    await this.manifestRepo.save(manifest);
-    await new CatalogUseCase(this.fs).execute({ manifest, docsDir, projectRoot });
-    await new GitignoreUseCase(this.fs).execute(projectRoot, [".aidd/cache/"]);
+    await new PostInstallPipelineUseCase(this.fs, this.manifestRepo, this.hasher, this.git).execute(
+      { projectRoot, version, descriptor, contentFiles, manifest, docsDir }
+    );
 
     return results;
+  }
+
+  private async installAllTools(
+    toolIds: ToolId[],
+    manifest: Manifest,
+    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    docsDir: string,
+    projectRoot: string,
+    force: boolean
+  ): Promise<InstallToolResult[]> {
+    const results: InstallToolResult[] = [];
+    for (const toolId of toolIds) {
+      const result = await this.installOneTool(
+        toolId,
+        manifest,
+        descriptor,
+        contentFiles,
+        docsDir,
+        projectRoot,
+        force
+      );
+      results.push(result);
+    }
+    return results;
+  }
+
+  /** Resolves which tool IDs to install from the 4-branch selection logic. */
+  private async resolveToolIds(options: InstallOptions, manifest: Manifest): Promise<ToolId[]> {
+    const interactive = options.interactive ?? false;
+
+    if (options.all) return [...VALID_TOOL_IDS];
+    if (options.toolIds !== undefined && options.toolIds.length > 0) return options.toolIds;
+    if (interactive && this.prompter !== undefined) return this.promptToolIds(manifest);
+
+    throw new Error(`At least one tool ID is required. Valid tools: ${VALID_TOOL_IDS.join(", ")}`);
+  }
+
+  private async promptToolIds(manifest: Manifest): Promise<ToolId[]> {
+    if (this.prompter === undefined) throw new Error("Prompter is required for interactive mode.");
+    const installedIds = manifest.getInstalledToolIds();
+    const choices = VALID_TOOL_IDS.map((id) =>
+      installedIds.includes(id)
+        ? { name: id, value: id, checked: true, disabled: "(already installed)" }
+        : { name: id, value: id, checked: false }
+    );
+    const selected = await this.prompter.checkbox("Which tools do you want to install?", choices);
+    if (selected.length === 0) throw new Error("No tools selected.");
+    return selected as ToolId[];
+  }
+
+  /** Installs a single tool and updates the manifest in place. */
+  private async installOneTool(
+    toolId: ToolId,
+    manifest: Manifest,
+    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    docsDir: string,
+    projectRoot: string,
+    force: boolean
+  ): Promise<InstallToolResult> {
+    if (manifest.hasTool(toolId) && !force) {
+      return { toolId, fileCount: 0, files: [], skipped: true, warnings: [] };
+    }
+
+    const config = getToolConfig(toolId);
+    const warnings = await this.checkForceWarning(toolId, config, manifest, projectRoot, force);
+
+    this.logger.info(`Generating ${toolId} distribution...`);
+
+    const generated = await generateDistribution(
+      descriptor,
+      config,
+      docsDir,
+      contentFiles,
+      this.hasher,
+      this.platform,
+      projectRoot,
+      this.fs
+    );
+
+    await this.removeStaleFiles(toolId, manifest, generated, projectRoot);
+
+    const { files: finalFiles, userFileConflicts } = await this.writeToolFiles(
+      generated,
+      projectRoot,
+      manifest
+    );
+    for (const relativePath of userFileConflicts) {
+      warnings.push(
+        `\`${relativePath}\` already exists and was not installed by AIDD — skipped to preserve user file`
+      );
+    }
+    manifest.addTool(toolId, descriptor.version, finalFiles);
+
+    return { toolId, fileCount: generated.length, files: generated, skipped: false, warnings };
+  }
+
+  private async checkForceWarning(
+    toolId: ToolId,
+    config: ReturnType<typeof getToolConfig>,
+    manifest: Manifest,
+    projectRoot: string,
+    force: boolean
+  ): Promise<string[]> {
+    const warnings: string[] = [];
+    if (!manifest.hasTool(toolId) && force) {
+      const toolDir = join(projectRoot, config.directory);
+      if (await this.fs.fileExists(toolDir)) {
+        warnings.push(
+          `Directory ${config.directory} exists but tool is not in manifest. Files will be overwritten.`
+        );
+      }
+    }
+    return warnings;
+  }
+
+  private async removeStaleFiles(
+    toolId: ToolId,
+    manifest: Manifest,
+    generated: GeneratedFile[],
+    projectRoot: string
+  ): Promise<void> {
+    if (!manifest.hasTool(toolId)) return;
+    const newPaths = new Set(generated.map((f) => f.relativePath));
+    for (const oldFile of manifest.getToolFiles(toolId)) {
+      if (!newPaths.has(oldFile.relativePath)) {
+        await this.fs.deleteFile(join(projectRoot, oldFile.relativePath));
+      }
+    }
   }
 
   private async writeToolFiles(

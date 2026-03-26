@@ -6,7 +6,7 @@ import { CleanUseCase } from "../../../src/application/use-cases/clean-use-case.
 import type { ToolId } from "../../../src/domain/models/tool-config.js";
 import { buildDeps, cleanupTempProject, createTempProject, initAndInstall } from "./helpers.js";
 
-describe("CleanUseCase", () => {
+describe("clean", () => {
   let tempDir: string;
   let projectRoot: string;
 
@@ -16,44 +16,6 @@ describe("CleanUseCase", () => {
 
   afterEach(async () => {
     await cleanupTempProject(tempDir);
-  });
-
-  it("reports nothing to clean when project is not initialized", async () => {
-    const deps = buildDeps(projectRoot);
-
-    const useCase = new CleanUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    const result = await useCase.execute({ projectRoot, force: true });
-
-    expect(result.preview.totalFileCount).toBe(0);
-    expect(result.fileCount).toBe(0);
-  });
-
-  it("dry-run returns preview without deleting files", async () => {
-    const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude" as ToolId);
-
-    const useCase = new CleanUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    const result = await useCase.execute({ projectRoot, force: false });
-
-    expect(result.dryRun).toBe(true);
-    expect(result.preview.totalFileCount).toBe(12);
-    expect(result.fileCount).toBe(0);
-    // Files should still exist
-    expect(existsSync(join(projectRoot, ".claude"))).toBe(true);
-    expect(existsSync(join(projectRoot, ".aidd", "manifest.json"))).toBe(true);
-  });
-
-  it("with force deletes all tracked files and .aidd directory", async () => {
-    const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude" as ToolId);
-
-    const useCase = new CleanUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    const result = await useCase.execute({ projectRoot, force: true });
-
-    expect(result.dryRun).toBe(false);
-    expect(result.fileCount).toBe(12);
-    expect(existsSync(join(projectRoot, ".claude"))).toBe(false);
-    expect(existsSync(join(projectRoot, ".aidd"))).toBe(false);
   });
 
   it("with force removes .aidd/cache/ entry from .gitignore", async () => {

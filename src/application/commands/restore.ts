@@ -121,8 +121,8 @@ export function registerRestoreCommand(program: Command): void {
             deps.loader,
             deps.hasher,
             deps.logger,
-            prompter,
-            deps.platform
+            deps.platform,
+            prompter
           );
 
           const result = await restoreUseCase.execute({

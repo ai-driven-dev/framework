@@ -20,7 +20,7 @@ import {
   SkipPrompter,
 } from "./helpers.js";
 
-describe("UpdateUseCase", () => {
+describe("update", () => {
   let tempDir: string;
   let projectRoot: string;
 

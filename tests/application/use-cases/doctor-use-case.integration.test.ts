@@ -77,7 +77,7 @@ describe("extractMarkdownLinkTargets", () => {
   });
 });
 
-describe("DoctorUseCase", () => {
+describe("doctor", () => {
   let tempDir: string;
   let projectRoot: string;
 

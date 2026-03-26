@@ -11,7 +11,7 @@ import {
   installTool,
 } from "./helpers.js";
 
-describe("SyncUseCase", () => {
+describe("sync", () => {
   let tempDir: string;
   let projectRoot: string;
 

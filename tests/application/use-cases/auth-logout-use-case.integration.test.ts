@@ -3,7 +3,7 @@ import { AuthLogoutUseCase } from "../../../src/application/use-cases/auth-logou
 import type { AuthStorage } from "../../../src/infrastructure/auth/auth-storage.js";
 import { makeAuthConfig, makeTempAuthStorage } from "../../helpers/auth.js";
 
-describe("AuthLogoutUseCase", () => {
+describe("auth logout", () => {
   let tempDir: string;
   let storage: AuthStorage;
   let cleanup: () => Promise<void>;
@@ -16,7 +16,7 @@ describe("AuthLogoutUseCase", () => {
     await cleanup();
   });
 
-  it("returns found=false when no auth file exists", async () => {
+  it("reports no auth file found when user is not logged in", async () => {
     const useCase = new AuthLogoutUseCase(storage);
     const result = await useCase.execute({ projectRoot: tempDir });
     expect(result.found).toBe(false);

@@ -42,10 +42,10 @@ flowchart TD
     subgraph APP["Application"]
         CMD_FILES["commands: auth, install, uninstall, status, clean, doctor, update, restore, sync, cache, config, self-update, setup"]
         OUTPUT["output.ts"]
-        USECASES["use-cases: auth-login, auth-logout, auth-status, adopt, init, install, uninstall, status, clean, doctor, catalog, restore, update, sync, gitignore, resolve-framework, require-auth, self-update, setup"]
+        USECASES["use-cases: auth-login, auth-logout, auth-status, adopt, init, install, uninstall, status, clean, doctor, catalog, restore, update, sync, gitignore, resolve-framework, require-auth, self-update, setup | shared: post-install-pipeline, setup-state-detector"]
     end
     subgraph DOM["Domain"]
-        MODELS["models: Manifest, Distribution, Catalog, ToolConfig, FileHash, GeneratedFile, Docs, Mcp, Semver"]
+        MODELS["models: Manifest, Distribution, Catalog, ToolConfig, FileHash, GeneratedFile, Docs, Mcp, Semver, FileDiff, ConflictDecision, UpdateScope, SyncExclusions"]
         PORTS["ports: interfaces"]
         TOOLS["tools: claude, cursor, copilot, opencode"]
     end
@@ -122,7 +122,11 @@ flowchart TD
     Distrib -->|applies spec| ToolCfg["ToolConfig"]
     InstallUC -->|writes files| FS["FileSystem"]
     InstallUC -->|hashes files| Hshr["Hasher"]
-    InstallUC -->|persists manifest| ManifRepo["ManifestRepository"]
+    InstallUC -->|delegates post-write steps| Pipeline["PostInstallPipelineUseCase (shared)"]
+    Pipeline -->|1 memory bank| MemScript["MemoryScriptUseCase"]
+    Pipeline -->|2 persist| ManifRepo["ManifestRepository"]
+    Pipeline -->|3 catalog| Catalog["CatalogUseCase"]
+    Pipeline -->|4 gitignore| Gitignore["GitignoreUseCase"]
 ```
 
 ## External Services
@@ -169,7 +173,8 @@ src/
 │   ├── commands/                   # adopt.ts, init.ts, install.ts, uninstall.ts, status.ts, clean.ts, doctor.ts, update.ts, restore.ts, sync.ts, cache.ts, config.ts, self-update.ts
 │   ├── output.ts                   # Output formatting (replaces presenter.ts)
 │   └── use-cases/                  # adopt, init, install, uninstall, status, clean, doctor, catalog
-│                                   # + gitignore, resolve-framework, self-update (shared)
+│       │                           # + gitignore, resolve-framework, self-update, setup, memory-script
+│       └── shared/                 # post-install-pipeline, setup-state-detector
 ├── domain/
 │   ├── models/                     # Manifest, Distribution, Catalog, ToolConfig, FileHash, GeneratedFile,
 │   │                               #   FrameworkDescriptor, Frontmatter, Docs, Mcp, Semver
@@ -191,6 +196,8 @@ src/
 - `ResolveFrameworkUseCase` handles framework resolution and conditional auth: for remote sources it delegates to `RequireAuthUseCase`; for local paths auth is never called. Exposes `isLocalSource` as a public static method for callers that need pre-classification.
 - `RequireAuthUseCase` is the single source of auth validation logic. All commands and `SetupUseCase` delegate auth through this class — no duplicated auth checks.
 - 13 commands total. `setup` is the interactive entry point for init/adopt/update flows; `init` and `adopt` are internal use cases only (no CLI commands). See DEC-009, DEC-010, DEC-011.
+- `SetupStateDetector` (shared) consolidates setup state detection logic — determines which phase a project is in (`needs-init`, `needs-adopt`, `needs-install`, `needs-update`, `up-to-date`). Used by `SetupUseCase` to dispatch to the correct handler.
+- `PostInstallPipelineUseCase` (shared) is the canonical post-write sequence: MemoryScriptUseCase → manifest.save() → CatalogUseCase → GitignoreUseCase. Every use-case that writes files to disk and updates the manifest must delegate to this pipeline. Exception: `InitUseCase` calls steps 2–4 directly (no tools installed at init time).
 
 ## Known Design Behaviors
 

@@ -17,7 +17,7 @@ import {
   RecordingPrompter,
 } from "./helpers.js";
 
-describe("RestoreUseCase", () => {
+describe("restore", () => {
   let tempDir: string;
   let projectRoot: string;
 
@@ -37,8 +37,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     await expect(
@@ -61,8 +61,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -89,8 +89,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -119,8 +119,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -149,8 +149,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new KeepPrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new KeepPrompter()
     );
 
     const result = await useCase.execute({
@@ -182,8 +182,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     await useCase.execute({
@@ -219,8 +219,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
     await useCase.execute({
       frameworkPath: FIXTURE_DIR,
@@ -253,8 +253,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     await useCase.execute({
@@ -289,8 +289,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     await useCase.execute({
@@ -323,8 +323,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     await useCase.execute({
@@ -351,8 +351,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -368,7 +368,7 @@ describe("RestoreUseCase", () => {
     expect(result.tools[0].restored.length).toBeGreaterThan(0);
   });
 
-  it("throws when modified files exist in non-interactive mode without --force", async () => {
+  it("aborts in non-interactive mode when modified files exist and --force is not set", async () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude");
 
@@ -381,8 +381,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     await expect(
@@ -411,8 +411,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      prompter,
-      linuxPlatform
+      linuxPlatform,
+      prompter
     );
 
     await useCase.execute({
@@ -441,8 +441,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      prompter,
-      linuxPlatform
+      linuxPlatform,
+      prompter
     );
 
     await useCase.execute({
@@ -477,8 +477,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -521,8 +521,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -551,8 +551,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -581,8 +581,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new KeepPrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new KeepPrompter()
     );
 
     const result = await useCase.execute({
@@ -612,8 +612,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -641,8 +641,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -673,8 +673,8 @@ describe("RestoreUseCase", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      new OverwritePrompter(),
-      linuxPlatform
+      linuxPlatform,
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({

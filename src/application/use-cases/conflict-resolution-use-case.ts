@@ -1,12 +1,11 @@
+import type { ConflictDecision } from "../../domain/models/conflict-decision.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
-
-type ConflictResolution = "overwrite" | "skip" | "backup";
 
 export class ConflictResolutionUseCase {
   constructor(private readonly prompter: Prompter) {}
 
-  async execute(relativePaths: string[]): Promise<Map<string, ConflictResolution>> {
-    const result = new Map<string, ConflictResolution>();
+  async execute(relativePaths: string[]): Promise<Map<string, ConflictDecision>> {
+    const result = new Map<string, ConflictDecision>();
 
     if (relativePaths.length === 0) {
       return result;
@@ -41,7 +40,7 @@ export class ConflictResolutionUseCase {
       }
     } else {
       for (const relativePath of relativePaths) {
-        const action = await this.prompter.select<ConflictResolution>(relativePath, [
+        const action = await this.prompter.select<ConflictDecision>(relativePath, [
           { name: "Overwrite with latest version", value: "overwrite" },
           { name: "Skip (keep my version)", value: "skip" },
           { name: "Backup and overwrite", value: "backup" },

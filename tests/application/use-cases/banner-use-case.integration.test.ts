@@ -8,7 +8,7 @@ function makeMockStream(isTTY: boolean): NodeJS.WriteStream {
   } as unknown as NodeJS.WriteStream;
 }
 
-describe("BannerUseCase", () => {
+describe("banner", () => {
   it("writes nothing when stream is not a TTY", async () => {
     const out = makeMockStream(false);
     await new BannerUseCase(out).execute();

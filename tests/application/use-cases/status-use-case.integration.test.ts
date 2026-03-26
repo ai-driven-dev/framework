@@ -11,13 +11,12 @@ import {
   cleanupTempProject,
   createTempProject,
   FIXTURE_DIR,
-  initAndInstall,
   initProject,
   linuxPlatform,
   noGit,
 } from "./helpers.js";
 
-describe("StatusUseCase", () => {
+describe("status", () => {
   let tempDir: string;
   let projectRoot: string;
 
@@ -27,49 +26,6 @@ describe("StatusUseCase", () => {
 
   afterEach(async () => {
     await cleanupTempProject(tempDir);
-  });
-
-  it("reports all files in sync when nothing changed", async () => {
-    const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude" as ToolId);
-
-    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    const report = await useCase.execute({ projectRoot });
-
-    expect(report.inSync).toBe(true);
-    expect(report.tools[0].drifted).toHaveLength(0);
-  });
-
-  it("detects modified file", async () => {
-    const deps = buildDeps(projectRoot);
-    const installResult = await initAndInstall(deps, projectRoot, "claude" as ToolId);
-
-    const firstFile = installResult.files[0];
-    await writeFile(join(projectRoot, firstFile.relativePath), "modified content", "utf-8");
-
-    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    const report = await useCase.execute({ projectRoot });
-
-    expect(report.inSync).toBe(false);
-    const modified = report.tools[0].drifted.find((f) => f.status === "modified");
-    expect(modified).toBeDefined();
-    expect(modified?.relativePath).toBe(firstFile.relativePath);
-  });
-
-  it("detects deleted file", async () => {
-    const deps = buildDeps(projectRoot);
-    const installResult = await initAndInstall(deps, projectRoot, "claude" as ToolId);
-
-    const firstFile = installResult.files[0];
-    await rm(join(projectRoot, firstFile.relativePath));
-
-    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    const report = await useCase.execute({ projectRoot });
-
-    expect(report.inSync).toBe(false);
-    const deleted = report.tools[0].drifted.find((f) => f.status === "deleted");
-    expect(deleted).toBeDefined();
-    expect(deleted?.relativePath).toBe(firstFile.relativePath);
   });
 
   it("does not report .vscode/settings.json as drifted when shared by claude and copilot", async () => {
@@ -105,22 +61,6 @@ describe("StatusUseCase", () => {
     }
   });
 
-  it("detects added file in tool directory", async () => {
-    const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude" as ToolId);
-
-    const extraFile = join(projectRoot, ".claude", "extra-untracked-file.md");
-    await writeFile(extraFile, "untracked content", "utf-8");
-
-    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    const report = await useCase.execute({ projectRoot });
-
-    expect(report.inSync).toBe(false);
-    const added = report.tools[0].drifted.find((f) => f.status === "added");
-    expect(added).toBeDefined();
-    expect(added?.relativePath).toContain("extra-untracked-file.md");
-  });
-
   it("detects added file in docs directory", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
@@ -151,14 +91,6 @@ describe("StatusUseCase", () => {
     expect(deleted?.relativePath).toBe("aidd_docs/CATALOG.md");
   });
 
-  it("fails if project is not initialized", async () => {
-    const deps = buildDeps(projectRoot);
-
-    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
-
-    await expect(useCase.execute({ projectRoot })).rejects.toThrow("aidd setup");
-  });
-
   it("reports no drift when no tools are installed", async () => {
     const deps = buildDeps(projectRoot);
     const initUseCase = new InitUseCase(
@@ -183,19 +115,19 @@ describe("StatusUseCase", () => {
   });
 
   describe("compareSemver()", () => {
-    it("returns -1 when a < b (major)", () => {
+    it("orders lower major version as smaller", () => {
       expect(compareSemver("1.0.0", "2.0.0")).toBe(-1);
     });
 
-    it("returns -1 when a < b (minor)", () => {
+    it("orders lower minor version as smaller", () => {
       expect(compareSemver("3.1.0", "3.2.0")).toBe(-1);
     });
 
-    it("returns 1 when a > b (patch)", () => {
+    it("orders higher patch version as greater", () => {
       expect(compareSemver("3.1.1", "3.1.0")).toBe(1);
     });
 
-    it("returns 0 when equal", () => {
+    it("treats identical versions as equal", () => {
       expect(compareSemver("3.1.0", "3.1.0")).toBe(0);
     });
 

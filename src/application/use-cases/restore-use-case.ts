@@ -60,6 +60,27 @@ interface RestorationResult {
   updatedHashMap: Map<string, FileHash>;
 }
 
+interface SectionRestoreResult {
+  restored: string[];
+  kept: string[];
+  updatedFiles: GeneratedFile[];
+}
+
+interface RestoreCtx {
+  options: RestoreOptions;
+  docsOnly: boolean;
+  manifest: Manifest;
+  descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"];
+  contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"];
+  docsFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["docsFiles"];
+  docsDir: string;
+  projectRoot: string;
+  version: string;
+  force: boolean;
+  interactive: boolean;
+  fileFilter: ((p: string) => boolean) | null;
+}
+
 export class RestoreUseCase {
   constructor(
     private readonly fs: FileSystem,
@@ -67,8 +88,8 @@ export class RestoreUseCase {
     private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
-    private readonly prompter: Prompter,
-    private readonly platform: Platform
+    private readonly platform: Platform,
+    private readonly prompter: Prompter
   ) {}
 
   async execute(options: RestoreOptions): Promise<RestoreResult> {
@@ -82,67 +103,59 @@ export class RestoreUseCase {
       repo,
     } = options;
     const docsOnly = options.docsOnly ?? false;
-    const fileFilter = buildFileFilter(options.files);
-
     const manifest = options.manifest ?? (await this.manifestRepo.load());
     if (manifest === null) throw new NoManifestError(repo);
-
-    const toolIds = docsOnly
-      ? []
-      : options.toolIds && options.toolIds.length > 0
-        ? options.toolIds
-        : manifest.getInstalledToolIds();
 
     const { descriptor, contentFiles, docsFiles } = await this.loader.loadFromDirectory(
       frameworkPath,
       version
     );
+    const fileFilter = buildFileFilter(options.files);
 
-    const toolResults: RestoreToolResult[] = [];
+    return this.executeRestore({
+      options,
+      docsOnly,
+      manifest,
+      descriptor,
+      contentFiles,
+      docsFiles,
+      docsDir,
+      projectRoot,
+      version,
+      force,
+      interactive,
+      fileFilter,
+    });
+  }
 
-    for (const toolId of toolIds) {
-      this.logger.info(`Checking ${toolId} for files to restore...`);
-
-      const config = getToolConfig(toolId);
-      const manifestFiles = manifest.getToolFiles(toolId);
-      const distribution = await generateDistribution(
-        descriptor,
-        config,
-        docsDir,
-        contentFiles,
-        this.hasher,
-        this.platform,
-        projectRoot,
-        this.fs
-      );
-      const distMap = new Map(distribution.map((f) => [f.relativePath, f]));
-
-      const drift = await this.collectDrift(manifestFiles, distMap, projectRoot, fileFilter);
-
-      if (drift.length === 0) {
-        toolResults.push({ toolId, nothingToRestore: true, restored: [], kept: [] });
-        continue;
-      }
-
-      const { restored, kept, updatedHashMap } = await this.applyRestorations(
-        drift,
-        new Map(manifestFiles.map((f) => [f.relativePath, f.hash])),
-        projectRoot,
-        force,
-        interactive
-      );
-
-      manifest.addTool(
-        toolId,
-        manifest.getToolVersion(toolId) ?? version,
-        Array.from(updatedHashMap.entries()).map(
-          ([relativePath, hash]) => new GeneratedFile({ relativePath, content: "", hash })
-        )
-      );
-
-      toolResults.push({ toolId, nothingToRestore: false, restored, kept });
-    }
-
+  private async executeRestore(ctx: RestoreCtx): Promise<RestoreResult> {
+    const {
+      options,
+      docsOnly,
+      manifest,
+      descriptor,
+      contentFiles,
+      docsFiles,
+      docsDir,
+      projectRoot,
+      version,
+      force,
+      interactive,
+      fileFilter,
+    } = ctx;
+    const toolIds = this.resolveToolIds(options, docsOnly, manifest);
+    const toolResults = await this.restoreAllTools(
+      toolIds,
+      manifest,
+      descriptor,
+      contentFiles,
+      docsDir,
+      projectRoot,
+      version,
+      force,
+      interactive,
+      fileFilter
+    );
     const hasExplicitToolFilter =
       !docsOnly && options.toolIds !== undefined && options.toolIds.length > 0;
     const docsResult = hasExplicitToolFilter
@@ -157,19 +170,115 @@ export class RestoreUseCase {
           interactive,
           fileFilter
         );
-
     const hasChanges =
       toolResults.some((t) => t.restored.length > 0) ||
       (docsResult !== null && docsResult.restored.length > 0);
-
     if (hasChanges) await this.manifestRepo.save(manifest);
+    return this.buildRestoreTotals(toolResults, docsResult);
+  }
 
-    const totalRestored =
-      toolResults.reduce((s, t) => s + t.restored.length, 0) + (docsResult?.restored.length ?? 0);
-    const totalKept =
-      toolResults.reduce((s, t) => s + t.kept.length, 0) + (docsResult?.kept.length ?? 0);
+  private resolveToolIds(options: RestoreOptions, docsOnly: boolean, manifest: Manifest): ToolId[] {
+    if (docsOnly) return [];
+    return options.toolIds?.length ? options.toolIds : manifest.getInstalledToolIds();
+  }
 
-    return { tools: toolResults, docs: docsResult, totalRestored, totalKept };
+  private async restoreAllTools(
+    toolIds: ToolId[],
+    manifest: Manifest,
+    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    docsDir: string,
+    projectRoot: string,
+    version: string,
+    force: boolean,
+    interactive: boolean,
+    fileFilter: ((p: string) => boolean) | null
+  ): Promise<RestoreToolResult[]> {
+    const toolResults: RestoreToolResult[] = [];
+    for (const toolId of toolIds) {
+      const result = await this.restoreOneTool(
+        toolId,
+        manifest,
+        descriptor,
+        contentFiles,
+        docsDir,
+        projectRoot,
+        version,
+        force,
+        interactive,
+        fileFilter
+      );
+      toolResults.push(result);
+    }
+    return toolResults;
+  }
+
+  private async restoreOneTool(
+    toolId: ToolId,
+    manifest: Manifest,
+    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    docsDir: string,
+    projectRoot: string,
+    version: string,
+    force: boolean,
+    interactive: boolean,
+    fileFilter: ((p: string) => boolean) | null
+  ): Promise<RestoreToolResult> {
+    this.logger.info(`Checking ${toolId} for files to restore...`);
+    const config = getToolConfig(toolId);
+    const manifestFiles = manifest.getToolFiles(toolId);
+    const distribution = await generateDistribution(
+      descriptor,
+      config,
+      docsDir,
+      contentFiles,
+      this.hasher,
+      this.platform,
+      projectRoot,
+      this.fs
+    );
+    const distMap = new Map(distribution.map((f) => [f.relativePath, f]));
+    const section = await this.restoreSection(
+      manifestFiles,
+      distMap,
+      projectRoot,
+      force,
+      interactive,
+      fileFilter
+    );
+
+    if (section === null) return { toolId, nothingToRestore: true, restored: [], kept: [] };
+
+    manifest.addTool(toolId, manifest.getToolVersion(toolId) ?? version, section.updatedFiles);
+    return { toolId, nothingToRestore: false, restored: section.restored, kept: section.kept };
+  }
+
+  /** Shared restoration logic for both tool files and docs files. Returns null when nothing to restore. */
+  private async restoreSection(
+    manifestFiles: ReadonlyArray<{ relativePath: string; hash: FileHash }>,
+    distMap: Map<string, GeneratedFile>,
+    projectRoot: string,
+    force: boolean,
+    interactive: boolean,
+    fileFilter: ((p: string) => boolean) | null
+  ): Promise<SectionRestoreResult | null> {
+    const drift = await this.collectDrift(manifestFiles, distMap, projectRoot, fileFilter);
+    if (drift.length === 0) return null;
+
+    const { restored, kept, updatedHashMap } = await this.applyRestorations(
+      drift,
+      new Map(manifestFiles.map((f) => [f.relativePath, f.hash])),
+      projectRoot,
+      force,
+      interactive
+    );
+
+    const updatedFiles = Array.from(updatedHashMap.entries()).map(
+      ([relativePath, hash]) => new GeneratedFile({ relativePath, content: "", hash })
+    );
+
+    return { restored, kept, updatedFiles };
   }
 
   private async restoreDocs(
@@ -193,26 +302,29 @@ export class RestoreUseCase {
     const distribution = buildDocsDistribution(docsFiles, docsDir, this.hasher);
     const distMap = new Map(distribution.map((f) => [f.relativePath, f]));
 
-    const drift = await this.collectDrift(docsManifestFiles, distMap, projectRoot, fileFilter);
-
-    if (drift.length === 0) return { nothingToRestore: true, restored: [], kept: [] };
-
-    const { restored, kept, updatedHashMap } = await this.applyRestorations(
-      drift,
-      new Map(docsManifestFiles.map((f) => [f.relativePath, f.hash])),
+    const section = await this.restoreSection(
+      docsManifestFiles,
+      distMap,
       projectRoot,
       force,
-      interactive
+      interactive,
+      fileFilter
     );
+    if (section === null) return { nothingToRestore: true, restored: [], kept: [] };
 
-    manifest.addDocs(
-      manifest.getDocsVersion() ?? version,
-      Array.from(updatedHashMap.entries()).map(
-        ([relativePath, hash]) => new GeneratedFile({ relativePath, content: "", hash })
-      )
-    );
+    manifest.addDocs(manifest.getDocsVersion() ?? version, section.updatedFiles);
+    return { nothingToRestore: false, restored: section.restored, kept: section.kept };
+  }
 
-    return { nothingToRestore: false, restored, kept };
+  private buildRestoreTotals(
+    toolResults: RestoreToolResult[],
+    docsResult: RestoreDocsResult | null
+  ): RestoreResult {
+    const totalRestored =
+      toolResults.reduce((s, t) => s + t.restored.length, 0) + (docsResult?.restored.length ?? 0);
+    const totalKept =
+      toolResults.reduce((s, t) => s + t.kept.length, 0) + (docsResult?.kept.length ?? 0);
+    return { tools: toolResults, docs: docsResult, totalRestored, totalKept };
   }
 
   private async collectDrift(

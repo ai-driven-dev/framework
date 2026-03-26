@@ -3,7 +3,7 @@ import { AuthStatusUseCase } from "../../../src/application/use-cases/auth-statu
 import type { AuthStorage } from "../../../src/infrastructure/auth/auth-storage.js";
 import { makeAuthConfig, makeTempAuthStorage } from "../../helpers/auth.js";
 
-describe("AuthStatusUseCase", () => {
+describe("auth status", () => {
   let tempDir: string;
   let storage: AuthStorage;
   let cleanup: () => Promise<void>;
@@ -21,14 +21,14 @@ describe("AuthStatusUseCase", () => {
     throw new Error("Authentication failed (HTTP 401). Run aidd auth login to authenticate.");
   };
 
-  it("returns authenticated=false when no token is available", async () => {
+  it("reports unauthenticated when no token is available", async () => {
     const authReader = { resolve: async () => null };
     const useCase = new AuthStatusUseCase(authReader, storage);
     const result = await useCase.execute({ projectRoot: tempDir, httpGet: successHttpGet });
     expect(result.authenticated).toBe(false);
   });
 
-  it("returns authenticated=true, valid=true when token resolves and GitHub API succeeds", async () => {
+  it("reports authenticated and valid when token resolves and GitHub API succeeds", async () => {
     await storage.write(storage.userConfigPath(), makeAuthConfig({ token: "ghp_valid" }));
 
     const authReader = { resolve: async () => "ghp_valid" };
@@ -43,7 +43,7 @@ describe("AuthStatusUseCase", () => {
     }
   });
 
-  it("returns authenticated=true, valid=false when GitHub API fails", async () => {
+  it("reports authenticated but invalid when GitHub API fails", async () => {
     const authReader = { resolve: async () => "ghp_expired" };
     const useCase = new AuthStatusUseCase(authReader, storage);
     const result = await useCase.execute({ projectRoot: tempDir, httpGet: failHttpGet });

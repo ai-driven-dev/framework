@@ -11,6 +11,7 @@ import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../domain/ports/platform.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
+import { GitignoreUseCase } from "./gitignore-use-case.js";
 
 interface AdoptOptions {
   toolIds: ToolId[];
@@ -44,32 +45,77 @@ export class AdoptUseCase {
   async execute(options: AdoptOptions): Promise<AdoptResult> {
     const { toolIds, frameworkPath, docsDir, projectRoot, version } = options;
 
-    const invalid = toolIds.filter((t) => !VALID_TOOL_IDS.includes(t));
-    if (invalid.length > 0) {
-      throw new Error(
-        `Unknown tool(s): ${invalid.join(", ")}. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
-      );
-    }
-
-    if (toolIds.length === 0) {
-      throw new Error("No tools specified. Use --tools to specify at least one tool.");
-    }
-
+    this.validateToolIds(toolIds);
     const existing = await this.manifestRepo.load();
-    if (existing !== null) {
-      throw new Error("Already initialized. Use `aidd update` to upgrade.");
-    }
-
+    if (existing !== null) throw new Error("Already initialized. Use `aidd update` to upgrade.");
     await this.deleteLegacyConfig(projectRoot);
 
     const { descriptor, contentFiles, docsFiles } = await this.loader.loadFromDirectory(
       frameworkPath,
       version
     );
-
     const manifest = Manifest.create(docsDir);
-    const toolResults: AdoptToolResult[] = [];
+    const toolResults = await this.registerAllTools(
+      toolIds,
+      manifest,
+      descriptor,
+      contentFiles,
+      docsDir,
+      projectRoot,
+      version
+    );
+    const docsRegistered = await this.registerDocs(
+      manifest,
+      docsFiles,
+      docsDir,
+      projectRoot,
+      version
+    );
+    await this.persistAdopt(manifest, docsDir, projectRoot, version);
+    return {
+      tools: toolResults,
+      totalRegistered: toolResults.reduce((sum, r) => sum + r.registered.length, 0),
+      docsRegistered,
+    };
+  }
 
+  /** Finalizes catalog, saves manifest, and writes gitignore entry. */
+  private async persistAdopt(
+    manifest: Manifest,
+    docsDir: string,
+    projectRoot: string,
+    version: string
+  ): Promise<void> {
+    await this.finalizeCatalog(manifest, docsDir, projectRoot, version);
+    await this.manifestRepo.save(manifest);
+    // AdoptUseCase calls gitignore directly (not via PostInstallPipelineUseCase).
+    // MemoryScriptUseCase is intentionally absent: adopt only registers existing files,
+    // no tool content is generated so there is no memory bank to write.
+    await new GitignoreUseCase(this.fs).execute(projectRoot, [".aidd/cache/"]);
+  }
+
+  private validateToolIds(toolIds: ToolId[]): void {
+    const invalid = toolIds.filter((t) => !VALID_TOOL_IDS.includes(t));
+    if (invalid.length > 0) {
+      throw new Error(
+        `Unknown tool(s): ${invalid.join(", ")}. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
+      );
+    }
+    if (toolIds.length === 0) {
+      throw new Error("No tools specified. Use --tools to specify at least one tool.");
+    }
+  }
+
+  private async registerAllTools(
+    toolIds: ToolId[],
+    manifest: Manifest,
+    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    docsDir: string,
+    projectRoot: string,
+    version: string
+  ): Promise<AdoptToolResult[]> {
+    const toolResults: AdoptToolResult[] = [];
     for (const toolId of toolIds) {
       this.logger.info(`Adopting ${toolId}...`);
       const config = getToolConfig(toolId);
@@ -99,44 +145,51 @@ export class AdoptUseCase {
       manifest.addTool(toolId, version, registeredFiles);
       toolResults.push({ toolId, registered: registeredFiles.map((f) => f.relativePath) });
     }
+    return toolResults;
+  }
 
-    let docsRegistered = 0;
+  private async registerDocs(
+    manifest: Manifest,
+    docsFiles: Map<string, string>,
+    docsDir: string,
+    projectRoot: string,
+    version: string
+  ): Promise<number> {
     const docsAbsDir = join(projectRoot, docsDir);
-    if (await this.fs.fileExists(docsAbsDir)) {
-      this.logger.info("Adopting docs...");
-      const docsDistribution = buildDocsDistribution(docsFiles, docsDir, this.hasher);
-      const registeredFiles = await this.matchDistributionToDisk(docsDistribution, projectRoot);
-      manifest.addDocs(version, registeredFiles);
-      docsRegistered = registeredFiles.length;
-    }
+    if (!(await this.fs.fileExists(docsAbsDir))) return 0;
 
+    this.logger.info("Adopting docs...");
+    const docsDistribution = buildDocsDistribution(docsFiles, docsDir, this.hasher);
+    const registeredFiles = await this.matchDistributionToDisk(docsDistribution, projectRoot);
+    manifest.addDocs(version, registeredFiles);
+    return registeredFiles.length;
+  }
+
+  private async finalizeCatalog(
+    manifest: Manifest,
+    docsDir: string,
+    projectRoot: string,
+    version: string
+  ): Promise<void> {
     await new CatalogUseCase(this.fs).execute({ manifest, docsDir, projectRoot });
 
     const catalogRelPath = `${docsDir}/CATALOG.md`;
     const catalogAbsPath = join(projectRoot, catalogRelPath);
-    if (await this.fs.fileExists(catalogAbsPath)) {
-      const catalogHash = await this.fs.readFileHash(catalogAbsPath);
-      const currentDocsFiles = manifest.getDocsFiles();
-      const updatedDocsFiles = currentDocsFiles.map((f) =>
-        f.relativePath === catalogRelPath
-          ? new GeneratedFile({ relativePath: f.relativePath, content: "", hash: catalogHash })
-          : new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash })
+    if (!(await this.fs.fileExists(catalogAbsPath))) return;
+
+    const catalogHash = await this.fs.readFileHash(catalogAbsPath);
+    const currentDocsFiles = manifest.getDocsFiles();
+    const updatedDocsFiles = currentDocsFiles.map((f) =>
+      f.relativePath === catalogRelPath
+        ? new GeneratedFile({ relativePath: f.relativePath, content: "", hash: catalogHash })
+        : new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash })
+    );
+    if (!currentDocsFiles.some((f) => f.relativePath === catalogRelPath)) {
+      updatedDocsFiles.push(
+        new GeneratedFile({ relativePath: catalogRelPath, content: "", hash: catalogHash })
       );
-      if (!currentDocsFiles.some((f) => f.relativePath === catalogRelPath)) {
-        updatedDocsFiles.push(
-          new GeneratedFile({ relativePath: catalogRelPath, content: "", hash: catalogHash })
-        );
-      }
-      manifest.addDocs(manifest.getDocsVersion() ?? version, updatedDocsFiles);
     }
-
-    await this.manifestRepo.save(manifest);
-
-    return {
-      tools: toolResults,
-      totalRegistered: toolResults.reduce((sum, r) => sum + r.registered.length, 0),
-      docsRegistered,
-    };
+    manifest.addDocs(manifest.getDocsVersion() ?? version, updatedDocsFiles);
   }
 
   private async matchDistributionToDisk(

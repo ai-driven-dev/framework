@@ -2,9 +2,9 @@
 
 ## Status
 
-- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection
+- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4)
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
-- `tests/` — 690 tests, all passing
+- `tests/` — 882 tests, all passing
 - Next: vNext interactive mode (not yet specified — do not implement until vision is stabilized)
 
 ## Command Output Paths (per tool)
@@ -56,18 +56,25 @@ src/
 │       ├── gitignore-use-case.ts
 │       ├── init-use-case.ts
 │       ├── install-use-case.ts
-│       ├── resolve-framework-use-case.ts   # shared: framework resolution (remote/local)
+│       ├── memory-script-use-case.ts       # writes/updates memory bank script for all installed tools
+│       ├── resolve-framework-use-case.ts   # framework resolution (remote/local)
 │       ├── restore-use-case.ts
 │       ├── self-update-use-case.ts         # update CLI binary to latest release
+│       ├── setup-use-case.ts               # interactive onboarding entry point
 │       ├── status-use-case.ts
 │       ├── sync-use-case.ts
 │       ├── uninstall-use-case.ts
-│       └── update-use-case.ts
+│       ├── update-use-case.ts
+│       └── shared/
+│           ├── post-install-pipeline-use-case.ts  # canonical post-write sequence: MemoryScript → save → Catalog → Gitignore
+│           └── setup-state-detector.ts            # detect project setup phase (needs-init/adopt/install/update/up-to-date)
 ├── domain/
 │   ├── models/
 │   │   ├── catalog.ts                  # generateCatalogContent() — pure function, no I/O
+│   │   ├── conflict-decision.ts        # ConflictDecision = "overwrite" | "skip" | "backup"
 │   │   ├── distribution.ts             # GeneratedFile[] per tool
 │   │   ├── docs.ts                     # documentation distribution: path remapping, content rewriting
+│   │   ├── file-diff.ts                # FileDiffKind, FileDiff — discriminant type for update diffs
 │   │   ├── file-hash.ts                # MD5 value object
 │   │   ├── framework-descriptor.ts     # framework layout code model (no framework.json file)
 │   │   ├── frontmatter.ts              # frontmatter parsing/conversion
@@ -75,7 +82,9 @@ src/
 │   │   ├── manifest.ts                 # aggregate root (persisted at .aidd/manifest.json); fields: docsDir, repo?, tools, docs
 │   │   ├── mcp.ts                      # MCP config transformation for Windows command path fixes
 │   │   ├── semver.ts                   # semantic version parsing & comparison for update checks
-│   │   └── tool-config.ts              # per-tool output path / frontmatter rules
+│   │   ├── sync-exclusions.ts          # SYNC_EXCLUDED_FILES, isSyncExcluded — sync skip list
+│   │   ├── tool-config.ts              # per-tool output path / frontmatter rules
+│   │   └── update-scope.ts             # UpdateScope, parseUpdateScope, formatToolScopeValue
 │   ├── models/
 │   │   └── auth-config.ts              # AuthConfig { version, method, level, token?, createdAt }
 │   ├── ports/

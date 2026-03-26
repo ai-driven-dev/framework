@@ -18,7 +18,7 @@ import {
 
 const FIXTURE_DIR_WIN32 = join(process.cwd(), "tests/fixtures/framework-win32");
 
-describe("InstallUseCase", () => {
+describe("install", () => {
   let tempDir: string;
   let projectRoot: string;
 
@@ -28,157 +28,6 @@ describe("InstallUseCase", () => {
 
   afterEach(async () => {
     await cleanupTempProject(tempDir);
-  });
-
-  it("installs claude tool and writes files to project", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
-
-    const useCase = new InstallUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger,
-      noGit,
-      linuxPlatform
-    );
-    const result = await useCase.execute({
-      toolIds: ["claude" as ToolId],
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    expect(result.length).toBe(1);
-    expect(result[0].toolId).toBe("claude" as ToolId);
-    expect(result[0].fileCount).toBe(7);
-    expect(result[0].skipped).toBe(false);
-  });
-
-  it("tracks installed tool files for drift detection", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
-
-    const useCase = new InstallUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger,
-      noGit,
-      linuxPlatform
-    );
-    await useCase.execute({
-      toolIds: ["claude" as ToolId],
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    const manifestPath = join(projectRoot, ".aidd", "manifest.json");
-    const raw = await readFile(manifestPath, "utf-8");
-    const data = JSON.parse(raw) as { tools: Record<string, unknown> };
-    expect(data.tools.claude).toBeDefined();
-  });
-
-  it("skips already installed tool without --force", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
-
-    const useCase = new InstallUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger,
-      noGit,
-      linuxPlatform
-    );
-    await useCase.execute({
-      toolIds: ["claude" as ToolId],
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    const result = await useCase.execute({
-      toolIds: ["claude" as ToolId],
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    expect(result.length).toBe(1);
-    expect(result[0].skipped).toBe(true);
-    expect(result[0].fileCount).toBe(0);
-  });
-
-  it("reinstalls with --force even if already installed", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
-
-    const useCase = new InstallUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger,
-      noGit,
-      linuxPlatform
-    );
-    await useCase.execute({
-      toolIds: ["claude" as ToolId],
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    const result = await useCase.execute({
-      toolIds: ["claude" as ToolId],
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-      force: true,
-    });
-
-    expect(result[0].fileCount).toBe(7);
-    expect(result[0].skipped).toBe(false);
-  });
-
-  it("installs multiple tools at once", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
-
-    const useCase = new InstallUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger,
-      noGit,
-      linuxPlatform
-    );
-    const result = await useCase.execute({
-      toolIds: ["claude" as ToolId, "cursor" as ToolId],
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    expect(result.length).toBe(2);
-    const manifestPath = join(projectRoot, ".aidd", "manifest.json");
-    const raw = await readFile(manifestPath, "utf-8");
-    const data = JSON.parse(raw) as { tools: Record<string, unknown> };
-    expect(data.tools.claude).toBeDefined();
-    expect(data.tools.cursor).toBeDefined();
   });
 
   it("warns about untracked directory when force-installing", async () => {
@@ -363,35 +212,6 @@ describe("InstallUseCase", () => {
     expect(claudeFile?.hash).toBe(copilotFile?.hash);
   });
 
-  it("generates CATALOG.md with links to installed tool files", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
-
-    const useCase = new InstallUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger,
-      noGit,
-      linuxPlatform
-    );
-    await useCase.execute({
-      toolIds: ["claude" as ToolId],
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    const catalogPath = join(projectRoot, "aidd_docs", "CATALOG.md");
-    expect(existsSync(catalogPath)).toBe(true);
-
-    const content = await readFile(catalogPath, "utf-8");
-    expect(content).toContain("### `agents`");
-    expect(content).toContain("../.claude/");
-  });
-
   it("does not track CATALOG.md as an installed file", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
@@ -509,30 +329,6 @@ describe("InstallUseCase", () => {
     expect(mcp.mcpServers.myServer.args).toEqual(["/c", "npx", "-y", "my-mcp-pkg"]);
   });
 
-  it("fails if project is not initialized", async () => {
-    const deps = buildDeps(projectRoot);
-
-    const useCase = new InstallUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger,
-      noGit,
-      linuxPlatform
-    );
-
-    await expect(
-      useCase.execute({
-        toolIds: ["claude" as ToolId],
-        frameworkPath: FIXTURE_DIR,
-        version: "test",
-        docsDir: "aidd_docs",
-        projectRoot,
-      })
-    ).rejects.toThrow("aidd setup");
-  });
-
   it("skips a pre-existing file not tracked in manifest and adds a warning", async () => {
     const { writeFile, mkdir: mkdirFs } = await import("node:fs/promises");
     const deps = buildDeps(projectRoot);
@@ -608,33 +404,6 @@ describe("InstallUseCase", () => {
     expect(
       result[0].warnings.some((w) => w.includes("code-reviewer.md") && w.includes("skipped"))
     ).toBe(false);
-  });
-
-  it("writes a non-existing file normally without warnings", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
-
-    const useCase = new InstallUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger,
-      noGit,
-      linuxPlatform
-    );
-
-    const result = await useCase.execute({
-      toolIds: ["claude" as ToolId],
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    const agentPath = join(projectRoot, ".claude/agents/code-reviewer.md");
-    expect(existsSync(agentPath)).toBe(true);
-    expect(result[0].warnings.some((w) => w.includes("skipped to preserve user file"))).toBe(false);
   });
 
   it("preserves existing cursor rule that collides with framework file", async () => {

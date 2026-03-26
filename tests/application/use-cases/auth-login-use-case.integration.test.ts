@@ -6,7 +6,7 @@ import type { ExternalTokenProvider } from "../../../src/domain/ports/external-t
 import type { AuthStorage } from "../../../src/infrastructure/auth/auth-storage.js";
 import { makeTempAuthStorage } from "../../helpers/auth.js";
 
-describe("AuthLoginUseCase", () => {
+describe("auth login", () => {
   let tempDir: string;
   let storage: AuthStorage;
   let cleanup: () => Promise<void>;
@@ -102,7 +102,7 @@ describe("AuthLoginUseCase", () => {
       ).rejects.toThrow(/gh auth token failed/);
     });
 
-    it("throws when gh CLI is unavailable and method=gh", async () => {
+    it("fails when gh CLI is not installed and method=gh", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
         makeHttpGet("octocat"),
@@ -118,7 +118,7 @@ describe("AuthLoginUseCase", () => {
       ).rejects.toThrow(/gh CLI is not installed/);
     });
 
-    it("throws when token is invalid (HTTP 401)", async () => {
+    it("fails when token is invalid (HTTP 401)", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
         makeFailingHttpGet(401),
@@ -135,7 +135,7 @@ describe("AuthLoginUseCase", () => {
       ).rejects.toThrow(/Authentication failed/);
     });
 
-    it("throws when method is missing in non-interactive mode", async () => {
+    it("fails when method is missing in non-interactive mode", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
         makeHttpGet("octocat"),
@@ -150,7 +150,7 @@ describe("AuthLoginUseCase", () => {
       ).rejects.toThrow(/method is required/);
     });
 
-    it("throws when level is missing in non-interactive mode", async () => {
+    it("fails when level is missing in non-interactive mode", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
         makeHttpGet("octocat"),
@@ -218,7 +218,7 @@ describe("AuthLoginUseCase", () => {
       expect(result.method).toBe("token");
     });
 
-    it("throws when token input is empty in interactive mode", async () => {
+    it("fails when token input is empty in interactive mode", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
         makeHttpGet("octocat"),
