@@ -4,7 +4,7 @@
   "tools": {
     "claude": {
       "toolId": "claude",
-      "version": "3.6.0",
+      "version": "3.7.3",
       "files": [
         {
           "relativePath": ".claude/agents/alexia.md",
@@ -63,12 +63,12 @@
         },
         {
           "relativePath": ".claude/commands/aidd/01/init.md",
-          "hash": "1d0fbe64aeae39d4d09a92412abc9f36",
+          "hash": "3ca8e6019f47b7ec45baf5e2bc743eb6",
           "frameworkPath": "commands/01_onboard/init.md"
         },
         {
           "relativePath": ".claude/commands/aidd/02/brainstorm.md",
-          "hash": "c021913ba490c33e7c3ae486bc9debd7",
+          "hash": "680a31d55c85a239a165cb51fd7c4f85",
           "frameworkPath": "commands/02_context/brainstorm.md"
         },
         {
@@ -98,7 +98,7 @@
         },
         {
           "relativePath": ".claude/commands/aidd/03/plan.md",
-          "hash": "4a0eea8a85e29fe988fa28bdc3f17f5d",
+          "hash": "3f45f79b09efbaa6a495b5f29c2db23b",
           "frameworkPath": "commands/03_plan/plan.md"
         },
         {
@@ -153,7 +153,7 @@
         },
         {
           "relativePath": ".claude/commands/aidd/07/learn.md",
-          "hash": "9191024abf52a596a5e836f1e08baabb",
+          "hash": "c9375cdc4982d1eff07825a53a837064",
           "frameworkPath": "commands/07_documentation/learn.md"
         },
         {
@@ -218,7 +218,7 @@
         },
         {
           "relativePath": ".claude/rules/01-standards/1-command-structure.md",
-          "hash": "7f273b4eb10e3e610c8124cddb1bb3c5",
+          "hash": "6ac83d39e07a20fb4fc11a192cb53cb3",
           "frameworkPath": "rules/01-standards/1-command-structure.md"
         },
         {
@@ -248,7 +248,7 @@
         },
         {
           "relativePath": ".claude/rules/04-tooling/ide-mapping.md",
-          "hash": "41d6e89c8fdad36383f9a2c21199f740",
+          "hash": "6bbb180b9aa4ffba0cda8b20e2991396",
           "frameworkPath": "rules/04-tooling/ide-mapping.claude.md"
         },
         {
@@ -293,7 +293,7 @@
         },
         {
           "relativePath": "CLAUDE.md",
-          "hash": "7f0abae29697cf42954f64c6b95ec91f",
+          "hash": "12205cc850b37e059467d103d846dad6",
           "frameworkPath": "aidd_docs/templates/AGENTS.md"
         },
         {
@@ -304,7 +304,7 @@
     }
   },
   "docs": {
-    "version": "3.6.0",
+    "version": "3.7.3",
     "files": [
       {
         "relativePath": "aidd_docs/CONTRIBUTING.md",
@@ -477,6 +477,15 @@
       {
         "relativePath": "aidd_docs/templates/vcs/release.md",
         "hash": "3a82a1224d2b32dabfc9206894306ea0"
+      }
+    ]
+  },
+  "scripts": {
+    "version": "3.7.3",
+    "files": [
+      {
+        "relativePath": ".aidd/scripts/update_memory.js",
+        "hash": "2614540bf198abe5456bfd5078e48d34"
       }
     ]
   }

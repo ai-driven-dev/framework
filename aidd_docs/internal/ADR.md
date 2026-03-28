@@ -18,3 +18,6 @@ This file contains the key architectural decisions made during the project, alon
 | 2026-03-24 | DEC-010 | [SetupUseCase non-interactive options](./decisions/DEC-010-setup-non-interactive-options.md) | programmatic use without prompter mocking |
 | 2026-03-24 | DEC-011 | [ResolveFrameworkUseCase and RequireAuthUseCase](./decisions/DEC-011-resolve-framework-require-auth-use-cases.md) | plain functions replaced by classes; auth delegated, no duplication |
 | 2026-03-24 | DEC-012 | [ConfigHandler.resolveOutputPath for runtime path resolution](./decisions/DEC-012-config-handler-resolve-output-path.md) | generateDistribution async; use cases stay tool-agnostic |
+| 2026-03-28 | DEC-013 | [Recursive MenuNode tree for interactive TUI](./decisions/DEC-013-recursive-menu-node-tree.md) | any new submenu = add children; no navigation code change |
+| 2026-03-28 | DEC-014 | [string[] breadcrumb as menu loop state](./decisions/DEC-014-breadcrumb-string-array-menu-state.md) | returnTo scales to any depth; UX resumes at correct level |
+| 2026-03-28 | DEC-015 | [createMenuDeps() + Map memoization for createDeps](./decisions/DEC-015-create-menu-deps-map-memoization.md) | E2E test isolation fixed; no double I/O in production |
