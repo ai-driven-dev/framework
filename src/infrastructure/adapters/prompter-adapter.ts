@@ -71,7 +71,7 @@ export class InquirerPrompterAdapter implements Prompter {
 
   async select<T>(
     message: string,
-    choices: Array<{ name: string; value: T; disabled?: boolean | string }>
+    choices: Array<{ name: string; value: T; disabled?: boolean | string; description?: string }>
   ): Promise<T> {
     return select(
       {
@@ -80,6 +80,7 @@ export class InquirerPrompterAdapter implements Prompter {
           name: c.name,
           value: c.value,
           disabled: c.disabled === true ? "Disabled" : c.disabled || false,
+          description: c.description,
         })),
       },
       this.context
