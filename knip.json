@@ -2,6 +2,7 @@
   "ignore": [
     "demo/**",
     ".claude/worktrees/**",
+    ".aidd/**",
     "tests/**/helpers.ts",
     "tests/helpers/**",
     "tests/fixtures/**"
