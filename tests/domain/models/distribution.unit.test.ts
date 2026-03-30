@@ -739,6 +739,49 @@ describe("generateDistribution() snapshots", () => {
     );
   });
 
+  describe("OpenCode", () => {
+    it("skills installed content uses the .opencode/ tool directory path", async () => {
+      hashCounter = 0;
+      const files = await generateDistribution(
+        snapshotFramework,
+        opencodeToolConfig,
+        "aidd_docs",
+        snapshotContentFiles,
+        stubHasher,
+        linuxPlatform,
+        stubProjectRoot,
+        stubFs
+      );
+      const skill = files.find((f) => f.relativePath.includes("skills/"));
+      expect(skill?.content).toEqual("# Commit Skill\n\nUse .opencode/agents/ for agents.\n");
+    });
+
+    it("workflow skills with bare command paths produce working references", async () => {
+      hashCounter = 0;
+      const withWorkflow = new Map([
+        ...snapshotContentFiles,
+        [
+          "skills/workflow/SKILL.md",
+          "# Workflow\n\n1. Brainstorm: {{TOOLS}}/commands/02_context/brainstorm.md\n2. Plan: {{TOOLS}}/commands/03_plan/plan.md\n",
+        ],
+      ]);
+      const files = await generateDistribution(
+        snapshotFramework,
+        opencodeToolConfig,
+        "aidd_docs",
+        withWorkflow,
+        stubHasher,
+        linuxPlatform,
+        stubProjectRoot,
+        stubFs
+      );
+      const skill = files.find((f) => f.relativePath.includes("workflow/"));
+      expect(skill?.content).toEqual(
+        "# Workflow\n\n1. Brainstorm: .opencode/commands/aidd/02/brainstorm.md\n2. Plan: .opencode/commands/aidd/03/plan.md\n"
+      );
+    });
+  });
+
   it("Cursor — agents content is rewritten correctly", async () => {
     hashCounter = 0;
     const files = await generateDistribution(

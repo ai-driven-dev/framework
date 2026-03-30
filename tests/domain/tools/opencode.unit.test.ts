@@ -38,6 +38,22 @@ describe("opencodeToolConfig", () => {
       );
       expect(result).toBe("@.opencode/commands/aidd/04/assert.md");
     });
+
+    it("skills listing bare command paths produce working references in installed content", () => {
+      const result = opencodeToolConfig.rewriteContent(
+        "1. Brainstorm: {{TOOLS}}/commands/02_context/brainstorm.md",
+        "aidd_docs"
+      );
+      expect(result).toBe("1. Brainstorm: .opencode/commands/aidd/02/brainstorm.md");
+    });
+
+    it("command cross-references with @ prefix still produce working references in installed content", () => {
+      const result = opencodeToolConfig.rewriteContent(
+        "@{{TOOLS}}/commands/04_code/implement.md",
+        "aidd_docs"
+      );
+      expect(result).toBe("@.opencode/commands/aidd/04/implement.md");
+    });
   });
 
   describe("reverseRewriteContent()", () => {
