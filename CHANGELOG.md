@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.1.1](https://github.com/ai-driven-dev/aidd-cli/compare/v3.1.0...v3.1.1) (2026-03-30)
+
+
+### Bug Fixes
+
+* tolerate JSONC trailing commas in existing opencode.json ([7f0bfca](https://github.com/ai-driven-dev/aidd-cli/commit/7f0bfca))
+
+
+### Refactoring
+
+* application layer — methods ≤ 20 lines, shared use-cases, domain types ([5aacadc](https://github.com/ai-driven-dev/aidd-cli/commit/5aacadc))
+
+
 ## [3.1.0](https://github.com/ai-driven-dev/aidd-cli/compare/v3.0.0...v3.1.0) (2026-03-24)
 
 
