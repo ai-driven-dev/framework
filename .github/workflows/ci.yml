@@ -24,7 +24,10 @@ jobs:
   commitlint:
     name: Commitlint
     runs-on: ubuntu-latest
-    if: "github.event_name != 'workflow_dispatch' && !startsWith(github.head_ref, 'release-please--')"
+    if: >
+      github.event_name != 'workflow_dispatch' &&
+      !startsWith(github.head_ref, 'release-please--') &&
+      !contains(github.event.head_commit.message, 'release-please--branches--')
     permissions:
       contents: read
       pull-requests: read
@@ -112,7 +115,14 @@ jobs:
     name: Release Please
     runs-on: ubuntu-latest
     needs: [typecheck, lint, test, knip, jscpd]
-    if: github.event_name == 'push'
+    if: |
+      always() &&
+      github.event_name == 'push' &&
+      (needs.typecheck.result == 'success' || needs.typecheck.result == 'skipped') &&
+      (needs.lint.result == 'success' || needs.lint.result == 'skipped') &&
+      (needs.test.result == 'success' || needs.test.result == 'skipped') &&
+      (needs.knip.result == 'success' || needs.knip.result == 'skipped') &&
+      (needs.jscpd.result == 'success' || needs.jscpd.result == 'skipped')
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
