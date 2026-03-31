@@ -34,7 +34,7 @@ export const cursorToolConfig: ToolConfig = {
 
   rewriteContent(content: string, docsDir: string): string {
     return baseRewriteContent(content, DIRECTORY, docsDir)
-      .replace(/(@\.cursor\/commands\/)(\d+)[_-][^/]+\/([^\s]+)/g, "$1aidd/$2/$3")
+      .replace(/(@?)\.cursor\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g, "$1.cursor/commands/aidd/$2/$3")
       .replace(/(@\.cursor\/rules\/[^\s]+)\.md\b/g, "$1.mdc");
   },
 
