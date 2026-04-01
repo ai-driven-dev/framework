@@ -6,20 +6,26 @@ paths:
 
 # Domain Value Objects and Discriminant Types
 
-## Rule: Named types for discriminant strings
+## Discriminant types
 
-Every discriminant string union used in 2 or more use-cases must be a named type in `src/domain/models/`.
+- Every discriminant string union used in ≥2 use-cases → named type in `src/domain/models/`
+- Never inline `type Foo = "a" | "b"` in use-case files
 
-- Do not inline `type Foo = "a" | "b"` inside use-case files.
-- Import the type from its domain model file.
-
-## Rule: Value objects are immutable
+## Value objects
 
 - All fields `readonly`
 - No setters — return new instance for mutations
-- Constructed via factory functions when validation is required
+- Validate invariants in constructor, throw on invalid input
+- Use params object when ≥3 constructor parameters
+- Static factory only when multiple distinct creation paths exist
+- Implement `.equals()` when used in comparisons or collections
 
-## Rule: Domain files have no upward imports
+## Constants
+
+- Module-level `const` in `CONSTANT_CASE` above the class definition
+- Named constant for any literal used more than once
+
+## Import rules
 
 - Files in `src/domain/models/` must not import from `src/application/` or `src/infrastructure/`
 - Cross-domain imports within `src/domain/models/` are allowed

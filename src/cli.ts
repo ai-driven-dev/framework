@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import { platform } from "node:os";
 import { Command } from "commander";
 import { printUpdateBanner } from "./application/check-update.js";
@@ -16,8 +17,9 @@ import { registerUninstallCommand } from "./application/commands/uninstall.js";
 import { registerUpdateCommand } from "./application/commands/update.js";
 import { CLIOutput } from "./application/output.js";
 import { BannerUseCase } from "./application/use-cases/banner-use-case.js";
+import { InteractiveMenuUseCase } from "./application/use-cases/interactive-menu-use-case.js";
 import { CurrentVersionAdapter } from "./infrastructure/adapters/current-version-adapter.js";
-import { createDeps } from "./infrastructure/deps.js";
+import { createDeps, createMenuDeps } from "./infrastructure/deps.js";
 
 function formatVersion(version: string): string {
   return `aidd/${version} node/${process.versions.node} ${platform()}-${process.arch}`;
@@ -70,9 +72,40 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
   }
 });
 
-const args = process.argv.slice(2);
-if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
+const cliArgs = process.argv.slice(2);
+if (cliArgs.length === 0 || cliArgs.includes("--help") || cliArgs.includes("-h")) {
   await new BannerUseCase().execute();
 }
 
-program.parse(process.argv);
+if (cliArgs.length === 0 && process.stdout.isTTY) {
+  runMenuLoop();
+} else {
+  program.parse(process.argv);
+}
+
+async function runMenuLoop(): Promise<never> {
+  const { manifestRepo, prompter } = createMenuDeps(process.cwd());
+  let returnTo: string[] | undefined;
+  for (;;) {
+    try {
+      const result = await new InteractiveMenuUseCase(manifestRepo, prompter).execute({
+        startAt: returnTo,
+      });
+      if (result.command[0] === "exit") process.exit(0);
+      returnTo = result.returnTo;
+      await spawnCliCommand(result.command);
+    } catch (error) {
+      if (error instanceof Error && error.name === "ExitPromptError") process.exit(0);
+      returnTo = undefined;
+    }
+  }
+}
+
+function spawnCliCommand(command: string[]): Promise<void> {
+  return new Promise((resolve) => {
+    spawn(process.execPath, [process.argv[1], ...command], { stdio: "inherit" }).on(
+      "close",
+      resolve
+    );
+  });
+}

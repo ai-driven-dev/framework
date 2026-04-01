@@ -7,7 +7,7 @@ export interface Prompter {
   input(message: string, defaultValue?: string): Promise<string>;
   select<T>(
     message: string,
-    choices: Array<{ name: string; value: T; disabled?: boolean | string }>
+    choices: Array<{ name: string; value: T; disabled?: boolean | string; description?: string }>
   ): Promise<T>;
   checkbox<T>(
     message: string,

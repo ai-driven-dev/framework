@@ -54,11 +54,25 @@ interface Deps {
   authStorage: AuthStorage;
 }
 
+const _cache = new Map<string, Deps>();
+
+export function createMenuDeps(projectRoot: string): {
+  manifestRepo: ManifestRepository;
+  prompter: Prompter;
+} {
+  return {
+    manifestRepo: new ManifestRepositoryAdapter(projectRoot),
+    prompter: process.stdout.isTTY ? new InquirerPrompterAdapter() : new SilentPrompterAdapter(),
+  };
+}
+
 export async function createDeps(
   projectRoot: string,
   options: GlobalOptions,
   output?: CLIOutput
 ): Promise<Deps> {
+  const cached = _cache.get(projectRoot);
+  if (cached !== undefined) return cached;
   const hasher = new HasherAdapter();
   const fs = new FileSystemAdapter(hasher);
   const loader = new FrameworkLoaderAdapter();
@@ -95,7 +109,7 @@ export async function createDeps(
   const prompter = process.stdout.isTTY
     ? new InquirerPrompterAdapter()
     : new SilentPrompterAdapter();
-  return {
+  const deps: Deps = {
     fs,
     manifestRepo,
     loader,
@@ -110,4 +124,6 @@ export async function createDeps(
     authReader,
     authStorage,
   };
+  _cache.set(projectRoot, deps);
+  return deps;
 }

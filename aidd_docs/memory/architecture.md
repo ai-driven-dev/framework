@@ -26,7 +26,7 @@ flowchart LR
 - 3-layer clean architecture: Domain → Application → Infrastructure (no separate Presentation layer)
 - Commands live in `application/commands/`, output formatting in `application/output.ts`
 - Max 2 runtime dependencies: `commander` and `@inquirer/prompts`; everything else uses Node.js built-ins (JSONC stripping is a local function in `file-system-adapter.ts`)
-- `@inquirer/prompts` is reserved for interactive mode: without flags = guided interactive flow; with flags = non-interactive (CI-safe). Not yet used in v3.0.
+- `@inquirer/prompts` is used for interactive mode. When `aidd` is run with no arguments in a TTY, `runMenuLoop()` in `cli.ts` launches `InteractiveMenuUseCase` in a fire-and-forget infinite loop. Each selected command is spawned as a child process via `child_process.spawn` with `stdio: "inherit"`; the menu reappears after it exits. Ctrl+C caught as `ExitPromptError` → `process.exit(0)`. See DEC-013, DEC-014.
 - MD5 hashing via `node:crypto` for drift detection between installed files and framework version
 - HTTP via `node:https` (no `fetch` wrapper libraries)
 - Framework layout is hardcoded in `FrameworkLoaderAdapter` (`CONTENT_SECTIONS`, `TEMPLATE_REFS`, `CONFIG_REFS`). No `framework.json` file — `FrameworkDescriptor` is a code model built by the adapter, not parsed from a file.
@@ -42,7 +42,7 @@ flowchart TD
     subgraph APP["Application"]
         CMD_FILES["commands: auth, install, uninstall, status, clean, doctor, update, restore, sync, cache, config, self-update, setup"]
         OUTPUT["output.ts"]
-        USECASES["use-cases: auth-login, auth-logout, auth-status, adopt, init, install, uninstall, status, clean, doctor, catalog, restore, update, sync, gitignore, resolve-framework, require-auth, self-update, setup | shared: post-install-pipeline, setup-state-detector"]
+        USECASES["use-cases: auth-login, auth-logout, auth-status, adopt, init, install, uninstall, status, clean, doctor, catalog, restore, update, sync, gitignore, resolve-framework, require-auth, self-update, setup, interactive-menu | shared: post-install-pipeline, setup-state-detector"]
     end
     subgraph DOM["Domain"]
         MODELS["models: Manifest, Distribution, Catalog, ToolConfig, FileHash, GeneratedFile, Docs, Mcp, Semver, FileDiff, ConflictDecision, UpdateScope, SyncExclusions"]
@@ -190,6 +190,11 @@ src/
     ├── migrations/                 # manifest-migrations.ts
     └── tar/                        # tar-extractor.ts
 ```
+
+## Dependency Wiring
+
+- `createDeps(projectRoot, options, output)` — async, full graph; memoized in `Map<string, Deps>` keyed by `projectRoot`; `preAction` hook always populates first; command actions reuse cached instance. See DEC-015.
+- `createMenuDeps(projectRoot)` — synchronous, returns only `ManifestRepository` + `Prompter`; used in `cli.ts` before `program.parse()`
 
 ## Use Case Notes
 
