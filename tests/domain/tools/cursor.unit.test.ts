@@ -25,6 +25,14 @@ describe("cursorToolConfig", () => {
       );
       expect(result).toBe("See @.cursor/commands/aidd/04/implement.md for reference");
     });
+
+    it("skills listing bare command paths produce working references in installed content", () => {
+      const result = cursorToolConfig.rewriteContent(
+        "1. Brainstorm: {{TOOLS}}/commands/02_context/brainstorm.md",
+        "aidd_docs"
+      );
+      expect(result).toBe("1. Brainstorm: .cursor/commands/aidd/02/brainstorm.md");
+    });
   });
 
   describe("rules().convertFrontmatter()", () => {
