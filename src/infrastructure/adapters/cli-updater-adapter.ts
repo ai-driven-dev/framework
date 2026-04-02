@@ -20,15 +20,23 @@ function detectPackageManager(): { pm: PackageManager; binaryPath: string } {
   const whichCommand = platform() === "win32" ? "where aidd" : "which aidd";
   let binaryPath: string;
   try {
-    binaryPath = execSync(whichCommand, { encoding: "utf8" }).trim();
+    const raw = execSync(whichCommand, { encoding: "utf8" });
+    // `where` on Windows may return multiple matches (one per line) — keep only the first
+    binaryPath = raw.trim().split(/\r?\n/)[0].trim();
   } catch {
     throw new Error(
       `Could not detect package manager. Run manually:\n  ${PM_INSTALL_COMMANDS.npm}\n  ${PM_INSTALL_COMMANDS.pnpm}\n  ${PM_INSTALL_COMMANDS.yarn}\n  ${PM_INSTALL_COMMANDS.bun}`
     );
   }
-  if (binaryPath.includes("/pnpm/")) return { pm: "pnpm", binaryPath };
-  if (binaryPath.includes("/.yarn/")) return { pm: "yarn", binaryPath };
-  if (binaryPath.includes("/bun/")) return { pm: "bun", binaryPath };
+  // Normalise Windows backslashes so path checks work cross-platform
+  const normalised = binaryPath.replace(/\\/g, "/");
+  if (normalised.includes("/pnpm/")) return { pm: "pnpm", binaryPath };
+  // yarn: ~/.yarn/bin (Unix) or AppData/Local/Yarn/bin (Windows)
+  if (normalised.includes("/.yarn/") || normalised.toLowerCase().includes("/yarn/bin/"))
+    return { pm: "yarn", binaryPath };
+  // bun: ~/.bun/bin (Unix) or AppData\Local\bun (Windows)
+  if (normalised.includes("/.bun/") || normalised.toLowerCase().includes("/bun/bin/"))
+    return { pm: "bun", binaryPath };
   // npm installs to system paths (e.g. /usr/local/bin, ~/.npm-global/bin) with no pm marker
   return { pm: "npm", binaryPath };
 }
