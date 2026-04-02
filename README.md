@@ -44,7 +44,7 @@ The AIDD framework repository requires a GitHub token. Authenticate once with `a
 
 ### Method 1 — Personal Access Token (recommended)
 
-Create a [GitHub Personal Access Token](https://github.com/settings/tokens/new) with the **`repo`** scope, then:
+Create a [GitHub Personal Access Token](https://github.com/settings/tokens/new) with the **`repo`** and **`read:packages`** scopes, then:
 
 ```bash
 aidd auth login --token <YOUR_TOKEN> --level user
@@ -326,7 +326,7 @@ aidd update --path ./local              # local framework path (dev/testing)
 
 | Variable       | Description                                                             |
 | -------------- | ----------------------------------------------------------------------- |
-| `AIDD_TOKEN`   | GitHub token with `repo` scope — takes precedence over stored credentials |
+| `AIDD_TOKEN`   | GitHub token with `repo` and `read:packages` scopes — takes precedence over stored credentials |
 | `AIDD_REPO`    | Custom framework repository (`owner/repo`)                              |
 | `AIDD_VERBOSE` | Verbose mode (`true`/`false`)                                           |
 
