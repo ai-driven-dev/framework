@@ -133,3 +133,19 @@ describe("cli-updater-adapter — package manager detection", () => {
     });
   });
 });
+
+describe("cli-updater-adapter — install", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("surfaces a read:packages hint when the install command fails", () => {
+    mockPlatform.mockReturnValue("linux");
+    mockExecSync
+      .mockReturnValueOnce("/usr/local/bin/aidd" as unknown as ReturnType<typeof execSync>)
+      .mockImplementationOnce(() => {
+        throw new Error("npm error 403");
+      });
+    expect(() => makeAdapter().install()).toThrow("read:packages");
+  });
+});
