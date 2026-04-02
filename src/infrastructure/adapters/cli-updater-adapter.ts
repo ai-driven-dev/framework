@@ -1,5 +1,6 @@
 import { execSync } from "node:child_process";
 import { platform } from "node:os";
+import { UpdateError } from "../../domain/errors.js";
 import type { CliRelease, CliUpdater } from "../../domain/ports/cli-updater.js";
 import type { HttpClient } from "../http/http-client.js";
 
@@ -87,7 +88,11 @@ export class CliUpdaterAdapter implements CliUpdater {
 
   install(): string {
     const { pm, binaryPath } = detectPackageManager();
-    execSync(PM_INSTALL_COMMANDS[pm], { stdio: "inherit" });
+    try {
+      execSync(PM_INSTALL_COMMANDS[pm], { stdio: "inherit" });
+    } catch {
+      throw new UpdateError();
+    }
     return binaryPath;
   }
 }
