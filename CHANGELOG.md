@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.1.2](https://github.com/ai-driven-dev/aidd-cli/compare/v3.1.1...v3.1.2) (2026-04-02)
+
+
+### Bug Fixes
+
+* **cursor:** normalise bare command path references during content rewrite ([de88d72](https://github.com/ai-driven-dev/aidd-cli/commit/de88d72d61313332e761b639845bc0f0f83f726e))
+* **opencode:** normalise bare command path references during content rewrite ([3e3437f](https://github.com/ai-driven-dev/aidd-cli/commit/3e3437fb136fdb18cf12633121e608c249912a6a)), closes [#57](https://github.com/ai-driven-dev/aidd-cli/issues/57)
+* **self-update:** add read:packages scope + typed UpdateError ([9f6bb04](https://github.com/ai-driven-dev/aidd-cli/commit/9f6bb04bb8f6d8d275e2aa0abb104e9b8e99e98e))
+* **self-update:** fix package manager detection on Windows ([6c26584](https://github.com/ai-driven-dev/aidd-cli/commit/6c265844d736a526e216f0af963a99b0c659048f))
+* **self-update:** fix package manager detection on Windows ([8f61eb1](https://github.com/ai-driven-dev/aidd-cli/commit/8f61eb17cfc85db105ed010266f1376480782fcd))
+* **self-update:** throw typed UpdateError when package install fails ([df245b5](https://github.com/ai-driven-dev/aidd-cli/commit/df245b54c9c7e67e129ab0136e2ba2e03fea5d7f)), closes [#109](https://github.com/ai-driven-dev/aidd-cli/issues/109) [#113](https://github.com/ai-driven-dev/aidd-cli/issues/113)
+
+
+### Documentation
+
+* document read:packages scope requirement for GitHub token ([6772bbb](https://github.com/ai-driven-dev/aidd-cli/commit/6772bbb94a7448a32814ec8d90a56399794d12a4))
+
 ## [3.1.1](https://github.com/ai-driven-dev/aidd-cli/compare/v3.1.0...v3.1.1) (2026-03-30)
 
 
