@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.8.0](https://github.com/ai-driven-dev/aidd-framework/compare/v3.7.3...v3.8.0) (2026-04-05)
+
+
+### Features
+
+* **onboard:** add /onboard wizard command for new users ([17e7b5c](https://github.com/ai-driven-dev/aidd-framework/commit/17e7b5cee5fc152a93b0ff7e44dd9ed638ccaadd))
+* **onboard:** add /onboard wizard command for new users ([b02e173](https://github.com/ai-driven-dev/aidd-framework/commit/b02e173814d10ed2c66990b0844cc1b6afa2c599)), closes [#33](https://github.com/ai-driven-dev/aidd-framework/issues/33)
+
+
+### Bug Fixes
+
+* **build-dist:** use aidd setup --tools to include docs in dist ([f99a84c](https://github.com/ai-driven-dev/aidd-framework/commit/f99a84cb6b73b839a38710917eb805622772f90a))
+* **memory:** make update_memory.js ESM-compatible with dynamic imports ([e671211](https://github.com/ai-driven-dev/aidd-framework/commit/e671211b11b3f06dbbbaeea1d76062305a83ae03))
+* **memory:** make update_memory.js ESM-compatible with dynamic imports ([0b0f68e](https://github.com/ai-driven-dev/aidd-framework/commit/0b0f68e8a2b3367b920efbbb739c38e1c01ba01d))
+
+
+### Documentation
+
+* remove discord README from main, belongs on feat/pm only ([435482f](https://github.com/ai-driven-dev/aidd-framework/commit/435482f582e18f78eed49e1643781bf2a54e8c89))
+
 ## [3.7.3](https://github.com/ai-driven-dev/aidd-framework/compare/v3.7.2...v3.7.3) (2026-03-24)
 
 
