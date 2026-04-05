@@ -133,6 +133,8 @@ Start at **Initialization**, then follow the path step by step. Each box shows t
 
 > **New commands:** `/init`
 
+> **Skip this phase** if `{{DOCS}}/memory/` already contains files — your project is already initialized. Go directly to [Phase 2](#️-phase-2--configure-your-project).
+
 ### Step by Step
 
 1. Install the AI-Driven Development framework using the [CLI](https://github.com/ai-driven-dev/aidd-cli) or by copying the dist files to your project root.
