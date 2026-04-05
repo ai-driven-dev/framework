@@ -1,14 +1,16 @@
 import { existsSync } from "node:fs";
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   MemoryScriptUseCase,
   SCRIPT_RELATIVE_PATH,
 } from "../../../src/application/use-cases/memory-script-use-case.js";
 import { FrameworkDescriptor } from "../../../src/domain/models/framework-descriptor.js";
+import { GeneratedFile } from "../../../src/domain/models/generated-file.js";
 import { Manifest } from "../../../src/domain/models/manifest.js";
 import type { Git } from "../../../src/domain/ports/git.js";
+import type { Prompter } from "../../../src/domain/ports/prompter.js";
 import { buildDeps, cleanupTempProject, createTempProject } from "./helpers.js";
 
 const SCRIPT_CONTENT = "// update memory script\nconsole.log('running');\n";
@@ -29,8 +31,8 @@ function makeContentFiles(): Map<string, string> {
   return new Map([[SCRIPT_REF_PATH, SCRIPT_CONTENT]]);
 }
 
-function buildUseCase(deps: ReturnType<typeof buildDeps>, git: Git) {
-  return new MemoryScriptUseCase(deps.fs, deps.hasher, git);
+function buildUseCase(deps: ReturnType<typeof buildDeps>, git: Git, prompter?: Prompter) {
+  return new MemoryScriptUseCase(deps.fs, deps.hasher, git, prompter);
 }
 
 const HOOK_HEADER = "#!/bin/sh";
@@ -268,5 +270,111 @@ describe("memory script", () => {
     });
 
     expect(existsSync(join(projectRoot, ".git", "hooks", "pre-commit"))).toBe(false);
+  });
+});
+
+describe("obsolete script removal", () => {
+  let tempDir: string;
+  let projectRoot: string;
+
+  beforeEach(async () => {
+    ({ tempDir, projectRoot } = await createTempProject());
+  });
+
+  afterEach(async () => {
+    await cleanupTempProject(tempDir);
+  });
+
+  async function makeManifestWithStaleScript(
+    deps: ReturnType<typeof buildDeps>,
+    stalePath: string,
+    staleContent: string
+  ): Promise<Manifest> {
+    const manifest = Manifest.create();
+    const staleAbsPath = join(projectRoot, stalePath);
+    await deps.fs.writeFile(staleAbsPath, staleContent);
+    const hash = await deps.fs.readFileHash(staleAbsPath);
+    manifest.addScripts(VERSION, [
+      new GeneratedFile({ relativePath: stalePath, content: staleContent, hash }),
+    ]);
+    return manifest;
+  }
+
+  it("removes an obsolete script that was not locally modified", async () => {
+    const deps = buildDeps(projectRoot);
+    const stalePath = ".aidd/scripts/update_memory.mjs";
+    const manifest = await makeManifestWithStaleScript(deps, stalePath, SCRIPT_CONTENT);
+
+    await buildUseCase(deps, makeGit(null)).execute({
+      projectRoot,
+      version: VERSION,
+      descriptor: makeDescriptor(),
+      contentFiles: makeContentFiles(),
+      manifest,
+    });
+
+    expect(existsSync(join(projectRoot, stalePath))).toBe(false);
+    expect(existsSync(join(projectRoot, SCRIPT_RELATIVE_PATH))).toBe(true);
+  });
+
+  it("removes an obsolete script after user confirms when locally modified", async () => {
+    const deps = buildDeps(projectRoot);
+    const stalePath = ".aidd/scripts/update_memory.mjs";
+    const manifest = await makeManifestWithStaleScript(deps, stalePath, SCRIPT_CONTENT);
+
+    // Tamper the stale file to simulate a local modification
+    await deps.fs.writeFile(join(projectRoot, stalePath), "// user modification\n");
+
+    const prompter: Prompter = { confirm: vi.fn().mockResolvedValue(true) } as unknown as Prompter;
+
+    await buildUseCase(deps, makeGit(null), prompter).execute({
+      projectRoot,
+      version: VERSION,
+      descriptor: makeDescriptor(),
+      contentFiles: makeContentFiles(),
+      manifest,
+    });
+
+    expect(prompter.confirm).toHaveBeenCalledOnce();
+    expect(existsSync(join(projectRoot, stalePath))).toBe(false);
+  });
+
+  it("preserves an obsolete script when user declines removal of a locally modified file", async () => {
+    const deps = buildDeps(projectRoot);
+    const stalePath = ".aidd/scripts/update_memory.mjs";
+    const manifest = await makeManifestWithStaleScript(deps, stalePath, SCRIPT_CONTENT);
+
+    await deps.fs.writeFile(join(projectRoot, stalePath), "// user modification\n");
+
+    const prompter: Prompter = { confirm: vi.fn().mockResolvedValue(false) } as unknown as Prompter;
+
+    await buildUseCase(deps, makeGit(null), prompter).execute({
+      projectRoot,
+      version: VERSION,
+      descriptor: makeDescriptor(),
+      contentFiles: makeContentFiles(),
+      manifest,
+    });
+
+    expect(prompter.confirm).toHaveBeenCalledOnce();
+    expect(existsSync(join(projectRoot, stalePath))).toBe(true);
+  });
+
+  it("silently removes an obsolete locally modified script in non-interactive mode", async () => {
+    const deps = buildDeps(projectRoot);
+    const stalePath = ".aidd/scripts/update_memory.mjs";
+    const manifest = await makeManifestWithStaleScript(deps, stalePath, SCRIPT_CONTENT);
+
+    await deps.fs.writeFile(join(projectRoot, stalePath), "// user modification\n");
+
+    await buildUseCase(deps, makeGit(null)).execute({
+      projectRoot,
+      version: VERSION,
+      descriptor: makeDescriptor(),
+      contentFiles: makeContentFiles(),
+      manifest,
+    });
+
+    expect(existsSync(join(projectRoot, stalePath))).toBe(false);
   });
 });

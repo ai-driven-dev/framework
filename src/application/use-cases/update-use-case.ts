@@ -245,7 +245,8 @@ export class UpdateUseCase {
         this.fs,
         this.manifestRepo,
         this.hasher,
-        this.git
+        this.git,
+        this.prompter
       ).execute({
         projectRoot,
         version,
