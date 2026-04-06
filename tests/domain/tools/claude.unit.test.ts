@@ -13,6 +13,16 @@ describe("claudeToolConfig", () => {
     });
   });
 
+  describe("config().mergeStrategy()", () => {
+    it("mcp config preserves user customizations during update", () => {
+      expect(claudeToolConfig.config().mergeStrategy("mcp")).toBe("user-prime");
+    });
+
+    it("vscode settings are controlled by the framework during update", () => {
+      expect(claudeToolConfig.config().mergeStrategy("vscodeSettings")).toBe("framework-prime");
+    });
+  });
+
   describe("rewriteContent()", () => {
     it("installed content uses the .claude/ tool directory path", () => {
       const result = claudeToolConfig.rewriteContent("{{TOOLS}}/agents/", "aidd_docs");

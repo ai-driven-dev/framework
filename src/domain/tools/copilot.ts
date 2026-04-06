@@ -11,6 +11,7 @@ import {
   TOOLS_PLACEHOLDER,
 } from "../models/framework-descriptor.js";
 import { parseFrontmatter } from "../models/frontmatter.js";
+import type { MergeStrategy } from "../models/merge-strategy.js";
 import {
   type CommandsHandler,
   type ConfigHandler,
@@ -259,8 +260,10 @@ export const copilotToolConfig: ToolConfig = {
         if (configName === CONFIG_VSCODE_SETTINGS) return ".vscode/settings.json";
         return null;
       },
-      shouldMerge(configName: string): boolean {
-        return configName === CONFIG_VSCODE_SETTINGS;
+      mergeStrategy(configName: string): MergeStrategy {
+        if (configName === CONFIG_MCP) return "user-prime";
+        if (configName === CONFIG_VSCODE_SETTINGS) return "framework-prime";
+        return "none";
       },
     };
   },

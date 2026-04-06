@@ -73,7 +73,7 @@ flowchart TD
 - `AuthTokenProvider` — `resolve(): Promise<string | null>`; implemented by `AuthReader`
 - `ExternalTokenProvider` — `resolve(): string | null`; implemented by `GhCliAdapter` (calls `gh auth token` with 3s timeout)
 - `ManifestRepository` — read/write `.aidd/manifest.json`; `load()` returns `null` if not found; `delete()` removes file + `.aidd/` dir if empty
-- `FileSystem` — read/write/delete/merge/hash files; `mergeJsonFile()` strips JSONC comments then deep-merges
+- `FileSystem` — read/write/delete/merge/hash files; `mergeJsonFile(path, content, strategy)` strips JSONC comments then deep-merges; `"user-prime"` inverts merge direction (existing wins), `"framework-prime"` keeps source-wins behavior
 - `FrameworkLoader` — build `FrameworkDescriptor` from hardcoded layout, read content directories
 - `FrameworkResolver` — resolve framework from remote (GitHub Releases), local path, or tarball; `fetchLatestVersion()` fetches only the latest tag (no download) for update checks
 - `Hasher` — compute MD5 hashes
@@ -96,12 +96,13 @@ interface ToolConfig {
   commands(): CommandsHandler;    // buildFilePath + convertFrontmatter(fm, relativeFileName)
   rules(): RulesHandler;          // buildFilePath + convertFrontmatter
   skills(): SectionHandler;
-  config(): ConfigHandler;        // outputPath + shouldMerge
+  config(): ConfigHandler;        // outputPath + mergeStrategy
   memoryBank(): MemoryBankHandler; // outputPath + rewriteContent
 }
 ```
 
 - `distribution.ts` dispatches via handlers — no more `if (section.name === X)` in tools
+- `ConfigHandler.mergeStrategy(name)` returns `MergeStrategy` (`"none" | "framework-prime" | "user-prime"`) — encodes both whether to merge and who wins on conflict. MCP configs are user-prime; `.vscode/settings.json` is framework-prime. See DEC-016.
 - `copilot.ts` named handlers (`agentsHandler`, `rulesHandler`...) reused in `rewriteContent` — no duplication of path mapping logic
 - `frontmatter.ts` — `parseYamlLike` index-based (3 autonomous sub-functions), `serializeFrontmatter` emits JSON-array strings raw (no single-quote wrap)
 

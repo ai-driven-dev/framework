@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { ConfigConflictError } from "../errors.js";
 import { CONFIG_MCP, CONFIG_OPENCODE, TEMPLATE_AGENTS_MD } from "../models/framework-descriptor.js";
+import type { MergeStrategy } from "../models/merge-strategy.js";
 import {
   baseReverseRewriteContent,
   baseRewriteContent,
@@ -159,8 +160,9 @@ export const opencodeToolConfig: ToolConfig = {
         if (configName === CONFIG_OPENCODE || configName === CONFIG_MCP) return OPENCODE_JSON;
         return null;
       },
-      shouldMerge(configName: string): boolean {
-        return handler.outputPath(configName) !== null;
+      mergeStrategy(configName: string): MergeStrategy {
+        if (handler.outputPath(configName) !== null) return "framework-prime";
+        return "none";
       },
       transformContent(configName: string, content: string): string {
         if (configName === CONFIG_MCP) return transformMcpToOpencode(content);

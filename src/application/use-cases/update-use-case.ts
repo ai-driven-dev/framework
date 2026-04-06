@@ -383,9 +383,9 @@ export class UpdateUseCase {
   ): Promise<Map<string, FileHash>> {
     const mergedHashMap = new Map<string, FileHash>();
     for (const newFile of newDistribution) {
-      if (!newFile.merge) continue;
+      if (newFile.mergeStrategy === "none") continue;
       const outputPath = join(projectRoot, newFile.relativePath);
-      await this.fs.mergeJsonFile(outputPath, newFile.content);
+      await this.fs.mergeJsonFile(outputPath, newFile.content, newFile.mergeStrategy);
       const diskHash = await this.fs.readFileHash(outputPath);
       manifest.syncFileHashAcrossTools(newFile.relativePath, diskHash);
       mergedHashMap.set(newFile.relativePath, diskHash);
@@ -404,7 +404,7 @@ export class UpdateUseCase {
     newDistMap: Map<string, GeneratedFile>
   ): void {
     const nonMergedFinal = newDistribution
-      .filter((f) => !f.merge)
+      .filter((f) => f.mergeStrategy === "none")
       .filter(
         (f) =>
           !result.deleted.includes(f.relativePath) &&
@@ -415,7 +415,7 @@ export class UpdateUseCase {
       .filter((f) => result.kept.includes(f.relativePath))
       .map((f) => new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash }));
     const mergedFiles = manifestFiles
-      .filter((f) => newDistMap.get(f.relativePath)?.merge === true)
+      .filter((f) => newDistMap.get(f.relativePath)?.mergeStrategy !== "none")
       .map((f) => {
         const hash = mergedHashMap.get(f.relativePath) ?? f.hash;
         return new GeneratedFile({ relativePath: f.relativePath, content: "", hash });
@@ -589,7 +589,7 @@ export class UpdateUseCase {
     const diff: FileDiff[] = [];
 
     for (const newFile of newDistribution) {
-      if (newFile.merge) continue;
+      if (newFile.mergeStrategy !== "none") continue;
       const manifestHash = manifestMap.get(newFile.relativePath);
       if (manifestHash === undefined) {
         diff.push({ relativePath: newFile.relativePath, kind: "added" });

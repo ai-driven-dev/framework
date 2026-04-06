@@ -6,6 +6,7 @@ import {
   DOCS_PLACEHOLDER,
   TOOLS_PLACEHOLDER,
 } from "./framework-descriptor.js";
+import type { MergeStrategy } from "./merge-strategy.js";
 
 export type ToolId = "claude" | "cursor" | "copilot" | "opencode";
 export const VALID_TOOL_IDS: readonly ToolId[] = ["claude", "cursor", "copilot", "opencode"];
@@ -48,7 +49,7 @@ export interface RulesHandler {
 
 export interface ConfigHandler {
   outputPath(configName: string): string | null;
-  shouldMerge(configName: string): boolean;
+  mergeStrategy(configName: string): MergeStrategy;
   transformContent?(configName: string, content: string): string;
   resolveOutputPath?(
     configName: string,

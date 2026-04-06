@@ -40,3 +40,4 @@ paths:
 | `UpdateScope`      | `src/domain/models/update-scope.ts`   |
 | `SYNC_EXCLUDED_FILES` | `src/domain/models/sync-exclusions.ts` |
 | `isSyncExcluded`   | `src/domain/models/sync-exclusions.ts` |
+| `MergeStrategy`    | `src/domain/models/merge-strategy.ts`  |

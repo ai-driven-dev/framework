@@ -3,6 +3,7 @@ import {
   CONFIG_VSCODE_SETTINGS,
   TEMPLATE_AGENTS_MD,
 } from "../models/framework-descriptor.js";
+import type { MergeStrategy } from "../models/merge-strategy.js";
 import {
   baseReverseRewriteContent,
   baseRewriteContent,
@@ -101,8 +102,10 @@ export const claudeToolConfig: ToolConfig = {
         if (configName === CONFIG_VSCODE_SETTINGS) return ".vscode/settings.json";
         return null;
       },
-      shouldMerge(configName: string): boolean {
-        return configName === CONFIG_VSCODE_SETTINGS;
+      mergeStrategy(configName: string): MergeStrategy {
+        if (configName === CONFIG_MCP) return "user-prime";
+        if (configName === CONFIG_VSCODE_SETTINGS) return "framework-prime";
+        return "none";
       },
     };
   },

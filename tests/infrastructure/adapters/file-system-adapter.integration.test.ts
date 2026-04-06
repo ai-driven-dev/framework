@@ -174,7 +174,7 @@ describe("FileSystemAdapter", () => {
   describe("mergeJsonFile()", () => {
     it("creates file if it does not exist", async () => {
       const path = join(tempDir, "new.json");
-      await fs.mergeJsonFile(path, JSON.stringify({ key: "value" }));
+      await fs.mergeJsonFile(path, JSON.stringify({ key: "value" }), "framework-prime");
       const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
       expect(result).toEqual({ key: "value" });
     });
@@ -182,24 +182,45 @@ describe("FileSystemAdapter", () => {
     it("merges new keys into existing JSON", async () => {
       const path = join(tempDir, "merge.json");
       await writeFile(path, JSON.stringify({ existing: "data" }), "utf-8");
-      await fs.mergeJsonFile(path, JSON.stringify({ newKey: "newValue" }));
+      await fs.mergeJsonFile(path, JSON.stringify({ newKey: "newValue" }), "framework-prime");
       const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
       expect(result.existing).toBe("data");
       expect(result.newKey).toBe("newValue");
     });
 
-    it("scalar values from new data override existing", async () => {
-      const path = join(tempDir, "override.json");
-      await writeFile(path, JSON.stringify({ key: "old" }), "utf-8");
-      await fs.mergeJsonFile(path, JSON.stringify({ key: "new" }));
-      const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
-      expect(result.key).toBe("new");
+    describe("framework prime strategy", () => {
+      it("incoming scalar values override existing values", async () => {
+        const path = join(tempDir, "override-framework-prime.json");
+        await writeFile(path, JSON.stringify({ key: "old" }), "utf-8");
+        await fs.mergeJsonFile(path, JSON.stringify({ key: "new" }), "framework-prime");
+        const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+        expect(result.key).toBe("new");
+      });
+    });
+
+    describe("user prime strategy", () => {
+      it("existing scalar values win over incoming values", async () => {
+        const path = join(tempDir, "override-user-prime.json");
+        await writeFile(path, JSON.stringify({ key: "user-value" }), "utf-8");
+        await fs.mergeJsonFile(path, JSON.stringify({ key: "framework-value" }), "user-prime");
+        const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+        expect(result.key).toBe("user-value");
+      });
+
+      it("new framework keys are added when absent in the existing file", async () => {
+        const path = join(tempDir, "new-keys-user-prime.json");
+        await writeFile(path, JSON.stringify({ existing: "data" }), "utf-8");
+        await fs.mergeJsonFile(path, JSON.stringify({ newKey: "newValue" }), "user-prime");
+        const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+        expect(result.existing).toBe("data");
+        expect(result.newKey).toBe("newValue");
+      });
     });
 
     it("deep merges nested objects", async () => {
       const path = join(tempDir, "deep.json");
       await writeFile(path, JSON.stringify({ outer: { a: 1, b: 2 } }), "utf-8");
-      await fs.mergeJsonFile(path, JSON.stringify({ outer: { b: 99, c: 3 } }));
+      await fs.mergeJsonFile(path, JSON.stringify({ outer: { b: 99, c: 3 } }), "framework-prime");
       const result = JSON.parse(await readFile(path, "utf-8")) as {
         outer: Record<string, number>;
       };
@@ -211,7 +232,7 @@ describe("FileSystemAdapter", () => {
     it("deduplicates merged arrays", async () => {
       const path = join(tempDir, "arrays.json");
       await writeFile(path, JSON.stringify({ items: ["a", "b"] }), "utf-8");
-      await fs.mergeJsonFile(path, JSON.stringify({ items: ["b", "c"] }));
+      await fs.mergeJsonFile(path, JSON.stringify({ items: ["b", "c"] }), "framework-prime");
       const result = JSON.parse(await readFile(path, "utf-8")) as { items: string[] };
       expect(result.items).toContain("a");
       expect(result.items).toContain("b");
@@ -223,7 +244,7 @@ describe("FileSystemAdapter", () => {
       const path = join(tempDir, "obj-arrays.json");
       const entry = { file: "aidd_docs/templates/vcs/pull_request.md" };
       await writeFile(path, JSON.stringify({ instructions: [entry] }), "utf-8");
-      await fs.mergeJsonFile(path, JSON.stringify({ instructions: [entry] }));
+      await fs.mergeJsonFile(path, JSON.stringify({ instructions: [entry] }), "framework-prime");
       const result = JSON.parse(await readFile(path, "utf-8")) as {
         instructions: (typeof entry)[];
       };
@@ -239,7 +260,7 @@ describe("FileSystemAdapter", () => {
   /* block comment */
   "other": true
 }`;
-      await fs.mergeJsonFile(path, jsonc);
+      await fs.mergeJsonFile(path, jsonc, "framework-prime");
       const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
       expect(result.key).toBe("value");
       expect(result.other).toBe(true);
@@ -253,7 +274,7 @@ describe("FileSystemAdapter", () => {
     "a": 1,
   },
 }`;
-      await fs.mergeJsonFile(path, jsonc);
+      await fs.mergeJsonFile(path, jsonc, "framework-prime");
       const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
       expect(result.key).toBe("value");
       expect((result.nested as Record<string, number>).a).toBe(1);
@@ -268,7 +289,7 @@ describe("FileSystemAdapter", () => {
   }
 }`;
       await writeFile(path, existingWithTrailingComma, "utf-8");
-      await fs.mergeJsonFile(path, JSON.stringify({ added: true }));
+      await fs.mergeJsonFile(path, JSON.stringify({ added: true }), "framework-prime");
       const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
       expect(result.keep).toBe("me");
       expect(result.added).toBe(true);
@@ -290,7 +311,7 @@ describe("FileSystemAdapter", () => {
   },
 }`;
       await writeFile(path, existingJsonc, "utf-8");
-      await fs.mergeJsonFile(path, JSON.stringify({ share: "disabled" }));
+      await fs.mergeJsonFile(path, JSON.stringify({ share: "disabled" }), "framework-prime");
       const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
       expect(result.model).toBe("neogen/swe-dev");
       expect(result.share).toBe("disabled");

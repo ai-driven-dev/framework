@@ -37,7 +37,7 @@ const makeStubConfig = (toolId: ToolId, toolSuffix: string): ToolConfig => ({
     convertFrontmatter: (fm) => fm,
     reverseConvertFrontmatter: (fm) => fm,
   }),
-  config: () => ({ outputPath: () => null, shouldMerge: () => false }),
+  config: () => ({ outputPath: () => null, mergeStrategy: () => "none" as const }),
   memoryBank: () => ({ outputPath: () => null, rewriteContent: (c) => c }),
   detectUserFileSectionKey: () => null,
 });

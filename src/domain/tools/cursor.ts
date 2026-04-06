@@ -1,4 +1,5 @@
 import { CONFIG_MCP, TEMPLATE_AGENTS_MD } from "../models/framework-descriptor.js";
+import type { MergeStrategy } from "../models/merge-strategy.js";
 import {
   baseReverseRewriteContent,
   baseRewriteContent,
@@ -105,8 +106,9 @@ export const cursorToolConfig: ToolConfig = {
         if (configName === CONFIG_MCP) return `${DIRECTORY}mcp.json`;
         return null;
       },
-      shouldMerge(_configName: string): boolean {
-        return false;
+      mergeStrategy(configName: string): MergeStrategy {
+        if (configName === CONFIG_MCP) return "user-prime";
+        return "none";
       },
     };
   },

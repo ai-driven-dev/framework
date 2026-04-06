@@ -225,8 +225,8 @@ export class InstallUseCase {
     const userFileConflicts: string[] = [];
     for (const file of generated) {
       const outputPath = join(projectRoot, file.relativePath);
-      if (file.merge) {
-        await this.fs.mergeJsonFile(outputPath, file.content);
+      if (file.mergeStrategy !== "none") {
+        await this.fs.mergeJsonFile(outputPath, file.content, file.mergeStrategy);
         const diskHash = await this.fs.readFileHash(outputPath);
         manifest.syncFileHashAcrossTools(file.relativePath, diskHash);
         filesByPath.set(
@@ -235,7 +235,7 @@ export class InstallUseCase {
             relativePath: file.relativePath,
             content: file.content,
             hash: diskHash,
-            merge: true,
+            mergeStrategy: file.mergeStrategy,
           })
         );
       } else {

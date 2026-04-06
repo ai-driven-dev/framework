@@ -550,7 +550,7 @@ describe("generateDistribution()", () => {
       );
       const mcpFile = files.find((f) => f.relativePath === "opencode.json");
       assert(mcpFile !== undefined, "opencode.json not generated");
-      expect(mcpFile.merge).toBe(true);
+      expect(mcpFile.mergeStrategy).toBe("framework-prime");
       expect(JSON.parse(mcpFile.content)).toEqual({
         mcp: {
           "my-server": {
@@ -592,7 +592,7 @@ describe("generateDistribution()", () => {
       );
       const opencodeJsonFiles = files.filter((f) => f.relativePath === "opencode.json");
       expect(opencodeJsonFiles).toHaveLength(2);
-      expect(opencodeJsonFiles.every((f) => f.merge)).toBe(true);
+      expect(opencodeJsonFiles.every((f) => f.mergeStrategy !== "none")).toBe(true);
       const contents = opencodeJsonFiles.map(
         (f) => JSON.parse(f.content) as Record<string, unknown>
       );

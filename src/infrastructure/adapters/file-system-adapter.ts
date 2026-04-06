@@ -11,6 +11,7 @@ import {
 } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import type { FileHash } from "../../domain/models/file-hash.js";
+import type { MergeStrategy } from "../../domain/models/merge-strategy.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 
@@ -121,7 +122,7 @@ export class FileSystemAdapter implements FileSystem {
     return backupPath;
   }
 
-  async mergeJsonFile(path: string, content: string): Promise<void> {
+  async mergeJsonFile(path: string, content: string, strategy: MergeStrategy): Promise<void> {
     let existing: Record<string, unknown> = {};
 
     try {
@@ -135,7 +136,8 @@ export class FileSystemAdapter implements FileSystem {
     }
 
     const incoming = JSON.parse(stripJsoncComments(content)) as Record<string, unknown>;
-    const merged = deepMerge(existing, incoming);
+    const merged =
+      strategy === "user-prime" ? deepMerge(incoming, existing) : deepMerge(existing, incoming);
     await this.writeFile(path, JSON.stringify(merged, null, 2));
   }
 }

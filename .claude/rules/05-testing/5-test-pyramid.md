@@ -49,14 +49,21 @@ A test in `tests/application/` must be deleted if an E2E test covers the same sc
 
 ## Naming rule
 
-Test names must describe a user-visible or system-level behaviour.
-
+- Test name = observable behaviour sentence
 - Banned: "calls execute()", "returns Y", "throws an error"
 - Required: "installs tool when not present", "fails in non-interactive mode without --tools flag"
+- No prefix separators — use nested `describe` instead
+- `describe` label = behavioral, not class/method name
 
-The test name must be readable as a specification sentence on its own.
+```ts
+// BAD — prefix as substitute for describe
+it("user prime: existing values win", ...)
 
-`describe` blocks must not be named after the class under test (e.g. "FooUseCase") — use a behavioral label instead (e.g. "install", "auth login").
+// GOOD
+describe("user prime strategy", () => {
+  it("existing scalar values win over incoming values", ...)
+})
+```
 
 ## Running a specific tier
 

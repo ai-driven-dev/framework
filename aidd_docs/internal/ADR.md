@@ -21,3 +21,4 @@ This file contains the key architectural decisions made during the project, alon
 | 2026-03-28 | DEC-013 | [Recursive MenuNode tree for interactive TUI](./decisions/DEC-013-recursive-menu-node-tree.md) | any new submenu = add children; no navigation code change |
 | 2026-03-28 | DEC-014 | [string[] breadcrumb as menu loop state](./decisions/DEC-014-breadcrumb-string-array-menu-state.md) | returnTo scales to any depth; UX resumes at correct level |
 | 2026-03-28 | DEC-015 | [createMenuDeps() + Map memoization for createDeps](./decisions/DEC-015-create-menu-deps-map-memoization.md) | E2E test isolation fixed; no double I/O in production |
+| 2026-04-06 | DEC-016 | [ConfigHandler.mergeStrategy() replaces boolean shouldMerge](./decisions/DEC-016-config-handler-merge-strategy.md) | MCP config files are user-prime; user customizations survive update |

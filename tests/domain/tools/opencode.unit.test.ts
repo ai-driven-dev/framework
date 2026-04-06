@@ -199,13 +199,13 @@ describe("opencodeToolConfig", () => {
     });
   });
 
-  describe("config().shouldMerge()", () => {
-    it("merges opencode config", () => {
-      expect(opencodeToolConfig.config().shouldMerge("opencode")).toBe(true);
+  describe("config().mergeStrategy()", () => {
+    it("opencode config is controlled by the framework during update", () => {
+      expect(opencodeToolConfig.config().mergeStrategy("opencode")).toBe("framework-prime");
     });
 
-    it("merges mcp config (transformed into opencode.json)", () => {
-      expect(opencodeToolConfig.config().shouldMerge("mcp")).toBe(true);
+    it("mcp config merged into opencode.json is controlled by the framework during update", () => {
+      expect(opencodeToolConfig.config().mergeStrategy("mcp")).toBe("framework-prime");
     });
   });
 

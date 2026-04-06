@@ -13,6 +13,7 @@ import {
 import { parseFrontmatter, serializeFrontmatter } from "./frontmatter.js";
 import { GeneratedFile } from "./generated-file.js";
 import { transformFor as mcpTransformFor } from "./mcp.js";
+import type { MergeStrategy } from "./merge-strategy.js";
 import {
   acceptsFile,
   type CommandsHandler,
@@ -104,7 +105,7 @@ export async function generateDistribution(
     ...(await collectRawFiles(
       framework.configRefs,
       resolveOutput,
-      (name) => configHandler.shouldMerge(name),
+      (name) => configHandler.mergeStrategy(name),
       configHandler.transformContent?.bind(configHandler),
       contentFiles,
       hasher,
@@ -174,7 +175,7 @@ function collectMemoryBankFiles(
 async function collectRawFiles(
   refs: readonly { name: string; path: string }[],
   resolveOutput: (name: string) => Promise<string | null>,
-  shouldMerge: (name: string) => boolean,
+  mergeStrategy: (name: string) => MergeStrategy,
   transformContent: ((name: string, content: string) => string) | undefined,
   contentFiles: Map<string, string>,
   hasher: Hasher,
@@ -193,7 +194,7 @@ async function collectRawFiles(
         relativePath: outputPath,
         content,
         hash: hasher.hash(content),
-        merge: shouldMerge(ref.name),
+        mergeStrategy: mergeStrategy(ref.name),
         frameworkPath: ref.path,
       })
     );

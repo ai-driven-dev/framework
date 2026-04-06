@@ -14,6 +14,7 @@ Always import them from `src/domain/models/`.
 - `interface FileDiff { ... }` — use `import type { FileDiff } from "../../domain/models/file-diff.js"`
 - `type ConflictDecision = "overwrite" | "skip" | "backup"` — use `import type { ConflictDecision } from "../../domain/models/conflict-decision.js"`
 - `type UpdateScope = ...` — use `import type { UpdateScope } from "../../domain/models/update-scope.js"`
+- `type MergeStrategy = ...` — use `import type { MergeStrategy } from "../../domain/models/merge-strategy.js"`
 
 ## Banned inline constants
 
@@ -22,7 +23,6 @@ Always import them from `src/domain/models/`.
 
 ## Rationale
 
-Discriminant types shared across use-cases belong in the domain layer. Inlining them:
-- Creates type drift (same concept defined differently in two places)
-- Prevents type-safe narrowing across use-case boundaries
-- Violates the hexagonal architecture's domain ownership rule
+- Inline definitions cause type drift across use-case boundaries
+- Prevents type-safe narrowing when the same concept is redefined
+- Domain layer owns shared types — hexagonal architecture rule
