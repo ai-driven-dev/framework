@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.1.3](https://github.com/ai-driven-dev/aidd-cli/compare/v3.1.2...v3.1.3) (2026-04-06)
+
+
+### Bug Fixes
+
+* **banner:** clean up stdin listener after animation to prevent arrow key exit ([eacd585](https://github.com/ai-driven-dev/aidd-cli/commit/eacd585ae5e68fc4c7b6eae025d481b65185846c)), closes [#116](https://github.com/ai-driven-dev/aidd-cli/issues/116)
+* **banner:** clean up stdin listener to prevent arrow key exit on Linux ([8acabc8](https://github.com/ai-driven-dev/aidd-cli/commit/8acabc8d7c2cfcb7713579f4ec97b6f7f4e4fa38))
+* remove obsolete script files after framework renames them ([961a2fd](https://github.com/ai-driven-dev/aidd-cli/commit/961a2fdf96b4383d00a65932fa19e80d79da8d94))
+* remove obsolete script files after framework renames them ([050a383](https://github.com/ai-driven-dev/aidd-cli/commit/050a3836cd73d40283423dd8dff6d16a3877c90e))
+* **setup:** detect existing docs dir as adopt signal when manifest is missing ([0081ee3](https://github.com/ai-driven-dev/aidd-cli/commit/0081ee3534948c4e8a0230f7c9a62cb7b6fd9675))
+* **setup:** detect existing docs dir as adopt signal when manifest is missing ([b7ab77c](https://github.com/ai-driven-dev/aidd-cli/commit/b7ab77c02e9f31e36002a608734745a6eb1bfd01)), closes [#118](https://github.com/ai-driven-dev/aidd-cli/issues/118)
+
 ## [3.1.2](https://github.com/ai-driven-dev/aidd-cli/compare/v3.1.1...v3.1.2) (2026-04-02)
 
 
