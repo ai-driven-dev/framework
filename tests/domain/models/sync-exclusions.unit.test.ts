@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { Manifest } from "../../../src/domain/models/manifest.js";
 import { isSyncExcluded, SYNC_EXCLUDED_FILES } from "../../../src/domain/models/sync-exclusions.js";
 
 describe("SYNC_EXCLUDED_FILES", () => {
@@ -28,7 +29,7 @@ describe("SYNC_EXCLUDED_FILES", () => {
 });
 
 describe("isSyncExcluded", () => {
-  const docsDir = "aidd_docs";
+  const docsDir = Manifest.DEFAULT_DOCS_DIR;
 
   it("excludes CLAUDE.md (in set)", () => {
     expect(isSyncExcluded("CLAUDE.md", docsDir)).toBe(true);
@@ -43,7 +44,7 @@ describe("isSyncExcluded", () => {
   });
 
   it("excludes files under docsDir", () => {
-    expect(isSyncExcluded("aidd_docs/memory/context.md", docsDir)).toBe(true);
+    expect(isSyncExcluded(`${Manifest.DEFAULT_DOCS_DIR}/memory/context.md`, docsDir)).toBe(true);
   });
 
   it("excludes .aidd/ paths", () => {
@@ -64,6 +65,6 @@ describe("isSyncExcluded", () => {
 
   it("respects custom docsDir", () => {
     expect(isSyncExcluded("custom_docs/readme.md", "custom_docs")).toBe(true);
-    expect(isSyncExcluded("aidd_docs/readme.md", "custom_docs")).toBe(false);
+    expect(isSyncExcluded(`${Manifest.DEFAULT_DOCS_DIR}/readme.md`, "custom_docs")).toBe(false);
   });
 });

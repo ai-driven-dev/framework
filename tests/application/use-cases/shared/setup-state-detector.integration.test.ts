@@ -6,6 +6,7 @@ import "../../../../src/domain/tools/copilot.js";
 import "../../../../src/domain/tools/cursor.js";
 import "../../../../src/domain/tools/opencode.js";
 import { SetupStateDetector } from "../../../../src/application/use-cases/shared/setup-state-detector.js";
+import { Manifest } from "../../../../src/domain/models/manifest.js";
 import type { FrameworkResolver } from "../../../../src/domain/ports/framework-resolver.js";
 import {
   buildDeps,
@@ -45,6 +46,18 @@ describe("SetupStateDetector", () => {
     const state = await detector.detect(projectRoot);
 
     expect(state.kind).toBe("needs-init");
+  });
+
+  it("detects needs-adopt state when aidd_docs directory exists without manifest", async () => {
+    await mkdir(join(projectRoot, Manifest.DEFAULT_DOCS_DIR), { recursive: true });
+
+    const deps = buildDeps(projectRoot);
+    const resolver = makeResolver({ latestVersion: "v1.0.0" });
+    const detector = new SetupStateDetector(deps.manifestRepo, deps.fs, resolver);
+
+    const state = await detector.detect(projectRoot);
+
+    expect(state.kind).toBe("needs-adopt");
   });
 
   it("detects needs-adopt state when AIDD-branded file found without manifest", async () => {

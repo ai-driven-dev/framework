@@ -109,9 +109,9 @@ describe("Manifest", () => {
       const json = manifest.toJSON();
       expect(json.docsDir).toBe("custom_docs");
 
-      const defaultManifest = Manifest.create("aidd_docs");
+      const defaultManifest = Manifest.create(Manifest.DEFAULT_DOCS_DIR);
       const defaultJson = defaultManifest.toJSON();
-      expect(defaultJson.docsDir).toBe("aidd_docs");
+      expect(defaultJson.docsDir).toBe(Manifest.DEFAULT_DOCS_DIR);
     });
 
     it("file hashes are preserved after round-trip", () => {
@@ -132,8 +132,8 @@ describe("Manifest", () => {
   });
 
   const docsFiles = [
-    makeFile("aidd_docs/CLAUDE.md", "112233"),
-    makeFile("aidd_docs/memory/project.md", "445566"),
+    makeFile(`${Manifest.DEFAULT_DOCS_DIR}/CLAUDE.md`, "112233"),
+    makeFile(`${Manifest.DEFAULT_DOCS_DIR}/memory/project.md`, "445566"),
   ];
 
   describe("isFileTracked()", () => {
@@ -152,7 +152,7 @@ describe("Manifest", () => {
     it("returns true for a file tracked by docs", () => {
       const manifest = Manifest.create();
       manifest.addDocs("3.0.0", docsFiles);
-      expect(manifest.isFileTracked("aidd_docs/CLAUDE.md")).toBe(true);
+      expect(manifest.isFileTracked(`${Manifest.DEFAULT_DOCS_DIR}/CLAUDE.md`)).toBe(true);
     });
 
     it("returns true for a file tracked by scripts", () => {
@@ -176,7 +176,7 @@ describe("Manifest", () => {
     it("replaces existing docs entry", () => {
       const manifest = Manifest.create();
       manifest.addDocs("3.0.0", docsFiles);
-      manifest.addDocs("3.1.0", [makeFile("aidd_docs/CLAUDE.md", "aabbcc")]);
+      manifest.addDocs("3.1.0", [makeFile(`${Manifest.DEFAULT_DOCS_DIR}/CLAUDE.md`, "aabbcc")]);
       const json = manifest.toJSON();
       expect(json.docs?.version).toBe("3.1.0");
       expect(json.docs?.files).toHaveLength(1);

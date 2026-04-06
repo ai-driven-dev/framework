@@ -1,3 +1,5 @@
+import { join } from "node:path";
+import { Manifest } from "../../../domain/models/manifest.js";
 import { compareSemver, isSemver } from "../../../domain/models/semver.js";
 import {
   getAllRegisteredTools,
@@ -38,6 +40,8 @@ export class SetupStateDetector {
   }
 
   private async detectWithoutManifest(projectRoot: string): Promise<SetupState> {
+    const docsDirExists = await this.fs.fileExists(join(projectRoot, Manifest.DEFAULT_DOCS_DIR));
+    if (docsDirExists) return { kind: "needs-adopt" };
     for (const tool of getAllRegisteredTools().values()) {
       if (await hasToolSignals(this.fs, tool, projectRoot)) return { kind: "needs-adopt" };
     }
