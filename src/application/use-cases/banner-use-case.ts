@@ -35,20 +35,29 @@ function boxLine(styledText: string, textVis: number): string {
   return `  ${B}│${R}  ${styledText}${" ".repeat(padding)}  ${B}│${R}`;
 }
 
-function waitForKeypress(): Promise<void> {
-  return new Promise((resolve) => {
-    if (!process.stdin.isTTY) {
-      resolve();
-      return;
-    }
-    process.stdin.setRawMode(true);
-    process.stdin.resume();
-    process.stdin.once("data", () => {
+function waitForKeypress(): { promise: Promise<void>; cleanup: () => void } {
+  if (!process.stdin.isTTY) {
+    return { promise: Promise.resolve(), cleanup: () => {} };
+  }
+  let onData: (() => void) | undefined;
+  const promise = new Promise<void>((resolve) => {
+    onData = () => {
       process.stdin.setRawMode(false);
       process.stdin.pause();
       resolve();
-    });
+    };
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.once("data", onData);
   });
+  return {
+    promise,
+    cleanup: () => {
+      if (onData !== undefined) process.stdin.removeListener("data", onData);
+      process.stdin.setRawMode(false);
+      process.stdin.pause();
+    },
+  };
 }
 
 export class BannerUseCase {
@@ -62,7 +71,7 @@ export class BannerUseCase {
     };
     const raw = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
-    const skip = waitForKeypress();
+    const { promise: skip, cleanup } = waitForKeypress();
     const sleep = (ms: number): Promise<void> => Promise.race([raw(ms), skip]);
 
     // --- Part 1: logo in corner frame ---
@@ -129,5 +138,6 @@ export class BannerUseCase {
     }
 
     await sleep(1500);
+    cleanup();
   }
 }
