@@ -4,6 +4,7 @@ import type { FileSystem } from "../../../domain/ports/file-system.js";
 import type { Git } from "../../../domain/ports/git.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
+import type { Prompter } from "../../../domain/ports/prompter.js";
 import { CatalogUseCase } from "../catalog-use-case.js";
 import { GitignoreUseCase } from "../gitignore-use-case.js";
 import { MemoryScriptUseCase } from "../memory-script-use-case.js";
@@ -22,13 +23,14 @@ export class PostInstallPipelineUseCase {
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
     private readonly hasher: Hasher,
-    private readonly git: Git
+    private readonly git: Git,
+    private readonly prompter?: Prompter
   ) {}
 
   async execute(options: PostInstallPipelineOptions): Promise<void> {
     const { projectRoot, version, descriptor, contentFiles, manifest, docsDir } = options;
 
-    await new MemoryScriptUseCase(this.fs, this.hasher, this.git).execute({
+    await new MemoryScriptUseCase(this.fs, this.hasher, this.git, this.prompter).execute({
       projectRoot,
       version,
       descriptor,

@@ -75,9 +75,13 @@ export class InstallUseCase {
       force
     );
 
-    await new PostInstallPipelineUseCase(this.fs, this.manifestRepo, this.hasher, this.git).execute(
-      { projectRoot, version, descriptor, contentFiles, manifest, docsDir }
-    );
+    await new PostInstallPipelineUseCase(
+      this.fs,
+      this.manifestRepo,
+      this.hasher,
+      this.git,
+      this.prompter
+    ).execute({ projectRoot, version, descriptor, contentFiles, manifest, docsDir });
 
     return results;
   }

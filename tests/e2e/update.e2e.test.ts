@@ -1,5 +1,5 @@
 import { existsSync, readdirSync } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -305,6 +305,40 @@ describe.concurrent("E2E: aidd update", () => {
       const readmePath = join(projectDir, "aidd_docs", "README.md");
       const readmeContent = await readFile(readmePath, "utf-8");
       expect(readmeContent).toContain("v2 Update");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("removes an obsolete script file replaced by a newer framework version", async () => {
+    const { projectDir, cleanup } = await createTestEnv("update-stale-script");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      // Simulate a project that was installed with an older CLI that wrote update_memory.mjs
+      const manifestPath = join(projectDir, ".aidd", "manifest.json");
+      const manifestRaw = JSON.parse(await readFile(manifestPath, "utf-8"));
+      const staleRelPath = ".aidd/scripts/update_memory.mjs";
+      const currentRelPath = ".aidd/scripts/update_memory.js";
+      const currentHash = manifestRaw.scripts.files[0].hash;
+      manifestRaw.scripts.files = [{ relativePath: staleRelPath, hash: currentHash }];
+      await writeFile(manifestPath, JSON.stringify(manifestRaw, null, 2));
+
+      // Move the script on disk to the stale path
+      await rename(join(projectDir, currentRelPath), join(projectDir, staleRelPath));
+
+      const { stdout, stderr, exitCode } = await runCli(
+        ["update", "--path", FRAMEWORK_PATH, "--verbose"],
+        projectDir
+      );
+
+      // Log everything for inspection
+      process.stdout.write(`\n--- stdout ---\n${stdout}\n--- stderr ---\n${stderr}\n`);
+
+      expect(exitCode).toBe(0);
+      expect(existsSync(join(projectDir, staleRelPath))).toBe(false);
+      expect(existsSync(join(projectDir, currentRelPath))).toBe(true);
     } finally {
       await cleanup();
     }

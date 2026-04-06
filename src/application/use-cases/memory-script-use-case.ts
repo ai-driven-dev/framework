@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import type { FileHash } from "../../domain/models/file-hash.js";
 import type { FrameworkDescriptor } from "../../domain/models/framework-descriptor.js";
 import { SCRIPT_UPDATE_MEMORY } from "../../domain/models/framework-descriptor.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
@@ -6,6 +7,7 @@ import type { Manifest } from "../../domain/models/manifest.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Git } from "../../domain/ports/git.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
+import type { Prompter } from "../../domain/ports/prompter.js";
 
 export const SCRIPT_RELATIVE_PATH = ".aidd/scripts/update_memory.js";
 const AIDD_HOOK_RELATIVE_PATH = ".aidd/hooks/pre-commit";
@@ -23,7 +25,8 @@ export class MemoryScriptUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly hasher: Hasher,
-    private readonly git: Git
+    private readonly git: Git,
+    private readonly prompter?: Prompter
   ) {}
 
   async execute(options: MemoryScriptOptions): Promise<void> {
@@ -32,6 +35,8 @@ export class MemoryScriptUseCase {
     if (!scriptRef) return;
     const scriptContent = contentFiles.get(scriptRef.path);
     if (scriptContent === undefined) return;
+
+    await this.cleanupStaleScripts(projectRoot, manifest);
 
     const newHash = this.hasher.hash(scriptContent);
     const storedFile = manifest
@@ -42,6 +47,29 @@ export class MemoryScriptUseCase {
     }
     await this.installAiddHook(projectRoot, scriptRef.invocation);
     await this.git.installPreCommitDelegate(projectRoot, AIDD_HOOK_RELATIVE_PATH);
+  }
+
+  private async cleanupStaleScripts(projectRoot: string, manifest: Manifest): Promise<void> {
+    for (const storedFile of manifest.getScriptsFiles()) {
+      if (storedFile.relativePath === SCRIPT_RELATIVE_PATH) continue;
+      await this.deleteStaleScript(projectRoot, storedFile.relativePath, storedFile.hash);
+    }
+  }
+
+  private async deleteStaleScript(
+    projectRoot: string,
+    relativePath: string,
+    hash: FileHash
+  ): Promise<void> {
+    const absolutePath = join(projectRoot, relativePath);
+    const isModified = await this.fs.hasLocalChanges(absolutePath, hash);
+    if (isModified && this.prompter !== undefined) {
+      const confirmed = await this.prompter.confirm(
+        `Stale script \`${relativePath}\` was locally modified. Delete it?`
+      );
+      if (!confirmed) return;
+    }
+    await this.fs.deleteFile(absolutePath);
   }
 
   private async writeScript(
