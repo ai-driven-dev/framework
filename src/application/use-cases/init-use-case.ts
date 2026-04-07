@@ -71,7 +71,7 @@ export class InitUseCase {
 
   private async hasAiddSignals(projectRoot: string): Promise<boolean> {
     for (const tool of getAllRegisteredTools().values()) {
-      if (await hasToolSignals(this.fs, tool, projectRoot)) return true;
+      if ((await hasToolSignals(this.fs, tool, projectRoot)).length > 0) return true;
     }
     return false;
   }

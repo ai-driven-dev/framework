@@ -277,14 +277,15 @@ export async function hasToolSignals(
   fs: FileSystem,
   config: ToolConfig,
   projectRoot: string
-): Promise<boolean> {
+): Promise<string[]> {
   const dir = join(projectRoot, config.signalDir);
-  if (!(await fs.fileExists(dir))) return false;
+  if (!(await fs.fileExists(dir))) return [];
   const files = await fs.listDirectory(dir);
+  const matches: string[] = [];
   for (const filePath of files) {
     if (!filePath.endsWith(".md")) continue;
     const content = await fs.readFile(join(dir, filePath));
-    if (/^name:\s*['"]?aidd[_:]/m.test(content)) return true;
+    if (/^name:\s*['"]?aidd[_:]/m.test(content)) matches.push(join(config.signalDir, filePath));
   }
-  return false;
+  return matches;
 }
