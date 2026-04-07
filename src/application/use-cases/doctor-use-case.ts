@@ -159,7 +159,7 @@ export class DoctorUseCase {
     const installedToolDirs = manifest.getInstalledDirectories();
 
     for (const tool of getAllRegisteredTools().values()) {
-      if (await hasToolSignals(this.fs, tool, projectRoot)) {
+      if ((await hasToolSignals(this.fs, tool, projectRoot)).length > 0) {
         if (!installedToolDirs.has(tool.directory)) {
           issues.push({
             severity: "warning",

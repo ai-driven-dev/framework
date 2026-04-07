@@ -10,9 +10,13 @@ import type { FileSystem } from "../../../domain/ports/file-system.js";
 import type { FrameworkResolver } from "../../../domain/ports/framework-resolver.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 
+export type AdoptSignal =
+  | { type: "docsDir"; path: string }
+  | { type: "toolSignal"; tool: ToolId; file: string };
+
 export type SetupState =
   | { kind: "needs-init" }
-  | { kind: "needs-adopt" }
+  | { kind: "needs-adopt"; signals: AdoptSignal[] }
   | { kind: "needs-install" }
   | { kind: "needs-update"; currentVersion: string; latestVersion: string }
   | { kind: "up-to-date" };
@@ -40,11 +44,15 @@ export class SetupStateDetector {
   }
 
   private async detectWithoutManifest(projectRoot: string): Promise<SetupState> {
+    const signals: AdoptSignal[] = [];
     const docsDirExists = await this.fs.fileExists(join(projectRoot, Manifest.DEFAULT_DOCS_DIR));
-    if (docsDirExists) return { kind: "needs-adopt" };
-    for (const tool of getAllRegisteredTools().values()) {
-      if (await hasToolSignals(this.fs, tool, projectRoot)) return { kind: "needs-adopt" };
+    if (docsDirExists) signals.push({ type: "docsDir", path: Manifest.DEFAULT_DOCS_DIR });
+    for (const [id, tool] of getAllRegisteredTools()) {
+      for (const file of await hasToolSignals(this.fs, tool, projectRoot)) {
+        signals.push({ type: "toolSignal", tool: id, file });
+      }
     }
+    if (signals.length > 0) return { kind: "needs-adopt", signals };
     return { kind: "needs-init" };
   }
 

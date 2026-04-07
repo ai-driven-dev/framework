@@ -116,6 +116,32 @@ describe("setup without TTY", () => {
     ).rejects.toThrow(/from/i);
   });
 
+  it("error message includes triggering signal paths when adopt requires version", async () => {
+    await seedAdoptSignal();
+
+    await expect(
+      buildUseCase(makeResolver()).execute({
+        projectRoot,
+        path: FIXTURE_DIR,
+        interactive: false,
+        toolIds: [...VALID_TOOL_IDS],
+      })
+    ).rejects.toThrow(".claude/commands/implement.md");
+  });
+
+  it("error message includes aidd_docs path when docs dir exists without manifest", async () => {
+    await mkdir(join(projectRoot, "aidd_docs"), { recursive: true });
+
+    await expect(
+      buildUseCase(makeResolver()).execute({
+        projectRoot,
+        path: FIXTURE_DIR,
+        interactive: false,
+        toolIds: [...VALID_TOOL_IDS],
+      })
+    ).rejects.toThrow("aidd_docs/");
+  });
+
   it("existing tool files detected without tools flag fails with a clear error", async () => {
     await seedAdoptSignal();
 

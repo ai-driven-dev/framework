@@ -17,10 +17,10 @@ import { InitUseCase } from "./init-use-case.js";
 import type { InstallToolResult } from "./install-use-case.js";
 import { InstallUseCase } from "./install-use-case.js";
 import { ResolveFrameworkUseCase } from "./resolve-framework-use-case.js";
-import { SetupStateDetector } from "./shared/setup-state-detector.js";
+import { type AdoptSignal, SetupStateDetector } from "./shared/setup-state-detector.js";
 import { UpdateUseCase } from "./update-use-case.js";
 
-export type { SetupState } from "./shared/setup-state-detector.js";
+export type { AdoptSignal, SetupState } from "./shared/setup-state-detector.js";
 
 interface SetupOptions {
   projectRoot: string;
@@ -85,7 +85,7 @@ export class SetupUseCase {
       case "needs-init":
         return this.handleInit(options);
       case "needs-adopt":
-        return this.handleAdopt(options);
+        return this.handleAdopt(options, state.signals);
       case "needs-install":
         return this.handleInstall(options);
       case "needs-update":
@@ -210,12 +210,12 @@ export class SetupUseCase {
     return this.resolver.fetchLatestVersion(frameworkRepo).catch(() => undefined);
   }
 
-  private async handleAdopt(options: SetupOptions): Promise<SetupResult> {
+  private async handleAdopt(options: SetupOptions, signals: AdoptSignal[]): Promise<SetupResult> {
     const { projectRoot, repo } = options;
-    this.validateAdoptNonInteractive(options, repo);
+    this.validateAdoptNonInteractive(options, repo, signals);
 
     const selected = await this.resolveAdoptTools(options);
-    const fromInput = await this.resolveAdoptFrom(options, repo);
+    const fromInput = await this.resolveAdoptFrom(options, repo, signals);
     const { path: frameworkPath, version } = await this.frameworkResolver.execute({
       from: fromInput,
     });
@@ -235,13 +235,31 @@ export class SetupUseCase {
     };
   }
 
-  private validateAdoptNonInteractive(options: SetupOptions, repo: string | undefined): void {
+  private validateAdoptNonInteractive(
+    options: SetupOptions,
+    repo: string | undefined,
+    signals: AdoptSignal[]
+  ): void {
     if (!options.interactive) {
       if (!options.toolIds || options.toolIds.length === 0) {
         throw new Error("--tools <ids> is required for adopt in non-interactive mode.");
       }
-      if (options.from === undefined) throw new AdoptRequiresVersionError(repo);
+      if (options.from === undefined)
+        throw new AdoptRequiresVersionError(repo, this.formatSignalDiagnostic(signals));
     }
+  }
+
+  private formatSignalDiagnostic(signals: AdoptSignal[]): string {
+    if (signals.length === 0) return "";
+    const lines = ["Detected existing AIDD files:"];
+    for (const signal of signals) {
+      if (signal.type === "docsDir") {
+        lines.push(`  • ${signal.path}/ — run: ls ${signal.path}/`);
+      } else {
+        lines.push(`  • ${signal.file} — run: cat ${signal.file}`);
+      }
+    }
+    return lines.join("\n");
   }
 
   private async runAdopt(
@@ -280,16 +298,21 @@ export class SetupUseCase {
     return checkedIds as ToolId[];
   }
 
-  private async resolveAdoptFrom(options: SetupOptions, repo: string | undefined): Promise<string> {
+  private async resolveAdoptFrom(
+    options: SetupOptions,
+    repo: string | undefined,
+    signals: AdoptSignal[]
+  ): Promise<string> {
     if (options.from !== undefined) {
-      if (!options.from) throw new AdoptRequiresVersionError(repo);
+      if (!options.from)
+        throw new AdoptRequiresVersionError(repo, this.formatSignalDiagnostic(signals));
       return options.from;
     }
     const fromInput = await this.prompter.input(
       "Which version of the framework do you already have installed? (e.g. v1.2.3 or local path):",
       ""
     );
-    if (!fromInput) throw new AdoptRequiresVersionError(repo);
+    if (!fromInput) throw new AdoptRequiresVersionError(repo, this.formatSignalDiagnostic(signals));
     return fromInput;
   }
 
