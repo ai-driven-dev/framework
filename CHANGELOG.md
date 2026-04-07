@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.1.4](https://github.com/ai-driven-dev/aidd-cli/compare/v3.1.3...v3.1.4) (2026-04-07)
+
+
+### Bug Fixes
+
+* **setup:** show triggering files when adopt requires version ([e1219fe](https://github.com/ai-driven-dev/aidd-cli/commit/e1219fee6b5d88682918f7c6cd841f73bdb27fba))
+* **setup:** surface adopt-trigger signals in error to help diagnose stuck state ([1b2fe39](https://github.com/ai-driven-dev/aidd-cli/commit/1b2fe394aa5038987cf08611796a5f602c604d40)), closes [#118](https://github.com/ai-driven-dev/aidd-cli/issues/118)
+* **update:** preserve user MCP config customizations with merge strategy ([#125](https://github.com/ai-driven-dev/aidd-cli/issues/125)) ([fab1b41](https://github.com/ai-driven-dev/aidd-cli/commit/fab1b4182faf0ff5f1239200267e5b7c4062922b))
+
 ## [3.1.3](https://github.com/ai-driven-dev/aidd-cli/compare/v3.1.2...v3.1.3) (2026-04-06)
 
 
