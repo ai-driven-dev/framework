@@ -196,9 +196,7 @@ describe("init", () => {
 
       await expect(
         buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
-      ).rejects.toThrow(
-        /aidd init --force.*aidd clean --force|aidd clean --force.*aidd init --force/
-      );
+      ).rejects.toThrow(/Already initialized \(docs in "aidd_docs"\)/);
     });
 
     it("--force: fails with guidance when no manifest exists", async () => {

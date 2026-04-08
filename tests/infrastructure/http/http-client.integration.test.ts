@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { beforeEach, describe, expect, it } from "vitest";
+import { AuthenticationError } from "../../../src/domain/errors.js";
 import { HttpClient } from "../../../src/infrastructure/http/http-client.js";
 
 function startServer(
@@ -120,26 +121,28 @@ describe("HttpClient", () => {
   });
 
   describe("error handling", () => {
-    it("reports unauthorized error when server responds 401", async () => {
+    it("throws AuthenticationError when server responds 401", async () => {
       const { url, close } = await startServer((_req, res) => {
         res.writeHead(401);
         res.end();
       });
 
       try {
+        await expect(client.get(url)).rejects.toThrow(AuthenticationError);
         await expect(client.get(url)).rejects.toThrow("Authentication failed (HTTP 401)");
       } finally {
         await close();
       }
     });
 
-    it("reports unauthorized error when server responds 403", async () => {
+    it("throws AuthenticationError when server responds 403", async () => {
       const { url, close } = await startServer((_req, res) => {
         res.writeHead(403);
         res.end();
       });
 
       try {
+        await expect(client.get(url)).rejects.toThrow(AuthenticationError);
         await expect(client.get(url)).rejects.toThrow("Authentication failed (HTTP 403)");
       } finally {
         await close();

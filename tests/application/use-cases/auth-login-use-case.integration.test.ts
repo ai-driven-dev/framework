@@ -115,7 +115,7 @@ describe("auth login", () => {
           projectRoot: tempDir,
           interactive: false,
         })
-      ).rejects.toThrow(/gh CLI is not installed/);
+      ).rejects.toThrow(/Authentication failed \(gh CLI\)/);
     });
 
     it("fails when token is invalid (HTTP 401)", async () => {
