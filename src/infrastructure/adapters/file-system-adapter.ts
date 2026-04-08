@@ -14,6 +14,7 @@ import type { FileHash } from "../../domain/models/file-hash.js";
 import type { MergeStrategy } from "../../domain/models/merge-strategy.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
+import { JsonParseError } from "../errors.js";
 
 export class FileSystemAdapter implements FileSystem {
   constructor(private readonly hasher: Hasher) {}
@@ -131,7 +132,7 @@ export class FileSystemAdapter implements FileSystem {
     } catch (err) {
       const code = (err as NodeJS.ErrnoException).code;
       if (code !== "ENOENT") {
-        throw new Error(`Cannot parse existing JSON at ${path}: ${(err as Error).message}`);
+        throw new JsonParseError(path, (err as Error).message);
       }
     }
 

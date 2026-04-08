@@ -1,4 +1,5 @@
 import { checkbox, confirm, input, select } from "@inquirer/prompts";
+import { InputRequiredError } from "../../application/errors.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 
 type PromptContext = {
@@ -28,7 +29,7 @@ export class SilentPrompterAdapter implements Prompter {
   ): Promise<T> {
     const first = choices.find((c) => !c.disabled);
     if (first === undefined) {
-      throw new Error("No enabled choices available");
+      throw new InputRequiredError("No enabled choices available");
     }
     return first.value;
   }

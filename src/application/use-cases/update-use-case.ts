@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { FrameworkResolutionError } from "../../domain/errors.js";
 import type { ConflictDecision } from "../../domain/models/conflict-decision.js";
 import { generateDistribution } from "../../domain/models/distribution.js";
 import { buildDocsDistribution } from "../../domain/models/docs.js";
@@ -16,7 +17,7 @@ import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
-import { NoManifestError } from "../errors.js";
+import { InputRequiredError, NoManifestError } from "../errors.js";
 import { ConflictResolutionUseCase } from "./conflict-resolution-use-case.js";
 import { PostInstallPipelineUseCase } from "./shared/post-install-pipeline-use-case.js";
 
@@ -265,7 +266,7 @@ export class UpdateUseCase {
     const installedIds = new Set(manifest.getInstalledToolIds());
     const notInstalled = toolIds.filter((id) => !installedIds.has(id));
     if (notInstalled.length > 0) {
-      throw new Error(
+      throw new InputRequiredError(
         `${notInstalled.join(", ")} ${notInstalled.length === 1 ? "is" : "are"} not installed. Use \`aidd install ${notInstalled.join(" ")}\` first.`
       );
     }
@@ -535,7 +536,10 @@ export class UpdateUseCase {
     for (const entry of diff) {
       if (entry.kind === "added") {
         const newFile = distMap.get(entry.relativePath);
-        if (!newFile) throw new Error(`Missing new file in distribution: ${entry.relativePath}`);
+        if (!newFile)
+          throw new FrameworkResolutionError(
+            `Missing new file in distribution: ${entry.relativePath}`
+          );
         const outputPath = join(projectRoot, entry.relativePath);
         if ((await this.fs.fileExists(outputPath)) && !manifest.isFileTracked(entry.relativePath)) {
           userFileConflicts.push(entry.relativePath);
@@ -571,7 +575,10 @@ export class UpdateUseCase {
           }
         }
         const newFile = distMap.get(entry.relativePath);
-        if (!newFile) throw new Error(`Missing new file in distribution: ${entry.relativePath}`);
+        if (!newFile)
+          throw new FrameworkResolutionError(
+            `Missing new file in distribution: ${entry.relativePath}`
+          );
         await this.fs.writeFile(join(projectRoot, entry.relativePath), newFile.content);
         written.push(entry.relativePath);
       }

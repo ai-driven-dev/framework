@@ -13,7 +13,7 @@ import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
-import { NoManifestError } from "../errors.js";
+import { InputRequiredError, NoManifestError, ToolNotInstalledError } from "../errors.js";
 
 interface SyncOptions {
   projectRoot: string;
@@ -254,13 +254,13 @@ export class SyncUseCase {
     const sourceTool = options.sourceTool as ToolId;
 
     if (!manifest.hasTool(sourceTool)) {
-      throw new Error(`Source tool '${sourceTool}' is not installed.`);
+      throw new ToolNotInstalledError(sourceTool, "Source tool");
     }
 
     const installedToolIds = manifest.getInstalledToolIds();
 
     if (installedToolIds.length < 2) {
-      throw new Error("Sync requires at least 2 installed tools.");
+      throw new InputRequiredError("Sync requires at least 2 installed tools.");
     }
 
     const targetTools =
@@ -270,10 +270,10 @@ export class SyncUseCase {
 
     for (const target of targetTools) {
       if (target === sourceTool) {
-        throw new Error("Source and target cannot be the same tool.");
+        throw new InputRequiredError("Source and target cannot be the same tool.");
       }
       if (!manifest.hasTool(target)) {
-        throw new Error(`Target tool '${target}' is not installed.`);
+        throw new ToolNotInstalledError(target, "Target tool");
       }
     }
 
@@ -286,14 +286,14 @@ export class SyncUseCase {
     projectRoot: string
   ): Promise<{ sourceTool: ToolId; targetTools: ToolId[] }> {
     if (!interactive || this.prompter === undefined) {
-      throw new Error("Source tool required in non-interactive mode.");
+      throw new InputRequiredError("Source tool required in non-interactive mode.");
     }
 
     const { SyncStatusUseCase } = await import("./sync-status-use-case.js");
     const installedIds = manifest.getInstalledToolIds();
 
     if (installedIds.length < 2) {
-      throw new Error("Sync requires at least 2 installed tools.");
+      throw new InputRequiredError("Sync requires at least 2 installed tools.");
     }
 
     const modCounts = await new SyncStatusUseCase(this.fs).execute(
@@ -340,7 +340,7 @@ export class SyncUseCase {
       .map((id) => ({ name: id, value: id as ToolId }));
 
     const targetTools = await prompter.checkbox("Target tools?", targetChoices);
-    if (targetTools.length === 0) throw new Error("No target tools selected.");
+    if (targetTools.length === 0) throw new InputRequiredError("No target tools selected.");
 
     return { sourceTool, targetTools };
   }

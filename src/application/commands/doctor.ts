@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
+import { ErrorHandler } from "../error-handler.js";
 import { DoctorUseCase } from "../use-cases/doctor-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
@@ -9,6 +10,7 @@ export function registerDoctorCommand(program: Command): void {
     .description("Check installation health and detect issues")
     .action(async () => {
       const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
 
       try {
         const deps = await createDeps(projectRoot, { verbose, repo }, output);
@@ -40,7 +42,7 @@ export function registerDoctorCommand(program: Command): void {
         }
         process.exit(1);
       } catch (error) {
-        output.exit(error);
+        errorHandler.handle(error);
       }
     });
 }

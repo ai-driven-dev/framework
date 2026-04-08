@@ -2,6 +2,7 @@ import type { Command } from "commander";
 import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 
 import { createDeps } from "../../infrastructure/deps.js";
+import { ErrorHandler } from "../error-handler.js";
 import { NoManifestError } from "../errors.js";
 import { ResolveFrameworkUseCase } from "../use-cases/resolve-framework-use-case.js";
 import { RestoreUseCase } from "../use-cases/restore-use-case.js";
@@ -30,6 +31,7 @@ export function registerRestoreCommand(program: Command): void {
         }
       ) => {
         const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+        const errorHandler = new ErrorHandler(output);
 
         if (cmdOptions.tool !== undefined && cmdOptions.docs) {
           output.error("--tool and --docs are mutually exclusive");
@@ -169,7 +171,7 @@ export function registerRestoreCommand(program: Command): void {
             `Restored ${restored} ${restored === 1 ? "file" : "files"}, kept ${kept} ${kept === 1 ? "file" : "files"}`
           );
         } catch (error) {
-          output.exit(error);
+          errorHandler.handle(error);
         }
       }
     );

@@ -1,3 +1,4 @@
+import { ManifestValidationError } from "../errors.js";
 import type { ToolId } from "./tool-config.js";
 
 export type UpdateScope = { kind: "all" } | { kind: "docs" } | { kind: "tool"; toolId: ToolId };
@@ -9,7 +10,7 @@ export function parseUpdateScope(raw: string): UpdateScope {
     const toolId = raw.slice(5) as ToolId;
     return { kind: "tool", toolId };
   }
-  throw new Error(`Invalid update scope: "${raw}"`);
+  throw new ManifestValidationError(`Invalid update scope: "${raw}"`);
 }
 
 export function formatToolScopeValue(toolId: ToolId): string {

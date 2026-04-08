@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { Command } from "commander";
 import { Manifest, validateRepoFormat } from "../../domain/models/manifest.js";
 import { createDeps } from "../../infrastructure/deps.js";
+import { ErrorHandler } from "../error-handler.js";
 import { NoManifestError } from "../errors.js";
 import { parseGlobalOptions } from "./global-options.js";
 
@@ -19,6 +20,7 @@ export function registerConfigCommand(program: Command): void {
     .description("Show all configuration values from the manifest")
     .action(async () => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
         const manifest = await deps.manifestRepo.load();
@@ -27,7 +29,7 @@ export function registerConfigCommand(program: Command): void {
         output.print(`repo    = ${manifest.repo ?? Manifest.DEFAULT_REPO}`);
         output.print(`tools   = ${manifest.getInstalledToolIds().join(", ") || "(none)"}`);
       } catch (error) {
-        output.exit(error);
+        errorHandler.handle(error);
       }
     });
 
@@ -36,6 +38,7 @@ export function registerConfigCommand(program: Command): void {
     .description(`Get a configuration value (readable: ${READABLE_KEYS.join(", ")})`)
     .action(async (key: string | undefined) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
 
@@ -61,7 +64,7 @@ export function registerConfigCommand(program: Command): void {
         else if (resolvedKey === "repo") output.print(manifest.repo ?? Manifest.DEFAULT_REPO);
         else output.print(manifest.getInstalledToolIds().join(", "));
       } catch (error) {
-        output.exit(error);
+        errorHandler.handle(error);
       }
     });
 
@@ -78,6 +81,7 @@ export function registerConfigCommand(program: Command): void {
         cmdOptions: { force: boolean }
       ) => {
         const { verbose, output, projectRoot } = parseGlobalOptions(program);
+        const errorHandler = new ErrorHandler(output);
         try {
           const deps = await createDeps(projectRoot, { verbose }, output);
 
@@ -179,7 +183,7 @@ export function registerConfigCommand(program: Command): void {
           await deps.manifestRepo.save(manifest.withDocsDir(resolvedValue));
           output.success(`Set docsDir = ${resolvedValue}`);
         } catch (error) {
-          output.exit(error);
+          errorHandler.handle(error);
         }
       }
     );

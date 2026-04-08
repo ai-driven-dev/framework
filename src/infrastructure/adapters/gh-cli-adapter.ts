@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import type { ExternalTokenProvider } from "../../domain/ports/external-token-provider.js";
+import { GhCliError } from "../errors.js";
 
 export class GhCliAdapter implements ExternalTokenProvider {
   resolve(): string | null {
@@ -17,11 +18,11 @@ export class GhCliAdapter implements ExternalTokenProvider {
     if (result.status !== 0) {
       const detail = result.stderr?.trim() ?? "";
       if (detail.includes("unknown command")) {
-        throw new Error(
+        throw new GhCliError(
           'gh CLI is too old to support "gh auth token". Install the latest version from https://cli.github.com'
         );
       }
-      throw new Error(
+      throw new GhCliError(
         detail
           ? `gh auth token failed: ${detail}`
           : `gh auth token exited with code ${result.status ?? "unknown"}`

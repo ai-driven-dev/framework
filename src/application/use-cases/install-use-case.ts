@@ -16,7 +16,7 @@ import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
-import { NoManifestError } from "../errors.js";
+import { InputRequiredError, NoManifestError } from "../errors.js";
 import { PostInstallPipelineUseCase } from "./shared/post-install-pipeline-use-case.js";
 
 interface InstallOptions {
@@ -119,11 +119,14 @@ export class InstallUseCase {
     if (options.toolIds !== undefined && options.toolIds.length > 0) return options.toolIds;
     if (interactive && this.prompter !== undefined) return this.promptToolIds(manifest);
 
-    throw new Error(`At least one tool ID is required. Valid tools: ${VALID_TOOL_IDS.join(", ")}`);
+    throw new InputRequiredError(
+      `At least one tool ID is required. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
+    );
   }
 
   private async promptToolIds(manifest: Manifest): Promise<ToolId[]> {
-    if (this.prompter === undefined) throw new Error("Prompter is required for interactive mode.");
+    if (this.prompter === undefined)
+      throw new InputRequiredError("Prompter is required for interactive mode.");
     const installedIds = manifest.getInstalledToolIds();
     const choices = VALID_TOOL_IDS.map((id) =>
       installedIds.includes(id)
@@ -131,7 +134,7 @@ export class InstallUseCase {
         : { name: id, value: id, checked: false }
     );
     const selected = await this.prompter.checkbox("Which tools do you want to install?", choices);
-    if (selected.length === 0) throw new Error("No tools selected.");
+    if (selected.length === 0) throw new InputRequiredError("No tools selected.");
     return selected as ToolId[];
   }
 

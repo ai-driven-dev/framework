@@ -1,4 +1,5 @@
 import { dirname, join, normalize } from "node:path";
+import { ManifestValidationError } from "../../domain/errors.js";
 import type { Manifest } from "../../domain/models/manifest.js";
 import {
   getAllRegisteredTools,
@@ -78,7 +79,7 @@ export class DoctorUseCase {
     try {
       manifest = await this.manifestRepo.load();
     } catch {
-      throw new Error(
+      throw new ManifestValidationError(
         "Manifest is corrupted (invalid JSON). Run `aidd clean --force` and re-initialize."
       );
     }

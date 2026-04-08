@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
+import { TarExtractionError } from "../errors.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -11,7 +12,7 @@ export class TarExtractor {
       await execFileAsync("tar", ["xzf", tarballPath, "-C", targetDir]);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to extract tarball '${tarballPath}': ${message}`);
+      throw new TarExtractionError(`Failed to extract tarball '${tarballPath}': ${message}`);
     }
 
     return this.findFrameworkRoot(targetDir);

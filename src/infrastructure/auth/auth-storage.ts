@@ -3,6 +3,7 @@ import { chmod, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import type { AuthConfig } from "../../domain/models/auth-config.js";
+import { AuthStorageError } from "../errors.js";
 
 export class AuthStorage {
   userConfigPath(): string {
@@ -33,7 +34,7 @@ export class AuthStorage {
           stdio: ["ignore", "ignore", "pipe"],
         });
       } catch (err) {
-        throw new Error(
+        throw new AuthStorageError(
           `Failed to set restrictive permissions on ${path}: ${err instanceof Error ? err.message : String(err)}`
         );
       }

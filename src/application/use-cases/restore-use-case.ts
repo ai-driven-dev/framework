@@ -12,7 +12,7 @@ import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
-import { NoManifestError } from "../errors.js";
+import { InputRequiredError, NoManifestError } from "../errors.js";
 
 interface RestoreOptions {
   frameworkPath: string;
@@ -381,7 +381,9 @@ export class RestoreUseCase {
     for (const { relativePath, content, reason } of drift) {
       if (reason === "modified") {
         if (!force && !interactive) {
-          throw new Error(`Use --force to overwrite modified files in non-interactive mode.`);
+          throw new InputRequiredError(
+            `Use --force to overwrite modified files in non-interactive mode.`
+          );
         }
         if (!force && interactive) {
           const decision = await this.prompter.resolveConflict(relativePath, reason);

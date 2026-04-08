@@ -1,6 +1,8 @@
 import type { Command } from "commander";
 import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
+import { ErrorHandler } from "../error-handler.js";
+import { InputRequiredError } from "../errors.js";
 import type { CLIOutput } from "../output.js";
 import { StatusUseCase } from "../use-cases/status-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
@@ -26,12 +28,13 @@ export function registerStatusCommand(program: Command): void {
     .option("--docs", "Filter output to docs only")
     .action(async (cmdOptions: { tool?: string; docs?: boolean }) => {
       const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
 
       try {
         const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
         if (cmdOptions.tool !== undefined && cmdOptions.docs) {
-          throw new Error("--tool and --docs are mutually exclusive");
+          throw new InputRequiredError("--tool and --docs are mutually exclusive");
         }
         if (cmdOptions.tool !== undefined) assertValidToolIds([cmdOptions.tool]);
         const filterToolId = cmdOptions.tool as ToolId | undefined;
@@ -72,7 +75,7 @@ export function registerStatusCommand(program: Command): void {
 
         output.print("\nLegend: ~ modified  - deleted  + added");
       } catch (error) {
-        output.exit(error);
+        errorHandler.handle(error);
       }
     });
 }

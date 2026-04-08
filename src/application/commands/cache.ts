@@ -3,6 +3,7 @@ import { Command } from "commander";
 import { formatBytes } from "../../domain/models/file-size.js";
 import { FrameworkCache } from "../../infrastructure/cache/framework-cache.js";
 import { createDeps } from "../../infrastructure/deps.js";
+import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 function buildCacheCommand(program: Command): Command {
@@ -13,6 +14,7 @@ function buildCacheCommand(program: Command): Command {
     .description("List all cached framework versions")
     .action(async () => {
       const { output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
 
       try {
         const cache = new FrameworkCache(join(projectRoot, ".aidd", "cache"));
@@ -27,7 +29,7 @@ function buildCacheCommand(program: Command): Command {
           output.print(`${entry.version}  ${formatBytes(entry.size)}  ${entry.path}`);
         }
       } catch (error) {
-        output.exit(error);
+        errorHandler.handle(error);
       }
     });
 
@@ -37,6 +39,7 @@ function buildCacheCommand(program: Command): Command {
     .option("-a, --all", "Clear all cached versions", false)
     .action(async (version: string | undefined, cmdOptions: { all: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
 
       if (cmdOptions.all && version !== undefined) {
         output.error("Cannot specify both a version and --all.");
@@ -87,7 +90,7 @@ function buildCacheCommand(program: Command): Command {
           output.success(`Cleared ${count} cached ${count === 1 ? "version" : "versions"}`);
         }
       } catch (error) {
-        output.exit(error);
+        errorHandler.handle(error);
       }
     });
 

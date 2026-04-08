@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { ToolValidationError } from "../errors.js";
 import type { FileSystem } from "../ports/file-system.js";
 import {
   AT_DOCS_PLACEHOLDER,
@@ -14,7 +15,7 @@ export const VALID_TOOL_IDS: readonly ToolId[] = ["claude", "cursor", "copilot",
 export function assertValidToolIds(toolIds: string[]): void {
   const invalid = toolIds.filter((t) => !VALID_TOOL_IDS.includes(t as ToolId));
   if (invalid.length === 0) return;
-  throw new Error(
+  throw new ToolValidationError(
     `Unknown tool(s): ${invalid.join(", ")}. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
   );
 }
@@ -115,7 +116,7 @@ export function registerTool(config: ToolConfig): void {
 
 export function getToolConfig(toolId: ToolId): ToolConfig {
   const config = TOOL_REGISTRY.get(toolId);
-  if (!config) throw new Error(`Tool '${toolId}' is not registered.`);
+  if (!config) throw new ToolValidationError(`Tool '${toolId}' is not registered.`);
   return config;
 }
 

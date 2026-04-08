@@ -3,7 +3,7 @@ import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js"
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
-import { NoManifestError } from "../errors.js";
+import { InputRequiredError, NoManifestError, ToolNotInstalledError } from "../errors.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
 
 interface UninstallOptions {
@@ -29,7 +29,7 @@ export class UninstallUseCase {
     const { toolIds, projectRoot, repo } = options;
 
     if (toolIds.length === 0) {
-      throw new Error(
+      throw new InputRequiredError(
         `At least one tool ID is required. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
       );
     }
@@ -43,7 +43,7 @@ export class UninstallUseCase {
 
     for (const toolId of toolIds) {
       if (!manifest.hasTool(toolId)) {
-        throw new Error(`${toolId} is not installed`);
+        throw new ToolNotInstalledError(toolId);
       }
     }
 

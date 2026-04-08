@@ -1,3 +1,10 @@
+export class AuthenticationError extends Error {
+  constructor(source: string) {
+    super(`Authentication failed (${source}). Run \`aidd auth login\` to authenticate.`);
+    this.name = "AuthenticationError";
+  }
+}
+
 export class NoFrameworkSourceError extends Error {
   constructor() {
     super(
@@ -21,5 +28,40 @@ export class UpdateError extends Error {
         "Update your token at https://github.com/settings/tokens, then re-run `aidd auth login`."
     );
     this.name = "UpdateError";
+  }
+}
+
+export class ManifestValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ManifestValidationError";
+  }
+}
+
+export class ToolValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ToolValidationError";
+  }
+}
+
+export class McpConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "McpConfigError";
+  }
+}
+
+export class FrameworkResolutionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "FrameworkResolutionError";
+  }
+}
+
+export class PackageManagerError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PackageManagerError";
   }
 }

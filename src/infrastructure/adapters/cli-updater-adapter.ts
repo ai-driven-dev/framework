@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
 import { platform } from "node:os";
-import { UpdateError } from "../../domain/errors.js";
+import { FrameworkResolutionError, PackageManagerError, UpdateError } from "../../domain/errors.js";
 import type { CliRelease, CliUpdater } from "../../domain/ports/cli-updater.js";
 import type { HttpClient } from "../http/http-client.js";
 
@@ -25,7 +25,7 @@ function detectPackageManager(): { pm: PackageManager; binaryPath: string } {
     // `where` on Windows may return multiple matches (one per line) — keep only the first
     binaryPath = raw.trim().split(/\r?\n/)[0].trim();
   } catch {
-    throw new Error(
+    throw new PackageManagerError(
       `Could not detect package manager. Run manually:\n  ${PM_INSTALL_COMMANDS.npm}\n  ${PM_INSTALL_COMMANDS.pnpm}\n  ${PM_INSTALL_COMMANDS.yarn}\n  ${PM_INSTALL_COMMANDS.bun}`
     );
   }
@@ -54,7 +54,7 @@ function parseCliRelease(body: unknown, url: string): CliReleaseResponse {
     !("tag_name" in body) ||
     typeof (body as Record<string, unknown>).tag_name !== "string"
   ) {
-    throw new Error(`Unexpected GitHub API response from ${url}`);
+    throw new FrameworkResolutionError(`Unexpected GitHub API response from ${url}`);
   }
   return body as CliReleaseResponse;
 }
