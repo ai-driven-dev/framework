@@ -24,7 +24,8 @@ flowchart LR
 ## Architecture Decisions
 
 - 3-layer clean architecture: Domain → Application → Infrastructure (no separate Presentation layer)
-- Commands live in `application/commands/`, output formatting in `application/output.ts`
+- Commands live in `application/commands/`, output formatting in `application/output.ts`, error handling in `application/error-handler.ts`
+- Error handling: `ErrorHandler` replaces `CLIOutput.exit()`. Commands instantiate `ErrorHandler` before try, use `errorHandler.handle(error)` in catch. Typed exceptions in 3 layers: domain, application, infrastructure (infra-internal only, adapters translate before crossing port). See DEC-017, DEC-018.
 - Max 2 runtime dependencies: `commander` and `@inquirer/prompts`; everything else uses Node.js built-ins (JSONC stripping is a local function in `file-system-adapter.ts`)
 - `@inquirer/prompts` is used for interactive mode. When `aidd` is run with no arguments in a TTY, `runMenuLoop()` in `cli.ts` launches `InteractiveMenuUseCase` in a fire-and-forget infinite loop. Each selected command is spawned as a child process via `child_process.spawn` with `stdio: "inherit"`; the menu reappears after it exits. Ctrl+C caught as `ExitPromptError` → `process.exit(0)`. See DEC-013, DEC-014.
 - MD5 hashing via `node:crypto` for drift detection between installed files and framework version

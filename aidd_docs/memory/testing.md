@@ -57,8 +57,8 @@ pnpm test             # all tiers
 
 ## Test Counts (post-refactor)
 
-- Total: **861** tests (~34s)
-- Unit: 286 | Integration: 427 | E2E: 148
+- Total: **932** tests (~30s)
+- Unit: 305 | Integration: 479 | E2E: 148
 
 ## Naming Rule
 

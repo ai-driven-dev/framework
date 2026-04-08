@@ -4,7 +4,7 @@
 
 - `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4)
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
-- `tests/` — 882 tests, all passing
+- `tests/` — 932 tests, all passing
 - Next: vNext interactive mode (not yet specified — do not implement until vision is stabilized)
 
 ## Command Output Paths (per tool)
@@ -29,22 +29,22 @@ src/
 ├── application/
 │   ├── commands/                       # commander command registrations
 │   │   ├── auth.ts                     # aidd auth login/logout/status
-│   │   ├── adopt.ts                    # aidd adopt --tools <tools> (--release or --path required)
 │   │   ├── cache.ts                    # aidd cache list / clear
 │   │   ├── config.ts                   # aidd config list/get/set
 │   │   ├── clean.ts                    # aidd clean [--force]
 │   │   ├── doctor.ts                   # aidd doctor
-│   │   ├── init.ts                     # aidd init [--force] [--repo]
 │   │   ├── install.ts                  # aidd install <tools> [--all] [--force]
 │   │   ├── restore.ts                  # aidd restore [files] [--tool] [--docs] [--force]
 │   │   ├── status.ts                   # aidd status [--tool] [--docs]
 │   │   ├── self-update.ts              # aidd self-update [--check] [--dry-run] [--force]
+│   │   ├── setup.ts                    # aidd setup (interactive onboarding entry point)
 │   │   ├── sync.ts                     # aidd sync --source <tool> [--target] [--force]
 │   │   ├── uninstall.ts                # aidd uninstall <tools> [--all]
 │   │   └── update.ts                   # aidd update [--force] [--dry-run] [--tool] [--docs]
 │   ├── check-update.ts                 # printUpdateBanner() — called via commander preAction hook in cli.ts
-│   ├── output.ts                       # All stdout/stderr formatting
-│   ├── require-auth.ts                 # requireAuth(authReader) — throws if no token
+│   ├── error-handler.ts                # ErrorHandler — central error handling for commands (replaces output.exit)
+│   ├── errors.ts                       # Application typed exceptions (NoManifestError, InputRequiredError, etc.)
+│   ├── output.ts                       # All stdout/stderr formatting (pure output, no exit logic)
 │   └── use-cases/
 │       ├── auth-login-use-case.ts          # store PAT or gh CLI config; validates token via GitHub API
 │       ├── auth-logout-use-case.ts         # remove stored credential
@@ -124,6 +124,7 @@ src/
     ├── cache/
     │   └── framework-cache.ts           # per-version cache in .aidd/cache/
     ├── deps.ts                          # dependency injection wiring
+    ├── errors.ts                        # Infrastructure typed exceptions (HttpError, GhCliError, etc. — internal only)
     ├── http/
     │   └── http-client.ts               # node:https, no fetch
     ├── migrations/

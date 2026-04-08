@@ -22,3 +22,5 @@ This file contains the key architectural decisions made during the project, alon
 | 2026-03-28 | DEC-014 | [string[] breadcrumb as menu loop state](./decisions/DEC-014-breadcrumb-string-array-menu-state.md) | returnTo scales to any depth; UX resumes at correct level |
 | 2026-03-28 | DEC-015 | [createMenuDeps() + Map memoization for createDeps](./decisions/DEC-015-create-menu-deps-map-memoization.md) | E2E test isolation fixed; no double I/O in production |
 | 2026-04-06 | DEC-016 | [ConfigHandler.mergeStrategy() replaces boolean shouldMerge](./decisions/DEC-016-config-handler-merge-strategy.md) | MCP config files are user-prime; user customizations survive update |
+| 2026-04-08 | DEC-017 | [ErrorHandler replaces CLIOutput.exit()](./decisions/DEC-017-error-handler-replaces-cli-output-exit.md) | CLIOutput is pure output; all commands use errorHandler.handle() |
+| 2026-04-08 | DEC-018 | [Typed exceptions across three layers](./decisions/DEC-018-typed-exceptions-three-layers.md) | Zero throw new Error(); infra errors never cross port boundary |
