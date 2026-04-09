@@ -52,7 +52,7 @@ describe("sync", () => {
         docsDir: Manifest.DEFAULT_DOCS_DIR,
         sourceTool: "claude",
       })
-    ).rejects.toThrow("Source tool 'claude' is not installed");
+    ).rejects.toThrow(/Source tool 'claude' is not installed/);
   });
 
   it("requires at least 2 installed tools", async () => {

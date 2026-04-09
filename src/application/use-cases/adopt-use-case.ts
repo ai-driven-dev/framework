@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { FrameworkResolutionError, ToolValidationError } from "../../domain/errors.js";
 import { generateDistribution } from "../../domain/models/distribution.js";
 import { buildDocsDistribution } from "../../domain/models/docs.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
@@ -10,6 +11,7 @@ import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../domain/ports/platform.js";
+import { AlreadyInitializedError, InputRequiredError } from "../errors.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
 import { GitignoreUseCase } from "./gitignore-use-case.js";
 
@@ -47,7 +49,7 @@ export class AdoptUseCase {
 
     this.validateToolIds(toolIds);
     const existing = await this.manifestRepo.load();
-    if (existing !== null) throw new Error("Already initialized. Use `aidd update` to upgrade.");
+    if (existing !== null) throw new AlreadyInitializedError();
     await this.deleteLegacyConfig(projectRoot);
 
     const { descriptor, contentFiles, docsFiles } = await this.loader.loadFromDirectory(
@@ -97,12 +99,12 @@ export class AdoptUseCase {
   private validateToolIds(toolIds: ToolId[]): void {
     const invalid = toolIds.filter((t) => !VALID_TOOL_IDS.includes(t));
     if (invalid.length > 0) {
-      throw new Error(
+      throw new ToolValidationError(
         `Unknown tool(s): ${invalid.join(", ")}. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
       );
     }
     if (toolIds.length === 0) {
-      throw new Error("No tools specified. Use --tools to specify at least one tool.");
+      throw new InputRequiredError("No tools specified. Use --tools to specify at least one tool.");
     }
   }
 
@@ -122,7 +124,9 @@ export class AdoptUseCase {
       const toolDir = join(projectRoot, config.directory);
 
       if (!(await this.fs.fileExists(toolDir))) {
-        throw new Error(`Directory '${config.directory}' not found for tool '${toolId}'.`);
+        throw new FrameworkResolutionError(
+          `Directory '${config.directory}' not found for tool '${toolId}'.`
+        );
       }
 
       const distribution = await generateDistribution(

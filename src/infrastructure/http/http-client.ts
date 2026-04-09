@@ -1,6 +1,8 @@
 import type { IncomingMessage } from "node:http";
 import * as http from "node:http";
 import * as https from "node:https";
+import { AuthenticationError } from "../../domain/errors.js";
+import { HttpError, HttpNotFoundError, HttpRedirectError } from "../errors.js";
 
 interface HttpGetOptions {
   token?: string;
@@ -60,7 +62,7 @@ export class HttpClient {
     if (statusCode === 302 || statusCode === 301) {
       const location = response.headers.location;
       if (!location) {
-        throw new Error(`HTTP redirect without location header from ${url}`);
+        throw new HttpRedirectError(url);
       }
       // Consume the body to free the socket
       await collectBuffer(response);
@@ -78,19 +80,17 @@ export class HttpClient {
 
     if (statusCode === 401 || statusCode === 403) {
       await collectBuffer(response);
-      throw new Error(
-        `Authentication failed (HTTP ${statusCode}). Run aidd auth login to authenticate.`
-      );
+      throw new AuthenticationError(`HTTP ${statusCode}`);
     }
 
     if (statusCode === 404) {
       await collectBuffer(response);
-      throw new Error(`Resource not found (HTTP 404): ${url}`);
+      throw new HttpNotFoundError(url);
     }
 
     if (statusCode < 200 || statusCode >= 300) {
       await collectBuffer(response);
-      throw new Error(`Unexpected HTTP ${statusCode} from ${url}`);
+      throw new HttpError(statusCode, url);
     }
 
     const buffer = await collectBuffer(response);

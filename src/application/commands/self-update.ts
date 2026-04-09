@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
+import { ErrorHandler } from "../error-handler.js";
 import { RequireAuthUseCase } from "../use-cases/require-auth-use-case.js";
 import { SelfUpdateUseCase } from "../use-cases/self-update-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
@@ -13,6 +14,7 @@ export function registerSelfUpdateCommand(program: Command): void {
     .option("-f, --force", "Reinstall even if already up to date", false)
     .action(async (cmdOptions: { check: boolean; dryRun: boolean; force: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
 
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
@@ -49,7 +51,7 @@ export function registerSelfUpdateCommand(program: Command): void {
           }
         }
       } catch (error) {
-        output.exit(error);
+        errorHandler.handle(error);
       }
     });
 }

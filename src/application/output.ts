@@ -34,9 +34,4 @@ export class CLIOutput implements Logger {
   error(message: string): void {
     process.stderr.write(`Error: ${message}\n`);
   }
-
-  exit(error: unknown): never {
-    this.error(error instanceof Error ? error.message : String(error));
-    process.exit(1);
-  }
 }

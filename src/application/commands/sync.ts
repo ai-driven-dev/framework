@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
+import { ErrorHandler } from "../error-handler.js";
 import { SyncUseCase } from "../use-cases/sync-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
@@ -20,6 +21,7 @@ export function registerSyncCommand(program: Command): void {
         includeUserFiles: boolean;
       }) => {
         const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+        const errorHandler = new ErrorHandler(output);
 
         if (!cmdOptions.source && !process.stdout.isTTY) {
           output.error(
@@ -90,7 +92,7 @@ export function registerSyncCommand(program: Command): void {
             `Synced ${totalWritten} ${totalWritten === 1 ? "file" : "files"}, deleted ${totalDeleted} ${totalDeleted === 1 ? "file" : "files"} from ${result.sourceTool}`
           );
         } catch (error) {
-          output.exit(error);
+          errorHandler.handle(error);
         }
       }
     );

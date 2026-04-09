@@ -29,3 +29,31 @@ export class AdoptRequiresVersionError extends Error {
     this.name = "AdoptRequiresVersionError";
   }
 }
+
+export class NotAuthenticatedError extends Error {
+  constructor() {
+    super("Not authenticated. Run `aidd auth login`.");
+    this.name = "NotAuthenticatedError";
+  }
+}
+
+export class AlreadyInitializedError extends Error {
+  constructor(message = "Already initialized. Use `aidd update` to upgrade.") {
+    super(message);
+    this.name = "AlreadyInitializedError";
+  }
+}
+
+export class InputRequiredError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InputRequiredError";
+  }
+}
+
+export class ToolNotInstalledError extends Error {
+  constructor(toolId: string, context?: string) {
+    super(context ? `${context} '${toolId}' is not installed.` : `${toolId} is not installed`);
+    this.name = "ToolNotInstalledError";
+  }
+}

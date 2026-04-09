@@ -1,7 +1,7 @@
 import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { NoFrameworkSourceError } from "../../domain/errors.js";
+import { FrameworkResolutionError, NoFrameworkSourceError } from "../../domain/errors.js";
 import { validateRepoFormat } from "../../domain/models/manifest.js";
 import type {
   FrameworkResolved,
@@ -26,7 +26,7 @@ function parseGithubRelease(body: unknown, url: string): GithubRelease {
     typeof (body as Record<string, unknown>).tag_name !== "string" ||
     !Array.isArray((body as Record<string, unknown>).assets)
   ) {
-    throw new Error(`Unexpected GitHub API response from ${url}`);
+    throw new FrameworkResolutionError(`Unexpected GitHub API response from ${url}`);
   }
   return body as GithubRelease;
 }
@@ -61,7 +61,7 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
       try {
         await stat(options.localPath);
       } catch {
-        throw new Error(`Framework path does not exist: ${options.localPath}`);
+        throw new FrameworkResolutionError(`Framework path does not exist: ${options.localPath}`);
       }
       const version = await readVersionFile(options.localPath);
       return { path: options.localPath, version, source: "local" };
@@ -125,7 +125,9 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
         const authHint = cause.includes("HTTP 404")
           ? " The repository may be private — authenticate via gh CLI, or provide a token via --token or AIDD_TOKEN."
           : "";
-        throw new Error(`Framework release not found: ${normalizedTag}. ${cause}.${authHint}`);
+        throw new FrameworkResolutionError(
+          `Framework release not found: ${normalizedTag}. ${cause}.${authHint}`
+        );
       }
       _networkError = error instanceof Error ? error : new Error(String(error));
     }
@@ -149,7 +151,9 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
       return { path: this.cache.get(cachedVersion), version: cachedVersion, source: "cache" };
     }
 
-    throw new Error("Cannot reach the framework source. Check your network connection.");
+    throw new FrameworkResolutionError(
+      "Cannot reach the framework source. Check your network connection."
+    );
   }
 
   private async fetchLatestRelease(repo: string, token?: string): Promise<GithubRelease> {
@@ -180,7 +184,7 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
 
     const response = await this.http.get(assetUrl, { token, accept: "application/octet-stream" });
     if (!Buffer.isBuffer(response.body)) {
-      throw new Error("Downloaded file is not a valid tarball");
+      throw new FrameworkResolutionError("Downloaded file is not a valid tarball");
     }
 
     const tempDir = await mkdtemp(join(tmpdir(), "aidd-download-"));
@@ -210,7 +214,7 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
         (a.name.endsWith(".tar.gz") || a.name.endsWith(".tgz"))
     );
     if (!tarball) {
-      throw new Error(
+      throw new FrameworkResolutionError(
         `No tarball asset found in release ${release.tag_name}. Assets: ${release.assets.map((a) => a.name).join(", ")}`
       );
     }

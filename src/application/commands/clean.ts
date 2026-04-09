@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
+import { ErrorHandler } from "../error-handler.js";
 import { CleanUseCase } from "../use-cases/clean-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
@@ -10,6 +11,7 @@ export function registerCleanCommand(program: Command): void {
     .option("--force", "Confirm file removal (skip dry-run)", false)
     .action(async (cmdOptions: { force: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
 
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
@@ -48,7 +50,7 @@ export function registerCleanCommand(program: Command): void {
 
         output.success(`Cleaned all AIDD files (${result.fileCount} files removed)`);
       } catch (error) {
-        output.exit(error);
+        errorHandler.handle(error);
       }
     });
 }

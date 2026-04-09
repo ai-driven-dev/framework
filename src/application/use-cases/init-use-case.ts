@@ -9,7 +9,7 @@ import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
-import { AiddFilesDetectedError, NoManifestError } from "../errors.js";
+import { AiddFilesDetectedError, AlreadyInitializedError, NoManifestError } from "../errors.js";
 import { CatalogUseCase } from "./catalog-use-case.js";
 import { GitignoreUseCase } from "./gitignore-use-case.js";
 
@@ -55,7 +55,7 @@ export class InitUseCase {
     }
 
     if (existing !== null) {
-      throw new Error(
+      throw new AlreadyInitializedError(
         `Already initialized (docs in "${existing.docsDir}"). Use \`aidd init --force\` to re-copy docs, or \`aidd clean --force\` to reset completely.`
       );
     }

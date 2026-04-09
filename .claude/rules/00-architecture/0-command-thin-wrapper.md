@@ -9,12 +9,12 @@ Each command handler calls exactly ONE use-case. Commands wire, not orchestrate.
 - Resolve framework via `resolveFramework()` (input preparation from flags, not business logic)
 - Call ONE use-case via `new FooUseCase(...deps).execute({ ..., interactive: process.stdout.isTTY })`
 - Display the typed result with `CLIOutput`
-- Catch all errors: `output.exit(error)`
+- Catch all errors: `errorHandler.handle(error)`
 
-## What does NOT belong in a command
+## FORBIDDEN in a command
 
-- Prompter calls — move into the use-case
-- Repository or manifest access — move into the use-case
+- Prompter calls => move into the use-case
+- Repository or manifest access => move into the use-case
 - Multiple use-case calls or orchestration between use-cases
 - Business decisions or domain logic
 
@@ -34,6 +34,7 @@ export function registerFooCommand(program: Command): void {
     .action(async (cmdOptions) => {
       const globalOptions = program.opts<...>();
       const output = new CLIOutput(globalOptions.verbose ?? false);
+      const errorHandler = new ErrorHandler(output);
 
       // CLI flag guards (abort, not throw)
       if (badFlags) { output.error("..."); process.exit(1); }
@@ -47,7 +48,7 @@ export function registerFooCommand(program: Command): void {
         });
         // display result
       } catch (error) {
-        output.exit(error);
+        errorHandler.handle(error);
       }
     });
 }

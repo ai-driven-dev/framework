@@ -2,6 +2,7 @@ import { access, cp, mkdir, readdir, rm, stat, writeFile } from "node:fs/promise
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { compareSemver, isSemver } from "../../domain/models/semver.js";
+import { CacheMissError } from "../errors.js";
 
 const DEFAULT_CACHE_BASE = join(tmpdir(), "aidd-cache");
 const MARKER_FILE = ".aidd-extracted";
@@ -66,7 +67,7 @@ export class FrameworkCache {
   async clear(version?: string): Promise<void> {
     if (version !== undefined) {
       const exists = await this.has(version);
-      if (!exists) throw new Error(`No cached framework found for version '${version}'.`);
+      if (!exists) throw new CacheMissError(version);
       await rm(this.cacheDir(version), { recursive: true, force: true });
       return;
     }

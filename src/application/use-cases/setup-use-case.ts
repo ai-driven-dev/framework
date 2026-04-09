@@ -11,7 +11,7 @@ import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
-import { AdoptRequiresVersionError } from "../errors.js";
+import { AdoptRequiresVersionError, InputRequiredError } from "../errors.js";
 import { AdoptUseCase } from "./adopt-use-case.js";
 import { InitUseCase } from "./init-use-case.js";
 import type { InstallToolResult } from "./install-use-case.js";
@@ -242,7 +242,9 @@ export class SetupUseCase {
   ): void {
     if (!options.interactive) {
       if (!options.toolIds || options.toolIds.length === 0) {
-        throw new Error("--tools <ids> is required for adopt in non-interactive mode.");
+        throw new InputRequiredError(
+          "--tools <ids> is required for adopt in non-interactive mode."
+        );
       }
       if (options.from === undefined)
         throw new AdoptRequiresVersionError(repo, this.formatSignalDiagnostic(signals));
@@ -294,7 +296,7 @@ export class SetupUseCase {
     }
     const choices = VALID_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }));
     const checkedIds = await this.prompter.checkbox("Which tools do you want to adopt?", choices);
-    if (checkedIds.length === 0) throw new Error("No tools selected.");
+    if (checkedIds.length === 0) throw new InputRequiredError("No tools selected.");
     return checkedIds as ToolId[];
   }
 

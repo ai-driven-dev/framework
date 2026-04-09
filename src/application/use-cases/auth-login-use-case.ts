@@ -1,8 +1,10 @@
 import { appendFile, readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { AuthenticationError } from "../../domain/errors.js";
 import type { AuthConfig } from "../../domain/models/auth-config.js";
 import type { ExternalTokenProvider } from "../../domain/ports/external-token-provider.js";
 import type { AuthStorage } from "../../infrastructure/auth/auth-storage.js";
+import { InputRequiredError } from "../errors.js";
 
 interface Prompter {
   select<T>(message: string, choices: Array<{ name: string; value: T }>): Promise<T>;
@@ -51,25 +53,29 @@ export class AuthLoginUseCase {
       }
     }
 
-    if (!method) throw new Error("Authentication method is required. Use --gh or --token.");
-    if (!level) throw new Error("Storage level is required. Use --level user or --level project.");
+    if (!method)
+      throw new InputRequiredError("Authentication method is required. Use --gh or --token.");
+    if (!level)
+      throw new InputRequiredError(
+        "Storage level is required. Use --level user or --level project."
+      );
 
     let resolvedToken: string;
 
     if (method === "gh") {
       const ghToken = this.externalProvider.resolve();
       if (!ghToken) {
-        throw new Error("gh CLI is not installed or not authenticated. Run `gh auth login` first.");
+        throw new AuthenticationError("gh CLI");
       }
       resolvedToken = ghToken;
     } else {
       let token = options.token;
       if (!token && options.interactive && options.prompter) {
         token = await options.prompter.input("Paste your GitHub Personal Access Token:");
-        if (!token) throw new Error("Token cannot be empty.");
+        if (!token) throw new InputRequiredError("Token cannot be empty.");
       }
       if (!token) {
-        throw new Error("--token <value> is required when using token method.");
+        throw new InputRequiredError("--token <value> is required when using token method.");
       }
       resolvedToken = token;
     }

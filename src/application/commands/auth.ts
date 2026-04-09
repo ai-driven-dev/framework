@@ -1,8 +1,10 @@
 import type { Command } from "commander";
+import { AuthenticationError } from "../../domain/errors.js";
 import { GhCliAdapter } from "../../infrastructure/adapters/gh-cli-adapter.js";
 import { AuthReader } from "../../infrastructure/auth/auth-reader.js";
 import { AuthStorage } from "../../infrastructure/auth/auth-storage.js";
 import { HttpClient } from "../../infrastructure/http/http-client.js";
+import { ErrorHandler } from "../error-handler.js";
 import { AuthLoginUseCase } from "../use-cases/auth-login-use-case.js";
 import { AuthLogoutUseCase } from "../use-cases/auth-logout-use-case.js";
 import { AuthStatusUseCase } from "../use-cases/auth-status-use-case.js";
@@ -13,7 +15,7 @@ function makeHttpGet(http: HttpClient) {
     const response = await http.get(url, { token });
     const body = response.body as Record<string, unknown>;
     if (typeof body.login !== "string") {
-      throw new Error("Unexpected response from GitHub API");
+      throw new AuthenticationError("GitHub API");
     }
     return { login: body.login };
   };
@@ -31,6 +33,7 @@ export function registerAuthCommand(program: Command): void {
     .option("--level <user|project>", "Storage level (user or project)")
     .action(async (cmdOptions: { gh: boolean; token?: string; level?: string }) => {
       const { output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
 
       try {
         const storage = new AuthStorage();
@@ -73,7 +76,7 @@ export function registerAuthCommand(program: Command): void {
 
         output.success(`Authenticated as ${result.login} (${result.method}, ${result.level})`);
       } catch (error) {
-        output.exit(error);
+        errorHandler.handle(error);
       }
     });
 
@@ -82,6 +85,7 @@ export function registerAuthCommand(program: Command): void {
     .description("Remove stored authentication")
     .action(async () => {
       const { output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
 
       try {
         const storage = new AuthStorage();
@@ -99,7 +103,7 @@ export function registerAuthCommand(program: Command): void {
 
         output.success(`Logged out (${result.method}, ${result.level})`);
       } catch (error) {
-        output.exit(error);
+        errorHandler.handle(error);
       }
     });
 
@@ -108,6 +112,7 @@ export function registerAuthCommand(program: Command): void {
     .description("Show authentication status")
     .action(async () => {
       const { output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
 
       try {
         const storage = new AuthStorage();
@@ -132,7 +137,7 @@ export function registerAuthCommand(program: Command): void {
 
         output.success(`Authenticated as ${result.login} (${result.method}, ${result.level})`);
       } catch (error) {
-        output.exit(error);
+        errorHandler.handle(error);
       }
     });
 }

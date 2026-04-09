@@ -1,3 +1,4 @@
+import { ManifestValidationError } from "../errors.js";
 import { FileHash } from "./file-hash.js";
 import type { GeneratedFile } from "./generated-file.js";
 import { type ToolId, VALID_TOOL_IDS } from "./tool-config.js";
@@ -9,7 +10,7 @@ const DOCS_DIR_REGEX = /^[a-zA-Z0-9_-]+$/;
 
 export function validateRepoFormat(repo: string): void {
   if (!REPO_FORMAT_REGEX.test(repo)) {
-    throw new Error("Invalid repository format. Expected: owner/repo");
+    throw new ManifestValidationError("Invalid repository format. Expected: owner/repo");
   }
 }
 
@@ -72,7 +73,7 @@ export class Manifest {
 
   static validateDocsDir(name: string): void {
     if (!DOCS_DIR_REGEX.test(name) || name.includes("..")) {
-      throw new Error(
+      throw new ManifestValidationError(
         `Invalid directory name: "${name}". Use alphanumeric characters, hyphens, and underscores only.`
       );
     }
@@ -174,7 +175,7 @@ export class Manifest {
 
   removeTool(toolId: ToolId): void {
     if (!this._tools.has(toolId)) {
-      throw new Error(`Tool '${toolId}' is not installed in the manifest.`);
+      throw new ManifestValidationError(`Tool '${toolId}' is not installed in the manifest.`);
     }
     this._tools.delete(toolId);
   }
@@ -274,13 +275,13 @@ export class Manifest {
 
   static fromJSON(data: unknown): Manifest {
     if (data === null || typeof data !== "object") {
-      throw new Error("Invalid manifest data: expected an object.");
+      throw new ManifestValidationError("Invalid manifest data: expected an object.");
     }
 
     const raw = data as Record<string, unknown>;
 
     if (raw.version !== MANIFEST_VERSION) {
-      throw new Error(
+      throw new ManifestValidationError(
         `Unsupported manifest version: ${String(raw.version)}. Expected ${MANIFEST_VERSION}.`
       );
     }
@@ -290,7 +291,7 @@ export class Manifest {
       for (const [key, value] of Object.entries(raw.tools as Record<string, unknown>)) {
         const toolId = key as ToolId;
         if (!VALID_TOOL_IDS.includes(toolId)) {
-          throw new Error(`Invalid tool id in manifest: '${key}'.`);
+          throw new ManifestValidationError(`Invalid tool id in manifest: '${key}'.`);
         }
         const entry = value as ToolEntryData;
         tools.set(toolId, {

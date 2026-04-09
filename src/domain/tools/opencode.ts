@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { ConfigConflictError } from "../errors.js";
+import { ConfigConflictError, McpConfigError } from "../errors.js";
 import { CONFIG_MCP, CONFIG_OPENCODE, TEMPLATE_AGENTS_MD } from "../models/framework-descriptor.js";
 import type { MergeStrategy } from "../models/merge-strategy.js";
 import {
@@ -48,11 +48,13 @@ function transformMcpToOpencode(content: string): string {
   try {
     parsed = JSON.parse(content) as typeof parsed;
   } catch (err) {
-    throw new Error(`Cannot parse MCP config: ${err instanceof Error ? err.message : String(err)}`);
+    throw new McpConfigError(
+      `Cannot parse MCP config: ${err instanceof Error ? err.message : String(err)}`
+    );
   }
 
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw new Error("MCP config must be a JSON object");
+    throw new McpConfigError("MCP config must be a JSON object");
   }
 
   const mcp: Record<string, OpencodeMcpServer> = {};
@@ -70,7 +72,7 @@ function transformMcpToOpencode(content: string): string {
     } else if ("url" in server) {
       mcp[name] = { type: "remote", url: server.url, enabled: true };
     } else {
-      throw new Error(`MCP server "${name}" must have either a "command" or "url" field`);
+      throw new McpConfigError(`MCP server "${name}" must have either a "command" or "url" field`);
     }
   }
 

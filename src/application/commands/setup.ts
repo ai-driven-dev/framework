@@ -5,6 +5,7 @@ import {
   VALID_TOOL_IDS,
 } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
+import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import type { InstallToolResult } from "../use-cases/install-use-case.js";
 import { SetupUseCase } from "../use-cases/setup-use-case.js";
@@ -52,6 +53,7 @@ export function registerSetupCommand(program: Command): void {
         from?: string;
       }) => {
         const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+        const errorHandler = new ErrorHandler(output);
 
         const rawToolIds = cmdOptions.allTools
           ? [...VALID_TOOL_IDS]
@@ -62,8 +64,7 @@ export function registerSetupCommand(program: Command): void {
           try {
             assertValidToolIds(rawToolIds);
           } catch (e) {
-            output.error(e instanceof Error ? e.message : String(e));
-            process.exit(1);
+            errorHandler.handle(e);
           }
         }
 
@@ -142,7 +143,7 @@ export function registerSetupCommand(program: Command): void {
             }
           }
         } catch (error) {
-          output.exit(error);
+          errorHandler.handle(error);
         }
       }
     );

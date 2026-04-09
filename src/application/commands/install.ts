@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
+import { ErrorHandler } from "../error-handler.js";
 import { InstallUseCase } from "../use-cases/install-use-case.js";
 import { ResolveFrameworkUseCase } from "../use-cases/resolve-framework-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
@@ -20,6 +21,7 @@ export function registerInstallCommand(program: Command): void {
         cmdOptions: { force: boolean; all: boolean; path?: string; release?: string }
       ) => {
         const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+        const errorHandler = new ErrorHandler(output);
 
         if (cmdOptions.all && toolArgs.length > 0) {
           output.warn(`--all is set; ignoring specified tools: ${toolArgs.join(", ")}`);
@@ -101,7 +103,7 @@ export function registerInstallCommand(program: Command): void {
             output.success(`Installed ${toolList} (${totalFiles} files)`);
           }
         } catch (error) {
-          output.exit(error);
+          errorHandler.handle(error);
         }
       }
     );
