@@ -45,6 +45,26 @@ project/
 
 ---
 
+## 🧩 Install as a Claude Code plugin
+
+If you only use Claude Code and want the skills without the full CLI-generated project layout, install this repo directly as a Claude Code plugin:
+
+```bash
+# In any Claude Code session
+/plugin marketplace add ai-driven-dev/aidd-framework
+/plugin install aidd@ai-driven-dev-aidd-framework
+```
+
+This exposes 4 skills: `challenge`, `clarity`, `for-sure`, `generate-skill`.
+
+To test a local checkout before publishing changes:
+
+```bash
+claude --plugin-dir /path/to/aidd-framework
+```
+
+---
+
 ## 🔄 Framework Flow Map
 
 Flow map is available here in the [aidd_docs](./aidd_docs/README.md).

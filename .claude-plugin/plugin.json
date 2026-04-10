@@ -1,0 +1,16 @@
+{
+  "name": "aidd",
+  "description": "AI-Driven Dev framework — autonomous development skills: challenge, clarity, for-sure, generate-skill",
+  "version": "3.3.1",
+  "author": {
+    "name": "AI-Driven Dev",
+    "email": "alex@ai-driven-dev.com"
+  },
+  "homepage": "https://github.com/ai-driven-dev/aidd-framework",
+  "skills": [
+    "./skills/challenge/",
+    "./skills/clarity/",
+    "./skills/for-sure/",
+    "./skills/generate-skill/"
+  ]
+}
