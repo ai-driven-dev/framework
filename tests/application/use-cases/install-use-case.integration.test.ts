@@ -131,7 +131,7 @@ describe("install", () => {
     expect(result[0].warnings).toEqual([]);
   });
 
-  it("no drift for shared merged file after multi-tool install", async () => {
+  it("shared merged file tracked in mergeFiles per tool after multi-tool install", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
@@ -155,19 +155,21 @@ describe("install", () => {
     const manifestPath = join(projectRoot, ".aidd", "manifest.json");
     const raw = await readFile(manifestPath, "utf-8");
     const data = JSON.parse(raw) as {
-      tools: Record<string, { files: Array<{ relativePath: string; hash: string }> }>;
+      tools: Record<
+        string,
+        { mergeFiles: Array<{ relativePath: string; entries: Record<string, string> }> }
+      >;
     };
 
     const sharedPath = ".vscode/settings.json";
-    const claudeFile = data.tools.claude.files.find((f) => f.relativePath === sharedPath);
-    const copilotFile = data.tools.copilot.files.find((f) => f.relativePath === sharedPath);
+    const claudeMerge = data.tools.claude.mergeFiles.find((m) => m.relativePath === sharedPath);
+    const copilotMerge = data.tools.copilot.mergeFiles.find((m) => m.relativePath === sharedPath);
 
-    expect(claudeFile).toBeDefined();
-    expect(copilotFile).toBeDefined();
-    expect(claudeFile?.hash).toBe(copilotFile?.hash);
+    expect(claudeMerge).toBeDefined();
+    expect(copilotMerge).toBeDefined();
   });
 
-  it("no drift for shared merged file across sequential installs", async () => {
+  it("shared merged file tracked in mergeFiles per tool across sequential installs", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
@@ -200,16 +202,18 @@ describe("install", () => {
     const manifestPath = join(projectRoot, ".aidd", "manifest.json");
     const raw = await readFile(manifestPath, "utf-8");
     const data = JSON.parse(raw) as {
-      tools: Record<string, { files: Array<{ relativePath: string; hash: string }> }>;
+      tools: Record<
+        string,
+        { mergeFiles: Array<{ relativePath: string; entries: Record<string, string> }> }
+      >;
     };
 
     const sharedPath = ".vscode/settings.json";
-    const claudeFile = data.tools.claude.files.find((f) => f.relativePath === sharedPath);
-    const copilotFile = data.tools.copilot.files.find((f) => f.relativePath === sharedPath);
+    const claudeMerge = data.tools.claude.mergeFiles.find((m) => m.relativePath === sharedPath);
+    const copilotMerge = data.tools.copilot.mergeFiles.find((m) => m.relativePath === sharedPath);
 
-    expect(claudeFile).toBeDefined();
-    expect(copilotFile).toBeDefined();
-    expect(claudeFile?.hash).toBe(copilotFile?.hash);
+    expect(claudeMerge).toBeDefined();
+    expect(copilotMerge).toBeDefined();
   });
 
   it("does not track CATALOG.md as an installed file", async () => {
@@ -599,5 +603,177 @@ describe("install", () => {
     expect(result[0].warnings.some((w) => w.includes(".claude/agents/code-reviewer.md"))).toBe(
       true
     );
+  });
+
+  describe("per-entry hash tracking", () => {
+    it("stores per-entry hashes in mergeFiles for .mcp.json", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+      await useCase.execute({
+        toolIds: ["claude" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const manifestPath = join(projectRoot, ".aidd", "manifest.json");
+      const raw = await readFile(manifestPath, "utf-8");
+      const data = JSON.parse(raw) as {
+        version: number;
+        tools: Record<
+          string,
+          {
+            files: unknown[];
+            mergeFiles: Array<{
+              relativePath: string;
+              sectionKey: string | null;
+              entries: Record<string, string>;
+            }>;
+          }
+        >;
+      };
+
+      expect(data.version).toBe(1);
+      const claudeMerge = data.tools.claude.mergeFiles;
+      expect(claudeMerge.length).toBeGreaterThan(0);
+      const mcpEntry = claudeMerge.find((m) => m.relativePath === ".mcp.json");
+      expect(mcpEntry).toBeDefined();
+      expect(mcpEntry?.sectionKey).toBe("mcpServers");
+      expect(Object.keys(mcpEntry?.entries ?? {})).toContain("playwright");
+      expect(Object.keys(mcpEntry?.entries ?? {})).toContain("github");
+    });
+
+    it("does not track user-added MCP servers in manifest entries", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      await mkdir(join(projectRoot), { recursive: true });
+      await writeFile(
+        join(projectRoot, ".mcp.json"),
+        JSON.stringify({ mcpServers: { userServer: { command: "custom" } } })
+      );
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+      await useCase.execute({
+        toolIds: ["claude" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const data = JSON.parse(raw) as {
+        tools: Record<
+          string,
+          {
+            mergeFiles: Array<{
+              relativePath: string;
+              entries: Record<string, string>;
+            }>;
+          }
+        >;
+      };
+      const mcpEntry = data.tools.claude.mergeFiles.find((m) => m.relativePath === ".mcp.json");
+      expect(mcpEntry).toBeDefined();
+      expect(mcpEntry?.entries).not.toHaveProperty("userServer");
+    });
+
+    it("tracks .vscode/settings.json with null sectionKey per tool", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+      await useCase.execute({
+        toolIds: ["claude" as ToolId, "copilot" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const data = JSON.parse(raw) as {
+        tools: Record<
+          string,
+          {
+            mergeFiles: Array<{
+              relativePath: string;
+              sectionKey: string | null;
+              entries: Record<string, string>;
+            }>;
+          }
+        >;
+      };
+
+      const claudeSettings = data.tools.claude.mergeFiles.find(
+        (m) => m.relativePath === ".vscode/settings.json"
+      );
+      const copilotSettings = data.tools.copilot.mergeFiles.find(
+        (m) => m.relativePath === ".vscode/settings.json"
+      );
+      expect(claudeSettings).toBeDefined();
+      expect(copilotSettings).toBeDefined();
+      expect(claudeSettings?.sectionKey).toBeNull();
+      expect(copilotSettings?.sectionKey).toBeNull();
+    });
+
+    it("merge files are not in the regular files array", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+      await useCase.execute({
+        toolIds: ["claude" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const data = JSON.parse(raw) as {
+        tools: Record<string, { files: Array<{ relativePath: string }> }>;
+      };
+
+      const claudeFiles = data.tools.claude.files;
+      expect(claudeFiles.find((f) => f.relativePath === ".mcp.json")).toBeUndefined();
+      expect(claudeFiles.find((f) => f.relativePath === ".vscode/settings.json")).toBeUndefined();
+    });
   });
 });

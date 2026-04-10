@@ -31,10 +31,10 @@ flowchart LR
 - MD5 hashing via `node:crypto` for drift detection between installed files and framework version
 - HTTP via `node:https` (no `fetch` wrapper libraries)
 - Framework layout is hardcoded in `FrameworkLoaderAdapter` (`CONTENT_SECTIONS`, `TEMPLATE_REFS`, `CONFIG_REFS`). No `framework.json` file — `FrameworkDescriptor` is a code model built by the adapter, not parsed from a file.
-- Manifest stored as JSON at `.aidd/manifest.json` — aggregate root tracking every installed file with its MD5 hash
+- Manifest stored as JSON at `.aidd/manifest.json` — aggregate root tracking every installed file with its MD5 hash. Merge config files (`.mcp.json`, `.vscode/settings.json`) tracked separately in `mergeFiles` with per-entry hashes. See DEC-020.
 - No settings file — project configuration is via CLI flags (`--repo`, `--verbose`) or env vars (`AIDD_REPO`, `AIDD_VERBOSE`)
 - Domain layer has zero infrastructure imports (enforced in tests)
-- Migration system in `infrastructure/migrations/` for manifest schema evolution
+- Framework config files may contain JSONC (comments + trailing commas) — `extractMergeEntries` strips them before parsing. See DEC-021.
 
 ## Component Diagram
 
@@ -46,7 +46,7 @@ flowchart TD
         USECASES["use-cases: auth-login, auth-logout, auth-status, adopt, init, install, uninstall, status, clean, doctor, catalog, restore, update, sync, gitignore, resolve-framework, require-auth, self-update, setup, interactive-menu | shared: post-install-pipeline, setup-state-detector"]
     end
     subgraph DOM["Domain"]
-        MODELS["models: Manifest, Distribution, Catalog, ToolConfig, FileHash, GeneratedFile, Docs, Mcp, Semver, FileDiff, ConflictDecision, UpdateScope, SyncExclusions"]
+        MODELS["models: Manifest, Distribution, Catalog, ToolConfig, FileHash, GeneratedFile, MergeEntry, Docs, Mcp, Semver, FileDiff, ConflictDecision, UpdateScope, SyncExclusions"]
         PORTS["ports: interfaces"]
         TOOLS["tools: claude, cursor, copilot, opencode"]
     end
@@ -97,13 +97,14 @@ interface ToolConfig {
   commands(): CommandsHandler;    // buildFilePath + convertFrontmatter(fm, relativeFileName)
   rules(): RulesHandler;          // buildFilePath + convertFrontmatter
   skills(): SectionHandler;
-  config(): ConfigHandler;        // outputPath + mergeStrategy
+  config(): ConfigHandler;        // outputPath + mergeStrategy + entrySection
   memoryBank(): MemoryBankHandler; // outputPath + rewriteContent
 }
 ```
 
 - `distribution.ts` dispatches via handlers — no more `if (section.name === X)` in tools
 - `ConfigHandler.mergeStrategy(name)` returns `MergeStrategy` (`"none" | "framework-prime" | "user-prime"`) — encodes both whether to merge and who wins on conflict. MCP configs are user-prime; `.vscode/settings.json` is framework-prime. See DEC-016.
+- `ConfigHandler.entrySection(name)` returns the JSON key containing trackable entries (`"mcpServers"`, `"servers"`, `"mcp"`) or `null` for top-level. See DEC-019.
 - `copilot.ts` named handlers (`agentsHandler`, `rulesHandler`...) reused in `rewriteContent` — no duplication of path mapping logic
 - `frontmatter.ts` — `parseYamlLike` index-based (3 autonomous sub-functions), `serializeFrontmatter` emits JSON-array strings raw (no single-quote wrap)
 

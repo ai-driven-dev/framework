@@ -1,6 +1,7 @@
 import { ManifestValidationError } from "../errors.js";
 import { FileHash } from "./file-hash.js";
 import type { GeneratedFile } from "./generated-file.js";
+import type { MergeFileEntry } from "./merge-entry.js";
 import { type ToolId, VALID_TOOL_IDS } from "./tool-config.js";
 
 const MANIFEST_VERSION = 1;
@@ -34,6 +35,7 @@ interface ToolEntry {
   readonly toolId: ToolId;
   readonly version: string;
   readonly files: readonly TrackedFile[];
+  readonly mergeFiles: readonly MergeFileEntry[];
 }
 
 interface ScriptsEntryData {
@@ -50,10 +52,17 @@ interface ManifestData {
   scripts: ScriptsEntryData | null;
 }
 
+interface MergeFileEntryData {
+  relativePath: string;
+  sectionKey: string | null;
+  entries: Record<string, string>;
+}
+
 interface ToolEntryData {
   toolId: string;
   version: string;
   files: TrackedFileData[];
+  mergeFiles?: MergeFileEntryData[];
 }
 
 interface DocsEntryData {
@@ -109,18 +118,18 @@ export class Manifest {
     });
   }
 
-  addTool(toolId: ToolId, version: string, files: GeneratedFile[]): void {
-    this._tools.set(toolId, { toolId, version, files: this.toTrackedFiles(files) });
-  }
-
-  syncFileHashAcrossTools(relativePath: string, hash: FileHash): void {
-    for (const [toolId, entry] of this._tools.entries()) {
-      const idx = entry.files.findIndex((f) => f.relativePath === relativePath);
-      if (idx === -1) continue;
-      const files = [...entry.files];
-      files[idx] = { relativePath, hash };
-      this._tools.set(toolId, { ...entry, files });
-    }
+  addTool(
+    toolId: ToolId,
+    version: string,
+    files: GeneratedFile[],
+    mergeFiles: MergeFileEntry[] = []
+  ): void {
+    this._tools.set(toolId, {
+      toolId,
+      version,
+      files: this.toTrackedFiles(files),
+      mergeFiles,
+    });
   }
 
   addDocs(version: string, files: GeneratedFile[]): void {
@@ -161,6 +170,10 @@ export class Manifest {
     return this._tools.get(toolId)?.files ?? [];
   }
 
+  getMergeFiles(toolId: ToolId): readonly MergeFileEntry[] {
+    return this._tools.get(toolId)?.mergeFiles ?? [];
+  }
+
   getDocsFiles(): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
     return this._docs?.files ?? [];
   }
@@ -186,16 +199,11 @@ export class Manifest {
 
   isFileTracked(relativePath: string): boolean {
     for (const entry of this._tools.values()) {
-      if (entry.files.some((f) => f.relativePath === relativePath)) {
-        return true;
-      }
+      if (entry.files.some((f) => f.relativePath === relativePath)) return true;
+      if (entry.mergeFiles.some((m) => m.relativePath === relativePath)) return true;
     }
-    if (this._docs?.files.some((f) => f.relativePath === relativePath)) {
-      return true;
-    }
-    if (this._scripts?.files.some((f) => f.relativePath === relativePath)) {
-      return true;
-    }
+    if (this._docs?.files.some((f) => f.relativePath === relativePath)) return true;
+    if (this._scripts?.files.some((f) => f.relativePath === relativePath)) return true;
     return false;
   }
 
@@ -240,6 +248,7 @@ export class Manifest {
         toolId: entry.toolId,
         version: entry.version,
         files: this.toTrackedFileData(entry.files),
+        mergeFiles: this.toMergeFileEntryData(entry.mergeFiles),
       };
     }
 
@@ -273,6 +282,26 @@ export class Manifest {
     }));
   }
 
+  private toMergeFileEntryData(mergeFiles: readonly MergeFileEntry[]): MergeFileEntryData[] {
+    return mergeFiles.map((m) => {
+      const entries: Record<string, string> = {};
+      for (const [key, hash] of Object.entries(m.entries)) {
+        entries[key] = hash.value;
+      }
+      return { relativePath: m.relativePath, sectionKey: m.sectionKey, entries };
+    });
+  }
+
+  private static parseMergeFileEntries(data: MergeFileEntryData[]): MergeFileEntry[] {
+    return data.map((m) => {
+      const entries: Record<string, FileHash> = {};
+      for (const [key, hash] of Object.entries(m.entries)) {
+        entries[key] = new FileHash(hash);
+      }
+      return { relativePath: m.relativePath, sectionKey: m.sectionKey, entries };
+    });
+  }
+
   static fromJSON(data: unknown): Manifest {
     if (data === null || typeof data !== "object") {
       throw new ManifestValidationError("Invalid manifest data: expected an object.");
@@ -286,21 +315,7 @@ export class Manifest {
       );
     }
 
-    const tools = new Map<ToolId, ToolEntry>();
-    if (raw.tools !== null && typeof raw.tools === "object") {
-      for (const [key, value] of Object.entries(raw.tools as Record<string, unknown>)) {
-        const toolId = key as ToolId;
-        if (!VALID_TOOL_IDS.includes(toolId)) {
-          throw new ManifestValidationError(`Invalid tool id in manifest: '${key}'.`);
-        }
-        const entry = value as ToolEntryData;
-        tools.set(toolId, {
-          toolId,
-          version: entry.version,
-          files: Manifest.parseTrackedFiles(entry.files),
-        });
-      }
-    }
+    const tools = Manifest.parseTools(raw);
 
     let docs: DocsEntry | null = null;
     if (raw.docs !== null && raw.docs !== undefined && typeof raw.docs === "object") {
@@ -324,5 +339,25 @@ export class Manifest {
     }
 
     return new Manifest({ tools, docs, scripts, docsDir, repo });
+  }
+
+  private static parseTools(raw: Record<string, unknown>): Map<ToolId, ToolEntry> {
+    const tools = new Map<ToolId, ToolEntry>();
+    if (raw.tools === null || typeof raw.tools !== "object") return tools;
+
+    for (const [key, value] of Object.entries(raw.tools as Record<string, unknown>)) {
+      const toolId = key as ToolId;
+      if (!VALID_TOOL_IDS.includes(toolId)) {
+        throw new ManifestValidationError(`Invalid tool id in manifest: '${key}'.`);
+      }
+      const entry = value as ToolEntryData;
+      tools.set(toolId, {
+        toolId,
+        version: entry.version,
+        files: Manifest.parseTrackedFiles(entry.files),
+        mergeFiles: Manifest.parseMergeFileEntries(entry.mergeFiles ?? []),
+      });
+    }
+    return tools;
   }
 }

@@ -738,4 +738,166 @@ describe("update", () => {
 
     expect(result.docs).toBeNull();
   });
+
+  describe("per-entry merge file tracking", () => {
+    it("surgically removes dropped unmodified MCP server from disk", async () => {
+      const deps = buildDeps(projectRoot);
+      await initAndInstall(deps, projectRoot, "claude");
+
+      const useCase = new UpdateUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform,
+        new OverwritePrompter()
+      );
+      await useCase.execute({
+        frameworkPath: FIXTURE_DIR_V2,
+        version: "test-v2",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const mcpContent = JSON.parse(await readFile(join(projectRoot, ".mcp.json"), "utf-8"));
+      expect(mcpContent.mcpServers.github).toBeUndefined();
+      expect(mcpContent.mcpServers.playwright).toBeDefined();
+      expect(mcpContent.mcpServers.slack).toBeDefined();
+    });
+
+    it("stores updated per-entry hashes in manifest after update", async () => {
+      const deps = buildDeps(projectRoot);
+      await initAndInstall(deps, projectRoot, "claude");
+
+      const useCase = new UpdateUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform,
+        new OverwritePrompter()
+      );
+      await useCase.execute({
+        frameworkPath: FIXTURE_DIR_V2,
+        version: "test-v2",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const data = JSON.parse(raw) as {
+        tools: Record<
+          string,
+          {
+            mergeFiles: Array<{
+              relativePath: string;
+              entries: Record<string, string>;
+            }>;
+          }
+        >;
+      };
+      const mcpEntry = data.tools.claude.mergeFiles.find((m) => m.relativePath === ".mcp.json");
+      expect(mcpEntry).toBeDefined();
+      expect(mcpEntry?.entries).toHaveProperty("playwright");
+      expect(mcpEntry?.entries).toHaveProperty("slack");
+      expect(mcpEntry?.entries).not.toHaveProperty("github");
+    });
+
+    it("prompts for conflict when dropping a user-modified MCP server entry", async () => {
+      const deps = buildDeps(projectRoot);
+      await initAndInstall(deps, projectRoot, "claude");
+
+      const mcpPath = join(projectRoot, ".mcp.json");
+      const mcpContent = JSON.parse(await readFile(mcpPath, "utf-8"));
+      mcpContent.mcpServers.github = { command: "gh", args: ["mcp", "--custom-flag"] };
+      await writeFile(mcpPath, JSON.stringify(mcpContent, null, 2));
+
+      const useCase = new UpdateUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform,
+        new SkipPrompter()
+      );
+      await useCase.execute({
+        frameworkPath: FIXTURE_DIR_V2,
+        version: "test-v2",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const updatedMcp = JSON.parse(await readFile(mcpPath, "utf-8"));
+      expect(updatedMcp.mcpServers.github).toBeDefined();
+      expect(updatedMcp.mcpServers.github.args).toContain("--custom-flag");
+    });
+
+    it("dry-run reports dropped merge entries without applying", async () => {
+      const deps = buildDeps(projectRoot);
+      await initAndInstall(deps, projectRoot, "claude");
+
+      const useCase = new UpdateUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform,
+        new OverwritePrompter()
+      );
+      const result = await useCase.execute({
+        frameworkPath: FIXTURE_DIR_V2,
+        version: "test-v2",
+        docsDir: "aidd_docs",
+        projectRoot,
+        dryRun: true,
+      });
+
+      const entryRemoved = result.tools[0].diff.find(
+        (d) => d.kind === "removed" && d.relativePath.includes(".mcp.json > github")
+      );
+      expect(entryRemoved).toBeDefined();
+
+      const mcpContent = JSON.parse(await readFile(join(projectRoot, ".mcp.json"), "utf-8"));
+      expect(mcpContent.mcpServers.github).toBeDefined();
+    });
+
+    it("preserves user-added MCP servers during update", async () => {
+      const deps = buildDeps(projectRoot);
+      await initAndInstall(deps, projectRoot, "claude");
+
+      const mcpPath = join(projectRoot, ".mcp.json");
+      const mcpContent = JSON.parse(await readFile(mcpPath, "utf-8"));
+      mcpContent.mcpServers.userCustom = { command: "custom-mcp" };
+      await writeFile(mcpPath, JSON.stringify(mcpContent, null, 2));
+
+      const useCase = new UpdateUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform,
+        new OverwritePrompter()
+      );
+      await useCase.execute({
+        frameworkPath: FIXTURE_DIR_V2,
+        version: "test-v2",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const updatedMcp = JSON.parse(await readFile(mcpPath, "utf-8"));
+      expect(updatedMcp.mcpServers.userCustom).toBeDefined();
+      expect(updatedMcp.mcpServers.slack).toBeDefined();
+    });
+  });
 });

@@ -107,6 +107,10 @@ export const claudeToolConfig: ToolConfig = {
         if (configName === CONFIG_VSCODE_SETTINGS) return "framework-prime";
         return "none";
       },
+      entrySection(configName: string): string | null {
+        if (configName === CONFIG_MCP) return "mcpServers";
+        return null;
+      },
     };
   },
 

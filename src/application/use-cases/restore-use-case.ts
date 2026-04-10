@@ -250,7 +250,13 @@ export class RestoreUseCase {
 
     if (section === null) return { toolId, nothingToRestore: true, restored: [], kept: [] };
 
-    manifest.addTool(toolId, manifest.getToolVersion(toolId) ?? version, section.updatedFiles);
+    const existingMergeFiles = [...manifest.getMergeFiles(toolId)];
+    manifest.addTool(
+      toolId,
+      manifest.getToolVersion(toolId) ?? version,
+      section.updatedFiles,
+      existingMergeFiles
+    );
     return { toolId, nothingToRestore: false, restored: section.restored, kept: section.kept };
   }
 

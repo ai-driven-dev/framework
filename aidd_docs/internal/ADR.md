@@ -24,3 +24,6 @@ This file contains the key architectural decisions made during the project, alon
 | 2026-04-06 | DEC-016 | [ConfigHandler.mergeStrategy() replaces boolean shouldMerge](./decisions/DEC-016-config-handler-merge-strategy.md) | MCP config files are user-prime; user customizations survive update |
 | 2026-04-08 | DEC-017 | [ErrorHandler replaces CLIOutput.exit()](./decisions/DEC-017-error-handler-replaces-cli-output-exit.md) | CLIOutput is pure output; all commands use errorHandler.handle() |
 | 2026-04-08 | DEC-018 | [Typed exceptions across three layers](./decisions/DEC-018-typed-exceptions-three-layers.md) | Zero throw new Error(); infra errors never cross port boundary |
+| 2026-04-09 | DEC-019 | [ConfigHandler.entrySection() for per-entry tracking](./decisions/DEC-019-config-handler-entry-section.md) | Tools own section key mapping; use-cases stay tool-agnostic |
+| 2026-04-09 | DEC-020 | [No manifest version bump for mergeFiles](./decisions/DEC-020-no-manifest-version-bump.md) | Backward-compatible; old manifests load with empty mergeFiles |
+| 2026-04-10 | DEC-021 | [JSONC stripping in domain extractMergeEntries](./decisions/DEC-021-jsonc-stripping-in-domain.md) | Domain self-contained; ~40 lines duplication with adapter |

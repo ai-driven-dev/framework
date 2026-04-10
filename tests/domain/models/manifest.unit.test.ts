@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { FileHash } from "../../../src/domain/models/file-hash.js";
 import { GeneratedFile } from "../../../src/domain/models/generated-file.js";
 import { Manifest } from "../../../src/domain/models/manifest.js";
+import type { MergeFileEntry } from "../../../src/domain/models/merge-entry.js";
 import type { ToolId } from "../../../src/domain/models/tool-config.js";
 
 const makeHash = (hex: string): FileHash => new FileHash(hex.padEnd(32, "0"));
@@ -84,7 +85,7 @@ describe("Manifest", () => {
       const manifest = Manifest.create();
       manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
       const json = manifest.toJSON();
-      const badVersion = { ...json, version: "99" };
+      const badVersion = { ...json, version: 99 };
       expect(() => Manifest.fromJSON(badVersion)).toThrow(/version/);
     });
 
@@ -160,6 +161,68 @@ describe("Manifest", () => {
       const scriptsFiles = [makeFile("scripts/setup.sh", "778899")];
       manifest.addScripts("1.0.0", scriptsFiles);
       expect(manifest.isFileTracked("scripts/setup.sh")).toBe(true);
+    });
+  });
+
+  describe("mergeFiles", () => {
+    const mergeFiles: MergeFileEntry[] = [
+      {
+        relativePath: ".mcp.json",
+        sectionKey: "mcpServers",
+        entries: {
+          playwright: makeHash("aabb11"),
+          github: makeHash("ccdd22"),
+        },
+      },
+    ];
+
+    it("addTool stores mergeFiles entries", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles, mergeFiles);
+      expect(manifest.getMergeFiles("claude" as ToolId)).toHaveLength(1);
+      expect(manifest.getMergeFiles("claude" as ToolId)[0].relativePath).toBe(".mcp.json");
+    });
+
+    it("getMergeFiles returns empty array for tool without merge files", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
+      expect(manifest.getMergeFiles("claude" as ToolId)).toEqual([]);
+    });
+
+    it("getMergeFiles returns empty array for missing tool", () => {
+      const manifest = Manifest.create();
+      expect(manifest.getMergeFiles("claude" as ToolId)).toEqual([]);
+    });
+
+    it("isFileTracked returns true for merge file paths", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles, mergeFiles);
+      expect(manifest.isFileTracked(".mcp.json")).toBe(true);
+    });
+
+    it("serialization round-trip preserves mergeFiles", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles, mergeFiles);
+      const restored = Manifest.fromJSON(manifest.toJSON());
+      const restoredMerge = restored.getMergeFiles("claude" as ToolId);
+      expect(restoredMerge).toHaveLength(1);
+      expect(restoredMerge[0].relativePath).toBe(".mcp.json");
+      expect(restoredMerge[0].sectionKey).toBe("mcpServers");
+      expect(Object.keys(restoredMerge[0].entries)).toEqual(["playwright", "github"]);
+      expect(restoredMerge[0].entries.playwright.value).toBe(`aabb11${"0".repeat(26)}`);
+    });
+
+    it("toJSON produces version 2", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
+      expect(manifest.toJSON().version).toBe(1);
+    });
+  });
+
+  describe("version validation", () => {
+    it("rejects unsupported manifest version", () => {
+      const badData = { version: 99, docsDir: "aidd_docs", tools: {}, docs: null, scripts: null };
+      expect(() => Manifest.fromJSON(badData)).toThrow(/version/);
     });
   });
 

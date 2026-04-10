@@ -1,7 +1,10 @@
 import { join } from "node:path";
 import type { FileHash } from "../../domain/models/file-hash.js";
+import type { Manifest } from "../../domain/models/manifest.js";
+import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/merge-entry.js";
 import { getToolConfig, type ToolId } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { NoManifestError, ToolNotInstalledError } from "../errors.js";
@@ -41,81 +44,161 @@ export class StatusUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    readonly _logger: Logger
+    readonly _logger: Logger,
+    private readonly hasher: Hasher
   ) {}
 
   async execute(options: StatusOptions): Promise<StatusReport> {
     const { projectRoot, filterToolId, filterDocs, repo } = options;
-
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) {
-      throw new NoManifestError(repo);
-    }
-
-    if (filterToolId && !manifest.hasTool(filterToolId)) {
+    if (manifest === null) throw new NoManifestError(repo);
+    if (filterToolId && !manifest.hasTool(filterToolId))
       throw new ToolNotInstalledError(filterToolId);
-    }
 
-    const installedToolIds = filterDocs
-      ? []
-      : filterToolId
-        ? [filterToolId]
-        : manifest.getInstalledToolIds();
-
-    const tools: ToolStatus[] = [];
-    for (const toolId of installedToolIds) {
-      const version = manifest.getToolVersion(toolId) ?? "unknown";
-      const trackedFiles = manifest.getToolFiles(toolId);
-      const config = getToolConfig(toolId);
-
-      const drifted = await this.checkTrackedFiles(trackedFiles, projectRoot);
-      const trackedSet = new Set(trackedFiles.map((f) => f.relativePath));
-
-      const toolDir = join(projectRoot, config.directory);
-      const toolDirExists = await this.fs.fileExists(toolDir);
-      if (toolDirExists) {
-        const diskFiles = await this.fs.listDirectory(toolDir);
-        for (const diskRelPath of diskFiles) {
-          if (diskRelPath.endsWith(".backup")) continue;
-          const fullRelPath = `${config.directory}${diskRelPath}`;
-          if (!trackedSet.has(fullRelPath)) {
-            drifted.push({ relativePath: fullRelPath, status: "added" });
-          }
-        }
-      }
-
-      tools.push({ toolId, version, drifted });
-    }
-
-    let docs: DocsStatus | null = null;
-    if ((filterDocs || !filterToolId) && manifest.hasDocs()) {
-      const docsVersion = manifest.getDocsVersion() ?? "unknown";
-      const docsFiles = manifest.getDocsFiles();
-      const drifted = await this.checkTrackedFiles(docsFiles, projectRoot);
-      const catalogPath = join(projectRoot, manifest.docsDir, "CATALOG.md");
-      if (!(await this.fs.fileExists(catalogPath))) {
-        drifted.push({ relativePath: `${manifest.docsDir}/CATALOG.md`, status: "deleted" });
-      }
-      const trackedDocsSet = new Set(docsFiles.map((f) => f.relativePath));
-      const docsDir = join(projectRoot, manifest.docsDir);
-      if (await this.fs.fileExists(docsDir)) {
-        const diskFiles = await this.fs.listDirectory(docsDir);
-        for (const diskRelPath of diskFiles) {
-          if (diskRelPath.endsWith(".backup")) continue;
-          if (diskRelPath === "CATALOG.md") continue;
-          const fullRelPath = `${manifest.docsDir}/${diskRelPath}`;
-          if (!trackedDocsSet.has(fullRelPath)) {
-            drifted.push({ relativePath: fullRelPath, status: "added" });
-          }
-        }
-      }
-      docs = { version: docsVersion, drifted };
-    }
-
+    const installedToolIds = this.resolveToolIds(filterToolId, filterDocs, manifest);
+    const tools = await this.checkAllTools(installedToolIds, manifest, projectRoot);
+    const docs = await this.checkDocsSection(manifest, projectRoot, filterToolId, filterDocs);
     const inSync =
       tools.every((t) => t.drifted.length === 0) && (docs === null || docs.drifted.length === 0);
-
     return { tools, docs, inSync };
+  }
+
+  private resolveToolIds(
+    filterToolId: ToolId | undefined,
+    filterDocs: boolean | undefined,
+    manifest: Manifest
+  ): ToolId[] {
+    if (filterDocs) return [];
+    if (filterToolId) return [filterToolId];
+    return manifest.getInstalledToolIds();
+  }
+
+  private async checkAllTools(
+    toolIds: ToolId[],
+    manifest: Manifest,
+    projectRoot: string
+  ): Promise<ToolStatus[]> {
+    const tools: ToolStatus[] = [];
+    for (const toolId of toolIds) {
+      tools.push(await this.checkOneTool(toolId, manifest, projectRoot));
+    }
+    return tools;
+  }
+
+  private async checkOneTool(
+    toolId: ToolId,
+    manifest: Manifest,
+    projectRoot: string
+  ): Promise<ToolStatus> {
+    const version = manifest.getToolVersion(toolId) ?? "unknown";
+    const trackedFiles = manifest.getToolFiles(toolId);
+    const mergeFiles = manifest.getMergeFiles(toolId);
+    const drifted = await this.checkTrackedFiles(trackedFiles, projectRoot);
+    drifted.push(...(await this.checkMergeFiles(mergeFiles, projectRoot)));
+    const trackedSet = new Set([
+      ...trackedFiles.map((f) => f.relativePath),
+      ...mergeFiles.map((m) => m.relativePath),
+    ]);
+    drifted.push(
+      ...(await this.detectAddedFiles(getToolConfig(toolId).directory, trackedSet, projectRoot))
+    );
+    return { toolId, version, drifted };
+  }
+
+  private async checkDocsSection(
+    manifest: Manifest,
+    projectRoot: string,
+    filterToolId: ToolId | undefined,
+    filterDocs: boolean | undefined
+  ): Promise<DocsStatus | null> {
+    if (!(filterDocs || !filterToolId) || !manifest.hasDocs()) return null;
+    const docsVersion = manifest.getDocsVersion() ?? "unknown";
+    const docsFiles = manifest.getDocsFiles();
+    const drifted = await this.checkTrackedFiles(docsFiles, projectRoot);
+    const catalogPath = join(projectRoot, manifest.docsDir, "CATALOG.md");
+    if (!(await this.fs.fileExists(catalogPath))) {
+      drifted.push({ relativePath: `${manifest.docsDir}/CATALOG.md`, status: "deleted" });
+    }
+    const trackedDocsSet = new Set(docsFiles.map((f) => f.relativePath));
+    drifted.push(...(await this.detectAddedDocs(manifest.docsDir, trackedDocsSet, projectRoot)));
+    return { version: docsVersion, drifted };
+  }
+
+  private async detectAddedFiles(
+    directory: string,
+    trackedSet: Set<string>,
+    projectRoot: string
+  ): Promise<FileDrift[]> {
+    const toolDir = join(projectRoot, directory);
+    if (!(await this.fs.fileExists(toolDir))) return [];
+    const added: FileDrift[] = [];
+    const diskFiles = await this.fs.listDirectory(toolDir);
+    for (const diskRelPath of diskFiles) {
+      if (diskRelPath.endsWith(".backup")) continue;
+      const fullRelPath = `${directory}${diskRelPath}`;
+      if (!trackedSet.has(fullRelPath)) added.push({ relativePath: fullRelPath, status: "added" });
+    }
+    return added;
+  }
+
+  private async detectAddedDocs(
+    docsDir: string,
+    trackedSet: Set<string>,
+    projectRoot: string
+  ): Promise<FileDrift[]> {
+    const dir = join(projectRoot, docsDir);
+    if (!(await this.fs.fileExists(dir))) return [];
+    const added: FileDrift[] = [];
+    const diskFiles = await this.fs.listDirectory(dir);
+    for (const diskRelPath of diskFiles) {
+      if (diskRelPath.endsWith(".backup") || diskRelPath === "CATALOG.md") continue;
+      const fullRelPath = `${docsDir}/${diskRelPath}`;
+      if (!trackedSet.has(fullRelPath)) added.push({ relativePath: fullRelPath, status: "added" });
+    }
+    return added;
+  }
+
+  private async checkMergeFiles(
+    mergeFiles: readonly MergeFileEntry[],
+    projectRoot: string
+  ): Promise<FileDrift[]> {
+    const drifted: FileDrift[] = [];
+    for (const mergeFile of mergeFiles) {
+      drifted.push(...(await this.checkOneMergeFile(mergeFile, projectRoot)));
+    }
+    return drifted;
+  }
+
+  private async checkOneMergeFile(
+    mergeFile: MergeFileEntry,
+    projectRoot: string
+  ): Promise<FileDrift[]> {
+    const fullPath = join(projectRoot, mergeFile.relativePath);
+    if (!(await this.fs.fileExists(fullPath))) {
+      return Object.keys(mergeFile.entries).map((key) => ({
+        relativePath: `${mergeFile.relativePath} > ${key}`,
+        status: "deleted" as const,
+      }));
+    }
+    const diskContent = await this.fs.readFile(fullPath);
+    const diskEntries = extractMergeEntries(diskContent, mergeFile.sectionKey, this.hasher);
+    return this.compareMergeEntries(mergeFile, diskEntries);
+  }
+
+  private compareMergeEntries(
+    mergeFile: MergeFileEntry,
+    diskEntries: Record<string, FileHash>
+  ): FileDrift[] {
+    const drifted: FileDrift[] = [];
+    for (const [key, manifestHash] of Object.entries(mergeFile.entries)) {
+      const diskHash = diskEntries[key];
+      if (!diskHash) {
+        drifted.push({ relativePath: `${mergeFile.relativePath} > ${key}`, status: "deleted" });
+      } else if (!diskHash.equals(manifestHash)) {
+        drifted.push({ relativePath: `${mergeFile.relativePath} > ${key}`, status: "modified" });
+      }
+    }
+    return drifted;
   }
 
   private async checkTrackedFiles(

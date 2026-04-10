@@ -23,6 +23,14 @@ paths:
 - Always save via `PostInstallPipelineUseCase` (or directly for `InitUseCase` which skips step 1)
 - Never call `manifestRepo.save()` in isolation outside the pipeline
 
+## Merge file tracking
+
+- Merge config files tracked in `ToolEntry.mergeFiles` (not in `files`)
+- Per-entry hashes via `extractMergeEntries(content, sectionKey, hasher)`
+- Framework content may be JSONC — `extractMergeEntries` strips comments
+- `isFileTracked()` checks both `files` and `mergeFiles`
+- Uninstall/clean must delete merge files alongside regular files
+
 ## Field ownership
 
 - Writable: `docsDir`, `repo`

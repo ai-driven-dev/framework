@@ -51,6 +51,7 @@ export interface RulesHandler {
 export interface ConfigHandler {
   outputPath(configName: string): string | null;
   mergeStrategy(configName: string): MergeStrategy;
+  entrySection(configName: string): string | null;
   transformContent?(configName: string, content: string): string;
   resolveOutputPath?(
     configName: string,

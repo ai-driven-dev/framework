@@ -40,7 +40,7 @@ export function registerStatusCommand(program: Command): void {
         const filterToolId = cmdOptions.tool as ToolId | undefined;
         const filterDocs = cmdOptions.docs ?? false;
 
-        const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
+        const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
         const report = await useCase.execute({
           projectRoot,
           filterToolId,

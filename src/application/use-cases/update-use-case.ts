@@ -5,9 +5,16 @@ import { generateDistribution } from "../../domain/models/distribution.js";
 import { buildDocsDistribution } from "../../domain/models/docs.js";
 import type { FileDiff } from "../../domain/models/file-diff.js";
 import type { FileHash } from "../../domain/models/file-hash.js";
+import type { ConfigRef } from "../../domain/models/framework-descriptor.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
-import { getToolConfig, type ToolId } from "../../domain/models/tool-config.js";
+import {
+  buildConfigNameLookup,
+  buildMergeFileEntries,
+  extractMergeEntries,
+  type MergeFileEntry,
+} from "../../domain/models/merge-entry.js";
+import { type ConfigHandler, getToolConfig, type ToolId } from "../../domain/models/tool-config.js";
 import { formatToolScopeValue, parseUpdateScope } from "../../domain/models/update-scope.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
@@ -70,6 +77,12 @@ interface ApplyDiffResult {
   deleted: string[];
   backedUp: string[];
   userFileConflicts: string[];
+}
+
+interface MergeEntryDiff {
+  relativePath: string;
+  sectionKey: string | null;
+  dropped: Array<{ key: string; conflict: boolean }>;
 }
 
 interface InternalUpdateOptions {
@@ -320,7 +333,7 @@ export class UpdateUseCase {
     version: string,
     internal: InternalUpdateOptions
   ): Promise<UpdateToolResult> {
-    const { dryRun, force, conflictResolution } = internal;
+    const { dryRun } = internal;
     const config = getToolConfig(toolId);
     const manifestFiles = manifest.getToolFiles(toolId);
     const manifestMap = new Map(manifestFiles.map((f) => [f.relativePath, f.hash]));
@@ -337,24 +350,34 @@ export class UpdateUseCase {
     const newDistMap = new Map(newDistribution.map((f) => [f.relativePath, f]));
     const diff = await this.computeDiff(newDistribution, newDistMap, manifestMap, projectRoot);
 
-    let result: ApplyDiffResult = this.emptyApplyDiffResult();
+    const configHandler = config.config();
+    const entryDiffs = await this.computeMergeEntryDiff(
+      toolId,
+      newDistribution,
+      manifest,
+      configHandler,
+      descriptor.configRefs,
+      projectRoot
+    );
 
-    if (!dryRun) {
-      const mergedHashMap = await this.applyMergeFiles(newDistribution, projectRoot, manifest);
-      const conflictDecisions = await this.resolveConflicts(diff, force, conflictResolution);
-      result = await this.applyDiff(diff, newDistMap, projectRoot, conflictDecisions, manifest);
-      this.warnUserFileConflicts(result.userFileConflicts);
-      this.registerToolFiles(
-        toolId,
-        version,
-        manifest,
-        newDistribution,
-        manifestFiles,
-        result,
-        mergedHashMap,
-        newDistMap
-      );
-    }
+    const result = dryRun
+      ? this.emptyApplyDiffResult()
+      : await this.applyToolUpdate(
+          toolId,
+          version,
+          manifest,
+          newDistribution,
+          newDistMap,
+          manifestFiles,
+          diff,
+          entryDiffs,
+          configHandler,
+          descriptor.configRefs,
+          projectRoot,
+          internal
+        );
+
+    this.appendEntryDiffs(diff, entryDiffs);
 
     return {
       toolId,
@@ -365,8 +388,53 @@ export class UpdateUseCase {
     };
   }
 
+  private async applyToolUpdate(
+    toolId: ToolId,
+    version: string,
+    manifest: Manifest,
+    newDistribution: GeneratedFile[],
+    newDistMap: Map<string, GeneratedFile>,
+    manifestFiles: ReadonlyArray<{ relativePath: string; hash: FileHash }>,
+    diff: FileDiff[],
+    entryDiffs: MergeEntryDiff[],
+    configHandler: ConfigHandler,
+    configRefs: readonly ConfigRef[],
+    projectRoot: string,
+    internal: InternalUpdateOptions
+  ): Promise<ApplyDiffResult> {
+    const { force, conflictResolution } = internal;
+    await this.applyMergeFiles(newDistribution, projectRoot);
+    const conflictDecisions = await this.resolveConflicts(diff, force, conflictResolution);
+    const result = await this.applyDiff(diff, newDistMap, projectRoot, conflictDecisions, manifest);
+    this.warnUserFileConflicts(result.userFileConflicts);
+    await this.applySurgicalRemovals(entryDiffs, projectRoot, force, conflictResolution);
+    const mergeFiles = this.buildUpdatedMergeEntries(newDistribution, configHandler, configRefs);
+    this.registerToolFiles(
+      toolId,
+      version,
+      manifest,
+      newDistribution,
+      manifestFiles,
+      result,
+      mergeFiles
+    );
+    return result;
+  }
+
   private emptyApplyDiffResult(): ApplyDiffResult {
     return { kept: [], written: [], deleted: [], backedUp: [], userFileConflicts: [] };
+  }
+
+  private appendEntryDiffs(diff: FileDiff[], entryDiffs: MergeEntryDiff[]): void {
+    for (const entry of entryDiffs) {
+      for (const { key, conflict } of entry.dropped) {
+        diff.push({
+          relativePath: `${entry.relativePath} > ${key}`,
+          kind: "removed",
+          conflict,
+        });
+      }
+    }
   }
 
   private warnUserFileConflicts(conflicts: string[]): void {
@@ -379,19 +447,13 @@ export class UpdateUseCase {
 
   private async applyMergeFiles(
     newDistribution: GeneratedFile[],
-    projectRoot: string,
-    manifest: Manifest
-  ): Promise<Map<string, FileHash>> {
-    const mergedHashMap = new Map<string, FileHash>();
+    projectRoot: string
+  ): Promise<void> {
     for (const newFile of newDistribution) {
       if (newFile.mergeStrategy === "none") continue;
       const outputPath = join(projectRoot, newFile.relativePath);
       await this.fs.mergeJsonFile(outputPath, newFile.content, newFile.mergeStrategy);
-      const diskHash = await this.fs.readFileHash(outputPath);
-      manifest.syncFileHashAcrossTools(newFile.relativePath, diskHash);
-      mergedHashMap.set(newFile.relativePath, diskHash);
     }
-    return mergedHashMap;
   }
 
   private registerToolFiles(
@@ -401,8 +463,7 @@ export class UpdateUseCase {
     newDistribution: GeneratedFile[],
     manifestFiles: ReadonlyArray<{ relativePath: string; hash: FileHash }>,
     result: ApplyDiffResult,
-    mergedHashMap: Map<string, FileHash>,
-    newDistMap: Map<string, GeneratedFile>
+    mergeFiles: MergeFileEntry[]
   ): void {
     const nonMergedFinal = newDistribution
       .filter((f) => f.mergeStrategy === "none")
@@ -415,13 +476,174 @@ export class UpdateUseCase {
     const keptFiles = manifestFiles
       .filter((f) => result.kept.includes(f.relativePath))
       .map((f) => new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash }));
-    const mergedFiles = manifestFiles
-      .filter((f) => newDistMap.get(f.relativePath)?.mergeStrategy !== "none")
-      .map((f) => {
-        const hash = mergedHashMap.get(f.relativePath) ?? f.hash;
-        return new GeneratedFile({ relativePath: f.relativePath, content: "", hash });
-      });
-    manifest.addTool(toolId, version, [...nonMergedFinal, ...keptFiles, ...mergedFiles]);
+    manifest.addTool(toolId, version, [...nonMergedFinal, ...keptFiles], mergeFiles);
+  }
+
+  private async computeMergeEntryDiff(
+    toolId: ToolId,
+    newDistribution: GeneratedFile[],
+    manifest: Manifest,
+    configHandler: ConfigHandler,
+    configRefs: readonly ConfigRef[],
+    projectRoot: string
+  ): Promise<MergeEntryDiff[]> {
+    const configNameLookup = buildConfigNameLookup(configRefs);
+    const diffs: MergeEntryDiff[] = [];
+    for (const manifestEntry of manifest.getMergeFiles(toolId)) {
+      const diff = await this.diffOneMergeFile(
+        manifestEntry,
+        newDistribution,
+        configHandler,
+        configNameLookup,
+        projectRoot
+      );
+      if (diff.dropped.length > 0) diffs.push(diff);
+    }
+    return diffs;
+  }
+
+  private async diffOneMergeFile(
+    manifestEntry: MergeFileEntry,
+    newDistribution: GeneratedFile[],
+    configHandler: ConfigHandler,
+    pathToConfigName: Map<string, string>,
+    projectRoot: string
+  ): Promise<MergeEntryDiff> {
+    const newFile = newDistribution.find(
+      (f) => f.relativePath === manifestEntry.relativePath && f.mergeStrategy !== "none"
+    );
+    const newEntries = this.extractNewEntries(newFile, configHandler, pathToConfigName);
+    const dropped = await this.findDroppedEntries(manifestEntry, newEntries, projectRoot);
+    return {
+      relativePath: manifestEntry.relativePath,
+      sectionKey: manifestEntry.sectionKey,
+      dropped,
+    };
+  }
+
+  private extractNewEntries(
+    newFile: GeneratedFile | undefined,
+    configHandler: ConfigHandler,
+    pathToConfigName: Map<string, string>
+  ): Set<string> {
+    if (!newFile) return new Set();
+    const configName = newFile.frameworkPath
+      ? pathToConfigName.get(newFile.frameworkPath)
+      : undefined;
+    const sectionKey = configName ? configHandler.entrySection(configName) : null;
+    const entries = extractMergeEntries(newFile.content, sectionKey, this.hasher);
+    return new Set(Object.keys(entries));
+  }
+
+  private async findDroppedEntries(
+    manifestEntry: MergeFileEntry,
+    newEntryKeys: Set<string>,
+    projectRoot: string
+  ): Promise<Array<{ key: string; conflict: boolean }>> {
+    const diskEntries = await this.readDiskEntries(manifestEntry, projectRoot);
+    const dropped: Array<{ key: string; conflict: boolean }> = [];
+    for (const [key, manifestHash] of Object.entries(manifestEntry.entries)) {
+      if (newEntryKeys.has(key)) continue;
+      const diskHash = diskEntries[key];
+      const conflict = diskHash !== undefined && !diskHash.equals(manifestHash);
+      dropped.push({ key, conflict });
+    }
+    return dropped;
+  }
+
+  private async readDiskEntries(
+    mergeFile: MergeFileEntry,
+    projectRoot: string
+  ): Promise<Record<string, FileHash>> {
+    const fullPath = join(projectRoot, mergeFile.relativePath);
+    if (!(await this.fs.fileExists(fullPath))) return {};
+    const diskContent = await this.fs.readFile(fullPath);
+    return extractMergeEntries(diskContent, mergeFile.sectionKey, this.hasher);
+  }
+
+  private async applySurgicalRemovals(
+    entryDiffs: MergeEntryDiff[],
+    projectRoot: string,
+    force: boolean,
+    conflictResolution: ConflictResolutionUseCase
+  ): Promise<void> {
+    for (const diff of entryDiffs) {
+      await this.removeMergeEntries(diff, projectRoot, force, conflictResolution);
+    }
+  }
+
+  private async removeMergeEntries(
+    diff: MergeEntryDiff,
+    projectRoot: string,
+    force: boolean,
+    conflictResolution: ConflictResolutionUseCase
+  ): Promise<void> {
+    const fullPath = join(projectRoot, diff.relativePath);
+    if (!(await this.fs.fileExists(fullPath))) return;
+    const hasConflicts = diff.dropped.some((d) => d.conflict);
+    const keysToRemove = await this.resolveEntryRemovals(
+      diff.dropped,
+      diff.relativePath,
+      force,
+      conflictResolution
+    );
+    if (keysToRemove.length === 0) return;
+    if (hasConflicts && force) await this.fs.backup(fullPath);
+    await this.removeKeysFromJsonFile(fullPath, diff.sectionKey, keysToRemove);
+  }
+
+  private async resolveEntryRemovals(
+    dropped: Array<{ key: string; conflict: boolean }>,
+    relativePath: string,
+    force: boolean,
+    conflictResolution: ConflictResolutionUseCase
+  ): Promise<string[]> {
+    const keysToRemove: string[] = [];
+    for (const { key, conflict } of dropped) {
+      if (!conflict) {
+        keysToRemove.push(key);
+        continue;
+      }
+      if (force) {
+        keysToRemove.push(key);
+        continue;
+      }
+      const entryPath = `${relativePath} > ${key}`;
+      const decisions = await conflictResolution.execute([entryPath]);
+      const decision = decisions.get(entryPath) ?? "skip";
+      if (decision !== "skip") keysToRemove.push(key);
+    }
+    return keysToRemove;
+  }
+
+  private async removeKeysFromJsonFile(
+    fullPath: string,
+    sectionKey: string | null,
+    keysToRemove: string[]
+  ): Promise<void> {
+    const content = await this.fs.readFile(fullPath);
+    const parsed = JSON.parse(content) as Record<string, unknown>;
+    const container =
+      sectionKey !== null
+        ? ((parsed[sectionKey] as Record<string, unknown> | undefined) ?? {})
+        : parsed;
+    for (const key of keysToRemove) {
+      delete (container as Record<string, unknown>)[key];
+    }
+    await this.fs.writeFile(fullPath, JSON.stringify(parsed, null, 2));
+  }
+
+  private buildUpdatedMergeEntries(
+    newDistribution: GeneratedFile[],
+    configHandler: ConfigHandler,
+    configRefs: readonly ConfigRef[]
+  ): MergeFileEntry[] {
+    return buildMergeFileEntries(
+      newDistribution,
+      configHandler,
+      buildConfigNameLookup(configRefs),
+      this.hasher
+    );
   }
 
   private buildTotals(

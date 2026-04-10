@@ -2,10 +2,10 @@
 
 ## Status
 
-- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4)
+- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4) + per-entry hash tracking for merge files
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
-- `tests/` — 932 tests, all passing
-- Next: vNext interactive mode (not yet specified — do not implement until vision is stabilized)
+- `tests/` — 964 tests, all passing
+- Next: granular MCP server selection (ai-driven-dev/aidd#259)
 
 ## Command Output Paths (per tool)
 
@@ -79,7 +79,8 @@ src/
 │   │   ├── framework-descriptor.ts     # framework layout code model (no framework.json file)
 │   │   ├── frontmatter.ts              # frontmatter parsing/conversion
 │   │   ├── generated-file.ts           # file + hash + merge flag
-│   │   ├── manifest.ts                 # aggregate root (persisted at .aidd/manifest.json); fields: docsDir, repo?, tools, docs
+│   │   ├── manifest.ts                 # aggregate root (persisted at .aidd/manifest.json); fields: docsDir, repo?, tools, docs; ToolEntry has mergeFiles
+│   │   ├── merge-entry.ts             # MergeFileEntry value object, extractMergeEntries, buildMergeFileEntries
 │   │   ├── mcp.ts                      # MCP config transformation for Windows command path fixes
 │   │   ├── semver.ts                   # semantic version parsing & comparison for update checks
 │   │   ├── sync-exclusions.ts          # SYNC_EXCLUDED_FILES, isSyncExcluded — sync skip list

@@ -44,7 +44,7 @@ export class CleanUseCase {
 
     const tools = manifest.getInstalledToolIds().map((toolId) => ({
       toolId,
-      fileCount: manifest.getToolFiles(toolId).length,
+      fileCount: manifest.getToolFiles(toolId).length + manifest.getMergeFiles(toolId).length,
     }));
     const docsFileCount = manifest.getDocsFiles().length;
     const totalFileCount = tools.reduce((s, t) => s + t.fileCount, 0) + docsFileCount;
@@ -65,6 +65,7 @@ export class CleanUseCase {
     for (const toolId of manifest.getInstalledToolIds()) {
       this.logger.info(`Removing ${toolId} files...`);
       deleted += await this.deleteFiles(manifest.getToolFiles(toolId), options.projectRoot);
+      deleted += await this.deleteFiles(manifest.getMergeFiles(toolId), options.projectRoot);
     }
 
     this.logger.info("Removing docs files...");

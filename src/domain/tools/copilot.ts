@@ -265,6 +265,10 @@ export const copilotToolConfig: ToolConfig = {
         if (configName === CONFIG_VSCODE_SETTINGS) return "framework-prime";
         return "none";
       },
+      entrySection(configName: string): string | null {
+        if (configName === CONFIG_MCP) return "servers";
+        return null;
+      },
     };
   },
 

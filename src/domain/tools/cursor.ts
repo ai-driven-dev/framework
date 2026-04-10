@@ -110,6 +110,10 @@ export const cursorToolConfig: ToolConfig = {
         if (configName === CONFIG_MCP) return "user-prime";
         return "none";
       },
+      entrySection(configName: string): string | null {
+        if (configName === CONFIG_MCP) return "mcpServers";
+        return null;
+      },
     };
   },
 

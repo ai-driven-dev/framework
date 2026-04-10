@@ -1,9 +1,16 @@
 import { join } from "node:path";
 import { generateDistribution } from "../../domain/models/distribution.js";
-import { GeneratedFile } from "../../domain/models/generated-file.js";
+import type { ConfigRef } from "../../domain/models/framework-descriptor.js";
+import type { GeneratedFile } from "../../domain/models/generated-file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
 import {
+  buildConfigNameLookup,
+  buildMergeFileEntries,
+  type MergeFileEntry,
+} from "../../domain/models/merge-entry.js";
+import {
   assertValidToolIds,
+  type ConfigHandler,
   getToolConfig,
   type ToolId,
   VALID_TOOL_IDS,
@@ -170,17 +177,15 @@ export class InstallUseCase {
 
     await this.removeStaleFiles(toolId, manifest, generated, projectRoot);
 
-    const { files: finalFiles, userFileConflicts } = await this.writeToolFiles(
-      generated,
-      projectRoot,
-      manifest
-    );
-    for (const relativePath of userFileConflicts) {
+    const configHandler = config.config();
+    const writeResult = await this.writeToolFiles(generated, projectRoot, manifest);
+    for (const relativePath of writeResult.userFileConflicts) {
       warnings.push(
         `\`${relativePath}\` already exists and was not installed by AIDD — skipped to preserve user file`
       );
     }
-    manifest.addTool(toolId, descriptor.version, finalFiles);
+    const mergeFiles = this.buildMergeEntries(generated, configHandler, descriptor.configRefs);
+    manifest.addTool(toolId, descriptor.version, writeResult.files, mergeFiles);
 
     return { toolId, fileCount: generated.length, files: generated, skipped: false, warnings };
   }
@@ -217,6 +222,11 @@ export class InstallUseCase {
         await this.fs.deleteFile(join(projectRoot, oldFile.relativePath));
       }
     }
+    for (const oldMerge of manifest.getMergeFiles(toolId)) {
+      if (!newPaths.has(oldMerge.relativePath)) {
+        await this.fs.deleteFile(join(projectRoot, oldMerge.relativePath));
+      }
+    }
   }
 
   private async writeToolFiles(
@@ -224,32 +234,47 @@ export class InstallUseCase {
     projectRoot: string,
     manifest: Manifest
   ): Promise<{ files: GeneratedFile[]; userFileConflicts: string[] }> {
-    const filesByPath = new Map<string, GeneratedFile>();
+    const regularFiles: GeneratedFile[] = [];
     const userFileConflicts: string[] = [];
     for (const file of generated) {
-      const outputPath = join(projectRoot, file.relativePath);
       if (file.mergeStrategy !== "none") {
-        await this.fs.mergeJsonFile(outputPath, file.content, file.mergeStrategy);
-        const diskHash = await this.fs.readFileHash(outputPath);
-        manifest.syncFileHashAcrossTools(file.relativePath, diskHash);
-        filesByPath.set(
-          file.relativePath,
-          new GeneratedFile({
-            relativePath: file.relativePath,
-            content: file.content,
-            hash: diskHash,
-            mergeStrategy: file.mergeStrategy,
-          })
+        await this.fs.mergeJsonFile(
+          join(projectRoot, file.relativePath),
+          file.content,
+          file.mergeStrategy
         );
-      } else {
-        if ((await this.fs.fileExists(outputPath)) && !manifest.isFileTracked(file.relativePath)) {
-          userFileConflicts.push(file.relativePath);
-          continue;
-        }
-        await this.fs.writeFile(outputPath, file.content);
-        filesByPath.set(file.relativePath, file);
+        continue;
       }
+      const conflict = await this.detectUserFileConflict(file, projectRoot, manifest);
+      if (conflict) {
+        userFileConflicts.push(file.relativePath);
+        continue;
+      }
+      await this.fs.writeFile(join(projectRoot, file.relativePath), file.content);
+      regularFiles.push(file);
     }
-    return { files: [...filesByPath.values()], userFileConflicts };
+    return { files: regularFiles, userFileConflicts };
+  }
+
+  private async detectUserFileConflict(
+    file: GeneratedFile,
+    projectRoot: string,
+    manifest: Manifest
+  ): Promise<boolean> {
+    const outputPath = join(projectRoot, file.relativePath);
+    return (await this.fs.fileExists(outputPath)) && !manifest.isFileTracked(file.relativePath);
+  }
+
+  private buildMergeEntries(
+    generated: GeneratedFile[],
+    configHandler: ConfigHandler,
+    configRefs: readonly ConfigRef[]
+  ): MergeFileEntry[] {
+    return buildMergeFileEntries(
+      generated,
+      configHandler,
+      buildConfigNameLookup(configRefs),
+      this.hasher
+    );
   }
 }

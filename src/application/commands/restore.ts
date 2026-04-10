@@ -80,7 +80,12 @@ export function registerRestoreCommand(program: Command): void {
             isTTY;
 
           if (isInteractive) {
-            const statusUseCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
+            const statusUseCase = new StatusUseCase(
+              deps.fs,
+              deps.manifestRepo,
+              deps.logger,
+              deps.hasher
+            );
             const statusReport = await statusUseCase.execute({
               projectRoot,
               repo: repo,

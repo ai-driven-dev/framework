@@ -166,6 +166,10 @@ export const opencodeToolConfig: ToolConfig = {
         if (handler.outputPath(configName) !== null) return "framework-prime";
         return "none";
       },
+      entrySection(configName: string): string | null {
+        if (configName === CONFIG_MCP || configName === CONFIG_OPENCODE) return "mcp";
+        return null;
+      },
       transformContent(configName: string, content: string): string {
         if (configName === CONFIG_MCP) return transformMcpToOpencode(content);
         return content;

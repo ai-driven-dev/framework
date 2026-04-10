@@ -53,18 +53,21 @@ export class UninstallUseCase {
       const remainingToolIds = manifest
         .getInstalledToolIds()
         .filter((id) => id !== toolId && !toolIds.includes(id));
-      const sharedPaths = new Set(
-        remainingToolIds.flatMap((id) => manifest.getToolFiles(id).map((f) => f.relativePath))
-      );
+      const sharedPaths = new Set([
+        ...remainingToolIds.flatMap((id) => manifest.getToolFiles(id).map((f) => f.relativePath)),
+        ...remainingToolIds.flatMap((id) => manifest.getMergeFiles(id).map((m) => m.relativePath)),
+      ]);
 
-      const files = manifest.getToolFiles(toolId);
+      const filePaths = manifest.getToolFiles(toolId).map((f) => f.relativePath);
+      const mergePaths = manifest.getMergeFiles(toolId).map((m) => m.relativePath);
+      const allPaths = [...filePaths, ...mergePaths];
       const deletedFiles: string[] = [];
 
-      for (const file of files) {
-        if (sharedPaths.has(file.relativePath)) continue;
-        const fullPath = join(projectRoot, file.relativePath);
+      for (const relativePath of allPaths) {
+        if (sharedPaths.has(relativePath)) continue;
+        const fullPath = join(projectRoot, relativePath);
         await this.fs.deleteFile(fullPath);
-        deletedFiles.push(file.relativePath);
+        deletedFiles.push(relativePath);
         await this.fs.deleteEmptyDirectories(dirname(fullPath));
       }
 

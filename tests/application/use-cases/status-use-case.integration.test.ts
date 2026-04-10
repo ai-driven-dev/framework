@@ -1,4 +1,4 @@
-import { rm, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
@@ -49,7 +49,7 @@ describe("status", () => {
       projectRoot,
     });
 
-    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
     const report = await useCase.execute({ projectRoot });
 
     expect(report.inSync).toBe(true);
@@ -67,7 +67,7 @@ describe("status", () => {
 
     await writeFile(join(projectRoot, "aidd_docs", "extra-untracked.md"), "extra", "utf-8");
 
-    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
     const report = await useCase.execute({ projectRoot });
 
     expect(report.inSync).toBe(false);
@@ -82,7 +82,7 @@ describe("status", () => {
 
     await rm(join(projectRoot, "aidd_docs", "CATALOG.md"));
 
-    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
     const report = await useCase.execute({ projectRoot });
 
     expect(report.inSync).toBe(false);
@@ -107,11 +107,176 @@ describe("status", () => {
       projectRoot,
     });
 
-    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
     const report = await useCase.execute({ projectRoot });
 
     expect(report.tools).toHaveLength(0);
     expect(report.inSync).toBe(true);
+  });
+
+  describe("per-entry merge file drift", () => {
+    it("reports no drift when framework MCP entries are unmodified", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const installUseCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+      await installUseCase.execute({
+        toolIds: ["claude" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
+      const report = await useCase.execute({ projectRoot });
+
+      expect(report.inSync).toBe(true);
+    });
+
+    it("ignores user-added MCP servers (no drift reported)", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const installUseCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+      await installUseCase.execute({
+        toolIds: ["claude" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const mcpPath = join(projectRoot, ".mcp.json");
+      const mcpContent = JSON.parse(await readFile(mcpPath, "utf-8"));
+      mcpContent.mcpServers.customServer = { command: "custom-mcp" };
+      await writeFile(mcpPath, JSON.stringify(mcpContent, null, 2));
+
+      const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
+      const report = await useCase.execute({ projectRoot });
+
+      const mcpDrift = report.tools[0].drifted.filter((d) => d.relativePath.includes(".mcp.json"));
+      expect(mcpDrift).toHaveLength(0);
+    });
+
+    it("detects modified framework MCP server entry", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const installUseCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+      await installUseCase.execute({
+        toolIds: ["claude" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const mcpPath = join(projectRoot, ".mcp.json");
+      const mcpContent = JSON.parse(await readFile(mcpPath, "utf-8"));
+      mcpContent.mcpServers.playwright.args = ["-y", "modified-pkg"];
+      await writeFile(mcpPath, JSON.stringify(mcpContent, null, 2));
+
+      const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
+      const report = await useCase.execute({ projectRoot });
+
+      const modified = report.tools[0].drifted.find(
+        (d) => d.status === "modified" && d.relativePath.includes("playwright")
+      );
+      expect(modified).toBeDefined();
+      expect(modified?.relativePath).toBe(".mcp.json > playwright");
+    });
+
+    it("detects deleted framework MCP server entry", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const installUseCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+      await installUseCase.execute({
+        toolIds: ["claude" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const mcpPath = join(projectRoot, ".mcp.json");
+      const mcpContent = JSON.parse(await readFile(mcpPath, "utf-8"));
+      delete mcpContent.mcpServers.playwright;
+      await writeFile(mcpPath, JSON.stringify(mcpContent, null, 2));
+
+      const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
+      const report = await useCase.execute({ projectRoot });
+
+      const deleted = report.tools[0].drifted.find(
+        (d) => d.status === "deleted" && d.relativePath.includes("playwright")
+      );
+      expect(deleted).toBeDefined();
+    });
+
+    it("reports all entries as deleted when entire merge file is removed", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const installUseCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+      await installUseCase.execute({
+        toolIds: ["claude" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      await rm(join(projectRoot, ".mcp.json"));
+
+      const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
+      const report = await useCase.execute({ projectRoot });
+
+      const deletedEntries = report.tools[0].drifted.filter(
+        (d) => d.status === "deleted" && d.relativePath.includes(".mcp.json >")
+      );
+      expect(deletedEntries.length).toBeGreaterThanOrEqual(2);
+    });
   });
 
   describe("compareSemver()", () => {
