@@ -1,9 +1,10 @@
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { InstallUseCase } from "../../../src/application/use-cases/install-use-case.js";
 import type { ToolId } from "../../../src/domain/models/tool-config.js";
+import type { Prompter } from "../../../src/domain/ports/prompter.js";
 import {
   buildDeps,
   cleanupTempProject,
@@ -11,6 +12,7 @@ import {
   FIXTURE_DIR,
   FIXTURE_DIR_V2,
   initProject,
+  KeepPrompter,
   linuxPlatform,
   noGit,
   win32Platform,
@@ -774,6 +776,148 @@ describe("install", () => {
       const claudeFiles = data.tools.claude.files;
       expect(claudeFiles.find((f) => f.relativePath === ".mcp.json")).toBeUndefined();
       expect(claudeFiles.find((f) => f.relativePath === ".vscode/settings.json")).toBeUndefined();
+    });
+  });
+
+  describe("MCP selection", () => {
+    it("installs only selected MCP servers when mcpFilter is provided", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+
+      await useCase.execute({
+        toolIds: ["claude" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        mcpFilter: ["playwright"],
+      });
+
+      const mcpContent = await readFile(join(projectRoot, ".mcp.json"), "utf-8");
+      const mcp = JSON.parse(mcpContent) as { mcpServers: Record<string, unknown> };
+      expect(mcp.mcpServers).toHaveProperty("playwright");
+      expect(mcp.mcpServers).not.toHaveProperty("github");
+
+      const manifestRaw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const manifest = JSON.parse(manifestRaw) as {
+        tools: Record<string, { excludedMcp?: Array<{ configPath: string; entryKey: string }> }>;
+      };
+      const excluded = manifest.tools.claude.excludedMcp ?? [];
+      expect(excluded).toContainEqual({ configPath: ".mcp.json", entryKey: "github" });
+    });
+
+    it("prompts for MCP selection in interactive mode", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const keepPrompter = new KeepPrompter();
+      const checkboxMock = vi.fn().mockResolvedValue(["playwright"]);
+      const mockPrompter = Object.create(keepPrompter) as Prompter;
+      mockPrompter.checkbox = checkboxMock;
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform,
+        mockPrompter
+      );
+
+      await useCase.execute({
+        toolIds: ["claude" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        interactive: true,
+      });
+
+      expect(checkboxMock).toHaveBeenCalledWith(
+        "Which MCP servers do you want to install?",
+        expect.arrayContaining([
+          expect.objectContaining({ name: "playwright", checked: true }),
+          expect.objectContaining({ name: "github", checked: true }),
+        ])
+      );
+
+      const mcpContent = await readFile(join(projectRoot, ".mcp.json"), "utf-8");
+      const mcp = JSON.parse(mcpContent) as { mcpServers: Record<string, unknown> };
+      expect(mcp.mcpServers).toHaveProperty("playwright");
+      expect(mcp.mcpServers).not.toHaveProperty("github");
+    });
+
+    it("installs all MCP servers in non-interactive mode without mcpFilter", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+
+      await useCase.execute({
+        toolIds: ["claude" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        interactive: false,
+      });
+
+      const mcpContent = await readFile(join(projectRoot, ".mcp.json"), "utf-8");
+      const mcp = JSON.parse(mcpContent) as { mcpServers: Record<string, unknown> };
+      expect(mcp.mcpServers).toHaveProperty("playwright");
+      expect(mcp.mcpServers).toHaveProperty("github");
+
+      const manifestRaw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const manifest = JSON.parse(manifestRaw) as {
+        tools: Record<string, { excludedMcp?: Array<{ configPath: string; entryKey: string }> }>;
+      };
+      expect(manifest.tools.claude.excludedMcp).toBeUndefined();
+    });
+
+    it("throws when mcpFilter contains an unknown server name", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+
+      await expect(
+        useCase.execute({
+          toolIds: ["claude" as ToolId],
+          frameworkPath: FIXTURE_DIR,
+          version: "test",
+          docsDir: "aidd_docs",
+          projectRoot,
+          mcpFilter: ["nonexistent"],
+        })
+      ).rejects.toThrow("Unknown MCP server(s): nonexistent");
     });
   });
 });

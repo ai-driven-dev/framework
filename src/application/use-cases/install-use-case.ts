@@ -1,12 +1,14 @@
 import { join } from "node:path";
 import { generateDistribution } from "../../domain/models/distribution.js";
 import type { ConfigRef } from "../../domain/models/framework-descriptor.js";
-import type { GeneratedFile } from "../../domain/models/generated-file.js";
+import { GeneratedFile } from "../../domain/models/generated-file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
+import type { McpExclusion } from "../../domain/models/mcp-exclusion.js";
 import {
   buildConfigNameLookup,
   buildMergeFileEntries,
   type MergeFileEntry,
+  parseEntryKeys,
 } from "../../domain/models/merge-entry.js";
 import {
   assertValidToolIds,
@@ -36,6 +38,7 @@ interface InstallOptions {
   force?: boolean;
   repo?: string;
   interactive?: boolean;
+  mcpFilter?: string[];
 }
 
 export interface InstallToolResult {
@@ -79,7 +82,9 @@ export class InstallUseCase {
       contentFiles,
       docsDir,
       projectRoot,
-      force
+      force,
+      options.interactive ?? false,
+      options.mcpFilter
     );
 
     await new PostInstallPipelineUseCase(
@@ -100,7 +105,9 @@ export class InstallUseCase {
     contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
     docsDir: string,
     projectRoot: string,
-    force: boolean
+    force: boolean,
+    interactive: boolean,
+    mcpFilter?: string[]
   ): Promise<InstallToolResult[]> {
     const results: InstallToolResult[] = [];
     for (const toolId of toolIds) {
@@ -111,7 +118,9 @@ export class InstallUseCase {
         contentFiles,
         docsDir,
         projectRoot,
-        force
+        force,
+        interactive,
+        mcpFilter
       );
       results.push(result);
     }
@@ -153,7 +162,9 @@ export class InstallUseCase {
     contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
     docsDir: string,
     projectRoot: string,
-    force: boolean
+    force: boolean,
+    interactive: boolean,
+    mcpFilter?: string[]
   ): Promise<InstallToolResult> {
     if (manifest.hasTool(toolId) && !force) {
       return { toolId, fileCount: 0, files: [], skipped: true, warnings: [] };
@@ -178,16 +189,27 @@ export class InstallUseCase {
     await this.removeStaleFiles(toolId, manifest, generated, projectRoot);
 
     const configHandler = config.config();
-    const writeResult = await this.writeToolFiles(generated, projectRoot, manifest);
+    const configNameLookup = buildConfigNameLookup(descriptor.configRefs);
+    const availableMcp = this.extractAvailableMcpKeys(generated, configHandler, configNameLookup);
+    const selectedMcp = await this.resolveMcpSelection(availableMcp, interactive, mcpFilter);
+    const filtered = this.applyMcpFilter(generated, configHandler, configNameLookup, selectedMcp);
+
+    const writeResult = await this.writeToolFiles(filtered, projectRoot, manifest);
     for (const relativePath of writeResult.userFileConflicts) {
       warnings.push(
         `\`${relativePath}\` already exists and was not installed by AIDD — skipped to preserve user file`
       );
     }
-    const mergeFiles = this.buildMergeEntries(generated, configHandler, descriptor.configRefs);
-    manifest.addTool(toolId, descriptor.version, writeResult.files, mergeFiles);
+    const mergeFiles = this.buildMergeEntries(filtered, configHandler, descriptor.configRefs);
+    const exclusions = this.computeExclusions(
+      generated,
+      configHandler,
+      configNameLookup,
+      selectedMcp
+    );
+    manifest.addTool(toolId, descriptor.version, writeResult.files, mergeFiles, exclusions);
 
-    return { toolId, fileCount: generated.length, files: generated, skipped: false, warnings };
+    return { toolId, fileCount: filtered.length, files: filtered, skipped: false, warnings };
   }
 
   private async checkForceWarning(
@@ -276,5 +298,132 @@ export class InstallUseCase {
       buildConfigNameLookup(configRefs),
       this.hasher
     );
+  }
+
+  private forEachMcpMergeFile(
+    generated: GeneratedFile[],
+    configHandler: ConfigHandler,
+    configNameLookup: Map<string, string>,
+    callback: (file: GeneratedFile, sectionKey: string) => void
+  ): void {
+    for (const file of generated) {
+      if (file.mergeStrategy === "none") continue;
+      const configName = file.frameworkPath ? configNameLookup.get(file.frameworkPath) : undefined;
+      if (!configName) continue;
+      const sectionKey = configHandler.entrySection(configName);
+      if (sectionKey === null) continue;
+      callback(file, sectionKey);
+    }
+  }
+
+  private extractAvailableMcpKeys(
+    generated: GeneratedFile[],
+    configHandler: ConfigHandler,
+    configNameLookup: Map<string, string>
+  ): Map<string, string[]> {
+    const result = new Map<string, string[]>();
+    this.forEachMcpMergeFile(generated, configHandler, configNameLookup, (file, sectionKey) => {
+      const keys = parseEntryKeys(file.content, sectionKey);
+      if (keys.length > 0) result.set(file.relativePath, keys);
+    });
+    return result;
+  }
+
+  private async resolveMcpSelection(
+    availableMcp: Map<string, string[]>,
+    interactive: boolean,
+    mcpFilter?: string[]
+  ): Promise<Set<string>> {
+    const allKeys = this.collectAllMcpKeys(availableMcp);
+    if (allKeys.size === 0) return allKeys;
+    if (mcpFilter !== undefined) return this.validateMcpFilter(mcpFilter, allKeys);
+    if (interactive && this.prompter !== undefined) return this.promptMcpSelection(allKeys);
+    return allKeys;
+  }
+
+  private collectAllMcpKeys(availableMcp: Map<string, string[]>): Set<string> {
+    const allKeys = new Set<string>();
+    for (const keys of availableMcp.values()) {
+      for (const key of keys) allKeys.add(key);
+    }
+    return allKeys;
+  }
+
+  private validateMcpFilter(mcpFilter: string[], allKeys: Set<string>): Set<string> {
+    const invalid = mcpFilter.filter((k) => !allKeys.has(k));
+    if (invalid.length > 0) {
+      throw new InputRequiredError(
+        `Unknown MCP server(s): ${invalid.join(", ")}. Available: ${[...allKeys].join(", ")}`
+      );
+    }
+    return new Set(mcpFilter);
+  }
+
+  private async promptMcpSelection(allKeys: Set<string>): Promise<Set<string>> {
+    if (this.prompter === undefined) return allKeys;
+    const choices = [...allKeys].map((key) => ({ name: key, value: key, checked: true }));
+    const selected = await this.prompter.checkbox(
+      "Which MCP servers do you want to install?",
+      choices
+    );
+    return new Set(selected);
+  }
+
+  private applyMcpFilter(
+    generated: GeneratedFile[],
+    configHandler: ConfigHandler,
+    configNameLookup: Map<string, string>,
+    selectedKeys: Set<string>
+  ): GeneratedFile[] {
+    const filtered = [...generated];
+    this.forEachMcpMergeFile(generated, configHandler, configNameLookup, (file, sectionKey) => {
+      const idx = filtered.indexOf(file);
+      if (idx !== -1) filtered[idx] = this.filterMergeFileContent(file, sectionKey, selectedKeys);
+    });
+    return filtered;
+  }
+
+  private filterMergeFileContent(
+    file: GeneratedFile,
+    sectionKey: string,
+    selectedKeys: Set<string>
+  ): GeneratedFile {
+    try {
+      const parsed = JSON.parse(file.content) as Record<string, unknown>;
+      const section = parsed[sectionKey] as Record<string, unknown> | undefined;
+      if (!section || typeof section !== "object") return file;
+      const filtered: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(section)) {
+        if (selectedKeys.has(key)) filtered[key] = value;
+      }
+      parsed[sectionKey] = filtered;
+      const content = JSON.stringify(parsed, null, 2);
+      return new GeneratedFile({
+        relativePath: file.relativePath,
+        content,
+        hash: this.hasher.hash(content),
+        mergeStrategy: file.mergeStrategy,
+        frameworkPath: file.frameworkPath,
+      });
+    } catch {
+      return file;
+    }
+  }
+
+  private computeExclusions(
+    generated: GeneratedFile[],
+    configHandler: ConfigHandler,
+    configNameLookup: Map<string, string>,
+    selectedKeys: Set<string>
+  ): McpExclusion[] {
+    const exclusions: McpExclusion[] = [];
+    this.forEachMcpMergeFile(generated, configHandler, configNameLookup, (file, sectionKey) => {
+      for (const key of parseEntryKeys(file.content, sectionKey)) {
+        if (!selectedKeys.has(key)) {
+          exclusions.push({ configPath: file.relativePath, entryKey: key });
+        }
+      }
+    });
+    return exclusions;
   }
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { FileHash } from "../../../src/domain/models/file-hash.js";
 import { GeneratedFile } from "../../../src/domain/models/generated-file.js";
 import { Manifest } from "../../../src/domain/models/manifest.js";
+import type { McpExclusion } from "../../../src/domain/models/mcp-exclusion.js";
 import type { MergeFileEntry } from "../../../src/domain/models/merge-entry.js";
 import type { ToolId } from "../../../src/domain/models/tool-config.js";
 
@@ -223,6 +224,112 @@ describe("Manifest", () => {
     it("rejects unsupported manifest version", () => {
       const badData = { version: 99, docsDir: "aidd_docs", tools: {}, docs: null, scripts: null };
       expect(() => Manifest.fromJSON(badData)).toThrow(/version/);
+    });
+  });
+
+  describe("MCP exclusion tracking", () => {
+    const exclusionA: McpExclusion = { configPath: ".mcp.json", entryKey: "playwright" };
+    const exclusionB: McpExclusion = { configPath: ".mcp.json", entryKey: "github" };
+
+    it("addTool with excludedMcp stores exclusions", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles, [], [exclusionA]);
+      expect(manifest.getExcludedMcp("claude" as ToolId)).toEqual([exclusionA]);
+    });
+
+    it("getExcludedMcp returns empty array for tool without exclusions", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
+      expect(manifest.getExcludedMcp("claude" as ToolId)).toEqual([]);
+    });
+
+    it("addExcludedMcp appends and deduplicates", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
+      manifest.addExcludedMcp("claude" as ToolId, [exclusionA]);
+      manifest.addExcludedMcp("claude" as ToolId, [exclusionA, exclusionB]);
+      const result = manifest.getExcludedMcp("claude" as ToolId);
+      expect(result).toHaveLength(2);
+      expect(result).toEqual([exclusionA, exclusionB]);
+    });
+
+    it("addExcludedMcp throws for uninstalled tool", () => {
+      const manifest = Manifest.create();
+      expect(() => manifest.addExcludedMcp("claude" as ToolId, [exclusionA])).toThrow(
+        /not installed/
+      );
+    });
+
+    it("removeExcludedMcp removes matching entries", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles, [], [exclusionA, exclusionB]);
+      manifest.removeExcludedMcp("claude" as ToolId, [exclusionA]);
+      expect(manifest.getExcludedMcp("claude" as ToolId)).toEqual([exclusionB]);
+    });
+
+    it("removeExcludedMcp throws for uninstalled tool", () => {
+      const manifest = Manifest.create();
+      expect(() => manifest.removeExcludedMcp("claude" as ToolId, [exclusionA])).toThrow(
+        /not installed/
+      );
+    });
+
+    it("clearExcludedMcp empties the list", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles, [], [exclusionA, exclusionB]);
+      manifest.clearExcludedMcp("claude" as ToolId);
+      expect(manifest.getExcludedMcp("claude" as ToolId)).toEqual([]);
+    });
+
+    it("clearExcludedMcp throws for uninstalled tool", () => {
+      const manifest = Manifest.create();
+      expect(() => manifest.clearExcludedMcp("claude" as ToolId)).toThrow(/not installed/);
+    });
+
+    it("toJSON/fromJSON round-trip preserves excludedMcp", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles, [], [exclusionA, exclusionB]);
+      const restored = Manifest.fromJSON(manifest.toJSON());
+      expect(restored.getExcludedMcp("claude" as ToolId)).toEqual([exclusionA, exclusionB]);
+    });
+
+    it("fromJSON handles missing excludedMcp (backward compat)", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
+      const json = manifest.toJSON();
+      const restored = Manifest.fromJSON(json);
+      expect(restored.getExcludedMcp("claude" as ToolId)).toEqual([]);
+    });
+
+    it("toJSON omits excludedMcp when empty", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
+      const json = manifest.toJSON();
+      expect(json.tools.claude).not.toHaveProperty("excludedMcp");
+    });
+
+    it("updateToolMergeFiles replaces merge files without touching regular files", () => {
+      const mergeEntry: MergeFileEntry = {
+        relativePath: ".mcp.json",
+        sectionKey: "mcpServers",
+        entries: { playwright: makeHash("aabb") },
+      };
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles, [mergeEntry], [exclusionA]);
+      const updatedMerge: MergeFileEntry = {
+        relativePath: ".mcp.json",
+        sectionKey: "mcpServers",
+        entries: {},
+      };
+      manifest.updateToolMergeFiles("claude" as ToolId, [updatedMerge]);
+      expect(manifest.getMergeFiles("claude" as ToolId)).toEqual([updatedMerge]);
+      expect(manifest.getToolFiles("claude" as ToolId)).toHaveLength(2);
+      expect(manifest.getExcludedMcp("claude" as ToolId)).toEqual([exclusionA]);
+    });
+
+    it("updateToolMergeFiles throws for uninstalled tool", () => {
+      const manifest = Manifest.create();
+      expect(() => manifest.updateToolMergeFiles("claude" as ToolId, [])).toThrow(/not installed/);
     });
   });
 
