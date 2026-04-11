@@ -31,7 +31,7 @@ flowchart LR
 - MD5 hashing via `node:crypto` for drift detection between installed files and framework version
 - HTTP via `node:https` (no `fetch` wrapper libraries)
 - Framework layout is hardcoded in `FrameworkLoaderAdapter` (`CONTENT_SECTIONS`, `TEMPLATE_REFS`, `CONFIG_REFS`). No `framework.json` file — `FrameworkDescriptor` is a code model built by the adapter, not parsed from a file.
-- Manifest stored as JSON at `.aidd/manifest.json` — aggregate root tracking every installed file with its MD5 hash. Merge config files (`.mcp.json`, `.vscode/settings.json`) tracked separately in `mergeFiles` with per-entry hashes. See DEC-020.
+- Manifest stored as JSON at `.aidd/manifest.json` — aggregate root tracking every installed file with its MD5 hash. Merge config files (`.mcp.json`, `.vscode/settings.json`) tracked separately in `mergeFiles` with per-entry hashes. Excluded MCP servers tracked per-tool in `excludedMcp`. See DEC-020, DEC-022.
 - No settings file — project configuration is via CLI flags (`--repo`, `--verbose`) or env vars (`AIDD_REPO`, `AIDD_VERBOSE`)
 - Domain layer has zero infrastructure imports (enforced in tests)
 - Framework config files may contain JSONC (comments + trailing commas) — `extractMergeEntries` strips them before parsing. See DEC-021.
@@ -46,7 +46,7 @@ flowchart TD
         USECASES["use-cases: auth-login, auth-logout, auth-status, adopt, init, install, uninstall, status, clean, doctor, catalog, restore, update, sync, gitignore, resolve-framework, require-auth, self-update, setup, interactive-menu | shared: post-install-pipeline, setup-state-detector"]
     end
     subgraph DOM["Domain"]
-        MODELS["models: Manifest, Distribution, Catalog, ToolConfig, FileHash, GeneratedFile, MergeEntry, Docs, Mcp, Semver, FileDiff, ConflictDecision, UpdateScope, SyncExclusions"]
+        MODELS["models: Manifest, Distribution, Catalog, ToolConfig, FileHash, GeneratedFile, MergeEntry, McpExclusion, Docs, Mcp, Semver, FileDiff, ConflictDecision, UpdateScope, SyncExclusions"]
         PORTS["ports: interfaces"]
         TOOLS["tools: claude, cursor, copilot, opencode"]
     end
@@ -123,7 +123,9 @@ flowchart TD
     InstallUC -->|loads layout| FrameworkLdr["FrameworkLoader"]
     InstallUC -->|rewrites per tool| Distrib["Distribution"]
     Distrib -->|applies spec| ToolCfg["ToolConfig"]
-    InstallUC -->|writes files| FS["FileSystem"]
+    InstallUC -->|MCP selection| McpFilter["MCP Filter (--mcp / checkbox / all)"]
+    McpFilter -->|filtered distribution| FS["FileSystem"]
+    InstallUC -->|writes files| FS
     InstallUC -->|hashes files| Hshr["Hasher"]
     InstallUC -->|delegates post-write steps| Pipeline["PostInstallPipelineUseCase (shared)"]
     Pipeline -->|1 memory bank| MemScript["MemoryScriptUseCase"]
@@ -155,7 +157,7 @@ New ports: `AuthTokenProvider` (resolve chain), `ExternalTokenProvider` (CLI-bas
 | --- | --- | --- | --- | --- | --- | --- |
 | `claude` | `CLAUDE.md` | `.mcp.json` | `.claude/agents/` | `.claude/commands/aidd/` | `.claude/rules/` (`.md`) | `.claude/skills/` |
 | `cursor` | `AGENTS.md` | `.cursor/mcp.json` | `.cursor/agents/` | `.cursor/commands/aidd/<phase>/` | `.cursor/rules/` (`.mdc`) | `.cursor/skills/` |
-| `copilot` | `.github/copilot-instructions.md` | — | `.github/agents/*.agent.md` | `.github/prompts/aidd_<phase>_<name>.prompt.md` | `.github/instructions/*.instructions.md` | `.github/skills/*/SKILL.md` |
+| `copilot` | `.github/copilot-instructions.md` | `.vscode/mcp.json` | `.github/agents/*.agent.md` | `.github/prompts/aidd_<phase>_<name>.prompt.md` | `.github/instructions/*.instructions.md` | `.github/skills/*/SKILL.md` |
 | `opencode` | `AGENTS.md` | `opencode.json` (merged, transforms `.mcp.json` to opencode format) | `.opencode/agents/` | `.opencode/commands/aidd/<phase>/` | `.opencode/rules/` (`.opencode.md`) | `.opencode/skills/` |
 
 - `claude` — frontmatter scope: `paths:` list; include syntax: `@.claude/path`; commands `name: aidd:<phase>:<name>`

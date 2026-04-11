@@ -38,8 +38,8 @@
 | Command | Flags | Description |
 | --- | --- | --- |
 | `aidd setup` | `--release`, `--path`, `--tools`, `--all-tools`, `--docs-dir`, `--from` | Detects state and runs init + install, adopt, install, or update. Interactive by default; non-interactive when `--tools` or `--all-tools` is provided. |
-| `aidd install <tools...>` | `--all`, `--force`, `--release`, `--path` | Generate and write tool-specific distribution files. Requires existing manifest. |
-| `aidd uninstall <tools...>` | `--all` | Remove tool files and update manifest. |
+| `aidd install <tools...>` | `--all`, `--force`, `--release`, `--path`, `--mcp` | Generate and write tool-specific distribution files. `--mcp server1,server2` selects specific MCP servers; interactive checkbox when TTY; all installed when non-interactive. Requires existing manifest. |
+| `aidd uninstall <tools...>` | `--all`, `--mcp` | Remove tool files and update manifest. `--mcp server1` removes specific MCP entries without uninstalling the tool. |
 | `aidd status` | `--tool`, `--docs` | Show drift (modified/deleted/added) between disk and manifest. |
 | `aidd update` | `--force`, `--dry-run`, `--tool`, `--docs`, `--release`, `--path` | Diff and apply new framework version. `--tool`/`--docs` scope to one section. |
 | `aidd restore` | `--force`, `--tool`, `--docs`, `[files...]`, `--release`, `--path` | Restore modified/deleted files from pinned version. |
@@ -59,10 +59,11 @@
 - No flag = interactive mode: step-by-step guidance via `@inquirer/prompts`
 - `--tools` or `--all-tools` = non-interactive mode: prompts suppressed, defaults auto-resolved, CI/scripting compatible
 
-**Installation granularity (to be specified):**
+**Installation granularity (implemented — MCP servers):**
 
-- Direction: ability to install sub-parts of the framework independently
-- Exact scope not yet settled — do not implement before the vision is stabilized
+- `--mcp` flag on install/uninstall for granular MCP server selection
+- Excluded MCP servers tracked per-tool in manifest (`excludedMcp`). See DEC-022.
+- `update` skips excluded entries, prompts for genuinely new ones, `--force` clears all exclusions
 
 ## User Journey
 

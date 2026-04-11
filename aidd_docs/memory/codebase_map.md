@@ -2,10 +2,9 @@
 
 ## Status
 
-- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4) + per-entry hash tracking for merge files
+- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4) + per-entry hash tracking for merge files + granular MCP server selection
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
-- `tests/` — 964 tests, all passing
-- Next: granular MCP server selection (ai-driven-dev/aidd#259)
+- `tests/` — 994 tests, all passing
 
 ## Command Output Paths (per tool)
 
@@ -33,13 +32,13 @@ src/
 │   │   ├── config.ts                   # aidd config list/get/set
 │   │   ├── clean.ts                    # aidd clean [--force]
 │   │   ├── doctor.ts                   # aidd doctor
-│   │   ├── install.ts                  # aidd install <tools> [--all] [--force]
+│   │   ├── install.ts                  # aidd install <tools> [--all] [--force] [--mcp]
 │   │   ├── restore.ts                  # aidd restore [files] [--tool] [--docs] [--force]
 │   │   ├── status.ts                   # aidd status [--tool] [--docs]
 │   │   ├── self-update.ts              # aidd self-update [--check] [--dry-run] [--force]
 │   │   ├── setup.ts                    # aidd setup (interactive onboarding entry point)
 │   │   ├── sync.ts                     # aidd sync --source <tool> [--target] [--force]
-│   │   ├── uninstall.ts                # aidd uninstall <tools> [--all]
+│   │   ├── uninstall.ts                # aidd uninstall <tools> [--all] [--mcp]
 │   │   └── update.ts                   # aidd update [--force] [--dry-run] [--tool] [--docs]
 │   ├── check-update.ts                 # printUpdateBanner() — called via commander preAction hook in cli.ts
 │   ├── error-handler.ts                # ErrorHandler — central error handling for commands (replaces output.exit)
@@ -79,8 +78,9 @@ src/
 │   │   ├── framework-descriptor.ts     # framework layout code model (no framework.json file)
 │   │   ├── frontmatter.ts              # frontmatter parsing/conversion
 │   │   ├── generated-file.ts           # file + hash + merge flag
-│   │   ├── manifest.ts                 # aggregate root (persisted at .aidd/manifest.json); fields: docsDir, repo?, tools, docs; ToolEntry has mergeFiles
-│   │   ├── merge-entry.ts             # MergeFileEntry value object, extractMergeEntries, buildMergeFileEntries
+│   │   ├── manifest.ts                 # aggregate root (persisted at .aidd/manifest.json); fields: docsDir, repo?, tools, docs; ToolEntry has mergeFiles + excludedMcp
+│   │   ├── mcp-exclusion.ts           # McpExclusion { configPath, entryKey }, mcpExclusionEquals
+│   │   ├── merge-entry.ts             # MergeFileEntry value object, extractMergeEntries, buildMergeFileEntries, parseEntryKeys, removeEntriesFromJson
 │   │   ├── mcp.ts                      # MCP config transformation for Windows command path fixes
 │   │   ├── semver.ts                   # semantic version parsing & comparison for update checks
 │   │   ├── sync-exclusions.ts          # SYNC_EXCLUDED_FILES, isSyncExcluded — sync skip list
