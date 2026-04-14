@@ -35,7 +35,7 @@ describe("uninstall", () => {
     await installTool(deps, projectRoot, "claude" as ToolId);
 
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot });
+    await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot, mcpFilter: [] });
 
     const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
     const data = JSON.parse(raw) as { tools: Record<string, unknown> };
@@ -51,7 +51,7 @@ describe("uninstall", () => {
 
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
     await expect(
-      useCase.execute({ toolIds: ["claude" as ToolId], projectRoot })
+      useCase.execute({ toolIds: ["claude" as ToolId], projectRoot, mcpFilter: [] })
     ).resolves.not.toThrow();
   });
 
@@ -65,7 +65,7 @@ describe("uninstall", () => {
     expect(beforeContent).toContain("### `agents`");
 
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot });
+    await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot, mcpFilter: [] });
 
     const afterContent = await readFile(catalogPath, "utf-8");
     expect(afterContent).not.toContain("### `agents`");
@@ -82,7 +82,7 @@ describe("uninstall", () => {
     expect(existsSync(sharedFile)).toBe(true);
 
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot });
+    await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot, mcpFilter: [] });
 
     expect(existsSync(sharedFile)).toBe(true);
   });
@@ -134,7 +134,7 @@ describe("uninstall", () => {
       await installTool(deps, projectRoot, "claude" as ToolId);
 
       const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-      await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot });
+      await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot, mcpFilter: [] });
 
       const manifestRaw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
       const manifest = JSON.parse(manifestRaw) as { tools: Record<string, unknown> };

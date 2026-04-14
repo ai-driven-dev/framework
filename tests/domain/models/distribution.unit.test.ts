@@ -954,7 +954,7 @@ describe("generateDistribution() snapshots", () => {
     expect(skill?.content).toEqual("# Commit Skill\n\nUse .github/agents/ for agents.\n");
   });
 
-  it("Copilot — config content is passed through unchanged", async () => {
+  it("Copilot — config content is transformed to VS Code servers format", async () => {
     hashCounter = 0;
     const files = await generateDistribution(
       snapshotFramework,
@@ -967,7 +967,7 @@ describe("generateDistribution() snapshots", () => {
       stubFs
     );
     const config = files.find((f) => f.relativePath === ".vscode/mcp.json");
-    expect(config?.content).toEqual('{"mcpServers":{}}');
+    expect(config?.content).toEqual('{\n  "servers": {}\n}');
   });
 
   it("Copilot — memoryBank content is rewritten correctly", async () => {
