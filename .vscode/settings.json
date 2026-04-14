@@ -135,8 +135,8 @@
     "markdown": true
   },
   "github.copilot.nextEditSuggestions.enabled": true,
-  "chat.notifyWindowOnConfirmation": true,
-  "chat.notifyWindowOnResponseReceived": true,
+  "chat.notifyWindowOnConfirmation": "windowNotFocused",
+  "chat.notifyWindowOnResponseReceived": "windowNotFocused",
   "accessibility.signals.chatResponseReceived": {
     "sound": "auto"
   },

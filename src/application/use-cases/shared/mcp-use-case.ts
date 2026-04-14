@@ -19,7 +19,7 @@ export class McpUseCase {
     if (allKeys.size === 0) return allKeys;
     if (mcpFilter.length > 0) return this.validateFilter(mcpFilter, allKeys);
     if (interactive && this.prompter !== undefined) return this.prompt(allKeys);
-    return allKeys;
+    return new Set();
   }
 
   private collectAllKeys(available: Map<string, string[]>): Set<string> {
@@ -39,8 +39,8 @@ export class McpUseCase {
   }
 
   private async prompt(allKeys: Set<string>): Promise<Set<string>> {
-    if (!this.prompter) return allKeys;
-    const choices = [...allKeys].map((key) => ({ name: key, value: key, checked: true }));
+    if (!this.prompter) return new Set();
+    const choices = [...allKeys].map((key) => ({ name: key, value: key, checked: false }));
     const selected = await this.prompter.checkbox(
       "Which MCP servers do you want to install?",
       choices
