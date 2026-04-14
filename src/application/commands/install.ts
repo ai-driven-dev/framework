@@ -60,7 +60,7 @@ export function registerInstallCommand(program: Command): void {
             deps.prompter
           );
 
-          const mcpFilter = cmdOptions.mcp?.split(",").map((s) => s.trim());
+          const mcpFilter = cmdOptions.mcp?.split(",").map((s) => s.trim()) ?? [];
 
           const results = await installUseCase.execute({
             toolIds,

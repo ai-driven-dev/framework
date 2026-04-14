@@ -8,13 +8,13 @@ import type { FileHash } from "../../domain/models/file-hash.js";
 import type { ConfigRef } from "../../domain/models/framework-descriptor.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
+import { detectNewMcpEntries, filterMcpExclusions } from "../../domain/models/mcp.js";
 import type { McpExclusion } from "../../domain/models/mcp-exclusion.js";
 import {
   buildConfigNameLookup,
   buildMergeFileEntries,
   extractMergeEntries,
   type MergeFileEntry,
-  parseEntryKeys,
   removeEntriesFromJson,
 } from "../../domain/models/merge-entry.js";
 import { type ConfigHandler, getToolConfig, type ToolId } from "../../domain/models/tool-config.js";
@@ -452,30 +452,44 @@ export class UpdateUseCase {
     interactive: boolean
   ): Promise<{ filtered: GeneratedFile[]; exclusions: McpExclusion[] }> {
     if (force) manifest.clearExcludedMcp(toolId);
-    const configNameLookup = buildConfigNameLookup(configRefs);
-    const exclusions = await this.resolveExclusions(
+    const lookup = buildConfigNameLookup(configRefs);
+    const exclusions = await this.resolveNewExclusions(
       toolId,
-      newDistribution,
       manifest,
+      newDistribution,
       configHandler,
-      configNameLookup,
+      lookup,
       interactive
     );
-    const filtered = this.filterExcludedFromDist(
+    const filtered = filterMcpExclusions(
       newDistribution,
       configHandler,
-      configNameLookup,
-      exclusions
+      lookup,
+      exclusions,
+      this.hasher
     );
     await this.applyMergeFiles(filtered, projectRoot);
-    await this.removeExcludedKeysFromDisk(
-      exclusions,
-      configHandler,
-      configNameLookup,
-      filtered,
-      projectRoot
-    );
+    await this.removeExcludedKeysFromDisk(exclusions, configHandler, lookup, filtered, projectRoot);
     return { filtered, exclusions };
+  }
+
+  private async resolveNewExclusions(
+    toolId: ToolId,
+    manifest: Manifest,
+    newDistribution: GeneratedFile[],
+    configHandler: ConfigHandler,
+    lookup: Map<string, string>,
+    interactive: boolean
+  ): Promise<McpExclusion[]> {
+    const newEntries = detectNewMcpEntries(
+      newDistribution,
+      configHandler,
+      lookup,
+      manifest.getMergeFiles(toolId),
+      manifest.getExcludedMcp(toolId)
+    );
+    const declined = await this.promptNewMcpEntries(newEntries, interactive);
+    return [...manifest.getExcludedMcp(toolId), ...declined];
   }
 
   private emptyApplyDiffResult(): ApplyDiffResult {
@@ -683,86 +697,6 @@ export class UpdateUseCase {
     await this.fs.writeFile(fullPath, removeEntriesFromJson(content, sectionKey, keysToRemove));
   }
 
-  private async resolveExclusions(
-    toolId: ToolId,
-    generated: GeneratedFile[],
-    manifest: Manifest,
-    configHandler: ConfigHandler,
-    configNameLookup: Map<string, string>,
-    interactive: boolean
-  ): Promise<McpExclusion[]> {
-    const existing = [...manifest.getExcludedMcp(toolId)];
-    const newEntries = this.detectNewMcpEntries(
-      toolId,
-      generated,
-      manifest,
-      configHandler,
-      configNameLookup
-    );
-    if (newEntries.length === 0) return existing;
-    const declined = await this.promptNewMcpEntries(newEntries, interactive);
-    return [...existing, ...declined];
-  }
-
-  private detectNewMcpEntries(
-    toolId: ToolId,
-    generated: GeneratedFile[],
-    manifest: Manifest,
-    configHandler: ConfigHandler,
-    configNameLookup: Map<string, string>
-  ): McpExclusion[] {
-    const manifestEntries = manifest.getMergeFiles(toolId);
-    const excluded = manifest.getExcludedMcp(toolId);
-    const newEntries: McpExclusion[] = [];
-    for (const file of generated) {
-      if (file.mergeStrategy === "none") continue;
-      const candidates = this.extractNewFileEntries(
-        file,
-        configHandler,
-        configNameLookup,
-        manifestEntries,
-        excluded
-      );
-      newEntries.push(...candidates);
-    }
-    return newEntries;
-  }
-
-  private extractNewFileEntries(
-    file: GeneratedFile,
-    configHandler: ConfigHandler,
-    configNameLookup: Map<string, string>,
-    manifestEntries: readonly MergeFileEntry[],
-    excluded: readonly McpExclusion[]
-  ): McpExclusion[] {
-    const configName = file.frameworkPath ? configNameLookup.get(file.frameworkPath) : undefined;
-    if (!configName) return [];
-    const sectionKey = configHandler.entrySection(configName);
-    if (sectionKey === null) return [];
-    const keys = parseEntryKeys(file.content, sectionKey);
-    const manifestEntry = manifestEntries.find((m) => m.relativePath === file.relativePath);
-    const knownKeys = manifestEntry
-      ? new Set(Object.keys(manifestEntry.entries))
-      : new Set<string>();
-    return this.filterGenuinelyNewKeys(file.relativePath, keys, knownKeys, excluded);
-  }
-
-  private filterGenuinelyNewKeys(
-    configPath: string,
-    keys: string[],
-    knownKeys: Set<string>,
-    excluded: readonly McpExclusion[]
-  ): McpExclusion[] {
-    const result: McpExclusion[] = [];
-    for (const key of keys) {
-      if (knownKeys.has(key)) continue;
-      const isExcluded = excluded.some((e) => e.configPath === configPath && e.entryKey === key);
-      if (isExcluded) continue;
-      result.push({ configPath, entryKey: key });
-    }
-    return result;
-  }
-
   private async promptNewMcpEntries(
     newEntries: McpExclusion[],
     interactive: boolean
@@ -779,62 +713,6 @@ export class UpdateUseCase {
     );
     const acceptedSet = new Set(accepted);
     return newEntries.filter((e) => !acceptedSet.has(e));
-  }
-
-  private filterExcludedFromDist(
-    distribution: GeneratedFile[],
-    configHandler: ConfigHandler,
-    configNameLookup: Map<string, string>,
-    exclusions: readonly McpExclusion[]
-  ): GeneratedFile[] {
-    if (exclusions.length === 0) return distribution;
-    return distribution.map((file) => {
-      if (file.mergeStrategy === "none") return file;
-      return this.filterOneFile(file, configHandler, configNameLookup, exclusions);
-    });
-  }
-
-  private filterOneFile(
-    file: GeneratedFile,
-    configHandler: ConfigHandler,
-    configNameLookup: Map<string, string>,
-    exclusions: readonly McpExclusion[]
-  ): GeneratedFile {
-    const configName = file.frameworkPath ? configNameLookup.get(file.frameworkPath) : undefined;
-    if (!configName) return file;
-    const sectionKey = configHandler.entrySection(configName);
-    if (sectionKey === null) return file;
-    const fileExclusions = exclusions.filter((e) => e.configPath === file.relativePath);
-    if (fileExclusions.length === 0) return file;
-    return this.removeExcludedKeys(file, sectionKey, fileExclusions);
-  }
-
-  private removeExcludedKeys(
-    file: GeneratedFile,
-    sectionKey: string,
-    exclusions: readonly McpExclusion[]
-  ): GeneratedFile {
-    try {
-      const parsed = JSON.parse(file.content) as Record<string, unknown>;
-      const section = parsed[sectionKey] as Record<string, unknown> | undefined;
-      if (!section || typeof section !== "object") return file;
-      const excludedKeys = new Set(exclusions.map((e) => e.entryKey));
-      const filtered: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(section)) {
-        if (!excludedKeys.has(key)) filtered[key] = value;
-      }
-      parsed[sectionKey] = filtered;
-      const content = JSON.stringify(parsed, null, 2);
-      return new GeneratedFile({
-        relativePath: file.relativePath,
-        content,
-        hash: this.hasher.hash(content),
-        mergeStrategy: file.mergeStrategy,
-        frameworkPath: file.frameworkPath,
-      });
-    } catch {
-      return file;
-    }
   }
 
   private async removeExcludedKeysFromDisk(

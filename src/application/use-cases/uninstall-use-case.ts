@@ -1,7 +1,7 @@
 import { dirname, join } from "node:path";
 import type { Manifest } from "../../domain/models/manifest.js";
 import type { McpExclusion } from "../../domain/models/mcp-exclusion.js";
-import { removeEntriesFromJson } from "../../domain/models/merge-entry.js";
+import { type MergeFileEntry, removeEntriesFromJson } from "../../domain/models/merge-entry.js";
 import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
@@ -13,7 +13,7 @@ interface UninstallOptions {
   toolIds: ToolId[];
   projectRoot: string;
   repo?: string;
-  mcpFilter?: string[];
+  mcpFilter: string[];
 }
 
 interface UninstallToolResult {
@@ -41,7 +41,7 @@ export class UninstallUseCase {
     const manifest = await this.loadAndValidate(toolIds, repo);
 
     const results =
-      mcpFilter !== undefined && mcpFilter.length > 0
+      mcpFilter.length > 0
         ? await this.removeMcpFromTools(toolIds, manifest, projectRoot, mcpFilter)
         : await this.removeTools(toolIds, manifest, projectRoot);
 
@@ -140,26 +140,31 @@ export class UninstallUseCase {
     const mergeFiles = manifest.getMergeFiles(toolId);
     const removedKeys: string[] = [];
     const exclusions: McpExclusion[] = [];
-
     for (const mergeFile of mergeFiles) {
-      if (mergeFile.sectionKey === null) continue;
-      const matching = mcpFilter.filter((k) => mergeFile.entries[k] !== undefined);
-      if (matching.length === 0) continue;
-      await this.removeKeysFromJsonFile(
-        join(projectRoot, mergeFile.relativePath),
-        mergeFile.sectionKey,
-        matching
-      );
-      for (const key of matching) {
-        removedKeys.push(key);
-        exclusions.push({ configPath: mergeFile.relativePath, entryKey: key });
-      }
+      const r = await this.processOneMergeFile(mergeFile, projectRoot, mcpFilter);
+      removedKeys.push(...r.keys);
+      exclusions.push(...r.exclusions);
     }
-
     this.rebuildMergeEntries(toolId, manifest, mcpFilter);
     manifest.addExcludedMcp(toolId, exclusions);
-
     return { toolId, fileCount: removedKeys.length, deletedFiles: removedKeys };
+  }
+
+  private async processOneMergeFile(
+    mergeFile: MergeFileEntry,
+    projectRoot: string,
+    mcpFilter: string[]
+  ): Promise<{ keys: string[]; exclusions: McpExclusion[] }> {
+    if (mergeFile.sectionKey === null) return { keys: [], exclusions: [] };
+    const matching = mcpFilter.filter((k) => mergeFile.entries[k] !== undefined);
+    if (matching.length === 0) return { keys: [], exclusions: [] };
+    await this.removeKeysFromJsonFile(
+      join(projectRoot, mergeFile.relativePath),
+      mergeFile.sectionKey,
+      matching
+    );
+    const exclusions = matching.map((k) => ({ configPath: mergeFile.relativePath, entryKey: k }));
+    return { keys: matching, exclusions };
   }
 
   private async removeKeysFromJsonFile(

@@ -69,7 +69,7 @@ export function registerUninstallCommand(program: Command): void {
           toolIds = selected as ToolId[];
         }
 
-        const mcpFilter = cmdOptions.mcp?.split(",").map((s) => s.trim());
+        const mcpFilter = cmdOptions.mcp?.split(",").map((s) => s.trim()) ?? [];
 
         const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
         const results = await useCase.execute({ toolIds, projectRoot, repo, mcpFilter });

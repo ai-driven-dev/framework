@@ -269,6 +269,18 @@ export const copilotToolConfig: ToolConfig = {
         if (configName === CONFIG_MCP) return "servers";
         return null;
       },
+      transformContent(configName: string, content: string): string {
+        if (configName !== CONFIG_MCP) return content;
+        const parsed = JSON.parse(content) as Record<string, unknown>;
+        if ("mcpServers" in parsed && !("servers" in parsed)) {
+          const { mcpServers, ...rest } = parsed as { mcpServers: unknown } & Record<
+            string,
+            unknown
+          >;
+          return JSON.stringify({ ...rest, servers: mcpServers }, null, 2);
+        }
+        return content;
+      },
     };
   },
 
