@@ -1,5 +1,29 @@
 # Changelog
 
+## [3.2.0](https://github.com/ai-driven-dev/aidd-cli/compare/v3.1.4...v3.2.0) (2026-04-14)
+
+
+### Features
+
+* **domain:** granular MCP server selection during install/uninstall ([#259](https://github.com/ai-driven-dev/aidd-cli/issues/259)) ([d544c32](https://github.com/ai-driven-dev/aidd-cli/commit/d544c324f72a1fb693fc6ad0521309e5754ec4bc))
+* **domain:** per-entry hash tracking for merge config files ([#131](https://github.com/ai-driven-dev/aidd-cli/issues/131)) ([61617bb](https://github.com/ai-driven-dev/aidd-cli/commit/61617bbbe606f8d4a3dc86109856fdeee963c673))
+* granular MCP server selection during install/uninstall ([f172f6b](https://github.com/ai-driven-dev/aidd-cli/commit/f172f6b4bc2834d50926c71f94953bc5561b9739))
+
+
+### Documentation
+
+* **decisions:** add DEC-022, DEC-023 for MCP exclusion tracking ([df3cc8e](https://github.com/ai-driven-dev/aidd-cli/commit/df3cc8e3d7939c0fb8b8b79b4e6718d7a204c4ae))
+* **errors:** update architecture rules, decisions, and memory ([904922f](https://github.com/ai-driven-dev/aidd-cli/commit/904922f32d452ed23a45590e651b2bc88b3faf0d))
+* **tasks:** add code review for granular MCP selection refactor ([571feb8](https://github.com/ai-driven-dev/aidd-cli/commit/571feb82c0cf3d6ef4ad7cbaf51dcbf073a49cd6))
+* **tasks:** add granular MCP selection plans and review ([aaaa433](https://github.com/ai-driven-dev/aidd-cli/commit/aaaa433457f71cf25f99846fb52616cc8009d928))
+
+
+### Refactoring
+
+* **errors:** introduce typed domain exceptions and ErrorHandler ([112416a](https://github.com/ai-driven-dev/aidd-cli/commit/112416a7d5f8318dff23186b4a8839cf70b3d70f))
+* **errors:** introduce typed domain exceptions and ErrorHandler ([c726895](https://github.com/ai-driven-dev/aidd-cli/commit/c726895f2cf44da5c17f241de27596321cbe6b16)), closes [#113](https://github.com/ai-driven-dev/aidd-cli/issues/113)
+* **mcp:** extract MCP selection into shared use-case and domain functions ([9156b70](https://github.com/ai-driven-dev/aidd-cli/commit/9156b700af828e8185187e9cfdbee38e5d90f786))
+
 ## [3.1.4](https://github.com/ai-driven-dev/aidd-cli/compare/v3.1.3...v3.1.4) (2026-04-07)
 
 
