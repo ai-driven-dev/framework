@@ -42,7 +42,7 @@ describe("McpUseCase", () => {
   });
 
   describe("interactive mode (no mcpFilter)", () => {
-    it("calls prompter.checkbox with all available keys pre-checked", async () => {
+    it("calls prompter.checkbox with all available keys unchecked", async () => {
       const prompter = makePrompter(["playwright"]);
       const uc = new McpUseCase(prompter);
       const result = await uc.execute({ available, mcpFilter: [], interactive: true });
@@ -50,20 +50,20 @@ describe("McpUseCase", () => {
       expect([...result]).toEqual(["playwright"]);
     });
 
-    it("returns all servers when prompter is absent in interactive mode", async () => {
+    it("returns no servers when prompter is absent in interactive mode", async () => {
       const uc = new McpUseCase();
       const result = await uc.execute({ available, mcpFilter: [], interactive: true });
-      expect([...result]).toHaveLength(2);
+      expect(result.size).toBe(0);
     });
   });
 
   describe("non-interactive mode (no mcpFilter)", () => {
-    it("returns all available servers without prompting", async () => {
+    it("returns no servers without prompting", async () => {
       const prompter = makePrompter([]);
       const uc = new McpUseCase(prompter);
       const result = await uc.execute({ available, mcpFilter: [], interactive: false });
       expect(prompter.checkbox).not.toHaveBeenCalled();
-      expect([...result]).toHaveLength(2);
+      expect(result.size).toBe(0);
     });
   });
 

@@ -326,6 +326,7 @@ describe("install", () => {
       version: "test",
       docsDir: "aidd_docs",
       projectRoot,
+      mcpFilter: ["myServer"],
     });
 
     const mcpContent = await readFile(join(projectRoot, ".mcp.json"), "utf-8");
@@ -627,6 +628,7 @@ describe("install", () => {
         version: "test",
         docsDir: "aidd_docs",
         projectRoot,
+        mcpFilter: ["playwright", "github"],
       });
 
       const manifestPath = join(projectRoot, ".aidd", "manifest.json");
@@ -848,8 +850,8 @@ describe("install", () => {
       expect(checkboxMock).toHaveBeenCalledWith(
         "Which MCP servers do you want to install?",
         expect.arrayContaining([
-          expect.objectContaining({ name: "playwright", checked: true }),
-          expect.objectContaining({ name: "github", checked: true }),
+          expect.objectContaining({ name: "playwright", checked: false }),
+          expect.objectContaining({ name: "github", checked: false }),
         ])
       );
 
@@ -859,7 +861,7 @@ describe("install", () => {
       expect(mcp.mcpServers).not.toHaveProperty("github");
     });
 
-    it("installs all MCP servers in non-interactive mode without mcpFilter", async () => {
+    it("installs no MCP servers in non-interactive mode without mcpFilter", async () => {
       const deps = buildDeps(projectRoot);
       await initProject(deps, projectRoot);
 
@@ -884,14 +886,16 @@ describe("install", () => {
 
       const mcpContent = await readFile(join(projectRoot, ".mcp.json"), "utf-8");
       const mcp = JSON.parse(mcpContent) as { mcpServers: Record<string, unknown> };
-      expect(mcp.mcpServers).toHaveProperty("playwright");
-      expect(mcp.mcpServers).toHaveProperty("github");
+      expect(mcp.mcpServers).not.toHaveProperty("playwright");
+      expect(mcp.mcpServers).not.toHaveProperty("github");
 
       const manifestRaw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
       const manifest = JSON.parse(manifestRaw) as {
         tools: Record<string, { excludedMcp?: Array<{ configPath: string; entryKey: string }> }>;
       };
-      expect(manifest.tools.claude.excludedMcp).toBeUndefined();
+      const excluded = manifest.tools.claude.excludedMcp ?? [];
+      expect(excluded).toContainEqual({ configPath: ".mcp.json", entryKey: "playwright" });
+      expect(excluded).toContainEqual({ configPath: ".mcp.json", entryKey: "github" });
     });
 
     it("throws when mcpFilter contains an unknown server name", async () => {

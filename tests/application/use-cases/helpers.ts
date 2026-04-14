@@ -234,6 +234,7 @@ export async function installTool(
     version: "test",
     docsDir: "aidd_docs",
     projectRoot,
+    mcpFilter: ["playwright", "github"],
   });
   return results[0];
 }

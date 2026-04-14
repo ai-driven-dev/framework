@@ -194,6 +194,7 @@ describe("status", () => {
         version: "test",
         docsDir: "aidd_docs",
         projectRoot,
+        mcpFilter: ["playwright", "github"],
       });
 
       const mcpPath = join(projectRoot, ".mcp.json");
@@ -230,6 +231,7 @@ describe("status", () => {
         version: "test",
         docsDir: "aidd_docs",
         projectRoot,
+        mcpFilter: ["playwright", "github"],
       });
 
       const mcpPath = join(projectRoot, ".mcp.json");
@@ -265,6 +267,7 @@ describe("status", () => {
         version: "test",
         docsDir: "aidd_docs",
         projectRoot,
+        mcpFilter: ["playwright", "github"],
       });
 
       await rm(join(projectRoot, ".mcp.json"));
