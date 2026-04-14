@@ -82,6 +82,33 @@ function stripComments(content: string): string {
   return result;
 }
 
+export function parseEntryKeys(content: string, sectionKey: string): string[] {
+  try {
+    const parsed = JSON.parse(content) as Record<string, unknown>;
+    const section = parsed[sectionKey];
+    if (section === null || typeof section !== "object" || Array.isArray(section)) return [];
+    return Object.keys(section as Record<string, unknown>);
+  } catch {
+    return [];
+  }
+}
+
+export function removeEntriesFromJson(
+  content: string,
+  sectionKey: string | null,
+  keysToRemove: string[]
+): string {
+  const parsed = JSON.parse(content) as Record<string, unknown>;
+  const container =
+    sectionKey !== null
+      ? ((parsed[sectionKey] as Record<string, unknown> | undefined) ?? {})
+      : parsed;
+  for (const key of keysToRemove) {
+    delete (container as Record<string, unknown>)[key];
+  }
+  return JSON.stringify(parsed, null, 2);
+}
+
 export function buildConfigNameLookup(configRefs: readonly ConfigRef[]): Map<string, string> {
   const lookup = new Map<string, string>();
   for (const ref of configRefs) lookup.set(ref.path, ref.name);

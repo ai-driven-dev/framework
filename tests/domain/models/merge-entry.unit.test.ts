@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { extractMergeEntries } from "../../../src/domain/models/merge-entry.js";
+import {
+  extractMergeEntries,
+  parseEntryKeys,
+  removeEntriesFromJson,
+} from "../../../src/domain/models/merge-entry.js";
 import type { Hasher } from "../../../src/domain/ports/hasher.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
 
@@ -99,5 +103,36 @@ describe("extractMergeEntries", () => {
       const entries = extractMergeEntries(json, "mcpServers", hasher);
       expect(entries.a.value).toBe(entries.b.value);
     });
+  });
+});
+
+describe("parseEntryKeys", () => {
+  it("extracts keys from a JSON section", () => {
+    const json = JSON.stringify({ mcpServers: { playwright: {}, github: {} } });
+    expect(parseEntryKeys(json, "mcpServers")).toEqual(["playwright", "github"]);
+  });
+
+  it("returns empty array for missing section", () => {
+    expect(parseEntryKeys(JSON.stringify({}), "mcpServers")).toEqual([]);
+  });
+
+  it("returns empty array for invalid JSON", () => {
+    expect(parseEntryKeys("not json", "mcpServers")).toEqual([]);
+  });
+});
+
+describe("removeEntriesFromJson", () => {
+  it("removes keys from a nested section", () => {
+    const json = JSON.stringify({
+      mcpServers: { playwright: { cmd: "npx" }, github: { cmd: "gh" } },
+    });
+    const result = JSON.parse(removeEntriesFromJson(json, "mcpServers", ["playwright"]));
+    expect(result.mcpServers).toEqual({ github: { cmd: "gh" } });
+  });
+
+  it("removes keys from root when sectionKey is null", () => {
+    const json = JSON.stringify({ playwright: { cmd: "npx" }, github: { cmd: "gh" } });
+    const result = JSON.parse(removeEntriesFromJson(json, null, ["playwright"]));
+    expect(result).toEqual({ github: { cmd: "gh" } });
   });
 });

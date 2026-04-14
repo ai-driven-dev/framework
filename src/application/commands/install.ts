@@ -15,10 +15,11 @@ export function registerInstallCommand(program: Command): void {
     .option("-a, --all", "Install all available tools", false)
     .option("--path <path>", "Path to a local framework directory or tarball")
     .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
+    .option("--mcp <servers>", "Comma-separated list of MCP servers to install")
     .action(
       async (
         toolArgs: string[],
-        cmdOptions: { force: boolean; all: boolean; path?: string; release?: string }
+        cmdOptions: { force: boolean; all: boolean; path?: string; release?: string; mcp?: string }
       ) => {
         const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
@@ -59,6 +60,8 @@ export function registerInstallCommand(program: Command): void {
             deps.prompter
           );
 
+          const mcpFilter = cmdOptions.mcp?.split(",").map((s) => s.trim()) ?? [];
+
           const results = await installUseCase.execute({
             toolIds,
             all: cmdOptions.all,
@@ -68,6 +71,7 @@ export function registerInstallCommand(program: Command): void {
             force: cmdOptions.force,
             repo,
             interactive: process.stdout.isTTY,
+            mcpFilter,
           });
 
           const skipped = results.filter((r) => r.skipped);

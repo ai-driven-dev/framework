@@ -12,6 +12,11 @@ import {
   installTool,
 } from "./helpers.js";
 
+type ManifestToolEntry = {
+  mergeFiles: Array<{ relativePath: string; entries: Record<string, string> }>;
+  excludedMcp?: Array<{ configPath: string; entryKey: string }>;
+};
+
 describe("uninstall", () => {
   let tempDir: string;
   let projectRoot: string;
@@ -30,7 +35,7 @@ describe("uninstall", () => {
     await installTool(deps, projectRoot, "claude" as ToolId);
 
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot });
+    await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot, mcpFilter: [] });
 
     const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
     const data = JSON.parse(raw) as { tools: Record<string, unknown> };
@@ -46,7 +51,7 @@ describe("uninstall", () => {
 
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
     await expect(
-      useCase.execute({ toolIds: ["claude" as ToolId], projectRoot })
+      useCase.execute({ toolIds: ["claude" as ToolId], projectRoot, mcpFilter: [] })
     ).resolves.not.toThrow();
   });
 
@@ -60,7 +65,7 @@ describe("uninstall", () => {
     expect(beforeContent).toContain("### `agents`");
 
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot });
+    await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot, mcpFilter: [] });
 
     const afterContent = await readFile(catalogPath, "utf-8");
     expect(afterContent).not.toContain("### `agents`");
@@ -77,8 +82,63 @@ describe("uninstall", () => {
     expect(existsSync(sharedFile)).toBe(true);
 
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot });
+    await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot, mcpFilter: [] });
 
     expect(existsSync(sharedFile)).toBe(true);
+  });
+
+  describe("MCP removal", () => {
+    it("removes specific MCP entry from config file while keeping tool installed", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+      await installTool(deps, projectRoot, "claude" as ToolId);
+
+      const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
+      await useCase.execute({
+        toolIds: ["claude" as ToolId],
+        projectRoot,
+        mcpFilter: ["github"],
+      });
+
+      const mcpContent = await readFile(join(projectRoot, ".mcp.json"), "utf-8");
+      const mcp = JSON.parse(mcpContent) as { mcpServers: Record<string, unknown> };
+      expect(mcp.mcpServers).toHaveProperty("playwright");
+      expect(mcp.mcpServers).not.toHaveProperty("github");
+
+      const manifestRaw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const manifest = JSON.parse(manifestRaw) as { tools: Record<string, ManifestToolEntry> };
+      expect(manifest.tools.claude).toBeDefined();
+    });
+
+    it("adds removed MCP entry to excludedMcp in manifest", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+      await installTool(deps, projectRoot, "claude" as ToolId);
+
+      const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
+      await useCase.execute({
+        toolIds: ["claude" as ToolId],
+        projectRoot,
+        mcpFilter: ["github"],
+      });
+
+      const manifestRaw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const manifest = JSON.parse(manifestRaw) as { tools: Record<string, ManifestToolEntry> };
+      const excluded = manifest.tools.claude.excludedMcp ?? [];
+      expect(excluded).toContainEqual({ configPath: ".mcp.json", entryKey: "github" });
+    });
+
+    it("full tool removal still works without mcpFilter", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+      await installTool(deps, projectRoot, "claude" as ToolId);
+
+      const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
+      await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot, mcpFilter: [] });
+
+      const manifestRaw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const manifest = JSON.parse(manifestRaw) as { tools: Record<string, unknown> };
+      expect(manifest.tools.claude).toBeUndefined();
+    });
   });
 });

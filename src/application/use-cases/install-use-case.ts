@@ -4,9 +4,16 @@ import type { ConfigRef } from "../../domain/models/framework-descriptor.js";
 import type { GeneratedFile } from "../../domain/models/generated-file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
 import {
+  computeMcpExclusions,
+  extractMcpKeys,
+  filterMcpExclusions,
+} from "../../domain/models/mcp.js";
+import type { McpExclusion } from "../../domain/models/mcp-exclusion.js";
+import type { MergeFileEntry } from "../../domain/models/merge-entry.js";
+import {
   buildConfigNameLookup,
   buildMergeFileEntries,
-  type MergeFileEntry,
+  removeEntriesFromJson,
 } from "../../domain/models/merge-entry.js";
 import {
   assertValidToolIds,
@@ -24,6 +31,7 @@ import type { ManifestRepository } from "../../domain/ports/manifest-repository.
 import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import { InputRequiredError, NoManifestError } from "../errors.js";
+import { McpUseCase } from "./shared/mcp-use-case.js";
 import { PostInstallPipelineUseCase } from "./shared/post-install-pipeline-use-case.js";
 
 interface InstallOptions {
@@ -36,6 +44,7 @@ interface InstallOptions {
   force?: boolean;
   repo?: string;
   interactive?: boolean;
+  mcpFilter?: string[];
 }
 
 export interface InstallToolResult {
@@ -79,7 +88,9 @@ export class InstallUseCase {
       contentFiles,
       docsDir,
       projectRoot,
-      force
+      force,
+      options.interactive ?? false,
+      options.mcpFilter ?? []
     );
 
     await new PostInstallPipelineUseCase(
@@ -100,7 +111,9 @@ export class InstallUseCase {
     contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
     docsDir: string,
     projectRoot: string,
-    force: boolean
+    force: boolean,
+    interactive: boolean,
+    mcpFilter: string[]
   ): Promise<InstallToolResult[]> {
     const results: InstallToolResult[] = [];
     for (const toolId of toolIds) {
@@ -111,7 +124,9 @@ export class InstallUseCase {
         contentFiles,
         docsDir,
         projectRoot,
-        force
+        force,
+        interactive,
+        mcpFilter
       );
       results.push(result);
     }
@@ -153,7 +168,9 @@ export class InstallUseCase {
     contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
     docsDir: string,
     projectRoot: string,
-    force: boolean
+    force: boolean,
+    interactive: boolean,
+    mcpFilter: string[]
   ): Promise<InstallToolResult> {
     if (manifest.hasTool(toolId) && !force) {
       return { toolId, fileCount: 0, files: [], skipped: true, warnings: [] };
@@ -177,17 +194,94 @@ export class InstallUseCase {
 
     await this.removeStaleFiles(toolId, manifest, generated, projectRoot);
 
-    const configHandler = config.config();
-    const writeResult = await this.writeToolFiles(generated, projectRoot, manifest);
+    const { filtered, exclusions, configHandler } = await this.selectMcpServers(
+      generated,
+      config,
+      descriptor.configRefs,
+      mcpFilter,
+      interactive
+    );
+
+    if (force && manifest.hasTool(toolId)) {
+      await this.clearExcludedMcpKeys(
+        exclusions,
+        configHandler,
+        descriptor.configRefs,
+        filtered,
+        projectRoot
+      );
+    }
+    const writeResult = await this.writeToolFiles(filtered, projectRoot, manifest);
     for (const relativePath of writeResult.userFileConflicts) {
       warnings.push(
         `\`${relativePath}\` already exists and was not installed by AIDD — skipped to preserve user file`
       );
     }
-    const mergeFiles = this.buildMergeEntries(generated, configHandler, descriptor.configRefs);
-    manifest.addTool(toolId, descriptor.version, writeResult.files, mergeFiles);
+    const mergeFiles = this.buildMergeEntries(filtered, configHandler, descriptor.configRefs);
+    manifest.addTool(toolId, descriptor.version, writeResult.files, mergeFiles, exclusions);
 
-    return { toolId, fileCount: generated.length, files: generated, skipped: false, warnings };
+    return { toolId, fileCount: filtered.length, files: filtered, skipped: false, warnings };
+  }
+
+  private async selectMcpServers(
+    generated: GeneratedFile[],
+    config: ReturnType<typeof getToolConfig>,
+    configRefs: readonly ConfigRef[],
+    mcpFilter: string[],
+    interactive: boolean
+  ): Promise<{
+    filtered: GeneratedFile[];
+    exclusions: McpExclusion[];
+    configHandler: ConfigHandler;
+  }> {
+    const configHandler = config.config();
+    const configNameLookup = buildConfigNameLookup(configRefs);
+    const available = extractMcpKeys(generated, configHandler, configNameLookup);
+    const selected = await new McpUseCase(this.prompter).execute({
+      available,
+      mcpFilter,
+      interactive,
+    });
+    const exclusions = computeMcpExclusions(generated, configHandler, configNameLookup, selected);
+    const filtered = filterMcpExclusions(
+      generated,
+      configHandler,
+      configNameLookup,
+      exclusions,
+      this.hasher
+    );
+    return { filtered, exclusions, configHandler };
+  }
+
+  private async clearExcludedMcpKeys(
+    exclusions: McpExclusion[],
+    configHandler: ConfigHandler,
+    configRefs: readonly ConfigRef[],
+    filtered: GeneratedFile[],
+    projectRoot: string
+  ): Promise<void> {
+    if (exclusions.length === 0) return;
+    const lookup = buildConfigNameLookup(configRefs);
+    for (const file of filtered) {
+      if (file.mergeStrategy === "none") continue;
+      const fileExclusions = exclusions.filter((e) => e.configPath === file.relativePath);
+      if (fileExclusions.length === 0) continue;
+      const configName = file.frameworkPath ? lookup.get(file.frameworkPath) : undefined;
+      if (!configName) continue;
+      const sectionKey = configHandler.entrySection(configName);
+      if (sectionKey === null) continue;
+      const fullPath = join(projectRoot, file.relativePath);
+      if (!(await this.fs.fileExists(fullPath))) continue;
+      const content = await this.fs.readFile(fullPath);
+      await this.fs.writeFile(
+        fullPath,
+        removeEntriesFromJson(
+          content,
+          sectionKey,
+          fileExclusions.map((e) => e.entryKey)
+        )
+      );
+    }
   }
 
   private async checkForceWarning(

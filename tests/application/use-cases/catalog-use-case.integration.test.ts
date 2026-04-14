@@ -107,7 +107,7 @@ describe("CATALOG.md — content", () => {
     const deps = buildDeps(projectRoot);
 
     const uninstall = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    await uninstall.execute({ toolIds: ["copilot"], projectRoot });
+    await uninstall.execute({ toolIds: ["copilot"], projectRoot, mcpFilter: [] });
 
     const content = await readFile(CATALOG(projectRoot), "utf-8");
 

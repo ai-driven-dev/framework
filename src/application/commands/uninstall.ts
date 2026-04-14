@@ -12,7 +12,8 @@ export function registerUninstallCommand(program: Command): void {
     .description("Remove a tool's generated configuration files")
     .argument("[tools...]", "Tool IDs to uninstall (e.g., claude, cursor, copilot)")
     .option("-a, --all", "Uninstall all installed tools", false)
-    .action(async (toolArgs: string[], cmdOptions: { all: boolean }) => {
+    .option("--mcp <servers>", "Comma-separated list of MCP servers to remove")
+    .action(async (toolArgs: string[], cmdOptions: { all: boolean; mcp?: string }) => {
       const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
 
@@ -68,8 +69,10 @@ export function registerUninstallCommand(program: Command): void {
           toolIds = selected as ToolId[];
         }
 
+        const mcpFilter = cmdOptions.mcp?.split(",").map((s) => s.trim()) ?? [];
+
         const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-        const results = await useCase.execute({ toolIds, projectRoot, repo: repo });
+        const results = await useCase.execute({ toolIds, projectRoot, repo, mcpFilter });
 
         const totalFileCount = results.reduce((sum, r) => sum + r.fileCount, 0);
 

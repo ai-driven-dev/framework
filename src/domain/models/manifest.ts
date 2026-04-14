@@ -1,6 +1,8 @@
 import { ManifestValidationError } from "../errors.js";
 import { FileHash } from "./file-hash.js";
 import type { GeneratedFile } from "./generated-file.js";
+import type { McpExclusion } from "./mcp-exclusion.js";
+import { mcpExclusionEquals } from "./mcp-exclusion.js";
 import type { MergeFileEntry } from "./merge-entry.js";
 import { type ToolId, VALID_TOOL_IDS } from "./tool-config.js";
 
@@ -36,6 +38,7 @@ interface ToolEntry {
   readonly version: string;
   readonly files: readonly TrackedFile[];
   readonly mergeFiles: readonly MergeFileEntry[];
+  readonly excludedMcp: readonly McpExclusion[];
 }
 
 interface ScriptsEntryData {
@@ -63,6 +66,7 @@ interface ToolEntryData {
   version: string;
   files: TrackedFileData[];
   mergeFiles?: MergeFileEntryData[];
+  excludedMcp?: Array<{ configPath: string; entryKey: string }>;
 }
 
 interface DocsEntryData {
@@ -122,13 +126,15 @@ export class Manifest {
     toolId: ToolId,
     version: string,
     files: GeneratedFile[],
-    mergeFiles: MergeFileEntry[] = []
+    mergeFiles: MergeFileEntry[] = [],
+    excludedMcp: McpExclusion[] = []
   ): void {
     this._tools.set(toolId, {
       toolId,
       version,
       files: this.toTrackedFiles(files),
       mergeFiles,
+      excludedMcp,
     });
   }
 
@@ -172,6 +178,55 @@ export class Manifest {
 
   getMergeFiles(toolId: ToolId): readonly MergeFileEntry[] {
     return this._tools.get(toolId)?.mergeFiles ?? [];
+  }
+
+  getExcludedMcp(toolId: ToolId): readonly McpExclusion[] {
+    return this._tools.get(toolId)?.excludedMcp ?? [];
+  }
+
+  addExcludedMcp(toolId: ToolId, exclusions: McpExclusion[]): void {
+    const entry = this._tools.get(toolId);
+    if (!entry)
+      throw new ManifestValidationError(`Tool '${toolId}' is not installed in the manifest.`);
+    const existing = [...entry.excludedMcp];
+    for (const excl of exclusions) {
+      if (!existing.some((e) => mcpExclusionEquals(e, excl))) {
+        existing.push(excl);
+      }
+    }
+    this._tools.set(toolId, { ...entry, excludedMcp: existing });
+  }
+
+  removeExcludedMcp(toolId: ToolId, exclusions: McpExclusion[]): void {
+    const entry = this._tools.get(toolId);
+    if (!entry)
+      throw new ManifestValidationError(`Tool '${toolId}' is not installed in the manifest.`);
+    const filtered = entry.excludedMcp.filter(
+      (e) => !exclusions.some((r) => mcpExclusionEquals(e, r))
+    );
+    this._tools.set(toolId, { ...entry, excludedMcp: filtered });
+  }
+
+  clearExcludedMcp(toolId: ToolId): void {
+    const entry = this._tools.get(toolId);
+    if (!entry)
+      throw new ManifestValidationError(`Tool '${toolId}' is not installed in the manifest.`);
+    this._tools.set(toolId, { ...entry, excludedMcp: [] });
+  }
+
+  updateToolMergeFiles(
+    toolId: ToolId,
+    mergeFiles: MergeFileEntry[],
+    excludedMcp?: McpExclusion[]
+  ): void {
+    const entry = this._tools.get(toolId);
+    if (!entry)
+      throw new ManifestValidationError(`Tool '${toolId}' is not installed in the manifest.`);
+    this._tools.set(toolId, {
+      ...entry,
+      mergeFiles,
+      ...(excludedMcp !== undefined && { excludedMcp }),
+    });
   }
 
   getDocsFiles(): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
@@ -249,6 +304,12 @@ export class Manifest {
         version: entry.version,
         files: this.toTrackedFileData(entry.files),
         mergeFiles: this.toMergeFileEntryData(entry.mergeFiles),
+        ...(entry.excludedMcp.length > 0 && {
+          excludedMcp: entry.excludedMcp.map((e) => ({
+            configPath: e.configPath,
+            entryKey: e.entryKey,
+          })),
+        }),
       };
     }
 
@@ -356,6 +417,8 @@ export class Manifest {
         version: entry.version,
         files: Manifest.parseTrackedFiles(entry.files),
         mergeFiles: Manifest.parseMergeFileEntries(entry.mergeFiles ?? []),
+        excludedMcp:
+          entry.excludedMcp?.map((e) => ({ configPath: e.configPath, entryKey: e.entryKey })) ?? [],
       });
     }
     return tools;

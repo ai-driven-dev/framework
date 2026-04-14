@@ -8,11 +8,14 @@ import type { FileHash } from "../../domain/models/file-hash.js";
 import type { ConfigRef } from "../../domain/models/framework-descriptor.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
+import { detectNewMcpEntries, filterMcpExclusions } from "../../domain/models/mcp.js";
+import type { McpExclusion } from "../../domain/models/mcp-exclusion.js";
 import {
   buildConfigNameLookup,
   buildMergeFileEntries,
   extractMergeEntries,
   type MergeFileEntry,
+  removeEntriesFromJson,
 } from "../../domain/models/merge-entry.js";
 import { type ConfigHandler, getToolConfig, type ToolId } from "../../domain/models/tool-config.js";
 import { formatToolScopeValue, parseUpdateScope } from "../../domain/models/update-scope.js";
@@ -88,6 +91,7 @@ interface MergeEntryDiff {
 interface InternalUpdateOptions {
   dryRun: boolean;
   force: boolean;
+  interactive: boolean;
   conflictResolution: ConflictResolutionUseCase;
 }
 
@@ -115,7 +119,12 @@ export class UpdateUseCase {
     const isInteractive = this.resolveInteractiveFlag(options, force, dryRun);
 
     if (!isInteractive) {
-      return this.executeInternal(options, { dryRun, force, conflictResolution }).then((r) => ({
+      return this.executeInternal(options, {
+        dryRun,
+        force,
+        interactive: options.interactive ?? false,
+        conflictResolution,
+      }).then((r) => ({
         ...r,
         version: options.version,
       }));
@@ -141,6 +150,7 @@ export class UpdateUseCase {
     const dryRunResult = await this.executeInternal(options, {
       dryRun: true,
       force: false,
+      interactive: true,
       conflictResolution,
     });
 
@@ -156,7 +166,7 @@ export class UpdateUseCase {
 
     return this.executeInternal(
       { ...options, toolIds: outcome.toolIds, docsOnly: outcome.docsOnly, force: true },
-      { dryRun: false, force: true, conflictResolution }
+      { dryRun: false, force: true, interactive: true, conflictResolution }
     ).then((r) => ({ ...r, cancelled: false, version: options.version }));
   }
 
@@ -176,7 +186,7 @@ export class UpdateUseCase {
       // doesn't keep reporting this version as outdated.
       const result = await this.executeInternal(
         { ...options, force: true },
-        { dryRun: false, force: true, conflictResolution }
+        { dryRun: false, force: true, interactive: true, conflictResolution }
       );
       return { kind: "already-applied", result };
     }
@@ -402,13 +412,22 @@ export class UpdateUseCase {
     projectRoot: string,
     internal: InternalUpdateOptions
   ): Promise<ApplyDiffResult> {
-    const { force, conflictResolution } = internal;
-    await this.applyMergeFiles(newDistribution, projectRoot);
+    const { force, interactive, conflictResolution } = internal;
+    const { filtered, exclusions } = await this.applyMcpExclusions(
+      toolId,
+      manifest,
+      newDistribution,
+      configHandler,
+      configRefs,
+      projectRoot,
+      force,
+      interactive
+    );
     const conflictDecisions = await this.resolveConflicts(diff, force, conflictResolution);
     const result = await this.applyDiff(diff, newDistMap, projectRoot, conflictDecisions, manifest);
     this.warnUserFileConflicts(result.userFileConflicts);
     await this.applySurgicalRemovals(entryDiffs, projectRoot, force, conflictResolution);
-    const mergeFiles = this.buildUpdatedMergeEntries(newDistribution, configHandler, configRefs);
+    const mergeFiles = this.buildUpdatedMergeEntries(filtered, configHandler, configRefs);
     this.registerToolFiles(
       toolId,
       version,
@@ -416,9 +435,61 @@ export class UpdateUseCase {
       newDistribution,
       manifestFiles,
       result,
-      mergeFiles
+      mergeFiles,
+      exclusions
     );
     return result;
+  }
+
+  private async applyMcpExclusions(
+    toolId: ToolId,
+    manifest: Manifest,
+    newDistribution: GeneratedFile[],
+    configHandler: ConfigHandler,
+    configRefs: readonly ConfigRef[],
+    projectRoot: string,
+    force: boolean,
+    interactive: boolean
+  ): Promise<{ filtered: GeneratedFile[]; exclusions: McpExclusion[] }> {
+    if (force) manifest.clearExcludedMcp(toolId);
+    const lookup = buildConfigNameLookup(configRefs);
+    const exclusions = await this.resolveNewExclusions(
+      toolId,
+      manifest,
+      newDistribution,
+      configHandler,
+      lookup,
+      interactive
+    );
+    const filtered = filterMcpExclusions(
+      newDistribution,
+      configHandler,
+      lookup,
+      exclusions,
+      this.hasher
+    );
+    await this.applyMergeFiles(filtered, projectRoot);
+    await this.removeExcludedKeysFromDisk(exclusions, configHandler, lookup, filtered, projectRoot);
+    return { filtered, exclusions };
+  }
+
+  private async resolveNewExclusions(
+    toolId: ToolId,
+    manifest: Manifest,
+    newDistribution: GeneratedFile[],
+    configHandler: ConfigHandler,
+    lookup: Map<string, string>,
+    interactive: boolean
+  ): Promise<McpExclusion[]> {
+    const newEntries = detectNewMcpEntries(
+      newDistribution,
+      configHandler,
+      lookup,
+      manifest.getMergeFiles(toolId),
+      manifest.getExcludedMcp(toolId)
+    );
+    const declined = await this.promptNewMcpEntries(newEntries, interactive);
+    return [...manifest.getExcludedMcp(toolId), ...declined];
   }
 
   private emptyApplyDiffResult(): ApplyDiffResult {
@@ -463,7 +534,8 @@ export class UpdateUseCase {
     newDistribution: GeneratedFile[],
     manifestFiles: ReadonlyArray<{ relativePath: string; hash: FileHash }>,
     result: ApplyDiffResult,
-    mergeFiles: MergeFileEntry[]
+    mergeFiles: MergeFileEntry[],
+    exclusions: McpExclusion[]
   ): void {
     const nonMergedFinal = newDistribution
       .filter((f) => f.mergeStrategy === "none")
@@ -476,7 +548,7 @@ export class UpdateUseCase {
     const keptFiles = manifestFiles
       .filter((f) => result.kept.includes(f.relativePath))
       .map((f) => new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash }));
-    manifest.addTool(toolId, version, [...nonMergedFinal, ...keptFiles], mergeFiles);
+    manifest.addTool(toolId, version, [...nonMergedFinal, ...keptFiles], mergeFiles, exclusions);
   }
 
   private async computeMergeEntryDiff(
@@ -622,15 +694,49 @@ export class UpdateUseCase {
     keysToRemove: string[]
   ): Promise<void> {
     const content = await this.fs.readFile(fullPath);
-    const parsed = JSON.parse(content) as Record<string, unknown>;
-    const container =
-      sectionKey !== null
-        ? ((parsed[sectionKey] as Record<string, unknown> | undefined) ?? {})
-        : parsed;
-    for (const key of keysToRemove) {
-      delete (container as Record<string, unknown>)[key];
+    await this.fs.writeFile(fullPath, removeEntriesFromJson(content, sectionKey, keysToRemove));
+  }
+
+  private async promptNewMcpEntries(
+    newEntries: McpExclusion[],
+    interactive: boolean
+  ): Promise<McpExclusion[]> {
+    if (!interactive) return [];
+    const choices = newEntries.map((e) => ({
+      name: e.entryKey,
+      value: e,
+      checked: true,
+    }));
+    const accepted = await this.prompter.checkbox(
+      "New MCP servers found. Which do you want to install?",
+      choices
+    );
+    const acceptedSet = new Set(accepted);
+    return newEntries.filter((e) => !acceptedSet.has(e));
+  }
+
+  private async removeExcludedKeysFromDisk(
+    exclusions: readonly McpExclusion[],
+    configHandler: ConfigHandler,
+    configNameLookup: Map<string, string>,
+    filtered: GeneratedFile[],
+    projectRoot: string
+  ): Promise<void> {
+    if (exclusions.length === 0) return;
+    for (const file of filtered) {
+      if (file.mergeStrategy === "none") continue;
+      const fileExclusions = exclusions.filter((e) => e.configPath === file.relativePath);
+      if (fileExclusions.length === 0) continue;
+      const configName = file.frameworkPath ? configNameLookup.get(file.frameworkPath) : undefined;
+      if (!configName) continue;
+      const sectionKey = configHandler.entrySection(configName);
+      if (sectionKey === null) continue;
+      await this.removeKeysFromJsonFile(
+        join(projectRoot, file.relativePath),
+        sectionKey,
+        fileExclusions.map((e) => e.entryKey)
+      );
     }
-    await this.fs.writeFile(fullPath, JSON.stringify(parsed, null, 2));
   }
 
   private buildUpdatedMergeEntries(

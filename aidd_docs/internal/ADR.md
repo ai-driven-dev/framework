@@ -27,3 +27,5 @@ This file contains the key architectural decisions made during the project, alon
 | 2026-04-09 | DEC-019 | [ConfigHandler.entrySection() for per-entry tracking](./decisions/DEC-019-config-handler-entry-section.md) | Tools own section key mapping; use-cases stay tool-agnostic |
 | 2026-04-09 | DEC-020 | [No manifest version bump for mergeFiles](./decisions/DEC-020-no-manifest-version-bump.md) | Backward-compatible; old manifests load with empty mergeFiles |
 | 2026-04-10 | DEC-021 | [JSONC stripping in domain extractMergeEntries](./decisions/DEC-021-jsonc-stripping-in-domain.md) | Domain self-contained; ~40 lines duplication with adapter |
+| 2026-04-11 | DEC-022 | [excludedMcp per-tool in manifest](./decisions/DEC-022-excluded-mcp-per-tool-in-manifest.md) | Manifest tracks skipped MCP servers; update skips excluded |
+| 2026-04-11 | DEC-023 | [Shared domain JSON entry functions](./decisions/DEC-023-shared-domain-json-entry-functions.md) | Zero duplication for JSON entry ops across use-cases |
