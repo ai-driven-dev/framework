@@ -27,8 +27,7 @@ Create a ticket based on the problem: `$ARGUMENTS`
 
 ## Rules
 
-- From project memory identify the ticketing tool (Jira, Linear, GitHub Issues, etc.) and CLI or MCP to use.
-- Use CLI first, MCP as fallback.
+- From project memory identify the ticketing tool and use it.
 - Be thorough and concise in the issue description, focus on clarity, small sentences.
 - Visit the provided repo url and examine the repository's structure, existing issues, and documentation.
 - Look for any `CONTRIBUTING.md` that may contain guidelines for creating issues.
