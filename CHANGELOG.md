@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.3.0](https://github.com/ai-driven-dev/aidd-cli/compare/v3.2.0...v3.3.0) (2026-04-14)
+
+
+### Features
+
+* **mcp:** disable MCP servers by default ([6023436](https://github.com/ai-driven-dev/aidd-cli/commit/602343681b379f920634a0cc962eee7bdb397c1e))
+* **mcp:** disable MCP servers by default, require explicit opt-in ([370f196](https://github.com/ai-driven-dev/aidd-cli/commit/370f196641d85474b3ae71efcc98875a7b687619))
+
 ## [3.2.0](https://github.com/ai-driven-dev/aidd-cli/compare/v3.1.4...v3.2.0) (2026-04-14)
 
 
