@@ -12,14 +12,20 @@ paths:
 - Exported as `*ToolConfig` (e.g. `claudeToolConfig`)
 - Implements `ToolConfig` interface from `domain/models/tool-config.ts`
 
-## Required fields
+## Two config variants
 
-- `toolId` — one of `ToolId` (`"claude" | "cursor" | "copilot" | "opencode"`)
-- `directory` — root output directory (e.g. `.claude/`)
-- `toolSuffix` — memory bank file suffix
-- `signalDir` — scanned for `name: aidd:` frontmatter signals
+- `AiToolConfig` — AI coding assistants (claude, cursor, copilot, opencode); `toolId: AiToolId`
+- `IdeToolConfig` — IDE integrations (vscode); `toolId: IdeToolId`; no agents/commands/rules/skills handlers
+- `ToolConfig = AiToolConfig | IdeToolConfig` — the union used everywhere
+- `isAiToolConfig(config: ToolConfig): config is AiToolConfig` — discriminates on `"agents" in config`
 
-## Handlers
+## Required fields (both variants)
+
+- `toolId` — `AiToolId` (`"claude" | "cursor" | "copilot" | "opencode"`) or `IdeToolId` (`"vscode"`)
+- `directory` — root output directory (e.g. `.claude/`, `.vscode/`)
+- `signalDir` — scanned for `name: aidd:` frontmatter signals (AI tools only; `null` for IDE tools)
+
+## Handlers (AiToolConfig only)
 
 - Use shared helpers from `tool-config.ts`: `namedAgentsSectionHandler`, `buildStandardCommandsHandler`, `passthroughSkillsHandler`
 - No tool-specific logic in use-cases — extend handler interfaces if runtime behavior is needed

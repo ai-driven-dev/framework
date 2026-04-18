@@ -9,7 +9,7 @@ paths:
 
 - Wire only: create deps → call use-case → display result
 - Validate CLI flags before try/catch (`output.error()` + `process.exit(1)`)
-- Validate domain input inside try/catch (domain throws, `output.exit()` catches)
+- All other errors caught in `catch (error) { errorHandler.handle(error) }` — never `output.exit()`
 - No business logic, no helper functions
 
 ## Use Case (`src/application/use-cases/`)

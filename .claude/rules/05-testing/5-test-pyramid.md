@@ -47,6 +47,13 @@ A test in `tests/application/` must be deleted if an E2E test covers the same sc
 - One file per CLI command
 - No edge cases — those belong in integration tests
 
+## Mandatory rules
+
+- Write test first for every bug fix
+- Mock only ports (domain interfaces) — never mock business logic
+- Fixtures in `FIXTURE_DIR` — never mutate, copy before use
+- `beforeEach`/`afterEach` for temp dir setup and teardown
+
 ## Naming rule
 
 - Test name = observable behaviour sentence

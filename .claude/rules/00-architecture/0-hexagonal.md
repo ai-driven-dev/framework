@@ -9,7 +9,8 @@ paths:
 
 - `domain/models/` — entities, value objects
 - `domain/ports/` — interfaces only, no external deps
-- `domain/tools/` — per-tool configuration and adaptation logic
+- `domain/tools/ai/` — AI tool configs (claude, cursor, copilot, opencode)
+- `domain/tools/ide/` — IDE tool configs (vscode)
 - `application/` — use cases, orchestration, depends on domain only
 - `infrastructure/` — adapters, I/O, framework code
 
