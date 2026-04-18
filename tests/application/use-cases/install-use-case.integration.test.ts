@@ -147,7 +147,7 @@ describe("install", () => {
       linuxPlatform
     );
     await useCase.execute({
-      toolIds: ["claude" as ToolId, "copilot" as ToolId],
+      toolIds: ["copilot" as ToolId, "vscode" as ToolId],
       frameworkPath: FIXTURE_DIR,
       version: "test",
       docsDir: "aidd_docs",
@@ -164,11 +164,11 @@ describe("install", () => {
     };
 
     const sharedPath = ".vscode/settings.json";
-    const claudeMerge = data.tools.claude.mergeFiles.find((m) => m.relativePath === sharedPath);
     const copilotMerge = data.tools.copilot.mergeFiles.find((m) => m.relativePath === sharedPath);
+    const vscodeMerge = data.tools.vscode.mergeFiles.find((m) => m.relativePath === sharedPath);
 
-    expect(claudeMerge).toBeDefined();
     expect(copilotMerge).toBeDefined();
+    expect(vscodeMerge).toBeDefined();
   });
 
   it("shared merged file tracked in mergeFiles per tool across sequential installs", async () => {
@@ -186,7 +186,7 @@ describe("install", () => {
     );
 
     await useCase.execute({
-      toolIds: ["claude" as ToolId],
+      toolIds: ["vscode" as ToolId],
       frameworkPath: FIXTURE_DIR,
       version: "test",
       docsDir: "aidd_docs",
@@ -211,11 +211,11 @@ describe("install", () => {
     };
 
     const sharedPath = ".vscode/settings.json";
-    const claudeMerge = data.tools.claude.mergeFiles.find((m) => m.relativePath === sharedPath);
     const copilotMerge = data.tools.copilot.mergeFiles.find((m) => m.relativePath === sharedPath);
+    const vscodeMerge = data.tools.vscode.mergeFiles.find((m) => m.relativePath === sharedPath);
 
-    expect(claudeMerge).toBeDefined();
     expect(copilotMerge).toBeDefined();
+    expect(vscodeMerge).toBeDefined();
   });
 
   it("does not track CATALOG.md as an installed file", async () => {
@@ -648,7 +648,7 @@ describe("install", () => {
         >;
       };
 
-      expect(data.version).toBe(1);
+      expect(data.version).toBe(2);
       const claudeMerge = data.tools.claude.mergeFiles;
       expect(claudeMerge.length).toBeGreaterThan(0);
       const mcpEntry = claudeMerge.find((m) => m.relativePath === ".mcp.json");
@@ -716,7 +716,7 @@ describe("install", () => {
         linuxPlatform
       );
       await useCase.execute({
-        toolIds: ["claude" as ToolId, "copilot" as ToolId],
+        toolIds: ["copilot" as ToolId, "vscode" as ToolId],
         frameworkPath: FIXTURE_DIR,
         version: "test",
         docsDir: "aidd_docs",
@@ -737,16 +737,16 @@ describe("install", () => {
         >;
       };
 
-      const claudeSettings = data.tools.claude.mergeFiles.find(
-        (m) => m.relativePath === ".vscode/settings.json"
-      );
       const copilotSettings = data.tools.copilot.mergeFiles.find(
         (m) => m.relativePath === ".vscode/settings.json"
       );
-      expect(claudeSettings).toBeDefined();
+      const vscodeSettings = data.tools.vscode.mergeFiles.find(
+        (m) => m.relativePath === ".vscode/settings.json"
+      );
       expect(copilotSettings).toBeDefined();
-      expect(claudeSettings?.sectionKey).toBeNull();
+      expect(vscodeSettings).toBeDefined();
       expect(copilotSettings?.sectionKey).toBeNull();
+      expect(vscodeSettings?.sectionKey).toBeNull();
     });
 
     it("merge files are not in the regular files array", async () => {

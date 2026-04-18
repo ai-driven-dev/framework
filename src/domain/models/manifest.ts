@@ -6,7 +6,13 @@ import { mcpExclusionEquals } from "./mcp-exclusion.js";
 import type { MergeFileEntry } from "./merge-entry.js";
 import { type ToolId, VALID_TOOL_IDS } from "./tool-config.js";
 
-const MANIFEST_VERSION = 1;
+const MANIFEST_VERSION = 2;
+
+const VSCODE_MIGRATION_PATHS = new Set([
+  ".vscode/extensions.json",
+  ".vscode/keybindings.json",
+  ".vscode/settings.json",
+]);
 
 const REPO_FORMAT_REGEX = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
 const DOCS_DIR_REGEX = /^[a-zA-Z0-9_-]+$/;
@@ -78,6 +84,31 @@ interface TrackedFileData {
   relativePath: string;
   hash: string;
   frameworkPath?: string;
+}
+
+function migrateV1toV2(raw: Record<string, unknown>): void {
+  const tools = raw.tools as Record<string, ToolEntryData> | undefined;
+  if (!tools) return;
+
+  const copilot = tools.copilot;
+  if (!copilot) return;
+
+  const vscodeFiles = copilot.files.filter((f) => VSCODE_MIGRATION_PATHS.has(f.relativePath));
+  if (vscodeFiles.length === 0) return;
+
+  copilot.files = copilot.files.filter((f) => !VSCODE_MIGRATION_PATHS.has(f.relativePath));
+
+  if (!tools.vscode) {
+    tools.vscode = {
+      toolId: "vscode",
+      version: copilot.version,
+      files: [],
+      mergeFiles: [],
+    };
+  }
+  const existingPaths = new Set(tools.vscode.files.map((f) => f.relativePath));
+  const deduped = vscodeFiles.filter((f) => !existingPaths.has(f.relativePath));
+  tools.vscode.files = [...tools.vscode.files, ...deduped];
 }
 
 export class Manifest {
@@ -370,7 +401,9 @@ export class Manifest {
 
     const raw = data as Record<string, unknown>;
 
-    if (raw.version !== MANIFEST_VERSION) {
+    if (raw.version === MANIFEST_VERSION - 1) {
+      migrateV1toV2(raw);
+    } else if (raw.version !== MANIFEST_VERSION) {
       throw new ManifestValidationError(
         `Unsupported manifest version: ${String(raw.version)}. Expected ${MANIFEST_VERSION}.`
       );

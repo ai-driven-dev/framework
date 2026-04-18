@@ -31,6 +31,11 @@ const CONFIG_REFS: readonly ConfigRef[] = [
   { name: "vscodeExtensions", path: "config/.vscode/extensions.json" },
   { name: "vscodeKeybindings", path: "config/.vscode/keybindings.json" },
   { name: "vscodeSettings", path: "config/.vscode/settings.json" },
+  {
+    name: "copilotVscodeSettings",
+    path: "config/.vscode/copilot-settings.json",
+    requiredIdeId: "vscode",
+  },
   { name: "opencode", path: "config/.opencode/opencode.json" },
 ];
 

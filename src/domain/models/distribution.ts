@@ -15,6 +15,7 @@ import { GeneratedFile } from "./generated-file.js";
 import { transformFor as mcpTransformFor } from "./mcp.js";
 import type { MergeStrategy } from "./merge-strategy.js";
 import {
+  type AiToolConfig,
   acceptsFile,
   type CommandsHandler,
   type RulesHandler,
@@ -26,7 +27,7 @@ type ContentTransform = (content: string) => string;
 
 export async function generateDistribution(
   framework: FrameworkDescriptor,
-  toolConfig: ToolConfig,
+  toolConfig: AiToolConfig,
   docsDir: string,
   contentFiles: Map<string, string>,
   hasher: Hasher,
@@ -117,8 +118,43 @@ export async function generateDistribution(
   return removeRedundantGitkeeps(results);
 }
 
-function resolveHandler(
+export async function generateConfigDistribution(
+  framework: FrameworkDescriptor,
   toolConfig: ToolConfig,
+  contentFiles: Map<string, string>,
+  hasher: Hasher,
+  platform: Platform,
+  projectRoot: string,
+  fs: FileSystem
+): Promise<GeneratedFile[]> {
+  const configHandler = toolConfig.config();
+  const current = platform.current();
+  const transforms = new Map<string, ContentTransform>();
+  const mcpTransform = mcpTransformFor(current);
+  if (mcpTransform) transforms.set(CONFIG_MCP, mcpTransform);
+
+  const resolveOutput = async (name: string): Promise<string | null> => {
+    if (configHandler.resolveOutputPath) {
+      return configHandler.resolveOutputPath(name, projectRoot, fs);
+    }
+    return configHandler.outputPath(name);
+  };
+
+  const results = await collectRawFiles(
+    framework.configRefs,
+    resolveOutput,
+    (name) => configHandler.mergeStrategy(name),
+    configHandler.transformContent?.bind(configHandler),
+    contentFiles,
+    hasher,
+    transforms
+  );
+
+  return removeRedundantGitkeeps(results);
+}
+
+function resolveHandler(
+  toolConfig: AiToolConfig,
   sectionName: string
 ): SectionHandler | CommandsHandler | RulesHandler | null {
   switch (sectionName) {
@@ -150,7 +186,7 @@ function removeRedundantGitkeeps(files: GeneratedFile[]): GeneratedFile[] {
 
 function collectMemoryBankFiles(
   refs: readonly { name: string; path: string }[],
-  toolConfig: ToolConfig,
+  toolConfig: AiToolConfig,
   docsDir: string,
   contentFiles: Map<string, string>,
   hasher: Hasher

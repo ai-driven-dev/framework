@@ -1,5 +1,9 @@
 import { join } from "node:path";
-import { generateDistribution } from "../../domain/models/distribution.js";
+import { filterGeneratedFilesByIdeContext } from "../../domain/models/config-ref-filter.js";
+import {
+  generateConfigDistribution,
+  generateDistribution,
+} from "../../domain/models/distribution.js";
 import type { ConfigRef } from "../../domain/models/framework-descriptor.js";
 import type { GeneratedFile } from "../../domain/models/generated-file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
@@ -16,9 +20,13 @@ import {
   removeEntriesFromJson,
 } from "../../domain/models/merge-entry.js";
 import {
+  AI_TOOL_IDS,
   assertValidToolIds,
   type ConfigHandler,
   getToolConfig,
+  IDE_TOOL_IDS,
+  type IdeToolId,
+  isAiToolConfig,
   type ToolId,
   VALID_TOOL_IDS,
 } from "../../domain/models/tool-config.js";
@@ -74,8 +82,12 @@ export class InstallUseCase {
     if (manifest === null) throw new NoManifestError(repo);
 
     const docsDir = options.docsDir ?? manifest.docsDir;
-    const toolIds = await this.resolveToolIds(options, manifest);
+    let toolIds = await this.resolveToolIds(options, manifest);
     assertValidToolIds(toolIds);
+
+    let ideContext = this.resolveIdeContext(toolIds, manifest);
+    toolIds = await this.maybySuggestVscode(toolIds, ideContext, options.interactive ?? false);
+    ideContext = this.resolveIdeContext(toolIds, manifest);
 
     const { descriptor, contentFiles } = await this.loader.loadFromDirectory(
       frameworkPath,
@@ -90,7 +102,8 @@ export class InstallUseCase {
       projectRoot,
       force,
       options.interactive ?? false,
-      options.mcpFilter ?? []
+      options.mcpFilter ?? [],
+      ideContext
     );
 
     await new PostInstallPipelineUseCase(
@@ -113,7 +126,8 @@ export class InstallUseCase {
     projectRoot: string,
     force: boolean,
     interactive: boolean,
-    mcpFilter: string[]
+    mcpFilter: string[],
+    ideContext: IdeToolId[]
   ): Promise<InstallToolResult[]> {
     const results: InstallToolResult[] = [];
     for (const toolId of toolIds) {
@@ -126,7 +140,8 @@ export class InstallUseCase {
         projectRoot,
         force,
         interactive,
-        mcpFilter
+        mcpFilter,
+        ideContext
       );
       results.push(result);
     }
@@ -150,14 +165,55 @@ export class InstallUseCase {
     if (this.prompter === undefined)
       throw new InputRequiredError("Prompter is required for interactive mode.");
     const installedIds = manifest.getInstalledToolIds();
-    const choices = VALID_TOOL_IDS.map((id) =>
-      installedIds.includes(id)
-        ? { name: id, value: id, checked: true, disabled: "(already installed)" }
-        : { name: id, value: id, checked: false }
+    const aiSelected = await this.prompter.checkbox(
+      "Which AI tools do you want to install?",
+      AI_TOOL_IDS.map((id) =>
+        installedIds.includes(id)
+          ? { name: id, value: id, checked: true, disabled: "(already installed)" }
+          : { name: id, value: id, checked: false }
+      )
     );
-    const selected = await this.prompter.checkbox("Which tools do you want to install?", choices);
+    const ideSelected = await this.prompter.checkbox(
+      "Which IDE integrations do you want to install?",
+      IDE_TOOL_IDS.map((id) =>
+        installedIds.includes(id)
+          ? { name: id, value: id, checked: true, disabled: "(already installed)" }
+          : { name: id, value: id, checked: false }
+      )
+    );
+    const selected = [...aiSelected, ...ideSelected];
     if (selected.length === 0) throw new InputRequiredError("No tools selected.");
     return selected as ToolId[];
+  }
+
+  private resolveIdeContext(toolIds: ToolId[], manifest: Manifest): IdeToolId[] {
+    const fromSelected = toolIds.filter((id): id is IdeToolId =>
+      (IDE_TOOL_IDS as readonly string[]).includes(id)
+    );
+    const fromManifest = manifest
+      .getInstalledToolIds()
+      .filter((id): id is IdeToolId => (IDE_TOOL_IDS as readonly string[]).includes(id));
+    return [...new Set([...fromSelected, ...fromManifest])];
+  }
+
+  private async maybySuggestVscode(
+    toolIds: ToolId[],
+    ideContext: IdeToolId[],
+    interactive: boolean
+  ): Promise<ToolId[]> {
+    if (
+      !interactive ||
+      this.prompter === undefined ||
+      !toolIds.includes("copilot") ||
+      ideContext.includes("vscode")
+    ) {
+      return toolIds;
+    }
+    const confirmed = await this.prompter.confirm(
+      "Copilot works best on VS Code. Also install the vscode integration?"
+    );
+    if (confirmed) return [...toolIds, "vscode"];
+    return toolIds;
   }
 
   /** Installs a single tool and updates the manifest in place. */
@@ -170,7 +226,8 @@ export class InstallUseCase {
     projectRoot: string,
     force: boolean,
     interactive: boolean,
-    mcpFilter: string[]
+    mcpFilter: string[],
+    ideContext: IdeToolId[]
   ): Promise<InstallToolResult> {
     if (manifest.hasTool(toolId) && !force) {
       return { toolId, fileCount: 0, files: [], skipped: true, warnings: [] };
@@ -181,21 +238,37 @@ export class InstallUseCase {
 
     this.logger.info(`Generating ${toolId} distribution...`);
 
-    const generated = await generateDistribution(
-      descriptor,
-      config,
-      docsDir,
-      contentFiles,
-      this.hasher,
-      this.platform,
-      projectRoot,
-      this.fs
-    );
+    const generated = isAiToolConfig(config)
+      ? await generateDistribution(
+          descriptor,
+          config,
+          docsDir,
+          contentFiles,
+          this.hasher,
+          this.platform,
+          projectRoot,
+          this.fs
+        )
+      : await generateConfigDistribution(
+          descriptor,
+          config,
+          contentFiles,
+          this.hasher,
+          this.platform,
+          projectRoot,
+          this.fs
+        );
 
     await this.removeStaleFiles(toolId, manifest, generated, projectRoot);
 
-    const { filtered, exclusions, configHandler } = await this.selectMcpServers(
+    const ideFiltered = filterGeneratedFilesByIdeContext(
       generated,
+      descriptor.configRefs,
+      ideContext
+    );
+
+    const { filtered, exclusions, configHandler } = await this.selectMcpServers(
+      ideFiltered,
       config,
       descriptor.configRefs,
       mcpFilter,

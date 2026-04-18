@@ -2,10 +2,10 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import "../../../../src/domain/tools/claude.js";
-import "../../../../src/domain/tools/copilot.js";
-import "../../../../src/domain/tools/cursor.js";
-import "../../../../src/domain/tools/opencode.js";
+import "../../../../src/domain/tools/ai/claude.js";
+import "../../../../src/domain/tools/ai/copilot.js";
+import "../../../../src/domain/tools/ai/cursor.js";
+import "../../../../src/domain/tools/ai/opencode.js";
 import { PostInstallPipelineUseCase } from "../../../../src/application/use-cases/shared/post-install-pipeline-use-case.js";
 import { FrameworkLoaderAdapter } from "../../../../src/infrastructure/adapters/framework-loader-adapter.js";
 import {

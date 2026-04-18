@@ -295,6 +295,45 @@ describe("FileSystemAdapter", () => {
       expect(result.added).toBe(true);
     });
 
+    describe("per-key strategy", () => {
+      describe("framework-prime key", () => {
+        it("incoming value wins over existing value", async () => {
+          const path = join(tempDir, "per-key-fp.json");
+          await writeFile(path, JSON.stringify({ "github.copilot.enable": false }), "utf-8");
+          await fs.mergeJsonFile(path, JSON.stringify({ "github.copilot.enable": true }), {
+            default: "user-prime",
+            frameworkPrimeKeys: ["github.copilot.enable"],
+          });
+          const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+          expect(result["github.copilot.enable"]).toBe(true);
+        });
+      });
+
+      describe("user-prime key", () => {
+        it("existing value wins over incoming value", async () => {
+          const path = join(tempDir, "per-key-up.json");
+          await writeFile(path, JSON.stringify({ "editor.fontSize": 14 }), "utf-8");
+          await fs.mergeJsonFile(path, JSON.stringify({ "editor.fontSize": 16 }), {
+            default: "user-prime",
+            frameworkPrimeKeys: ["github.copilot.enable"],
+          });
+          const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+          expect(result["editor.fontSize"]).toBe(14);
+        });
+
+        it("incoming value is added when key is absent from disk", async () => {
+          const path = join(tempDir, "per-key-new.json");
+          await writeFile(path, JSON.stringify({}), "utf-8");
+          await fs.mergeJsonFile(path, JSON.stringify({ "chat.agent.enabled": true }), {
+            default: "user-prime",
+            frameworkPrimeKeys: ["chat.agent.enabled"],
+          });
+          const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+          expect(result["chat.agent.enabled"]).toBe(true);
+        });
+      });
+    });
+
     it("tolerates comments and trailing commas in an existing .jsonc file", async () => {
       const path = join(tempDir, "opencode.jsonc");
       const existingJsonc = `{

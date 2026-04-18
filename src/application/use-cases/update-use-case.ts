@@ -1,7 +1,11 @@
 import { join } from "node:path";
 import { FrameworkResolutionError } from "../../domain/errors.js";
+import { filterGeneratedFilesByIdeContext } from "../../domain/models/config-ref-filter.js";
 import type { ConflictDecision } from "../../domain/models/conflict-decision.js";
-import { generateDistribution } from "../../domain/models/distribution.js";
+import {
+  generateConfigDistribution,
+  generateDistribution,
+} from "../../domain/models/distribution.js";
 import { buildDocsDistribution } from "../../domain/models/docs.js";
 import type { FileDiff } from "../../domain/models/file-diff.js";
 import type { FileHash } from "../../domain/models/file-hash.js";
@@ -17,7 +21,14 @@ import {
   type MergeFileEntry,
   removeEntriesFromJson,
 } from "../../domain/models/merge-entry.js";
-import { type ConfigHandler, getToolConfig, type ToolId } from "../../domain/models/tool-config.js";
+import {
+  type ConfigHandler,
+  getToolConfig,
+  IDE_TOOL_IDS,
+  type IdeToolId,
+  isAiToolConfig,
+  type ToolId,
+} from "../../domain/models/tool-config.js";
 import { formatToolScopeValue, parseUpdateScope } from "../../domain/models/update-scope.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
@@ -217,6 +228,12 @@ export class UpdateUseCase {
     return { kind: "scope", toolIds, docsOnly };
   }
 
+  private resolveIdeContext(manifest: Manifest): IdeToolId[] {
+    return manifest
+      .getInstalledToolIds()
+      .filter((id): id is IdeToolId => (IDE_TOOL_IDS as readonly string[]).includes(id));
+  }
+
   private async executeInternal(
     options: UpdateOptions,
     internal: InternalUpdateOptions
@@ -237,6 +254,7 @@ export class UpdateUseCase {
 
     this.validateToolIds(options.toolIds, manifest);
 
+    const ideContext = this.resolveIdeContext(manifest);
     const effectiveToolIds = this.resolveEffectiveToolIds(options, docsOnly, manifest);
     const toolResults = await this.updateAllTools(
       effectiveToolIds,
@@ -246,7 +264,8 @@ export class UpdateUseCase {
       docsDir,
       projectRoot,
       version,
-      internal
+      internal,
+      ideContext
     );
 
     const hasExplicitToolFilter =
@@ -313,7 +332,8 @@ export class UpdateUseCase {
     docsDir: string,
     projectRoot: string,
     version: string,
-    internal: InternalUpdateOptions
+    internal: InternalUpdateOptions,
+    ideContext: IdeToolId[]
   ): Promise<UpdateToolResult[]> {
     const toolResults: UpdateToolResult[] = [];
     for (const toolId of toolIds) {
@@ -326,7 +346,8 @@ export class UpdateUseCase {
         docsDir,
         projectRoot,
         version,
-        internal
+        internal,
+        ideContext
       );
       toolResults.push(result);
     }
@@ -341,21 +362,37 @@ export class UpdateUseCase {
     docsDir: string,
     projectRoot: string,
     version: string,
-    internal: InternalUpdateOptions
+    internal: InternalUpdateOptions,
+    ideContext: IdeToolId[]
   ): Promise<UpdateToolResult> {
     const { dryRun } = internal;
     const config = getToolConfig(toolId);
     const manifestFiles = manifest.getToolFiles(toolId);
     const manifestMap = new Map(manifestFiles.map((f) => [f.relativePath, f.hash]));
-    const newDistribution = await generateDistribution(
-      descriptor,
-      config,
-      docsDir,
-      contentFiles,
-      this.hasher,
-      this.platform,
-      projectRoot,
-      this.fs
+    const rawDistribution = isAiToolConfig(config)
+      ? await generateDistribution(
+          descriptor,
+          config,
+          docsDir,
+          contentFiles,
+          this.hasher,
+          this.platform,
+          projectRoot,
+          this.fs
+        )
+      : await generateConfigDistribution(
+          descriptor,
+          config,
+          contentFiles,
+          this.hasher,
+          this.platform,
+          projectRoot,
+          this.fs
+        );
+    const newDistribution = filterGeneratedFilesByIdeContext(
+      rawDistribution,
+      descriptor.configRefs,
+      ideContext
     );
     const newDistMap = new Map(newDistribution.map((f) => [f.relativePath, f]));
     const diff = await this.computeDiff(newDistribution, newDistMap, manifestMap, projectRoot);

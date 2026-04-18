@@ -1,6 +1,11 @@
 import { isLocalPath } from "../../domain/models/framework-path.js";
 import { Manifest } from "../../domain/models/manifest.js";
-import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
+import {
+  AI_TOOL_IDS,
+  IDE_TOOL_IDS,
+  type ToolId,
+  VALID_TOOL_IDS,
+} from "../../domain/models/tool-config.js";
 import type { AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
@@ -294,8 +299,15 @@ export class SetupUseCase {
     if (options.toolIds !== undefined && options.toolIds.length > 0) {
       return options.toolIds;
     }
-    const choices = VALID_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }));
-    const checkedIds = await this.prompter.checkbox("Which tools do you want to adopt?", choices);
+    const aiChecked = await this.prompter.checkbox(
+      "Which AI tools do you want to adopt?",
+      AI_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }))
+    );
+    const ideChecked = await this.prompter.checkbox(
+      "Which IDE integrations do you want to adopt?",
+      IDE_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }))
+    );
+    const checkedIds = [...aiChecked, ...ideChecked];
     if (checkedIds.length === 0) throw new InputRequiredError("No tools selected.");
     return checkedIds as ToolId[];
   }
