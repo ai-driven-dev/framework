@@ -76,7 +76,7 @@ describe("uninstall", () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
     await installTool(deps, projectRoot, "claude" as ToolId);
-    await installTool(deps, projectRoot, "copilot" as ToolId);
+    await installTool(deps, projectRoot, "vscode" as ToolId);
 
     const sharedFile = join(projectRoot, ".vscode", "settings.json");
     expect(existsSync(sharedFile)).toBe(true);

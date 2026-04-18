@@ -81,11 +81,23 @@ export class UninstallUseCase {
     this.logger.info(`Removing ${toolId} files...`);
 
     const sharedPaths = this.computeSharedPaths(toolId, allToolIds, manifest);
+    const nullSectionPaths = this.collectNullSectionMergePaths(toolId, manifest);
     const allPaths = this.collectToolPaths(toolId, manifest);
     const deletedFiles: string[] = [];
 
     for (const relativePath of allPaths) {
-      if (sharedPaths.has(relativePath)) continue;
+      if (sharedPaths.has(relativePath) && !nullSectionPaths.has(relativePath)) continue;
+      if (nullSectionPaths.has(relativePath)) {
+        const removed = await this.removeNullSectionMergeFile(
+          toolId,
+          allToolIds,
+          relativePath,
+          manifest,
+          projectRoot
+        );
+        if (removed) deletedFiles.push(relativePath);
+        continue;
+      }
       const fullPath = join(projectRoot, relativePath);
       await this.fs.deleteFile(fullPath);
       deletedFiles.push(relativePath);
@@ -94,6 +106,56 @@ export class UninstallUseCase {
 
     manifest.removeTool(toolId);
     return { toolId, fileCount: deletedFiles.length, deletedFiles };
+  }
+
+  private collectNullSectionMergePaths(toolId: ToolId, manifest: Manifest): Set<string> {
+    return new Set(
+      manifest
+        .getMergeFiles(toolId)
+        .filter((m) => m.sectionKey === null)
+        .map((m) => m.relativePath)
+    );
+  }
+
+  private async removeNullSectionMergeFile(
+    toolId: ToolId,
+    allToolIds: ToolId[],
+    relativePath: string,
+    manifest: Manifest,
+    projectRoot: string
+  ): Promise<boolean> {
+    const mergeEntry = manifest.getMergeFiles(toolId).find((m) => m.relativePath === relativePath);
+    if (!mergeEntry) return false;
+    const fullPath = join(projectRoot, relativePath);
+    if (!(await this.fs.fileExists(fullPath))) return false;
+    const otherOwnersExist = this.otherToolsOwnMergeFile(
+      toolId,
+      allToolIds,
+      relativePath,
+      manifest
+    );
+    if (!otherOwnersExist) {
+      await this.fs.deleteFile(fullPath);
+      await this.fs.deleteEmptyDirectories(dirname(fullPath));
+      return true;
+    }
+    const content = await this.fs.readFile(fullPath);
+    const keys = Object.keys(mergeEntry.entries);
+    await this.fs.writeFile(fullPath, removeEntriesFromJson(content, null, keys));
+    return false;
+  }
+
+  private otherToolsOwnMergeFile(
+    toolId: ToolId,
+    allToolIds: ToolId[],
+    relativePath: string,
+    manifest: Manifest
+  ): boolean {
+    const uninstallingSet = new Set([toolId, ...allToolIds]);
+    return manifest
+      .getInstalledToolIds()
+      .filter((id) => !uninstallingSet.has(id))
+      .some((id) => manifest.getMergeFiles(id).some((m) => m.relativePath === relativePath));
   }
 
   private computeSharedPaths(
