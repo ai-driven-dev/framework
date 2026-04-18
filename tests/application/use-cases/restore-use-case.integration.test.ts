@@ -657,6 +657,232 @@ describe("restore", () => {
     expect(result.docs?.restored).toHaveLength(0);
   });
 
+  describe("merge file restore", () => {
+    it("reports nothing to restore when merge file keys are unmodified", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+      await installTool(deps, projectRoot, "vscode");
+
+      const useCase = new RestoreUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        linuxPlatform,
+        new OverwritePrompter()
+      );
+
+      const result = await useCase.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const vscodeTool = result.tools.find((t) => t.toolId === "vscode");
+      expect(vscodeTool?.nothingToRestore).toBe(true);
+    });
+
+    it("restores merge file when a tracked key has drifted", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+      await installTool(deps, projectRoot, "vscode");
+
+      const settingsPath = join(projectRoot, ".vscode/settings.json");
+      await writeFile(settingsPath, JSON.stringify({ "editor.formatOnSave": false }, null, 2));
+
+      const useCase = new RestoreUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        linuxPlatform,
+        new OverwritePrompter()
+      );
+
+      const result = await useCase.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        force: true,
+      });
+
+      const vscodeTool = result.tools.find((t) => t.toolId === "vscode");
+      expect(vscodeTool?.restored).toContain(".vscode/settings.json");
+    });
+
+    it("updates manifest merge entries after restoring", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+      await installTool(deps, projectRoot, "vscode");
+
+      const settingsPath = join(projectRoot, ".vscode/settings.json");
+      await writeFile(settingsPath, JSON.stringify({ "editor.formatOnSave": false }, null, 2));
+
+      const useCase = new RestoreUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        linuxPlatform,
+        new OverwritePrompter()
+      );
+
+      await useCase.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        force: true,
+      });
+
+      const manifest = await deps.manifestRepo.load();
+      const mergeFiles = manifest?.getMergeFiles("vscode") ?? [];
+      const settingsEntry = mergeFiles.find((m) => m.relativePath === ".vscode/settings.json");
+      expect(settingsEntry).toBeDefined();
+
+      const diskContent = await deps.fs.readFile(settingsPath);
+      const diskEntries = Object.fromEntries(
+        Object.entries(JSON.parse(diskContent) as Record<string, unknown>).map(([k, v]) => [
+          k,
+          deps.hasher.hash(JSON.stringify(v)).value,
+        ])
+      );
+      expect(settingsEntry?.entries["editor.formatOnSave"].value).toBe(
+        diskEntries["editor.formatOnSave"]
+      );
+    });
+
+    it("recreates deleted merge file", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+      await installTool(deps, projectRoot, "vscode");
+
+      const settingsPath = join(projectRoot, ".vscode/settings.json");
+      await rm(settingsPath);
+
+      const useCase = new RestoreUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        linuxPlatform,
+        new OverwritePrompter()
+      );
+
+      const result = await useCase.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        force: true,
+      });
+
+      const vscodeTool = result.tools.find((t) => t.toolId === "vscode");
+      expect(vscodeTool?.restored).toContain(".vscode/settings.json");
+      expect(await deps.fs.fileExists(settingsPath)).toBe(true);
+    });
+
+    it("keeps merge file when prompter returns keep", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+      await installTool(deps, projectRoot, "vscode");
+
+      const settingsPath = join(projectRoot, ".vscode/settings.json");
+      await writeFile(settingsPath, JSON.stringify({ "editor.formatOnSave": false }, null, 2));
+
+      const useCase = new RestoreUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        linuxPlatform,
+        new KeepPrompter()
+      );
+
+      const result = await useCase.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        interactive: true,
+      });
+
+      const vscodeTool = result.tools.find((t) => t.toolId === "vscode");
+      expect(vscodeTool?.kept).toContain(".vscode/settings.json");
+
+      const content = JSON.parse(await readFile(settingsPath, "utf-8")) as Record<string, unknown>;
+      expect(content["editor.formatOnSave"]).toBe(false);
+    });
+
+    it("throws in non-interactive mode without --force when merge file is modified", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+      await installTool(deps, projectRoot, "vscode");
+
+      const settingsPath = join(projectRoot, ".vscode/settings.json");
+      await writeFile(settingsPath, JSON.stringify({ "editor.formatOnSave": false }, null, 2));
+
+      const useCase = new RestoreUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        linuxPlatform,
+        new OverwritePrompter()
+      );
+
+      await expect(
+        useCase.execute({
+          frameworkPath: FIXTURE_DIR,
+          version: "test",
+          docsDir: "aidd_docs",
+          projectRoot,
+          force: false,
+          interactive: false,
+        })
+      ).rejects.toThrow("--force");
+    });
+
+    it("file filter skips merge files not matching the filter", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+      await installTool(deps, projectRoot, "vscode");
+
+      const settingsPath = join(projectRoot, ".vscode/settings.json");
+      await writeFile(settingsPath, JSON.stringify({ "editor.formatOnSave": false }, null, 2));
+
+      const useCase = new RestoreUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        linuxPlatform,
+        new OverwritePrompter()
+      );
+
+      const result = await useCase.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        force: true,
+        files: ["CLAUDE.md"],
+      });
+
+      const vscodeTool = result.tools.find((t) => t.toolId === "vscode");
+      expect(vscodeTool?.nothingToRestore).toBe(true);
+    });
+  });
+
   it("docsOnly=true skips all tools and restores docs regardless of toolIds", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);

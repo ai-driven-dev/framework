@@ -1,10 +1,15 @@
 import { join } from "node:path";
-import { generateDistribution } from "../../domain/models/distribution.js";
+import {
+  generateConfigDistribution,
+  generateDistribution,
+} from "../../domain/models/distribution.js";
 import { buildDocsDistribution } from "../../domain/models/docs.js";
 import type { FileHash } from "../../domain/models/file-hash.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
-import { getToolConfig, type ToolId } from "../../domain/models/tool-config.js";
+import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/merge-entry.js";
+import type { MergeStrategy } from "../../domain/models/merge-strategy.js";
+import { getToolConfig, isAiToolConfig, type ToolId } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
@@ -64,6 +69,20 @@ interface SectionRestoreResult {
   restored: string[];
   kept: string[];
   updatedFiles: GeneratedFile[];
+}
+
+interface MergeDriftEntry {
+  relativePath: string;
+  content: string;
+  reason: "deleted" | "modified";
+  mergeStrategy: MergeStrategy;
+  sectionKey: string | null;
+}
+
+interface MergeSectionRestoreResult {
+  restored: string[];
+  kept: string[];
+  updatedMergeFiles: MergeFileEntry[];
 }
 
 interface RestoreCtx {
@@ -227,37 +246,177 @@ export class RestoreUseCase {
   ): Promise<RestoreToolResult> {
     this.logger.info(`Checking ${toolId} for files to restore...`);
     const config = getToolConfig(toolId);
-    const manifestFiles = manifest.getToolFiles(toolId);
-    const distribution = await generateDistribution(
-      descriptor,
-      config,
-      docsDir,
-      contentFiles,
-      this.hasher,
-      this.platform,
-      projectRoot,
-      this.fs
-    );
+    const distribution = isAiToolConfig(config)
+      ? await generateDistribution(
+          descriptor,
+          config,
+          docsDir,
+          contentFiles,
+          this.hasher,
+          this.platform,
+          projectRoot,
+          this.fs
+        )
+      : await generateConfigDistribution(
+          descriptor,
+          config,
+          contentFiles,
+          this.hasher,
+          this.platform,
+          projectRoot,
+          this.fs
+        );
     const distMap = new Map(distribution.map((f) => [f.relativePath, f]));
     const section = await this.restoreSection(
-      manifestFiles,
+      manifest.getToolFiles(toolId),
       distMap,
       projectRoot,
       force,
       interactive,
       fileFilter
     );
-
-    if (section === null) return { toolId, nothingToRestore: true, restored: [], kept: [] };
-
-    const existingMergeFiles = [...manifest.getMergeFiles(toolId)];
-    manifest.addTool(
-      toolId,
-      manifest.getToolVersion(toolId) ?? version,
-      section.updatedFiles,
-      existingMergeFiles
+    const mergeSection = await this.restoreMergeSection(
+      manifest.getMergeFiles(toolId),
+      distMap,
+      projectRoot,
+      force,
+      interactive,
+      fileFilter
     );
-    return { toolId, nothingToRestore: false, restored: section.restored, kept: section.kept };
+    if (section === null && mergeSection === null) {
+      return { toolId, nothingToRestore: true, restored: [], kept: [] };
+    }
+    return this.commitToolRestore(toolId, manifest, version, section, mergeSection);
+  }
+
+  private commitToolRestore(
+    toolId: ToolId,
+    manifest: Manifest,
+    version: string,
+    section: SectionRestoreResult | null,
+    mergeSection: MergeSectionRestoreResult | null
+  ): RestoreToolResult {
+    const files =
+      section?.updatedFiles ?? this.existingFilesAsGenerated(manifest.getToolFiles(toolId));
+    const mergeFiles = mergeSection?.updatedMergeFiles ?? [...manifest.getMergeFiles(toolId)];
+    manifest.addTool(toolId, manifest.getToolVersion(toolId) ?? version, files, mergeFiles);
+    const restored = [...(section?.restored ?? []), ...(mergeSection?.restored ?? [])];
+    const kept = [...(section?.kept ?? []), ...(mergeSection?.kept ?? [])];
+    return { toolId, nothingToRestore: false, restored, kept };
+  }
+
+  private existingFilesAsGenerated(
+    files: ReadonlyArray<{ relativePath: string; hash: FileHash }>
+  ): GeneratedFile[] {
+    return files.map(
+      (f) => new GeneratedFile({ relativePath: f.relativePath, content: "", hash: f.hash })
+    );
+  }
+
+  private async restoreMergeSection(
+    mergeFiles: readonly MergeFileEntry[],
+    distMap: Map<string, GeneratedFile>,
+    projectRoot: string,
+    force: boolean,
+    interactive: boolean,
+    fileFilter: ((p: string) => boolean) | null
+  ): Promise<MergeSectionRestoreResult | null> {
+    const drift = await this.collectMergeDrift(mergeFiles, distMap, projectRoot, fileFilter);
+    if (drift.length === 0) return null;
+    return this.applyMergeRestorations(drift, mergeFiles, projectRoot, force, interactive);
+  }
+
+  private async collectMergeDrift(
+    mergeFiles: readonly MergeFileEntry[],
+    distMap: Map<string, GeneratedFile>,
+    projectRoot: string,
+    fileFilter: ((p: string) => boolean) | null
+  ): Promise<MergeDriftEntry[]> {
+    const drift: MergeDriftEntry[] = [];
+    for (const entry of mergeFiles) {
+      if (fileFilter && !fileFilter(entry.relativePath)) continue;
+      const distFile = distMap.get(entry.relativePath);
+      if (!distFile || distFile.mergeStrategy === "none") continue;
+      const driftEntry = await this.checkOneMergeFileDrift(entry, distFile, projectRoot);
+      if (driftEntry) drift.push(driftEntry);
+    }
+    return drift;
+  }
+
+  private async checkOneMergeFileDrift(
+    entry: MergeFileEntry,
+    distFile: GeneratedFile,
+    projectRoot: string
+  ): Promise<MergeDriftEntry | null> {
+    const diskPath = join(projectRoot, entry.relativePath);
+    const diskExists = await this.fs.fileExists(diskPath);
+    if (!diskExists) {
+      return {
+        relativePath: entry.relativePath,
+        content: distFile.content,
+        reason: "deleted",
+        mergeStrategy: distFile.mergeStrategy,
+        sectionKey: entry.sectionKey,
+      };
+    }
+    const diskContent = await this.fs.readFile(diskPath);
+    const diskEntries = extractMergeEntries(diskContent, entry.sectionKey, this.hasher);
+    const hasDrift = Object.keys(entry.entries).some(
+      (key) => diskEntries[key]?.value !== entry.entries[key].value
+    );
+    if (!hasDrift) return null;
+    return {
+      relativePath: entry.relativePath,
+      content: distFile.content,
+      reason: "modified",
+      mergeStrategy: distFile.mergeStrategy,
+      sectionKey: entry.sectionKey,
+    };
+  }
+
+  private async applyMergeRestorations(
+    drift: MergeDriftEntry[],
+    mergeFiles: readonly MergeFileEntry[],
+    projectRoot: string,
+    force: boolean,
+    interactive: boolean
+  ): Promise<MergeSectionRestoreResult> {
+    const restored: string[] = [];
+    const kept: string[] = [];
+    const mergeMap = new Map(mergeFiles.map((m) => [m.relativePath, m]));
+    for (const entry of drift) {
+      if (entry.reason === "modified" && !force && !interactive) {
+        throw new InputRequiredError(
+          `Use --force to overwrite modified files in non-interactive mode.`
+        );
+      }
+      if (entry.reason === "modified" && !force && interactive) {
+        const decision = await this.prompter.resolveConflict(entry.relativePath, entry.reason);
+        if (decision === "keep") {
+          kept.push(entry.relativePath);
+          continue;
+        }
+      }
+      await this.applyOneMergeRestore(entry, projectRoot, mergeMap);
+      restored.push(entry.relativePath);
+    }
+    return { restored, kept, updatedMergeFiles: [...mergeMap.values()] };
+  }
+
+  private async applyOneMergeRestore(
+    entry: MergeDriftEntry,
+    projectRoot: string,
+    mergeMap: Map<string, MergeFileEntry>
+  ): Promise<void> {
+    const fullPath = join(projectRoot, entry.relativePath);
+    await this.fs.mergeJsonFile(fullPath, entry.content, entry.mergeStrategy);
+    const mergedContent = await this.fs.readFile(fullPath);
+    const newEntries = extractMergeEntries(mergedContent, entry.sectionKey, this.hasher);
+    mergeMap.set(entry.relativePath, {
+      relativePath: entry.relativePath,
+      sectionKey: entry.sectionKey,
+      entries: newEntries,
+    });
   }
 
   /** Shared restoration logic for both tool files and docs files. Returns null when nothing to restore. */
