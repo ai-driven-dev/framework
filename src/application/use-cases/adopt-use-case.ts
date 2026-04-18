@@ -1,10 +1,18 @@
 import { join } from "node:path";
 import { FrameworkResolutionError, ToolValidationError } from "../../domain/errors.js";
-import { generateDistribution } from "../../domain/models/distribution.js";
+import {
+  generateConfigDistribution,
+  generateDistribution,
+} from "../../domain/models/distribution.js";
 import { buildDocsDistribution } from "../../domain/models/docs.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import { Manifest } from "../../domain/models/manifest.js";
-import { getToolConfig, type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
+import {
+  getToolConfig,
+  isAiToolConfig,
+  type ToolId,
+  VALID_TOOL_IDS,
+} from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
@@ -129,16 +137,26 @@ export class AdoptUseCase {
         );
       }
 
-      const distribution = await generateDistribution(
-        descriptor,
-        config,
-        docsDir,
-        contentFiles,
-        this.hasher,
-        this.platform,
-        projectRoot,
-        this.fs
-      );
+      const distribution = isAiToolConfig(config)
+        ? await generateDistribution(
+            descriptor,
+            config,
+            docsDir,
+            contentFiles,
+            this.hasher,
+            this.platform,
+            projectRoot,
+            this.fs
+          )
+        : await generateConfigDistribution(
+            descriptor,
+            config,
+            contentFiles,
+            this.hasher,
+            this.platform,
+            projectRoot,
+            this.fs
+          );
       const registeredFiles = await this.matchDistributionToDisk(distribution, projectRoot);
       if (registeredFiles.length === 0) {
         this.logger.warn(

@@ -1,10 +1,11 @@
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import "../../../src/domain/tools/claude.js";
-import "../../../src/domain/tools/copilot.js";
-import "../../../src/domain/tools/cursor.js";
-import "../../../src/domain/tools/opencode.js";
+import "../../../src/domain/tools/ai/claude.js";
+import "../../../src/domain/tools/ai/copilot.js";
+import "../../../src/domain/tools/ai/cursor.js";
+import "../../../src/domain/tools/ai/opencode.js";
+import "../../../src/domain/tools/ide/vscode.js";
 import { CLIOutput } from "../../../src/application/output.js";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
 import { InstallUseCase } from "../../../src/application/use-cases/install-use-case.js";

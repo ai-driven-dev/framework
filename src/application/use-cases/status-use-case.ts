@@ -95,14 +95,34 @@ export class StatusUseCase {
     const mergeFiles = manifest.getMergeFiles(toolId);
     const drifted = await this.checkTrackedFiles(trackedFiles, projectRoot);
     drifted.push(...(await this.checkMergeFiles(mergeFiles, projectRoot)));
-    const trackedSet = new Set([
-      ...trackedFiles.map((f) => f.relativePath),
-      ...mergeFiles.map((m) => m.relativePath),
-    ]);
+    const trackedSet = this.buildTrackedSet(manifest, toolId, trackedFiles, mergeFiles);
     drifted.push(
       ...(await this.detectAddedFiles(getToolConfig(toolId).directory, trackedSet, projectRoot))
     );
     return { toolId, version, drifted };
+  }
+
+  private buildTrackedSet(
+    manifest: Manifest,
+    toolId: ToolId,
+    trackedFiles: ReadonlyArray<{ relativePath: string }>,
+    mergeFiles: ReadonlyArray<{ relativePath: string }>
+  ): Set<string> {
+    const trackedSet = new Set([
+      ...trackedFiles.map((f) => f.relativePath),
+      ...mergeFiles.map((m) => m.relativePath),
+    ]);
+    const dir = getToolConfig(toolId).directory;
+    for (const otherId of manifest.getInstalledToolIds()) {
+      if (otherId === toolId) continue;
+      for (const f of manifest.getToolFiles(otherId)) {
+        if (f.relativePath.startsWith(dir)) trackedSet.add(f.relativePath);
+      }
+      for (const m of manifest.getMergeFiles(otherId)) {
+        if (m.relativePath.startsWith(dir)) trackedSet.add(m.relativePath);
+      }
+    }
+    return trackedSet;
   }
 
   private async checkDocsSection(

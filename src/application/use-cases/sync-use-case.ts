@@ -2,9 +2,10 @@ import { join } from "node:path";
 import { parseFrontmatter, serializeFrontmatter } from "../../domain/models/frontmatter.js";
 import { isSyncExcluded } from "../../domain/models/sync-exclusions.js";
 import {
+  type AiToolConfig,
   getToolConfig,
+  isAiToolConfig,
   type SectionHandler,
-  type ToolConfig,
   type ToolId,
   type UserFileSectionKey,
 } from "../../domain/models/tool-config.js";
@@ -45,8 +46,8 @@ interface PropagateModifiedCtx {
     hash: { value: string };
     frameworkPath?: string;
   }>;
-  sourceConfig: ToolConfig;
-  targetConfig: ToolConfig;
+  sourceConfig: AiToolConfig;
+  targetConfig: AiToolConfig;
   targetManifestMap: Map<string, { value: string }>;
   targetByFrameworkPath: Map<string, string>;
   fileResults: SyncFileResult[];
@@ -78,8 +79,8 @@ function getSectionKeyFromFrameworkPath(frameworkPath: string): UserFileSectionK
 
 function transformContent(
   content: string,
-  sourceConfig: ToolConfig,
-  targetConfig: ToolConfig,
+  sourceConfig: AiToolConfig,
+  targetConfig: AiToolConfig,
   sectionKey: UserFileSectionKey,
   docsDir: string
 ): string {
@@ -102,7 +103,10 @@ function transformContent(
   return serializeFrontmatter(targetFrontmatter, targetBody);
 }
 
-function buildTargetPath(targetConfig: ToolConfig, sectionKey: UserFileSectionKey): string | null {
+function buildTargetPath(
+  targetConfig: AiToolConfig,
+  sectionKey: UserFileSectionKey
+): string | null {
   return targetConfig[sectionKey.section]().buildFilePath(sectionKey.key);
 }
 
@@ -126,7 +130,11 @@ export class SyncUseCase {
       manifest,
       options.interactive ?? false
     );
-    const sourceConfig = getToolConfig(sourceTool);
+    const sourceConfigRaw = getToolConfig(sourceTool);
+    if (!isAiToolConfig(sourceConfigRaw)) {
+      throw new InputRequiredError(`Source tool '${sourceTool}' does not support sync.`);
+    }
+    const sourceConfig = sourceConfigRaw;
     const sourceManifestFiles = manifest.getToolFiles(sourceTool);
     const sourceManifestMap = new Map(sourceManifestFiles.map((f) => [f.relativePath, f.hash]));
 
@@ -149,7 +157,7 @@ export class SyncUseCase {
   private async syncAllTargets(
     targetTools: ToolId[],
     sourceTool: ToolId,
-    sourceConfig: ReturnType<typeof getToolConfig>,
+    sourceConfig: AiToolConfig,
     sourceManifestFiles: ReadonlyArray<{
       relativePath: string;
       hash: { value: string };
@@ -183,7 +191,7 @@ export class SyncUseCase {
 
   private async syncOneTool(
     targetToolId: ToolId,
-    sourceConfig: ReturnType<typeof getToolConfig>,
+    sourceConfig: AiToolConfig,
     sourceManifestFiles: ReadonlyArray<{
       relativePath: string;
       hash: { value: string };
@@ -196,7 +204,11 @@ export class SyncUseCase {
     force: boolean,
     includeUserFiles: boolean
   ): Promise<SyncToolResult> {
-    const targetConfig = getToolConfig(targetToolId);
+    const targetConfigRaw = getToolConfig(targetToolId);
+    if (!isAiToolConfig(targetConfigRaw)) {
+      return { targetToolId, files: [] };
+    }
+    const targetConfig = targetConfigRaw;
     const targetManifestFiles = manifest.getToolFiles(targetToolId);
     const targetManifestMap = new Map(targetManifestFiles.map((f) => [f.relativePath, f.hash]));
     const targetByFrameworkPath = new Map(
@@ -389,8 +401,8 @@ export class SyncUseCase {
 
   private async propagateOneModified(
     sourceManifestFile: { relativePath: string; hash: { value: string }; frameworkPath?: string },
-    sourceConfig: ToolConfig,
-    targetConfig: ToolConfig,
+    sourceConfig: AiToolConfig,
+    targetConfig: AiToolConfig,
     targetManifestMap: Map<string, { value: string }>,
     targetByFrameworkPath: Map<string, string>,
     fileResults: SyncFileResult[],
@@ -464,8 +476,8 @@ export class SyncUseCase {
 
   private async propagateAdded(ctx: {
     sourceManifestMap: Map<string, { value: string }>;
-    sourceConfig: ToolConfig;
-    targetConfig: ToolConfig;
+    sourceConfig: AiToolConfig;
+    targetConfig: AiToolConfig;
     fileResults: SyncFileResult[];
     projectRoot: string;
     docsDir: string;
@@ -502,8 +514,8 @@ export class SyncUseCase {
   private async propagateOneAdded(
     diskRelative: string,
     sourceManifestMap: Map<string, { value: string }>,
-    sourceConfig: ToolConfig,
-    targetConfig: ToolConfig,
+    sourceConfig: AiToolConfig,
+    targetConfig: AiToolConfig,
     fileResults: SyncFileResult[],
     projectRoot: string,
     docsDir: string
