@@ -52,18 +52,10 @@
 | `aidd auth login/logout/status` | `--token`, `--gh`, `--level` | Manage stored GitHub credentials. `--token` is auth-command-only (not global). |
 | Global flags | `--verbose`, `--repo` | Apply to all commands. `--path` and `--release` are command-level options on `setup`, `install`, `update`, `restore`. |
 
-## vNext — Vision (unspecified)
+## Notes
 
-**Interactive / non-interactive mode (implemented):**
-
-- No flag = interactive mode: step-by-step guidance via `@inquirer/prompts`
-- `--tools` or `--all-tools` = non-interactive mode: prompts suppressed, defaults auto-resolved, CI/scripting compatible
-
-**Installation granularity (implemented — MCP servers):**
-
-- `--mcp` flag on install/uninstall for granular MCP server selection
-- Excluded MCP servers tracked per-tool in manifest (`excludedMcp`). See DEC-022.
-- `update` skips excluded entries, prompts for genuinely new ones, `--force` clears all exclusions
+- No flag = interactive mode (`@inquirer/prompts`); `--tools`/`--all-tools` = non-interactive (CI-safe)
+- `--mcp` flag on install/uninstall for granular MCP server selection; excluded servers tracked per-tool in manifest. See DEC-022.
 
 ## User Journey
 

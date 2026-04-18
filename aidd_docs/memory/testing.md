@@ -55,10 +55,6 @@ pnpm test:e2e         # functional journeys
 pnpm test             # all tiers
 ```
 
-## Test Counts (post-refactor)
-
-- Total: **932** tests (~30s)
-- Unit: 305 | Integration: 479 | E2E: 148
 
 ## Naming Rule
 

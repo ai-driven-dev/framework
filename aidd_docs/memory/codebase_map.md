@@ -2,9 +2,9 @@
 
 ## Status
 
-- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4) + per-entry hash tracking for merge files + granular MCP server selection
+- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4) + per-entry hash tracking for merge files + granular MCP server selection + AI/IDE tool type split + restore merge file support + IDE-aware copilot settings (requiredIdeId, config-ref-filter, copilotVscodeSettings, surgical null-section uninstall)
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
-- `tests/` — 994 tests, all passing
+- `tests/` — tests all passing
 
 ## Command Output Paths (per tool)
 
@@ -70,12 +70,13 @@ src/
 ├── domain/
 │   ├── models/
 │   │   ├── catalog.ts                  # generateCatalogContent() — pure function, no I/O
+│   │   ├── config-ref-filter.ts        # filterGeneratedFilesByIdeContext(generated, configRefs, ideContext) — pure filter; excludes files with requiredIdeId not in ideContext
 │   │   ├── conflict-decision.ts        # ConflictDecision = "overwrite" | "skip" | "backup"
 │   │   ├── distribution.ts             # GeneratedFile[] per tool
 │   │   ├── docs.ts                     # documentation distribution: path remapping, content rewriting
 │   │   ├── file-diff.ts                # FileDiffKind, FileDiff — discriminant type for update diffs
 │   │   ├── file-hash.ts                # MD5 value object
-│   │   ├── framework-descriptor.ts     # framework layout code model (no framework.json file)
+│   │   ├── framework-descriptor.ts     # framework layout code model (no framework.json file); ConfigRef has optional requiredIdeId?: IdeToolId
 │   │   ├── frontmatter.ts              # frontmatter parsing/conversion
 │   │   ├── generated-file.ts           # file + hash + merge flag
 │   │   ├── manifest.ts                 # aggregate root (persisted at .aidd/manifest.json); fields: docsDir, repo?, tools, docs; ToolEntry has mergeFiles + excludedMcp
@@ -84,7 +85,7 @@ src/
 │   │   ├── mcp.ts                      # MCP config transformation for Windows command path fixes
 │   │   ├── semver.ts                   # semantic version parsing & comparison for update checks
 │   │   ├── sync-exclusions.ts          # SYNC_EXCLUDED_FILES, isSyncExcluded — sync skip list
-│   │   ├── tool-config.ts              # per-tool output path / frontmatter rules
+│   │   ├── tool-config.ts              # ToolConfig = AiToolConfig | IdeToolConfig; AiToolId/IdeToolId types; isAiToolConfig() guard; VALID_TOOL_IDS derived from AI_TOOL_IDS + IDE_TOOL_IDS
 │   │   └── update-scope.ts             # UpdateScope, parseUpdateScope, formatToolScopeValue
 │   ├── models/
 │   │   └── auth-config.ts              # AuthConfig { version, method, level, token?, createdAt }
@@ -102,10 +103,13 @@ src/
 │   │   ├── platform.ts                 # current() returns platform identifier for MCP transforms
 │   │   └── prompter.ts                 # resolveConflict(path, reason: "deleted"|"modified") for restore
 │   └── tools/
-│       ├── claude.ts
-│       ├── copilot.ts
-│       ├── cursor.ts
-│       └── opencode.ts
+│       ├── ai/
+│       │   ├── claude.ts
+│       │   ├── copilot.ts
+│       │   ├── cursor.ts
+│       │   └── opencode.ts
+│       └── ide/
+│           └── vscode.ts
 └── infrastructure/
     ├── adapters/
     │   ├── gh-cli-adapter.ts            # ExternalTokenProvider — calls `gh auth token` (3s timeout)
@@ -140,7 +144,8 @@ src/
 tests/
 ├── application/use-cases/              # unit tests per use-case (vi.fn() mocked ports)
 ├── domain/models/                      # pure value object tests
-├── domain/tools/                       # tool config unit tests (claude, copilot, cursor, opencode)
+├── domain/tools/ai/                    # tool config unit tests (claude, copilot, cursor, opencode)
+├── domain/tools/ide/                   # tool config unit tests (vscode)
 ├── e2e/                                # full CLI e2e via child_process + temp dirs
 │   ├── adopt.e2e.test.ts
 │   ├── init.e2e.test.ts

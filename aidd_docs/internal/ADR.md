@@ -29,3 +29,8 @@ This file contains the key architectural decisions made during the project, alon
 | 2026-04-10 | DEC-021 | [JSONC stripping in domain extractMergeEntries](./decisions/DEC-021-jsonc-stripping-in-domain.md) | Domain self-contained; ~40 lines duplication with adapter |
 | 2026-04-11 | DEC-022 | [excludedMcp per-tool in manifest](./decisions/DEC-022-excluded-mcp-per-tool-in-manifest.md) | Manifest tracks skipped MCP servers; update skips excluded |
 | 2026-04-11 | DEC-023 | [Shared domain JSON entry functions](./decisions/DEC-023-shared-domain-json-entry-functions.md) | Zero duplication for JSON entry ops across use-cases |
+| 2026-04-16 | DEC-024 | [AI/IDE tool type separation](./decisions/DEC-024-ai-ide-tool-type-separation.md) | Two prompts in install/setup; type guard enables exhaustive branching |
+| 2026-04-16 | DEC-025 | [Re-merge semantics for restore on merge files](./decisions/DEC-025-restore-remerge-semantics.md) | User-prime keys preserved on restore; framework-prime drift re-enforced |
+| 2026-04-18 | DEC-026 | [requiredIdeId on ConfigRef for IDE-conditional distribution](./decisions/DEC-026-required-ide-id-config-ref.md) | Copilot doesn't install .vscode files without IDE context |
+| 2026-04-18 | DEC-027 | [Framework split — copilot-settings.json separate from settings.json](./decisions/DEC-027-framework-split-copilot-vscode-settings.md) | No hardcoded key lists in CLI; framework carries semantics |
+| 2026-04-18 | DEC-028 | [Surgical key removal for null-section merge files on uninstall](./decisions/DEC-028-surgical-key-removal-uninstall.md) | Keys removed per-tool; file deleted only when no owners remain |
