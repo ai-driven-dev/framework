@@ -2,7 +2,7 @@
 
 ## Status
 
-- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4) + per-entry hash tracking for merge files + granular MCP server selection + AI/IDE tool type split + restore merge file support + IDE-aware copilot settings (requiredIdeId, config-ref-filter, copilotVscodeSettings, surgical null-section uninstall)
+- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4) + per-entry hash tracking for merge files + granular MCP server selection + AI/IDE tool type split + restore merge file support + IDE-aware copilot settings (requiredIdeId, config-ref-filter, copilotVscodeSettings, surgical null-section uninstall) + IDE context patch on install (requiredIdeIds on AiToolConfig, IdePatchUseCase, IDE tool uninstall preserves user-prime)
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
 - `tests/` — tests all passing
 
@@ -65,6 +65,7 @@ src/
 │       ├── uninstall-use-case.ts
 │       ├── update-use-case.ts
 │       └── shared/
+│           ├── ide-patch-use-case.ts              # IdePatchUseCase — distributes IDE-conditional AI tool files when IDE installed after AI tool (DEC-030)
 │           ├── post-install-pipeline-use-case.ts  # canonical post-write sequence: MemoryScript → save → Catalog → Gitignore
 │           └── setup-state-detector.ts            # detect project setup phase (needs-init/adopt/install/update/up-to-date)
 ├── domain/

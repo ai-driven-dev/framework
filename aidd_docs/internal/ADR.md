@@ -34,3 +34,6 @@ This file contains the key architectural decisions made during the project, alon
 | 2026-04-18 | DEC-026 | [requiredIdeId on ConfigRef for IDE-conditional distribution](./decisions/DEC-026-required-ide-id-config-ref.md) | Copilot doesn't install .vscode files without IDE context |
 | 2026-04-18 | DEC-027 | [Framework split — copilot-settings.json separate from settings.json](./decisions/DEC-027-framework-split-copilot-vscode-settings.md) | No hardcoded key lists in CLI; framework carries semantics |
 | 2026-04-18 | DEC-028 | [Surgical key removal for null-section merge files on uninstall](./decisions/DEC-028-surgical-key-removal-uninstall.md) | Keys removed per-tool; file deleted only when no owners remain |
+| 2026-04-20 | DEC-029 | [requiredIdeIds on AiToolConfig for tool-level IDE dependency](./decisions/DEC-029-required-ide-ids-on-ai-tool-config.md) | Tool declares IDE deps; IdePatchUseCase finds affected tools without scanning ConfigRefs |
+| 2026-04-20 | DEC-030 | [IdePatchUseCase for late IDE installation](./decisions/DEC-030-ide-patch-use-case.md) | Installing IDE retroactively distributes AI tool IDE-conditional files |
+| 2026-04-20 | DEC-031 | [IDE tool uninstall preserves user-prime files](./decisions/DEC-031-ide-tool-uninstall-preserves-user-prime.md) | isAiToolConfig guard; IDE tool files never auto-deleted on uninstall |
