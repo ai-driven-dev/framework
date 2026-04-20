@@ -75,6 +75,7 @@ export interface AiToolConfig {
   readonly directory: string;
   readonly toolSuffix: string;
   readonly signalDir: string | null;
+  readonly requiredIdeIds?: readonly IdeToolId[];
   rewriteContent(content: string, docsDir: string): string;
   reverseRewriteContent(content: string, docsDir: string): string;
   agents(): SectionHandler;

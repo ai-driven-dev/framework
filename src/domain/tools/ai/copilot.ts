@@ -228,6 +228,7 @@ export const copilotToolConfig: AiToolConfig = {
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   signalDir: ".github/prompts",
+  requiredIdeIds: ["vscode"] as const,
 
   rewriteContent: rewriteCopilotContent,
 
