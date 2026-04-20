@@ -100,6 +100,40 @@ describe("install", () => {
     expect(result[0].warnings).toEqual([]);
   });
 
+  it("creates all vscode config files on disk and tracks them in manifest", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const useCase = new InstallUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      noGit,
+      linuxPlatform
+    );
+    await useCase.execute({
+      toolIds: ["vscode" as ToolId],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    expect(existsSync(join(projectRoot, ".vscode/extensions.json"))).toBe(true);
+    expect(existsSync(join(projectRoot, ".vscode/keybindings.json"))).toBe(true);
+    expect(existsSync(join(projectRoot, ".vscode/settings.json"))).toBe(true);
+
+    const manifest = await deps.manifestRepo.load();
+    if (manifest === null) throw new Error("manifest not found");
+    const mergeFiles = manifest.getMergeFiles("vscode");
+    const paths = mergeFiles.map((m) => m.relativePath);
+    expect(paths).toContain(".vscode/extensions.json");
+    expect(paths).toContain(".vscode/keybindings.json");
+    expect(paths).toContain(".vscode/settings.json");
+  });
+
   it("skipped tool produces no warnings", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
@@ -925,6 +959,50 @@ describe("install", () => {
     });
   });
 
+  describe("user-prime merge strategy", () => {
+    it("preserves user-added settings when force-reinstalling vscode", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+
+      await useCase.execute({
+        toolIds: ["vscode" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const settingsPath = join(projectRoot, ".vscode", "settings.json");
+      const raw = await readFile(settingsPath, "utf-8");
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      parsed["editor.fontSize"] = 20;
+      await writeFile(settingsPath, JSON.stringify(parsed, null, 2));
+
+      await useCase.execute({
+        toolIds: ["vscode" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        force: true,
+      });
+
+      const after = JSON.parse(await readFile(settingsPath, "utf-8")) as Record<string, unknown>;
+      expect(after["editor.fontSize"]).toBe(20);
+      expect(after["editor.formatOnSave"]).toBe(true);
+    });
+  });
+
   describe("IDE context patch on install", () => {
     it("distributes copilot IDE-conditional files when vscode is installed after copilot", async () => {
       const deps = buildDeps(projectRoot);
@@ -1001,6 +1079,50 @@ describe("install", () => {
       const content = await readFile(settingsPath, "utf-8");
       const parsed = JSON.parse(content) as Record<string, unknown>;
       expect(parsed["github.copilot.enable"]).toBe(true);
+    });
+
+    it("restores copilot-critical setting to framework value on force reinstall", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+
+      await useCase.execute({
+        toolIds: ["copilot" as ToolId, "vscode" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const settingsPath = join(projectRoot, ".vscode", "settings.json");
+      const initialContent = await readFile(settingsPath, "utf-8");
+      const mutated = {
+        ...(JSON.parse(initialContent) as Record<string, unknown>),
+        "github.copilot.enable": false,
+      };
+      await writeFile(settingsPath, JSON.stringify(mutated, null, 2));
+
+      await useCase.execute({
+        toolIds: ["copilot" as ToolId, "vscode" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        force: true,
+      });
+
+      const restoredContent = await readFile(settingsPath, "utf-8");
+      const restored = JSON.parse(restoredContent) as Record<string, unknown>;
+      expect(restored["github.copilot.enable"]).toBe(true);
     });
   });
 });
