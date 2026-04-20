@@ -146,21 +146,38 @@ export class InstallUseCase {
       );
       results.push(result);
     }
+    await this.patchAlreadyInstalledAiTools(
+      toolIds,
+      manifest,
+      descriptor,
+      contentFiles,
+      docsDir,
+      projectRoot
+    );
+    return results;
+  }
+
+  private async patchAlreadyInstalledAiTools(
+    toolIds: ToolId[],
+    manifest: Manifest,
+    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    docsDir: string,
+    projectRoot: string
+  ): Promise<void> {
     const newIdeIds = toolIds.filter((id): id is IdeToolId =>
       (IDE_TOOL_IDS as readonly string[]).includes(id)
     );
-    if (newIdeIds.length > 0) {
-      await new IdePatchUseCase(this.fs, this.hasher, this.platform).execute({
-        newIdeIds,
-        installingIds: toolIds,
-        manifest,
-        descriptor,
-        contentFiles,
-        docsDir,
-        projectRoot,
-      });
-    }
-    return results;
+    if (newIdeIds.length === 0) return;
+    await new IdePatchUseCase(this.fs, this.hasher, this.platform).execute({
+      newIdeIds,
+      installingIds: toolIds,
+      manifest,
+      descriptor,
+      contentFiles,
+      docsDir,
+      projectRoot,
+    });
   }
 
   /** Resolves which tool IDs to install from the 4-branch selection logic. */
@@ -247,49 +264,25 @@ export class InstallUseCase {
     if (manifest.hasTool(toolId) && !force) {
       return { toolId, fileCount: 0, files: [], skipped: true, warnings: [] };
     }
-
     const config = getToolConfig(toolId);
     const warnings = await this.checkForceWarning(toolId, config, manifest, projectRoot, force);
-
     this.logger.info(`Generating ${toolId} distribution...`);
-
-    const generated = isAiToolConfig(config)
-      ? await generateDistribution(
-          descriptor,
-          config,
-          docsDir,
-          contentFiles,
-          this.hasher,
-          this.platform,
-          projectRoot,
-          this.fs
-        )
-      : await generateConfigDistribution(
-          descriptor,
-          config,
-          contentFiles,
-          this.hasher,
-          this.platform,
-          projectRoot,
-          this.fs
-        );
-
-    await this.removeStaleFiles(toolId, manifest, generated, projectRoot);
-
-    const ideFiltered = filterGeneratedFilesByIdeContext(
-      generated,
-      descriptor.configRefs,
-      ideContext
-    );
-
-    const { filtered, exclusions, configHandler } = await this.selectMcpServers(
-      ideFiltered,
+    const generated = await this.generateToolFiles(
       config,
-      descriptor.configRefs,
+      descriptor,
+      contentFiles,
+      docsDir,
+      projectRoot
+    );
+    await this.removeStaleFiles(toolId, manifest, generated, projectRoot);
+    const { filtered, exclusions, configHandler } = await this.applyIdeAndMcpFilters(
+      generated,
+      descriptor,
+      ideContext,
+      config,
       mcpFilter,
       interactive
     );
-
     if (force && manifest.hasTool(toolId)) {
       await this.clearExcludedMcpKeys(
         exclusions,
@@ -300,6 +293,84 @@ export class InstallUseCase {
       );
     }
     const writeResult = await this.writeToolFiles(filtered, projectRoot, manifest);
+    return this.recordInstallation(
+      toolId,
+      filtered,
+      configHandler,
+      descriptor,
+      writeResult,
+      exclusions,
+      warnings,
+      manifest
+    );
+  }
+
+  private async generateToolFiles(
+    config: ReturnType<typeof getToolConfig>,
+    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    docsDir: string,
+    projectRoot: string
+  ): Promise<GeneratedFile[]> {
+    if (isAiToolConfig(config)) {
+      return generateDistribution(
+        descriptor,
+        config,
+        docsDir,
+        contentFiles,
+        this.hasher,
+        this.platform,
+        projectRoot,
+        this.fs
+      );
+    }
+    return generateConfigDistribution(
+      descriptor,
+      config,
+      contentFiles,
+      this.hasher,
+      this.platform,
+      projectRoot,
+      this.fs
+    );
+  }
+
+  private async applyIdeAndMcpFilters(
+    generated: GeneratedFile[],
+    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    ideContext: IdeToolId[],
+    config: ReturnType<typeof getToolConfig>,
+    mcpFilter: string[],
+    interactive: boolean
+  ): Promise<{
+    filtered: GeneratedFile[];
+    exclusions: McpExclusion[];
+    configHandler: ConfigHandler;
+  }> {
+    const ideFiltered = filterGeneratedFilesByIdeContext(
+      generated,
+      descriptor.configRefs,
+      ideContext
+    );
+    return this.selectMcpServers(
+      ideFiltered,
+      config,
+      descriptor.configRefs,
+      mcpFilter,
+      interactive
+    );
+  }
+
+  private recordInstallation(
+    toolId: ToolId,
+    filtered: GeneratedFile[],
+    configHandler: ConfigHandler,
+    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    writeResult: { files: GeneratedFile[]; userFileConflicts: string[] },
+    exclusions: McpExclusion[],
+    warnings: string[],
+    manifest: Manifest
+  ): InstallToolResult {
     for (const relativePath of writeResult.userFileConflicts) {
       warnings.push(
         `\`${relativePath}\` already exists and was not installed by AIDD — skipped to preserve user file`
@@ -307,7 +378,6 @@ export class InstallUseCase {
     }
     const mergeFiles = this.buildMergeEntries(filtered, configHandler, descriptor.configRefs);
     manifest.addTool(toolId, descriptor.version, writeResult.files, mergeFiles, exclusions);
-
     return { toolId, fileCount: filtered.length, files: filtered, skipped: false, warnings };
   }
 
@@ -351,25 +421,35 @@ export class InstallUseCase {
     if (exclusions.length === 0) return;
     const lookup = buildConfigNameLookup(configRefs);
     for (const file of filtered) {
-      if (file.mergeStrategy === "none") continue;
-      const fileExclusions = exclusions.filter((e) => e.configPath === file.relativePath);
-      if (fileExclusions.length === 0) continue;
-      const configName = file.frameworkPath ? lookup.get(file.frameworkPath) : undefined;
-      if (!configName) continue;
-      const sectionKey = configHandler.entrySection(configName);
-      if (sectionKey === null) continue;
-      const fullPath = join(projectRoot, file.relativePath);
-      if (!(await this.fs.fileExists(fullPath))) continue;
-      const content = await this.fs.readFile(fullPath);
-      await this.fs.writeFile(
-        fullPath,
-        removeEntriesFromJson(
-          content,
-          sectionKey,
-          fileExclusions.map((e) => e.entryKey)
-        )
-      );
+      await this.clearExcludedMcpKeysForFile(file, exclusions, configHandler, lookup, projectRoot);
     }
+  }
+
+  private async clearExcludedMcpKeysForFile(
+    file: GeneratedFile,
+    exclusions: McpExclusion[],
+    configHandler: ConfigHandler,
+    lookup: Map<string, string>,
+    projectRoot: string
+  ): Promise<void> {
+    if (file.mergeStrategy === "none") return;
+    const fileExclusions = exclusions.filter((e) => e.configPath === file.relativePath);
+    if (fileExclusions.length === 0) return;
+    const configName = file.frameworkPath ? lookup.get(file.frameworkPath) : undefined;
+    if (!configName) return;
+    const sectionKey = configHandler.entrySection(configName);
+    if (sectionKey === null) return;
+    const fullPath = join(projectRoot, file.relativePath);
+    if (!(await this.fs.fileExists(fullPath))) return;
+    const content = await this.fs.readFile(fullPath);
+    await this.fs.writeFile(
+      fullPath,
+      removeEntriesFromJson(
+        content,
+        sectionKey,
+        fileExclusions.map((e) => e.entryKey)
+      )
+    );
   }
 
   private async checkForceWarning(
