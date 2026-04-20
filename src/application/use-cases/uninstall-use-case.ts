@@ -2,7 +2,12 @@ import { dirname, join } from "node:path";
 import type { Manifest } from "../../domain/models/manifest.js";
 import type { McpExclusion } from "../../domain/models/mcp-exclusion.js";
 import { type MergeFileEntry, removeEntriesFromJson } from "../../domain/models/merge-entry.js";
-import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
+import {
+  getToolConfig,
+  isAiToolConfig,
+  type ToolId,
+  VALID_TOOL_IDS,
+} from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -134,7 +139,8 @@ export class UninstallUseCase {
       relativePath,
       manifest
     );
-    if (!otherOwnersExist) {
+    const isIdeTool = !isAiToolConfig(getToolConfig(toolId));
+    if (!otherOwnersExist && !isIdeTool) {
       await this.fs.deleteFile(fullPath);
       await this.fs.deleteEmptyDirectories(dirname(fullPath));
       return true;

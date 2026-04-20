@@ -127,7 +127,11 @@ export function buildMergeFileEntries(
     const configName = file.frameworkPath ? configNameLookup.get(file.frameworkPath) : undefined;
     const sectionKey = configName ? configHandler.entrySection(configName) : null;
     const hashes = extractMergeEntries(file.content, sectionKey, hasher);
-    entries.push({ relativePath: file.relativePath, sectionKey, entries: hashes });
+    entries.push({
+      relativePath: file.relativePath,
+      sectionKey,
+      entries: hashes,
+    });
   }
   return entries;
 }

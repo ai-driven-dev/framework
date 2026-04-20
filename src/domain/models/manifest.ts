@@ -380,7 +380,11 @@ export class Manifest {
       for (const [key, hash] of Object.entries(m.entries)) {
         entries[key] = hash.value;
       }
-      return { relativePath: m.relativePath, sectionKey: m.sectionKey, entries };
+      return {
+        relativePath: m.relativePath,
+        sectionKey: m.sectionKey,
+        entries,
+      };
     });
   }
 
@@ -390,7 +394,11 @@ export class Manifest {
       for (const [key, hash] of Object.entries(m.entries)) {
         entries[key] = new FileHash(hash);
       }
-      return { relativePath: m.relativePath, sectionKey: m.sectionKey, entries };
+      return {
+        relativePath: m.relativePath,
+        sectionKey: m.sectionKey,
+        entries,
+      };
     });
   }
 
