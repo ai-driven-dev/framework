@@ -924,4 +924,83 @@ describe("install", () => {
       ).rejects.toThrow("Unknown MCP server(s): nonexistent");
     });
   });
+
+  describe("IDE context patch on install", () => {
+    it("distributes copilot IDE-conditional files when vscode is installed after copilot", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+
+      await useCase.execute({
+        toolIds: ["copilot" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        mcpFilter: ["playwright", "github"],
+      });
+
+      const settingsPath = join(projectRoot, ".vscode", "settings.json");
+      expect(existsSync(settingsPath)).toBe(false);
+
+      await useCase.execute({
+        toolIds: ["vscode" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      expect(existsSync(settingsPath)).toBe(true);
+      const content = await readFile(settingsPath, "utf-8");
+      const parsed = JSON.parse(content) as Record<string, unknown>;
+      expect(parsed["github.copilot.enable"]).toBe(true);
+
+      const manifest = await deps.manifestRepo.load();
+      if (manifest === null) throw new Error("manifest not found");
+      const copilotMerge = manifest.getMergeFiles("copilot");
+      expect(copilotMerge.some((m) => m.relativePath === ".vscode/settings.json")).toBe(true);
+    });
+
+    it("produces same result when copilot and vscode are installed together", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+
+      await expect(
+        useCase.execute({
+          toolIds: ["copilot" as ToolId, "vscode" as ToolId],
+          frameworkPath: FIXTURE_DIR,
+          version: "test",
+          docsDir: "aidd_docs",
+          projectRoot,
+          mcpFilter: ["playwright", "github"],
+        })
+      ).resolves.not.toThrow();
+
+      const settingsPath = join(projectRoot, ".vscode", "settings.json");
+      expect(existsSync(settingsPath)).toBe(true);
+      const content = await readFile(settingsPath, "utf-8");
+      const parsed = JSON.parse(content) as Record<string, unknown>;
+      expect(parsed["github.copilot.enable"]).toBe(true);
+    });
+  });
 });

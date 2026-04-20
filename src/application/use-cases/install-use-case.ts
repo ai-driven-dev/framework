@@ -39,6 +39,7 @@ import type { ManifestRepository } from "../../domain/ports/manifest-repository.
 import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import { InputRequiredError, NoManifestError } from "../errors.js";
+import { IdePatchUseCase } from "./shared/ide-patch-use-case.js";
 import { McpUseCase } from "./shared/mcp-use-case.js";
 import { PostInstallPipelineUseCase } from "./shared/post-install-pipeline-use-case.js";
 
@@ -144,6 +145,20 @@ export class InstallUseCase {
         ideContext
       );
       results.push(result);
+    }
+    const newIdeIds = toolIds.filter((id): id is IdeToolId =>
+      (IDE_TOOL_IDS as readonly string[]).includes(id)
+    );
+    if (newIdeIds.length > 0) {
+      await new IdePatchUseCase(this.fs, this.hasher, this.platform).execute({
+        newIdeIds,
+        installingIds: toolIds,
+        manifest,
+        descriptor,
+        contentFiles,
+        docsDir,
+        projectRoot,
+      });
     }
     return results;
   }
