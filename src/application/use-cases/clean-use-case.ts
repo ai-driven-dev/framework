@@ -1,4 +1,5 @@
 import { dirname, join } from "node:path";
+import { type MergeFileEntry, removeEntriesFromJson } from "../../domain/models/merge-entry.js";
 import type { ToolId } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
@@ -65,7 +66,7 @@ export class CleanUseCase {
     for (const toolId of manifest.getInstalledToolIds()) {
       this.logger.info(`Removing ${toolId} files...`);
       deleted += await this.deleteFiles(manifest.getToolFiles(toolId), options.projectRoot);
-      deleted += await this.deleteFiles(manifest.getMergeFiles(toolId), options.projectRoot);
+      deleted += await this.cleanMergeFileKeys(manifest.getMergeFiles(toolId), options.projectRoot);
     }
 
     this.logger.info("Removing docs files...");
@@ -79,6 +80,41 @@ export class CleanUseCase {
     await new GitignoreUseCase(this.fs).remove(options.projectRoot, [".aidd/cache/"]);
 
     return { dryRun: false, preview, fileCount: deleted };
+  }
+
+  private async cleanMergeFileKeys(
+    mergeFiles: readonly MergeFileEntry[],
+    projectRoot: string
+  ): Promise<number> {
+    let count = 0;
+    for (const mergeFile of mergeFiles) {
+      const fullPath = join(projectRoot, mergeFile.relativePath);
+      if (!(await this.fs.fileExists(fullPath))) continue;
+      const content = await this.fs.readFile(fullPath);
+      const keys = Object.keys(mergeFile.entries);
+      const cleaned = removeEntriesFromJson(content, mergeFile.sectionKey, keys);
+      if (this.isEffectivelyEmpty(cleaned)) {
+        await this.fs.deleteFile(fullPath);
+        await this.fs.deleteEmptyDirectories(dirname(fullPath));
+      } else {
+        await this.fs.writeFile(fullPath, cleaned);
+      }
+      count++;
+    }
+    return count;
+  }
+
+  private isEffectivelyEmpty(json: string): boolean {
+    try {
+      const parsed = JSON.parse(json) as Record<string, unknown>;
+      return Object.values(parsed).every(
+        (v) =>
+          v === null ||
+          (typeof v === "object" && !Array.isArray(v) && Object.keys(v as object).length === 0)
+      );
+    } catch {
+      return false;
+    }
   }
 
   private async deleteFiles(

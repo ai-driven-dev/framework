@@ -1,6 +1,7 @@
 import { dirname, join, normalize } from "node:path";
 import { ManifestValidationError } from "../../domain/errors.js";
 import type { Manifest } from "../../domain/models/manifest.js";
+import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/merge-entry.js";
 import {
   getAllRegisteredTools,
   hasToolSignals,
@@ -8,6 +9,7 @@ import {
 } from "../../domain/models/tool-config.js";
 import type { AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { NoManifestError } from "../errors.js";
@@ -23,6 +25,7 @@ interface DoctorIssue {
 interface ToolHealth {
   toolId: ToolId;
   fileCount: number;
+  mergeFileCount: number;
 }
 
 interface DoctorReport {
@@ -68,6 +71,7 @@ export class DoctorUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
+    private readonly hasher: Hasher,
     readonly _logger: Logger,
     private readonly authReader?: AuthTokenProvider
   ) {}
@@ -94,7 +98,8 @@ export class DoctorUseCase {
 
     for (const toolId of manifest.getInstalledToolIds()) {
       const files = manifest.getToolFiles(toolId);
-      toolHealth.push({ toolId, fileCount: files.length });
+      const mergeFiles = manifest.getMergeFiles(toolId);
+      toolHealth.push({ toolId, fileCount: files.length, mergeFileCount: mergeFiles.length });
       allTrackedFiles.push(...files.map((f) => ({ ...f, toolId })));
     }
 
@@ -103,6 +108,7 @@ export class DoctorUseCase {
 
     issues.push(...(await this.checkDocsDirectory(manifest, projectRoot)));
     issues.push(...(await this.checkMissingTrackedFiles(allTrackedFiles, projectRoot)));
+    issues.push(...(await this.checkMergeFileKeys(manifest, projectRoot)));
     issues.push(...(await this.checkBrokenReferences(allTrackedFiles, projectRoot)));
     issues.push(...(await this.checkOrphanedDirectories(manifest, projectRoot)));
     issues.push(...(await this.checkAuth()));
@@ -187,6 +193,62 @@ export class DoctorUseCase {
       ];
     }
     return [];
+  }
+
+  private async checkMergeFileKeys(
+    manifest: Manifest,
+    projectRoot: string
+  ): Promise<DoctorIssue[]> {
+    const issues: DoctorIssue[] = [];
+    for (const toolId of manifest.getInstalledToolIds()) {
+      for (const mergeFile of manifest.getMergeFiles(toolId)) {
+        issues.push(...(await this.checkOneMergeFileHealth(mergeFile, projectRoot)));
+      }
+    }
+    return issues;
+  }
+
+  private async checkOneMergeFileHealth(
+    mergeFile: MergeFileEntry,
+    projectRoot: string
+  ): Promise<DoctorIssue[]> {
+    const fullPath = join(projectRoot, mergeFile.relativePath);
+    if (!(await this.fs.fileExists(fullPath))) {
+      return [
+        {
+          severity: "error",
+          message: `Missing merge file: ${mergeFile.relativePath}`,
+          fix: `Run \`aidd restore --force\` to reinstall tracked files.`,
+        },
+      ];
+    }
+    return this.compareMergeFileKeys(mergeFile, fullPath);
+  }
+
+  private async compareMergeFileKeys(
+    mergeFile: MergeFileEntry,
+    fullPath: string
+  ): Promise<DoctorIssue[]> {
+    const content = await this.fs.readFile(fullPath);
+    const diskEntries = extractMergeEntries(content, mergeFile.sectionKey, this.hasher);
+    const issues: DoctorIssue[] = [];
+    for (const [key, manifestHash] of Object.entries(mergeFile.entries)) {
+      const diskHash = diskEntries[key];
+      if (!diskHash) {
+        issues.push({
+          severity: "error",
+          message: `Missing key in ${mergeFile.relativePath} > ${key}`,
+          fix: `Run \`aidd restore --force\` to restore managed keys.`,
+        });
+      } else if (!diskHash.equals(manifestHash)) {
+        issues.push({
+          severity: "warning",
+          message: `Modified key in ${mergeFile.relativePath} > ${key}`,
+          fix: `Run \`aidd restore --force\` to restore the original value.`,
+        });
+      }
+    }
+    return issues;
   }
 
   private async checkBrokenReferences(

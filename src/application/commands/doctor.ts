@@ -15,7 +15,13 @@ export function registerDoctorCommand(program: Command): void {
       try {
         const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
-        const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.authReader);
+        const useCase = new DoctorUseCase(
+          deps.fs,
+          deps.manifestRepo,
+          deps.hasher,
+          deps.logger,
+          deps.authReader
+        );
         const report = await useCase.execute({ projectRoot, repo });
 
         for (const issue of report.issues.filter((i) => i.severity === "info")) {
@@ -24,7 +30,8 @@ export function registerDoctorCommand(program: Command): void {
 
         if (report.healthy) {
           const totalFiles =
-            report.toolHealth.reduce((s, t) => s + t.fileCount, 0) + report.docsFileCount;
+            report.toolHealth.reduce((s, t) => s + t.fileCount + t.mergeFileCount, 0) +
+            report.docsFileCount;
           const toolCount = report.toolHealth.length;
           output.success(
             `Installation is healthy (${totalFiles} files tracked across ${toolCount} ${toolCount === 1 ? "tool" : "tools"})`
