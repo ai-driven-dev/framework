@@ -13,7 +13,7 @@ function makeDescriptor() {
     templateRefs: [{ name: "agentsMd", path: "aidd_docs/templates/AGENTS.md" }],
     configRefs: [
       { name: "mcp", path: "config/mcp.json" },
-      { name: "vscodeDir", path: "config/.vscode" },
+      { name: "vscodeDir", path: "config/vscode" },
     ],
     scriptRefs: [],
   });
@@ -81,7 +81,7 @@ describe("FrameworkDescriptor", () => {
     it("returns vscodeDir config", () => {
       const config = descriptor.getConfig("vscodeDir");
       expect(config).toBeDefined();
-      expect(config?.path).toBe("config/.vscode");
+      expect(config?.path).toBe("config/vscode");
     });
 
     it("returns undefined for unknown config name", () => {

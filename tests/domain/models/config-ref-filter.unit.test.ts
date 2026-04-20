@@ -30,26 +30,23 @@ describe("filterGeneratedFilesByIdeContext", () => {
   });
 
   it("excludes IDE-conditional file when ideContext is empty", () => {
-    const file = makeFile("config/.vscode/copilot-settings.json");
-    const ref = makeRef("config/.vscode/copilot-settings.json", "vscode");
+    const file = makeFile("config/copilot/settings.json");
+    const ref = makeRef("config/copilot/settings.json", "vscode");
     const result = filterGeneratedFilesByIdeContext([file], [ref], []);
     expect(result).not.toContain(file);
   });
 
   it("includes IDE-conditional file when matching IDE is in ideContext", () => {
-    const file = makeFile("config/.vscode/copilot-settings.json");
-    const ref = makeRef("config/.vscode/copilot-settings.json", "vscode");
+    const file = makeFile("config/copilot/settings.json");
+    const ref = makeRef("config/copilot/settings.json", "vscode");
     const result = filterGeneratedFilesByIdeContext([file], [ref], ["vscode"]);
     expect(result).toContain(file);
   });
 
   it("passes non-conditional files regardless of ideContext and filters conditional ones", () => {
     const regular = makeFile("config/mcp.json");
-    const conditional = makeFile("config/.vscode/copilot-settings.json");
-    const refs = [
-      makeRef("config/mcp.json"),
-      makeRef("config/.vscode/copilot-settings.json", "vscode"),
-    ];
+    const conditional = makeFile("config/copilot/settings.json");
+    const refs = [makeRef("config/mcp.json"), makeRef("config/copilot/settings.json", "vscode")];
     const result = filterGeneratedFilesByIdeContext([regular, conditional], refs, []);
     expect(result).toContain(regular);
     expect(result).not.toContain(conditional);

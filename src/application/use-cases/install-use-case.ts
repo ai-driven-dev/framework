@@ -266,6 +266,7 @@ export class InstallUseCase {
     }
     const config = getToolConfig(toolId);
     const warnings = await this.checkForceWarning(toolId, config, manifest, projectRoot, force);
+    this.appendMissingIdeWarnings(toolId, config, ideContext, warnings);
     this.logger.info(`Generating ${toolId} distribution...`);
     const generated = await this.generateToolFiles(
       config,
@@ -469,6 +470,20 @@ export class InstallUseCase {
       }
     }
     return warnings;
+  }
+
+  private appendMissingIdeWarnings(
+    toolId: ToolId,
+    config: ReturnType<typeof getToolConfig>,
+    ideContext: IdeToolId[],
+    warnings: string[]
+  ): void {
+    if (!isAiToolConfig(config) || !config.requiredIdeIds) return;
+    const missing = config.requiredIdeIds.filter((id) => !ideContext.includes(id));
+    if (missing.length === 0) return;
+    warnings.push(
+      `Some ${toolId} settings require ${missing.join(", ")} — run \`aidd install ${missing.join(" ")}\` to enable full configuration`
+    );
   }
 
   private async removeStaleFiles(
