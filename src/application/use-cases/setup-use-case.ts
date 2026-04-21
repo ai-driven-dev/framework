@@ -115,6 +115,7 @@ export class SetupUseCase {
       projectRoot,
       repoForManifest
     );
+
     const installResults = await this.runInstall(
       resolved.path,
       resolved.version,
@@ -255,11 +256,7 @@ export class SetupUseCase {
     if (signals.length === 0) return "";
     const lines = ["Detected existing AIDD files:"];
     for (const signal of signals) {
-      if (signal.type === "docsDir") {
-        lines.push(`  • ${signal.path}/ — run: ls ${signal.path}/`);
-      } else {
-        lines.push(`  • ${signal.file} — run: cat ${signal.file}`);
-      }
+      lines.push(`  • ${signal.file} — run: cat ${signal.file}`);
     }
     return lines.join("\n");
   }

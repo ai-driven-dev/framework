@@ -64,10 +64,15 @@ describe("adopt", () => {
     ).rejects.toThrow("Already initialized");
   });
 
-  it("fails when the tool directory does not exist on disk", async () => {
-    await expect(
-      buildUseCase().execute({ ...DEFAULT_OPTS, toolIds: ["claude"], projectRoot })
-    ).rejects.toThrow("Directory '.claude/' not found for tool 'claude'");
+  it("skips a tool with a warning when its directory does not exist on disk", async () => {
+    const result = await buildUseCase().execute({
+      ...DEFAULT_OPTS,
+      toolIds: ["claude"],
+      projectRoot,
+    });
+
+    expect(result.tools).toHaveLength(0);
+    expect(result.totalRegistered).toBe(0);
   });
 
   it("only registers files on disk that match the framework distribution", async () => {
