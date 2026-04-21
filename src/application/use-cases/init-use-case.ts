@@ -185,7 +185,9 @@ export class InitUseCase {
         generated.push(new GeneratedFile({ relativePath: outputRelPath, content, hash: newHash }));
       } else if (await this.fs.fileExists(outputPath)) {
         const diskHash = await this.fs.readFileHash(outputPath);
-        generated.push(new GeneratedFile({ relativePath: outputRelPath, content: "", hash: diskHash }));
+        generated.push(
+          new GeneratedFile({ relativePath: outputRelPath, content: "", hash: diskHash })
+        );
       } else {
         await this.fs.writeFile(outputPath, content);
         generated.push(new GeneratedFile({ relativePath: outputRelPath, content, hash: newHash }));
