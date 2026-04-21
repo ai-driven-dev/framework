@@ -17,11 +17,27 @@ export const AI_TOOL_IDS: readonly AiToolId[] = ["claude", "cursor", "copilot", 
 export const IDE_TOOL_IDS: readonly IdeToolId[] = ["vscode"];
 export const VALID_TOOL_IDS: readonly ToolId[] = [...AI_TOOL_IDS, ...IDE_TOOL_IDS];
 
+export type ToolCategory = "ai" | "ide";
+
+export function toolIdsForCategory(category: ToolCategory): readonly ToolId[] {
+  return category === "ai" ? AI_TOOL_IDS : IDE_TOOL_IDS;
+}
+
 export function assertValidToolIds(toolIds: string[]): void {
   const invalid = toolIds.filter((t) => !VALID_TOOL_IDS.includes(t as ToolId));
   if (invalid.length === 0) return;
   throw new ToolValidationError(
     `Unknown tool(s): ${invalid.join(", ")}. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
+  );
+}
+
+export function assertToolIdsMatchCategory(toolIds: ToolId[], category: ToolCategory): void {
+  const allowed = toolIdsForCategory(category);
+  const wrong = toolIds.filter((id) => !(allowed as readonly string[]).includes(id));
+  if (wrong.length === 0) return;
+  const label = category === "ai" ? "AI" : "IDE";
+  throw new ToolValidationError(
+    `${wrong.join(", ")} ${wrong.length === 1 ? `is not an ${label} tool` : `are not ${label} tools`}. Valid ${label} tools: ${[...allowed].join(", ")}`
   );
 }
 

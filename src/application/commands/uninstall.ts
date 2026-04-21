@@ -1,5 +1,11 @@
 import type { Command } from "commander";
-import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
+import {
+  assertToolIdsMatchCategory,
+  assertValidToolIds,
+  type ToolCategory,
+  type ToolId,
+  toolIdsForCategory,
+} from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { NoManifestError } from "../errors.js";
@@ -10,12 +16,16 @@ export function registerUninstallCommand(program: Command): void {
   program
     .command("uninstall")
     .description("Remove a tool's generated configuration files")
-    .argument("[tools...]", "Tool IDs to uninstall (e.g., claude, cursor, copilot)")
+    .argument("[args...]", "Optional category ('ai' or 'ide') followed by tool IDs")
     .option("-a, --all", "Uninstall all installed tools", false)
     .option("--mcp <servers>", "Comma-separated list of MCP servers to remove")
-    .action(async (toolArgs: string[], cmdOptions: { all: boolean; mcp?: string }) => {
+    .action(async (rawArgs: string[], cmdOptions: { all: boolean; mcp?: string }) => {
       const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
+
+      const category: ToolCategory | undefined =
+        rawArgs[0] === "ai" || rawArgs[0] === "ide" ? rawArgs[0] : undefined;
+      const toolArgs = category ? rawArgs.slice(1) : rawArgs;
 
       if (cmdOptions.all && toolArgs.length > 0) {
         output.warn(`--all is set; ignoring specified tools: ${toolArgs.join(", ")}`);
@@ -29,7 +39,12 @@ export function registerUninstallCommand(program: Command): void {
         if (cmdOptions.all) {
           const manifest = await deps.manifestRepo.load();
           if (!manifest) throw new NoManifestError(repo);
-          toolIds = manifest.getInstalledToolIds();
+          const allInstalled = manifest.getInstalledToolIds();
+          toolIds = category
+            ? allInstalled.filter((id) =>
+                (toolIdsForCategory(category) as readonly string[]).includes(id)
+              )
+            : allInstalled;
           if (toolIds.length === 0) {
             output.success("No tools installed. Run `aidd install <tool>` to get started.");
             return;
@@ -37,6 +52,7 @@ export function registerUninstallCommand(program: Command): void {
         } else if (toolArgs.length > 0) {
           toolIds = toolArgs as ToolId[];
           assertValidToolIds(toolIds);
+          if (category) assertToolIdsMatchCategory(toolIds, category);
         } else {
           if (!process.stdout.isTTY) {
             output.error(
@@ -49,13 +65,20 @@ export function registerUninstallCommand(program: Command): void {
           if (!manifest) throw new NoManifestError(repo);
 
           const installedIds = manifest.getInstalledToolIds();
-          if (installedIds.length === 0) {
-            output.error("No tools installed.");
+          const candidates = category
+            ? installedIds.filter((id) =>
+                (toolIdsForCategory(category) as readonly string[]).includes(id)
+              )
+            : installedIds;
+
+          if (candidates.length === 0) {
+            output.error(
+              category ? `No ${category.toUpperCase()} tools installed.` : "No tools installed."
+            );
             process.exit(1);
           }
 
-          const choices = installedIds.map((id) => ({ name: id, value: id, checked: false }));
-
+          const choices = candidates.map((id) => ({ name: id, value: id, checked: false }));
           const selected = await deps.prompter.checkbox(
             "Which tools do you want to uninstall?",
             choices

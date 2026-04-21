@@ -112,7 +112,9 @@ export class AdoptUseCase {
       );
     }
     if (toolIds.length === 0) {
-      throw new InputRequiredError("No tools specified. Use --tools to specify at least one tool.");
+      throw new InputRequiredError(
+        "No tools specified. Use --ai or --ide to specify at least one tool."
+      );
     }
   }
 

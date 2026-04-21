@@ -2,7 +2,7 @@
 
 The **AIDD CLI** (`@ai-driven-dev/cli`) distributes the [AI-Driven Development Framework](https://github.com/ai-driven-dev/aidd-framework) consistently across AI coding assistants. It downloads a canonical framework from GitHub, rewrites files to match each tool's conventions, and tracks every installed file in a hash-based manifest to detect drift.
 
-**Supported tools:** Claude Code · Cursor · GitHub Copilot · OpenCode
+**Supported tools:** Claude Code · Cursor · GitHub Copilot · OpenCode · VS Code (IDE integration)
 
 ---
 
@@ -147,6 +147,8 @@ Excluded from sync: memory bank files, MCP configs, VS Code settings, docs.
 
 ```bash
 aidd uninstall cursor           # remove cursor files and clean up the manifest
+aidd uninstall ide vscode       # remove VS Code integration only
+aidd uninstall ai --all         # remove all AI tools
 aidd uninstall --all            # uninstall all tools
 ```
 
@@ -158,10 +160,10 @@ aidd uninstall --all            # uninstall all tools
 | ---------------------------- | ------------------------------------------------------------------ | -------------------------------------------- |
 | `aidd auth`                  | Manage authentication (login, logout, status)                      | `--token`, `--gh`, `--level`                 |
 | `aidd setup`                 | Set up or update the project — interactive by default, scriptable with flags | `--release`, `--path`, `--tools`, `--all-tools`, `--docs-dir`, `--from` |
-| `aidd install <tools...>`    | Generate and write tool-specific files (requires existing manifest) | `--all`, `--force`, `--release`, `--path`   |
-| `aidd uninstall <tools...>`  | Remove tool files and update manifest                              | `--all`                                      |
-| `aidd status`                | Show drift between disk and manifest + available update            | `--tool`, `--docs`                           |
-| `aidd doctor`                | Structural integrity check — exits 1 on errors or warnings         | —                                            |
+| `aidd install [ai\|ide] <tools...>` | Generate and write tool-specific files (requires existing manifest) | `--all`, `--force`, `--release`, `--path` |
+| `aidd uninstall [ai\|ide] <tools...>` | Remove tool files and update manifest                        | `--all`                                      |
+| `aidd status [ai\|ide]`      | Show drift between disk and manifest + available update            | `--tool`, `--docs`                           |
+| `aidd doctor [ai\|ide]`      | Structural integrity check — exits 1 on errors or warnings         | —                                            |
 | `aidd update`                | Apply new framework version                                        | `--force`, `--dry-run`, `--tool`, `--docs`, `--release`, `--path` |
 | `aidd restore [files...]`    | Revert modified/deleted files to the pinned framework version      | `--force`, `--tool`, `--docs`, `--release`, `--path` |
 | `aidd sync`                  | Propagate local changes from one tool to the others                | `--source` (required), `--target`, `--force` |
@@ -209,10 +211,17 @@ Generates and writes tool-specific distribution files (agents, commands, rules, 
 ```bash
 aidd install claude
 aidd install claude cursor copilot opencode
+aidd install vscode                          # IDE integration only
+aidd install ai claude cursor               # scope to AI tools only
+aidd install ide vscode                     # scope to IDE tools only
 aidd install --all                          # all supported tools
+aidd install ai --all                       # all AI tools
+aidd install ide --all                      # all IDE tools
 aidd install claude --force                 # overwrite existing files
 aidd install claude --release v3.4.0       # pin a specific framework version
 ```
+
+The optional `ai` or `ide` prefix scopes the operation and validates that the listed tools belong to that category.
 
 ### `aidd uninstall`
 
@@ -220,7 +229,9 @@ Removes a tool's generated files and updates the manifest.
 
 ```bash
 aidd uninstall cursor
-aidd uninstall --all
+aidd uninstall ide vscode                   # scope to IDE tools
+aidd uninstall ai --all                     # remove all AI tools
+aidd uninstall --all                        # remove all installed tools
 ```
 
 ### `aidd status`
@@ -229,6 +240,8 @@ Compares files on disk with the manifest. Shows drift and available framework up
 
 ```bash
 aidd status                     # all tools + docs
+aidd status ai                  # AI tools only (no docs)
+aidd status ide                 # IDE tools only (no docs)
 aidd status --tool claude       # filter to one tool
 aidd status --docs              # docs only
 ```
@@ -240,7 +253,9 @@ Legend: `~` modified · `-` deleted · `+` untracked (on disk, not in manifest)
 Checks structural integrity. Exits 1 if errors or warnings are found; exits 0 with a warning message if only the auth credential is missing (non-blocking in CI).
 
 ```bash
-aidd doctor
+aidd doctor                     # check all tools + docs
+aidd doctor ai                  # AI tools only
+aidd doctor ide                 # IDE tools only
 ```
 
 Detects: missing or corrupted manifest, orphaned tool directories, broken `@path` includes and markdown links in tracked files.

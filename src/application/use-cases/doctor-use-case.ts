@@ -5,7 +5,9 @@ import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/me
 import {
   getAllRegisteredTools,
   hasToolSignals,
+  type ToolCategory,
   type ToolId,
+  toolIdsForCategory,
 } from "../../domain/models/tool-config.js";
 import type { AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
@@ -37,6 +39,7 @@ interface DoctorReport {
 
 interface DoctorOptions {
   projectRoot: string;
+  category?: ToolCategory;
   repo?: string;
 }
 
@@ -77,7 +80,7 @@ export class DoctorUseCase {
   ) {}
 
   async execute(options: DoctorOptions): Promise<DoctorReport> {
-    const { projectRoot, repo } = options;
+    const { projectRoot, category, repo } = options;
 
     let manifest: Manifest | null;
     try {
@@ -92,26 +95,29 @@ export class DoctorUseCase {
       throw new NoManifestError(repo);
     }
 
+    const allowedIds = category ? new Set(toolIdsForCategory(category) as readonly string[]) : null;
+
     const issues: DoctorIssue[] = [];
     const toolHealth: ToolHealth[] = [];
     const allTrackedFiles: { relativePath: string; toolId: ToolId | null }[] = [];
 
     for (const toolId of manifest.getInstalledToolIds()) {
+      if (allowedIds && !allowedIds.has(toolId)) continue;
       const files = manifest.getToolFiles(toolId);
       const mergeFiles = manifest.getMergeFiles(toolId);
       toolHealth.push({ toolId, fileCount: files.length, mergeFileCount: mergeFiles.length });
       allTrackedFiles.push(...files.map((f) => ({ ...f, toolId })));
     }
 
-    const docsFiles = manifest.getDocsFiles();
+    const docsFiles = category ? [] : manifest.getDocsFiles();
     allTrackedFiles.push(...docsFiles.map((f) => ({ ...f, toolId: null })));
 
-    issues.push(...(await this.checkDocsDirectory(manifest, projectRoot)));
+    if (!category) issues.push(...(await this.checkDocsDirectory(manifest, projectRoot)));
     issues.push(...(await this.checkMissingTrackedFiles(allTrackedFiles, projectRoot)));
-    issues.push(...(await this.checkMergeFileKeys(manifest, projectRoot)));
+    issues.push(...(await this.checkMergeFileKeys(manifest, projectRoot, allowedIds)));
     issues.push(...(await this.checkBrokenReferences(allTrackedFiles, projectRoot)));
-    issues.push(...(await this.checkOrphanedDirectories(manifest, projectRoot)));
-    issues.push(...(await this.checkAuth()));
+    if (!category) issues.push(...(await this.checkOrphanedDirectories(manifest, projectRoot)));
+    if (!category) issues.push(...(await this.checkAuth()));
 
     return {
       healthy: issues.filter((i) => i.severity !== "info").length === 0,
@@ -197,10 +203,12 @@ export class DoctorUseCase {
 
   private async checkMergeFileKeys(
     manifest: Manifest,
-    projectRoot: string
+    projectRoot: string,
+    allowedIds: Set<string> | null = null
   ): Promise<DoctorIssue[]> {
     const issues: DoctorIssue[] = [];
     for (const toolId of manifest.getInstalledToolIds()) {
+      if (allowedIds && !allowedIds.has(toolId)) continue;
       for (const mergeFile of manifest.getMergeFiles(toolId)) {
         issues.push(...(await this.checkOneMergeFileHealth(mergeFile, projectRoot)));
       }

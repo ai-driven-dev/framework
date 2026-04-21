@@ -3,11 +3,13 @@ import {
   type AiToolConfig,
   type AiToolId,
   acceptsFile,
+  assertToolIdsMatchCategory,
   getAllRegisteredTools,
   getToolConfig,
   registerTool,
   stripToolSuffix,
   type ToolId,
+  toolIdsForCategory,
   VALID_TOOL_IDS,
 } from "../../../src/domain/models/tool-config.js";
 
@@ -92,6 +94,41 @@ describe("stripToolSuffix()", () => {
 
   it("returns unchanged when no suffix at all", () => {
     expect(stripToolSuffix(".claude.md", "generic.md")).toBe("generic.md");
+  });
+});
+
+describe("toolIdsForCategory()", () => {
+  it("returns AI tool IDs for 'ai'", () => {
+    expect(toolIdsForCategory("ai")).toEqual(["claude", "cursor", "copilot", "opencode"]);
+  });
+
+  it("returns IDE tool IDs for 'ide'", () => {
+    expect(toolIdsForCategory("ide")).toEqual(["vscode"]);
+  });
+});
+
+describe("assertToolIdsMatchCategory()", () => {
+  it("does not throw when all tools match the category", () => {
+    expect(() => assertToolIdsMatchCategory(["claude", "cursor"], "ai")).not.toThrow();
+    expect(() => assertToolIdsMatchCategory(["vscode"], "ide")).not.toThrow();
+  });
+
+  it("throws when an IDE tool is passed with 'ai' category", () => {
+    expect(() => assertToolIdsMatchCategory(["vscode" as ToolId], "ai")).toThrow(
+      /vscode is not an AI tool/
+    );
+  });
+
+  it("throws when an AI tool is passed with 'ide' category", () => {
+    expect(() => assertToolIdsMatchCategory(["claude" as ToolId], "ide")).toThrow(
+      /claude is not an IDE tool/
+    );
+  });
+
+  it("lists all wrong tools in the error message", () => {
+    expect(() =>
+      assertToolIdsMatchCategory(["claude" as ToolId, "cursor" as ToolId], "ide")
+    ).toThrow(/claude, cursor are not IDE tools/);
   });
 });
 

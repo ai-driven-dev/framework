@@ -27,7 +27,9 @@ import {
   IDE_TOOL_IDS,
   type IdeToolId,
   isAiToolConfig,
+  type ToolCategory,
   type ToolId,
+  toolIdsForCategory,
   VALID_TOOL_IDS,
 } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
@@ -46,6 +48,7 @@ import { PostInstallPipelineUseCase } from "./shared/post-install-pipeline-use-c
 interface InstallOptions {
   toolIds?: ToolId[];
   all?: boolean;
+  category?: ToolCategory;
   frameworkPath: string;
   version: string;
   docsDir?: string;
@@ -84,10 +87,16 @@ export class InstallUseCase {
 
     const docsDir = options.docsDir ?? manifest.docsDir;
     let toolIds = await this.resolveToolIds(options, manifest);
+    if (toolIds.length === 0) return [];
     assertValidToolIds(toolIds);
 
     let ideContext = this.resolveIdeContext(toolIds, manifest);
-    toolIds = await this.maybySuggestVscode(toolIds, ideContext, options.interactive ?? false);
+    toolIds = await this.maybySuggestVscode(
+      toolIds,
+      ideContext,
+      options.interactive ?? false,
+      options.category
+    );
     ideContext = this.resolveIdeContext(toolIds, manifest);
 
     const { descriptor, contentFiles } = await this.loader.loadFromDirectory(
@@ -183,39 +192,52 @@ export class InstallUseCase {
   /** Resolves which tool IDs to install from the 4-branch selection logic. */
   private async resolveToolIds(options: InstallOptions, manifest: Manifest): Promise<ToolId[]> {
     const interactive = options.interactive ?? false;
+    const { category } = options;
 
-    if (options.all) return [...VALID_TOOL_IDS];
+    if (options.all) return [...(category ? toolIdsForCategory(category) : VALID_TOOL_IDS)];
     if (options.toolIds !== undefined && options.toolIds.length > 0) return options.toolIds;
-    if (interactive && this.prompter !== undefined) return this.promptToolIds(manifest);
+    if (interactive && this.prompter !== undefined) return this.promptToolIds(manifest, category);
 
     throw new InputRequiredError(
       `At least one tool ID is required. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
     );
   }
 
-  private async promptToolIds(manifest: Manifest): Promise<ToolId[]> {
+  private async promptToolIds(manifest: Manifest, category?: ToolCategory): Promise<ToolId[]> {
     if (this.prompter === undefined)
       throw new InputRequiredError("Prompter is required for interactive mode.");
     const installedIds = manifest.getInstalledToolIds();
-    const aiSelected = await this.prompter.checkbox(
-      "Which AI tools do you want to install?",
-      AI_TOOL_IDS.map((id) =>
-        installedIds.includes(id)
-          ? { name: id, value: id, checked: true, disabled: "(already installed)" }
-          : { name: id, value: id, checked: false }
-      )
+    const aiSelected =
+      category === "ide"
+        ? []
+        : await this.promptCategoryTools(
+            "Which AI tools do you want to install?",
+            AI_TOOL_IDS,
+            installedIds
+          );
+    const ideSelected =
+      category === "ai"
+        ? []
+        : await this.promptCategoryTools(
+            "Which IDE integrations do you want to install?",
+            IDE_TOOL_IDS,
+            installedIds
+          );
+    return [...aiSelected, ...ideSelected] as ToolId[];
+  }
+
+  private async promptCategoryTools(
+    message: string,
+    toolIds: readonly string[],
+    installedIds: ToolId[]
+  ): Promise<string[]> {
+    const choices = toolIds.map((id) =>
+      installedIds.includes(id as ToolId)
+        ? { name: id, value: id, checked: true, disabled: "(already installed)" }
+        : { name: id, value: id, checked: false }
     );
-    const ideSelected = await this.prompter.checkbox(
-      "Which IDE integrations do you want to install?",
-      IDE_TOOL_IDS.map((id) =>
-        installedIds.includes(id)
-          ? { name: id, value: id, checked: true, disabled: "(already installed)" }
-          : { name: id, value: id, checked: false }
-      )
-    );
-    const selected = [...aiSelected, ...ideSelected];
-    if (selected.length === 0) throw new InputRequiredError("No tools selected.");
-    return selected as ToolId[];
+    if (!choices.some((c) => !c.disabled)) return [];
+    return this.prompter?.checkbox(message, choices) ?? [];
   }
 
   private resolveIdeContext(toolIds: ToolId[], manifest: Manifest): IdeToolId[] {
@@ -231,11 +253,13 @@ export class InstallUseCase {
   private async maybySuggestVscode(
     toolIds: ToolId[],
     ideContext: IdeToolId[],
-    interactive: boolean
+    interactive: boolean,
+    category?: ToolCategory
   ): Promise<ToolId[]> {
     if (
       !interactive ||
       this.prompter === undefined ||
+      category === "ai" ||
       !toolIds.includes("copilot") ||
       ideContext.includes("vscode")
     ) {

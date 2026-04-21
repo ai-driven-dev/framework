@@ -2,7 +2,7 @@
 
 ## Status
 
-- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4) + per-entry hash tracking for merge files + granular MCP server selection + AI/IDE tool type split + restore merge file support + IDE-aware copilot settings (requiredIdeId, config-ref-filter, copilotVscodeSettings, surgical null-section uninstall) + IDE context patch on install (requiredIdeIds on AiToolConfig, IdePatchUseCase, IDE tool uninstall preserves user-prime)
+- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4) + per-entry hash tracking for merge files + granular MCP server selection + AI/IDE tool type split + restore merge file support + IDE-aware copilot settings (requiredIdeId, config-ref-filter, copilotVscodeSettings, surgical null-section uninstall) + IDE context patch on install (requiredIdeIds on AiToolConfig, IdePatchUseCase, IDE tool uninstall preserves user-prime) + AI/IDE category filter on install/uninstall/status/doctor (positional `ai|ide` arg, cross-category validation, interactive checkbox scoped by category)
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
 - `tests/` — tests all passing
 
@@ -31,14 +31,14 @@ src/
 │   │   ├── cache.ts                    # aidd cache list / clear
 │   │   ├── config.ts                   # aidd config list/get/set
 │   │   ├── clean.ts                    # aidd clean [--force]
-│   │   ├── doctor.ts                   # aidd doctor
-│   │   ├── install.ts                  # aidd install <tools> [--all] [--force] [--mcp]
+│   │   ├── doctor.ts                   # aidd doctor [ai|ide]
+│   │   ├── install.ts                  # aidd install [ai|ide] <tools> [--all] [--force] [--mcp]
 │   │   ├── restore.ts                  # aidd restore [files] [--tool] [--docs] [--force]
-│   │   ├── status.ts                   # aidd status [--tool] [--docs]
+│   │   ├── status.ts                   # aidd status [ai|ide] [--tool] [--docs]
 │   │   ├── self-update.ts              # aidd self-update [--check] [--dry-run] [--force]
 │   │   ├── setup.ts                    # aidd setup (interactive onboarding entry point)
 │   │   ├── sync.ts                     # aidd sync --source <tool> [--target] [--force]
-│   │   ├── uninstall.ts                # aidd uninstall <tools> [--all] [--mcp]
+│   │   ├── uninstall.ts                # aidd uninstall [ai|ide] <tools> [--all] [--mcp]
 │   │   └── update.ts                   # aidd update [--force] [--dry-run] [--tool] [--docs]
 │   ├── check-update.ts                 # printUpdateBanner() — called via commander preAction hook in cli.ts
 │   ├── error-handler.ts                # ErrorHandler — central error handling for commands (replaces output.exit)
@@ -86,7 +86,7 @@ src/
 │   │   ├── mcp.ts                      # MCP config transformation for Windows command path fixes
 │   │   ├── semver.ts                   # semantic version parsing & comparison for update checks
 │   │   ├── sync-exclusions.ts          # SYNC_EXCLUDED_FILES, isSyncExcluded — sync skip list
-│   │   ├── tool-config.ts              # ToolConfig = AiToolConfig | IdeToolConfig; AiToolId/IdeToolId types; isAiToolConfig() guard; VALID_TOOL_IDS derived from AI_TOOL_IDS + IDE_TOOL_IDS
+│   │   ├── tool-config.ts              # ToolConfig = AiToolConfig | IdeToolConfig; AiToolId/IdeToolId/ToolCategory types; isAiToolConfig() guard; toolIdsForCategory(); assertToolIdsMatchCategory(); VALID_TOOL_IDS derived from AI_TOOL_IDS + IDE_TOOL_IDS
 │   │   └── update-scope.ts             # UpdateScope, parseUpdateScope, formatToolScopeValue
 │   ├── models/
 │   │   └── auth-config.ts              # AuthConfig { version, method, level, token?, createdAt }

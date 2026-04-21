@@ -37,3 +37,4 @@ This file contains the key architectural decisions made during the project, alon
 | 2026-04-20 | DEC-029 | [requiredIdeIds on AiToolConfig for tool-level IDE dependency](./decisions/DEC-029-required-ide-ids-on-ai-tool-config.md) | Tool declares IDE deps; IdePatchUseCase finds affected tools without scanning ConfigRefs |
 | 2026-04-20 | DEC-030 | [IdePatchUseCase for late IDE installation](./decisions/DEC-030-ide-patch-use-case.md) | Installing IDE retroactively distributes AI tool IDE-conditional files |
 | 2026-04-20 | DEC-031 | [IDE tool uninstall preserves user-prime files](./decisions/DEC-031-ide-tool-uninstall-preserves-user-prime.md) | isAiToolConfig guard; IDE tool files never auto-deleted on uninstall |
+| 2026-04-21 | DEC-032 | [AI/IDE category filter as positional arg on install/uninstall/status/doctor](./decisions/DEC-032-ai-ide-category-filter.md) | backward-compatible; cross-category validation; interactive checkbox scoped by category |

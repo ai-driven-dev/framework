@@ -1,5 +1,9 @@
 import type { Command } from "commander";
-import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
+import {
+  assertValidToolIds,
+  type ToolCategory,
+  type ToolId,
+} from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { InputRequiredError } from "../errors.js";
@@ -24,58 +28,74 @@ export function registerStatusCommand(program: Command): void {
   program
     .command("status")
     .description("Show drift between disk files and the manifest")
+    .argument("[category]", "Filter to 'ai' or 'ide' tools")
     .option("--tool <toolId>", "Filter output to a specific tool")
     .option("--docs", "Filter output to docs only")
-    .action(async (cmdOptions: { tool?: string; docs?: boolean }) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
+    .action(
+      async (categoryArg: string | undefined, cmdOptions: { tool?: string; docs?: boolean }) => {
+        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+        const errorHandler = new ErrorHandler(output);
 
-      try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
-
-        if (cmdOptions.tool !== undefined && cmdOptions.docs) {
-          throw new InputRequiredError("--tool and --docs are mutually exclusive");
+        if (categoryArg !== undefined && categoryArg !== "ai" && categoryArg !== "ide") {
+          output.error(`Invalid category '${categoryArg}'. Use 'ai' or 'ide'.`);
+          process.exit(1);
         }
-        if (cmdOptions.tool !== undefined) assertValidToolIds([cmdOptions.tool]);
-        const filterToolId = cmdOptions.tool as ToolId | undefined;
-        const filterDocs = cmdOptions.docs ?? false;
+        const category = categoryArg as ToolCategory | undefined;
 
-        const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
-        const report = await useCase.execute({
-          projectRoot,
-          filterToolId,
-          filterDocs,
-          repo,
-        });
+        try {
+          const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
-        if (report.tools.length === 0 && !filterToolId && !filterDocs) {
-          output.print("No tools installed. Run `aidd install <tool>` to get started.");
-          if (report.inSync) return;
-        } else if (report.inSync) {
-          output.success("All files are in sync");
-          return;
-        }
-
-        for (const tool of report.tools) {
-          if (tool.drifted.length === 0) continue;
-          output.print(`\n${tool.toolId} (v${tool.version}):`);
-          for (const file of tool.drifted) {
-            output.print(`  ${STATUS_SYMBOL[file.status]} ${file.relativePath}`);
+          if (cmdOptions.tool !== undefined && cmdOptions.docs) {
+            throw new InputRequiredError("--tool and --docs are mutually exclusive");
           }
-          printDriftStats(output, tool.drifted);
-        }
-
-        if (report.docs && report.docs.drifted.length > 0) {
-          output.print(`\ndocs (v${report.docs.version}):`);
-          for (const file of report.docs.drifted) {
-            output.print(`  ${STATUS_SYMBOL[file.status]} ${file.relativePath}`);
+          if (category && cmdOptions.tool !== undefined) {
+            throw new InputRequiredError("category and --tool are mutually exclusive");
           }
-          printDriftStats(output, report.docs.drifted);
-        }
+          if (category && cmdOptions.docs) {
+            throw new InputRequiredError("category and --docs are mutually exclusive");
+          }
+          if (cmdOptions.tool !== undefined) assertValidToolIds([cmdOptions.tool]);
+          const filterToolId = cmdOptions.tool as ToolId | undefined;
+          const filterDocs = cmdOptions.docs ?? false;
 
-        output.print("\nLegend: ~ modified  - deleted  + added");
-      } catch (error) {
-        errorHandler.handle(error);
+          const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
+          const report = await useCase.execute({
+            projectRoot,
+            filterToolId,
+            filterDocs,
+            category,
+            repo,
+          });
+
+          if (report.tools.length === 0 && !filterToolId && !filterDocs && !category) {
+            output.print("No tools installed. Run `aidd install <tool>` to get started.");
+            if (report.inSync) return;
+          } else if (report.inSync) {
+            output.success("All files are in sync");
+            return;
+          }
+
+          for (const tool of report.tools) {
+            if (tool.drifted.length === 0) continue;
+            output.print(`\n${tool.toolId} (v${tool.version}):`);
+            for (const file of tool.drifted) {
+              output.print(`  ${STATUS_SYMBOL[file.status]} ${file.relativePath}`);
+            }
+            printDriftStats(output, tool.drifted);
+          }
+
+          if (report.docs && report.docs.drifted.length > 0) {
+            output.print(`\ndocs (v${report.docs.version}):`);
+            for (const file of report.docs.drifted) {
+              output.print(`  ${STATUS_SYMBOL[file.status]} ${file.relativePath}`);
+            }
+            printDriftStats(output, report.docs.drifted);
+          }
+
+          output.print("\nLegend: ~ modified  - deleted  + added");
+        } catch (error) {
+          errorHandler.handle(error);
+        }
       }
-    });
+    );
 }

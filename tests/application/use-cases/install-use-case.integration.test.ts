@@ -1125,4 +1125,119 @@ describe("install", () => {
       expect(restored["github.copilot.enable"]).toBe(true);
     });
   });
+
+  describe("interactive tool selection", () => {
+    it("returns empty result when user selects no tools interactively", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const mockPrompter = Object.create(new KeepPrompter()) as Prompter;
+      mockPrompter.checkbox = vi.fn().mockResolvedValue([]);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform,
+        mockPrompter
+      );
+
+      const results = await useCase.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        interactive: true,
+      });
+
+      expect(results).toEqual([]);
+    });
+
+    it("skips AI checkbox and shows only IDE checkbox when all AI tools already installed", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+
+      await useCase.execute({
+        toolIds: ["claude", "cursor", "copilot", "opencode"] as ToolId[],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const checkboxMock = vi.fn().mockResolvedValue(["vscode"]);
+      const mockPrompter = Object.create(new KeepPrompter()) as Prompter;
+      mockPrompter.checkbox = checkboxMock;
+
+      const useCase2 = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform,
+        mockPrompter
+      );
+
+      const results = await useCase2.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        interactive: true,
+      });
+
+      expect(checkboxMock).toHaveBeenCalledTimes(1);
+      expect(checkboxMock).toHaveBeenCalledWith(
+        "Which IDE integrations do you want to install?",
+        expect.any(Array)
+      );
+      expect(results.some((r) => r.toolId === "vscode")).toBe(true);
+    });
+
+    it("installs only IDE tool when user skips AI tools and selects vscode", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const checkboxMock = vi.fn().mockResolvedValueOnce([]).mockResolvedValueOnce(["vscode"]);
+      const mockPrompter = Object.create(new KeepPrompter()) as Prompter;
+      mockPrompter.checkbox = checkboxMock;
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform,
+        mockPrompter
+      );
+
+      const results = await useCase.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        interactive: true,
+      });
+
+      expect(results.some((r) => r.toolId === "vscode")).toBe(true);
+      expect(results.every((r) => r.toolId === "vscode")).toBe(true);
+    });
+  });
 });
