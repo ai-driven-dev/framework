@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import type { ToolCategory } from "../../domain/models/tool-config.js";
 import { CLIOutput } from "../output.js";
 
 export interface GlobalOptions {
@@ -17,4 +18,14 @@ export function parseGlobalOptions(program: Command): GlobalOptions {
     output: new CLIOutput(verbose),
     projectRoot: process.cwd(),
   };
+}
+
+export function parseCategoryArg(
+  arg: string | undefined,
+  output: CLIOutput
+): ToolCategory | undefined {
+  if (arg === undefined) return undefined;
+  if (arg === "ai" || arg === "ide") return arg;
+  output.error(`Invalid category '${arg}'. Use 'ai' or 'ide'.`);
+  process.exit(1);
 }

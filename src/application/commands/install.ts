@@ -11,6 +11,30 @@ import { InstallUseCase } from "../use-cases/install-use-case.js";
 import { ResolveFrameworkUseCase } from "../use-cases/resolve-framework-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
+function resolveInstallArgs(
+  rawArgs: string[],
+  cmdOptions: { all: boolean },
+  output: ReturnType<typeof parseGlobalOptions>["output"]
+): { category: ToolCategory | undefined; toolIds: ToolId[] | undefined } {
+  const category: ToolCategory | undefined =
+    rawArgs[0] === "ai" || rawArgs[0] === "ide" ? rawArgs[0] : undefined;
+  const toolArgs = category ? rawArgs.slice(1) : rawArgs;
+
+  if (cmdOptions.all && toolArgs.length > 0) {
+    output.warn(`--all is set; ignoring specified tools: ${toolArgs.join(", ")}`);
+  }
+
+  if (toolArgs.length > 0 && !cmdOptions.all) {
+    assertValidToolIds(toolArgs);
+    if (category) assertToolIdsMatchCategory(toolArgs as ToolId[], category);
+  }
+
+  const toolIds: ToolId[] | undefined =
+    !cmdOptions.all && toolArgs.length > 0 ? (toolArgs as ToolId[]) : undefined;
+
+  return { category, toolIds };
+}
+
 export function registerInstallCommand(program: Command): void {
   program
     .command("install")
@@ -29,35 +53,21 @@ export function registerInstallCommand(program: Command): void {
         const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
 
-        const category: ToolCategory | undefined =
-          rawArgs[0] === "ai" || rawArgs[0] === "ide" ? rawArgs[0] : undefined;
-        const toolArgs = category ? rawArgs.slice(1) : rawArgs;
-
-        if (cmdOptions.all && toolArgs.length > 0) {
-          output.warn(`--all is set; ignoring specified tools: ${toolArgs.join(", ")}`);
+        if (!cmdOptions.all && rawArgs.length === 0 && !process.stdout.isTTY) {
+          output.error("aidd install requires tool arguments or --all in non-interactive mode.");
+          process.exit(1);
         }
 
         try {
-          if (toolArgs.length > 0 && !cmdOptions.all) {
-            assertValidToolIds(toolArgs);
-            if (category) assertToolIdsMatchCategory(toolArgs as ToolId[], category);
-          }
+          const { category, toolIds } = resolveInstallArgs(rawArgs, cmdOptions, output);
 
           const deps = await createDeps(projectRoot, { verbose, repo }, output);
-
-          if (!cmdOptions.all && toolArgs.length === 0 && !category && !process.stdout.isTTY) {
-            output.error("aidd install requires tool arguments or --all in non-interactive mode.");
-            process.exit(1);
-          }
 
           const { path: frameworkPath, version } = await new ResolveFrameworkUseCase(
             deps.resolver,
             deps.logger,
             deps.authReader
           ).execute({ path: cmdOptions.path, release: cmdOptions.release });
-
-          const toolIds: ToolId[] | undefined =
-            !cmdOptions.all && toolArgs.length > 0 ? (toolArgs as ToolId[]) : undefined;
 
           const installUseCase = new InstallUseCase(
             deps.fs,

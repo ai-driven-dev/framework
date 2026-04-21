@@ -1,9 +1,8 @@
 import type { Command } from "commander";
-import type { ToolCategory } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { DoctorUseCase } from "../use-cases/doctor-use-case.js";
-import { parseGlobalOptions } from "./global-options.js";
+import { parseCategoryArg, parseGlobalOptions } from "./global-options.js";
 
 export function registerDoctorCommand(program: Command): void {
   program
@@ -14,11 +13,7 @@ export function registerDoctorCommand(program: Command): void {
       const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
 
-      if (categoryArg !== undefined && categoryArg !== "ai" && categoryArg !== "ide") {
-        output.error(`Invalid category '${categoryArg}'. Use 'ai' or 'ide'.`);
-        process.exit(1);
-      }
-      const category = categoryArg as ToolCategory | undefined;
+      const category = parseCategoryArg(categoryArg, output);
 
       try {
         const deps = await createDeps(projectRoot, { verbose, repo }, output);

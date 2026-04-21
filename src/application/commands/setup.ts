@@ -110,7 +110,7 @@ export function registerSetupCommand(program: Command): void {
             repo,
             interactive,
             docsDir: cmdOptions.docsDir,
-            toolIds: rawToolIds ?? undefined,
+            toolIds: rawToolIds,
             from: cmdOptions.from,
           });
 

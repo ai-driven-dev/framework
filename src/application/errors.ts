@@ -57,3 +57,10 @@ export class ToolNotInstalledError extends Error {
     this.name = "ToolNotInstalledError";
   }
 }
+
+export class NoToolsInstalledError extends Error {
+  constructor(category?: string) {
+    super(category ? `No ${category.toUpperCase()} tools installed.` : "No tools installed.");
+    this.name = "NoToolsInstalledError";
+  }
+}

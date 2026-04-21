@@ -8,7 +8,7 @@ import {
 } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
-import { NoManifestError } from "../errors.js";
+import { NoManifestError, NoToolsInstalledError } from "../errors.js";
 import { UninstallUseCase } from "../use-cases/uninstall-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
@@ -72,10 +72,7 @@ export function registerUninstallCommand(program: Command): void {
             : installedIds;
 
           if (candidates.length === 0) {
-            output.error(
-              category ? `No ${category.toUpperCase()} tools installed.` : "No tools installed."
-            );
-            process.exit(1);
+            throw new NoToolsInstalledError(category);
           }
 
           const choices = candidates.map((id) => ({ name: id, value: id, checked: false }));
