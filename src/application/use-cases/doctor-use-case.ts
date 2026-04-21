@@ -1,6 +1,11 @@
 import { dirname, join, normalize } from "node:path";
 import { ManifestValidationError } from "../../domain/errors.js";
 import type { Manifest } from "../../domain/models/manifest.js";
+import {
+  extractAtReferences,
+  extractMarkdownLinkTargets,
+  isFileReference,
+} from "../../domain/models/markdown-references.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/merge-entry.js";
 import {
   getAllRegisteredTools,
@@ -15,6 +20,11 @@ import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { NoManifestError } from "../errors.js";
+
+export {
+  extractAtReferences,
+  extractMarkdownLinkTargets,
+} from "../../domain/models/markdown-references.js";
 
 type IssueSeverity = "info" | "warning" | "error";
 
@@ -41,33 +51,6 @@ interface DoctorOptions {
   projectRoot: string;
   category?: ToolCategory;
   repo?: string;
-}
-
-const CODE_FENCE_WITH_LANG_RE = /```(?!markdown\b|md\b)(\w+)[^\n]*\n[\s\S]*?```/gm;
-const INLINE_CODE_RE = /`[^`\n]+`/g;
-const AT_PATH_RE = /@([\w.-]+(?:\/[\w.-]+)+)/g;
-const MARKDOWN_LINK_RE = /\[[^\]]*\]\(([^)#\s]+)\)/g;
-function stripNonMarkdownCodeBlocks(content: string): string {
-  return content.replace(CODE_FENCE_WITH_LANG_RE, "").replace(INLINE_CODE_RE, "");
-}
-
-export function extractAtReferences(content: string): string[] {
-  const refs = new Set<string>();
-  for (const match of stripNonMarkdownCodeBlocks(content).matchAll(AT_PATH_RE)) refs.add(match[1]);
-  return [...refs];
-}
-
-export function extractMarkdownLinkTargets(content: string): string[] {
-  const refs = new Set<string>();
-  for (const match of stripNonMarkdownCodeBlocks(content).matchAll(MARKDOWN_LINK_RE)) {
-    if (!match[1].startsWith("http")) refs.add(match[1]);
-  }
-  return [...refs];
-}
-
-function isFileReference(ref: string): boolean {
-  const lastSegment = ref.split("/").at(-1) ?? "";
-  return lastSegment.includes(".") && !ref.endsWith("/");
 }
 
 export class DoctorUseCase {

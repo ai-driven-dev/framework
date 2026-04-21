@@ -372,22 +372,43 @@ export class RestoreUseCase {
     const kept: string[] = [];
     const mergeMap = new Map(mergeFiles.map((m) => [m.relativePath, m]));
     for (const entry of drift) {
-      if (entry.reason === "modified" && !force && !interactive) {
-        throw new InputRequiredError(
-          `Use --force to overwrite modified files in non-interactive mode.`
-        );
-      }
-      if (entry.reason === "modified" && !force && interactive) {
-        const decision = await this.prompter.resolveConflict(entry.relativePath, entry.reason);
-        if (decision === "keep") {
-          kept.push(entry.relativePath);
-          continue;
-        }
+      const skip = await this.resolveRestoreDecision(
+        entry.relativePath,
+        entry.reason,
+        force,
+        interactive
+      );
+      if (skip) {
+        kept.push(entry.relativePath);
+        continue;
       }
       await this.applyOneMergeRestore(entry, projectRoot, mergeMap);
       restored.push(entry.relativePath);
     }
     return { restored, kept, updatedMergeFiles: [...mergeMap.values()] };
+  }
+
+  /**
+   * Returns true when the file should be kept (skipped), false when it should be restored.
+   * Throws InputRequiredError when a modified file is encountered in non-interactive non-force mode.
+   */
+  private async resolveRestoreDecision(
+    relativePath: string,
+    reason: "deleted" | "modified",
+    force: boolean,
+    interactive: boolean
+  ): Promise<boolean> {
+    if (reason !== "modified") return false;
+    if (!force && !interactive) {
+      throw new InputRequiredError(
+        `Use --force to overwrite modified files in non-interactive mode.`
+      );
+    }
+    if (!force && interactive) {
+      const decision = await this.prompter.resolveConflict(relativePath, reason);
+      return decision === "keep";
+    }
+    return false;
   }
 
   private async applyOneMergeRestore(
@@ -531,19 +552,10 @@ export class RestoreUseCase {
     const updatedHashMap = new Map(initialHashMap);
 
     for (const { relativePath, content, reason } of drift) {
-      if (reason === "modified") {
-        if (!force && !interactive) {
-          throw new InputRequiredError(
-            `Use --force to overwrite modified files in non-interactive mode.`
-          );
-        }
-        if (!force && interactive) {
-          const decision = await this.prompter.resolveConflict(relativePath, reason);
-          if (decision === "keep") {
-            kept.push(relativePath);
-            continue;
-          }
-        }
+      const skip = await this.resolveRestoreDecision(relativePath, reason, force, interactive);
+      if (skip) {
+        kept.push(relativePath);
+        continue;
       }
       await this.fs.writeFile(join(projectRoot, relativePath), content);
       const newHash = await this.fs.readFileHash(join(projectRoot, relativePath));

@@ -398,15 +398,10 @@ export class SetupUseCase {
   ): Promise<SetupResult> {
     const updatedManifest = await this.manifestRepo.load();
     const updatedInstalledIds = updatedManifest?.getInstalledToolIds() ?? [];
-    const missingTools = VALID_TOOL_IDS.filter((id) => !updatedInstalledIds.includes(id));
-    const additionalInstall = await this.offerAdditionalInstall(
-      missingTools.length > 0,
-      frameworkPath,
-      version,
-      projectRoot,
-      repo,
-      interactive
-    );
+    const hasMissing = VALID_TOOL_IDS.some((id) => !updatedInstalledIds.includes(id));
+    const additionalInstall = hasMissing
+      ? await this.offerAdditionalInstall(frameworkPath, version, projectRoot, repo, interactive)
+      : undefined;
     return {
       kind: "updated",
       version,
@@ -427,47 +422,28 @@ export class SetupUseCase {
     if (missingTools.length === 0) return { kind: "up-to-date", hasAdditionalTools: false };
     if (!options.interactive) return { kind: "up-to-date", hasAdditionalTools: true };
 
-    const wantsMore = await this.prompter.confirm("Install additional tools?");
-    if (!wantsMore) return { kind: "up-to-date", hasAdditionalTools: true };
-
-    return this.installAdditionalTools(path, release, repo, projectRoot);
-  }
-
-  private async installAdditionalTools(
-    path: string | undefined,
-    release: string | undefined,
-    repo: string | undefined,
-    projectRoot: string
-  ): Promise<SetupResult> {
     const { path: frameworkPath, version } = await this.frameworkResolver.execute({
       path,
       release,
       repo,
     });
-    const installResults = await this.runInstall(
+    const additionalInstall = await this.offerAdditionalInstall(
       frameworkPath,
       version,
       projectRoot,
       repo,
-      undefined,
-      true
+      options.interactive
     );
-    return {
-      kind: "up-to-date",
-      hasAdditionalTools: true,
-      additionalInstall: { results: installResults },
-    };
+    return { kind: "up-to-date", hasAdditionalTools: true, additionalInstall };
   }
 
   private async offerAdditionalInstall(
-    hasMissing: boolean,
     frameworkPath: string,
     version: string,
     projectRoot: string,
     repo: string | undefined,
     interactive?: boolean
   ): Promise<InstallSummary | undefined> {
-    if (!hasMissing) return undefined;
     if (!interactive) return undefined;
     const wantsMore = await this.prompter.confirm("Install additional tools?");
     if (!wantsMore) return undefined;
