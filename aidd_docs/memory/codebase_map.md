@@ -2,7 +2,7 @@
 
 ## Status
 
-- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4) + per-entry hash tracking for merge files + granular MCP server selection + AI/IDE tool type split + restore merge file support + IDE-aware copilot settings (requiredIdeId, config-ref-filter, copilotVscodeSettings, surgical null-section uninstall) + IDE context patch on install (requiredIdeIds on AiToolConfig, IdePatchUseCase, IDE tool uninstall preserves user-prime) + AI/IDE category filter on install/uninstall/status/doctor (positional `ai|ide` arg, cross-category validation, interactive checkbox scoped by category)
+- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4) + per-entry hash tracking for merge files + granular MCP server selection + AI/IDE tool type split + restore merge file support + IDE-aware copilot settings (requiredIdeId, ide-requirement-filter, copilotVscodeSettings, surgical null-section uninstall) + IDE context patch on install (requiredIdeIds on AiToolConfig, IdePatchUseCase, IDE tool uninstall preserves user-prime) + AI/IDE category filter on install/uninstall/status/doctor (positional `ai|ide` arg, cross-category validation, interactive checkbox scoped by category) + PR review cleanup (Phases 1–7)
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
 - `tests/` — tests all passing
 
@@ -71,25 +71,28 @@ src/
 ├── domain/
 │   ├── models/
 │   │   ├── catalog.ts                  # generateCatalogContent() — pure function, no I/O
-│   │   ├── config-ref-filter.ts        # filterGeneratedFilesByIdeContext(generated, configRefs, ideContext) — pure filter; excludes files with requiredIdeId not in ideContext
 │   │   ├── conflict-decision.ts        # ConflictDecision = "overwrite" | "skip" | "backup"
 │   │   ├── distribution.ts             # GeneratedFile[] per tool
 │   │   ├── docs.ts                     # documentation distribution: path remapping, content rewriting
 │   │   ├── file-diff.ts                # FileDiffKind, FileDiff — discriminant type for update diffs
 │   │   ├── file-hash.ts                # MD5 value object
+│   │   ├── file-size.ts                # FileSizeKind, formatFileSize helpers
 │   │   ├── framework-descriptor.ts     # framework layout code model (no framework.json file); ConfigRef has optional requiredIdeId?: IdeToolId
+│   │   ├── framework-path.ts           # framework path helpers
 │   │   ├── frontmatter.ts              # frontmatter parsing/conversion
 │   │   ├── generated-file.ts           # file + hash + merge flag
+│   │   ├── ide-requirement-filter.ts   # filterByIdeRequirements(generated, configRefs, installedIdeIds) — pure filter; excludes files with requiredIdeId not in ideContext
 │   │   ├── manifest.ts                 # aggregate root (persisted at .aidd/manifest.json); fields: docsDir, repo?, tools, docs; ToolEntry has mergeFiles + excludedMcp
-│   │   ├── mcp-exclusion.ts           # McpExclusion { configPath, entryKey }, mcpExclusionEquals
-│   │   ├── merge-entry.ts             # MergeFileEntry value object, extractMergeEntries, buildMergeFileEntries, parseEntryKeys, removeEntriesFromJson
+│   │   ├── markdown-references.ts      # markdown @path reference parsing/resolution
+│   │   ├── mcp-exclusion.ts            # McpExclusion { configPath, entryKey }, mcpExclusionEquals
 │   │   ├── mcp.ts                      # MCP config transformation for Windows command path fixes
+│   │   ├── merge-entry.ts              # MergeFileEntry value object, extractMergeEntries, buildMergeFileEntries, parseEntryKeys, removeEntriesFromJson
+│   │   ├── merge-strategy.ts           # MergeStrategy type and helpers
 │   │   ├── semver.ts                   # semantic version parsing & comparison for update checks
 │   │   ├── sync-exclusions.ts          # SYNC_EXCLUDED_FILES, isSyncExcluded — sync skip list
 │   │   ├── tool-config.ts              # ToolConfig = AiToolConfig | IdeToolConfig; AiToolId/IdeToolId/ToolCategory types; isAiToolConfig() guard; toolIdsForCategory(); assertToolIdsMatchCategory(); VALID_TOOL_IDS derived from AI_TOOL_IDS + IDE_TOOL_IDS
+│   │   ├── auth-config.ts              # AuthConfig { version, method, level, token?, createdAt }
 │   │   └── update-scope.ts             # UpdateScope, parseUpdateScope, formatToolScopeValue
-│   ├── models/
-│   │   └── auth-config.ts              # AuthConfig { version, method, level, token?, createdAt }
 │   ├── ports/
 │   │   ├── auth-token-provider.ts      # resolve(): Promise<string | null> — implemented by AuthReader
 │   │   ├── external-token-provider.ts  # resolve(): string | null — implemented by GhCliAdapter

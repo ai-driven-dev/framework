@@ -244,7 +244,6 @@ Compares files on disk with the manifest. Shows drift and available framework up
 aidd status                     # all tools + docs
 aidd status ai                  # AI tools only (no docs)
 aidd status ide                 # IDE tools only (no docs)
-aidd status --tool claude       # filter to one tool
 aidd status --docs              # docs only
 ```
 
