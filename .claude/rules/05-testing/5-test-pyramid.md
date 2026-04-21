@@ -50,7 +50,8 @@ A test in `tests/application/` must be deleted if an E2E test covers the same sc
 ## Mandatory rules
 
 - Write test first for every bug fix
-- Mock only ports (domain interfaces) — never mock business logic
+- Mock only ports (domain interfaces)
+- Never mock business logic
 - Fixtures in `FIXTURE_DIR` — never mutate, copy before use
 - `beforeEach`/`afterEach` for temp dir setup and teardown
 

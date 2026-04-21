@@ -55,7 +55,7 @@
 ## Notes
 
 - No flag = interactive mode (`@inquirer/prompts`); `--tools`/`--all-tools` = non-interactive (CI-safe)
-- `--mcp` flag on install/uninstall for granular MCP server selection; excluded servers tracked per-tool in manifest. See DEC-022.
+- `--mcp` flag on install/uninstall enables granular MCP server selection; exclusions are tracked per-tool in the manifest
 
 ## User Journey
 
