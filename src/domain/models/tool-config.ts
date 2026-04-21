@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { ToolValidationError } from "../errors.js";
+import { CategoryMismatchError, InvalidToolIdError, UnregisteredToolError } from "../errors.js";
 import type { FileSystem } from "../ports/file-system.js";
 import {
   AT_DOCS_PLACEHOLDER,
@@ -26,19 +26,14 @@ export function toolIdsForCategory(category: ToolCategory): readonly ToolId[] {
 export function assertValidToolIds(toolIds: string[]): void {
   const invalid = toolIds.filter((t) => !VALID_TOOL_IDS.includes(t as ToolId));
   if (invalid.length === 0) return;
-  throw new ToolValidationError(
-    `Unknown tool(s): ${invalid.join(", ")}. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
-  );
+  throw new InvalidToolIdError(invalid, VALID_TOOL_IDS);
 }
 
 export function assertToolIdsMatchCategory(toolIds: ToolId[], category: ToolCategory): void {
   const allowed = toolIdsForCategory(category);
   const wrong = toolIds.filter((id) => !(allowed as readonly string[]).includes(id));
   if (wrong.length === 0) return;
-  const label = category === "ai" ? "AI" : "IDE";
-  throw new ToolValidationError(
-    `${wrong.join(", ")} ${wrong.length === 1 ? `is not an ${label} tool` : `are not ${label} tools`}. Valid ${label} tools: ${[...allowed].join(", ")}`
-  );
+  throw new CategoryMismatchError(wrong, category, allowed);
 }
 
 export type UserFileSection = "agents" | "commands" | "rules" | "skills";
@@ -152,7 +147,7 @@ export function registerTool(config: ToolConfig): void {
 
 export function getToolConfig(toolId: ToolId): ToolConfig {
   const config = TOOL_REGISTRY.get(toolId);
-  if (!config) throw new ToolValidationError(`Tool '${toolId}' is not registered.`);
+  if (!config) throw new UnregisteredToolError(toolId);
   return config;
 }
 

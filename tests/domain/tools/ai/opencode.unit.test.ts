@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ConfigConflictError } from "../../../../src/domain/errors.js";
+import { OpencodeDualConfigError } from "../../../../src/domain/errors.js";
 import type { FileSystem } from "../../../../src/domain/ports/file-system.js";
 import { opencodeToolConfig } from "../../../../src/domain/tools/ai/opencode.js";
 
@@ -324,10 +324,10 @@ describe("opencodeToolConfig", () => {
       expect(await resolve("opencode", makeFs(["opencode.jsonc"]))).toBe("opencode.jsonc");
     });
 
-    it("throws ConfigConflictError when both opencode.json and opencode.jsonc exist", async () => {
+    it("throws OpencodeDualConfigError when both opencode.json and opencode.jsonc exist", async () => {
       await expect(
         resolve("opencode", makeFs(["opencode.json", "opencode.jsonc"]))
-      ).rejects.toThrow(ConfigConflictError);
+      ).rejects.toThrow(OpencodeDualConfigError);
     });
 
     it("returns null for a config name that is not handled", async () => {

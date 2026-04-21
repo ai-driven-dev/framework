@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { FrameworkResolutionError, ToolValidationError } from "../../domain/errors.js";
+import { FrameworkResolutionError } from "../../domain/errors.js";
 import {
   generateConfigDistribution,
   generateDistribution,
@@ -8,10 +8,10 @@ import { buildDocsDistribution } from "../../domain/models/docs.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import { Manifest } from "../../domain/models/manifest.js";
 import {
+  assertValidToolIds,
   getToolConfig,
   isAiToolConfig,
   type ToolId,
-  VALID_TOOL_IDS,
 } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
@@ -55,7 +55,12 @@ export class AdoptUseCase {
   async execute(options: AdoptOptions): Promise<AdoptResult> {
     const { toolIds, frameworkPath, docsDir, projectRoot, version } = options;
 
-    this.validateToolIds(toolIds);
+    assertValidToolIds(toolIds);
+    if (toolIds.length === 0) {
+      throw new InputRequiredError(
+        "No tools specified. Use --ai or --ide to specify at least one tool."
+      );
+    }
     const existing = await this.manifestRepo.load();
     if (existing !== null) throw new AlreadyInitializedError();
     await this.deleteLegacyConfig(projectRoot);
@@ -102,20 +107,6 @@ export class AdoptUseCase {
     // MemoryScriptUseCase is intentionally absent: adopt only registers existing files,
     // no tool content is generated so there is no memory bank to write.
     await new GitignoreUseCase(this.fs).execute(projectRoot, [".aidd/cache/"]);
-  }
-
-  private validateToolIds(toolIds: ToolId[]): void {
-    const invalid = toolIds.filter((t) => !VALID_TOOL_IDS.includes(t));
-    if (invalid.length > 0) {
-      throw new ToolValidationError(
-        `Unknown tool(s): ${invalid.join(", ")}. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
-      );
-    }
-    if (toolIds.length === 0) {
-      throw new InputRequiredError(
-        "No tools specified. Use --ai or --ide to specify at least one tool."
-      );
-    }
   }
 
   private async registerAllTools(

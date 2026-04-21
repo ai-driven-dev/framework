@@ -1,5 +1,9 @@
 import { join } from "node:path";
-import { ConfigConflictError, McpConfigError } from "../../errors.js";
+import {
+  InvalidMcpServerConfigError,
+  McpConfigError,
+  OpencodeDualConfigError,
+} from "../../errors.js";
 import {
   CONFIG_MCP,
   CONFIG_OPENCODE,
@@ -76,7 +80,7 @@ function transformMcpToOpencode(content: string): string {
     } else if ("url" in server) {
       mcp[name] = { type: "remote", url: server.url, enabled: true };
     } else {
-      throw new McpConfigError(`MCP server "${name}" must have either a "command" or "url" field`);
+      throw new InvalidMcpServerConfigError(name);
     }
   }
 
@@ -182,10 +186,7 @@ export const opencodeToolConfig: AiToolConfig = {
         if (handler.outputPath(configName) === null) return null;
         const jsonExists = await fs.fileExists(join(projectRoot, OPENCODE_JSON));
         const jsoncExists = await fs.fileExists(join(projectRoot, OPENCODE_JSONC));
-        if (jsonExists && jsoncExists)
-          throw new ConfigConflictError(
-            `Both ${OPENCODE_JSON} and ${OPENCODE_JSONC} exist. Remove one before continuing.`
-          );
+        if (jsonExists && jsoncExists) throw new OpencodeDualConfigError();
         if (jsoncExists) return OPENCODE_JSONC;
         return OPENCODE_JSON;
       },

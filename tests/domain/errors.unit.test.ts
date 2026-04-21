@@ -1,17 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { ManifestValidationError, ToolValidationError } from "../../src/domain/errors.js";
+import {
+  InvalidRepoFormatError,
+  InvalidToolIdError,
+  ManifestValidationError,
+} from "../../src/domain/errors.js";
 import { FileHash } from "../../src/domain/models/file-hash.js";
 import { validateRepoFormat } from "../../src/domain/models/manifest.js";
 import { assertValidToolIds } from "../../src/domain/models/tool-config.js";
 import { parseUpdateScope } from "../../src/domain/models/update-scope.js";
 
-describe("ManifestValidationError from validateRepoFormat", () => {
-  it("throws ManifestValidationError for missing slash", () => {
-    expect(() => validateRepoFormat("noslash")).toThrow(ManifestValidationError);
+describe("validateRepoFormat", () => {
+  it("throws InvalidRepoFormatError for missing slash", () => {
+    expect(() => validateRepoFormat("noslash")).toThrow(InvalidRepoFormatError);
   });
 
-  it("throws ManifestValidationError for empty string", () => {
-    expect(() => validateRepoFormat("")).toThrow(ManifestValidationError);
+  it("throws InvalidRepoFormatError for empty string", () => {
+    expect(() => validateRepoFormat("")).toThrow(InvalidRepoFormatError);
   });
 
   it("includes expected message for invalid format", () => {
@@ -47,9 +51,9 @@ describe("ManifestValidationError from parseUpdateScope", () => {
   });
 });
 
-describe("ToolValidationError from assertValidToolIds", () => {
-  it("throws ToolValidationError for unknown tool IDs", () => {
-    expect(() => assertValidToolIds(["unknown-tool"])).toThrow(ToolValidationError);
+describe("assertValidToolIds", () => {
+  it("throws InvalidToolIdError for unknown tool IDs", () => {
+    expect(() => assertValidToolIds(["unknown-tool"])).toThrow(InvalidToolIdError);
   });
 
   it("includes unknown tool name in the message", () => {

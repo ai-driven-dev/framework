@@ -1,4 +1,10 @@
-import { ManifestValidationError } from "../errors.js";
+import {
+  InvalidManifestDataError,
+  InvalidManifestToolIdError,
+  InvalidRepoFormatError,
+  ManifestValidationError,
+  ToolNotInManifestError,
+} from "../errors.js";
 import { FileHash } from "./file-hash.js";
 import type { GeneratedFile } from "./generated-file.js";
 import type { McpExclusion } from "./mcp-exclusion.js";
@@ -19,7 +25,7 @@ const DOCS_DIR_REGEX = /^[a-zA-Z0-9_-]+$/;
 
 export function validateRepoFormat(repo: string): void {
   if (!REPO_FORMAT_REGEX.test(repo)) {
-    throw new ManifestValidationError("Invalid repository format. Expected: owner/repo");
+    throw new InvalidRepoFormatError();
   }
 }
 
@@ -217,8 +223,7 @@ export class Manifest {
 
   addExcludedMcp(toolId: ToolId, exclusions: McpExclusion[]): void {
     const entry = this._tools.get(toolId);
-    if (!entry)
-      throw new ManifestValidationError(`Tool '${toolId}' is not installed in the manifest.`);
+    if (!entry) throw new ToolNotInManifestError(toolId);
     const existing = [...entry.excludedMcp];
     for (const excl of exclusions) {
       if (!existing.some((e) => mcpExclusionEquals(e, excl))) {
@@ -230,8 +235,7 @@ export class Manifest {
 
   removeExcludedMcp(toolId: ToolId, exclusions: McpExclusion[]): void {
     const entry = this._tools.get(toolId);
-    if (!entry)
-      throw new ManifestValidationError(`Tool '${toolId}' is not installed in the manifest.`);
+    if (!entry) throw new ToolNotInManifestError(toolId);
     const filtered = entry.excludedMcp.filter(
       (e) => !exclusions.some((r) => mcpExclusionEquals(e, r))
     );
@@ -240,8 +244,7 @@ export class Manifest {
 
   clearExcludedMcp(toolId: ToolId): void {
     const entry = this._tools.get(toolId);
-    if (!entry)
-      throw new ManifestValidationError(`Tool '${toolId}' is not installed in the manifest.`);
+    if (!entry) throw new ToolNotInManifestError(toolId);
     this._tools.set(toolId, { ...entry, excludedMcp: [] });
   }
 
@@ -251,8 +254,7 @@ export class Manifest {
     excludedMcp?: McpExclusion[]
   ): void {
     const entry = this._tools.get(toolId);
-    if (!entry)
-      throw new ManifestValidationError(`Tool '${toolId}' is not installed in the manifest.`);
+    if (!entry) throw new ToolNotInManifestError(toolId);
     this._tools.set(toolId, {
       ...entry,
       mergeFiles,
@@ -274,7 +276,7 @@ export class Manifest {
 
   removeTool(toolId: ToolId): void {
     if (!this._tools.has(toolId)) {
-      throw new ManifestValidationError(`Tool '${toolId}' is not installed in the manifest.`);
+      throw new ToolNotInManifestError(toolId);
     }
     this._tools.delete(toolId);
   }
@@ -404,7 +406,7 @@ export class Manifest {
 
   static fromJSON(data: unknown): Manifest {
     if (data === null || typeof data !== "object") {
-      throw new ManifestValidationError("Invalid manifest data: expected an object.");
+      throw new InvalidManifestDataError("expected an object.");
     }
 
     const raw = data as Record<string, unknown>;
@@ -412,7 +414,7 @@ export class Manifest {
     if (raw.version === MANIFEST_VERSION - 1) {
       migrateV1toV2(raw);
     } else if (raw.version !== MANIFEST_VERSION) {
-      throw new ManifestValidationError(
+      throw new InvalidManifestDataError(
         `Unsupported manifest version: ${String(raw.version)}. Expected ${MANIFEST_VERSION}.`
       );
     }
@@ -450,7 +452,7 @@ export class Manifest {
     for (const [key, value] of Object.entries(raw.tools as Record<string, unknown>)) {
       const toolId = key as ToolId;
       if (!VALID_TOOL_IDS.includes(toolId)) {
-        throw new ManifestValidationError(`Invalid tool id in manifest: '${key}'.`);
+        throw new InvalidManifestToolIdError(key);
       }
       const entry = value as ToolEntryData;
       tools.set(toolId, {

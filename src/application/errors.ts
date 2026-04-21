@@ -1,4 +1,5 @@
 import { Manifest } from "../domain/models/manifest.js";
+import type { ToolCategory } from "../domain/models/tool-config.js";
 
 export { NoFrameworkSourceError } from "../domain/errors.js";
 
@@ -59,7 +60,7 @@ export class ToolNotInstalledError extends Error {
 }
 
 export class NoToolsInstalledError extends Error {
-  constructor(category?: string) {
+  constructor(category?: ToolCategory) {
     super(category ? `No ${category.toUpperCase()} tools installed.` : "No tools installed.");
     this.name = "NoToolsInstalledError";
   }
