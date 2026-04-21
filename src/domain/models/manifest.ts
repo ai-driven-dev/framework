@@ -222,6 +222,20 @@ export class Manifest {
     return this._tools.get(toolId)?.mergeFiles ?? [];
   }
 
+  /** Returns all tracked paths (files + merge files) across all tools that start with the given directory prefix. */
+  getTrackedPathsInDirectory(dir: string): Set<string> {
+    const tracked = new Set<string>();
+    for (const [, entry] of this._tools) {
+      for (const f of entry.files) {
+        if (f.relativePath.startsWith(dir)) tracked.add(f.relativePath);
+      }
+      for (const m of entry.mergeFiles) {
+        if (m.relativePath.startsWith(dir)) tracked.add(m.relativePath);
+      }
+    }
+    return tracked;
+  }
+
   getExcludedMcp(toolId: ToolId): readonly McpExclusion[] {
     return this._tools.get(toolId)?.excludedMcp ?? [];
   }

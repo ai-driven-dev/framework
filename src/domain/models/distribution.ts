@@ -19,6 +19,7 @@ import {
   acceptsFile,
   type CommandsHandler,
   type ConfigHandler,
+  isAiToolConfig,
   type RulesHandler,
   type SectionHandler,
   type ToolConfig,
@@ -126,6 +127,39 @@ export async function generateConfigDistribution(
     fs
   );
   return removeRedundantGitkeeps(results);
+}
+
+export async function generateForConfig(
+  config: ToolConfig,
+  framework: FrameworkDescriptor,
+  docsDir: string,
+  contentFiles: Map<string, string>,
+  hasher: Hasher,
+  platform: Platform,
+  projectRoot: string,
+  fs: FileSystem
+): Promise<GeneratedFile[]> {
+  if (isAiToolConfig(config)) {
+    return generateDistribution(
+      framework,
+      config,
+      docsDir,
+      contentFiles,
+      hasher,
+      platform,
+      projectRoot,
+      fs
+    );
+  }
+  return generateConfigDistribution(
+    framework,
+    config,
+    contentFiles,
+    hasher,
+    platform,
+    projectRoot,
+    fs
+  );
 }
 
 async function collectConfigFiles(

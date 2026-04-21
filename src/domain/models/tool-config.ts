@@ -38,6 +38,10 @@ export function assertValidToolIds(toolIds: string[]): void {
   throw new InvalidToolIdError(invalid, VALID_TOOL_IDS);
 }
 
+export function isIdeToolId(id: string): id is IdeToolId {
+  return (IDE_TOOL_IDS as readonly string[]).includes(id);
+}
+
 export function assertToolIdsMatchCategory(toolIds: ToolId[], category: ToolCategory): void {
   const allowed = toolIdsForCategory(category);
   const wrong = toolIds.filter((id) => !(allowed as readonly string[]).includes(id));

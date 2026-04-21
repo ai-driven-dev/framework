@@ -1,10 +1,7 @@
 import { join } from "node:path";
 import { FrameworkResolutionError } from "../../domain/errors.js";
 import type { ConflictDecision } from "../../domain/models/conflict-decision.js";
-import {
-  generateConfigDistribution,
-  generateDistribution,
-} from "../../domain/models/distribution.js";
+import { generateForConfig } from "../../domain/models/distribution.js";
 import { buildDocsDistribution } from "../../domain/models/docs.js";
 import type { FileDiff } from "../../domain/models/file-diff.js";
 import type { FileHash } from "../../domain/models/file-hash.js";
@@ -24,9 +21,8 @@ import {
 import {
   type ConfigHandler,
   getToolConfig,
-  IDE_TOOL_IDS,
   type IdeToolId,
-  isAiToolConfig,
+  isIdeToolId,
   type ToolId,
 } from "../../domain/models/tool-config.js";
 import { formatToolScopeValue, parseUpdateScope } from "../../domain/models/update-scope.js";
@@ -229,9 +225,7 @@ export class UpdateUseCase {
   }
 
   private resolveIdeContext(manifest: Manifest): IdeToolId[] {
-    return manifest
-      .getInstalledToolIds()
-      .filter((id): id is IdeToolId => (IDE_TOOL_IDS as readonly string[]).includes(id));
+    return manifest.getInstalledToolIds().filter((id): id is IdeToolId => isIdeToolId(id));
   }
 
   private async executeInternal(
@@ -369,26 +363,16 @@ export class UpdateUseCase {
     const config = getToolConfig(toolId);
     const manifestFiles = manifest.getToolFiles(toolId);
     const manifestMap = new Map(manifestFiles.map((f) => [f.relativePath, f.hash]));
-    const rawDistribution = isAiToolConfig(config)
-      ? await generateDistribution(
-          descriptor,
-          config,
-          docsDir,
-          contentFiles,
-          this.hasher,
-          this.platform,
-          projectRoot,
-          this.fs
-        )
-      : await generateConfigDistribution(
-          descriptor,
-          config,
-          contentFiles,
-          this.hasher,
-          this.platform,
-          projectRoot,
-          this.fs
-        );
+    const rawDistribution = await generateForConfig(
+      config,
+      descriptor,
+      docsDir,
+      contentFiles,
+      this.hasher,
+      this.platform,
+      projectRoot,
+      this.fs
+    );
     const newDistribution = filterByIdeRequirements(
       rawDistribution,
       descriptor.configRefs,

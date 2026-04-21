@@ -7,8 +7,8 @@ import "../../../../src/domain/tools/ai/copilot.js";
 import "../../../../src/domain/tools/ai/cursor.js";
 import "../../../../src/domain/tools/ai/opencode.js";
 import "../../../../src/domain/tools/ide/vscode.js";
-import { IdePatchUseCase } from "../../../../src/application/use-cases/shared/ide-patch-use-case.js";
-import { FrameworkLoaderAdapter } from "../../../../src/infrastructure/adapters/framework-loader-adapter.js";
+import { InstallUseCase } from "../../../../src/application/use-cases/install-use-case.js";
+import { SilentPrompterAdapter } from "../../../../src/infrastructure/adapters/prompter-adapter.js";
 import {
   buildDeps,
   cleanupTempProject,
@@ -16,9 +16,23 @@ import {
   FIXTURE_DIR,
   initAndInstall,
   linuxPlatform,
+  noGit,
 } from "../helpers.js";
 
-describe("IdePatchUseCase", () => {
+function buildInstallUseCase(deps: ReturnType<typeof buildDeps>) {
+  return new InstallUseCase(
+    deps.fs,
+    deps.manifestRepo,
+    deps.loader,
+    deps.hasher,
+    deps.logger,
+    noGit,
+    linuxPlatform,
+    new SilentPrompterAdapter()
+  );
+}
+
+describe("IDE patch after install", () => {
   let tempDir: string;
   let projectRoot: string;
 
@@ -37,20 +51,13 @@ describe("IdePatchUseCase", () => {
     const settingsPath = join(projectRoot, ".vscode", "settings.json");
     expect(existsSync(settingsPath)).toBe(false);
 
-    const manifest = await deps.manifestRepo.load();
-    if (manifest === null) throw new Error("manifest not found");
-
-    const loader = new FrameworkLoaderAdapter();
-    const { descriptor, contentFiles } = await loader.loadFromDirectory(FIXTURE_DIR, "test");
-
-    await new IdePatchUseCase(deps.fs, deps.hasher, linuxPlatform).execute({
-      newIdeIds: ["vscode"],
-      installingIds: ["vscode"],
-      manifest,
-      descriptor,
-      contentFiles,
+    await buildInstallUseCase(deps).execute({
+      toolIds: ["vscode"],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
       docsDir: "aidd_docs",
       projectRoot,
+      interactive: false,
     });
 
     expect(existsSync(settingsPath)).toBe(true);
@@ -58,6 +65,8 @@ describe("IdePatchUseCase", () => {
     const parsed = JSON.parse(content) as Record<string, unknown>;
     expect(parsed["github.copilot.enable"]).toBe(true);
 
+    const manifest = await deps.manifestRepo.load();
+    if (manifest === null) throw new Error("manifest not found");
     const mergeFiles = manifest.getMergeFiles("copilot");
     expect(mergeFiles.some((m) => m.relativePath === ".vscode/settings.json")).toBe(true);
   });
@@ -66,52 +75,50 @@ describe("IdePatchUseCase", () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude");
 
-    const manifest = await deps.manifestRepo.load();
-    if (manifest === null) throw new Error("manifest not found");
-
-    const loader = new FrameworkLoaderAdapter();
-    const { descriptor, contentFiles } = await loader.loadFromDirectory(FIXTURE_DIR, "test");
-
     await expect(
-      new IdePatchUseCase(deps.fs, deps.hasher, linuxPlatform).execute({
-        newIdeIds: ["vscode"],
-        installingIds: ["vscode"],
-        manifest,
-        descriptor,
-        contentFiles,
+      buildInstallUseCase(deps).execute({
+        toolIds: ["vscode"],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
         docsDir: "aidd_docs",
         projectRoot,
+        interactive: false,
       })
-    ).resolves.toBeUndefined();
+    ).resolves.toBeDefined();
   });
 
-  it("does not add duplicate merge entries when patched twice with the same IDE", async () => {
+  it("does not add duplicate merge entries when vscode is installed after copilot twice", async () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "copilot");
 
-    const manifest = await deps.manifestRepo.load();
-    if (manifest === null) throw new Error("manifest not found");
-
-    const loader = new FrameworkLoaderAdapter();
-    const { descriptor, contentFiles } = await loader.loadFromDirectory(FIXTURE_DIR, "test");
-
-    const patchOptions = {
-      newIdeIds: ["vscode"] as const,
-      installingIds: ["vscode"] as const,
-      manifest,
-      descriptor,
-      contentFiles,
+    await buildInstallUseCase(deps).execute({
+      toolIds: ["vscode"],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
       docsDir: "aidd_docs",
       projectRoot,
-    };
+      interactive: false,
+    });
 
-    await new IdePatchUseCase(deps.fs, deps.hasher, linuxPlatform).execute(patchOptions);
+    const manifest = await deps.manifestRepo.load();
+    if (manifest === null) throw new Error("manifest not found");
     const countAfterFirst = manifest
       .getMergeFiles("copilot")
       .filter((m) => m.relativePath === ".vscode/settings.json").length;
 
-    await new IdePatchUseCase(deps.fs, deps.hasher, linuxPlatform).execute(patchOptions);
-    const countAfterSecond = manifest
+    await buildInstallUseCase(deps).execute({
+      toolIds: ["vscode"],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+      force: true,
+      interactive: false,
+    });
+
+    const manifest2 = await deps.manifestRepo.load();
+    if (manifest2 === null) throw new Error("manifest not found");
+    const countAfterSecond = manifest2
       .getMergeFiles("copilot")
       .filter((m) => m.relativePath === ".vscode/settings.json").length;
 

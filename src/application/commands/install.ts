@@ -4,6 +4,8 @@ import {
   assertValidToolIds,
   type ToolCategory,
   type ToolId,
+  toolIdsForCategory,
+  VALID_TOOL_IDS,
 } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
@@ -29,8 +31,12 @@ function resolveInstallArgs(
     if (category) assertToolIdsMatchCategory(toolArgs as ToolId[], category);
   }
 
-  const toolIds: ToolId[] | undefined =
-    !cmdOptions.all && toolArgs.length > 0 ? (toolArgs as ToolId[]) : undefined;
+  if (cmdOptions.all) {
+    const allIds = category ? [...toolIdsForCategory(category)] : [...VALID_TOOL_IDS];
+    return { category, toolIds: allIds };
+  }
+
+  const toolIds: ToolId[] | undefined = toolArgs.length > 0 ? (toolArgs as ToolId[]) : undefined;
 
   return { category, toolIds };
 }
@@ -84,7 +90,6 @@ export function registerInstallCommand(program: Command): void {
 
           const results = await installUseCase.execute({
             toolIds,
-            all: cmdOptions.all,
             category,
             frameworkPath,
             version,

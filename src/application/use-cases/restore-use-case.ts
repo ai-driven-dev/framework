@@ -1,15 +1,12 @@
 import { join } from "node:path";
-import {
-  generateConfigDistribution,
-  generateDistribution,
-} from "../../domain/models/distribution.js";
+import { generateForConfig } from "../../domain/models/distribution.js";
 import { buildDocsDistribution } from "../../domain/models/docs.js";
 import type { FileHash } from "../../domain/models/file-hash.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/merge-entry.js";
 import type { MergeStrategy } from "../../domain/models/merge-strategy.js";
-import { getToolConfig, isAiToolConfig, type ToolId } from "../../domain/models/tool-config.js";
+import { getToolConfig, type ToolId } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
@@ -246,26 +243,16 @@ export class RestoreUseCase {
   ): Promise<RestoreToolResult> {
     this.logger.info(`Checking ${toolId} for files to restore...`);
     const config = getToolConfig(toolId);
-    const distribution = isAiToolConfig(config)
-      ? await generateDistribution(
-          descriptor,
-          config,
-          docsDir,
-          contentFiles,
-          this.hasher,
-          this.platform,
-          projectRoot,
-          this.fs
-        )
-      : await generateConfigDistribution(
-          descriptor,
-          config,
-          contentFiles,
-          this.hasher,
-          this.platform,
-          projectRoot,
-          this.fs
-        );
+    const distribution = await generateForConfig(
+      config,
+      descriptor,
+      docsDir,
+      contentFiles,
+      this.hasher,
+      this.platform,
+      projectRoot,
+      this.fs
+    );
     const distMap = new Map(distribution.map((f) => [f.relativePath, f]));
     const section = await this.restoreSection(
       manifest.getToolFiles(toolId),

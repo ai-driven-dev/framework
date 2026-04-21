@@ -64,13 +64,7 @@ export class StatusUseCase {
     const installedToolIds = this.resolveToolIds(filterToolId, filterDocs, category, manifest);
     const showDocs = !category && !filterToolId;
     const tools = await this.checkAllTools(installedToolIds, manifest, projectRoot);
-    const docs = await this.checkDocsSection(
-      manifest,
-      projectRoot,
-      filterToolId,
-      filterDocs,
-      showDocs
-    );
+    const docs = await this.checkDocsSection(manifest, projectRoot, filterDocs, showDocs);
     const inSync =
       tools.every((t) => t.drifted.length === 0) && (docs === null || docs.drifted.length === 0);
     return { tools, docs, inSync };
@@ -115,45 +109,20 @@ export class StatusUseCase {
     const mergeFiles = manifest.getMergeFiles(toolId);
     const drifted = await this.checkTrackedFiles(trackedFiles, projectRoot);
     drifted.push(...(await this.checkMergeFiles(mergeFiles, projectRoot)));
-    const trackedSet = this.buildTrackedSet(manifest, toolId, trackedFiles, mergeFiles);
-    drifted.push(
-      ...(await this.detectAddedFiles(getToolConfig(toolId).directory, trackedSet, projectRoot))
-    );
-    return { toolId, version, drifted };
-  }
-
-  private buildTrackedSet(
-    manifest: Manifest,
-    toolId: ToolId,
-    trackedFiles: ReadonlyArray<{ relativePath: string }>,
-    mergeFiles: ReadonlyArray<{ relativePath: string }>
-  ): Set<string> {
-    const trackedSet = new Set([
-      ...trackedFiles.map((f) => f.relativePath),
-      ...mergeFiles.map((m) => m.relativePath),
-    ]);
     const dir = getToolConfig(toolId).directory;
-    for (const otherId of manifest.getInstalledToolIds()) {
-      if (otherId === toolId) continue;
-      for (const f of manifest.getToolFiles(otherId)) {
-        if (f.relativePath.startsWith(dir)) trackedSet.add(f.relativePath);
-      }
-      for (const m of manifest.getMergeFiles(otherId)) {
-        if (m.relativePath.startsWith(dir)) trackedSet.add(m.relativePath);
-      }
-    }
-    return trackedSet;
+    const trackedSet = manifest.getTrackedPathsInDirectory(dir);
+    drifted.push(...(await this.detectAddedFiles(dir, trackedSet, projectRoot)));
+    return { toolId, version, drifted };
   }
 
   private async checkDocsSection(
     manifest: Manifest,
     projectRoot: string,
-    filterToolId: ToolId | undefined,
     filterDocs: boolean | undefined,
-    showDocs?: boolean
+    showDocs: boolean
   ): Promise<DocsStatus | null> {
-    if (showDocs === false) return null;
-    if (!(filterDocs || !filterToolId) || !manifest.hasDocs()) return null;
+    if (!showDocs && !filterDocs) return null;
+    if (!manifest.hasDocs()) return null;
     const docsVersion = manifest.getDocsVersion() ?? "unknown";
     const docsFiles = manifest.getDocsFiles();
     const drifted = await this.checkTrackedFiles(docsFiles, projectRoot);
