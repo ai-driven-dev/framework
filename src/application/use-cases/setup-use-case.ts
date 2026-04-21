@@ -248,7 +248,7 @@ export class SetupUseCase {
     if (!options.interactive) {
       if (!options.toolIds || options.toolIds.length === 0) {
         throw new InputRequiredError(
-          "--tools <ids> is required for adopt in non-interactive mode."
+          "--ai or --ide is required for adopt in non-interactive mode."
         );
       }
       if (options.from === undefined)

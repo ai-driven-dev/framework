@@ -151,7 +151,7 @@ describe("setup without TTY", () => {
         path: FIXTURE_DIR,
         interactive: false,
       })
-    ).rejects.toThrow("--tools");
+    ).rejects.toThrow("--ai or --ide");
   });
 
   it("manifest exists but no tools installed and all tools flag installs all tools", async () => {

@@ -41,7 +41,7 @@ describe.concurrent("E2E: aidd setup", () => {
         "---\nname: aidd:04:implement\ndescription: test\n---\nbody"
       );
 
-      const { stderr, exitCode } = await runCli(["setup", "--tools", "claude"], projectDir);
+      const { stderr, exitCode } = await runCli(["setup", "--ai", "claude"], projectDir);
 
       expect(exitCode).toBe(1);
       expect(stderr.toLowerCase()).toMatch(/from|adopt/);

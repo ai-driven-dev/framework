@@ -38,7 +38,7 @@ describe("AdoptRequiresVersionError", () => {
   it("uses default repo in message", () => {
     const error = new AdoptRequiresVersionError();
     expect(error.message).toContain("--from <version|path> is required for adopt");
-    expect(error.message).toContain("aidd adopt --from 3.6.0 --tools claude");
+    expect(error.message).toContain("aidd setup --ai claude --from 3.6.0");
     expect(error.message).toContain("Check available tags for: ai-driven-dev/aidd-framework");
     expect(error.name).toBe("AdoptRequiresVersionError");
   });
