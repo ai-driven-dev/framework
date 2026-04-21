@@ -24,7 +24,7 @@ export class AdoptRequiresVersionError extends Error {
   constructor(repo = Manifest.DEFAULT_REPO, diagnostic = "") {
     const suffix = diagnostic ? `\n\n${diagnostic}` : "";
     super(
-      `--from <version|path> is required for adopt.\nExample: aidd adopt --from 3.6.0 --tools claude\nCheck available tags for: ${repo}${suffix}`
+      `--from <version|path> is required.\nExample: aidd setup --from 3.6.0 --tools claude\nCheck available tags for: ${repo}${suffix}`
     );
     this.name = "AdoptRequiresVersionError";
   }

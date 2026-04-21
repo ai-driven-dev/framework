@@ -43,8 +43,7 @@ export class InitUseCase {
   async checkPreconditions(
     options: Pick<InitOptions, "docsDir" | "projectRoot" | "force" | "repo">
   ): Promise<void> {
-    const { docsDir, projectRoot, force = false, repo } = options;
-    const resolvedDocsDir = docsDir ?? Manifest.DEFAULT_DOCS_DIR;
+    const { projectRoot, force = false, repo } = options;
     const existing = await this.manifestRepo.load();
 
     if (force) {
@@ -58,10 +57,6 @@ export class InitUseCase {
       throw new AlreadyInitializedError(
         `Already initialized (docs in "${existing.docsDir}"). Use \`aidd init --force\` to re-copy docs, or \`aidd clean --force\` to reset completely.`
       );
-    }
-
-    if (await this.fs.fileExists(join(projectRoot, resolvedDocsDir))) {
-      throw new AiddFilesDetectedError(repo);
     }
 
     if (await this.hasAiddSignals(projectRoot)) {
@@ -187,11 +182,14 @@ export class InitUseCase {
           this.logger.warn(`Overwriting modified file: ${outputRelPath}`);
           await this.fs.writeFile(outputPath, content);
         }
+        generated.push(new GeneratedFile({ relativePath: outputRelPath, content, hash: newHash }));
+      } else if (await this.fs.fileExists(outputPath)) {
+        const diskHash = await this.fs.readFileHash(outputPath);
+        generated.push(new GeneratedFile({ relativePath: outputRelPath, content: "", hash: diskHash }));
       } else {
         await this.fs.writeFile(outputPath, content);
+        generated.push(new GeneratedFile({ relativePath: outputRelPath, content, hash: newHash }));
       }
-
-      generated.push(new GeneratedFile({ relativePath: outputRelPath, content, hash: newHash }));
     }
     return generated;
   }

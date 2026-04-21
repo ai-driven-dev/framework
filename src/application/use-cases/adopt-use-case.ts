@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { FrameworkResolutionError, ToolValidationError } from "../../domain/errors.js";
+import { ToolValidationError } from "../../domain/errors.js";
 import { generateDistribution } from "../../domain/models/distribution.js";
 import { buildDocsDistribution } from "../../domain/models/docs.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
@@ -124,9 +124,11 @@ export class AdoptUseCase {
       const toolDir = join(projectRoot, config.directory);
 
       if (!(await this.fs.fileExists(toolDir))) {
-        throw new FrameworkResolutionError(
-          `Directory '${config.directory}' not found for tool '${toolId}'.`
+        this.logger.warn(
+          `Directory '${config.directory}' not found for tool '${toolId}'. ` +
+            `Run \`aidd install ${toolId}\` to install the tool from scratch.`
         );
+        continue;
       }
 
       const distribution = await generateDistribution(
