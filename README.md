@@ -159,7 +159,7 @@ aidd uninstall --all            # uninstall all tools
 | Command                      | Description                                                        | Key options                                  |
 | ---------------------------- | ------------------------------------------------------------------ | -------------------------------------------- |
 | `aidd auth`                  | Manage authentication (login, logout, status)                      | `--token`, `--gh`, `--level`                 |
-| `aidd setup`                 | Set up or update the project — interactive by default, scriptable with flags | `--release`, `--path`, `--tools`, `--all-tools`, `--docs-dir`, `--from` |
+| `aidd setup`                 | Set up or update the project — interactive by default, scriptable with flags | `--release`, `--path`, `--ai`, `--ide`, `--all`, `--docs-dir`, `--from` |
 | `aidd install [ai\|ide] <tools...>` | Generate and write tool-specific files (requires existing manifest) | `--all`, `--force`, `--release`, `--path` |
 | `aidd uninstall [ai\|ide] <tools...>` | Remove tool files and update manifest                        | `--all`                                      |
 | `aidd status [ai\|ide]`      | Show drift between disk and manifest + available update            | `--tool`, `--docs`                           |
@@ -194,13 +194,15 @@ Detects the current project state and runs the appropriate flow (init, adopt, in
 aidd setup                                      # interactive guided setup
 aidd setup --release v3.4.0                     # pin a specific framework version
 aidd setup --path ./local                       # use a local framework copy
-aidd setup --all-tools                          # non-interactive: init + install all tools
-aidd setup --tools claude,cursor                # non-interactive: init + install specific tools
-aidd setup --tools claude --from v3.2.0         # non-interactive adopt (existing tool files)
+aidd setup --all                                # non-interactive: init + install all tools (AI + IDE)
+aidd setup --ai claude,cursor                   # non-interactive: init + install specific AI tools
+aidd setup --ide vscode                         # non-interactive: init + install specific IDE tools
+aidd setup --ai claude,cursor --ide vscode      # mix AI and IDE tools
+aidd setup --ai claude --from v3.2.0            # non-interactive adopt (existing tool files)
 aidd setup --docs-dir my_docs                   # custom documentation directory
 ```
 
-Passing `--all-tools` or `--tools` disables interactive prompts — values with defaults (docs dir, repo, release) are resolved automatically. For `adopt` state, `--from` is required.
+Passing `--all`, `--ai`, or `--ide` disables interactive prompts — values with defaults (docs dir, repo, release) are resolved automatically. For `adopt` state, `--from` is required.
 
 ### `aidd install`
 

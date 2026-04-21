@@ -36,7 +36,7 @@ src/
 │   │   ├── restore.ts                  # aidd restore [files] [--tool] [--docs] [--force]
 │   │   ├── status.ts                   # aidd status [ai|ide] [--tool] [--docs]
 │   │   ├── self-update.ts              # aidd self-update [--check] [--dry-run] [--force]
-│   │   ├── setup.ts                    # aidd setup (interactive onboarding entry point)
+│   │   ├── setup.ts                    # aidd setup [--all] [--ai <ids>] [--ide <ids>] (interactive onboarding entry point)
 │   │   ├── sync.ts                     # aidd sync --source <tool> [--target] [--force]
 │   │   ├── uninstall.ts                # aidd uninstall [ai|ide] <tools> [--all] [--mcp]
 │   │   └── update.ts                   # aidd update [--force] [--dry-run] [--tool] [--docs]
