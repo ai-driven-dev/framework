@@ -166,7 +166,7 @@ function mergePerKey(
   const allKeys = new Set([...Object.keys(existing), ...Object.keys(incoming)]);
   const result: Record<string, unknown> = {};
   for (const key of allKeys) {
-    const isFrameworkPrime = strategy.frameworkPrimeKeys.includes(key);
+    const isFrameworkPrime = strategy.frameworkOverrideKeys.includes(key);
     const effectiveStrategy = isFrameworkPrime ? "framework-prime" : strategy.default;
     if (effectiveStrategy === "framework-prime") {
       result[key] = key in incoming ? incoming[key] : existing[key];

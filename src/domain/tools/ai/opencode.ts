@@ -99,6 +99,7 @@ const descriptionOnlyFrontmatter = {
 };
 
 export const opencodeToolConfig: AiToolConfig = {
+  kind: "ai",
   toolId: "opencode",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,

@@ -14,6 +14,7 @@ import {
 } from "../../../src/domain/models/tool-config.js";
 
 const makeStubConfig = (toolId: AiToolId, toolSuffix: string): AiToolConfig => ({
+  kind: "ai",
   toolId,
   directory: `.${toolId}/`,
   toolSuffix,

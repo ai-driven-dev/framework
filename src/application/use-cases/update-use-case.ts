@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import { FrameworkResolutionError } from "../../domain/errors.js";
-import { filterGeneratedFilesByIdeContext } from "../../domain/models/config-ref-filter.js";
 import type { ConflictDecision } from "../../domain/models/conflict-decision.js";
 import {
   generateConfigDistribution,
@@ -11,6 +10,7 @@ import type { FileDiff } from "../../domain/models/file-diff.js";
 import type { FileHash } from "../../domain/models/file-hash.js";
 import type { ConfigRef } from "../../domain/models/framework-descriptor.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
+import { filterByIdeRequirements } from "../../domain/models/ide-requirement-filter.js";
 import type { Manifest } from "../../domain/models/manifest.js";
 import { detectNewMcpEntries, filterMcpExclusions } from "../../domain/models/mcp.js";
 import type { McpExclusion } from "../../domain/models/mcp-exclusion.js";
@@ -389,7 +389,7 @@ export class UpdateUseCase {
           projectRoot,
           this.fs
         );
-    const newDistribution = filterGeneratedFilesByIdeContext(
+    const newDistribution = filterByIdeRequirements(
       rawDistribution,
       descriptor.configRefs,
       ideContext

@@ -302,7 +302,7 @@ describe("FileSystemAdapter", () => {
           await writeFile(path, JSON.stringify({ "github.copilot.enable": false }), "utf-8");
           await fs.mergeJsonFile(path, JSON.stringify({ "github.copilot.enable": true }), {
             default: "user-prime",
-            frameworkPrimeKeys: ["github.copilot.enable"],
+            frameworkOverrideKeys: ["github.copilot.enable"],
           });
           const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
           expect(result["github.copilot.enable"]).toBe(true);
@@ -315,7 +315,7 @@ describe("FileSystemAdapter", () => {
           await writeFile(path, JSON.stringify({ "editor.fontSize": 14 }), "utf-8");
           await fs.mergeJsonFile(path, JSON.stringify({ "editor.fontSize": 16 }), {
             default: "user-prime",
-            frameworkPrimeKeys: ["github.copilot.enable"],
+            frameworkOverrideKeys: ["github.copilot.enable"],
           });
           const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
           expect(result["editor.fontSize"]).toBe(14);
@@ -326,7 +326,7 @@ describe("FileSystemAdapter", () => {
           await writeFile(path, JSON.stringify({}), "utf-8");
           await fs.mergeJsonFile(path, JSON.stringify({ "chat.agent.enabled": true }), {
             default: "user-prime",
-            frameworkPrimeKeys: ["chat.agent.enabled"],
+            frameworkOverrideKeys: ["chat.agent.enabled"],
           });
           const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
           expect(result["chat.agent.enabled"]).toBe(true);

@@ -224,6 +224,7 @@ function reverseCopilotContent(content: string, docsDir: string): string {
 }
 
 export const copilotToolConfig: AiToolConfig = {
+  kind: "ai",
   toolId: "copilot",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,

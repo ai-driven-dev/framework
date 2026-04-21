@@ -14,6 +14,8 @@ import { type ToolId, VALID_TOOL_IDS } from "./tool-config.js";
 
 const MANIFEST_VERSION = 2;
 
+// VSCode file paths that were tracked under "copilot" in manifest v1.
+// Used exclusively by migrateV1toV2 to move them to the "vscode" tool entry.
 const VSCODE_MIGRATION_PATHS = new Set([
   ".vscode/extensions.json",
   ".vscode/keybindings.json",
@@ -92,6 +94,9 @@ interface TrackedFileData {
   frameworkPath?: string;
 }
 
+// This migration block must remain until all users have upgraded past v1.
+// Removing it would corrupt manifests that still have VSCode files tracked under "copilot".
+// It can only be removed when the manifest version is bumped again and v1 support is explicitly dropped.
 function migrateV1toV2(raw: Record<string, unknown>): void {
   const tools = raw.tools as Record<string, ToolEntryData> | undefined;
   if (!tools) return;

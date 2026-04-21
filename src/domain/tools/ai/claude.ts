@@ -26,6 +26,7 @@ function commandsDir(phase: string): string {
 }
 
 export const claudeToolConfig: AiToolConfig = {
+  kind: "ai",
   toolId: "claude",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,

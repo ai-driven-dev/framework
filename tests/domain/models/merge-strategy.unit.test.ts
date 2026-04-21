@@ -3,7 +3,7 @@ import { isPerKeyMergeStrategy } from "../../../src/domain/models/merge-strategy
 
 describe("isPerKeyMergeStrategy", () => {
   it("returns true for PerKeyMergeStrategy objects", () => {
-    expect(isPerKeyMergeStrategy({ default: "user-prime", frameworkPrimeKeys: [] })).toBe(true);
+    expect(isPerKeyMergeStrategy({ default: "user-prime", frameworkOverrideKeys: [] })).toBe(true);
   });
 
   it("returns false for string strategies", () => {

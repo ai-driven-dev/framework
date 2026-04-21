@@ -20,7 +20,16 @@ export const VALID_TOOL_IDS: readonly ToolId[] = [...AI_TOOL_IDS, ...IDE_TOOL_ID
 export type ToolCategory = "ai" | "ide";
 
 export function toolIdsForCategory(category: ToolCategory): readonly ToolId[] {
-  return category === "ai" ? AI_TOOL_IDS : IDE_TOOL_IDS;
+  switch (category) {
+    case "ai":
+      return AI_TOOL_IDS;
+    case "ide":
+      return IDE_TOOL_IDS;
+    default: {
+      const _exhaustive: never = category;
+      throw new Error(`Unknown category: ${String(_exhaustive)}`);
+    }
+  }
 }
 
 export function assertValidToolIds(toolIds: string[]): void {
@@ -82,6 +91,7 @@ export interface MemoryBankHandler {
 }
 
 export interface AiToolConfig {
+  readonly kind: "ai";
   readonly toolId: AiToolId;
   readonly directory: string;
   readonly toolSuffix: string;
@@ -99,6 +109,7 @@ export interface AiToolConfig {
 }
 
 export interface IdeToolConfig {
+  readonly kind: "ide";
   readonly toolId: IdeToolId;
   readonly directory: string;
   readonly signalDir: string | null;
@@ -108,7 +119,7 @@ export interface IdeToolConfig {
 export type ToolConfig = AiToolConfig | IdeToolConfig;
 
 export function isAiToolConfig(config: ToolConfig): config is AiToolConfig {
-  return "agents" in config;
+  return config.kind === "ai";
 }
 
 export function agentNameFromFrontmatter(

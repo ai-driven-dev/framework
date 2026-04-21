@@ -18,6 +18,7 @@ import {
   type AiToolConfig,
   acceptsFile,
   type CommandsHandler,
+  type ConfigHandler,
   type RulesHandler,
   type SectionHandler,
   type ToolConfig,
@@ -89,29 +90,17 @@ export async function generateDistribution(
     }
   }
 
-  const configHandler = toolConfig.config();
-  const current = platform.current();
-  const transforms = new Map<string, ContentTransform>();
-  const mcpTransform = mcpTransformFor(current);
-  if (mcpTransform) transforms.set(CONFIG_MCP, mcpTransform);
-
-  const resolveOutput = async (name: string): Promise<string | null> => {
-    if (configHandler.resolveOutputPath) {
-      return configHandler.resolveOutputPath(name, projectRoot, fs);
-    }
-    return configHandler.outputPath(name);
-  };
-
+  const configFiles = await collectConfigFiles(
+    framework,
+    toolConfig.config(),
+    contentFiles,
+    hasher,
+    platform,
+    projectRoot,
+    fs
+  );
   results.push(
-    ...(await collectRawFiles(
-      framework.configRefs,
-      resolveOutput,
-      (name) => configHandler.mergeStrategy(name),
-      configHandler.transformContent?.bind(configHandler),
-      contentFiles,
-      hasher,
-      transforms
-    )),
+    ...configFiles,
     ...collectMemoryBankFiles(framework.templateRefs, toolConfig, docsDir, contentFiles, hasher)
   );
 
@@ -127,10 +116,30 @@ export async function generateConfigDistribution(
   projectRoot: string,
   fs: FileSystem
 ): Promise<GeneratedFile[]> {
-  const configHandler = toolConfig.config();
-  const current = platform.current();
+  const results = await collectConfigFiles(
+    framework,
+    toolConfig.config(),
+    contentFiles,
+    hasher,
+    platform,
+    projectRoot,
+    fs
+  );
+  return removeRedundantGitkeeps(results);
+}
+
+async function collectConfigFiles(
+  framework: FrameworkDescriptor,
+  configHandler: ConfigHandler,
+  contentFiles: Map<string, string>,
+  hasher: Hasher,
+  platform: Platform,
+  projectRoot: string,
+  fs: FileSystem
+): Promise<GeneratedFile[]> {
+  const currentPlatform = platform.current();
   const transforms = new Map<string, ContentTransform>();
-  const mcpTransform = mcpTransformFor(current);
+  const mcpTransform = mcpTransformFor(currentPlatform);
   if (mcpTransform) transforms.set(CONFIG_MCP, mcpTransform);
 
   const resolveOutput = async (name: string): Promise<string | null> => {
@@ -140,7 +149,7 @@ export async function generateConfigDistribution(
     return configHandler.outputPath(name);
   };
 
-  const results = await collectRawFiles(
+  return collectRawFiles(
     framework.configRefs,
     resolveOutput,
     (name) => configHandler.mergeStrategy(name),
@@ -149,8 +158,6 @@ export async function generateConfigDistribution(
     hasher,
     transforms
   );
-
-  return removeRedundantGitkeeps(results);
 }
 
 function resolveHandler(

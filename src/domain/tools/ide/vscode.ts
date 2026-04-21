@@ -9,6 +9,7 @@ import { type ConfigHandler, type IdeToolConfig, registerTool } from "../../mode
 const DIRECTORY = ".vscode/";
 
 export const vscodeToolConfig: IdeToolConfig = {
+  kind: "ide",
   toolId: "vscode",
   directory: DIRECTORY,
   signalDir: null,

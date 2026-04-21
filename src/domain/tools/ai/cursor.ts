@@ -28,6 +28,7 @@ function toMdc(fileName: string): string {
 }
 
 export const cursorToolConfig: AiToolConfig = {
+  kind: "ai",
   toolId: "cursor",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { filterGeneratedFilesByIdeContext } from "../../../src/domain/models/config-ref-filter.js";
 import { FileHash } from "../../../src/domain/models/file-hash.js";
 import type { ConfigRef } from "../../../src/domain/models/framework-descriptor.js";
 import { GeneratedFile } from "../../../src/domain/models/generated-file.js";
+import { filterByIdeRequirements } from "../../../src/domain/models/ide-requirement-filter.js";
 import type { IdeToolId } from "../../../src/domain/models/tool-config.js";
 
 const DUMMY_HASH = "d41d8cd98f00b204e9800998ecf8427e";
@@ -21,25 +21,25 @@ function makeRef(path: string, requiredIdeId?: IdeToolId): ConfigRef {
   return requiredIdeId !== undefined ? { name: path, path, requiredIdeId } : { name: path, path };
 }
 
-describe("filterGeneratedFilesByIdeContext", () => {
+describe("filterByIdeRequirements", () => {
   it("includes file with no requiredIdeId regardless of empty ideContext", () => {
     const file = makeFile("config/mcp.json");
     const ref = makeRef("config/mcp.json");
-    const result = filterGeneratedFilesByIdeContext([file], [ref], []);
+    const result = filterByIdeRequirements([file], [ref], []);
     expect(result).toContain(file);
   });
 
   it("excludes IDE-conditional file when ideContext is empty", () => {
     const file = makeFile("config/copilot/settings.json");
     const ref = makeRef("config/copilot/settings.json", "vscode");
-    const result = filterGeneratedFilesByIdeContext([file], [ref], []);
+    const result = filterByIdeRequirements([file], [ref], []);
     expect(result).not.toContain(file);
   });
 
   it("includes IDE-conditional file when matching IDE is in ideContext", () => {
     const file = makeFile("config/copilot/settings.json");
     const ref = makeRef("config/copilot/settings.json", "vscode");
-    const result = filterGeneratedFilesByIdeContext([file], [ref], ["vscode"]);
+    const result = filterByIdeRequirements([file], [ref], ["vscode"]);
     expect(result).toContain(file);
   });
 
@@ -47,7 +47,7 @@ describe("filterGeneratedFilesByIdeContext", () => {
     const regular = makeFile("config/mcp.json");
     const conditional = makeFile("config/copilot/settings.json");
     const refs = [makeRef("config/mcp.json"), makeRef("config/copilot/settings.json", "vscode")];
-    const result = filterGeneratedFilesByIdeContext([regular, conditional], refs, []);
+    const result = filterByIdeRequirements([regular, conditional], refs, []);
     expect(result).toContain(regular);
     expect(result).not.toContain(conditional);
   });

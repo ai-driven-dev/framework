@@ -1,11 +1,11 @@
 import { join } from "node:path";
-import { filterGeneratedFilesByIdeContext } from "../../domain/models/config-ref-filter.js";
 import {
   generateConfigDistribution,
   generateDistribution,
 } from "../../domain/models/distribution.js";
 import type { ConfigRef } from "../../domain/models/framework-descriptor.js";
 import type { GeneratedFile } from "../../domain/models/generated-file.js";
+import { filterByIdeRequirements } from "../../domain/models/ide-requirement-filter.js";
 import type { Manifest } from "../../domain/models/manifest.js";
 import {
   computeMcpExclusions,
@@ -372,11 +372,7 @@ export class InstallUseCase {
     exclusions: McpExclusion[];
     configHandler: ConfigHandler;
   }> {
-    const ideFiltered = filterGeneratedFilesByIdeContext(
-      generated,
-      descriptor.configRefs,
-      ideContext
-    );
+    const ideFiltered = filterByIdeRequirements(generated, descriptor.configRefs, ideContext);
     return this.selectMcpServers(
       ideFiltered,
       config,
