@@ -16,10 +16,10 @@ assignees: ""
 
 ## Type de contenu
 
-- [ ] Rule (`.claude/rules/`)
-- [ ] Skill (`.claude/skills/`)
-- [ ] Command (`.claude/commands/`)
-- [ ] Agent (`.claude/agents/`)
+- [ ] Rule (`{{TOOLS}}/rules/`)
+- [ ] Skill (`{{TOOLS}}/skills/`)
+- [ ] Command (`{{TOOLS}}/commands/`)
+- [ ] Agent (`{{TOOLS}}/agents/`)
 - [ ] IDE mapping / MCP config
 - [ ] Autre
 

@@ -188,7 +188,7 @@ graph LR
 
    ```text
    /generate_rules "We use camelCase for variables, PascalCase for components, and barrel exports for every module"
-   # → Created 3 rules in .claude/rules/
+   # → Created 3 rules in {{TOOLS}}/rules/
    ```
 
 3. Verify everything works — tests pass, types check, build succeeds, linter is clean. This becomes your safety net throughout the entire workflow.
