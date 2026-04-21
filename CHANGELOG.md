@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.3.1](https://github.com/ai-driven-dev/aidd-cli/compare/v3.3.0...v3.3.1) (2026-04-21)
+
+
+### Bug Fixes
+
+* **setup:** handle post-uninstall state when aidd_docs/ exists without manifest ([490649c](https://github.com/ai-driven-dev/aidd-cli/commit/490649c21f9c27bdcf0f2b21d4cba8eac93e825b))
+* **setup:** handle post-uninstall state where aidd_docs/ exists without manifest ([bb6c0f7](https://github.com/ai-driven-dev/aidd-cli/commit/bb6c0f70e4dbf3eba46b13a2302fa4ba961cc3af)), closes [#141](https://github.com/ai-driven-dev/aidd-cli/issues/141)
+
 ## [3.3.0](https://github.com/ai-driven-dev/aidd-cli/compare/v3.2.0...v3.3.0) (2026-04-14)
 
 
