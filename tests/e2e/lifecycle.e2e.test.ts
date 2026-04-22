@@ -13,14 +13,14 @@ describe.concurrent("E2E: full lifecycle", () => {
 
       // install claude and cursor
       const installClaudeResult = await runCli(
-        ["install", "claude", "--path", FRAMEWORK_PATH],
+        ["install", "ai", "claude", "--path", FRAMEWORK_PATH],
         projectDir
       );
       expect(installClaudeResult.exitCode).toBe(0);
       expect(installClaudeResult.stdout).toContain("Installed claude");
 
       const installCursorResult = await runCli(
-        ["install", "cursor", "--path", FRAMEWORK_PATH],
+        ["install", "ai", "cursor", "--path", FRAMEWORK_PATH],
         projectDir
       );
       expect(installCursorResult.exitCode).toBe(0);
@@ -85,7 +85,7 @@ describe.concurrent("E2E: full lifecycle", () => {
 
       // install claude
       const installResult = await runCli(
-        ["install", "claude", "--path", FRAMEWORK_PATH],
+        ["install", "ai", "claude", "--path", FRAMEWORK_PATH],
         projectDir
       );
       expect(installResult.exitCode).toBe(0);
@@ -97,7 +97,7 @@ describe.concurrent("E2E: full lifecycle", () => {
       expect(statusResult.stdout).toContain("All files are in sync");
 
       // uninstall
-      const uninstallResult = await runCli(["uninstall", "claude"], projectDir);
+      const uninstallResult = await runCli(["uninstall", "ai", "claude"], projectDir);
       expect(uninstallResult.exitCode).toBe(0);
       expect(uninstallResult.stdout).toContain("Uninstalled claude");
       expect(existsSync(join(projectDir, ".claude"))).toBe(false);

@@ -2,7 +2,6 @@ import type { Command } from "commander";
 import {
   assertToolIdsMatchCategory,
   assertValidToolIds,
-  type ToolCategory,
   type ToolId,
   toolIdsForCategory,
 } from "../../domain/models/tool-config.js";
@@ -10,7 +9,7 @@ import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { NoManifestError, NoToolsInstalledError } from "../errors.js";
 import { UninstallUseCase } from "../use-cases/uninstall-use-case.js";
-import { parseGlobalOptions } from "./global-options.js";
+import { parseCategoryArg, parseGlobalOptions } from "./global-options.js";
 
 export function registerUninstallCommand(program: Command): void {
   program
@@ -23,8 +22,7 @@ export function registerUninstallCommand(program: Command): void {
       const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
 
-      const category: ToolCategory | undefined =
-        rawArgs[0] === "ai" || rawArgs[0] === "ide" ? rawArgs[0] : undefined;
+      const category = parseCategoryArg(rawArgs[0], output);
       const toolArgs = category ? rawArgs.slice(1) : rawArgs;
 
       if (cmdOptions.all && toolArgs.length > 0) {

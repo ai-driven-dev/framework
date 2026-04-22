@@ -8,7 +8,7 @@ describe.concurrent("E2E: aidd clean", () => {
     const { projectDir, cleanup } = await createTestEnv("clean");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["clean"], projectDir);
 
@@ -25,7 +25,7 @@ describe.concurrent("E2E: aidd clean", () => {
     const { projectDir, cleanup } = await createTestEnv("clean");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
 
@@ -54,7 +54,7 @@ describe.concurrent("E2E: aidd clean", () => {
     const { projectDir, cleanup } = await createTestEnv("clean");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["clean"], projectDir);
 
@@ -70,8 +70,8 @@ describe.concurrent("E2E: aidd clean", () => {
     const { projectDir, cleanup } = await createTestEnv("clean");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
       expect(exitCode).toBe(0);
@@ -105,7 +105,7 @@ describe.concurrent("E2E: aidd clean", () => {
     const { projectDir, cleanup } = await createTestEnv("clean");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       // runCli always runs non-TTY (child process without TTY)
       const { stdout, exitCode } = await runCli(["clean"], projectDir);

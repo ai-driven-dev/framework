@@ -32,7 +32,7 @@ describe.concurrent("E2E: aidd update", () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["update", "--path", FRAMEWORK_PATH], projectDir);
 
@@ -47,7 +47,7 @@ describe.concurrent("E2E: aidd update", () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(
         ["update", "--path", FRAMEWORK_V2_PATH],
@@ -75,7 +75,7 @@ describe.concurrent("E2E: aidd update", () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       // agent exists after v1 install
       expect(existsSync(join(projectDir, ".claude", "agents", "code-reviewer.md"))).toBe(true);
@@ -93,7 +93,7 @@ describe.concurrent("E2E: aidd update", () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const namingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
       await writeFile(namingPath, "# my custom naming rules\n");
@@ -126,7 +126,7 @@ describe.concurrent("E2E: aidd update", () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const namingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
       const contentBefore = await readFile(namingPath, "utf-8");
@@ -157,7 +157,7 @@ describe.concurrent("E2E: aidd update", () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const namingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
       await writeFile(namingPath, "# my custom naming rules\n");
@@ -179,7 +179,7 @@ describe.concurrent("E2E: aidd update", () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { exitCode } = await runCli(["update", "--path", FRAMEWORK_V2_PATH], projectDir);
 
@@ -210,7 +210,7 @@ describe.concurrent("E2E: aidd update", () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const v1Content = await readFile(
         join(projectDir, ".aidd", "scripts", "update_memory.js"),
@@ -249,8 +249,8 @@ describe.concurrent("E2E: aidd update", () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
       const cursorNamingBefore = await readFile(
         join(projectDir, ".cursor", "rules", "01-standards", "naming.mdc"),
@@ -282,7 +282,7 @@ describe.concurrent("E2E: aidd update", () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const claudeNamingBefore = await readFile(
         join(projectDir, ".claude", "rules", "01-standards", "naming.md"),
@@ -314,7 +314,7 @@ describe.concurrent("E2E: aidd update", () => {
     const { projectDir, cleanup } = await createTestEnv("update-stale-script");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       // Simulate a project that was installed with an older CLI that wrote update_memory.mjs
       const manifestPath = join(projectDir, ".aidd", "manifest.json");

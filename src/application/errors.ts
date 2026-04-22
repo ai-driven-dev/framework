@@ -65,3 +65,10 @@ export class NoToolsInstalledError extends Error {
     this.name = "NoToolsInstalledError";
   }
 }
+
+export class InvalidCategoryError extends Error {
+  constructor(category: string) {
+    super(`Invalid category '${category}'. Use 'ai' or 'ide'.`);
+    this.name = "InvalidCategoryError";
+  }
+}

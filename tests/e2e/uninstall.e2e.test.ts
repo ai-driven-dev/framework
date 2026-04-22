@@ -9,10 +9,10 @@ describe.concurrent("E2E: aidd uninstall", () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
-      const { stdout, exitCode } = await runCli(["uninstall", "claude"], projectDir);
+      const { stdout, exitCode } = await runCli(["uninstall", "ai", "claude"], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Uninstalled claude");
@@ -27,9 +27,9 @@ describe.concurrent("E2E: aidd uninstall", () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
-      const { stderr, exitCode } = await runCli(["uninstall", "cursor"], projectDir);
+      const { stderr, exitCode } = await runCli(["uninstall", "ai", "cursor"], projectDir);
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("cursor is not installed");
@@ -41,7 +41,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
   it("shows an error message when the project is not initialized", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      const { stderr, exitCode } = await runCli(["uninstall", "claude"], projectDir);
+      const { stderr, exitCode } = await runCli(["uninstall", "ai", "claude"], projectDir);
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("No AIDD manifest found");
@@ -55,10 +55,13 @@ describe.concurrent("E2E: aidd uninstall", () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
-      const { stdout, exitCode } = await runCli(["uninstall", "claude", "cursor"], projectDir);
+      const { stdout, exitCode } = await runCli(
+        ["uninstall", "ai", "claude", "cursor"],
+        projectDir
+      );
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Uninstalled");
@@ -72,7 +75,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
   it("shows an error message for unrecognized tool IDs", async () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
-      const { stderr, exitCode } = await runCli(["uninstall", "unknown-tool"], projectDir);
+      const { stderr, exitCode } = await runCli(["uninstall", "ai", "unknown-tool"], projectDir);
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("Unknown tool");
@@ -85,7 +88,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stderr, exitCode } = await runCli(["uninstall"], projectDir);
 
@@ -120,9 +123,9 @@ describe.concurrent("E2E: aidd uninstall", () => {
     const { projectDir, cleanup } = await createTestEnv("uninstall");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "cursor", "--path", FRAMEWORK_PATH], projectDir);
-      await runCli(["uninstall", "claude"], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "cursor", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["uninstall", "ai", "claude"], projectDir);
 
       const manifestRaw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");
       const manifest = JSON.parse(manifestRaw) as { tools: Record<string, unknown> };
@@ -139,7 +142,7 @@ describe.concurrent("E2E: aidd uninstall", () => {
       await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "--all", "--path", FRAMEWORK_PATH], projectDir);
 
-      const { stderr, exitCode } = await runCli(["uninstall", "--all", "claude"], projectDir);
+      const { stderr, exitCode } = await runCli(["uninstall", "--all", "ai", "claude"], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stderr).toContain("ignoring specified tools");
