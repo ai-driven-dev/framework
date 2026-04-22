@@ -108,7 +108,7 @@ export async function generateDistribution(
   return removeRedundantGitkeeps(results);
 }
 
-export async function generateConfigDistribution(
+async function generateConfigDistribution(
   framework: FrameworkDescriptor,
   toolConfig: ToolConfig,
   contentFiles: Map<string, string>,

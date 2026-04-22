@@ -1,5 +1,9 @@
 import { dirname, join } from "node:path";
-import { type MergeFileEntry, removeEntriesFromJson } from "../../domain/models/merge-entry.js";
+import {
+  isMergeContentEmpty,
+  type MergeFileEntry,
+  removeEntriesFromJson,
+} from "../../domain/models/merge-entry.js";
 import type { ToolId } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
@@ -93,7 +97,7 @@ export class CleanUseCase {
       const content = await this.fs.readFile(fullPath);
       const keys = Object.keys(mergeFile.entries);
       const cleaned = removeEntriesFromJson(content, mergeFile.sectionKey, keys);
-      if (this.isEffectivelyEmpty(cleaned)) {
+      if (isMergeContentEmpty(cleaned, mergeFile.sectionKey)) {
         await this.fs.deleteFile(fullPath);
         await this.fs.deleteEmptyDirectories(dirname(fullPath));
       } else {
@@ -102,19 +106,6 @@ export class CleanUseCase {
       count++;
     }
     return count;
-  }
-
-  private isEffectivelyEmpty(json: string): boolean {
-    try {
-      const parsed = JSON.parse(json) as Record<string, unknown>;
-      return Object.values(parsed).every(
-        (v) =>
-          v === null ||
-          (typeof v === "object" && !Array.isArray(v) && Object.keys(v as object).length === 0)
-      );
-    } catch {
-      return false;
-    }
   }
 
   private async deleteFiles(

@@ -1,7 +1,11 @@
 import { dirname, join } from "node:path";
 import type { Manifest } from "../../domain/models/manifest.js";
 import type { McpExclusion } from "../../domain/models/mcp-exclusion.js";
-import { type MergeFileEntry, removeEntriesFromJson } from "../../domain/models/merge-entry.js";
+import {
+  isMergeContentEmpty,
+  type MergeFileEntry,
+  removeEntriesFromJson,
+} from "../../domain/models/merge-entry.js";
 import {
   getToolConfig,
   isAiToolConfig,
@@ -128,37 +132,41 @@ export class UninstallUseCase {
     if (!mergeEntry) return false;
     const fullPath = join(projectRoot, relativePath);
     if (!(await this.fs.fileExists(fullPath))) return false;
-    const otherOwnersExist = this.otherToolsOwnMergeFile(toolId, allToolIds, relativePath, manifest);
-    const isIdeTool = !isAiToolConfig(getToolConfig(toolId));
-    const canDelete = !otherOwnersExist && !isIdeTool;
+    const canDelete = this.computeDeletePermission(toolId, allToolIds, relativePath, manifest);
     if (mergeEntry.sectionKey === null && canDelete) {
       await this.fs.deleteFile(fullPath);
       await this.fs.deleteEmptyDirectories(dirname(fullPath));
       return true;
     }
+    return this.deleteOrWriteStripped(fullPath, mergeEntry, canDelete);
+  }
+
+  private computeDeletePermission(
+    toolId: ToolId,
+    allToolIds: ToolId[],
+    relativePath: string,
+    manifest: Manifest
+  ): boolean {
+    const otherOwnersExist = this.otherToolsOwnMergeFile(toolId, allToolIds, relativePath, manifest);
+    const isIdeTool = !isAiToolConfig(getToolConfig(toolId));
+    return !otherOwnersExist && !isIdeTool;
+  }
+
+  private async deleteOrWriteStripped(
+    fullPath: string,
+    mergeEntry: MergeFileEntry,
+    canDelete: boolean
+  ): Promise<boolean> {
     const content = await this.fs.readFile(fullPath);
     const keys = Object.keys(mergeEntry.entries);
     const cleaned = removeEntriesFromJson(content, mergeEntry.sectionKey, keys);
-    if (canDelete && this.isMergeFileEffectivelyEmpty(cleaned, mergeEntry.sectionKey)) {
+    if (canDelete && isMergeContentEmpty(cleaned, mergeEntry.sectionKey)) {
       await this.fs.deleteFile(fullPath);
       await this.fs.deleteEmptyDirectories(dirname(fullPath));
       return true;
     }
     await this.fs.writeFile(fullPath, cleaned);
     return false;
-  }
-
-  private isMergeFileEffectivelyEmpty(content: string, sectionKey: string | null): boolean {
-    try {
-      const parsed = JSON.parse(content) as Record<string, unknown>;
-      if (sectionKey === null) return Object.keys(parsed).length === 0;
-      const otherKeys = Object.keys(parsed).filter((k) => k !== sectionKey);
-      if (otherKeys.length > 0) return false;
-      const section = parsed[sectionKey] as Record<string, unknown> | undefined;
-      return !section || Object.keys(section).length === 0;
-    } catch {
-      return false;
-    }
   }
 
   private otherToolsOwnMergeFile(

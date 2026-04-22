@@ -109,6 +109,19 @@ export function removeEntriesFromJson(
   return JSON.stringify(parsed, null, 2);
 }
 
+export function isMergeContentEmpty(content: string, sectionKey: string | null): boolean {
+  try {
+    const parsed = JSON.parse(content) as Record<string, unknown>;
+    if (sectionKey === null) return Object.keys(parsed).length === 0;
+    const otherKeys = Object.keys(parsed).filter((k) => k !== sectionKey);
+    if (otherKeys.length > 0) return false;
+    const section = parsed[sectionKey] as Record<string, unknown> | undefined;
+    return !section || Object.keys(section).length === 0;
+  } catch {
+    return false;
+  }
+}
+
 export function buildConfigNameLookup(configRefs: readonly ConfigRef[]): Map<string, string> {
   const lookup = new Map<string, string>();
   for (const ref of configRefs) lookup.set(ref.path, ref.name);
