@@ -4,6 +4,8 @@ import type { ConfigRef } from "../../../src/domain/models/framework-descriptor.
 import { GeneratedFile } from "../../../src/domain/models/generated-file.js";
 import { filterByIdeRequirements } from "../../../src/domain/models/ide-requirement-filter.js";
 import type { IdeToolId } from "../../../src/domain/models/tool-config.js";
+// Side-effect import: registers vscode in the tool registry so filterByIdeRequirements can resolve its directory
+import "../../../src/domain/tools/ide/vscode.js";
 
 const DUMMY_HASH = "d41d8cd98f00b204e9800998ecf8427e";
 
