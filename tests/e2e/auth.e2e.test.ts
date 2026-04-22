@@ -113,7 +113,9 @@ describe.concurrent("E2E: aidd auth", () => {
         expect(combined).toMatch(/authenticated as/);
       } else {
         // Not authenticated — verify the CLI explains the situation
-        expect(combined).toMatch(/not authenticated|unauthenticated|run aidd auth login/);
+        expect(combined).toMatch(
+          /not authenticated|unauthenticated|run aidd auth login|token is invalid or expired/
+        );
       }
     } finally {
       await cleanup();
