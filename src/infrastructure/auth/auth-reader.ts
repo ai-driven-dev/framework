@@ -1,7 +1,13 @@
-import type { AuthContext, AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
+import type { AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
 import type { ExternalTokenProvider } from "../../domain/ports/external-token-provider.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { AuthStorage } from "./auth-storage.js";
+
+export interface AuthContext {
+  token: string;
+  method: "gh" | "token";
+  level: "user" | "project";
+}
 
 const noopExternalProvider: ExternalTokenProvider = { resolve: () => null };
 
