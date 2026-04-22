@@ -2,7 +2,7 @@
 
 ## Status
 
-- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4) + per-entry hash tracking for merge files + granular MCP server selection + AI/IDE tool type split + restore merge file support + IDE-aware copilot settings (requiredIdeId, ide-requirement-filter, copilotVscodeSettings, surgical null-section uninstall) + IDE context patch on install (requiredIdeIds on AiToolConfig, IdePatchUseCase, IDE tool uninstall preserves user-prime) + AI/IDE category filter on install/uninstall/status/doctor (positional `ai|ide` arg, cross-category validation, interactive checkbox scoped by category) + PR review cleanup (Phases 1–7)
+- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4) + per-entry hash tracking for merge files + granular MCP server selection + AI/IDE tool type split + restore merge file support + IDE-aware copilot settings (requiredIdeId, ide-requirement-filter, copilotVscodeSettings, surgical null-section uninstall) + IDE context patch on install (requiredIdeIds on AiToolConfig, IdePatchUseCase, IDE tool uninstall preserves user-prime) + AI/IDE category filter on install/uninstall/status/doctor (positional `ai|ide` arg, cross-category validation, interactive checkbox scoped by category) + PR review cleanup (Phases 1–7) + auth refactor (AuthProvider port, AuthProviderAdapter, auth domain models split)
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
 - `tests/` — tests all passing
 
@@ -91,11 +91,16 @@ src/
 │   │   ├── semver.ts                   # semantic version parsing & comparison for update checks
 │   │   ├── sync-exclusions.ts          # SYNC_EXCLUDED_FILES, isSyncExcluded — sync skip list
 │   │   ├── tool-config.ts              # ToolConfig = AiToolConfig | IdeToolConfig; AiToolId/IdeToolId/ToolCategory types; isAiToolConfig() guard; toolIdsForCategory(); assertToolIdsMatchCategory(); VALID_TOOL_IDS derived from AI_TOOL_IDS + IDE_TOOL_IDS
-│   │   ├── auth-config.ts              # AuthConfig { version, method, level, token?, createdAt }
+│   │   ├── auth-config.ts              # re-exports AuthConfig, AuthMethod from auth.ts
+│   │   ├── auth-level.ts               # re-exports AuthLevel from auth.ts
+│   │   ├── auth.ts                     # AuthLevel, AuthMethod, AuthCredential, AuthConfig types
+│   │   ├── paths.ts                    # AIDD_DIR constant
 │   │   └── update-scope.ts             # UpdateScope, parseUpdateScope, formatToolScopeValue
 │   ├── ports/
-│   │   ├── auth-token-provider.ts      # resolve(): Promise<string | null> — implemented by AuthReader
-│   │   ├── external-token-provider.ts  # resolve(): string | null — implemented by GhCliAdapter
+│   │   ├── auth-provider.ts            # AuthProvider — login(credential, level), status(), logout(); implemented by AuthProviderAdapter
+│   │   ├── auth-token-provider.ts      # resolve(): Promise<string | null> — implemented by AuthReader (API bearer token)
+│   │   ├── external-auth-provider.ts   # ExternalAuthProvider extends ExternalTokenProvider with verify(): Promise<string>
+│   │   ├── external-token-provider.ts  # resolve(): string | null — base interface
 │   │   ├── cli-updater.ts              # fetchLatestRelease(), install() — used by self-update
 │   │   ├── current-version-provider.ts # get() returns current CLI version string
 │   │   ├── file-system.ts
@@ -105,6 +110,7 @@ src/
 │   │   ├── logger.ts
 │   │   ├── manifest-repository.ts
 │   │   ├── platform.ts                 # current() returns platform identifier for MCP transforms
+│   │   ├── login-verifier.ts           # verify(token): Promise<string> — implemented by GhTokenAdapter
 │   │   └── prompter.ts                 # resolveConflict(path, reason: "deleted"|"modified") for restore
 │   └── tools/
 │       ├── ai/
@@ -116,7 +122,8 @@ src/
 │           └── vscode.ts
 └── infrastructure/
     ├── adapters/
-    │   ├── gh-cli-adapter.ts            # ExternalTokenProvider — calls `gh auth token` (3s timeout)
+    │   ├── auth-provider-adapter.ts     # AuthProviderAdapter — implements AuthProvider; wires storage + externalProviders + tokenVerifier
+    │   ├── gh-cli-adapter.ts            # ExternalAuthProvider — `gh auth token` (3s timeout) + `gh api user` verify
     │   ├── cli-updater-adapter.ts       # GitHub CLI Release API for self-update
     │   ├── current-version-adapter.ts   # reads package.json version at runtime
     │   ├── file-system-adapter.ts       # mergeJsonFile (strips JSONC comments + deep-merge)
