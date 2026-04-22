@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { copilotToolConfig } from "../../../src/domain/tools/copilot.js";
+import { copilotToolConfig } from "../../../../src/domain/tools/ai/copilot.js";
 
 describe("copilotToolConfig", () => {
   describe("rewriteContent()", () => {
@@ -75,24 +75,30 @@ describe("copilotToolConfig", () => {
       expect(copilotToolConfig.config().outputPath("mcp")).toBe(".vscode/mcp.json");
     });
 
-    it("maps vscodeExtensions to .vscode/extensions.json", () => {
-      expect(copilotToolConfig.config().outputPath("vscodeExtensions")).toBe(
-        ".vscode/extensions.json"
+    it("maps copilotVscodeSettings to .vscode/settings.json", () => {
+      expect(copilotToolConfig.config().outputPath("copilotVscodeSettings")).toBe(
+        ".vscode/settings.json"
       );
-    });
-
-    it("maps vscodeKeybindings to .vscode/keybindings.json", () => {
-      expect(copilotToolConfig.config().outputPath("vscodeKeybindings")).toBe(
-        ".vscode/keybindings.json"
-      );
-    });
-
-    it("maps vscodeSettings to .vscode/settings.json", () => {
-      expect(copilotToolConfig.config().outputPath("vscodeSettings")).toBe(".vscode/settings.json");
     });
 
     it("returns null for unknown config names", () => {
       expect(copilotToolConfig.config().outputPath("unknown")).toBeNull();
+    });
+
+    it("returns null for vscodeSettings (no longer handled by copilot)", () => {
+      expect(copilotToolConfig.config().outputPath("vscodeSettings")).toBeNull();
+    });
+  });
+
+  describe("config().mergeStrategy()", () => {
+    it("copilotVscodeSettings uses framework-prime strategy", () => {
+      expect(copilotToolConfig.config().mergeStrategy("copilotVscodeSettings")).toBe(
+        "framework-prime"
+      );
+    });
+
+    it("vscodeSettings falls back to none strategy", () => {
+      expect(copilotToolConfig.config().mergeStrategy("vscodeSettings")).toBe("none");
     });
   });
 

@@ -1,10 +1,7 @@
+import { CONFIG_MCP, TEMPLATE_AGENTS_MD } from "../../models/framework-descriptor.js";
+import type { MergeStrategy } from "../../models/merge-strategy.js";
 import {
-  CONFIG_MCP,
-  CONFIG_VSCODE_SETTINGS,
-  TEMPLATE_AGENTS_MD,
-} from "../models/framework-descriptor.js";
-import type { MergeStrategy } from "../models/merge-strategy.js";
-import {
+  type AiToolConfig,
   baseReverseRewriteContent,
   baseRewriteContent,
   buildStandardCommandsHandler,
@@ -18,9 +15,8 @@ import {
   registerTool,
   type SectionHandler,
   stripToolSuffix,
-  type ToolConfig,
   type UserFileSectionKey,
-} from "../models/tool-config.js";
+} from "../../models/tool-config.js";
 
 const DIRECTORY = ".claude/";
 const TOOL_SUFFIX = ".claude.md";
@@ -29,7 +25,8 @@ function commandsDir(phase: string): string {
   return `${DIRECTORY}commands/aidd/${phase}/`;
 }
 
-export const claudeToolConfig: ToolConfig = {
+export const claudeToolConfig: AiToolConfig = {
+  kind: "ai",
   toolId: "claude",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
@@ -99,12 +96,10 @@ export const claudeToolConfig: ToolConfig = {
     return {
       outputPath(configName: string): string | null {
         if (configName === CONFIG_MCP) return ".mcp.json";
-        if (configName === CONFIG_VSCODE_SETTINGS) return ".vscode/settings.json";
         return null;
       },
       mergeStrategy(configName: string): MergeStrategy {
         if (configName === CONFIG_MCP) return "user-prime";
-        if (configName === CONFIG_VSCODE_SETTINGS) return "framework-prime";
         return "none";
       },
       entrySection(configName: string): string | null {

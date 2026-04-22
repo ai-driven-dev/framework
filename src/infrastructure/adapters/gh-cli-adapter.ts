@@ -1,8 +1,9 @@
 import { spawnSync } from "node:child_process";
-import type { ExternalTokenProvider } from "../../domain/ports/external-token-provider.js";
+import { AuthenticationError } from "../../domain/errors.js";
+import type { ExternalAuthProvider } from "../../domain/ports/external-auth-provider.js";
 import { GhCliError } from "../errors.js";
 
-export class GhCliAdapter implements ExternalTokenProvider {
+export class GhCliAdapter implements ExternalAuthProvider {
   resolve(): string | null {
     const result = spawnSync("gh", ["auth", "token"], {
       timeout: 3000,
@@ -30,5 +31,19 @@ export class GhCliAdapter implements ExternalTokenProvider {
     }
 
     return result.stdout.trim() || null;
+  }
+
+  async verify(): Promise<string> {
+    const result = spawnSync("gh", ["api", "user", "--jq", ".login"], {
+      timeout: 5000,
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    if (result.error || result.status !== 0) {
+      throw new AuthenticationError("gh CLI");
+    }
+    const login = result.stdout.trim();
+    if (!login) throw new AuthenticationError("gh CLI");
+    return login;
   }
 }

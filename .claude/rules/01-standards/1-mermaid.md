@@ -42,7 +42,7 @@ paths:
 
 ## Styles
 
-- Do style unless specified by user
+- No styles unless user explicitly requests them
 
 ## Gantt
 

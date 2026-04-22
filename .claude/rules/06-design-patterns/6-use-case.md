@@ -31,4 +31,4 @@ Any `fs.writeFile()` on a framework-distributed file must be guarded:
 
 ## Constructor injection order
 
-FileSystem → Repository → Loader → Hasher → Logger → Platform → Prompter
+FileSystem → Repository → Loader → Hasher → Logger → Platform → Prompter (only for domain-level interaction — conflict resolution, strategy selection; never for CLI input collection)

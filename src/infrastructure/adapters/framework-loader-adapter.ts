@@ -28,9 +28,14 @@ const TEMPLATE_REFS: readonly TemplateRef[] = [
 // the opencode config is merged on top, so its keys take precedence on conflict.
 const CONFIG_REFS: readonly ConfigRef[] = [
   { name: "mcp", path: "config/mcp.json" },
-  { name: "vscodeExtensions", path: "config/.vscode/extensions.json" },
-  { name: "vscodeKeybindings", path: "config/.vscode/keybindings.json" },
-  { name: "vscodeSettings", path: "config/.vscode/settings.json" },
+  { name: "vscodeExtensions", path: "config/vscode/extensions.json" },
+  { name: "vscodeKeybindings", path: "config/vscode/keybindings.json" },
+  { name: "vscodeSettings", path: "config/vscode/settings.json" },
+  {
+    name: "copilotVscodeSettings",
+    path: "config/copilot/settings.json",
+    requiredIdeId: "vscode",
+  },
   { name: "opencode", path: "config/.opencode/opencode.json" },
 ];
 

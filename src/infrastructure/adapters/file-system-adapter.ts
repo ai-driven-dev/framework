@@ -11,7 +11,11 @@ import {
 } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import type { FileHash } from "../../domain/models/file-hash.js";
-import type { MergeStrategy } from "../../domain/models/merge-strategy.js";
+import {
+  isPerKeyMergeStrategy,
+  type MergeStrategy,
+  type PerKeyMergeStrategy,
+} from "../../domain/models/merge-strategy.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import { JsonParseError } from "../errors.js";
@@ -137,10 +141,40 @@ export class FileSystemAdapter implements FileSystem {
     }
 
     const incoming = JSON.parse(stripJsoncComments(content)) as Record<string, unknown>;
+
+    if (isPerKeyMergeStrategy(strategy)) {
+      await this.writeFile(
+        path,
+        JSON.stringify(mergePerKey(existing, incoming, strategy), null, 2)
+      );
+      return;
+    }
+
     const merged =
       strategy === "user-prime" ? deepMerge(incoming, existing) : deepMerge(existing, incoming);
     await this.writeFile(path, JSON.stringify(merged, null, 2));
   }
+}
+
+// Intentionally shallow: each key's value is taken wholesale from either existing or incoming.
+// No deep merge — nested objects are replaced, not recursively merged.
+function mergePerKey(
+  existing: Record<string, unknown>,
+  incoming: Record<string, unknown>,
+  strategy: PerKeyMergeStrategy
+): Record<string, unknown> {
+  const allKeys = new Set([...Object.keys(existing), ...Object.keys(incoming)]);
+  const result: Record<string, unknown> = {};
+  for (const key of allKeys) {
+    const isFrameworkPrime = strategy.frameworkOverrideKeys.includes(key);
+    const effectiveStrategy = isFrameworkPrime ? "framework-prime" : strategy.default;
+    if (effectiveStrategy === "framework-prime") {
+      result[key] = key in incoming ? incoming[key] : existing[key];
+    } else {
+      result[key] = key in existing ? existing[key] : incoming[key];
+    }
+  }
+  return result;
 }
 
 function deepMerge(

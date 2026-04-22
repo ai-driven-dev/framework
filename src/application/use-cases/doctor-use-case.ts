@@ -2,15 +2,29 @@ import { dirname, join, normalize } from "node:path";
 import { ManifestValidationError } from "../../domain/errors.js";
 import type { Manifest } from "../../domain/models/manifest.js";
 import {
+  extractAtReferences,
+  extractMarkdownLinkTargets,
+  isFileReference,
+} from "../../domain/models/markdown-references.js";
+import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/merge-entry.js";
+import {
   getAllRegisteredTools,
   hasToolSignals,
+  type ToolCategory,
   type ToolId,
+  toolIdsForCategory,
 } from "../../domain/models/tool-config.js";
 import type { AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { NoManifestError } from "../errors.js";
+
+export {
+  extractAtReferences,
+  extractMarkdownLinkTargets,
+} from "../../domain/models/markdown-references.js";
 
 type IssueSeverity = "info" | "warning" | "error";
 
@@ -23,6 +37,7 @@ interface DoctorIssue {
 interface ToolHealth {
   toolId: ToolId;
   fileCount: number;
+  mergeFileCount: number;
 }
 
 interface DoctorReport {
@@ -34,46 +49,21 @@ interface DoctorReport {
 
 interface DoctorOptions {
   projectRoot: string;
+  category?: ToolCategory;
   repo?: string;
-}
-
-const CODE_FENCE_WITH_LANG_RE = /```(?!markdown\b|md\b)(\w+)[^\n]*\n[\s\S]*?```/gm;
-const INLINE_CODE_RE = /`[^`\n]+`/g;
-const AT_PATH_RE = /@([\w.-]+(?:\/[\w.-]+)+)/g;
-const MARKDOWN_LINK_RE = /\[[^\]]*\]\(([^)#\s]+)\)/g;
-function stripNonMarkdownCodeBlocks(content: string): string {
-  return content.replace(CODE_FENCE_WITH_LANG_RE, "").replace(INLINE_CODE_RE, "");
-}
-
-export function extractAtReferences(content: string): string[] {
-  const refs = new Set<string>();
-  for (const match of stripNonMarkdownCodeBlocks(content).matchAll(AT_PATH_RE)) refs.add(match[1]);
-  return [...refs];
-}
-
-export function extractMarkdownLinkTargets(content: string): string[] {
-  const refs = new Set<string>();
-  for (const match of stripNonMarkdownCodeBlocks(content).matchAll(MARKDOWN_LINK_RE)) {
-    if (!match[1].startsWith("http")) refs.add(match[1]);
-  }
-  return [...refs];
-}
-
-function isFileReference(ref: string): boolean {
-  const lastSegment = ref.split("/").at(-1) ?? "";
-  return lastSegment.includes(".") && !ref.endsWith("/");
 }
 
 export class DoctorUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
+    private readonly hasher: Hasher,
     readonly _logger: Logger,
     private readonly authReader?: AuthTokenProvider
   ) {}
 
   async execute(options: DoctorOptions): Promise<DoctorReport> {
-    const { projectRoot, repo } = options;
+    const { projectRoot, category, repo } = options;
 
     let manifest: Manifest | null;
     try {
@@ -88,24 +78,29 @@ export class DoctorUseCase {
       throw new NoManifestError(repo);
     }
 
+    const allowedIds = category ? new Set(toolIdsForCategory(category) as readonly string[]) : null;
+
     const issues: DoctorIssue[] = [];
     const toolHealth: ToolHealth[] = [];
     const allTrackedFiles: { relativePath: string; toolId: ToolId | null }[] = [];
 
     for (const toolId of manifest.getInstalledToolIds()) {
+      if (allowedIds && !allowedIds.has(toolId)) continue;
       const files = manifest.getToolFiles(toolId);
-      toolHealth.push({ toolId, fileCount: files.length });
+      const mergeFiles = manifest.getMergeFiles(toolId);
+      toolHealth.push({ toolId, fileCount: files.length, mergeFileCount: mergeFiles.length });
       allTrackedFiles.push(...files.map((f) => ({ ...f, toolId })));
     }
 
-    const docsFiles = manifest.getDocsFiles();
+    const docsFiles = category ? [] : manifest.getDocsFiles();
     allTrackedFiles.push(...docsFiles.map((f) => ({ ...f, toolId: null })));
 
-    issues.push(...(await this.checkDocsDirectory(manifest, projectRoot)));
+    if (!category) issues.push(...(await this.checkDocsDirectory(manifest, projectRoot)));
     issues.push(...(await this.checkMissingTrackedFiles(allTrackedFiles, projectRoot)));
+    issues.push(...(await this.checkMergeFileKeys(manifest, projectRoot, allowedIds)));
     issues.push(...(await this.checkBrokenReferences(allTrackedFiles, projectRoot)));
-    issues.push(...(await this.checkOrphanedDirectories(manifest, projectRoot)));
-    issues.push(...(await this.checkAuth()));
+    if (!category) issues.push(...(await this.checkOrphanedDirectories(manifest, projectRoot)));
+    if (!category) issues.push(...(await this.checkAuth()));
 
     return {
       healthy: issues.filter((i) => i.severity !== "info").length === 0,
@@ -187,6 +182,64 @@ export class DoctorUseCase {
       ];
     }
     return [];
+  }
+
+  private async checkMergeFileKeys(
+    manifest: Manifest,
+    projectRoot: string,
+    allowedIds: Set<string> | null = null
+  ): Promise<DoctorIssue[]> {
+    const issues: DoctorIssue[] = [];
+    for (const toolId of manifest.getInstalledToolIds()) {
+      if (allowedIds && !allowedIds.has(toolId)) continue;
+      for (const mergeFile of manifest.getMergeFiles(toolId)) {
+        issues.push(...(await this.checkOneMergeFileHealth(mergeFile, projectRoot)));
+      }
+    }
+    return issues;
+  }
+
+  private async checkOneMergeFileHealth(
+    mergeFile: MergeFileEntry,
+    projectRoot: string
+  ): Promise<DoctorIssue[]> {
+    const fullPath = join(projectRoot, mergeFile.relativePath);
+    if (!(await this.fs.fileExists(fullPath))) {
+      return [
+        {
+          severity: "error",
+          message: `Missing merge file: ${mergeFile.relativePath}`,
+          fix: `Run \`aidd restore --force\` to reinstall tracked files.`,
+        },
+      ];
+    }
+    return this.compareMergeFileKeys(mergeFile, fullPath);
+  }
+
+  private async compareMergeFileKeys(
+    mergeFile: MergeFileEntry,
+    fullPath: string
+  ): Promise<DoctorIssue[]> {
+    const content = await this.fs.readFile(fullPath);
+    const diskEntries = extractMergeEntries(content, mergeFile.sectionKey, this.hasher);
+    const issues: DoctorIssue[] = [];
+    for (const [key, manifestHash] of Object.entries(mergeFile.entries)) {
+      const diskHash = diskEntries[key];
+      if (!diskHash) {
+        issues.push({
+          severity: "error",
+          message: `Missing key in ${mergeFile.relativePath} > ${key}`,
+          fix: `Run \`aidd restore --force\` to restore managed keys.`,
+        });
+      } else if (!diskHash.equals(manifestHash)) {
+        issues.push({
+          severity: "warning",
+          message: `Modified key in ${mergeFile.relativePath} > ${key}`,
+          fix: `Run \`aidd restore --force\` to restore the original value.`,
+        });
+      }
+    }
+    return issues;
   }
 
   private async checkBrokenReferences(

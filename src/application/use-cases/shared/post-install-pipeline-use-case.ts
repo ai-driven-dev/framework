@@ -1,5 +1,6 @@
 import type { FrameworkDescriptor } from "../../../domain/models/framework-descriptor.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
+import { AIDD_DIR } from "../../../domain/models/paths.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
 import type { Git } from "../../../domain/ports/git.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
@@ -40,6 +41,6 @@ export class PostInstallPipelineUseCase {
 
     await this.manifestRepo.save(manifest);
     await new CatalogUseCase(this.fs).execute({ manifest, docsDir, projectRoot });
-    await new GitignoreUseCase(this.fs).execute(projectRoot, [".aidd/cache/"]);
+    await new GitignoreUseCase(this.fs).execute(projectRoot, [`${AIDD_DIR}/cache/`]);
   }
 }

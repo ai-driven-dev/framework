@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cursorToolConfig } from "../../../src/domain/tools/cursor.js";
+import { cursorToolConfig } from "../../../../src/domain/tools/ai/cursor.js";
 
 describe("cursorToolConfig", () => {
   describe("rewriteContent()", () => {

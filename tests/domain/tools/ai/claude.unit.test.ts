@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { claudeToolConfig } from "../../../src/domain/tools/claude.js";
+import { claudeToolConfig } from "../../../../src/domain/tools/ai/claude.js";
 
 describe("claudeToolConfig", () => {
   describe("config().outputPath()", () => {
@@ -18,8 +18,8 @@ describe("claudeToolConfig", () => {
       expect(claudeToolConfig.config().mergeStrategy("mcp")).toBe("user-prime");
     });
 
-    it("vscode settings are controlled by the framework during update", () => {
-      expect(claudeToolConfig.config().mergeStrategy("vscodeSettings")).toBe("framework-prime");
+    it("unknown config returns no merge", () => {
+      expect(claudeToolConfig.config().mergeStrategy("vscodeSettings")).toBe("none");
     });
   });
 

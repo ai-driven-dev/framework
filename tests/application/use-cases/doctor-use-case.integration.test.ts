@@ -93,7 +93,7 @@ describe("doctor", () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
     const report = await useCase.execute({ projectRoot });
 
     expect(report.healthy).toBe(true);
@@ -107,7 +107,7 @@ describe("doctor", () => {
     // Write invalid JSON to manifest
     await writeFile(join(projectRoot, ".aidd", "manifest.json"), "{ invalid json }", "utf-8");
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
 
     await expect(useCase.execute({ projectRoot })).rejects.toThrow("Manifest is corrupted");
   });
@@ -115,7 +115,7 @@ describe("doctor", () => {
   it("fails if project is not initialized", async () => {
     const deps = buildDeps(projectRoot);
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
 
     await expect(useCase.execute({ projectRoot })).rejects.toThrow("aidd setup");
   });
@@ -133,7 +133,7 @@ describe("doctor", () => {
       "utf-8"
     );
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
     const report = await useCase.execute({ projectRoot });
 
     const orphanIssue = report.issues.find(
@@ -153,7 +153,7 @@ describe("doctor", () => {
       "utf-8"
     );
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
     const report = await useCase.execute({ projectRoot });
 
     const refIssue = report.issues.find((i) => i.message.includes("missing-agent.md"));
@@ -172,7 +172,7 @@ describe("doctor", () => {
       "utf-8"
     );
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
     const report = await useCase.execute({ projectRoot });
 
     expect(report.issues.every((i) => !i.message.includes(".claude/agents/"))).toBe(true);
@@ -192,7 +192,7 @@ describe("doctor", () => {
       "utf-8"
     );
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
     const report = await useCase.execute({ projectRoot });
 
     const linkIssue = report.issues.find((i) => i.message.includes("non-existent.md"));
@@ -211,7 +211,7 @@ describe("doctor", () => {
       "utf-8"
     );
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
     const report = await useCase.execute({ projectRoot });
 
     const refIssue = report.issues.find((i) => i.message.includes("missing-agent.md"));
@@ -229,7 +229,7 @@ describe("doctor", () => {
       "utf-8"
     );
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
     const report = await useCase.execute({ projectRoot });
 
     const refIssue = report.issues.find((i) => i.message.includes("agent.md"));
@@ -250,7 +250,7 @@ describe("doctor", () => {
       "utf-8"
     );
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
     const report = await useCase.execute({ projectRoot });
 
     const linkIssue = report.issues.find((i) => i.message.includes("non-existent.md"));
@@ -268,7 +268,7 @@ describe("doctor", () => {
       "utf-8"
     );
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
     const report = await useCase.execute({ projectRoot });
 
     expect(report.issues.every((i) => !i.message.includes("example.md"))).toBe(true);
@@ -280,7 +280,7 @@ describe("doctor", () => {
 
     await rm(join(projectRoot, "aidd_docs"), { recursive: true, force: true });
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
     const report = await useCase.execute({ projectRoot });
 
     const issue = report.issues.find((i) => i.message.includes("does not exist on disk"));
@@ -302,7 +302,7 @@ describe("doctor", () => {
         "utf-8"
       );
 
-      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
       const report = await useCase.execute({ projectRoot });
 
       const githubOrphanIssue = report.issues.find(
@@ -323,7 +323,7 @@ describe("doctor", () => {
         "utf-8"
       );
 
-      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
       const report = await useCase.execute({ projectRoot });
 
       const orphanIssues = report.issues.filter(
@@ -345,7 +345,7 @@ describe("doctor", () => {
         "utf-8"
       );
 
-      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
       const report = await useCase.execute({ projectRoot });
 
       const githubOrphanIssue = report.issues.find(
@@ -362,12 +362,75 @@ describe("doctor", () => {
       const trackedFile = installResult.files[0];
       await rm(join(projectRoot, trackedFile.relativePath), { force: true });
 
-      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger);
+      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
       const report = await useCase.execute({ projectRoot });
 
       const missingIssue = report.issues.find((i) => i.message.includes("Missing tracked file"));
       expect(missingIssue).toBeDefined();
       expect(missingIssue?.severity).toBe("error");
+    });
+  });
+
+  describe("merge file key checks", () => {
+    it("reports an error when a tracked merge file is missing from disk", async () => {
+      const deps = buildDeps(projectRoot);
+      await initAndInstall(deps, projectRoot, "vscode" as ToolId);
+
+      await rm(join(projectRoot, ".vscode", "settings.json"), { force: true });
+
+      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+      const report = await useCase.execute({ projectRoot });
+
+      const issue = report.issues.find((i) => i.message.includes("Missing merge file"));
+      expect(issue).toBeDefined();
+      expect(issue?.severity).toBe("error");
+    });
+
+    it("reports a warning when a managed key in a merge file has been modified", async () => {
+      const deps = buildDeps(projectRoot);
+      await initAndInstall(deps, projectRoot, "vscode" as ToolId);
+
+      // Overwrite settings.json with a different value for a managed key
+      await writeFile(
+        join(projectRoot, ".vscode", "settings.json"),
+        JSON.stringify({ "editor.formatOnSave": false }),
+        "utf-8"
+      );
+
+      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+      const report = await useCase.execute({ projectRoot });
+
+      const issue = report.issues.find((i) => i.message.includes("Modified key"));
+      expect(issue).toBeDefined();
+      expect(issue?.severity).toBe("warning");
+    });
+
+    it("reports an error when a managed key is missing from a merge file", async () => {
+      const deps = buildDeps(projectRoot);
+      await initAndInstall(deps, projectRoot, "vscode" as ToolId);
+
+      // Remove the managed key entirely from the file
+      await writeFile(join(projectRoot, ".vscode", "settings.json"), JSON.stringify({}), "utf-8");
+
+      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+      const report = await useCase.execute({ projectRoot });
+
+      const issue = report.issues.find((i) => i.message.includes("Missing key"));
+      expect(issue).toBeDefined();
+      expect(issue?.severity).toBe("error");
+    });
+
+    it("is healthy when merge file keys match the manifest", async () => {
+      const deps = buildDeps(projectRoot);
+      await initAndInstall(deps, projectRoot, "vscode" as ToolId);
+
+      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+      const report = await useCase.execute({ projectRoot });
+
+      const mergeIssues = report.issues.filter(
+        (i) => i.message.includes("merge file") || i.message.includes("key in")
+      );
+      expect(mergeIssues).toHaveLength(0);
     });
   });
 });

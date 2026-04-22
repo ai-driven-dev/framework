@@ -60,4 +60,25 @@ describe("clean", () => {
 
     expect(existsSync(userFile)).toBe(true);
   });
+
+  it("keeps merge file on disk but removes AIDD-managed keys when user keys exist", async () => {
+    const deps = buildDeps(projectRoot);
+    await initAndInstall(deps, projectRoot, "vscode" as ToolId);
+
+    const settingsPath = join(projectRoot, ".vscode", "settings.json");
+    // Add a user-owned key alongside the AIDD-managed key
+    await writeFile(
+      settingsPath,
+      JSON.stringify({ "editor.formatOnSave": true, "my.custom.setting": "value" }),
+      "utf-8"
+    );
+
+    const useCase = new CleanUseCase(deps.fs, deps.manifestRepo, deps.logger);
+    await useCase.execute({ projectRoot, force: true });
+
+    expect(existsSync(settingsPath)).toBe(true);
+    const content = JSON.parse(await readFile(settingsPath, "utf-8")) as Record<string, unknown>;
+    expect(content["editor.formatOnSave"]).toBeUndefined();
+    expect(content["my.custom.setting"]).toBe("value");
+  });
 });

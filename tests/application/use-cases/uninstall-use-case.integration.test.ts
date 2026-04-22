@@ -76,7 +76,7 @@ describe("uninstall", () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
     await installTool(deps, projectRoot, "claude" as ToolId);
-    await installTool(deps, projectRoot, "copilot" as ToolId);
+    await installTool(deps, projectRoot, "vscode" as ToolId);
 
     const sharedFile = join(projectRoot, ".vscode", "settings.json");
     expect(existsSync(sharedFile)).toBe(true);
@@ -85,6 +85,22 @@ describe("uninstall", () => {
     await useCase.execute({ toolIds: ["claude" as ToolId], projectRoot, mcpFilter: [] });
 
     expect(existsSync(sharedFile)).toBe(true);
+  });
+
+  describe("user-prime merge files", () => {
+    it("preserves settings.json when vscode is the only owner", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+      await installTool(deps, projectRoot, "vscode" as ToolId);
+
+      const settingsPath = join(projectRoot, ".vscode", "settings.json");
+      expect(existsSync(settingsPath)).toBe(true);
+
+      const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
+      await useCase.execute({ toolIds: ["vscode" as ToolId], projectRoot, mcpFilter: [] });
+
+      expect(existsSync(settingsPath)).toBe(true);
+    });
   });
 
   describe("MCP removal", () => {

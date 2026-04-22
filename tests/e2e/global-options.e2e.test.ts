@@ -68,7 +68,7 @@ describe.concurrent("E2E: aidd global options", () => {
       await initProject(projectDir, FRAMEWORK_PATH);
 
       const { stderr, exitCode } = await runCli(
-        ["--verbose", "install", "claude", "--path", FRAMEWORK_PATH],
+        ["--verbose", "install", "ai", "claude", "--path", FRAMEWORK_PATH],
         projectDir
       );
 

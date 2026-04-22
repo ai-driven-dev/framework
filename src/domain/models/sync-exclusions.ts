@@ -1,3 +1,5 @@
+import { AIDD_DIR } from "./paths.js";
+
 export const SYNC_EXCLUDED_FILES: ReadonlySet<string> = new Set([
   "CLAUDE.md",
   "AGENTS.md",
@@ -13,6 +15,6 @@ export function isSyncExcluded(relativePath: string, docsDir: string): boolean {
   if (SYNC_EXCLUDED_FILES.has(relativePath)) return true;
   if (relativePath.startsWith(".vscode/")) return true;
   if (relativePath.startsWith(`${docsDir}/`)) return true;
-  if (relativePath.startsWith(".aidd/")) return true;
+  if (relativePath.startsWith(`${AIDD_DIR}/`)) return true;
   return false;
 }

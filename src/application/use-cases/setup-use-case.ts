@@ -1,6 +1,11 @@
 import { isLocalPath } from "../../domain/models/framework-path.js";
 import { Manifest } from "../../domain/models/manifest.js";
-import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
+import {
+  AI_TOOL_IDS,
+  IDE_TOOL_IDS,
+  type ToolId,
+  VALID_TOOL_IDS,
+} from "../../domain/models/tool-config.js";
 import type { AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
@@ -244,7 +249,7 @@ export class SetupUseCase {
     if (!options.interactive) {
       if (!options.toolIds || options.toolIds.length === 0) {
         throw new InputRequiredError(
-          "--tools <ids> is required for adopt in non-interactive mode."
+          "--ai or --ide is required for adopt in non-interactive mode."
         );
       }
       if (options.from === undefined)
@@ -291,8 +296,15 @@ export class SetupUseCase {
     if (options.toolIds !== undefined && options.toolIds.length > 0) {
       return options.toolIds;
     }
-    const choices = VALID_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }));
-    const checkedIds = await this.prompter.checkbox("Which tools do you want to adopt?", choices);
+    const aiChecked = await this.prompter.checkbox(
+      "Which AI tools do you want to adopt?",
+      AI_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }))
+    );
+    const ideChecked = await this.prompter.checkbox(
+      "Which IDE integrations do you want to adopt?",
+      IDE_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }))
+    );
+    const checkedIds = [...aiChecked, ...ideChecked];
     if (checkedIds.length === 0) throw new InputRequiredError("No tools selected.");
     return checkedIds as ToolId[];
   }
@@ -383,15 +395,10 @@ export class SetupUseCase {
   ): Promise<SetupResult> {
     const updatedManifest = await this.manifestRepo.load();
     const updatedInstalledIds = updatedManifest?.getInstalledToolIds() ?? [];
-    const missingTools = VALID_TOOL_IDS.filter((id) => !updatedInstalledIds.includes(id));
-    const additionalInstall = await this.offerAdditionalInstall(
-      missingTools.length > 0,
-      frameworkPath,
-      version,
-      projectRoot,
-      repo,
-      interactive
-    );
+    const hasMissing = VALID_TOOL_IDS.some((id) => !updatedInstalledIds.includes(id));
+    const additionalInstall = hasMissing
+      ? await this.offerAdditionalInstall(frameworkPath, version, projectRoot, repo, interactive)
+      : undefined;
     return {
       kind: "updated",
       version,
@@ -412,47 +419,28 @@ export class SetupUseCase {
     if (missingTools.length === 0) return { kind: "up-to-date", hasAdditionalTools: false };
     if (!options.interactive) return { kind: "up-to-date", hasAdditionalTools: true };
 
-    const wantsMore = await this.prompter.confirm("Install additional tools?");
-    if (!wantsMore) return { kind: "up-to-date", hasAdditionalTools: true };
-
-    return this.installAdditionalTools(path, release, repo, projectRoot);
-  }
-
-  private async installAdditionalTools(
-    path: string | undefined,
-    release: string | undefined,
-    repo: string | undefined,
-    projectRoot: string
-  ): Promise<SetupResult> {
     const { path: frameworkPath, version } = await this.frameworkResolver.execute({
       path,
       release,
       repo,
     });
-    const installResults = await this.runInstall(
+    const additionalInstall = await this.offerAdditionalInstall(
       frameworkPath,
       version,
       projectRoot,
       repo,
-      undefined,
-      true
+      options.interactive
     );
-    return {
-      kind: "up-to-date",
-      hasAdditionalTools: true,
-      additionalInstall: { results: installResults },
-    };
+    return { kind: "up-to-date", hasAdditionalTools: true, additionalInstall };
   }
 
   private async offerAdditionalInstall(
-    hasMissing: boolean,
     frameworkPath: string,
     version: string,
     projectRoot: string,
     repo: string | undefined,
     interactive?: boolean
   ): Promise<InstallSummary | undefined> {
-    if (!hasMissing) return undefined;
     if (!interactive) return undefined;
     const wantsMore = await this.prompter.confirm("Install additional tools?");
     if (!wantsMore) return undefined;

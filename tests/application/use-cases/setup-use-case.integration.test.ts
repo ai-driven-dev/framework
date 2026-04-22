@@ -154,7 +154,7 @@ describe("setup without TTY", () => {
         path: FIXTURE_DIR,
         interactive: false,
       })
-    ).rejects.toThrow("--tools");
+    ).rejects.toThrow("--ai or --ide");
   });
 
   it("manifest exists but no tools installed and all tools flag installs all tools", async () => {
@@ -289,7 +289,7 @@ describe("setup without TTY", () => {
       const { manifestRepo } = buildDeps(projectRoot);
       const manifest = await manifestRepo.load();
       expect(manifest).not.toBeNull();
-      const docsFiles = manifest!.getDocsFiles();
+      const docsFiles = manifest?.getDocsFiles() ?? [];
       expect(docsFiles.some((f) => f.relativePath === "aidd_docs/README.md")).toBe(true);
     });
   });

@@ -1,6 +1,7 @@
-import { CONFIG_MCP, TEMPLATE_AGENTS_MD } from "../models/framework-descriptor.js";
-import type { MergeStrategy } from "../models/merge-strategy.js";
+import { CONFIG_MCP, TEMPLATE_AGENTS_MD } from "../../models/framework-descriptor.js";
+import type { MergeStrategy } from "../../models/merge-strategy.js";
 import {
+  type AiToolConfig,
   baseReverseRewriteContent,
   baseRewriteContent,
   buildAiddCommandFilePath,
@@ -15,9 +16,8 @@ import {
   registerTool,
   type SectionHandler,
   stripToolSuffix,
-  type ToolConfig,
   type UserFileSectionKey,
-} from "../models/tool-config.js";
+} from "../../models/tool-config.js";
 
 const DIRECTORY = ".cursor/";
 const TOOL_SUFFIX = ".cursor.md";
@@ -27,7 +27,8 @@ function toMdc(fileName: string): string {
   return fileName.endsWith(".md") ? `${fileName.slice(0, -3)}${MDC_EXT}` : fileName;
 }
 
-export const cursorToolConfig: ToolConfig = {
+export const cursorToolConfig: AiToolConfig = {
+  kind: "ai",
   toolId: "cursor",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,

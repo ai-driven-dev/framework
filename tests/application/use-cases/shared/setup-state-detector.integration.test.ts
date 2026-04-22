@@ -1,10 +1,10 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import "../../../../src/domain/tools/claude.js";
-import "../../../../src/domain/tools/copilot.js";
-import "../../../../src/domain/tools/cursor.js";
-import "../../../../src/domain/tools/opencode.js";
+import "../../../../src/domain/tools/ai/claude.js";
+import "../../../../src/domain/tools/ai/copilot.js";
+import "../../../../src/domain/tools/ai/cursor.js";
+import "../../../../src/domain/tools/ai/opencode.js";
 import { SetupStateDetector } from "../../../../src/application/use-cases/shared/setup-state-detector.js";
 import { Manifest } from "../../../../src/domain/models/manifest.js";
 import type { FrameworkResolver } from "../../../../src/domain/ports/framework-resolver.js";

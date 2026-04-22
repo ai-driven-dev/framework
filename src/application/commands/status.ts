@@ -1,11 +1,9 @@
 import type { Command } from "commander";
-import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
-import { InputRequiredError } from "../errors.js";
 import type { CLIOutput } from "../output.js";
 import { StatusUseCase } from "../use-cases/status-use-case.js";
-import { parseGlobalOptions } from "./global-options.js";
+import { parseCategoryArg, parseGlobalOptions } from "./global-options.js";
 
 const STATUS_SYMBOL: Record<string, string> = {
   modified: "~",
@@ -24,31 +22,34 @@ export function registerStatusCommand(program: Command): void {
   program
     .command("status")
     .description("Show drift between disk files and the manifest")
-    .option("--tool <toolId>", "Filter output to a specific tool")
+    .argument("[category]", "Filter to 'ai' or 'ide' tools")
     .option("--docs", "Filter output to docs only")
-    .action(async (cmdOptions: { tool?: string; docs?: boolean }) => {
+    .action(async (categoryArg: string | undefined, cmdOptions: { docs?: boolean }) => {
       const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
 
-      try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+      const category = parseCategoryArg(categoryArg, output);
 
-        if (cmdOptions.tool !== undefined && cmdOptions.docs) {
-          throw new InputRequiredError("--tool and --docs are mutually exclusive");
-        }
-        if (cmdOptions.tool !== undefined) assertValidToolIds([cmdOptions.tool]);
-        const filterToolId = cmdOptions.tool as ToolId | undefined;
+      if (category && cmdOptions.docs) {
+        output.error("category and --docs are mutually exclusive");
+        process.exit(1);
+      }
+
+      try {
         const filterDocs = cmdOptions.docs ?? false;
+
+        const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
         const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
         const report = await useCase.execute({
           projectRoot,
-          filterToolId,
+          filterToolId: undefined,
           filterDocs,
+          category,
           repo,
         });
 
-        if (report.tools.length === 0 && !filterToolId && !filterDocs) {
+        if (report.tools.length === 0 && !filterDocs && !category) {
           output.print("No tools installed. Run `aidd install <tool>` to get started.");
           if (report.inSync) return;
         } else if (report.inSync) {

@@ -100,6 +100,40 @@ describe("install", () => {
     expect(result[0].warnings).toEqual([]);
   });
 
+  it("creates all vscode config files on disk and tracks them in manifest", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const useCase = new InstallUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      noGit,
+      linuxPlatform
+    );
+    await useCase.execute({
+      toolIds: ["vscode" as ToolId],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    expect(existsSync(join(projectRoot, ".vscode/extensions.json"))).toBe(true);
+    expect(existsSync(join(projectRoot, ".vscode/keybindings.json"))).toBe(true);
+    expect(existsSync(join(projectRoot, ".vscode/settings.json"))).toBe(true);
+
+    const manifest = await deps.manifestRepo.load();
+    if (manifest === null) throw new Error("manifest not found");
+    const mergeFiles = manifest.getMergeFiles("vscode");
+    const paths = mergeFiles.map((m) => m.relativePath);
+    expect(paths).toContain(".vscode/extensions.json");
+    expect(paths).toContain(".vscode/keybindings.json");
+    expect(paths).toContain(".vscode/settings.json");
+  });
+
   it("skipped tool produces no warnings", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
@@ -133,6 +167,30 @@ describe("install", () => {
     expect(result[0].warnings).toEqual([]);
   });
 
+  it("warns when installing an AI tool without its required IDE integration", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const useCase = new InstallUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      noGit,
+      linuxPlatform
+    );
+    const result = await useCase.execute({
+      toolIds: ["copilot" as ToolId],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+    const copilotResult = result.find((r) => r.toolId === "copilot");
+    expect(copilotResult?.warnings.some((w) => w.includes("vscode"))).toBe(true);
+  });
+
   it("shared merged file tracked in mergeFiles per tool after multi-tool install", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
@@ -147,7 +205,7 @@ describe("install", () => {
       linuxPlatform
     );
     await useCase.execute({
-      toolIds: ["claude" as ToolId, "copilot" as ToolId],
+      toolIds: ["copilot" as ToolId, "vscode" as ToolId],
       frameworkPath: FIXTURE_DIR,
       version: "test",
       docsDir: "aidd_docs",
@@ -164,11 +222,11 @@ describe("install", () => {
     };
 
     const sharedPath = ".vscode/settings.json";
-    const claudeMerge = data.tools.claude.mergeFiles.find((m) => m.relativePath === sharedPath);
     const copilotMerge = data.tools.copilot.mergeFiles.find((m) => m.relativePath === sharedPath);
+    const vscodeMerge = data.tools.vscode.mergeFiles.find((m) => m.relativePath === sharedPath);
 
-    expect(claudeMerge).toBeDefined();
     expect(copilotMerge).toBeDefined();
+    expect(vscodeMerge).toBeDefined();
   });
 
   it("shared merged file tracked in mergeFiles per tool across sequential installs", async () => {
@@ -186,7 +244,7 @@ describe("install", () => {
     );
 
     await useCase.execute({
-      toolIds: ["claude" as ToolId],
+      toolIds: ["vscode" as ToolId],
       frameworkPath: FIXTURE_DIR,
       version: "test",
       docsDir: "aidd_docs",
@@ -211,11 +269,11 @@ describe("install", () => {
     };
 
     const sharedPath = ".vscode/settings.json";
-    const claudeMerge = data.tools.claude.mergeFiles.find((m) => m.relativePath === sharedPath);
     const copilotMerge = data.tools.copilot.mergeFiles.find((m) => m.relativePath === sharedPath);
+    const vscodeMerge = data.tools.vscode.mergeFiles.find((m) => m.relativePath === sharedPath);
 
-    expect(claudeMerge).toBeDefined();
     expect(copilotMerge).toBeDefined();
+    expect(vscodeMerge).toBeDefined();
   });
 
   it("does not track CATALOG.md as an installed file", async () => {
@@ -648,7 +706,7 @@ describe("install", () => {
         >;
       };
 
-      expect(data.version).toBe(1);
+      expect(data.version).toBe(2);
       const claudeMerge = data.tools.claude.mergeFiles;
       expect(claudeMerge.length).toBeGreaterThan(0);
       const mcpEntry = claudeMerge.find((m) => m.relativePath === ".mcp.json");
@@ -716,7 +774,7 @@ describe("install", () => {
         linuxPlatform
       );
       await useCase.execute({
-        toolIds: ["claude" as ToolId, "copilot" as ToolId],
+        toolIds: ["copilot" as ToolId, "vscode" as ToolId],
         frameworkPath: FIXTURE_DIR,
         version: "test",
         docsDir: "aidd_docs",
@@ -737,16 +795,16 @@ describe("install", () => {
         >;
       };
 
-      const claudeSettings = data.tools.claude.mergeFiles.find(
-        (m) => m.relativePath === ".vscode/settings.json"
-      );
       const copilotSettings = data.tools.copilot.mergeFiles.find(
         (m) => m.relativePath === ".vscode/settings.json"
       );
-      expect(claudeSettings).toBeDefined();
+      const vscodeSettings = data.tools.vscode.mergeFiles.find(
+        (m) => m.relativePath === ".vscode/settings.json"
+      );
       expect(copilotSettings).toBeDefined();
-      expect(claudeSettings?.sectionKey).toBeNull();
+      expect(vscodeSettings).toBeDefined();
       expect(copilotSettings?.sectionKey).toBeNull();
+      expect(vscodeSettings?.sectionKey).toBeNull();
     });
 
     it("merge files are not in the regular files array", async () => {
@@ -922,6 +980,288 @@ describe("install", () => {
           mcpFilter: ["nonexistent"],
         })
       ).rejects.toThrow("Unknown MCP server(s): nonexistent");
+    });
+  });
+
+  describe("user-prime merge strategy", () => {
+    it("preserves user-added settings when force-reinstalling vscode", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+
+      await useCase.execute({
+        toolIds: ["vscode" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const settingsPath = join(projectRoot, ".vscode", "settings.json");
+      const raw = await readFile(settingsPath, "utf-8");
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      parsed["editor.fontSize"] = 20;
+      await writeFile(settingsPath, JSON.stringify(parsed, null, 2));
+
+      await useCase.execute({
+        toolIds: ["vscode" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        force: true,
+      });
+
+      const after = JSON.parse(await readFile(settingsPath, "utf-8")) as Record<string, unknown>;
+      expect(after["editor.fontSize"]).toBe(20);
+      expect(after["editor.formatOnSave"]).toBe(true);
+    });
+  });
+
+  describe("IDE context patch on install", () => {
+    it("distributes copilot IDE-conditional files when vscode is installed after copilot", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+
+      await useCase.execute({
+        toolIds: ["copilot" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        mcpFilter: ["playwright", "github"],
+      });
+
+      const settingsPath = join(projectRoot, ".vscode", "settings.json");
+      expect(existsSync(settingsPath)).toBe(false);
+
+      await useCase.execute({
+        toolIds: ["vscode" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      expect(existsSync(settingsPath)).toBe(true);
+      const content = await readFile(settingsPath, "utf-8");
+      const parsed = JSON.parse(content) as Record<string, unknown>;
+      expect(parsed["github.copilot.enable"]).toBe(true);
+
+      const manifest = await deps.manifestRepo.load();
+      if (manifest === null) throw new Error("manifest not found");
+      const copilotMerge = manifest.getMergeFiles("copilot");
+      expect(copilotMerge.some((m) => m.relativePath === ".vscode/settings.json")).toBe(true);
+    });
+
+    it("produces same result when copilot and vscode are installed together", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+
+      await expect(
+        useCase.execute({
+          toolIds: ["copilot" as ToolId, "vscode" as ToolId],
+          frameworkPath: FIXTURE_DIR,
+          version: "test",
+          docsDir: "aidd_docs",
+          projectRoot,
+          mcpFilter: ["playwright", "github"],
+        })
+      ).resolves.not.toThrow();
+
+      const settingsPath = join(projectRoot, ".vscode", "settings.json");
+      expect(existsSync(settingsPath)).toBe(true);
+      const content = await readFile(settingsPath, "utf-8");
+      const parsed = JSON.parse(content) as Record<string, unknown>;
+      expect(parsed["github.copilot.enable"]).toBe(true);
+    });
+
+    it("restores copilot-critical setting to framework value on force reinstall", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+
+      await useCase.execute({
+        toolIds: ["copilot" as ToolId, "vscode" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const settingsPath = join(projectRoot, ".vscode", "settings.json");
+      const initialContent = await readFile(settingsPath, "utf-8");
+      const mutated = {
+        ...(JSON.parse(initialContent) as Record<string, unknown>),
+        "github.copilot.enable": false,
+      };
+      await writeFile(settingsPath, JSON.stringify(mutated, null, 2));
+
+      await useCase.execute({
+        toolIds: ["copilot" as ToolId, "vscode" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        force: true,
+      });
+
+      const restoredContent = await readFile(settingsPath, "utf-8");
+      const restored = JSON.parse(restoredContent) as Record<string, unknown>;
+      expect(restored["github.copilot.enable"]).toBe(true);
+    });
+  });
+
+  describe("interactive tool selection", () => {
+    it("returns empty result when user selects no tools interactively", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const mockPrompter = Object.create(new KeepPrompter()) as Prompter;
+      mockPrompter.checkbox = vi.fn().mockResolvedValue([]);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform,
+        mockPrompter
+      );
+
+      const results = await useCase.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        interactive: true,
+      });
+
+      expect(results).toEqual([]);
+    });
+
+    it("skips AI checkbox and shows only IDE checkbox when all AI tools already installed", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+
+      await useCase.execute({
+        toolIds: ["claude", "cursor", "copilot", "opencode"] as ToolId[],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+      });
+
+      const checkboxMock = vi.fn().mockResolvedValue(["vscode"]);
+      const mockPrompter = Object.create(new KeepPrompter()) as Prompter;
+      mockPrompter.checkbox = checkboxMock;
+
+      const useCase2 = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform,
+        mockPrompter
+      );
+
+      const results = await useCase2.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        interactive: true,
+      });
+
+      expect(checkboxMock).toHaveBeenCalledTimes(1);
+      expect(checkboxMock).toHaveBeenCalledWith(
+        "Which IDE integrations do you want to install?",
+        expect.any(Array)
+      );
+      expect(results.some((r) => r.toolId === "vscode")).toBe(true);
+    });
+
+    it("installs only IDE tool when user skips AI tools and selects vscode", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const checkboxMock = vi.fn().mockResolvedValueOnce([]).mockResolvedValueOnce(["vscode"]);
+      const mockPrompter = Object.create(new KeepPrompter()) as Prompter;
+      mockPrompter.checkbox = checkboxMock;
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform,
+        mockPrompter
+      );
+
+      const results = await useCase.execute({
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        interactive: true,
+      });
+
+      expect(results.some((r) => r.toolId === "vscode")).toBe(true);
+      expect(results.every((r) => r.toolId === "vscode")).toBe(true);
     });
   });
 });

@@ -1,6 +1,10 @@
 import { execSync } from "node:child_process";
 import { platform } from "node:os";
-import { FrameworkResolutionError, PackageManagerError, UpdateError } from "../../domain/errors.js";
+import {
+  FrameworkResolutionError,
+  PackageManagerDetectionError,
+  UpdateError,
+} from "../../domain/errors.js";
 import type { CliRelease, CliUpdater } from "../../domain/ports/cli-updater.js";
 import type { HttpClient } from "../http/http-client.js";
 
@@ -25,9 +29,7 @@ function detectPackageManager(): { pm: PackageManager; binaryPath: string } {
     // `where` on Windows may return multiple matches (one per line) — keep only the first
     binaryPath = raw.trim().split(/\r?\n/)[0].trim();
   } catch {
-    throw new PackageManagerError(
-      `Could not detect package manager. Run manually:\n  ${PM_INSTALL_COMMANDS.npm}\n  ${PM_INSTALL_COMMANDS.pnpm}\n  ${PM_INSTALL_COMMANDS.yarn}\n  ${PM_INSTALL_COMMANDS.bun}`
-    );
+    throw new PackageManagerDetectionError(Object.values(PM_INSTALL_COMMANDS));
   }
   // Normalise Windows backslashes so path checks work cross-platform
   const normalised = binaryPath.replace(/\\/g, "/");

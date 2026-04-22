@@ -2,21 +2,30 @@ import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { DoctorUseCase } from "../use-cases/doctor-use-case.js";
-import { parseGlobalOptions } from "./global-options.js";
+import { parseCategoryArg, parseGlobalOptions } from "./global-options.js";
 
 export function registerDoctorCommand(program: Command): void {
   program
     .command("doctor")
     .description("Check installation health and detect issues")
-    .action(async () => {
+    .argument("[category]", "Filter to 'ai' or 'ide' tools")
+    .action(async (categoryArg: string | undefined) => {
       const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
+
+      const category = parseCategoryArg(categoryArg, output);
 
       try {
         const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
-        const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.authReader);
-        const report = await useCase.execute({ projectRoot, repo });
+        const useCase = new DoctorUseCase(
+          deps.fs,
+          deps.manifestRepo,
+          deps.hasher,
+          deps.logger,
+          deps.authReader
+        );
+        const report = await useCase.execute({ projectRoot, category, repo });
 
         for (const issue of report.issues.filter((i) => i.severity === "info")) {
           output.warn(`${issue.message}\n  Fix: ${issue.fix}`);
@@ -24,7 +33,8 @@ export function registerDoctorCommand(program: Command): void {
 
         if (report.healthy) {
           const totalFiles =
-            report.toolHealth.reduce((s, t) => s + t.fileCount, 0) + report.docsFileCount;
+            report.toolHealth.reduce((s, t) => s + t.fileCount + t.mergeFileCount, 0) +
+            report.docsFileCount;
           const toolCount = report.toolHealth.length;
           output.success(
             `Installation is healthy (${totalFiles} files tracked across ${toolCount} ${toolCount === 1 ? "tool" : "tools"})`

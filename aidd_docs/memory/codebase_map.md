@@ -2,9 +2,9 @@
 
 ## Status
 
-- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4) + per-entry hash tracking for merge files + granular MCP server selection
+- `src/` — fully implemented through v2.10.0 + adopt + self-update + opencode tool + AIDD branding signals + doctor signal detection + application layer refactoring (Phase 1–4) + per-entry hash tracking for merge files + granular MCP server selection + AI/IDE tool type split + restore merge file support + IDE-aware copilot settings (requiredIdeId, ide-requirement-filter, copilotVscodeSettings, surgical null-section uninstall) + IDE context patch on install (requiredIdeIds on AiToolConfig, IdePatchUseCase, IDE tool uninstall preserves user-prime) + AI/IDE category filter on install/uninstall/status/doctor (positional `ai|ide` arg, cross-category validation, interactive checkbox scoped by category) + PR review cleanup (Phases 1–7) + auth refactor (AuthProvider port, AuthProviderAdapter, auth domain models split)
 - `dist/cli.js` — produced by `pnpm build` (tsup, ESM bundle)
-- `tests/` — 994 tests, all passing
+- `tests/` — tests all passing
 
 ## Command Output Paths (per tool)
 
@@ -31,14 +31,14 @@ src/
 │   │   ├── cache.ts                    # aidd cache list / clear
 │   │   ├── config.ts                   # aidd config list/get/set
 │   │   ├── clean.ts                    # aidd clean [--force]
-│   │   ├── doctor.ts                   # aidd doctor
-│   │   ├── install.ts                  # aidd install <tools> [--all] [--force] [--mcp]
+│   │   ├── doctor.ts                   # aidd doctor [ai|ide]
+│   │   ├── install.ts                  # aidd install [ai|ide] <tools> [--all] [--force] [--mcp]
 │   │   ├── restore.ts                  # aidd restore [files] [--tool] [--docs] [--force]
-│   │   ├── status.ts                   # aidd status [--tool] [--docs]
+│   │   ├── status.ts                   # aidd status [ai|ide] [--tool] [--docs]
 │   │   ├── self-update.ts              # aidd self-update [--check] [--dry-run] [--force]
-│   │   ├── setup.ts                    # aidd setup (interactive onboarding entry point)
+│   │   ├── setup.ts                    # aidd setup [--all] [--ai <ids>] [--ide <ids>] (interactive onboarding entry point)
 │   │   ├── sync.ts                     # aidd sync --source <tool> [--target] [--force]
-│   │   ├── uninstall.ts                # aidd uninstall <tools> [--all] [--mcp]
+│   │   ├── uninstall.ts                # aidd uninstall [ai|ide] <tools> [--all] [--mcp]
 │   │   └── update.ts                   # aidd update [--force] [--dry-run] [--tool] [--docs]
 │   ├── check-update.ts                 # printUpdateBanner() — called via commander preAction hook in cli.ts
 │   ├── error-handler.ts                # ErrorHandler — central error handling for commands (replaces output.exit)
@@ -65,6 +65,7 @@ src/
 │       ├── uninstall-use-case.ts
 │       ├── update-use-case.ts
 │       └── shared/
+│           ├── ide-patch-use-case.ts              # IdePatchUseCase — distributes IDE-conditional AI tool files when IDE installed after AI tool (DEC-030)
 │           ├── post-install-pipeline-use-case.ts  # canonical post-write sequence: MemoryScript → save → Catalog → Gitignore
 │           └── setup-state-detector.ts            # detect project setup phase (needs-init/adopt/install/update/up-to-date)
 ├── domain/
@@ -75,22 +76,31 @@ src/
 │   │   ├── docs.ts                     # documentation distribution: path remapping, content rewriting
 │   │   ├── file-diff.ts                # FileDiffKind, FileDiff — discriminant type for update diffs
 │   │   ├── file-hash.ts                # MD5 value object
-│   │   ├── framework-descriptor.ts     # framework layout code model (no framework.json file)
+│   │   ├── file-size.ts                # FileSizeKind, formatFileSize helpers
+│   │   ├── framework-descriptor.ts     # framework layout code model (no framework.json file); ConfigRef has optional requiredIdeId?: IdeToolId
+│   │   ├── framework-path.ts           # framework path helpers
 │   │   ├── frontmatter.ts              # frontmatter parsing/conversion
 │   │   ├── generated-file.ts           # file + hash + merge flag
+│   │   ├── ide-requirement-filter.ts   # filterByIdeRequirements(generated, configRefs, installedIdeIds) — pure filter; excludes files with requiredIdeId not in ideContext
 │   │   ├── manifest.ts                 # aggregate root (persisted at .aidd/manifest.json); fields: docsDir, repo?, tools, docs; ToolEntry has mergeFiles + excludedMcp
-│   │   ├── mcp-exclusion.ts           # McpExclusion { configPath, entryKey }, mcpExclusionEquals
-│   │   ├── merge-entry.ts             # MergeFileEntry value object, extractMergeEntries, buildMergeFileEntries, parseEntryKeys, removeEntriesFromJson
+│   │   ├── markdown-references.ts      # markdown @path reference parsing/resolution
+│   │   ├── mcp-exclusion.ts            # McpExclusion { configPath, entryKey }, mcpExclusionEquals
 │   │   ├── mcp.ts                      # MCP config transformation for Windows command path fixes
+│   │   ├── merge-entry.ts              # MergeFileEntry value object, extractMergeEntries, buildMergeFileEntries, parseEntryKeys, removeEntriesFromJson
+│   │   ├── merge-strategy.ts           # MergeStrategy type and helpers
 │   │   ├── semver.ts                   # semantic version parsing & comparison for update checks
 │   │   ├── sync-exclusions.ts          # SYNC_EXCLUDED_FILES, isSyncExcluded — sync skip list
-│   │   ├── tool-config.ts              # per-tool output path / frontmatter rules
+│   │   ├── tool-config.ts              # ToolConfig = AiToolConfig | IdeToolConfig; AiToolId/IdeToolId/ToolCategory types; isAiToolConfig() guard; toolIdsForCategory(); assertToolIdsMatchCategory(); VALID_TOOL_IDS derived from AI_TOOL_IDS + IDE_TOOL_IDS
+│   │   ├── auth-config.ts              # re-exports AuthConfig, AuthMethod from auth.ts
+│   │   ├── auth-level.ts               # re-exports AuthLevel from auth.ts
+│   │   ├── auth.ts                     # AuthLevel, AuthMethod, AuthCredential, AuthConfig types
+│   │   ├── paths.ts                    # AIDD_DIR constant
 │   │   └── update-scope.ts             # UpdateScope, parseUpdateScope, formatToolScopeValue
-│   ├── models/
-│   │   └── auth-config.ts              # AuthConfig { version, method, level, token?, createdAt }
 │   ├── ports/
-│   │   ├── auth-token-provider.ts      # resolve(): Promise<string | null> — implemented by AuthReader
-│   │   ├── external-token-provider.ts  # resolve(): string | null — implemented by GhCliAdapter
+│   │   ├── auth-provider.ts            # AuthProvider — login(credential, level), status(), logout(); implemented by AuthProviderAdapter
+│   │   ├── auth-token-provider.ts      # resolve(): Promise<string | null> — implemented by AuthReader (API bearer token)
+│   │   ├── external-auth-provider.ts   # ExternalAuthProvider extends ExternalTokenProvider with verify(): Promise<string>
+│   │   ├── external-token-provider.ts  # resolve(): string | null — base interface
 │   │   ├── cli-updater.ts              # fetchLatestRelease(), install() — used by self-update
 │   │   ├── current-version-provider.ts # get() returns current CLI version string
 │   │   ├── file-system.ts
@@ -100,15 +110,20 @@ src/
 │   │   ├── logger.ts
 │   │   ├── manifest-repository.ts
 │   │   ├── platform.ts                 # current() returns platform identifier for MCP transforms
+│   │   ├── login-verifier.ts           # verify(token): Promise<string> — implemented by GhTokenAdapter
 │   │   └── prompter.ts                 # resolveConflict(path, reason: "deleted"|"modified") for restore
 │   └── tools/
-│       ├── claude.ts
-│       ├── copilot.ts
-│       ├── cursor.ts
-│       └── opencode.ts
+│       ├── ai/
+│       │   ├── claude.ts
+│       │   ├── copilot.ts
+│       │   ├── cursor.ts
+│       │   └── opencode.ts
+│       └── ide/
+│           └── vscode.ts
 └── infrastructure/
     ├── adapters/
-    │   ├── gh-cli-adapter.ts            # ExternalTokenProvider — calls `gh auth token` (3s timeout)
+    │   ├── auth-provider-adapter.ts     # AuthProviderAdapter — implements AuthProvider; wires storage + externalProviders + tokenVerifier
+    │   ├── gh-cli-adapter.ts            # ExternalAuthProvider — `gh auth token` (3s timeout) + `gh api user` verify
     │   ├── cli-updater-adapter.ts       # GitHub CLI Release API for self-update
     │   ├── current-version-adapter.ts   # reads package.json version at runtime
     │   ├── file-system-adapter.ts       # mergeJsonFile (strips JSONC comments + deep-merge)
@@ -140,7 +155,8 @@ src/
 tests/
 ├── application/use-cases/              # unit tests per use-case (vi.fn() mocked ports)
 ├── domain/models/                      # pure value object tests
-├── domain/tools/                       # tool config unit tests (claude, copilot, cursor, opencode)
+├── domain/tools/ai/                    # tool config unit tests (claude, copilot, cursor, opencode)
+├── domain/tools/ide/                   # tool config unit tests (vscode)
 ├── e2e/                                # full CLI e2e via child_process + temp dirs
 │   ├── adopt.e2e.test.ts
 │   ├── init.e2e.test.ts

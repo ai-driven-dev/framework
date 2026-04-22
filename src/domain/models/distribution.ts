@@ -15,8 +15,11 @@ import { GeneratedFile } from "./generated-file.js";
 import { transformFor as mcpTransformFor } from "./mcp.js";
 import type { MergeStrategy } from "./merge-strategy.js";
 import {
+  type AiToolConfig,
   acceptsFile,
   type CommandsHandler,
+  type ConfigHandler,
+  isAiToolConfig,
   type RulesHandler,
   type SectionHandler,
   type ToolConfig,
@@ -26,7 +29,7 @@ type ContentTransform = (content: string) => string;
 
 export async function generateDistribution(
   framework: FrameworkDescriptor,
-  toolConfig: ToolConfig,
+  toolConfig: AiToolConfig,
   docsDir: string,
   contentFiles: Map<string, string>,
   hasher: Hasher,
@@ -88,10 +91,89 @@ export async function generateDistribution(
     }
   }
 
-  const configHandler = toolConfig.config();
-  const current = platform.current();
+  const configFiles = await collectConfigFiles(
+    framework,
+    toolConfig.config(),
+    contentFiles,
+    hasher,
+    platform,
+    projectRoot,
+    fs
+  );
+  results.push(
+    ...configFiles,
+    ...collectMemoryBankFiles(framework.templateRefs, toolConfig, docsDir, contentFiles, hasher)
+  );
+
+  return removeRedundantGitkeeps(results);
+}
+
+async function generateConfigDistribution(
+  framework: FrameworkDescriptor,
+  toolConfig: ToolConfig,
+  contentFiles: Map<string, string>,
+  hasher: Hasher,
+  platform: Platform,
+  projectRoot: string,
+  fs: FileSystem
+): Promise<GeneratedFile[]> {
+  const results = await collectConfigFiles(
+    framework,
+    toolConfig.config(),
+    contentFiles,
+    hasher,
+    platform,
+    projectRoot,
+    fs
+  );
+  return removeRedundantGitkeeps(results);
+}
+
+export async function generateForConfig(
+  config: ToolConfig,
+  framework: FrameworkDescriptor,
+  docsDir: string,
+  contentFiles: Map<string, string>,
+  hasher: Hasher,
+  platform: Platform,
+  projectRoot: string,
+  fs: FileSystem
+): Promise<GeneratedFile[]> {
+  if (isAiToolConfig(config)) {
+    return generateDistribution(
+      framework,
+      config,
+      docsDir,
+      contentFiles,
+      hasher,
+      platform,
+      projectRoot,
+      fs
+    );
+  }
+  return generateConfigDistribution(
+    framework,
+    config,
+    contentFiles,
+    hasher,
+    platform,
+    projectRoot,
+    fs
+  );
+}
+
+async function collectConfigFiles(
+  framework: FrameworkDescriptor,
+  configHandler: ConfigHandler,
+  contentFiles: Map<string, string>,
+  hasher: Hasher,
+  platform: Platform,
+  projectRoot: string,
+  fs: FileSystem
+): Promise<GeneratedFile[]> {
+  const currentPlatform = platform.current();
   const transforms = new Map<string, ContentTransform>();
-  const mcpTransform = mcpTransformFor(current);
+  const mcpTransform = mcpTransformFor(currentPlatform);
   if (mcpTransform) transforms.set(CONFIG_MCP, mcpTransform);
 
   const resolveOutput = async (name: string): Promise<string | null> => {
@@ -101,24 +183,19 @@ export async function generateDistribution(
     return configHandler.outputPath(name);
   };
 
-  results.push(
-    ...(await collectRawFiles(
-      framework.configRefs,
-      resolveOutput,
-      (name) => configHandler.mergeStrategy(name),
-      configHandler.transformContent?.bind(configHandler),
-      contentFiles,
-      hasher,
-      transforms
-    )),
-    ...collectMemoryBankFiles(framework.templateRefs, toolConfig, docsDir, contentFiles, hasher)
+  return collectRawFiles(
+    framework.configRefs,
+    resolveOutput,
+    (name) => configHandler.mergeStrategy(name),
+    configHandler.transformContent?.bind(configHandler),
+    contentFiles,
+    hasher,
+    transforms
   );
-
-  return removeRedundantGitkeeps(results);
 }
 
 function resolveHandler(
-  toolConfig: ToolConfig,
+  toolConfig: AiToolConfig,
   sectionName: string
 ): SectionHandler | CommandsHandler | RulesHandler | null {
   switch (sectionName) {
@@ -150,7 +227,7 @@ function removeRedundantGitkeeps(files: GeneratedFile[]): GeneratedFile[] {
 
 function collectMemoryBankFiles(
   refs: readonly { name: string; path: string }[],
-  toolConfig: ToolConfig,
+  toolConfig: AiToolConfig,
   docsDir: string,
   contentFiles: Map<string, string>,
   hasher: Hasher

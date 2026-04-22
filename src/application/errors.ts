@@ -1,4 +1,5 @@
 import { Manifest } from "../domain/models/manifest.js";
+import type { ToolCategory } from "../domain/models/tool-config.js";
 
 export { NoFrameworkSourceError } from "../domain/errors.js";
 
@@ -24,7 +25,7 @@ export class AdoptRequiresVersionError extends Error {
   constructor(repo = Manifest.DEFAULT_REPO, diagnostic = "") {
     const suffix = diagnostic ? `\n\n${diagnostic}` : "";
     super(
-      `--from <version|path> is required.\nExample: aidd setup --from 3.6.0 --tools claude\nCheck available tags for: ${repo}${suffix}`
+      `--from <version|path> is required for adopt.\nExample: aidd setup --ai claude --from 3.6.0\nCheck available tags for: ${repo}${suffix}`
     );
     this.name = "AdoptRequiresVersionError";
   }
@@ -55,5 +56,19 @@ export class ToolNotInstalledError extends Error {
   constructor(toolId: string, context?: string) {
     super(context ? `${context} '${toolId}' is not installed.` : `${toolId} is not installed`);
     this.name = "ToolNotInstalledError";
+  }
+}
+
+export class NoToolsInstalledError extends Error {
+  constructor(category?: ToolCategory) {
+    super(category ? `No ${category.toUpperCase()} tools installed.` : "No tools installed.");
+    this.name = "NoToolsInstalledError";
+  }
+}
+
+export class InvalidCategoryError extends Error {
+  constructor(category: string) {
+    super(`Invalid category '${category}'. Use 'ai' or 'ide'.`);
+    this.name = "InvalidCategoryError";
   }
 }

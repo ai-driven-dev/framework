@@ -20,7 +20,7 @@ describe.concurrent("E2E: aidd config", () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
         await initProject(projectDir, FRAMEWORK_PATH);
-        await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+        await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
         const { stdout, exitCode } = await runCli(["config", "list"], projectDir);
         expect(exitCode).toBe(0);
@@ -102,7 +102,7 @@ describe.concurrent("E2E: aidd config", () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
         await initProject(projectDir, FRAMEWORK_PATH);
-        await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+        await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
         const { stdout, exitCode } = await runCli(["config", "get", "tools"], projectDir);
         expect(exitCode).toBe(0);

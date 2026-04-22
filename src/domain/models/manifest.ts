@@ -1,4 +1,10 @@
-import { ManifestValidationError } from "../errors.js";
+import {
+  InvalidManifestDataError,
+  InvalidManifestToolIdError,
+  InvalidRepoFormatError,
+  ManifestValidationError,
+  ToolNotInManifestError,
+} from "../errors.js";
 import { FileHash } from "./file-hash.js";
 import type { GeneratedFile } from "./generated-file.js";
 import type { McpExclusion } from "./mcp-exclusion.js";
@@ -6,14 +12,22 @@ import { mcpExclusionEquals } from "./mcp-exclusion.js";
 import type { MergeFileEntry } from "./merge-entry.js";
 import { type ToolId, VALID_TOOL_IDS } from "./tool-config.js";
 
-const MANIFEST_VERSION = 1;
+const MANIFEST_VERSION = 2;
+
+// VSCode file paths that were tracked under "copilot" in manifest v1.
+// Used exclusively by migrateV1toV2 to move them to the "vscode" tool entry.
+const VSCODE_MIGRATION_PATHS = new Set([
+  ".vscode/extensions.json",
+  ".vscode/keybindings.json",
+  ".vscode/settings.json",
+]);
 
 const REPO_FORMAT_REGEX = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
 const DOCS_DIR_REGEX = /^[a-zA-Z0-9_-]+$/;
 
 export function validateRepoFormat(repo: string): void {
   if (!REPO_FORMAT_REGEX.test(repo)) {
-    throw new ManifestValidationError("Invalid repository format. Expected: owner/repo");
+    throw new InvalidRepoFormatError();
   }
 }
 
@@ -78,6 +92,34 @@ interface TrackedFileData {
   relativePath: string;
   hash: string;
   frameworkPath?: string;
+}
+
+// This migration block must remain until all users have upgraded past v1.
+// Removing it would corrupt manifests that still have VSCode files tracked under "copilot".
+// It can only be removed when the manifest version is bumped again and v1 support is explicitly dropped.
+function migrateV1toV2(raw: Record<string, unknown>): void {
+  const tools = raw.tools as Record<string, ToolEntryData> | undefined;
+  if (!tools) return;
+
+  const copilot = tools.copilot;
+  if (!copilot) return;
+
+  const vscodeFiles = copilot.files.filter((f) => VSCODE_MIGRATION_PATHS.has(f.relativePath));
+  if (vscodeFiles.length === 0) return;
+
+  copilot.files = copilot.files.filter((f) => !VSCODE_MIGRATION_PATHS.has(f.relativePath));
+
+  if (!tools.vscode) {
+    tools.vscode = {
+      toolId: "vscode",
+      version: copilot.version,
+      files: [],
+      mergeFiles: [],
+    };
+  }
+  const existingPaths = new Set(tools.vscode.files.map((f) => f.relativePath));
+  const deduped = vscodeFiles.filter((f) => !existingPaths.has(f.relativePath));
+  tools.vscode.files = [...tools.vscode.files, ...deduped];
 }
 
 export class Manifest {
@@ -180,14 +222,27 @@ export class Manifest {
     return this._tools.get(toolId)?.mergeFiles ?? [];
   }
 
+  /** Returns all tracked paths (files + merge files) across all tools that start with the given directory prefix. */
+  getTrackedPathsInDirectory(dir: string): Set<string> {
+    const tracked = new Set<string>();
+    for (const [, entry] of this._tools) {
+      for (const f of entry.files) {
+        if (f.relativePath.startsWith(dir)) tracked.add(f.relativePath);
+      }
+      for (const m of entry.mergeFiles) {
+        if (m.relativePath.startsWith(dir)) tracked.add(m.relativePath);
+      }
+    }
+    return tracked;
+  }
+
   getExcludedMcp(toolId: ToolId): readonly McpExclusion[] {
     return this._tools.get(toolId)?.excludedMcp ?? [];
   }
 
   addExcludedMcp(toolId: ToolId, exclusions: McpExclusion[]): void {
     const entry = this._tools.get(toolId);
-    if (!entry)
-      throw new ManifestValidationError(`Tool '${toolId}' is not installed in the manifest.`);
+    if (!entry) throw new ToolNotInManifestError(toolId);
     const existing = [...entry.excludedMcp];
     for (const excl of exclusions) {
       if (!existing.some((e) => mcpExclusionEquals(e, excl))) {
@@ -199,8 +254,7 @@ export class Manifest {
 
   removeExcludedMcp(toolId: ToolId, exclusions: McpExclusion[]): void {
     const entry = this._tools.get(toolId);
-    if (!entry)
-      throw new ManifestValidationError(`Tool '${toolId}' is not installed in the manifest.`);
+    if (!entry) throw new ToolNotInManifestError(toolId);
     const filtered = entry.excludedMcp.filter(
       (e) => !exclusions.some((r) => mcpExclusionEquals(e, r))
     );
@@ -209,8 +263,7 @@ export class Manifest {
 
   clearExcludedMcp(toolId: ToolId): void {
     const entry = this._tools.get(toolId);
-    if (!entry)
-      throw new ManifestValidationError(`Tool '${toolId}' is not installed in the manifest.`);
+    if (!entry) throw new ToolNotInManifestError(toolId);
     this._tools.set(toolId, { ...entry, excludedMcp: [] });
   }
 
@@ -220,8 +273,7 @@ export class Manifest {
     excludedMcp?: McpExclusion[]
   ): void {
     const entry = this._tools.get(toolId);
-    if (!entry)
-      throw new ManifestValidationError(`Tool '${toolId}' is not installed in the manifest.`);
+    if (!entry) throw new ToolNotInManifestError(toolId);
     this._tools.set(toolId, {
       ...entry,
       mergeFiles,
@@ -243,7 +295,7 @@ export class Manifest {
 
   removeTool(toolId: ToolId): void {
     if (!this._tools.has(toolId)) {
-      throw new ManifestValidationError(`Tool '${toolId}' is not installed in the manifest.`);
+      throw new ToolNotInManifestError(toolId);
     }
     this._tools.delete(toolId);
   }
@@ -349,7 +401,11 @@ export class Manifest {
       for (const [key, hash] of Object.entries(m.entries)) {
         entries[key] = hash.value;
       }
-      return { relativePath: m.relativePath, sectionKey: m.sectionKey, entries };
+      return {
+        relativePath: m.relativePath,
+        sectionKey: m.sectionKey,
+        entries,
+      };
     });
   }
 
@@ -359,19 +415,25 @@ export class Manifest {
       for (const [key, hash] of Object.entries(m.entries)) {
         entries[key] = new FileHash(hash);
       }
-      return { relativePath: m.relativePath, sectionKey: m.sectionKey, entries };
+      return {
+        relativePath: m.relativePath,
+        sectionKey: m.sectionKey,
+        entries,
+      };
     });
   }
 
   static fromJSON(data: unknown): Manifest {
     if (data === null || typeof data !== "object") {
-      throw new ManifestValidationError("Invalid manifest data: expected an object.");
+      throw new InvalidManifestDataError("expected an object.");
     }
 
     const raw = data as Record<string, unknown>;
 
-    if (raw.version !== MANIFEST_VERSION) {
-      throw new ManifestValidationError(
+    if (raw.version === MANIFEST_VERSION - 1) {
+      migrateV1toV2(raw);
+    } else if (raw.version !== MANIFEST_VERSION) {
+      throw new InvalidManifestDataError(
         `Unsupported manifest version: ${String(raw.version)}. Expected ${MANIFEST_VERSION}.`
       );
     }
@@ -409,7 +471,7 @@ export class Manifest {
     for (const [key, value] of Object.entries(raw.tools as Record<string, unknown>)) {
       const toolId = key as ToolId;
       if (!VALID_TOOL_IDS.includes(toolId)) {
-        throw new ManifestValidationError(`Invalid tool id in manifest: '${key}'.`);
+        throw new InvalidManifestToolIdError(key);
       }
       const entry = value as ToolEntryData;
       tools.set(toolId, {

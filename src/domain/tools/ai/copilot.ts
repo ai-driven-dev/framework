@@ -1,18 +1,17 @@
 import {
   AT_DOCS_PLACEHOLDER,
   AT_TOOLS_PLACEHOLDER,
+  CONFIG_COPILOT_VSCODE_SETTINGS,
   CONFIG_MCP,
-  CONFIG_VSCODE_EXTENSIONS,
-  CONFIG_VSCODE_KEYBINDINGS,
-  CONFIG_VSCODE_SETTINGS,
   DOCS_PLACEHOLDER,
   GITKEEP_FILE,
   TEMPLATE_AGENTS_MD,
   TOOLS_PLACEHOLDER,
-} from "../models/framework-descriptor.js";
-import { parseFrontmatter } from "../models/frontmatter.js";
-import type { MergeStrategy } from "../models/merge-strategy.js";
+} from "../../models/framework-descriptor.js";
+import { parseFrontmatter } from "../../models/frontmatter.js";
+import type { MergeStrategy } from "../../models/merge-strategy.js";
 import {
+  type AiToolConfig,
   type CommandsHandler,
   type ConfigHandler,
   type MemoryBankHandler,
@@ -22,9 +21,8 @@ import {
   registerTool,
   type SectionHandler,
   standardCommandFrontmatter,
-  type ToolConfig,
   type UserFileSectionKey,
-} from "../models/tool-config.js";
+} from "../../models/tool-config.js";
 
 const DIRECTORY = ".github/";
 const TOOL_SUFFIX = ".copilot.md";
@@ -225,11 +223,13 @@ function reverseCopilotContent(content: string, docsDir: string): string {
     .replaceAll(`${docsDir}/`, DOCS_PLACEHOLDER);
 }
 
-export const copilotToolConfig: ToolConfig = {
+export const copilotToolConfig: AiToolConfig = {
+  kind: "ai",
   toolId: "copilot",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   signalDir: ".github/prompts",
+  requiredIdeIds: ["vscode"] as const,
 
   rewriteContent: rewriteCopilotContent,
 
@@ -255,14 +255,12 @@ export const copilotToolConfig: ToolConfig = {
     return {
       outputPath(configName: string): string | null {
         if (configName === CONFIG_MCP) return ".vscode/mcp.json";
-        if (configName === CONFIG_VSCODE_EXTENSIONS) return ".vscode/extensions.json";
-        if (configName === CONFIG_VSCODE_KEYBINDINGS) return ".vscode/keybindings.json";
-        if (configName === CONFIG_VSCODE_SETTINGS) return ".vscode/settings.json";
+        if (configName === CONFIG_COPILOT_VSCODE_SETTINGS) return ".vscode/settings.json";
         return null;
       },
       mergeStrategy(configName: string): MergeStrategy {
         if (configName === CONFIG_MCP) return "user-prime";
-        if (configName === CONFIG_VSCODE_SETTINGS) return "framework-prime";
+        if (configName === CONFIG_COPILOT_VSCODE_SETTINGS) return "framework-prime";
         return "none";
       },
       entrySection(configName: string): string | null {

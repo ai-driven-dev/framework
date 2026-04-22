@@ -1,8 +1,17 @@
 import { join } from "node:path";
-import { ConfigConflictError, McpConfigError } from "../errors.js";
-import { CONFIG_MCP, CONFIG_OPENCODE, TEMPLATE_AGENTS_MD } from "../models/framework-descriptor.js";
-import type { MergeStrategy } from "../models/merge-strategy.js";
 import {
+  InvalidMcpServerConfigError,
+  McpConfigError,
+  OpencodeDualConfigError,
+} from "../../errors.js";
+import {
+  CONFIG_MCP,
+  CONFIG_OPENCODE,
+  TEMPLATE_AGENTS_MD,
+} from "../../models/framework-descriptor.js";
+import type { MergeStrategy } from "../../models/merge-strategy.js";
+import {
+  type AiToolConfig,
   baseReverseRewriteContent,
   baseRewriteContent,
   buildAiddCommandFilePath,
@@ -17,9 +26,8 @@ import {
   reverseConvertCommandFrontmatterNoHint,
   type SectionHandler,
   stripToolSuffix,
-  type ToolConfig,
   type UserFileSectionKey,
-} from "../models/tool-config.js";
+} from "../../models/tool-config.js";
 
 const DIRECTORY = ".opencode/";
 const TOOL_SUFFIX = ".opencode.md";
@@ -72,7 +80,7 @@ function transformMcpToOpencode(content: string): string {
     } else if ("url" in server) {
       mcp[name] = { type: "remote", url: server.url, enabled: true };
     } else {
-      throw new McpConfigError(`MCP server "${name}" must have either a "command" or "url" field`);
+      throw new InvalidMcpServerConfigError(name);
     }
   }
 
@@ -90,7 +98,8 @@ const descriptionOnlyFrontmatter = {
   reverseConvertFrontmatter: (fm: Record<string, unknown>) => ({ description: fm.description }),
 };
 
-export const opencodeToolConfig: ToolConfig = {
+export const opencodeToolConfig: AiToolConfig = {
+  kind: "ai",
   toolId: "opencode",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
@@ -178,10 +187,7 @@ export const opencodeToolConfig: ToolConfig = {
         if (handler.outputPath(configName) === null) return null;
         const jsonExists = await fs.fileExists(join(projectRoot, OPENCODE_JSON));
         const jsoncExists = await fs.fileExists(join(projectRoot, OPENCODE_JSONC));
-        if (jsonExists && jsoncExists)
-          throw new ConfigConflictError(
-            `Both ${OPENCODE_JSON} and ${OPENCODE_JSONC} exist. Remove one before continuing.`
-          );
+        if (jsonExists && jsoncExists) throw new OpencodeDualConfigError();
         if (jsoncExists) return OPENCODE_JSONC;
         return OPENCODE_JSON;
       },

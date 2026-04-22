@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { ToolValidationError } from "../errors.js";
+import { CategoryMismatchError, InvalidToolIdError, UnregisteredToolError } from "../errors.js";
 import type { FileSystem } from "../ports/file-system.js";
 import {
   AT_DOCS_PLACEHOLDER,
@@ -9,15 +9,44 @@ import {
 } from "./framework-descriptor.js";
 import type { MergeStrategy } from "./merge-strategy.js";
 
-export type ToolId = "claude" | "cursor" | "copilot" | "opencode";
-export const VALID_TOOL_IDS: readonly ToolId[] = ["claude", "cursor", "copilot", "opencode"];
+export type AiToolId = "claude" | "cursor" | "copilot" | "opencode";
+export type IdeToolId = "vscode";
+export type ToolId = AiToolId | IdeToolId;
+
+export const AI_TOOL_IDS: readonly AiToolId[] = ["claude", "cursor", "copilot", "opencode"];
+export const IDE_TOOL_IDS: readonly IdeToolId[] = ["vscode"];
+export const VALID_TOOL_IDS: readonly ToolId[] = [...AI_TOOL_IDS, ...IDE_TOOL_IDS];
+
+export type ToolCategory = "ai" | "ide";
+
+export function toolIdsForCategory(category: ToolCategory): readonly ToolId[] {
+  switch (category) {
+    case "ai":
+      return AI_TOOL_IDS;
+    case "ide":
+      return IDE_TOOL_IDS;
+    default: {
+      const _exhaustive: never = category;
+      throw new Error(`Unknown category: ${String(_exhaustive)}`);
+    }
+  }
+}
 
 export function assertValidToolIds(toolIds: string[]): void {
   const invalid = toolIds.filter((t) => !VALID_TOOL_IDS.includes(t as ToolId));
   if (invalid.length === 0) return;
-  throw new ToolValidationError(
-    `Unknown tool(s): ${invalid.join(", ")}. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
-  );
+  throw new InvalidToolIdError(invalid, VALID_TOOL_IDS);
+}
+
+export function isIdeToolId(id: string): id is IdeToolId {
+  return (IDE_TOOL_IDS as readonly string[]).includes(id);
+}
+
+export function assertToolIdsMatchCategory(toolIds: ToolId[], category: ToolCategory): void {
+  const allowed = toolIdsForCategory(category);
+  const wrong = toolIds.filter((id) => !(allowed as readonly string[]).includes(id));
+  if (wrong.length === 0) return;
+  throw new CategoryMismatchError(wrong, category, allowed);
 }
 
 export type UserFileSection = "agents" | "commands" | "rules" | "skills";
@@ -65,11 +94,13 @@ export interface MemoryBankHandler {
   rewriteContent(content: string, docsDir: string): string;
 }
 
-export interface ToolConfig {
-  readonly toolId: ToolId;
+export interface AiToolConfig {
+  readonly kind: "ai";
+  readonly toolId: AiToolId;
   readonly directory: string;
   readonly toolSuffix: string;
-  readonly signalDir: string;
+  readonly signalDir: string | null;
+  readonly requiredIdeIds?: readonly IdeToolId[];
   rewriteContent(content: string, docsDir: string): string;
   reverseRewriteContent(content: string, docsDir: string): string;
   agents(): SectionHandler;
@@ -81,6 +112,20 @@ export interface ToolConfig {
   detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null;
 }
 
+export interface IdeToolConfig {
+  readonly kind: "ide";
+  readonly toolId: IdeToolId;
+  readonly directory: string;
+  readonly signalDir: string | null;
+  config(): ConfigHandler;
+}
+
+export type ToolConfig = AiToolConfig | IdeToolConfig;
+
+export function isAiToolConfig(config: ToolConfig): config is AiToolConfig {
+  return config.kind === "ai";
+}
+
 export function agentNameFromFrontmatter(
   fm: Record<string, unknown>,
   fileName?: string
@@ -90,9 +135,9 @@ export function agentNameFromFrontmatter(
   return typeof name === "string" ? name : undefined;
 }
 
-const TOOL_SUFFIXES = VALID_TOOL_IDS.map((id) => `.${id}.md`);
+const TOOL_SUFFIXES = AI_TOOL_IDS.map((id) => `.${id}.md`);
 
-export function acceptsFile(config: ToolConfig, fileName: string): boolean {
+export function acceptsFile(config: AiToolConfig, fileName: string): boolean {
   const basename = fileName.split("/").at(-1) ?? fileName;
   const otherSuffixes = TOOL_SUFFIXES.filter((s) => s !== config.toolSuffix);
   return !otherSuffixes.some((s) => basename.endsWith(s));
@@ -117,7 +162,7 @@ export function registerTool(config: ToolConfig): void {
 
 export function getToolConfig(toolId: ToolId): ToolConfig {
   const config = TOOL_REGISTRY.get(toolId);
-  if (!config) throw new ToolValidationError(`Tool '${toolId}' is not registered.`);
+  if (!config) throw new UnregisteredToolError(toolId);
   return config;
 }
 
@@ -281,6 +326,7 @@ export async function hasToolSignals(
   config: ToolConfig,
   projectRoot: string
 ): Promise<string[]> {
+  if (!config.signalDir) return [];
   const dir = join(projectRoot, config.signalDir);
   if (!(await fs.fileExists(dir))) return [];
   const files = await fs.listDirectory(dir);

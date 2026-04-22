@@ -1,54 +1,58 @@
 import { describe, expect, it } from "vitest";
 import {
+  type AiToolConfig,
+  type AiToolId,
   acceptsFile,
+  assertToolIdsMatchCategory,
   getAllRegisteredTools,
   getToolConfig,
   registerTool,
   stripToolSuffix,
-  type ToolConfig,
   type ToolId,
+  toolIdsForCategory,
   VALID_TOOL_IDS,
 } from "../../../src/domain/models/tool-config.js";
 
-const makeStubConfig = (toolId: ToolId, toolSuffix: string): ToolConfig => ({
+const makeStubConfig = (toolId: AiToolId, toolSuffix: string): AiToolConfig => ({
+  kind: "ai",
   toolId,
   directory: `.${toolId}/`,
   toolSuffix,
   signalDir: `.${toolId}/commands`,
-  rewriteContent: (content) => content,
-  reverseRewriteContent: (content) => content,
+  rewriteContent: (content: string) => content,
+  reverseRewriteContent: (content: string) => content,
   agents: () => ({
-    buildFilePath: (f) => f,
-    convertFrontmatter: (fm) => fm,
-    reverseConvertFrontmatter: (fm) => fm,
+    buildFilePath: (f: string) => f,
+    convertFrontmatter: (fm: Record<string, unknown>) => fm,
+    reverseConvertFrontmatter: (fm: Record<string, unknown>) => fm,
   }),
   commands: () => ({
-    buildFilePath: (f) => f,
-    convertFrontmatter: (fm) => fm,
-    reverseConvertFrontmatter: (fm) => fm,
+    buildFilePath: (f: string) => f,
+    convertFrontmatter: (fm: Record<string, unknown>) => fm,
+    reverseConvertFrontmatter: (fm: Record<string, unknown>) => fm,
   }),
   rules: () => ({
-    buildFilePath: (f) => f,
-    convertFrontmatter: (fm) => fm,
-    reverseConvertFrontmatter: (fm) => fm,
+    buildFilePath: (f: string) => f,
+    convertFrontmatter: (fm: Record<string, unknown>) => fm,
+    reverseConvertFrontmatter: (fm: Record<string, unknown>) => fm,
   }),
   skills: () => ({
-    buildFilePath: (f) => f,
-    convertFrontmatter: (fm) => fm,
-    reverseConvertFrontmatter: (fm) => fm,
+    buildFilePath: (f: string) => f,
+    convertFrontmatter: (fm: Record<string, unknown>) => fm,
+    reverseConvertFrontmatter: (fm: Record<string, unknown>) => fm,
   }),
   config: () => ({
     outputPath: () => null,
     mergeStrategy: () => "none" as const,
     entrySection: () => null,
   }),
-  memoryBank: () => ({ outputPath: () => null, rewriteContent: (c) => c }),
+  memoryBank: () => ({ outputPath: () => null, rewriteContent: (c: string) => c }),
   detectUserFileSectionKey: () => null,
 });
 
 describe("VALID_TOOL_IDS", () => {
-  it("contains exactly claude, cursor, copilot, opencode", () => {
-    expect(VALID_TOOL_IDS).toEqual(["claude", "cursor", "copilot", "opencode"]);
+  it("contains exactly claude, cursor, copilot, opencode, vscode", () => {
+    expect(VALID_TOOL_IDS).toEqual(["claude", "cursor", "copilot", "opencode", "vscode"]);
   });
 });
 
@@ -91,6 +95,41 @@ describe("stripToolSuffix()", () => {
 
   it("returns unchanged when no suffix at all", () => {
     expect(stripToolSuffix(".claude.md", "generic.md")).toBe("generic.md");
+  });
+});
+
+describe("toolIdsForCategory()", () => {
+  it("returns AI tool IDs for 'ai'", () => {
+    expect(toolIdsForCategory("ai")).toEqual(["claude", "cursor", "copilot", "opencode"]);
+  });
+
+  it("returns IDE tool IDs for 'ide'", () => {
+    expect(toolIdsForCategory("ide")).toEqual(["vscode"]);
+  });
+});
+
+describe("assertToolIdsMatchCategory()", () => {
+  it("does not throw when all tools match the category", () => {
+    expect(() => assertToolIdsMatchCategory(["claude", "cursor"], "ai")).not.toThrow();
+    expect(() => assertToolIdsMatchCategory(["vscode"], "ide")).not.toThrow();
+  });
+
+  it("throws when an IDE tool is passed with 'ai' category", () => {
+    expect(() => assertToolIdsMatchCategory(["vscode" as ToolId], "ai")).toThrow(
+      /vscode is not an AI tool/
+    );
+  });
+
+  it("throws when an AI tool is passed with 'ide' category", () => {
+    expect(() => assertToolIdsMatchCategory(["claude" as ToolId], "ide")).toThrow(
+      /claude is not an IDE tool/
+    );
+  });
+
+  it("lists all wrong tools in the error message", () => {
+    expect(() =>
+      assertToolIdsMatchCategory(["claude" as ToolId, "cursor" as ToolId], "ide")
+    ).toThrow(/claude, cursor are not IDE tools/);
   });
 });
 

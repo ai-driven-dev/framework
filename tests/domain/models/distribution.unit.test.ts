@@ -5,10 +5,10 @@ import { FrameworkDescriptor } from "../../../src/domain/models/framework-descri
 import type { FileSystem } from "../../../src/domain/ports/file-system.js";
 import type { Hasher } from "../../../src/domain/ports/hasher.js";
 import type { Platform } from "../../../src/domain/ports/platform.js";
-import { claudeToolConfig } from "../../../src/domain/tools/claude.js";
-import { copilotToolConfig } from "../../../src/domain/tools/copilot.js";
-import { cursorToolConfig } from "../../../src/domain/tools/cursor.js";
-import { opencodeToolConfig } from "../../../src/domain/tools/opencode.js";
+import { claudeToolConfig } from "../../../src/domain/tools/ai/claude.js";
+import { copilotToolConfig } from "../../../src/domain/tools/ai/copilot.js";
+import { cursorToolConfig } from "../../../src/domain/tools/ai/cursor.js";
+import { opencodeToolConfig } from "../../../src/domain/tools/ai/opencode.js";
 
 const linuxPlatform: Platform = { current: () => "linux" };
 const win32Platform: Platform = { current: () => "win32" };

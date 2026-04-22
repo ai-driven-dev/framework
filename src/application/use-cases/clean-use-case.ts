@@ -1,4 +1,10 @@
 import { dirname, join } from "node:path";
+import {
+  isMergeContentEmpty,
+  type MergeFileEntry,
+  removeEntriesFromJson,
+} from "../../domain/models/merge-entry.js";
+import { AIDD_DIR } from "../../domain/models/paths.js";
 import type { ToolId } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
@@ -65,7 +71,7 @@ export class CleanUseCase {
     for (const toolId of manifest.getInstalledToolIds()) {
       this.logger.info(`Removing ${toolId} files...`);
       deleted += await this.deleteFiles(manifest.getToolFiles(toolId), options.projectRoot);
-      deleted += await this.deleteFiles(manifest.getMergeFiles(toolId), options.projectRoot);
+      deleted += await this.cleanMergeFileKeys(manifest.getMergeFiles(toolId), options.projectRoot);
     }
 
     this.logger.info("Removing docs files...");
@@ -75,10 +81,32 @@ export class CleanUseCase {
     await this.fs.deleteFile(catalogPath);
     await this.fs.deleteEmptyDirectories(join(options.projectRoot, manifest.docsDir));
 
-    await this.fs.deleteDirectory(join(options.projectRoot, ".aidd"));
-    await new GitignoreUseCase(this.fs).remove(options.projectRoot, [".aidd/cache/"]);
+    await this.fs.deleteDirectory(join(options.projectRoot, AIDD_DIR));
+    await new GitignoreUseCase(this.fs).remove(options.projectRoot, [`${AIDD_DIR}/cache/`]);
 
     return { dryRun: false, preview, fileCount: deleted };
+  }
+
+  private async cleanMergeFileKeys(
+    mergeFiles: readonly MergeFileEntry[],
+    projectRoot: string
+  ): Promise<number> {
+    let count = 0;
+    for (const mergeFile of mergeFiles) {
+      const fullPath = join(projectRoot, mergeFile.relativePath);
+      if (!(await this.fs.fileExists(fullPath))) continue;
+      const content = await this.fs.readFile(fullPath);
+      const keys = Object.keys(mergeFile.entries);
+      const cleaned = removeEntriesFromJson(content, mergeFile.sectionKey, keys);
+      if (isMergeContentEmpty(cleaned, mergeFile.sectionKey)) {
+        await this.fs.deleteFile(fullPath);
+        await this.fs.deleteEmptyDirectories(dirname(fullPath));
+      } else {
+        await this.fs.writeFile(fullPath, cleaned);
+      }
+      count++;
+    }
+    return count;
   }
 
   private async deleteFiles(

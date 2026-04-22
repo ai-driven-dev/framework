@@ -9,7 +9,7 @@ describe.concurrent("E2E: aidd doctor", () => {
     const { projectDir, cleanup } = await createTestEnv("doctor");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const { stdout, exitCode } = await runCli(["doctor"], projectDir);
 
@@ -24,7 +24,7 @@ describe.concurrent("E2E: aidd doctor", () => {
     const { projectDir, cleanup } = await createTestEnv("doctor");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await writeFile(join(projectDir, ".aidd", "manifest.json"), "{ not valid json", "utf-8");
 
       const { stderr, exitCode } = await runCli(["doctor"], projectDir);
@@ -52,7 +52,7 @@ describe.concurrent("E2E: aidd doctor", () => {
     const { projectDir, cleanup } = await createTestEnv("doctor");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       await writeFile(
         join(projectDir, ".claude", "agents", "code-reviewer.md"),
@@ -73,7 +73,7 @@ describe.concurrent("E2E: aidd doctor", () => {
     const { projectDir, cleanup } = await createTestEnv("doctor");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await rm(join(projectDir, Manifest.DEFAULT_DOCS_DIR), { recursive: true, force: true });
 
       const { stderr, exitCode } = await runCli(["doctor"], projectDir);
@@ -89,7 +89,7 @@ describe.concurrent("E2E: aidd doctor", () => {
     const { projectDir, cleanup } = await createTestEnv("doctor");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       // hasToolSignals checks signalDir (.cursor/commands) for .md files with aidd: frontmatter
       await mkdir(join(projectDir, ".cursor", "commands"), { recursive: true });

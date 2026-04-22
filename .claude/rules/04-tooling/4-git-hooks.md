@@ -1,7 +1,3 @@
----
-paths: []
----
-
 # Git Hooks (lefthook)
 
 - `pre-commit` — biome + typecheck

@@ -2,7 +2,12 @@ import { join } from "node:path";
 import type { FileHash } from "../../domain/models/file-hash.js";
 import type { Manifest } from "../../domain/models/manifest.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/merge-entry.js";
-import { getToolConfig, type ToolId } from "../../domain/models/tool-config.js";
+import {
+  getToolConfig,
+  type ToolCategory,
+  type ToolId,
+  toolIdsForCategory,
+} from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
@@ -37,6 +42,7 @@ interface StatusOptions {
   projectRoot: string;
   filterToolId?: ToolId;
   filterDocs?: boolean;
+  category?: ToolCategory;
   repo?: string;
 }
 
@@ -49,15 +55,16 @@ export class StatusUseCase {
   ) {}
 
   async execute(options: StatusOptions): Promise<StatusReport> {
-    const { projectRoot, filterToolId, filterDocs, repo } = options;
+    const { projectRoot, filterToolId, filterDocs, category, repo } = options;
     const manifest = await this.manifestRepo.load();
     if (manifest === null) throw new NoManifestError(repo);
     if (filterToolId && !manifest.hasTool(filterToolId))
       throw new ToolNotInstalledError(filterToolId);
 
-    const installedToolIds = this.resolveToolIds(filterToolId, filterDocs, manifest);
+    const installedToolIds = this.resolveToolIds(filterToolId, filterDocs, category, manifest);
+    const showDocs = !category && !filterToolId;
     const tools = await this.checkAllTools(installedToolIds, manifest, projectRoot);
-    const docs = await this.checkDocsSection(manifest, projectRoot, filterToolId, filterDocs);
+    const docs = await this.checkDocsSection(manifest, projectRoot, filterDocs, showDocs);
     const inSync =
       tools.every((t) => t.drifted.length === 0) && (docs === null || docs.drifted.length === 0);
     return { tools, docs, inSync };
@@ -66,10 +73,17 @@ export class StatusUseCase {
   private resolveToolIds(
     filterToolId: ToolId | undefined,
     filterDocs: boolean | undefined,
+    category: ToolCategory | undefined,
     manifest: Manifest
   ): ToolId[] {
     if (filterDocs) return [];
     if (filterToolId) return [filterToolId];
+    if (category) {
+      const allowed = toolIdsForCategory(category);
+      return manifest
+        .getInstalledToolIds()
+        .filter((id) => (allowed as readonly string[]).includes(id));
+    }
     return manifest.getInstalledToolIds();
   }
 
@@ -95,23 +109,20 @@ export class StatusUseCase {
     const mergeFiles = manifest.getMergeFiles(toolId);
     const drifted = await this.checkTrackedFiles(trackedFiles, projectRoot);
     drifted.push(...(await this.checkMergeFiles(mergeFiles, projectRoot)));
-    const trackedSet = new Set([
-      ...trackedFiles.map((f) => f.relativePath),
-      ...mergeFiles.map((m) => m.relativePath),
-    ]);
-    drifted.push(
-      ...(await this.detectAddedFiles(getToolConfig(toolId).directory, trackedSet, projectRoot))
-    );
+    const dir = getToolConfig(toolId).directory;
+    const trackedSet = manifest.getTrackedPathsInDirectory(dir);
+    drifted.push(...(await this.detectAddedFiles(dir, trackedSet, projectRoot)));
     return { toolId, version, drifted };
   }
 
   private async checkDocsSection(
     manifest: Manifest,
     projectRoot: string,
-    filterToolId: ToolId | undefined,
-    filterDocs: boolean | undefined
+    filterDocs: boolean | undefined,
+    showDocs: boolean
   ): Promise<DocsStatus | null> {
-    if (!(filterDocs || !filterToolId) || !manifest.hasDocs()) return null;
+    if (!showDocs && !filterDocs) return null;
+    if (!manifest.hasDocs()) return null;
     const docsVersion = manifest.getDocsVersion() ?? "unknown";
     const docsFiles = manifest.getDocsFiles();
     const drifted = await this.checkTrackedFiles(docsFiles, projectRoot);

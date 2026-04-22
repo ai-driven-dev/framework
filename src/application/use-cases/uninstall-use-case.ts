@@ -1,8 +1,17 @@
 import { dirname, join } from "node:path";
 import type { Manifest } from "../../domain/models/manifest.js";
 import type { McpExclusion } from "../../domain/models/mcp-exclusion.js";
-import { type MergeFileEntry, removeEntriesFromJson } from "../../domain/models/merge-entry.js";
-import { type ToolId, VALID_TOOL_IDS } from "../../domain/models/tool-config.js";
+import {
+  isMergeContentEmpty,
+  type MergeFileEntry,
+  removeEntriesFromJson,
+} from "../../domain/models/merge-entry.js";
+import {
+  getToolConfig,
+  isAiToolConfig,
+  type ToolId,
+  VALID_TOOL_IDS,
+} from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -81,11 +90,23 @@ export class UninstallUseCase {
     this.logger.info(`Removing ${toolId} files...`);
 
     const sharedPaths = this.computeSharedPaths(toolId, allToolIds, manifest);
+    const mergeFilePaths = this.collectMergeFilePaths(toolId, manifest);
     const allPaths = this.collectToolPaths(toolId, manifest);
     const deletedFiles: string[] = [];
 
     for (const relativePath of allPaths) {
-      if (sharedPaths.has(relativePath)) continue;
+      if (sharedPaths.has(relativePath) && !mergeFilePaths.has(relativePath)) continue;
+      if (mergeFilePaths.has(relativePath)) {
+        const removed = await this.removeMergeFile(
+          toolId,
+          allToolIds,
+          relativePath,
+          manifest,
+          projectRoot
+        );
+        if (removed) deletedFiles.push(relativePath);
+        continue;
+      }
       const fullPath = join(projectRoot, relativePath);
       await this.fs.deleteFile(fullPath);
       deletedFiles.push(relativePath);
@@ -94,6 +115,76 @@ export class UninstallUseCase {
 
     manifest.removeTool(toolId);
     return { toolId, fileCount: deletedFiles.length, deletedFiles };
+  }
+
+  private collectMergeFilePaths(toolId: ToolId, manifest: Manifest): Set<string> {
+    return new Set(manifest.getMergeFiles(toolId).map((m) => m.relativePath));
+  }
+
+  private async removeMergeFile(
+    toolId: ToolId,
+    allToolIds: ToolId[],
+    relativePath: string,
+    manifest: Manifest,
+    projectRoot: string
+  ): Promise<boolean> {
+    const mergeEntry = manifest.getMergeFiles(toolId).find((m) => m.relativePath === relativePath);
+    if (!mergeEntry) return false;
+    const fullPath = join(projectRoot, relativePath);
+    if (!(await this.fs.fileExists(fullPath))) return false;
+    const canDelete = this.computeDeletePermission(toolId, allToolIds, relativePath, manifest);
+    if (mergeEntry.sectionKey === null && canDelete) {
+      await this.fs.deleteFile(fullPath);
+      await this.fs.deleteEmptyDirectories(dirname(fullPath));
+      return true;
+    }
+    return this.deleteOrWriteStripped(fullPath, mergeEntry, canDelete);
+  }
+
+  private computeDeletePermission(
+    toolId: ToolId,
+    allToolIds: ToolId[],
+    relativePath: string,
+    manifest: Manifest
+  ): boolean {
+    const otherOwnersExist = this.otherToolsOwnMergeFile(
+      toolId,
+      allToolIds,
+      relativePath,
+      manifest
+    );
+    const isIdeTool = !isAiToolConfig(getToolConfig(toolId));
+    return !otherOwnersExist && !isIdeTool;
+  }
+
+  private async deleteOrWriteStripped(
+    fullPath: string,
+    mergeEntry: MergeFileEntry,
+    canDelete: boolean
+  ): Promise<boolean> {
+    const content = await this.fs.readFile(fullPath);
+    const keys = Object.keys(mergeEntry.entries);
+    const cleaned = removeEntriesFromJson(content, mergeEntry.sectionKey, keys);
+    if (canDelete && isMergeContentEmpty(cleaned, mergeEntry.sectionKey)) {
+      await this.fs.deleteFile(fullPath);
+      await this.fs.deleteEmptyDirectories(dirname(fullPath));
+      return true;
+    }
+    await this.fs.writeFile(fullPath, cleaned);
+    return false;
+  }
+
+  private otherToolsOwnMergeFile(
+    toolId: ToolId,
+    allToolIds: ToolId[],
+    relativePath: string,
+    manifest: Manifest
+  ): boolean {
+    const uninstallingSet = new Set([toolId, ...allToolIds]);
+    return manifest
+      .getInstalledToolIds()
+      .filter((id) => !uninstallingSet.has(id))
+      .some((id) => manifest.getMergeFiles(id).some((m) => m.relativePath === relativePath));
   }
 
   private computeSharedPaths(

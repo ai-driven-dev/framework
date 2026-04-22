@@ -1,24 +1,24 @@
 import type { Command } from "commander";
-import { AuthenticationError } from "../../domain/errors.js";
+import type { AuthCredential, AuthLevel } from "../../domain/models/auth.js";
+import { AIDD_DIR } from "../../domain/models/paths.js";
+import { AuthProviderAdapter } from "../../infrastructure/adapters/auth-provider-adapter.js";
 import { GhCliAdapter } from "../../infrastructure/adapters/gh-cli-adapter.js";
-import { AuthReader } from "../../infrastructure/auth/auth-reader.js";
+import { GhTokenAdapter } from "../../infrastructure/adapters/gh-token-adapter.js";
+import { InquirerPrompterAdapter } from "../../infrastructure/adapters/prompter-adapter.js";
 import { AuthStorage } from "../../infrastructure/auth/auth-storage.js";
 import { HttpClient } from "../../infrastructure/http/http-client.js";
 import { ErrorHandler } from "../error-handler.js";
+import { InputRequiredError } from "../errors.js";
 import { AuthLoginUseCase } from "../use-cases/auth-login-use-case.js";
 import { AuthLogoutUseCase } from "../use-cases/auth-logout-use-case.js";
 import { AuthStatusUseCase } from "../use-cases/auth-status-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
-function makeHttpGet(http: HttpClient) {
-  return async (url: string, token: string): Promise<{ login: string }> => {
-    const response = await http.get(url, { token });
-    const body = response.body as Record<string, unknown>;
-    if (typeof body.login !== "string") {
-      throw new AuthenticationError("GitHub API");
-    }
-    return { login: body.login };
-  };
+function buildAuthProvider(projectRoot: string): AuthProviderAdapter {
+  const storage = new AuthStorage();
+  const http = new HttpClient();
+  const externalProviders = new Map([["gh", new GhCliAdapter()]]);
+  return new AuthProviderAdapter(storage, externalProviders, new GhTokenAdapter(http), projectRoot);
 }
 
 export function registerAuthCommand(program: Command): void {
@@ -35,46 +35,54 @@ export function registerAuthCommand(program: Command): void {
       const { output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
 
+      if (cmdOptions.gh && cmdOptions.token) {
+        output.error("--gh and --token are mutually exclusive.");
+        process.exit(1);
+      }
+      if (!cmdOptions.gh && !cmdOptions.token && !process.stdout.isTTY) {
+        output.error("Use --gh or --token <value> in non-interactive mode.");
+        process.exit(1);
+      }
+      if (!cmdOptions.level && !process.stdout.isTTY) {
+        output.error("Use --level <user|project> in non-interactive mode.");
+        process.exit(1);
+      }
+      const rawLevel = cmdOptions.level;
+      if (rawLevel !== undefined && rawLevel !== "user" && rawLevel !== "project") {
+        output.error("--level must be 'user' or 'project'.");
+        process.exit(1);
+      }
+
       try {
-        const storage = new AuthStorage();
-        const http = new HttpClient();
-        const useCase = new AuthLoginUseCase(storage, makeHttpGet(http), new GhCliAdapter());
+        const prompter = new InquirerPrompterAdapter();
+        const level: AuthLevel =
+          (rawLevel as AuthLevel) ??
+          (await prompter.select<AuthLevel>("Storage level:", [
+            { name: "User (~/.config/aidd/auth.json)", value: "user" },
+            { name: `Project (${AIDD_DIR}/auth.json)`, value: "project" },
+          ]));
 
-        const method: "gh" | "token" | undefined = cmdOptions.gh
-          ? "gh"
-          : cmdOptions.token
-            ? "token"
-            : undefined;
-
-        const level = cmdOptions.level as "user" | "project" | undefined;
-
-        if (!method && !process.stdout.isTTY) {
-          output.error("Use --gh or --token <value> in non-interactive mode.");
-          process.exit(1);
+        let credential: AuthCredential;
+        if (cmdOptions.gh) {
+          credential = { method: "external", provider: "gh" };
+        } else if (cmdOptions.token) {
+          credential = { method: "stored", token: cmdOptions.token };
+        } else {
+          const wantsPat = await prompter.confirm("Do you have a Personal Access Token?");
+          if (!wantsPat) {
+            credential = { method: "external", provider: "gh" };
+          } else {
+            const token = await prompter.input("Paste your GitHub Personal Access Token:");
+            if (!token) throw new InputRequiredError("Token cannot be empty.");
+            credential = { method: "stored", token };
+          }
         }
 
-        if (!level && !process.stdout.isTTY) {
-          output.error("Use --level <user|project> in non-interactive mode.");
-          process.exit(1);
-        }
-
-        const { InquirerPrompterAdapter, SilentPrompterAdapter } = await import(
-          "../../infrastructure/adapters/prompter-adapter.js"
-        );
-        const prompter = process.stdout.isTTY
-          ? new InquirerPrompterAdapter()
-          : new SilentPrompterAdapter();
-
-        const result = await useCase.execute({
-          method,
-          token: cmdOptions.token,
+        const result = await new AuthLoginUseCase(buildAuthProvider(projectRoot)).execute({
+          credential,
           level,
-          projectRoot,
-          interactive: process.stdout.isTTY,
-          prompter,
         });
-
-        output.success(`Authenticated as ${result.login} (${result.method}, ${result.level})`);
+        output.success(`Authenticated as ${result.login} (${result.level})`);
       } catch (error) {
         errorHandler.handle(error);
       }
@@ -88,20 +96,20 @@ export function registerAuthCommand(program: Command): void {
       const errorHandler = new ErrorHandler(output);
 
       try {
-        const storage = new AuthStorage();
-        const useCase = new AuthLogoutUseCase(storage);
-        const result = await useCase.execute({ projectRoot });
+        const result = await new AuthLogoutUseCase(buildAuthProvider(projectRoot)).execute();
 
         if (!result.found) {
           output.info("Not authenticated.");
           return;
         }
 
-        if (result.ghHint) {
-          output.info(result.ghHint);
+        if (result.hint === "external-provider-cleanup") {
+          output.info(
+            "To fully logout, run the external provider's logout command (e.g. gh auth logout)."
+          );
         }
 
-        output.success(`Logged out (${result.method}, ${result.level})`);
+        output.success(`Logged out (${result.level})`);
       } catch (error) {
         errorHandler.handle(error);
       }
@@ -115,27 +123,8 @@ export function registerAuthCommand(program: Command): void {
       const errorHandler = new ErrorHandler(output);
 
       try {
-        const storage = new AuthStorage();
-        const authReader = new AuthReader(storage, projectRoot, undefined, new GhCliAdapter());
-        const http = new HttpClient();
-        const useCase = new AuthStatusUseCase(authReader, storage);
-
-        const result = await useCase.execute({
-          projectRoot,
-          httpGet: makeHttpGet(http),
-        });
-
-        if (!result.authenticated) {
-          output.info("Not authenticated. Run aidd auth login");
-          process.exit(1);
-        }
-
-        if (!result.valid) {
-          output.error(`Token is invalid or expired: ${result.reason}`);
-          process.exit(1);
-        }
-
-        output.success(`Authenticated as ${result.login} (${result.method}, ${result.level})`);
+        const result = await new AuthStatusUseCase(buildAuthProvider(projectRoot)).execute();
+        output.success(`Authenticated as ${result.login} (${result.level})`);
       } catch (error) {
         errorHandler.handle(error);
       }

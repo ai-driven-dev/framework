@@ -1,3 +1,5 @@
+import type { IdeToolId } from "./tool-config.js";
+
 export const TOOLS_PLACEHOLDER = "{{TOOLS}}/";
 export const DOCS_PLACEHOLDER = "{{DOCS}}/";
 export const AT_TOOLS_PLACEHOLDER = "@{{TOOLS}}/";
@@ -12,6 +14,7 @@ export const CONFIG_MCP = "mcp";
 export const CONFIG_VSCODE_SETTINGS = "vscodeSettings";
 export const CONFIG_VSCODE_EXTENSIONS = "vscodeExtensions";
 export const CONFIG_VSCODE_KEYBINDINGS = "vscodeKeybindings";
+export const CONFIG_COPILOT_VSCODE_SETTINGS = "copilotVscodeSettings";
 export const CONFIG_OPENCODE = "opencode";
 
 export const TEMPLATE_AGENTS_MD = "agentsMd";
@@ -35,6 +38,7 @@ export interface TemplateRef {
 export interface ConfigRef {
   readonly name: string;
   readonly path: string;
+  readonly requiredIdeId?: IdeToolId;
 }
 
 export interface ScriptRef {

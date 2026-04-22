@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import {
-  assertValidToolIds,
+  assertToolIdsMatchCategory,
   type ToolId,
   VALID_TOOL_IDS,
 } from "../../domain/models/tool-config.js";
@@ -10,6 +10,32 @@ import type { CLIOutput } from "../output.js";
 import type { InstallToolResult } from "../use-cases/install-use-case.js";
 import { SetupUseCase } from "../use-cases/setup-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
+
+function resolveToolIds(
+  cmdOptions: { all?: boolean; ai?: string; ide?: string },
+  errorHandler: ErrorHandler
+): ToolId[] | undefined | null {
+  if (cmdOptions.all) return [...VALID_TOOL_IDS];
+  const aiIds =
+    cmdOptions.ai
+      ?.split(",")
+      .map((s) => s.trim())
+      .filter(Boolean) ?? [];
+  const ideIds =
+    cmdOptions.ide
+      ?.split(",")
+      .map((s) => s.trim())
+      .filter(Boolean) ?? [];
+  try {
+    if (aiIds.length > 0) assertToolIdsMatchCategory(aiIds as ToolId[], "ai");
+    if (ideIds.length > 0) assertToolIdsMatchCategory(ideIds as ToolId[], "ide");
+  } catch (e) {
+    errorHandler.handle(e);
+    return null;
+  }
+  if (aiIds.length === 0 && ideIds.length === 0) return undefined;
+  return [...aiIds, ...ideIds] as ToolId[];
+}
 
 function displayInstall(output: CLIOutput, results: InstallToolResult[], verbose: boolean): void {
   const skipped = results.filter((r) => r.skipped);
@@ -37,8 +63,9 @@ export function registerSetupCommand(program: Command): void {
     .option("--path <path>", "Path to a local framework directory or tarball")
     .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
     .option("--docs-dir <dir>", "Documentation directory name (default: aidd_docs)")
-    .option("--tools <ids>", "Comma-separated tool IDs to install (e.g., claude,cursor)")
-    .option("--all-tools", "Install all available tools")
+    .option("--ai <ids>", "Comma-separated AI tool IDs to install (e.g., claude,cursor)")
+    .option("--ide <ids>", "Comma-separated IDE tool IDs to install (e.g., vscode)")
+    .option("--all", "Install all available tools (AI + IDE)")
     .option(
       "--from <version>",
       "Framework version already installed, required for adopt (e.g., v3.2.0)"
@@ -48,28 +75,19 @@ export function registerSetupCommand(program: Command): void {
         path?: string;
         release?: string;
         docsDir?: string;
-        tools?: string;
-        allTools?: boolean;
+        ai?: string;
+        ide?: string;
+        all?: boolean;
         from?: string;
       }) => {
         const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
 
-        const rawToolIds = cmdOptions.allTools
-          ? [...VALID_TOOL_IDS]
-          : cmdOptions.tools
-            ? (cmdOptions.tools.split(",").map((s) => s.trim()) as ToolId[])
-            : undefined;
-        if (rawToolIds && rawToolIds.length > 0) {
-          try {
-            assertValidToolIds(rawToolIds);
-          } catch (e) {
-            errorHandler.handle(e);
-          }
-        }
+        const rawToolIds = resolveToolIds(cmdOptions, errorHandler);
+        if (rawToolIds === null) return;
 
         try {
-          const hasScriptingFlags = !!(cmdOptions.allTools || cmdOptions.tools);
+          const hasScriptingFlags = !!(cmdOptions.all || cmdOptions.ai || cmdOptions.ide);
           const interactive = process.stdout.isTTY && !hasScriptingFlags;
 
           const deps = await createDeps(projectRoot, { verbose, repo }, output);
