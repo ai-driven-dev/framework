@@ -1024,10 +1024,39 @@ describe("update", () => {
         interactive: true,
       });
 
-      expect(prompter.checkboxCalls.length).toBeGreaterThan(0);
-      const mcpCall = prompter.checkboxCalls.find((c) => c.message.includes("MCP"));
-      expect(mcpCall).toBeDefined();
-      expect(mcpCall?.choices.some((c) => c.name === "slack")).toBe(true);
+      expect(prompter.checkboxCalls).toHaveLength(1);
+      expect(prompter.checkboxCalls[0].message).toContain("not yet installed");
+      expect(prompter.checkboxCalls[0].choices.some((c) => c.name === "slack")).toBe(true);
+    });
+
+    it("shows single MCP prompt when two tools have the same new MCP entry", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+      await installTool(deps, projectRoot, "claude");
+      await installTool(deps, projectRoot, "cursor");
+
+      const prompter = new CheckboxTrackingPrompter(true);
+      const useCase = new UpdateUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform,
+        prompter
+      );
+
+      await useCase.execute({
+        frameworkPath: FIXTURE_DIR_V2,
+        version: "test-v2",
+        docsDir: "aidd_docs",
+        projectRoot,
+        interactive: true,
+      });
+
+      expect(prompter.checkboxCalls).toHaveLength(1);
+      expect(prompter.checkboxCalls[0].message).toContain("not yet installed");
     });
 
     it("clears exclusions and installs all when using --force", async () => {
