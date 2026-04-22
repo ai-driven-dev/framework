@@ -1,3 +1,4 @@
+import type { AuthLevel, AuthMethod } from "../../domain/models/auth.js";
 import type { AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
 import type { ExternalTokenProvider } from "../../domain/ports/external-token-provider.js";
 import type { Logger } from "../../domain/ports/logger.js";
@@ -5,8 +6,8 @@ import type { AuthStorage } from "./auth-storage.js";
 
 export interface AuthContext {
   token: string;
-  method: "gh" | "token";
-  level: "user" | "project";
+  method: AuthMethod;
+  level: AuthLevel;
 }
 
 const noopExternalProvider: ExternalTokenProvider = { resolve: () => null };
@@ -28,14 +29,14 @@ export class AuthReader implements AuthTokenProvider {
 
     const projectConfig = await this.storage.read(this.storage.projectConfigPath(this.projectRoot));
     if (projectConfig !== null) {
-      if (projectConfig.method === "token" && projectConfig.token) {
-        this.logger?.debug("Token resolved from project auth.json (token)");
+      if (projectConfig.method === "stored" && projectConfig.token) {
+        this.logger?.debug("Token resolved from project auth.json (stored)");
         return projectConfig.token;
       }
-      if (projectConfig.method === "gh") {
+      if (projectConfig.method === "external") {
         const token = this.externalProvider.resolve();
         if (token) {
-          this.logger?.debug("Token resolved from project auth.json (gh)");
+          this.logger?.debug("Token resolved from project auth.json (external)");
           return token;
         }
       }
@@ -43,14 +44,14 @@ export class AuthReader implements AuthTokenProvider {
 
     const userConfig = await this.storage.read(this.storage.userConfigPath());
     if (userConfig !== null) {
-      if (userConfig.method === "token" && userConfig.token) {
-        this.logger?.debug("Token resolved from user auth.json (token)");
+      if (userConfig.method === "stored" && userConfig.token) {
+        this.logger?.debug("Token resolved from user auth.json (stored)");
         return userConfig.token;
       }
-      if (userConfig.method === "gh") {
+      if (userConfig.method === "external") {
         const token = this.externalProvider.resolve();
         if (token) {
-          this.logger?.debug("Token resolved from user auth.json (gh)");
+          this.logger?.debug("Token resolved from user auth.json (external)");
           return token;
         }
       }
@@ -70,7 +71,7 @@ export class AuthReader implements AuthTokenProvider {
 
     return {
       token,
-      method: config?.method ?? "token",
+      method: config?.method ?? "stored",
       level: config?.level ?? "user",
     };
   }

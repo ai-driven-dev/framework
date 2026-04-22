@@ -1,3 +1,3 @@
 export interface LoginVerifier {
-  getLogin(token: string): Promise<string>;
+  verify(token: string): Promise<string>;
 }

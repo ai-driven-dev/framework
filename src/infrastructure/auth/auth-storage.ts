@@ -2,16 +2,25 @@ import { execSync } from "node:child_process";
 import { chmod, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import type { AuthConfig } from "../../domain/models/auth-config.js";
+import type { AuthConfig, AuthCredential, AuthLevel } from "../../domain/models/auth.js";
+import { AIDD_DIR } from "../../domain/models/paths.js";
 import { AuthStorageError } from "../errors.js";
 
+interface SaveOptions {
+  credential: AuthCredential;
+  level: AuthLevel;
+  projectRoot: string;
+}
+
 export class AuthStorage {
+  private static readonly AUTH_FILE = "auth.json";
+
   userConfigPath(): string {
-    return join(homedir(), ".config", "aidd", "auth.json");
+    return join(homedir(), ".config", "aidd", AuthStorage.AUTH_FILE);
   }
 
   projectConfigPath(projectRoot: string): string {
-    return join(projectRoot, ".aidd", "auth.json");
+    return join(projectRoot, AIDD_DIR, AuthStorage.AUTH_FILE);
   }
 
   async read(path: string): Promise<AuthConfig | null> {
@@ -46,6 +55,39 @@ export class AuthStorage {
   async delete(path: string): Promise<void> {
     await rm(path, { force: true });
   }
+
+  async readActive(projectRoot: string): Promise<AuthConfig | null> {
+    const envToken = process.env.AIDD_TOKEN;
+    if (envToken) {
+      return {
+        version: 1,
+        method: "stored",
+        level: "user",
+        token: envToken,
+        createdAt: new Date().toISOString(),
+      };
+    }
+    const projectConfig = await this.read(this.projectConfigPath(projectRoot));
+    if (projectConfig !== null) return projectConfig;
+    return this.read(this.userConfigPath());
+  }
+
+  async save(options: SaveOptions): Promise<void> {
+    const config: AuthConfig = {
+      version: 1,
+      method: options.credential.method,
+      level: options.level,
+      createdAt: new Date().toISOString(),
+      ...(options.credential.method === "stored"
+        ? { token: options.credential.token }
+        : { provider: options.credential.provider }),
+    };
+    const path =
+      options.level === "project"
+        ? this.projectConfigPath(options.projectRoot)
+        : this.userConfigPath();
+    await this.write(path, config);
+  }
 }
 
 function isAuthConfig(value: unknown): value is AuthConfig {
@@ -53,7 +95,7 @@ function isAuthConfig(value: unknown): value is AuthConfig {
   const obj = value as Record<string, unknown>;
   return (
     obj.version === 1 &&
-    (obj.method === "gh" || obj.method === "token") &&
+    (obj.method === "external" || obj.method === "stored") &&
     (obj.level === "user" || obj.level === "project") &&
     typeof obj.createdAt === "string"
   );
