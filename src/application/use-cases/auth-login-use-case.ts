@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { AuthenticationError } from "../../domain/errors.js";
 import type { AuthConfig } from "../../domain/models/auth-config.js";
 import type { ExternalTokenProvider } from "../../domain/ports/external-token-provider.js";
+import type { LoginVerifier } from "../../domain/ports/login-verifier.js";
 import type { AuthStorage } from "../../infrastructure/auth/auth-storage.js";
 import { InputRequiredError } from "../errors.js";
 
@@ -30,7 +31,8 @@ interface AuthLoginResult {
 export class AuthLoginUseCase {
   constructor(
     private readonly storage: AuthStorage,
-    private readonly httpGet: (url: string, token: string) => Promise<{ login: string }>,
+    private readonly ghVerifier: LoginVerifier,
+    private readonly tokenVerifier: LoginVerifier,
     private readonly externalProvider: ExternalTokenProvider
   ) {}
 
@@ -60,29 +62,9 @@ export class AuthLoginUseCase {
         "Storage level is required. Use --level user or --level project."
       );
 
-    let resolvedToken: string;
-
-    if (method === "gh") {
-      const ghToken = this.externalProvider.resolve();
-      if (!ghToken) {
-        throw new AuthenticationError("gh CLI");
-      }
-      resolvedToken = ghToken;
-    } else {
-      let token = options.token;
-      if (!token && options.interactive && options.prompter) {
-        token = await options.prompter.input("Paste your GitHub Personal Access Token:");
-        if (!token) throw new InputRequiredError("Token cannot be empty.");
-      }
-      if (!token) {
-        throw new InputRequiredError("--token <value> is required when using token method.");
-      }
-      resolvedToken = token;
-    }
-
-    const login = await this.httpGet("https://api.github.com/user", resolvedToken).then(
-      (r) => r.login
-    );
+    const resolvedToken = await this.resolveToken(method, options);
+    const verifier = method === "gh" ? this.ghVerifier : this.tokenVerifier;
+    const login = await verifier.getLogin(resolvedToken);
 
     const config: AuthConfig = {
       version: 1,
@@ -104,6 +86,26 @@ export class AuthLoginUseCase {
     }
 
     return { method, level, login };
+  }
+
+  private async resolveToken(method: "gh" | "token", options: AuthLoginOptions): Promise<string> {
+    if (method === "gh") {
+      const ghToken = this.externalProvider.resolve();
+      if (!ghToken) {
+        throw new AuthenticationError("gh CLI");
+      }
+      return ghToken;
+    }
+
+    let token = options.token;
+    if (!token && options.interactive && options.prompter) {
+      token = await options.prompter.input("Paste your GitHub Personal Access Token:");
+      if (!token) throw new InputRequiredError("Token cannot be empty.");
+    }
+    if (!token) {
+      throw new InputRequiredError("--token <value> is required when using token method.");
+    }
+    return token;
   }
 
   private async maybeAddToGitignore(projectRoot: string, prompter: Prompter): Promise<void> {

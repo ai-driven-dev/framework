@@ -1,6 +1,6 @@
 import type { Command } from "commander";
-import { AuthenticationError } from "../../domain/errors.js";
 import { GhCliAdapter } from "../../infrastructure/adapters/gh-cli-adapter.js";
+import { GhTokenAdapter } from "../../infrastructure/adapters/gh-token-adapter.js";
 import { AuthReader } from "../../infrastructure/auth/auth-reader.js";
 import { AuthStorage } from "../../infrastructure/auth/auth-storage.js";
 import { HttpClient } from "../../infrastructure/http/http-client.js";
@@ -9,17 +9,6 @@ import { AuthLoginUseCase } from "../use-cases/auth-login-use-case.js";
 import { AuthLogoutUseCase } from "../use-cases/auth-logout-use-case.js";
 import { AuthStatusUseCase } from "../use-cases/auth-status-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
-
-function makeHttpGet(http: HttpClient) {
-  return async (url: string, token: string): Promise<{ login: string }> => {
-    const response = await http.get(url, { token });
-    const body = response.body as Record<string, unknown>;
-    if (typeof body.login !== "string") {
-      throw new AuthenticationError("GitHub API");
-    }
-    return { login: body.login };
-  };
-}
 
 export function registerAuthCommand(program: Command): void {
   const authCmd = program.command("auth").description("Manage authentication");
@@ -37,8 +26,10 @@ export function registerAuthCommand(program: Command): void {
 
       try {
         const storage = new AuthStorage();
+        const ghAdapter = new GhCliAdapter();
         const http = new HttpClient();
-        const useCase = new AuthLoginUseCase(storage, makeHttpGet(http), new GhCliAdapter());
+        const tokenVerifier = new GhTokenAdapter(http);
+        const useCase = new AuthLoginUseCase(storage, ghAdapter, tokenVerifier, ghAdapter);
 
         const method: "gh" | "token" | undefined = cmdOptions.gh
           ? "gh"
@@ -116,13 +107,16 @@ export function registerAuthCommand(program: Command): void {
 
       try {
         const storage = new AuthStorage();
-        const authReader = new AuthReader(storage, projectRoot, undefined, new GhCliAdapter());
+        const ghAdapter = new GhCliAdapter();
         const http = new HttpClient();
+        const tokenVerifier = new GhTokenAdapter(http);
+        const authReader = new AuthReader(storage, projectRoot, undefined, ghAdapter);
         const useCase = new AuthStatusUseCase(authReader, storage);
 
         const result = await useCase.execute({
           projectRoot,
-          httpGet: makeHttpGet(http),
+          ghVerifier: ghAdapter,
+          tokenVerifier,
         });
 
         if (!result.authenticated) {

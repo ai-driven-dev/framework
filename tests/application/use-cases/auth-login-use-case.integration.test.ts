@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthLoginUseCase } from "../../../src/application/use-cases/auth-login-use-case.js";
 import type { ExternalTokenProvider } from "../../../src/domain/ports/external-token-provider.js";
+import type { LoginVerifier } from "../../../src/domain/ports/login-verifier.js";
 import type { AuthStorage } from "../../../src/infrastructure/auth/auth-storage.js";
 import { makeTempAuthStorage } from "../../helpers/auth.js";
 
@@ -19,17 +20,17 @@ describe("auth login", () => {
     await cleanup();
   });
 
-  function makeHttpGet(login: string) {
-    return async (_url: string, _token: string): Promise<{ login: string }> => ({
-      login,
-    });
+  function makeVerifier(login: string): LoginVerifier {
+    return { getLogin: async (_token: string) => login };
   }
 
-  function makeFailingHttpGet(statusCode: number) {
-    return async (): Promise<{ login: string }> => {
-      throw new Error(
-        `Authentication failed (HTTP ${statusCode}). Run aidd auth login to authenticate.`
-      );
+  function makeFailingVerifier(statusCode: number): LoginVerifier {
+    return {
+      getLogin: async (_token: string) => {
+        throw new Error(
+          `Authentication failed (HTTP ${statusCode}). Run aidd auth login to authenticate.`
+        );
+      },
     };
   }
 
@@ -41,7 +42,8 @@ describe("auth login", () => {
     it("stores token config at user level when method=token and level=user", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
-        makeHttpGet("octocat"),
+        makeVerifier("octocat"),
+        makeVerifier("octocat"),
         makeExternalProvider(null)
       );
       const result = await useCase.execute({
@@ -65,7 +67,8 @@ describe("auth login", () => {
     it("stores gh config at project level when method=gh and level=project", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
-        makeHttpGet("octocat"),
+        makeVerifier("octocat"),
+        makeVerifier("octocat"),
         makeExternalProvider("ghp_from_gh_cli")
       );
       const result = await useCase.execute({
@@ -91,7 +94,12 @@ describe("auth login", () => {
           );
         },
       };
-      const useCase = new AuthLoginUseCase(storage, makeHttpGet("octocat"), throwingProvider);
+      const useCase = new AuthLoginUseCase(
+        storage,
+        makeVerifier("octocat"),
+        makeVerifier("octocat"),
+        throwingProvider
+      );
       await expect(
         useCase.execute({
           method: "gh",
@@ -105,7 +113,8 @@ describe("auth login", () => {
     it("fails when gh CLI is not installed and method=gh", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
-        makeHttpGet("octocat"),
+        makeVerifier("octocat"),
+        makeVerifier("octocat"),
         makeExternalProvider(null)
       );
       await expect(
@@ -121,7 +130,8 @@ describe("auth login", () => {
     it("fails when token is invalid (HTTP 401)", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
-        makeFailingHttpGet(401),
+        makeVerifier("octocat"),
+        makeFailingVerifier(401),
         makeExternalProvider(null)
       );
       await expect(
@@ -138,7 +148,8 @@ describe("auth login", () => {
     it("fails when method is missing in non-interactive mode", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
-        makeHttpGet("octocat"),
+        makeVerifier("octocat"),
+        makeVerifier("octocat"),
         makeExternalProvider(null)
       );
       await expect(
@@ -153,7 +164,8 @@ describe("auth login", () => {
     it("fails when level is missing in non-interactive mode", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
-        makeHttpGet("octocat"),
+        makeVerifier("octocat"),
+        makeVerifier("octocat"),
         makeExternalProvider(null)
       );
       await expect(
@@ -179,7 +191,8 @@ describe("auth login", () => {
 
       const useCase = new AuthLoginUseCase(
         storage,
-        makeHttpGet("octocat"),
+        makeVerifier("octocat"),
+        makeVerifier("octocat"),
         makeExternalProvider(null)
       );
       const result = await useCase.execute({
@@ -203,7 +216,8 @@ describe("auth login", () => {
 
       const useCase = new AuthLoginUseCase(
         storage,
-        makeHttpGet("octocat"),
+        makeVerifier("octocat"),
+        makeVerifier("octocat"),
         makeExternalProvider(null)
       );
       const result = await useCase.execute({
@@ -221,7 +235,8 @@ describe("auth login", () => {
     it("fails when token input is empty in interactive mode", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
-        makeHttpGet("octocat"),
+        makeVerifier("octocat"),
+        makeVerifier("octocat"),
         makeExternalProvider(null)
       );
       await expect(
@@ -256,7 +271,8 @@ describe("auth login", () => {
 
       const useCase = new AuthLoginUseCase(
         storage,
-        makeHttpGet("octocat"),
+        makeVerifier("octocat"),
+        makeVerifier("octocat"),
         makeExternalProvider(null)
       );
       await useCase.execute({
@@ -287,7 +303,8 @@ describe("auth login", () => {
 
       const useCase = new AuthLoginUseCase(
         storage,
-        makeHttpGet("octocat"),
+        makeVerifier("octocat"),
+        makeVerifier("octocat"),
         makeExternalProvider(null)
       );
       await useCase.execute({

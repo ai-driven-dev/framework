@@ -1,9 +1,11 @@
 import type { AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
+import type { LoginVerifier } from "../../domain/ports/login-verifier.js";
 import type { AuthStorage } from "../../infrastructure/auth/auth-storage.js";
 
 interface AuthStatusOptions {
   projectRoot: string;
-  httpGet: (url: string, token: string) => Promise<{ login: string }>;
+  ghVerifier: LoginVerifier;
+  tokenVerifier: LoginVerifier;
 }
 
 type AuthStatusResult =
@@ -37,9 +39,10 @@ export class AuthStatusUseCase {
     const method = config?.method ?? "token";
     const level = config?.level ?? "user";
 
+    const verifier = method === "gh" ? options.ghVerifier : options.tokenVerifier;
     try {
-      const user = await options.httpGet("https://api.github.com/user", token);
-      return { authenticated: true, valid: true, method, level, login: user.login };
+      const login = await verifier.getLogin(token);
+      return { authenticated: true, valid: true, method, level, login };
     } catch (err) {
       return {
         authenticated: true,
