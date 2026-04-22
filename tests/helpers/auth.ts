@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { AuthConfig } from "../../src/domain/models/auth-config.js";
+import type { AuthConfig } from "../../src/domain/models/auth.js";
 import { AuthStorage } from "../../src/infrastructure/auth/auth-storage.js";
 
 export async function makeTempAuthStorage(prefix: string): Promise<{
@@ -23,7 +23,7 @@ export async function makeTempAuthStorage(prefix: string): Promise<{
 export function makeAuthConfig(overrides: Partial<AuthConfig> = {}): AuthConfig {
   return {
     version: 1,
-    method: "token",
+    method: "stored",
     level: "user",
     token: "ghp_test",
     createdAt: "2026-03-20T00:00:00.000Z",

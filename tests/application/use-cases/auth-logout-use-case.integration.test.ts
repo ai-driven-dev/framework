@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AuthLogoutUseCase } from "../../../src/application/use-cases/auth-logout-use-case.js";
+import type { AuthProvider } from "../../../src/domain/ports/auth-provider.js";
+import { AuthProviderAdapter } from "../../../src/infrastructure/adapters/auth-provider-adapter.js";
+import { GhCliAdapter } from "../../../src/infrastructure/adapters/gh-cli-adapter.js";
+import { GhTokenAdapter } from "../../../src/infrastructure/adapters/gh-token-adapter.js";
 import type { AuthStorage } from "../../../src/infrastructure/auth/auth-storage.js";
+import { HttpClient } from "../../../src/infrastructure/http/http-client.js";
 import { makeAuthConfig, makeTempAuthStorage } from "../../helpers/auth.js";
 
 describe("auth logout", () => {
@@ -16,9 +21,19 @@ describe("auth logout", () => {
     await cleanup();
   });
 
+  function makeProvider(): AuthProvider {
+    const http = new HttpClient();
+    return new AuthProviderAdapter(
+      storage,
+      new Map([["gh", new GhCliAdapter()]]),
+      new GhTokenAdapter(http),
+      tempDir
+    );
+  }
+
   it("reports no auth file found when user is not logged in", async () => {
-    const useCase = new AuthLogoutUseCase(storage);
-    const result = await useCase.execute({ projectRoot: tempDir });
+    const useCase = new AuthLogoutUseCase(makeProvider());
+    const result = await useCase.execute();
     expect(result.found).toBe(false);
   });
 
@@ -27,14 +42,13 @@ describe("auth logout", () => {
     const path = storage.projectConfigPath(tempDir);
     await storage.write(path, config);
 
-    const useCase = new AuthLogoutUseCase(storage);
-    const result = await useCase.execute({ projectRoot: tempDir });
+    const useCase = new AuthLogoutUseCase(makeProvider());
+    const result = await useCase.execute();
 
     expect(result.found).toBe(true);
     if (result.found) {
       expect(result.level).toBe("project");
-      expect(result.method).toBe("token");
-      expect(result.ghHint).toBeUndefined();
+      expect(result.hint).toBeUndefined();
     }
 
     const after = await storage.read(path);
@@ -44,8 +58,8 @@ describe("auth logout", () => {
   it("removes user auth.json when no project config found", async () => {
     await storage.write(storage.userConfigPath(), makeAuthConfig({ token: "ghp_user" }));
 
-    const useCase = new AuthLogoutUseCase(storage);
-    const result = await useCase.execute({ projectRoot: tempDir });
+    const useCase = new AuthLogoutUseCase(makeProvider());
+    const result = await useCase.execute();
 
     expect(result.found).toBe(true);
     if (result.found) {
@@ -53,18 +67,18 @@ describe("auth logout", () => {
     }
   });
 
-  it("provides gh hint when method=gh", async () => {
+  it("sets external-provider-cleanup hint when method=external", async () => {
     await storage.write(
       storage.userConfigPath(),
-      makeAuthConfig({ method: "gh", token: undefined })
+      makeAuthConfig({ method: "external", token: undefined })
     );
 
-    const useCase = new AuthLogoutUseCase(storage);
-    const result = await useCase.execute({ projectRoot: tempDir });
+    const useCase = new AuthLogoutUseCase(makeProvider());
+    const result = await useCase.execute();
 
     expect(result.found).toBe(true);
     if (result.found) {
-      expect(result.ghHint).toContain("gh auth logout");
+      expect(result.hint).toBe("external-provider-cleanup");
     }
   });
 });

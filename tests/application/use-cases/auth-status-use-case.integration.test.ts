@@ -1,42 +1,33 @@
 import { describe, expect, it } from "vitest";
 import { AuthStatusUseCase } from "../../../src/application/use-cases/auth-status-use-case.js";
-import type { LoginVerifier } from "../../../src/domain/ports/login-verifier.js";
+import { AuthenticationError } from "../../../src/domain/errors.js";
+import type { AuthProvider, AuthStatus } from "../../../src/domain/ports/auth-provider.js";
 
-const successVerifier: LoginVerifier = { getLogin: async (_token) => "octocat" };
-const failVerifier: LoginVerifier = {
-  getLogin: async (_token) => {
-    throw new Error("Authentication failed (HTTP 401).");
-  },
-};
+function makeAuthProvider(status: AuthStatus | null): AuthProvider {
+  return {
+    login: async () => {
+      throw new Error("not called");
+    },
+    status: async () => {
+      if (!status) throw new AuthenticationError("not authenticated");
+      return status;
+    },
+    logout: async () => {
+      throw new Error("not called");
+    },
+  };
+}
 
 describe("auth status", () => {
-  it("returns valid login when verifier succeeds", async () => {
-    const useCase = new AuthStatusUseCase();
-    const result = await useCase.execute({
-      token: "ghp_valid",
-      method: "token",
-      level: "user",
-      verifier: successVerifier,
-    });
-    expect(result.valid).toBe(true);
-    if (result.valid) {
-      expect(result.login).toBe("octocat");
-      expect(result.method).toBe("token");
-      expect(result.level).toBe("user");
-    }
+  it("returns status when provider resolves a valid login", async () => {
+    const useCase = new AuthStatusUseCase(makeAuthProvider({ login: "octocat", level: "user" }));
+    const result = await useCase.execute();
+    expect(result.login).toBe("octocat");
+    expect(result.level).toBe("user");
   });
 
-  it("returns invalid when verifier throws", async () => {
-    const useCase = new AuthStatusUseCase();
-    const result = await useCase.execute({
-      token: "ghp_expired",
-      method: "token",
-      level: "user",
-      verifier: failVerifier,
-    });
-    expect(result.valid).toBe(false);
-    if (!result.valid) {
-      expect(result.reason).toContain("401");
-    }
+  it("propagates error when provider throws", async () => {
+    const useCase = new AuthStatusUseCase(makeAuthProvider(null));
+    await expect(useCase.execute()).rejects.toThrow(/Authentication failed/);
   });
 });

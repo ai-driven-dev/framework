@@ -50,7 +50,7 @@ describe("AuthStorage", () => {
   describe("write", () => {
     it("creates parent directories and writes the file", async () => {
       const path = join(tempDir, "nested", "dir", "auth.json");
-      const config = makeAuthConfig({ method: "gh", level: "project", token: undefined });
+      const config = makeAuthConfig({ method: "external", level: "project", token: undefined });
       await storage.write(path, config);
       const content = await readFile(path, "utf-8");
       expect(JSON.parse(content)).toEqual(config);

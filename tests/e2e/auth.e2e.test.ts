@@ -39,7 +39,7 @@ describe.concurrent("E2E: aidd auth", () => {
       await mkdir(authDir, { recursive: true });
       const authConfig = {
         version: 1,
-        method: "token",
+        method: "stored",
         level: "project",
         token: "ghp_e2e_placeholder",
         createdAt: new Date().toISOString(),
@@ -51,7 +51,7 @@ describe.concurrent("E2E: aidd auth", () => {
       ) as typeof authConfig;
 
       expect(stored.version).toBe(1);
-      expect(stored.method).toBe("token");
+      expect(stored.method).toBe("stored");
       expect(stored.level).toBe("project");
       expect(typeof stored.token).toBe("string");
       expect(existsSync(join(authDir, "auth.json"))).toBe(true);
@@ -71,7 +71,7 @@ describe.concurrent("E2E: aidd auth", () => {
         JSON.stringify(
           {
             version: 1,
-            method: "token",
+            method: "stored",
             level: "project",
             token: "ghp_e2e_placeholder",
             createdAt: new Date().toISOString(),
