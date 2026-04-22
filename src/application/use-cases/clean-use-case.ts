@@ -4,6 +4,7 @@ import {
   type MergeFileEntry,
   removeEntriesFromJson,
 } from "../../domain/models/merge-entry.js";
+import { AIDD_DIR } from "../../domain/models/paths.js";
 import type { ToolId } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
@@ -80,8 +81,8 @@ export class CleanUseCase {
     await this.fs.deleteFile(catalogPath);
     await this.fs.deleteEmptyDirectories(join(options.projectRoot, manifest.docsDir));
 
-    await this.fs.deleteDirectory(join(options.projectRoot, ".aidd"));
-    await new GitignoreUseCase(this.fs).remove(options.projectRoot, [".aidd/cache/"]);
+    await this.fs.deleteDirectory(join(options.projectRoot, AIDD_DIR));
+    await new GitignoreUseCase(this.fs).remove(options.projectRoot, [`${AIDD_DIR}/cache/`]);
 
     return { dryRun: false, preview, fileCount: deleted };
   }

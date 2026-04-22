@@ -4,13 +4,14 @@ import type { FrameworkDescriptor } from "../../domain/models/framework-descript
 import { SCRIPT_UPDATE_MEMORY } from "../../domain/models/framework-descriptor.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
+import { AIDD_DIR } from "../../domain/models/paths.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Git } from "../../domain/ports/git.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 
-export const SCRIPT_RELATIVE_PATH = ".aidd/scripts/update_memory.js";
-const AIDD_HOOK_RELATIVE_PATH = ".aidd/hooks/pre-commit";
+export const SCRIPT_RELATIVE_PATH = `${AIDD_DIR}/scripts/update_memory.js`;
+const AIDD_HOOK_RELATIVE_PATH = `${AIDD_DIR}/hooks/pre-commit`;
 const HOOK_HEADER = "#!/bin/sh";
 
 interface MemoryScriptOptions {

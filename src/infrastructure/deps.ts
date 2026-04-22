@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import "../domain/tools/ai/claude.js";
+import { AIDD_DIR } from "../domain/models/paths.js";
 import "../domain/tools/ai/copilot.js";
 import "../domain/tools/ai/cursor.js";
 import "../domain/tools/ai/opencode.js";
@@ -85,7 +86,7 @@ export async function createDeps(
   }
   const manifestForRepo = await manifestRepo.load().catch(() => null);
   const effectiveRepo = repoFromFlag ?? manifestForRepo?.repo ?? "ai-driven-dev/aidd-framework";
-  const cacheDir = join(projectRoot, ".aidd", "cache");
+  const cacheDir = join(projectRoot, AIDD_DIR, "cache");
   const http = new HttpClient();
   const tar = new TarExtractor();
   const cache = new FrameworkCache(cacheDir);

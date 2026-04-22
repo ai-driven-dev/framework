@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { Command } from "commander";
 import { formatBytes } from "../../domain/models/file-size.js";
+import { AIDD_DIR } from "../../domain/models/paths.js";
 import { FrameworkCache } from "../../infrastructure/cache/framework-cache.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
@@ -17,7 +18,7 @@ function buildCacheCommand(program: Command): Command {
       const errorHandler = new ErrorHandler(output);
 
       try {
-        const cache = new FrameworkCache(join(projectRoot, ".aidd", "cache"));
+        const cache = new FrameworkCache(join(projectRoot, AIDD_DIR, "cache"));
         const entries = await cache.list();
 
         if (entries.length === 0) {
@@ -47,7 +48,7 @@ function buildCacheCommand(program: Command): Command {
       }
 
       try {
-        const cache = new FrameworkCache(join(projectRoot, ".aidd", "cache"));
+        const cache = new FrameworkCache(join(projectRoot, AIDD_DIR, "cache"));
 
         if (version !== undefined) {
           await cache.clear(version);

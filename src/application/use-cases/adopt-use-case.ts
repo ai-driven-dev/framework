@@ -3,6 +3,7 @@ import { generateForConfig } from "../../domain/models/distribution.js";
 import { buildDocsDistribution } from "../../domain/models/docs.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import { Manifest } from "../../domain/models/manifest.js";
+import { AIDD_DIR } from "../../domain/models/paths.js";
 import { assertValidToolIds, getToolConfig, type ToolId } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
@@ -97,7 +98,7 @@ export class AdoptUseCase {
     // AdoptUseCase calls gitignore directly (not via PostInstallPipelineUseCase).
     // MemoryScriptUseCase is intentionally absent: adopt only registers existing files,
     // no tool content is generated so there is no memory bank to write.
-    await new GitignoreUseCase(this.fs).execute(projectRoot, [".aidd/cache/"]);
+    await new GitignoreUseCase(this.fs).execute(projectRoot, [`${AIDD_DIR}/cache/`]);
   }
 
   private async registerAllTools(
@@ -212,7 +213,7 @@ export class AdoptUseCase {
   }
 
   private async deleteLegacyConfig(projectRoot: string): Promise<void> {
-    const configPath = join(projectRoot, ".aidd", "config.json");
+    const configPath = join(projectRoot, AIDD_DIR, "config.json");
     if (await this.fs.fileExists(configPath)) {
       await this.fs.deleteFile(configPath);
     }

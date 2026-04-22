@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { remapDocsPath, rewriteDocsContent } from "../../domain/models/docs.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";
 import { Manifest } from "../../domain/models/manifest.js";
+import { AIDD_DIR } from "../../domain/models/paths.js";
 import { getAllRegisteredTools, hasToolSignals } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
@@ -127,7 +128,7 @@ export class InitUseCase {
     await this.manifestRepo.save(manifest);
     await new CatalogUseCase(this.fs).execute({ manifest, docsDir, projectRoot });
     if (!force) {
-      await new GitignoreUseCase(this.fs).execute(projectRoot, [".aidd/cache/"]);
+      await new GitignoreUseCase(this.fs).execute(projectRoot, [`${AIDD_DIR}/cache/`]);
     }
   }
 
