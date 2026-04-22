@@ -13,15 +13,16 @@ Each command handler calls exactly ONE use-case. Commands wire, not orchestrate.
 
 ## FORBIDDEN in a command
 
-- Prompter calls => move into the use-case
+- Prompter calls for domain decisions (conflict resolution, strategy selection) => move into the use-case
 - Repository or manifest access => move into the use-case
 - Multiple use-case calls or orchestration between use-cases
 - Business decisions or domain logic
 
 ## Interactive mode
 
-- Pass `interactive: process.stdout.isTTY` to the use-case
-- The use-case owns all `Prompter` calls
+- Commands has to use `Prompter` to resolve missing CLI inputs (level, credential) before calling the use-case
+- Use-cases receive fully-resolved values — no `Prompter` for input collection inside a use-case
+- Prompter in use-cases is only for domain-level interaction (e.g. conflict resolution, strategy selection)
 - Non-interactive guards stay in the command (fast early exit before deps creation)
 
 ## Template
