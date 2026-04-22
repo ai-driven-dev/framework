@@ -29,6 +29,25 @@ describe("init", () => {
     return new InitUseCase(fs, manifestRepo, loader, hasher, logger);
   }
 
+  it("registers existing doc files with disk hash without overwriting them", async () => {
+    const docFile = join(projectRoot, "aidd_docs", "README.md");
+    await mkdir(join(projectRoot, "aidd_docs"), { recursive: true });
+    await writeFile(docFile, "custom content");
+
+    await buildUseCase().execute({
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+
+    expect(await readFile(docFile, "utf-8")).toBe("custom content");
+    const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+    const manifest = JSON.parse(raw) as { docs: { files: { relativePath: string }[] } };
+    const tracked = manifest.docs.files.some((f) => f.relativePath === "aidd_docs/README.md");
+    expect(tracked).toBe(true);
+  });
+
   it("creates the docs directory from framework templates", async () => {
     const result = await buildUseCase().execute({
       frameworkPath: FIXTURE_DIR,
@@ -83,12 +102,12 @@ describe("init", () => {
       ).resolves.toBeUndefined();
     });
 
-    it("aborts with adopt guidance when docs directory already exists", async () => {
+    it("passes when docs directory already exists without tool signals", async () => {
       await mkdir(join(projectRoot, "aidd_docs"), { recursive: true });
 
       await expect(
         buildUseCase().checkPreconditions({ docsDir: "aidd_docs", projectRoot })
-      ).rejects.toThrow("Repository:");
+      ).resolves.toBeUndefined();
     });
 
     it("aborts with adopt guidance when .claude/ contains AIDD frontmatter", async () => {

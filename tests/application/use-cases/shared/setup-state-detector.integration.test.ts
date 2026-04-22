@@ -48,7 +48,7 @@ describe("SetupStateDetector", () => {
     expect(state.kind).toBe("needs-init");
   });
 
-  it("detects needs-adopt state when docs directory exists without manifest", async () => {
+  it("detects needs-init state when only docs directory exists without manifest and no tool signals", async () => {
     await mkdir(join(projectRoot, Manifest.DEFAULT_DOCS_DIR), { recursive: true });
 
     const deps = buildDeps(projectRoot);
@@ -57,11 +57,7 @@ describe("SetupStateDetector", () => {
 
     const state = await detector.detect(projectRoot);
 
-    expect(state.kind).toBe("needs-adopt");
-    if (state.kind === "needs-adopt") {
-      expect(state.signals).toHaveLength(1);
-      expect(state.signals[0]).toMatchObject({ type: "docsDir", path: Manifest.DEFAULT_DOCS_DIR });
-    }
+    expect(state.kind).toBe("needs-init");
   });
 
   it("detects needs-adopt state when AIDD-branded file found without manifest", async () => {

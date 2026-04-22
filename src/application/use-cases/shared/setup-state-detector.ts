@@ -1,5 +1,3 @@
-import { join } from "node:path";
-import { Manifest } from "../../../domain/models/manifest.js";
 import { compareSemver, isSemver } from "../../../domain/models/semver.js";
 import {
   getAllRegisteredTools,
@@ -10,9 +8,7 @@ import type { FileSystem } from "../../../domain/ports/file-system.js";
 import type { FrameworkResolver } from "../../../domain/ports/framework-resolver.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 
-export type AdoptSignal =
-  | { type: "docsDir"; path: string }
-  | { type: "toolSignal"; tool: ToolId; file: string };
+export type AdoptSignal = { type: "toolSignal"; tool: ToolId; file: string };
 
 export type SetupState =
   | { kind: "needs-init" }
@@ -45,8 +41,6 @@ export class SetupStateDetector {
 
   private async detectWithoutManifest(projectRoot: string): Promise<SetupState> {
     const signals: AdoptSignal[] = [];
-    const docsDirExists = await this.fs.fileExists(join(projectRoot, Manifest.DEFAULT_DOCS_DIR));
-    if (docsDirExists) signals.push({ type: "docsDir", path: Manifest.DEFAULT_DOCS_DIR });
     for (const [id, tool] of getAllRegisteredTools()) {
       for (const file of await hasToolSignals(this.fs, tool, projectRoot)) {
         signals.push({ type: "toolSignal", tool: id, file });
