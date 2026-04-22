@@ -4,8 +4,7 @@ import type { AuthStorage } from "../../infrastructure/auth/auth-storage.js";
 
 interface AuthStatusOptions {
   projectRoot: string;
-  ghVerifier: LoginVerifier;
-  tokenVerifier: LoginVerifier;
+  verifiers: Record<"gh" | "token", LoginVerifier>;
 }
 
 type AuthStatusResult =
@@ -39,9 +38,8 @@ export class AuthStatusUseCase {
     const method = config?.method ?? "token";
     const level = config?.level ?? "user";
 
-    const verifier = method === "gh" ? options.ghVerifier : options.tokenVerifier;
     try {
-      const login = await verifier.getLogin(token);
+      const login = await options.verifiers[method].getLogin(token);
       return { authenticated: true, valid: true, method, level, login };
     } catch (err) {
       return {

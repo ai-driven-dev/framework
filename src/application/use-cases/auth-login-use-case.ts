@@ -14,7 +14,7 @@ interface Prompter {
 }
 
 interface AuthLoginOptions {
-  method?: "gh" | "token";
+  method: "gh" | "token";
   token?: string;
   level?: "user" | "project";
   projectRoot: string;
@@ -31,22 +31,15 @@ interface AuthLoginResult {
 export class AuthLoginUseCase {
   constructor(
     private readonly storage: AuthStorage,
-    private readonly ghVerifier: LoginVerifier,
-    private readonly tokenVerifier: LoginVerifier,
+    private readonly loginVerifier: LoginVerifier,
     private readonly externalProvider: ExternalTokenProvider
   ) {}
 
   async execute(options: AuthLoginOptions): Promise<AuthLoginResult> {
-    let method = options.method;
+    const method = options.method;
     let level = options.level;
 
     if (options.interactive && options.prompter) {
-      if (!method) {
-        method = await options.prompter.select<"gh" | "token">("Authentication method:", [
-          { name: "GitHub CLI (gh auth token)", value: "gh" },
-          { name: "Personal Access Token", value: "token" },
-        ]);
-      }
       if (!level) {
         level = await options.prompter.select<"user" | "project">("Storage level:", [
           { name: "User (~/.config/aidd/auth.json)", value: "user" },
@@ -55,16 +48,13 @@ export class AuthLoginUseCase {
       }
     }
 
-    if (!method)
-      throw new InputRequiredError("Authentication method is required. Use --gh or --token.");
     if (!level)
       throw new InputRequiredError(
         "Storage level is required. Use --level user or --level project."
       );
 
     const resolvedToken = await this.resolveToken(method, options);
-    const verifier = method === "gh" ? this.ghVerifier : this.tokenVerifier;
-    const login = await verifier.getLogin(resolvedToken);
+    const login = await this.loginVerifier.getLogin(resolvedToken);
 
     const config: AuthConfig = {
       version: 1,

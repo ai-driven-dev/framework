@@ -43,7 +43,6 @@ describe("auth login", () => {
       const useCase = new AuthLoginUseCase(
         storage,
         makeVerifier("octocat"),
-        makeVerifier("octocat"),
         makeExternalProvider(null)
       );
       const result = await useCase.execute({
@@ -67,7 +66,6 @@ describe("auth login", () => {
     it("stores gh config at project level when method=gh and level=project", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
-        makeVerifier("octocat"),
         makeVerifier("octocat"),
         makeExternalProvider("ghp_from_gh_cli")
       );
@@ -94,12 +92,7 @@ describe("auth login", () => {
           );
         },
       };
-      const useCase = new AuthLoginUseCase(
-        storage,
-        makeVerifier("octocat"),
-        makeVerifier("octocat"),
-        throwingProvider
-      );
+      const useCase = new AuthLoginUseCase(storage, makeVerifier("octocat"), throwingProvider);
       await expect(
         useCase.execute({
           method: "gh",
@@ -113,7 +106,6 @@ describe("auth login", () => {
     it("fails when gh CLI is not installed and method=gh", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
-        makeVerifier("octocat"),
         makeVerifier("octocat"),
         makeExternalProvider(null)
       );
@@ -130,7 +122,6 @@ describe("auth login", () => {
     it("fails when token is invalid (HTTP 401)", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
-        makeVerifier("octocat"),
         makeFailingVerifier(401),
         makeExternalProvider(null)
       );
@@ -145,26 +136,9 @@ describe("auth login", () => {
       ).rejects.toThrow(/Authentication failed/);
     });
 
-    it("fails when method is missing in non-interactive mode", async () => {
-      const useCase = new AuthLoginUseCase(
-        storage,
-        makeVerifier("octocat"),
-        makeVerifier("octocat"),
-        makeExternalProvider(null)
-      );
-      await expect(
-        useCase.execute({
-          level: "user",
-          projectRoot: tempDir,
-          interactive: false,
-        })
-      ).rejects.toThrow(/method is required/);
-    });
-
     it("fails when level is missing in non-interactive mode", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
-        makeVerifier("octocat"),
         makeVerifier("octocat"),
         makeExternalProvider(null)
       );
@@ -180,43 +154,17 @@ describe("auth login", () => {
   });
 
   describe("interactive mode", () => {
-    it("prompts for method and level when both missing", async () => {
-      const tokenPrompter = {
-        select: async <T>(_message: string, choices: Array<{ name: string; value: T }>) => {
-          return choices[1].value; // "token" is index 1, "user" is index 0
-        },
-        confirm: async (_msg: string) => false,
-        input: async (_msg: string) => "ghp_interactive",
-      };
-
-      const useCase = new AuthLoginUseCase(
-        storage,
-        makeVerifier("octocat"),
-        makeVerifier("octocat"),
-        makeExternalProvider(null)
-      );
-      const result = await useCase.execute({
-        token: "ghp_interactive",
-        projectRoot: tempDir,
-        interactive: true,
-        prompter: tokenPrompter,
-      });
-
-      expect(result.method).toBe("token");
-    });
-
-    it("prompts for token when method=token selected interactively and no --token flag", async () => {
+    it("prompts for token when method=token and no --token flag", async () => {
       const inputCalled = vi.fn().mockResolvedValue("ghp_prompted");
       const prompter = {
         select: async <T>(_msg: string, choices: Array<{ name: string; value: T }>) =>
-          choices[0].value, // first choice each time: method=gh but we override below
+          choices[0].value,
         confirm: async (_msg: string) => false,
         input: inputCalled,
       };
 
       const useCase = new AuthLoginUseCase(
         storage,
-        makeVerifier("octocat"),
         makeVerifier("octocat"),
         makeExternalProvider(null)
       );
@@ -235,7 +183,6 @@ describe("auth login", () => {
     it("fails when token input is empty in interactive mode", async () => {
       const useCase = new AuthLoginUseCase(
         storage,
-        makeVerifier("octocat"),
         makeVerifier("octocat"),
         makeExternalProvider(null)
       );
@@ -272,7 +219,6 @@ describe("auth login", () => {
       const useCase = new AuthLoginUseCase(
         storage,
         makeVerifier("octocat"),
-        makeVerifier("octocat"),
         makeExternalProvider(null)
       );
       await useCase.execute({
@@ -303,7 +249,6 @@ describe("auth login", () => {
 
       const useCase = new AuthLoginUseCase(
         storage,
-        makeVerifier("octocat"),
         makeVerifier("octocat"),
         makeExternalProvider(null)
       );

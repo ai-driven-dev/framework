@@ -29,8 +29,7 @@ describe("auth status", () => {
     const useCase = new AuthStatusUseCase(authReader, storage);
     const result = await useCase.execute({
       projectRoot: tempDir,
-      ghVerifier: successVerifier,
-      tokenVerifier: successVerifier,
+      verifiers: { gh: successVerifier, token: successVerifier },
     });
     expect(result.authenticated).toBe(false);
   });
@@ -42,8 +41,7 @@ describe("auth status", () => {
     const useCase = new AuthStatusUseCase(authReader, storage);
     const result = await useCase.execute({
       projectRoot: tempDir,
-      ghVerifier: successVerifier,
-      tokenVerifier: successVerifier,
+      verifiers: { gh: successVerifier, token: successVerifier },
     });
 
     expect(result.authenticated).toBe(true);
@@ -59,8 +57,7 @@ describe("auth status", () => {
     const useCase = new AuthStatusUseCase(authReader, storage);
     const result = await useCase.execute({
       projectRoot: tempDir,
-      ghVerifier: successVerifier,
-      tokenVerifier: failVerifier,
+      verifiers: { gh: successVerifier, token: failVerifier },
     });
 
     expect(result.authenticated).toBe(true);

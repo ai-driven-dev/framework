@@ -29,9 +29,8 @@ export function registerAuthCommand(program: Command): void {
         const ghAdapter = new GhCliAdapter();
         const http = new HttpClient();
         const tokenVerifier = new GhTokenAdapter(http);
-        const useCase = new AuthLoginUseCase(storage, ghAdapter, tokenVerifier, ghAdapter);
 
-        const method: "gh" | "token" | undefined = cmdOptions.gh
+        let method: "gh" | "token" | undefined = cmdOptions.gh
           ? "gh"
           : cmdOptions.token
             ? "token"
@@ -49,6 +48,20 @@ export function registerAuthCommand(program: Command): void {
           process.exit(1);
         }
 
+        if (!method && process.stdout.isTTY) {
+          const { InquirerPrompterAdapter } = await import(
+            "../../infrastructure/adapters/prompter-adapter.js"
+          );
+          const prompter = new InquirerPrompterAdapter();
+          method = await prompter.select<"gh" | "token">("Authentication method:", [
+            { name: "GitHub CLI (gh auth token)", value: "gh" },
+            { name: "Personal Access Token", value: "token" },
+          ]);
+        }
+
+        const loginVerifier = method === "gh" ? ghAdapter : tokenVerifier;
+        const useCase = new AuthLoginUseCase(storage, loginVerifier, ghAdapter);
+
         const { InquirerPrompterAdapter, SilentPrompterAdapter } = await import(
           "../../infrastructure/adapters/prompter-adapter.js"
         );
@@ -57,7 +70,7 @@ export function registerAuthCommand(program: Command): void {
           : new SilentPrompterAdapter();
 
         const result = await useCase.execute({
-          method,
+          method: method as "gh" | "token",
           token: cmdOptions.token,
           level,
           projectRoot,
@@ -115,8 +128,7 @@ export function registerAuthCommand(program: Command): void {
 
         const result = await useCase.execute({
           projectRoot,
-          ghVerifier: ghAdapter,
-          tokenVerifier,
+          verifiers: { gh: ghAdapter, token: tokenVerifier },
         });
 
         if (!result.authenticated) {
