@@ -167,6 +167,30 @@ describe("install", () => {
     expect(result[0].warnings).toEqual([]);
   });
 
+  it("warns when installing an AI tool without its required IDE integration", async () => {
+    const deps = buildDeps(projectRoot);
+    await initProject(deps, projectRoot);
+
+    const useCase = new InstallUseCase(
+      deps.fs,
+      deps.manifestRepo,
+      deps.loader,
+      deps.hasher,
+      deps.logger,
+      noGit,
+      linuxPlatform
+    );
+    const result = await useCase.execute({
+      toolIds: ["copilot" as ToolId],
+      frameworkPath: FIXTURE_DIR,
+      version: "test",
+      docsDir: "aidd_docs",
+      projectRoot,
+    });
+    const copilotResult = result.find((r) => r.toolId === "copilot");
+    expect(copilotResult?.warnings.some((w) => w.includes("vscode"))).toBe(true);
+  });
+
   it("shared merged file tracked in mergeFiles per tool after multi-tool install", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);

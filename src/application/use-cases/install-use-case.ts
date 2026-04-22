@@ -561,7 +561,7 @@ export class InstallUseCase {
     const missing = config.requiredIdeIds.filter((id) => !ideContext.includes(id));
     if (missing.length === 0) return;
     warnings.push(
-      `Some ${toolId} settings require ${missing.join(", ")} — run \`aidd install ${missing.join(" ")}\` to enable full configuration`
+      `${toolId} IDE settings (MCP servers, Chat, extensions) require ${missing.join(", ")} — run \`aidd install ide ${missing.join(" ")}\` to enable them`
     );
   }
 
