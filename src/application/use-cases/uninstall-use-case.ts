@@ -147,7 +147,12 @@ export class UninstallUseCase {
     relativePath: string,
     manifest: Manifest
   ): boolean {
-    const otherOwnersExist = this.otherToolsOwnMergeFile(toolId, allToolIds, relativePath, manifest);
+    const otherOwnersExist = this.otherToolsOwnMergeFile(
+      toolId,
+      allToolIds,
+      relativePath,
+      manifest
+    );
     const isIdeTool = !isAiToolConfig(getToolConfig(toolId));
     return !otherOwnersExist && !isIdeTool;
   }
