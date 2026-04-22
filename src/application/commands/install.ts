@@ -14,12 +14,12 @@ import { ResolveFrameworkUseCase } from "../use-cases/resolve-framework-use-case
 import { parseCategoryArg, parseGlobalOptions } from "./global-options.js";
 
 function resolveInstallArgs(
-  rawArgs: string[],
+  categoryArg: string | undefined,
+  toolArgs: string[],
   cmdOptions: { all: boolean },
   output: ReturnType<typeof parseGlobalOptions>["output"]
 ): { category: ToolCategory | undefined; toolIds: ToolId[] | undefined } {
-  const category = parseCategoryArg(rawArgs[0], output);
-  const toolArgs = category ? rawArgs.slice(1) : rawArgs;
+  const category = parseCategoryArg(categoryArg, output);
 
   if (cmdOptions.all && toolArgs.length > 0) {
     output.warn(`--all is set; ignoring specified tools: ${toolArgs.join(", ")}`);
@@ -44,7 +44,18 @@ export function registerInstallCommand(program: Command): void {
   program
     .command("install")
     .description("Generate tool-specific distributions from the framework")
-    .argument("[args...]", "Optional category ('ai' or 'ide') followed by tool IDs")
+    .argument("[category]", "Category to install: ai or ide")
+    .argument("[tool...]", "Tool IDs to install (e.g. claude cursor vscode)")
+    .addHelpText(
+      "after",
+      `
+Examples:
+  aidd install ai claude          Install a specific AI tool
+  aidd install ide vscode         Install a specific IDE integration
+  aidd install ai claude cursor   Install multiple AI tools
+  aidd install ai --all           Install all AI tools
+  aidd install --all              Install all tools`
+    )
     .option("-f, --force", "Overwrite already-installed tool", false)
     .option("-a, --all", "Install all available tools", false)
     .option("--path <path>", "Path to a local framework directory or tarball")
@@ -52,19 +63,25 @@ export function registerInstallCommand(program: Command): void {
     .option("--mcp <servers>", "Comma-separated list of MCP servers to install")
     .action(
       async (
-        rawArgs: string[],
+        categoryArg: string | undefined,
+        toolArgs: string[],
         cmdOptions: { force: boolean; all: boolean; path?: string; release?: string; mcp?: string }
       ) => {
         const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
 
-        if (!cmdOptions.all && rawArgs.length === 0 && !process.stdout.isTTY) {
+        if (!cmdOptions.all && !categoryArg && toolArgs.length === 0 && !process.stdout.isTTY) {
           output.error("aidd install requires tool arguments or --all in non-interactive mode.");
           process.exit(1);
         }
 
         try {
-          const { category, toolIds } = resolveInstallArgs(rawArgs, cmdOptions, output);
+          const { category, toolIds } = resolveInstallArgs(
+            categoryArg,
+            toolArgs,
+            cmdOptions,
+            output
+          );
 
           const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
