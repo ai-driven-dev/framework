@@ -1,5 +1,4 @@
 import { join } from "node:path";
-import { FrameworkResolutionError } from "../../domain/errors.js";
 import { generateForConfig } from "../../domain/models/distribution.js";
 import { buildDocsDistribution } from "../../domain/models/docs.js";
 import { GeneratedFile } from "../../domain/models/generated-file.js";

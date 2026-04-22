@@ -124,17 +124,17 @@ export function registerAuthCommand(program: Command): void {
         const http = new HttpClient();
         const tokenVerifier = new GhTokenAdapter(http);
         const authReader = new AuthReader(storage, projectRoot, undefined, ghAdapter);
-        const useCase = new AuthStatusUseCase(authReader, storage);
 
-        const result = await useCase.execute({
-          projectRoot,
-          verifiers: { gh: ghAdapter, token: tokenVerifier },
-        });
-
-        if (!result.authenticated) {
+        const context = await authReader.resolveContext(projectRoot);
+        if (!context) {
           output.info("Not authenticated. Run aidd auth login");
           process.exit(1);
+          return;
         }
+
+        const verifier = context.method === "gh" ? ghAdapter : tokenVerifier;
+        const useCase = new AuthStatusUseCase();
+        const result = await useCase.execute({ ...context, verifier });
 
         if (!result.valid) {
           output.error(`Token is invalid or expired: ${result.reason}`);

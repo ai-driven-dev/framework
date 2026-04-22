@@ -1,4 +1,4 @@
-import type { AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
+import type { AuthContext, AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
 import type { ExternalTokenProvider } from "../../domain/ports/external-token-provider.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { AuthStorage } from "./auth-storage.js";
@@ -52,5 +52,20 @@ export class AuthReader implements AuthTokenProvider {
 
     this.logger?.debug("No token available");
     return null;
+  }
+
+  async resolveContext(projectRoot: string): Promise<AuthContext | null> {
+    const token = await this.resolve();
+    if (token === null) return null;
+
+    const projectConfig = await this.storage.read(this.storage.projectConfigPath(projectRoot));
+    const userConfig = await this.storage.read(this.storage.userConfigPath());
+    const config = projectConfig ?? userConfig;
+
+    return {
+      token,
+      method: config?.method ?? "token",
+      level: config?.level ?? "user",
+    };
   }
 }

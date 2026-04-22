@@ -139,6 +139,62 @@ describe("AuthReader", () => {
     });
   });
 
+  describe("resolveContext", () => {
+    it("returns null when no token is available", async () => {
+      const storage = makeStorage();
+      const reader = new AuthReader(storage, "/project", undefined, makeExternalProvider(null));
+      const result = await withEnv({ AIDD_TOKEN: undefined }, () =>
+        reader.resolveContext("/project")
+      );
+      expect(result).toBeNull();
+    });
+
+    it("returns defaults method=token and level=user when no config exists", async () => {
+      const storage = makeStorage();
+      const reader = new AuthReader(storage, "/project");
+      const result = await withEnv({ AIDD_TOKEN: "env-token" }, () =>
+        reader.resolveContext("/project")
+      );
+      expect(result).toEqual({ token: "env-token", method: "token", level: "user" });
+    });
+
+    it("reads method and level from project config", async () => {
+      const config: AuthConfig = {
+        version: 1,
+        method: "gh",
+        level: "project",
+        createdAt: "2026-03-20T00:00:00.000Z",
+      };
+      const storage = makeStorage({ projectConfig: config });
+      const reader = new AuthReader(
+        storage,
+        "/project",
+        undefined,
+        makeExternalProvider("gh-token")
+      );
+      const result = await withEnv({ AIDD_TOKEN: undefined }, () =>
+        reader.resolveContext("/project")
+      );
+      expect(result).toEqual({ token: "gh-token", method: "gh", level: "project" });
+    });
+
+    it("falls back to user config when no project config", async () => {
+      const config: AuthConfig = {
+        version: 1,
+        method: "token",
+        level: "user",
+        token: "user-token",
+        createdAt: "2026-03-20T00:00:00.000Z",
+      };
+      const storage = makeStorage({ userConfig: config });
+      const reader = new AuthReader(storage, "/project");
+      const result = await withEnv({ AIDD_TOKEN: undefined }, () =>
+        reader.resolveContext("/project")
+      );
+      expect(result).toEqual({ token: "user-token", method: "token", level: "user" });
+    });
+  });
+
   describe("logging", () => {
     it("logs resolution source without revealing token value", async () => {
       const logged: string[] = [];

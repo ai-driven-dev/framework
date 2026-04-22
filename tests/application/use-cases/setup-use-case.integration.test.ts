@@ -289,7 +289,7 @@ describe("setup without TTY", () => {
       const { manifestRepo } = buildDeps(projectRoot);
       const manifest = await manifestRepo.load();
       expect(manifest).not.toBeNull();
-      const docsFiles = manifest!.getDocsFiles();
+      const docsFiles = manifest?.getDocsFiles() ?? [];
       expect(docsFiles.some((f) => f.relativePath === "aidd_docs/README.md")).toBe(true);
     });
   });
