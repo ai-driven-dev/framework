@@ -36,6 +36,7 @@ import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import { InputRequiredError, NoManifestError } from "../errors.js";
 import { ConflictResolutionUseCase } from "./conflict-resolution-use-case.js";
+import { McpUseCase } from "./shared/mcp-use-case.js";
 import { PostInstallPipelineUseCase } from "./shared/post-install-pipeline-use-case.js";
 
 interface UpdateOptions {
@@ -100,6 +101,19 @@ interface InternalUpdateOptions {
   force: boolean;
   interactive: boolean;
   conflictResolution: ConflictResolutionUseCase;
+}
+
+interface ToolUpdatePrepared {
+  readonly toolId: ToolId;
+  readonly version: string;
+  readonly newDistribution: GeneratedFile[];
+  readonly newDistMap: Map<string, GeneratedFile>;
+  readonly diff: FileDiff[];
+  readonly entryDiffs: MergeEntryDiff[];
+  readonly configHandler: ConfigHandler;
+  readonly configRefs: readonly ConfigRef[];
+  readonly newMcpEntries: McpExclusion[];
+  readonly manifestFiles: ReadonlyArray<{ relativePath: string; hash: FileHash }>;
 }
 
 /** Resolved interactive scope — null means user cancelled */
@@ -329,37 +343,47 @@ export class UpdateUseCase {
     internal: InternalUpdateOptions,
     ideContext: IdeToolId[]
   ): Promise<UpdateToolResult[]> {
-    const toolResults: UpdateToolResult[] = [];
+    const prepared: ToolUpdatePrepared[] = [];
     for (const toolId of toolIds) {
       this.logger.debug(`Checking ${toolId} for updates...`);
-      const result = await this.updateToolSection(
-        toolId,
-        manifest,
-        descriptor,
-        contentFiles,
-        docsDir,
-        projectRoot,
-        version,
-        internal,
-        ideContext
+      prepared.push(
+        await this.prepareToolUpdate(
+          toolId,
+          version,
+          manifest,
+          descriptor,
+          contentFiles,
+          docsDir,
+          projectRoot,
+          ideContext
+        )
       );
-      toolResults.push(result);
+    }
+
+    const allNewEntries = this.aggregateNewMcpEntries(prepared);
+    const declinedKeys = internal.dryRun
+      ? new Set<string>()
+      : await this.promptDeclinedMcp(allNewEntries, internal.interactive);
+
+    const toolResults: UpdateToolResult[] = [];
+    for (const data of prepared) {
+      toolResults.push(
+        await this.finalizeToolResult(data, manifest, projectRoot, internal, declinedKeys)
+      );
     }
     return toolResults;
   }
 
-  private async updateToolSection(
+  private async prepareToolUpdate(
     toolId: ToolId,
+    version: string,
     manifest: Manifest,
     descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
     contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
     docsDir: string,
     projectRoot: string,
-    version: string,
-    internal: InternalUpdateOptions,
     ideContext: IdeToolId[]
-  ): Promise<UpdateToolResult> {
-    const { dryRun } = internal;
+  ): Promise<ToolUpdatePrepared> {
     const config = getToolConfig(toolId);
     const manifestFiles = manifest.getToolFiles(toolId);
     const manifestMap = new Map(manifestFiles.map((f) => [f.relativePath, f.hash]));
@@ -380,43 +404,121 @@ export class UpdateUseCase {
     );
     const newDistMap = new Map(newDistribution.map((f) => [f.relativePath, f]));
     const diff = await this.computeDiff(newDistribution, newDistMap, manifestMap, projectRoot);
-
     const configHandler = config.config();
+    const configRefs = descriptor.configRefs;
     const entryDiffs = await this.computeMergeEntryDiff(
       toolId,
       newDistribution,
       manifest,
       configHandler,
-      descriptor.configRefs,
+      configRefs,
       projectRoot
     );
-
-    const result = dryRun
-      ? this.emptyApplyDiffResult()
-      : await this.applyToolUpdate(
-          toolId,
-          version,
-          manifest,
-          newDistribution,
-          newDistMap,
-          manifestFiles,
-          diff,
-          entryDiffs,
-          configHandler,
-          descriptor.configRefs,
-          projectRoot,
-          internal
-        );
-
-    this.appendEntryDiffs(diff, entryDiffs);
-
+    const lookup = buildConfigNameLookup(configRefs);
+    const newMcpEntries = detectNewMcpEntries(
+      newDistribution,
+      configHandler,
+      lookup,
+      manifest.getMergeFiles(toolId),
+      manifest.getExcludedMcp(toolId)
+    );
     return {
       toolId,
+      version,
+      newDistribution,
+      newDistMap,
+      diff,
+      entryDiffs,
+      configHandler,
+      configRefs,
+      newMcpEntries,
+      manifestFiles,
+    };
+  }
+
+  private aggregateNewMcpEntries(prepared: ToolUpdatePrepared[]): McpExclusion[] {
+    const seen = new Set<string>();
+    const result: McpExclusion[] = [];
+    for (const p of prepared) {
+      for (const entry of p.newMcpEntries) {
+        if (!seen.has(entry.entryKey)) {
+          seen.add(entry.entryKey);
+          result.push(entry);
+        }
+      }
+    }
+    return result;
+  }
+
+  private async promptDeclinedMcp(
+    entries: McpExclusion[],
+    interactive: boolean
+  ): Promise<Set<string>> {
+    const keys = entries.map((e) => e.entryKey);
+    const selected = await new McpUseCase(this.prompter).execute({
+      keys,
+      defaultChecked: true,
+      message: "These MCP servers are not yet installed — select which ones to add:",
+      interactive,
+    });
+    return new Set(keys.filter((k) => !selected.has(k)));
+  }
+
+  private computeToolExclusions(
+    toolId: ToolId,
+    manifest: Manifest,
+    newMcpEntries: McpExclusion[],
+    declinedKeys: Set<string>
+  ): McpExclusion[] {
+    const declined = newMcpEntries.filter((e) => declinedKeys.has(e.entryKey));
+    return [...manifest.getExcludedMcp(toolId), ...declined];
+  }
+
+  private async finalizeToolResult(
+    data: ToolUpdatePrepared,
+    manifest: Manifest,
+    projectRoot: string,
+    internal: InternalUpdateOptions,
+    declinedKeys: Set<string>
+  ): Promise<UpdateToolResult> {
+    const { dryRun } = internal;
+    const applyResult = dryRun
+      ? this.emptyApplyDiffResult()
+      : await this.applyToolUpdateFromData(data, manifest, projectRoot, internal, declinedKeys);
+    const diff = [...data.diff];
+    this.appendEntryDiffs(diff, data.entryDiffs);
+    return {
+      toolId: data.toolId,
       alreadyUpToDate: !diff.some((d) => d.kind !== "unchanged"),
       dryRun,
       diff,
-      ...result,
+      ...applyResult,
     };
+  }
+
+  private async applyToolUpdateFromData(
+    data: ToolUpdatePrepared,
+    manifest: Manifest,
+    projectRoot: string,
+    internal: InternalUpdateOptions,
+    declinedKeys: Set<string>
+  ): Promise<ApplyDiffResult> {
+    return this.applyToolUpdate(
+      data.toolId,
+      data.version,
+      manifest,
+      data.newDistribution,
+      data.newDistMap,
+      data.manifestFiles,
+      data.diff,
+      data.entryDiffs,
+      data.configHandler,
+      data.configRefs,
+      data.newMcpEntries,
+      projectRoot,
+      internal,
+      declinedKeys
+    );
   }
 
   private async applyToolUpdate(
@@ -430,19 +532,22 @@ export class UpdateUseCase {
     entryDiffs: MergeEntryDiff[],
     configHandler: ConfigHandler,
     configRefs: readonly ConfigRef[],
+    newMcpEntries: McpExclusion[],
     projectRoot: string,
-    internal: InternalUpdateOptions
+    internal: InternalUpdateOptions,
+    declinedKeys: Set<string>
   ): Promise<ApplyDiffResult> {
-    const { force, interactive, conflictResolution } = internal;
+    const { force, conflictResolution } = internal;
     const { filtered, exclusions } = await this.applyMcpExclusions(
       toolId,
       manifest,
       newDistribution,
       configHandler,
       configRefs,
+      newMcpEntries,
       projectRoot,
       force,
-      interactive
+      declinedKeys
     );
     const conflictDecisions = await this.resolveConflicts(diff, force, conflictResolution);
     const result = await this.applyDiff(diff, newDistMap, projectRoot, conflictDecisions, manifest);
@@ -468,20 +573,14 @@ export class UpdateUseCase {
     newDistribution: GeneratedFile[],
     configHandler: ConfigHandler,
     configRefs: readonly ConfigRef[],
+    newMcpEntries: McpExclusion[],
     projectRoot: string,
     force: boolean,
-    interactive: boolean
+    declinedKeys: Set<string>
   ): Promise<{ filtered: GeneratedFile[]; exclusions: McpExclusion[] }> {
     if (force) manifest.clearExcludedMcp(toolId);
     const lookup = buildConfigNameLookup(configRefs);
-    const exclusions = await this.resolveNewExclusions(
-      toolId,
-      manifest,
-      newDistribution,
-      configHandler,
-      lookup,
-      interactive
-    );
+    const exclusions = this.computeToolExclusions(toolId, manifest, newMcpEntries, declinedKeys);
     const filtered = filterMcpExclusions(
       newDistribution,
       configHandler,
@@ -492,25 +591,6 @@ export class UpdateUseCase {
     await this.applyMergeFiles(filtered, projectRoot);
     await this.removeExcludedKeysFromDisk(exclusions, configHandler, lookup, filtered, projectRoot);
     return { filtered, exclusions };
-  }
-
-  private async resolveNewExclusions(
-    toolId: ToolId,
-    manifest: Manifest,
-    newDistribution: GeneratedFile[],
-    configHandler: ConfigHandler,
-    lookup: Map<string, string>,
-    interactive: boolean
-  ): Promise<McpExclusion[]> {
-    const newEntries = detectNewMcpEntries(
-      newDistribution,
-      configHandler,
-      lookup,
-      manifest.getMergeFiles(toolId),
-      manifest.getExcludedMcp(toolId)
-    );
-    const declined = await this.promptNewMcpEntries(newEntries, interactive);
-    return [...manifest.getExcludedMcp(toolId), ...declined];
   }
 
   private emptyApplyDiffResult(): ApplyDiffResult {
@@ -716,24 +796,6 @@ export class UpdateUseCase {
   ): Promise<void> {
     const content = await this.fs.readFile(fullPath);
     await this.fs.writeFile(fullPath, removeEntriesFromJson(content, sectionKey, keysToRemove));
-  }
-
-  private async promptNewMcpEntries(
-    newEntries: McpExclusion[],
-    interactive: boolean
-  ): Promise<McpExclusion[]> {
-    if (!interactive) return [];
-    const choices = newEntries.map((e) => ({
-      name: e.entryKey,
-      value: e,
-      checked: true,
-    }));
-    const accepted = await this.prompter.checkbox(
-      "New MCP servers found. Which do you want to install?",
-      choices
-    );
-    const acceptedSet = new Set(accepted);
-    return newEntries.filter((e) => !acceptedSet.has(e));
   }
 
   private async removeExcludedKeysFromDisk(

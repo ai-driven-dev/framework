@@ -876,12 +876,12 @@ describe("install", () => {
       expect(excluded).toContainEqual({ configPath: ".mcp.json", entryKey: "github" });
     });
 
-    it("prompts for MCP selection in interactive mode", async () => {
+    it("prompts once for MCP selection in interactive mode without mcpFilter and installs only selected servers", async () => {
       const deps = buildDeps(projectRoot);
       await initProject(deps, projectRoot);
 
       const keepPrompter = new KeepPrompter();
-      const checkboxMock = vi.fn().mockResolvedValue(["playwright"]);
+      const checkboxMock = vi.fn().mockResolvedValue([]);
       const mockPrompter = Object.create(keepPrompter) as Prompter;
       mockPrompter.checkbox = checkboxMock;
 
@@ -905,17 +905,15 @@ describe("install", () => {
         interactive: true,
       });
 
+      expect(checkboxMock).toHaveBeenCalledTimes(1);
       expect(checkboxMock).toHaveBeenCalledWith(
         "Which MCP servers do you want to install?",
-        expect.arrayContaining([
-          expect.objectContaining({ name: "playwright", checked: false }),
-          expect.objectContaining({ name: "github", checked: false }),
-        ])
+        expect.any(Array)
       );
 
       const mcpContent = await readFile(join(projectRoot, ".mcp.json"), "utf-8");
       const mcp = JSON.parse(mcpContent) as { mcpServers: Record<string, unknown> };
-      expect(mcp.mcpServers).toHaveProperty("playwright");
+      expect(mcp.mcpServers).not.toHaveProperty("playwright");
       expect(mcp.mcpServers).not.toHaveProperty("github");
     });
 
@@ -954,6 +952,47 @@ describe("install", () => {
       const excluded = manifest.tools.claude.excludedMcp ?? [];
       expect(excluded).toContainEqual({ configPath: ".mcp.json", entryKey: "playwright" });
       expect(excluded).toContainEqual({ configPath: ".mcp.json", entryKey: "github" });
+    });
+
+    it("prompts exactly once when installing multiple tools that share MCP keys", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const keepPrompter = new KeepPrompter();
+      const checkboxMock = vi.fn().mockResolvedValue(["playwright"]);
+      const mockPrompter = Object.create(keepPrompter) as Prompter;
+      mockPrompter.checkbox = checkboxMock;
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform,
+        mockPrompter
+      );
+
+      await useCase.execute({
+        toolIds: ["claude" as ToolId, "cursor" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        interactive: true,
+      });
+
+      expect(checkboxMock).toHaveBeenCalledTimes(1);
+      expect(checkboxMock).toHaveBeenCalledWith(
+        "Which MCP servers do you want to install?",
+        expect.any(Array)
+      );
+
+      const mcpContent = await readFile(join(projectRoot, ".mcp.json"), "utf-8");
+      const mcp = JSON.parse(mcpContent) as { mcpServers: Record<string, unknown> };
+      expect(mcp.mcpServers).toHaveProperty("playwright");
+      expect(mcp.mcpServers).not.toHaveProperty("github");
     });
 
     it("throws when mcpFilter contains an unknown server name", async () => {

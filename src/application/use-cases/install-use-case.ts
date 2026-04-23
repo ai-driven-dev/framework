@@ -62,6 +62,14 @@ export interface InstallToolResult {
   warnings: string[];
 }
 
+interface ToolInstallData {
+  readonly toolId: ToolId;
+  readonly generated: GeneratedFile[];
+  readonly config: ReturnType<typeof getToolConfig>;
+  readonly configHandler: ConfigHandler;
+  readonly configRefs: readonly ConfigRef[];
+}
+
 export class InstallUseCase {
   constructor(
     private readonly fs: FileSystem,
@@ -132,18 +140,25 @@ export class InstallUseCase {
     mcpFilter: string[],
     ideContext: IdeToolId[]
   ): Promise<InstallToolResult[]> {
+    const prepared = await this.prepareAllTools(
+      toolIds,
+      descriptor,
+      contentFiles,
+      docsDir,
+      projectRoot,
+      ideContext
+    );
+    const allKeys = this.aggregateAvailableMcpKeys(prepared);
+    const selectedKeys = await this.promptMcpSelection(allKeys, mcpFilter, interactive);
     const results: InstallToolResult[] = [];
-    for (const toolId of toolIds) {
-      const result = await this.installOneTool(
-        toolId,
+    for (const data of prepared) {
+      const result = await this.installOneToolFromData(
+        data,
         manifest,
         descriptor,
-        contentFiles,
-        docsDir,
         projectRoot,
         force,
-        interactive,
-        mcpFilter,
+        selectedKeys,
         ideContext
       );
       results.push(result);
@@ -157,6 +172,127 @@ export class InstallUseCase {
       projectRoot
     );
     return results;
+  }
+
+  private async prepareAllTools(
+    toolIds: ToolId[],
+    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    docsDir: string,
+    projectRoot: string,
+    ideContext: IdeToolId[]
+  ): Promise<ToolInstallData[]> {
+    const result: ToolInstallData[] = [];
+    for (const toolId of toolIds) {
+      result.push(
+        await this.prepareToolInstall(
+          toolId,
+          descriptor,
+          contentFiles,
+          docsDir,
+          projectRoot,
+          ideContext
+        )
+      );
+    }
+    return result;
+  }
+
+  private async prepareToolInstall(
+    toolId: ToolId,
+    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    docsDir: string,
+    projectRoot: string,
+    ideContext: IdeToolId[]
+  ): Promise<ToolInstallData> {
+    const config = getToolConfig(toolId);
+    const generated = await this.generateToolFiles(
+      config,
+      descriptor,
+      contentFiles,
+      docsDir,
+      projectRoot
+    );
+    const ideFiltered = filterByIdeRequirements(generated, descriptor.configRefs, ideContext);
+    return {
+      toolId,
+      generated: ideFiltered,
+      config,
+      configHandler: config.config(),
+      configRefs: descriptor.configRefs,
+    };
+  }
+
+  private aggregateAvailableMcpKeys(data: ToolInstallData[]): Set<string> {
+    const keys = new Set<string>();
+    for (const d of data) {
+      const configNameLookup = buildConfigNameLookup(d.configRefs);
+      const mcpMap = extractMcpKeys(d.generated, d.configHandler, configNameLookup);
+      for (const values of mcpMap.values()) {
+        for (const k of values) keys.add(k);
+      }
+    }
+    return keys;
+  }
+
+  private async promptMcpSelection(
+    allKeys: Set<string>,
+    mcpFilter: string[],
+    interactive: boolean
+  ): Promise<Set<string>> {
+    return new McpUseCase(this.prompter).execute({
+      keys: [...allKeys],
+      defaultChecked: false,
+      message: "Which MCP servers do you want to install?",
+      mcpFilter: mcpFilter.length > 0 ? mcpFilter : undefined,
+      interactive,
+    });
+  }
+
+  private async installOneToolFromData(
+    data: ToolInstallData,
+    manifest: Manifest,
+    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    projectRoot: string,
+    force: boolean,
+    selectedKeys: Set<string>,
+    ideContext: IdeToolId[]
+  ): Promise<InstallToolResult> {
+    const { toolId, generated, config, configHandler, configRefs } = data;
+    if (manifest.hasTool(toolId) && !force) {
+      return { toolId, fileCount: 0, files: [], skipped: true, warnings: [] };
+    }
+    const warnings = await this.checkForceWarning(toolId, config, manifest, projectRoot, force);
+    this.appendMissingIdeWarnings(toolId, config, ideContext, warnings);
+    this.logger.info(`Generating ${toolId} distribution...`);
+    await this.removeStaleFiles(toolId, manifest, generated, projectRoot);
+    const { filtered, exclusions } = this.applyMcpFilter(
+      generated,
+      configHandler,
+      configRefs,
+      selectedKeys
+    );
+    if (force && manifest.hasTool(toolId)) {
+      await this.clearExcludedMcpKeys(
+        exclusions,
+        configHandler,
+        descriptor.configRefs,
+        filtered,
+        projectRoot
+      );
+    }
+    const writeResult = await this.writeToolFiles(filtered, projectRoot, manifest);
+    return this.recordInstallation(
+      toolId,
+      filtered,
+      configHandler,
+      descriptor,
+      writeResult,
+      exclusions,
+      warnings,
+      manifest
+    );
   }
 
   private async patchAlreadyInstalledAiTools(
@@ -342,64 +478,6 @@ export class InstallUseCase {
     return result;
   }
 
-  /** Installs a single tool and updates the manifest in place. */
-  private async installOneTool(
-    toolId: ToolId,
-    manifest: Manifest,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
-    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
-    docsDir: string,
-    projectRoot: string,
-    force: boolean,
-    interactive: boolean,
-    mcpFilter: string[],
-    ideContext: IdeToolId[]
-  ): Promise<InstallToolResult> {
-    if (manifest.hasTool(toolId) && !force) {
-      return { toolId, fileCount: 0, files: [], skipped: true, warnings: [] };
-    }
-    const config = getToolConfig(toolId);
-    const warnings = await this.checkForceWarning(toolId, config, manifest, projectRoot, force);
-    this.appendMissingIdeWarnings(toolId, config, ideContext, warnings);
-    this.logger.info(`Generating ${toolId} distribution...`);
-    const generated = await this.generateToolFiles(
-      config,
-      descriptor,
-      contentFiles,
-      docsDir,
-      projectRoot
-    );
-    await this.removeStaleFiles(toolId, manifest, generated, projectRoot);
-    const { filtered, exclusions, configHandler } = await this.applyFilters(
-      generated,
-      descriptor,
-      ideContext,
-      config,
-      mcpFilter,
-      interactive
-    );
-    if (force && manifest.hasTool(toolId)) {
-      await this.clearExcludedMcpKeys(
-        exclusions,
-        configHandler,
-        descriptor.configRefs,
-        filtered,
-        projectRoot
-      );
-    }
-    const writeResult = await this.writeToolFiles(filtered, projectRoot, manifest);
-    return this.recordInstallation(
-      toolId,
-      filtered,
-      configHandler,
-      descriptor,
-      writeResult,
-      exclusions,
-      warnings,
-      manifest
-    );
-  }
-
   private async generateToolFiles(
     config: ReturnType<typeof getToolConfig>,
     descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
@@ -419,26 +497,27 @@ export class InstallUseCase {
     );
   }
 
-  private async applyFilters(
+  private applyMcpFilter(
     generated: GeneratedFile[],
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
-    ideContext: IdeToolId[],
-    config: ReturnType<typeof getToolConfig>,
-    mcpFilter: string[],
-    interactive: boolean
-  ): Promise<{
-    filtered: GeneratedFile[];
-    exclusions: McpExclusion[];
-    configHandler: ConfigHandler;
-  }> {
-    const ideFiltered = filterByIdeRequirements(generated, descriptor.configRefs, ideContext);
-    return this.selectMcpServers(
-      ideFiltered,
-      config,
-      descriptor.configRefs,
-      mcpFilter,
-      interactive
+    configHandler: ConfigHandler,
+    configRefs: readonly ConfigRef[],
+    selectedKeys: Set<string>
+  ): { filtered: GeneratedFile[]; exclusions: McpExclusion[] } {
+    const configNameLookup = buildConfigNameLookup(configRefs);
+    const exclusions = computeMcpExclusions(
+      generated,
+      configHandler,
+      configNameLookup,
+      selectedKeys
     );
+    const filtered = filterMcpExclusions(
+      generated,
+      configHandler,
+      configNameLookup,
+      exclusions,
+      this.hasher
+    );
+    return { filtered, exclusions };
   }
 
   private recordInstallation(
@@ -459,36 +538,6 @@ export class InstallUseCase {
     const mergeFiles = this.buildMergeEntries(filtered, configHandler, descriptor.configRefs);
     manifest.addTool(toolId, descriptor.version, writeResult.files, mergeFiles, exclusions);
     return { toolId, fileCount: filtered.length, files: filtered, skipped: false, warnings };
-  }
-
-  private async selectMcpServers(
-    generated: GeneratedFile[],
-    config: ReturnType<typeof getToolConfig>,
-    configRefs: readonly ConfigRef[],
-    mcpFilter: string[],
-    interactive: boolean
-  ): Promise<{
-    filtered: GeneratedFile[];
-    exclusions: McpExclusion[];
-    configHandler: ConfigHandler;
-  }> {
-    const configHandler = config.config();
-    const configNameLookup = buildConfigNameLookup(configRefs);
-    const available = extractMcpKeys(generated, configHandler, configNameLookup);
-    const selected = await new McpUseCase(this.prompter).execute({
-      available,
-      mcpFilter,
-      interactive,
-    });
-    const exclusions = computeMcpExclusions(generated, configHandler, configNameLookup, selected);
-    const filtered = filterMcpExclusions(
-      generated,
-      configHandler,
-      configNameLookup,
-      exclusions,
-      this.hasher
-    );
-    return { filtered, exclusions, configHandler };
   }
 
   private async clearExcludedMcpKeys(
