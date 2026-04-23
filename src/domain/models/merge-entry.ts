@@ -134,17 +134,19 @@ export function buildMergeFileEntries(
   configNameLookup: Map<string, string>,
   hasher: Hasher
 ): MergeFileEntry[] {
-  const entries: MergeFileEntry[] = [];
+  const grouped = new Map<string, MergeFileEntry>();
   for (const file of distribution) {
     if (file.mergeStrategy === "none") continue;
     const configName = file.frameworkPath ? configNameLookup.get(file.frameworkPath) : undefined;
     const sectionKey = configName ? configHandler.entrySection(configName) : null;
     const hashes = extractMergeEntries(file.content, sectionKey, hasher);
-    entries.push({
+    const key = `${file.relativePath}::${sectionKey ?? ""}`;
+    const previous = grouped.get(key);
+    grouped.set(key, {
       relativePath: file.relativePath,
       sectionKey,
-      entries: hashes,
+      entries: { ...(previous?.entries ?? {}), ...hashes },
     });
   }
-  return entries;
+  return [...grouped.values()];
 }

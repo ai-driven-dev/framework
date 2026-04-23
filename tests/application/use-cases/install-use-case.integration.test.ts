@@ -667,6 +667,51 @@ describe("install", () => {
   });
 
   describe("per-entry hash tracking", () => {
+    it("dedups mergeFiles entries when multiple configRefs share the same output path", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+
+      const useCase = new InstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.loader,
+        deps.hasher,
+        deps.logger,
+        noGit,
+        linuxPlatform
+      );
+      await useCase.execute({
+        toolIds: ["opencode" as ToolId],
+        frameworkPath: FIXTURE_DIR,
+        version: "test",
+        docsDir: "aidd_docs",
+        projectRoot,
+        mcpFilter: ["playwright", "github"],
+      });
+
+      const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
+      const data = JSON.parse(raw) as {
+        tools: Record<
+          string,
+          {
+            mergeFiles: Array<{
+              relativePath: string;
+              sectionKey: string | null;
+              entries: Record<string, string>;
+            }>;
+          }
+        >;
+      };
+
+      const opencodeMerge = data.tools.opencode.mergeFiles.filter(
+        (m) => m.relativePath === "opencode.json"
+      );
+      expect(opencodeMerge).toHaveLength(1);
+      expect(opencodeMerge[0].sectionKey).toBe("mcp");
+      expect(Object.keys(opencodeMerge[0].entries)).toContain("playwright");
+      expect(Object.keys(opencodeMerge[0].entries)).toContain("github");
+    });
+
     it("stores per-entry hashes in mergeFiles for .mcp.json", async () => {
       const deps = buildDeps(projectRoot);
       await initProject(deps, projectRoot);
