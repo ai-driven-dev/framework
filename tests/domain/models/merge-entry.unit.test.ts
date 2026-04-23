@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { GeneratedFile } from "../../../src/domain/models/generated-file.js";
 import {
+  buildMergeFileEntries,
   extractMergeEntries,
   parseEntryKeys,
   removeEntriesFromJson,
 } from "../../../src/domain/models/merge-entry.js";
+import type { ConfigHandler } from "../../../src/domain/models/tool-config.js";
 import type { Hasher } from "../../../src/domain/ports/hasher.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
 
@@ -118,6 +121,135 @@ describe("parseEntryKeys", () => {
 
   it("returns empty array for invalid JSON", () => {
     expect(parseEntryKeys("not json", "mcpServers")).toEqual([]);
+  });
+});
+
+describe("buildMergeFileEntries", () => {
+  const configHandler: ConfigHandler = {
+    outputPath(configName) {
+      if (configName === "mcp" || configName === "opencode") return "opencode.json";
+      if (configName === "claudeSettings") return ".mcp.json";
+      return null;
+    },
+    mergeStrategy() {
+      return "framework-prime";
+    },
+    entrySection(configName) {
+      if (configName === "mcp" || configName === "opencode") return "mcp";
+      if (configName === "claudeSettings") return "mcpServers";
+      return null;
+    },
+  };
+
+  const configNameLookup = new Map<string, string>([
+    ["config/mcp.json", "mcp"],
+    ["config/.opencode/opencode.json", "opencode"],
+    ["config/claude/settings.json", "claudeSettings"],
+  ]);
+
+  it("dedups two GeneratedFiles sharing relativePath and sectionKey", () => {
+    const mcpContent = JSON.stringify({
+      mcp: {
+        playwright: { command: "npx", args: ["-y", "pkg"] },
+        figma: { url: "https://mcp.figma.com/mcp" },
+      },
+    });
+    const opencodeTemplateContent = JSON.stringify({
+      instructions: [".opencode/rules/**/*.md"],
+      mcp: {},
+    });
+    const files = [
+      new GeneratedFile({
+        relativePath: "opencode.json",
+        content: mcpContent,
+        hash: hasher.hash(mcpContent),
+        mergeStrategy: "framework-prime",
+        frameworkPath: "config/mcp.json",
+      }),
+      new GeneratedFile({
+        relativePath: "opencode.json",
+        content: opencodeTemplateContent,
+        hash: hasher.hash(opencodeTemplateContent),
+        mergeStrategy: "framework-prime",
+        frameworkPath: "config/.opencode/opencode.json",
+      }),
+    ];
+
+    const result = buildMergeFileEntries(files, configHandler, configNameLookup, hasher);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].relativePath).toBe("opencode.json");
+    expect(result[0].sectionKey).toBe("mcp");
+    expect(Object.keys(result[0].entries)).toEqual(["playwright", "figma"]);
+  });
+
+  it("later input wins on colliding entry key", () => {
+    const firstContent = JSON.stringify({ mcp: { playwright: { command: "old" } } });
+    const secondContent = JSON.stringify({ mcp: { playwright: { command: "new" } } });
+    const files = [
+      new GeneratedFile({
+        relativePath: "opencode.json",
+        content: firstContent,
+        hash: hasher.hash(firstContent),
+        mergeStrategy: "framework-prime",
+        frameworkPath: "config/mcp.json",
+      }),
+      new GeneratedFile({
+        relativePath: "opencode.json",
+        content: secondContent,
+        hash: hasher.hash(secondContent),
+        mergeStrategy: "framework-prime",
+        frameworkPath: "config/.opencode/opencode.json",
+      }),
+    ];
+
+    const result = buildMergeFileEntries(files, configHandler, configNameLookup, hasher);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].entries.playwright.value).toBe(
+      hasher.hash(JSON.stringify({ command: "new" })).value
+    );
+  });
+
+  it("keeps separate entries when relativePath differs", () => {
+    const mcpContent = JSON.stringify({ mcp: { playwright: { command: "npx" } } });
+    const claudeContent = JSON.stringify({ mcpServers: { github: { command: "gh" } } });
+    const files = [
+      new GeneratedFile({
+        relativePath: "opencode.json",
+        content: mcpContent,
+        hash: hasher.hash(mcpContent),
+        mergeStrategy: "framework-prime",
+        frameworkPath: "config/mcp.json",
+      }),
+      new GeneratedFile({
+        relativePath: ".mcp.json",
+        content: claudeContent,
+        hash: hasher.hash(claudeContent),
+        mergeStrategy: "framework-prime",
+        frameworkPath: "config/claude/settings.json",
+      }),
+    ];
+
+    const result = buildMergeFileEntries(files, configHandler, configNameLookup, hasher);
+
+    expect(result).toHaveLength(2);
+    expect(result.map((e) => e.relativePath).sort()).toEqual([".mcp.json", "opencode.json"]);
+  });
+
+  it("skips files with mergeStrategy none", () => {
+    const files = [
+      new GeneratedFile({
+        relativePath: ".opencode/agents/foo.md",
+        content: "body",
+        hash: hasher.hash("body"),
+        mergeStrategy: "none",
+      }),
+    ];
+
+    const result = buildMergeFileEntries(files, configHandler, configNameLookup, hasher);
+
+    expect(result).toEqual([]);
   });
 });
 
