@@ -1,5 +1,49 @@
 # Changelog
 
+## [4.0.0](https://github.com/ai-driven-dev/aidd-cli/compare/v3.3.1...v4.0.0) (2026-04-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **cli:** `aidd install <toolId>` and `aidd uninstall <toolId>` without a category prefix are no longer valid. Use `aidd install ai <toolId>` or `aidd install ide <toolId>` instead.
+* **cli:** `aidd install <toolId>` and `aidd uninstall <toolId>` without a category prefix are no longer valid. Use `aidd install ai <toolId>` or `aidd install ide <toolId>` instead.
+
+### Features
+
+* **cli:** enforce category prefix for install and uninstall commands ([ae34aec](https://github.com/ai-driven-dev/aidd-cli/commit/ae34aece30aa3c0d9f32f9110221cb8589d8d25f))
+* **cli:** enforce category prefix for install and uninstall commands ([cc781e3](https://github.com/ai-driven-dev/aidd-cli/commit/cc781e312bf13ceca8d55c3e27c2ee8fc705d725))
+* **setup:** ai/ide category filter + replace --tools with --ai/--ide/--all ([e2280b2](https://github.com/ai-driven-dev/aidd-cli/commit/e2280b2167dc7cec32d515fbebcdae3e74982122))
+
+
+### Bug Fixes
+
+* **auth:** move AuthContext out of domain port into infrastructure ([75cc175](https://github.com/ai-driven-dev/aidd-cli/commit/75cc175d742ebba71eb12a5fbd7e16a9ef4f4bb6))
+* **auth:** replace httpGet function injection with typed LoginVerifier ports ([e0bf067](https://github.com/ai-driven-dev/aidd-cli/commit/e0bf0672348f02b37aa75878452d2845c9402717))
+* **install:** aggregate MCP keys and prompt once across all tools ([ff09210](https://github.com/ai-driven-dev/aidd-cli/commit/ff09210df092d4d27350913055e532f02ea20a77)), closes [#142](https://github.com/ai-driven-dev/aidd-cli/issues/142)
+* **install:** clarify missing IDE warning with specific feature list ([6e16517](https://github.com/ai-driven-dev/aidd-cli/commit/6e165172e41481b90e5cab88bd9d42cc8be7ebb6))
+* **install:** require ai|ide category prefix, improve command help ([ee88851](https://github.com/ai-driven-dev/aidd-cli/commit/ee8885177533e92cbcd4d515c5efffa79141b6c8))
+* **install:** skip IDE-rooted files when required IDE is not installed ([fa445dc](https://github.com/ai-driven-dev/aidd-cli/commit/fa445dc65c7e2b0df0735758e5d2af294df2df1c)), closes [#143](https://github.com/ai-driven-dev/aidd-cli/issues/143)
+* **mcp:** prompt once per install/update across all tools ([e475621](https://github.com/ai-driven-dev/aidd-cli/commit/e47562126650ab6859b86742e2723a7d96a9fb42))
+* **uninstall:** strip entries from keyed-section merge files instead of deleting ([4b2222b](https://github.com/ai-driven-dev/aidd-cli/commit/4b2222b57bfcfe2c1226b616283fc20037678aae))
+* **update:** aggregate MCP entries and prompt once across all tools ([1bd816c](https://github.com/ai-driven-dev/aidd-cli/commit/1bd816c310c314465212ebfaddf639da70dd9e75)), closes [#142](https://github.com/ai-driven-dev/aidd-cli/issues/142)
+
+
+### Documentation
+
+* **tasks:** add auth refactor plan and code review ([e57c527](https://github.com/ai-driven-dev/aidd-cli/commit/e57c5275fb47fcacd9cb2360f22203e8cdce2fbb))
+* **tasks:** add mcp single-prompt plans and code review ([652ae71](https://github.com/ai-driven-dev/aidd-cli/commit/652ae714a4d08f7a8603c60a4f36cf40b83df308))
+
+
+### Refactoring
+
+* **auth:** introduce AuthCredential union and move credential resolution to command ([3c97d37](https://github.com/ai-driven-dev/aidd-cli/commit/3c97d378b8ba2944158ac5d8e1b40e050c214f48))
+* **auth:** pure use-case via resolveContext port method ([d04a3c3](https://github.com/ai-driven-dev/aidd-cli/commit/d04a3c365548e9e03332f5b667b21b31ec3574ed))
+* **auth:** use-cases receive one LoginVerifier, method resolved at command level ([76d81cf](https://github.com/ai-driven-dev/aidd-cli/commit/76d81cfb8f979410cb735913e0095704d07e6d94))
+* **domain:** extract AIDD_DIR to shared paths constant ([a8a4dde](https://github.com/ai-driven-dev/aidd-cli/commit/a8a4ddece39220b0e5868b02a2375c0132af5db3))
+* **mcp:** centralize prompt logic in shared McpUseCase ([90993e9](https://github.com/ai-driven-dev/aidd-cli/commit/90993e94063bea628d7cbb94d9cc5788dd683b93)), closes [#142](https://github.com/ai-driven-dev/aidd-cli/issues/142)
+* **uninstall:** extract isMergeContentEmpty to domain and split removeMergeFile ([1c82cd6](https://github.com/ai-driven-dev/aidd-cli/commit/1c82cd6badb1b0bae9c47630ad7f40c9caf11fb8))
+* **uninstall:** format code for better readability ([e2352e1](https://github.com/ai-driven-dev/aidd-cli/commit/e2352e106d25c1db2a2fb2c93112d16c59fd74d9))
+
 ## [3.3.1](https://github.com/ai-driven-dev/aidd-cli/compare/v3.3.0...v3.3.1) (2026-04-21)
 
 
