@@ -1,4 +1,4 @@
-import type { FrameworkDescriptor } from "../models/framework-descriptor.js";
+import type { FrameworkDescriptor } from "../models/framework.js";
 
 export interface FrameworkLoader {
   loadFromDirectory(

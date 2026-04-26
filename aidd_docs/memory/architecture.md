@@ -1,70 +1,47 @@
 # Architecture
 
-## Language/Framework
+## Stack
 
-```mermaid
-flowchart LR
-    TS["TypeScript ESM"] -->|compiles| NODE["Node.js >= 24"]
-    TSUP["tsup"] -->|bundles| DIST["dist/cli.js"]
-    CMD["commander"] -->|parses| ARGS["CLI args"]
-    VT["vitest"] -->|tests| SRC["Source"]
-    BIO["biome"] -->|lints/formats| SRC
-    LH["lefthook"] -->|delegates hooks| PARENT["Parent monorepo"]
+- TypeScript ESM, Node.js >= 24, bundled via tsup → `dist/cli.js`
+- 2 runtime deps max: `commander` (CLI), `@inquirer/prompts` (interactive); rest = Node.js built-ins
+- Vitest (tests), Biome (lint/format), Lefthook (git hooks via parent monorepo)
+
+## Layers
+
+3-layer hexagonal architecture — dependencies flow inward only:
+
+```
+Infrastructure → Application → Domain
 ```
 
-### Naming Conventions
+| Layer | Path | Role |
+|---|---|---|
+| Domain | `src/domain/` | Models, ports, formats, capabilities, tool definitions |
+| Application | `src/application/` | Use-cases, commands (CLI wiring only) |
+| Infrastructure | `src/infrastructure/` | Adapters (filesystem, HTTP, GitHub, auth, cache) |
 
-| Scope | Convention | Example |
-| --- | --- | --- |
-| Files | kebab-case | `http-client.ts`, `file-hash.ts` |
-| Functions | camelCase | `resolveToken()` |
-| Types/Interfaces | PascalCase | `Manifest`, `ToolConfig` |
-| Constants | UPPER_CASE | `DEFAULT_TIMEOUT` |
+## Key Domain Concepts
 
-## Architecture
+- `AiTool<C>` — generic AI tool type; `C` = intersection of `Has*` capability interfaces
+- `IdeToolConfig` — IDE tool type (vscode); no capabilities
+- `ToolConfig = AiTool<unknown> | IdeToolConfig` — discriminated union; `isAiTool()` is the guard
+- `Manifest` — aggregate root, tracks every installed file with MD5 hash (`.aidd/manifest.json`)
+- Framework layout is code-defined — no `framework.json` on disk
 
-- 3-layer clean architecture: Domain → Application → Infrastructure
-- Max 2 runtime dependencies: `commander`, `@inquirer/prompts`; everything else is Node.js built-ins
-- `ToolConfig` is a discriminant union (`AiToolConfig | IdeToolConfig`); `isAiToolConfig()` is the runtime guard
-- Config refs are filtered by active IDE context before distribution (IDE-conditional distribution)
-- AI tools declare IDE dependencies; `IdePatchUseCase` retroactively applies IDE-conditional files for already-installed AI tools when a new IDE is installed
-- Framework layout is code-defined in `FrameworkLoaderAdapter` — no `framework.json` on disk
-- Uninstall performs surgical key removal on shared merge files; IDE tool files (user-prime) are never deleted on uninstall
-- Error handling: `ErrorHandler.handle(error)` in every command catch block. Typed exceptions in 3 layers (infra-internal only). See DEC-017, DEC-018.
+## Install Flow (high-level)
 
-## Services Communication
-
-### Install Flow
-
-```mermaid
-flowchart TD
-    User["User"] -->|aidd install tools| InstallCmd["InstallCommand"]
-    InstallCmd -->|calls| InstallUC["InstallUseCase"]
-    InstallUC -->|resolves framework| FrameworkRes["FrameworkResolver"]
-    FrameworkRes -->|downloads release| GH["GitHub Releases API"]
-    FrameworkRes -->|extracts| Tar["TarExtractor"]
-    FrameworkRes -->|caches| Cache["FrameworkCache"]
-    InstallUC -->|loads layout| FrameworkLdr["FrameworkLoader"]
-    InstallUC -->|filters by ideContext| Filter["filterGeneratedFilesByIdeContext"]
-    InstallUC -->|rewrites per tool| Distrib["Distribution"]
-    Distrib -->|applies spec| ToolCfg["ToolConfig"]
-    InstallUC -->|writes files| FS["FileSystem"]
-    InstallUC -->|delegates post-write steps| Pipeline["PostInstallPipelineUseCase"]
-    Pipeline -->|1 memory bank| MemScript["MemoryScriptUseCase"]
-    Pipeline -->|2 persist| ManifRepo["ManifestRepository"]
-    Pipeline -->|3 catalog| Catalog["CatalogUseCase"]
-    Pipeline -->|4 gitignore| Gitignore["GitignoreUseCase"]
+```
+CLI Command → UseCase → FrameworkResolver (download/cache) → FrameworkLoader (layout)
+→ Distribution (per-tool rewrite) → FileSystem (write) → PostInstallPipeline (memory/manifest/catalog/gitignore)
 ```
 
-## External Services
+## Auth
 
-### GitHub Releases API
+Token resolution: `AIDD_TOKEN` env → project `.aidd/auth.json` → user `~/.config/aidd/auth.json` → `gh auth token` (only when `method: "gh"`) → none
 
-- Latest: `https://api.github.com/repos/<owner>/<repo>/releases/latest`
-- By tag: `https://api.github.com/repos/<owner>/<repo>/releases/tags/<tag>` (used by `--release`)
-- Auth: Bearer token resolved by `AuthReader`
-- Response: tarball URL downloaded via `node:https`, extracted with `node:child_process` (system `tar`)
+## Key Design Decisions
 
-## Token Resolution Priority
-
-`AIDD_TOKEN` env > project `.aidd/auth.json` > user `~/.config/aidd/auth.json` > `gh auth token` (only when `method: "gh"`) > none
+- Merge files (JSON/TOML): surgical key-level tracking; uninstall removes only AIDD keys
+- IDE-conditional distribution: AI tools declare `requiredIdeIds`; filtered at install time
+- IDE tool files (user-prime): never deleted on uninstall
+- Error handling: typed exceptions thrown from use-cases/adapters; caught only at command layer

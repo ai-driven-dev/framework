@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ConflictResolutionUseCase } from "../../../src/application/use-cases/conflict-resolution-use-case.js";
+import { ConflictResolutionUseCase } from "../../../src/application/use-cases/sync/conflict-resolution-use-case.js";
 import type { Prompter } from "../../../src/domain/ports/prompter.js";
 
 function buildMockPrompter(selectResponses: string[]): Prompter & { selectCallCount: number } {

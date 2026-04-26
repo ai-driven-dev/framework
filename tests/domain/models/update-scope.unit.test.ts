@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatToolScopeValue, parseUpdateScope } from "../../../src/domain/models/update-scope.js";
+import { formatToolScopeValue, parseUpdateScope } from "../../../src/domain/models/tool-scope.js";
 
 describe("parseUpdateScope", () => {
   it('parses "all"', () => {

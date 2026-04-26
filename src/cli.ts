@@ -1,13 +1,12 @@
-import { spawn } from "node:child_process";
 import { platform } from "node:os";
 import { Command } from "commander";
-import { printUpdateBanner } from "./application/check-update.js";
 import { registerAuthCommand } from "./application/commands/auth.js";
 import { registerCacheCommand } from "./application/commands/cache.js";
 import { registerCleanCommand } from "./application/commands/clean.js";
 import { registerConfigCommand } from "./application/commands/config.js";
 import { registerDoctorCommand } from "./application/commands/doctor.js";
 import { registerInstallCommand } from "./application/commands/install.js";
+import { runMenuLoop } from "./application/commands/menu.js";
 import { registerRestoreCommand } from "./application/commands/restore.js";
 import { registerSelfUpdateCommand } from "./application/commands/self-update.js";
 import { registerSetupCommand } from "./application/commands/setup.js";
@@ -16,10 +15,9 @@ import { registerSyncCommand } from "./application/commands/sync.js";
 import { registerUninstallCommand } from "./application/commands/uninstall.js";
 import { registerUpdateCommand } from "./application/commands/update.js";
 import { CLIOutput } from "./application/output.js";
-import { BannerUseCase } from "./application/use-cases/banner-use-case.js";
-import { InteractiveMenuUseCase } from "./application/use-cases/interactive-menu-use-case.js";
+import { printUpdateBanner } from "./application/use-cases/check-update-use-case.js";
 import { CurrentVersionAdapter } from "./infrastructure/adapters/current-version-adapter.js";
-import { createDeps, createMenuDeps } from "./infrastructure/deps.js";
+import { createDeps } from "./infrastructure/deps.js";
 
 function formatVersion(version: string): string {
   return `aidd/${version} node/${process.versions.node} ${platform()}-${process.arch}`;
@@ -73,39 +71,9 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
 });
 
 const cliArgs = process.argv.slice(2);
-if (cliArgs.length === 0 || cliArgs.includes("--help") || cliArgs.includes("-h")) {
-  await new BannerUseCase().execute();
-}
 
 if (cliArgs.length === 0 && process.stdout.isTTY) {
   runMenuLoop();
 } else {
   program.parse(process.argv);
-}
-
-async function runMenuLoop(): Promise<never> {
-  const { manifestRepo, prompter } = createMenuDeps(process.cwd());
-  let returnTo: string[] | undefined;
-  for (;;) {
-    try {
-      const result = await new InteractiveMenuUseCase(manifestRepo, prompter).execute({
-        startAt: returnTo,
-      });
-      if (result.command[0] === "exit") process.exit(0);
-      returnTo = result.returnTo;
-      await spawnCliCommand(result.command);
-    } catch (error) {
-      if (error instanceof Error && error.name === "ExitPromptError") process.exit(0);
-      returnTo = undefined;
-    }
-  }
-}
-
-function spawnCliCommand(command: string[]): Promise<void> {
-  return new Promise((resolve) => {
-    spawn(process.execPath, [process.argv[1], ...command], { stdio: "inherit" }).on(
-      "close",
-      resolve
-    );
-  });
 }

@@ -6,10 +6,10 @@ import {
   type ToolId,
   toolIdsForCategory,
   VALID_TOOL_IDS,
-} from "../../domain/models/tool-config.js";
+} from "../../domain/tools/registry.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
-import { InstallUseCase } from "../use-cases/install-use-case.js";
+import { InstallUseCase } from "../use-cases/install/install-use-case.js";
 import { ResolveFrameworkUseCase } from "../use-cases/resolve-framework-use-case.js";
 import { parseCategoryArg, parseGlobalOptions } from "./global-options.js";
 

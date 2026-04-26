@@ -1,6 +1,6 @@
 import { compareSemver } from "../../domain/models/semver.js";
-import type { CliUpdater } from "../../domain/ports/cli-updater.js";
-import type { CurrentVersionProvider } from "../../domain/ports/current-version-provider.js";
+import type { SelfUpdater } from "../../domain/ports/self-updater.js";
+import type { VersionReader } from "../../domain/ports/version-reader.js";
 
 export interface SelfUpdateInput {
   check: boolean;
@@ -17,8 +17,8 @@ export type SelfUpdateResult =
 
 export class SelfUpdateUseCase {
   constructor(
-    private readonly updater: CliUpdater,
-    private readonly versionProvider: CurrentVersionProvider
+    private readonly updater: SelfUpdater,
+    private readonly versionProvider: VersionReader
   ) {}
 
   async execute(input: SelfUpdateInput): Promise<SelfUpdateResult> {

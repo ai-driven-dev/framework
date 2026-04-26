@@ -1,12 +1,12 @@
 import { join } from "node:path";
 import type { FileSystem } from "../../domain/ports/file-system.js";
-import type { Git } from "../../domain/ports/git.js";
+import type { VersionControl } from "../../domain/ports/version-control.js";
 
 const GITDIR_PREFIX = "gitdir:";
 const HOOK_HEADER = "#!/bin/sh";
 const PRE_COMMIT_HOOK = "pre-commit";
 
-export class GitAdapter implements Git {
+export class GitAdapter implements VersionControl {
   constructor(private readonly fs: FileSystem) {}
 
   async installPreCommitDelegate(projectRoot: string, delegatePath: string): Promise<void> {

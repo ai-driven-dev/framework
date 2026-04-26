@@ -1,3 +1,7 @@
+---
+description: 'Standards for naming, organizing, and writing command files. Apply when creating or editing any command file.'
+---
+
 # Command file structure
 
 ## File naming

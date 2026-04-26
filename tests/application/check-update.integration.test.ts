@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { printUpdateBanner } from "../../src/application/check-update.js";
+import { printUpdateBanner } from "../../src/application/use-cases/check-update-use-case.js";
 import { InitUseCase } from "../../src/application/use-cases/init-use-case.js";
-import { InstallUseCase } from "../../src/application/use-cases/install-use-case.js";
-import type { ToolId } from "../../src/domain/models/tool-config.js";
-import type { CliUpdater } from "../../src/domain/ports/cli-updater.js";
-import type { CurrentVersionProvider } from "../../src/domain/ports/current-version-provider.js";
+import { InstallUseCase } from "../../src/application/use-cases/install/install-use-case.js";
 import type { FrameworkResolver } from "../../src/domain/ports/framework-resolver.js";
 import type { Logger } from "../../src/domain/ports/logger.js";
+import type { SelfUpdater } from "../../src/domain/ports/self-updater.js";
+import type { VersionReader } from "../../src/domain/ports/version-reader.js";
+import type { ToolId } from "../../src/domain/tools/registry.js";
 import {
   buildDeps,
   cleanupTempProject,
@@ -34,14 +34,14 @@ function makeResolver(latestVersion: string): FrameworkResolver {
   };
 }
 
-function makeCliUpdater(latestVersion: string): CliUpdater {
+function makeSelfUpdater(latestVersion: string): SelfUpdater {
   return {
     fetchLatestRelease: vi.fn().mockResolvedValue({ version: latestVersion, changelog: "" }),
     install: vi.fn().mockReturnValue("/usr/local/bin/aidd"),
   };
 }
 
-function makeCurrentVersionProvider(version: string): CurrentVersionProvider {
+function makeVersionReader(version: string): VersionReader {
   return { get: () => version };
 }
 
@@ -100,8 +100,8 @@ describe("printUpdateBanner", () => {
     const { logger, logs } = makeLogger();
 
     await printUpdateBanner(
-      makeCliUpdater("v1.0.0"),
-      makeCurrentVersionProvider("1.0.0"),
+      makeSelfUpdater("v1.0.0"),
+      makeVersionReader("1.0.0"),
       makeResolver("v3.0.0"),
       deps.manifestRepo,
       logger
@@ -116,8 +116,8 @@ describe("printUpdateBanner", () => {
     const { logger, logs } = makeLogger();
 
     await printUpdateBanner(
-      makeCliUpdater("v1.0.0"),
-      makeCurrentVersionProvider("1.0.0"),
+      makeSelfUpdater("v1.0.0"),
+      makeVersionReader("1.0.0"),
       makeResolver("v3.0.0"),
       deps.manifestRepo,
       logger
@@ -132,8 +132,8 @@ describe("printUpdateBanner", () => {
     const { logger, logs } = makeLogger();
 
     await printUpdateBanner(
-      makeCliUpdater("v1.0.0"),
-      makeCurrentVersionProvider("1.0.0"),
+      makeSelfUpdater("v1.0.0"),
+      makeVersionReader("1.0.0"),
       makeResolver("v3.0.0"),
       deps.manifestRepo,
       logger
@@ -153,8 +153,8 @@ describe("printUpdateBanner", () => {
     };
 
     await printUpdateBanner(
-      makeCliUpdater("v1.0.0"),
-      makeCurrentVersionProvider("1.0.0"),
+      makeSelfUpdater("v1.0.0"),
+      makeVersionReader("1.0.0"),
       resolver,
       deps.manifestRepo,
       logger
@@ -169,8 +169,8 @@ describe("printUpdateBanner", () => {
     const { logger, logs } = makeLogger();
 
     await printUpdateBanner(
-      makeCliUpdater("v1.0.0"),
-      makeCurrentVersionProvider("1.0.0"),
+      makeSelfUpdater("v1.0.0"),
+      makeVersionReader("1.0.0"),
       makeResolver("v3.1.0"),
       deps.manifestRepo,
       logger
@@ -188,8 +188,8 @@ describe("printUpdateBanner", () => {
     const { logger, logs } = makeLogger();
 
     await printUpdateBanner(
-      makeCliUpdater("v1.0.0"),
-      makeCurrentVersionProvider("1.0.0"),
+      makeSelfUpdater("v1.0.0"),
+      makeVersionReader("1.0.0"),
       makeResolver("v3.1.0"),
       deps.manifestRepo,
       logger
@@ -207,8 +207,8 @@ describe("printUpdateBanner", () => {
     const { logger, logs } = makeLogger();
 
     await printUpdateBanner(
-      makeCliUpdater("v1.0.0"),
-      makeCurrentVersionProvider("1.0.0"),
+      makeSelfUpdater("v1.0.0"),
+      makeVersionReader("1.0.0"),
       makeResolver("v3.1.0"),
       deps.manifestRepo,
       logger
@@ -224,8 +224,8 @@ describe("printUpdateBanner", () => {
     const { logger, logs } = makeLogger();
 
     await printUpdateBanner(
-      makeCliUpdater("v2.0.0"),
-      makeCurrentVersionProvider("1.0.0"),
+      makeSelfUpdater("v2.0.0"),
+      makeVersionReader("1.0.0"),
       makeResolver("v3.0.0"),
       deps.manifestRepo,
       logger
@@ -238,14 +238,14 @@ describe("printUpdateBanner", () => {
   it("stays silent for CLI when CLI check fails", async () => {
     const deps = buildDeps(projectRoot);
     const { logger, logs } = makeLogger();
-    const failingCliUpdater: CliUpdater = {
+    const failingSelfUpdater: SelfUpdater = {
       fetchLatestRelease: vi.fn().mockRejectedValue(new Error("network failure")),
       install: vi.fn().mockReturnValue("/usr/local/bin/aidd"),
     };
 
     await printUpdateBanner(
-      failingCliUpdater,
-      makeCurrentVersionProvider("1.0.0"),
+      failingSelfUpdater,
+      makeVersionReader("1.0.0"),
       makeResolver("v3.0.0"),
       deps.manifestRepo,
       logger
@@ -259,8 +259,8 @@ describe("printUpdateBanner", () => {
     const { logger, logs } = makeLogger();
 
     await printUpdateBanner(
-      makeCliUpdater("v2.0.0"),
-      makeCurrentVersionProvider("1.0.0"),
+      makeSelfUpdater("v2.0.0"),
+      makeVersionReader("1.0.0"),
       makeResolver("v3.0.0"),
       deps.manifestRepo,
       logger,

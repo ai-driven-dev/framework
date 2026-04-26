@@ -1,7 +1,7 @@
 import pkg from "../../../package.json" with { type: "json" };
-import type { CurrentVersionProvider } from "../../domain/ports/current-version-provider.js";
+import type { VersionReader } from "../../domain/ports/version-reader.js";
 
-export class CurrentVersionAdapter implements CurrentVersionProvider {
+export class CurrentVersionAdapter implements VersionReader {
   get(): string {
     return pkg.version;
   }

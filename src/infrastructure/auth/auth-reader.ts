@@ -1,7 +1,7 @@
 import type { AuthLevel, AuthMethod } from "../../domain/models/auth.js";
-import type { AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
-import type { ExternalTokenProvider } from "../../domain/ports/external-token-provider.js";
 import type { Logger } from "../../domain/ports/logger.js";
+import type { TokenResolver } from "../../domain/ports/oauth-provider.js";
+import type { TokenProvider } from "../../domain/ports/token-provider.js";
 import type { AuthStorage } from "./auth-storage.js";
 
 export interface AuthContext {
@@ -10,14 +10,14 @@ export interface AuthContext {
   level: AuthLevel;
 }
 
-const noopExternalProvider: ExternalTokenProvider = { resolve: () => null };
+const noopExternalProvider: TokenResolver = { resolve: () => null };
 
-export class AuthReader implements AuthTokenProvider {
+export class AuthReader implements TokenProvider {
   constructor(
     private readonly storage: AuthStorage,
     private readonly projectRoot: string,
     private readonly logger?: Logger,
-    private readonly externalProvider: ExternalTokenProvider = noopExternalProvider
+    private readonly externalProvider: TokenResolver = noopExternalProvider
   ) {}
 
   async resolve(): Promise<string | null> {

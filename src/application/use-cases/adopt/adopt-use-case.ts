@@ -1,0 +1,92 @@
+import { join } from "node:path";
+import { Manifest } from "../../../domain/models/manifest.js";
+import { AIDD_DIR } from "../../../domain/models/paths.js";
+import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FrameworkLoader } from "../../../domain/ports/framework-loader.js";
+import type { Hasher } from "../../../domain/ports/hasher.js";
+import type { Logger } from "../../../domain/ports/logger.js";
+import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
+import type { Platform } from "../../../domain/ports/platform.js";
+import { assertValidToolIds, type ToolId } from "../../../domain/tools/registry.js";
+import { AlreadyInitializedError, InputRequiredError } from "../../errors.js";
+import { GitignoreUseCase } from "../shared/gitignore-use-case.js";
+import { AdoptDocsUseCase } from "./adopt-docs-use-case.js";
+import { type AdoptToolResult, AdoptToolsUseCase } from "./adopt-tools-use-case.js";
+
+interface AdoptOptions {
+  toolIds: ToolId[];
+  frameworkPath: string;
+  docsDir: string;
+  projectRoot: string;
+  version: string;
+}
+
+interface AdoptResult {
+  tools: AdoptToolResult[];
+  totalRegistered: number;
+  docsRegistered: number;
+}
+
+export class AdoptUseCase {
+  constructor(
+    private readonly fs: FileSystem,
+    private readonly manifestRepo: ManifestRepository,
+    private readonly loader: FrameworkLoader,
+    private readonly hasher: Hasher,
+    private readonly logger: Logger,
+    private readonly platform: Platform
+  ) {}
+
+  async execute(options: AdoptOptions): Promise<AdoptResult> {
+    const { toolIds, frameworkPath, docsDir, projectRoot, version } = options;
+
+    assertValidToolIds(toolIds);
+    if (toolIds.length === 0) {
+      throw new InputRequiredError(
+        "No tools specified. Use --ai or --ide to specify at least one tool."
+      );
+    }
+    const existing = await this.manifestRepo.load();
+    if (existing !== null) throw new AlreadyInitializedError();
+    await this.deleteLegacyConfig(projectRoot);
+
+    const { descriptor, contentFiles, docsFiles } = await this.loader.loadFromDirectory(
+      frameworkPath,
+      version
+    );
+    const manifest = Manifest.create(docsDir);
+    const toolResults = await new AdoptToolsUseCase(
+      this.fs,
+      this.hasher,
+      this.logger,
+      this.platform
+    ).execute({ toolIds, manifest, descriptor, contentFiles, docsDir, projectRoot, version });
+    const { docsRegistered } = await new AdoptDocsUseCase(
+      this.fs,
+      this.hasher,
+      this.logger
+    ).execute({ manifest, docsFiles, docsDir, projectRoot, version });
+    await this.persistAdopt(manifest, projectRoot);
+    return {
+      tools: toolResults,
+      totalRegistered: toolResults.reduce((sum, r) => sum + r.registered.length, 0),
+      docsRegistered,
+    };
+  }
+
+  /** Saves manifest and writes gitignore entry. */
+  private async persistAdopt(manifest: Manifest, projectRoot: string): Promise<void> {
+    await this.manifestRepo.save(manifest);
+    // AdoptUseCase calls gitignore directly (not via PostInstallPipelineUseCase).
+    // MemoryScriptUseCase is intentionally absent: adopt only registers existing files,
+    // no tool content is generated so there is no memory bank to write.
+    await new GitignoreUseCase(this.fs).execute(projectRoot, [`${AIDD_DIR}/cache/`]);
+  }
+
+  private async deleteLegacyConfig(projectRoot: string): Promise<void> {
+    const configPath = join(projectRoot, AIDD_DIR, "config.json");
+    if (await this.fs.fileExists(configPath)) {
+      await this.fs.deleteFile(configPath);
+    }
+  }
+}

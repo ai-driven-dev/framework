@@ -1,17 +1,17 @@
 import { join } from "node:path";
-import type { FileHash } from "../../domain/models/file-hash.js";
+import type { FileHash } from "../../domain/models/file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
-import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/merge-entry.js";
+import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/merge.js";
+import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { Hasher } from "../../domain/ports/hasher.js";
+import type { Logger } from "../../domain/ports/logger.js";
+import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import {
   getToolConfig,
   type ToolCategory,
   type ToolId,
   toolIdsForCategory,
-} from "../../domain/models/tool-config.js";
-import type { FileSystem } from "../../domain/ports/file-system.js";
-import type { Hasher } from "../../domain/ports/hasher.js";
-import type { Logger } from "../../domain/ports/logger.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+} from "../../domain/tools/registry.js";
 import { NoManifestError, ToolNotInstalledError } from "../errors.js";
 
 type FileStatusKind = "modified" | "deleted" | "added";

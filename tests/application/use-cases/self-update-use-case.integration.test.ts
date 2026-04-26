@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 import { SelfUpdateUseCase } from "../../../src/application/use-cases/self-update-use-case.js";
-import type { CliUpdater } from "../../../src/domain/ports/cli-updater.js";
-import type { CurrentVersionProvider } from "../../../src/domain/ports/current-version-provider.js";
+import type { SelfUpdater } from "../../../src/domain/ports/self-updater.js";
+import type { VersionReader } from "../../../src/domain/ports/version-reader.js";
 
 function makeUseCase(
   currentVersion: string,
   latestVersion: string,
   installFn = vi.fn().mockReturnValue("/usr/local/bin/aidd")
 ): { useCase: SelfUpdateUseCase; installFn: ReturnType<typeof vi.fn> } {
-  const versionProvider: CurrentVersionProvider = { get: vi.fn().mockReturnValue(currentVersion) };
-  const updater: CliUpdater = {
+  const versionProvider: VersionReader = { get: vi.fn().mockReturnValue(currentVersion) };
+  const updater: SelfUpdater = {
     fetchLatestRelease: vi
       .fn()
       .mockResolvedValue({ version: latestVersion, changelog: "Release notes" }),

@@ -1,22 +1,28 @@
-import { CONFIG_MCP, TEMPLATE_AGENTS_MD } from "../../models/framework-descriptor.js";
-import type { MergeStrategy } from "../../models/merge-strategy.js";
+import { AgentsCapability } from "../../capabilities/agents-capability.js";
+import { CommandsCapability } from "../../capabilities/commands-capability.js";
+import { McpCapability } from "../../capabilities/mcp-capability.js";
+import { MemoryCapability } from "../../capabilities/memory-capability.js";
+import { RulesCapability } from "../../capabilities/rules-capability.js";
+import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import {
-  type AiToolConfig,
-  baseReverseRewriteContent,
-  baseRewriteContent,
-  buildStandardCommandsHandler,
-  type CommandsHandler,
-  type ConfigHandler,
+  convertCommandFrontmatter,
   detectSectionKeyFromPrefixes,
-  type MemoryBankHandler,
-  namedAgentsSectionHandler,
-  passthroughSkillsHandler,
-  type RulesHandler,
-  registerTool,
-  type SectionHandler,
+  reverseConvertCommandFrontmatter,
   stripToolSuffix,
-  type UserFileSectionKey,
-} from "../../models/tool-config.js";
+} from "../../formats/command.js";
+import { baseReverseRewriteContent, baseRewriteContent } from "../../formats/placeholders.js";
+import { CONFIG_MCP } from "../../models/framework.js";
+import type {
+  AiTool,
+  HasAgents,
+  HasCommands,
+  HasMcp,
+  HasMemory,
+  HasRules,
+  HasSkills,
+  UserFileSectionKey,
+} from "../contracts.js";
+import { registerTool } from "../registry.js";
 
 const DIRECTORY = ".claude/";
 const TOOL_SUFFIX = ".claude.md";
@@ -25,49 +31,48 @@ function commandsDir(phase: string): string {
   return `${DIRECTORY}commands/aidd/${phase}/`;
 }
 
-export const claudeToolConfig: AiToolConfig = {
+export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasMemory> = {
   kind: "ai",
   toolId: "claude",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   signalDir: ".claude/commands",
 
-  rewriteContent(content: string, docsDir: string): string {
-    return baseRewriteContent(content, DIRECTORY, docsDir).replace(
-      /(@?)\.claude\/commands\/(\d+)[_][^/]+\//g,
-      (_, at, phase) => `${at}${commandsDir(phase)}`
-    );
-  },
-
-  reverseRewriteContent(content: string, docsDir: string): string {
-    return baseReverseRewriteContent(content, DIRECTORY, docsDir);
-  },
-
-  agents(): SectionHandler {
-    return namedAgentsSectionHandler(DIRECTORY, TOOL_SUFFIX);
-  },
-
-  commands(): CommandsHandler {
-    return buildStandardCommandsHandler((fileName: string): string | null => {
-      const slashIdx = fileName.indexOf("/");
-      if (slashIdx !== -1) {
-        const phaseDir = fileName.slice(0, slashIdx);
-        const rest = fileName.slice(slashIdx + 1);
-        const phase = phaseDir.match(/^(\d+)/)?.[1];
-        if (phase) {
-          return `${commandsDir(phase)}${rest}`;
+  capabilities: {
+    agents: new AgentsCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      format: "markdown",
+    }),
+    skills: new SkillsCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      buildInstallPath: (fileName) =>
+        `${DIRECTORY}skills/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+      convertFrontmatter: (fm) => fm,
+      reverseConvertFrontmatter: (fm) => fm,
+    }),
+    commands: new CommandsCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      buildInstallPath: (fileName) => {
+        const slashIdx = fileName.indexOf("/");
+        if (slashIdx !== -1) {
+          const phaseDir = fileName.slice(0, slashIdx);
+          const rest = fileName.slice(slashIdx + 1);
+          const phase = phaseDir.match(/^(\d+)/)?.[1];
+          if (phase) return `${commandsDir(phase)}${rest}`;
         }
-      }
-      return `${DIRECTORY}commands/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
-    });
-  },
-
-  rules(): RulesHandler {
-    return {
-      buildFilePath(fileName: string): string {
-        return `${DIRECTORY}rules/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
+        return `${DIRECTORY}commands/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
       },
-      convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+      convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
+      reverseConvertFrontmatter: (fm) => reverseConvertCommandFrontmatter(fm),
+    }),
+    rules: new RulesCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      buildInstallPath: (fileName) => `${DIRECTORY}rules/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+      convertFrontmatter: (fm) => {
         if ("paths" in fm) {
           const paths = fm.paths;
           if (Array.isArray(paths) && paths.length === 0) return {};
@@ -82,43 +87,30 @@ export const claudeToolConfig: AiToolConfig = {
         }
         return {};
       },
-      reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-        return Array.isArray(fm.paths) && fm.paths.length > 0 ? { paths: fm.paths } : {};
-      },
-    };
+      reverseConvertFrontmatter: (fm) =>
+        Array.isArray(fm.paths) && fm.paths.length > 0 ? { paths: fm.paths } : {},
+    }),
+    mcp: new McpCapability({
+      outputPath: ".mcp.json",
+      format: "json",
+      entrySection: "mcpServers",
+      consumes: [CONFIG_MCP],
+    }),
+    memory: new MemoryCapability({
+      outputFileName: "CLAUDE.md",
+      rewriteContent: (content, docsDir) => claude.rewriteContent(content, docsDir),
+    }),
   },
 
-  skills(): SectionHandler {
-    return passthroughSkillsHandler(DIRECTORY, TOOL_SUFFIX);
+  rewriteContent(content: string, docsDir: string): string {
+    return baseRewriteContent(content, DIRECTORY, docsDir).replace(
+      /(@?)\.claude\/commands\/(\d+)[_][^/]+\//g,
+      (_, at, phase) => `${at}${commandsDir(phase)}`
+    );
   },
 
-  config(): ConfigHandler {
-    return {
-      outputPath(configName: string): string | null {
-        if (configName === CONFIG_MCP) return ".mcp.json";
-        return null;
-      },
-      mergeStrategy(configName: string): MergeStrategy {
-        if (configName === CONFIG_MCP) return "user-prime";
-        return "none";
-      },
-      entrySection(configName: string): string | null {
-        if (configName === CONFIG_MCP) return "mcpServers";
-        return null;
-      },
-    };
-  },
-
-  memoryBank(): MemoryBankHandler {
-    return {
-      outputPath(templateName: string): string | null {
-        if (templateName === TEMPLATE_AGENTS_MD) return "CLAUDE.md";
-        return null;
-      },
-      rewriteContent(content: string, docsDir: string): string {
-        return claudeToolConfig.rewriteContent(content, docsDir);
-      },
-    };
+  reverseRewriteContent(content: string, docsDir: string): string {
+    return baseReverseRewriteContent(content, DIRECTORY, docsDir);
   },
 
   detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null {
@@ -131,4 +123,4 @@ export const claudeToolConfig: AiToolConfig = {
   },
 };
 
-registerTool(claudeToolConfig);
+registerTool(claude);

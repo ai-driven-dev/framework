@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { FileHash } from "../../domain/models/file-hash.js";
+import { FileHash } from "../../domain/models/file.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 
 export class HasherAdapter implements Hasher {

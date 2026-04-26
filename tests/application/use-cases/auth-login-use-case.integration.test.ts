@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { AuthLoginUseCase } from "../../../src/application/use-cases/auth-login-use-case.js";
+import { AuthLoginUseCase } from "../../../src/application/use-cases/auth/auth-login-use-case.js";
 import { AuthenticationError } from "../../../src/domain/errors.js";
 import type { AuthCredential, AuthLevel } from "../../../src/domain/models/auth.js";
-import type { AuthProvider } from "../../../src/domain/ports/auth-provider.js";
+import type { CredentialStore } from "../../../src/domain/ports/credential-store.js";
 
 describe("auth login", () => {
-  function makeAuthProvider(login: string): AuthProvider {
+  function makeCredentialStore(login: string): CredentialStore {
     return {
       login: vi.fn().mockResolvedValue({ login, level: "user" as AuthLevel }),
       status: vi.fn().mockRejectedValue(new Error("not called")),
@@ -13,7 +13,7 @@ describe("auth login", () => {
     };
   }
 
-  function makeFailingAuthProvider(message: string): AuthProvider {
+  function makeFailingCredentialStore(message: string): CredentialStore {
     return {
       login: vi.fn().mockRejectedValue(new AuthenticationError(message)),
       status: vi.fn().mockRejectedValue(new Error("not called")),
@@ -22,7 +22,7 @@ describe("auth login", () => {
   }
 
   it("authenticates with PAT when stored credential is provided at user level", async () => {
-    const provider = makeAuthProvider("octocat");
+    const provider = makeCredentialStore("octocat");
     const credential: AuthCredential = { method: "stored", token: "ghp_abc123" };
     const result = await new AuthLoginUseCase(provider).execute({ credential, level: "user" });
 
@@ -32,7 +32,7 @@ describe("auth login", () => {
   });
 
   it("authenticates with external credential at project level", async () => {
-    const provider = makeAuthProvider("octocat");
+    const provider = makeCredentialStore("octocat");
     const credential: AuthCredential = { method: "external", provider: "gh" };
     await new AuthLoginUseCase(provider).execute({ credential, level: "project" });
 
@@ -42,14 +42,17 @@ describe("auth login", () => {
   it("propagates error when provider fails", async () => {
     const credential: AuthCredential = { method: "external", provider: "gh" };
     await expect(
-      new AuthLoginUseCase(makeFailingAuthProvider("gh CLI")).execute({ credential, level: "user" })
+      new AuthLoginUseCase(makeFailingCredentialStore("gh CLI")).execute({
+        credential,
+        level: "user",
+      })
     ).rejects.toThrow(/Authentication failed/);
   });
 
   it("fails when stored credential has invalid token (HTTP 401)", async () => {
     const credential: AuthCredential = { method: "stored", token: "bad-token" };
     await expect(
-      new AuthLoginUseCase(makeFailingAuthProvider("HTTP 401")).execute({
+      new AuthLoginUseCase(makeFailingCredentialStore("HTTP 401")).execute({
         credential,
         level: "user",
       })

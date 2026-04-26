@@ -4,18 +4,17 @@ import type {
   AuthLoginResult,
   AuthLogoutHint,
   AuthLogoutResult,
-  AuthProvider,
   AuthStatus,
-} from "../../domain/ports/auth-provider.js";
-import type { ExternalAuthProvider } from "../../domain/ports/external-auth-provider.js";
-import type { LoginVerifier } from "../../domain/ports/login-verifier.js";
+  CredentialStore,
+} from "../../domain/ports/credential-store.js";
+import type { CliAuthProvider, TokenAuthProvider } from "../../domain/ports/oauth-provider.js";
 import type { AuthStorage } from "../auth/auth-storage.js";
 
-export class AuthProviderAdapter implements AuthProvider {
+export class AuthProviderAdapter implements CredentialStore {
   constructor(
     private readonly storage: AuthStorage,
-    private readonly externalProviders: Map<string, ExternalAuthProvider>,
-    private readonly tokenVerifier: LoginVerifier,
+    private readonly externalProviders: Map<string, CliAuthProvider>,
+    private readonly tokenVerifier: TokenAuthProvider,
     private readonly projectRoot: string
   ) {}
 
@@ -23,7 +22,7 @@ export class AuthProviderAdapter implements AuthProvider {
     const login =
       credential.method === "external"
         ? await this.resolveExternalProvider(credential.provider).verify()
-        : await this.tokenVerifier.verify(credential.token);
+        : await this.tokenVerifier.verifyToken(credential.token);
     await this.storage.save({ credential, level, projectRoot: this.projectRoot });
     return { login, level };
   }
@@ -65,10 +64,10 @@ export class AuthProviderAdapter implements AuthProvider {
       return await this.resolveExternalProvider(config.provider ?? "gh").verify();
     }
     if (!config.token) throw new AuthenticationError("invalid config");
-    return await this.tokenVerifier.verify(config.token);
+    return await this.tokenVerifier.verifyToken(config.token);
   }
 
-  private resolveExternalProvider(provider: string): ExternalAuthProvider {
+  private resolveExternalProvider(provider: string): CliAuthProvider {
     const adapter = this.externalProviders.get(provider);
     if (!adapter) throw new AuthenticationError(`unknown external provider: ${provider}`);
     return adapter;

@@ -79,6 +79,36 @@ describe.concurrent("E2E: aidd global options", () => {
     }
   });
 
+  it("--verbose status shows verbose token resolution prefix", async () => {
+    const { projectDir, cleanup } = await createTestEnv("global");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stderr, exitCode } = await runCli(["--verbose", "status"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stderr).toContain("[verbose]");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--verbose doctor shows verbose token resolution prefix", async () => {
+    const { projectDir, cleanup } = await createTestEnv("global");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stderr, exitCode } = await runCli(["--verbose", "doctor"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stderr).toContain("[verbose]");
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("--help does not show adopt or init commands", async () => {
     const { projectDir, cleanup } = await createTestEnv("global");
     try {

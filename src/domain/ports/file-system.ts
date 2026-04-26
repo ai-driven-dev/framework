@@ -1,5 +1,5 @@
-import type { FileHash } from "../models/file-hash.js";
-import type { MergeStrategy } from "../models/merge-strategy.js";
+import type { FileHash } from "../models/file.js";
+import type { MergeStrategy } from "../models/merge.js";
 
 export interface FileSystem {
   writeFile(path: string, content: string): Promise<void>;

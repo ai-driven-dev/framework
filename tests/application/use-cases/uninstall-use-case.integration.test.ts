@@ -3,7 +3,7 @@ import { readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { UninstallUseCase } from "../../../src/application/use-cases/uninstall-use-case.js";
-import type { ToolId } from "../../../src/domain/models/tool-config.js";
+import type { ToolId } from "../../../src/domain/tools/registry.js";
 import {
   buildDeps,
   cleanupTempProject,
@@ -88,7 +88,7 @@ describe("uninstall", () => {
   });
 
   describe("user-prime merge files", () => {
-    it("preserves settings.json when vscode is the only owner", async () => {
+    it("deletes settings.json when empty after stripping all AIDD-managed keys", async () => {
       const deps = buildDeps(projectRoot);
       await initProject(deps, projectRoot);
       await installTool(deps, projectRoot, "vscode" as ToolId);
@@ -99,7 +99,21 @@ describe("uninstall", () => {
       const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
       await useCase.execute({ toolIds: ["vscode" as ToolId], projectRoot, mcpFilter: [] });
 
-      expect(existsSync(settingsPath)).toBe(true);
+      expect(existsSync(settingsPath)).toBe(false);
+    });
+
+    it("deletes keybindings.json on uninstall — whole-file ownership, no zombie", async () => {
+      const deps = buildDeps(projectRoot);
+      await initProject(deps, projectRoot);
+      await installTool(deps, projectRoot, "vscode" as ToolId);
+
+      const keybindingsPath = join(projectRoot, ".vscode", "keybindings.json");
+      expect(existsSync(keybindingsPath)).toBe(true);
+
+      const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
+      await useCase.execute({ toolIds: ["vscode" as ToolId], projectRoot, mcpFilter: [] });
+
+      expect(existsSync(keybindingsPath)).toBe(false);
     });
   });
 

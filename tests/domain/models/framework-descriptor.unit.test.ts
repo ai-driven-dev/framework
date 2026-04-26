@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FrameworkDescriptor } from "../../../src/domain/models/framework-descriptor.js";
+import { FrameworkDescriptor } from "../../../src/domain/models/framework.js";
 
 function makeDescriptor() {
   return new FrameworkDescriptor({

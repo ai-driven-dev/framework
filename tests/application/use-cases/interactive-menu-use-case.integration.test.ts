@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { InteractiveMenuUseCase } from "../../../src/application/use-cases/interactive-menu-use-case.js";
+import { InteractiveMenuUseCase } from "../../../src/application/commands/menu.js";
 import type { Prompter } from "../../../src/domain/ports/prompter.js";
 import { buildDeps, cleanupTempProject, createTempProject, initProject } from "./helpers.js";
 

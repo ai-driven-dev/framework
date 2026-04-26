@@ -1,15 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { FileHash } from "../../../src/domain/models/file-hash.js";
-import { GeneratedFile } from "../../../src/domain/models/generated-file.js";
+import { FileHash, InstallationFile } from "../../../src/domain/models/file.js";
 import { Manifest } from "../../../src/domain/models/manifest.js";
 import type { McpExclusion } from "../../../src/domain/models/mcp-exclusion.js";
-import type { MergeFileEntry } from "../../../src/domain/models/merge-entry.js";
-import type { ToolId } from "../../../src/domain/models/tool-config.js";
+import type { MergeFileEntry } from "../../../src/domain/models/merge.js";
+import type { ToolId } from "../../../src/domain/tools/registry.js";
 
 const makeHash = (hex: string): FileHash => new FileHash(hex.padEnd(32, "0"));
 
-const makeFile = (path: string, hashHex: string): GeneratedFile =>
-  new GeneratedFile({
+const makeFile = (path: string, hashHex: string): InstallationFile =>
+  new InstallationFile({
     relativePath: path,
     content: "content",
     hash: makeHash(hashHex),

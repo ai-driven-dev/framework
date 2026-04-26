@@ -1,5 +1,5 @@
 import { Manifest } from "../domain/models/manifest.js";
-import type { ToolCategory } from "../domain/models/tool-config.js";
+import type { ToolCategory } from "../domain/tools/registry.js";
 
 export { NoFrameworkSourceError } from "../domain/errors.js";
 

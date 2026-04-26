@@ -1,80 +1,32 @@
 import { describe, expect, it } from "vitest";
+import { stripToolSuffix } from "../../../src/domain/formats/command.js";
+import type { AiTool } from "../../../src/domain/tools/contracts.js";
 import {
-  type AiToolConfig,
   type AiToolId,
-  acceptsFile,
   assertToolIdsMatchCategory,
   getAllRegisteredTools,
   getToolConfig,
   registerTool,
-  stripToolSuffix,
   type ToolId,
   toolIdsForCategory,
   VALID_TOOL_IDS,
-} from "../../../src/domain/models/tool-config.js";
+} from "../../../src/domain/tools/registry.js";
 
-const makeStubConfig = (toolId: AiToolId, toolSuffix: string): AiToolConfig => ({
+const makeStubConfig = (toolId: AiToolId, toolSuffix: string): AiTool<unknown> => ({
   kind: "ai",
   toolId,
   directory: `.${toolId}/`,
   toolSuffix,
   signalDir: `.${toolId}/commands`,
+  capabilities: {},
   rewriteContent: (content: string) => content,
   reverseRewriteContent: (content: string) => content,
-  agents: () => ({
-    buildFilePath: (f: string) => f,
-    convertFrontmatter: (fm: Record<string, unknown>) => fm,
-    reverseConvertFrontmatter: (fm: Record<string, unknown>) => fm,
-  }),
-  commands: () => ({
-    buildFilePath: (f: string) => f,
-    convertFrontmatter: (fm: Record<string, unknown>) => fm,
-    reverseConvertFrontmatter: (fm: Record<string, unknown>) => fm,
-  }),
-  rules: () => ({
-    buildFilePath: (f: string) => f,
-    convertFrontmatter: (fm: Record<string, unknown>) => fm,
-    reverseConvertFrontmatter: (fm: Record<string, unknown>) => fm,
-  }),
-  skills: () => ({
-    buildFilePath: (f: string) => f,
-    convertFrontmatter: (fm: Record<string, unknown>) => fm,
-    reverseConvertFrontmatter: (fm: Record<string, unknown>) => fm,
-  }),
-  config: () => ({
-    outputPath: () => null,
-    mergeStrategy: () => "none" as const,
-    entrySection: () => null,
-  }),
-  memoryBank: () => ({ outputPath: () => null, rewriteContent: (c: string) => c }),
   detectUserFileSectionKey: () => null,
 });
 
 describe("VALID_TOOL_IDS", () => {
-  it("contains exactly claude, cursor, copilot, opencode, vscode", () => {
-    expect(VALID_TOOL_IDS).toEqual(["claude", "cursor", "copilot", "opencode", "vscode"]);
-  });
-});
-
-describe("acceptsFile()", () => {
-  const claudeConfig = makeStubConfig("claude", ".claude.md");
-
-  it("accepts files without any tool suffix", () => {
-    expect(acceptsFile(claudeConfig, "generic.md")).toBe(true);
-  });
-
-  it("accepts files with own tool suffix", () => {
-    expect(acceptsFile(claudeConfig, "ide-mapping.claude.md")).toBe(true);
-  });
-
-  it("rejects files with another tool's suffix", () => {
-    expect(acceptsFile(claudeConfig, "ide-mapping.cursor.md")).toBe(false);
-    expect(acceptsFile(claudeConfig, "ide-mapping.copilot.md")).toBe(false);
-  });
-
-  it("handles nested paths correctly", () => {
-    expect(acceptsFile(claudeConfig, "rules/04-tooling/ide-mapping.cursor.md")).toBe(false);
-    expect(acceptsFile(claudeConfig, "rules/04-tooling/ide-mapping.claude.md")).toBe(true);
+  it("contains exactly claude, cursor, copilot, opencode, codex, vscode", () => {
+    expect(VALID_TOOL_IDS).toEqual(["claude", "cursor", "copilot", "opencode", "codex", "vscode"]);
   });
 });
 
@@ -100,7 +52,7 @@ describe("stripToolSuffix()", () => {
 
 describe("toolIdsForCategory()", () => {
   it("returns AI tool IDs for 'ai'", () => {
-    expect(toolIdsForCategory("ai")).toEqual(["claude", "cursor", "copilot", "opencode"]);
+    expect(toolIdsForCategory("ai")).toEqual(["claude", "cursor", "copilot", "opencode", "codex"]);
   });
 
   it("returns IDE tool IDs for 'ide'", () => {

@@ -1,13 +1,13 @@
 import type { Dirent } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
-import type {
-  ConfigRef,
-  ContentSection,
-  ScriptRef,
-  TemplateRef,
-} from "../../domain/models/framework-descriptor.js";
-import { FrameworkDescriptor } from "../../domain/models/framework-descriptor.js";
+import {
+  type ConfigRef,
+  type ContentSection,
+  FrameworkDescriptor,
+  type ScriptRef,
+  type TemplateRef,
+} from "../../domain/models/framework.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 
 const OS_FILES = new Set([".DS_Store", "Thumbs.db"]);
@@ -37,6 +37,7 @@ const CONFIG_REFS: readonly ConfigRef[] = [
     requiredIdeId: "vscode",
   },
   { name: "opencode", path: "config/.opencode/opencode.json" },
+  { name: "codex-hooks", path: "config/codex/hooks.json" },
 ];
 
 const SCRIPT_REFS: readonly ScriptRef[] = [

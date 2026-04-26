@@ -1,8 +1,35 @@
 import { existsSync } from "node:fs";
-import { readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
+import {
+  CLI_PATH,
+  createTestEnv,
+  execFileAsync,
+  FRAMEWORK_PATH,
+  initProject,
+  runCli,
+} from "./helpers.js";
+
+async function runCliNoAuth(
+  args: string[],
+  cwd: string,
+  fakeHome: string
+): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  const env: NodeJS.ProcessEnv = { ...process.env, HOME: fakeHome };
+  delete env.AIDD_TOKEN;
+  try {
+    const { stdout, stderr } = await execFileAsync("node", [CLI_PATH, ...args], { cwd, env });
+    return { stdout, stderr, exitCode: 0 };
+  } catch (error) {
+    const err = error as { stdout?: string; stderr?: string; code?: number };
+    return {
+      stdout: err.stdout ?? "",
+      stderr: err.stderr ?? "",
+      exitCode: err.code ?? 1,
+    };
+  }
+}
 
 describe.concurrent("E2E: aidd restore", () => {
   it("fails with 'No AIDD installation found' when no manifest exists", async () => {
@@ -318,6 +345,28 @@ describe.concurrent("E2E: aidd restore", () => {
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("mutually exclusive");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--release flag without --path triggers remote resolution and requires auth", async () => {
+    const { projectDir, cleanup } = await createTestEnv("restore-release");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      const fakeHome = join(projectDir, "fake-home");
+      await mkdir(fakeHome, { recursive: true });
+
+      const { stderr, exitCode } = await runCliNoAuth(
+        ["restore", "--release", "v3.9.0", "--force"],
+        projectDir,
+        fakeHome
+      );
+
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toMatch(/not authenticated|auth login/i);
     } finally {
       await cleanup();
     }

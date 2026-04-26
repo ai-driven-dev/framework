@@ -5,7 +5,7 @@ import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { CLIOutput } from "../../src/application/output.js";
 import { SetupUseCase } from "../../src/application/use-cases/setup-use-case.js";
-import type { ToolId } from "../../src/domain/models/tool-config.js";
+import type { ToolId } from "../../src/domain/tools/registry.js";
 import { createDeps } from "../../src/infrastructure/deps.js";
 
 export const execFileAsync = promisify(execFile);

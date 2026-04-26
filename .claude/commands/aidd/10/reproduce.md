@@ -20,7 +20,7 @@ Fix bug systematically using test-driven approach, from issue creation to pull r
 
 ## Steps
 
-1. Create GitHub issue with short descriptive title
+1. Create ticket in configured ticketing tool with short descriptive title
 2. Create fix branch
 3. Reproduce issue and understand root cause
 4. Write failing test demonstrating bug

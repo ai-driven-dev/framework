@@ -11,12 +11,6 @@ Capture and store new learnings from recently implemented feature in memory bank
 
 ## Resources
 
-### IDE syntax reference
-
-```md
-@.claude/rules/04-tooling/ide-mapping.md
-```
-
 ### Doc content
 
 ```shell
@@ -105,4 +99,4 @@ Propose where to save each learning.
 
 ### Phase 4: Sync memory references
 
-Sync memory references in context files
+Execute `.aidd/scripts/update_memory.js` to sync memory references in context files

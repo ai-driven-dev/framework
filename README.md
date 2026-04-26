@@ -2,7 +2,7 @@
 
 The **AIDD CLI** (`@ai-driven-dev/cli`) distributes the [AI-Driven Development Framework](https://github.com/ai-driven-dev/aidd-framework) consistently across AI coding assistants. It downloads a canonical framework from GitHub, rewrites files to match each tool's conventions, and tracks every installed file in a hash-based manifest to detect drift.
 
-**Supported tools:** Claude Code · Cursor · GitHub Copilot · OpenCode · VS Code (IDE integration)
+**Supported tools:** Claude Code · Cursor · GitHub Copilot · OpenCode · Codex · VS Code (IDE integration)
 
 ---
 

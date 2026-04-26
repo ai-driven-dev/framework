@@ -2,17 +2,18 @@ import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import "../../../src/domain/tools/ai/claude.js";
+import "../../../src/domain/tools/ai/codex.js";
 import "../../../src/domain/tools/ai/copilot.js";
 import "../../../src/domain/tools/ai/cursor.js";
 import "../../../src/domain/tools/ai/opencode.js";
 import "../../../src/domain/tools/ide/vscode.js";
 import { CLIOutput } from "../../../src/application/output.js";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
-import { InstallUseCase } from "../../../src/application/use-cases/install-use-case.js";
-import type { ToolId } from "../../../src/domain/models/tool-config.js";
-import type { Git } from "../../../src/domain/ports/git.js";
+import { InstallUseCase } from "../../../src/application/use-cases/install/install-use-case.js";
 import type { Platform } from "../../../src/domain/ports/platform.js";
 import type { Prompter } from "../../../src/domain/ports/prompter.js";
+import type { VersionControl } from "../../../src/domain/ports/version-control.js";
+import type { ToolId } from "../../../src/domain/tools/registry.js";
 import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
 import { FrameworkLoaderAdapter } from "../../../src/infrastructure/adapters/framework-loader-adapter.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
@@ -21,7 +22,7 @@ import { SilentPrompterAdapter } from "../../../src/infrastructure/adapters/prom
 
 export const linuxPlatform: Platform = { current: () => "linux" };
 export const win32Platform: Platform = { current: () => "win32" };
-export const noGit: Git = { installPreCommitDelegate: async () => {} };
+export const noGit: VersionControl = { installPreCommitDelegate: async () => {} };
 
 export { SilentPrompterAdapter as OverwritePrompter };
 

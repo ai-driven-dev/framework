@@ -46,7 +46,7 @@ flowchart TD
 
 > {straight to point goal}
 
-1. {ultra concise task1, with logical
+1. {ultra concise task1, with logical ordering}
 2. {...}
 3. {...}
 

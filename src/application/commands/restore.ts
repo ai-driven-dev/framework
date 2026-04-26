@@ -1,11 +1,11 @@
 import type { Command } from "commander";
-import { assertValidToolIds, type ToolId } from "../../domain/models/tool-config.js";
+import { assertValidToolIds, type ToolId } from "../../domain/tools/registry.js";
 
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { NoManifestError } from "../errors.js";
 import { ResolveFrameworkUseCase } from "../use-cases/resolve-framework-use-case.js";
-import { RestoreUseCase } from "../use-cases/restore-use-case.js";
+import { RestoreUseCase } from "../use-cases/restore/restore-use-case.js";
 import { StatusUseCase } from "../use-cases/status-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 

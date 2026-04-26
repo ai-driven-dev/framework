@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { SetupStateDetector } from "../../../src/application/use-cases/shared/setup-state-detector.js";
+import { SetupStateService } from "../../../src/application/use-cases/shared/setup-state-service.js";
 import type { FrameworkResolver } from "../../../src/domain/ports/framework-resolver.js";
 import {
   buildDeps,
@@ -11,7 +11,7 @@ import {
   initProject,
 } from "./helpers.js";
 
-describe("SetupStateDetector", () => {
+describe("SetupStateService", () => {
   let tempDir: string;
   let projectRoot: string;
 
@@ -37,7 +37,7 @@ describe("SetupStateDetector", () => {
     const deps = buildDeps(projectRoot);
     const resolver = makeResolver({ latestVersion: "v1.0.0" });
 
-    const state = await new SetupStateDetector(deps.manifestRepo, deps.fs, resolver).detect(
+    const state = await new SetupStateService(deps.manifestRepo, deps.fs, resolver).detect(
       projectRoot
     );
     expect(state.kind).toBe("needs-init");
@@ -51,7 +51,7 @@ describe("SetupStateDetector", () => {
     const deps = buildDeps(projectRoot);
     const resolver = makeResolver({ latestVersion: "v1.0.0" });
 
-    const state = await new SetupStateDetector(deps.manifestRepo, deps.fs, resolver).detect(
+    const state = await new SetupStateService(deps.manifestRepo, deps.fs, resolver).detect(
       projectRoot
     );
     expect(state.kind).toBe("needs-adopt");
@@ -63,7 +63,7 @@ describe("SetupStateDetector", () => {
 
     const resolver = makeResolver({ latestVersion: "v1.0.0" });
 
-    const state = await new SetupStateDetector(deps.manifestRepo, deps.fs, resolver).detect(
+    const state = await new SetupStateService(deps.manifestRepo, deps.fs, resolver).detect(
       projectRoot
     );
     expect(state.kind).toBe("needs-install");
@@ -75,7 +75,7 @@ describe("SetupStateDetector", () => {
 
     const resolver = makeResolver({ latestVersion: "v9.9.9" });
 
-    const state = await new SetupStateDetector(deps.manifestRepo, deps.fs, resolver).detect(
+    const state = await new SetupStateService(deps.manifestRepo, deps.fs, resolver).detect(
       projectRoot
     );
     expect(state.kind).toBe("needs-update");
@@ -91,7 +91,7 @@ describe("SetupStateDetector", () => {
 
     const resolver = makeResolver({ latestVersion: "test" });
 
-    const state = await new SetupStateDetector(deps.manifestRepo, deps.fs, resolver).detect(
+    const state = await new SetupStateService(deps.manifestRepo, deps.fs, resolver).detect(
       projectRoot
     );
     expect(state.kind).toBe("up-to-date");
@@ -103,7 +103,7 @@ describe("SetupStateDetector", () => {
 
     const resolver = makeResolver({ throws: true });
 
-    const state = await new SetupStateDetector(deps.manifestRepo, deps.fs, resolver).detect(
+    const state = await new SetupStateService(deps.manifestRepo, deps.fs, resolver).detect(
       projectRoot
     );
     expect(state.kind).toBe("up-to-date");

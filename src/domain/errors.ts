@@ -1,4 +1,4 @@
-import type { ToolCategory } from "./models/tool-config.js";
+import type { ToolCategory } from "./tools/registry.js";
 
 export class AuthenticationError extends Error {
   constructor(source: string) {

@@ -1,14 +1,36 @@
 import { existsSync, readdirSync } from "node:fs";
-import { readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  CLI_PATH,
   createTestEnv,
+  execFileAsync,
   FRAMEWORK_PATH,
   FRAMEWORK_V2_PATH,
   initProject,
   runCli,
 } from "./helpers.js";
+
+async function runCliNoAuth(
+  args: string[],
+  cwd: string,
+  fakeHome: string
+): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  const env: NodeJS.ProcessEnv = { ...process.env, HOME: fakeHome };
+  delete env.AIDD_TOKEN;
+  try {
+    const { stdout, stderr } = await execFileAsync("node", [CLI_PATH, ...args], { cwd, env });
+    return { stdout, stderr, exitCode: 0 };
+  } catch (error) {
+    const err = error as { stdout?: string; stderr?: string; code?: number };
+    return {
+      stdout: err.stdout ?? "",
+      stderr: err.stderr ?? "",
+      exitCode: err.code ?? 1,
+    };
+  }
+}
 
 // framework-v2 vs framework changes:
 //   changed: rules/01-standards/naming.md (added "Constants: UPPER_SNAKE_CASE" line)
@@ -310,6 +332,28 @@ describe.concurrent("E2E: aidd update", () => {
     }
   });
 
+  it("--release flag without --path triggers remote resolution and requires auth", async () => {
+    const { projectDir, cleanup } = await createTestEnv("update-release");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      const fakeHome = join(projectDir, "fake-home");
+      await mkdir(fakeHome, { recursive: true });
+
+      const { stderr, exitCode } = await runCliNoAuth(
+        ["update", "--release", "v3.9.0"],
+        projectDir,
+        fakeHome
+      );
+
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toMatch(/not authenticated|auth login/i);
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("removes an obsolete script file replaced by a newer framework version", async () => {
     const { projectDir, cleanup } = await createTestEnv("update-stale-script");
     try {
@@ -339,6 +383,64 @@ describe.concurrent("E2E: aidd update", () => {
       expect(exitCode).toBe(0);
       expect(existsSync(join(projectDir, staleRelPath))).toBe(false);
       expect(existsSync(join(projectDir, currentRelPath))).toBe(true);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("deletes merge files that become empty after key removal during update", async () => {
+    const { projectDir, cleanup } = await createTestEnv("update-empty-merge");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ide", "vscode", "--path", FRAMEWORK_PATH], projectDir);
+
+      // v2 removes the extensions.json recommendations key — file should be deleted, not left as {}
+      const { exitCode } = await runCli(
+        ["update", "--path", FRAMEWORK_V2_PATH, "--force"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(existsSync(join(projectDir, ".vscode", "extensions.json"))).toBe(false);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("updates codex (a tool with no rules capability) without crashing", async () => {
+    const { projectDir, cleanup } = await createTestEnv("update-codex");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "codex", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stdout, exitCode } = await runCli(
+        ["update", "--path", FRAMEWORK_V2_PATH, "--force"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toMatch(/Updated \d+ files/);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("deletes merge files whose capability section is dropped entirely in the newer framework", async () => {
+    const { projectDir, cleanup } = await createTestEnv("update-dropped-merge");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "codex", "--path", FRAMEWORK_PATH], projectDir);
+
+      // hooks.json is a merge file in v1 codex; v2 drops codex-hooks entirely
+      expect(existsSync(join(projectDir, ".codex", "hooks.json"))).toBe(true);
+
+      const { exitCode } = await runCli(
+        ["update", "--path", FRAMEWORK_V2_PATH, "--force"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(existsSync(join(projectDir, ".codex", "hooks.json"))).toBe(false);
     } finally {
       await cleanup();
     }

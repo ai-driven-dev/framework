@@ -1,33 +1,35 @@
 import { join } from "node:path";
+import { AgentsCapability } from "../../capabilities/agents-capability.js";
+import { CommandsCapability } from "../../capabilities/commands-capability.js";
+import { McpCapability } from "../../capabilities/mcp-capability.js";
+import { MemoryCapability } from "../../capabilities/memory-capability.js";
+import { RulesCapability } from "../../capabilities/rules-capability.js";
+import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import {
   InvalidMcpServerConfigError,
   McpConfigError,
   OpencodeDualConfigError,
 } from "../../errors.js";
 import {
-  CONFIG_MCP,
-  CONFIG_OPENCODE,
-  TEMPLATE_AGENTS_MD,
-} from "../../models/framework-descriptor.js";
-import type { MergeStrategy } from "../../models/merge-strategy.js";
-import {
-  type AiToolConfig,
-  baseReverseRewriteContent,
-  baseRewriteContent,
   buildAiddCommandFilePath,
-  type CommandsHandler,
-  type ConfigHandler,
   convertCommandFrontmatterNoHint,
   detectSectionKeyFromPrefixes,
-  type MemoryBankHandler,
-  passthroughSkillsHandler,
-  type RulesHandler,
-  registerTool,
   reverseConvertCommandFrontmatterNoHint,
-  type SectionHandler,
   stripToolSuffix,
-  type UserFileSectionKey,
-} from "../../models/tool-config.js";
+} from "../../formats/command.js";
+import { baseReverseRewriteContent, baseRewriteContent } from "../../formats/placeholders.js";
+import { CONFIG_MCP, CONFIG_OPENCODE } from "../../models/framework.js";
+import type {
+  AiTool,
+  HasAgents,
+  HasCommands,
+  HasMcp,
+  HasMemory,
+  HasRules,
+  HasSkills,
+  UserFileSectionKey,
+} from "../contracts.js";
+import { registerTool } from "../registry.js";
 
 const DIRECTORY = ".opencode/";
 const TOOL_SUFFIX = ".opencode.md";
@@ -87,134 +89,91 @@ function transformMcpToOpencode(content: string): string {
   return JSON.stringify({ mcp }, null, 2);
 }
 
-// OpenCode uses filename as name for agents and commands — no name field in frontmatter.
-// Sync round-trips (opencode → other tools) lose the name; it is recovered from the filename.
-// mode: subagent is required by OpenCode to register agents as subagents.
-const descriptionOnlyFrontmatter = {
-  convertFrontmatter: (fm: Record<string, unknown>) => ({
-    description: fm.description,
-    mode: "subagent",
-  }),
-  reverseConvertFrontmatter: (fm: Record<string, unknown>) => ({ description: fm.description }),
-};
+export const opencode: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasMemory> =
+  {
+    kind: "ai",
+    toolId: "opencode",
+    directory: DIRECTORY,
+    toolSuffix: TOOL_SUFFIX,
+    signalDir: ".opencode/commands",
 
-export const opencodeToolConfig: AiToolConfig = {
-  kind: "ai",
-  toolId: "opencode",
-  directory: DIRECTORY,
-  toolSuffix: TOOL_SUFFIX,
-  signalDir: ".opencode/commands",
+    capabilities: {
+      agents: new AgentsCapability({
+        directory: DIRECTORY,
+        toolSuffix: TOOL_SUFFIX,
+        format: "markdown",
+        convertFrontmatter: (fm) => ({ description: fm.description, mode: "subagent" }),
+        reverseConvertFrontmatter: (fm) => ({ description: fm.description }),
+      }),
+      skills: new SkillsCapability({
+        directory: DIRECTORY,
+        toolSuffix: TOOL_SUFFIX,
+        buildInstallPath: (fileName) =>
+          `${DIRECTORY}skills/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+        convertFrontmatter: (fm) => fm,
+        reverseConvertFrontmatter: (fm) => fm,
+      }),
+      commands: new CommandsCapability({
+        directory: DIRECTORY,
+        toolSuffix: TOOL_SUFFIX,
+        buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
+        convertFrontmatter: (fm, relativeFileName) =>
+          convertCommandFrontmatterNoHint(fm, relativeFileName),
+        reverseConvertFrontmatter: (fm) => reverseConvertCommandFrontmatterNoHint(fm),
+      }),
+      rules: new RulesCapability({
+        directory: DIRECTORY,
+        toolSuffix: TOOL_SUFFIX,
+        buildInstallPath: (fileName) =>
+          `${DIRECTORY}rules/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+        convertFrontmatter: (fm) => {
+          if (fm.alwaysApply === false && fm.description !== undefined) {
+            return { description: fm.description };
+          }
+          return {};
+        },
+        reverseConvertFrontmatter: () => ({}),
+      }),
+      mcp: new McpCapability({
+        outputPath: "opencode.json",
+        format: "json",
+        entrySection: "mcp",
+        mergeStrategy: "framework-prime",
+        transformContent: transformMcpToOpencode,
+        consumes: [CONFIG_MCP, CONFIG_OPENCODE],
+        resolveOutputPath: async (projectRoot, fs) => {
+          const jsonExists = await fs.fileExists(join(projectRoot, "opencode.json"));
+          const jsoncExists = await fs.fileExists(join(projectRoot, "opencode.jsonc"));
+          if (jsonExists && jsoncExists) throw new OpencodeDualConfigError();
+          if (jsoncExists) return "opencode.jsonc";
+          return "opencode.json";
+        },
+      }),
+      memory: new MemoryCapability({
+        outputFileName: "AGENTS.md",
+        rewriteContent: (content, docsDir) => opencode.rewriteContent(content, docsDir),
+      }),
+    },
 
-  rewriteContent(content: string, docsDir: string): string {
-    return baseRewriteContent(content, DIRECTORY, docsDir).replace(
-      /(@?)\.opencode\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
-      "$1.opencode/commands/aidd/$2/$3"
-    );
-  },
+    rewriteContent(content: string, docsDir: string): string {
+      return baseRewriteContent(content, DIRECTORY, docsDir).replace(
+        /(@?)\.opencode\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
+        "$1.opencode/commands/aidd/$2/$3"
+      );
+    },
 
-  reverseRewriteContent(content: string, docsDir: string): string {
-    return baseReverseRewriteContent(content, DIRECTORY, docsDir);
-  },
+    reverseRewriteContent(content: string, docsDir: string): string {
+      return baseReverseRewriteContent(content, DIRECTORY, docsDir);
+    },
 
-  agents(): SectionHandler {
-    return {
-      buildFilePath: (fileName) => `${DIRECTORY}agents/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
-      ...descriptionOnlyFrontmatter,
-    };
-  },
+    detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null {
+      return detectSectionKeyFromPrefixes(relativePath, [
+        [`${DIRECTORY}agents/`, "agents"],
+        [`${DIRECTORY}commands/aidd/`, "commands"],
+        [`${DIRECTORY}rules/`, "rules"],
+        [`${DIRECTORY}skills/`, "skills"],
+      ]);
+    },
+  };
 
-  commands(): CommandsHandler {
-    return {
-      buildFilePath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
-      convertFrontmatter(
-        fm: Record<string, unknown>,
-        relativeFileName: string
-      ): Record<string, unknown> {
-        return convertCommandFrontmatterNoHint(fm, relativeFileName);
-      },
-      reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-        return reverseConvertCommandFrontmatterNoHint(fm);
-      },
-    };
-  },
-
-  rules(): RulesHandler {
-    return {
-      // OpenCode has no built-in rules scoping — rules are installed to .opencode/rules/.
-      // They are inert until opencode.json lists them under "instructions".
-      // The framework's config/opencode.json template must include:
-      //   { "instructions": [".opencode/rules/**/*.md"] }
-      buildFilePath(fileName: string): string {
-        return `${DIRECTORY}rules/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
-      },
-      convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-        if (fm.alwaysApply === false && fm.description !== undefined) {
-          return { description: fm.description };
-        }
-        return {};
-      },
-      reverseConvertFrontmatter(_fm: Record<string, unknown>): Record<string, unknown> {
-        return {};
-      },
-    };
-  },
-
-  skills(): SectionHandler {
-    return passthroughSkillsHandler(DIRECTORY, TOOL_SUFFIX);
-  },
-
-  config(): ConfigHandler {
-    const OPENCODE_JSON = "opencode.json";
-    const OPENCODE_JSONC = "opencode.jsonc";
-    const handler: ConfigHandler = {
-      outputPath(configName: string): string | null {
-        if (configName === CONFIG_OPENCODE || configName === CONFIG_MCP) return OPENCODE_JSON;
-        return null;
-      },
-      mergeStrategy(configName: string): MergeStrategy {
-        if (handler.outputPath(configName) !== null) return "framework-prime";
-        return "none";
-      },
-      entrySection(configName: string): string | null {
-        if (configName === CONFIG_MCP || configName === CONFIG_OPENCODE) return "mcp";
-        return null;
-      },
-      transformContent(configName: string, content: string): string {
-        if (configName === CONFIG_MCP) return transformMcpToOpencode(content);
-        return content;
-      },
-      async resolveOutputPath(configName, projectRoot, fs): Promise<string | null> {
-        if (handler.outputPath(configName) === null) return null;
-        const jsonExists = await fs.fileExists(join(projectRoot, OPENCODE_JSON));
-        const jsoncExists = await fs.fileExists(join(projectRoot, OPENCODE_JSONC));
-        if (jsonExists && jsoncExists) throw new OpencodeDualConfigError();
-        if (jsoncExists) return OPENCODE_JSONC;
-        return OPENCODE_JSON;
-      },
-    };
-    return handler;
-  },
-
-  memoryBank(): MemoryBankHandler {
-    return {
-      outputPath(templateName: string): string | null {
-        if (templateName === TEMPLATE_AGENTS_MD) return "AGENTS.md";
-        return null;
-      },
-      rewriteContent(content: string, docsDir: string): string {
-        return opencodeToolConfig.rewriteContent(content, docsDir);
-      },
-    };
-  },
-
-  detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null {
-    return detectSectionKeyFromPrefixes(relativePath, [
-      [`${DIRECTORY}agents/`, "agents"],
-      [`${DIRECTORY}commands/aidd/`, "commands"],
-      [`${DIRECTORY}rules/`, "rules"],
-      [`${DIRECTORY}skills/`, "skills"],
-    ]);
-  },
-};
-
-registerTool(opencodeToolConfig);
+registerTool(opencode);

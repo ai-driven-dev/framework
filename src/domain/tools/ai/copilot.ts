@@ -1,3 +1,15 @@
+import { AgentsCapability } from "../../capabilities/agents-capability.js";
+import { CommandsCapability } from "../../capabilities/commands-capability.js";
+import { McpCapability } from "../../capabilities/mcp-capability.js";
+import { MemoryCapability } from "../../capabilities/memory-capability.js";
+import { RulesCapability } from "../../capabilities/rules-capability.js";
+import { SettingsCapability } from "../../capabilities/settings-capability.js";
+import { SkillsCapability } from "../../capabilities/skills-capability.js";
+import {
+  convertCommandFrontmatter,
+  reverseConvertCommandFrontmatter,
+} from "../../formats/command.js";
+import { parseFrontmatter } from "../../formats/markdown.js";
 import {
   AT_DOCS_PLACEHOLDER,
   AT_TOOLS_PLACEHOLDER,
@@ -5,24 +17,20 @@ import {
   CONFIG_MCP,
   DOCS_PLACEHOLDER,
   GITKEEP_FILE,
-  TEMPLATE_AGENTS_MD,
   TOOLS_PLACEHOLDER,
-} from "../../models/framework-descriptor.js";
-import { parseFrontmatter } from "../../models/frontmatter.js";
-import type { MergeStrategy } from "../../models/merge-strategy.js";
-import {
-  type AiToolConfig,
-  type CommandsHandler,
-  type ConfigHandler,
-  type MemoryBankHandler,
-  namedAgentsFrontmatter,
-  passthroughFrontmatter,
-  type RulesHandler,
-  registerTool,
-  type SectionHandler,
-  standardCommandFrontmatter,
-  type UserFileSectionKey,
-} from "../../models/tool-config.js";
+} from "../../models/framework.js";
+import type {
+  AiTool,
+  HasAgents,
+  HasCommands,
+  HasMcp,
+  HasMemory,
+  HasRules,
+  HasSettings,
+  HasSkills,
+  UserFileSectionKey,
+} from "../contracts.js";
+import { registerTool } from "../registry.js";
 
 const DIRECTORY = ".github/";
 const TOOL_SUFFIX = ".copilot.md";
@@ -78,27 +86,42 @@ function escapedRegex(literal: string): string {
   return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-const agentsHandler: SectionHandler = {
+const agentsHandler = {
   buildFilePath(fileName: string): string | null {
     const base = basename(fileName);
     if (base === GITKEEP_FILE) return null;
     const name = base.endsWith(".md") ? `${base.slice(0, -3)}${EXT_AGENT}` : base;
     return `${DIRECTORY}agents/${name}`;
   },
-  ...namedAgentsFrontmatter,
+  convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {
+    const base = fileName?.split("/").at(-1);
+    const name = fm.name ?? base?.replace(/\.md$/, "");
+    return { name: typeof name === "string" ? name : undefined, description: fm.description };
+  },
+  reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+    return { name: fm.name, description: fm.description };
+  },
 };
 
-const commandsHandler: CommandsHandler = {
+const commandsHandler = {
   buildFilePath(fileName: string): string | null {
     const base = basename(fileName);
     if (base === GITKEEP_FILE) return null;
     const flat = flattenFileName(fileName, EXT_PROMPT);
     return `${DIRECTORY}prompts/${flat}`;
   },
-  ...standardCommandFrontmatter,
+  convertFrontmatter(
+    fm: Record<string, unknown>,
+    relativeFileName: string
+  ): Record<string, unknown> {
+    return convertCommandFrontmatter(fm, relativeFileName);
+  },
+  reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+    return reverseConvertCommandFrontmatter(fm);
+  },
 };
 
-const rulesHandler: RulesHandler = {
+const rulesHandler = {
   buildFilePath(fileName: string): string | null {
     const base = basename(fileName);
     if (base === GITKEEP_FILE) return null;
@@ -127,13 +150,18 @@ const rulesHandler: RulesHandler = {
   },
 };
 
-const skillsHandler: SectionHandler = {
+const skillsHandler = {
   buildFilePath(fileName: string): string | null {
     const base = basename(fileName);
     if (base === GITKEEP_FILE) return null;
     return `${DIRECTORY}skills/${fileName}`;
   },
-  ...passthroughFrontmatter,
+  convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+    return fm;
+  },
+  reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+    return fm;
+  },
 };
 
 function resolveInstalledPath(path: string): string {
@@ -223,7 +251,19 @@ function reverseCopilotContent(content: string, docsDir: string): string {
     .replaceAll(`${docsDir}/`, DOCS_PLACEHOLDER);
 }
 
-export const copilotToolConfig: AiToolConfig = {
+function rewriteCopilotMemoryContent(content: string, docsDir: string): string {
+  const rewritten = rewriteCopilotContent(content, docsDir);
+  const { body } = parseFrontmatter(rewritten);
+  return body
+    .replace(/^\n+/, "")
+    .replace(/^# AGENTS\.md[ \t]*\n/, "# Copilot Instructions\n")
+    .replace(/\]\(\.\.\/\.\.\//g, "](../")
+    .replace(new RegExp(`\\]\\(${docsDir}/`, "g"), `](../${docsDir}/`);
+}
+
+export const copilot: AiTool<
+  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasMemory & HasSettings
+> = {
   kind: "ai",
   toolId: "copilot",
   directory: DIRECTORY,
@@ -231,44 +271,43 @@ export const copilotToolConfig: AiToolConfig = {
   signalDir: ".github/prompts",
   requiredIdeIds: ["vscode"] as const,
 
-  rewriteContent: rewriteCopilotContent,
-
-  reverseRewriteContent: reverseCopilotContent,
-
-  agents(): SectionHandler {
-    return agentsHandler;
-  },
-
-  commands(): CommandsHandler {
-    return commandsHandler;
-  },
-
-  rules(): RulesHandler {
-    return rulesHandler;
-  },
-
-  skills(): SectionHandler {
-    return skillsHandler;
-  },
-
-  config(): ConfigHandler {
-    return {
-      outputPath(configName: string): string | null {
-        if (configName === CONFIG_MCP) return ".vscode/mcp.json";
-        if (configName === CONFIG_COPILOT_VSCODE_SETTINGS) return ".vscode/settings.json";
-        return null;
-      },
-      mergeStrategy(configName: string): MergeStrategy {
-        if (configName === CONFIG_MCP) return "user-prime";
-        if (configName === CONFIG_COPILOT_VSCODE_SETTINGS) return "framework-prime";
-        return "none";
-      },
-      entrySection(configName: string): string | null {
-        if (configName === CONFIG_MCP) return "servers";
-        return null;
-      },
-      transformContent(configName: string, content: string): string {
-        if (configName !== CONFIG_MCP) return content;
+  capabilities: {
+    agents: new AgentsCapability({
+      directory: DIRECTORY,
+      toolSuffix: EXT_AGENT,
+      format: "markdown",
+      userFileExt: EXT_AGENT,
+      buildInstallPath: (fileName) => agentsHandler.buildFilePath(fileName),
+      convertFrontmatter: (fm, fileName) => agentsHandler.convertFrontmatter(fm, fileName),
+      reverseConvertFrontmatter: (fm) => agentsHandler.reverseConvertFrontmatter(fm),
+    }),
+    skills: new SkillsCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      buildInstallPath: (fileName) => skillsHandler.buildFilePath(fileName),
+      convertFrontmatter: (fm) => skillsHandler.convertFrontmatter(fm),
+      reverseConvertFrontmatter: (fm) => skillsHandler.reverseConvertFrontmatter(fm),
+    }),
+    commands: new CommandsCapability({
+      directory: DIRECTORY,
+      toolSuffix: EXT_PROMPT,
+      buildInstallPath: (fileName) => commandsHandler.buildFilePath(fileName),
+      convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
+      reverseConvertFrontmatter: (fm) => reverseConvertCommandFrontmatter(fm),
+    }),
+    rules: new RulesCapability({
+      directory: DIRECTORY,
+      toolSuffix: EXT_INSTRUCTIONS,
+      buildInstallPath: (fileName) => rulesHandler.buildFilePath(fileName),
+      convertFrontmatter: (fm) => rulesHandler.convertFrontmatter(fm),
+      reverseConvertFrontmatter: (fm) => rulesHandler.reverseConvertFrontmatter(fm),
+    }),
+    mcp: new McpCapability({
+      outputPath: ".vscode/mcp.json",
+      format: "json",
+      entrySection: "servers",
+      consumes: [CONFIG_MCP],
+      transformContent: (content) => {
         const parsed = JSON.parse(content) as Record<string, unknown>;
         if ("mcpServers" in parsed && !("servers" in parsed)) {
           const { mcpServers, ...rest } = parsed as { mcpServers: unknown } & Record<
@@ -279,26 +318,21 @@ export const copilotToolConfig: AiToolConfig = {
         }
         return content;
       },
-    };
+    }),
+    memory: new MemoryCapability({
+      outputFileName: `${DIRECTORY}copilot-instructions.md`,
+      rewriteContent: rewriteCopilotMemoryContent,
+    }),
+    settings: new SettingsCapability({
+      outputPath: ".vscode/settings.json",
+      mergeStrategy: "framework-prime",
+      consumes: [CONFIG_COPILOT_VSCODE_SETTINGS],
+    }),
   },
 
-  memoryBank(): MemoryBankHandler {
-    return {
-      outputPath(templateName: string): string | null {
-        if (templateName === TEMPLATE_AGENTS_MD) return `${DIRECTORY}copilot-instructions.md`;
-        return null;
-      },
-      rewriteContent(content: string, docsDir: string): string {
-        const rewritten = rewriteCopilotContent(content, docsDir);
-        const { body } = parseFrontmatter(rewritten);
-        return body
-          .replace(/^\n+/, "")
-          .replace(/^# AGENTS\.md[ \t]*\n/, "# Copilot Instructions\n")
-          .replace(/\]\(\.\.\/\.\.\//g, "](../")
-          .replace(new RegExp(`\\]\\(${docsDir}/`, "g"), `](../${docsDir}/`);
-      },
-    };
-  },
+  rewriteContent: rewriteCopilotContent,
+
+  reverseRewriteContent: reverseCopilotContent,
 
   detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null {
     if (relativePath.startsWith(`${DIRECTORY}agents/`)) {
@@ -314,4 +348,4 @@ export const copilotToolConfig: AiToolConfig = {
   },
 };
 
-registerTool(copilotToolConfig);
+registerTool(copilot);

@@ -288,6 +288,36 @@ describe.concurrent("E2E: aidd sync", () => {
     }
   });
 
+  it("broadcasts deletion from claude to cursor and copilot when no --target is given", async () => {
+    const { projectDir, cleanup } = await createTestEnv("sync");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "cursor", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ai", "copilot", "--path", FRAMEWORK_PATH], projectDir);
+
+      const claudeNamingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
+      await rm(claudeNamingPath, { force: true });
+
+      const { stdout, exitCode } = await runCli(["sync", "--source", "claude"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("deleted");
+
+      const cursorNamingPath = join(projectDir, ".cursor", "rules", "01-standards", "naming.mdc");
+      const copilotNamingPath = join(
+        projectDir,
+        ".github",
+        "instructions",
+        "01-naming.instructions.md"
+      );
+      expect(existsSync(cursorNamingPath)).toBe(false);
+      expect(existsSync(copilotNamingPath)).toBe(false);
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("syncs a modified rule from claude to copilot (framework file MODIFIED)", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {

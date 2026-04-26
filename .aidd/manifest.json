@@ -1,10 +1,10 @@
 {
-  "version": 1,
+  "version": 2,
   "docsDir": "aidd_docs",
   "tools": {
     "claude": {
       "toolId": "claude",
-      "version": "3.7.3",
+      "version": "3.9.0",
       "files": [
         {
           "relativePath": ".claude/agents/alexia.md",
@@ -63,8 +63,13 @@
         },
         {
           "relativePath": ".claude/commands/aidd/01/init.md",
-          "hash": "3ca8e6019f47b7ec45baf5e2bc743eb6",
+          "hash": "0cc1b49c4bb3ea4f5c9beab13d5b314b",
           "frameworkPath": "commands/01_onboard/init.md"
+        },
+        {
+          "relativePath": ".claude/commands/aidd/01/onboard.md",
+          "hash": "8a1c189d8b3a2b72e9d13a42cc7fd668",
+          "frameworkPath": "commands/01_onboard/onboard.md"
         },
         {
           "relativePath": ".claude/commands/aidd/02/brainstorm.md",
@@ -98,7 +103,7 @@
         },
         {
           "relativePath": ".claude/commands/aidd/03/plan.md",
-          "hash": "3f45f79b09efbaa6a495b5f29c2db23b",
+          "hash": "b2e5dc379fa4c53ce24af64b612aa8dc",
           "frameworkPath": "commands/03_plan/plan.md"
         },
         {
@@ -198,7 +203,7 @@
         },
         {
           "relativePath": ".claude/commands/aidd/10/new_issue.md",
-          "hash": "77de2921252ea34954aece4360dca6c7",
+          "hash": "4c821fbf8bb55252e5e95e462ce54f88",
           "frameworkPath": "commands/10_maintenance/new_issue.md"
         },
         {
@@ -208,7 +213,7 @@
         },
         {
           "relativePath": ".claude/commands/aidd/10/reproduce.md",
-          "hash": "3d7fc8de4d25a128dd9227b7395b4818",
+          "hash": "bd0f32b34f97a2641c01c853eaf7a141",
           "frameworkPath": "commands/10_maintenance/reproduce.md"
         },
         {
@@ -287,24 +292,26 @@
           "frameworkPath": "skills/challenge/SKILL.md"
         },
         {
-          "relativePath": ".mcp.json",
-          "hash": "1522c3279d4454b8fd1af8456279e19e",
-          "frameworkPath": "config/mcp.json"
-        },
-        {
           "relativePath": "CLAUDE.md",
           "hash": "12205cc850b37e059467d103d846dad6",
           "frameworkPath": "aidd_docs/templates/AGENTS.md"
-        },
+        }
+      ],
+      "mergeFiles": [
         {
-          "relativePath": ".vscode/settings.json",
-          "hash": "0b7389fcac352084d5ada3c03328a27f"
+          "relativePath": ".mcp.json",
+          "sectionKey": "mcpServers",
+          "entries": {
+            "playwright": "27219fcdb8b4ad76e7b54d5a2b372faa",
+            "figma": "cc1879da2080f6bfee680748ddf1dec9",
+            "mcp-atlassian": "df94ce234e0da3bdf63bbd013d76ec9f"
+          }
         }
       ]
     }
   },
   "docs": {
-    "version": "3.7.3",
+    "version": "3.9.0",
     "files": [
       {
         "relativePath": "aidd_docs/CONTRIBUTING.md",
@@ -312,7 +319,7 @@
       },
       {
         "relativePath": "aidd_docs/README.md",
-        "hash": "1f94b502f73cff8d4bcc6b6b1338c254"
+        "hash": "a3c84b42eee7d894fe34afd89d89941b"
       },
       {
         "relativePath": "aidd_docs/memory/external/.gitkeep",
@@ -396,11 +403,11 @@
       },
       {
         "relativePath": "aidd_docs/templates/aidd/memory/vcs.md",
-        "hash": "6f99710116c6f413167b6325774cb843"
+        "hash": "f0d7fcf11139c8d15ebdf2fa2f42e577"
       },
       {
         "relativePath": "aidd_docs/templates/aidd/plan.md",
-        "hash": "9cf210a7ce183dde48413195d513e670"
+        "hash": "c4d2055bfd8f79cd61a151b6a04e916e"
       },
       {
         "relativePath": "aidd_docs/templates/aidd/prompt.md",
@@ -481,11 +488,11 @@
     ]
   },
   "scripts": {
-    "version": "3.7.3",
+    "version": "local",
     "files": [
       {
         "relativePath": ".aidd/scripts/update_memory.js",
-        "hash": "2614540bf198abe5456bfd5078e48d34"
+        "hash": "eb90ea0cab7e830a5e452e4a2173e444"
       }
     ]
   }

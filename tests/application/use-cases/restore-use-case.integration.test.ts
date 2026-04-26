@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { RestoreUseCase } from "../../../src/application/use-cases/restore-use-case.js";
+import { RestoreUseCase } from "../../../src/application/use-cases/restore/restore-use-case.js";
 import {
   buildDeps,
   cleanupTempProject,

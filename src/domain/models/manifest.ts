@@ -5,12 +5,10 @@ import {
   ManifestValidationError,
   ToolNotInManifestError,
 } from "../errors.js";
-import { FileHash } from "./file-hash.js";
-import type { GeneratedFile } from "./generated-file.js";
-import type { McpExclusion } from "./mcp-exclusion.js";
-import { mcpExclusionEquals } from "./mcp-exclusion.js";
-import type { MergeFileEntry } from "./merge-entry.js";
-import { type ToolId, VALID_TOOL_IDS } from "./tool-config.js";
+import { FileHash, type InstallationFile } from "./file.js";
+import { type McpExclusion, mcpExclusionEquals } from "./mcp-exclusion.js";
+import type { MergeFileEntry } from "./merge.js";
+import { type ToolId, VALID_TOOL_IDS } from "./tool-ids.js";
 
 const MANIFEST_VERSION = 2;
 
@@ -167,7 +165,7 @@ export class Manifest {
   addTool(
     toolId: ToolId,
     version: string,
-    files: GeneratedFile[],
+    files: InstallationFile[],
     mergeFiles: MergeFileEntry[] = [],
     excludedMcp: McpExclusion[] = []
   ): void {
@@ -180,11 +178,11 @@ export class Manifest {
     });
   }
 
-  addDocs(version: string, files: GeneratedFile[]): void {
+  addDocs(version: string, files: InstallationFile[]): void {
     this._docs = { version, files: this.toTrackedFiles(files) };
   }
 
-  addScripts(version: string, files: GeneratedFile[]): void {
+  addScripts(version: string, files: InstallationFile[]): void {
     this._scripts = { version, files: this.toTrackedFiles(files) };
   }
 
@@ -200,7 +198,7 @@ export class Manifest {
     return this._scripts !== null;
   }
 
-  private toTrackedFiles(files: GeneratedFile[]): TrackedFile[] {
+  private toTrackedFiles(files: InstallationFile[]): TrackedFile[] {
     return files.map((f) => ({
       relativePath: f.relativePath,
       hash: f.hash,

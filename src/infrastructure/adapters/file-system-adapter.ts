@@ -10,12 +10,12 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
-import type { FileHash } from "../../domain/models/file-hash.js";
+import type { FileHash } from "../../domain/models/file.js";
 import {
   isPerKeyMergeStrategy,
   type MergeStrategy,
   type PerKeyMergeStrategy,
-} from "../../domain/models/merge-strategy.js";
+} from "../../domain/models/merge.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import { JsonParseError } from "../errors.js";

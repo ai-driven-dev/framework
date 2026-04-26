@@ -6,7 +6,7 @@ import {
   extractAtReferences,
   extractMarkdownLinkTargets,
 } from "../../../src/application/use-cases/doctor-use-case.js";
-import type { ToolId } from "../../../src/domain/models/tool-config.js";
+import type { ToolId } from "../../../src/domain/tools/registry.js";
 import { buildDeps, cleanupTempProject, createTempProject, initAndInstall } from "./helpers.js";
 
 describe("extractAtReferences", () => {

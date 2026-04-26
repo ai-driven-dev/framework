@@ -133,6 +133,8 @@ Start at **Initialization**, then follow the path step by step. Each box shows t
 
 > **New commands:** `/init`
 
+> **Skip this phase** if `aidd_docs/memory/` already contains files — your project is already initialized. Go directly to [Phase 2](#️-phase-2--configure-your-project).
+
 ### Step by Step
 
 1. Install the AI-Driven Development framework using the [CLI](https://github.com/ai-driven-dev/aidd-cli) or by copying the dist files to your project root.
@@ -186,7 +188,7 @@ graph LR
 
    ```text
    /generate_rules "We use camelCase for variables, PascalCase for components, and barrel exports for every module"
-   # → Created 3 rules in .claude/rules/
+   # → Created 3 rules in aidd_docs/rules/
    ```
 
 3. Verify everything works — tests pass, types check, build succeeds, linter is clean. This becomes your safety net throughout the entire workflow.

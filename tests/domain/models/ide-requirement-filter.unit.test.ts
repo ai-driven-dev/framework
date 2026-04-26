@@ -1,14 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { FileHash } from "../../../src/domain/models/file-hash.js";
-import { GeneratedFile } from "../../../src/domain/models/generated-file.js";
-import { filterByIdeRequirements } from "../../../src/domain/models/ide-requirement-filter.js";
+import { filterByIdeRequirements } from "../../../src/application/use-cases/shared/ide-requirement-filter.js";
+import { FileHash, InstallationFile } from "../../../src/domain/models/file.js";
 // Side-effect import: registers vscode in the tool registry so filterByIdeRequirements can resolve its directory
 import "../../../src/domain/tools/ide/vscode.js";
 
 const DUMMY_HASH = "d41d8cd98f00b204e9800998ecf8427e";
 
-function makeFile(relativePath: string, frameworkPath: string): GeneratedFile {
-  return new GeneratedFile({
+function makeFile(relativePath: string, frameworkPath: string): InstallationFile {
+  return new InstallationFile({
     relativePath,
     content: "{}",
     hash: new FileHash(DUMMY_HASH),

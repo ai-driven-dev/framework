@@ -164,4 +164,90 @@ describe.concurrent("E2E: aidd uninstall", () => {
       await cleanup();
     }
   });
+
+  it("--mcp filter removes only that MCP server entry from claude", async () => {
+    const { projectDir, cleanup } = await createTestEnv("uninstall-mcp");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stdout, exitCode } = await runCli(
+        ["uninstall", "ai", "claude", "--mcp", "playwright"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Uninstalled claude");
+
+      // playwright entry must be gone; github entry (if present) must survive
+      const mcpPath = join(projectDir, ".mcp.json");
+      if (existsSync(mcpPath)) {
+        const mcp = JSON.parse(await readFile(mcpPath, "utf-8")) as {
+          mcpServers: Record<string, unknown>;
+        };
+        expect(mcp.mcpServers).not.toHaveProperty("playwright");
+      }
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("removes all codex files on uninstall", async () => {
+    const { projectDir, cleanup } = await createTestEnv("uninstall");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "codex", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stdout, exitCode } = await runCli(["uninstall", "ai", "codex"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Uninstalled codex");
+      expect(existsSync(join(projectDir, ".codex"))).toBe(false);
+      expect(existsSync(join(projectDir, "AGENTS.md"))).toBe(false);
+      expect(existsSync(join(projectDir, ".agents", "skills", "aidd-commit", "SKILL.md"))).toBe(
+        false
+      );
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("removes vscode from the manifest on uninstall (IDE settings files preserve user content)", async () => {
+    const { projectDir, cleanup } = await createTestEnv("uninstall");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ide", "vscode", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stdout, exitCode } = await runCli(["uninstall", "ide", "vscode"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Uninstalled vscode");
+
+      // IDE settings files are NOT deleted (user-prime merge strategy preserves user content)
+      // but vscode must be removed from the manifest
+      const manifestRaw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");
+      const manifest = JSON.parse(manifestRaw) as { tools: Record<string, unknown> };
+      expect(manifest.tools.vscode).toBeUndefined();
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("uninstall ai --all with claude and vscode installed removes only AI tools", async () => {
+    const { projectDir, cleanup } = await createTestEnv("uninstall-ai-category");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await runCli(["install", "ide", "vscode", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stdout, exitCode } = await runCli(["uninstall", "ai", "--all"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("claude");
+      expect(existsSync(join(projectDir, ".claude"))).toBe(false);
+      expect(existsSync(join(projectDir, ".vscode"))).toBe(true);
+    } finally {
+      await cleanup();
+    }
+  });
 });

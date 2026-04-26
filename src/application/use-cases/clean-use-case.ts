@@ -3,14 +3,14 @@ import {
   isMergeContentEmpty,
   type MergeFileEntry,
   removeEntriesFromJson,
-} from "../../domain/models/merge-entry.js";
+} from "../../domain/models/merge.js";
 import { AIDD_DIR } from "../../domain/models/paths.js";
-import type { ToolId } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
-import { GitignoreUseCase } from "./gitignore-use-case.js";
+import type { ToolId } from "../../domain/tools/registry.js";
+import { GitignoreUseCase } from "./shared/gitignore-use-case.js";
 
 interface CleanOptions {
   projectRoot: string;
@@ -95,8 +95,14 @@ export class CleanUseCase {
     for (const mergeFile of mergeFiles) {
       const fullPath = join(projectRoot, mergeFile.relativePath);
       if (!(await this.fs.fileExists(fullPath))) continue;
-      const content = await this.fs.readFile(fullPath);
       const keys = Object.keys(mergeFile.entries);
+      if (keys.length === 0) {
+        await this.fs.deleteFile(fullPath);
+        await this.fs.deleteEmptyDirectories(dirname(fullPath));
+        count++;
+        continue;
+      }
+      const content = await this.fs.readFile(fullPath);
       const cleaned = removeEntriesFromJson(content, mergeFile.sectionKey, keys);
       if (isMergeContentEmpty(cleaned, mergeFile.sectionKey)) {
         await this.fs.deleteFile(fullPath);

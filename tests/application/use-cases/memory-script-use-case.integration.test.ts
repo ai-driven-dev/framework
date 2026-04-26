@@ -5,12 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   MemoryScriptUseCase,
   SCRIPT_RELATIVE_PATH,
-} from "../../../src/application/use-cases/memory-script-use-case.js";
-import { FrameworkDescriptor } from "../../../src/domain/models/framework-descriptor.js";
-import { GeneratedFile } from "../../../src/domain/models/generated-file.js";
+} from "../../../src/application/use-cases/shared/memory-script-use-case.js";
+import { InstallationFile } from "../../../src/domain/models/file.js";
+import { FrameworkDescriptor } from "../../../src/domain/models/framework.js";
 import { Manifest } from "../../../src/domain/models/manifest.js";
-import type { Git } from "../../../src/domain/ports/git.js";
 import type { Prompter } from "../../../src/domain/ports/prompter.js";
+import type { VersionControl } from "../../../src/domain/ports/version-control.js";
 import { buildDeps, cleanupTempProject, createTempProject } from "./helpers.js";
 
 const SCRIPT_CONTENT = "// update memory script\nconsole.log('running');\n";
@@ -31,13 +31,17 @@ function makeContentFiles(): Map<string, string> {
   return new Map([[SCRIPT_REF_PATH, SCRIPT_CONTENT]]);
 }
 
-function buildUseCase(deps: ReturnType<typeof buildDeps>, git: Git, prompter?: Prompter) {
+function buildUseCase(
+  deps: ReturnType<typeof buildDeps>,
+  git: VersionControl,
+  prompter?: Prompter
+) {
   return new MemoryScriptUseCase(deps.fs, deps.hasher, git, prompter);
 }
 
 const HOOK_HEADER = "#!/bin/sh";
 
-function makeGit(hooksDir: string | null): Git {
+function makeGit(hooksDir: string | null): VersionControl {
   return {
     installPreCommitDelegate: async (_projectRoot: string, delegatePath: string) => {
       if (hooksDir === null) return;
@@ -295,7 +299,7 @@ describe("obsolete script removal", () => {
     await deps.fs.writeFile(staleAbsPath, staleContent);
     const hash = await deps.fs.readFileHash(staleAbsPath);
     manifest.addScripts(VERSION, [
-      new GeneratedFile({ relativePath: stalePath, content: staleContent, hash }),
+      new InstallationFile({ relativePath: stalePath, content: staleContent, hash }),
     ]);
     return manifest;
   }

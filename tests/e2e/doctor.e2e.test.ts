@@ -107,4 +107,76 @@ describe.concurrent("E2E: aidd doctor", () => {
       await cleanup();
     }
   });
+
+  it("doctor ai filters to only AI tools and reports healthy", async () => {
+    const { projectDir, cleanup } = await createTestEnv("doctor-ai-filter");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stdout, exitCode } = await runCli(["doctor", "ai"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Installation is healthy");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("doctor ide reports healthy when no IDE tools are installed", async () => {
+    const { projectDir, cleanup } = await createTestEnv("doctor-ide-none");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stdout, exitCode } = await runCli(["doctor", "ide"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Installation is healthy");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("reports a healthy installation after a fresh codex install", async () => {
+    const { projectDir, cleanup } = await createTestEnv("doctor");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "codex", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stdout, exitCode } = await runCli(["doctor", "ai"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Installation is healthy");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("reports a healthy installation after a fresh vscode install", async () => {
+    const { projectDir, cleanup } = await createTestEnv("doctor");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ide", "vscode", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stdout, exitCode } = await runCli(["doctor", "ide"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Installation is healthy");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("doctor with unknown category exits with error", async () => {
+    const { projectDir, cleanup } = await createTestEnv("doctor-bad-category");
+    try {
+      const { stderr, exitCode } = await runCli(["doctor", "unknown"], projectDir);
+
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toContain("Invalid category");
+    } finally {
+      await cleanup();
+    }
+  });
 });

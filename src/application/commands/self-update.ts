@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
-import { RequireAuthUseCase } from "../use-cases/require-auth-use-case.js";
+import { RequireAuthUseCase } from "../use-cases/auth/require-auth-use-case.js";
 import { SelfUpdateUseCase } from "../use-cases/self-update-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 

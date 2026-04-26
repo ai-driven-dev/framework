@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ConflictDecision } from "../../../src/domain/models/conflict-decision.js";
+import type { ConflictDecision } from "../../../src/domain/models/merge.js";
 
 describe("ConflictDecision", () => {
   it("exists as a type and accepts overwrite", () => {

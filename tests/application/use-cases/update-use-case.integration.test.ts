@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { UpdateUseCase } from "../../../src/application/use-cases/update-use-case.js";
+import { UpdateUseCase } from "../../../src/application/use-cases/update/update-use-case.js";
 import type { McpExclusion } from "../../../src/domain/models/mcp-exclusion.js";
 import type { Prompter } from "../../../src/domain/ports/prompter.js";
 import {

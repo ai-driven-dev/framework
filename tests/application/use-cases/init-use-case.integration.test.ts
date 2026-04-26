@@ -408,7 +408,7 @@ describe("init", () => {
         projectRoot,
       });
       const { InstallUseCase } = await import(
-        "../../../src/application/use-cases/install-use-case.js"
+        "../../../src/application/use-cases/install/install-use-case.js"
       );
       const installUseCase = new InstallUseCase(
         fs,
@@ -420,7 +420,7 @@ describe("init", () => {
         linuxPlatform
       );
       await installUseCase.execute({
-        toolIds: ["claude" as import("../../../src/domain/models/tool-config.js").ToolId],
+        toolIds: ["claude" as import("../../../src/domain/tools/registry.js").ToolId],
         frameworkPath: FIXTURE_DIR,
         version: "test",
         docsDir: "aidd_docs",

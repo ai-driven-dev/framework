@@ -13,6 +13,7 @@ Clarify and refine a feature request through iterative questioning until no ambi
 
 - Never assume technical solutions upfront
 - Use bullet points for clarity
+- DO NOT IMPLEMENT ANYTHING
 
 ## Steps
 

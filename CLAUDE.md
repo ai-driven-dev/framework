@@ -27,18 +27,18 @@ All instructions and information above are willing to be up to date, but always 
 
 ## Memory Management
 
-This section contains your memory, because you might lack context.
+### Project memory
 
-### Load the memory on launch
+<aidd_project_memory>
+@aidd_docs/memory/architecture.md
+@aidd_docs/memory/codebase_map.md
+@aidd_docs/memory/coding_assertions.md
+@aidd_docs/memory/deployment.md
+@aidd_docs/memory/project_brief.md
+@aidd_docs/memory/testing.md
+@aidd_docs/memory/vcs.md
+</aidd_project_memory>
 
-List all files:
-
-```shell
-! ls -1tr aidd_docs/memory/
-```
-
-Then:
-
-- READ every files in `aidd_docs/memory/*` on load
+- If memory is not loaded above: run `ls -1tr aidd_docs/memory/` then read each file
 - If needed: load files from `aidd_docs/memory/external/*` when user request it
 - If needed: load files from `aidd_docs/memory/internal/*`, you have to think about it

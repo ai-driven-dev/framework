@@ -3,11 +3,11 @@ import {
   assertToolIdsMatchCategory,
   type ToolId,
   VALID_TOOL_IDS,
-} from "../../domain/models/tool-config.js";
+} from "../../domain/tools/registry.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
-import type { InstallToolResult } from "../use-cases/install-use-case.js";
+import type { InstallToolResult } from "../use-cases/install/install-use-case.js";
 import { SetupUseCase } from "../use-cases/setup-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 

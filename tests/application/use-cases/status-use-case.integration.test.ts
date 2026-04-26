@@ -2,10 +2,10 @@ import { readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
-import { InstallUseCase } from "../../../src/application/use-cases/install-use-case.js";
+import { InstallUseCase } from "../../../src/application/use-cases/install/install-use-case.js";
 import { StatusUseCase } from "../../../src/application/use-cases/status-use-case.js";
 import { compareSemver } from "../../../src/domain/models/semver.js";
-import type { ToolId } from "../../../src/domain/models/tool-config.js";
+import type { ToolId } from "../../../src/domain/tools/registry.js";
 import {
   buildDeps,
   cleanupTempProject,

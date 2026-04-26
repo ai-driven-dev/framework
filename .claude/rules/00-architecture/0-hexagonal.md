@@ -7,12 +7,17 @@ paths:
 
 ## Layers
 
-- `domain/models/` — entities, value objects
-- `domain/ports/` — interfaces only, no external deps
-- `domain/tools/ai/` — AI tool configs (claude, cursor, copilot, opencode)
-- `domain/tools/ide/` — IDE tool configs (vscode)
-- `application/` — use cases, orchestration, depends on domain only
-- `infrastructure/` — adapters, I/O, framework code
+- `domain/models/` — entities, value objects, discriminant types
+- `domain/ports/` — interface contracts only, no implementations
+- `domain/formats/` — pure string transforms (TOML, JSON, Markdown, placeholders)
+- `domain/capabilities/` — capability classes (agents, commands, hooks, mcp, memory, rules, settings, skills)
+- `domain/tools/contracts.ts` — `AiTool<C>`, `Has*` interfaces, `IdeToolConfig`
+- `domain/tools/registry.ts` — tool registry, `ToolConfig` union, guards
+- `domain/tools/ai/` — AI tool definitions (claude, cursor, copilot, opencode, codex)
+- `domain/tools/ide/` — IDE tool definitions (vscode)
+- `application/use-cases/` — orchestrators, sub-use-cases in subdirs (`install/`, `update/`, `sync/`, `auth/`, `shared/`)
+- `application/commands/` — CLI wiring only
+- `infrastructure/adapters/` — port implementations, all I/O
 
 ## Dependency direction
 

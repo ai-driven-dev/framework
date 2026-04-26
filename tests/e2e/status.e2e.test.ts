@@ -150,4 +150,81 @@ describe.concurrent("E2E: aidd status", () => {
       await cleanup();
     }
   });
+
+  it("status ai filters to only AI tools when claude is installed", async () => {
+    const { projectDir, cleanup } = await createTestEnv("status-ai-filter");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stdout, exitCode } = await runCli(["status", "ai"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("All files are in sync");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("status ide reports in sync when no IDE tools are installed", async () => {
+    const { projectDir, cleanup } = await createTestEnv("status-ide-none");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stdout, exitCode } = await runCli(["status", "ide"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("All files are in sync");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("status ai shows drift only for AI tools when AI file is modified", async () => {
+    const { projectDir, cleanup } = await createTestEnv("status-ai-drift");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+
+      await writeFile(join(projectDir, "CLAUDE.md"), "tampered content", "utf-8");
+
+      const { stdout, exitCode } = await runCli(["status", "ai"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("claude");
+      expect(stdout).toContain("~");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("reports all files in sync after a fresh codex install", async () => {
+    const { projectDir, cleanup } = await createTestEnv("status");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(["install", "ai", "codex", "--path", FRAMEWORK_PATH], projectDir);
+
+      const { stdout, exitCode } = await runCli(["status"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("All files are in sync");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("status with unknown category exits with error", async () => {
+    const { projectDir, cleanup } = await createTestEnv("status-bad-category");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+
+      const { stderr, exitCode } = await runCli(["status", "unknown"], projectDir);
+
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toContain("Invalid category");
+    } finally {
+      await cleanup();
+    }
+  });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../src/domain/models/manifest.js";
-import { isSyncExcluded, SYNC_EXCLUDED_FILES } from "../../../src/domain/models/sync-exclusions.js";
+import { isSyncExcluded, SYNC_EXCLUDED_FILES } from "../../../src/domain/models/sync-policy.js";
 
 describe("SYNC_EXCLUDED_FILES", () => {
   it("is a ReadonlySet", () => {

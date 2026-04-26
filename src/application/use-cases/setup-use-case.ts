@@ -1,31 +1,31 @@
-import { isLocalPath } from "../../domain/models/framework-path.js";
+import { isLocalPath } from "../../domain/models/framework.js";
 import { Manifest } from "../../domain/models/manifest.js";
-import {
-  AI_TOOL_IDS,
-  IDE_TOOL_IDS,
-  type ToolId,
-  VALID_TOOL_IDS,
-} from "../../domain/models/tool-config.js";
-import type { AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { FrameworkResolver } from "../../domain/ports/framework-resolver.js";
-import type { Git } from "../../domain/ports/git.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
+import type { TokenProvider } from "../../domain/ports/token-provider.js";
+import type { VersionControl } from "../../domain/ports/version-control.js";
+import {
+  AI_TOOL_IDS,
+  IDE_TOOL_IDS,
+  type ToolId,
+  VALID_TOOL_IDS,
+} from "../../domain/tools/registry.js";
 import { AdoptRequiresVersionError, InputRequiredError } from "../errors.js";
-import { AdoptUseCase } from "./adopt-use-case.js";
+import { AdoptUseCase } from "./adopt/adopt-use-case.js";
 import { InitUseCase } from "./init-use-case.js";
-import type { InstallToolResult } from "./install-use-case.js";
-import { InstallUseCase } from "./install-use-case.js";
+import type { InstallToolResult } from "./install/install-use-case.js";
+import { InstallUseCase } from "./install/install-use-case.js";
 import { ResolveFrameworkUseCase } from "./resolve-framework-use-case.js";
-import { type AdoptSignal, SetupStateDetector } from "./shared/setup-state-detector.js";
-import { UpdateUseCase } from "./update-use-case.js";
+import { type AdoptSignal, SetupStateService } from "./shared/setup-state-service.js";
+import { UpdateUseCase } from "./update/update-use-case.js";
 
-export type { AdoptSignal, SetupState } from "./shared/setup-state-detector.js";
+export type { AdoptSignal, SetupState } from "./shared/setup-state-service.js";
 
 interface SetupOptions {
   projectRoot: string;
@@ -73,17 +73,17 @@ export class SetupUseCase {
     private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
-    private readonly git: Git,
+    private readonly git: VersionControl,
     private readonly platform: Platform,
     private readonly prompter: Prompter,
     private readonly resolver: FrameworkResolver,
-    authReader?: AuthTokenProvider
+    authReader?: TokenProvider
   ) {
     this.frameworkResolver = new ResolveFrameworkUseCase(resolver, logger, authReader);
   }
 
   async execute(options: SetupOptions): Promise<SetupResult> {
-    const state = await new SetupStateDetector(this.manifestRepo, this.fs, this.resolver).detect(
+    const state = await new SetupStateService(this.manifestRepo, this.fs, this.resolver).detect(
       options.projectRoot
     );
     switch (state.kind) {

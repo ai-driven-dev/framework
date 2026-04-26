@@ -9,9 +9,9 @@ import { AuthStorage } from "../../infrastructure/auth/auth-storage.js";
 import { HttpClient } from "../../infrastructure/http/http-client.js";
 import { ErrorHandler } from "../error-handler.js";
 import { InputRequiredError } from "../errors.js";
-import { AuthLoginUseCase } from "../use-cases/auth-login-use-case.js";
-import { AuthLogoutUseCase } from "../use-cases/auth-logout-use-case.js";
-import { AuthStatusUseCase } from "../use-cases/auth-status-use-case.js";
+import { AuthLoginUseCase } from "../use-cases/auth/auth-login-use-case.js";
+import { AuthLogoutUseCase } from "../use-cases/auth/auth-logout-use-case.js";
+import { AuthStatusUseCase } from "../use-cases/auth/auth-status-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 function buildAuthProvider(projectRoot: string): AuthProviderAdapter {

@@ -1,23 +1,29 @@
-import { CONFIG_MCP, TEMPLATE_AGENTS_MD } from "../../models/framework-descriptor.js";
-import type { MergeStrategy } from "../../models/merge-strategy.js";
+import { AgentsCapability } from "../../capabilities/agents-capability.js";
+import { CommandsCapability } from "../../capabilities/commands-capability.js";
+import { McpCapability } from "../../capabilities/mcp-capability.js";
+import { MemoryCapability } from "../../capabilities/memory-capability.js";
+import { RulesCapability } from "../../capabilities/rules-capability.js";
+import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import {
-  type AiToolConfig,
-  baseReverseRewriteContent,
-  baseRewriteContent,
   buildAiddCommandFilePath,
-  buildStandardCommandsHandler,
-  type CommandsHandler,
-  type ConfigHandler,
+  convertCommandFrontmatter,
   detectSectionKeyFromPrefixes,
-  type MemoryBankHandler,
-  namedAgentsSectionHandler,
-  passthroughSkillsHandler,
-  type RulesHandler,
-  registerTool,
-  type SectionHandler,
+  reverseConvertCommandFrontmatter,
   stripToolSuffix,
-  type UserFileSectionKey,
-} from "../../models/tool-config.js";
+} from "../../formats/command.js";
+import { baseReverseRewriteContent, baseRewriteContent } from "../../formats/placeholders.js";
+import { CONFIG_MCP } from "../../models/framework.js";
+import type {
+  AiTool,
+  HasAgents,
+  HasCommands,
+  HasMcp,
+  HasMemory,
+  HasRules,
+  HasSkills,
+  UserFileSectionKey,
+} from "../contracts.js";
+import { registerTool } from "../registry.js";
 
 const DIRECTORY = ".cursor/";
 const TOOL_SUFFIX = ".cursor.md";
@@ -27,44 +33,40 @@ function toMdc(fileName: string): string {
   return fileName.endsWith(".md") ? `${fileName.slice(0, -3)}${MDC_EXT}` : fileName;
 }
 
-export const cursorToolConfig: AiToolConfig = {
+export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasMemory> = {
   kind: "ai",
   toolId: "cursor",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   signalDir: ".cursor/commands",
 
-  rewriteContent(content: string, docsDir: string): string {
-    return baseRewriteContent(content, DIRECTORY, docsDir)
-      .replace(/(@?)\.cursor\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g, "$1.cursor/commands/aidd/$2/$3")
-      .replace(/(@\.cursor\/rules\/[^\s]+)\.md\b/g, "$1.mdc");
-  },
-
-  reverseRewriteContent(content: string, docsDir: string): string {
-    return baseReverseRewriteContent(
-      content.replace(/(@\.cursor\/rules\/[^\s]+)\.mdc\b/g, "$1.md"),
-      DIRECTORY,
-      docsDir
-    );
-  },
-
-  agents(): SectionHandler {
-    return namedAgentsSectionHandler(DIRECTORY, TOOL_SUFFIX);
-  },
-
-  commands(): CommandsHandler {
-    return buildStandardCommandsHandler((fileName) =>
-      buildAiddCommandFilePath(DIRECTORY, fileName)
-    );
-  },
-
-  rules(): RulesHandler {
-    return {
-      buildFilePath(fileName: string): string {
-        const stripped = stripToolSuffix(TOOL_SUFFIX, fileName);
-        return `${DIRECTORY}rules/${toMdc(stripped)}`;
-      },
-      convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+  capabilities: {
+    agents: new AgentsCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      format: "markdown",
+    }),
+    skills: new SkillsCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      buildInstallPath: (fileName) =>
+        `${DIRECTORY}skills/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+      convertFrontmatter: (fm) => fm,
+      reverseConvertFrontmatter: (fm) => fm,
+    }),
+    commands: new CommandsCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
+      convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
+      reverseConvertFrontmatter: (fm) => reverseConvertCommandFrontmatter(fm),
+    }),
+    rules: new RulesCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      buildInstallPath: (fileName) =>
+        `${DIRECTORY}rules/${toMdc(stripToolSuffix(TOOL_SUFFIX, fileName))}`,
+      convertFrontmatter: (fm) => {
         const { paths, globs, description } = fm;
         const patterns = Array.isArray(paths) ? paths : Array.isArray(globs) ? globs : null;
         if (patterns === null || patterns.length === 0) {
@@ -81,7 +83,7 @@ export const cursorToolConfig: AiToolConfig = {
           alwaysApply: false,
         };
       },
-      reverseConvertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+      reverseConvertFrontmatter: (fm) => {
         const { globs } = fm;
         if (Array.isArray(globs) && globs.length > 0) return { paths: globs };
         if (typeof globs === "string") {
@@ -89,45 +91,36 @@ export const cursorToolConfig: AiToolConfig = {
             const parsed = JSON.parse(globs);
             if (Array.isArray(parsed) && parsed.length > 0) return { paths: parsed };
           } catch {
-            // globs is not valid JSON — no paths
+            /* globs is not valid JSON */
           }
         }
         return {};
       },
-    };
+    }),
+    mcp: new McpCapability({
+      outputPath: `${DIRECTORY}mcp.json`,
+      format: "json",
+      entrySection: "mcpServers",
+      consumes: [CONFIG_MCP],
+    }),
+    memory: new MemoryCapability({
+      outputFileName: "AGENTS.md",
+      rewriteContent: (content, docsDir) => cursor.rewriteContent(content, docsDir),
+    }),
   },
 
-  skills(): SectionHandler {
-    return passthroughSkillsHandler(DIRECTORY, TOOL_SUFFIX);
+  rewriteContent(content: string, docsDir: string): string {
+    return baseRewriteContent(content, DIRECTORY, docsDir)
+      .replace(/(@?)\.cursor\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g, "$1.cursor/commands/aidd/$2/$3")
+      .replace(/(@\.cursor\/rules\/[^\s]+)\.md\b/g, "$1.mdc");
   },
 
-  config(): ConfigHandler {
-    return {
-      outputPath(configName: string): string | null {
-        if (configName === CONFIG_MCP) return `${DIRECTORY}mcp.json`;
-        return null;
-      },
-      mergeStrategy(configName: string): MergeStrategy {
-        if (configName === CONFIG_MCP) return "user-prime";
-        return "none";
-      },
-      entrySection(configName: string): string | null {
-        if (configName === CONFIG_MCP) return "mcpServers";
-        return null;
-      },
-    };
-  },
-
-  memoryBank(): MemoryBankHandler {
-    return {
-      outputPath(templateName: string): string | null {
-        if (templateName === TEMPLATE_AGENTS_MD) return "AGENTS.md";
-        return null;
-      },
-      rewriteContent(content: string, docsDir: string): string {
-        return cursorToolConfig.rewriteContent(content, docsDir);
-      },
-    };
+  reverseRewriteContent(content: string, docsDir: string): string {
+    return baseReverseRewriteContent(
+      content.replace(/(@\.cursor\/rules\/[^\s]+)\.mdc\b/g, "$1.md"),
+      DIRECTORY,
+      docsDir
+    );
   },
 
   detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null {
@@ -143,4 +136,4 @@ export const cursorToolConfig: AiToolConfig = {
   },
 };
 
-registerTool(cursorToolConfig);
+registerTool(cursor);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AuthConfig } from "../../../src/domain/models/auth.js";
-import type { ExternalTokenProvider } from "../../../src/domain/ports/external-token-provider.js";
+import type { TokenResolver } from "../../../src/domain/ports/oauth-provider.js";
 import { AuthReader } from "../../../src/infrastructure/auth/auth-reader.js";
 import type { AuthStorage } from "../../../src/infrastructure/auth/auth-storage.js";
 
@@ -27,7 +27,7 @@ function makeStorage(
   } as AuthStorage;
 }
 
-function makeExternalProvider(token: string | null): ExternalTokenProvider {
+function makeExternalProvider(token: string | null): TokenResolver {
   return { resolve: () => token };
 }
 

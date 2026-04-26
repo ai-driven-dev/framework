@@ -7,7 +7,7 @@ import "../../../../src/domain/tools/ai/copilot.js";
 import "../../../../src/domain/tools/ai/cursor.js";
 import "../../../../src/domain/tools/ai/opencode.js";
 import "../../../../src/domain/tools/ide/vscode.js";
-import { InstallUseCase } from "../../../../src/application/use-cases/install-use-case.js";
+import { InstallUseCase } from "../../../../src/application/use-cases/install/install-use-case.js";
 import { SilentPrompterAdapter } from "../../../../src/infrastructure/adapters/prompter-adapter.js";
 import {
   buildDeps,

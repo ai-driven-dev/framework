@@ -1,30 +1,30 @@
 import { dirname, join, normalize } from "node:path";
 import { ManifestValidationError } from "../../domain/errors.js";
-import type { Manifest } from "../../domain/models/manifest.js";
 import {
   extractAtReferences,
   extractMarkdownLinkTargets,
   isFileReference,
-} from "../../domain/models/markdown-references.js";
-import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/merge-entry.js";
+} from "../../domain/formats/markdown-references.js";
+import type { Manifest } from "../../domain/models/manifest.js";
+import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/merge.js";
+import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { Hasher } from "../../domain/ports/hasher.js";
+import type { Logger } from "../../domain/ports/logger.js";
+import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import type { TokenProvider } from "../../domain/ports/token-provider.js";
 import {
   getAllRegisteredTools,
   hasToolSignals,
   type ToolCategory,
   type ToolId,
   toolIdsForCategory,
-} from "../../domain/models/tool-config.js";
-import type { AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
-import type { FileSystem } from "../../domain/ports/file-system.js";
-import type { Hasher } from "../../domain/ports/hasher.js";
-import type { Logger } from "../../domain/ports/logger.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+} from "../../domain/tools/registry.js";
 import { NoManifestError } from "../errors.js";
 
 export {
   extractAtReferences,
   extractMarkdownLinkTargets,
-} from "../../domain/models/markdown-references.js";
+} from "../../domain/formats/markdown-references.js";
 
 type IssueSeverity = "info" | "warning" | "error";
 
@@ -59,7 +59,7 @@ export class DoctorUseCase {
     private readonly manifestRepo: ManifestRepository,
     private readonly hasher: Hasher,
     readonly _logger: Logger,
-    private readonly authReader?: AuthTokenProvider
+    private readonly authReader?: TokenProvider
   ) {}
 
   async execute(options: DoctorOptions): Promise<DoctorReport> {

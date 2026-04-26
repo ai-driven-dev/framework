@@ -1,7 +1,13 @@
 import { join } from "node:path";
 import { Command } from "commander";
-import { formatBytes } from "../../domain/models/file-size.js";
 import { AIDD_DIR } from "../../domain/models/paths.js";
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 import { FrameworkCache } from "../../infrastructure/cache/framework-cache.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";

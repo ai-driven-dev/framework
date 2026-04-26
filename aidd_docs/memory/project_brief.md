@@ -11,7 +11,7 @@
 - Community product gated by GitHub authentication token
 - CLI is the distribution backbone — not a generic scaffolding tool
 - Framework assets: agents, commands, rules, skills, templates
-- Supported tools: Claude Code, Cursor, GitHub Copilot, OpenCode
+- Supported tools: Claude Code, Cursor, GitHub Copilot, OpenCode, Codex (AI); VS Code (IDE)
 
 ## Core Domain
 

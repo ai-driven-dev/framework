@@ -2,8 +2,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SetupUseCase } from "../../../src/application/use-cases/setup-use-case.js";
-import { type ToolId, VALID_TOOL_IDS } from "../../../src/domain/models/tool-config.js";
 import type { FrameworkResolver } from "../../../src/domain/ports/framework-resolver.js";
+import { type ToolId, VALID_TOOL_IDS } from "../../../src/domain/tools/registry.js";
 import { SilentPrompterAdapter } from "../../../src/infrastructure/adapters/prompter-adapter.js";
 import {
   buildDeps,

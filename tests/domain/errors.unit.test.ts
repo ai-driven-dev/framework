@@ -4,10 +4,10 @@ import {
   InvalidToolIdError,
   ManifestValidationError,
 } from "../../src/domain/errors.js";
-import { FileHash } from "../../src/domain/models/file-hash.js";
+import { FileHash } from "../../src/domain/models/file.js";
 import { validateRepoFormat } from "../../src/domain/models/manifest.js";
-import { assertValidToolIds } from "../../src/domain/models/tool-config.js";
-import { parseUpdateScope } from "../../src/domain/models/update-scope.js";
+import { parseUpdateScope } from "../../src/domain/models/tool-scope.js";
+import { assertValidToolIds } from "../../src/domain/tools/registry.js";
 
 describe("validateRepoFormat", () => {
   it("throws InvalidRepoFormatError for missing slash", () => {

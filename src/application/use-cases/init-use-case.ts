@@ -1,18 +1,17 @@
 import { join } from "node:path";
-import { remapDocsPath, rewriteDocsContent } from "../../domain/models/docs.js";
-import { GeneratedFile } from "../../domain/models/generated-file.js";
+import { InstallationFile } from "../../domain/models/file.js";
 import { Manifest } from "../../domain/models/manifest.js";
 import { AIDD_DIR } from "../../domain/models/paths.js";
-import { getAllRegisteredTools, hasToolSignals } from "../../domain/models/tool-config.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
+import { getAllRegisteredTools, hasToolSignals } from "../../domain/tools/registry.js";
 import { AiddFilesDetectedError, AlreadyInitializedError, NoManifestError } from "../errors.js";
-import { CatalogUseCase } from "./catalog-use-case.js";
-import { GitignoreUseCase } from "./gitignore-use-case.js";
+import { CatalogUseCase } from "./shared/catalog-use-case.js";
+import { GitignoreUseCase } from "./shared/gitignore-use-case.js";
 
 interface InitOptions {
   frameworkPath: string;
@@ -168,37 +167,57 @@ export class InitUseCase {
     projectRoot: string,
     force: boolean,
     existing: Manifest | null
-  ): Promise<GeneratedFile[]> {
-    const generated: GeneratedFile[] = [];
+  ): Promise<InstallationFile[]> {
+    const generated: InstallationFile[] = [];
     for (const [frameworkRelPath, rawContent] of docsFiles.entries()) {
       if (frameworkRelPath.endsWith("CATALOG.md")) continue;
-      const outputRelPath = remapDocsPath(frameworkRelPath, docsDir);
-      const outputPath = join(projectRoot, outputRelPath);
-      const content = rewriteDocsContent(rawContent, docsDir);
-      const newHash = this.hasher.hash(content);
-
-      if (force && existing !== null && (await this.fs.fileExists(outputPath))) {
-        const diskHash = await this.fs.readFileHash(outputPath);
-        if (!diskHash.equals(newHash)) {
-          this.logger.warn(`Overwriting modified file: ${outputRelPath}`);
-          await this.fs.writeFile(outputPath, content);
-        }
-        generated.push(new GeneratedFile({ relativePath: outputRelPath, content, hash: newHash }));
-      } else if (await this.fs.fileExists(outputPath)) {
-        const diskHash = await this.fs.readFileHash(outputPath);
-        generated.push(
-          new GeneratedFile({ relativePath: outputRelPath, content: "", hash: diskHash })
-        );
-      } else {
-        await this.fs.writeFile(outputPath, content);
-        generated.push(new GeneratedFile({ relativePath: outputRelPath, content, hash: newHash }));
-      }
+      const file = await this.writeDocsFile(
+        frameworkRelPath,
+        rawContent,
+        docsDir,
+        projectRoot,
+        force,
+        existing
+      );
+      generated.push(file);
     }
     return generated;
   }
 
+  private async writeDocsFile(
+    frameworkRelPath: string,
+    rawContent: string,
+    docsDir: string,
+    projectRoot: string,
+    force: boolean,
+    existing: Manifest | null
+  ): Promise<InstallationFile> {
+    const outputRelPath = frameworkRelPath.startsWith("aidd_docs/")
+      ? `${docsDir}/${frameworkRelPath.slice("aidd_docs/".length)}`
+      : frameworkRelPath;
+    const outputPath = join(projectRoot, outputRelPath);
+    const content = rawContent
+      .replaceAll("{{DOCS}}/", `${docsDir}/`)
+      .replaceAll("{{TOOLS}}/", `${docsDir}/`);
+    const newHash = this.hasher.hash(content);
+    if (force && existing !== null && (await this.fs.fileExists(outputPath))) {
+      const diskHash = await this.fs.readFileHash(outputPath);
+      if (!diskHash.equals(newHash)) {
+        this.logger.warn(`Overwriting modified file: ${outputRelPath}`);
+        await this.fs.writeFile(outputPath, content);
+      }
+      return new InstallationFile({ relativePath: outputRelPath, content, hash: newHash });
+    }
+    if (await this.fs.fileExists(outputPath)) {
+      const diskHash = await this.fs.readFileHash(outputPath);
+      return new InstallationFile({ relativePath: outputRelPath, content: "", hash: diskHash });
+    }
+    await this.fs.writeFile(outputPath, content);
+    return new InstallationFile({ relativePath: outputRelPath, content, hash: newHash });
+  }
+
   private async removeStaleDocsFiles(
-    generated: GeneratedFile[],
+    generated: InstallationFile[],
     existing: Manifest,
     projectRoot: string
   ): Promise<void> {

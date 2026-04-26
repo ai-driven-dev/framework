@@ -1,11 +1,11 @@
-import { isLocalPath } from "../../domain/models/framework-path.js";
-import type { AuthTokenProvider } from "../../domain/ports/auth-token-provider.js";
+import { isLocalPath } from "../../domain/models/framework.js";
 import type {
   FrameworkResolved,
   FrameworkResolver,
 } from "../../domain/ports/framework-resolver.js";
 import type { Logger } from "../../domain/ports/logger.js";
-import { RequireAuthUseCase } from "./require-auth-use-case.js";
+import type { TokenProvider } from "../../domain/ports/token-provider.js";
+import { RequireAuthUseCase } from "./auth/require-auth-use-case.js";
 
 interface ResolveFrameworkOptions {
   path?: string;
@@ -19,7 +19,7 @@ export class ResolveFrameworkUseCase {
   constructor(
     private readonly resolver: FrameworkResolver,
     private readonly logger: Logger,
-    private readonly authReader?: AuthTokenProvider
+    private readonly authReader?: TokenProvider
   ) {}
 
   async execute(options: ResolveFrameworkOptions): Promise<FrameworkResolved> {

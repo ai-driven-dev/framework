@@ -2,7 +2,35 @@ import { existsSync } from "node:fs";
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, FRAMEWORK_PATH, gitInit, initProject, runCli } from "./helpers.js";
+import {
+  CLI_PATH,
+  createTestEnv,
+  execFileAsync,
+  FRAMEWORK_PATH,
+  gitInit,
+  initProject,
+  runCli,
+} from "./helpers.js";
+
+async function runCliNoAuth(
+  args: string[],
+  cwd: string,
+  fakeHome: string
+): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  const env: NodeJS.ProcessEnv = { ...process.env, HOME: fakeHome };
+  delete env.AIDD_TOKEN;
+  try {
+    const { stdout, stderr } = await execFileAsync("node", [CLI_PATH, ...args], { cwd, env });
+    return { stdout, stderr, exitCode: 0 };
+  } catch (error) {
+    const err = error as { stdout?: string; stderr?: string; code?: number };
+    return {
+      stdout: err.stdout ?? "",
+      stderr: err.stderr ?? "",
+      exitCode: err.code ?? 1,
+    };
+  }
+}
 
 describe.concurrent("E2E: aidd install", () => {
   it("requires init first — aborts with clear error on uninitialized project", async () => {
@@ -474,6 +502,161 @@ describe.concurrent("E2E: aidd install", () => {
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("opencode.json");
       expect(stderr).toContain("opencode.jsonc");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--path local framework with explicit tool uses specified local path", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install-path");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+
+      const { stdout, exitCode } = await runCli(
+        ["install", "ai", "claude", "--path", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Installed claude");
+      expect(existsSync(join(projectDir, ".claude"))).toBe(true);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--mcp filter with claude installs only specified MCP servers", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install-mcp");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+
+      const { stdout, exitCode } = await runCli(
+        ["install", "ai", "claude", "--path", FRAMEWORK_PATH, "--mcp", "playwright"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Installed claude");
+
+      const mcpRaw = await readFile(join(projectDir, ".mcp.json"), "utf-8");
+      const mcp = JSON.parse(mcpRaw) as { mcpServers: Record<string, unknown> };
+      expect(mcp.mcpServers).toHaveProperty("playwright");
+      expect(mcp.mcpServers).not.toHaveProperty("github");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--mcp filter with tool that has no MCP config exits successfully", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install-mcp-no-mcp");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+
+      const { exitCode } = await runCli(
+        ["install", "ai", "cursor", "--path", FRAMEWORK_PATH, "--mcp", "playwright"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("install ai --all installs all AI category tools", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install-ai-all");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+
+      const { stdout, exitCode } = await runCli(
+        ["install", "ai", "--all", "--path", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("claude");
+      expect(stdout).toContain("cursor");
+      expect(stdout).toContain("copilot");
+      expect(existsSync(join(projectDir, ".claude"))).toBe(true);
+      expect(existsSync(join(projectDir, ".cursor"))).toBe(true);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("install ai with no tool specified in non-TTY exits with error", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install-ai-no-tool");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+
+      const { stderr, exitCode } = await runCli(
+        ["install", "ai", "--path", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toContain("required");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("installs codex tool with correct file layout", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      const { stdout, exitCode } = await runCli(
+        ["install", "ai", "codex", "--path", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Installed codex");
+      expect(existsSync(join(projectDir, ".codex"))).toBe(true);
+      expect(existsSync(join(projectDir, "AGENTS.md"))).toBe(true);
+      expect(existsSync(join(projectDir, ".agents", "skills", "aidd-commit", "SKILL.md"))).toBe(
+        true
+      );
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("installs vscode tool with correct file layout", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      const { stdout, exitCode } = await runCli(
+        ["install", "ide", "vscode", "--path", FRAMEWORK_PATH],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Installed vscode");
+      expect(existsSync(join(projectDir, ".vscode", "extensions.json"))).toBe(true);
+      expect(existsSync(join(projectDir, ".vscode", "keybindings.json"))).toBe(true);
+      expect(existsSync(join(projectDir, ".vscode", "settings.json"))).toBe(true);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--release flag without --path triggers remote resolution and requires auth", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install-release");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+
+      const fakeHome = join(projectDir, "fake-home");
+      await mkdir(fakeHome, { recursive: true });
+
+      const { stderr, exitCode } = await runCliNoAuth(
+        ["install", "ai", "claude", "--release", "v3.9.0"],
+        projectDir,
+        fakeHome
+      );
+
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toMatch(/not authenticated|auth login/i);
     } finally {
       await cleanup();
     }

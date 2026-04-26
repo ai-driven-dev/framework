@@ -16,7 +16,7 @@ Every file has its own template to follow.
 ### Hard copy into memory bank (always generated)
 
 ```text
-aidd_docs/templates/aidd/agents_coordination.md
+@aidd_docs/templates/aidd/agents_coordination.md
 ```
 
 ### Memory templates
@@ -62,12 +62,6 @@ All templates are in:
 @.claude/rules/01-standards/1-mermaid.md
 ```
 
-### IDE syntax reference
-
-```md
-@.claude/rules/04-tooling/ide-mapping.md
-```
-
 ## Steps
 
 1. Check if memory bank already exists in `aidd_docs/memory/` folder:
@@ -78,4 +72,4 @@ All templates are in:
 4. Spawn parallel task sub-agents for each template files
 5. Write generated files to `aidd_docs/memory/`
 6. Launch an agent to review all files for consistency and accuracy
-7. Sync memory references in context files
+7. Execute `.aidd/scripts/update_memory.js` to sync memory references in context files

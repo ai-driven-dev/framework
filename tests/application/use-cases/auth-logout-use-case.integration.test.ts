@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { AuthLogoutUseCase } from "../../../src/application/use-cases/auth-logout-use-case.js";
-import type { AuthProvider } from "../../../src/domain/ports/auth-provider.js";
+import { AuthLogoutUseCase } from "../../../src/application/use-cases/auth/auth-logout-use-case.js";
+import type { CredentialStore } from "../../../src/domain/ports/credential-store.js";
 import { AuthProviderAdapter } from "../../../src/infrastructure/adapters/auth-provider-adapter.js";
 import { GhCliAdapter } from "../../../src/infrastructure/adapters/gh-cli-adapter.js";
 import { GhTokenAdapter } from "../../../src/infrastructure/adapters/gh-token-adapter.js";
@@ -21,7 +21,7 @@ describe("auth logout", () => {
     await cleanup();
   });
 
-  function makeProvider(): AuthProvider {
+  function makeProvider(): CredentialStore {
     const http = new HttpClient();
     return new AuthProviderAdapter(
       storage,

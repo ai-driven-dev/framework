@@ -2,9 +2,9 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { InstallUseCase } from "../../../src/application/use-cases/install-use-case.js";
-import type { ToolId } from "../../../src/domain/models/tool-config.js";
+import { InstallUseCase } from "../../../src/application/use-cases/install/install-use-case.js";
 import type { Prompter } from "../../../src/domain/ports/prompter.js";
+import type { ToolId } from "../../../src/domain/tools/registry.js";
 import {
   buildDeps,
   cleanupTempProject,
@@ -128,10 +128,12 @@ describe("install", () => {
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
     const mergeFiles = manifest.getMergeFiles("vscode");
-    const paths = mergeFiles.map((m) => m.relativePath);
-    expect(paths).toContain(".vscode/extensions.json");
-    expect(paths).toContain(".vscode/keybindings.json");
-    expect(paths).toContain(".vscode/settings.json");
+    const mergePaths = mergeFiles.map((m) => m.relativePath);
+    expect(mergePaths).toContain(".vscode/extensions.json");
+    expect(mergePaths).toContain(".vscode/settings.json");
+    expect(mergePaths).not.toContain(".vscode/keybindings.json");
+    const filePaths = manifest.getToolFiles("vscode").map((f) => f.relativePath);
+    expect(filePaths).toContain(".vscode/keybindings.json");
   });
 
   it("skipped tool produces no warnings", async () => {
@@ -1279,7 +1281,7 @@ describe("install", () => {
       );
 
       await useCase.execute({
-        toolIds: ["claude", "cursor", "copilot", "opencode"] as ToolId[],
+        toolIds: ["claude", "cursor", "copilot", "opencode", "codex"] as ToolId[],
         frameworkPath: FIXTURE_DIR,
         version: "test",
         docsDir: "aidd_docs",

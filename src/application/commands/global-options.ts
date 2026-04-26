@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import type { ToolCategory } from "../../domain/models/tool-config.js";
+import type { ToolCategory } from "../../domain/tools/registry.js";
 import { InvalidCategoryError } from "../errors.js";
 import { CLIOutput } from "../output.js";
 

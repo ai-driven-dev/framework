@@ -4,7 +4,7 @@ import {
   assertValidToolIds,
   type ToolId,
   toolIdsForCategory,
-} from "../../domain/models/tool-config.js";
+} from "../../domain/tools/registry.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { NoManifestError, NoToolsInstalledError } from "../errors.js";

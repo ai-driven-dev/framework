@@ -5,18 +5,18 @@ import {
   isMergeContentEmpty,
   type MergeFileEntry,
   removeEntriesFromJson,
-} from "../../domain/models/merge-entry.js";
-import {
-  getToolConfig,
-  isAiToolConfig,
-  type ToolId,
-  VALID_TOOL_IDS,
-} from "../../domain/models/tool-config.js";
+} from "../../domain/models/merge.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import {
+  getToolConfig,
+  isAiTool,
+  type ToolId,
+  VALID_TOOL_IDS,
+} from "../../domain/tools/registry.js";
 import { InputRequiredError, NoManifestError, ToolNotInstalledError } from "../errors.js";
-import { CatalogUseCase } from "./catalog-use-case.js";
+import { CatalogUseCase } from "./shared/catalog-use-case.js";
 
 interface UninstallOptions {
   toolIds: ToolId[];
@@ -153,7 +153,7 @@ export class UninstallUseCase {
       relativePath,
       manifest
     );
-    const isIdeTool = !isAiToolConfig(getToolConfig(toolId));
+    const isIdeTool = !isAiTool(getToolConfig(toolId));
     return !otherOwnersExist && !isIdeTool;
   }
 
@@ -162,10 +162,21 @@ export class UninstallUseCase {
     mergeEntry: MergeFileEntry,
     canDelete: boolean
   ): Promise<boolean> {
-    const content = await this.fs.readFile(fullPath);
     const keys = Object.keys(mergeEntry.entries);
+    if (keys.length === 0) {
+      if (!canDelete) return false;
+      await this.fs.deleteFile(fullPath);
+      await this.fs.deleteEmptyDirectories(dirname(fullPath));
+      return true;
+    }
+    const content = await this.fs.readFile(fullPath);
     const cleaned = removeEntriesFromJson(content, mergeEntry.sectionKey, keys);
-    if (canDelete && isMergeContentEmpty(cleaned, mergeEntry.sectionKey)) {
+    if (isMergeContentEmpty(cleaned, mergeEntry.sectionKey)) {
+      await this.fs.deleteFile(fullPath);
+      await this.fs.deleteEmptyDirectories(dirname(fullPath));
+      return true;
+    }
+    if (canDelete) {
       await this.fs.deleteFile(fullPath);
       await this.fs.deleteEmptyDirectories(dirname(fullPath));
       return true;

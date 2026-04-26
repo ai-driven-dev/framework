@@ -1,9 +1,9 @@
 import { spawnSync } from "node:child_process";
 import { AuthenticationError } from "../../domain/errors.js";
-import type { ExternalAuthProvider } from "../../domain/ports/external-auth-provider.js";
+import type { CliAuthProvider } from "../../domain/ports/oauth-provider.js";
 import { GhCliError } from "../errors.js";
 
-export class GhCliAdapter implements ExternalAuthProvider {
+export class GhCliAdapter implements CliAuthProvider {
   resolve(): string | null {
     const result = spawnSync("gh", ["auth", "token"], {
       timeout: 3000,
