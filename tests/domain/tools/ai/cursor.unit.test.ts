@@ -147,4 +147,30 @@ describe("cursor", () => {
       expect(path).toBe(".cursor/agents/code-reviewer.md");
     });
   });
+
+  describe("capabilities.plugins", () => {
+    it("has a plugins capability", () => {
+      expect("plugins" in cursor.capabilities).toBe(true);
+    });
+
+    it("is native mode", () => {
+      expect(cursor.capabilities.plugins.mode).toBe("native");
+    });
+
+    it("uses .cursor/plugins/ as plugins directory", () => {
+      expect(cursor.capabilities.plugins.pluginsDir).toBe(".cursor/plugins/");
+    });
+
+    it("uses .cursor-plugin/plugin.json as plugin manifest path", () => {
+      expect(cursor.capabilities.plugins.pluginManifestRelativePath).toBe(
+        ".cursor-plugin/plugin.json"
+      );
+    });
+
+    it("pluginOutputDir returns correct path for a plugin name", () => {
+      expect(cursor.capabilities.plugins.pluginOutputDir("my-plugin")).toBe(
+        ".cursor/plugins/my-plugin/"
+      );
+    });
+  });
 });

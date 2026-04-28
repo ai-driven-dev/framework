@@ -2,6 +2,7 @@ import { join } from "node:path";
 import type { FileHash } from "../../domain/models/file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/merge.js";
+import type { AiToolId } from "../../domain/models/tool-ids.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
@@ -32,9 +33,16 @@ interface DocsStatus {
   drifted: FileDrift[];
 }
 
+interface PluginDriftEntry {
+  toolId: AiToolId;
+  pluginName: string;
+  driftedFiles: string[];
+}
+
 interface StatusReport {
   tools: ToolStatus[];
   docs: DocsStatus | null;
+  pluginDrift: PluginDriftEntry[];
   inSync: boolean;
 }
 
@@ -44,6 +52,7 @@ interface StatusOptions {
   filterDocs?: boolean;
   category?: ToolCategory;
   repo?: string;
+  pluginName?: string;
 }
 
 export class StatusUseCase {
@@ -55,7 +64,7 @@ export class StatusUseCase {
   ) {}
 
   async execute(options: StatusOptions): Promise<StatusReport> {
-    const { projectRoot, filterToolId, filterDocs, category, repo } = options;
+    const { projectRoot, filterToolId, filterDocs, category, repo, pluginName } = options;
     const manifest = await this.manifestRepo.load();
     if (manifest === null) throw new NoManifestError(repo);
     if (filterToolId && !manifest.hasTool(filterToolId))
@@ -65,9 +74,17 @@ export class StatusUseCase {
     const showDocs = !category && !filterToolId;
     const tools = await this.checkAllTools(installedToolIds, manifest, projectRoot);
     const docs = await this.checkDocsSection(manifest, projectRoot, filterDocs, showDocs);
+    const pluginDrift = await this.checkAllPlugins(
+      installedToolIds,
+      manifest,
+      projectRoot,
+      pluginName
+    );
     const inSync =
-      tools.every((t) => t.drifted.length === 0) && (docs === null || docs.drifted.length === 0);
-    return { tools, docs, inSync };
+      tools.every((t) => t.drifted.length === 0) &&
+      (docs === null || docs.drifted.length === 0) &&
+      pluginDrift.length === 0;
+    return { tools, docs, pluginDrift, inSync };
   }
 
   private resolveToolIds(
@@ -226,6 +243,60 @@ export class StatusUseCase {
         if (!diskHash.equals(file.hash)) {
           drifted.push({ relativePath: file.relativePath, status: "modified" });
         }
+      }
+    }
+    return drifted;
+  }
+
+  private async checkAllPlugins(
+    toolIds: ToolId[],
+    manifest: Manifest,
+    projectRoot: string,
+    pluginName?: string
+  ): Promise<PluginDriftEntry[]> {
+    const result: PluginDriftEntry[] = [];
+    for (const toolId of toolIds) {
+      const entries = await this.checkPluginsForTool(
+        toolId as AiToolId,
+        manifest,
+        projectRoot,
+        pluginName
+      );
+      result.push(...entries);
+    }
+    return result;
+  }
+
+  private async checkPluginsForTool(
+    toolId: AiToolId,
+    manifest: Manifest,
+    projectRoot: string,
+    pluginName?: string
+  ): Promise<PluginDriftEntry[]> {
+    const plugins = manifest.getPlugins(toolId);
+    const targets = pluginName ? plugins.filter((p) => p.name === pluginName) : plugins;
+    const result: PluginDriftEntry[] = [];
+    for (const plugin of targets) {
+      const driftedFiles = await this.checkOnePluginDrift(plugin.files, projectRoot);
+      if (driftedFiles.length > 0) {
+        result.push({ toolId, pluginName: plugin.name, driftedFiles });
+      }
+    }
+    return result;
+  }
+
+  private async checkOnePluginDrift(
+    files: ReadonlyMap<string, string>,
+    projectRoot: string
+  ): Promise<string[]> {
+    const drifted: string[] = [];
+    for (const [relativePath, expectedHashValue] of files.entries()) {
+      const fullPath = join(projectRoot, relativePath);
+      if (!(await this.fs.fileExists(fullPath))) {
+        drifted.push(relativePath);
+      } else {
+        const diskHash = await this.fs.readFileHash(fullPath);
+        if (diskHash.value !== expectedHashValue) drifted.push(relativePath);
       }
     }
     return drifted;

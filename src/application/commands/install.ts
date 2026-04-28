@@ -9,7 +9,7 @@ import {
 } from "../../domain/tools/registry.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
-import { InstallUseCase } from "../use-cases/install/install-use-case.js";
+import { InstallUseCase, type PluginMode } from "../use-cases/install/install-use-case.js";
 import { ResolveFrameworkUseCase } from "../use-cases/resolve-framework-use-case.js";
 import { parseCategoryArg, parseGlobalOptions } from "./global-options.js";
 
@@ -61,17 +61,41 @@ Examples:
     .option("--path <path>", "Path to a local framework directory or tarball")
     .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
     .option("--mcp <servers>", "Comma-separated list of MCP servers to install")
+    .option("--plugins <names>", "Comma-separated plugin names from catalog to install")
+    .option("--all-plugins", "Install all plugins from catalog", false)
+    .option("--recommended-plugins", "Install only recommended plugins from catalog", false)
+    .option("--no-plugins", "Skip plugin installation entirely")
     .action(
       async (
         categoryArg: string | undefined,
         toolArgs: string[],
-        cmdOptions: { force: boolean; all: boolean; path?: string; release?: string; mcp?: string }
+        cmdOptions: {
+          force: boolean;
+          all: boolean;
+          path?: string;
+          release?: string;
+          mcp?: string;
+          plugins?: string | boolean;
+          allPlugins: boolean;
+          recommendedPlugins: boolean;
+        }
       ) => {
         const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
 
         if (!cmdOptions.all && !categoryArg && toolArgs.length === 0 && !process.stdout.isTTY) {
           output.error("aidd install requires tool arguments or --all in non-interactive mode.");
+          process.exit(1);
+        }
+
+        const pluginFlagCount =
+          (typeof cmdOptions.plugins === "string" ? 1 : 0) +
+          (cmdOptions.allPlugins ? 1 : 0) +
+          (cmdOptions.recommendedPlugins ? 1 : 0);
+        if (pluginFlagCount > 1) {
+          output.error(
+            "--plugins, --all-plugins, and --recommended-plugins are mutually exclusive."
+          );
           process.exit(1);
         }
 
@@ -99,10 +123,28 @@ Examples:
             deps.logger,
             deps.git,
             deps.platform,
-            deps.prompter
+            deps.prompter,
+            deps.pluginFetcher,
+            deps.pluginDistributionReader,
+            deps.pluginCatalogRepository
           );
 
           const mcpFilter = cmdOptions.mcp?.split(",").map((s) => s.trim()) ?? [];
+          let pluginMode: PluginMode | undefined;
+          let pluginNames: string[] | undefined;
+          if (cmdOptions.plugins === false) {
+            pluginMode = "none";
+          } else if (typeof cmdOptions.plugins === "string") {
+            pluginMode = "named";
+            pluginNames = cmdOptions.plugins
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean);
+          } else if (cmdOptions.allPlugins) {
+            pluginMode = "all";
+          } else if (cmdOptions.recommendedPlugins) {
+            pluginMode = "recommended";
+          }
 
           const results = await installUseCase.execute({
             toolIds,
@@ -114,6 +156,8 @@ Examples:
             repo,
             interactive: process.stdout.isTTY,
             mcpFilter,
+            pluginMode,
+            pluginNames,
           });
 
           const skipped = results.filter((r) => r.skipped);

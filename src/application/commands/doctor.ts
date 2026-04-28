@@ -9,7 +9,8 @@ export function registerDoctorCommand(program: Command): void {
     .command("doctor")
     .description("Check installation health and detect issues")
     .argument("[category]", "Filter to 'ai' or 'ide' tools")
-    .action(async (categoryArg: string | undefined) => {
+    .option("--plugin <name>", "Filter check to one plugin")
+    .action(async (categoryArg: string | undefined, cmdOptions: { plugin?: string }) => {
       const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
 
@@ -25,7 +26,12 @@ export function registerDoctorCommand(program: Command): void {
           deps.logger,
           deps.authReader
         );
-        const report = await useCase.execute({ projectRoot, category, repo });
+        const report = await useCase.execute({
+          projectRoot,
+          category,
+          repo,
+          pluginName: cmdOptions.plugin,
+        });
 
         for (const issue of report.issues.filter((i) => i.severity === "info")) {
           output.warn(`${issue.message}\n  Fix: ${issue.fix}`);
@@ -50,6 +56,13 @@ export function registerDoctorCommand(program: Command): void {
             output.warn(text);
           }
         }
+
+        for (const pi of report.pluginIssues) {
+          output.error(
+            `Plugin ${pi.pluginName} (${pi.toolId}): ${pi.issue} — ${pi.filePath}\n  Fix: Run \`aidd restore --plugin ${pi.pluginName}\` to restore.`
+          );
+        }
+
         process.exit(1);
       } catch (error) {
         errorHandler.handle(error);

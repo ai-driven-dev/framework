@@ -234,4 +234,28 @@ describe("copilot", () => {
       expect(result).toContain("{{TOOLS}}/commands/");
     });
   });
+
+  describe("capabilities.plugins", () => {
+    it("has a plugins capability", () => {
+      expect("plugins" in copilot.capabilities).toBe(true);
+    });
+
+    it("is native mode", () => {
+      expect(copilot.capabilities.plugins.mode).toBe("native");
+    });
+
+    it("uses .github/plugins/ as plugins directory", () => {
+      expect(copilot.capabilities.plugins.pluginsDir).toBe(".github/plugins/");
+    });
+
+    it("uses plugin.json as plugin manifest path", () => {
+      expect(copilot.capabilities.plugins.pluginManifestRelativePath).toBe("plugin.json");
+    });
+
+    it("pluginOutputDir returns correct path for a plugin name", () => {
+      expect(copilot.capabilities.plugins.pluginOutputDir("my-plugin")).toBe(
+        ".github/plugins/my-plugin/"
+      );
+    });
+  });
 });

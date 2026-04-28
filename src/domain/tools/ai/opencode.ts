@@ -3,6 +3,7 @@ import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { MemoryCapability } from "../../capabilities/memory-capability.js";
+import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import {
@@ -25,6 +26,7 @@ import type {
   HasCommands,
   HasMcp,
   HasMemory,
+  HasPlugins,
   HasRules,
   HasSkills,
   UserFileSectionKey,
@@ -89,91 +91,95 @@ function transformMcpToOpencode(content: string): string {
   return JSON.stringify({ mcp }, null, 2);
 }
 
-export const opencode: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasMemory> =
-  {
-    kind: "ai",
-    toolId: "opencode",
-    directory: DIRECTORY,
-    toolSuffix: TOOL_SUFFIX,
-    signalDir: ".opencode/commands",
+export const opencode: AiTool<
+  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasMemory & HasPlugins
+> = {
+  kind: "ai",
+  toolId: "opencode",
+  directory: DIRECTORY,
+  toolSuffix: TOOL_SUFFIX,
+  signalDir: ".opencode/commands",
 
-    capabilities: {
-      agents: new AgentsCapability({
-        directory: DIRECTORY,
-        toolSuffix: TOOL_SUFFIX,
-        format: "markdown",
-        convertFrontmatter: (fm) => ({ description: fm.description, mode: "subagent" }),
-        reverseConvertFrontmatter: (fm) => ({ description: fm.description }),
-      }),
-      skills: new SkillsCapability({
-        directory: DIRECTORY,
-        toolSuffix: TOOL_SUFFIX,
-        buildInstallPath: (fileName) =>
-          `${DIRECTORY}skills/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
-        convertFrontmatter: (fm) => fm,
-        reverseConvertFrontmatter: (fm) => fm,
-      }),
-      commands: new CommandsCapability({
-        directory: DIRECTORY,
-        toolSuffix: TOOL_SUFFIX,
-        buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
-        convertFrontmatter: (fm, relativeFileName) =>
-          convertCommandFrontmatterNoHint(fm, relativeFileName),
-        reverseConvertFrontmatter: (fm) => reverseConvertCommandFrontmatterNoHint(fm),
-      }),
-      rules: new RulesCapability({
-        directory: DIRECTORY,
-        toolSuffix: TOOL_SUFFIX,
-        buildInstallPath: (fileName) =>
-          `${DIRECTORY}rules/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
-        convertFrontmatter: (fm) => {
-          if (fm.alwaysApply === false && fm.description !== undefined) {
-            return { description: fm.description };
-          }
-          return {};
-        },
-        reverseConvertFrontmatter: () => ({}),
-      }),
-      mcp: new McpCapability({
-        outputPath: "opencode.json",
-        format: "json",
-        entrySection: "mcp",
-        mergeStrategy: "framework-prime",
-        transformContent: transformMcpToOpencode,
-        consumes: [CONFIG_MCP, CONFIG_OPENCODE],
-        resolveOutputPath: async (projectRoot, fs) => {
-          const jsonExists = await fs.fileExists(join(projectRoot, "opencode.json"));
-          const jsoncExists = await fs.fileExists(join(projectRoot, "opencode.jsonc"));
-          if (jsonExists && jsoncExists) throw new OpencodeDualConfigError();
-          if (jsoncExists) return "opencode.jsonc";
-          return "opencode.json";
-        },
-      }),
-      memory: new MemoryCapability({
-        outputFileName: "AGENTS.md",
-        rewriteContent: (content, docsDir) => opencode.rewriteContent(content, docsDir),
-      }),
-    },
+  capabilities: {
+    agents: new AgentsCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      format: "markdown",
+      convertFrontmatter: (fm) => ({ description: fm.description, mode: "subagent" }),
+      reverseConvertFrontmatter: (fm) => ({ description: fm.description }),
+    }),
+    skills: new SkillsCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      buildInstallPath: (fileName) =>
+        `${DIRECTORY}skills/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+      convertFrontmatter: (fm) => fm,
+      reverseConvertFrontmatter: (fm) => fm,
+    }),
+    commands: new CommandsCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
+      convertFrontmatter: (fm, relativeFileName) =>
+        convertCommandFrontmatterNoHint(fm, relativeFileName),
+      reverseConvertFrontmatter: (fm) => reverseConvertCommandFrontmatterNoHint(fm),
+    }),
+    rules: new RulesCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      buildInstallPath: (fileName) => `${DIRECTORY}rules/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+      convertFrontmatter: (fm) => {
+        if (fm.alwaysApply === false && fm.description !== undefined) {
+          return { description: fm.description };
+        }
+        return {};
+      },
+      reverseConvertFrontmatter: () => ({}),
+    }),
+    mcp: new McpCapability({
+      outputPath: "opencode.json",
+      format: "json",
+      entrySection: "mcp",
+      mergeStrategy: "framework-prime",
+      transformContent: transformMcpToOpencode,
+      consumes: [CONFIG_MCP, CONFIG_OPENCODE],
+      resolveOutputPath: async (projectRoot, fs) => {
+        const jsonExists = await fs.fileExists(join(projectRoot, "opencode.json"));
+        const jsoncExists = await fs.fileExists(join(projectRoot, "opencode.jsonc"));
+        if (jsonExists && jsoncExists) throw new OpencodeDualConfigError();
+        if (jsoncExists) return "opencode.jsonc";
+        return "opencode.json";
+      },
+    }),
+    memory: new MemoryCapability({
+      outputFileName: "AGENTS.md",
+      rewriteContent: (content, docsDir) => opencode.rewriteContent(content, docsDir),
+    }),
+    plugins: new PluginsCapability({
+      mode: "flat",
+      flatNamespacePrefix: "aidd-",
+    }),
+  },
 
-    rewriteContent(content: string, docsDir: string): string {
-      return baseRewriteContent(content, DIRECTORY, docsDir).replace(
-        /(@?)\.opencode\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
-        "$1.opencode/commands/aidd/$2/$3"
-      );
-    },
+  rewriteContent(content: string, docsDir: string): string {
+    return baseRewriteContent(content, DIRECTORY, docsDir).replace(
+      /(@?)\.opencode\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
+      "$1.opencode/commands/aidd/$2/$3"
+    );
+  },
 
-    reverseRewriteContent(content: string, docsDir: string): string {
-      return baseReverseRewriteContent(content, DIRECTORY, docsDir);
-    },
+  reverseRewriteContent(content: string, docsDir: string): string {
+    return baseReverseRewriteContent(content, DIRECTORY, docsDir);
+  },
 
-    detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null {
-      return detectSectionKeyFromPrefixes(relativePath, [
-        [`${DIRECTORY}agents/`, "agents"],
-        [`${DIRECTORY}commands/aidd/`, "commands"],
-        [`${DIRECTORY}rules/`, "rules"],
-        [`${DIRECTORY}skills/`, "skills"],
-      ]);
-    },
-  };
+  detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null {
+    return detectSectionKeyFromPrefixes(relativePath, [
+      [`${DIRECTORY}agents/`, "agents"],
+      [`${DIRECTORY}commands/aidd/`, "commands"],
+      [`${DIRECTORY}rules/`, "rules"],
+      [`${DIRECTORY}skills/`, "skills"],
+    ]);
+  },
+};
 
 registerTool(opencode);

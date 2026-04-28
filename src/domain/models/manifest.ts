@@ -1,16 +1,19 @@
 import {
+  DuplicatePluginError,
   InvalidManifestDataError,
   InvalidManifestToolIdError,
   InvalidRepoFormatError,
   ManifestValidationError,
+  PluginNotFoundError,
   ToolNotInManifestError,
 } from "../errors.js";
 import { FileHash, type InstallationFile } from "./file.js";
 import { type McpExclusion, mcpExclusionEquals } from "./mcp-exclusion.js";
 import type { MergeFileEntry } from "./merge.js";
+import { Plugin, type PluginEntryData } from "./plugin.js";
 import { type ToolId, VALID_TOOL_IDS } from "./tool-ids.js";
 
-const MANIFEST_VERSION = 2;
+const MANIFEST_VERSION = 3;
 
 // VSCode file paths that were tracked under "copilot" in manifest v1.
 // Used exclusively by migrateV1toV2 to move them to the "vscode" tool entry.
@@ -51,6 +54,7 @@ interface ToolEntry {
   readonly files: readonly TrackedFile[];
   readonly mergeFiles: readonly MergeFileEntry[];
   readonly excludedMcp: readonly McpExclusion[];
+  readonly plugins: readonly Plugin[];
 }
 
 interface ScriptsEntryData {
@@ -79,6 +83,7 @@ interface ToolEntryData {
   files: TrackedFileData[];
   mergeFiles?: MergeFileEntryData[];
   excludedMcp?: Array<{ configPath: string; entryKey: string }>;
+  plugins?: PluginEntryData[];
 }
 
 interface DocsEntryData {
@@ -118,6 +123,14 @@ function migrateV1toV2(raw: Record<string, unknown>): void {
   const existingPaths = new Set(tools.vscode.files.map((f) => f.relativePath));
   const deduped = vscodeFiles.filter((f) => !existingPaths.has(f.relativePath));
   tools.vscode.files = [...tools.vscode.files, ...deduped];
+}
+
+function migrateV2toV3(raw: Record<string, unknown>): void {
+  const tools = raw.tools as Record<string, ToolEntryData> | undefined;
+  if (!tools) return;
+  for (const entry of Object.values(tools)) {
+    entry.plugins ??= [];
+  }
 }
 
 export class Manifest {
@@ -169,12 +182,14 @@ export class Manifest {
     mergeFiles: MergeFileEntry[] = [],
     excludedMcp: McpExclusion[] = []
   ): void {
+    const existing = this._tools.get(toolId);
     this._tools.set(toolId, {
       toolId,
       version,
       files: this.toTrackedFiles(files),
       mergeFiles,
       excludedMcp,
+      plugins: existing?.plugins ?? [],
     });
   }
 
@@ -220,7 +235,7 @@ export class Manifest {
     return this._tools.get(toolId)?.mergeFiles ?? [];
   }
 
-  /** Returns all tracked paths (files + merge files) across all tools that start with the given directory prefix. */
+  /** Returns all tracked paths (files + merge files + plugin files) across all tools that start with the given directory prefix. */
   getTrackedPathsInDirectory(dir: string): Set<string> {
     const tracked = new Set<string>();
     for (const [, entry] of this._tools) {
@@ -229,6 +244,11 @@ export class Manifest {
       }
       for (const m of entry.mergeFiles) {
         if (m.relativePath.startsWith(dir)) tracked.add(m.relativePath);
+      }
+      for (const plugin of entry.plugins) {
+        for (const relPath of plugin.files.keys()) {
+          if (relPath.startsWith(dir)) tracked.add(relPath);
+        }
       }
     }
     return tracked;
@@ -302,13 +322,55 @@ export class Manifest {
     return this._tools.has(toolId);
   }
 
+  getPlugins(toolId: ToolId): readonly Plugin[] {
+    return this._tools.get(toolId)?.plugins ?? [];
+  }
+
+  addPlugin(toolId: ToolId, plugin: Plugin): void {
+    const entry = this._tools.get(toolId);
+    if (!entry) throw new ToolNotInManifestError(toolId);
+    if (entry.plugins.some((p) => p.name === plugin.name)) {
+      throw new DuplicatePluginError(plugin.name);
+    }
+    this._tools.set(toolId, { ...entry, plugins: [...entry.plugins, plugin] });
+  }
+
+  removePlugin(toolId: ToolId, name: string): void {
+    const entry = this._tools.get(toolId);
+    if (!entry) throw new ToolNotInManifestError(toolId);
+    if (!entry.plugins.some((p) => p.name === name)) {
+      throw new PluginNotFoundError(name);
+    }
+    this._tools.set(toolId, { ...entry, plugins: entry.plugins.filter((p) => p.name !== name) });
+  }
+
+  updatePlugin(toolId: ToolId, plugin: Plugin): void {
+    const entry = this._tools.get(toolId);
+    if (!entry) throw new ToolNotInManifestError(toolId);
+    if (!entry.plugins.some((p) => p.name === plugin.name)) {
+      throw new PluginNotFoundError(plugin.name);
+    }
+    this._tools.set(toolId, {
+      ...entry,
+      plugins: entry.plugins.map((p) => (p.name === plugin.name ? plugin : p)),
+    });
+  }
+
   isFileTracked(relativePath: string): boolean {
     for (const entry of this._tools.values()) {
       if (entry.files.some((f) => f.relativePath === relativePath)) return true;
       if (entry.mergeFiles.some((m) => m.relativePath === relativePath)) return true;
+      if (this.isFileTrackedInPlugins(entry.plugins, relativePath)) return true;
     }
     if (this._docs?.files.some((f) => f.relativePath === relativePath)) return true;
     if (this._scripts?.files.some((f) => f.relativePath === relativePath)) return true;
+    return false;
+  }
+
+  private isFileTrackedInPlugins(plugins: readonly Plugin[], relativePath: string): boolean {
+    for (const plugin of plugins) {
+      if (plugin.isFileTracked(relativePath)) return true;
+    }
     return false;
   }
 
@@ -359,6 +421,9 @@ export class Manifest {
             configPath: e.configPath,
             entryKey: e.entryKey,
           })),
+        }),
+        ...(entry.plugins.length > 0 && {
+          plugins: entry.plugins.map((p) => p.toJSON()),
         }),
       };
     }
@@ -428,9 +493,12 @@ export class Manifest {
 
     const raw = data as Record<string, unknown>;
 
-    if (raw.version === MANIFEST_VERSION - 1) {
+    if (raw.version === 1) {
       migrateV1toV2(raw);
-    } else if (raw.version !== MANIFEST_VERSION) {
+      migrateV2toV3(raw);
+    } else if (raw.version === 2) {
+      migrateV2toV3(raw);
+    } else if (raw.version !== 3) {
       throw new InvalidManifestDataError(
         `Unsupported manifest version: ${String(raw.version)}. Expected ${MANIFEST_VERSION}.`
       );
@@ -479,8 +547,13 @@ export class Manifest {
         mergeFiles: Manifest.parseMergeFileEntries(entry.mergeFiles ?? []),
         excludedMcp:
           entry.excludedMcp?.map((e) => ({ configPath: e.configPath, entryKey: e.entryKey })) ?? [],
+        plugins: Manifest.parsePluginEntries(entry.plugins ?? []),
       });
     }
     return tools;
+  }
+
+  private static parsePluginEntries(data: PluginEntryData[]): Plugin[] {
+    return data.map((p) => Plugin.fromJSON(p));
   }
 }

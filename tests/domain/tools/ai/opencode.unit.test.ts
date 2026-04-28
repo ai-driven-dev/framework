@@ -337,6 +337,28 @@ describe("opencode", () => {
     });
   });
 
+  describe("capabilities.plugins", () => {
+    it("has a plugins capability", () => {
+      expect("plugins" in opencode.capabilities).toBe(true);
+    });
+
+    it("is flat mode", () => {
+      expect(opencode.capabilities.plugins.mode).toBe("flat");
+    });
+
+    it("uses aidd- as flat namespace prefix", () => {
+      expect(opencode.capabilities.plugins.flatNamespacePrefix).toBe("aidd-");
+    });
+
+    it("pluginsDir is null", () => {
+      expect(opencode.capabilities.plugins.pluginsDir).toBeNull();
+    });
+
+    it("pluginOutputDir returns null", () => {
+      expect(opencode.capabilities.plugins.pluginOutputDir("my-plugin")).toBeNull();
+    });
+  });
+
   describe("detectUserFileSectionKey()", () => {
     it("detects agents section", () => {
       const key = opencode.detectUserFileSectionKey(".opencode/agents/alexia.md");

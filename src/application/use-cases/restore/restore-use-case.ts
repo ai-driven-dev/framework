@@ -15,9 +15,9 @@ import { RestoreMergeFilesUseCase } from "../shared/restore-merge-files-use-case
 import { RestoreRegularFilesUseCase } from "../shared/restore-regular-files-use-case.js";
 
 interface RestoreOptions {
-  frameworkPath: string;
-  version: string;
-  docsDir: string;
+  frameworkPath?: string;
+  version?: string;
+  docsDir?: string;
   projectRoot: string;
   toolIds?: ToolId[];
   docsOnly?: boolean;
@@ -96,6 +96,11 @@ export class RestoreUseCase {
       interactive = false,
       repo,
     } = options;
+
+    if (frameworkPath === undefined || version === undefined || docsDir === undefined) {
+      throw new Error("frameworkPath, version, and docsDir are required for non-plugin restore.");
+    }
+
     const docsOnly = options.docsOnly ?? false;
     const manifest = options.manifest ?? (await this.manifestRepo.load());
     if (manifest === null) throw new NoManifestError(repo);

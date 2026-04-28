@@ -2,13 +2,18 @@ import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { FrameworkResolutionError, NoFrameworkSourceError } from "../../domain/errors.js";
-import { validateRepoFormat } from "../../domain/models/manifest.js";
+import type { PluginSource } from "../../domain/models/plugin-source.js";
+import {
+  GITHUB_REPO_REGEX,
+  parsePluginSourceShorthand,
+} from "../../domain/models/plugin-source.js";
 import type {
   FrameworkResolved,
   FrameworkResolver,
   FrameworkResolverOptions,
 } from "../../domain/ports/framework-resolver.js";
 import type { Logger } from "../../domain/ports/logger.js";
+import type { PluginFetcher } from "../../domain/ports/plugin-fetcher.js";
 import type { FrameworkCache } from "../cache/framework-cache.js";
 import type { HttpClient } from "../http/http-client.js";
 import type { TarExtractor } from "../tar/tar-extractor.js";
@@ -35,6 +40,8 @@ interface FrameworkResolverAdapterConfig {
   defaultRepo: string;
   defaultToken?: string;
   githubApiBase?: string;
+  gitFetcher: PluginFetcher;
+  gitCacheDir: string;
 }
 
 const DEFAULT_GITHUB_API_BASE = "https://api.github.com";
@@ -43,6 +50,8 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
   private readonly defaultRepo: string;
   private readonly defaultToken: string | undefined;
   private readonly githubApiBase: string;
+  private readonly gitFetcher: PluginFetcher;
+  private readonly gitCacheDir: string;
 
   constructor(
     private readonly http: HttpClient,
@@ -54,6 +63,8 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
     this.defaultRepo = config.defaultRepo;
     this.defaultToken = config.defaultToken;
     this.githubApiBase = config.githubApiBase ?? DEFAULT_GITHUB_API_BASE;
+    this.gitFetcher = config.gitFetcher;
+    this.gitCacheDir = config.gitCacheDir;
   }
 
   async resolve(options: FrameworkResolverOptions): Promise<FrameworkResolved> {
@@ -80,7 +91,13 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
   }
 
   async fetchLatestVersion(repo?: string): Promise<string> {
-    const release = await this.fetchLatestRelease(repo ?? this.defaultRepo, this.defaultToken);
+    const effectiveRepo = repo ?? this.defaultRepo;
+    if (!GITHUB_REPO_REGEX.test(effectiveRepo)) {
+      throw new FrameworkResolutionError(
+        "Version check is not supported for git-cloned framework sources. Pin a specific ref via --version."
+      );
+    }
+    const release = await this.fetchLatestRelease(effectiveRepo, this.defaultToken);
     return release.tag_name;
   }
 
@@ -100,60 +117,97 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
 
   private async resolveRemote(options: FrameworkResolverOptions): Promise<FrameworkResolved> {
     const repo = options.repo ?? this.defaultRepo;
-    validateRepoFormat(repo);
+    const source = parsePluginSourceShorthand(repo);
+    if (source.kind === "github") {
+      return this.resolveRemoteViaGitHub(options);
+    }
+    return this.resolveViaGitClone(source, options.version);
+  }
+
+  private async resolveRemoteViaGitHub(
+    options: FrameworkResolverOptions
+  ): Promise<FrameworkResolved> {
+    const repo = options.repo ?? this.defaultRepo;
     const token = options.token ?? this.defaultToken;
+    const normalizedTag = this.normalizeTag(options.version);
+    const release = await this.tryFetchRelease(repo, normalizedTag, token);
+    return this.serveFromReleaseOrCache(repo, release, token);
+  }
 
-    const normalizedTag = options.version?.startsWith("v")
-      ? options.version
-      : options.version
-        ? `v${options.version}`
-        : undefined;
+  private normalizeTag(version?: string): string | undefined {
+    if (!version) return undefined;
+    return version.startsWith("v") ? version : `v${version}`;
+  }
 
-    let release: GithubRelease | null = null;
-    let _networkError: Error | null = null;
-
+  private async tryFetchRelease(
+    repo: string,
+    normalizedTag: string | undefined,
+    token?: string
+  ): Promise<GithubRelease | null> {
     try {
-      release = normalizedTag
+      return normalizedTag
         ? await this.fetchReleaseByTag(repo, normalizedTag, token)
         : await this.fetchLatestRelease(repo, token);
     } catch (error) {
       if (normalizedTag) {
-        const cause = error instanceof Error ? error.message : String(error);
-        // GitHub returns HTTP 404 for private repos when unauthenticated, not 401/403.
-        // Token resolution order: --token flag > AIDD_TOKEN env > gh auth token.
-        // Run `gh auth status` to verify gh CLI authentication.
-        const authHint = cause.includes("HTTP 404")
-          ? " The repository may be private — authenticate via gh CLI, or provide a token via --token or AIDD_TOKEN."
-          : "";
-        throw new FrameworkResolutionError(
-          `Framework release not found: ${normalizedTag}. ${cause}.${authHint}`
-        );
+        this.throwTagNotFound(normalizedTag, error);
       }
-      _networkError = error instanceof Error ? error : new Error(String(error));
+      return null;
     }
+  }
 
+  private throwTagNotFound(normalizedTag: string, error: unknown): never {
+    const cause = error instanceof Error ? error.message : String(error);
+    // GitHub returns HTTP 404 for private repos when unauthenticated, not 401/403.
+    // Token resolution order: --token flag > AIDD_TOKEN env > gh auth token.
+    // Run `gh auth status` to verify gh CLI authentication.
+    const authHint = cause.includes("HTTP 404")
+      ? " The repository may be private — authenticate via gh CLI, or provide a token via --token or AIDD_TOKEN."
+      : "";
+    throw new FrameworkResolutionError(
+      `Framework release not found: ${normalizedTag}. ${cause}.${authHint}`
+    );
+  }
+
+  private async serveFromReleaseOrCache(
+    repo: string,
+    release: GithubRelease | null,
+    token?: string
+  ): Promise<FrameworkResolved> {
     if (release !== null) {
       const version = release.tag_name.replace(/^v/, "");
-
       if (await this.cache.has(version)) {
         this.logger?.debug(`Using cached framework v${version}`);
         return { path: this.cache.get(version), version, source: "cache" };
       }
-
       this.logger?.debug(`Downloading framework v${version}...`);
       const path = await this.downloadAndCache(repo, release, version, token);
       return { path, version, source: "download" };
     }
+    return this.fallbackToCache();
+  }
 
+  private async fallbackToCache(): Promise<FrameworkResolved> {
     const cachedVersion = await this.cache.getLatestCached();
     if (cachedVersion !== null) {
       this.logger?.warn(`Network unavailable. Using cached framework v${cachedVersion}.`);
       return { path: this.cache.get(cachedVersion), version: cachedVersion, source: "cache" };
     }
-
     throw new FrameworkResolutionError(
       "Cannot reach the framework source. Check your network connection."
     );
+  }
+
+  private applyRef(source: PluginSource, ref?: string): PluginSource {
+    if (!ref || source.kind === "local" || source.kind === "npm") return source;
+    return { ...source, ref };
+  }
+
+  private async resolveViaGitClone(source: PluginSource, ref?: string): Promise<FrameworkResolved> {
+    const sourcedWithRef = this.applyRef(source, ref);
+    const path = await this.gitFetcher.fetch(sourcedWithRef, this.gitCacheDir);
+    const version = await readVersionFile(path);
+    return { path, version, source: "git" };
   }
 
   private async fetchLatestRelease(repo: string, token?: string): Promise<GithubRelease> {

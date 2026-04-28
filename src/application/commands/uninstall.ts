@@ -28,11 +28,12 @@ Examples:
     )
     .option("-a, --all", "Uninstall all installed tools", false)
     .option("--mcp <servers>", "Comma-separated list of MCP servers to remove")
+    .option("--plugin <name>", "Uninstall a specific plugin by name")
     .action(
       async (
         categoryArg: string | undefined,
         toolArgs: string[],
-        cmdOptions: { all: boolean; mcp?: string }
+        cmdOptions: { all: boolean; mcp?: string; plugin?: string }
       ) => {
         const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
@@ -45,6 +46,21 @@ Examples:
 
         try {
           const deps = await createDeps(projectRoot, { verbose }, output);
+
+          if (cmdOptions.plugin !== undefined) {
+            const pluginToolIds: ToolId[] = toolArgs.length > 0 ? (toolArgs as ToolId[]) : [];
+            const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
+            const results = await useCase.execute({
+              toolIds: pluginToolIds,
+              projectRoot,
+              repo,
+              mcpFilter: [],
+              pluginName: cmdOptions.plugin,
+            });
+            const count = results.reduce((s, r) => s + r.fileCount, 0);
+            output.success(`Plugin ${cmdOptions.plugin} uninstalled (${count} files removed).`);
+            return;
+          }
 
           let toolIds: ToolId[];
 

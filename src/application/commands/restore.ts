@@ -5,6 +5,7 @@ import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { NoManifestError } from "../errors.js";
 import { ResolveFrameworkUseCase } from "../use-cases/resolve-framework-use-case.js";
+import { RestorePluginUseCase } from "../use-cases/restore/restore-plugin-use-case.js";
 import { RestoreUseCase } from "../use-cases/restore/restore-use-case.js";
 import { StatusUseCase } from "../use-cases/status-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
@@ -19,6 +20,7 @@ export function registerRestoreCommand(program: Command): void {
     .option("--docs", "Limit restore to docs only")
     .option("--path <path>", "Path to a local framework directory or tarball")
     .option("--release <tag>", "Specific framework release tag to restore against (e.g., v3.2.0)")
+    .option("--plugin <name>", "Restore a specific plugin by name")
     .action(
       async (
         fileArgs: string[],
@@ -28,6 +30,7 @@ export function registerRestoreCommand(program: Command): void {
           docs?: boolean;
           path?: string;
           release?: string;
+          plugin?: string;
         }
       ) => {
         const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
@@ -44,6 +47,18 @@ export function registerRestoreCommand(program: Command): void {
           }
 
           const deps = await createDeps(projectRoot, { verbose, repo }, output);
+
+          if (cmdOptions.plugin !== undefined) {
+            await new RestorePluginUseCase(
+              deps.fs,
+              deps.manifestRepo,
+              deps.pluginFetcher,
+              deps.pluginDistributionReader,
+              deps.hasher
+            ).execute({ pluginName: cmdOptions.plugin, projectRoot, repo });
+            output.success(`Plugin ${cmdOptions.plugin} restored.`);
+            return;
+          }
 
           const manifest = await deps.manifestRepo.load();
           if (manifest === null) {

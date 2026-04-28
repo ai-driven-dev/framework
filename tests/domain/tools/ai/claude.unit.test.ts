@@ -171,4 +171,30 @@ describe("claude", () => {
       expect(path).toBe(".claude/commands/aidd/02/create_user_stories.md");
     });
   });
+
+  describe("capabilities.plugins", () => {
+    it("has a plugins capability", () => {
+      expect("plugins" in claude.capabilities).toBe(true);
+    });
+
+    it("is native mode", () => {
+      expect(claude.capabilities.plugins.mode).toBe("native");
+    });
+
+    it("uses .claude/plugins/ as plugins directory", () => {
+      expect(claude.capabilities.plugins.pluginsDir).toBe(".claude/plugins/");
+    });
+
+    it("uses .claude-plugin/plugin.json as plugin manifest path", () => {
+      expect(claude.capabilities.plugins.pluginManifestRelativePath).toBe(
+        ".claude-plugin/plugin.json"
+      );
+    });
+
+    it("pluginOutputDir returns correct path for a plugin name", () => {
+      expect(claude.capabilities.plugins.pluginOutputDir("my-plugin")).toBe(
+        ".claude/plugins/my-plugin/"
+      );
+    });
+  });
 });

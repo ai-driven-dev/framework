@@ -212,10 +212,10 @@ describe("Manifest", () => {
       expect(restoredMerge[0].entries.playwright.value).toBe(`aabb11${"0".repeat(26)}`);
     });
 
-    it("toJSON produces version 2", () => {
+    it("toJSON produces version 3", () => {
       const manifest = Manifest.create();
       manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
-      expect(manifest.toJSON().version).toBe(2);
+      expect(manifest.toJSON().version).toBe(3);
     });
   });
 
@@ -413,11 +413,11 @@ describe("Manifest", () => {
       expect(manifest.hasTool("copilot" as ToolId)).toBe(false);
     });
 
-    it("v2 manifest loads without migration", () => {
+    it("v3 manifest loads without migration", () => {
       const manifest = Manifest.create();
       manifest.addTool("copilot" as ToolId, "1.0.0", []);
       const json = manifest.toJSON();
-      expect(json.version).toBe(2);
+      expect(json.version).toBe(3);
       expect(() => Manifest.fromJSON(json)).not.toThrow();
     });
 

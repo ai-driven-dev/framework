@@ -1,40 +1,41 @@
 ---
 name: 'aidd:05:review_functional'
-description: 'Use this agent when you need to browse current project web application, getting browser console, screenshot, navigating across the app...'
-argument-hint: 'The technical plan to base the review on'
+description: 'Review feature behavior against plan specification and current diff'
+argument-hint: 'Plan path to validate against'
 ---
 
-# Goal
+# Functional Review Prompt
 
-You are about to review the coded implementation done by a senior developer.
+## Goal
+
+Verify the implemented feature matches the plan's acceptance criteria, flows, and edge cases. Static review of current diff against plan intent. No app execution, no browser, no code quality checks.
 
 ## Rules
 
-You need to make sure:
+- Plan path via `$ARGUMENTS`
+- Default diff source: `git diff main`
+- Focus on _what_ the feature does, not _how_ it is coded
+- Behavioral verification only
+- No runtime testing
+- One row per acceptance criterion
+- Report-only output
 
-- Plan has been followed correctly
-- All tasks in all phases are perfectly implemented
+### Review template
 
-### Score Calculation
+```markdown
+@aidd_docs/templates/dev/review_functional.md
+```
 
-For each item you discover, create a table score
+## Process steps
 
-| Title | Files | Confidence Score |
-| ----- | ----- | ---------------- |
-|       |       |                  |
-
-0: No fix needed
-1: Minor improvements suggested
-2: Major issues found
-3: Critical problems detected
-
-## Steps
-
-1. Read the following plan: $ARGUMENTS
-2. Look for code duplication and inconsistencies.
-3. Affect confidence score regarding the implementation.
-4. List all issues found in a scored table.
-5. Challenge your assumptions, remember less is more, only fix what really need to be fixed.
-6. **Wait for user approval**
-7. Spawn 1 `dev` sub-agent per issue and wait for all to be completed.
-8. Restart all the steps and iterate until no more score issues are found.
+1. Read plan from `$ARGUMENTS` if provided, else ask user to give functional review criteria directly
+2. Extract acceptance criteria from plan
+   - If criteria present: ask user to validate them before proceeding
+   - If criteria missing: ask user to provide them
+3. Fetch current diff: `git diff main` (or argument-provided scope)
+4. Map diff behavior to each criterion, fill scoring matrix
+5. List missing behaviors (criteria with no trace in diff)
+6. List unplanned behaviors (diff changes not traced to any criterion)
+7. List flow / edge-case gaps surfaced by criteria walkthrough
+8. Format using template
+9. Output to `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<task_name>.review_functional.md`

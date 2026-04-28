@@ -20,12 +20,17 @@ import {
   type MergeFileEntry,
   removeEntriesFromJson,
 } from "../../../domain/models/merge.js";
+import type { PluginCatalogEntry } from "../../../domain/models/plugin-catalog.js";
+import type { PluginSource } from "../../../domain/models/plugin-source.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../../domain/ports/platform.js";
+import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
+import type { PluginDistributionReader } from "../../../domain/ports/plugin-distribution-reader.js";
+import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
 import type { VersionControl } from "../../../domain/ports/version-control.js";
 import type {
@@ -60,8 +65,11 @@ import {
   InstallConfigUseCase,
 } from "./install-config-use-case.js";
 import { InstallMemoryBankUseCase } from "./install-memory-bank-use-case.js";
+import { InstallPluginsUseCase } from "./install-plugins-use-case.js";
 import { InstallRulesUseCase } from "./install-rules-use-case.js";
 import { InstallSkillsUseCase } from "./install-skills-use-case.js";
+
+export type PluginMode = "all" | "recommended" | "named" | "none";
 
 interface InstallOptions {
   toolIds?: ToolId[];
@@ -74,6 +82,9 @@ interface InstallOptions {
   repo?: string;
   interactive?: boolean;
   mcpFilter?: string[];
+  plugins?: PluginSource[];
+  pluginMode?: PluginMode;
+  pluginNames?: string[];
 }
 
 export interface InstallToolResult {
@@ -101,7 +112,10 @@ export class InstallUseCase {
     private readonly logger: Logger,
     private readonly git: VersionControl,
     private readonly platform: Platform,
-    private readonly prompter?: Prompter
+    private readonly prompter?: Prompter,
+    private readonly pluginFetcher?: PluginFetcher,
+    private readonly pluginDistributionReader?: PluginDistributionReader,
+    private readonly pluginCatalogRepository?: PluginCatalogRepository
   ) {}
 
   async execute(options: InstallOptions): Promise<InstallToolResult[]> {
@@ -139,6 +153,9 @@ export class InstallUseCase {
       ideContext
     );
 
+    const resolvedPlugins = await this.resolvePluginsForInstall(options, frameworkPath);
+    await this.maybeInstallPlugins(resolvedPlugins, toolIds, projectRoot, manifest);
+
     await new PostInstallPipelineUseCase(
       this.fs,
       this.manifestRepo,
@@ -148,6 +165,61 @@ export class InstallUseCase {
     ).execute({ projectRoot, version, descriptor, contentFiles, manifest, docsDir });
 
     return results;
+  }
+
+  private async resolvePluginsForInstall(
+    options: InstallOptions,
+    frameworkPath: string
+  ): Promise<PluginSource[]> {
+    if (options.plugins !== undefined && options.plugins.length > 0) return options.plugins;
+    if (this.pluginCatalogRepository === undefined) return [];
+    const catalog = await this.pluginCatalogRepository.load(frameworkPath);
+    if (catalog === null) return [];
+    const { pluginMode, pluginNames, interactive } = options;
+    if (!interactive || pluginMode !== undefined) {
+      return this.selectPluginsByMode(catalog.plugins, pluginMode ?? "none", pluginNames ?? []);
+    }
+    return this.promptPluginSelection(catalog.plugins);
+  }
+
+  private selectPluginsByMode(
+    entries: readonly PluginCatalogEntry[],
+    mode: PluginMode,
+    names: string[]
+  ): PluginSource[] {
+    if (mode === "all") return entries.map((e) => e.source);
+    if (mode === "recommended") return entries.filter((e) => e.recommended).map((e) => e.source);
+    if (mode === "named") return entries.filter((e) => names.includes(e.name)).map((e) => e.source);
+    return [];
+  }
+
+  private async promptPluginSelection(
+    entries: readonly PluginCatalogEntry[]
+  ): Promise<PluginSource[]> {
+    if (this.prompter === undefined || entries.length === 0) return [];
+    const choices = entries.map((e) => ({
+      name: e.description !== undefined ? `${e.name} — ${e.description}` : e.name,
+      value: e,
+      checked: e.recommended,
+    }));
+    const selected = await this.prompter.checkbox("Which plugins do you want to install?", choices);
+    return selected.map((e) => e.source);
+  }
+
+  private async maybeInstallPlugins(
+    plugins: PluginSource[],
+    toolIds: ToolId[],
+    projectRoot: string,
+    manifest: Manifest
+  ): Promise<void> {
+    if (plugins.length === 0 || !this.pluginFetcher || !this.pluginDistributionReader) return;
+    const toolConfigs = toolIds.map((id) => getToolConfig(id));
+    await new InstallPluginsUseCase(
+      this.fs,
+      this.pluginFetcher,
+      this.pluginDistributionReader,
+      this.hasher
+    ).execute({ plugins, toolConfigs, projectRoot, manifest });
   }
 
   private async installAllTools(
@@ -172,6 +244,35 @@ export class InstallUseCase {
     );
     const allKeys = this.aggregateAvailableMcpKeys(prepared);
     const selectedKeys = await this.promptMcpSelection(allKeys, mcpFilter, interactive);
+    const results = await this.installPreparedTools(
+      prepared,
+      manifest,
+      descriptor,
+      projectRoot,
+      force,
+      selectedKeys,
+      ideContext
+    );
+    await this.patchAlreadyInstalledAiTools(
+      toolIds,
+      manifest,
+      descriptor,
+      contentFiles,
+      docsDir,
+      projectRoot
+    );
+    return results;
+  }
+
+  private async installPreparedTools(
+    prepared: ToolInstallData[],
+    manifest: Manifest,
+    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    projectRoot: string,
+    force: boolean,
+    selectedKeys: Set<string>,
+    ideContext: IdeToolId[]
+  ): Promise<InstallToolResult[]> {
     const results: InstallToolResult[] = [];
     for (const data of prepared) {
       const result = await this.installOneToolFromData(
@@ -185,14 +286,6 @@ export class InstallUseCase {
       );
       results.push(result);
     }
-    await this.patchAlreadyInstalledAiTools(
-      toolIds,
-      manifest,
-      descriptor,
-      contentFiles,
-      docsDir,
-      projectRoot
-    );
     return results;
   }
 
@@ -301,9 +394,14 @@ export class InstallUseCase {
     if (manifest.hasTool(toolId) && !force) {
       return { toolId, fileCount: 0, files: [], skipped: true, warnings: [] };
     }
-    const warnings = await this.checkForceWarning(toolId, config, manifest, projectRoot, force);
-    this.appendMissingIdeWarnings(toolId, config, ideContext, warnings);
-    this.appendCodexRulesWarning(toolId, warnings);
+    const warnings = await this.buildToolWarnings(
+      toolId,
+      config,
+      manifest,
+      projectRoot,
+      force,
+      ideContext
+    );
     this.logger.info(`Generating ${toolId} distribution...`);
     await this.removeStaleFiles(toolId, manifest, generated, projectRoot);
     const { filtered, exclusions } = this.applyMcpFilter(
@@ -312,15 +410,16 @@ export class InstallUseCase {
       configRefs,
       selectedKeys
     );
-    if (force && manifest.hasTool(toolId)) {
-      await this.clearExcludedMcpKeys(
-        exclusions,
-        capabilities,
-        descriptor.configRefs,
-        filtered,
-        projectRoot
-      );
-    }
+    await this.maybeClearExcludedMcp(
+      force,
+      manifest,
+      toolId,
+      exclusions,
+      capabilities,
+      descriptor,
+      filtered,
+      projectRoot
+    );
     const lookup = buildConfigNameLookup(configRefs);
     const writeResult = await this.writeToolFiles(
       filtered,
@@ -338,6 +437,40 @@ export class InstallUseCase {
       exclusions,
       warnings,
       manifest
+    );
+  }
+
+  private async buildToolWarnings(
+    toolId: ToolId,
+    config: ReturnType<typeof getToolConfig>,
+    manifest: Manifest,
+    projectRoot: string,
+    force: boolean,
+    ideContext: IdeToolId[]
+  ): Promise<string[]> {
+    const warnings = await this.checkForceWarning(toolId, config, manifest, projectRoot, force);
+    this.appendMissingIdeWarnings(toolId, config, ideContext, warnings);
+    this.appendCodexRulesWarning(toolId, warnings);
+    return warnings;
+  }
+
+  private async maybeClearExcludedMcp(
+    force: boolean,
+    manifest: Manifest,
+    toolId: ToolId,
+    exclusions: McpExclusion[],
+    capabilities: readonly ConfigCapability[],
+    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    filtered: InstallationFile[],
+    projectRoot: string
+  ): Promise<void> {
+    if (!force || !manifest.hasTool(toolId)) return;
+    await this.clearExcludedMcpKeys(
+      exclusions,
+      capabilities,
+      descriptor.configRefs,
+      filtered,
+      projectRoot
     );
   }
 

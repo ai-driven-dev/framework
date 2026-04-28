@@ -7,6 +7,7 @@ import {
 } from "../../domain/formats/markdown-references.js";
 import type { Manifest } from "../../domain/models/manifest.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/merge.js";
+import type { AiToolId } from "../../domain/models/tool-ids.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
@@ -40,17 +41,28 @@ interface ToolHealth {
   mergeFileCount: number;
 }
 
+type PluginIssueKind = "missing" | "hash-mismatch";
+
+interface PluginIssueEntry {
+  toolId: AiToolId;
+  pluginName: string;
+  issue: PluginIssueKind;
+  filePath: string;
+}
+
 interface DoctorReport {
   healthy: boolean;
   toolHealth: ToolHealth[];
   docsFileCount: number;
   issues: DoctorIssue[];
+  pluginIssues: PluginIssueEntry[];
 }
 
 interface DoctorOptions {
   projectRoot: string;
   category?: ToolCategory;
   repo?: string;
+  pluginName?: string;
 }
 
 export class DoctorUseCase {
@@ -63,7 +75,7 @@ export class DoctorUseCase {
   ) {}
 
   async execute(options: DoctorOptions): Promise<DoctorReport> {
-    const { projectRoot, category, repo } = options;
+    const { projectRoot, category, repo, pluginName } = options;
 
     let manifest: Manifest | null;
     try {
@@ -102,11 +114,15 @@ export class DoctorUseCase {
     if (!category) issues.push(...(await this.checkOrphanedDirectories(manifest, projectRoot)));
     if (!category) issues.push(...(await this.checkAuth()));
 
+    const pluginIssues = await this.checkAllPlugins(manifest, projectRoot, allowedIds, pluginName);
+
     return {
-      healthy: issues.filter((i) => i.severity !== "info").length === 0,
+      healthy:
+        issues.filter((i) => i.severity !== "info").length === 0 && pluginIssues.length === 0,
       toolHealth,
       docsFileCount: docsFiles.length,
       issues,
+      pluginIssues,
     };
   }
 
@@ -237,6 +253,63 @@ export class DoctorUseCase {
           message: `Modified key in ${mergeFile.relativePath} > ${key}`,
           fix: `Run \`aidd restore --force\` to restore the original value.`,
         });
+      }
+    }
+    return issues;
+  }
+
+  private async checkAllPlugins(
+    manifest: Manifest,
+    projectRoot: string,
+    allowedIds: Set<string> | null,
+    pluginName?: string
+  ): Promise<PluginIssueEntry[]> {
+    const result: PluginIssueEntry[] = [];
+    for (const toolId of manifest.getInstalledToolIds()) {
+      if (allowedIds && !allowedIds.has(toolId)) continue;
+      const entries = await this.checkPluginsForTool(
+        toolId as AiToolId,
+        manifest,
+        projectRoot,
+        pluginName
+      );
+      result.push(...entries);
+    }
+    return result;
+  }
+
+  private async checkPluginsForTool(
+    toolId: AiToolId,
+    manifest: Manifest,
+    projectRoot: string,
+    pluginName?: string
+  ): Promise<PluginIssueEntry[]> {
+    const plugins = manifest.getPlugins(toolId);
+    const targets = pluginName ? plugins.filter((p) => p.name === pluginName) : plugins;
+    const result: PluginIssueEntry[] = [];
+    for (const plugin of targets) {
+      const issues = await this.checkOnePlugin(toolId, plugin.name, plugin.files, projectRoot);
+      result.push(...issues);
+    }
+    return result;
+  }
+
+  private async checkOnePlugin(
+    toolId: AiToolId,
+    pluginName: string,
+    files: ReadonlyMap<string, string>,
+    projectRoot: string
+  ): Promise<PluginIssueEntry[]> {
+    const issues: PluginIssueEntry[] = [];
+    for (const [relativePath, expectedHash] of files.entries()) {
+      const fullPath = join(projectRoot, relativePath);
+      if (!(await this.fs.fileExists(fullPath))) {
+        issues.push({ toolId, pluginName, issue: "missing", filePath: relativePath });
+      } else {
+        const diskHash = await this.fs.readFileHash(fullPath);
+        if (diskHash.value !== expectedHash) {
+          issues.push({ toolId, pluginName, issue: "hash-mismatch", filePath: relativePath });
+        }
       }
     }
     return issues;

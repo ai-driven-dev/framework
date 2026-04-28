@@ -2,6 +2,7 @@ import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { MemoryCapability } from "../../capabilities/memory-capability.js";
+import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import {
@@ -19,6 +20,7 @@ import type {
   HasCommands,
   HasMcp,
   HasMemory,
+  HasPlugins,
   HasRules,
   HasSkills,
   UserFileSectionKey,
@@ -33,7 +35,9 @@ function toMdc(fileName: string): string {
   return fileName.endsWith(".md") ? `${fileName.slice(0, -3)}${MDC_EXT}` : fileName;
 }
 
-export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasMemory> = {
+export const cursor: AiTool<
+  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasMemory & HasPlugins
+> = {
   kind: "ai",
   toolId: "cursor",
   directory: DIRECTORY,
@@ -106,6 +110,15 @@ export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
     memory: new MemoryCapability({
       outputFileName: "AGENTS.md",
       rewriteContent: (content, docsDir) => cursor.rewriteContent(content, docsDir),
+    }),
+    plugins: new PluginsCapability({
+      mode: "native",
+      pluginsDir: ".cursor/plugins/",
+      pluginManifestRelativePath: ".cursor-plugin/plugin.json",
+      mcpRelativePath: "mcp.json",
+      hooksRelativePath: "hooks.json",
+      acceptsHooks: true,
+      acceptsMcp: true,
     }),
   },
 

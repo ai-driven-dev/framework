@@ -33,7 +33,8 @@
       "!.cursor",
       "!.opencode",
       "!.vscode",
-      "!setup-test"
+      "!setup-test",
+      "!**/fixtures/**/*.json"
     ]
   },
   "overrides": [

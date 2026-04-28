@@ -1,6 +1,9 @@
 import { join } from "node:path";
+import { PluginNotFoundError } from "../../../domain/errors.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../domain/formats/markdown.js";
 import { SyncPolicy } from "../../../domain/models/sync-policy.js";
+import type { AiToolId } from "../../../domain/models/tool-ids.js";
+import { AI_TOOL_IDS } from "../../../domain/models/tool-ids.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Logger } from "../../../domain/ports/logger.js";
@@ -28,6 +31,7 @@ interface SyncOptions {
   includeUserFiles?: boolean;
   repo?: string;
   interactive?: boolean;
+  pluginName?: string;
 }
 
 interface SyncFileResult {
@@ -143,15 +147,19 @@ export class SyncUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    readonly _hasher: Hasher,
+    private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly prompter?: Prompter
   ) {}
 
   async execute(options: SyncOptions): Promise<SyncResult> {
-    const { projectRoot, force = false, includeUserFiles = false, repo } = options;
+    const { projectRoot, force = false, includeUserFiles = false, repo, pluginName } = options;
     const manifest = await this.manifestRepo.load();
     if (manifest === null) throw new NoManifestError(repo);
+
+    if (pluginName !== undefined) {
+      return this.executePluginSync(pluginName, projectRoot, manifest);
+    }
 
     const docsDir = options.docsDir ?? manifest.docsDir;
     const { sourceTool, targetTools } = await this.selectSyncScope(
@@ -384,6 +392,48 @@ export class SyncUseCase {
     if (targetTools.length === 0) throw new InputRequiredError("No target tools selected.");
 
     return { sourceTool, targetTools };
+  }
+
+  private async executePluginSync(
+    pluginName: string,
+    projectRoot: string,
+    manifest: Awaited<ReturnType<ManifestRepository["load"]>> & object
+  ): Promise<SyncResult> {
+    const toolIds = AI_TOOL_IDS.filter((id) => manifest.hasTool(id)) as AiToolId[];
+    let firstMatchedTool: ToolId | undefined;
+    for (const toolId of toolIds) {
+      const found = await this.syncPluginForTool(toolId, pluginName, projectRoot, manifest);
+      if (found && firstMatchedTool === undefined) firstMatchedTool = toolId;
+    }
+    if (firstMatchedTool === undefined) throw new PluginNotFoundError(pluginName);
+    await this.manifestRepo.save(manifest);
+    return {
+      sourceTool: firstMatchedTool,
+      tools: [],
+      totalWritten: 0,
+      totalDeleted: 0,
+      totalConflicts: 0,
+      totalSkipped: 0,
+    };
+  }
+
+  private async syncPluginForTool(
+    toolId: AiToolId,
+    pluginName: string,
+    projectRoot: string,
+    manifest: Awaited<ReturnType<ManifestRepository["load"]>> & object
+  ): Promise<boolean> {
+    const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
+    if (plugin === undefined) return false;
+    const newFiles = new Map<string, string>();
+    for (const [relativePath] of plugin.files.entries()) {
+      const fullPath = join(projectRoot, relativePath);
+      if (!(await this.fs.fileExists(fullPath))) continue;
+      const content = await this.fs.readFile(fullPath);
+      newFiles.set(relativePath, this.hasher.hash(content).value);
+    }
+    manifest.updatePlugin(toolId, plugin.withFiles(newFiles));
+    return true;
   }
 
   private buildSyncTotals(sourceTool: ToolId, toolResults: SyncToolResult[]): SyncResult {

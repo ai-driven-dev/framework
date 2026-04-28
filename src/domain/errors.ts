@@ -118,3 +118,61 @@ export class PackageManagerDetectionError extends Error {
     this.name = "PackageManagerDetectionError";
   }
 }
+
+export class InvalidPluginSourceError extends Error {
+  constructor(detail?: string) {
+    super(detail ? `Invalid plugin source: ${detail}` : "Invalid plugin source.");
+    this.name = "InvalidPluginSourceError";
+  }
+}
+
+export class InvalidPluginNameError extends Error {
+  constructor(name: string) {
+    super(
+      `Invalid plugin name: "${name}". Use lowercase alphanumeric characters and hyphens only.`
+    );
+    this.name = "InvalidPluginNameError";
+  }
+}
+
+export class InvalidPluginVersionError extends Error {
+  constructor(version: string) {
+    super(`Invalid plugin version: "${version}". Expected semver format (e.g. 1.0.0).`);
+    this.name = "InvalidPluginVersionError";
+  }
+}
+
+export class InvalidPluginManifestError extends Error {
+  constructor(detail?: string) {
+    super(detail ? `Invalid plugin manifest: ${detail}` : "Invalid plugin manifest.");
+    this.name = "InvalidPluginManifestError";
+  }
+}
+
+export class PluginNotFoundError extends Error {
+  constructor(name: string) {
+    super(`Plugin '${name}' is not installed.`);
+    this.name = "PluginNotFoundError";
+  }
+}
+
+export class DuplicatePluginError extends Error {
+  constructor(name: string) {
+    super(`Plugin '${name}' is already installed.`);
+    this.name = "DuplicatePluginError";
+  }
+}
+
+export class PluginFetchError extends Error {
+  constructor(detail: string) {
+    super(`Failed to fetch plugin: ${detail}`);
+    this.name = "PluginFetchError";
+  }
+}
+
+export class FlatCollisionError extends Error {
+  constructor(plugin: string, path: string) {
+    super(`Plugin '${plugin}' collides with an existing file at '${path}'.`);
+    this.name = "FlatCollisionError";
+  }
+}

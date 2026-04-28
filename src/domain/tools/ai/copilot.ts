@@ -2,6 +2,7 @@ import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { MemoryCapability } from "../../capabilities/memory-capability.js";
+import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SettingsCapability } from "../../capabilities/settings-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
@@ -25,6 +26,7 @@ import type {
   HasCommands,
   HasMcp,
   HasMemory,
+  HasPlugins,
   HasRules,
   HasSettings,
   HasSkills,
@@ -262,7 +264,7 @@ function rewriteCopilotMemoryContent(content: string, docsDir: string): string {
 }
 
 export const copilot: AiTool<
-  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasMemory & HasSettings
+  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasMemory & HasSettings & HasPlugins
 > = {
   kind: "ai",
   toolId: "copilot",
@@ -327,6 +329,13 @@ export const copilot: AiTool<
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
       consumes: [CONFIG_COPILOT_VSCODE_SETTINGS],
+    }),
+    plugins: new PluginsCapability({
+      mode: "native",
+      pluginsDir: ".github/plugins/",
+      pluginManifestRelativePath: "plugin.json",
+      acceptsHooks: true,
+      acceptsMcp: true,
     }),
   },
 

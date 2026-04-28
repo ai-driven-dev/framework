@@ -7,6 +7,7 @@ import { registerConfigCommand } from "./application/commands/config.js";
 import { registerDoctorCommand } from "./application/commands/doctor.js";
 import { registerInstallCommand } from "./application/commands/install.js";
 import { runMenuLoop } from "./application/commands/menu.js";
+import { registerPluginCommand } from "./application/commands/plugin.js";
 import { registerRestoreCommand } from "./application/commands/restore.js";
 import { registerSelfUpdateCommand } from "./application/commands/self-update.js";
 import { registerSetupCommand } from "./application/commands/setup.js";
@@ -47,6 +48,7 @@ registerRestoreCommand(program);
 registerSyncCommand(program);
 registerSelfUpdateCommand(program);
 registerSetupCommand(program);
+registerPluginCommand(program);
 
 program.hook("preAction", async (_thisCommand, actionCommand) => {
   const opts = program.opts<{ verbose?: boolean; repo?: string }>();

@@ -101,7 +101,7 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
 | File | Description | Argument Hint |
 |------|---|---|
 | [review_code.md](../.claude/commands/aidd/05/review_code.md) | `Ensure code quality and rules compliance` | - |
-| [review_functional.md](../.claude/commands/aidd/05/review_functional.md) | `Use this agent when you need to browse current project web application, getting browser console, screenshot, navigating across the app...` | `The technical plan to base the review on` |
+| [review_functional.md](../.claude/commands/aidd/05/review_functional.md) | `Review feature behavior against plan specification and current diff` | `Plan path to validate against` |
 
 #### `commands/06_tests`
 

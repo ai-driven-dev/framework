@@ -70,7 +70,7 @@ describe("init", () => {
 
     const raw = await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8");
     const data = JSON.parse(raw) as { version: number; docs: unknown };
-    expect(data.version).toBe(2);
+    expect(data.version).toBe(3);
     expect(data.docs).not.toBeNull();
   });
 

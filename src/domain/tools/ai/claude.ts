@@ -2,6 +2,7 @@ import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { MemoryCapability } from "../../capabilities/memory-capability.js";
+import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import {
@@ -18,6 +19,7 @@ import type {
   HasCommands,
   HasMcp,
   HasMemory,
+  HasPlugins,
   HasRules,
   HasSkills,
   UserFileSectionKey,
@@ -31,7 +33,9 @@ function commandsDir(phase: string): string {
   return `${DIRECTORY}commands/aidd/${phase}/`;
 }
 
-export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasMemory> = {
+export const claude: AiTool<
+  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasMemory & HasPlugins
+> = {
   kind: "ai",
   toolId: "claude",
   directory: DIRECTORY,
@@ -99,6 +103,13 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
     memory: new MemoryCapability({
       outputFileName: "CLAUDE.md",
       rewriteContent: (content, docsDir) => claude.rewriteContent(content, docsDir),
+    }),
+    plugins: new PluginsCapability({
+      mode: "native",
+      pluginsDir: ".claude/plugins/",
+      pluginManifestRelativePath: ".claude-plugin/plugin.json",
+      acceptsHooks: true,
+      acceptsMcp: true,
     }),
   },
 

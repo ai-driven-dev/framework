@@ -6,7 +6,7 @@ export interface FrameworkResolverOptions {
   version?: string;
 }
 
-export type FrameworkSource = "local" | "cache" | "download";
+export type FrameworkSource = "local" | "cache" | "download" | "git";
 
 export interface FrameworkResolved {
   path: string;

@@ -4,7 +4,7 @@
   "tools": {
     "claude": {
       "toolId": "claude",
-      "version": "3.9.0",
+      "version": "3.9.1",
       "files": [
         {
           "relativePath": ".claude/agents/alexia.md",
@@ -143,7 +143,7 @@
         },
         {
           "relativePath": ".claude/commands/aidd/05/review_functional.md",
-          "hash": "59a037922f1969941a423e75ea9eba78",
+          "hash": "a761aa41c4828f730240066e5ee1b195",
           "frameworkPath": "commands/05_review/review_functional.md"
         },
         {
@@ -311,7 +311,7 @@
     }
   },
   "docs": {
-    "version": "3.9.0",
+    "version": "3.9.1",
     "files": [
       {
         "relativePath": "aidd_docs/CONTRIBUTING.md",
@@ -442,6 +442,10 @@
         "hash": "40957d1ebfa40e7c39a6078034c15e70"
       },
       {
+        "relativePath": "aidd_docs/templates/dev/review_functional.md",
+        "hash": "147cbf847691714c2766fd7f52bf41cd"
+      },
+      {
         "relativePath": "aidd_docs/templates/dev/tech_choice.md",
         "hash": "7372335de874251c1fd4950bb5ca020b"
       },
@@ -488,11 +492,11 @@
     ]
   },
   "scripts": {
-    "version": "local",
+    "version": "3.9.1",
     "files": [
       {
         "relativePath": ".aidd/scripts/update_memory.js",
-        "hash": "eb90ea0cab7e830a5e452e4a2173e444"
+        "hash": "39e2120fb104f461667d299ba4f19e79"
       }
     ]
   }

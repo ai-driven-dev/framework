@@ -1,4 +1,5 @@
 import { dirname, join } from "node:path";
+import { PluginNotFoundError } from "../../domain/errors.js";
 import type { Manifest } from "../../domain/models/manifest.js";
 import type { McpExclusion } from "../../domain/models/mcp-exclusion.js";
 import {
@@ -6,6 +7,8 @@ import {
   type MergeFileEntry,
   removeEntriesFromJson,
 } from "../../domain/models/merge.js";
+import type { AiToolId } from "../../domain/models/tool-ids.js";
+import { AI_TOOL_IDS } from "../../domain/models/tool-ids.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -23,6 +26,7 @@ interface UninstallOptions {
   projectRoot: string;
   repo?: string;
   mcpFilter: string[];
+  pluginName?: string;
 }
 
 interface UninstallToolResult {
@@ -39,7 +43,11 @@ export class UninstallUseCase {
   ) {}
 
   async execute(options: UninstallOptions): Promise<UninstallToolResult[]> {
-    const { toolIds, projectRoot, repo, mcpFilter } = options;
+    const { toolIds, projectRoot, repo, mcpFilter, pluginName } = options;
+
+    if (pluginName !== undefined) {
+      return this.executePluginUninstall(pluginName, toolIds, projectRoot, repo);
+    }
 
     if (toolIds.length === 0) {
       throw new InputRequiredError(
@@ -57,6 +65,57 @@ export class UninstallUseCase {
     await this.manifestRepo.save(manifest);
     await new CatalogUseCase(this.fs).execute({ manifest, docsDir: manifest.docsDir, projectRoot });
     return results;
+  }
+
+  private async executePluginUninstall(
+    pluginName: string,
+    toolIds: ToolId[],
+    projectRoot: string,
+    repo?: string
+  ): Promise<UninstallToolResult[]> {
+    const manifest = await this.manifestRepo.load();
+    if (manifest === null) throw new NoManifestError(repo);
+    const scope = this.resolvePluginToolScope(toolIds, manifest);
+    const results = await this.removePluginFromTools(pluginName, scope, projectRoot, manifest);
+    if (results.length === 0) throw new PluginNotFoundError(pluginName);
+    await this.manifestRepo.save(manifest);
+    return results;
+  }
+
+  private resolvePluginToolScope(toolIds: ToolId[], manifest: Manifest): AiToolId[] {
+    if (toolIds.length > 0) return toolIds.filter((id) => manifest.hasTool(id)) as AiToolId[];
+    return AI_TOOL_IDS.filter((id) => manifest.hasTool(id)) as AiToolId[];
+  }
+
+  private async removePluginFromTools(
+    pluginName: string,
+    toolIds: AiToolId[],
+    projectRoot: string,
+    manifest: Manifest
+  ): Promise<UninstallToolResult[]> {
+    const results: UninstallToolResult[] = [];
+    for (const toolId of toolIds) {
+      const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
+      if (plugin === undefined) continue;
+      const deletedFiles = await this.deletePluginFiles(plugin.files, projectRoot);
+      manifest.removePlugin(toolId, pluginName);
+      results.push({ toolId, fileCount: deletedFiles.length, deletedFiles });
+    }
+    return results;
+  }
+
+  private async deletePluginFiles(
+    files: ReadonlyMap<string, string>,
+    projectRoot: string
+  ): Promise<string[]> {
+    const deleted: string[] = [];
+    for (const relativePath of files.keys()) {
+      const fullPath = join(projectRoot, relativePath);
+      await this.fs.deleteFile(fullPath);
+      await this.fs.deleteEmptyDirectories(dirname(fullPath));
+      deleted.push(relativePath);
+    }
+    return deleted;
   }
 
   private async loadAndValidate(toolIds: ToolId[], repo?: string): Promise<Manifest> {

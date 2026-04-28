@@ -299,4 +299,30 @@ describe("reverseRewriteCodexContent()", () => {
     const reversed = reverseRewriteCodexContent(rewritten, "aidd_docs");
     expect(reversed).toBe(canonical);
   });
+
+  describe("capabilities.plugins", () => {
+    it("has a plugins capability", () => {
+      expect("plugins" in codex.capabilities).toBe(true);
+    });
+
+    it("is native mode", () => {
+      expect(codex.capabilities.plugins.mode).toBe("native");
+    });
+
+    it("uses .codex/plugins/ as plugins directory", () => {
+      expect(codex.capabilities.plugins.pluginsDir).toBe(".codex/plugins/");
+    });
+
+    it("uses .codex-plugin/plugin.json as plugin manifest path", () => {
+      expect(codex.capabilities.plugins.pluginManifestRelativePath).toBe(
+        ".codex-plugin/plugin.json"
+      );
+    });
+
+    it("pluginOutputDir returns correct path for a plugin name", () => {
+      expect(codex.capabilities.plugins.pluginOutputDir("my-plugin")).toBe(
+        ".codex/plugins/my-plugin/"
+      );
+    });
+  });
 });

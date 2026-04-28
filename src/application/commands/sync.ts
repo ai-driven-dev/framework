@@ -13,17 +13,19 @@ export function registerSyncCommand(program: Command): void {
     .option("--target <tool>", "Target tool to sync to (default: all other installed tools)")
     .option("-f, --force", "Overwrite conflicting files without prompting", false)
     .option("--include-user-files", "Also sync user-created files not tracked in manifest", false)
+    .option("--plugin <name>", "Re-hash a specific plugin's files and update the manifest")
     .action(
       async (cmdOptions: {
         source?: string;
         target?: string;
         force: boolean;
         includeUserFiles: boolean;
+        plugin?: string;
       }) => {
         const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
 
-        if (!cmdOptions.source && !process.stdout.isTTY) {
+        if (!cmdOptions.source && !cmdOptions.plugin && !process.stdout.isTTY) {
           output.error(
             "--source <tool> is required. Usage: aidd sync --source <tool> [--target <tool>]"
           );
@@ -59,7 +61,13 @@ export function registerSyncCommand(program: Command): void {
             includeUserFiles: cmdOptions.includeUserFiles,
             repo: repo,
             interactive: process.stdout.isTTY,
+            pluginName: cmdOptions.plugin,
           });
+
+          if (cmdOptions.plugin !== undefined) {
+            output.success(`Plugin ${cmdOptions.plugin} manifest updated.`);
+            return;
+          }
 
           const { totalWritten, totalDeleted, totalConflicts, totalSkipped } = result;
 

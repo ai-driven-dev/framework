@@ -5,8 +5,9 @@ import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { validateRepoFormat } from "../../../src/domain/models/manifest.js";
+import type { PluginFetcher } from "../../../src/domain/ports/plugin-fetcher.js";
 import { FrameworkResolverAdapter } from "../../../src/infrastructure/adapters/framework-resolver-adapter.js";
 import { FrameworkCache } from "../../../src/infrastructure/cache/framework-cache.js";
 import { HttpClient } from "../../../src/infrastructure/http/http-client.js";
@@ -47,21 +48,31 @@ function startHttpServer(
   });
 }
 
+function makeNoopGitFetcher(): PluginFetcher {
+  return {
+    fetch: vi.fn().mockRejectedValue(new Error("git fetcher must not be called in this test")),
+  };
+}
+
 describe("FrameworkResolverAdapter", () => {
   let tempDir: string;
   let cacheDir: string;
+  let gitCacheDir: string;
   let http: HttpClient;
   let tar: TarExtractor;
   let cache: FrameworkCache;
+  let noopFetcher: PluginFetcher;
 
   beforeEach(async () => {
     tempDir = join(tmpdir(), `resolver-adapter-test-${Date.now()}`);
     cacheDir = join(tempDir, "cache");
+    gitCacheDir = join(tempDir, "plugin-cache");
     await mkdir(cacheDir, { recursive: true });
 
     http = new HttpClient();
     tar = new TarExtractor();
     cache = new FrameworkCache(cacheDir);
+    noopFetcher = makeNoopGitFetcher();
   });
 
   afterEach(async () => {
@@ -73,7 +84,11 @@ describe("FrameworkResolverAdapter", () => {
       const localPath = join(tempDir, "local-framework");
       await mkdir(localPath);
 
-      const adapter = new FrameworkResolverAdapter(http, tar, cache, { defaultRepo: "unused" });
+      const adapter = new FrameworkResolverAdapter(http, tar, cache, {
+        defaultRepo: "unused",
+        gitFetcher: noopFetcher,
+        gitCacheDir,
+      });
       const result = await adapter.resolve({ localPath });
       expect(result.path).toBe(localPath);
       expect(result.version).toBe("local");
@@ -84,7 +99,11 @@ describe("FrameworkResolverAdapter", () => {
     it("extracts tarball and returns framework root", async () => {
       const { tarballPath } = await createFrameworkTarball(tempDir, "1.0.0");
 
-      const adapter = new FrameworkResolverAdapter(http, tar, cache, { defaultRepo: "unused" });
+      const adapter = new FrameworkResolverAdapter(http, tar, cache, {
+        defaultRepo: "unused",
+        gitFetcher: noopFetcher,
+        gitCacheDir,
+      });
       const result = await adapter.resolve({ tarballPath });
       expect(result.path).toMatch(/framework-1\.0\.0/);
       expect(result.version).toBe("local");
@@ -94,7 +113,11 @@ describe("FrameworkResolverAdapter", () => {
       const fakeTarball = join(tempDir, "fake.tar.gz");
       await writeFile(fakeTarball, "not a tarball");
 
-      const adapter = new FrameworkResolverAdapter(http, tar, cache, { defaultRepo: "unused" });
+      const adapter = new FrameworkResolverAdapter(http, tar, cache, {
+        defaultRepo: "unused",
+        gitFetcher: noopFetcher,
+        gitCacheDir,
+      });
       await expect(adapter.resolve({ tarballPath: fakeTarball })).rejects.toThrow(
         "Failed to extract tarball"
       );
@@ -127,6 +150,8 @@ describe("FrameworkResolverAdapter", () => {
         const adapter = new FrameworkResolverAdapter(http, tar, cache, {
           defaultRepo: "test/repo",
           githubApiBase: serverUrl,
+          gitFetcher: noopFetcher,
+          gitCacheDir,
         });
 
         const result = await adapter.resolve({});
@@ -168,6 +193,8 @@ describe("FrameworkResolverAdapter", () => {
         const adapter = new FrameworkResolverAdapter(http, tar, cache, {
           defaultRepo: "test/repo",
           githubApiBase: serverUrl,
+          gitFetcher: noopFetcher,
+          gitCacheDir,
         });
 
         const result = await adapter.resolve({});
@@ -206,6 +233,8 @@ describe("FrameworkResolverAdapter", () => {
         const adapter = new FrameworkResolverAdapter(http, tar, cache, {
           defaultRepo: "test/repo",
           githubApiBase: serverUrl,
+          gitFetcher: noopFetcher,
+          gitCacheDir,
         });
 
         const result = await adapter.resolve({ version: "v3.1.0" });
@@ -240,6 +269,8 @@ describe("FrameworkResolverAdapter", () => {
         const adapter = new FrameworkResolverAdapter(http, tar, cache, {
           defaultRepo: "test/repo",
           githubApiBase: serverUrl,
+          gitFetcher: noopFetcher,
+          gitCacheDir,
         });
 
         const result = await adapter.resolve({ version: "v3.1.0" });
@@ -260,6 +291,8 @@ describe("FrameworkResolverAdapter", () => {
         const adapter = new FrameworkResolverAdapter(http, tar, cache, {
           defaultRepo: "test/repo",
           githubApiBase: serverUrl,
+          gitFetcher: noopFetcher,
+          gitCacheDir,
         });
 
         await expect(adapter.resolve({ version: "v9.9.9" })).rejects.toThrow(
@@ -287,7 +320,12 @@ describe("FrameworkResolverAdapter", () => {
         http,
         tar,
         cache,
-        { defaultRepo: "test/repo", githubApiBase: "http://localhost:1" },
+        {
+          defaultRepo: "test/repo",
+          githubApiBase: "http://localhost:1",
+          gitFetcher: noopFetcher,
+          gitCacheDir,
+        },
         logger
       );
 
@@ -301,9 +339,66 @@ describe("FrameworkResolverAdapter", () => {
       const adapter = new FrameworkResolverAdapter(http, tar, cache, {
         defaultRepo: "test/repo",
         githubApiBase: "http://localhost:1",
+        gitFetcher: noopFetcher,
+        gitCacheDir,
       });
 
       await expect(adapter.resolve({})).rejects.toThrow("Cannot reach the framework source");
+    });
+  });
+
+  describe("git clone dispatch", () => {
+    it("calls gitFetcher.fetch and returns source: git for non-GitHub repo", async () => {
+      const clonedDir = join(tempDir, "cloned-framework");
+      await mkdir(clonedDir, { recursive: true });
+      await writeFile(join(clonedDir, "version.txt"), "2.0.0");
+
+      const gitFetcher: PluginFetcher = { fetch: vi.fn().mockResolvedValue(clonedDir) };
+
+      const adapter = new FrameworkResolverAdapter(http, tar, cache, {
+        defaultRepo: "https://github.com/org/framework.git",
+        gitFetcher,
+        gitCacheDir,
+      });
+
+      const result = await adapter.resolve({ repo: "https://github.com/org/framework.git" });
+      expect(result.source).toBe("git");
+      expect(result.path).toBe(clonedDir);
+      expect(result.version).toBe("2.0.0");
+      expect(gitFetcher.fetch).toHaveBeenCalledOnce();
+    });
+
+    it("passes ref to gitFetcher when version is provided", async () => {
+      const clonedDir = join(tempDir, "cloned-with-ref");
+      await mkdir(clonedDir, { recursive: true });
+
+      const gitFetcher: PluginFetcher = { fetch: vi.fn().mockResolvedValue(clonedDir) };
+
+      const adapter = new FrameworkResolverAdapter(http, tar, cache, {
+        defaultRepo: "git@github.com:org/framework.git",
+        gitFetcher,
+        gitCacheDir,
+      });
+
+      await adapter.resolve({ repo: "git@github.com:org/framework.git", version: "v1.2.3" });
+      const [calledSource] = (gitFetcher.fetch as ReturnType<typeof vi.fn>).mock.calls[0] as [
+        { ref?: string },
+        string,
+      ];
+      expect(calledSource.ref).toBe("v1.2.3");
+    });
+  });
+
+  describe("fetchLatestVersion() with non-GitHub repo", () => {
+    it("throws when repo is not GitHub format", async () => {
+      const adapter = new FrameworkResolverAdapter(http, tar, cache, {
+        defaultRepo: "https://gitlab.com/org/framework.git",
+        gitFetcher: noopFetcher,
+        gitCacheDir,
+      });
+      await expect(adapter.fetchLatestVersion()).rejects.toThrow(
+        "Version check is not supported for git-cloned framework sources."
+      );
     });
   });
 
@@ -335,6 +430,8 @@ describe("FrameworkResolverAdapter", () => {
         const adapter = new FrameworkResolverAdapter(http, tar, cache, {
           defaultRepo: "test/repo",
           githubApiBase: serverUrl,
+          gitFetcher: noopFetcher,
+          gitCacheDir,
         });
 
         const version = await adapter.fetchLatestVersion();
@@ -348,6 +445,8 @@ describe("FrameworkResolverAdapter", () => {
       const adapter = new FrameworkResolverAdapter(http, tar, cache, {
         defaultRepo: "test/repo",
         githubApiBase: "http://localhost:1",
+        gitFetcher: noopFetcher,
+        gitCacheDir,
       });
       await expect(adapter.fetchLatestVersion()).rejects.toThrow();
     });
