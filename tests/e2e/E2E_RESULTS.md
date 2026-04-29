@@ -321,6 +321,7 @@ Auth:      gh CLI authenticated as blafourcade
 | K1-fix | `marketplace browse` showed `@?` — no version in catalog | ✅ Fixed — added `version` to `marketplace.json` entries in framework |
 | K2-fix | Marketplace stale immediately after `setup` | ✅ Fixed — `setup.ts` calls `marketplaceRefreshUseCase` after successful registration |
 | K3-fix | Local `--path` install copied `aidd_docs/tasks/` dev plans to user projects | ✅ Fixed — `FrameworkLoaderAdapter.loadDocsFiles()` excludes `tasks/` prefix |
+| K5-fix | `aidd-context/hooks.json` used wrong format (array) for Claude Code and Copilot | ✅ Fixed — object map format with `${CLAUDE_PLUGIN_ROOT}` path |
 
 ---
 
@@ -328,8 +329,7 @@ Auth:      gh CLI authenticated as blafourcade
 
 | ID | Issue | Severity |
 |----|-------|----------|
-| K1 | `marketplace browse` showed `@?` — fixed: version added to catalog entries (framework) | ✅ Fixed |
-| K2 | `marketplace check` stale after `setup` — fixed: auto-refresh after registration | ✅ Fixed |
-| K3 | Local `--path` install copied `aidd_docs/tasks/` dev files — fixed: loader excludes tasks/ | ✅ Fixed |
-| K5 | Cursor/copilot/opencode: no native hook runtime — hooks files installed but not executed by tool | Expected (by design) |
+| K5-cursor | Cursor plugin hooks installed but schema differs (`version:1`, camelCase events) — hooks won't execute | Low |
+| K5-opencode | OpenCode plugins are JS/TS modules — `hooks.json` approach incompatible by design | Expected |
+| K5-codex | Codex has native hooks but plugins don't expose them — by design | Expected |
 | I11/U6/UP7 | Interactive flows not covered (TTY required) | Expected (out of scope) |
