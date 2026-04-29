@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import {
   InvalidPluginManifestError,
   MarketplaceNotFoundError,
