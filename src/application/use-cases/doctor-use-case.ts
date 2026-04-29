@@ -348,6 +348,7 @@ export class DoctorUseCase {
 
     for (const file of files) {
       if (!file.relativePath.match(/\.(md|mdc)$/)) continue;
+      if (file.relativePath.includes("/tasks/")) continue;
 
       const fullPath = join(projectRoot, file.relativePath);
       if (!(await this.fs.fileExists(fullPath))) continue;

@@ -116,7 +116,6 @@ export const cursor: AiTool<
       pluginsDir: ".cursor/plugins/",
       pluginManifestRelativePath: ".cursor-plugin/plugin.json",
       mcpRelativePath: "mcp.json",
-      hooksRelativePath: "hooks.json",
       acceptsHooks: true,
       acceptsMcp: true,
     }),
