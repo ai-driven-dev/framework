@@ -95,10 +95,14 @@ export class PluginTranslator {
     if (file.relativePath === ".mcp.json") {
       return cap.acceptsMcp ? { relativePath: cap.mcpRelativePath, content: file.content } : null;
     }
-    if (file.relativePath === "hooks/hooks.json") {
-      return cap.acceptsHooks
-        ? { relativePath: cap.hooksRelativePath, content: file.content }
-        : null;
+    if (file.relativePath.split("/")[0] === "hooks") {
+      if (!cap.acceptsHooks) return null;
+      if (file.relativePath === "hooks/hooks.json") {
+        return { relativePath: cap.hooksRelativePath, content: file.content };
+      }
+      const hooksDir = cap.hooksRelativePath.split("/").slice(0, -1).join("/");
+      const filename = file.relativePath.split("/").at(-1) ?? "";
+      return { relativePath: `${hooksDir}/${filename}`, content: file.content };
     }
     return this.translateComponent(file, tool);
   }

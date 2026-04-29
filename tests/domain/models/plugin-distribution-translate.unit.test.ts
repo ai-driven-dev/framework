@@ -100,6 +100,33 @@ describe("PluginTranslator.translate()", () => {
       expect(manifest).toBeDefined();
       expect(manifest?.content).toContain("sample-plugin");
     });
+
+    it("emits hooks companion scripts alongside hooks.json", () => {
+      const scriptFile = makeFile("hooks/update_memory.js", "console.log('updated');");
+      const hooksFiles = [makeFile("hooks/hooks.json", hooksJsonContent), scriptFile];
+      const dist = makeDist({
+        files: [
+          makeFile("skills/hello/SKILL.md", skillContent),
+          makeFile("commands/greet.md", greetContent),
+          makeFile("agents/reviewer.md", agentContent),
+          makeFile("rules/standards.md", ruleContent),
+          ...hooksFiles,
+          makeFile(".mcp.json", mcpJsonContent),
+          makeFile(".claude-plugin/plugin.json", claudeManifestContent),
+        ],
+        components: {
+          skills: [makeFile("skills/hello/SKILL.md", skillContent)],
+          commands: [makeFile("commands/greet.md", greetContent)],
+          agents: [makeFile("agents/reviewer.md", agentContent)],
+          rules: [makeFile("rules/standards.md", ruleContent)],
+          hooks: hooksFiles,
+          mcp: [makeFile(".mcp.json", mcpJsonContent)],
+        },
+      });
+      const paths = pathsFor(claude, dist);
+      expect(paths).toContain(".claude/plugins/sample-plugin/hooks/hooks.json");
+      expect(paths).toContain(".claude/plugins/sample-plugin/hooks/update_memory.js");
+    });
   });
 
   describe("cursor target", () => {

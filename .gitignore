@@ -21,4 +21,5 @@ coverage/
 temp/projects/
 temp/
 .claude/worktrees/
+.claude/plugins/
 setup-test/

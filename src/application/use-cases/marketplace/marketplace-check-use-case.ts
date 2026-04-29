@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import {
   isMarketplaceStale,

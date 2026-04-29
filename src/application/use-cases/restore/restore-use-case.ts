@@ -3,8 +3,7 @@ import { type FileHash, InstallationFile } from "../../../domain/models/file.js"
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { MergeFileEntry } from "../../../domain/models/merge.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../domain/models/paths.js";
-import { PluginTranslator } from "../../../domain/models/plugin-translator.js";
-import { AI_TOOL_IDS, type AiToolId } from "../../../domain/models/tool-ids.js";
+import { AI_TOOL_IDS } from "../../../domain/models/tool-ids.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
@@ -16,6 +15,7 @@ import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
 import { getToolConfig, isAiTool, type ToolId } from "../../../domain/tools/registry.js";
 import { NoManifestError } from "../../errors.js";
+import { ApplyPluginFilesUseCase } from "../shared/apply-plugin-files-use-case.js";
 import { GenerateToolDistributionUseCase } from "../shared/generate-tool-distribution-use-case.js";
 import { RestoreMergeFilesUseCase } from "../shared/restore-merge-files-use-case.js";
 import { RestoreRegularFilesUseCase } from "../shared/restore-regular-files-use-case.js";
@@ -32,7 +32,6 @@ interface RestoreOptions {
   interactive?: boolean;
   manifest?: Manifest;
   repo?: string;
-  skipPlugins?: boolean;
 }
 
 interface RestoreToolResult {
@@ -179,10 +178,7 @@ export class RestoreUseCase {
           interactive,
           fileFilter
         );
-    const skipPlugins = options.skipPlugins ?? false;
-    const totalPluginFilesRestored = skipPlugins
-      ? 0
-      : await this.restoreAllPlugins(projectRoot, manifest);
+    const totalPluginFilesRestored = await this.restoreAllPlugins(projectRoot, manifest);
     const hasChanges =
       toolResults.some((t) => t.restored.length > 0) ||
       (docsResult !== null && docsResult.restored.length > 0) ||
@@ -192,47 +188,29 @@ export class RestoreUseCase {
   }
 
   private async restoreAllPlugins(projectRoot: string, manifest: Manifest): Promise<number> {
-    const { pluginFetcher, pluginDistributionReader } = this;
-    if (pluginFetcher === undefined || pluginDistributionReader === undefined) return 0;
+    if (this.pluginFetcher === undefined || this.pluginDistributionReader === undefined) return 0;
+    const applyUseCase = new ApplyPluginFilesUseCase(
+      this.fs,
+      this.hasher,
+      this.pluginFetcher,
+      this.pluginDistributionReader
+    );
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
     let total = 0;
     for (const toolId of AI_TOOL_IDS) {
       if (!manifest.hasTool(toolId)) continue;
-      total += await this.restorePluginsForTool(
-        toolId,
-        projectRoot,
-        cacheDir,
-        manifest,
-        pluginFetcher,
-        pluginDistributionReader
-      );
-    }
-    return total;
-  }
-
-  private async restorePluginsForTool(
-    toolId: AiToolId,
-    projectRoot: string,
-    cacheDir: string,
-    manifest: Manifest,
-    pluginFetcher: PluginFetcher,
-    pluginDistributionReader: PluginDistributionReader
-  ): Promise<number> {
-    const toolConfig = getToolConfig(toolId);
-    if (!isAiTool(toolConfig)) return 0;
-    let total = 0;
-    for (const plugin of manifest.getPlugins(toolId)) {
-      const localPath = await pluginFetcher.fetch(plugin.source, cacheDir);
-      const dist = await pluginDistributionReader.read(localPath);
-      const files = new PluginTranslator(this.hasher).translate(dist, toolConfig);
-      await Promise.all(
-        files.map((f) => this.fs.writeFile(join(projectRoot, f.relativePath), f.content))
-      );
-      manifest.updatePlugin(
-        toolId,
-        plugin.withFiles(new Map(files.map((f) => [f.relativePath, f.hash.value])))
-      );
-      total += files.length;
+      const toolConfig = getToolConfig(toolId);
+      if (!isAiTool(toolConfig)) continue;
+      for (const plugin of manifest.getPlugins(toolId)) {
+        total += await applyUseCase.execute({
+          toolId,
+          plugin,
+          toolConfig,
+          projectRoot,
+          cacheDir,
+          manifest,
+        });
+      }
     }
     return total;
   }
