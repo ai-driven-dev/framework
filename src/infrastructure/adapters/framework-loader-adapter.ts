@@ -74,6 +74,7 @@ export class FrameworkLoaderAdapter implements FrameworkLoader {
     for (const filePath of allFiles) {
       const relPath = relative(frameworkPath, filePath).replaceAll("\\", "/");
       if (excludePaths.has(relPath)) continue;
+      if (relPath.startsWith(`${DOCS_DIR}/tasks/`)) continue;
       const content = filePath.endsWith(".gitkeep") ? "" : await readFile(filePath, "utf-8");
       files.set(relPath, content);
     }

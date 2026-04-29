@@ -113,10 +113,14 @@ export function registerSetupCommand(program: Command): void {
             from: cmdOptions.from,
           });
 
-          await deps.marketplaceRegisterFrameworkUseCase.execute({
+          const registrationResult = await deps.marketplaceRegisterFrameworkUseCase.execute({
             projectRoot,
             pathHint: cmdOptions.path,
           });
+
+          if (registrationResult.registered) {
+            await deps.marketplaceRefreshUseCase.execute({ projectRoot });
+          }
 
           if (interactive) {
             const marketplaces = await deps.marketplaceRegistry.list(projectRoot);
