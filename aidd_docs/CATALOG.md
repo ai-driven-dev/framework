@@ -9,21 +9,17 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
 - [`.claude`](#claude)
 - [`.claude-plugin`](#claude-plugin)
 - [`.specstory`](#specstory)
-- [`agents`](#agents)
 - [`aidd_docs`](#aidd_docs)
   - [`aidd_docs/memory`](#aidd_docsmemory)
   - [`aidd_docs/tasks`](#aidd_docstasks)
-  - [`aidd_docs/templates`](#aidd_docstemplates)
 - [`plugins`](#plugins)
   - [`plugins/aidd-context`](#pluginsaidd-context)
   - [`plugins/aidd-dev`](#pluginsaidd-dev)
   - [`plugins/aidd-pm`](#pluginsaidd-pm)
   - [`plugins/aidd-vcs`](#pluginsaidd-vcs)
 - [`rules`](#rules)
-  - [`rules/01-standards`](#rules01-standards)
   - [`rules/04-tooling`](#rules04-tooling)
 - [`scripts`](#scripts)
-  - [`scripts/schemas`](#scriptsschemas)
 - [`skills`](#skills)
 
 ---
@@ -40,16 +36,6 @@ No files found.
 ### `.specstory`
 
 No files found.
-### `agents`
-
-| File | Description | Docs |
-|------|---|---|
-| [alexia.md](../agents/alexia.md) | `Act like the USER to autonomously end-to-end implementation without human intervention` | - |
-| [claire.md](../agents/claire.md) | `Clarity challenger — challenges and questions until the request is ultra-clear` | - |
-| [iris.md](../agents/iris.md) | `Frontend specialist with 3 modes - implement from Figma, verify UI conformity, validate user journeys.` | - |
-| [kent.md](../agents/kent.md) | `Use this agent when explicitly asked to perform test-driven development.` | `https://tidyfirst.substack.com/p/augmented-coding-beyond-the-vibes` |
-| [martin.md](../agents/martin.md) | `Every time you need to run a command to ensure code is correct, still builds are that tests pass, you must call this agent.` | - |
-
 ### `aidd_docs`
 
 | File |
@@ -80,36 +66,6 @@ No files found.
 |-------|------|
 | `2026_04` | [2026_04_29-#260-plugin-architecture-part-8.md](tasks/2026_04/2026_04_29-#260-plugin-architecture-part-8.md) |
 
-#### `aidd_docs/templates`
-
-| Group | File | Description | Argument Hint |
-|-------|------|---|---|
-| `-` | [AGENTS.md](templates/AGENTS.md) | `AI agent configuration and guidelines` | - |
-| `aidd` | [agent.md](templates/aidd/agent.md) | `<when-this-agent-needs-to-be-called>` | - |
-| `aidd` | [agents_coordination.md](templates/aidd/agents_coordination.md) | `Multi-agent coordination and workflows template` | - |
-| `aidd` | [command.md](templates/aidd/command.md) | `<generated-action-oriented-description>` | `<generated-argument-hint-if-applicable>` |
-| `aidd` | [master_plan.md](templates/aidd/master_plan.md) | `Parent plan template orchestrating multiple child plans with validation gates` | - |
-| `aidd` | [plan.md](templates/aidd/plan.md) | `Feature implementation plan template` | - |
-| `aidd` | [prompt.md](templates/aidd/prompt.md) | `Custom prompt template example` | - |
-| `aidd` | [rule.md](templates/aidd/rule.md) | `< One line. Comprehensive description that provides full context and clearly indicates when this rule should be applied. Include key scenarios, impacted areas, and why following this rule is important. While being thorough, remain focused and relevant. The description should be detailed enough that the agent can confidently determine whether to apply the rule in any given situation.>` | - |
-| `aidd` | [skill.md](templates/aidd/skill.md) | `<What it does - actions, capabilities>. Use when <trigger phrases, contexts, file types, user intents>.` | - |
-| `aidd` | [task.md](templates/aidd/task.md) | `Task tracking system to ensure all tasks are categorized and addressed` | - |
-| `dev` | [adr.md](templates/dev/adr.md) | `Architecture Decision Record template` | - |
-| `dev` | [code_review.md](templates/dev/code_review.md) | `Code review checklist and scoring template` | - |
-| `dev` | [decision.md](templates/dev/decision.md) | `Individual decision record template` | `<title>` |
-| `dev` | [review_code.md](templates/dev/review_code.md) | `Code review checklist and scoring template` | - |
-| `dev` | [review_functional.md](templates/dev/review_functional.md) | `Functional review report template` | - |
-| `dev` | [tech_choice.md](templates/dev/tech_choice.md) | `Technology selection and comparison template` | - |
-| `pm` | [prd.md](templates/pm/prd.md) | `Product Requirements Document template (15 sections)` | - |
-| `pm` | [user_story.md](templates/pm/user_story.md) | `Template for defining user stories with estimation and acceptance criteria` | - |
-| `vcs` | [branch.md](templates/vcs/branch.md) | `VCS branch naming convention template` | - |
-| `vcs` | [commit.md](templates/vcs/commit.md) | `VCS commit message template` | - |
-| `vcs` | [CONTRIBUTING.md](templates/vcs/CONTRIBUTING.md) | `Project contribution guidelines template` | - |
-| `vcs` | [issue.md](templates/vcs/issue.md) | `VCS issue/ticket template` | - |
-| `vcs` | [pull_request.md](templates/vcs/pull_request.md) | `VCS pull/merge request template` | - |
-| `vcs` | [README.md](templates/vcs/README.md) | `Project README template` | - |
-| `vcs` | [release.md](templates/vcs/release.md) | `VCS release notes template` | - |
-
 ### `plugins`
 
 #### `plugins/aidd-context`
@@ -118,23 +74,35 @@ No files found.
 |-------|------|
 | `.claude-plugin` | [plugin.json](../plugins/aidd-context/.claude-plugin/plugin.json) |
 | `-` | [CATALOG.md](../plugins/aidd-context/CATALOG.md) |
+| `hooks` | [hooks.json](../plugins/aidd-context/hooks/hooks.json) |
+| `hooks` | [update_memory.js](../plugins/aidd-context/hooks/update_memory.js) |
 | `-` | [README.md](../plugins/aidd-context/README.md) |
+| `-` | [version.txt](../plugins/aidd-context/version.txt) |
 
 #### `plugins/aidd-dev`
 
-| Group | File |
-|-------|------|
-| `.claude-plugin` | [plugin.json](../plugins/aidd-dev/.claude-plugin/plugin.json) |
-| `-` | [CATALOG.md](../plugins/aidd-dev/CATALOG.md) |
-| `-` | [README.md](../plugins/aidd-dev/README.md) |
+| Group | File | Description | Docs |
+|-------|------|---|---|
+| `.claude-plugin` | [plugin.json](../plugins/aidd-dev/.claude-plugin/plugin.json) | - | - |
+| `-` | [.mcp.json](../plugins/aidd-dev/.mcp.json) | - | - |
+| `agents` | [alexia.md](../plugins/aidd-dev/agents/alexia.md) | `Act like the USER to autonomously end-to-end implementation without human intervention` | - |
+| `agents` | [claire.md](../plugins/aidd-dev/agents/claire.md) | `Clarity challenger — challenges and questions until the request is ultra-clear` | - |
+| `agents` | [iris.md](../plugins/aidd-dev/agents/iris.md) | `Frontend specialist with 3 modes - implement from Figma, verify UI conformity, validate user journeys.` | - |
+| `agents` | [kent.md](../plugins/aidd-dev/agents/kent.md) | `Use this agent when explicitly asked to perform test-driven development.` | `https://tidyfirst.substack.com/p/augmented-coding-beyond-the-vibes` |
+| `agents` | [martin.md](../plugins/aidd-dev/agents/martin.md) | `Every time you need to run a command to ensure code is correct, still builds are that tests pass, you must call this agent.` | - |
+| `-` | [CATALOG.md](../plugins/aidd-dev/CATALOG.md) | - | - |
+| `-` | [README.md](../plugins/aidd-dev/README.md) | - | - |
+| `-` | [version.txt](../plugins/aidd-dev/version.txt) | - | - |
 
 #### `plugins/aidd-pm`
 
 | Group | File |
 |-------|------|
 | `.claude-plugin` | [plugin.json](../plugins/aidd-pm/.claude-plugin/plugin.json) |
+| `-` | [.mcp.json](../plugins/aidd-pm/.mcp.json) |
 | `-` | [CATALOG.md](../plugins/aidd-pm/CATALOG.md) |
 | `-` | [README.md](../plugins/aidd-pm/README.md) |
+| `-` | [version.txt](../plugins/aidd-pm/version.txt) |
 
 #### `plugins/aidd-vcs`
 
@@ -143,17 +111,9 @@ No files found.
 | `.claude-plugin` | [plugin.json](../plugins/aidd-vcs/.claude-plugin/plugin.json) |
 | `-` | [CATALOG.md](../plugins/aidd-vcs/CATALOG.md) |
 | `-` | [README.md](../plugins/aidd-vcs/README.md) |
+| `-` | [version.txt](../plugins/aidd-vcs/version.txt) |
 
 ### `rules`
-
-#### `rules/01-standards`
-
-| File | Description |
-|------|---|
-| [1-command-structure.md](../rules/01-standards/1-command-structure.md) | `Standards for naming, organizing, and writing command files. Apply when creating or editing any command file.` |
-| [1-mermaid.md](../rules/01-standards/1-mermaid.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` |
-| [1-rule-structure.md](../rules/01-standards/1-rule-structure.md) | `Standards for naming and organizing .md rule files. Apply when creating new rule files or deciding on file placement.` |
-| [1-rule-writing.md](../rules/01-standards/1-rule-writing.md) | `Standards for writing .md coding rule content. Apply when creating, editing, or reviewing any rule file.` |
 
 #### `rules/04-tooling`
 
@@ -171,14 +131,6 @@ No files found.
 |------|
 | [aidd.sh](../scripts/aidd.sh) |
 | [build-dist.sh](../scripts/build-dist.sh) |
-
-#### `scripts/schemas`
-
-| File |
-|------|
-| [hooks.schema.json](../scripts/schemas/hooks.schema.json) |
-| [marketplace.schema.json](../scripts/schemas/marketplace.schema.json) |
-| [plugin.schema.json](../scripts/schemas/plugin.schema.json) |
 
 ### `skills`
 
