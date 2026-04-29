@@ -1,5 +1,5 @@
 ---
-name: generate-skill
+name: context-generate
 description: Generate and maintain router-based Claude Code skills — SKILL.md router + atomic testable actions + TDD evaluations. Use when the user wants to create a new skill, refactor an existing skill, add or remove actions, or migrate a slash command into a skill. Do NOT use for editing a single action inside an existing skill (edit directly), creating slash commands (no router needed), writing MCP servers, or modifying project-level CLAUDE.md files.
 version: 2.0.0
 license: MIT
