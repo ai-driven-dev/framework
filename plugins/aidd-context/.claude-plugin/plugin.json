@@ -1,0 +1,7 @@
+{
+  "name": "aidd-context",
+  "version": "1.0.0",
+  "description": "Knowledge production: project init, architecture/context generation, brainstorm, challenge, mermaid, learn, discovery",
+  "author": { "name": "AI-Driven Dev" },
+  "strict": true
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "./scripts/schemas/marketplace.schema.json",
+  "plugins": [
+    {
+      "name": "aidd-context",
+      "source": { "kind": "local", "path": "./plugins/aidd-context" },
+      "description": "Knowledge production: project init, architecture/context generation, brainstorm, challenge, mermaid, learn, discovery",
+      "recommended": true,
+      "strict": true
+    },
+    {
+      "name": "aidd-dev",
+      "source": { "kind": "local", "path": "./plugins/aidd-dev" },
+      "description": "Code transformation: SDLC orchestrator, plan, assert, audit, review, test, refactor, debug, for-sure. Hosts agents.",
+      "recommended": true,
+      "strict": true
+    },
+    {
+      "name": "aidd-vcs",
+      "source": { "kind": "local", "path": "./plugins/aidd-vcs" },
+      "description": "External artifacts: commit, pull-request, release-tag, issue-create",
+      "recommended": true,
+      "strict": true
+    },
+    {
+      "name": "aidd-pm",
+      "source": { "kind": "local", "path": "./plugins/aidd-pm" },
+      "description": "Product management (release candidate): ticket-info, user-stories-create, prd",
+      "recommended": false,
+      "strict": true
+    }
+  ]
+}
