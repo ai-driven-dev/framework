@@ -32,7 +32,6 @@ import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catal
 import type { PluginDistributionReader } from "../../../domain/ports/plugin-distribution-reader.js";
 import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
-import type { VersionControl } from "../../../domain/ports/version-control.js";
 import type {
   AiTool,
   HasAgents,
@@ -110,7 +109,6 @@ export class InstallUseCase {
     private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
-    private readonly git: VersionControl,
     private readonly platform: Platform,
     private readonly prompter?: Prompter,
     private readonly pluginFetcher?: PluginFetcher,
@@ -156,13 +154,11 @@ export class InstallUseCase {
     const resolvedPlugins = await this.resolvePluginsForInstall(options, frameworkPath);
     await this.maybeInstallPlugins(resolvedPlugins, toolIds, projectRoot, manifest);
 
-    await new PostInstallPipelineUseCase(
-      this.fs,
-      this.manifestRepo,
-      this.hasher,
-      this.git,
-      this.prompter
-    ).execute({ projectRoot, version, descriptor, contentFiles, manifest, docsDir });
+    await new PostInstallPipelineUseCase(this.fs, this.manifestRepo).execute({
+      projectRoot,
+      manifest,
+      docsDir,
+    });
 
     return results;
   }

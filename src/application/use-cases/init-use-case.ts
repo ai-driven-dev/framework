@@ -120,10 +120,8 @@ export class InitUseCase {
     projectRoot: string,
     force: boolean
   ): Promise<void> {
-    // Init calls save + catalog + gitignore directly (3 of the 4 post-install steps).
-    // MemoryScriptUseCase is intentionally absent here: no tools are installed during init,
-    // so there is no memory bank content to write. PostInstallPipelineUseCase is used by
-    // InstallUseCase and UpdateUseCase where tool installation has already happened.
+    // Init calls save + catalog + gitignore directly (not via PostInstallPipelineUseCase):
+    // no tools are installed during init, so catalog generation uses an empty tool set.
     await this.manifestRepo.save(manifest);
     await new CatalogUseCase(this.fs).execute({ manifest, docsDir, projectRoot });
     if (!force) {

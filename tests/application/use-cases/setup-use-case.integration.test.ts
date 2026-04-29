@@ -13,7 +13,6 @@ import {
   initAndInstall,
   initProject,
   linuxPlatform,
-  noGit,
 } from "./helpers.js";
 
 describe("setup without TTY", () => {
@@ -46,7 +45,6 @@ describe("setup without TTY", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new SilentPrompterAdapter(),
       resolver

@@ -9,7 +9,6 @@ import {
   createTempProject,
   FIXTURE_DIR,
   linuxPlatform,
-  noGit,
 } from "./helpers.js";
 
 describe("init", () => {
@@ -416,7 +415,6 @@ describe("init", () => {
         loader,
         hasher,
         logger,
-        noGit,
         linuxPlatform
       );
       await installUseCase.execute({

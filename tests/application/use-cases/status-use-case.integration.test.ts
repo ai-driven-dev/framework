@@ -13,7 +13,6 @@ import {
   FIXTURE_DIR,
   initProject,
   linuxPlatform,
-  noGit,
 } from "./helpers.js";
 
 describe("status", () => {
@@ -38,7 +37,6 @@ describe("status", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
     await installUseCase.execute({
@@ -125,7 +123,6 @@ describe("status", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
       await installUseCase.execute({
@@ -152,7 +149,6 @@ describe("status", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
       await installUseCase.execute({
@@ -185,7 +181,6 @@ describe("status", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
       await installUseCase.execute({
@@ -222,7 +217,6 @@ describe("status", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
       await installUseCase.execute({
@@ -258,7 +252,6 @@ describe("status", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
       await installUseCase.execute({

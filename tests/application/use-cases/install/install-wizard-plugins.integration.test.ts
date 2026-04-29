@@ -19,7 +19,6 @@ import {
   FIXTURE_DIR,
   initAndInstall,
   linuxPlatform,
-  noGit,
   OverwritePrompter,
 } from "../helpers.js";
 
@@ -66,7 +65,6 @@ function makeUseCase(
     deps.loader,
     deps.hasher,
     deps.logger,
-    noGit,
     linuxPlatform,
     new OverwritePrompter(),
     new PluginFetcherAdapter(deps.fs as FileSystemAdapter),

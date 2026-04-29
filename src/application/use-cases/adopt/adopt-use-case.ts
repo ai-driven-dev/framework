@@ -77,9 +77,8 @@ export class AdoptUseCase {
   /** Saves manifest and writes gitignore entry. */
   private async persistAdopt(manifest: Manifest, projectRoot: string): Promise<void> {
     await this.manifestRepo.save(manifest);
-    // AdoptUseCase calls gitignore directly (not via PostInstallPipelineUseCase).
-    // MemoryScriptUseCase is intentionally absent: adopt only registers existing files,
-    // no tool content is generated so there is no memory bank to write.
+    // AdoptUseCase calls gitignore directly (not via PostInstallPipelineUseCase):
+    // adopt only registers existing files, no tool content is generated.
     await new GitignoreUseCase(this.fs).execute(projectRoot, [`${AIDD_DIR}/cache/`]);
   }
 

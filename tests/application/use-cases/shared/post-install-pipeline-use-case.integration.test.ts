@@ -7,15 +7,7 @@ import "../../../../src/domain/tools/ai/copilot.js";
 import "../../../../src/domain/tools/ai/cursor.js";
 import "../../../../src/domain/tools/ai/opencode.js";
 import { PostInstallPipelineUseCase } from "../../../../src/application/use-cases/shared/post-install-pipeline-use-case.js";
-import { FrameworkLoaderAdapter } from "../../../../src/infrastructure/adapters/framework-loader-adapter.js";
-import {
-  buildDeps,
-  cleanupTempProject,
-  createTempProject,
-  FIXTURE_DIR,
-  initAndInstall,
-  noGit,
-} from "../helpers.js";
+import { buildDeps, cleanupTempProject, createTempProject, initAndInstall } from "../helpers.js";
 
 describe("post-install pipeline", () => {
   let tempDir: string;
@@ -36,14 +28,8 @@ describe("post-install pipeline", () => {
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
 
-    const loader = new FrameworkLoaderAdapter();
-    const { descriptor, contentFiles } = await loader.loadFromDirectory(FIXTURE_DIR, "test");
-
-    await new PostInstallPipelineUseCase(deps.fs, deps.manifestRepo, deps.hasher, noGit).execute({
+    await new PostInstallPipelineUseCase(deps.fs, deps.manifestRepo).execute({
       projectRoot,
-      version: "test",
-      descriptor,
-      contentFiles,
       manifest,
       docsDir: "aidd_docs",
     });
@@ -64,5 +50,4 @@ describe("post-install pipeline", () => {
     const gitignoreContent = await readFile(gitignorePath, "utf-8");
     expect(gitignoreContent).toContain(".aidd/cache/");
   });
-
 });

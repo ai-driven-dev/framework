@@ -14,8 +14,6 @@ export const CONFIG_OPENCODE = "opencode";
 
 export const TEMPLATE_AGENTS_MD = "agentsMd";
 
-export const SCRIPT_UPDATE_MEMORY = "updateMemory";
-
 export const GITKEEP_FILE = ".gitkeep";
 export const FRAMEWORK_CONFIG_PREFIX = "config/";
 
@@ -36,31 +34,22 @@ export interface ConfigRef {
   readonly requiredIdeId?: IdeToolId;
 }
 
-export interface ScriptRef {
-  readonly name: string;
-  readonly path: string;
-  readonly invocation: string;
-}
-
 export class FrameworkDescriptor {
   readonly version: string;
   readonly contentSections: readonly ContentSection[];
   readonly templateRefs: readonly TemplateRef[];
   readonly configRefs: readonly ConfigRef[];
-  readonly scriptRefs: readonly ScriptRef[];
 
   constructor(params: {
     version: string;
     contentSections: ContentSection[];
     templateRefs: TemplateRef[];
     configRefs: ConfigRef[];
-    scriptRefs: ScriptRef[];
   }) {
     this.version = params.version;
     this.contentSections = Object.freeze([...params.contentSections]);
     this.templateRefs = Object.freeze([...params.templateRefs]);
     this.configRefs = Object.freeze([...params.configRefs]);
-    this.scriptRefs = Object.freeze([...params.scriptRefs]);
   }
 
   getContentSection(name: string): ContentSection | undefined {
@@ -73,10 +62,6 @@ export class FrameworkDescriptor {
 
   getConfig(name: string): ConfigRef | undefined {
     return this.configRefs.find((c) => c.name === name);
-  }
-
-  getScript(name: string): ScriptRef | undefined {
-    return this.scriptRefs.find((s) => s.name === name);
   }
 }
 

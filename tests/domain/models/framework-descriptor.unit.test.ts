@@ -15,7 +15,6 @@ function makeDescriptor() {
       { name: "mcp", path: "config/mcp.json" },
       { name: "vscodeDir", path: "config/vscode" },
     ],
-    scriptRefs: [],
   });
 }
 

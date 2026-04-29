@@ -32,7 +32,6 @@ import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../../domain/ports/platform.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
-import type { VersionControl } from "../../../domain/ports/version-control.js";
 import type {
   AiTool,
   HasAgents,
@@ -154,7 +153,6 @@ export class UpdateUseCase {
     private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
-    private readonly git: VersionControl,
     private readonly platform: Platform,
     private readonly prompter: Prompter
   ) {}
@@ -334,13 +332,11 @@ export class UpdateUseCase {
   ): Promise<void> {
     const { projectRoot, version, docsDir: optDocsDir } = options;
     const docsDir = optDocsDir ?? manifest.docsDir;
-    await new PostInstallPipelineUseCase(
-      this.fs,
-      this.manifestRepo,
-      this.hasher,
-      this.git,
-      this.prompter
-    ).execute({ projectRoot, version, descriptor, contentFiles, manifest, docsDir });
+    await new PostInstallPipelineUseCase(this.fs, this.manifestRepo).execute({
+      projectRoot,
+      manifest,
+      docsDir,
+    });
   }
 
   private validateToolIds(toolIds: ToolId[] | undefined, manifest: Manifest): void {

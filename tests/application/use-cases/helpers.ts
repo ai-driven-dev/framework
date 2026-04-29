@@ -226,7 +226,6 @@ export async function installTool(
     deps.loader,
     deps.hasher,
     deps.logger,
-    noGit,
     linuxPlatform,
     new SilentPrompterAdapter()
   );

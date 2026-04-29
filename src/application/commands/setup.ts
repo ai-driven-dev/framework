@@ -98,7 +98,6 @@ export function registerSetupCommand(program: Command): void {
             deps.loader,
             deps.hasher,
             deps.logger,
-            deps.git,
             deps.platform,
             deps.prompter,
             deps.resolver,

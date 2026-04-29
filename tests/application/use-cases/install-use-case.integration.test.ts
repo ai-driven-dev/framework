@@ -14,7 +14,6 @@ import {
   initProject,
   KeepPrompter,
   linuxPlatform,
-  noGit,
   win32Platform,
 } from "./helpers.js";
 
@@ -46,7 +45,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
 
@@ -74,7 +72,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
 
@@ -110,7 +107,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
     await useCase.execute({
@@ -146,7 +142,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
     // Install first
@@ -179,7 +174,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
     const result = await useCase.execute({
@@ -203,7 +197,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
     await useCase.execute({
@@ -241,7 +234,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
 
@@ -288,7 +280,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
     await useCase.execute({
@@ -314,7 +305,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
 
@@ -339,7 +329,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
 
@@ -377,7 +366,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       win32Platform
     );
     await useCase.execute({
@@ -411,7 +399,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
 
@@ -442,7 +429,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
 
@@ -487,7 +473,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
 
@@ -520,7 +505,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
 
@@ -552,7 +536,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
 
@@ -608,7 +591,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
 
@@ -648,7 +630,6 @@ describe("install", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform
     );
 
@@ -679,7 +660,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
       await useCase.execute({
@@ -724,7 +704,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
       await useCase.execute({
@@ -779,7 +758,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
       await useCase.execute({
@@ -817,7 +795,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
       await useCase.execute({
@@ -864,7 +841,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
       await useCase.execute({
@@ -897,7 +873,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
 
@@ -938,7 +913,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform,
         mockPrompter
       );
@@ -974,7 +948,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
 
@@ -1016,7 +989,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform,
         mockPrompter
       );
@@ -1052,7 +1024,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
 
@@ -1080,7 +1051,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
 
@@ -1124,7 +1094,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
 
@@ -1169,7 +1138,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
 
@@ -1201,7 +1169,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
 
@@ -1250,7 +1217,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform,
         mockPrompter
       );
@@ -1276,7 +1242,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform
       );
 
@@ -1298,7 +1263,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform,
         mockPrompter
       );
@@ -1333,7 +1297,6 @@ describe("install", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform,
         mockPrompter
       );

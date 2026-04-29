@@ -9,7 +9,6 @@ import type { ManifestRepository } from "../../domain/ports/manifest-repository.
 import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import type { TokenProvider } from "../../domain/ports/token-provider.js";
-import type { VersionControl } from "../../domain/ports/version-control.js";
 import {
   AI_TOOL_IDS,
   IDE_TOOL_IDS,
@@ -73,7 +72,6 @@ export class SetupUseCase {
     private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
-    private readonly git: VersionControl,
     private readonly platform: Platform,
     private readonly prompter: Prompter,
     private readonly resolver: FrameworkResolver,
@@ -362,7 +360,6 @@ export class SetupUseCase {
       this.loader,
       this.hasher,
       this.logger,
-      this.git,
       this.platform,
       this.prompter
     ).execute({
@@ -473,7 +470,6 @@ export class SetupUseCase {
       this.loader,
       this.hasher,
       this.logger,
-      this.git,
       this.platform,
       this.prompter
     ).execute({

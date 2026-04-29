@@ -17,7 +17,6 @@ import {
   installTool,
   KeepPrompter,
   linuxPlatform,
-  noGit,
   OverwritePrompter,
   SkipPrompter,
 } from "./helpers.js";
@@ -44,7 +43,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new OverwritePrompter()
     );
@@ -68,7 +66,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new OverwritePrompter()
     );
@@ -93,7 +90,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new OverwritePrompter()
     );
@@ -144,7 +140,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new OverwritePrompter()
     );
@@ -194,7 +189,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new SkipPrompter()
     );
@@ -240,7 +234,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new OverwritePrompter()
     );
@@ -286,7 +279,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new BackupPrompter()
     );
@@ -336,7 +328,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new KeepPrompter()
     );
@@ -366,7 +357,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new OverwritePrompter()
     );
@@ -392,7 +382,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new OverwritePrompter()
     );
@@ -425,7 +414,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new OverwritePrompter()
     );
@@ -456,7 +444,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new BackupPrompter()
     );
@@ -490,7 +477,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new SkipPrompter()
     );
@@ -522,7 +508,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new OverwritePrompter()
     );
@@ -558,7 +543,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new OverwritePrompter()
     );
@@ -593,7 +577,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new OverwritePrompter()
     );
@@ -623,7 +606,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new OverwritePrompter()
     );
@@ -660,7 +642,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new OverwritePrompter()
     );
@@ -690,7 +671,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new OverwritePrompter()
     );
@@ -726,7 +706,6 @@ describe("update", () => {
       deps.loader,
       deps.hasher,
       deps.logger,
-      noGit,
       linuxPlatform,
       new OverwritePrompter()
     );
@@ -752,7 +731,6 @@ describe("update", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform,
         new OverwritePrompter()
       );
@@ -779,7 +757,6 @@ describe("update", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform,
         new OverwritePrompter()
       );
@@ -824,7 +801,6 @@ describe("update", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform,
         new SkipPrompter()
       );
@@ -850,7 +826,6 @@ describe("update", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform,
         new OverwritePrompter()
       );
@@ -886,7 +861,6 @@ describe("update", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform,
         new OverwritePrompter()
       );
@@ -983,7 +957,6 @@ describe("update", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform,
         new OverwritePrompter()
       );
@@ -1011,7 +984,6 @@ describe("update", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform,
         prompter
       );
@@ -1042,7 +1014,6 @@ describe("update", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform,
         prompter
       );
@@ -1076,7 +1047,6 @@ describe("update", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform,
         new OverwritePrompter()
       );
@@ -1109,7 +1079,6 @@ describe("update", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform,
         prompter
       );
@@ -1139,7 +1108,6 @@ describe("update", () => {
         deps.loader,
         deps.hasher,
         deps.logger,
-        noGit,
         linuxPlatform,
         declineAllPrompter
       );

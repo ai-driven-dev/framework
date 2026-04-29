@@ -16,7 +16,6 @@ import {
   FIXTURE_DIR,
   initAndInstall,
   linuxPlatform,
-  noGit,
 } from "../helpers.js";
 
 function buildInstallUseCase(deps: ReturnType<typeof buildDeps>) {
@@ -26,7 +25,6 @@ function buildInstallUseCase(deps: ReturnType<typeof buildDeps>) {
     deps.loader,
     deps.hasher,
     deps.logger,
-    noGit,
     linuxPlatform,
     new SilentPrompterAdapter()
   );

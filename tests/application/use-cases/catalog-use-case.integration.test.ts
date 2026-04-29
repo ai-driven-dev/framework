@@ -11,7 +11,6 @@ import {
   FIXTURE_DIR,
   initProject,
   linuxPlatform,
-  noGit,
 } from "./helpers.js";
 
 const CATALOG = (root: string) => join(root, "aidd_docs", "CATALOG.md");
@@ -25,7 +24,6 @@ async function install(projectRoot: string, ...toolIds: ToolId[]): Promise<void>
     deps.loader,
     deps.hasher,
     deps.logger,
-    noGit,
     linuxPlatform
   );
   await useCase.execute({

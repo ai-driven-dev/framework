@@ -121,7 +121,6 @@ Examples:
             deps.loader,
             deps.hasher,
             deps.logger,
-            deps.git,
             deps.platform,
             deps.prompter,
             deps.pluginFetcher,

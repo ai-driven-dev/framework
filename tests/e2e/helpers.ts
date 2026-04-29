@@ -71,7 +71,6 @@ export async function initProject(
     deps.loader,
     deps.hasher,
     deps.logger,
-    deps.git,
     deps.platform,
     deps.prompter,
     deps.resolver
@@ -96,7 +95,6 @@ export async function adoptProject(
     deps.loader,
     deps.hasher,
     deps.logger,
-    deps.git,
     deps.platform,
     deps.prompter,
     deps.resolver

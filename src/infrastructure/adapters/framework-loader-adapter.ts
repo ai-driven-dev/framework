@@ -5,7 +5,6 @@ import {
   type ConfigRef,
   type ContentSection,
   FrameworkDescriptor,
-  type ScriptRef,
   type TemplateRef,
 } from "../../domain/models/framework.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
@@ -39,8 +38,6 @@ const CONFIG_REFS: readonly ConfigRef[] = [
   { name: "opencode", path: "config/.opencode/opencode.json" },
 ];
 
-const SCRIPT_REFS: readonly ScriptRef[] = [];
-
 const DOCS_DIR = "aidd_docs";
 
 export class FrameworkLoaderAdapter implements FrameworkLoader {
@@ -57,7 +54,6 @@ export class FrameworkLoaderAdapter implements FrameworkLoader {
       contentSections: [...CONTENT_SECTIONS],
       templateRefs: [...TEMPLATE_REFS],
       configRefs: [...CONFIG_REFS],
-      scriptRefs: [...SCRIPT_REFS],
     });
 
     const contentFiles = await this.loadContentFiles(path, descriptor);
@@ -102,11 +98,7 @@ export class FrameworkLoaderAdapter implements FrameworkLoader {
       }
     }
 
-    for (const ref of [
-      ...descriptor.templateRefs,
-      ...descriptor.configRefs,
-      ...descriptor.scriptRefs,
-    ]) {
+    for (const ref of [...descriptor.templateRefs, ...descriptor.configRefs]) {
       const filePath = join(basePath, ref.path);
       try {
         const content = await readFile(filePath, "utf-8");

@@ -13,7 +13,6 @@ import {
   createTempProject,
   FIXTURE_DIR,
   linuxPlatform,
-  noGit,
 } from "./use-cases/helpers.js";
 
 function makeLogger(): { logger: Logger; logs: string[] } {
@@ -71,7 +70,6 @@ async function installWithVersion(
     deps.loader,
     deps.hasher,
     deps.logger,
-    noGit,
     linuxPlatform
   );
   await useCase.execute({
