@@ -12,10 +12,10 @@ AIDD is a plugin marketplace for AI-driven development. Each plugin delivers a f
 
 | Plugin | Purpose |
 |--------|---------|
-| [aidd-context](../plugins/aidd-context/README.md) | Knowledge production — project init, architecture, brainstorming, diagrams, discovery |
-| [aidd-dev](../plugins/aidd-dev/README.md) | Code transformation — full SDLC loop with planning, assertions, review, testing, debugging |
-| [aidd-vcs](../plugins/aidd-vcs/README.md) | VCS workflows — commits, pull/merge requests, release tags, issue creation |
-| [aidd-pm](../plugins/aidd-pm/README.md) | Product management — ticket info, user stories, PRD (release candidate) |
+| [aidd-context](https://github.com/ai-driven-dev/aidd-framework/blob/main/plugins/aidd-context/README.md) | Knowledge production — project init, architecture, brainstorming, diagrams, discovery |
+| [aidd-dev](https://github.com/ai-driven-dev/aidd-framework/blob/main/plugins/aidd-dev/README.md) | Code transformation — full SDLC loop with planning, assertions, review, testing, debugging |
+| [aidd-vcs](https://github.com/ai-driven-dev/aidd-framework/blob/main/plugins/aidd-vcs/README.md) | VCS workflows — commits, pull/merge requests, release tags, issue creation |
+| [aidd-pm](https://github.com/ai-driven-dev/aidd-framework/blob/main/plugins/aidd-pm/README.md) | Product management — ticket info, user stories, PRD (release candidate) |
 
 ---
 
