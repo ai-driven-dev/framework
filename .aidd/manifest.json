@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "docsDir": "aidd_docs",
   "tools": {
     "claude": {
@@ -305,6 +305,36 @@
             "playwright": "27219fcdb8b4ad76e7b54d5a2b372faa",
             "figma": "cc1879da2080f6bfee680748ddf1dec9",
             "mcp-atlassian": "df94ce234e0da3bdf63bbd013d76ec9f"
+          }
+        }
+      ],
+      "plugins": [
+        {
+          "name": "aidd-vcs",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-vcs"
+          },
+          "version": "1.0.0",
+          "strict": true,
+          "files": {
+            ".claude/plugins/aidd-vcs/skills/[3.1] commit/SKILL.md": "67af316198b8c2d580aaf8e53baee80b",
+            ".claude/plugins/aidd-vcs/skills/[3.1] commit/actions/01-commit.md": "66a2c81c9dc93ed48e9bea29ceea4848",
+            ".claude/plugins/aidd-vcs/skills/[3.1] commit/assets/commit-template.md": "05505046967cad96666d44bbf1daa7c9",
+            ".claude/plugins/aidd-vcs/skills/[3.2] pull-request/SKILL.md": "871c887bb3d78db4c233533e2c4811ff",
+            ".claude/plugins/aidd-vcs/skills/[3.2] pull-request/actions/01-pull-request.md": "508b9a9728fef0e6e2e5a081b18f81a3",
+            ".claude/plugins/aidd-vcs/skills/[3.2] pull-request/assets/CONTRIBUTING.md": "e4f6f4dd8f5fbb076d4011cc875b1fbc",
+            ".claude/plugins/aidd-vcs/skills/[3.2] pull-request/assets/README.md": "6f20a8f9ae09de111ddd836e6afd516c",
+            ".claude/plugins/aidd-vcs/skills/[3.2] pull-request/assets/branch.md": "79075a62616b75d7dd586d88d4d05413",
+            ".claude/plugins/aidd-vcs/skills/[3.2] pull-request/assets/pull_request.md": "4b4c2a575ecffbce2ae8a17a6c542ce0",
+            ".claude/plugins/aidd-vcs/skills/[3.3] release-tag/SKILL.md": "dc987160b27d9ab8e727cf9b7dbe39d2",
+            ".claude/plugins/aidd-vcs/skills/[3.3] release-tag/actions/01-release-tag.md": "844eed46afe03872508f7b8980fe0f0a",
+            ".claude/plugins/aidd-vcs/skills/[3.3] release-tag/assets/release-template.md": "4fadf2dfa256db821d0e6c221e8cc77f",
+            ".claude/plugins/aidd-vcs/skills/[3.4] issue-create/SKILL.md": "7030623b162dddcc4d44bdb43c57f901",
+            ".claude/plugins/aidd-vcs/skills/[3.4] issue-create/actions/01-issue-create.md": "157e7d7728b875d46d83e2148bd874d5",
+            ".claude/plugins/aidd-vcs/skills/[3.4] issue-create/assets/CONTRIBUTING.md": "e4f6f4dd8f5fbb076d4011cc875b1fbc",
+            ".claude/plugins/aidd-vcs/skills/[3.4] issue-create/assets/issue-template.md": "c52dc44e022d12b84e6263f0e43b0784",
+            ".claude/plugins/aidd-vcs/.claude-plugin/plugin.json": "38a576433ba5f16a39424a63774e889b"
           }
         }
       ]
