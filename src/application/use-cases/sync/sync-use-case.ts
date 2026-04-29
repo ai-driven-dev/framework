@@ -20,6 +20,16 @@ import type {
 import { getToolConfig, isAiTool, type ToolId } from "../../../domain/tools/registry.js";
 import { InputRequiredError, NoManifestError, ToolNotInstalledError } from "../../errors.js";
 
+function canonicalFrameworkKey(frameworkPath: string): string {
+  for (const id of AI_TOOL_IDS) {
+    const suffix = `.${id}.md`;
+    if (frameworkPath.endsWith(suffix)) {
+      return frameworkPath.slice(0, -suffix.length);
+    }
+  }
+  return frameworkPath;
+}
+
 type SyncCapabilities = HasAgents & HasSkills & Partial<HasCommands & HasRules>;
 
 interface SyncOptions {
@@ -251,7 +261,7 @@ export class SyncUseCase {
     const targetByFrameworkPath = new Map(
       targetManifestFiles
         .filter((f): f is typeof f & { frameworkPath: string } => f.frameworkPath !== undefined)
-        .map((f) => [f.frameworkPath, f.relativePath])
+        .map((f) => [canonicalFrameworkKey(f.frameworkPath), f.relativePath])
     );
     const fileResults: SyncFileResult[] = [];
     await this.propagateModified({
@@ -498,7 +508,7 @@ export class SyncUseCase {
     if (diskSourceHash.value === manifestHash.value) return;
 
     const sectionKey = getSectionKeyFromFrameworkPath(frameworkPath);
-    const targetRelativePath = targetByFrameworkPath.get(frameworkPath);
+    const targetRelativePath = targetByFrameworkPath.get(canonicalFrameworkKey(frameworkPath));
     if (sectionKey === null || targetRelativePath === undefined) return;
 
     const diskSourceContent = await this.fs.readFile(diskSourcePath);
@@ -674,7 +684,7 @@ export class SyncUseCase {
     if (new SyncPolicy(docsDir).isProtected(relativePath) || frameworkPath === undefined) return;
     if (await this.fs.fileExists(join(projectRoot, relativePath))) return;
 
-    const targetRelativePath = targetByFrameworkPath.get(frameworkPath);
+    const targetRelativePath = targetByFrameworkPath.get(canonicalFrameworkKey(frameworkPath));
     if (targetRelativePath === undefined) return;
 
     const diskTargetPath = join(projectRoot, targetRelativePath);

@@ -124,6 +124,10 @@ export function registerAuthCommand(program: Command): void {
 
       try {
         const result = await new AuthStatusUseCase(buildAuthProvider(projectRoot)).execute();
+        if (!result.authenticated) {
+          output.info("Not authenticated.");
+          return;
+        }
         output.success(`Authenticated as ${result.login} (${result.level})`);
       } catch (error) {
         errorHandler.handle(error);

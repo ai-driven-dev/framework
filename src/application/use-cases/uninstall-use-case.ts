@@ -172,8 +172,21 @@ export class UninstallUseCase {
       await this.fs.deleteEmptyDirectories(dirname(fullPath));
     }
 
+    await this.removePluginFiles(toolId, manifest, projectRoot);
     manifest.removeTool(toolId);
     return { toolId, fileCount: deletedFiles.length, deletedFiles };
+  }
+
+  private async removePluginFiles(toolId: ToolId, manifest: Manifest, projectRoot: string): Promise<void> {
+    for (const plugin of manifest.getPlugins(toolId)) {
+      for (const relativePath of plugin.files.keys()) {
+        const fullPath = join(projectRoot, relativePath);
+        if (await this.fs.fileExists(fullPath)) {
+          await this.fs.deleteFile(fullPath);
+          await this.fs.deleteEmptyDirectories(dirname(fullPath));
+        }
+      }
+    }
   }
 
   private collectMergeFilePaths(toolId: ToolId, manifest: Manifest): Set<string> {
