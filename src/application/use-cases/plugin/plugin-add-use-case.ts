@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { DuplicatePluginError } from "../../../domain/errors.js";
+import { DuplicatePluginError, VersionMismatchError } from "../../../domain/errors.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../domain/models/paths.js";
 import { Plugin } from "../../../domain/models/plugin.js";
@@ -20,6 +20,8 @@ export interface PluginAddOptions {
   toolIds: AiToolId[] | "all";
   projectRoot: string;
   interactive: boolean;
+  marketplace?: string;
+  requiredVersion?: string;
 }
 
 export class PluginAddUseCase {
@@ -32,17 +34,27 @@ export class PluginAddUseCase {
   ) {}
 
   async execute(options: PluginAddOptions): Promise<void> {
-    const { source, toolIds, projectRoot } = options;
+    const { source, toolIds, projectRoot, marketplace, requiredVersion } = options;
     const manifest = await loadPluginManifest(this.manifestRepo);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest);
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
     const localPath = await this.pluginFetcher.fetch(source, cacheDir);
     const dist = await this.pluginDistributionReader.read(localPath);
+    this.assertPluginVersionMatches(dist.manifest.name, dist.manifest.version, requiredVersion);
     this.validateNoDuplicates(dist.manifest.name, resolvedToolIds, manifest);
     for (const toolId of resolvedToolIds) {
-      await this.addPluginForTool(dist, toolId, source, projectRoot, manifest);
+      await this.addPluginForTool(dist, toolId, source, projectRoot, manifest, marketplace);
     }
     await this.manifestRepo.save(manifest);
+  }
+
+  private assertPluginVersionMatches(
+    name: string,
+    actual: string,
+    requested: string | undefined
+  ): void {
+    if (!requested) return;
+    if (actual !== requested) throw new VersionMismatchError(name, requested, actual);
   }
 
   private validateNoDuplicates(pluginName: string, toolIds: AiToolId[], manifest: Manifest): void {
@@ -57,13 +69,14 @@ export class PluginAddUseCase {
     toolId: AiToolId,
     source: PluginSource,
     projectRoot: string,
-    manifest: Manifest
+    manifest: Manifest,
+    marketplace: string | undefined
   ): Promise<void> {
     const toolConfig = getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return;
     const files = new PluginTranslator(this.hasher).translate(dist, toolConfig);
     if (files.length === 0) return;
     await writePluginFiles(files, projectRoot, this.fs);
-    manifest.addPlugin(toolId, Plugin.fromDistribution(dist, source, files));
+    manifest.addPlugin(toolId, Plugin.fromDistribution(dist, source, files, marketplace));
   }
 }

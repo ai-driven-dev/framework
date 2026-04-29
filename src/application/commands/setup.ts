@@ -114,6 +114,27 @@ export function registerSetupCommand(program: Command): void {
             from: cmdOptions.from,
           });
 
+          await deps.marketplaceRegisterFrameworkUseCase.execute({
+            projectRoot,
+            pathHint: cmdOptions.path,
+          });
+
+          if (interactive) {
+            const marketplaces = await deps.marketplaceRegistry.list(projectRoot);
+            if (marketplaces.length > 0) {
+              const proceed = await deps.prompter.confirm(
+                "Browse marketplaces and install plugins now?"
+              );
+              if (proceed) {
+                await deps.pluginPickUseCase.execute({
+                  toolIds: "all",
+                  projectRoot,
+                  interactive: true,
+                });
+              }
+            }
+          }
+
           switch (result.kind) {
             case "initialized": {
               output.success(`Initialized docs in ${result.docsDir}/ (${result.fileCount} files)`);

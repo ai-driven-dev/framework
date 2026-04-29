@@ -2,3 +2,8 @@ import { join } from "node:path";
 
 export const AIDD_DIR = ".aidd";
 export const PLUGIN_CACHE_SUBDIR = join(AIDD_DIR, "plugin-cache");
+export const MARKETPLACE_CACHE_SUBDIR = join(AIDD_DIR, "cache", "marketplaces");
+
+export function marketplaceCacheDir(projectRoot: string, marketplaceName: string): string {
+  return join(projectRoot, MARKETPLACE_CACHE_SUBDIR, marketplaceName);
+}

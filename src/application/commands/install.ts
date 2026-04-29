@@ -192,6 +192,22 @@ Examples:
             const toolList = installed.map((r) => r.toolId).join(", ");
             output.success(`Installed ${toolList} (${totalFiles} files)`);
           }
+
+          if (process.stdout.isTTY) {
+            const marketplaces = await deps.marketplaceRegistry.list(projectRoot);
+            if (marketplaces.length > 0) {
+              const proceed = await deps.prompter.confirm(
+                "Browse marketplaces and install plugins now?"
+              );
+              if (proceed) {
+                await deps.pluginPickUseCase.execute({
+                  toolIds: "all",
+                  projectRoot,
+                  interactive: true,
+                });
+              }
+            }
+          }
         } catch (error) {
           errorHandler.handle(error);
         }

@@ -188,6 +188,21 @@ function parseGitLabShorthand(raw: string): PluginSourceUrl {
   return result;
 }
 
+export function describePluginSource(src: PluginSource): string {
+  switch (src.kind) {
+    case "github":
+      return `https://github.com/${src.repo}${src.ref ? `@${src.ref}` : ""}`;
+    case "url":
+      return src.url;
+    case "git-subdir":
+      return `${src.url}#${src.path}`;
+    case "npm":
+      return `npm:${src.package}${src.version ? `@${src.version}` : ""}`;
+    case "local":
+      return src.path;
+  }
+}
+
 export function serializePluginSource(src: PluginSource): Record<string, unknown> {
   const result: Record<string, unknown> = { kind: src.kind };
   switch (src.kind) {

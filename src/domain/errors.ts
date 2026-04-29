@@ -176,3 +176,86 @@ export class FlatCollisionError extends Error {
     this.name = "FlatCollisionError";
   }
 }
+
+export class InvalidMarketplaceNameError extends Error {
+  constructor(detail: string) {
+    super(
+      `Invalid marketplace name: "${detail}". Use lowercase alphanumeric characters and hyphens only.`
+    );
+    this.name = "InvalidMarketplaceNameError";
+  }
+}
+
+export class InvalidMarketplaceScopeError extends Error {
+  constructor(scope: string) {
+    super(`Invalid marketplace scope: "${scope}". Expected "project" or "user".`);
+    this.name = "InvalidMarketplaceScopeError";
+  }
+}
+
+export class MarketplaceAlreadyRegisteredError extends Error {
+  constructor(name: string) {
+    super(`Marketplace '${name}' is already registered.`);
+    this.name = "MarketplaceAlreadyRegisteredError";
+  }
+}
+
+export class MarketplaceNotFoundError extends Error {
+  constructor(name: string) {
+    super(`Marketplace '${name}' is not registered.`);
+    this.name = "MarketplaceNotFoundError";
+  }
+}
+
+export class TrustDeniedError extends Error {
+  constructor(name: string) {
+    super(`Trust denied for marketplace '${name}'. Aborting.`);
+    this.name = "TrustDeniedError";
+  }
+}
+
+export class PluginNotInMarketplaceError extends Error {
+  constructor(plugin: string) {
+    super(`Plugin '${plugin}' was not found in any registered marketplace.`);
+    this.name = "PluginNotInMarketplaceError";
+  }
+}
+
+export class VersionMismatchError extends Error {
+  constructor(plugin: string, requested: string, actual: string) {
+    super(
+      `Plugin '${plugin}': requested version '${requested}' does not match catalog version '${actual}'.`
+    );
+    this.name = "VersionMismatchError";
+  }
+}
+
+export class AmbiguousPluginMatchError extends Error {
+  constructor(plugin: string, marketplaces: readonly string[]) {
+    super(
+      `Plugin '${plugin}' matches multiple marketplaces: ${marketplaces.join(", ")}. Use --from <marketplace>.`
+    );
+    this.name = "AmbiguousPluginMatchError";
+  }
+}
+
+export class OfflineError extends Error {
+  constructor(detail: string) {
+    super(`Offline: ${detail}`);
+    this.name = "OfflineError";
+  }
+}
+
+export class NoMarketplacesRegisteredError extends Error {
+  constructor() {
+    super("No marketplaces registered. Use `aidd plugin marketplace add <source>` first.");
+    this.name = "NoMarketplacesRegisteredError";
+  }
+}
+
+export class InteractiveOnlyError extends Error {
+  constructor(action: string) {
+    super(`'${action}' requires an interactive terminal.`);
+    this.name = "InteractiveOnlyError";
+  }
+}

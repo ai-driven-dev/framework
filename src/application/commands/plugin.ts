@@ -1,5 +1,9 @@
 import type { Command } from "commander";
-import { parsePluginSourceShorthand } from "../../domain/models/plugin-source.js";
+import { parsePluginSpec } from "../../domain/models/plugin.js";
+import {
+  describePluginSource,
+  parsePluginSourceShorthand,
+} from "../../domain/models/plugin-source.js";
 import { assertValidAiToolId, parseToolOption } from "../../domain/models/tool-ids.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
@@ -73,6 +77,98 @@ export function registerPluginCommand(program: Command): void {
           printed = true;
         }
         if (!printed) output.info("No plugins installed.");
+      } catch (error) {
+        errorHandler.handle(error);
+      }
+    });
+
+  plugin
+    .command("install <plugin>")
+    .description("Install a plugin from a registered marketplace")
+    .option("--from <market>", "Marketplace name (when multiple match)")
+    .option("--tool <toolId>", "Target AI tool (default: all installed)")
+    .option("--token <value>", "Auth token (host detected from source URL at fetch time)")
+    .option("--yes", "Auto-resolve interactive prompts (CI mode)")
+    .action(
+      async (
+        pluginArg: string,
+        cmdOptions: { from?: string; tool?: string; token?: string; yes?: boolean }
+      ) => {
+        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+        const errorHandler = new ErrorHandler(output);
+        try {
+          assertValidAiToolId(cmdOptions.tool);
+          const { name, version } = parsePluginSpec(pluginArg);
+          if (cmdOptions.token) process.env.AIDD_TOKEN = cmdOptions.token;
+          const deps = await createDeps(projectRoot, { verbose, repo }, output);
+          const result = await deps.pluginInstallFromMarketplaceUseCase.execute({
+            pluginName: name,
+            version,
+            fromMarketplace: cmdOptions.from,
+            toolIds: parseToolOption(cmdOptions.tool),
+            projectRoot,
+            interactive: process.stdout.isTTY,
+            autoSelect: cmdOptions.yes ?? false,
+          });
+          output.success(
+            `Installed '${result.entry.name}' from '${result.marketplace.name}' (${describePluginSource(result.marketplace.source)}).`
+          );
+        } catch (error) {
+          errorHandler.handle(error);
+        }
+      }
+    );
+
+  plugin
+    .command("search <query>")
+    .description("Search registered marketplaces for plugins")
+    .option("--recommended", "Show only recommended plugins")
+    .option("--marketplace <name>", "Limit to a single marketplace")
+    .action(async (query: string, cmdOptions: { recommended?: boolean; marketplace?: string }) => {
+      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
+      try {
+        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const { hits } = await deps.pluginSearchUseCase.execute({
+          query,
+          recommendedOnly: cmdOptions.recommended ?? false,
+          marketplace: cmdOptions.marketplace,
+          projectRoot,
+        });
+        if (hits.length === 0) output.info("No matches.");
+        for (const h of hits) {
+          const flag = h.entry.recommended ? " (recommended)" : "";
+          output.print(
+            `${h.entry.name}@${h.entry.version ?? "?"} — ${h.entry.description ?? ""} — marketplace: ${h.marketplace.name}${flag}`
+          );
+        }
+      } catch (error) {
+        errorHandler.handle(error);
+      }
+    });
+
+  plugin
+    .command("pick")
+    .description("Interactively pick a marketplace and install plugins from it")
+    .option("--tool <toolId>", "Target AI tool (default: all installed)")
+    .action(async (cmdOptions: { tool?: string }) => {
+      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
+      try {
+        assertValidAiToolId(cmdOptions.tool);
+        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const result = await deps.pluginPickUseCase.execute({
+          toolIds: parseToolOption(cmdOptions.tool),
+          projectRoot,
+          interactive: process.stdout.isTTY,
+        });
+        if (result.installed.length === 0) {
+          output.info(`No plugins selected from '${result.marketplace.name}'.`);
+        } else {
+          output.success(
+            `Installed ${result.installed.length} plugin(s) from '${result.marketplace.name}': ${result.installed.join(", ")}`
+          );
+        }
       } catch (error) {
         errorHandler.handle(error);
       }
