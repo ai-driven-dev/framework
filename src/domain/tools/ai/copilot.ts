@@ -300,6 +300,7 @@ export const copilot: AiTool<
     rules: new RulesCapability({
       directory: DIRECTORY,
       toolSuffix: EXT_INSTRUCTIONS,
+      inputSuffix: TOOL_SUFFIX,
       buildInstallPath: (fileName) => rulesHandler.buildFilePath(fileName),
       convertFrontmatter: (fm) => rulesHandler.convertFrontmatter(fm),
       reverseConvertFrontmatter: (fm) => rulesHandler.reverseConvertFrontmatter(fm),
