@@ -37,12 +37,9 @@ const CONFIG_REFS: readonly ConfigRef[] = [
     requiredIdeId: "vscode",
   },
   { name: "opencode", path: "config/.opencode/opencode.json" },
-  { name: "codex-hooks", path: "config/codex/hooks.json" },
 ];
 
-const SCRIPT_REFS: readonly ScriptRef[] = [
-  { name: "updateMemory", path: "config/scripts/update_memory.js", invocation: "node" },
-];
+const SCRIPT_REFS: readonly ScriptRef[] = [];
 
 const DOCS_DIR = "aidd_docs";
 

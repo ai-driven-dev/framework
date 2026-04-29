@@ -1,5 +1,5 @@
 import { existsSync, readdirSync } from "node:fs";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -228,30 +228,6 @@ describe.concurrent("E2E: aidd update", () => {
     }
   });
 
-  it("updates memory script when framework has a newer version", async () => {
-    const { projectDir, cleanup } = await createTestEnv("update");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-
-      const v1Content = await readFile(
-        join(projectDir, ".aidd", "scripts", "update_memory.js"),
-        "utf-8"
-      );
-
-      await runCli(["update", "--path", FRAMEWORK_V2_PATH], projectDir);
-
-      const v2Content = await readFile(
-        join(projectDir, ".aidd", "scripts", "update_memory.js"),
-        "utf-8"
-      );
-
-      expect(v1Content).not.toBe(v2Content);
-    } finally {
-      await cleanup();
-    }
-  });
-
   it("exits with error when --tool and --docs are both specified", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
@@ -354,40 +330,6 @@ describe.concurrent("E2E: aidd update", () => {
     }
   });
 
-  it("removes an obsolete script file replaced by a newer framework version", async () => {
-    const { projectDir, cleanup } = await createTestEnv("update-stale-script");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-
-      // Simulate a project that was installed with an older CLI that wrote update_memory.mjs
-      const manifestPath = join(projectDir, ".aidd", "manifest.json");
-      const manifestRaw = JSON.parse(await readFile(manifestPath, "utf-8"));
-      const staleRelPath = ".aidd/scripts/update_memory.mjs";
-      const currentRelPath = ".aidd/scripts/update_memory.js";
-      const currentHash = manifestRaw.scripts.files[0].hash;
-      manifestRaw.scripts.files = [{ relativePath: staleRelPath, hash: currentHash }];
-      await writeFile(manifestPath, JSON.stringify(manifestRaw, null, 2));
-
-      // Move the script on disk to the stale path
-      await rename(join(projectDir, currentRelPath), join(projectDir, staleRelPath));
-
-      const { stdout, stderr, exitCode } = await runCli(
-        ["update", "--path", FRAMEWORK_PATH, "--verbose"],
-        projectDir
-      );
-
-      // Log everything for inspection
-      process.stdout.write(`\n--- stdout ---\n${stdout}\n--- stderr ---\n${stderr}\n`);
-
-      expect(exitCode).toBe(0);
-      expect(existsSync(join(projectDir, staleRelPath))).toBe(false);
-      expect(existsSync(join(projectDir, currentRelPath))).toBe(true);
-    } finally {
-      await cleanup();
-    }
-  });
-
   it("deletes merge files that become empty after key removal during update", async () => {
     const { projectDir, cleanup } = await createTestEnv("update-empty-merge");
     try {
@@ -425,24 +367,4 @@ describe.concurrent("E2E: aidd update", () => {
     }
   });
 
-  it("deletes merge files whose capability section is dropped entirely in the newer framework", async () => {
-    const { projectDir, cleanup } = await createTestEnv("update-dropped-merge");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "codex", "--path", FRAMEWORK_PATH], projectDir);
-
-      // hooks.json is a merge file in v1 codex; v2 drops codex-hooks entirely
-      expect(existsSync(join(projectDir, ".codex", "hooks.json"))).toBe(true);
-
-      const { exitCode } = await runCli(
-        ["update", "--path", FRAMEWORK_V2_PATH, "--force"],
-        projectDir
-      );
-
-      expect(exitCode).toBe(0);
-      expect(existsSync(join(projectDir, ".codex", "hooks.json"))).toBe(false);
-    } finally {
-      await cleanup();
-    }
-  });
 });

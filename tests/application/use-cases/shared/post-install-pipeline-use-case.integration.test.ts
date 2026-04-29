@@ -65,34 +65,4 @@ describe("post-install pipeline", () => {
     expect(gitignoreContent).toContain(".aidd/cache/");
   });
 
-  it("executes memory script before saving manifest", async () => {
-    const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
-
-    const manifest = await deps.manifestRepo.load();
-    if (manifest === null) throw new Error("manifest not found");
-
-    const loader = new FrameworkLoaderAdapter();
-    const { descriptor, contentFiles } = await loader.loadFromDirectory(FIXTURE_DIR, "test");
-
-    await new PostInstallPipelineUseCase(deps.fs, deps.manifestRepo, deps.hasher, noGit).execute({
-      projectRoot,
-      version: "test",
-      descriptor,
-      contentFiles,
-      manifest,
-      docsDir: "aidd_docs",
-    });
-
-    // memory script written before manifest save — verify script file exists
-    const scriptPath = join(projectRoot, ".aidd", "scripts", "update_memory.js");
-    expect(existsSync(scriptPath)).toBe(true);
-
-    // manifest reflects the script registration
-    const reloaded = await deps.manifestRepo.load();
-    expect(reloaded).not.toBeNull();
-    if (reloaded === null) throw new Error("manifest not found after pipeline");
-    const scriptFiles = reloaded.getScriptsFiles();
-    expect(scriptFiles.some((f) => f.relativePath.includes("update_memory"))).toBe(true);
-  });
 });
