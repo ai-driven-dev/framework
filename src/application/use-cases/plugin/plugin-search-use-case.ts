@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import type { Marketplace } from "../../../domain/models/marketplace.js";
 import { marketplaceCacheDir } from "../../../domain/models/paths.js";
 import type { PluginCatalogEntry } from "../../../domain/models/plugin-catalog.js";
