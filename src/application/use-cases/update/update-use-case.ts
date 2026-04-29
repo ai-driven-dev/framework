@@ -307,7 +307,7 @@ export class UpdateUseCase {
           conflictResolution
         );
 
-    if (!dryRun) await this.runPostInstall(options, manifest, descriptor, contentFiles);
+    if (!dryRun) await this.runPostInstall(options, manifest);
 
     return this.buildTotals(toolResults, docsResult, dryRun);
   }
@@ -324,13 +324,8 @@ export class UpdateUseCase {
     return { manifest, descriptor, contentFiles, docsFiles, docsDir };
   }
 
-  private async runPostInstall(
-    options: UpdateOptions,
-    manifest: Manifest,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
-    contentFiles: Map<string, string>
-  ): Promise<void> {
-    const { projectRoot, version, docsDir: optDocsDir } = options;
+  private async runPostInstall(options: UpdateOptions, manifest: Manifest): Promise<void> {
+    const { projectRoot, docsDir: optDocsDir } = options;
     const docsDir = optDocsDir ?? manifest.docsDir;
     await new PostInstallPipelineUseCase(this.fs, this.manifestRepo).execute({
       projectRoot,
