@@ -57,8 +57,9 @@ function buildCacheCommand(program: Command): Command {
         const cache = new FrameworkCache(join(projectRoot, AIDD_DIR, "cache"));
 
         if (version !== undefined) {
-          await cache.clear(version);
-          output.success(`Cleared cache for version ${version}`);
+          const normalizedVersion = version.replace(/^v/, "");
+          await cache.clear(normalizedVersion);
+          output.success(`Cleared cache for version ${normalizedVersion}`);
         } else if (cmdOptions.all) {
           await cache.clear();
           output.success("Cleared all cached framework versions");

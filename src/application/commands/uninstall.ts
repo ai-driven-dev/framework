@@ -81,6 +81,10 @@ Examples:
             toolIds = toolArgs as ToolId[];
             assertValidToolIds(toolIds);
             if (category) assertToolIdsMatchCategory(toolIds, category);
+          } else if (cmdOptions.mcp !== undefined) {
+            const manifest = await deps.manifestRepo.load();
+            if (!manifest) throw new NoManifestError(repo);
+            toolIds = manifest.getInstalledToolIds();
           } else {
             if (!process.stdout.isTTY) {
               output.error(

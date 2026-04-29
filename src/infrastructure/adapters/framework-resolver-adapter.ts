@@ -136,6 +136,7 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
 
   private normalizeTag(version?: string): string | undefined {
     if (!version) return undefined;
+    if (version === "latest") return undefined;
     return version.startsWith("v") ? version : `v${version}`;
   }
 

@@ -109,6 +109,7 @@ export class DoctorUseCase {
 
     if (!category) issues.push(...(await this.checkDocsDirectory(manifest, projectRoot)));
     issues.push(...(await this.checkMissingTrackedFiles(allTrackedFiles, projectRoot)));
+    issues.push(...(await this.checkModifiedTrackedFiles(manifest, projectRoot, allowedIds)));
     issues.push(...(await this.checkMergeFileKeys(manifest, projectRoot, allowedIds)));
     issues.push(...(await this.checkBrokenReferences(allTrackedFiles, projectRoot)));
     if (!category) issues.push(...(await this.checkOrphanedDirectories(manifest, projectRoot)));
@@ -158,6 +159,30 @@ export class DoctorUseCase {
           message: `Missing tracked file: ${file.relativePath}`,
           fix: `Restore the file or run \`aidd restore\` to reinstall tracked files.`,
         });
+      }
+    }
+    return issues;
+  }
+
+  private async checkModifiedTrackedFiles(
+    manifest: Manifest,
+    projectRoot: string,
+    allowedIds: Set<string> | null
+  ): Promise<DoctorIssue[]> {
+    const issues: DoctorIssue[] = [];
+    for (const toolId of manifest.getInstalledToolIds()) {
+      if (allowedIds && !allowedIds.has(toolId)) continue;
+      for (const file of manifest.getToolFiles(toolId)) {
+        const fullPath = join(projectRoot, file.relativePath);
+        if (!(await this.fs.fileExists(fullPath))) continue;
+        const diskHash = await this.fs.readFileHash(fullPath);
+        if (!diskHash.equals(file.hash)) {
+          issues.push({
+            severity: "warning",
+            message: `Modified tracked file: ${file.relativePath}`,
+            fix: `Run \`aidd restore --force\` to revert to the framework version.`,
+          });
+        }
       }
     }
     return issues;
