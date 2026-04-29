@@ -177,7 +177,11 @@ export class UninstallUseCase {
     return { toolId, fileCount: deletedFiles.length, deletedFiles };
   }
 
-  private async removePluginFiles(toolId: ToolId, manifest: Manifest, projectRoot: string): Promise<void> {
+  private async removePluginFiles(
+    toolId: ToolId,
+    manifest: Manifest,
+    projectRoot: string
+  ): Promise<void> {
     for (const plugin of manifest.getPlugins(toolId)) {
       await this.deletePluginFiles(plugin.files, projectRoot);
     }
