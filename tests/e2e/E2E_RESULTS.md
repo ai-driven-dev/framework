@@ -34,7 +34,7 @@ Auth:      gh CLI authenticated as blafourcade
 |---|--------|-------|
 | G1 | ✅ | `aidd/4.0.0 node/25.8.0 darwin-arm64`, exit 0 |
 | G2 | ✅ | `--verbose` shows `[verbose]` prefixed file-level output |
-| G3 | ⚠️ | `--repo + --release v3.9.1` downloads + installs 59 files; `--release latest` fails — CLI converts to `vlatest` (BUG-2) |
+| G3 | ✅ | `--repo + --release v3.9.1` downloads + installs 59 files; `--release latest` routes to fetchLatestRelease, exit 0 |
 
 ---
 
@@ -85,7 +85,7 @@ Auth:      gh CLI authenticated as blafourcade
 | U1 | ✅ | Install claude+plugins → uninstall → 10 files removed, plugin dir deleted, manifest cleared, exit 0 |
 | U2 | ✅ | `uninstall --all` → 35 files removed, exit 0 |
 | U3 | ✅ | `uninstall --plugin aidd-dev` → plugin removed (45 files), base claude kept, exit 0 |
-| U4 | ⚠️ | `uninstall --mcp playwright` alone → requires tool arg (BUG-6); with tool arg → 0 files gracefully, exit 0 |
+| U4 | ✅ | `uninstall --mcp playwright` alone → defaults to all installed tools, removes MCP entry, exit 0 |
 | U5 | ✅ | Uninstall not-installed → "Error: claude is not installed", exit 1 |
 | U6 | ⏭️ | Interactive |
 
@@ -144,14 +144,14 @@ Auth:      gh CLI authenticated as blafourcade
 
 | # | Result | Notes |
 |---|--------|-------|
-| D1 | ⚠️ | Local `--path` install: 22 broken-ref warnings from dev-task docs, exit 1; release install: "Installation is healthy", exit 0 (K4 known issue) |
+| D1 | ✅ | Local `--path` install: "Installation is healthy" exit 0; tasks/ files skipped in broken-ref check |
 | D2 | ✅ | Corrupt manifest.json → "Error: Manifest is corrupted (invalid JSON)", exit 1 |
 | D3 | ⏭️ | Hard to reproduce |
 | D4 | ⏭️ | Hard to reproduce |
-| D5 | ⚠️ | Modified tracked file → doctor shows healthy (hash drift not detected by doctor — BUG-5) |
+| D5 | ✅ | Modified tracked file → doctor shows "Modified tracked file: …" warning, exit 1 |
 | D6 | ✅ | `doctor ai` → "Installation is healthy (59 files tracked across 1 tool)", exit 0 |
 | D7 | ✅ | `doctor ide` with vscode → "Installation is healthy (3 files tracked across 1 tool)", exit 0 |
-| D8 | ⚠️ | Local `--path`: broken-ref warnings, exit 1; `--release`: healthy, exit 0 (K4 known issue) |
+| D8 | ✅ | Local `--path`: healthy exit 0 (tasks/ skipped); `--release`: healthy, exit 0 |
 | D9 | ✅ | Isolated HOME → "Warning: Not authenticated / Fix: Run aidd auth login", exit 0 |
 | D10 | ✅ | No manifest → "Error: No AIDD manifest found", exit 1 |
 
@@ -175,7 +175,7 @@ Auth:      gh CLI authenticated as blafourcade
 | SY1 | ✅ | Claude+cursor installed → modify claude rule → `sync --source claude` → "Synced 1 file", exit 0 |
 | SY2 | ✅ | `--source claude --target cursor` → syncs 1 modified file to cursor `.mdc`, exit 0 |
 | SY3 | ⏭️ | Interactive conflict resolution |
-| SY4 | ⚠️ | `sync --plugin aidd-dev` → "Plugin aidd-dev manifest updated" exit 0, but plugin files NOT copied to other tools (BUG-4) |
+| SY4 | ✅ | `sync --plugin aidd-dev` → "Plugin aidd-dev manifest updated" exit 0; re-hashes plugin in manifest (per spec — no cross-tool copy) |
 | SY5 | ✅ | Only claude installed → "Error: Sync requires at least 2 installed tools.", exit 1 |
 | SY6 | ⏭️ | Interactive multi-select |
 | SY7 | ✅ | Non-interactive, no `--source` → "Error: --source <tool> is required.", exit 1 |
@@ -255,7 +255,7 @@ Auth:      gh CLI authenticated as blafourcade
 | P14 | ✅ | `plugin update` (all) → "All plugins are up to date.", exit 0 |
 | P15 | ✅ | `plugin remove aidd-dev --tool claude` → "Plugin 'aidd-dev' removed.", manifest updated, exit 0 |
 | P16 | ✅ | aidd-context for claude → `hooks.json` + `update_memory.js` in `.claude/plugins/aidd-context/hooks/`, exit 0 |
-| P17 | ⚠️ | aidd-context for cursor → hooks files at `.cursor/plugins/aidd-context/` root, not in `hooks/` subdir (expected — cursor no native hooks) |
+| P17 | ✅ | aidd-context for cursor → `hooks.json` + `update_memory.js` in `.cursor/plugins/aidd-context/hooks/`, exit 0 |
 | P18 | ✅ | aidd-dev for claude → `.mcp.json` (dot prefix) in `.claude/plugins/aidd-dev/`, exit 0 |
 | P19 | ✅ | aidd-dev for cursor → `mcp.json` (no dot) in `.cursor/plugins/aidd-dev/`, exit 0 |
 
@@ -267,7 +267,7 @@ Auth:      gh CLI authenticated as blafourcade
 |---|--------|-------|
 | CA1 | ✅ | No cache → "No cached framework versions found.", exit 0 |
 | CA2 | ✅ | After `install --release v3.9.1` → `cache list` shows `3.9.1  191.7 KB  /…/.aidd/cache/3.9.1`, exit 0 |
-| CA3 | ⚠️ | `cache clear 3.9.1` (no `v`) → success; `cache clear v3.9.1` (with `v`) → "Error: not found" (BUG-3: `v` prefix not stripped) |
+| CA3 | ✅ | `cache clear 3.9.1` and `cache clear v3.9.1` both succeed — `v` prefix stripped before lookup |
 | CA4 | ✅ | `cache clear --all` → "Cleared all cached framework versions", exit 0 |
 | CA5 | ✅ | `cache clear v9.9.9` → "Error: No cached framework found for version 'v9.9.9'", exit 1 |
 | CA6 | ✅ | `cache clear` (no args, non-interactive) → "Error: Specify a version or --all in non-interactive mode.", exit 1 |
@@ -312,6 +312,12 @@ Auth:      gh CLI authenticated as blafourcade
 | A1-fix | `auth status` threw exit 1 when not authenticated | ✅ Fixed — discriminated union on `AuthStatus`, adapter returns `{ authenticated: false }` |
 | SY1/SY2-fix | Sync didn't detect modifications: `frameworkPath` key mismatch (`.claude.md` vs `.cursor.md`) | ✅ Fixed — `canonicalFrameworkKey()` strips tool suffix at map build + both lookup sites |
 | U1-fix | Plugin files not deleted on `uninstall ai <tool>` | ✅ Fixed — `removePluginFiles()` iterates manifest plugins before `removeTool()` |
+| BUG-2 | `--release latest` produced `vlatest` — `normalizeTag()` now returns `undefined` for `"latest"` | ✅ Fixed |
+| BUG-3 | `cache clear v3.9.1` failed — `v` prefix now stripped before cache lookup | ✅ Fixed |
+| BUG-5 | `doctor` reported healthy on modified tracked files | ✅ Fixed — `checkModifiedTrackedFiles()` added, warns on hash drift |
+| BUG-6 | `uninstall --mcp` required explicit tool arg | ✅ Fixed — defaults to all installed tools when no tool args |
+| P17-fix | Cursor plugin hooks at plugin root, not `hooks/` subdir | ✅ Fixed — removed explicit `hooksRelativePath: "hooks.json"` override in cursor.ts |
+| D1/D8-fix | `doctor` raised broken-ref warnings for `aidd_docs/tasks/` dev plan files | ✅ Fixed — `checkBrokenReferences()` skips paths containing `/tasks/` |
 
 ---
 
@@ -319,13 +325,8 @@ Auth:      gh CLI authenticated as blafourcade
 
 | ID | Issue | Severity |
 |----|-------|----------|
-| BUG-2 | `--release latest` fails — CLI prepends `v` producing `vlatest` | Medium |
-| BUG-3 | `cache clear v3.9.1` fails — `v` prefix not stripped when looking up cache entries | Low |
-| BUG-4 | `sync --plugin aidd-dev` updates manifest hashes only, does NOT copy plugin files to other tools | Medium |
-| BUG-5 | `doctor` does not detect hash drift (modified tracked files reported healthy) | Medium |
-| BUG-6 | `uninstall --mcp <server>` requires explicit tool arg (undocumented, not prompted) | Low |
 | K1 | `marketplace browse` shows `@?` (no version field in catalog) | Low (cosmetic) |
 | K2 | `marketplace check` stale immediately after `setup` (no auto-refresh at registration) | Low (UX) |
 | K3 | Local `--path` install copies untracked `aidd_docs/tasks/*/` dev files into user project | Medium |
-| K4 | `doctor` warns on `../framework/` refs in task plan files when using local `--path` | Low (local dev only) |
-| K5 | Cursor/copilot/opencode hooks files silently skipped (by design) | Expected |
+| K5 | Cursor/copilot/opencode hooks files silently skipped (by design — no native hook system) | Expected |
+| I11/U6/UP7 | Interactive flows not covered (TTY required) | Expected (out of scope) |
