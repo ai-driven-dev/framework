@@ -222,11 +222,11 @@ Auth:      gh CLI authenticated as blafourcade
 | M2 | ✅ | `--user` → registered in `~/.config/aidd/marketplaces.json` with scope=user, exit 0 |
 | M3 | ✅ | `marketplace list` → shows all with `[project]`/`[user]` scope, exit 0 |
 | M4 | ✅ | `marketplace remove testfw --yes` → "Marketplace removed (0 plugin(s) cleaned up).", exit 0 |
-| M5 | ✅ | `marketplace browse testfw` → shows `name@? description path (recommended)`, exit 0 |
+| M5 | ✅ | `marketplace browse testfw` → shows `name@1.0.0 description path (recommended)`, exit 0 |
 | M6 | ✅ | `marketplace refresh` → `framework: ok`, `testfw: ok`, exit 0 |
 | M7 | ✅ | `marketplace refresh testfw` → `testfw: ok`, exit 0 |
 | M8 | ✅ | After refresh → "All marketplaces fresh.", exit 0 |
-| M9 | ⚠️ | Check immediately after add → all stale (no auto-refresh at registration — K2 known issue) |
+| M9 | ✅ | After `setup`, marketplace auto-refreshed immediately — no longer stale |
 | M10 | ✅ | Add same name twice → "Error: already registered.", exit 1 |
 | M11 | ✅ | `--overwrite` → "Marketplace 'testfw' registered.", exit 0 |
 | M12 | ✅ | Bad path → "Error: local path does not exist", exit 1 |
@@ -318,6 +318,9 @@ Auth:      gh CLI authenticated as blafourcade
 | BUG-6 | `uninstall --mcp` required explicit tool arg | ✅ Fixed — defaults to all installed tools when no tool args |
 | P17-fix | Cursor plugin hooks at plugin root, not `hooks/` subdir | ✅ Fixed — removed explicit `hooksRelativePath: "hooks.json"` override in cursor.ts |
 | D1/D8-fix | `doctor` raised broken-ref warnings for `aidd_docs/tasks/` dev plan files | ✅ Fixed — `checkBrokenReferences()` skips paths containing `/tasks/` |
+| K1-fix | `marketplace browse` showed `@?` — no version in catalog | ✅ Fixed — added `version` to `marketplace.json` entries in framework |
+| K2-fix | Marketplace stale immediately after `setup` | ✅ Fixed — `setup.ts` calls `marketplaceRefreshUseCase` after successful registration |
+| K3-fix | Local `--path` install copied `aidd_docs/tasks/` dev plans to user projects | ✅ Fixed — `FrameworkLoaderAdapter.loadDocsFiles()` excludes `tasks/` prefix |
 
 ---
 
@@ -325,8 +328,8 @@ Auth:      gh CLI authenticated as blafourcade
 
 | ID | Issue | Severity |
 |----|-------|----------|
-| K1 | `marketplace browse` shows `@?` (no version field in catalog) | Low (cosmetic) |
-| K2 | `marketplace check` stale immediately after `setup` (no auto-refresh at registration) | Low (UX) |
-| K3 | Local `--path` install copies untracked `aidd_docs/tasks/*/` dev files into user project | Medium |
-| K5 | Cursor/copilot/opencode hooks files silently skipped (by design — no native hook system) | Expected |
+| K1 | `marketplace browse` showed `@?` — fixed: version added to catalog entries (framework) | ✅ Fixed |
+| K2 | `marketplace check` stale after `setup` — fixed: auto-refresh after registration | ✅ Fixed |
+| K3 | Local `--path` install copied `aidd_docs/tasks/` dev files — fixed: loader excludes tasks/ | ✅ Fixed |
+| K5 | Cursor/copilot/opencode: no native hook runtime — hooks files installed but not executed by tool | Expected (by design) |
 | I11/U6/UP7 | Interactive flows not covered (TTY required) | Expected (out of scope) |
