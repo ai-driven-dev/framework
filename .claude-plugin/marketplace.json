@@ -1,5 +1,4 @@
 {
-  "$schema": "./scripts/schemas/marketplace.schema.json",
   "plugins": [
     {
       "name": "aidd-context",
