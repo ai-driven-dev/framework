@@ -12,6 +12,7 @@ import type {
 } from "../../domain/models/plugin-source.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { PluginFetcher, PluginFetchOptions } from "../../domain/ports/plugin-fetcher.js";
+import { injectTokenIntoUrl } from "../git/inject-token.js";
 
 const execFile = promisify(execFileCb);
 
@@ -21,8 +22,7 @@ const AUTH_ERROR_PATTERN =
 export class PluginFetcherAdapter implements PluginFetcher {
   constructor(
     private readonly fs: FileSystem,
-    private readonly githubToken?: string,
-    private readonly gitlabToken?: string
+    private readonly token?: string
   ) {}
 
   async fetch(
@@ -128,19 +128,12 @@ export class PluginFetcherAdapter implements PluginFetcher {
   }
 
   private injectGitHubToken(url: string): string {
-    if (!this.githubToken) return url;
-    return url.replace("https://", `https://x-access-token:${this.githubToken}@`);
+    return injectTokenIntoUrl(url, this.token);
   }
 
   private injectTokenForUrl(url: string): string {
     if (url.startsWith("git@")) return url;
-    if (url.includes("github.com") && this.githubToken) {
-      return url.replace("https://", `https://x-access-token:${this.githubToken}@`);
-    }
-    if (url.includes("gitlab.com") && this.gitlabToken) {
-      return url.replace("https://", `https://oauth2:${this.gitlabToken}@`);
-    }
-    return url;
+    return injectTokenIntoUrl(url, this.token);
   }
 
   private async cloneShallow(
@@ -187,13 +180,7 @@ export class PluginFetcherAdapter implements PluginFetcher {
     if (url.startsWith("git@")) {
       return "Check your SSH key is registered on the remote host.";
     }
-    if (url.includes("github.com")) {
-      return "Set AIDD_TOKEN or run `aidd auth login`. Token needs `repo` scope for private repos.";
-    }
-    if (url.includes("gitlab.com")) {
-      return "Set AIDD_GITLAB_TOKEN env var with a personal access token (`read_repository` scope).";
-    }
-    return "Check your credentials or use an SSH URL (git@host:owner/repo.git).";
+    return "Set AIDD_TOKEN, run `aidd auth login`, or pass --token <value>. Required scope depends on the host (github: `repo`, gitlab: `read_repository`, bitbucket: `repository:read`).";
   }
 }
 

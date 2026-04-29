@@ -6,12 +6,19 @@ import { isSemver } from "./semver.js";
 
 export const PLUGIN_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
+export function parsePluginSpec(arg: string): { name: string; version?: string } {
+  const at = arg.lastIndexOf("@");
+  if (at <= 0) return { name: arg };
+  return { name: arg.slice(0, at), version: arg.slice(at + 1) };
+}
+
 export interface PluginEntryData {
   name: string;
   source: Record<string, unknown>;
   version: string;
   strict: boolean;
   files: Record<string, string>;
+  marketplace?: string;
 }
 
 export class Plugin {
@@ -20,6 +27,7 @@ export class Plugin {
   readonly version: string;
   readonly strict: boolean;
   readonly files: ReadonlyMap<string, string>;
+  readonly marketplace?: string;
 
   private constructor(params: {
     name: string;
@@ -27,30 +35,35 @@ export class Plugin {
     version: string;
     strict: boolean;
     files: ReadonlyMap<string, string>;
+    marketplace?: string;
   }) {
     this.name = params.name;
     this.source = params.source;
     this.version = params.version;
     this.strict = params.strict;
     this.files = params.files;
+    this.marketplace = params.marketplace;
   }
 
   static fromDistribution(
     dist: PluginDistribution,
     source: PluginSource,
-    files: InstallationFile[]
+    files: InstallationFile[],
+    marketplace?: string
   ): Plugin {
     const filesRecord: Record<string, string> = {};
     for (const f of files) {
       filesRecord[f.relativePath] = f.hash.value;
     }
-    return Plugin.fromJSON({
+    const data: PluginEntryData = {
       name: dist.manifest.name,
       source: serializePluginSource(source),
       version: dist.manifest.version,
       strict: dist.manifest.strict ?? false,
       files: filesRecord,
-    });
+    };
+    if (marketplace !== undefined) data.marketplace = marketplace;
+    return Plugin.fromJSON(data);
   }
 
   static fromJSON(data: PluginEntryData): Plugin {
@@ -68,6 +81,7 @@ export class Plugin {
       version: data.version,
       strict: data.strict,
       files,
+      marketplace: data.marketplace,
     });
   }
 
@@ -76,13 +90,15 @@ export class Plugin {
     for (const [key, value] of this.files) {
       files[key] = value;
     }
-    return {
+    const data: PluginEntryData = {
       name: this.name,
       source: serializePluginSource(this.source),
       version: this.version,
       strict: this.strict,
       files,
     };
+    if (this.marketplace !== undefined) data.marketplace = this.marketplace;
+    return data;
   }
 
   isFileTracked(relPath: string): boolean {
@@ -96,6 +112,7 @@ export class Plugin {
       version: v,
       strict: this.strict,
       files: this.files,
+      marketplace: this.marketplace,
     });
   }
 
@@ -106,6 +123,7 @@ export class Plugin {
       version: this.version,
       strict: this.strict,
       files: f,
+      marketplace: this.marketplace,
     });
   }
 }

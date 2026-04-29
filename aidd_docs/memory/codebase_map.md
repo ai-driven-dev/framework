@@ -11,6 +11,7 @@ src/
 │   │   ├── adopt/            # adopt-use-case + sub-use-cases
 │   │   ├── auth/             # login / logout / status / require-auth
 │   │   ├── install/          # install + 6 capability sub-use-cases
+│   │   ├── plugin/           # add/remove/list/update + marketplace lifecycle (add/list/remove/refresh/browse/check) + install-from-marketplace + search
 │   │   ├── restore/          # restore-use-case + restore-plugin-use-case
 │   │   ├── sync/             # sync + sync-status + conflict-resolution
 │   │   ├── update/           # update + 6 capability sub-use-cases
