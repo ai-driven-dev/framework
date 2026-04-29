@@ -19,6 +19,14 @@ describe("PluginDistributionReaderAdapter", () => {
       expect(dist.format).toBe("claude");
     });
 
+    it("includes all hooks/ files including companion scripts", async () => {
+      const adapter = makeAdapter();
+      const dist = await adapter.read(join(FIXTURE_DIR, "claude-format/sample-plugin"));
+      const paths = dist.files.map((f) => f.relativePath);
+      expect(paths).toContain("hooks/hooks.json");
+      expect(paths).toContain("hooks/update_memory.js");
+    });
+
     it("parses manifest fields", async () => {
       const adapter = makeAdapter();
       const dist = await adapter.read(join(FIXTURE_DIR, "claude-format/sample-plugin"));

@@ -82,7 +82,7 @@ function toPosix(p: string): string {
 function isComponentFile(relativePath: string): boolean {
   const top = relativePath.split("/")[0];
   if (top === "skills" || top === "commands" || top === "agents" || top === "rules") return true;
-  if (relativePath === "hooks/hooks.json") return true;
+  if (top === "hooks") return true;
   if (relativePath === ".mcp.json") return true;
   return false;
 }

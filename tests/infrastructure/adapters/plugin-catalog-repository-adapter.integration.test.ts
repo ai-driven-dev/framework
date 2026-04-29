@@ -32,10 +32,14 @@ describe("PluginCatalogRepositoryAdapter", () => {
       expect(catalog?.plugins[1].recommended).toBe(false);
     });
 
-    it("parses local source for first entry", async () => {
+    it("resolves relative local source path against framework directory", async () => {
       const adapter = makeAdapter();
-      const catalog = await adapter.load(join(FIXTURE_DIR, "marketplace-sample"));
-      expect(catalog?.plugins[0].source).toEqual({ kind: "local", path: "./plugins/dev" });
+      const frameworkDir = join(FIXTURE_DIR, "marketplace-sample");
+      const catalog = await adapter.load(frameworkDir);
+      expect(catalog?.plugins[0].source).toEqual({
+        kind: "local",
+        path: join(frameworkDir, "plugins/dev"),
+      });
     });
 
     it("parses github source for second entry", async () => {

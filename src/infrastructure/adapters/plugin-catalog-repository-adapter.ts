@@ -1,6 +1,7 @@
-import { join } from "node:path";
+import { isAbsolute, join, resolve } from "node:path";
 import { InvalidPluginManifestError } from "../../domain/errors.js";
 import { type PluginCatalog, parsePluginCatalog } from "../../domain/models/plugin-catalog.js";
+import type { PluginSource } from "../../domain/models/plugin-source.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { PluginCatalogRepository } from "../../domain/ports/plugin-catalog-repository.js";
 
@@ -14,7 +15,8 @@ export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {
     if (!(await this.fs.fileExists(fullPath))) {
       return null;
     }
-    return this.readCatalog(fullPath);
+    const catalog = await this.readCatalog(fullPath);
+    return this.resolveLocalPaths(catalog, frameworkPath);
   }
 
   private async readCatalog(fullPath: string): Promise<PluginCatalog> {
@@ -32,5 +34,19 @@ export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {
         `marketplace.json at "${fullPath}": ${err instanceof Error ? err.message : String(err)}`
       );
     }
+  }
+
+  private resolveLocalPaths(catalog: PluginCatalog, frameworkPath: string): PluginCatalog {
+    const plugins = catalog.plugins.map((entry) => ({
+      ...entry,
+      source: this.resolveSource(entry.source, frameworkPath),
+    }));
+    return { plugins };
+  }
+
+  private resolveSource(source: PluginSource, frameworkPath: string): PluginSource {
+    if (source.kind !== "local") return source;
+    if (isAbsolute(source.path)) return source;
+    return { kind: "local", path: resolve(frameworkPath, source.path) };
   }
 }
