@@ -1,14 +1,20 @@
+import { join } from "node:path";
 import { type FileHash, InstallationFile } from "../../../domain/models/file.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { MergeFileEntry } from "../../../domain/models/merge.js";
+import { PLUGIN_CACHE_SUBDIR } from "../../../domain/models/paths.js";
+import { PluginTranslator } from "../../../domain/models/plugin-translator.js";
+import { AI_TOOL_IDS, type AiToolId } from "../../../domain/models/tool-ids.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../../domain/ports/platform.js";
+import type { PluginDistributionReader } from "../../../domain/ports/plugin-distribution-reader.js";
+import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
-import { getToolConfig, type ToolId } from "../../../domain/tools/registry.js";
+import { getToolConfig, isAiTool, type ToolId } from "../../../domain/tools/registry.js";
 import { NoManifestError } from "../../errors.js";
 import { GenerateToolDistributionUseCase } from "../shared/generate-tool-distribution-use-case.js";
 import { RestoreMergeFilesUseCase } from "../shared/restore-merge-files-use-case.js";
@@ -26,6 +32,7 @@ interface RestoreOptions {
   interactive?: boolean;
   manifest?: Manifest;
   repo?: string;
+  skipPlugins?: boolean;
 }
 
 interface RestoreToolResult {
@@ -46,6 +53,7 @@ interface RestoreResult {
   docs: RestoreDocsResult | null;
   totalRestored: number;
   totalKept: number;
+  totalPluginFilesRestored: number;
 }
 
 interface SectionRestoreResult {
@@ -83,7 +91,9 @@ export class RestoreUseCase {
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly platform: Platform,
-    private readonly prompter: Prompter
+    private readonly prompter: Prompter,
+    private readonly pluginFetcher?: PluginFetcher,
+    private readonly pluginDistributionReader?: PluginDistributionReader
   ) {}
 
   async execute(options: RestoreOptions): Promise<RestoreResult> {
@@ -169,11 +179,62 @@ export class RestoreUseCase {
           interactive,
           fileFilter
         );
+    const skipPlugins = options.skipPlugins ?? false;
+    const totalPluginFilesRestored = skipPlugins
+      ? 0
+      : await this.restoreAllPlugins(projectRoot, manifest);
     const hasChanges =
       toolResults.some((t) => t.restored.length > 0) ||
-      (docsResult !== null && docsResult.restored.length > 0);
+      (docsResult !== null && docsResult.restored.length > 0) ||
+      totalPluginFilesRestored > 0;
     if (hasChanges) await this.manifestRepo.save(manifest);
-    return this.buildRestoreTotals(toolResults, docsResult);
+    return this.buildRestoreTotals(toolResults, docsResult, totalPluginFilesRestored);
+  }
+
+  private async restoreAllPlugins(projectRoot: string, manifest: Manifest): Promise<number> {
+    const { pluginFetcher, pluginDistributionReader } = this;
+    if (pluginFetcher === undefined || pluginDistributionReader === undefined) return 0;
+    const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
+    let total = 0;
+    for (const toolId of AI_TOOL_IDS) {
+      if (!manifest.hasTool(toolId)) continue;
+      total += await this.restorePluginsForTool(
+        toolId,
+        projectRoot,
+        cacheDir,
+        manifest,
+        pluginFetcher,
+        pluginDistributionReader
+      );
+    }
+    return total;
+  }
+
+  private async restorePluginsForTool(
+    toolId: AiToolId,
+    projectRoot: string,
+    cacheDir: string,
+    manifest: Manifest,
+    pluginFetcher: PluginFetcher,
+    pluginDistributionReader: PluginDistributionReader
+  ): Promise<number> {
+    const toolConfig = getToolConfig(toolId);
+    if (!isAiTool(toolConfig)) return 0;
+    let total = 0;
+    for (const plugin of manifest.getPlugins(toolId)) {
+      const localPath = await pluginFetcher.fetch(plugin.source, cacheDir);
+      const dist = await pluginDistributionReader.read(localPath);
+      const files = new PluginTranslator(this.hasher).translate(dist, toolConfig);
+      await Promise.all(
+        files.map((f) => this.fs.writeFile(join(projectRoot, f.relativePath), f.content))
+      );
+      manifest.updatePlugin(
+        toolId,
+        plugin.withFiles(new Map(files.map((f) => [f.relativePath, f.hash.value])))
+      );
+      total += files.length;
+    }
+    return total;
   }
 
   private resolveToolIds(options: RestoreOptions, docsOnly: boolean, manifest: Manifest): ToolId[] {
@@ -351,13 +412,20 @@ export class RestoreUseCase {
 
   private buildRestoreTotals(
     toolResults: RestoreToolResult[],
-    docsResult: RestoreDocsResult | null
+    docsResult: RestoreDocsResult | null,
+    totalPluginFilesRestored: number
   ): RestoreResult {
     const totalRestored =
       toolResults.reduce((s, t) => s + t.restored.length, 0) + (docsResult?.restored.length ?? 0);
     const totalKept =
       toolResults.reduce((s, t) => s + t.kept.length, 0) + (docsResult?.kept.length ?? 0);
-    return { tools: toolResults, docs: docsResult, totalRestored, totalKept };
+    return {
+      tools: toolResults,
+      docs: docsResult,
+      totalRestored,
+      totalKept,
+      totalPluginFilesRestored,
+    };
   }
 
   private buildDocsDistribution(

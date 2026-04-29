@@ -144,7 +144,9 @@ export function registerRestoreCommand(program: Command): void {
             deps.hasher,
             deps.logger,
             deps.platform,
-            prompter
+            prompter,
+            deps.pluginFetcher,
+            deps.pluginDistributionReader
           );
 
           const result = await restoreUseCase.execute({
@@ -163,7 +165,8 @@ export function registerRestoreCommand(program: Command): void {
 
           const nothingDone =
             result.tools.every((t) => t.nothingToRestore) &&
-            (result.docs === null || result.docs.nothingToRestore);
+            (result.docs === null || result.docs.nothingToRestore) &&
+            result.totalPluginFilesRestored === 0;
 
           if (nothingDone) {
             output.success("Nothing to restore — all files are unmodified.");
@@ -186,9 +189,14 @@ export function registerRestoreCommand(program: Command): void {
 
           const restored = result.totalRestored;
           const kept = result.totalKept;
+          const pluginFiles = result.totalPluginFilesRestored;
           output.print("");
+          const pluginSuffix =
+            pluginFiles > 0
+              ? `, ${pluginFiles} plugin ${pluginFiles === 1 ? "file" : "files"}`
+              : "";
           output.success(
-            `Restored ${restored} ${restored === 1 ? "file" : "files"}, kept ${kept} ${kept === 1 ? "file" : "files"}`
+            `Restored ${restored} ${restored === 1 ? "file" : "files"}, kept ${kept} ${kept === 1 ? "file" : "files"}${pluginSuffix}`
           );
         } catch (error) {
           errorHandler.handle(error);
