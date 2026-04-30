@@ -8,8 +8,7 @@ Covers project initialisation, architecture and context generation, brainstormin
 
 | Bracket ID | Skill | Description |
 |---|---|---|
-| [1.1] | project-init | Initialize project memory bank and scaffold the rules directory structure. |
-| [1.2] | architecture-generate | Generate project architecture with agents, skills, coordination diagram, and rules. |
+| [1.2] | project-init | Initialize project memory bank and scaffold the rules directory structure. |
 | [1.3] | generate-skill | Generate and maintain router-based Claude Code skills. |
 | [1.4] | brainstorm | Interactive brainstorming session to clarify and refine feature requests through iterative questioning. |
 | [1.5] | challenge | Challenge ideas and achieve clarity. Invoke 01 for structured challenge, 02 for compressed communication mode. |

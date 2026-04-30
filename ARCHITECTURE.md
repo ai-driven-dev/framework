@@ -58,7 +58,7 @@ Les fichiers vides ne sont pas listés dans l'arbre ci-dessous (notamment `evals
 - **D9.** Numérotation `01-` locale à la skill.
 - **D10.** `aidd-pm` marqué comme "release candidate" — à valider après v1.
 - **D11.** `auto-accept` devient une action de `[2.8] for-sure` (pas de dossier `behaviors/`).
-- **D12.** `golden-principles.md` dans `[1.1] project-init/assets/` (template copié au projet client).
+- **D12.** `golden-principles.md` dans `[1.2] project-init/assets/` (template copié au projet client).
 - **D13.** `[2.0] sdlc` (skill 0, en tête de aidd-dev) — orchestrateur du cycle complet.
 - **D14.** `[2.3] audit` skill à part entière (sortie de refactor).
 - **D15.** `[1.8] discovery` ajouté à aidd-context.
@@ -69,10 +69,10 @@ Les fichiers vides ne sont pas listés dans l'arbre ci-dessous (notamment `evals
 - **D20.** `aidd_docs/` étendu à **4 dossiers** : `memory/`, `stack/` (NEW), `workflows/` (NEW), `rules/`. (Plus de `domain/` — voir D25.)
 - **D21.** `memory/` contient `frontend/` et `backend/` comme sous-dossiers (au lieu de l'ancien `internal/`). Plus de concept memory interne/externe.
 - **D22.** Chaque dossier de `aidd_docs/` contient un `README.md` (guide type) qui explique : quoi, qui le lit, comment maintenir.
-- **D23.** Tous les templates regroupés dans `[1.1] project-init/assets/templates/` (sous-dossier unique pour la maintenance).
+- **D23.** Tous les templates regroupés dans `[1.2] project-init/assets/templates/` (sous-dossier unique pour la maintenance).
 - **D24.** `frontend/` et `backend/` sont des sous-dossiers de `memory/` (pas au niveau templates/). Copiés si le projet a un module concerné.
 - **D25.** `domain/` supprimé — tout ce qui est métier (ubiquitous-language, business-rules, bounded-contexts) va dans `memory/` selon le besoin du dev.
-- **D26.** `rules/` côté projet client suit la **structure existante** : 10 dossiers numérotés (`00-architecture/` à `09-other/`), vides au départ. Convention de naming des fichiers à l'intérieur : `1-<nom>.md`. Cette structure est **générée par l'action `02-init-skeleton-rules.md`** de `[1.1] project-init` (pas de templates statiques dans assets/).
+- **D26.** `rules/` côté projet client suit la **structure existante** : 10 dossiers numérotés (`00-architecture/` à `09-other/`), vides au départ. Convention de naming des fichiers à l'intérieur : `1-<nom>.md`. Cette structure est **générée par l'action `02-init-skeleton-rules.md`** de `[1.2] project-init` (pas de templates statiques dans assets/).
 
 ---
 
@@ -102,7 +102,7 @@ aidd-framework/
     │   │   └── plugin.json
     │   └── skills/
     │       │
-    │       ├── [1.1] project-init/                ← commands/01_onboard/init.md
+    │       ├── [1.2] project-init/                ← commands/01_onboard/init.md
     │       │   ├── SKILL.md
     │       │   ├── actions/
     │       │   │   ├── 01-init.md                 # init principal (copie templates, génère AGENTS.md)
@@ -132,13 +132,6 @@ aidd-framework/
     │       │   │       │   └── README.md          (guide : 1 fichier par techno utilisée)
     │       │   │       └── workflows/
     │       │   │           └── README.md          (guide : spec d'une future skill custom)
-    │       │   ├── evals/
-    │       │   └── references/
-    │       │
-    │       ├── [1.2] architecture-generate/       ← commands/01_onboard/generate_architecture.md
-    │       │   ├── SKILL.md
-    │       │   ├── actions/
-    │       │   │   └── 01-generate-architecture.md
     │       │   ├── evals/
     │       │   └── references/
     │       │
@@ -398,9 +391,9 @@ aidd-framework/
 ```
 <projet-client>/
 │
-├── AGENTS.md                                       (router universel — copié depuis [1.1] project-init/assets/AGENTS.md)
+├── AGENTS.md                                       (router universel — copié depuis [1.2] project-init/assets/AGENTS.md)
 │
-└── aidd_docs/                                      (copié depuis [1.1] project-init/assets/, mutable)
+└── aidd_docs/                                      (copié depuis [1.2] project-init/assets/, mutable)
     │
     ├── golden-principles.md                        ← copié depuis assets/golden-principles.md
     │
@@ -452,7 +445,7 @@ aidd-framework/
 ## Récap skills numérotées
 
 **aidd-context** (8 skills) :
-1.1 project-init · 1.2 architecture-generate · 1.3 context-generate · 1.4 brainstorm · 1.5 challenge (+ clarity) · 1.6 mermaid · 1.7 learn · 1.8 discovery
+1.2 project-init · 1.3 context-generate · 1.4 brainstorm · 1.5 challenge (+ clarity) · 1.6 mermaid · 1.7 learn · 1.8 discovery
 
 **aidd-dev** (9 skills) :
 2.0 sdlc ⭐ · 2.1 plan · 2.2 assert · 2.3 audit · 2.4 review · 2.5 test · 2.6 refactor · 2.7 debug (+ reflect-issue) · 2.8 for-sure (+ auto-accept)
@@ -479,12 +472,12 @@ aidd-framework/
 - [ ] Intégrer `reflect_issue.md` comme action `03-reflect-issue.md` de `[2.7] debug`
 - [ ] Copier les templates métier au plus proche : `aidd_docs/templates/{aidd,dev,vcs,pm,docs}/` → `<skill>/assets/`
   - Notes : `adr.md` + `decision.md` → `[1.7] learn/assets/` (pas plan)
-- [ ] Copier les templates de mémoire dans `[1.1] project-init/assets/templates/memory/` avec **frontend/ et backend/ comme sous-dossiers** (`internal/` éclaté)
-- [ ] Créer les **squelettes** des nouveaux dossiers `aidd_docs/` dans `[1.1] project-init/assets/templates/` :
+- [ ] Copier les templates de mémoire dans `[1.2] project-init/assets/templates/memory/` avec **frontend/ et backend/ comme sous-dossiers** (`internal/` éclaté)
+- [ ] Créer les **squelettes** des nouveaux dossiers `aidd_docs/` dans `[1.2] project-init/assets/templates/` :
   - `stack/README.md` (guide explicatif)
   - `workflows/README.md` (guide explicatif)
 - [ ] Écrire l'action `02-init-skeleton-rules.md` qui génère la structure `rules/` côté client : 10 dossiers numérotés (`00-architecture/`, `01-standards/`, ..., `09-other/`)
-- [ ] Copier `golden-principles.md` et créer `AGENTS.md` template dans `[1.1] project-init/assets/`
+- [ ] Copier `golden-principles.md` et créer `AGENTS.md` template dans `[1.2] project-init/assets/`
 - [ ] Copier les conventions au plus proche : skill-structure, rule-structure, rule-writing, agents-coordination → `[1.3] context-generate/references/`
 - [ ] Copier les agents existants dans `aidd-dev/agents/` (renommage v2 par Alex)
 - [ ] Migrer `auto_accept.md` comme action `02-auto-accept.md` dans `[2.8] for-sure`

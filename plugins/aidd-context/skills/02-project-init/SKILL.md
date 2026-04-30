@@ -1,5 +1,5 @@
 ---
-name: aidd-context:01:project-init
+name: aidd-context:02:project-init
 description: Initialize project memory bank and scaffold the rules directory structure.
 ---
 

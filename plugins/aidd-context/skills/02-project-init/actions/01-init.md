@@ -17,7 +17,7 @@ Every file has its own template to follow.
 ### Hard copy into memory bank (always generated)
 
 ```text
-@{{TOOLS}}/plugins/aidd-context/skills/01-project-init/assets/templates/memory/
+@{{TOOLS}}/plugins/aidd-context/skills/02-project-init/assets/templates/memory/
 ```
 
 ### Memory templates
@@ -35,14 +35,14 @@ Each has a `scope` front-matter field:
 All templates are in:
 
 ```text
-@{{TOOLS}}/plugins/aidd-context/skills/01-project-init/assets/templates/memory/
+@{{TOOLS}}/plugins/aidd-context/skills/02-project-init/assets/templates/memory/
 ```
 
 #### Internal templates (frontend / backend)
 
 ```text
-@{{TOOLS}}/plugins/aidd-context/skills/01-project-init/assets/templates/memory/frontend/
-@{{TOOLS}}/plugins/aidd-context/skills/01-project-init/assets/templates/memory/backend/
+@{{TOOLS}}/plugins/aidd-context/skills/02-project-init/assets/templates/memory/frontend/
+@{{TOOLS}}/plugins/aidd-context/skills/02-project-init/assets/templates/memory/backend/
 ```
 
 ## Rules
