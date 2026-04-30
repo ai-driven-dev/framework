@@ -445,7 +445,7 @@ aidd-framework/
 ## Récap skills numérotées
 
 **aidd-context** (8 skills) :
-1.2 project-init · 1.3 context-generate · 1.4 brainstorm · 1.5 challenge (+ clarity) · 1.6 mermaid · 1.7 learn · 1.8 discovery
+1.1 bootstrap · 1.2 project-init · 1.3 context-generate · 1.4 brainstorm · 1.5 challenge (+ clarity) · 1.6 mermaid · 1.7 learn · 1.8 discovery
 
 **aidd-dev** (9 skills) :
 2.0 sdlc ⭐ · 2.1 plan · 2.2 assert · 2.3 audit · 2.4 review · 2.5 test · 2.6 refactor · 2.7 debug (+ reflect-issue) · 2.8 for-sure (+ auto-accept)
