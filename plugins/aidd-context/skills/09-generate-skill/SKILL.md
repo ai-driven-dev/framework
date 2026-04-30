@@ -1,5 +1,5 @@
 ---
-name: generate-skill
+name: aidd-context:09:generate-skill
 description: Generate and maintain router-based Claude Code skills — SKILL.md router + atomic testable actions + minimal evals. Use when the user wants to create a new skill, refactor an existing skill, add or remove actions, or migrate a slash command into a skill. Do NOT use for editing a single action inside an existing skill (edit directly), creating slash commands (no router needed), writing MCP servers, or modifying project-level CLAUDE.md files.
 ---
 

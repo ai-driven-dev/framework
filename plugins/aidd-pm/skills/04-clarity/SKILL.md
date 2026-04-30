@@ -1,5 +1,5 @@
 ---
-name: clarity
+name: aidd-pm:04:clarity
 description: >
   Ultra-compressed communication mode. Cuts token usage ~75% while keeping full technical accuracy.
   Supports intensity levels: lite, full (default), ultra. Toggle on/off by invoking /clarity again.
