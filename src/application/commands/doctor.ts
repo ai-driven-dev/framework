@@ -38,9 +38,10 @@ export function registerDoctorCommand(program: Command): void {
         }
 
         if (report.healthy) {
-          const totalFiles =
-            report.toolHealth.reduce((s, t) => s + t.fileCount + t.mergeFileCount, 0) +
-            report.docsFileCount;
+          const totalFiles = report.toolHealth.reduce(
+            (s, t) => s + t.fileCount + t.mergeFileCount,
+            0
+          );
           const toolCount = report.toolHealth.length;
           output.success(
             `Installation is healthy (${totalFiles} files tracked across ${toolCount} ${toolCount === 1 ? "tool" : "tools"})`

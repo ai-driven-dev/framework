@@ -137,41 +137,18 @@ describe("adopt", () => {
     expect(existsSync(join(projectRoot, ".aidd", "config.json"))).toBe(false);
   });
 
-  it("registers docs files that match the framework distribution", async () => {
+  it("regenerates the catalog after adopt", async () => {
     await mkdir(join(projectRoot, ".claude"), { recursive: true });
     await writeFile(join(projectRoot, ".claude", "CLAUDE.md"), "content");
-    await mkdir(join(projectRoot, "aidd_docs", "memory"), { recursive: true });
-    // README.md is in the fixture docs distribution; notes.md is not
-    await writeFile(join(projectRoot, "aidd_docs", "README.md"), "# Docs");
-    await writeFile(join(projectRoot, "aidd_docs", "memory", "notes.md"), "notes");
 
-    const result = await buildUseCase().execute({
+    await buildUseCase().execute({
       ...DEFAULT_OPTS,
       toolIds: ["claude"],
       projectRoot,
     });
 
-    expect(result.docsRegistered).toBeGreaterThanOrEqual(1);
-    const manifestData = JSON.parse(
-      await readFile(join(projectRoot, ".aidd", "manifest.json"), "utf-8")
-    ) as { docs: { files: Array<{ relativePath: string }> } };
-    const registeredPaths = manifestData.docs.files.map((f) => f.relativePath);
-    expect(registeredPaths).toContain("aidd_docs/README.md");
-    expect(registeredPaths).not.toContain("aidd_docs/memory/notes.md");
-  });
-
-  it("registers docs dir as empty when present but contains no files", async () => {
-    await mkdir(join(projectRoot, ".claude"), { recursive: true });
-    await writeFile(join(projectRoot, ".claude", "CLAUDE.md"), "content");
-    await mkdir(join(projectRoot, "aidd_docs"), { recursive: true });
-
-    const result = await buildUseCase().execute({
-      ...DEFAULT_OPTS,
-      toolIds: ["claude"],
-      projectRoot,
-    });
-
-    expect(result.docsRegistered).toBe(0);
+    const catalogPath = join(projectRoot, "aidd_docs", "CATALOG.md");
+    expect(existsSync(catalogPath)).toBe(true);
   });
 
   it("registers multiple tools independently", async () => {

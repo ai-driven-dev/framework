@@ -20,7 +20,6 @@ interface CleanOptions {
 
 interface CleanPreview {
   tools: Array<{ toolId: ToolId; fileCount: number }>;
-  docsFileCount: number;
   totalFileCount: number;
 }
 
@@ -28,6 +27,7 @@ interface CleanResult {
   dryRun: boolean;
   preview: CleanPreview;
   fileCount: number;
+  manifestExisted: boolean;
 }
 
 export class CleanUseCase {
@@ -43,8 +43,9 @@ export class CleanUseCase {
     if (manifest === null) {
       return {
         dryRun: false,
-        preview: { tools: [], docsFileCount: 0, totalFileCount: 0 },
+        preview: { tools: [], totalFileCount: 0 },
         fileCount: 0,
+        manifestExisted: false,
       };
     }
 
@@ -52,17 +53,16 @@ export class CleanUseCase {
       toolId,
       fileCount: manifest.getToolFiles(toolId).length + manifest.getMergeFiles(toolId).length,
     }));
-    const docsFileCount = manifest.getDocsFiles().length;
-    const totalFileCount = tools.reduce((s, t) => s + t.fileCount, 0) + docsFileCount;
+    const totalFileCount = tools.reduce((s, t) => s + t.fileCount, 0);
 
-    const preview: CleanPreview = { tools, docsFileCount, totalFileCount };
+    const preview: CleanPreview = { tools, totalFileCount };
 
     if (!options.force) {
       if (options.interactive && this.prompter) {
         const confirmed = await this.prompter.confirm("Remove all AIDD files?");
-        if (!confirmed) return { dryRun: true, preview, fileCount: 0 };
+        if (!confirmed) return { dryRun: true, preview, fileCount: 0, manifestExisted: true };
       } else {
-        return { dryRun: true, preview, fileCount: 0 };
+        return { dryRun: true, preview, fileCount: 0, manifestExisted: true };
       }
     }
 
@@ -74,9 +74,6 @@ export class CleanUseCase {
       deleted += await this.cleanMergeFileKeys(manifest.getMergeFiles(toolId), options.projectRoot);
     }
 
-    this.logger.info("Removing docs files...");
-    deleted += await this.deleteFiles(manifest.getDocsFiles(), options.projectRoot);
-
     const catalogPath = join(options.projectRoot, manifest.docsDir, "CATALOG.md");
     await this.fs.deleteFile(catalogPath);
     await this.fs.deleteEmptyDirectories(join(options.projectRoot, manifest.docsDir));
@@ -84,7 +81,7 @@ export class CleanUseCase {
     await this.fs.deleteDirectory(join(options.projectRoot, AIDD_DIR));
     await new GitignoreUseCase(this.fs).remove(options.projectRoot, [`${AIDD_DIR}/cache/`]);
 
-    return { dryRun: false, preview, fileCount: deleted };
+    return { dryRun: false, preview, fileCount: deleted, manifestExisted: true };
   }
 
   private async cleanMergeFileKeys(

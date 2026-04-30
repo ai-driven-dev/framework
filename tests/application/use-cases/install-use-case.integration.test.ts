@@ -732,7 +732,7 @@ describe("install", () => {
         >;
       };
 
-      expect(data.version).toBe(4);
+      expect(data.version).toBe(5);
       const claudeMerge = data.tools.claude.mergeFiles;
       expect(claudeMerge.length).toBeGreaterThan(0);
       const mcpEntry = claudeMerge.find((m) => m.relativePath === ".mcp.json");

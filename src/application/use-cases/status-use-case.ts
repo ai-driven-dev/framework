@@ -28,11 +28,6 @@ interface ToolStatus {
   drifted: FileDrift[];
 }
 
-interface DocsStatus {
-  version: string;
-  drifted: FileDrift[];
-}
-
 interface PluginDriftEntry {
   toolId: AiToolId;
   pluginName: string;
@@ -41,7 +36,6 @@ interface PluginDriftEntry {
 
 interface StatusReport {
   tools: ToolStatus[];
-  docs: DocsStatus | null;
   pluginDrift: PluginDriftEntry[];
   inSync: boolean;
 }
@@ -49,7 +43,6 @@ interface StatusReport {
 interface StatusOptions {
   projectRoot: string;
   filterToolId?: ToolId;
-  filterDocs?: boolean;
   category?: ToolCategory;
   repo?: string;
   pluginName?: string;
@@ -64,36 +57,29 @@ export class StatusUseCase {
   ) {}
 
   async execute(options: StatusOptions): Promise<StatusReport> {
-    const { projectRoot, filterToolId, filterDocs, category, repo, pluginName } = options;
+    const { projectRoot, filterToolId, category, repo, pluginName } = options;
     const manifest = await this.manifestRepo.load();
     if (manifest === null) throw new NoManifestError(repo);
     if (filterToolId && !manifest.hasTool(filterToolId))
       throw new ToolNotInstalledError(filterToolId);
 
-    const installedToolIds = this.resolveToolIds(filterToolId, filterDocs, category, manifest);
-    const showDocs = !category && !filterToolId;
+    const installedToolIds = this.resolveToolIds(filterToolId, category, manifest);
     const tools = await this.checkAllTools(installedToolIds, manifest, projectRoot);
-    const docs = await this.checkDocsSection(manifest, projectRoot, filterDocs, showDocs);
     const pluginDrift = await this.checkAllPlugins(
       installedToolIds,
       manifest,
       projectRoot,
       pluginName
     );
-    const inSync =
-      tools.every((t) => t.drifted.length === 0) &&
-      (docs === null || docs.drifted.length === 0) &&
-      pluginDrift.length === 0;
-    return { tools, docs, pluginDrift, inSync };
+    const inSync = tools.every((t) => t.drifted.length === 0) && pluginDrift.length === 0;
+    return { tools, pluginDrift, inSync };
   }
 
   private resolveToolIds(
     filterToolId: ToolId | undefined,
-    filterDocs: boolean | undefined,
     category: ToolCategory | undefined,
     manifest: Manifest
   ): ToolId[] {
-    if (filterDocs) return [];
     if (filterToolId) return [filterToolId];
     if (category) {
       const allowed = toolIdsForCategory(category);
@@ -132,26 +118,6 @@ export class StatusUseCase {
     return { toolId, version, drifted };
   }
 
-  private async checkDocsSection(
-    manifest: Manifest,
-    projectRoot: string,
-    filterDocs: boolean | undefined,
-    showDocs: boolean
-  ): Promise<DocsStatus | null> {
-    if (!showDocs && !filterDocs) return null;
-    if (!manifest.hasDocs()) return null;
-    const docsVersion = manifest.getDocsVersion() ?? "unknown";
-    const docsFiles = manifest.getDocsFiles();
-    const drifted = await this.checkTrackedFiles(docsFiles, projectRoot);
-    const catalogPath = join(projectRoot, manifest.docsDir, "CATALOG.md");
-    if (!(await this.fs.fileExists(catalogPath))) {
-      drifted.push({ relativePath: `${manifest.docsDir}/CATALOG.md`, status: "deleted" });
-    }
-    const trackedDocsSet = new Set(docsFiles.map((f) => f.relativePath));
-    drifted.push(...(await this.detectAddedDocs(manifest.docsDir, trackedDocsSet, projectRoot)));
-    return { version: docsVersion, drifted };
-  }
-
   private async detectAddedFiles(
     directory: string,
     trackedSet: Set<string>,
@@ -164,23 +130,6 @@ export class StatusUseCase {
     for (const diskRelPath of diskFiles) {
       if (diskRelPath.endsWith(".backup")) continue;
       const fullRelPath = `${directory}${diskRelPath}`;
-      if (!trackedSet.has(fullRelPath)) added.push({ relativePath: fullRelPath, status: "added" });
-    }
-    return added;
-  }
-
-  private async detectAddedDocs(
-    docsDir: string,
-    trackedSet: Set<string>,
-    projectRoot: string
-  ): Promise<FileDrift[]> {
-    const dir = join(projectRoot, docsDir);
-    if (!(await this.fs.fileExists(dir))) return [];
-    const added: FileDrift[] = [];
-    const diskFiles = await this.fs.listDirectory(dir);
-    for (const diskRelPath of diskFiles) {
-      if (diskRelPath.endsWith(".backup") || diskRelPath === "CATALOG.md") continue;
-      const fullRelPath = `${docsDir}/${diskRelPath}`;
       if (!trackedSet.has(fullRelPath)) added.push({ relativePath: fullRelPath, status: "added" });
     }
     return added;

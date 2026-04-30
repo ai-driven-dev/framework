@@ -9,8 +9,8 @@ import type { ManifestRepository } from "../../../domain/ports/manifest-reposito
 import type { Platform } from "../../../domain/ports/platform.js";
 import { assertValidToolIds, type ToolId } from "../../../domain/tools/registry.js";
 import { AlreadyInitializedError, InputRequiredError } from "../../errors.js";
+import { CatalogUseCase } from "../shared/catalog-use-case.js";
 import { GitignoreUseCase } from "../shared/gitignore-use-case.js";
-import { AdoptDocsUseCase } from "./adopt-docs-use-case.js";
 import { type AdoptToolResult, AdoptToolsUseCase } from "./adopt-tools-use-case.js";
 
 interface AdoptOptions {
@@ -24,7 +24,6 @@ interface AdoptOptions {
 interface AdoptResult {
   tools: AdoptToolResult[];
   totalRegistered: number;
-  docsRegistered: number;
 }
 
 export class AdoptUseCase {
@@ -50,7 +49,7 @@ export class AdoptUseCase {
     if (existing !== null) throw new AlreadyInitializedError();
     await this.deleteLegacyConfig(projectRoot);
 
-    const { descriptor, contentFiles, docsFiles } = await this.loader.loadFromDirectory(
+    const { descriptor, contentFiles } = await this.loader.loadFromDirectory(
       frameworkPath,
       version
     );
@@ -61,24 +60,21 @@ export class AdoptUseCase {
       this.logger,
       this.platform
     ).execute({ toolIds, manifest, descriptor, contentFiles, docsDir, projectRoot, version });
-    const { docsRegistered } = await new AdoptDocsUseCase(
-      this.fs,
-      this.hasher,
-      this.logger
-    ).execute({ manifest, docsFiles, docsDir, projectRoot, version });
-    await this.persistAdopt(manifest, projectRoot);
+    await this.persistAdopt(manifest, docsDir, projectRoot);
     return {
       tools: toolResults,
       totalRegistered: toolResults.reduce((sum, r) => sum + r.registered.length, 0),
-      docsRegistered,
     };
   }
 
-  /** Saves manifest and writes gitignore entry. */
-  private async persistAdopt(manifest: Manifest, projectRoot: string): Promise<void> {
+  /** Saves manifest, regenerates catalog, and writes gitignore entry. */
+  private async persistAdopt(
+    manifest: Manifest,
+    docsDir: string,
+    projectRoot: string
+  ): Promise<void> {
     await this.manifestRepo.save(manifest);
-    // AdoptUseCase calls gitignore directly (not via PostInstallPipelineUseCase):
-    // adopt only registers existing files, no tool content is generated.
+    await new CatalogUseCase(this.fs).execute({ manifest, docsDir, projectRoot });
     await new GitignoreUseCase(this.fs).execute(projectRoot, [`${AIDD_DIR}/cache/`]);
   }
 

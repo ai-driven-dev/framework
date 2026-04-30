@@ -38,8 +38,6 @@ const CONFIG_REFS: readonly ConfigRef[] = [
   { name: "opencode", path: "config/.opencode/opencode.json" },
 ];
 
-const DOCS_DIR = "aidd_docs";
-
 export class FrameworkLoaderAdapter implements FrameworkLoader {
   async loadFromDirectory(
     path: string,
@@ -47,7 +45,6 @@ export class FrameworkLoaderAdapter implements FrameworkLoader {
   ): Promise<{
     descriptor: FrameworkDescriptor;
     contentFiles: Map<string, string>;
-    docsFiles: Map<string, string>;
   }> {
     const descriptor = new FrameworkDescriptor({
       version,
@@ -57,29 +54,8 @@ export class FrameworkLoaderAdapter implements FrameworkLoader {
     });
 
     const contentFiles = await this.loadContentFiles(path, descriptor);
-    const templatePaths = new Set(descriptor.templateRefs.map((r) => r.path));
-    const docsFiles = await this.loadDocsFiles(path, templatePaths);
 
-    return { descriptor, contentFiles, docsFiles };
-  }
-
-  private async loadDocsFiles(
-    frameworkPath: string,
-    excludePaths: ReadonlySet<string>
-  ): Promise<Map<string, string>> {
-    const docsDir = join(frameworkPath, DOCS_DIR);
-    const files = new Map<string, string>();
-    const allFiles = await this.collectFiles(docsDir);
-
-    for (const filePath of allFiles) {
-      const relPath = relative(frameworkPath, filePath).replaceAll("\\", "/");
-      if (excludePaths.has(relPath)) continue;
-      if (relPath.startsWith(`${DOCS_DIR}/tasks/`)) continue;
-      const content = filePath.endsWith(".gitkeep") ? "" : await readFile(filePath, "utf-8");
-      files.set(relPath, content);
-    }
-
-    return files;
+    return { descriptor, contentFiles };
   }
 
   private async loadContentFiles(

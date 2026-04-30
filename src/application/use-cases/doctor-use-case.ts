@@ -53,7 +53,6 @@ interface PluginIssueEntry {
 interface DoctorReport {
   healthy: boolean;
   toolHealth: ToolHealth[];
-  docsFileCount: number;
   issues: DoctorIssue[];
   pluginIssues: PluginIssueEntry[];
 }
@@ -104,9 +103,6 @@ export class DoctorUseCase {
       allTrackedFiles.push(...files.map((f) => ({ ...f, toolId })));
     }
 
-    const docsFiles = category ? [] : manifest.getDocsFiles();
-    allTrackedFiles.push(...docsFiles.map((f) => ({ ...f, toolId: null })));
-
     if (!category) issues.push(...(await this.checkDocsDirectory(manifest, projectRoot)));
     issues.push(...(await this.checkMissingTrackedFiles(allTrackedFiles, projectRoot)));
     issues.push(...(await this.checkModifiedTrackedFiles(manifest, projectRoot, allowedIds)));
@@ -121,7 +117,6 @@ export class DoctorUseCase {
       healthy:
         issues.filter((i) => i.severity !== "info").length === 0 && pluginIssues.length === 0,
       toolHealth,
-      docsFileCount: docsFiles.length,
       issues,
       pluginIssues,
     };

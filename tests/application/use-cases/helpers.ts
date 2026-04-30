@@ -199,17 +199,8 @@ export async function initProject(
   deps: ReturnType<typeof buildDeps>,
   projectRoot: string
 ): Promise<void> {
-  const initUseCase = new InitUseCase(
-    deps.fs,
-    deps.manifestRepo,
-    deps.loader,
-    deps.hasher,
-    deps.logger,
-    new SilentPrompterAdapter()
-  );
+  const initUseCase = new InitUseCase(deps.fs, deps.manifestRepo, new SilentPrompterAdapter());
   await initUseCase.execute({
-    frameworkPath: FIXTURE_DIR,
-    version: "test",
     docsDir: "aidd_docs",
     projectRoot,
   });

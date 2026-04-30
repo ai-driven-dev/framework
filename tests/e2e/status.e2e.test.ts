@@ -98,52 +98,15 @@ describe.concurrent("E2E: aidd status", () => {
     }
   });
 
-  it("reports docs drift when no tools are installed", async () => {
+  it("rejects the legacy --docs flag", async () => {
     const { projectDir, cleanup } = await createTestEnv("status");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
 
-      const trackedPath = join(projectDir, "aidd_docs", "README.md");
-      await writeFile(trackedPath, "modified", "utf-8");
-
-      const { stdout, exitCode } = await runCli(["status"], projectDir);
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("docs");
-      expect(stdout).toContain("~");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("filters status output to docs only with --docs", async () => {
-    const { projectDir, cleanup } = await createTestEnv("status");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-
-      const trackedPath = join(projectDir, "aidd_docs", "README.md");
-      await writeFile(trackedPath, "modified docs", "utf-8");
-
-      const { stdout, exitCode } = await runCli(["status", "--docs"], projectDir);
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("docs");
-      expect(stdout).not.toContain("claude");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("exits with error when category and --docs are both specified", async () => {
-    const { projectDir, cleanup } = await createTestEnv("status");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-
-      const { stderr, exitCode } = await runCli(["status", "ai", "--docs"], projectDir);
+      const { stderr, exitCode } = await runCli(["status", "--docs"], projectDir);
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("mutually exclusive");
+      expect(stderr).toMatch(/unknown option/i);
     } finally {
       await cleanup();
     }

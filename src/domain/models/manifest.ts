@@ -13,7 +13,7 @@ import type { MergeFileEntry } from "./merge.js";
 import { Plugin, type PluginEntryData } from "./plugin.js";
 import { type ToolId, VALID_TOOL_IDS } from "./tool-ids.js";
 
-const MANIFEST_VERSION = 4;
+const MANIFEST_VERSION = 5;
 
 // VSCode file paths that were tracked under "copilot" in manifest v1.
 // Used exclusively by migrateV1toV2 to move them to the "vscode" tool entry.
@@ -38,11 +38,6 @@ interface TrackedFile {
   readonly relativePath: string;
   readonly hash: FileHash;
   readonly frameworkPath?: string;
-}
-
-interface DocsEntry {
-  readonly version: string;
-  readonly files: readonly TrackedFile[];
 }
 
 interface ScriptsEntry {
@@ -79,7 +74,6 @@ interface ManifestData {
   docsDir: string;
   repo?: string;
   tools: Record<string, ToolEntryData>;
-  docs: DocsEntryData | null;
   scripts: ScriptsEntryData | null;
   plugins: PluginsSectionData | null;
   mode: DistributionMode;
@@ -98,11 +92,6 @@ interface ToolEntryData {
   mergeFiles?: MergeFileEntryData[];
   excludedMcp?: Array<{ configPath: string; entryKey: string }>;
   plugins?: PluginEntryData[];
-}
-
-interface DocsEntryData {
-  version: string;
-  files: TrackedFileData[];
 }
 
 interface TrackedFileData {
@@ -152,6 +141,10 @@ function migrateV3toV4(raw: Record<string, unknown>): void {
   if (!("plugins" in raw)) raw.plugins = null;
 }
 
+function migrateV4toV5(raw: Record<string, unknown>): void {
+  delete raw.docs;
+}
+
 export class Manifest {
   static readonly DEFAULT_DOCS_DIR = "aidd_docs";
   static readonly DEFAULT_REPO = "ai-driven-dev/aidd-framework";
@@ -165,7 +158,6 @@ export class Manifest {
   }
 
   private readonly _tools: Map<ToolId, ToolEntry>;
-  private _docs: DocsEntry | null;
   private _scripts: ScriptsEntry | null;
   private _plugins: PluginsEntry | null = null;
   private _mode: DistributionMode = "local";
@@ -174,7 +166,6 @@ export class Manifest {
 
   private constructor(params: {
     tools: Map<ToolId, ToolEntry>;
-    docs: DocsEntry | null;
     scripts: ScriptsEntry | null;
     plugins: PluginsEntry | null;
     mode: DistributionMode;
@@ -182,7 +173,6 @@ export class Manifest {
     repo?: string;
   }) {
     this._tools = new Map(params.tools);
-    this._docs = params.docs;
     this._scripts = params.scripts;
     this._plugins = params.plugins;
     this._mode = params.mode;
@@ -193,7 +183,6 @@ export class Manifest {
   static create(docsDir?: string, repo?: string): Manifest {
     return new Manifest({
       tools: new Map(),
-      docs: null,
       scripts: null,
       plugins: null,
       mode: "local",
@@ -218,10 +207,6 @@ export class Manifest {
       excludedMcp,
       plugins: existing?.plugins ?? [],
     });
-  }
-
-  addDocs(version: string, files: InstallationFile[]): void {
-    this._docs = { version, files: this.toTrackedFiles(files) };
   }
 
   addScripts(version: string, files: InstallationFile[]): void {
@@ -350,18 +335,6 @@ export class Manifest {
     });
   }
 
-  getDocsFiles(): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
-    return this._docs?.files ?? [];
-  }
-
-  getDocsVersion(): string | undefined {
-    return this._docs?.version;
-  }
-
-  hasDocs(): boolean {
-    return this._docs !== null;
-  }
-
   removeTool(toolId: ToolId): void {
     if (!this._tools.has(toolId)) {
       throw new ToolNotInManifestError(toolId);
@@ -413,7 +386,6 @@ export class Manifest {
       if (entry.mergeFiles.some((m) => m.relativePath === relativePath)) return true;
       if (this.isFileTrackedInPlugins(entry.plugins, relativePath)) return true;
     }
-    if (this._docs?.files.some((f) => f.relativePath === relativePath)) return true;
     if (this._scripts?.files.some((f) => f.relativePath === relativePath)) return true;
     if (this._plugins?.files.some((f) => f.relativePath === relativePath)) return true;
     return false;
@@ -429,7 +401,6 @@ export class Manifest {
   withDocsDir(newDocsDir: string): Manifest {
     return new Manifest({
       tools: new Map(this._tools),
-      docs: this._docs,
       scripts: this._scripts,
       plugins: this._plugins,
       mode: this._mode,
@@ -441,7 +412,6 @@ export class Manifest {
   withRepo(newRepo: string): Manifest {
     return new Manifest({
       tools: new Map(this._tools),
-      docs: this._docs,
       scripts: this._scripts,
       plugins: this._plugins,
       mode: this._mode,
@@ -489,9 +459,6 @@ export class Manifest {
       docsDir: this.docsDir,
       ...(this.repo !== undefined && { repo: this.repo }),
       tools,
-      docs: this._docs
-        ? { version: this._docs.version, files: this.toTrackedFileData(this._docs.files) }
-        : null,
       scripts: this._scripts
         ? { version: this._scripts.version, files: this.toTrackedFileData(this._scripts.files) }
         : null,
@@ -557,27 +524,23 @@ export class Manifest {
       migrateV1toV2(raw);
       migrateV2toV3(raw);
       migrateV3toV4(raw);
+      migrateV4toV5(raw);
     } else if (raw.version === 2) {
       migrateV2toV3(raw);
       migrateV3toV4(raw);
+      migrateV4toV5(raw);
     } else if (raw.version === 3) {
       migrateV3toV4(raw);
-    } else if (raw.version !== 4) {
+      migrateV4toV5(raw);
+    } else if (raw.version === 4) {
+      migrateV4toV5(raw);
+    } else if (raw.version !== 5) {
       throw new InvalidManifestDataError(
         `Unsupported manifest version: ${String(raw.version)}. Expected ${MANIFEST_VERSION}.`
       );
     }
 
     const tools = Manifest.parseTools(raw);
-
-    let docs: DocsEntry | null = null;
-    if (raw.docs !== null && raw.docs !== undefined && typeof raw.docs === "object") {
-      const docsRaw = raw.docs as DocsEntryData;
-      docs = {
-        version: docsRaw.version,
-        files: Manifest.parseTrackedFiles(docsRaw.files),
-      };
-    }
 
     const docsDir = typeof raw.docsDir === "string" ? raw.docsDir : Manifest.DEFAULT_DOCS_DIR;
     const repo = typeof raw.repo === "string" ? raw.repo : undefined;
@@ -601,7 +564,7 @@ export class Manifest {
     }
     const mode: DistributionMode = raw.mode === "remote" ? "remote" : "local";
 
-    return new Manifest({ tools, docs, scripts, plugins, mode, docsDir, repo });
+    return new Manifest({ tools, scripts, plugins, mode, docsDir, repo });
   }
 
   private static parseTools(raw: Record<string, unknown>): Map<ToolId, ToolEntry> {

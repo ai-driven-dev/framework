@@ -39,23 +39,20 @@ export async function printUpdateBanner(
     const manifest = await manifestRepo.load();
     if (manifest === null) return;
 
-    const docsVersion = manifest.getDocsVersion();
     const toolVersion = manifest
       .getInstalledToolIds()
       .map((id) => manifest.getToolVersion(id))
       .find(Boolean);
 
-    if (!docsVersion && !toolVersion) return;
+    if (!toolVersion) return;
 
     const latest = await resolver.fetchLatestVersion();
 
-    const docsOutdated = docsVersion !== undefined && isOutdated(docsVersion, latest);
-    const toolsOutdated = toolVersion !== undefined && isOutdated(toolVersion, latest);
+    if (!isOutdated(toolVersion, latest)) return;
 
-    if (!docsOutdated && !toolsOutdated) return;
-
-    const current = (docsVersion ?? toolVersion) as string;
-    logger.warn(`Update available: v${current.replace(/^v/, "")} → v${latest.replace(/^v/, "")}`);
+    logger.warn(
+      `Update available: v${toolVersion.replace(/^v/, "")} → v${latest.replace(/^v/, "")}`
+    );
     logger.warn("Run `aidd update` to update.");
   } catch (err) {
     logger.debug(

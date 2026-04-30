@@ -242,54 +242,6 @@ describe.concurrent("E2E: aidd restore", () => {
     }
   });
 
-  it("restores a deleted docs file with --force", async () => {
-    const { projectDir, cleanup } = await createTestEnv("restore");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-
-      const readmePath = join(projectDir, "aidd_docs", "README.md");
-      await rm(readmePath, { force: true });
-      expect(existsSync(readmePath)).toBe(false);
-
-      const { stdout, exitCode } = await runCli(
-        ["restore", "--path", FRAMEWORK_PATH, "--force"],
-        projectDir
-      );
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("Restored");
-      expect(existsSync(readmePath)).toBe(true);
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("restores a modified docs file with --force", async () => {
-    const { projectDir, cleanup } = await createTestEnv("restore");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-
-      const readmePath = join(projectDir, "aidd_docs", "README.md");
-      const originalContent = await readFile(readmePath, "utf-8");
-      await writeFile(readmePath, "custom docs content", "utf-8");
-
-      const { stdout, exitCode } = await runCli(
-        ["restore", "--path", FRAMEWORK_PATH, "--force"],
-        projectDir
-      );
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("Restored");
-
-      const afterContent = await readFile(readmePath, "utf-8");
-      expect(afterContent).toBe(originalContent);
-    } finally {
-      await cleanup();
-    }
-  });
-
   it("shows usage with --help", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
     try {
@@ -302,49 +254,16 @@ describe.concurrent("E2E: aidd restore", () => {
     }
   });
 
-  it("--docs scope limits restore to docs files only", async () => {
-    const { projectDir, cleanup } = await createTestEnv("restore");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-
-      const claudeMdPath = join(projectDir, "CLAUDE.md");
-      const readmePath = join(projectDir, "aidd_docs", "README.md");
-      const originalReadme = await readFile(readmePath, "utf-8");
-
-      await writeFile(claudeMdPath, "modified claude", "utf-8");
-      await writeFile(readmePath, "modified readme", "utf-8");
-
-      const { stdout, exitCode } = await runCli(
-        ["restore", "--docs", "--force", "--path", FRAMEWORK_PATH],
-        projectDir
-      );
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("Restored");
-
-      // docs file should be restored
-      const readmeAfter = await readFile(readmePath, "utf-8");
-      expect(readmeAfter).toBe(originalReadme);
-
-      // claude tool file should remain modified (not in docs scope)
-      const claudeAfter = await readFile(claudeMdPath, "utf-8");
-      expect(claudeAfter).toBe("modified claude");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("exits with error when --tool and --docs are both specified", async () => {
+  it("rejects the legacy --docs flag", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
     try {
       const { stderr, exitCode } = await runCli(
-        ["restore", "--tool", "claude", "--docs", "--path", FRAMEWORK_PATH],
+        ["restore", "--docs", "--path", FRAMEWORK_PATH],
         projectDir
       );
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("mutually exclusive");
+      expect(stderr).toMatch(/unknown option/i);
     } finally {
       await cleanup();
     }

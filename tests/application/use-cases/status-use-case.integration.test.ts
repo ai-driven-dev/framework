@@ -59,51 +59,10 @@ describe("status", () => {
     }
   });
 
-  it("detects added file in docs directory", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
-
-    await writeFile(join(projectRoot, "aidd_docs", "extra-untracked.md"), "extra", "utf-8");
-
-    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
-    const report = await useCase.execute({ projectRoot });
-
-    expect(report.inSync).toBe(false);
-    const added = report.docs?.drifted.find((f) => f.status === "added");
-    expect(added).toBeDefined();
-    expect(added?.relativePath).toBe("aidd_docs/extra-untracked.md");
-  });
-
-  it("detects deleted CATALOG.md as drift", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
-
-    await rm(join(projectRoot, "aidd_docs", "CATALOG.md"));
-
-    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
-    const report = await useCase.execute({ projectRoot });
-
-    expect(report.inSync).toBe(false);
-    const deleted = report.docs?.drifted.find((f) => f.status === "deleted");
-    expect(deleted).toBeDefined();
-    expect(deleted?.relativePath).toBe("aidd_docs/CATALOG.md");
-  });
-
   it("reports no drift when no tools are installed", async () => {
     const deps = buildDeps(projectRoot);
-    const initUseCase = new InitUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger
-    );
-    await initUseCase.execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
+    const initUseCase = new InitUseCase(deps.fs, deps.manifestRepo);
+    await initUseCase.execute({ docsDir: "aidd_docs", projectRoot });
 
     const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
     const report = await useCase.execute({ projectRoot });

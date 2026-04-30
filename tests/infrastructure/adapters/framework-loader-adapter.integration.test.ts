@@ -140,18 +140,6 @@ describe("FrameworkLoaderAdapter", () => {
       expect(keys.some((k) => k.includes("Thumbs.db"))).toBe(false);
     });
 
-    it("excludes .DS_Store from docs files", async () => {
-      const docsDir = join(tempDir, "aidd_docs");
-      await createDir(docsDir);
-      await writeFile(join(docsDir, "README.md"), "# Docs", "utf-8");
-      await writeFile(join(docsDir, ".DS_Store"), Buffer.alloc(0));
-
-      const { docsFiles } = await loader.loadFromDirectory(tempDir, "1.0.0");
-      const keys = [...docsFiles.keys()];
-      expect(keys.some((k) => k.includes(".DS_Store"))).toBe(false);
-      expect(docsFiles.has(join("aidd_docs", "README.md"))).toBe(true);
-    });
-
     it("excludes AppleDouble ._* files from content sections", async () => {
       await createDir(join(tempDir, "rules"));
       await writeFile(join(tempDir, "rules", "rule.md"), "# Rule", "utf-8");
@@ -163,35 +151,6 @@ describe("FrameworkLoaderAdapter", () => {
       expect(keys.some((k) => k.includes("._.DS_Store"))).toBe(false);
       expect(keys.some((k) => k.includes("._rule.md"))).toBe(false);
       expect(contentFiles.has(join("rules", "rule.md"))).toBe(true);
-    });
-  });
-
-  describe("docsFiles loading", () => {
-    it("includes .gitkeep files with empty string content", async () => {
-      const docsDir = join(tempDir, "aidd_docs", "memory", "internal");
-      await mkdir(docsDir, { recursive: true });
-      await writeFile(join(docsDir, ".gitkeep"), "", "utf-8");
-
-      const { docsFiles } = await loader.loadFromDirectory(tempDir, "1.0.0");
-      const gitkeepKey = join("aidd_docs", "memory", "internal", ".gitkeep");
-      expect(docsFiles.has(gitkeepKey)).toBe(true);
-      expect(docsFiles.get(gitkeepKey)).toBe("");
-    });
-
-    it("includes regular docs files with their content", async () => {
-      const docsDir = join(tempDir, "aidd_docs");
-      await mkdir(docsDir, { recursive: true });
-      await writeFile(join(docsDir, "README.md"), "# Docs", "utf-8");
-
-      const { docsFiles } = await loader.loadFromDirectory(tempDir, "1.0.0");
-      const readmeKey = join("aidd_docs", "README.md");
-      expect(docsFiles.has(readmeKey)).toBe(true);
-      expect(docsFiles.get(readmeKey)).toBe("# Docs");
-    });
-
-    it("returns empty docsFiles when aidd_docs directory does not exist", async () => {
-      const { docsFiles } = await loader.loadFromDirectory(tempDir, "1.0.0");
-      expect(docsFiles.size).toBe(0);
     });
   });
 });

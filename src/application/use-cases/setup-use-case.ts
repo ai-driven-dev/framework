@@ -46,13 +46,12 @@ interface InstallSummary {
 }
 
 export type SetupResult = { resolvedFrameworkPath?: string } & (
-  | { kind: "initialized"; docsDir: string; fileCount: number; install: InstallSummary }
+  | { kind: "initialized"; docsDir: string; install: InstallSummary }
   | {
       kind: "adopted";
       version: string;
       toolCount: number;
       totalRegistered: number;
-      docsRegistered: number;
     }
   | { kind: "installed"; install: InstallSummary }
   | { kind: "update-cancelled" }
@@ -123,14 +122,7 @@ export class SetupUseCase {
     });
     const repoForManifest = frameworkRepo ?? repo;
 
-    const initResult = await this.runInit(
-      resolved.path,
-      resolved.version,
-      docsDir,
-      explicitDocsDir,
-      projectRoot,
-      repoForManifest
-    );
+    const initResult = await this.runInit(docsDir, explicitDocsDir, projectRoot, repoForManifest);
 
     await this.persistMode(resolvedMode);
 
@@ -150,7 +142,6 @@ export class SetupUseCase {
     return {
       kind: "initialized",
       docsDir: initResult.docsDir,
-      fileCount: initResult.fileCount,
       install: { results: installResults },
       resolvedFrameworkPath: this.localPathOf(frameworkPath, resolved.path),
     };
@@ -230,22 +221,12 @@ export class SetupUseCase {
   }
 
   private async runInit(
-    frameworkPath: string,
-    version: string,
     docsDir: string,
     explicitDocsDir: string,
     projectRoot: string,
     repo: string | undefined
-  ): Promise<{ docsDir: string; fileCount: number }> {
-    return new InitUseCase(
-      this.fs,
-      this.manifestRepo,
-      this.loader,
-      this.hasher,
-      this.logger
-    ).execute({
-      frameworkPath,
-      version,
+  ): Promise<{ docsDir: string }> {
+    return new InitUseCase(this.fs, this.manifestRepo).execute({
       docsDir,
       explicitDocsDir,
       projectRoot,
@@ -331,7 +312,6 @@ export class SetupUseCase {
       version,
       toolCount: adoptResult.tools.length,
       totalRegistered: adoptResult.totalRegistered,
-      docsRegistered: adoptResult.docsRegistered,
     };
   }
 
@@ -368,7 +348,6 @@ export class SetupUseCase {
   ): Promise<{
     tools: { registered: string[] }[];
     totalRegistered: number;
-    docsRegistered: number;
   }> {
     return new AdoptUseCase(
       this.fs,

@@ -7,6 +7,5 @@ export interface FrameworkLoader {
   ): Promise<{
     descriptor: FrameworkDescriptor;
     contentFiles: Map<string, string>;
-    docsFiles: Map<string, string>;
   }>;
 }

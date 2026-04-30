@@ -69,7 +69,6 @@ interface UpdateOptions {
   docsDir?: string;
   projectRoot: string;
   toolIds?: ToolId[];
-  docsOnly?: boolean;
   force?: boolean;
   dryRun?: boolean;
   repo?: string;
@@ -91,13 +90,10 @@ interface UpdateToolResult extends UpdateSectionResult {
   toolId: ToolId;
 }
 
-type DocsUpdateResult = UpdateSectionResult;
-
 export interface UpdateResult {
   alreadyUpToDate: boolean;
   dryRun: boolean;
   tools: UpdateToolResult[];
-  docs: DocsUpdateResult | null;
   totalWritten: number;
   totalDeleted: number;
   toolCount: number;
@@ -142,7 +138,7 @@ interface ToolUpdatePrepared {
 
 /** Resolved interactive scope — null means user cancelled */
 type InteractiveScopeOutcome =
-  | { kind: "scope"; toolIds: ToolId[] | undefined; docsOnly: boolean }
+  | { kind: "scope"; toolIds: ToolId[] | undefined }
   | { kind: "already-applied"; result: UpdateResult }
   | { kind: "cancelled" };
 
@@ -178,13 +174,7 @@ export class UpdateUseCase {
   }
 
   private resolveInteractiveFlag(options: UpdateOptions, force: boolean, dryRun: boolean): boolean {
-    return (
-      (options.interactive ?? false) &&
-      !force &&
-      !dryRun &&
-      options.toolIds === undefined &&
-      !(options.docsOnly ?? false)
-    );
+    return (options.interactive ?? false) && !force && !dryRun && options.toolIds === undefined;
   }
 
   private async executeInteractive(
@@ -209,7 +199,7 @@ export class UpdateUseCase {
     }
 
     return this.executeInternal(
-      { ...options, toolIds: outcome.toolIds, docsOnly: outcome.docsOnly, force: true },
+      { ...options, toolIds: outcome.toolIds, force: true },
       { dryRun: false, force: true, interactive: true, conflictResolution }
     ).then((r) => ({ ...r, cancelled: false, version: options.version }));
   }
@@ -223,9 +213,8 @@ export class UpdateUseCase {
     const changedTools = dryRunResult.tools.filter((t) =>
       t.diff.some((d) => d.kind !== "unchanged")
     );
-    const docsChanged = dryRunResult.docs?.diff.some((d) => d.kind !== "unchanged") ?? false;
 
-    if (changedTools.length === 0 && !docsChanged) {
+    if (changedTools.length === 0) {
       // Nothing changed — run to bump manifest version so the update banner
       // doesn't keep reporting this version as outdated.
       const result = await this.executeInternal(
@@ -241,7 +230,6 @@ export class UpdateUseCase {
         name: `${t.toolId} only`,
         value: formatToolScopeValue(t.toolId),
       })),
-      ...(docsChanged ? [{ name: "docs only", value: "docs" }] : []),
     ];
 
     const scopeSelection = await this.prompter.select("What to update?", scopeChoices);
@@ -250,15 +238,9 @@ export class UpdateUseCase {
     if (!confirmed) return { kind: "cancelled" };
 
     const scope = parseUpdateScope(scopeSelection);
-    let toolIds: ToolId[] | undefined;
-    let docsOnly = false;
-    if (scope.kind === "docs") {
-      docsOnly = true;
-    } else if (scope.kind === "tool") {
-      toolIds = [scope.toolId];
-    }
+    const toolIds = scope.kind === "tool" ? [scope.toolId] : undefined;
 
-    return { kind: "scope", toolIds, docsOnly };
+    return { kind: "scope", toolIds };
   }
 
   private resolveIdeContext(manifest: Manifest): IdeToolId[] {
@@ -270,16 +252,14 @@ export class UpdateUseCase {
     internal: InternalUpdateOptions
   ): Promise<UpdateResult> {
     const { projectRoot } = options;
-    const { dryRun, force, conflictResolution } = internal;
-    const docsOnly = options.docsOnly ?? false;
+    const { dryRun } = internal;
 
-    const { manifest, descriptor, contentFiles, docsFiles, docsDir } =
-      await this.loadFrameworkData(options);
+    const { manifest, descriptor, contentFiles, docsDir } = await this.loadFrameworkData(options);
 
     this.validateToolIds(options.toolIds, manifest);
 
     const ideContext = this.resolveIdeContext(manifest);
-    const effectiveToolIds = this.resolveEffectiveToolIds(options, docsOnly, manifest);
+    const effectiveToolIds = this.resolveEffectiveToolIds(options, manifest);
     const toolResults = await this.updateAllTools(
       effectiveToolIds,
       manifest,
@@ -292,24 +272,9 @@ export class UpdateUseCase {
       ideContext
     );
 
-    const hasExplicitToolFilter =
-      !docsOnly && options.toolIds !== undefined && options.toolIds.length > 0;
-    const docsResult = hasExplicitToolFilter
-      ? null
-      : await this.updateDocs(
-          manifest,
-          docsFiles,
-          docsDir,
-          projectRoot,
-          options.version,
-          force,
-          dryRun,
-          conflictResolution
-        );
-
     if (!dryRun) await this.runPostInstall(options, manifest);
 
-    return this.buildTotals(toolResults, docsResult, dryRun);
+    return this.buildTotals(toolResults, dryRun);
   }
 
   private async loadFrameworkData(options: UpdateOptions) {
@@ -317,11 +282,11 @@ export class UpdateUseCase {
     const manifest = await this.manifestRepo.load();
     if (manifest === null) throw new NoManifestError(repo);
     const docsDir = options.docsDir ?? manifest.docsDir;
-    const { descriptor, contentFiles, docsFiles } = await this.loader.loadFromDirectory(
+    const { descriptor, contentFiles } = await this.loader.loadFromDirectory(
       frameworkPath,
       version
     );
-    return { manifest, descriptor, contentFiles, docsFiles, docsDir };
+    return { manifest, descriptor, contentFiles, docsDir };
   }
 
   private async runPostInstall(options: UpdateOptions, manifest: Manifest): Promise<void> {
@@ -345,12 +310,7 @@ export class UpdateUseCase {
     }
   }
 
-  private resolveEffectiveToolIds(
-    options: UpdateOptions,
-    docsOnly: boolean,
-    manifest: Manifest
-  ): ToolId[] {
-    if (docsOnly) return [];
+  private resolveEffectiveToolIds(options: UpdateOptions, manifest: Manifest): ToolId[] {
     if (options.toolIds && options.toolIds.length > 0) return options.toolIds;
     return manifest.getInstalledToolIds();
   }
@@ -1015,20 +975,13 @@ export class UpdateUseCase {
     return buildMergeFileEntries(newDistribution, getEntrySection, this.hasher);
   }
 
-  private buildTotals(
-    toolResults: UpdateToolResult[],
-    docsResult: DocsUpdateResult | null,
-    dryRun: boolean
-  ): UpdateResult {
-    const totalWritten =
-      toolResults.reduce((s, t) => s + t.written.length, 0) + (docsResult?.written.length ?? 0);
-    const totalDeleted =
-      toolResults.reduce((s, t) => s + t.deleted.length, 0) + (docsResult?.deleted.length ?? 0);
+  private buildTotals(toolResults: UpdateToolResult[], dryRun: boolean): UpdateResult {
+    const totalWritten = toolResults.reduce((s, t) => s + t.written.length, 0);
+    const totalDeleted = toolResults.reduce((s, t) => s + t.deleted.length, 0);
     const toolCount = toolResults.filter((t) => !t.alreadyUpToDate).length;
 
     const countDiffKind = (kind: string) =>
-      toolResults.reduce((s, t) => s + t.diff.filter((d) => d.kind === kind).length, 0) +
-      (docsResult?.diff.filter((d) => d.kind === kind).length ?? 0);
+      toolResults.reduce((s, t) => s + t.diff.filter((d) => d.kind === kind).length, 0);
     const diffSummary = {
       added: countDiffKind("added"),
       changed: countDiffKind("changed"),
@@ -1036,94 +989,14 @@ export class UpdateUseCase {
     };
 
     return {
-      alreadyUpToDate:
-        toolResults.every((r) => r.alreadyUpToDate) &&
-        (docsResult === null || docsResult.alreadyUpToDate),
+      alreadyUpToDate: toolResults.every((r) => r.alreadyUpToDate),
       dryRun,
       tools: toolResults,
-      docs: docsResult,
       totalWritten,
       totalDeleted,
       toolCount,
       diffSummary,
     };
-  }
-
-  private async updateDocs(
-    manifest: Manifest,
-    docsFiles: Map<string, string>,
-    docsDir: string,
-    projectRoot: string,
-    version: string,
-    force: boolean,
-    dryRun: boolean,
-    conflictResolution: ConflictResolutionUseCase
-  ): Promise<DocsUpdateResult | null> {
-    if (!manifest.hasDocs()) return null;
-
-    this.logger.debug("Checking docs for updates...");
-
-    const newDistribution = this.buildDocsDistribution(docsFiles, docsDir);
-    const newDistMap = new Map(newDistribution.map((f) => [f.relativePath, f]));
-    const manifestFiles = manifest.getDocsFiles();
-    const manifestMap = new Map(manifestFiles.map((f) => [f.relativePath, f.hash]));
-    const diff = await this.computeDiff(newDistribution, newDistMap, manifestMap, projectRoot);
-
-    let result: ApplyDiffResult = this.emptyApplyDiffResult();
-
-    if (!dryRun) {
-      const conflictDecisions = await this.resolveConflicts(diff, force, conflictResolution);
-      result = await this.applyDiff(diff, newDistMap, projectRoot, conflictDecisions, manifest);
-      this.warnUserFileConflicts(result.userFileConflicts);
-      this.updateDocsManifest(manifest, version, newDistribution, manifestFiles, result);
-    }
-
-    return {
-      alreadyUpToDate: !diff.some((d) => d.kind !== "unchanged"),
-      dryRun,
-      diff,
-      ...result,
-    };
-  }
-
-  private updateDocsManifest(
-    manifest: Manifest,
-    version: string,
-    newDistribution: InstallationFile[],
-    manifestFiles: ReadonlyArray<{ relativePath: string; hash: FileHash }>,
-    result: ApplyDiffResult
-  ): void {
-    const finalFiles = newDistribution.filter(
-      (f) =>
-        !result.deleted.includes(f.relativePath) &&
-        !result.kept.includes(f.relativePath) &&
-        !result.userFileConflicts.includes(f.relativePath)
-    );
-    const keptFiles = manifestFiles
-      .filter((f) => result.kept.includes(f.relativePath))
-      .map(
-        (f) => new InstallationFile({ relativePath: f.relativePath, content: "", hash: f.hash })
-      );
-    manifest.addDocs(version, [...finalFiles, ...keptFiles]);
-  }
-
-  private buildDocsDistribution(
-    docsFiles: Map<string, string>,
-    docsDir: string
-  ): InstallationFile[] {
-    const distribution: InstallationFile[] = [];
-    for (const [frameworkRelPath, rawContent] of docsFiles.entries()) {
-      if (frameworkRelPath.endsWith("CATALOG.md")) continue;
-      const relativePath = frameworkRelPath.startsWith("aidd_docs/")
-        ? `${docsDir}/${frameworkRelPath.slice("aidd_docs/".length)}`
-        : frameworkRelPath;
-      const content = rawContent
-        .replaceAll("{{DOCS}}/", `${docsDir}/`)
-        .replaceAll("{{TOOLS}}/", `${docsDir}/`);
-      const hash = this.hasher.hash(content);
-      distribution.push(new InstallationFile({ relativePath, content, hash }));
-    }
-    return distribution;
   }
 
   private async resolveConflicts(

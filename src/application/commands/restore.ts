@@ -17,7 +17,6 @@ export function registerRestoreCommand(program: Command): void {
     .argument("[files...]", "Specific file paths to restore (relative paths)")
     .option("-f, --force", "Restore without prompting", false)
     .option("--tool <tool>", "Limit restore to a specific tool")
-    .option("--docs", "Limit restore to docs only")
     .option("--path <path>", "Path to a local framework directory or tarball")
     .option("--release <tag>", "Specific framework release tag to restore against (e.g., v3.2.0)")
     .option("--plugin <name>", "Restore a specific plugin by name")
@@ -27,7 +26,6 @@ export function registerRestoreCommand(program: Command): void {
         cmdOptions: {
           force: boolean;
           tool?: string;
-          docs?: boolean;
           path?: string;
           release?: string;
           plugin?: string;
@@ -35,11 +33,6 @@ export function registerRestoreCommand(program: Command): void {
       ) => {
         const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
-
-        if (cmdOptions.tool !== undefined && cmdOptions.docs) {
-          output.error("--tool and --docs are mutually exclusive");
-          process.exit(1);
-        }
 
         try {
           if (cmdOptions.tool !== undefined) {
@@ -65,8 +58,6 @@ export function registerRestoreCommand(program: Command): void {
             throw new NoManifestError(repo);
           }
 
-          const docsOnly = cmdOptions.docs ?? false;
-
           const pinnedVersion = cmdOptions.tool
             ? manifest.getToolVersion(cmdOptions.tool as ToolId)
             : manifest
@@ -88,11 +79,7 @@ export function registerRestoreCommand(program: Command): void {
 
           const isTTY = process.stdout.isTTY;
           const isInteractive =
-            fileArgs.length === 0 &&
-            cmdOptions.tool === undefined &&
-            !cmdOptions.docs &&
-            !cmdOptions.force &&
-            isTTY;
+            fileArgs.length === 0 && cmdOptions.tool === undefined && !cmdOptions.force && isTTY;
 
           if (isInteractive) {
             const statusUseCase = new StatusUseCase(
@@ -106,16 +93,11 @@ export function registerRestoreCommand(program: Command): void {
               repo: repo,
             });
 
-            const driftedFiles = [
-              ...statusReport.tools.flatMap((t) =>
-                t.drifted
-                  .filter((d) => d.status === "modified" || d.status === "deleted")
-                  .map((d) => d.relativePath)
-              ),
-              ...(statusReport.docs?.drifted
+            const driftedFiles = statusReport.tools.flatMap((t) =>
+              t.drifted
                 .filter((d) => d.status === "modified" || d.status === "deleted")
-                .map((d) => d.relativePath) ?? []),
-            ];
+                .map((d) => d.relativePath)
+            );
 
             if (driftedFiles.length === 0) {
               output.info("Nothing to restore.");
@@ -155,7 +137,6 @@ export function registerRestoreCommand(program: Command): void {
             docsDir: manifest.docsDir,
             projectRoot,
             toolIds,
-            docsOnly,
             files: effectiveFiles,
             force: isInteractive ? true : cmdOptions.force,
             interactive: isTTY,
@@ -164,9 +145,7 @@ export function registerRestoreCommand(program: Command): void {
           });
 
           const nothingDone =
-            result.tools.every((t) => t.nothingToRestore) &&
-            (result.docs === null || result.docs.nothingToRestore) &&
-            result.totalPluginFilesRestored === 0;
+            result.tools.every((t) => t.nothingToRestore) && result.totalPluginFilesRestored === 0;
 
           if (nothingDone) {
             output.success("Nothing to restore — all files are unmodified.");
@@ -179,12 +158,6 @@ export function registerRestoreCommand(program: Command): void {
             output.print(`${tool.toolId}:`);
             for (const f of tool.restored) output.print(`  + ${f}`);
             for (const f of tool.kept) output.print(`  ~ kept: ${f}`);
-          }
-          if (result.docs && !result.docs.nothingToRestore) {
-            output.print("");
-            output.print("docs:");
-            for (const f of result.docs.restored) output.print(`  + ${f}`);
-            for (const f of result.docs.kept) output.print(`  ~ kept: ${f}`);
           }
 
           const restored = result.totalRestored;

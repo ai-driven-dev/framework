@@ -1,11 +1,7 @@
 import { join } from "node:path";
-import { InstallationFile } from "../../domain/models/file.js";
 import { Manifest } from "../../domain/models/manifest.js";
 import { AIDD_DIR } from "../../domain/models/paths.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
-import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
-import type { Hasher } from "../../domain/ports/hasher.js";
-import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import { getAllRegisteredTools, hasToolSignals } from "../../domain/tools/registry.js";
@@ -14,8 +10,6 @@ import { CatalogUseCase } from "./shared/catalog-use-case.js";
 import { GitignoreUseCase } from "./shared/gitignore-use-case.js";
 
 interface InitOptions {
-  frameworkPath: string;
-  version: string;
   docsDir?: string;
   explicitDocsDir?: string;
   projectRoot: string;
@@ -26,7 +20,6 @@ interface InitOptions {
 
 interface InitResult {
   docsDir: string;
-  fileCount: number;
   manifest: Manifest;
 }
 
@@ -34,9 +27,6 @@ export class InitUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    private readonly loader: FrameworkLoader,
-    private readonly hasher: Hasher,
-    private readonly logger: Logger,
     private readonly prompter?: Prompter
   ) {}
 
@@ -55,7 +45,7 @@ export class InitUseCase {
 
     if (existing !== null) {
       throw new AlreadyInitializedError(
-        `Already initialized (docs in "${existing.docsDir}"). Use \`aidd init --force\` to re-copy docs, or \`aidd clean --force\` to reset completely.`
+        `Already initialized (docs in "${existing.docsDir}"). Use \`aidd init --force\` to recreate the docs directory, or \`aidd clean --force\` to reset completely.`
       );
     }
 
@@ -72,7 +62,7 @@ export class InitUseCase {
   }
 
   async execute(options: InitOptions): Promise<InitResult> {
-    const { frameworkPath, version, projectRoot, force = false } = options;
+    const { projectRoot, force = false } = options;
 
     const { docsDir, explicitDocsDir, repo } = await this.resolveInitConfig(options);
     const resolvedInputDocsDir = docsDir ?? Manifest.DEFAULT_DOCS_DIR;
@@ -85,21 +75,11 @@ export class InitUseCase {
         ? existing.docsDir
         : resolvedInputDocsDir;
 
-    const { descriptor, docsFiles } = await this.loader.loadFromDirectory(frameworkPath, version);
-    const generated = await this.writeDocsFiles(
-      docsFiles,
-      resolvedDocsDir,
-      projectRoot,
-      force,
-      existing
-    );
-    if (force && existing !== null)
-      await this.removeStaleDocsFiles(generated, existing, projectRoot);
+    await this.fs.createDirectory(join(projectRoot, resolvedDocsDir));
 
     const manifest = this.buildManifest(existing, resolvedDocsDir, repo, force);
-    manifest.addDocs(descriptor.version, generated);
     await this.persistInit(manifest, resolvedDocsDir, projectRoot, force);
-    return { docsDir: resolvedDocsDir, fileCount: generated.length, manifest };
+    return { docsDir: resolvedDocsDir, manifest };
   }
 
   private buildManifest(
@@ -156,74 +136,5 @@ export class InitUseCase {
     const repo = repoInput !== "" ? repoInput.trim() : options.repo;
 
     return { docsDir, explicitDocsDir: docsDir, repo };
-  }
-
-  /** Writes docs files to disk, skipping CATALOG.md. Returns the list of generated files. */
-  private async writeDocsFiles(
-    docsFiles: Map<string, string>,
-    docsDir: string,
-    projectRoot: string,
-    force: boolean,
-    existing: Manifest | null
-  ): Promise<InstallationFile[]> {
-    const generated: InstallationFile[] = [];
-    for (const [frameworkRelPath, rawContent] of docsFiles.entries()) {
-      if (frameworkRelPath.endsWith("CATALOG.md")) continue;
-      const file = await this.writeDocsFile(
-        frameworkRelPath,
-        rawContent,
-        docsDir,
-        projectRoot,
-        force,
-        existing
-      );
-      generated.push(file);
-    }
-    return generated;
-  }
-
-  private async writeDocsFile(
-    frameworkRelPath: string,
-    rawContent: string,
-    docsDir: string,
-    projectRoot: string,
-    force: boolean,
-    existing: Manifest | null
-  ): Promise<InstallationFile> {
-    const outputRelPath = frameworkRelPath.startsWith("aidd_docs/")
-      ? `${docsDir}/${frameworkRelPath.slice("aidd_docs/".length)}`
-      : frameworkRelPath;
-    const outputPath = join(projectRoot, outputRelPath);
-    const content = rawContent
-      .replaceAll("{{DOCS}}/", `${docsDir}/`)
-      .replaceAll("{{TOOLS}}/", `${docsDir}/`);
-    const newHash = this.hasher.hash(content);
-    if (force && existing !== null && (await this.fs.fileExists(outputPath))) {
-      const diskHash = await this.fs.readFileHash(outputPath);
-      if (!diskHash.equals(newHash)) {
-        this.logger.warn(`Overwriting modified file: ${outputRelPath}`);
-        await this.fs.writeFile(outputPath, content);
-      }
-      return new InstallationFile({ relativePath: outputRelPath, content, hash: newHash });
-    }
-    if (await this.fs.fileExists(outputPath)) {
-      const diskHash = await this.fs.readFileHash(outputPath);
-      return new InstallationFile({ relativePath: outputRelPath, content: "", hash: diskHash });
-    }
-    await this.fs.writeFile(outputPath, content);
-    return new InstallationFile({ relativePath: outputRelPath, content, hash: newHash });
-  }
-
-  private async removeStaleDocsFiles(
-    generated: InstallationFile[],
-    existing: Manifest,
-    projectRoot: string
-  ): Promise<void> {
-    const newPaths = new Set(generated.map((f) => f.relativePath));
-    for (const oldFile of existing.getDocsFiles()) {
-      if (!newPaths.has(oldFile.relativePath)) {
-        await this.fs.deleteFile(join(projectRoot, oldFile.relativePath));
-      }
-    }
   }
 }

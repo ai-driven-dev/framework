@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { InstallFrameworkPluginsUseCase } from "../../../src/application/use-cases/install-framework-plugins-use-case.js";
@@ -283,7 +283,7 @@ describe("setup without TTY", () => {
       expect(result.kind).toBe("initialized");
     });
 
-    it("docs in aidd_docs/ are tracked in manifest after setup", async () => {
+    it("preserves user files in aidd_docs/ across setup", async () => {
       await seedPostUninstallState();
       await writeFile(join(projectRoot, "aidd_docs", "README.md"), "my custom readme");
 
@@ -294,11 +294,8 @@ describe("setup without TTY", () => {
         toolIds: ["claude" as ToolId],
       });
 
-      const { manifestRepo } = buildDeps(projectRoot);
-      const manifest = await manifestRepo.load();
-      expect(manifest).not.toBeNull();
-      const docsFiles = manifest?.getDocsFiles() ?? [];
-      expect(docsFiles.some((f) => f.relativePath === "aidd_docs/README.md")).toBe(true);
+      const content = await readFile(join(projectRoot, "aidd_docs", "README.md"), "utf-8");
+      expect(content).toBe("my custom readme");
     });
   });
 });

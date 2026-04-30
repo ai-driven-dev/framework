@@ -161,9 +161,8 @@ describe.concurrent("E2E: aidd update", () => {
       expect(exitCode).toBe(0);
       expect(stdout).toContain("The following changes would be applied");
 
-      // section header format: "\nclaude (v<version>):" and "\ndocs (v<version>):"
+      // section header format: "\nclaude (v<version>):"
       expect(stdout).toMatch(/claude \(v[^)]+\):/);
-      expect(stdout).toMatch(/docs \(v[^)]+\):/);
 
       const contentAfter = await readFile(namingPath, "utf-8");
       expect(contentAfter).toBe(contentBefore);
@@ -197,25 +196,6 @@ describe.concurrent("E2E: aidd update", () => {
     }
   });
 
-  it("updates docs files when upgrading to a newer framework", async () => {
-    const { projectDir, cleanup } = await createTestEnv("update");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-
-      const { exitCode } = await runCli(["update", "--path", FRAMEWORK_V2_PATH], projectDir);
-
-      expect(exitCode).toBe(0);
-
-      // README.md was changed in v2 (added "v2 Update" section)
-      const readmePath = join(projectDir, "aidd_docs", "README.md");
-      const content = await readFile(readmePath, "utf-8");
-      expect(content).toContain("v2 Update");
-    } finally {
-      await cleanup();
-    }
-  });
-
   it("shows usage with --help", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
@@ -228,16 +208,16 @@ describe.concurrent("E2E: aidd update", () => {
     }
   });
 
-  it("exits with error when --tool and --docs are both specified", async () => {
+  it("rejects the legacy --docs flag", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       const { stderr, exitCode } = await runCli(
-        ["update", "--path", FRAMEWORK_PATH, "--tool", "claude", "--docs"],
+        ["update", "--path", FRAMEWORK_PATH, "--docs"],
         projectDir
       );
 
       expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("mutually exclusive");
+      expect(stderr).toMatch(/unknown option/i);
     } finally {
       await cleanup();
     }
@@ -271,38 +251,6 @@ describe.concurrent("E2E: aidd update", () => {
         "utf-8"
       );
       expect(cursorNamingAfter).toBe(cursorNamingBefore);
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("--docs scope updates only docs files", async () => {
-    const { projectDir, cleanup } = await createTestEnv("update");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-
-      const claudeNamingBefore = await readFile(
-        join(projectDir, ".claude", "rules", "01-standards", "naming.md"),
-        "utf-8"
-      );
-
-      const { exitCode } = await runCli(
-        ["update", "--path", FRAMEWORK_V2_PATH, "--docs"],
-        projectDir
-      );
-
-      expect(exitCode).toBe(0);
-      // claude naming file should be unchanged (docs scope only)
-      const claudeNamingAfter = await readFile(
-        join(projectDir, ".claude", "rules", "01-standards", "naming.md"),
-        "utf-8"
-      );
-      expect(claudeNamingAfter).toBe(claudeNamingBefore);
-      // docs README should be updated from v2
-      const readmePath = join(projectDir, "aidd_docs", "README.md");
-      const readmeContent = await readFile(readmePath, "utf-8");
-      expect(readmeContent).toContain("v2 Update");
     } finally {
       await cleanup();
     }
@@ -361,7 +309,7 @@ describe.concurrent("E2E: aidd update", () => {
       );
 
       expect(exitCode).toBe(0);
-      expect(stdout).toMatch(/Updated \d+ files/);
+      expect(stdout).toMatch(/Updated \d+ files?/);
     } finally {
       await cleanup();
     }

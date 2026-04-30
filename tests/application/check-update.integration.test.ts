@@ -47,16 +47,10 @@ function makeVersionReader(version: string): VersionReader {
 async function initWithVersion(
   deps: ReturnType<typeof buildDeps>,
   projectRoot: string,
-  version: string
+  _version: string
 ) {
-  const useCase = new InitUseCase(
-    deps.fs,
-    deps.manifestRepo,
-    deps.loader,
-    deps.hasher,
-    deps.logger
-  );
-  await useCase.execute({ frameworkPath: FIXTURE_DIR, version, docsDir: "aidd_docs", projectRoot });
+  const useCase = new InitUseCase(deps.fs, deps.manifestRepo);
+  await useCase.execute({ docsDir: "aidd_docs", projectRoot });
 }
 
 async function installWithVersion(
@@ -108,9 +102,9 @@ describe("printUpdateBanner", () => {
     expect(logs).toHaveLength(0);
   });
 
-  it("stays silent for non-release versions", async () => {
+  it("stays silent when project has no installed tools", async () => {
     const deps = buildDeps(projectRoot);
-    await initWithVersion(deps, projectRoot, "local");
+    await initWithVersion(deps, projectRoot, "3.0.0");
     const { logger, logs } = makeLogger();
 
     await printUpdateBanner(
@@ -124,9 +118,10 @@ describe("printUpdateBanner", () => {
     expect(logs).toHaveLength(0);
   });
 
-  it("stays silent when already on latest version", async () => {
+  it("stays silent when installed tool version is on latest", async () => {
     const deps = buildDeps(projectRoot);
     await initWithVersion(deps, projectRoot, "3.0.0");
+    await installWithVersion(deps, projectRoot, "3.0.0");
     const { logger, logs } = makeLogger();
 
     await printUpdateBanner(
@@ -143,6 +138,7 @@ describe("printUpdateBanner", () => {
   it("stays silent when version check fails", async () => {
     const deps = buildDeps(projectRoot);
     await initWithVersion(deps, projectRoot, "3.0.0");
+    await installWithVersion(deps, projectRoot, "3.0.0");
     const { logger, logs } = makeLogger();
     const resolver: FrameworkResolver = {
       resolve: vi.fn(),
@@ -161,44 +157,7 @@ describe("printUpdateBanner", () => {
     expect(logs).toHaveLength(0);
   });
 
-  it("shows 'aidd update' when only docs are outdated", async () => {
-    const deps = buildDeps(projectRoot);
-    await initWithVersion(deps, projectRoot, "3.0.0");
-    const { logger, logs } = makeLogger();
-
-    await printUpdateBanner(
-      makeSelfUpdater("v1.0.0"),
-      makeVersionReader("1.0.0"),
-      makeResolver("v3.1.0"),
-      deps.manifestRepo,
-      logger
-    );
-
-    expect(logs.some((l) => l.includes("Update available"))).toBe(true);
-    expect(logs.some((l) => l.includes("aidd update"))).toBe(true);
-    expect(logs.some((l) => l.includes("--docs"))).toBe(false);
-  });
-
-  it("shows 'aidd update' when only tools are outdated", async () => {
-    const deps = buildDeps(projectRoot);
-    await initWithVersion(deps, projectRoot, "3.1.0");
-    await installWithVersion(deps, projectRoot, "3.0.0");
-    const { logger, logs } = makeLogger();
-
-    await printUpdateBanner(
-      makeSelfUpdater("v1.0.0"),
-      makeVersionReader("1.0.0"),
-      makeResolver("v3.1.0"),
-      deps.manifestRepo,
-      logger
-    );
-
-    expect(logs.some((l) => l.includes("Update available"))).toBe(true);
-    expect(logs.some((l) => l.includes("aidd update"))).toBe(true);
-    expect(logs.some((l) => l.includes("--docs"))).toBe(false);
-  });
-
-  it("shows 'aidd update' when both docs and tools are outdated", async () => {
+  it("shows 'aidd update' when installed tools are outdated", async () => {
     const deps = buildDeps(projectRoot);
     await initWithVersion(deps, projectRoot, "3.0.0");
     await installWithVersion(deps, projectRoot, "3.0.0");
@@ -213,8 +172,7 @@ describe("printUpdateBanner", () => {
     );
 
     expect(logs.some((l) => l.includes("Update available"))).toBe(true);
-    expect(logs.some((l) => l.includes("aidd update") && !l.includes("--docs"))).toBe(true);
-    expect(logs.some((l) => l.includes("--docs"))).toBe(false);
+    expect(logs.some((l) => l.includes("aidd update"))).toBe(true);
   });
 
   it("shows CLI update when CLI is outdated", async () => {

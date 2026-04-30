@@ -6,8 +6,8 @@ describe("parseUpdateScope", () => {
     expect(parseUpdateScope("all")).toEqual({ kind: "all" });
   });
 
-  it('parses "docs"', () => {
-    expect(parseUpdateScope("docs")).toEqual({ kind: "docs" });
+  it('rejects "docs" (no longer supported)', () => {
+    expect(() => parseUpdateScope("docs")).toThrow('Invalid update scope: "docs"');
   });
 
   it('parses "tool:claude"', () => {

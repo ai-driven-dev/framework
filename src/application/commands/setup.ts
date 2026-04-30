@@ -139,14 +139,14 @@ export function registerSetupCommand(program: Command): void {
 
           switch (result.kind) {
             case "initialized": {
-              output.success(`Initialized docs in ${result.docsDir}/ (${result.fileCount} files)`);
+              output.success(`Initialized docs directory ${result.docsDir}/`);
               displayInstall(output, result.install.results, verbose);
               break;
             }
 
             case "adopted": {
               output.success(
-                `Adopted ${result.toolCount} tool(s) at version ${result.version}: ${result.totalRegistered} files registered, ${result.docsRegistered} docs registered`
+                `Adopted ${result.toolCount} tool(s) at version ${result.version}: ${result.totalRegistered} files registered`
               );
               break;
             }

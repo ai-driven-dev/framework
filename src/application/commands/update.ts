@@ -13,7 +13,6 @@ export function registerUpdateCommand(program: Command): void {
     .option("-f, --force", "Overwrite conflicting files without prompting", false)
     .option("--dry-run", "Preview changes without writing files", false)
     .option("--tool <tool>", "Limit update to a specific tool")
-    .option("--docs", "Limit update to docs only")
     .option("--path <path>", "Path to a local framework directory or tarball")
     .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
     .action(
@@ -21,17 +20,11 @@ export function registerUpdateCommand(program: Command): void {
         force: boolean;
         dryRun: boolean;
         tool?: string;
-        docs?: boolean;
         path?: string;
         release?: string;
       }) => {
         const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
-
-        if (cmdOptions.tool !== undefined && cmdOptions.docs) {
-          output.error("--tool and --docs are mutually exclusive");
-          process.exit(1);
-        }
 
         try {
           if (cmdOptions.tool !== undefined) {
@@ -61,7 +54,6 @@ export function registerUpdateCommand(program: Command): void {
             version,
             projectRoot,
             toolIds: cmdOptions.tool ? [cmdOptions.tool as ToolId] : undefined,
-            docsOnly: cmdOptions.docs ?? false,
             force: cmdOptions.force,
             dryRun: cmdOptions.dryRun,
             repo: repo,
@@ -98,19 +90,6 @@ export function registerUpdateCommand(program: Command): void {
                 totalChanges++;
               }
             }
-            if (result.docs) {
-              const changed = result.docs.diff.filter((d) => d.kind !== "unchanged");
-              if (changed.length > 0) {
-                output.print("");
-                output.print(`docs (v${version}):`);
-                for (const diff of changed) {
-                  const symbol = DRY_RUN_SYMBOL[diff.kind] ?? "~";
-                  const conflict = diff.conflict ? " [conflict]" : "";
-                  output.print(`  ${symbol} ${diff.relativePath}${conflict}`);
-                  totalChanges++;
-                }
-              }
-            }
             const toolCount = result.toolCount;
             output.print("");
             output.print(
@@ -128,15 +107,6 @@ export function registerUpdateCommand(program: Command): void {
             for (const f of tool.kept) output.print(`  ~ kept: ${f}`);
             for (const f of tool.backedUp) output.print(`  ~ backup: ${f}`);
           }
-          if (result.docs && !result.docs.alreadyUpToDate) {
-            output.print("");
-            output.print(`docs (v${version}):`);
-            for (const f of result.docs.written) output.print(`  + ${f}`);
-            for (const f of result.docs.deleted) output.print(`  - ${f}`);
-            for (const f of result.docs.kept) output.print(`  ~ kept: ${f}`);
-            for (const f of result.docs.backedUp) output.print(`  ~ backup: ${f}`);
-          }
-
           const toolCount = result.toolCount;
           output.print("");
           output.success(

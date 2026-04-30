@@ -23,71 +23,52 @@ export function registerStatusCommand(program: Command): void {
     .command("status")
     .description("Show drift between disk files and the manifest")
     .argument("[category]", "Filter to 'ai' or 'ide' tools")
-    .option("--docs", "Filter output to docs only")
     .option("--plugin <name>", "Filter status to one plugin")
-    .action(
-      async (categoryArg: string | undefined, cmdOptions: { docs?: boolean; plugin?: string }) => {
-        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
-        const errorHandler = new ErrorHandler(output);
+    .action(async (categoryArg: string | undefined, cmdOptions: { plugin?: string }) => {
+      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
 
-        const category = parseCategoryArg(categoryArg, output);
+      const category = parseCategoryArg(categoryArg, output);
 
-        if (category && cmdOptions.docs) {
-          output.error("category and --docs are mutually exclusive");
-          process.exit(1);
+      try {
+        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+
+        const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
+        const report = await useCase.execute({
+          projectRoot,
+          filterToolId: undefined,
+          category,
+          repo,
+          pluginName: cmdOptions.plugin,
+        });
+
+        if (report.tools.length === 0 && !category) {
+          output.print("No tools installed. Run `aidd install <tool>` to get started.");
+          if (report.inSync) return;
+        } else if (report.inSync) {
+          output.success("All files are in sync");
+          return;
         }
 
-        try {
-          const filterDocs = cmdOptions.docs ?? false;
-
-          const deps = await createDeps(projectRoot, { verbose, repo }, output);
-
-          const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
-          const report = await useCase.execute({
-            projectRoot,
-            filterToolId: undefined,
-            filterDocs,
-            category,
-            repo,
-            pluginName: cmdOptions.plugin,
-          });
-
-          if (report.tools.length === 0 && !filterDocs && !category) {
-            output.print("No tools installed. Run `aidd install <tool>` to get started.");
-            if (report.inSync) return;
-          } else if (report.inSync) {
-            output.success("All files are in sync");
-            return;
+        for (const tool of report.tools) {
+          if (tool.drifted.length === 0) continue;
+          output.print(`\n${tool.toolId} (v${tool.version}):`);
+          for (const file of tool.drifted) {
+            output.print(`  ${STATUS_SYMBOL[file.status]} ${file.relativePath}`);
           }
-
-          for (const tool of report.tools) {
-            if (tool.drifted.length === 0) continue;
-            output.print(`\n${tool.toolId} (v${tool.version}):`);
-            for (const file of tool.drifted) {
-              output.print(`  ${STATUS_SYMBOL[file.status]} ${file.relativePath}`);
-            }
-            printDriftStats(output, tool.drifted);
-          }
-
-          if (report.docs && report.docs.drifted.length > 0) {
-            output.print(`\ndocs (v${report.docs.version}):`);
-            for (const file of report.docs.drifted) {
-              output.print(`  ${STATUS_SYMBOL[file.status]} ${file.relativePath}`);
-            }
-            printDriftStats(output, report.docs.drifted);
-          }
-
-          for (const entry of report.pluginDrift) {
-            output.print(`\nplugin ${entry.pluginName} (${entry.toolId}):`);
-            for (const f of entry.driftedFiles) {
-              output.print(`  ~ ${f}`);
-            }
-          }
-
-          output.print("\nLegend: ~ modified  - deleted  + added");
-        } catch (error) {
-          errorHandler.handle(error);
+          printDriftStats(output, tool.drifted);
         }
+
+        for (const entry of report.pluginDrift) {
+          output.print(`\nplugin ${entry.pluginName} (${entry.toolId}):`);
+          for (const f of entry.driftedFiles) {
+            output.print(`  ~ ${f}`);
+          }
+        }
+
+        output.print("\nLegend: ~ modified  - deleted  + added");
+      } catch (error) {
+        errorHandler.handle(error);
       }
-    );
+    });
 }

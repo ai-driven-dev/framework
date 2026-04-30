@@ -26,7 +26,6 @@ interface RestoreOptions {
   docsDir?: string;
   projectRoot: string;
   toolIds?: ToolId[];
-  docsOnly?: boolean;
   files?: string[];
   force?: boolean;
   interactive?: boolean;
@@ -41,15 +40,8 @@ interface RestoreToolResult {
   kept: string[];
 }
 
-interface RestoreDocsResult {
-  nothingToRestore: boolean;
-  restored: string[];
-  kept: string[];
-}
-
 interface RestoreResult {
   tools: RestoreToolResult[];
-  docs: RestoreDocsResult | null;
   totalRestored: number;
   totalKept: number;
   totalPluginFilesRestored: number;
@@ -69,11 +61,9 @@ interface MergeSectionRestoreResult {
 
 interface RestoreCtx {
   options: RestoreOptions;
-  docsOnly: boolean;
   manifest: Manifest;
   descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"];
   contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"];
-  docsFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["docsFiles"];
   docsDir: string;
   projectRoot: string;
   version: string;
@@ -110,11 +100,10 @@ export class RestoreUseCase {
       throw new Error("frameworkPath, version, and docsDir are required for non-plugin restore.");
     }
 
-    const docsOnly = options.docsOnly ?? false;
     const manifest = options.manifest ?? (await this.manifestRepo.load());
     if (manifest === null) throw new NoManifestError(repo);
 
-    const { descriptor, contentFiles, docsFiles } = await this.loader.loadFromDirectory(
+    const { descriptor, contentFiles } = await this.loader.loadFromDirectory(
       frameworkPath,
       version
     );
@@ -122,11 +111,9 @@ export class RestoreUseCase {
 
     return this.executeRestore({
       options,
-      docsOnly,
       manifest,
       descriptor,
       contentFiles,
-      docsFiles,
       docsDir,
       projectRoot,
       version,
@@ -139,11 +126,9 @@ export class RestoreUseCase {
   private async executeRestore(ctx: RestoreCtx): Promise<RestoreResult> {
     const {
       options,
-      docsOnly,
       manifest,
       descriptor,
       contentFiles,
-      docsFiles,
       docsDir,
       projectRoot,
       version,
@@ -151,7 +136,7 @@ export class RestoreUseCase {
       interactive,
       fileFilter,
     } = ctx;
-    const toolIds = this.resolveToolIds(options, docsOnly, manifest);
+    const toolIds = this.resolveToolIds(options, manifest);
     const toolResults = await this.restoreAllTools(
       toolIds,
       manifest,
@@ -164,27 +149,11 @@ export class RestoreUseCase {
       interactive,
       fileFilter
     );
-    const hasExplicitToolFilter =
-      !docsOnly && options.toolIds !== undefined && options.toolIds.length > 0;
-    const docsResult = hasExplicitToolFilter
-      ? null
-      : await this.restoreDocs(
-          manifest,
-          docsFiles,
-          docsDir,
-          projectRoot,
-          version,
-          force,
-          interactive,
-          fileFilter
-        );
     const totalPluginFilesRestored = await this.restoreAllPlugins(projectRoot, manifest, docsDir);
     const hasChanges =
-      toolResults.some((t) => t.restored.length > 0) ||
-      (docsResult !== null && docsResult.restored.length > 0) ||
-      totalPluginFilesRestored > 0;
+      toolResults.some((t) => t.restored.length > 0) || totalPluginFilesRestored > 0;
     if (hasChanges) await this.manifestRepo.save(manifest);
-    return this.buildRestoreTotals(toolResults, docsResult, totalPluginFilesRestored);
+    return this.buildRestoreTotals(toolResults, totalPluginFilesRestored);
   }
 
   private async restoreAllPlugins(
@@ -220,8 +189,7 @@ export class RestoreUseCase {
     return total;
   }
 
-  private resolveToolIds(options: RestoreOptions, docsOnly: boolean, manifest: Manifest): ToolId[] {
-    if (docsOnly) return [];
+  private resolveToolIds(options: RestoreOptions, manifest: Manifest): ToolId[] {
     return options.toolIds?.length ? options.toolIds : manifest.getInstalledToolIds();
   }
 
@@ -358,76 +326,18 @@ export class RestoreUseCase {
     });
   }
 
-  private async restoreDocs(
-    manifest: Manifest,
-    docsFiles: Map<string, string>,
-    docsDir: string,
-    projectRoot: string,
-    version: string,
-    force: boolean,
-    interactive: boolean,
-    fileFilter: ((p: string) => boolean) | null
-  ): Promise<RestoreDocsResult | null> {
-    const docsManifestFiles = manifest.getDocsFiles();
-    const filesIncludeDocs =
-      fileFilter === null || docsManifestFiles.some((f) => fileFilter(f.relativePath));
-
-    if (!manifest.hasDocs() || !filesIncludeDocs) return null;
-
-    this.logger.info("Checking docs for files to restore...");
-
-    const distribution = this.buildDocsDistribution(docsFiles, docsDir);
-    const distMap = new Map(distribution.map((f) => [f.relativePath, f]));
-
-    const section = await this.restoreSection(
-      docsManifestFiles,
-      distMap,
-      projectRoot,
-      force,
-      interactive,
-      fileFilter
-    );
-    if (section === null) return { nothingToRestore: true, restored: [], kept: [] };
-
-    manifest.addDocs(manifest.getDocsVersion() ?? version, section.updatedFiles);
-    return { nothingToRestore: false, restored: section.restored, kept: section.kept };
-  }
-
   private buildRestoreTotals(
     toolResults: RestoreToolResult[],
-    docsResult: RestoreDocsResult | null,
     totalPluginFilesRestored: number
   ): RestoreResult {
-    const totalRestored =
-      toolResults.reduce((s, t) => s + t.restored.length, 0) + (docsResult?.restored.length ?? 0);
-    const totalKept =
-      toolResults.reduce((s, t) => s + t.kept.length, 0) + (docsResult?.kept.length ?? 0);
+    const totalRestored = toolResults.reduce((s, t) => s + t.restored.length, 0);
+    const totalKept = toolResults.reduce((s, t) => s + t.kept.length, 0);
     return {
       tools: toolResults,
-      docs: docsResult,
       totalRestored,
       totalKept,
       totalPluginFilesRestored,
     };
-  }
-
-  private buildDocsDistribution(
-    docsFiles: Map<string, string>,
-    docsDir: string
-  ): InstallationFile[] {
-    const distribution: InstallationFile[] = [];
-    for (const [frameworkRelPath, rawContent] of docsFiles.entries()) {
-      if (frameworkRelPath.endsWith("CATALOG.md")) continue;
-      const relativePath = frameworkRelPath.startsWith("aidd_docs/")
-        ? `${docsDir}/${frameworkRelPath.slice("aidd_docs/".length)}`
-        : frameworkRelPath;
-      const content = rawContent
-        .replaceAll("{{DOCS}}/", `${docsDir}/`)
-        .replaceAll("{{TOOLS}}/", `${docsDir}/`);
-      const hash = this.hasher.hash(content);
-      distribution.push(new InstallationFile({ relativePath, content, hash }));
-    }
-    return distribution;
   }
 }
 
