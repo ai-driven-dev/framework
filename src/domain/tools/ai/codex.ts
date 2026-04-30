@@ -220,7 +220,7 @@ export const codex: AiTool<HasAgents & HasSkills & HasMcp & HasHooks & HasMemory
     plugins: new PluginsCapability({
       mode: "native",
       pluginsDir: ".codex/plugins/",
-      pluginManifestRelativePath: ".codex-plugin/plugin.json",
+      pluginManifestRelativePath: "plugin.json",
       acceptsMcp: true,
     }),
   },

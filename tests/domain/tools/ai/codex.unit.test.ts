@@ -313,10 +313,8 @@ describe("reverseRewriteCodexContent()", () => {
       expect(codex.capabilities.plugins.pluginsDir).toBe(".codex/plugins/");
     });
 
-    it("uses .codex-plugin/plugin.json as plugin manifest path", () => {
-      expect(codex.capabilities.plugins.pluginManifestRelativePath).toBe(
-        ".codex-plugin/plugin.json"
-      );
+    it("uses plugin.json as plugin manifest path", () => {
+      expect(codex.capabilities.plugins.pluginManifestRelativePath).toBe("plugin.json");
     });
 
     it("pluginOutputDir returns correct path for a plugin name", () => {

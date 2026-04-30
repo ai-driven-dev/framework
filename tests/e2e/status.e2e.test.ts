@@ -103,8 +103,7 @@ describe.concurrent("E2E: aidd status", () => {
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
 
-      // aidd_docs/tasks/.gitkeep is a tracked docs file in the test fixture
-      const trackedPath = join(projectDir, "aidd_docs", "tasks", ".gitkeep");
+      const trackedPath = join(projectDir, "aidd_docs", "README.md");
       await writeFile(trackedPath, "modified", "utf-8");
 
       const { stdout, exitCode } = await runCli(["status"], projectDir);
@@ -123,8 +122,7 @@ describe.concurrent("E2E: aidd status", () => {
       await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
-      // modify a docs file to create drift
-      const trackedPath = join(projectDir, "aidd_docs", "tasks", ".gitkeep");
+      const trackedPath = join(projectDir, "aidd_docs", "README.md");
       await writeFile(trackedPath, "modified docs", "utf-8");
 
       const { stdout, exitCode } = await runCli(["status", "--docs"], projectDir);

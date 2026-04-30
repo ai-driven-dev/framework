@@ -1,7 +1,31 @@
+import type { HooksContentFormat } from "../formats/cursor-hooks.js";
+import type { PluginSource } from "../models/plugin-source.js";
+
 export type PluginsMode = "native" | "flat" | "unsupported";
+export type { HooksContentFormat };
 
 const DEFAULT_MCP_PATH = ".mcp.json";
 const DEFAULT_HOOKS_PATH = "hooks/hooks.json";
+const DEFAULT_HOOKS_FORMAT: HooksContentFormat = "claude";
+
+export interface MarketplaceSettingsEntry {
+  key: string;
+  value: Record<string, unknown>;
+}
+
+export interface MarketplaceSettingsInput {
+  name: string;
+  source: PluginSource;
+  version?: string;
+}
+
+export interface MarketplaceSettings {
+  settingsPath: string;
+  settingsKey: string;
+  enabledPluginsKey?: string;
+  enabledPluginsSettingsPath?: string;
+  toEntry(input: MarketplaceSettingsInput): MarketplaceSettingsEntry | null;
+}
 
 export interface NativePluginsParams {
   mode: "native";
@@ -9,8 +33,10 @@ export interface NativePluginsParams {
   pluginManifestRelativePath: string;
   mcpRelativePath?: string;
   hooksRelativePath?: string;
+  hooksContentFormat?: HooksContentFormat;
   acceptsHooks?: boolean;
   acceptsMcp?: boolean;
+  marketplaceSettings?: MarketplaceSettings;
 }
 
 export interface FlatPluginsParams {
@@ -33,6 +59,8 @@ export class PluginsCapability {
   readonly acceptsMcp: boolean;
   readonly mcpRelativePath: string;
   readonly hooksRelativePath: string;
+  readonly hooksContentFormat: HooksContentFormat;
+  readonly marketplaceSettings: MarketplaceSettings | null;
 
   constructor(params: PluginsParams) {
     this.mode = params.mode;
@@ -44,6 +72,8 @@ export class PluginsCapability {
       this.acceptsMcp = params.acceptsMcp ?? false;
       this.mcpRelativePath = params.mcpRelativePath ?? DEFAULT_MCP_PATH;
       this.hooksRelativePath = params.hooksRelativePath ?? DEFAULT_HOOKS_PATH;
+      this.hooksContentFormat = params.hooksContentFormat ?? DEFAULT_HOOKS_FORMAT;
+      this.marketplaceSettings = params.marketplaceSettings ?? null;
     } else {
       this.pluginsDir = null;
       this.pluginManifestRelativePath = null;
@@ -52,6 +82,8 @@ export class PluginsCapability {
       this.acceptsMcp = false;
       this.mcpRelativePath = DEFAULT_MCP_PATH;
       this.hooksRelativePath = DEFAULT_HOOKS_PATH;
+      this.hooksContentFormat = DEFAULT_HOOKS_FORMAT;
+      this.marketplaceSettings = null;
     }
   }
 

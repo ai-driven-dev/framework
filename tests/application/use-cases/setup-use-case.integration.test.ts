@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { InstallFrameworkPluginsUseCase } from "../../../src/application/use-cases/install-framework-plugins-use-case.js";
 import { SetupUseCase } from "../../../src/application/use-cases/setup-use-case.js";
 import type { FrameworkResolver } from "../../../src/domain/ports/framework-resolver.js";
 import { type ToolId, VALID_TOOL_IDS } from "../../../src/domain/tools/registry.js";
@@ -37,6 +38,14 @@ describe("setup without TTY", () => {
     };
   }
 
+  function makeInstallFrameworkPluginsUseCase(): InstallFrameworkPluginsUseCase {
+    return {
+      execute: vi
+        .fn()
+        .mockResolvedValue({ installedCount: 0, skippedCount: 0, deletedCount: 0, warnings: [] }),
+    } as unknown as InstallFrameworkPluginsUseCase;
+  }
+
   function buildUseCase(resolver: FrameworkResolver) {
     const deps = buildDeps(projectRoot);
     return new SetupUseCase(
@@ -47,7 +56,8 @@ describe("setup without TTY", () => {
       deps.logger,
       linuxPlatform,
       new SilentPrompterAdapter(),
-      resolver
+      resolver,
+      makeInstallFrameworkPluginsUseCase()
     );
   }
 

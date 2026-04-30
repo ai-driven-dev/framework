@@ -8,6 +8,12 @@ import { SetupUseCase } from "../../src/application/use-cases/setup-use-case.js"
 import type { ToolId } from "../../src/domain/tools/registry.js";
 import { createDeps } from "../../src/infrastructure/deps.js";
 
+function makeNoOpInstallFrameworkPlugins() {
+  return {
+    execute: async () => ({ installedCount: 0, skippedCount: 0, deletedCount: 0, warnings: [] }),
+  };
+}
+
 export const execFileAsync = promisify(execFile);
 
 const GIT_ENV_VARS = [
@@ -73,7 +79,8 @@ export async function initProject(
     deps.logger,
     deps.platform,
     deps.prompter,
-    deps.resolver
+    deps.resolver,
+    makeNoOpInstallFrameworkPlugins() as never
   ).execute({
     projectRoot: projectDir,
     path: frameworkPath,
@@ -97,6 +104,7 @@ export async function adoptProject(
     deps.logger,
     deps.platform,
     deps.prompter,
-    deps.resolver
+    deps.resolver,
+    makeNoOpInstallFrameworkPlugins() as never
   ).execute({ projectRoot: projectDir, path: frameworkPath, toolIds, from: frameworkPath });
 }

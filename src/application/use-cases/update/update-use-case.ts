@@ -1222,6 +1222,7 @@ export class UpdateUseCase {
       }
     }
     await this.fs.deleteFile(join(projectRoot, entry.relativePath));
+    await this.fs.deleteEmptyDirectories(dirname(join(projectRoot, entry.relativePath)));
     deleted.push(entry.relativePath);
   }
 

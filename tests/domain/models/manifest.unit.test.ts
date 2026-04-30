@@ -212,10 +212,10 @@ describe("Manifest", () => {
       expect(restoredMerge[0].entries.playwright.value).toBe(`aabb11${"0".repeat(26)}`);
     });
 
-    it("toJSON produces version 3", () => {
+    it("toJSON produces version 4", () => {
       const manifest = Manifest.create();
       manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
-      expect(manifest.toJSON().version).toBe(3);
+      expect(manifest.toJSON().version).toBe(4);
     });
   });
 
@@ -413,11 +413,22 @@ describe("Manifest", () => {
       expect(manifest.hasTool("copilot" as ToolId)).toBe(false);
     });
 
-    it("v3 manifest loads without migration", () => {
+    it("v3 manifest migrates to v4 without error", () => {
+      const v3Json = {
+        version: 3,
+        docsDir: "aidd_docs",
+        tools: { copilot: { toolId: "copilot", version: "1.0.0", files: [], plugins: [] } },
+        docs: null,
+        scripts: null,
+      };
+      expect(() => Manifest.fromJSON(v3Json)).not.toThrow();
+    });
+
+    it("v4 manifest loads without migration", () => {
       const manifest = Manifest.create();
       manifest.addTool("copilot" as ToolId, "1.0.0", []);
       const json = manifest.toJSON();
-      expect(json.version).toBe(3);
+      expect(json.version).toBe(4);
       expect(() => Manifest.fromJSON(json)).not.toThrow();
     });
 

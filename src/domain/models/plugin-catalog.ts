@@ -11,6 +11,8 @@ export interface PluginCatalogEntry {
 }
 
 export interface PluginCatalog {
+  name?: string;
+  version?: string;
   plugins: readonly PluginCatalogEntry[];
 }
 
@@ -54,5 +56,8 @@ export function parsePluginCatalog(raw: unknown): PluginCatalog {
   }
 
   const plugins = obj.plugins.map((entry, i) => parseEntry(entry, i));
-  return { plugins };
+  const catalog: PluginCatalog = { plugins };
+  if (typeof obj.name === "string" && obj.name.length > 0) catalog.name = obj.name;
+  if (typeof obj.version === "string" && obj.version.length > 0) catalog.version = obj.version;
+  return catalog;
 }

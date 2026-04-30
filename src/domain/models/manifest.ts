@@ -13,7 +13,7 @@ import type { MergeFileEntry } from "./merge.js";
 import { Plugin, type PluginEntryData } from "./plugin.js";
 import { type ToolId, VALID_TOOL_IDS } from "./tool-ids.js";
 
-const MANIFEST_VERSION = 3;
+const MANIFEST_VERSION = 4;
 
 // VSCode file paths that were tracked under "copilot" in manifest v1.
 // Used exclusively by migrateV1toV2 to move them to the "vscode" tool entry.
@@ -22,6 +22,8 @@ const VSCODE_MIGRATION_PATHS = new Set([
   ".vscode/keybindings.json",
   ".vscode/settings.json",
 ]);
+
+export type DistributionMode = "local" | "remote";
 
 const REPO_FORMAT_REGEX = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
 const DOCS_DIR_REGEX = /^[a-zA-Z0-9_-]+$/;
@@ -48,6 +50,11 @@ interface ScriptsEntry {
   readonly files: readonly TrackedFile[];
 }
 
+interface PluginsEntry {
+  readonly version: string;
+  readonly files: readonly TrackedFile[];
+}
+
 interface ToolEntry {
   readonly toolId: ToolId;
   readonly version: string;
@@ -62,6 +69,11 @@ interface ScriptsEntryData {
   files: TrackedFileData[];
 }
 
+interface PluginsSectionData {
+  version: string;
+  files: TrackedFileData[];
+}
+
 interface ManifestData {
   version: number;
   docsDir: string;
@@ -69,6 +81,8 @@ interface ManifestData {
   tools: Record<string, ToolEntryData>;
   docs: DocsEntryData | null;
   scripts: ScriptsEntryData | null;
+  plugins: PluginsSectionData | null;
+  mode: DistributionMode;
 }
 
 interface MergeFileEntryData {
@@ -133,6 +147,11 @@ function migrateV2toV3(raw: Record<string, unknown>): void {
   }
 }
 
+function migrateV3toV4(raw: Record<string, unknown>): void {
+  if (!("mode" in raw)) raw.mode = "local";
+  if (!("plugins" in raw)) raw.plugins = null;
+}
+
 export class Manifest {
   static readonly DEFAULT_DOCS_DIR = "aidd_docs";
   static readonly DEFAULT_REPO = "ai-driven-dev/aidd-framework";
@@ -148,6 +167,8 @@ export class Manifest {
   private readonly _tools: Map<ToolId, ToolEntry>;
   private _docs: DocsEntry | null;
   private _scripts: ScriptsEntry | null;
+  private _plugins: PluginsEntry | null = null;
+  private _mode: DistributionMode = "local";
   readonly docsDir: string;
   readonly repo?: string;
 
@@ -155,12 +176,16 @@ export class Manifest {
     tools: Map<ToolId, ToolEntry>;
     docs: DocsEntry | null;
     scripts: ScriptsEntry | null;
+    plugins: PluginsEntry | null;
+    mode: DistributionMode;
     docsDir: string;
     repo?: string;
   }) {
     this._tools = new Map(params.tools);
     this._docs = params.docs;
     this._scripts = params.scripts;
+    this._plugins = params.plugins;
+    this._mode = params.mode;
     this.docsDir = params.docsDir;
     this.repo = params.repo;
   }
@@ -170,6 +195,8 @@ export class Manifest {
       tools: new Map(),
       docs: null,
       scripts: null,
+      plugins: null,
+      mode: "local",
       docsDir: docsDir ?? Manifest.DEFAULT_DOCS_DIR,
       repo,
     });
@@ -211,6 +238,30 @@ export class Manifest {
 
   hasScripts(): boolean {
     return this._scripts !== null;
+  }
+
+  addPlugins(version: string, files: InstallationFile[]): void {
+    this._plugins = { version, files: this.toTrackedFiles(files) };
+  }
+
+  getPluginsVersion(): string | undefined {
+    return this._plugins?.version;
+  }
+
+  hasPlugins(): boolean {
+    return this._plugins !== null;
+  }
+
+  getPluginsFiles(): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
+    return this._plugins?.files ?? [];
+  }
+
+  getMode(): DistributionMode {
+    return this._mode;
+  }
+
+  setMode(mode: DistributionMode): void {
+    this._mode = mode;
   }
 
   private toTrackedFiles(files: InstallationFile[]): TrackedFile[] {
@@ -364,6 +415,7 @@ export class Manifest {
     }
     if (this._docs?.files.some((f) => f.relativePath === relativePath)) return true;
     if (this._scripts?.files.some((f) => f.relativePath === relativePath)) return true;
+    if (this._plugins?.files.some((f) => f.relativePath === relativePath)) return true;
     return false;
   }
 
@@ -379,6 +431,8 @@ export class Manifest {
       tools: new Map(this._tools),
       docs: this._docs,
       scripts: this._scripts,
+      plugins: this._plugins,
+      mode: this._mode,
       docsDir: newDocsDir,
       repo: this.repo,
     });
@@ -389,6 +443,8 @@ export class Manifest {
       tools: new Map(this._tools),
       docs: this._docs,
       scripts: this._scripts,
+      plugins: this._plugins,
+      mode: this._mode,
       docsDir: this.docsDir,
       repo: newRepo,
     });
@@ -439,6 +495,10 @@ export class Manifest {
       scripts: this._scripts
         ? { version: this._scripts.version, files: this.toTrackedFileData(this._scripts.files) }
         : null,
+      plugins: this._plugins
+        ? { version: this._plugins.version, files: this.toTrackedFileData(this._plugins.files) }
+        : null,
+      mode: this._mode,
     };
   }
 
@@ -496,9 +556,13 @@ export class Manifest {
     if (raw.version === 1) {
       migrateV1toV2(raw);
       migrateV2toV3(raw);
+      migrateV3toV4(raw);
     } else if (raw.version === 2) {
       migrateV2toV3(raw);
-    } else if (raw.version !== 3) {
+      migrateV3toV4(raw);
+    } else if (raw.version === 3) {
+      migrateV3toV4(raw);
+    } else if (raw.version !== 4) {
       throw new InvalidManifestDataError(
         `Unsupported manifest version: ${String(raw.version)}. Expected ${MANIFEST_VERSION}.`
       );
@@ -527,7 +591,17 @@ export class Manifest {
       };
     }
 
-    return new Manifest({ tools, docs, scripts, docsDir, repo });
+    let plugins: PluginsEntry | null = null;
+    if (raw.plugins !== null && raw.plugins !== undefined && typeof raw.plugins === "object") {
+      const pluginsRaw = raw.plugins as PluginsSectionData;
+      plugins = {
+        version: pluginsRaw.version,
+        files: Manifest.parseTrackedFiles(pluginsRaw.files),
+      };
+    }
+    const mode: DistributionMode = raw.mode === "remote" ? "remote" : "local";
+
+    return new Manifest({ tools, docs, scripts, plugins, mode, docsDir, repo });
   }
 
   private static parseTools(raw: Record<string, unknown>): Map<ToolId, ToolEntry> {

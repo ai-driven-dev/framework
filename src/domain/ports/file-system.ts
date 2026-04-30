@@ -15,4 +15,5 @@ export interface FileSystem {
   chmodExecutable(path: string): Promise<void>;
   backup(absolutePath: string): Promise<string>;
   hasLocalChanges(path: string, knownHash: FileHash): Promise<boolean>;
+  listFilesRecursive(dirPath: string): Promise<string[]>;
 }

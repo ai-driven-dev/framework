@@ -1,3 +1,14 @@
 {
-  "PreToolUse": []
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/update_memory.js"
+          }
+        ]
+      }
+    ]
+  }
 }

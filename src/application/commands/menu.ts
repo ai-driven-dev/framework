@@ -1,7 +1,8 @@
-import { spawn } from "node:child_process";
+import readline from "node:readline";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import { createMenuDeps } from "../../infrastructure/deps.js";
+import { spawnCliCommand } from "./shared/spawn-cli-command.js";
 
 interface MenuLeaf {
   name: string;
@@ -109,6 +110,98 @@ const INSTALLED_NODES: MenuNode[] = [
     ],
   },
   {
+    name: "Plugins",
+    value: "plugins",
+    description: "Browse, install and manage AI tool plugins",
+    children: [
+      {
+        name: "Install from marketplace",
+        value: "install",
+        description: "Install a plugin by name from registered marketplaces",
+        command: ["plugin", "install"],
+        inputPrompt: "Plugin name (e.g. aidd-dev or aidd-dev@1.0.0)",
+      },
+      {
+        name: "Add local plugin",
+        value: "add",
+        description: "Add a plugin from a local directory",
+        command: ["plugin", "add"],
+        inputPrompt: "Path to plugin directory",
+      },
+      {
+        name: "List installed plugins",
+        value: "list",
+        description: "Show all installed plugins per tool",
+        command: ["plugin", "list"],
+      },
+      {
+        name: "Search plugins",
+        value: "search",
+        description: "Search plugins across all registered marketplaces",
+        command: ["plugin", "search"],
+        inputPrompt: "Search query",
+      },
+      {
+        name: "Update plugins",
+        value: "update",
+        description: "Update all installed plugins to latest version",
+        command: ["plugin", "update"],
+      },
+      {
+        name: "Remove a plugin",
+        value: "remove",
+        description: "Remove an installed plugin",
+        command: ["plugin", "remove"],
+        inputPrompt: "Plugin name to remove",
+      },
+    ],
+  },
+  {
+    name: "Marketplace",
+    value: "marketplace",
+    description: "Manage plugin marketplace registrations",
+    children: [
+      {
+        name: "List marketplaces",
+        value: "list",
+        description: "Show all registered marketplaces",
+        command: ["marketplace", "list"],
+      },
+      {
+        name: "Add marketplace",
+        value: "add",
+        description: "Register a new plugin marketplace",
+        command: ["marketplace", "add"],
+      },
+      {
+        name: "Browse marketplace",
+        value: "browse",
+        description: "Browse plugins in a registered marketplace",
+        command: ["marketplace", "browse"],
+        inputPrompt: "Marketplace name",
+      },
+      {
+        name: "Refresh marketplaces",
+        value: "refresh",
+        description: "Refresh all registered marketplaces",
+        command: ["marketplace", "refresh"],
+      },
+      {
+        name: "Remove marketplace",
+        value: "remove",
+        description: "Unregister a marketplace",
+        command: ["marketplace", "remove"],
+        inputPrompt: "Marketplace name to remove",
+      },
+      {
+        name: "Check marketplaces",
+        value: "check",
+        description: "Report stale marketplaces",
+        command: ["marketplace", "check"],
+      },
+    ],
+  },
+  {
     name: "System",
     value: "system",
     description: "CLI updates, configuration and cache",
@@ -191,18 +284,12 @@ const INSTALLED_NODES: MenuNode[] = [
 const BACK = { name: "← Back", value: "back" } as const;
 const EXIT = { name: "Exit", value: "exit" } as const;
 
-type NavResult =
-  | { type: "command"; command: string[]; returnTo: string[] }
-  | { type: "back" }
-  | { type: "exit" };
+type NavResult = { type: "command"; command: string[] } | { type: "back" } | { type: "exit" };
 
-export interface InteractiveMenuOptions {
-  startAt?: string[];
-}
+export type InteractiveMenuOptions = {};
 
 export interface InteractiveMenuResult {
   command: string[];
-  returnTo?: string[];
 }
 
 export class InteractiveMenuUseCase {
@@ -211,41 +298,12 @@ export class InteractiveMenuUseCase {
     private readonly prompter: Prompter
   ) {}
 
-  async execute(options?: InteractiveMenuOptions): Promise<InteractiveMenuResult> {
+  async execute(_options?: InteractiveMenuOptions): Promise<InteractiveMenuResult> {
     const manifest = await this.manifestRepo.load();
     const rootNodes = manifest === null ? FRESH_NODES : INSTALLED_NODES;
-    const result = await this.navigateFrom(
-      rootNodes,
-      "What would you like to do?",
-      options?.startAt ?? [],
-      []
-    );
+    const result = await this.showMenu(rootNodes, "What would you like to do?", []);
     if (result.type !== "command") return { command: ["exit"] };
-    return {
-      command: result.command,
-      returnTo: result.returnTo.length > 0 ? result.returnTo : undefined,
-    };
-  }
-
-  private async navigateFrom(
-    nodes: MenuNode[],
-    label: string,
-    path: string[],
-    breadcrumb: string[]
-  ): Promise<NavResult> {
-    if (path.length > 0) {
-      const [head, ...tail] = path;
-      const node = nodes.find((n) => n.value === head);
-      if (node && isBranch(node)) {
-        const result = await this.navigateFrom(node.children, node.name, tail, [
-          ...breadcrumb,
-          node.value,
-        ]);
-        if (result.type === "back") return this.showMenu(nodes, label, breadcrumb);
-        return result;
-      }
-    }
-    return this.showMenu(nodes, label, breadcrumb);
+    return { command: result.command };
   }
 
   private async showMenu(
@@ -266,7 +324,7 @@ export class InteractiveMenuUseCase {
       return result;
     }
 
-    return { type: "command", command: await this.resolveCommand(node), returnTo: breadcrumb };
+    return { type: "command", command: await this.resolveCommand(node) };
   }
 
   private async resolveCommand(node: MenuLeaf): Promise<string[]> {
@@ -278,29 +336,26 @@ export class InteractiveMenuUseCase {
   }
 }
 
-function spawnCliCommand(command: string[]): Promise<void> {
-  return new Promise((resolve) => {
-    spawn(process.execPath, [process.argv[1], ...command], { stdio: "inherit" }).on(
-      "close",
-      resolve
-    );
+async function waitForEnter(): Promise<void> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  await new Promise<void>((resolve) => {
+    rl.question("\nPress ENTER to continue...", () => {
+      rl.close();
+      resolve();
+    });
   });
 }
 
 export async function runMenuLoop(): Promise<never> {
   const { manifestRepo, prompter } = createMenuDeps(process.cwd());
-  let returnTo: string[] | undefined;
   for (;;) {
     try {
-      const result = await new InteractiveMenuUseCase(manifestRepo, prompter).execute({
-        startAt: returnTo,
-      });
+      const result = await new InteractiveMenuUseCase(manifestRepo, prompter).execute();
       if (result.command[0] === "exit") process.exit(0);
-      returnTo = result.returnTo;
       await spawnCliCommand(result.command);
+      await waitForEnter();
     } catch (error) {
       if (error instanceof Error && error.name === "ExitPromptError") process.exit(0);
-      returnTo = undefined;
     }
   }
 }

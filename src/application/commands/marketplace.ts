@@ -4,26 +4,43 @@ import {
   describePluginSource,
   parsePluginSourceShorthand,
 } from "../../domain/models/plugin-source.js";
-import { createDeps } from "../../infrastructure/deps.js";
+import { createDeps, createMenuDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
+import { spawnCliCommand } from "./shared/spawn-cli-command.js";
 
 export function registerMarketplaceCommand(program: Command): void {
   const marketplace = program.command("marketplace").description("Manage plugin marketplaces");
 
+  marketplace.action(async () => {
+    if (!process.stdout.isTTY) {
+      marketplace.help();
+      return;
+    }
+    const { prompter } = createMenuDeps(process.cwd());
+    const choice = await prompter.select("marketplace: what do you want to do?", [
+      { name: "List marketplaces", value: "list" },
+      { name: "Add marketplace", value: "add" },
+      { name: "Browse marketplace", value: "browse", description: "requires name arg" },
+      { name: "Refresh marketplaces", value: "refresh" },
+      { name: "Remove marketplace", value: "remove", description: "requires name arg" },
+      { name: "Check marketplaces", value: "check" },
+    ]);
+    await spawnCliCommand(["marketplace", choice]);
+  });
+
   marketplace
-    .command("add <source>")
+    .command("add [name] [source]")
     .description("Register a plugin marketplace")
-    .requiredOption("--name <slug>", "Marketplace name")
     .option("--user", "Register at user scope (default: project)")
     .option("--yes", "Skip the trust + cleanup prompts")
     .option("--overwrite", "Replace an existing marketplace with the same name")
     .option("--token <value>", "Auth token (host detected from source URL at fetch time)")
     .action(
       async (
-        sourceArg: string,
+        nameArg: string | undefined,
+        sourceArg: string | undefined,
         cmdOptions: {
-          name: string;
           user?: boolean;
           yes?: boolean;
           overwrite?: boolean;
@@ -32,19 +49,27 @@ export function registerMarketplaceCommand(program: Command): void {
       ) => {
         const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
+        const interactive = process.stdout.isTTY;
+        if (!interactive && (!nameArg || !sourceArg)) {
+          output.error("name and source are required in non-interactive mode.");
+          process.exit(1);
+        }
         try {
-          const source = parsePluginSourceShorthand(sourceArg);
           if (cmdOptions.token) process.env.AIDD_TOKEN = cmdOptions.token;
           const scope: MarketplaceScope = cmdOptions.user ? "user" : "project";
           const deps = await createDeps(projectRoot, { verbose, repo }, output);
+          const name = nameArg ?? (await deps.prompter.input("Marketplace name:"));
+          const rawSource = sourceArg ?? (await deps.prompter.input("Source (path or user/repo):"));
+          const source = parsePluginSourceShorthand(rawSource);
           const result = await deps.marketplaceAddUseCase.execute({
             source,
-            name: cmdOptions.name,
+            name,
             scope,
             projectRoot,
             autoTrust: cmdOptions.yes ?? false,
             overwrite: cmdOptions.overwrite ?? false,
           });
+          await deps.marketplaceSyncSettingsUseCase.execute({ projectRoot });
           output.success(`Marketplace '${result.marketplace.name}' registered.`);
         } catch (error) {
           errorHandler.handle(error);
@@ -82,6 +107,7 @@ export function registerMarketplaceCommand(program: Command): void {
           projectRoot,
           autoConfirm: cmdOptions.yes ?? false,
         });
+        await deps.marketplaceSyncSettingsUseCase.execute({ projectRoot });
         output.success(
           `Marketplace '${result.marketplace.name}' removed (${result.removedPluginCount} plugin(s) cleaned up).`
         );
@@ -102,6 +128,7 @@ export function registerMarketplaceCommand(program: Command): void {
           projectRoot,
           name,
         });
+        await deps.marketplaceSyncSettingsUseCase.execute({ projectRoot });
         for (const r of results)
           output.print(`${r.name}: ${r.status}${r.error ? ` (${r.error})` : ""}`);
         if (failedCount > 0) process.exit(1);

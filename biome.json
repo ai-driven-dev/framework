@@ -35,6 +35,7 @@
       "!.specstory",
       "!.vscode",
       "!setup-test",
+      "!tmp-test",
       "!**/fixtures/**/*.json"
     ]
   },

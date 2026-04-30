@@ -1,5 +1,5 @@
 import { isLocalPath } from "../../domain/models/framework.js";
-import { Manifest } from "../../domain/models/manifest.js";
+import { type DistributionMode, Manifest } from "../../domain/models/manifest.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { FrameworkResolver } from "../../domain/ports/framework-resolver.js";
@@ -20,6 +20,7 @@ import { AdoptUseCase } from "./adopt/adopt-use-case.js";
 import { InitUseCase } from "./init-use-case.js";
 import type { InstallToolResult } from "./install/install-use-case.js";
 import { InstallUseCase } from "./install/install-use-case.js";
+import type { InstallFrameworkPluginsUseCase } from "./install-framework-plugins-use-case.js";
 import { ResolveFrameworkUseCase } from "./resolve-framework-use-case.js";
 import { type AdoptSignal, SetupStateService } from "./shared/setup-state-service.js";
 import { UpdateUseCase } from "./update/update-use-case.js";
@@ -36,13 +37,15 @@ interface SetupOptions {
   toolIds?: ToolId[];
   from?: string;
   interactive?: boolean;
+  mode?: DistributionMode;
+  switchMode?: boolean;
 }
 
 interface InstallSummary {
   results: InstallToolResult[];
 }
 
-export type SetupResult =
+export type SetupResult = { resolvedFrameworkPath?: string } & (
   | { kind: "initialized"; docsDir: string; fileCount: number; install: InstallSummary }
   | {
       kind: "adopted";
@@ -59,9 +62,13 @@ export type SetupResult =
       totalWritten: number;
       totalDeleted: number;
       toolCount: number;
+      pluginsUpdated: number;
+      pluginsDeleted: number;
       additionalInstall?: InstallSummary;
     }
-  | { kind: "up-to-date"; hasAdditionalTools: boolean; additionalInstall?: InstallSummary };
+  | { kind: "up-to-date"; hasAdditionalTools: boolean; additionalInstall?: InstallSummary }
+  | { kind: "mode-switched"; newMode: DistributionMode }
+);
 
 export class SetupUseCase {
   private readonly frameworkResolver: ResolveFrameworkUseCase;
@@ -75,12 +82,14 @@ export class SetupUseCase {
     private readonly platform: Platform,
     private readonly prompter: Prompter,
     private readonly resolver: FrameworkResolver,
+    private readonly installFrameworkPluginsUseCase: InstallFrameworkPluginsUseCase,
     authReader?: TokenProvider
   ) {
     this.frameworkResolver = new ResolveFrameworkUseCase(resolver, logger, authReader);
   }
 
   async execute(options: SetupOptions): Promise<SetupResult> {
+    if (options.switchMode) return this.handleSwitchMode(options);
     const state = await new SetupStateService(this.manifestRepo, this.fs, this.resolver).detect(
       options.projectRoot
     );
@@ -102,8 +111,12 @@ export class SetupUseCase {
     const { projectRoot, repo } = options;
 
     const { docsDir, explicitDocsDir } = await this.resolveDocsDir(options);
-    const { frameworkPath, frameworkRepo } = await this.resolveFrameworkSource(options);
-    const resolvedRelease = await this.resolveRelease(frameworkRepo, options);
+    const resolvedMode = await this.resolveMode(options);
+    const { frameworkPath, frameworkRepo } = await this.resolveFrameworkSource(
+      options,
+      resolvedMode
+    );
+    const resolvedRelease = await this.resolveRelease(frameworkRepo, frameworkPath, options);
     const resolved = await this.frameworkResolver.execute({
       path: frameworkPath,
       release: resolvedRelease,
@@ -119,6 +132,8 @@ export class SetupUseCase {
       repoForManifest
     );
 
+    await this.persistMode(resolvedMode);
+
     const installResults = await this.runInstall(
       resolved.path,
       resolved.version,
@@ -128,12 +143,90 @@ export class SetupUseCase {
       options.interactive
     );
 
+    if (resolvedMode === "local") {
+      await this.installLocalPlugins(resolved.path, resolved.version, projectRoot);
+    }
+
     return {
       kind: "initialized",
       docsDir: initResult.docsDir,
       fileCount: initResult.fileCount,
       install: { results: installResults },
+      resolvedFrameworkPath: this.localPathOf(frameworkPath, resolved.path),
     };
+  }
+
+  private async installLocalPlugins(
+    frameworkPath: string,
+    version: string,
+    projectRoot: string
+  ): Promise<void> {
+    await this.installFrameworkPluginsUseCase.execute({ frameworkPath, projectRoot, version });
+  }
+
+  private async resolveMode(options: SetupOptions): Promise<DistributionMode> {
+    if (options.mode) return options.mode;
+    if (!options.interactive) return "local";
+    return this.prompter.select<DistributionMode>("Distribution mode:", [
+      { name: "local (copy plugins to project)", value: "local" },
+      { name: "remote (GitHub marketplace at release tag)", value: "remote" },
+    ]);
+  }
+
+  private async persistMode(mode: DistributionMode): Promise<void> {
+    if (mode === "local") return;
+    const manifest = await this.manifestRepo.load();
+    if (!manifest) return;
+    manifest.setMode(mode);
+    await this.manifestRepo.save(manifest);
+  }
+
+  private async handleSwitchMode(options: SetupOptions): Promise<SetupResult> {
+    const manifest = await this.manifestRepo.load();
+    if (!manifest) throw new InputRequiredError("No manifest found. Run `aidd setup` first.");
+    const currentMode = manifest.getMode();
+    const newMode = await this.resolveNewMode(options, currentMode);
+    manifest.setMode(newMode);
+    await this.manifestRepo.save(manifest);
+    if (newMode === "local") {
+      await this.installPluginsForSwitchToLocal(options, manifest);
+    }
+    return { kind: "mode-switched", newMode };
+  }
+
+  private async resolveNewMode(
+    options: SetupOptions,
+    currentMode: DistributionMode
+  ): Promise<DistributionMode> {
+    if (options.mode) return options.mode;
+    if (!options.interactive) {
+      throw new InputRequiredError("--mode is required in non-interactive mode.");
+    }
+    return this.prompter.select<DistributionMode>(`Switch mode (current: ${currentMode}):`, [
+      { name: "local (copy plugins to project)", value: "local" },
+      { name: "remote (GitHub marketplace at release tag)", value: "remote" },
+    ]);
+  }
+
+  private async installPluginsForSwitchToLocal(
+    options: SetupOptions,
+    manifest: Manifest
+  ): Promise<void> {
+    const { path: frameworkPath, version } = await this.frameworkResolver.execute({
+      path: options.path,
+      release: options.release,
+      repo: manifest.repo,
+    });
+    await this.installFrameworkPluginsUseCase.execute({
+      frameworkPath,
+      projectRoot: options.projectRoot,
+      version,
+      force: true,
+    });
+  }
+
+  private localPathOf(sourcePath: string | undefined, resolvedPath: string): string | undefined {
+    return sourcePath && isLocalPath(sourcePath) ? resolvedPath : undefined;
   }
 
   private async runInit(
@@ -181,7 +274,8 @@ export class SetupUseCase {
   }
 
   private async resolveFrameworkSource(
-    options: SetupOptions
+    options: SetupOptions,
+    mode: DistributionMode
   ): Promise<{ frameworkPath?: string; frameworkRepo?: string }> {
     if (options.path !== undefined) {
       if (!options.path) return {};
@@ -189,7 +283,8 @@ export class SetupUseCase {
       return { frameworkRepo: options.path };
     }
     const existingManifest = await this.manifestRepo.load();
-    const sourceDefault = existingManifest?.repo ?? this.resolver.getDefaultRepo() ?? "";
+    const repoDefault = existingManifest?.repo ?? this.resolver.getDefaultRepo() ?? "";
+    const sourceDefault = mode === "local" ? "." : repoDefault;
     const sourceInput = options.interactive
       ? await this.prompter.input("Framework source (owner/repo or local path):", sourceDefault)
       : sourceDefault;
@@ -200,9 +295,10 @@ export class SetupUseCase {
 
   private async resolveRelease(
     frameworkRepo: string | undefined,
+    frameworkPath: string | undefined,
     options: SetupOptions
   ): Promise<string | undefined> {
-    if (options.path && isLocalPath(options.path)) return options.release;
+    if (frameworkPath && isLocalPath(frameworkPath)) return options.release;
     if (options.release) return options.release;
     if (options.interactive) {
       const latest = await this.resolver.fetchLatestVersion(frameworkRepo).catch(() => "");
@@ -343,7 +439,11 @@ export class SetupUseCase {
       options.interactive
     );
 
-    return { kind: "installed", install: { results: installResults } };
+    return {
+      kind: "installed",
+      install: { results: installResults },
+      resolvedFrameworkPath: this.localPathOf(path, frameworkPath),
+    };
   }
 
   private async handleUpdate(options: SetupOptions): Promise<SetupResult> {
@@ -372,14 +472,43 @@ export class SetupUseCase {
 
     if (updateResult.cancelled) return { kind: "update-cancelled" };
 
+    const { pluginsUpdated, pluginsDeleted } = await this.installPluginsForUpdate(
+      frameworkPath,
+      projectRoot,
+      version
+    );
+
     return this.buildUpdateResult(
       updateResult,
       frameworkPath,
       version,
       projectRoot,
       repo,
-      options.interactive
+      options.interactive,
+      pluginsUpdated,
+      pluginsDeleted,
+      this.localPathOf(path, frameworkPath)
     );
+  }
+
+  private async installPluginsForUpdate(
+    frameworkPath: string,
+    projectRoot: string,
+    version: string
+  ): Promise<{ pluginsUpdated: number; pluginsDeleted: number }> {
+    const manifest = await this.manifestRepo.load();
+    const mode = manifest?.getMode() ?? "local";
+    if (mode !== "local") return { pluginsUpdated: 0, pluginsDeleted: 0 };
+    const pluginResult = await this.installFrameworkPluginsUseCase.execute({
+      frameworkPath,
+      projectRoot,
+      version,
+      cleanDeleted: true,
+    });
+    return {
+      pluginsUpdated: pluginResult.installedCount,
+      pluginsDeleted: pluginResult.deletedCount,
+    };
   }
 
   private async buildUpdateResult(
@@ -388,7 +517,10 @@ export class SetupUseCase {
     version: string,
     projectRoot: string,
     repo: string | undefined,
-    interactive?: boolean
+    interactive: boolean | undefined,
+    pluginsUpdated: number,
+    pluginsDeleted: number,
+    resolvedFrameworkPath?: string
   ): Promise<SetupResult> {
     const updatedManifest = await this.manifestRepo.load();
     const updatedInstalledIds = updatedManifest?.getInstalledToolIds() ?? [];
@@ -402,7 +534,10 @@ export class SetupUseCase {
       totalWritten: updateResult.totalWritten,
       totalDeleted: updateResult.totalDeleted,
       toolCount: updateResult.toolCount,
+      pluginsUpdated,
+      pluginsDeleted,
       additionalInstall,
+      resolvedFrameworkPath,
     };
   }
 
@@ -428,7 +563,12 @@ export class SetupUseCase {
       repo,
       options.interactive
     );
-    return { kind: "up-to-date", hasAdditionalTools: true, additionalInstall };
+    return {
+      kind: "up-to-date",
+      hasAdditionalTools: true,
+      additionalInstall,
+      resolvedFrameworkPath: this.localPathOf(path, frameworkPath),
+    };
   }
 
   private async offerAdditionalInstall(

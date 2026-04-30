@@ -143,6 +143,23 @@ aidd sync --source claude --force          # overwrite conflicting target files
 
 Excluded from sync: memory bank files, MCP configs, VS Code settings, docs.
 
+### Managing plugins
+
+```bash
+# Register a marketplace and install plugins
+aidd marketplace add acme owner/aidd-plugins
+aidd plugin pick                         # interactive browse + install
+
+# One-shot non-interactive install
+aidd plugin install my-plugin --yes
+
+# Keep plugins up to date
+aidd plugin update
+
+# Check for stale catalogs or upstream-removed plugins
+aidd marketplace check
+```
+
 ### Uninstalling a tool
 
 ```bash
@@ -159,14 +176,16 @@ aidd uninstall --all            # uninstall all tools
 | Command                      | Description                                                        | Key options                                  |
 | ---------------------------- | ------------------------------------------------------------------ | -------------------------------------------- |
 | `aidd auth`                  | Manage authentication (login, logout, status)                      | `--token`, `--gh`, `--level`                 |
-| `aidd setup`                 | Set up or update the project — interactive by default, scriptable with flags | `--release`, `--path`, `--ai`, `--ide`, `--all`, `--docs-dir`, `--from` |
-| `aidd install [ai\|ide] <tools...>` | Generate and write tool-specific files (requires existing manifest) | `--all`, `--force`, `--release`, `--path` |
+| `aidd setup`                 | Set up or update the project — interactive by default, scriptable with flags | `--release`, `--path`, `--ai`, `--ide`, `--all`, `--docs-dir`, `--from`, `--mode`, `--switch-mode` |
+| `aidd install [ai\|ide] <tools...>` | Generate and write tool-specific files (requires existing manifest) | `--all`, `--force`, `--release`, `--path`, `--plugins`, `--all-plugins`, `--recommended-plugins`, `--no-plugins` |
 | `aidd uninstall [ai\|ide] <tools...>` | Remove tool files and update manifest                        | `--all`                                      |
 | `aidd status [ai\|ide]`      | Show drift between disk and manifest + available update            | `--tool`, `--docs`                           |
 | `aidd doctor [ai\|ide]`      | Structural integrity check — exits 1 on errors or warnings         | —                                            |
 | `aidd update`                | Apply new framework version                                        | `--force`, `--dry-run`, `--tool`, `--docs`, `--release`, `--path` |
 | `aidd restore [files...]`    | Revert modified/deleted files to the pinned framework version      | `--force`, `--tool`, `--docs`, `--release`, `--path` |
 | `aidd sync`                  | Propagate local changes from one tool to the others                | `--source` (required), `--target`, `--force` |
+| `aidd plugin`                | Manage plugins for AI tools                                        | `add`, `remove`, `list`, `install`, `search`, `pick`, `update` |
+| `aidd marketplace`           | Manage plugin marketplaces                                         | `add`, `list`, `remove`, `refresh`, `browse`, `check` |
 | `aidd clean`                 | Remove all AIDD files — dry-run without `--force`                  | `--force`                                    |
 | `aidd cache list\|clear`     | List or remove cached framework versions                           | `--all`, `[version]`                         |
 | `aidd config list\|get\|set` | Read or update manifest-backed config (`docsDir`, `repo`, `tools`) | `--force`                                    |
@@ -200,9 +219,18 @@ aidd setup --ide vscode                         # non-interactive: init + instal
 aidd setup --ai claude,cursor --ide vscode      # mix AI and IDE tools
 aidd setup --ai claude --from v3.2.0            # non-interactive adopt (existing tool files)
 aidd setup --docs-dir my_docs                   # custom documentation directory
+aidd setup --mode remote                        # use remote distribution mode
+aidd setup --switch-mode                        # switch distribution mode on an existing project
 ```
 
 Passing `--all`, `--ai`, or `--ide` disables interactive prompts — values with defaults (docs dir, repo, release) are resolved automatically. For `adopt` state, `--from` is required.
+
+**Distribution modes:**
+
+| Mode | Behaviour |
+| ---- | --------- |
+| `local` (default) | Framework files are downloaded and written to disk in the project |
+| `remote` | Files are served from the registered framework marketplace; only plugin manifests are stored locally |
 
 ### `aidd install`
 
@@ -221,9 +249,15 @@ aidd install ai --all                       # all AI tools
 aidd install ide --all                      # all IDE tools
 aidd install claude --force                 # overwrite existing files
 aidd install claude --release v3.4.0       # pin a specific framework version
+aidd install claude --plugins hooks,rules   # install specific plugins from catalog
+aidd install claude --all-plugins           # install all plugins from catalog
+aidd install claude --recommended-plugins   # install only recommended plugins
+aidd install claude --no-plugins            # skip plugin installation entirely
 ```
 
 The optional `ai` or `ide` prefix scopes the operation and validates that the listed tools belong to that category.
+
+`--plugins`, `--all-plugins`, and `--recommended-plugins` are mutually exclusive.
 
 ### `aidd uninstall`
 
@@ -276,6 +310,50 @@ Reverts modified or deleted files to the framework version pinned in the manifes
 ### `aidd sync`
 
 Propagates local modifications from one tool's files to the others via reverse + forward content rewriting. See [Syncing changes across tools](#syncing-changes-across-tools) for examples.
+
+### `aidd plugin`
+
+Manages plugins for AI tools. Plugins extend the framework with additional agents, rules, hooks, and commands distributed independently of the core framework.
+
+```bash
+aidd plugin add owner/repo                  # add a local/remote plugin to all installed tools
+aidd plugin add owner/repo --tool claude    # add to a specific tool only
+aidd plugin install my-plugin               # install a plugin from a registered marketplace
+aidd plugin install my-plugin@1.2.0         # pin to a specific version
+aidd plugin install my-plugin --from acme   # resolve from a specific marketplace
+aidd plugin install my-plugin --yes         # auto-resolve prompts (CI mode)
+aidd plugin list                            # list installed plugins (all tools)
+aidd plugin list --tool claude              # list for a specific tool
+aidd plugin search hooks                    # search marketplaces by keyword
+aidd plugin search hooks --recommended      # show only recommended results
+aidd plugin search hooks --marketplace acme # limit search to one marketplace
+aidd plugin pick                            # interactively browse and install from a marketplace
+aidd plugin update                          # update all installed plugins
+aidd plugin update my-plugin               # update a specific plugin
+aidd plugin remove my-plugin               # remove a plugin from all tools
+aidd plugin remove my-plugin --tool claude  # remove from a specific tool
+```
+
+### `aidd marketplace`
+
+Registers and manages plugin marketplaces — sources that publish plugin catalogs.
+
+```bash
+aidd marketplace add acme owner/aidd-plugins    # register a marketplace (project scope)
+aidd marketplace add acme owner/aidd-plugins --user  # register at user scope
+aidd marketplace add acme owner/aidd-plugins --yes   # skip trust + cleanup prompts
+aidd marketplace add acme owner/aidd-plugins --overwrite  # replace existing entry
+aidd marketplace list                           # list registered marketplaces
+aidd marketplace browse acme                    # list plugins in a marketplace
+aidd marketplace browse acme --use-cache        # use cached catalog if fetch fails
+aidd marketplace refresh                        # refresh all marketplace catalogs
+aidd marketplace refresh acme                   # refresh a specific marketplace
+aidd marketplace remove acme                    # remove a registered marketplace
+aidd marketplace remove acme --yes              # skip orphan-cleanup prompt
+aidd marketplace check                          # report stale marketplaces and removed plugins
+```
+
+Marketplace sources accept a GitHub shorthand (`owner/repo`) or a full path to a local catalog file. Use `--token` on `marketplace add` or `plugin install` when the source requires authentication.
 
 ### `aidd clean`
 

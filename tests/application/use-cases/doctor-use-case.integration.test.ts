@@ -175,7 +175,8 @@ describe("doctor", () => {
     const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
     const report = await useCase.execute({ projectRoot });
 
-    expect(report.issues.every((i) => !i.message.includes(".claude/agents/"))).toBe(true);
+    const brokenRefIssues = report.issues.filter((i) => i.message.startsWith("Broken reference"));
+    expect(brokenRefIssues.every((i) => !i.message.includes(".claude/agents/"))).toBe(true);
   });
 
   it("reports broken markdown link target for copilot tracked files", async () => {

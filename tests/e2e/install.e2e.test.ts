@@ -568,6 +568,75 @@ describe.concurrent("E2E: aidd install", () => {
     }
   });
 
+  it("cursor rules have .mdc extension after install", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install-cursor-mdc");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      const { exitCode } = await runCli(
+        ["install", "ai", "cursor", "--path", FRAMEWORK_PATH, "--no-plugins"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(existsSync(join(projectDir, ".cursor/rules/01-standards/naming.mdc"))).toBe(true);
+      expect(existsSync(join(projectDir, ".cursor/rules/01-standards/naming.md"))).toBe(false);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("copilot rules have .instructions.md extension and flattened filenames after install", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install-copilot-instructions");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      const { exitCode } = await runCli(
+        ["install", "ai", "copilot", "--path", FRAMEWORK_PATH, "--no-plugins"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(existsSync(join(projectDir, ".github/instructions/01-naming.instructions.md"))).toBe(
+        true
+      );
+      expect(existsSync(join(projectDir, ".github/instructions/naming.md"))).toBe(false);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("cursor MCP file is named mcp.json (no leading dot) after install", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install-cursor-mcp");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      const { exitCode } = await runCli(
+        ["install", "ai", "cursor", "--path", FRAMEWORK_PATH, "--no-plugins"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(existsSync(join(projectDir, ".cursor/mcp.json"))).toBe(true);
+      expect(existsSync(join(projectDir, ".cursor/.mcp.json"))).toBe(false);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("claude MCP file is named .mcp.json at project root after install", async () => {
+    const { projectDir, cleanup } = await createTestEnv("install-claude-mcp");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      const { exitCode } = await runCli(
+        ["install", "ai", "claude", "--path", FRAMEWORK_PATH, "--no-plugins"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(existsSync(join(projectDir, ".mcp.json"))).toBe(true);
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("--release flag without --path triggers remote resolution and requires auth", async () => {
     const { projectDir, cleanup } = await createTestEnv("install-release");
     try {

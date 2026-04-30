@@ -39,7 +39,7 @@ describe.concurrent("E2E: aidd cache", () => {
         const { exitCode, stderr } = await runCli(["cache", "clear", "v3.9.0"], projectDir);
 
         expect(exitCode).toBe(1);
-        expect(stderr).toContain("No cached framework found for version 'v3.9.0'");
+        expect(stderr).toContain("No cached framework found for version '3.9.0'");
       } finally {
         await cleanup();
       }

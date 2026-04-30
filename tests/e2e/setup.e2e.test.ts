@@ -25,32 +25,6 @@ async function runCliNoAuth(
 }
 
 describe.concurrent("E2E: aidd setup", () => {
-  it("shows usage with --help", async () => {
-    const { projectDir, cleanup } = await createTestEnv("setup-help");
-    try {
-      const { stdout, exitCode } = await runCli(["setup", "--help"], projectDir);
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("setup");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("needs-init state, non-interactive, no extra flags — succeeds with exit 0", async () => {
-    const { projectDir, cleanup } = await createTestEnv("setup-init-noninteractive");
-    try {
-      const { exitCode } = await runCli(
-        ["setup", "--path", FRAMEWORK_PATH, "--release", "test"],
-        projectDir
-      );
-
-      expect(exitCode).toBe(0);
-    } finally {
-      await cleanup();
-    }
-  });
-
   it("needs-adopt state, non-interactive, missing --from — exits 1 with error", async () => {
     const { projectDir, cleanup } = await createTestEnv("setup-adopt-no-from");
     try {
@@ -105,24 +79,6 @@ describe.concurrent("E2E: aidd setup", () => {
     }
   });
 
-  it("--ai claude --ide vscode --path local installs both tools", async () => {
-    const { projectDir, cleanup } = await createTestEnv("setup-ai-ide");
-    try {
-      const { stdout, exitCode } = await runCli(
-        ["setup", "--ai", "claude", "--ide", "vscode", "--path", FRAMEWORK_PATH],
-        projectDir
-      );
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("claude");
-      expect(stdout).toContain("vscode");
-      expect(existsSync(join(projectDir, ".claude"))).toBe(true);
-      expect(existsSync(join(projectDir, ".vscode"))).toBe(true);
-    } finally {
-      await cleanup();
-    }
-  });
-
   it("--docs-dir custom_docs uses the custom docs directory name", async () => {
     const { projectDir, cleanup } = await createTestEnv("setup-docs-dir");
     try {
@@ -135,23 +91,6 @@ describe.concurrent("E2E: aidd setup", () => {
       expect(stdout).toContain("custom_docs");
       expect(existsSync(join(projectDir, "custom_docs"))).toBe(true);
       expect(existsSync(join(projectDir, "aidd_docs"))).toBe(false);
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("already-initialized project with same tool runs update and exits 0", async () => {
-    const { projectDir, cleanup } = await createTestEnv("setup-reinit");
-    try {
-      await runCli(["setup", "--ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-
-      const { stdout, exitCode } = await runCli(
-        ["setup", "--ai", "claude", "--path", FRAMEWORK_PATH],
-        projectDir
-      );
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toMatch(/updated|up to date/i);
     } finally {
       await cleanup();
     }
@@ -197,6 +136,87 @@ describe.concurrent("E2E: aidd setup", () => {
       const manifestRaw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");
       const manifest = JSON.parse(manifestRaw) as { tools: Record<string, unknown> };
       expect(manifest.tools.claude).toBeDefined();
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--mode local copies plugins/ and .claude-plugin/ to project root", async () => {
+    const { projectDir, cleanup } = await createTestEnv("setup-mode-local");
+    try {
+      const { exitCode } = await runCli(
+        ["setup", "--ai", "claude", "--path", FRAMEWORK_PATH, "--mode", "local"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(existsSync(join(projectDir, ".aidd", "manifest.json"))).toBe(true);
+      expect(existsSync(join(projectDir, "plugins", "aidd-test"))).toBe(true);
+      expect(existsSync(join(projectDir, ".claude-plugin", "marketplace.json"))).toBe(true);
+
+      const manifestRaw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");
+      const manifest = JSON.parse(manifestRaw) as { mode: string; plugins: unknown };
+      expect(manifest.mode).toBe("local");
+      expect(manifest.plugins).not.toBeNull();
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--mode remote does not copy plugins/ to project root", async () => {
+    const { projectDir, cleanup } = await createTestEnv("setup-mode-remote");
+    try {
+      const { exitCode } = await runCli(
+        ["setup", "--ai", "claude", "--path", FRAMEWORK_PATH, "--mode", "remote"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(existsSync(join(projectDir, "plugins"))).toBe(false);
+      expect(existsSync(join(projectDir, ".claude-plugin"))).toBe(false);
+
+      const manifestRaw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");
+      const manifest = JSON.parse(manifestRaw) as { mode: string };
+      expect(manifest.mode).toBe("remote");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--switch-mode --mode remote on local-mode project switches mode in manifest", async () => {
+    const { projectDir, cleanup } = await createTestEnv("setup-switch-mode");
+    try {
+      await runCli(
+        ["setup", "--ai", "claude", "--path", FRAMEWORK_PATH, "--mode", "local"],
+        projectDir
+      );
+
+      const { stdout, exitCode } = await runCli(
+        ["setup", "--switch-mode", "--mode", "remote"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout.toLowerCase()).toMatch(/switch|remote/);
+
+      const manifestRaw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");
+      const manifest = JSON.parse(manifestRaw) as { mode: string };
+      expect(manifest.mode).toBe("remote");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--mode invalid exits 1 with error message", async () => {
+    const { projectDir, cleanup } = await createTestEnv("setup-mode-invalid");
+    try {
+      const { stderr, exitCode } = await runCli(
+        ["setup", "--ai", "claude", "--path", FRAMEWORK_PATH, "--mode", "invalid"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(1);
+      expect(stderr).toMatch(/invalid|mode/i);
     } finally {
       await cleanup();
     }

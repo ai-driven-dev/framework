@@ -32,7 +32,7 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
       ]);
 
       const { stdout, exitCode } = await runCli(
-        ["marketplace", "add", marketDir, "--name", "local", "--yes"],
+        ["marketplace", "add", "local", marketDir, "--yes"],
         projectDir
       );
 
@@ -49,7 +49,7 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
       await initProject(projectDir, FRAMEWORK_PATH);
       const marketDir = join(tempDir, "market");
       await writeMarketplace(marketDir, []);
-      await runCli(["marketplace", "add", marketDir, "--name", "local", "--yes"], projectDir);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
 
       const { stdout, exitCode } = await runCli(["marketplace", "list"], projectDir);
 
@@ -73,7 +73,7 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
           description: "Sample",
         },
       ]);
-      await runCli(["marketplace", "add", marketDir, "--name", "local", "--yes"], projectDir);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
 
       const { stdout, exitCode } = await runCli(["plugin", "search", "sample"], projectDir);
 
@@ -101,7 +101,7 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
           version: "1.0.0",
         },
       ]);
-      await runCli(["marketplace", "add", marketDir, "--name", "local", "--yes"], projectDir);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
 
       const { stdout, exitCode } = await runCli(
         ["plugin", "install", "sample-plugin", "--tool", "claude"],
@@ -121,7 +121,7 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
       await initProject(projectDir, FRAMEWORK_PATH);
       const marketDir = join(tempDir, "market");
       await writeMarketplace(marketDir, []);
-      await runCli(["marketplace", "add", marketDir, "--name", "local", "--yes"], projectDir);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
 
       const { stdout, exitCode } = await runCli(
         ["marketplace", "remove", "local", "--yes"],
@@ -151,7 +151,7 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
           recommended: true,
         },
       ]);
-      await runCli(["marketplace", "add", marketDir, "--name", "local", "--yes"], projectDir);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
 
       const { stdout, exitCode } = await runCli(["marketplace", "browse", "local"], projectDir);
 
@@ -171,10 +171,10 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
       await initProject(projectDir, FRAMEWORK_PATH);
       const marketDir = join(tempDir, "market");
       await writeMarketplace(marketDir, []);
-      await runCli(["marketplace", "add", marketDir, "--name", "local", "--yes"], projectDir);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
 
       const { stdout, exitCode } = await runCli(
-        ["marketplace", "add", marketDir, "--name", "local", "--yes", "--overwrite"],
+        ["marketplace", "add", "local", marketDir, "--yes", "--overwrite"],
         projectDir
       );
 
@@ -193,7 +193,7 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
       await initProject(projectDir, FRAMEWORK_PATH);
       const marketDir = join(tempDir, "market");
       await writeMarketplace(marketDir, []);
-      await runCli(["marketplace", "add", marketDir, "--name", "local", "--yes"], projectDir);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
       await runCli(["marketplace", "refresh"], projectDir);
 
       const { stdout, exitCode } = await runCli(["marketplace", "check"], projectDir);

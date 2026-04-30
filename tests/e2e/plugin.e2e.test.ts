@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
@@ -23,9 +24,7 @@ describe.concurrent("E2E: aidd plugin", () => {
       expect(existsSync(join(projectDir, ".claude/plugins/sample-plugin/commands/greet.md"))).toBe(
         true
       );
-      expect(
-        existsSync(join(projectDir, ".claude/plugins/sample-plugin/.claude-plugin/plugin.json"))
-      ).toBe(true);
+      expect(existsSync(join(projectDir, ".claude/plugins/sample-plugin/plugin.json"))).toBe(true);
     } finally {
       await cleanup();
     }
@@ -106,10 +105,77 @@ describe.concurrent("E2E: aidd plugin", () => {
       expect(cursorInstall.exitCode).toBe(0);
       const { exitCode } = await runCli(["plugin", "add", PLUGIN_FIXTURE], projectDir);
       expect(exitCode).toBe(0);
-      // Cursor target uses native cursor manifest path
-      expect(
-        existsSync(join(projectDir, ".cursor/plugins/sample-plugin/.cursor-plugin/plugin.json"))
-      ).toBe(true);
+      expect(existsSync(join(projectDir, ".cursor/plugins/sample-plugin/plugin.json"))).toBe(true);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("plugin add → hooks.json converted to cursor format for cursor tool", async () => {
+    const { projectDir, cleanup } = await createTestEnv("plugin-cursor-hooks");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(
+        ["install", "ai", "cursor", "--path", FRAMEWORK_PATH, "--no-plugins"],
+        projectDir
+      );
+      const { exitCode } = await runCli(
+        ["plugin", "add", PLUGIN_FIXTURE, "--tool", "cursor"],
+        projectDir
+      );
+      expect(exitCode).toBe(0);
+
+      const hooksPath = join(projectDir, ".cursor/plugins/sample-plugin/hooks/hooks.json");
+      expect(existsSync(hooksPath)).toBe(true);
+
+      const content = JSON.parse(await readFile(hooksPath, "utf-8")) as {
+        hooks: Record<string, unknown[]>;
+      };
+      expect(content).toHaveProperty("hooks");
+      expect(Object.keys(content.hooks)).toContain("sessionStart");
+      expect(Object.keys(content.hooks)).not.toContain("SessionStart");
+      const items = content.hooks.sessionStart;
+      expect(items).toHaveLength(1);
+      const item = items[0] as { command: string };
+      expect(item.command).toBe("node ./hooks/update_memory.js");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("plugin install → from marketplace by name", async () => {
+    const { tempDir, projectDir, cleanup } = await createTestEnv("plugin-market-install");
+    try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+      await runCli(
+        ["install", "ai", "claude", "--path", FRAMEWORK_PATH, "--no-plugins"],
+        projectDir
+      );
+
+      const marketDir = join(tempDir, "market");
+      await mkdir(join(marketDir, ".claude-plugin"), { recursive: true });
+      await writeFile(
+        join(marketDir, ".claude-plugin", "marketplace.json"),
+        JSON.stringify({
+          plugins: [
+            {
+              name: "sample-plugin",
+              source: { kind: "local", path: PLUGIN_FIXTURE },
+              version: "1.0.0",
+            },
+          ],
+        })
+      );
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
+
+      const { stdout, exitCode } = await runCli(
+        ["plugin", "install", "sample-plugin", "--tool", "claude"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("sample-plugin");
+      expect(existsSync(join(projectDir, ".claude/plugins/sample-plugin/plugin.json"))).toBe(true);
     } finally {
       await cleanup();
     }

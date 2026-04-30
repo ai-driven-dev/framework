@@ -16,6 +16,7 @@ interface ApplyPluginFilesOptions {
   projectRoot: string;
   cacheDir: string;
   manifest: Manifest;
+  docsDir: string;
 }
 
 export class ApplyPluginFilesUseCase {
@@ -27,10 +28,10 @@ export class ApplyPluginFilesUseCase {
   ) {}
 
   async execute(options: ApplyPluginFilesOptions): Promise<number> {
-    const { toolId, plugin, toolConfig, projectRoot, cacheDir, manifest } = options;
+    const { toolId, plugin, toolConfig, projectRoot, cacheDir, manifest, docsDir } = options;
     const localPath = await this.pluginFetcher.fetch(plugin.source, cacheDir);
     const dist = await this.pluginDistributionReader.read(localPath);
-    const files = new PluginTranslator(this.hasher).translate(dist, toolConfig);
+    const files = new PluginTranslator(this.hasher).translate(dist, toolConfig, docsDir);
     await Promise.all(
       files.map((f) => this.fs.writeFile(join(projectRoot, f.relativePath), f.content))
     );

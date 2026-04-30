@@ -36,6 +36,7 @@ export class RestorePluginUseCase {
     const manifest = await this.manifestRepo.load();
     if (manifest === null) throw new NoManifestError(repo);
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
+    const docsDir = manifest.docsDir;
     const toolIds = AI_TOOL_IDS.filter((id) => manifest.hasTool(id)) as AiToolId[];
     let totalRestored = 0;
     for (const toolId of toolIds) {
@@ -44,7 +45,8 @@ export class RestorePluginUseCase {
         pluginName,
         projectRoot,
         cacheDir,
-        manifest
+        manifest,
+        docsDir
       );
     }
     if (totalRestored === 0) throw new PluginNotFoundError(pluginName);
@@ -57,7 +59,8 @@ export class RestorePluginUseCase {
     pluginName: string,
     projectRoot: string,
     cacheDir: string,
-    manifest: Manifest
+    manifest: Manifest,
+    docsDir: string
   ): Promise<number> {
     const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
     if (plugin === undefined) return 0;
@@ -68,6 +71,6 @@ export class RestorePluginUseCase {
       this.hasher,
       this.pluginFetcher,
       this.pluginDistributionReader
-    ).execute({ toolId, plugin, toolConfig, projectRoot, cacheDir, manifest });
+    ).execute({ toolId, plugin, toolConfig, projectRoot, cacheDir, manifest, docsDir });
   }
 }

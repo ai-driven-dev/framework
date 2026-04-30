@@ -185,10 +185,8 @@ describe("claude", () => {
       expect(claude.capabilities.plugins.pluginsDir).toBe(".claude/plugins/");
     });
 
-    it("uses .claude-plugin/plugin.json as plugin manifest path", () => {
-      expect(claude.capabilities.plugins.pluginManifestRelativePath).toBe(
-        ".claude-plugin/plugin.json"
-      );
+    it("uses plugin.json as plugin manifest path", () => {
+      expect(claude.capabilities.plugins.pluginManifestRelativePath).toBe("plugin.json");
     });
 
     it("pluginOutputDir returns correct path for a plugin name", () => {

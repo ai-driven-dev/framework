@@ -5,12 +5,30 @@ import {
   parsePluginSourceShorthand,
 } from "../../domain/models/plugin-source.js";
 import { assertValidAiToolId, parseToolOption } from "../../domain/models/tool-ids.js";
-import { createDeps } from "../../infrastructure/deps.js";
+import { createDeps, createMenuDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
+import { spawnCliCommand } from "./shared/spawn-cli-command.js";
 
 export function registerPluginCommand(program: Command): void {
   const plugin = program.command("plugin").description("Manage plugins for AI tools");
+
+  plugin.action(async () => {
+    if (!process.stdout.isTTY) {
+      plugin.help();
+      return;
+    }
+    const { prompter } = createMenuDeps(process.cwd());
+    const choice = await prompter.select("plugin: what do you want to do?", [
+      { name: "Install from marketplace", value: "install" },
+      { name: "Add local plugin", value: "add" },
+      { name: "List installed plugins", value: "list" },
+      { name: "Search plugins", value: "search", description: "requires query arg" },
+      { name: "Update plugins", value: "update" },
+      { name: "Remove a plugin", value: "remove", description: "requires name arg" },
+    ]);
+    await spawnCliCommand(["plugin", choice]);
+  });
 
   plugin
     .command("add <source>")
@@ -29,6 +47,7 @@ export function registerPluginCommand(program: Command): void {
           projectRoot,
           interactive: process.stdout.isTTY,
         });
+        await deps.marketplaceSyncSettingsUseCase.execute({ projectRoot });
         output.success(`Plugin added successfully.`);
       } catch (error) {
         errorHandler.handle(error);
@@ -50,6 +69,7 @@ export function registerPluginCommand(program: Command): void {
           toolIds: parseToolOption(cmdOptions.tool),
           projectRoot,
         });
+        await deps.marketplaceSyncSettingsUseCase.execute({ projectRoot });
         output.success(`Plugin '${name}' removed.`);
       } catch (error) {
         errorHandler.handle(error);
@@ -110,6 +130,7 @@ export function registerPluginCommand(program: Command): void {
             interactive: process.stdout.isTTY,
             autoSelect: cmdOptions.yes ?? false,
           });
+          await deps.marketplaceSyncSettingsUseCase.execute({ projectRoot });
           output.success(
             `Installed '${result.entry.name}' from '${result.marketplace.name}' (${describePluginSource(result.marketplace.source)}).`
           );
@@ -162,6 +183,7 @@ export function registerPluginCommand(program: Command): void {
           projectRoot,
           interactive: process.stdout.isTTY,
         });
+        await deps.marketplaceSyncSettingsUseCase.execute({ projectRoot });
         if (result.installed.length === 0) {
           output.info(`No plugins selected from '${result.marketplace.name}'.`);
         } else {
@@ -189,6 +211,7 @@ export function registerPluginCommand(program: Command): void {
           toolIds: parseToolOption(cmdOptions.tool),
           projectRoot,
         });
+        await deps.marketplaceSyncSettingsUseCase.execute({ projectRoot });
         if (updated.length === 0) {
           output.success("All plugins are up to date.");
         } else {

@@ -18,6 +18,7 @@ interface InstallPluginsOptions {
   toolConfigs: ToolConfig[];
   projectRoot: string;
   manifest: Manifest;
+  docsDir: string;
 }
 
 export class InstallPluginsUseCase {
@@ -29,14 +30,14 @@ export class InstallPluginsUseCase {
   ) {}
 
   async execute(options: InstallPluginsOptions): Promise<void> {
-    const { plugins, toolConfigs, projectRoot, manifest } = options;
+    const { plugins, toolConfigs, projectRoot, manifest, docsDir } = options;
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
     const dists = await this.fetchAll(plugins, cacheDir);
     this.validateCollisions(dists, toolConfigs);
     for (let i = 0; i < plugins.length; i++) {
       await Promise.all(
         toolConfigs.map((tc) =>
-          this.installPluginForTool(dists[i], tc, plugins[i], projectRoot, manifest)
+          this.installPluginForTool(dists[i], tc, plugins[i], projectRoot, manifest, docsDir)
         )
       );
     }
@@ -66,9 +67,10 @@ export class InstallPluginsUseCase {
     toolConfig: ToolConfig,
     source: PluginSource,
     projectRoot: string,
-    manifest: Manifest
+    manifest: Manifest,
+    docsDir: string
   ): Promise<void> {
-    const files = new PluginTranslator(this.hasher).translate(dist, toolConfig);
+    const files = new PluginTranslator(this.hasher).translate(dist, toolConfig, docsDir);
     if (files.length === 0) return;
     await Promise.all(
       files.map((f) => this.fs.writeFile(join(projectRoot, f.relativePath), f.content))

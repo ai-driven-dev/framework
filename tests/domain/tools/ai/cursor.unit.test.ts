@@ -161,10 +161,8 @@ describe("cursor", () => {
       expect(cursor.capabilities.plugins.pluginsDir).toBe(".cursor/plugins/");
     });
 
-    it("uses .cursor-plugin/plugin.json as plugin manifest path", () => {
-      expect(cursor.capabilities.plugins.pluginManifestRelativePath).toBe(
-        ".cursor-plugin/plugin.json"
-      );
+    it("uses plugin.json as plugin manifest path", () => {
+      expect(cursor.capabilities.plugins.pluginManifestRelativePath).toBe("plugin.json");
     });
 
     it("pluginOutputDir returns correct path for a plugin name", () => {

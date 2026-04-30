@@ -37,6 +37,7 @@ describe("InstallPluginsUseCase", () => {
           toolConfigs: [getToolConfig("claude")],
           projectRoot,
           manifest,
+          docsDir: manifest.docsDir,
         });
         const commandExists = await deps.fs.fileExists(
           join(projectRoot, ".claude/plugins/sample-plugin/commands/greet.md")
@@ -62,6 +63,7 @@ describe("InstallPluginsUseCase", () => {
           toolConfigs: [getToolConfig("opencode")],
           projectRoot,
           manifest,
+          docsDir: manifest.docsDir,
         });
         const commandExists = await deps.fs.fileExists(
           join(projectRoot, ".opencode/commands/sample-plugin/greet.md")
@@ -88,6 +90,7 @@ describe("InstallPluginsUseCase", () => {
           toolConfigs: [getToolConfig("claude")],
           projectRoot,
           manifest,
+          docsDir: manifest.docsDir,
         });
         await expect(
           useCase.execute({
@@ -95,6 +98,7 @@ describe("InstallPluginsUseCase", () => {
             toolConfigs: [getToolConfig("claude")],
             projectRoot,
             manifest,
+            docsDir: manifest.docsDir,
           })
         ).rejects.toThrow(DuplicatePluginError);
       } finally {

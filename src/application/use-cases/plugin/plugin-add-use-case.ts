@@ -42,8 +42,17 @@ export class PluginAddUseCase {
     const dist = await this.pluginDistributionReader.read(localPath);
     this.assertPluginVersionMatches(dist.manifest.name, dist.manifest.version, requiredVersion);
     this.validateNoDuplicates(dist.manifest.name, resolvedToolIds, manifest);
+    const docsDir = manifest.docsDir;
     for (const toolId of resolvedToolIds) {
-      await this.addPluginForTool(dist, toolId, source, projectRoot, manifest, marketplace);
+      await this.addPluginForTool(
+        dist,
+        toolId,
+        source,
+        projectRoot,
+        manifest,
+        marketplace,
+        docsDir
+      );
     }
     await this.manifestRepo.save(manifest);
   }
@@ -70,11 +79,12 @@ export class PluginAddUseCase {
     source: PluginSource,
     projectRoot: string,
     manifest: Manifest,
-    marketplace: string | undefined
+    marketplace: string | undefined,
+    docsDir: string
   ): Promise<void> {
     const toolConfig = getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return;
-    const files = new PluginTranslator(this.hasher).translate(dist, toolConfig);
+    const files = new PluginTranslator(this.hasher).translate(dist, toolConfig, docsDir);
     if (files.length === 0) return;
     await writePluginFiles(files, projectRoot, this.fs);
     manifest.addPlugin(toolId, Plugin.fromDistribution(dist, source, files, marketplace));

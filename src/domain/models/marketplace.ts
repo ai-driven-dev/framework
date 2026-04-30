@@ -2,7 +2,7 @@ import { InvalidMarketplaceNameError, InvalidMarketplaceScopeError } from "../er
 import { type PluginSource, parsePluginSource, serializePluginSource } from "./plugin-source.js";
 
 export const MARKETPLACE_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-export const FRAMEWORK_MARKETPLACE_NAME = "framework";
+export const FRAMEWORK_MARKETPLACE_NAME = "aidd-framework";
 export const STALE_MAX_DAYS_DEFAULT = 7;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 

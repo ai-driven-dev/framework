@@ -114,10 +114,11 @@ export const cursor: AiTool<
     plugins: new PluginsCapability({
       mode: "native",
       pluginsDir: ".cursor/plugins/",
-      pluginManifestRelativePath: ".cursor-plugin/plugin.json",
+      pluginManifestRelativePath: "plugin.json",
       mcpRelativePath: "mcp.json",
       acceptsHooks: true,
       acceptsMcp: true,
+      hooksContentFormat: "cursor",
     }),
   },
 

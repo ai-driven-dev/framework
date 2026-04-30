@@ -107,9 +107,26 @@ export const claude: AiTool<
     plugins: new PluginsCapability({
       mode: "native",
       pluginsDir: ".claude/plugins/",
-      pluginManifestRelativePath: ".claude-plugin/plugin.json",
+      pluginManifestRelativePath: "plugin.json",
       acceptsHooks: true,
       acceptsMcp: true,
+      marketplaceSettings: {
+        settingsPath: ".claude/settings.json",
+        settingsKey: "extraKnownMarketplaces",
+        enabledPluginsKey: "enabledPlugins",
+        toEntry({ name, source, version }) {
+          const value: Record<string, unknown> = {};
+          if (source.kind === "local") {
+            value.source = { source: "directory", path: source.path };
+          } else if (source.kind === "github") {
+            value.source = { source: "github", repo: source.repo };
+          } else {
+            return null;
+          }
+          if (version != null) value.version = version;
+          return { key: name, value };
+        },
+      },
     }),
   },
 

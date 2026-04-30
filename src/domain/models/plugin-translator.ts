@@ -1,3 +1,4 @@
+import { convertHooksFormat } from "../formats/cursor-hooks.js";
 import { parseFrontmatter, serializeFrontmatter } from "../formats/markdown.js";
 import type { Hasher } from "../ports/hasher.js";
 import type {
@@ -39,12 +40,12 @@ interface SkillCap {
 export class PluginTranslator {
   constructor(private readonly hasher: Hasher) {}
 
-  translate(dist: PluginDistribution, toolConfig: ToolConfig): InstallationFile[] {
+  translate(dist: PluginDistribution, toolConfig: ToolConfig, docsDir: string): InstallationFile[] {
     const tool = asPluginTool(toolConfig);
     if (tool === null) return [];
     const { mode } = tool.capabilities.plugins;
-    if (mode === "native") return this.translateNative(dist, tool);
-    if (mode === "flat") return this.translateFlat(dist, tool);
+    if (mode === "native") return this.translateNative(dist, tool, docsDir);
+    if (mode === "flat") return this.translateFlat(dist, tool, docsDir);
     return [];
   }
 
@@ -58,7 +59,7 @@ export class PluginTranslator {
     const seen = new Map<string, string>();
     const collisions: Array<{ plugin: string; path: string }> = [];
     for (const dist of dists) {
-      for (const file of this.translate(dist, toolConfig)) {
+      for (const file of this.translate(dist, toolConfig, "")) {
         if (seen.has(file.relativePath)) {
           collisions.push({ plugin: dist.manifest.name, path: file.relativePath });
         } else {
@@ -69,21 +70,32 @@ export class PluginTranslator {
     return collisions;
   }
 
-  private translateNative(dist: PluginDistribution, tool: AiTool<HasPlugins>): InstallationFile[] {
+  private translateNative(
+    dist: PluginDistribution,
+    tool: AiTool<HasPlugins>,
+    docsDir: string
+  ): InstallationFile[] {
     const { pluginsDir, pluginManifestRelativePath } = tool.capabilities.plugins;
     if (pluginsDir === null || pluginManifestRelativePath === null) return [];
     const pluginRoot = `${pluginsDir}${dist.manifest.name}/`;
     const result: InstallationFile[] = [];
     for (const file of dist.files) {
-      const transformed = this.translateFile(file, tool);
-      if (transformed === null) continue;
-      result.push(this.makeFile(`${pluginRoot}${transformed.relativePath}`, transformed.content));
+      const translated = this.translateFile(file, tool);
+      if (translated === null) continue;
+      const hooked = this.maybeConvertHooks(file.relativePath, translated.content, tool);
+      const content = tool.rewriteContent(hooked, docsDir);
+      result.push(this.makeFile(`${pluginRoot}${translated.relativePath}`, content));
     }
     const sourceManifest = findSourceManifestContent(dist);
     if (sourceManifest !== null) {
       result.push(this.makeFile(`${pluginRoot}${pluginManifestRelativePath}`, sourceManifest));
     }
     return result;
+  }
+
+  private maybeConvertHooks(sourcePath: string, content: string, tool: AiTool<HasPlugins>): string {
+    if (sourcePath !== "hooks/hooks.json") return content;
+    return convertHooksFormat(content, tool.capabilities.plugins.hooksContentFormat);
   }
 
   private translateFile(
@@ -127,16 +139,22 @@ export class PluginTranslator {
     return null;
   }
 
-  private translateFlat(dist: PluginDistribution, tool: AiTool<HasPlugins>): InstallationFile[] {
+  private translateFlat(
+    dist: PluginDistribution,
+    tool: AiTool<HasPlugins>,
+    docsDir: string
+  ): InstallationFile[] {
     const { flatNamespacePrefix } = tool.capabilities.plugins;
     if (flatNamespacePrefix === null) return [];
     const result: InstallationFile[] = [];
     for (const file of dist.components.commands) {
-      result.push(this.flatCommandFile(file, dist.manifest.name, tool, flatNamespacePrefix));
+      result.push(
+        this.flatCommandFile(file, dist.manifest.name, tool, flatNamespacePrefix, docsDir)
+      );
     }
     for (const section of ["agents", "rules", "skills"] as const) {
       for (const file of dist.components[section]) {
-        const f = this.flatSectionFile(file, section, dist.manifest.name, tool);
+        const f = this.flatSectionFile(file, section, dist.manifest.name, tool, docsDir);
         if (f !== null) result.push(f);
       }
     }
@@ -147,10 +165,12 @@ export class PluginTranslator {
     file: PluginComponentFile,
     pluginName: string,
     tool: AiTool<HasPlugins>,
-    prefix: string
+    prefix: string,
+    docsDir: string
   ): InstallationFile {
     const filename = basename(file.relativePath);
-    const content = prefixCommandName(file.content, file.relativePath, prefix, pluginName);
+    const raw = prefixCommandName(file.content, file.relativePath, prefix, pluginName);
+    const content = tool.rewriteContent(raw, docsDir);
     return this.makeFile(`${tool.directory}commands/${pluginName}/${filename}`, content);
   }
 
@@ -158,12 +178,14 @@ export class PluginTranslator {
     file: PluginComponentFile,
     section: "agents" | "rules" | "skills",
     pluginName: string,
-    tool: AiTool<HasPlugins>
+    tool: AiTool<HasPlugins>,
+    docsDir: string
   ): InstallationFile | null {
     if (!sectionPresent(tool, section)) return null;
     const sectionDir = `${section}/`;
     const fileName = file.relativePath.slice(sectionDir.length);
-    return this.makeFile(`${tool.directory}${section}/${pluginName}/${fileName}`, file.content);
+    const content = tool.rewriteContent(file.content, docsDir);
+    return this.makeFile(`${tool.directory}${section}/${pluginName}/${fileName}`, content);
   }
 
   private makeFile(relativePath: string, content: string): InstallationFile {

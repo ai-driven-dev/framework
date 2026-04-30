@@ -94,7 +94,7 @@ describe("interactive menu", () => {
 
       const choices = selectMock.mock.calls[0][1] as Array<{ value: string; description?: string }>;
       const groupsWithDescription = choices.filter((c) => c.value !== "exit" && c.description);
-      expect(groupsWithDescription.length).toBe(4);
+      expect(groupsWithDescription.length).toBe(6);
     });
 
     it("status is reachable from the inspect group", async () => {
@@ -237,20 +237,13 @@ describe("interactive menu", () => {
       expect(allValues).not.toContain("init");
     });
 
-    it("returns the breadcrumb path so the loop can resume at the right level", async () => {
+    it("always returns to root after a command (no breadcrumb saved)", async () => {
       const deps = buildDeps(projectRoot);
       await initProject(deps, projectRoot);
       const { prompter } = makeQueuedPrompter(["inspect", "status"]);
       const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
-      expect(result.returnTo).toEqual(["inspect"]);
-    });
-
-    it("returns the full breadcrumb for nested submenus", async () => {
-      const deps = buildDeps(projectRoot);
-      await initProject(deps, projectRoot);
-      const { prompter } = makeQueuedPrompter(["system", "config", "list"]);
-      const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
-      expect(result.returnTo).toEqual(["system", "config"]);
+      expect(result.command).toEqual(["status"]);
+      expect("returnTo" in result).toBe(false);
     });
   });
 });

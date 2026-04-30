@@ -1,6 +1,6 @@
 import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { FrameworkResolutionError, NoFrameworkSourceError } from "../../domain/errors.js";
 import type { PluginSource } from "../../domain/models/plugin-source.js";
 import {
@@ -69,13 +69,14 @@ export class FrameworkResolverAdapter implements FrameworkResolver {
 
   async resolve(options: FrameworkResolverOptions): Promise<FrameworkResolved> {
     if (options.localPath) {
+      const absPath = resolve(options.localPath);
       try {
-        await stat(options.localPath);
+        await stat(absPath);
       } catch {
-        throw new FrameworkResolutionError(`Framework path does not exist: ${options.localPath}`);
+        throw new FrameworkResolutionError(`Framework path does not exist: ${absPath}`);
       }
-      const version = await readVersionFile(options.localPath);
-      return { path: options.localPath, version, source: "local" };
+      const version = await readVersionFile(absPath);
+      return { path: absPath, version, source: "local" };
     }
 
     if (options.tarballPath) {

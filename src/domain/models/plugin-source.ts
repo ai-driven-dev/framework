@@ -117,6 +117,11 @@ function parseLocal(raw: Record<string, unknown>): PluginSourceLocal {
 }
 
 export function parsePluginSource(raw: unknown): PluginSource {
+  if (typeof raw === "string") {
+    if (raw.startsWith("./") || raw.startsWith("/")) return { kind: "local", path: raw };
+    if (GITHUB_REPO_REGEX.test(raw)) return { kind: "github", repo: raw };
+    throw new InvalidPluginSourceError(`string source "${raw}" is not a recognized path or repo.`);
+  }
   if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
     throw new InvalidPluginSourceError("expected an object.");
   }

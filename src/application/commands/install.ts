@@ -192,6 +192,16 @@ Examples:
             output.success(`Installed ${toolList} (${totalFiles} files)`);
           }
 
+          const registrationResult = await deps.marketplaceRegisterFrameworkUseCase.execute({
+            projectRoot,
+          });
+          await deps.marketplaceRefreshUseCase.execute({ projectRoot });
+          if (registrationResult.registered) {
+            output.info(
+              "Plugin marketplace ready. Run `aidd plugin pick` to browse and install plugins."
+            );
+          }
+
           if (process.stdout.isTTY) {
             const marketplaces = await deps.marketplaceRegistry.list(projectRoot);
             if (marketplaces.length > 0) {

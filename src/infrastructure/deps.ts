@@ -7,6 +7,7 @@ import "../domain/tools/ai/cursor.js";
 import "../domain/tools/ai/opencode.js";
 import "../domain/tools/ide/vscode.js";
 import { CLIOutput } from "../application/output.js";
+import { InstallFrameworkPluginsUseCase } from "../application/use-cases/install-framework-plugins-use-case.js";
 import { MarketplaceAddUseCase } from "../application/use-cases/marketplace/marketplace-add-use-case.js";
 import { MarketplaceBrowseUseCase } from "../application/use-cases/marketplace/marketplace-browse-use-case.js";
 import { MarketplaceCheckUseCase } from "../application/use-cases/marketplace/marketplace-check-use-case.js";
@@ -14,6 +15,7 @@ import { MarketplaceListUseCase } from "../application/use-cases/marketplace/mar
 import { MarketplaceRefreshUseCase } from "../application/use-cases/marketplace/marketplace-refresh-use-case.js";
 import { MarketplaceRegisterFrameworkUseCase } from "../application/use-cases/marketplace/marketplace-register-framework-use-case.js";
 import { MarketplaceRemoveUseCase } from "../application/use-cases/marketplace/marketplace-remove-use-case.js";
+import { MarketplaceSyncSettingsUseCase } from "../application/use-cases/marketplace/marketplace-sync-settings-use-case.js";
 import { PluginAddUseCase } from "../application/use-cases/plugin/plugin-add-use-case.js";
 import { PluginInstallFromMarketplaceUseCase } from "../application/use-cases/plugin/plugin-install-from-marketplace-use-case.js";
 import { PluginListUseCase } from "../application/use-cases/plugin/plugin-list-use-case.js";
@@ -83,6 +85,7 @@ interface Deps {
   pluginDistributionReader: PluginDistributionReader;
   marketplaceRegistry: MarketplaceRegistry;
   marketplaceTrustStore: MarketplaceTrustStore;
+  installFrameworkPluginsUseCase: InstallFrameworkPluginsUseCase;
   pluginAddUseCase: PluginAddUseCase;
   pluginRemoveUseCase: PluginRemoveUseCase;
   pluginListUseCase: PluginListUseCase;
@@ -97,6 +100,7 @@ interface Deps {
   pluginSearchUseCase: PluginSearchUseCase;
   marketplaceRegisterFrameworkUseCase: MarketplaceRegisterFrameworkUseCase;
   pluginPickUseCase: PluginPickUseCase;
+  marketplaceSyncSettingsUseCase: MarketplaceSyncSettingsUseCase;
 }
 
 const _cache = new Map<string, Deps>();
@@ -159,6 +163,11 @@ export async function createDeps(
   const prompter = process.stdout.isTTY
     ? new InquirerPrompterAdapter()
     : new SilentPrompterAdapter();
+  const installFrameworkPluginsUseCase = new InstallFrameworkPluginsUseCase(
+    fs,
+    manifestRepo,
+    logger
+  );
   const pluginAddUseCase = new PluginAddUseCase(
     fs,
     manifestRepo,
@@ -230,6 +239,12 @@ export async function createDeps(
     pluginAddUseCase,
     prompter
   );
+  const marketplaceSyncSettingsUseCase = new MarketplaceSyncSettingsUseCase(
+    fs,
+    manifestRepo,
+    marketplaceRegistry,
+    pluginCatalogRepository
+  );
   const deps: Deps = {
     fs,
     manifestRepo,
@@ -249,6 +264,7 @@ export async function createDeps(
     pluginDistributionReader,
     marketplaceRegistry,
     marketplaceTrustStore,
+    installFrameworkPluginsUseCase,
     pluginAddUseCase,
     pluginRemoveUseCase,
     pluginListUseCase,
@@ -263,6 +279,7 @@ export async function createDeps(
     pluginSearchUseCase,
     marketplaceRegisterFrameworkUseCase,
     pluginPickUseCase,
+    marketplaceSyncSettingsUseCase,
   };
   _cache.set(projectRoot, deps);
   return deps;

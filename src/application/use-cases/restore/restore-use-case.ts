@@ -178,7 +178,7 @@ export class RestoreUseCase {
           interactive,
           fileFilter
         );
-    const totalPluginFilesRestored = await this.restoreAllPlugins(projectRoot, manifest);
+    const totalPluginFilesRestored = await this.restoreAllPlugins(projectRoot, manifest, docsDir);
     const hasChanges =
       toolResults.some((t) => t.restored.length > 0) ||
       (docsResult !== null && docsResult.restored.length > 0) ||
@@ -187,7 +187,11 @@ export class RestoreUseCase {
     return this.buildRestoreTotals(toolResults, docsResult, totalPluginFilesRestored);
   }
 
-  private async restoreAllPlugins(projectRoot: string, manifest: Manifest): Promise<number> {
+  private async restoreAllPlugins(
+    projectRoot: string,
+    manifest: Manifest,
+    docsDir: string
+  ): Promise<number> {
     if (this.pluginFetcher === undefined || this.pluginDistributionReader === undefined) return 0;
     const applyUseCase = new ApplyPluginFilesUseCase(
       this.fs,
@@ -209,6 +213,7 @@ export class RestoreUseCase {
           projectRoot,
           cacheDir,
           manifest,
+          docsDir,
         });
       }
     }

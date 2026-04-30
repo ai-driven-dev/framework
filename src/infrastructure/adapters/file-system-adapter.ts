@@ -127,6 +127,29 @@ export class FileSystemAdapter implements FileSystem {
     return backupPath;
   }
 
+  async listFilesRecursive(dirPath: string): Promise<string[]> {
+    const results: string[] = [];
+    await this.collectAbsolutePaths(dirPath, results);
+    return results;
+  }
+
+  private async collectAbsolutePaths(dir: string, results: string[]): Promise<void> {
+    let entries: import("node:fs").Dirent[];
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const fullPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await this.collectAbsolutePaths(fullPath, results);
+      } else {
+        results.push(fullPath);
+      }
+    }
+  }
+
   async mergeJsonFile(path: string, content: string, strategy: MergeStrategy): Promise<void> {
     let existing: Record<string, unknown> = {};
 

@@ -139,13 +139,13 @@ describe("MarketplaceAddUseCase", () => {
       ).rejects.toThrow(MarketplaceAlreadyRegisteredError);
     });
 
-    it("rejects the reserved name 'framework'", async () => {
+    it("rejects the reserved name 'aidd-framework'", async () => {
       const { useCase } = buildUseCase(new KeepPrompter(), projectRoot);
 
       await expect(
         useCase.execute({
           source: { kind: "local", path: MARKETPLACE_FIXTURE },
-          name: "framework",
+          name: "aidd-framework",
           scope: "project",
           projectRoot,
           autoTrust: true,

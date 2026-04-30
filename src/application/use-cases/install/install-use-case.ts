@@ -152,7 +152,7 @@ export class InstallUseCase {
     );
 
     const resolvedPlugins = await this.resolvePluginsForInstall(options, frameworkPath);
-    await this.maybeInstallPlugins(resolvedPlugins, toolIds, projectRoot, manifest);
+    await this.maybeInstallPlugins(resolvedPlugins, toolIds, projectRoot, manifest, docsDir);
 
     await new PostInstallPipelineUseCase(this.fs, this.manifestRepo).execute({
       projectRoot,
@@ -206,7 +206,8 @@ export class InstallUseCase {
     plugins: PluginSource[],
     toolIds: ToolId[],
     projectRoot: string,
-    manifest: Manifest
+    manifest: Manifest,
+    docsDir: string
   ): Promise<void> {
     if (plugins.length === 0 || !this.pluginFetcher || !this.pluginDistributionReader) return;
     const toolConfigs = toolIds.map((id) => getToolConfig(id));
@@ -215,7 +216,7 @@ export class InstallUseCase {
       this.pluginFetcher,
       this.pluginDistributionReader,
       this.hasher
-    ).execute({ plugins, toolConfigs, projectRoot, manifest });
+    ).execute({ plugins, toolConfigs, projectRoot, manifest, docsDir });
   }
 
   private async installAllTools(
@@ -398,7 +399,7 @@ export class InstallUseCase {
       force,
       ideContext
     );
-    this.logger.info(`Generating ${toolId} distribution...`);
+    this.logger.debug(`Generating ${toolId} distribution...`);
     await this.removeStaleFiles(toolId, manifest, generated, projectRoot);
     const { filtered, exclusions } = this.applyMcpFilter(
       generated,
