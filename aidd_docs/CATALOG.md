@@ -6,10 +6,7 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
 
 ## Table of Contents
 
-- [`.claude`](#claude)
 - [`.claude-plugin`](#claude-plugin)
-- [`.specstory`](#specstory)
-  - [`.specstory/history`](#specstoryhistory)
 - [`.vscode`](#vscode)
 - [`aidd_docs`](#aidd_docs)
   - [`aidd_docs/memory`](#aidd_docsmemory)
@@ -22,32 +19,14 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
 - [`rules`](#rules)
   - [`rules/04-tooling`](#rules04-tooling)
 - [`scripts`](#scripts)
-- [`skills`](#skills)
 
 ---
 
-### `.claude`
-
-No files found.
 ### `.claude-plugin`
 
 | File |
 |------|
 | [marketplace.json](../.claude-plugin/marketplace.json) |
-
-### `.specstory`
-
-| File |
-|------|
-| [.project.json](../.specstory/.project.json) |
-| [statistics.json](../.specstory/statistics.json) |
-
-#### `.specstory/history`
-
-| File |
-|------|
-| [2026-04-29_10-07-51Z-untitled.md](../.specstory/history/2026-04-29_10-07-51Z-untitled.md) |
-| [2026-04-30_10-55-34Z.md](../.specstory/history/2026-04-30_10-55-34Z.md) |
 
 ### `.vscode`
 
@@ -61,6 +40,7 @@ No files found.
 |------|
 | [CATALOG.md](CATALOG.md) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| [GUIDELINES.md](GUIDELINES.md) |
 | [README.md](README.md) |
 
 #### `aidd_docs/memory`
@@ -104,7 +84,7 @@ No files found.
 |-------|------|---|---|
 | `.claude-plugin` | [plugin.json](../plugins/aidd-dev/.claude-plugin/plugin.json) | - | - |
 | `-` | [.mcp.json](../plugins/aidd-dev/.mcp.json) | - | - |
-| `agents` | [alexia.md](../plugins/aidd-dev/agents/alexia.md) | `Act like the USER to autonomously end-to-end implementation without human intervention` | - |
+| `agents` | [alexia.md](../plugins/aidd-dev/agents/alexia.md) | `Act like the USER to autonomously do the asked task without human intervention` | - |
 | `agents` | [claire.md](../plugins/aidd-dev/agents/claire.md) | `Clarity challenger — challenges and questions until the request is ultra-clear` | - |
 | `agents` | [iris.md](../plugins/aidd-dev/agents/iris.md) | `Frontend specialist with 3 modes - implement from Figma, verify UI conformity, validate user journeys.` | - |
 | `agents` | [kent.md](../plugins/aidd-dev/agents/kent.md) | `Use this agent when explicitly asked to perform test-driven development.` | `https://tidyfirst.substack.com/p/augmented-coding-beyond-the-vibes` |
@@ -151,6 +131,3 @@ No files found.
 | [aidd.sh](../scripts/aidd.sh) |
 | [build-dist.sh](../scripts/build-dist.sh) |
 
-### `skills`
-
-No files found.
