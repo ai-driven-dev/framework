@@ -1,8 +1,0 @@
-[
-  { "prompt": "Create a new skill for posting to Slack", "expect_action": "capture-intent" },
-  { "prompt": "I want to refactor the review skill to add a security action", "expect_action": "capture-intent" },
-  { "prompt": "Convert my /commit-message slash command into a proper skill", "expect_action": "capture-intent" },
-  { "prompt": "Edit the process step of actions/post-message.md in the slack skill", "expect_action": null },
-  { "prompt": "Write an MCP server for my internal CRM", "expect_action": null },
-  { "prompt": "Update the project CLAUDE.md with our new doctrine", "expect_action": null }
-]

@@ -12,7 +12,7 @@ Write `evals/scenarios.json` so we can probe trigger correctness later.
 
 ## Outputs
 
-`evals/scenarios.json` — see `@assets/evals-template.md` for schema and example.
+`evals/scenarios.json` — see `@assets/skills/evals-template.md` for schema and example.
 
 ## Process
 
