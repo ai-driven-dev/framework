@@ -9,6 +9,8 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
 - [`.claude`](#claude)
 - [`.claude-plugin`](#claude-plugin)
 - [`.specstory`](#specstory)
+  - [`.specstory/history`](#specstoryhistory)
+- [`.vscode`](#vscode)
 - [`aidd_docs`](#aidd_docs)
   - [`aidd_docs/memory`](#aidd_docsmemory)
   - [`aidd_docs/tasks`](#aidd_docstasks)
@@ -35,7 +37,24 @@ No files found.
 
 ### `.specstory`
 
-No files found.
+| File |
+|------|
+| [.project.json](../.specstory/.project.json) |
+| [statistics.json](../.specstory/statistics.json) |
+
+#### `.specstory/history`
+
+| File |
+|------|
+| [2026-04-29_10-07-51Z-untitled.md](../.specstory/history/2026-04-29_10-07-51Z-untitled.md) |
+| [2026-04-30_10-55-34Z.md](../.specstory/history/2026-04-30_10-55-34Z.md) |
+
+### `.vscode`
+
+| File |
+|------|
+| [settings.json](../.vscode/settings.json) |
+
 ### `aidd_docs`
 
 | File |

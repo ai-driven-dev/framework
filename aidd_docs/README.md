@@ -19,26 +19,6 @@ AIDD is a plugin marketplace for AI-driven development. Each plugin delivers a f
 
 ---
 
-## Install
-
-Install a plugin into your project for a specific AI tool:
-
-```bash
-aidd plugin add aidd-dev --tool claude
-```
-
-Install all recommended plugins:
-
-```bash
-aidd plugin add --recommended --tool claude
-```
-
-Supported tools: `claude`, `cursor`, `copilot`, `opencode`.
-
-Each plugin installs its skills into the tool-specific directory and registers any MCP servers.
-
----
-
 ## Skills catalog
 
 See [CATALOG.md](CATALOG.md) for the full list of skills across all plugins.
@@ -47,10 +27,10 @@ Quick reference:
 
 | Plugin | Skills |
 |--------|--------|
-| aidd-context | [1.1] project-init, [1.2] architecture-generate, [1.3] context-generate, [1.4] brainstorm, [1.5] challenge, [1.6] mermaid, [1.7] learn, [1.8] discovery |
-| aidd-dev | [2.0] sdlc, [2.1] plan, [2.2] assert, [2.3] audit, [2.4] review, [2.5] test, [2.6] refactor, [2.7] debug, [2.8] for-sure |
-| aidd-vcs | [3.1] commit, [3.2] pull-request, [3.3] release-tag, [3.4] issue-create |
-| aidd-pm | [4.1] ticket-info, [4.2] user-stories-create, [4.3] prd |
+| aidd-context | 01-project-init, 02-architecture-generate, 03-context-generate, 04-brainstorm, 05-challenge, 06-mermaid, 07-learn, 08-discovery |
+| aidd-dev | 00-sdlc, 01-plan, 02-assert, 03-audit, 04-review, 05-test, 06-refactor, 07-debug, 08-for-sure |
+| aidd-vcs | 01-commit, 02-pull-request, 03-release-tag, 04-issue-create |
+| aidd-pm | 01-ticket-info, 02-user-stories-create, 03-prd |
 
 ---
 
