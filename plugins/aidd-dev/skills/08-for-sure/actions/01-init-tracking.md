@@ -63,9 +63,9 @@ Last interactive step. Validates prerequisites, builds journey map, creates trac
 
    Iterate until user confirms: "Does this map look correct? Anything missing?"
 
-8. Read `assets/tracking-template.md`. Create `{{DOCS}}/tasks/` if needed.
+8. Read `../../01-plan/assets/plan-template.md`. Create `{{DOCS}}/tasks/` if needed.
 
-9. Create `{{DOCS}}/tasks/<task-name>.in-progress.md` with all fields filled. Include journey map.
+9. Create `{{DOCS}}/tasks/<task-name>.in-progress.md` using the plan template. Fill frontmatter (`objective`, `success_condition`, `iteration: 0`, `created_at`), Phases with Tasks and Acceptance criteria (= the steps), and include the journey map.
 
 ### Spawn
 
@@ -78,7 +78,7 @@ Last interactive step. Validates prerequisites, builds journey map, creates trac
 
 ## References
 
-Read `assets/tracking-template.md` for file format.
+Read `../../01-plan/assets/plan-template.md` for file format. Acceptance criteria checkboxes are the steps the autonomous loop ticks off; the `Log` section is append-only.
 
 ## Test policy
 

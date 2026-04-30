@@ -94,11 +94,16 @@ Spawn a new sub-agent task to:
 2. Determine feature name from requirements
 3. Insert user journey in mermaid syntax in plan for better visualization and validation
 4. Fill the appropriate template based on decisions
-5. **Save to file**:
+5. **Fill execution frontmatter** (required — the plan IS the For Sure tracking file):
+   - `objective`: one-sentence statement of what must be true when done
+   - `success_condition`: a **runnable command** that proves done (e.g. `npm test exits 0 AND coverage > 80%`). If no obvious command exists, ask the user. Reject vague conditions.
+   - `iteration: 0`
+   - `created_at`: ISO 8601 timestamp from step 1
+6. **Save to file**:
    - Simple plan: `{{DOCS}}/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>.md`
    - Master plan: `{{DOCS}}/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>-master.md`
    - Child plans: `{{DOCS}}/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>-part-N.md`
-6. Display saved file path to user
+7. Display saved file path to user
 
 ### Step 5: Quality Assurance
 
