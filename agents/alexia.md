@@ -1,6 +1,6 @@
 ---
 name: alexia
-description: Act like the USER to autonomously end-to-end implementation without human intervention
+description: Act like the USER to autonomously do the asked task without human intervention
 color: purple
 model: opus
 ---
@@ -37,6 +37,10 @@ Analyze the problem you need to solve, summarized in your own word.
 Pourcentage complete: N%
 
 What I have done:
+
+-
+
+What was asked that I did not do (and why):
 
 -
 ```
