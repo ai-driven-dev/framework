@@ -86,15 +86,21 @@ jobs:
             config/ \
             rules/ \
             skills/ \
+            plugins/ \
+            .claude-plugin/ \
             aidd_docs/ \
             version.txt
 
       - name: Build per-tool tarballs
         run: |
           VERSION="${{ needs.release-please.outputs.version }}"
-          for tool in claude cursor copilot opencode; do
+          for tool in claude cursor copilot opencode codex; do
             tar czf "/tmp/aidd-${tool}-${VERSION}.tar.gz" \
               -C dist/${tool} \
+              --exclude='.aidd/cache' \
+              .
+            tar czf "/tmp/aidd-${tool}-remote-${VERSION}.tar.gz" \
+              -C dist/${tool}-remote \
               --exclude='.aidd/cache' \
               .
           done
@@ -108,7 +114,13 @@ jobs:
           gh release upload "${TAG}" \
             "/tmp/aidd-framework-${VERSION}.tar.gz" \
             "/tmp/aidd-claude-${VERSION}.tar.gz" \
+            "/tmp/aidd-claude-remote-${VERSION}.tar.gz" \
             "/tmp/aidd-cursor-${VERSION}.tar.gz" \
+            "/tmp/aidd-cursor-remote-${VERSION}.tar.gz" \
             "/tmp/aidd-copilot-${VERSION}.tar.gz" \
+            "/tmp/aidd-copilot-remote-${VERSION}.tar.gz" \
             "/tmp/aidd-opencode-${VERSION}.tar.gz" \
+            "/tmp/aidd-opencode-remote-${VERSION}.tar.gz" \
+            "/tmp/aidd-codex-${VERSION}.tar.gz" \
+            "/tmp/aidd-codex-remote-${VERSION}.tar.gz" \
             --clobber

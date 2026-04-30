@@ -1,36 +1,37 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "aidd-framework",
+  "version": "3.9.1",
+  "description": "Official plugin marketplace for the AI-Driven Development framework",
+  "owner": { "name": "AI-Driven Dev" },
   "plugins": [
     {
       "name": "aidd-context",
-      "version": "1.0.0",
-      "source": { "kind": "local", "path": "./plugins/aidd-context" },
+      "source": "./plugins/aidd-context",
       "description": "Knowledge production: project init, architecture/context generation, brainstorm, challenge, mermaid, learn, discovery",
-      "recommended": true,
-      "strict": true
+      "strict": true,
+      "recommended": true
     },
     {
       "name": "aidd-dev",
-      "version": "1.0.0",
-      "source": { "kind": "local", "path": "./plugins/aidd-dev" },
+      "source": "./plugins/aidd-dev",
       "description": "Code transformation: SDLC orchestrator, plan, assert, audit, review, test, refactor, debug, for-sure. Hosts agents.",
-      "recommended": true,
-      "strict": true
+      "strict": true,
+      "recommended": true
     },
     {
       "name": "aidd-vcs",
-      "version": "1.0.0",
-      "source": { "kind": "local", "path": "./plugins/aidd-vcs" },
+      "source": "./plugins/aidd-vcs",
       "description": "External artifacts: commit, pull-request, release-tag, issue-create",
-      "recommended": true,
-      "strict": true
+      "strict": true,
+      "recommended": true
     },
     {
       "name": "aidd-pm",
-      "version": "1.0.0-rc.1",
-      "source": { "kind": "local", "path": "./plugins/aidd-pm" },
+      "source": "./plugins/aidd-pm",
       "description": "Product management (release candidate): ticket-info, user-stories-create, prd",
-      "recommended": false,
-      "strict": true
+      "strict": true,
+      "recommended": true
     }
   ]
 }

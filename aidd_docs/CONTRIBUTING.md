@@ -25,9 +25,9 @@ Used by the generate commands to create new content:
 
 | Template | File                                                                                    |
 | -------- | --------------------------------------------------------------------------------------- |
-| Agent    | `plugins/aidd-context/skills/[1.3] context-generate/assets/agents/agent-template.md`  |
-| Rule     | `plugins/aidd-context/skills/[1.3] context-generate/assets/rules/rule-template.md`    |
-| Skill    | `plugins/aidd-context/skills/[1.3] context-generate/assets/skills/skill-template.md`  |
+| Agent    | `plugins/aidd-context/skills/03-context-generate/assets/agents/agent-template.md`  |
+| Rule     | `plugins/aidd-context/skills/03-context-generate/assets/rules/rule-template.md`    |
+| Skill    | `plugins/aidd-context/skills/03-context-generate/assets/skills/skill-template.md`  |
 
 ### Project templates
 
@@ -35,11 +35,11 @@ Used as reference documents by skill actions. You can adapt these to your projec
 
 | Skill | Templates                                                                |
 | ----- | ------------------------------------------------------------------------ |
-| `[1.7] learn`  | ADR, decision record                                          |
-| `[2.1] plan`   | Plan, master plan, tech choice comparison                     |
-| `[2.4] review` | Code review checklist, review, functional review              |
-| `[4.3] prd`    | PRD, task                                                     |
-| `[3.x] vcs`    | Commit message, pull request, branch naming, issue, release   |
+| `07-learn`  | ADR, decision record                                          |
+| `01-plan`   | Plan, master plan, tech choice comparison                     |
+| `04-review` | Code review checklist, review, functional review              |
+| `03-prd`    | PRD, task                                                     |
+| `aidd-vcs`  | Commit message, pull request, branch naming, issue, release   |
 
 ## Syncing Across Tools
 
@@ -47,7 +47,6 @@ If your project uses multiple tools (e.g. Claude Code + Cursor), content created
 
 Options:
 
-- **CLI update**: re-run the CLI install — it syncs content across all configured tools
 - **Manual copy**: copy the file to the other tool's folder, adapting the syntax as described in the IDE mapping rule for each tool
 
 ## Recommended Workflow

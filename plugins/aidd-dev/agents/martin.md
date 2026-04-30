@@ -25,7 +25,7 @@ $ARGUMENTS
 3. Run the assertion command until everything pass.
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-dev/skills/%5B2.2%5D%20assert/actions/01-assert.md
+@{{TOOLS}}/plugins/aidd-dev/skills/02-assert/actions/01-assert.md
 ```
 
 ## OUTPUT: Report / Response

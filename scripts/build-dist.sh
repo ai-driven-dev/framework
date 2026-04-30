@@ -63,7 +63,8 @@ EOF
 generate_catalogs
 
 # ---------------------------------------------------------------------------
-# Step 2: Generate dist/<ide>/ for each supported tool (requires aidd CLI)
+# Step 2: Generate dist/<tool>/ (local mode) and dist/<tool>-remote/ (remote mode)
+# for each supported tool (requires aidd CLI)
 # ---------------------------------------------------------------------------
 
 if ! command -v aidd &>/dev/null; then
@@ -81,13 +82,28 @@ MCP_SERVERS=$(node -e "
 ")
 
 for tool in claude cursor copilot opencode codex; do
+  # --- local mode ---
   TARGET="$FRAMEWORK_ROOT/dist/$tool"
   rm -rf "$TARGET"
   mkdir -p "$TARGET"
   cd "$TARGET"
-  "$CLI" setup --path "$FRAMEWORK_ROOT" --docs-dir aidd_docs
+  "$CLI" setup --path "$FRAMEWORK_ROOT" --docs-dir aidd_docs --mode local
   if ! "$CLI" install ai "$tool" --path "$FRAMEWORK_ROOT" --mcp "$MCP_SERVERS" --force; then
     echo "Warning: skipping $tool (not supported by installed CLI version)" >&2
+    cd "$FRAMEWORK_ROOT"
+    continue
+  fi
+  "$CLI" install ide vscode --path "$FRAMEWORK_ROOT" --force
+  cd "$FRAMEWORK_ROOT"
+
+  # --- remote mode ---
+  TARGET_REMOTE="$FRAMEWORK_ROOT/dist/${tool}-remote"
+  rm -rf "$TARGET_REMOTE"
+  mkdir -p "$TARGET_REMOTE"
+  cd "$TARGET_REMOTE"
+  "$CLI" setup --path "$FRAMEWORK_ROOT" --docs-dir aidd_docs --mode remote
+  if ! "$CLI" install ai "$tool" --path "$FRAMEWORK_ROOT" --mcp "$MCP_SERVERS" --force; then
+    echo "Warning: skipping $tool remote (not supported by installed CLI version)" >&2
     cd "$FRAMEWORK_ROOT"
     continue
   fi

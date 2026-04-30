@@ -60,7 +60,7 @@ function buildReference(syntax, filePath) {
 function buildBlockContent(memoryFiles, syntax) {
   if (memoryFiles.length === 0) return '';
   const refs = memoryFiles.map((f) => buildReference(syntax, f));
-  return '\n' + refs.join('\n') + '\n';
+  return `\n${refs.join('\n')}\n`;
 }
 
 function updateBlock(content, innerContent) {

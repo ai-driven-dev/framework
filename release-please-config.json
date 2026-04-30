@@ -7,13 +7,62 @@
   "changelog-sections": [
     {"type": "feat", "section": "Features"},
     {"type": "fix", "section": "Bug Fixes"},
-    {"type": "chore", "section": "Miscellaneous"}
+    {"type": "chore", "section": "Miscellaneous"},
+    { "type": "perf", "section": "Performance" },
+    { "type": "revert", "section": "Reverts" },
+    { "type": "docs", "section": "Documentation" },
+    { "type": "refactor", "section": "Refactoring" }
   ],
   "packages": {
-    ".": {},
-    "plugins/aidd-context": { "package-name": "aidd-context" },
-    "plugins/aidd-dev": { "package-name": "aidd-dev" },
-    "plugins/aidd-vcs": { "package-name": "aidd-vcs" },
-    "plugins/aidd-pm": { "package-name": "aidd-pm", "release-as": "1.0.0-rc.1" }
+    ".": {
+      "extra-files": [
+        {
+          "type": "json",
+          "path": ".claude-plugin/marketplace.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "plugins/aidd-context": {
+      "package-name": "aidd-context",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": ".claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "plugins/aidd-dev": {
+      "package-name": "aidd-dev",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": ".claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "plugins/aidd-vcs": {
+      "package-name": "aidd-vcs",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": ".claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "plugins/aidd-pm": {
+      "package-name": "aidd-pm",
+      "release-as": "1.0.0-rc.1",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": ".claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
   }
 }
