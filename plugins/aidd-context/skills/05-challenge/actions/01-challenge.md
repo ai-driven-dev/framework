@@ -4,20 +4,34 @@ description: >-
   Review and challenge previous work for improvements and correctness.
   Use when the user says 'challenge this', 'review my work', 'is this correct',
   asks for a critical review, or wants to rethink a decision.
+model: opus
 ---
 
 # Challenge
 
 ## Goal
 
-Critically review previous work to ensure 100% correctness, identify edge cases, and suggest improvements.
+Rethink what you have done. Is this 100% correct based on what we agreed on earlier?
+
+When no "Deal breakers", then correctness is 100%.
 
 ## Rules
 
-- When no "Deal breakers", then correctness is 100%.
-- Challenge assumptions and decisions.
-- Look for edge cases, errors, inconsistencies, missing parts, duplications.
-- Aim for simplifications — every step must be logical without gaps.
+### Already existing content
+
+- Challenge your assumptions.
+- Challenge my decisions.
+
+### What to look for
+
+- Look for edge cases, errors, inconsistencies.
+- Look for missing parts, duplications.
+- Look for optimizations, improvements.
+
+### How to think
+
+- Aim for simplifications.
+- Every step must be logical without any gap nor missing information.
 - Think in first principles.
 
 ## Process

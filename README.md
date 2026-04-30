@@ -35,6 +35,20 @@ Full documentation, flow guide, and skill catalog: [aidd_docs/README.md](aidd_do
 
 Skills catalog: [aidd_docs/CATALOG.md](aidd_docs/CATALOG.md)
 
-Contributing: [CONTRIBUTING.md](./CONTRIBUTING.md)
+---
+
+## 🧠 LLM Tiers
+
+| Tier   | Label        | Example Models           | Usage                                                            | Relative Cost |
+| ------ | ------------ | ------------------------ | ---------------------------------------------------------------- | ------------- |
+| **T1** | **Fast**     | Claude Haiku, Grok Fast  | Mechanical, deterministic tasks, templates, git ops              | 1x            |
+| **T2** | **Balanced** | Claude Sonnet, GPT Codex | Implementation, structured analysis, validation, code generation | 8x            |
+| **T3** | **Thinking** | Claude Opus, GPT 5.2     | Deep reasoning, synthesis, planning, orchestration, onboarding   | 30x           |
+
+---
+
+## 👌 Contributing
+
+To add or modify elements (agents, commands, rules, skills, or templates), see the [contribution guide](./CONTRIBUTING.md).
 
 ← [Back to main repo](https://github.com/ai-driven-dev/aidd/blob/main/README.md)
