@@ -15,17 +15,17 @@ Capture and store new learnings from recently implemented feature in memory bank
 ### Doc content
 
 ```shell
-! ls -1tr {{DOCS}}/
+! ls -1tr aidd_docs/
 ```
 
 #### Decision & ADR Template
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-context/skills/07-learn/assets/decision-template.md
+@../assets/decision-template.md
 ```
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-context/skills/07-learn/assets/adr-template.md
+@../assets/adr-template.md
 ```
 
 ## Rules
@@ -39,10 +39,10 @@ Capture and store new learnings from recently implemented feature in memory bank
 
 ### Phase 0: Gather Context
 
-List all files in `{{DOCS}}/` and pin relevant ones for reference:
+List all files in `aidd_docs/` and pin relevant ones for reference:
 
 ```shell
-! ls -1tr {{DOCS}}/
+! ls -1tr aidd_docs/
 ```
 
 > You should be able to show the user which files need to be updated.
@@ -84,17 +84,17 @@ AI categorizes each learning by destination, goal is to update the files caused 
 
 | Category               | Destination                    | Examples                                |
 | ---------------------- | ------------------------------ | --------------------------------------- |
-| **Decisions**          | `{{DOCS}}/internal/decisions/` | Tech decisions                          |
-| **Memory** (mandatory) | `{{DOCS}}/memory/`             | Project context, stack updates          |
-| **Rules**              | `{{TOOLS}}/rules/`             | Coding conventions, patterns to enforce |
-| **Skills**             | `{{TOOLS}}/skills/`            | Reusable prompts, workflows             |
-| **Templates**          | `{{TOOLS}}/plugins/*/skills/*/assets/` | Skill-specific templates         |
+| **Decisions**          | `aidd_docs/internal/decisions/` | Tech decisions                          |
+| **Memory** (mandatory) | `aidd_docs/memory/`             | Project context, stack updates          |
+| **Rules**              | project rules location         | Coding conventions, patterns to enforce |
+| **Skills**             | project skills location        | Reusable prompts, workflows             |
+| **Templates**          | plugin assets directories      | Skill-specific templates                |
 
 Propose where to save each learning.
 
 ### Phase 3: Create/Update Files
 
-1. Create file in `{{DOCS}}/internal/decisions/XXX-<title>.md` using decision template
+1. Create file in `aidd_docs/internal/decisions/XXX-<title>.md` using decision template
 2. Update ADR table in `ADR.md`
 3. Create/update files in their categories as needed
 

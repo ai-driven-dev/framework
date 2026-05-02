@@ -11,14 +11,12 @@ model: opus
 
 ### Coding rules
 
-```markdown
-@{{TOOLS}}/rules/
-```
+Apply project conventions and coding standards.
 
 ### Template
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-dev/skills/04-review/assets/code-review-template.md
+@./assets/code-review-template.md
 ```
 
 ## Goal
@@ -45,4 +43,4 @@ Code to Analyze: "$ARGUMENTS" (default: entire codebase)
 
 1. Scan source code for duplication patterns
 2. For each rules, check compliance and document findings
-3. Output detailed audit report based on template in `{{DOCS}}/tasks/audits/<yyyy>_<mm>_<slug>.md`
+3. Output detailed audit report based on template in `aidd_docs/tasks/audits/<yyyy>_<mm>_<slug>.md`

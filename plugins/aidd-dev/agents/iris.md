@@ -36,7 +36,7 @@ Analyze the image to extract components, then implement the UI based on the extr
 #### Instruction steps
 
 ```text
-@{{TOOLS}}/plugins/aidd-dev/skills/02-assert/actions/03-assert-frontend.md
+@../skills/02-assert/actions/03-assert-frontend.md
 ```
 
 ### Mode 3: Verify User Journey
@@ -46,7 +46,7 @@ Analyze the image to extract components, then implement the UI based on the extr
 #### Instruction steps
 
 ```text
-@{{TOOLS}}/plugins/aidd-dev/skills/05-test/actions/02-test-journey.md
+@../skills/05-test/actions/02-test-journey.md
 ```
 
 ## Input format

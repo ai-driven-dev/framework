@@ -40,4 +40,4 @@ $ARGUMENTS
    - **Open questions**: unresolved assumptions that need answers
 3. Present the draft to the user for review.
 4. **WAIT FOR USER APPROVAL**
-5. Save the approved PRD to `{{DOCS}}/tasks/<yyyy_mm>/<yyyy_mm_dd>-<feature_name>-prd.md`.
+5. Save the approved PRD to `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<feature_name>-prd.md`.

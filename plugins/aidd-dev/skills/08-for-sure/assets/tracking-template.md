@@ -1,6 +1,6 @@
 # Tracking file template
 
-Canonical format for task files in `{{DOCS}}/tasks/<task-name>.<status>.md`. Used by SA-01 to create files. Autonomous agents don't read this — they read the task file itself.
+Canonical format for task files in `aidd_docs/tasks/<task-name>.<status>.md`. Used by SA-01 to create files. Autonomous agents don't read this — they read the task file itself.
 
 ## File naming
 
@@ -76,7 +76,7 @@ created_at: "2026-04-07T14:32:15Z"
 
 ## Rules
 
-- Files in `{{DOCS}}/tasks/`, named `<task-slug>.<status>.md` (kebab-case).
+- Files in `aidd_docs/tasks/`, named `<task-slug>.<status>.md` (kebab-case).
 - Files are committed — they are a decision record.
 - Log is append-only. Never rewrite history.
 - One Log entry per step attempt. One agent per step.

@@ -38,7 +38,7 @@ location         = local
    - If the user mentions multiple unrelated domains, propose a split into separate skills.
 4. Pick `domain_type`: external tool/API → `tool`; practice (review, plan...) → `activity`; ambiguous → ask.
 5. Validate name per `references/naming-conventions.md`.
-6. Check collisions: `ls {{TOOLS}}/skills/`. No overlap in name or triggers.
+6. Check collisions via the AI tool's native skill listing. No overlap in name or triggers.
 7. Ask if execution order is strict. If yes → numbered prefixes in action 05.
 8. Ask: "Local to this repo (`<repo>/.claude/skills/<name>/`) or global (`~/.claude/skills/<name>/`)?" **Default = local.** Build where the user works now; move to global later only when the user asks. Never infer `global` from "I want to use it in other repos too" — that intent is satisfied by copying the local skill later.
 9. Run the skill-vs-command heuristic from `references/skill-vs-command.md`. Single-action skill → recommend a slash command and stop.

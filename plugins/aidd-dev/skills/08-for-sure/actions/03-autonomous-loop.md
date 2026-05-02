@@ -7,7 +7,7 @@ Orchestrates the loop. For each unchecked step: spawns a worker agent, verifies 
 ```
 Autonomous orchestrator. No human interaction.
 
-FILE: `{{DOCS}}/tasks/<task-name>.in-progress.md`
+FILE: `aidd_docs/tasks/<task-name>.in-progress.md`
 
 LOOP — for each unchecked step:
 

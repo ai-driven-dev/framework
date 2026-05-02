@@ -33,7 +33,7 @@ $ARGUMENTS
 ### Template
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-dev/skills/01-plan/assets/plan-template.md
+@../assets/plan-template.md
 ```
 
 ## Steps
@@ -95,9 +95,9 @@ Spawn a new sub-agent task to:
 3. Insert user journey in mermaid syntax in plan for better visualization and validation
 4. Fill the appropriate template based on decisions
 5. **Save to file**:
-   - Simple plan: `{{DOCS}}/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>.md`
-   - Master plan: `{{DOCS}}/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>-master.md`
-   - Child plans: `{{DOCS}}/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>-part-N.md`
+   - Simple plan: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>.md`
+   - Master plan: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>-master.md`
+   - Child plans: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>-part-N.md`
 6. Display saved file path to user
 
 ### Step 5: Quality Assurance

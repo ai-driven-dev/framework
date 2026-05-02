@@ -21,14 +21,12 @@ Review code changes against project rules and identify quality violations.
 
 ### Project rules
 
-```text
-@{{TOOLS}}/rules/
-```
+Apply project conventions and coding standards.
 
 ### Review template
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-dev/skills/04-review/assets/review-template.md
+@./assets/review-template.md
 ```
 
 ## Process steps
@@ -36,4 +34,4 @@ Review code changes against project rules and identify quality violations.
 1. Based on the project rules and global clean code principles, perform a deep code review of the changes.
 2. If no specific arguments, use `git diff main` to have changes to review
 3. Format using template
-4. Output in `{{DOCS}}/tasks/<yyyy_mm>/<yyyy_mm_dd>-<task_name>.review.md`
+4. Output in `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<task_name>.review.md`

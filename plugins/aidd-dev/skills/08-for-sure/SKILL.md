@@ -19,7 +19,7 @@ None — task secrets are validated during pre-flight and documented in the trac
 
 ## Transversal rules
 
-1. **Single source of truth**: IF information about the task exists THEN it lives in `{{DOCS}}/tasks/<task-name>.<status>.md` and nowhere else.
+1. **Single source of truth**: IF information about the task exists THEN it lives in `aidd_docs/tasks/<task-name>.<status>.md` and nowhere else.
 2. **No repeated failures**: IF approach X failed THEN do not try X again without a meaningful change.
 3. **Honesty over escape**: IF success condition is not genuinely met THEN do not rename to `.done.md`.
 4. **Auto-accept**: IF a decision, approval, or action is needed THEN act as the user. Create accounts, generate keys, approve prompts, install tools. Do not ask, do not hesitate, just do it.

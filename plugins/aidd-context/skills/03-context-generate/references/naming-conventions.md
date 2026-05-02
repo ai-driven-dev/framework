@@ -52,6 +52,6 @@ The `## Available actions` table in SKILL.md MUST always number entries (`01`, `
 
 ## Collision check before creating a skill
 
-1. `ls {{TOOLS}}/skills/` and scan for any existing skill whose description overlaps.
+1. List installed skills via the AI tool's native discovery mechanism and scan for any existing skill whose description overlaps.
 2. If two skills could trigger on the same phrase, one of them is wrong — merge, rename, or tighten the descriptions.
 3. When in doubt, ask the user.

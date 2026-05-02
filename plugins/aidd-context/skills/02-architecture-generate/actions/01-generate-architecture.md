@@ -12,41 +12,35 @@ model: opus
 ### Domain templates
 
 ```markdown
-@{{DOCS}}/templates/domain/
+@aidd_docs/templates/domain/
 ```
 
 ### Core generators
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-context/skills/03-context-generate/actions/agents/01-generate-agent.md
+@../../03-context-generate/actions/agents/01-generate-agent.md
 ```
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-context/skills/03-context-generate/SKILL.md
+@../../03-context-generate/SKILL.md
 ```
 
 ### Coordination template
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-context/skills/03-context-generate/references/agents-coordination.md
-```
-
-### IDE Mapping
-
-```markdown
-@{{TOOLS}}/rules/04-tooling/ide-mapping.md
+@../../03-context-generate/references/agents-coordination.md
 ```
 
 ### Mermaid standards
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-context/skills/06-mermaid/references/mermaid-conventions.md
+@../../06-mermaid/references/mermaid-conventions.md
 ```
 
 ### Skill structure standards
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-context/skills/03-context-generate/references/skill-structure.md
+@../../03-context-generate/references/skill-structure.md
 ```
 
 ### Arguments
@@ -83,7 +77,7 @@ Generate project architecture: agents, skills, commands, and a Mermaid coordinat
 7. Generate Mermaid coordination diagram showing: agents, skills they load, communication flows
 8. Present diagram + architecture plan (including domain templates) to user for validation
 9. On approval, create every items: templates, agents, skills, rules, commands...
-10. Update `@{{DOCS}}/CATALOG.md` with all new elements
+10. Update `@aidd_docs/CATALOG.md` with all new elements
 
 ## Validation checklist
 
