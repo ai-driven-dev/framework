@@ -104,31 +104,31 @@ flowchart TD
 
 ## Implementation phases
 
-### Phase 0 — CLI assets bundling
+### ✅ Phase 0 — CLI assets bundling
 
 > Foundation: bundle tool runtime configs + memory stubs in CLI binary.
 
 See: `2026_05_01-cli-marketplace-architecture-part-0.md`
 
-### Phase 1 — Marketplace-only core
+### ✅ Phase 1 — Marketplace-only core
 
 > New MarketplaceResolver. Default marketplace pre-registered. Plugin install prompts target tools. MCP plugin-owned, translated per tool. Strip framework loading.
 
 See: `2026_05_01-cli-marketplace-architecture-part-1.md`
 
-### Phase 2 — Install command split (`install ai|ide <tool>`)
+### ✅ Phase 2 — Install command split (`install ai|ide <tool>`)
 
 > Split install into `ai <tool>` (runtime config + memory stub) and `ide <tool>` (IDE configs). Add `uninstall ide`. Remove old framework-fetch flow.
 
 See: `2026_05_01-cli-marketplace-architecture-part-2.md`
 
-### Phase 3 — Migration command
+### ✅ Phase 3 — Migration command
 
 > Interactive `aidd migrate`. Strip obsolete tracked entries. Rewire plugins via marketplace. Preserve user files.
 
 See: `2026_05_01-cli-marketplace-architecture-part-3.md`
 
-### Phase 4 — Framework cleanup + tests + docs
+### 🔄 Phase 4 — Framework cleanup + tests + docs
 
 > Delete framework/config/, framework/rules/, framework/aidd_docs/. Simplify build-dist. Realign tests, update README/ARCHITECTURE/CHANGELOG.
 

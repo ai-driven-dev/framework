@@ -156,6 +156,7 @@ describe("PluginTranslator.translate()", () => {
       const claudeHooks = JSON.stringify({
         hooks: {
           SessionStart: [
+            // biome-ignore lint/suspicious/noTemplateCurlyInString: intentional literal string in test fixture (Claude hooks format)
             { hooks: [{ type: "command", command: "node ${CLAUDE_PLUGIN_ROOT}/hooks/run.js" }] },
           ],
         },
