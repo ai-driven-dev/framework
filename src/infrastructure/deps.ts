@@ -7,7 +7,9 @@ import "../domain/tools/ai/cursor.js";
 import "../domain/tools/ai/opencode.js";
 import "../domain/tools/ide/vscode.js";
 import { CLIOutput } from "../application/output.js";
+import { InstallIdeConfigUseCase } from "../application/use-cases/install/install-ide-config-use-case.js";
 import { InstallMemoryStubUseCase } from "../application/use-cases/install/install-memory-stub-use-case.js";
+import { InstallRuntimeConfigUseCase } from "../application/use-cases/install/install-runtime-config-use-case.js";
 import { InstallFrameworkPluginsUseCase } from "../application/use-cases/install-framework-plugins-use-case.js";
 import { MarketplaceAddUseCase } from "../application/use-cases/marketplace/marketplace-add-use-case.js";
 import { MarketplaceBrowseUseCase } from "../application/use-cases/marketplace/marketplace-browse-use-case.js";
@@ -25,6 +27,7 @@ import { PluginRemoveUseCase } from "../application/use-cases/plugin/plugin-remo
 import { PluginSearchUseCase } from "../application/use-cases/plugin/plugin-search-use-case.js";
 import { PluginUpdateUseCase } from "../application/use-cases/plugin/plugin-update-use-case.js";
 import { ResolveMarketplaceUseCase } from "../application/use-cases/shared/resolve-marketplace-use-case.js";
+import { UninstallIdeUseCase } from "../application/use-cases/uninstall-ide-use-case.js";
 import type { AssetProvider } from "../domain/ports/asset-provider.js";
 import type { FileSystem } from "../domain/ports/file-system.js";
 import type { FrameworkResolver } from "../domain/ports/framework-resolver.js";
@@ -100,6 +103,9 @@ interface Deps {
   pluginInstallFromMarketplaceUseCase: PluginInstallFromMarketplaceUseCase;
   resolveMarketplaceUseCase: ResolveMarketplaceUseCase;
   installMemoryStubUseCase: InstallMemoryStubUseCase;
+  installRuntimeConfigUseCase: InstallRuntimeConfigUseCase;
+  installIdeConfigUseCase: InstallIdeConfigUseCase;
+  uninstallIdeUseCase: UninstallIdeUseCase;
   assetProvider: AssetProvider;
   pluginSearchUseCase: PluginSearchUseCase;
   marketplaceRegisterFrameworkUseCase: MarketplaceRegisterFrameworkUseCase;
@@ -225,6 +231,22 @@ export async function createDeps(
   );
   const assetProvider = new BundledAssetProviderAdapter();
   const installMemoryStubUseCase = new InstallMemoryStubUseCase(fs, hasher, logger, assetProvider);
+  const installRuntimeConfigUseCase = new InstallRuntimeConfigUseCase(
+    fs,
+    manifestRepo,
+    hasher,
+    logger,
+    assetProvider,
+    installMemoryStubUseCase
+  );
+  const installIdeConfigUseCase = new InstallIdeConfigUseCase(
+    fs,
+    manifestRepo,
+    hasher,
+    logger,
+    assetProvider
+  );
+  const uninstallIdeUseCase = new UninstallIdeUseCase(fs, manifestRepo);
   const pluginInstallFromMarketplaceUseCase = new PluginInstallFromMarketplaceUseCase(
     resolveMarketplaceUseCase,
     marketplaceRegistry,
@@ -285,6 +307,9 @@ export async function createDeps(
     pluginInstallFromMarketplaceUseCase,
     resolveMarketplaceUseCase,
     installMemoryStubUseCase,
+    installRuntimeConfigUseCase,
+    installIdeConfigUseCase,
+    uninstallIdeUseCase,
     assetProvider,
     pluginSearchUseCase,
     marketplaceRegisterFrameworkUseCase,

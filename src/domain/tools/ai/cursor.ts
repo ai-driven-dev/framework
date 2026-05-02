@@ -43,6 +43,7 @@ export const cursor: AiTool<
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   signalDir: ".cursor/commands",
+  configOutputPaths: { "settings.json": ".cursor/settings.json" },
 
   capabilities: {
     agents: new AgentsCapability({

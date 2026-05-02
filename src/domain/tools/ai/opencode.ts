@@ -99,6 +99,7 @@ export const opencode: AiTool<
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   signalDir: ".opencode/commands",
+  configOutputPaths: { "opencode.json": "opencode.json" },
 
   capabilities: {
     agents: new AgentsCapability({

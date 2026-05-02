@@ -1,17 +1,28 @@
 import type { Command } from "commander";
+import { Manifest } from "../../domain/models/manifest.js";
+import type { AiToolId, IdeToolId, ToolId } from "../../domain/models/tool-ids.js";
+import type { ToolCategory } from "../../domain/tools/registry.js";
 import {
   assertToolIdsMatchCategory,
   assertValidToolIds,
-  type ToolCategory,
-  type ToolId,
+  getToolConfig,
+  isAiTool,
   toolIdsForCategory,
   VALID_TOOL_IDS,
 } from "../../domain/tools/registry.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
-import { InstallUseCase, type PluginMode } from "../use-cases/install/install-use-case.js";
+import type { InstallIdeConfigResult } from "../use-cases/install/install-ide-config-use-case.js";
+import type { InstallRuntimeConfigResult } from "../use-cases/install/install-runtime-config-use-case.js";
+import {
+  type InstallToolResult,
+  InstallUseCase,
+  type PluginMode,
+} from "../use-cases/install/install-use-case.js";
 import { ResolveFrameworkUseCase } from "../use-cases/resolve-framework-use-case.js";
 import { parseCategoryArg, parseGlobalOptions } from "./global-options.js";
+
+type InstallResult = InstallRuntimeConfigResult | InstallIdeConfigResult | InstallToolResult;
 
 function resolveInstallArgs(
   categoryArg: string | undefined,
@@ -40,10 +51,46 @@ function resolveInstallArgs(
   return { category, toolIds };
 }
 
+async function installFromAssets(
+  toolIds: ToolId[],
+  manifest: Manifest,
+  projectRoot: string,
+  force: boolean,
+  version: string,
+  deps: Awaited<ReturnType<typeof createDeps>>
+): Promise<(InstallRuntimeConfigResult | InstallIdeConfigResult)[]> {
+  const results: (InstallRuntimeConfigResult | InstallIdeConfigResult)[] = [];
+  for (const toolId of toolIds) {
+    const config = getToolConfig(toolId);
+    if (isAiTool(config)) {
+      results.push(
+        await deps.installRuntimeConfigUseCase.execute({
+          toolId: toolId as AiToolId,
+          projectRoot,
+          manifest,
+          force,
+          version,
+        })
+      );
+    } else {
+      results.push(
+        await deps.installIdeConfigUseCase.execute({
+          toolId: toolId as IdeToolId,
+          projectRoot,
+          manifest,
+          force,
+          version,
+        })
+      );
+    }
+  }
+  return results;
+}
+
 export function registerInstallCommand(program: Command): void {
   program
     .command("install")
-    .description("Generate tool-specific distributions from the framework")
+    .description("Install tool runtime configuration from bundled assets")
     .argument("[category]", "Category to install: ai or ide")
     .argument("[tool...]", "Tool IDs to install (e.g. claude cursor vscode)")
     .addHelpText(
@@ -109,55 +156,73 @@ Examples:
 
           const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
-          const { path: frameworkPath, version } = await new ResolveFrameworkUseCase(
-            deps.resolver,
-            deps.logger,
-            deps.authReader
-          ).execute({ path: cmdOptions.path, release: cmdOptions.release });
+          let results: InstallResult[];
 
-          const installUseCase = new InstallUseCase(
-            deps.fs,
-            deps.manifestRepo,
-            deps.hasher,
-            deps.logger,
-            deps.platform,
-            deps.prompter,
-            deps.pluginFetcher,
-            deps.pluginDistributionReader,
-            deps.pluginCatalogRepository,
-            deps.assetProvider
-          );
+          if (cmdOptions.path !== undefined || cmdOptions.release !== undefined) {
+            const { path: frameworkPath, version } = await new ResolveFrameworkUseCase(
+              deps.resolver,
+              deps.logger,
+              deps.authReader
+            ).execute({ path: cmdOptions.path, release: cmdOptions.release });
 
-          const mcpFilter = cmdOptions.mcp?.split(",").map((s) => s.trim()) ?? [];
-          let pluginMode: PluginMode | undefined;
-          let pluginNames: string[] | undefined;
-          if (cmdOptions.plugins === false) {
-            pluginMode = "none";
-          } else if (typeof cmdOptions.plugins === "string") {
-            pluginMode = "named";
-            pluginNames = cmdOptions.plugins
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean);
-          } else if (cmdOptions.allPlugins) {
-            pluginMode = "all";
-          } else if (cmdOptions.recommendedPlugins) {
-            pluginMode = "recommended";
+            const mcpFilter = cmdOptions.mcp?.split(",").map((s) => s.trim()) ?? [];
+            let pluginMode: PluginMode | undefined;
+            let pluginNames: string[] | undefined;
+            if (cmdOptions.plugins === false) {
+              pluginMode = "none";
+            } else if (typeof cmdOptions.plugins === "string") {
+              pluginMode = "named";
+              pluginNames = cmdOptions.plugins
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean);
+            } else if (cmdOptions.allPlugins) {
+              pluginMode = "all";
+            } else if (cmdOptions.recommendedPlugins) {
+              pluginMode = "recommended";
+            }
+
+            results = await new InstallUseCase(
+              deps.fs,
+              deps.manifestRepo,
+              deps.hasher,
+              deps.logger,
+              deps.platform,
+              deps.prompter,
+              deps.pluginFetcher,
+              deps.pluginDistributionReader,
+              deps.pluginCatalogRepository,
+              deps.assetProvider
+            ).execute({
+              toolIds,
+              category,
+              frameworkPath,
+              version,
+              projectRoot,
+              force: cmdOptions.force,
+              repo,
+              interactive: process.stdout.isTTY,
+              mcpFilter,
+              pluginMode,
+              pluginNames,
+            });
+          } else {
+            const resolvedIds = toolIds ?? [];
+            if (resolvedIds.length === 0) {
+              output.error("Specify tools to install or use --all.");
+              process.exit(1);
+            }
+            const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+            const version = deps.currentVersionProvider.get();
+            results = await installFromAssets(
+              resolvedIds,
+              manifest,
+              projectRoot,
+              cmdOptions.force,
+              version,
+              deps
+            );
           }
-
-          const results = await installUseCase.execute({
-            toolIds,
-            category,
-            frameworkPath,
-            version,
-            projectRoot,
-            force: cmdOptions.force,
-            repo,
-            interactive: process.stdout.isTTY,
-            mcpFilter,
-            pluginMode,
-            pluginNames,
-          });
 
           const skipped = results.filter((r) => r.skipped);
           const installed = results.filter((r) => !r.skipped);
@@ -165,7 +230,6 @@ Examples:
           for (const result of skipped) {
             output.warn(`${result.toolId} is already installed. Use \`--force\` to reinstall.`);
           }
-
           for (const result of installed) {
             for (const warning of result.warnings) {
               output.warn(warning);
@@ -175,7 +239,6 @@ Examples:
           if (installed.length === 0) return;
 
           const totalFiles = installed.reduce((sum, r) => sum + r.fileCount, 0);
-
           if (verbose) {
             for (const result of installed) {
               output.debug(`Tool: ${result.toolId}`);
@@ -184,7 +247,6 @@ Examples:
               }
             }
           }
-
           if (installed.length === 1) {
             output.success(`Installed ${installed[0].toolId} (${installed[0].fileCount} files)`);
           } else {

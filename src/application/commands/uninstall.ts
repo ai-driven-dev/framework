@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import type { IdeToolId } from "../../domain/models/tool-ids.js";
 import {
   assertToolIdsMatchCategory,
   assertValidToolIds,
@@ -122,6 +123,25 @@ Examples:
           }
 
           const mcpFilter = cmdOptions.mcp?.split(",").map((s) => s.trim()) ?? [];
+
+          if (category === "ide" && mcpFilter.length === 0) {
+            const ideResults = [];
+            for (const toolId of toolIds) {
+              ideResults.push(
+                await deps.uninstallIdeUseCase.execute({ toolId: toolId as IdeToolId, projectRoot })
+              );
+            }
+            const totalFileCount = ideResults.reduce((sum, r) => sum + r.fileCount, 0);
+            if (ideResults.length === 1) {
+              output.success(
+                `Uninstalled ${ideResults[0].toolId} (${ideResults[0].fileCount} files removed)`
+              );
+            } else {
+              const toolList = ideResults.map((r) => r.toolId).join(", ");
+              output.success(`Uninstalled ${toolList} (${totalFileCount} files removed)`);
+            }
+            return;
+          }
 
           const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
           const results = await useCase.execute({ toolIds, projectRoot, repo, mcpFilter });

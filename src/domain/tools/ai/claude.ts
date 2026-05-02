@@ -41,6 +41,7 @@ export const claude: AiTool<
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   signalDir: ".claude/commands",
+  configOutputPaths: { "settings.json": ".claude/settings.json" },
 
   capabilities: {
     agents: new AgentsCapability({

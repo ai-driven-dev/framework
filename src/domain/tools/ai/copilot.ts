@@ -272,6 +272,7 @@ export const copilot: AiTool<
   toolSuffix: TOOL_SUFFIX,
   signalDir: ".github/prompts",
   requiredIdeIds: ["vscode"] as const,
+  configOutputPaths: { "settings.json": ".vscode/settings.json" },
 
   capabilities: {
     agents: new AgentsCapability({

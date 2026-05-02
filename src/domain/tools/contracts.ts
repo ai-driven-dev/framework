@@ -60,6 +60,7 @@ export interface AiTool<C> {
   readonly signalDir: string | null;
   readonly requiredIdeIds?: readonly IdeToolId[];
   readonly capabilities: C;
+  readonly configOutputPaths?: Readonly<Record<string, string>>;
   rewriteContent(content: string, docsDir: string): string;
   reverseRewriteContent(content: string, docsDir: string): string;
   detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null;

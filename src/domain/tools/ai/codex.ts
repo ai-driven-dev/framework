@@ -189,6 +189,7 @@ export const codex: AiTool<HasAgents & HasSkills & HasMcp & HasHooks & HasMemory
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   signalDir: null,
+  configOutputPaths: { "config.toml": ".codex/config.toml" },
 
   capabilities: {
     agents: new AgentsCapability({ directory: DIRECTORY, toolSuffix: TOOL_SUFFIX, format: "toml" }),
