@@ -4,66 +4,7 @@ set -e
 FRAMEWORK_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 # ---------------------------------------------------------------------------
-# Step 1: Generate CATALOG.md files from plugins/*/skills/*/SKILL.md
-# This step runs unconditionally (no aidd CLI required).
-# ---------------------------------------------------------------------------
-
-generate_catalogs() {
-  local global_catalog="$FRAMEWORK_ROOT/aidd_docs/CATALOG.md"
-
-  # Header for global catalog
-  cat > "$global_catalog" <<'EOF'
-# AIDD Framework — Skills Catalog
-
-All skills across all plugins, auto-generated from `plugins/*/skills/*/SKILL.md`.
-
-| Plugin | Bracket ID | Skill | Description |
-|--------|-----------|-------|-------------|
-EOF
-
-  for plugin_dir in "$FRAMEWORK_ROOT"/plugins/*/; do
-    plugin_name="$(basename "$plugin_dir")"
-    local_catalog="$plugin_dir/CATALOG.md"
-
-    # Header for per-plugin catalog
-    cat > "$local_catalog" <<EOF
-# ${plugin_name} — Skills Catalog
-
-Auto-generated from \`skills/*/SKILL.md\`.
-
-| Bracket ID | Skill | Description |
-|-----------|-------|-------------|
-EOF
-
-    # Walk skills using find + read -d to handle bracket-named dirs
-    while IFS= read -r -d '' skill_md; do
-      skill_dir="$(dirname "$skill_md")"     # e.g. .../skills/[1.1] project-init
-      bracket_dir="$(basename "$skill_dir")" # e.g. "[1.1] project-init"
-
-      # Extract bracket ID: the part inside brackets
-      bracket_id="$(echo "$bracket_dir" | grep -o '\[[^]]*\]')"
-
-      # Extract name and description from frontmatter
-      skill_name="$(awk '/^---/{f=!f; next} f && /^name:/{sub(/^name:[[:space:]]*/, ""); print; exit}' "$skill_md")"
-      skill_desc="$(awk '/^---/{f=!f; next} f && /^description:/{sub(/^description:[[:space:]]*/, ""); print; exit}' "$skill_md")"
-
-      # Append to per-plugin catalog
-      printf '| %s | %s | %s |\n' "$bracket_id" "$skill_name" "$skill_desc" >> "$local_catalog"
-
-      # Append to global catalog
-      printf '| %s | %s | %s | %s |\n' "$plugin_name" "$bracket_id" "$skill_name" "$skill_desc" >> "$global_catalog"
-
-    done < <(find "$plugin_dir/skills" -name "SKILL.md" -print0 | sort -z)
-
-  done
-
-  echo "Catalogs generated."
-}
-
-generate_catalogs
-
-# ---------------------------------------------------------------------------
-# Step 2: Generate dist/<tool>/ (local mode) and dist/<tool>-remote/ (remote mode)
+# Generate dist/<tool>/ (local mode) and dist/<tool>-remote/ (remote mode)
 # for each supported tool (requires aidd CLI)
 # ---------------------------------------------------------------------------
 
@@ -94,6 +35,22 @@ for tool in claude cursor copilot opencode codex; do
     continue
   fi
   "$CLI" install ide vscode --path "$FRAMEWORK_ROOT" --force
+  # Strip CI-absolute marketplace paths so the tarball is portable.
+  # Users run `aidd setup` once on their machine to register their own local path.
+  node -e "
+    const fs = require('fs');
+    const files = ['.claude/settings.json'];
+    for (const f of files) {
+      if (!fs.existsSync(f)) continue;
+      const json = JSON.parse(fs.readFileSync(f, 'utf-8'));
+      if (!json.extraKnownMarketplaces) continue;
+      for (const [k, v] of Object.entries(json.extraKnownMarketplaces)) {
+        if (v?.source?.source === 'directory') delete json.extraKnownMarketplaces[k];
+      }
+      if (!Object.keys(json.extraKnownMarketplaces).length) delete json.extraKnownMarketplaces;
+      fs.writeFileSync(f, JSON.stringify(json, null, 2));
+    }
+  "
   cd "$FRAMEWORK_ROOT"
 
   # --- remote mode ---
