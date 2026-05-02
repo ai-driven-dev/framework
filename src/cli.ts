@@ -65,11 +65,8 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
     await printUpdateBanner(
       deps.cliUpdater,
       deps.currentVersionProvider,
-      deps.resolver,
-      deps.manifestRepo,
       output,
-      cmd === "self-update",
-      ["self-update", "update", "setup"].includes(cmd)
+      cmd === "self-update"
     );
   }
 });
