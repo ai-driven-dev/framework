@@ -225,8 +225,16 @@ export class Manifest {
     return this._scripts !== null;
   }
 
+  clearScripts(): void {
+    this._scripts = null;
+  }
+
   addPlugins(version: string, files: InstallationFile[]): void {
     this._plugins = { version, files: this.toTrackedFiles(files) };
+  }
+
+  clearPlugins(): void {
+    this._plugins = null;
   }
 
   getPluginsVersion(): string | undefined {

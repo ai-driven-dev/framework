@@ -32,10 +32,12 @@ describe("convertClaudeHooksToCursorPlugin", () => {
     expect(result.hooks.sessionStart).toHaveLength(2);
   });
 
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: intentional placeholder literal in test data
   it("replaces ${CLAUDE_PLUGIN_ROOT}/ with ./", () => {
     const input = JSON.stringify({
       hooks: {
         SessionStart: [
+          // biome-ignore lint/suspicious/noTemplateCurlyInString: intentional placeholder literal in test data
           { hooks: [{ type: "command", command: "node ${CLAUDE_PLUGIN_ROOT}/hooks/update.js" }] },
         ],
       },
