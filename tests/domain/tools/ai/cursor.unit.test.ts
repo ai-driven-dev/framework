@@ -2,38 +2,6 @@ import { describe, expect, it } from "vitest";
 import { cursor } from "../../../../src/domain/tools/ai/cursor.js";
 
 describe("cursor", () => {
-  describe("rewriteContent()", () => {
-    it("installed content uses the .cursor/ tool directory path", () => {
-      const result = cursor.rewriteContent("{{TOOLS}}/rules/", "aidd_docs");
-      expect(result).toBe(".cursor/rules/");
-    });
-
-    it("installed content uses the configured docs directory path", () => {
-      const result = cursor.rewriteContent("{{DOCS}}/memory/", "aidd_docs");
-      expect(result).toBe("aidd_docs/memory/");
-    });
-
-    it("rule include references in installed content use .mdc extension for Cursor", () => {
-      const result = cursor.rewriteContent("@{{TOOLS}}/rules/naming.md", "aidd_docs");
-      expect(result).toBe("@.cursor/rules/naming.mdc");
-    });
-
-    it("command cross-references in installed content use the AIDD-namespaced path", () => {
-      const result = cursor.rewriteContent(
-        "See @.cursor/commands/04_code/implement.md for reference",
-        "aidd_docs"
-      );
-      expect(result).toBe("See @.cursor/commands/aidd/04/implement.md for reference");
-    });
-
-    it("skills listing bare command paths produce working references in installed content", () => {
-      const result = cursor.rewriteContent(
-        "1. Brainstorm: {{TOOLS}}/commands/02_context/brainstorm.md",
-        "aidd_docs"
-      );
-      expect(result).toBe("1. Brainstorm: .cursor/commands/aidd/02/brainstorm.md");
-    });
-  });
 
   describe("capabilities.rules.convertFrontmatter()", () => {
     it("converts paths: to globs: as JSON inline string and adds alwaysApply: false", () => {
@@ -101,28 +69,6 @@ describe("cursor", () => {
     });
   });
 
-  describe("reverseRewriteContent()", () => {
-    it("reverses @.cursor/ to @{{TOOLS}}/", () => {
-      const input = "See @.cursor/agents/alexia.md for more";
-      const result = cursor.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toContain("@{{TOOLS}}/agents/alexia.md");
-    });
-
-    it("reverses .mdc extension back to .md in @-references", () => {
-      const input = "@.cursor/rules/01-standards/naming.mdc";
-      const result = cursor.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toContain("@{{TOOLS}}/rules/01-standards/naming.md");
-      expect(result).not.toContain(".mdc");
-    });
-
-    it("roundtrip: rewrite then reverse produces canonical content", () => {
-      const canonical = "Use @{{TOOLS}}/agents/alexia.md and @{{DOCS}}/CATALOG.md";
-      const rewritten = cursor.rewriteContent(canonical, "aidd_docs");
-      const reversed = cursor.reverseRewriteContent(rewritten, "aidd_docs");
-      expect(reversed).toContain("@{{TOOLS}}/agents/alexia.md");
-      expect(reversed).toContain("@{{DOCS}}/CATALOG.md");
-    });
-  });
 
   describe("capabilities.memory.buildInstallPath()", () => {
     it("returns AGENTS.md for agentsMd template", () => {

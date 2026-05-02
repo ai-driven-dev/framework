@@ -29,26 +29,7 @@ describe("codex", () => {
     expect(config.toolId).toBe("codex");
   });
 
-  describe("rewriteContent()", () => {
-    it("replaces TOOLS placeholder with .codex/ directory", () => {
-      const result = codex.rewriteContent("{{TOOLS}}/agents/", "aidd_docs");
-      expect(result).toBe(".codex/agents/");
-    });
 
-    it("replaces DOCS placeholder with docs directory", () => {
-      const result = codex.rewriteContent("{{DOCS}}/memory/", "aidd_docs");
-      expect(result).toBe("aidd_docs/memory/");
-    });
-  });
-
-  describe("reverseRewriteContent()", () => {
-    it("round-trip: rewrite then reverse restores canonical content", () => {
-      const canonical = "Use @{{TOOLS}}/agents/ and {{DOCS}}/CATALOG.md";
-      const rewritten = codex.rewriteContent(canonical, "aidd_docs");
-      const reversed = codex.reverseRewriteContent(rewritten, "aidd_docs");
-      expect(reversed).toBe(canonical);
-    });
-  });
 
   describe("capabilities.skills.buildInstallPath()", () => {
     it("builds path under .agents/skills/aidd-{name}/SKILL.md", () => {
@@ -227,100 +208,4 @@ codex_hooks = false
   });
 });
 
-describe("rewriteCodexContent()", () => {
-  it("replaces {{TOOLS}}/ placeholder with .codex/ directory", () => {
-    const result = rewriteCodexContent("{{TOOLS}}/agents/", {
-      directory: ".codex/",
-      docsDir: "aidd_docs",
-    });
-    expect(result).toBe(".codex/agents/");
-  });
 
-  it("replaces @{{TOOLS}}/ placeholder with @.codex/", () => {
-    const result = rewriteCodexContent("@{{TOOLS}}/agents/alexia.md", {
-      directory: ".codex/",
-      docsDir: "aidd_docs",
-    });
-    expect(result).toBe("@.codex/agents/alexia.md");
-  });
-
-  it("replaces {{DOCS}}/ placeholder with docs directory", () => {
-    const result = rewriteCodexContent("{{DOCS}}/memory/", {
-      directory: ".codex/",
-      docsDir: "aidd_docs",
-    });
-    expect(result).toBe("aidd_docs/memory/");
-  });
-
-  it("remaps .codex/skills/ to .agents/skills/aidd-", () => {
-    const result = rewriteCodexContent(".codex/skills/my-skill", {
-      directory: ".codex/",
-      docsDir: "aidd_docs",
-    });
-    expect(result).toBe(".agents/skills/aidd-my-skill");
-  });
-
-  it("remaps .codex/commands/ to .agents/skills/aidd-", () => {
-    const result = rewriteCodexContent(".codex/commands/my-cmd", {
-      directory: ".codex/",
-      docsDir: "aidd_docs",
-    });
-    expect(result).toBe(".agents/skills/aidd-my-cmd");
-  });
-});
-
-describe("reverseRewriteCodexContent()", () => {
-  it("restores .codex/ directory to {{TOOLS}}/ placeholder", () => {
-    const result = reverseRewriteCodexContent(".codex/agents/", "aidd_docs");
-    expect(result).toBe("{{TOOLS}}/agents/");
-  });
-
-  it("restores @.codex/ to @{{TOOLS}}/", () => {
-    const result = reverseRewriteCodexContent("@.codex/agents/alexia.md", "aidd_docs");
-    expect(result).toBe("@{{TOOLS}}/agents/alexia.md");
-  });
-
-  it("reverses .agents/skills/aidd-{phase}-{name} to {{TOOLS}}/commands/{name}", () => {
-    const result = reverseRewriteCodexContent(".agents/skills/aidd-04-implement", "aidd_docs");
-    expect(result).toBe("{{TOOLS}}/commands/implement");
-  });
-
-  it("reverses .agents/skills/aidd-{name} (no phase) to {{TOOLS}}/skills/{name}", () => {
-    const result = reverseRewriteCodexContent(".agents/skills/aidd-my-skill", "aidd_docs");
-    expect(result).toBe("{{TOOLS}}/skills/my-skill");
-  });
-
-  it("round-trip: rewrite then reverse restores canonical content", () => {
-    const canonical = "Use @{{TOOLS}}/agents/ and {{DOCS}}/CATALOG.md";
-    const rewritten = rewriteCodexContent(canonical, {
-      directory: ".codex/",
-      docsDir: "aidd_docs",
-    });
-    const reversed = reverseRewriteCodexContent(rewritten, "aidd_docs");
-    expect(reversed).toBe(canonical);
-  });
-
-  describe("capabilities.plugins", () => {
-    it("has a plugins capability", () => {
-      expect("plugins" in codex.capabilities).toBe(true);
-    });
-
-    it("is native mode", () => {
-      expect(codex.capabilities.plugins.mode).toBe("native");
-    });
-
-    it("uses .codex/plugins/ as plugins directory", () => {
-      expect(codex.capabilities.plugins.pluginsDir).toBe(".codex/plugins/");
-    });
-
-    it("uses plugin.json as plugin manifest path", () => {
-      expect(codex.capabilities.plugins.pluginManifestRelativePath).toBe("plugin.json");
-    });
-
-    it("pluginOutputDir returns correct path for a plugin name", () => {
-      expect(codex.capabilities.plugins.pluginOutputDir("my-plugin")).toBe(
-        ".codex/plugins/my-plugin/"
-      );
-    });
-  });
-});

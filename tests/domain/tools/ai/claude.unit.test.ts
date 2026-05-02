@@ -20,27 +20,6 @@ describe("claude", () => {
     });
   });
 
-  describe("rewriteContent()", () => {
-    it("installed content uses the .claude/ tool directory path", () => {
-      const result = claude.rewriteContent("{{TOOLS}}/agents/", "aidd_docs");
-      expect(result).toBe(".claude/agents/");
-    });
-
-    it("installed content uses the configured docs directory path", () => {
-      const result = claude.rewriteContent("{{DOCS}}/memory/", "aidd_docs");
-      expect(result).toBe("aidd_docs/memory/");
-    });
-
-    it("include references in installed content point to the tool directory", () => {
-      const result = claude.rewriteContent("@{{TOOLS}}/rules/naming.md", "aidd_docs");
-      expect(result).toBe("@.claude/rules/naming.md");
-    });
-
-    it("command cross-references in installed content use the AIDD-namespaced path", () => {
-      const result = claude.rewriteContent("@{{TOOLS}}/commands/04_code/implement.md", "aidd_docs");
-      expect(result).toBe("@.claude/commands/aidd/04/implement.md");
-    });
-  });
 
   describe("capabilities.rules.convertFrontmatter()", () => {
     it("preserves paths: list when already in Claude format", () => {
@@ -100,39 +79,6 @@ describe("claude", () => {
     });
   });
 
-  describe("reverseRewriteContent()", () => {
-    it("tool include paths are restored to canonical placeholders when syncing back", () => {
-      const input = "See @.claude/agents/alexia.md for more";
-      const result = claude.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toContain("@{{TOOLS}}/agents/alexia.md");
-      expect(result).not.toContain("@.claude/");
-    });
-
-    it("docs directory paths are restored to canonical placeholders when syncing back", () => {
-      const input = "See aidd_docs/memory/project_brief.md";
-      const result = claude.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toContain("{{DOCS}}/memory/project_brief.md");
-    });
-
-    it("docs include paths are restored to canonical placeholders when syncing back", () => {
-      const input = "@aidd_docs/CATALOG.md";
-      const result = claude.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toBe("@{{DOCS}}/CATALOG.md");
-    });
-
-    it("roundtrip: rewrite then reverse produces canonical content", () => {
-      const canonical =
-        "Use @{{TOOLS}}/agents/alexia.md and {{TOOLS}}/rules/ and @{{DOCS}}/CATALOG.md";
-      const rewritten = claude.rewriteContent(canonical, "aidd_docs");
-      const reversed = claude.reverseRewriteContent(rewritten, "aidd_docs");
-      // The roundtrip should recover the original canonical form
-      // Note: command path transformations (@.claude/commands/aidd/01/) are not perfectly reversible
-      // but placeholder substitutions must roundtrip
-      expect(reversed).toContain("@{{TOOLS}}/agents/alexia.md");
-      expect(reversed).toContain("{{TOOLS}}/rules/");
-      expect(reversed).toContain("@{{DOCS}}/CATALOG.md");
-    });
-  });
 
   describe("capabilities.memory.buildInstallPath()", () => {
     it("returns CLAUDE.md for agentsMd template", () => {

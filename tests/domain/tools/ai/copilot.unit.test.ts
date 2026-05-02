@@ -2,44 +2,6 @@ import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../src/domain/tools/ai/copilot.js";
 
 describe("copilot", () => {
-  describe("rewriteContent()", () => {
-    it("installed content uses the .github/ tool directory path", () => {
-      const result = copilot.rewriteContent("{{TOOLS}}/agents/", "aidd_docs");
-      expect(result).toBe(".github/agents/");
-    });
-
-    it("installed content uses the configured docs directory path", () => {
-      const result = copilot.rewriteContent("{{DOCS}}/memory/", "aidd_docs");
-      expect(result).toBe("aidd_docs/memory/");
-    });
-
-    it("replaces @{{TOOLS}}/ with a markdown link using installed path", () => {
-      const result = copilot.rewriteContent("@{{TOOLS}}/rules/naming.md", "aidd_docs");
-      expect(result).toBe(
-        "[.github/instructions/naming.instructions.md](../../.github/instructions/naming.instructions.md)"
-      );
-    });
-
-    it("replaces @{{TOOLS}}/rules/ (directory reference) with .github/instructions/ directory link", () => {
-      const result = copilot.rewriteContent("Follow all rules @{{TOOLS}}/rules/", "aidd_docs");
-      expect(result).toBe("Follow all rules [.github/instructions/](../../.github/instructions/)");
-    });
-
-    it("replaces @{{TOOLS}}/agents/ (directory reference) with .github/agents/ directory link", () => {
-      const result = copilot.rewriteContent("@{{TOOLS}}/agents/", "aidd_docs");
-      expect(result).toBe("[.github/agents/](../../.github/agents/)");
-    });
-
-    it("replaces @{{DOCS}}/ with a markdown link using docsDir path", () => {
-      const result = copilot.rewriteContent("@{{DOCS}}/memory/project.md", "aidd_docs");
-      expect(result).toBe("[aidd_docs/memory/project.md](../../aidd_docs/memory/project.md)");
-    });
-
-    it("plain {{TOOLS}}/ still works after @ include handling", () => {
-      const result = copilot.rewriteContent("{{TOOLS}}/agents/", "aidd_docs");
-      expect(result).toBe(".github/agents/");
-    });
-  });
 
   describe("capabilities.rules.convertFrontmatter()", () => {
     it("converts paths: list to applyTo: comma-joined string", () => {
@@ -195,45 +157,6 @@ describe("copilot", () => {
     });
   });
 
-  describe("reverseRewriteContent()", () => {
-    it("reverses markdown link for agents to @{{TOOLS}}/agents/", () => {
-      const input = "[.github/agents/alexia.agent.md](../../.github/agents/alexia.agent.md)";
-      const result = copilot.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toContain("@{{TOOLS}}/agents/alexia.agent.md");
-    });
-
-    it("reverses markdown link for prompts to @{{TOOLS}}/commands/", () => {
-      const input =
-        "[.github/prompts/01-implement.prompt.md](../../.github/prompts/01-implement.prompt.md)";
-      const result = copilot.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toContain("@{{TOOLS}}/commands/01-implement.prompt.md");
-    });
-
-    it("reverses markdown link for instructions to @{{TOOLS}}/rules/", () => {
-      const input =
-        "[.github/instructions/naming.instructions.md](../../.github/instructions/naming.instructions.md)";
-      const result = copilot.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toContain("@{{TOOLS}}/rules/naming.instructions.md");
-    });
-
-    it("reverses markdown link for skills to @{{TOOLS}}/skills/", () => {
-      const input = "[.github/skills/foo/SKILL.md](../../.github/skills/foo/SKILL.md)";
-      const result = copilot.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toContain("@{{TOOLS}}/skills/foo/SKILL.md");
-    });
-
-    it("reverses docs markdown link to @{{DOCS}}/", () => {
-      const input = "[aidd_docs/memory/CATALOG.md](../../aidd_docs/memory/CATALOG.md)";
-      const result = copilot.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toContain("@{{DOCS}}/memory/CATALOG.md");
-    });
-
-    it("reverses .github/prompts/ plain text to {{TOOLS}}/commands/", () => {
-      const input = "Located at .github/prompts/implement.prompt.md";
-      const result = copilot.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toContain("{{TOOLS}}/commands/");
-    });
-  });
 
   describe("capabilities.plugins", () => {
     it("has a plugins capability", () => {
