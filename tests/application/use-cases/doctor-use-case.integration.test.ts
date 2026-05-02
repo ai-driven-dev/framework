@@ -146,7 +146,8 @@ describe("doctor", () => {
     const deps = buildDeps(projectRoot);
     const installResult = await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
-    const firstFile = installResult.files[0];
+    const firstFile = installResult.files.find((f) => f.relativePath.endsWith(".md"));
+    if (!firstFile) throw new Error("claude fixture must install at least one .md file");
     await writeFile(
       join(projectRoot, firstFile.relativePath),
       "See @.claude/agents/missing-agent.md for details",
@@ -165,7 +166,8 @@ describe("doctor", () => {
     const deps = buildDeps(projectRoot);
     const installResult = await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
-    const firstFile = installResult.files[0];
+    const firstFile = installResult.files.find((f) => f.relativePath.endsWith(".md"));
+    if (!firstFile) throw new Error("claude fixture must install at least one .md file");
     await writeFile(
       join(projectRoot, firstFile.relativePath),
       "See @.claude/agents/ for all agents",
@@ -205,7 +207,8 @@ describe("doctor", () => {
     const deps = buildDeps(projectRoot);
     const installResult = await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
-    const firstFile = installResult.files[0];
+    const firstFile = installResult.files.find((f) => f.relativePath.endsWith(".md"));
+    if (!firstFile) throw new Error("claude fixture must install at least one .md file");
     await writeFile(
       join(projectRoot, firstFile.relativePath),
       "```\n@.claude/agents/missing-agent.md\n```",
@@ -223,7 +226,8 @@ describe("doctor", () => {
     const deps = buildDeps(projectRoot);
     const installResult = await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
-    const firstFile = installResult.files[0];
+    const firstFile = installResult.files.find((f) => f.relativePath.endsWith(".md"));
+    if (!firstFile) throw new Error("claude fixture must install at least one .md file");
     await writeFile(
       join(projectRoot, firstFile.relativePath),
       "```markdown\n@aidd_docs/templates/aidd/agent.md\n```",
@@ -262,7 +266,8 @@ describe("doctor", () => {
     const deps = buildDeps(projectRoot);
     const installResult = await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
-    const firstFile = installResult.files[0];
+    const firstFile = installResult.files.find((f) => f.relativePath.endsWith(".md"));
+    if (!firstFile) throw new Error("claude fixture must install at least one .md file");
     await writeFile(
       join(projectRoot, firstFile.relativePath),
       "```text\n@path/to/example.md\n```",
@@ -360,7 +365,8 @@ describe("doctor", () => {
       const installResult = await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
       // Delete one tracked file from disk without removing it from the manifest
-      const trackedFile = installResult.files[0];
+      const trackedFile = installResult.files.find((f) => f.relativePath.endsWith(".md"));
+      if (!trackedFile) throw new Error("claude fixture must install at least one .md file");
       await rm(join(projectRoot, trackedFile.relativePath), { force: true });
 
       const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);

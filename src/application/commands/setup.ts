@@ -108,7 +108,6 @@ export function registerSetupCommand(program: Command): void {
           const result = await new SetupUseCase(
             deps.fs,
             deps.manifestRepo,
-            deps.loader,
             deps.hasher,
             deps.logger,
             deps.platform,

@@ -310,8 +310,18 @@ describe.concurrent("E2E: aidd install", () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      const userFilePath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
-      await mkdir(join(projectDir, ".claude", "rules", "01-standards"), { recursive: true });
+      const userFilePath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.md"
+      );
+      await mkdir(join(projectDir, ".claude", "plugins", "aidd-test", "rules", "01-standards"), {
+        recursive: true,
+      });
       await writeFile(userFilePath, "user naming rule");
 
       const { stderr, exitCode } = await runCli(
@@ -332,8 +342,18 @@ describe.concurrent("E2E: aidd install", () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      const userFilePath = join(projectDir, ".claude", "commands", "aidd", "04", "implement.md");
-      await mkdir(join(projectDir, ".claude", "commands", "aidd", "04"), { recursive: true });
+      const userFilePath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "commands",
+        "04",
+        "implement.md"
+      );
+      await mkdir(join(projectDir, ".claude", "plugins", "aidd-test", "commands", "04"), {
+        recursive: true,
+      });
       await writeFile(userFilePath, "user implement command");
 
       const { stderr, exitCode } = await runCli(
@@ -354,8 +374,17 @@ describe.concurrent("E2E: aidd install", () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      const userFilePath = join(projectDir, ".claude", "agents", "code-reviewer.md");
-      await mkdir(join(projectDir, ".claude", "agents"), { recursive: true });
+      const userFilePath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "agents",
+        "code-reviewer.md"
+      );
+      await mkdir(join(projectDir, ".claude", "plugins", "aidd-test", "agents"), {
+        recursive: true,
+      });
       await writeFile(userFilePath, "user agent");
 
       const { stderr, exitCode } = await runCli(
@@ -376,8 +405,18 @@ describe.concurrent("E2E: aidd install", () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      const userFilePath = join(projectDir, ".claude", "skills", "commit", "SKILL.md");
-      await mkdir(join(projectDir, ".claude", "skills", "commit"), { recursive: true });
+      const userFilePath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "skills",
+        "commit",
+        "SKILL.md"
+      );
+      await mkdir(join(projectDir, ".claude", "plugins", "aidd-test", "skills", "commit"), {
+        recursive: true,
+      });
       await writeFile(userFilePath, "user skill");
 
       const { stderr, exitCode } = await runCli(
@@ -541,9 +580,11 @@ describe.concurrent("E2E: aidd install", () => {
       expect(stdout).toContain("Installed codex");
       expect(existsSync(join(projectDir, ".codex"))).toBe(true);
       expect(existsSync(join(projectDir, "AGENTS.md"))).toBe(true);
-      expect(existsSync(join(projectDir, ".agents", "skills", "aidd-commit", "SKILL.md"))).toBe(
-        true
-      );
+      expect(
+        existsSync(
+          join(projectDir, ".codex", "plugins", "aidd-test", "skills", "commit", "SKILL.md")
+        )
+      ).toBe(true);
     } finally {
       await cleanup();
     }
@@ -573,13 +614,17 @@ describe.concurrent("E2E: aidd install", () => {
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
       const { exitCode } = await runCli(
-        ["install", "ai", "cursor", "--path", FRAMEWORK_PATH, "--no-plugins"],
+        ["install", "ai", "cursor", "--path", FRAMEWORK_PATH],
         projectDir
       );
 
       expect(exitCode).toBe(0);
-      expect(existsSync(join(projectDir, ".cursor/rules/01-standards/naming.mdc"))).toBe(true);
-      expect(existsSync(join(projectDir, ".cursor/rules/01-standards/naming.md"))).toBe(false);
+      expect(
+        existsSync(join(projectDir, ".cursor/plugins/aidd-test/rules/01-standards/naming.mdc"))
+      ).toBe(true);
+      expect(
+        existsSync(join(projectDir, ".cursor/plugins/aidd-test/rules/01-standards/naming.md"))
+      ).toBe(false);
     } finally {
       await cleanup();
     }
@@ -590,15 +635,19 @@ describe.concurrent("E2E: aidd install", () => {
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
       const { exitCode } = await runCli(
-        ["install", "ai", "copilot", "--path", FRAMEWORK_PATH, "--no-plugins"],
+        ["install", "ai", "copilot", "--path", FRAMEWORK_PATH],
         projectDir
       );
 
       expect(exitCode).toBe(0);
-      expect(existsSync(join(projectDir, ".github/instructions/01-naming.instructions.md"))).toBe(
-        true
+      expect(
+        existsSync(
+          join(projectDir, ".github/plugins/aidd-test/instructions/01-naming.instructions.md")
+        )
+      ).toBe(true);
+      expect(existsSync(join(projectDir, ".github/plugins/aidd-test/instructions/naming.md"))).toBe(
+        false
       );
-      expect(existsSync(join(projectDir, ".github/instructions/naming.md"))).toBe(false);
     } finally {
       await cleanup();
     }

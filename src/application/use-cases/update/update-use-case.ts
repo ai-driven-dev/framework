@@ -8,7 +8,12 @@ import {
   InstallationFile,
   removeRedundantGitkeeps,
 } from "../../../domain/models/file.js";
-import type { ConfigRef } from "../../../domain/models/framework.js";
+import {
+  type ConfigRef,
+  type ContentSection,
+  FRAMEWORK_CONFIG_PREFIX,
+  FrameworkDescriptor,
+} from "../../../domain/models/framework.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import {
   detectNewMcpEntries,
@@ -24,9 +29,10 @@ import {
   type MergeFileEntry,
   removeEntriesFromJson,
 } from "../../../domain/models/merge.js";
+import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import { formatToolScopeValue, parseUpdateScope } from "../../../domain/models/tool-scope.js";
+import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
-import type { FrameworkLoader } from "../../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
@@ -36,7 +42,6 @@ import type {
   AiTool,
   HasAgents,
   HasCommands,
-  HasMemory,
   HasRules,
   HasSkills,
 } from "../../../domain/tools/contracts.js";
@@ -59,9 +64,21 @@ import { ConflictResolutionUseCase } from "../sync/conflict-resolution-use-case.
 import { UpdateAgentsUseCase } from "./update-agents-use-case.js";
 import { UpdateCommandsUseCase } from "./update-commands-use-case.js";
 import { UpdateConfigUseCase } from "./update-config-use-case.js";
-import { UpdateMemoryBankUseCase } from "./update-memory-bank-use-case.js";
 import { UpdateRulesUseCase } from "./update-rules-use-case.js";
 import { UpdateSkillsUseCase } from "./update-skills-use-case.js";
+
+const CONFIG_REFS: readonly ConfigRef[] = [
+  { name: "mcp", path: `${FRAMEWORK_CONFIG_PREFIX}mcp.json` },
+  { name: "vscodeExtensions", path: `${FRAMEWORK_CONFIG_PREFIX}vscode/extensions.json` },
+  { name: "vscodeKeybindings", path: `${FRAMEWORK_CONFIG_PREFIX}vscode/keybindings.json` },
+  { name: "vscodeSettings", path: `${FRAMEWORK_CONFIG_PREFIX}vscode/settings.json` },
+  {
+    name: "copilotVscodeSettings",
+    path: `${FRAMEWORK_CONFIG_PREFIX}copilot/settings.json`,
+    requiredIdeId: "vscode",
+  },
+  { name: "opencode", path: `${FRAMEWORK_CONFIG_PREFIX}.opencode/opencode.json` },
+];
 
 interface UpdateOptions {
   frameworkPath: string;
@@ -146,11 +163,11 @@ export class UpdateUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly platform: Platform,
-    private readonly prompter: Prompter
+    private readonly prompter: Prompter,
+    private readonly assets?: AssetProvider
   ) {}
 
   async execute(options: UpdateOptions): Promise<UpdateResult> {
@@ -282,11 +299,31 @@ export class UpdateUseCase {
     const manifest = await this.manifestRepo.load();
     if (manifest === null) throw new NoManifestError(repo);
     const docsDir = options.docsDir ?? manifest.docsDir;
-    const { descriptor, contentFiles } = await this.loader.loadFromDirectory(
-      frameworkPath,
-      version
-    );
+    const descriptor = this.buildStaticDescriptor(version);
+    const contentFiles = await this.buildContentFiles(frameworkPath);
     return { manifest, descriptor, contentFiles, docsDir };
+  }
+
+  private buildStaticDescriptor(version: string): FrameworkDescriptor {
+    return new FrameworkDescriptor({
+      version,
+      contentSections: [],
+      templateRefs: [],
+      configRefs: [...CONFIG_REFS],
+    });
+  }
+
+  private async buildContentFiles(frameworkPath: string): Promise<Map<string, string>> {
+    const contentFiles = new Map<string, string>();
+    for (const ref of CONFIG_REFS) {
+      try {
+        const content = await this.fs.readFile(join(frameworkPath, ref.path));
+        contentFiles.set(ref.path, content);
+      } catch {
+        // skip missing optional refs
+      }
+    }
+    return contentFiles;
   }
 
   private async runPostInstall(options: UpdateOptions, manifest: Manifest): Promise<void> {
@@ -318,8 +355,8 @@ export class UpdateUseCase {
   private async updateAllTools(
     toolIds: ToolId[],
     manifest: Manifest,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
-    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    descriptor: FrameworkDescriptor,
+    contentFiles: Map<string, string>,
     docsDir: string,
     projectRoot: string,
     version: string,
@@ -359,7 +396,7 @@ export class UpdateUseCase {
 
   private async generateDistributionForTool(
     toolId: ToolId,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    descriptor: FrameworkDescriptor,
     contentFiles: Map<string, string>,
     docsDir: string,
     projectRoot: string
@@ -380,7 +417,7 @@ export class UpdateUseCase {
 
   private async generateAiToolDistribution(
     config: AiTool<unknown>,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    descriptor: FrameworkDescriptor,
     contentFiles: Map<string, string>,
     docsDir: string,
     projectRoot: string
@@ -398,18 +435,13 @@ export class UpdateUseCase {
       projectRoot,
       platform: this.platform,
     });
-    const memoryFiles = new UpdateMemoryBankUseCase(this.hasher).execute({
-      toolConfig: config as AiTool<HasMemory>,
-      templateRefs: descriptor.templateRefs,
-      contentFiles,
-      docsDir,
-    });
+    const memoryFiles = this.buildMemoryStubFiles(config);
     return removeRedundantGitkeeps([...sectionFiles, ...configFiles, ...memoryFiles]);
   }
 
   private generateCapabilitySectionFiles(
     config: AiTool<unknown>,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    descriptor: FrameworkDescriptor,
     contentFiles: Map<string, string>,
     docsDir: string
   ): InstallationFile[] {
@@ -424,9 +456,7 @@ export class UpdateUseCase {
 
   private generateSectionFiles(
     config: AiTool<unknown>,
-    section: Awaited<
-      ReturnType<FrameworkLoader["loadFromDirectory"]>
-    >["descriptor"]["contentSections"][number],
+    section: ContentSection,
     contentFiles: Map<string, string>,
     docsDir: string
   ): InstallationFile[] {
@@ -461,8 +491,8 @@ export class UpdateUseCase {
     toolId: ToolId,
     version: string,
     manifest: Manifest,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
-    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    descriptor: FrameworkDescriptor,
+    contentFiles: Map<string, string>,
     docsDir: string,
     projectRoot: string,
     ideContext: IdeToolId[]
@@ -1196,5 +1226,19 @@ export class UpdateUseCase {
       if (cap instanceof HooksCapability) return cap.getEntrySection();
       return null;
     };
+  }
+
+  private buildMemoryStubFiles(config: AiTool<unknown>): InstallationFile[] {
+    const caps = config.capabilities as Record<string, unknown>;
+    if (!("memory" in caps) || !this.assets) return [];
+    const stub = this.assets.loadMemoryStub(config.toolId as AiToolId);
+    const content = stub.content;
+    return [
+      new InstallationFile({
+        relativePath: stub.fileName,
+        content,
+        hash: this.hasher.hash(content),
+      }),
+    ];
   }
 }

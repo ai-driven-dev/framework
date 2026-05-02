@@ -1,11 +1,16 @@
 import { join } from "node:path";
 import { type FileHash, InstallationFile } from "../../../domain/models/file.js";
+import {
+  type ConfigRef,
+  FRAMEWORK_CONFIG_PREFIX,
+  FrameworkDescriptor,
+} from "../../../domain/models/framework.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { MergeFileEntry } from "../../../domain/models/merge.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../domain/models/paths.js";
 import { AI_TOOL_IDS } from "../../../domain/models/tool-ids.js";
+import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
-import type { FrameworkLoader } from "../../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
@@ -19,6 +24,19 @@ import { ApplyPluginFilesUseCase } from "../shared/apply-plugin-files-use-case.j
 import { GenerateToolDistributionUseCase } from "../shared/generate-tool-distribution-use-case.js";
 import { RestoreMergeFilesUseCase } from "../shared/restore-merge-files-use-case.js";
 import { RestoreRegularFilesUseCase } from "../shared/restore-regular-files-use-case.js";
+
+const CONFIG_REFS: readonly ConfigRef[] = [
+  { name: "mcp", path: `${FRAMEWORK_CONFIG_PREFIX}mcp.json` },
+  { name: "vscodeExtensions", path: `${FRAMEWORK_CONFIG_PREFIX}vscode/extensions.json` },
+  { name: "vscodeKeybindings", path: `${FRAMEWORK_CONFIG_PREFIX}vscode/keybindings.json` },
+  { name: "vscodeSettings", path: `${FRAMEWORK_CONFIG_PREFIX}vscode/settings.json` },
+  {
+    name: "copilotVscodeSettings",
+    path: `${FRAMEWORK_CONFIG_PREFIX}copilot/settings.json`,
+    requiredIdeId: "vscode",
+  },
+  { name: "opencode", path: `${FRAMEWORK_CONFIG_PREFIX}.opencode/opencode.json` },
+];
 
 interface RestoreOptions {
   frameworkPath?: string;
@@ -62,8 +80,8 @@ interface MergeSectionRestoreResult {
 interface RestoreCtx {
   options: RestoreOptions;
   manifest: Manifest;
-  descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"];
-  contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"];
+  descriptor: FrameworkDescriptor;
+  contentFiles: Map<string, string>;
   docsDir: string;
   projectRoot: string;
   version: string;
@@ -76,11 +94,11 @@ export class RestoreUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly platform: Platform,
     private readonly prompter: Prompter,
+    private readonly assets?: AssetProvider,
     private readonly pluginFetcher?: PluginFetcher,
     private readonly pluginDistributionReader?: PluginDistributionReader
   ) {}
@@ -96,17 +114,14 @@ export class RestoreUseCase {
       repo,
     } = options;
 
-    if (frameworkPath === undefined || version === undefined || docsDir === undefined) {
-      throw new Error("frameworkPath, version, and docsDir are required for non-plugin restore.");
-    }
-
     const manifest = options.manifest ?? (await this.manifestRepo.load());
     if (manifest === null) throw new NoManifestError(repo);
 
-    const { descriptor, contentFiles } = await this.loader.loadFromDirectory(
-      frameworkPath,
-      version
-    );
+    const resolvedVersion = version ?? "unknown";
+    const descriptor = this.buildStaticDescriptor(resolvedVersion);
+    const contentFiles = frameworkPath
+      ? await this.buildContentFiles(frameworkPath)
+      : new Map<string, string>();
     const fileFilter = buildFileFilter(options.files);
 
     return this.executeRestore({
@@ -114,9 +129,9 @@ export class RestoreUseCase {
       manifest,
       descriptor,
       contentFiles,
-      docsDir,
+      docsDir: docsDir ?? "",
       projectRoot,
-      version,
+      version: resolvedVersion,
       force,
       interactive,
       fileFilter,
@@ -149,7 +164,12 @@ export class RestoreUseCase {
       interactive,
       fileFilter
     );
-    const totalPluginFilesRestored = await this.restoreAllPlugins(projectRoot, manifest, docsDir);
+    const totalPluginFilesRestored = await this.restoreAllPlugins(
+      projectRoot,
+      manifest,
+      docsDir,
+      fileFilter
+    );
     const hasChanges =
       toolResults.some((t) => t.restored.length > 0) || totalPluginFilesRestored > 0;
     if (hasChanges) await this.manifestRepo.save(manifest);
@@ -159,7 +179,8 @@ export class RestoreUseCase {
   private async restoreAllPlugins(
     projectRoot: string,
     manifest: Manifest,
-    docsDir: string
+    docsDir: string,
+    fileFilter: ((p: string) => boolean) | null
   ): Promise<number> {
     if (this.pluginFetcher === undefined || this.pluginDistributionReader === undefined) return 0;
     const applyUseCase = new ApplyPluginFilesUseCase(
@@ -183,10 +204,33 @@ export class RestoreUseCase {
           cacheDir,
           manifest,
           docsDir,
+          fileFilter,
         });
       }
     }
     return total;
+  }
+
+  private buildStaticDescriptor(version: string): FrameworkDescriptor {
+    return new FrameworkDescriptor({
+      version,
+      contentSections: [],
+      templateRefs: [],
+      configRefs: [...CONFIG_REFS],
+    });
+  }
+
+  private async buildContentFiles(frameworkPath: string): Promise<Map<string, string>> {
+    const contentFiles = new Map<string, string>();
+    for (const ref of CONFIG_REFS) {
+      try {
+        const content = await this.fs.readFile(join(frameworkPath, ref.path));
+        contentFiles.set(ref.path, content);
+      } catch {
+        // skip missing optional refs
+      }
+    }
+    return contentFiles;
   }
 
   private resolveToolIds(options: RestoreOptions, manifest: Manifest): ToolId[] {
@@ -196,8 +240,8 @@ export class RestoreUseCase {
   private async restoreAllTools(
     toolIds: ToolId[],
     manifest: Manifest,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
-    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    descriptor: FrameworkDescriptor,
+    contentFiles: Map<string, string>,
     docsDir: string,
     projectRoot: string,
     version: string,
@@ -227,8 +271,8 @@ export class RestoreUseCase {
   private async restoreOneTool(
     toolId: ToolId,
     manifest: Manifest,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
-    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    descriptor: FrameworkDescriptor,
+    contentFiles: Map<string, string>,
     docsDir: string,
     projectRoot: string,
     version: string,
@@ -241,7 +285,8 @@ export class RestoreUseCase {
     const distribution = await new GenerateToolDistributionUseCase(
       this.fs,
       this.hasher,
-      this.platform
+      this.platform,
+      this.assets
     ).execute({ config, descriptor, contentFiles, docsDir, projectRoot });
     const distMap = new Map(distribution.map((f) => [f.relativePath, f]));
     const section = await this.restoreSection(

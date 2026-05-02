@@ -122,11 +122,11 @@ export function registerRestoreCommand(program: Command): void {
           const restoreUseCase = new RestoreUseCase(
             deps.fs,
             deps.manifestRepo,
-            deps.loader,
             deps.hasher,
             deps.logger,
             deps.platform,
             prompter,
+            deps.assetProvider,
             deps.pluginFetcher,
             deps.pluginDistributionReader
           );

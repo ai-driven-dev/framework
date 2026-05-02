@@ -1,5 +1,7 @@
-import { type InstallationFile, removeRedundantGitkeeps } from "../../../domain/models/file.js";
+import { InstallationFile, removeRedundantGitkeeps } from "../../../domain/models/file.js";
 import type { ContentSection, FrameworkDescriptor } from "../../../domain/models/framework.js";
+import type { AiToolId } from "../../../domain/models/tool-ids.js";
+import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Platform } from "../../../domain/ports/platform.js";
@@ -7,7 +9,6 @@ import type {
   AiTool,
   HasAgents,
   HasCommands,
-  HasMemory,
   HasRules,
   HasSkills,
 } from "../../../domain/tools/contracts.js";
@@ -18,7 +19,6 @@ import {
   extractConfigCapabilities,
   InstallConfigUseCase,
 } from "../install/install-config-use-case.js";
-import { InstallMemoryBankUseCase } from "../install/install-memory-bank-use-case.js";
 import { InstallRulesUseCase } from "../install/install-rules-use-case.js";
 import { InstallSkillsUseCase } from "../install/install-skills-use-case.js";
 
@@ -34,7 +34,8 @@ export class GenerateToolDistributionUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly hasher: Hasher,
-    private readonly platform: Platform
+    private readonly platform: Platform,
+    private readonly assets?: AssetProvider
   ) {}
 
   async execute(options: GenerateToolDistributionOptions): Promise<InstallationFile[]> {
@@ -83,12 +84,7 @@ export class GenerateToolDistributionUseCase {
       projectRoot,
       platform: this.platform,
     });
-    const memoryFiles = new InstallMemoryBankUseCase(this.hasher).execute({
-      toolConfig: config as AiTool<HasMemory>,
-      templateRefs: descriptor.templateRefs,
-      contentFiles,
-      docsDir,
-    });
+    const memoryFiles = this.buildMemoryStubFiles(config);
     return removeRedundantGitkeeps([...sectionFiles, ...configFiles, ...memoryFiles]);
   }
 
@@ -138,5 +134,19 @@ export class GenerateToolDistributionUseCase {
       default:
         return [];
     }
+  }
+
+  private buildMemoryStubFiles(config: AiTool<unknown>): InstallationFile[] {
+    const caps = config.capabilities as Record<string, unknown>;
+    if (!("memory" in caps) || !this.assets) return [];
+    const stub = this.assets.loadMemoryStub(config.toolId as AiToolId);
+    const content = stub.content;
+    return [
+      new InstallationFile({
+        relativePath: stub.fileName,
+        content,
+        hash: this.hasher.hash(content),
+      }),
+    ];
   }
 }

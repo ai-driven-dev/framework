@@ -4,7 +4,7 @@ import type { Manifest } from "../../../domain/models/manifest.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
-import type { Hasher } from "../../../domain/ports/hasher.js";
+
 import type { Logger } from "../../../domain/ports/logger.js";
 import { getToolConfig, isAiTool, type ToolId } from "../../../domain/tools/registry.js";
 
@@ -23,7 +23,6 @@ export interface AdoptToolResult {
 export class AdoptToolsUseCase {
   constructor(
     private readonly fs: FileSystem,
-    private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly assets: AssetProvider
   ) {}
@@ -77,10 +76,7 @@ export class AdoptToolsUseCase {
     return new InstallationFile({ relativePath: stub.fileName, content: "", hash });
   }
 
-  private async collectAllFiles(
-    toolDir: string,
-    projectRoot: string
-  ): Promise<InstallationFile[]> {
+  private async collectAllFiles(toolDir: string, projectRoot: string): Promise<InstallationFile[]> {
     const absolutePaths = await this.fs.listFilesRecursive(toolDir);
     const files: InstallationFile[] = [];
     for (const absolutePath of absolutePaths) {

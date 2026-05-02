@@ -114,7 +114,8 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
     expect(result.marketplace.name).toBe("mkt1");
     const manifest = await new ManifestRepositoryAdapter(projectRoot).load();
     const plugins = manifest?.getPlugins("claude") ?? [];
-    expect(plugins[0]?.marketplace).toBe("mkt1");
+    const installed = plugins.find((p) => p.name === "sample-plugin");
+    expect(installed?.marketplace).toBe("mkt1");
   });
 
   it("throws PluginNotInMarketplaceError when no marketplace contains the plugin", async () => {

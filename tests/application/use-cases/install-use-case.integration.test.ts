@@ -42,7 +42,6 @@ describe("install", () => {
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform
@@ -69,7 +68,6 @@ describe("install", () => {
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform
@@ -104,7 +102,6 @@ describe("install", () => {
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform
@@ -139,7 +136,6 @@ describe("install", () => {
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform
@@ -171,7 +167,6 @@ describe("install", () => {
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform
@@ -194,7 +189,6 @@ describe("install", () => {
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform
@@ -231,7 +225,6 @@ describe("install", () => {
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform
@@ -277,7 +270,6 @@ describe("install", () => {
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform
@@ -302,7 +294,6 @@ describe("install", () => {
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform
@@ -326,10 +317,14 @@ describe("install", () => {
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
-      linuxPlatform
+      linuxPlatform,
+      undefined,
+      deps.pluginFetcher,
+      deps.pluginDistributionReader,
+      deps.pluginCatalogRepository,
+      deps.assetProvider
     );
 
     // Install with FIXTURE_DIR_V2 first (has assert.md, no code-reviewer.md)
@@ -340,7 +335,7 @@ describe("install", () => {
       docsDir: "aidd_docs",
       projectRoot,
     });
-    const assertPath = join(projectRoot, ".claude/commands/aidd/04/assert.md");
+    const assertPath = join(projectRoot, ".claude/plugins/aidd-test/commands/04/assert.md");
     expect(existsSync(assertPath)).toBe(true);
 
     // Reinstall with FIXTURE_DIR (no assert.md) using --force
@@ -363,7 +358,6 @@ describe("install", () => {
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       win32Platform
@@ -389,17 +383,21 @@ describe("install", () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
-    const userFilePath = join(projectRoot, ".claude/agents/code-reviewer.md");
-    await mkdirFs(join(projectRoot, ".claude/agents"), { recursive: true });
+    const userFilePath = join(projectRoot, ".claude/plugins/aidd-test/agents/code-reviewer.md");
+    await mkdirFs(join(projectRoot, ".claude/plugins/aidd-test/agents"), { recursive: true });
     await writeFile(userFilePath, "user content");
 
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
-      linuxPlatform
+      linuxPlatform,
+      undefined,
+      deps.pluginFetcher,
+      deps.pluginDistributionReader,
+      deps.pluginCatalogRepository,
+      deps.assetProvider
     );
 
     const result = await useCase.execute({
@@ -412,9 +410,11 @@ describe("install", () => {
 
     const content = await readFile(userFilePath, "utf-8");
     expect(content).toBe("user content");
-    expect(result[0].warnings.some((w) => w.includes(".claude/agents/code-reviewer.md"))).toBe(
-      true
-    );
+    expect(
+      result[0].warnings.some((w) =>
+        w.includes(".claude/plugins/aidd-test/agents/code-reviewer.md")
+      )
+    ).toBe(true);
     expect(result[0].warnings.some((w) => w.includes("skipped to preserve user file"))).toBe(true);
   });
 
@@ -426,10 +426,14 @@ describe("install", () => {
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
-      linuxPlatform
+      linuxPlatform,
+      undefined,
+      deps.pluginFetcher,
+      deps.pluginDistributionReader,
+      deps.pluginCatalogRepository,
+      deps.assetProvider
     );
 
     await useCase.execute({
@@ -440,7 +444,7 @@ describe("install", () => {
       projectRoot,
     });
 
-    const trackedFilePath = join(projectRoot, ".claude/agents/code-reviewer.md");
+    const trackedFilePath = join(projectRoot, ".claude/plugins/aidd-test/agents/code-reviewer.md");
     await writeFile(trackedFilePath, "modified by user");
 
     const result = await useCase.execute({
@@ -463,17 +467,26 @@ describe("install", () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
-    const userFilePath = join(projectRoot, ".cursor/rules/01-standards/naming.mdc");
-    await mkdir(join(projectRoot, ".cursor/rules/01-standards"), { recursive: true });
+    const userFilePath = join(
+      projectRoot,
+      ".cursor/plugins/aidd-test/rules/01-standards/naming.mdc"
+    );
+    await mkdir(join(projectRoot, ".cursor/plugins/aidd-test/rules/01-standards"), {
+      recursive: true,
+    });
     await writeFile(userFilePath, "user content");
 
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
-      linuxPlatform
+      linuxPlatform,
+      undefined,
+      deps.pluginFetcher,
+      deps.pluginDistributionReader,
+      deps.pluginCatalogRepository,
+      deps.assetProvider
     );
 
     const result = await useCase.execute({
@@ -487,7 +500,9 @@ describe("install", () => {
     const content = await readFile(userFilePath, "utf-8");
     expect(content).toBe("user content");
     expect(
-      result[0].warnings.some((w) => w.includes(".cursor/rules/01-standards/naming.mdc"))
+      result[0].warnings.some((w) =>
+        w.includes(".cursor/plugins/aidd-test/rules/01-standards/naming.mdc")
+      )
     ).toBe(true);
   });
 
@@ -502,10 +517,14 @@ describe("install", () => {
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
-      linuxPlatform
+      linuxPlatform,
+      undefined,
+      deps.pluginFetcher,
+      deps.pluginDistributionReader,
+      deps.pluginCatalogRepository,
+      deps.assetProvider
     );
 
     const result = await useCase.execute({
@@ -519,7 +538,9 @@ describe("install", () => {
     const content = await readFile(userFilePath, "utf-8");
     expect(content).toBe("my unique rule");
     expect(result[0].warnings.some((w) => w.includes("my-unique-rule.mdc"))).toBe(false);
-    expect(existsSync(join(projectRoot, ".cursor/rules/01-standards/naming.mdc"))).toBe(true);
+    expect(
+      existsSync(join(projectRoot, ".cursor/plugins/aidd-test/rules/01-standards/naming.mdc"))
+    ).toBe(true);
   });
 
   it("does not add skipped user file to the manifest", async () => {
@@ -533,7 +554,6 @@ describe("install", () => {
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform
@@ -577,21 +597,25 @@ describe("install", () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
-    await mkdir(join(projectRoot, ".cursor/rules/01-standards"), { recursive: true });
+    const pluginRulesPath = ".cursor/plugins/aidd-test/rules/01-standards/naming.mdc";
+    await mkdir(join(projectRoot, ".cursor/plugins/aidd-test/rules/01-standards"), {
+      recursive: true,
+    });
+    await writeFile(join(projectRoot, pluginRulesPath), "colliding user content");
     await mkdir(join(projectRoot, ".cursor/rules"), { recursive: true });
-    await writeFile(
-      join(projectRoot, ".cursor/rules/01-standards/naming.mdc"),
-      "colliding user content"
-    );
     await writeFile(join(projectRoot, ".cursor/rules/my-other-rule.mdc"), "other user content");
 
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
-      linuxPlatform
+      linuxPlatform,
+      undefined,
+      deps.pluginFetcher,
+      deps.pluginDistributionReader,
+      deps.pluginCatalogRepository,
+      deps.assetProvider
     );
 
     const result = await useCase.execute({
@@ -602,9 +626,9 @@ describe("install", () => {
       projectRoot,
     });
 
-    expect(
-      await readFile(join(projectRoot, ".cursor/rules/01-standards/naming.mdc"), "utf-8")
-    ).toBe("colliding user content");
+    expect(await readFile(join(projectRoot, pluginRulesPath), "utf-8")).toBe(
+      "colliding user content"
+    );
     expect(await readFile(join(projectRoot, ".cursor/rules/my-other-rule.mdc"), "utf-8")).toBe(
       "other user content"
     );
@@ -612,25 +636,29 @@ describe("install", () => {
       w.includes("skipped to preserve user file")
     );
     expect(collidingWarnings.length).toBe(1);
-    expect(existsSync(join(projectRoot, ".cursor/commands"))).toBe(true);
-    expect(existsSync(join(projectRoot, ".cursor/agents"))).toBe(true);
+    expect(existsSync(join(projectRoot, ".cursor/plugins/aidd-test/commands"))).toBe(true);
+    expect(existsSync(join(projectRoot, ".cursor/plugins/aidd-test/agents"))).toBe(true);
   });
 
   it("still skips untracked user file when force-installing a tool not yet in manifest", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
-    const userFilePath = join(projectRoot, ".claude/agents/code-reviewer.md");
-    await mkdir(join(projectRoot, ".claude/agents"), { recursive: true });
+    const userFilePath = join(projectRoot, ".claude/plugins/aidd-test/agents/code-reviewer.md");
+    await mkdir(join(projectRoot, ".claude/plugins/aidd-test/agents"), { recursive: true });
     await writeFile(userFilePath, "user content");
 
     const useCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
-      linuxPlatform
+      linuxPlatform,
+      undefined,
+      deps.pluginFetcher,
+      deps.pluginDistributionReader,
+      deps.pluginCatalogRepository,
+      deps.assetProvider
     );
 
     const result = await useCase.execute({
@@ -644,9 +672,11 @@ describe("install", () => {
 
     const content = await readFile(userFilePath, "utf-8");
     expect(content).toBe("user content");
-    expect(result[0].warnings.some((w) => w.includes(".claude/agents/code-reviewer.md"))).toBe(
-      true
-    );
+    expect(
+      result[0].warnings.some((w) =>
+        w.includes(".claude/plugins/aidd-test/agents/code-reviewer.md")
+      )
+    ).toBe(true);
   });
 
   describe("per-entry hash tracking", () => {
@@ -657,7 +687,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -701,7 +730,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -755,7 +783,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -792,7 +819,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -838,7 +864,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -870,7 +895,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -910,7 +934,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
@@ -945,7 +968,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -986,7 +1008,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
@@ -1021,7 +1042,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -1048,7 +1068,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -1091,7 +1110,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -1135,7 +1153,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -1166,7 +1183,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -1214,7 +1230,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
@@ -1239,7 +1254,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -1260,7 +1274,6 @@ describe("install", () => {
       const useCase2 = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
@@ -1294,7 +1307,6 @@ describe("install", () => {
       const useCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,

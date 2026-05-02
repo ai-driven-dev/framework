@@ -191,7 +191,16 @@ describe("init", () => {
     });
 
     it("does not touch tool distributions", async () => {
-      const { fs, manifestRepo, loader, hasher, logger } = buildDeps(projectRoot);
+      const {
+        fs,
+        manifestRepo,
+        hasher,
+        logger,
+        pluginFetcher,
+        pluginDistributionReader,
+        pluginCatalogRepository,
+        assetProvider,
+      } = buildDeps(projectRoot);
       const initUseCase = new InitUseCase(fs, manifestRepo);
       await initUseCase.execute({ docsDir: "aidd_docs", projectRoot });
 
@@ -201,10 +210,14 @@ describe("init", () => {
       const installUseCase = new InstallUseCase(
         fs,
         manifestRepo,
-        loader,
         hasher,
         logger,
-        linuxPlatform
+        linuxPlatform,
+        undefined,
+        pluginFetcher,
+        pluginDistributionReader,
+        pluginCatalogRepository,
+        assetProvider
       );
       await installUseCase.execute({
         toolIds: ["claude" as import("../../../src/domain/tools/registry.js").ToolId],

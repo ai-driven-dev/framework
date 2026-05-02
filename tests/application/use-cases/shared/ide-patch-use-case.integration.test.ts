@@ -22,7 +22,6 @@ function buildInstallUseCase(deps: ReturnType<typeof buildDeps>) {
   return new InstallUseCase(
     deps.fs,
     deps.manifestRepo,
-    deps.loader,
     deps.hasher,
     deps.logger,
     linuxPlatform,

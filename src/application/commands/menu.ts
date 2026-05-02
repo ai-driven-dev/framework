@@ -286,7 +286,7 @@ const EXIT = { name: "Exit", value: "exit" } as const;
 
 type NavResult = { type: "command"; command: string[] } | { type: "back" } | { type: "exit" };
 
-export type InteractiveMenuOptions = {};
+export type InteractiveMenuOptions = Record<never, never>;
 
 export interface InteractiveMenuResult {
   command: string[];

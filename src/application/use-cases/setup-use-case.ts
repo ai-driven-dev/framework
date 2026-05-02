@@ -1,11 +1,10 @@
 import { isLocalPath } from "../../domain/models/framework.js";
 import { type DistributionMode, Manifest } from "../../domain/models/manifest.js";
+import type { AssetProvider } from "../../domain/ports/asset-provider.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
-import type { FrameworkLoader } from "../../domain/ports/framework-loader.js";
 import type { FrameworkResolver } from "../../domain/ports/framework-resolver.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
-import type { AssetProvider } from "../../domain/ports/asset-provider.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../domain/ports/platform.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
@@ -76,7 +75,6 @@ export class SetupUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly platform: Platform,
@@ -344,20 +342,14 @@ export class SetupUseCase {
 
   private async runAdopt(
     toolIds: ToolId[],
-    frameworkPath: string,
+    _frameworkPath: string,
     projectRoot: string,
     version: string
   ): Promise<{
     tools: { registered: string[] }[];
     totalRegistered: number;
   }> {
-    return new AdoptUseCase(
-      this.fs,
-      this.manifestRepo,
-      this.hasher,
-      this.logger,
-      this.assets
-    ).execute({
+    return new AdoptUseCase(this.fs, this.manifestRepo, this.logger, this.assets).execute({
       toolIds,
       docsDir: Manifest.DEFAULT_DOCS_DIR,
       projectRoot,
@@ -436,11 +428,11 @@ export class SetupUseCase {
     const updateResult = await new UpdateUseCase(
       this.fs,
       this.manifestRepo,
-      this.loader,
       this.hasher,
       this.logger,
       this.platform,
-      this.prompter
+      this.prompter,
+      this.assets
     ).execute({
       frameworkPath,
       version,
@@ -586,11 +578,14 @@ export class SetupUseCase {
     return new InstallUseCase(
       this.fs,
       this.manifestRepo,
-      this.loader,
       this.hasher,
       this.logger,
       this.platform,
-      this.prompter
+      this.prompter,
+      undefined,
+      undefined,
+      undefined,
+      this.assets
     ).execute({
       frameworkPath,
       version,

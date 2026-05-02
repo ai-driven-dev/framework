@@ -34,7 +34,6 @@ describe("status", () => {
     const installUseCase = new InstallUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform
@@ -79,7 +78,6 @@ describe("status", () => {
       const installUseCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -105,7 +103,6 @@ describe("status", () => {
       const installUseCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -137,7 +134,6 @@ describe("status", () => {
       const installUseCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -173,7 +169,6 @@ describe("status", () => {
       const installUseCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform
@@ -208,7 +203,6 @@ describe("status", () => {
       const installUseCase = new InstallUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform

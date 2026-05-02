@@ -62,7 +62,6 @@ function makeUseCase(
   return new InstallUseCase(
     deps.fs,
     deps.manifestRepo,
-    deps.loader,
     deps.hasher,
     deps.logger,
     linuxPlatform,

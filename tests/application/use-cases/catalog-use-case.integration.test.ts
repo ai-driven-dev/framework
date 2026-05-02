@@ -21,10 +21,14 @@ async function install(projectRoot: string, ...toolIds: ToolId[]): Promise<void>
   const useCase = new InstallUseCase(
     deps.fs,
     deps.manifestRepo,
-    deps.loader,
     deps.hasher,
     deps.logger,
-    linuxPlatform
+    linuxPlatform,
+    undefined,
+    deps.pluginFetcher,
+    deps.pluginDistributionReader,
+    deps.pluginCatalogRepository,
+    deps.assetProvider
   );
   await useCase.execute({
     toolIds,
@@ -32,6 +36,7 @@ async function install(projectRoot: string, ...toolIds: ToolId[]): Promise<void>
     version: "test",
     docsDir: "aidd_docs",
     projectRoot,
+    mcpFilter: ["playwright", "github"],
   });
 }
 
@@ -72,7 +77,7 @@ describe("CATALOG.md — content", () => {
     await install(projectRoot, "claude");
     const content = await readFile(CATALOG(projectRoot), "utf-8");
 
-    expect(content).toContain("#### `commands/04_code`");
+    expect(content).toContain("#### `commands/04`");
   });
 
   it("includes a table of contents with links to all sections", async () => {

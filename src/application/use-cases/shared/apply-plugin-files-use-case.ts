@@ -17,6 +17,7 @@ interface ApplyPluginFilesOptions {
   cacheDir: string;
   manifest: Manifest;
   docsDir: string;
+  fileFilter?: ((relativePath: string) => boolean) | null;
 }
 
 export class ApplyPluginFilesUseCase {
@@ -28,17 +29,36 @@ export class ApplyPluginFilesUseCase {
   ) {}
 
   async execute(options: ApplyPluginFilesOptions): Promise<number> {
-    const { toolId, plugin, toolConfig, projectRoot, cacheDir, manifest, docsDir } = options;
+    const { toolId, plugin, toolConfig, projectRoot, cacheDir, manifest, docsDir, fileFilter } =
+      options;
     const localPath = await this.pluginFetcher.fetch(plugin.source, cacheDir);
     const dist = await this.pluginDistributionReader.read(localPath);
     const files = new PluginTranslator(this.hasher).translate(dist, toolConfig, docsDir);
-    await Promise.all(
-      files.map((f) => this.fs.writeFile(join(projectRoot, f.relativePath), f.content))
-    );
+    let restored = 0;
+    for (const f of files) {
+      if (fileFilter !== null && fileFilter !== undefined && !fileFilter(f.relativePath)) continue;
+      const outputPath = join(projectRoot, f.relativePath);
+      if (!(await this.isFileAtDesiredState(outputPath, f.hash.value))) {
+        await this.fs.writeFile(outputPath, f.content);
+        restored++;
+      }
+    }
     manifest.updatePlugin(
       toolId,
       plugin.withFiles(new Map(files.map((f) => [f.relativePath, f.hash.value])))
     );
-    return files.length;
+    return restored;
+  }
+
+  private async isFileAtDesiredState(
+    outputPath: string,
+    expectedHashValue: string
+  ): Promise<boolean> {
+    try {
+      const content = await this.fs.readFile(outputPath);
+      return this.hasher.hash(content).value === expectedHashValue;
+    } catch {
+      return false;
+    }
   }
 }

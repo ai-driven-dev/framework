@@ -15,11 +15,13 @@ import type { Prompter } from "../../../src/domain/ports/prompter.js";
 import type { VersionControl } from "../../../src/domain/ports/version-control.js";
 import type { ToolId } from "../../../src/domain/tools/registry.js";
 import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
-import { FrameworkLoaderAdapter } from "../../../src/infrastructure/adapters/framework-loader-adapter.js";
-import { BundledAssetProviderAdapter } from "../../../src/infrastructure/assets/asset-loader.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
 import { ManifestRepositoryAdapter } from "../../../src/infrastructure/adapters/manifest-repository-adapter.js";
+import { PluginCatalogRepositoryAdapter } from "../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
+import { PluginDistributionReaderAdapter } from "../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
+import { PluginFetcherAdapter } from "../../../src/infrastructure/adapters/plugin-fetcher-adapter.js";
 import { SilentPrompterAdapter } from "../../../src/infrastructure/adapters/prompter-adapter.js";
+import { BundledAssetProviderAdapter } from "../../../src/infrastructure/assets/asset-loader.js";
 
 export const linuxPlatform: Platform = { current: () => "linux" };
 export const win32Platform: Platform = { current: () => "win32" };
@@ -180,10 +182,21 @@ export function buildDeps(projectRoot: string) {
   const hasher = new HasherAdapter();
   const fs = new FileSystemAdapter(hasher);
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
-  const loader = new FrameworkLoaderAdapter();
   const logger = new CLIOutput(false);
   const assetProvider = new BundledAssetProviderAdapter();
-  return { hasher, fs, manifestRepo, loader, logger, assetProvider };
+  const pluginFetcher = new PluginFetcherAdapter(fs);
+  const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
+  const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
+  return {
+    hasher,
+    fs,
+    manifestRepo,
+    logger,
+    assetProvider,
+    pluginFetcher,
+    pluginDistributionReader,
+    pluginCatalogRepository,
+  };
 }
 
 export async function createTempProject(): Promise<{ tempDir: string; projectRoot: string }> {
@@ -216,11 +229,14 @@ export async function installTool(
   const installUseCase = new InstallUseCase(
     deps.fs,
     deps.manifestRepo,
-    deps.loader,
     deps.hasher,
     deps.logger,
     linuxPlatform,
-    new SilentPrompterAdapter()
+    new SilentPrompterAdapter(),
+    deps.pluginFetcher,
+    deps.pluginDistributionReader,
+    deps.pluginCatalogRepository,
+    deps.assetProvider
   );
   const results = await installUseCase.execute({
     toolIds: [toolId],

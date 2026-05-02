@@ -1,12 +1,9 @@
 import { join } from "node:path";
 import { HooksCapability } from "../../../domain/capabilities/hooks-capability.js";
 import { McpCapability } from "../../../domain/capabilities/mcp-capability.js";
-import { type InstallationFile, removeRedundantGitkeeps } from "../../../domain/models/file.js";
-import type {
-  ConfigRef,
-  ContentSection,
-  FrameworkDescriptor,
-} from "../../../domain/models/framework.js";
+import { InstallationFile, removeRedundantGitkeeps } from "../../../domain/models/file.js";
+import type { ConfigRef, ContentSection, TemplateRef } from "../../../domain/models/framework.js";
+import { FRAMEWORK_CONFIG_PREFIX, FrameworkDescriptor } from "../../../domain/models/framework.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { McpExclusion } from "../../../domain/models/mcp-exclusion.js";
 import {
@@ -22,8 +19,9 @@ import {
 } from "../../../domain/models/merge.js";
 import type { PluginCatalogEntry } from "../../../domain/models/plugin-catalog.js";
 import type { PluginSource } from "../../../domain/models/plugin-source.js";
+import type { AiToolId } from "../../../domain/models/tool-ids.js";
+import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
-import type { FrameworkLoader } from "../../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
@@ -36,13 +34,11 @@ import type {
   AiTool,
   HasAgents,
   HasCommands,
-  HasMemory,
   HasRules,
   HasSkills,
 } from "../../../domain/tools/contracts.js";
 import {
   AI_TOOL_IDS,
-  type AiToolId,
   getToolConfig,
   IDE_TOOL_IDS,
   type IdeToolId,
@@ -63,10 +59,28 @@ import {
   extractConfigCapabilities,
   InstallConfigUseCase,
 } from "./install-config-use-case.js";
-import { InstallMemoryBankUseCase } from "./install-memory-bank-use-case.js";
 import { InstallPluginsUseCase } from "./install-plugins-use-case.js";
 import { InstallRulesUseCase } from "./install-rules-use-case.js";
 import { InstallSkillsUseCase } from "./install-skills-use-case.js";
+
+const CONFIG_REFS: readonly ConfigRef[] = [
+  { name: "mcp", path: `${FRAMEWORK_CONFIG_PREFIX}mcp.json` },
+  { name: "vscodeExtensions", path: `${FRAMEWORK_CONFIG_PREFIX}vscode/extensions.json` },
+  { name: "vscodeKeybindings", path: `${FRAMEWORK_CONFIG_PREFIX}vscode/keybindings.json` },
+  { name: "vscodeSettings", path: `${FRAMEWORK_CONFIG_PREFIX}vscode/settings.json` },
+  {
+    name: "copilotVscodeSettings",
+    path: `${FRAMEWORK_CONFIG_PREFIX}copilot/settings.json`,
+    requiredIdeId: "vscode",
+  },
+  { name: "opencode", path: `${FRAMEWORK_CONFIG_PREFIX}.opencode/opencode.json` },
+];
+
+// No content sections — agents/commands/rules/skills come from plugins.
+const EMPTY_CONTENT_SECTIONS: readonly ContentSection[] = [];
+
+// No template refs — memory comes from AssetProvider stubs.
+const EMPTY_TEMPLATE_REFS: readonly TemplateRef[] = [];
 
 export type PluginMode = "all" | "recommended" | "named" | "none";
 
@@ -106,14 +120,14 @@ export class InstallUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly platform: Platform,
     private readonly prompter?: Prompter,
     private readonly pluginFetcher?: PluginFetcher,
     private readonly pluginDistributionReader?: PluginDistributionReader,
-    private readonly pluginCatalogRepository?: PluginCatalogRepository
+    private readonly pluginCatalogRepository?: PluginCatalogRepository,
+    private readonly assets?: AssetProvider
   ) {}
 
   async execute(options: InstallOptions): Promise<InstallToolResult[]> {
@@ -134,10 +148,9 @@ export class InstallUseCase {
     );
     const ideContext = this.resolveIdeContext(toolIds, manifest);
 
-    const { descriptor, contentFiles } = await this.loader.loadFromDirectory(
-      frameworkPath,
-      version
-    );
+    const descriptor = this.buildStaticDescriptor(version);
+    const contentFiles = await this.buildContentFiles(frameworkPath);
+
     const results = await this.installAllTools(
       toolIds,
       manifest,
@@ -152,7 +165,15 @@ export class InstallUseCase {
     );
 
     const resolvedPlugins = await this.resolvePluginsForInstall(options, frameworkPath);
-    await this.maybeInstallPlugins(resolvedPlugins, toolIds, projectRoot, manifest, docsDir);
+    const pluginWarnings = await this.maybeInstallPlugins(
+      resolvedPlugins,
+      toolIds,
+      projectRoot,
+      manifest,
+      docsDir,
+      force
+    );
+    this.mergePluginWarnings(results, pluginWarnings);
 
     await new PostInstallPipelineUseCase(this.fs, this.manifestRepo).execute({
       projectRoot,
@@ -161,6 +182,39 @@ export class InstallUseCase {
     });
 
     return results;
+  }
+
+  private buildStaticDescriptor(version: string): FrameworkDescriptor {
+    return new FrameworkDescriptor({
+      version,
+      contentSections: [...EMPTY_CONTENT_SECTIONS],
+      templateRefs: [...EMPTY_TEMPLATE_REFS],
+      configRefs: [...CONFIG_REFS],
+    });
+  }
+
+  private async buildContentFiles(frameworkPath: string): Promise<Map<string, string>> {
+    const contentFiles = new Map<string, string>();
+    for (const ref of CONFIG_REFS) {
+      const filePath = join(frameworkPath, ref.path);
+      try {
+        const content = await this.fs.readFile(filePath);
+        contentFiles.set(ref.path, content);
+      } catch {
+        // skip missing optional refs
+      }
+    }
+    return contentFiles;
+  }
+
+  private mergePluginWarnings(
+    results: InstallToolResult[],
+    pluginWarnings: Map<ToolId, string[]>
+  ): void {
+    for (const [toolId, warnings] of pluginWarnings) {
+      const result = results.find((r) => r.toolId === toolId);
+      if (result) result.warnings.push(...warnings);
+    }
   }
 
   private async resolvePluginsForInstall(
@@ -173,7 +227,11 @@ export class InstallUseCase {
     if (catalog === null) return [];
     const { pluginMode, pluginNames, interactive } = options;
     if (!interactive || pluginMode !== undefined) {
-      return this.selectPluginsByMode(catalog.plugins, pluginMode ?? "none", pluginNames ?? []);
+      return this.selectPluginsByMode(
+        catalog.plugins,
+        pluginMode ?? "recommended",
+        pluginNames ?? []
+      );
     }
     return this.promptPluginSelection(catalog.plugins);
   }
@@ -207,23 +265,26 @@ export class InstallUseCase {
     toolIds: ToolId[],
     projectRoot: string,
     manifest: Manifest,
-    docsDir: string
-  ): Promise<void> {
-    if (plugins.length === 0 || !this.pluginFetcher || !this.pluginDistributionReader) return;
+    docsDir: string,
+    force: boolean
+  ): Promise<Map<ToolId, string[]>> {
+    if (plugins.length === 0 || !this.pluginFetcher || !this.pluginDistributionReader) {
+      return new Map();
+    }
     const toolConfigs = toolIds.map((id) => getToolConfig(id));
-    await new InstallPluginsUseCase(
+    return new InstallPluginsUseCase(
       this.fs,
       this.pluginFetcher,
       this.pluginDistributionReader,
       this.hasher
-    ).execute({ plugins, toolConfigs, projectRoot, manifest, docsDir });
+    ).execute({ plugins, toolConfigs, projectRoot, manifest, docsDir, force });
   }
 
   private async installAllTools(
     toolIds: ToolId[],
     manifest: Manifest,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
-    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    descriptor: FrameworkDescriptor,
+    contentFiles: Map<string, string>,
     docsDir: string,
     projectRoot: string,
     force: boolean,
@@ -264,7 +325,7 @@ export class InstallUseCase {
   private async installPreparedTools(
     prepared: ToolInstallData[],
     manifest: Manifest,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    descriptor: FrameworkDescriptor,
     projectRoot: string,
     force: boolean,
     selectedKeys: Set<string>,
@@ -288,8 +349,8 @@ export class InstallUseCase {
 
   private async prepareAllTools(
     toolIds: ToolId[],
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
-    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    descriptor: FrameworkDescriptor,
+    contentFiles: Map<string, string>,
     docsDir: string,
     projectRoot: string,
     ideContext: IdeToolId[]
@@ -312,8 +373,8 @@ export class InstallUseCase {
 
   private async prepareToolInstall(
     toolId: ToolId,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
-    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    descriptor: FrameworkDescriptor,
+    contentFiles: Map<string, string>,
     docsDir: string,
     projectRoot: string,
     ideContext: IdeToolId[]
@@ -381,7 +442,7 @@ export class InstallUseCase {
   private async installOneToolFromData(
     data: ToolInstallData,
     manifest: Manifest,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    descriptor: FrameworkDescriptor,
     projectRoot: string,
     force: boolean,
     selectedKeys: Set<string>,
@@ -457,7 +518,7 @@ export class InstallUseCase {
     toolId: ToolId,
     exclusions: McpExclusion[],
     capabilities: readonly ConfigCapability[],
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    descriptor: FrameworkDescriptor,
     filtered: InstallationFile[],
     projectRoot: string
   ): Promise<void> {
@@ -474,8 +535,8 @@ export class InstallUseCase {
   private async patchAlreadyInstalledAiTools(
     toolIds: ToolId[],
     manifest: Manifest,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
-    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    descriptor: FrameworkDescriptor,
+    contentFiles: Map<string, string>,
     docsDir: string,
     projectRoot: string
   ): Promise<void> {
@@ -653,8 +714,8 @@ export class InstallUseCase {
 
   private async generateToolFiles(
     config: ReturnType<typeof getToolConfig>,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
-    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    descriptor: FrameworkDescriptor,
+    contentFiles: Map<string, string>,
     docsDir: string,
     projectRoot: string
   ): Promise<InstallationFile[]> {
@@ -672,8 +733,8 @@ export class InstallUseCase {
 
   private async generateAiToolFiles(
     config: AiTool<unknown>,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
-    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
+    descriptor: FrameworkDescriptor,
+    contentFiles: Map<string, string>,
     docsDir: string,
     projectRoot: string
   ): Promise<InstallationFile[]> {
@@ -692,19 +753,28 @@ export class InstallUseCase {
       projectRoot,
       platform: this.platform,
     });
-    const memoryFiles = new InstallMemoryBankUseCase(this.hasher).execute({
-      toolConfig: config as AiTool<HasMemory>,
-      templateRefs: descriptor.templateRefs,
-      contentFiles,
-      docsDir,
-    });
+    const memoryFiles = this.buildMemoryStubFiles(config);
     return removeRedundantGitkeeps([...sectionFiles, ...configFiles, ...memoryFiles]);
+  }
+
+  private buildMemoryStubFiles(config: AiTool<unknown>): InstallationFile[] {
+    const caps = config.capabilities as Record<string, unknown>;
+    if (!("memory" in caps) || !this.assets) return [];
+    const stub = this.assets.loadMemoryStub(config.toolId as AiToolId);
+    const content = stub.content;
+    return [
+      new InstallationFile({
+        relativePath: stub.fileName,
+        content,
+        hash: this.hasher.hash(content),
+      }),
+    ];
   }
 
   private generateCapabilitySectionFiles(
     caps: Record<string, unknown>,
     config: AiTool<unknown>,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    descriptor: FrameworkDescriptor,
     contentFiles: Map<string, string>,
     docsDir: string
   ): InstallationFile[] {
@@ -718,7 +788,7 @@ export class InstallUseCase {
 
   private generateSectionFiles(
     config: AiTool<unknown>,
-    section: ContentSection,
+    section: { name: string; directory: string; entryFile: string | null },
     contentFiles: Map<string, string>,
     docsDir: string
   ): InstallationFile[] {
@@ -766,7 +836,7 @@ export class InstallUseCase {
     toolId: ToolId,
     filtered: InstallationFile[],
     capabilities: readonly ConfigCapability[],
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
+    descriptor: FrameworkDescriptor,
     writeResult: { files: InstallationFile[]; userFileConflicts: string[] },
     exclusions: McpExclusion[],
     warnings: string[],

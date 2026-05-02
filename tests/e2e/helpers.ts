@@ -74,7 +74,6 @@ export async function initProject(
   await new SetupUseCase(
     deps.fs,
     deps.manifestRepo,
-    deps.loader,
     deps.hasher,
     deps.logger,
     deps.platform,
@@ -100,7 +99,6 @@ export async function adoptProject(
   await new SetupUseCase(
     deps.fs,
     deps.manifestRepo,
-    deps.loader,
     deps.hasher,
     deps.logger,
     deps.platform,

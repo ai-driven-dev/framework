@@ -4,12 +4,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AdoptUseCase } from "../../../src/application/use-cases/adopt/adopt-use-case.js";
-import {
-  buildDeps,
-  cleanupTempProject,
-  createTempProject,
-  initAndInstall,
-} from "./helpers.js";
+import { buildDeps, cleanupTempProject, createTempProject, initAndInstall } from "./helpers.js";
 
 describe("adopt", () => {
   let tempDir: string;
@@ -25,13 +20,7 @@ describe("adopt", () => {
 
   function buildUseCase() {
     const deps = buildDeps(projectRoot);
-    return new AdoptUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.hasher,
-      deps.logger,
-      deps.assetProvider
-    );
+    return new AdoptUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.assetProvider);
   }
 
   const DEFAULT_OPTS = {

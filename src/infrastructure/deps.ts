@@ -7,6 +7,7 @@ import "../domain/tools/ai/cursor.js";
 import "../domain/tools/ai/opencode.js";
 import "../domain/tools/ide/vscode.js";
 import { CLIOutput } from "../application/output.js";
+import { InstallMemoryStubUseCase } from "../application/use-cases/install/install-memory-stub-use-case.js";
 import { InstallFrameworkPluginsUseCase } from "../application/use-cases/install-framework-plugins-use-case.js";
 import { MarketplaceAddUseCase } from "../application/use-cases/marketplace/marketplace-add-use-case.js";
 import { MarketplaceBrowseUseCase } from "../application/use-cases/marketplace/marketplace-browse-use-case.js";
@@ -18,17 +19,14 @@ import { MarketplaceRemoveUseCase } from "../application/use-cases/marketplace/m
 import { MarketplaceSyncSettingsUseCase } from "../application/use-cases/marketplace/marketplace-sync-settings-use-case.js";
 import { PluginAddUseCase } from "../application/use-cases/plugin/plugin-add-use-case.js";
 import { PluginInstallFromMarketplaceUseCase } from "../application/use-cases/plugin/plugin-install-from-marketplace-use-case.js";
-import { ResolveMarketplaceUseCase } from "../application/use-cases/shared/resolve-marketplace-use-case.js";
-import { InstallMemoryStubUseCase } from "../application/use-cases/install/install-memory-stub-use-case.js";
-import type { AssetProvider } from "../domain/ports/asset-provider.js";
-import { BundledAssetProviderAdapter } from "./assets/asset-loader.js";
 import { PluginListUseCase } from "../application/use-cases/plugin/plugin-list-use-case.js";
 import { PluginPickUseCase } from "../application/use-cases/plugin/plugin-pick-use-case.js";
 import { PluginRemoveUseCase } from "../application/use-cases/plugin/plugin-remove-use-case.js";
 import { PluginSearchUseCase } from "../application/use-cases/plugin/plugin-search-use-case.js";
 import { PluginUpdateUseCase } from "../application/use-cases/plugin/plugin-update-use-case.js";
+import { ResolveMarketplaceUseCase } from "../application/use-cases/shared/resolve-marketplace-use-case.js";
+import type { AssetProvider } from "../domain/ports/asset-provider.js";
 import type { FileSystem } from "../domain/ports/file-system.js";
-import type { FrameworkLoader } from "../domain/ports/framework-loader.js";
 import type { FrameworkResolver } from "../domain/ports/framework-resolver.js";
 import type { Hasher } from "../domain/ports/hasher.js";
 import type { Logger } from "../domain/ports/logger.js";
@@ -45,7 +43,6 @@ import type { VersionControl } from "../domain/ports/version-control.js";
 import type { VersionReader } from "../domain/ports/version-reader.js";
 import { CurrentVersionAdapter } from "./adapters/current-version-adapter.js";
 import { FileSystemAdapter } from "./adapters/file-system-adapter.js";
-import { FrameworkLoaderAdapter } from "./adapters/framework-loader-adapter.js";
 import { FrameworkResolverAdapter } from "./adapters/framework-resolver-adapter.js";
 import { GhCliAdapter } from "./adapters/gh-cli-adapter.js";
 import { GitAdapter } from "./adapters/git-adapter.js";
@@ -59,6 +56,7 @@ import { PluginDistributionReaderAdapter } from "./adapters/plugin-distribution-
 import { PluginFetcherAdapter } from "./adapters/plugin-fetcher-adapter.js";
 import { InquirerPrompterAdapter, SilentPrompterAdapter } from "./adapters/prompter-adapter.js";
 import { SelfUpdaterAdapter } from "./adapters/self-updater-adapter.js";
+import { BundledAssetProviderAdapter } from "./assets/asset-loader.js";
 import { AuthReader } from "./auth/auth-reader.js";
 import { AuthStorage } from "./auth/auth-storage.js";
 import { FrameworkCache } from "./cache/framework-cache.js";
@@ -73,7 +71,6 @@ interface GlobalOptions {
 interface Deps {
   fs: FileSystem;
   manifestRepo: ManifestRepository;
-  loader: FrameworkLoader;
   hasher: Hasher;
   logger: Logger;
   resolver: FrameworkResolver;
@@ -135,7 +132,6 @@ export async function createDeps(
   const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
   const marketplaceRegistry = new MarketplaceRegistryAdapter();
   const marketplaceTrustStore = new MarketplaceTrustStoreAdapter(hasher);
-  const loader = new FrameworkLoaderAdapter();
   const logger = output ?? new CLIOutput(options.verbose);
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
   const repoFromFlag = options.repo ?? process.env.AIDD_REPO;
@@ -260,7 +256,6 @@ export async function createDeps(
   const deps: Deps = {
     fs,
     manifestRepo,
-    loader,
     hasher,
     logger,
     resolver,

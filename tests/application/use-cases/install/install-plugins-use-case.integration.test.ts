@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import "../../../../src/domain/tools/ai/claude.js";
 import "../../../../src/domain/tools/ai/opencode.js";
 import { InstallPluginsUseCase } from "../../../../src/application/use-cases/install/install-plugins-use-case.js";
-import { DuplicatePluginError } from "../../../../src/domain/errors.js";
+
 import type { Hasher } from "../../../../src/domain/ports/hasher.js";
 import { getToolConfig } from "../../../../src/domain/tools/registry.js";
 import type { FileSystemAdapter } from "../../../../src/infrastructure/adapters/file-system-adapter.js";
@@ -76,7 +76,7 @@ describe("InstallPluginsUseCase", () => {
   });
 
   describe("duplicate plugin install", () => {
-    it("throws DuplicatePluginError on second install of same plugin", async () => {
+    it("silently skips second install of same plugin without force", async () => {
       const { tempDir, projectRoot } = await createTempProject();
       try {
         const deps = buildDeps(projectRoot);
@@ -92,15 +92,14 @@ describe("InstallPluginsUseCase", () => {
           manifest,
           docsDir: manifest.docsDir,
         });
-        await expect(
-          useCase.execute({
-            plugins: [pluginSource],
-            toolConfigs: [getToolConfig("claude")],
-            projectRoot,
-            manifest,
-            docsDir: manifest.docsDir,
-          })
-        ).rejects.toThrow(DuplicatePluginError);
+        const warningsMap = await useCase.execute({
+          plugins: [pluginSource],
+          toolConfigs: [getToolConfig("claude")],
+          projectRoot,
+          manifest,
+          docsDir: manifest.docsDir,
+        });
+        expect(warningsMap.size).toBe(0);
       } finally {
         await cleanupTempProject(tempDir);
       }

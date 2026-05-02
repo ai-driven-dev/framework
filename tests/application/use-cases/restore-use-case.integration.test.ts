@@ -34,11 +34,11 @@ describe("restore", () => {
     const useCase = new RestoreUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider
     );
 
     await expect(
@@ -58,11 +58,11 @@ describe("restore", () => {
     const useCase = new RestoreUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider
     );
 
     const result = await useCase.execute({
@@ -86,11 +86,11 @@ describe("restore", () => {
     const useCase = new RestoreUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider
     );
 
     const result = await useCase.execute({
@@ -116,11 +116,11 @@ describe("restore", () => {
     const useCase = new RestoreUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider
     );
 
     const result = await useCase.execute({
@@ -146,11 +146,11 @@ describe("restore", () => {
     const useCase = new RestoreUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new KeepPrompter()
+      new KeepPrompter(),
+      deps.assetProvider
     );
 
     const result = await useCase.execute({
@@ -171,7 +171,7 @@ describe("restore", () => {
     await initAndInstall(deps, projectRoot, "claude");
 
     const claudeMdPath = join(projectRoot, "CLAUDE.md");
-    const rulePath = join(projectRoot, ".claude/rules/01-standards/naming.md");
+    const rulePath = join(projectRoot, ".claude/plugins/aidd-test/rules/01-standards/naming.md");
 
     await writeFile(claudeMdPath, "modified claude");
     await writeFile(rulePath, "modified rule");
@@ -179,11 +179,13 @@ describe("restore", () => {
     const useCase = new RestoreUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider,
+      deps.pluginFetcher,
+      deps.pluginDistributionReader
     );
 
     await useCase.execute({
@@ -192,7 +194,7 @@ describe("restore", () => {
       docsDir: "aidd_docs",
       projectRoot,
       force: true,
-      files: [".claude/rules/01-standards/naming.md"],
+      files: [".claude/plugins/aidd-test/rules/01-standards/naming.md"],
     });
 
     const claudeMdContent = await readFile(claudeMdPath, "utf-8");
@@ -216,11 +218,11 @@ describe("restore", () => {
     const useCase = new RestoreUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider
     );
     await useCase.execute({
       frameworkPath: FIXTURE_DIR,
@@ -242,7 +244,7 @@ describe("restore", () => {
     await initAndInstall(deps, projectRoot, "claude");
 
     const claudeMdPath = join(projectRoot, "CLAUDE.md");
-    const rulePath = join(projectRoot, ".claude/rules/01-standards/naming.md");
+    const rulePath = join(projectRoot, ".claude/plugins/aidd-test/rules/01-standards/naming.md");
 
     await writeFile(claudeMdPath, "modified claude");
     await writeFile(rulePath, "modified rule");
@@ -250,11 +252,13 @@ describe("restore", () => {
     const useCase = new RestoreUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider,
+      deps.pluginFetcher,
+      deps.pluginDistributionReader
     );
 
     await useCase.execute({
@@ -263,7 +267,7 @@ describe("restore", () => {
       docsDir: "aidd_docs",
       projectRoot,
       force: true,
-      files: [".claude/rules/"],
+      files: [".claude/plugins/aidd-test/rules/"],
     });
 
     const claudeMdContent = await readFile(claudeMdPath, "utf-8");
@@ -278,7 +282,7 @@ describe("restore", () => {
     await initAndInstall(deps, projectRoot, "claude");
 
     const claudeMdPath = join(projectRoot, "CLAUDE.md");
-    const rulePath = join(projectRoot, ".claude/rules/01-standards/naming.md");
+    const rulePath = join(projectRoot, ".claude/plugins/aidd-test/rules/01-standards/naming.md");
 
     await writeFile(claudeMdPath, "modified claude");
     await writeFile(rulePath, "modified rule");
@@ -286,11 +290,13 @@ describe("restore", () => {
     const useCase = new RestoreUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider,
+      deps.pluginFetcher,
+      deps.pluginDistributionReader
     );
 
     await useCase.execute({
@@ -299,7 +305,7 @@ describe("restore", () => {
       docsDir: "aidd_docs",
       projectRoot,
       force: true,
-      files: [".claude/rules"],
+      files: [".claude/plugins/aidd-test/rules"],
     });
 
     const claudeMdContent = await readFile(claudeMdPath, "utf-8");
@@ -320,11 +326,11 @@ describe("restore", () => {
     const useCase = new RestoreUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider
     );
 
     await useCase.execute({
@@ -348,11 +354,11 @@ describe("restore", () => {
     const useCase = new RestoreUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider
     );
 
     const result = await useCase.execute({
@@ -378,11 +384,11 @@ describe("restore", () => {
     const useCase = new RestoreUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider
     );
 
     await expect(
@@ -408,11 +414,11 @@ describe("restore", () => {
     const useCase = new RestoreUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      prompter
+      prompter,
+      deps.assetProvider
     );
 
     await useCase.execute({
@@ -438,11 +444,11 @@ describe("restore", () => {
     const useCase = new RestoreUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      prompter
+      prompter,
+      deps.assetProvider
     );
 
     await useCase.execute({
@@ -463,7 +469,7 @@ describe("restore", () => {
     await initAndInstall(deps, projectRoot, "claude");
 
     const claudeMdPath = join(projectRoot, "CLAUDE.md");
-    const rulePath = join(projectRoot, ".claude/rules/01-standards/naming.md");
+    const rulePath = join(projectRoot, ".claude/plugins/aidd-test/rules/01-standards/naming.md");
 
     const originalClaudeMd = await readFile(claudeMdPath, "utf-8");
     const originalRule = await readFile(rulePath, "utf-8");
@@ -474,11 +480,13 @@ describe("restore", () => {
     const useCase = new RestoreUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider,
+      deps.pluginFetcher,
+      deps.pluginDistributionReader
     );
 
     const result = await useCase.execute({
@@ -489,7 +497,8 @@ describe("restore", () => {
       force: true,
     });
 
-    expect(result.tools[0].restored.length).toBeGreaterThanOrEqual(2);
+    const totalRestored = result.totalRestored + result.totalPluginFilesRestored;
+    expect(totalRestored).toBeGreaterThanOrEqual(2);
 
     const claudeMdAfter = await readFile(claudeMdPath, "utf-8");
     const ruleAfter = await readFile(rulePath, "utf-8");
@@ -516,11 +525,11 @@ describe("restore", () => {
       const useCase = new RestoreUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter()
+        new OverwritePrompter(),
+        deps.assetProvider
       );
 
       const result = await useCase.execute({
@@ -545,11 +554,11 @@ describe("restore", () => {
       const useCase = new RestoreUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter()
+        new OverwritePrompter(),
+        deps.assetProvider
       );
 
       const result = await useCase.execute({
@@ -575,11 +584,11 @@ describe("restore", () => {
       const useCase = new RestoreUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter()
+        new OverwritePrompter(),
+        deps.assetProvider
       );
 
       await useCase.execute({
@@ -618,11 +627,11 @@ describe("restore", () => {
       const useCase = new RestoreUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter()
+        new OverwritePrompter(),
+        deps.assetProvider
       );
 
       const result = await useCase.execute({
@@ -649,11 +658,11 @@ describe("restore", () => {
       const useCase = new RestoreUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new KeepPrompter()
+        new KeepPrompter(),
+        deps.assetProvider
       );
 
       const result = await useCase.execute({
@@ -682,11 +691,11 @@ describe("restore", () => {
       const useCase = new RestoreUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter()
+        new OverwritePrompter(),
+        deps.assetProvider
       );
 
       await expect(
@@ -712,11 +721,11 @@ describe("restore", () => {
       const useCase = new RestoreUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter()
+        new OverwritePrompter(),
+        deps.assetProvider
       );
 
       const result = await useCase.execute({

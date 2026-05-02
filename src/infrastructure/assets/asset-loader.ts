@@ -1,11 +1,3 @@
-import type { AiToolId, ToolId } from "../../domain/models/tool-ids.js";
-import type {
-  AssetProvider,
-  ConfigAsset,
-  DefaultMarketplace,
-  MemoryStub,
-} from "../../domain/ports/asset-provider.js";
-
 import claudeSettings from "../../../assets/configs/claude/settings.json" with { type: "json" };
 import codexConfigToml from "../../../assets/configs/codex/config.toml";
 import copilotSettings from "../../../assets/configs/copilot/settings.json" with { type: "json" };
@@ -22,6 +14,13 @@ import defaultMarketplaceJson from "../../../assets/marketplaces/default.json" w
 import agentsStub from "../../../assets/memory-stubs/AGENTS.md";
 import claudeStub from "../../../assets/memory-stubs/CLAUDE.md";
 import copilotStub from "../../../assets/memory-stubs/copilot-instructions.md";
+import type { AiToolId, ToolId } from "../../domain/models/tool-ids.js";
+import type {
+  AssetProvider,
+  ConfigAsset,
+  DefaultMarketplace,
+  MemoryStub,
+} from "../../domain/ports/asset-provider.js";
 
 const CONFIG_ASSETS: Readonly<Record<ToolId, Readonly<Record<string, ConfigAsset>>>> = {
   claude: { "settings.json": claudeSettings },

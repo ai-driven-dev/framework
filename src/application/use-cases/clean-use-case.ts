@@ -5,6 +5,7 @@ import {
   removeEntriesFromJson,
 } from "../../domain/models/merge.js";
 import { AIDD_DIR } from "../../domain/models/paths.js";
+import { AI_TOOL_IDS } from "../../domain/models/tool-ids.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -72,6 +73,16 @@ export class CleanUseCase {
       this.logger.info(`Removing ${toolId} files...`);
       deleted += await this.deleteFiles(manifest.getToolFiles(toolId), options.projectRoot);
       deleted += await this.cleanMergeFileKeys(manifest.getMergeFiles(toolId), options.projectRoot);
+      if ((AI_TOOL_IDS as readonly string[]).includes(toolId)) {
+        for (const plugin of manifest.getPlugins(toolId)) {
+          for (const relativePath of plugin.files.keys()) {
+            const fullPath = join(options.projectRoot, relativePath);
+            await this.fs.deleteFile(fullPath);
+            await this.fs.deleteEmptyDirectories(dirname(fullPath));
+            deleted++;
+          }
+        }
+      }
     }
 
     const catalogPath = join(options.projectRoot, manifest.docsDir, "CATALOG.md");

@@ -51,7 +51,6 @@ describe("setup without TTY", () => {
     return new SetupUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,

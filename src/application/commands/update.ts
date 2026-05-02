@@ -42,11 +42,11 @@ export function registerUpdateCommand(program: Command): void {
           const updateUseCase = new UpdateUseCase(
             deps.fs,
             deps.manifestRepo,
-            deps.loader,
             deps.hasher,
             deps.logger,
             deps.platform,
-            deps.prompter
+            deps.prompter,
+            deps.assetProvider
           );
 
           const result = await updateUseCase.execute({

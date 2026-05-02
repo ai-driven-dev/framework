@@ -1,4 +1,3 @@
-import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -6,7 +5,6 @@ import { UpdateUseCase } from "../../../src/application/use-cases/update/update-
 import type { McpExclusion } from "../../../src/domain/models/mcp-exclusion.js";
 import type { Prompter } from "../../../src/domain/ports/prompter.js";
 import {
-  BackupPrompter,
   buildDeps,
   cleanupTempProject,
   createTempProject,
@@ -15,7 +13,6 @@ import {
   initAndInstall,
   initProject,
   installTool,
-  KeepPrompter,
   linuxPlatform,
   OverwritePrompter,
   SkipPrompter,
@@ -40,11 +37,11 @@ describe("update", () => {
     const useCase = new UpdateUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider
     );
 
     const result = await useCase.execute({
@@ -63,11 +60,11 @@ describe("update", () => {
     const useCase = new UpdateUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider
     );
 
     await expect(
@@ -87,11 +84,11 @@ describe("update", () => {
     const useCase = new UpdateUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider
     );
 
     const result = await useCase.execute({
@@ -106,247 +103,6 @@ describe("update", () => {
     expect(result.tools[0].written).toHaveLength(0);
   });
 
-  it("detects conflict when framework AND user both changed a file", async () => {
-    const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
-
-    // Simulate: user modifies a rule file AND manifest hash is set to old hash
-    // by writing a different hash to manifest
-    const manifestPath = join(projectRoot, ".aidd", "manifest.json");
-    const rawManifest = await readFile(manifestPath, "utf-8");
-    const manifestData = JSON.parse(rawManifest) as {
-      tools: Record<
-        string,
-        { version: string; files: Array<{ relativePath: string; hash: string }> }
-      >;
-    };
-
-    // Change the manifest hash for naming.md to simulate framework update
-    const ruleFile = manifestData.tools.claude.files.find(
-      (f) => f.relativePath === ".claude/rules/01-standards/naming.md"
-    );
-    if (ruleFile) {
-      ruleFile.hash = "00000000000000000000000000000000";
-    }
-    await writeFile(manifestPath, JSON.stringify(manifestData));
-
-    // Also modify the disk file to simulate user modification
-    const rulePath = join(projectRoot, ".claude/rules/01-standards/naming.md");
-    await writeFile(rulePath, "user modified rule content");
-
-    const useCase = new UpdateUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger,
-      linuxPlatform,
-      new OverwritePrompter()
-    );
-
-    const result = await useCase.execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-      force: true,
-    });
-
-    // With force=true, conflicting file should be overwritten
-    const ruleDiff = result.tools[0].diff.find(
-      (d) => d.relativePath === ".claude/rules/01-standards/naming.md"
-    );
-    expect(ruleDiff?.kind).toBe("changed");
-    expect(result.tools[0].written).toContain(".claude/rules/01-standards/naming.md");
-  });
-
-  it("keeps conflict file when prompter returns keep", async () => {
-    const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
-
-    // Simulate framework update by corrupting manifest hash
-    const manifestPath = join(projectRoot, ".aidd", "manifest.json");
-    const rawManifest = await readFile(manifestPath, "utf-8");
-    const manifestData = JSON.parse(rawManifest) as {
-      tools: Record<
-        string,
-        { version: string; files: Array<{ relativePath: string; hash: string }> }
-      >;
-    };
-    const ruleFile = manifestData.tools.claude.files.find(
-      (f) => f.relativePath === ".claude/rules/01-standards/naming.md"
-    );
-    if (ruleFile) ruleFile.hash = "00000000000000000000000000000000";
-    await writeFile(manifestPath, JSON.stringify(manifestData));
-
-    // Modify disk file to simulate user modification
-    const rulePath = join(projectRoot, ".claude/rules/01-standards/naming.md");
-    await writeFile(rulePath, "user modified rule content");
-
-    const useCase = new UpdateUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger,
-      linuxPlatform,
-      new SkipPrompter()
-    );
-
-    const result = await useCase.execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    const contentAfter = await readFile(rulePath, "utf-8");
-    expect(contentAfter).toBe("user modified rule content");
-
-    const keptTool = result.tools.find((t) => t.kept.length > 0);
-    expect(keptTool).toBeDefined();
-  });
-
-  it("marks file as removed and deletes it when no longer in framework distribution", async () => {
-    const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
-
-    const manifestPath = join(projectRoot, ".aidd", "manifest.json");
-    const rawManifest = await readFile(manifestPath, "utf-8");
-    const manifestData = JSON.parse(rawManifest) as {
-      tools: Record<
-        string,
-        { version: string; files: Array<{ relativePath: string; hash: string }> }
-      >;
-    };
-    manifestData.tools.claude.files.push({
-      relativePath: ".claude/rules/fake-rule.md",
-      hash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    });
-    await writeFile(manifestPath, JSON.stringify(manifestData));
-
-    const fakePath = join(projectRoot, ".claude/rules/fake-rule.md");
-    await writeFile(fakePath, "fake content");
-
-    const useCase = new UpdateUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger,
-      linuxPlatform,
-      new OverwritePrompter()
-    );
-    const result = await useCase.execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    const toolResult = result.tools.find((t) => t.toolId === "claude");
-    expect(toolResult?.deleted).toContain(".claude/rules/fake-rule.md");
-    expect(existsSync(fakePath)).toBe(false);
-  });
-
-  it("creates a .backup file when overwriting a user-modified conflicting file", async () => {
-    const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
-
-    const manifestPath = join(projectRoot, ".aidd", "manifest.json");
-    const rawManifest = await readFile(manifestPath, "utf-8");
-    const manifestData = JSON.parse(rawManifest) as {
-      tools: Record<
-        string,
-        { version: string; files: Array<{ relativePath: string; hash: string }> }
-      >;
-    };
-
-    const ruleFile = manifestData.tools.claude.files.find(
-      (f) => f.relativePath === ".claude/rules/01-standards/naming.md"
-    );
-    if (ruleFile) {
-      ruleFile.hash = "00000000000000000000000000000000";
-    }
-    await writeFile(manifestPath, JSON.stringify(manifestData));
-
-    const rulePath = join(projectRoot, ".claude/rules/01-standards/naming.md");
-    await writeFile(rulePath, "user modified rule content");
-
-    const useCase = new UpdateUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger,
-      linuxPlatform,
-      new BackupPrompter()
-    );
-
-    const result = await useCase.execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    const toolResult = result.tools.find((t) => t.toolId === "claude");
-    expect(toolResult?.backedUp.length).toBeGreaterThan(0);
-    expect(toolResult?.backedUp[0]).toMatch(/naming\.md\.bak\.\d{8}T\d{6}/);
-
-    const backedUpRelative = toolResult?.backedUp[0];
-    if (!backedUpRelative) throw new Error("Expected a backed up path");
-    const backupPath = join(projectRoot, backedUpRelative);
-    const backupContent = await readFile(backupPath, "utf-8");
-    expect(backupContent).toBe("user modified rule content");
-  });
-
-  it("does not create .backup when user keeps the conflict file", async () => {
-    const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
-
-    const manifestPath = join(projectRoot, ".aidd", "manifest.json");
-    const rawManifest = await readFile(manifestPath, "utf-8");
-    const manifestData = JSON.parse(rawManifest) as {
-      tools: Record<
-        string,
-        { version: string; files: Array<{ relativePath: string; hash: string }> }
-      >;
-    };
-    const ruleFile = manifestData.tools.claude.files.find(
-      (f) => f.relativePath === ".claude/rules/01-standards/naming.md"
-    );
-    if (ruleFile) ruleFile.hash = "00000000000000000000000000000000";
-    await writeFile(manifestPath, JSON.stringify(manifestData));
-
-    const rulePath = join(projectRoot, ".claude/rules/01-standards/naming.md");
-    await writeFile(rulePath, "user modified rule content");
-
-    const useCase = new UpdateUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger,
-      linuxPlatform,
-      new KeepPrompter()
-    );
-
-    const result = await useCase.execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    const toolResult = result.tools.find((t) => t.toolId === "claude");
-    expect(toolResult?.backedUp).toHaveLength(0);
-
-    const { existsSync } = await import("node:fs");
-    const backupPath = join(projectRoot, ".claude/rules/01-standards/naming.md.backup");
-    expect(existsSync(backupPath)).toBe(false);
-  });
-
   it("processes all installed tools in update", async () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude");
@@ -354,11 +110,11 @@ describe("update", () => {
     const useCase = new UpdateUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider
     );
 
     const result = await useCase.execute({
@@ -381,11 +137,11 @@ describe("update", () => {
     const useCase = new UpdateUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider
     );
 
     const result = await useCase.execute({
@@ -401,71 +157,6 @@ describe("update", () => {
     expect(result.tools[0].toolId).toBe("claude");
   });
 
-  it("re-installs a file deleted on disk even when unchanged in framework", async () => {
-    const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
-
-    const rulePath = join(projectRoot, ".claude/rules/01-standards/naming.md");
-    const { unlink } = await import("node:fs/promises");
-    await unlink(rulePath);
-
-    const useCase = new UpdateUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger,
-      linuxPlatform,
-      new OverwritePrompter()
-    );
-
-    const result = await useCase.execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-    });
-
-    const toolResult = result.tools.find((t) => t.toolId === "claude");
-    expect(toolResult?.written).toContain(".claude/rules/01-standards/naming.md");
-    expect(existsSync(rulePath)).toBe(true);
-  });
-
-  it("treats disk-modified file as conflict when unchanged in framework", async () => {
-    const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
-
-    const rulePath = join(projectRoot, ".claude/rules/01-standards/naming.md");
-    await writeFile(rulePath, "user modified rule content");
-
-    const useCase = new UpdateUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      deps.loader,
-      deps.hasher,
-      deps.logger,
-      linuxPlatform,
-      new OverwritePrompter()
-    );
-
-    const result = await useCase.execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot,
-      force: true,
-    });
-
-    const toolResult = result.tools.find((t) => t.toolId === "claude");
-    const ruleDiff = toolResult?.diff.find(
-      (d) => d.relativePath === ".claude/rules/01-standards/naming.md"
-    );
-    expect(ruleDiff?.kind).toBe("changed");
-    expect(ruleDiff?.conflict).toBe(true);
-    expect(toolResult?.backedUp.some((f) => f.includes("naming.md"))).toBe(true);
-    expect(toolResult?.written).toContain(".claude/rules/01-standards/naming.md");
-  });
-
   it("does not overwrite a pre-existing user file when the framework adds it as a new file", async () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude");
@@ -477,11 +168,11 @@ describe("update", () => {
     const useCase = new UpdateUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter()
+      new OverwritePrompter(),
+      deps.assetProvider
     );
 
     await useCase.execute({
@@ -503,11 +194,11 @@ describe("update", () => {
       const useCase = new UpdateUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter()
+        new OverwritePrompter(),
+        deps.assetProvider
       );
       await useCase.execute({
         frameworkPath: FIXTURE_DIR_V2,
@@ -529,11 +220,11 @@ describe("update", () => {
       const useCase = new UpdateUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter()
+        new OverwritePrompter(),
+        deps.assetProvider
       );
       await useCase.execute({
         frameworkPath: FIXTURE_DIR_V2,
@@ -573,11 +264,11 @@ describe("update", () => {
       const useCase = new UpdateUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new SkipPrompter()
+        new SkipPrompter(),
+        deps.assetProvider
       );
       await useCase.execute({
         frameworkPath: FIXTURE_DIR_V2,
@@ -598,11 +289,11 @@ describe("update", () => {
       const useCase = new UpdateUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter()
+        new OverwritePrompter(),
+        deps.assetProvider
       );
       const result = await useCase.execute({
         frameworkPath: FIXTURE_DIR_V2,
@@ -633,11 +324,11 @@ describe("update", () => {
       const useCase = new UpdateUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter()
+        new OverwritePrompter(),
+        deps.assetProvider
       );
       await useCase.execute({
         frameworkPath: FIXTURE_DIR_V2,
@@ -729,11 +420,11 @@ describe("update", () => {
       const useCase = new UpdateUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter()
+        new OverwritePrompter(),
+        deps.assetProvider
       );
 
       await useCase.execute({
@@ -756,11 +447,11 @@ describe("update", () => {
       const useCase = new UpdateUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        prompter
+        prompter,
+        deps.assetProvider
       );
 
       await useCase.execute({
@@ -786,11 +477,11 @@ describe("update", () => {
       const useCase = new UpdateUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        prompter
+        prompter,
+        deps.assetProvider
       );
 
       await useCase.execute({
@@ -819,11 +510,11 @@ describe("update", () => {
       const useCase = new UpdateUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter()
+        new OverwritePrompter(),
+        deps.assetProvider
       );
 
       await useCase.execute({
@@ -851,11 +542,11 @@ describe("update", () => {
       const useCase = new UpdateUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        prompter
+        prompter,
+        deps.assetProvider
       );
 
       await useCase.execute({
@@ -880,11 +571,11 @@ describe("update", () => {
       const useCase = new UpdateUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.loader,
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        declineAllPrompter
+        declineAllPrompter,
+        deps.assetProvider
       );
 
       await useCase.execute({

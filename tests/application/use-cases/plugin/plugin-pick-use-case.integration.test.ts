@@ -124,6 +124,7 @@ describe("PluginPickUseCase", () => {
     expect(result.installed).toEqual(["sample-plugin"]);
     const manifest = await new ManifestRepositoryAdapter(projectRoot).load();
     const plugins = manifest?.getPlugins("claude") ?? [];
-    expect(plugins[0]?.marketplace).toBe("local");
+    const installed = plugins.find((p) => p.name === "sample-plugin");
+    expect(installed?.marketplace).toBe("local");
   });
 });

@@ -118,14 +118,14 @@ Examples:
           const installUseCase = new InstallUseCase(
             deps.fs,
             deps.manifestRepo,
-            deps.loader,
             deps.hasher,
             deps.logger,
             deps.platform,
             deps.prompter,
             deps.pluginFetcher,
             deps.pluginDistributionReader,
-            deps.pluginCatalogRepository
+            deps.pluginCatalogRepository,
+            deps.assetProvider
           );
 
           const mcpFilter = cmdOptions.mcp?.split(",").map((s) => s.trim()) ?? [];

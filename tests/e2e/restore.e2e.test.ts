@@ -94,7 +94,15 @@ describe.concurrent("E2E: aidd restore", () => {
       await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
-      const namingFilePath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
+      const namingFilePath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.md"
+      );
       await rm(namingFilePath, { force: true });
       expect(existsSync(namingFilePath)).toBe(false);
 
@@ -118,7 +126,15 @@ describe.concurrent("E2E: aidd restore", () => {
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const claudeMdPath = join(projectDir, "CLAUDE.md");
-      const namingFilePath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
+      const namingFilePath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.md"
+      );
 
       const customClaudeContent = "custom claude content";
       const customNamingContent = "custom naming content";
@@ -179,7 +195,15 @@ describe.concurrent("E2E: aidd restore", () => {
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       const claudeMdPath = join(projectDir, "CLAUDE.md");
-      const namingFilePath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
+      const namingFilePath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.md"
+      );
 
       const customClaudeContent = "custom claude content";
       const customNamingContent = "custom naming content";
@@ -187,7 +211,7 @@ describe.concurrent("E2E: aidd restore", () => {
       await writeFile(namingFilePath, customNamingContent, "utf-8");
 
       const { stdout, exitCode } = await runCli(
-        ["restore", ".claude/rules/", "--path", FRAMEWORK_PATH, "--force"],
+        ["restore", ".claude/plugins/aidd-test/rules/", "--path", FRAMEWORK_PATH, "--force"],
         projectDir
       );
 
@@ -210,7 +234,7 @@ describe.concurrent("E2E: aidd restore", () => {
       await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
-      const untrackedPath = join(projectDir, ".claude", "rules", "user-extra.md");
+      const untrackedPath = join(projectDir, ".claude", "user-extra.md");
       await writeFile(untrackedPath, "user added file");
 
       const { exitCode } = await runCli(

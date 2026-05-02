@@ -27,11 +27,12 @@ describe("SyncUseCase — plugin scope", () => {
       });
 
       const before = await deps.manifestRepo.load();
-      const trackedKey = [...(before?.getPlugins("claude")[0]?.files.keys() ?? [])].find((k) =>
+      const samplePlugin = before?.getPlugins("claude").find((p) => p.name === "sample-plugin");
+      const trackedKey = [...(samplePlugin?.files.keys() ?? [])].find((k) =>
         k.endsWith("greet.md")
       );
       expect(trackedKey).toBeDefined();
-      const hashBefore = before?.getPlugins("claude")[0]?.files.get(trackedKey ?? "");
+      const hashBefore = samplePlugin?.files.get(trackedKey ?? "");
 
       const pluginFile = join(projectRoot, trackedKey ?? "");
       await deps.fs.writeFile(pluginFile, "USER MODIFIED CONTENT");

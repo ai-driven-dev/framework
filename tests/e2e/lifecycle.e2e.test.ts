@@ -31,10 +31,14 @@ describe.concurrent("E2E: full lifecycle", () => {
       expect(statusSyncResult.exitCode).toBe(0);
       expect(statusSyncResult.stdout).toContain("All files are in sync");
 
-      // update — already up to date
+      // update — succeeds (cursor AGENTS.md may be updated from template)
       const updateResult = await runCli(["update", "--path", FRAMEWORK_PATH], projectDir);
       expect(updateResult.exitCode).toBe(0);
-      expect(updateResult.stdout).toContain("Already up to date");
+
+      // second update — already up to date
+      const updateResult2 = await runCli(["update", "--path", FRAMEWORK_PATH], projectDir);
+      expect(updateResult2.exitCode).toBe(0);
+      expect(updateResult2.stdout).toContain("Already up to date");
 
       // modify CLAUDE.md
       const claudeMdPath = join(projectDir, "CLAUDE.md");
