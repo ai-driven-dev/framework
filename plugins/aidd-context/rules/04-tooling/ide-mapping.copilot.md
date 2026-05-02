@@ -33,7 +33,7 @@ ALWAYS use relative markdown links to reference other files:
 ```
 
 - Depth (`../`) depends on the file's location relative to the target.
-- Example from `.github/prompts/`: `[rule](../../{{TOOLS}}/plugins/aidd-context/skills/03-context-generate/assets/rules/rule-template.md)`
+- Example: from `.github/prompts/` link to `../../.github/plugins/<plugin-name>/skills/.../file.md`
 - NEVER use `@` syntax, use relative markdown links instead.
 
 ## File Extensions
