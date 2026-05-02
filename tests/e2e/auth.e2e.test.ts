@@ -129,7 +129,7 @@ describe.concurrent("E2E: aidd auth", () => {
       // If the developer has a user-level auth or gh auth configured, auth status
       // may still succeed — this test therefore only asserts that the command exits
       // cleanly (0 or 1) and produces recognisable output in either state.
-      const { stdout, stderr, exitCode } = await runCliNoToken(["auth", "status"], projectDir);
+      const { stdout, stderr } = await runCliNoToken(["auth", "status"], projectDir);
 
       const combined = (stdout + stderr).toLowerCase();
 

@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  codex,
-  mergeCodexConfigToml,
-  reverseRewriteCodexContent,
-  rewriteCodexContent,
-} from "../../../../src/domain/tools/ai/codex.js";
+import { codex, mergeCodexConfigToml } from "../../../../src/domain/tools/ai/codex.js";
 import { getToolConfig } from "../../../../src/domain/tools/registry.js";
 
 describe("codex", () => {

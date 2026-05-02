@@ -179,7 +179,8 @@ describe("PluginTranslator.translate()", () => {
         (f) => f.relativePath === ".cursor/plugins/sample-plugin/hooks/hooks.json"
       );
       expect(hooks).toBeDefined();
-      const parsed = JSON.parse(hooks!.content) as { hooks: Record<string, unknown[]> };
+      if (!hooks) throw new Error("hooks file not found");
+      const parsed = JSON.parse(hooks.content) as { hooks: Record<string, unknown[]> };
       expect(parsed.hooks).toHaveProperty("sessionStart");
       expect(parsed.hooks).not.toHaveProperty("SessionStart");
       const items = parsed.hooks.sessionStart as Array<{ command: string }>;

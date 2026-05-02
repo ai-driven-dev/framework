@@ -155,7 +155,8 @@ export class MarketplaceSyncSettingsUseCase {
     marketplaces: readonly Marketplace[],
     versionByName: Map<string, string | undefined>
   ): boolean {
-    const pluginsKey = settings.enabledPluginsKey!;
+    const pluginsKey = settings.enabledPluginsKey;
+    if (pluginsKey == null) return false;
     const existing = this.existingRecord(json, pluginsKey);
     const toAdd: Record<string, boolean> = {};
     const marketplaceByName = new Map(marketplaces.map((m) => [m.name, m]));
