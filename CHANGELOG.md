@@ -1,5 +1,25 @@
 # Changelog
 
+## [Unreleased] — Marketplace-only architecture
+
+### ⚠ BREAKING CHANGES
+
+* **install**: `aidd install ai <tool>` and `aidd install ide <tool>` now write bundled runtime configs from the CLI binary instead of downloading a framework tarball. The `--release`, `--path`, `--repo`, `--from`, and `--mode` flags are removed from `install` and `setup`.
+* **setup**: `aidd setup` no longer downloads a framework tarball. It initializes the manifest, registers the default marketplace, and writes bundled configs. `--switch-mode` and `--mode` flags removed.
+* **framework**: Framework is now a pure plugin marketplace (Git repo with `marketplace.json` + `plugins/`). The CLI no longer fetches or caches framework tarballs. `aidd cache` command removed.
+* **config**: `repo` config key removed. Use `aidd marketplace` to manage marketplace sources.
+
+### Features
+
+* **migrate**: new `aidd migrate` command — detects and strips obsolete manifest entries (scripts section, top-level plugins section, bundled plugins) from projects on previous CLI versions. Backs up manifest before write. `--dry-run` and `--non-interactive` flags.
+* **assets**: runtime configs (Claude, Cursor, Copilot, OpenCode, Codex) and memory stubs (CLAUDE.md, AGENTS.md, copilot-instructions.md) bundled inside the CLI binary — no network required for `aidd install ai`.
+* **plugin install**: prompts for target tools when multiple AI tools installed; `--tool` flag for non-interactive use.
+* **marketplace**: default marketplace (`github.com/ai-driven-dev/aidd-framework`) pre-registered on `aidd setup`. No auth required for public marketplace.
+
+### Migration
+
+Run `aidd migrate` to clean up any project initialized with CLI < 4.1.0.
+
 ## [4.0.0](https://github.com/ai-driven-dev/aidd-cli/compare/v3.3.1...v4.0.0) (2026-04-23)
 
 
