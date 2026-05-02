@@ -80,7 +80,8 @@ export async function initProject(
     deps.platform,
     deps.prompter,
     deps.resolver,
-    makeNoOpInstallFrameworkPlugins() as never
+    makeNoOpInstallFrameworkPlugins() as never,
+    deps.assetProvider
   ).execute({
     projectRoot: projectDir,
     path: frameworkPath,
@@ -105,6 +106,7 @@ export async function adoptProject(
     deps.platform,
     deps.prompter,
     deps.resolver,
-    makeNoOpInstallFrameworkPlugins() as never
+    makeNoOpInstallFrameworkPlugins() as never,
+    deps.assetProvider
   ).execute({ projectRoot: projectDir, path: frameworkPath, toolIds, from: frameworkPath });
 }

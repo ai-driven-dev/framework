@@ -115,6 +115,7 @@ export function registerSetupCommand(program: Command): void {
             deps.prompter,
             deps.resolver,
             deps.installFrameworkPluginsUseCase,
+            deps.assetProvider,
             deps.authReader
           ).execute({
             projectRoot,

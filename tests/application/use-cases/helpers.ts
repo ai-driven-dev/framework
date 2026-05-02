@@ -16,6 +16,7 @@ import type { VersionControl } from "../../../src/domain/ports/version-control.j
 import type { ToolId } from "../../../src/domain/tools/registry.js";
 import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
 import { FrameworkLoaderAdapter } from "../../../src/infrastructure/adapters/framework-loader-adapter.js";
+import { BundledAssetProviderAdapter } from "../../../src/infrastructure/assets/asset-loader.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
 import { ManifestRepositoryAdapter } from "../../../src/infrastructure/adapters/manifest-repository-adapter.js";
 import { SilentPrompterAdapter } from "../../../src/infrastructure/adapters/prompter-adapter.js";
@@ -181,7 +182,8 @@ export function buildDeps(projectRoot: string) {
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
   const loader = new FrameworkLoaderAdapter();
   const logger = new CLIOutput(false);
-  return { hasher, fs, manifestRepo, loader, logger };
+  const assetProvider = new BundledAssetProviderAdapter();
+  return { hasher, fs, manifestRepo, loader, logger, assetProvider };
 }
 
 export async function createTempProject(): Promise<{ tempDir: string; projectRoot: string }> {

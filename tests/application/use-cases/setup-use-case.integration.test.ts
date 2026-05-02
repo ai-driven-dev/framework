@@ -57,7 +57,8 @@ describe("setup without TTY", () => {
       linuxPlatform,
       new SilentPrompterAdapter(),
       resolver,
-      makeInstallFrameworkPluginsUseCase()
+      makeInstallFrameworkPluginsUseCase(),
+      deps.assetProvider
     );
   }
 

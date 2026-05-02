@@ -8,9 +8,7 @@ import {
   buildDeps,
   cleanupTempProject,
   createTempProject,
-  FIXTURE_DIR,
   initAndInstall,
-  linuxPlatform,
 } from "./helpers.js";
 
 describe("adopt", () => {
@@ -30,15 +28,13 @@ describe("adopt", () => {
     return new AdoptUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.loader,
       deps.hasher,
       deps.logger,
-      linuxPlatform
+      deps.assetProvider
     );
   }
 
   const DEFAULT_OPTS = {
-    frameworkPath: FIXTURE_DIR,
     docsDir: "aidd_docs",
     version: "3.3.3",
   };
@@ -75,8 +71,7 @@ describe("adopt", () => {
     expect(result.totalRegistered).toBe(0);
   });
 
-  it("only registers files on disk that match the framework distribution", async () => {
-    // naming.md is in the fixture distribution; style.md is not
+  it("registers all files found in the tool directory", async () => {
     await mkdir(join(projectRoot, ".claude", "rules", "01-standards"), { recursive: true });
     await writeFile(join(projectRoot, ".claude", "rules", "01-standards", "naming.md"), "# Naming");
     await writeFile(join(projectRoot, ".claude", "rules", "01-standards", "style.md"), "# Style");
@@ -88,7 +83,7 @@ describe("adopt", () => {
     });
 
     expect(result.tools[0].registered).toContain(".claude/rules/01-standards/naming.md");
-    expect(result.tools[0].registered).not.toContain(".claude/rules/01-standards/style.md");
+    expect(result.tools[0].registered).toContain(".claude/rules/01-standards/style.md");
     // files on disk are not modified
     expect(
       await readFile(join(projectRoot, ".claude", "rules", "01-standards", "naming.md"), "utf-8")
@@ -170,9 +165,8 @@ describe("adopt", () => {
     );
   });
 
-  it("ignores user files not in the framework distribution", async () => {
+  it("registers user-added files alongside aidd-managed ones", async () => {
     await mkdir(join(projectRoot, ".claude", "rules", "01-standards"), { recursive: true });
-    // naming.md is in fixture distribution; my-custom.md is not
     await writeFile(join(projectRoot, ".claude", "rules", "01-standards", "naming.md"), "# Naming");
     await writeFile(join(projectRoot, ".claude", "rules", "my-custom.md"), "# Custom");
 
@@ -183,7 +177,7 @@ describe("adopt", () => {
     });
 
     expect(result.tools[0].registered).toContain(".claude/rules/01-standards/naming.md");
-    expect(result.tools[0].registered).not.toContain(".claude/rules/my-custom.md");
+    expect(result.tools[0].registered).toContain(".claude/rules/my-custom.md");
   });
 
   it("creates CATALOG.md after adoption", async () => {

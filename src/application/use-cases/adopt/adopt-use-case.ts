@@ -1,12 +1,11 @@
 import { join } from "node:path";
 import { Manifest } from "../../../domain/models/manifest.js";
 import { AIDD_DIR } from "../../../domain/models/paths.js";
+import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
-import type { FrameworkLoader } from "../../../domain/ports/framework-loader.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
-import type { Platform } from "../../../domain/ports/platform.js";
 import { assertValidToolIds, type ToolId } from "../../../domain/tools/registry.js";
 import { AlreadyInitializedError, InputRequiredError } from "../../errors.js";
 import { CatalogUseCase } from "../shared/catalog-use-case.js";
@@ -15,7 +14,6 @@ import { type AdoptToolResult, AdoptToolsUseCase } from "./adopt-tools-use-case.
 
 interface AdoptOptions {
   toolIds: ToolId[];
-  frameworkPath: string;
   docsDir: string;
   projectRoot: string;
   version: string;
@@ -30,14 +28,13 @@ export class AdoptUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
-    private readonly platform: Platform
+    private readonly assets: AssetProvider
   ) {}
 
   async execute(options: AdoptOptions): Promise<AdoptResult> {
-    const { toolIds, frameworkPath, docsDir, projectRoot, version } = options;
+    const { toolIds, docsDir, projectRoot, version } = options;
 
     assertValidToolIds(toolIds);
     if (toolIds.length === 0) {
@@ -49,17 +46,18 @@ export class AdoptUseCase {
     if (existing !== null) throw new AlreadyInitializedError();
     await this.deleteLegacyConfig(projectRoot);
 
-    const { descriptor, contentFiles } = await this.loader.loadFromDirectory(
-      frameworkPath,
-      version
-    );
     const manifest = Manifest.create(docsDir);
     const toolResults = await new AdoptToolsUseCase(
       this.fs,
       this.hasher,
       this.logger,
-      this.platform
-    ).execute({ toolIds, manifest, descriptor, contentFiles, docsDir, projectRoot, version });
+      this.assets
+    ).execute({
+      toolIds,
+      manifest,
+      projectRoot,
+      version,
+    });
     await this.persistAdopt(manifest, docsDir, projectRoot);
     return {
       tools: toolResults,
