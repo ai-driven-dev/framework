@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased] — Marketplace-only architecture
+## [4.1.0-beta.1] — Marketplace-only architecture
 
 ### ⚠ BREAKING CHANGES
 
