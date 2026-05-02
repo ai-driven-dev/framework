@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../src/domain/tools/ai/copilot.js";
 
 describe("copilot", () => {
-
   describe("capabilities.rules.convertFrontmatter()", () => {
     it("converts paths: list to applyTo: comma-joined string", () => {
       const result = copilot.capabilities.rules?.convertFrontmatter({
@@ -156,7 +155,6 @@ describe("copilot", () => {
       ).toEqual({ applyTo: "{{TOOLS}}/rules/**/*.md" });
     });
   });
-
 
   describe("capabilities.plugins", () => {
     it("has a plugins capability", () => {

@@ -10,8 +10,6 @@ function makeFs(existingPaths: string[]): FileSystem {
 }
 
 describe("opencode", () => {
-
-
   describe("capabilities.agents.buildInstallPath()", () => {
     it("builds path under .opencode/agents/", () => {
       const path = opencode.capabilities.agents.buildInstallPath("code-reviewer.md");

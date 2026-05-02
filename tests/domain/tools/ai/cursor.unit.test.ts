@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { cursor } from "../../../../src/domain/tools/ai/cursor.js";
 
 describe("cursor", () => {
-
   describe("capabilities.rules.convertFrontmatter()", () => {
     it("converts paths: to globs: as JSON inline string and adds alwaysApply: false", () => {
       const result = cursor.capabilities.rules?.convertFrontmatter({
@@ -68,7 +67,6 @@ describe("cursor", () => {
       expect(result).toEqual({ name: "implement", description: "Impl" });
     });
   });
-
 
   describe("capabilities.memory.buildInstallPath()", () => {
     it("returns AGENTS.md for agentsMd template", () => {

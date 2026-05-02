@@ -20,7 +20,6 @@ describe("claude", () => {
     });
   });
 
-
   describe("capabilities.rules.convertFrontmatter()", () => {
     it("preserves paths: list when already in Claude format", () => {
       const fm = { paths: ["src/**/*.ts"] };
@@ -78,7 +77,6 @@ describe("claude", () => {
       });
     });
   });
-
 
   describe("capabilities.memory.buildInstallPath()", () => {
     it("returns CLAUDE.md for agentsMd template", () => {

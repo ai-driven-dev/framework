@@ -29,8 +29,6 @@ describe("codex", () => {
     expect(config.toolId).toBe("codex");
   });
 
-
-
   describe("capabilities.skills.buildInstallPath()", () => {
     it("builds path under .agents/skills/aidd-{name}/SKILL.md", () => {
       const path = codex.capabilities.skills.buildInstallPath("my-skill/SKILL.md");
@@ -207,5 +205,3 @@ codex_hooks = false
     expect(count).toBe(1);
   });
 });
-
-

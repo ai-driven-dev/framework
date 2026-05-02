@@ -58,12 +58,7 @@ describe("printUpdateBanner", () => {
   it("skips banner when skipCliCheck is true", async () => {
     const { logger, logs } = makeLogger();
 
-    await printUpdateBanner(
-      makeSelfUpdater("v2.0.0"),
-      makeVersionReader("1.0.0"),
-      logger,
-      true
-    );
+    await printUpdateBanner(makeSelfUpdater("v2.0.0"), makeVersionReader("1.0.0"), logger, true);
 
     expect(logs).toHaveLength(0);
   });
