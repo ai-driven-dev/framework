@@ -18,6 +18,10 @@ import { MarketplaceRemoveUseCase } from "../application/use-cases/marketplace/m
 import { MarketplaceSyncSettingsUseCase } from "../application/use-cases/marketplace/marketplace-sync-settings-use-case.js";
 import { PluginAddUseCase } from "../application/use-cases/plugin/plugin-add-use-case.js";
 import { PluginInstallFromMarketplaceUseCase } from "../application/use-cases/plugin/plugin-install-from-marketplace-use-case.js";
+import { ResolveMarketplaceUseCase } from "../application/use-cases/shared/resolve-marketplace-use-case.js";
+import { InstallMemoryStubUseCase } from "../application/use-cases/install/install-memory-stub-use-case.js";
+import type { AssetProvider } from "../domain/ports/asset-provider.js";
+import { BundledAssetProviderAdapter } from "./assets/asset-loader.js";
 import { PluginListUseCase } from "../application/use-cases/plugin/plugin-list-use-case.js";
 import { PluginPickUseCase } from "../application/use-cases/plugin/plugin-pick-use-case.js";
 import { PluginRemoveUseCase } from "../application/use-cases/plugin/plugin-remove-use-case.js";
@@ -97,6 +101,9 @@ interface Deps {
   marketplaceBrowseUseCase: MarketplaceBrowseUseCase;
   marketplaceCheckUseCase: MarketplaceCheckUseCase;
   pluginInstallFromMarketplaceUseCase: PluginInstallFromMarketplaceUseCase;
+  resolveMarketplaceUseCase: ResolveMarketplaceUseCase;
+  installMemoryStubUseCase: InstallMemoryStubUseCase;
+  assetProvider: AssetProvider;
   pluginSearchUseCase: PluginSearchUseCase;
   marketplaceRegisterFrameworkUseCase: MarketplaceRegisterFrameworkUseCase;
   pluginPickUseCase: PluginPickUseCase;
@@ -216,10 +223,15 @@ export async function createDeps(
     marketplaceRegistry,
     pluginFetcher
   );
-  const pluginInstallFromMarketplaceUseCase = new PluginInstallFromMarketplaceUseCase(
-    pluginCatalogRepository,
-    marketplaceRegistry,
+  const resolveMarketplaceUseCase = new ResolveMarketplaceUseCase(
     pluginFetcher,
+    pluginCatalogRepository
+  );
+  const assetProvider = new BundledAssetProviderAdapter();
+  const installMemoryStubUseCase = new InstallMemoryStubUseCase(fs, hasher, logger, assetProvider);
+  const pluginInstallFromMarketplaceUseCase = new PluginInstallFromMarketplaceUseCase(
+    resolveMarketplaceUseCase,
+    marketplaceRegistry,
     pluginAddUseCase,
     prompter
   );
@@ -276,6 +288,9 @@ export async function createDeps(
     marketplaceBrowseUseCase,
     marketplaceCheckUseCase,
     pluginInstallFromMarketplaceUseCase,
+    resolveMarketplaceUseCase,
+    installMemoryStubUseCase,
+    assetProvider,
     pluginSearchUseCase,
     marketplaceRegisterFrameworkUseCase,
     pluginPickUseCase,

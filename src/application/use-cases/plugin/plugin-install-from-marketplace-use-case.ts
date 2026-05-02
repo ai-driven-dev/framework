@@ -4,13 +4,11 @@ import {
   VersionMismatchError,
 } from "../../../domain/errors.js";
 import type { Marketplace } from "../../../domain/models/marketplace.js";
-import { marketplaceCacheDir } from "../../../domain/models/paths.js";
 import type { PluginCatalogEntry } from "../../../domain/models/plugin-catalog.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
-import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
-import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
+import type { ResolveMarketplaceUseCase } from "../shared/resolve-marketplace-use-case.js";
 import type { PluginAddUseCase } from "./plugin-add-use-case.js";
 
 export interface PluginInstallFromMarketplaceOptions {
@@ -35,9 +33,8 @@ interface MatchEntry {
 
 export class PluginInstallFromMarketplaceUseCase {
   constructor(
-    private readonly catalogRepo: PluginCatalogRepository,
+    private readonly resolveMarketplace: ResolveMarketplaceUseCase,
     private readonly registry: MarketplaceRegistry,
-    private readonly pluginFetcher: PluginFetcher,
     private readonly pluginAddUseCase: PluginAddUseCase,
     private readonly prompter: Prompter
   ) {}
@@ -76,9 +73,10 @@ export class PluginInstallFromMarketplaceUseCase {
     m: Marketplace,
     options: PluginInstallFromMarketplaceOptions
   ): Promise<MatchEntry[]> {
-    const cacheDir = marketplaceCacheDir(options.projectRoot, m.name);
-    const localPath = await this.pluginFetcher.fetch(m.source, cacheDir);
-    const catalog = await this.catalogRepo.load(localPath);
+    const { catalog } = await this.resolveMarketplace.execute({
+      marketplace: m,
+      projectRoot: options.projectRoot,
+    });
     if (!catalog) return [];
     return catalog.plugins
       .filter((entry) => entry.name === options.pluginName)

@@ -36,6 +36,7 @@
       "!.vscode",
       "!setup-test",
       "!tmp-test",
+      "!tmp",
       "!**/fixtures/**/*.json"
     ]
   },

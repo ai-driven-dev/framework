@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import "../../../../src/domain/tools/ai/claude.js";
 import { PluginAddUseCase } from "../../../../src/application/use-cases/plugin/plugin-add-use-case.js";
 import { PluginInstallFromMarketplaceUseCase } from "../../../../src/application/use-cases/plugin/plugin-install-from-marketplace-use-case.js";
+import { ResolveMarketplaceUseCase } from "../../../../src/application/use-cases/shared/resolve-marketplace-use-case.js";
 import {
   AmbiguousPluginMatchError,
   PluginNotInMarketplaceError,
@@ -68,17 +69,18 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
   function buildUseCase() {
     const deps = buildDeps(projectRoot);
     const fs = deps.fs as FileSystemAdapter;
+    const pluginFetcher = new PluginFetcherAdapter(fs);
+    const catalogRepo = new PluginCatalogRepositoryAdapter(fs);
     const pluginAdd = new PluginAddUseCase(
       fs,
       deps.manifestRepo,
-      new PluginFetcherAdapter(fs),
+      pluginFetcher,
       new PluginDistributionReaderAdapter(fs),
       deps.hasher
     );
     const useCase = new PluginInstallFromMarketplaceUseCase(
-      new PluginCatalogRepositoryAdapter(fs),
+      new ResolveMarketplaceUseCase(pluginFetcher, catalogRepo),
       new MarketplaceRegistryAdapter(),
-      new PluginFetcherAdapter(fs),
       pluginAdd,
       new KeepPrompter()
     );
