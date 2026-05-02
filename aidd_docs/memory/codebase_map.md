@@ -10,13 +10,13 @@ src/
 │   ├── use-cases/            # Business orchestration
 │   │   ├── adopt/            # adopt-use-case + sub-use-cases
 │   │   ├── auth/             # login / logout / status / require-auth
-│   │   ├── install/          # install + 6 capability sub-use-cases
+│   │   ├── install/          # install + capability sub-use-cases (runtime-config, memory-stub, ide-config, plugins, agents, commands, rules, skills, config)
 │   │   ├── plugin/           # add/remove/list/update + marketplace lifecycle (add/list/remove/refresh/browse/check) + install-from-marketplace + search
 │   │   ├── restore/          # restore-use-case + restore-plugin-use-case
 │   │   ├── sync/             # sync + sync-status + conflict-resolution
-│   │   ├── update/           # update + 6 capability sub-use-cases
+│   │   ├── update/           # update + capability sub-use-cases
 │   │   ├── shared/           # helpers called by use-cases only (never by commands)
-│   │   └── *.ts              # top-level use-cases (clean, doctor, init, setup, status, uninstall...)
+│   │   └── *.ts              # top-level use-cases (clean, doctor, init, migrate, setup, status, uninstall...)
 │   ├── check-update.ts       # update banner
 │   ├── error-handler.ts      # central error handling
 │   ├── errors.ts             # application typed exceptions
@@ -33,6 +33,7 @@ src/
 │       └── ide/              # one file per IDE tool (vscode)
 └── infrastructure/
     ├── adapters/             # port implementations — one adapter per port
+    ├── assets/               # asset-loader.ts — typed loader for configs/stubs bundled in binary
     ├── auth/                 # token reading and storage
     ├── cache/                # framework version caching
     ├── deps.ts               # dependency injection wiring
@@ -72,7 +73,9 @@ tests/
 | File | Purpose |
 |------|---------|
 | `infrastructure/deps.ts` | Full dependency graph — start here when wiring new deps |
+| `infrastructure/assets/asset-loader.ts` | Typed loader for configs/stubs bundled in binary |
 | `domain/tools/contracts.ts` | All tool/capability interfaces |
 | `domain/tools/registry.ts` | Tool lookup, guards, signal detection |
 | `application/use-cases/shared/post-install-pipeline-use-case.ts` | Mandatory post-write sequence |
+| `application/use-cases/migrate-use-case.ts` | Brownfield migration — strip obsolete manifest entries |
 | `domain/models/manifest.ts` | Aggregate root — all installed file tracking |

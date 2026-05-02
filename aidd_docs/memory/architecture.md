@@ -28,16 +28,42 @@ Infrastructure → Application → Domain
 - `Manifest` — aggregate root, tracks every installed file with MD5 hash (`.aidd/manifest.json`)
 - Framework layout is code-defined — no `framework.json` on disk
 
-## Install Flow (high-level)
+## Install Flows (high-level)
 
+**AI tool runtime config** (`aidd install ai <tool>`):
 ```
-CLI Command → UseCase → FrameworkResolver (download/cache) → FrameworkLoader (layout)
-→ Distribution (per-tool rewrite) → FileSystem (write) → PostInstallPipeline (memory/manifest/catalog/gitignore)
+InstallRuntimeConfigUseCase → AssetLoader (bundled in binary) → FileSystem + ManifestRepository
 ```
+
+**IDE config** (`aidd install ide <tool>`):
+```
+InstallIdeConfigUseCase → AssetLoader (bundled in binary) → FileSystem + ManifestRepository
+```
+
+**Plugin** (`aidd plugin install <name>`):
+```
+PluginInstallFromMarketplaceUseCase → MarketplaceRegistry + PluginFetcher (git clone)
+→ Distribution (per-tool rewrite) → FileSystem → PostInstallPipeline
+```
+
+**Migration** (`aidd migrate`):
+```
+MigrateUseCase → ManifestRepository (detect obsolete scripts/plugins sections + bundled plugins)
+→ backup + strip entries + best-effort rewire via marketplace
+```
+
+**Framework resolver** (`FrameworkResolver`) is still used by `setup` — being phased out in the marketplace-only refactor.
 
 ## Auth
 
 Token resolution: `AIDD_TOKEN` env → project `.aidd/auth.json` → user `~/.config/aidd/auth.json` → `gh auth token` (only when `method: "gh"`) → none
+
+## Bundled Assets
+
+Runtime configs, memory stubs, and IDE configs ship inside the CLI binary (tsup bundles them):
+- `src/infrastructure/assets/asset-loader.ts` — typed loader, esbuild text/json loaders at build time
+- `.md` files → text loader (string); `.json` → native import (object); `.toml` → text loader (string)
+- No fs reads at runtime — all assets inlined at bundle time
 
 ## Key Design Decisions
 
@@ -45,3 +71,4 @@ Token resolution: `AIDD_TOKEN` env → project `.aidd/auth.json` → user `~/.co
 - IDE-conditional distribution: AI tools declare `requiredIdeIds`; filtered at install time
 - IDE tool files (user-prime): never deleted on uninstall
 - Error handling: typed exceptions thrown from use-cases/adapters; caught only at command layer
+- `aidd migrate`: idempotent, `--dry-run` safe, backup before writes, best-effort plugin rewire via marketplace

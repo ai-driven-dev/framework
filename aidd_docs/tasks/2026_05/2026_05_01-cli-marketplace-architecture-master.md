@@ -128,7 +128,7 @@ See: `2026_05_01-cli-marketplace-architecture-part-2.md`
 
 See: `2026_05_01-cli-marketplace-architecture-part-3.md`
 
-### 🔄 Phase 4 — Framework cleanup + tests + docs
+### ✅ Phase 4 — Framework cleanup + tests + docs
 
 > Delete framework/config/, framework/rules/, framework/aidd_docs/. Simplify build-dist. Realign tests, update README/ARCHITECTURE/CHANGELOG.
 
