@@ -7,6 +7,7 @@
   "plugins": [
     {
       "name": "aidd-context",
+      "version": "1.0.0",
       "source": "./plugins/aidd-context",
       "description": "Knowledge production: project init, architecture/context generation, brainstorm, challenge, mermaid, learn, discovery",
       "strict": true,
@@ -14,6 +15,7 @@
     },
     {
       "name": "aidd-dev",
+      "version": "1.0.0",
       "source": "./plugins/aidd-dev",
       "description": "Code transformation: SDLC orchestrator, plan, assert, audit, review, test, refactor, debug, for-sure. Hosts agents.",
       "strict": true,
@@ -21,6 +23,7 @@
     },
     {
       "name": "aidd-vcs",
+      "version": "1.0.0",
       "source": "./plugins/aidd-vcs",
       "description": "External artifacts: commit, pull-request, release-tag, issue-create",
       "strict": true,
@@ -28,6 +31,7 @@
     },
     {
       "name": "aidd-pm",
+      "version": "1.0.0-rc.1",
       "source": "./plugins/aidd-pm",
       "description": "Product management (release candidate): ticket-info, user-stories-create, prd",
       "strict": true,
