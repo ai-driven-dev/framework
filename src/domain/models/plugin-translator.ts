@@ -41,12 +41,21 @@ export class PluginTranslator {
   constructor(private readonly hasher: Hasher) {}
 
   translate(dist: PluginDistribution, toolConfig: ToolConfig, docsDir: string): InstallationFile[] {
+    return this.translateWithComponentPaths(dist, toolConfig, docsDir).files;
+  }
+
+  translateWithComponentPaths(
+    dist: PluginDistribution,
+    toolConfig: ToolConfig,
+    docsDir: string
+  ): { files: InstallationFile[]; componentPaths: ReadonlyMap<string, string> } {
     const tool = asPluginTool(toolConfig);
-    if (tool === null) return [];
+    if (tool === null) return { files: [], componentPaths: new Map() };
     const { mode } = tool.capabilities.plugins;
-    if (mode === "native") return this.translateNative(dist, tool, docsDir);
-    if (mode === "flat") return this.translateFlat(dist, tool, docsDir);
-    return [];
+    if (mode === "native") return this.translateNativeWithPaths(dist, tool, docsDir);
+    if (mode === "flat")
+      return { files: this.translateFlat(dist, tool, docsDir), componentPaths: new Map() };
+    return { files: [], componentPaths: new Map() };
   }
 
   detectFlatCollisions(
@@ -70,27 +79,34 @@ export class PluginTranslator {
     return collisions;
   }
 
-  private translateNative(
+  private translateNativeWithPaths(
     dist: PluginDistribution,
     tool: AiTool<HasPlugins>,
     docsDir: string
-  ): InstallationFile[] {
+  ): { files: InstallationFile[]; componentPaths: ReadonlyMap<string, string> } {
     const { pluginsDir, pluginManifestRelativePath } = tool.capabilities.plugins;
-    if (pluginsDir === null || pluginManifestRelativePath === null) return [];
+    if (pluginsDir === null || pluginManifestRelativePath === null) {
+      return { files: [], componentPaths: new Map() };
+    }
     const pluginRoot = `${pluginsDir}${dist.manifest.name}/`;
     const result: InstallationFile[] = [];
+    const componentPaths = new Map<string, string>();
     for (const file of dist.files) {
       const translated = this.translateFile(file, tool);
       if (translated === null) continue;
       const hooked = this.maybeConvertHooks(file.relativePath, translated.content, tool);
       const content = tool.rewriteContent(hooked, docsDir);
-      result.push(this.makeFile(`${pluginRoot}${translated.relativePath}`, content));
+      const installedPath = `${pluginRoot}${translated.relativePath}`;
+      result.push(this.makeFile(installedPath, content));
+      if (isComponentFile(file.relativePath)) {
+        componentPaths.set(installedPath, file.relativePath);
+      }
     }
     const sourceManifest = findSourceManifestContent(dist);
     if (sourceManifest !== null) {
       result.push(this.makeFile(`${pluginRoot}${pluginManifestRelativePath}`, sourceManifest));
     }
-    return result;
+    return { files: result, componentPaths };
   }
 
   private maybeConvertHooks(sourcePath: string, content: string, tool: AiTool<HasPlugins>): string {
@@ -225,6 +241,11 @@ function hasSkills(tool: AiTool<HasPlugins>): tool is AiTool<HasPlugins & HasSki
 
 function sectionPresent(tool: AiTool<HasPlugins>, section: "agents" | "rules" | "skills"): boolean {
   return section in (tool.capabilities as object);
+}
+
+function isComponentFile(relativePath: string): boolean {
+  const top = relativePath.split("/")[0];
+  return top === "agents" || top === "commands" || top === "rules" || top === "skills";
 }
 
 function findSourceManifestContent(dist: PluginDistribution): string | null {

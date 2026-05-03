@@ -29,6 +29,9 @@ import {
   type MergeFileEntry,
   removeEntriesFromJson,
 } from "../../../domain/models/merge.js";
+import type { Plugin } from "../../../domain/models/plugin.js";
+import type { PluginCatalog } from "../../../domain/models/plugin-catalog.js";
+import { type PluginSource, serializePluginSource } from "../../../domain/models/plugin-source.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import { formatToolScopeValue, parseUpdateScope } from "../../../domain/models/tool-scope.js";
 import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
@@ -37,6 +40,9 @@ import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../../domain/ports/platform.js";
+import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
+import type { PluginDistributionReader } from "../../../domain/ports/plugin-distribution-reader.js";
+import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
 import type {
   AiTool,
@@ -57,6 +63,7 @@ import {
   type ConfigCapability,
   extractConfigCapabilities,
 } from "../install/install-config-use-case.js";
+import { InstallPluginsUseCase } from "../install/install-plugins-use-case.js";
 import { filterByIdeRequirements } from "../shared/ide-requirement-filter.js";
 import { McpUseCase } from "../shared/mcp-use-case.js";
 import { PostInstallPipelineUseCase } from "../shared/post-install-pipeline-use-case.js";
@@ -167,7 +174,10 @@ export class UpdateUseCase {
     private readonly logger: Logger,
     private readonly platform: Platform,
     private readonly prompter: Prompter,
-    private readonly assets?: AssetProvider
+    private readonly assets?: AssetProvider,
+    private readonly pluginFetcher?: PluginFetcher,
+    private readonly pluginDistributionReader?: PluginDistributionReader,
+    private readonly pluginCatalogRepository?: PluginCatalogRepository
   ) {}
 
   async execute(options: UpdateOptions): Promise<UpdateResult> {
@@ -268,13 +278,36 @@ export class UpdateUseCase {
     options: UpdateOptions,
     internal: InternalUpdateOptions
   ): Promise<UpdateResult> {
-    const { projectRoot } = options;
     const { dryRun } = internal;
+    const { manifest, effectiveToolIds, toolResults } = await this.runFrameworkUpdate(
+      options,
+      internal
+    );
+    const catalog = await this.loadCatalog(options.frameworkPath);
+    const pluginChanges = this.markPluginDiffs(
+      toolResults,
+      manifest,
+      effectiveToolIds,
+      catalog,
+      dryRun
+    );
+    if (!dryRun) {
+      const changedToolIds = effectiveToolIds.filter((id) => pluginChanges.get(id));
+      if (changedToolIds.length > 0) {
+        await this.updateInstalledPlugins(options, manifest, changedToolIds, catalog);
+      }
+      await this.runPostInstall(options, manifest);
+    }
+    return this.buildTotals(toolResults, dryRun);
+  }
 
+  private async runFrameworkUpdate(
+    options: UpdateOptions,
+    internal: InternalUpdateOptions
+  ): Promise<{ manifest: Manifest; effectiveToolIds: ToolId[]; toolResults: UpdateToolResult[] }> {
+    const { projectRoot } = options;
     const { manifest, descriptor, contentFiles, docsDir } = await this.loadFrameworkData(options);
-
     this.validateToolIds(options.toolIds, manifest);
-
     const ideContext = this.resolveIdeContext(manifest);
     const effectiveToolIds = this.resolveEffectiveToolIds(options, manifest);
     const toolResults = await this.updateAllTools(
@@ -288,10 +321,7 @@ export class UpdateUseCase {
       internal,
       ideContext
     );
-
-    if (!dryRun) await this.runPostInstall(options, manifest);
-
-    return this.buildTotals(toolResults, dryRun);
+    return { manifest, effectiveToolIds, toolResults };
   }
 
   private async loadFrameworkData(options: UpdateOptions) {
@@ -324,6 +354,134 @@ export class UpdateUseCase {
       }
     }
     return contentFiles;
+  }
+
+  private async updateInstalledPlugins(
+    options: UpdateOptions,
+    manifest: Manifest,
+    effectiveToolIds: ToolId[],
+    catalog: PluginCatalog | null
+  ): Promise<void> {
+    if (!this.pluginFetcher || !this.pluginDistributionReader) return;
+    const { projectRoot } = options;
+    const docsDir = options.docsDir ?? manifest.docsDir;
+    const aiToolIds = effectiveToolIds.filter((id): id is AiToolId => isAiTool(getToolConfig(id)));
+    for (const toolId of aiToolIds) {
+      await this.updatePluginsForTool(
+        toolId,
+        manifest,
+        catalog,
+        projectRoot,
+        docsDir,
+        this.pluginFetcher,
+        this.pluginDistributionReader
+      );
+    }
+  }
+
+  private async updatePluginsForTool(
+    toolId: AiToolId,
+    manifest: Manifest,
+    catalog: PluginCatalog | null,
+    projectRoot: string,
+    docsDir: string,
+    pluginFetcher: PluginFetcher,
+    pluginDistributionReader: PluginDistributionReader
+  ): Promise<void> {
+    const toolConfig = getToolConfig(toolId);
+    if (!isAiTool(toolConfig)) return;
+    const plugins = manifest.getPlugins(toolId);
+    if (plugins.length === 0) return;
+    const sources = plugins.map((p) => {
+      const catalogEntry = catalog?.plugins.find((e) => e.name === p.name);
+      return catalogEntry?.source ?? p.source;
+    });
+    await this.backupModifiedPluginFiles(plugins, projectRoot, manifest);
+    await new InstallPluginsUseCase(
+      this.fs,
+      pluginFetcher,
+      pluginDistributionReader,
+      this.hasher
+    ).execute({
+      plugins: sources,
+      toolConfigs: [toolConfig],
+      projectRoot,
+      manifest,
+      docsDir,
+      force: true,
+    });
+  }
+
+  private async backupModifiedPluginFiles(
+    plugins: readonly Plugin[],
+    projectRoot: string,
+    _manifest: Manifest
+  ): Promise<void> {
+    for (const plugin of plugins) {
+      for (const [relativePath, manifestHash] of plugin.files) {
+        const absPath = join(projectRoot, relativePath);
+        if (!(await this.fs.fileExists(absPath))) continue;
+        const diskHash = await this.fs.readFileHash(absPath);
+        if (diskHash.value !== manifestHash) {
+          await this.fs.backup(absPath);
+        }
+      }
+    }
+  }
+
+  private async loadCatalog(frameworkPath: string): Promise<PluginCatalog | null> {
+    if (!this.pluginCatalogRepository) return null;
+    return this.pluginCatalogRepository.load(frameworkPath);
+  }
+
+  private detectPluginSourceChanges(
+    manifest: Manifest,
+    effectiveToolIds: ToolId[],
+    catalog: PluginCatalog
+  ): Map<ToolId, boolean> {
+    const result = new Map<ToolId, boolean>();
+    const aiToolIds = effectiveToolIds.filter((id): id is AiToolId => isAiTool(getToolConfig(id)));
+    for (const toolId of aiToolIds) {
+      result.set(toolId, this.toolHasPluginSourceChanges(toolId, manifest, catalog));
+    }
+    return result;
+  }
+
+  private toolHasPluginSourceChanges(
+    toolId: AiToolId,
+    manifest: Manifest,
+    catalog: PluginCatalog
+  ): boolean {
+    return manifest.getPlugins(toolId).some((plugin) => {
+      const entry = catalog.plugins.find((e) => e.name === plugin.name);
+      return entry !== undefined && !this.pluginSourcesEqual(entry.source, plugin.source);
+    });
+  }
+
+  private pluginSourcesEqual(a: PluginSource, b: PluginSource): boolean {
+    return JSON.stringify(serializePluginSource(a)) === JSON.stringify(serializePluginSource(b));
+  }
+
+  private markPluginDiffs(
+    toolResults: UpdateToolResult[],
+    manifest: Manifest,
+    effectiveToolIds: ToolId[],
+    catalog: PluginCatalog | null,
+    dryRun: boolean
+  ): Map<ToolId, boolean> {
+    if (!catalog) return new Map();
+    const changes = this.detectPluginSourceChanges(manifest, effectiveToolIds, catalog);
+    for (const result of toolResults) {
+      if (!changes.get(result.toolId)) continue;
+      result.alreadyUpToDate = false;
+      if (dryRun)
+        result.diff.push({
+          kind: "changed",
+          relativePath: "plugins (update available)",
+          conflict: false,
+        });
+    }
+    return changes;
   }
 
   private async runPostInstall(options: UpdateOptions, manifest: Manifest): Promise<void> {
