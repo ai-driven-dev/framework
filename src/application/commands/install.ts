@@ -263,7 +263,9 @@ Examples:
           const registrationResult = await deps.marketplaceRegisterFrameworkUseCase.execute({
             projectRoot,
           });
-          await deps.marketplaceRefreshUseCase.execute({ projectRoot });
+          if (process.env.AIDD_SKIP_MARKETPLACE_REFRESH !== "1") {
+            await deps.marketplaceRefreshUseCase.execute({ projectRoot });
+          }
           if (registrationResult.registered) {
             output.info(
               "Plugin marketplace ready. Run `aidd plugin pick` to browse and install plugins."

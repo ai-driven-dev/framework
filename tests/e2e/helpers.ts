@@ -64,6 +64,25 @@ export async function runCli(
   }
 }
 
+/** Skips marketplace refresh (network call) for fast/flake-prone tests. */
+export async function runCliFast(
+  args: string[],
+  cwd: string
+): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  const env = { ...process.env, AIDD_SKIP_MARKETPLACE_REFRESH: "1" };
+  try {
+    const { stdout, stderr } = await execFileAsync("node", [CLI_PATH, ...args], { cwd, env });
+    return { stdout, stderr, exitCode: 0 };
+  } catch (error) {
+    const err = error as { stdout?: string; stderr?: string; code?: number };
+    return {
+      stdout: err.stdout ?? "",
+      stderr: err.stderr ?? "",
+      exitCode: err.code ?? 1,
+    };
+  }
+}
+
 export async function initProject(
   projectDir: string,
   frameworkPath: string,

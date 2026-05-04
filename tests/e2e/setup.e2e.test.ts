@@ -2,7 +2,14 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CLI_PATH, createTestEnv, execFileAsync, FRAMEWORK_PATH, runCli } from "./helpers.js";
+import {
+  CLI_PATH,
+  createTestEnv,
+  execFileAsync,
+  FRAMEWORK_PATH,
+  runCli,
+  runCliFast,
+} from "./helpers.js";
 
 async function runCliNoAuth(
   args: string[],
@@ -150,12 +157,12 @@ describe.concurrent("E2E: aidd setup", () => {
   it("--switch-mode --mode remote on local-mode project switches mode in manifest", async () => {
     const { projectDir, cleanup } = await createTestEnv("setup-switch-mode");
     try {
-      await runCli(
+      await runCliFast(
         ["setup", "--ai", "claude", "--path", FRAMEWORK_PATH, "--mode", "local"],
         projectDir
       );
 
-      const { stdout, exitCode } = await runCli(
+      const { stdout, exitCode } = await runCliFast(
         ["setup", "--switch-mode", "--mode", "remote"],
         projectDir
       );

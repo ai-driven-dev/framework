@@ -133,8 +133,10 @@ export function registerSetupCommand(program: Command): void {
             frameworkPath: cmdOptions.path,
           });
 
-          await deps.marketplaceRefreshUseCase.execute({ projectRoot });
-          await deps.marketplaceSyncSettingsUseCase.execute({ projectRoot });
+          if (process.env.AIDD_SKIP_MARKETPLACE_REFRESH !== "1") {
+            await deps.marketplaceRefreshUseCase.execute({ projectRoot });
+            await deps.marketplaceSyncSettingsUseCase.execute({ projectRoot });
+          }
 
           switch (result.kind) {
             case "initialized": {
