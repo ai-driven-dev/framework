@@ -23,6 +23,11 @@ export function registerCleanCommand(program: Command): void {
           interactive: process.stdout.isTTY,
         });
 
+        if (!result.manifestFound) {
+          output.success("Nothing to clean");
+          return;
+        }
+
         if (result.dryRun) {
           output.print("The following will be removed:");
           for (const tool of result.preview.tools) {

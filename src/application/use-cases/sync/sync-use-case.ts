@@ -344,7 +344,7 @@ export class SyncUseCase {
     const installedToolIds = manifest.getInstalledToolIds();
 
     if (installedToolIds.length < 2) {
-      return { sourceTool, targetTools: [] };
+      throw new InputRequiredError("Sync requires at least 2 installed tools.");
     }
 
     const targetTools =

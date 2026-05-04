@@ -113,8 +113,8 @@ export class Plugin {
       version: this.version,
       strict: this.strict,
       files,
-      componentPaths,
     };
+    if (this.componentPaths.size > 0) data.componentPaths = componentPaths;
     if (this.marketplace !== undefined) data.marketplace = this.marketplace;
     return data;
   }
