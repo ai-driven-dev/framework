@@ -8,7 +8,7 @@ describe.concurrent("E2E: aidd global options", () => {
       const { stdout, exitCode } = await runCli(["--version"], projectDir);
 
       expect(exitCode).toBe(0);
-      expect(stdout).toMatch(/^aidd\/\d+\.\d+\.\d+ node\/\d+\.\d+\.\d+/);
+      expect(stdout).toMatch(/^aidd\/\d+\.\d+\.\d+(-[a-z0-9.]+)? node\/\d+\.\d+\.\d+/);
     } finally {
       await cleanup();
     }

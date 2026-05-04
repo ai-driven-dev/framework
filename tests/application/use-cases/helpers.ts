@@ -9,11 +9,16 @@ import "../../../src/domain/tools/ai/opencode.js";
 import "../../../src/domain/tools/ide/vscode.js";
 import { CLIOutput } from "../../../src/application/output.js";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
+import { InstallIdeConfigUseCase } from "../../../src/application/use-cases/install/install-ide-config-use-case.js";
+import { InstallMemoryStubUseCase } from "../../../src/application/use-cases/install/install-memory-stub-use-case.js";
+import { InstallRuntimeConfigUseCase } from "../../../src/application/use-cases/install/install-runtime-config-use-case.js";
 import { InstallUseCase } from "../../../src/application/use-cases/install/install-use-case.js";
 import type { Platform } from "../../../src/domain/ports/platform.js";
 import type { Prompter } from "../../../src/domain/ports/prompter.js";
 import type { VersionControl } from "../../../src/domain/ports/version-control.js";
+import type { VersionReader } from "../../../src/domain/ports/version-reader.js";
 import type { ToolId } from "../../../src/domain/tools/registry.js";
+import { CurrentVersionAdapter } from "../../../src/infrastructure/adapters/current-version-adapter.js";
 import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
 import { ManifestRepositoryAdapter } from "../../../src/infrastructure/adapters/manifest-repository-adapter.js";
@@ -187,6 +192,23 @@ export function buildDeps(projectRoot: string) {
   const pluginFetcher = new PluginFetcherAdapter(fs);
   const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
+  const installMemoryStubUseCase = new InstallMemoryStubUseCase(fs, hasher, logger, assetProvider);
+  const installRuntimeConfigUseCase = new InstallRuntimeConfigUseCase(
+    fs,
+    manifestRepo,
+    hasher,
+    logger,
+    assetProvider,
+    installMemoryStubUseCase
+  );
+  const installIdeConfigUseCase = new InstallIdeConfigUseCase(
+    fs,
+    manifestRepo,
+    hasher,
+    logger,
+    assetProvider
+  );
+  const currentVersionProvider: VersionReader = new CurrentVersionAdapter();
   return {
     hasher,
     fs,
@@ -196,6 +218,10 @@ export function buildDeps(projectRoot: string) {
     pluginFetcher,
     pluginDistributionReader,
     pluginCatalogRepository,
+    installRuntimeConfigUseCase,
+    installIdeConfigUseCase,
+    installMemoryStubUseCase,
+    currentVersionProvider,
   };
 }
 

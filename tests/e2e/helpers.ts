@@ -76,11 +76,12 @@ export async function initProject(
     deps.manifestRepo,
     deps.hasher,
     deps.logger,
-    deps.platform,
     deps.prompter,
-    deps.resolver,
+    deps.assetProvider,
+    deps.installRuntimeConfigUseCase,
+    deps.installIdeConfigUseCase,
     makeNoOpInstallFrameworkPlugins() as never,
-    deps.assetProvider
+    deps.currentVersionProvider
   ).execute({
     projectRoot: projectDir,
     path: frameworkPath,
@@ -101,10 +102,11 @@ export async function adoptProject(
     deps.manifestRepo,
     deps.hasher,
     deps.logger,
-    deps.platform,
     deps.prompter,
-    deps.resolver,
+    deps.assetProvider,
+    deps.installRuntimeConfigUseCase,
+    deps.installIdeConfigUseCase,
     makeNoOpInstallFrameworkPlugins() as never,
-    deps.assetProvider
+    deps.currentVersionProvider
   ).execute({ projectRoot: projectDir, path: frameworkPath, toolIds, from: frameworkPath });
 }

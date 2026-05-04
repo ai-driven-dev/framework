@@ -79,42 +79,6 @@ describe.concurrent("E2E: aidd setup", () => {
     }
   });
 
-  it("--docs-dir custom_docs uses the custom docs directory name", async () => {
-    const { projectDir, cleanup } = await createTestEnv("setup-docs-dir");
-    try {
-      const { stdout, exitCode } = await runCli(
-        ["setup", "--ai", "claude", "--path", FRAMEWORK_PATH, "--docs-dir", "custom_docs"],
-        projectDir
-      );
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("custom_docs");
-      expect(existsSync(join(projectDir, "custom_docs"))).toBe(true);
-      expect(existsSync(join(projectDir, "aidd_docs"))).toBe(false);
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("--release flag without --path triggers remote resolution and requires auth", async () => {
-    const { projectDir, cleanup } = await createTestEnv("setup-release");
-    try {
-      const fakeHome = join(projectDir, "fake-home");
-      await mkdir(fakeHome, { recursive: true });
-
-      const { stderr, exitCode } = await runCliNoAuth(
-        ["setup", "--ai", "claude", "--release", "v3.9.0"],
-        projectDir,
-        fakeHome
-      );
-
-      expect(exitCode).not.toBe(0);
-      expect(stderr).toMatch(/not authenticated|auth login/i);
-    } finally {
-      await cleanup();
-    }
-  });
-
   it("--from with adopt signals creates adopted state", async () => {
     const { projectDir, cleanup } = await createTestEnv("setup-from-adopt");
     try {

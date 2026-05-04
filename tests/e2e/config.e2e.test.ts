@@ -124,22 +124,6 @@ describe.concurrent("E2E: aidd config", () => {
         await cleanup();
       }
     });
-
-    it("returns custom docsDir after setup with --docs-dir", async () => {
-      const { projectDir, cleanup } = await createTestEnv("config-get-custom-docs");
-      try {
-        await runCli(
-          ["setup", "--ai", "claude", "--path", FRAMEWORK_PATH, "--docs-dir", "my_custom_docs"],
-          projectDir
-        );
-
-        const { stdout, exitCode } = await runCli(["config", "get", "docsDir"], projectDir);
-        expect(exitCode).toBe(0);
-        expect(stdout.trim()).toBe("my_custom_docs");
-      } finally {
-        await cleanup();
-      }
-    });
   });
 
   describe("config set", () => {

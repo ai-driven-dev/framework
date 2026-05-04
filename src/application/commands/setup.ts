@@ -7,8 +7,7 @@ import {
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
-import type { InstallToolResult } from "../use-cases/install/install-use-case.js";
-import { SetupUseCase } from "../use-cases/setup-use-case.js";
+import { SetupUseCase, type ToolInstallResult } from "../use-cases/setup-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 function resolveToolIds(
@@ -37,7 +36,7 @@ function resolveToolIds(
   return [...aiIds, ...ideIds] as ToolId[];
 }
 
-function displayInstall(output: CLIOutput, results: InstallToolResult[], verbose: boolean): void {
+function displayInstall(output: CLIOutput, results: ToolInstallResult[], verbose: boolean): void {
   const skipped = results.filter((r) => r.skipped);
   const installed = results.filter((r) => !r.skipped);
   for (const r of skipped) output.warn(`${r.toolId} is already installed.`);
@@ -60,9 +59,8 @@ export function registerSetupCommand(program: Command): void {
   program
     .command("setup")
     .description("Set up or update the project to a correct state")
-    .option("--path <path>", "Path to a local framework directory or tarball")
-    .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
-    .option("--docs-dir <dir>", "Documentation directory name (default: aidd_docs)")
+    .option("--path <path>", "Path to a local framework directory (local mode plugin install)")
+    .option("--release <tag>", "Specific framework release tag (e.g., v3.2.0)")
     .option("--ai <ids>", "Comma-separated AI tool IDs to install (e.g., claude,cursor)")
     .option("--ide <ids>", "Comma-separated IDE tool IDs to install (e.g., vscode)")
     .option("--all", "Install all available tools (AI + IDE)")
@@ -76,7 +74,6 @@ export function registerSetupCommand(program: Command): void {
       async (cmdOptions: {
         path?: string;
         release?: string;
-        docsDir?: string;
         ai?: string;
         ide?: string;
         all?: boolean;
@@ -110,12 +107,12 @@ export function registerSetupCommand(program: Command): void {
             deps.manifestRepo,
             deps.hasher,
             deps.logger,
-            deps.platform,
             deps.prompter,
-            deps.resolver,
-            deps.installFrameworkPluginsUseCase,
             deps.assetProvider,
-            deps.authReader,
+            deps.installRuntimeConfigUseCase,
+            deps.installIdeConfigUseCase,
+            deps.installFrameworkPluginsUseCase,
+            deps.currentVersionProvider,
             deps.marketplaceRegistry,
             deps.pluginCatalogRepository
           ).execute({
@@ -124,7 +121,6 @@ export function registerSetupCommand(program: Command): void {
             release: cmdOptions.release,
             repo,
             interactive,
-            docsDir: cmdOptions.docsDir,
             toolIds: rawToolIds,
             from: cmdOptions.from,
             mode: cmdOptions.mode as "local" | "remote" | undefined,
@@ -146,48 +142,24 @@ export function registerSetupCommand(program: Command): void {
               displayInstall(output, result.install.results, verbose);
               break;
             }
-
             case "adopted": {
               output.success(
                 `Adopted ${result.toolCount} tool(s) at version ${result.version}: ${result.totalRegistered} files registered`
               );
               break;
             }
-
             case "installed": {
               displayInstall(output, result.install.results, verbose);
               break;
             }
-
-            case "update-cancelled": {
-              output.info("Update cancelled.");
-              break;
-            }
-
-            case "updated": {
-              let msg = `Updated ${result.totalWritten} files, deleted ${result.totalDeleted} files across ${result.toolCount} tool(s)`;
-              if (result.pluginsUpdated > 0 || result.pluginsDeleted > 0) {
-                msg += ` (plugins: ${result.pluginsUpdated} updated, ${result.pluginsDeleted} deleted)`;
-              }
-              output.success(msg);
-              if (result.additionalInstall) {
-                displayInstall(output, result.additionalInstall.results, verbose);
-              }
-              break;
-            }
-
             case "up-to-date": {
-              if (result.hasAdditionalTools) {
-                output.info("All installed tools are up to date.");
-              } else {
-                output.info("Project is up to date.");
-              }
+              if (result.hasAdditionalTools) output.info("All installed tools are up to date.");
+              else output.info("Project is up to date.");
               if (result.additionalInstall) {
                 displayInstall(output, result.additionalInstall.results, verbose);
               }
               break;
             }
-
             case "mode-switched": {
               output.success(`Switched to ${result.newMode} mode.`);
               break;
