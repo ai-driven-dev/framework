@@ -3,10 +3,6 @@ import type { Hasher } from "../ports/hasher.js";
 import type { FileHash, InstallationFile } from "./file.js";
 import type { ConfigRef } from "./framework.js";
 
-// ── ConflictDecision ─────────────────────────────────────────────────────────
-
-export type ConflictDecision = "overwrite" | "skip" | "backup";
-
 // ── MergeStrategy ────────────────────────────────────────────────────────────
 
 export type PerKeyMergeStrategy = {
@@ -20,6 +16,10 @@ export type MergeStrategy = "none" | "framework-prime" | "user-prime" | PerKeyMe
 export function isPerKeyMergeStrategy(s: MergeStrategy): s is PerKeyMergeStrategy {
   return typeof s === "object" && s !== null;
 }
+
+// ── ConflictDecision ─────────────────────────────────────────────────────────
+
+export type ConflictDecision = "overwrite" | "skip" | "backup";
 
 // ── MergeFileEntry ───────────────────────────────────────────────────────────
 

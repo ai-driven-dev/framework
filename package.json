@@ -29,7 +29,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "knip:production": "knip --production",
+    "knip:production": "knip --production --exclude exports,types",
     "jscpd": "jscpd src/",
     "pack:local": "pnpm build && pnpm pack --pack-destination ./dist",
     "install:local": "pnpm run pack:local && npm install -g ./dist/ai-driven-dev-cli-$(node -p \"require('./package.json').version\").tgz --force",
