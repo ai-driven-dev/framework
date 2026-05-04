@@ -42,6 +42,11 @@ export class GitignoreUseCase {
 
     if (filtered === existing) return;
 
-    await this.fs.writeFile(gitignorePath, filtered);
+    const trimmed = filtered.replace(/^\n+|\n+$/g, "");
+    if (trimmed === "") {
+      await this.fs.deleteFile(gitignorePath);
+      return;
+    }
+    await this.fs.writeFile(gitignorePath, `${trimmed}\n`);
   }
 }

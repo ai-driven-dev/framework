@@ -18,6 +18,7 @@ export interface PluginEntryData {
   version: string;
   strict: boolean;
   files: Record<string, string>;
+  componentPaths?: Record<string, string>;
   marketplace?: string;
 }
 
@@ -27,6 +28,8 @@ export class Plugin {
   readonly version: string;
   readonly strict: boolean;
   readonly files: ReadonlyMap<string, string>;
+  /** Maps installedRelPath → plugin component path (e.g. rules/01-standards/naming.md) */
+  readonly componentPaths: ReadonlyMap<string, string>;
   readonly marketplace?: string;
 
   private constructor(params: {
@@ -35,6 +38,7 @@ export class Plugin {
     version: string;
     strict: boolean;
     files: ReadonlyMap<string, string>;
+    componentPaths: ReadonlyMap<string, string>;
     marketplace?: string;
   }) {
     this.name = params.name;
@@ -42,6 +46,7 @@ export class Plugin {
     this.version = params.version;
     this.strict = params.strict;
     this.files = params.files;
+    this.componentPaths = params.componentPaths;
     this.marketplace = params.marketplace;
   }
 
@@ -49,11 +54,16 @@ export class Plugin {
     dist: PluginDistribution,
     source: PluginSource,
     files: InstallationFile[],
+    componentPaths?: ReadonlyMap<string, string>,
     marketplace?: string
   ): Plugin {
     const filesRecord: Record<string, string> = {};
     for (const f of files) {
       filesRecord[f.relativePath] = f.hash.value;
+    }
+    const componentPathsRecord: Record<string, string> = {};
+    if (componentPaths) {
+      for (const [k, v] of componentPaths) componentPathsRecord[k] = v;
     }
     const data: PluginEntryData = {
       name: dist.manifest.name,
@@ -61,6 +71,7 @@ export class Plugin {
       version: dist.manifest.version,
       strict: dist.manifest.strict ?? false,
       files: filesRecord,
+      componentPaths: componentPathsRecord,
     };
     if (marketplace !== undefined) data.marketplace = marketplace;
     return Plugin.fromJSON(data);
@@ -75,12 +86,14 @@ export class Plugin {
     }
     const source = parsePluginSource(data.source);
     const files = new Map(Object.entries(data.files));
+    const componentPaths = new Map(Object.entries(data.componentPaths ?? {}));
     return new Plugin({
       name: data.name,
       source,
       version: data.version,
       strict: data.strict,
       files,
+      componentPaths,
       marketplace: data.marketplace,
     });
   }
@@ -90,12 +103,17 @@ export class Plugin {
     for (const [key, value] of this.files) {
       files[key] = value;
     }
+    const componentPaths: Record<string, string> = {};
+    for (const [key, value] of this.componentPaths) {
+      componentPaths[key] = value;
+    }
     const data: PluginEntryData = {
       name: this.name,
       source: serializePluginSource(this.source),
       version: this.version,
       strict: this.strict,
       files,
+      componentPaths,
     };
     if (this.marketplace !== undefined) data.marketplace = this.marketplace;
     return data;
@@ -112,6 +130,7 @@ export class Plugin {
       version: v,
       strict: this.strict,
       files: this.files,
+      componentPaths: this.componentPaths,
       marketplace: this.marketplace,
     });
   }
@@ -123,6 +142,7 @@ export class Plugin {
       version: this.version,
       strict: this.strict,
       files: f,
+      componentPaths: this.componentPaths,
       marketplace: this.marketplace,
     });
   }

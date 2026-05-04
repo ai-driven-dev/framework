@@ -23,11 +23,6 @@ export function registerCleanCommand(program: Command): void {
           interactive: process.stdout.isTTY,
         });
 
-        if (!result.manifestExisted) {
-          output.success("Nothing to clean. No AIDD installation found.");
-          return;
-        }
-
         if (result.dryRun) {
           output.print("The following will be removed:");
           for (const tool of result.preview.tools) {

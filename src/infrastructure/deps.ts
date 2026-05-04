@@ -273,7 +273,8 @@ export async function createDeps(
     fs,
     manifestRepo,
     marketplaceRegistry,
-    pluginCatalogRepository
+    pluginCatalogRepository,
+    hasher
   );
   const deps: Deps = {
     fs,

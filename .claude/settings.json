@@ -1,0 +1,16 @@
+{
+  "extraKnownMarketplaces": {
+    "local": {
+      "source": {
+        "source": "directory",
+        "path": "/tmp/aidd-map-iUENmv/market"
+      }
+    },
+    "aidd-framework": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/cli"
+      }
+    }
+  }
+}

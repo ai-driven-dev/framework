@@ -65,8 +65,7 @@ describe.concurrent("E2E: aidd update", () => {
     }
   });
 
-  // TODO: Plugin.frameworkPath gap — UpdateUseCase doesn't process framework plugins/ dir; needs PluginDistributionReader integration or post-1.E.7 rework
-  it.skip("applies added and changed files when updating to a newer framework", async () => {
+  it("applies added and changed files when updating to a newer framework", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
@@ -96,8 +95,7 @@ describe.concurrent("E2E: aidd update", () => {
     }
   });
 
-  // TODO: Plugin.frameworkPath gap — UpdateUseCase doesn't process framework plugins/ dir; needs PluginDistributionReader integration or post-1.E.7 rework
-  it.skip("removes files that no longer exist in the newer framework", async () => {
+  it("removes files that no longer exist in the newer framework", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
@@ -123,8 +121,7 @@ describe.concurrent("E2E: aidd update", () => {
     }
   });
 
-  // TODO: Plugin.frameworkPath gap — UpdateUseCase doesn't process framework plugins/ dir; needs PluginDistributionReader integration or post-1.E.7 rework
-  it.skip("creates a .backup when updating a user-modified file", async () => {
+  it("creates a .backup when updating a user-modified file", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
@@ -165,8 +162,7 @@ describe.concurrent("E2E: aidd update", () => {
     }
   });
 
-  // TODO: Plugin.frameworkPath gap — UpdateUseCase doesn't process framework plugins/ dir; needs PluginDistributionReader integration or post-1.E.7 rework
-  it.skip("does not write files with --dry-run but shows what would change", async () => {
+  it("does not write files with --dry-run but shows what would change", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
@@ -206,8 +202,7 @@ describe.concurrent("E2E: aidd update", () => {
     }
   });
 
-  // TODO: Plugin.frameworkPath gap — UpdateUseCase doesn't process framework plugins/ dir; needs PluginDistributionReader integration or post-1.E.7 rework
-  it.skip("overwrites conflicts without prompting with --force", async () => {
+  it("overwrites conflicts without prompting with --force", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
@@ -264,8 +259,7 @@ describe.concurrent("E2E: aidd update", () => {
     }
   });
 
-  // TODO: Plugin.frameworkPath gap — UpdateUseCase doesn't process framework plugins/ dir; needs PluginDistributionReader integration or post-1.E.7 rework
-  it.skip("--tool scope updates only the specified tool", async () => {
+  it("--tool scope updates only the specified tool", async () => {
     const { projectDir, cleanup } = await createTestEnv("update");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);

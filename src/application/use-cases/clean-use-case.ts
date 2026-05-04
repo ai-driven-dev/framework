@@ -11,6 +11,7 @@ import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import type { ToolId } from "../../domain/tools/registry.js";
+import { NoManifestError } from "../errors.js";
 import { GitignoreUseCase } from "./shared/gitignore-use-case.js";
 
 interface CleanOptions {
@@ -28,7 +29,6 @@ interface CleanResult {
   dryRun: boolean;
   preview: CleanPreview;
   fileCount: number;
-  manifestExisted: boolean;
 }
 
 export class CleanUseCase {
@@ -41,14 +41,7 @@ export class CleanUseCase {
 
   async execute(options: CleanOptions): Promise<CleanResult> {
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) {
-      return {
-        dryRun: false,
-        preview: { tools: [], totalFileCount: 0 },
-        fileCount: 0,
-        manifestExisted: false,
-      };
-    }
+    if (manifest === null) throw new NoManifestError();
 
     const tools = manifest.getInstalledToolIds().map((toolId) => ({
       toolId,
@@ -61,9 +54,9 @@ export class CleanUseCase {
     if (!options.force) {
       if (options.interactive && this.prompter) {
         const confirmed = await this.prompter.confirm("Remove all AIDD files?");
-        if (!confirmed) return { dryRun: true, preview, fileCount: 0, manifestExisted: true };
+        if (!confirmed) return { dryRun: true, preview, fileCount: 0 };
       } else {
-        return { dryRun: true, preview, fileCount: 0, manifestExisted: true };
+        return { dryRun: true, preview, fileCount: 0 };
       }
     }
 
@@ -92,7 +85,7 @@ export class CleanUseCase {
     await this.fs.deleteDirectory(join(options.projectRoot, AIDD_DIR));
     await new GitignoreUseCase(this.fs).remove(options.projectRoot, [`${AIDD_DIR}/cache/`]);
 
-    return { dryRun: false, preview, fileCount: deleted, manifestExisted: true };
+    return { dryRun: false, preview, fileCount: deleted };
   }
 
   private async cleanMergeFileKeys(

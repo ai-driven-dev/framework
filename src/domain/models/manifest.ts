@@ -329,6 +329,15 @@ export class Manifest {
     this._tools.set(toolId, { ...entry, excludedMcp: [] });
   }
 
+  updateTrackedFileHash(toolId: ToolId, relativePath: string, hash: FileHash): void {
+    const entry = this._tools.get(toolId);
+    if (!entry) return;
+    const updatedFiles = entry.files.map((f) =>
+      f.relativePath === relativePath ? { ...f, hash } : f
+    );
+    this._tools.set(toolId, { ...entry, files: updatedFiles });
+  }
+
   updateToolMergeFiles(
     toolId: ToolId,
     mergeFiles: MergeFileEntry[],

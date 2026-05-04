@@ -84,9 +84,16 @@ export class PluginAddUseCase {
   ): Promise<void> {
     const toolConfig = getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return;
-    const files = new PluginTranslator(this.hasher).translate(dist, toolConfig, docsDir);
+    const { files, componentPaths } = new PluginTranslator(this.hasher).translateWithComponentPaths(
+      dist,
+      toolConfig,
+      docsDir
+    );
     if (files.length === 0) return;
     await writePluginFiles(files, projectRoot, this.fs);
-    manifest.addPlugin(toolId, Plugin.fromDistribution(dist, source, files, marketplace));
+    manifest.addPlugin(
+      toolId,
+      Plugin.fromDistribution(dist, source, files, componentPaths, marketplace)
+    );
   }
 }

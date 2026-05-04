@@ -14,7 +14,6 @@ coverage/
 .specstory/
 
 # AIDD framework cache (downloaded framework versions)
-.aidd/cache/
 
 # Local overrides (e.g. .claude/ralph-loop.local.md)
 *.local.md

@@ -1,9 +1,9 @@
 # AIDD CLI — E2E Test Results
 
 > Reference: `tests/e2e/E2E_MAP.md`
-> Run date: 2026-04-29 (full pass with auth)
-> CLI version: aidd/4.0.0
-> Framework: main (local path + v3.9.1 release)
+> Run date: 2026-05-03 (real-env re-run post plugin-architecture refactor)
+> CLI version: aidd/4.1.0
+> Framework: main (local path, v3.9.1)
 
 ## Legend
 
@@ -19,8 +19,8 @@
 ## Environment
 
 ```
-CLI:       node /…/cli/dist/cli.js
-FRAMEWORK: /…/framework  (local) + ai-driven-dev/aidd-framework v3.9.1 (GitHub)
+CLI:       node /…/cli/dist/cli.js  (v4.1.0)
+FRAMEWORK: /…/framework  (local, v3.9.1, 4 plugins)
 OS:        darwin arm64
 Node:      25.8.0
 Auth:      gh CLI authenticated as blafourcade
@@ -333,3 +333,55 @@ Auth:      gh CLI authenticated as blafourcade
 | K5-opencode | OpenCode plugins are JS/TS modules — `hooks.json` approach incompatible by design | Expected |
 | K5-codex | Codex has native hooks but plugins don't expose them — by design | Expected |
 | I11/U6/UP7 | Interactive flows not covered (TTY required) | Expected (out of scope) |
+
+---
+
+## Real-env re-run — 2026-05-03 (plugin-architecture refactor)
+
+> New in v4.1.0: two distribution modes (`local` / `remote`). Default is `local`.
+> Local mode copies `./plugins/` from framework to project root.
+> Remote mode installs plugins per-tool under `.claude/plugins/`, `.cursor/plugins/`, etc.
+
+### Mode: local (default)
+
+| # | Scenario | Result | Notes |
+|---|----------|--------|-------|
+| L1 | `setup --path <fw> --ai claude` | ✅ | `./plugins/` with 4 dirs at project root, `CLAUDE.md`, `.aidd/manifest.json`, marketplace registered |
+| L2 | `plugins/aidd-context/`, `aidd-dev/`, `aidd-pm/`, `aidd-vcs/` present | ✅ | All 4 copied with full content (hooks, rules, agents, skills) |
+| L3 | `.claude-plugin/marketplace.json` created | ✅ | 4-plugin catalog pointing to `./plugins/*` |
+| L4 | `status` (clean state) | ✅ | "All files are in sync." |
+| L5 | `clean --force` | ✅ | All files removed. `.gitignore` deleted (not zeroed — see BUG-7 fix) |
+
+### Mode: remote
+
+| # | Scenario | Result | Notes |
+|---|----------|--------|-------|
+| R1 | `setup --path <fw> --ai claude --mode remote` | ✅ | `CLAUDE.md`, `.claude/settings.json`, marketplace registered, exit 0 |
+| R2 | Plugins NOT auto-installed on setup | ✅ | Expected — "Run `aidd plugin pick` to install plugins." message shown |
+| R3 | `install ai cursor --path <fw>` (after claude remote setup) | ✅ | `.cursor/` dir + all 4 plugins in `.cursor/plugins/` |
+| R4 | `plugin add <fw>/plugins/aidd-dev --tool claude` | ✅ | `.claude/plugins/aidd-dev/` created, `plugin list --tool claude` shows `aidd-dev@1.0.0` |
+| R5 | `plugin install aidd-dev --tool claude` (from auto-registered GitHub marketplace) | ❌ | GitHub API skips `.claude-plugin/` (hidden dir) — `marketplace.json` not fetched. Workaround: use `marketplace add <name> <local-path>` |
+| R6 | `marketplace add local-fw <fw> --name local-fw` → `plugin install aidd-dev` | ✅ | Installs from local path marketplace |
+| R7 | `marketplace browse aidd-framework` (GitHub source) | ❌ | "marketplace.json not found" — same hidden dir issue |
+| R8 | `marketplace browse local-fw` (local path) | ✅ | Lists 4 plugins with name/description/version |
+| R9 | `update --path <fw>` (clean state) | ✅ | "Already up to date (v3.9.1)" |
+| R10 | Modify `CLAUDE.md` → `update --path <fw> --force` | ✅ | File restored, `.bak` backup created |
+| R11 | `uninstall ai claude` | ✅ | `CLAUDE.md` removed, manifest cleared. `settings.json` retained (untracked — expected) |
+| R12 | `setup --ai claude,cursor --mode remote` → sync | ✅ | Both tools installed. `sync --source claude --force` propagates plugin file change to cursor |
+| R13 | `clean --force` | ✅ | `CLAUDE.md` removed, `.aidd/` deleted, `.gitignore` deleted cleanly |
+
+### Bug fixes found during this run
+
+| ID | Bug | Status |
+|----|-----|--------|
+| BUG-7 | `clean --force` zeroed `.gitignore` (0 bytes) when `.aidd/cache/` was only entry — `GitignoreUseCase.remove()` wrote empty string instead of deleting | ✅ Fixed — `remove()` now deletes file when result is empty after filtering |
+| BUG-update-plugin-scope | `updatePluginsForTool` reinstalled plugins for ALL installed AI tools instead of target tool only (UP8 scope) | ✅ Fixed — `toolConfigs: [getToolConfig(toolId)]` |
+| BUG-update-false-uptodate | `update` always returned "Already up to date" after plugin-architecture refactor — empty MCP manifest entries + no regular framework files = no diff detected | ✅ Fixed — `markPluginDiffs()` detects catalog source path changes and overrides `alreadyUpToDate` |
+| BUG-update-plugin-skip | Plugin reinstall ran even when sources matched (same v→v) | ✅ Fixed — `markPluginDiffs()` returns change map; `executeInternal()` filters to changed tools only |
+
+### Remaining open issues (new)
+
+| ID | Issue | Severity |
+|----|-------|----------|
+| MKTPL-1 | `marketplace browse` / `plugin install` fail for GitHub-sourced marketplace — GitHub API skips hidden dirs (`.claude-plugin/marketplace.json` unreachable) | Medium |
+| STATUS-1 | `status` omits tools with no drift — cursor with 0 modified files not shown; only tools with changes appear | Low (UX) |

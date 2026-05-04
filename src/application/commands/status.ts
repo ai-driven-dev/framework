@@ -51,7 +51,10 @@ export function registerStatusCommand(program: Command): void {
         }
 
         for (const tool of report.tools) {
-          if (tool.drifted.length === 0) continue;
+          if (tool.drifted.length === 0) {
+            output.print(`\n${tool.toolId} (v${tool.version}): in sync`);
+            continue;
+          }
           output.print(`\n${tool.toolId} (v${tool.version}):`);
           for (const file of tool.drifted) {
             output.print(`  ${STATUS_SYMBOL[file.status]} ${file.relativePath}`);

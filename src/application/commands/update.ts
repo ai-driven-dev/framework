@@ -46,7 +46,10 @@ export function registerUpdateCommand(program: Command): void {
             deps.logger,
             deps.platform,
             deps.prompter,
-            deps.assetProvider
+            deps.assetProvider,
+            deps.pluginFetcher,
+            deps.pluginDistributionReader,
+            deps.pluginCatalogRepository
           );
 
           const result = await updateUseCase.execute({

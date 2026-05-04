@@ -86,7 +86,11 @@ export class InstallPluginsUseCase {
     docsDir: string,
     force: boolean
   ): Promise<string[]> {
-    const files = new PluginTranslator(this.hasher).translate(dist, toolConfig, docsDir);
+    const { files, componentPaths } = new PluginTranslator(this.hasher).translateWithComponentPaths(
+      dist,
+      toolConfig,
+      docsDir
+    );
     if (files.length === 0) return [];
     if (!isAiTool(toolConfig)) {
       await this.writeFiles(files, projectRoot, manifest);
@@ -98,7 +102,7 @@ export class InstallPluginsUseCase {
       .find((p) => p.name === pluginName);
     if (existingPlugin && !force) return [];
     const { written, conflicts } = await this.writeFiles(files, projectRoot, manifest);
-    const plugin = Plugin.fromDistribution(dist, source, written);
+    const plugin = Plugin.fromDistribution(dist, source, written, componentPaths);
     if (existingPlugin) {
       await this.deleteStaleFiles(existingPlugin, written, projectRoot);
       manifest.updatePlugin(toolConfig.toolId, plugin);

@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { PluginNotFoundError } from "../../../domain/errors.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../domain/formats/markdown.js";
+import type { Plugin } from "../../../domain/models/plugin.js";
 import { SyncPolicy } from "../../../domain/models/sync-policy.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import { AI_TOOL_IDS } from "../../../domain/models/tool-ids.js";
@@ -153,6 +154,14 @@ function buildTargetPath(
   return caps.skills.buildInstallPath(sectionKey.key);
 }
 
+function buildReverseComponentMap(plugin: Plugin): Map<string, string> {
+  const rev = new Map<string, string>();
+  for (const [installPath, componentPath] of plugin.componentPaths) {
+    rev.set(componentPath, installPath);
+  }
+  return rev;
+}
+
 export class SyncUseCase {
   constructor(
     private readonly fs: FileSystem,
@@ -291,6 +300,22 @@ export class SyncUseCase {
       projectRoot,
       docsDir,
     });
+    await this.propagatePluginsModified(
+      sourceConfig,
+      targetConfig,
+      manifest,
+      fileResults,
+      projectRoot,
+      docsDir,
+      force
+    );
+    await this.propagatePluginsDeleted(
+      sourceConfig,
+      targetConfig,
+      manifest,
+      fileResults,
+      projectRoot
+    );
     return { targetToolId, files: fileResults };
   }
 
@@ -319,7 +344,7 @@ export class SyncUseCase {
     const installedToolIds = manifest.getInstalledToolIds();
 
     if (installedToolIds.length < 2) {
-      throw new InputRequiredError("Sync requires at least 2 installed tools.");
+      return { sourceTool, targetTools: [] };
     }
 
     const targetTools =
@@ -458,6 +483,127 @@ export class SyncUseCase {
       totalConflicts: count((f) => f.conflict && !f.written),
       totalSkipped: count((f) => f.skipped),
     };
+  }
+
+  private async propagatePluginsModified(
+    sourceConfig: AiTool<unknown>,
+    targetConfig: AiTool<unknown>,
+    manifest: Awaited<ReturnType<ManifestRepository["load"]>> & object,
+    fileResults: SyncFileResult[],
+    projectRoot: string,
+    docsDir: string,
+    force: boolean
+  ): Promise<void> {
+    const sourcePlugins = manifest.getPlugins(sourceConfig.toolId);
+    const targetPlugins = manifest.getPlugins(targetConfig.toolId);
+    for (const srcPlugin of sourcePlugins) {
+      const tgtPlugin = targetPlugins.find((p) => p.name === srcPlugin.name);
+      if (tgtPlugin === undefined) continue;
+      const targetByComponent = buildReverseComponentMap(tgtPlugin);
+      for (const [srcRelPath, manifestHash] of srcPlugin.files) {
+        await this.propagateOnePluginModified(
+          srcRelPath,
+          manifestHash,
+          srcPlugin,
+          targetByComponent,
+          sourceConfig,
+          targetConfig,
+          fileResults,
+          projectRoot,
+          docsDir,
+          force
+        );
+      }
+    }
+  }
+
+  private async propagateOnePluginModified(
+    srcRelPath: string,
+    manifestHash: string,
+    srcPlugin: Plugin,
+    targetByComponent: Map<string, string>,
+    sourceConfig: AiTool<unknown>,
+    targetConfig: AiTool<unknown>,
+    fileResults: SyncFileResult[],
+    projectRoot: string,
+    docsDir: string,
+    force: boolean
+  ): Promise<void> {
+    const componentPath = srcPlugin.componentPaths.get(srcRelPath);
+    if (componentPath === undefined) return;
+    const sectionKey = getSectionKeyFromFrameworkPath(componentPath);
+    if (sectionKey === null) return;
+    const tgtRelPath = targetByComponent.get(componentPath);
+    if (tgtRelPath === undefined) return;
+    const diskSrcPath = join(projectRoot, srcRelPath);
+    if (!(await this.fs.fileExists(diskSrcPath))) return;
+    const diskHash = await this.fs.readFileHash(diskSrcPath);
+    if (diskHash.value === manifestHash) return;
+    const srcContent = await this.fs.readFile(diskSrcPath);
+    const tgtContent = transformContent(
+      srcContent,
+      sourceConfig,
+      targetConfig,
+      sectionKey,
+      docsDir
+    );
+    const diskTgtPath = join(projectRoot, tgtRelPath);
+    if (
+      (await this.fs.fileExists(diskTgtPath)) &&
+      (await this.fs.readFile(diskTgtPath)) === tgtContent
+    ) {
+      fileResults.push({
+        relativePath: tgtRelPath,
+        conflict: false,
+        skipped: true,
+        written: false,
+      });
+      return;
+    }
+    if (!force && (await this.fs.fileExists(diskTgtPath))) {
+      fileResults.push({
+        relativePath: tgtRelPath,
+        conflict: true,
+        skipped: false,
+        written: false,
+      });
+      return;
+    }
+    await this.fs.writeFile(diskTgtPath, tgtContent);
+    fileResults.push({ relativePath: tgtRelPath, conflict: false, skipped: false, written: true });
+  }
+
+  private async propagatePluginsDeleted(
+    sourceConfig: AiTool<unknown>,
+    targetConfig: AiTool<unknown>,
+    manifest: Awaited<ReturnType<ManifestRepository["load"]>> & object,
+    fileResults: SyncFileResult[],
+    projectRoot: string
+  ): Promise<void> {
+    const sourcePlugins = manifest.getPlugins(sourceConfig.toolId);
+    const targetPlugins = manifest.getPlugins(targetConfig.toolId);
+    for (const srcPlugin of sourcePlugins) {
+      const tgtPlugin = targetPlugins.find((p) => p.name === srcPlugin.name);
+      if (tgtPlugin === undefined) continue;
+      const targetByComponent = buildReverseComponentMap(tgtPlugin);
+      for (const [srcRelPath] of srcPlugin.files) {
+        if (await this.fs.fileExists(join(projectRoot, srcRelPath))) continue;
+        const componentPath = srcPlugin.componentPaths.get(srcRelPath);
+        if (componentPath === undefined) continue;
+        const tgtRelPath = targetByComponent.get(componentPath);
+        if (tgtRelPath === undefined) continue;
+        const diskTgtPath = join(projectRoot, tgtRelPath);
+        if (!(await this.fs.fileExists(diskTgtPath))) continue;
+        await this.fs.deleteFile(diskTgtPath);
+        fileResults.push({
+          relativePath: tgtRelPath,
+          conflict: false,
+          skipped: false,
+          written: false,
+          deleted: true,
+        });
+      }
+    }
   }
 
   private async propagateModified(ctx: PropagateModifiedCtx): Promise<void> {

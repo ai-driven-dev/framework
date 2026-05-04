@@ -105,9 +105,14 @@ export class PluginUpdateUseCase {
   ): Promise<void> {
     await this.deleteOldFiles(plugin.files, projectRoot);
     const toolConfig = getToolConfig(toolId);
-    const newFiles = new PluginTranslator(this.hasher).translate(dist, toolConfig, docsDir);
+    const { files: newFiles, componentPaths } = new PluginTranslator(
+      this.hasher
+    ).translateWithComponentPaths(dist, toolConfig, docsDir);
     await writePluginFiles(newFiles, projectRoot, this.fs);
-    manifest.updatePlugin(toolId, Plugin.fromDistribution(dist, plugin.source, newFiles));
+    manifest.updatePlugin(
+      toolId,
+      Plugin.fromDistribution(dist, plugin.source, newFiles, componentPaths)
+    );
   }
 
   private async deleteOldFiles(

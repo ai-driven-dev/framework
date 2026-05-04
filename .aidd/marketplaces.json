@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "marketplaces": [
+    {
+      "name": "market-a",
+      "source": {
+        "kind": "local",
+        "path": "/tmp/aidd-map-EoPg2v/market-a"
+      },
+      "scope": "project",
+      "addedAt": "2026-05-03T05:00:31.873Z"
+    },
+    {
+      "name": "market-b",
+      "source": {
+        "kind": "local",
+        "path": "/tmp/aidd-map-EoPg2v/market-b"
+      },
+      "scope": "project",
+      "addedAt": "2026-05-03T05:00:34.833Z"
+    },
+    {
+      "name": "framework",
+      "source": {
+        "kind": "local",
+        "path": "/tmp/aidd-map-Yg7EMU/market"
+      },
+      "scope": "project",
+      "addedAt": "2026-05-03T05:00:43.849Z"
+    },
+    {
+      "name": "mymarket",
+      "source": {
+        "kind": "local",
+        "path": "/tmp/aidd-map-rqHyPh/market"
+      },
+      "scope": "project",
+      "addedAt": "2026-05-03T05:01:05.055Z"
+    },
+    {
+      "name": "another",
+      "source": {
+        "kind": "local",
+        "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/cli/tests/fixtures/framework"
+      },
+      "scope": "project",
+      "addedAt": "2026-05-03T05:02:30.260Z"
+    }
+  ]
+}

@@ -35,17 +35,8 @@ Reference for what files must exist on disk after install + plugin install. Use 
   manifest.json
   marketplaces.json
 .claude/
-  rules/
-    00-architecture/.gitkeep
-    01-standards/.gitkeep
-    02-programming-languages/.gitkeep
-    03-frameworks-and-libraries/.gitkeep
-    04-tooling/ide-mapping.md          ← only non-empty rule from framework
-    05-testing/.gitkeep
-    06-design-patterns/.gitkeep
-    07-quality/.gitkeep
-    08-domain/.gitkeep
-    09-other/.gitkeep
+  settings.json                        ← marketplace settings (extraKnownMarketplaces, enabledPlugins)
+CLAUDE.md                              ← memory file at project root
 .gitignore
 aidd_docs/
   README.md
@@ -59,26 +50,26 @@ aidd_docs/
 
 ```
 .claude/plugins/aidd-context/
-  .claude-plugin/plugin.json
+  plugin.json                          ← plugin manifest at plugin root
   hooks/
     hooks.json                         ← SessionStart hook
     update_memory.js                   ← companion script
   skills/
-    [1.1] project-init/SKILL.md + actions/ + assets/
-    [1.2] architecture-generate/SKILL.md + actions/
-    [1.3] context-generate/SKILL.md + actions/ + assets/ + evals/ + references/ + scripts/
-    [1.4] brainstorm/SKILL.md + actions/
-    [1.5] challenge/SKILL.md + actions/
-    [1.6] mermaid/SKILL.md + actions/ + references/
-    [1.7] learn/SKILL.md + actions/ + assets/
-    [1.8] discovery/SKILL.md + actions/
+    02-project-init/SKILL.md + actions/ + assets/
+    03-architecture-generate/SKILL.md + actions/
+    04-context-generate/SKILL.md + actions/ + assets/ + evals/ + references/ + scripts/
+    05-brainstorm/SKILL.md + actions/
+    06-challenge/SKILL.md + actions/
+    07-mermaid/SKILL.md + actions/ + references/
+    08-learn/SKILL.md + actions/ + assets/
+    09-discovery/SKILL.md + actions/
 ```
 
 **After `plugin install aidd-dev --tool claude`:**
 
 ```
 .claude/plugins/aidd-dev/
-  .claude-plugin/plugin.json
+  plugin.json                          ← plugin manifest at plugin root
   .mcp.json                            ← Claude MCP format (mcpServers: {})
   agents/
     alexia.md
@@ -87,35 +78,35 @@ aidd_docs/
     kent.md
     martin.md
   skills/
-    [2.0] sdlc/SKILL.md + actions/
-    [2.1] plan/SKILL.md + actions/ + assets/
-    [2.2] assert/SKILL.md + actions/
-    [2.3] audit/SKILL.md + actions/
-    [2.4] review/SKILL.md + actions/ + assets/
-    [2.5] test/SKILL.md + actions/
-    [2.6] refactor/SKILL.md + actions/
-    [2.7] debug/SKILL.md + actions/
-    [2.8] for-sure/SKILL.md + actions/ + assets/
+    00-sdlc/SKILL.md + actions/
+    01-plan/SKILL.md + actions/ + assets/
+    02-assert/SKILL.md + actions/
+    03-audit/SKILL.md + actions/
+    04-review/SKILL.md + actions/ + assets/
+    05-test/SKILL.md + actions/
+    06-refactor/SKILL.md + actions/
+    07-debug/SKILL.md + actions/
+    08-for-sure/SKILL.md + actions/ + assets/
 ```
 
 **After `plugin install aidd-vcs --tool claude`:**
 
 ```
 .claude/plugins/aidd-vcs/
-  .claude-plugin/plugin.json
+  plugin.json                          ← plugin manifest at plugin root
   skills/
-    [3.1] commit/SKILL.md + actions/ + assets/
-    [3.2] pull-request/SKILL.md + actions/ + assets/
-    [3.3] release-tag/SKILL.md + actions/ + assets/
-    [3.4] issue-create/SKILL.md + actions/ + assets/
+    01-commit/SKILL.md + actions/ + assets/
+    02-pull-request/SKILL.md + actions/ + assets/
+    03-release-tag/SKILL.md + actions/ + assets/
+    04-issue-create/SKILL.md + actions/ + assets/
 ```
 
 **Key assertions:**
 - Plugin dir: `.claude/plugins/<name>/`
-- Plugin manifest: `.claude-plugin/plugin.json` inside plugin dir
+- Plugin manifest: `plugin.json` at root of plugin dir (not in a subdirectory)
 - MCP file: `.mcp.json` (root of plugin dir, NOT project root)
 - Hooks: `hooks/hooks.json` + any `hooks/*.js` companion scripts
-- Skills: bracket-named dirs `[X.Y] name/` preserved exactly
+- Skills: numeric prefix dirs `NN-name/` (e.g. `00-sdlc/`, `01-plan/`)
 - Agents: `.md` files directly in `agents/`
 
 ---
@@ -140,7 +131,7 @@ aidd_docs/
 
 ```
 .cursor/plugins/aidd-dev/
-  .cursor-plugin/plugin.json           ← cursor plugin manifest
+  plugin.json                          ← cursor plugin manifest at plugin root
   mcp.json                             ← cursor MCP format (NOT .mcp.json)
   agents/
     alexia.md
@@ -149,7 +140,7 @@ aidd_docs/
     kent.md
     martin.md
   skills/
-    [2.0] sdlc/SKILL.md + ...
+    00-sdlc/SKILL.md + ...
     ...
 ```
 
@@ -157,18 +148,18 @@ aidd_docs/
 
 ```
 .cursor/plugins/aidd-context/
-  .cursor-plugin/plugin.json
+  plugin.json
   hooks/
     hooks.json                         ← cursor DOES support hooks
     update_memory.js
   skills/
-    [1.1] project-init/...
+    02-project-init/...
     ...
 ```
 
 **Key assertions vs Claude:**
 - Plugin dir: `.cursor/plugins/<name>/` (not `.claude/plugins/`)
-- Plugin manifest: `.cursor-plugin/plugin.json`
+- Plugin manifest: `plugin.json` at root of plugin dir
 - MCP: `mcp.json` (no leading dot, different from Claude's `.mcp.json`)
 - Rules: `.mdc` extension instead of `.md`
 - Hooks: supported, same structure as Claude
@@ -258,13 +249,13 @@ aidd_docs/
 
 ```
 .codex/plugins/aidd-dev/
-  .codex-plugin/plugin.json
+  plugin.json
   config.toml                                ← TOML MCP format (mcp_servers = [])
   agents/
     alexia.codex.md                          ← TOML frontmatter format
     ...
   skills/
-    [2.0] sdlc/SKILL.md + ...
+    00-sdlc/SKILL.md + ...
 ```
 
 **Key assertions vs Claude:**
@@ -272,7 +263,7 @@ aidd_docs/
 - MCP: `config.toml` with `mcp_servers` array (TOML, not JSON)
 - Agents: TOML-formatted content
 - Hooks: `.codex/hooks.json` (project-level, merged — not in plugin dir)
-- Plugin manifest: `.codex-plugin/plugin.json`
+- Plugin manifest: `plugin.json` at root of plugin dir
 
 ---
 
@@ -306,8 +297,8 @@ When the same plugin (`aidd-dev`) is installed for both claude and cursor, the t
 | `.mcp.json` | `.claude/plugins/aidd-dev/.mcp.json` | `.cursor/plugins/aidd-dev/mcp.json` |
 | `hooks/hooks.json` | ❌ skipped (claude no hooks) | `.cursor/plugins/aidd-dev/hooks/hooks.json` (cursor format: camelCase events) |
 | `hooks/update_memory.js` | ❌ skipped | `.cursor/plugins/aidd-dev/hooks/update_memory.js` |
-| `skills/[2.0] sdlc/SKILL.md` | `.claude/plugins/aidd-dev/skills/[2.0] sdlc/SKILL.md` | `.cursor/plugins/aidd-dev/skills/[2.0] sdlc/SKILL.md` |
-| `.claude-plugin/plugin.json` | `.claude/plugins/aidd-dev/.claude-plugin/plugin.json` | `.cursor/plugins/aidd-dev/.cursor-plugin/plugin.json` |
+| `skills/00-sdlc/SKILL.md` | `.claude/plugins/aidd-dev/skills/00-sdlc/SKILL.md` | `.cursor/plugins/aidd-dev/skills/00-sdlc/SKILL.md` |
+| `plugin.json` | `.claude/plugins/aidd-dev/plugin.json` | `.cursor/plugins/aidd-dev/plugin.json` |
 
 ---
 
@@ -398,7 +389,7 @@ Generates tool-specific distributions from the framework.
 | I12 | `install ai claude --path <fw> --mcp playwright` | Only playwright MCP installed |
 | I13 | `install ai claude --path <fw> --plugins aidd-dev` | Specific plugin installed alongside |
 | I14 | `install ai claude --path <fw> --all-plugins` | All catalog plugins installed |
-| I15 | `install ai claude` (no `--path`, no `--release`, no manifest) | Error: no framework source |
+| I15 | `install ai claude` (no `--path`, no `--release`, no manifest) | Fetches latest from default public GitHub repo (no auth needed for public repos) |
 | I16 | `install ai claude --release v3.9.0` (no auth) | Error: authentication required |
 | I17 | `install ai claude --plugins x --all-plugins` | Error: mutually exclusive flags |
 
@@ -438,7 +429,6 @@ Updates installed files to latest framework version.
 | `-f, --force` | boolean | false | Overwrite conflicting files |
 | `--dry-run` | boolean | false | Preview without writing |
 | `--tool <tool>` | string | — | Limit to one tool |
-| `--docs` | boolean | false | Limit to docs only |
 | `--path <path>` | string | — | Local framework override |
 | `--release <tag>` | string | — | GitHub release override |
 
@@ -450,8 +440,7 @@ Updates installed files to latest framework version.
 | UP2 | `update --path <fw2>` (newer framework) | Changed files updated, new files added |
 | UP3 | `update --dry-run --path <fw2>` | Shows diff, no writes |
 | UP4 | `update --tool claude --path <fw2>` | Only claude updated |
-| UP5 | `update --docs --path <fw2>` | Only `aidd_docs/` updated |
-| UP6 | `update --tool claude --docs` | Error: mutually exclusive |
+| UP5 | `update --docs --path <fw2>` | Error: unknown option |
 | UP7 | Modified user file conflicts with update | Prompts to overwrite or skip |
 | UP8 | Modified user file + `--force` | Overwrites without prompt |
 | UP9 | `update --release v3.9.0` (no auth) | Error: authentication required |
@@ -467,7 +456,6 @@ Restores files to their framework version (undoes user modifications).
 | `[files...]` | positional | — | Specific relative file paths |
 | `-f, --force` | boolean | false | No prompt |
 | `--tool <tool>` | string | — | Limit to one tool |
-| `--docs` | boolean | false | Limit to docs |
 | `--path <path>` | string | — | Local framework source |
 | `--release <tag>` | string | — | GitHub release source |
 | `--plugin <name>` | string | — | Restore specific plugin |
@@ -481,8 +469,7 @@ Restores files to their framework version (undoes user modifications).
 | R3 | Deleted tracked file → `restore` | File recreated |
 | R4 | `restore .claude/rules/04-tooling/ide-mapping.md` | Only that file restored |
 | R5 | `restore --tool claude` | Only claude files checked |
-| R6 | `restore --docs` | Only `aidd_docs/` files checked |
-| R7 | `restore --tool claude --docs` | Error: mutually exclusive |
+| R6 | `restore --docs` | Error: unknown option |
 | R8 | `restore --plugin aidd-dev` | Plugin files re-fetched and written |
 | R9 | `restore` in non-interactive mode (no `--force`) | Error: use `--force` |
 | R10 | `restore --path <fw>` (same version) | Restores from local path |
@@ -496,7 +483,6 @@ Shows drift between disk and manifest.
 | Option | Type | Default | Notes |
 |--------|------|---------|-------|
 | `[category]` | positional | — | `ai` or `ide` |
-| `--docs` | boolean | false | Show only docs status |
 | `--plugin <name>` | string | — | Filter to one plugin |
 
 ### Test cases
@@ -509,7 +495,7 @@ Shows drift between disk and manifest.
 | ST4 | User-added file → `status` | Not shown (not tracked) |
 | ST5 | `status ai` | Only AI tool files shown |
 | ST6 | `status ide` | Only IDE tool files shown |
-| ST7 | `status --docs` | Only docs drift shown |
+| ST7 | `status --docs` | Error: unknown option |
 | ST8 | `status --plugin aidd-dev` | Only plugin files shown |
 | ST9 | `status` with no manifest | Error: not initialized |
 
@@ -665,8 +651,8 @@ Manages plugin marketplaces.
 
 | Argument/Option | Type | Required | Notes |
 |---------|------|----------|-------|
-| `<source>` | positional | Yes | Local path or GitHub repo |
-| `--name <slug>` | string | Yes | Marketplace identifier |
+| `[name]` | positional | No | Marketplace identifier (prompted if omitted) |
+| `[source]` | positional | No | Local path or GitHub repo (prompted if omitted) |
 | `--user` | boolean | No | Register at user scope |
 | `--yes` | boolean | No | Skip prompts |
 | `--overwrite` | boolean | No | Replace existing same-name |
@@ -702,8 +688,8 @@ No options.
 
 | # | Scenario | Expected |
 |---|----------|----------|
-| M1 | `marketplace add /path/to/fw --name myfw --yes` | Registered, scope: project |
-| M2 | `marketplace add /path/to/fw --name myfw --user --yes` | Registered, scope: user |
+| M1 | `marketplace add myfw /path/to/fw --yes` | Registered, scope: project |
+| M2 | `marketplace add myfw /path/to/fw --user --yes` | Registered, scope: user |
 | M3 | `marketplace list` | Shows all registered marketplaces |
 | M4 | `marketplace remove myfw --yes` | Removed, installed plugins orphan-cleaned |
 | M5 | `marketplace browse myfw` | Lists plugins with name/description/recommended |
@@ -711,11 +697,11 @@ No options.
 | M7 | `marketplace refresh myfw` | Only `myfw` refreshed |
 | M8 | `marketplace check` (all fresh) | "All marketplaces fresh" |
 | M9 | `marketplace check` (stale) | Lists stale marketplaces |
-| M10 | `marketplace add /path --name myfw --yes` twice | Error: already exists |
-| M11 | `marketplace add /path --name myfw --overwrite --yes` | Replaces existing |
-| M12 | `marketplace add /bad/path --name x --yes` | Error: path not found |
+| M10 | `marketplace add myfw /path --yes` twice | Error: already exists |
+| M11 | `marketplace add myfw /path --overwrite --yes` | Replaces existing |
+| M12 | `marketplace add x /bad/path --yes` | Error: path not found |
 | M13 | `marketplace browse nonexistent` | Error: marketplace not registered |
-| M14 | Auto-register: `setup --path <fw>` | `framework` marketplace auto-registered |
+| M14 | Auto-register: `setup --path <fw>` | `aidd-framework` marketplace auto-registered |
 
 ---
 
@@ -785,11 +771,11 @@ Manages plugins for AI tools.
 | P5 | `plugin list --tool claude` | Only claude plugins |
 | P6 | `plugin install aidd-dev --tool claude` | Fetched from registered marketplace |
 | P7 | `plugin install aidd-dev` (matches 2 marketplaces) | Error: use `--from` |
-| P8 | `plugin install aidd-dev --from framework --tool claude` | Installs from `framework` marketplace |
+| P8 | `plugin install aidd-dev --from aidd-framework --tool claude` | Installs from `aidd-framework` marketplace |
 | P9 | `plugin install nonexistent --tool claude` | Error: plugin not found |
 | P10 | `plugin search sdlc` | Lists matching plugins from all marketplaces |
 | P11 | `plugin search sdlc --recommended` | Only recommended results |
-| P12 | `plugin search sdlc --marketplace framework` | Only from `framework` marketplace |
+| P12 | `plugin search sdlc --marketplace aidd-framework` | Only from `aidd-framework` marketplace |
 | P13 | `plugin update aidd-dev --tool claude` | Re-fetches plugin, overwrites files |
 | P14 | `plugin update` (all plugins) | Updates all for all tools |
 | P15 | `plugin remove aidd-dev --tool claude` | Plugin files deleted, manifest updated |

@@ -132,6 +132,7 @@ export function registerSetupCommand(program: Command): void {
           const registrationResult = await deps.marketplaceRegisterFrameworkUseCase.execute({
             projectRoot,
             force: result.kind === "mode-switched",
+            frameworkPath: cmdOptions.path,
           });
 
           await deps.marketplaceRefreshUseCase.execute({ projectRoot });

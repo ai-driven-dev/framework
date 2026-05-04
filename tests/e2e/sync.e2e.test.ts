@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
@@ -114,15 +114,22 @@ describe.concurrent("E2E: aidd sync", () => {
     }
   });
 
-  // TODO: Plugin.frameworkPath gap — plugin files have no frameworkPath, cross-tool sync impossible without model change
-  it.skip("syncs a modified rule file from claude to cursor", async () => {
+  it("syncs a modified rule file from claude to cursor", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "ai", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
-      const claudeNamingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
+      const claudeNamingPath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.md"
+      );
       await writeFile(claudeNamingPath, "# Custom naming rules\nmodified content", "utf-8");
 
       const { stdout, exitCode } = await runCli(
@@ -133,7 +140,15 @@ describe.concurrent("E2E: aidd sync", () => {
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Synced");
 
-      const cursorNamingPath = join(projectDir, ".cursor", "rules", "01-standards", "naming.mdc");
+      const cursorNamingPath = join(
+        projectDir,
+        ".cursor",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.mdc"
+      );
       const cursorContent = await readFile(cursorNamingPath, "utf-8");
       expect(cursorContent).toContain("Custom naming rules");
     } finally {
@@ -141,15 +156,22 @@ describe.concurrent("E2E: aidd sync", () => {
     }
   });
 
-  // TODO: Plugin.frameworkPath gap — plugin files have no frameworkPath, cross-tool sync impossible without model change
-  it.skip("propagates deletion from source to target", async () => {
+  it("propagates deletion from source to target", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "ai", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
-      const claudeNamingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
+      const claudeNamingPath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.md"
+      );
       await rm(claudeNamingPath, { force: true });
 
       const { stdout, exitCode } = await runCli(
@@ -160,15 +182,22 @@ describe.concurrent("E2E: aidd sync", () => {
       expect(exitCode).toBe(0);
       expect(stdout).toContain("deleted");
 
-      const cursorNamingPath = join(projectDir, ".cursor", "rules", "01-standards", "naming.mdc");
+      const cursorNamingPath = join(
+        projectDir,
+        ".cursor",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.mdc"
+      );
       expect(existsSync(cursorNamingPath)).toBe(false);
     } finally {
       await cleanup();
     }
   });
 
-  // TODO: Plugin.frameworkPath gap — plugin files have no frameworkPath, cross-tool sync impossible without model change
-  it.skip("propagates modification from source to all installed tools when no --target is given", async () => {
+  it("propagates modification from source to all installed tools when no --target is given", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
@@ -176,7 +205,15 @@ describe.concurrent("E2E: aidd sync", () => {
       await runCli(["install", "ai", "cursor", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "ai", "copilot", "--path", FRAMEWORK_PATH], projectDir);
 
-      const claudeNamingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
+      const claudeNamingPath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.md"
+      );
       await writeFile(claudeNamingPath, "# Broadcast sync\nmodified content", "utf-8");
 
       const { stdout, exitCode } = await runCli(
@@ -187,10 +224,20 @@ describe.concurrent("E2E: aidd sync", () => {
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Synced");
 
-      const cursorNamingPath = join(projectDir, ".cursor", "rules", "01-standards", "naming.mdc");
+      const cursorNamingPath = join(
+        projectDir,
+        ".cursor",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.mdc"
+      );
       const copilotNamingPath = join(
         projectDir,
         ".github",
+        "plugins",
+        "aidd-test",
         "instructions",
         "01-naming.instructions.md"
       );
@@ -223,15 +270,22 @@ describe.concurrent("E2E: aidd sync", () => {
     }
   });
 
-  // TODO: Plugin.frameworkPath gap — plugin files have no frameworkPath, cross-tool sync impossible without model change
-  it.skip("force-syncs from claude to cursor without blocking on conflict", async () => {
+  it("force-syncs from claude to cursor without blocking on conflict", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "ai", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
-      const claudeNamingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
+      const claudeNamingPath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.md"
+      );
       await writeFile(claudeNamingPath, "# Force sync\noverridden content", "utf-8");
 
       const { stdout, exitCode } = await runCli(
@@ -242,7 +296,15 @@ describe.concurrent("E2E: aidd sync", () => {
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Synced");
 
-      const cursorNamingPath = join(projectDir, ".cursor", "rules", "01-standards", "naming.mdc");
+      const cursorNamingPath = join(
+        projectDir,
+        ".cursor",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.mdc"
+      );
       const content = await readFile(cursorNamingPath, "utf-8");
       expect(content).toContain("Force sync");
     } finally {
@@ -262,8 +324,7 @@ describe.concurrent("E2E: aidd sync", () => {
     }
   });
 
-  // TODO: Plugin.frameworkPath gap — .claude/agents/ dir not created when agents are in plugins; user-file sync scan needs model change
-  it.skip("syncs user agent from claude to cursor with --include-user-files", async () => {
+  it("syncs user agent from claude to cursor with --include-user-files", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
@@ -271,6 +332,7 @@ describe.concurrent("E2E: aidd sync", () => {
       await runCli(["install", "ai", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
       const userAgentPath = join(projectDir, ".claude", "agents", "my-custom-agent.md");
+      await mkdir(join(projectDir, ".claude", "agents"), { recursive: true });
       await writeFile(
         userAgentPath,
         "---\nname: my-custom-agent\ndescription: My custom agent.\n---\n\nCustom agent content.\n",
@@ -293,8 +355,7 @@ describe.concurrent("E2E: aidd sync", () => {
     }
   });
 
-  // TODO: Plugin.frameworkPath gap — plugin files have no frameworkPath, cross-tool sync impossible without model change
-  it.skip("broadcasts deletion from claude to cursor and copilot when no --target is given", async () => {
+  it("broadcasts deletion from claude to cursor and copilot when no --target is given", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
@@ -302,7 +363,15 @@ describe.concurrent("E2E: aidd sync", () => {
       await runCli(["install", "ai", "cursor", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "ai", "copilot", "--path", FRAMEWORK_PATH], projectDir);
 
-      const claudeNamingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
+      const claudeNamingPath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.md"
+      );
       await rm(claudeNamingPath, { force: true });
 
       const { stdout, exitCode } = await runCli(["sync", "--source", "claude"], projectDir);
@@ -310,10 +379,20 @@ describe.concurrent("E2E: aidd sync", () => {
       expect(exitCode).toBe(0);
       expect(stdout).toContain("deleted");
 
-      const cursorNamingPath = join(projectDir, ".cursor", "rules", "01-standards", "naming.mdc");
+      const cursorNamingPath = join(
+        projectDir,
+        ".cursor",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.mdc"
+      );
       const copilotNamingPath = join(
         projectDir,
         ".github",
+        "plugins",
+        "aidd-test",
         "instructions",
         "01-naming.instructions.md"
       );
@@ -324,15 +403,22 @@ describe.concurrent("E2E: aidd sync", () => {
     }
   });
 
-  // TODO: Plugin.frameworkPath gap — plugin files have no frameworkPath, cross-tool sync impossible without model change
-  it.skip("syncs a modified rule from claude to copilot (framework file MODIFIED)", async () => {
+  it("syncs a modified rule from claude to copilot (framework file MODIFIED)", async () => {
     const { projectDir, cleanup } = await createTestEnv("sync");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "ai", "copilot", "--path", FRAMEWORK_PATH], projectDir);
 
-      const claudeNamingPath = join(projectDir, ".claude", "rules", "01-standards", "naming.md");
+      const claudeNamingPath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.md"
+      );
       await writeFile(claudeNamingPath, "# Copilot sync test\nmodified content", "utf-8");
 
       const { stdout, exitCode } = await runCli(
@@ -346,6 +432,8 @@ describe.concurrent("E2E: aidd sync", () => {
       const copilotNamingPath = join(
         projectDir,
         ".github",
+        "plugins",
+        "aidd-test",
         "instructions",
         "01-naming.instructions.md"
       );

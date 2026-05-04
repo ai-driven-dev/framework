@@ -6,6 +6,7 @@ import { marketplaceCacheDir } from "../../../domain/models/paths.js";
 import type { PluginSource } from "../../../domain/models/plugin-source.js";
 import type { ToolId } from "../../../domain/models/tool-ids.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
 import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
@@ -25,7 +26,8 @@ export class MarketplaceSyncSettingsUseCase {
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
     private readonly marketplaceRegistry: MarketplaceRegistry,
-    private readonly catalogRepo: PluginCatalogRepository
+    private readonly catalogRepo: PluginCatalogRepository,
+    private readonly hasher: Hasher
   ) {}
 
   async execute(options: MarketplaceSyncSettingsOptions): Promise<MarketplaceSyncSettingsResult> {
@@ -40,6 +42,7 @@ export class MarketplaceSyncSettingsUseCase {
       const updated = await this.syncTool(toolId, projectRoot, manifest, marketplaces);
       if (updated) updatedTools.push(toolId);
     }
+    if (updatedTools.length > 0) await this.manifestRepo.save(manifest);
     return { updatedTools };
   }
 
@@ -73,7 +76,9 @@ export class MarketplaceSyncSettingsUseCase {
   ): Promise<boolean> {
     const versionByName = await this.loadAllVersions(projectRoot, marketplaces);
     const marketplaceChanged = await this.syncMarketplacesFile(
+      toolId,
       projectRoot,
+      manifest,
       settings,
       marketplaces,
       versionByName
@@ -93,7 +98,9 @@ export class MarketplaceSyncSettingsUseCase {
   }
 
   private async syncMarketplacesFile(
+    toolId: ToolId,
     projectRoot: string,
+    manifest: Manifest,
     settings: MarketplaceSettings,
     marketplaces: readonly Marketplace[],
     versionByName: Map<string, string | undefined>
@@ -102,7 +109,9 @@ export class MarketplaceSyncSettingsUseCase {
     const json = await this.loadSettings(absPath);
     if (!this.mergeMarketplaces(json, settings, marketplaces, versionByName, projectRoot))
       return false;
-    await this.fs.writeFile(absPath, JSON.stringify(json, null, 2));
+    const content = JSON.stringify(json, null, 2);
+    await this.fs.writeFile(absPath, content);
+    manifest.updateTrackedFileHash(toolId, settings.settingsPath, this.hasher.hash(content));
     return true;
   }
 
@@ -119,7 +128,11 @@ export class MarketplaceSyncSettingsUseCase {
     const json = await this.loadSettings(pluginsPath);
     if (!this.mergeEnabledPlugins(json, settings, toolId, manifest, marketplaces, versionByName))
       return false;
-    await this.fs.writeFile(pluginsPath, JSON.stringify(json, null, 2));
+    const content = JSON.stringify(json, null, 2);
+    await this.fs.writeFile(pluginsPath, content);
+    if (settings.enabledPluginsSettingsPath == null) {
+      manifest.updateTrackedFileHash(toolId, settings.settingsPath, this.hasher.hash(content));
+    }
     return true;
   }
 

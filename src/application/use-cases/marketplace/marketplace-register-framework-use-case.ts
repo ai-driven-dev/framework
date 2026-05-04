@@ -7,6 +7,7 @@ import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-regi
 export interface MarketplaceRegisterFrameworkOptions {
   projectRoot: string;
   force?: boolean;
+  frameworkPath?: string;
 }
 
 export interface MarketplaceRegisterFrameworkResult {
@@ -28,7 +29,7 @@ export class MarketplaceRegisterFrameworkUseCase {
     if (alreadyRegistered && options.force) {
       await this.registry.delete(options.projectRoot, FRAMEWORK_MARKETPLACE_NAME, "project");
     }
-    const source = await this.deriveSource();
+    const source = await this.deriveSource(options.frameworkPath);
     const marketplace = Marketplace.create({
       name: FRAMEWORK_MARKETPLACE_NAME,
       source,
@@ -39,10 +40,11 @@ export class MarketplaceRegisterFrameworkUseCase {
     return { registered: true };
   }
 
-  private async deriveSource(): Promise<PluginSource> {
+  private async deriveSource(frameworkPath?: string): Promise<PluginSource> {
     const manifest = await this.manifestRepo.load();
     const mode = manifest?.getMode() ?? "local";
     if (mode === "remote") {
+      if (frameworkPath) return { kind: "local", path: frameworkPath };
       const repo = manifest?.repo ?? Manifest.DEFAULT_REPO;
       const version = manifest?.getScriptsVersion();
       const ref = version ? `v${version}` : undefined;
