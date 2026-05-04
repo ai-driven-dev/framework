@@ -13,8 +13,8 @@ export function registerUpdateCommand(program: Command): void {
     .option("-f, --force", "Overwrite conflicting files without prompting", false)
     .option("--dry-run", "Preview changes without writing files", false)
     .option("--tool <tool>", "Limit update to a specific tool")
-    .option("--path <path>", "Path to a local framework directory or tarball")
-    .option("--release <tag>", "Specific framework release tag to install (e.g., v3.2.0)")
+    .option("--path <path>", "Local framework directory (legacy framework-fetch path)")
+    .option("--release <tag>", "Marketplace catalog version (legacy framework-fetch path)")
     .action(
       async (cmdOptions: {
         force: boolean;

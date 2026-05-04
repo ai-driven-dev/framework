@@ -182,8 +182,8 @@ export class SetupUseCase {
       throw new InputRequiredError("--mode is required in non-interactive mode.");
     }
     return this.prompter.select<DistributionMode>(`Switch mode (current: ${currentMode}):`, [
-      { name: "local (copy plugins to project)", value: "local" },
-      { name: "remote (GitHub marketplace at release tag)", value: "remote" },
+      { name: "local (copy plugins from local framework into project)", value: "local" },
+      { name: "remote (fetch plugins from registered marketplace)", value: "remote" },
     ]);
   }
 
@@ -266,8 +266,8 @@ export class SetupUseCase {
     if (options.mode) return options.mode;
     if (!options.interactive) return "local";
     return this.prompter.select<DistributionMode>("Distribution mode:", [
-      { name: "local (copy plugins to project)", value: "local" },
-      { name: "remote (GitHub marketplace at release tag)", value: "remote" },
+      { name: "local (copy plugins from local framework into project)", value: "local" },
+      { name: "remote (fetch plugins from registered marketplace)", value: "remote" },
     ]);
   }
 
@@ -317,7 +317,7 @@ export class SetupUseCase {
 
   private async resolveLocalSource(options: SetupOptions): Promise<{ frameworkPath?: string }> {
     const pathInput = options.interactive
-      ? await this.prompter.input("Framework local path:", ".")
+      ? await this.prompter.input("Local framework path (for plugin copy):", ".")
       : ".";
     if (!pathInput) return {};
     return { frameworkPath: pathInput };
@@ -327,7 +327,7 @@ export class SetupUseCase {
     const existingManifest = await this.manifestRepo.load();
     const repoDefault = existingManifest?.repo ?? "";
     const repoInput = options.interactive
-      ? await this.prompter.input("Framework repository (owner/repo):", repoDefault)
+      ? await this.prompter.input("Marketplace repository (owner/repo):", repoDefault)
       : repoDefault;
     if (!repoInput) return {};
     return { frameworkRepo: repoInput };
@@ -343,7 +343,10 @@ export class SetupUseCase {
     const catalogVersion = await this.fetchCatalogVersion(options.projectRoot);
     if (catalogVersion) return catalogVersion;
     if (options.interactive) {
-      const input = await this.prompter.input("Framework release tag:", "");
+      const input = await this.prompter.input(
+        "Marketplace catalog version (leave empty for latest):",
+        ""
+      );
       return input || this.currentVersionProvider.get();
     }
     return this.currentVersionProvider.get();

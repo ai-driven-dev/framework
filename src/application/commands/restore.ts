@@ -17,8 +17,11 @@ export function registerRestoreCommand(program: Command): void {
     .argument("[files...]", "Specific file paths to restore (relative paths)")
     .option("-f, --force", "Restore without prompting", false)
     .option("--tool <tool>", "Limit restore to a specific tool")
-    .option("--path <path>", "Path to a local framework directory or tarball")
-    .option("--release <tag>", "Specific framework release tag to restore against (e.g., v3.2.0)")
+    .option("--path <path>", "Local framework directory (legacy framework-fetch path)")
+    .option(
+      "--release <tag>",
+      "Marketplace catalog version to restore against (legacy framework-fetch path)"
+    )
     .option("--plugin <name>", "Restore a specific plugin by name")
     .action(
       async (

@@ -59,8 +59,8 @@ export function registerSetupCommand(program: Command): void {
   program
     .command("setup")
     .description("Set up or update the project to a correct state")
-    .option("--path <path>", "Path to a local framework directory (local mode plugin install)")
-    .option("--release <tag>", "Specific framework release tag (e.g., v3.2.0)")
+    .option("--path <path>", "Local framework directory (used by --mode local for plugin copy)")
+    .option("--release <tag>", "Marketplace catalog version to install (e.g., v4.1.0-beta.2)")
     .option("--ai <ids>", "Comma-separated AI tool IDs to install (e.g., claude,cursor)")
     .option("--ide <ids>", "Comma-separated IDE tool IDs to install (e.g., vscode)")
     .option("--all", "Install all available tools (AI + IDE)")
