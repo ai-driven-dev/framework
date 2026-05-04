@@ -1,11 +1,4 @@
 {
-  "ignore": [
-    ".aidd/**",
-    "tests/**/helpers.ts",
-    "tests/helpers/**",
-    "tests/fixtures/**",
-    "tmp/**",
-    "config/vitest-text-loader.ts"
-  ],
+  "ignore": [".aidd/**", "tests/**/helpers.ts", "tests/fixtures/**"],
   "ignoreExportsUsedInFile": true
 }
