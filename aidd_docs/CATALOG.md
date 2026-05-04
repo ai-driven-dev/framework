@@ -7,6 +7,8 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
 ## Table of Contents
 
 - [`.claude-plugin`](#claude-plugin)
+- [`.specstory`](#specstory)
+  - [`.specstory/history`](#specstoryhistory)
 - [`.vscode`](#vscode)
 - [`aidd_docs`](#aidd_docs)
   - [`aidd_docs/memory`](#aidd_docsmemory)
@@ -27,6 +29,20 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
 | File |
 |------|
 | [marketplace.json](../.claude-plugin/marketplace.json) |
+
+### `.specstory`
+
+| File |
+|------|
+| [.project.json](../.specstory/.project.json) |
+| [statistics.json](../.specstory/statistics.json) |
+
+#### `.specstory/history`
+
+| File |
+|------|
+| [2026-04-29_10-07-51Z-untitled.md](../.specstory/history/2026-04-29_10-07-51Z-untitled.md) |
+| [2026-04-30_10-55-34Z.md](../.specstory/history/2026-04-30_10-55-34Z.md) |
 
 ### `.vscode`
 
