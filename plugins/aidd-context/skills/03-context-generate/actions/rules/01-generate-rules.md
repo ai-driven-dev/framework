@@ -20,16 +20,12 @@ Create structured markdown rule (.mdc or .md depending on the IDE) files with pr
 ### Template
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-context/skills/03-context-generate/assets/rules/rule-template.md
+@../../assets/rules/rule-template.md
 ```
 
 ### IDE Mapping
 
-Mandatory mapping for IDE integration (file paths, naming, extensions):
-
-```md
-@{{TOOLS}}/rules/04-tooling/ide-mapping.md
-```
+Apply tool-native conventions for rule file paths, naming, and extensions.
 
 ## Context
 
@@ -59,13 +55,13 @@ $ARGUMENTS
 ### Rule writing standards
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-context/skills/03-context-generate/references/rule-writing.md
+@../../references/rule-writing.md
 ```
 
 ### Rule file structure
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-context/skills/03-context-generate/references/rule-structure.md
+@../../references/rule-structure.md
 ```
 
 ## Steps

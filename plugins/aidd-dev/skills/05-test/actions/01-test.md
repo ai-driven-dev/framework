@@ -18,9 +18,7 @@ Identify untested behaviors in the feature, then create and iterate on tests unt
 
 ### Testing rules
 
-```markdown
-@{{TOOLS}}/rules/
-```
+Apply project conventions for test naming, structure, and coverage.
 
 ### Scope to test
 

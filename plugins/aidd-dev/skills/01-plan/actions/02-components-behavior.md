@@ -25,7 +25,7 @@ $ARGUMENTS
 ### Mermaid rules
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-context/skills/06-mermaid/references/mermaid-conventions.md
+@../references/mermaid-conventions.md
 ```
 
 ## Steps

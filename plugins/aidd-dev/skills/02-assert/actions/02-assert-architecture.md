@@ -16,13 +16,13 @@ Verify that the codebase (or a specific scope) conforms to the documented archit
 ### Architecture diagrams (micro)
 
 ```shell
-! ls -1tr {{DOCS}}/memory/internal/
+! ls -1tr aidd_docs/memory/internal/
 ```
 
 ### Architecture decisions
 
 ```shell
-! ls -1tr {{DOCS}}/internal/decisions/
+! ls -1tr aidd_docs/internal/decisions/
 ```
 
 ### Scope
@@ -43,13 +43,13 @@ $ARGUMENTS
 ## Steps
 
 1. Load architecture context:
-   - Remember architecture diagrams from `{{DOCS}}/memory/architecture.md`
-   - Read micro diagrams from `{{DOCS}}/memory/internal/` (if scope targets a specific module)
-   - Read ADRs from `{{DOCS}}/internal/decisions/`
+   - Remember architecture diagrams from `aidd_docs/memory/architecture.md`
+   - Read micro diagrams from `aidd_docs/memory/internal/` (if scope targets a specific module)
+   - Read ADRs from `aidd_docs/internal/decisions/`
    - Extract the expected project tree structure from diagrams
 
 2. Verify macro architecture (service boundaries):
-   - Read the expected tree structure from `{{DOCS}}/memory/architecture.md`
+   - Read the expected tree structure from `aidd_docs/memory/architecture.md`
    - Compare actual code structure against the documented tree
    - Check for files outside expected boundaries
    - Check for direct imports between independent services

@@ -21,7 +21,7 @@ AIDD is a plugin marketplace for AI-driven development. Each plugin delivers a f
 
 ## Skills catalog
 
-See [CATALOG.md](CATALOG.md) for the full list of skills across all plugins.
+See [CONTRIBUTING.md](https://github.com/ai-driven-dev/aidd-framework/blob/main/CONTRIBUTING.md) for the full contribution guide.
 
 Quick reference:
 
@@ -34,4 +34,4 @@ Quick reference:
 
 ---
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) to add or modify plugins and skills.
+See [CONTRIBUTING.md](https://github.com/ai-driven-dev/aidd-framework/blob/main/CONTRIBUTING.md) to add or modify plugins and skills.

@@ -1,6 +1,0 @@
-{
-  "respectGitignore": false,
-  "permissions": {
-    "deny": ["Read(./node_modules/**)", "Read(./.git/**)"]
-  }
-}

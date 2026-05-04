@@ -13,7 +13,7 @@ Implement following development plan following project rules with complete valid
 
 ## Rules
 
-- Follow all project rules @{{TOOLS}}/rules/
+- Follow all project conventions and coding standards
 - Never format code
 - Never run dev mode
 - If a phase is incorrect, incomplete, or blocked by missing information, amend the plan directly. Mark every change with 🤖 and a brief rationale.

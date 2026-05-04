@@ -6,7 +6,7 @@ Last interactive step. Validates prerequisites, builds journey map, creates trac
 
 ### Resume flow (existing task)
 
-1. Check `{{DOCS}}/tasks/` for files matching the task name:
+1. Check `aidd_docs/tasks/` for files matching the task name:
    - `*.in-progress.md` → Report status (iteration, steps remaining), spawn (step 10) to resume.
    - `*.done.md` → Report "Task already completed." Stop.
    - No file → continue to step 2.
@@ -63,9 +63,9 @@ Last interactive step. Validates prerequisites, builds journey map, creates trac
 
    Iterate until user confirms: "Does this map look correct? Anything missing?"
 
-8. Read `../../01-plan/assets/plan-template.md`. Create `{{DOCS}}/tasks/` if needed.
+8. Read `../../01-plan/assets/plan-template.md`. Create `aidd_docs/tasks/` if needed.
 
-9. Create `{{DOCS}}/tasks/<task-name>.in-progress.md` using the plan template. Fill frontmatter (`objective`, `success_condition`, `iteration: 0`, `created_at`), Phases with Tasks and Acceptance criteria (= the steps), and include the journey map.
+9. Create `aidd_docs/tasks/<task-name>.in-progress.md` using the plan template. Fill frontmatter (`objective`, `success_condition`, `iteration: 0`, `created_at`), Phases with Tasks and Acceptance criteria (= the steps), and include the journey map.
 
 ### Spawn
 
@@ -74,7 +74,7 @@ Last interactive step. Validates prerequisites, builds journey map, creates trac
 ## Input / Output
 
 - **Input**: User's task description, or existing task file.
-- **Output**: `{ tracking_file: "{{DOCS}}/tasks/<task-name>.in-progress.md" }`
+- **Output**: `{ tracking_file: "aidd_docs/tasks/<task-name>.in-progress.md" }`
 
 ## References
 

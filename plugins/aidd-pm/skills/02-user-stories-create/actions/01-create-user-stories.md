@@ -41,7 +41,7 @@ Generate well-structured user stories from feature requirements through systemat
 ### User Story Template
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-pm/skills/02-user-stories-create/assets/user-story-template.md
+@../assets/user-story-template.md
 ```
 
 ## Steps

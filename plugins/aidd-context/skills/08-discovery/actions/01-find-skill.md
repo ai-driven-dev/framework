@@ -18,11 +18,7 @@ Help the user discover installed skills and identify the most relevant one for t
 
 ## Steps
 
-1. List all available skills from installed plugins:
-
-```shell
-! find {{TOOLS}}/plugins -name "SKILL.md" | sort
-```
+1. List all available skills from installed plugins. Use the AI tool's native skill discovery mechanism to enumerate installed skills.
 
 2. For each skill found, extract its `name` and `description` from the frontmatter.
 3. Display a table: skill name, plugin, one-line description.

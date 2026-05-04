@@ -24,7 +24,7 @@ Verify the implemented feature matches the plan's acceptance criteria, flows, an
 ### Review template
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-dev/skills/04-review/assets/review-functional-template.md
+@../assets/review-functional-template.md
 ```
 
 ## Process steps
@@ -39,4 +39,4 @@ Verify the implemented feature matches the plan's acceptance criteria, flows, an
 6. List unplanned behaviors (diff changes not traced to any criterion)
 7. List flow / edge-case gaps surfaced by criteria walkthrough
 8. Format using template
-9. Output to `{{DOCS}}/tasks/<yyyy_mm>/<yyyy_mm_dd>-<task_name>.review_functional.md`
+9. Output to `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<task_name>.review_functional.md`

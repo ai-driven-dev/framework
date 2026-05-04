@@ -17,7 +17,7 @@ Every file has its own template to follow.
 ### Hard copy into memory bank (always generated)
 
 ```text
-@{{TOOLS}}/plugins/aidd-context/skills/02-project-init/assets/templates/memory/
+@../assets/templates/memory
 ```
 
 ### Memory templates
@@ -35,14 +35,14 @@ Each has a `scope` front-matter field:
 All templates are in:
 
 ```text
-@{{TOOLS}}/plugins/aidd-context/skills/02-project-init/assets/templates/memory/
+@../assets/templates/memory
 ```
 
 #### Internal templates (frontend / backend)
 
 ```text
-@{{TOOLS}}/plugins/aidd-context/skills/02-project-init/assets/templates/memory/frontend/
-@{{TOOLS}}/plugins/aidd-context/skills/02-project-init/assets/templates/memory/backend/
+@../assets/templates/memory/frontend
+@../assets/templates/memory/backend
 ```
 
 ## Rules
@@ -54,24 +54,24 @@ All templates are in:
 - ZERO DUPLICATION: Focus only on template sections to avoid duplication
 - SUPER SHORT explicit and concise bullet points
 - Mention code using backticks
-- Internal doc: must be located in `{{DOCS}}/memory/internal/`
+- Internal doc: must be located in `aidd_docs/memory/internal/`
 - Do not anticipate needs or future changes, focus on current state only
 - No version in tech names, just the name (e.g., React, not React 19)
 
 ### Schema rules to apply to generated Mermaid diagrams
 
 ```md
-@{{TOOLS}}/plugins/aidd-context/skills/06-mermaid/references/mermaid-conventions.md
+@../../06-mermaid/references/mermaid-conventions.md
 ```
 
 ## Steps
 
-1. Check if memory bank already exists in `{{DOCS}}/memory/` folder:
+1. Check if memory bank already exists in `aidd_docs/memory/` folder:
    - If exists, update with newer information
    - If not, create from scratch
 2. **Auto-detect project type**: Quickly explore the codebase to determine if it's frontend or backend. Use the `scope` frontmatter field to select which templates to generate.
 3. **Inform user of detection**: Display detected type and list files that will be generated
 4. Spawn parallel task sub-agents for each template files
-5. Write generated files to `{{DOCS}}/memory/`
+5. Write generated files to `aidd_docs/memory/`
 6. Launch an agent to review all files for consistency and accuracy
 7. Execute `.aidd/scripts/update_memory.js` to sync memory references in context files

@@ -13,28 +13,24 @@ Generate a specialized agent template tailored to specific user requirements.
 ### Coordination with other agents
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-context/skills/03-context-generate/references/agents-coordination.md
+@../../references/agents-coordination.md
 ```
 
 ### Agent template
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-context/skills/03-context-generate/assets/agents/agent-template.md
+@../../assets/agents/agent-template.md
 ```
 
 ### IDE Mapping
 
-Mandatory mapping for IDE integration (file paths, naming, extensions):
-
-```markdown
-@{{TOOLS}}/rules/04-tooling/ide-mapping.md
-```
+Apply tool-native conventions for agent file paths, naming, and extensions.
 
 ## Rules
 
 - Input and Output for the agent MUST be ULTRA concise and precise.
 - Ask clarifying questions if the user's request is ambiguous or lacks detail.
-- When mentioning templates in `{{DOCS}}`, always provide full path
+- When mentioning templates in `aidd_docs`, always provide full path
 
 ## Instruction steps
 
@@ -45,5 +41,5 @@ Mandatory mapping for IDE integration (file paths, naming, extensions):
    1. Affect a note between 1 and 10 to the generated agent based on its relevance and completeness.
 3. **Wait for user confirmation before finalizing the agent.**
 4. Propose 3 real first names for the agent, each name must be short and catchy, making sense with the agent's purpose (could be word game, acronym, etc.).
-5. Provide the completed agent template as the final output into `{{TOOLS}}/agents/<generated-agent-name>.md`.
-6. Add the new prompt into the `@{{DOCS}}/CATALOG.md` to keep documentation up to date.
+5. Provide the completed agent template as the final output, written to the AI tool's native agents directory as `<generated-agent-name>.md`.
+6. Add the new prompt into the `@aidd_docs/CATALOG.md` to keep documentation up to date.

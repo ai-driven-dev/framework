@@ -33,7 +33,7 @@ $ARGUMENTS
 ### Template
 
 ```markdown
-@{{TOOLS}}/plugins/aidd-dev/skills/01-plan/assets/plan-template.md
+@../assets/plan-template.md
 ```
 
 ## Steps
@@ -100,9 +100,9 @@ Spawn a new sub-agent task to:
    - `iteration: 0`
    - `created_at`: ISO 8601 timestamp from step 1
 6. **Save to file**:
-   - Simple plan: `{{DOCS}}/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>.md`
-   - Master plan: `{{DOCS}}/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>-master.md`
-   - Child plans: `{{DOCS}}/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>-part-N.md`
+   - Simple plan: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>.md`
+   - Master plan: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>-master.md`
+   - Child plans: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>-part-N.md`
 7. Display saved file path to user
 
 ### Step 5: Quality Assurance

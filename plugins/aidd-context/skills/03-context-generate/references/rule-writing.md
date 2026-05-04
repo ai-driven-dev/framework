@@ -1,6 +1,5 @@
 ---
 description: Standards for writing .md coding rule content. Apply when creating, editing, or reviewing any rule file.
-globs: ["{{TOOLS}}/rules/**/*.md", "{{TOOLS}}/rules/**/*.mdc"]
 alwaysApply: false
 ---
 

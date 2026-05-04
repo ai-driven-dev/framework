@@ -1,6 +1,5 @@
 ---
 description: Standards for naming and organizing .md rule files. Apply when creating new rule files or deciding on file placement.
-globs: ["{{TOOLS}}/rules/**/*.md", "{{TOOLS}}/rules/**/*.mdc"]
 alwaysApply: false
 ---
 
