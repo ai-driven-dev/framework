@@ -322,13 +322,12 @@ When the same plugin (`aidd-dev`) is installed for both claude and cursor, the t
 
 ## `aidd setup`
 
-Sets up or updates the project. Smart dispatcher: detects state and calls init/install/update/adopt.
+Sets up or updates the project. Smart dispatcher: detects state and calls init/install/update/adopt. Runtime configs + memory stubs come from bundled CLI assets — no framework download.
 
 | Option | Type | Default | Notes |
 |--------|------|---------|-------|
-| `--path <path>` | string | — | Local framework dir or tarball |
-| `--release <tag>` | string | — | Specific GitHub release tag |
-| `--docs-dir <dir>` | string | `aidd_docs` | Custom docs directory name |
+| `--path <path>` | string | — | Local framework dir (only used by `--mode local` for plugin copy) |
+| `--release <tag>` | string | — | Marketplace catalog version to install (e.g., `v4.1.0-beta.2`) |
 | `--ai <ids>` | string | — | Comma-separated AI tool IDs |
 | `--ide <ids>` | string | — | Comma-separated IDE tool IDs |
 | `--all` | boolean | false | All available tools (AI + IDE) |
@@ -336,20 +335,23 @@ Sets up or updates the project. Smart dispatcher: detects state and calls init/i
 | `--mode <mode>` | string | `local` | Distribution mode: `local` or `remote` |
 | `--switch-mode` | boolean | false | Switch distribution mode on existing project |
 
+> **Note**: `--docs-dir` was removed (locked decision #10: docs dir hardcoded to `aidd_docs`).
+> **Note**: Setup no longer downloads framework tarball. Asset-based install + marketplace catalog only.
+
 ### Test cases
 
 | # | Scenario | Expected |
 |---|----------|----------|
-| S1 | Fresh project + `--path <fw> --ai claude` | Init + install claude, manifest created |
-| S2 | Fresh project + `--all --path <fw>` | Installs all AI + IDE tools |
-| S3 | `--docs-dir custom_docs --path <fw> --ai claude` | Docs in `custom_docs/`, not `aidd_docs/` |
-| S4 | `--release <tag>` without auth | Error: authentication required |
-| S5 | `--from v3.0.0 --path <fw> --ai claude` with adopt signals | Adopt flow — migrates existing install |
+| S1 | Fresh project + `--path <fw> --ai claude` | Init + install claude (assets), manifest created |
+| S2 | Fresh project + `--all --path <fw>` | Installs all AI + IDE tools (assets) |
+| S4 | `--release <tag>` in remote mode | Sets marketplace catalog version, no GitHub auth required |
+| S5 | `--from v3.0.0 --path <fw> --ai claude` with adopt signals | Adopt flow — registers existing install in manifest |
 | S6 | needs-adopt state, missing `--from`, no `--path` | Error: `--from` required, exit 1 |
 | S7 | `--mode local --path <fw> --ai claude` | Init + install + `./plugins/` + `./.claude-plugin/` copied to project root, manifest mode = local |
-| S8 | `--mode remote --path <fw> --ai claude` | Init + install, no `./plugins/` in project root, manifest mode = remote |
+| S8 | `--mode remote --ai claude` | Init + install, no `./plugins/` in project root, manifest mode = remote, no tarball |
 | S9 | Already-init local project + `--switch-mode --mode remote` | Mode switched, exit 0, manifest mode = remote |
 | S10 | `--mode invalid --path <fw> --ai claude` | Error: invalid mode value, exit 1 |
+| S11 | `--mode remote --release v4.1.0-beta.2 --ai claude` (no auth) | Succeeds: marketplace flow, no GitHub API call |
 
 ---
 
@@ -363,8 +365,8 @@ Generates tool-specific distributions from the framework.
 | `[tool...]` | positional | — | Tool IDs: `claude`, `cursor`, `copilot`, `opencode`, `codex`, `vscode` |
 | `-f, --force` | boolean | false | Overwrite already-installed tool |
 | `-a, --all` | boolean | false | Install all available tools |
-| `--path <path>` | string | — | Local framework dir or tarball |
-| `--release <tag>` | string | — | Specific GitHub release |
+| `--path <path>` | string | — | Local framework dir (legacy framework-fetch path) |
+| `--release <tag>` | string | — | Marketplace catalog version (legacy framework-fetch path) |
 | `--mcp <servers>` | string | — | Comma-separated MCP server names to install |
 | `--plugins <names>` | string | — | Comma-separated plugin names from catalog |
 | `--all-plugins` | boolean | false | Install all catalog plugins |
@@ -429,8 +431,8 @@ Updates installed files to latest framework version.
 | `-f, --force` | boolean | false | Overwrite conflicting files |
 | `--dry-run` | boolean | false | Preview without writing |
 | `--tool <tool>` | string | — | Limit to one tool |
-| `--path <path>` | string | — | Local framework override |
-| `--release <tag>` | string | — | GitHub release override |
+| `--path <path>` | string | — | Local framework dir (legacy framework-fetch path) |
+| `--release <tag>` | string | — | Marketplace catalog version (legacy framework-fetch path) |
 
 ### Test cases
 
@@ -440,10 +442,9 @@ Updates installed files to latest framework version.
 | UP2 | `update --path <fw2>` (newer framework) | Changed files updated, new files added |
 | UP3 | `update --dry-run --path <fw2>` | Shows diff, no writes |
 | UP4 | `update --tool claude --path <fw2>` | Only claude updated |
-| UP5 | `update --docs --path <fw2>` | Error: unknown option |
-| UP7 | Modified user file conflicts with update | Prompts to overwrite or skip |
-| UP8 | Modified user file + `--force` | Overwrites without prompt |
-| UP9 | `update --release v3.9.0` (no auth) | Error: authentication required |
+| UP5 | Modified user file conflicts with update | Prompts to overwrite or skip |
+| UP6 | Modified user file + `--force` | Overwrites without prompt |
+| UP7 | `update --release v3.9.0` (no auth) | Error: authentication required |
 
 ---
 
@@ -456,8 +457,8 @@ Restores files to their framework version (undoes user modifications).
 | `[files...]` | positional | — | Specific relative file paths |
 | `-f, --force` | boolean | false | No prompt |
 | `--tool <tool>` | string | — | Limit to one tool |
-| `--path <path>` | string | — | Local framework source |
-| `--release <tag>` | string | — | GitHub release source |
+| `--path <path>` | string | — | Local framework dir (legacy framework-fetch path) |
+| `--release <tag>` | string | — | Marketplace catalog version (legacy framework-fetch path) |
 | `--plugin <name>` | string | — | Restore specific plugin |
 
 ### Test cases
@@ -469,10 +470,9 @@ Restores files to their framework version (undoes user modifications).
 | R3 | Deleted tracked file → `restore` | File recreated |
 | R4 | `restore .claude/rules/04-tooling/ide-mapping.md` | Only that file restored |
 | R5 | `restore --tool claude` | Only claude files checked |
-| R6 | `restore --docs` | Error: unknown option |
-| R8 | `restore --plugin aidd-dev` | Plugin files re-fetched and written |
-| R9 | `restore` in non-interactive mode (no `--force`) | Error: use `--force` |
-| R10 | `restore --path <fw>` (same version) | Restores from local path |
+| R6 | `restore --plugin aidd-dev` | Plugin files re-fetched and written |
+| R7 | `restore` in non-interactive mode (no `--force`) | Error: use `--force` |
+| R8 | `restore --path <fw>` (same version) | Restores from local path |
 
 ---
 
@@ -495,9 +495,8 @@ Shows drift between disk and manifest.
 | ST4 | User-added file → `status` | Not shown (not tracked) |
 | ST5 | `status ai` | Only AI tool files shown |
 | ST6 | `status ide` | Only IDE tool files shown |
-| ST7 | `status --docs` | Error: unknown option |
-| ST8 | `status --plugin aidd-dev` | Only plugin files shown |
-| ST9 | `status` with no manifest | Error: not initialized |
+| ST7 | `status --plugin aidd-dev` | Only plugin files shown |
+| ST8 | `status` with no manifest | Error: not initialized |
 
 ---
 
@@ -543,6 +542,29 @@ Removes ALL AIDD-managed files.
 | CL2 | `clean` (interactive) | Prompts confirmation |
 | CL3 | `clean --force` (no manifest) | Error: not initialized |
 | CL4 | `clean --force` (user files mixed in) | User files preserved, framework files deleted |
+
+---
+
+## `aidd migrate`
+
+Brownfield migration: detects obsolete manifest entries (legacy `docs`, `scripts`, top-level `plugins` sections, bundled-plugin entries) and rewrites the manifest to the marketplace-only architecture. Preserves user-edited memory files. Backs up manifest before mutation.
+
+| Option | Type | Default | Notes |
+|--------|------|---------|-------|
+| `--dry-run` | boolean | false | Show migration plan without writing |
+| `--non-interactive` | boolean | false | Apply plan without prompts; fails on conflicts |
+
+### Test cases
+
+| # | Scenario | Expected |
+|---|----------|----------|
+| MG1 | `migrate` (clean project, no obsolete entries) | "Nothing to migrate", exit 0 |
+| MG2 | `migrate --dry-run` (project with obsolete sections) | Plan shown, no writes, no manifest backup |
+| MG3 | `migrate` (manifest with `scripts` section) | Strips `scripts`, manifest backup created at `.aidd/manifest.backup.json` |
+| MG4 | `migrate` (manifest with top-level `plugins` section) | Strips top-level `plugins`, plugins re-registered via marketplace where possible |
+| MG5 | `migrate` (already migrated) | Idempotent — "Nothing to migrate" on second run |
+| MG6 | `migrate` (no manifest exists) | Exits 0 with no-op message |
+| MG7 | User-edited memory files (CLAUDE.md/AGENTS.md hash mismatch) | Files preserved on disk and in manifest |
 
 ---
 
@@ -848,9 +870,25 @@ These span multiple commands and test complete workflows.
 | X5 | Plugin hooks flow | `plugin install aidd-context --tool claude` | `hooks.json` + `update_memory.js` both present |
 | X6 | Clean + reinstall | `clean --force` → `setup --ai claude` | All files reinstalled from scratch |
 | X7 | Doctor identifies broken install | Delete tracked file → `doctor` → `restore` | Doctor warns, restore fixes |
-| X8 | Config change + update | `config set docsDir docs` → `update` | Update respects custom docs dir |
-| X9 | Auth + release install | `auth login --token <t>` → `install ai claude --release v3.9.0` | Framework downloaded, installed |
+| X8 | Brownfield migration | `migrate --dry-run` → `migrate` | Manifest cleaned, plugins re-registered, backup created |
+| X9 | Auth + release install (legacy) | `auth login --token <t>` → `install ai claude --release v3.9.0` | Framework downloaded via legacy path, installed |
 | X10 | Duplicate marketplace avoidance | `setup --path <fw>` → `marketplace add <fw> --name x` → `plugin install x` | Error: duplicate paths, resolved with `--from` |
+| X11 | Remote-mode greenfield (no auth, no tarball) | `setup --mode remote --release v4.1.0-beta.2 --ai claude` | Manifest mode=remote, tool installed from CLI assets, marketplace registered |
+
+---
+
+## Architectural notes
+
+### Marketplace-only architecture (since v4.1.0-beta.2)
+
+- **Setup remote mode**: no framework tarball download. Runtime configs + memory stubs come from bundled CLI assets. Plugins fetched from registered marketplace at the catalog version.
+- **Setup local mode**: bundled CLI assets for runtime configs + memory stubs. Local framework path used only for `plugins/` + `.claude-plugin/` copy.
+- **Locked decision #10**: Docs dir hardcoded to `aidd_docs`. `--docs-dir` flag removed from setup. `manifest.docsDir` field still mutable via `config set`, but skills always write to literal `aidd_docs/`.
+- **Legacy framework-fetch path**: `install`/`update`/`restore` still accept `--path`/`--release` for backward compatibility. These trigger the old `ResolveFrameworkUseCase` flow (downloads tarball or reads local framework dir). Phase 5c will remove these.
+
+### Outstanding refactor work
+
+- **Phase 1.5c (deletion sweep)**: delete `framework-resolver-adapter.ts`, `framework-resolver.ts` port, `infrastructure/tar/`, `resolve-framework-use-case.ts`. Blocked on migrating install/update/restore commands off legacy `--path`/`--release` paths.
 
 ---
 
@@ -863,3 +901,5 @@ These span multiple commands and test complete workflows.
 | K3 | Local `--path` install copies untracked `aidd_docs/tasks/*/` dev files into user project | Medium |
 | K4 | Doctor warns about task plan files with `../framework/` relative paths (dev workspace paths) | Low (expected for local dev) |
 | K5 | ~~No cursor hooks support~~ — **fixed**: cursor now converts hooks to camelCase cursor format | Resolved |
+| K6 | `manifest.docsDir` mutable via `config set`, but skills hardcode `aidd_docs` (locked decision #10) | Medium (UX inconsistency) |
+| K7 | `--release` flag in install/update/restore still triggers legacy framework-fetch path | Low (Phase 1.5c will remove) |
