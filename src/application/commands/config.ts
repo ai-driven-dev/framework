@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import { Command } from "commander";
 import { Manifest, validateRepoFormat } from "../../domain/models/manifest.js";
 import { createDeps } from "../../infrastructure/deps.js";
@@ -7,10 +6,10 @@ import { NoManifestError } from "../errors.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 type ReadableKey = "docsDir" | "repo" | "tools";
-type WritableKey = "docsDir" | "repo";
+type WritableKey = "repo";
 
 const READABLE_KEYS: ReadableKey[] = ["docsDir", "repo", "tools"];
-const WRITABLE_KEYS: WritableKey[] = ["docsDir", "repo"];
+const WRITABLE_KEYS: WritableKey[] = ["repo"];
 
 export function registerConfigCommand(program: Command): void {
   const configCmd = new Command("config").description("Read or update manifest configuration");
@@ -103,8 +102,7 @@ export function registerConfigCommand(program: Command): void {
             }
             const manifest = await deps.manifestRepo.load();
             if (manifest === null) throw new NoManifestError();
-            const currentValue =
-              resolvedKey === "repo" ? (manifest.repo ?? Manifest.DEFAULT_REPO) : manifest.docsDir;
+            const currentValue = manifest.repo ?? Manifest.DEFAULT_REPO;
             resolvedValue = await deps.prompter.input("New value:", currentValue);
           }
 
@@ -124,64 +122,28 @@ export function registerConfigCommand(program: Command): void {
           const manifest = await deps.manifestRepo.load();
           if (manifest === null) throw new NoManifestError();
 
-          if (resolvedKey === "repo") {
-            validateRepoFormat(resolvedValue);
-            const current = manifest.repo ?? Manifest.DEFAULT_REPO;
-            if (resolvedValue === current) {
-              output.print(`repo is already '${resolvedValue}'.`);
-              return;
-            }
-            if (!cmdOptions.force) {
-              if (!process.stdout.isTTY) {
-                output.error("Confirmation required. Use --force to skip in non-interactive mode.");
-                process.exit(1);
-              }
-              const confirmed = await deps.prompter.confirm(
-                `Change repo from '${current}' to '${resolvedValue}'?`
-              );
-              if (!confirmed) {
-                output.print("Aborted.");
-                return;
-              }
-            }
-            await deps.manifestRepo.save(manifest.withRepo(resolvedValue));
-            output.success(`Set repo = ${resolvedValue}`);
+          // Only writable key is "repo" (docsDir hardcoded per locked decision #10).
+          validateRepoFormat(resolvedValue);
+          const current = manifest.repo ?? Manifest.DEFAULT_REPO;
+          if (resolvedValue === current) {
+            output.print(`repo is already '${resolvedValue}'.`);
             return;
           }
-
-          // resolvedKey === "docsDir"
-          if (resolvedValue === manifest.docsDir) {
-            output.print(`docsDir is already '${resolvedValue}'.`);
-            return;
-          }
-
-          const newDirExists = await deps.fs.fileExists(join(projectRoot, resolvedValue));
-
-          if (newDirExists) {
-            output.print(`Directory '${resolvedValue}' found on disk. Updating manifest.`);
-          } else {
-            output.warn(`Directory '${resolvedValue}' does not exist on disk.`);
-            output.warn(
-              `Move your docs manually from '${manifest.docsDir}' to '${resolvedValue}' before running other commands.`
-            );
-          }
-
           if (!cmdOptions.force) {
             if (!process.stdout.isTTY) {
               output.error("Confirmation required. Use --force to skip in non-interactive mode.");
               process.exit(1);
             }
             const confirmed = await deps.prompter.confirm(
-              `Change docsDir from '${manifest.docsDir}' to '${resolvedValue}'?`
+              `Change repo from '${current}' to '${resolvedValue}'?`
             );
             if (!confirmed) {
               output.print("Aborted.");
               return;
             }
           }
-
-          await deps.manifestRepo.save(manifest.withDocsDir(resolvedValue));
-          output.success(`Set docsDir = ${resolvedValue}`);
+          await deps.manifestRepo.save(manifest.withRepo(resolvedValue));
+          output.success(`Set repo = ${resolvedValue}`);
         } catch (error) {
           errorHandler.handle(error);
         }

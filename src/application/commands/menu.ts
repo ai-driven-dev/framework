@@ -234,14 +234,6 @@ const INSTALLED_NODES: MenuNode[] = [
             ],
           },
           {
-            name: "Set docs directory",
-            value: "set-docs",
-            description: "Change the docs folder name",
-            command: ["config", "set", "docsDir"],
-            inputPrompt: "New value for docsDir",
-            commandSuffix: ["--force"],
-          },
-          {
             name: "Set repository",
             value: "set-repo",
             description: "Change the framework repository",

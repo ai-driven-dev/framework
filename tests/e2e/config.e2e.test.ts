@@ -140,35 +140,17 @@ describe.concurrent("E2E: aidd config", () => {
       }
     });
 
-    it("updates docsDir in manifest with --force", async () => {
+    it("rejects setting docsDir (hardcoded per locked decision #10)", async () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
         await initProject(projectDir, FRAMEWORK_PATH);
 
-        const { exitCode } = await runCli(
+        const { stderr, exitCode } = await runCli(
           ["config", "set", "docsDir", "my_docs", "--force"],
           projectDir
         );
-        expect(exitCode).toBe(0);
-
-        const { stdout } = await runCli(["config", "get", "docsDir"], projectDir);
-        expect(stdout.trim()).toBe("my_docs");
-      } finally {
-        await cleanup();
-      }
-    });
-
-    it("is a no-op when value is unchanged", async () => {
-      const { projectDir, cleanup } = await createTestEnv("config");
-      try {
-        await initProject(projectDir, FRAMEWORK_PATH);
-
-        const { stdout, exitCode } = await runCli(
-          ["config", "set", "docsDir", "aidd_docs", "--force"],
-          projectDir
-        );
-        expect(exitCode).toBe(0);
-        expect(stdout).toContain("already");
+        expect(exitCode).toBe(1);
+        expect(stderr.toLowerCase()).toMatch(/read-only|unknown/);
       } finally {
         await cleanup();
       }
@@ -180,7 +162,7 @@ describe.concurrent("E2E: aidd config", () => {
         await initProject(projectDir, FRAMEWORK_PATH);
 
         const { stderr, exitCode } = await runCli(
-          ["config", "set", "docsDir", "my_docs"],
+          ["config", "set", "repo", "my-org/my-framework"],
           projectDir
         );
         expect(exitCode).toBe(1);
@@ -217,40 +199,6 @@ describe.concurrent("E2E: aidd config", () => {
         );
         expect(exitCode).toBe(1);
         expect(stderr).toContain("Unknown key");
-      } finally {
-        await cleanup();
-      }
-    });
-
-    it("shows warning when new directory does not exist on disk", async () => {
-      const { projectDir, cleanup } = await createTestEnv("config");
-      try {
-        await initProject(projectDir, FRAMEWORK_PATH);
-
-        const { stderr } = await runCli(
-          ["config", "set", "docsDir", "my_docs", "--force"],
-          projectDir
-        );
-        expect(stderr).toContain("does not exist on disk");
-        expect(stderr).toContain("Move your docs manually");
-      } finally {
-        await cleanup();
-      }
-    });
-
-    it("shows no warning when new directory already exists on disk", async () => {
-      const { projectDir, cleanup } = await createTestEnv("config");
-      try {
-        await initProject(projectDir, FRAMEWORK_PATH);
-        await mkdir(join(projectDir, "my_docs"), { recursive: true });
-
-        const { stdout, stderr } = await runCli(
-          ["config", "set", "docsDir", "my_docs", "--force"],
-          projectDir
-        );
-        expect(stdout).toContain("found on disk");
-        expect(stderr).not.toContain("does not exist");
-        expect(stderr).not.toContain("Move your docs");
       } finally {
         await cleanup();
       }
@@ -294,7 +242,7 @@ describe.concurrent("E2E: aidd config", () => {
       const { projectDir, cleanup } = await createTestEnv("config");
       try {
         const { stderr, exitCode } = await runCli(
-          ["config", "set", "docsDir", "my_docs", "--force"],
+          ["config", "set", "repo", "x/y", "--force"],
           projectDir
         );
         expect(exitCode).toBe(1);

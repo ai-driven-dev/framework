@@ -146,14 +146,6 @@ describe("interactive menu", () => {
         expect(result.command).toEqual(["config", "get", "docsDir"]);
       });
 
-      it("sets the docs directory with the entered value", async () => {
-        const deps = buildDeps(projectRoot);
-        await initProject(deps, projectRoot);
-        const { prompter } = makeQueuedPrompter(["system", "config", "set-docs"], ["my_docs"]);
-        const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
-        expect(result.command).toEqual(["config", "set", "docsDir", "my_docs", "--force"]);
-      });
-
       it("sets the repository with the entered value", async () => {
         const deps = buildDeps(projectRoot);
         await initProject(deps, projectRoot);
