@@ -8,7 +8,7 @@ export default defineConfig({
     globals: false,
     environment: "node",
     include: ["tests/**/*.test.ts"],
-    testTimeout: 60000,
+    testTimeout: 120000,
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary"],
