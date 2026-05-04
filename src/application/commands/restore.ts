@@ -17,11 +17,11 @@ export function registerRestoreCommand(program: Command): void {
     .argument("[files...]", "Specific file paths to restore (relative paths)")
     .option("-f, --force", "Restore without prompting", false)
     .option("--tool <tool>", "Limit restore to a specific tool")
-    .option("--path <path>", "Local framework directory (legacy framework-fetch path)")
     .option(
-      "--release <tag>",
-      "Marketplace catalog version to restore against (legacy framework-fetch path)"
+      "--path <path>",
+      "[DEPRECATED] Local framework directory — use marketplace flow instead"
     )
+    .option("--release <tag>", "[DEPRECATED] Framework release tag — use marketplace flow instead")
     .option("--plugin <name>", "Restore a specific plugin by name")
     .action(
       async (
@@ -68,6 +68,11 @@ export function registerRestoreCommand(program: Command): void {
                 .map((id) => manifest.getToolVersion(id))
                 .find((v) => v !== undefined);
 
+          if (cmdOptions.path !== undefined || cmdOptions.release !== undefined) {
+            output.warn(
+              "[DEPRECATED] --path/--release will be removed in a future release. Use the marketplace flow instead."
+            );
+          }
           const { path: frameworkPath, version } = await new ResolveFrameworkUseCase(
             deps.resolver,
             deps.logger,

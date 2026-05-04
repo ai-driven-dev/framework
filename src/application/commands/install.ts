@@ -105,8 +105,11 @@ Examples:
     )
     .option("-f, --force", "Overwrite already-installed tool", false)
     .option("-a, --all", "Install all available tools", false)
-    .option("--path <path>", "Local framework directory (legacy framework-fetch path)")
-    .option("--release <tag>", "Marketplace catalog version (legacy framework-fetch path)")
+    .option(
+      "--path <path>",
+      "[DEPRECATED] Local framework directory — use marketplace flow instead"
+    )
+    .option("--release <tag>", "[DEPRECATED] Framework release tag — use marketplace flow instead")
     .option("--mcp <servers>", "Comma-separated list of MCP servers to install")
     .option("--plugins <names>", "Comma-separated plugin names from catalog to install")
     .option("--all-plugins", "Install all plugins from catalog", false)
@@ -159,6 +162,9 @@ Examples:
           let results: InstallResult[];
 
           if (cmdOptions.path !== undefined || cmdOptions.release !== undefined) {
+            output.warn(
+              "[DEPRECATED] --path/--release will be removed in a future release. Use the marketplace flow instead."
+            );
             const { path: frameworkPath, version } = await new ResolveFrameworkUseCase(
               deps.resolver,
               deps.logger,

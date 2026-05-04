@@ -13,8 +13,11 @@ export function registerUpdateCommand(program: Command): void {
     .option("-f, --force", "Overwrite conflicting files without prompting", false)
     .option("--dry-run", "Preview changes without writing files", false)
     .option("--tool <tool>", "Limit update to a specific tool")
-    .option("--path <path>", "Local framework directory (legacy framework-fetch path)")
-    .option("--release <tag>", "Marketplace catalog version (legacy framework-fetch path)")
+    .option(
+      "--path <path>",
+      "[DEPRECATED] Local framework directory — use marketplace flow instead"
+    )
+    .option("--release <tag>", "[DEPRECATED] Framework release tag — use marketplace flow instead")
     .action(
       async (cmdOptions: {
         force: boolean;
@@ -33,6 +36,11 @@ export function registerUpdateCommand(program: Command): void {
 
           const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
+          if (cmdOptions.path !== undefined || cmdOptions.release !== undefined) {
+            output.warn(
+              "[DEPRECATED] --path/--release will be removed in a future release. Use the marketplace flow instead."
+            );
+          }
           const { path: frameworkPath, version } = await new ResolveFrameworkUseCase(
             deps.resolver,
             deps.logger,
