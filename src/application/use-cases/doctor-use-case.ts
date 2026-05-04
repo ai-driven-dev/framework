@@ -363,6 +363,10 @@ export class DoctorUseCase {
         }));
 
       for (const { ref, resolvedPath } of [...atRefs, ...linkRefs]) {
+        // Skip refs that resolve outside projectRoot (dev workspace paths like @../framework/...).
+        const normalizedResolved = normalize(resolvedPath);
+        const normalizedRoot = normalize(projectRoot);
+        if (!normalizedResolved.startsWith(normalizedRoot)) continue;
         if (!(await this.fs.fileExists(resolvedPath))) {
           issues.push({
             severity: "warning",
