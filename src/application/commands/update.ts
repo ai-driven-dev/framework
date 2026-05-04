@@ -1,131 +1,75 @@
 import type { Command } from "commander";
-import { assertValidToolIds, type ToolId } from "../../domain/tools/registry.js";
+import { Manifest } from "../../domain/models/manifest.js";
+import type { AiToolId, IdeToolId } from "../../domain/models/tool-ids.js";
+import {
+  assertValidToolIds,
+  getToolConfig,
+  isAiTool,
+  type ToolId,
+} from "../../domain/tools/registry.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
-import { ResolveFrameworkUseCase } from "../use-cases/resolve-framework-use-case.js";
-import { UpdateUseCase } from "../use-cases/update/update-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 export function registerUpdateCommand(program: Command): void {
   program
     .command("update")
-    .description("Update installed files to the latest framework version")
+    .description("Re-install runtime configs from bundled CLI assets (force overwrite)")
     .option("-f, --force", "Overwrite conflicting files without prompting", false)
-    .option("--dry-run", "Preview changes without writing files", false)
     .option("--tool <tool>", "Limit update to a specific tool")
-    .option(
-      "--path <path>",
-      "[DEPRECATED] Local framework directory — use marketplace flow instead"
-    )
-    .option("--release <tag>", "[DEPRECATED] Framework release tag — use marketplace flow instead")
-    .action(
-      async (cmdOptions: {
-        force: boolean;
-        dryRun: boolean;
-        tool?: string;
-        path?: string;
-        release?: string;
-      }) => {
-        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
-        const errorHandler = new ErrorHandler(output);
+    .action(async (cmdOptions: { force: boolean; tool?: string }) => {
+      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
 
-        try {
-          if (cmdOptions.tool !== undefined) {
-            assertValidToolIds([cmdOptions.tool]);
-          }
-
-          const deps = await createDeps(projectRoot, { verbose, repo }, output);
-
-          if (cmdOptions.path !== undefined || cmdOptions.release !== undefined) {
-            output.warn(
-              "[DEPRECATED] --path/--release will be removed in a future release. Use the marketplace flow instead."
-            );
-          }
-          const { path: frameworkPath, version } = await new ResolveFrameworkUseCase(
-            deps.resolver,
-            deps.logger,
-            deps.authReader
-          ).execute({ path: cmdOptions.path, release: cmdOptions.release });
-
-          const updateUseCase = new UpdateUseCase(
-            deps.fs,
-            deps.manifestRepo,
-            deps.hasher,
-            deps.logger,
-            deps.platform,
-            deps.prompter,
-            deps.assetProvider,
-            deps.pluginFetcher,
-            deps.pluginDistributionReader,
-            deps.pluginCatalogRepository
-          );
-
-          const result = await updateUseCase.execute({
-            frameworkPath,
-            version,
-            projectRoot,
-            toolIds: cmdOptions.tool ? [cmdOptions.tool as ToolId] : undefined,
-            force: cmdOptions.force,
-            dryRun: cmdOptions.dryRun,
-            repo: repo,
-            interactive: process.stdout.isTTY,
-          });
-
-          if (result.cancelled) {
-            output.info("Update cancelled.");
-            return;
-          }
-
-          if (result.alreadyUpToDate) {
-            output.success(`Already up to date (v${version})`);
-            return;
-          }
-
-          if (result.dryRun) {
-            const DRY_RUN_SYMBOL: Record<string, string> = {
-              added: "+",
-              removed: "-",
-              changed: "~",
-            };
-            output.print("The following changes would be applied:");
-            let totalChanges = 0;
-            for (const tool of result.tools) {
-              const changed = tool.diff.filter((d) => d.kind !== "unchanged");
-              if (changed.length === 0) continue;
-              output.print("");
-              output.print(`${tool.toolId} (v${version}):`);
-              for (const diff of changed) {
-                const symbol = DRY_RUN_SYMBOL[diff.kind] ?? "~";
-                const conflict = diff.conflict ? " [conflict]" : "";
-                output.print(`  ${symbol} ${diff.relativePath}${conflict}`);
-                totalChanges++;
-              }
-            }
-            const toolCount = result.toolCount;
-            output.print("");
-            output.print(
-              `Would apply ${totalChanges} ${totalChanges === 1 ? "change" : "changes"} across ${toolCount} ${toolCount === 1 ? "tool" : "tools"}. Run without --dry-run to apply.`
-            );
-            return;
-          }
-
-          for (const tool of result.tools) {
-            if (tool.alreadyUpToDate) continue;
-            output.print("");
-            output.print(`${tool.toolId} (v${version}):`);
-            for (const f of tool.written) output.print(`  + ${f}`);
-            for (const f of tool.deleted) output.print(`  - ${f}`);
-            for (const f of tool.kept) output.print(`  ~ kept: ${f}`);
-            for (const f of tool.backedUp) output.print(`  ~ backup: ${f}`);
-          }
-          const toolCount = result.toolCount;
-          output.print("");
-          output.success(
-            `Updated ${result.totalWritten} ${result.totalWritten === 1 ? "file" : "files"}, deleted ${result.totalDeleted} ${result.totalDeleted === 1 ? "file" : "files"} across ${toolCount} ${toolCount === 1 ? "tool" : "tools"}`
-          );
-        } catch (error) {
-          errorHandler.handle(error);
+      try {
+        if (cmdOptions.tool !== undefined) {
+          assertValidToolIds([cmdOptions.tool]);
         }
+
+        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+        const installedIds = manifest.getInstalledToolIds();
+        const targetIds: ToolId[] = cmdOptions.tool ? [cmdOptions.tool as ToolId] : installedIds;
+
+        if (targetIds.length === 0) {
+          output.info("No tools installed. Run `aidd setup` to bootstrap.");
+          return;
+        }
+
+        const version = deps.currentVersionProvider.get();
+        let totalUpdated = 0;
+        for (const toolId of targetIds) {
+          const config = getToolConfig(toolId);
+          const result = isAiTool(config)
+            ? await deps.installRuntimeConfigUseCase.execute({
+                toolId: toolId as AiToolId,
+                projectRoot,
+                manifest,
+                force: true,
+                version,
+              })
+            : await deps.installIdeConfigUseCase.execute({
+                toolId: toolId as IdeToolId,
+                projectRoot,
+                manifest,
+                force: true,
+                version,
+              });
+          for (const w of result.warnings) output.warn(w);
+          if (!result.skipped) {
+            output.success(`Updated ${result.toolId} (${result.fileCount} files)`);
+            totalUpdated += result.fileCount;
+          }
+        }
+
+        if (totalUpdated === 0) {
+          output.info("Nothing to update.");
+          return;
+        }
+        output.print("");
+        output.info(`Run \`aidd plugin update\` to update plugins from marketplace.`);
+      } catch (error) {
+        errorHandler.handle(error);
       }
-    );
+    });
 }

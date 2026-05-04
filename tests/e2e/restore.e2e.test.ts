@@ -1,41 +1,14 @@
 import { existsSync } from "node:fs";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  CLI_PATH,
-  createTestEnv,
-  execFileAsync,
-  FRAMEWORK_PATH,
-  initProject,
-  runCli,
-} from "./helpers.js";
-
-async function runCliNoAuth(
-  args: string[],
-  cwd: string,
-  fakeHome: string
-): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  const env: NodeJS.ProcessEnv = { ...process.env, HOME: fakeHome };
-  delete env.AIDD_TOKEN;
-  try {
-    const { stdout, stderr } = await execFileAsync("node", [CLI_PATH, ...args], { cwd, env });
-    return { stdout, stderr, exitCode: 0 };
-  } catch (error) {
-    const err = error as { stdout?: string; stderr?: string; code?: number };
-    return {
-      stdout: err.stdout ?? "",
-      stderr: err.stderr ?? "",
-      exitCode: err.code ?? 1,
-    };
-  }
-}
+import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
 
 describe.concurrent("E2E: aidd restore", () => {
   it("fails with 'No AIDD installation found' when no manifest exists", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
     try {
-      const { stderr, exitCode } = await runCli(["restore", "--path", FRAMEWORK_PATH], projectDir);
+      const { stderr, exitCode } = await runCli(["restore", "--force"], projectDir);
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("No AIDD manifest found");
@@ -50,10 +23,7 @@ describe.concurrent("E2E: aidd restore", () => {
       await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
-      const { stdout, exitCode } = await runCli(
-        ["restore", "--path", FRAMEWORK_PATH, "--force"],
-        projectDir
-      );
+      const { stdout, exitCode } = await runCli(["restore", "--force"], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Nothing to restore");
@@ -73,10 +43,7 @@ describe.concurrent("E2E: aidd restore", () => {
       const customContent = "custom content that should be restored";
       await writeFile(claudeMdPath, customContent, "utf-8");
 
-      const { stdout, exitCode } = await runCli(
-        ["restore", "--path", FRAMEWORK_PATH, "--force"],
-        projectDir
-      );
+      const { stdout, exitCode } = await runCli(["restore", "--force"], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Restored");
@@ -106,10 +73,7 @@ describe.concurrent("E2E: aidd restore", () => {
       await rm(namingFilePath, { force: true });
       expect(existsSync(namingFilePath)).toBe(false);
 
-      const { stdout, exitCode } = await runCli(
-        ["restore", "--path", FRAMEWORK_PATH, "--force"],
-        projectDir
-      );
+      const { stdout, exitCode } = await runCli(["restore", "--force"], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Restored");
@@ -141,10 +105,7 @@ describe.concurrent("E2E: aidd restore", () => {
       await writeFile(claudeMdPath, customClaudeContent, "utf-8");
       await writeFile(namingFilePath, customNamingContent, "utf-8");
 
-      const { stdout, exitCode } = await runCli(
-        ["restore", "CLAUDE.md", "--path", FRAMEWORK_PATH, "--force"],
-        projectDir
-      );
+      const { stdout, exitCode } = await runCli(["restore", "CLAUDE.md", "--force"], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Restored");
@@ -172,7 +133,7 @@ describe.concurrent("E2E: aidd restore", () => {
       await writeFile(agentsMdPath, "modified agents");
 
       const { exitCode, stdout } = await runCli(
-        ["restore", "--tool", "claude", "--force", "--path", FRAMEWORK_PATH],
+        ["restore", "--tool", "claude", "--force"],
         projectDir
       );
 
@@ -211,7 +172,7 @@ describe.concurrent("E2E: aidd restore", () => {
       await writeFile(namingFilePath, customNamingContent, "utf-8");
 
       const { stdout, exitCode } = await runCli(
-        ["restore", ".claude/plugins/aidd-test/rules/", "--path", FRAMEWORK_PATH, "--force"],
+        ["restore", ".claude/plugins/aidd-test/rules/", "--force"],
         projectDir
       );
 
@@ -237,10 +198,7 @@ describe.concurrent("E2E: aidd restore", () => {
       const untrackedPath = join(projectDir, ".claude", "user-extra.md");
       await writeFile(untrackedPath, "user added file");
 
-      const { exitCode } = await runCli(
-        ["restore", "--path", FRAMEWORK_PATH, "--force"],
-        projectDir
-      );
+      const { exitCode } = await runCli(["restore", "--force"], projectDir);
 
       expect(exitCode).toBe(0);
       expect(existsSync(untrackedPath)).toBe(true);
@@ -257,7 +215,7 @@ describe.concurrent("E2E: aidd restore", () => {
 
       await writeFile(join(projectDir, "CLAUDE.md"), "user modified content");
 
-      const { stderr, exitCode } = await runCli(["restore", "--path", FRAMEWORK_PATH], projectDir);
+      const { stderr, exitCode } = await runCli(["restore"], projectDir);
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("--force");
@@ -278,38 +236,18 @@ describe.concurrent("E2E: aidd restore", () => {
     }
   });
 
-  it("rejects the legacy --docs flag", async () => {
-    const { projectDir, cleanup } = await createTestEnv("restore");
+  it("rejects the legacy --release flag (removed)", async () => {
+    const { projectDir, cleanup } = await createTestEnv("restore-release");
     try {
+      await initProject(projectDir, FRAMEWORK_PATH);
+
       const { stderr, exitCode } = await runCli(
-        ["restore", "--docs", "--path", FRAMEWORK_PATH],
+        ["restore", "--release", "v3.9.0", "--force"],
         projectDir
       );
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toMatch(/unknown option/i);
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("--release flag without --path triggers remote resolution and requires auth", async () => {
-    const { projectDir, cleanup } = await createTestEnv("restore-release");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-
-      const fakeHome = join(projectDir, "fake-home");
-      await mkdir(fakeHome, { recursive: true });
-
-      const { stderr, exitCode } = await runCliNoAuth(
-        ["restore", "--release", "v3.9.0", "--force"],
-        projectDir,
-        fakeHome
-      );
-
-      expect(exitCode).not.toBe(0);
-      expect(stderr).toMatch(/not authenticated|auth login/i);
     } finally {
       await cleanup();
     }

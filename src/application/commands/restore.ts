@@ -4,7 +4,6 @@ import { assertValidToolIds, type ToolId } from "../../domain/tools/registry.js"
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { NoManifestError } from "../errors.js";
-import { ResolveFrameworkUseCase } from "../use-cases/resolve-framework-use-case.js";
 import { RestorePluginUseCase } from "../use-cases/restore/restore-plugin-use-case.js";
 import { RestoreUseCase } from "../use-cases/restore/restore-use-case.js";
 import { StatusUseCase } from "../use-cases/status-use-case.js";
@@ -13,15 +12,10 @@ import { parseGlobalOptions } from "./global-options.js";
 export function registerRestoreCommand(program: Command): void {
   program
     .command("restore")
-    .description("Restore files to their framework version")
+    .description("Restore tracked files to their installed version (from manifest hashes)")
     .argument("[files...]", "Specific file paths to restore (relative paths)")
     .option("-f, --force", "Restore without prompting", false)
     .option("--tool <tool>", "Limit restore to a specific tool")
-    .option(
-      "--path <path>",
-      "[DEPRECATED] Local framework directory — use marketplace flow instead"
-    )
-    .option("--release <tag>", "[DEPRECATED] Framework release tag — use marketplace flow instead")
     .option("--plugin <name>", "Restore a specific plugin by name")
     .action(
       async (
@@ -29,8 +23,6 @@ export function registerRestoreCommand(program: Command): void {
         cmdOptions: {
           force: boolean;
           tool?: string;
-          path?: string;
-          release?: string;
           plugin?: string;
         }
       ) => {
@@ -61,23 +53,11 @@ export function registerRestoreCommand(program: Command): void {
             throw new NoManifestError(repo);
           }
 
-          const pinnedVersion = cmdOptions.tool
-            ? manifest.getToolVersion(cmdOptions.tool as ToolId)
-            : manifest
-                .getInstalledToolIds()
-                .map((id) => manifest.getToolVersion(id))
-                .find((v) => v !== undefined);
-
-          if (cmdOptions.path !== undefined || cmdOptions.release !== undefined) {
-            output.warn(
-              "[DEPRECATED] --path/--release will be removed in a future release. Use the marketplace flow instead."
-            );
-          }
-          const { path: frameworkPath, version } = await new ResolveFrameworkUseCase(
-            deps.resolver,
-            deps.logger,
-            deps.authReader
-          ).execute({ path: cmdOptions.path, pinnedVersion, release: cmdOptions.release });
+          const version =
+            manifest
+              .getInstalledToolIds()
+              .map((id) => manifest.getToolVersion(id))
+              .find((v) => v !== undefined) ?? deps.currentVersionProvider.get();
 
           const toolIds: ToolId[] | undefined = cmdOptions.tool
             ? [cmdOptions.tool as ToolId]
@@ -140,7 +120,6 @@ export function registerRestoreCommand(program: Command): void {
           );
 
           const result = await restoreUseCase.execute({
-            frameworkPath,
             version,
             docsDir: manifest.docsDir,
             projectRoot,
