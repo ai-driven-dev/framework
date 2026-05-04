@@ -115,7 +115,9 @@ export function registerSetupCommand(program: Command): void {
             deps.resolver,
             deps.installFrameworkPluginsUseCase,
             deps.assetProvider,
-            deps.authReader
+            deps.authReader,
+            deps.marketplaceRegistry,
+            deps.pluginCatalogRepository
           ).execute({
             projectRoot,
             path: cmdOptions.path,

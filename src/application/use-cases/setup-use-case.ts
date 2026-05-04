@@ -1,12 +1,16 @@
 import { isLocalPath } from "../../domain/models/framework.js";
 import { type DistributionMode, Manifest } from "../../domain/models/manifest.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../domain/models/marketplace.js";
+import { marketplaceCacheDir } from "../../domain/models/paths.js";
 import type { AssetProvider } from "../../domain/ports/asset-provider.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkResolver } from "../../domain/ports/framework-resolver.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import type { MarketplaceRegistry } from "../../domain/ports/marketplace-registry.js";
 import type { Platform } from "../../domain/ports/platform.js";
+import type { PluginCatalogRepository } from "../../domain/ports/plugin-catalog-repository.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import type { TokenProvider } from "../../domain/ports/token-provider.js";
 import {
@@ -82,7 +86,9 @@ export class SetupUseCase {
     private readonly resolver: FrameworkResolver,
     private readonly installFrameworkPluginsUseCase: InstallFrameworkPluginsUseCase,
     private readonly assets: AssetProvider,
-    authReader?: TokenProvider
+    authReader?: TokenProvider,
+    private readonly marketplaceRegistry?: MarketplaceRegistry,
+    private readonly pluginCatalogRepository?: PluginCatalogRepository
   ) {
     this.frameworkResolver = new ResolveFrameworkUseCase(resolver, logger, authReader);
   }
@@ -109,7 +115,7 @@ export class SetupUseCase {
   private async handleInit(options: SetupOptions): Promise<SetupResult> {
     const { projectRoot, repo } = options;
 
-    const { docsDir, explicitDocsDir } = await this.resolveDocsDir(options);
+    const { docsDir, explicitDocsDir } = this.resolveDocsDir(options);
     const resolvedMode = await this.resolveMode(options);
     const { frameworkPath, frameworkRepo } = await this.resolveFrameworkSource(
       options,
@@ -235,23 +241,12 @@ export class SetupUseCase {
     });
   }
 
-  private async resolveDocsDir(
-    options: SetupOptions
-  ): Promise<{ docsDir: string; explicitDocsDir: string }> {
+  private resolveDocsDir(options: SetupOptions): { docsDir: string; explicitDocsDir: string } {
     if (options.docsDir !== undefined) {
       Manifest.validateDocsDir(options.docsDir);
       return { docsDir: options.docsDir, explicitDocsDir: options.docsDir };
     }
-    if (!options.interactive) {
-      return { docsDir: Manifest.DEFAULT_DOCS_DIR, explicitDocsDir: "" };
-    }
-    const docsDirInput = await this.prompter.input(
-      "Documentation directory name:",
-      Manifest.DEFAULT_DOCS_DIR
-    );
-    const docsDir = docsDirInput || Manifest.DEFAULT_DOCS_DIR;
-    Manifest.validateDocsDir(docsDir);
-    return { docsDir, explicitDocsDir: docsDirInput };
+    return { docsDir: Manifest.DEFAULT_DOCS_DIR, explicitDocsDir: "" };
   }
 
   private async resolveFrameworkSource(
@@ -263,15 +258,26 @@ export class SetupUseCase {
       if (isLocalPath(options.path)) return { frameworkPath: options.path };
       return { frameworkRepo: options.path };
     }
+    if (mode === "local") return this.resolveLocalSource(options);
+    return this.resolveRemoteSource(options);
+  }
+
+  private async resolveLocalSource(options: SetupOptions): Promise<{ frameworkPath?: string }> {
+    const pathInput = options.interactive
+      ? await this.prompter.input("Framework local path:", ".")
+      : ".";
+    if (!pathInput) return {};
+    return { frameworkPath: pathInput };
+  }
+
+  private async resolveRemoteSource(options: SetupOptions): Promise<{ frameworkRepo?: string }> {
     const existingManifest = await this.manifestRepo.load();
     const repoDefault = existingManifest?.repo ?? this.resolver.getDefaultRepo() ?? "";
-    const sourceDefault = mode === "local" ? "." : repoDefault;
-    const sourceInput = options.interactive
-      ? await this.prompter.input("Framework source (owner/repo or local path):", sourceDefault)
-      : sourceDefault;
-    if (!sourceInput) return {};
-    if (isLocalPath(sourceInput)) return { frameworkPath: sourceInput };
-    return { frameworkRepo: sourceInput };
+    const repoInput = options.interactive
+      ? await this.prompter.input("Framework repository (owner/repo):", repoDefault)
+      : repoDefault;
+    if (!repoInput) return {};
+    return { frameworkRepo: repoInput };
   }
 
   private async resolveRelease(
@@ -281,14 +287,26 @@ export class SetupUseCase {
   ): Promise<string | undefined> {
     if (frameworkPath && isLocalPath(frameworkPath)) return options.release;
     if (options.release) return options.release;
+    const catalogVersion = await this.fetchCatalogVersion(options.projectRoot);
     if (options.interactive) {
-      const latest = await this.resolver.fetchLatestVersion(frameworkRepo).catch(() => "");
+      const latest =
+        catalogVersion ?? (await this.resolver.fetchLatestVersion(frameworkRepo).catch(() => ""));
       const label = latest
         ? `Framework release tag (latest: ${latest}):`
         : "Framework release tag:";
       return (await this.prompter.input(label, latest)) || latest || undefined;
     }
-    return this.resolver.fetchLatestVersion(frameworkRepo).catch(() => undefined);
+    return catalogVersion ?? this.resolver.fetchLatestVersion(frameworkRepo).catch(() => undefined);
+  }
+
+  private async fetchCatalogVersion(projectRoot: string): Promise<string | undefined> {
+    if (!this.marketplaceRegistry || !this.pluginCatalogRepository) return undefined;
+    const marketplaces = await this.marketplaceRegistry.list(projectRoot).catch(() => []);
+    const framework = marketplaces.find((m) => m.name === FRAMEWORK_MARKETPLACE_NAME);
+    if (!framework) return undefined;
+    const cacheDir = marketplaceCacheDir(projectRoot, framework.name);
+    const catalog = await this.pluginCatalogRepository.load(cacheDir).catch(() => null);
+    return catalog?.version;
   }
 
   private async handleAdopt(options: SetupOptions, signals: AdoptSignal[]): Promise<SetupResult> {

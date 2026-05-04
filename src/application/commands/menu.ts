@@ -346,7 +346,12 @@ async function waitForEnter(): Promise<void> {
   });
 }
 
+function printBanner(): void {
+  process.stdout.write("\n  AI-Driven Dev CLI\n  ─────────────────\n\n");
+}
+
 export async function runMenuLoop(): Promise<never> {
+  printBanner();
   const { manifestRepo, prompter } = createMenuDeps(process.cwd());
   for (;;) {
     try {
