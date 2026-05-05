@@ -127,10 +127,16 @@ export function registerSetupCommand(program: Command): void {
             switchMode: cmdOptions.switchMode,
           });
 
+          const resolvedRef =
+            cmdOptions.release ??
+            (result.kind === "initialized" || result.kind === "installed"
+              ? result.resolvedRef
+              : undefined);
           const registrationResult = await deps.marketplaceRegisterFrameworkUseCase.execute({
             projectRoot,
             force: result.kind === "mode-switched",
             frameworkPath: cmdOptions.path,
+            ref: resolvedRef,
           });
 
           if (process.env.AIDD_SKIP_MARKETPLACE_REFRESH !== "1") {

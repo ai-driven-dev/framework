@@ -56,9 +56,9 @@ interface InstallSummary {
 }
 
 export type SetupResult =
-  | { kind: "initialized"; docsDir: string; install: InstallSummary }
+  | { kind: "initialized"; docsDir: string; install: InstallSummary; resolvedRef?: string }
   | { kind: "adopted"; version: string; toolCount: number; totalRegistered: number }
-  | { kind: "installed"; install: InstallSummary }
+  | { kind: "installed"; install: InstallSummary; resolvedRef?: string }
   | { kind: "up-to-date"; hasAdditionalTools: boolean; additionalInstall?: InstallSummary }
   | { kind: "mode-switched"; newMode: DistributionMode };
 
@@ -124,6 +124,7 @@ export class SetupUseCase {
       kind: "initialized",
       docsDir: initResult.docsDir,
       install: { results: installResults },
+      resolvedRef: version,
     };
   }
 
@@ -135,7 +136,7 @@ export class SetupUseCase {
       version,
       options.interactive ?? false
     );
-    return { kind: "installed", install: { results: installResults } };
+    return { kind: "installed", install: { results: installResults }, resolvedRef: version };
   }
 
   private async handleUpToDate(options: SetupOptions): Promise<SetupResult> {

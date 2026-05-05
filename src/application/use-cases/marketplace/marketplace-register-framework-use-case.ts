@@ -8,6 +8,8 @@ export interface MarketplaceRegisterFrameworkOptions {
   projectRoot: string;
   force?: boolean;
   frameworkPath?: string;
+  /** Git ref/tag to pin marketplace at (e.g. v4.1.0-beta.5). Used in remote mode. */
+  ref?: string;
 }
 
 export interface MarketplaceRegisterFrameworkResult {
@@ -29,7 +31,7 @@ export class MarketplaceRegisterFrameworkUseCase {
     if (alreadyRegistered && options.force) {
       await this.registry.delete(options.projectRoot, FRAMEWORK_MARKETPLACE_NAME, "project");
     }
-    const source = await this.deriveSource(options.frameworkPath);
+    const source = await this.deriveSource(options.frameworkPath, options.ref);
     const marketplace = Marketplace.create({
       name: FRAMEWORK_MARKETPLACE_NAME,
       source,
@@ -40,15 +42,15 @@ export class MarketplaceRegisterFrameworkUseCase {
     return { registered: true };
   }
 
-  private async deriveSource(frameworkPath?: string): Promise<PluginSource> {
+  private async deriveSource(frameworkPath?: string, ref?: string): Promise<PluginSource> {
     const manifest = await this.manifestRepo.load();
     const mode = manifest?.getMode() ?? "local";
     if (mode === "remote") {
       if (frameworkPath) return { kind: "local", path: frameworkPath };
       const repo = manifest?.repo ?? Manifest.DEFAULT_REPO;
-      const version = manifest?.getScriptsVersion();
-      const ref = version ? `v${version}` : undefined;
-      return { kind: "github", repo, ref };
+      const resolvedRef =
+        ref ?? (manifest?.getScriptsVersion() ? `v${manifest.getScriptsVersion()}` : undefined);
+      return { kind: "github", repo, ref: resolvedRef };
     }
     return { kind: "local", path: "." };
   }
