@@ -5,72 +5,54 @@ description: Multi-agent coordination and workflows template
 
 # AGENTS COORDINATION
 
-| AGENT NAME | ROLE DESCRIPTION                                                                    | RESPONSIBILITIES                                                                                                                      | STATUS |
-| ---------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| `alexia`   | Autonomous end-to-end feature implementation without human intervention             | - Implement features end-to-end without asking questions <br> - Make all implementation decisions autonomously based on project rules | prod   |
-| `claire`   | PM discovery agent - from fuzzy idea to actionable backlog                          | - Transform fuzzy requests into crystal-clear requirements <br> - Guide PMs through full discovery flow with iterative questioning    | prod   |
-| `kent`     | TDD & Tidy First development guide                                                  | - Drive the Red → Green → Refactor TDD cycle <br> - Separate structural changes from behavioral changes                               | prod   |
-| `iris`     | Frontend specialist - implement from Figma, verify UI conformity, validate journeys | - Implement components from Figma designs <br> - Verify UI conformity and validate user journeys                                      | prod   |
-| `martin`   | Code quality and validation agent                                                   | - Run commands to validate build, lint and tests <br> - Enforce coding assertions and module-specific rules                           | prod   |
+| AGENT NAME    | ROLE DESCRIPTION                                                                       | RESPONSIBILITIES                                                                                                                                                                              | STATUS |
+| ------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| `planner`     | Run orchestrator — turns a validated spec into milestones and drives execution         | - Decompose spec into milestones with acceptance criteria <br> - Spawn `implementer` and `reviewer` in fresh contexts per milestone <br> - Re-spawn on incomplete or low-quality output, escalate on cap | prod   |
+| `implementer` | Milestone executor — codes, tests, repairs within the input scope                      | - Implement substep by substep, validate after each <br> - Commit atomically per ticked checkbox (one box = one commit) <br> - Report `completion_score` honestly                                       | prod   |
+| `reviewer`    | Independent critic — verifies an artifact against an explicit validator                | - Judge each criterion as fulfilled / partial / unfulfilled with evidence <br> - Compute `completion_score` and `quality_score` <br> - Surface findings precise enough to act on without further investigation | prod   |
 
-## Communication flow (if applicable)
+## Communication flow
 
-<!-- To coordinate effectively, agents will follow this communication flow IF they depend on each other: -->
+The three agents only talk through the `planner`. The `implementer` and `reviewer` never call each other directly.
 
 ```mermaid
 graph LR
-    claire -->|requirements| alexia
-    alexia -->|implementation| martin
-    alexia -->|frontend| iris
-    alexia -->|TDD| kent
-    kent -->|code to validate| martin
-    iris -->|validated UI| martin
+    spec[validated spec] -->|input| planner
+    planner -->|milestone| implementer
+    implementer -->|completion_score + items_remaining| planner
+    planner -->|artifact + validator| reviewer
+    reviewer -->|completion + quality + findings| planner
+    planner -->|done or blocked| done([run output])
 ```
 
 ## Usage
 
-### `alexia`
+### `planner`
 
-> Use Alexia when you want a fully autonomous senior engineer to implement a feature or fix end-to-end without questions.
-
-Use-cases :
-
-- **Autonomous feature delivery** : Implement a complete feature from request to final report with minimal human interaction.
-- **Exploratory implementation** : Try a pragmatic implementation path quickly while respecting project rules and best practices.
-
-### `claire`
-
-> Use Claire when you need to transform a vague feature request into crystal-clear requirements before planning.
+> Use the planner when a validated spec needs to be turned into an executable plan, or when a previous run came back with incomplete or low-quality output.
 
 Use-cases :
 
-- **Fuzzy requests** : Turn incomplete or ambiguous feature ideas into comprehensive requirements.
-- **Discovery phase** : Systematically uncover edge cases, constraints, and missing context through iterative questioning.
+- **New spec to plan** : decompose into milestones with acceptance criteria sized for one implementer pass.
+- **Re-spawn loop** : a previous implementer or reviewer returned `completion_score < 100` or quality below threshold — feed the findings back, decide whether to re-spawn or escalate.
+- **Replan on human input** : a human surfaced a missing constraint or asked for a scope change — incorporate and reschedule.
 
-### `kent`
+### `implementer`
 
-> Use Kent when you explicitly want strict Test-Driven Development and Tidy First refactoring discipline.
-
-Use-cases :
-
-- **New critical logic** : Design and implement core domain behavior with a tight Red → Green → Refactor loop.
-- **Huge or risky refactors** : Separate structural from behavioral changes and validate each step with tests.
-
-### `iris`
-
-> Use Iris every time you need to verify or review a frontend implementation against initial requirements.
+> Use the implementer when the planner has handed off a single milestone, a fix list, or `items_remaining` from a previous incomplete pass.
 
 Use-cases :
 
-- **Frontend implementation** : Generate components from Figma designs with exact values (colors, spacing, typography).
-- **UI validation** : Verify that a frontend implementation fully conforms to the original design or requirements.
-- **User journey testing** : Validate complete user flows and interactions step by step.
+- **Milestone implementation** : code the milestone, run tests, repair until acceptance criteria pass, commit per checkbox.
+- **Targeted fix list** : fix exactly what the reviewer flagged, no scope expansion.
+- **Resumed incomplete pass** : pick up `items_remaining` from a previous spawn and finish.
 
-### `martin`
+### `reviewer`
 
-> Use Martin every time you need to ensure the codebase still builds correctly and all tests and coding rules pass.
+> Use the reviewer when an artifact (code, spec, plan, doc) needs an independent verdict against an explicit validator.
 
 Use-cases :
 
-- **Build validation** : Verify that the project compiles and all tests pass after changes.
-- **Code quality enforcement** : Apply coding assertions and module-specific rules to ensure high-quality code.
+- **Spec validation** : check a draft spec against a spec-validator checklist before freezing it.
+- **Milestone verdict** : verify the implementer's output against the milestone's acceptance criteria.
+- **Plan or doc review** : audit any reviewable artifact against a checklist file (YAML, JSON, markdown).

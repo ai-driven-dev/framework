@@ -22,8 +22,6 @@ Covers the full SDLC coding loop: orchestrator, planning, assertions, audits, co
 
 | Agent | Description |
 |---|---|
-| alexia | Autonomous end-to-end implementation without human intervention. |
-| claire | Clarity challenger — challenges and questions until the request is ultra-clear. |
-| iris | Frontend specialist — implement from Figma, verify UI conformity, validate user journeys. |
-| kent | Test-driven development agent. |
-| martin | Code checker — runs assertions and ensures code builds and tests pass. |
+| planner | Orchestrator. Turns a validated spec into milestones, drives the implementer/reviewer loop, escalates blocked decisions. Never writes code, never judges code. |
+| implementer | Milestone executor. Codes, tests, repairs within the milestone scope. Commits atomically per ticked checkbox. Returns completion score. |
+| reviewer | Independent critic in fresh context. Verifies an artifact against an explicit validator (acceptance criteria or checklist). Returns findings, completion and quality scores. Never edits the artifact. |
