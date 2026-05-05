@@ -7,6 +7,34 @@ description: Pure orchestrator for the full AIDD development flow. Use when a hu
 
 Pure orchestrator. Takes a free-form request and drives it through `spec → plan → implementation → done` by composing other skills and agents. This skill is a workflow descriptor: every step delegates to a skill or an agent. No business logic lives here.
 
+## Iron rule
+
+**You are the conductor, not a player.**
+
+You never write code. You never run tests. You never commit. You never load a skill into your own context.
+
+Every action — including invoking another skill — is delegated to a sub-agent that runs in a fresh context. You only ever read structured outputs (YAML) returned by sub-agents. You never read the contents of files produced (spec.md, plan.md, source code) — those belong to the agents that wrote them.
+
+If you find yourself about to use the `Skill`, `Write`, `Edit`, `Bash` tool yourself for anything other than reading a sub-agent output or routing it to the next phase, you have violated the protocol. Stop and re-delegate.
+
+## Skill invocation protocol
+
+You never call `Skill(...)` directly. Every skill invocation is wrapped in an Agent spawn:
+
+1. Spawn the Agent tool with `subagent_type: general-purpose`.
+2. Prompt template:
+
+   ```
+   Invoke skill `<skill-id>` with these inputs:
+   <yaml inputs>
+
+   Run the skill in your fresh context. When done, return ONLY the structured output described by the skill's frontmatter, in YAML, with no surrounding prose. Do not include the file contents you produced.
+   ```
+
+3. Parse the agent's YAML response. Use the values, not the produced content.
+
+This applies to: `aidd-pm:05:spec`, `aidd-vcs:01:commit`, `aidd-vcs:02:pull-request`. Skills used by `planner`, `implementer`, or `reviewer` are loaded inside those agents' own contexts — that already satisfies the rule.
+
 ## When to use
 
 - A human invokes `/sdlc <request>` to start a new run from a free-form description
@@ -58,15 +86,15 @@ Four phases. Each phase delegates. Defaults below are overridable per invocation
 
 ### Phase 1 — Spec generation and validation
 
-1. Invoke `aidd-pm:05:spec` with `request` and/or `prd_path`. Output: a draft spec at `working_dir/spec.md`.
-2. Spawn `reviewer` agent with:
-   - artifact: the draft spec
+1. **Spawn a sub-agent (per Skill invocation protocol)** to invoke `aidd-pm:05:spec` with inputs `{request, prd_path, working_dir}`. The agent loads the skill in its fresh context, writes the draft spec at `working_dir/spec.md`, and returns `{spec_path, status, notes}`. You never load the skill yourself; you only read the YAML output.
+2. **Spawn `reviewer` agent** (Agent tool, `subagent_type: reviewer`) with:
+   - artifact: the draft spec at the returned `spec_path`
    - validator: `{{TOOLS}}/plugins/aidd-pm/skills/05-spec/assets/spec-validator.yml` (filesystem path, resolved by Claude Code)
 3. Read the reviewer's output:
    - `completion_score = 100` and `quality_score >= quality_threshold` → proceed to step 4
-   - `quality_score < quality_threshold` → re-invoke `aidd-pm:05:spec` with the reviewer's findings as input, retry
+   - `quality_score < quality_threshold` → re-spawn the spec sub-agent with `existing_spec` and `findings`, retry
    - Beyond `retry_cap_per_step` retries → escalate to human, return with `status: blocked`
-4. **Commit the validated spec** via `aidd-vcs:01:commit` with `mode: auto`, `message: "spec: <feature-name> validated"`, `files: [<spec_path>]`, `push: false`. Record the returned `commit_sha` in `commits.spec_validated`.
+4. **Commit the validated spec.** Spawn a sub-agent (per Skill invocation protocol) to invoke `aidd-vcs:01:commit` with `{mode: auto, message: "spec: <feature-name> validated", files: [<spec_path>], push: false}`. Record the returned `commit_sha` in `commits.spec_validated`.
 
 ### Phase 2 — Planning
 
@@ -77,7 +105,7 @@ Four phases. Each phase delegates. Defaults below are overridable per invocation
    - `decisions_blocked` non-empty → ask the human, get answers, re-spawn the planner with the answers as input
    - `plan_status: blocked` → escalate, return with `status: blocked`
    - Beyond `retry_cap_per_step` retries → escalate to human
-4. **Commit the validated plan** via `aidd-vcs:01:commit` with `mode: auto`, `message: "plan: <feature-name> validated"`, `files: [<plan_path>, ...child_paths]`, `push: false`. Record the returned `commit_sha` in `commits.plan_validated`.
+4. **Commit the validated plan.** Spawn a sub-agent (per Skill invocation protocol) to invoke `aidd-vcs:01:commit` with `{mode: auto, message: "plan: <feature-name> validated", files: [<plan_path>, ...child_paths], push: false}`. Record the returned `commit_sha` in `commits.plan_validated`.
 
 The plan does not require a separate validator pass at this stage. The planner's structural output is used as-is. A plan validator may be added later if the run pattern reveals gaps.
 
@@ -94,9 +122,9 @@ The plan does not require a separate validator pass at this stage. The planner's
 
 ### Phase 4 — Finalize
 
-1. Write a run summary (decisions, milestones, final state, commit shas) at `working_dir/summary.md`.
-2. **Final commit** via `aidd-vcs:01:commit` with `mode: auto`, `message: "feat: <feature-name> complete"`, `files: [<summary_path>]`, `push: <open_pr>` (push only if a PR is requested). Record the returned `commit_sha` in `commits.final`.
-3. If `open_pr: true` → invoke `aidd-vcs:02:pull-request`. Record the URL in `pr_url`.
+1. **Write the run summary.** Spawn a sub-agent (Agent tool, `subagent_type: general-purpose`) and instruct it to write `working_dir/summary.md` with the decisions, milestones, final state, and commit shas you tracked. The agent does the writing; you don't. It returns `{summary_path}`.
+2. **Final commit.** Spawn a sub-agent (per Skill invocation protocol) to invoke `aidd-vcs:01:commit` with `{mode: auto, message: "feat: <feature-name> complete", files: [<summary_path>], push: <open_pr>}` (push only if a PR is requested). Record the returned `commit_sha` in `commits.final`.
+3. If `open_pr: true` → spawn a sub-agent (per Skill invocation protocol) to invoke `aidd-vcs:02:pull-request`. Record the returned URL in `pr_url`.
 4. Return the structured output.
 
 ## Skills and agents this skill uses
