@@ -56,6 +56,16 @@ $ARGUMENTS
 - Be concise, less is more
 - If multiple examples, then multiple rule files
 
+### Frontmatter convention (mandatory)
+
+Every rule file MUST start with this frontmatter:
+
+- `name`: kebab-case slug, unique within the rules folder.
+- `description`: one-line, self-contained — a downstream skill (notably `aidd-dev:01:plan`) decides whether the rule applies based on this single line.
+- `paths` (optional): list of globs scoping the rule. Omit for always-apply rules.
+
+The physical path of the rule (`aidd_docs/rules/<category>/<slug>.md`) is derived from the file location — it is NOT part of the frontmatter. The script `scripts/list-rules.mjs` consumes this convention.
+
 ### Rule writing standards
 
 ```markdown

@@ -34,13 +34,29 @@ created_at: "{YYYY-MM-DDTHH:MM:SSZ}"
 - Confidence: {Confidence}
 - Time to implement: {Time to implement}
 
-## Existing files
+## Architecture projection
 
-- @{affected files path}
+<!-- Validated with the user before plan finalization. -->
 
-### New file to create
+### Files to modify
 
-- {not found in current project - no comments}
+- `path/to/file.ts` — {one-line reason}
+
+### Files to create
+
+- `path/to/new-file.ts` — {one-line purpose}
+
+### Files to delete
+
+- `path/to/dead.ts` — {one-line reason}
+
+## Applicable rules
+
+<!-- From `node scripts/list-rules.mjs`. Reviewer uses this list to verify the implementation. `none` if `aidd_docs/rules/` is absent. -->
+
+| Name   | Path                              | Why it applies |
+| ------ | --------------------------------- | -------------- |
+| {slug} | `aidd_docs/rules/<cat>/<slug>.md` | {short reason} |
 
 ## User Journey
 

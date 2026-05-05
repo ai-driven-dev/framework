@@ -1,6 +1,8 @@
 ---
-description: < One line. Comprehensive description that provides full context and clearly indicates when this rule should be applied. Include key scenarios, impacted areas, and why following this rule is important. While being thorough, remain focused and relevant. The description should be detailed enough that the agent can confidently determine whether to apply the rule in any given situation.>
-globs: <Appropriate extension language based on language AND current structure directory (look existing codebase)>
+name: <kebab-case-slug>
+description: <One line. When to apply, key scenarios, why. Self-contained — a downstream skill (e.g. plan) decides applicability from this single line.>
+paths:                # optional — omit for always-apply
+  - <glob>
 ---
 
 # Rule name
