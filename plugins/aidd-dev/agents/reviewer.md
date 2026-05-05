@@ -57,10 +57,25 @@ Your output is complete when:
 - Start fresh. Don't try to reconstruct how the artifact was produced. Read the artifact, not the production history.
 - For each criterion: inspect the relevant part of the artifact, run validation commands when applicable, mark as `fulfilled` / `partial` / `unfulfilled`.
 - Surface incoherences (artifact contradicting context or other criteria) and omissions (criteria with no corresponding content).
-- Compute `quality_score` based on the proportion of criteria fulfilled, the severity of findings, and your judgment. Justify.
 - Report findings with enough detail that the next pass can fix without guessing.
 - When uncertain on a criterion, mark it `partial` and explain in `notes`. Don't bluff.
 - Lean toward stricter scoring. False positives on quality cost less than false negatives.
+
+## Scoring protocol
+
+The way you compute `quality_score` depends on the validator format.
+
+- **YAML validator with `weights`, `hard_thresholds`, `scoring.pass_threshold`** (e.g. `spec-validator.yml`):
+  apply the file's protocol exactly. Don't substitute judgment.
+  1. Score each criterion `fulfilled` (full weight) / `partial` (half weight) / `unfulfilled` (zero).
+  2. Sum the weighted scores, normalize to 0–100 → that is `quality_score`.
+  3. Apply `hard_thresholds`: any condition flagged forces `quality_score: 0` and `notes: "hard threshold violated: <which>"`. Hard thresholds override the weighted sum, no exceptions.
+  4. Required criteria unfulfilled → also forces `quality_score: 0`.
+  5. The `scoring.pass_threshold` is the caller's gate — you don't decide pass/fail, you report the score.
+- **Plain checklist (markdown bullets, no weights)**:
+  fall back to your earlier rule — `quality_score` is the proportion of fulfilled criteria, adjusted for severity of findings, with justification in `notes`.
+- **Free-form criteria embedded in a milestone**:
+  same fall-back. Lean strict.
 
 # Decisions in scope
 
@@ -77,8 +92,8 @@ Your output is complete when:
 
 # Skills you may invoke
 
-- `aidd-dev:review`
-- `aidd-dev:audit`
+- `aidd-dev:04:review`
+- `aidd-dev:03:audit`
 
 Anything else is out of bounds.
 

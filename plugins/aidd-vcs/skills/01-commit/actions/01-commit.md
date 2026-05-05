@@ -1,7 +1,7 @@
 ---
 name: commit
-description: Create git commit with proper message format
-argument-hint: auto
+description: Create git commit with proper message format. Supports both interactive (human-driven) and auto (agent-driven) flows.
+argument-hint: mode=auto|interactive (default interactive), message=<imposed text>, push=true|false (default false), files=<list>
 model: sonnet
 ---
 
@@ -9,20 +9,34 @@ model: sonnet
 
 ## Goal
 
-Generate git commit with standardized message following project conventions.
+Generate git commit with standardized message. Two modes: `interactive` (asks for approval, may split commits) and `auto` (no approval, single commit, message can be imposed). The `auto` path is what SDLC and the implementer agent rely on.
+
+## Inputs
+
+```yaml
+mode: interactive | auto       # default: interactive
+message: <imposed commit message>   # optional — when set, use as-is, no generation
+push: true | false             # default: false (decoupled from mode)
+files: [<paths>]               # optional — restrict staging to these paths
+```
+
+## Outputs
+
+```yaml
+commit_sha: <full sha>
+branch: <branch name>
+pushed: true | false
+```
 
 ## Rules
 
-- **If `auto` mode is enabled, do not ask for user confirmation**.
-- Respect already defined commit rules
-- Keep commits atomic and focused
-- Clear and concise change description
-- Follow previous commit message format
-- Include change type prefix
-- Reference issues if applicable
-- Imperative mood ("Add feature" not "Added feature")
-- Explain "why", not "what"
-- Never `--force` push
+- **`auto` mode never asks for confirmation.** No WAIT APPROVAL gates apply.
+- **When `message` is provided, use it verbatim** — skip change-type detection and splitting.
+- Keep commits atomic and focused.
+- Clear and concise change description; imperative mood ("Add feature" not "Added feature"); explain "why" not "what".
+- Follow project commit conventions (see template).
+- Reference issues if applicable.
+- Never `--force` push.
 
 ## Context
 
@@ -42,17 +56,22 @@ Follow the commit conventions defined here:
 
 ## Process steps
 
-1. If branch does not exist, propose a name based on changes + **WAIT FOR USER APPROVAL**
-2. Check staged changes
-3. Determine change type (feat, fix, docs, etc)
-4. Suggests splitting commits for different concerns:
-   1. Make a list of functional changes with clear commit messages
-   2. **WAIT FOR USER APPROVAL** before committing
-5. Execute git add patch for dedicated part of the feature
-6. Run git commit with generated messages
-7. If pre-commit errors, fix and retry to commit:
-8. loop here until you can commit
-9. Verify commits success
-10. List them to user
-11. If `auto` mode: push (with lease) the branch to remote
-12. Notify user of completion
+1. **Branch resolution**
+   - If branch already exists → use it.
+   - Else `auto` mode → generate a sensible name from the change (no approval).
+   - Else `interactive` mode → propose a name and **WAIT FOR USER APPROVAL**.
+2. **Staging**
+   - If `files` provided → `git add` exactly those.
+   - Else → use already-staged changes (do not add unstaged files implicitly).
+3. **Message**
+   - If `message` arg provided → use as-is. Skip steps 4–5.
+   - Else (`interactive` only) → determine change type (feat, fix, docs, etc) and draft a message.
+4. **(Interactive only)** Suggest splitting commits for different concerns:
+   1. List functional changes with clear commit messages.
+   2. **WAIT FOR USER APPROVAL** before committing.
+5. **(Interactive only)** `git add -p` for each split.
+6. **Commit** — `git commit` with the chosen message.
+7. If pre-commit hook errors → fix and retry. Loop here until commit succeeds.
+8. Capture the resulting sha.
+9. **Push** — only if `push: true`. Push with lease (`--force-with-lease`) is OK; never `--force`.
+10. **Return** structured output (`commit_sha`, `branch`, `pushed`). In interactive mode, also notify the user.

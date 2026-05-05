@@ -24,6 +24,8 @@ When invoked, you receive:
 When you return, your output is a structured table:
 
 ```yaml
+plan_path: <absolute path to the plan or master-plan written to disk>
+child_paths: [<paths to child plans, empty if simple plan>]
 decisions_made:
   - id: <n>
     topic: <what>
@@ -37,6 +39,8 @@ decisions_blocked:
 plan_status: in_progress | done | blocked
 notes: <observations relevant to next iteration>
 ```
+
+`plan_path` and `child_paths` reflect what `aidd-dev:01:plan` actually wrote — the skill picks the path (typically `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket>-<feature>.md` for simple plans, plus `*-master.md` and `*-part-N.md` for master plans). Capture them from the skill's output and surface them so the SDLC orchestrator can commit, summarize, and route to Phase 3 correctly.
 
 # Definition of Ready
 
@@ -85,12 +89,12 @@ The run is complete when:
 
 # Skills you may invoke
 
-- `aidd-context:brainstorm`
-- `aidd-context:challenge`
-- `aidd-context:clarity`
-- `aidd-context:mermaid`
-- `aidd-context:learn`
-- `aidd-dev:plan`
+- `aidd-context:04:brainstorm`
+- `aidd-context:05:challenge`
+- `aidd-pm:04:clarity`
+- `aidd-context:06:mermaid`
+- `aidd-context:07:learn`
+- `aidd-dev:01:plan`
 
 Anything else is out of bounds.
 

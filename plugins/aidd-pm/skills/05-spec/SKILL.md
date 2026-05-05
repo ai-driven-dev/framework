@@ -10,14 +10,14 @@ Produces a complete spec from a free-form human request. The spec is the contrac
 ## When to use
 
 - A human types `/spec <request>` to draft a spec
-- The `aidd-dev:sdlc` orchestrator invokes this skill at Phase 1 of a run
+- The `aidd-dev:00:sdlc` orchestrator invokes this skill at Phase 1 of a run
 - An existing spec failed reviewer validation and needs refinement based on findings
 
 ## When NOT to use
 
 - A validated spec already exists → use it directly, no need to regenerate
-- The user only wants a single requirement clarified → use `aidd-pm:clarity`
-- The user wants a full PRD with stakeholders, OKRs, and rollout plan → use `aidd-pm:prd` (more granular than a spec)
+- The user only wants a single requirement clarified → use `aidd-pm:04:clarity`
+- The user wants a full PRD with stakeholders, OKRs, and rollout plan → use `aidd-pm:03:prd` (more granular than a spec)
 
 ## Inputs
 
@@ -56,7 +56,7 @@ notes: <ambiguities, assumptions made, questions for the human>
 
 ## Validation
 
-This skill does not self-validate. The caller (typically `aidd-dev:sdlc`) spawns the `reviewer` agent with `assets/spec-validator.yml` as validator after this skill returns. The reviewer's findings are passed back to this skill for refinement if needed.
+This skill does not self-validate. The caller (typically `aidd-dev:00:sdlc`) spawns the `reviewer` agent with `assets/spec-validator.yml` as validator after this skill returns. The reviewer's findings are passed back to this skill for refinement if needed.
 
 ## Assets
 
@@ -65,7 +65,7 @@ This skill does not self-validate. The caller (typically `aidd-dev:sdlc`) spawns
 
 ## Skills this skill may invoke
 
-- `aidd-pm:clarity` (when the request needs a clarification round before drafting)
+- `aidd-pm:04:clarity` (when the request needs a clarification round before drafting)
 
 ## Guardrails
 
