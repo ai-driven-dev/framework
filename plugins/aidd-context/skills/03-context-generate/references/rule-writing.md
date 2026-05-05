@@ -1,8 +1,3 @@
----
-description: Standards for writing .md coding rule content. Apply when creating, editing, or reviewing any rule file.
-alwaysApply: false
----
-
 # Rule writing standards
 
 ## Content format

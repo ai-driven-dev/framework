@@ -27,6 +27,10 @@ Create structured markdown rule (.mdc or .md depending on the IDE) files with pr
 
 Apply tool-native conventions for rule file paths, naming, and extensions.
 
+```markdown
+@../../references/ai-mapping.md
+```
+
 ## Context
 
 ### User input

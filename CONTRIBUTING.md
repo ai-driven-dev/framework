@@ -7,13 +7,12 @@ This guide explains how to contribute to the AIDD framework — the source of tr
 ---
 
 - [Releases](#releases)
+- [Commit scope discipline](#commit-scope-discipline)
 - [Commit conventions](#commit-conventions)
 - [Contribution process](#contribution-process)
 - [Existing templates](#existing-templates)
 - [Syntax and conventions](#syntax-and-conventions)
-  - [Placeholders](#placeholders)
   - [Frontmatter and metadata](#frontmatter-and-metadata)
-- [IDE-specific rules](#ide-specific-rules)
 - [CLI and installation](#cli-and-installation)
 - [Reporting issues](#reporting-issues)
 
@@ -42,13 +41,13 @@ The tarball contains only the framework content: `agents/`, `commands/`, `config
 
 Every commit must use one of the five allowed scopes:
 
-| Scope | Use for |
-|-------|---------|
-| `aidd-context` | Changes inside `plugins/aidd-context/` |
-| `aidd-dev` | Changes inside `plugins/aidd-dev/` |
-| `aidd-vcs` | Changes inside `plugins/aidd-vcs/` |
-| `aidd-pm` | Changes inside `plugins/aidd-pm/` |
-| `framework` | Root-level changes: build scripts, CI, config, docs, `aidd_docs/` |
+| Scope          | Use for                                                           |
+| -------------- | ----------------------------------------------------------------- |
+| `aidd-context` | Changes inside `plugins/aidd-context/`                            |
+| `aidd-dev`     | Changes inside `plugins/aidd-dev/`                                |
+| `aidd-vcs`     | Changes inside `plugins/aidd-vcs/`                                |
+| `aidd-pm`      | Changes inside `plugins/aidd-pm/`                                 |
+| `framework`    | Root-level changes: build scripts, CI, config, docs, `aidd_docs/` |
 
 Examples:
 
@@ -87,7 +86,7 @@ This repository uses [Conventional Commits](https://www.conventionalcommits.org/
 | `ci`       | CI/CD configuration                                 | None         | —         |
 | `chore`    | Maintenance, tooling                                | None         | —         |
 
-**Breaking changes:** add `!` after any type to trigger a **major** version bump (e.g., `feat!: `, `fix!:`, `refactor!:`). Use this when renaming files, removing content, or changing structure in a way that breaks existing setups.
+**Breaking changes:** add `!` after any type to trigger a **major** version bump (e.g., `feat!:`, `fix!:`, `refactor!:`). Use this when renaming files, removing content, or changing structure in a way that breaks existing setups.
 
 **Examples:**
 
@@ -129,16 +128,6 @@ The framework must remain **tool-agnostic** — the CLI handles all syntactic ad
 
 > **IMPORTANT**: Source files use **Claude Code** syntax by default (`/command`, `@path`).
 
-### Placeholders
-
-| Placeholder  | Role                                                 | Resolution                         |
-| ------------ | ---------------------------------------------------- | ---------------------------------- |
-| `{{TOOLS}}/` | Tool-specific content (commands, agents, rules, etc) | `.claude/`, `.cursor/`, `.github/` |
-| `{{DOCS}}/`   | Documentation (templates, memory, tasks, etc)        | `aidd_docs/`                       |
-| `$ARGUMENTS` | User input in commands                               | Value provided at runtime          |
-
-For file inclusions, use `@{{TOOLS}}/path` or `@{{DOCS}}/path`: the CLI rewrites these paths based on the target tool.
-
 ### Frontmatter and metadata
 
 All framework elements use YAML frontmatter. Some properties are universal, others are specific to certain tools.
@@ -155,17 +144,7 @@ All framework elements use YAML frontmatter. Some properties are universal, othe
 | `alwaysApply`   | rules                   | no                   |
 | `paths`         | rules                   | no                   |
 
-> Properties marked **no** can be added but will not be interpreted by all target tools. See the `rules/04-tooling/ide-mapping.*.md` files for detailed per-tool support.
-
----
-
-## IDE-specific rules
-
-Syntax reference files per tool live in `rules/04-tooling/`:
-
-- `ide-mapping.claude.md` — Paths, syntax, and frontmatter for Claude Code
-- `ide-mapping.cursor.md` — Paths, syntax, and frontmatter for Cursor
-- `ide-mapping.copilot.md` — Paths, syntax, and frontmatter for GitHub Copilot
+> Properties marked **no** can be added but will not be interpreted by all target tools. See documentation for each tool for details.
 
 ---
 

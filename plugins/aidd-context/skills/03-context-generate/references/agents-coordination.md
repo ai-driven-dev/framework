@@ -5,13 +5,13 @@ description: Multi-agent coordination and workflows template
 
 # AGENTS COORDINATION
 
-| AGENT NAME | ROLE DESCRIPTION                                                                   | RESPONSIBILITIES                                                                                                                        | STATUS |
-| ---------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| `alexia`   | Autonomous end-to-end feature implementation without human intervention             | - Implement features end-to-end without asking questions <br> - Make all implementation decisions autonomously based on project rules    | prod   |
-| `claire`   | PM discovery agent - from fuzzy idea to actionable backlog                          | - Transform fuzzy requests into crystal-clear requirements <br> - Guide PMs through full discovery flow with iterative questioning       | prod   |
-| `kent`     | TDD & Tidy First development guide                                                 | - Drive the Red → Green → Refactor TDD cycle <br> - Separate structural changes from behavioral changes                                | prod   |
-| `iris`     | Frontend specialist - implement from Figma, verify UI conformity, validate journeys | - Implement components from Figma designs <br> - Verify UI conformity and validate user journeys                                        | prod   |
-| `martin`   | Code quality and validation agent                                                  | - Run commands to validate build, lint and tests <br> - Enforce coding assertions and module-specific rules                             | prod   |
+| AGENT NAME | ROLE DESCRIPTION                                                                    | RESPONSIBILITIES                                                                                                                      | STATUS |
+| ---------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| `alexia`   | Autonomous end-to-end feature implementation without human intervention             | - Implement features end-to-end without asking questions <br> - Make all implementation decisions autonomously based on project rules | prod   |
+| `claire`   | PM discovery agent - from fuzzy idea to actionable backlog                          | - Transform fuzzy requests into crystal-clear requirements <br> - Guide PMs through full discovery flow with iterative questioning    | prod   |
+| `kent`     | TDD & Tidy First development guide                                                  | - Drive the Red → Green → Refactor TDD cycle <br> - Separate structural changes from behavioral changes                               | prod   |
+| `iris`     | Frontend specialist - implement from Figma, verify UI conformity, validate journeys | - Implement components from Figma designs <br> - Verify UI conformity and validate user journeys                                      | prod   |
+| `martin`   | Code quality and validation agent                                                   | - Run commands to validate build, lint and tests <br> - Enforce coding assertions and module-specific rules                           | prod   |
 
 ## Communication flow (if applicable)
 

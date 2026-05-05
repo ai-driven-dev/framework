@@ -61,6 +61,7 @@ Materialize the flow as a task list at skill entry; a task closes only when its 
 - `references/agents-coordination.md` — multi-agent coordination patterns
 - `references/rule-structure.md` — rule file anatomy
 - `references/rule-writing.md` — rule authoring conventions
+- `references/ide-mapping.md` — syntax and file location reference for AI files (agents, commands, rules, skills)
 
 ## Assets (templates to copy)
 

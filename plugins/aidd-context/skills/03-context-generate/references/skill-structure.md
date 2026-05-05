@@ -1,8 +1,3 @@
----
-description: Standards for naming, organizing, and writing command files. Apply when creating or editing any command file.
-alwaysApply: false
----
-
 # Command file structure
 
 ## File naming

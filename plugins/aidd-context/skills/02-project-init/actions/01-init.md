@@ -10,9 +10,27 @@ Create or update the documentation files that make up the memory bank of the pro
 
 Only change existing files if there are REAL CHANGES in the codebase, do not change files just to reformat or reword things.
 
+## Tree structure
+
+```
+aidd_docs/
+  memory/
+   internal/
+   external/
+  README.md
+  GUIDELINES.md
+```
+
 ## Resources
 
 Every file has its own template to follow.
+
+### Root documentation files
+
+```text
+@../assets/README.md
+@../assets/GUIDELINES.md
+```
 
 ### Hard copy into memory bank (always generated)
 
@@ -66,12 +84,15 @@ All templates are in:
 
 ## Steps
 
-1. Check if memory bank already exists in `aidd_docs/memory/` folder:
+1. Verify if project documentation exists based on tree structure :
+   - If exists, update root documentation with newer information
+   - If not, create structure from scratch with root documentation
+2. Check if memory bank already exists in `aidd_docs/memory/` folder:
    - If exists, update with newer information
    - If not, create from scratch
-2. **Auto-detect project type**: Quickly explore the codebase to determine if it's frontend or backend. Use the `scope` frontmatter field to select which templates to generate.
-3. **Inform user of detection**: Display detected type and list files that will be generated
-4. Spawn parallel task sub-agents for each template files
-5. Write generated files to `aidd_docs/memory/`
-6. Launch an agent to review all files for consistency and accuracy
-7. Execute `.aidd/scripts/update_memory.js` to sync memory references in context files
+3. **Auto-detect project type**: Quickly explore the codebase to determine if it's frontend or backend. Use the `scope` frontmatter field to select which templates to generate.
+4. **Inform user of detection**: Display detected type and list files that will be generated
+5. Spawn parallel task sub-agents for each template files
+6. Write generated files to `aidd_docs/memory/`
+7. Launch an agent to review all files for consistency and accuracy
+8. Execute @../hooks/update_memory.js` to sync memory references in context files

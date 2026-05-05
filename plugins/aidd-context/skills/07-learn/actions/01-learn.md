@@ -82,13 +82,13 @@ Then AI asks user:
 
 AI categorizes each learning by destination, goal is to update the files caused by the decision.
 
-| Category               | Destination                    | Examples                                |
-| ---------------------- | ------------------------------ | --------------------------------------- |
+| Category               | Destination                     | Examples                                |
+| ---------------------- | ------------------------------- | --------------------------------------- |
 | **Decisions**          | `aidd_docs/internal/decisions/` | Tech decisions                          |
 | **Memory** (mandatory) | `aidd_docs/memory/`             | Project context, stack updates          |
-| **Rules**              | project rules location         | Coding conventions, patterns to enforce |
-| **Skills**             | project skills location        | Reusable prompts, workflows             |
-| **Templates**          | plugin assets directories      | Skill-specific templates                |
+| **Rules**              | project rules location          | Coding conventions, patterns to enforce |
+| **Skills**             | project skills location         | Reusable prompts, workflows             |
+| **Templates**          | plugin assets directories       | Skill-specific templates                |
 
 Propose where to save each learning.
 
@@ -100,4 +100,4 @@ Propose where to save each learning.
 
 ### Phase 4: Sync memory references
 
-Execute `.aidd/scripts/update_memory.js` to sync memory references in context files
+Execute @../../hooks/update_memory.js` to sync memory references in context files

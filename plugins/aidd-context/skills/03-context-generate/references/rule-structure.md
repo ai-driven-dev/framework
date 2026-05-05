@@ -1,8 +1,3 @@
----
-description: Standards for naming and organizing .md rule files. Apply when creating new rule files or deciding on file placement.
-alwaysApply: false
----
-
 # Rule file structure
 
 ## File naming
