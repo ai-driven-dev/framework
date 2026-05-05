@@ -7,8 +7,6 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
 ## Table of Contents
 
 - [`.claude-plugin`](#claude-plugin)
-- [`.specstory`](#specstory)
-  - [`.specstory/history`](#specstoryhistory)
 - [`.vscode`](#vscode)
 - [`aidd_docs`](#aidd_docs)
 - [`plugins`](#plugins)
@@ -26,20 +24,6 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
 |------|
 | [marketplace.json](../.claude-plugin/marketplace.json) |
 
-### `.specstory`
-
-| File |
-|------|
-| [.project.json](../.specstory/.project.json) |
-| [statistics.json](../.specstory/statistics.json) |
-
-#### `.specstory/history`
-
-| File |
-|------|
-| [2026-04-29_10-07-51Z-untitled.md](../.specstory/history/2026-04-29_10-07-51Z-untitled.md) |
-| [2026-04-30_10-55-34Z.md](../.specstory/history/2026-04-30_10-55-34Z.md) |
-
 ### `.vscode`
 
 | File |
@@ -51,8 +35,6 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
 | File |
 |------|
 | [CATALOG.md](CATALOG.md) |
-| [GUIDELINES.md](GUIDELINES.md) |
-| [README.md](README.md) |
 
 ### `plugins`
 
@@ -69,18 +51,18 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
 
 #### `plugins/aidd-dev`
 
-| Group | File | Description | Docs |
-|-------|------|---|---|
-| `.claude-plugin` | [plugin.json](../plugins/aidd-dev/.claude-plugin/plugin.json) | - | - |
-| `-` | [.mcp.json](../plugins/aidd-dev/.mcp.json) | - | - |
-| `agents` | [alexia.md](../plugins/aidd-dev/agents/alexia.md) | `Act like the USER to autonomously do the asked task without human intervention` | - |
-| `agents` | [claire.md](../plugins/aidd-dev/agents/claire.md) | `Clarity challenger — challenges and questions until the request is ultra-clear` | - |
-| `agents` | [iris.md](../plugins/aidd-dev/agents/iris.md) | `Frontend specialist with 3 modes - implement from Figma, verify UI conformity, validate user journeys.` | - |
-| `agents` | [kent.md](../plugins/aidd-dev/agents/kent.md) | `Use this agent when explicitly asked to perform test-driven development.` | `https://tidyfirst.substack.com/p/augmented-coding-beyond-the-vibes` |
-| `agents` | [martin.md](../plugins/aidd-dev/agents/martin.md) | `Every time you need to run a command to ensure code is correct, still builds are that tests pass, you must call this agent.` | - |
-| `-` | [CATALOG.md](../plugins/aidd-dev/CATALOG.md) | - | - |
-| `-` | [README.md](../plugins/aidd-dev/README.md) | - | - |
-| `-` | [version.txt](../plugins/aidd-dev/version.txt) | - | - |
+| Group | File | Description |
+|-------|------|---|
+| `.claude-plugin` | [plugin.json](../plugins/aidd-dev/.claude-plugin/plugin.json) | - |
+| `-` | [.mcp.json](../plugins/aidd-dev/.mcp.json) | - |
+| `agents` | [implementer.md](../plugins/aidd-dev/agents/implementer.md) | `Milestone executor. Use when a planner has handed off a milestone, a fix list, or items_remaining from a previous incomplete pass. Codes, tests, repairs. Returns what's done, what's remaining, and a completion score. Never replans, never judges.` |
+| `agents` | [iris.md](../plugins/aidd-dev/agents/iris.md) | `Frontend specialist with 3 modes - implement from Figma, verify UI conformity, validate user journeys.` |
+| `agents` | [martin.md](../plugins/aidd-dev/agents/martin.md) | `Every time you need to run a command to ensure code is correct, still builds are that tests pass, you must call this agent.` |
+| `agents` | [planner.md](../plugins/aidd-dev/agents/planner.md) | `Orchestrator. Use when a new spec must be turned into an executable plan, when an agent returned with completion_score < 100%, when a reviewer surfaced quality issues, or when a human requests a replan. Spawns implementer and reviewer in fresh contexts. Never writes code, never judges code.` |
+| `agents` | [reviewer.md](../plugins/aidd-dev/agents/reviewer.md) | `Independent critic in fresh context. Use when an artifact (code, spec, plan, doc) needs verification against a validator (acceptance criteria, checklist file, or any explicit ruleset). Returns reviewed items, findings, completion score and quality score. Never edits the artifact, never decides what to do next.` |
+| `-` | [CATALOG.md](../plugins/aidd-dev/CATALOG.md) | - |
+| `-` | [README.md](../plugins/aidd-dev/README.md) | - |
+| `-` | [version.txt](../plugins/aidd-dev/version.txt) | - |
 
 #### `plugins/aidd-pm`
 
