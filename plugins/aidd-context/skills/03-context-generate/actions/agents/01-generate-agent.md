@@ -22,9 +22,13 @@ Generate a specialized agent template tailored to specific user requirements.
 @../../assets/agents/agent-template.md
 ```
 
-### IDE Mapping
+### AI Mapping
 
 Apply tool-native conventions for agent file paths, naming, and extensions.
+
+```markdown
+@../../references/ai-mapping.md
+```
 
 ## Rules
 

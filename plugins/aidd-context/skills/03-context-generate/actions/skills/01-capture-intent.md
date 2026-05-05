@@ -25,7 +25,7 @@ Plus a **skill landscape** report (existing-skills inventory + overlap alerts).
 ## Process
 
 1. Ask: **generate** a new skill or **modify** an existing one?
-2. Inventory `{{TOOLS}}/skills/` (project) + global skills. Read each `SKILL.md` frontmatter (`name`, first line of `description`). Print as a markdown table.
+2. Inventory skills project + global skills. Read each `SKILL.md` frontmatter (`name`, first line of `description`). Print as a markdown table.
 3. Branch:
    - `modify` → confirm target name exists, read its `SKILL.md`, jump to action 03.
    - `generate` → ask the skill's single purpose in one sentence. If multiple unrelated domains, propose a split.

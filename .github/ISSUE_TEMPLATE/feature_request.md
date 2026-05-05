@@ -16,11 +16,11 @@ assignees: ""
 
 ## Type de contenu
 
-- [ ] Rule (`{{TOOLS}}/rules/`)
-- [ ] Skill (`{{TOOLS}}/skills/`)
-- [ ] Command (`{{TOOLS}}/commands/`)
-- [ ] Agent (`{{TOOLS}}/agents/`)
-- [ ] IDE mapping / MCP config
+- [ ] Rule (`rules/`)
+- [ ] Skill (`skills/`)
+- [ ] Command (`commands/`)
+- [ ] Agent (`agents/`)
+- [ ] Plugin (`plugins/`)
 - [ ] Autre
 
 ## Outil(s) cible(s)
