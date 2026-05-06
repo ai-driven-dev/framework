@@ -1,9 +1,10 @@
 import { platform } from "node:os";
 import { Command } from "commander";
+import { registerAiCommand } from "./application/commands/ai.js";
 import { registerAuthCommand } from "./application/commands/auth.js";
 import { registerCleanCommand } from "./application/commands/clean.js";
 import { registerDoctorCommand } from "./application/commands/doctor.js";
-import { registerInstallCommand } from "./application/commands/install.js";
+import { registerIdeCommand } from "./application/commands/ide.js";
 import { registerMarketplaceCommand } from "./application/commands/marketplace.js";
 import { runMenuLoop } from "./application/commands/menu.js";
 import { registerMigrateCommand } from "./application/commands/migrate.js";
@@ -13,7 +14,6 @@ import { registerSelfUpdateCommand } from "./application/commands/self-update.js
 import { registerSetupCommand } from "./application/commands/setup.js";
 import { registerStatusCommand } from "./application/commands/status.js";
 import { registerSyncCommand } from "./application/commands/sync.js";
-import { registerUninstallCommand } from "./application/commands/uninstall.js";
 import { registerUpdateCommand } from "./application/commands/update.js";
 import { CLIOutput } from "./application/output.js";
 import { printUpdateBanner } from "./application/use-cases/check-update-use-case.js";
@@ -34,20 +34,20 @@ program
   .version(formatVersion(currentVersion), "-V, --version", "Show version number")
   .option("--verbose", "Show detailed diagnostic output", false);
 
-registerAuthCommand(program);
-registerInstallCommand(program);
-registerUninstallCommand(program);
-registerStatusCommand(program);
-registerCleanCommand(program);
-registerDoctorCommand(program);
-registerUpdateCommand(program);
-registerRestoreCommand(program);
-registerSyncCommand(program);
-registerSelfUpdateCommand(program);
 registerSetupCommand(program);
+registerAiCommand(program);
+registerIdeCommand(program);
 registerPluginCommand(program);
 registerMarketplaceCommand(program);
+registerAuthCommand(program);
+registerSyncCommand(program);
+registerStatusCommand(program);
+registerRestoreCommand(program);
+registerUpdateCommand(program);
+registerDoctorCommand(program);
+registerCleanCommand(program);
 registerMigrateCommand(program);
+registerSelfUpdateCommand(program);
 
 program.hook("preAction", async (_thisCommand, actionCommand) => {
   const opts = program.opts<{ verbose?: boolean }>();

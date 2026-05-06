@@ -7,6 +7,9 @@ import {
 import { assertValidAiToolId, parseToolOption } from "../../domain/models/tool-ids.js";
 import { createDeps, createMenuDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
+import { DoctorUseCase } from "../use-cases/doctor-use-case.js";
+import { RestorePluginUseCase } from "../use-cases/restore/restore-plugin-use-case.js";
+import { StatusUseCase } from "../use-cases/status-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./shared/spawn-cli-command.js";
 
@@ -26,6 +29,10 @@ export function registerPluginCommand(program: Command): void {
       { name: "Search plugins", value: "search", description: "requires query arg" },
       { name: "Update plugins", value: "update" },
       { name: "Remove a plugin", value: "remove", description: "requires name arg" },
+      { name: "Plugin status", value: "status" },
+      { name: "Sync plugins", value: "sync", description: "requires --source" },
+      { name: "Restore a plugin", value: "restore", description: "requires --plugin" },
+      { name: "Plugin doctor", value: "doctor" },
     ]);
     await spawnCliCommand(["plugin", choice]);
   });
@@ -217,6 +224,98 @@ export function registerPluginCommand(program: Command): void {
         } else {
           output.success(`Updated: ${updated.join(", ")}.`);
         }
+      } catch (error) {
+        errorHandler.handle(error);
+      }
+    });
+
+  plugin
+    .command("status")
+    .description("Show drift for plugins")
+    .option("--plugin <name>", "Filter status to one plugin")
+    .action(async (cmdOptions: { plugin?: string }) => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
+      try {
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
+        const report = await useCase.execute({
+          projectRoot,
+          filterToolId: undefined,
+          pluginName: cmdOptions.plugin,
+        });
+        if (report.inSync) {
+          output.success("All plugin files are in sync");
+          return;
+        }
+        for (const entry of report.pluginDrift) {
+          output.print(`plugin ${entry.pluginName} (${entry.toolId}):`);
+          for (const f of entry.driftedFiles) output.print(`  ~ ${f}`);
+        }
+      } catch (error) {
+        errorHandler.handle(error);
+      }
+    });
+
+  plugin
+    .command("sync")
+    .description("Sync plugins across tools — full implementation Phase 11")
+    .option("--source <tool>", "Source tool")
+    .option("--target <tool>", "Target tool")
+    .action(async () => {
+      const { output } = parseGlobalOptions(program);
+      output.warn("plugin sync — full implementation Phase 11");
+    });
+
+  plugin
+    .command("restore")
+    .description("Restore a plugin to its cached version")
+    .requiredOption("--plugin <name>", "Plugin to restore")
+    .action(async (cmdOptions: { plugin: string }) => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
+      try {
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        await new RestorePluginUseCase(
+          deps.fs,
+          deps.manifestRepo,
+          deps.pluginFetcher,
+          deps.pluginDistributionReader,
+          deps.hasher
+        ).execute({ pluginName: cmdOptions.plugin, projectRoot });
+        output.success(`Plugin ${cmdOptions.plugin} restored.`);
+      } catch (error) {
+        errorHandler.handle(error);
+      }
+    });
+
+  plugin
+    .command("doctor")
+    .description("Check plugin installation health")
+    .option("--plugin <name>", "Filter check to one plugin")
+    .action(async (cmdOptions: { plugin?: string }) => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
+      try {
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const useCase = new DoctorUseCase(
+          deps.fs,
+          deps.manifestRepo,
+          deps.hasher,
+          deps.logger,
+          deps.authReader
+        );
+        const report = await useCase.execute({ projectRoot, pluginName: cmdOptions.plugin });
+        if (report.healthy) {
+          output.success("Plugin installation is healthy");
+          return;
+        }
+        for (const pi of report.pluginIssues) {
+          output.error(
+            `Plugin ${pi.pluginName} (${pi.toolId}): ${pi.issue} — ${pi.filePath}\n  Fix: Run \`aidd plugin restore --plugin ${pi.pluginName}\` to restore.`
+          );
+        }
+        process.exit(1);
       } catch (error) {
         errorHandler.handle(error);
       }
