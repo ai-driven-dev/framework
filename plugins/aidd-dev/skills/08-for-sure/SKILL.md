@@ -12,7 +12,7 @@ Autonomous loop that runs until a success condition is verified. Two phases: int
 - **Goal**: Task's `success_condition` verified by running a command. All steps/acceptance criteria checked. File renamed to `.done.md`.
 - **Tools required**: Agent tool (spawning iterations), Read/Write/Edit (tracking file), task-specific tools.
 - **Trigger**: Manual — `/for-sure`.
-- **Tracking file format**: Uses the `plan` template from skill `aidd-dev:01:plan` (`../../01-plan/assets/plan-template.md`). Filename: `{{DOCS}}/tasks/<task-name>.<status>.md`.
+- **Tracking file format**: Uses the `plan` template from skill `aidd-dev:01:plan` (`../../01-plan/assets/plan-template.md`). Filename: `aidd_docs/tasks/<task-name>.<status>.md`.
 
 ## Environment
 
@@ -28,9 +28,11 @@ None — task secrets are validated during pre-flight and documented in the trac
 ## Execution flow
 
 ### Phase 1 — Interactive (human present)
+
 1. `actions/01-init-tracking.md` — Pre-flight, create tracking file, spawn first autonomous agent.
 
 ### Phase 2 — Autonomous (human gone)
+
 2. `actions/02-auto-accept.md` — Auto-accept mode activation (Phase 3).
 3. `actions/03-autonomous-loop.md` — Orchestrator: spawns one worker per step, verifies, checks/retries, evaluates success.
 

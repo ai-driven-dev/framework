@@ -1,10 +1,4 @@
----
-name: brainstorm
-description: Interactive brainstorming session to clarify and refine feature requests
-model: opus
----
-
-# Brainstorm
+# 01 - Brainstorm
 
 ## Goal
 

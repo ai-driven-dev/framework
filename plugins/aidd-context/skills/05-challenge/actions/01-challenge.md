@@ -1,13 +1,4 @@
----
-name: challenge
-description: >-
-  Review and challenge previous work for improvements and correctness.
-  Use when the user says 'challenge this', 'review my work', 'is this correct',
-  asks for a critical review, or wants to rethink a decision.
-model: opus
----
-
-# Challenge
+# 01 - Challenge
 
 ## Goal
 
