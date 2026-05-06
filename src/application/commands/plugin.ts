@@ -269,9 +269,9 @@ export function registerPluginCommand(program: Command): void {
     .action(async (cmdOptions: { source: string; target?: string; force: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
-      assertValidAiToolId(cmdOptions.source);
-      if (cmdOptions.target !== undefined) assertValidAiToolId(cmdOptions.target);
       try {
+        assertValidAiToolId(cmdOptions.source);
+        if (cmdOptions.target !== undefined) assertValidAiToolId(cmdOptions.target);
         const deps = await createDeps(projectRoot, { verbose }, output);
         const manifest = await deps.manifestRepo.load();
         if (manifest === null) throw new NoManifestError();
