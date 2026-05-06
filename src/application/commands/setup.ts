@@ -59,141 +59,106 @@ export function registerSetupCommand(program: Command): void {
   program
     .command("setup")
     .description("Set up or update the project to a correct state")
-    .option("--path <path>", "Local framework directory (used by --mode local for plugin copy)")
-    .option("--release <tag>", "Marketplace catalog version to install (e.g., v4.1.0-beta.2)")
     .option("--ai <ids>", "Comma-separated AI tool IDs to install (e.g., claude,cursor)")
     .option("--ide <ids>", "Comma-separated IDE tool IDs to install (e.g., vscode)")
     .option("--all", "Install all available tools (AI + IDE)")
-    .option(
-      "--from <version>",
-      "Framework version already installed, required for adopt (e.g., v3.2.0)"
-    )
-    .option("--mode <mode>", "Distribution mode: local (default) or remote")
-    .option("--switch-mode", "Switch distribution mode on existing project")
-    .action(
-      async (cmdOptions: {
-        path?: string;
-        release?: string;
-        ai?: string;
-        ide?: string;
-        all?: boolean;
-        from?: string;
-        mode?: string;
-        switchMode?: boolean;
-      }) => {
-        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
-        const errorHandler = new ErrorHandler(output);
+    .action(async (cmdOptions: { ai?: string; ide?: string; all?: boolean }) => {
+      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
 
-        const rawToolIds = resolveToolIds(cmdOptions, errorHandler);
-        if (rawToolIds === null) return;
+      const rawToolIds = resolveToolIds(cmdOptions, errorHandler);
+      if (rawToolIds === null) return;
 
-        if (
-          cmdOptions.mode !== undefined &&
-          cmdOptions.mode !== "local" &&
-          cmdOptions.mode !== "remote"
-        ) {
-          output.error(`Invalid --mode value: "${cmdOptions.mode}". Must be "local" or "remote".`);
-          process.exit(1);
+      try {
+        const hasScriptingFlags = !!(cmdOptions.all || cmdOptions.ai || cmdOptions.ide);
+        const interactive = process.stdout.isTTY && !hasScriptingFlags;
+
+        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+
+        const result = await new SetupUseCase(
+          deps.fs,
+          deps.manifestRepo,
+          deps.logger,
+          deps.prompter,
+          deps.installRuntimeConfigUseCase,
+          deps.installIdeConfigUseCase,
+          deps.installFrameworkPluginsUseCase,
+          deps.currentVersionProvider,
+          deps.marketplaceRegistry,
+          deps.pluginCatalogRepository,
+          deps.resolver
+        ).execute({
+          projectRoot,
+          repo,
+          interactive,
+          toolIds: rawToolIds,
+        });
+
+        const resolvedRef =
+          result.kind === "initialized" || result.kind === "installed"
+            ? result.resolvedRef
+            : undefined;
+        const registrationResult = await deps.marketplaceRegisterFrameworkUseCase.execute({
+          projectRoot,
+          force: result.kind === "mode-switched",
+          ref: resolvedRef,
+        });
+
+        if (process.env.AIDD_SKIP_MARKETPLACE_REFRESH !== "1") {
+          await deps.marketplaceRefreshUseCase.execute({ projectRoot });
+          await deps.marketplaceSyncSettingsUseCase.execute({ projectRoot });
         }
 
-        try {
-          const hasScriptingFlags = !!(cmdOptions.all || cmdOptions.ai || cmdOptions.ide);
-          const interactive = process.stdout.isTTY && !hasScriptingFlags;
-
-          const deps = await createDeps(projectRoot, { verbose, repo }, output);
-
-          const result = await new SetupUseCase(
-            deps.fs,
-            deps.manifestRepo,
-            deps.logger,
-            deps.prompter,
-            deps.installRuntimeConfigUseCase,
-            deps.installIdeConfigUseCase,
-            deps.installFrameworkPluginsUseCase,
-            deps.currentVersionProvider,
-            deps.marketplaceRegistry,
-            deps.pluginCatalogRepository,
-            deps.resolver
-          ).execute({
-            projectRoot,
-            path: cmdOptions.path,
-            release: cmdOptions.release,
-            repo,
-            interactive,
-            toolIds: rawToolIds,
-            from: cmdOptions.from,
-            mode: cmdOptions.mode as "local" | "remote" | undefined,
-            switchMode: cmdOptions.switchMode,
-          });
-
-          const resolvedRef =
-            cmdOptions.release ??
-            (result.kind === "initialized" || result.kind === "installed"
-              ? result.resolvedRef
-              : undefined);
-          const registrationResult = await deps.marketplaceRegisterFrameworkUseCase.execute({
-            projectRoot,
-            force: result.kind === "mode-switched",
-            frameworkPath: cmdOptions.path,
-            ref: resolvedRef,
-          });
-
-          if (process.env.AIDD_SKIP_MARKETPLACE_REFRESH !== "1") {
-            await deps.marketplaceRefreshUseCase.execute({ projectRoot });
-            await deps.marketplaceSyncSettingsUseCase.execute({ projectRoot });
+        switch (result.kind) {
+          case "initialized": {
+            output.success(`Initialized docs directory ${result.docsDir}/`);
+            displayInstall(output, result.install.results, verbose);
+            break;
           }
-
-          switch (result.kind) {
-            case "initialized": {
-              output.success(`Initialized docs directory ${result.docsDir}/`);
-              displayInstall(output, result.install.results, verbose);
-              break;
-            }
-            case "adopted": {
-              output.success(
-                `Adopted ${result.toolCount} tool(s) at version ${result.version}: ${result.totalRegistered} files registered`
-              );
-              break;
-            }
-            case "installed": {
-              displayInstall(output, result.install.results, verbose);
-              break;
-            }
-            case "up-to-date": {
-              if (result.hasAdditionalTools) output.info("All installed tools are up to date.");
-              else output.info("Project is up to date.");
-              if (result.additionalInstall) {
-                displayInstall(output, result.additionalInstall.results, verbose);
-              }
-              break;
-            }
-            case "mode-switched": {
-              output.success(`Switched to ${result.newMode} mode.`);
-              break;
-            }
+          case "adopted": {
+            output.success(
+              `Adopted ${result.toolCount} tool(s) at version ${result.version}: ${result.totalRegistered} files registered`
+            );
+            break;
           }
-
-          if (!interactive && registrationResult.registered) {
-            output.info("Plugin marketplace ready. Run `aidd plugin pick` to install plugins.");
+          case "installed": {
+            displayInstall(output, result.install.results, verbose);
+            break;
           }
-
-          if (interactive) {
-            const marketplaces = await deps.marketplaceRegistry.list(projectRoot);
-            if (marketplaces.length > 0) {
-              const proceed = await deps.prompter.confirm("Install plugins now?");
-              if (proceed) {
-                await deps.pluginPickUseCase.execute({
-                  toolIds: "all",
-                  projectRoot,
-                  interactive: true,
-                });
-                await deps.marketplaceSyncSettingsUseCase.execute({ projectRoot });
-              }
+          case "up-to-date": {
+            if (result.hasAdditionalTools) output.info("All installed tools are up to date.");
+            else output.info("Project is up to date.");
+            if (result.additionalInstall) {
+              displayInstall(output, result.additionalInstall.results, verbose);
             }
+            break;
           }
-        } catch (error) {
-          errorHandler.handle(error);
+          case "mode-switched": {
+            output.success(`Switched to ${result.newMode} mode.`);
+            break;
+          }
         }
+
+        if (!interactive && registrationResult.registered) {
+          output.info("Plugin marketplace ready. Run `aidd plugin pick` to install plugins.");
+        }
+
+        if (interactive) {
+          const marketplaces = await deps.marketplaceRegistry.list(projectRoot);
+          if (marketplaces.length > 0) {
+            const proceed = await deps.prompter.confirm("Install plugins now?");
+            if (proceed) {
+              await deps.pluginPickUseCase.execute({
+                toolIds: "all",
+                projectRoot,
+                interactive: true,
+              });
+              await deps.marketplaceSyncSettingsUseCase.execute({ projectRoot });
+            }
+          }
+        }
+      } catch (error) {
+        errorHandler.handle(error);
       }
-    );
+    });
 }

@@ -14,15 +14,7 @@ import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { InstallIdeConfigResult } from "../use-cases/install/install-ide-config-use-case.js";
 import type { InstallRuntimeConfigResult } from "../use-cases/install/install-runtime-config-use-case.js";
-import {
-  type InstallToolResult,
-  InstallUseCase,
-  type PluginMode,
-} from "../use-cases/install/install-use-case.js";
-import { ResolveFrameworkUseCase } from "../use-cases/resolve-framework-use-case.js";
 import { parseCategoryArg, parseGlobalOptions } from "./global-options.js";
-
-type InstallResult = InstallRuntimeConfigResult | InstallIdeConfigResult | InstallToolResult;
 
 function resolveInstallArgs(
   categoryArg: string | undefined,
@@ -105,11 +97,6 @@ Examples:
     )
     .option("-f, --force", "Overwrite already-installed tool", false)
     .option("-a, --all", "Install all available tools", false)
-    .option(
-      "--path <path>",
-      "[DEPRECATED] Local framework directory — use marketplace flow instead"
-    )
-    .option("--release <tag>", "[DEPRECATED] Framework release tag — use marketplace flow instead")
     .option("--mcp <servers>", "Comma-separated list of MCP servers to install")
     .option("--plugins <names>", "Comma-separated plugin names from catalog to install")
     .option("--all-plugins", "Install all plugins from catalog", false)
@@ -122,8 +109,6 @@ Examples:
         cmdOptions: {
           force: boolean;
           all: boolean;
-          path?: string;
-          release?: string;
           mcp?: string;
           plugins?: string | boolean;
           allPlugins: boolean;
@@ -150,84 +135,25 @@ Examples:
         }
 
         try {
-          const { category, toolIds } = resolveInstallArgs(
-            categoryArg,
-            toolArgs,
-            cmdOptions,
-            output
-          );
+          const { toolIds } = resolveInstallArgs(categoryArg, toolArgs, cmdOptions, output);
 
           const deps = await createDeps(projectRoot, { verbose, repo }, output);
 
-          let results: InstallResult[];
-
-          if (cmdOptions.path !== undefined || cmdOptions.release !== undefined) {
-            output.warn(
-              "[DEPRECATED] --path/--release will be removed in a future release. Use the marketplace flow instead."
-            );
-            const { path: frameworkPath, version } = await new ResolveFrameworkUseCase(
-              deps.resolver,
-              deps.logger,
-              deps.authReader
-            ).execute({ path: cmdOptions.path, release: cmdOptions.release });
-
-            const mcpFilter = cmdOptions.mcp?.split(",").map((s) => s.trim()) ?? [];
-            let pluginMode: PluginMode | undefined;
-            let pluginNames: string[] | undefined;
-            if (cmdOptions.plugins === false) {
-              pluginMode = "none";
-            } else if (typeof cmdOptions.plugins === "string") {
-              pluginMode = "named";
-              pluginNames = cmdOptions.plugins
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean);
-            } else if (cmdOptions.allPlugins) {
-              pluginMode = "all";
-            } else if (cmdOptions.recommendedPlugins) {
-              pluginMode = "recommended";
-            }
-
-            results = await new InstallUseCase(
-              deps.fs,
-              deps.manifestRepo,
-              deps.hasher,
-              deps.logger,
-              deps.platform,
-              deps.prompter,
-              deps.pluginFetcher,
-              deps.pluginDistributionReader,
-              deps.pluginCatalogRepository
-            ).execute({
-              toolIds,
-              category,
-              frameworkPath,
-              version,
-              projectRoot,
-              force: cmdOptions.force,
-              repo,
-              interactive: process.stdout.isTTY,
-              mcpFilter,
-              pluginMode,
-              pluginNames,
-            });
-          } else {
-            const resolvedIds = toolIds ?? [];
-            if (resolvedIds.length === 0) {
-              output.error("Specify tools to install or use --all.");
-              process.exit(1);
-            }
-            const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-            const version = deps.currentVersionProvider.get();
-            results = await installFromAssets(
-              resolvedIds,
-              manifest,
-              projectRoot,
-              cmdOptions.force,
-              version,
-              deps
-            );
+          const resolvedIds = toolIds ?? [];
+          if (resolvedIds.length === 0) {
+            output.error("Specify tools to install or use --all.");
+            process.exit(1);
           }
+          const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+          const version = deps.currentVersionProvider.get();
+          const results = await installFromAssets(
+            resolvedIds,
+            manifest,
+            projectRoot,
+            cmdOptions.force,
+            version,
+            deps
+          );
 
           const skipped = results.filter((r) => r.skipped);
           const installed = results.filter((r) => !r.skipped);
