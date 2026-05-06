@@ -8,9 +8,9 @@ export interface MarketplaceRegisterFrameworkOptions {
   projectRoot: string;
   force?: boolean;
   frameworkPath?: string;
-  /** Git ref/tag to pin marketplace at (e.g. v4.1.0-beta.5). Used in remote mode. */
+  /** Git ref/tag to pin marketplace at (e.g. v4.1.0-beta.5). */
   ref?: string;
-  /** Explicit plugin source — when provided, skips manifest.getMode() read. */
+  /** Explicit plugin source — when provided, deriveSource() is skipped. */
   pluginSource?: PluginSource;
 }
 
@@ -46,10 +46,9 @@ export class MarketplaceRegisterFrameworkUseCase {
   }
 
   private async deriveSource(frameworkPath?: string, ref?: string): Promise<PluginSource> {
+    if (frameworkPath) return { kind: "local", path: frameworkPath };
     const manifest = await this.manifestRepo.load();
-    const mode = manifest?.getMode() ?? "local";
-    if (mode === "remote") {
-      if (frameworkPath) return { kind: "local", path: frameworkPath };
+    if (ref !== undefined || manifest?.repo !== undefined) {
       const repo = manifest?.repo ?? Manifest.DEFAULT_REPO;
       const resolvedRef =
         ref ?? (manifest?.getScriptsVersion() ? `v${manifest.getScriptsVersion()}` : undefined);

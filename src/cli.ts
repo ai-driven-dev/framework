@@ -1,7 +1,6 @@
 import { platform } from "node:os";
 import { Command } from "commander";
 import { registerAuthCommand } from "./application/commands/auth.js";
-import { registerCacheCommand } from "./application/commands/cache.js";
 import { registerCleanCommand } from "./application/commands/clean.js";
 import { registerConfigCommand } from "./application/commands/config.js";
 import { registerDoctorCommand } from "./application/commands/doctor.js";
@@ -38,7 +37,6 @@ program
   .option("--repo <owner/repo>", "GitHub repository in owner/repo format");
 
 registerAuthCommand(program);
-registerCacheCommand(program);
 registerConfigCommand(program);
 registerInstallCommand(program);
 registerUninstallCommand(program);

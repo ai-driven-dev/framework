@@ -23,8 +23,6 @@ const VSCODE_MIGRATION_PATHS = new Set([
   ".vscode/settings.json",
 ]);
 
-export type DistributionMode = "local" | "remote";
-
 const REPO_FORMAT_REGEX = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
 const DOCS_DIR_REGEX = /^[a-zA-Z0-9_-]+$/;
 
@@ -76,7 +74,6 @@ interface ManifestData {
   tools: Record<string, ToolEntryData>;
   scripts: ScriptsEntryData | null;
   plugins: PluginsSectionData | null;
-  mode: DistributionMode;
 }
 
 interface MergeFileEntryData {
@@ -160,7 +157,6 @@ export class Manifest {
   private readonly _tools: Map<ToolId, ToolEntry>;
   private _scripts: ScriptsEntry | null;
   private _plugins: PluginsEntry | null = null;
-  private _mode: DistributionMode = "local";
   readonly docsDir: string;
   readonly repo?: string;
 
@@ -168,14 +164,12 @@ export class Manifest {
     tools: Map<ToolId, ToolEntry>;
     scripts: ScriptsEntry | null;
     plugins: PluginsEntry | null;
-    mode: DistributionMode;
     docsDir: string;
     repo?: string;
   }) {
     this._tools = new Map(params.tools);
     this._scripts = params.scripts;
     this._plugins = params.plugins;
-    this._mode = params.mode;
     this.docsDir = params.docsDir;
     this.repo = params.repo;
   }
@@ -185,7 +179,6 @@ export class Manifest {
       tools: new Map(),
       scripts: null,
       plugins: null,
-      mode: "local",
       docsDir: docsDir ?? Manifest.DEFAULT_DOCS_DIR,
       repo,
     });
@@ -247,14 +240,6 @@ export class Manifest {
 
   getPluginsFiles(): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
     return this._plugins?.files ?? [];
-  }
-
-  getMode(): DistributionMode {
-    return this._mode;
-  }
-
-  setMode(mode: DistributionMode): void {
-    this._mode = mode;
   }
 
   private toTrackedFiles(files: InstallationFile[]): TrackedFile[] {
@@ -420,7 +405,6 @@ export class Manifest {
       tools: new Map(this._tools),
       scripts: this._scripts,
       plugins: this._plugins,
-      mode: this._mode,
       docsDir: newDocsDir,
       repo: this.repo,
     });
@@ -431,7 +415,6 @@ export class Manifest {
       tools: new Map(this._tools),
       scripts: this._scripts,
       plugins: this._plugins,
-      mode: this._mode,
       docsDir: this.docsDir,
       repo: newRepo,
     });
@@ -482,7 +465,6 @@ export class Manifest {
       plugins: this._plugins
         ? { version: this._plugins.version, files: this.toTrackedFileData(this._plugins.files) }
         : null,
-      mode: this._mode,
     };
   }
 
@@ -579,9 +561,7 @@ export class Manifest {
         files: Manifest.parseTrackedFiles(pluginsRaw.files),
       };
     }
-    const mode: DistributionMode = raw.mode === "remote" ? "remote" : "local";
-
-    return new Manifest({ tools, scripts, plugins, mode, docsDir, repo });
+    return new Manifest({ tools, scripts, plugins, docsDir, repo });
   }
 
   private static parseTools(raw: Record<string, unknown>): Map<ToolId, ToolEntry> {

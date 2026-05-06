@@ -34,15 +34,16 @@ describe("MarketplaceRegisterFrameworkUseCase", () => {
     return manifestRepo;
   }
 
-  it("registers using github source when mode is remote", async () => {
+  it("registers using github source when pluginSource is github", async () => {
     const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
-    const manifest = Manifest.create().withRepo("ai-driven-dev/aidd-framework");
-    manifest.setMode("remote");
-    await manifestRepo.save(manifest);
+    await manifestRepo.save(Manifest.create().withRepo("ai-driven-dev/aidd-framework"));
     const registry = new MarketplaceRegistryAdapter();
     const useCase = new MarketplaceRegisterFrameworkUseCase(manifestRepo, registry);
 
-    const result = await useCase.execute({ projectRoot });
+    const result = await useCase.execute({
+      projectRoot,
+      pluginSource: { kind: "github", repo: "ai-driven-dev/aidd-framework" },
+    });
 
     expect(result.registered).toBe(true);
     const list = await registry.list(projectRoot);

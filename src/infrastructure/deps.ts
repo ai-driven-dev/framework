@@ -1,6 +1,4 @@
-import { join } from "node:path";
 import "../domain/tools/ai/claude.js";
-import { AIDD_DIR, PLUGIN_CACHE_SUBDIR } from "../domain/models/paths.js";
 import "../domain/tools/ai/codex.js";
 import "../domain/tools/ai/copilot.js";
 import "../domain/tools/ai/cursor.js";
@@ -29,7 +27,6 @@ import { ResolveMarketplaceUseCase } from "../application/use-cases/shared/resol
 import { UninstallIdeUseCase } from "../application/use-cases/uninstall-ide-use-case.js";
 import type { AssetProvider } from "../domain/ports/asset-provider.js";
 import type { FileSystem } from "../domain/ports/file-system.js";
-import type { FrameworkResolver } from "../domain/ports/framework-resolver.js";
 import type { Hasher } from "../domain/ports/hasher.js";
 import type { Logger } from "../domain/ports/logger.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
@@ -45,7 +42,6 @@ import type { VersionControl } from "../domain/ports/version-control.js";
 import type { VersionReader } from "../domain/ports/version-reader.js";
 import { CurrentVersionAdapter } from "./adapters/current-version-adapter.js";
 import { FileSystemAdapter } from "./adapters/file-system-adapter.js";
-import { FrameworkResolverAdapter } from "./adapters/framework-resolver-adapter.js";
 import { GhCliAdapter } from "./adapters/gh-cli-adapter.js";
 import { GitAdapter } from "./adapters/git-adapter.js";
 import { HasherAdapter } from "./adapters/hasher-adapter.js";
@@ -61,9 +57,7 @@ import { SelfUpdaterAdapter } from "./adapters/self-updater-adapter.js";
 import { BundledAssetProviderAdapter } from "./assets/asset-loader.js";
 import { AuthReader } from "./auth/auth-reader.js";
 import { AuthStorage } from "./auth/auth-storage.js";
-import { FrameworkCache } from "./cache/framework-cache.js";
 import { HttpClient } from "./http/http-client.js";
-import { TarExtractor } from "./tar/tar-extractor.js";
 
 interface GlobalOptions {
   verbose: boolean;
@@ -75,7 +69,6 @@ interface Deps {
   manifestRepo: ManifestRepository;
   hasher: Hasher;
   logger: Logger;
-  resolver: FrameworkResolver;
   cliUpdater: SelfUpdater;
   currentVersionProvider: VersionReader;
   git: VersionControl;
@@ -138,31 +131,12 @@ export async function createDeps(
   const marketplaceTrustStore = new MarketplaceTrustStoreAdapter(hasher);
   const logger = output ?? new CLIOutput(options.verbose);
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
-  const repoFromFlag = options.repo ?? process.env.AIDD_REPO;
-  const manifestForRepo = await manifestRepo.load().catch(() => null);
-  const effectiveRepo = repoFromFlag ?? manifestForRepo?.repo ?? "ai-driven-dev/aidd-framework";
-  const cacheDir = join(projectRoot, AIDD_DIR, "cache");
   const http = new HttpClient();
-  const tar = new TarExtractor();
-  const cache = new FrameworkCache(cacheDir);
   const authStorage = new AuthStorage();
   const ghCliAdapter = new GhCliAdapter();
   const authReader = new AuthReader(authStorage, projectRoot, logger, ghCliAdapter);
   const token = await authReader.resolve();
   const pluginFetcher = new PluginFetcherAdapter(fs, token ?? undefined);
-  const gitCacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
-  const resolver = new FrameworkResolverAdapter(
-    http,
-    tar,
-    cache,
-    {
-      defaultRepo: effectiveRepo,
-      defaultToken: token ?? undefined,
-      gitFetcher: pluginFetcher,
-      gitCacheDir,
-    },
-    logger
-  );
   const cliUpdater = new SelfUpdaterAdapter(http, { token: token ?? undefined });
   const currentVersionProvider = new CurrentVersionAdapter();
   const git = new GitAdapter(fs);
@@ -277,7 +251,6 @@ export async function createDeps(
     manifestRepo,
     hasher,
     logger,
-    resolver,
     cliUpdater,
     currentVersionProvider,
     git,
