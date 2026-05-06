@@ -324,14 +324,10 @@ export class SetupUseCase {
     return { frameworkPath: pathInput };
   }
 
-  private async resolveRemoteSource(options: SetupOptions): Promise<{ frameworkRepo?: string }> {
+  private async resolveRemoteSource(_options: SetupOptions): Promise<{ frameworkRepo?: string }> {
+    // Framework marketplace is implicit. Custom marketplaces added via `aidd marketplace add`.
     const existingManifest = await this.manifestRepo.load();
-    const repoDefault = existingManifest?.repo ?? "";
-    const repoInput = options.interactive
-      ? await this.prompter.input("Marketplace repository (owner/repo):", repoDefault)
-      : repoDefault;
-    if (!repoInput) return {};
-    return { frameworkRepo: repoInput };
+    return { frameworkRepo: existingManifest?.repo ?? Manifest.DEFAULT_REPO };
   }
 
   private async resolveVersion(
