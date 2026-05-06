@@ -1,7 +1,7 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Manifest } from "../../src/domain/models/manifest.js";
+import { DOCS_DIR } from "../../src/domain/models/paths.js";
 import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
 
 describe.concurrent("E2E: aidd doctor", () => {
@@ -74,7 +74,7 @@ describe.concurrent("E2E: aidd doctor", () => {
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-      await rm(join(projectDir, Manifest.DEFAULT_DOCS_DIR), { recursive: true, force: true });
+      await rm(join(projectDir, DOCS_DIR), { recursive: true, force: true });
 
       const { stderr, exitCode } = await runCli(["doctor"], projectDir);
 

@@ -83,13 +83,11 @@ export async function runCliFast(
  */
 export async function initProject(
   projectDir: string,
-  _frameworkPath: string,
-  options?: { docsDir?: string }
+  _frameworkPath: string
 ): Promise<void> {
   const output = new CLIOutput(false);
   const deps = await createDeps(projectDir, { verbose: false }, output);
   await new InitUseCase(deps.fs, deps.manifestRepo).execute({
     projectRoot: projectDir,
-    docsDir: options?.docsDir,
   });
 }

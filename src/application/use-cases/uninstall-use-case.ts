@@ -7,6 +7,7 @@ import {
   type MergeFileEntry,
   removeEntriesFromJson,
 } from "../../domain/models/merge.js";
+import { DOCS_DIR } from "../../domain/models/paths.js";
 import type { AiToolId } from "../../domain/models/tool-ids.js";
 import { AI_TOOL_IDS } from "../../domain/models/tool-ids.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
@@ -62,7 +63,7 @@ export class UninstallUseCase {
         : await this.removeTools(toolIds, manifest, projectRoot);
 
     await this.manifestRepo.save(manifest);
-    await new CatalogUseCase(this.fs).execute({ manifest, docsDir: manifest.docsDir, projectRoot });
+    await new CatalogUseCase(this.fs).execute({ manifest, docsDir: DOCS_DIR, projectRoot });
     return results;
   }
 

@@ -6,7 +6,7 @@ import "../../../../src/domain/tools/ai/copilot.js";
 import "../../../../src/domain/tools/ai/cursor.js";
 import "../../../../src/domain/tools/ai/opencode.js";
 import { SetupStateService } from "../../../../src/application/use-cases/shared/setup-state-service.js";
-import { Manifest } from "../../../../src/domain/models/manifest.js";
+import { DOCS_DIR } from "../../../../src/domain/models/paths.js";
 import {
   buildDeps,
   cleanupTempProject,
@@ -37,7 +37,7 @@ describe("SetupStateService", () => {
   });
 
   it("detects needs-init when only docs directory exists", async () => {
-    await mkdir(join(projectRoot, Manifest.DEFAULT_DOCS_DIR), { recursive: true });
+    await mkdir(join(projectRoot, DOCS_DIR), { recursive: true });
 
     const deps = buildDeps(projectRoot);
     const detector = new SetupStateService(deps.manifestRepo, deps.fs);

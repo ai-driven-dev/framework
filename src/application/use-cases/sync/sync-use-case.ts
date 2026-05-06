@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { PluginNotFoundError } from "../../../domain/errors.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../domain/formats/markdown.js";
+import { DOCS_DIR } from "../../../domain/models/paths.js";
 import type { Plugin } from "../../../domain/models/plugin.js";
 import { SyncPolicy } from "../../../domain/models/sync-policy.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
@@ -179,7 +180,7 @@ export class SyncUseCase {
       return this.executePluginSync(pluginName, projectRoot, manifest);
     }
 
-    const docsDir = options.docsDir ?? manifest.docsDir;
+    const docsDir = options.docsDir ?? DOCS_DIR;
     const { sourceTool, targetTools } = await this.selectSyncScope(
       options,
       manifest,

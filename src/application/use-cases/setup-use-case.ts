@@ -1,5 +1,5 @@
-import { Manifest } from "../../domain/models/manifest.js";
 import type { MarketplaceSourceMode } from "../../domain/models/marketplace-source-mode.js";
+import { DOCS_DIR } from "../../domain/models/paths.js";
 import type { PluginSource } from "../../domain/models/plugin-source.js";
 import type { SetupFlow } from "../../domain/models/setup-flow.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
@@ -56,10 +56,8 @@ export class SetupUseCase {
 
   private async initManifest(flow: SetupFlow): Promise<{ docsDir: string; isNew: boolean }> {
     const existing = await this.manifestRepo.load();
-    if (existing !== null) return { docsDir: existing.docsDir, isNew: false };
+    if (existing !== null) return { docsDir: DOCS_DIR, isNew: false };
     const result = await new InitUseCase(this.fs, this.manifestRepo).execute({
-      docsDir: Manifest.DEFAULT_DOCS_DIR,
-      explicitDocsDir: "",
       projectRoot: flow.projectRoot,
       force: false,
     });

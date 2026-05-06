@@ -223,29 +223,25 @@ describe.concurrent("E2E: aidd install", () => {
     }
   });
 
-  it("uses custom docs-dir from manifest when installing", async () => {
+  it("uses aidd_docs as the docs directory when installing", async () => {
     const { projectDir, cleanup } = await createTestEnv("install");
     try {
-      // init with custom docs dir
-      await initProject(projectDir, FRAMEWORK_PATH, { docsDir: "my_docs" });
-      expect(existsSync(join(projectDir, "my_docs"))).toBe(true);
+      await initProject(projectDir, FRAMEWORK_PATH);
+      expect(existsSync(join(projectDir, "aidd_docs"))).toBe(true);
 
-      // install claude - should use my_docs/ not aidd_docs/ (reads docsDir from manifest)
       const { exitCode: installExit } = await runCli(
         ["install", "ai", "claude", "--path", FRAMEWORK_PATH],
         projectDir
       );
       expect(installExit).toBe(0);
 
-      // my_docs directory must still exist (was not replaced by aidd_docs)
-      expect(existsSync(join(projectDir, "my_docs"))).toBe(true);
-      // aidd_docs must not exist (install did not re-create with default name)
-      expect(existsSync(join(projectDir, "aidd_docs"))).toBe(false);
+      // aidd_docs must still exist after install
+      expect(existsSync(join(projectDir, "aidd_docs"))).toBe(true);
 
-      // manifest records my_docs as the docsDir
+      // manifest does not store docsDir anymore (hardcoded constant)
       const manifestRaw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");
-      const manifest = JSON.parse(manifestRaw) as { docsDir: string };
-      expect(manifest.docsDir).toBe("my_docs");
+      const manifest = JSON.parse(manifestRaw) as Record<string, unknown>;
+      expect("docsDir" in manifest).toBe(false);
     } finally {
       await cleanup();
     }

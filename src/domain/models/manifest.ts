@@ -2,11 +2,13 @@ import {
   DuplicatePluginError,
   InvalidManifestDataError,
   InvalidManifestToolIdError,
-  ManifestValidationError,
+  MarketplaceAlreadyRegisteredError,
+  MarketplaceNotFoundError,
   PluginNotFoundError,
   ToolNotInManifestError,
 } from "../errors.js";
 import { FileHash, type InstallationFile } from "./file.js";
+import { MarketplaceEntry, type MarketplaceEntryData } from "./marketplace-entry.js";
 import { type McpExclusion, mcpExclusionEquals } from "./mcp-exclusion.js";
 import type { MergeFileEntry } from "./merge.js";
 import { Plugin, type PluginEntryData } from "./plugin.js";
@@ -16,13 +18,12 @@ const MANIFEST_VERSION = 5;
 
 // VSCode file paths that were tracked under "copilot" in manifest v1.
 // Used exclusively by migrateV1toV2 to move them to the "vscode" tool entry.
+// It can only be removed when the manifest version is bumped again and v1 support is explicitly dropped.
 const VSCODE_MIGRATION_PATHS = new Set([
   ".vscode/extensions.json",
   ".vscode/keybindings.json",
   ".vscode/settings.json",
 ]);
-
-const DOCS_DIR_REGEX = /^[a-zA-Z0-9_-]+$/;
 
 interface TrackedFile {
   readonly relativePath: string;
@@ -30,11 +31,13 @@ interface TrackedFile {
   readonly frameworkPath?: string;
 }
 
+// Retained for Phase 8 migrate-use-case consumption. Remove once migrate is reworked.
 interface ScriptsEntry {
   readonly version: string;
   readonly files: readonly TrackedFile[];
 }
 
+// Retained for Phase 8 migrate-use-case consumption. Remove once migrate is reworked.
 interface PluginsEntry {
   readonly version: string;
   readonly files: readonly TrackedFile[];
@@ -49,6 +52,7 @@ interface ToolEntry {
   readonly plugins: readonly Plugin[];
 }
 
+// Phase 8 deferred: ScriptsEntryData / PluginsSectionData kept for legacy deserialization.
 interface ScriptsEntryData {
   version: string;
   files: TrackedFileData[];
@@ -60,11 +64,9 @@ interface PluginsSectionData {
 }
 
 interface ManifestData {
-  version: number;
-  docsDir: string;
+  version: 5;
   tools: Record<string, ToolEntryData>;
-  scripts: ScriptsEntryData | null;
-  plugins: PluginsSectionData | null;
+  marketplaces: Record<string, MarketplaceEntryData>;
 }
 
 interface MergeFileEntryData {
@@ -90,7 +92,6 @@ interface TrackedFileData {
 
 // This migration block must remain until all users have upgraded past v1.
 // Removing it would corrupt manifests that still have VSCode files tracked under "copilot".
-// It can only be removed when the manifest version is bumped again and v1 support is explicitly dropped.
 function migrateV1toV2(raw: Record<string, unknown>): void {
   const tools = raw.tools as Record<string, ToolEntryData> | undefined;
   if (!tools) return;
@@ -129,44 +130,43 @@ function migrateV3toV4(raw: Record<string, unknown>): void {
   if (!("plugins" in raw)) raw.plugins = null;
 }
 
+// Strips dead top-level fields: docs, mode, repo, docsDir.
+// scripts + plugins (legacy top-level sections) are intentionally preserved here so
+// migrate-use-case.ts can detect them via hasScripts()/hasPlugins(). Phase 8 will
+// rework migrate to use raw JSON inspection and strip scripts/plugins here.
 function migrateV4toV5(raw: Record<string, unknown>): void {
   delete raw.docs;
+  delete raw.mode;
+  delete raw.repo;
+  delete raw.docsDir;
+  if (!("marketplaces" in raw)) raw.marketplaces = {};
 }
 
 export class Manifest {
-  static readonly DEFAULT_DOCS_DIR = "aidd_docs";
-
-  static validateDocsDir(name: string): void {
-    if (!DOCS_DIR_REGEX.test(name) || name.includes("..")) {
-      throw new ManifestValidationError(
-        `Invalid directory name: "${name}". Use alphanumeric characters, hyphens, and underscores only.`
-      );
-    }
-  }
-
   private readonly _tools: Map<ToolId, ToolEntry>;
+  // Phase 8 deferred: _scripts/_plugins kept to support migrate-use-case legacy detection.
   private _scripts: ScriptsEntry | null;
-  private _plugins: PluginsEntry | null = null;
-  readonly docsDir: string;
+  private _plugins: PluginsEntry | null;
+  private readonly _marketplaces: Map<string, MarketplaceEntry>;
 
   private constructor(params: {
     tools: Map<ToolId, ToolEntry>;
     scripts: ScriptsEntry | null;
     plugins: PluginsEntry | null;
-    docsDir: string;
+    marketplaces: Map<string, MarketplaceEntry>;
   }) {
     this._tools = new Map(params.tools);
     this._scripts = params.scripts;
     this._plugins = params.plugins;
-    this.docsDir = params.docsDir;
+    this._marketplaces = new Map(params.marketplaces);
   }
 
-  static create(docsDir?: string): Manifest {
+  static create(): Manifest {
     return new Manifest({
       tools: new Map(),
       scripts: null,
       plugins: null,
-      docsDir: docsDir ?? Manifest.DEFAULT_DOCS_DIR,
+      marketplaces: new Map(),
     });
   }
 
@@ -188,34 +188,42 @@ export class Manifest {
     });
   }
 
+  // Phase 8 deferred: kept for migrate-use-case legacy detection.
   getScriptsFiles(): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
     return this._scripts?.files ?? [];
   }
 
+  // Phase 8 deferred: kept for migrate-use-case legacy detection.
   getScriptsVersion(): string | undefined {
     return this._scripts?.version;
   }
 
+  // Phase 8 deferred: kept for migrate-use-case legacy detection.
   hasScripts(): boolean {
     return this._scripts !== null;
   }
 
+  // Phase 8 deferred: kept for migrate-use-case clearing.
   clearScripts(): void {
     this._scripts = null;
   }
 
+  // Phase 8 deferred: kept for migrate-use-case clearing.
   clearPlugins(): void {
     this._plugins = null;
   }
 
+  // Phase 8 deferred: kept for migrate-use-case legacy detection.
   getPluginsVersion(): string | undefined {
     return this._plugins?.version;
   }
 
+  // Phase 8 deferred: kept for migrate-use-case legacy detection.
   hasPlugins(): boolean {
     return this._plugins !== null;
   }
 
+  // Phase 8 deferred: kept for migrate-use-case legacy detection.
   getPluginsFiles(): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
     return this._plugins?.files ?? [];
   }
@@ -378,15 +386,6 @@ export class Manifest {
     return false;
   }
 
-  withDocsDir(newDocsDir: string): Manifest {
-    return new Manifest({
-      tools: new Map(this._tools),
-      scripts: this._scripts,
-      plugins: this._plugins,
-      docsDir: newDocsDir,
-    });
-  }
-
   getToolVersion(toolId: ToolId): string | undefined {
     return this._tools.get(toolId)?.version;
   }
@@ -401,7 +400,43 @@ export class Manifest {
     return dirs;
   }
 
+  // --- Marketplace aggregate ---
+
+  addMarketplace(entry: MarketplaceEntry): void {
+    if (this._marketplaces.has(entry.name)) {
+      throw new MarketplaceAlreadyRegisteredError(entry.name);
+    }
+    this._marketplaces.set(entry.name, entry);
+  }
+
+  removeMarketplace(name: string): void {
+    if (!this._marketplaces.has(name)) {
+      throw new MarketplaceNotFoundError(name);
+    }
+    this._marketplaces.delete(name);
+  }
+
+  getMarketplace(name: string): MarketplaceEntry | undefined {
+    return this._marketplaces.get(name);
+  }
+
+  listMarketplaces(): readonly MarketplaceEntry[] {
+    return [...this._marketplaces.values()];
+  }
+
+  hasMarketplace(name: string): boolean {
+    return this._marketplaces.has(name);
+  }
+
+  // --- Serialization ---
+
   toJSON(): ManifestData {
+    const tools = this.serializeTools();
+    const marketplaces = this.serializeMarketplaces();
+    return { version: MANIFEST_VERSION as 5, tools, marketplaces };
+  }
+
+  private serializeTools(): Record<string, ToolEntryData> {
     const tools: Record<string, ToolEntryData> = {};
     for (const [toolId, entry] of this._tools.entries()) {
       tools[toolId] = {
@@ -420,18 +455,15 @@ export class Manifest {
         }),
       };
     }
+    return tools;
+  }
 
-    return {
-      version: MANIFEST_VERSION,
-      docsDir: this.docsDir,
-      tools,
-      scripts: this._scripts
-        ? { version: this._scripts.version, files: this.toTrackedFileData(this._scripts.files) }
-        : null,
-      plugins: this._plugins
-        ? { version: this._plugins.version, files: this.toTrackedFileData(this._plugins.files) }
-        : null,
-    };
+  private serializeMarketplaces(): Record<string, MarketplaceEntryData> {
+    const marketplaces: Record<string, MarketplaceEntryData> = {};
+    for (const [name, entry] of this._marketplaces.entries()) {
+      marketplaces[name] = entry.serialize();
+    }
+    return marketplaces;
   }
 
   private toTrackedFileData(files: readonly TrackedFile[]): TrackedFileData[] {
@@ -506,27 +538,10 @@ export class Manifest {
     }
 
     const tools = Manifest.parseTools(raw);
+    const marketplaces = Manifest.parseMarketplaces(raw);
+    const { scripts, plugins } = Manifest.parseLegacySections(raw);
 
-    const docsDir = typeof raw.docsDir === "string" ? raw.docsDir : Manifest.DEFAULT_DOCS_DIR;
-
-    let scripts: ScriptsEntry | null = null;
-    if (raw.scripts !== null && raw.scripts !== undefined && typeof raw.scripts === "object") {
-      const scriptsRaw = raw.scripts as ScriptsEntryData;
-      scripts = {
-        version: scriptsRaw.version,
-        files: Manifest.parseTrackedFiles(scriptsRaw.files),
-      };
-    }
-
-    let plugins: PluginsEntry | null = null;
-    if (raw.plugins !== null && raw.plugins !== undefined && typeof raw.plugins === "object") {
-      const pluginsRaw = raw.plugins as PluginsSectionData;
-      plugins = {
-        version: pluginsRaw.version,
-        files: Manifest.parseTrackedFiles(pluginsRaw.files),
-      };
-    }
-    return new Manifest({ tools, scripts, plugins, docsDir });
+    return new Manifest({ tools, scripts, plugins, marketplaces });
   }
 
   private static parseTools(raw: Record<string, unknown>): Map<ToolId, ToolEntry> {
@@ -550,6 +565,41 @@ export class Manifest {
       });
     }
     return tools;
+  }
+
+  private static parseMarketplaces(raw: Record<string, unknown>): Map<string, MarketplaceEntry> {
+    const marketplaces = new Map<string, MarketplaceEntry>();
+    if (!raw.marketplaces || typeof raw.marketplaces !== "object") return marketplaces;
+    for (const [, value] of Object.entries(raw.marketplaces as Record<string, unknown>)) {
+      const entry = MarketplaceEntry.deserialize(value as MarketplaceEntryData);
+      marketplaces.set(entry.name, entry);
+    }
+    return marketplaces;
+  }
+
+  // Phase 8 deferred: parse legacy scripts/plugins for migrate-use-case detection.
+  private static parseLegacySections(raw: Record<string, unknown>): {
+    scripts: ScriptsEntry | null;
+    plugins: PluginsEntry | null;
+  } {
+    let scripts: ScriptsEntry | null = null;
+    if (raw.scripts !== null && raw.scripts !== undefined && typeof raw.scripts === "object") {
+      const scriptsRaw = raw.scripts as ScriptsEntryData;
+      scripts = {
+        version: scriptsRaw.version,
+        files: Manifest.parseTrackedFiles(scriptsRaw.files),
+      };
+    }
+
+    let plugins: PluginsEntry | null = null;
+    if (raw.plugins !== null && raw.plugins !== undefined && typeof raw.plugins === "object") {
+      const pluginsRaw = raw.plugins as PluginsSectionData;
+      plugins = {
+        version: pluginsRaw.version,
+        files: Manifest.parseTrackedFiles(pluginsRaw.files),
+      };
+    }
+    return { scripts, plugins };
   }
 
   private static parsePluginEntries(data: PluginEntryData[]): Plugin[] {

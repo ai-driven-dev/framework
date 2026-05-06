@@ -105,14 +105,10 @@ describe("Manifest", () => {
       expect(restored.getToolVersion("cursor" as ToolId)).toBe("3.0.0");
     });
 
-    it("docsDir is always stored in manifest JSON", () => {
-      const manifest = Manifest.create("custom_docs");
+    it("marketplaces is empty in a fresh manifest JSON", () => {
+      const manifest = Manifest.create();
       const json = manifest.toJSON();
-      expect(json.docsDir).toBe("custom_docs");
-
-      const defaultManifest = Manifest.create(Manifest.DEFAULT_DOCS_DIR);
-      const defaultJson = defaultManifest.toJSON();
-      expect(defaultJson.docsDir).toBe(Manifest.DEFAULT_DOCS_DIR);
+      expect(json.marketplaces).toEqual({});
     });
 
     it("file hashes are preserved after round-trip", () => {

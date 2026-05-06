@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../src/domain/tools/ai/claude.js";
 import "../../../../src/domain/tools/ai/opencode.js";
+import { DOCS_DIR } from "../../../../src/domain/models/paths.js";
 import { InstallPluginsUseCase } from "../../../../src/application/use-cases/install/install-plugins-use-case.js";
 
 import type { Hasher } from "../../../../src/domain/ports/hasher.js";
@@ -37,7 +38,7 @@ describe("InstallPluginsUseCase", () => {
           toolConfigs: [getToolConfig("claude")],
           projectRoot,
           manifest,
-          docsDir: manifest.docsDir,
+          docsDir: DOCS_DIR,
         });
         const commandExists = await deps.fs.fileExists(
           join(projectRoot, ".claude/plugins/sample-plugin/commands/greet.md")
@@ -63,7 +64,7 @@ describe("InstallPluginsUseCase", () => {
           toolConfigs: [getToolConfig("opencode")],
           projectRoot,
           manifest,
-          docsDir: manifest.docsDir,
+          docsDir: DOCS_DIR,
         });
         const commandExists = await deps.fs.fileExists(
           join(projectRoot, ".opencode/commands/sample-plugin/greet.md")
@@ -90,14 +91,14 @@ describe("InstallPluginsUseCase", () => {
           toolConfigs: [getToolConfig("claude")],
           projectRoot,
           manifest,
-          docsDir: manifest.docsDir,
+          docsDir: DOCS_DIR,
         });
         const warningsMap = await useCase.execute({
           plugins: [pluginSource],
           toolConfigs: [getToolConfig("claude")],
           projectRoot,
           manifest,
-          docsDir: manifest.docsDir,
+          docsDir: DOCS_DIR,
         });
         expect(warningsMap.size).toBe(0);
       } finally {

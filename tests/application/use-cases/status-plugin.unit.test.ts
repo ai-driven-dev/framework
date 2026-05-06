@@ -15,7 +15,7 @@ const DRIFTED_HASH = "def456def456def456def456def456de";
 const PLUGIN_FILE = ".claude/plugins/test-plugin/commands/greet.md";
 
 function makeManifest(pluginFileHash: string): Manifest {
-  const manifest = Manifest.create("aidd_docs");
+  const manifest = Manifest.create();
   manifest.addTool("claude", "1.0.0", []);
   manifest.addPlugin(
     "claude",

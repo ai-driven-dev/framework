@@ -61,7 +61,7 @@ describe("status", () => {
   it("reports no drift when no tools are installed", async () => {
     const deps = buildDeps(projectRoot);
     const initUseCase = new InitUseCase(deps.fs, deps.manifestRepo);
-    await initUseCase.execute({ docsDir: "aidd_docs", projectRoot });
+    await initUseCase.execute({ projectRoot });
 
     const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
     const report = await useCase.execute({ projectRoot });

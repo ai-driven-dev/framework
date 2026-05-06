@@ -3,7 +3,7 @@ import { readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SyncUseCase } from "../../../src/application/use-cases/sync/sync-use-case.js";
-import { Manifest } from "../../../src/domain/models/manifest.js";
+import { DOCS_DIR } from "../../../src/domain/models/paths.js";
 import {
   buildDeps,
   cleanupTempProject,
@@ -33,7 +33,7 @@ describe("sync", () => {
     await expect(
       useCase.execute({
         projectRoot,
-        docsDir: Manifest.DEFAULT_DOCS_DIR,
+        docsDir: DOCS_DIR,
         sourceTool: "claude",
       })
     ).rejects.toThrow("aidd setup");
@@ -49,7 +49,7 @@ describe("sync", () => {
     await expect(
       useCase.execute({
         projectRoot,
-        docsDir: Manifest.DEFAULT_DOCS_DIR,
+        docsDir: DOCS_DIR,
         sourceTool: "claude",
       })
     ).rejects.toThrow(/Source tool 'claude' is not installed/);
@@ -65,7 +65,7 @@ describe("sync", () => {
     await expect(
       useCase.execute({
         projectRoot,
-        docsDir: Manifest.DEFAULT_DOCS_DIR,
+        docsDir: DOCS_DIR,
         sourceTool: "claude",
       })
     ).rejects.toThrow("Sync requires at least 2 installed tools");
@@ -82,7 +82,7 @@ describe("sync", () => {
     await expect(
       useCase.execute({
         projectRoot,
-        docsDir: Manifest.DEFAULT_DOCS_DIR,
+        docsDir: DOCS_DIR,
         sourceTool: "claude",
         targetTools: ["claude"],
       })

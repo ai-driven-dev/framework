@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import type { Manifest } from "../../../domain/models/manifest.js";
-import { PLUGIN_CACHE_SUBDIR } from "../../../domain/models/paths.js";
+import { DOCS_DIR, PLUGIN_CACHE_SUBDIR } from "../../../domain/models/paths.js";
 import { Plugin } from "../../../domain/models/plugin.js";
 import type { PluginDistribution } from "../../../domain/models/plugin-distribution.js";
 import { PluginTranslator } from "../../../domain/models/plugin-translator.js";
@@ -34,7 +34,7 @@ export class PluginUpdateUseCase {
     const manifest = await loadPluginManifest(this.manifestRepo);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest);
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
-    const docsDir = manifest.docsDir;
+    const docsDir = DOCS_DIR;
     const updated: string[] = [];
     for (const toolId of resolvedToolIds) {
       const names = await this.updatePluginsForTool(

@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import { DOCS_DIR } from "../../domain/models/paths.js";
 import { assertValidToolIds, type ToolId } from "../../domain/tools/registry.js";
 
 import { createDeps } from "../../infrastructure/deps.js";
@@ -119,7 +120,7 @@ export function registerRestoreCommand(program: Command): void {
 
           const result = await restoreUseCase.execute({
             version,
-            docsDir: manifest.docsDir,
+            docsDir: DOCS_DIR,
             projectRoot,
             toolIds,
             files: effectiveFiles,
