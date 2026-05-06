@@ -202,10 +202,6 @@ export class Manifest {
     });
   }
 
-  addScripts(version: string, files: InstallationFile[]): void {
-    this._scripts = { version, files: this.toTrackedFiles(files) };
-  }
-
   getScriptsFiles(): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
     return this._scripts?.files ?? [];
   }
@@ -220,10 +216,6 @@ export class Manifest {
 
   clearScripts(): void {
     this._scripts = null;
-  }
-
-  addPlugins(version: string, files: InstallationFile[]): void {
-    this._plugins = { version, files: this.toTrackedFiles(files) };
   }
 
   clearPlugins(): void {

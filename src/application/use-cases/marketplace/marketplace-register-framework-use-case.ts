@@ -50,9 +50,7 @@ export class MarketplaceRegisterFrameworkUseCase {
     const manifest = await this.manifestRepo.load();
     if (ref !== undefined || manifest?.repo !== undefined) {
       const repo = manifest?.repo ?? Manifest.DEFAULT_REPO;
-      const resolvedRef =
-        ref ?? (manifest?.getScriptsVersion() ? `v${manifest.getScriptsVersion()}` : undefined);
-      return { kind: "github", repo, ref: resolvedRef };
+      return { kind: "github", repo, ref };
     }
     return { kind: "local", path: "." };
   }

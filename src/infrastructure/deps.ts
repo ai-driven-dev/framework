@@ -7,7 +7,6 @@ import "../domain/tools/ide/vscode.js";
 import { CLIOutput } from "../application/output.js";
 import { InstallIdeConfigUseCase } from "../application/use-cases/install/install-ide-config-use-case.js";
 import { InstallRuntimeConfigUseCase } from "../application/use-cases/install/install-runtime-config-use-case.js";
-import { InstallFrameworkPluginsUseCase } from "../application/use-cases/install-framework-plugins-use-case.js";
 import { MarketplaceAddUseCase } from "../application/use-cases/marketplace/marketplace-add-use-case.js";
 import { MarketplaceBrowseUseCase } from "../application/use-cases/marketplace/marketplace-browse-use-case.js";
 import { MarketplaceCheckUseCase } from "../application/use-cases/marketplace/marketplace-check-use-case.js";
@@ -81,7 +80,6 @@ interface Deps {
   pluginDistributionReader: PluginDistributionReader;
   marketplaceRegistry: MarketplaceRegistry;
   marketplaceTrustStore: MarketplaceTrustStore;
-  installFrameworkPluginsUseCase: InstallFrameworkPluginsUseCase;
   pluginAddUseCase: PluginAddUseCase;
   pluginRemoveUseCase: PluginRemoveUseCase;
   pluginListUseCase: PluginListUseCase;
@@ -144,11 +142,6 @@ export async function createDeps(
   const prompter = process.stdout.isTTY
     ? new InquirerPrompterAdapter()
     : new SilentPrompterAdapter();
-  const installFrameworkPluginsUseCase = new InstallFrameworkPluginsUseCase(
-    fs,
-    manifestRepo,
-    logger
-  );
   const pluginAddUseCase = new PluginAddUseCase(
     fs,
     manifestRepo,
@@ -263,7 +256,6 @@ export async function createDeps(
     pluginDistributionReader,
     marketplaceRegistry,
     marketplaceTrustStore,
-    installFrameworkPluginsUseCase,
     pluginAddUseCase,
     pluginRemoveUseCase,
     pluginListUseCase,

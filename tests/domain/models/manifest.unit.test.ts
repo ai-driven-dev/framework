@@ -144,13 +144,6 @@ describe("Manifest", () => {
       manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
       expect(manifest.isFileTracked("some/unknown/file.md")).toBe(false);
     });
-
-    it("returns true for a file tracked by scripts", () => {
-      const manifest = Manifest.create();
-      const scriptsFiles = [makeFile("scripts/setup.sh", "778899")];
-      manifest.addScripts("1.0.0", scriptsFiles);
-      expect(manifest.isFileTracked("scripts/setup.sh")).toBe(true);
-    });
   });
 
   describe("mergeFiles", () => {
