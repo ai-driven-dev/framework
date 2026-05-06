@@ -56,9 +56,7 @@ Auto-generated framework content: agents, commands, rules, skills, and templates
 | `.claude-plugin` | [plugin.json](../plugins/aidd-dev/.claude-plugin/plugin.json) | - |
 | `-` | [.mcp.json](../plugins/aidd-dev/.mcp.json) | - |
 | `agents` | [implementer.md](../plugins/aidd-dev/agents/implementer.md) | `Milestone executor. Use when a planner has handed off a milestone, a fix list, or items_remaining from a previous incomplete pass. Codes, tests, repairs. Returns what's done, what's remaining, and a completion score. Never replans, never judges.` |
-| `agents` | [iris.md](../plugins/aidd-dev/agents/iris.md) | `Frontend specialist with 3 modes - implement from Figma, verify UI conformity, validate user journeys.` |
-| `agents` | [martin.md](../plugins/aidd-dev/agents/martin.md) | `Every time you need to run a command to ensure code is correct, still builds are that tests pass, you must call this agent.` |
-| `agents` | [planner.md](../plugins/aidd-dev/agents/planner.md) | `Orchestrator. Use when a new spec must be turned into an executable plan, when an agent returned with completion_score < 100%, when a reviewer surfaced quality issues, or when a human requests a replan. Spawns implementer and reviewer in fresh contexts. Never writes code, never judges code.` |
+| `agents` | [planner.md](../plugins/aidd-dev/agents/planner.md) | `Planning agent. Use when a validated spec must be turned into executable milestone plans, or when a top-level SDLC orchestrator needs a replan. Writes plans and decisions only. Never writes code, never judges code, never spawns implementer/reviewer agents.` |
 | `agents` | [reviewer.md](../plugins/aidd-dev/agents/reviewer.md) | `Independent critic in fresh context. Use when an artifact (code, spec, plan, doc) needs verification against a validator (acceptance criteria, checklist file, or any explicit ruleset). Returns reviewed items, findings, completion score and quality score. Never edits the artifact, never decides what to do next.` |
 | `-` | [CATALOG.md](../plugins/aidd-dev/CATALOG.md) | - |
 | `-` | [README.md](../plugins/aidd-dev/README.md) | - |
