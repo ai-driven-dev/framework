@@ -94,9 +94,9 @@ jobs:
       - name: Build per-tool tarballs
         run: |
           VERSION="${{ needs.release-please.outputs.version }}"
-          for tool in claude cursor copilot opencode codex; do
+          for tool in claude cursor copilot codex; do
             tar czf "/tmp/aidd-${tool}-${VERSION}.tar.gz" \
-              -C dist/${tool} \
+              -C dist/${tool}-local \
               --exclude='.aidd/cache' \
               .
             tar czf "/tmp/aidd-${tool}-remote-${VERSION}.tar.gz" \
@@ -119,8 +119,6 @@ jobs:
             "/tmp/aidd-cursor-remote-${VERSION}.tar.gz" \
             "/tmp/aidd-copilot-${VERSION}.tar.gz" \
             "/tmp/aidd-copilot-remote-${VERSION}.tar.gz" \
-            "/tmp/aidd-opencode-${VERSION}.tar.gz" \
-            "/tmp/aidd-opencode-remote-${VERSION}.tar.gz" \
             "/tmp/aidd-codex-${VERSION}.tar.gz" \
             "/tmp/aidd-codex-remote-${VERSION}.tar.gz" \
             --clobber
