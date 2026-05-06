@@ -101,24 +101,36 @@ export class SetupUseCase {
   private async handleInit(options: SetupOptions): Promise<SetupResult> {
     const { projectRoot, repo } = options;
     const { docsDir, explicitDocsDir } = this.resolveDocsDir(options);
-    const resolvedMode = await this.resolveMode(options);
-    const { frameworkPath, frameworkRepo } = await this.resolveFrameworkSource(
-      options,
-      resolvedMode
-    );
+
+    // Step 1 — tools first (logical: user picks tools before deciding marketplace)
+    const toolIds = options.toolIds ?? (options.interactive ? await this.promptForTools() : []);
+
+    // Step 2 — plugin marketplace opt-in (default yes)
+    const wantsMarketplace = await this.resolveWantsMarketplace(options);
+
+    // Step 3 — if wants marketplace, ask mode + source + version
+    const resolvedMode = wantsMarketplace
+      ? await this.resolveMode(options)
+      : "local";
+    const { frameworkPath, frameworkRepo } = wantsMarketplace
+      ? await this.resolveFrameworkSource(options, resolvedMode)
+      : {};
+    const version = wantsMarketplace
+      ? await this.resolveVersion(options, frameworkRepo, frameworkPath)
+      : this.currentVersionProvider.get();
+
     const repoForManifest = frameworkRepo ?? repo;
     const initResult = await this.runInit(docsDir, explicitDocsDir, projectRoot, repoForManifest);
     await this.persistMode(resolvedMode);
 
-    const version = await this.resolveVersion(options, frameworkRepo, frameworkPath);
     const installResults = await this.installToolsFromAssets(
-      options.toolIds,
+      toolIds.length > 0 ? toolIds : undefined,
       projectRoot,
       version,
-      options.interactive ?? false
+      false
     );
 
-    if (resolvedMode === "local" && frameworkPath) {
+    if (wantsMarketplace && resolvedMode === "local" && frameworkPath) {
       await this.installLocalPluginsAt(frameworkPath, version, projectRoot);
     }
 
@@ -126,8 +138,14 @@ export class SetupUseCase {
       kind: "initialized",
       docsDir: initResult.docsDir,
       install: { results: installResults },
-      resolvedRef: version,
+      resolvedRef: wantsMarketplace ? version : undefined,
     };
+  }
+
+  private async resolveWantsMarketplace(options: SetupOptions): Promise<boolean> {
+    if (options.mode) return true; // explicit --mode flag implies yes
+    if (!options.interactive) return true; // non-interactive defaults to yes
+    return this.prompter.confirm("Install framework plugin marketplace?", true);
   }
 
   private async handleInstall(options: SetupOptions): Promise<SetupResult> {

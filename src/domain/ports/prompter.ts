@@ -3,7 +3,7 @@ export interface Prompter {
     relativePath: string,
     reason: "deleted" | "modified"
   ): Promise<"keep" | "overwrite">;
-  confirm(message: string): Promise<boolean>;
+  confirm(message: string, defaultValue?: boolean): Promise<boolean>;
   input(message: string, defaultValue?: string): Promise<string>;
   select<T>(
     message: string,
