@@ -25,13 +25,19 @@ Last interactive step. Validates prerequisites, builds journey map, creates trac
    - `npm test exits 0` → Valid.
    - "The code is clean" → Invalid. → `eslint . exits 0`.
 
-6. **Pre-flight checklist.** For each step, verify: tools, secrets, API access, data, permissions. The agent will handle everything autonomously — just identify what's needed.
+6. **Pre-flight checklist.** For each step, list: tools, secrets, API access, data, permissions. Use markers:
+   - `[✓]` already satisfied
+   - `[~]` SOFT — agent will self-serve (sign up, generate key, install tool)
+   - `[!]` HARD — only the user can provide (DB ID, channel ID, env var, password, owned API key)
+
+   Collect every `[!]` from the user now. **If any `[!]` remains unresolved, STOP — do not proceed to step 7.**
 
    ```
    [✓] Node.js v20 installed
    [✓] npm test configured in package.json
-   [?] Stripe API key — agent will generate via dashboard
-   [?] Database password — ask user now if only they know it
+   [~] Stripe API key — agent generates via dashboard
+   [!] DATABASE_URL — only the user knows it
+   [!] SLACK_CHANNEL_ID — only the user knows it
    ```
 
 7. **Build ASCII journey map.** Project entire path. Show steps, dependencies, tools, blockers. Ask user to confirm.
