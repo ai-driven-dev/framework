@@ -114,7 +114,6 @@ export function registerRestoreCommand(program: Command): void {
             deps.logger,
             deps.platform,
             prompter,
-            deps.assetProvider,
             deps.pluginFetcher,
             deps.pluginDistributionReader
           );

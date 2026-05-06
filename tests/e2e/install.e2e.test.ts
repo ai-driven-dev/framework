@@ -579,7 +579,6 @@ describe.concurrent("E2E: aidd install", () => {
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Installed codex");
       expect(existsSync(join(projectDir, ".codex"))).toBe(true);
-      expect(existsSync(join(projectDir, "AGENTS.md"))).toBe(true);
       expect(
         existsSync(
           join(projectDir, ".codex", "plugins", "aidd-test", "skills", "commit", "SKILL.md")

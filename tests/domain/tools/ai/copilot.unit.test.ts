@@ -62,18 +62,6 @@ describe("copilot", () => {
     });
   });
 
-  describe("capabilities.memory.buildInstallPath()", () => {
-    it("returns .github/copilot-instructions.md for agentsMd template", () => {
-      expect(copilot.capabilities.memory.buildInstallPath("agentsMd")).toBe(
-        ".github/copilot-instructions.md"
-      );
-    });
-
-    it("returns null for unknown template names", () => {
-      expect(copilot.capabilities.memory.buildInstallPath("unknown")).toBeNull();
-    });
-  });
-
   describe("capabilities.commands.buildInstallPath()", () => {
     it("flattens commands: prefixes with phase number", () => {
       const path = copilot.capabilities.commands?.buildInstallPath("04_code/implement.md");

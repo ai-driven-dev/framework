@@ -144,10 +144,9 @@ describe("doctor", () => {
 
   it("reports warning for broken @path reference in a tracked file", async () => {
     const deps = buildDeps(projectRoot);
-    const installResult = await initAndInstall(deps, projectRoot, "claude" as ToolId);
+    await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
-    const firstFile = installResult.files.find((f) => f.relativePath.endsWith(".md"));
-    if (!firstFile) throw new Error("claude fixture must install at least one .md file");
+    const firstFile = { relativePath: ".claude/plugins/aidd-test/agents/code-reviewer.md" };
     await writeFile(
       join(projectRoot, firstFile.relativePath),
       "See @.claude/agents/missing-agent.md for details",
@@ -164,10 +163,9 @@ describe("doctor", () => {
 
   it("does not report broken reference for directory-only @path (trailing slash, no extension)", async () => {
     const deps = buildDeps(projectRoot);
-    const installResult = await initAndInstall(deps, projectRoot, "claude" as ToolId);
+    await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
-    const firstFile = installResult.files.find((f) => f.relativePath.endsWith(".md"));
-    if (!firstFile) throw new Error("claude fixture must install at least one .md file");
+    const firstFile = { relativePath: ".claude/plugins/aidd-test/agents/code-reviewer.md" };
     await writeFile(
       join(projectRoot, firstFile.relativePath),
       "See @.claude/agents/ for all agents",
@@ -183,11 +181,9 @@ describe("doctor", () => {
 
   it("reports broken markdown link target for copilot tracked files", async () => {
     const deps = buildDeps(projectRoot);
-    const installResult = await initAndInstall(deps, projectRoot, "copilot" as ToolId);
+    await initAndInstall(deps, projectRoot, "copilot" as ToolId);
 
-    const firstFile = installResult.files.find((f) => f.relativePath.endsWith(".md"));
-    expect(firstFile).toBeDefined();
-    if (!firstFile) throw new Error("copilot fixture must install at least one .md file");
+    const firstFile = { relativePath: ".github/plugins/aidd-test/agents/code-reviewer.agent.md" };
 
     await writeFile(
       join(projectRoot, firstFile.relativePath),
@@ -205,10 +201,9 @@ describe("doctor", () => {
 
   it("reports broken @path reference inside plain fenced code block", async () => {
     const deps = buildDeps(projectRoot);
-    const installResult = await initAndInstall(deps, projectRoot, "claude" as ToolId);
+    await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
-    const firstFile = installResult.files.find((f) => f.relativePath.endsWith(".md"));
-    if (!firstFile) throw new Error("claude fixture must install at least one .md file");
+    const firstFile = { relativePath: ".claude/plugins/aidd-test/agents/code-reviewer.md" };
     await writeFile(
       join(projectRoot, firstFile.relativePath),
       "```\n@.claude/agents/missing-agent.md\n```",
@@ -224,10 +219,9 @@ describe("doctor", () => {
 
   it("reports broken @path reference inside ```markdown fenced code block", async () => {
     const deps = buildDeps(projectRoot);
-    const installResult = await initAndInstall(deps, projectRoot, "claude" as ToolId);
+    await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
-    const firstFile = installResult.files.find((f) => f.relativePath.endsWith(".md"));
-    if (!firstFile) throw new Error("claude fixture must install at least one .md file");
+    const firstFile = { relativePath: ".claude/plugins/aidd-test/agents/code-reviewer.md" };
     await writeFile(
       join(projectRoot, firstFile.relativePath),
       "```markdown\n@aidd_docs/templates/aidd/agent.md\n```",
@@ -243,11 +237,9 @@ describe("doctor", () => {
 
   it("reports broken markdown link inside ```markdown block for copilot files", async () => {
     const deps = buildDeps(projectRoot);
-    const installResult = await initAndInstall(deps, projectRoot, "copilot" as ToolId);
+    await initAndInstall(deps, projectRoot, "copilot" as ToolId);
 
-    const firstFile = installResult.files.find((f) => f.relativePath.endsWith(".md"));
-    expect(firstFile).toBeDefined();
-    if (!firstFile) throw new Error("copilot fixture must install at least one .md file");
+    const firstFile = { relativePath: ".github/plugins/aidd-test/agents/code-reviewer.agent.md" };
 
     await writeFile(
       join(projectRoot, firstFile.relativePath),
@@ -264,10 +256,9 @@ describe("doctor", () => {
 
   it("does not report broken @path reference inside non-markdown fenced code block", async () => {
     const deps = buildDeps(projectRoot);
-    const installResult = await initAndInstall(deps, projectRoot, "claude" as ToolId);
+    await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
-    const firstFile = installResult.files.find((f) => f.relativePath.endsWith(".md"));
-    if (!firstFile) throw new Error("claude fixture must install at least one .md file");
+    const firstFile = { relativePath: ".claude/plugins/aidd-test/agents/code-reviewer.md" };
     await writeFile(
       join(projectRoot, firstFile.relativePath),
       "```text\n@path/to/example.md\n```",
@@ -362,19 +353,20 @@ describe("doctor", () => {
 
     it("reports an error when a tracked file has been deleted from disk", async () => {
       const deps = buildDeps(projectRoot);
-      const installResult = await initAndInstall(deps, projectRoot, "claude" as ToolId);
+      await initAndInstall(deps, projectRoot, "claude" as ToolId);
 
-      // Delete one tracked file from disk without removing it from the manifest
-      const trackedFile = installResult.files.find((f) => f.relativePath.endsWith(".md"));
-      if (!trackedFile) throw new Error("claude fixture must install at least one .md file");
+      // Delete one plugin file from disk without removing it from the manifest
+      const trackedFile = { relativePath: ".claude/plugins/aidd-test/agents/code-reviewer.md" };
       await rm(join(projectRoot, trackedFile.relativePath), { force: true });
 
       const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
       const report = await useCase.execute({ projectRoot });
 
-      const missingIssue = report.issues.find((i) => i.message.includes("Missing tracked file"));
+      const missingIssue = report.pluginIssues.find(
+        (i) => i.issue === "missing" && i.filePath === trackedFile.relativePath
+      );
       expect(missingIssue).toBeDefined();
-      expect(missingIssue?.severity).toBe("error");
+      expect(report.healthy).toBe(false);
     });
   });
 

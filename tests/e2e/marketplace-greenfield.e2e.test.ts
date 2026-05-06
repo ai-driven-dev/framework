@@ -21,7 +21,7 @@ async function seedManifest(projectDir: string, data: unknown = EMPTY_MANIFEST):
 }
 
 describe.concurrent("E2E: marketplace greenfield — bundled asset install", () => {
-  it("install ai claude writes CLAUDE.md and settings.json from bundled assets", async () => {
+  it("install ai claude writes settings.json and manifest from bundled assets", async () => {
     const { projectDir, cleanup } = await createTestEnv("greenfield-claude");
     try {
       await seedManifest(projectDir);
@@ -30,7 +30,6 @@ describe.concurrent("E2E: marketplace greenfield — bundled asset install", () 
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Installed claude");
-      expect(existsSync(join(projectDir, "CLAUDE.md"))).toBe(true);
       expect(existsSync(join(projectDir, ".claude", "settings.json"))).toBe(true);
       expect(existsSync(join(projectDir, AIDD_DIR, "manifest.json"))).toBe(true);
     } finally {

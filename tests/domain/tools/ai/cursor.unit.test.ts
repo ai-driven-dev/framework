@@ -68,16 +68,6 @@ describe("cursor", () => {
     });
   });
 
-  describe("capabilities.memory.buildInstallPath()", () => {
-    it("returns AGENTS.md for agentsMd template", () => {
-      expect(cursor.capabilities.memory.buildInstallPath("agentsMd")).toBe("AGENTS.md");
-    });
-
-    it("returns null for unknown template names", () => {
-      expect(cursor.capabilities.memory.buildInstallPath("unknown")).toBeNull();
-    });
-  });
-
   describe("capabilities.rules.buildInstallPath()", () => {
     it("builds path for rules section with .mdc extension", () => {
       const path = cursor.capabilities.rules?.buildInstallPath("01-standards/naming.md");

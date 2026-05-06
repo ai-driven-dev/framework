@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { HooksCapability } from "../../../domain/capabilities/hooks-capability.js";
 import { McpCapability } from "../../../domain/capabilities/mcp-capability.js";
-import { InstallationFile, removeRedundantGitkeeps } from "../../../domain/models/file.js";
+import { type InstallationFile, removeRedundantGitkeeps } from "../../../domain/models/file.js";
 import type { ConfigRef, ContentSection, TemplateRef } from "../../../domain/models/framework.js";
 import { FRAMEWORK_CONFIG_PREFIX, FrameworkDescriptor } from "../../../domain/models/framework.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
@@ -20,7 +20,6 @@ import {
 import type { PluginCatalogEntry } from "../../../domain/models/plugin-catalog.js";
 import type { PluginSource } from "../../../domain/models/plugin-source.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
-import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Logger } from "../../../domain/ports/logger.js";
@@ -79,7 +78,6 @@ const CONFIG_REFS: readonly ConfigRef[] = [
 // No content sections — agents/commands/rules/skills come from plugins.
 const EMPTY_CONTENT_SECTIONS: readonly ContentSection[] = [];
 
-// No template refs — memory comes from AssetProvider stubs.
 const EMPTY_TEMPLATE_REFS: readonly TemplateRef[] = [];
 
 export type PluginMode = "all" | "recommended" | "named" | "none";
@@ -126,8 +124,7 @@ export class InstallUseCase {
     private readonly prompter?: Prompter,
     private readonly pluginFetcher?: PluginFetcher,
     private readonly pluginDistributionReader?: PluginDistributionReader,
-    private readonly pluginCatalogRepository?: PluginCatalogRepository,
-    private readonly assets?: AssetProvider
+    private readonly pluginCatalogRepository?: PluginCatalogRepository
   ) {}
 
   async execute(options: InstallOptions): Promise<InstallToolResult[]> {
@@ -753,22 +750,7 @@ export class InstallUseCase {
       projectRoot,
       platform: this.platform,
     });
-    const memoryFiles = this.buildMemoryStubFiles(config);
-    return removeRedundantGitkeeps([...sectionFiles, ...configFiles, ...memoryFiles]);
-  }
-
-  private buildMemoryStubFiles(config: AiTool<unknown>): InstallationFile[] {
-    const caps = config.capabilities as Record<string, unknown>;
-    if (!("memory" in caps) || !this.assets) return [];
-    const stub = this.assets.loadMemoryStub(config.toolId as AiToolId);
-    const content = stub.content;
-    return [
-      new InstallationFile({
-        relativePath: stub.fileName,
-        content,
-        hash: this.hasher.hash(content),
-      }),
-    ];
+    return removeRedundantGitkeeps([...sectionFiles, ...configFiles]);
   }
 
   private generateCapabilitySectionFiles(

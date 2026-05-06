@@ -93,10 +93,8 @@ export async function initProject(
   await new SetupUseCase(
     deps.fs,
     deps.manifestRepo,
-    deps.hasher,
     deps.logger,
     deps.prompter,
-    deps.assetProvider,
     deps.installRuntimeConfigUseCase,
     deps.installIdeConfigUseCase,
     makeNoOpInstallFrameworkPlugins() as never,
@@ -119,10 +117,8 @@ export async function adoptProject(
   await new SetupUseCase(
     deps.fs,
     deps.manifestRepo,
-    deps.hasher,
     deps.logger,
     deps.prompter,
-    deps.assetProvider,
     deps.installRuntimeConfigUseCase,
     deps.installIdeConfigUseCase,
     makeNoOpInstallFrameworkPlugins() as never,

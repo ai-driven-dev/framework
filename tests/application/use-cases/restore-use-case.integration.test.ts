@@ -37,8 +37,7 @@ describe("restore", () => {
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter(),
-      deps.assetProvider
+      new OverwritePrompter()
     );
 
     await expect(
@@ -61,8 +60,7 @@ describe("restore", () => {
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter(),
-      deps.assetProvider
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -77,11 +75,10 @@ describe("restore", () => {
 
   it("restores a modified file with --force", async () => {
     const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
+    await initAndInstall(deps, projectRoot, "vscode");
 
-    const claudeMdPath = join(projectRoot, "CLAUDE.md");
-    const original = await readFile(claudeMdPath, "utf-8");
-    await writeFile(claudeMdPath, "user modified content");
+    const settingsPath = join(projectRoot, ".vscode/settings.json");
+    await writeFile(settingsPath, '{"modified": true}');
 
     const useCase = new RestoreUseCase(
       deps.fs,
@@ -89,8 +86,7 @@ describe("restore", () => {
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter(),
-      deps.assetProvider
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -101,17 +97,18 @@ describe("restore", () => {
       force: true,
     });
 
-    const contentAfter = await readFile(claudeMdPath, "utf-8");
-    expect(contentAfter).toBe(original);
+    const contentAfter = await readFile(settingsPath, "utf-8");
+    const parsed = JSON.parse(contentAfter) as Record<string, unknown>;
+    expect(parsed["editor.formatOnSave"]).toBe(true);
     expect(result.tools[0].restored.length).toBeGreaterThan(0);
   });
 
   it("restores a deleted file", async () => {
     const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
+    await initAndInstall(deps, projectRoot, "vscode");
 
-    const claudeMdPath = join(projectRoot, "CLAUDE.md");
-    await rm(claudeMdPath);
+    const settingsPath = join(projectRoot, ".vscode/settings.json");
+    await rm(settingsPath);
 
     const useCase = new RestoreUseCase(
       deps.fs,
@@ -119,8 +116,7 @@ describe("restore", () => {
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter(),
-      deps.assetProvider
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -131,17 +127,17 @@ describe("restore", () => {
       force: true,
     });
 
-    const exists = await deps.fs.fileExists(claudeMdPath);
+    const exists = await deps.fs.fileExists(settingsPath);
     expect(exists).toBe(true);
     expect(result.tools[0].restored.length).toBeGreaterThan(0);
   });
 
   it("keeps file when prompter returns keep", async () => {
     const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
+    await initAndInstall(deps, projectRoot, "vscode");
 
-    const claudeMdPath = join(projectRoot, "CLAUDE.md");
-    await writeFile(claudeMdPath, "user modified content");
+    const settingsPath = join(projectRoot, ".vscode/settings.json");
+    await writeFile(settingsPath, '{"modified": true}');
 
     const useCase = new RestoreUseCase(
       deps.fs,
@@ -149,8 +145,7 @@ describe("restore", () => {
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new KeepPrompter(),
-      deps.assetProvider
+      new KeepPrompter()
     );
 
     const result = await useCase.execute({
@@ -161,8 +156,8 @@ describe("restore", () => {
       interactive: true,
     });
 
-    const contentAfter = await readFile(claudeMdPath, "utf-8");
-    expect(contentAfter).toBe("user modified content");
+    const contentAfter = await readFile(settingsPath, "utf-8");
+    expect(contentAfter).toBe('{"modified": true}');
     expect(result.tools[0].kept.length).toBeGreaterThan(0);
   });
 
@@ -170,10 +165,10 @@ describe("restore", () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude");
 
-    const claudeMdPath = join(projectRoot, "CLAUDE.md");
+    const agentPath = join(projectRoot, ".claude/plugins/aidd-test/agents/code-reviewer.md");
     const rulePath = join(projectRoot, ".claude/plugins/aidd-test/rules/01-standards/naming.md");
 
-    await writeFile(claudeMdPath, "modified claude");
+    await writeFile(agentPath, "modified agent");
     await writeFile(rulePath, "modified rule");
 
     const useCase = new RestoreUseCase(
@@ -183,7 +178,6 @@ describe("restore", () => {
       deps.logger,
       linuxPlatform,
       new OverwritePrompter(),
-      deps.assetProvider,
       deps.pluginFetcher,
       deps.pluginDistributionReader
     );
@@ -197,8 +191,8 @@ describe("restore", () => {
       files: [".claude/plugins/aidd-test/rules/01-standards/naming.md"],
     });
 
-    const claudeMdContent = await readFile(claudeMdPath, "utf-8");
-    expect(claudeMdContent).toBe("modified claude");
+    const agentContent = await readFile(agentPath, "utf-8");
+    expect(agentContent).toBe("modified agent");
 
     const ruleContent = await readFile(rulePath, "utf-8");
     expect(ruleContent).not.toBe("modified rule");
@@ -207,13 +201,13 @@ describe("restore", () => {
   it("toolIds filter limits restore to specific tool", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
-    await installTool(deps, projectRoot, "claude");
+    await installTool(deps, projectRoot, "vscode");
     await installTool(deps, projectRoot, "cursor");
 
-    const claudeMdPath = join(projectRoot, "CLAUDE.md");
-    const agentsMdPath = join(projectRoot, "AGENTS.md");
-    await writeFile(claudeMdPath, "modified claude");
-    await writeFile(agentsMdPath, "modified agents");
+    const vscodePath = join(projectRoot, ".vscode/settings.json");
+    const cursorPath = join(projectRoot, ".cursor/settings.json");
+    await writeFile(vscodePath, '{"modified": true}');
+    await writeFile(cursorPath, '{"modified": true}');
 
     const useCase = new RestoreUseCase(
       deps.fs,
@@ -221,32 +215,32 @@ describe("restore", () => {
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter(),
-      deps.assetProvider
+      new OverwritePrompter()
     );
     await useCase.execute({
       frameworkPath: FIXTURE_DIR,
       version: "test",
       docsDir: "aidd_docs",
       projectRoot,
-      toolIds: ["claude"],
+      toolIds: ["vscode"],
       force: true,
     });
 
-    const claudeContent = await readFile(claudeMdPath, "utf-8");
-    const agentsContent = await readFile(agentsMdPath, "utf-8");
-    expect(claudeContent).not.toBe("modified claude");
-    expect(agentsContent).toBe("modified agents");
+    const vscodeContent = await readFile(vscodePath, "utf-8");
+    const cursorContent = await readFile(cursorPath, "utf-8");
+    const parsedVscode = JSON.parse(vscodeContent) as Record<string, unknown>;
+    expect(parsedVscode["editor.formatOnSave"]).toBe(true);
+    expect(cursorContent).toBe('{"modified": true}');
   });
 
   it("accepts directory prefix filter (ends with /)", async () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude");
 
-    const claudeMdPath = join(projectRoot, "CLAUDE.md");
+    const agentPath = join(projectRoot, ".claude/plugins/aidd-test/agents/code-reviewer.md");
     const rulePath = join(projectRoot, ".claude/plugins/aidd-test/rules/01-standards/naming.md");
 
-    await writeFile(claudeMdPath, "modified claude");
+    await writeFile(agentPath, "modified agent");
     await writeFile(rulePath, "modified rule");
 
     const useCase = new RestoreUseCase(
@@ -256,7 +250,6 @@ describe("restore", () => {
       deps.logger,
       linuxPlatform,
       new OverwritePrompter(),
-      deps.assetProvider,
       deps.pluginFetcher,
       deps.pluginDistributionReader
     );
@@ -270,8 +263,8 @@ describe("restore", () => {
       files: [".claude/plugins/aidd-test/rules/"],
     });
 
-    const claudeMdContent = await readFile(claudeMdPath, "utf-8");
-    expect(claudeMdContent).toBe("modified claude");
+    const agentContent = await readFile(agentPath, "utf-8");
+    expect(agentContent).toBe("modified agent");
 
     const ruleContent = await readFile(rulePath, "utf-8");
     expect(ruleContent).not.toBe("modified rule");
@@ -281,10 +274,10 @@ describe("restore", () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude");
 
-    const claudeMdPath = join(projectRoot, "CLAUDE.md");
+    const agentPath = join(projectRoot, ".claude/plugins/aidd-test/agents/code-reviewer.md");
     const rulePath = join(projectRoot, ".claude/plugins/aidd-test/rules/01-standards/naming.md");
 
-    await writeFile(claudeMdPath, "modified claude");
+    await writeFile(agentPath, "modified agent");
     await writeFile(rulePath, "modified rule");
 
     const useCase = new RestoreUseCase(
@@ -294,7 +287,6 @@ describe("restore", () => {
       deps.logger,
       linuxPlatform,
       new OverwritePrompter(),
-      deps.assetProvider,
       deps.pluginFetcher,
       deps.pluginDistributionReader
     );
@@ -308,8 +300,8 @@ describe("restore", () => {
       files: [".claude/plugins/aidd-test/rules"],
     });
 
-    const claudeMdContent = await readFile(claudeMdPath, "utf-8");
-    expect(claudeMdContent).toBe("modified claude");
+    const agentContent = await readFile(agentPath, "utf-8");
+    expect(agentContent).toBe("modified agent");
 
     const ruleContent = await readFile(rulePath, "utf-8");
     expect(ruleContent).not.toBe("modified rule");
@@ -329,8 +321,7 @@ describe("restore", () => {
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter(),
-      deps.assetProvider
+      new OverwritePrompter()
     );
 
     await useCase.execute({
@@ -346,10 +337,10 @@ describe("restore", () => {
 
   it("restores deleted files in non-interactive mode without --force", async () => {
     const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
+    await initAndInstall(deps, projectRoot, "vscode");
 
-    const claudeMdPath = join(projectRoot, "CLAUDE.md");
-    await rm(claudeMdPath);
+    const settingsPath = join(projectRoot, ".vscode/settings.json");
+    await rm(settingsPath);
 
     const useCase = new RestoreUseCase(
       deps.fs,
@@ -357,8 +348,7 @@ describe("restore", () => {
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter(),
-      deps.assetProvider
+      new OverwritePrompter()
     );
 
     const result = await useCase.execute({
@@ -370,16 +360,16 @@ describe("restore", () => {
       force: false,
     });
 
-    expect(existsSync(claudeMdPath)).toBe(true);
+    expect(existsSync(settingsPath)).toBe(true);
     expect(result.tools[0].restored.length).toBeGreaterThan(0);
   });
 
   it("aborts in non-interactive mode when modified files exist and --force is not set", async () => {
     const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
+    await initAndInstall(deps, projectRoot, "vscode");
 
-    const claudeMdPath = join(projectRoot, "CLAUDE.md");
-    await writeFile(claudeMdPath, "user modified content");
+    const settingsPath = join(projectRoot, ".vscode/settings.json");
+    await writeFile(settingsPath, '{"modified": true}');
 
     const useCase = new RestoreUseCase(
       deps.fs,
@@ -387,8 +377,7 @@ describe("restore", () => {
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      new OverwritePrompter(),
-      deps.assetProvider
+      new OverwritePrompter()
     );
 
     await expect(
@@ -405,10 +394,10 @@ describe("restore", () => {
 
   it("restores deleted files without prompting the user", async () => {
     const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
+    await initAndInstall(deps, projectRoot, "vscode");
 
-    const claudeMdPath = join(projectRoot, "CLAUDE.md");
-    await rm(claudeMdPath);
+    const settingsPath = join(projectRoot, ".vscode/settings.json");
+    await rm(settingsPath);
 
     const prompter = new RecordingPrompter("overwrite");
     const useCase = new RestoreUseCase(
@@ -417,8 +406,7 @@ describe("restore", () => {
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      prompter,
-      deps.assetProvider
+      prompter
     );
 
     await useCase.execute({
@@ -428,17 +416,17 @@ describe("restore", () => {
       projectRoot,
     });
 
-    const call = prompter.calls.find((c) => c.relativePath === "CLAUDE.md");
+    const call = prompter.calls.find((c) => c.relativePath === ".vscode/settings.json");
     expect(call).toBeUndefined();
-    expect(existsSync(claudeMdPath)).toBe(true);
+    expect(existsSync(settingsPath)).toBe(true);
   });
 
   it("passes reason 'modified' to prompter when file is changed on disk", async () => {
     const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
+    await initAndInstall(deps, projectRoot, "vscode");
 
-    const claudeMdPath = join(projectRoot, "CLAUDE.md");
-    await writeFile(claudeMdPath, "user modified content");
+    const settingsPath = join(projectRoot, ".vscode/settings.json");
+    await writeFile(settingsPath, '{"modified": true}');
 
     const prompter = new RecordingPrompter("overwrite");
     const useCase = new RestoreUseCase(
@@ -447,8 +435,7 @@ describe("restore", () => {
       deps.hasher,
       deps.logger,
       linuxPlatform,
-      prompter,
-      deps.assetProvider
+      prompter
     );
 
     await useCase.execute({
@@ -459,22 +446,23 @@ describe("restore", () => {
       interactive: true,
     });
 
-    const call = prompter.calls.find((c) => c.relativePath === "CLAUDE.md");
+    const call = prompter.calls.find((c) => c.relativePath === ".vscode/settings.json");
     expect(call).toBeDefined();
     expect(call?.reason).toBe("modified");
   });
 
   it("correctly updates manifest when multiple files are restored", async () => {
     const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
+    await initProject(deps, projectRoot);
+    await installTool(deps, projectRoot, "vscode");
+    await installTool(deps, projectRoot, "claude");
 
-    const claudeMdPath = join(projectRoot, "CLAUDE.md");
+    const settingsPath = join(projectRoot, ".vscode/settings.json");
     const rulePath = join(projectRoot, ".claude/plugins/aidd-test/rules/01-standards/naming.md");
 
-    const originalClaudeMd = await readFile(claudeMdPath, "utf-8");
     const originalRule = await readFile(rulePath, "utf-8");
 
-    await writeFile(claudeMdPath, "modified claude");
+    await writeFile(settingsPath, '{"modified": true}');
     await writeFile(rulePath, "modified rule");
 
     const useCase = new RestoreUseCase(
@@ -484,7 +472,6 @@ describe("restore", () => {
       deps.logger,
       linuxPlatform,
       new OverwritePrompter(),
-      deps.assetProvider,
       deps.pluginFetcher,
       deps.pluginDistributionReader
     );
@@ -500,20 +487,17 @@ describe("restore", () => {
     const totalRestored = result.totalRestored + result.totalPluginFilesRestored;
     expect(totalRestored).toBeGreaterThanOrEqual(2);
 
-    const claudeMdAfter = await readFile(claudeMdPath, "utf-8");
+    const settingsAfter = await readFile(settingsPath, "utf-8");
     const ruleAfter = await readFile(rulePath, "utf-8");
-    expect(claudeMdAfter).toBe(originalClaudeMd);
+    const parsedSettings = JSON.parse(settingsAfter) as Record<string, unknown>;
+    expect(parsedSettings["editor.formatOnSave"]).toBe(true);
     expect(ruleAfter).toBe(originalRule);
 
     const manifest = await deps.manifestRepo.load();
     expect(manifest).not.toBeNull();
-    const trackedFiles = manifest?.getToolFiles("claude") ?? [];
-    const claudeEntry = trackedFiles.find((f) => f.relativePath === "CLAUDE.md");
-    expect(claudeEntry).toBeDefined();
-
-    // No false drift: disk hash matches manifest hash for restored file
-    const diskHash = await deps.fs.readFileHash(claudeMdPath);
-    expect(diskHash.value).toBe(claudeEntry?.hash.value);
+    const mergeFiles = manifest?.getMergeFiles("vscode") ?? [];
+    const settingsEntry = mergeFiles.find((m) => m.relativePath === ".vscode/settings.json");
+    expect(settingsEntry).toBeDefined();
   });
 
   describe("merge file restore", () => {
@@ -528,8 +512,7 @@ describe("restore", () => {
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter(),
-        deps.assetProvider
+        new OverwritePrompter()
       );
 
       const result = await useCase.execute({
@@ -557,8 +540,7 @@ describe("restore", () => {
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter(),
-        deps.assetProvider
+        new OverwritePrompter()
       );
 
       const result = await useCase.execute({
@@ -587,8 +569,7 @@ describe("restore", () => {
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter(),
-        deps.assetProvider
+        new OverwritePrompter()
       );
 
       await useCase.execute({
@@ -630,8 +611,7 @@ describe("restore", () => {
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter(),
-        deps.assetProvider
+        new OverwritePrompter()
       );
 
       const result = await useCase.execute({
@@ -661,8 +641,7 @@ describe("restore", () => {
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new KeepPrompter(),
-        deps.assetProvider
+        new KeepPrompter()
       );
 
       const result = await useCase.execute({
@@ -694,8 +673,7 @@ describe("restore", () => {
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter(),
-        deps.assetProvider
+        new OverwritePrompter()
       );
 
       await expect(
@@ -724,8 +702,7 @@ describe("restore", () => {
         deps.hasher,
         deps.logger,
         linuxPlatform,
-        new OverwritePrompter(),
-        deps.assetProvider
+        new OverwritePrompter()
       );
 
       const result = await useCase.execute({

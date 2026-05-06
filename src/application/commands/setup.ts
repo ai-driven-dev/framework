@@ -105,10 +105,8 @@ export function registerSetupCommand(program: Command): void {
           const result = await new SetupUseCase(
             deps.fs,
             deps.manifestRepo,
-            deps.hasher,
             deps.logger,
             deps.prompter,
-            deps.assetProvider,
             deps.installRuntimeConfigUseCase,
             deps.installIdeConfigUseCase,
             deps.installFrameworkPluginsUseCase,

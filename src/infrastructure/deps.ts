@@ -8,7 +8,6 @@ import "../domain/tools/ai/opencode.js";
 import "../domain/tools/ide/vscode.js";
 import { CLIOutput } from "../application/output.js";
 import { InstallIdeConfigUseCase } from "../application/use-cases/install/install-ide-config-use-case.js";
-import { InstallMemoryStubUseCase } from "../application/use-cases/install/install-memory-stub-use-case.js";
 import { InstallRuntimeConfigUseCase } from "../application/use-cases/install/install-runtime-config-use-case.js";
 import { InstallFrameworkPluginsUseCase } from "../application/use-cases/install-framework-plugins-use-case.js";
 import { MarketplaceAddUseCase } from "../application/use-cases/marketplace/marketplace-add-use-case.js";
@@ -102,7 +101,6 @@ interface Deps {
   marketplaceCheckUseCase: MarketplaceCheckUseCase;
   pluginInstallFromMarketplaceUseCase: PluginInstallFromMarketplaceUseCase;
   resolveMarketplaceUseCase: ResolveMarketplaceUseCase;
-  installMemoryStubUseCase: InstallMemoryStubUseCase;
   installRuntimeConfigUseCase: InstallRuntimeConfigUseCase;
   installIdeConfigUseCase: InstallIdeConfigUseCase;
   uninstallIdeUseCase: UninstallIdeUseCase;
@@ -230,14 +228,12 @@ export async function createDeps(
     pluginCatalogRepository
   );
   const assetProvider = new BundledAssetProviderAdapter();
-  const installMemoryStubUseCase = new InstallMemoryStubUseCase(fs, hasher, logger, assetProvider);
   const installRuntimeConfigUseCase = new InstallRuntimeConfigUseCase(
     fs,
     manifestRepo,
     hasher,
     logger,
-    assetProvider,
-    installMemoryStubUseCase
+    assetProvider
   );
   const installIdeConfigUseCase = new InstallIdeConfigUseCase(
     fs,
@@ -307,7 +303,6 @@ export async function createDeps(
     marketplaceCheckUseCase,
     pluginInstallFromMarketplaceUseCase,
     resolveMarketplaceUseCase,
-    installMemoryStubUseCase,
     installRuntimeConfigUseCase,
     installIdeConfigUseCase,
     uninstallIdeUseCase,

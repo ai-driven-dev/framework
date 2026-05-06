@@ -109,7 +109,7 @@ describe.concurrent("E2E: aidd update", () => {
 
       await runCli(["update", "--force"], projectDir);
 
-      expect(existsSync(join(projectDir, "CLAUDE.md"))).toBe(true);
+      expect(existsSync(join(projectDir, ".mcp.json"))).toBe(true);
       expect(existsSync(join(projectDir, ".aidd", "manifest.json"))).toBe(true);
     } finally {
       await cleanup();

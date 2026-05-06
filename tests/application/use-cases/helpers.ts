@@ -10,7 +10,6 @@ import "../../../src/domain/tools/ide/vscode.js";
 import { CLIOutput } from "../../../src/application/output.js";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
 import { InstallIdeConfigUseCase } from "../../../src/application/use-cases/install/install-ide-config-use-case.js";
-import { InstallMemoryStubUseCase } from "../../../src/application/use-cases/install/install-memory-stub-use-case.js";
 import { InstallRuntimeConfigUseCase } from "../../../src/application/use-cases/install/install-runtime-config-use-case.js";
 import { InstallUseCase } from "../../../src/application/use-cases/install/install-use-case.js";
 import type { Platform } from "../../../src/domain/ports/platform.js";
@@ -192,14 +191,12 @@ export function buildDeps(projectRoot: string) {
   const pluginFetcher = new PluginFetcherAdapter(fs);
   const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
-  const installMemoryStubUseCase = new InstallMemoryStubUseCase(fs, hasher, logger, assetProvider);
   const installRuntimeConfigUseCase = new InstallRuntimeConfigUseCase(
     fs,
     manifestRepo,
     hasher,
     logger,
-    assetProvider,
-    installMemoryStubUseCase
+    assetProvider
   );
   const installIdeConfigUseCase = new InstallIdeConfigUseCase(
     fs,
@@ -220,7 +217,6 @@ export function buildDeps(projectRoot: string) {
     pluginCatalogRepository,
     installRuntimeConfigUseCase,
     installIdeConfigUseCase,
-    installMemoryStubUseCase,
     currentVersionProvider,
   };
 }
@@ -261,8 +257,7 @@ export async function installTool(
     new SilentPrompterAdapter(),
     deps.pluginFetcher,
     deps.pluginDistributionReader,
-    deps.pluginCatalogRepository,
-    deps.assetProvider
+    deps.pluginCatalogRepository
   );
   const results = await installUseCase.execute({
     toolIds: [toolId],

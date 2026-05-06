@@ -9,7 +9,6 @@ import type { Manifest } from "../../../domain/models/manifest.js";
 import type { MergeFileEntry } from "../../../domain/models/merge.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../domain/models/paths.js";
 import { AI_TOOL_IDS } from "../../../domain/models/tool-ids.js";
-import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Logger } from "../../../domain/ports/logger.js";
@@ -98,7 +97,6 @@ export class RestoreUseCase {
     private readonly logger: Logger,
     private readonly platform: Platform,
     private readonly prompter: Prompter,
-    private readonly assets?: AssetProvider,
     private readonly pluginFetcher?: PluginFetcher,
     private readonly pluginDistributionReader?: PluginDistributionReader
   ) {}
@@ -285,8 +283,7 @@ export class RestoreUseCase {
     const distribution = await new GenerateToolDistributionUseCase(
       this.fs,
       this.hasher,
-      this.platform,
-      this.assets
+      this.platform
     ).execute({ config, descriptor, contentFiles, docsDir, projectRoot });
     const distMap = new Map(distribution.map((f) => [f.relativePath, f]));
     const section = await this.restoreSection(

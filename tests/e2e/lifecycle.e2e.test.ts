@@ -39,9 +39,17 @@ describe.concurrent("E2E: full lifecycle", () => {
       const updateResult2 = await runCli(["update", "--force"], projectDir);
       expect(updateResult2.exitCode).toBe(0);
 
-      // modify CLAUDE.md
-      const claudeMdPath = join(projectDir, "CLAUDE.md");
-      await writeFile(claudeMdPath, "modified content", "utf-8");
+      // modify a plugin file to create drift
+      const namingPath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.md"
+      );
+      await writeFile(namingPath, "modified content", "utf-8");
 
       // status shows drift
       const statusDriftResult = await runCli(["status"], projectDir);

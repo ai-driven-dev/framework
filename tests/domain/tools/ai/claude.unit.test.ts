@@ -78,16 +78,6 @@ describe("claude", () => {
     });
   });
 
-  describe("capabilities.memory.buildInstallPath()", () => {
-    it("returns CLAUDE.md for agentsMd template", () => {
-      expect(claude.capabilities.memory.buildInstallPath("agentsMd")).toBe("CLAUDE.md");
-    });
-
-    it("returns null for unknown template names", () => {
-      expect(claude.capabilities.memory.buildInstallPath("unknown")).toBeNull();
-    });
-  });
-
   describe("capabilities.agents.buildInstallPath()", () => {
     it("builds path for agents section", () => {
       const path = claude.capabilities.agents.buildInstallPath("code-reviewer.md");

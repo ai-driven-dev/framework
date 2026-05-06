@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { Manifest } from "../../../domain/models/manifest.js";
 import { AIDD_DIR } from "../../../domain/models/paths.js";
-import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
 
 import type { Logger } from "../../../domain/ports/logger.js";
@@ -28,8 +27,7 @@ export class AdoptUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    private readonly logger: Logger,
-    private readonly assets: AssetProvider
+    private readonly logger: Logger
   ) {}
 
   async execute(options: AdoptOptions): Promise<AdoptResult> {
@@ -46,7 +44,7 @@ export class AdoptUseCase {
     await this.deleteLegacyConfig(projectRoot);
 
     const manifest = Manifest.create(docsDir);
-    const toolResults = await new AdoptToolsUseCase(this.fs, this.logger, this.assets).execute({
+    const toolResults = await new AdoptToolsUseCase(this.fs, this.logger).execute({
       toolIds,
       manifest,
       projectRoot,

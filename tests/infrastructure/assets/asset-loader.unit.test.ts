@@ -56,35 +56,6 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
   });
 });
 
-describe("BundledAssetProviderAdapter.loadMemoryStub", () => {
-  it("maps claude to CLAUDE.md", () => {
-    const stub = provider.loadMemoryStub("claude");
-    expect(stub.fileName).toBe("CLAUDE.md");
-    expect(stub.content).toContain("aidd_docs/memory/");
-  });
-
-  it("maps cursor to AGENTS.md", () => {
-    expect(provider.loadMemoryStub("cursor").fileName).toBe("AGENTS.md");
-  });
-
-  it("maps copilot to .github/copilot-instructions.md", () => {
-    expect(provider.loadMemoryStub("copilot").fileName).toBe(".github/copilot-instructions.md");
-  });
-
-  it("maps opencode to AGENTS.md", () => {
-    expect(provider.loadMemoryStub("opencode").fileName).toBe("AGENTS.md");
-  });
-
-  it("maps codex to AGENTS.md", () => {
-    expect(provider.loadMemoryStub("codex").fileName).toBe("AGENTS.md");
-  });
-
-  it("hardcodes aidd_docs (no placeholders)", () => {
-    expect(provider.loadMemoryStub("claude").content).not.toContain("{{DOCS}}");
-    expect(provider.loadMemoryStub("claude").content).not.toContain("{{TOOLS}}");
-  });
-});
-
 describe("BundledAssetProviderAdapter.loadDefaultMarketplace", () => {
   it("returns the aidd-framework Git source", () => {
     const marketplace = provider.loadDefaultMarketplace();

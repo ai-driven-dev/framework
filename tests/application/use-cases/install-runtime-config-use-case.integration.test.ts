@@ -3,25 +3,17 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import "../../../src/domain/tools/ai/claude.js";
-import { InstallMemoryStubUseCase } from "../../../src/application/use-cases/install/install-memory-stub-use-case.js";
 import { InstallRuntimeConfigUseCase } from "../../../src/application/use-cases/install/install-runtime-config-use-case.js";
 import { Manifest } from "../../../src/domain/models/manifest.js";
 import { buildDeps, cleanupTempProject, createTempProject, initProject } from "./helpers.js";
 
 function buildUseCase(deps: ReturnType<typeof buildDeps>) {
-  const installMemoryStub = new InstallMemoryStubUseCase(
-    deps.fs,
-    deps.hasher,
-    deps.logger,
-    deps.assetProvider
-  );
   return new InstallRuntimeConfigUseCase(
     deps.fs,
     deps.manifestRepo,
     deps.hasher,
     deps.logger,
-    deps.assetProvider,
-    installMemoryStub
+    deps.assetProvider
   );
 }
 
@@ -37,7 +29,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     await cleanupTempProject(tempDir);
   });
 
-  it("writes config and memory stub on fresh install", async () => {
+  it("writes config on fresh install", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
@@ -54,7 +46,6 @@ describe("InstallRuntimeConfigUseCase", () => {
     expect(result.skipped).toBe(false);
     expect(result.fileCount).toBeGreaterThan(0);
     expect(existsSync(join(projectRoot, ".claude/settings.json"))).toBe(true);
-    expect(existsSync(join(projectRoot, "CLAUDE.md"))).toBe(true);
 
     const saved = await deps.manifestRepo.load();
     expect(saved?.hasTool("claude")).toBe(true);

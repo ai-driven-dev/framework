@@ -103,11 +103,13 @@ export class DoctorUseCase {
       allTrackedFiles.push(...files.map((f) => ({ ...f, toolId })));
     }
 
+    const scanFiles = this.gatherAllMarkdownFiles(manifest, allTrackedFiles, allowedIds);
+
     if (!category) issues.push(...(await this.checkDocsDirectory(manifest, projectRoot)));
     issues.push(...(await this.checkMissingTrackedFiles(allTrackedFiles, projectRoot)));
     issues.push(...(await this.checkModifiedTrackedFiles(manifest, projectRoot, allowedIds)));
     issues.push(...(await this.checkMergeFileKeys(manifest, projectRoot, allowedIds)));
-    issues.push(...(await this.checkBrokenReferences(allTrackedFiles, projectRoot)));
+    issues.push(...(await this.checkBrokenReferences(scanFiles, projectRoot)));
     if (!category) issues.push(...(await this.checkOrphanedDirectories(manifest, projectRoot)));
     if (!category) issues.push(...(await this.checkAuth()));
 
@@ -333,6 +335,23 @@ export class DoctorUseCase {
       }
     }
     return issues;
+  }
+
+  private gatherAllMarkdownFiles(
+    manifest: Manifest,
+    trackedFiles: { relativePath: string; toolId: ToolId | null }[],
+    allowedIds: Set<string> | null
+  ): { relativePath: string; toolId: ToolId | null }[] {
+    const result = [...trackedFiles];
+    for (const toolId of manifest.getInstalledToolIds()) {
+      if (allowedIds && !allowedIds.has(toolId)) continue;
+      for (const plugin of manifest.getPlugins(toolId as AiToolId)) {
+        for (const relativePath of plugin.files.keys()) {
+          result.push({ relativePath, toolId });
+        }
+      }
+    }
+    return result;
   }
 
   private async checkBrokenReferences(

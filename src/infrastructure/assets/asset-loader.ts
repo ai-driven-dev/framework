@@ -11,15 +11,11 @@ import vscodeSettings from "../../../assets/configs/vscode/settings.json" with {
 import defaultMarketplaceJson from "../../../assets/marketplaces/default.json" with {
   type: "json",
 };
-import agentsStub from "../../../assets/memory-stubs/AGENTS.md";
-import claudeStub from "../../../assets/memory-stubs/CLAUDE.md";
-import copilotStub from "../../../assets/memory-stubs/copilot-instructions.md";
-import type { AiToolId, ToolId } from "../../domain/models/tool-ids.js";
+import type { ToolId } from "../../domain/models/tool-ids.js";
 import type {
   AssetProvider,
   ConfigAsset,
   DefaultMarketplace,
-  MemoryStub,
 } from "../../domain/ports/asset-provider.js";
 
 const CONFIG_ASSETS: Readonly<Record<ToolId, Readonly<Record<string, ConfigAsset>>>> = {
@@ -35,14 +31,6 @@ const CONFIG_ASSETS: Readonly<Record<ToolId, Readonly<Record<string, ConfigAsset
   },
 };
 
-const MEMORY_STUBS: Readonly<Record<AiToolId, MemoryStub>> = {
-  claude: { fileName: "CLAUDE.md", content: claudeStub },
-  cursor: { fileName: "AGENTS.md", content: agentsStub },
-  copilot: { fileName: ".github/copilot-instructions.md", content: copilotStub },
-  opencode: { fileName: "AGENTS.md", content: agentsStub },
-  codex: { fileName: "AGENTS.md", content: agentsStub },
-};
-
 export class BundledAssetProviderAdapter implements AssetProvider {
   loadConfigAsset(toolId: ToolId, fileName: string): ConfigAsset {
     const asset = CONFIG_ASSETS[toolId][fileName];
@@ -50,10 +38,6 @@ export class BundledAssetProviderAdapter implements AssetProvider {
       throw new Error(`No config asset for tool '${toolId}' with file '${fileName}'`);
     }
     return asset;
-  }
-
-  loadMemoryStub(toolId: AiToolId): MemoryStub {
-    return MEMORY_STUBS[toolId];
   }
 
   loadDefaultMarketplace(): DefaultMarketplace {

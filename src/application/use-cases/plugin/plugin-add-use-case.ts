@@ -90,10 +90,17 @@ export class PluginAddUseCase {
       docsDir
     );
     if (files.length === 0) return;
-    await writePluginFiles(files, projectRoot, this.fs);
+    const isLocalMarketplace = source.kind === "local" && marketplace !== undefined;
+    if (!isLocalMarketplace) await writePluginFiles(files, projectRoot, this.fs);
     manifest.addPlugin(
       toolId,
-      Plugin.fromDistribution(dist, source, files, componentPaths, marketplace)
+      Plugin.fromDistribution(
+        dist,
+        source,
+        isLocalMarketplace ? [] : files,
+        isLocalMarketplace ? new Map() : componentPaths,
+        marketplace
+      )
     );
   }
 }

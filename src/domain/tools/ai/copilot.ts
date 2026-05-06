@@ -1,7 +1,6 @@
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { MemoryCapability } from "../../capabilities/memory-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SettingsCapability } from "../../capabilities/settings-capability.js";
@@ -10,7 +9,6 @@ import {
   convertCommandFrontmatter,
   reverseConvertCommandFrontmatter,
 } from "../../formats/command.js";
-import { parseFrontmatter } from "../../formats/markdown.js";
 import {
   AT_DOCS_PLACEHOLDER,
   AT_TOOLS_PLACEHOLDER,
@@ -25,7 +23,6 @@ import type {
   HasAgents,
   HasCommands,
   HasMcp,
-  HasMemory,
   HasPlugins,
   HasRules,
   HasSettings,
@@ -253,18 +250,8 @@ function reverseCopilotContent(content: string, docsDir: string): string {
     .replaceAll(`${docsDir}/`, DOCS_PLACEHOLDER);
 }
 
-function rewriteCopilotMemoryContent(content: string, docsDir: string): string {
-  const rewritten = rewriteCopilotContent(content, docsDir);
-  const { body } = parseFrontmatter(rewritten);
-  return body
-    .replace(/^\n+/, "")
-    .replace(/^# AGENTS\.md[ \t]*\n/, "# Copilot Instructions\n")
-    .replace(/\]\(\.\.\/\.\.\//g, "](../")
-    .replace(new RegExp(`\\]\\(${docsDir}/`, "g"), `](../${docsDir}/`);
-}
-
 export const copilot: AiTool<
-  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasMemory & HasSettings & HasPlugins
+  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasSettings & HasPlugins
 > = {
   kind: "ai",
   toolId: "copilot",
@@ -322,10 +309,6 @@ export const copilot: AiTool<
         }
         return content;
       },
-    }),
-    memory: new MemoryCapability({
-      outputFileName: `${DIRECTORY}copilot-instructions.md`,
-      rewriteContent: rewriteCopilotMemoryContent,
     }),
     settings: new SettingsCapability({
       outputPath: ".vscode/settings.json",

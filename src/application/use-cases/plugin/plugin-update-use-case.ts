@@ -108,10 +108,16 @@ export class PluginUpdateUseCase {
     const { files: newFiles, componentPaths } = new PluginTranslator(
       this.hasher
     ).translateWithComponentPaths(dist, toolConfig, docsDir);
-    await writePluginFiles(newFiles, projectRoot, this.fs);
+    const isLocalMarketplace = plugin.source.kind === "local" && plugin.marketplace !== undefined;
+    if (!isLocalMarketplace) await writePluginFiles(newFiles, projectRoot, this.fs);
     manifest.updatePlugin(
       toolId,
-      Plugin.fromDistribution(dist, plugin.source, newFiles, componentPaths)
+      Plugin.fromDistribution(
+        dist,
+        plugin.source,
+        isLocalMarketplace ? [] : newFiles,
+        isLocalMarketplace ? new Map() : componentPaths
+      )
     );
   }
 

@@ -27,8 +27,7 @@ async function install(projectRoot: string, ...toolIds: ToolId[]): Promise<void>
     undefined,
     deps.pluginFetcher,
     deps.pluginDistributionReader,
-    deps.pluginCatalogRepository,
-    deps.assetProvider
+    deps.pluginCatalogRepository
   );
   await useCase.execute({
     toolIds,

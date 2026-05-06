@@ -12,8 +12,6 @@ export const CONFIG_VSCODE_KEYBINDINGS = "vscodeKeybindings";
 export const CONFIG_COPILOT_VSCODE_SETTINGS = "copilotVscodeSettings";
 export const CONFIG_OPENCODE = "opencode";
 
-export const TEMPLATE_AGENTS_MD = "agentsMd";
-
 export const GITKEEP_FILE = ".gitkeep";
 export const FRAMEWORK_CONFIG_PREFIX = "config/";
 

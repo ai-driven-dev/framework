@@ -197,8 +197,7 @@ Examples:
               deps.prompter,
               deps.pluginFetcher,
               deps.pluginDistributionReader,
-              deps.pluginCatalogRepository,
-              deps.assetProvider
+              deps.pluginCatalogRepository
             ).execute({
               toolIds,
               category,

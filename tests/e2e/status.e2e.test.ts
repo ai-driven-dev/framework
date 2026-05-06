@@ -25,7 +25,11 @@ describe.concurrent("E2E: aidd status", () => {
       await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
-      await writeFile(join(projectDir, "CLAUDE.md"), "modified content by user", "utf-8");
+      await writeFile(
+        join(projectDir, ".claude", "plugins", "aidd-test", "rules", "01-standards", "naming.md"),
+        "modified content by user",
+        "utf-8"
+      );
 
       const { stdout, exitCode } = await runCli(["status"], projectDir);
 
@@ -42,12 +46,15 @@ describe.concurrent("E2E: aidd status", () => {
       await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
-      await rm(join(projectDir, "CLAUDE.md"), { force: true });
+      await rm(
+        join(projectDir, ".claude", "plugins", "aidd-test", "rules", "01-standards", "naming.md"),
+        { force: true }
+      );
 
       const { stdout, exitCode } = await runCli(["status"], projectDir);
 
       expect(exitCode).toBe(0);
-      expect(stdout).toMatch(/-\s+CLAUDE\.md/);
+      expect(stdout).toContain("~");
     } finally {
       await cleanup();
     }
@@ -148,7 +155,11 @@ describe.concurrent("E2E: aidd status", () => {
       await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
-      await writeFile(join(projectDir, "CLAUDE.md"), "tampered content", "utf-8");
+      await writeFile(
+        join(projectDir, ".claude", "plugins", "aidd-test", "rules", "01-standards", "naming.md"),
+        "tampered content",
+        "utf-8"
+      );
 
       const { stdout, exitCode } = await runCli(["status", "ai"], projectDir);
 

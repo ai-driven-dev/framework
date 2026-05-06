@@ -2,7 +2,6 @@ import { join } from "node:path";
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { MemoryCapability } from "../../capabilities/memory-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
@@ -25,7 +24,6 @@ import type {
   HasAgents,
   HasCommands,
   HasMcp,
-  HasMemory,
   HasPlugins,
   HasRules,
   HasSkills,
@@ -92,7 +90,7 @@ function transformMcpToOpencode(content: string): string {
 }
 
 export const opencode: AiTool<
-  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasMemory & HasPlugins
+  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasPlugins
 > = {
   kind: "ai",
   toolId: "opencode",
@@ -151,10 +149,6 @@ export const opencode: AiTool<
         if (jsoncExists) return "opencode.jsonc";
         return "opencode.json";
       },
-    }),
-    memory: new MemoryCapability({
-      outputFileName: "AGENTS.md",
-      rewriteContent: (content, docsDir) => opencode.rewriteContent(content, docsDir),
     }),
     plugins: new PluginsCapability({
       mode: "flat",

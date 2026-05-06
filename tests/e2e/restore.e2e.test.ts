@@ -38,17 +38,25 @@ describe.concurrent("E2E: aidd restore", () => {
       await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
-      const claudeMdPath = join(projectDir, "CLAUDE.md");
-      const originalContent = await readFile(claudeMdPath, "utf-8");
+      const namingPath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.md"
+      );
+      const originalContent = await readFile(namingPath, "utf-8");
       const customContent = "custom content that should be restored";
-      await writeFile(claudeMdPath, customContent, "utf-8");
+      await writeFile(namingPath, customContent, "utf-8");
 
       const { stdout, exitCode } = await runCli(["restore", "--force"], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Restored");
 
-      const afterContent = await readFile(claudeMdPath, "utf-8");
+      const afterContent = await readFile(namingPath, "utf-8");
       expect(afterContent).toBe(originalContent);
     } finally {
       await cleanup();
@@ -89,7 +97,14 @@ describe.concurrent("E2E: aidd restore", () => {
       await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
-      const claudeMdPath = join(projectDir, "CLAUDE.md");
+      const agentPath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "agents",
+        "code-reviewer.md"
+      );
       const namingFilePath = join(
         projectDir,
         ".claude",
@@ -100,18 +115,21 @@ describe.concurrent("E2E: aidd restore", () => {
         "naming.md"
       );
 
-      const customClaudeContent = "custom claude content";
+      const customAgentContent = "custom agent content";
       const customNamingContent = "custom naming content";
-      await writeFile(claudeMdPath, customClaudeContent, "utf-8");
+      await writeFile(agentPath, customAgentContent, "utf-8");
       await writeFile(namingFilePath, customNamingContent, "utf-8");
 
-      const { stdout, exitCode } = await runCli(["restore", "CLAUDE.md", "--force"], projectDir);
+      const { stdout, exitCode } = await runCli(
+        ["restore", ".claude/plugins/aidd-test/agents/code-reviewer.md", "--force"],
+        projectDir
+      );
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Restored");
 
-      const claudeAfter = await readFile(claudeMdPath, "utf-8");
-      expect(claudeAfter).not.toBe(customClaudeContent);
+      const agentAfter = await readFile(agentPath, "utf-8");
+      expect(agentAfter).not.toBe(customAgentContent);
 
       const namingAfter = await readFile(namingFilePath, "utf-8");
       expect(namingAfter).toBe(customNamingContent);
@@ -127,10 +145,18 @@ describe.concurrent("E2E: aidd restore", () => {
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
       await runCli(["install", "ai", "cursor", "--path", FRAMEWORK_PATH], projectDir);
 
-      const claudeMdPath = join(projectDir, "CLAUDE.md");
-      const agentsMdPath = join(projectDir, "AGENTS.md");
-      await writeFile(claudeMdPath, "modified claude");
-      await writeFile(agentsMdPath, "modified agents");
+      const claudePluginPath = join(
+        projectDir,
+        ".claude",
+        "plugins",
+        "aidd-test",
+        "rules",
+        "01-standards",
+        "naming.md"
+      );
+      const untrackedPath = join(projectDir, "AGENTS.md");
+      await writeFile(claudePluginPath, "modified claude plugin");
+      await writeFile(untrackedPath, "modified agents");
 
       const { exitCode, stdout } = await runCli(
         ["restore", "--tool", "claude", "--force"],
@@ -140,10 +166,10 @@ describe.concurrent("E2E: aidd restore", () => {
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Restored");
 
-      const claudeContent = await readFile(claudeMdPath, "utf-8");
-      const agentsContent = await readFile(agentsMdPath, "utf-8");
-      expect(claudeContent).not.toBe("modified claude");
-      expect(agentsContent).toBe("modified agents");
+      const claudeContent = await readFile(claudePluginPath, "utf-8");
+      const untrackedContent = await readFile(untrackedPath, "utf-8");
+      expect(claudeContent).not.toBe("modified claude plugin");
+      expect(untrackedContent).toBe("modified agents");
     } finally {
       await cleanup();
     }
@@ -207,18 +233,21 @@ describe.concurrent("E2E: aidd restore", () => {
     }
   });
 
-  it("fails with '--force' hint when modified files exist in non-interactive mode", async () => {
+  it("restores plugin files in non-interactive mode without --force", async () => {
     const { projectDir, cleanup } = await createTestEnv("restore");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
-      await writeFile(join(projectDir, "CLAUDE.md"), "user modified content");
+      await writeFile(
+        join(projectDir, ".claude", "plugins", "aidd-test", "rules", "01-standards", "naming.md"),
+        "modified content"
+      );
 
-      const { stderr, exitCode } = await runCli(["restore"], projectDir);
+      const { stdout, exitCode } = await runCli(["restore"], projectDir);
 
-      expect(exitCode).not.toBe(0);
-      expect(stderr).toContain("--force");
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Restored");
     } finally {
       await cleanup();
     }

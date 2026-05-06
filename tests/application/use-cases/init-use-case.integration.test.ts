@@ -199,7 +199,6 @@ describe("init", () => {
         pluginFetcher,
         pluginDistributionReader,
         pluginCatalogRepository,
-        assetProvider,
       } = buildDeps(projectRoot);
       const initUseCase = new InitUseCase(fs, manifestRepo);
       await initUseCase.execute({ docsDir: "aidd_docs", projectRoot });
@@ -216,8 +215,7 @@ describe("init", () => {
         undefined,
         pluginFetcher,
         pluginDistributionReader,
-        pluginCatalogRepository,
-        assetProvider
+        pluginCatalogRepository
       );
       await installUseCase.execute({
         toolIds: ["claude" as import("../../../src/domain/tools/registry.js").ToolId],

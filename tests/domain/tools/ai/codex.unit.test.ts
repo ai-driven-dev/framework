@@ -91,16 +91,6 @@ describe("codex", () => {
     });
   });
 
-  describe("capabilities.memory.buildInstallPath()", () => {
-    it("returns AGENTS.md for agentsMd template", () => {
-      expect(codex.capabilities.memory.buildInstallPath("agentsMd")).toBe("AGENTS.md");
-    });
-
-    it("returns null for unknown template names", () => {
-      expect(codex.capabilities.memory.buildInstallPath("unknown")).toBeNull();
-    });
-  });
-
   describe("detectUserFileSectionKey()", () => {
     it("detects agents section for .codex/agents/ paths", () => {
       const key = codex.detectUserFileSectionKey(".codex/agents/alexia.toml");

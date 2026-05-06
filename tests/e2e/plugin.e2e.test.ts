@@ -175,7 +175,7 @@ describe.concurrent("E2E: aidd plugin", () => {
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("sample-plugin");
-      expect(existsSync(join(projectDir, ".claude/plugins/sample-plugin/plugin.json"))).toBe(true);
+      expect(existsSync(join(projectDir, ".claude/plugins/sample-plugin/plugin.json"))).toBe(false);
     } finally {
       await cleanup();
     }

@@ -1,7 +1,5 @@
-import { InstallationFile, removeRedundantGitkeeps } from "../../../domain/models/file.js";
+import { type InstallationFile, removeRedundantGitkeeps } from "../../../domain/models/file.js";
 import type { ContentSection, FrameworkDescriptor } from "../../../domain/models/framework.js";
-import type { AiToolId } from "../../../domain/models/tool-ids.js";
-import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Platform } from "../../../domain/ports/platform.js";
@@ -34,8 +32,7 @@ export class GenerateToolDistributionUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly hasher: Hasher,
-    private readonly platform: Platform,
-    private readonly assets?: AssetProvider
+    private readonly platform: Platform
   ) {}
 
   async execute(options: GenerateToolDistributionOptions): Promise<InstallationFile[]> {
@@ -84,8 +81,7 @@ export class GenerateToolDistributionUseCase {
       projectRoot,
       platform: this.platform,
     });
-    const memoryFiles = this.buildMemoryStubFiles(config);
-    return removeRedundantGitkeeps([...sectionFiles, ...configFiles, ...memoryFiles]);
+    return removeRedundantGitkeeps([...sectionFiles, ...configFiles]);
   }
 
   private generateCapabilitySectionFiles(
@@ -134,19 +130,5 @@ export class GenerateToolDistributionUseCase {
       default:
         return [];
     }
-  }
-
-  private buildMemoryStubFiles(config: AiTool<unknown>): InstallationFile[] {
-    const caps = config.capabilities as Record<string, unknown>;
-    if (!("memory" in caps) || !this.assets) return [];
-    const stub = this.assets.loadMemoryStub(config.toolId as AiToolId);
-    const content = stub.content;
-    return [
-      new InstallationFile({
-        relativePath: stub.fileName,
-        content,
-        hash: this.hasher.hash(content),
-      }),
-    ];
   }
 }

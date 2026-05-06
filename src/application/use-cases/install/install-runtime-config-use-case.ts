@@ -9,7 +9,6 @@ import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
 import { PostInstallPipelineUseCase } from "../shared/post-install-pipeline-use-case.js";
-import type { InstallMemoryStubUseCase } from "./install-memory-stub-use-case.js";
 
 export interface InstallRuntimeConfigOptions {
   toolId: AiToolId;
@@ -33,8 +32,7 @@ export class InstallRuntimeConfigUseCase {
     private readonly manifestRepo: ManifestRepository,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
-    private readonly assets: AssetProvider,
-    private readonly installMemoryStub: InstallMemoryStubUseCase
+    private readonly assets: AssetProvider
   ) {}
 
   async execute(options: InstallRuntimeConfigOptions): Promise<InstallRuntimeConfigResult> {
@@ -42,13 +40,7 @@ export class InstallRuntimeConfigUseCase {
     if (manifest.hasTool(toolId) && !force) {
       return { toolId, fileCount: 0, files: [], skipped: true, warnings: [] };
     }
-    const configFiles = await this.buildConfigFiles(options);
-    const stubFiles = await this.installMemoryStub.execute({
-      toolId,
-      projectRoot: options.projectRoot,
-      manifest,
-    });
-    const allFiles = [...configFiles, ...stubFiles];
+    const allFiles = await this.buildConfigFiles(options);
     await this.writeFiles(allFiles, options.projectRoot);
     manifest.addTool(toolId, options.version, allFiles);
     await new PostInstallPipelineUseCase(this.fs, this.manifestRepo).execute({

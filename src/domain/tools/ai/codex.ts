@@ -1,7 +1,6 @@
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { HooksCapability } from "../../capabilities/hooks-capability.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { MemoryCapability } from "../../capabilities/memory-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import { detectSectionKeyFromPrefixes } from "../../formats/command.js";
@@ -13,7 +12,6 @@ import type {
   HasAgents,
   HasHooks,
   HasMcp,
-  HasMemory,
   HasPlugins,
   HasSkills,
   UserFileSectionKey,
@@ -183,7 +181,7 @@ function stripCodexSkillFrontmatter(fm: Record<string, unknown>): Record<string,
   return result;
 }
 
-export const codex: AiTool<HasAgents & HasSkills & HasMcp & HasHooks & HasMemory & HasPlugins> = {
+export const codex: AiTool<HasAgents & HasSkills & HasMcp & HasHooks & HasPlugins> = {
   kind: "ai",
   toolId: "codex",
   directory: DIRECTORY,
@@ -212,11 +210,6 @@ export const codex: AiTool<HasAgents & HasSkills & HasMcp & HasHooks & HasMemory
       entrySection: "SessionStart",
       mergeFn: mergeCodexHooksJson,
       consumes: [CONFIG_CODEX_HOOKS],
-    }),
-    memory: new MemoryCapability({
-      outputFileName: "AGENTS.md",
-      rewriteContent: (content, docsDir) =>
-        rewriteCodexContent(content, { directory: DIRECTORY, docsDir }),
     }),
     plugins: new PluginsCapability({
       mode: "native",

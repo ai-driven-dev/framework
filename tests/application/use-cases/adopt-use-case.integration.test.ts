@@ -20,7 +20,7 @@ describe("adopt", () => {
 
   function buildUseCase() {
     const deps = buildDeps(projectRoot);
-    return new AdoptUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.assetProvider);
+    return new AdoptUseCase(deps.fs, deps.manifestRepo, deps.logger);
   }
 
   const DEFAULT_OPTS = {
@@ -82,7 +82,7 @@ describe("adopt", () => {
   it("stores the exact disk hash in the manifest", async () => {
     const fileContent = "some content";
     await mkdir(join(projectRoot, ".claude"), { recursive: true });
-    await writeFile(join(projectRoot, "CLAUDE.md"), fileContent);
+    await writeFile(join(projectRoot, ".claude", "settings.json"), fileContent);
 
     await buildUseCase().execute({ ...DEFAULT_OPTS, toolIds: ["claude"], projectRoot });
 
@@ -91,7 +91,7 @@ describe("adopt", () => {
     ) as {
       tools: Record<string, { files: Array<{ relativePath: string; hash: string }> }>;
     };
-    const entry = data.tools.claude.files.find((f) => f.relativePath === "CLAUDE.md");
+    const entry = data.tools.claude.files.find((f) => f.relativePath === ".claude/settings.json");
     expect(entry).toBeDefined();
     expect(entry?.hash).toBe(createHash("md5").update(fileContent).digest("hex"));
   });
@@ -137,7 +137,7 @@ describe("adopt", () => {
 
   it("registers multiple tools independently", async () => {
     await mkdir(join(projectRoot, ".claude"), { recursive: true });
-    await writeFile(join(projectRoot, "CLAUDE.md"), "content");
+    await writeFile(join(projectRoot, ".claude", "settings.json"), "{}");
     await mkdir(join(projectRoot, ".github"), { recursive: true });
     await writeFile(join(projectRoot, ".github", "copilot-instructions.md"), "# Copilot");
 
@@ -148,7 +148,9 @@ describe("adopt", () => {
     });
 
     expect(result.tools.map((t) => t.toolId)).toEqual(["claude", "copilot"]);
-    expect(result.tools.find((t) => t.toolId === "claude")?.registered).toContain("CLAUDE.md");
+    expect(result.tools.find((t) => t.toolId === "claude")?.registered).toContain(
+      ".claude/settings.json"
+    );
     expect(result.tools.find((t) => t.toolId === "copilot")?.registered).toContain(
       ".github/copilot-instructions.md"
     );

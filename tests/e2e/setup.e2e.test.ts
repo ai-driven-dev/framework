@@ -11,7 +11,7 @@ import {
   runCliFast,
 } from "./helpers.js";
 
-async function runCliNoAuth(
+async function _runCliNoAuth(
   args: string[],
   cwd: string,
   fakeHome: string

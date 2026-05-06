@@ -55,7 +55,7 @@ describe.concurrent("E2E: aidd doctor", () => {
       await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
 
       await writeFile(
-        join(projectDir, "CLAUDE.md"),
+        join(projectDir, ".claude", "plugins", "aidd-test", "agents", "code-reviewer.md"),
         "See @.claude/agents/nonexistent-agent.md for details",
         "utf-8"
       );

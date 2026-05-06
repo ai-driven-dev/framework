@@ -3,10 +3,8 @@ import { type DistributionMode, Manifest } from "../../domain/models/manifest.js
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../domain/models/marketplace.js";
 import { marketplaceCacheDir } from "../../domain/models/paths.js";
 import type { AiToolId, IdeToolId } from "../../domain/models/tool-ids.js";
-import type { AssetProvider } from "../../domain/ports/asset-provider.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { FrameworkResolver } from "../../domain/ports/framework-resolver.js";
-import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { MarketplaceRegistry } from "../../domain/ports/marketplace-registry.js";
@@ -67,10 +65,8 @@ export class SetupUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly prompter: Prompter,
-    private readonly assets: AssetProvider,
     private readonly installRuntimeConfigUseCase: InstallRuntimeConfigUseCase,
     private readonly installIdeConfigUseCase: InstallIdeConfigUseCase,
     private readonly installFrameworkPluginsUseCase: InstallFrameworkPluginsUseCase,
@@ -102,33 +98,27 @@ export class SetupUseCase {
     const { projectRoot, repo } = options;
     const { docsDir, explicitDocsDir } = this.resolveDocsDir(options);
 
-    // Step 1 — tools first (logical: user picks tools before deciding marketplace)
     const toolIds = options.toolIds ?? (options.interactive ? await this.promptForTools() : []);
+    const initResult = await this.runInit(docsDir, explicitDocsDir, projectRoot, repo);
+    const currentVersion = this.currentVersionProvider.get();
+    const installResults = await this.installToolsFromAssets(
+      toolIds.length > 0 ? toolIds : undefined,
+      projectRoot,
+      currentVersion,
+      false
+    );
 
-    // Step 2 — plugin marketplace opt-in (default yes)
     const wantsMarketplace = await this.resolveWantsMarketplace(options);
-
-    // Step 3 — if wants marketplace, ask mode + source + version
-    const resolvedMode = wantsMarketplace
-      ? await this.resolveMode(options)
-      : "local";
+    const resolvedMode = wantsMarketplace ? await this.resolveMode(options) : "local";
     const { frameworkPath, frameworkRepo } = wantsMarketplace
       ? await this.resolveFrameworkSource(options, resolvedMode)
       : {};
     const version = wantsMarketplace
       ? await this.resolveVersion(options, frameworkRepo, frameworkPath)
-      : this.currentVersionProvider.get();
+      : currentVersion;
 
-    const repoForManifest = frameworkRepo ?? repo;
-    const initResult = await this.runInit(docsDir, explicitDocsDir, projectRoot, repoForManifest);
+    if (frameworkRepo) await this.updateManifestRepo(frameworkRepo);
     await this.persistMode(resolvedMode);
-
-    const installResults = await this.installToolsFromAssets(
-      toolIds.length > 0 ? toolIds : undefined,
-      projectRoot,
-      version,
-      false
-    );
 
     if (wantsMarketplace && resolvedMode === "local" && frameworkPath) {
       await this.installLocalPluginsAt(frameworkPath, version, projectRoot);
@@ -140,6 +130,12 @@ export class SetupUseCase {
       install: { results: installResults },
       resolvedRef: wantsMarketplace ? version : undefined,
     };
+  }
+
+  private async updateManifestRepo(repo: string): Promise<void> {
+    const manifest = await this.manifestRepo.load();
+    if (!manifest) return;
+    await this.manifestRepo.save(manifest.withRepo(repo));
   }
 
   private async resolveWantsMarketplace(options: SetupOptions): Promise<boolean> {
@@ -365,6 +361,7 @@ export class SetupUseCase {
       frameworkPath,
       options.projectRoot
     );
+    if (frameworkPath && isLocalPath(frameworkPath) && versionDefault) return versionDefault;
     if (!options.interactive) return versionDefault ?? this.currentVersionProvider.get();
     const label = versionDefault
       ? `Marketplace catalog version (latest: ${versionDefault}):`
@@ -414,12 +411,7 @@ export class SetupUseCase {
     this.validateAdoptNonInteractive(options, repo, signals);
     const selected = await this.resolveAdoptTools(options);
     const fromInput = await this.resolveAdoptFrom(options, repo, signals);
-    const adoptResult = await new AdoptUseCase(
-      this.fs,
-      this.manifestRepo,
-      this.logger,
-      this.assets
-    ).execute({
+    const adoptResult = await new AdoptUseCase(this.fs, this.manifestRepo, this.logger).execute({
       toolIds: selected as ToolId[],
       docsDir: Manifest.DEFAULT_DOCS_DIR,
       projectRoot,

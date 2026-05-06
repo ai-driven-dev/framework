@@ -263,16 +263,6 @@ describe("opencode", () => {
     });
   });
 
-  describe("capabilities.memory.buildInstallPath()", () => {
-    it("returns AGENTS.md for agentsMd template", () => {
-      expect(opencode.capabilities.memory.buildInstallPath("agentsMd")).toBe("AGENTS.md");
-    });
-
-    it("returns null for unknown template names", () => {
-      expect(opencode.capabilities.memory.buildInstallPath("unknown")).toBeNull();
-    });
-  });
-
   describe("capabilities.plugins", () => {
     it("has a plugins capability", () => {
       expect("plugins" in opencode.capabilities).toBe(true);

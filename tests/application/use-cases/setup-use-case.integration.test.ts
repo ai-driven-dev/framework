@@ -38,10 +38,8 @@ describe("setup without TTY", () => {
     return new SetupUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.hasher,
       deps.logger,
       new SilentPrompterAdapter(),
-      deps.assetProvider,
       deps.installRuntimeConfigUseCase,
       deps.installIdeConfigUseCase,
       makeInstallFrameworkPluginsUseCase(),
