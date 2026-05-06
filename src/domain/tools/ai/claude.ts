@@ -120,7 +120,12 @@ export const claude: AiTool<
           if (source.kind === "local") {
             value.source = { source: "directory", path: source.path };
           } else if (source.kind === "github") {
-            value.source = { source: "github", repo: source.repo };
+            const githubSource: Record<string, unknown> = {
+              source: "github",
+              repo: source.repo,
+            };
+            if (source.ref != null) githubSource.ref = source.ref;
+            value.source = githubSource;
           } else {
             return null;
           }
