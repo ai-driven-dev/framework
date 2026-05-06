@@ -2,8 +2,8 @@ import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
-import { StatusUseCase } from "../use-cases/status-use-case.js";
-import { parseCategoryArg, parseGlobalOptions } from "./global-options.js";
+import { StatusAllUseCase } from "../use-cases/global/status-all-use-case.js";
+import { parseGlobalOptions } from "./global-options.js";
 
 const STATUS_SYMBOL: Record<string, string> = {
   modified: "~",
@@ -21,56 +21,77 @@ function printDriftStats(output: CLIOutput, drifted: { status: string }[]): void
 export function registerStatusCommand(program: Command): void {
   program
     .command("status")
-    .description("Show drift between disk files and the manifest")
-    .argument("[category]", "Filter to 'ai' or 'ide' tools")
-    .option("--plugin <name>", "Filter status to one plugin")
-    .action(async (categoryArg: string | undefined, cmdOptions: { plugin?: string }) => {
+    .description("Show drift across all installed tools and plugins")
+    .action(async () => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
 
-      const category = parseCategoryArg(categoryArg, output);
-
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
+        const useCase = new StatusAllUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
+        const result = await useCase.execute(projectRoot);
 
-        const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
-        const report = await useCase.execute({
-          projectRoot,
-          filterToolId: undefined,
-          category,
-          pluginName: cmdOptions.plugin,
-        });
+        for (const e of result.errors) output.warn(`[${e.scope}] ${e.message}`);
 
-        if (report.tools.length === 0 && !category) {
-          output.print("No tools installed. Run `aidd install <tool>` to get started.");
-          if (report.inSync) return;
-        } else if (report.inSync) {
+        const allInSync = result.aiTools.inSync && result.ideTools.inSync && result.plugins.inSync;
+
+        if (allInSync && result.errors.length === 0) {
           output.success("All files are in sync");
           return;
         }
 
-        for (const tool of report.tools) {
-          if (tool.drifted.length === 0) {
-            output.print(`\n${tool.toolId} (v${tool.version}): in sync`);
-            continue;
-          }
-          output.print(`\n${tool.toolId} (v${tool.version}):`);
-          for (const file of tool.drifted) {
-            output.print(`  ${STATUS_SYMBOL[file.status]} ${file.relativePath}`);
-          }
-          printDriftStats(output, tool.drifted);
-        }
-
-        for (const entry of report.pluginDrift) {
-          output.print(`\nplugin ${entry.pluginName} (${entry.toolId}):`);
-          for (const f of entry.driftedFiles) {
-            output.print(`  ~ ${f}`);
-          }
-        }
-
+        output.print("\nAI tools:");
+        printScopeReport(output, result.aiTools);
+        output.print("\nIDE tools:");
+        printScopeReport(output, result.ideTools);
+        output.print("\nPlugins:");
+        printPluginDrift(output, result.plugins);
         output.print("\nLegend: ~ modified  - deleted  + added");
       } catch (error) {
         errorHandler.handle(error);
       }
     });
+}
+
+function printScopeReport(
+  output: CLIOutput,
+  report: {
+    tools: {
+      toolId: string;
+      version: string;
+      drifted: { status: string; relativePath: string }[];
+    }[];
+  }
+): void {
+  if (report.tools.length === 0) {
+    output.print("  (none installed)");
+    return;
+  }
+  for (const tool of report.tools) {
+    if (tool.drifted.length === 0) {
+      output.print(`  ${tool.toolId} (v${tool.version}): in sync`);
+      continue;
+    }
+    output.print(`  ${tool.toolId} (v${tool.version}):`);
+    for (const file of tool.drifted) {
+      output.print(`    ${STATUS_SYMBOL[file.status] ?? "?"} ${file.relativePath}`);
+    }
+    printDriftStats(output, tool.drifted);
+  }
+}
+
+function printPluginDrift(
+  output: CLIOutput,
+  report: { pluginDrift: { pluginName: string; toolId: string; driftedFiles: string[] }[] }
+): void {
+  if (report.pluginDrift.length === 0) {
+    output.print("  (all in sync)");
+    return;
+  }
+  for (const entry of report.pluginDrift) {
+    output.print(`  plugin ${entry.pluginName} (${entry.toolId}):`);
+    for (const f of entry.driftedFiles) {
+      output.print(`    ~ ${f}`);
+    }
+  }
 }

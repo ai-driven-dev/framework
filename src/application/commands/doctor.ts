@@ -1,71 +1,66 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
-import { DoctorUseCase } from "../use-cases/doctor-use-case.js";
-import { parseCategoryArg, parseGlobalOptions } from "./global-options.js";
+import { DoctorAllUseCase } from "../use-cases/global/doctor-all-use-case.js";
+import { parseGlobalOptions } from "./global-options.js";
 
 export function registerDoctorCommand(program: Command): void {
   program
     .command("doctor")
-    .description("Check installation health and detect issues")
-    .argument("[category]", "Filter to 'ai' or 'ide' tools")
-    .option("--plugin <name>", "Filter check to one plugin")
-    .action(async (categoryArg: string | undefined, cmdOptions: { plugin?: string }) => {
+    .description("Check installation health and detect issues across all tools and plugins")
+    .action(async () => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
 
-      const category = parseCategoryArg(categoryArg, output);
-
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-
-        const useCase = new DoctorUseCase(
+        const useCase = new DoctorAllUseCase(
           deps.fs,
           deps.manifestRepo,
           deps.hasher,
           deps.logger,
           deps.authReader
         );
-        const report = await useCase.execute({
-          projectRoot,
-          category,
-          pluginName: cmdOptions.plugin,
-        });
+        const result = await useCase.execute(projectRoot);
 
-        for (const issue of report.issues.filter((i) => i.severity === "info")) {
-          output.warn(`${issue.message}\n  Fix: ${issue.fix}`);
-        }
+        for (const e of result.errors) output.warn(`[${e.scope}] ${e.message}`);
 
-        if (report.healthy) {
-          const totalFiles = report.toolHealth.reduce(
-            (s, t) => s + t.fileCount + t.mergeFileCount,
-            0
-          );
-          const toolCount = report.toolHealth.length;
-          output.success(
-            `Installation is healthy (${totalFiles} files tracked across ${toolCount} ${toolCount === 1 ? "tool" : "tools"})`
-          );
+        if (result.healthy) {
+          output.success("Installation is healthy");
           return;
         }
 
-        for (const issue of report.issues.filter((i) => i.severity !== "info")) {
-          const text = `${issue.message}\n  Fix: ${issue.fix}`;
-          if (issue.severity === "error") {
-            output.error(text);
-          } else {
-            output.warn(text);
-          }
-        }
-
-        for (const pi of report.pluginIssues) {
-          output.error(
-            `Plugin ${pi.pluginName} (${pi.toolId}): ${pi.issue} — ${pi.filePath}\n  Fix: Run \`aidd restore --plugin ${pi.pluginName}\` to restore.`
-          );
-        }
-
+        printScopeIssues(output, "AI", result.ai);
+        printScopeIssues(output, "IDE", result.ide);
+        printScopeIssues(output, "Plugins", result.plugins);
         process.exit(1);
       } catch (error) {
         errorHandler.handle(error);
       }
     });
+}
+
+function printScopeIssues(
+  output: ReturnType<typeof parseGlobalOptions>["output"],
+  label: string,
+  report: {
+    issues: { severity: string; message: string; fix: string }[];
+    pluginIssues: { pluginName: string; toolId: string; issue: string; filePath: string }[];
+  } | null
+): void {
+  if (report === null || (report.issues.length === 0 && report.pluginIssues.length === 0)) return;
+  output.print(`\n${label}:`);
+  for (const issue of report.issues.filter((i) => i.severity === "info")) {
+    output.warn(`  ${issue.message}\n    Fix: ${issue.fix}`);
+  }
+  for (const issue of report.issues.filter((i) => i.severity !== "info")) {
+    const text = `  ${issue.message}\n    Fix: ${issue.fix}`;
+    if (issue.severity === "error") output.error(text);
+    else output.warn(text);
+  }
+  for (const pi of report.pluginIssues) {
+    output.error(
+      `  Plugin ${pi.pluginName} (${pi.toolId}): ${pi.issue} — ${pi.filePath}\n    Fix: Run \`aidd plugin restore --plugin ${pi.pluginName}\``
+    );
+  }
 }
