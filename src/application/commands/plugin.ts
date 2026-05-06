@@ -4,12 +4,15 @@ import {
   describePluginSource,
   parsePluginSourceShorthand,
 } from "../../domain/models/plugin-source.js";
-import { assertValidAiToolId, parseToolOption } from "../../domain/models/tool-ids.js";
+import type { AiToolId } from "../../domain/models/tool-ids.js";
+import { AI_TOOL_IDS, assertValidAiToolId, parseToolOption } from "../../domain/models/tool-ids.js";
 import { createDeps, createMenuDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
+import { NoManifestError } from "../errors.js";
 import { DoctorUseCase } from "../use-cases/doctor-use-case.js";
 import { RestorePluginUseCase } from "../use-cases/restore/restore-plugin-use-case.js";
 import { StatusUseCase } from "../use-cases/status-use-case.js";
+import { SyncPluginsUseCase } from "../use-cases/sync/sync-plugins-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./shared/spawn-cli-command.js";
 
@@ -259,12 +262,50 @@ export function registerPluginCommand(program: Command): void {
 
   plugin
     .command("sync")
-    .description("Sync plugins across tools — full implementation Phase 11")
-    .option("--source <tool>", "Source tool")
-    .option("--target <tool>", "Target tool")
-    .action(async () => {
-      const { output } = parseGlobalOptions(program);
-      output.warn("plugin sync — full implementation Phase 11");
+    .description("Propagate installed plugins from source tool to target tools")
+    .requiredOption("--source <tool>", "Source AI tool to sync plugins from")
+    .option("--target <tool>", "Target AI tool (default: all other installed AI tools)")
+    .option("-f, --force", "Force reinstall even if versions match", false)
+    .action(async (cmdOptions: { source: string; target?: string; force: boolean }) => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
+      assertValidAiToolId(cmdOptions.source);
+      if (cmdOptions.target !== undefined) assertValidAiToolId(cmdOptions.target);
+      try {
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const manifest = await deps.manifestRepo.load();
+        if (manifest === null) throw new NoManifestError();
+        const allAiIds = manifest
+          .getInstalledToolIds()
+          .filter((id): id is AiToolId => (AI_TOOL_IDS as readonly string[]).includes(id));
+        const targetIds = cmdOptions.target
+          ? [cmdOptions.target as AiToolId]
+          : allAiIds.filter((id) => id !== cmdOptions.source);
+        const useCase = new SyncPluginsUseCase(
+          deps.manifestRepo,
+          deps.pluginInstallFromMarketplaceUseCase,
+          deps.logger
+        );
+        const result = await useCase.execute({
+          projectRoot,
+          sourceToolId: cmdOptions.source as AiToolId,
+          targetToolIds: targetIds,
+          force: cmdOptions.force,
+          interactive: process.stdout.isTTY,
+        });
+        if (result.totalWarnings > 0) {
+          output.warn(`${result.totalWarnings} plugin(s) could not be propagated.`);
+        }
+        if (result.totalInstalled === 0) {
+          output.success("Plugins are in sync.");
+        } else {
+          output.success(
+            `Propagated ${result.totalInstalled} plugin(s) across ${result.tools.length} tool(s).`
+          );
+        }
+      } catch (error) {
+        errorHandler.handle(error);
+      }
     });
 
   plugin

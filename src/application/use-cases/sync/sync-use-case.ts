@@ -21,6 +21,7 @@ import type {
 } from "../../../domain/tools/contracts.js";
 import { getToolConfig, isAiTool, type ToolId } from "../../../domain/tools/registry.js";
 import { InputRequiredError, NoManifestError, ToolNotInstalledError } from "../../errors.js";
+import type { SyncPluginsUseCase } from "./sync-plugins-use-case.js";
 
 function canonicalFrameworkKey(frameworkPath: string): string {
   for (const id of AI_TOOL_IDS) {
@@ -43,6 +44,7 @@ interface SyncOptions {
   includeUserFiles?: boolean;
   interactive?: boolean;
   pluginName?: string;
+  includePlugins?: boolean;
 }
 
 interface SyncFileResult {
@@ -168,7 +170,8 @@ export class SyncUseCase {
     private readonly manifestRepo: ManifestRepository,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
-    private readonly prompter?: Prompter
+    private readonly prompter?: Prompter,
+    private readonly syncPluginsUseCase?: SyncPluginsUseCase
   ) {}
 
   async execute(options: SyncOptions): Promise<SyncResult> {
@@ -207,7 +210,32 @@ export class SyncUseCase {
       includeUserFiles
     );
 
-    return this.buildSyncTotals(sourceTool, toolResults);
+    const totals = this.buildSyncTotals(sourceTool, toolResults);
+    await this.maybeSyncPlugins(options, sourceTool, targetTools, projectRoot, force);
+    return totals;
+  }
+
+  private async maybeSyncPlugins(
+    options: SyncOptions,
+    sourceTool: ToolId,
+    targetTools: ToolId[],
+    projectRoot: string,
+    force: boolean
+  ): Promise<void> {
+    if (options.includePlugins === false || this.syncPluginsUseCase === undefined) return;
+    const aiSourceId = AI_TOOL_IDS.find((id) => id === sourceTool);
+    if (aiSourceId === undefined) return;
+    const aiTargetIds = targetTools.filter((id): id is AiToolId =>
+      (AI_TOOL_IDS as readonly string[]).includes(id)
+    );
+    if (aiTargetIds.length === 0) return;
+    await this.syncPluginsUseCase.execute({
+      projectRoot,
+      sourceToolId: aiSourceId,
+      targetToolIds: aiTargetIds,
+      force,
+      interactive: options.interactive,
+    });
   }
 
   private async syncAllTargets(

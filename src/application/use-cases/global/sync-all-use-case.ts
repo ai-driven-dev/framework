@@ -4,6 +4,8 @@ import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
 import type { ToolId } from "../../../domain/tools/registry.js";
+import type { PluginInstallFromMarketplaceUseCase } from "../plugin/plugin-install-from-marketplace-use-case.js";
+import { SyncPluginsUseCase } from "../sync/sync-plugins-use-case.js";
 import { SyncUseCase } from "../sync/sync-use-case.js";
 
 export class NonInteractiveSyncError extends Error {
@@ -34,19 +36,25 @@ export class SyncAllUseCase {
     private readonly manifestRepo: ManifestRepository,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
-    private readonly prompter: Prompter
+    private readonly prompter: Prompter,
+    private readonly pluginInstallFromMarketplace?: PluginInstallFromMarketplaceUseCase
   ) {}
 
   async execute(options: SyncAllOptions): Promise<SyncAllResult> {
     if (!options.interactive && !options.sourceTool) {
       throw new NonInteractiveSyncError();
     }
+    const syncPluginsUseCase =
+      this.pluginInstallFromMarketplace !== undefined
+        ? new SyncPluginsUseCase(this.manifestRepo, this.pluginInstallFromMarketplace, this.logger)
+        : undefined;
     const syncUseCase = new SyncUseCase(
       this.fs,
       this.manifestRepo,
       this.hasher,
       this.logger,
-      this.prompter
+      this.prompter,
+      syncPluginsUseCase
     );
     const result = await syncUseCase.execute({
       projectRoot: options.projectRoot,
@@ -54,6 +62,7 @@ export class SyncAllUseCase {
       force: false,
       includeUserFiles: false,
       interactive: options.interactive,
+      includePlugins: true,
     });
     return {
       totalWritten: result.totalWritten,

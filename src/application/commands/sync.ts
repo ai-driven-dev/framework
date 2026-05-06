@@ -28,7 +28,8 @@ export function registerSyncCommand(program: Command): void {
           deps.manifestRepo,
           deps.hasher,
           deps.logger,
-          deps.prompter
+          deps.prompter,
+          deps.pluginInstallFromMarketplaceUseCase
         );
         const result = await useCase.execute({ projectRoot, interactive: process.stdout.isTTY });
 

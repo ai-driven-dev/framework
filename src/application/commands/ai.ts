@@ -186,12 +186,14 @@ export function registerAiCommand(program: Command): void {
     .option("--target <tool>", "Target tool to sync to (default: all other installed tools)")
     .option("-f, --force", "Overwrite conflicting files without prompting", false)
     .option("--include-user-files", "Also sync user-created files not tracked in manifest", false)
+    .option("--no-plugins", "Skip plugin propagation (sync configs only)")
     .action(
       async (cmdOptions: {
         source?: string;
         target?: string;
         force: boolean;
         includeUserFiles: boolean;
+        plugins: boolean;
       }) => {
         const { verbose, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
@@ -208,12 +210,21 @@ export function registerAiCommand(program: Command): void {
           }
           const deps = await createDeps(projectRoot, { verbose }, output);
           const { SyncUseCase } = await import("../use-cases/sync/sync-use-case.js");
+          const { SyncPluginsUseCase } = await import("../use-cases/sync/sync-plugins-use-case.js");
+          const syncPluginsUseCase = cmdOptions.plugins
+            ? new SyncPluginsUseCase(
+                deps.manifestRepo,
+                deps.pluginInstallFromMarketplaceUseCase,
+                deps.logger
+              )
+            : undefined;
           const syncUseCase = new SyncUseCase(
             deps.fs,
             deps.manifestRepo,
             deps.hasher,
             deps.logger,
-            deps.prompter
+            deps.prompter,
+            syncPluginsUseCase
           );
           const result = await syncUseCase.execute({
             projectRoot,
@@ -222,6 +233,7 @@ export function registerAiCommand(program: Command): void {
             force: cmdOptions.force,
             includeUserFiles: cmdOptions.includeUserFiles,
             interactive: process.stdout.isTTY,
+            includePlugins: cmdOptions.plugins,
           });
           const { totalWritten, totalDeleted, totalConflicts } = result;
           if (totalWritten === 0 && totalDeleted === 0 && totalConflicts === 0) {
