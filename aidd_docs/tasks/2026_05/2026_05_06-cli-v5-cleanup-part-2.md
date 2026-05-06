@@ -1,178 +1,133 @@
-# Phase 2 — Vertical suppressions
+# Phase 2 — Install legacy purge
 
-> Mass removal of orphan / legacy code. Each suppression backed by Phase 0 inventory grep proof.
+> Delete the `--path/--release` install branch, `InstallUseCase` (legacy class), and `ResolveFrameworkUseCase`. The install command survives as a thin marketplace-native wrapper.
 
 ## Pre-requisites
 
 - Phase 0 inventory complete
-- Phase 1 manifest schema landed (callers of `manifest.docsDir/repo/mode` no longer compile — must be removed in Phase 2 to keep main green)
 
 ## Goal
 
-Delete every code path made dead by the marketplace-only architecture and the v5 manifest rewrite. After Phase 2, the CLI surface still works (Phase 3 setup refactor depends on it) but has shrunk by thousands of lines.
+`commands/install.ts` has two branches: a marketplace-native path (keep) and a legacy `--path/--release` branch that was the old framework-fetch mechanism. The legacy branch calls `ResolveFrameworkUseCase` which in turn uses `FrameworkResolverAdapter` + `FrameworkCache`. Phase 2 cuts the legacy branch and deletes the associated code.
+
+After Phase 2, `ResolveFrameworkUseCase` has no callers, which unblocks Phase 4's co-deletion of `FrameworkCache` + `FrameworkResolverAdapter` once Phase 3 also removes `SetupUseCase`'s dependency on the `FrameworkResolver` port.
 
 ## Architecture compliance
 
-- Each deletion follows the layer dependency rule: domain first → application → infrastructure → command
-- Tests for deleted code are deleted in same commit (no orphan tests)
-- `deps.ts` updated atomically — no dangling factory wires
-- Errors classes referenced only by deleted code paths are also deleted (`src/domain/errors.ts`, `src/application/errors.ts`)
+The command thin-wrapper rule is directly in scope here. `commands/install.ts` must emerge from this phase as a clean thin wrapper: flags parsed, one use-case called, result displayed. The legacy branching inside the command (`if (cmdOptions.path !== undefined || cmdOptions.release !== undefined)`) violates the "commands wire, not orchestrate" rule. Removing that branch restores compliance.
 
-## Suppressions checklist
+Domain layer stays unchanged. No new value objects needed here — this is a pure deletion phase.
 
-### A. `aidd cache` command + FrameworkCache adapter
+## Steps
 
-- [ ] Delete `src/infrastructure/cache/framework-cache.ts`
-- [ ] Delete `src/application/commands/cache.ts`
-- [ ] Remove `registerCacheCommand` import + call in `src/cli.ts`
-- [ ] Remove `frameworkCache` (if any) from `deps.ts`
-- [ ] Delete tests: `tests/infrastructure/cache/`, `tests/application/commands/cache*.test.ts`
-- [ ] Verify zero remaining `FrameworkCache` references: `rg "FrameworkCache" src/ tests/` returns empty
+### A. Delete `InstallUseCase` (legacy class)
 
-### B. `aidd config` command
+- [ ] Delete `src/application/use-cases/install/install-use-case.ts` — this is the legacy class (distinct from `InstallRuntimeConfigUseCase` and `InstallIdeConfigUseCase` which are KEPT)
+- [ ] Delete tests: `tests/application/use-cases/install/install-use-case*.test.ts` (legacy class tests only)
+- [ ] Verify: `rg "InstallUseCase\b" src/ tests/` returns only references to `InstallRuntimeConfigUseCase` / `InstallIdeConfigUseCase` (not the bare `InstallUseCase`)
 
-- [ ] Delete `src/application/commands/config.ts`
-- [ ] Remove `registerConfigCommand` import + call in `src/cli.ts`
-- [ ] Delete tests: `tests/application/commands/config*.test.ts`
-- [ ] Verify menu node `config` removed (Phase 9 will sweep again)
-
-### C. Memory stubs assets + use-case
-
-- [ ] Delete entire dir `src/assets/memory-stubs/`
-- [ ] Delete `src/application/use-cases/install/install-memory-stub-use-case.ts` (verify exists in Phase 0)
-- [ ] Remove memory stub asset loader entry in `src/assets/index.ts` (if exists)
-- [ ] Remove memory stub writes from `InstallRuntimeConfigUseCase` if present
-- [ ] Delete tests: `tests/application/use-cases/install-memory-stub*.test.ts`
-- [ ] Verify `rg "memory-stubs|InstallMemoryStub" src/ tests/` returns empty
-
-### D. `CatalogUseCase` + `InstallPluginsUseCase` (legacy framework plugins)
-
-- [ ] Delete `src/application/use-cases/shared/catalog-use-case.ts`
-- [ ] Delete `src/application/use-cases/install/install-plugins-use-case.ts`
-- [ ] Delete `src/application/use-cases/install-framework-plugins-use-case.ts`
-- [ ] Remove deps wiring (`pluginCatalogRepository`, `installFrameworkPluginsUseCase` in `deps.ts`)
-- [ ] Delete tests: corresponding `*.test.ts` files
-- [ ] Update `SetupUseCase` callsites (Phase 3 will rewrite anyway — temporary stub OK)
-
-### E. `InstallUseCase` (legacy) + legacy install branch
-
-- [ ] Delete `src/application/use-cases/install/install-use-case.ts`
-- [ ] In `src/application/commands/install.ts`: delete the `if (cmdOptions.path !== undefined || cmdOptions.release !== undefined)` legacy branch + `--path/--release` option declarations
-- [ ] Delete `--mcp`, `--plugins`, `--all-plugins`, `--recommended-plugins`, `--no-plugins` options on `install` command (only relevant under legacy branch)
-- [ ] Keep `installFromAssets()` path as the only branch
-- [ ] Delete tests: `tests/application/use-cases/install-use-case*.test.ts`
-- [ ] Verify `rg "InstallUseCase\b" src/ tests/` returns only references to `InstallRuntimeConfigUseCase` / `InstallIdeConfigUseCase`
-
-### F. `ResolveFrameworkUseCase` + framework adapters
+### B. Delete `ResolveFrameworkUseCase`
 
 - [ ] Delete `src/application/use-cases/resolve-framework-use-case.ts`
-- [ ] Delete `src/infrastructure/adapters/framework-resolver-adapter.ts`
-- [ ] Delete `src/infrastructure/adapters/framework-loader-adapter.ts` (verify dead in Phase 0)
-- [ ] Delete `src/domain/ports/framework-resolver.ts` and any `framework-loader` port
-- [ ] Delete `src/domain/models/framework.ts` (if dead post Phase 0)
-- [ ] Remove `resolver`, `frameworkLoader` deps wiring
-- [ ] Delete tests: `tests/application/use-cases/resolve-framework-use-case*.test.ts`, adapter tests
-- [ ] Update `install.ts` and `setup.ts` to not import `ResolveFrameworkUseCase`
+  - Definition: class at line 18
+  - Callers: `src/application/commands/install.ts` lines 22 (import), 168 (call) — these are removed in step C below
+- [ ] Delete tests: `tests/application/use-cases/resolve-framework-use-case*.test.ts`
+- [ ] Verify: `rg "ResolveFrameworkUseCase" src/ tests/` returns empty
 
-### G. `adopt/` use-case dir
+### C. Strip legacy branch from `commands/install.ts`
 
-- [ ] Confirm Phase 0 inventory shows zero callers (must be true after master plan `2026_05_01` execution)
-- [ ] Delete entire dir `src/application/use-cases/adopt/`
-- [ ] Delete tests: `tests/application/use-cases/adopt*.test.ts` and `tests/application/use-cases/adopt/`
-- [ ] Remove `adopted` result kind handling in `setup.ts` (Phase 3 cleanup)
+- [ ] Remove `--path` and `--release` option declarations
+- [ ] Remove `if (cmdOptions.path !== undefined || cmdOptions.release !== undefined)` branch at lines 164–172
+- [ ] Remove import of `ResolveFrameworkUseCase` at line 22
+- [ ] Remove import of `ResolveFrameworkUseCase` at line 168 (call site)
+- [ ] Keep the marketplace-native install path as the only branch
+- [ ] Verify command stays thin: no business logic in the action handler
 
-### H. Setup legacy flags
+### D. Strip legacy `setup.ts` flags (setup orchestrator rewrite is Phase 3, but flag removal now)
 
-- [ ] In `src/application/commands/setup.ts`, remove options: `--from`, `--switch-mode`, `--mode <local|remote>`, `--path`, `--release`
-- [ ] Drop `mode` and `switchMode` and `from` and `path` and `release` from action handler
-- [ ] Phase 3 will re-introduce `--source remote|local` and `--path` cleanly with new semantics
+- [ ] In `src/application/commands/setup.ts`, remove option declarations: `--from`, `--switch-mode`, `--mode <local|remote>`, `--path`, `--release` (lines 62, 71, 72)
+- [ ] Drop `mode`, `switchMode`, `from`, `path`, `release` from action handler destructuring (lines 92–95, 125–126)
+- [ ] Note: full SetupUseCase orchestrator rewrite is Phase 3 — this step only cuts the flag declarations to unblock typecheck
 
-### I. Plugin distribution legacy adapters
+### E. Delete `InstallPluginsUseCase` (legacy framework plugins — different from marketplace plugin install)
 
-- [ ] Inventory check: `src/infrastructure/adapters/plugin-distribution-reader-adapter.ts` — keep or delete?
-- [ ] If only used by deleted `RestorePluginUseCase` legacy branch — delete. Phase 4 reworks restore plugin to cache-first.
-- [ ] If still consumed by marketplace flow — keep.
-- [ ] Verify and delete or keep accordingly. Document decision in commit body.
+- [ ] Delete `src/application/use-cases/install/install-plugins-use-case.ts`
+- [ ] Delete tests: `tests/application/use-cases/install/install-plugins-use-case*.test.ts`
+- [ ] Verify: `rg "InstallPluginsUseCase\b" src/ tests/` returns empty
 
-### J. Auth helper / errors cleanup
+### F. Update `deps.ts` and `cli.ts`
 
-- [ ] List error classes in `src/domain/errors.ts` referenced only by deleted code paths
-- [ ] Delete: `InvalidRepoFormatError` (no more `repo` field), any docs-related errors, framework-resolution errors
-- [ ] Verify `rg "<ErrorClassName>" src/ tests/` empty before deletion
+- [ ] Remove any deps wiring for deleted classes: `installUseCase` (legacy), `resolveFrameworkUseCase`, `installPluginsUseCase`
+- [ ] Do NOT yet remove `frameworkCache` or `frameworkResolverAdapter` deps — those are co-deleted in Phase 4 with `FrameworkResolverAdapter`
+- [ ] Verify `deps.ts` compiles after removals
 
-### K. `cli.ts` cleanup
+### G. Verify remaining deps unchanged
 
-- [ ] Remove imports + calls for: `registerCacheCommand`, `registerConfigCommand`
-- [ ] Remove `--repo` global option (no longer used)
-- [ ] Verify `program.opts<{ verbose?: boolean; repo?: string }>()` reduced to `{ verbose?: boolean }`
+- [ ] `InstallRuntimeConfigUseCase` — KEEP, untouched
+- [ ] `InstallIdeConfigUseCase` — KEEP, untouched
+- [ ] `InstallFrameworkPluginsUseCase` — removal is Phase 5 (still has active callers in `setup-use-case.ts:72` until Phase 3 rewrites it)
 
 ## Tests
 
 ### Unit tests added
 
-- None — Phase 2 is destructive.
+None — this phase is destructive.
 
-### Tests deleted (alongside code)
+### Tests deleted
 
-- All tests covering deleted classes / commands / use-cases
-- Adapt fixture references in remaining tests if they still cite dead schema fields
+- `tests/application/use-cases/install/install-use-case*.test.ts`
+- `tests/application/use-cases/resolve-framework-use-case*.test.ts`
+- `tests/application/use-cases/install/install-plugins-use-case*.test.ts`
+- Any adapter tests for `resolve-framework-use-case`
 
-### Integration tests reviewed
+### Remaining tests reviewed
 
-- [ ] Confirm no remaining integration test instantiates `FrameworkCache`, `ResolveFrameworkUseCase`, `CatalogUseCase`, `InstallUseCase`, `InstallPluginsUseCase`, adopt classes
-- [ ] Update fixtures: any `.aidd/manifest.json` fixture mentioning `repo`/`docsDir`/`mode`/`scripts`/top-level `plugins` regenerated or moved to `legacy-vN/` for migration tests only
+- [ ] Confirm no remaining test instantiates `ResolveFrameworkUseCase` or `InstallUseCase` (bare legacy class)
+- [ ] Update any fixture that references `--path`/`--release` install flags
 
 ## Acceptance criteria
 
-- [ ] `pnpm test` green (post-deletion test suite)
+- [ ] `pnpm test` green (post-deletion suite)
 - [ ] `pnpm typecheck` clean
 - [ ] `pnpm biome check` clean
-- [ ] `rg "FrameworkCache|ResolveFrameworkUseCase|CatalogUseCase|InstallPluginsUseCase|InstallMemoryStub|memory-stubs|adopt" src/` returns empty
-- [ ] `cli.ts` does not register `cache` or `config` commands
+- [ ] `rg "ResolveFrameworkUseCase|InstallUseCase\b|InstallPluginsUseCase" src/ tests/` returns empty
+- [ ] `aidd install --help` does not list `--path` or `--release`
 - [ ] `aidd setup --help` does not list `--from / --switch-mode / --mode / --path / --release`
-- [ ] `aidd install --help` does not list `--path / --release / --mcp / --plugins / --all-plugins / --recommended-plugins / --no-plugins`
-- [ ] Build passes: `pnpm build`
-- [ ] Bundle size shrinks (record before/after in commit body)
+- [ ] `pnpm build` passes
+- [ ] Bundle size reduced (record before/after in commit body)
 
 ## Manual validation
 
 ```bash
-cd /tmp && rm -rf cli-v5-test && mkdir cli-v5-test && cd cli-v5-test
+# Install help: no legacy flags
+aidd install --help | grep -E "\-\-path|\-\-release" && echo "FAIL" || echo "OK"
 
-# 1. Cache command gone
-aidd cache list && echo "FAIL: cache should be unknown" || echo "OK"
-
-# 2. Config command gone
-aidd config list && echo "FAIL" || echo "OK"
-
-# 3. Setup help no legacy flags
+# Setup help: no legacy flags
 aidd setup --help | grep -E "from|switch-mode|mode" && echo "FAIL" || echo "OK"
 
-# 4. Install help no legacy flags
-aidd install --help | grep -E "path|release|plugins|mcp" && echo "FAIL" || echo "OK"
+# Zero refs
+rg "ResolveFrameworkUseCase" src/ && echo "FAIL" || echo "OK"
 ```
 
 ## Risks / breaking changes
 
-- **Major breaking change** for users still relying on `--path`/`--release` install flags. Acceptable: marketplace-only flow is the official path post `2026_05_01`. Document in CHANGELOG.
-- Deletion of `adopt/` dir blocks any future "adopt existing project" feature — re-introduce with marketplace semantics if needed (out of scope here).
-- Bundle size drop expected ≥30% (record actual measurement in commit).
+- **Breaking change** for users still using `aidd install --path <dir>` or `aidd install --release <version>`. These flags are removed with no transition period. Document in CHANGELOG. Marketplace-only flow (`aidd ai install <tool>`) is the replacement.
+- Setup command temporarily has stub flags removed without its orchestrator rewrite — Phase 3 completes the setup refactor.
 
 ## Commit
 
 ```
-refactor(cli): drop dead code from marketplace-only architecture
+refactor(install): purge --path/--release legacy branch + ResolveFrameworkUseCase
 
-Vertical suppressions of legacy paths:
-- aidd cache command + FrameworkCache adapter (orphan post marketplace)
-- aidd config command (no remaining writable manifest field)
-- src/assets/memory-stubs/ + InstallMemoryStubUseCase (plugin owns memory)
-- CatalogUseCase + InstallPluginsUseCase + InstallUseCase (legacy framework fetch)
-- ResolveFrameworkUseCase + framework-resolver/loader adapters
-- adopt/ use-case dir (no callers post 2026_05_01)
-- setup --from / --switch-mode / --mode / --path / --release flags
-- install --path / --release / --plugins / --mcp / --all-plugins / --recommended-plugins / --no-plugins flags
-- cli.ts --repo global option
+Remove install legacy path that bypassed marketplace:
+- Delete commands/install.ts --path/--release flags and branch (lines 164-172)
+- Delete src/application/use-cases/resolve-framework-use-case.ts (callers: install.ts:22,168)
+- Delete src/application/use-cases/install/install-use-case.ts (legacy class)
+- Delete src/application/use-cases/install/install-plugins-use-case.ts
+- Strip setup.ts --from/--switch-mode/--mode/--path/--release flag declarations
+
+FrameworkResolverAdapter and FrameworkCache not yet deleted — co-delete
+in Phase 4 once SetupUseCase also drops FrameworkResolver port (Phase 3).
 
 Refs: aidd_docs/tasks/2026_05/2026_05_06-cli-v5-cleanup-part-2.md
 ```

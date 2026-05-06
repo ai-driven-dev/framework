@@ -1,151 +1,154 @@
-# Phase 6 — Globaux chainés
+# Phase 6 — Manifest `repo` + `config` command purge
 
-> Reframe global commands (`update`, `status`, `sync`, `restore`, `doctor`) as orchestrators that chain the per-domain unitaries from Phase 5.
+> Atomically clear all 8 callers of `manifest.repo`, delete `aidd config` command, drop the `repo` field from manifest, drop `--repo` global flag. Per blocker B2, this is the only safe sequencing — partial clearing leaves the codebase inconsistent.
 
 ## Pre-requisites
 
-- Phase 5 (noun-first split) landed — `aidd ai/ide/plugin <op>` exist
+- Phase 3 (setup orchestrator rewrite) landed — `setup-use-case.ts:345` `manifest.repo` read removed in Phase 3
+- Phase 4 (cache + adopt + framework-cache co-delete) landed — `framework-resolver-adapter.ts:89,120,131` deleted
 
 ## Goal
 
-Global commands today either operate flat or take `[category]` arg. Post Phase 5, globals invoke the noun-first unitaries:
+Phase 0 inventory blocker B2 enumerated 8 active callers of `manifest.repo` plus 2 CLI flag callers:
 
-| Global | Chain |
-|---|---|
-| `aidd update` | `ai update` + `ide update` + `plugin update` + `marketplace refresh` |
-| `aidd status` | `ai status` + `ide status` + `plugin status` |
-| `aidd sync` | (interactive only) prompts source → calls `ai sync` then `plugin sync` |
-| `aidd restore` | `ai restore` + `plugin restore` (interactive picks) |
-| `aidd doctor` | `ai doctor` + `ide doctor` + `plugin doctor` |
-| `aidd clean` | unchanged (single-shot full nuke) |
+| Caller | File:Line | Status entering Phase 6 |
+|---|---|---|
+| `deps.ts` | line 143 | active |
+| `setup-use-case.ts` | line 345 | **already removed in Phase 3** |
+| `marketplace-register-framework-use-case.ts` | line 50 | active |
+| `init-use-case.ts` | lines 123, 134, 136 | active |
+| `resolve-framework-use-case.ts` | line 47 | **already deleted in Phase 2** |
+| `framework-resolver-adapter.ts` | lines 89, 120, 131 | **already deleted in Phase 4** |
+| `cli.ts` | line 62 | active (`--repo` global flag) |
+| `global-options.ts` | line 18 | active (parses `--repo`) |
+| `commands/config.ts` | lines 28, 63, 105, 127 | active (config cmd reads `manifest.repo`) |
+
+Phase 6 clears the remaining active callers (4 src files + 2 CLI flag sites + the config command) atomically.
 
 ## Architecture compliance
 
-- Each global command calls ONE orchestrator use-case in `src/application/use-cases/global/`
-- Orchestrator use-cases compose per-domain use-cases (do not duplicate logic)
-- Orchestrators tolerate per-domain failures: error in `plugin update` doesn't abort `ai update` already done — collect errors, surface aggregate result at end
-- Orchestrator returns a typed `GlobalResult` discriminated union
+`manifest.repo` was a runtime override for the framework GitHub repo. In the marketplace-only architecture, marketplace registration replaces it (each marketplace declares its own source). The field is dead — removing it shrinks the `Manifest` aggregate's surface and matches the marketplace-only invariant.
 
-```ts
-// src/application/use-cases/global/update-all-use-case.ts
-export interface UpdateAllResult {
-  ai: ToolUpdateResult[];
-  ide: ToolUpdateResult[];
-  plugins: PluginUpdateResult[];
-  marketplaceRefresh: MarketplaceRefreshResult;
-  errors: GlobalExecutionError[];
-}
-```
+`aidd config` command reads `manifest.repo`/`manifest.docsDir` and writes `manifest.repo`. With `repo` gone and `docsDir` hardcoded (Phase 7), there is no remaining writable manifest field — the command becomes empty. Delete entirely.
 
 ## Steps
 
-### A. Create `src/application/use-cases/global/`
+### A. Clear remaining `manifest.repo` reads
 
-- [ ] `update-all-use-case.ts` — chains `UpdateAiUseCase`, `UpdateIdeUseCase`, `PluginUpdateUseCase`, `MarketplaceRefreshUseCase`. Returns aggregated result. Continues on per-step error.
-- [ ] `status-all-use-case.ts` — chains `StatusUseCase` with category filter `"ai"`, `"ide"`, plus plugin status. Aggregates `StatusReport`.
-- [ ] `sync-all-use-case.ts` — interactive only (throw if non-TTY). Prompts source, then chains `SyncUseCase` (configs) + `SyncPluginsUseCase` (plugins, Phase 8).
-- [ ] `restore-all-use-case.ts` — chains `RestoreUseCase` (configs) + `RestorePluginsAllUseCase` (each tracked plugin). Interactive prompts to pick files.
-- [ ] `doctor-all-use-case.ts` — chains `DoctorUseCase` for AI / IDE / plugins. Aggregates issues.
+- [ ] In `src/infrastructure/deps.ts:143`: remove `manifest.repo` read; replace any default-repo fallback with marketplace registration check
+- [ ] In `src/application/use-cases/marketplace/marketplace-register-framework-use-case.ts:50`: remove `manifest.repo` read; use the input `frameworkPath` or default URL directly
+- [ ] In `src/application/use-cases/init-use-case.ts:123,134,136`: remove all `manifest.repo` reads. Init no longer needs a custom repo — marketplace registration replaces this concept entirely. If `init-use-case.ts` is now dead post-Phase 3 setup rewrite, delete it instead.
 
-### B. Update commands
+### B. Delete `--repo` global CLI flag
 
-- [ ] `commands/update.ts` — call `UpdateAllUseCase`, display aggregated `UpdateAllResult`
-- [ ] `commands/status.ts` — call `StatusAllUseCase`, display aggregated report (sections per scope)
-- [ ] `commands/sync.ts` — call `SyncAllUseCase` (interactive only), error in non-TTY without explicit `--source`
-- [ ] `commands/restore.ts` — call `RestoreAllUseCase`, display aggregated result
-- [ ] `commands/doctor.ts` — call `DoctorAllUseCase`, exit non-zero if any error issue surfaces
+- [ ] In `src/cli.ts:62`: remove `.option("--repo <owner/repo>", ...)` declaration
+- [ ] Remove `repo?: string` from `program.opts<...>()` typing in `cli.ts`
+- [ ] In `src/application/commands/global-options.ts:18`: remove `repo` from parsed options
+- [ ] In every command that accepts `repo` from `parseGlobalOptions`: remove the parameter pass-through
 
-### C. Drop redundant flags
+### C. Delete `aidd config` command
 
-- [ ] `commands/status.ts` — drop `[category]` argument (use `aidd ai status` / `aidd ide status` / `aidd plugin status` instead)
-- [ ] `commands/doctor.ts` — drop `[category]` argument
-- [ ] `commands/restore.ts` — drop `--tool` flag (use `aidd ai restore --tool <id>` instead)
-- [ ] `commands/sync.ts` — drop `--source` flag from global (only on `aidd ai sync` / `aidd plugin sync`)
+- [ ] Delete `src/application/commands/config.ts` (4 reads of `manifest.repo` at lines 28, 63, 105, 127; 2 reads of `manifest.docsDir` at lines 27, 62; `withRepo` write at line 145)
+- [ ] Remove `registerConfigCommand` import + call from `src/cli.ts` (lines 6, 42)
+- [ ] Delete tests: `tests/application/commands/config*.test.ts`
 
-### D. Wire deps
+### D. Drop `repo` field from manifest
 
-- [ ] `deps.ts` exposes orchestrators: `updateAllUseCase`, `statusAllUseCase`, `syncAllUseCase`, `restoreAllUseCase`, `doctorAllUseCase`
-- [ ] Each orchestrator constructed with the per-domain use-cases as constructor deps (single execute method)
+- [ ] In `src/domain/models/manifest.ts`:
+  - [ ] Remove `repo?: string` from `ManifestData` interface
+  - [ ] Remove `repo?: string` from constructor params
+  - [ ] Remove `readonly repo?: string` field
+  - [ ] Remove `withRepo()` method
+  - [ ] Remove `DEFAULT_REPO` static constant
+  - [ ] Remove `validateRepoFormat` export and `REPO_FORMAT_REGEX`
+  - [ ] In `serialize()`: remove `repo` field emission
+  - [ ] In `deserialize()`: ignore legacy `repo` field (silent strip during migration)
+- [ ] In `src/domain/errors.ts`: delete `InvalidRepoFormatError` class
 
-## Tests (unit-first)
+### E. Update `deps.ts` and adapter signatures
+
+- [ ] Remove `repo?: string` from `createDeps(projectRoot, options, output)` signature
+- [ ] Remove repo plumbing through `marketplaceFetcher`, `pluginFetcher`, `currentVersionProvider` constructors
+- [ ] Verify auth-related `repo` usages (auth uses GitHub host detection, not `manifest.repo`) are preserved
+
+### F. Update tests
+
+- [ ] Update fixtures with `repo` field — strip it (deserialize will silently ignore from now on)
+- [ ] Update unit tests that asserted on `manifest.repo` value or `withRepo()` calls
+- [ ] Update menu tests if they reference config command
+
+## Tests
 
 ### Unit tests
 
-- [ ] `tests/application/use-cases/global/update-all-use-case.unit.test.ts` — happy path, partial failure (continues), all-fail aggregate result
-- [ ] `tests/application/use-cases/global/status-all-use-case.unit.test.ts` — combined report shape
-- [ ] `tests/application/use-cases/global/sync-all-use-case.unit.test.ts` — non-TTY rejection
-- [ ] `tests/application/use-cases/global/restore-all-use-case.unit.test.ts` — interactive flow with mocked prompter
-- [ ] `tests/application/use-cases/global/doctor-all-use-case.unit.test.ts` — exit code derivation from aggregated issues
+- [ ] `tests/domain/models/manifest.unit.test.ts` — verify `repo` field gone from serialized output, deserialize silently ignores legacy `repo`
+- [ ] `tests/domain/errors.unit.test.ts` — `InvalidRepoFormatError` no longer importable
 
 ### Integration tests
 
-- [ ] One integration test per orchestrator using in-memory FS port + real (or stubbed) sub-use-cases — verify chaining order
+- [ ] Adapter integration tests using `--repo` flag updated to drop the flag
 
-### E2E tests
+### Tests deleted
 
-- One E2E covering `aidd update` global chain in Phase 11
+- `tests/application/commands/config*.test.ts`
 
 ## Acceptance criteria
 
-- [ ] `aidd update` chains AI update + IDE update + plugin update + marketplace refresh in one call
-- [ ] `aidd update` surfaces partial failures cleanly (one tool fails, rest still update)
-- [ ] `aidd status` reports across all 3 scopes
-- [ ] `aidd doctor` exits 0 if all healthy, exits 1 if any error
-- [ ] `aidd sync` non-TTY: errors with "use aidd ai sync --source <tool>"
-- [ ] `aidd restore` interactive: prompts, applies selection
-- [ ] `aidd clean` unchanged behavior
-- [ ] `pnpm test`, `pnpm typecheck`, `pnpm biome check` all clean
+- [ ] `pnpm test` green
+- [ ] `pnpm typecheck` clean
+- [ ] `pnpm biome check` clean
+- [ ] `rg "manifest\.repo\b|withRepo\b|DEFAULT_REPO\b|InvalidRepoFormatError" src/ tests/` returns empty (only legacy-deserialize comment remnants OK)
+- [ ] `aidd config` command no longer exists (`aidd config list` → "unknown command")
+- [ ] `aidd --help` does not list `--repo` global flag
+- [ ] `aidd setup --repo foo/bar` errors with "unknown option"
+- [ ] `pnpm build` passes
+- [ ] Bundle size measurably smaller (record in commit)
 
 ## Manual validation
 
 ```bash
-cd /tmp && rm -rf v5-globals && mkdir v5-globals && cd v5-globals
-aidd setup --source remote --all --no-plugins --yes
+cd /tmp && rm -rf phase6-test && mkdir phase6-test && cd phase6-test
+aidd setup --source remote --ai claude --no-plugins --yes
 
-# Update global
-aidd update
-# expect: AI tools updated + IDE tools updated + (no plugins) + marketplace refreshed
+# Manifest does not contain repo
+cat .aidd/manifest.json | jq 'has("repo")'
+# expect: false
 
-# Status global
-aidd status
-# expect: sections "AI tools:", "IDE tools:", "Plugins:" — all "in sync"
+# Config command gone
+aidd config list 2>&1 | grep -i "unknown" && echo "OK" || echo "FAIL"
 
-# Doctor
-aidd doctor
-echo $?  # expect 0
-
-# Sync TTY
-aidd sync
-# expect: prompt for source
-
-# Sync non-TTY (CI-style)
-echo | aidd sync 2>&1 | grep -i "use aidd ai sync"
+# --repo flag gone
+aidd --help | grep -E "\-\-repo" && echo "FAIL" || echo "OK"
 ```
 
 ## Risks / breaking changes
 
-- `aidd status [category]` and `aidd doctor [category]` arg form gone — users must use noun-first `aidd ai status` etc. Document in CHANGELOG.
-- `aidd sync --source <tool>` flag relocated to `aidd ai sync --source <tool>` and `aidd plugin sync --source <tool>` — same.
-- `aidd restore --tool <tool>` flag relocated.
-- Aggregated error output format changes — any user parsing CLI output needs update (none expected).
+- Users invoking `aidd <cmd> --repo <owner>/<repo>` break. Document in CHANGELOG migration guide: marketplace registration replaces.
+- Users with `repo` field in manifest: silently stripped on next deserialize/save round-trip. No data loss — they didn't need it.
+- `aidd config` users: removed. Document in CHANGELOG.
+- `init-use-case.ts` may end up either reworked or fully deleted depending on Phase 3 SetupUseCase scope absorbing init responsibilities.
 
 ## Commit
 
 ```
-feat(global): chain per-domain unitaries in global commands
+refactor(manifest): drop repo field + aidd config command + --repo flag
 
-Globals now orchestrate per-domain operations:
-- aidd update => ai update + ide update + plugin update + marketplace refresh
-- aidd status => ai status + ide status + plugin status
-- aidd sync   => prompts source then ai sync + plugin sync
-- aidd restore=> ai restore + plugin restore
-- aidd doctor => ai doctor + ide doctor + plugin doctor
+Atomically clear 8 active manifest.repo callers + 2 CLI flag sites:
+- deps.ts:143
+- marketplace-register-framework-use-case.ts:50
+- init-use-case.ts:123-136
+- cli.ts:62 (--repo global flag)
+- global-options.ts:18 (--repo parsing)
+- config.ts:28,63,105,127 (4 reads + withRepo write)
 
-Drop [category] argument and tool/source flags from globals — use noun-first
-unitaries for scope filtering instead.
+Delete aidd config command (no remaining writable manifest field after
+docsDir hardcoded in Phase 7 and repo dropped here).
 
-Add UpdateAll/StatusAll/SyncAll/RestoreAll/DoctorAll orchestrator use-cases.
-Each tolerates per-step failures and aggregates results.
+Drop manifest.repo / withRepo / DEFAULT_REPO / validateRepoFormat /
+InvalidRepoFormatError. Marketplace registration source replaces the
+runtime repo override concept.
+
+Legacy manifests with repo field: silently stripped on round-trip.
 
 Refs: aidd_docs/tasks/2026_05/2026_05_06-cli-v5-cleanup-part-6.md
 ```

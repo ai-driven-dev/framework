@@ -1,126 +1,190 @@
-# Phase 8 — Sync plugins inter-tool propagation
+# Phase 8 — Migrate command alignment
 
-> Extend sync semantics so `aidd ai sync --source claude --target cursor` propagates installed plugins (re-translated by target tool's emitter), not only runtime config files.
+> Update `aidd migrate` to handle the new v5 clean schema. Detect legacy v3/v4 manifests, strip dead fields, rewire bundled plugins, preserve user files, transparent execution. Add `MigrationPlan` value object and sub-use-cases.
 
 ## Pre-requisites
 
-- Phase 5 (noun-first) landed — `aidd ai sync` and `aidd plugin sync` commands exist
-- Phase 1 (manifest v5) landed — `tools[*].plugins[]` is the source of truth for installed plugins per tool
+- Phase 7 (manifest schema rewrite + docsDir hardcode) landed — schema reaches final v5 clean form
 
 ## Goal
 
-Today `SyncUseCase` propagates files tracked under `tools[source].files[]`. Plugins emitted under each tool live in `tools[*].plugins[*].files[]`. Phase 8 makes sync include plugin files: when source tool has plugin X installed and target tool does not, fetch plugin X from its marketplace cache, re-translate via target tool's emitter, install on target.
+`aidd migrate` is the safety net for users on prod v3 / beta v4 manifests. After Phase 7 reworked v5 in place, the migration chain `v3 → v4 → v5` operates on **schema** (`Manifest.deserialize`), but `MigrateUseCase` must additionally:
+
+1. Backup `.aidd/manifest.backup.json` before mutation
+2. Strip on-disk artifacts no longer tracked (legacy framework files)
+3. Re-register the default marketplace if absent
+4. Rewire bundled framework plugins as marketplace installations
+5. Preserve user-edited memory files (`CLAUDE.md`, `AGENTS.md`, `copilot-instructions.md`)
+6. Be transparent: no opt-in, silent no-op if no migration needed
 
 ## Architecture compliance
 
-- New use case `SyncPluginsUseCase` lives in `src/application/use-cases/sync/sync-plugins-use-case.ts`
-- Reuses `PluginInstallFromMarketplaceUseCase` for plugin materialization on target
-- `SyncUseCase` (existing) now optionally chains `SyncPluginsUseCase` based on `includePlugins: boolean` flag (default true)
-- Domain logic stays per-tool emitter — tool registry already carries `domain/tools/ai/<tool>.ts` with capability-aware emitters
-- `Plugin` value object enriched with `marketplace: string | null` (Phase 1) — required to re-fetch from same source on target
+`MigrateUseCase` is the orchestrator with single `execute()`. Returns discriminated union. Sub-use-cases per phase:
 
-## Plugin re-translation guarantees
+```
+MigrateUseCase (orchestrator, src/application/use-cases/migrate-use-case.ts)
+├── MigrateBackupUseCase            (src/application/use-cases/migrate/)
+├── MigrateStripDeadFilesUseCase    (src/application/use-cases/migrate/)
+├── MigrateRewirePluginsUseCase     (src/application/use-cases/migrate/)
+├── MarketplaceRegisterFrameworkUseCase (existing)
+└── PluginInstallFromMarketplaceUseCase (existing)
+```
 
-For sync plugins to be safe symmetrically, every tool emitter must support every plugin capability the source tool exposed:
+`MigrationPlan` value object (pure decision computation, zero I/O) drives both `--dry-run` display AND apply step. All decisions on `MigrationPlan` are pure; apply step is the only adapter-touching part.
 
-| Capability | Source: Claude | Target: Cursor | Target: Codex | Target: Copilot | Target: OpenCode |
-|---|---|---|---|---|---|
-| commands | yes | yes | yes | yes | yes (flat) |
-| rules | yes | yes | yes | yes | yes |
-| skills | yes | partial | partial | partial | yes |
-| agents | yes | yes (subagents) | partial | partial | yes |
-| hooks | yes | partial | partial | partial | partial |
-| mcp | yes (.mcp.json) | yes (.cursor/mcp.json) | yes (.codex/config.toml) | yes (.vscode/mcp.json) | yes (opencode.json mcp key) |
+```ts
+// src/domain/models/migration-plan.ts
+export class MigrationPlan {
+  readonly fromVersion: number;
+  readonly toVersion: 5;
+  readonly fieldsToStrip: readonly string[];
+  readonly filesToDelete: readonly string[];
+  readonly pluginsToRewire: readonly { name: string; marketplace: string }[];
+  readonly defaultMarketplaceMissing: boolean;
+  readonly userMemoryFiles: readonly string[];
 
-Phase 0 inventory verifies symmetry coverage. Capabilities not re-translatable produce a warning on sync (skipped, not error).
+  isNoOp(): boolean { /* derived */ }
+  describe(): string { /* for --dry-run */ }
+  equals(other: MigrationPlan): boolean { /* by value */ }
+}
+```
+
+Methods ≤20 lines. Domain pure (no `node:fs`, no logging).
 
 ## Steps
 
-- [ ] In Phase 0 inventory, list every tool emitter's capability coverage (above table populated with verified results)
-- [ ] Create `src/application/use-cases/sync/sync-plugins-use-case.ts`:
-  - [ ] Input: `{ projectRoot, sourceToolId, targetToolIds, force, interactive }`
-  - [ ] Load manifest, enumerate plugins on source tool not present (or out of date) on each target
-  - [ ] For each plugin: fetch from marketplace cache (cache-first per locked decision), re-translate via target emitter, install (skip MCP credentials per locked decision #8)
-  - [ ] Aggregate result `SyncPluginsResult` per target tool
-  - [ ] Surface skipped capabilities as warnings (do not fail sync)
-- [ ] Update `src/application/use-cases/sync/sync-use-case.ts`:
-  - [ ] Accept `includePlugins?: boolean` (default true)
-  - [ ] After config sync, optionally invoke `SyncPluginsUseCase`
-- [ ] Update `aidd ai sync` command (Phase 5 wired) to pass `includePlugins: true` by default; add `--no-plugins` flag to disable
-- [ ] Wire `aidd plugin sync` command — same use case but bypasses config sync (`includePlugins: true` only)
-- [ ] Update `deps.ts` — wire `syncPluginsUseCase`
+### A. Create `MigrationPlan` value object
+
+- [ ] Create `src/domain/models/migration-plan.ts`:
+  - Readonly fields per signature above
+  - Constructor validates: `fromVersion ∈ {3, 4, 5}`, `toVersion === 5`, file paths non-empty strings
+  - `isNoOp()` returns `true` when fromVersion === 5 AND defaultMarketplaceMissing === false AND fieldsToStrip empty AND pluginsToRewire empty
+  - `describe()` returns multi-line plan text for `--dry-run` display
+- [ ] Unit tests in `tests/domain/models/migration-plan.unit.test.ts`
+
+### B. Create migrate sub-use-cases
+
+- [ ] `src/application/use-cases/migrate/migrate-backup-use-case.ts`:
+  - Input: `{ projectRoot }`
+  - Writes `.aidd/manifest.backup.json` (atomic via temp + rename)
+  - Idempotent (overwrites prior backup)
+  - Throws if `.aidd/manifest.json` missing
+- [ ] `src/application/use-cases/migrate/migrate-strip-dead-files-use-case.ts`:
+  - Input: `{ projectRoot, plan: MigrationPlan }`
+  - Removes files listed in `plan.filesToDelete` (legacy `docs/`, `scripts/` tracked files from raw JSON pre-deserialize)
+  - Does NOT touch user files (CLAUDE.md, AGENTS.md, copilot-instructions.md, `aidd_docs/`)
+- [ ] `src/application/use-cases/migrate/migrate-rewire-plugins-use-case.ts`:
+  - Input: `{ projectRoot, plan: MigrationPlan, defaultMarketplaceName }`
+  - Detects bundled plugins in legacy top-level `manifest.plugins`
+  - For each: calls `PluginInstallFromMarketplaceUseCase` to materialize via marketplace
+  - Skips plugins not present in default marketplace catalog (logs warning)
+
+### C. Rewrite `MigrateUseCase`
+
+- [ ] Constructor injects: `fs, manifestRepo, logger, prompter, marketplaceRegisterFramework, pluginInstallFromMarketplace, migrateBackup, migrateStripDeadFiles, migrateRewirePlugins`
+- [ ] `execute({ projectRoot, dryRun, interactive }) → Promise<MigrateResult>`:
+  1. Load raw legacy JSON (bypass deserialize to inspect old fields)
+  2. Compute `MigrationPlan`
+  3. If `plan.isNoOp()` → return `{ kind: "no-op" }`
+  4. If `dryRun` → return `{ kind: "dry-run", plan }`
+  5. If `interactive` → confirm via prompter (skip if `--non-interactive`)
+  6. Pipeline: backup → strip dead files → register default marketplace if missing → rewire plugins → save migrated manifest (deserialize+serialize round-trip strips dead fields automatically)
+  7. Return `{ kind: "migrated", plan }`
+- [ ] Each pipeline step extracted to private method ≤20 lines
+
+### D. Update command
+
+- [ ] `src/application/commands/migrate.ts`: keep flags `--dry-run` and `--non-interactive`; on dry-run print `plan.describe()`
+
+### E. Wire deps
+
+- [ ] Update `deps.ts` to wire `migrateBackup`, `migrateStripDeadFiles`, `migrateRewirePlugins` sub-use-cases
+- [ ] Reuse existing `marketplaceRegisterFrameworkUseCase` and `pluginInstallFromMarketplaceUseCase`
 
 ## Tests (unit-first)
 
 ### Unit tests
 
-- [ ] `tests/application/use-cases/sync/sync-plugins-use-case.unit.test.ts`:
-  - [ ] Source has 2 plugins, target has 0 → both installed
-  - [ ] Source has 1 plugin, target already has it (same version) → skip
-  - [ ] Source has plugin v2, target has v1 → reinstall v2
-  - [ ] Plugin from marketplace not in cache → fetches from source URL
-  - [ ] Plugin marketplace removed → warning, skip
-  - [ ] Capability not supported by target emitter → warning, skip that capability
-- [ ] `tests/application/use-cases/sync/sync-use-case.unit.test.ts` (existing) — extend with `includePlugins: true/false` paths
+- [ ] `tests/domain/models/migration-plan.unit.test.ts` — every plan computation case (v3, v4, v5, mixed)
+- [ ] `tests/application/use-cases/migrate/migrate-backup-use-case.unit.test.ts`
+- [ ] `tests/application/use-cases/migrate/migrate-strip-dead-files-use-case.unit.test.ts`
+- [ ] `tests/application/use-cases/migrate/migrate-rewire-plugins-use-case.unit.test.ts`
+- [ ] `tests/application/use-cases/migrate-use-case.unit.test.ts` — orchestration: no-op, dry-run, full migration, interactive abort, error mid-pipeline (verify backup intact)
 
 ### Integration tests
 
-- [ ] One integration test on real FS: source = claude with `aidd-context` installed, target = cursor — verify cursor receives translated rules + skills + commands
+- [ ] `tests/application/use-cases/migrate-use-case.integration.test.ts` — fixture with legacy v3 manifest + bundled plugins + framework files on disk → migrate → verify v5 manifest + dead files removed + backup present + user files untouched
 
 ### E2E tests
 
-- One E2E in Phase 11 covering `aidd ai sync --source claude --target cursor` with plugin propagation
+- One brownfield migrate E2E test in Phase 12
 
 ## Acceptance criteria
 
-- [ ] `aidd ai sync --source claude --target cursor` propagates configs AND plugins
-- [ ] `aidd ai sync --source claude --target cursor --no-plugins` propagates configs only
-- [ ] `aidd plugin sync --source claude --target cursor` propagates plugins only
-- [ ] Plugin re-translation skips unsupported capabilities (warning, not error)
-- [ ] Plugin already at correct version on target: skipped
-- [ ] Plugin marketplace cache miss: fetches from origin
-- [ ] MCP credentials not auto-propagated (per locked decision #8) — warning printed
-- [ ] `pnpm test`, `pnpm typecheck`, `pnpm biome check` clean
+- [ ] `aidd migrate` on v5 manifest: silent no-op
+- [ ] `aidd migrate` on v3 manifest: backup written + manifest upgraded + dead files removed + plugins rewired
+- [ ] `aidd migrate --dry-run` on v3: prints plan, no mutation
+- [ ] User-edited memory files preserved byte-identical
+- [ ] Failure mid-pipeline: backup file intact, manifest left in last-saved state
+- [ ] All unit tests green
+- [ ] Integration test green
+- [ ] `pnpm typecheck` + `pnpm biome check` clean
 
 ## Manual validation
 
 ```bash
-cd /tmp && rm -rf sync-plugins && mkdir sync-plugins && cd sync-plugins
-aidd setup --source remote --ai claude --ide vscode --recommended-plugins --yes
-ls .claude/         # claude plugin files present
-ls .cursor/         # cursor not installed yet
+cd /tmp && rm -rf brownfield && mkdir brownfield && cd brownfield
 
-# Install cursor (no plugins yet)
-aidd ai install cursor --yes
-ls .cursor/         # cursor config only, no plugins
+# Stage legacy v3 manifest fixture
+mkdir -p .aidd
+cp /path/to/repo/tests/fixtures/manifests/legacy-v3/manifest.json .aidd/
 
-# Sync plugins from claude to cursor
-aidd ai sync --source claude --target cursor
+# Stage user-edited memory files
+echo "user memory" > CLAUDE.md
+echo "user memory" > AGENTS.md
+echo "user memory" > copilot-instructions.md
 
-ls .cursor/         # plugin files now present
-aidd plugin list --tool cursor   # plugins listed for cursor
+# Dry run
+aidd migrate --dry-run
+# expect: prints plan with field strips + plugins to rewire
+
+# Apply
+aidd migrate
+
+# Verify
+cat .aidd/manifest.json | jq .version              # expect: 5
+cat .aidd/manifest.json | jq 'has("docs"), has("scripts"), has("docsDir"), has("repo"), has("mode")'
+# expect: false × 5
+cat CLAUDE.md                                       # expect: "user memory"
+ls .aidd/manifest.backup.json                       # expect: present
+
+# Idempotent
+aidd migrate                                        # expect: silent no-op
 ```
 
 ## Risks / breaking changes
 
-- Some plugin capabilities may not survive translation cleanly (e.g. claude-specific `agents` to codex). Sync degrades gracefully (warnings). Document expected gaps.
-- Marketplace cache miss + no network: sync errors with explicit "fetch failed" message — user can retry.
-- Plugin version drift between tools: sync overwrites target version with source version. Document as semantic.
-- MCP credentials NOT propagated — user must re-add credentials manually on target after sync.
+- Custom modifications to tracked framework files: strip step removes them. CHANGELOG: "before `aidd migrate`, run `aidd status` to inspect drift; modified tracked files are removed."
+- Plugins missing in default marketplace: warning logged, user manually re-installs.
+- `MigrateUseCase.execute()` risks growing >20 lines — extract per-step private helpers.
 
 ## Commit
 
 ```
-feat(sync): propagate installed plugins inter-tool
+refactor(migrate): align with v5 clean schema — backup + strip + rewire
 
-Extend ai sync to re-translate and install source tool plugins on targets:
-- aidd ai sync --source <s> --target <t>     => configs + plugins (default)
-- aidd ai sync --source <s> --target <t> --no-plugins  => configs only
-- aidd plugin sync --source <s> --target <t> => plugins only
+Migrate command now handles full v3/v4 → v5 cleanup:
+- Backup .aidd/manifest.backup.json (atomic) before mutation
+- Strip on-disk files tracked under legacy docs/scripts sections
+- Re-register default marketplace if absent
+- Rewire bundled plugins as marketplace installations
+- Preserve user-edited memory files (CLAUDE.md / AGENTS.md / copilot-instructions.md)
 
-Add SyncPluginsUseCase orchestrating per-plugin fetch (cache-first) +
-target-emitter re-translation. Skips unsupported capabilities with warnings.
-Skips MCP credential propagation (user manually re-adds on target).
+Add MigrationPlan value object (pure decision computation, no I/O).
+Add MigrateBackup / MigrateStripDeadFiles / MigrateRewirePlugins sub-use-cases.
+Each pipeline step ≤20 lines (private methods).
+
+Transparent semantics: silent no-op when no migration needed.
 
 Refs: aidd_docs/tasks/2026_05/2026_05_06-cli-v5-cleanup-part-8.md
 ```

@@ -1,167 +1,166 @@
-# Phase 9 — Menu interactif aligned
+# Phase 9 — Noun-first surface
 
-> Refresh interactive menu (`aidd` no-arg in TTY) to reflect noun-first surface, drop dead entries, fix labels and ordering.
+> Restructure command surface so domain operations live under noun groups (`ai`, `ide`, `plugin`). Globals stay flat. Eliminate `aidd install [category] [tool…]` verb-first flat form.
 
 ## Pre-requisites
 
-- Phase 5 (noun-first surface) landed
-- Phase 6 (globals chained) landed
-- Phase 2 (suppressions) landed — `cache` and `config` commands gone
-- Phase 7 (marketplace cache) landed — new `marketplace cache` entry
+- Phase 2 (install legacy purge) landed — `--path/--release` already gone
+- Phase 6 (manifest repo + config purge) landed — `--repo` global flag and `aidd config` deleted
 
 ## Goal
 
-Today the menu in `commands/menu.ts` references commands that no longer exist (cache, config legacy paths) and uses verb-first labels (e.g. "Install" → `["install"]` flat). Phase 9 rewrites the menu tree to dispatch noun-first commands and reorders branches by user intent.
+Today the surface mixes verb-first (`install`, `uninstall`, `update`, `restore`, `sync`, `status`, `doctor`) and noun-first (`plugin`, `marketplace`, `auth`). Phase 9 unifies domain operations under noun-first groups while keeping globals (chain orchestrators) flat.
+
+Target surface:
+
+```
+aidd ai install <tool>          aidd ide install <tool>          aidd plugin install <name>
+aidd ai uninstall <tool>        aidd ide uninstall <tool>        aidd plugin add <source>
+aidd ai list                    aidd ide list                    aidd plugin remove <name>
+aidd ai status                  aidd ide status                  aidd plugin list
+aidd ai update [tool]           aidd ide update [tool]           aidd plugin update [name]
+aidd ai sync --source <tool>    aidd ide doctor                  aidd plugin search <query>
+aidd ai restore [files...]                                        aidd plugin pick
+aidd ai doctor                                                    aidd plugin status
+                                                                  aidd plugin sync --source <tool>
+                                                                  aidd plugin restore --plugin <name>
+                                                                  aidd plugin doctor
+```
+
+Globals stay flat:
+
+```
+aidd setup       aidd update       aidd status       aidd sync
+aidd restore     aidd doctor       aidd clean        aidd migrate
+aidd self-update
+```
 
 ## Architecture compliance
 
-- Menu structure stays a pure data tree in `commands/menu.ts`
-- `InteractiveMenuUseCase` already exists — keep, only the data tree changes
-- Branch entries reference only existing commands (any reference to deleted commands fails type-checking via `spawnCliCommand` arg validation if added)
+New files `src/application/commands/ai.ts` and `src/application/commands/ide.ts` mirror the existing `plugin.ts` / `marketplace.ts` pattern (parent command + subcommands).
 
-## Target menu tree
+Each subcommand action body stays a thin wrapper: parse → deps → ONE use-case → display. No business logic in command files.
 
-### Fresh project (no manifest)
+`ToolCategory` value object (`"ai" | "ide"`) is the contract — used by use cases to filter manifest entries.
 
-```
-1. Install AIDD in this project       → aidd setup
-```
-
-### Installed project
-
-```
-1. Inspect
-   ├── Status                         → aidd status
-   ├── Doctor                         → aidd doctor
-   └── List installed
-       ├── AI tools                   → aidd ai list
-       ├── IDE tools                  → aidd ide list
-       └── Plugins                    → aidd plugin list
-
-2. Manage AI tools
-   ├── Install                        → aidd ai install <prompt tool>
-   ├── Uninstall                      → aidd ai uninstall <prompt tool>
-   ├── Update                         → aidd ai update
-   ├── Sync                           → aidd ai sync (interactive)
-   ├── Restore                        → aidd ai restore
-   └── Doctor                         → aidd ai doctor
-
-3. Manage IDE tools
-   ├── Install                        → aidd ide install <prompt tool>
-   ├── Uninstall                      → aidd ide uninstall <prompt tool>
-   ├── Update                         → aidd ide update
-   └── Doctor                         → aidd ide doctor
-
-4. Manage plugins
-   ├── Install from marketplace       → aidd plugin install <prompt name>
-   ├── Add local plugin               → aidd plugin add <prompt path>
-   ├── Pick (interactive marketplace) → aidd plugin pick
-   ├── Search                         → aidd plugin search <prompt query>
-   ├── Update                         → aidd plugin update
-   ├── Remove                         → aidd plugin remove <prompt name>
-   ├── List                           → aidd plugin list
-   ├── Sync                           → aidd plugin sync
-   ├── Restore                        → aidd plugin restore
-   └── Doctor                         → aidd plugin doctor
-
-5. Marketplaces
-   ├── List                           → aidd marketplace list
-   ├── Add                            → aidd marketplace add
-   ├── Browse                         → aidd marketplace browse <prompt name>
-   ├── Refresh                        → aidd marketplace refresh
-   ├── Remove                         → aidd marketplace remove <prompt name>
-   ├── Check freshness                → aidd marketplace check
-   └── Cache
-       ├── List                       → aidd marketplace cache list
-       └── Clear                      → aidd marketplace cache clear
-
-6. Maintain & repair
-   ├── Update everything              → aidd update
-   ├── Sync everything                → aidd sync
-   ├── Restore everything             → aidd restore
-   └── Clean (nuke .aidd)             → aidd clean
-
-7. Migrate from older version         → aidd migrate
-
-8. System
-   ├── Self-update CLI                → aidd self-update
-   └── Authentication
-       ├── Status                     → aidd auth status
-       ├── Login                      → aidd auth login
-       └── Logout                     → aidd auth logout
-```
+Sub-use-cases per scope where missing: `AiListUseCase`, `IdeListUseCase`, `PluginStatusUseCase`, `PluginSyncUseCase`, `PluginRestoreUseCase`, `PluginDoctorUseCase`. Most reuse existing scoped logic (e.g. `StatusUseCase` already accepts `category` filter). New ones extend.
 
 ## Steps
 
-- [ ] Rewrite `INSTALLED_NODES` constant in `commands/menu.ts` to the tree above
-- [ ] Drop entries: `Cache (system)`, `Config (system)`, `Update (now under Maintain & repair)`, etc.
-- [ ] Add `aidd ai list / ide list / plugin list` selectors under Inspect → List installed
-- [ ] Update labels: drop "Pull the latest framework version" → use "Update everything" (no framework concept post-marketplace)
-- [ ] Verify each leaf's `command: string[]` references a command that exists post Phases 2/5/6/7
-- [ ] Update fresh project tree (`FRESH_NODES`) — only `setup` entry
-- [ ] Update tests `tests/application/commands/menu*.test.ts`:
-  - [ ] Verify menu tree matches expected structure (snapshot test)
-  - [ ] Verify each `command` array is invokable (no unknown command after `aidd` parse)
+### A. Create `aidd ai` parent command
+
+- [ ] `src/application/commands/ai.ts`:
+  - [ ] `registerAiCommand(program)` — parent description "Manage AI tools (claude, cursor, copilot, codex, opencode)"
+  - [ ] No-arg TTY action → interactive subcommand picker (mirror `plugin.ts` pattern)
+  - [ ] Subcommands: `install <tool>`, `uninstall <tool>`, `list`, `status`, `update [tool]`, `sync`, `restore [files...]`, `doctor`
+  - [ ] Each subcommand validates `toolId ∈ AI_TOOL_IDS` (reject IDE ids)
+  - [ ] Each subcommand calls existing use-cases with `category: "ai"` filter or AI-tool-specific use-cases
+
+### B. Create `aidd ide` parent command
+
+- [ ] `src/application/commands/ide.ts`:
+  - [ ] `registerIdeCommand(program)` — parent description "Manage IDE integrations (vscode)"
+  - [ ] Subcommands: `install <tool>`, `uninstall <tool>`, `list`, `status`, `update [tool]`, `doctor`
+  - [ ] No `sync`/`restore` on IDE (IDE configs are merge-based — sync semantics don't apply per locked decision; document in command help)
+  - [ ] Each validates `toolId ∈ IDE_TOOL_IDS`
+
+### C. Extend `aidd plugin`
+
+- [ ] `src/application/commands/plugin.ts` — add subcommands:
+  - [ ] `plugin status [--plugin <name>]` — calls existing `StatusUseCase` with `pluginName` filter
+  - [ ] `plugin sync --source <tool> [--target <tool>]` — calls `SyncPluginsUseCase` (Phase 11 fully implements; here stub-wired)
+  - [ ] `plugin restore --plugin <name>` — calls existing `RestorePluginUseCase` (cache-first per locked decision)
+  - [ ] `plugin doctor [--plugin <name>]` — calls existing `DoctorUseCase` with `pluginName` filter
+
+### D. Delete verb-first variants
+
+- [ ] Delete `src/application/commands/install.ts` (verb-first flat)
+- [ ] Delete `src/application/commands/uninstall.ts` (verb-first flat)
+- [ ] Update `src/cli.ts`: remove `registerInstallCommand`, `registerUninstallCommand`; add `registerAiCommand`, `registerIdeCommand`
+- [ ] Verb-first `update`, `restore`, `sync`, `status`, `doctor` STAY but become globals (Phase 10 makes them chain unitaries)
+
+### E. Update use-case input contracts
+
+- [ ] `InstallRuntimeConfigUseCase` already accepts single `toolId: AiToolId` — keep
+- [ ] `InstallIdeConfigUseCase` already accepts single `toolId: IdeToolId` — keep
+- [ ] `UninstallUseCase` accepts `toolIds: ToolId[]` — extract `UninstallAiUseCase` and `UninstallIdeUseCase` if logic diverges; otherwise reuse with category filter
+- [ ] `SyncUseCase` accepts source/target — keep, restrict to AI category in `aidd ai sync` command
+- [ ] `RestoreUseCase` accepts `toolIds` — keep, restrict to AI category in `aidd ai restore`
+
+### F. Update `cli.ts`
+
+- [ ] Remove imports: `registerInstallCommand`, `registerUninstallCommand`
+- [ ] Add imports: `registerAiCommand`, `registerIdeCommand`
+- [ ] Order of registration: `setup, ai, ide, plugin, marketplace, auth, sync, status, restore, update, doctor, clean, migrate, self-update`
 
 ## Tests (unit-first)
 
 ### Unit tests
 
-- [ ] `tests/application/commands/menu.unit.test.ts`:
-  - [ ] `InteractiveMenuUseCase.execute()` with no manifest → returns `setup` command
-  - [ ] With manifest → returns selected command (test against mock `Prompter`)
-  - [ ] Navigation back/exit handled
-- [ ] Snapshot test of `INSTALLED_NODES` tree shape (order + labels) to catch unintentional drift
+- No new domain logic (just routing). Skip command-level unit tests.
+- Use-case unit tests reused from existing suite.
 
 ### Integration tests
 
-- None (menu is pure data)
+- [ ] `tests/application/commands/ai.integration.test.ts` — invoke `aidd ai install claude` via commander, verify use-case called with correct args
+- [ ] `tests/application/commands/ide.integration.test.ts` — same for `aidd ide install vscode`
+- [ ] Reject cross-category: `aidd ai install vscode` errors with clear message
 
 ### E2E tests
 
-- None (interactive flow not E2E-able without TTY pty harness — out of scope for cleanup)
+- One E2E in Phase 12 covering noun-first surface end-to-end
 
 ## Acceptance criteria
 
-- [ ] `aidd` (TTY, no manifest) → menu shows only "Install AIDD in this project"
-- [ ] `aidd` (TTY, with manifest) → menu shows 8 top-level branches per target tree
-- [ ] Every leaf invokes a real command (no "unknown command" errors)
-- [ ] Snapshot test stable
+- [ ] `aidd install` exits with "unknown command"
+- [ ] `aidd uninstall` exits with "unknown command"
+- [ ] `aidd ai install claude` works
+- [ ] `aidd ai install vscode` errors (vscode is IDE)
+- [ ] `aidd ide install vscode` works
+- [ ] `aidd ide install claude` errors
+- [ ] `aidd ai --help`, `aidd ide --help`, `aidd plugin --help` all show subcommand list
+- [ ] `aidd ai` (no subcommand, TTY) prompts subcommand picker
+- [ ] `aidd ai status` works (filtered to AI tools)
+- [ ] `aidd plugin sync --source claude` accepts but may stub-return (Phase 11 implements full)
 - [ ] `pnpm typecheck` + `pnpm biome check` clean
 
 ## Manual validation
 
 ```bash
-cd /tmp && rm -rf menu-fresh && mkdir menu-fresh && cd menu-fresh
-aidd
-# expect: single option "Install AIDD in this project"
+# Surface check
+aidd --help | grep -E "^\s+(ai|ide|plugin|marketplace|auth)\b"
+# expect: 5 noun-first parents
 
-cd /tmp/v5-globals    # installed project from earlier phases
-aidd
-# expect: 8 branches per tree above
-# Navigate: Inspect → Status → expect aidd status output
-# Navigate: Manage plugins → Pick → expect aidd plugin pick output
+aidd ai --help     # expect: install, uninstall, list, status, update, sync, restore, doctor
+aidd ide --help    # expect: install, uninstall, list, status, update, doctor
+aidd plugin --help # expect: add, install, remove, list, update, search, pick, status, sync, restore, doctor
+
+# Cross-category rejection
+aidd ai install vscode 2>&1 | grep -i "must be ai" && echo "OK"
+aidd ide install claude 2>&1 | grep -i "must be ide" && echo "OK"
 ```
 
 ## Risks / breaking changes
 
-- Menu UX is breaking for users who memorized prior structure. CHANGELOG must note.
-- Snapshot test will require update on every legitimate menu change — accept this maintenance cost.
+- **Major UX break** for users running `aidd install ai claude` — replace with `aidd ai install claude`. Document in CHANGELOG migration table.
+- Shell completion scripts must update if shipped.
+- No code aliasing the old verb-first form (clean break, no transition period).
 
 ## Commit
 
 ```
-refactor(menu): align with noun-first surface and v5 cleanup
+refactor(cli): noun-first command surface
 
-Rewrite interactive menu tree to reflect post-cleanup command surface:
-- Drop Cache and Config entries (commands deleted)
-- Restructure under noun-first groups: Manage AI tools / IDE tools / plugins
-- Add Inspect (status/doctor/list)
-- Add Maintain & repair (chained globals)
-- Move marketplace cache under Marketplaces
-- Move auth under System
+Restructure domain commands under noun groups:
+- aidd ai install/uninstall/list/status/update/sync/restore/doctor
+- aidd ide install/uninstall/list/status/update/doctor
+- aidd plugin status/sync/restore/doctor (extending existing add/install/list/update/search/pick/remove)
 
-Snapshot test added on INSTALLED_NODES tree.
+Delete verb-first flat variants:
+- aidd install [category] [tool] (commands/install.ts)
+- aidd uninstall [category] [tool] (commands/uninstall.ts)
+
+Globals (status, doctor, sync, restore, update, clean, setup, migrate, self-update) stay flat — Phase 10 chains them.
 
 Refs: aidd_docs/tasks/2026_05/2026_05_06-cli-v5-cleanup-part-9.md
 ```

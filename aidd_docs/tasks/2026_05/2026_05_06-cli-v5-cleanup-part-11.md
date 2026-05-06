@@ -1,185 +1,242 @@
-# Phase 11 — Tests rewrite + docs alignment
+# Phase 11 — Sync plugins inter-tool + menu refresh
 
-> Invert the test pyramid (max unit, light integration, minimal E2E on main journeys only). Update all repo docs. Final acceptance gate before merge.
+> Implement `SyncPluginsUseCase` for cross-tool plugin propagation (re-translate via target emitter, cache-first marketplace fetch). Refresh interactive menu (relabel + reorder + drop dead entries to match noun-first surface).
 
 ## Pre-requisites
 
-- Phases 1–10 landed
-- All per-phase tests passing in isolation
+- Phase 9 (noun-first) landed — `aidd ai sync` and `aidd plugin sync` commands exist
+- Phase 10 (globals + mp cache + plugin sub-cmds) landed — sub-cmd wiring in place; orchestrators ready
+- Phase 1 (manifest v5 schema) landed — `tools[*].plugins[]` is the source of truth for installed plugins per tool
 
 ## Goal
 
-The current test suite is integration-heavy with many slow E2E tests covering edge cases. Phase 11 trims to a pyramid:
+Two deliverables combined:
 
-- **Unit tests**: maximum coverage of domain models, value objects, pure functions, use-case orchestration via in-memory ports
-- **Integration tests**: only adapter ↔ I/O boundary tests where real I/O behavior matters (FS layout, git operations, HTTP)
-- **E2E tests**: 6 tests covering the main user journeys
-
-Combined target: full `pnpm test` <60s, ratio unit:integration:e2e ≥10:3:1.
+1. **Sync plugins inter-tool**: `aidd ai sync --source claude --target cursor` propagates configs **and** installed plugins. Source tool's installed plugins are re-translated by target tool's emitter and installed on target.
+2. **Menu refresh**: relabel entries, reorder branches by user intent, drop entries for deleted commands (cache, config), add new entries (marketplace cache, AI/IDE/plugin per-domain operations).
 
 ## Architecture compliance
 
-- Every use-case unit-tested by constructing it directly with in-memory ports
-- Adapters tested in integration only when they have non-trivial translation logic (e.g. TOML serialization, manifest deserialize chain, marketplace fetch)
-- E2E tests invoke the built CLI binary against a temp dir — no source-level imports
-- Test naming follows convention: `*.unit.test.ts`, `*.integration.test.ts`, `*.e2e.test.ts`
+### Sync plugins
 
-## Main journeys (E2E coverage)
+New use case `SyncPluginsUseCase` lives in `src/application/use-cases/sync/sync-plugins-use-case.ts`. Reuses `PluginInstallFromMarketplaceUseCase` for plugin materialization on target. `SyncUseCase` (existing) optionally chains `SyncPluginsUseCase` based on `includePlugins: boolean` flag (default `true`).
 
-Six E2E tests, no more:
+Domain logic stays per-tool emitter — tool registry already carries `domain/tools/ai/<tool>.ts` with capability-aware emitters. `Plugin` value object enriched with `marketplace: string | null` (Phase 7) — required to re-fetch from same source on target.
 
-1. **Greenfield setup** — `aidd setup --source remote --all --recommended-plugins --yes` in empty dir → manifest v5 + AI/IDE configs + plugins installed
-2. **Brownfield migrate** — stage v3 manifest fixture → `aidd migrate` → manifest v5 + backup + dead files removed
-3. **Plugin install from marketplace** — fresh project → `aidd marketplace add` + `aidd plugin install` → plugin files present
-4. **Sync plugins inter-tool** — claude with plugin → `aidd ai sync --source claude --target cursor` → cursor receives translated plugin
-5. **Update global** — `aidd update` chains AI + IDE + plugin updates
-6. **Clean** — `aidd clean --force` removes `.aidd` and tracked files
+Plugin re-translation guarantees per-tool capability table — capabilities not re-translatable produce a warning on sync (skipped, not error).
 
-Anything beyond these 6 lives in unit or integration tests.
+### Menu
+
+Menu structure stays a pure data tree in `commands/menu.ts`. `InteractiveMenuUseCase` exists — keep, only the data tree changes. Branch entries reference only existing commands.
 
 ## Steps
 
-### A. Test inventory + reduction
+### A. Implement `SyncPluginsUseCase`
 
-- [ ] Enumerate every existing test file (count by category): `fd -t f "\.unit\.test\.ts$" tests | wc -l` etc.
-- [ ] Tag each integration test as `KEEP` or `DEMOTE` (most demote to unit with in-memory ports)
-- [ ] Tag each E2E test as `KEEP` (matches one of the 6 journeys) or `DELETE`/`DEMOTE`
-- [ ] Document inventory in `aidd_docs/tasks/2026_05/2026_05_06-cli-v5-cleanup-part-11-test-inventory.md`
+- [ ] Create `src/application/use-cases/sync/sync-plugins-use-case.ts`:
+  - Input: `{ projectRoot, sourceToolId, targetToolIds, force, interactive }`
+  - Load manifest, enumerate plugins on source tool not present (or out of date) on each target
+  - For each plugin: fetch from marketplace cache (cache-first), re-translate via target emitter, install (skip MCP credentials per locked decision #8)
+  - Aggregate result `SyncPluginsResult` per target tool
+  - Surface skipped capabilities as warnings (do not fail sync)
+- [ ] Update `src/application/use-cases/sync/sync-use-case.ts`:
+  - Accept `includePlugins?: boolean` (default `true`)
+  - After config sync, invoke `SyncPluginsUseCase` if `includePlugins`
+- [ ] Update `aidd ai sync` command (Phase 9 wired) to default `includePlugins: true`; add `--no-plugins` flag to disable
+- [ ] Update `aidd plugin sync` command — same use case but bypasses config sync (`includePlugins: true` only)
+- [ ] Update `deps.ts` to wire `syncPluginsUseCase`
 
-### B. Convert integration → unit where possible
+### B. Plugin re-translation symmetry verification (carry-over from Phase 0)
 
-- [ ] For each `*.integration.test.ts` instantiating a use case:
-  - [ ] Replace real adapters with in-memory port implementations
-  - [ ] Move the file to `tests/.../*.unit.test.ts`
-  - [ ] Verify still passes
-- [ ] Keep integration only when adapter behavior is the test target (e.g. manifest deserialize, marketplace fetch, FS layout enforcement)
+- [ ] For each target emitter (claude, cursor, copilot, codex), verify capability coverage table from Phase 0 inventory:
 
-### C. Rewrite E2E suite
+| Capability | Claude→Cursor | Claude→Codex | Claude→Copilot |
+|---|---|---|---|
+| commands | OK | OK | OK |
+| rules | OK | OK | OK |
+| skills | partial | partial | partial |
+| agents | OK (subagents) | partial | partial |
+| hooks | partial | partial | partial |
+| mcp | OK | OK | OK |
 
-- [ ] Delete every E2E test not on the 6-journey list
-- [ ] Add missing journeys (probably 1 or 2 are not currently covered)
-- [ ] Each E2E uses `tmp.dirSync()`, invokes built CLI via `execa`, asserts on disk + exit code
-- [ ] No E2E uses `aidd-context` plugin's init skill (memory stub is manual — not part of CLI E2E scope)
+- [ ] Document partial-coverage cases in `SyncPluginsUseCase` warnings
+- [ ] OpenCode deferred (next-version scope)
 
-### D. In-memory port helpers
+### C. Refresh interactive menu
 
-- [ ] Ensure `tests/helpers/ports/` contains in-memory implementations for every port:
-  - [ ] `FileSystem` (in-memory map)
-  - [ ] `Logger` (capture)
-  - [ ] `Prompter` (scripted answers)
-  - [ ] `Hasher` (deterministic stub)
-  - [ ] `Platform` (fake)
-  - [ ] `PluginFetcher` (fixture-backed)
-  - [ ] `MarketplaceRegistry` (in-memory)
-  - [ ] `MarketplaceCachePort` (in-memory)
-  - [ ] `AuthReader` (fake)
-  - [ ] `CurrentVersionProvider` (constant)
-- [ ] Helpers exported from `tests/helpers/index.ts` (allowed exception to no-barrel rule for tests)
+Target menu tree:
 
-### E. Test speed budget
+```
+Fresh project (no manifest):
+  1. Install AIDD in this project       → aidd setup
 
-- [ ] Run `pnpm test` and measure
-- [ ] If >60s, profile: identify slow tests, demote or speed up
-- [ ] CI step: fail if `pnpm test` >90s (hard ceiling, soft target 60s)
+Installed project:
+  1. Inspect
+     ├── Status                         → aidd status
+     ├── Doctor                         → aidd doctor
+     └── List installed
+         ├── AI tools                   → aidd ai list
+         ├── IDE tools                  → aidd ide list
+         └── Plugins                    → aidd plugin list
 
-### F. Documentation alignment
+  2. Manage AI tools
+     ├── Install                        → aidd ai install <prompt tool>
+     ├── Uninstall                      → aidd ai uninstall <prompt tool>
+     ├── Update                         → aidd ai update
+     ├── Sync                           → aidd ai sync (interactive)
+     ├── Restore                        → aidd ai restore
+     └── Doctor                         → aidd ai doctor
 
-- [ ] Update `README.md`:
-  - [ ] Drop legacy command references (cache, config, install --path)
-  - [ ] Update install snippet to noun-first surface
-  - [ ] Document `aidd setup` interactive + scriptable flows
-  - [ ] Document migration via `aidd migrate`
-- [ ] Update `ARCHITECTURE.md`:
-  - [ ] Update layer diagram (no FrameworkResolver, no FrameworkCache)
-  - [ ] Update use-case list (mark new orchestrators)
-  - [ ] Document `SetupFlow` aggregate, `MarketplaceSourceMode` value object
-  - [ ] Document plugin re-translation pipeline
-- [ ] Update `CHANGELOG.md`:
-  - [ ] Section "Breaking changes" listing every flag/command removed
-  - [ ] Section "New surface" listing noun-first commands
-  - [ ] Section "Migration guide" with command mapping table (old → new)
-- [ ] Update `package.json` if version bump (e.g. `4.1.0-beta.11` once all phases land)
+  3. Manage IDE tools
+     ├── Install                        → aidd ide install <prompt tool>
+     ├── Uninstall                      → aidd ide uninstall <prompt tool>
+     ├── Update                         → aidd ide update
+     └── Doctor                         → aidd ide doctor
 
-### G. Final acceptance run
+  4. Manage plugins
+     ├── Install from marketplace       → aidd plugin install <prompt name>
+     ├── Add local plugin               → aidd plugin add <prompt path>
+     ├── Pick (interactive marketplace) → aidd plugin pick
+     ├── Search                         → aidd plugin search <prompt query>
+     ├── Update                         → aidd plugin update
+     ├── Remove                         → aidd plugin remove <prompt name>
+     ├── List                           → aidd plugin list
+     ├── Sync                           → aidd plugin sync
+     ├── Restore                        → aidd plugin restore
+     └── Doctor                         → aidd plugin doctor
 
-- [ ] `pnpm clean && pnpm install && pnpm build && pnpm test && pnpm typecheck && pnpm biome check`
-- [ ] Run all 6 E2E journeys manually via the built binary
-- [ ] Review final commit log: 11 commits on `feat/cli-v5-cleanup` matching phase numbers
+  5. Marketplaces
+     ├── List                           → aidd marketplace list
+     ├── Add                            → aidd marketplace add
+     ├── Browse                         → aidd marketplace browse <prompt name>
+     ├── Refresh                        → aidd marketplace refresh
+     ├── Remove                         → aidd marketplace remove <prompt name>
+     ├── Check freshness                → aidd marketplace check
+     └── Cache
+         ├── List                       → aidd marketplace cache list
+         └── Clear                      → aidd marketplace cache clear
+
+  6. Maintain & repair
+     ├── Update everything              → aidd update
+     ├── Sync everything                → aidd sync
+     ├── Restore everything             → aidd restore
+     └── Clean (nuke .aidd)             → aidd clean
+
+  7. Migrate from older version         → aidd migrate
+
+  8. System
+     ├── Self-update CLI                → aidd self-update
+     └── Authentication
+         ├── Status                     → aidd auth status
+         ├── Login                      → aidd auth login
+         └── Logout                     → aidd auth logout
+```
+
+- [ ] Rewrite `INSTALLED_NODES` constant in `commands/menu.ts` to the tree above
+- [ ] Drop legacy entries: `Cache (system)`, `Config (system)` (commands deleted Phase 4 + 6)
+- [ ] Update labels — drop "Pull the latest framework version" → use "Update everything" (no framework concept post-marketplace)
+- [ ] Verify each leaf's `command: string[]` references a command that exists post Phases 2–10
+- [ ] Update fresh project tree (`FRESH_NODES`) — only `setup` entry
+
+## Tests (unit-first)
+
+### Unit tests
+
+- [ ] `tests/application/use-cases/sync/sync-plugins-use-case.unit.test.ts`:
+  - [ ] Source has 2 plugins, target has 0 → both installed
+  - [ ] Source has 1 plugin, target already has same version → skip
+  - [ ] Source has plugin v2, target has v1 → reinstall v2
+  - [ ] Plugin from marketplace not in cache → fetches from source URL
+  - [ ] Plugin marketplace removed → warning, skip
+  - [ ] Capability not supported by target emitter → warning, skip that capability
+- [ ] `tests/application/use-cases/sync/sync-use-case.unit.test.ts` (existing) — extend with `includePlugins: true/false` paths
+- [ ] `tests/application/commands/menu.unit.test.ts`:
+  - [ ] `InteractiveMenuUseCase.execute()` with no manifest → returns `setup` command
+  - [ ] With manifest → returns selected command (mock `Prompter`)
+  - [ ] Navigation back/exit handled
+- [ ] Snapshot test of `INSTALLED_NODES` tree shape (order + labels) to catch unintentional drift
+
+### Integration tests
+
+- [ ] Sync plugins integration test: source = claude with `aidd-context` installed, target = cursor — verify cursor receives translated rules + skills + commands
+
+### E2E tests
+
+- One E2E in Phase 12 covering `aidd ai sync --source claude --target cursor` with plugin propagation
 
 ## Acceptance criteria
 
-- [ ] `pnpm test` runs in <60s
-- [ ] Unit:integration:e2e ratio ≥10:3:1 (count files)
-- [ ] Exactly 6 E2E test files, mapped to 6 journeys
-- [ ] All in-memory port helpers present in `tests/helpers/ports/`
-- [ ] README, ARCHITECTURE, CHANGELOG fully updated and reviewed
-- [ ] Final `pnpm test`, `pnpm typecheck`, `pnpm biome check`, `pnpm build` all green
-- [ ] `git log feat/plugin-architecture..feat/cli-v5-cleanup` shows 11 commits, one per phase, conventional commit format
+- [ ] `aidd ai sync --source claude --target cursor` propagates configs AND plugins
+- [ ] `aidd ai sync --source claude --target cursor --no-plugins` propagates configs only
+- [ ] `aidd plugin sync --source claude --target cursor` propagates plugins only
+- [ ] Plugin re-translation skips unsupported capabilities (warning)
+- [ ] Plugin already at correct version on target: skipped
+- [ ] Plugin marketplace cache miss: fetches from origin
+- [ ] MCP credentials NOT auto-propagated — warning printed
+- [ ] `aidd` (TTY, no manifest): menu shows only "Install AIDD in this project"
+- [ ] `aidd` (TTY, with manifest): menu shows 8 top-level branches per tree above
+- [ ] Every menu leaf invokes a real command (no "unknown command" errors)
+- [ ] Snapshot test of menu tree stable
+- [ ] `pnpm test`, `pnpm typecheck`, `pnpm biome check` clean
 
 ## Manual validation
 
 ```bash
-cd /Users/baptistelafourcade/Projects/freelance/aidd/aidd/cli
-pnpm clean && pnpm install
-time pnpm test            # expect <60s
-pnpm typecheck            # expect clean
-pnpm biome check          # expect clean
-pnpm build                # expect clean
+cd /tmp && rm -rf sync-plugins && mkdir sync-plugins && cd sync-plugins
+aidd setup --source remote --ai claude --ide vscode --recommended-plugins --yes
+ls .claude/         # claude plugin files present
+ls .cursor/         # absent (cursor not installed yet)
 
-# Verify pyramid
-fd -t f "\.unit\.test\.ts$" tests | wc -l       # large
-fd -t f "\.integration\.test\.ts$" tests | wc -l  # moderate
-fd -t f "\.e2e\.test\.ts$" tests | wc -l        # exactly 6
+# Install cursor (no plugins yet)
+aidd ai install cursor --yes
+ls .cursor/         # cursor config only
 
-# Run each E2E journey
-pnpm test tests/e2e/greenfield-setup.e2e.test.ts
-pnpm test tests/e2e/brownfield-migrate.e2e.test.ts
-pnpm test tests/e2e/plugin-install.e2e.test.ts
-pnpm test tests/e2e/sync-plugins.e2e.test.ts
-pnpm test tests/e2e/update-global.e2e.test.ts
-pnpm test tests/e2e/clean.e2e.test.ts
+# Sync plugins
+aidd ai sync --source claude --target cursor
+
+ls .cursor/                           # plugin files now present
+aidd plugin list --tool cursor        # plugins listed for cursor
+
+# Menu fresh
+cd /tmp && rm -rf menu-fresh && mkdir menu-fresh && cd menu-fresh
+aidd                                  # single option
+
+# Menu installed
+cd /tmp/sync-plugins && aidd          # 8 branches
 ```
 
 ## Risks / breaking changes
 
-- Demoting integration tests to unit risks losing real-FS coverage — mitigate by keeping a thin "smoke" integration suite hitting actual FS once per major adapter
-- E2E journey list is opinionated — if a regression slips through (e.g. inter-tool sync edge case), add unit test, not E2E
-- Documentation drift: docs must be reviewed per-phase, not lumped at end. Phase 11 catches the residue, but each phase commit should also touch CHANGELOG entry
-
-## Final merge
-
-After all 11 phases land on `feat/cli-v5-cleanup`:
-
-```bash
-git checkout feat/plugin-architecture
-git merge --no-ff feat/cli-v5-cleanup
-git log --oneline feat/plugin-architecture | head -15
-# expect: 11 cleanup commits + earlier history
-```
-
-No squash. Each phase is a meaningful checkpoint in history.
+- Some plugin capabilities may not survive translation cleanly. Sync degrades gracefully (warnings).
+- Marketplace cache miss + no network: errors with explicit "fetch failed" — user retries.
+- Plugin version drift between tools: sync overwrites target version with source version.
+- MCP credentials NOT propagated — user manually re-adds.
+- Menu UX is breaking for users who memorized prior structure. CHANGELOG must note.
+- Snapshot test requires update on legitimate menu changes — accepted maintenance cost.
 
 ## Commit
 
 ```
-test(cli): invert test pyramid + docs alignment
+feat(sync,menu): plugin propagation inter-tool + interactive menu refresh
 
-Reduce integration tests to adapter-boundary coverage only.
-Demote use-case integration tests to unit with in-memory ports.
-Trim E2E to 6 main journeys (greenfield, brownfield, plugin install,
-sync plugins, update global, clean).
+Extend ai sync to re-translate and install source tool plugins on targets:
+- aidd ai sync --source <s> --target <t>     => configs + plugins (default)
+- aidd ai sync --source <s> --target <t> --no-plugins  => configs only
+- aidd plugin sync --source <s> --target <t> => plugins only
 
-Add in-memory port helpers under tests/helpers/ports/ for every domain port.
+Add SyncPluginsUseCase orchestrating per-plugin fetch (cache-first) +
+target-emitter re-translation. Skips unsupported capabilities with warnings.
+Skips MCP credential propagation (user manually re-adds on target).
 
-Update README, ARCHITECTURE, CHANGELOG to reflect:
-- Noun-first surface (ai/ide/plugin/marketplace)
-- Setup orchestrator (interactive + scriptable)
-- Manifest v5 schema (no docsDir/repo/mode/scripts/topPlugins)
-- Memory ownership shifted to plugins
-- Marketplace cache subcommand
-- Inter-tool plugin sync semantics
+Rewrite INSTALLED_NODES menu tree post-cleanup:
+- Drop Cache + Config entries (commands deleted)
+- Restructure under noun-first groups: Manage AI tools / IDE tools / plugins
+- Add Inspect (status/doctor/list)
+- Add Maintain & repair (chained globals)
+- Move marketplace cache under Marketplaces
+- Move auth under System
 
-Final acceptance gate before merging feat/cli-v5-cleanup back to feat/plugin-architecture.
+Snapshot test added on INSTALLED_NODES tree.
 
 Refs: aidd_docs/tasks/2026_05/2026_05_06-cli-v5-cleanup-part-11.md
 ```

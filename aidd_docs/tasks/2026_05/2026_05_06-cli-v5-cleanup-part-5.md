@@ -1,169 +1,126 @@
-# Phase 5 — Surface noun-first split
+# Phase 5 — Framework plugins legacy purge
 
-> Restructure command surface so domain operations live under noun groups (`ai`, `ide`, `plugin`). Globals stay flat. Eliminate `aidd install [category] [tool…]` verb-first flat form.
+> Delete `InstallFrameworkPluginsUseCase` + `install-plugins-use-case.ts`. Drop `manifest.scripts` and top-level `manifest.plugins` write paths. `MigrateUseCase` keeps READ access for backward-compat migration.
 
 ## Pre-requisites
 
-- Phase 2 (suppressions) landed — legacy install branch gone
-- Phase 3 (setup refactor) landed — `aidd setup` is the bootstrap entry
+- Phase 3 (setup orchestrator rewrite) landed — `setup-use-case.ts:72` no longer calls `InstallFrameworkPluginsUseCase`
+- Phase 4 (cache + adopt + framework-cache co-delete) landed — `adopt/` deleted, `manifest.mode` removed
 
 ## Goal
 
-Today the surface mixes verb-first (`install`, `uninstall`, `update`, `restore`, `sync`, `status`, `doctor`) and noun-first (`plugin`, `marketplace`, `auth`, `config`). Phase 5 unifies domain operations under noun-first groups while keeping globals (chain orchestrators) flat.
+Phase 0 inventory blocker B4 noted that `manifest.plugins` (top-level) and `manifest.scripts` are still actively WRITTEN, not just read for migration:
 
-Target surface:
+- `install-framework-plugins-use-case.ts:55,127` — actively writes `manifest.plugins`
+- `migrate-use-case.ts:42,91` — reads legacy `plugins` to migrate
+- `marketplace-register-framework-use-case.ts:52` — reads `scripts` for marketplace inference
 
-```
-aidd ai install <tool>          aidd ide install <tool>          aidd plugin install <name>
-aidd ai uninstall <tool>        aidd ide uninstall <tool>        aidd plugin add <source>
-aidd ai list                    aidd ide list                    aidd plugin remove <name>
-aidd ai status                  aidd ide status                  aidd plugin list
-aidd ai update [tool]           aidd ide update [tool]           aidd plugin update [name]
-aidd ai sync --source <tool>    aidd ide doctor                  aidd plugin search <query>
-aidd ai restore [files...]                                        aidd plugin pick
-aidd ai doctor                                                    aidd plugin status
-                                                                  aidd plugin sync --source <tool>
-                                                                  aidd plugin restore --plugin <name>
-                                                                  aidd plugin doctor
-```
-
-Globals stay flat (Phase 6 chains them):
-
-```
-aidd setup       aidd update       aidd status       aidd sync
-aidd restore     aidd doctor       aidd clean        aidd migrate
-aidd self-update
-```
+Phase 5 deletes the active-write code paths and shrinks the manifest fields to read-only stubs that `MigrateUseCase` (Phase 8) consumes for legacy migration. After this phase, no NEW manifest will contain `scripts` or top-level `plugins`.
 
 ## Architecture compliance
 
-- New files `src/application/commands/ai.ts` and `src/application/commands/ide.ts` mirror the existing `plugin.ts` / `marketplace.ts` pattern (parent command + subcommands)
-- Each subcommand action body stays a thin wrapper: parse → deps → ONE use-case → display
-- No business logic moves into command files
-- Domain `ToolCategory` value object (`"ai" | "ide"`) is the contract — used by use cases to filter manifest entries
-- Sub-use-cases per scope where missing: `AiListUseCase`, `IdeListUseCase`, `PluginStatusUseCase`, `PluginSyncUseCase`, `PluginRestoreUseCase`, `PluginDoctorUseCase`. Most reuse existing scoped logic (e.g. `StatusUseCase` already accepts `category` filter)
+`Manifest` aggregate currently owns `addScripts`, `getScriptsFiles`, `clearScripts`, `addPlugins`, `clearPlugins` mutators. Phase 5 removes the mutators (no new writes) but keeps READ accessors (`getScriptsFiles`, `getPluginsFiles`, `hasScripts`, `hasPlugins`) — `MigrateUseCase` needs them to detect legacy data. The full READ accessor removal happens in Phase 7 schema rewrite, by which point migration logic has already consumed the data.
+
+Domain pure rule: `Manifest` aggregate stays free of I/O and infrastructure imports. Mutator removal is internal cleanup.
 
 ## Steps
 
-### A. Create `aidd ai` parent command
+### A. Delete `InstallFrameworkPluginsUseCase`
 
-- [ ] `src/application/commands/ai.ts`:
-  - [ ] `registerAiCommand(program)` — parent command with description "Manage AI tools (claude, cursor, copilot, codex, opencode)"
-  - [ ] No-arg TTY action → interactive subcommand picker (mirror `plugin.ts` pattern)
-  - [ ] Subcommands: `install <tool>`, `uninstall <tool>`, `list`, `status`, `update [tool]`, `sync`, `restore [files...]`, `doctor`
-  - [ ] Each subcommand validates `toolId` is in `AI_TOOL_IDS` (reject IDE ids)
-  - [ ] Each subcommand calls existing use-cases with `category: "ai"` filter or AI-tool-specific use-cases
+- [ ] Delete `src/application/use-cases/install-framework-plugins-use-case.ts`
+  - Definition at line 8; calls `manifest.addPlugins` at lines 55, 127; persistPlugins helper at line 123
+- [ ] Delete tests: `tests/application/use-cases/install-framework-plugins-use-case*.test.ts`
+- [ ] Verify `setup-use-case.ts` (post Phase 3) does not import this — `rg "InstallFrameworkPluginsUseCase" src/`
+- [ ] Verify `deps.ts` does not wire it — `rg "installFrameworkPluginsUseCase" src/infrastructure/deps.ts`
 
-### B. Create `aidd ide` parent command
+### B. Delete `InstallPluginsUseCase` (already removed Phase 2)
 
-- [ ] `src/application/commands/ide.ts`:
-  - [ ] `registerIdeCommand(program)` — parent command "Manage IDE integrations (vscode)"
-  - [ ] Subcommands: `install <tool>`, `uninstall <tool>`, `list`, `status`, `update [tool]`, `doctor`
-  - [ ] No `sync`/`restore` on IDE (IDE configs are merge-based — sync semantics don't apply per locked decision; document in command help)
-  - [ ] Each validates `toolId` in `IDE_TOOL_IDS`
+- [ ] Sanity check from Phase 2: `rg "InstallPluginsUseCase\b" src/ tests/` returns empty
+- [ ] If any residue, remove now
 
-### C. Extend `aidd plugin`
+### C. Remove `manifest.scripts` write paths
 
-- [ ] `src/application/commands/plugin.ts` — add subcommands:
-  - [ ] `plugin status [--plugin <name>]` — calls existing `StatusUseCase` with `pluginName` filter (already exists in StatusUseCase)
-  - [ ] `plugin sync --source <tool> [--target <tool>]` — calls `SyncPluginsUseCase` (Phase 8 implements; here just the wiring with throw "not yet implemented" temporary stub if Phase 8 not landed)
-  - [ ] `plugin restore --plugin <name>` — calls existing `RestorePluginUseCase` (kept; cache-first per locked decision)
-  - [ ] `plugin doctor [--plugin <name>]` — calls existing `DoctorUseCase` with `pluginName` filter
+- [ ] In `src/domain/models/manifest.ts`:
+  - [ ] Delete `addScripts(version, files)` method (line 212)
+  - [ ] Delete `clearScripts()` method (line 228)
+  - [ ] **Keep**: `getScriptsFiles()`, `getScriptsVersion()`, `hasScripts()` (read-only accessors used by Phase 8 migrate)
+- [ ] In `marketplace-register-framework-use-case.ts:52`: remove `manifest.scripts` read (no longer relevant — marketplace registration uses source type, not scripts inference)
 
-### D. Delete verb-first variants
+### D. Remove top-level `manifest.plugins` write paths
 
-- [ ] Delete `src/application/commands/install.ts` (verb-first flat)
-- [ ] Delete `src/application/commands/uninstall.ts` (verb-first flat)
-- [ ] Update `src/cli.ts`: remove `registerInstallCommand`, `registerUninstallCommand`; add `registerAiCommand`, `registerIdeCommand`
-- [ ] Verb-first `update`, `restore`, `sync`, `status`, `doctor` STAY but become globals (Phase 6 makes them chain unitaries)
+- [ ] In `src/domain/models/manifest.ts`:
+  - [ ] Delete `addPlugins(version, files)` method (line 232)
+  - [ ] Delete `clearPlugins()` method (line 236)
+  - [ ] **Keep**: `getPluginsFiles()`, `getPluginsVersion()`, `hasPlugins()` (read-only accessors used by Phase 8 migrate)
+- [ ] Search for any remaining caller: `rg "addPlugins\b|clearPlugins\b" src/`
 
-### E. Update use-case input contracts
+### E. Update `deps.ts`
 
-- [ ] `InstallRuntimeConfigUseCase` already accepts single `toolId: AiToolId` — keep
-- [ ] `InstallIdeConfigUseCase` already accepts single `toolId: IdeToolId` — keep
-- [ ] `UninstallUseCase` accepts `toolIds: ToolId[]` — extract `UninstallAiUseCase` and `UninstallIdeUseCase` if logic diverges; otherwise reuse with category filter
-- [ ] `SyncUseCase` accepts source/target — keep, restrict to AI category in `aidd ai sync` command
-- [ ] `RestoreUseCase` accepts `toolIds` — keep, restrict to AI category in `aidd ai restore`
+- [ ] Remove `installFrameworkPluginsUseCase` wiring
+- [ ] Verify `pluginCatalogRepository` still wired (used by `CatalogUseCase` which is KEPT per blocker B1)
 
-### F. Update `cli.ts`
+### F. Update remaining callers
 
-- [ ] Remove imports: `registerInstallCommand`, `registerUninstallCommand`
-- [ ] Add imports: `registerAiCommand`, `registerIdeCommand`
-- [ ] Order of registration: `setup, ai, ide, plugin, marketplace, auth, sync, status, restore, update, doctor, clean, migrate, self-update`
+- [ ] If any test fixture writes `manifest.plugins` (top-level) or `manifest.scripts` directly, update to use the new `tools[*].plugins[*]` nested form
+- [ ] Migration tests that read legacy fixtures unchanged (Phase 8 migrate handles them)
 
-## Tests (unit-first)
+## Tests
 
 ### Unit tests
 
-- [ ] No new domain logic (just routing). Skip command-level unit tests.
-- [ ] Use-case unit tests reused from existing suite.
+- [ ] `tests/domain/models/manifest.unit.test.ts` — verify `addScripts`/`addPlugins`/`clearScripts`/`clearPlugins` no longer exist on the API
+- [ ] Verify `getScriptsFiles()`/`getPluginsFiles()` still return data when deserialized from legacy v3/v4 fixtures (READ accessors preserved)
 
 ### Integration tests
 
-- [ ] `tests/application/commands/ai.integration.test.ts` — invoke `aidd ai install claude` via commander, verify use-case called with correct args
-- [ ] `tests/application/commands/ide.integration.test.ts` — same for `aidd ide install vscode`
-- [ ] Reject cross-category: `aidd ai install vscode` errors
+- [ ] `tests/application/use-cases/migrate-use-case.integration.test.ts` (existing) — verify legacy plugins/scripts read paths still work for migration
 
-### E2E tests
+### Tests deleted
 
-- One E2E test in Phase 11 covering noun-first surface end-to-end
+- `tests/application/use-cases/install-framework-plugins-use-case*.test.ts`
 
 ## Acceptance criteria
 
-- [ ] `aidd install` exits with "unknown command"
-- [ ] `aidd uninstall` exits with "unknown command"
-- [ ] `aidd ai install claude` works
-- [ ] `aidd ai install vscode` errors (vscode is IDE)
-- [ ] `aidd ide install vscode` works
-- [ ] `aidd ide install claude` errors
-- [ ] `aidd ai --help`, `aidd ide --help`, `aidd plugin --help` all show subcommand list
-- [ ] `aidd ai` (no subcommand, TTY) prompts subcommand picker
-- [ ] `aidd ai status` works (filtered to AI tools)
-- [ ] `aidd plugin sync --source claude` works (Phase 8 fully implements; until then, it can return "not yet implemented" — but command must be wired)
-- [ ] `pnpm typecheck` + `pnpm biome check` clean
+- [ ] `pnpm test` green
+- [ ] `pnpm typecheck` clean
+- [ ] `pnpm biome check` clean
+- [ ] `rg "InstallFrameworkPluginsUseCase|installFrameworkPluginsUseCase" src/ tests/` returns empty
+- [ ] `rg "addScripts\b|addPlugins\b|clearScripts\b|clearPlugins\b" src/` returns empty (mutators gone)
+- [ ] `rg "getScriptsFiles|getPluginsFiles|hasScripts|hasPlugins" src/domain/models/manifest.ts` returns hits (read accessors preserved)
+- [ ] `pnpm build` passes
+- [ ] No new manifest written by setup/install/update flows contains `scripts` or top-level `plugins` keys (verify via integration test)
 
 ## Manual validation
 
 ```bash
-# Surface check
-aidd --help | grep -E "^\s+(ai|ide|plugin|marketplace|auth)\b"
-# Expect: 5 noun-first parents
+cd /tmp && rm -rf phase5-test && mkdir phase5-test && cd phase5-test
+aidd setup --source remote --ai claude --no-plugins --yes
 
-aidd ai --help
-# Expect: install, uninstall, list, status, update, sync, restore, doctor
+cat .aidd/manifest.json | jq 'has("scripts"), has("plugins")'
+# expect: false, false (no top-level scripts/plugins)
 
-aidd ide --help
-# Expect: install, uninstall, list, status, update, doctor
-
-aidd plugin --help
-# Expect: add, install, remove, list, update, search, pick, status, sync, restore, doctor
-
-# Cross-category rejection
-aidd ai install vscode 2>&1 | grep -i "must be ai"
-aidd ide install claude 2>&1 | grep -i "must be ide"
+cat .aidd/manifest.json | jq '.tools.claude.plugins'
+# expect: [] (empty array, nested per-tool location stays)
 ```
 
 ## Risks / breaking changes
 
-- **Major UX break** for users running `aidd install ai claude` — the noun-first form is now `aidd ai install claude`. Document in CHANGELOG. Provide migration table.
-- Shell completion scripts must update if shipped.
-- No code aliasing the old verb-first form (no transition period — clean break).
+- Any external tooling parsing `manifest.scripts` or top-level `manifest.plugins` arrays for new manifests will break. Document in CHANGELOG.
+- Tests that mocked `addPlugins` directly need rewriting to use `addTool(...).plugins`.
+- Read accessors stay until Phase 7 schema rewrite — DO NOT delete them in this phase.
 
 ## Commit
 
 ```
-refactor(cli): noun-first command surface
+refactor(manifest): remove framework plugins legacy write paths
 
-Restructure domain commands under noun groups:
-- aidd ai install/uninstall/list/status/update/sync/restore/doctor
-- aidd ide install/uninstall/list/status/update/doctor
-- aidd plugin status/sync/restore/doctor (extending existing add/install/list/update/search/pick/remove)
+Delete InstallFrameworkPluginsUseCase + install-plugins-use-case.ts.
+Remove manifest.addScripts/addPlugins/clearScripts/clearPlugins mutators.
+Keep getScriptsFiles/getPluginsFiles/hasScripts/hasPlugins read accessors
+for Phase 8 migrate backward-compat (legacy v3/v4 manifest support).
 
-Delete verb-first flat variants:
-- aidd install [category] [tool] (commands/install.ts)
-- aidd uninstall [category] [tool] (commands/uninstall.ts)
-
-Globals (status, doctor, sync, restore, update, clean, setup, migrate, self-update) stay flat — Phase 6 chains them.
+After this phase, no new manifest contains top-level scripts or plugins.
+Plugin tracking moved fully to per-tool nested location: tools[id].plugins[].
 
 Refs: aidd_docs/tasks/2026_05/2026_05_06-cli-v5-cleanup-part-5.md
 ```
