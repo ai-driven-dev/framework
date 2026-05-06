@@ -15,6 +15,9 @@ import { MarketplaceRefreshUseCase } from "../application/use-cases/marketplace/
 import { MarketplaceRegisterFrameworkUseCase } from "../application/use-cases/marketplace/marketplace-register-framework-use-case.js";
 import { MarketplaceRemoveUseCase } from "../application/use-cases/marketplace/marketplace-remove-use-case.js";
 import { MarketplaceSyncSettingsUseCase } from "../application/use-cases/marketplace/marketplace-sync-settings-use-case.js";
+import { MigrateBackupUseCase } from "../application/use-cases/migrate/migrate-backup-use-case.js";
+import { MigrateRewirePluginsUseCase } from "../application/use-cases/migrate/migrate-rewire-plugins-use-case.js";
+import { MigrateStripDeadFilesUseCase } from "../application/use-cases/migrate/migrate-strip-dead-files-use-case.js";
 import { PluginAddUseCase } from "../application/use-cases/plugin/plugin-add-use-case.js";
 import { PluginInstallFromMarketplaceUseCase } from "../application/use-cases/plugin/plugin-install-from-marketplace-use-case.js";
 import { PluginListUseCase } from "../application/use-cases/plugin/plugin-list-use-case.js";
@@ -99,6 +102,9 @@ interface Deps {
   marketplaceRegisterFrameworkUseCase: MarketplaceRegisterFrameworkUseCase;
   pluginPickUseCase: PluginPickUseCase;
   marketplaceSyncSettingsUseCase: MarketplaceSyncSettingsUseCase;
+  migrateBackupUseCase: MigrateBackupUseCase;
+  migrateStripDeadFilesUseCase: MigrateStripDeadFilesUseCase;
+  migrateRewirePluginsUseCase: MigrateRewirePluginsUseCase;
 }
 
 const _cache = new Map<string, Deps>();
@@ -237,6 +243,12 @@ export async function createDeps(
     pluginCatalogRepository,
     hasher
   );
+  const migrateBackupUseCase = new MigrateBackupUseCase(fs);
+  const migrateStripDeadFilesUseCase = new MigrateStripDeadFilesUseCase(fs, logger);
+  const migrateRewirePluginsUseCase = new MigrateRewirePluginsUseCase(
+    pluginInstallFromMarketplaceUseCase,
+    logger
+  );
   const deps: Deps = {
     fs,
     manifestRepo,
@@ -274,6 +286,9 @@ export async function createDeps(
     marketplaceRegisterFrameworkUseCase,
     pluginPickUseCase,
     marketplaceSyncSettingsUseCase,
+    migrateBackupUseCase,
+    migrateStripDeadFilesUseCase,
+    migrateRewirePluginsUseCase,
   };
   _cache.set(projectRoot, deps);
   return deps;

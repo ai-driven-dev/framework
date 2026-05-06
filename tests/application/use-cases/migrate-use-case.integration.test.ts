@@ -8,6 +8,9 @@ import "../../../src/domain/tools/ai/cursor.js";
 import "../../../src/domain/tools/ai/opencode.js";
 import "../../../src/domain/tools/ide/vscode.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { MigrateBackupUseCase } from "../../../src/application/use-cases/migrate/migrate-backup-use-case.js";
+import { MigrateRewirePluginsUseCase } from "../../../src/application/use-cases/migrate/migrate-rewire-plugins-use-case.js";
+import { MigrateStripDeadFilesUseCase } from "../../../src/application/use-cases/migrate/migrate-strip-dead-files-use-case.js";
 import { MigrateUseCase } from "../../../src/application/use-cases/migrate-use-case.js";
 import { AIDD_DIR } from "../../../src/domain/models/paths.js";
 import { buildDeps, KeepPrompter } from "./helpers.js";
@@ -45,13 +48,21 @@ describe("MigrateUseCase", () => {
   }
 
   function buildUseCase(deps: ReturnType<typeof buildDeps>) {
+    const migrateBackup = new MigrateBackupUseCase(deps.fs);
+    const migrateStripDeadFiles = new MigrateStripDeadFilesUseCase(deps.fs, deps.logger);
+    const migrateRewirePlugins = new MigrateRewirePluginsUseCase(
+      noOpPluginInstall as never,
+      deps.logger
+    );
     return new MigrateUseCase(
       deps.fs,
       deps.manifestRepo,
       deps.logger,
       new KeepPrompter(),
       noOpRegister as never,
-      noOpPluginInstall as never
+      migrateBackup,
+      migrateStripDeadFiles,
+      migrateRewirePlugins
     );
   }
 
@@ -213,13 +224,21 @@ describe("MigrateUseCase", () => {
         },
       });
       const deps = buildDeps(projectRoot);
+      const migrateBackup = new MigrateBackupUseCase(deps.fs);
+      const migrateStripDeadFiles = new MigrateStripDeadFilesUseCase(deps.fs, deps.logger);
+      const migrateRewirePlugins = new MigrateRewirePluginsUseCase(
+        failingPluginInstall as never,
+        deps.logger
+      );
       const uc = new MigrateUseCase(
         deps.fs,
         deps.manifestRepo,
         deps.logger,
         new KeepPrompter(),
         noOpRegister as never,
-        failingPluginInstall as never
+        migrateBackup,
+        migrateStripDeadFiles,
+        migrateRewirePlugins
       );
       const result = await uc.execute({ projectRoot, interactive: false, dryRun: false });
       expect(result.kind).toBe("migrated");

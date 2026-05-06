@@ -5,35 +5,28 @@ import "../../../src/domain/tools/ai/cursor.js";
 import "../../../src/domain/tools/ai/opencode.js";
 import "../../../src/domain/tools/ide/vscode.js";
 import { describe, expect, it } from "vitest";
-import { detectMigrationPlan } from "../../../src/application/use-cases/migrate-use-case.js";
-import { Manifest } from "../../../src/domain/models/manifest.js";
-
-function makeManifest(data: unknown): Manifest {
-  return Manifest.fromJSON(data);
-}
+import { computeMigrationPlan } from "../../../src/application/use-cases/migrate-use-case.js";
 
 const BASE = {
   version: 5,
-  docsDir: "aidd_docs",
   tools: {},
-  scripts: null,
-  plugins: null,
-  mode: "local",
+  marketplaces: {},
 };
 
-describe("detectMigrationPlan", () => {
-  describe("empty plan", () => {
-    it("returns empty plan for clean manifest", () => {
-      const manifest = makeManifest(BASE);
-      const plan = detectMigrationPlan(manifest);
-      expect(plan.hasObsoleteScripts).toBe(false);
-      expect(plan.hasObsoletePlugins).toBe(false);
-      expect(plan.bundledPlugins.size).toBe(0);
+describe("computeMigrationPlan", () => {
+  describe("no-op plan", () => {
+    it("returns no-op for clean v5 manifest with default marketplace", () => {
+      const plan = computeMigrationPlan({
+        ...BASE,
+        marketplaces: { "aidd-framework": {} },
+      });
+      expect(plan.isNoOp()).toBe(true);
     });
 
     it("ignores marketplace-linked plugins", () => {
-      const manifest = makeManifest({
+      const plan = computeMigrationPlan({
         ...BASE,
+        marketplaces: { "aidd-framework": {} },
         tools: {
           claude: {
             toolId: "claude",
@@ -52,40 +45,56 @@ describe("detectMigrationPlan", () => {
           },
         },
       });
-      const plan = detectMigrationPlan(manifest);
-      expect(plan.bundledPlugins.size).toBe(0);
+      expect(plan.pluginsToRewire.length).toBe(0);
+      expect(plan.isNoOp()).toBe(true);
     });
   });
 
-  describe("scripts section", () => {
-    it("detects obsolete scripts section", () => {
-      const manifest = makeManifest({
+  describe("legacy fields detection", () => {
+    it("detects legacy scripts section", () => {
+      const plan = computeMigrationPlan({
         ...BASE,
         scripts: {
           version: "1.0.0",
           files: [{ relativePath: "scripts/build.sh", hash: "a".repeat(32) }],
         },
       });
-      const plan = detectMigrationPlan(manifest);
-      expect(plan.hasObsoleteScripts).toBe(true);
-      expect(plan.obsoleteScriptFiles).toEqual(["scripts/build.sh"]);
+      expect(plan.fieldsToStrip).toContain("scripts");
+      expect(plan.filesToDelete).toContain("scripts/build.sh");
     });
-  });
 
-  describe("top-level plugins section", () => {
-    it("detects obsolete plugins section", () => {
-      const manifest = makeManifest({
+    it("detects legacy top-level plugins section", () => {
+      const plan = computeMigrationPlan({
         ...BASE,
         plugins: { version: "1.0.0", files: [] },
       });
-      const plan = detectMigrationPlan(manifest);
-      expect(plan.hasObsoletePlugins).toBe(true);
+      expect(plan.fieldsToStrip).toContain("plugins");
+    });
+
+    it("detects legacy mode field", () => {
+      const plan = computeMigrationPlan({ ...BASE, mode: "local" });
+      expect(plan.fieldsToStrip).toContain("mode");
+    });
+  });
+
+  describe("marketplace detection", () => {
+    it("flags missing default marketplace", () => {
+      const plan = computeMigrationPlan(BASE);
+      expect(plan.defaultMarketplaceMissing).toBe(true);
+    });
+
+    it("does not flag when default marketplace present", () => {
+      const plan = computeMigrationPlan({
+        ...BASE,
+        marketplaces: { "aidd-framework": {} },
+      });
+      expect(plan.defaultMarketplaceMissing).toBe(false);
     });
   });
 
   describe("bundled plugins", () => {
     it("detects bundled plugin in single tool", () => {
-      const manifest = makeManifest({
+      const plan = computeMigrationPlan({
         ...BASE,
         tools: {
           claude: {
@@ -104,9 +113,11 @@ describe("detectMigrationPlan", () => {
           },
         },
       });
-      const plan = detectMigrationPlan(manifest);
-      expect(plan.bundledPlugins.size).toBe(1);
-      expect(plan.bundledPlugins.get("aidd-context")).toEqual(["claude"]);
+      expect(plan.pluginsToRewire.length).toBe(1);
+      const rewired = plan.pluginsToRewire[0];
+      expect(rewired?.name).toBe("aidd-context");
+      expect(rewired?.marketplace).toBe("aidd-framework");
+      expect(rewired?.toolIds).toContain("claude");
     });
 
     it("groups same plugin name across multiple tools", () => {
@@ -117,26 +128,26 @@ describe("detectMigrationPlan", () => {
         strict: false,
         files: {},
       };
-      const manifest = makeManifest({
+      const plan = computeMigrationPlan({
         ...BASE,
         tools: {
           claude: { toolId: "claude", version: "1.0.0", files: [], plugins: [bundledPlugin] },
           cursor: { toolId: "cursor", version: "1.0.0", files: [], plugins: [bundledPlugin] },
         },
       });
-      const plan = detectMigrationPlan(manifest);
-      expect(plan.bundledPlugins.get("aidd-context")?.sort()).toEqual(["claude", "cursor"].sort());
+      const rewired = plan.pluginsToRewire[0];
+      expect(rewired?.name).toBe("aidd-context");
+      expect([...(rewired?.toolIds ?? [])].sort()).toEqual(["claude", "cursor"].sort());
     });
 
     it("skips IDE tools (vscode)", () => {
-      const manifest = makeManifest({
+      const plan = computeMigrationPlan({
         ...BASE,
         tools: {
           vscode: { toolId: "vscode", version: "1.0.0", files: [], plugins: [] },
         },
       });
-      const plan = detectMigrationPlan(manifest);
-      expect(plan.bundledPlugins.size).toBe(0);
+      expect(plan.pluginsToRewire.length).toBe(0);
     });
   });
 });

@@ -21,7 +21,9 @@ export function registerMigrateCommand(program: Command): void {
           deps.logger,
           deps.prompter,
           deps.marketplaceRegisterFrameworkUseCase,
-          deps.pluginInstallFromMarketplaceUseCase
+          deps.migrateBackupUseCase,
+          deps.migrateStripDeadFilesUseCase,
+          deps.migrateRewirePluginsUseCase
         ).execute({
           projectRoot,
           interactive: !cmdOptions.nonInteractive && process.stdout.isTTY,
@@ -32,6 +34,7 @@ export function registerMigrateCommand(program: Command): void {
             output.info("Nothing to migrate.");
             break;
           case "dry-run":
+            if (result.plan) output.info(result.plan.describe());
             output.info("Dry-run complete. No changes applied.");
             break;
           case "aborted":

@@ -31,13 +31,13 @@ interface TrackedFile {
   readonly frameworkPath?: string;
 }
 
-// Retained for Phase 8 migrate-use-case consumption. Remove once migrate is reworked.
+// Retained for legacy manifest round-trip and isFileTracked coverage.
 interface ScriptsEntry {
   readonly version: string;
   readonly files: readonly TrackedFile[];
 }
 
-// Retained for Phase 8 migrate-use-case consumption. Remove once migrate is reworked.
+// Retained for legacy manifest round-trip and isFileTracked coverage.
 interface PluginsEntry {
   readonly version: string;
   readonly files: readonly TrackedFile[];
@@ -52,7 +52,7 @@ interface ToolEntry {
   readonly plugins: readonly Plugin[];
 }
 
-// Phase 8 deferred: ScriptsEntryData / PluginsSectionData kept for legacy deserialization.
+// Kept for legacy manifest round-trip: v3/v4 manifests may carry these sections until migrate runs.
 interface ScriptsEntryData {
   version: string;
   files: TrackedFileData[];
@@ -130,15 +130,16 @@ function migrateV3toV4(raw: Record<string, unknown>): void {
   if (!("plugins" in raw)) raw.plugins = null;
 }
 
-// Strips dead top-level fields: docs, mode, repo, docsDir.
-// scripts + plugins (legacy top-level sections) are intentionally preserved here so
-// migrate-use-case.ts can detect them via hasScripts()/hasPlugins(). Phase 8 will
-// rework migrate to use raw JSON inspection and strip scripts/plugins here.
+// Strips dead top-level fields: docs, mode, repo, docsDir, scripts, plugins.
+// migrate-use-case.ts uses raw JSON inspection before deserialization, so it is
+// safe to strip scripts/plugins here during the round-trip.
 function migrateV4toV5(raw: Record<string, unknown>): void {
   delete raw.docs;
   delete raw.mode;
   delete raw.repo;
   delete raw.docsDir;
+  delete raw.scripts;
+  delete raw.plugins;
   if (!("marketplaces" in raw)) raw.marketplaces = {};
 }
 
@@ -188,44 +189,14 @@ export class Manifest {
     });
   }
 
-  // Phase 8 deferred: kept for migrate-use-case legacy detection.
-  getScriptsFiles(): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
-    return this._scripts?.files ?? [];
-  }
-
-  // Phase 8 deferred: kept for migrate-use-case legacy detection.
-  getScriptsVersion(): string | undefined {
-    return this._scripts?.version;
-  }
-
-  // Phase 8 deferred: kept for migrate-use-case legacy detection.
+  /** Returns true when the loaded JSON carried a legacy scripts section. Used by isFileTracked. */
   hasScripts(): boolean {
     return this._scripts !== null;
   }
 
-  // Phase 8 deferred: kept for migrate-use-case clearing.
-  clearScripts(): void {
-    this._scripts = null;
-  }
-
-  // Phase 8 deferred: kept for migrate-use-case clearing.
-  clearPlugins(): void {
-    this._plugins = null;
-  }
-
-  // Phase 8 deferred: kept for migrate-use-case legacy detection.
-  getPluginsVersion(): string | undefined {
-    return this._plugins?.version;
-  }
-
-  // Phase 8 deferred: kept for migrate-use-case legacy detection.
+  /** Returns true when the loaded JSON carried a legacy top-level plugins section. Used by isFileTracked. */
   hasPlugins(): boolean {
     return this._plugins !== null;
-  }
-
-  // Phase 8 deferred: kept for migrate-use-case legacy detection.
-  getPluginsFiles(): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
-    return this._plugins?.files ?? [];
   }
 
   private toTrackedFiles(files: InstallationFile[]): TrackedFile[] {
