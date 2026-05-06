@@ -2,8 +2,8 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../src/domain/tools/ai/claude.js";
 import "../../../../src/domain/tools/ai/opencode.js";
-import { DOCS_DIR } from "../../../../src/domain/models/paths.js";
 import { InstallPluginsUseCase } from "../../../../src/application/use-cases/install/install-plugins-use-case.js";
+import { DOCS_DIR } from "../../../../src/domain/models/paths.js";
 
 import type { Hasher } from "../../../../src/domain/ports/hasher.js";
 import { getToolConfig } from "../../../../src/domain/tools/registry.js";

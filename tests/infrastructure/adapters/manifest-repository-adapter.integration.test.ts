@@ -3,7 +3,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Manifest } from "../../../src/domain/models/manifest.js";
-import { DOCS_DIR } from "../../../src/domain/models/paths.js";
 import { ManifestRepositoryAdapter } from "../../../src/infrastructure/adapters/manifest-repository-adapter.js";
 
 describe("ManifestRepositoryAdapter", () => {

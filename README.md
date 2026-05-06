@@ -91,14 +91,14 @@ aidd auth logout                                # remove stored credential
 # 1. Interactive setup: init manifest + register default marketplace + install runtime config
 aidd setup
 
-# 2. Install IDE integration
-aidd install ide vscode
+# 2. Non-interactive scriptable setup (CI / onboarding scripts)
+aidd setup --source remote --ai claude --ide vscode --recommended-plugins --yes
 
 # 3. Install a plugin from the marketplace
 aidd plugin install aidd-context
 
 # 4. Check installation status
-aidd status
+aidd ai status
 ```
 
 ### Brownfield (existing project)
@@ -175,22 +175,33 @@ aidd uninstall --all            # uninstall all tools
 
 ## Commands
 
-| Command                      | Description                                                        | Key options                                  |
-| ---------------------------- | ------------------------------------------------------------------ | -------------------------------------------- |
-| `aidd auth`                  | Manage authentication (login, logout, status)                      | `--token`, `--gh`, `--level`                 |
-| `aidd setup`                 | Bootstrap a project: init manifest + register marketplace + install runtime config | `--ai`, `--ide`, `--all`, `--docs-dir` |
-| `aidd install [ai\|ide] <tools...>` | Write bundled runtime config or IDE config for a tool (requires existing manifest) | `--all`, `--force` |
-| `aidd uninstall [ai\|ide] <tools...>` | Remove tool files and update manifest                        | `--all`                                      |
-| `aidd migrate`               | Detect and strip obsolete manifest entries from previous CLI versions | `--dry-run`, `--non-interactive`           |
-| `aidd status [ai\|ide]`      | Show drift between disk and manifest                               | `--tool`                                     |
-| `aidd doctor [ai\|ide]`      | Structural integrity check — exits 1 on errors or warnings         | —                                            |
-| `aidd restore [files...]`    | Revert modified/deleted files to the manifest-pinned version       | `--force`, `--tool`                          |
-| `aidd sync`                  | Propagate local changes from one tool to the others                | `--source` (required), `--target`, `--force` |
-| `aidd plugin`                | Manage plugins for AI tools                                        | `add`, `remove`, `list`, `install`, `search`, `pick`, `update` |
-| `aidd marketplace`           | Manage plugin marketplaces                                         | `add`, `list`, `remove`, `refresh`, `browse`, `check` |
-| `aidd clean`                 | Remove all AIDD files — dry-run without `--force`                  | `--force`                                    |
-| `aidd config list\|get\|set` | Read or update manifest-backed config (`docsDir`, `tools`)         | `--force`                                    |
-| `aidd self-update`           | Update the CLI itself to the latest version                        | `--check`, `--dry-run`, `--force`            |
+| Command                         | Description                                                                          | Key options                                                       |
+| ------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `aidd auth`                     | Manage authentication (login, logout, status)                                        | `--token`, `--gh`, `--level`                                      |
+| `aidd setup`                    | Bootstrap a project: init manifest + register marketplace + install runtime config   | `--source`, `--ai`, `--ide`, `--all`, `--recommended-plugins`, `--yes` |
+| `aidd ai install <tool>`        | Install an AI tool runtime configuration from bundled assets                         | `--force`                                                         |
+| `aidd ai uninstall <tool>`      | Remove an AI tool's generated configuration files                                    | —                                                                 |
+| `aidd ai list`                  | List installed AI tools                                                              | —                                                                 |
+| `aidd ai status`                | Show drift for AI tools                                                              | —                                                                 |
+| `aidd ai update [tool]`         | Re-install AI tool configs from bundled CLI assets                                   | `--force`                                                         |
+| `aidd ai sync`                  | Propagate local modifications from one AI tool to others                             | `--source` (required), `--target`, `--force`, `--no-plugins`      |
+| `aidd ai restore [files...]`    | Restore AI tool tracked files to their installed version                             | `--force`, `--tool`                                               |
+| `aidd ai doctor`                | Check AI tool installation health and detect issues                                  | —                                                                 |
+| `aidd ide install <tool>`       | Install an IDE integration from bundled assets                                       | `--force`                                                         |
+| `aidd ide uninstall <tool>`     | Remove an IDE integration from the manifest                                          | —                                                                 |
+| `aidd ide list`                 | List installed IDE tools                                                             | —                                                                 |
+| `aidd ide status`               | Show drift for IDE tools                                                             | —                                                                 |
+| `aidd ide update [tool]`        | Re-install IDE tool configs from bundled CLI assets                                  | `--force`                                                         |
+| `aidd ide doctor`               | Check IDE tool installation health and detect issues                                 | —                                                                 |
+| `aidd migrate`                  | Detect and strip obsolete manifest entries from previous CLI versions                | `--dry-run`, `--non-interactive`                                  |
+| `aidd status`                   | Show drift across all tools (AI + IDE)                                               | —                                                                 |
+| `aidd doctor`                   | Structural integrity check — exits 1 on errors or warnings                           | —                                                                 |
+| `aidd restore [files...]`       | Revert modified/deleted files to the manifest-pinned version                         | `--force`, `--tool`                                               |
+| `aidd sync`                     | Propagate local changes from one tool to the others                                  | `--source` (required), `--target`, `--force`                      |
+| `aidd plugin`                   | Manage plugins for AI tools                                                          | `add`, `remove`, `list`, `install`, `search`, `pick`, `update`    |
+| `aidd marketplace`              | Manage plugin marketplaces                                                           | `add`, `list`, `remove`, `refresh`, `browse`, `check`, `cache`    |
+| `aidd clean`                    | Remove all AIDD files — dry-run without `--force`                                    | `--force`                                                         |
+| `aidd self-update`              | Update the CLI itself to the latest version                                          | `--check`, `--dry-run`, `--force`                                 |
 
 ### `aidd auth`
 
@@ -211,42 +222,45 @@ Credentials are stored in JSON files with `600` permissions. The `project` level
 Bootstraps a new project: initializes the manifest, registers the default marketplace, and writes the runtime config for the selected tools. Interactive by default; scriptable with flags.
 
 ```bash
-aidd setup                                      # interactive guided setup
-aidd setup --all                                # non-interactive: init + install all tools
-aidd setup --ai claude,cursor                   # non-interactive: specific AI tools
-aidd setup --ide vscode                         # non-interactive: specific IDE tools
-aidd setup --ai claude --ide vscode             # mix AI and IDE tools
-aidd setup --docs-dir my_docs                   # custom documentation directory
+aidd setup                                              # interactive guided setup
+aidd setup --source remote --ai claude --yes            # non-interactive: remote marketplace, claude
+aidd setup --source local --path /path/to/framework \
+  --ai claude --ide vscode --recommended-plugins --yes  # local framework source
+aidd setup --all --yes                                  # all tools, no prompts
+aidd setup --ai claude,cursor --ide vscode              # mix AI and IDE tools
 ```
 
-Passing `--all`, `--ai`, or `--ide` disables interactive prompts.
+`--source remote|local` selects the marketplace source. `--yes` accepts all defaults. Passing `--all`, `--ai`, `--ide`, or `--source` disables interactive prompts.
 
-### `aidd install`
+### `aidd ai`
 
-Writes bundled runtime config (AI tools) or IDE config (IDE tools) from CLI assets.
-
-> Requires an existing AIDD project (manifest). For first-time setup, use `aidd setup` instead.
+Manages AI tools (install, uninstall, list, status, update, sync, restore, doctor).
 
 ```bash
-aidd install ai claude                      # runtime config for Claude Code
-aidd install ai claude cursor copilot       # multiple AI tools
-aidd install ai --all                       # all AI tools
-aidd install ide vscode                     # VS Code integration
-aidd install ide --all                      # all IDE tools
-aidd install ai claude --force              # overwrite existing files
+aidd ai install claude                      # install Claude Code runtime config
+aidd ai install cursor --force              # overwrite existing files
+aidd ai uninstall claude                    # remove Claude Code files
+aidd ai list                                # list installed AI tools
+aidd ai status                             # show drift for all AI tools
+aidd ai update                             # re-install all AI tool configs
+aidd ai update claude                      # re-install a specific AI tool
+aidd ai sync --source claude               # propagate claude changes to all other AI tools
+aidd ai sync --source claude --target cursor --force  # to a specific target
+aidd ai restore --tool claude              # restore modified Claude files
+aidd ai doctor                             # check AI tool installation health
 ```
 
-The `ai` or `ide` prefix is required.
+### `aidd ide`
 
-### `aidd uninstall`
-
-Removes a tool's generated files and updates the manifest.
+Manages IDE integrations (install, uninstall, list, status, update, doctor).
 
 ```bash
-aidd uninstall cursor
-aidd uninstall ide vscode                   # scope to IDE tools
-aidd uninstall ai --all                     # remove all AI tools
-aidd uninstall --all                        # remove all installed tools
+aidd ide install vscode                    # install VS Code integration
+aidd ide uninstall vscode                  # remove VS Code integration
+aidd ide list                              # list installed IDE tools
+aidd ide status                            # show drift for IDE tools
+aidd ide update                            # re-install all IDE tool configs
+aidd ide doctor                            # check IDE tool installation health
 ```
 
 ### `aidd status`
@@ -330,6 +344,9 @@ aidd marketplace refresh acme                   # refresh a specific marketplace
 aidd marketplace remove acme                    # remove a registered marketplace
 aidd marketplace remove acme --yes              # skip orphan-cleanup prompt
 aidd marketplace check                          # report stale marketplaces and removed plugins
+aidd marketplace cache list                     # list cached marketplace catalogs with size and last fetch time
+aidd marketplace cache clear                    # clear all marketplace cache entries
+aidd marketplace cache clear acme              # clear cache for a specific marketplace
 ```
 
 Marketplace sources accept a GitHub shorthand (`owner/repo`) or a full path to a local catalog file. Use `--token` on `marketplace add` or `plugin install` when the source requires authentication.
@@ -364,18 +381,6 @@ aidd self-update --dry-run      # preview without installing
 aidd self-update --force        # reinstall even if already up to date
 ```
 
-### `aidd config`
-
-Reads or updates project-level configuration backed by the manifest.
-
-```bash
-aidd config list                # show all config values
-aidd config get docsDir         # read a value (docsDir, tools)
-aidd config set docsDir my_docs # update docsDir
-```
-
-`tools` is read-only — use `install`/`uninstall` to change it.
-
 ---
 
 ## Options
@@ -384,7 +389,6 @@ aidd config set docsDir my_docs # update docsDir
 
 ```bash
 aidd update --verbose           # detailed logs
-aidd update --repo owner/repo   # alternative framework repository
 ```
 
 **Environment variables:**

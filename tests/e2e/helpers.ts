@@ -81,10 +81,7 @@ export async function runCliFast(
  * The frameworkPath parameter is kept for API compatibility but no longer used
  * (init no longer copies framework files).
  */
-export async function initProject(
-  projectDir: string,
-  _frameworkPath: string
-): Promise<void> {
+export async function initProject(projectDir: string, _frameworkPath: string): Promise<void> {
   const output = new CLIOutput(false);
   const deps = await createDeps(projectDir, { verbose: false }, output);
   await new InitUseCase(deps.fs, deps.manifestRepo).execute({
