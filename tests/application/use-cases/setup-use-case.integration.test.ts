@@ -1,9 +1,13 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { InstallFrameworkPluginsUseCase } from "../../../src/application/use-cases/install-framework-plugins-use-case.js";
+import { SetupMarketplaceSourceUseCase } from "../../../src/application/use-cases/setup/setup-marketplace-source-use-case.js";
+import { SetupPluginsPromptUseCase } from "../../../src/application/use-cases/setup/setup-plugins-prompt-use-case.js";
+import { SetupToolsUseCase } from "../../../src/application/use-cases/setup/setup-tools-use-case.js";
 import { SetupUseCase } from "../../../src/application/use-cases/setup-use-case.js";
-import { type ToolId, VALID_TOOL_IDS } from "../../../src/domain/tools/registry.js";
+import { MarketplaceSourceMode } from "../../../src/domain/models/marketplace-source-mode.js";
+import { SetupFlow } from "../../../src/domain/models/setup-flow.js";
+import { AI_TOOL_IDS, IDE_TOOL_IDS, type ToolId } from "../../../src/domain/tools/registry.js";
 import { SilentPrompterAdapter } from "../../../src/infrastructure/adapters/prompter-adapter.js";
 import {
   buildDeps,
@@ -13,55 +17,94 @@ import {
   initProject,
 } from "./helpers.js";
 
+// Minimal no-op sub-use-case stubs for marketplace (network calls not needed in unit-style integration tests)
+function makeNoOpMarketplaceRegisterFramework() {
+  return { execute: vi.fn().mockResolvedValue({ registered: false }) } as never;
+}
+
+function makeNoOpMarketplaceRefresh() {
+  return { execute: vi.fn().mockResolvedValue({ results: [], failedCount: 0 }) } as never;
+}
+
+function makeNoOpMarketplaceSyncSettings() {
+  return { execute: vi.fn().mockResolvedValue(undefined) } as never;
+}
+
+function makeNoOpPluginPick() {
+  return { execute: vi.fn().mockResolvedValue({ marketplace: {}, installed: [] }) } as never;
+}
+
+function makeNoOpPluginInstallFromMarketplace() {
+  return { execute: vi.fn().mockResolvedValue({ marketplace: {}, entry: {} }) } as never;
+}
+
+function makeNoOpMarketplaceRegistry() {
+  return { list: vi.fn().mockResolvedValue([]) } as never;
+}
+
+function makeNoOpResolveMarketplace() {
+  return {
+    execute: vi.fn().mockResolvedValue({ marketplace: {}, localPath: "", catalog: null }),
+  } as never;
+}
+
 describe("setup without TTY", () => {
   let tempDir: string;
   let projectRoot: string;
 
   beforeEach(async () => {
     ({ tempDir, projectRoot } = await createTempProject());
+    process.env.AIDD_SKIP_MARKETPLACE_REFRESH = "1";
   });
 
   afterEach(async () => {
+    delete process.env.AIDD_SKIP_MARKETPLACE_REFRESH;
     await cleanupTempProject(tempDir);
   });
 
-  function makeInstallFrameworkPluginsUseCase(): InstallFrameworkPluginsUseCase {
-    return {
-      execute: vi
-        .fn()
-        .mockResolvedValue({ installedCount: 0, skippedCount: 0, deletedCount: 0, warnings: [] }),
-    } as unknown as InstallFrameworkPluginsUseCase;
-  }
-
   function buildUseCase() {
     const deps = buildDeps(projectRoot);
+    const prompter = new SilentPrompterAdapter();
+    const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(prompter);
+    const setupToolsUseCase = new SetupToolsUseCase(
+      deps.manifestRepo,
+      deps.installRuntimeConfigUseCase,
+      deps.installIdeConfigUseCase
+    );
+    const setupPluginsPromptUseCase = new SetupPluginsPromptUseCase(
+      makeNoOpPluginPick(),
+      makeNoOpPluginInstallFromMarketplace(),
+      makeNoOpMarketplaceRegistry(),
+      makeNoOpResolveMarketplace()
+    );
     return new SetupUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.logger,
-      new SilentPrompterAdapter(),
-      deps.installRuntimeConfigUseCase,
-      deps.installIdeConfigUseCase,
-      makeInstallFrameworkPluginsUseCase(),
+      setupMarketplaceSourceUseCase,
+      makeNoOpMarketplaceRegisterFramework(),
+      makeNoOpMarketplaceRefresh(),
+      makeNoOpMarketplaceSyncSettings(),
+      setupToolsUseCase,
+      setupPluginsPromptUseCase,
       deps.currentVersionProvider
     );
   }
 
-  async function seedAdoptSignal() {
-    const commandDir = join(projectRoot, ".claude", "commands");
-    await mkdir(commandDir, { recursive: true });
-    await writeFile(
-      join(commandDir, "implement.md"),
-      "---\nname: aidd:04:implement\ndescription: test\n---\nbody"
-    );
+  function remoteFlow(opts: Partial<{ aiTools: ToolId[]; ideTools: ToolId[] }> = {}): SetupFlow {
+    return new SetupFlow({
+      projectRoot,
+      source: MarketplaceSourceMode.remote(),
+      aiTools: opts.aiTools ?? [],
+      ideTools: opts.ideTools ?? [],
+      pluginMode: "none",
+      interactive: false,
+    });
   }
 
   it("fresh project with all tools flag initializes and installs all tools", async () => {
-    const result = await buildUseCase().execute({
-      projectRoot,
-      interactive: false,
-      toolIds: [...VALID_TOOL_IDS],
-    });
+    const result = await buildUseCase().execute(
+      remoteFlow({ aiTools: [...AI_TOOL_IDS], ideTools: [...IDE_TOOL_IDS] })
+    );
 
     expect(result.kind).toBe("initialized");
     if (result.kind === "initialized") {
@@ -70,62 +113,20 @@ describe("setup without TTY", () => {
   });
 
   it("fresh project without tool flags initializes docs only and installs no tools", async () => {
-    const result = await buildUseCase().execute({
-      projectRoot,
-      interactive: false,
-    });
+    const result = await buildUseCase().execute(remoteFlow());
 
     expect(result.kind).toBe("initialized");
     if (result.kind === "initialized") {
       expect(result.install.results).toHaveLength(0);
     }
-  });
-
-  it("existing tool files detected with tools and from flags registers the tool in manifest", async () => {
-    await seedAdoptSignal();
-
-    const result = await buildUseCase().execute({
-      projectRoot,
-      interactive: false,
-      toolIds: ["claude" as ToolId],
-      from: "test",
-    });
-
-    expect(result.kind).toBe("adopted");
-  });
-
-  it("existing tool files detected without from flag fails with a clear error", async () => {
-    await seedAdoptSignal();
-
-    await expect(
-      buildUseCase().execute({
-        projectRoot,
-        interactive: false,
-        toolIds: [...VALID_TOOL_IDS],
-      })
-    ).rejects.toThrow(/from/i);
-  });
-
-  it("error message includes triggering signal paths when adopt requires version", async () => {
-    await seedAdoptSignal();
-
-    await expect(
-      buildUseCase().execute({
-        projectRoot,
-        interactive: false,
-        toolIds: [...VALID_TOOL_IDS],
-      })
-    ).rejects.toThrow(".claude/commands/implement.md");
   });
 
   it("aidd_docs exists without tool signals routes to init and installs tools", async () => {
     await mkdir(join(projectRoot, "aidd_docs"), { recursive: true });
 
-    const result = await buildUseCase().execute({
-      projectRoot,
-      interactive: false,
-      toolIds: [...VALID_TOOL_IDS],
-    });
+    const result = await buildUseCase().execute(
+      remoteFlow({ aiTools: [...AI_TOOL_IDS], ideTools: [...IDE_TOOL_IDS] })
+    );
 
     expect(result.kind).toBe("initialized");
     if (result.kind === "initialized") {
@@ -133,56 +134,37 @@ describe("setup without TTY", () => {
     }
   });
 
-  it("existing tool files detected without tools flag fails with a clear error", async () => {
-    await seedAdoptSignal();
-
-    await expect(
-      buildUseCase().execute({
-        projectRoot,
-        interactive: false,
-      })
-    ).rejects.toThrow("--ai or --ide");
-  });
-
-  it("manifest exists but no tools installed and all tools flag installs all tools", async () => {
+  it("manifest exists — returns up-to-date even with tool flags (tools still installed)", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
-    const result = await buildUseCase().execute({
-      projectRoot,
-      interactive: false,
-      toolIds: [...VALID_TOOL_IDS],
-    });
+    const result = await buildUseCase().execute(
+      remoteFlow({ aiTools: [...AI_TOOL_IDS], ideTools: [...IDE_TOOL_IDS] })
+    );
 
-    expect(result.kind).toBe("installed");
-    if (result.kind === "installed") {
+    expect(result.kind).toBe("up-to-date");
+    if (result.kind === "up-to-date") {
       expect(result.install.results.length).toBeGreaterThan(0);
     }
   });
 
-  it("manifest exists but no tools installed without tool flags installs nothing", async () => {
+  it("manifest exists without tool flags returns up-to-date with empty install", async () => {
     const deps = buildDeps(projectRoot);
     await initProject(deps, projectRoot);
 
-    const result = await buildUseCase().execute({
-      projectRoot,
-      interactive: false,
-    });
+    const result = await buildUseCase().execute(remoteFlow());
 
-    expect(result.kind).toBe("installed");
-    if (result.kind === "installed") {
+    expect(result.kind).toBe("up-to-date");
+    if (result.kind === "up-to-date") {
       expect(result.install.results).toHaveLength(0);
     }
   });
 
-  it("project already up to date — exits without asking to install more tools", async () => {
+  it("project already up to date — exits without error", async () => {
     const deps = buildDeps(projectRoot);
     await initAndInstall(deps, projectRoot, "claude");
 
-    const result = await buildUseCase().execute({
-      projectRoot,
-      interactive: false,
-    });
+    const result = await buildUseCase().execute(remoteFlow());
 
     expect(result.kind).toBe("up-to-date");
   });
@@ -196,11 +178,7 @@ describe("setup without TTY", () => {
     it("succeeds when aidd_docs/ and .aidd/ exist but no manifest and no tool dirs", async () => {
       await seedPostUninstallState();
 
-      const result = await buildUseCase().execute({
-        projectRoot,
-        interactive: false,
-        toolIds: ["claude" as ToolId],
-      });
+      const result = await buildUseCase().execute(remoteFlow({ aiTools: ["claude" as ToolId] }));
 
       expect(result.kind).toBe("initialized");
     });
@@ -208,11 +186,7 @@ describe("setup without TTY", () => {
     it("installs selected tools when only aidd_docs/ survives uninstall", async () => {
       await seedPostUninstallState();
 
-      const result = await buildUseCase().execute({
-        projectRoot,
-        interactive: false,
-        toolIds: ["opencode" as ToolId],
-      });
+      const result = await buildUseCase().execute(remoteFlow({ aiTools: ["opencode" as ToolId] }));
 
       expect(result.kind).toBe("initialized");
       if (result.kind === "initialized") {
@@ -222,15 +196,11 @@ describe("setup without TTY", () => {
       }
     });
 
-    it("does not route to adopt when only aidd_docs/ exists (no tool signal files)", async () => {
+    it("does not fail when only aidd_docs/ exists (no manifest)", async () => {
       await seedPostUninstallState();
 
-      const result = await buildUseCase().execute({
-        projectRoot,
-        interactive: false,
-      });
+      const result = await buildUseCase().execute(remoteFlow());
 
-      expect(result.kind).not.toBe("adopted");
       expect(result.kind).toBe("initialized");
     });
 
@@ -238,11 +208,7 @@ describe("setup without TTY", () => {
       await seedPostUninstallState();
       await writeFile(join(projectRoot, "aidd_docs", "README.md"), "my custom readme");
 
-      await buildUseCase().execute({
-        projectRoot,
-        interactive: false,
-        toolIds: ["claude" as ToolId],
-      });
+      await buildUseCase().execute(remoteFlow({ aiTools: ["claude" as ToolId] }));
 
       const content = await readFile(join(projectRoot, "aidd_docs", "README.md"), "utf-8");
       expect(content).toBe("my custom readme");

@@ -10,6 +10,8 @@ export interface MarketplaceRegisterFrameworkOptions {
   frameworkPath?: string;
   /** Git ref/tag to pin marketplace at (e.g. v4.1.0-beta.5). Used in remote mode. */
   ref?: string;
+  /** Explicit plugin source — when provided, skips manifest.getMode() read. */
+  pluginSource?: PluginSource;
 }
 
 export interface MarketplaceRegisterFrameworkResult {
@@ -31,7 +33,8 @@ export class MarketplaceRegisterFrameworkUseCase {
     if (alreadyRegistered && options.force) {
       await this.registry.delete(options.projectRoot, FRAMEWORK_MARKETPLACE_NAME, "project");
     }
-    const source = await this.deriveSource(options.frameworkPath, options.ref);
+    const source =
+      options.pluginSource ?? (await this.deriveSource(options.frameworkPath, options.ref));
     const marketplace = Marketplace.create({
       name: FRAMEWORK_MARKETPLACE_NAME,
       source,
