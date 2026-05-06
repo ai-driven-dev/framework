@@ -47,7 +47,6 @@ interface RestoreOptions {
   force?: boolean;
   interactive?: boolean;
   manifest?: Manifest;
-  repo?: string;
 }
 
 interface RestoreToolResult {
@@ -109,11 +108,10 @@ export class RestoreUseCase {
       projectRoot,
       force = false,
       interactive = false,
-      repo,
     } = options;
 
     const manifest = options.manifest ?? (await this.manifestRepo.load());
-    if (manifest === null) throw new NoManifestError(repo);
+    if (manifest === null) throw new NoManifestError();
 
     const resolvedVersion = version ?? "unknown";
     const descriptor = this.buildStaticDescriptor(resolvedVersion);

@@ -2,7 +2,6 @@ import { platform } from "node:os";
 import { Command } from "commander";
 import { registerAuthCommand } from "./application/commands/auth.js";
 import { registerCleanCommand } from "./application/commands/clean.js";
-import { registerConfigCommand } from "./application/commands/config.js";
 import { registerDoctorCommand } from "./application/commands/doctor.js";
 import { registerInstallCommand } from "./application/commands/install.js";
 import { registerMarketplaceCommand } from "./application/commands/marketplace.js";
@@ -33,11 +32,9 @@ program
   .name("aidd")
   .description("Generate AI coding assistant configurations from the AIDD framework")
   .version(formatVersion(currentVersion), "-V, --version", "Show version number")
-  .option("--verbose", "Show detailed diagnostic output", false)
-  .option("--repo <owner/repo>", "GitHub repository in owner/repo format");
+  .option("--verbose", "Show detailed diagnostic output", false);
 
 registerAuthCommand(program);
-registerConfigCommand(program);
 registerInstallCommand(program);
 registerUninstallCommand(program);
 registerStatusCommand(program);
@@ -53,13 +50,11 @@ registerMarketplaceCommand(program);
 registerMigrateCommand(program);
 
 program.hook("preAction", async (_thisCommand, actionCommand) => {
-  const opts = program.opts<{ verbose?: boolean; repo?: string }>();
+  const opts = program.opts<{ verbose?: boolean }>();
   const output = new CLIOutput(opts.verbose ?? false);
-  const deps = await createDeps(
-    process.cwd(),
-    { verbose: opts.verbose ?? false, repo: opts.repo },
-    output
-  ).catch(() => null);
+  const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(
+    () => null
+  );
   if (deps) {
     const cmd = actionCommand.name();
     await printUpdateBanner(

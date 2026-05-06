@@ -213,37 +213,6 @@ const INSTALLED_NODES: MenuNode[] = [
         command: ["self-update"],
       },
       {
-        name: "Config",
-        value: "config",
-        description: "View or edit project settings",
-        children: [
-          {
-            name: "Show all settings",
-            value: "list",
-            description: "List all config values",
-            command: ["config", "list"],
-          },
-          {
-            name: "Get a value",
-            value: "get",
-            description: "Read a specific config key",
-            children: [
-              { name: "Docs directory", value: "docsDir", command: ["config", "get", "docsDir"] },
-              { name: "Repository", value: "repo", command: ["config", "get", "repo"] },
-              { name: "Installed tools", value: "tools", command: ["config", "get", "tools"] },
-            ],
-          },
-          {
-            name: "Set repository",
-            value: "set-repo",
-            description: "Change the framework repository",
-            command: ["config", "set", "repo"],
-            inputPrompt: "New value for repo",
-            commandSuffix: ["--force"],
-          },
-        ],
-      },
-      {
         name: "Cache",
         value: "cache",
         description: "Manage cached framework versions",

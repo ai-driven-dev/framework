@@ -24,7 +24,6 @@ import { CatalogUseCase } from "./shared/catalog-use-case.js";
 interface UninstallOptions {
   toolIds: ToolId[];
   projectRoot: string;
-  repo?: string;
   mcpFilter: string[];
   pluginName?: string;
 }
@@ -43,10 +42,10 @@ export class UninstallUseCase {
   ) {}
 
   async execute(options: UninstallOptions): Promise<UninstallToolResult[]> {
-    const { toolIds, projectRoot, repo, mcpFilter, pluginName } = options;
+    const { toolIds, projectRoot, mcpFilter, pluginName } = options;
 
     if (pluginName !== undefined) {
-      return this.executePluginUninstall(pluginName, toolIds, projectRoot, repo);
+      return this.executePluginUninstall(pluginName, toolIds, projectRoot);
     }
 
     if (toolIds.length === 0) {
@@ -55,7 +54,7 @@ export class UninstallUseCase {
       );
     }
 
-    const manifest = await this.loadAndValidate(toolIds, repo);
+    const manifest = await this.loadAndValidate(toolIds);
 
     const results =
       mcpFilter.length > 0
@@ -70,11 +69,10 @@ export class UninstallUseCase {
   private async executePluginUninstall(
     pluginName: string,
     toolIds: ToolId[],
-    projectRoot: string,
-    repo?: string
+    projectRoot: string
   ): Promise<UninstallToolResult[]> {
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) throw new NoManifestError(repo);
+    if (manifest === null) throw new NoManifestError();
     const scope = this.resolvePluginToolScope(toolIds, manifest);
     const results = await this.removePluginFromTools(pluginName, scope, projectRoot, manifest);
     if (results.length === 0) throw new PluginNotFoundError(pluginName);
@@ -118,9 +116,9 @@ export class UninstallUseCase {
     return deleted;
   }
 
-  private async loadAndValidate(toolIds: ToolId[], repo?: string): Promise<Manifest> {
+  private async loadAndValidate(toolIds: ToolId[]): Promise<Manifest> {
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) throw new NoManifestError(repo);
+    if (manifest === null) throw new NoManifestError();
     for (const toolId of toolIds) {
       if (!manifest.hasTool(toolId)) throw new ToolNotInstalledError(toolId);
     }

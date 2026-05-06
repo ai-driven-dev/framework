@@ -60,7 +60,6 @@ import { HttpClient } from "./http/http-client.js";
 
 interface GlobalOptions {
   verbose: boolean;
-  repo?: string;
 }
 
 interface Deps {
@@ -222,7 +221,6 @@ export async function createDeps(
     pluginFetcher
   );
   const marketplaceRegisterFrameworkUseCase = new MarketplaceRegisterFrameworkUseCase(
-    manifestRepo,
     marketplaceRegistry
   );
   const pluginPickUseCase = new PluginPickUseCase(

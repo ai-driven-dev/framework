@@ -11,10 +11,10 @@ export function registerMigrateCommand(program: Command): void {
     .option("--dry-run", "Detect and display migration plan without applying changes")
     .option("--non-interactive", "Apply migration without interactive prompts")
     .action(async (cmdOptions: { dryRun?: boolean; nonInteractive?: boolean }) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const result = await new MigrateUseCase(
           deps.fs,
           deps.manifestRepo,

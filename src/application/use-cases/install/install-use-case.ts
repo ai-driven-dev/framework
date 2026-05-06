@@ -90,7 +90,6 @@ interface InstallOptions {
   docsDir?: string;
   projectRoot: string;
   force?: boolean;
-  repo?: string;
   interactive?: boolean;
   mcpFilter?: string[];
   plugins?: PluginSource[];
@@ -128,10 +127,10 @@ export class InstallUseCase {
   ) {}
 
   async execute(options: InstallOptions): Promise<InstallToolResult[]> {
-    const { frameworkPath, version, projectRoot, force = false, repo } = options;
+    const { frameworkPath, version, projectRoot, force = false } = options;
 
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) throw new NoManifestError(repo);
+    if (manifest === null) throw new NoManifestError();
 
     const docsDir = options.docsDir ?? manifest.docsDir;
     let toolIds = await this.resolveToolIds(options, manifest);

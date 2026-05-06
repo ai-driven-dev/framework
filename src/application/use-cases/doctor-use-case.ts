@@ -60,7 +60,6 @@ interface DoctorReport {
 interface DoctorOptions {
   projectRoot: string;
   category?: ToolCategory;
-  repo?: string;
   pluginName?: string;
 }
 
@@ -74,7 +73,7 @@ export class DoctorUseCase {
   ) {}
 
   async execute(options: DoctorOptions): Promise<DoctorReport> {
-    const { projectRoot, category, repo, pluginName } = options;
+    const { projectRoot, category, pluginName } = options;
 
     let manifest: Manifest | null;
     try {
@@ -86,7 +85,7 @@ export class DoctorUseCase {
     }
 
     if (manifest === null) {
-      throw new NoManifestError(repo);
+      throw new NoManifestError();
     }
 
     const allowedIds = category ? new Set(toolIdsForCategory(category) as readonly string[]) : null;

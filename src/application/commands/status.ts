@@ -25,20 +25,19 @@ export function registerStatusCommand(program: Command): void {
     .argument("[category]", "Filter to 'ai' or 'ide' tools")
     .option("--plugin <name>", "Filter status to one plugin")
     .action(async (categoryArg: string | undefined, cmdOptions: { plugin?: string }) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
 
       const category = parseCategoryArg(categoryArg, output);
 
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
 
         const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
         const report = await useCase.execute({
           projectRoot,
           filterToolId: undefined,
           category,
-          repo,
           pluginName: cmdOptions.plugin,
         });
 

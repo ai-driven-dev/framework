@@ -129,41 +129,6 @@ describe("interactive menu", () => {
       expect(result.command).toEqual(["self-update"]);
     });
 
-    describe("config submenu", () => {
-      it("lists all settings", async () => {
-        const deps = buildDeps(projectRoot);
-        await initProject(deps, projectRoot);
-        const { prompter } = makeQueuedPrompter(["system", "config", "list"]);
-        const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
-        expect(result.command).toEqual(["config", "list"]);
-      });
-
-      it("gets a specific setting by key", async () => {
-        const deps = buildDeps(projectRoot);
-        await initProject(deps, projectRoot);
-        const { prompter } = makeQueuedPrompter(["system", "config", "get", "docsDir"]);
-        const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
-        expect(result.command).toEqual(["config", "get", "docsDir"]);
-      });
-
-      it("sets the repository with the entered value", async () => {
-        const deps = buildDeps(projectRoot);
-        await initProject(deps, projectRoot);
-        const { prompter } = makeQueuedPrompter(["system", "config", "set-repo"], ["owner/repo"]);
-        const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
-        expect(result.command).toEqual(["config", "set", "repo", "owner/repo", "--force"]);
-      });
-
-      it("goes back to system group from config submenu", async () => {
-        const deps = buildDeps(projectRoot);
-        await initProject(deps, projectRoot);
-        const { prompter, selectMock } = makeQueuedPrompter(["system", "config", "back", "exit"]);
-        const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
-        expect(result.command).toEqual(["exit"]);
-        expect(selectMock).toHaveBeenCalledTimes(4);
-      });
-    });
-
     describe("cache submenu", () => {
       it("lists cached versions", async () => {
         const deps = buildDeps(projectRoot);

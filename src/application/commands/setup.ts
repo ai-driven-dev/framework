@@ -124,7 +124,7 @@ export function registerSetupCommand(program: Command): void {
     .option("--no-plugins", "Skip plugin installation")
     .option("--yes", "Accept defaults without prompting")
     .action(async (cmdOptions: SetupCmdOptions) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
 
       validatePluginFlags(cmdOptions, output);
@@ -162,7 +162,7 @@ export function registerSetupCommand(program: Command): void {
       });
 
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
 
         const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(deps.prompter);
         const setupToolsUseCase = new SetupToolsUseCase(

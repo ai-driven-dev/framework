@@ -14,7 +14,6 @@ interface InitOptions {
   explicitDocsDir?: string;
   projectRoot: string;
   force?: boolean;
-  repo?: string;
   interactive?: boolean;
 }
 
@@ -31,14 +30,14 @@ export class InitUseCase {
   ) {}
 
   async checkPreconditions(
-    options: Pick<InitOptions, "docsDir" | "projectRoot" | "force" | "repo">
+    options: Pick<InitOptions, "docsDir" | "projectRoot" | "force">
   ): Promise<void> {
-    const { projectRoot, force = false, repo } = options;
+    const { projectRoot, force = false } = options;
     const existing = await this.manifestRepo.load();
 
     if (force) {
       if (existing === null) {
-        throw new NoManifestError(repo);
+        throw new NoManifestError();
       }
       return;
     }
@@ -50,7 +49,7 @@ export class InitUseCase {
     }
 
     if (await this.hasAiddSignals(projectRoot)) {
-      throw new AiddFilesDetectedError(repo);
+      throw new AiddFilesDetectedError();
     }
   }
 
@@ -64,12 +63,12 @@ export class InitUseCase {
   async execute(options: InitOptions): Promise<InitResult> {
     const { projectRoot, force = false } = options;
 
-    const { docsDir, explicitDocsDir, repo } = await this.resolveInitConfig(options);
+    const { docsDir, explicitDocsDir } = await this.resolveInitConfig(options);
     const resolvedInputDocsDir = docsDir ?? Manifest.DEFAULT_DOCS_DIR;
     Manifest.validateDocsDir(resolvedInputDocsDir);
 
     const existing = await this.manifestRepo.load();
-    await this.checkPreconditions({ docsDir: resolvedInputDocsDir, projectRoot, force, repo });
+    await this.checkPreconditions({ docsDir: resolvedInputDocsDir, projectRoot, force });
     const resolvedDocsDir =
       force && existing !== null && explicitDocsDir === undefined
         ? existing.docsDir
@@ -77,7 +76,7 @@ export class InitUseCase {
 
     await this.fs.createDirectory(join(projectRoot, resolvedDocsDir));
 
-    const manifest = this.buildManifest(existing, resolvedDocsDir, repo, force);
+    const manifest = this.buildManifest(existing, resolvedDocsDir, force);
     await this.persistInit(manifest, resolvedDocsDir, projectRoot, force);
     return { docsDir: resolvedDocsDir, manifest };
   }
@@ -85,12 +84,11 @@ export class InitUseCase {
   private buildManifest(
     existing: Manifest | null,
     resolvedDocsDir: string,
-    repo: string | undefined,
     force: boolean
   ): Manifest {
     return force && existing !== null
       ? existing.withDocsDir(resolvedDocsDir)
-      : Manifest.create(resolvedDocsDir, repo);
+      : Manifest.create(resolvedDocsDir);
   }
 
   /** Saves manifest, regenerates catalog, and conditionally adds gitignore entry. */
@@ -109,10 +107,10 @@ export class InitUseCase {
     }
   }
 
-  /** Resolves interactive config (docsDir, repo) if prompted, otherwise uses options as-is. */
+  /** Resolves interactive config (docsDir) if prompted, otherwise uses options as-is. */
   private async resolveInitConfig(
     options: InitOptions
-  ): Promise<{ docsDir?: string; explicitDocsDir?: string; repo?: string }> {
+  ): Promise<{ docsDir?: string; explicitDocsDir?: string }> {
     const interactive = options.interactive ?? false;
     const force = options.force ?? false;
 
@@ -120,7 +118,6 @@ export class InitUseCase {
       return {
         docsDir: options.docsDir,
         explicitDocsDir: options.explicitDocsDir,
-        repo: options.repo,
       };
     }
 
@@ -129,12 +126,7 @@ export class InitUseCase {
       Manifest.DEFAULT_DOCS_DIR
     );
     const docsDir = docsDirInput || Manifest.DEFAULT_DOCS_DIR;
-    const repoInput = await this.prompter.input(
-      "Framework repository (owner/repo, leave blank to skip):",
-      options.repo ?? ""
-    );
-    const repo = repoInput !== "" ? repoInput.trim() : options.repo;
 
-    return { docsDir, explicitDocsDir: docsDir, repo };
+    return { docsDir, explicitDocsDir: docsDir };
   }
 }

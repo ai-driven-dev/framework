@@ -403,5 +403,4 @@ describe("sync", () => {
     const cursorFiles = manifest?.getToolFiles("cursor") ?? [];
     expect(cursorFiles.some((f) => f.relativePath.includes("my-custom-agent"))).toBe(false);
   });
-
 });

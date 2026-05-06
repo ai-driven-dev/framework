@@ -15,7 +15,6 @@ import { ApplyPluginFilesUseCase } from "../shared/apply-plugin-files-use-case.j
 export interface RestorePluginOptions {
   pluginName: string;
   projectRoot: string;
-  repo?: string;
 }
 
 export interface RestorePluginResult {
@@ -32,9 +31,9 @@ export class RestorePluginUseCase {
   ) {}
 
   async execute(options: RestorePluginOptions): Promise<RestorePluginResult> {
-    const { pluginName, projectRoot, repo } = options;
+    const { pluginName, projectRoot } = options;
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) throw new NoManifestError(repo);
+    if (manifest === null) throw new NoManifestError();
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
     const docsDir = manifest.docsDir;
     const toolIds = AI_TOOL_IDS.filter((id) => manifest.hasTool(id)) as AiToolId[];

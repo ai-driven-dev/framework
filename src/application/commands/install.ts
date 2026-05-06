@@ -115,7 +115,7 @@ Examples:
           recommendedPlugins: boolean;
         }
       ) => {
-        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+        const { verbose, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
 
         if (!cmdOptions.all && !categoryArg && toolArgs.length === 0 && !process.stdout.isTTY) {
@@ -137,7 +137,7 @@ Examples:
         try {
           const { toolIds } = resolveInstallArgs(categoryArg, toolArgs, cmdOptions, output);
 
-          const deps = await createDeps(projectRoot, { verbose, repo }, output);
+          const deps = await createDeps(projectRoot, { verbose }, output);
 
           const resolvedIds = toolIds ?? [];
           if (resolvedIds.length === 0) {

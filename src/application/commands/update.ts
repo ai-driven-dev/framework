@@ -18,7 +18,7 @@ export function registerUpdateCommand(program: Command): void {
     .option("-f, --force", "Overwrite conflicting files without prompting", false)
     .option("--tool <tool>", "Limit update to a specific tool")
     .action(async (cmdOptions: { force: boolean; tool?: string }) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
 
       try {
@@ -26,7 +26,7 @@ export function registerUpdateCommand(program: Command): void {
           assertValidToolIds([cmdOptions.tool]);
         }
 
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
         const installedIds = manifest.getInstalledToolIds();
         const targetIds: ToolId[] = cmdOptions.tool ? [cmdOptions.tool as ToolId] : installedIds;

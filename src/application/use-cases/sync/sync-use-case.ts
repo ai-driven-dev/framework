@@ -40,7 +40,6 @@ interface SyncOptions {
   targetTools?: ToolId[];
   force?: boolean;
   includeUserFiles?: boolean;
-  repo?: string;
   interactive?: boolean;
   pluginName?: string;
 }
@@ -172,9 +171,9 @@ export class SyncUseCase {
   ) {}
 
   async execute(options: SyncOptions): Promise<SyncResult> {
-    const { projectRoot, force = false, includeUserFiles = false, repo, pluginName } = options;
+    const { projectRoot, force = false, includeUserFiles = false, pluginName } = options;
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) throw new NoManifestError(repo);
+    if (manifest === null) throw new NoManifestError();
 
     if (pluginName !== undefined) {
       return this.executePluginSync(pluginName, projectRoot, manifest);

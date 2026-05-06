@@ -36,7 +36,7 @@ Examples:
         toolArgs: string[],
         cmdOptions: { all: boolean; mcp?: string; plugin?: string }
       ) => {
-        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+        const { verbose, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
 
         const category = parseCategoryArg(categoryArg, output);
@@ -54,7 +54,6 @@ Examples:
             const results = await useCase.execute({
               toolIds: pluginToolIds,
               projectRoot,
-              repo,
               mcpFilter: [],
               pluginName: cmdOptions.plugin,
             });
@@ -67,7 +66,7 @@ Examples:
 
           if (cmdOptions.all) {
             const manifest = await deps.manifestRepo.load();
-            if (!manifest) throw new NoManifestError(repo);
+            if (!manifest) throw new NoManifestError();
             const allInstalled = manifest.getInstalledToolIds();
             toolIds = category
               ? allInstalled.filter((id) =>
@@ -84,7 +83,7 @@ Examples:
             if (category) assertToolIdsMatchCategory(toolIds, category);
           } else if (cmdOptions.mcp !== undefined) {
             const manifest = await deps.manifestRepo.load();
-            if (!manifest) throw new NoManifestError(repo);
+            if (!manifest) throw new NoManifestError();
             toolIds = manifest.getInstalledToolIds();
           } else {
             if (!process.stdout.isTTY) {
@@ -95,7 +94,7 @@ Examples:
             }
 
             const manifest = await deps.manifestRepo.load();
-            if (!manifest) throw new NoManifestError(repo);
+            if (!manifest) throw new NoManifestError();
 
             const installedIds = manifest.getInstalledToolIds();
             const candidates = category
@@ -144,7 +143,7 @@ Examples:
           }
 
           const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-          const results = await useCase.execute({ toolIds, projectRoot, repo, mcpFilter });
+          const results = await useCase.execute({ toolIds, projectRoot, mcpFilter });
 
           const totalFileCount = results.reduce((sum, r) => sum + r.fileCount, 0);
 

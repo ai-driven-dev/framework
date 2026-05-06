@@ -22,7 +22,7 @@ export function registerSyncCommand(program: Command): void {
         includeUserFiles: boolean;
         plugin?: string;
       }) => {
-        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+        const { verbose, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
 
         if (!cmdOptions.source && !cmdOptions.plugin && !process.stdout.isTTY) {
@@ -40,7 +40,7 @@ export function registerSyncCommand(program: Command): void {
             assertValidToolIds([cmdOptions.target]);
           }
 
-          const deps = await createDeps(projectRoot, { verbose, repo }, output);
+          const deps = await createDeps(projectRoot, { verbose }, output);
 
           const sourceTool = cmdOptions.source as ToolId | undefined;
           const targetTools = cmdOptions.target ? [cmdOptions.target as ToolId] : undefined;
@@ -59,7 +59,6 @@ export function registerSyncCommand(program: Command): void {
             targetTools,
             force: cmdOptions.force,
             includeUserFiles: cmdOptions.includeUserFiles,
-            repo: repo,
             interactive: process.stdout.isTTY,
             pluginName: cmdOptions.plugin,
           });

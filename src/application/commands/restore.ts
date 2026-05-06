@@ -26,7 +26,7 @@ export function registerRestoreCommand(program: Command): void {
           plugin?: string;
         }
       ) => {
-        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+        const { verbose, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
 
         try {
@@ -34,7 +34,7 @@ export function registerRestoreCommand(program: Command): void {
             assertValidToolIds([cmdOptions.tool]);
           }
 
-          const deps = await createDeps(projectRoot, { verbose, repo }, output);
+          const deps = await createDeps(projectRoot, { verbose }, output);
 
           if (cmdOptions.plugin !== undefined) {
             await new RestorePluginUseCase(
@@ -43,14 +43,14 @@ export function registerRestoreCommand(program: Command): void {
               deps.pluginFetcher,
               deps.pluginDistributionReader,
               deps.hasher
-            ).execute({ pluginName: cmdOptions.plugin, projectRoot, repo });
+            ).execute({ pluginName: cmdOptions.plugin, projectRoot });
             output.success(`Plugin ${cmdOptions.plugin} restored.`);
             return;
           }
 
           const manifest = await deps.manifestRepo.load();
           if (manifest === null) {
-            throw new NoManifestError(repo);
+            throw new NoManifestError();
           }
 
           const version =
@@ -78,7 +78,6 @@ export function registerRestoreCommand(program: Command): void {
             );
             const statusReport = await statusUseCase.execute({
               projectRoot,
-              repo: repo,
             });
 
             const driftedFiles = statusReport.tools.flatMap((t) =>
@@ -127,7 +126,6 @@ export function registerRestoreCommand(program: Command): void {
             force: isInteractive ? true : cmdOptions.force,
             interactive: isTTY,
             manifest,
-            repo: repo,
           });
 
           const nothingDone =

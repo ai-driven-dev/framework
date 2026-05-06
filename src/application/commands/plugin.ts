@@ -35,12 +35,12 @@ export function registerPluginCommand(program: Command): void {
     .description("Add a plugin to one or all AI tools")
     .option("--tool <toolId>", "Target AI tool (default: all installed)")
     .action(async (sourceArg: string, cmdOptions: { tool?: string }) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
         assertValidAiToolId(cmdOptions.tool);
         const source = parsePluginSourceShorthand(sourceArg);
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         await deps.pluginAddUseCase.execute({
           source,
           toolIds: parseToolOption(cmdOptions.tool),
@@ -59,11 +59,11 @@ export function registerPluginCommand(program: Command): void {
     .description("Remove a plugin from one or all AI tools")
     .option("--tool <toolId>", "Target AI tool (default: all installed)")
     .action(async (name: string, cmdOptions: { tool?: string }) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
         assertValidAiToolId(cmdOptions.tool);
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         await deps.pluginRemoveUseCase.execute({
           pluginName: name,
           toolIds: parseToolOption(cmdOptions.tool),
@@ -81,11 +81,11 @@ export function registerPluginCommand(program: Command): void {
     .description("List installed plugins for one or all AI tools")
     .option("--tool <toolId>", "Target AI tool (default: all installed)")
     .action(async (cmdOptions: { tool?: string }) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
         assertValidAiToolId(cmdOptions.tool);
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const result = await deps.pluginListUseCase.execute({
           toolIds: parseToolOption(cmdOptions.tool),
         });
@@ -114,13 +114,13 @@ export function registerPluginCommand(program: Command): void {
         pluginArg: string,
         cmdOptions: { from?: string; tool?: string; token?: string; yes?: boolean }
       ) => {
-        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+        const { verbose, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
         try {
           assertValidAiToolId(cmdOptions.tool);
           const { name, version } = parsePluginSpec(pluginArg);
           if (cmdOptions.token) process.env.AIDD_TOKEN = cmdOptions.token;
-          const deps = await createDeps(projectRoot, { verbose, repo }, output);
+          const deps = await createDeps(projectRoot, { verbose }, output);
           const result = await deps.pluginInstallFromMarketplaceUseCase.execute({
             pluginName: name,
             version,
@@ -146,10 +146,10 @@ export function registerPluginCommand(program: Command): void {
     .option("--recommended", "Show only recommended plugins")
     .option("--marketplace <name>", "Limit to a single marketplace")
     .action(async (query: string, cmdOptions: { recommended?: boolean; marketplace?: string }) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const { hits } = await deps.pluginSearchUseCase.execute({
           query,
           recommendedOnly: cmdOptions.recommended ?? false,
@@ -173,11 +173,11 @@ export function registerPluginCommand(program: Command): void {
     .description("Interactively pick a marketplace and install plugins from it")
     .option("--tool <toolId>", "Target AI tool (default: all installed)")
     .action(async (cmdOptions: { tool?: string }) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
         assertValidAiToolId(cmdOptions.tool);
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const result = await deps.pluginPickUseCase.execute({
           toolIds: parseToolOption(cmdOptions.tool),
           projectRoot,
@@ -201,11 +201,11 @@ export function registerPluginCommand(program: Command): void {
     .description("Update one or all plugins for one or all AI tools")
     .option("--tool <toolId>", "Target AI tool (default: all installed)")
     .action(async (name: string | undefined, cmdOptions: { tool?: string }) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
         assertValidAiToolId(cmdOptions.tool);
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const updated = await deps.pluginUpdateUseCase.execute({
           pluginNames: name !== undefined ? [name] : undefined,
           toolIds: parseToolOption(cmdOptions.tool),

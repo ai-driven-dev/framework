@@ -11,13 +11,13 @@ export function registerDoctorCommand(program: Command): void {
     .argument("[category]", "Filter to 'ai' or 'ide' tools")
     .option("--plugin <name>", "Filter check to one plugin")
     .action(async (categoryArg: string | undefined, cmdOptions: { plugin?: string }) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
 
       const category = parseCategoryArg(categoryArg, output);
 
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
 
         const useCase = new DoctorUseCase(
           deps.fs,
@@ -29,7 +29,6 @@ export function registerDoctorCommand(program: Command): void {
         const report = await useCase.execute({
           projectRoot,
           category,
-          repo,
           pluginName: cmdOptions.plugin,
         });
 

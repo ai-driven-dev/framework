@@ -1,31 +1,28 @@
-import { Manifest } from "../domain/models/manifest.js";
 import type { ToolCategory } from "../domain/tools/registry.js";
 
 export { NoFrameworkSourceError } from "../domain/errors.js";
 
 export class NoManifestError extends Error {
-  constructor(repo = Manifest.DEFAULT_REPO) {
-    super(
-      `No AIDD manifest found. Run \`aidd setup\` to initialize your project.\nRepository: ${repo}`
-    );
+  constructor() {
+    super("No AIDD manifest found. Run `aidd setup` to initialize your project.");
     this.name = "NoManifestError";
   }
 }
 
 export class AiddFilesDetectedError extends Error {
-  constructor(repo = Manifest.DEFAULT_REPO) {
+  constructor() {
     super(
-      `AIDD files detected but no manifest found.\nRun \`aidd setup\` to register existing files.\nRepository: ${repo}`
+      "AIDD files detected but no manifest found.\nRun `aidd setup` to register existing files."
     );
     this.name = "AiddFilesDetectedError";
   }
 }
 
 export class AdoptRequiresVersionError extends Error {
-  constructor(repo = Manifest.DEFAULT_REPO, diagnostic = "") {
+  constructor(diagnostic = "") {
     const suffix = diagnostic ? `\n\n${diagnostic}` : "";
     super(
-      `--from <version|path> is required for adopt.\nExample: aidd setup --ai claude --from 3.6.0\nCheck available tags for: ${repo}${suffix}`
+      `--from <version|path> is required for adopt.\nExample: aidd setup --ai claude --from 3.6.0${suffix}`
     );
     this.name = "AdoptRequiresVersionError";
   }

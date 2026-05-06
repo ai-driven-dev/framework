@@ -26,19 +26,11 @@ describe("MarketplaceRegisterFrameworkUseCase", () => {
     await rm(homeDir, { recursive: true, force: true });
   });
 
-  async function withManifestRepo(repo: string | undefined) {
-    const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
-    if (repo !== undefined) {
-      await manifestRepo.save(Manifest.create().withRepo(repo));
-    }
-    return manifestRepo;
-  }
-
   it("registers using github source when pluginSource is github", async () => {
     const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
-    await manifestRepo.save(Manifest.create().withRepo("ai-driven-dev/aidd-framework"));
+    await manifestRepo.save(Manifest.create());
     const registry = new MarketplaceRegistryAdapter();
-    const useCase = new MarketplaceRegisterFrameworkUseCase(manifestRepo, registry);
+    const useCase = new MarketplaceRegisterFrameworkUseCase(registry);
 
     const result = await useCase.execute({
       projectRoot,
@@ -55,10 +47,11 @@ describe("MarketplaceRegisterFrameworkUseCase", () => {
     }
   });
 
-  it("local mode always uses relative dot regardless of install path", async () => {
-    const manifestRepo = await withManifestRepo(undefined);
+  it("defaults to local dot source when no pluginSource is supplied", async () => {
+    const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
+    await manifestRepo.save(Manifest.create());
     const registry = new MarketplaceRegistryAdapter();
-    const useCase = new MarketplaceRegisterFrameworkUseCase(manifestRepo, registry);
+    const useCase = new MarketplaceRegisterFrameworkUseCase(registry);
 
     const result = await useCase.execute({ projectRoot });
 
@@ -68,9 +61,10 @@ describe("MarketplaceRegisterFrameworkUseCase", () => {
   });
 
   it("is idempotent — does not duplicate when called twice", async () => {
-    const manifestRepo = await withManifestRepo("x/y");
+    const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
+    await manifestRepo.save(Manifest.create());
     const registry = new MarketplaceRegistryAdapter();
-    const useCase = new MarketplaceRegisterFrameworkUseCase(manifestRepo, registry);
+    const useCase = new MarketplaceRegisterFrameworkUseCase(registry);
 
     const first = await useCase.execute({ projectRoot });
     const second = await useCase.execute({ projectRoot });

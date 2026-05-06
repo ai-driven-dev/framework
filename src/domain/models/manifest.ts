@@ -2,7 +2,6 @@ import {
   DuplicatePluginError,
   InvalidManifestDataError,
   InvalidManifestToolIdError,
-  InvalidRepoFormatError,
   ManifestValidationError,
   PluginNotFoundError,
   ToolNotInManifestError,
@@ -23,14 +22,7 @@ const VSCODE_MIGRATION_PATHS = new Set([
   ".vscode/settings.json",
 ]);
 
-const REPO_FORMAT_REGEX = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
 const DOCS_DIR_REGEX = /^[a-zA-Z0-9_-]+$/;
-
-export function validateRepoFormat(repo: string): void {
-  if (!REPO_FORMAT_REGEX.test(repo)) {
-    throw new InvalidRepoFormatError();
-  }
-}
 
 interface TrackedFile {
   readonly relativePath: string;
@@ -70,7 +62,6 @@ interface PluginsSectionData {
 interface ManifestData {
   version: number;
   docsDir: string;
-  repo?: string;
   tools: Record<string, ToolEntryData>;
   scripts: ScriptsEntryData | null;
   plugins: PluginsSectionData | null;
@@ -144,7 +135,6 @@ function migrateV4toV5(raw: Record<string, unknown>): void {
 
 export class Manifest {
   static readonly DEFAULT_DOCS_DIR = "aidd_docs";
-  static readonly DEFAULT_REPO = "ai-driven-dev/aidd-framework";
 
   static validateDocsDir(name: string): void {
     if (!DOCS_DIR_REGEX.test(name) || name.includes("..")) {
@@ -158,29 +148,25 @@ export class Manifest {
   private _scripts: ScriptsEntry | null;
   private _plugins: PluginsEntry | null = null;
   readonly docsDir: string;
-  readonly repo?: string;
 
   private constructor(params: {
     tools: Map<ToolId, ToolEntry>;
     scripts: ScriptsEntry | null;
     plugins: PluginsEntry | null;
     docsDir: string;
-    repo?: string;
   }) {
     this._tools = new Map(params.tools);
     this._scripts = params.scripts;
     this._plugins = params.plugins;
     this.docsDir = params.docsDir;
-    this.repo = params.repo;
   }
 
-  static create(docsDir?: string, repo?: string): Manifest {
+  static create(docsDir?: string): Manifest {
     return new Manifest({
       tools: new Map(),
       scripts: null,
       plugins: null,
       docsDir: docsDir ?? Manifest.DEFAULT_DOCS_DIR,
-      repo,
     });
   }
 
@@ -398,17 +384,6 @@ export class Manifest {
       scripts: this._scripts,
       plugins: this._plugins,
       docsDir: newDocsDir,
-      repo: this.repo,
-    });
-  }
-
-  withRepo(newRepo: string): Manifest {
-    return new Manifest({
-      tools: new Map(this._tools),
-      scripts: this._scripts,
-      plugins: this._plugins,
-      docsDir: this.docsDir,
-      repo: newRepo,
     });
   }
 
@@ -449,7 +424,6 @@ export class Manifest {
     return {
       version: MANIFEST_VERSION,
       docsDir: this.docsDir,
-      ...(this.repo !== undefined && { repo: this.repo }),
       tools,
       scripts: this._scripts
         ? { version: this._scripts.version, files: this.toTrackedFileData(this._scripts.files) }
@@ -534,7 +508,6 @@ export class Manifest {
     const tools = Manifest.parseTools(raw);
 
     const docsDir = typeof raw.docsDir === "string" ? raw.docsDir : Manifest.DEFAULT_DOCS_DIR;
-    const repo = typeof raw.repo === "string" ? raw.repo : undefined;
 
     let scripts: ScriptsEntry | null = null;
     if (raw.scripts !== null && raw.scripts !== undefined && typeof raw.scripts === "object") {
@@ -553,7 +526,7 @@ export class Manifest {
         files: Manifest.parseTrackedFiles(pluginsRaw.files),
       };
     }
-    return new Manifest({ tools, scripts, plugins, docsDir, repo });
+    return new Manifest({ tools, scripts, plugins, docsDir });
   }
 
   private static parseTools(raw: Record<string, unknown>): Map<ToolId, ToolEntry> {

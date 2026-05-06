@@ -47,7 +47,7 @@ export function registerMarketplaceCommand(program: Command): void {
           token?: string;
         }
       ) => {
-        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+        const { verbose, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
         const interactive = process.stdout.isTTY;
         if (!interactive && (!nameArg || !sourceArg)) {
@@ -57,7 +57,7 @@ export function registerMarketplaceCommand(program: Command): void {
         try {
           if (cmdOptions.token) process.env.AIDD_TOKEN = cmdOptions.token;
           const scope: MarketplaceScope = cmdOptions.user ? "user" : "project";
-          const deps = await createDeps(projectRoot, { verbose, repo }, output);
+          const deps = await createDeps(projectRoot, { verbose }, output);
           const name = nameArg ?? (await deps.prompter.input("Marketplace name:"));
           const rawSource = sourceArg ?? (await deps.prompter.input("Source (path or user/repo):"));
           const source = parsePluginSourceShorthand(rawSource);
@@ -81,10 +81,10 @@ export function registerMarketplaceCommand(program: Command): void {
     .command("list")
     .description("List registered plugin marketplaces")
     .action(async () => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const { marketplaces } = await deps.marketplaceListUseCase.execute({ projectRoot });
         if (marketplaces.length === 0) output.info("No marketplaces registered.");
         for (const m of marketplaces) output.print(`${m.name} [${m.scope}]`);
@@ -98,10 +98,10 @@ export function registerMarketplaceCommand(program: Command): void {
     .description("Remove a registered plugin marketplace")
     .option("--yes", "Skip the orphan-cleanup prompt")
     .action(async (name: string, cmdOptions: { yes?: boolean }) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const result = await deps.marketplaceRemoveUseCase.execute({
           name,
           projectRoot,
@@ -120,10 +120,10 @@ export function registerMarketplaceCommand(program: Command): void {
     .command("refresh [name]")
     .description("Refresh registered marketplaces")
     .action(async (name: string | undefined) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const { results, failedCount } = await deps.marketplaceRefreshUseCase.execute({
           projectRoot,
           name,
@@ -142,10 +142,10 @@ export function registerMarketplaceCommand(program: Command): void {
     .description("Browse plugins in a registered marketplace")
     .option("--use-cache", "Use the cached catalog if fetch fails")
     .action(async (name: string, cmdOptions: { useCache?: boolean }) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const { catalog, fromCache } = await deps.marketplaceBrowseUseCase.execute({
           name,
           projectRoot,
@@ -167,10 +167,10 @@ export function registerMarketplaceCommand(program: Command): void {
     .command("check")
     .description("Report stale marketplaces and upstream-removed plugins")
     .action(async () => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const { stale, upstreamRemoved, skipped } = await deps.marketplaceCheckUseCase.execute({
           projectRoot,
         });
