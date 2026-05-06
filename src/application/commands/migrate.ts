@@ -23,7 +23,8 @@ export function registerMigrateCommand(program: Command): void {
           deps.marketplaceRegisterFrameworkUseCase,
           deps.migrateBackupUseCase,
           deps.migrateStripDeadFilesUseCase,
-          deps.migrateRewirePluginsUseCase
+          deps.migrateRewirePluginsUseCase,
+          deps.marketplaceRegistry
         ).execute({
           projectRoot,
           interactive: !cmdOptions.nonInteractive && process.stdout.isTTY,

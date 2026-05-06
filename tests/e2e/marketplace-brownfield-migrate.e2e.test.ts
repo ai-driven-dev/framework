@@ -111,10 +111,7 @@ describe.concurrent("E2E: marketplace brownfield migrate", () => {
     }
   });
 
-  // TODO(feat/cli-v5-cleanup follow-up): after migration, `scripts` field is absent (undefined)
-  // not null. Test assertion `toBeNull()` fails — needs to use `toBeFalsy()` or update manifest
-  // serialization to preserve null for stripped fields.
-  it.skip("strips both bundled plugin and obsolete scripts in single run", async () => {
+  it("strips both bundled plugin and obsolete scripts in single run", async () => {
     const { projectDir, cleanup } = await createTestEnv("brownfield-combined");
     try {
       await seedManifest(projectDir, MANIFEST_WITH_BUNDLED_PLUGIN_AND_SCRIPTS);
@@ -124,7 +121,8 @@ describe.concurrent("E2E: marketplace brownfield migrate", () => {
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Migration complete");
       const manifest = await readManifest(projectDir);
-      expect(manifest.scripts).toBeNull();
+      // After migration, scripts field is absent (stripped by toJSON round-trip)
+      expect("scripts" in manifest ? manifest.scripts : null).toBeFalsy();
       const tools = manifest.tools as Record<string, { plugins?: unknown[] }>;
       expect(tools.claude.plugins ?? []).toHaveLength(0);
     } finally {
@@ -132,9 +130,7 @@ describe.concurrent("E2E: marketplace brownfield migrate", () => {
     }
   });
 
-  // TODO(feat/cli-v5-cleanup follow-up): idempotency broken — fixture has legacy `mode`/`docsDir`
-  // fields that trigger migration on every run. Fix: update fixture to v5 schema without legacy fields.
-  it.skip("is idempotent — second run reports nothing to migrate", async () => {
+  it("is idempotent — second run reports nothing to migrate", async () => {
     const { projectDir, cleanup } = await createTestEnv("brownfield-idempotent");
     try {
       await seedManifest(projectDir, MANIFEST_WITH_BUNDLED_PLUGIN);

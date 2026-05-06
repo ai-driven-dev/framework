@@ -7,6 +7,7 @@ import { AI_TOOL_IDS, type AiToolId } from "../../domain/models/tool-ids.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import type { MarketplaceRegistry } from "../../domain/ports/marketplace-registry.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import type { MarketplaceRegisterFrameworkUseCase } from "./marketplace/marketplace-register-framework-use-case.js";
 import type { MigrateBackupUseCase } from "./migrate/migrate-backup-use-case.js";
@@ -33,13 +34,15 @@ export class MigrateUseCase {
     private readonly registerFramework: MarketplaceRegisterFrameworkUseCase,
     private readonly migrateBackup: MigrateBackupUseCase,
     private readonly migrateStripDeadFiles: MigrateStripDeadFilesUseCase,
-    private readonly migrateRewirePlugins: MigrateRewirePluginsUseCase
+    private readonly migrateRewirePlugins: MigrateRewirePluginsUseCase,
+    private readonly marketplaceRegistry?: MarketplaceRegistry
   ) {}
 
   async execute(options: MigrateOptions): Promise<MigrateResult> {
     const raw = await this.loadRaw(options.projectRoot);
     if (raw === null) return { kind: "no-op" };
-    const plan = computeMigrationPlan(raw);
+    const registryHasDefault = await this.checkRegistryForDefault(options.projectRoot);
+    const plan = computeMigrationPlan(raw, registryHasDefault);
     if (plan.isNoOp()) return { kind: "no-op" };
     if (options.dryRun) return { kind: "dry-run", plan };
     const confirmed = await this.confirm(options.interactive);
@@ -53,6 +56,12 @@ export class MigrateUseCase {
     if (!(await this.fs.fileExists(manifestPath))) return null;
     const content = await this.fs.readFile(manifestPath);
     return JSON.parse(content) as Record<string, unknown>;
+  }
+
+  private async checkRegistryForDefault(projectRoot: string): Promise<boolean> {
+    if (this.marketplaceRegistry === undefined) return false;
+    const list = await this.marketplaceRegistry.list(projectRoot);
+    return list.some((m) => m.name === FRAMEWORK_MARKETPLACE_NAME);
   }
 
   private async applyMigration(options: MigrateOptions, plan: MigrationPlan): Promise<void> {
@@ -109,12 +118,15 @@ const LEGACY_TOP_LEVEL_FIELDS: readonly string[] = [
   "plugins",
 ];
 
-export function computeMigrationPlan(raw: Record<string, unknown>): MigrationPlan {
+export function computeMigrationPlan(
+  raw: Record<string, unknown>,
+  registryHasDefault = false
+): MigrationPlan {
   const fromVersion = typeof raw.version === "number" ? raw.version : 0;
   const fieldsToStrip = detectFieldsToStrip(raw);
   const filesToDelete = collectLegacyFiles(raw);
   const pluginsToRewire = detectBundledPlugins(raw);
-  const defaultMarketplaceMissing = !hasDefaultMarketplace(raw);
+  const defaultMarketplaceMissing = !registryHasDefault && !hasDefaultMarketplace(raw);
   return new MigrationPlan({
     fromVersion,
     fieldsToStrip,

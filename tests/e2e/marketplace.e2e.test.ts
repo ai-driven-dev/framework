@@ -16,15 +16,11 @@ async function writeMarketplace(
 // TODO(feat/cli-v5-cleanup follow-up): replace `install ai <tool> --path` setup
 // with `aidd ai install <tool>` in all tests that use it.
 describe.concurrent("E2E: aidd plugin marketplace", () => {
-  // TODO(feat/cli-v5-cleanup follow-up): rewrite with `aidd ai install claude` (remove --path).
-  it.skip("marketplace add → registers a project-scope marketplace and skips trust prompt with --yes", async () => {
+  it("marketplace add → registers a project-scope marketplace and skips trust prompt with --yes", async () => {
     const { tempDir, projectDir, cleanup } = await createTestEnv("mkt-add");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(
-        ["install", "ai", "claude", "--path", FRAMEWORK_PATH, "--no-plugins"],
-        projectDir
-      );
+      await runCli(["ai", "install", "claude"], projectDir);
       const marketDir = join(tempDir, "market");
       await writeMarketplace(marketDir, [
         {
@@ -88,15 +84,11 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
     }
   });
 
-  // TODO(feat/cli-v5-cleanup follow-up): rewrite with `aidd ai install claude` (remove --path).
-  it.skip("plugin install → installs from registered marketplace and tags the plugin", async () => {
+  it("plugin install → installs from registered marketplace and tags the plugin", async () => {
     const { tempDir, projectDir, cleanup } = await createTestEnv("mkt-install");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(
-        ["install", "ai", "claude", "--path", FRAMEWORK_PATH, "--no-plugins"],
-        projectDir
-      );
+      await runCli(["ai", "install", "claude"], projectDir);
       const marketDir = join(tempDir, "market");
       await writeMarketplace(marketDir, [
         {

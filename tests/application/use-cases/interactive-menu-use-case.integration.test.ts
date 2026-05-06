@@ -70,8 +70,7 @@ describe("interactive menu", () => {
   });
 
   describe("project with AIDD installed", () => {
-    // TODO(feat/cli-v5-cleanup follow-up): menu groups restructured in v5 (manage-tools → manage-ai/manage-ide).
-    it.skip("groups commands by usage area", async () => {
+    it("groups commands by usage area", async () => {
       const deps = buildDeps(projectRoot);
       await initProject(deps, projectRoot);
       const { prompter, selectMock } = makeQueuedPrompter(["exit"]);
@@ -80,14 +79,16 @@ describe("interactive menu", () => {
 
       const values = (selectMock.mock.calls[0][1] as SelectChoice[]).map((c) => c.value);
       expect(values).toContain("inspect");
-      expect(values).toContain("manage-tools");
+      expect(values).toContain("manage-ai");
+      expect(values).toContain("manage-ide");
+      expect(values).toContain("manage-plugins");
+      expect(values).toContain("marketplaces");
       expect(values).toContain("maintain");
       expect(values).toContain("system");
       expect(values).toContain("exit");
     });
 
-    // TODO(feat/cli-v5-cleanup follow-up): group count changed — update to reflect v5 menu structure.
-    it.skip("each group has a description to guide the user", async () => {
+    it("each group has a description to guide the user", async () => {
       const deps = buildDeps(projectRoot);
       await initProject(deps, projectRoot);
       const { prompter, selectMock } = makeQueuedPrompter(["exit"]);
@@ -96,7 +97,8 @@ describe("interactive menu", () => {
 
       const choices = selectMock.mock.calls[0][1] as Array<{ value: string; description?: string }>;
       const groupsWithDescription = choices.filter((c) => c.value !== "exit" && c.description);
-      expect(groupsWithDescription.length).toBe(6);
+      // v5 menu: inspect, manage-ai, manage-ide, manage-plugins, marketplaces, maintain, migrate, system = 8
+      expect(groupsWithDescription.length).toBe(8);
     });
 
     it("status is reachable from the inspect group", async () => {
@@ -107,20 +109,19 @@ describe("interactive menu", () => {
       expect(result.command).toEqual(["status"]);
     });
 
-    // TODO(feat/cli-v5-cleanup follow-up): `manage-tools`/`install` removed; now `manage-ai`/`ai install`.
-    it.skip("install is reachable from the manage tools group", async () => {
+    it("ai install is reachable from the manage-ai group", async () => {
       const deps = buildDeps(projectRoot);
       await initProject(deps, projectRoot);
-      const { prompter } = makeQueuedPrompter(["manage-tools", "install"]);
+      // ai-install has inputPrompt, so after selecting it, the prompter.input is called
+      const { prompter } = makeQueuedPrompter(["manage-ai", "ai-install"], ["claude"]);
       const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
-      expect(result.command).toEqual(["install"]);
+      expect(result.command).toEqual(["ai", "install", "claude"]);
     });
 
-    // TODO(feat/cli-v5-cleanup follow-up): `maintain`/`update` removed; now `manage-ai`/`ai update`.
-    it.skip("update is reachable from the maintain group", async () => {
+    it("update-all is reachable from the maintain group", async () => {
       const deps = buildDeps(projectRoot);
       await initProject(deps, projectRoot);
-      const { prompter } = makeQueuedPrompter(["maintain", "update"]);
+      const { prompter } = makeQueuedPrompter(["maintain", "update-all"]);
       const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
       expect(result.command).toEqual(["update"]);
     });
@@ -133,31 +134,29 @@ describe("interactive menu", () => {
       expect(result.command).toEqual(["self-update"]);
     });
 
-    // TODO(feat/cli-v5-cleanup follow-up): `aidd cache` removed; `aidd marketplace cache` is the new surface.
-    // Update menu tests to use `marketplace cache list/clear` when menu is updated.
-    describe.skip("cache submenu", () => {
-      it("lists cached versions", async () => {
+    describe("marketplace cache submenu", () => {
+      it("lists cached marketplaces via marketplaces > marketplace-cache > cache-list", async () => {
         const deps = buildDeps(projectRoot);
         await initProject(deps, projectRoot);
-        const { prompter } = makeQueuedPrompter(["system", "cache", "list"]);
+        const { prompter } = makeQueuedPrompter([
+          "marketplaces",
+          "marketplace-cache",
+          "cache-list",
+        ]);
         const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
-        expect(result.command).toEqual(["cache", "list"]);
+        expect(result.command).toEqual(["marketplace", "cache", "list"]);
       });
 
-      it("clears all cached versions", async () => {
+      it("clears marketplace cache via marketplaces > marketplace-cache > cache-clear", async () => {
         const deps = buildDeps(projectRoot);
         await initProject(deps, projectRoot);
-        const { prompter } = makeQueuedPrompter(["system", "cache", "clear-all"]);
+        const { prompter } = makeQueuedPrompter([
+          "marketplaces",
+          "marketplace-cache",
+          "cache-clear",
+        ]);
         const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
-        expect(result.command).toEqual(["cache", "clear", "--all"]);
-      });
-
-      it("clears a specific version entered by the user", async () => {
-        const deps = buildDeps(projectRoot);
-        await initProject(deps, projectRoot);
-        const { prompter } = makeQueuedPrompter(["system", "cache", "clear-version"], ["v3.2.0"]);
-        const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
-        expect(result.command).toEqual(["cache", "clear", "v3.2.0"]);
+        expect(result.command).toEqual(["marketplace", "cache", "clear"]);
       });
     });
 

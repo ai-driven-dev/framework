@@ -8,11 +8,8 @@ const AIDD_DIR = ".aidd";
 
 const EMPTY_MANIFEST = {
   version: 5,
-  docsDir: "aidd_docs",
   tools: {},
-  scripts: null,
-  plugins: null,
-  mode: "local",
+  marketplaces: {},
 };
 
 async function seedManifest(projectDir: string, data: unknown = EMPTY_MANIFEST): Promise<void> {
@@ -20,15 +17,13 @@ async function seedManifest(projectDir: string, data: unknown = EMPTY_MANIFEST):
   await writeFile(join(projectDir, AIDD_DIR, "manifest.json"), JSON.stringify(data), "utf-8");
 }
 
-// TODO(feat/cli-v5-cleanup follow-up): rewrite with noun-first surface.
-// Tests use `install ai <tool>` — replaced by `aidd ai install <tool>` in v5.
-describe.skip("E2E: marketplace greenfield — bundled asset install", () => {
-  it("install ai claude writes settings.json and manifest from bundled assets", async () => {
+describe.concurrent("E2E: marketplace greenfield — bundled asset install", () => {
+  it("ai install claude writes settings.json and manifest from bundled assets", async () => {
     const { projectDir, cleanup } = await createTestEnv("greenfield-claude");
     try {
       await seedManifest(projectDir);
 
-      const { stdout, exitCode } = await runCli(["install", "ai", "claude"], projectDir);
+      const { stdout, exitCode } = await runCli(["ai", "install", "claude"], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Installed claude");
@@ -39,12 +34,12 @@ describe.skip("E2E: marketplace greenfield — bundled asset install", () => {
     }
   });
 
-  it("install ide vscode writes .vscode/settings.json from bundled assets", async () => {
+  it("ai install vscode writes .vscode/settings.json from bundled assets", async () => {
     const { projectDir, cleanup } = await createTestEnv("greenfield-vscode");
     try {
       await seedManifest(projectDir);
 
-      const { stdout, exitCode } = await runCli(["install", "ide", "vscode"], projectDir);
+      const { stdout, exitCode } = await runCli(["ide", "install", "vscode"], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Installed vscode");
@@ -54,12 +49,12 @@ describe.skip("E2E: marketplace greenfield — bundled asset install", () => {
     }
   });
 
-  it("install ai cursor writes .cursor/rules from bundled assets", async () => {
+  it("ai install cursor writes .cursor directory from bundled assets", async () => {
     const { projectDir, cleanup } = await createTestEnv("greenfield-cursor");
     try {
       await seedManifest(projectDir);
 
-      const { stdout, exitCode } = await runCli(["install", "ai", "cursor"], projectDir);
+      const { stdout, exitCode } = await runCli(["ai", "install", "cursor"], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Installed cursor");
@@ -69,13 +64,13 @@ describe.skip("E2E: marketplace greenfield — bundled asset install", () => {
     }
   });
 
-  it("install ai claude is idempotent — second run skips", async () => {
+  it("ai install claude is idempotent — second run warns already installed", async () => {
     const { projectDir, cleanup } = await createTestEnv("greenfield-idempotent");
     try {
       await seedManifest(projectDir);
-      await runCli(["install", "ai", "claude"], projectDir);
+      await runCli(["ai", "install", "claude"], projectDir);
 
-      const { stderr, exitCode } = await runCli(["install", "ai", "claude"], projectDir);
+      const { stderr, exitCode } = await runCli(["ai", "install", "claude"], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stderr).toContain("already installed");
@@ -84,13 +79,13 @@ describe.skip("E2E: marketplace greenfield — bundled asset install", () => {
     }
   });
 
-  it("install ai claude --force reinstalls over existing files", async () => {
+  it("ai install claude --force reinstalls over existing files", async () => {
     const { projectDir, cleanup } = await createTestEnv("greenfield-force");
     try {
       await seedManifest(projectDir);
-      await runCli(["install", "ai", "claude"], projectDir);
+      await runCli(["ai", "install", "claude"], projectDir);
 
-      const { stdout, exitCode } = await runCli(["install", "ai", "claude", "--force"], projectDir);
+      const { stdout, exitCode } = await runCli(["ai", "install", "claude", "--force"], projectDir);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Installed claude");
@@ -99,11 +94,11 @@ describe.skip("E2E: marketplace greenfield — bundled asset install", () => {
     }
   });
 
-  it("manifest tracks installed files after install ai claude", async () => {
+  it("manifest tracks installed files after ai install claude", async () => {
     const { projectDir, cleanup } = await createTestEnv("greenfield-manifest");
     try {
       await seedManifest(projectDir);
-      await runCli(["install", "ai", "claude"], projectDir);
+      await runCli(["ai", "install", "claude"], projectDir);
 
       const raw = await readFile(join(projectDir, AIDD_DIR, "manifest.json"), "utf-8");
       const manifest = JSON.parse(raw) as { tools: Record<string, unknown> };

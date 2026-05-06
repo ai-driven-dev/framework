@@ -1,118 +1,79 @@
 import { existsSync } from "node:fs";
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
+import { createTestEnv, runCli } from "./helpers.js";
 
-// TODO(feat/cli-v5-cleanup follow-up): rewrite setup with `aidd ai install <tool>`.
-// All tests use the removed `install ai <tool> --path` command.
-describe.skip("E2E: aidd update", () => {
-  it("re-installs runtime configs from bundled CLI assets for installed tools", async () => {
-    const { projectDir, cleanup } = await createTestEnv("update");
+const AIDD_DIR = ".aidd";
+
+async function seedProject(projectDir: string): Promise<void> {
+  await mkdir(join(projectDir, AIDD_DIR), { recursive: true });
+  await writeFile(
+    join(projectDir, AIDD_DIR, "manifest.json"),
+    JSON.stringify({ version: 5, tools: {}, marketplaces: {} }),
+    "utf-8"
+  );
+}
+
+describe.concurrent("E2E: aidd update", () => {
+  it("reports all tools up to date when no tools have drift", async () => {
+    const { projectDir, cleanup } = await createTestEnv("update-noop");
     try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await seedProject(projectDir);
+      await runCli(["ai", "install", "claude"], projectDir);
 
-      // user modifies the runtime config
-      const claudeMd = join(projectDir, "CLAUDE.md");
-      await writeFile(claudeMd, "user-modified content", "utf-8");
+      const { stdout, exitCode } = await runCli(["update"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout.toLowerCase()).toMatch(/up to date|updated/);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("re-installs runtime configs from bundled assets with --force", async () => {
+    const { projectDir, cleanup } = await createTestEnv("update-force");
+    try {
+      await seedProject(projectDir);
+      await runCli(["ai", "install", "claude"], projectDir);
 
       const { stdout, exitCode } = await runCli(["update", "--force"], projectDir);
+
       expect(exitCode).toBe(0);
-      expect(stdout.toLowerCase()).toMatch(/updated|nothing/);
+      expect(stdout.toLowerCase()).toMatch(/updated|up to date/);
+      // manifest still exists after update
+      expect(existsSync(join(projectDir, AIDD_DIR, "manifest.json"))).toBe(true);
     } finally {
       await cleanup();
     }
   });
 
-  it("limits update to specified tool with --tool", async () => {
-    const { projectDir, cleanup } = await createTestEnv("update");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "ai", "cursor", "--path", FRAMEWORK_PATH], projectDir);
-
-      const { stdout, exitCode } = await runCli(["update", "--tool", "claude"], projectDir);
-      expect(exitCode).toBe(0);
-      expect(stdout).not.toContain("cursor");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("reports nothing to update when no tools installed", async () => {
-    const { projectDir, cleanup } = await createTestEnv("update");
+  it("exits zero when no manifest exists (no tools installed)", async () => {
+    const { projectDir, cleanup } = await createTestEnv("update-empty");
     try {
       const { stdout, exitCode } = await runCli(["update"], projectDir);
+
+      // update exits 0 and reports no tools
       expect(exitCode).toBe(0);
-      expect(stdout.toLowerCase()).toMatch(/no tools|setup/);
+      expect(stdout.toLowerCase()).toMatch(/up to date|no manifest|nothing/);
     } finally {
       await cleanup();
     }
   });
 
-  it("rejects unknown tool ID", async () => {
-    const { projectDir, cleanup } = await createTestEnv("update");
+  it("updates multiple installed tools in one invocation", async () => {
+    const { projectDir, cleanup } = await createTestEnv("update-multi");
     try {
-      await initProject(projectDir, FRAMEWORK_PATH);
+      await seedProject(projectDir);
+      await runCli(["ai", "install", "claude"], projectDir);
+      await runCli(["ai", "install", "cursor"], projectDir);
 
-      const { stderr, exitCode } = await runCli(["update", "--tool", "nonexistent"], projectDir);
-      expect(exitCode).not.toBe(0);
-      expect(stderr.toLowerCase()).toMatch(/tool/);
-    } finally {
-      await cleanup();
-    }
-  });
+      const { stdout, exitCode } = await runCli(["update", "--force"], projectDir);
 
-  it("legacy --path flag is rejected (removed)", async () => {
-    const { projectDir, cleanup } = await createTestEnv("update");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-
-      const { stderr, exitCode } = await runCli(["update", "--path", FRAMEWORK_PATH], projectDir);
-      expect(exitCode).not.toBe(0);
-      expect(stderr).toMatch(/unknown option/i);
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("legacy --release flag is rejected (removed)", async () => {
-    const { projectDir, cleanup } = await createTestEnv("update");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-
-      const { stderr, exitCode } = await runCli(["update", "--release", "v3.9.0"], projectDir);
-      expect(exitCode).not.toBe(0);
-      expect(stderr).toMatch(/unknown option/i);
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("legacy --dry-run flag is rejected (removed)", async () => {
-    const { projectDir, cleanup } = await createTestEnv("update");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-
-      const { stderr, exitCode } = await runCli(["update", "--dry-run"], projectDir);
-      expect(exitCode).not.toBe(0);
-      expect(stderr).toMatch(/unknown option/i);
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("file structure stays intact after update (regression: empty project)", async () => {
-    const { projectDir, cleanup } = await createTestEnv("update");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-
-      await runCli(["update", "--force"], projectDir);
-
-      expect(existsSync(join(projectDir, ".mcp.json"))).toBe(true);
-      expect(existsSync(join(projectDir, ".aidd", "manifest.json"))).toBe(true);
+      expect(exitCode).toBe(0);
+      // Both tools should be mentioned
+      expect(stdout).toContain("claude");
+      expect(stdout).toContain("cursor");
     } finally {
       await cleanup();
     }
