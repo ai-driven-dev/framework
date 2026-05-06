@@ -5,6 +5,7 @@ import { marketplaceCacheDir } from "../../domain/models/paths.js";
 import type { AiToolId, IdeToolId } from "../../domain/models/tool-ids.js";
 import type { AssetProvider } from "../../domain/ports/asset-provider.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { FrameworkResolver } from "../../domain/ports/framework-resolver.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -75,7 +76,8 @@ export class SetupUseCase {
     private readonly installFrameworkPluginsUseCase: InstallFrameworkPluginsUseCase,
     private readonly currentVersionProvider: VersionReader,
     private readonly marketplaceRegistry?: MarketplaceRegistry,
-    private readonly pluginCatalogRepository?: PluginCatalogRepository
+    private readonly pluginCatalogRepository?: PluginCatalogRepository,
+    private readonly frameworkResolver?: FrameworkResolver
   ) {}
 
   async execute(options: SetupOptions): Promise<SetupResult> {
@@ -318,35 +320,65 @@ export class SetupUseCase {
 
   private async resolveLocalSource(options: SetupOptions): Promise<{ frameworkPath?: string }> {
     const pathInput = options.interactive
-      ? await this.prompter.input("Local framework path (for plugin copy):", ".")
+      ? await this.prompter.input("Local framework path:", ".")
       : ".";
     if (!pathInput) return {};
     return { frameworkPath: pathInput };
   }
 
-  private async resolveRemoteSource(_options: SetupOptions): Promise<{ frameworkRepo?: string }> {
-    // Framework marketplace is implicit. Custom marketplaces added via `aidd marketplace add`.
+  private async resolveRemoteSource(options: SetupOptions): Promise<{ frameworkRepo?: string }> {
     const existingManifest = await this.manifestRepo.load();
-    return { frameworkRepo: existingManifest?.repo ?? Manifest.DEFAULT_REPO };
+    const repoDefault = existingManifest?.repo ?? Manifest.DEFAULT_REPO;
+    const repoInput = options.interactive
+      ? await this.prompter.input("Marketplace repository (owner/repo):", repoDefault)
+      : repoDefault;
+    if (!repoInput) return {};
+    return { frameworkRepo: repoInput };
   }
 
   private async resolveVersion(
     options: SetupOptions,
-    _frameworkRepo: string | undefined,
+    frameworkRepo: string | undefined,
     frameworkPath: string | undefined
   ): Promise<string> {
     if (options.release) return options.release;
-    if (frameworkPath && isLocalPath(frameworkPath)) return this.currentVersionProvider.get();
-    const catalogVersion = await this.fetchCatalogVersion(options.projectRoot);
-    if (catalogVersion) return catalogVersion;
-    if (options.interactive) {
-      const input = await this.prompter.input(
-        "Marketplace catalog version (leave empty for latest):",
-        ""
-      );
-      return input || this.currentVersionProvider.get();
+    const versionDefault = await this.discoverVersionDefault(
+      frameworkRepo,
+      frameworkPath,
+      options.projectRoot
+    );
+    if (!options.interactive) return versionDefault ?? this.currentVersionProvider.get();
+    const label = versionDefault
+      ? `Marketplace catalog version (latest: ${versionDefault}):`
+      : "Marketplace catalog version:";
+    const input = await this.prompter.input(label, versionDefault ?? "");
+    return input || versionDefault || this.currentVersionProvider.get();
+  }
+
+  private async discoverVersionDefault(
+    frameworkRepo: string | undefined,
+    frameworkPath: string | undefined,
+    projectRoot: string
+  ): Promise<string | undefined> {
+    if (frameworkPath && isLocalPath(frameworkPath)) {
+      return this.readLocalCatalogVersion(frameworkPath);
     }
-    return this.currentVersionProvider.get();
+    const remoteVersion = await this.fetchLatestRemoteVersion(frameworkRepo);
+    if (remoteVersion) return remoteVersion;
+    return this.fetchCatalogVersion(projectRoot);
+  }
+
+  private async readLocalCatalogVersion(frameworkPath: string): Promise<string | undefined> {
+    if (!this.pluginCatalogRepository) return undefined;
+    const catalog = await this.pluginCatalogRepository.load(frameworkPath).catch(() => null);
+    return catalog?.version;
+  }
+
+  private async fetchLatestRemoteVersion(
+    frameworkRepo: string | undefined
+  ): Promise<string | undefined> {
+    if (!this.frameworkResolver) return undefined;
+    return this.frameworkResolver.fetchLatestVersion(frameworkRepo).catch(() => undefined);
   }
 
   private async fetchCatalogVersion(projectRoot: string): Promise<string | undefined> {
