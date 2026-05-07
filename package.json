@@ -15,8 +15,10 @@
     "node": ">=20"
   },
   "packageManager": "pnpm@9.15.9",
+  "bundleBudgetKB": 500,
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && node scripts/check-bundle-size.mjs",
+    "build:check-size": "node scripts/check-bundle-size.mjs",
     "dev": "tsup --watch",
     "test": "pnpm build && vitest run",
     "test:unit": "vitest run --project=unit",

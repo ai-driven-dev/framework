@@ -1,4 +1,5 @@
 {
+  "entry": ["src/cli.ts", "scripts/check-bundle-size.mjs"],
   "ignore": [
     ".aidd/**",
     "config/vitest-text-loader.ts",
