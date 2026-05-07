@@ -36,6 +36,14 @@
       "description": "Product management (release candidate): ticket-info, user-stories-create, prd",
       "strict": true,
       "recommended": true
+    },
+    {
+      "name": "aidd-async-dev",
+      "version": "1.0.0",
+      "source": "./plugins/aidd-async-dev",
+      "description": "Async development orchestration: turn ready issues into pull requests, then iterate on review feedback until a human takes over.",
+      "strict": true,
+      "recommended": false
     }
   ]
 }

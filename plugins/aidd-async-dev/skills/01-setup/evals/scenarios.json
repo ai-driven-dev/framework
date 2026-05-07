@@ -1,0 +1,8 @@
+[
+  { "prompt": "Setup async dev in this repo", "expect_action": "detect-context" },
+  { "prompt": "Configure aidd-async-dev plugin", "expect_action": "detect-context" },
+  { "prompt": "Install async-dev so Claude picks up ready issues automatically", "expect_action": "detect-context" },
+  { "prompt": "Generate the GitHub Actions workflow for async dev", "expect_action": "generate-workflow" },
+  { "prompt": "Run the async pipeline on issue #42", "expect_action": null },
+  { "prompt": "Handle the review comments on the open PR", "expect_action": null }
+]
