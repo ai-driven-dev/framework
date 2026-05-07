@@ -118,12 +118,12 @@ All CI checks must pass locally before pushing.
 pnpm run install:local      # build + install globally
 
 mkdir /tmp/aidd-test && cd /tmp/aidd-test
-aidd init
+aidd setup
 
-aidd install                        # all tools
-aidd install claude                 # single tool
-aidd install claude cursor          # multiple tools
-aidd install --force                # reinstall (overwrite existing)
+aidd ai install claude              # single AI tool
+aidd ai install claude --force      # reinstall (overwrite existing)
+aidd ai list                        # list installed AI tools
+aidd ai status                      # show drift for AI tools
 
 ls .claude/                         # verify output was generated
 ```
@@ -153,7 +153,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/). The type de
 ```bash
 feat: add restore --docs flag
 fix(status): correct hash comparison for merged files
-docs: update adopt command examples
+docs: update aidd ai install examples
 ci: add coverage thresholds to pipeline
 ```
 

@@ -320,7 +320,7 @@ Auth:      gh CLI authenticated as blafourcade
 | D1/D8-fix | `doctor` raised broken-ref warnings for `aidd_docs/tasks/` dev plan files | ✅ Fixed — `checkBrokenReferences()` skips paths containing `/tasks/` |
 | K1-fix | `marketplace browse` showed `@?` — no version in catalog | ✅ Fixed — added `version` to `marketplace.json` entries in framework |
 | K2-fix | Marketplace stale immediately after `setup` | ✅ Fixed — `setup.ts` calls `marketplaceRefreshUseCase` after successful registration |
-| K3-fix | Local `--path` install copied `aidd_docs/tasks/` dev plans to user projects | ✅ Fixed — `FrameworkLoaderAdapter.loadDocsFiles()` excludes `tasks/` prefix |
+| K3-fix | Local `--path` install copied `aidd_docs/tasks/` dev plans to user projects | ✅ Fixed — docs file loader excludes `tasks/` prefix |
 | K5-fix | `aidd-context/hooks.json` used wrong format (array) for Claude Code and Copilot | ✅ Fixed — object map format with `${CLAUDE_PLUGIN_ROOT}` path |
 
 ---

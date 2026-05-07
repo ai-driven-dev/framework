@@ -11,7 +11,7 @@
 │  Thin wiring: parse flags → call use-case → display result  │
 ├─────────────────────────────────────────────────────────────┤
 │  Use Cases (src/application/use-cases/)                     │
-│  Orchestration: ai/ ide/ marketplace/ plugin/ shared/       │
+│  Orchestration: auth/ global/ install/ marketplace/ migrate/ plugin/ restore/ setup/ shared/ sync/       │
 │  SetupUseCase (orchestrator), MigrateUseCase, SyncUseCase   │
 ├─────────────────────────────────────────────────────────────┤
 │  Domain (src/domain/)                                       │
@@ -24,10 +24,11 @@
 │  Infrastructure (src/infrastructure/)                       │
 │  adapters/ — port implementations, all I/O                  │
 │  assets/   — bundled runtime configs (embedded in binary)   │
-│  auth/     — credential storage and resolution              │
+│  auth/     — credential storage and resolution
+│  cache/    — reserved, empty              │
 │  git/      — token injection for authenticated git fetches  │
 │  http/     — HTTP client                                    │
-│  tar/      — tarball extraction                             │
+│  tar/      — tarball extraction (reserved, empty)                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 

@@ -8,13 +8,15 @@ src/
 ├── application/
 │   ├── commands/             # CLI wiring only (1 file per command)
 │   ├── use-cases/            # Business orchestration
-│   │   ├── adopt/            # adopt-use-case + sub-use-cases
 │   │   ├── auth/             # login / logout / status / require-auth
-│   │   ├── install/          # install + capability sub-use-cases (runtime-config, memory-stub, ide-config, plugins, agents, commands, rules, skills, config)
-│   │   ├── plugin/           # add/remove/list/update + marketplace lifecycle (add/list/remove/refresh/browse/check) + install-from-marketplace + search
+│   │   ├── global/           # global cross-tool ops (status, update, sync, restore, doctor)
+│   │   ├── install/          # install + capability sub-use-cases (runtime-config, ide-config, plugins, agents, commands, rules, skills, config)
+│   │   ├── marketplace/      # marketplace lifecycle (add/list/remove/refresh/browse/check) + cache
+│   │   ├── migrate/          # manifest v3/v4 → v5 migration
+│   │   ├── plugin/           # add/remove/list/update + install-from-marketplace + search + sync
 │   │   ├── restore/          # restore-use-case + restore-plugin-use-case
+│   │   ├── setup/            # setup orchestrator sub-use-cases
 │   │   ├── sync/             # sync + sync-status + conflict-resolution
-│   │   ├── update/           # update + capability sub-use-cases
 │   │   ├── shared/           # helpers called by use-cases only (never by commands)
 │   │   └── *.ts              # top-level use-cases (clean, doctor, init, migrate, setup, status, uninstall...)
 │   ├── check-update.ts       # update banner
@@ -35,12 +37,11 @@ src/
     ├── adapters/             # port implementations — one adapter per port
     ├── assets/               # asset-loader.ts — typed loader for configs/stubs bundled in binary
     ├── auth/                 # token reading and storage
-    ├── cache/                # framework version caching
+    ├── cache/                # reserved, empty
     ├── deps.ts               # dependency injection wiring
     ├── errors.ts             # infrastructure typed exceptions (internal only)
     ├── http/                 # node:https client
-    ├── migrations/           # manifest schema evolution
-    └── tar/                  # tarball extraction
+    └── tar/                  # reserved, empty
 ```
 
 ## Where to Add Things
@@ -60,7 +61,7 @@ src/
 
 ```
 tests/
-├── application/use-cases/    # integration — real filesystem, mock Prompter + FrameworkResolver only
+├── application/use-cases/    # integration — real filesystem, mock all ports via tests/helpers/ports/
 ├── domain/models/            # unit — pure value object tests
 ├── domain/tools/             # unit — tool config tests
 ├── e2e/                      # full CLI invocation via runCli()

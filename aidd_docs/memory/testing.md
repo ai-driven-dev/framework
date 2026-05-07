@@ -29,8 +29,8 @@ Two sub-scopes:
 
 **Application** (`tests/application/`):
 - Use-cases with real temp filesystem
-- Mock only: `Prompter` and `FrameworkResolver`
-- Never mock: `FileSystem`, `ManifestRepository`, `Hasher`, `FrameworkLoader`
+- Mock all ports via in-memory implementations from `tests/helpers/ports/`
+- Never mock: `FileSystem`, `ManifestRepository`, `Hasher`
 - Covers specific cases NOT covered by E2E: conflict resolution, non-interactive branches, edge cases
 
 **Infrastructure** (`tests/infrastructure/`):
@@ -68,6 +68,6 @@ Test names must describe user-visible or system-level behaviour:
 ## Mocking and Stubbing
 
 - Never mock functional behavior
-- Application integration: mock only `Prompter` and `FrameworkResolver`
+- Application integration: mock all ports via in-memory implementations from `tests/helpers/ports/`
 - Infrastructure integration: mock only the HTTP/external layer
 - E2E: no mocks — full real CLI binary invocation

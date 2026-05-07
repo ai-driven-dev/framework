@@ -28,34 +28,67 @@
 | Distribution         | Tool-specific generated output (files rewritten per tool conventions)                                                                                                             |
 | Manifest             | `.aidd/manifest.json` — hash-based tracking of every installed file                                                                                                               |
 | ToolConfig           | Per-tool configuration: output paths, frontmatter conversion, merge rules. Tools: `claude` → `.claude/`, `cursor` → `.cursor/`, `copilot` → `.github/`, `opencode` → `.opencode/` |
-| Framework Descriptor | Code model built by `FrameworkLoaderAdapter` — no `framework.json` file                                                                                                           |
+| Plugin               | Capability files (agents, commands, hooks, mcp, rules, skills) distributed per AI tool format via marketplace catalogs                                                            |
 | Drift                | Installed file modified locally vs. what was written at install time                                                                                                              |
 | Init                 | Bootstrap: creates `aidd_docs/` structure + manifest                                                                                                                              |
 | Install              | Generates and writes tool-specific distribution files                                                                                                                             |
 
 ## Commands
 
-| Command | Flags | Description |
-| --- | --- | --- |
-| `aidd setup` | `--release`, `--path`, `--tools`, `--all-tools`, `--docs-dir`, `--from` | Detects state and runs init + install, adopt, install, or update. Interactive by default; non-interactive when `--tools` or `--all-tools` is provided. |
-| `aidd install <tools...>` | `--all`, `--force`, `--release`, `--path`, `--mcp` | Generate and write tool-specific distribution files. `--mcp server1,server2` selects specific MCP servers; interactive checkbox when TTY; all installed when non-interactive. Requires existing manifest. |
-| `aidd uninstall <tools...>` | `--all`, `--mcp` | Remove tool files and update manifest. `--mcp server1` removes specific MCP entries without uninstalling the tool. |
-| `aidd status` | `--tool`, `--docs` | Show drift (modified/deleted/added) between disk and manifest. |
-| `aidd update` | `--force`, `--dry-run`, `--tool`, `--docs`, `--release`, `--path` | Diff and apply new framework version. `--tool`/`--docs` scope to one section. |
-| `aidd restore` | `--force`, `--tool`, `--docs`, `[files...]`, `--release`, `--path` | Restore modified/deleted files from pinned version. |
-| `aidd sync` | `--source`, `--target`, `--force` | Propagate local changes from one tool to others. |
-| `aidd doctor` | — | Check structural integrity: manifest, orphaned dirs, broken references. Auth warning = exit 0 (info). Exits 1 on warning/error issues. |
-| `aidd clean` | `--force` | Remove all AIDD files. Dry-run without `--force`. |
-| `aidd cache list/clear` | `--all`, `[version]` | List or clear cached framework versions. |
-| `aidd config list/get/set` | `--force` | Manifest-backed config. Writable: `docsDir`, `repo`. Read-only: `tools`. |
-| `aidd self-update` | `--check`, `--dry-run`, `--force` | Update the aidd CLI itself to the latest version. `--check` shows if newer version is available without installing. `--dry-run` previews without installing. `--force` reinstalls even if already up to date. Uses GitHub Releases API for version check and changelog. |
-| `aidd auth login/logout/status` | `--token`, `--gh`, `--level` | Manage stored GitHub credentials. `--token` is auth-command-only (not global). |
-| Global flags | `--verbose`, `--repo` | Apply to all commands. `--path` and `--release` are command-level options on `setup`, `install`, `update`, `restore`. |
+### Bootstrap
+| Command | Purpose |
+|---|---|
+| `aidd setup --source remote\|local [--all] [--ai <ids>] [--ide <ids>] [--plugins/--all-plugins/--recommended-plugins/--no-plugins] [--yes]` | Initialize project: marketplace + tools + plugins |
+| `aidd migrate [--dry-run] [--non-interactive]` | Migrate brownfield v3/v4 manifest to v5 |
 
-## Notes
+### AI tools (claude, cursor, copilot, codex, opencode)
+| Command | Purpose |
+|---|---|
+| `aidd ai install <tool> [--force]` | Install AI tool runtime config |
+| `aidd ai uninstall <tool>` | Remove tool config |
+| `aidd ai list / status / update / sync / restore / doctor` | Per-tool ops |
 
-- No flag = interactive mode (`@inquirer/prompts`); `--tools`/`--all-tools` = non-interactive (CI-safe)
-- `--mcp` flag on install/uninstall enables granular MCP server selection; exclusions are tracked per-tool in the manifest
+### IDE tools (vscode)
+| Command | Purpose |
+|---|---|
+| `aidd ide install <tool> [--force]` | Install IDE config |
+| `aidd ide uninstall / list / status / update / doctor` | Per-tool ops |
+
+### Plugins
+| Command | Purpose |
+|---|---|
+| `aidd plugin install <name> [--from <market>] [--tool <id>] [--token <v>] [--yes]` | Install from marketplace |
+| `aidd plugin add <local-path> [--tool <id>]` | Add local plugin |
+| `aidd plugin remove / list / update / search / pick / status / sync / restore / doctor` | Plugin ops |
+
+### Marketplaces
+| Command | Purpose |
+|---|---|
+| `aidd marketplace add <name> <source> [--user] [--yes] [--overwrite] [--token <v>]` | Register marketplace |
+| `aidd marketplace list / remove / refresh / browse / check` | Marketplace ops |
+| `aidd marketplace cache list / clear` | Cache management |
+
+### Auth
+| Command | Purpose |
+|---|---|
+| `aidd auth login [--gh] [--token <v>] [--level user\|project]` | GitHub auth |
+| `aidd auth logout / status` | Auth ops |
+
+### Globals (chain unitaries)
+| Command | Purpose |
+|---|---|
+| `aidd update / status / sync / restore / doctor` | Run across AI + IDE + plugins |
+| `aidd clean [--force]` | Nuke .aidd + tracked files |
+| `aidd self-update` | Update CLI binary |
+
+### Removed (v5)
+- `aidd cache list/clear` — replaced by `aidd marketplace cache`
+- `aidd config list/get/set` — no remaining writable fields
+- `aidd install [category] [tool]` — replaced by `aidd ai/ide install`
+- `aidd uninstall [category] [tool]` — replaced by `aidd ai/ide uninstall`
+- Setup flags `--from / --switch-mode / --mode / --path` (path kept only with `--source local`) / `--release`
+- Install flags `--path / --release / --plugins / --mcp / --all-plugins / --recommended-plugins / --no-plugins`
+- Global `--repo` flag
 
 ## User Journey
 
@@ -64,13 +97,14 @@
 ```mermaid
 journey
     section Install
-      Run aidd install claude cursor: 5: Multi-Tool Dev
+      Run aidd ai install claude: 5: Multi-Tool Dev
+      Run aidd ai install cursor: 5: Multi-Tool Dev
       Files generated in .claude/ and .cursor/: 5: CLI
     section Drift
       Modify some files locally: 3: Multi-Tool Dev
       Run aidd status: 5: Multi-Tool Dev
       Drift detected per tool: 5: CLI
-    section Restore (v3.1+)
-      Run aidd restore claude --force: 4: Multi-Tool Dev
-      Files reverted to framework version: 5: CLI
+    section Restore
+      Run aidd ai restore claude --force: 4: Multi-Tool Dev
+      Files reverted to installed version: 5: CLI
 ```

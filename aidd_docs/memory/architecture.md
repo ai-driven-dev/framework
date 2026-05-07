@@ -52,15 +52,13 @@ MigrateUseCase → ManifestRepository (detect obsolete scripts/plugins sections 
 → backup + strip entries + best-effort rewire via marketplace
 ```
 
-**Framework resolver** (`FrameworkResolver`) is still used by `setup` — being phased out in the marketplace-only refactor.
-
 ## Auth
 
 Token resolution: `AIDD_TOKEN` env → project `.aidd/auth.json` → user `~/.config/aidd/auth.json` → `gh auth token` (only when `method: "gh"`) → none
 
 ## Bundled Assets
 
-Runtime configs, memory stubs, and IDE configs ship inside the CLI binary (tsup bundles them):
+Runtime configs and IDE configs ship inside the CLI binary (tsup bundles them):
 - `src/infrastructure/assets/asset-loader.ts` — typed loader, esbuild text/json loaders at build time
 - `.md` files → text loader (string); `.json` → native import (object); `.toml` → text loader (string)
 - No fs reads at runtime — all assets inlined at bundle time

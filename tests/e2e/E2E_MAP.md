@@ -346,7 +346,7 @@ Sets up or updates the project. Smart dispatcher: detects state and calls init/i
 | S2 | Fresh project + `--all --path <fw>` | Installs all AI + IDE tools (assets) |
 | S4 | `--release <tag>` in remote mode | Sets marketplace catalog version, no GitHub auth required |
 | S5 | `--from v3.0.0 --path <fw> --ai claude` with adopt signals | Adopt flow — registers existing install in manifest |
-| S6 | needs-adopt state, missing `--from`, no `--path` | Error: `--from` required, exit 1 |
+| S6 | missing `--source`, no `--path` | Error: `--source` required, exit 1 |
 | S7 | `--mode local --path <fw> --ai claude` | Init + install + `./plugins/` + `./.claude-plugin/` copied to project root, manifest mode = local |
 | S8 | `--mode remote --ai claude` | Init + install, no `./plugins/` in project root, manifest mode = remote, no tarball |
 | S9 | Already-init local project + `--switch-mode --mode remote` | Mode switched, exit 0, manifest mode = remote |
