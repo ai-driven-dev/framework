@@ -47,6 +47,7 @@
     "@commitlint/config-conventional": "^19.0.0",
     "@types/node": "^24.0.0",
     "@vitest/coverage-v8": "^2.1.9",
+    "fast-check": "^4.7.0",
     "jscpd": "^4.0.0",
     "knip": "^5.0.0",
     "lefthook": "^1.13.1",
