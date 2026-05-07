@@ -250,3 +250,10 @@ export class InteractiveOnlyError extends Error {
     this.name = "InteractiveOnlyError";
   }
 }
+
+export class ForeignSchemaValidationError extends Error {
+  constructor(source: string, detail: string) {
+    super(`Foreign marketplace schema validation failed (${source}): ${detail}`);
+    this.name = "ForeignSchemaValidationError";
+  }
+}

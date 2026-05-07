@@ -70,3 +70,17 @@ Runtime configs and IDE configs ship inside the CLI binary (tsup bundles them):
 - IDE tool files (user-prime): never deleted on uninstall
 - Error handling: typed exceptions thrown from use-cases/adapters; caught only at command layer
 - `aidd migrate`: idempotent, `--dry-run` safe, backup before writes, best-effort plugin rewire via marketplace
+
+## Foreign-Format Adapters (Phase A — Cursor only)
+
+Future capability: ingest native marketplace formats from other AI tools.
+Pipeline: `NativeFormat → Parser → NormalizedPlugin → Emitter[targetTool] → ToolNativeFiles`
+
+**Phase A (Cursor) — shipped:**
+- `src/domain/models/normalized-plugin.ts` — `NormalizedPlugin` internal AST (NOT versioned); `ForeignMarketplaceSource` union
+- `src/domain/formats/cursor-marketplace.ts` — pure parser `parseCursorMarketplace(rawJson)` → `NormalizedCatalog`
+- `ForeignSchemaValidationError` in `src/domain/errors.ts` — thrown on invalid foreign schema
+- Cursor's `marketplace.json` schema mirrors Claude's catalog shape (official schema undocumented as of 2026-05-06)
+- Integration with fetcher pipeline deferred to Phase A.5
+
+**Phases B (Copilot), C (Codex), D (OpenCode) — deferred.**
