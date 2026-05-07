@@ -24,11 +24,13 @@ paths:
 
 ## User file protection
 
-Any `fs.writeFile()` on a framework-distributed file must be guarded:
+- Guard every `fs.writeFile()` on framework files
 - Check `fs.fileExists(outputPath)` AND `!manifest.isFileTracked(relativePath)`
-- If both true → skip write, emit `logger.warn()`, do NOT add to manifest
-- Never overwrite a file that exists on disk but is not owned by AIDD
+- If both true → skip write, emit `logger.warn()`
+- Never overwrite a file not owned by AIDD
 
 ## Constructor injection order
 
-FileSystem → Repository → Loader → Hasher → Logger → Platform → Prompter (only for domain-level interaction — conflict resolution, strategy selection; never for CLI input collection)
+- FileSystem → Repository → Loader → Hasher → Logger → Platform → Prompter
+- Prompter: domain interaction only (conflict resolution, strategy selection)
+- Never use Prompter for CLI input collection in use-cases

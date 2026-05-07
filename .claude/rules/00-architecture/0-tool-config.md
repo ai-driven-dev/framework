@@ -10,7 +10,7 @@ paths:
 ## Layers
 
 - `formats/` — pure string transforms, no I/O (`markdown.ts`, `toml.ts`, `json.ts`, `placeholders.ts`, `command.ts`)
-- `capabilities/` — capability classes (`agents-capability.ts`, `commands-capability.ts`, `hooks-capability.ts`, `mcp-capability.ts`, `memory-capability.ts`, `rules-capability.ts`, `settings-capability.ts`, `skills-capability.ts`)
+- `capabilities/` — capability classes (`agents-capability.ts`, `commands-capability.ts`, `hooks-capability.ts`, `mcp-capability.ts`, `plugins-capability.ts`, `rules-capability.ts`, `settings-capability.ts`, `skills-capability.ts`)
 - `tools/contracts.ts` — `AiTool<C>` interface, all `Has*` interfaces, `IdeToolConfig`, `UserFileSectionKey`, `UserFileSection`
 - `tools/registry.ts` — `ToolConfig` union, `isAiTool`, `registerTool`, `getToolConfig`
 - `tools/ai/` — one file per AI tool, composes capabilities

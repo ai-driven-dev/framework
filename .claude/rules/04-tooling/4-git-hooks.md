@@ -1,3 +1,8 @@
+---
+paths:
+  - "lefthook.yml"
+---
+
 # Git Hooks (lefthook)
 
 - `pre-commit` — biome + typecheck

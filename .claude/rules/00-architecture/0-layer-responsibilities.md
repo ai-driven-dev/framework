@@ -5,28 +5,20 @@ paths:
 
 # Layer Responsibilities
 
-## Command (`src/application/commands/`)
-
-- Wire only: create deps → call use-case → display result
-- Validate CLI flags before try/catch (`output.error()` + `process.exit(1)`)
-- All other errors caught in `catch (error) { errorHandler.handle(error) }`
-- Never call `output.exit()`
-- No business logic, no helper functions
-
 ## Use Case (`src/application/use-cases/`)
 
 - Orchestrate domain operations end-to-end
 - Return a typed result object
-- Throw on invalid input or domain errors — never catch internally
-- No tool-specific logic — tool names (`opencode`, `cursor`, etc.), tool file names, or per-tool decisions must not appear here
-- If a tool needs runtime behavior (e.g. dynamic output path), extend the relevant capability class or `AiTool<C>` interface and implement it in the tool's domain file
-- Methods must be ≤ 20 lines — extract named private methods before reaching the limit
+- Throw on errors — never catch internally
+- No tool-specific logic in use-cases
+- Extend capability class for tool runtime behavior
+- Methods ≤ 20 lines
 
 ## Shared Use Cases (`src/application/use-cases/shared/`)
 
-- Orchestration helpers called only by other use-cases, never by commands
-- Examples: `PostInstallPipelineUseCase`, `SetupStateService`
-- Same rules as top-level use-cases (class, single `execute()`, typed input/output, throws on errors)
+- Only called from other use-cases
+- Examples: `PostInstallPipelineUseCase`
+- Same rules as top-level use-cases
 
 ## Domain Model (`src/domain/models/`)
 
