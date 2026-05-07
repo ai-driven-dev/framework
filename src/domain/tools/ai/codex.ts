@@ -1,18 +1,28 @@
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
+import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { HooksCapability } from "../../capabilities/hooks-capability.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
+import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
-import { detectSectionKeyFromPrefixes } from "../../formats/command.js";
+import {
+  buildAiddCommandFilePath,
+  convertCommandFrontmatter,
+  detectSectionKeyFromPrefixes,
+  reverseConvertCommandFrontmatter,
+  stripToolSuffix,
+} from "../../formats/command.js";
 import { baseReverseRewriteContent, baseRewriteContent } from "../../formats/placeholders.js";
 import { parseToml, stringifyToml } from "../../formats/toml.js";
 import { CONFIG_MCP } from "../../models/framework.js";
 import type {
   AiTool,
   HasAgents,
+  HasCommands,
   HasHooks,
   HasMcp,
   HasPlugins,
+  HasRules,
   HasSkills,
   UserFileSectionKey,
 } from "../contracts.js";
@@ -23,20 +33,14 @@ const TOOL_SUFFIX = ".codex.md";
 const AGENTS_SKILLS_PREFIX = ".agents/skills/";
 
 const SKILLS_TO_AGENTS_RE = /\.codex\/skills\//g;
-const COMMANDS_TO_AGENTS_RE = /\.codex\/commands\//g;
-const AGENTS_SKILLS_COMMANDS_RE = /\.agents\/skills\/aidd-(\d+)-/g;
 const AGENTS_SKILLS_PLAIN_RE = /\.agents\/skills\/aidd-/g;
 
-function remapInstallPaths(content: string): string {
-  return content
-    .replace(SKILLS_TO_AGENTS_RE, ".agents/skills/aidd-")
-    .replace(COMMANDS_TO_AGENTS_RE, ".agents/skills/aidd-");
+function remapSkillPaths(content: string): string {
+  return content.replace(SKILLS_TO_AGENTS_RE, ".agents/skills/aidd-");
 }
 
-function reverseAgentPaths(content: string): string {
-  return content
-    .replace(AGENTS_SKILLS_COMMANDS_RE, ".codex/commands/")
-    .replace(AGENTS_SKILLS_PLAIN_RE, ".codex/skills/");
+function reverseSkillPaths(content: string): string {
+  return content.replace(AGENTS_SKILLS_PLAIN_RE, ".codex/skills/");
 }
 
 export function rewriteCodexContent(
@@ -44,11 +48,15 @@ export function rewriteCodexContent(
   context: { directory: string; docsDir: string }
 ): string {
   const step1 = baseRewriteContent(content, context.directory, context.docsDir);
-  return remapInstallPaths(step1);
+  const step2 = remapSkillPaths(step1);
+  return step2.replace(
+    /(@?)\.codex\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
+    "$1.codex/commands/aidd/$2/$3"
+  );
 }
 
 export function reverseRewriteCodexContent(content: string, docsDir: string): string {
-  const step1 = reverseAgentPaths(content);
+  const step1 = reverseSkillPaths(content);
   return baseReverseRewriteContent(step1, DIRECTORY, docsDir);
 }
 
@@ -181,12 +189,14 @@ function stripCodexSkillFrontmatter(fm: Record<string, unknown>): Record<string,
   return result;
 }
 
-export const codex: AiTool<HasAgents & HasSkills & HasMcp & HasHooks & HasPlugins> = {
+export const codex: AiTool<
+  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasHooks & HasPlugins
+> = {
   kind: "ai",
   toolId: "codex",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
-  signalDir: null,
+  signalDir: `${DIRECTORY}commands`,
   configOutputPaths: { "config.toml": ".codex/config.toml" },
 
   capabilities: {
@@ -195,6 +205,20 @@ export const codex: AiTool<HasAgents & HasSkills & HasMcp & HasHooks & HasPlugin
       prefix: "aidd-",
       buildInstallPath: buildCodexSkillFilePath,
       convertFrontmatter: stripCodexSkillFrontmatter,
+      reverseConvertFrontmatter: (fm) => fm,
+    }),
+    commands: new CommandsCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
+      convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
+      reverseConvertFrontmatter: (fm) => reverseConvertCommandFrontmatter(fm),
+    }),
+    rules: new RulesCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      buildInstallPath: (fileName) => `${DIRECTORY}rules/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+      convertFrontmatter: (fm) => fm,
       reverseConvertFrontmatter: (fm) => fm,
     }),
     mcp: new McpCapability({
@@ -231,6 +255,8 @@ export const codex: AiTool<HasAgents & HasSkills & HasMcp & HasHooks & HasPlugin
     return detectSectionKeyFromPrefixes(relativePath, [
       [`${AGENTS_SKILLS_PREFIX}aidd-`, "skills"],
       [`${DIRECTORY}agents/`, "agents"],
+      [`${DIRECTORY}commands/aidd/`, "commands"],
+      [`${DIRECTORY}rules/`, "rules"],
     ]);
   },
 };

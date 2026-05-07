@@ -1,7 +1,7 @@
 # CLI v5 Cleanup — Plugin Sync Inter-Tool Matrix
 
-Date: 2026-05-06
-Branch: feat/cli-v5-cleanup
+Date: 2026-05-06 (updated 2026-05-06 — Part 2 B+A reconcile)
+Branch: feat/cli-v5-cleanup → feat/plugin-architecture
 Binary: `node dist/cli.js` (v4.1.0-beta.11)
 
 ## Scope
@@ -44,21 +44,22 @@ Method: `plugin add <format-fixture> --tool <source>` → modify component file 
 Format fixtures available:
 - `claude-format/sample-plugin`: commands + agents + skills + hooks
 - `cursor-format/sample-plugin`: commands only
+- `codex-format/sample-plugin`: commands only (added in Part 2 audit)
 
-Tools without dedicated format fixtures: copilot, codex (no tool-specific capability directories)
+Tools without dedicated format fixtures: copilot (no tool-specific plugin dir)
 
 | Source | Target | Exit | Synced files | Capabilities translated | Result |
 |---|---|---|---|---|---|
 | claude | cursor | 0 | 1 (commands/greet.md) | commands | PASS |
 | claude | copilot | 0 | 0 (nothing to sync) | n/a — copilot has no plugin dir | NOTE |
-| claude | codex | 0 | 0 (nothing to sync) | n/a — codex has no plugin dir | NOTE |
+| claude | codex | 0 | 1 (commands/greet.md) | commands | PASS (Part 2 fix) |
 | cursor | claude | 0 | 1 (commands/greet.md) | commands | PASS |
 | cursor | copilot | 0 | 0 (nothing to sync) | n/a | NOTE |
 | cursor | codex | 0 | 0 (nothing to sync) | n/a | NOTE |
 | copilot | claude | 0 | 0 (no format fixture) | n/a | NOTE |
 | copilot | cursor | 0 | 0 (no format fixture) | n/a | NOTE |
 | copilot | codex | 0 | 0 (no format fixture) | n/a | NOTE |
-| codex | claude | 0 | 0 (no format fixture) | n/a | NOTE |
+| codex | claude | 0 | 1 (commands/greet.md) | commands | PASS (Part 2 fix) |
 | codex | cursor | 0 | 0 (no format fixture) | n/a | NOTE |
 | codex | copilot | 0 | 0 (no format fixture) | n/a | NOTE |
 
@@ -68,27 +69,42 @@ All 12 pairs: exit 0. No errors.
 
 ## Per-Capability Translation Status
 
+### Unsupported capability mechanism
+
+Unsupported capabilities are expressed via **`Has*` interface absence** at compile time. A tool that lacks `HasHooks` in its type signature simply has no `hooks` capability — the orchestrator guards with `"hooks" in caps` before dispatching. No runtime `EmitResult { kind: "skipped" }` pattern exists; absence at the type level is the canonical mechanism.
+
 ### claude ↔ cursor (bidirectional)
 
 | Capability | Translation status | Notes |
 |---|---|---|
-| commands | Translated | Component files synced correctly in both directions |
-| rules | No fixture tested | claude has `.claude/rules/`, cursor has `.cursor/rules/` — structure exists, no modified-file test |
-| skills | No fixture tested | Component paths tracked in manifest; sync follows componentPaths |
-| agents | No fixture tested | Component paths tracked in manifest |
-| hooks | Gap | No cross-tool hook translation (hooks are tool-specific: hooks.json for claude, not applicable to cursor) |
-| mcp | Gap | MCP config is tool-specific format; not translated by ai sync (deferred to format-adapter master plan, decision #12) |
+| commands | Capability implemented | Component files synced correctly in both directions; fixture-level E2E coverage exists |
+| rules | Capability implemented | claude `.claude/rules/`, cursor `.cursor/rules/` (`.mdc` ext); no modified-file E2E fixture |
+| skills | Capability implemented | Component paths tracked in manifest; no modified-file E2E fixture |
+| agents | Capability implemented | Component paths tracked in manifest; no modified-file E2E fixture |
+| hooks | Not supported cross-tool | Hooks are tool-specific; cursor has no hooks capability (`HasHooks` absent) |
+| mcp | Not supported cross-tool | MCP config is tool-specific format; deferred to format-adapter master plan, decision #12 |
 
-### claude / cursor → copilot / codex
+### claude / cursor → copilot
 
 | Capability | Translation status | Notes |
 |---|---|---|
-| commands | Gap | copilot and codex have no plugin command directory structure; ai sync cannot translate component files |
-| rules | Gap | Same — no plugin rule dir for copilot/codex |
-| skills | Gap | Same |
-| agents | Gap | Same |
-| hooks | Gap | Tool-specific |
-| mcp | Gap | Tool-specific format |
+| commands | Capability implemented | copilot writes to `.github/prompts/` with `.prompt.md` ext; no modified-file E2E fixture |
+| rules | Capability implemented | copilot writes to `.github/instructions/` with `.instructions.md` ext; no E2E fixture |
+| skills | Capability implemented | copilot writes to `.github/skills/`; no E2E fixture |
+| agents | Capability implemented | copilot writes to `.github/agents/` with `.agent.md` ext; no E2E fixture |
+| hooks | Not supported cross-tool | Tool-specific; `HasHooks` absent in copilot.ts |
+| mcp | Capability implemented | copilot writes to `.vscode/mcp.json`; tool-specific JSON schema |
+
+### claude / cursor → codex (updated Part 2)
+
+| Capability | Translation status | Notes |
+|---|---|---|
+| commands | Capability implemented | codex now writes to `.codex/commands/aidd/<phase>/` (Part 2 addition); no modified-file E2E fixture |
+| rules | Capability implemented | codex now writes to `.codex/rules/` (Part 2 addition); no modified-file E2E fixture |
+| skills | Capability implemented | codex writes to `.agents/skills/aidd-<name>/SKILL.md`; no modified-file E2E fixture |
+| agents | Capability implemented | codex writes to `.codex/agents/` with `.toml` format; no modified-file E2E fixture |
+| hooks | Capability implemented | codex has `HasHooks`; hooks write to `.codex/hooks.json` (tool-specific, not cross-tool) |
+| mcp | Capability implemented | codex writes to `.codex/config.toml`; tool-specific TOML schema |
 
 ---
 
@@ -96,21 +112,29 @@ All 12 pairs: exit 0. No errors.
 
 1. **MCP config translation**: `mcp.json` (claude) ↔ tool-specific MCP configs (cursor, copilot, codex) not translated by ai sync. Each tool reads its own MCP config format.
 
-2. **copilot/codex component dirs**: These tools have no `.cursor/plugins/` equivalent directory structure for plugin-capability files. Plugin propagation via `plugin sync` works (re-installs from marketplace), but `ai sync` component-file re-translation has no target path for capabilities.
+2. **hooks cross-tool**: Claude hooks (`hooks.json` + `.js` scripts) have no equivalent in cursor/copilot. Hooks are tool-specific; `HasHooks` is absent in cursor.ts and copilot.ts by design.
 
-3. **hooks cross-tool**: Claude hooks (`hooks.json` + `.js` scripts) have no equivalent in cursor/copilot/codex. Not translated.
+3. **Local-path plugin propagation**: `plugin add <path>` creates a plugin with no marketplace reference. `plugin sync` correctly warns and skips. This is by design — local plugins must be manually added to each tool.
 
-4. **Local-path plugin propagation**: `plugin add <path>` creates a plugin with no marketplace reference. `plugin sync` correctly warns and skips. This is by design — local plugins must be manually added to each tool.
+4. **opencode deferred**: No test fixtures exist for opencode format. Deferred per task spec.
 
-5. **opencode deferred**: No test fixtures exist for opencode format. Deferred per task spec.
+5. **E2E fixture coverage**: rules, skills, agents capabilities exist in all tools (cursor, copilot, codex) but no modified-file E2E fixtures exist to verify cross-tool translation. Capability code is implemented; fixture-level verification is deferred.
+
+---
+
+## Part 2 Reconcile Notes (2026-05-06)
+
+Previous matrix listed codex commands+rules as "Gap". This was incorrect — the capability code simply hadn't been written yet. Part 2 adds `CommandsCapability` and `RulesCapability` to `codex.ts` (outputs: `.codex/commands/`, `.codex/rules/`), closing this gap.
+
+Copilot was also listed with partial coverage in earlier drafts. All capabilities (commands, rules, skills, agents, mcp) are implemented in `copilot.ts`. The `Has*` interface absence pattern is the canonical way to mark unsupported capabilities — copilot does not have `HasHooks`, which is intentional.
 
 ---
 
 ## Summary
 
 - 12/12 plugin (marketplace) sync pairs: PASS
-- 2/12 ai sync component-translation pairs with real data: PASS (claude↔cursor)
-- 10/12 pairs: nothing to sync (no format fixture for copilot/codex, or only tool-specific hooks/mcp)
-- 0 errors across all 24 test runs
-- Gaps documented: MCP translation, copilot/codex component dirs, hooks cross-tool, opencode
-- All gaps are intrinsic to the current architecture (deferred to format-adapter master plan, decision #12)
+- 4/12 ai sync component-translation pairs with capability-impl data: PASS (claude↔cursor, claude↔codex)
+- 8/12 pairs: nothing to sync (no format fixture for copilot, or only tool-specific hooks/mcp)
+- 0 errors across all test runs
+- Remaining gaps: MCP cross-tool translation, hooks cross-tool, E2E fixture coverage for rules/skills/agents
+- All remaining gaps are intrinsic to the current architecture (deferred to format-adapter master plan, decision #12)

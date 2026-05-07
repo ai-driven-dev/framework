@@ -15,8 +15,8 @@ describe("codex", () => {
     expect(codex.toolSuffix).toBe(".codex.md");
   });
 
-  it("has no signalDir", () => {
-    expect(codex.signalDir).toBeNull();
+  it("has signalDir pointing at .codex/commands", () => {
+    expect(codex.signalDir).toBe(".codex/commands");
   });
 
   it("is registered in the tool registry", () => {
@@ -91,6 +91,56 @@ describe("codex", () => {
     });
   });
 
+  describe("capabilities.commands.buildInstallPath()", () => {
+    it("maps phase-prefixed path to .codex/commands/aidd/<phase>/ subfolder", () => {
+      const path = codex.capabilities.commands.buildInstallPath("04_code/implement.md");
+      expect(path).toBe(".codex/commands/aidd/04/implement.md");
+    });
+
+    it("maps top-level file to .codex/commands/aidd/ without phase", () => {
+      const path = codex.capabilities.commands.buildInstallPath("commit.md");
+      expect(path).toBe(".codex/commands/aidd/commit.md");
+    });
+  });
+
+  describe("capabilities.commands.convertFrontmatter()", () => {
+    it("prefixes name with aidd:<phase>: and strips extra fields", () => {
+      const fm = { name: "implement", description: "Implement", model: "sonnet" };
+      const result = codex.capabilities.commands.convertFrontmatter(fm, "04_code/implement.md");
+      expect(result).toEqual({ name: "aidd:04:implement", description: "Implement" });
+    });
+  });
+
+  describe("capabilities.commands.reverseConvertFrontmatter()", () => {
+    it("strips aidd:<phase>: prefix from name", () => {
+      const result = codex.capabilities.commands.reverseConvertFrontmatter({
+        name: "aidd:04:implement",
+        description: "Impl",
+      });
+      expect(result).toEqual({ name: "implement", description: "Impl" });
+    });
+  });
+
+  describe("capabilities.rules.buildInstallPath()", () => {
+    it("builds path for rules under .codex/rules/", () => {
+      const path = codex.capabilities.rules.buildInstallPath("01-standards/naming.md");
+      expect(path).toBe(".codex/rules/01-standards/naming.md");
+    });
+
+    it("strips .codex.md tool suffix from rules path", () => {
+      const path = codex.capabilities.rules.buildInstallPath("01-standards/naming.codex.md");
+      expect(path).toBe(".codex/rules/01-standards/naming.md");
+    });
+  });
+
+  describe("capabilities.rules.convertFrontmatter()", () => {
+    it("passes frontmatter through unchanged", () => {
+      const fm = { paths: ["src/**/*.ts"], description: "TS rules" };
+      const result = codex.capabilities.rules.convertFrontmatter(fm);
+      expect(result).toEqual(fm);
+    });
+  });
+
   describe("detectUserFileSectionKey()", () => {
     it("detects agents section for .codex/agents/ paths", () => {
       const key = codex.detectUserFileSectionKey(".codex/agents/alexia.toml");
@@ -100,6 +150,16 @@ describe("codex", () => {
     it("detects skills section for .agents/skills/aidd- paths", () => {
       const key = codex.detectUserFileSectionKey(".agents/skills/aidd-my-skill/SKILL.md");
       expect(key).toEqual({ section: "skills", key: "my-skill/SKILL.md" });
+    });
+
+    it("detects commands section for .codex/commands/aidd/ paths", () => {
+      const key = codex.detectUserFileSectionKey(".codex/commands/aidd/04/implement.md");
+      expect(key).toEqual({ section: "commands", key: "04/implement.md" });
+    });
+
+    it("detects rules section for .codex/rules/ paths", () => {
+      const key = codex.detectUserFileSectionKey(".codex/rules/01-standards/naming.md");
+      expect(key).toEqual({ section: "rules", key: "01-standards/naming.md" });
     });
 
     it("returns null for unrecognised paths", () => {
