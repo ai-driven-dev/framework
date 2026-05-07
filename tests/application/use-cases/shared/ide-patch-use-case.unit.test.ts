@@ -1,65 +1,55 @@
-import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import "../../../../src/domain/tools/ai/claude.js";
+import { describe, expect, it } from "vitest";
 import "../../../../src/domain/tools/ai/copilot.js";
-import "../../../../src/domain/tools/ai/cursor.js";
-import "../../../../src/domain/tools/ai/opencode.js";
+import "../../../../src/domain/tools/ai/claude.js";
 import "../../../../src/domain/tools/ide/vscode.js";
 import { InstallUseCase } from "../../../../src/application/use-cases/install/install-use-case.js";
-import { SilentPrompterAdapter } from "../../../../src/infrastructure/adapters/prompter-adapter.js";
+import { FakePlatform } from "../../../helpers/ports/fake-platform.js";
+import { OverwritePrompter } from "../../../helpers/ports/scripted-prompter.js";
 import {
-  buildDeps,
-  cleanupTempProject,
-  createTempProject,
-  FIXTURE_DIR,
+  buildUnitDeps,
   initAndInstall,
-  linuxPlatform,
-} from "../helpers.js";
+  FIXTURE_DIR,
+} from "../../../helpers/ports/build-unit-deps.js";
 
-function buildInstallUseCase(deps: ReturnType<typeof buildDeps>) {
-  return new InstallUseCase(
+const PROJECT_ROOT = "/test-project";
+
+async function buildInstallUseCase() {
+  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const useCase = new InstallUseCase(
     deps.fs,
     deps.manifestRepo,
     deps.hasher,
     deps.logger,
-    linuxPlatform,
-    new SilentPrompterAdapter()
+    new FakePlatform("linux"),
+    new OverwritePrompter(),
+    deps.pluginFetcher,
+    deps.pluginDistributionReader,
+    deps.pluginCatalogRepository
   );
+  return { deps, useCase };
 }
 
 describe("IDE patch after install", () => {
-  let tempDir: string;
-  let projectRoot: string;
-
-  beforeEach(async () => {
-    ({ tempDir, projectRoot } = await createTempProject());
-  });
-
-  afterEach(async () => {
-    await cleanupTempProject(tempDir);
-  });
-
   it("distributes IDE-conditional files for already-installed AI tool when IDE is installed", async () => {
-    const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "copilot");
+    const { deps, useCase } = await buildInstallUseCase();
+    await initAndInstall(deps, PROJECT_ROOT, "copilot");
 
-    const settingsPath = join(projectRoot, ".vscode", "settings.json");
-    expect(existsSync(settingsPath)).toBe(false);
+    const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
+    expect(deps.fs.has(settingsPath)).toBe(false);
 
-    await buildInstallUseCase(deps).execute({
+    await useCase.execute({
       toolIds: ["vscode"],
       frameworkPath: FIXTURE_DIR,
       version: "test",
       docsDir: "aidd_docs",
-      projectRoot,
+      projectRoot: PROJECT_ROOT,
       interactive: false,
     });
 
-    expect(existsSync(settingsPath)).toBe(true);
-    const content = await readFile(settingsPath, "utf-8");
-    const parsed = JSON.parse(content) as Record<string, unknown>;
+    expect(deps.fs.has(settingsPath)).toBe(true);
+    const content = deps.fs.getFile(settingsPath);
+    const parsed = JSON.parse(content ?? "{}") as Record<string, unknown>;
     expect(parsed["github.copilot.enable"]).toBe(true);
 
     const manifest = await deps.manifestRepo.load();
@@ -69,31 +59,31 @@ describe("IDE patch after install", () => {
   });
 
   it("does nothing when AI tool has no IDE-conditional files for the given IDE", async () => {
-    const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "claude");
+    const { deps, useCase } = await buildInstallUseCase();
+    await initAndInstall(deps, PROJECT_ROOT, "claude");
 
     await expect(
-      buildInstallUseCase(deps).execute({
+      useCase.execute({
         toolIds: ["vscode"],
         frameworkPath: FIXTURE_DIR,
         version: "test",
         docsDir: "aidd_docs",
-        projectRoot,
+        projectRoot: PROJECT_ROOT,
         interactive: false,
       })
     ).resolves.toBeDefined();
   });
 
   it("does not add duplicate merge entries when vscode is installed after copilot twice", async () => {
-    const deps = buildDeps(projectRoot);
-    await initAndInstall(deps, projectRoot, "copilot");
+    const { deps, useCase } = await buildInstallUseCase();
+    await initAndInstall(deps, PROJECT_ROOT, "copilot");
 
-    await buildInstallUseCase(deps).execute({
+    await useCase.execute({
       toolIds: ["vscode"],
       frameworkPath: FIXTURE_DIR,
       version: "test",
       docsDir: "aidd_docs",
-      projectRoot,
+      projectRoot: PROJECT_ROOT,
       interactive: false,
     });
 
@@ -103,12 +93,12 @@ describe("IDE patch after install", () => {
       .getMergeFiles("copilot")
       .filter((m) => m.relativePath === ".vscode/settings.json").length;
 
-    await buildInstallUseCase(deps).execute({
+    await useCase.execute({
       toolIds: ["vscode"],
       frameworkPath: FIXTURE_DIR,
       version: "test",
       docsDir: "aidd_docs",
-      projectRoot,
+      projectRoot: PROJECT_ROOT,
       force: true,
       interactive: false,
     });

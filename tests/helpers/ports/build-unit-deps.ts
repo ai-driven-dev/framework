@@ -16,6 +16,7 @@ import { PluginCatalogRepositoryAdapter } from "../../../src/infrastructure/adap
 import { PluginDistributionReaderAdapter } from "../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
 import type { ToolId } from "../../../src/domain/tools/registry.js";
 import { DeterministicHasher } from "./deterministic-hasher.js";
+import { FakeCurrentVersion } from "./fake-current-version.js";
 import { FakePlatform } from "./fake-platform.js";
 import { FixturePluginFetcher } from "./fixture-plugin-fetcher.js";
 import { InMemoryFileSystem } from "./in-memory-file-system.js";
@@ -53,6 +54,8 @@ export async function buildUnitDeps(projectRoot: string) {
     assetProvider
   );
 
+  const currentVersionProvider = new FakeCurrentVersion();
+
   // Seed the framework fixture content so the install use-case can read it
   await seedFromDirectory(fs, FIXTURE_DIR, { useAbsolutePaths: true });
 
@@ -67,6 +70,7 @@ export async function buildUnitDeps(projectRoot: string) {
     pluginCatalogRepository,
     installRuntimeConfigUseCase,
     installIdeConfigUseCase,
+    currentVersionProvider,
   };
 }
 
