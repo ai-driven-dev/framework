@@ -1,0 +1,7 @@
+[
+  { "prompt": "Handle review comments on PR #117", "expect_action": "collect-comments" },
+  { "prompt": "Address review feedback automatically on the open PR", "expect_action": "collect-comments" },
+  { "prompt": "Iterate fixes on PR 89 until reviewer approves or max retries", "expect_action": "collect-comments" },
+  { "prompt": "Setup async dev plugin", "expect_action": null },
+  { "prompt": "Run the async pipeline on issue #50", "expect_action": null }
+]

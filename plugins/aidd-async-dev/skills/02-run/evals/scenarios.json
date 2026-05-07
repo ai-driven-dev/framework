@@ -1,0 +1,8 @@
+[
+  { "prompt": "Run async dev on issue #42", "expect_action": "poll-ready" },
+  { "prompt": "Process the async queue now", "expect_action": "poll-ready" },
+  { "prompt": "Implement the next ready issue with Claude", "expect_action": "poll-ready" },
+  { "prompt": "@claude /implement on this issue", "expect_action": "poll-ready" },
+  { "prompt": "Setup the aidd-async-dev plugin", "expect_action": null },
+  { "prompt": "Handle the review comments on PR #117", "expect_action": null }
+]
