@@ -62,7 +62,9 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
   }
 
   private userPath(): string {
-    return join(homedir(), ".config", "aidd", REGISTRY_FILENAME);
+    const override = process.env.AIDD_USER_CONFIG_DIR;
+    const dir = override ?? join(homedir(), ".config", "aidd");
+    return join(dir, REGISTRY_FILENAME);
   }
 
   private async read(path: string, scope: MarketplaceScope): Promise<Marketplace[]> {

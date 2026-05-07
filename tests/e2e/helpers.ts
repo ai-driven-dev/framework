@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { copyFile, mkdir, mkdtemp, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { CLIOutput } from "../../src/application/output.js";
@@ -38,6 +39,12 @@ export async function createTestEnv(prefix: string): Promise<{
   const fakeHome = join(tempDir, "home");
   await mkdir(projectDir, { recursive: true });
   await mkdir(fakeHome, { recursive: true });
+  // Mirror real ~/.gitconfig into fakeHome so git operations (clone, fetch)
+  // work from sandboxed HOME without losing user identity / credential helpers.
+  const realGitconfig = join(homedir(), ".gitconfig");
+  if (existsSync(realGitconfig)) {
+    await copyFile(realGitconfig, join(fakeHome, ".gitconfig"));
+  }
   return {
     tempDir,
     projectDir,
@@ -46,7 +53,14 @@ export async function createTestEnv(prefix: string): Promise<{
   };
 }
 
-function sandboxedEnv(fakeHome: string, extra?: Record<string, string>): NodeJS.ProcessEnv {
+function sandboxedEnv(
+  fakeHome: string,
+  extra?: Record<string, string>,
+  options?: { realHome?: boolean }
+): NodeJS.ProcessEnv {
+  if (options?.realHome) {
+    return { ...process.env, ...extra, AIDD_USER_CONFIG_DIR: join(fakeHome, ".config", "aidd") };
+  }
   return {
     ...process.env,
     ...extra,
@@ -58,9 +72,10 @@ function sandboxedEnv(fakeHome: string, extra?: Record<string, string>): NodeJS.
 export async function runCli(
   args: string[],
   cwd: string,
-  fakeHome: string
+  fakeHome: string,
+  options?: { realHome?: boolean }
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  const env = sandboxedEnv(fakeHome);
+  const env = sandboxedEnv(fakeHome, undefined, options);
   try {
     const { stdout, stderr } = await execFileAsync("node", [CLI_PATH, ...args], { cwd, env });
     return { stdout, stderr, exitCode: 0 };

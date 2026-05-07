@@ -16,7 +16,9 @@ export class AuthStorage {
   private static readonly AUTH_FILE = "auth.json";
 
   userConfigPath(): string {
-    return join(homedir(), ".config", "aidd", AuthStorage.AUTH_FILE);
+    const override = process.env.AIDD_USER_CONFIG_DIR;
+    const dir = override ?? join(homedir(), ".config", "aidd");
+    return join(dir, AuthStorage.AUTH_FILE);
   }
 
   projectConfigPath(projectRoot: string): string {

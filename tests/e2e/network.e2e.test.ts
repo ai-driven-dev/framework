@@ -59,7 +59,7 @@ describe.concurrent("Network E2E — real GitHub fetch path", () => {
         await cleanup();
       }
     },
-    { retry: 2 }
+    { retry: 2, timeout: 180_000 }
   );
 
   it.skipIf(!RUN_NETWORK)(
@@ -89,7 +89,7 @@ describe.concurrent("Network E2E — real GitHub fetch path", () => {
         await cleanup();
       }
     },
-    { retry: 2 }
+    { retry: 2, timeout: 180_000 }
   );
 
   it.skipIf(!RUN_NETWORK)(
@@ -117,7 +117,7 @@ describe.concurrent("Network E2E — real GitHub fetch path", () => {
         await cleanup();
       }
     },
-    { retry: 2 }
+    { retry: 2, timeout: 180_000 }
   );
 
   it.skipIf(!RUN_NETWORK)(
@@ -147,6 +147,6 @@ describe.concurrent("Network E2E — real GitHub fetch path", () => {
         await cleanup();
       }
     },
-    { retry: 2 }
+    { retry: 2, timeout: 180_000 }
   );
 });
