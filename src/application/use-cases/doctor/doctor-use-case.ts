@@ -1,5 +1,10 @@
 import { ManifestValidationError } from "../../../domain/errors.js";
-import type { DoctorReport } from "../../../domain/models/doctor.js";
+import type {
+  DoctorIssue,
+  DoctorReport,
+  PluginIssueEntry,
+  ToolHealth,
+} from "../../../domain/models/doctor.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { ToolCategory } from "../../../domain/models/tool-ids.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
@@ -36,31 +41,15 @@ export class DoctorUseCase {
     const { projectRoot, category, pluginName } = options;
     const manifest = await this.loadManifest();
     const allowedIds = category ? new Set(toolIdsForCategory(category) as readonly string[]) : null;
-
     const toolHealth = this.buildToolHealth(manifest, allowedIds);
-    const trackedFileList = this.trackedFiles.collectTrackedFiles(manifest, allowedIds);
-
-    const issues = await this.collectIssues(
-      manifest,
-      projectRoot,
-      allowedIds,
-      trackedFileList,
-      category
-    );
+    const issues = await this.collectIssues(manifest, projectRoot, allowedIds, category);
     const pluginIssues = await this.plugin.execute({
       manifest,
       projectRoot,
       allowedIds,
       pluginName,
     });
-
-    return {
-      healthy:
-        issues.filter((i) => i.severity !== "info").length === 0 && pluginIssues.length === 0,
-      toolHealth,
-      issues,
-      pluginIssues,
-    };
+    return this.buildReport(toolHealth, issues, pluginIssues);
   }
 
   private async loadManifest(): Promise<Manifest> {
@@ -76,8 +65,8 @@ export class DoctorUseCase {
     return manifest;
   }
 
-  private buildToolHealth(manifest: Manifest, allowedIds: Set<string> | null) {
-    const toolHealth = [];
+  private buildToolHealth(manifest: Manifest, allowedIds: Set<string> | null): ToolHealth[] {
+    const toolHealth: ToolHealth[] = [];
     for (const toolId of manifest.getInstalledToolIds()) {
       if (allowedIds && !allowedIds.has(toolId)) continue;
       const files = manifest.getToolFiles(toolId);
@@ -91,9 +80,9 @@ export class DoctorUseCase {
     manifest: Manifest,
     projectRoot: string,
     allowedIds: Set<string> | null,
-    trackedFileList: ReturnType<DoctorTrackedFilesUseCase["collectTrackedFiles"]>,
     category?: ToolCategory
-  ) {
+  ): Promise<DoctorIssue[]> {
+    const trackedFileList = this.trackedFiles.collectTrackedFiles(manifest, allowedIds);
     const issues = [
       ...(await this.trackedFiles.execute({ manifest, projectRoot, allowedIds })),
       ...(await this.mergeFiles.execute({ manifest, projectRoot, allowedIds })),
@@ -104,9 +93,21 @@ export class DoctorUseCase {
         trackedFiles: trackedFileList,
       })),
     ];
-    if (!category) {
-      issues.push(...(await this.layout.execute({ manifest, projectRoot })));
-    }
+    if (!category) issues.push(...(await this.layout.execute({ manifest, projectRoot })));
     return issues;
+  }
+
+  private buildReport(
+    toolHealth: ToolHealth[],
+    issues: DoctorIssue[],
+    pluginIssues: PluginIssueEntry[]
+  ): DoctorReport {
+    return {
+      healthy:
+        issues.filter((i) => i.severity !== "info").length === 0 && pluginIssues.length === 0,
+      toolHealth,
+      issues,
+      pluginIssues,
+    };
   }
 }
