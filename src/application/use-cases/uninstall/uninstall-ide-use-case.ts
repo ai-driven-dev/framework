@@ -1,11 +1,11 @@
 import { dirname, join } from "node:path";
-import type { Manifest } from "../../domain/models/manifest.js";
-import { DOCS_DIR } from "../../domain/models/paths.js";
-import type { IdeToolId } from "../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../domain/ports/file-system.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
-import { NoManifestError, ToolNotInstalledError } from "../errors.js";
-import { CatalogUseCase } from "./shared/catalog-use-case.js";
+import type { Manifest } from "../../../domain/models/manifest.js";
+import { DOCS_DIR } from "../../../domain/models/paths.js";
+import type { IdeToolId } from "../../../domain/models/tool-ids.js";
+import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
+import { NoManifestError, ToolNotInstalledError } from "../../errors.js";
+import { CatalogUseCase } from "../shared/catalog-use-case.js";
 
 export interface UninstallIdeOptions {
   toolId: IdeToolId;

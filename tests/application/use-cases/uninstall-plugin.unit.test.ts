@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../src/domain/tools/ai/claude.js";
 import { PluginAddUseCase } from "../../../src/application/use-cases/plugin/plugin-add-use-case.js";
-import { UninstallUseCase } from "../../../src/application/use-cases/uninstall-use-case.js";
+import { UninstallUseCase } from "../../../src/application/use-cases/uninstall/uninstall-use-case.js";
 import { PluginNotFoundError } from "../../../src/domain/errors.js";
 import { PluginDistributionReaderAdapter } from "../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";

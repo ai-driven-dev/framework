@@ -5,7 +5,7 @@ import { AI_TOOL_IDS } from "../../domain/models/tool-ids.js";
 import type { ToolId } from "../../domain/tools/registry.js";
 import { createDeps, createMenuDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
-import { UninstallUseCase } from "../use-cases/uninstall-use-case.js";
+import { UninstallUseCase } from "../use-cases/uninstall/uninstall-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./shared/spawn-cli-command.js";
 

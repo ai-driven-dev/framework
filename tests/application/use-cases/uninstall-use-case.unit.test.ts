@@ -6,7 +6,7 @@ import "../../../src/domain/tools/ai/copilot.js";
 import "../../../src/domain/tools/ai/cursor.js";
 import "../../../src/domain/tools/ai/opencode.js";
 import "../../../src/domain/tools/ide/vscode.js";
-import { UninstallUseCase } from "../../../src/application/use-cases/uninstall-use-case.js";
+import { UninstallUseCase } from "../../../src/application/use-cases/uninstall/uninstall-use-case.js";
 import type { ToolId } from "../../../src/domain/tools/registry.js";
 import { buildUnitDeps, initProject, installTool } from "../../helpers/ports/build-unit-deps.js";
 

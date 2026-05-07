@@ -35,7 +35,7 @@ import { ResolveMarketplaceUseCase } from "../application/use-cases/shared/resol
 import { SyncConflictResolverUseCase } from "../application/use-cases/sync/sync-conflict-resolver-use-case.js";
 import { SyncFilePropagationUseCase } from "../application/use-cases/sync/sync-file-propagation-use-case.js";
 import { SyncSourceResolverUseCase } from "../application/use-cases/sync/sync-source-resolver-use-case.js";
-import { UninstallIdeUseCase } from "../application/use-cases/uninstall-ide-use-case.js";
+import { UninstallIdeUseCase } from "../application/use-cases/uninstall/uninstall-ide-use-case.js";
 import type { AssetProvider } from "../domain/ports/asset-provider.js";
 import type { FileSystem } from "../domain/ports/file-system.js";
 import type { Hasher } from "../domain/ports/hasher.js";
