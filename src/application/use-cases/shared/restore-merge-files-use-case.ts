@@ -8,7 +8,7 @@ import {
 import type { FileSystem } from "../../../domain/ports/file-system.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
-import { resolveRestoreDecision } from "./resolve-restore-decision.js";
+import { ResolveRestoreDecisionUseCase } from "./resolve-restore-decision.js";
 
 interface MergeDriftEntry {
   relativePath: string;
@@ -116,13 +116,12 @@ export class RestoreMergeFilesUseCase {
     const kept: string[] = [];
     const mergeMap = new Map(mergeFiles.map((m) => [m.relativePath, m]));
     for (const entry of drift) {
-      const skip = await resolveRestoreDecision(
-        this.prompter,
-        entry.relativePath,
-        entry.reason,
+      const skip = await new ResolveRestoreDecisionUseCase(this.prompter).execute({
+        relativePath: entry.relativePath,
+        reason: entry.reason,
         force,
-        interactive
-      );
+        interactive,
+      });
       if (skip) {
         kept.push(entry.relativePath);
         continue;

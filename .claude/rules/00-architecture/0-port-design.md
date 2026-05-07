@@ -23,3 +23,7 @@ paths:
 
 - Implementation details (hook names, runtime strings, system paths) stay in the adapter
 - Port signature must not leak the adapter's internal structure
+
+## Exceptions
+
+- `FileSystem` (14 methods) — pragmatic exception; covers read, write, hash, merge, permissions, and directory ops. Splitting into `FileReader`/`FileWriter`/`FileMerger` is deferred and tracked separately. All other ports must still respect ≤5 methods.

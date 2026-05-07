@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { printUpdateBanner } from "../../src/application/use-cases/check-update-use-case.js";
+import { CheckUpdateUseCase } from "../../src/application/use-cases/check-update-use-case.js";
 import type { Logger } from "../../src/domain/ports/logger.js";
 import type { SelfUpdater } from "../../src/domain/ports/self-updater.js";
 import type { VersionReader } from "../../src/domain/ports/version-reader.js";
@@ -25,11 +25,15 @@ function makeVersionReader(version: string): VersionReader {
   return { get: () => version };
 }
 
-describe("printUpdateBanner", () => {
+describe("CheckUpdateUseCase", () => {
   it("warns when CLI is outdated", async () => {
     const { logger, logs } = makeLogger();
 
-    await printUpdateBanner(makeSelfUpdater("v2.0.0"), makeVersionReader("1.0.0"), logger);
+    await new CheckUpdateUseCase(
+      makeSelfUpdater("v2.0.0"),
+      makeVersionReader("1.0.0"),
+      logger
+    ).execute();
 
     expect(logs.some((l) => l.includes("CLI update available"))).toBe(true);
     expect(logs.some((l) => l.includes("aidd self-update"))).toBe(true);
@@ -38,7 +42,11 @@ describe("printUpdateBanner", () => {
   it("stays silent when CLI version matches latest", async () => {
     const { logger, logs } = makeLogger();
 
-    await printUpdateBanner(makeSelfUpdater("v1.0.0"), makeVersionReader("1.0.0"), logger);
+    await new CheckUpdateUseCase(
+      makeSelfUpdater("v1.0.0"),
+      makeVersionReader("1.0.0"),
+      logger
+    ).execute();
 
     expect(logs).toHaveLength(0);
   });
@@ -50,7 +58,7 @@ describe("printUpdateBanner", () => {
       install: vi.fn().mockReturnValue("/usr/local/bin/aidd"),
     };
 
-    await printUpdateBanner(failing, makeVersionReader("1.0.0"), logger);
+    await new CheckUpdateUseCase(failing, makeVersionReader("1.0.0"), logger).execute();
 
     expect(logs).toHaveLength(0);
   });
@@ -58,7 +66,11 @@ describe("printUpdateBanner", () => {
   it("skips banner when skipCliCheck is true", async () => {
     const { logger, logs } = makeLogger();
 
-    await printUpdateBanner(makeSelfUpdater("v2.0.0"), makeVersionReader("1.0.0"), logger, true);
+    await new CheckUpdateUseCase(
+      makeSelfUpdater("v2.0.0"),
+      makeVersionReader("1.0.0"),
+      logger
+    ).execute({ skipCliCheck: true });
 
     expect(logs).toHaveLength(0);
   });

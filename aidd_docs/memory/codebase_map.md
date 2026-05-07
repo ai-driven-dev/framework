@@ -19,7 +19,6 @@ src/
 │   │   ├── sync/             # sync + sync-status + conflict-resolution
 │   │   ├── shared/           # helpers called by use-cases only (never by commands)
 │   │   └── *.ts              # top-level use-cases (clean, doctor, init, migrate, setup, status, uninstall...)
-│   ├── check-update.ts       # update banner
 │   ├── error-handler.ts      # central error handling
 │   ├── errors.ts             # application typed exceptions
 │   └── output.ts             # stdout/stderr formatting
@@ -37,11 +36,9 @@ src/
     ├── adapters/             # port implementations — one adapter per port
     ├── assets/               # asset-loader.ts — typed loader for configs/stubs bundled in binary
     ├── auth/                 # token reading and storage
-    ├── cache/                # reserved, empty
     ├── deps.ts               # dependency injection wiring
     ├── errors.ts             # infrastructure typed exceptions (internal only)
-    ├── http/                 # node:https client
-    └── tar/                  # reserved, empty
+    └── http/                 # node:https client
 ```
 
 ## Where to Add Things

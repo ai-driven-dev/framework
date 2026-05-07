@@ -24,11 +24,9 @@
 │  Infrastructure (src/infrastructure/)                       │
 │  adapters/ — port implementations, all I/O                  │
 │  assets/   — bundled runtime configs (embedded in binary)   │
-│  auth/     — credential storage and resolution
-│  cache/    — reserved, empty              │
+│  auth/     — credential storage and resolution              │
 │  git/      — token injection for authenticated git fetches  │
 │  http/     — HTTP client                                    │
-│  tar/      — tarball extraction (reserved, empty)                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
