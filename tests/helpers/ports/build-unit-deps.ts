@@ -1,4 +1,11 @@
 import { resolve } from "node:path";
+// Register all tools so use-cases that call getToolConfig / getIdeToolConfig don't throw
+import "../../../src/domain/tools/ai/claude.js";
+import "../../../src/domain/tools/ai/codex.js";
+import "../../../src/domain/tools/ai/copilot.js";
+import "../../../src/domain/tools/ai/cursor.js";
+import "../../../src/domain/tools/ai/opencode.js";
+import "../../../src/domain/tools/ide/vscode.js";
 import { CLIOutput } from "../../../src/application/output.js";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
 import { InstallIdeConfigUseCase } from "../../../src/application/use-cases/install/install-ide-config-use-case.js";
