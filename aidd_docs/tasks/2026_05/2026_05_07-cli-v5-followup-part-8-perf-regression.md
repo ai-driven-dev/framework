@@ -120,7 +120,7 @@ pnpm bench:check
 - Wall-clock benchmarks are noisy in CI (shared runners); use median of 5 runs and a wide threshold (20% warn, 50% hard) to reduce false positives
 - CI runner speed varies by time of day on GitHub-hosted runners; consider self-hosted runner for stable baselines (deferred)
 - Baseline JSON in git: if a legitimate speed improvement lands, update baseline in the same PR
-- Open question: should CI upload `latest.json` as an artifact for trend charts? Nice-to-have — defer
+- **DECIDED**: Option A — commit baseline JSON in repo (`scripts/perf-baseline.json`). No CI artifact upload needed for v1. Trend charts deferred.
 
 ## Effort
 

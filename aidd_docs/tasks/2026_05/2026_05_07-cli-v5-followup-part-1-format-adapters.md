@@ -151,7 +151,7 @@ aidd plugin sync --source claude --target cursor
 - `PluginCatalogRepository` port gains `loadForeign()` — all existing mocks need updating (mechanical but broad)
 - Cursor/Copilot/Codex schemas may change without notice; parsers should fail gracefully with `ForeignSchemaValidationError` (typed domain exception)
 - Phase ordering: A ships first, B and C in follow-up PRs. Do NOT block A on B/C.
-- Open question: should `NormalizedPlugin` be versioned (schema v1/v2)? Defer until Phase B lands and we have two real schemas to compare.
+- **DECIDED**: `NormalizedPlugin` is NOT versioned — internal type only, no schema versioning needed.
 
 ## Effort
 

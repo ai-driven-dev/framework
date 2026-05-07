@@ -39,7 +39,7 @@ OpenCode flat-mode strategy: all capabilities merged into `.opencode/config.json
 }
 ```
 
-Open question: does OpenCode support hooks? If not, `emitHook()` returns `{ kind: "skipped"; reason: "opencode has no hook equivalent" }`.
+**DECIDED**: OpenCode has NO hooks at the same format → `emitHook()` returns `{ kind: "skipped"; reason: "opencode has no hook equivalent" }`. Verify exact hook shape mismatch in OpenCode docs during impl.
 
 ## Steps
 
@@ -129,7 +129,7 @@ ls .claude/commands/ && echo "OK: commands synced back"
 
 - OpenCode config schema may not be finalised — pin to a specific OpenCode version in fixtures
 - Flat-mode merging into JSON requires `mergeJsonFile()` port method with array-aware strategy; confirm `MergeStrategy` supports array append
-- Open question: OpenCode MCP format — same as `.mcp.json` or different? Document before implementing `emitMcp()`
+- **DECIDED**: OpenCode MCP format = JSON in `opencode.json` under `mcp` key. Pattern already exists in current codebase (see `domain/tools/ai/opencode.ts` MCP merge). Reuse the existing format helper.
 - 20-pair sync matrix doubles harness runtime; consider parallelising fixture setup
 
 ## Effort

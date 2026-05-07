@@ -36,13 +36,9 @@ Every use-case constructor that injects `FileSystem` is updated to inject only t
 - Domain pure: no new imports, no logic change in adapters
 - No method renamed — signatures unchanged
 
-### Open question: FileWriter has 6 methods
+### DECIDED: pragmatic 6 methods OK
 
-`deleteDirectory` and `deleteEmptyDirectories` could form a 4th `FileDeleter` port. Decision:
-- If accepted as-is (6 methods): update `0-port-design.md` exception note
-- If split further: 4 ports total, `FileWriter` shrinks to 4 methods
-
-Decide before implementation.
+`FileWriter` keeps 6 methods (`write/delete/create/chmod/deleteDirectory/deleteEmptyDirectories`) — pragmatic over strict. Update `0-port-design.md` exception note to allow ≤6 for write-class ports. NO further split into `FileDeleter`.
 
 ## Steps
 
@@ -156,7 +152,7 @@ pnpm test
 - Large mechanical refactor: ~30 use-case files, ~20+ test files. High risk of merge conflicts with Parts 1–3 if those parts add new use-cases. Do this part last.
 - Use-cases that call methods from multiple groups need 2–3 constructor params instead of 1. May complicate `deps.ts` wiring if not careful.
 - If a future use-case needs all 14 methods (unlikely but possible), it injects 3 ports — more verbose but architecturally correct.
-- Open question: should `FileSystemAdapter` stay as one class implementing 3 interfaces, or be split into 3 adapters? Single class is pragmatic. Document decision.
+- **DECIDED**: ONE adapter `FileAdapter` (renamed from `FileSystemAdapter`) implementing all 3 interfaces (`FileReader`, `FileWriter`, `FileMerger`). Single class, multi-interface — pragmatic. File renamed to `src/infrastructure/adapters/file-adapter.ts`.
 
 ## Effort
 

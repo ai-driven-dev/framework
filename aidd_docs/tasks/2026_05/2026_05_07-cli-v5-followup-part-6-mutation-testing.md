@@ -115,7 +115,7 @@ cat reports/mutation/mutation.json | node -e "
 
 - Mutation runs are CPU-heavy; local runs can take 10–20 min on large codebases — scoped to `domain/` and `use-cases/` keeps it manageable
 - Stryker ESM support: verify `@stryker-mutator/vitest-runner` supports `"type": "module"` in `package.json`; may require `vitest.config.ts` adjustments
-- Open question: does Stryker play well with `tsup` build output or does it need to run on raw TS? Use TypeScript checker plugin to operate on source directly
+- **DECIDED**: do a 30-min spike on Stryker + ESM + Vitest runner BEFORE committing to full Phase scope. If spike reveals fundamental incompatibility, document and surface as blocker. Use TypeScript checker plugin to operate on source directly (preferred over compiled output).
 - Stryker may mutate `throw` statements and reveal that error-path tests are missing — fixing these is high value but time-consuming; scope the initial run narrowly if needed
 
 ## Effort

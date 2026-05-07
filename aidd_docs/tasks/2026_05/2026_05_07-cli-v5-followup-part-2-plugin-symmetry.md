@@ -59,7 +59,7 @@ For each tool × capability pair:
 | codex | hooks | skipped |
 | codex | mcp | skipped — codex MCP deferred |
 
-Open question: copilot agents map — verify against VS Code spec before implementing.
+**DECIDED**: research step — verify Copilot agents spec at https://code.visualstudio.com/docs/copilot/customization/agent-plugins BEFORE implementing emitter. Document findings in commit body.
 
 ## Steps
 
@@ -152,7 +152,7 @@ cat AGENTS.md | grep "greet" && echo "OK: agent synced"
 ## Risks / breaking changes
 
 - Appending to `copilot-instructions.md` / `AGENTS.md` requires idempotency: re-sync must not duplicate sections. Implement section markers (HTML comments or header guards).
-- Open question: does copilot's `instructions.md` have a size limit? Document in this part if discovered.
+- **DECIDED**: research step — verify `copilot-instructions.md` size limit during the spec research phase (before implementing emitter). Document finding in commit body if discovered.
 - MCP translation for cursor (`.cursor/mcp.json`) is a JSON merge — must use `mergeJsonFile()` port method. Verify merge strategy does not clobber existing user MCP entries.
 
 ## Effort
