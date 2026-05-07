@@ -27,25 +27,42 @@ export const CLI_PATH = resolve(process.cwd(), "dist/cli.js");
 export const FRAMEWORK_PATH = resolve(process.cwd(), "tests/fixtures/framework");
 export const FRAMEWORK_V2_PATH = resolve(process.cwd(), "tests/fixtures/framework-v2");
 
-export async function createTestEnv(
-  prefix: string
-): Promise<{ tempDir: string; projectDir: string; cleanup: () => Promise<void> }> {
+export async function createTestEnv(prefix: string): Promise<{
+  tempDir: string;
+  projectDir: string;
+  fakeHome: string;
+  cleanup: () => Promise<void>;
+}> {
   const tempDir = await mkdtemp(join(tmpdir(), `aidd-e2e-${prefix}-`));
   const projectDir = join(tempDir, "project");
+  const fakeHome = join(tempDir, "home");
   await mkdir(projectDir, { recursive: true });
+  await mkdir(fakeHome, { recursive: true });
   return {
     tempDir,
     projectDir,
+    fakeHome,
     cleanup: () => rm(tempDir, { recursive: true, force: true }),
+  };
+}
+
+function sandboxedEnv(fakeHome: string, extra?: Record<string, string>): NodeJS.ProcessEnv {
+  return {
+    ...process.env,
+    ...extra,
+    HOME: fakeHome,
+    XDG_CONFIG_HOME: join(fakeHome, ".config"),
   };
 }
 
 export async function runCli(
   args: string[],
-  cwd: string
+  cwd: string,
+  fakeHome: string
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  const env = sandboxedEnv(fakeHome);
   try {
-    const { stdout, stderr } = await execFileAsync("node", [CLI_PATH, ...args], { cwd });
+    const { stdout, stderr } = await execFileAsync("node", [CLI_PATH, ...args], { cwd, env });
     return { stdout, stderr, exitCode: 0 };
   } catch (error) {
     const err = error as { stdout?: string; stderr?: string; code?: number };
@@ -60,9 +77,10 @@ export async function runCli(
 /** Skips marketplace refresh (network call) for fast/flake-prone tests. */
 export async function runCliFast(
   args: string[],
-  cwd: string
+  cwd: string,
+  fakeHome: string
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  const env = { ...process.env, AIDD_SKIP_MARKETPLACE_REFRESH: "1" };
+  const env = sandboxedEnv(fakeHome, { AIDD_SKIP_MARKETPLACE_REFRESH: "1" });
   try {
     const { stdout, stderr } = await execFileAsync("node", [CLI_PATH, ...args], { cwd, env });
     return { stdout, stderr, exitCode: 0 };

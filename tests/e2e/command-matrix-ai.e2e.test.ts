@@ -27,14 +27,14 @@ async function seedManifest(projectDir: string): Promise<void> {
   );
 }
 
-async function seedWithClaude(projectDir: string): Promise<void> {
+async function seedWithClaude(projectDir: string, fakeHome: string): Promise<void> {
   await seedManifest(projectDir);
-  await runCli(["ai", "install", "claude"], projectDir);
+  await runCli(["ai", "install", "claude"], projectDir, fakeHome);
 }
 
-async function seedWithVscode(projectDir: string): Promise<void> {
+async function seedWithVscode(projectDir: string, fakeHome: string): Promise<void> {
   await seedManifest(projectDir);
-  await runCli(["ide", "install", "vscode"], projectDir);
+  await runCli(["ide", "install", "vscode"], projectDir, fakeHome);
 }
 
 // ---------------------------------------------------------------------------
@@ -44,10 +44,10 @@ async function seedWithVscode(projectDir: string): Promise<void> {
 
 describe.concurrent("Command Matrix: AI install/uninstall (copilot, codex, opencode)", () => {
   it("ai install copilot exits 0 and reports installed", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ai-copilot-install");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-copilot-install");
     try {
       await seedManifest(projectDir);
-      const { stdout, exitCode } = await runCli(["ai", "install", "copilot"], projectDir);
+      const { stdout, exitCode } = await runCli(["ai", "install", "copilot"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("copilot");
     } finally {
@@ -56,13 +56,14 @@ describe.concurrent("Command Matrix: AI install/uninstall (copilot, codex, openc
   });
 
   it("ai install copilot --force reinstalls over existing", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ai-copilot-force");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-copilot-force");
     try {
       await seedManifest(projectDir);
-      await runCli(["ai", "install", "copilot"], projectDir);
+      await runCli(["ai", "install", "copilot"], projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(
         ["ai", "install", "copilot", "--force"],
-        projectDir
+        projectDir,
+        fakeHome
       );
       expect(exitCode).toBe(0);
       expect(stdout).toContain("copilot");
@@ -72,11 +73,15 @@ describe.concurrent("Command Matrix: AI install/uninstall (copilot, codex, openc
   });
 
   it("ai uninstall copilot exits 0 and reports removed", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ai-copilot-uninstall");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-copilot-uninstall");
     try {
       await seedManifest(projectDir);
-      await runCli(["ai", "install", "copilot"], projectDir);
-      const { stdout, exitCode } = await runCli(["ai", "uninstall", "copilot"], projectDir);
+      await runCli(["ai", "install", "copilot"], projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(
+        ["ai", "uninstall", "copilot"],
+        projectDir,
+        fakeHome
+      );
       expect(exitCode).toBe(0);
       expect(stdout).toContain("copilot");
     } finally {
@@ -85,10 +90,10 @@ describe.concurrent("Command Matrix: AI install/uninstall (copilot, codex, openc
   });
 
   it("ai install codex exits 0 and reports installed", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ai-codex-install");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-codex-install");
     try {
       await seedManifest(projectDir);
-      const { stdout, exitCode } = await runCli(["ai", "install", "codex"], projectDir);
+      const { stdout, exitCode } = await runCli(["ai", "install", "codex"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("codex");
     } finally {
@@ -97,11 +102,11 @@ describe.concurrent("Command Matrix: AI install/uninstall (copilot, codex, openc
   });
 
   it("ai uninstall codex exits 0", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ai-codex-uninstall");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-codex-uninstall");
     try {
       await seedManifest(projectDir);
-      await runCli(["ai", "install", "codex"], projectDir);
-      const { stdout, exitCode } = await runCli(["ai", "uninstall", "codex"], projectDir);
+      await runCli(["ai", "install", "codex"], projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["ai", "uninstall", "codex"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("codex");
     } finally {
@@ -110,10 +115,14 @@ describe.concurrent("Command Matrix: AI install/uninstall (copilot, codex, openc
   });
 
   it("ai install opencode exits 0 and reports installed", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ai-opencode-install");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-opencode-install");
     try {
       await seedManifest(projectDir);
-      const { stdout, exitCode } = await runCli(["ai", "install", "opencode"], projectDir);
+      const { stdout, exitCode } = await runCli(
+        ["ai", "install", "opencode"],
+        projectDir,
+        fakeHome
+      );
       expect(exitCode).toBe(0);
       expect(stdout).toContain("opencode");
     } finally {
@@ -122,11 +131,15 @@ describe.concurrent("Command Matrix: AI install/uninstall (copilot, codex, openc
   });
 
   it("ai uninstall opencode exits 0", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ai-opencode-uninstall");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-opencode-uninstall");
     try {
       await seedManifest(projectDir);
-      await runCli(["ai", "install", "opencode"], projectDir);
-      const { stdout, exitCode } = await runCli(["ai", "uninstall", "opencode"], projectDir);
+      await runCli(["ai", "install", "opencode"], projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(
+        ["ai", "uninstall", "opencode"],
+        projectDir,
+        fakeHome
+      );
       expect(exitCode).toBe(0);
       expect(stdout).toContain("opencode");
     } finally {
@@ -135,9 +148,9 @@ describe.concurrent("Command Matrix: AI install/uninstall (copilot, codex, openc
   });
 
   it("ai install vscode exits 1 — cross-category rejection", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ai-cross-category");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-cross-category");
     try {
-      const { stderr, exitCode } = await runCli(["ai", "install", "vscode"], projectDir);
+      const { stderr, exitCode } = await runCli(["ai", "install", "vscode"], projectDir, fakeHome);
       expect(exitCode).toBe(1);
       expect(stderr).toContain("Unknown AI tool: vscode");
       expect(stderr).toContain("claude");
@@ -154,10 +167,10 @@ describe.concurrent("Command Matrix: AI install/uninstall (copilot, codex, openc
 
 describe.concurrent("Command Matrix: AI list/status/update/doctor/restore", () => {
   it("ai list exits 0 and shows installed tool name", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ai-list");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-list");
     try {
-      await seedWithClaude(projectDir);
-      const { stdout, exitCode } = await runCli(["ai", "list"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["ai", "list"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("claude");
     } finally {
@@ -166,10 +179,10 @@ describe.concurrent("Command Matrix: AI list/status/update/doctor/restore", () =
   });
 
   it("ai status exits 0 and reports files in sync", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ai-status");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-status");
     try {
-      await seedWithClaude(projectDir);
-      const { stdout, exitCode } = await runCli(["ai", "status"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["ai", "status"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("in sync");
     } finally {
@@ -178,10 +191,10 @@ describe.concurrent("Command Matrix: AI list/status/update/doctor/restore", () =
   });
 
   it("ai update exits 0 and reports updated", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ai-update");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-update");
     try {
-      await seedWithClaude(projectDir);
-      const { stdout, exitCode } = await runCli(["ai", "update"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["ai", "update"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toMatch(/[Uu]pdated|up to date/);
     } finally {
@@ -190,10 +203,10 @@ describe.concurrent("Command Matrix: AI list/status/update/doctor/restore", () =
   });
 
   it("ai update claude exits 0 and reports updated for specific tool", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ai-update-tool");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-update-tool");
     try {
-      await seedWithClaude(projectDir);
-      const { stdout, exitCode } = await runCli(["ai", "update", "claude"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["ai", "update", "claude"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toMatch(/[Uu]pdated.*claude|claude.*[Uu]pdated/);
     } finally {
@@ -202,10 +215,10 @@ describe.concurrent("Command Matrix: AI list/status/update/doctor/restore", () =
   });
 
   it("ai doctor exits 0 with healthy message", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ai-doctor");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-doctor");
     try {
-      await seedWithClaude(projectDir);
-      const { stdout, exitCode } = await runCli(["ai", "doctor"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["ai", "doctor"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("healthy");
     } finally {
@@ -214,10 +227,10 @@ describe.concurrent("Command Matrix: AI list/status/update/doctor/restore", () =
   });
 
   it("ai restore exits 0 reporting nothing to restore when files unmodified", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ai-restore");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-restore");
     try {
-      await seedWithClaude(projectDir);
-      const { stdout, exitCode } = await runCli(["ai", "restore"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["ai", "restore"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Nothing to restore");
     } finally {
@@ -233,10 +246,14 @@ describe.concurrent("Command Matrix: AI list/status/update/doctor/restore", () =
 
 describe.concurrent("Command Matrix: IDE list/status/update/doctor/uninstall", () => {
   it("ide uninstall vscode exits 0 and reports removed", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ide-uninstall");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ide-uninstall");
     try {
-      await seedWithVscode(projectDir);
-      const { stdout, exitCode } = await runCli(["ide", "uninstall", "vscode"], projectDir);
+      await seedWithVscode(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(
+        ["ide", "uninstall", "vscode"],
+        projectDir,
+        fakeHome
+      );
       expect(exitCode).toBe(0);
       expect(stdout).toContain("vscode");
     } finally {
@@ -245,10 +262,10 @@ describe.concurrent("Command Matrix: IDE list/status/update/doctor/uninstall", (
   });
 
   it("ide list exits 0 and shows installed tool", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ide-list");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ide-list");
     try {
-      await seedWithVscode(projectDir);
-      const { stdout, exitCode } = await runCli(["ide", "list"], projectDir);
+      await seedWithVscode(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["ide", "list"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("vscode");
     } finally {
@@ -257,10 +274,10 @@ describe.concurrent("Command Matrix: IDE list/status/update/doctor/uninstall", (
   });
 
   it("ide status exits 0 and reports files in sync", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ide-status");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ide-status");
     try {
-      await seedWithVscode(projectDir);
-      const { stdout, exitCode } = await runCli(["ide", "status"], projectDir);
+      await seedWithVscode(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["ide", "status"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("in sync");
     } finally {
@@ -269,10 +286,10 @@ describe.concurrent("Command Matrix: IDE list/status/update/doctor/uninstall", (
   });
 
   it("ide update exits 0 and reports updated", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ide-update");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ide-update");
     try {
-      await seedWithVscode(projectDir);
-      const { stdout, exitCode } = await runCli(["ide", "update"], projectDir);
+      await seedWithVscode(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["ide", "update"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("vscode");
     } finally {
@@ -281,10 +298,10 @@ describe.concurrent("Command Matrix: IDE list/status/update/doctor/uninstall", (
   });
 
   it("ide doctor exits 0 with healthy message", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ide-doctor");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ide-doctor");
     try {
-      await seedWithVscode(projectDir);
-      const { stdout, exitCode } = await runCli(["ide", "doctor"], projectDir);
+      await seedWithVscode(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["ide", "doctor"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("healthy");
     } finally {
@@ -293,9 +310,9 @@ describe.concurrent("Command Matrix: IDE list/status/update/doctor/uninstall", (
   });
 
   it("ide install claude exits 1 — cross-category rejection", async () => {
-    const { projectDir, cleanup } = await createTestEnv("ide-cross-category");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ide-cross-category");
     try {
-      const { stderr, exitCode } = await runCli(["ide", "install", "claude"], projectDir);
+      const { stderr, exitCode } = await runCli(["ide", "install", "claude"], projectDir, fakeHome);
       expect(exitCode).toBe(1);
       expect(stderr).toContain("Unknown IDE tool: claude");
     } finally {

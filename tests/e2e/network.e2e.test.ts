@@ -33,11 +33,12 @@ describe.concurrent("Network E2E — real GitHub fetch path", () => {
   it.skipIf(!RUN_NETWORK)(
     "aidd setup --source remote --ai claude --no-plugins --yes installs claude and writes v5 manifest",
     async () => {
-      const { projectDir, cleanup } = await createTestEnv("net-setup-claude");
+      const { projectDir, fakeHome, cleanup } = await createTestEnv("net-setup-claude");
       try {
         const { stdout, exitCode } = await runCli(
           ["setup", "--source", "remote", "--ai", "claude", "--no-plugins", "--yes"],
-          projectDir
+          projectDir,
+          fakeHome
         );
 
         expect(exitCode).toBe(0);
@@ -64,22 +65,24 @@ describe.concurrent("Network E2E — real GitHub fetch path", () => {
   it.skipIf(!RUN_NETWORK)(
     "aidd marketplace refresh aidd-framework fetches real catalog and populates cache",
     async () => {
-      const { projectDir, cleanup } = await createTestEnv("net-mkt-refresh");
+      const { projectDir, fakeHome, cleanup } = await createTestEnv("net-mkt-refresh");
       try {
         await runCli(
           ["setup", "--source", "remote", "--ai", "claude", "--no-plugins", "--yes"],
-          projectDir
+          projectDir,
+          fakeHome
         );
 
         const { stdout, exitCode } = await runCli(
           ["marketplace", "refresh", MARKETPLACE_NAME],
-          projectDir
+          projectDir,
+          fakeHome
         );
 
         expect(exitCode).toBe(0);
         expect(stdout).toContain(MARKETPLACE_NAME);
 
-        const cacheList = await runCli(["marketplace", "cache", "list"], projectDir);
+        const cacheList = await runCli(["marketplace", "cache", "list"], projectDir, fakeHome);
         expect(cacheList.exitCode).toBe(0);
         expect(cacheList.stdout).toContain(MARKETPLACE_NAME);
       } finally {
@@ -92,17 +95,19 @@ describe.concurrent("Network E2E — real GitHub fetch path", () => {
   it.skipIf(!RUN_NETWORK)(
     "aidd plugin search --marketplace aidd-framework exits 0 after real catalog refresh",
     async () => {
-      const { projectDir, cleanup } = await createTestEnv("net-plugin-search");
+      const { projectDir, fakeHome, cleanup } = await createTestEnv("net-plugin-search");
       try {
         await runCli(
           ["setup", "--source", "remote", "--ai", "claude", "--no-plugins", "--yes"],
-          projectDir
+          projectDir,
+          fakeHome
         );
-        await runCli(["marketplace", "refresh", MARKETPLACE_NAME], projectDir);
+        await runCli(["marketplace", "refresh", MARKETPLACE_NAME], projectDir, fakeHome);
 
         const { exitCode } = await runCli(
           ["plugin", "search", "aidd-context", "--marketplace", MARKETPLACE_NAME],
-          projectDir
+          projectDir,
+          fakeHome
         );
 
         // Exit 0 even when the real repo has no .claude-plugin/marketplace.json yet —
@@ -118,17 +123,19 @@ describe.concurrent("Network E2E — real GitHub fetch path", () => {
   it.skipIf(!RUN_NETWORK)(
     "aidd plugin install from real aidd-framework exits non-zero with a descriptive error when catalog absent",
     async () => {
-      const { projectDir, cleanup } = await createTestEnv("net-plugin-install");
+      const { projectDir, fakeHome, cleanup } = await createTestEnv("net-plugin-install");
       try {
         await runCli(
           ["setup", "--source", "remote", "--ai", "claude", "--no-plugins", "--yes"],
-          projectDir
+          projectDir,
+          fakeHome
         );
-        await runCli(["marketplace", "refresh", MARKETPLACE_NAME], projectDir);
+        await runCli(["marketplace", "refresh", MARKETPLACE_NAME], projectDir, fakeHome);
 
         const { stderr, exitCode } = await runCli(
           ["plugin", "install", "aidd-context", "--tool", "claude"],
-          projectDir
+          projectDir,
+          fakeHome
         );
 
         // The real aidd-framework repo has no .claude-plugin/marketplace.json yet.

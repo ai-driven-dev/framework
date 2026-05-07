@@ -17,10 +17,10 @@ async function writeMarketplace(
 // with `aidd ai install <tool>` in all tests that use it.
 describe.concurrent("E2E: aidd plugin marketplace", () => {
   it("marketplace add → registers a project-scope marketplace and skips trust prompt with --yes", async () => {
-    const { tempDir, projectDir, cleanup } = await createTestEnv("mkt-add");
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-add");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["ai", "install", "claude"], projectDir);
+      await runCli(["ai", "install", "claude"], projectDir, fakeHome);
       const marketDir = join(tempDir, "market");
       await writeMarketplace(marketDir, [
         {
@@ -32,7 +32,8 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
 
       const { stdout, exitCode } = await runCli(
         ["marketplace", "add", "local", marketDir, "--yes"],
-        projectDir
+        projectDir,
+        fakeHome
       );
 
       expect(exitCode).toBe(0);
@@ -43,14 +44,14 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
   });
 
   it("marketplace list → shows registered entries with scope", async () => {
-    const { tempDir, projectDir, cleanup } = await createTestEnv("mkt-list");
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-list");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
       const marketDir = join(tempDir, "market");
       await writeMarketplace(marketDir, []);
-      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir, fakeHome);
 
-      const { stdout, exitCode } = await runCli(["marketplace", "list"], projectDir);
+      const { stdout, exitCode } = await runCli(["marketplace", "list"], projectDir, fakeHome);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("local [project]");
@@ -60,7 +61,7 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
   });
 
   it("plugin search → finds plugins across registered marketplaces", async () => {
-    const { tempDir, projectDir, cleanup } = await createTestEnv("mkt-search");
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-search");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
       const marketDir = join(tempDir, "market");
@@ -72,9 +73,13 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
           description: "Sample",
         },
       ]);
-      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir, fakeHome);
 
-      const { stdout, exitCode } = await runCli(["plugin", "search", "sample"], projectDir);
+      const { stdout, exitCode } = await runCli(
+        ["plugin", "search", "sample"],
+        projectDir,
+        fakeHome
+      );
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("sample-plugin@1.0.0");
@@ -85,10 +90,10 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
   });
 
   it("plugin install → installs from registered marketplace and tags the plugin", async () => {
-    const { tempDir, projectDir, cleanup } = await createTestEnv("mkt-install");
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-install");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["ai", "install", "claude"], projectDir);
+      await runCli(["ai", "install", "claude"], projectDir, fakeHome);
       const marketDir = join(tempDir, "market");
       await writeMarketplace(marketDir, [
         {
@@ -97,11 +102,12 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
           version: "1.0.0",
         },
       ]);
-      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir, fakeHome);
 
       const { stdout, exitCode } = await runCli(
         ["plugin", "install", "sample-plugin", "--tool", "claude"],
-        projectDir
+        projectDir,
+        fakeHome
       );
 
       expect(exitCode).toBe(0);
@@ -112,21 +118,22 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
   });
 
   it("marketplace remove → unregisters the marketplace", async () => {
-    const { tempDir, projectDir, cleanup } = await createTestEnv("mkt-remove");
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-remove");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
       const marketDir = join(tempDir, "market");
       await writeMarketplace(marketDir, []);
-      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir, fakeHome);
 
       const { stdout, exitCode } = await runCli(
         ["marketplace", "remove", "local", "--yes"],
-        projectDir
+        projectDir,
+        fakeHome
       );
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("'local' removed");
-      const listed = await runCli(["marketplace", "list"], projectDir);
+      const listed = await runCli(["marketplace", "list"], projectDir, fakeHome);
       expect(listed.stdout).toContain("No marketplaces");
     } finally {
       await cleanup();
@@ -134,7 +141,7 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
   });
 
   it("marketplace browse → prints catalog entries with name@version, description, source URL", async () => {
-    const { tempDir, projectDir, cleanup } = await createTestEnv("mkt-browse");
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-browse");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
       const marketDir = join(tempDir, "market");
@@ -147,9 +154,13 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
           recommended: true,
         },
       ]);
-      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir, fakeHome);
 
-      const { stdout, exitCode } = await runCli(["marketplace", "browse", "local"], projectDir);
+      const { stdout, exitCode } = await runCli(
+        ["marketplace", "browse", "local"],
+        projectDir,
+        fakeHome
+      );
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("sample-plugin@1.0.0");
@@ -162,21 +173,22 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
   });
 
   it("marketplace add --overwrite → replaces an existing entry without error", async () => {
-    const { tempDir, projectDir, cleanup } = await createTestEnv("mkt-overwrite");
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-overwrite");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
       const marketDir = join(tempDir, "market");
       await writeMarketplace(marketDir, []);
-      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir, fakeHome);
 
       const { stdout, exitCode } = await runCli(
         ["marketplace", "add", "local", marketDir, "--yes", "--overwrite"],
-        projectDir
+        projectDir,
+        fakeHome
       );
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("'local' registered");
-      const listed = await runCli(["marketplace", "list"], projectDir);
+      const listed = await runCli(["marketplace", "list"], projectDir, fakeHome);
       expect(listed.stdout.match(/local \[project\]/g)?.length).toBe(1);
     } finally {
       await cleanup();
@@ -184,15 +196,15 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
   });
 
   it("marketplace check → reports clean when nothing is stale or removed", async () => {
-    const { tempDir, projectDir, cleanup } = await createTestEnv("mkt-check");
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-check");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
       const marketDir = join(tempDir, "market");
       await writeMarketplace(marketDir, []);
-      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
-      await runCli(["marketplace", "refresh"], projectDir);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir, fakeHome);
+      await runCli(["marketplace", "refresh"], projectDir, fakeHome);
 
-      const { stdout, exitCode } = await runCli(["marketplace", "check"], projectDir);
+      const { stdout, exitCode } = await runCli(["marketplace", "check"], projectDir, fakeHome);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("All marketplaces fresh");

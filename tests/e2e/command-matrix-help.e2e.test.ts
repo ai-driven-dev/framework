@@ -28,9 +28,9 @@ async function seedManifest(projectDir: string): Promise<void> {
   );
 }
 
-async function seedWithClaude(projectDir: string): Promise<void> {
+async function seedWithClaude(projectDir: string, fakeHome: string): Promise<void> {
   await seedManifest(projectDir);
-  await runCli(["ai", "install", "claude"], projectDir);
+  await runCli(["ai", "install", "claude"], projectDir, fakeHome);
 }
 
 // ---------------------------------------------------------------------------
@@ -39,9 +39,9 @@ async function seedWithClaude(projectDir: string): Promise<void> {
 
 describe.concurrent("Command Matrix: Help", () => {
   it("aidd --help exits 0 and lists top-level commands", async () => {
-    const { projectDir, cleanup } = await createTestEnv("help-root");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("help-root");
     try {
-      const { stdout, exitCode } = await runCli(["--help"], projectDir);
+      const { stdout, exitCode } = await runCli(["--help"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("setup");
       expect(stdout).toContain("ai");
@@ -55,9 +55,9 @@ describe.concurrent("Command Matrix: Help", () => {
   });
 
   it("aidd ai --help exits 0 and lists ai subcommands", async () => {
-    const { projectDir, cleanup } = await createTestEnv("help-ai");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("help-ai");
     try {
-      const { stdout, exitCode } = await runCli(["ai", "--help"], projectDir);
+      const { stdout, exitCode } = await runCli(["ai", "--help"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("install");
       expect(stdout).toContain("uninstall");
@@ -68,9 +68,9 @@ describe.concurrent("Command Matrix: Help", () => {
   });
 
   it("aidd ide --help exits 0 and lists ide subcommands", async () => {
-    const { projectDir, cleanup } = await createTestEnv("help-ide");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("help-ide");
     try {
-      const { stdout, exitCode } = await runCli(["ide", "--help"], projectDir);
+      const { stdout, exitCode } = await runCli(["ide", "--help"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("install");
       expect(stdout).toContain("uninstall");
@@ -81,9 +81,9 @@ describe.concurrent("Command Matrix: Help", () => {
   });
 
   it("aidd plugin --help exits 0 and lists plugin subcommands", async () => {
-    const { projectDir, cleanup } = await createTestEnv("help-plugin");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("help-plugin");
     try {
-      const { stdout, exitCode } = await runCli(["plugin", "--help"], projectDir);
+      const { stdout, exitCode } = await runCli(["plugin", "--help"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("add");
       expect(stdout).toContain("remove");
@@ -95,9 +95,9 @@ describe.concurrent("Command Matrix: Help", () => {
   });
 
   it("aidd marketplace --help exits 0 and lists marketplace subcommands", async () => {
-    const { projectDir, cleanup } = await createTestEnv("help-marketplace");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("help-marketplace");
     try {
-      const { stdout, exitCode } = await runCli(["marketplace", "--help"], projectDir);
+      const { stdout, exitCode } = await runCli(["marketplace", "--help"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("add");
       expect(stdout).toContain("list");
@@ -110,9 +110,9 @@ describe.concurrent("Command Matrix: Help", () => {
   });
 
   it("aidd auth --help exits 0 and lists auth subcommands", async () => {
-    const { projectDir, cleanup } = await createTestEnv("help-auth");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("help-auth");
     try {
-      const { stdout, exitCode } = await runCli(["auth", "--help"], projectDir);
+      const { stdout, exitCode } = await runCli(["auth", "--help"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("login");
       expect(stdout).toContain("logout");
@@ -123,9 +123,9 @@ describe.concurrent("Command Matrix: Help", () => {
   });
 
   it("aidd setup --help shows --source --ai --ide --all and no removed flags", async () => {
-    const { projectDir, cleanup } = await createTestEnv("help-setup");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("help-setup");
     try {
-      const { stdout, exitCode } = await runCli(["setup", "--help"], projectDir);
+      const { stdout, exitCode } = await runCli(["setup", "--help"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("--source");
       expect(stdout).toContain("--ai");
@@ -142,9 +142,9 @@ describe.concurrent("Command Matrix: Help", () => {
   });
 
   it("aidd install (no --help) exits 1 with unknown command error", async () => {
-    const { projectDir, cleanup } = await createTestEnv("help-unknown-install");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("help-unknown-install");
     try {
-      const { stderr, exitCode } = await runCli(["install"], projectDir);
+      const { stderr, exitCode } = await runCli(["install"], projectDir, fakeHome);
       expect(exitCode).toBe(1);
       expect(stderr).toContain("unknown command");
       expect(stderr).toContain("install");
@@ -154,9 +154,9 @@ describe.concurrent("Command Matrix: Help", () => {
   });
 
   it("aidd uninstall exits 1 with unknown command error", async () => {
-    const { projectDir, cleanup } = await createTestEnv("help-unknown-uninstall");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("help-unknown-uninstall");
     try {
-      const { stderr, exitCode } = await runCli(["uninstall"], projectDir);
+      const { stderr, exitCode } = await runCli(["uninstall"], projectDir, fakeHome);
       expect(exitCode).toBe(1);
       expect(stderr).toContain("unknown command");
     } finally {
@@ -165,9 +165,9 @@ describe.concurrent("Command Matrix: Help", () => {
   });
 
   it("aidd cache exits 1 with unknown command error", async () => {
-    const { projectDir, cleanup } = await createTestEnv("help-unknown-cache");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("help-unknown-cache");
     try {
-      const { stderr, exitCode } = await runCli(["cache"], projectDir);
+      const { stderr, exitCode } = await runCli(["cache"], projectDir, fakeHome);
       expect(exitCode).toBe(1);
       expect(stderr).toContain("unknown command");
     } finally {
@@ -176,9 +176,9 @@ describe.concurrent("Command Matrix: Help", () => {
   });
 
   it("aidd config exits 1 with unknown command error", async () => {
-    const { projectDir, cleanup } = await createTestEnv("help-unknown-config");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("help-unknown-config");
     try {
-      const { stderr, exitCode } = await runCli(["config"], projectDir);
+      const { stderr, exitCode } = await runCli(["config"], projectDir, fakeHome);
       expect(exitCode).toBe(1);
       expect(stderr).toContain("unknown command");
     } finally {
@@ -189,9 +189,9 @@ describe.concurrent("Command Matrix: Help", () => {
   it("aidd install --help exits 0 (Commander.js intercepts --help before unknown command check)", async () => {
     // NOTE from matrix: `--help` on unknown command shows top-level help with exit 0.
     // The bare `aidd install` (above) correctly exits 1.
-    const { projectDir, cleanup } = await createTestEnv("help-unknown-install-flag");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("help-unknown-install-flag");
     try {
-      const { stdout, exitCode } = await runCli(["install", "--help"], projectDir);
+      const { stdout, exitCode } = await runCli(["install", "--help"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Usage:");
     } finally {
@@ -208,10 +208,10 @@ describe.concurrent("Command Matrix: Help", () => {
 describe.concurrent("Command Matrix: Globals", () => {
   it("status exits 0 and reports files in sync", async () => {
     // matrix row: "status" → exit 0, "All files are in sync"
-    const { projectDir, cleanup } = await createTestEnv("global-status");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("global-status");
     try {
-      await seedWithClaude(projectDir);
-      const { stdout, exitCode } = await runCli(["status"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["status"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toMatch(/[Aa]ll files are in sync|in sync/);
     } finally {
@@ -220,10 +220,10 @@ describe.concurrent("Command Matrix: Globals", () => {
   });
 
   it("doctor exits 0 and reports installation is healthy", async () => {
-    const { projectDir, cleanup } = await createTestEnv("global-doctor");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("global-doctor");
     try {
-      await seedWithClaude(projectDir);
-      const { stdout, exitCode } = await runCli(["doctor"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["doctor"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("healthy");
     } finally {
@@ -232,10 +232,10 @@ describe.concurrent("Command Matrix: Globals", () => {
   });
 
   it("restore exits 0 reporting nothing to restore when files unmodified", async () => {
-    const { projectDir, cleanup } = await createTestEnv("global-restore");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("global-restore");
     try {
-      await seedWithClaude(projectDir);
-      const { stdout, exitCode } = await runCli(["restore"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["restore"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Nothing to restore");
     } finally {
@@ -245,9 +245,9 @@ describe.concurrent("Command Matrix: Globals", () => {
 
   it("migrate --dry-run exits 0 reporting nothing to migrate on empty project", async () => {
     // Uses empty projectDir (no manifest) — "Nothing to migrate."
-    const { projectDir, cleanup } = await createTestEnv("global-migrate-dry");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("global-migrate-dry");
     try {
-      const { stdout, exitCode } = await runCli(["migrate", "--dry-run"], projectDir);
+      const { stdout, exitCode } = await runCli(["migrate", "--dry-run"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toMatch(/[Nn]othing to migrate|[Dd]ry-run complete/);
     } finally {
@@ -257,10 +257,10 @@ describe.concurrent("Command Matrix: Globals", () => {
 
   it("sync exits 1 in non-interactive mode with usage hint", async () => {
     // Non-TTY mode (runCli is not a TTY)
-    const { projectDir, cleanup } = await createTestEnv("global-sync-noninteractive");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("global-sync-noninteractive");
     try {
-      await seedWithClaude(projectDir);
-      const { stderr, exitCode } = await runCli(["sync"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      const { stderr, exitCode } = await runCli(["sync"], projectDir, fakeHome);
       expect(exitCode).toBe(1);
       expect(stderr).toMatch(/[Nn]on-interactive|interactive terminal/);
     } finally {
@@ -271,9 +271,9 @@ describe.concurrent("Command Matrix: Globals", () => {
   it("self-update --check exits 1 when not authenticated (requires auth)", async () => {
     // NOTE from matrix: self-update requires valid auth; expected in test env.
     // Flag is --check (not --check-only as in task spec — verified against actual CLI).
-    const { projectDir, cleanup } = await createTestEnv("global-self-update-check");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("global-self-update-check");
     try {
-      const { stderr, exitCode } = await runCli(["self-update", "--check"], projectDir);
+      const { stderr, exitCode } = await runCli(["self-update", "--check"], projectDir, fakeHome);
       expect(exitCode).toBe(1);
       expect(stderr).toMatch(/[Nn]ot authenticated|auth login/);
     } finally {

@@ -25,14 +25,14 @@ async function seedProject(projectDir: string): Promise<void> {
 
 describe.concurrent("E2E: aidd ai sync", () => {
   it("exits non-zero when --source is missing in non-interactive mode", async () => {
-    const { projectDir, cleanup } = await createTestEnv("sync-no-source");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("sync-no-source");
     try {
       await seedProject(projectDir);
-      await runCli(["ai", "install", "claude"], projectDir);
-      await runCli(["ai", "install", "cursor"], projectDir);
+      await runCli(["ai", "install", "claude"], projectDir, fakeHome);
+      await runCli(["ai", "install", "cursor"], projectDir, fakeHome);
 
       // Non-interactive (runCli is not a TTY), no --source flag
-      const { stderr, exitCode } = await runCli(["ai", "sync"], projectDir);
+      const { stderr, exitCode } = await runCli(["ai", "sync"], projectDir, fakeHome);
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain("--source");
@@ -42,14 +42,15 @@ describe.concurrent("E2E: aidd ai sync", () => {
   });
 
   it("fails when source tool is not installed", async () => {
-    const { projectDir, cleanup } = await createTestEnv("sync-not-installed");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("sync-not-installed");
     try {
       await seedProject(projectDir);
-      await runCli(["ai", "install", "cursor"], projectDir);
+      await runCli(["ai", "install", "cursor"], projectDir, fakeHome);
 
       const { stderr, exitCode } = await runCli(
         ["ai", "sync", "--source", "claude", "--target", "cursor"],
-        projectDir
+        projectDir,
+        fakeHome
       );
 
       expect(exitCode).not.toBe(0);
@@ -60,12 +61,16 @@ describe.concurrent("E2E: aidd ai sync", () => {
   });
 
   it("fails when only one tool is installed (sync needs at least 2)", async () => {
-    const { projectDir, cleanup } = await createTestEnv("sync-one-tool");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("sync-one-tool");
     try {
       await seedProject(projectDir);
-      await runCli(["ai", "install", "claude"], projectDir);
+      await runCli(["ai", "install", "claude"], projectDir, fakeHome);
 
-      const { stderr, exitCode } = await runCli(["ai", "sync", "--source", "claude"], projectDir);
+      const { stderr, exitCode } = await runCli(
+        ["ai", "sync", "--source", "claude"],
+        projectDir,
+        fakeHome
+      );
 
       expect(exitCode).not.toBe(0);
       expect(stderr.toLowerCase()).toMatch(/at least 2|sync requires/i);
@@ -75,15 +80,16 @@ describe.concurrent("E2E: aidd ai sync", () => {
   });
 
   it("reports nothing to sync when files are unmodified", async () => {
-    const { projectDir, cleanup } = await createTestEnv("sync-noop");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("sync-noop");
     try {
       await seedProject(projectDir);
-      await runCli(["ai", "install", "claude"], projectDir);
-      await runCli(["ai", "install", "cursor"], projectDir);
+      await runCli(["ai", "install", "claude"], projectDir, fakeHome);
+      await runCli(["ai", "install", "cursor"], projectDir, fakeHome);
 
       const { stdout, exitCode } = await runCli(
         ["ai", "sync", "--source", "claude", "--target", "cursor"],
-        projectDir
+        projectDir,
+        fakeHome
       );
 
       expect(exitCode).toBe(0);
@@ -94,11 +100,11 @@ describe.concurrent("E2E: aidd ai sync", () => {
   });
 
   it("syncs a user-modified agent file from claude to cursor with --force", async () => {
-    const { projectDir, cleanup } = await createTestEnv("sync-agent");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("sync-agent");
     try {
       await seedProject(projectDir);
-      await runCli(["ai", "install", "claude"], projectDir);
-      await runCli(["ai", "install", "cursor"], projectDir);
+      await runCli(["ai", "install", "claude"], projectDir, fakeHome);
+      await runCli(["ai", "install", "cursor"], projectDir, fakeHome);
 
       // Create a user agent in claude directory (simulates a user-added file)
       const agentDir = join(projectDir, ".claude", "agents");
@@ -117,7 +123,8 @@ describe.concurrent("E2E: aidd ai sync", () => {
           "--include-user-files",
           "--force",
         ],
-        projectDir
+        projectDir,
+        fakeHome
       );
 
       expect(exitCode).toBe(0);
@@ -129,15 +136,23 @@ describe.concurrent("E2E: aidd ai sync", () => {
   });
 
   it("propagates modified plugin component file from claude to cursor with --force", async () => {
-    const { projectDir, cleanup } = await createTestEnv("sync-plugin-component");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("sync-plugin-component");
     try {
       await seedProject(projectDir);
-      await runCli(["ai", "install", "claude"], projectDir);
-      await runCli(["ai", "install", "cursor"], projectDir);
+      await runCli(["ai", "install", "claude"], projectDir, fakeHome);
+      await runCli(["ai", "install", "cursor"], projectDir, fakeHome);
 
       // Install same plugin (different format) to both tools via plugin add (writes real files)
-      await runCli(["plugin", "add", CLAUDE_PLUGIN_FIXTURE, "--tool", "claude"], projectDir);
-      await runCli(["plugin", "add", CURSOR_PLUGIN_FIXTURE, "--tool", "cursor"], projectDir);
+      await runCli(
+        ["plugin", "add", CLAUDE_PLUGIN_FIXTURE, "--tool", "claude"],
+        projectDir,
+        fakeHome
+      );
+      await runCli(
+        ["plugin", "add", CURSOR_PLUGIN_FIXTURE, "--tool", "cursor"],
+        projectDir,
+        fakeHome
+      );
 
       // Modify the claude plugin component file to differ from its manifest hash
       const claudeCommandPath = join(
@@ -153,7 +168,8 @@ describe.concurrent("E2E: aidd ai sync", () => {
 
       const { stdout, exitCode } = await runCli(
         ["ai", "sync", "--source", "claude", "--target", "cursor", "--force"],
-        projectDir
+        projectDir,
+        fakeHome
       );
 
       expect(exitCode).toBe(0);

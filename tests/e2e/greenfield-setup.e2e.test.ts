@@ -18,11 +18,12 @@ async function seedManifest(projectDir: string): Promise<void> {
 
 describe.concurrent("E2E: aidd setup greenfield — full setup from empty dir", () => {
   it("setup --source remote --all --recommended-plugins --yes installs all tools and writes v5 manifest", async () => {
-    const { projectDir, cleanup } = await createTestEnv("greenfield-setup-all");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-setup-all");
     try {
       const { stdout, exitCode } = await runCli(
         ["setup", "--source", "remote", "--all", "--recommended-plugins", "--yes"],
-        projectDir
+        projectDir,
+        fakeHome
       );
 
       expect(exitCode).toBe(0);
@@ -47,11 +48,12 @@ describe.concurrent("E2E: aidd setup greenfield — full setup from empty dir", 
   });
 
   it("setup --source remote --all --yes writes AI and IDE tool files to disk", async () => {
-    const { projectDir, cleanup } = await createTestEnv("greenfield-setup-disk");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-setup-disk");
     try {
       const { exitCode } = await runCli(
         ["setup", "--source", "remote", "--all", "--yes"],
-        projectDir
+        projectDir,
+        fakeHome
       );
 
       expect(exitCode).toBe(0);
@@ -63,11 +65,12 @@ describe.concurrent("E2E: aidd setup greenfield — full setup from empty dir", 
   });
 
   it("setup --source remote --ai claude --yes installs only claude", async () => {
-    const { projectDir, cleanup } = await createTestEnv("greenfield-setup-claude-only");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-setup-claude-only");
     try {
       const { stdout, exitCode } = await runCli(
         ["setup", "--source", "remote", "--ai", "claude", "--yes"],
-        projectDir
+        projectDir,
+        fakeHome
       );
 
       expect(exitCode).toBe(0);
@@ -83,13 +86,18 @@ describe.concurrent("E2E: aidd setup greenfield — full setup from empty dir", 
   });
 
   it("setup is idempotent — second run on already-set-up project exits 0", async () => {
-    const { projectDir, cleanup } = await createTestEnv("greenfield-setup-idempotent");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-setup-idempotent");
     try {
-      await runCli(["setup", "--source", "remote", "--ai", "claude", "--yes"], projectDir);
+      await runCli(
+        ["setup", "--source", "remote", "--ai", "claude", "--yes"],
+        projectDir,
+        fakeHome
+      );
 
       const { exitCode } = await runCli(
         ["setup", "--source", "remote", "--ai", "claude", "--yes"],
-        projectDir
+        projectDir,
+        fakeHome
       );
 
       expect(exitCode).toBe(0);
@@ -101,11 +109,11 @@ describe.concurrent("E2E: aidd setup greenfield — full setup from empty dir", 
 
 describe.concurrent("E2E: aidd ai install — individual tool install", () => {
   it("ai install claude writes settings.json and manifest from bundled assets", async () => {
-    const { projectDir, cleanup } = await createTestEnv("greenfield-claude");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-claude");
     try {
       await seedManifest(projectDir);
 
-      const { stdout, exitCode } = await runCli(["ai", "install", "claude"], projectDir);
+      const { stdout, exitCode } = await runCli(["ai", "install", "claude"], projectDir, fakeHome);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Installed claude");
@@ -117,11 +125,11 @@ describe.concurrent("E2E: aidd ai install — individual tool install", () => {
   });
 
   it("ide install vscode writes .vscode/settings.json from bundled assets", async () => {
-    const { projectDir, cleanup } = await createTestEnv("greenfield-vscode");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-vscode");
     try {
       await seedManifest(projectDir);
 
-      const { stdout, exitCode } = await runCli(["ide", "install", "vscode"], projectDir);
+      const { stdout, exitCode } = await runCli(["ide", "install", "vscode"], projectDir, fakeHome);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Installed vscode");
@@ -132,11 +140,11 @@ describe.concurrent("E2E: aidd ai install — individual tool install", () => {
   });
 
   it("ai install cursor writes .cursor directory from bundled assets", async () => {
-    const { projectDir, cleanup } = await createTestEnv("greenfield-cursor");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-cursor");
     try {
       await seedManifest(projectDir);
 
-      const { stdout, exitCode } = await runCli(["ai", "install", "cursor"], projectDir);
+      const { stdout, exitCode } = await runCli(["ai", "install", "cursor"], projectDir, fakeHome);
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Installed cursor");
@@ -147,12 +155,12 @@ describe.concurrent("E2E: aidd ai install — individual tool install", () => {
   });
 
   it("ai install claude is idempotent — second run warns already installed", async () => {
-    const { projectDir, cleanup } = await createTestEnv("greenfield-install-idempotent");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-install-idempotent");
     try {
       await seedManifest(projectDir);
-      await runCli(["ai", "install", "claude"], projectDir);
+      await runCli(["ai", "install", "claude"], projectDir, fakeHome);
 
-      const { stderr, exitCode } = await runCli(["ai", "install", "claude"], projectDir);
+      const { stderr, exitCode } = await runCli(["ai", "install", "claude"], projectDir, fakeHome);
 
       expect(exitCode).toBe(0);
       expect(stderr).toContain("already installed");
@@ -162,12 +170,16 @@ describe.concurrent("E2E: aidd ai install — individual tool install", () => {
   });
 
   it("ai install claude --force reinstalls over existing files", async () => {
-    const { projectDir, cleanup } = await createTestEnv("greenfield-force");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-force");
     try {
       await seedManifest(projectDir);
-      await runCli(["ai", "install", "claude"], projectDir);
+      await runCli(["ai", "install", "claude"], projectDir, fakeHome);
 
-      const { stdout, exitCode } = await runCli(["ai", "install", "claude", "--force"], projectDir);
+      const { stdout, exitCode } = await runCli(
+        ["ai", "install", "claude", "--force"],
+        projectDir,
+        fakeHome
+      );
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Installed claude");
@@ -177,10 +189,10 @@ describe.concurrent("E2E: aidd ai install — individual tool install", () => {
   });
 
   it("manifest tracks installed files after ai install claude", async () => {
-    const { projectDir, cleanup } = await createTestEnv("greenfield-manifest");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-manifest");
     try {
       await seedManifest(projectDir);
-      await runCli(["ai", "install", "claude"], projectDir);
+      await runCli(["ai", "install", "claude"], projectDir, fakeHome);
 
       const raw = await readFile(join(projectDir, AIDD_DIR, "manifest.json"), "utf-8");
       const manifest = JSON.parse(raw) as { tools: Record<string, unknown> };

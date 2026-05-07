@@ -27,9 +27,9 @@ async function seedManifest(projectDir: string): Promise<void> {
   );
 }
 
-async function seedWithClaude(projectDir: string): Promise<void> {
+async function seedWithClaude(projectDir: string, fakeHome: string): Promise<void> {
   await seedManifest(projectDir);
-  await runCli(["ai", "install", "claude"], projectDir);
+  await runCli(["ai", "install", "claude"], projectDir, fakeHome);
 }
 
 async function writeMarketplace(
@@ -47,10 +47,14 @@ async function writeMarketplace(
 
 describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
   it("plugin add <local-path> exits 0 with success message", async () => {
-    const { projectDir, cleanup } = await createTestEnv("plugin-add");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-add");
     try {
-      await seedWithClaude(projectDir);
-      const { stdout, exitCode } = await runCli(["plugin", "add", PLUGIN_FIXTURE], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(
+        ["plugin", "add", PLUGIN_FIXTURE],
+        projectDir,
+        fakeHome
+      );
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Plugin added successfully");
     } finally {
@@ -59,12 +63,13 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
   });
 
   it("plugin add <local-path> --tool claude exits 0", async () => {
-    const { projectDir, cleanup } = await createTestEnv("plugin-add-tool");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-add-tool");
     try {
-      await seedWithClaude(projectDir);
+      await seedWithClaude(projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(
         ["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"],
-        projectDir
+        projectDir,
+        fakeHome
       );
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Plugin added successfully");
@@ -74,11 +79,11 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
   });
 
   it("plugin list exits 0 and shows installed plugin", async () => {
-    const { projectDir, cleanup } = await createTestEnv("plugin-list");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-list");
     try {
-      await seedWithClaude(projectDir);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir);
-      const { stdout, exitCode } = await runCli(["plugin", "list"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["plugin", "list"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("sample-plugin");
     } finally {
@@ -87,11 +92,15 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
   });
 
   it("plugin list --tool claude exits 0 and shows plugin under tool scope", async () => {
-    const { projectDir, cleanup } = await createTestEnv("plugin-list-tool");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-list-tool");
     try {
-      await seedWithClaude(projectDir);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir);
-      const { stdout, exitCode } = await runCli(["plugin", "list", "--tool", "claude"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(
+        ["plugin", "list", "--tool", "claude"],
+        projectDir,
+        fakeHome
+      );
       expect(exitCode).toBe(0);
       expect(stdout).toContain("sample-plugin");
     } finally {
@@ -100,11 +109,11 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
   });
 
   it("plugin status exits 0 and reports files in sync", async () => {
-    const { projectDir, cleanup } = await createTestEnv("plugin-status");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-status");
     try {
-      await seedWithClaude(projectDir);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir);
-      const { stdout, exitCode } = await runCli(["plugin", "status"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["plugin", "status"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("in sync");
     } finally {
@@ -113,10 +122,10 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
   });
 
   it("plugin doctor exits 0 with healthy message when tool is installed", async () => {
-    const { projectDir, cleanup } = await createTestEnv("plugin-doctor");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-doctor");
     try {
-      await seedWithClaude(projectDir);
-      const { stdout, exitCode } = await runCli(["plugin", "doctor"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["plugin", "doctor"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("healthy");
     } finally {
@@ -125,11 +134,11 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
   });
 
   it("plugin update exits 0 reporting all plugins up to date", async () => {
-    const { projectDir, cleanup } = await createTestEnv("plugin-update");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-update");
     try {
-      await seedWithClaude(projectDir);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir);
-      const { stdout, exitCode } = await runCli(["plugin", "update"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["plugin", "update"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("up to date");
     } finally {
@@ -138,11 +147,15 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
   });
 
   it("plugin update sample-plugin exits 0 reporting up to date", async () => {
-    const { projectDir, cleanup } = await createTestEnv("plugin-update-named");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-update-named");
     try {
-      await seedWithClaude(projectDir);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir);
-      const { stdout, exitCode } = await runCli(["plugin", "update", "sample-plugin"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(
+        ["plugin", "update", "sample-plugin"],
+        projectDir,
+        fakeHome
+      );
       expect(exitCode).toBe(0);
       expect(stdout).toContain("up to date");
     } finally {
@@ -152,13 +165,14 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
 
   it("plugin restore --plugin sample-plugin exits 1 for local-path plugin (no marketplace cache)", async () => {
     // NOTE from matrix: local-path plugins have no marketplace cache to restore from — expected behavior
-    const { projectDir, cleanup } = await createTestEnv("plugin-restore-local");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-restore-local");
     try {
-      await seedWithClaude(projectDir);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
       const { stderr, exitCode } = await runCli(
         ["plugin", "restore", "--plugin", "sample-plugin"],
-        projectDir
+        projectDir,
+        fakeHome
       );
       expect(exitCode).toBe(1);
       expect(stderr).toContain("sample-plugin");
@@ -168,13 +182,14 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
   });
 
   it("plugin remove sample-plugin --tool claude exits 0", async () => {
-    const { projectDir, cleanup } = await createTestEnv("plugin-remove");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-remove");
     try {
-      await seedWithClaude(projectDir);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(
         ["plugin", "remove", "sample-plugin", "--tool", "claude"],
-        projectDir
+        projectDir,
+        fakeHome
       );
       expect(exitCode).toBe(0);
       expect(stdout).toContain("sample-plugin");
@@ -185,10 +200,10 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
   });
 
   it("plugin pick exits 1 in non-interactive mode", async () => {
-    const { projectDir, cleanup } = await createTestEnv("plugin-pick-noninteractive");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-pick-noninteractive");
     try {
-      await seedWithClaude(projectDir);
-      const { stderr, exitCode } = await runCli(["plugin", "pick"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      const { stderr, exitCode } = await runCli(["plugin", "pick"], projectDir, fakeHome);
       expect(exitCode).toBe(1);
       expect(stderr).toContain("interactive");
     } finally {
@@ -199,13 +214,14 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
   it("plugin sync --source claude exits 0 when plugins are already in sync", async () => {
     // matrix row: "plugin sync --source claude" → exit 0. Actual output: "Plugins are in sync."
     // (matrix noted "Warning: Plugin has no marketplace" but current behavior is cleaner)
-    const { projectDir, cleanup } = await createTestEnv("plugin-sync-local");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-sync-local");
     try {
-      await seedWithClaude(projectDir);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir);
+      await seedWithClaude(projectDir, fakeHome);
+      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(
         ["plugin", "sync", "--source", "claude"],
-        projectDir
+        projectDir,
+        fakeHome
       );
       expect(exitCode).toBe(0);
       expect(stdout).toMatch(/[Pp]lugins are in sync|[Ww]arning|[Nn]othing to sync/);
@@ -221,10 +237,10 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
 
 describe.concurrent("Command Matrix: Marketplace cache + refresh", () => {
   it("marketplace refresh exits 0 (no-op when no marketplaces registered)", async () => {
-    const { projectDir, cleanup } = await createTestEnv("mkt-refresh-empty");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("mkt-refresh-empty");
     try {
       await seedManifest(projectDir);
-      const { exitCode } = await runCli(["marketplace", "refresh"], projectDir);
+      const { exitCode } = await runCli(["marketplace", "refresh"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
     } finally {
       await cleanup();
@@ -232,13 +248,17 @@ describe.concurrent("Command Matrix: Marketplace cache + refresh", () => {
   });
 
   it("marketplace refresh <name> refreshes a registered marketplace", async () => {
-    const { tempDir, projectDir, cleanup } = await createTestEnv("mkt-refresh-named");
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-refresh-named");
     try {
       await seedManifest(projectDir);
       const marketDir = join(tempDir, "market");
       await writeMarketplace(marketDir, []);
-      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
-      const { stdout, exitCode } = await runCli(["marketplace", "refresh", "local"], projectDir);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(
+        ["marketplace", "refresh", "local"],
+        projectDir,
+        fakeHome
+      );
       expect(exitCode).toBe(0);
       expect(stdout).toContain("local");
     } finally {
@@ -247,10 +267,14 @@ describe.concurrent("Command Matrix: Marketplace cache + refresh", () => {
   });
 
   it("marketplace cache list exits 0 reporting no cached marketplaces", async () => {
-    const { projectDir, cleanup } = await createTestEnv("mkt-cache-list");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("mkt-cache-list");
     try {
       await seedManifest(projectDir);
-      const { stdout, exitCode } = await runCli(["marketplace", "cache", "list"], projectDir);
+      const { stdout, exitCode } = await runCli(
+        ["marketplace", "cache", "list"],
+        projectDir,
+        fakeHome
+      );
       expect(exitCode).toBe(0);
       expect(stdout).toContain("No cached");
     } finally {
@@ -259,12 +283,13 @@ describe.concurrent("Command Matrix: Marketplace cache + refresh", () => {
   });
 
   it("marketplace cache clear --all exits 0 when nothing to clear", async () => {
-    const { projectDir, cleanup } = await createTestEnv("mkt-cache-clear-all");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("mkt-cache-clear-all");
     try {
       await seedManifest(projectDir);
       const { stdout, exitCode } = await runCli(
         ["marketplace", "cache", "clear", "--all"],
-        projectDir
+        projectDir,
+        fakeHome
       );
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Nothing to clear");
@@ -274,10 +299,14 @@ describe.concurrent("Command Matrix: Marketplace cache + refresh", () => {
   });
 
   it("marketplace cache clear (no name, non-TTY) exits 1 asking for name or --all", async () => {
-    const { projectDir, cleanup } = await createTestEnv("mkt-cache-clear-noarg");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("mkt-cache-clear-noarg");
     try {
       await seedManifest(projectDir);
-      const { stderr, exitCode } = await runCli(["marketplace", "cache", "clear"], projectDir);
+      const { stderr, exitCode } = await runCli(
+        ["marketplace", "cache", "clear"],
+        projectDir,
+        fakeHome
+      );
       expect(exitCode).toBe(1);
       expect(stderr).toMatch(/Non-interactive|--all/);
     } finally {
@@ -287,12 +316,13 @@ describe.concurrent("Command Matrix: Marketplace cache + refresh", () => {
 
   it("marketplace add with file:// URI exits 1 — unsupported format", async () => {
     // NOTE from matrix: file:// URI format not supported; use absolute path instead
-    const { projectDir, cleanup } = await createTestEnv("mkt-add-file-uri");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("mkt-add-file-uri");
     try {
       await seedManifest(projectDir);
       const { stderr, exitCode } = await runCli(
         ["marketplace", "add", "mymarket", "file:///some/path", "--yes"],
-        projectDir
+        projectDir,
+        fakeHome
       );
       expect(exitCode).toBe(1);
       expect(stderr).toContain("Invalid plugin source");
@@ -310,9 +340,9 @@ describe.concurrent("Command Matrix: Auth (offline)", () => {
   it("auth status exits 0 and reports authentication state", async () => {
     // Runs against real user credentials env — test only checks exit 0 and presence
     // of status text. In CI without credentials, output is "Not authenticated."
-    const { projectDir, cleanup } = await createTestEnv("auth-status");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("auth-status");
     try {
-      const { stdout, exitCode } = await runCli(["auth", "status"], projectDir);
+      const { stdout, exitCode } = await runCli(["auth", "status"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       // Either "Authenticated as ..." (dev machine) or "Not authenticated." (CI/fresh env)
       expect(stdout).toMatch(/[Aa]uthenticated/);
@@ -322,9 +352,9 @@ describe.concurrent("Command Matrix: Auth (offline)", () => {
   });
 
   it("auth logout exits 0 and is idempotent — reports state after logout", async () => {
-    const { projectDir, cleanup } = await createTestEnv("auth-logout");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("auth-logout");
     try {
-      const { stdout, exitCode } = await runCli(["auth", "logout"], projectDir);
+      const { stdout, exitCode } = await runCli(["auth", "logout"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       // After logout: "Logged out (user)" or "Not authenticated." (already logged out)
       expect(stdout).toMatch(/[Ll]ogged out|[Nn]ot authenticated/);

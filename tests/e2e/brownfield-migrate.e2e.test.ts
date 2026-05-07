@@ -60,11 +60,15 @@ async function readManifest(projectDir: string): Promise<Record<string, unknown>
 
 describe.concurrent("E2E: marketplace brownfield migrate", () => {
   it("detects and strips bundled plugin from tool manifest entry", async () => {
-    const { projectDir, cleanup } = await createTestEnv("brownfield-bundled");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("brownfield-bundled");
     try {
       await seedManifest(projectDir, MANIFEST_WITH_BUNDLED_PLUGIN);
 
-      const { stdout, exitCode } = await runCli(["migrate", "--non-interactive"], projectDir);
+      const { stdout, exitCode } = await runCli(
+        ["migrate", "--non-interactive"],
+        projectDir,
+        fakeHome
+      );
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Migration complete");
@@ -77,11 +81,11 @@ describe.concurrent("E2E: marketplace brownfield migrate", () => {
   });
 
   it("creates manifest backup before writing", async () => {
-    const { projectDir, cleanup } = await createTestEnv("brownfield-backup");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("brownfield-backup");
     try {
       await seedManifest(projectDir, MANIFEST_WITH_BUNDLED_PLUGIN);
 
-      await runCli(["migrate", "--non-interactive"], projectDir);
+      await runCli(["migrate", "--non-interactive"], projectDir, fakeHome);
 
       const { readdir } = await import("node:fs/promises");
       const files = await readdir(join(projectDir, AIDD_DIR));
@@ -92,13 +96,14 @@ describe.concurrent("E2E: marketplace brownfield migrate", () => {
   });
 
   it("dry-run shows plan but does not strip bundled plugin", async () => {
-    const { projectDir, cleanup } = await createTestEnv("brownfield-dry-run");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("brownfield-dry-run");
     try {
       await seedManifest(projectDir, MANIFEST_WITH_BUNDLED_PLUGIN);
 
       const { stdout, exitCode } = await runCli(
         ["migrate", "--dry-run", "--non-interactive"],
-        projectDir
+        projectDir,
+        fakeHome
       );
 
       expect(exitCode).toBe(0);
@@ -112,11 +117,15 @@ describe.concurrent("E2E: marketplace brownfield migrate", () => {
   });
 
   it("strips both bundled plugin and obsolete scripts in single run", async () => {
-    const { projectDir, cleanup } = await createTestEnv("brownfield-combined");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("brownfield-combined");
     try {
       await seedManifest(projectDir, MANIFEST_WITH_BUNDLED_PLUGIN_AND_SCRIPTS);
 
-      const { stdout, exitCode } = await runCli(["migrate", "--non-interactive"], projectDir);
+      const { stdout, exitCode } = await runCli(
+        ["migrate", "--non-interactive"],
+        projectDir,
+        fakeHome
+      );
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Migration complete");
@@ -131,12 +140,16 @@ describe.concurrent("E2E: marketplace brownfield migrate", () => {
   });
 
   it("is idempotent — second run reports nothing to migrate", async () => {
-    const { projectDir, cleanup } = await createTestEnv("brownfield-idempotent");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("brownfield-idempotent");
     try {
       await seedManifest(projectDir, MANIFEST_WITH_BUNDLED_PLUGIN);
-      await runCli(["migrate", "--non-interactive"], projectDir);
+      await runCli(["migrate", "--non-interactive"], projectDir, fakeHome);
 
-      const { stdout, exitCode } = await runCli(["migrate", "--non-interactive"], projectDir);
+      const { stdout, exitCode } = await runCli(
+        ["migrate", "--non-interactive"],
+        projectDir,
+        fakeHome
+      );
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Nothing to migrate");

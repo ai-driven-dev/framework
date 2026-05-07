@@ -81,26 +81,29 @@ function targetHasPlugin(
 describe.concurrent("sync matrix: plugin propagation inter-tool", () => {
   for (const { source, target } of PAIRS) {
     it(`${source} → ${target} propagates installed plugin`, async () => {
-      const { tempDir, projectDir, cleanup } = await createTestEnv(`sync-${source}-${target}`);
+      const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv(
+        `sync-${source}-${target}`
+      );
       try {
         await seedManifest(projectDir);
 
         // Install source and target AI tools
-        await runCli(["ai", "install", source], projectDir);
-        await runCli(["ai", "install", target], projectDir);
+        await runCli(["ai", "install", source], projectDir, fakeHome);
+        await runCli(["ai", "install", target], projectDir, fakeHome);
 
         // Register a local marketplace
         const marketDir = join(tempDir, "market");
         await writeMarketplace(marketDir);
-        await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir);
+        await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir, fakeHome);
 
         // Install plugin on source tool
-        await runCli(["plugin", "install", PLUGIN_NAME, "--tool", source], projectDir);
+        await runCli(["plugin", "install", PLUGIN_NAME, "--tool", source], projectDir, fakeHome);
 
         // Propagate to target via plugin sync
         const result = await runCli(
           ["plugin", "sync", "--source", source, "--target", target],
-          projectDir
+          projectDir,
+          fakeHome
         );
 
         expect(result.exitCode).toBe(0);
@@ -122,15 +125,16 @@ describe.concurrent("sync matrix: plugin propagation inter-tool", () => {
 
 describe.concurrent("sync matrix: negative cases", () => {
   it("ai sync --source claude --target claude exits 1 (source and target identical)", async () => {
-    const { projectDir, cleanup } = await createTestEnv("sync-self-pair");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("sync-self-pair");
     try {
       await seedManifest(projectDir);
-      await runCli(["ai", "install", "claude"], projectDir);
-      await runCli(["ai", "install", "cursor"], projectDir);
+      await runCli(["ai", "install", "claude"], projectDir, fakeHome);
+      await runCli(["ai", "install", "cursor"], projectDir, fakeHome);
 
       const { exitCode, stderr } = await runCli(
         ["ai", "sync", "--source", "claude", "--target", "claude"],
-        projectDir
+        projectDir,
+        fakeHome
       );
 
       expect(exitCode).not.toBe(0);
@@ -141,15 +145,16 @@ describe.concurrent("sync matrix: negative cases", () => {
   });
 
   it("plugin sync with no plugins on source exits 0 and reports in sync", async () => {
-    const { projectDir, cleanup } = await createTestEnv("sync-no-plugins");
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("sync-no-plugins");
     try {
       await seedManifest(projectDir);
-      await runCli(["ai", "install", "claude"], projectDir);
-      await runCli(["ai", "install", "cursor"], projectDir);
+      await runCli(["ai", "install", "claude"], projectDir, fakeHome);
+      await runCli(["ai", "install", "cursor"], projectDir, fakeHome);
 
       const { exitCode, stdout } = await runCli(
         ["plugin", "sync", "--source", "claude", "--target", "cursor"],
-        projectDir
+        projectDir,
+        fakeHome
       );
 
       expect(exitCode).toBe(0);
