@@ -1,6 +1,9 @@
-import type { PluginFetchOptions, PluginFetcher } from "../../../src/domain/ports/plugin-fetcher.js";
 import type { PluginSource } from "../../../src/domain/models/plugin-source.js";
 import { serializePluginSource } from "../../../src/domain/models/plugin-source.js";
+import type {
+  PluginFetcher,
+  PluginFetchOptions,
+} from "../../../src/domain/ports/plugin-fetcher.js";
 
 /**
  * In-memory PluginFetcher that returns pre-staged paths from a local fixture map.
@@ -13,7 +16,11 @@ export class FixturePluginFetcher implements PluginFetcher {
     this.fixtures = new Map(Object.entries(fixtures));
   }
 
-  async fetch(source: PluginSource, _cacheDir: string, _options?: PluginFetchOptions): Promise<string> {
+  async fetch(
+    source: PluginSource,
+    _cacheDir: string,
+    _options?: PluginFetchOptions
+  ): Promise<string> {
     const key = JSON.stringify(serializePluginSource(source));
     const path = this.fixtures.get(key);
     if (path !== undefined) return path;

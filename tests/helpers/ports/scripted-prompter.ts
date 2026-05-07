@@ -87,25 +87,23 @@ export class ScriptedPrompter implements Prompter {
 
   // ── Builder helpers ────────────────────────────────────────────────────────
 
-  static conflict(value: "keep" | "overwrite"): PromptAnswer {
-    return { type: "conflict", value };
-  }
-
-  static confirm(value: boolean): PromptAnswer {
-    return { type: "confirm", value };
-  }
-
-  static input(value: string): PromptAnswer {
-    return { type: "input", value };
-  }
-
-  static select(value: string): PromptAnswer {
-    return { type: "select", value };
-  }
-
-  static checkbox(value: string[]): PromptAnswer {
-    return { type: "checkbox", value };
-  }
+  static answer = {
+    conflict(value: "keep" | "overwrite"): PromptAnswer {
+      return { type: "conflict", value };
+    },
+    confirm(value: boolean): PromptAnswer {
+      return { type: "confirm", value };
+    },
+    input(value: string): PromptAnswer {
+      return { type: "input", value };
+    },
+    select(value: string): PromptAnswer {
+      return { type: "select", value };
+    },
+    checkbox(value: string[]): PromptAnswer {
+      return { type: "checkbox", value };
+    },
+  };
 }
 
 /**

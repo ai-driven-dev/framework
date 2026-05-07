@@ -2,11 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { SyncUseCase } from "../../../src/application/use-cases/sync/sync-use-case.js";
 import { DOCS_DIR } from "../../../src/domain/models/paths.js";
-import {
-  buildUnitDeps,
-  initProject,
-  installTool,
-} from "../../helpers/ports/build-unit-deps.js";
+import { buildUnitDeps, initProject, installTool } from "../../helpers/ports/build-unit-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -185,8 +181,7 @@ describe("sync", () => {
         .some((f) => f.relativePath.includes("my-custom-agent"))
     ).toBe(true);
 
-    const content =
-      deps.fs.getFile(join(PROJECT_ROOT, ".cursor/agents/my-custom-agent.md")) ?? "";
+    const content = deps.fs.getFile(join(PROJECT_ROOT, ".cursor/agents/my-custom-agent.md")) ?? "";
     expect(content).toContain("Custom agent content.");
   });
 
@@ -262,8 +257,7 @@ describe("sync", () => {
       includeUserFiles: true,
     });
 
-    const content =
-      deps.fs.getFile(join(PROJECT_ROOT, ".cursor/skills/my-skill/SKILL.md")) ?? "";
+    const content = deps.fs.getFile(join(PROJECT_ROOT, ".cursor/skills/my-skill/SKILL.md")) ?? "";
     expect(content).toContain("Custom skill content.");
   });
 
@@ -314,8 +308,7 @@ describe("sync", () => {
       includeUserFiles: true,
     });
 
-    const content =
-      deps.fs.getFile(join(PROJECT_ROOT, ".claude/agents/my-copilot-agent.md")) ?? "";
+    const content = deps.fs.getFile(join(PROJECT_ROOT, ".claude/agents/my-copilot-agent.md")) ?? "";
     expect(content).toContain("Copilot agent content.");
   });
 

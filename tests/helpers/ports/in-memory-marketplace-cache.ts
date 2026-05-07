@@ -1,4 +1,4 @@
-import { MarketplaceCacheEntry } from "../../../src/domain/models/marketplace-cache-entry.js";
+import type { MarketplaceCacheEntry } from "../../../src/domain/models/marketplace-cache-entry.js";
 import type { MarketplaceCachePort } from "../../../src/domain/ports/marketplace-cache.js";
 
 /**

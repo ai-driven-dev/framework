@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import { PluginSearchUseCase } from "../../../../src/application/use-cases/plugin/plugin-search-use-case.js";
 import { Marketplace } from "../../../../src/domain/models/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
+import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileSystem } from "../../../helpers/ports/in-memory-file-system.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
 
 const PROJECT_ROOT = "/test-project";
 const MKT1_PATH = "/mkt1";
@@ -16,10 +16,7 @@ function seedMarketplace(
   dir: string,
   plugins: Array<Record<string, unknown>>
 ): void {
-  fs.writeFile(
-    join(dir, ".claude-plugin", "marketplace.json"),
-    JSON.stringify({ plugins })
-  );
+  fs.writeFile(join(dir, ".claude-plugin", "marketplace.json"), JSON.stringify({ plugins }));
 }
 
 function buildUseCase(
@@ -30,30 +27,44 @@ function buildUseCase(
     [MKT1_PATH]: MKT1_PATH,
     [MKT2_PATH]: MKT2_PATH,
   });
-  return new PluginSearchUseCase(
-    new PluginCatalogRepositoryAdapter(fs),
-    registry,
-    fetcher
-  );
+  return new PluginSearchUseCase(new PluginCatalogRepositoryAdapter(fs), registry, fetcher);
 }
 
 describe("PluginSearchUseCase", () => {
   it("matches by name and description across marketplaces", async () => {
     const fs = new InMemoryFileSystem();
     seedMarketplace(fs, MKT1_PATH, [
-      { name: "sample-plugin", source: { kind: "github", repo: "x/y" }, description: "Hello world" },
+      {
+        name: "sample-plugin",
+        source: { kind: "github", repo: "x/y" },
+        description: "Hello world",
+      },
     ]);
     seedMarketplace(fs, MKT2_PATH, [
-      { name: "different", source: { kind: "github", repo: "a/b" }, description: "Greets the world" },
+      {
+        name: "different",
+        source: { kind: "github", repo: "a/b" },
+        description: "Greets the world",
+      },
     ]);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(
       PROJECT_ROOT,
-      Marketplace.create({ name: "mkt1", source: { kind: "local", path: MKT1_PATH }, scope: "project", addedAt: "2026-04-29T10:00:00.000Z" })
+      Marketplace.create({
+        name: "mkt1",
+        source: { kind: "local", path: MKT1_PATH },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
     );
     await registry.save(
       PROJECT_ROOT,
-      Marketplace.create({ name: "mkt2", source: { kind: "local", path: MKT2_PATH }, scope: "project", addedAt: "2026-04-29T10:00:00.000Z" })
+      Marketplace.create({
+        name: "mkt2",
+        source: { kind: "local", path: MKT2_PATH },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
     );
 
     const result = await buildUseCase(fs, registry).execute({
@@ -74,7 +85,12 @@ describe("PluginSearchUseCase", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(
       PROJECT_ROOT,
-      Marketplace.create({ name: "mkt1", source: { kind: "local", path: MKT1_PATH }, scope: "project", addedAt: "2026-04-29T10:00:00.000Z" })
+      Marketplace.create({
+        name: "mkt1",
+        source: { kind: "local", path: MKT1_PATH },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
     );
 
     const result = await buildUseCase(fs, registry).execute({
@@ -94,11 +110,21 @@ describe("PluginSearchUseCase", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(
       PROJECT_ROOT,
-      Marketplace.create({ name: "mkt1", source: { kind: "local", path: MKT1_PATH }, scope: "project", addedAt: "2026-04-29T10:00:00.000Z" })
+      Marketplace.create({
+        name: "mkt1",
+        source: { kind: "local", path: MKT1_PATH },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
     );
     await registry.save(
       PROJECT_ROOT,
-      Marketplace.create({ name: "mkt2", source: { kind: "local", path: MKT2_PATH }, scope: "project", addedAt: "2026-04-29T10:00:00.000Z" })
+      Marketplace.create({
+        name: "mkt2",
+        source: { kind: "local", path: MKT2_PATH },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
     );
 
     const result = await buildUseCase(fs, registry).execute({

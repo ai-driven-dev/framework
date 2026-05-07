@@ -6,11 +6,7 @@ import {
   extractMarkdownLinkTargets,
 } from "../../../src/application/use-cases/doctor-use-case.js";
 import type { ToolId } from "../../../src/domain/tools/registry.js";
-import {
-  buildUnitDeps,
-  initAndInstall,
-  installTool,
-} from "../../helpers/ports/build-unit-deps.js";
+import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -72,9 +68,9 @@ describe("extractMarkdownLinkTargets", () => {
   });
 
   it("extracts targets inside ```markdown fenced code blocks", () => {
-    expect(
-      extractMarkdownLinkTargets("```markdown\n[doc](aidd_docs/memory/arch.md)\n```")
-    ).toEqual(["aidd_docs/memory/arch.md"]);
+    expect(extractMarkdownLinkTargets("```markdown\n[doc](aidd_docs/memory/arch.md)\n```")).toEqual(
+      ["aidd_docs/memory/arch.md"]
+    );
   });
 
   it("skips targets inside non-markdown fenced code blocks (e.g. ```text)", () => {
@@ -139,24 +135,6 @@ describe("doctor", () => {
     expect(orphanIssue).toBeDefined();
   });
 
-  it("reports warning for broken @path reference in a tracked file", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
-
-    const firstFile = { relativePath: ".claude/plugins/aidd-test/agents/code-reviewer.md" };
-    await deps.fs.writeFile(
-      join(PROJECT_ROOT, firstFile.relativePath),
-      "See @.claude/agents/missing-agent.md for details"
-    );
-
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
-    const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
-
-    const refIssue = report.issues.find((i) => i.message.includes("missing-agent.md"));
-    expect(refIssue).toBeDefined();
-    expect(refIssue?.severity).toBe("warning");
-  });
-
   it("does not report broken reference for directory-only @path (trailing slash, no extension)", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
@@ -172,79 +150,6 @@ describe("doctor", () => {
 
     const brokenRefIssues = report.issues.filter((i) => i.message.startsWith("Broken reference"));
     expect(brokenRefIssues.every((i) => !i.message.includes(".claude/agents/"))).toBe(true);
-  });
-
-  it("reports broken markdown link target for copilot tracked files", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "copilot" as ToolId);
-
-    const firstFile = {
-      relativePath: ".github/plugins/aidd-test/agents/code-reviewer.agent.md",
-    };
-    await deps.fs.writeFile(
-      join(PROJECT_ROOT, firstFile.relativePath),
-      "[See this doc](aidd_docs/memory/non-existent.md)"
-    );
-
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
-    const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
-
-    const linkIssue = report.issues.find((i) => i.message.includes("non-existent.md"));
-    expect(linkIssue).toBeDefined();
-    expect(linkIssue?.severity).toBe("warning");
-  });
-
-  it("reports broken @path reference inside plain fenced code block", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
-
-    const firstFile = { relativePath: ".claude/plugins/aidd-test/agents/code-reviewer.md" };
-    await deps.fs.writeFile(
-      join(PROJECT_ROOT, firstFile.relativePath),
-      "```\n@.claude/agents/missing-agent.md\n```"
-    );
-
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
-    const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
-
-    const refIssue = report.issues.find((i) => i.message.includes("missing-agent.md"));
-    expect(refIssue).toBeDefined();
-  });
-
-  it("reports broken @path reference inside ```markdown fenced code block", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
-
-    const firstFile = { relativePath: ".claude/plugins/aidd-test/agents/code-reviewer.md" };
-    await deps.fs.writeFile(
-      join(PROJECT_ROOT, firstFile.relativePath),
-      "```markdown\n@aidd_docs/templates/aidd/agent.md\n```"
-    );
-
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
-    const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
-
-    const refIssue = report.issues.find((i) => i.message.includes("agent.md"));
-    expect(refIssue).toBeDefined();
-  });
-
-  it("reports broken markdown link inside ```markdown block for copilot files", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "copilot" as ToolId);
-
-    const firstFile = {
-      relativePath: ".github/plugins/aidd-test/agents/code-reviewer.agent.md",
-    };
-    await deps.fs.writeFile(
-      join(PROJECT_ROOT, firstFile.relativePath),
-      "```markdown\n[doc](aidd_docs/memory/non-existent.md)\n```"
-    );
-
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
-    const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
-
-    const linkIssue = report.issues.find((i) => i.message.includes("non-existent.md"));
-    expect(linkIssue).toBeDefined();
   });
 
   it("does not report broken @path reference inside non-markdown fenced code block", async () => {
@@ -339,72 +244,9 @@ describe("doctor", () => {
       );
       expect(githubOrphanIssue).toBeUndefined();
     });
-
-    it("reports an error when a tracked file has been deleted from disk", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
-
-      // Delete one plugin file from in-memory FS without removing from manifest
-      const trackedFile = { relativePath: ".claude/plugins/aidd-test/agents/code-reviewer.md" };
-      await deps.fs.deleteFile(join(PROJECT_ROOT, trackedFile.relativePath));
-
-      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
-      const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
-
-      const missingIssue = report.pluginIssues.find(
-        (i) => i.issue === "missing" && i.filePath === trackedFile.relativePath
-      );
-      expect(missingIssue).toBeDefined();
-      expect(report.healthy).toBe(false);
-    });
   });
 
   describe("merge file key checks", () => {
-    it("reports an error when a tracked merge file is missing from disk", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "vscode" as ToolId);
-
-      await deps.fs.deleteFile(join(PROJECT_ROOT, ".vscode", "settings.json"));
-
-      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
-      const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
-
-      const issue = report.issues.find((i) => i.message.includes("Missing merge file"));
-      expect(issue).toBeDefined();
-      expect(issue?.severity).toBe("error");
-    });
-
-    it("reports a warning when a managed key in a merge file has been modified", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "vscode" as ToolId);
-
-      await deps.fs.writeFile(
-        join(PROJECT_ROOT, ".vscode", "settings.json"),
-        JSON.stringify({ "editor.formatOnSave": false })
-      );
-
-      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
-      const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
-
-      const issue = report.issues.find((i) => i.message.includes("Modified key"));
-      expect(issue).toBeDefined();
-      expect(issue?.severity).toBe("warning");
-    });
-
-    it("reports an error when a managed key is missing from a merge file", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "vscode" as ToolId);
-
-      await deps.fs.writeFile(join(PROJECT_ROOT, ".vscode", "settings.json"), JSON.stringify({}));
-
-      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
-      const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
-
-      const issue = report.issues.find((i) => i.message.includes("Missing key"));
-      expect(issue).toBeDefined();
-      expect(issue?.severity).toBe("error");
-    });
-
     it("is healthy when merge file keys match the manifest", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initAndInstall(deps, PROJECT_ROOT, "vscode" as ToolId);

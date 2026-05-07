@@ -4,10 +4,7 @@ import { PluginAddUseCase } from "../../../../src/application/use-cases/plugin/p
 import { PluginRemoveUseCase } from "../../../../src/application/use-cases/plugin/plugin-remove-use-case.js";
 import { PluginNotFoundError } from "../../../../src/domain/errors.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
-import {
-  buildUnitDeps,
-  initAndInstall,
-} from "../../../helpers/ports/build-unit-deps.js";
+import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");

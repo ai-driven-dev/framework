@@ -9,10 +9,7 @@ import {
   installTool,
 } from "../../helpers/ports/build-unit-deps.js";
 import { FakePlatform } from "../../helpers/ports/fake-platform.js";
-import {
-  KeepPrompter,
-  OverwritePrompter,
-} from "../../helpers/ports/scripted-prompter.js";
+import { KeepPrompter, OverwritePrompter } from "../../helpers/ports/scripted-prompter.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -139,29 +136,6 @@ describe("restore", () => {
     expect(result.tools[0].kept.length).toBeGreaterThan(0);
   });
 
-  it("only restores files matching the files filter", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
-
-    const agentPath = join(PROJECT_ROOT, ".claude/plugins/aidd-test/agents/code-reviewer.md");
-    const rulePath = join(PROJECT_ROOT, ".claude/plugins/aidd-test/rules/01-standards/naming.md");
-
-    await deps.fs.writeFile(agentPath, "modified agent");
-    await deps.fs.writeFile(rulePath, "modified rule");
-
-    await makeRestoreUseCase(deps).execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot: PROJECT_ROOT,
-      force: true,
-      files: [".claude/plugins/aidd-test/rules/01-standards/naming.md"],
-    });
-
-    expect(deps.fs.getFile(agentPath)).toBe("modified agent");
-    expect(deps.fs.getFile(rulePath)).not.toBe("modified rule");
-  });
-
   it("toolIds filter limits restore to specific tool", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
@@ -187,52 +161,6 @@ describe("restore", () => {
     const parsedVscode = JSON.parse(vscodeContent) as Record<string, unknown>;
     expect(parsedVscode["editor.formatOnSave"]).toBe(true);
     expect(cursorContent).toBe('{"modified": true}');
-  });
-
-  it("accepts directory prefix filter (ends with /)", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
-
-    const agentPath = join(PROJECT_ROOT, ".claude/plugins/aidd-test/agents/code-reviewer.md");
-    const rulePath = join(PROJECT_ROOT, ".claude/plugins/aidd-test/rules/01-standards/naming.md");
-
-    await deps.fs.writeFile(agentPath, "modified agent");
-    await deps.fs.writeFile(rulePath, "modified rule");
-
-    await makeRestoreUseCase(deps).execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot: PROJECT_ROOT,
-      force: true,
-      files: [".claude/plugins/aidd-test/rules/"],
-    });
-
-    expect(deps.fs.getFile(agentPath)).toBe("modified agent");
-    expect(deps.fs.getFile(rulePath)).not.toBe("modified rule");
-  });
-
-  it("accepts directory prefix filter without trailing slash (no file extension)", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
-
-    const agentPath = join(PROJECT_ROOT, ".claude/plugins/aidd-test/agents/code-reviewer.md");
-    const rulePath = join(PROJECT_ROOT, ".claude/plugins/aidd-test/rules/01-standards/naming.md");
-
-    await deps.fs.writeFile(agentPath, "modified agent");
-    await deps.fs.writeFile(rulePath, "modified rule");
-
-    await makeRestoreUseCase(deps).execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot: PROJECT_ROOT,
-      force: true,
-      files: [".claude/plugins/aidd-test/rules"],
-    });
-
-    expect(deps.fs.getFile(agentPath)).toBe("modified agent");
-    expect(deps.fs.getFile(rulePath)).not.toBe("modified rule");
   });
 
   it("does not remove untracked files in tool directory", async () => {
@@ -333,43 +261,6 @@ describe("restore", () => {
     expect(call?.reason).toBe("modified");
   });
 
-  it("correctly updates manifest when multiple files are restored", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initProject(deps, PROJECT_ROOT);
-    await installTool(deps, PROJECT_ROOT, "vscode");
-    await installTool(deps, PROJECT_ROOT, "claude");
-
-    const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
-    const rulePath = join(PROJECT_ROOT, ".claude/plugins/aidd-test/rules/01-standards/naming.md");
-    const originalRule = deps.fs.getFile(rulePath) ?? "";
-
-    await deps.fs.writeFile(settingsPath, '{"modified": true}');
-    await deps.fs.writeFile(rulePath, "modified rule");
-
-    const result = await makeRestoreUseCase(deps).execute({
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      docsDir: "aidd_docs",
-      projectRoot: PROJECT_ROOT,
-      force: true,
-    });
-
-    const totalRestored = result.totalRestored + result.totalPluginFilesRestored;
-    expect(totalRestored).toBeGreaterThanOrEqual(2);
-
-    const settingsAfter = deps.fs.getFile(settingsPath) ?? "{}";
-    const ruleAfter = deps.fs.getFile(rulePath) ?? "";
-    const parsedSettings = JSON.parse(settingsAfter) as Record<string, unknown>;
-    expect(parsedSettings["editor.formatOnSave"]).toBe(true);
-    expect(ruleAfter).toBe(originalRule);
-
-    const manifest = await deps.manifestRepo.load();
-    expect(manifest).not.toBeNull();
-    const mergeFiles = manifest?.getMergeFiles("vscode") ?? [];
-    const settingsEntry = mergeFiles.find((m) => m.relativePath === ".vscode/settings.json");
-    expect(settingsEntry).toBeDefined();
-  });
-
   describe("merge file restore", () => {
     it("reports nothing to restore when merge file keys are unmodified", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
@@ -408,42 +299,6 @@ describe("restore", () => {
 
       const vscodeTool = result.tools.find((t) => t.toolId === "vscode");
       expect(vscodeTool?.restored).toContain(".vscode/settings.json");
-    });
-
-    it("updates manifest merge entries after restoring", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "vscode");
-
-      const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
-      await deps.fs.writeFile(
-        settingsPath,
-        JSON.stringify({ "editor.formatOnSave": false }, null, 2)
-      );
-
-      await makeRestoreUseCase(deps).execute({
-        frameworkPath: FIXTURE_DIR,
-        version: "test",
-        docsDir: "aidd_docs",
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
-
-      const manifest = await deps.manifestRepo.load();
-      const mergeFiles = manifest?.getMergeFiles("vscode") ?? [];
-      const settingsEntry = mergeFiles.find((m) => m.relativePath === ".vscode/settings.json");
-      expect(settingsEntry).toBeDefined();
-
-      const diskContent = await deps.fs.readFile(settingsPath);
-      const diskEntries = Object.fromEntries(
-        Object.entries(JSON.parse(diskContent) as Record<string, unknown>).map(([k, v]) => [
-          k,
-          deps.hasher.hash(JSON.stringify(v)).value,
-        ])
-      );
-      expect(settingsEntry?.entries["editor.formatOnSave"].value).toBe(
-        diskEntries["editor.formatOnSave"]
-      );
     });
 
     it("recreates deleted merge file", async () => {

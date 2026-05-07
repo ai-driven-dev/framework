@@ -11,12 +11,12 @@ import { CLIOutput } from "../../../src/application/output.js";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
 import { InstallIdeConfigUseCase } from "../../../src/application/use-cases/install/install-ide-config-use-case.js";
 import { InstallRuntimeConfigUseCase } from "../../../src/application/use-cases/install/install-runtime-config-use-case.js";
-import { InstallUseCase } from "../../../src/application/use-cases/install/install-use-case.js";
+import { Manifest } from "../../../src/domain/models/manifest.js";
 import type { Platform } from "../../../src/domain/ports/platform.js";
 import type { Prompter } from "../../../src/domain/ports/prompter.js";
 import type { VersionControl } from "../../../src/domain/ports/version-control.js";
 import type { VersionReader } from "../../../src/domain/ports/version-reader.js";
-import type { ToolId } from "../../../src/domain/tools/registry.js";
+import { isIdeToolId, type ToolId } from "../../../src/domain/tools/registry.js";
 import { CurrentVersionAdapter } from "../../../src/infrastructure/adapters/current-version-adapter.js";
 import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
@@ -247,26 +247,24 @@ export async function installTool(
   projectRoot: string,
   toolId: ToolId
 ) {
-  const installUseCase = new InstallUseCase(
-    deps.fs,
-    deps.manifestRepo,
-    deps.hasher,
-    deps.logger,
-    linuxPlatform,
-    new SilentPrompterAdapter(),
-    deps.pluginFetcher,
-    deps.pluginDistributionReader,
-    deps.pluginCatalogRepository
-  );
-  const results = await installUseCase.execute({
-    toolIds: [toolId],
-    frameworkPath: FIXTURE_DIR,
-    version: "test",
-    docsDir: "aidd_docs",
+  const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+  const version = "test";
+  if (isIdeToolId(toolId)) {
+    return deps.installIdeConfigUseCase.execute({
+      toolId,
+      projectRoot,
+      manifest,
+      force: false,
+      version,
+    });
+  }
+  return deps.installRuntimeConfigUseCase.execute({
+    toolId,
     projectRoot,
-    mcpFilter: ["playwright", "github"],
+    manifest,
+    force: false,
+    version,
   });
-  return results[0];
 }
 
 export async function initAndInstall(

@@ -7,16 +7,9 @@ import "../../../src/domain/tools/ai/cursor.js";
 import "../../../src/domain/tools/ai/opencode.js";
 import "../../../src/domain/tools/ide/vscode.js";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
-import { InstallUseCase } from "../../../src/application/use-cases/install/install-use-case.js";
 import { DOCS_DIR } from "../../../src/domain/models/paths.js";
 import type { ToolId } from "../../../src/domain/tools/registry.js";
-import {
-  buildUnitDeps,
-  FIXTURE_DIR,
-  initProject,
-  installTool,
-} from "../../helpers/ports/build-unit-deps.js";
-import { FakePlatform } from "../../helpers/ports/fake-platform.js";
+import { buildUnitDeps, initProject, installTool } from "../../helpers/ports/build-unit-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -63,7 +56,7 @@ describe("init", () => {
 
     const catalogPath = join(PROJECT_ROOT, DOCS_DIR, "CATALOG.md");
     expect(deps.fs.has(catalogPath)).toBe(true);
-    const content = deps.fs.getFile(catalogPath)!;
+    const content = deps.fs.getFile(catalogPath) ?? "";
     expect(content).toContain("# AIDD Framework Catalog");
 
     // Manifest should not contain CATALOG.md in tracked files
@@ -78,7 +71,9 @@ describe("init", () => {
     it("passes when directory is truly empty", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await expect(
-        new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({ projectRoot: PROJECT_ROOT })
+        new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
+          projectRoot: PROJECT_ROOT,
+        })
       ).resolves.toBeUndefined();
     });
 
@@ -90,7 +85,9 @@ describe("init", () => {
       );
 
       await expect(
-        new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({ projectRoot: PROJECT_ROOT })
+        new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
+          projectRoot: PROJECT_ROOT,
+        })
       ).rejects.toThrow("AIDD files detected but no manifest found");
     });
 
@@ -102,7 +99,9 @@ describe("init", () => {
       );
 
       await expect(
-        new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({ projectRoot: PROJECT_ROOT })
+        new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
+          projectRoot: PROJECT_ROOT,
+        })
       ).resolves.toBeUndefined();
     });
 
@@ -110,7 +109,9 @@ describe("init", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await new InitUseCase(deps.fs, deps.manifestRepo).execute({ projectRoot: PROJECT_ROOT });
       await expect(
-        new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({ projectRoot: PROJECT_ROOT })
+        new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
+          projectRoot: PROJECT_ROOT,
+        })
       ).rejects.toThrow(/Already initialized \(docs in "aidd_docs"\)/);
     });
 

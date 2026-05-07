@@ -10,18 +10,16 @@ import { CLIOutput } from "../../../src/application/output.js";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
 import { InstallIdeConfigUseCase } from "../../../src/application/use-cases/install/install-ide-config-use-case.js";
 import { InstallRuntimeConfigUseCase } from "../../../src/application/use-cases/install/install-runtime-config-use-case.js";
-import { InstallUseCase } from "../../../src/application/use-cases/install/install-use-case.js";
-import { BundledAssetProviderAdapter } from "../../../src/infrastructure/assets/asset-loader.js";
+import { Manifest } from "../../../src/domain/models/manifest.js";
+import { isIdeToolId, type ToolId } from "../../../src/domain/tools/registry.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
-import type { ToolId } from "../../../src/domain/tools/registry.js";
+import { BundledAssetProviderAdapter } from "../../../src/infrastructure/assets/asset-loader.js";
 import { DeterministicHasher } from "./deterministic-hasher.js";
 import { FakeCurrentVersion } from "./fake-current-version.js";
-import { FakePlatform } from "./fake-platform.js";
 import { FixturePluginFetcher } from "./fixture-plugin-fetcher.js";
 import { InMemoryFileSystem } from "./in-memory-file-system.js";
 import { InMemoryManifestRepository } from "./in-memory-manifest-repository.js";
-import { OverwritePrompter } from "./scripted-prompter.js";
 import { seedFromDirectory } from "./seed-from-directory.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
@@ -30,7 +28,7 @@ const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
  * Builds in-memory deps for use-case unit tests.
  * The InMemoryFileSystem is pre-seeded with the framework fixture content (absolute paths).
  */
-export async function buildUnitDeps(projectRoot: string) {
+export async function buildUnitDeps(_projectRoot: string) {
   const hasher = new DeterministicHasher();
   const fs = new InMemoryFileSystem({}, hasher);
   const manifestRepo = new InMemoryManifestRepository();
@@ -87,26 +85,24 @@ export async function installTool(
   projectRoot: string,
   toolId: ToolId
 ) {
-  const installUseCase = new InstallUseCase(
-    deps.fs,
-    deps.manifestRepo,
-    deps.hasher,
-    deps.logger,
-    new FakePlatform("linux"),
-    new OverwritePrompter(),
-    deps.pluginFetcher,
-    deps.pluginDistributionReader,
-    deps.pluginCatalogRepository
-  );
-  const results = await installUseCase.execute({
-    toolIds: [toolId],
-    frameworkPath: FIXTURE_DIR,
-    version: "test",
-    docsDir: "aidd_docs",
+  const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+  const version = "test";
+  if (isIdeToolId(toolId)) {
+    return deps.installIdeConfigUseCase.execute({
+      toolId,
+      projectRoot,
+      manifest,
+      force: false,
+      version,
+    });
+  }
+  return deps.installRuntimeConfigUseCase.execute({
+    toolId,
     projectRoot,
-    mcpFilter: ["playwright", "github"],
+    manifest,
+    force: false,
+    version,
   });
-  return results[0];
 }
 
 export async function initAndInstall(

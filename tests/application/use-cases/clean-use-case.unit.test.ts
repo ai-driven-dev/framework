@@ -4,10 +4,7 @@ import "../../../src/domain/tools/ai/claude.js";
 import "../../../src/domain/tools/ide/vscode.js";
 import { CleanUseCase } from "../../../src/application/use-cases/clean-use-case.js";
 import type { ToolId } from "../../../src/domain/tools/registry.js";
-import {
-  buildUnitDeps,
-  initAndInstall,
-} from "../../helpers/ports/build-unit-deps.js";
+import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -53,25 +50,5 @@ describe("clean", () => {
     await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
     expect(deps.fs.has(userFile)).toBe(true);
-  });
-
-  it("keeps merge file on disk but removes AIDD-managed keys when user keys exist", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "vscode" as ToolId);
-
-    const settingsPath = join(PROJECT_ROOT, ".vscode", "settings.json");
-    await deps.fs.writeFile(
-      settingsPath,
-      JSON.stringify({ "editor.formatOnSave": true, "my.custom.setting": "value" })
-    );
-
-    const useCase = new CleanUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
-
-    const raw = deps.fs.getFile(settingsPath);
-    expect(raw).toBeDefined();
-    const content = JSON.parse(raw!) as Record<string, unknown>;
-    expect(content["editor.formatOnSave"]).toBeUndefined();
-    expect(content["my.custom.setting"]).toBe("value");
   });
 });

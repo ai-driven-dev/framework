@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { FileHash } from "../../../src/domain/models/file.js";
 import { stripJsonComments } from "../../../src/domain/formats/jsonc.js";
+import { FileHash } from "../../../src/domain/models/file.js";
 import {
   isPerKeyMergeStrategy,
   type MergeStrategy,

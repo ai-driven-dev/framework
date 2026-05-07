@@ -2,10 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { InstallIdeConfigUseCase } from "../../../src/application/use-cases/install/install-ide-config-use-case.js";
 import { Manifest } from "../../../src/domain/models/manifest.js";
-import {
-  buildUnitDeps,
-  initProject,
-} from "../../helpers/ports/build-unit-deps.js";
+import { buildUnitDeps, initProject } from "../../helpers/ports/build-unit-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 

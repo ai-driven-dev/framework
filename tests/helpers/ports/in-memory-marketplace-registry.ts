@@ -48,9 +48,7 @@ export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {
 
   private getProjectEntries(projectRoot: string): Marketplace[] {
     const prefix = `${projectRoot}:`;
-    return [...this.project.entries()]
-      .filter(([k]) => k.startsWith(prefix))
-      .map(([, v]) => v);
+    return [...this.project.entries()].filter(([k]) => k.startsWith(prefix)).map(([, v]) => v);
   }
 
   private key(projectRoot: string, name: string): string {

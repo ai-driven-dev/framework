@@ -1,5 +1,4 @@
 export { CapturingLogger } from "./capturing-logger.js";
-export { seedFromDirectory } from "./seed-from-directory.js";
 export { DeterministicHasher } from "./deterministic-hasher.js";
 export { FakeAuthReader } from "./fake-auth-reader.js";
 export { FakeCurrentVersion } from "./fake-current-version.js";
@@ -11,3 +10,4 @@ export { InMemoryMarketplaceCache } from "./in-memory-marketplace-cache.js";
 export { InMemoryMarketplaceRegistry } from "./in-memory-marketplace-registry.js";
 export { InMemoryMarketplaceTrustStore } from "./in-memory-marketplace-trust-store.js";
 export { KeepPrompter, OverwritePrompter, ScriptedPrompter } from "./scripted-prompter.js";
+export { seedFromDirectory } from "./seed-from-directory.js";
