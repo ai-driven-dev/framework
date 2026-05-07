@@ -105,6 +105,64 @@ describe("MigrationPlan", () => {
       const plan = new MigrationPlan(BASE_PARAMS);
       expect(plan.describe()).toContain("nothing to do");
     });
+
+    it("omits strip-fields line when fieldsToStrip is empty", () => {
+      const plan = new MigrationPlan(BASE_PARAMS);
+      expect(plan.describe()).not.toContain("Strip legacy fields");
+    });
+
+    it("omits files-to-delete line when filesToDelete is empty", () => {
+      const plan = new MigrationPlan(BASE_PARAMS);
+      expect(plan.describe()).not.toContain("Delete");
+    });
+
+    it("omits marketplace-registration line when defaultMarketplaceMissing is false", () => {
+      const plan = new MigrationPlan(BASE_PARAMS);
+      expect(plan.describe()).not.toContain("Register default marketplace");
+    });
+
+    it("omits rewire line when pluginsToRewire is empty", () => {
+      const plan = new MigrationPlan(BASE_PARAMS);
+      expect(plan.describe()).not.toContain("Rewire");
+    });
+
+    it("lists user memory files when present", () => {
+      const plan = new MigrationPlan({
+        ...BASE_PARAMS,
+        userMemoryFiles: ["CLAUDE.md", "memory.md"],
+      });
+      expect(plan.describe()).toContain("Preserve user memory files: CLAUDE.md, memory.md");
+    });
+
+    it("omits user-memory line when userMemoryFiles is empty", () => {
+      const plan = new MigrationPlan({ ...BASE_PARAMS, userMemoryFiles: [] });
+      expect(plan.describe()).not.toContain("Preserve user memory files");
+    });
+
+    it("includes plugin marketplace in rewire description", () => {
+      const plan = new MigrationPlan({
+        ...BASE_PARAMS,
+        pluginsToRewire: [
+          { name: "aidd-context", marketplace: "aidd-framework", toolIds: ["claude" as AiToolId] },
+        ],
+      });
+      expect(plan.describe()).toContain("aidd-framework");
+    });
+
+    it("includes plugin tool ids in rewire description", () => {
+      const plan = new MigrationPlan({
+        ...BASE_PARAMS,
+        pluginsToRewire: [
+          { name: "aidd-context", marketplace: "aidd-framework", toolIds: ["claude" as AiToolId] },
+        ],
+      });
+      expect(plan.describe()).toContain("claude");
+    });
+
+    it("does not show nothing-to-do when there are fields to strip", () => {
+      const plan = new MigrationPlan({ ...BASE_PARAMS, fieldsToStrip: ["mode"] });
+      expect(plan.describe()).not.toContain("nothing to do");
+    });
   });
 
   describe("equals()", () => {
@@ -132,6 +190,78 @@ describe("MigrationPlan", () => {
         pluginsToRewire: [{ name: "p1", marketplace: "m1", toolIds: ["claude" as AiToolId] }],
       });
       const b = new MigrationPlan({ ...BASE_PARAMS, pluginsToRewire: [] });
+      expect(a.equals(b)).toBe(false);
+    });
+
+    it("returns false when defaultMarketplaceMissing differs", () => {
+      const a = new MigrationPlan({ ...BASE_PARAMS, defaultMarketplaceMissing: true });
+      const b = new MigrationPlan({ ...BASE_PARAMS, defaultMarketplaceMissing: false });
+      expect(a.equals(b)).toBe(false);
+    });
+
+    it("returns false when filesToDelete differs", () => {
+      const a = new MigrationPlan({ ...BASE_PARAMS, filesToDelete: ["file.sh"] });
+      const b = new MigrationPlan({ ...BASE_PARAMS, filesToDelete: [] });
+      expect(a.equals(b)).toBe(false);
+    });
+
+    it("returns false when userMemoryFiles differs", () => {
+      const a = new MigrationPlan({ ...BASE_PARAMS, userMemoryFiles: ["CLAUDE.md"] });
+      const b = new MigrationPlan({ ...BASE_PARAMS, userMemoryFiles: ["AGENTS.md"] });
+      expect(a.equals(b)).toBe(false);
+    });
+
+    it("returns false when plugin name differs but same length", () => {
+      const a = new MigrationPlan({
+        ...BASE_PARAMS,
+        pluginsToRewire: [
+          { name: "plugin-a", marketplace: "market", toolIds: ["claude" as AiToolId] },
+        ],
+      });
+      const b = new MigrationPlan({
+        ...BASE_PARAMS,
+        pluginsToRewire: [
+          { name: "plugin-b", marketplace: "market", toolIds: ["claude" as AiToolId] },
+        ],
+      });
+      expect(a.equals(b)).toBe(false);
+    });
+
+    it("returns false when plugin marketplace differs but same length", () => {
+      const a = new MigrationPlan({
+        ...BASE_PARAMS,
+        pluginsToRewire: [
+          { name: "plugin-a", marketplace: "market-1", toolIds: ["claude" as AiToolId] },
+        ],
+      });
+      const b = new MigrationPlan({
+        ...BASE_PARAMS,
+        pluginsToRewire: [
+          { name: "plugin-a", marketplace: "market-2", toolIds: ["claude" as AiToolId] },
+        ],
+      });
+      expect(a.equals(b)).toBe(false);
+    });
+
+    it("returns false when plugin toolIds differ but same length", () => {
+      const a = new MigrationPlan({
+        ...BASE_PARAMS,
+        pluginsToRewire: [
+          { name: "plugin-a", marketplace: "market", toolIds: ["claude" as AiToolId] },
+        ],
+      });
+      const b = new MigrationPlan({
+        ...BASE_PARAMS,
+        pluginsToRewire: [
+          { name: "plugin-a", marketplace: "market", toolIds: ["cursor" as AiToolId] },
+        ],
+      });
+      expect(a.equals(b)).toBe(false);
+    });
+
+    it("returns false when fieldsToStrip arrays have same length but different values", () => {
+      const a = new MigrationPlan({ ...BASE_PARAMS, fieldsToStrip: ["mode"] });
+      const b = new MigrationPlan({ ...BASE_PARAMS, fieldsToStrip: ["docs"] });
       expect(a.equals(b)).toBe(false);
     });
   });

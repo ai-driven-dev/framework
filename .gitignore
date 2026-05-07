@@ -10,6 +10,11 @@ dist/
 # Test coverage
 coverage/
 
+# Mutation testing
+reports/
+.stryker-tmp/
+stryker.log
+
 # AI conversation history
 .specstory/
 

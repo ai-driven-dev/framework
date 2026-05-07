@@ -35,6 +35,7 @@
     "jscpd": "jscpd src/",
     "pack:local": "pnpm build && pnpm pack --pack-destination ./dist",
     "install:local": "pnpm run pack:local && npm install -g ./dist/ai-driven-dev-cli-$(node -p \"require('./package.json').version\").tgz --force",
+    "test:mutation": "stryker run",
     "prepare": "lefthook install"
   },
   "dependencies": {
@@ -47,6 +48,9 @@
     "@biomejs/biome": "^2.4.7",
     "@commitlint/cli": "^19.0.0",
     "@commitlint/config-conventional": "^19.0.0",
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/typescript-checker": "^9.6.1",
+    "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^24.0.0",
     "@vitest/coverage-v8": "^2.1.9",
     "fast-check": "^4.7.0",
