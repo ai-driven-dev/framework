@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { PluginNotFoundError } from "../../../domain/errors.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
-import { PLUGIN_CACHE_SUBDIR } from "../../../domain/models/paths.js";
+import { DOCS_DIR, PLUGIN_CACHE_SUBDIR } from "../../../domain/models/paths.js";
 import { AI_TOOL_IDS, type AiToolId } from "../../../domain/models/tool-ids.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
@@ -15,7 +15,6 @@ import { ApplyPluginFilesUseCase } from "../shared/apply-plugin-files-use-case.j
 export interface RestorePluginOptions {
   pluginName: string;
   projectRoot: string;
-  repo?: string;
 }
 
 export interface RestorePluginResult {
@@ -32,11 +31,11 @@ export class RestorePluginUseCase {
   ) {}
 
   async execute(options: RestorePluginOptions): Promise<RestorePluginResult> {
-    const { pluginName, projectRoot, repo } = options;
+    const { pluginName, projectRoot } = options;
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) throw new NoManifestError(repo);
+    if (manifest === null) throw new NoManifestError();
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
-    const docsDir = manifest.docsDir;
+    const docsDir = DOCS_DIR;
     const toolIds = AI_TOOL_IDS.filter((id) => manifest.hasTool(id)) as AiToolId[];
     let totalRestored = 0;
     for (const toolId of toolIds) {

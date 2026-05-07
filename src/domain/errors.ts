@@ -9,9 +9,7 @@ export class AuthenticationError extends Error {
 
 export class NoFrameworkSourceError extends Error {
   constructor() {
-    super(
-      "No framework source configured. Use --path for a local framework or --repo owner/repo for a remote one."
-    );
+    super("No framework source configured. Use --path for a local framework path.");
     this.name = "NoFrameworkSourceError";
   }
 }
@@ -74,13 +72,6 @@ export class ToolNotInManifestError extends Error {
   constructor(toolId: string) {
     super(`Tool '${toolId}' is not installed in the manifest.`);
     this.name = "ToolNotInManifestError";
-  }
-}
-
-export class InvalidRepoFormatError extends Error {
-  constructor() {
-    super("Invalid repository format. Expected: owner/repo");
-    this.name = "InvalidRepoFormatError";
   }
 }
 

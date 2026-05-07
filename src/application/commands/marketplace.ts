@@ -4,8 +4,11 @@ import {
   describePluginSource,
   parsePluginSourceShorthand,
 } from "../../domain/models/plugin-source.js";
+import { MarketplaceCacheAdapter } from "../../infrastructure/adapters/marketplace-cache-adapter.js";
 import { createDeps, createMenuDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
+import { MarketplaceCacheClearUseCase } from "../use-cases/marketplace/marketplace-cache-clear-use-case.js";
+import { MarketplaceCacheListUseCase } from "../use-cases/marketplace/marketplace-cache-list-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./shared/spawn-cli-command.js";
 
@@ -47,7 +50,7 @@ export function registerMarketplaceCommand(program: Command): void {
           token?: string;
         }
       ) => {
-        const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+        const { verbose, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
         const interactive = process.stdout.isTTY;
         if (!interactive && (!nameArg || !sourceArg)) {
@@ -57,7 +60,7 @@ export function registerMarketplaceCommand(program: Command): void {
         try {
           if (cmdOptions.token) process.env.AIDD_TOKEN = cmdOptions.token;
           const scope: MarketplaceScope = cmdOptions.user ? "user" : "project";
-          const deps = await createDeps(projectRoot, { verbose, repo }, output);
+          const deps = await createDeps(projectRoot, { verbose }, output);
           const name = nameArg ?? (await deps.prompter.input("Marketplace name:"));
           const rawSource = sourceArg ?? (await deps.prompter.input("Source (path or user/repo):"));
           const source = parsePluginSourceShorthand(rawSource);
@@ -81,10 +84,10 @@ export function registerMarketplaceCommand(program: Command): void {
     .command("list")
     .description("List registered plugin marketplaces")
     .action(async () => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const { marketplaces } = await deps.marketplaceListUseCase.execute({ projectRoot });
         if (marketplaces.length === 0) output.info("No marketplaces registered.");
         for (const m of marketplaces) output.print(`${m.name} [${m.scope}]`);
@@ -98,10 +101,10 @@ export function registerMarketplaceCommand(program: Command): void {
     .description("Remove a registered plugin marketplace")
     .option("--yes", "Skip the orphan-cleanup prompt")
     .action(async (name: string, cmdOptions: { yes?: boolean }) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const result = await deps.marketplaceRemoveUseCase.execute({
           name,
           projectRoot,
@@ -120,10 +123,10 @@ export function registerMarketplaceCommand(program: Command): void {
     .command("refresh [name]")
     .description("Refresh registered marketplaces")
     .action(async (name: string | undefined) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const { results, failedCount } = await deps.marketplaceRefreshUseCase.execute({
           projectRoot,
           name,
@@ -142,10 +145,10 @@ export function registerMarketplaceCommand(program: Command): void {
     .description("Browse plugins in a registered marketplace")
     .option("--use-cache", "Use the cached catalog if fetch fails")
     .action(async (name: string, cmdOptions: { useCache?: boolean }) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const { catalog, fromCache } = await deps.marketplaceBrowseUseCase.execute({
           name,
           projectRoot,
@@ -167,10 +170,10 @@ export function registerMarketplaceCommand(program: Command): void {
     .command("check")
     .description("Report stale marketplaces and upstream-removed plugins")
     .action(async () => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const { stale, upstreamRemoved, skipped } = await deps.marketplaceCheckUseCase.execute({
           projectRoot,
         });
@@ -180,6 +183,88 @@ export function registerMarketplaceCommand(program: Command): void {
         for (const s of skipped) output.warn(`skipped: ${s.marketplace} — ${s.error}`);
         if (stale.length === 0 && upstreamRemoved.length === 0 && skipped.length === 0)
           output.success("All marketplaces fresh.");
+      } catch (error) {
+        errorHandler.handle(error);
+      }
+    });
+
+  const cache = marketplace.command("cache").description("Manage marketplace fetch cache");
+
+  cache
+    .command("list")
+    .description("List cached marketplaces with size and last fetch time")
+    .action(async () => {
+      const { output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
+      try {
+        const adapter = new MarketplaceCacheAdapter(projectRoot);
+        const { entries } = await new MarketplaceCacheListUseCase(adapter).execute();
+        if (entries.length === 0) {
+          output.info("No cached marketplaces.");
+          return;
+        }
+        for (const e of entries) {
+          const size = `${(e.sizeBytes / 1024).toFixed(1)}KB`;
+          const fetched = e.lastFetchedAt ? e.lastFetchedAt.toISOString() : "unknown";
+          output.print(`${e.name}  ${size}  last fetched: ${fetched}`);
+        }
+      } catch (error) {
+        errorHandler.handle(error);
+      }
+    });
+
+  cache
+    .command("clear [name]")
+    .description("Clear marketplace cache for one or all marketplaces")
+    .option("--all", "Clear all cached marketplaces")
+    .action(async (nameArg: string | undefined, cmdOptions: { all?: boolean }) => {
+      const { output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
+      try {
+        const adapter = new MarketplaceCacheAdapter(projectRoot);
+        const listUseCase = new MarketplaceCacheListUseCase(adapter);
+        const clearUseCase = new MarketplaceCacheClearUseCase(adapter);
+        const interactive = process.stdout.isTTY;
+
+        const name = nameArg;
+        let all = cmdOptions.all ?? false;
+
+        if (!name && !all) {
+          if (!interactive) {
+            output.error("Non-interactive mode: provide a marketplace name or --all.");
+            process.exit(1);
+          }
+          const { entries } = await listUseCase.execute();
+          if (entries.length === 0) {
+            output.info("No cached marketplaces.");
+            return;
+          }
+          const { prompter } = createMenuDeps(projectRoot);
+          const selected = await prompter.checkbox(
+            "Select marketplaces to clear:",
+            entries.map((e) => ({ name: e.name, value: e.name }))
+          );
+          if (selected.length === 0) {
+            output.info("No selection.");
+            return;
+          }
+          if (selected.length === entries.length) {
+            all = true;
+          } else {
+            for (const n of selected) {
+              await clearUseCase.execute({ name: n });
+            }
+            output.success(`Cleared: ${selected.join(", ")}`);
+            return;
+          }
+        }
+
+        const result = await clearUseCase.execute({ name, all });
+        if (result.cleared.length === 0) {
+          output.info("Nothing to clear.");
+          return;
+        }
+        output.success(`Cleared: ${result.cleared.join(", ")}`);
       } catch (error) {
         errorHandler.handle(error);
       }

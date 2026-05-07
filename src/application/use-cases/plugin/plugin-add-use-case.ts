@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { DuplicatePluginError, VersionMismatchError } from "../../../domain/errors.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
-import { PLUGIN_CACHE_SUBDIR } from "../../../domain/models/paths.js";
+import { DOCS_DIR, PLUGIN_CACHE_SUBDIR } from "../../../domain/models/paths.js";
 import { Plugin } from "../../../domain/models/plugin.js";
 import type { PluginDistribution } from "../../../domain/models/plugin-distribution.js";
 import type { PluginSource } from "../../../domain/models/plugin-source.js";
@@ -42,7 +42,7 @@ export class PluginAddUseCase {
     const dist = await this.pluginDistributionReader.read(localPath);
     this.assertPluginVersionMatches(dist.manifest.name, dist.manifest.version, requiredVersion);
     this.validateNoDuplicates(dist.manifest.name, resolvedToolIds, manifest);
-    const docsDir = manifest.docsDir;
+    const docsDir = DOCS_DIR;
     for (const toolId of resolvedToolIds) {
       await this.addPluginForTool(
         dist,

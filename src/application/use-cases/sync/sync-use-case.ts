@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { PluginNotFoundError } from "../../../domain/errors.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../domain/formats/markdown.js";
+import { DOCS_DIR } from "../../../domain/models/paths.js";
 import type { Plugin } from "../../../domain/models/plugin.js";
 import { SyncPolicy } from "../../../domain/models/sync-policy.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
@@ -20,6 +21,7 @@ import type {
 } from "../../../domain/tools/contracts.js";
 import { getToolConfig, isAiTool, type ToolId } from "../../../domain/tools/registry.js";
 import { InputRequiredError, NoManifestError, ToolNotInstalledError } from "../../errors.js";
+import type { SyncPluginsUseCase } from "./sync-plugins-use-case.js";
 
 function canonicalFrameworkKey(frameworkPath: string): string {
   for (const id of AI_TOOL_IDS) {
@@ -40,9 +42,9 @@ interface SyncOptions {
   targetTools?: ToolId[];
   force?: boolean;
   includeUserFiles?: boolean;
-  repo?: string;
   interactive?: boolean;
   pluginName?: string;
+  includePlugins?: boolean;
 }
 
 interface SyncFileResult {
@@ -168,19 +170,20 @@ export class SyncUseCase {
     private readonly manifestRepo: ManifestRepository,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
-    private readonly prompter?: Prompter
+    private readonly prompter?: Prompter,
+    private readonly syncPluginsUseCase?: SyncPluginsUseCase
   ) {}
 
   async execute(options: SyncOptions): Promise<SyncResult> {
-    const { projectRoot, force = false, includeUserFiles = false, repo, pluginName } = options;
+    const { projectRoot, force = false, includeUserFiles = false, pluginName } = options;
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) throw new NoManifestError(repo);
+    if (manifest === null) throw new NoManifestError();
 
     if (pluginName !== undefined) {
       return this.executePluginSync(pluginName, projectRoot, manifest);
     }
 
-    const docsDir = options.docsDir ?? manifest.docsDir;
+    const docsDir = options.docsDir ?? DOCS_DIR;
     const { sourceTool, targetTools } = await this.selectSyncScope(
       options,
       manifest,
@@ -207,7 +210,32 @@ export class SyncUseCase {
       includeUserFiles
     );
 
-    return this.buildSyncTotals(sourceTool, toolResults);
+    const totals = this.buildSyncTotals(sourceTool, toolResults);
+    await this.maybeSyncPlugins(options, sourceTool, targetTools, projectRoot, force);
+    return totals;
+  }
+
+  private async maybeSyncPlugins(
+    options: SyncOptions,
+    sourceTool: ToolId,
+    targetTools: ToolId[],
+    projectRoot: string,
+    force: boolean
+  ): Promise<void> {
+    if (options.includePlugins === false || this.syncPluginsUseCase === undefined) return;
+    const aiSourceId = AI_TOOL_IDS.find((id) => id === sourceTool);
+    if (aiSourceId === undefined) return;
+    const aiTargetIds = targetTools.filter((id): id is AiToolId =>
+      (AI_TOOL_IDS as readonly string[]).includes(id)
+    );
+    if (aiTargetIds.length === 0) return;
+    await this.syncPluginsUseCase.execute({
+      projectRoot,
+      sourceToolId: aiSourceId,
+      targetToolIds: aiTargetIds,
+      force,
+      interactive: options.interactive,
+    });
   }
 
   private async syncAllTargets(

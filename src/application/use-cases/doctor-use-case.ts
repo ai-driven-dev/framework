@@ -7,6 +7,7 @@ import {
 } from "../../domain/formats/markdown-references.js";
 import type { Manifest } from "../../domain/models/manifest.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/merge.js";
+import { DOCS_DIR } from "../../domain/models/paths.js";
 import type { AiToolId } from "../../domain/models/tool-ids.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
@@ -60,7 +61,6 @@ interface DoctorReport {
 interface DoctorOptions {
   projectRoot: string;
   category?: ToolCategory;
-  repo?: string;
   pluginName?: string;
 }
 
@@ -74,7 +74,7 @@ export class DoctorUseCase {
   ) {}
 
   async execute(options: DoctorOptions): Promise<DoctorReport> {
-    const { projectRoot, category, repo, pluginName } = options;
+    const { projectRoot, category, pluginName } = options;
 
     let manifest: Manifest | null;
     try {
@@ -86,7 +86,7 @@ export class DoctorUseCase {
     }
 
     if (manifest === null) {
-      throw new NoManifestError(repo);
+      throw new NoManifestError();
     }
 
     const allowedIds = category ? new Set(toolIdsForCategory(category) as readonly string[]) : null;
@@ -125,17 +125,16 @@ export class DoctorUseCase {
   }
 
   private async checkDocsDirectory(
-    manifest: Manifest,
+    _manifest: Manifest,
     projectRoot: string
   ): Promise<DoctorIssue[]> {
     const issues: DoctorIssue[] = [];
-    const manifestDocsDir = manifest.docsDir;
-    const docsDirPath = join(projectRoot, manifestDocsDir);
+    const docsDirPath = join(projectRoot, DOCS_DIR);
 
     if (!(await this.fs.fileExists(docsDirPath))) {
       issues.push({
         severity: "error",
-        message: `Docs directory '${manifestDocsDir}' does not exist on disk`,
+        message: `Docs directory '${DOCS_DIR}' does not exist on disk`,
         fix: "Run `aidd init --force` to recreate the docs directory.",
       });
     }

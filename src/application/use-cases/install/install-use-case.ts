@@ -17,6 +17,7 @@ import {
   type MergeFileEntry,
   removeEntriesFromJson,
 } from "../../../domain/models/merge.js";
+import { DOCS_DIR } from "../../../domain/models/paths.js";
 import type { PluginCatalogEntry } from "../../../domain/models/plugin-catalog.js";
 import type { PluginSource } from "../../../domain/models/plugin-source.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
@@ -90,7 +91,6 @@ interface InstallOptions {
   docsDir?: string;
   projectRoot: string;
   force?: boolean;
-  repo?: string;
   interactive?: boolean;
   mcpFilter?: string[];
   plugins?: PluginSource[];
@@ -128,12 +128,12 @@ export class InstallUseCase {
   ) {}
 
   async execute(options: InstallOptions): Promise<InstallToolResult[]> {
-    const { frameworkPath, version, projectRoot, force = false, repo } = options;
+    const { frameworkPath, version, projectRoot, force = false } = options;
 
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) throw new NoManifestError(repo);
+    if (manifest === null) throw new NoManifestError();
 
-    const docsDir = options.docsDir ?? manifest.docsDir;
+    const docsDir = options.docsDir ?? DOCS_DIR;
     let toolIds = await this.resolveToolIds(options, manifest);
     if (toolIds.length === 0) return [];
 

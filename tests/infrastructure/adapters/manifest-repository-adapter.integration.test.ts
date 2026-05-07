@@ -28,21 +28,23 @@ describe("ManifestRepositoryAdapter", () => {
 
   describe("save() + load() roundtrip", () => {
     it("persists and restores manifest without data loss", async () => {
-      const manifest = Manifest.create("my_docs");
+      const manifest = Manifest.create();
       await adapter.save(manifest);
 
       const loaded = await adapter.load();
       expect(loaded).not.toBeNull();
-      expect(loaded?.docsDir).toBe("my_docs");
       expect(loaded?.getInstalledToolIds()).toHaveLength(0);
     });
 
-    it("preserves custom docs directory in persisted manifest", async () => {
-      const manifest = Manifest.create("custom_docs");
+    it("manifest version is 5 after roundtrip", async () => {
+      const manifest = Manifest.create();
       await adapter.save(manifest);
 
       const loaded = await adapter.load();
-      expect(loaded?.docsDir).toBe("custom_docs");
+      const json = loaded?.toJSON();
+      expect(json?.version).toBe(5);
+      expect(json?.marketplaces).toEqual({});
+      expect("docsDir" in (json ?? {})).toBe(false);
     });
   });
 

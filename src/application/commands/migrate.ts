@@ -11,17 +11,20 @@ export function registerMigrateCommand(program: Command): void {
     .option("--dry-run", "Detect and display migration plan without applying changes")
     .option("--non-interactive", "Apply migration without interactive prompts")
     .action(async (cmdOptions: { dryRun?: boolean; nonInteractive?: boolean }) => {
-      const { verbose, repo, output, projectRoot } = parseGlobalOptions(program);
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose, repo }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const result = await new MigrateUseCase(
           deps.fs,
           deps.manifestRepo,
           deps.logger,
           deps.prompter,
           deps.marketplaceRegisterFrameworkUseCase,
-          deps.pluginInstallFromMarketplaceUseCase
+          deps.migrateBackupUseCase,
+          deps.migrateStripDeadFilesUseCase,
+          deps.migrateRewirePluginsUseCase,
+          deps.marketplaceRegistry
         ).execute({
           projectRoot,
           interactive: !cmdOptions.nonInteractive && process.stdout.isTTY,
@@ -32,6 +35,7 @@ export function registerMigrateCommand(program: Command): void {
             output.info("Nothing to migrate.");
             break;
           case "dry-run":
+            if (result.plan) output.info(result.plan.describe());
             output.info("Dry-run complete. No changes applied.");
             break;
           case "aborted":

@@ -2,12 +2,13 @@ import {
   DuplicatePluginError,
   InvalidManifestDataError,
   InvalidManifestToolIdError,
-  InvalidRepoFormatError,
-  ManifestValidationError,
+  MarketplaceAlreadyRegisteredError,
+  MarketplaceNotFoundError,
   PluginNotFoundError,
   ToolNotInManifestError,
 } from "../errors.js";
 import { FileHash, type InstallationFile } from "./file.js";
+import { MarketplaceEntry, type MarketplaceEntryData } from "./marketplace-entry.js";
 import { type McpExclusion, mcpExclusionEquals } from "./mcp-exclusion.js";
 import type { MergeFileEntry } from "./merge.js";
 import { Plugin, type PluginEntryData } from "./plugin.js";
@@ -17,22 +18,12 @@ const MANIFEST_VERSION = 5;
 
 // VSCode file paths that were tracked under "copilot" in manifest v1.
 // Used exclusively by migrateV1toV2 to move them to the "vscode" tool entry.
+// It can only be removed when the manifest version is bumped again and v1 support is explicitly dropped.
 const VSCODE_MIGRATION_PATHS = new Set([
   ".vscode/extensions.json",
   ".vscode/keybindings.json",
   ".vscode/settings.json",
 ]);
-
-export type DistributionMode = "local" | "remote";
-
-const REPO_FORMAT_REGEX = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
-const DOCS_DIR_REGEX = /^[a-zA-Z0-9_-]+$/;
-
-export function validateRepoFormat(repo: string): void {
-  if (!REPO_FORMAT_REGEX.test(repo)) {
-    throw new InvalidRepoFormatError();
-  }
-}
 
 interface TrackedFile {
   readonly relativePath: string;
@@ -40,11 +31,13 @@ interface TrackedFile {
   readonly frameworkPath?: string;
 }
 
+// Retained for legacy manifest round-trip and isFileTracked coverage.
 interface ScriptsEntry {
   readonly version: string;
   readonly files: readonly TrackedFile[];
 }
 
+// Retained for legacy manifest round-trip and isFileTracked coverage.
 interface PluginsEntry {
   readonly version: string;
   readonly files: readonly TrackedFile[];
@@ -59,6 +52,7 @@ interface ToolEntry {
   readonly plugins: readonly Plugin[];
 }
 
+// Kept for legacy manifest round-trip: v3/v4 manifests may carry these sections until migrate runs.
 interface ScriptsEntryData {
   version: string;
   files: TrackedFileData[];
@@ -70,13 +64,9 @@ interface PluginsSectionData {
 }
 
 interface ManifestData {
-  version: number;
-  docsDir: string;
-  repo?: string;
+  version: 5;
   tools: Record<string, ToolEntryData>;
-  scripts: ScriptsEntryData | null;
-  plugins: PluginsSectionData | null;
-  mode: DistributionMode;
+  marketplaces: Record<string, MarketplaceEntryData>;
 }
 
 interface MergeFileEntryData {
@@ -102,7 +92,6 @@ interface TrackedFileData {
 
 // This migration block must remain until all users have upgraded past v1.
 // Removing it would corrupt manifests that still have VSCode files tracked under "copilot".
-// It can only be removed when the manifest version is bumped again and v1 support is explicitly dropped.
 function migrateV1toV2(raw: Record<string, unknown>): void {
   const tools = raw.tools as Record<string, ToolEntryData> | undefined;
   if (!tools) return;
@@ -141,53 +130,44 @@ function migrateV3toV4(raw: Record<string, unknown>): void {
   if (!("plugins" in raw)) raw.plugins = null;
 }
 
+// Strips dead top-level fields: docs, mode, repo, docsDir, scripts, plugins.
+// migrate-use-case.ts uses raw JSON inspection before deserialization, so it is
+// safe to strip scripts/plugins here during the round-trip.
 function migrateV4toV5(raw: Record<string, unknown>): void {
   delete raw.docs;
+  delete raw.mode;
+  delete raw.repo;
+  delete raw.docsDir;
+  delete raw.scripts;
+  delete raw.plugins;
+  if (!("marketplaces" in raw)) raw.marketplaces = {};
 }
 
 export class Manifest {
-  static readonly DEFAULT_DOCS_DIR = "aidd_docs";
-  static readonly DEFAULT_REPO = "ai-driven-dev/aidd-framework";
-
-  static validateDocsDir(name: string): void {
-    if (!DOCS_DIR_REGEX.test(name) || name.includes("..")) {
-      throw new ManifestValidationError(
-        `Invalid directory name: "${name}". Use alphanumeric characters, hyphens, and underscores only.`
-      );
-    }
-  }
-
   private readonly _tools: Map<ToolId, ToolEntry>;
+  // Phase 8 deferred: _scripts/_plugins kept to support migrate-use-case legacy detection.
   private _scripts: ScriptsEntry | null;
-  private _plugins: PluginsEntry | null = null;
-  private _mode: DistributionMode = "local";
-  readonly docsDir: string;
-  readonly repo?: string;
+  private _plugins: PluginsEntry | null;
+  private readonly _marketplaces: Map<string, MarketplaceEntry>;
 
   private constructor(params: {
     tools: Map<ToolId, ToolEntry>;
     scripts: ScriptsEntry | null;
     plugins: PluginsEntry | null;
-    mode: DistributionMode;
-    docsDir: string;
-    repo?: string;
+    marketplaces: Map<string, MarketplaceEntry>;
   }) {
     this._tools = new Map(params.tools);
     this._scripts = params.scripts;
     this._plugins = params.plugins;
-    this._mode = params.mode;
-    this.docsDir = params.docsDir;
-    this.repo = params.repo;
+    this._marketplaces = new Map(params.marketplaces);
   }
 
-  static create(docsDir?: string, repo?: string): Manifest {
+  static create(): Manifest {
     return new Manifest({
       tools: new Map(),
       scripts: null,
       plugins: null,
-      mode: "local",
-      docsDir: docsDir ?? Manifest.DEFAULT_DOCS_DIR,
-      repo,
+      marketplaces: new Map(),
     });
   }
 
@@ -209,52 +189,14 @@ export class Manifest {
     });
   }
 
-  addScripts(version: string, files: InstallationFile[]): void {
-    this._scripts = { version, files: this.toTrackedFiles(files) };
-  }
-
-  getScriptsFiles(): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
-    return this._scripts?.files ?? [];
-  }
-
-  getScriptsVersion(): string | undefined {
-    return this._scripts?.version;
-  }
-
+  /** Returns true when the loaded JSON carried a legacy scripts section. Used by isFileTracked. */
   hasScripts(): boolean {
     return this._scripts !== null;
   }
 
-  clearScripts(): void {
-    this._scripts = null;
-  }
-
-  addPlugins(version: string, files: InstallationFile[]): void {
-    this._plugins = { version, files: this.toTrackedFiles(files) };
-  }
-
-  clearPlugins(): void {
-    this._plugins = null;
-  }
-
-  getPluginsVersion(): string | undefined {
-    return this._plugins?.version;
-  }
-
+  /** Returns true when the loaded JSON carried a legacy top-level plugins section. Used by isFileTracked. */
   hasPlugins(): boolean {
     return this._plugins !== null;
-  }
-
-  getPluginsFiles(): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
-    return this._plugins?.files ?? [];
-  }
-
-  getMode(): DistributionMode {
-    return this._mode;
-  }
-
-  setMode(mode: DistributionMode): void {
-    this._mode = mode;
   }
 
   private toTrackedFiles(files: InstallationFile[]): TrackedFile[] {
@@ -415,28 +357,6 @@ export class Manifest {
     return false;
   }
 
-  withDocsDir(newDocsDir: string): Manifest {
-    return new Manifest({
-      tools: new Map(this._tools),
-      scripts: this._scripts,
-      plugins: this._plugins,
-      mode: this._mode,
-      docsDir: newDocsDir,
-      repo: this.repo,
-    });
-  }
-
-  withRepo(newRepo: string): Manifest {
-    return new Manifest({
-      tools: new Map(this._tools),
-      scripts: this._scripts,
-      plugins: this._plugins,
-      mode: this._mode,
-      docsDir: this.docsDir,
-      repo: newRepo,
-    });
-  }
-
   getToolVersion(toolId: ToolId): string | undefined {
     return this._tools.get(toolId)?.version;
   }
@@ -451,7 +371,43 @@ export class Manifest {
     return dirs;
   }
 
+  // --- Marketplace aggregate ---
+
+  addMarketplace(entry: MarketplaceEntry): void {
+    if (this._marketplaces.has(entry.name)) {
+      throw new MarketplaceAlreadyRegisteredError(entry.name);
+    }
+    this._marketplaces.set(entry.name, entry);
+  }
+
+  removeMarketplace(name: string): void {
+    if (!this._marketplaces.has(name)) {
+      throw new MarketplaceNotFoundError(name);
+    }
+    this._marketplaces.delete(name);
+  }
+
+  getMarketplace(name: string): MarketplaceEntry | undefined {
+    return this._marketplaces.get(name);
+  }
+
+  listMarketplaces(): readonly MarketplaceEntry[] {
+    return [...this._marketplaces.values()];
+  }
+
+  hasMarketplace(name: string): boolean {
+    return this._marketplaces.has(name);
+  }
+
+  // --- Serialization ---
+
   toJSON(): ManifestData {
+    const tools = this.serializeTools();
+    const marketplaces = this.serializeMarketplaces();
+    return { version: MANIFEST_VERSION as 5, tools, marketplaces };
+  }
+
+  private serializeTools(): Record<string, ToolEntryData> {
     const tools: Record<string, ToolEntryData> = {};
     for (const [toolId, entry] of this._tools.entries()) {
       tools[toolId] = {
@@ -470,20 +426,15 @@ export class Manifest {
         }),
       };
     }
+    return tools;
+  }
 
-    return {
-      version: MANIFEST_VERSION,
-      docsDir: this.docsDir,
-      ...(this.repo !== undefined && { repo: this.repo }),
-      tools,
-      scripts: this._scripts
-        ? { version: this._scripts.version, files: this.toTrackedFileData(this._scripts.files) }
-        : null,
-      plugins: this._plugins
-        ? { version: this._plugins.version, files: this.toTrackedFileData(this._plugins.files) }
-        : null,
-      mode: this._mode,
-    };
+  private serializeMarketplaces(): Record<string, MarketplaceEntryData> {
+    const marketplaces: Record<string, MarketplaceEntryData> = {};
+    for (const [name, entry] of this._marketplaces.entries()) {
+      marketplaces[name] = entry.serialize();
+    }
+    return marketplaces;
   }
 
   private toTrackedFileData(files: readonly TrackedFile[]): TrackedFileData[] {
@@ -558,30 +509,10 @@ export class Manifest {
     }
 
     const tools = Manifest.parseTools(raw);
+    const marketplaces = Manifest.parseMarketplaces(raw);
+    const { scripts, plugins } = Manifest.parseLegacySections(raw);
 
-    const docsDir = typeof raw.docsDir === "string" ? raw.docsDir : Manifest.DEFAULT_DOCS_DIR;
-    const repo = typeof raw.repo === "string" ? raw.repo : undefined;
-
-    let scripts: ScriptsEntry | null = null;
-    if (raw.scripts !== null && raw.scripts !== undefined && typeof raw.scripts === "object") {
-      const scriptsRaw = raw.scripts as ScriptsEntryData;
-      scripts = {
-        version: scriptsRaw.version,
-        files: Manifest.parseTrackedFiles(scriptsRaw.files),
-      };
-    }
-
-    let plugins: PluginsEntry | null = null;
-    if (raw.plugins !== null && raw.plugins !== undefined && typeof raw.plugins === "object") {
-      const pluginsRaw = raw.plugins as PluginsSectionData;
-      plugins = {
-        version: pluginsRaw.version,
-        files: Manifest.parseTrackedFiles(pluginsRaw.files),
-      };
-    }
-    const mode: DistributionMode = raw.mode === "remote" ? "remote" : "local";
-
-    return new Manifest({ tools, scripts, plugins, mode, docsDir, repo });
+    return new Manifest({ tools, scripts, plugins, marketplaces });
   }
 
   private static parseTools(raw: Record<string, unknown>): Map<ToolId, ToolEntry> {
@@ -605,6 +536,41 @@ export class Manifest {
       });
     }
     return tools;
+  }
+
+  private static parseMarketplaces(raw: Record<string, unknown>): Map<string, MarketplaceEntry> {
+    const marketplaces = new Map<string, MarketplaceEntry>();
+    if (!raw.marketplaces || typeof raw.marketplaces !== "object") return marketplaces;
+    for (const [, value] of Object.entries(raw.marketplaces as Record<string, unknown>)) {
+      const entry = MarketplaceEntry.deserialize(value as MarketplaceEntryData);
+      marketplaces.set(entry.name, entry);
+    }
+    return marketplaces;
+  }
+
+  // Phase 8 deferred: parse legacy scripts/plugins for migrate-use-case detection.
+  private static parseLegacySections(raw: Record<string, unknown>): {
+    scripts: ScriptsEntry | null;
+    plugins: PluginsEntry | null;
+  } {
+    let scripts: ScriptsEntry | null = null;
+    if (raw.scripts !== null && raw.scripts !== undefined && typeof raw.scripts === "object") {
+      const scriptsRaw = raw.scripts as ScriptsEntryData;
+      scripts = {
+        version: scriptsRaw.version,
+        files: Manifest.parseTrackedFiles(scriptsRaw.files),
+      };
+    }
+
+    let plugins: PluginsEntry | null = null;
+    if (raw.plugins !== null && raw.plugins !== undefined && typeof raw.plugins === "object") {
+      const pluginsRaw = raw.plugins as PluginsSectionData;
+      plugins = {
+        version: pluginsRaw.version,
+        files: Manifest.parseTrackedFiles(pluginsRaw.files),
+      };
+    }
+    return { scripts, plugins };
   }
 
   private static parsePluginEntries(data: PluginEntryData[]): Plugin[] {

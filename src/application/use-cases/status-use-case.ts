@@ -44,7 +44,6 @@ interface StatusOptions {
   projectRoot: string;
   filterToolId?: ToolId;
   category?: ToolCategory;
-  repo?: string;
   pluginName?: string;
 }
 
@@ -57,9 +56,9 @@ export class StatusUseCase {
   ) {}
 
   async execute(options: StatusOptions): Promise<StatusReport> {
-    const { projectRoot, filterToolId, category, repo, pluginName } = options;
+    const { projectRoot, filterToolId, category, pluginName } = options;
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) throw new NoManifestError(repo);
+    if (manifest === null) throw new NoManifestError();
     if (filterToolId && !manifest.hasTool(filterToolId))
       throw new ToolNotInstalledError(filterToolId);
 

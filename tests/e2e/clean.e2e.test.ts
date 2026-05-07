@@ -1,45 +1,23 @@
 import { existsSync } from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
+import { createTestEnv, runCli } from "./helpers.js";
+
+const AIDD_DIR = ".aidd";
+
+async function seedManifest(projectDir: string): Promise<void> {
+  await mkdir(join(projectDir, AIDD_DIR), { recursive: true });
+  await writeFile(
+    join(projectDir, AIDD_DIR, "manifest.json"),
+    JSON.stringify({ version: 5, tools: {}, marketplaces: {} }),
+    "utf-8"
+  );
+}
 
 describe.concurrent("E2E: aidd clean", () => {
-  it("previews files to remove without deleting them", async () => {
-    const { projectDir, cleanup } = await createTestEnv("clean");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-
-      const { stdout, exitCode } = await runCli(["clean"], projectDir);
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toMatch(/--force|Cancelled/);
-      expect(existsSync(join(projectDir, ".claude"))).toBe(true);
-      expect(existsSync(join(projectDir, ".aidd"))).toBe(true);
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("deletes all installed files and manifest when --force is used", async () => {
-    const { projectDir, cleanup } = await createTestEnv("clean");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-
-      const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("Cleaned all AIDD files");
-      expect(existsSync(join(projectDir, ".claude"))).toBe(false);
-      expect(existsSync(join(projectDir, ".aidd"))).toBe(false);
-    } finally {
-      await cleanup();
-    }
-  });
-
   it("reports nothing to clean when not initialized", async () => {
-    const { projectDir, cleanup } = await createTestEnv("clean");
+    const { projectDir, cleanup } = await createTestEnv("clean-empty");
     try {
       const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
 
@@ -50,11 +28,45 @@ describe.concurrent("E2E: aidd clean", () => {
     }
   });
 
-  it("lists tool names and file counts in dry-run preview output", async () => {
-    const { projectDir, cleanup } = await createTestEnv("clean");
+  it("shows 'Would remove' summary in non-interactive mode without --force", async () => {
+    const { projectDir, cleanup } = await createTestEnv("clean-dry-run");
     try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
+      await seedManifest(projectDir);
+      await runCli(["ai", "install", "claude"], projectDir);
+
+      // runCli runs non-TTY (child process without TTY), so dry-run shows Would remove
+      const { stdout, exitCode } = await runCli(["clean"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Would remove");
+      expect(stdout).toContain("--force");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("deletes all installed files and manifest when --force is used", async () => {
+    const { projectDir, cleanup } = await createTestEnv("clean-force");
+    try {
+      await seedManifest(projectDir);
+      await runCli(["ai", "install", "claude"], projectDir);
+
+      const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Cleaned all AIDD files");
+      expect(existsSync(join(projectDir, ".claude"))).toBe(false);
+      expect(existsSync(join(projectDir, AIDD_DIR))).toBe(false);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("lists tool names and file counts in dry-run preview output", async () => {
+    const { projectDir, cleanup } = await createTestEnv("clean-preview");
+    try {
+      await seedManifest(projectDir);
+      await runCli(["ai", "install", "claude"], projectDir);
 
       const { stdout, exitCode } = await runCli(["clean"], projectDir);
 
@@ -67,11 +79,11 @@ describe.concurrent("E2E: aidd clean", () => {
   });
 
   it("removes all tool directories when multiple tools are installed", async () => {
-    const { projectDir, cleanup } = await createTestEnv("clean");
+    const { projectDir, cleanup } = await createTestEnv("clean-multi");
     try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-      await runCli(["install", "ai", "cursor", "--path", FRAMEWORK_PATH], projectDir);
+      await seedManifest(projectDir);
+      await runCli(["ai", "install", "claude"], projectDir);
+      await runCli(["ai", "install", "cursor"], projectDir);
 
       const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
       expect(exitCode).toBe(0);
@@ -79,40 +91,7 @@ describe.concurrent("E2E: aidd clean", () => {
 
       expect(existsSync(join(projectDir, ".claude"))).toBe(false);
       expect(existsSync(join(projectDir, ".cursor"))).toBe(false);
-      expect(existsSync(join(projectDir, ".aidd"))).toBe(false);
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("removes docs and manifest when only init was run", async () => {
-    const { projectDir, cleanup } = await createTestEnv("clean");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-
-      const { stdout, exitCode } = await runCli(["clean", "--force"], projectDir);
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("Cleaned");
-      expect(existsSync(join(projectDir, "aidd_docs"))).toBe(false);
-      expect(existsSync(join(projectDir, ".aidd"))).toBe(false);
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("shows 'Would remove' summary in non-interactive mode without --force", async () => {
-    const { projectDir, cleanup } = await createTestEnv("clean");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["install", "ai", "claude", "--path", FRAMEWORK_PATH], projectDir);
-
-      // runCli always runs non-TTY (child process without TTY)
-      const { stdout, exitCode } = await runCli(["clean"], projectDir);
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("Would remove");
-      expect(stdout).toContain("--force");
+      expect(existsSync(join(projectDir, AIDD_DIR))).toBe(false);
     } finally {
       await cleanup();
     }

@@ -236,9 +236,8 @@ export async function initProject(
   deps: ReturnType<typeof buildDeps>,
   projectRoot: string
 ): Promise<void> {
-  const initUseCase = new InitUseCase(deps.fs, deps.manifestRepo, new SilentPrompterAdapter());
+  const initUseCase = new InitUseCase(deps.fs, deps.manifestRepo);
   await initUseCase.execute({
-    docsDir: "aidd_docs",
     projectRoot,
   });
 }

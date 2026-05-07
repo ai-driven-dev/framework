@@ -4,15 +4,8 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { CLIOutput } from "../../src/application/output.js";
-import { SetupUseCase } from "../../src/application/use-cases/setup-use-case.js";
-import type { ToolId } from "../../src/domain/tools/registry.js";
+import { InitUseCase } from "../../src/application/use-cases/init-use-case.js";
 import { createDeps } from "../../src/infrastructure/deps.js";
-
-function makeNoOpInstallFrameworkPlugins() {
-  return {
-    execute: async () => ({ installedCount: 0, skippedCount: 0, deletedCount: 0, warnings: [] }),
-  };
-}
 
 export const execFileAsync = promisify(execFile);
 
@@ -83,45 +76,15 @@ export async function runCliFast(
   }
 }
 
-export async function initProject(
-  projectDir: string,
-  frameworkPath: string,
-  options?: { docsDir?: string; repo?: string }
-): Promise<void> {
+/**
+ * Initializes a project with a manifest. Used to set up e2e test fixtures.
+ * The frameworkPath parameter is kept for API compatibility but no longer used
+ * (init no longer copies framework files).
+ */
+export async function initProject(projectDir: string, _frameworkPath: string): Promise<void> {
   const output = new CLIOutput(false);
   const deps = await createDeps(projectDir, { verbose: false }, output);
-  await new SetupUseCase(
-    deps.fs,
-    deps.manifestRepo,
-    deps.logger,
-    deps.prompter,
-    deps.installRuntimeConfigUseCase,
-    deps.installIdeConfigUseCase,
-    makeNoOpInstallFrameworkPlugins() as never,
-    deps.currentVersionProvider
-  ).execute({
+  await new InitUseCase(deps.fs, deps.manifestRepo).execute({
     projectRoot: projectDir,
-    path: frameworkPath,
-    docsDir: options?.docsDir,
-    repo: options?.repo,
   });
-}
-
-export async function adoptProject(
-  projectDir: string,
-  frameworkPath: string,
-  toolIds: ToolId[]
-): Promise<void> {
-  const output = new CLIOutput(false);
-  const deps = await createDeps(projectDir, { verbose: false }, output);
-  await new SetupUseCase(
-    deps.fs,
-    deps.manifestRepo,
-    deps.logger,
-    deps.prompter,
-    deps.installRuntimeConfigUseCase,
-    deps.installIdeConfigUseCase,
-    makeNoOpInstallFrameworkPlugins() as never,
-    deps.currentVersionProvider
-  ).execute({ projectRoot: projectDir, path: frameworkPath, toolIds, from: frameworkPath });
 }

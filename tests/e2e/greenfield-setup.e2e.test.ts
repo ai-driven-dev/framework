@@ -1,0 +1,193 @@
+import { existsSync } from "node:fs";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { createTestEnv, runCli } from "./helpers.js";
+
+const AIDD_DIR = ".aidd";
+const EMPTY_MANIFEST = { version: 5, tools: {}, marketplaces: {} };
+
+async function seedManifest(projectDir: string): Promise<void> {
+  await mkdir(join(projectDir, AIDD_DIR), { recursive: true });
+  await writeFile(
+    join(projectDir, AIDD_DIR, "manifest.json"),
+    JSON.stringify(EMPTY_MANIFEST),
+    "utf-8"
+  );
+}
+
+describe.concurrent("E2E: aidd setup greenfield — full setup from empty dir", () => {
+  it("setup --source remote --all --recommended-plugins --yes installs all tools and writes v5 manifest", async () => {
+    const { projectDir, cleanup } = await createTestEnv("greenfield-setup-all");
+    try {
+      const { stdout, exitCode } = await runCli(
+        ["setup", "--source", "remote", "--all", "--recommended-plugins", "--yes"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Installed");
+
+      const raw = await readFile(join(projectDir, AIDD_DIR, "manifest.json"), "utf-8");
+      const manifest = JSON.parse(raw) as Record<string, unknown>;
+
+      expect(manifest.version).toBe(5);
+      expect(manifest).toHaveProperty("tools");
+      expect(manifest).toHaveProperty("marketplaces");
+      expect(manifest).not.toHaveProperty("mode");
+      expect(manifest).not.toHaveProperty("docsDir");
+      expect(manifest).not.toHaveProperty("scripts");
+
+      const tools = manifest.tools as Record<string, unknown>;
+      expect(tools).toHaveProperty("claude");
+      expect(tools).toHaveProperty("cursor");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("setup --source remote --all --yes writes AI and IDE tool files to disk", async () => {
+    const { projectDir, cleanup } = await createTestEnv("greenfield-setup-disk");
+    try {
+      const { exitCode } = await runCli(
+        ["setup", "--source", "remote", "--all", "--yes"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(existsSync(join(projectDir, ".claude", "settings.json"))).toBe(true);
+      expect(existsSync(join(projectDir, ".cursor", "settings.json"))).toBe(true);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("setup --source remote --ai claude --yes installs only claude", async () => {
+    const { projectDir, cleanup } = await createTestEnv("greenfield-setup-claude-only");
+    try {
+      const { stdout, exitCode } = await runCli(
+        ["setup", "--source", "remote", "--ai", "claude", "--yes"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("claude");
+
+      const raw = await readFile(join(projectDir, AIDD_DIR, "manifest.json"), "utf-8");
+      const manifest = JSON.parse(raw) as { tools: Record<string, unknown> };
+      expect(manifest.tools).toHaveProperty("claude");
+      expect(manifest.tools).not.toHaveProperty("cursor");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("setup is idempotent — second run on already-set-up project exits 0", async () => {
+    const { projectDir, cleanup } = await createTestEnv("greenfield-setup-idempotent");
+    try {
+      await runCli(["setup", "--source", "remote", "--ai", "claude", "--yes"], projectDir);
+
+      const { exitCode } = await runCli(
+        ["setup", "--source", "remote", "--ai", "claude", "--yes"],
+        projectDir
+      );
+
+      expect(exitCode).toBe(0);
+    } finally {
+      await cleanup();
+    }
+  });
+});
+
+describe.concurrent("E2E: aidd ai install — individual tool install", () => {
+  it("ai install claude writes settings.json and manifest from bundled assets", async () => {
+    const { projectDir, cleanup } = await createTestEnv("greenfield-claude");
+    try {
+      await seedManifest(projectDir);
+
+      const { stdout, exitCode } = await runCli(["ai", "install", "claude"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Installed claude");
+      expect(existsSync(join(projectDir, ".claude", "settings.json"))).toBe(true);
+      expect(existsSync(join(projectDir, AIDD_DIR, "manifest.json"))).toBe(true);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("ide install vscode writes .vscode/settings.json from bundled assets", async () => {
+    const { projectDir, cleanup } = await createTestEnv("greenfield-vscode");
+    try {
+      await seedManifest(projectDir);
+
+      const { stdout, exitCode } = await runCli(["ide", "install", "vscode"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Installed vscode");
+      expect(existsSync(join(projectDir, ".vscode", "settings.json"))).toBe(true);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("ai install cursor writes .cursor directory from bundled assets", async () => {
+    const { projectDir, cleanup } = await createTestEnv("greenfield-cursor");
+    try {
+      await seedManifest(projectDir);
+
+      const { stdout, exitCode } = await runCli(["ai", "install", "cursor"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Installed cursor");
+      expect(existsSync(join(projectDir, ".cursor"))).toBe(true);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("ai install claude is idempotent — second run warns already installed", async () => {
+    const { projectDir, cleanup } = await createTestEnv("greenfield-install-idempotent");
+    try {
+      await seedManifest(projectDir);
+      await runCli(["ai", "install", "claude"], projectDir);
+
+      const { stderr, exitCode } = await runCli(["ai", "install", "claude"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stderr).toContain("already installed");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("ai install claude --force reinstalls over existing files", async () => {
+    const { projectDir, cleanup } = await createTestEnv("greenfield-force");
+    try {
+      await seedManifest(projectDir);
+      await runCli(["ai", "install", "claude"], projectDir);
+
+      const { stdout, exitCode } = await runCli(["ai", "install", "claude", "--force"], projectDir);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Installed claude");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("manifest tracks installed files after ai install claude", async () => {
+    const { projectDir, cleanup } = await createTestEnv("greenfield-manifest");
+    try {
+      await seedManifest(projectDir);
+      await runCli(["ai", "install", "claude"], projectDir);
+
+      const raw = await readFile(join(projectDir, AIDD_DIR, "manifest.json"), "utf-8");
+      const manifest = JSON.parse(raw) as { tools: Record<string, unknown> };
+
+      expect(manifest.tools).toHaveProperty("claude");
+    } finally {
+      await cleanup();
+    }
+  });
+});

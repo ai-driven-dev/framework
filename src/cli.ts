@@ -1,11 +1,10 @@
 import { platform } from "node:os";
 import { Command } from "commander";
+import { registerAiCommand } from "./application/commands/ai.js";
 import { registerAuthCommand } from "./application/commands/auth.js";
-import { registerCacheCommand } from "./application/commands/cache.js";
 import { registerCleanCommand } from "./application/commands/clean.js";
-import { registerConfigCommand } from "./application/commands/config.js";
 import { registerDoctorCommand } from "./application/commands/doctor.js";
-import { registerInstallCommand } from "./application/commands/install.js";
+import { registerIdeCommand } from "./application/commands/ide.js";
 import { registerMarketplaceCommand } from "./application/commands/marketplace.js";
 import { runMenuLoop } from "./application/commands/menu.js";
 import { registerMigrateCommand } from "./application/commands/migrate.js";
@@ -15,7 +14,6 @@ import { registerSelfUpdateCommand } from "./application/commands/self-update.js
 import { registerSetupCommand } from "./application/commands/setup.js";
 import { registerStatusCommand } from "./application/commands/status.js";
 import { registerSyncCommand } from "./application/commands/sync.js";
-import { registerUninstallCommand } from "./application/commands/uninstall.js";
 import { registerUpdateCommand } from "./application/commands/update.js";
 import { CLIOutput } from "./application/output.js";
 import { printUpdateBanner } from "./application/use-cases/check-update-use-case.js";
@@ -34,34 +32,29 @@ program
   .name("aidd")
   .description("Generate AI coding assistant configurations from the AIDD framework")
   .version(formatVersion(currentVersion), "-V, --version", "Show version number")
-  .option("--verbose", "Show detailed diagnostic output", false)
-  .option("--repo <owner/repo>", "GitHub repository in owner/repo format");
+  .option("--verbose", "Show detailed diagnostic output", false);
 
-registerAuthCommand(program);
-registerCacheCommand(program);
-registerConfigCommand(program);
-registerInstallCommand(program);
-registerUninstallCommand(program);
-registerStatusCommand(program);
-registerCleanCommand(program);
-registerDoctorCommand(program);
-registerUpdateCommand(program);
-registerRestoreCommand(program);
-registerSyncCommand(program);
-registerSelfUpdateCommand(program);
 registerSetupCommand(program);
+registerAiCommand(program);
+registerIdeCommand(program);
 registerPluginCommand(program);
 registerMarketplaceCommand(program);
+registerAuthCommand(program);
+registerSyncCommand(program);
+registerStatusCommand(program);
+registerRestoreCommand(program);
+registerUpdateCommand(program);
+registerDoctorCommand(program);
+registerCleanCommand(program);
 registerMigrateCommand(program);
+registerSelfUpdateCommand(program);
 
 program.hook("preAction", async (_thisCommand, actionCommand) => {
-  const opts = program.opts<{ verbose?: boolean; repo?: string }>();
+  const opts = program.opts<{ verbose?: boolean }>();
   const output = new CLIOutput(opts.verbose ?? false);
-  const deps = await createDeps(
-    process.cwd(),
-    { verbose: opts.verbose ?? false, repo: opts.repo },
-    output
-  ).catch(() => null);
+  const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(
+    () => null
+  );
   if (deps) {
     const cmd = actionCommand.name();
     await printUpdateBanner(

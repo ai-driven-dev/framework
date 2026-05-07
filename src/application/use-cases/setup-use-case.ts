@@ -1,481 +1,115 @@
-import { isLocalPath } from "../../domain/models/framework.js";
-import { type DistributionMode, Manifest } from "../../domain/models/manifest.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../domain/models/marketplace.js";
-import { marketplaceCacheDir } from "../../domain/models/paths.js";
-import type { AiToolId, IdeToolId } from "../../domain/models/tool-ids.js";
+import type { MarketplaceSourceMode } from "../../domain/models/marketplace-source-mode.js";
+import { DOCS_DIR } from "../../domain/models/paths.js";
+import type { PluginSource } from "../../domain/models/plugin-source.js";
+import type { SetupFlow } from "../../domain/models/setup-flow.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
-import type { FrameworkResolver } from "../../domain/ports/framework-resolver.js";
-import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
-import type { MarketplaceRegistry } from "../../domain/ports/marketplace-registry.js";
-import type { PluginCatalogRepository } from "../../domain/ports/plugin-catalog-repository.js";
-import type { Prompter } from "../../domain/ports/prompter.js";
 import type { VersionReader } from "../../domain/ports/version-reader.js";
-import {
-  AI_TOOL_IDS,
-  getToolConfig,
-  IDE_TOOL_IDS,
-  isAiTool,
-  type ToolId,
-  VALID_TOOL_IDS,
-} from "../../domain/tools/registry.js";
-import { AdoptRequiresVersionError, InputRequiredError } from "../errors.js";
-import { AdoptUseCase } from "./adopt/adopt-use-case.js";
 import { InitUseCase } from "./init-use-case.js";
+import type { MarketplaceRefreshUseCase } from "./marketplace/marketplace-refresh-use-case.js";
 import type {
-  InstallIdeConfigResult,
-  InstallIdeConfigUseCase,
-} from "./install/install-ide-config-use-case.js";
-import type {
-  InstallRuntimeConfigResult,
-  InstallRuntimeConfigUseCase,
-} from "./install/install-runtime-config-use-case.js";
-import type { InstallFrameworkPluginsUseCase } from "./install-framework-plugins-use-case.js";
-import { type AdoptSignal, SetupStateService } from "./shared/setup-state-service.js";
+  MarketplaceRegisterFrameworkOptions,
+  MarketplaceRegisterFrameworkUseCase,
+} from "./marketplace/marketplace-register-framework-use-case.js";
+import type { MarketplaceSyncSettingsUseCase } from "./marketplace/marketplace-sync-settings-use-case.js";
+import type { SetupMarketplaceSourceUseCase } from "./setup/setup-marketplace-source-use-case.js";
+import type { SetupPluginsPromptUseCase } from "./setup/setup-plugins-prompt-use-case.js";
+import type { SetupToolsResult, SetupToolsUseCase } from "./setup/setup-tools-use-case.js";
 
-export type { AdoptSignal, SetupState } from "./shared/setup-state-service.js";
-
-export type ToolInstallResult = InstallRuntimeConfigResult | InstallIdeConfigResult;
-
-interface SetupOptions {
-  projectRoot: string;
-  path?: string;
-  release?: string;
-  repo?: string;
-  docsDir?: string;
-  toolIds?: ToolId[];
-  from?: string;
-  interactive?: boolean;
-  mode?: DistributionMode;
-  switchMode?: boolean;
-}
-
-interface InstallSummary {
-  results: ToolInstallResult[];
-}
+export type { ToolInstallResult } from "./setup/setup-tools-use-case.js";
+export type { SetupToolsResult };
 
 export type SetupResult =
-  | { kind: "initialized"; docsDir: string; install: InstallSummary; resolvedRef?: string }
-  | { kind: "adopted"; version: string; toolCount: number; totalRegistered: number }
-  | { kind: "installed"; install: InstallSummary; resolvedRef?: string }
-  | { kind: "up-to-date"; hasAdditionalTools: boolean; additionalInstall?: InstallSummary }
-  | { kind: "mode-switched"; newMode: DistributionMode };
+  | { kind: "initialized"; docsDir: string; install: SetupToolsResult }
+  | { kind: "up-to-date"; install: SetupToolsResult };
 
 export class SetupUseCase {
   constructor(
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
-    private readonly logger: Logger,
-    private readonly prompter: Prompter,
-    private readonly installRuntimeConfigUseCase: InstallRuntimeConfigUseCase,
-    private readonly installIdeConfigUseCase: InstallIdeConfigUseCase,
-    private readonly installFrameworkPluginsUseCase: InstallFrameworkPluginsUseCase,
-    private readonly currentVersionProvider: VersionReader,
-    private readonly marketplaceRegistry?: MarketplaceRegistry,
-    private readonly pluginCatalogRepository?: PluginCatalogRepository,
-    private readonly frameworkResolver?: FrameworkResolver
+    private readonly setupMarketplaceSourceUseCase: SetupMarketplaceSourceUseCase,
+    private readonly marketplaceRegisterFrameworkUseCase: MarketplaceRegisterFrameworkUseCase,
+    private readonly marketplaceRefreshUseCase: MarketplaceRefreshUseCase,
+    private readonly marketplaceSyncSettingsUseCase: MarketplaceSyncSettingsUseCase,
+    private readonly setupToolsUseCase: SetupToolsUseCase,
+    private readonly setupPluginsPromptUseCase: SetupPluginsPromptUseCase,
+    private readonly currentVersionProvider: VersionReader
   ) {}
 
-  async execute(options: SetupOptions): Promise<SetupResult> {
-    if (options.switchMode) return this.handleSwitchMode(options);
-    const state = await new SetupStateService(this.manifestRepo, this.fs).detect(
-      options.projectRoot
-    );
-    switch (state.kind) {
-      case "needs-init":
-        return this.handleInit(options);
-      case "needs-adopt":
-        return this.handleAdopt(options, state.signals);
-      case "needs-install":
-      case "needs-update":
-        return this.handleInstall(options);
-      case "up-to-date":
-        return this.handleUpToDate(options);
-    }
+  async execute(flow: SetupFlow): Promise<SetupResult> {
+    const source = await this.resolveSource(flow);
+    const { docsDir, isNew } = await this.initManifest(flow);
+    await this.registerMarketplace(flow, source);
+    await this.refreshCatalog(flow);
+    const install = await this.installTools(flow);
+    await this.promptPlugins(flow);
+    return this.buildResult(isNew, docsDir, install);
   }
 
-  private async handleInit(options: SetupOptions): Promise<SetupResult> {
-    const { projectRoot, repo } = options;
-    const { docsDir, explicitDocsDir } = this.resolveDocsDir(options);
-
-    const toolIds = options.toolIds ?? (options.interactive ? await this.promptForTools() : []);
-    const initResult = await this.runInit(docsDir, explicitDocsDir, projectRoot, repo);
-    const currentVersion = this.currentVersionProvider.get();
-    const installResults = await this.installToolsFromAssets(
-      toolIds.length > 0 ? toolIds : undefined,
-      projectRoot,
-      currentVersion,
-      false
-    );
-
-    const wantsMarketplace = await this.resolveWantsMarketplace(options);
-    const resolvedMode = wantsMarketplace ? await this.resolveMode(options) : "local";
-    const { frameworkPath, frameworkRepo } = wantsMarketplace
-      ? await this.resolveFrameworkSource(options, resolvedMode)
-      : {};
-    const version = wantsMarketplace
-      ? await this.resolveVersion(options, frameworkRepo, frameworkPath)
-      : currentVersion;
-
-    if (frameworkRepo) await this.updateManifestRepo(frameworkRepo);
-    await this.persistMode(resolvedMode);
-
-    if (wantsMarketplace && resolvedMode === "local" && frameworkPath) {
-      await this.installLocalPluginsAt(frameworkPath, version, projectRoot);
-    }
-
-    return {
-      kind: "initialized",
-      docsDir: initResult.docsDir,
-      install: { results: installResults },
-      resolvedRef: wantsMarketplace ? version : undefined,
-    };
-  }
-
-  private async updateManifestRepo(repo: string): Promise<void> {
-    const manifest = await this.manifestRepo.load();
-    if (!manifest) return;
-    await this.manifestRepo.save(manifest.withRepo(repo));
-  }
-
-  private async resolveWantsMarketplace(options: SetupOptions): Promise<boolean> {
-    if (options.mode) return true; // explicit --mode flag implies yes
-    if (!options.interactive) return true; // non-interactive defaults to yes
-    return this.prompter.confirm("Install framework plugin marketplace?", true);
-  }
-
-  private async handleInstall(options: SetupOptions): Promise<SetupResult> {
-    const version = await this.resolveVersion(options, undefined, options.path);
-    const installResults = await this.installToolsFromAssets(
-      options.toolIds,
-      options.projectRoot,
-      version,
-      options.interactive ?? false
-    );
-    return { kind: "installed", install: { results: installResults }, resolvedRef: version };
-  }
-
-  private async handleUpToDate(options: SetupOptions): Promise<SetupResult> {
-    const manifest = await this.manifestRepo.load();
-    const installedIds = manifest?.getInstalledToolIds() ?? [];
-    const missingTools = VALID_TOOL_IDS.filter((id) => !installedIds.includes(id));
-    if (missingTools.length === 0) return { kind: "up-to-date", hasAdditionalTools: false };
-    if (!options.interactive) return { kind: "up-to-date", hasAdditionalTools: true };
-
-    const wantsMore = await this.prompter.confirm("Install additional tools?");
-    if (!wantsMore) return { kind: "up-to-date", hasAdditionalTools: true };
-
-    const version = this.currentVersionProvider.get();
-    const installResults = await this.installToolsFromAssets(
-      undefined,
-      options.projectRoot,
-      version,
-      true
-    );
-    return {
-      kind: "up-to-date",
-      hasAdditionalTools: true,
-      additionalInstall: { results: installResults },
-    };
-  }
-
-  private async handleSwitchMode(options: SetupOptions): Promise<SetupResult> {
-    const manifest = await this.manifestRepo.load();
-    if (!manifest) throw new InputRequiredError("No manifest found. Run `aidd setup` first.");
-    const currentMode = manifest.getMode();
-    const newMode = await this.resolveNewMode(options, currentMode);
-    manifest.setMode(newMode);
-    await this.manifestRepo.save(manifest);
-    if (newMode === "local") await this.installPluginsForSwitchToLocal(options);
-    return { kind: "mode-switched", newMode };
-  }
-
-  private async resolveNewMode(
-    options: SetupOptions,
-    currentMode: DistributionMode
-  ): Promise<DistributionMode> {
-    if (options.mode) return options.mode;
-    if (!options.interactive) {
-      throw new InputRequiredError("--mode is required in non-interactive mode.");
-    }
-    return this.prompter.select<DistributionMode>(`Switch mode (current: ${currentMode}):`, [
-      { name: "local (copy plugins from local framework into project)", value: "local" },
-      { name: "remote (fetch plugins from registered marketplace)", value: "remote" },
-    ]);
-  }
-
-  private async installPluginsForSwitchToLocal(options: SetupOptions): Promise<void> {
-    const path = options.path ?? ".";
-    if (!isLocalPath(path)) {
-      throw new InputRequiredError("Switch to local mode requires --path to a local framework.");
-    }
-    const version = options.release ?? this.currentVersionProvider.get();
-    await this.installFrameworkPluginsUseCase.execute({
-      frameworkPath: path,
-      projectRoot: options.projectRoot,
-      version,
-      force: true,
+  private async resolveSource(flow: SetupFlow): Promise<MarketplaceSourceMode> {
+    return this.setupMarketplaceSourceUseCase.execute({
+      projectRoot: flow.projectRoot,
+      sourceFromCli: flow.source,
+      interactive: flow.interactive,
     });
   }
 
-  private async installLocalPluginsAt(
-    frameworkPath: string,
-    version: string,
-    projectRoot: string
-  ): Promise<void> {
-    if (!(await this.fs.fileExists(frameworkPath))) {
-      this.logger.warn(`Local framework path not found: ${frameworkPath}`);
-      return;
-    }
-    await this.installFrameworkPluginsUseCase.execute({ frameworkPath, projectRoot, version });
-  }
-
-  private async installToolsFromAssets(
-    toolIds: ToolId[] | undefined,
-    projectRoot: string,
-    version: string,
-    interactive: boolean
-  ): Promise<ToolInstallResult[]> {
-    const ids = toolIds ?? (interactive ? await this.promptForTools() : []);
-    if (ids.length === 0) return [];
-    const manifest = (await this.manifestRepo.load()) ?? Manifest.create();
-    const results: ToolInstallResult[] = [];
-    for (const toolId of ids) {
-      const config = getToolConfig(toolId);
-      if (isAiTool(config)) {
-        results.push(
-          await this.installRuntimeConfigUseCase.execute({
-            toolId: toolId as AiToolId,
-            projectRoot,
-            manifest,
-            force: false,
-            version,
-          })
-        );
-      } else {
-        results.push(
-          await this.installIdeConfigUseCase.execute({
-            toolId: toolId as IdeToolId,
-            projectRoot,
-            manifest,
-            force: false,
-            version,
-          })
-        );
-      }
-    }
-    return results;
-  }
-
-  private async promptForTools(): Promise<ToolId[]> {
-    const aiChecked = await this.prompter.checkbox(
-      "Which AI tools do you want to install?",
-      AI_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }))
-    );
-    const ideChecked = await this.prompter.checkbox(
-      "Which IDE integrations do you want to install?",
-      IDE_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }))
-    );
-    return [...aiChecked, ...ideChecked] as ToolId[];
-  }
-
-  private async resolveMode(options: SetupOptions): Promise<DistributionMode> {
-    if (options.mode) return options.mode;
-    if (!options.interactive) return "local";
-    return this.prompter.select<DistributionMode>("Distribution mode:", [
-      { name: "local (copy plugins from local framework into project)", value: "local" },
-      { name: "remote (fetch plugins from registered marketplace)", value: "remote" },
-    ]);
-  }
-
-  private async persistMode(mode: DistributionMode): Promise<void> {
-    if (mode === "local") return;
-    const manifest = await this.manifestRepo.load();
-    if (!manifest) return;
-    manifest.setMode(mode);
-    await this.manifestRepo.save(manifest);
-  }
-
-  private async runInit(
-    docsDir: string,
-    explicitDocsDir: string,
-    projectRoot: string,
-    repo: string | undefined
-  ): Promise<{ docsDir: string }> {
-    return new InitUseCase(this.fs, this.manifestRepo).execute({
-      docsDir,
-      explicitDocsDir,
-      projectRoot,
+  private async initManifest(flow: SetupFlow): Promise<{ docsDir: string; isNew: boolean }> {
+    const existing = await this.manifestRepo.load();
+    if (existing !== null) return { docsDir: DOCS_DIR, isNew: false };
+    const result = await new InitUseCase(this.fs, this.manifestRepo).execute({
+      projectRoot: flow.projectRoot,
       force: false,
-      repo,
+    });
+    return { docsDir: result.docsDir, isNew: true };
+  }
+
+  private async registerMarketplace(flow: SetupFlow, source: MarketplaceSourceMode): Promise<void> {
+    const opts = this.buildRegisterOptions(flow, source);
+    await this.marketplaceRegisterFrameworkUseCase.execute(opts);
+  }
+
+  private buildRegisterOptions(
+    flow: SetupFlow,
+    source: MarketplaceSourceMode
+  ): MarketplaceRegisterFrameworkOptions {
+    const pluginSource = this.toPluginSource(source);
+    return { projectRoot: flow.projectRoot, pluginSource };
+  }
+
+  private toPluginSource(source: MarketplaceSourceMode): PluginSource {
+    if (source.kind === "local") return { kind: "local", path: source.path };
+    return { kind: "github", repo: source.repo };
+  }
+
+  private async refreshCatalog(flow: SetupFlow): Promise<void> {
+    if (process.env.AIDD_SKIP_MARKETPLACE_REFRESH === "1") return;
+    await this.marketplaceRefreshUseCase.execute({ projectRoot: flow.projectRoot });
+    await this.marketplaceSyncSettingsUseCase.execute({ projectRoot: flow.projectRoot });
+  }
+
+  private async installTools(flow: SetupFlow): Promise<SetupToolsResult> {
+    const version = this.currentVersionProvider.get();
+    return this.setupToolsUseCase.execute({
+      projectRoot: flow.projectRoot,
+      aiTools: flow.aiTools,
+      ideTools: flow.ideTools,
+      force: flow.force,
+      version,
     });
   }
 
-  private resolveDocsDir(options: SetupOptions): { docsDir: string; explicitDocsDir: string } {
-    if (options.docsDir !== undefined) {
-      Manifest.validateDocsDir(options.docsDir);
-      return { docsDir: options.docsDir, explicitDocsDir: options.docsDir };
-    }
-    return { docsDir: Manifest.DEFAULT_DOCS_DIR, explicitDocsDir: "" };
-  }
-
-  private async resolveFrameworkSource(
-    options: SetupOptions,
-    mode: DistributionMode
-  ): Promise<{ frameworkPath?: string; frameworkRepo?: string }> {
-    if (options.path !== undefined) {
-      if (!options.path) return {};
-      if (isLocalPath(options.path)) return { frameworkPath: options.path };
-      return { frameworkRepo: options.path };
-    }
-    if (mode === "local") return this.resolveLocalSource(options);
-    return this.resolveRemoteSource(options);
-  }
-
-  private async resolveLocalSource(options: SetupOptions): Promise<{ frameworkPath?: string }> {
-    const pathInput = options.interactive
-      ? await this.prompter.input("Local framework path:", ".")
-      : ".";
-    if (!pathInput) return {};
-    return { frameworkPath: pathInput };
-  }
-
-  private async resolveRemoteSource(options: SetupOptions): Promise<{ frameworkRepo?: string }> {
-    const existingManifest = await this.manifestRepo.load();
-    const repoDefault = existingManifest?.repo ?? Manifest.DEFAULT_REPO;
-    const repoInput = options.interactive
-      ? await this.prompter.input("Marketplace repository (owner/repo):", repoDefault)
-      : repoDefault;
-    if (!repoInput) return {};
-    return { frameworkRepo: repoInput };
-  }
-
-  private async resolveVersion(
-    options: SetupOptions,
-    frameworkRepo: string | undefined,
-    frameworkPath: string | undefined
-  ): Promise<string> {
-    if (options.release) return options.release;
-    const versionDefault = await this.discoverVersionDefault(
-      frameworkRepo,
-      frameworkPath,
-      options.projectRoot
-    );
-    if (frameworkPath && isLocalPath(frameworkPath) && versionDefault) return versionDefault;
-    if (!options.interactive) return versionDefault ?? this.currentVersionProvider.get();
-    const label = versionDefault
-      ? `Marketplace catalog version (latest: ${versionDefault}):`
-      : "Marketplace catalog version:";
-    const input = await this.prompter.input(label, versionDefault ?? "");
-    return input || versionDefault || this.currentVersionProvider.get();
-  }
-
-  private async discoverVersionDefault(
-    frameworkRepo: string | undefined,
-    frameworkPath: string | undefined,
-    projectRoot: string
-  ): Promise<string | undefined> {
-    if (frameworkPath && isLocalPath(frameworkPath)) {
-      return this.readLocalCatalogVersion(frameworkPath);
-    }
-    const remoteVersion = await this.fetchLatestRemoteVersion(frameworkRepo);
-    if (remoteVersion) return remoteVersion;
-    return this.fetchCatalogVersion(projectRoot);
-  }
-
-  private async readLocalCatalogVersion(frameworkPath: string): Promise<string | undefined> {
-    if (!this.pluginCatalogRepository) return undefined;
-    const catalog = await this.pluginCatalogRepository.load(frameworkPath).catch(() => null);
-    return catalog?.version;
-  }
-
-  private async fetchLatestRemoteVersion(
-    frameworkRepo: string | undefined
-  ): Promise<string | undefined> {
-    if (!this.frameworkResolver) return undefined;
-    return this.frameworkResolver.fetchLatestVersion(frameworkRepo).catch(() => undefined);
-  }
-
-  private async fetchCatalogVersion(projectRoot: string): Promise<string | undefined> {
-    if (!this.marketplaceRegistry || !this.pluginCatalogRepository) return undefined;
-    const marketplaces = await this.marketplaceRegistry.list(projectRoot).catch(() => []);
-    const framework = marketplaces.find((m) => m.name === FRAMEWORK_MARKETPLACE_NAME);
-    if (!framework) return undefined;
-    const cacheDir = marketplaceCacheDir(projectRoot, framework.name);
-    const catalog = await this.pluginCatalogRepository.load(cacheDir).catch(() => null);
-    return catalog?.version;
-  }
-
-  private async handleAdopt(options: SetupOptions, signals: AdoptSignal[]): Promise<SetupResult> {
-    const { projectRoot, repo } = options;
-    this.validateAdoptNonInteractive(options, repo, signals);
-    const selected = await this.resolveAdoptTools(options);
-    const fromInput = await this.resolveAdoptFrom(options, repo, signals);
-    const adoptResult = await new AdoptUseCase(this.fs, this.manifestRepo, this.logger).execute({
-      toolIds: selected as ToolId[],
-      docsDir: Manifest.DEFAULT_DOCS_DIR,
-      projectRoot,
-      version: fromInput,
+  private async promptPlugins(flow: SetupFlow): Promise<void> {
+    await this.setupPluginsPromptUseCase.execute({
+      projectRoot: flow.projectRoot,
+      mode: flow.pluginMode,
+      pluginNames: [...flow.pluginNames],
+      interactive: flow.interactive,
     });
-    return {
-      kind: "adopted",
-      version: fromInput,
-      toolCount: adoptResult.tools.length,
-      totalRegistered: adoptResult.totalRegistered,
-    };
   }
 
-  private validateAdoptNonInteractive(
-    options: SetupOptions,
-    repo: string | undefined,
-    signals: AdoptSignal[]
-  ): void {
-    if (options.interactive) return;
-    if (!options.toolIds || options.toolIds.length === 0) {
-      throw new InputRequiredError("--ai or --ide is required for adopt in non-interactive mode.");
-    }
-    if (options.from === undefined) {
-      throw new AdoptRequiresVersionError(repo, this.formatSignalDiagnostic(signals));
-    }
-  }
-
-  private formatSignalDiagnostic(signals: AdoptSignal[]): string {
-    if (signals.length === 0) return "";
-    const lines = ["Detected existing AIDD files:"];
-    for (const signal of signals) lines.push(`  • ${signal.file} — run: cat ${signal.file}`);
-    return lines.join("\n");
-  }
-
-  private async resolveAdoptTools(options: SetupOptions): Promise<ToolId[]> {
-    if (options.toolIds !== undefined && options.toolIds.length > 0) return options.toolIds;
-    const aiChecked = await this.prompter.checkbox(
-      "Which AI tools do you want to adopt?",
-      AI_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }))
-    );
-    const ideChecked = await this.prompter.checkbox(
-      "Which IDE integrations do you want to adopt?",
-      IDE_TOOL_IDS.map((id) => ({ name: id, value: id, checked: false }))
-    );
-    const checkedIds = [...aiChecked, ...ideChecked];
-    if (checkedIds.length === 0) throw new InputRequiredError("No tools selected.");
-    return checkedIds as ToolId[];
-  }
-
-  private async resolveAdoptFrom(
-    options: SetupOptions,
-    repo: string | undefined,
-    signals: AdoptSignal[]
-  ): Promise<string> {
-    if (options.from !== undefined) {
-      if (!options.from)
-        throw new AdoptRequiresVersionError(repo, this.formatSignalDiagnostic(signals));
-      return options.from;
-    }
-    const fromInput = await this.prompter.input(
-      "Which version of the framework do you already have installed? (e.g. v1.2.3):",
-      ""
-    );
-    if (!fromInput) throw new AdoptRequiresVersionError(repo, this.formatSignalDiagnostic(signals));
-    return fromInput;
+  private buildResult(isNew: boolean, docsDir: string, install: SetupToolsResult): SetupResult {
+    if (isNew) return { kind: "initialized", docsDir, install };
+    return { kind: "up-to-date", install };
   }
 }

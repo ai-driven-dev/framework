@@ -1,5 +1,6 @@
 import { dirname, join } from "node:path";
 import type { Manifest } from "../../domain/models/manifest.js";
+import { DOCS_DIR } from "../../domain/models/paths.js";
 import type { IdeToolId } from "../../domain/models/tool-ids.js";
 import type { FileSystem } from "../../domain/ports/file-system.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -31,7 +32,7 @@ export class UninstallIdeUseCase {
     const deletedFiles = await this.deleteTrackedFiles(toolId, manifest, projectRoot);
     manifest.removeTool(toolId);
     await this.manifestRepo.save(manifest);
-    await new CatalogUseCase(this.fs).execute({ manifest, docsDir: manifest.docsDir, projectRoot });
+    await new CatalogUseCase(this.fs).execute({ manifest, docsDir: DOCS_DIR, projectRoot });
     return { toolId, fileCount: deletedFiles.length, deletedFiles };
   }
 

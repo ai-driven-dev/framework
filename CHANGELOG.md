@@ -1,5 +1,76 @@
 # Changelog
 
+## [4.1.0-beta.11] — Noun-first surface + plugin architecture (CLI v5)
+
+### Breaking Changes
+
+Commands removed or restructured since 4.0.x:
+
+| Old command | New command | Notes |
+|---|---|---|
+| `aidd install ai <tool>` | `aidd ai install <tool>` | Noun-first: `ai` is the noun |
+| `aidd install ide <tool>` | `aidd ide install <tool>` | Noun-first: `ide` is the noun |
+| `aidd uninstall ai <tool>` | `aidd ai uninstall <tool>` | Noun-first |
+| `aidd uninstall ide <tool>` | `aidd ide uninstall <tool>` | Noun-first |
+| `aidd cache list` | `aidd marketplace cache list` | Cache scoped to marketplace |
+| `aidd cache clear` | `aidd marketplace cache clear` | Cache scoped to marketplace |
+| `aidd config list\|get\|set` | removed | `docsDir`/`repo` keys dropped from manifest v5 |
+| `aidd sync --source <tool>` | `aidd ai sync --source <tool>` | Under `ai` noun |
+| `aidd restore` | `aidd ai restore` | Under `ai` noun |
+| `aidd status` | `aidd ai status` / `aidd ide status` | Per-noun subcommands (global `aidd status` still works) |
+| `aidd doctor` | `aidd ai doctor` / `aidd ide doctor` | Per-noun subcommands (global `aidd doctor` still works) |
+| `aidd update` | `aidd ai update` / `aidd ide update` | Per-noun subcommands (global `aidd update` still works) |
+| `--docs-dir` on setup | removed | `docsDir` field removed from manifest v5 |
+| `--mode` on setup/install | removed | Replaced by `--source local\|remote` on `aidd setup` |
+| `--path` on install | removed | Local framework path only used in `aidd setup --source local --path` |
+| `--release`, `--repo`, `--from`, `--switch-mode` on install/setup | removed | Framework tarball download eliminated |
+
+### New Surface (noun-first commands)
+
+```bash
+# AI tools
+aidd ai install claude
+aidd ai uninstall cursor
+aidd ai list
+aidd ai status
+aidd ai update [tool]
+aidd ai sync --source claude [--target cursor] [--force] [--no-plugins]
+aidd ai restore [files...] [--tool claude] [--force]
+aidd ai doctor
+
+# IDE tools
+aidd ide install vscode
+aidd ide uninstall vscode
+aidd ide list
+aidd ide status
+aidd ide update [tool]
+aidd ide doctor
+
+# Setup (scriptable, non-interactive)
+aidd setup --source remote --ai claude --ide vscode --recommended-plugins --yes
+
+# Marketplace cache
+aidd marketplace cache list
+aidd marketplace cache clear [--all]
+```
+
+### Migration Guide (from 4.0.x)
+
+1. Run `aidd migrate` to clean obsolete manifest entries (scripts, top-level plugins, docsDir).
+2. Replace `aidd install ai <tool>` → `aidd ai install <tool>` in scripts.
+3. Replace `aidd install ide <tool>` → `aidd ide install <tool>` in scripts.
+4. Replace `aidd uninstall ai <tool>` → `aidd ai uninstall <tool>` in scripts.
+5. Replace `aidd cache` → `aidd marketplace cache` in scripts.
+6. Replace `aidd sync --source <tool>` → `aidd ai sync --source <tool>` in scripts.
+7. Remove any `aidd config` calls — config keys (docsDir, repo) are no longer in the manifest.
+
+### Plugin Architecture
+
+- Memory ownership moved to plugins: CLAUDE.md/AGENTS.md/copilot-instructions.md stubs are no longer bundled in the CLI; the `aidd-context` plugin provides them.
+- Plugin sync (`aidd ai sync`) propagates installed plugins from source tool to target tools via re-translation of capability files.
+- `MarketplaceCacheEntry` tracks catalog fetch time and size; `aidd marketplace cache` manages this cache.
+- Manifest v5 schema: removed `docsDir`, `repo`, `mode`, `scripts`, `topPlugins`.
+
 ## [4.1.0-beta.1] — Marketplace-only architecture
 
 ### ⚠ BREAKING CHANGES

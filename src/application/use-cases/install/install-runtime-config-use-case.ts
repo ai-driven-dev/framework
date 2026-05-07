@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { InstallationFile } from "../../../domain/models/file.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
+import { DOCS_DIR } from "../../../domain/models/paths.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
@@ -46,7 +47,7 @@ export class InstallRuntimeConfigUseCase {
     await new PostInstallPipelineUseCase(this.fs, this.manifestRepo).execute({
       projectRoot: options.projectRoot,
       manifest,
-      docsDir: manifest.docsDir,
+      docsDir: DOCS_DIR,
     });
     return { toolId, fileCount: allFiles.length, files: allFiles, skipped: false, warnings: [] };
   }
