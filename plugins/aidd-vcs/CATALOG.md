@@ -1,4 +1,4 @@
-# aidd-vcs — Skills Catalog
+# aidd-vcs - Skills Catalog
 
 Auto-generated from `skills/*/SKILL.md`.
 
