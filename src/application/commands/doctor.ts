@@ -14,13 +14,7 @@ export function registerDoctorCommand(program: Command): void {
 
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const useCase = new DoctorAllUseCase(
-          deps.fs,
-          deps.manifestRepo,
-          deps.hasher,
-          deps.logger,
-          deps.authReader
-        );
+        const useCase = new DoctorAllUseCase(deps.doctorUseCase);
         const result = await useCase.execute(projectRoot);
 
         for (const e of result.errors) output.warn(`[${e.scope}] ${e.message}`);

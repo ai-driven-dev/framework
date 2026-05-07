@@ -1,12 +1,6 @@
-import type { FileSystem } from "../../../domain/ports/file-system.js";
-import type { Hasher } from "../../../domain/ports/hasher.js";
-import type { Logger } from "../../../domain/ports/logger.js";
-import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
-import type { TokenProvider } from "../../../domain/ports/token-provider.js";
-import { DoctorUseCase } from "../doctor-use-case.js";
+import type { DoctorReport } from "../../../domain/models/doctor.js";
+import type { DoctorUseCase } from "../doctor/doctor-use-case.js";
 import type { GlobalExecutionError } from "./update-all-use-case.js";
-
-type DoctorReport = Awaited<ReturnType<DoctorUseCase["execute"]>>;
 
 export interface DoctorAllResult {
   ai: DoctorReport | null;
@@ -17,35 +11,22 @@ export interface DoctorAllResult {
 }
 
 export class DoctorAllUseCase {
-  constructor(
-    private readonly fs: FileSystem,
-    private readonly manifestRepo: ManifestRepository,
-    private readonly hasher: Hasher,
-    private readonly logger: Logger,
-    private readonly authReader?: TokenProvider
-  ) {}
+  constructor(private readonly doctorUseCase: DoctorUseCase) {}
 
   async execute(projectRoot: string): Promise<DoctorAllResult> {
     const errors: GlobalExecutionError[] = [];
-    const doctorUseCase = new DoctorUseCase(
-      this.fs,
-      this.manifestRepo,
-      this.hasher,
-      this.logger,
-      this.authReader
-    );
     const ai = await this.runScope(
-      () => doctorUseCase.execute({ projectRoot, category: "ai" }),
+      () => this.doctorUseCase.execute({ projectRoot, category: "ai" }),
       "ai",
       errors
     );
     const ide = await this.runScope(
-      () => doctorUseCase.execute({ projectRoot, category: "ide" }),
+      () => this.doctorUseCase.execute({ projectRoot, category: "ide" }),
       "ide",
       errors
     );
     const plugins = await this.runScope(
-      () => doctorUseCase.execute({ projectRoot }),
+      () => this.doctorUseCase.execute({ projectRoot }),
       "plugins",
       errors
     );

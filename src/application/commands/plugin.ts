@@ -9,7 +9,6 @@ import { AI_TOOL_IDS, assertValidAiToolId, parseToolOption } from "../../domain/
 import { createDeps, createMenuDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { NoManifestError } from "../errors.js";
-import { DoctorUseCase } from "../use-cases/doctor-use-case.js";
 import { RestorePluginUseCase } from "../use-cases/restore/restore-plugin-use-case.js";
 import { StatusUseCase } from "../use-cases/status-use-case.js";
 import { SyncPluginsUseCase } from "../use-cases/sync/sync-plugins-use-case.js";
@@ -339,14 +338,10 @@ export function registerPluginCommand(program: Command): void {
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const useCase = new DoctorUseCase(
-          deps.fs,
-          deps.manifestRepo,
-          deps.hasher,
-          deps.logger,
-          deps.authReader
-        );
-        const report = await useCase.execute({ projectRoot, pluginName: cmdOptions.plugin });
+        const report = await deps.doctorUseCase.execute({
+          projectRoot,
+          pluginName: cmdOptions.plugin,
+        });
         if (report.healthy) {
           output.success("Plugin installation is healthy");
           return;

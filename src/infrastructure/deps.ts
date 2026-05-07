@@ -5,6 +5,12 @@ import "../domain/tools/ai/cursor.js";
 import "../domain/tools/ai/opencode.js";
 import "../domain/tools/ide/vscode.js";
 import { CLIOutput } from "../application/output.js";
+import { DoctorLayoutUseCase } from "../application/use-cases/doctor/doctor-layout-use-case.js";
+import { DoctorMergeFilesUseCase } from "../application/use-cases/doctor/doctor-merge-files-use-case.js";
+import { DoctorPluginUseCase } from "../application/use-cases/doctor/doctor-plugin-use-case.js";
+import { DoctorReferencesUseCase } from "../application/use-cases/doctor/doctor-references-use-case.js";
+import { DoctorTrackedFilesUseCase } from "../application/use-cases/doctor/doctor-tracked-files-use-case.js";
+import { DoctorUseCase } from "../application/use-cases/doctor/doctor-use-case.js";
 import { InstallIdeConfigUseCase } from "../application/use-cases/install/install-ide-config-use-case.js";
 import { InstallRuntimeConfigUseCase } from "../application/use-cases/install/install-runtime-config-use-case.js";
 import { MarketplaceAddUseCase } from "../application/use-cases/marketplace/marketplace-add-use-case.js";
@@ -111,6 +117,7 @@ interface Deps {
   syncConflictResolverUseCase: SyncConflictResolverUseCase;
   syncFilePropagationUseCase: SyncFilePropagationUseCase;
   syncSourceResolverUseCase: SyncSourceResolverUseCase;
+  doctorUseCase: DoctorUseCase;
 }
 
 const _cache = new Map<string, Deps>();
@@ -262,6 +269,19 @@ export async function createDeps(
     logger
   );
   const syncSourceResolverUseCase = new SyncSourceResolverUseCase(fs, prompter);
+  const doctorTrackedFilesUseCase = new DoctorTrackedFilesUseCase(fs);
+  const doctorMergeFilesUseCase = new DoctorMergeFilesUseCase(fs, hasher);
+  const doctorPluginUseCase = new DoctorPluginUseCase(fs);
+  const doctorReferencesUseCase = new DoctorReferencesUseCase(fs);
+  const doctorLayoutUseCase = new DoctorLayoutUseCase(fs, authReader);
+  const doctorUseCase = new DoctorUseCase(
+    manifestRepo,
+    doctorTrackedFilesUseCase,
+    doctorMergeFilesUseCase,
+    doctorPluginUseCase,
+    doctorReferencesUseCase,
+    doctorLayoutUseCase
+  );
   const deps: Deps = {
     fs,
     manifestRepo,
@@ -305,6 +325,7 @@ export async function createDeps(
     syncConflictResolverUseCase,
     syncFilePropagationUseCase,
     syncSourceResolverUseCase,
+    doctorUseCase,
   };
   _cache.set(projectRoot, deps);
   return deps;

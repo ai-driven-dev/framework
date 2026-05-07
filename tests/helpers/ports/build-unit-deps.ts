@@ -7,6 +7,12 @@ import "../../../src/domain/tools/ai/cursor.js";
 import "../../../src/domain/tools/ai/opencode.js";
 import "../../../src/domain/tools/ide/vscode.js";
 import { CLIOutput } from "../../../src/application/output.js";
+import { DoctorLayoutUseCase } from "../../../src/application/use-cases/doctor/doctor-layout-use-case.js";
+import { DoctorMergeFilesUseCase } from "../../../src/application/use-cases/doctor/doctor-merge-files-use-case.js";
+import { DoctorPluginUseCase } from "../../../src/application/use-cases/doctor/doctor-plugin-use-case.js";
+import { DoctorReferencesUseCase } from "../../../src/application/use-cases/doctor/doctor-references-use-case.js";
+import { DoctorTrackedFilesUseCase } from "../../../src/application/use-cases/doctor/doctor-tracked-files-use-case.js";
+import { DoctorUseCase } from "../../../src/application/use-cases/doctor/doctor-use-case.js";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
 import { InstallIdeConfigUseCase } from "../../../src/application/use-cases/install/install-ide-config-use-case.js";
 import { InstallRuntimeConfigUseCase } from "../../../src/application/use-cases/install/install-runtime-config-use-case.js";
@@ -136,6 +142,20 @@ export function buildSyncUseCase(
     deps.syncSourceResolver,
     deps.syncFilePropagation,
     syncPluginsUseCase
+  );
+}
+
+export function buildDoctorUseCase(
+  deps: Awaited<ReturnType<typeof buildUnitDeps>>,
+  authReader?: ConstructorParameters<typeof DoctorLayoutUseCase>[1]
+): DoctorUseCase {
+  return new DoctorUseCase(
+    deps.manifestRepo,
+    new DoctorTrackedFilesUseCase(deps.fs),
+    new DoctorMergeFilesUseCase(deps.fs, deps.hasher),
+    new DoctorPluginUseCase(deps.fs),
+    new DoctorReferencesUseCase(deps.fs),
+    new DoctorLayoutUseCase(deps.fs, authReader)
   );
 }
 

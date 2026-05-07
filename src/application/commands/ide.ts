@@ -182,15 +182,7 @@ export function registerIdeCommand(program: Command): void {
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const { DoctorUseCase } = await import("../use-cases/doctor-use-case.js");
-        const useCase = new DoctorUseCase(
-          deps.fs,
-          deps.manifestRepo,
-          deps.hasher,
-          deps.logger,
-          deps.authReader
-        );
-        const report = await useCase.execute({ projectRoot, category: "ide" });
+        const report = await deps.doctorUseCase.execute({ projectRoot, category: "ide" });
         if (report.healthy) {
           output.success("IDE tool installation is healthy");
           return;

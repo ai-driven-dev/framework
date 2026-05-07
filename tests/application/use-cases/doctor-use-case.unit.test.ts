@@ -1,12 +1,15 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-  DoctorUseCase,
   extractAtReferences,
   extractMarkdownLinkTargets,
-} from "../../../src/application/use-cases/doctor-use-case.js";
+} from "../../../src/application/use-cases/doctor/doctor-use-case.js";
 import type { ToolId } from "../../../src/domain/tools/registry.js";
-import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
+import {
+  buildDoctorUseCase,
+  buildUnitDeps,
+  initAndInstall,
+} from "../../helpers/ports/build-unit-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -83,7 +86,7 @@ describe("doctor", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildDoctorUseCase(deps);
     const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(report.healthy).toBe(true);
@@ -98,12 +101,11 @@ describe("doctor", () => {
     // ManifestRepositoryAdapter uses load() — InMemoryManifestRepository just returns null or manifest
     // We need to simulate a corrupt manifest. The doctor calls manifestRepo.load(),
     // so we make it throw.
-    const realRepo = deps.manifestRepo;
-    const corruptRepo = Object.create(realRepo) as typeof realRepo;
+    const corruptRepo = Object.create(deps.manifestRepo) as typeof deps.manifestRepo;
     corruptRepo.load = async () => {
       throw new Error("Manifest is corrupted");
     };
-    const useCase = new DoctorUseCase(deps.fs, corruptRepo, deps.hasher, deps.logger);
+    const useCase = buildDoctorUseCase({ ...deps, manifestRepo: corruptRepo });
     await expect(useCase.execute({ projectRoot: PROJECT_ROOT })).rejects.toThrow(
       "Manifest is corrupted"
     );
@@ -112,7 +114,7 @@ describe("doctor", () => {
   it("fails if project is not initialized", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildDoctorUseCase(deps);
     await expect(useCase.execute({ projectRoot: PROJECT_ROOT })).rejects.toThrow("aidd setup");
   });
 
@@ -126,7 +128,7 @@ describe("doctor", () => {
       "---\nname: aidd:03:plan\ndescription: Plan feature\n---\nContent here.\n"
     );
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildDoctorUseCase(deps);
     const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     const orphanIssue = report.issues.find(
@@ -145,7 +147,7 @@ describe("doctor", () => {
       "See @.claude/agents/ for all agents"
     );
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildDoctorUseCase(deps);
     const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     const brokenRefIssues = report.issues.filter((i) => i.message.startsWith("Broken reference"));
@@ -162,7 +164,7 @@ describe("doctor", () => {
       "```text\n@path/to/example.md\n```"
     );
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildDoctorUseCase(deps);
     const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(report.issues.every((i) => !i.message.includes("example.md"))).toBe(true);
@@ -178,7 +180,7 @@ describe("doctor", () => {
       await deps.fs.deleteFile(f);
     }
 
-    const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildDoctorUseCase(deps);
     const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     const issue = report.issues.find((i) => i.message.includes("does not exist on disk"));
@@ -198,7 +200,7 @@ describe("doctor", () => {
         "name: CI\non: push\njobs:\n  build:\n    runs-on: ubuntu-latest\n"
       );
 
-      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+      const useCase = buildDoctorUseCase(deps);
       const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
       const githubOrphanIssue = report.issues.find(
@@ -217,7 +219,7 @@ describe("doctor", () => {
         "---\nname: aidd:01:plan\ndescription: Plan feature\n---\nContent here.\n"
       );
 
-      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+      const useCase = buildDoctorUseCase(deps);
       const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
       const orphanIssues = report.issues.filter(
@@ -236,7 +238,7 @@ describe("doctor", () => {
         "---\nname: my-custom-prompt\ndescription: A custom prompt\n---\nContent here.\n"
       );
 
-      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+      const useCase = buildDoctorUseCase(deps);
       const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
       const githubOrphanIssue = report.issues.find(
@@ -251,7 +253,7 @@ describe("doctor", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initAndInstall(deps, PROJECT_ROOT, "vscode" as ToolId);
 
-      const useCase = new DoctorUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+      const useCase = buildDoctorUseCase(deps);
       const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
       const mergeIssues = report.issues.filter(
