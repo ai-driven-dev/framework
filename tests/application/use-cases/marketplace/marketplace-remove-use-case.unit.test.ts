@@ -1,62 +1,40 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import "../../../../src/domain/tools/ai/claude.js";
 import { MarketplaceRemoveUseCase } from "../../../../src/application/use-cases/marketplace/marketplace-remove-use-case.js";
 import { MarketplaceNotFoundError } from "../../../../src/domain/errors.js";
 import { Manifest } from "../../../../src/domain/models/manifest.js";
 import { Marketplace } from "../../../../src/domain/models/marketplace.js";
 import { Plugin } from "../../../../src/domain/models/plugin.js";
-import { FileSystemAdapter } from "../../../../src/infrastructure/adapters/file-system-adapter.js";
-import { HasherAdapter } from "../../../../src/infrastructure/adapters/hasher-adapter.js";
-import { ManifestRepositoryAdapter } from "../../../../src/infrastructure/adapters/manifest-repository-adapter.js";
-import { MarketplaceRegistryAdapter } from "../../../../src/infrastructure/adapters/marketplace-registry-adapter.js";
-import { KeepPrompter } from "../helpers.js";
+import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
+import { InMemoryFileSystem } from "../../../helpers/ports/in-memory-file-system.js";
+import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
+import { KeepPrompter } from "../../../helpers/ports/scripted-prompter.js";
+
+const PROJECT_ROOT = "/test-project";
+
+function buildUseCase() {
+  const hasher = new DeterministicHasher();
+  const fs = new InMemoryFileSystem({}, hasher);
+  const manifestRepo = new InMemoryManifestRepository();
+  const registry = new InMemoryMarketplaceRegistry();
+  const useCase = new MarketplaceRemoveUseCase(fs, manifestRepo, registry, new KeepPrompter());
+  return { useCase, registry, manifestRepo, fs };
+}
 
 describe("MarketplaceRemoveUseCase", () => {
-  let projectRoot: string;
-  let homeDir: string;
-  let originalHome: string | undefined;
-
-  beforeEach(async () => {
-    projectRoot = await mkdtemp(join(tmpdir(), "mkt-remove-project-"));
-    homeDir = await mkdtemp(join(tmpdir(), "mkt-remove-home-"));
-    originalHome = process.env.HOME;
-    process.env.HOME = homeDir;
-  });
-
-  afterEach(async () => {
-    process.env.HOME = originalHome;
-    await rm(projectRoot, { recursive: true, force: true });
-    await rm(homeDir, { recursive: true, force: true });
-  });
-
-  function buildUseCase(): {
-    useCase: MarketplaceRemoveUseCase;
-    registry: MarketplaceRegistryAdapter;
-    manifestRepo: ManifestRepositoryAdapter;
-    fs: FileSystemAdapter;
-  } {
-    const hasher = new HasherAdapter();
-    const fs = new FileSystemAdapter(hasher);
-    const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
-    const registry = new MarketplaceRegistryAdapter();
-    const useCase = new MarketplaceRemoveUseCase(fs, manifestRepo, registry, new KeepPrompter());
-    return { useCase, registry, manifestRepo, fs };
-  }
-
   it("throws MarketplaceNotFoundError when entry does not exist", async () => {
     const { useCase } = buildUseCase();
     await expect(
-      useCase.execute({ name: "missing", projectRoot, autoConfirm: true })
+      useCase.execute({ name: "missing", projectRoot: PROJECT_ROOT, autoConfirm: true })
     ).rejects.toThrow(MarketplaceNotFoundError);
   });
 
   it("removes registry entry when no orphans tracked", async () => {
     const { useCase, registry } = buildUseCase();
     await registry.save(
-      projectRoot,
+      PROJECT_ROOT,
       Marketplace.create({
         name: "awesome",
         source: { kind: "local", path: "/tmp/whatever" },
@@ -67,12 +45,12 @@ describe("MarketplaceRemoveUseCase", () => {
 
     const result = await useCase.execute({
       name: "awesome",
-      projectRoot,
+      projectRoot: PROJECT_ROOT,
       autoConfirm: true,
     });
 
     expect(result.removedPluginCount).toBe(0);
-    expect(await registry.list(projectRoot)).toEqual([]);
+    expect(await registry.list(PROJECT_ROOT)).toEqual([]);
   });
 
   it("removes orphan plugins and their files when autoConfirm is true", async () => {
@@ -89,11 +67,12 @@ describe("MarketplaceRemoveUseCase", () => {
     });
     manifest.addPlugin("claude", plugin);
     await manifestRepo.save(manifest);
-    const filePath = join(projectRoot, ".claude/plugins/sample/CLAUDE.md");
-    await mkdir(join(projectRoot, ".claude/plugins/sample"), { recursive: true });
-    await writeFile(filePath, "content");
+
+    const filePath = join(PROJECT_ROOT, ".claude/plugins/sample/CLAUDE.md");
+    await fs.writeFile(filePath, "content");
+
     await registry.save(
-      projectRoot,
+      PROJECT_ROOT,
       Marketplace.create({
         name: "awesome",
         source: { kind: "github", repo: "owner/awesome" },
@@ -104,12 +83,12 @@ describe("MarketplaceRemoveUseCase", () => {
 
     const result = await useCase.execute({
       name: "awesome",
-      projectRoot,
+      projectRoot: PROJECT_ROOT,
       autoConfirm: true,
     });
 
     expect(result.removedPluginCount).toBe(1);
-    expect(await fs.fileExists(filePath)).toBe(false);
+    expect(fs.has(filePath)).toBe(false);
     const reloaded = await manifestRepo.load();
     expect(reloaded?.getPlugins("claude")).toHaveLength(0);
   });
