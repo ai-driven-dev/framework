@@ -4,10 +4,7 @@ import { InstallPluginsUseCase } from "../../../../src/application/use-cases/ins
 import { DOCS_DIR } from "../../../../src/domain/models/paths.js";
 import { getToolConfig } from "../../../../src/domain/tools/registry.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
-import {
-  buildUnitDeps,
-  initAndInstall,
-} from "../../../helpers/ports/build-unit-deps.js";
+import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -58,9 +55,9 @@ describe("InstallPluginsUseCase", () => {
         manifest,
         docsDir: DOCS_DIR,
       });
-      expect(
-        deps.fs.has(join(PROJECT_ROOT, ".opencode/commands/sample-plugin/greet.md"))
-      ).toBe(true);
+      expect(deps.fs.has(join(PROJECT_ROOT, ".opencode/commands/sample-plugin/greet.md"))).toBe(
+        true
+      );
     });
   });
 

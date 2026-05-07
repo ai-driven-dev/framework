@@ -4,13 +4,13 @@ import "../../../../src/domain/tools/ai/copilot.js";
 import "../../../../src/domain/tools/ai/claude.js";
 import "../../../../src/domain/tools/ide/vscode.js";
 import { InstallUseCase } from "../../../../src/application/use-cases/install/install-use-case.js";
-import { FakePlatform } from "../../../helpers/ports/fake-platform.js";
-import { OverwritePrompter } from "../../../helpers/ports/scripted-prompter.js";
 import {
   buildUnitDeps,
-  initAndInstall,
   FIXTURE_DIR,
+  initAndInstall,
 } from "../../../helpers/ports/build-unit-deps.js";
+import { FakePlatform } from "../../../helpers/ports/fake-platform.js";
+import { OverwritePrompter } from "../../../helpers/ports/scripted-prompter.js";
 
 const PROJECT_ROOT = "/test-project";
 

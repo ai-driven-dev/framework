@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { InteractiveMenuUseCase } from "../../../src/application/commands/menu.js";
 import type { Prompter } from "../../../src/domain/ports/prompter.js";
-import {
-  buildUnitDeps,
-  initProject,
-} from "../../helpers/ports/build-unit-deps.js";
+import { buildUnitDeps, initProject } from "../../helpers/ports/build-unit-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 

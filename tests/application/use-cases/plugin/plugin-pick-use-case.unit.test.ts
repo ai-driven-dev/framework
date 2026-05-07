@@ -7,16 +7,13 @@ import {
   NoMarketplacesRegisteredError,
 } from "../../../../src/domain/errors.js";
 import { Marketplace } from "../../../../src/domain/models/marketplace.js";
-import { InMemoryFileSystem } from "../../../helpers/ports/in-memory-file-system.js";
-import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
-import { KeepPrompter } from "../../../helpers/ports/scripted-prompter.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
-import {
-  buildUnitDeps,
-  initAndInstall,
-} from "../../../helpers/ports/build-unit-deps.js";
+import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";
+import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
+import type { InMemoryFileSystem } from "../../../helpers/ports/in-memory-file-system.js";
+import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
+import { KeepPrompter } from "../../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");

@@ -3,13 +3,13 @@ import { describe, expect, it } from "vitest";
 import { InstallUseCase } from "../../../../src/application/use-cases/install/install-use-case.js";
 import type { PluginCatalog } from "../../../../src/domain/models/plugin-catalog.js";
 import type { PluginCatalogRepository } from "../../../../src/domain/ports/plugin-catalog-repository.js";
-import { FakePlatform } from "../../../helpers/ports/fake-platform.js";
-import { OverwritePrompter } from "../../../helpers/ports/scripted-prompter.js";
 import {
   buildUnitDeps,
-  initAndInstall,
   FIXTURE_DIR,
+  initAndInstall,
 } from "../../../helpers/ports/build-unit-deps.js";
+import { FakePlatform } from "../../../helpers/ports/fake-platform.js";
+import { OverwritePrompter } from "../../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
 
 const SAMPLE_PLUGIN_PATH = join(
@@ -79,9 +79,9 @@ describe("InstallUseCase plugin wizard", () => {
       expect(
         deps.fs.has(join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md"))
       ).toBe(true);
-      expect(
-        deps.fs.has(join(PROJECT_ROOT, ".claude/plugins/extra-plugin/commands/bye.md"))
-      ).toBe(false);
+      expect(deps.fs.has(join(PROJECT_ROOT, ".claude/plugins/extra-plugin/commands/bye.md"))).toBe(
+        false
+      );
     });
   });
 
@@ -101,9 +101,9 @@ describe("InstallUseCase plugin wizard", () => {
       expect(
         deps.fs.has(join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md"))
       ).toBe(true);
-      expect(
-        deps.fs.has(join(PROJECT_ROOT, ".claude/plugins/extra-plugin/commands/bye.md"))
-      ).toBe(true);
+      expect(deps.fs.has(join(PROJECT_ROOT, ".claude/plugins/extra-plugin/commands/bye.md"))).toBe(
+        true
+      );
     });
   });
 
@@ -124,9 +124,9 @@ describe("InstallUseCase plugin wizard", () => {
       expect(
         deps.fs.has(join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md"))
       ).toBe(false);
-      expect(
-        deps.fs.has(join(PROJECT_ROOT, ".claude/plugins/extra-plugin/commands/bye.md"))
-      ).toBe(true);
+      expect(deps.fs.has(join(PROJECT_ROOT, ".claude/plugins/extra-plugin/commands/bye.md"))).toBe(
+        true
+      );
     });
   });
 
@@ -147,9 +147,9 @@ describe("InstallUseCase plugin wizard", () => {
       expect(
         deps.fs.has(join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md"))
       ).toBe(false);
-      expect(
-        deps.fs.has(join(PROJECT_ROOT, ".claude/plugins/extra-plugin/commands/bye.md"))
-      ).toBe(false);
+      expect(deps.fs.has(join(PROJECT_ROOT, ".claude/plugins/extra-plugin/commands/bye.md"))).toBe(
+        false
+      );
       expect(results.length).toBeGreaterThan(0);
     });
   });

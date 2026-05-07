@@ -2,10 +2,10 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ResolveMarketplaceUseCase } from "../../../../src/application/use-cases/shared/resolve-marketplace-use-case.js";
 import { Marketplace } from "../../../../src/domain/models/marketplace.js";
-import { InMemoryFileSystem } from "../../../helpers/ports/in-memory-file-system.js";
+import { PluginCatalogRepositoryAdapter } from "../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
-import { PluginCatalogRepositoryAdapter } from "../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
+import { InMemoryFileSystem } from "../../../helpers/ports/in-memory-file-system.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_DIR = "/marketplace-source";
@@ -15,18 +15,12 @@ function seedMarketplaceJson(
   dir: string,
   plugins: Array<Record<string, unknown>>
 ): void {
-  fs.writeFile(
-    join(dir, ".claude-plugin/marketplace.json"),
-    JSON.stringify({ plugins })
-  );
+  fs.writeFile(join(dir, ".claude-plugin/marketplace.json"), JSON.stringify({ plugins }));
 }
 
 function buildUseCase(fs: InMemoryFileSystem) {
   const pluginFetcher = new FixturePluginFetcher();
-  return new ResolveMarketplaceUseCase(
-    pluginFetcher,
-    new PluginCatalogRepositoryAdapter(fs)
-  );
+  return new ResolveMarketplaceUseCase(pluginFetcher, new PluginCatalogRepositoryAdapter(fs));
 }
 
 function makeMarketplace(name: string): Marketplace {

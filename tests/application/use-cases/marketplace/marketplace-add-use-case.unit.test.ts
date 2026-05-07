@@ -8,14 +8,14 @@ import {
   TrustDeniedError,
 } from "../../../../src/domain/errors.js";
 import type { Prompter } from "../../../../src/domain/ports/prompter.js";
+import { PluginCatalogRepositoryAdapter } from "../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
+import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
+import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileSystem } from "../../../helpers/ports/in-memory-file-system.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { InMemoryMarketplaceTrustStore } from "../../../helpers/ports/in-memory-marketplace-trust-store.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { KeepPrompter } from "../../../helpers/ports/scripted-prompter.js";
-import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
-import { PluginCatalogRepositoryAdapter } from "../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
 
 const MARKETPLACE_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-sample");

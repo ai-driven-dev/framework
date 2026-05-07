@@ -9,17 +9,14 @@ import {
   VersionMismatchError,
 } from "../../../../src/domain/errors.js";
 import { Marketplace } from "../../../../src/domain/models/marketplace.js";
-import { InMemoryFileSystem } from "../../../helpers/ports/in-memory-file-system.js";
-import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
-import { KeepPrompter } from "../../../helpers/ports/scripted-prompter.js";
-import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
-import {
-  buildUnitDeps,
-  initAndInstall,
-} from "../../../helpers/ports/build-unit-deps.js";
+import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";
+import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
+import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
+import type { InMemoryFileSystem } from "../../../helpers/ports/in-memory-file-system.js";
+import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
+import { KeepPrompter } from "../../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -32,10 +29,7 @@ function seedMarketplaceFile(
   dir: string,
   plugins: Array<Record<string, unknown>>
 ): void {
-  fs.writeFile(
-    join(dir, ".claude-plugin/marketplace.json"),
-    JSON.stringify({ plugins })
-  );
+  fs.writeFile(join(dir, ".claude-plugin/marketplace.json"), JSON.stringify({ plugins }));
 }
 
 async function buildUseCase() {
@@ -124,11 +118,21 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
     seedMarketplaceFile(deps.fs, MKT2_DIR, [entry]);
     await registry.save(
       PROJECT_ROOT,
-      Marketplace.create({ name: "mkt1", source: { kind: "local", path: MKT1_DIR }, scope: "project", addedAt: "2026-04-29T10:00:00.000Z" })
+      Marketplace.create({
+        name: "mkt1",
+        source: { kind: "local", path: MKT1_DIR },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
     );
     await registry.save(
       PROJECT_ROOT,
-      Marketplace.create({ name: "mkt2", source: { kind: "local", path: MKT2_DIR }, scope: "project", addedAt: "2026-04-29T10:00:00.000Z" })
+      Marketplace.create({
+        name: "mkt2",
+        source: { kind: "local", path: MKT2_DIR },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
     );
 
     await expect(
@@ -152,11 +156,21 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
     seedMarketplaceFile(deps.fs, MKT2_DIR, [entry]);
     await registry.save(
       PROJECT_ROOT,
-      Marketplace.create({ name: "mkt1", source: { kind: "local", path: MKT1_DIR }, scope: "project", addedAt: "2026-04-29T10:00:00.000Z" })
+      Marketplace.create({
+        name: "mkt1",
+        source: { kind: "local", path: MKT1_DIR },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
     );
     await registry.save(
       PROJECT_ROOT,
-      Marketplace.create({ name: "mkt2", source: { kind: "local", path: MKT2_DIR }, scope: "project", addedAt: "2026-04-29T10:00:00.000Z" })
+      Marketplace.create({
+        name: "mkt2",
+        source: { kind: "local", path: MKT2_DIR },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
     );
 
     const result = await useCase.execute({
@@ -177,7 +191,12 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
     ]);
     await registry.save(
       PROJECT_ROOT,
-      Marketplace.create({ name: "mkt1", source: { kind: "local", path: MKT1_DIR }, scope: "project", addedAt: "2026-04-29T10:00:00.000Z" })
+      Marketplace.create({
+        name: "mkt1",
+        source: { kind: "local", path: MKT1_DIR },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
     );
 
     await expect(
@@ -198,7 +217,12 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
     ]);
     await registry.save(
       PROJECT_ROOT,
-      Marketplace.create({ name: "mkt1", source: { kind: "local", path: MKT1_DIR }, scope: "project", addedAt: "2026-04-29T10:00:00.000Z" })
+      Marketplace.create({
+        name: "mkt1",
+        source: { kind: "local", path: MKT1_DIR },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
     );
 
     await expect(
@@ -223,11 +247,21 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
     seedMarketplaceFile(deps.fs, MKT2_DIR, [entry]);
     await registry.save(
       PROJECT_ROOT,
-      Marketplace.create({ name: "mkt1", source: { kind: "local", path: MKT1_DIR }, scope: "project", addedAt: "2026-04-29T10:00:00.000Z" })
+      Marketplace.create({
+        name: "mkt1",
+        source: { kind: "local", path: MKT1_DIR },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
     );
     await registry.save(
       PROJECT_ROOT,
-      Marketplace.create({ name: "mkt2", source: { kind: "local", path: MKT2_DIR }, scope: "project", addedAt: "2026-04-29T10:00:00.000Z" })
+      Marketplace.create({
+        name: "mkt2",
+        source: { kind: "local", path: MKT2_DIR },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
     );
 
     const result = await useCase.execute({

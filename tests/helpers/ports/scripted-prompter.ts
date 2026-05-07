@@ -112,7 +112,10 @@ export class ScriptedPrompter implements Prompter {
  * Always-overwrite variant — convenience for tests that don't care about conflicts.
  */
 export class OverwritePrompter implements Prompter {
-  async resolveConflict(): Promise<"keep" | "overwrite"> {
+  async resolveConflict(
+    _relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite"> {
     return "overwrite";
   }
 
@@ -145,7 +148,10 @@ export class OverwritePrompter implements Prompter {
  * Always-keep variant — convenience for tests that preserve user files.
  */
 export class KeepPrompter implements Prompter {
-  async resolveConflict(): Promise<"keep" | "overwrite"> {
+  async resolveConflict(
+    _relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite"> {
     return "keep";
   }
 

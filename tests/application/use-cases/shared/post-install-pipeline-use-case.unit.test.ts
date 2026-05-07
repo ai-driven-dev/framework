@@ -1,10 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PostInstallPipelineUseCase } from "../../../../src/application/use-cases/shared/post-install-pipeline-use-case.js";
-import {
-  buildUnitDeps,
-  initAndInstall,
-} from "../../../helpers/ports/build-unit-deps.js";
+import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 
