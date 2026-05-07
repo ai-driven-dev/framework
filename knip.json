@@ -1,5 +1,5 @@
 {
-  "entry": ["src/cli.ts", "scripts/check-bundle-size.mjs"],
+  "entry": ["src/cli.ts", "scripts/check-bundle-size.mjs", "scripts/pre-release-check.mjs"],
   "ignore": [
     ".aidd/**",
     "config/vitest-text-loader.ts",

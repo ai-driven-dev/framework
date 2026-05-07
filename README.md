@@ -25,10 +25,10 @@ Available on [npmjs.org](https://www.npmjs.com/package/@ai-driven-dev/cli).
 
 ```bash
 # npm (recommended)
-npm install -g @ai-driven-dev/cli
+npm install -g @ai-driven-dev/cli@latest
 
 # or with pnpm / yarn / bun
-pnpm add -g @ai-driven-dev/cli
+pnpm add -g @ai-driven-dev/cli@latest
 
 # Verify
 aidd --version
@@ -165,10 +165,9 @@ aidd marketplace check
 ### Uninstalling a tool
 
 ```bash
-aidd uninstall cursor           # remove cursor files and clean up the manifest
-aidd uninstall ide vscode       # remove VS Code integration only
-aidd uninstall ai --all         # remove all AI tools
-aidd uninstall --all            # uninstall all tools
+aidd ai uninstall cursor        # remove cursor files and clean up the manifest
+aidd ide uninstall vscode       # remove VS Code integration only
+aidd ai uninstall --all         # remove all AI tools
 ```
 
 ---

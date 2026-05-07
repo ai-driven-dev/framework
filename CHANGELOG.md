@@ -1,5 +1,30 @@
 # Changelog
 
+## [4.1.0] — Stable release — Noun-first surface + plugin architecture (CLI v5)
+
+> Consolidates `4.1.0-beta.1` through `4.1.0-beta.11`. Full details in each beta section below.
+> Version bump and npm publish are handled by the release-please PR on `main`.
+
+### Headline features
+
+- **Noun-first command surface** — `aidd ai <verb>`, `aidd ide <verb>`, `aidd marketplace <verb>`, `aidd plugin <verb>`
+- **Manifest v5 schema** — removed `docsDir`, `repo`, `mode`, `scripts`, `topPlugins` fields
+- **Plugin architecture** — memory stubs (CLAUDE.md, AGENTS.md, copilot-instructions.md) are plugin-owned; not bundled in the CLI
+- **Marketplace cache** — `aidd marketplace cache list|clear` manages fetched catalogs
+- **Plugin sync** — `aidd ai sync` propagates installed plugins from source to target tools
+- **Bundle budget** — `dist/cli.js` gated at 500 KB; checked on every build
+
+### Breaking changes summary (see full table in `[4.1.0-beta.11]` section below)
+
+All `4.0.x` command spellings are removed. Run `aidd migrate` to clean obsolete manifest entries.
+
+### Included beta releases
+
+- `4.1.0-beta.11` — noun-first surface, plugin sync, build-dist, bundle budget
+- `4.1.0-beta.10` and earlier — marketplace architecture, migrate command, bundled configs
+
+---
+
 ## [4.1.0-beta.11] — Noun-first surface + plugin architecture (CLI v5)
 
 ### Breaking Changes
