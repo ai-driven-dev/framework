@@ -112,6 +112,16 @@ pnpm test -- --coverage      # same + coverage report with thresholds
 
 All CI checks must pass locally before pushing.
 
+#### Network E2E tests (opt-in)
+
+Network E2E tests exercise the real GitHub fetch path (`ai-driven-dev/aidd-framework`). They are skipped in the default `pnpm test` run and require opt-in:
+
+```bash
+RUN_NETWORK_TESTS=1 pnpm test:e2e tests/e2e/network.e2e.test.ts
+```
+
+These tests run automatically every night via the `network-e2e.yml` workflow. They do not count against the regular E2E budget and must not be run in offline/CI environments that lack GitHub access.
+
 ### 6. Test the CLI manually _(optional)_
 
 ```bash
