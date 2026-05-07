@@ -16,8 +16,13 @@ async function seedManifest(projectDir: string): Promise<void> {
   );
 }
 
+// Tests using `--source remote` clone aidd-framework via git, which requires
+// real ~/.gitconfig + network. Sandboxed HOME breaks this. Gate behind
+// RUN_NETWORK_TESTS=1 like other network E2E suites.
+const networkAvailable = process.env.RUN_NETWORK_TESTS === "1";
+
 describe.concurrent("E2E: aidd setup greenfield — full setup from empty dir", () => {
-  it("setup --source remote --all --recommended-plugins --yes installs all tools and writes v5 manifest", async () => {
+  it.skipIf(!networkAvailable)("setup --source remote --all --recommended-plugins --yes installs all tools and writes v5 manifest", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-setup-all");
     try {
       const { stdout, exitCode } = await runCli(
@@ -47,7 +52,7 @@ describe.concurrent("E2E: aidd setup greenfield — full setup from empty dir", 
     }
   });
 
-  it("setup --source remote --all --yes writes AI and IDE tool files to disk", async () => {
+  it.skipIf(!networkAvailable)("setup --source remote --all --yes writes AI and IDE tool files to disk",async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-setup-disk");
     try {
       const { exitCode } = await runCli(
@@ -64,7 +69,7 @@ describe.concurrent("E2E: aidd setup greenfield — full setup from empty dir", 
     }
   });
 
-  it("setup --source remote --ai claude --yes installs only claude", async () => {
+  it.skipIf(!networkAvailable)("setup --source remote --ai claude --yes installs only claude", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-setup-claude-only");
     try {
       const { stdout, exitCode } = await runCli(
@@ -85,7 +90,7 @@ describe.concurrent("E2E: aidd setup greenfield — full setup from empty dir", 
     }
   });
 
-  it("setup is idempotent — second run on already-set-up project exits 0", async () => {
+  it.skipIf(!networkAvailable)("setup is idempotent — second run on already-set-up project exits 0", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-setup-idempotent");
     try {
       await runCli(

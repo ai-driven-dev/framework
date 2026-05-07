@@ -44,7 +44,7 @@ Method: `plugin add <format-fixture> --tool <source>` → modify component file 
 Format fixtures available:
 - `claude-format/sample-plugin`: commands + agents + skills + hooks
 - `cursor-format/sample-plugin`: commands only
-- `codex-format/sample-plugin`: commands only (added in Part 2 audit)
+- `codex-format/sample-plugin`: commands only
 
 Tools without dedicated format fixtures: copilot (no tool-specific plugin dir)
 

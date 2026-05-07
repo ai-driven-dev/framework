@@ -180,7 +180,7 @@ describe("PluginFetcherAdapter", () => {
     });
   });
 
-  describe("github source (unreachable repo)", () => {
+  describe.skipIf(process.env.RUN_NETWORK_TESTS !== "1")("github source (unreachable repo)", () => {
     it("surfaces a PluginFetchError when the github repo cannot be cloned", async () => {
       const sandbox = await mkdtemp(join(tmpdir(), "aidd-fetcher-gh-"));
       try {
