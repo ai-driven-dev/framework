@@ -1,13 +1,15 @@
-import { existsSync } from "node:fs";
-import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import "../../../src/domain/tools/ide/vscode.js";
+import { describe, expect, it, vi } from "vitest";
 import { InstallIdeConfigUseCase } from "../../../src/application/use-cases/install/install-ide-config-use-case.js";
 import { Manifest } from "../../../src/domain/models/manifest.js";
-import { buildDeps, cleanupTempProject, createTempProject, initProject } from "./helpers.js";
+import {
+  buildUnitDeps,
+  initProject,
+} from "../../helpers/ports/build-unit-deps.js";
 
-function buildUseCase(deps: ReturnType<typeof buildDeps>) {
+const PROJECT_ROOT = "/test-project";
+
+function buildUseCase(deps: Awaited<ReturnType<typeof buildUnitDeps>>) {
   return new InstallIdeConfigUseCase(
     deps.fs,
     deps.manifestRepo,
@@ -18,26 +20,14 @@ function buildUseCase(deps: ReturnType<typeof buildDeps>) {
 }
 
 describe("InstallIdeConfigUseCase", () => {
-  let tempDir: string;
-  let projectRoot: string;
-
-  beforeEach(async () => {
-    ({ tempDir, projectRoot } = await createTempProject());
-  });
-
-  afterEach(async () => {
-    await cleanupTempProject(tempDir);
-  });
-
   it("writes settings files on fresh install", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
-    const useCase = buildUseCase(deps);
-    const result = await useCase.execute({
+    const result = await buildUseCase(deps).execute({
       toolId: "vscode",
-      projectRoot,
+      projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
       version: "1.0.0",
@@ -45,30 +35,29 @@ describe("InstallIdeConfigUseCase", () => {
 
     expect(result.skipped).toBe(false);
     expect(result.fileCount).toBeGreaterThan(0);
-    expect(existsSync(join(projectRoot, ".vscode/settings.json"))).toBe(true);
+    expect(deps.fs.has(join(PROJECT_ROOT, ".vscode/settings.json"))).toBe(true);
 
     const saved = await deps.manifestRepo.load();
     expect(saved?.hasTool("vscode")).toBe(true);
   });
 
   it("returns skipped without writing when already installed and no force", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
-    const useCase = buildUseCase(deps);
-    await useCase.execute({
+    await buildUseCase(deps).execute({
       toolId: "vscode",
-      projectRoot,
+      projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
       version: "1.0.0",
     });
 
     const reloaded = (await deps.manifestRepo.load()) ?? Manifest.create();
-    const result = await useCase.execute({
+    const result = await buildUseCase(deps).execute({
       toolId: "vscode",
-      projectRoot,
+      projectRoot: PROJECT_ROOT,
       manifest: reloaded,
       force: false,
       version: "1.0.0",
@@ -79,51 +68,46 @@ describe("InstallIdeConfigUseCase", () => {
   });
 
   it("overwrites existing tracked files when force is true", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
-    const useCase = buildUseCase(deps);
-    await useCase.execute({
+    await buildUseCase(deps).execute({
       toolId: "vscode",
-      projectRoot,
+      projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
       version: "1.0.0",
     });
 
-    const settingsPath = join(projectRoot, ".vscode/settings.json");
-    await writeFile(settingsPath, '{"modified": true}');
+    const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
+    await deps.fs.writeFile(settingsPath, '{"modified": true}');
 
     const reloaded = (await deps.manifestRepo.load()) ?? Manifest.create();
-    const result = await useCase.execute({
+    const result = await buildUseCase(deps).execute({
       toolId: "vscode",
-      projectRoot,
+      projectRoot: PROJECT_ROOT,
       manifest: reloaded,
       force: true,
       version: "1.0.0",
     });
 
     expect(result.skipped).toBe(false);
-    const { readFile } = await import("node:fs/promises");
-    const content = await readFile(settingsPath, "utf-8");
+    const content = deps.fs.getFile(settingsPath) ?? "";
     expect(content).not.toContain('"modified"');
   });
 
   it("skips user-owned untracked settings file and emits warning", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initProject(deps, PROJECT_ROOT);
 
-    const { mkdir } = await import("node:fs/promises");
-    await mkdir(join(projectRoot, ".vscode"), { recursive: true });
-    await writeFile(join(projectRoot, ".vscode/settings.json"), '{"user": true}');
+    await deps.fs.writeFile(join(PROJECT_ROOT, ".vscode/settings.json"), '{"user": true}');
 
     const warnSpy = vi.spyOn(deps.logger, "warn");
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-    const useCase = buildUseCase(deps);
-    const result = await useCase.execute({
+    const result = await buildUseCase(deps).execute({
       toolId: "vscode",
-      projectRoot,
+      projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
       version: "1.0.0",

@@ -1,29 +1,27 @@
-import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { InstallUseCase } from "../../../src/application/use-cases/install/install-use-case.js";
 import { UninstallUseCase } from "../../../src/application/use-cases/uninstall-use-case.js";
 import type { ToolId } from "../../../src/domain/tools/registry.js";
 import {
-  buildDeps,
-  cleanupTempProject,
-  createTempProject,
+  buildUnitDeps,
   FIXTURE_DIR,
   initProject,
-  linuxPlatform,
-} from "./helpers.js";
+} from "../../helpers/ports/build-unit-deps.js";
+import { FakePlatform } from "../../helpers/ports/fake-platform.js";
 
-const CATALOG = (root: string) => join(root, "aidd_docs", "CATALOG.md");
+const PROJECT_ROOT = "/test-project";
+const CATALOG = join(PROJECT_ROOT, "aidd_docs", "CATALOG.md");
 
-async function install(projectRoot: string, ...toolIds: ToolId[]): Promise<void> {
-  const deps = buildDeps(projectRoot);
-  await initProject(deps, projectRoot);
+async function install(toolIds: ToolId[]): Promise<Awaited<ReturnType<typeof buildUnitDeps>>> {
+  const deps = await buildUnitDeps(PROJECT_ROOT);
+  await initProject(deps, PROJECT_ROOT);
   const useCase = new InstallUseCase(
     deps.fs,
     deps.manifestRepo,
     deps.hasher,
     deps.logger,
-    linuxPlatform,
+    new FakePlatform("linux"),
     undefined,
     deps.pluginFetcher,
     deps.pluginDistributionReader,
@@ -34,26 +32,16 @@ async function install(projectRoot: string, ...toolIds: ToolId[]): Promise<void>
     frameworkPath: FIXTURE_DIR,
     version: "test",
     docsDir: "aidd_docs",
-    projectRoot,
+    projectRoot: PROJECT_ROOT,
     mcpFilter: ["playwright", "github"],
   });
+  return deps;
 }
 
 describe("CATALOG.md — content", () => {
-  let tempDir: string;
-  let projectRoot: string;
-
-  beforeEach(async () => {
-    ({ tempDir, projectRoot } = await createTempProject());
-  });
-
-  afterEach(async () => {
-    await cleanupTempProject(tempDir);
-  });
-
   it("organizes files by framework content type, not by tool name", async () => {
-    await install(projectRoot, "claude");
-    const content = await readFile(CATALOG(projectRoot), "utf-8");
+    const deps = await install(["claude" as ToolId]);
+    const content = deps.fs.getFile(CATALOG) ?? "";
 
     expect(content).toContain("### `agents`");
     expect(content).toContain("### `commands`");
@@ -64,8 +52,8 @@ describe("CATALOG.md — content", () => {
   });
 
   it("shows file descriptions from frontmatter as table column", async () => {
-    await install(projectRoot, "claude");
-    const content = await readFile(CATALOG(projectRoot), "utf-8");
+    const deps = await install(["claude" as ToolId]);
+    const content = deps.fs.getFile(CATALOG) ?? "";
 
     expect(content).toContain("| Description |");
     expect(content).toContain("`Reviews code for quality and correctness.`");
@@ -73,15 +61,15 @@ describe("CATALOG.md — content", () => {
   });
 
   it("creates a subfolder subsection for commands with subdirectories", async () => {
-    await install(projectRoot, "claude");
-    const content = await readFile(CATALOG(projectRoot), "utf-8");
+    const deps = await install(["claude" as ToolId]);
+    const content = deps.fs.getFile(CATALOG) ?? "";
 
     expect(content).toContain("#### `commands/04`");
   });
 
   it("includes a table of contents with links to all sections", async () => {
-    await install(projectRoot, "claude");
-    const content = await readFile(CATALOG(projectRoot), "utf-8");
+    const deps = await install(["claude" as ToolId]);
+    const content = deps.fs.getFile(CATALOG) ?? "";
 
     expect(content).toContain("## Table of Contents");
     expect(content).toContain("- [agents](#agents)");
@@ -89,63 +77,56 @@ describe("CATALOG.md — content", () => {
   });
 
   it("merges same framework file from two tools into one row with an Installed column", async () => {
-    await install(projectRoot, "claude", "copilot");
-    const content = await readFile(CATALOG(projectRoot), "utf-8");
+    const deps = await install(["claude" as ToolId, "copilot" as ToolId]);
+    const content = deps.fs.getFile(CATALOG) ?? "";
 
-    // Installed column header appears
     expect(content).toContain("| Installed |");
-    // Tool-named links in the same row
     expect(content).toContain("[claude]");
     expect(content).toContain("[copilot]");
     expect(content).toContain(" · ");
-
-    // No separate per-tool top-level sections
     expect(content).not.toContain("## Claude");
     expect(content).not.toContain("## Copilot");
   });
 
   it("removes a tool's files from catalog when it is uninstalled", async () => {
-    await install(projectRoot, "claude", "copilot");
-    const deps = buildDeps(projectRoot);
+    const deps = await install(["claude" as ToolId, "copilot" as ToolId]);
 
     const uninstall = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-    await uninstall.execute({ toolIds: ["copilot"], projectRoot, mcpFilter: [] });
+    await uninstall.execute({ toolIds: ["copilot" as ToolId], projectRoot: PROJECT_ROOT, mcpFilter: [] });
 
-    const content = await readFile(CATALOG(projectRoot), "utf-8");
-
+    const content = deps.fs.getFile(CATALOG) ?? "";
     expect(content).toContain("../.claude/");
     expect(content).not.toContain("../.github/");
   });
 
   it("shows 'No content installed' when no tools are installed", async () => {
-    const deps = buildDeps(projectRoot);
-    await initProject(deps, projectRoot);
-    const content = await readFile(CATALOG(projectRoot), "utf-8");
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initProject(deps, PROJECT_ROOT);
+    const content = deps.fs.getFile(CATALOG) ?? "";
 
     expect(content).toContain("No content installed.");
     expect(content).not.toContain("###");
   });
 
   it("excludes .gitkeep placeholder files from catalog", async () => {
-    await install(projectRoot, "claude");
-    const content = await readFile(CATALOG(projectRoot), "utf-8");
+    const deps = await install(["claude" as ToolId]);
+    const content = deps.fs.getFile(CATALOG) ?? "";
 
     expect(content).not.toContain(".gitkeep");
   });
 
   it("excludes files installed in hidden directories (config files like .vscode, .mcp)", async () => {
-    await install(projectRoot, "claude");
-    const content = await readFile(CATALOG(projectRoot), "utf-8");
+    const deps = await install(["claude" as ToolId]);
+    const content = deps.fs.getFile(CATALOG) ?? "";
 
     expect(content).not.toContain(".vscode");
     expect(content).not.toContain("mcp.json");
   });
 
   it("generates correct relative links from aidd_docs to installed files", async () => {
-    await install(projectRoot, "claude");
-    const content = await readFile(CATALOG(projectRoot), "utf-8");
+    const deps = await install(["claude" as ToolId]);
+    const content = deps.fs.getFile(CATALOG) ?? "";
 
-    // Links must be relative from aidd_docs/ → ../.claude/
     expect(content).toMatch(/\[code-reviewer\.md\]\(\.\.\/\.claude\//);
   });
 });
