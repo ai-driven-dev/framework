@@ -11,12 +11,17 @@ paths:
 - `*.integration.test.ts` — use-cases (`tests/application/`) and adapters (`tests/infrastructure/`)
 - `*.e2e.test.ts` — main user journeys only; `describe.concurrent()` required; `try/finally` cleanup
 
+## Unit — application use-cases
+
+- Mock all ports via in-memory implementations from `tests/helpers/ports/`
+- No real filesystem, no real I/O
+- Cover business logic, branches, error paths
+
 ## Integration — application
 
-- Real temp filesystem and fixture framework
-- Mock only: `Prompter`, `FrameworkResolver`
-- Never mock: `FileSystem`, `ManifestRepository`, `Hasher`, `FrameworkLoader`
-- Cover only: edge cases, non-interactive branches, platform-specific behavior not in E2E
+- Real temp filesystem only when adapter boundary behavior is the test target
+- Mock all ports otherwise
+- Cover only: real-FS layout enforcement, format serialization, real git/HTTP
 
 ## Integration — infrastructure
 
