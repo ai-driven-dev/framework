@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { AuthConfig } from "../../../src/domain/models/auth.js";
 import type { TokenResolver } from "../../../src/domain/ports/oauth-provider.js";
-import { AuthReader } from "../../../src/infrastructure/auth/auth-reader.js";
-import type { AuthStorage } from "../../../src/infrastructure/auth/auth-storage.js";
+import { AuthReader } from "../../../src/infrastructure/adapters/auth-reader.js";
+import type { AuthStorage } from "../../../src/infrastructure/adapters/auth-storage.js";
 
 function makeStorage(
   overrides: Partial<{

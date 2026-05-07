@@ -33,12 +33,10 @@ src/
 │       ├── ai/               # one file per AI tool (claude, cursor, copilot, opencode, codex)
 │       └── ide/              # one file per IDE tool (vscode)
 └── infrastructure/
-    ├── adapters/             # port implementations — one adapter per port
+    ├── adapters/             # port implementations — one adapter per port (incl. auth-reader, auth-storage, http-client)
     ├── assets/               # asset-loader.ts — typed loader for configs/stubs bundled in binary
-    ├── auth/                 # token reading and storage
     ├── deps.ts               # dependency injection wiring
-    ├── errors.ts             # infrastructure typed exceptions (internal only)
-    └── http/                 # node:https client
+    └── errors.ts             # infrastructure typed exceptions (internal only)
 ```
 
 ## Where to Add Things

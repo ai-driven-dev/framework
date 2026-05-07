@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { beforeEach, describe, expect, it } from "vitest";
 import { AuthenticationError } from "../../../src/domain/errors.js";
-import { HttpClient } from "../../../src/infrastructure/http/http-client.js";
+import { HttpClient } from "../../../src/infrastructure/adapters/http-client.js";
 
 function startServer(
   handler: (

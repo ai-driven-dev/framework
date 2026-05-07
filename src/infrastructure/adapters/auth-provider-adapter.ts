@@ -8,7 +8,7 @@ import type {
   CredentialStore,
 } from "../../domain/ports/credential-store.js";
 import type { CliAuthProvider, TokenAuthProvider } from "../../domain/ports/oauth-provider.js";
-import type { AuthStorage } from "../auth/auth-storage.js";
+import type { AuthStorage } from "./auth-storage.js";
 
 export class AuthProviderAdapter implements CredentialStore {
   constructor(

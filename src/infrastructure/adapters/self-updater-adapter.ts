@@ -6,7 +6,7 @@ import {
   UpdateError,
 } from "../../domain/errors.js";
 import type { CliRelease, SelfUpdater } from "../../domain/ports/self-updater.js";
-import type { HttpClient } from "../http/http-client.js";
+import type { HttpClient } from "./http-client.js";
 
 const CLI_REPO = "ai-driven-dev/aidd-cli";
 const CLI_PACKAGE = "@ai-driven-dev/cli";

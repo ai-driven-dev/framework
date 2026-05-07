@@ -51,11 +51,14 @@ import type { Prompter } from "../domain/ports/prompter.js";
 import type { SelfUpdater } from "../domain/ports/self-updater.js";
 import type { VersionControl } from "../domain/ports/version-control.js";
 import type { VersionReader } from "../domain/ports/version-reader.js";
+import { AuthReader } from "./adapters/auth-reader.js";
+import { AuthStorage } from "./adapters/auth-storage.js";
 import { CurrentVersionAdapter } from "./adapters/current-version-adapter.js";
 import { FileSystemAdapter } from "./adapters/file-system-adapter.js";
 import { GhCliAdapter } from "./adapters/gh-cli-adapter.js";
 import { GitAdapter } from "./adapters/git-adapter.js";
 import { HasherAdapter } from "./adapters/hasher-adapter.js";
+import { HttpClient } from "./adapters/http-client.js";
 import { ManifestRepositoryAdapter } from "./adapters/manifest-repository-adapter.js";
 import { MarketplaceRegistryAdapter } from "./adapters/marketplace-registry-adapter.js";
 import { MarketplaceTrustStoreAdapter } from "./adapters/marketplace-trust-store-adapter.js";
@@ -66,9 +69,6 @@ import { PluginFetcherAdapter } from "./adapters/plugin-fetcher-adapter.js";
 import { InquirerPrompterAdapter, SilentPrompterAdapter } from "./adapters/prompter-adapter.js";
 import { SelfUpdaterAdapter } from "./adapters/self-updater-adapter.js";
 import { BundledAssetProviderAdapter } from "./assets/asset-loader.js";
-import { AuthReader } from "./auth/auth-reader.js";
-import { AuthStorage } from "./auth/auth-storage.js";
-import { HttpClient } from "./http/http-client.js";
 
 interface GlobalOptions {
   verbose: boolean;
