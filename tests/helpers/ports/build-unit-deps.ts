@@ -10,6 +10,10 @@ import { CLIOutput } from "../../../src/application/output.js";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
 import { InstallIdeConfigUseCase } from "../../../src/application/use-cases/install/install-ide-config-use-case.js";
 import { InstallRuntimeConfigUseCase } from "../../../src/application/use-cases/install/install-runtime-config-use-case.js";
+import { SyncConflictResolverUseCase } from "../../../src/application/use-cases/sync/sync-conflict-resolver-use-case.js";
+import { SyncFilePropagationUseCase } from "../../../src/application/use-cases/sync/sync-file-propagation-use-case.js";
+import { SyncSourceResolverUseCase } from "../../../src/application/use-cases/sync/sync-source-resolver-use-case.js";
+import { SyncUseCase } from "../../../src/application/use-cases/sync/sync-use-case.js";
 import { Manifest } from "../../../src/domain/models/manifest.js";
 import { isIdeToolId, type ToolId } from "../../../src/domain/tools/registry.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
@@ -54,6 +58,10 @@ export async function buildUnitDeps(_projectRoot: string) {
 
   const currentVersionProvider = new FakeCurrentVersion();
 
+  const syncConflictResolver = new SyncConflictResolverUseCase(fs);
+  const syncFilePropagation = new SyncFilePropagationUseCase(fs, syncConflictResolver, logger);
+  const syncSourceResolver = new SyncSourceResolverUseCase(fs);
+
   // Seed the framework fixture content so the install use-case can read it
   await seedFromDirectory(fs, FIXTURE_DIR, { useAbsolutePaths: true });
 
@@ -69,6 +77,9 @@ export async function buildUnitDeps(_projectRoot: string) {
     installRuntimeConfigUseCase,
     installIdeConfigUseCase,
     currentVersionProvider,
+    syncConflictResolver,
+    syncFilePropagation,
+    syncSourceResolver,
   };
 }
 
@@ -112,6 +123,20 @@ export async function initAndInstall(
 ) {
   await initProject(deps, projectRoot);
   return installTool(deps, projectRoot, toolId);
+}
+
+export function buildSyncUseCase(
+  deps: Awaited<ReturnType<typeof buildUnitDeps>>,
+  syncPluginsUseCase?: ConstructorParameters<typeof SyncUseCase>[5]
+): SyncUseCase {
+  return new SyncUseCase(
+    deps.fs,
+    deps.manifestRepo,
+    deps.hasher,
+    deps.syncSourceResolver,
+    deps.syncFilePropagation,
+    syncPluginsUseCase
+  );
 }
 
 export { FIXTURE_DIR };

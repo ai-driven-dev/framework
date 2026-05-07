@@ -1,15 +1,19 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { SyncUseCase } from "../../../src/application/use-cases/sync/sync-use-case.js";
 import { DOCS_DIR } from "../../../src/domain/models/paths.js";
-import { buildUnitDeps, initProject, installTool } from "../../helpers/ports/build-unit-deps.js";
+import {
+  buildSyncUseCase,
+  buildUnitDeps,
+  initProject,
+  installTool,
+} from "../../helpers/ports/build-unit-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 
 describe("sync", () => {
   it("aborts if project is not initialized", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildSyncUseCase(deps);
 
     await expect(
       useCase.execute({
@@ -25,7 +29,7 @@ describe("sync", () => {
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, "cursor");
 
-    const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildSyncUseCase(deps);
 
     await expect(
       useCase.execute({
@@ -41,7 +45,7 @@ describe("sync", () => {
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, "claude");
 
-    const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildSyncUseCase(deps);
 
     await expect(
       useCase.execute({
@@ -58,7 +62,7 @@ describe("sync", () => {
     await installTool(deps, PROJECT_ROOT, "claude");
     await installTool(deps, PROJECT_ROOT, "cursor");
 
-    const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildSyncUseCase(deps);
 
     await expect(
       useCase.execute({
@@ -76,7 +80,7 @@ describe("sync", () => {
     await installTool(deps, PROJECT_ROOT, "claude");
     await installTool(deps, PROJECT_ROOT, "cursor");
 
-    const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildSyncUseCase(deps);
 
     const result = await useCase.execute({
       projectRoot: PROJECT_ROOT,
@@ -96,7 +100,7 @@ describe("sync", () => {
 
     await deps.fs.deleteFile(join(PROJECT_ROOT, ".claude/rules/01-standards/naming.md"));
 
-    const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildSyncUseCase(deps);
 
     await useCase.execute({
       projectRoot: PROJECT_ROOT,
@@ -116,7 +120,7 @@ describe("sync", () => {
 
     await deps.fs.writeFile(join(PROJECT_ROOT, "CLAUDE.md"), "modified memory bank content");
 
-    const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildSyncUseCase(deps);
 
     const result = await useCase.execute({
       projectRoot: PROJECT_ROOT,
@@ -140,7 +144,7 @@ describe("sync", () => {
       "---\nname: my-custom-agent\ndescription: My agent.\n---\n\nContent.\n"
     );
 
-    const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildSyncUseCase(deps);
 
     const result = await useCase.execute({
       projectRoot: PROJECT_ROOT,
@@ -165,7 +169,7 @@ describe("sync", () => {
       "---\nname: my-custom-agent\ndescription: My agent.\n---\n\nCustom agent content.\n"
     );
 
-    const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildSyncUseCase(deps);
 
     const result = await useCase.execute({
       projectRoot: PROJECT_ROOT,
@@ -196,7 +200,7 @@ describe("sync", () => {
       '---\npaths:\n  - "src/**"\n---\n\nCustom rule.\n'
     );
 
-    const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildSyncUseCase(deps);
 
     await useCase.execute({
       projectRoot: PROJECT_ROOT,
@@ -221,7 +225,7 @@ describe("sync", () => {
       '---\nglobs: ["src/**"]\nalwaysApply: false\n---\n\nCustom cursor rule.\n'
     );
 
-    const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildSyncUseCase(deps);
 
     await useCase.execute({
       projectRoot: PROJECT_ROOT,
@@ -247,7 +251,7 @@ describe("sync", () => {
       "# My Skill\n\nCustom skill content.\n"
     );
 
-    const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildSyncUseCase(deps);
 
     await useCase.execute({
       projectRoot: PROJECT_ROOT,
@@ -272,7 +276,7 @@ describe("sync", () => {
       "---\nname: my-custom-agent\ndescription: My agent.\n---\n\nCustom agent for copilot.\n"
     );
 
-    const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildSyncUseCase(deps);
 
     await useCase.execute({
       projectRoot: PROJECT_ROOT,
@@ -298,7 +302,7 @@ describe("sync", () => {
       "---\nname: my-copilot-agent\ndescription: My copilot agent.\n---\n\nCopilot agent content.\n"
     );
 
-    const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildSyncUseCase(deps);
 
     await useCase.execute({
       projectRoot: PROJECT_ROOT,
@@ -323,7 +327,7 @@ describe("sync", () => {
       "---\nname: my-custom-agent\ndescription: My agent.\n---\n\nContent.\n"
     );
 
-    const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildSyncUseCase(deps);
 
     await useCase.execute({
       projectRoot: PROJECT_ROOT,
@@ -359,7 +363,7 @@ describe("sync", () => {
       "---\nname: my-custom-agent\ndescription: My agent.\n---\n\nContent.\n"
     );
 
-    const useCase = new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger);
+    const useCase = buildSyncUseCase(deps);
 
     await useCase.execute({
       projectRoot: PROJECT_ROOT,

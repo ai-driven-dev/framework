@@ -222,8 +222,8 @@ export function registerAiCommand(program: Command): void {
             deps.fs,
             deps.manifestRepo,
             deps.hasher,
-            deps.logger,
-            deps.prompter,
+            deps.syncSourceResolverUseCase,
+            deps.syncFilePropagationUseCase,
             syncPluginsUseCase
           );
           const result = await syncUseCase.execute({

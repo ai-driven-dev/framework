@@ -1,10 +1,13 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginAddUseCase } from "../../../src/application/use-cases/plugin/plugin-add-use-case.js";
-import { SyncUseCase } from "../../../src/application/use-cases/sync/sync-use-case.js";
 import { PluginNotFoundError } from "../../../src/domain/errors.js";
 import { PluginDistributionReaderAdapter } from "../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
-import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
+import {
+  buildSyncUseCase,
+  buildUnitDeps,
+  initAndInstall,
+} from "../../helpers/ports/build-unit-deps.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -39,7 +42,7 @@ describe("SyncUseCase — plugin scope", () => {
     const pluginFile = join(PROJECT_ROOT, trackedKey ?? "");
     await deps.fs.writeFile(pluginFile, "USER MODIFIED CONTENT");
 
-    await new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger).execute({
+    await buildSyncUseCase(deps).execute({
       projectRoot: PROJECT_ROOT,
       pluginName: "sample-plugin",
     });
@@ -56,7 +59,7 @@ describe("SyncUseCase — plugin scope", () => {
     await initAndInstall(deps, PROJECT_ROOT, "claude");
 
     await expect(
-      new SyncUseCase(deps.fs, deps.manifestRepo, deps.hasher, deps.logger).execute({
+      buildSyncUseCase(deps).execute({
         projectRoot: PROJECT_ROOT,
         pluginName: "nonexistent",
       })

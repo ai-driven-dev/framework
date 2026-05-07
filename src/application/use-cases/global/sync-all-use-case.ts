@@ -2,10 +2,11 @@ import type { FileSystem } from "../../../domain/ports/file-system.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
-import type { Prompter } from "../../../domain/ports/prompter.js";
 import type { ToolId } from "../../../domain/tools/registry.js";
 import type { PluginInstallFromMarketplaceUseCase } from "../plugin/plugin-install-from-marketplace-use-case.js";
+import type { SyncFilePropagationUseCase } from "../sync/sync-file-propagation-use-case.js";
 import { SyncPluginsUseCase } from "../sync/sync-plugins-use-case.js";
+import type { SyncSourceResolverUseCase } from "../sync/sync-source-resolver-use-case.js";
 import { SyncUseCase } from "../sync/sync-use-case.js";
 
 export class NonInteractiveSyncError extends Error {
@@ -36,7 +37,8 @@ export class SyncAllUseCase {
     private readonly manifestRepo: ManifestRepository,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
-    private readonly prompter: Prompter,
+    private readonly syncSourceResolver: SyncSourceResolverUseCase,
+    private readonly syncFilePropagation: SyncFilePropagationUseCase,
     private readonly pluginInstallFromMarketplace?: PluginInstallFromMarketplaceUseCase
   ) {}
 
@@ -52,8 +54,8 @@ export class SyncAllUseCase {
       this.fs,
       this.manifestRepo,
       this.hasher,
-      this.logger,
-      this.prompter,
+      this.syncSourceResolver,
+      this.syncFilePropagation,
       syncPluginsUseCase
     );
     const result = await syncUseCase.execute({

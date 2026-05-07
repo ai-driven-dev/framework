@@ -26,6 +26,9 @@ import { PluginRemoveUseCase } from "../application/use-cases/plugin/plugin-remo
 import { PluginSearchUseCase } from "../application/use-cases/plugin/plugin-search-use-case.js";
 import { PluginUpdateUseCase } from "../application/use-cases/plugin/plugin-update-use-case.js";
 import { ResolveMarketplaceUseCase } from "../application/use-cases/shared/resolve-marketplace-use-case.js";
+import { SyncConflictResolverUseCase } from "../application/use-cases/sync/sync-conflict-resolver-use-case.js";
+import { SyncFilePropagationUseCase } from "../application/use-cases/sync/sync-file-propagation-use-case.js";
+import { SyncSourceResolverUseCase } from "../application/use-cases/sync/sync-source-resolver-use-case.js";
 import { UninstallIdeUseCase } from "../application/use-cases/uninstall-ide-use-case.js";
 import type { AssetProvider } from "../domain/ports/asset-provider.js";
 import type { FileSystem } from "../domain/ports/file-system.js";
@@ -105,6 +108,9 @@ interface Deps {
   migrateBackupUseCase: MigrateBackupUseCase;
   migrateStripDeadFilesUseCase: MigrateStripDeadFilesUseCase;
   migrateRewirePluginsUseCase: MigrateRewirePluginsUseCase;
+  syncConflictResolverUseCase: SyncConflictResolverUseCase;
+  syncFilePropagationUseCase: SyncFilePropagationUseCase;
+  syncSourceResolverUseCase: SyncSourceResolverUseCase;
 }
 
 const _cache = new Map<string, Deps>();
@@ -249,6 +255,13 @@ export async function createDeps(
     pluginInstallFromMarketplaceUseCase,
     logger
   );
+  const syncConflictResolverUseCase = new SyncConflictResolverUseCase(fs);
+  const syncFilePropagationUseCase = new SyncFilePropagationUseCase(
+    fs,
+    syncConflictResolverUseCase,
+    logger
+  );
+  const syncSourceResolverUseCase = new SyncSourceResolverUseCase(fs, prompter);
   const deps: Deps = {
     fs,
     manifestRepo,
@@ -289,6 +302,9 @@ export async function createDeps(
     migrateBackupUseCase,
     migrateStripDeadFilesUseCase,
     migrateRewirePluginsUseCase,
+    syncConflictResolverUseCase,
+    syncFilePropagationUseCase,
+    syncSourceResolverUseCase,
   };
   _cache.set(projectRoot, deps);
   return deps;

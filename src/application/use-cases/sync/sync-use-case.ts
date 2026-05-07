@@ -5,19 +5,16 @@ import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import { AI_TOOL_IDS } from "../../../domain/models/tool-ids.js";
 import type { FileSystem } from "../../../domain/ports/file-system.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
-import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
-import type { Prompter } from "../../../domain/ports/prompter.js";
 import { getToolConfig, isAiTool, type ToolId } from "../../../domain/tools/registry.js";
 import { InputRequiredError, NoManifestError } from "../../errors.js";
-import { SyncConflictResolverUseCase } from "./sync-conflict-resolver-use-case.js";
-import {
+import type {
   SyncFilePropagationUseCase,
-  type SyncFileResult,
-  type SyncToolResult,
+  SyncFileResult,
+  SyncToolResult,
 } from "./sync-file-propagation-use-case.js";
 import type { SyncPluginsUseCase } from "./sync-plugins-use-case.js";
-import { SyncSourceResolverUseCase } from "./sync-source-resolver-use-case.js";
+import type { SyncSourceResolverUseCase } from "./sync-source-resolver-use-case.js";
 
 export interface SyncOptions {
   projectRoot: string;
@@ -47,8 +44,8 @@ export class SyncUseCase {
     private readonly fs: FileSystem,
     private readonly manifestRepo: ManifestRepository,
     private readonly hasher: Hasher,
-    private readonly logger: Logger,
-    private readonly prompter?: Prompter,
+    private readonly sourceResolver: SyncSourceResolverUseCase,
+    private readonly filePropagation: SyncFilePropagationUseCase,
     private readonly syncPluginsUseCase?: SyncPluginsUseCase
   ) {}
 
@@ -71,8 +68,7 @@ export class SyncUseCase {
     const force = options.force ?? false;
     const includeUserFiles = options.includeUserFiles ?? false;
 
-    const sourceResolver = new SyncSourceResolverUseCase(this.fs, this.prompter);
-    const { sourceTool, targetTools } = await sourceResolver.execute(manifest, {
+    const { sourceTool, targetTools } = await this.sourceResolver.execute(manifest, {
       projectRoot: options.projectRoot,
       sourceTool: options.sourceTool,
       targetTools: options.targetTools,
@@ -86,8 +82,7 @@ export class SyncUseCase {
     const sourceManifestFiles = manifest.getToolFiles(sourceTool);
     const sourceManifestMap = new Map(sourceManifestFiles.map((f) => [f.relativePath, f.hash]));
 
-    const propagation = this.createPropagationUseCase();
-    const toolResults = await propagation.syncAllTargets({
+    const toolResults = await this.filePropagation.syncAllTargets({
       targetTools,
       sourceTool,
       sourceConfig: sourceConfigRaw,
@@ -102,14 +97,6 @@ export class SyncUseCase {
 
     await this.maybeSyncPlugins(options, sourceTool, targetTools);
     return this.buildSyncTotals(sourceTool, toolResults);
-  }
-
-  private createPropagationUseCase(): SyncFilePropagationUseCase {
-    return new SyncFilePropagationUseCase(
-      this.fs,
-      new SyncConflictResolverUseCase(this.fs),
-      this.logger
-    );
   }
 
   private async maybeSyncPlugins(
