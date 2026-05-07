@@ -1,5 +1,5 @@
 ---
-name: aidd-context:06:mermaid
+name: aidd-context:04:mermaid
 description: Generate high-quality Mermaid diagrams from markdown content using a structured plan-validate workflow.
 ---
 

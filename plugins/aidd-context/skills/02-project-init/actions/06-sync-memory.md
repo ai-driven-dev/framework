@@ -1,4 +1,4 @@
-# 06 — Sync memory
+# 06 - Sync memory
 
 Execute `update_memory.js` to fill the `<aidd_project_memory>` blocks in all context files with references to the generated memory files.
 

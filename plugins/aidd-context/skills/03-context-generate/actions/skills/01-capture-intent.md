@@ -1,4 +1,4 @@
-# 01 — Capture intent
+# 01 - Capture intent
 
 Clarify what the user wants before any file is touched.
 

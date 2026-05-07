@@ -1,4 +1,4 @@
-# memory/ — Project Memory Templates
+# memory/ - Project Memory Templates
 
 ## What is memory/?
 
@@ -11,13 +11,13 @@ These files are loaded by the `<aidd_project_memory>` block in `AGENTS.md`. Clau
 ## How to maintain it?
 
 - One file per concern (architecture, testing, VCS, etc.)
-- Keep each file under 200 lines — favour pointers to code over copying code
+- Keep each file under 200 lines - favour pointers to code over copying code
 - Update a file whenever the underlying reality changes (new stack decision, changed test strategy, etc.)
-- Never add personal notes or TODO items — memory files describe current state, not future intent
+- Never add personal notes or TODO items - memory files describe current state, not future intent
 
 ## Subdirectories
 
-- `backend/` — optional context specific to server-side concerns (API contracts, database schema conventions, inter-service communication)
-- `frontend/` — optional context specific to client-side concerns (UI patterns, form handling, design tokens)
+- `backend/` - optional context specific to server-side concerns (API contracts, database schema conventions, inter-service communication)
+- `frontend/` - optional context specific to client-side concerns (UI patterns, form handling, design tokens)
 
 Drop the subfolder you do not need for your project type.

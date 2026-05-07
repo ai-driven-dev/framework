@@ -1,4 +1,4 @@
-# 03 — Audit candidates
+# 03 - Audit candidates
 
 Spawn one parallel agent per candidate to validate the proposed stack: tech compatibility, ecosystem maturity, known gotchas. Returns a verdict (`✅ / ⚠️ / ❌`) plus a 3-bullet rationale per candidate.
 
@@ -22,12 +22,12 @@ The same table from action 02, augmented with a `Verdict` column and a per-candi
 Per-candidate rationale (3 bullets):
 
 ```markdown
-### A. Vercel-native — ✅
+### A. Vercel-native - ✅
 - Next.js + Supabase is the most documented stack in 2026; copy-paste examples exist for every checklist requirement
 - Vercel's Hobby tier plus Supabase free tier covers the 6-month volume target; cost forecast holds
-- Cold start is the only concrete risk — irrelevant for a B2B SaaS with predictable load patterns
+- Cold start is the only concrete risk - irrelevant for a B2B SaaS with predictable load patterns
 
-### B. Self-hosted — ⚠️
+### B. Self-hosted - ⚠️
 - ...
 ```
 
@@ -41,16 +41,16 @@ Per-candidate rationale (3 bullets):
 
    ```
    Audit the following candidate stack for a SaaS project. Validate three dimensions:
-   1. Tech compatibility — do the components integrate cleanly? Any deprecated combos?
-   2. Ecosystem maturity — are the components stable (≥ 2 years prod-tested) and well-documented?
-   3. Known gotchas — search recent (last 12 months) issues, blog posts, HN discussions for blockers.
+   1. Tech compatibility - do the components integrate cleanly? Any deprecated combos?
+   2. Ecosystem maturity - are the components stable (≥ 2 years prod-tested) and well-documented?
+   3. Known gotchas - search recent (last 12 months) issues, blog posts, HN discussions for blockers.
 
    Project context: <paste filled checklist blocks 1-3>
    Candidate: <paste candidate row from comparison table>
 
    Return:
    - Verdict: ✅ (no blocker) / ⚠️ (minor concerns) / ❌ (deal-breaker)
-   - Three bullet points justifying the verdict — concrete, citing specific tech facts
+   - Three bullet points justifying the verdict - concrete, citing specific tech facts
    - Cost estimate confirmation: agree / disagree with the proposed monthly cost
    ```
 

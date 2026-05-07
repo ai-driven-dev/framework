@@ -1,10 +1,10 @@
-# 05 — Init rules skeleton
+# 05 - Init rules skeleton
 
 Create the `rules/` directory skeleton with 10 empty numbered subdirectories following the SDLC phase taxonomy.
 
 ## Inputs
 
-- `project_root` (required) — absolute path to project root (current working directory)
+- `project_root` (required) - absolute path to project root (current working directory)
 
 ## Outputs
 

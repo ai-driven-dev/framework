@@ -2,6 +2,6 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "aidd-context",
   "version": "1.0.0",
-  "description": "Knowledge production: project init, architecture/context generation, brainstorm, challenge, mermaid, learn, discovery",
+  "description": "Knowledge production: project bootstrap, project init, context generation, mermaid diagrams, learn, discovery",
   "author": { "name": "AI-Driven Dev" }
 }

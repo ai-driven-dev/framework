@@ -11,8 +11,8 @@
 ]
 ```
 
-- `prompt` — string, what a user would actually type.
-- `expect_action` — slug of the action to dispatch, or `null` if the skill must NOT trigger.
+- `prompt` - string, what a user would actually type.
+- `expect_action` - slug of the action to dispatch, or `null` if the skill must NOT trigger.
 
 ## Rules
 

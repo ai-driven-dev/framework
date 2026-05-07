@@ -1,5 +1,5 @@
 ---
-name: aidd-context:08:discovery
+name: aidd-context:06:discovery
 description: Help users discover installed skills and find the right one for their use case.
 ---
 

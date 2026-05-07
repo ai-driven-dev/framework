@@ -1,11 +1,11 @@
-# <NN — Action title>
+# <NN - Action title>
 
 <One-line description of what this action does.>
 
 ## Inputs
 
-- `<name>` (required) — <type, one-line description>
-- `<name>` (optional, default: `<value>`) — <type, one-line description>
+- `<name>` (required) - <type, one-line description>
+- `<name>` (optional, default: `<value>`) - <type, one-line description>
 
 ## Outputs
 
@@ -28,10 +28,10 @@
 
 ## Test
 
-<One sentence describing how to verify this action's intent — a command to run, a concrete check on the produced artifact, or an observable side-effect (API/MCP/state). Examples:>
+<One sentence describing how to verify this action's intent - a command to run, a concrete check on the produced artifact, or an observable side-effect (API/MCP/state). Examples:>
 
 - `node scripts/<slug>.js` exits 0 with non-empty payload (real 200).
 - `<artifact>` exists at `<path>` and satisfies `<concrete check>`.
 - Call `mcp__<server>__<tool>` with `<concrete params>`, assert `<observable result>`.
 
-**Never** a `*.test.js` mocking the call — the first successful run is the test.
+**Never** a `*.test.js` mocking the call - the first successful run is the test.

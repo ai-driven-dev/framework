@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "aidd-framework",
-  "version": "3.9.1",
+  "version": "1.0.0",
   "description": "Official plugin marketplace for the AI-Driven Development framework",
   "owner": { "name": "AI-Driven Dev" },
   "plugins": [
@@ -9,7 +9,7 @@
       "name": "aidd-context",
       "version": "1.0.0",
       "source": "./plugins/aidd-context",
-      "description": "Knowledge production: project init, architecture/context generation, brainstorm, challenge, mermaid, learn, discovery",
+      "description": "Knowledge production: project bootstrap, project init, context generation, mermaid diagrams, learn, discovery",
       "strict": true,
       "recommended": true
     },
@@ -44,6 +44,14 @@
       "description": "Async development orchestration: turn ready issues into pull requests, then iterate on review feedback until a human takes over.",
       "strict": true,
       "recommended": false
+    },
+    {
+      "name": "aidd-refine",
+      "version": "1.0.0",
+      "source": "./plugins/aidd-refine",
+      "description": "Meta-cognition: refine input through brainstorming, refine output through challenge and condensed communication mode.",
+      "strict": true,
+      "recommended": true
     }
   ]
 }

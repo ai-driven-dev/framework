@@ -1,4 +1,4 @@
-# 01 — Upsert context file
+# 01 - Upsert context file
 
 Ensure every installed tool's AI context file contains the `<aidd_project_memory>` block required by `update_memory.js`.
 
@@ -10,7 +10,7 @@ Ensure every installed tool's AI context file contains the `<aidd_project_memory
 
 ## Inputs
 
-- `project_root` (required) — absolute path to project root (current working directory)
+- `project_root` (required) - absolute path to project root (current working directory)
 
 ## Outputs
 

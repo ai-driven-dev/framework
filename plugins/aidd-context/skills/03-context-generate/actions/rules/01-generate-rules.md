@@ -61,10 +61,10 @@ $ARGUMENTS
 Every rule file MUST start with this frontmatter:
 
 - `name`: kebab-case slug, unique within the rules folder.
-- `description`: one-line, self-contained — a downstream skill (notably `aidd-dev:01:plan`) decides whether the rule applies based on this single line.
+- `description`: one-line, self-contained - a downstream skill (notably `aidd-dev:01:plan`) decides whether the rule applies based on this single line.
 - `paths` (optional): list of globs scoping the rule. Omit for always-apply rules.
 
-The physical path of the rule (`aidd_docs/rules/<category>/<slug>.md`) is derived from the file location — it is NOT part of the frontmatter. The script `scripts/list-rules.mjs` consumes this convention.
+The physical path of the rule (`aidd_docs/rules/<category>/<slug>.md`) is derived from the file location - it is NOT part of the frontmatter. The script `scripts/list-rules.mjs` consumes this convention.
 
 ### Rule writing standards
 
@@ -85,7 +85,7 @@ The physical path of the rule (`aidd_docs/rules/<category>/<slug>.md`) is derive
 - If `$ARGUMENTS` is "auto" or "scan" → **Auto mode** (Step 2A)
 - Otherwise → **Manual mode** (Step 2B)
 
-### Step 2A: Auto mode — Scan codebase
+### Step 2A: Auto mode - Scan codebase
 
 1. Scan project: source files, configs, dependencies, directory structure
 2. Identify patterns, conventions, tech stack usage, and existing rules
@@ -96,7 +96,7 @@ The physical path of the rule (`aidd_docs/rules/<category>/<slug>.md`) is derive
 4. **Wait for user approval** before proceeding
 5. → Go to Step 3
 
-### Step 2B: Manual mode — User-guided
+### Step 2B: Manual mode - User-guided
 
 1. Remind project context: tech stack, versions, architecture, existing rules
 2. Define categories, 1 file per category

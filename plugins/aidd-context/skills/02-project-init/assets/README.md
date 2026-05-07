@@ -1,4 +1,4 @@
-# AI-Driven Dev — Documentation
+# AI-Driven Dev - Documentation
 
 AIDD is a plugin marketplace for AI-driven development. Each plugin delivers a focused set of skills installed into your AI coding assistant.
 
@@ -11,10 +11,11 @@ AIDD is a plugin marketplace for AI-driven development. Each plugin delivers a f
 
 | Plugin                                                                                                   | Purpose                                                                                    |
 | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| [aidd-context](https://github.com/ai-driven-dev/aidd-framework/blob/main/plugins/aidd-context/README.md) | Knowledge production — project init, architecture, brainstorming, diagrams, discovery      |
-| [aidd-dev](https://github.com/ai-driven-dev/aidd-framework/blob/main/plugins/aidd-dev/README.md)         | Code transformation — full SDLC loop with planning, assertions, review, testing, debugging |
-| [aidd-vcs](https://github.com/ai-driven-dev/aidd-framework/blob/main/plugins/aidd-vcs/README.md)         | VCS workflows — commits, pull/merge requests, release tags, issue creation                 |
-| [aidd-pm](https://github.com/ai-driven-dev/aidd-framework/blob/main/plugins/aidd-pm/README.md)           | Product management — ticket info, user stories, PRD (release candidate)                    |
+| [aidd-context](https://github.com/ai-driven-dev/aidd-framework/blob/main/plugins/aidd-context/README.md) | Knowledge production - project bootstrap, project init, context generation, mermaid diagrams, learn, discovery |
+| [aidd-refine](https://github.com/ai-driven-dev/aidd-framework/blob/main/plugins/aidd-refine/README.md)   | Meta-cognition - brainstorming, challenge, condensed communication mode                                         |
+| [aidd-dev](https://github.com/ai-driven-dev/aidd-framework/blob/main/plugins/aidd-dev/README.md)         | Code transformation - full SDLC loop with planning, assertions, review, testing, debugging |
+| [aidd-vcs](https://github.com/ai-driven-dev/aidd-framework/blob/main/plugins/aidd-vcs/README.md)         | VCS workflows - commits, pull/merge requests, release tags, issue creation                 |
+| [aidd-pm](https://github.com/ai-driven-dev/aidd-framework/blob/main/plugins/aidd-pm/README.md)           | Product management - ticket info, user stories, PRD (release candidate)                    |
 
 ---
 
@@ -26,7 +27,8 @@ Quick reference:
 
 | Plugin       | Skills                                                                                                              |
 | ------------ | ------------------------------------------------------------------------------------------------------------------- |
-| aidd-context | 01-bootstrap, 02-project-init, 03-context-generate, 04-brainstorm, 05-challenge, 06-mermaid, 07-learn, 08-discovery |
+| aidd-context | 01-bootstrap, 02-project-init, 03-context-generate, 04-mermaid, 05-learn, 06-discovery |
+| aidd-refine  | 01-brainstorm, 02-challenge, 03-condense                                                |
 | aidd-dev     | 00-sdlc, 01-plan, 02-assert, 03-audit, 04-review, 05-test, 06-refactor, 07-debug, 08-for-sure                       |
 | aidd-vcs     | 01-commit, 02-pull-request, 03-release-tag, 04-issue-create                                                         |
 | aidd-pm      | 01-ticket-info, 02-user-stories-create, 03-prd                                                                      |

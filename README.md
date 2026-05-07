@@ -8,10 +8,11 @@ A plugin marketplace for AI-driven development. Install focused skill sets into 
 
 | Plugin | Skills | Purpose |
 |--------|--------|---------|
-| [aidd-context](plugins/aidd-context/README.md) | 8 | Project init, architecture, brainstorming, diagrams, discovery |
-| [aidd-dev](plugins/aidd-dev/README.md) | 9 | SDLC loop — plan, assert, review, test, refactor, debug |
+| [aidd-context](plugins/aidd-context/README.md) | 6 | Project init, architecture, context generation, diagrams, learning, discovery |
+| [aidd-dev](plugins/aidd-dev/README.md) | 9 | SDLC loop: plan, assert, review, test, refactor, debug |
 | [aidd-vcs](plugins/aidd-vcs/README.md) | 4 | Commits, pull/merge requests, release tags, issue creation |
-| [aidd-pm](plugins/aidd-pm/README.md) | 3 | Ticket info, user stories, PRD (release candidate) |
+| [aidd-pm](plugins/aidd-pm/README.md) | 4 | Ticket info, user stories, PRD, clarity mode (release candidate) |
+| [aidd-refine](plugins/aidd-refine/README.md) | 3 | Meta-cognition: brainstorm, challenge, condense |
 
 ---
 

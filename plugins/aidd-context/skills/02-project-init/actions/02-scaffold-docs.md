@@ -1,10 +1,10 @@
-# 02 — Scaffold docs
+# 02 - Scaffold docs
 
 Create the `aidd_docs/` directory structure with root documentation files and empty memory subdirectories.
 
 ## Inputs
 
-- `project_root` (required) — absolute path to project root (current working directory)
+- `project_root` (required) - absolute path to project root (current working directory)
 
 ## Outputs
 

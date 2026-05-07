@@ -5,7 +5,7 @@ description: Imagine and validate the technical architecture of a new SaaS throu
 
 # Bootstrap
 
-Plays the role of technical architect for a new SaaS project. Walks the user through a 24-item checklist (18 user-input + 6 derived), proposes 2-3 candidate stacks, audits each via parallel agents, then produces `aidd_docs/INSTALL.md` capturing the technical vision, decisions, stack, architecture pattern, folder tree, and install steps. Documentation only — no code, no scaffolding.
+Plays the role of technical architect for a new SaaS project. Walks the user through a 24-item checklist (18 user-input + 6 derived), proposes 2-3 candidate stacks, audits each via parallel agents, then produces `aidd_docs/INSTALL.md` capturing the technical vision, decisions, stack, architecture pattern, folder tree, and install steps. Documentation only - no code, no scaffolding.
 
 ## Available actions
 
@@ -24,21 +24,20 @@ Plays the role of technical architect for a new SaaS project. Walks the user thr
 ## Transversal rules
 
 - **No file scaffolding.** This skill writes only `aidd_docs/INSTALL.md`. It never creates `package.json`, source files, or empty directories.
-- **Anti-sycophancy.** When the user expresses a stack preference that conflicts with their needs (e.g. wants Mongo for heavily relational data), challenge it before accepting — invoke `aidd-context:05:challenge` if needed.
+- **Anti-sycophancy.** When the user expresses a stack preference that conflicts with their needs (e.g. wants Mongo for heavily relational data), challenge it before accepting: surface audit concerns and ask whether the user has a mitigation plan.
 - **Recommend opinionated, not encyclopedic.** Each action proposes 2-3 options max, never a long catalog. The user should leave with a concrete decision, not a research paper.
 - **Stop on full checklist.** Action 01 keeps asking until the 18 user-input items (blocks 1-3) are filled; the 6 derived items (block 4) are filled across actions 02 and 04.
 - **Apply heuristics from `references/stack-heuristics.md`** when proposing candidates.
 
 ## References (documents to read)
 
-- `references/stack-heuristics.md` — input → recommended-stack-family heuristics
+- `references/stack-heuristics.md` - input → recommended-stack-family heuristics
 
 ## Assets (templates to copy or data to inject)
 
-- `assets/checklist.md` — the 17-item checklist (4 blocks)
-- `assets/install-template.md` — the `INSTALL.md` skeleton
+- `assets/checklist.md` - the 17-item checklist (4 blocks)
+- `assets/install-template.md` - the `INSTALL.md` skeleton
 
 ## External data (cross-skill pointers per R7)
 
-- `aidd-context/skills/06-mermaid/SKILL.md` — invoked from action 04 to render the architecture diagram
-- `aidd-context/skills/05-challenge/SKILL.md` — invoked from action 04 to challenge the user's pick when audit is mixed (`⚠️`)
+- `aidd-context/skills/04-mermaid/SKILL.md` - invoked from action 04 to render the architecture diagram

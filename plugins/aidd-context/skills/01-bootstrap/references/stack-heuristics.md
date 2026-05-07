@@ -1,6 +1,6 @@
 # Stack heuristics
 
-Mapping rules from checklist signals to recommended stack families. Use these when proposing candidates in action 02. Heuristics, not laws — override when audit (action 03) flags a conflict.
+Mapping rules from checklist signals to recommended stack families. Use these when proposing candidates in action 02. Heuristics, not laws - override when audit (action 03) flags a conflict.
 
 ## Architecture pattern
 
@@ -67,9 +67,9 @@ Mapping rules from checklist signals to recommended stack families. Use these wh
 
 When two signals push to different stacks, prioritize in this order:
 
-1. **Data sensitivity (GDPR/health)** — overrides hosting region preference
-2. **Real-time + multi-tenant** — overrides cost preference (forces non-trivial backend)
-3. **Team language expertise** — overrides "best tool" if learning curve > 2 weeks
-4. **Budget** — caps everything else; prune candidates that exceed it
+1. **Data sensitivity (GDPR/health)** - overrides hosting region preference
+2. **Real-time + multi-tenant** - overrides cost preference (forces non-trivial backend)
+3. **Team language expertise** - overrides "best tool" if learning curve > 2 weeks
+4. **Budget** - caps everything else; prune candidates that exceed it
 
 When still ambiguous, surface the trade-off to the user in the comparison table (action 02) instead of choosing silently.

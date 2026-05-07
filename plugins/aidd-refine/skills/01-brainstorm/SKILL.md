@@ -1,9 +1,9 @@
 ---
-name: aidd-context:04:brainstorm-bis
+name: aidd-refine:01:brainstorm
 description: Interactive brainstorming session to clarify and refine requests through iterative questioning. Use when user mentions unclear requirements, vague ideas, or needs clarification on features. Do NOT use for clear technical specs, implementation details, or when requirements are already well-defined.
 ---
 
-# Skill: brainstorm-bis
+# Brainstorm
 
 Clarifies and refines a feature request through structured iterative questioning until no ambiguity remains. Auto-triggers on prompts indicating uncertainty or need for clarification.
 
@@ -30,12 +30,11 @@ Sequential skill: `01 → 02 → 03 → 04 → 05`. Loop `02 → 03` until no am
 
 ## References (documents to read)
 
-- `references/brainstorming-best-practices.md` — Tips on iterative questioning and ambiguity detection.
-- `references/ambiguity-detection.md` — How to identify and resolve unclear requirements.
+- `references/ambiguity-detection.md`: How to identify and resolve unclear requirements.
 
 ## Assets (templates to copy or data to inject)
 
-- `assets/question-templates.md` — Reusable probing question categories.
+- `assets/question-templates.md`: Reusable probing question categories.
 
 ## External data (cross-skill pointers per R7)
 

@@ -1,5 +1,5 @@
 ---
-name: aidd-context:07:learn
+name: aidd-context:05:learn
 description: Capture and store learnings from recently implemented features into memory bank, decisions, or coding rules.
 ---
 

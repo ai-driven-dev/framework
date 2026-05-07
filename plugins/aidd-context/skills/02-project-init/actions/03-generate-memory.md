@@ -1,4 +1,4 @@
-# 03 — Generate memory
+# 03 - Generate memory
 
 Detect the project type and spawn parallel sub-agents to generate memory bank files from templates.
 

@@ -1,4 +1,4 @@
-# 04 — Review memory
+# 04 - Review memory
 
 Spawn a single review agent with all memory files in context to catch cross-file inconsistencies that per-file agents cannot detect.
 

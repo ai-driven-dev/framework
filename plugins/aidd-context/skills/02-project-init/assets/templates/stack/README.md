@@ -1,4 +1,4 @@
-# stack/ — Technology Stack Documentation
+# stack/ - Technology Stack Documentation
 
 ## What is stack/?
 

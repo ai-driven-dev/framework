@@ -1,6 +1,6 @@
 ---
 name: aidd-context:02:project-init
-description: Initialize or refresh the project memory bank, scaffold the rules directory, and ensure AI context files contain the project memory block. Use when running `aidd init` for the first time, bootstrapping a new project, or re-running the init flow on an existing project. Do NOT use for updating individual memory files after they exist — use `aidd-context:07:learn` instead; do NOT use for editing a single rule — edit the file directly.
+description: Initialize or refresh the project memory bank, scaffold the rules directory, and ensure AI context files contain the project memory block. Use when running `aidd init` for the first time, bootstrapping a new project, or re-running the init flow on an existing project. Do NOT use for updating individual memory files after they exist - use `aidd-context:05:learn` instead; do NOT use for editing a single rule - edit the file directly.
 model: opus
 ---
 
@@ -39,20 +39,20 @@ Bootstraps the full AIDD context layer for a project: AI context files with memo
 ### Schema rules to apply to generated Mermaid diagrams
 
 ```md
-@../../06-mermaid/references/mermaid-conventions.md
+@../../04-mermaid/references/mermaid-conventions.md
 ```
 
 ## Assets (templates to copy or data to inject)
 
-- `assets/AGENTS.md` — canonical AI context file template
-- `assets/README.md` — `aidd_docs/README.md` template
-- `assets/GUIDELINES.md` — `aidd_docs/GUIDELINES.md` template
-- `assets/templates/memory/` — memory file templates (scope: `all` | `frontend` | `backend`)
+- `assets/AGENTS.md` - canonical AI context file template
+- `assets/README.md` - `aidd_docs/README.md` template
+- `assets/GUIDELINES.md` - `aidd_docs/GUIDELINES.md` template
+- `assets/templates/memory/` - memory file templates (scope: `all` | `frontend` | `backend`)
 
 ## References
 
-- `references/mapping-ai-context-file.md` — mapping of AI context files across tools
+- `references/mapping-ai-context-file.md` - mapping of AI context files across tools
 
 ## External data
 
-- `../hooks/update_memory.js` — syncs `<aidd_project_memory>` block content across all context files
+- `../hooks/update_memory.js` - syncs `<aidd_project_memory>` block content across all context files

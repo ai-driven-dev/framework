@@ -1,6 +1,6 @@
-# 04 — Draft SKILL.md router
+# 04 - Draft SKILL.md router
 
-Write the SKILL.md. Router only — no business logic.
+Write the SKILL.md. Router only - no business logic.
 
 ## Inputs
 
