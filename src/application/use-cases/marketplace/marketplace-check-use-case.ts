@@ -9,7 +9,7 @@ import { AI_TOOL_IDS, type AiToolId } from "../../../domain/models/tool-ids.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
 import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
-import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
+import type { FetchMarketplaceSourceUseCase } from "../shared/fetch-marketplace-source-use-case.js";
 
 export interface MarketplaceCheckOptions {
   projectRoot: string;
@@ -43,7 +43,7 @@ export class MarketplaceCheckUseCase {
     private readonly manifestRepo: ManifestRepository,
     private readonly catalogRepo: PluginCatalogRepository,
     private readonly registry: MarketplaceRegistry,
-    private readonly pluginFetcher: PluginFetcher
+    private readonly fetchMarketplaceSource: FetchMarketplaceSourceUseCase
   ) {}
 
   async execute(options: MarketplaceCheckOptions): Promise<MarketplaceCheckResult> {
@@ -85,7 +85,7 @@ export class MarketplaceCheckUseCase {
   private async readCatalog(m: Marketplace, projectRoot: string): Promise<CatalogReadResult> {
     try {
       const cacheDir = marketplaceCacheDir(projectRoot, m.name);
-      const localPath = await this.pluginFetcher.fetch(m.source, cacheDir);
+      const localPath = await this.fetchMarketplaceSource.execute({ marketplace: m, cacheDir });
       const catalog = await this.catalogRepo.load(localPath);
       if (!catalog) return { known: null };
       return { known: new Set(catalog.plugins.map((p) => p.name)) };

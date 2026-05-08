@@ -1,13 +1,9 @@
 import type { Marketplace } from "../../../domain/models/marketplace.js";
 import { marketplaceCacheDir } from "../../../domain/models/paths.js";
-import type { PluginSourceGitHub } from "../../../domain/models/plugin-source.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
 import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
-import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
-import type { RawCatalogFetcher } from "../../../domain/ports/raw-catalog-fetcher.js";
-
-const CLAUDE_CATALOG_PATH = ".claude-plugin/marketplace.json";
+import type { FetchMarketplaceSourceUseCase } from "../shared/fetch-marketplace-source-use-case.js";
 
 export interface MarketplaceRefreshOptions {
   projectRoot: string;
@@ -29,8 +25,7 @@ export class MarketplaceRefreshUseCase {
   constructor(
     private readonly catalogRepo: PluginCatalogRepository,
     private readonly registry: MarketplaceRegistry,
-    private readonly pluginFetcher: PluginFetcher,
-    private readonly rawCatalogFetcher?: RawCatalogFetcher,
+    private readonly fetchMarketplaceSource: FetchMarketplaceSourceUseCase,
     private readonly logger?: Logger
   ) {}
 
@@ -65,13 +60,10 @@ export class MarketplaceRefreshUseCase {
   }
 
   private async fetchSource(m: Marketplace, cacheDir: string): Promise<string> {
-    if (m.source.kind === "github" && this.rawCatalogFetcher !== undefined) {
-      return this.rawCatalogFetcher.fetchCatalog(
-        m.source as PluginSourceGitHub,
-        CLAUDE_CATALOG_PATH,
-        cacheDir
-      );
-    }
-    return this.pluginFetcher.fetch(m.source, cacheDir, { forceRefresh: true });
+    return this.fetchMarketplaceSource.execute({
+      marketplace: m,
+      cacheDir,
+      fetchOptions: { forceRefresh: true },
+    });
   }
 }

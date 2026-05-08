@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { MarketplaceAddUseCase } from "../../../../src/application/use-cases/marketplace/marketplace-add-use-case.js";
 import { MarketplaceRemoveUseCase } from "../../../../src/application/use-cases/marketplace/marketplace-remove-use-case.js";
+import { FetchMarketplaceSourceUseCase } from "../../../../src/application/use-cases/shared/fetch-marketplace-source-use-case.js";
 import {
   InvalidMarketplaceNameError,
   MarketplaceAlreadyRegisteredError,
@@ -34,13 +35,13 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
   const registry = new InMemoryMarketplaceRegistry();
   const trustStore = new InMemoryMarketplaceTrustStore();
   const manifestRepo = new InMemoryManifestRepository();
-  const pluginFetcher = new FixturePluginFetcher();
+  const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(new FixturePluginFetcher());
   const removeUseCase = new MarketplaceRemoveUseCase(fs, manifestRepo, registry, prompter);
   const useCase = new MarketplaceAddUseCase(
     new PluginCatalogRepositoryAdapter(fs),
     registry,
     trustStore,
-    pluginFetcher,
+    fetchMarketplaceSource,
     prompter,
     removeUseCase
   );

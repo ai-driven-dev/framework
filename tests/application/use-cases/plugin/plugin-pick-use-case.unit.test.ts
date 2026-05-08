@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginAddUseCase } from "../../../../src/application/use-cases/plugin/plugin-add-use-case.js";
 import { PluginPickUseCase } from "../../../../src/application/use-cases/plugin/plugin-pick-use-case.js";
+import { FetchMarketplaceSourceUseCase } from "../../../../src/application/use-cases/shared/fetch-marketplace-source-use-case.js";
 import {
   InteractiveOnlyError,
   NoMarketplacesRegisteredError,
@@ -39,10 +40,11 @@ async function buildUseCase() {
     new PluginDistributionReaderAdapter(deps.fs),
     deps.hasher
   );
+  const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(deps.pluginFetcher);
   const useCase = new PluginPickUseCase(
     new PluginCatalogRepositoryAdapter(deps.fs),
     registry,
-    deps.pluginFetcher,
+    fetchMarketplaceSource,
     pluginAdd,
     new KeepPrompter()
   );

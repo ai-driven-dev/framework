@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { FetchMarketplaceSourceUseCase } from "../../../../src/application/use-cases/shared/fetch-marketplace-source-use-case.js";
 import { ResolveMarketplaceUseCase } from "../../../../src/application/use-cases/shared/resolve-marketplace-use-case.js";
 import { Marketplace } from "../../../../src/domain/models/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
@@ -19,8 +20,11 @@ function seedMarketplaceJson(
 }
 
 function buildUseCase(fs: InMemoryFileAdapter) {
-  const pluginFetcher = new FixturePluginFetcher();
-  return new ResolveMarketplaceUseCase(pluginFetcher, new PluginCatalogRepositoryAdapter(fs));
+  const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(new FixturePluginFetcher());
+  return new ResolveMarketplaceUseCase(
+    fetchMarketplaceSource,
+    new PluginCatalogRepositoryAdapter(fs)
+  );
 }
 
 function makeMarketplace(name: string): Marketplace {

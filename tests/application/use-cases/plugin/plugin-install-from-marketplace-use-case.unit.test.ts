@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginAddUseCase } from "../../../../src/application/use-cases/plugin/plugin-add-use-case.js";
 import { PluginInstallFromMarketplaceUseCase } from "../../../../src/application/use-cases/plugin/plugin-install-from-marketplace-use-case.js";
+import { FetchMarketplaceSourceUseCase } from "../../../../src/application/use-cases/shared/fetch-marketplace-source-use-case.js";
 import { ResolveMarketplaceUseCase } from "../../../../src/application/use-cases/shared/resolve-marketplace-use-case.js";
 import {
   AmbiguousPluginMatchError,
@@ -43,8 +44,9 @@ async function buildUseCase() {
     new PluginDistributionReaderAdapter(deps.fs),
     deps.hasher
   );
+  const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(deps.pluginFetcher);
   const useCase = new PluginInstallFromMarketplaceUseCase(
-    new ResolveMarketplaceUseCase(deps.pluginFetcher, catalogRepo),
+    new ResolveMarketplaceUseCase(fetchMarketplaceSource, catalogRepo),
     registry,
     pluginAdd,
     new KeepPrompter()

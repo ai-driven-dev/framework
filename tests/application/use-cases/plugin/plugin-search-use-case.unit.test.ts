@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginSearchUseCase } from "../../../../src/application/use-cases/plugin/plugin-search-use-case.js";
+import { FetchMarketplaceSourceUseCase } from "../../../../src/application/use-cases/shared/fetch-marketplace-source-use-case.js";
 import { Marketplace } from "../../../../src/domain/models/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
@@ -27,7 +28,12 @@ function buildUseCase(
     [MKT1_PATH]: MKT1_PATH,
     [MKT2_PATH]: MKT2_PATH,
   });
-  return new PluginSearchUseCase(new PluginCatalogRepositoryAdapter(fs), registry, fetcher);
+  const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(fetcher);
+  return new PluginSearchUseCase(
+    new PluginCatalogRepositoryAdapter(fs),
+    registry,
+    fetchMarketplaceSource
+  );
 }
 
 describe("PluginSearchUseCase", () => {

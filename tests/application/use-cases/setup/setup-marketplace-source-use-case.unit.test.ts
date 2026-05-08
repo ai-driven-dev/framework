@@ -5,10 +5,11 @@ import {
   DEFAULT_FRAMEWORK_REPO,
   MarketplaceSourceMode,
 } from "../../../../src/domain/models/marketplace-source-mode.js";
+import type { LatestReleaseResolver } from "../../../../src/domain/ports/latest-release-resolver.js";
 import { ScriptedPrompter } from "../../../helpers/ports/scripted-prompter.js";
 
-function makeResolver(tag: string | null) {
-  return { resolveLatest: vi.fn().mockResolvedValue(tag) } as never;
+function makeResolver(tag: string | null): LatestReleaseResolver {
+  return { resolveLatest: vi.fn().mockResolvedValue(tag) };
 }
 
 const PROJECT_ROOT = "/test-project";

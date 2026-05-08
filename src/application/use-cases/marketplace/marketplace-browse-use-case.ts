@@ -8,8 +8,8 @@ import { marketplaceCacheDir } from "../../../domain/models/paths.js";
 import type { PluginCatalog } from "../../../domain/models/plugin-catalog.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
 import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
-import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
+import type { FetchMarketplaceSourceUseCase } from "../shared/fetch-marketplace-source-use-case.js";
 
 export interface MarketplaceBrowseOptions {
   name: string;
@@ -27,7 +27,7 @@ export class MarketplaceBrowseUseCase {
   constructor(
     private readonly catalogRepo: PluginCatalogRepository,
     private readonly registry: MarketplaceRegistry,
-    private readonly pluginFetcher: PluginFetcher,
+    private readonly fetchMarketplaceSource: FetchMarketplaceSourceUseCase,
     private readonly prompter: Prompter
   ) {}
 
@@ -45,8 +45,10 @@ export class MarketplaceBrowseUseCase {
     useCachedOnFailure: boolean
   ): Promise<MarketplaceBrowseResult> {
     try {
-      const localPath = await this.pluginFetcher.fetch(marketplace.source, cacheDir, {
-        forceRefresh: true,
+      const localPath = await this.fetchMarketplaceSource.execute({
+        marketplace,
+        cacheDir,
+        fetchOptions: { forceRefresh: true },
       });
       const catalog = await this.requireCatalog(localPath);
       return { marketplace, catalog, fromCache: false };
@@ -67,7 +69,7 @@ export class MarketplaceBrowseUseCase {
       const detail = originalError instanceof Error ? originalError.message : String(originalError);
       throw new OfflineError(detail);
     }
-    const localPath = await this.pluginFetcher.fetch(marketplace.source, cacheDir);
+    const localPath = await this.fetchMarketplaceSource.execute({ marketplace, cacheDir });
     const catalog = await this.requireCatalog(localPath);
     return { marketplace, catalog, fromCache: true };
   }

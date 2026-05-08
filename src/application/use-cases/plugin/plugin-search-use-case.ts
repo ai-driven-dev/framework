@@ -3,7 +3,7 @@ import { marketplaceCacheDir } from "../../../domain/models/paths.js";
 import type { PluginCatalogEntry } from "../../../domain/models/plugin-catalog.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
 import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
-import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
+import type { FetchMarketplaceSourceUseCase } from "../shared/fetch-marketplace-source-use-case.js";
 
 export interface PluginSearchOptions {
   query: string;
@@ -25,7 +25,7 @@ export class PluginSearchUseCase {
   constructor(
     private readonly catalogRepo: PluginCatalogRepository,
     private readonly registry: MarketplaceRegistry,
-    private readonly pluginFetcher: PluginFetcher
+    private readonly fetchMarketplaceSource: FetchMarketplaceSourceUseCase
   ) {}
 
   async execute(options: PluginSearchOptions): Promise<PluginSearchResult> {
@@ -40,7 +40,7 @@ export class PluginSearchUseCase {
 
   private async searchOne(m: Marketplace, options: PluginSearchOptions): Promise<SearchHit[]> {
     const cacheDir = marketplaceCacheDir(options.projectRoot, m.name);
-    const localPath = await this.pluginFetcher.fetch(m.source, cacheDir);
+    const localPath = await this.fetchMarketplaceSource.execute({ marketplace: m, cacheDir });
     const catalog = await this.catalogRepo.load(localPath);
     if (!catalog) return [];
     return catalog.plugins

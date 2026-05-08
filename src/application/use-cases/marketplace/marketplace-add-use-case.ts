@@ -14,8 +14,8 @@ import type { PluginSource } from "../../../domain/models/plugin-source.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
 import type { MarketplaceTrustStore } from "../../../domain/ports/marketplace-trust-store.js";
 import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
-import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
+import type { FetchMarketplaceSourceUseCase } from "../shared/fetch-marketplace-source-use-case.js";
 import type { MarketplaceRemoveUseCase } from "./marketplace-remove-use-case.js";
 
 export interface MarketplaceAddOptions {
@@ -36,7 +36,7 @@ export class MarketplaceAddUseCase {
     private readonly catalogRepo: PluginCatalogRepository,
     private readonly registry: MarketplaceRegistry,
     private readonly trustStore: MarketplaceTrustStore,
-    private readonly pluginFetcher: PluginFetcher,
+    private readonly fetchMarketplaceSource: FetchMarketplaceSourceUseCase,
     private readonly prompter: Prompter,
     private readonly removeUseCase: MarketplaceRemoveUseCase
   ) {}
@@ -82,7 +82,13 @@ export class MarketplaceAddUseCase {
     source: PluginSource
   ): Promise<string> {
     const cacheDir = marketplaceCacheDir(projectRoot, name);
-    return this.pluginFetcher.fetch(source, cacheDir);
+    const marketplace = Marketplace.create({
+      name,
+      source,
+      scope: "project",
+      addedAt: new Date().toISOString(),
+    });
+    return this.fetchMarketplaceSource.execute({ marketplace, cacheDir });
   }
 
   private async ensureTrust(options: MarketplaceAddOptions): Promise<void> {

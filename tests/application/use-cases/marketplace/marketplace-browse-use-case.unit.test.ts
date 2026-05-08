@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { MarketplaceBrowseUseCase } from "../../../../src/application/use-cases/marketplace/marketplace-browse-use-case.js";
+import { FetchMarketplaceSourceUseCase } from "../../../../src/application/use-cases/shared/fetch-marketplace-source-use-case.js";
 import { MarketplaceNotFoundError, OfflineError } from "../../../../src/domain/errors.js";
 import { Marketplace } from "../../../../src/domain/models/marketplace.js";
 import type { Prompter } from "../../../../src/domain/ports/prompter.js";
@@ -23,11 +24,11 @@ class DenyPrompter extends KeepPrompter {
 
 function buildUseCase(prompter: Prompter, fs: InMemoryFileAdapter) {
   const registry = new InMemoryMarketplaceRegistry();
-  const pluginFetcher = new FixturePluginFetcher();
+  const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(new FixturePluginFetcher());
   const useCase = new MarketplaceBrowseUseCase(
     new PluginCatalogRepositoryAdapter(fs),
     registry,
-    pluginFetcher,
+    fetchMarketplaceSource,
     prompter
   );
   return { useCase, registry };

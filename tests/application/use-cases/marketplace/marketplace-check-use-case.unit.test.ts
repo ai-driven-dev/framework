@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../src/domain/tools/ai/claude.js";
 import { MarketplaceCheckUseCase } from "../../../../src/application/use-cases/marketplace/marketplace-check-use-case.js";
+import { FetchMarketplaceSourceUseCase } from "../../../../src/application/use-cases/shared/fetch-marketplace-source-use-case.js";
 import { Manifest } from "../../../../src/domain/models/manifest.js";
 import { Marketplace } from "../../../../src/domain/models/marketplace.js";
 import { Plugin } from "../../../../src/domain/models/plugin.js";
@@ -22,12 +23,12 @@ async function buildUseCase() {
   await seedFromDirectory(fs, VALID_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const manifestRepo = new InMemoryManifestRepository();
-  const pluginFetcher = new FixturePluginFetcher();
+  const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(new FixturePluginFetcher());
   const useCase = new MarketplaceCheckUseCase(
     manifestRepo,
     new PluginCatalogRepositoryAdapter(fs),
     registry,
-    pluginFetcher
+    fetchMarketplaceSource
   );
   return { useCase, registry, manifestRepo };
 }

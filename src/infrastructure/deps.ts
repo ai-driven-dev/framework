@@ -31,6 +31,7 @@ import { PluginPickUseCase } from "../application/use-cases/plugin/plugin-pick-u
 import { PluginRemoveUseCase } from "../application/use-cases/plugin/plugin-remove-use-case.js";
 import { PluginSearchUseCase } from "../application/use-cases/plugin/plugin-search-use-case.js";
 import { PluginUpdateUseCase } from "../application/use-cases/plugin/plugin-update-use-case.js";
+import { FetchMarketplaceSourceUseCase } from "../application/use-cases/shared/fetch-marketplace-source-use-case.js";
 import { ResolveMarketplaceUseCase } from "../application/use-cases/shared/resolve-marketplace-use-case.js";
 import { SyncConflictResolverUseCase } from "../application/use-cases/sync/sync-conflict-resolver-use-case.js";
 import { SyncFilePropagationUseCase } from "../application/use-cases/sync/sync-file-propagation-use-case.js";
@@ -182,6 +183,10 @@ export async function createDeps(
     pluginDistributionReader,
     hasher
   );
+  const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(
+    pluginFetcher,
+    rawCatalogFetcher
+  );
   const marketplaceListUseCase = new MarketplaceListUseCase(marketplaceRegistry);
   const marketplaceRemoveUseCase = new MarketplaceRemoveUseCase(
     fs,
@@ -193,31 +198,30 @@ export async function createDeps(
     pluginCatalogRepository,
     marketplaceRegistry,
     marketplaceTrustStore,
-    pluginFetcher,
+    fetchMarketplaceSource,
     prompter,
     marketplaceRemoveUseCase
   );
   const marketplaceRefreshUseCase = new MarketplaceRefreshUseCase(
     pluginCatalogRepository,
     marketplaceRegistry,
-    pluginFetcher,
-    rawCatalogFetcher,
+    fetchMarketplaceSource,
     logger
   );
   const marketplaceBrowseUseCase = new MarketplaceBrowseUseCase(
     pluginCatalogRepository,
     marketplaceRegistry,
-    pluginFetcher,
+    fetchMarketplaceSource,
     prompter
   );
   const marketplaceCheckUseCase = new MarketplaceCheckUseCase(
     manifestRepo,
     pluginCatalogRepository,
     marketplaceRegistry,
-    pluginFetcher
+    fetchMarketplaceSource
   );
   const resolveMarketplaceUseCase = new ResolveMarketplaceUseCase(
-    pluginFetcher,
+    fetchMarketplaceSource,
     pluginCatalogRepository
   );
   const assetProvider = new BundledAssetProviderAdapter();
@@ -245,7 +249,7 @@ export async function createDeps(
   const pluginSearchUseCase = new PluginSearchUseCase(
     pluginCatalogRepository,
     marketplaceRegistry,
-    pluginFetcher
+    fetchMarketplaceSource
   );
   const marketplaceRegisterFrameworkUseCase = new MarketplaceRegisterFrameworkUseCase(
     marketplaceRegistry
@@ -253,7 +257,7 @@ export async function createDeps(
   const pluginPickUseCase = new PluginPickUseCase(
     pluginCatalogRepository,
     marketplaceRegistry,
-    pluginFetcher,
+    fetchMarketplaceSource,
     pluginAddUseCase,
     prompter
   );
