@@ -1,13 +1,13 @@
 # CLI v5 Cleanup — Plugin Sync Inter-Tool Matrix
 
-Date: 2026-05-06 (updated 2026-05-06 — Part 2 B+A reconcile)
+Date: 2026-05-06 (updated 2026-05-06 — Part 3 OpenCode enabled)
 Branch: feat/cli-v5-cleanup → feat/plugin-architecture
 Binary: `node dist/cli.js` (v4.1.0-beta.11)
 
 ## Scope
 
 Tests `plugin sync` and `ai sync` capability translation between all source×target pairs.
-opencode deferred (no test fixture).
+OpenCode included as of Part 3: capabilities fully implemented in opencode.ts, HasHooks intentionally absent.
 Marketplace native format adapters (Cursor/Copilot/Codex marketplace ingestion) are explicitly out of scope.
 
 ## Plugin (marketplace) Sync Matrix
@@ -21,17 +21,25 @@ Capabilities: commands, rules, skills, agents (no hooks, no mcp in aidd-test fix
 | claude | cursor | 0 | aidd-test@0.1.0 | PASS |
 | claude | copilot | 0 | aidd-test@0.1.0 | PASS |
 | claude | codex | 0 | aidd-test@0.1.0 | PASS |
+| claude | opencode | 0 | aidd-test@0.1.0 | PASS |
 | cursor | claude | 0 | aidd-test@0.1.0 | PASS |
 | cursor | copilot | 0 | aidd-test@0.1.0 | PASS |
 | cursor | codex | 0 | aidd-test@0.1.0 | PASS |
+| cursor | opencode | 0 | aidd-test@0.1.0 | PASS |
 | copilot | claude | 0 | aidd-test@0.1.0 | PASS |
 | copilot | cursor | 0 | aidd-test@0.1.0 | PASS |
 | copilot | codex | 0 | aidd-test@0.1.0 | PASS |
+| copilot | opencode | 0 | aidd-test@0.1.0 | PASS |
 | codex | claude | 0 | aidd-test@0.1.0 | PASS |
 | codex | cursor | 0 | aidd-test@0.1.0 | PASS |
 | codex | copilot | 0 | aidd-test@0.1.0 | PASS |
+| codex | opencode | 0 | aidd-test@0.1.0 | PASS |
+| opencode | claude | 0 | aidd-test@0.1.0 | PASS |
+| opencode | cursor | 0 | aidd-test@0.1.0 | PASS |
+| opencode | copilot | 0 | aidd-test@0.1.0 | PASS |
+| opencode | codex | 0 | aidd-test@0.1.0 | PASS |
 
-All 12 pairs: plugin propagated via marketplace reference (re-install from same source), no failures.
+All 20 pairs: plugin propagated via marketplace reference (re-install from same source), no failures.
 
 Note: local-path plugins (added via `plugin add`) cannot be propagated — this is expected behavior. The warning "Plugin has no marketplace — cannot propagate" is intentional. Marketplace-registered plugins propagate correctly across all pairs.
 
@@ -116,7 +124,7 @@ Unsupported capabilities are expressed via **`Has*` interface absence** at compi
 
 3. **Local-path plugin propagation**: `plugin add <path>` creates a plugin with no marketplace reference. `plugin sync` correctly warns and skips. This is by design — local plugins must be manually added to each tool.
 
-4. **opencode deferred**: No test fixtures exist for opencode format. Deferred per task spec.
+4. **opencode hooks absent**: OpenCode has no hook equivalent. `HasHooks` is intentionally absent in `opencode.ts` (locked decision — Part 3). All other capabilities (commands, rules, skills, agents, mcp, plugins) are implemented.
 
 5. **E2E fixture coverage**: rules, skills, agents capabilities exist in all tools (cursor, copilot, codex) but no modified-file E2E fixtures exist to verify cross-tool translation. Capability code is implemented; fixture-level verification is deferred.
 
@@ -132,9 +140,9 @@ Copilot was also listed with partial coverage in earlier drafts. All capabilitie
 
 ## Summary
 
-- 12/12 plugin (marketplace) sync pairs: PASS
-- 4/12 ai sync component-translation pairs with capability-impl data: PASS (claude↔cursor, claude↔codex)
-- 8/12 pairs: nothing to sync (no format fixture for copilot, or only tool-specific hooks/mcp)
+- 20/20 plugin (marketplace) sync pairs: PASS (5 tools × 4 others; includes 8 new opencode pairs from Part 3)
+- 4/20 ai sync component-translation pairs with capability-impl data: PASS (claude↔cursor, claude↔codex)
+- 16/20 pairs: nothing to sync (no format fixture for copilot/opencode, or only tool-specific hooks/mcp)
 - 0 errors across all test runs
 - Remaining gaps: MCP cross-tool translation, hooks cross-tool, E2E fixture coverage for rules/skills/agents
 - All remaining gaps are intrinsic to the current architecture (deferred to format-adapter master plan, decision #12)

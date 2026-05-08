@@ -1,5 +1,5 @@
 /**
- * Sync-matrix E2E — plugin propagation inter-tool (12 pairs)
+ * Sync-matrix E2E — plugin propagation inter-tool (20 pairs)
  * Automated counterpart of:
  *   aidd_docs/tasks/2026_05/2026_05_06-cli-v5-cleanup-sync-matrix.md
  * DDD audit Q4 #3 (HIGH ROI):
@@ -9,7 +9,8 @@
  * `plugin sync --source S --target T` propagates it to target.
  * Local-path (`plugin add`) plugins cannot propagate — that is by design.
  *
- * OpenCode deferred (locked decision #12) — not included.
+ * OpenCode included: capabilities fully implemented in opencode.ts (Part 3).
+ * HasHooks intentionally absent (no hook equivalent in OpenCode — locked decision).
  */
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -22,7 +23,7 @@ const PLUGIN_FIXTURE = resolve(process.cwd(), "tests/fixtures/plugins/claude-for
 
 const PLUGIN_NAME = "sample-plugin";
 
-const TOOLS = ["claude", "cursor", "copilot", "codex"] as const;
+const TOOLS = ["claude", "cursor", "copilot", "codex", "opencode"] as const;
 type Tool = (typeof TOOLS)[number];
 
 const PAIRS: Array<{ source: Tool; target: Tool }> = TOOLS.flatMap((s) =>
@@ -78,7 +79,7 @@ function targetHasPlugin(
 // 12-pair matrix
 // -------------------------------------------------------------------------
 
-describe.concurrent("sync matrix: plugin propagation inter-tool", () => {
+describe.concurrent("sync matrix: plugin propagation inter-tool (20 pairs)", () => {
   for (const { source, target } of PAIRS) {
     it(`${source} → ${target} propagates installed plugin`, async () => {
       const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv(

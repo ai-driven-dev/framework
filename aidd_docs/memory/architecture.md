@@ -83,4 +83,4 @@ Pipeline: `NativeFormat → Parser → NormalizedPlugin → Emitter[targetTool] 
 - Cursor's `marketplace.json` schema mirrors Claude's catalog shape (official schema undocumented as of 2026-05-06)
 - Integration with fetcher pipeline deferred to Phase A.5
 
-**Phases B (Copilot), C (Codex), D (OpenCode) — deferred.**
+**Phases B (Copilot), C (Codex) — deferred. Phase D (OpenCode) — emitter complete (Part 3); marketplace adapter deferred.**
