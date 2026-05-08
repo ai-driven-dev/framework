@@ -147,6 +147,20 @@ describe("SetupMarketplaceSourceUseCase", () => {
       expect(result.kind).toBe("local");
       expect(result.path).toBe("/abs/framework");
     });
+
+    it("resolves relative path to absolute when user enters a relative local path", async () => {
+      const resolver = makeResolver(null);
+      const prompter = new ScriptedPrompter([
+        ScriptedPrompter.answer.select("local"),
+        ScriptedPrompter.answer.input("./some/relative/path"),
+      ]);
+      const uc = new SetupMarketplaceSourceUseCase(prompter, resolver);
+
+      const result = await uc.execute({ projectRoot: PROJECT_ROOT, interactive: true });
+
+      expect(result.kind).toBe("local");
+      expect(result.path).toMatch(/^[/\\]/); // starts with / (POSIX) or \ (Windows)
+    });
   });
 
   describe("interactive with sourceFromCli (ref not set)", () => {

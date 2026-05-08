@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import type { Command } from "commander";
 import { MarketplaceSourceMode } from "../../domain/models/marketplace-source-mode.js";
 import { SetupFlow } from "../../domain/models/setup-flow.js";
@@ -39,10 +40,10 @@ function parseSourceFlag(
   if (!cmdOptions.source) return undefined;
   if (cmdOptions.source === "local") {
     if (!cmdOptions.path) {
-      output.error("--source local requires --path <absolute-dir>");
+      output.error("--source local requires --path <dir>");
       process.exit(1);
     }
-    return MarketplaceSourceMode.local(cmdOptions.path);
+    return MarketplaceSourceMode.local(resolve(cmdOptions.path));
   }
   return MarketplaceSourceMode.remote(undefined, cmdOptions.release);
 }

@@ -43,12 +43,14 @@ describe("MarketplaceSourceMode", () => {
       expect(mode.path).toBe("/some/path");
     });
 
-    it("throws when path is empty", () => {
-      expect(() => MarketplaceSourceMode.local("")).toThrow("not be empty");
+    it("stores relative path as-is (resolution happens at command boundary)", () => {
+      const mode = MarketplaceSourceMode.local("./relative/path");
+      expect(mode.kind).toBe("local");
+      expect(mode.path).toBe("./relative/path");
     });
 
-    it("throws when path is not absolute", () => {
-      expect(() => MarketplaceSourceMode.local("relative/path")).toThrow("must be absolute");
+    it("throws when path is empty", () => {
+      expect(() => MarketplaceSourceMode.local("")).toThrow("not be empty");
     });
 
     it("ref getter returns undefined for local source", () => {

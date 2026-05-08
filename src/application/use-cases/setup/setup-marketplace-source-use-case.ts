@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { MarketplaceSourceMode } from "../../../domain/models/marketplace-source-mode.js";
 import type { LatestReleaseResolver } from "../../../domain/ports/latest-release-resolver.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
@@ -42,8 +43,8 @@ export class SetupMarketplaceSourceUseCase {
       { name: "local (copy from local framework directory)", value: "local" },
     ]);
     if (kind === "remote") return this.promptRemoteSource();
-    const path = await this.prompter.input("Absolute path to local framework directory:", "");
-    return MarketplaceSourceMode.local(path);
+    const path = await this.prompter.input("Path to local framework directory:", "");
+    return MarketplaceSourceMode.local(resolve(path));
   }
 
   private async promptRemoteSource(): Promise<MarketplaceSourceMode> {

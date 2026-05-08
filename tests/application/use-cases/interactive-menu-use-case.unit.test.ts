@@ -34,29 +34,50 @@ function makeQueuedPrompter(
 
 describe("interactive menu", () => {
   describe("project without AIDD installed", () => {
-    it("proposes installing AIDD or exiting", async () => {
+    it("prompts to run setup when no manifest exists and user confirms", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      const { prompter, selectMock } = makeQueuedPrompter(["setup"]);
+      const confirmMock = vi.fn().mockResolvedValue(true);
+      const prompter: Prompter = {
+        resolveConflict: vi.fn(),
+        confirm: confirmMock,
+        input: vi.fn(),
+        select: vi.fn(),
+        checkbox: vi.fn(),
+      };
 
       const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
 
       expect(result.command).toEqual(["setup"]);
-      const values = (selectMock.mock.calls[0][1] as SelectChoice[]).map((c) => c.value);
-      expect(values).toEqual(["setup", "exit"]);
+      expect(confirmMock).toHaveBeenCalledWith("AIDD not initialized. Run setup now?", true);
     });
 
-    it("exits cleanly when user chooses to leave", async () => {
+    it("exits when no manifest exists and user declines setup", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      const { prompter } = makeQueuedPrompter(["exit"]);
+      const prompter: Prompter = {
+        resolveConflict: vi.fn(),
+        confirm: vi.fn().mockResolvedValue(false),
+        input: vi.fn(),
+        select: vi.fn(),
+        checkbox: vi.fn(),
+      };
+
       const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+
       expect(result.command).toEqual(["exit"]);
     });
 
-    it("does not show command groups before installation", async () => {
+    it("does not show the full menu before installation", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      const { prompter, selectMock } = makeQueuedPrompter(["exit"]);
+      const selectMock = vi.fn();
+      const prompter: Prompter = {
+        resolveConflict: vi.fn(),
+        confirm: vi.fn().mockResolvedValue(false),
+        input: vi.fn(),
+        select: selectMock,
+        checkbox: vi.fn(),
+      };
       await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
-      expect(selectMock).toHaveBeenCalledTimes(1);
+      expect(selectMock).not.toHaveBeenCalled();
     });
   });
 

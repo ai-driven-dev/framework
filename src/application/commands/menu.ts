@@ -30,15 +30,6 @@ function toChoice(node: MenuNode): { name: string; value: string; description?: 
   return { name: node.name, value: node.value, description: node.description };
 }
 
-const FRESH_NODES: MenuNode[] = [
-  {
-    name: "Install AIDD in this project",
-    value: "setup",
-    description: "Set up the AI-Driven Development framework",
-    command: ["setup"],
-  },
-];
-
 const INSTALLED_NODES: MenuNode[] = [
   {
     name: "Inspect",
@@ -393,10 +384,15 @@ export class InteractiveMenuUseCase {
 
   async execute(_options?: InteractiveMenuOptions): Promise<InteractiveMenuResult> {
     const manifest = await this.manifestRepo.load();
-    const rootNodes = manifest === null ? FRESH_NODES : INSTALLED_NODES;
-    const result = await this.showMenu(rootNodes, "What would you like to do?", []);
+    if (manifest === null) return this.handleFreshInstall();
+    const result = await this.showMenu(INSTALLED_NODES, "What would you like to do?", []);
     if (result.type !== "command") return { command: ["exit"] };
     return { command: result.command };
+  }
+
+  private async handleFreshInstall(): Promise<InteractiveMenuResult> {
+    const confirmed = await this.prompter.confirm("AIDD not initialized. Run setup now?", true);
+    return { command: confirmed ? ["setup"] : ["exit"] };
   }
 
   private async showMenu(
@@ -439,8 +435,17 @@ async function waitForEnter(): Promise<void> {
   });
 }
 
+const BANNER = `
+   _    ___ ___  ___
+  /_\\  |_ _|   \\|   \\
+ / _ \\  | || |) | |) |
+/_/ \\_\\|___|___/|___/
+
+ AI-Driven Development CLI
+`;
+
 function printBanner(): void {
-  process.stdout.write("\n  AI-Driven Dev CLI\n  ─────────────────\n\n");
+  process.stdout.write(BANNER);
 }
 
 export async function runMenuLoop(): Promise<never> {

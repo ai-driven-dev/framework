@@ -36,7 +36,6 @@ export class MarketplaceSourceMode {
 
   static local(path: string): MarketplaceSourceMode {
     if (!path) throw new Error("Local source path must not be empty.");
-    if (!path.startsWith("/")) throw new Error(`Local source path must be absolute: "${path}"`);
     return new MarketplaceSourceMode({ kind: "local", path });
   }
 
