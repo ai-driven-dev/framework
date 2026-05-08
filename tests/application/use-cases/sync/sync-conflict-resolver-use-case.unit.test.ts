@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SyncConflictResolverUseCase } from "../../../../src/application/use-cases/sync/sync-conflict-resolver-use-case.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-system.js";
+import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 
 const DISK_PATH = "/project/target.md";
 const CONTENT_A = "content A";

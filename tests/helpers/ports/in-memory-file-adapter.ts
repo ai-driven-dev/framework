@@ -54,7 +54,7 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   }
 
   /**
-   * Returns relative paths of all files under dirPath (recursive), same as FileSystemAdapter.
+   * Returns relative paths of all files under dirPath (recursive), same as FileAdapter.
    */
   async listDirectory(dirPath: string): Promise<string[]> {
     const prefix = dirPath.endsWith("/") ? dirPath : `${dirPath}/`;

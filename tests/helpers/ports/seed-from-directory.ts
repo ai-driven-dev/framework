@@ -1,6 +1,6 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
-import type { InMemoryFileAdapter } from "./in-memory-file-system.js";
+import type { InMemoryFileAdapter } from "./in-memory-file-adapter.js";
 
 interface SeedOptions {
   /**

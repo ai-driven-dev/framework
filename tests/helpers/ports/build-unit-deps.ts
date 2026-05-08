@@ -28,7 +28,7 @@ import { BundledAssetProviderAdapter } from "../../../src/infrastructure/assets/
 import { DeterministicHasher } from "./deterministic-hasher.js";
 import { FakeCurrentVersion } from "./fake-current-version.js";
 import { FixturePluginFetcher } from "./fixture-plugin-fetcher.js";
-import { InMemoryFileAdapter } from "./in-memory-file-system.js";
+import { InMemoryFileAdapter } from "./in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "./in-memory-manifest-repository.js";
 import { seedFromDirectory } from "./seed-from-directory.js";
 

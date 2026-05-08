@@ -4,7 +4,7 @@ export { FakeAuthReader } from "./fake-auth-reader.js";
 export { FakeCurrentVersion } from "./fake-current-version.js";
 export { darwinPlatform, FakePlatform, linuxPlatform, win32Platform } from "./fake-platform.js";
 export { FixturePluginFetcher } from "./fixture-plugin-fetcher.js";
-export { InMemoryFileAdapter } from "./in-memory-file-system.js";
+export { InMemoryFileAdapter } from "./in-memory-file-adapter.js";
 export { InMemoryManifestRepository } from "./in-memory-manifest-repository.js";
 export { InMemoryMarketplaceCache } from "./in-memory-marketplace-cache.js";
 export { InMemoryMarketplaceRegistry } from "./in-memory-marketplace-registry.js";
