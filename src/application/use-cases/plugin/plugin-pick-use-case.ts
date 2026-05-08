@@ -89,6 +89,11 @@ export class PluginPickUseCase {
         projectRoot: options.projectRoot,
         interactive: options.interactive,
         marketplace: marketplace.name,
+        pluginMetadata: {
+          name: entry.name,
+          version: entry.version ?? "",
+          strict: entry.strict ?? false,
+        },
       });
       installed.push(entry.name);
     }
