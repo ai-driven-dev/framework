@@ -1,6 +1,7 @@
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { HooksCapability } from "../../capabilities/hooks-capability.js";
+import { buildClaudeStyleMarketplaceEntry } from "../../capabilities/marketplace-entry.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
@@ -240,9 +241,16 @@ export const codex: AiTool<
       pluginsDir: ".codex/plugins/",
       pluginManifestRelativePath: "plugin.json",
       acceptsMcp: true,
-      // marketplaceSettings: null — Codex marketplace state lives in the user-global
-      // $CODEX_HOME/config.toml, not in the project. Repo-scoped plugin registration
-      // is tracked in openai/codex#18115 and has not shipped yet.
+      // Codex auto-discovers .claude-plugin/marketplace.json natively (already
+      // shipped via setup). User-global plugin enable lives in ~/.codex/config.toml
+      // and is managed manually via `codex /plugins`. This project-local JSON
+      // mirrors the Claude Code schema for forward-compat + audit trail.
+      marketplaceSettings: {
+        settingsPath: ".codex/config.json",
+        settingsKey: "extraKnownMarketplaces",
+        enabledPluginsKey: "enabledPlugins",
+        toEntry: buildClaudeStyleMarketplaceEntry,
+      },
     }),
   },
 

@@ -4,7 +4,7 @@ import type { MarketplaceSettingsEntry, MarketplaceSettingsInput } from "./plugi
  * Shared toEntry implementation for tools that use the Claude Code marketplace schema:
  *   { source: { source: "github"|"directory", repo/path: "..." }, version? }
  *
- * Used by: claude, copilot (same .github/copilot/settings.json spec as .claude/settings.json)
+ * Used by: claude, copilot, cursor, codex
  */
 export function buildClaudeStyleMarketplaceEntry(
   input: MarketplaceSettingsInput

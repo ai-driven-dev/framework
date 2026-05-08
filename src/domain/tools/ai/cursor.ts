@@ -1,5 +1,6 @@
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
+import { buildClaudeStyleMarketplaceEntry } from "../../capabilities/marketplace-entry.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
@@ -114,9 +115,17 @@ export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         acceptsHooks: true,
         acceptsMcp: true,
         hooksContentFormat: "cursor",
-        // marketplaceSettings: null — Cursor marketplace is UI-dashboard-driven.
-        // No project-local JSON spec exists for registering marketplace sources.
-        // Revisit if Cursor ships a project-scoped plugins manifest.
+        // Project-local mirror using the same schema as Claude Code / Copilot.
+        // Cursor's native marketplace install path is UI-dashboard-driven (no
+        // project-scoped JSON spec today). This file provides forward-compat
+        // when Cursor ships a project-local spec, and an audit trail for users
+        // inspecting setup output.
+        marketplaceSettings: {
+          settingsPath: ".cursor/settings.json",
+          settingsKey: "extraKnownMarketplaces",
+          enabledPluginsKey: "enabledPlugins",
+          toEntry: buildClaudeStyleMarketplaceEntry,
+        },
       }),
     },
 

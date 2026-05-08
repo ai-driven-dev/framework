@@ -167,6 +167,89 @@ describe("codex", () => {
       expect(codex.detectUserFileSectionKey("unknown.json")).toBeNull();
     });
   });
+
+  describe("capabilities.plugins.marketplaceSettings", () => {
+    const ms = codex.capabilities.plugins.marketplaceSettings;
+
+    it("has marketplaceSettings configured", () => {
+      expect(ms).not.toBeNull();
+    });
+
+    it("writes to .codex/config.json", () => {
+      expect(ms?.settingsPath).toBe(".codex/config.json");
+    });
+
+    it("uses extraKnownMarketplaces as settings key", () => {
+      expect(ms?.settingsKey).toBe("extraKnownMarketplaces");
+    });
+
+    it("uses enabledPlugins as enabled plugins key", () => {
+      expect(ms?.enabledPluginsKey).toBe("enabledPlugins");
+    });
+
+    describe("toEntry()", () => {
+      it("returns directory entry for local source", () => {
+        const result = ms?.toEntry({
+          name: "my-plugin",
+          source: { kind: "local", path: "/workspace/my-plugin" },
+        });
+        expect(result).toEqual({
+          key: "my-plugin",
+          value: { source: { source: "directory", path: "/workspace/my-plugin" } },
+        });
+      });
+
+      it("returns github entry for github source without ref", () => {
+        const result = ms?.toEntry({
+          name: "my-plugin",
+          source: { kind: "github", repo: "org/my-plugin" },
+        });
+        expect(result).toEqual({
+          key: "my-plugin",
+          value: { source: { source: "github", repo: "org/my-plugin" } },
+        });
+      });
+
+      it("includes ref when github source has ref", () => {
+        const result = ms?.toEntry({
+          name: "my-plugin",
+          source: { kind: "github", repo: "org/my-plugin", ref: "v1.2.3" },
+        });
+        expect(result).toEqual({
+          key: "my-plugin",
+          value: { source: { source: "github", repo: "org/my-plugin", ref: "v1.2.3" } },
+        });
+      });
+
+      it("includes version when provided", () => {
+        const result = ms?.toEntry({
+          name: "my-plugin",
+          source: { kind: "github", repo: "org/my-plugin" },
+          version: "2.0.0",
+        });
+        expect(result).toEqual({
+          key: "my-plugin",
+          value: { source: { source: "github", repo: "org/my-plugin" }, version: "2.0.0" },
+        });
+      });
+
+      it("returns null for unsupported source kind (npm)", () => {
+        const result = ms?.toEntry({
+          name: "my-plugin",
+          source: { kind: "npm", package: "my-plugin" },
+        });
+        expect(result).toBeNull();
+      });
+
+      it("returns null for unsupported source kind (url)", () => {
+        const result = ms?.toEntry({
+          name: "my-plugin",
+          source: { kind: "url", url: "https://example.com/plugin.zip" },
+        });
+        expect(result).toBeNull();
+      });
+    });
+  });
 });
 
 const MCP_PAYLOAD = `
