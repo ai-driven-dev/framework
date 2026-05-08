@@ -28,14 +28,14 @@ Sequential skill: `01 → 02 → 03 → 04 → 05`. Loop `02 → 03` until no am
 - DO NOT IMPLEMENT ANYTHING.
 - Wait for user response after questions or approval prompts.
 
-## References (documents to read)
+## References
 
 - `references/ambiguity-detection.md`: How to identify and resolve unclear requirements.
 
-## Assets (templates to copy or data to inject)
+## Assets
 
 - `assets/question-templates.md`: Reusable probing question categories.
 
-## External data (cross-skill pointers per R7)
+## External data
 
 - None.

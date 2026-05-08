@@ -42,7 +42,7 @@ Bootstraps the full AIDD context layer for a project: AI context files with memo
 @../../04-mermaid/references/mermaid-conventions.md
 ```
 
-## Assets (templates to copy or data to inject)
+## Assets
 
 - `assets/AGENTS.md` - canonical AI context file template
 - `assets/README.md` - `aidd_docs/README.md` template

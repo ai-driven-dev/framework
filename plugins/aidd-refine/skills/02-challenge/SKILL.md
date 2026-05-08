@@ -25,14 +25,14 @@ Single action skill. The router dispatches to `challenge` whenever the trigger p
 - Aim for simplifications. If the work can be smaller, say so.
 - Output the structured report verbatim per the action's `## Outputs` block.
 
-## References (documents to read)
+## References
 
 - `references/confidence-rubric.md`: tiered rubric for the confidence percentage.
 
-## Assets (templates to copy or data to inject)
+## Assets
 
 - None.
 
-## External data (cross-skill pointers per R7)
+## External data
 
 - None.

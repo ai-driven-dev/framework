@@ -31,7 +31,7 @@ Sequential: `01 -> 02 -> 03 -> 04 -> 05 -> 06 -> 07`. Action 03 runs once per se
 - Never auto-merge. The pipeline ends at PR creation.
 - Apply `tool_allowlist` from config via the plugin `PreToolUse` hook when hooks are wired.
 
-## External data (cross-skill pointers per R7)
+## External data
 
 - `aidd_docs/async-runs/` -- run history directory shared with this plugin's review skill
 - `.claude/aidd-async-dev.json` -- runtime config produced by this plugin's setup skill

@@ -26,14 +26,14 @@ Single action skill. The router dispatches to `condense` whenever a toggle phras
 - **Auto-pause**: drop terse mode for security warnings, irreversible action confirmations, multi-step sequences where fragment order risks misread, or when the user is confused. Resume once the at-risk passage is clear.
 - **Boundaries**: code, commits, and pull request bodies are written in normal English regardless of intensity. The intensity level persists until toggled off or until session end.
 
-## References (documents to read)
+## References
 
 - `references/intensity-levels.md`: detailed per-level rules and side-by-side examples.
 
-## Assets (templates to copy or data to inject)
+## Assets
 
 - None.
 
-## External data (cross-skill pointers per R7)
+## External data
 
 - None.

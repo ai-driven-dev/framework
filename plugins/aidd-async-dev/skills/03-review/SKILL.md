@@ -28,11 +28,11 @@ Loop: `01 -> 02`. If `02` says continue, run `03` then jump back to `01`. If `02
 - Never auto-merge. The loop only adds commits to the existing PR branch.
 - See `references/stop-conditions.md` for the precise stop logic.
 
-## References (documents to read)
+## References
 
 - `references/stop-conditions.md` -- ordered stop conditions and human detection heuristics
 
-## External data (cross-skill pointers per R7)
+## External data
 
 - `aidd_docs/async-runs/` -- run history (this skill appends iteration entries to existing records)
 - `.claude/aidd-async-dev.json` -- runtime config produced by this plugin's setup skill

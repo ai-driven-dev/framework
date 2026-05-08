@@ -28,11 +28,12 @@ Sequential: `01 -> 02 -> 03 -> 04 -> 05`. No skipping.
 - Auth choice defaults to `gh` CLI when present.
 - If no SDLC orchestration capability is discovered at action 01, ask the user whether to continue (warn that the run skill will fail at delegation time).
 
-## References (documents to read)
+## References
 
-- `references/auth-modes.md` -- comparison of gh CLI, PAT, and GitHub App auth, with tradeoffs
+- `references/auth-modes.md` -- comparison of gh CLI, PAT, and GitHub App auth (how the plugin reads/writes GitHub)
+- `references/claude-action-auth.md` -- comparison of OAuth token (Claude Pro/Max) vs API key (how the GitHub Action authenticates to Anthropic)
 
-## Assets (templates to copy or data to inject)
+## Assets
 
 - `assets/workflow-template.yml` -- GitHub Actions workflow skeleton
 - `assets/config-template.json` -- `.claude/aidd-async-dev.json` skeleton

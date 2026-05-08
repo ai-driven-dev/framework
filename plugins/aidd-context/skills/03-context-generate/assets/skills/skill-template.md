@@ -28,15 +28,15 @@ description: <What the skill does in one clause, third person>. Use when <explic
 - <MCP: use the qualified name `mcp__<server>__<tool>` for every MCP call.>
 - <Required env vars: listed in `.env.local`.>
 
-## References (documents to read)
+## References
 
 - `references/<file>.md` - <what this reference covers>
 
-## Assets (templates to copy or data to inject)
+## Assets
 
 - `assets/<file>.json` - <what this asset provides>
 
-## External data (cross-skill pointers per R7)
+## External data
 
 <Optional. Include only if the skill depends on data/docs that live outside this skill (e.g. in a shared folder at repo root). Always point, never copy.>
 

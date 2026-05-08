@@ -54,7 +54,7 @@ Materialize the flow as a task list at skill entry; a task closes only when its 
 - **R9** - Auto-trigger skills (`disable-model-invocation: false`, default) ship `evals/scenarios.json` = JSON array of at least 3 `{prompt, expect_action}`. Manual-only skills skip.
 - **R10** - Generated skills are written in **English only** (frontmatter, body, actions, references, assets). Holds regardless of conversation language.
 
-## References (documents to read)
+## References
 
 - `references/naming-conventions.md` - tool vs activity naming, hard constraints
 - `references/skill-structure.md` - skill anatomy

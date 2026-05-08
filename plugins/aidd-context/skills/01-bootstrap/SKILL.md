@@ -29,15 +29,15 @@ Plays the role of technical architect for a new SaaS project. Walks the user thr
 - **Stop on full checklist.** Action 01 keeps asking until the 18 user-input items (blocks 1-3) are filled; the 6 derived items (block 4) are filled across actions 02 and 04.
 - **Apply heuristics from `references/stack-heuristics.md`** when proposing candidates.
 
-## References (documents to read)
+## References
 
 - `references/stack-heuristics.md` - input → recommended-stack-family heuristics
 
-## Assets (templates to copy or data to inject)
+## Assets
 
 - `assets/checklist.md` - the 17-item checklist (4 blocks)
 - `assets/install-template.md` - the `INSTALL.md` skeleton
 
-## External data (cross-skill pointers per R7)
+## External data
 
 - `aidd-context/skills/04-mermaid/SKILL.md` - invoked from action 04 to render the architecture diagram
