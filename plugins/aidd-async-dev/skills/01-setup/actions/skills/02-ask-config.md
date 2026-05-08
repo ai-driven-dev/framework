@@ -1,6 +1,6 @@
 # 02 -- Ask Config
 
-Interactively collects runtime parameters from the user.
+Interactively collects the small set of runtime parameters from the user.
 
 ## Inputs
 
@@ -12,16 +12,26 @@ Interactively collects runtime parameters from the user.
 {
   "mode": "both",
   "labels": {
-    "ready": "ai:ready",
-    "running": "ai:running",
-    "blocked": "ai:blocked"
+    "to_implement": "to-implement",
+    "to_review": "to-review",
+    "working": "claude/working",
+    "awaiting_review": "claude/awaiting-review",
+    "blocked": "claude/blocked"
   },
-  "auth": { "source": "gh-cli", "fallback": "pat" },
-  "webhook_url": null,
-  "max_iterations": 3,
-  "monorepo_scope": "codeowners",
-  "trigger_mention": "@claude /implement",
-  "project_board_column": "Ready"
+  "mentions": {
+    "implement": "@claude /implement",
+    "review": "@claude /review"
+  },
+  "claude_action_auth": {
+    "mode": "oauth_token",
+    "secret_name": "CLAUDE_CODE_OAUTH_TOKEN"
+  },
+  "marketplace": {
+    "repo": "ai-driven-dev/aidd-framework",
+    "access": "public",
+    "token_secret_name": null
+  },
+  "max_iterations": 3
 }
 ```
 
@@ -31,16 +41,18 @@ Interactively collects runtime parameters from the user.
 
 ## Process
 
-1. Ask `mode`: one of `local`, `remote`, `both`. Default `both`.
-2. Ask label names. Defaults: `ai:ready`, `ai:running`, `ai:blocked`. Validate they are not already used for another purpose by querying `gh label list`.
-3. Ask `auth.source`: `gh-cli` (default if `gh auth status` succeeds), `pat` (env var name), or `github-app` (app id + private key path). See `references/auth-modes.md`.
-4. Ask whether a SIEM webhook URL is needed; if yes, validate URL format (https only).
-5. Ask `max_iterations` for the review-fix loop; default `3`.
-6. If `detection.monorepo` is true: ask `monorepo_scope`: `codeowners` (default) or `path-label` (require label prefix `area:`).
-7. Ask the trigger mention string; default `@claude /implement`.
-8. Ask the project board column name; default `Ready`.
-9. Emit the JSON above; do NOT persist yet.
+1. Ask `mode`: one of `local`, `remote`, `both`. Default `both`. The remote path uses GitHub Actions; the local path uses Claude Code Desktop scheduled tasks (poll the same labels).
+2. Ask `claude_action_auth.mode`: how the GitHub Action authenticates to Anthropic.
+   - `oauth_token` (default if user has Claude Pro/Max) -- consumes plan usage. Secret name `CLAUDE_CODE_OAUTH_TOKEN`. User generates the token via `claude setup-token`.
+   - `api_key` -- pay-per-token Anthropic API. Secret name `ANTHROPIC_API_KEY`. User obtains the key from `https://console.anthropic.com/settings/keys`.
+   See `references/claude-action-auth.md` for tradeoffs.
+3. Ask the marketplace location: `marketplace.repo` (default `ai-driven-dev/aidd-framework`) and `marketplace.access`: `public` or `private`.
+   - If `private`: ask `token_secret_name` (default `AIDD_FRAMEWORK_TOKEN`). The user must add a fine-grained PAT with `Contents: Read` on the marketplace repo.
+   - If `public`: leave `token_secret_name` null and the workflow uses `${{ github.token }}` for the clone.
+4. Ask `max_iterations` for the review-fix loop; default `3`.
+5. Keep label names and mention strings at their defaults (the plugin documents these as fixed contracts to avoid drift).
+6. Emit the JSON above; do NOT persist yet.
 
 ## Test
 
-Run interactively in a sandbox; the action returns valid JSON that satisfies the example schema, all enum fields hold one of the documented values, and `webhook_url` is either `null` or a valid `https://` URL.
+Run interactively in a sandbox; the action returns valid JSON that satisfies the example schema, `claude_action_auth.mode` is one of `oauth_token`/`api_key`, `marketplace.access` is one of `public`/`private` with a matching `token_secret_name`, and `max_iterations` is a positive integer.

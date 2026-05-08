@@ -4,7 +4,7 @@ The review loop evaluates three conditions in this exact order. The first match 
 
 ## 1. Blocked label
 
-If the linked issue carries the configured `blocked` label (default `ai:blocked`), the loop stops with `reason = blocked_label`. The Check Run conclusion is `action_required`.
+If the linked issue carries the configured `blocked` label (default `claude/blocked`), the loop stops with `reason = blocked_label`. The Check Run conclusion is `action_required`.
 
 Use case: a maintainer noticed a deeper issue and wants Claude out of the loop without writing a comment.
 
