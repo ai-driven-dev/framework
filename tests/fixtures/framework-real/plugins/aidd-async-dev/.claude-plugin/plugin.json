@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "aidd-async-dev",
+  "version": "1.0.0",
+  "description": "Async development orchestration: turn ready issues into pull requests, then iterate on review feedback until a human takes over.",
+  "author": { "name": "AI-Driven Dev" }
+}

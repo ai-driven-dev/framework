@@ -1,0 +1,9 @@
+[
+  { "prompt": "Commit my changes", "expect_action": "commit" },
+  { "prompt": "/commit", "expect_action": "commit" },
+  { "prompt": "Create a commit with message 'fix typo'", "expect_action": "commit" },
+  { "prompt": "Commit and push", "expect_action": "commit" },
+  { "prompt": "Push the current branch to origin", "expect_action": null },
+  { "prompt": "Open a pull request", "expect_action": null },
+  { "prompt": "Tag this release v1.2.0", "expect_action": null }
+]

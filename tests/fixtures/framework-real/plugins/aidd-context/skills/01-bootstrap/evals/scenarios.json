@@ -1,0 +1,8 @@
+[
+  { "prompt": "I want to bootstrap a new SaaS for managing client invoices", "expect_action": "gather-needs" },
+  { "prompt": "Help me imagine the technical architecture for my project", "expect_action": "gather-needs" },
+  { "prompt": "Generate INSTALL.md for my project", "expect_action": "gather-needs" },
+  { "prompt": "Design my database schema for users and orders", "expect_action": null },
+  { "prompt": "Set up my CI/CD pipeline", "expect_action": null },
+  { "prompt": "Refactor my React component", "expect_action": null }
+]

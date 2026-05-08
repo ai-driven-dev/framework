@@ -33,6 +33,21 @@ paths:
 - 5–10 scenarios per command max
 - Full CLI invocation via `runCli()` from `tests/e2e/helpers.ts`
 
+## E2E principles
+
+- Zero network, zero machine state, zero timing-dependent assertions
+- 5–7 persona journeys; edge cases belong in unit/integration
+- Marketplace = local fixture (`tests/fixtures/framework-real`); real GitHub only in manual smoke
+- TTY interactive flows: use `expect(1)` shell-out via `execFile`
+- Wall clock: <30s for the full E2E suite
+
+## Forbidden
+
+- `it.skipIf(networkAvailable)` patterns — gated tests provide false security
+- Tests depending on real GitHub / external HTTP / real filesystem outside tmp
+- Snapshot tests on menu trees / output strings unless covered by interactive E2E
+- Multiple permutations of the same flag combination — pick one representative case
+
 ## Rules
 
 - Write test first for every bug fix

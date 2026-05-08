@@ -179,26 +179,4 @@ describe("PluginFetcherAdapter", () => {
       }
     });
   });
-
-  describe.skipIf(process.env.RUN_NETWORK_TESTS !== "1")("github source (unreachable repo)", () => {
-    it("surfaces a PluginFetchError when the github repo cannot be cloned", {
-      timeout: 120_000,
-    }, async () => {
-      const sandbox = await mkdtemp(join(tmpdir(), "aidd-fetcher-gh-"));
-      try {
-        const adapter = makeAdapter();
-        await expect(
-          adapter.fetch(
-            {
-              kind: "github",
-              repo: "aidd-test-nonexistent-org/nonexistent-plugin-repo-xyz-12345",
-            },
-            sandbox
-          )
-        ).rejects.toThrow(PluginFetchError);
-      } finally {
-        await rm(sandbox, { recursive: true, force: true });
-      }
-    });
-  });
 });

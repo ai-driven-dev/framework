@@ -1,6 +1,6 @@
 {
   "name": "@ai-driven-dev/cli",
-  "version": "4.1.0-beta.15",
+  "version": "4.1.0-beta.18",
   "description": "AI-Driven Development CLI — install AI tool configs and plugins from the AIDD marketplace",
   "type": "module",
   "main": "dist/cli.js",
@@ -38,7 +38,8 @@
     "pack:local": "pnpm build && pnpm pack --pack-destination ./dist",
     "install:local": "pnpm run pack:local && npm install -g ./dist/ai-driven-dev-cli-$(node -p \"require('./package.json').version\").tgz --force",
     "test:mutation": "stryker run",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "fixture:refresh": "bash scripts/refresh-framework-fixture.sh"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.0.0",
