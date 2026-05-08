@@ -1,54 +1,54 @@
 [
   {
     "command": "aidd --version",
-    "medianMs": 95,
+    "medianMs": 105,
     "runs": [
-      95,
-      95,
-      100,
-      95,
-      97
+      106,
+      103,
+      103,
+      109,
+      105
     ],
-    "timestamp": "2026-05-08T20:28:04.881Z",
+    "timestamp": "2026-05-08T20:31:24.513Z",
     "cliVersion": "4.1.0-beta.24"
   },
   {
     "command": "aidd --help",
-    "medianMs": 95,
+    "medianMs": 108,
     "runs": [
-      96,
-      94,
-      96,
-      95,
-      95
+      108,
+      110,
+      108,
+      109,
+      104
     ],
-    "timestamp": "2026-05-08T20:28:05.357Z",
+    "timestamp": "2026-05-08T20:31:25.052Z",
     "cliVersion": "4.1.0-beta.24"
   },
   {
     "command": "aidd status",
-    "medianMs": 567,
+    "medianMs": 112,
     "runs": [
-      627,
-      627,
-      567,
-      530,
-      540
+      112,
+      112,
+      109,
+      112,
+      107
     ],
-    "timestamp": "2026-05-08T20:28:08.250Z",
+    "timestamp": "2026-05-08T20:31:25.606Z",
     "cliVersion": "4.1.0-beta.24"
   },
   {
     "command": "aidd ai list",
-    "medianMs": 567,
+    "medianMs": 109,
     "runs": [
-      532,
-      619,
-      561,
-      567,
-      611
+      112,
+      109,
+      107,
+      107,
+      109
     ],
-    "timestamp": "2026-05-08T20:28:11.141Z",
+    "timestamp": "2026-05-08T20:31:26.150Z",
     "cliVersion": "4.1.0-beta.24"
   }
 ]

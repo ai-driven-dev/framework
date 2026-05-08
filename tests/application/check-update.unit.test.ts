@@ -1,4 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CheckUpdateUseCase } from "../../src/application/use-cases/check-update-use-case.js";
 import type { Logger } from "../../src/domain/ports/logger.js";
 import type { SelfUpdater } from "../../src/domain/ports/self-updater.js";
@@ -26,6 +29,21 @@ function makeVersionReader(version: string): VersionReader {
 }
 
 describe("CheckUpdateUseCase", () => {
+  let cacheDir: string;
+  let prevEnv: string | undefined;
+
+  beforeEach(async () => {
+    cacheDir = await mkdtemp(join(tmpdir(), "aidd-check-update-"));
+    prevEnv = process.env.AIDD_USER_CONFIG_DIR;
+    process.env.AIDD_USER_CONFIG_DIR = cacheDir;
+  });
+
+  afterEach(async () => {
+    if (prevEnv === undefined) delete process.env.AIDD_USER_CONFIG_DIR;
+    else process.env.AIDD_USER_CONFIG_DIR = prevEnv;
+    await rm(cacheDir, { recursive: true, force: true });
+  });
+
   it("warns when CLI is outdated", async () => {
     const { logger, logs } = makeLogger();
 
