@@ -280,3 +280,10 @@ export class CatalogFetchError extends Error {
     this.name = "CatalogFetchError";
   }
 }
+
+export class MissingPluginVersionError extends Error {
+  constructor() {
+    super("Cannot register github marketplace plugin: catalog entry is missing a version field.");
+    this.name = "MissingPluginVersionError";
+  }
+}

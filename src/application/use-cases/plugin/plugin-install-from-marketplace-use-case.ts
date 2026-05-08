@@ -5,6 +5,7 @@ import {
 } from "../../../domain/errors.js";
 import type { Marketplace } from "../../../domain/models/marketplace.js";
 import type { PluginCatalogEntry } from "../../../domain/models/plugin-catalog.js";
+import { resolvePluginSourceFromMarketplace } from "../../../domain/models/plugin-source-resolver.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
@@ -29,6 +30,7 @@ export interface PluginInstallFromMarketplaceResult {
 interface MatchEntry {
   marketplace: Marketplace;
   entry: PluginCatalogEntry;
+  localPath: string;
 }
 
 export class PluginInstallFromMarketplaceUseCase {
@@ -45,13 +47,22 @@ export class PluginInstallFromMarketplaceUseCase {
     const matches = await this.findMatches(options);
     const chosen = await this.chooseOne(matches, options);
     this.assertCatalogVersionMatches(chosen.entry, options.version);
+    const resolvedSource = resolvePluginSourceFromMarketplace(
+      chosen.entry.source,
+      chosen.marketplace,
+      chosen.localPath
+    );
     await this.pluginAddUseCase.execute({
-      source: chosen.entry.source,
+      source: resolvedSource,
       toolIds: options.toolIds,
       projectRoot: options.projectRoot,
       interactive: options.interactive,
       marketplace: chosen.marketplace.name,
       requiredVersion: options.version,
+      pluginMetadata:
+        chosen.entry.version !== undefined
+          ? { name: chosen.entry.name, version: chosen.entry.version, strict: chosen.entry.strict }
+          : undefined,
     });
     return { marketplace: chosen.marketplace, entry: chosen.entry };
   }
@@ -73,14 +84,14 @@ export class PluginInstallFromMarketplaceUseCase {
     m: Marketplace,
     options: PluginInstallFromMarketplaceOptions
   ): Promise<MatchEntry[]> {
-    const { catalog } = await this.resolveMarketplace.execute({
+    const { catalog, localPath } = await this.resolveMarketplace.execute({
       marketplace: m,
       projectRoot: options.projectRoot,
     });
     if (!catalog) return [];
     return catalog.plugins
       .filter((entry) => entry.name === options.pluginName)
-      .map((entry) => ({ marketplace: m, entry }));
+      .map((entry) => ({ marketplace: m, entry, localPath }));
   }
 
   private async chooseOne(

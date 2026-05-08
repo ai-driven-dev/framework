@@ -30,6 +30,7 @@ import { FakeCurrentVersion } from "./fake-current-version.js";
 import { FixturePluginFetcher } from "./fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "./in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "./in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "./in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "./seed-from-directory.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
@@ -47,6 +48,7 @@ export async function buildUnitDeps(_projectRoot: string) {
   const pluginFetcher = new FixturePluginFetcher();
   const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
+  const marketplaceRegistry = new InMemoryMarketplaceRegistry();
   const installRuntimeConfigUseCase = new InstallRuntimeConfigUseCase(
     fs,
     manifestRepo,
@@ -80,6 +82,7 @@ export async function buildUnitDeps(_projectRoot: string) {
     pluginFetcher,
     pluginDistributionReader,
     pluginCatalogRepository,
+    marketplaceRegistry,
     installRuntimeConfigUseCase,
     installIdeConfigUseCase,
     currentVersionProvider,

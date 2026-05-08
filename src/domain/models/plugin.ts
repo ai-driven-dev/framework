@@ -50,6 +50,24 @@ export class Plugin {
     this.marketplace = params.marketplace;
   }
 
+  static fromMetadata(
+    name: string,
+    version: string,
+    source: PluginSource,
+    strict: boolean,
+    marketplace?: string
+  ): Plugin {
+    const data: PluginEntryData = {
+      name,
+      source: serializePluginSource(source),
+      version,
+      strict,
+      files: {},
+    };
+    if (marketplace !== undefined) data.marketplace = marketplace;
+    return Plugin.fromJSON(data);
+  }
+
   static fromDistribution(
     dist: PluginDistribution,
     source: PluginSource,

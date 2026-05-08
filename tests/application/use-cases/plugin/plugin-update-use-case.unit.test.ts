@@ -17,7 +17,8 @@ async function setup(deps: Awaited<ReturnType<typeof buildUnitDeps>>) {
     deps.manifestRepo,
     deps.pluginFetcher,
     reader,
-    deps.hasher
+    deps.hasher,
+    deps.marketplaceRegistry
   );
   const updateUseCase = new PluginUpdateUseCase(
     deps.fs,
