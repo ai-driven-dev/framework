@@ -10,6 +10,10 @@ import type { TokenProvider } from "../../../src/domain/ports/token-provider.js"
 import { buildUnitDeps } from "../../helpers/ports/build-unit-deps.js";
 import { OverwritePrompter } from "../../helpers/ports/scripted-prompter.js";
 
+function makeNoOpLatestResolver() {
+  return { resolveLatest: vi.fn().mockResolvedValue(null) } as never;
+}
+
 function makeNoOp(value: unknown) {
   return { execute: vi.fn().mockResolvedValue(value) } as never;
 }
@@ -23,7 +27,10 @@ const PROJECT_ROOT = "/test-project";
 async function buildSetupUseCase(tokenProvider: TokenProvider) {
   const deps = await buildUnitDeps(PROJECT_ROOT);
   const prompter = new OverwritePrompter();
-  const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(prompter);
+  const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
+    prompter,
+    makeNoOpLatestResolver()
+  );
   const setupToolsUseCase = new SetupToolsUseCase(
     deps.manifestRepo,
     deps.installRuntimeConfigUseCase,

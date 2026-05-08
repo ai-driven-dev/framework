@@ -131,10 +131,10 @@ describe.concurrent("Command Matrix: Help", () => {
       expect(stdout).toContain("--ai");
       expect(stdout).toContain("--ide");
       expect(stdout).toContain("--all");
+      expect(stdout).toContain("--release");
       expect(stdout).not.toContain("--from");
       expect(stdout).not.toContain("--switch-mode");
       expect(stdout).not.toContain("--mode");
-      expect(stdout).not.toContain("--release");
       expect(stdout).not.toContain("--repo");
     } finally {
       await cleanup();

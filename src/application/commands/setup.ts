@@ -7,6 +7,7 @@ import {
   IDE_TOOL_IDS,
   type ToolId,
 } from "../../domain/tools/registry.js";
+import { GitHubReleaseResolverAdapter } from "../../infrastructure/adapters/github-release-resolver-adapter.js";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
@@ -20,6 +21,7 @@ import { parseGlobalOptions } from "./global-options.js";
 interface SetupCmdOptions {
   source?: "remote" | "local";
   path?: string;
+  release?: string;
   ai?: string;
   ide?: string;
   all?: boolean;
@@ -42,7 +44,7 @@ function parseSourceFlag(
     }
     return MarketplaceSourceMode.local(cmdOptions.path);
   }
-  return MarketplaceSourceMode.remote();
+  return MarketplaceSourceMode.remote(undefined, cmdOptions.release);
 }
 
 function parseToolIds(
@@ -115,6 +117,7 @@ export function registerSetupCommand(program: Command): void {
     .description("Set up or update the project to a correct state")
     .option("--source <mode>", "Framework source: remote or local")
     .option("--path <dir>", "Absolute path to local framework (required with --source local)")
+    .option("--release <tag>", "Marketplace release tag to fetch (e.g., v1.2.3)")
     .option("--ai <ids>", "Comma-separated AI tool IDs (e.g., claude,cursor)")
     .option("--ide <ids>", "Comma-separated IDE tool IDs (e.g., vscode)")
     .option("--all", "Install all available tools (AI + IDE)")
@@ -135,6 +138,7 @@ export function registerSetupCommand(program: Command): void {
 
       const hasScriptingFlags = !!(
         cmdOptions.source ||
+        cmdOptions.release ||
         cmdOptions.all ||
         cmdOptions.ai ||
         cmdOptions.ide ||
@@ -164,7 +168,14 @@ export function registerSetupCommand(program: Command): void {
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
 
-        const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(deps.prompter);
+        const releaseResolver = new GitHubReleaseResolverAdapter(
+          deps.http,
+          deps.token ?? undefined
+        );
+        const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
+          deps.prompter,
+          releaseResolver
+        );
         const setupToolsUseCase = new SetupToolsUseCase(
           deps.manifestRepo,
           deps.installRuntimeConfigUseCase,

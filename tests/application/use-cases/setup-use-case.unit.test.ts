@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { SetupMarketplaceSourceUseCase } from "../../../src/application/use-cases/setup/setup-marketplace-source-use-case.js";
+
 import { SetupPluginsPromptUseCase } from "../../../src/application/use-cases/setup/setup-plugins-prompt-use-case.js";
 import { SetupToolsUseCase } from "../../../src/application/use-cases/setup/setup-tools-use-case.js";
 import { SetupUseCase } from "../../../src/application/use-cases/setup-use-case.js";
@@ -9,6 +10,10 @@ import { SetupFlow } from "../../../src/domain/models/setup-flow.js";
 import { AI_TOOL_IDS, IDE_TOOL_IDS, type ToolId } from "../../../src/domain/tools/registry.js";
 import { buildUnitDeps, initAndInstall, initProject } from "../../helpers/ports/build-unit-deps.js";
 import { OverwritePrompter } from "../../helpers/ports/scripted-prompter.js";
+
+function makeNoOpLatestResolver() {
+  return { resolveLatest: vi.fn().mockResolvedValue(null) } as never;
+}
 
 function makeNoOpMarketplaceRegisterFramework() {
   return { execute: vi.fn().mockResolvedValue({ registered: false }) } as never;
@@ -45,7 +50,10 @@ const PROJECT_ROOT = "/test-project";
 async function buildUseCase() {
   const deps = await buildUnitDeps(PROJECT_ROOT);
   const prompter = new OverwritePrompter();
-  const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(prompter);
+  const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
+    prompter,
+    makeNoOpLatestResolver()
+  );
   const setupToolsUseCase = new SetupToolsUseCase(
     deps.manifestRepo,
     deps.installRuntimeConfigUseCase,

@@ -89,6 +89,8 @@ interface Deps {
   prompter: Prompter;
   authReader: AuthReader;
   authStorage: AuthStorage;
+  http: HttpClient;
+  token: string | null;
   pluginCatalogRepository: PluginCatalogRepository;
   pluginFetcher: PluginFetcher;
   pluginDistributionReader: PluginDistributionReader;
@@ -300,6 +302,8 @@ export async function createDeps(
     prompter,
     authReader,
     authStorage,
+    http,
+    token,
     pluginCatalogRepository,
     pluginFetcher,
     pluginDistributionReader,

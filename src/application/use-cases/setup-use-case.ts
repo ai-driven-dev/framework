@@ -93,7 +93,7 @@ export class SetupUseCase {
 
   private toPluginSource(source: MarketplaceSourceMode): PluginSource {
     if (source.kind === "local") return { kind: "local", path: source.path };
-    return { kind: "github", repo: source.repo };
+    return { kind: "github", repo: source.repo, ref: source.ref };
   }
 
   private async refreshCatalog(flow: SetupFlow): Promise<void> {
