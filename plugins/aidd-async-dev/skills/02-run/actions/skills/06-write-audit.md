@@ -1,6 +1,6 @@
 # 06 -- Write Audit
 
-Persists the run record and creates the GitHub Check Run.
+Persists the run record, creates the GitHub Check Run, and transitions the lifecycle labels to `claude/awaiting-review` (or `claude/blocked` on failure).
 
 ## Inputs
 
@@ -25,9 +25,11 @@ Persists the run record and creates the GitHub Check Run.
 1. Compute `audit_dir = config.audit.log_dir + "/" + YYYY_MM` (UTC). Create it if missing.
 2. Write `<audit_dir>/<run_id>.json` with the full run record: trigger, issue, dependency check, lock timestamps, SDLC outcome, errors if any, plugin version.
 3. If `config.audit.github_check_run` is true, call `gh api repos/{owner}/{repo}/check-runs` to create or update a Check Run named `aidd-async/<run_id>` with `status` and `conclusion` reflecting the run.
-4. Remove `ai:running` from the issue. If the run failed, also add a `failed-async-run` label so a human can inspect.
+4. Transition labels on the issue:
+   - On success (PR was opened): remove `config.labels.working`, add `config.labels.awaiting_review`.
+   - On failure: remove `config.labels.working`, add `config.labels.blocked`. Post a comment on the issue with the error details.
 5. Return the audit path and check run id.
 
 ## Test
 
-After a successful run: `jq '.run_id, .pr_number' aidd_docs/async-runs/<YYYY_MM>/<run_id>.json` returns the run id and PR number; `gh api repos/{owner}/{repo}/check-runs/<id>` returns `conclusion: "success"`; `gh issue view <n> --json labels` no longer contains `ai:running`.
+After a successful run: `jq '.run_id, .pr_number' aidd_docs/async-runs/<YYYY_MM>/<run_id>.json` returns the run id and PR number; `gh api repos/{owner}/{repo}/check-runs/<id>` returns `conclusion: "success"`; `gh issue view <n> --repo <owner>/<repo> --json labels --jq '.labels[].name'` includes `claude/awaiting-review` and excludes `claude/working`.

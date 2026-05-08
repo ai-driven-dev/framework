@@ -26,7 +26,7 @@ Decides whether to keep iterating or hand control to a human.
 
 ## Process
 
-1. If `issue_labels` contains `config.labels.blocked` (default `ai:blocked`): decision = `stop`, reason = `blocked_label`.
+1. If `issue_labels` contains `config.labels.blocked` (default `claude/blocked`): decision = `stop`, reason = `blocked_label`.
 2. If `collect_output.iteration >= config.max_iterations`: decision = `stop`, reason = `max_iterations`.
 3. If any comment in `collect_output.comments` has `is_bot == false` AND `created_at` newer than the last iteration's start time: decision = `stop`, reason = `human_reviewer`.
 4. Otherwise: decision = `continue`, reason = `null`.

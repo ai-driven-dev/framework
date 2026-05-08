@@ -1,33 +1,41 @@
 ---
 name: aidd-async-dev:02:run
-description: Runs one async development pipeline cycle: polls ready GitHub issues, resolves dependencies, locks the issue, delegates implementation to whichever SDLC capability is loaded at runtime, then writes audit log and SIEM webhook. Use when the user (or CI / cron / @claude mention / project board move) says "run async dev", "implement ready issues", "process the async queue", or invokes this skill on a specific issue. Do NOT use for setup or for handling PR review comment loops; other skills in this plugin cover those.
+description: Runs one async development pipeline cycle: polls issues labeled with the `to-implement` label (or its mention equivalent), resolves dependencies, locks the issue with `claude/working`, delegates implementation to whichever SDLC capability is loaded at runtime, opens a PR, and ends with the issue marked `claude/awaiting-review`. Use when a fresh issue is labeled or mentioned for implementation, or when the user says "run async dev", "implement ready issues", "process the async queue". Do NOT use for setup or for handling PR review comment loops; other skills in this plugin cover those.
 ---
 
 # Run
 
-Executes one orchestration cycle. Reads ready issues, resolves blockers, acquires a per-issue lock, hands the implementation to the active SDLC orchestration capability discovered in the runtime, and records audit + observability artifacts.
+Executes one orchestration cycle on a fresh issue. Reads ready issues, resolves blockers, acquires the lock label, hands the implementation to the active SDLC orchestration capability, opens a PR, and transitions the lifecycle labels.
 
 ## Available actions
 
 | #   | Action            | Role                                                         | Input            |
 | --- | ----------------- | ------------------------------------------------------------ | ---------------- |
-| 01  | `poll-ready`      | List ready issues by label, project column, or mention       | repo + config    |
+| 01  | `poll-ready`      | List candidate issues by `to-implement` label or mention     | repo + config    |
 | 02  | `resolve-deps`    | Filter out blocked issues via dependency chain               | candidate issues |
-| 03  | `acquire-lock`    | Add `ai:running` label to dedupe parallel runs               | target issue     |
+| 03  | `acquire-lock`    | Swap `to-implement` -> `claude/working`                      | target issue     |
 | 04  | `check-sdlc`      | Discover an active SDLC orchestration capability             | runtime context  |
 | 05  | `delegate-sdlc`   | Invoke the discovered SDLC capability with issue context     | locked issue     |
-| 06  | `write-audit`     | Persist run record to `aidd_docs/async-runs/` and Check Run  | run result       |
-| 07  | `emit-webhook`    | POST run record to SIEM webhook if configured                | run record       |
+| 06  | `write-audit`     | Persist run record, Check Run, transition to `claude/awaiting-review` | run result |
 
 ## Default flow
 
-Sequential: `01 -> 02 -> 03 -> 04 -> 05 -> 06 -> 07`. Action 03 runs once per selected issue. If no issue passes 02, the skill stops cleanly without locking.
+Sequential: `01 -> 02 -> 03 -> 04 -> 05 -> 06`. Action 03 runs once per selected issue. If no issue passes 02, the skill stops cleanly without locking.
+
+## Lifecycle labels
+
+| Phase            | Label after action                  | Posed by |
+| ---------------- | ----------------------------------- | -------- |
+| Trigger received | `to-implement`                      | Human    |
+| Lock acquired    | `claude/working`                    | This skill (action 03) |
+| PR opened        | `claude/awaiting-review`            | This skill (action 06) |
+| Failure          | `claude/blocked` + comment          | This skill (action 06) |
 
 ## Transversal rules
 
 - Read `.claude/aidd-async-dev.json` first; abort with a clear message if absent (refer the user to the setup skill of this plugin).
-- Acquire the lock before delegating. Release the lock by removing `ai:running` only after `06-write-audit` succeeds, regardless of pipeline outcome.
-- On any failure between 03 and 06, attach the error to the audit record and the issue as a comment; keep `ai:running` so a human can investigate.
+- Acquire the lock before delegating. Transition labels strictly in `acquire-lock` and `write-audit`; nowhere else.
+- On any failure between 03 and 06, attach the error to the audit record and the issue as a comment, replace `claude/working` with `claude/blocked`, and stop.
 - Never auto-merge. The pipeline ends at PR creation.
 - Apply `tool_allowlist` from config via the plugin `PreToolUse` hook when hooks are wired.
 
