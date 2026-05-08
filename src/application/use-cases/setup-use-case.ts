@@ -48,7 +48,12 @@ export class SetupUseCase {
     await this.refreshCatalog(flow);
     const install = await this.installTools(flow);
     await this.promptPlugins(flow);
+    await this.syncSettings(flow);
     return this.buildResult(isNew, docsDir, install);
+  }
+
+  private async syncSettings(flow: SetupFlow): Promise<void> {
+    await this.marketplaceSyncSettingsUseCase.execute({ projectRoot: flow.projectRoot });
   }
 
   private async resolveSource(flow: SetupFlow): Promise<MarketplaceSourceMode> {
@@ -99,7 +104,6 @@ export class SetupUseCase {
   private async refreshCatalog(flow: SetupFlow): Promise<void> {
     if (process.env.AIDD_SKIP_MARKETPLACE_REFRESH === "1") return;
     await this.marketplaceRefreshUseCase.execute({ projectRoot: flow.projectRoot });
-    await this.marketplaceSyncSettingsUseCase.execute({ projectRoot: flow.projectRoot });
   }
 
   private async installTools(flow: SetupFlow): Promise<SetupToolsResult> {
