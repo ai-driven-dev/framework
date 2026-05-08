@@ -172,7 +172,8 @@ export class PluginAddUseCase {
       docsDir
     );
     if (files.length === 0) return;
-    const isLocalMarketplace = source.kind === "local" && marketplace !== undefined;
+    const isLocalMarketplace =
+      !this.isFlatTool(toolId) && source.kind === "local" && marketplace !== undefined;
     if (!isLocalMarketplace) await writePluginFiles(files, projectRoot, this.fs);
     manifest.addPlugin(
       toolId,

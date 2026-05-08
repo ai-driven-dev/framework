@@ -37,6 +37,7 @@
       "!setup-test",
       "!tmp-test",
       "!tmp",
+      "!.stryker-tmp",
       "!**/fixtures/**/*.json"
     ]
   },

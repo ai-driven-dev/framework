@@ -323,4 +323,44 @@ describe("PluginAddUseCase", () => {
       expect(installed?.files.size).toBe(0);
     });
   });
+
+  describe("per-tool install strategy (local marketplace)", () => {
+    it("opencode: materializes flat files even when source is local marketplace", async () => {
+      const deps = await buildUnitDeps(PROJECT_ROOT);
+      await initAndInstall(deps, PROJECT_ROOT, "opencode");
+      await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
+      const registry = new InMemoryMarketplaceRegistry();
+      await registry.save(
+        PROJECT_ROOT,
+        Marketplace.create({
+          name: "local-mkt",
+          source: { kind: "local", path: "/mkt-source" },
+          scope: "project",
+          addedAt: "2026-05-01T00:00:00.000Z",
+        })
+      );
+      const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
+      const useCase = new PluginAddUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.pluginFetcher,
+        new PluginDistributionReaderAdapter(deps.fs),
+        deps.hasher,
+        registry
+      );
+      await useCase.execute({
+        source: { kind: "local", path: PLUGIN_FIXTURE },
+        toolIds: ["opencode"],
+        projectRoot: PROJECT_ROOT,
+        marketplace: "local-mkt",
+        interactive: false,
+      });
+      expect(fetchSpy).toHaveBeenCalled();
+      const manifest = await deps.manifestRepo.load();
+      const plugins = manifest?.getPlugins("opencode") ?? [];
+      const installed = plugins.find((p) => p.name === "sample-plugin");
+      expect(installed).toBeDefined();
+      expect(installed?.files.size).toBeGreaterThan(0);
+    });
+  });
 });
