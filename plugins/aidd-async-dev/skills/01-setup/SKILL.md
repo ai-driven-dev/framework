@@ -5,35 +5,38 @@ description: Installs and configures the aidd-async-dev plugin in a target repo.
 
 # Setup
 
-Sets up async-dev in a repo: detects context, asks the user for a small set of runtime parameters, generates the GitHub Actions workflow, persists the config, and bootstraps the lifecycle labels. One-shot, manual.
+Sets up async-dev in a repo: detects context, asks the user for runtime parameters, then generates the artefacts that match the chosen mode (`remote`, `local`, or `both`), persists the config, and bootstraps the lifecycle labels. One-shot, manual.
 
 ## Available actions
 
-| #   | Action               | Role                                                   | Input                |
-| --- | -------------------- | ------------------------------------------------------ | -------------------- |
-| 01  | `detect-context`     | Detect repo platform and discover an SDLC capability   | repo cwd             |
-| 02  | `ask-config`         | Collect mode, marketplace, auth, max-iterations        | detection report     |
-| 03  | `generate-workflow`  | Render `.github/workflows/aidd-async.yml` from template | answers              |
-| 04  | `write-config`       | Persist `.claude/aidd-async-dev.json`                  | answers              |
-| 05  | `bootstrap-labels`   | Create the 5 lifecycle labels on the GitHub repo       | answers              |
+| #   | Action               | Role                                                                  | Mode gate           |
+| --- | -------------------- | --------------------------------------------------------------------- | ------------------- |
+| 01  | `detect-context`     | Detect repo platform and discover an SDLC capability                  | always              |
+| 02  | `ask-config`         | Collect mode, marketplace, auth, max iterations                       | always              |
+| 03  | `generate-workflow`  | Render `.github/workflows/aidd-async.yml`                             | `remote` or `both`  |
+| 04  | `generate-local-script` | Render `scripts/aidd-async-poll.sh` and a launchd/cron snippet     | `local` or `both`   |
+| 05  | `write-config`       | Persist `.claude/aidd-async-dev.json`                                 | always              |
+| 06  | `bootstrap-labels`   | Create the 5 lifecycle labels on the GitHub repo                      | always              |
 
 ## Default flow
 
-Sequential: `01 -> 02 -> 03 -> 04 -> 05`. No skipping.
+Sequential: `01 -> 02 -> 03 -> 04 -> 05 -> 06`. Actions 03 and 04 self-skip when the chosen `mode` excludes them.
 
 ## Lifecycle labels
 
-The plugin defines two namespaces with strict ownership.
+| Label                     | Posed by | Meaning                                                |
+| ------------------------- | -------- | ------------------------------------------------------ |
+| `to-implement`            | Human    | "Claude, implement this issue."                       |
+| `to-review`               | Human    | "Claude, apply the review feedback on the linked PR." |
+| `claude/working`          | Claude   | Pipeline lock; a run is in progress.                  |
+| `claude/awaiting-review`  | Claude   | A PR is open and is waiting for human review.         |
+| `claude/blocked`          | Claude   | Failure or dependency blocker; human takeover needed. |
 
-| Label                     | Posed by | Meaning                                                 |
-| ------------------------- | -------- | ------------------------------------------------------- |
-| `to-implement`            | Human    | "Claude, implement this issue."                        |
-| `to-review`               | Human    | "Claude, apply the review feedback on the linked PR."  |
-| `claude/working`          | Claude   | Pipeline lock; a run is in progress.                   |
-| `claude/awaiting-review`  | Claude   | A PR is open and is waiting for human review.          |
-| `claude/blocked`          | Claude   | Failure or dependency blocker; human takeover needed.  |
+## Modes
 
-The pipeline auto-routes: when the human applies `to-implement` (or `to-review`) on an issue, the workflow checks whether an open PR is linked to that issue. If yes, it dispatches to the review skill; otherwise to the run skill. Mention triggers (`@claude /implement`, `@claude /review`) work the same way.
+- **`remote`** -- GitHub Actions runs the pipeline. Fully managed by GitHub; no machine on the user's side needs to be online.
+- **`local`** -- A poll script runs on the user's machine on a schedule (cron, launchd, or a Claude Code Desktop scheduled task). Useful for repos without GitHub Actions or for offline-first workflows.
+- **`both`** -- Both surfaces enabled. The same labels and the same skills drive both. Concurrency is naturally deduplicated by the `claude/working` lock label.
 
 ## Transversal rules
 
@@ -49,5 +52,6 @@ The pipeline auto-routes: when the human applies `to-implement` (or `to-review`)
 
 ## Assets
 
-- `assets/workflow-template.yml` -- GitHub Actions workflow skeleton
+- `assets/workflow-template.yml` -- GitHub Actions workflow skeleton (for `remote`)
+- `assets/local-poll-template.sh` -- poll script skeleton (for `local`)
 - `assets/config-template.json` -- `.claude/aidd-async-dev.json` skeleton
