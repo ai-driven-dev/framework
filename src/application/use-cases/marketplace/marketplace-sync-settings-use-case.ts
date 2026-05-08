@@ -150,9 +150,11 @@ export class MarketplaceSyncSettingsUseCase {
       const source = this.resolveSourceForSettings(m.source, projectRoot);
       const entry = settings.toEntry({ name: m.name, source, version: versionByName.get(m.name) });
       if (entry === null || entry.key in toMerge) continue;
-      if (entry.key in existing) {
-        if (m.source.kind !== "local") continue;
-        if (JSON.stringify(existing[entry.key]) === JSON.stringify(entry.value)) continue;
+      if (
+        entry.key in existing &&
+        JSON.stringify(existing[entry.key]) === JSON.stringify(entry.value)
+      ) {
+        continue;
       }
       toMerge[entry.key] = entry.value;
     }

@@ -94,6 +94,7 @@ export class PluginPickUseCase {
           version: entry.version ?? "",
           strict: entry.strict ?? false,
         },
+        replace: true,
       });
       installed.push(entry.name);
     }

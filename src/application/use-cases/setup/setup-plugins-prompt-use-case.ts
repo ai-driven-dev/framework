@@ -52,6 +52,7 @@ export class SetupPluginsPromptUseCase {
         projectRoot: options.projectRoot,
         interactive: options.interactive,
         autoSelect: true,
+        replace: true,
       });
       installed.push(name);
     }

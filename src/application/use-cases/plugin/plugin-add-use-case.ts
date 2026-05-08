@@ -30,6 +30,8 @@ export interface PluginAddOptions {
   marketplace?: string;
   requiredVersion?: string;
   pluginMetadata?: { name: string; version: string; strict: boolean };
+  /** When true, drop any existing entry with the same name before adding (idempotent re-add for setup re-runs). */
+  replace?: boolean;
 }
 
 export class PluginAddUseCase {
@@ -67,7 +69,8 @@ export class PluginAddUseCase {
   ): Promise<void> {
     const { pluginMetadata } = options;
     if (pluginMetadata === undefined) throw new MissingPluginVersionError();
-    this.validateNoDuplicates(pluginMetadata.name, toolIds, manifest);
+    if (options.replace === true) this.dropExistingPlugin(pluginMetadata.name, toolIds, manifest);
+    else this.validateNoDuplicates(pluginMetadata.name, toolIds, manifest);
     const flatToolIds = toolIds.filter((id) => this.isFlatTool(id));
     const nativeToolIds = toolIds.filter((id) => !this.isFlatTool(id));
     if (flatToolIds.length > 0) {
@@ -124,7 +127,11 @@ export class PluginAddUseCase {
     const localPath = await this.pluginFetcher.fetch(source, cacheDir);
     const dist = await this.pluginDistributionReader.read(localPath);
     this.assertPluginVersionMatches(dist.manifest.name, dist.manifest.version, requiredVersion);
-    this.validateNoDuplicates(dist.manifest.name, resolvedToolIds, manifest);
+    if (options.replace === true) {
+      this.dropExistingPlugin(dist.manifest.name, resolvedToolIds, manifest);
+    } else {
+      this.validateNoDuplicates(dist.manifest.name, resolvedToolIds, manifest);
+    }
     const docsDir = DOCS_DIR;
     for (const toolId of resolvedToolIds) {
       await this.addPluginForTool(
@@ -152,6 +159,13 @@ export class PluginAddUseCase {
     for (const toolId of toolIds) {
       const exists = manifest.getPlugins(toolId).some((p) => p.name === pluginName);
       if (exists) throw new DuplicatePluginError(pluginName);
+    }
+  }
+
+  private dropExistingPlugin(pluginName: string, toolIds: AiToolId[], manifest: Manifest): void {
+    for (const toolId of toolIds) {
+      const exists = manifest.getPlugins(toolId).some((p) => p.name === pluginName);
+      if (exists) manifest.removePlugin(toolId, pluginName);
     }
   }
 

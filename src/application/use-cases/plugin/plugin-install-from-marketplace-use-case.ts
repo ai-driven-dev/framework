@@ -20,6 +20,8 @@ export interface PluginInstallFromMarketplaceOptions {
   projectRoot: string;
   interactive: boolean;
   autoSelect?: boolean;
+  /** When true, drop existing plugin entry before adding (idempotent setup re-runs). */
+  replace?: boolean;
 }
 
 export interface PluginInstallFromMarketplaceResult {
@@ -63,6 +65,7 @@ export class PluginInstallFromMarketplaceUseCase {
         chosen.entry.version !== undefined
           ? { name: chosen.entry.name, version: chosen.entry.version, strict: chosen.entry.strict }
           : undefined,
+      replace: options.replace,
     });
     return { marketplace: chosen.marketplace, entry: chosen.entry };
   }
