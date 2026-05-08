@@ -10,6 +10,7 @@ import { PluginCatalogRepositoryAdapter } from "../../../src/infrastructure/adap
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/framework");
 const CURSOR_FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins/cursor-format");
+const CODEX_FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins/codex-format");
 const COPILOT_FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins/copilot-format");
 
 function makeAdapter(): PluginCatalogRepositoryAdapter {
@@ -130,6 +131,68 @@ describe("PluginCatalogRepositoryAdapter.loadForeign", () => {
 
   describe("no marketplace.json present", () => {
     it("returns empty array when no cursor marketplace exists", async () => {
+      const adapter = makeAdapter();
+      const plugins = await adapter.loadForeign(join(FIXTURE_DIR, "marketplace-missing"));
+      expect(plugins).toEqual([]);
+    });
+  });
+});
+
+describe("PluginCatalogRepositoryAdapter.loadForeign (Codex)", () => {
+  describe("codex marketplace-sample fixture", () => {
+    it("returns three normalized plugins", async () => {
+      const adapter = makeAdapter();
+      const plugins = await adapter.loadForeign(join(CODEX_FIXTURE_DIR, "marketplace-sample"));
+      expect(plugins).toHaveLength(3);
+    });
+
+    it("first plugin has name, version and description", async () => {
+      const adapter = makeAdapter();
+      const plugins = await adapter.loadForeign(join(CODEX_FIXTURE_DIR, "marketplace-sample"));
+      expect(plugins[0]).toEqual({
+        name: "codex-dev-tools",
+        version: "1.2.0",
+        description: "Developer tools for Codex",
+        source: "codex",
+      });
+    });
+
+    it("plugin without version has name and description only", async () => {
+      const adapter = makeAdapter();
+      const plugins = await adapter.loadForeign(join(CODEX_FIXTURE_DIR, "marketplace-sample"));
+      expect(plugins[1]).toEqual({
+        name: "codex-testing",
+        description: "Testing utilities",
+        source: "codex",
+      });
+    });
+
+    it("minimal plugin has name and source only", async () => {
+      const adapter = makeAdapter();
+      const plugins = await adapter.loadForeign(join(CODEX_FIXTURE_DIR, "marketplace-sample"));
+      expect(plugins[2]).toEqual({ name: "codex-minimal", source: "codex" });
+    });
+  });
+
+  describe("codex marketplace-empty fixture", () => {
+    it("returns empty array when plugins list is empty", async () => {
+      const adapter = makeAdapter();
+      const plugins = await adapter.loadForeign(join(CODEX_FIXTURE_DIR, "marketplace-empty"));
+      expect(plugins).toEqual([]);
+    });
+  });
+
+  describe("codex marketplace-malformed fixture", () => {
+    it("throws ForeignSchemaValidationError for invalid JSON", async () => {
+      const adapter = makeAdapter();
+      await expect(
+        adapter.loadForeign(join(CODEX_FIXTURE_DIR, "marketplace-malformed"))
+      ).rejects.toThrow(ForeignSchemaValidationError);
+    });
+  });
+
+  describe("no codex marketplace.json present", () => {
+    it("returns empty array when no codex marketplace exists", async () => {
       const adapter = makeAdapter();
       const plugins = await adapter.loadForeign(join(FIXTURE_DIR, "marketplace-missing"));
       expect(plugins).toEqual([]);
