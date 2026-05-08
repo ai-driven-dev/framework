@@ -12,6 +12,7 @@ const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/framework");
 const CURSOR_FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins/cursor-format");
 const CODEX_FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins/codex-format");
 const COPILOT_FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins/copilot-format");
+const OPENCODE_FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins/opencode-format");
 
 function makeAdapter(): PluginCatalogRepositoryAdapter {
   return new PluginCatalogRepositoryAdapter(new FileAdapter(new HasherAdapter()));
@@ -239,6 +240,78 @@ describe("PluginCatalogRepositoryAdapter.loadForeign (Copilot)", () => {
 
   describe("no copilot plugin.json present", () => {
     it("returns empty array when no copilot plugin.json exists", async () => {
+      const adapter = makeAdapter();
+      const plugins = await adapter.loadForeign(join(FIXTURE_DIR, "marketplace-missing"));
+      expect(plugins).toEqual([]);
+    });
+  });
+});
+
+describe("PluginCatalogRepositoryAdapter.loadForeign (OpenCode)", () => {
+  describe("opencode marketplace-sample fixture", () => {
+    it("returns three normalized plugins", async () => {
+      const adapter = makeAdapter();
+      const plugins = await adapter.loadForeign(join(OPENCODE_FIXTURE_DIR, "marketplace-sample"));
+      expect(plugins).toHaveLength(3);
+    });
+
+    it("first plugin is bare string specifier", async () => {
+      const adapter = makeAdapter();
+      const plugins = await adapter.loadForeign(join(OPENCODE_FIXTURE_DIR, "marketplace-sample"));
+      expect(plugins[0]).toEqual({ name: "opencode-dev-tools", source: "opencode" });
+    });
+
+    it("second plugin is scoped npm package specifier", async () => {
+      const adapter = makeAdapter();
+      const plugins = await adapter.loadForeign(join(OPENCODE_FIXTURE_DIR, "marketplace-sample"));
+      expect(plugins[1]).toEqual({ name: "@my-org/opencode-testing", source: "opencode" });
+    });
+
+    it("third plugin comes from tuple, name is first element", async () => {
+      const adapter = makeAdapter();
+      const plugins = await adapter.loadForeign(join(OPENCODE_FIXTURE_DIR, "marketplace-sample"));
+      expect(plugins[2]).toEqual({ name: "opencode-minimal", source: "opencode" });
+    });
+
+    it("no plugin has version or description", async () => {
+      const adapter = makeAdapter();
+      const plugins = await adapter.loadForeign(join(OPENCODE_FIXTURE_DIR, "marketplace-sample"));
+      for (const p of plugins) {
+        expect(p.version).toBeUndefined();
+        expect(p.description).toBeUndefined();
+      }
+    });
+  });
+
+  describe("opencode marketplace-empty fixture", () => {
+    it("returns empty array when plugin list is empty", async () => {
+      const adapter = makeAdapter();
+      const plugins = await adapter.loadForeign(join(OPENCODE_FIXTURE_DIR, "marketplace-empty"));
+      expect(plugins).toEqual([]);
+    });
+  });
+
+  describe("opencode marketplace-no-plugin-key fixture", () => {
+    it("returns empty array when plugin field is absent", async () => {
+      const adapter = makeAdapter();
+      const plugins = await adapter.loadForeign(
+        join(OPENCODE_FIXTURE_DIR, "marketplace-no-plugin-key")
+      );
+      expect(plugins).toEqual([]);
+    });
+  });
+
+  describe("opencode marketplace-malformed fixture", () => {
+    it("throws ForeignSchemaValidationError for invalid JSON", async () => {
+      const adapter = makeAdapter();
+      await expect(
+        adapter.loadForeign(join(OPENCODE_FIXTURE_DIR, "marketplace-malformed"))
+      ).rejects.toThrow(ForeignSchemaValidationError);
+    });
+  });
+
+  describe("no opencode.json present", () => {
+    it("returns empty array when no opencode.json exists", async () => {
       const adapter = makeAdapter();
       const plugins = await adapter.loadForeign(join(FIXTURE_DIR, "marketplace-missing"));
       expect(plugins).toEqual([]);

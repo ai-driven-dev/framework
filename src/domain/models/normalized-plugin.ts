@@ -12,7 +12,7 @@
  * NOT versioned — internal type only, no schema versioning.
  */
 
-export type ForeignMarketplaceSource = "cursor" | "copilot" | "codex";
+export type ForeignMarketplaceSource = "cursor" | "copilot" | "codex" | "opencode";
 
 export interface NormalizedPlugin {
   readonly name: string;

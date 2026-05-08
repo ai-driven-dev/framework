@@ -71,9 +71,9 @@ Runtime configs and IDE configs ship inside the CLI binary (tsup bundles them):
 - Error handling: typed exceptions thrown from use-cases/adapters; caught only at command layer
 - `aidd migrate`: idempotent, `--dry-run` safe, backup before writes, best-effort plugin rewire via marketplace
 
-## Foreign-Format Adapters (Phase A — Cursor only)
+## Foreign-Format Adapters (Part 1 — COMPLETE)
 
-Future capability: ingest native marketplace formats from other AI tools.
+Ingests native marketplace/config formats from other AI tools.
 Pipeline: `NativeFormat → Parser → NormalizedPlugin → Emitter[targetTool] → ToolNativeFiles`
 
 **Phase A (Cursor) — shipped:**
@@ -81,13 +81,22 @@ Pipeline: `NativeFormat → Parser → NormalizedPlugin → Emitter[targetTool] 
 - `src/domain/formats/cursor-marketplace.ts` — pure parser `parseCursorMarketplace(rawJson)` → `NormalizedCatalog`
 - `ForeignSchemaValidationError` in `src/domain/errors.ts` — thrown on invalid foreign schema
 - Cursor's `marketplace.json` schema mirrors Claude's catalog shape (official schema undocumented as of 2026-05-06)
-- Integration with fetcher pipeline deferred to Phase A.5
 
 **Phase B (Copilot) — shipped:**
 - `src/domain/formats/copilot-marketplace.ts` — pure parser `parseCopilotMarketplace(rawJson)` → `NormalizedCatalog` (single-entry)
 - Copilot has no multi-plugin catalog format; the "marketplace" is a Git repo with one plugin at `.github/plugin/plugin.json`
 - Parser treats that single-plugin manifest as a degenerate one-entry catalog
-- `ForeignMarketplaceSource` union extended: `"cursor" | "copilot"`
-- MARKETPLACE_PROBES extended: `.github/plugin/plugin.json` for copilot format
 
-**Phases C (Codex) — deferred. Phase D (OpenCode) — emitter complete (Part 3); marketplace adapter deferred.**
+**Phase C (Codex) — shipped:**
+- `src/domain/formats/codex-marketplace.ts` — pure parser `parseCodexMarketplace(rawJson)` → `NormalizedCatalog` (multi-entry)
+- Codex multi-plugin catalog at `.agents/plugins/marketplace.json`; shape: `{ plugins: [{ name, version?, description? }] }`
+
+**Phase D (OpenCode) — shipped (Part 1 COMPLETE):**
+- `src/domain/formats/opencode-marketplace.ts` — pure parser `parseOpencodeMarketplace(rawJson)` → `NormalizedCatalog`
+- OpenCode has no marketplace.json or per-project plugin manifest; plugins are referenced by npm specifier in `opencode.json` under the `plugin` array
+- Each entry is a bare string specifier OR a `[specifier, options]` tuple; name = specifier verbatim; no version/description available
+- Parser returns empty catalog when `plugin` field is absent (field is optional in OpenCode config)
+- Probe path: `opencode.json` at project root
+
+**ForeignMarketplaceSource union (final):** `"cursor" | "copilot" | "codex" | "opencode"`
+**MARKETPLACE_PROBES (final):** cursor `.cursor-plugin/marketplace.json`, copilot `.github/plugin/plugin.json`, codex `.agents/plugins/marketplace.json`, opencode `opencode.json`

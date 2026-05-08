@@ -3,6 +3,7 @@ import { InvalidPluginManifestError } from "../../domain/errors.js";
 import { parseCodexMarketplace } from "../../domain/formats/codex-marketplace.js";
 import { parseCopilotMarketplace } from "../../domain/formats/copilot-marketplace.js";
 import { parseCursorMarketplace } from "../../domain/formats/cursor-marketplace.js";
+import { parseOpencodeMarketplace } from "../../domain/formats/opencode-marketplace.js";
 import type { NormalizedPlugin } from "../../domain/models/normalized-plugin.js";
 import { type PluginCatalog, parsePluginCatalog } from "../../domain/models/plugin-catalog.js";
 import { MARKETPLACE_PROBES } from "../../domain/models/plugin-format.js";
@@ -32,6 +33,7 @@ export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {
       if (probe.format === "cursor") return this.readCursorCatalog(fullPath);
       if (probe.format === "codex") return this.readCodexCatalog(fullPath);
       if (probe.format === "copilot") return this.readCopilotCatalog(fullPath);
+      if (probe.format === "opencode") return this.readOpencodeCatalog(fullPath);
     }
     return [];
   }
@@ -66,6 +68,11 @@ export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {
   private async readCopilotCatalog(fullPath: string): Promise<NormalizedPlugin[]> {
     const raw = await this.fs.readFile(fullPath);
     return [...parseCopilotMarketplace(raw).plugins];
+  }
+
+  private async readOpencodeCatalog(fullPath: string): Promise<NormalizedPlugin[]> {
+    const raw = await this.fs.readFile(fullPath);
+    return [...parseOpencodeMarketplace(raw).plugins];
   }
 
   private resolveLocalPaths(catalog: PluginCatalog, frameworkPath: string): PluginCatalog {
