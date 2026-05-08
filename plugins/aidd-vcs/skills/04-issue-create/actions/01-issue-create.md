@@ -1,50 +1,43 @@
----
-name: new_issue
-description: Create issues in the configured ticketing tool
-argument-hint: "Describe the problem you want to create an issue for"
-model: sonnet
----
+# 01 - Issue Create
 
-# Issue Generator Prompt
+Detect the ticketing tool, gather a thorough problem description, fill the issue template, validate with the user, then create the issue.
 
-## Goal
+## Inputs
 
-Create a ticket based on the problem: `$ARGUMENTS`
-
-## Context
-
-### How to provide issues
-
-```markdown
-@assets/CONTRIBUTING.md
+```yaml
+problem_description: <free text>   # required
+repo_url: <url>                    # optional; default: derived from `git remote get-url origin`
+labels: [<label>]                  # optional
+type: bug | feature | task | docs  # optional; default: inferred from description
+projects: [<project>]              # optional
+milestone: <milestone>             # optional
 ```
 
-### Template to fill
+## Outputs
 
-```markdown
-@assets/issue-template.md
+```yaml
+tool: <configured ticketing tool>
+issue_url: <url>
+issue_number: <int>
+title: <issue title>
+labels: [<label>]
+type: <type>
 ```
 
-## Rules
+## Process
 
-- From project memory identify the ticketing tool and use it.
-- Be thorough and concise in the issue description, focus on clarity, small sentences.
-- Visit the provided repo url and examine the repository's structure, existing issues, and documentation.
-- Look for any `CONTRIBUTING.md` that may contain guidelines for creating issues.
-- Note the project's coding style, naming conventions, and any specific requirements for submitting issues.
+1. **Tool resolution**. Pick first match:
+   - ticketing tool declared in project memory -> use it
+   - default -> map `git remote get-url origin` to the matching configured tool
+2. **Read context**. Load `assets/CONTRIBUTING.md` and `assets/issue-template.md`. Skim existing open issues via the configured tool to avoid duplicates.
+3. **Gather details**. Combine `problem_description` with technical context (stack, repro steps, environment). Ask the user follow-up questions when required fields are missing.
+4. **Web search**. Look up official documentation that backs the issue when applicable (e.g. linked errors, framework changelog).
+5. **Fill template**. Generate a concise title and body that match the template structure. Pick a `type` (bug, feature, task, docs) when not provided.
+6. **Validate**. Show title, body, labels, type, projects, and milestone. Wait for explicit user approval.
+7. **Create**. Invoke the configured ticketing tool to open the issue, passing title, body, labels, projects, and milestone.
+8. **Capture** the returned URL and number. Return the structured Outputs block.
 
-## Process steps
+## Test
 
-1. Gather detailed problem description + Add technical implementation details
-2. Challenge the user to provide more details about the issue
-3. Web Search official documentation to support the issue
-4. Use our template to fill in the issue
-5. Validate complete issue with user displaying:
-   1. Title
-   2. Content from template
-   3. Labels
-   4. Type
-   5. Projets
-   6. Milestones
-6. **WAIT FOR USER APPROVAL**
-7. Provide link to issue
+- **Tool view**: querying the configured ticketing tool for the created issue returns a record where `url` equals `issue_url`, `title` equals the validated title, and `labels` matches the validated labels.
+- **Reachable**: the created issue is reachable at `issue_url` in the tracker UI.
