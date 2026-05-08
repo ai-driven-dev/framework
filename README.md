@@ -24,17 +24,21 @@ The **AIDD CLI** (`@ai-driven-dev/cli`) installs AI tool runtime configs, IDE in
 Available on [npmjs.org](https://www.npmjs.com/package/@ai-driven-dev/cli).
 
 ```bash
-# npm (recommended)
+# Stable release (post v4.1.0)
 npm install -g @ai-driven-dev/cli@latest
 
+# Current beta (v4.1.0-beta.*)
+npm install -g @ai-driven-dev/cli@beta
 # or with pnpm / yarn / bun
-pnpm add -g @ai-driven-dev/cli@latest
+pnpm add -g @ai-driven-dev/cli@beta
 
 # Verify
 aidd --version
 ```
 
 > Run `which aidd` to identify the active binary and use the matching package manager (`npm`, `pnpm`, `yarn`, `bun`).
+
+> **Beta users:** Once v4.1.0 is published as stable, switch to `@latest` and remove any `@beta` version pins from install scripts.
 
 ---
 
@@ -94,12 +98,33 @@ aidd setup
 # 2. Non-interactive scriptable setup (CI / onboarding scripts)
 aidd setup --source remote --ai claude --ide vscode --recommended-plugins --yes
 
-# 3. Install a plugin from the marketplace
+# 3. Install an AI tool or IDE integration (noun-first surface)
+aidd ai install claude
+aidd ide install vscode
+
+# 4. Install a plugin from the marketplace
 aidd plugin install aidd-context
 
-# 4. Check installation status
+# 5. Check installation status
 aidd ai status
 ```
+
+### Setup flags
+
+```bash
+# Remote marketplace (default) — optionally pin a specific tag
+aidd setup --source remote --release v4.1.0 --ai claude --yes
+
+# Local framework checkout
+aidd setup --source local --path /path/to/aidd-framework --ai claude --yes
+
+# All tools, no prompts
+aidd setup --all --yes
+```
+
+`--source remote|local` selects the marketplace source.
+`--release <tag>` pins the marketplace version fetched during setup (default: latest tag).
+`--yes` accepts all defaults.
 
 ### Brownfield (existing project)
 
@@ -223,13 +248,25 @@ Bootstraps a new project: initializes the manifest, registers the default market
 ```bash
 aidd setup                                              # interactive guided setup
 aidd setup --source remote --ai claude --yes            # non-interactive: remote marketplace, claude
+aidd setup --source remote --release v4.1.0 --ai claude --yes  # pin a specific marketplace tag
 aidd setup --source local --path /path/to/framework \
   --ai claude --ide vscode --recommended-plugins --yes  # local framework source
 aidd setup --all --yes                                  # all tools, no prompts
 aidd setup --ai claude,cursor --ide vscode              # mix AI and IDE tools
 ```
 
-`--source remote|local` selects the marketplace source. `--yes` accepts all defaults. Passing `--all`, `--ai`, `--ide`, or `--source` disables interactive prompts.
+| Flag | Description |
+|---|---|
+| `--source remote\|local` | Marketplace source. `remote` fetches from GitHub; `local` uses a local checkout. |
+| `--release <tag>` | Marketplace version to fetch (e.g. `v4.1.0`). Defaults to latest tag. Remote only. |
+| `--path <dir>` | Path to local framework checkout. Required with `--source local`. |
+| `--ai <tools>` | Comma-separated AI tools to install (e.g. `claude,cursor`). |
+| `--ide <tools>` | Comma-separated IDE tools to install (e.g. `vscode`). |
+| `--all` | Install all supported tools. |
+| `--recommended-plugins` | Auto-install recommended plugins after setup. |
+| `--yes` | Accept all defaults; disables interactive prompts. |
+
+`--all`, `--ai`, `--ide`, or `--source` each disable interactive prompts.
 
 ### `aidd ai`
 
@@ -350,6 +387,30 @@ aidd marketplace cache clear acme              # clear cache for a specific mark
 
 Marketplace sources accept a GitHub shorthand (`owner/repo`) or a full path to a local catalog file. Use `--token` on `marketplace add` or `plugin install` when the source requires authentication.
 
+#### Marketplace formats supported
+
+The CLI can ingest plugin catalogs in five native formats and normalizes them into a common schema for installation:
+
+| Format | Source |
+|---|---|
+| AIDD native (`marketplace.json`) | Default AIDD marketplace |
+| Cursor marketplace | `.cursor/extensions/` |
+| GitHub Copilot (`extensions.json`) | VS Code / Copilot |
+| Codex (`.claude-plugin/marketplace.json`) | Codex native |
+| OpenCode (`opencode.json` extensions) | OpenCode |
+
+#### Per-tool settings file paths
+
+Marketplace registration and plugin enable state are written to per-tool settings files:
+
+| Tool | Settings file |
+|---|---|
+| Claude Code | `.claude/settings.json` |
+| Cursor | `.cursor/settings.json` |
+| GitHub Copilot | `.github/copilot/settings.json` |
+| Codex | `.codex/config.json` |
+| OpenCode | `opencode.json` (project root) |
+
 ### `aidd migrate`
 
 Detects and strips obsolete manifest entries left over from previous CLI versions (bundled `scripts` section, top-level `plugins` section, plugins without a marketplace source). Backs up the manifest before any write. Idempotent — safe to run multiple times.
@@ -396,6 +457,31 @@ aidd update --verbose           # detailed logs
 | -------------- | ----------------------------------------------------------------------- |
 | `AIDD_TOKEN`   | GitHub token — takes precedence over stored credentials (needed for private marketplaces only) |
 | `AIDD_VERBOSE` | Verbose mode (`true`/`false`)                                           |
+
+---
+
+## Removed surface (v4.0.x → v4.1.0)
+
+The following commands and flags were removed in v4.1.0. Do not use them in new scripts.
+
+| Removed | Replacement |
+|---|---|
+| `aidd install ai <tool>` | `aidd ai install <tool>` |
+| `aidd install ide <tool>` | `aidd ide install <tool>` |
+| `aidd uninstall ai <tool>` | `aidd ai uninstall <tool>` |
+| `aidd uninstall ide <tool>` | `aidd ide uninstall <tool>` |
+| `aidd cache list` | `aidd marketplace cache list` |
+| `aidd cache clear` | `aidd marketplace cache clear` |
+| `aidd config list\|get\|set` | removed — manifest fields `docsDir`/`repo` dropped |
+| `aidd sync --source <tool>` | `aidd ai sync --source <tool>` |
+| `aidd restore` | `aidd ai restore` |
+| `--repo` global flag | `aidd marketplace add` |
+| `--mode` on setup/install | `--source local\|remote` on `aidd setup` |
+| `--path` on install | `aidd setup --source local --path <dir>` |
+| `--release`, `--from`, `--switch-mode` on install | removed — tarball download eliminated |
+| `--docs-dir` on setup | removed — `docsDir` field dropped from manifest v5 |
+
+See [MIGRATION.md](MIGRATION.md) for the full migration guide from v4.0.x to v4.1.0.
 
 ---
 
