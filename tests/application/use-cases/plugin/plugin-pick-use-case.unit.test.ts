@@ -10,7 +10,7 @@ import { Marketplace } from "../../../../src/domain/models/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";
-import type { InMemoryFileSystem } from "../../../helpers/ports/in-memory-file-system.js";
+import type { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-system.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { KeepPrompter } from "../../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
@@ -20,7 +20,7 @@ const PROJECT_ROOT = "/test-project";
 const MKT_DIR = "/mkt-source";
 
 function seedMarketplaceFile(
-  fs: InMemoryFileSystem,
+  fs: InMemoryFileAdapter,
   dir: string,
   plugins: Array<Record<string, unknown>>
 ): void {

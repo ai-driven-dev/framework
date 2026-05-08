@@ -2,7 +2,8 @@ import { dirname, join } from "node:path";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import { DOCS_DIR } from "../../../domain/models/paths.js";
 import type { IdeToolId } from "../../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import { NoManifestError, ToolNotInstalledError } from "../../errors.js";
 import { CatalogUseCase } from "../shared/catalog-use-case.js";
@@ -20,7 +21,7 @@ export interface UninstallIdeResult {
 
 export class UninstallIdeUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository
   ) {}
 

@@ -7,7 +7,7 @@ import {
 import type { DoctorIssue } from "../../../domain/models/doctor.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { AiToolId, ToolId } from "../../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 
 export interface DoctorReferencesOptions {
   manifest: Manifest;
@@ -17,7 +17,7 @@ export interface DoctorReferencesOptions {
 }
 
 export class DoctorReferencesUseCase {
-  constructor(private readonly fs: FileSystem) {}
+  constructor(private readonly fs: FileReader) {}
 
   async execute(options: DoctorReferencesOptions): Promise<DoctorIssue[]> {
     const { manifest, projectRoot, allowedIds, trackedFiles } = options;

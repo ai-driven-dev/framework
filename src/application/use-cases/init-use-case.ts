@@ -1,7 +1,8 @@
 import { join } from "node:path";
 import { Manifest } from "../../domain/models/manifest.js";
 import { AIDD_DIR, DOCS_DIR } from "../../domain/models/paths.js";
-import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { FileReader } from "../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../domain/ports/file-writer.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { getAllRegisteredTools, hasToolSignals } from "../../domain/tools/registry.js";
 import { AiddFilesDetectedError, AlreadyInitializedError, NoManifestError } from "../errors.js";
@@ -20,7 +21,7 @@ interface InitResult {
 
 export class InitUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository
   ) {}
 

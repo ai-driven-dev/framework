@@ -114,9 +114,9 @@ describe("parseCursorMarketplace", () => {
 
   describe("invalid plugin entries", () => {
     it("throws when a plugin entry is not an object", () => {
-      expect(() =>
-        parseCursorMarketplace(JSON.stringify({ plugins: ["not-an-object"] }))
-      ).toThrow(ForeignSchemaValidationError);
+      expect(() => parseCursorMarketplace(JSON.stringify({ plugins: ["not-an-object"] }))).toThrow(
+        ForeignSchemaValidationError
+      );
     });
 
     it("throws when plugin name is missing", () => {
@@ -126,9 +126,9 @@ describe("parseCursorMarketplace", () => {
     });
 
     it("throws when plugin name is empty string", () => {
-      expect(() =>
-        parseCursorMarketplace(JSON.stringify({ plugins: [{ name: "" }] }))
-      ).toThrow(ForeignSchemaValidationError);
+      expect(() => parseCursorMarketplace(JSON.stringify({ plugins: [{ name: "" }] }))).toThrow(
+        ForeignSchemaValidationError
+      );
     });
 
     it("error message includes entry index", () => {

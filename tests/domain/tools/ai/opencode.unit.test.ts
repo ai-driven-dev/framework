@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { OpencodeDualConfigError } from "../../../../src/domain/errors.js";
-import type { FileSystem } from "../../../../src/domain/ports/file-system.js";
+import type { FileReader } from "../../../../src/domain/ports/file-reader.js";
 import { opencode } from "../../../../src/domain/tools/ai/opencode.js";
 
-function makeFs(existingPaths: string[]): FileSystem {
+function makeFs(existingPaths: string[]): FileReader {
   return {
     fileExists: async (path: string) => existingPaths.some((p) => path.endsWith(p)),
-  } as unknown as FileSystem;
+  } as unknown as FileReader;
 }
 
 describe("opencode", () => {
@@ -240,7 +240,7 @@ describe("opencode", () => {
   describe("capabilities.mcp.resolveOutput()", () => {
     const PROJECT_ROOT = "/project";
 
-    async function resolve(fs: FileSystem): Promise<string> {
+    async function resolve(fs: FileReader): Promise<string> {
       return opencode.capabilities.mcp.resolveOutput(PROJECT_ROOT, fs);
     }
 

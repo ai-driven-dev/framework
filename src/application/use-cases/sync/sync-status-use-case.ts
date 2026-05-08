@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import type { Manifest } from "../../../domain/models/manifest.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { ToolId } from "../../../domain/tools/registry.js";
 
 export interface ToolModificationCounts {
@@ -9,7 +9,7 @@ export interface ToolModificationCounts {
 }
 
 export class SyncStatusUseCase {
-  constructor(private readonly fs: FileSystem) {}
+  constructor(private readonly fs: FileReader) {}
 
   async execute(
     manifest: Manifest,

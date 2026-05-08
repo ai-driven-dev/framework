@@ -18,7 +18,7 @@ import type { VersionControl } from "../../../src/domain/ports/version-control.j
 import type { VersionReader } from "../../../src/domain/ports/version-reader.js";
 import { isIdeToolId, type ToolId } from "../../../src/domain/tools/registry.js";
 import { CurrentVersionAdapter } from "../../../src/infrastructure/adapters/current-version-adapter.js";
-import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
+import { FileAdapter } from "../../../src/infrastructure/adapters/file-adapter.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
 import { ManifestRepositoryAdapter } from "../../../src/infrastructure/adapters/manifest-repository-adapter.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
@@ -184,7 +184,7 @@ export const FIXTURE_DIR_V2 = join(process.cwd(), "tests/fixtures/framework-v2")
 
 export function buildDeps(projectRoot: string) {
   const hasher = new HasherAdapter();
-  const fs = new FileSystemAdapter(hasher);
+  const fs = new FileAdapter(hasher);
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
   const logger = new CLIOutput(false);
   const assetProvider = new BundledAssetProviderAdapter();

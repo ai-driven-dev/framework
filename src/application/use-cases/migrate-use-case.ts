@@ -4,7 +4,7 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../domain/models/marketplace.js";
 import { MigrationPlan, type PluginToRewire } from "../../domain/models/migration-plan.js";
 import { AIDD_DIR } from "../../domain/models/paths.js";
 import { AI_TOOL_IDS, type AiToolId } from "../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { FileReader } from "../../domain/ports/file-reader.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { MarketplaceRegistry } from "../../domain/ports/marketplace-registry.js";
@@ -27,7 +27,7 @@ export interface MigrateResult {
 
 export class MigrateUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader,
     private readonly manifestRepo: ManifestRepository,
     private readonly logger: Logger,
     private readonly prompter: Prompter,

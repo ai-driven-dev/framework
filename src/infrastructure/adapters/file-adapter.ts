@@ -16,11 +16,13 @@ import {
   type MergeStrategy,
   type PerKeyMergeStrategy,
 } from "../../domain/models/merge.js";
-import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { FileMerger } from "../../domain/ports/file-merger.js";
+import type { FileReader } from "../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../domain/ports/file-writer.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import { JsonParseError } from "../errors.js";
 
-export class FileSystemAdapter implements FileSystem {
+export class FileAdapter implements FileReader, FileWriter, FileMerger {
   constructor(private readonly hasher: Hasher) {}
 
   async writeFile(path: string, content: string): Promise<void> {

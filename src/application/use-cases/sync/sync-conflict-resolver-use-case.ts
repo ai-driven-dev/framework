@@ -1,4 +1,4 @@
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 
 /**
  * Determines whether a target file is in conflict (modified since last sync).
@@ -6,7 +6,7 @@ import type { FileSystem } from "../../../domain/ports/file-system.js";
  * Does NOT prompt the user — conflict recording is handled by the caller.
  */
 export class SyncConflictResolverUseCase {
-  constructor(private readonly fs: FileSystem) {}
+  constructor(private readonly fs: FileReader) {}
 
   /** Returns true when the target file exists and its disk hash differs from its manifest hash. */
   async isConflict(

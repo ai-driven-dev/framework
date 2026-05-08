@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SyncConflictResolverUseCase } from "../../../../src/application/use-cases/sync/sync-conflict-resolver-use-case.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileSystem } from "../../../helpers/ports/in-memory-file-system.js";
+import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-system.js";
 
 const DISK_PATH = "/project/target.md";
 const CONTENT_A = "content A";
@@ -9,7 +9,7 @@ const CONTENT_B = "content B";
 
 function buildDeps() {
   const hasher = new DeterministicHasher();
-  const fs = new InMemoryFileSystem({}, hasher);
+  const fs = new InMemoryFileAdapter({}, hasher);
   const resolver = new SyncConflictResolverUseCase(fs);
   return { hasher, fs, resolver };
 }

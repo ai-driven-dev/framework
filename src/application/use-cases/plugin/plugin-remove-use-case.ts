@@ -2,7 +2,7 @@ import { dirname, join } from "node:path";
 import { PluginNotFoundError } from "../../../domain/errors.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import { loadPluginManifest, resolvePluginToolIds } from "./plugin-helpers.js";
 
@@ -14,7 +14,7 @@ export interface PluginRemoveOptions {
 
 export class PluginRemoveUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileWriter,
     private readonly manifestRepo: ManifestRepository
   ) {}
 

@@ -2,7 +2,9 @@ import { type FileHash, InstallationFile } from "../../../domain/models/file.js"
 import type { FrameworkDescriptor } from "../../../domain/models/framework.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { MergeFileEntry } from "../../../domain/models/merge.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileMerger } from "../../../domain/ports/file-merger.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 import type { Platform } from "../../../domain/ports/platform.js";
@@ -46,7 +48,7 @@ export interface RestoreToolFilesResult {
 
 export class RestoreToolFilesUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter & FileMerger,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly platform: Platform,

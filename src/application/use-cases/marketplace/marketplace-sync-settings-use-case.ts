@@ -5,7 +5,8 @@ import type { Marketplace } from "../../../domain/models/marketplace.js";
 import { marketplaceCacheDir } from "../../../domain/models/paths.js";
 import type { PluginSource } from "../../../domain/models/plugin-source.js";
 import type { ToolId } from "../../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
@@ -23,7 +24,7 @@ export interface MarketplaceSyncSettingsResult {
 // Upserts local marketplace entries (absolute path may change); never removes entries; skips non-local if already present.
 export class MarketplaceSyncSettingsUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository,
     private readonly marketplaceRegistry: MarketplaceRegistry,
     private readonly catalogRepo: PluginCatalogRepository,

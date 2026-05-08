@@ -6,14 +6,16 @@ import {
   type MergeStrategy,
   type PerKeyMergeStrategy,
 } from "../../../src/domain/models/merge.js";
-import type { FileSystem } from "../../../src/domain/ports/file-system.js";
+import type { FileMerger } from "../../../src/domain/ports/file-merger.js";
+import type { FileReader } from "../../../src/domain/ports/file-reader.js";
+import type { FileWriter } from "../../../src/domain/ports/file-writer.js";
 import type { Hasher } from "../../../src/domain/ports/hasher.js";
 
 /**
- * Pure in-memory implementation of the FileSystem port.
+ * Pure in-memory implementation of the FileReader, FileWriter, and FileMerger ports.
  * Uses a Map<path, content> — no real I/O.
  */
-export class InMemoryFileSystem implements FileSystem {
+export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   private readonly files = new Map<string, string>();
   private readonly hasher: Hasher;
 

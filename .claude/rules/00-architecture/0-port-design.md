@@ -26,4 +26,4 @@ paths:
 
 ## Exceptions
 
-- `FileSystem` (14 methods) — pragmatic exception; covers read, write, hash, merge, permissions, and directory ops. Splitting into `FileReader`/`FileWriter`/`FileMerger` is deferred and tracked separately. All other ports must still respect ≤5 methods.
+- `FileWriter` (6 methods) — pragmatic exception; write-class ports may have up to 6 methods. `FileReader` (5 methods) and `FileMerger` (3 methods) are within the ≤5 budget. `FileSystem` aggregate split landed in Part 9. All other ports must still respect ≤5 methods.

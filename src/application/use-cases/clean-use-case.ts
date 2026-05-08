@@ -6,7 +6,8 @@ import {
 } from "../../domain/models/merge.js";
 import { AIDD_DIR, DOCS_DIR } from "../../domain/models/paths.js";
 import { AI_TOOL_IDS } from "../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { FileReader } from "../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../domain/ports/file-writer.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
@@ -33,7 +34,7 @@ interface CleanResult {
 
 export class CleanUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository,
     private readonly logger: Logger,
     private readonly prompter?: Prompter

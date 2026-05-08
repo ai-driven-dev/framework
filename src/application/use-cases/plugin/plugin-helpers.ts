@@ -3,7 +3,7 @@ import type { InstallationFile } from "../../../domain/models/file.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import { AI_TOOL_IDS } from "../../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import { NoManifestError } from "../../errors.js";
 
@@ -21,7 +21,7 @@ export async function loadPluginManifest(manifestRepo: ManifestRepository): Prom
 export async function writePluginFiles(
   files: InstallationFile[],
   projectRoot: string,
-  fs: FileSystem
+  fs: FileWriter
 ): Promise<void> {
   await Promise.all(files.map((f) => fs.writeFile(join(projectRoot, f.relativePath), f.content)));
 }

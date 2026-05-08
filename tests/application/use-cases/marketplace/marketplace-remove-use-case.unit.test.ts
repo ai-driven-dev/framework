@@ -7,7 +7,7 @@ import { Manifest } from "../../../../src/domain/models/manifest.js";
 import { Marketplace } from "../../../../src/domain/models/marketplace.js";
 import { Plugin } from "../../../../src/domain/models/plugin.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileSystem } from "../../../helpers/ports/in-memory-file-system.js";
+import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-system.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { KeepPrompter } from "../../../helpers/ports/scripted-prompter.js";
@@ -16,7 +16,7 @@ const PROJECT_ROOT = "/test-project";
 
 function buildUseCase() {
   const hasher = new DeterministicHasher();
-  const fs = new InMemoryFileSystem({}, hasher);
+  const fs = new InMemoryFileAdapter({}, hasher);
   const manifestRepo = new InMemoryManifestRepository();
   const registry = new InMemoryMarketplaceRegistry();
   const useCase = new MarketplaceRemoveUseCase(fs, manifestRepo, registry, new KeepPrompter());

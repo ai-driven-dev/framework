@@ -1,13 +1,14 @@
 import { join } from "node:path";
 import { AIDD_DIR } from "../../../domain/models/paths.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileMerger } from "../../../domain/ports/file-merger.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 
 export interface MigrateBackupOptions {
   projectRoot: string;
 }
 
 export class MigrateBackupUseCase {
-  constructor(private readonly fs: FileSystem) {}
+  constructor(private readonly fs: FileReader & FileMerger) {}
 
   async execute(options: MigrateBackupOptions): Promise<string> {
     const manifestPath = join(options.projectRoot, AIDD_DIR, "manifest.json");

@@ -7,7 +7,7 @@ import type { PluginDistribution } from "../../../domain/models/plugin-distribut
 import type { PluginSource } from "../../../domain/models/plugin-source.js";
 import { PluginTranslator } from "../../../domain/models/plugin-translator.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { PluginDistributionReader } from "../../../domain/ports/plugin-distribution-reader.js";
@@ -26,7 +26,7 @@ export interface PluginAddOptions {
 
 export class PluginAddUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileWriter,
     private readonly manifestRepo: ManifestRepository,
     private readonly pluginFetcher: PluginFetcher,
     private readonly pluginDistributionReader: PluginDistributionReader,

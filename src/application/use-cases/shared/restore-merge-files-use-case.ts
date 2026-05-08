@@ -5,7 +5,8 @@ import {
   type MergeFileEntry,
   type MergeStrategy,
 } from "../../../domain/models/merge.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileMerger } from "../../../domain/ports/file-merger.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
 import { ResolveRestoreDecisionUseCase } from "./resolve-restore-decision.js";
@@ -35,7 +36,7 @@ export interface MergeFilesRestoreResult {
 
 export class RestoreMergeFilesUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileMerger,
     private readonly hasher: Hasher,
     private readonly prompter: Prompter
   ) {}

@@ -9,7 +9,7 @@ import {
   type ToolId,
   VALID_TOOL_IDS,
 } from "../models/tool-ids.js";
-import type { FileSystem } from "../ports/file-system.js";
+import type { FileReader } from "../ports/file-reader.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
 
 export type { AiToolId, IdeToolId, ToolCategory, ToolId };
@@ -68,7 +68,7 @@ export function getAllRegisteredTools(): Map<ToolId, ToolConfig> {
 }
 
 export async function hasToolSignals(
-  fs: FileSystem,
+  fs: FileReader,
   config: ToolConfig,
   projectRoot: string
 ): Promise<string[]> {

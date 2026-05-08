@@ -2,17 +2,17 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
+import { FileAdapter } from "../../../src/infrastructure/adapters/file-adapter.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
 
-describe("FileSystemAdapter", () => {
+describe("FileAdapter", () => {
   let tempDir: string;
-  let fs: FileSystemAdapter;
+  let fs: FileAdapter;
 
   beforeEach(async () => {
     tempDir = join(tmpdir(), `fs-adapter-test-${Date.now()}`);
     await mkdir(tempDir, { recursive: true });
-    fs = new FileSystemAdapter(new HasherAdapter());
+    fs = new FileAdapter(new HasherAdapter());
   });
 
   afterEach(async () => {

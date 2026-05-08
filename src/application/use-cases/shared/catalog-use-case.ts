@@ -5,7 +5,8 @@ import { FRAMEWORK_CONFIG_PREFIX, GITKEEP_FILE } from "../../../domain/models/fr
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { Plugin } from "../../../domain/models/plugin.js";
 import type { ToolId } from "../../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
 
 const PLUGIN_CONTENT_SECTIONS = new Set(["agents", "commands", "rules", "skills"]);
@@ -26,7 +27,7 @@ function isCatalogExcluded(frameworkPath: string): boolean {
 }
 
 export class CatalogUseCase {
-  constructor(private readonly fs: FileSystem) {}
+  constructor(private readonly fs: FileReader & FileWriter) {}
 
   async execute({ manifest, docsDir, projectRoot }: CatalogOptions): Promise<void> {
     const files = await this.buildCatalogFiles(manifest, projectRoot);

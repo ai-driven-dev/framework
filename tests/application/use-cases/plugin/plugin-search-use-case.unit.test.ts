@@ -4,7 +4,7 @@ import { PluginSearchUseCase } from "../../../../src/application/use-cases/plugi
 import { Marketplace } from "../../../../src/domain/models/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileSystem } from "../../../helpers/ports/in-memory-file-system.js";
+import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-system.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -12,7 +12,7 @@ const MKT1_PATH = "/mkt1";
 const MKT2_PATH = "/mkt2";
 
 function seedMarketplace(
-  fs: InMemoryFileSystem,
+  fs: InMemoryFileAdapter,
   dir: string,
   plugins: Array<Record<string, unknown>>
 ): void {
@@ -20,7 +20,7 @@ function seedMarketplace(
 }
 
 function buildUseCase(
-  fs: InMemoryFileSystem,
+  fs: InMemoryFileAdapter,
   registry: InMemoryMarketplaceRegistry
 ): PluginSearchUseCase {
   const fetcher = new FixturePluginFetcher({
@@ -32,7 +32,7 @@ function buildUseCase(
 
 describe("PluginSearchUseCase", () => {
   it("matches by name and description across marketplaces", async () => {
-    const fs = new InMemoryFileSystem();
+    const fs = new InMemoryFileAdapter();
     seedMarketplace(fs, MKT1_PATH, [
       {
         name: "sample-plugin",
@@ -77,7 +77,7 @@ describe("PluginSearchUseCase", () => {
   });
 
   it("filters by --recommended", async () => {
-    const fs = new InMemoryFileSystem();
+    const fs = new InMemoryFileAdapter();
     seedMarketplace(fs, MKT1_PATH, [
       { name: "a", source: { kind: "github", repo: "x/y" }, recommended: true },
       { name: "b", source: { kind: "github", repo: "x/y" }, recommended: false },
@@ -103,7 +103,7 @@ describe("PluginSearchUseCase", () => {
   });
 
   it("filters by --marketplace", async () => {
-    const fs = new InMemoryFileSystem();
+    const fs = new InMemoryFileAdapter();
     const entry = { name: "shared", source: { kind: "github", repo: "x/y" } };
     seedMarketplace(fs, MKT1_PATH, [entry]);
     seedMarketplace(fs, MKT2_PATH, [entry]);
@@ -139,7 +139,7 @@ describe("PluginSearchUseCase", () => {
   });
 
   it("returns empty when no marketplaces are registered", async () => {
-    const fs = new InMemoryFileSystem();
+    const fs = new InMemoryFileAdapter();
     const registry = new InMemoryMarketplaceRegistry();
     const result = await buildUseCase(fs, registry).execute({
       query: "anything",

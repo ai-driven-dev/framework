@@ -8,7 +8,8 @@ import {
   getSectionKeyFromFrameworkPath,
   transformContent,
 } from "../../../domain/models/sync-transform.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { AiTool } from "../../../domain/tools/contracts.js";
@@ -49,7 +50,7 @@ type ManifestShape = Awaited<ReturnType<ManifestRepository["load"]>> & object;
 
 export class SyncFilePropagationUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter,
     private readonly conflictResolver: SyncConflictResolverUseCase,
     private readonly logger: Logger
   ) {}

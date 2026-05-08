@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 import { PluginFetchError } from "../../../src/domain/errors.js";
-import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
+import { FileAdapter } from "../../../src/infrastructure/adapters/file-adapter.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
 import { PluginFetcherAdapter } from "../../../src/infrastructure/adapters/plugin-fetcher-adapter.js";
 
@@ -52,7 +52,7 @@ async function setupBareRepoWithPlugin(repoPath: string, workPath: string): Prom
 }
 
 function makeAdapter(): PluginFetcherAdapter {
-  return new PluginFetcherAdapter(new FileSystemAdapter(new HasherAdapter()));
+  return new PluginFetcherAdapter(new FileAdapter(new HasherAdapter()));
 }
 
 describe("PluginFetcherAdapter", () => {
@@ -181,7 +181,9 @@ describe("PluginFetcherAdapter", () => {
   });
 
   describe.skipIf(process.env.RUN_NETWORK_TESTS !== "1")("github source (unreachable repo)", () => {
-    it("surfaces a PluginFetchError when the github repo cannot be cloned", { timeout: 120_000 }, async () => {
+    it("surfaces a PluginFetchError when the github repo cannot be cloned", {
+      timeout: 120_000,
+    }, async () => {
       const sandbox = await mkdtemp(join(tmpdir(), "aidd-fetcher-gh-"));
       try {
         const adapter = makeAdapter();

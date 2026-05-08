@@ -2,7 +2,8 @@ import type { MarketplaceSourceMode } from "../../domain/models/marketplace-sour
 import { DOCS_DIR } from "../../domain/models/paths.js";
 import type { PluginSource } from "../../domain/models/plugin-source.js";
 import type { SetupFlow } from "../../domain/models/setup-flow.js";
-import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { FileReader } from "../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../domain/ports/file-writer.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { VersionReader } from "../../domain/ports/version-reader.js";
 import { InitUseCase } from "./init-use-case.js";
@@ -25,7 +26,7 @@ export type SetupResult =
 
 export class SetupUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository,
     private readonly setupMarketplaceSourceUseCase: SetupMarketplaceSourceUseCase,
     private readonly marketplaceRegisterFrameworkUseCase: MarketplaceRegisterFrameworkUseCase,

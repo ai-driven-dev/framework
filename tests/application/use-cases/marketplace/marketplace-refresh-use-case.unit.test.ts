@@ -6,7 +6,7 @@ import { serializePluginSource } from "../../../../src/domain/models/plugin-sour
 import { PluginCatalogRepositoryAdapter } from "../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileSystem } from "../../../helpers/ports/in-memory-file-system.js";
+import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-system.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
 
@@ -15,7 +15,7 @@ const PROJECT_ROOT = "/test-project";
 
 async function buildUseCase() {
   const hasher = new DeterministicHasher();
-  const fs = new InMemoryFileSystem({}, hasher);
+  const fs = new InMemoryFileAdapter({}, hasher);
   await seedFromDirectory(fs, VALID_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   // Only register the valid fixture path; unknown paths will throw

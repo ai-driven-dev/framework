@@ -10,7 +10,8 @@ import type {
   PluginSourceNpm,
   PluginSourceUrl,
 } from "../../domain/models/plugin-source.js";
-import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { FileReader } from "../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../domain/ports/file-writer.js";
 import type { PluginFetcher, PluginFetchOptions } from "../../domain/ports/plugin-fetcher.js";
 import { injectTokenIntoUrl } from "../git/inject-token.js";
 
@@ -21,7 +22,7 @@ const AUTH_ERROR_PATTERN =
 
 export class PluginFetcherAdapter implements PluginFetcher {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter,
     private readonly token?: string
   ) {}
 

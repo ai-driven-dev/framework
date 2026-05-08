@@ -7,7 +7,7 @@ import type { Prompter } from "../../../../src/domain/ports/prompter.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileSystem } from "../../../helpers/ports/in-memory-file-system.js";
+import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-system.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { KeepPrompter } from "../../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
@@ -21,7 +21,7 @@ class DenyPrompter extends KeepPrompter {
   }
 }
 
-function buildUseCase(prompter: Prompter, fs: InMemoryFileSystem) {
+function buildUseCase(prompter: Prompter, fs: InMemoryFileAdapter) {
   const registry = new InMemoryMarketplaceRegistry();
   const pluginFetcher = new FixturePluginFetcher();
   const useCase = new MarketplaceBrowseUseCase(
@@ -36,7 +36,7 @@ function buildUseCase(prompter: Prompter, fs: InMemoryFileSystem) {
 describe("MarketplaceBrowseUseCase", () => {
   it("returns the catalog when fetch succeeds", async () => {
     const hasher = new DeterministicHasher();
-    const fs = new InMemoryFileSystem({}, hasher);
+    const fs = new InMemoryFileAdapter({}, hasher);
     await seedFromDirectory(fs, VALID_FIXTURE, { useAbsolutePaths: true });
     const { useCase, registry } = buildUseCase(new KeepPrompter(), fs);
     await registry.save(
@@ -61,7 +61,7 @@ describe("MarketplaceBrowseUseCase", () => {
 
   it("throws MarketplaceNotFoundError when name is not registered", async () => {
     const hasher = new DeterministicHasher();
-    const fs = new InMemoryFileSystem({}, hasher);
+    const fs = new InMemoryFileAdapter({}, hasher);
     const { useCase } = buildUseCase(new KeepPrompter(), fs);
 
     await expect(
@@ -71,7 +71,7 @@ describe("MarketplaceBrowseUseCase", () => {
 
   it("throws OfflineError when fetch fails and the user declines cache", async () => {
     const hasher = new DeterministicHasher();
-    const fs = new InMemoryFileSystem({}, hasher);
+    const fs = new InMemoryFileAdapter({}, hasher);
     // Do NOT seed fixture — fetcher returns path, catalogRepo gets null → triggers offline path
     const { useCase, registry } = buildUseCase(new DenyPrompter(), fs);
     await registry.save(

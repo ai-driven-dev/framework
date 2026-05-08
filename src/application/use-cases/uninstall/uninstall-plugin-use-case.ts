@@ -3,7 +3,7 @@ import { PluginNotFoundError } from "../../../domain/errors.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import { AI_TOOL_IDS } from "../../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { ToolId } from "../../../domain/tools/registry.js";
 import { NoManifestError } from "../../errors.js";
@@ -22,7 +22,7 @@ export interface UninstallPluginResult {
 
 export class UninstallPluginUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileWriter,
     private readonly manifestRepo: ManifestRepository
   ) {}
 

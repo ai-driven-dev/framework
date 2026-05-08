@@ -4,7 +4,7 @@ import type { Manifest } from "../../../domain/models/manifest.js";
 import type { Marketplace } from "../../../domain/models/marketplace.js";
 import type { Plugin } from "../../../domain/models/plugin.js";
 import { AI_TOOL_IDS, type AiToolId } from "../../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
@@ -28,7 +28,7 @@ interface OrphanRef {
 
 export class MarketplaceRemoveUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileWriter,
     private readonly manifestRepo: ManifestRepository,
     private readonly registry: MarketplaceRegistry,
     private readonly prompter: Prompter

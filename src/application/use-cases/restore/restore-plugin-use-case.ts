@@ -3,7 +3,9 @@ import { PluginNotFoundError } from "../../../domain/errors.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import { DOCS_DIR, PLUGIN_CACHE_SUBDIR } from "../../../domain/models/paths.js";
 import { AI_TOOL_IDS, type AiToolId } from "../../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileMerger } from "../../../domain/ports/file-merger.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { PluginDistributionReader } from "../../../domain/ports/plugin-distribution-reader.js";
@@ -23,7 +25,7 @@ export interface RestorePluginResult {
 
 export class RestorePluginUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter & FileMerger,
     private readonly manifestRepo: ManifestRepository,
     private readonly pluginFetcher: PluginFetcher,
     private readonly pluginDistributionReader: PluginDistributionReader,

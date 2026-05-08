@@ -3,7 +3,8 @@ import { PluginNotFoundError } from "../../../domain/errors.js";
 import { DOCS_DIR } from "../../../domain/models/paths.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import { AI_TOOL_IDS } from "../../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import { getToolConfig, isAiTool, type ToolId } from "../../../domain/tools/registry.js";
@@ -41,7 +42,7 @@ type ManifestShape = Awaited<ReturnType<ManifestRepository["load"]>> & object;
 
 export class SyncUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository,
     private readonly hasher: Hasher,
     private readonly sourceResolver: SyncSourceResolverUseCase,

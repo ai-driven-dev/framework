@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import type { MigrationPlan } from "../../../domain/models/migration-plan.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 
 const USER_PROTECTED_PREFIXES = ["CLAUDE.md", "AGENTS.md", "copilot-instructions.md", "aidd_docs/"];
@@ -12,7 +13,7 @@ export interface MigrateStripDeadFilesOptions {
 
 export class MigrateStripDeadFilesUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter,
     private readonly logger: Logger
   ) {}
 

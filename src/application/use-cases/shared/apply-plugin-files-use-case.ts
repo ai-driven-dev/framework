@@ -3,7 +3,8 @@ import type { Manifest } from "../../../domain/models/manifest.js";
 import type { Plugin } from "../../../domain/models/plugin.js";
 import { PluginTranslator } from "../../../domain/models/plugin-translator.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { PluginDistributionReader } from "../../../domain/ports/plugin-distribution-reader.js";
 import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
@@ -22,7 +23,7 @@ interface ApplyPluginFilesOptions {
 
 export class ApplyPluginFilesUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter,
     private readonly hasher: Hasher,
     private readonly pluginFetcher: PluginFetcher,
     private readonly pluginDistributionReader: PluginDistributionReader

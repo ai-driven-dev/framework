@@ -1,6 +1,6 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
-import type { InMemoryFileSystem } from "./in-memory-file-system.js";
+import type { InMemoryFileAdapter } from "./in-memory-file-system.js";
 
 interface SeedOptions {
   /**
@@ -13,11 +13,11 @@ interface SeedOptions {
 }
 
 /**
- * Seeds an InMemoryFileSystem from a real directory on disk.
+ * Seeds an InMemoryFileAdapter from a real directory on disk.
  * Used once at test setup to replicate fixture content — the use-case run itself stays I/O-free.
  */
 export async function seedFromDirectory(
-  fs: InMemoryFileSystem,
+  fs: InMemoryFileAdapter,
   dirPath: string,
   options: SeedOptions = {}
 ): Promise<void> {

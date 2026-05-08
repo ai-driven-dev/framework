@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { type FileHash, InstallationFile } from "../../../domain/models/file.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
 import { ResolveRestoreDecisionUseCase } from "./resolve-restore-decision.js";
 
@@ -33,7 +34,7 @@ export interface RegularFilesRestoreResult {
 
 export class RestoreRegularFilesUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter,
     private readonly prompter: Prompter
   ) {}
 

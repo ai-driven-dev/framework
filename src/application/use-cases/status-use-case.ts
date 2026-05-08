@@ -3,7 +3,7 @@ import type { FileHash } from "../../domain/models/file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/merge.js";
 import type { AiToolId } from "../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { FileReader } from "../../domain/ports/file-reader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -49,7 +49,7 @@ interface StatusOptions {
 
 export class StatusUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader,
     private readonly manifestRepo: ManifestRepository,
     readonly _logger: Logger,
     private readonly hasher: Hasher

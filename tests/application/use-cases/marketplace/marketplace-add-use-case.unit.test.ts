@@ -11,7 +11,7 @@ import type { Prompter } from "../../../../src/domain/ports/prompter.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileSystem } from "../../../helpers/ports/in-memory-file-system.js";
+import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-system.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { InMemoryMarketplaceTrustStore } from "../../../helpers/ports/in-memory-marketplace-trust-store.js";
@@ -29,7 +29,7 @@ class DenyPrompter extends KeepPrompter {
 
 async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
   const hasher = new DeterministicHasher();
-  const fs = new InMemoryFileSystem({}, hasher);
+  const fs = new InMemoryFileAdapter({}, hasher);
   await seedFromDirectory(fs, MARKETPLACE_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const trustStore = new InMemoryMarketplaceTrustStore();

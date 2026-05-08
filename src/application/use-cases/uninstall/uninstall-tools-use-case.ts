@@ -5,7 +5,8 @@ import {
   type MergeFileEntry,
   removeEntriesFromJson,
 } from "../../../domain/models/merge.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 import { getToolConfig, isAiTool, type ToolId } from "../../../domain/tools/registry.js";
 
@@ -23,7 +24,7 @@ export interface UninstallToolsResult {
 
 export class UninstallToolsUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter,
     private readonly logger: Logger
   ) {}
 

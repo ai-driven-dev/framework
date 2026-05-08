@@ -37,7 +37,9 @@ import { SyncFilePropagationUseCase } from "../application/use-cases/sync/sync-f
 import { SyncSourceResolverUseCase } from "../application/use-cases/sync/sync-source-resolver-use-case.js";
 import { UninstallIdeUseCase } from "../application/use-cases/uninstall/uninstall-ide-use-case.js";
 import type { AssetProvider } from "../domain/ports/asset-provider.js";
-import type { FileSystem } from "../domain/ports/file-system.js";
+import type { FileMerger } from "../domain/ports/file-merger.js";
+import type { FileReader } from "../domain/ports/file-reader.js";
+import type { FileWriter } from "../domain/ports/file-writer.js";
 import type { Hasher } from "../domain/ports/hasher.js";
 import type { Logger } from "../domain/ports/logger.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
@@ -54,7 +56,7 @@ import type { VersionReader } from "../domain/ports/version-reader.js";
 import { AuthReader } from "./adapters/auth-reader.js";
 import { AuthStorage } from "./adapters/auth-storage.js";
 import { CurrentVersionAdapter } from "./adapters/current-version-adapter.js";
-import { FileSystemAdapter } from "./adapters/file-system-adapter.js";
+import { FileAdapter } from "./adapters/file-adapter.js";
 import { GhCliAdapter } from "./adapters/gh-cli-adapter.js";
 import { GitAdapter } from "./adapters/git-adapter.js";
 import { HasherAdapter } from "./adapters/hasher-adapter.js";
@@ -75,7 +77,7 @@ interface GlobalOptions {
 }
 
 interface Deps {
-  fs: FileSystem;
+  fs: FileReader & FileWriter & FileMerger;
   manifestRepo: ManifestRepository;
   hasher: Hasher;
   logger: Logger;
@@ -140,7 +142,7 @@ export async function createDeps(
   const cached = _cache.get(projectRoot);
   if (cached !== undefined) return cached;
   const hasher = new HasherAdapter();
-  const fs = new FileSystemAdapter(hasher);
+  const fs = new FileAdapter(hasher);
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
   const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
   const marketplaceRegistry = new MarketplaceRegistryAdapter();

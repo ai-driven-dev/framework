@@ -2,7 +2,7 @@ import { join } from "node:path";
 import type { DoctorIssue } from "../../../domain/models/doctor.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import { DOCS_DIR } from "../../../domain/models/paths.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { TokenProvider } from "../../../domain/ports/token-provider.js";
 import { getAllRegisteredTools, hasToolSignals } from "../../../domain/tools/registry.js";
 
@@ -13,7 +13,7 @@ export interface DoctorLayoutOptions {
 
 export class DoctorLayoutUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader,
     private readonly authReader?: TokenProvider
   ) {}
 

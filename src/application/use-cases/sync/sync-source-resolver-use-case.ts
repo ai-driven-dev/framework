@@ -1,4 +1,4 @@
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
 import type { ToolId } from "../../../domain/tools/registry.js";
@@ -20,7 +20,7 @@ type ManifestShape = Awaited<ReturnType<ManifestRepository["load"]>> & object;
 
 export class SyncSourceResolverUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader,
     private readonly prompter?: Prompter
   ) {}
 

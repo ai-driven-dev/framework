@@ -6,7 +6,7 @@ import type { ConfigRef } from "../../../domain/models/framework.js";
 import { CONFIG_MCP } from "../../../domain/models/framework.js";
 import { transformFor as transformMcpForPlatform } from "../../../domain/models/mcp-exclusion.js";
 import type { MergeStrategy } from "../../../domain/models/merge.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Platform } from "../../../domain/ports/platform.js";
 import type { ToolConfig } from "../../../domain/tools/registry.js";
@@ -47,7 +47,7 @@ interface InstallConfigOptions {
 
 export class InstallConfigUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader,
     private readonly hasher: Hasher
   ) {}
 

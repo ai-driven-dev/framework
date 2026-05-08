@@ -28,7 +28,7 @@ import { BundledAssetProviderAdapter } from "../../../src/infrastructure/assets/
 import { DeterministicHasher } from "./deterministic-hasher.js";
 import { FakeCurrentVersion } from "./fake-current-version.js";
 import { FixturePluginFetcher } from "./fixture-plugin-fetcher.js";
-import { InMemoryFileSystem } from "./in-memory-file-system.js";
+import { InMemoryFileAdapter } from "./in-memory-file-system.js";
 import { InMemoryManifestRepository } from "./in-memory-manifest-repository.js";
 import { seedFromDirectory } from "./seed-from-directory.js";
 
@@ -36,11 +36,11 @@ const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 
 /**
  * Builds in-memory deps for use-case unit tests.
- * The InMemoryFileSystem is pre-seeded with the framework fixture content (absolute paths).
+ * The InMemoryFileAdapter is pre-seeded with the framework fixture content (absolute paths).
  */
 export async function buildUnitDeps(_projectRoot: string) {
   const hasher = new DeterministicHasher();
-  const fs = new InMemoryFileSystem({}, hasher);
+  const fs = new InMemoryFileAdapter({}, hasher);
   const manifestRepo = new InMemoryManifestRepository();
   const logger = new CLIOutput(false);
   const assetProvider = new BundledAssetProviderAdapter();

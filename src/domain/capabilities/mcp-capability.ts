@@ -1,5 +1,5 @@
 import { mcpJsonToToml, mergeJsonUserPrime } from "../formats/mcp-format.js";
-import type { FileSystem } from "../ports/file-system.js";
+import type { FileReader } from "../ports/file-reader.js";
 
 export class McpCapability {
   readonly consumes: readonly string[];
@@ -12,7 +12,7 @@ export class McpCapability {
       mergeStrategy?: "user-prime" | "framework-prime" | "none";
       mergeFn?: (existing: string, incoming: string) => string;
       transformContent?: (content: string) => string;
-      resolveOutputPath?: (projectRoot: string, fs: FileSystem) => Promise<string>;
+      resolveOutputPath?: (projectRoot: string, fs: FileReader) => Promise<string>;
       consumes?: readonly string[];
     }
   ) {
@@ -29,7 +29,7 @@ export class McpCapability {
     return afterTransform;
   }
 
-  async resolveOutput(projectRoot: string, fs: FileSystem): Promise<string> {
+  async resolveOutput(projectRoot: string, fs: FileReader): Promise<string> {
     if (this.params.resolveOutputPath) {
       return this.params.resolveOutputPath(projectRoot, fs);
     }

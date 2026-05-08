@@ -1,9 +1,10 @@
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 
 const GITIGNORE_FILENAME = ".gitignore";
 
 export class GitignoreUseCase {
-  constructor(private readonly fs: FileSystem) {}
+  constructor(private readonly fs: FileReader & FileWriter) {}
 
   async execute(projectRoot: string, entries: string[]): Promise<void> {
     const gitignorePath = `${projectRoot}/${GITIGNORE_FILENAME}`;

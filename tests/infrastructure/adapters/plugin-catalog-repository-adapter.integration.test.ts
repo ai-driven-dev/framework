@@ -1,14 +1,14 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { InvalidPluginManifestError } from "../../../src/domain/errors.js";
-import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
+import { FileAdapter } from "../../../src/infrastructure/adapters/file-adapter.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/framework");
 
 function makeAdapter(): PluginCatalogRepositoryAdapter {
-  return new PluginCatalogRepositoryAdapter(new FileSystemAdapter(new HasherAdapter()));
+  return new PluginCatalogRepositoryAdapter(new FileAdapter(new HasherAdapter()));
 }
 
 describe("PluginCatalogRepositoryAdapter", () => {

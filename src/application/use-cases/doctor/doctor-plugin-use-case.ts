@@ -2,7 +2,7 @@ import { join } from "node:path";
 import type { PluginIssueEntry } from "../../../domain/models/doctor.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 
 export interface DoctorPluginOptions {
   manifest: Manifest;
@@ -12,7 +12,7 @@ export interface DoctorPluginOptions {
 }
 
 export class DoctorPluginUseCase {
-  constructor(private readonly fs: FileSystem) {}
+  constructor(private readonly fs: FileReader) {}
 
   async execute(options: DoctorPluginOptions): Promise<PluginIssueEntry[]> {
     const { manifest, projectRoot, allowedIds, pluginName } = options;

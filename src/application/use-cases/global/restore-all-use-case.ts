@@ -1,6 +1,8 @@
 import { DOCS_DIR } from "../../../domain/models/paths.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileMerger } from "../../../domain/ports/file-merger.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
@@ -23,7 +25,7 @@ export interface RestoreAllResult {
 
 export class RestoreAllUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter & FileMerger,
     private readonly manifestRepo: ManifestRepository,
     private readonly hasher: Hasher,
     private readonly logger: Logger,

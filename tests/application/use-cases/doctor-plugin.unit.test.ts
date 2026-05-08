@@ -9,7 +9,7 @@ import { DoctorUseCase } from "../../../src/application/use-cases/doctor/doctor-
 import { FileHash } from "../../../src/domain/models/file.js";
 import { Manifest } from "../../../src/domain/models/manifest.js";
 import { Plugin } from "../../../src/domain/models/plugin.js";
-import type { FileSystem } from "../../../src/domain/ports/file-system.js";
+import type { FileReader } from "../../../src/domain/ports/file-reader.js";
 import type { Hasher } from "../../../src/domain/ports/hasher.js";
 import type { ManifestRepository } from "../../../src/domain/ports/manifest-repository.js";
 
@@ -33,7 +33,7 @@ function makeManifest(pluginFileHash: string): Manifest {
   return manifest;
 }
 
-function makeFs(fileExists: boolean, diskHash: string): FileSystem {
+function makeFs(fileExists: boolean, diskHash: string): FileReader {
   return {
     fileExists: async () => fileExists,
     readFileHash: async () => new FileHash(diskHash),
@@ -43,7 +43,7 @@ function makeFs(fileExists: boolean, diskHash: string): FileSystem {
     listDirectory: async () => [],
     deleteEmptyDirectories: async () => {},
     copyFile: async () => {},
-  } as unknown as FileSystem;
+  } as unknown as FileReader;
 }
 
 function makeManifestRepo(manifest: Manifest): ManifestRepository {
@@ -54,7 +54,7 @@ const noopHasher: Hasher = {
   hash: () => new FileHash("00000000000000000000000000000000"),
 };
 
-function makeDoctorUseCase(fs: FileSystem, manifest: Manifest): DoctorUseCase {
+function makeDoctorUseCase(fs: FileReader, manifest: Manifest): DoctorUseCase {
   return new DoctorUseCase(
     makeManifestRepo(manifest),
     new DoctorTrackedFilesUseCase(fs),

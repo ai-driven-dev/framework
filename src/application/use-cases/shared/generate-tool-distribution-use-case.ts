@@ -1,6 +1,6 @@
 import { type InstallationFile, removeRedundantGitkeeps } from "../../../domain/models/file.js";
 import type { ContentSection, FrameworkDescriptor } from "../../../domain/models/framework.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Platform } from "../../../domain/ports/platform.js";
 import type {
@@ -30,7 +30,7 @@ interface GenerateToolDistributionOptions {
 
 export class GenerateToolDistributionUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader,
     private readonly hasher: Hasher,
     private readonly platform: Platform
   ) {}

@@ -2,7 +2,7 @@ import { join } from "node:path";
 import type { DoctorIssue } from "../../../domain/models/doctor.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../../domain/models/merge.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 
 export interface DoctorMergeFilesOptions {
@@ -13,7 +13,7 @@ export interface DoctorMergeFilesOptions {
 
 export class DoctorMergeFilesUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader,
     private readonly hasher: Hasher
   ) {}
 

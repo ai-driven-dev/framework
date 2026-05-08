@@ -2,7 +2,7 @@ import { join } from "node:path";
 import type { DoctorIssue } from "../../../domain/models/doctor.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { ToolId } from "../../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 
 export interface DoctorTrackedFilesOptions {
   manifest: Manifest;
@@ -11,7 +11,7 @@ export interface DoctorTrackedFilesOptions {
 }
 
 export class DoctorTrackedFilesUseCase {
-  constructor(private readonly fs: FileSystem) {}
+  constructor(private readonly fs: FileReader) {}
 
   async execute(options: DoctorTrackedFilesOptions): Promise<DoctorIssue[]> {
     const { manifest, projectRoot, allowedIds } = options;
