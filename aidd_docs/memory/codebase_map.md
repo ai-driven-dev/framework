@@ -9,24 +9,25 @@ src/
 │   ├── commands/             # CLI wiring only (1 file per command)
 │   ├── use-cases/            # Business orchestration
 │   │   ├── auth/             # login / logout / status / require-auth
-│   │   ├── global/           # global cross-tool ops (status, update, sync, restore, doctor)
-│   │   ├── install/          # install + capability sub-use-cases (runtime-config, ide-config, plugins, agents, commands, rules, skills, config)
-│   │   ├── marketplace/      # marketplace lifecycle (add/list/remove/refresh/browse/check) + cache
-│   │   ├── migrate/          # manifest v3/v4 → v5 migration
-│   │   ├── plugin/           # add/remove/list/update + install-from-marketplace + search + sync
-│   │   ├── restore/          # restore-use-case + restore-plugin-use-case
-│   │   ├── setup/            # setup orchestrator sub-use-cases
-│   │   ├── sync/             # sync + sync-status + conflict-resolution
-│   │   ├── shared/           # helpers called by use-cases only (never by commands)
-│   │   └── *.ts              # top-level use-cases (clean, doctor, init, migrate, setup, status, uninstall...)
+│   │   ├── doctor/           # orchestrator + layout / merge-files / plugin / references / tracked-files
+│   │   ├── global/           # cross-tool chains: update-all / status-all / sync-all / restore-all / doctor-all
+│   │   ├── install/          # capability sub-use-cases: runtime-config / ide-config / agents / commands / rules / skills / config
+│   │   ├── marketplace/      # marketplace lifecycle: add / list / remove / refresh / browse / check / cache / register-framework / sync-settings
+│   │   ├── migrate/          # sub-use-cases: backup / strip-dead-files / rewire-plugins
+│   │   ├── plugin/           # add / remove / list / update / install-from-marketplace / search / pick
+│   │   ├── restore/          # orchestrator + tool-files / all-plugins / plugin
+│   │   ├── setup/            # sub-use-cases: marketplace-source / tools / plugins-prompt
+│   │   ├── sync/             # orchestrator + source-resolver / conflict-resolver / file-propagation / plugins / status
+│   │   ├── uninstall/        # orchestrator + tools / plugin / mcp-exclusion / ide
+│   │   └── shared/           # helpers called by use-cases only (never by commands)
 │   ├── error-handler.ts      # central error handling
 │   ├── errors.ts             # application typed exceptions
 │   └── output.ts             # stdout/stderr formatting
 ├── domain/
-│   ├── formats/              # pure string transforms — no I/O (command, json, jsonc, markdown, toml, placeholders)
+│   ├── formats/              # pure string transforms — no I/O (command, json, jsonc, markdown, toml, placeholders, cursor-hooks, mcp-format, markdown-references, *-marketplace parsers)
 │   ├── models/               # entities, value objects, discriminant types
-│   ├── ports/                # interface contracts (FileSystem, Hasher, Logger, Prompter, etc.)
-│   ├── capabilities/         # one capability class per Has* interface (agents, commands, rules, skills, hooks, mcp, memory, settings)
+│   ├── ports/                # interface contracts (FileSystem, Hasher, Logger, Prompter, LatestReleaseResolver, etc.)
+│   ├── capabilities/         # one capability class per Has* interface (agents, commands, rules, skills, hooks, mcp, settings, plugins, marketplace-entry)
 │   └── tools/
 │       ├── contracts.ts      # AiTool<C>, Has* interfaces, IdeToolConfig, UserFileSectionKey
 │       ├── registry.ts       # ToolConfig union, isAiTool(), registerTool(), getToolConfig(), hasToolSignals()
@@ -38,6 +39,18 @@ src/
     ├── deps.ts               # dependency injection wiring
     └── errors.ts             # infrastructure typed exceptions (internal only)
 ```
+
+## Use-Case Structure
+
+| Domain | Orchestrator | Sub-use-cases |
+|---|---|---|
+| sync | `sync-use-case.ts` | source-resolver, conflict-resolver, file-propagation, plugins, status |
+| doctor | `doctor-use-case.ts` | layout, merge-files, plugin, references, tracked-files |
+| restore | `restore-use-case.ts` | tool-files, all-plugins, plugin (shared: restore-merge-files, restore-regular-files) |
+| uninstall | `uninstall-use-case.ts` | tools, plugin, mcp-exclusion, ide |
+| migrate | `migrate-use-case.ts` | backup, strip-dead-files, rewire-plugins |
+| setup | `setup-use-case.ts` | marketplace-source, tools, plugins-prompt |
+| global | — | update-all, status-all, sync-all, restore-all, doctor-all (5 chain orchestrators) |
 
 ## Where to Add Things
 
@@ -56,12 +69,16 @@ src/
 
 ```
 tests/
-├── application/use-cases/    # integration — real filesystem, mock all ports via tests/helpers/ports/
-├── domain/models/            # unit — pure value object tests
+├── application/use-cases/    # unit — use-cases with in-memory ports from tests/helpers/ports/
+├── domain/capabilities/      # unit — capability class tests
+├── domain/formats/           # unit — format parser tests (incl. *-marketplace parsers)
+├── domain/models/            # unit — pure value object tests; manifest.property.unit.test.ts (property-based)
 ├── domain/tools/             # unit — tool config tests
 ├── e2e/                      # full CLI invocation via runCli()
 ├── infrastructure/           # adapter tests with mock servers/fixtures
-└── fixtures/                 # shared test data
+└── fixtures/
+    ├── framework/            # minimal synthetic framework fixture
+    └── framework-real/       # pinned real framework tag (plugins: aidd-async-dev, etc.)
 ```
 
 ## Key Files
@@ -75,3 +92,6 @@ tests/
 | `application/use-cases/shared/post-install-pipeline-use-case.ts` | Mandatory post-write sequence |
 | `application/use-cases/migrate-use-case.ts` | Brownfield migration — strip obsolete manifest entries |
 | `domain/models/manifest.ts` | Aggregate root — all installed file tracking |
+| `domain/models/normalized-plugin.ts` | Internal AST for foreign-format plugin ingestion |
+| `domain/models/migration-plan.ts` | Value object — brownfield migration decisions |
+| `domain/models/setup-flow.ts` | Aggregate — setup orchestration state |

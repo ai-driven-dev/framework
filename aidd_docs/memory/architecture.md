@@ -28,14 +28,26 @@ Infrastructure → Application → Domain
 - `Manifest` — aggregate root, tracks every installed file with MD5 hash (`.aidd/manifest.json`)
 - Framework layout is code-defined — no `framework.json` on disk
 
+## Domain Models (added in v5 / post-beta.23)
+
+| Model | File | Description |
+|---|---|---|
+| `MarketplaceSourceMode` | `domain/models/marketplace-source-mode.ts` | Marketplace source type with optional `ref` |
+| `SetupFlow` | `domain/models/setup-flow.ts` | Aggregate: setup orchestration state |
+| `MigrationPlan` | `domain/models/migration-plan.ts` | Value object: brownfield migration decisions |
+| `MarketplaceEntry` | `domain/capabilities/marketplace-entry.ts` | Per-tool marketplace registration entry |
+| `MarketplaceCacheEntry` | `domain/models/marketplace-cache-entry.ts` | Cached catalog TTL entry |
+| `NormalizedPlugin` | `domain/models/normalized-plugin.ts` | Foreign-format AST (internal; non-versioned) |
+| `LatestReleaseResolver` | `domain/ports/latest-release-resolver.ts` | Port: resolve latest GitHub release tag |
+
 ## Install Flows (high-level)
 
-**AI tool runtime config** (`aidd install ai <tool>`):
+**AI tool runtime config** (`aidd ai install <tool>`):
 ```
 InstallRuntimeConfigUseCase → AssetLoader (bundled in binary) → FileSystem + ManifestRepository
 ```
 
-**IDE config** (`aidd install ide <tool>`):
+**IDE config** (`aidd ide install <tool>`):
 ```
 InstallIdeConfigUseCase → AssetLoader (bundled in binary) → FileSystem + ManifestRepository
 ```
@@ -52,6 +64,21 @@ MigrateUseCase → ManifestRepository (detect obsolete scripts/plugins sections 
 → backup + strip entries + best-effort rewire via marketplace
 ```
 
+## Per-Tool Plugin Install Strategy
+
+Controlled by `PluginsCapability` mode field in each tool definition:
+
+| Tool | Mode | Settings path (marketplace registration) | Config output path |
+|---|---|---|---|
+| Claude | `native` | `.claude/settings.json` | `.claude/settings.json` |
+| Cursor | `native` | `.cursor/settings.json` | `.cursor/settings.json` |
+| Copilot | `native` | `.github/copilot/settings.json` | `.vscode/settings.json` |
+| Codex | `native` | `.codex/config.json` | `.codex/config.toml` |
+| OpenCode | `flat` | — (no marketplace support) | `opencode.json` |
+
+- `native` mode: plugins registered via `marketplaceSettings` in tool's settings JSON; files materialized under tool-specific `pluginsDir`
+- `flat` mode: plugins installed as flat files under a namespace prefix; no native marketplace concept (OpenCode only)
+
 ## Auth
 
 Token resolution: `AIDD_TOKEN` env → project `.aidd/auth.json` → user `~/.config/aidd/auth.json` → `gh auth token` (only when `method: "gh"`) → none
@@ -63,6 +90,12 @@ Runtime configs and IDE configs ship inside the CLI binary (tsup bundles them):
 - `.md` files → text loader (string); `.json` → native import (object); `.toml` → text loader (string)
 - No fs reads at runtime — all assets inlined at bundle time
 
+## Bundle Budget
+
+- Budget: 500 KB (`bundleBudgetKB` in `package.json`)
+- Enforced at build time: `scripts/check-bundle-size.mjs` runs after `tsup`
+- Perf regression tracker: `scripts/check-perf-regression.mjs` + `scripts/perf-baseline.json` (4 commands: `--version`, `--help`, `status`, `ai list`)
+
 ## Key Design Decisions
 
 - Merge files (JSON/TOML): surgical key-level tracking; uninstall removes only AIDD keys
@@ -71,32 +104,20 @@ Runtime configs and IDE configs ship inside the CLI binary (tsup bundles them):
 - Error handling: typed exceptions thrown from use-cases/adapters; caught only at command layer
 - `aidd migrate`: idempotent, `--dry-run` safe, backup before writes, best-effort plugin rewire via marketplace
 
-## Foreign-Format Adapters (Part 1 — COMPLETE)
+## Foreign-Format Adapters (COMPLETE)
 
 Ingests native marketplace/config formats from other AI tools.
 Pipeline: `NativeFormat → Parser → NormalizedPlugin → Emitter[targetTool] → ToolNativeFiles`
 
-**Phase A (Cursor) — shipped:**
-- `src/domain/models/normalized-plugin.ts` — `NormalizedPlugin` internal AST (NOT versioned); `ForeignMarketplaceSource` union
-- `src/domain/formats/cursor-marketplace.ts` — pure parser `parseCursorMarketplace(rawJson)` → `NormalizedCatalog`
-- `ForeignSchemaValidationError` in `src/domain/errors.ts` — thrown on invalid foreign schema
-- Cursor's `marketplace.json` schema mirrors Claude's catalog shape (official schema undocumented as of 2026-05-06)
+| Tool | File | Notes |
+|---|---|---|
+| Cursor | `src/domain/formats/cursor-marketplace.ts` | `parseCursorMarketplace(rawJson)` → `NormalizedCatalog` |
+| Copilot | `src/domain/formats/copilot-marketplace.ts` | Single-entry degenerate catalog from `.github/plugin/plugin.json` |
+| Codex | `src/domain/formats/codex-marketplace.ts` | Multi-entry catalog at `.agents/plugins/marketplace.json` |
+| OpenCode | `src/domain/formats/opencode-marketplace.ts` | npm specifier strings from `opencode.json`; empty catalog when `plugin` field absent |
 
-**Phase B (Copilot) — shipped:**
-- `src/domain/formats/copilot-marketplace.ts` — pure parser `parseCopilotMarketplace(rawJson)` → `NormalizedCatalog` (single-entry)
-- Copilot has no multi-plugin catalog format; the "marketplace" is a Git repo with one plugin at `.github/plugin/plugin.json`
-- Parser treats that single-plugin manifest as a degenerate one-entry catalog
+**ForeignMarketplaceSource union:** `"cursor" | "copilot" | "codex" | "opencode"`
 
-**Phase C (Codex) — shipped:**
-- `src/domain/formats/codex-marketplace.ts` — pure parser `parseCodexMarketplace(rawJson)` → `NormalizedCatalog` (multi-entry)
-- Codex multi-plugin catalog at `.agents/plugins/marketplace.json`; shape: `{ plugins: [{ name, version?, description? }] }`
+**MARKETPLACE_PROBES:** cursor `.cursor-plugin/marketplace.json`, copilot `.github/plugin/plugin.json`, codex `.agents/plugins/marketplace.json`, opencode `opencode.json`
 
-**Phase D (OpenCode) — shipped (Part 1 COMPLETE):**
-- `src/domain/formats/opencode-marketplace.ts` — pure parser `parseOpencodeMarketplace(rawJson)` → `NormalizedCatalog`
-- OpenCode has no marketplace.json or per-project plugin manifest; plugins are referenced by npm specifier in `opencode.json` under the `plugin` array
-- Each entry is a bare string specifier OR a `[specifier, options]` tuple; name = specifier verbatim; no version/description available
-- Parser returns empty catalog when `plugin` field is absent (field is optional in OpenCode config)
-- Probe path: `opencode.json` at project root
-
-**ForeignMarketplaceSource union (final):** `"cursor" | "copilot" | "codex" | "opencode"`
-**MARKETPLACE_PROBES (final):** cursor `.cursor-plugin/marketplace.json`, copilot `.github/plugin/plugin.json`, codex `.agents/plugins/marketplace.json`, opencode `opencode.json`
+**Error type:** `ForeignSchemaValidationError` in `src/domain/errors.ts` — thrown on invalid foreign schema

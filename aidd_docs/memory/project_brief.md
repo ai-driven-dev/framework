@@ -27,7 +27,7 @@
 | Framework            | Canonical set of agents, commands, rules, skills, templates                                                                                                                       |
 | Distribution         | Tool-specific generated output (files rewritten per tool conventions)                                                                                                             |
 | Manifest             | `.aidd/manifest.json` — hash-based tracking of every installed file                                                                                                               |
-| ToolConfig           | Per-tool configuration: output paths, frontmatter conversion, merge rules. Tools: `claude` → `.claude/`, `cursor` → `.cursor/`, `copilot` → `.github/`, `opencode` → `.opencode/` |
+| ToolConfig           | Per-tool configuration: output paths, frontmatter conversion, merge rules. Tools: `claude` → `.claude/`, `cursor` → `.cursor/`, `copilot` → `.github/`, `opencode` → `.opencode/`, `codex` → `.codex/` |
 | Plugin               | Capability files (agents, commands, hooks, mcp, rules, skills) distributed per AI tool format via marketplace catalogs                                                            |
 | Drift                | Installed file modified locally vs. what was written at install time                                                                                                              |
 | Init                 | Bootstrap: creates `aidd_docs/` structure + manifest                                                                                                                              |
@@ -81,14 +81,17 @@
 | `aidd clean [--force]` | Nuke .aidd + tracked files |
 | `aidd self-update` | Update CLI binary |
 
-### Removed (v5)
+### Removed (v5 / post-beta.23 architecture cleanup)
 - `aidd cache list/clear` — replaced by `aidd marketplace cache`
 - `aidd config list/get/set` — no remaining writable fields
 - `aidd install [category] [tool]` — replaced by `aidd ai/ide install`
 - `aidd uninstall [category] [tool]` — replaced by `aidd ai/ide uninstall`
 - Setup flags `--from / --switch-mode / --mode / --path` (path kept only with `--source local`) / `--release`
 - Install flags `--path / --release / --plugins / --mcp / --all-plugins / --recommended-plugins / --no-plugins`
-- Global `--repo` flag
+- Global `--repo` flag; `AIDD_REPO` env var gone from source
+- `FrameworkResolver`, `FrameworkCache`, `ResolveFrameworkUseCase`, `InstallFrameworkPluginsUseCase`, `AdoptUseCase` — removed classes
+- `MemoryCapability` — memory stubs moved to plugin ownership; no `memory-capability.ts` in source
+- Manifest fields: `mode / scripts / repo / docsDir / docs / plugins(top-level)` — all removed
 
 ## User Journey
 
