@@ -38,9 +38,9 @@
       "recommended": true
     },
     {
-      "name": "aidd-async-dev",
+      "name": "aidd-orchestrator",
       "version": "1.0.0",
-      "source": "./plugins/aidd-async-dev",
+      "source": "./plugins/aidd-orchestrator",
       "description": "Async development orchestration: turn ready issues into pull requests, then iterate on review feedback until a human takes over.",
       "strict": true,
       "recommended": false
