@@ -31,7 +31,10 @@ async function runInteractive(
   fakeHome: string,
   script: string
 ): Promise<{ stdout: string; exitCode: number }> {
-  const scriptPath = join(tmpdir(), `aidd-expect-${Date.now()}.exp`);
+  const scriptPath = join(
+    tmpdir(),
+    `aidd-expect-${Date.now()}-${process.pid}-${Math.random().toString(36).slice(2)}.exp`
+  );
   const fullScript = `
 set timeout 15
 set env(HOME) "${fakeHome}"
