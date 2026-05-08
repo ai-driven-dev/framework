@@ -69,10 +69,11 @@ jobs:
             npm-global-${{ runner.os }}-
 
       - name: Install CLI
+        # Use @beta during pre-release cycle; switch to @latest after stable v5 ships.
         run: |
           npm config set @ai-driven-dev:registry https://npm.pkg.github.com
           npm config set //npm.pkg.github.com/:_authToken ${{ secrets.PACKAGES_TOKEN }}
-          npm install -g @ai-driven-dev/cli@latest
+          npm install -g @ai-driven-dev/cli@beta
 
       - name: Build distributions
         run: bash scripts/build-dist.sh
@@ -81,11 +82,6 @@ jobs:
         run: |
           VERSION="${{ needs.release-please.outputs.version }}"
           tar czf "/tmp/aidd-framework-${VERSION}.tar.gz" \
-            agents/ \
-            commands/ \
-            config/ \
-            rules/ \
-            skills/ \
             plugins/ \
             .claude-plugin/ \
             aidd_docs/ \
