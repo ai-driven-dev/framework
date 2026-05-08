@@ -88,7 +88,7 @@ export class SetupUseCase {
     source: MarketplaceSourceMode
   ): MarketplaceRegisterFrameworkOptions {
     const pluginSource = this.toPluginSource(source);
-    return { projectRoot: flow.projectRoot, pluginSource };
+    return { projectRoot: flow.projectRoot, pluginSource, force: true };
   }
 
   private toPluginSource(source: MarketplaceSourceMode): PluginSource {
