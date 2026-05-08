@@ -3,8 +3,6 @@
   "ignore": [
     ".aidd/**",
     "config/vitest-text-loader.ts",
-    "src/domain/formats/cursor-marketplace.ts",
-    "src/domain/models/normalized-plugin.ts",
     "tests/**/helpers.ts",
     "tests/helpers/**",
     "tests/fixtures/**",
