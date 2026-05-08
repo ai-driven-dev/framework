@@ -20,6 +20,8 @@ import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
 import { loadPluginManifest, resolvePluginToolIds, writePluginFiles } from "./plugin-helpers.js";
 
+const FLAT_PLUGINS_MODE = "flat";
+
 export interface PluginAddOptions {
   source: PluginSource;
   toolIds: AiToolId[] | "all";
@@ -45,7 +47,7 @@ export class PluginAddUseCase {
     const manifest = await loadPluginManifest(this.manifestRepo);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest);
     if (marketplace !== undefined && (await this.isGithubMarketplace(marketplace, projectRoot))) {
-      this.addGithubMarketplacePlugin(options, resolvedToolIds, manifest);
+      await this.addGithubMarketplacePlugin(options, resolvedToolIds, manifest);
     } else {
       await this.addLocalPlugin(options, resolvedToolIds, manifest, source, projectRoot);
     }
@@ -58,14 +60,44 @@ export class PluginAddUseCase {
     return found?.source.kind === "github";
   }
 
-  private addGithubMarketplacePlugin(
+  private async addGithubMarketplacePlugin(
+    options: PluginAddOptions,
+    toolIds: AiToolId[],
+    manifest: Manifest
+  ): Promise<void> {
+    const { pluginMetadata } = options;
+    if (pluginMetadata === undefined) throw new MissingPluginVersionError();
+    this.validateNoDuplicates(pluginMetadata.name, toolIds, manifest);
+    const flatToolIds = toolIds.filter((id) => this.isFlatTool(id));
+    const nativeToolIds = toolIds.filter((id) => !this.isFlatTool(id));
+    if (flatToolIds.length > 0) {
+      await this.addLocalPlugin(
+        options,
+        flatToolIds,
+        manifest,
+        options.source,
+        options.projectRoot
+      );
+    }
+    this.registerNativeGithubPlugins(options, nativeToolIds, manifest);
+  }
+
+  private isFlatTool(toolId: AiToolId): boolean {
+    const toolConfig = getToolConfig(toolId);
+    if (!isAiTool(toolConfig)) return false;
+    if (!("plugins" in (toolConfig.capabilities as object))) return false;
+    return (
+      (toolConfig.capabilities as { plugins: { mode: string } }).plugins.mode === FLAT_PLUGINS_MODE
+    );
+  }
+
+  private registerNativeGithubPlugins(
     options: PluginAddOptions,
     toolIds: AiToolId[],
     manifest: Manifest
   ): void {
     const { pluginMetadata, marketplace, source } = options;
-    if (pluginMetadata === undefined) throw new MissingPluginVersionError();
-    this.validateNoDuplicates(pluginMetadata.name, toolIds, manifest);
+    if (pluginMetadata === undefined) return;
     for (const toolId of toolIds) {
       manifest.addPlugin(
         toolId,
