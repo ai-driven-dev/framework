@@ -10,4 +10,5 @@ export const PLUGIN_MANIFEST_PROBES: readonly { format: PluginFormat; relativePa
 export const MARKETPLACE_PROBES: readonly { format: PluginFormat; relativePath: string }[] = [
   { format: "claude", relativePath: ".claude-plugin/marketplace.json" },
   { format: "cursor", relativePath: ".cursor-plugin/marketplace.json" },
+  { format: "copilot", relativePath: ".github/plugin/plugin.json" },
 ];

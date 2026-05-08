@@ -83,4 +83,11 @@ Pipeline: `NativeFormat → Parser → NormalizedPlugin → Emitter[targetTool] 
 - Cursor's `marketplace.json` schema mirrors Claude's catalog shape (official schema undocumented as of 2026-05-06)
 - Integration with fetcher pipeline deferred to Phase A.5
 
-**Phases B (Copilot), C (Codex) — deferred. Phase D (OpenCode) — emitter complete (Part 3); marketplace adapter deferred.**
+**Phase B (Copilot) — shipped:**
+- `src/domain/formats/copilot-marketplace.ts` — pure parser `parseCopilotMarketplace(rawJson)` → `NormalizedCatalog` (single-entry)
+- Copilot has no multi-plugin catalog format; the "marketplace" is a Git repo with one plugin at `.github/plugin/plugin.json`
+- Parser treats that single-plugin manifest as a degenerate one-entry catalog
+- `ForeignMarketplaceSource` union extended: `"cursor" | "copilot"`
+- MARKETPLACE_PROBES extended: `.github/plugin/plugin.json` for copilot format
+
+**Phases C (Codex) — deferred. Phase D (OpenCode) — emitter complete (Part 3); marketplace adapter deferred.**

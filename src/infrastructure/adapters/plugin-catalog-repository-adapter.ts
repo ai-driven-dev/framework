@@ -1,5 +1,6 @@
 import { isAbsolute, join, resolve } from "node:path";
 import { InvalidPluginManifestError } from "../../domain/errors.js";
+import { parseCopilotMarketplace } from "../../domain/formats/copilot-marketplace.js";
 import { parseCursorMarketplace } from "../../domain/formats/cursor-marketplace.js";
 import type { NormalizedPlugin } from "../../domain/models/normalized-plugin.js";
 import { type PluginCatalog, parsePluginCatalog } from "../../domain/models/plugin-catalog.js";
@@ -28,6 +29,7 @@ export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {
       const fullPath = join(frameworkPath, probe.relativePath);
       if (!(await this.fs.fileExists(fullPath))) continue;
       if (probe.format === "cursor") return this.readCursorCatalog(fullPath);
+      if (probe.format === "copilot") return this.readCopilotCatalog(fullPath);
     }
     return [];
   }
@@ -52,6 +54,11 @@ export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {
   private async readCursorCatalog(fullPath: string): Promise<NormalizedPlugin[]> {
     const raw = await this.fs.readFile(fullPath);
     return [...parseCursorMarketplace(raw).plugins];
+  }
+
+  private async readCopilotCatalog(fullPath: string): Promise<NormalizedPlugin[]> {
+    const raw = await this.fs.readFile(fullPath);
+    return [...parseCopilotMarketplace(raw).plugins];
   }
 
   private resolveLocalPaths(catalog: PluginCatalog, frameworkPath: string): PluginCatalog {
