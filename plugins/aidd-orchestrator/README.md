@@ -65,9 +65,9 @@ The workflow's dispatch step inspects whether the issue has an open linked PR. I
 
 | Skill                             | Purpose                                                         |
 | --------------------------------- | --------------------------------------------------------------- |
-| `aidd-orchestrator:01:setup`         | Generate the workflow, write the config, bootstrap the labels.  |
-| `aidd-orchestrator:02:run`           | Pick a candidate, resolve blockers, lock, delegate, audit.      |
-| `aidd-orchestrator:03:review`        | Loop on PR feedback, reply per comment, resolve threads, summarise. |
+| `aidd-orchestrator:01:setup-async-dev`         | Generate the workflow, write the config, bootstrap the labels.  |
+| `aidd-orchestrator:02:run-async-dev`           | Pick a candidate, resolve blockers, lock, delegate, audit.      |
+| `aidd-orchestrator:03:review-async-dev`        | Loop on PR feedback, reply per comment, resolve threads, summarise. |
 
 The plugin also ships an `async-orchestrator` agent that wraps the run/review choice for direct invocation.
 
@@ -89,7 +89,7 @@ No custom workflow is needed; the labels drive the columns.
 ## Setup
 
 1. Install the plugin via the marketplace.
-2. Run the `aidd-orchestrator:01:setup` skill in your repo. It asks five questions:
+2. Run the `aidd-orchestrator:01:setup-async-dev` skill in your repo. It asks five questions:
    - mode (`local` / `remote` / `both`)
    - Anthropic auth (`oauth_token` / `api_key`)
    - marketplace repo and access (`public` / `private`)

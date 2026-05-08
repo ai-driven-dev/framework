@@ -78,7 +78,7 @@ jobs:
       - name: Run aidd-orchestrator pipeline
         uses: anthropics/claude-code-action@v1
         with:
-          prompt: "Use skill aidd-orchestrator:02:run on issue #${{ needs.dispatch.outputs.issue_number }}"
+          prompt: "Use skill aidd-orchestrator:02:run-async-dev on issue #${{ needs.dispatch.outputs.issue_number }}"
           __CLAUDE_AUTH_LINE__
           plugins: |
             aidd-orchestrator@aidd-framework
@@ -101,7 +101,7 @@ jobs:
       - name: Run aidd-orchestrator review loop
         uses: anthropics/claude-code-action@v1
         with:
-          prompt: "Use skill aidd-orchestrator:03:review on PR #${{ needs.dispatch.outputs.issue_number }}"
+          prompt: "Use skill aidd-orchestrator:03:review-async-dev on PR #${{ needs.dispatch.outputs.issue_number }}"
           __CLAUDE_AUTH_LINE__
           plugins: |
             aidd-orchestrator@aidd-framework

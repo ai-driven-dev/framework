@@ -1,5 +1,5 @@
 ---
-name: aidd-orchestrator:03:review
+name: aidd-orchestrator:03:review-async-dev
 description: Handles the post-PR review-fix loop for runs created by this plugin's run skill. Triggered when the human labels the linked issue with `to-review` (or comments `@claude /review` on the PR). Collects review comments, decides whether to keep iterating, delegates fixes to whichever SDLC capability is loaded at runtime, replies to each addressed comment, resolves the threads, and posts a structured summary when stop conditions trigger. Use when the user (or a webhook / cron) says "handle review comments", "iterate on PR <n>", "address review feedback automatically", or invokes this skill on a specific PR. Do NOT use for the initial implementation or for setup; other skills in this plugin cover those.
 ---
 

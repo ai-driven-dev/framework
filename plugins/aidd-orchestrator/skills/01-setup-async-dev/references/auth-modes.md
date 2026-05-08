@@ -1,6 +1,6 @@
 # Auth modes
 
-Three supported sources for the GitHub token used by `aidd-orchestrator:02:run` and `aidd-orchestrator:03:review`.
+Three supported sources for the GitHub token used by `aidd-orchestrator:02:run-async-dev` and `aidd-orchestrator:03:review-async-dev`.
 
 ## gh CLI (default)
 

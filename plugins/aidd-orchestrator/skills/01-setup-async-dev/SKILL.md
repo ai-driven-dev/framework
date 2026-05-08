@@ -1,5 +1,5 @@
 ---
-name: aidd-orchestrator:01:setup
+name: aidd-orchestrator:01:setup-async-dev
 description: Installs and configures the aidd-orchestrator plugin in a target repo. Use when the user runs "/setup async dev", "configure async dev", "install async-dev plugin", or asks to set up Claude auto-implementation on issues. Do NOT use for running the async pipeline (use the run skill) or handling PR review loops (use the review skill).
 ---
 
