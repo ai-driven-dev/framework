@@ -171,7 +171,7 @@ export function registerSetupCommand(program: Command): void {
 
         const releaseResolver = new GitHubReleaseResolverAdapter(
           deps.http,
-          deps.token ?? undefined
+          deps.authReader
         );
         const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
           deps.prompter,

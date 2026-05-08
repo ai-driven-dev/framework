@@ -13,6 +13,8 @@ export interface AuthContext {
 const noopExternalProvider: TokenResolver = { resolve: () => null };
 
 export class AuthReader implements TokenProvider {
+  private cached?: Promise<string | null>;
+
   constructor(
     private readonly storage: AuthStorage,
     private readonly projectRoot: string,
@@ -20,7 +22,12 @@ export class AuthReader implements TokenProvider {
     private readonly externalProvider: TokenResolver = noopExternalProvider
   ) {}
 
-  async resolve(): Promise<string | null> {
+  resolve(): Promise<string | null> {
+    this.cached ??= this.resolveUncached();
+    return this.cached;
+  }
+
+  private async resolveUncached(): Promise<string | null> {
     const envToken = process.env.AIDD_TOKEN;
     if (envToken) {
       this.logger?.debug("Token resolved from AIDD_TOKEN env");

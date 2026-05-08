@@ -197,6 +197,31 @@ describe("AuthReader", () => {
     });
   });
 
+  describe("memoization", () => {
+    it("calls storage read only once across multiple resolve() calls", async () => {
+      let readCount = 0;
+      const storage: AuthStorage = {
+        userConfigPath: () => "/home/user/.config/aidd/auth.json",
+        projectConfigPath: (_root: string) => "/project/.aidd/auth.json",
+        read: async () => {
+          readCount++;
+          return null;
+        },
+        write: async () => {},
+        delete: async () => {},
+        save: async () => {},
+        readActive: async () => null,
+      } as AuthStorage;
+      const reader = new AuthReader(storage, "/project");
+      await withEnv({ AIDD_TOKEN: undefined }, async () => {
+        await reader.resolve();
+        await reader.resolve();
+        await reader.resolve();
+      });
+      expect(readCount).toBe(2); // projectConfig + userConfig, each read once total
+    });
+  });
+
   describe("logging", () => {
     it("logs resolution source without revealing token value", async () => {
       const logged: string[] = [];

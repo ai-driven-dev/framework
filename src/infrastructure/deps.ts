@@ -91,7 +91,6 @@ interface Deps {
   authReader: AuthReader;
   authStorage: AuthStorage;
   http: HttpClient;
-  token: string | null;
   pluginCatalogRepository: PluginCatalogRepository;
   pluginFetcher: PluginFetcher;
   pluginDistributionReader: PluginDistributionReader;
@@ -157,10 +156,9 @@ export async function createDeps(
   const authStorage = new AuthStorage();
   const ghCliAdapter = new GhCliAdapter();
   const authReader = new AuthReader(authStorage, projectRoot, logger, ghCliAdapter);
-  const token = await authReader.resolve();
-  const pluginFetcher = new PluginFetcherAdapter(fs, token ?? undefined);
-  const rawCatalogFetcher = new GitHubRawFetcherAdapter(http, token ?? undefined);
-  const cliUpdater = new SelfUpdaterAdapter(http, { token: token ?? undefined });
+  const pluginFetcher = new PluginFetcherAdapter(fs, authReader);
+  const rawCatalogFetcher = new GitHubRawFetcherAdapter(http, authReader);
+  const cliUpdater = new SelfUpdaterAdapter(http, { tokenProvider: authReader });
   const currentVersionProvider = new CurrentVersionAdapter();
   const git = new GitAdapter(fs);
   const platform = new PlatformAdapter();
@@ -308,7 +306,6 @@ export async function createDeps(
     authReader,
     authStorage,
     http,
-    token,
     pluginCatalogRepository,
     pluginFetcher,
     pluginDistributionReader,

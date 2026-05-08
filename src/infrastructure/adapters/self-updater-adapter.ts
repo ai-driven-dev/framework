@@ -6,6 +6,7 @@ import {
   UpdateError,
 } from "../../domain/errors.js";
 import type { CliRelease, SelfUpdater } from "../../domain/ports/self-updater.js";
+import type { TokenProvider } from "../../domain/ports/token-provider.js";
 import type { HttpClient } from "./http-client.js";
 
 const CLI_REPO = "ai-driven-dev/aidd-cli";
@@ -62,25 +63,26 @@ function parseCliRelease(body: unknown, url: string): CliReleaseResponse {
 }
 
 interface SelfUpdaterAdapterConfig {
-  token?: string;
+  tokenProvider?: TokenProvider;
   githubApiBase?: string;
 }
 
 export class SelfUpdaterAdapter implements SelfUpdater {
-  private readonly token: string | undefined;
+  private readonly tokenProvider: TokenProvider | undefined;
   private readonly githubApiBase: string;
 
   constructor(
     private readonly http: HttpClient,
     config: SelfUpdaterAdapterConfig = {}
   ) {
-    this.token = config.token;
+    this.tokenProvider = config.tokenProvider;
     this.githubApiBase = config.githubApiBase ?? DEFAULT_GITHUB_API_BASE;
   }
 
   async fetchLatestRelease(): Promise<CliRelease> {
     const url = `${this.githubApiBase}/repos/${CLI_REPO}/releases/latest`;
-    const response = await this.http.get(url, { token: this.token });
+    const token = (await this.tokenProvider?.resolve()) ?? undefined;
+    const response = await this.http.get(url, { token });
     const release = parseCliRelease(response.body, url);
     return {
       version: release.tag_name.replace(/^v/, ""),

@@ -8,6 +8,7 @@ import {
 } from "../../domain/errors.js";
 import type { PluginSourceGitHub } from "../../domain/models/plugin-source.js";
 import type { RawCatalogFetcher } from "../../domain/ports/raw-catalog-fetcher.js";
+import type { TokenProvider } from "../../domain/ports/token-provider.js";
 import { HttpNotFoundError } from "../errors.js";
 import type { HttpClient } from "./http-client.js";
 
@@ -17,7 +18,7 @@ const RAW_ACCEPT = "application/vnd.github.raw";
 export class GitHubRawFetcherAdapter implements RawCatalogFetcher {
   constructor(
     private readonly http: HttpClient,
-    private readonly token?: string
+    private readonly tokenProvider?: TokenProvider
   ) {}
 
   async fetchCatalog(
@@ -36,9 +37,10 @@ export class GitHubRawFetcherAdapter implements RawCatalogFetcher {
   }
 
   private async fetchRaw(url: string): Promise<string> {
+    const token = (await this.tokenProvider?.resolve()) ?? undefined;
     try {
       const response = await this.http.get(url, {
-        token: this.token,
+        token,
         accept: RAW_ACCEPT,
       });
       const body = response.body;

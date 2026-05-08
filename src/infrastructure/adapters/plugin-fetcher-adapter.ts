@@ -13,6 +13,7 @@ import type {
 import type { FileReader } from "../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../domain/ports/file-writer.js";
 import type { PluginFetcher, PluginFetchOptions } from "../../domain/ports/plugin-fetcher.js";
+import type { TokenProvider } from "../../domain/ports/token-provider.js";
 import { injectTokenIntoUrl } from "../git/inject-token.js";
 
 const execFile = promisify(execFileCb);
@@ -23,7 +24,7 @@ const AUTH_ERROR_PATTERN =
 export class PluginFetcherAdapter implements PluginFetcher {
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly token?: string
+    private readonly tokenProvider?: TokenProvider
   ) {}
 
   async fetch(
@@ -64,7 +65,8 @@ export class PluginFetcherAdapter implements PluginFetcher {
     const targetDir = join(cacheDir, key);
     await this.bustCacheIfNeeded(targetDir, forceRefresh);
     if (!(await this.fs.fileExists(targetDir))) {
-      await this.cloneShallow(this.injectGitHubToken(baseUrl), baseUrl, targetDir, source.ref);
+      const token = (await this.tokenProvider?.resolve()) ?? undefined;
+      await this.cloneShallow(injectTokenIntoUrl(baseUrl, token), baseUrl, targetDir, source.ref);
     }
     return targetDir;
   }
@@ -78,12 +80,11 @@ export class PluginFetcherAdapter implements PluginFetcher {
     const targetDir = join(cacheDir, key);
     await this.bustCacheIfNeeded(targetDir, forceRefresh);
     if (!(await this.fs.fileExists(targetDir))) {
-      await this.cloneShallow(
-        this.injectTokenForUrl(source.url),
-        source.url,
-        targetDir,
-        source.ref
-      );
+      const token = (await this.tokenProvider?.resolve()) ?? undefined;
+      const authUrl = source.url.startsWith("git@")
+        ? source.url
+        : injectTokenIntoUrl(source.url, token);
+      await this.cloneShallow(authUrl, source.url, targetDir, source.ref);
     }
     return targetDir;
   }
@@ -98,7 +99,9 @@ export class PluginFetcherAdapter implements PluginFetcher {
     const targetDir = join(cacheDir, key);
     await this.bustCacheIfNeeded(targetDir, forceRefresh);
     if (!(await this.fs.fileExists(targetDir))) {
-      await this.cloneSparse(this.injectTokenForUrl(url), url, targetDir, subpath, ref);
+      const token = (await this.tokenProvider?.resolve()) ?? undefined;
+      const authUrl = url.startsWith("git@") ? url : injectTokenIntoUrl(url, token);
+      await this.cloneSparse(authUrl, url, targetDir, subpath, ref);
     }
     return join(targetDir, subpath);
   }
@@ -126,15 +129,6 @@ export class PluginFetcherAdapter implements PluginFetcher {
       throw new PluginFetchError(`npm install failed for "${spec}": ${String(err)}`);
     }
     return pkgDir;
-  }
-
-  private injectGitHubToken(url: string): string {
-    return injectTokenIntoUrl(url, this.token);
-  }
-
-  private injectTokenForUrl(url: string): string {
-    if (url.startsWith("git@")) return url;
-    return injectTokenIntoUrl(url, this.token);
   }
 
   private gitWithNoPrompt(baseDir?: string): ReturnType<typeof simpleGit> {

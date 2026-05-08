@@ -30,7 +30,8 @@ describe("GitHubReleaseResolverAdapter", () => {
 
     it("calls the correct GitHub releases/latest URL", async () => {
       const http = makeHttp({ tag_name: "v1.0.0" });
-      const adapter = new GitHubReleaseResolverAdapter(http as never, "my-token");
+      const tokenProvider = { resolve: async () => "my-token" as string | null };
+      const adapter = new GitHubReleaseResolverAdapter(http as never, tokenProvider);
       await adapter.resolveLatest(REPO);
       expect(http.get).toHaveBeenCalledWith(
         "https://api.github.com/repos/owner/repo/releases/latest",
