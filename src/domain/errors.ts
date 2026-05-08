@@ -257,3 +257,26 @@ export class ForeignSchemaValidationError extends Error {
     this.name = "ForeignSchemaValidationError";
   }
 }
+
+export class CatalogFetchNotFoundError extends Error {
+  constructor(url: string) {
+    super(`Catalog not found (HTTP 404): ${url}`);
+    this.name = "CatalogFetchNotFoundError";
+  }
+}
+
+export class CatalogFetchAuthError extends Error {
+  constructor(url: string) {
+    super(
+      `Authentication required to fetch catalog from "${url}". Run \`aidd auth login\` first or use \`--source local --path <dir>\`.`
+    );
+    this.name = "CatalogFetchAuthError";
+  }
+}
+
+export class CatalogFetchError extends Error {
+  constructor(url: string, detail: string) {
+    super(`Failed to fetch catalog from "${url}": ${detail}`);
+    this.name = "CatalogFetchError";
+  }
+}

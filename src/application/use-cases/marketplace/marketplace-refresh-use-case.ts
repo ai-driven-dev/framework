@@ -1,8 +1,13 @@
 import type { Marketplace } from "../../../domain/models/marketplace.js";
 import { marketplaceCacheDir } from "../../../domain/models/paths.js";
+import type { PluginSourceGitHub } from "../../../domain/models/plugin-source.js";
+import type { Logger } from "../../../domain/ports/logger.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
 import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
 import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
+import type { RawCatalogFetcher } from "../../../domain/ports/raw-catalog-fetcher.js";
+
+const CLAUDE_CATALOG_PATH = ".claude-plugin/marketplace.json";
 
 export interface MarketplaceRefreshOptions {
   projectRoot: string;
@@ -24,7 +29,9 @@ export class MarketplaceRefreshUseCase {
   constructor(
     private readonly catalogRepo: PluginCatalogRepository,
     private readonly registry: MarketplaceRegistry,
-    private readonly pluginFetcher: PluginFetcher
+    private readonly pluginFetcher: PluginFetcher,
+    private readonly rawCatalogFetcher?: RawCatalogFetcher,
+    private readonly logger?: Logger
   ) {}
 
   async execute(options: MarketplaceRefreshOptions): Promise<MarketplaceRefreshResult> {
@@ -42,10 +49,9 @@ export class MarketplaceRefreshUseCase {
   // batch refresh. Each failure is reported via the result, never thrown.
   private async refreshOne(projectRoot: string, m: Marketplace): Promise<RefreshEntryResult> {
     try {
+      this.logger?.info(`Fetching marketplace '${m.name}'...`);
       const cacheDir = marketplaceCacheDir(projectRoot, m.name);
-      const localPath = await this.pluginFetcher.fetch(m.source, cacheDir, {
-        forceRefresh: true,
-      });
+      const localPath = await this.fetchSource(m, cacheDir);
       await this.catalogRepo.load(localPath);
       await this.registry.updateLastFetched(projectRoot, m.name, m.scope, new Date().toISOString());
       return { name: m.name, status: "ok" };
@@ -56,5 +62,16 @@ export class MarketplaceRefreshUseCase {
         error: err instanceof Error ? err.message : String(err),
       };
     }
+  }
+
+  private async fetchSource(m: Marketplace, cacheDir: string): Promise<string> {
+    if (m.source.kind === "github" && this.rawCatalogFetcher !== undefined) {
+      return this.rawCatalogFetcher.fetchCatalog(
+        m.source as PluginSourceGitHub,
+        CLAUDE_CATALOG_PATH,
+        cacheDir
+      );
+    }
+    return this.pluginFetcher.fetch(m.source, cacheDir, { forceRefresh: true });
   }
 }

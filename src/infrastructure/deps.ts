@@ -59,6 +59,7 @@ import { CurrentVersionAdapter } from "./adapters/current-version-adapter.js";
 import { FileAdapter } from "./adapters/file-adapter.js";
 import { GhCliAdapter } from "./adapters/gh-cli-adapter.js";
 import { GitAdapter } from "./adapters/git-adapter.js";
+import { GitHubRawFetcherAdapter } from "./adapters/github-raw-fetcher-adapter.js";
 import { HasherAdapter } from "./adapters/hasher-adapter.js";
 import { HttpClient } from "./adapters/http-client.js";
 import { ManifestRepositoryAdapter } from "./adapters/manifest-repository-adapter.js";
@@ -155,6 +156,7 @@ export async function createDeps(
   const authReader = new AuthReader(authStorage, projectRoot, logger, ghCliAdapter);
   const token = await authReader.resolve();
   const pluginFetcher = new PluginFetcherAdapter(fs, token ?? undefined);
+  const rawCatalogFetcher = new GitHubRawFetcherAdapter(http, token ?? undefined);
   const cliUpdater = new SelfUpdaterAdapter(http, { token: token ?? undefined });
   const currentVersionProvider = new CurrentVersionAdapter();
   const git = new GitAdapter(fs);
@@ -196,7 +198,9 @@ export async function createDeps(
   const marketplaceRefreshUseCase = new MarketplaceRefreshUseCase(
     pluginCatalogRepository,
     marketplaceRegistry,
-    pluginFetcher
+    pluginFetcher,
+    rawCatalogFetcher,
+    logger
   );
   const marketplaceBrowseUseCase = new MarketplaceBrowseUseCase(
     pluginCatalogRepository,

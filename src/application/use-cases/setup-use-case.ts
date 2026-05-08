@@ -1,3 +1,4 @@
+import { CatalogFetchAuthError } from "../../domain/errors.js";
 import type { MarketplaceSourceMode } from "../../domain/models/marketplace-source-mode.js";
 import { DOCS_DIR } from "../../domain/models/paths.js";
 import type { PluginSource } from "../../domain/models/plugin-source.js";
@@ -5,6 +6,7 @@ import type { SetupFlow } from "../../domain/models/setup-flow.js";
 import type { FileReader } from "../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../domain/ports/file-writer.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import type { TokenProvider } from "../../domain/ports/token-provider.js";
 import type { VersionReader } from "../../domain/ports/version-reader.js";
 import { InitUseCase } from "./init-use-case.js";
 import type { MarketplaceRefreshUseCase } from "./marketplace/marketplace-refresh-use-case.js";
@@ -34,12 +36,14 @@ export class SetupUseCase {
     private readonly marketplaceSyncSettingsUseCase: MarketplaceSyncSettingsUseCase,
     private readonly setupToolsUseCase: SetupToolsUseCase,
     private readonly setupPluginsPromptUseCase: SetupPluginsPromptUseCase,
-    private readonly currentVersionProvider: VersionReader
+    private readonly currentVersionProvider: VersionReader,
+    private readonly tokenProvider?: TokenProvider
   ) {}
 
   async execute(flow: SetupFlow): Promise<SetupResult> {
     const source = await this.resolveSource(flow);
     const { docsDir, isNew } = await this.initManifest(flow);
+    await this.guardRemoteAuth(source);
     await this.registerMarketplace(flow, source);
     await this.refreshCatalog(flow);
     const install = await this.installTools(flow);
@@ -63,6 +67,15 @@ export class SetupUseCase {
       force: false,
     });
     return { docsDir: result.docsDir, isNew: true };
+  }
+
+  private async guardRemoteAuth(source: MarketplaceSourceMode): Promise<void> {
+    if (source.kind !== "remote") return;
+    if (this.tokenProvider === undefined) return;
+    const token = await this.tokenProvider.resolve();
+    if (token === null) {
+      throw new CatalogFetchAuthError(`https://github.com/${source.repo}`);
+    }
   }
 
   private async registerMarketplace(flow: SetupFlow, source: MarketplaceSourceMode): Promise<void> {

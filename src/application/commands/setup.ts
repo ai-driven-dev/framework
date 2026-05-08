@@ -186,7 +186,8 @@ export function registerSetupCommand(program: Command): void {
           deps.marketplaceSyncSettingsUseCase,
           setupToolsUseCase,
           setupPluginsPromptUseCase,
-          deps.currentVersionProvider
+          deps.currentVersionProvider,
+          deps.authReader
         ).execute(flow);
 
         switch (result.kind) {

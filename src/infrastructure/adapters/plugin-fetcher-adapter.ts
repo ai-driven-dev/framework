@@ -137,6 +137,11 @@ export class PluginFetcherAdapter implements PluginFetcher {
     return injectTokenIntoUrl(url, this.token);
   }
 
+  private gitWithNoPrompt(baseDir?: string): ReturnType<typeof simpleGit> {
+    const git = baseDir ? simpleGit(baseDir) : simpleGit();
+    return git.env("GIT_TERMINAL_PROMPT", "0");
+  }
+
   private async cloneShallow(
     authUrl: string,
     displayUrl: string,
@@ -145,7 +150,7 @@ export class PluginFetcherAdapter implements PluginFetcher {
   ): Promise<void> {
     const args = ["--depth", "1", ...(ref ? ["--branch", ref] : [])];
     try {
-      await simpleGit().clone(authUrl, targetDir, args);
+      await this.gitWithNoPrompt().clone(authUrl, targetDir, args);
     } catch (err) {
       this.classifyAndThrow(err, displayUrl);
     }
@@ -159,9 +164,12 @@ export class PluginFetcherAdapter implements PluginFetcher {
     ref?: string
   ): Promise<void> {
     try {
-      await simpleGit().clone(authUrl, targetDir, ["--filter=blob:none", "--no-checkout"]);
-      await simpleGit(targetDir).raw(["sparse-checkout", "set", subpath]);
-      await simpleGit(targetDir).checkout(ref ?? "HEAD");
+      await this.gitWithNoPrompt().clone(authUrl, targetDir, [
+        "--filter=blob:none",
+        "--no-checkout",
+      ]);
+      await this.gitWithNoPrompt(targetDir).raw(["sparse-checkout", "set", subpath]);
+      await this.gitWithNoPrompt(targetDir).checkout(ref ?? "HEAD");
     } catch (err) {
       this.classifyAndThrow(err, displayUrl);
     }
