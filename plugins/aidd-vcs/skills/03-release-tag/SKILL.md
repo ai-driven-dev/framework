@@ -1,11 +1,11 @@
 ---
 name: aidd-vcs:03:release-tag
-description: Cut a semver release by computing the next version from recent commits, generating annotated release notes from the template, validating with the user, then creating and pushing the git tag along with a bump commit. Use when the user says "release", "tag", "tag this release", "bump version", "release v1.2.0", "cut a release", or invokes `/release-tag`. Do NOT use for plain commits without a tag, opening pull requests, pushing a branch only, or amending existing tags.
+description: Cut a semver release with annotated tag and release notes. Use when the user says "release", "tag", "tag this release", "bump version", "release v1.2.0", "cut a release", or invokes `/release-tag`. Do NOT use for plain commits without a tag, opening pull requests, pushing a branch only, or amending existing tags.
 ---
 
 # Release Tag
 
-Generates and pushes annotated semver tags with release notes. Computes the next version from conventional commits since the previous tag, fills the release notes template, captures user approval, creates a `chore: bump version` commit, then tags and pushes.
+Cuts annotated semver releases with notes derived from recent commits.
 
 ## Available actions
 

@@ -1,0 +1,9 @@
+[
+  { "prompt": "Create user stories for the new search feature", "expect_action": "create-user-stories" },
+  { "prompt": "/create-user-stories auth flow", "expect_action": "create-user-stories" },
+  { "prompt": "Write INVEST stories for the onboarding redesign", "expect_action": "create-user-stories" },
+  { "prompt": "Draft user stories for billing", "expect_action": "create-user-stories" },
+  { "prompt": "Implement the auth feature", "expect_action": null },
+  { "prompt": "Draft a PRD for billing", "expect_action": null },
+  { "prompt": "Commit my changes", "expect_action": null }
+]

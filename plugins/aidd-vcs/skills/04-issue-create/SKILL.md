@@ -1,11 +1,11 @@
 ---
 name: aidd-vcs:04:issue-create
-description: Create a tracker issue with the configured ticketing tool by gathering a thorough problem description, filling the team template, validating with the user, then opening it. Use when the user says "new issue", "create an issue", "file a bug", "file an issue", "report bug", "open an issue", or invokes `/issue-create`. Do NOT use for committing changes, opening pull requests, tagging releases, or commenting on existing issues.
+description: Create an issue in the configured ticketing tool. Use when the user says "new issue", "create an issue", "file a bug", "file an issue", "report bug", "open an issue", or invokes `/issue-create`. Do NOT use for committing changes, opening pull requests, tagging releases, or commenting on existing issues.
 ---
 
 # Issue Create
 
-Generates well-formed issues in the project's tracker. Detects the tool from project memory and remote URL, fills the issue template, validates with the user, then creates the issue and returns the URL.
+Files well-formed issues in the configured tracker after gathering enough context to be actionable.
 
 ## Available actions
 

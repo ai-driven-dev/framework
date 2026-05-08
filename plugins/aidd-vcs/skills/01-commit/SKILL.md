@@ -1,11 +1,11 @@
 ---
 name: aidd-vcs:01:commit
-description: Create an atomic git commit with conventional message format. Supports interactive mode (human-driven, may split commits, asks approval) and auto mode (agent-driven, no approval, single commit). Use when the user says "commit", "git commit", "create a commit", "commit my changes", "commit and push", or invokes `/commit`. Do NOT use for amending existing commits, force-pushing, rebasing, opening pull requests, or release tagging.
+description: Create an atomic git commit with conventional message format. Use when the user says "commit", "git commit", "create a commit", "commit my changes", "commit and push", or invokes `/commit`. Do NOT use for amending existing commits, force-pushing, rebasing, opening pull requests, or release tagging.
 ---
 
 # Commit
 
-Generates atomic git commits with standardized conventional messages. Stages files, drafts or accepts an imposed message, runs the commit, optionally pushes, and returns the resulting sha.
+Generates atomic git commits with conventional messages, supporting interactive splits and agent-driven auto mode.
 
 ## Available actions
 

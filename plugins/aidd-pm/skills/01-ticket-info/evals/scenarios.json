@@ -1,0 +1,9 @@
+[
+  { "prompt": "Show ticket info for ABC-123", "expect_action": "ticket-info" },
+  { "prompt": "/ticket-info", "expect_action": "ticket-info" },
+  { "prompt": "Get ticket details for the current branch", "expect_action": "ticket-info" },
+  { "prompt": "What's ENG-42 about?", "expect_action": "ticket-info" },
+  { "prompt": "Create a new issue for the auth bug", "expect_action": null },
+  { "prompt": "Comment 'looks good' on ticket ABC-123", "expect_action": null },
+  { "prompt": "Move ticket ABC-123 to Done", "expect_action": null }
+]

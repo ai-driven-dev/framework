@@ -1,54 +1,41 @@
----
-name: create_user_stories
-description: Create user stories through iterative questioning
-argument-hint: "[Feature description or requirements for user story generation]"
-model: sonnet
----
+# 01 - Create User Stories
 
-# Create perfect User Stories for a developer
+Clarify scope through iterative Product Owner questioning, draft INVEST-compliant user stories, validate with the user, then save them to the configured ticketing tool.
 
-## Goal
+## Inputs
 
-Generate well-structured user stories from feature requirements through systematic Product Owner questioning.
-
-## Rules
-
-- No technical aspect, focus on user needs
-- Requirements started from $ARGUMENTS
-- Lean, concise approach
-- 3 max questions per iteration
-- Sort by implementation priority
-- All checklists must be satisfied
-
-### INVEST Checklist
-
-- [ ] **I**ndependent — can be developed without other stories
-- [ ] **N**egotiable — details can be discussed
-- [ ] **V**aluable — delivers value to the user
-- [ ] **E**stimable — team can estimate the effort
-- [ ] **S**mall — fits in a single sprint
-- [ ] **T**estable — acceptance criteria are verifiable
-
-### Definition of Ready
-
-- [ ] Acceptance criteria defined
-- [ ] Dependencies identified
-- [ ] Story points estimated
-- [ ] No blocking questions
-
-## Context
-
-### User Story Template
-
-```markdown
-@../assets/user-story-template.md
+```yaml
+feature_description: <free text>   # required; the feature or requirement to break into stories
+existing_stories: [<id>]            # optional; ids of related stories to consider
 ```
 
-## Steps
+## Outputs
 
-1. Ask clarifying questions to understand completeness (problem, features, criteria, scope, constraints)
-2. Refine story understanding to user
-3. Iterate until you are both satisfied
-4. Format stories using user story template
-5. **Wait for user validation**
-6. Save it to the ticketing system
+```yaml
+stories:
+  - id: <tracker id>
+    title: <user story title>
+    story: As a <persona>, I want <goal>, so that <reason>.
+    acceptance_criteria:
+      - <criterion>
+    story_points: <int>
+    priority: <int>
+    url: <tracker url>
+```
+
+## Process
+
+1. **Clarify**. Ask up to 3 questions per iteration to close gaps in problem, features, criteria, scope, and constraints. Skip technical detail.
+2. **Iterate**. Pick first match:
+   - blocking question remains -> loop back to step 1
+   - no blocking question -> proceed
+3. **Draft**. Format each story with `assets/user-story-template.md`. Sort by implementation priority.
+4. **Validate**. Show the full story list to the user. Wait for explicit approval.
+5. **Save**. Invoke the configured ticketing tool to create each story; capture the returned id and url.
+6. **Return** the structured Outputs block.
+
+## Test
+
+- **INVEST**: each story satisfies Independent, Negotiable, Valuable, Estimable, Small, Testable.
+- **Ready**: every story has acceptance criteria, dependencies addressed, and story points set.
+- **Persisted**: querying the configured ticketing tool returns each saved story id with matching title.

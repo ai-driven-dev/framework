@@ -1,11 +1,11 @@
 ---
 name: aidd-vcs:02:pull-request
-description: Create a draft request from the current branch by detecting the base branch, filling the team template, and asking the user to validate before opening. The configured VCS tool is invoked transparently. Use when the user says "open a pr", "open a pull request", "create a pr", "create a merge request", "open mr", "draft a pr for this branch", or invokes `/pull-request`. Do NOT use for committing changes, pushing a branch directly, tagging releases, merging an existing request, or amending commits.
+description: Create a draft pull or merge request from the current branch. Use when the user says "open a pr", "open a pull request", "create a pr", "create a merge request", "open mr", "draft a pr for this branch", or invokes `/pull-request`. Do NOT use for committing changes, pushing a branch directly, tagging releases, merging an existing request, or amending commits.
 ---
 
 # Pull Request
 
-Generates draft pull or merge requests from the current branch using the configured VCS tool. Detects the correct base branch, fills the team template with recent changes, asks for user validation, and opens the request as a draft.
+Drafts pull or merge requests from the current branch using the team's template, ready for the user to promote.
 
 ## Available actions
 

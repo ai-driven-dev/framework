@@ -1,33 +1,39 @@
----
-name: ticket_info
-description: Get ticket information from the project's ticketing tool
-argument-hint: "[Ticket URL or number]"
-model: haiku
----
+# 01 - Ticket Info
 
-# Get Ticket Info
+Resolve the ticket identifier, query the configured ticketing tool, and display the relevant fields.
 
-## Goal
+## Inputs
 
-Retrieve ticket information from the project's ticketing tool based on project memory.
-
-## Context
-
-### Ticket URL or number
-
-```text
-$ARGUMENTS
+```yaml
+ticket_id: <id or url>     # optional; auto-detect from current branch name when omitted
 ```
 
-## Rules
+## Outputs
 
-- From project memory identify ticketing tool to use for tick in use (Jira, Linear, GitHub Issues, etc.)
-- Extract ticket number from the current branch name if no argument is provided
-- Format the identifier according to the project's ticketing convention
+```yaml
+ticket_id: <id>
+title: <title>
+description: <body>
+status: <status>
+assignee: <assignee>
+priority: <priority>
+url: <url>
+```
 
-## Steps
+## Process
 
-1. Check project memory for ticketing tool configuration and conventions
-2. Format the ticket identifier according to project conventions
-3. Query the ticketing tool
-4. Display relevant ticket information (e.g. title, description, status, assignee, priority)
+1. **Tool resolution**. Pick first match:
+   - ticketing tool declared in project memory -> use it
+   - default -> inspect repo configuration or environment for the configured tool
+2. **Ticket identifier**. Pick first match:
+   - `ticket_id` provided -> use it
+   - default -> extract from `git rev-parse --abbrev-ref HEAD` per project convention
+3. **Format**. Apply the project ticketing convention to the identifier (prefix, separator, casing).
+4. **Query**. Invoke the configured ticketing tool to fetch the ticket record.
+5. **Display**. Render title, description, status, assignee, priority, and URL for the user.
+6. **Return** the structured Outputs block.
+
+## Test
+
+- **Tool view**: querying the configured ticketing tool for the resolved id returns a record where `title`, `status`, `assignee`, and `url` match the displayed fields.
+- **Reachable**: the ticket is reachable at `url` in the tracker.

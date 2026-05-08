@@ -1,0 +1,9 @@
+[
+  { "prompt": "Draft a PRD for billing", "expect_action": "prd" },
+  { "prompt": "/prd auth feature", "expect_action": "prd" },
+  { "prompt": "Write product requirements for the search redesign", "expect_action": "prd" },
+  { "prompt": "Generate a PRD for the onboarding flow", "expect_action": "prd" },
+  { "prompt": "Create user stories for billing", "expect_action": null },
+  { "prompt": "Implement the auth feature", "expect_action": null },
+  { "prompt": "Commit my changes", "expect_action": null }
+]
