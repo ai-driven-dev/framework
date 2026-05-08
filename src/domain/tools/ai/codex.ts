@@ -240,6 +240,9 @@ export const codex: AiTool<
       pluginsDir: ".codex/plugins/",
       pluginManifestRelativePath: "plugin.json",
       acceptsMcp: true,
+      // marketplaceSettings: null — Codex marketplace state lives in the user-global
+      // $CODEX_HOME/config.toml, not in the project. Repo-scoped plugin registration
+      // is tracked in openai/codex#18115 and has not shipped yet.
     }),
   },
 

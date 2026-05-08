@@ -1,5 +1,6 @@
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
+import { buildClaudeStyleMarketplaceEntry } from "../../capabilities/marketplace-entry.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
@@ -321,6 +322,15 @@ export const copilot: AiTool<
       pluginManifestRelativePath: "plugin.json",
       acceptsHooks: true,
       acceptsMcp: true,
+      // VS Code Copilot workspace plugin settings: .github/copilot/settings.json
+      // uses the same extraKnownMarketplaces + enabledPlugins schema as Claude Code.
+      // Source: https://docs.github.com/en/copilot/customizing-copilot/managing-copilot-plugins
+      marketplaceSettings: {
+        settingsPath: ".github/copilot/settings.json",
+        settingsKey: "extraKnownMarketplaces",
+        enabledPluginsKey: "enabledPlugins",
+        toEntry: buildClaudeStyleMarketplaceEntry,
+      },
     }),
   },
 

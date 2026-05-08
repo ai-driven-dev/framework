@@ -150,6 +150,9 @@ export const opencode: AiTool<
         return "opencode.json";
       },
     }),
+    // marketplaceSettings is not available in flat mode (FlatPluginsParams has no such field).
+    // Additionally, opencode's plugin[] array accepts only npm package name strings —
+    // there is no source/version concept that a marketplace entry could express.
     plugins: new PluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",

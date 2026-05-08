@@ -1,5 +1,6 @@
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
+import { buildClaudeStyleMarketplaceEntry } from "../../capabilities/marketplace-entry.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
@@ -110,23 +111,7 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
           settingsPath: ".claude/settings.json",
           settingsKey: "extraKnownMarketplaces",
           enabledPluginsKey: "enabledPlugins",
-          toEntry({ name, source, version }) {
-            const value: Record<string, unknown> = {};
-            if (source.kind === "local") {
-              value.source = { source: "directory", path: source.path };
-            } else if (source.kind === "github") {
-              const githubSource: Record<string, unknown> = {
-                source: "github",
-                repo: source.repo,
-              };
-              if (source.ref != null) githubSource.ref = source.ref;
-              value.source = githubSource;
-            } else {
-              return null;
-            }
-            if (version != null) value.version = version;
-            return { key: name, value };
-          },
+          toEntry: buildClaudeStyleMarketplaceEntry,
         },
       }),
     },

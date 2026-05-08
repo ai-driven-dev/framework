@@ -114,6 +114,9 @@ export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         acceptsHooks: true,
         acceptsMcp: true,
         hooksContentFormat: "cursor",
+        // marketplaceSettings: null — Cursor marketplace is UI-dashboard-driven.
+        // No project-local JSON spec exists for registering marketplace sources.
+        // Revisit if Cursor ships a project-scoped plugins manifest.
       }),
     },
 
