@@ -21,7 +21,7 @@ Sets up async-dev in a repo. Goes from a fresh repo to a working pipeline: detec
 | 08  | `configure-remote-secrets`   | Prompt the user, then call `gh secret set` for each required secret           | `remote` or `both`  |
 | 09  | `bootstrap-scheduling`       | Create a `/schedule` cloud routine OR print Desktop scheduled task steps      | `local` or `both`   |
 | 10  | `commit-and-push`            | Stage the generated files, commit, push the branch                            | `remote` or `both`  |
-| 11  | `smoke-test`                 | Apply `to-implement` on a chosen issue and watch the first run land           | always              |
+| 11  | `smoke-test`                 | Create a throwaway issue, watch the first run land, then clean up the PR/issue/commit | always      |
 
 ## Default flow
 
