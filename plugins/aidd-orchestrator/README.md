@@ -157,12 +157,16 @@ The next time you apply `to-implement` on an issue, the workflow runs.
 
 ### 4b. Local-mode finalisation
 
-The setup skill drops two files:
+The setup skill drops one file in your repo:
 
 ```
 scripts/aidd-async-poll.sh             # the poll runner (wraps claude -p)
-aidd_docs/local-mode-scheduling.md     # short guide: two Claude Code-native scheduling paths
 ```
+
+Plus the setup skill itself:
+- installs the orchestrator and SDLC plugins at user scope (action 07),
+- schedules the poll routine via `/schedule` cloud routine OR prints the Desktop scheduled task fields (action 09),
+- offers a smoke test that applies `to-implement` on a chosen issue and waits for the first run to land (action 11).
 
 Manual sanity check first:
 
@@ -214,7 +218,6 @@ Repeat. The same flow scales to N issues in parallel; each one has its own concu
 | ------------------------------------- | ------------------------------------------------------------- |
 | `.github/workflows/aidd-async.yml`    | GitHub Actions workflow: dispatch + run + review jobs (remote mode). |
 | `scripts/aidd-async-poll.sh`          | Local poll script wrapping `claude -p` (local mode).          |
-| `aidd_docs/local-mode-scheduling.md`  | Guide: schedule the poll script via Claude Code Desktop or `/schedule`. |
 | `.claude/aidd-orchestrator.json`      | Runtime config (committed; no secrets).                       |
 | `aidd_docs/async-runs/<YYYY_MM>/<run-id>.json` | Per-run audit log: trigger, dependency check, lock timestamps, SDLC outcome, iteration log. |
 

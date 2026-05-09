@@ -27,12 +27,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description |
 |-------|------|---|
 | `assets` | [config-template.json](skills/01-setup-async-dev/assets/config-template.json) | - |
-| `assets` | [local-mode-scheduling-template.md](skills/01-setup-async-dev/assets/local-mode-scheduling-template.md) | - |
 | `assets` | [local-poll-template.sh](skills/01-setup-async-dev/assets/local-poll-template.sh) | - |
 | `evals` | [scenarios.json](skills/01-setup-async-dev/evals/scenarios.json) | - |
 | `references` | [auth-modes.md](skills/01-setup-async-dev/references/auth-modes.md) | - |
 | `references` | [claude-action-auth.md](skills/01-setup-async-dev/references/claude-action-auth.md) | - |
-| `-` | [SKILL.md](skills/01-setup-async-dev/SKILL.md) | `Installs and configures the aidd-orchestrator plugin in a target repo. Use when the user runs "/setup async dev", "configure async dev", "install async-dev plugin", or asks to set up Claude auto-implementation on issues. Do NOT use for running the async pipeline (use the run skill) or handling PR review loops (use the review skill).` |
+| `references` | [local-mode-scheduling.md](skills/01-setup-async-dev/references/local-mode-scheduling.md) | - |
+| `-` | [SKILL.md](skills/01-setup-async-dev/SKILL.md) | `Installs and configures the aidd-orchestrator plugin end-to-end in a target repo, up to and including the first triggered run. Use when the user runs "/setup async dev", "configure async dev", "install async-dev plugin", or asks to set up Claude auto-implementation on issues. Do NOT use for running the async pipeline (use the run skill) or handling PR review loops (use the review skill).` |
 
 #### `skills/02-run-async-dev`
 

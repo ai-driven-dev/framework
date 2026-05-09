@@ -26,7 +26,7 @@ Best for: users who want the schedule to keep running even when their machine is
    ```
    /schedule
    cron: */5 * * * *
-   prompt: Use skill aidd-orchestrator:02:run-async-dev on the next ready issue in __REPO_FULL_NAME__
+   prompt: Use skill aidd-orchestrator:02:run-async-dev on the next ready issue in {owner}/{repo}
    ```
 
 3. Confirm. The routine appears in your Claude Code account and runs server-side.
