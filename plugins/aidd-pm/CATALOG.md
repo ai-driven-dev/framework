@@ -54,6 +54,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
+| `actions` | [01-spec.md](skills/05-spec/actions/01-spec.md) | - |
 | `assets` | [spec-template.md](skills/05-spec/assets/spec-template.md) | - |
-| `-` | [SKILL.md](skills/05-spec/SKILL.md) | `Generates and refines a project spec from a free-form human request. The spec is the immutable target a planner consumes. Use when starting a new run, when an existing spec needs refinement after review, or when a human wants to draft a spec collaboratively.` |
+| `evals` | [scenarios.json](skills/05-spec/evals/scenarios.json) | - |
+| `-` | [SKILL.md](skills/05-spec/SKILL.md) | `Generate or refine a project spec from a free-form human request, an existing PRD, or reviewer findings. Use when the user says "draft spec", "spec for X", "refine the spec", "generate spec from prd", "/spec", or when an orchestrator needs a normalized contract before planning. Do NOT use for writing source code, drafting a full PRD, or modifying a validated and locked spec.` |
 
