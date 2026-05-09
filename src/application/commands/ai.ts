@@ -42,27 +42,28 @@ export function registerAiCommand(program: Command): void {
   ai.command("install <tool>")
     .description("Install an AI tool runtime configuration from bundled assets")
     .option("-f, --force", "Overwrite already-installed tool", false)
-    .action(async (toolArg: string, cmdOptions: { force: boolean }) => {
+    .option("--no-plugins", "Skip propagation of already-installed plugins onto the new tool")
+    .action(async (toolArg: string, cmdOptions: { force: boolean; plugins: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
         assertAiToolId(toolArg);
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
         const version = deps.currentVersionProvider.get();
-        const result = await deps.installRuntimeConfigUseCase.execute({
+        const result = await deps.installAiToolUseCase.execute({
           toolId: toolArg,
           projectRoot,
-          manifest,
           force: cmdOptions.force,
           version,
+          propagatePlugins: cmdOptions.plugins,
         });
-        if (result.skipped) {
-          output.warn(`${result.toolId} is already installed. Use \`--force\` to reinstall.`);
+        if (result.runtimeResult.skipped) {
+          output.warn(`${toolArg} is already installed. Use \`--force\` to reinstall.`);
           return;
         }
-        for (const w of result.warnings) output.warn(w);
-        output.success(`Installed ${result.toolId} (${result.fileCount} files)`);
+        for (const w of result.runtimeResult.warnings) output.warn(w);
+        for (const w of result.propagationWarnings) output.warn(w);
+        output.success(`Installed ${toolArg} (${result.runtimeResult.fileCount} files)`);
       } catch (error) {
         errorHandler.handle(error);
       }
