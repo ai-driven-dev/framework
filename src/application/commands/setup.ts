@@ -14,6 +14,7 @@ import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { SetupMarketplaceSourceUseCase } from "../use-cases/setup/setup-marketplace-source-use-case.js";
 import { SetupPluginsPromptUseCase } from "../use-cases/setup/setup-plugins-prompt-use-case.js";
+import { SetupToolsPromptUseCase } from "../use-cases/setup/setup-tools-prompt-use-case.js";
 import { SetupToolsUseCase } from "../use-cases/setup/setup-tools-use-case.js";
 import type { ToolInstallResult } from "../use-cases/setup-use-case.js";
 import { SetupUseCase } from "../use-cases/setup-use-case.js";
@@ -188,6 +189,7 @@ export function registerSetupCommand(program: Command): void {
           deps.marketplaceRegistry,
           deps.resolveMarketplaceUseCase
         );
+        const setupToolsPromptUseCase = new SetupToolsPromptUseCase(deps.prompter);
 
         const result = await new SetupUseCase(
           deps.fs,
@@ -199,7 +201,8 @@ export function registerSetupCommand(program: Command): void {
           setupToolsUseCase,
           setupPluginsPromptUseCase,
           deps.currentVersionProvider,
-          deps.authReader
+          deps.authReader,
+          setupToolsPromptUseCase
         ).execute(flow);
 
         switch (result.kind) {

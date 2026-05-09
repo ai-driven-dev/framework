@@ -26,14 +26,21 @@ export class GitHubRawFetcherAdapter implements RawCatalogFetcher {
     catalogPath: string,
     cacheDir: string
   ): Promise<string> {
-    const url = this.buildContentsUrl(source, catalogPath);
-    const content = await this.fetchRaw(url);
-    return this.writeToCache(cacheDir, catalogPath, content);
+    const ref = source.ref ?? "HEAD";
+    try {
+      const content = await this.fetchRaw(this.buildContentsUrl(source.repo, catalogPath, ref));
+      return this.writeToCache(cacheDir, catalogPath, content);
+    } catch (err) {
+      if (ref === "HEAD" || !(err instanceof CatalogFetchNotFoundError)) throw err;
+      const headContent = await this.fetchRaw(
+        this.buildContentsUrl(source.repo, catalogPath, "HEAD")
+      );
+      return this.writeToCache(cacheDir, catalogPath, headContent);
+    }
   }
 
-  private buildContentsUrl(source: PluginSourceGitHub, catalogPath: string): string {
-    const ref = source.ref ?? "HEAD";
-    return `${GITHUB_API_BASE}/repos/${source.repo}/contents/${catalogPath}?ref=${ref}`;
+  private buildContentsUrl(repo: string, catalogPath: string, ref: string): string {
+    return `${GITHUB_API_BASE}/repos/${repo}/contents/${catalogPath}?ref=${ref}`;
   }
 
   private async fetchRaw(url: string): Promise<string> {

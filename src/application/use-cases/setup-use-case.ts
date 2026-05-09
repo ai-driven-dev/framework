@@ -3,6 +3,7 @@ import type { MarketplaceSourceMode } from "../../domain/models/marketplace-sour
 import { DOCS_DIR } from "../../domain/models/paths.js";
 import type { PluginSource } from "../../domain/models/plugin-source.js";
 import type { SetupFlow } from "../../domain/models/setup-flow.js";
+import type { AiToolId, IdeToolId } from "../../domain/models/tool-ids.js";
 import type { FileReader } from "../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../domain/ports/file-writer.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -18,6 +19,7 @@ import type { MarketplaceSyncSettingsUseCase } from "./marketplace/marketplace-s
 import type { SetupMarketplaceSourceUseCase } from "./setup/setup-marketplace-source-use-case.js";
 import type { SetupPluginsPromptUseCase } from "./setup/setup-plugins-prompt-use-case.js";
 import type { SetupToolsResult, SetupToolsUseCase } from "./setup/setup-tools-use-case.js";
+import type { SetupToolsPromptUseCase } from "./setup/setup-tools-prompt-use-case.js";
 
 export type { ToolInstallResult } from "./setup/setup-tools-use-case.js";
 export type { SetupToolsResult };
@@ -37,7 +39,8 @@ export class SetupUseCase {
     private readonly setupToolsUseCase: SetupToolsUseCase,
     private readonly setupPluginsPromptUseCase: SetupPluginsPromptUseCase,
     private readonly currentVersionProvider: VersionReader,
-    private readonly tokenProvider?: TokenProvider
+    private readonly tokenProvider?: TokenProvider,
+    private readonly setupToolsPromptUseCase?: SetupToolsPromptUseCase
   ) {}
 
   async execute(flow: SetupFlow): Promise<SetupResult> {
@@ -107,13 +110,27 @@ export class SetupUseCase {
   }
 
   private async installTools(flow: SetupFlow): Promise<SetupToolsResult> {
+    const { aiTools, ideTools } = await this.resolveTools(flow);
     const version = this.currentVersionProvider.get();
     return this.setupToolsUseCase.execute({
       projectRoot: flow.projectRoot,
-      aiTools: flow.aiTools,
-      ideTools: flow.ideTools,
+      aiTools,
+      ideTools,
       force: flow.force,
       version,
+    });
+  }
+
+  private async resolveTools(
+    flow: SetupFlow
+  ): Promise<{ aiTools: readonly AiToolId[]; ideTools: readonly IdeToolId[] }> {
+    if (this.setupToolsPromptUseCase === undefined) {
+      return { aiTools: flow.aiTools as AiToolId[], ideTools: flow.ideTools as IdeToolId[] };
+    }
+    return this.setupToolsPromptUseCase.execute({
+      interactive: flow.interactive,
+      aiTools: flow.aiTools as AiToolId[],
+      ideTools: flow.ideTools as IdeToolId[],
     });
   }
 

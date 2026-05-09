@@ -1,15 +1,15 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { SetupMarketplaceSourceUseCase } from "../../../src/application/use-cases/setup/setup-marketplace-source-use-case.js";
-
 import { SetupPluginsPromptUseCase } from "../../../src/application/use-cases/setup/setup-plugins-prompt-use-case.js";
+import { SetupToolsPromptUseCase } from "../../../src/application/use-cases/setup/setup-tools-prompt-use-case.js";
 import { SetupToolsUseCase } from "../../../src/application/use-cases/setup/setup-tools-use-case.js";
 import { SetupUseCase } from "../../../src/application/use-cases/setup-use-case.js";
 import { MarketplaceSourceMode } from "../../../src/domain/models/marketplace-source-mode.js";
 import { SetupFlow } from "../../../src/domain/models/setup-flow.js";
 import { AI_TOOL_IDS, IDE_TOOL_IDS, type ToolId } from "../../../src/domain/tools/registry.js";
 import { buildUnitDeps, initAndInstall, initProject } from "../../helpers/ports/build-unit-deps.js";
-import { OverwritePrompter } from "../../helpers/ports/scripted-prompter.js";
+import { OverwritePrompter, ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
 
 function makeNoOpLatestResolver() {
   return { resolveLatest: vi.fn().mockResolvedValue(null) } as never;
@@ -47,7 +47,7 @@ function makeNoOpResolveMarketplace() {
 
 const PROJECT_ROOT = "/test-project";
 
-async function buildUseCase() {
+async function buildUseCase(setupToolsPromptUseCase?: SetupToolsPromptUseCase) {
   const deps = await buildUnitDeps(PROJECT_ROOT);
   const prompter = new OverwritePrompter();
   const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
@@ -74,7 +74,9 @@ async function buildUseCase() {
     makeNoOpMarketplaceSyncSettings(),
     setupToolsUseCase,
     setupPluginsPromptUseCase,
-    deps.currentVersionProvider
+    deps.currentVersionProvider,
+    undefined,
+    setupToolsPromptUseCase
   );
   return { useCase, deps };
 }
@@ -209,5 +211,62 @@ describe("setup without TTY", () => {
       const content = deps.fs.getFile(join(PROJECT_ROOT, "aidd_docs/README.md")) ?? "";
       expect(content).toBe("my custom readme");
     });
+  });
+});
+
+describe("setup interactive tool selection", () => {
+  function interactiveFlow(opts: Partial<{ aiTools: ToolId[]; ideTools: ToolId[] }> = {}): SetupFlow {
+    return new SetupFlow({
+      projectRoot: PROJECT_ROOT,
+      source: MarketplaceSourceMode.remote(),
+      aiTools: opts.aiTools ?? [],
+      ideTools: opts.ideTools ?? [],
+      pluginMode: "none",
+      interactive: true,
+    });
+  }
+
+  it("interactive + empty tools → prompts and installs user-selected tools", async () => {
+    const prompter = new ScriptedPrompter([
+      ScriptedPrompter.answer.checkbox(["claude"]),
+      ScriptedPrompter.answer.checkbox([]),
+    ]);
+    const setupToolsPromptUseCase = new SetupToolsPromptUseCase(prompter);
+    const { useCase } = await buildUseCase(setupToolsPromptUseCase);
+
+    const result = await useCase.execute(interactiveFlow());
+
+    expect(result.kind).toBe("initialized");
+    if (result.kind === "initialized") {
+      const installed = result.install.results.map((r) => r.toolId);
+      expect(installed).toContain("claude");
+    }
+  });
+
+  it("interactive + tools provided via flow → no extra prompt, installs given tools", async () => {
+    const prompter = new ScriptedPrompter([]); // no tool prompts expected
+    const setupToolsPromptUseCase = new SetupToolsPromptUseCase(prompter);
+    const { useCase } = await buildUseCase(setupToolsPromptUseCase);
+
+    const result = await useCase.execute(interactiveFlow({ aiTools: ["cursor" as ToolId] }));
+
+    expect(result.kind).toBe("initialized");
+    if (result.kind === "initialized") {
+      const installed = result.install.results.map((r) => r.toolId);
+      expect(installed).toContain("cursor");
+    }
+  });
+
+  it("non-interactive + empty tools → no prompt, installs nothing", async () => {
+    const prompter = new ScriptedPrompter([]); // no prompts expected
+    const setupToolsPromptUseCase = new SetupToolsPromptUseCase(prompter);
+    const { useCase } = await buildUseCase(setupToolsPromptUseCase);
+
+    const result = await useCase.execute(remoteFlow());
+
+    expect(result.kind).toBe("initialized");
+    if (result.kind === "initialized") {
+      expect(result.install.results).toHaveLength(0);
+    }
   });
 });

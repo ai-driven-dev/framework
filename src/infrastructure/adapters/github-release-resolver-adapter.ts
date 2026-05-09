@@ -17,12 +17,17 @@ export class GitHubReleaseResolverAdapter implements LatestReleaseResolver {
   ) {}
 
   async resolveLatest(repo: string): Promise<string | null> {
-    const url = `${GITHUB_API_BASE}/repos/${repo}/releases/latest`;
+    // Use /releases?per_page=1 (not /releases/latest) — the latter excludes
+    // prereleases. We want the most recent published release of any kind so
+    // beta tags resolve too.
+    const url = `${GITHUB_API_BASE}/repos/${repo}/releases?per_page=1`;
     const token = (await this.tokenProvider?.resolve()) ?? undefined;
     try {
       const response = await this.http.get(url, { token });
-      const body = response.body as Record<string, unknown>;
-      return typeof body.tag_name === "string" ? body.tag_name : null;
+      const body = response.body as unknown[];
+      if (!Array.isArray(body) || body.length === 0) return null;
+      const first = body[0] as Record<string, unknown>;
+      return typeof first.tag_name === "string" ? first.tag_name : null;
     } catch (err) {
       return this.handleError(err, url);
     }
