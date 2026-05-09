@@ -446,9 +446,14 @@ export class Manifest {
     if (data === null || typeof data !== "object") {
       throw new InvalidManifestDataError("expected an object.");
     }
-
     const raw = data as Record<string, unknown>;
+    Manifest.applyMigrations(raw);
+    const tools = Manifest.parseTools(raw);
+    const { scripts, plugins } = Manifest.parseLegacySections(raw);
+    return new Manifest({ tools, scripts, plugins });
+  }
 
+  private static applyMigrations(raw: Record<string, unknown>): void {
     if (raw.version === 1) {
       migrateV1toV2(raw);
       migrateV2toV3(raw);
@@ -474,11 +479,6 @@ export class Manifest {
         `Unsupported manifest version: ${String(raw.version)}. Expected ${MANIFEST_VERSION}.`
       );
     }
-
-    const tools = Manifest.parseTools(raw);
-    const { scripts, plugins } = Manifest.parseLegacySections(raw);
-
-    return new Manifest({ tools, scripts, plugins });
   }
 
   private static parseTools(raw: Record<string, unknown>): Map<ToolId, ToolEntry> {
