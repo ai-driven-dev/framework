@@ -455,8 +455,9 @@ export async function runMenuLoop(): Promise<never> {
     try {
       const result = await new InteractiveMenuUseCase(manifestRepo, prompter).execute();
       if (result.command[0] === "exit") process.exit(0);
-      await spawnCliCommand(result.command);
+      const exitCode = await spawnCliCommand(result.command);
       await waitForEnter();
+      if (exitCode !== 0 && result.command[0] === "setup") process.exit(exitCode);
     } catch (error) {
       if (error instanceof Error && error.name === "ExitPromptError") process.exit(0);
     }
