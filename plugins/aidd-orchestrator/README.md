@@ -157,25 +157,15 @@ The next time you apply `to-implement` on an issue, the workflow runs.
 
 ### 4b. Local-mode finalisation
 
-The setup skill drops a poll script and a scheduler snippet:
+The setup skill drops two files:
 
 ```
-scripts/aidd-async-poll.sh                # the runner
-scripts/aidd-async-poll.scheduler.txt     # cron + launchd snippets to copy/paste
+scripts/aidd-async-poll.sh             # the poll runner (wraps claude -p)
+aidd_docs/local-mode-scheduling.md     # short guide: two Claude Code-native scheduling paths
 ```
 
-Pick one of the snippets and install it. Examples:
+Manual sanity check first:
 
-**cron** (Linux, macOS):
-```cron
-*/5 * * * * cd /abs/path/to/repo && ./scripts/aidd-async-poll.sh >> /tmp/aidd-async.log 2>&1
-```
-
-**launchd** (macOS): copy the `<plist>` from the `.scheduler.txt` file into `~/Library/LaunchAgents/com.aidd.async-poll.plist`, then `launchctl load …`.
-
-**Claude Code Desktop scheduled task**: create a task that runs `./scripts/aidd-async-poll.sh` from the repo root every N minutes.
-
-Manual sanity check:
 ```bash
 ./scripts/aidd-async-poll.sh --dry-run    # lists what it would do
 ./scripts/aidd-async-poll.sh              # runs once for real
@@ -185,6 +175,15 @@ The script invokes `claude -p` under the hood, so the local machine must have:
 - Claude Code installed (`claude --version`)
 - `gh auth status` OK
 - The `aidd-orchestrator` and SDLC plugins installed at user scope (`claude plugin install …`)
+
+Then schedule via one of the two Claude Code-native paths documented in `aidd_docs/local-mode-scheduling.md`:
+
+| Path | Where the schedule lives | Runs when |
+| ---- | ------------------------ | --------- |
+| **Desktop scheduled task** | Inside Claude Code Desktop on your machine | Only when the machine is awake |
+| **`/schedule` skill** | On Anthropic's cloud (a routine in your account) | Always, machine-independent |
+
+Both paths call the same poll script (or invoke the same skill prompt), so behaviour is identical. Pick the one that fits your availability needs. OS-level cron and launchd are intentionally not used here: the scheduling stays inside Claude Code so it is visible and pausable from the same UI as the rest of the workflow.
 
 ## Daily workflow
 
@@ -215,7 +214,7 @@ Repeat. The same flow scales to N issues in parallel; each one has its own concu
 | ------------------------------------- | ------------------------------------------------------------- |
 | `.github/workflows/aidd-async.yml`    | GitHub Actions workflow: dispatch + run + review jobs (remote mode). |
 | `scripts/aidd-async-poll.sh`          | Local poll script wrapping `claude -p` (local mode).          |
-| `scripts/aidd-async-poll.scheduler.txt` | Ready-to-paste cron and launchd snippets (local mode).      |
+| `aidd_docs/local-mode-scheduling.md`  | Guide: schedule the poll script via Claude Code Desktop or `/schedule`. |
 | `.claude/aidd-orchestrator.json`      | Runtime config (committed; no secrets).                       |
 | `aidd_docs/async-runs/<YYYY_MM>/<run-id>.json` | Per-run audit log: trigger, dependency check, lock timestamps, SDLC outcome, iteration log. |
 
