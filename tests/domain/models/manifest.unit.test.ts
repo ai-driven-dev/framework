@@ -105,10 +105,10 @@ describe("Manifest", () => {
       expect(restored.getToolVersion("cursor" as ToolId)).toBe("3.0.0");
     });
 
-    it("marketplaces is empty in a fresh manifest JSON", () => {
+    it("marketplaces field is absent in a fresh manifest JSON", () => {
       const manifest = Manifest.create();
       const json = manifest.toJSON();
-      expect(json.marketplaces).toEqual({});
+      expect("marketplaces" in json).toBe(false);
     });
 
     it("file hashes are preserved after round-trip", () => {
@@ -190,10 +190,10 @@ describe("Manifest", () => {
       expect(restoredMerge[0].entries.playwright.value).toBe(`aabb11${"0".repeat(26)}`);
     });
 
-    it("toJSON produces version 5", () => {
+    it("toJSON produces version 6", () => {
       const manifest = Manifest.create();
       manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
-      expect(manifest.toJSON().version).toBe(5);
+      expect(manifest.toJSON().version).toBe(6);
     });
   });
 
@@ -402,11 +402,11 @@ describe("Manifest", () => {
       expect(() => Manifest.fromJSON(v3Json)).not.toThrow();
     });
 
-    it("v5 manifest loads without migration", () => {
+    it("v6 manifest loads without migration", () => {
       const manifest = Manifest.create();
       manifest.addTool("copilot" as ToolId, "1.0.0", []);
       const json = manifest.toJSON();
-      expect(json.version).toBe(5);
+      expect(json.version).toBe(6);
       expect(() => Manifest.fromJSON(json)).not.toThrow();
     });
 
@@ -459,7 +459,7 @@ describe("Manifest", () => {
     });
   });
 
-  describe("v4→v5 migration (strips docs)", () => {
+  describe("v4→v6 migration (strips docs and marketplaces)", () => {
     it("strips a docs field from a v4 manifest on fromJSON", () => {
       const v4WithDocs = {
         version: 4,
@@ -475,12 +475,12 @@ describe("Manifest", () => {
       };
       const restored = Manifest.fromJSON(JSON.parse(JSON.stringify(v4WithDocs)));
       const json = restored.toJSON();
-      expect(json.version).toBe(5);
+      expect(json.version).toBe(6);
       expect("docs" in json).toBe(false);
       expect(restored.isFileTracked("aidd_docs/architecture.md")).toBe(false);
     });
 
-    it("cascades v3 → v4 → v5 and ends without docs", () => {
+    it("cascades v3 → v4 → v6 and ends without docs", () => {
       const v3 = {
         version: 3,
         docsDir: "aidd_docs",
@@ -490,15 +490,15 @@ describe("Manifest", () => {
       };
       const restored = Manifest.fromJSON(JSON.parse(JSON.stringify(v3)));
       const json = restored.toJSON();
-      expect(json.version).toBe(5);
+      expect(json.version).toBe(6);
       expect("docs" in json).toBe(false);
     });
 
-    it("v5 round-trip is stable", () => {
+    it("v6 round-trip is stable", () => {
       const manifest = Manifest.create();
       manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
       const restored = Manifest.fromJSON(manifest.toJSON());
-      expect(restored.toJSON().version).toBe(5);
+      expect(restored.toJSON().version).toBe(6);
     });
   });
 });

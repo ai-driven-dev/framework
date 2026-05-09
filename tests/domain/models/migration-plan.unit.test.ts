@@ -8,7 +8,7 @@ function rewire(name: string, toolIds: AiToolId[]) {
 }
 
 const BASE_PARAMS: MigrationPlanParams = {
-  fromVersion: 5,
+  fromVersion: 6,
   fieldsToStrip: [],
   filesToDelete: [],
   pluginsToRewire: [],
@@ -19,25 +19,30 @@ const BASE_PARAMS: MigrationPlanParams = {
 describe("MigrationPlan", () => {
   describe("constructor validation", () => {
     it("accepts valid fromVersion values", () => {
-      for (const v of [1, 2, 3, 4, 5]) {
+      for (const v of [1, 2, 3, 4, 5, 6]) {
         expect(() => new MigrationPlan({ ...BASE_PARAMS, fromVersion: v })).not.toThrow();
       }
     });
 
     it("throws on invalid fromVersion", () => {
       expect(() => new MigrationPlan({ ...BASE_PARAMS, fromVersion: 0 })).toThrow();
-      expect(() => new MigrationPlan({ ...BASE_PARAMS, fromVersion: 6 })).toThrow();
+      expect(() => new MigrationPlan({ ...BASE_PARAMS, fromVersion: 7 })).toThrow();
     });
 
-    it("toVersion is always 5", () => {
+    it("toVersion is always 6", () => {
       const plan = new MigrationPlan(BASE_PARAMS);
-      expect(plan.toVersion).toBe(5);
+      expect(plan.toVersion).toBe(6);
     });
   });
 
   describe("isNoOp()", () => {
     it("returns true for clean v5 manifest with default marketplace", () => {
       const plan = new MigrationPlan(BASE_PARAMS);
+      expect(plan.isNoOp()).toBe(true);
+    });
+
+    it("returns true for clean v6 manifest with default marketplace", () => {
+      const plan = new MigrationPlan({ ...BASE_PARAMS, fromVersion: 6 });
       expect(plan.isNoOp()).toBe(true);
     });
 
@@ -73,7 +78,7 @@ describe("MigrationPlan", () => {
   describe("describe()", () => {
     it("includes version header", () => {
       const plan = new MigrationPlan({ ...BASE_PARAMS, fromVersion: 4 });
-      expect(plan.describe()).toContain("v4 → v5");
+      expect(plan.describe()).toContain("v4 → v6");
     });
 
     it("lists fields to strip", () => {

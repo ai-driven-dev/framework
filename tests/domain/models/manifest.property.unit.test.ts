@@ -2,7 +2,6 @@ import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { FileHash, InstallationFile } from "../../../src/domain/models/file.js";
 import { Manifest } from "../../../src/domain/models/manifest.js";
-import { MarketplaceEntry } from "../../../src/domain/models/marketplace-entry.js";
 import type { ToolId } from "../../../src/domain/models/tool-ids.js";
 import { VALID_TOOL_IDS } from "../../../src/domain/models/tool-ids.js";
 
@@ -34,53 +33,15 @@ const toolEntryArb = fc.record({
   files: fc.array(installationFileArb, { maxLength: 6 }),
 });
 
-/**
- * Marketplace name: /^[a-z0-9]+(-[a-z0-9]+)*$/
- * Build by joining 1-3 lowercase-alphanum segments with hyphens.
- */
-const marketplaceNameArb = fc
-  .array(
-    fc.stringMatching(/^[a-z0-9]+$/).filter((s) => s.length >= 1 && s.length <= 12),
-    { minLength: 1, maxLength: 3 }
-  )
-  .map((parts) => parts.join("-"));
-
-/** Only local sources — round-trip is the invariant, not source coverage. */
-const pluginSourceArb = fc.constantFrom(
-  { kind: "local" as const, path: "/abs/path" },
-  { kind: "local" as const, path: "/tmp/test" },
-  { kind: "github" as const, repo: "owner/repo" }
-);
-
-const marketplaceEntryArb = fc
-  .record({
-    name: marketplaceNameArb,
-    source: pluginSourceArb,
-    scope: fc.constantFrom("project" as const, "user" as const),
-  })
-  .map(({ name, source, scope }) => MarketplaceEntry.create({ name, source, scope }));
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/**
- * Build a v5 Manifest from tools + marketplace entries.
- * Dedup tools by toolId (last-wins is fine; the Map already does that via addTool).
- * Dedup marketplaces by name to avoid MarketplaceAlreadyRegisteredError.
- */
+/** Build a v6 Manifest from tool entries. Dedup by toolId (last-wins via addTool). */
 function buildManifest(
-  tools: Array<{ toolId: ToolId; version: string; files: InstallationFile[] }>,
-  marketplaces: MarketplaceEntry[]
+  tools: Array<{ toolId: ToolId; version: string; files: InstallationFile[] }>
 ): Manifest {
   const m = Manifest.create();
   for (const t of tools) {
     m.addTool(t.toolId, t.version, t.files);
-  }
-  const seenNames = new Set<string>();
-  for (const mp of marketplaces) {
-    if (!seenNames.has(mp.name)) {
-      seenNames.add(mp.name);
-      m.addMarketplace(mp);
-    }
   }
   return m;
 }
@@ -90,44 +51,36 @@ function buildManifest(
 describe("Manifest property tests", () => {
   it("toJSON → fromJSON → toJSON is identity", () => {
     fc.assert(
-      fc.property(
-        fc.array(toolEntryArb, { maxLength: 4 }),
-        fc.array(marketplaceEntryArb, { maxLength: 4 }),
-        (tools, marketplaces) => {
-          const m = buildManifest(tools, marketplaces);
-          const firstSerialized = m.toJSON();
-          const reparsed = Manifest.fromJSON(firstSerialized);
-          const secondSerialized = reparsed.toJSON();
-          expect(secondSerialized).toEqual(firstSerialized);
-        }
-      ),
+      fc.property(fc.array(toolEntryArb, { maxLength: 4 }), (tools) => {
+        const m = buildManifest(tools);
+        const firstSerialized = m.toJSON();
+        const reparsed = Manifest.fromJSON(firstSerialized);
+        const secondSerialized = reparsed.toJSON();
+        expect(secondSerialized).toEqual(firstSerialized);
+      }),
       { numRuns: 100 }
     );
   });
 
-  // ── Property 2: migration chain idempotent on v5 input ──────────────────────
+  // ── Property 2: migration chain idempotent on v6 input ──────────────────────
 
-  it("migration chain on v5 input is idempotent (fromJSON round-trips cleanly)", () => {
+  it("migration chain on v6 input is idempotent (fromJSON round-trips cleanly)", () => {
     fc.assert(
-      fc.property(
-        fc.array(toolEntryArb, { maxLength: 4 }),
-        fc.array(marketplaceEntryArb, { maxLength: 4 }),
-        (tools, marketplaces) => {
-          const m = buildManifest(tools, marketplaces);
-          const v5 = m.toJSON();
-          // Apply fromJSON twice — the migration branch must be a no-op on version 5.
-          const once = Manifest.fromJSON(v5).toJSON();
-          const twice = Manifest.fromJSON(once).toJSON();
-          expect(twice).toEqual(once);
-        }
-      ),
+      fc.property(fc.array(toolEntryArb, { maxLength: 4 }), (tools) => {
+        const m = buildManifest(tools);
+        const v6 = m.toJSON();
+        // Apply fromJSON twice — the migration branch must be a no-op on version 6.
+        const once = Manifest.fromJSON(v6).toJSON();
+        const twice = Manifest.fromJSON(once).toJSON();
+        expect(twice).toEqual(once);
+      }),
       { numRuns: 100 }
     );
   });
 
   // ── Property 3: v3/v4 raw shapes deserialize to v5 ──────────────────────────
 
-  it("v3 raw shapes migrate to version 5 without throwing", () => {
+  it("v3 raw shapes migrate to version 6 without throwing", () => {
     const v3ToolEntryArb = fc.record({
       toolId: toolIdArb,
       version: fc
@@ -154,13 +107,13 @@ describe("Manifest property tests", () => {
           tools: toolsRecord,
         };
         const migrated = Manifest.fromJSON(rawV3);
-        expect(migrated.toJSON().version).toBe(5);
+        expect(migrated.toJSON().version).toBe(6);
       }),
       { numRuns: 100 }
     );
   });
 
-  it("v4 raw shapes migrate to version 5 without throwing", () => {
+  it("v4 raw shapes migrate to version 6 without throwing", () => {
     const v4ToolEntryArb = fc.record({
       toolId: toolIdArb,
       version: fc
@@ -187,7 +140,7 @@ describe("Manifest property tests", () => {
           tools: toolsRecord,
         };
         const migrated = Manifest.fromJSON(rawV4);
-        expect(migrated.toJSON().version).toBe(5);
+        expect(migrated.toJSON().version).toBe(6);
       }),
       { numRuns: 100 }
     );

@@ -44,9 +44,9 @@ describe("Manifest v2 → v3 migration", () => {
     expect(manifest.getPlugins(CURSOR)).toHaveLength(0);
   });
 
-  it("migrated manifest serializes with version 5", () => {
+  it("migrated manifest serializes with version 6", () => {
     const manifest = Manifest.fromJSON(makeV2Manifest());
-    expect(manifest.toJSON().version).toBe(5);
+    expect(manifest.toJSON().version).toBe(6);
   });
 });
 
@@ -75,7 +75,7 @@ describe("Manifest v1 → v3 chain", () => {
     );
     expect(copilotFiles.some((f) => f.relativePath === ".vscode/settings.json")).toBe(false);
     expect(manifest.getPlugins("copilot" as ToolId)).toHaveLength(0);
-    expect(manifest.toJSON().version).toBe(5);
+    expect(manifest.toJSON().version).toBe(6);
   });
 });
 

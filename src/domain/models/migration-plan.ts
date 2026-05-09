@@ -15,11 +15,12 @@ export interface MigrationPlanParams {
   userMemoryFiles: readonly string[];
 }
 
-const VALID_FROM_VERSIONS = [1, 2, 3, 4, 5] as const;
+const VALID_FROM_VERSIONS = [1, 2, 3, 4, 5, 6] as const;
+const CURRENT_VERSION = 6;
 
 export class MigrationPlan {
   readonly fromVersion: number;
-  readonly toVersion: 5 = 5;
+  readonly toVersion: 6 = CURRENT_VERSION;
   readonly fieldsToStrip: readonly string[];
   readonly filesToDelete: readonly string[];
   readonly pluginsToRewire: readonly PluginToRewire[];
@@ -42,7 +43,7 @@ export class MigrationPlan {
 
   isNoOp(): boolean {
     return (
-      this.fromVersion === 5 &&
+      this.fromVersion >= 5 &&
       !this.defaultMarketplaceMissing &&
       this.fieldsToStrip.length === 0 &&
       this.filesToDelete.length === 0 &&

@@ -108,7 +108,7 @@ exit 0
 
       const raw = await readFile(join(projectDir, AIDD_DIR, "manifest.json"), "utf-8");
       const manifest = JSON.parse(raw) as Record<string, unknown>;
-      expect(manifest.version).toBe(5);
+      expect(manifest.version).toBe(6);
       const tools = manifest.tools as Record<string, unknown>;
       expect(tools).toHaveProperty("claude");
 

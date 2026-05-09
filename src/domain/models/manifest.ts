@@ -2,19 +2,16 @@ import {
   DuplicatePluginError,
   InvalidManifestDataError,
   InvalidManifestToolIdError,
-  MarketplaceAlreadyRegisteredError,
-  MarketplaceNotFoundError,
   PluginNotFoundError,
   ToolNotInManifestError,
 } from "../errors.js";
 import { FileHash, type InstallationFile } from "./file.js";
-import { MarketplaceEntry, type MarketplaceEntryData } from "./marketplace-entry.js";
 import { type McpExclusion, mcpExclusionEquals } from "./mcp-exclusion.js";
 import type { MergeFileEntry } from "./merge.js";
 import { Plugin, type PluginEntryData } from "./plugin.js";
 import { type ToolId, VALID_TOOL_IDS } from "./tool-ids.js";
 
-const MANIFEST_VERSION = 5;
+const MANIFEST_VERSION = 6;
 
 // VSCode file paths that were tracked under "copilot" in manifest v1.
 // Used exclusively by migrateV1toV2 to move them to the "vscode" tool entry.
@@ -64,9 +61,8 @@ interface PluginsSectionData {
 }
 
 interface ManifestData {
-  version: 5;
+  version: 6;
   tools: Record<string, ToolEntryData>;
-  marketplaces: Record<string, MarketplaceEntryData>;
 }
 
 interface MergeFileEntryData {
@@ -143,23 +139,26 @@ function migrateV4toV5(raw: Record<string, unknown>): void {
   if (!("marketplaces" in raw)) raw.marketplaces = {};
 }
 
+// Strips the dead marketplaces aggregate. The actual marketplace registry now lives
+// exclusively in .aidd/marketplaces.json (managed by MarketplaceRegistryAdapter).
+function migrateV5toV6(raw: Record<string, unknown>): void {
+  delete raw.marketplaces;
+}
+
 export class Manifest {
   private readonly _tools: Map<ToolId, ToolEntry>;
   // Phase 8 deferred: _scripts/_plugins kept to support migrate-use-case legacy detection.
   private _scripts: ScriptsEntry | null;
   private _plugins: PluginsEntry | null;
-  private readonly _marketplaces: Map<string, MarketplaceEntry>;
 
   private constructor(params: {
     tools: Map<ToolId, ToolEntry>;
     scripts: ScriptsEntry | null;
     plugins: PluginsEntry | null;
-    marketplaces: Map<string, MarketplaceEntry>;
   }) {
     this._tools = new Map(params.tools);
     this._scripts = params.scripts;
     this._plugins = params.plugins;
-    this._marketplaces = new Map(params.marketplaces);
   }
 
   static create(): Manifest {
@@ -167,7 +166,6 @@ export class Manifest {
       tools: new Map(),
       scripts: null,
       plugins: null,
-      marketplaces: new Map(),
     });
   }
 
@@ -371,40 +369,11 @@ export class Manifest {
     return dirs;
   }
 
-  // --- Marketplace aggregate ---
-
-  addMarketplace(entry: MarketplaceEntry): void {
-    if (this._marketplaces.has(entry.name)) {
-      throw new MarketplaceAlreadyRegisteredError(entry.name);
-    }
-    this._marketplaces.set(entry.name, entry);
-  }
-
-  removeMarketplace(name: string): void {
-    if (!this._marketplaces.has(name)) {
-      throw new MarketplaceNotFoundError(name);
-    }
-    this._marketplaces.delete(name);
-  }
-
-  getMarketplace(name: string): MarketplaceEntry | undefined {
-    return this._marketplaces.get(name);
-  }
-
-  listMarketplaces(): readonly MarketplaceEntry[] {
-    return [...this._marketplaces.values()];
-  }
-
-  hasMarketplace(name: string): boolean {
-    return this._marketplaces.has(name);
-  }
-
   // --- Serialization ---
 
   toJSON(): ManifestData {
     const tools = this.serializeTools();
-    const marketplaces = this.serializeMarketplaces();
-    return { version: MANIFEST_VERSION as 5, tools, marketplaces };
+    return { version: MANIFEST_VERSION as 6, tools };
   }
 
   private serializeTools(): Record<string, ToolEntryData> {
@@ -427,14 +396,6 @@ export class Manifest {
       };
     }
     return tools;
-  }
-
-  private serializeMarketplaces(): Record<string, MarketplaceEntryData> {
-    const marketplaces: Record<string, MarketplaceEntryData> = {};
-    for (const [name, entry] of this._marketplaces.entries()) {
-      marketplaces[name] = entry.serialize();
-    }
-    return marketplaces;
   }
 
   private toTrackedFileData(files: readonly TrackedFile[]): TrackedFileData[] {
@@ -493,26 +454,31 @@ export class Manifest {
       migrateV2toV3(raw);
       migrateV3toV4(raw);
       migrateV4toV5(raw);
+      migrateV5toV6(raw);
     } else if (raw.version === 2) {
       migrateV2toV3(raw);
       migrateV3toV4(raw);
       migrateV4toV5(raw);
+      migrateV5toV6(raw);
     } else if (raw.version === 3) {
       migrateV3toV4(raw);
       migrateV4toV5(raw);
+      migrateV5toV6(raw);
     } else if (raw.version === 4) {
       migrateV4toV5(raw);
-    } else if (raw.version !== 5) {
+      migrateV5toV6(raw);
+    } else if (raw.version === 5) {
+      migrateV5toV6(raw);
+    } else if (raw.version !== 6) {
       throw new InvalidManifestDataError(
         `Unsupported manifest version: ${String(raw.version)}. Expected ${MANIFEST_VERSION}.`
       );
     }
 
     const tools = Manifest.parseTools(raw);
-    const marketplaces = Manifest.parseMarketplaces(raw);
     const { scripts, plugins } = Manifest.parseLegacySections(raw);
 
-    return new Manifest({ tools, scripts, plugins, marketplaces });
+    return new Manifest({ tools, scripts, plugins });
   }
 
   private static parseTools(raw: Record<string, unknown>): Map<ToolId, ToolEntry> {
@@ -536,16 +502,6 @@ export class Manifest {
       });
     }
     return tools;
-  }
-
-  private static parseMarketplaces(raw: Record<string, unknown>): Map<string, MarketplaceEntry> {
-    const marketplaces = new Map<string, MarketplaceEntry>();
-    if (!raw.marketplaces || typeof raw.marketplaces !== "object") return marketplaces;
-    for (const [, value] of Object.entries(raw.marketplaces as Record<string, unknown>)) {
-      const entry = MarketplaceEntry.deserialize(value as MarketplaceEntryData);
-      marketplaces.set(entry.name, entry);
-    }
-    return marketplaces;
   }
 
   // Phase 8 deferred: parse legacy scripts/plugins for migrate-use-case detection.
