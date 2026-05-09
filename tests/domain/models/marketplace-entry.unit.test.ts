@@ -65,6 +65,18 @@ describe("MarketplaceEntry", () => {
       expect(entry.serialize()).toEqual(data);
     });
 
+    it("round-trips with version field", () => {
+      const data = makeData({ version: "1.2.3" });
+      const entry = MarketplaceEntry.deserialize(data);
+      expect(entry.version).toBe("1.2.3");
+      expect(entry.serialize().version).toBe("1.2.3");
+    });
+
+    it("omits version from serialize when absent", () => {
+      const entry = MarketplaceEntry.deserialize(makeData());
+      expect(entry.serialize().version).toBeUndefined();
+    });
+
     it("preserves lastRefreshAt when present", () => {
       const data = makeData({ lastRefreshAt: "2026-05-01T10:00:00.000Z" });
       const entry = MarketplaceEntry.deserialize(data);
@@ -118,6 +130,28 @@ describe("MarketplaceEntry", () => {
       const a = MarketplaceEntry.deserialize(makeData({ lastRefreshAt: "2026-01-01T00:00:00Z" }));
       const b = MarketplaceEntry.deserialize(makeData());
       expect(a.equals(b)).toBe(false);
+    });
+
+    it("returns false when version differs", () => {
+      const a = MarketplaceEntry.deserialize(makeData({ version: "1.0.0" }));
+      const b = MarketplaceEntry.deserialize(makeData());
+      expect(a.equals(b)).toBe(false);
+    });
+  });
+
+  describe("withVersion()", () => {
+    it("returns a new instance with the given version", () => {
+      const entry = MarketplaceEntry.deserialize(makeData());
+      const updated = entry.withVersion("2.0.0");
+      expect(updated.version).toBe("2.0.0");
+      expect(updated.name).toBe(entry.name);
+      expect(updated.scope).toBe(entry.scope);
+    });
+
+    it("does not mutate the original entry", () => {
+      const entry = MarketplaceEntry.deserialize(makeData());
+      entry.withVersion("2.0.0");
+      expect(entry.version).toBeUndefined();
     });
   });
 });

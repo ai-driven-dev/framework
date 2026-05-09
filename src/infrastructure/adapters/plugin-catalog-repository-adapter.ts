@@ -80,7 +80,10 @@ export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {
       ...entry,
       source: this.resolveSource(entry.source, frameworkPath),
     }));
-    return { plugins };
+    const resolved: PluginCatalog = { plugins };
+    if (catalog.name !== undefined) resolved.name = catalog.name;
+    if (catalog.version !== undefined) resolved.version = catalog.version;
+    return resolved;
   }
 
   private resolveSource(source: PluginSource, frameworkPath: string): PluginSource {

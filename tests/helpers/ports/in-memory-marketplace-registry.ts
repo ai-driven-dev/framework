@@ -40,6 +40,20 @@ export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {
     }
   }
 
+  async updateVersion(
+    projectRoot: string,
+    name: string,
+    scope: MarketplaceScope,
+    version: string
+  ): Promise<void> {
+    const store = scope === "project" ? this.project : this.user;
+    const key = this.key(projectRoot, name);
+    const existing = store.get(key);
+    if (existing !== undefined) {
+      store.set(key, existing.withVersion(version));
+    }
+  }
+
   // ── Inspection helpers ──────────────────────────────────────────────────────
 
   getAll(projectRoot: string): readonly Marketplace[] {

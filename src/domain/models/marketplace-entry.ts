@@ -11,6 +11,7 @@ export interface MarketplaceEntryData {
   source: Record<string, unknown>;
   scope: MarketplaceScope;
   lastRefreshAt?: string;
+  version?: string;
 }
 
 export class MarketplaceEntry {
@@ -18,17 +19,20 @@ export class MarketplaceEntry {
   readonly source: PluginSource;
   readonly scope: MarketplaceScope;
   readonly lastRefreshAt?: string;
+  readonly version?: string;
 
   private constructor(params: {
     name: string;
     source: PluginSource;
     scope: MarketplaceScope;
     lastRefreshAt?: string;
+    version?: string;
   }) {
     this.name = params.name;
     this.source = params.source;
     this.scope = params.scope;
     this.lastRefreshAt = params.lastRefreshAt;
+    this.version = params.version;
   }
 
   static create(params: {
@@ -58,6 +62,7 @@ export class MarketplaceEntry {
       source,
       scope: data.scope,
       lastRefreshAt: data.lastRefreshAt,
+      version: data.version,
     });
   }
 
@@ -68,7 +73,18 @@ export class MarketplaceEntry {
       scope: this.scope,
     };
     if (this.lastRefreshAt !== undefined) data.lastRefreshAt = this.lastRefreshAt;
+    if (this.version !== undefined) data.version = this.version;
     return data;
+  }
+
+  withVersion(version: string): MarketplaceEntry {
+    return new MarketplaceEntry({
+      name: this.name,
+      source: this.source,
+      scope: this.scope,
+      lastRefreshAt: this.lastRefreshAt,
+      version,
+    });
   }
 
   equals(other: MarketplaceEntry): boolean {
@@ -76,6 +92,7 @@ export class MarketplaceEntry {
       this.name === other.name &&
       this.scope === other.scope &&
       this.lastRefreshAt === other.lastRefreshAt &&
+      this.version === other.version &&
       JSON.stringify(serializePluginSource(this.source)) ===
         JSON.stringify(serializePluginSource(other.source))
     );

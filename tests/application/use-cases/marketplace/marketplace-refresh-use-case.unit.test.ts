@@ -12,17 +12,21 @@ import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-ma
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
 
 const VALID_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-sample");
+const VERSIONED_FIXTURE = join(process.cwd(), "tests/fixtures/framework-real");
 const PROJECT_ROOT = "/test-project";
 
 async function buildUseCase() {
   const hasher = new DeterministicHasher();
   const fs = new InMemoryFileAdapter({}, hasher);
   await seedFromDirectory(fs, VALID_FIXTURE, { useAbsolutePaths: true });
+  await seedFromDirectory(fs, VERSIONED_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
-  // Only register the valid fixture path; unknown paths will throw
-  const pluginFetcher = new FixturePluginFetcher({
+  const fetchers: Record<string, string> = {
     [JSON.stringify(serializePluginSource({ kind: "local", path: VALID_FIXTURE }))]: VALID_FIXTURE,
-  });
+    [JSON.stringify(serializePluginSource({ kind: "local", path: VERSIONED_FIXTURE }))]:
+      VERSIONED_FIXTURE,
+  };
+  const pluginFetcher = new FixturePluginFetcher(fetchers);
   const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(pluginFetcher);
   const useCase = new MarketplaceRefreshUseCase(
     new PluginCatalogRepositoryAdapter(fs),
@@ -111,5 +115,41 @@ describe("MarketplaceRefreshUseCase", () => {
 
     expect(result.results).toHaveLength(1);
     expect(result.results[0]?.name).toBe("a");
+  });
+
+  it("persists catalog version when marketplace.json has a version field", async () => {
+    const { useCase, registry } = await buildUseCase();
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: "aidd-framework",
+        source: { kind: "local", path: VERSIONED_FIXTURE },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
+    );
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    const list = await registry.list(PROJECT_ROOT);
+    expect(list[0]?.version).toBe("1.0.0");
+  });
+
+  it("does not update version when catalog has no version field", async () => {
+    const { useCase, registry } = await buildUseCase();
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: "awesome",
+        source: { kind: "local", path: VALID_FIXTURE },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
+    );
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    const list = await registry.list(PROJECT_ROOT);
+    expect(list[0]?.version).toBeUndefined();
   });
 });

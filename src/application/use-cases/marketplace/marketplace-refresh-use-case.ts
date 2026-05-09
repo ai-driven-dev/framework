@@ -47,8 +47,11 @@ export class MarketplaceRefreshUseCase {
       this.logger?.info(`Fetching marketplace '${m.name}'...`);
       const cacheDir = marketplaceCacheDir(projectRoot, m.name);
       const localPath = await this.fetchSource(m, cacheDir);
-      await this.catalogRepo.load(localPath);
+      const catalog = await this.catalogRepo.load(localPath);
       await this.registry.updateLastFetched(projectRoot, m.name, m.scope, new Date().toISOString());
+      if (catalog?.version !== undefined) {
+        await this.registry.updateVersion(projectRoot, m.name, m.scope, catalog.version);
+      }
       return { name: m.name, status: "ok" };
     } catch (err) {
       return {

@@ -14,6 +14,7 @@ export interface MarketplaceData {
   scope: MarketplaceScope;
   addedAt: string;
   lastFetched?: string;
+  version?: string;
 }
 
 export class Marketplace {
@@ -22,6 +23,7 @@ export class Marketplace {
   readonly scope: MarketplaceScope;
   readonly addedAt: string;
   readonly lastFetched?: string;
+  readonly version?: string;
 
   private constructor(params: {
     name: string;
@@ -29,12 +31,14 @@ export class Marketplace {
     scope: MarketplaceScope;
     addedAt: string;
     lastFetched?: string;
+    version?: string;
   }) {
     this.name = params.name;
     this.source = params.source;
     this.scope = params.scope;
     this.addedAt = params.addedAt;
     this.lastFetched = params.lastFetched;
+    this.version = params.version;
   }
 
   static create(params: {
@@ -65,6 +69,7 @@ export class Marketplace {
       scope: data.scope,
       addedAt: data.addedAt,
       lastFetched: data.lastFetched,
+      version: data.version,
     });
   }
 
@@ -76,6 +81,7 @@ export class Marketplace {
       addedAt: this.addedAt,
     };
     if (this.lastFetched !== undefined) data.lastFetched = this.lastFetched;
+    if (this.version !== undefined) data.version = this.version;
     return data;
   }
 
@@ -86,6 +92,18 @@ export class Marketplace {
       scope: this.scope,
       addedAt: this.addedAt,
       lastFetched: when,
+      version: this.version,
+    });
+  }
+
+  withVersion(version: string): Marketplace {
+    return new Marketplace({
+      name: this.name,
+      source: this.source,
+      scope: this.scope,
+      addedAt: this.addedAt,
+      lastFetched: this.lastFetched,
+      version,
     });
   }
 

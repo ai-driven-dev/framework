@@ -90,7 +90,10 @@ export function registerMarketplaceCommand(program: Command): void {
         const deps = await createDeps(projectRoot, { verbose }, output);
         const { marketplaces } = await deps.marketplaceListUseCase.execute({ projectRoot });
         if (marketplaces.length === 0) output.info("No marketplaces registered.");
-        for (const m of marketplaces) output.print(`${m.name} [${m.scope}]`);
+        for (const m of marketplaces) {
+          const ver = m.version !== undefined ? ` v${m.version}` : "";
+          output.print(`${m.name}${ver} [${m.scope}]`);
+        }
       } catch (error) {
         errorHandler.handle(error);
       }
