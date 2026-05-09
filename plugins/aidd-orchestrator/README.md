@@ -182,10 +182,11 @@ The script invokes `claude -p` under the hood, so the local machine must have:
 
 Then schedule via one of the two Claude Code-native paths documented in `aidd_docs/local-mode-scheduling.md`:
 
-| Path | Where the schedule lives | Runs when |
-| ---- | ------------------------ | --------- |
-| **Desktop scheduled task** | Inside Claude Code Desktop on your machine | Only when the machine is awake |
-| **`/schedule` skill** | On Anthropic's cloud (a routine in your account) | Always, machine-independent |
+| Path | Where the schedule lives | Min interval | Runs when |
+| ---- | ------------------------ | ------------ | --------- |
+| **Desktop scheduled task** (recommended for < 1h) | Inside Claude Code Desktop on your machine | 1 minute | Only when the machine is awake |
+| **`/schedule` skill** | On Anthropic's cloud (a routine in your account) | 1 hour | Always, machine-independent |
+| **Manual** | n/a | n/a | When you run `./scripts/aidd-async-poll.sh` yourself |
 
 Both paths call the same poll script (or invoke the same skill prompt), so behaviour is identical. Pick the one that fits your availability needs. OS-level cron and launchd are intentionally not used here: the scheduling stays inside Claude Code so it is visible and pausable from the same UI as the rest of the workflow.
 

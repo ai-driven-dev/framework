@@ -2,9 +2,9 @@
 
 Two Claude Code-native ways to run `scripts/aidd-async-poll.sh` on a schedule. Pick one. Both stay inside Claude Code; neither needs OS-level cron or launchd.
 
-## Path A -- Claude Code Desktop scheduled task
+## Path A -- Claude Code Desktop scheduled task (recommended for cadences below 1 hour)
 
-Best for: users who want the schedule to live on their machine and run only when the laptop is awake.
+Best for: users who want a poll cadence under one hour or who want the schedule to live on their machine. Minimum interval is 1 minute.
 
 1. Open Claude Code Desktop.
 2. Open the scheduled tasks panel (settings -> Scheduled tasks -> New task).
@@ -18,7 +18,7 @@ To pause: disable the task in the same panel. To remove: delete the task.
 
 ## Path B -- `/schedule` skill (cloud routine)
 
-Best for: users who want the schedule to keep running even when their machine is off, and accept that the cycle runs on Anthropic's cloud.
+Best for: users who want the schedule to keep running even when their machine is off, and accept a minimum interval of **1 hour** (the floor for cloud routines). Use Path A if you need to iterate faster.
 
 1. Open any Claude Code session in this repo.
 2. Run the `/schedule` skill with this exact input (placeholders are already filled in):
