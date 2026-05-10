@@ -207,7 +207,7 @@ export function registerSetupCommand(program: Command): void {
 
         switch (result.kind) {
           case "initialized": {
-            output.success(`Initialized docs directory ${result.docsDir}/`);
+            output.success("Project initialized.");
             displayInstall(output, result.install.results, verbose);
             break;
           }

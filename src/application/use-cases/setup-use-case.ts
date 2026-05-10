@@ -1,6 +1,5 @@
 import { CatalogFetchAuthError } from "../../domain/errors.js";
 import type { MarketplaceSourceMode } from "../../domain/models/marketplace-source-mode.js";
-import { DOCS_DIR } from "../../domain/models/paths.js";
 import type { PluginSource } from "../../domain/models/plugin-source.js";
 import type { SetupFlow } from "../../domain/models/setup-flow.js";
 import type { AiToolId, IdeToolId } from "../../domain/models/tool-ids.js";
@@ -25,7 +24,7 @@ export type { ToolInstallResult } from "./setup/setup-tools-use-case.js";
 export type { SetupToolsResult };
 
 export type SetupResult =
-  | { kind: "initialized"; docsDir: string; install: SetupToolsResult }
+  | { kind: "initialized"; install: SetupToolsResult }
   | { kind: "up-to-date"; install: SetupToolsResult };
 
 export class SetupUseCase {
@@ -45,14 +44,14 @@ export class SetupUseCase {
 
   async execute(flow: SetupFlow): Promise<SetupResult> {
     const source = await this.resolveSource(flow);
-    const { docsDir, isNew } = await this.initManifest(flow);
+    const isNew = await this.initManifest(flow);
     await this.guardRemoteAuth(source);
     await this.registerMarketplace(flow, source);
     await this.refreshCatalog(flow);
     const install = await this.installTools(flow);
     await this.promptPlugins(flow);
     await this.syncSettings(flow);
-    return this.buildResult(isNew, docsDir, install);
+    return this.buildResult(isNew, install);
   }
 
   private async syncSettings(flow: SetupFlow): Promise<void> {
@@ -67,14 +66,14 @@ export class SetupUseCase {
     });
   }
 
-  private async initManifest(flow: SetupFlow): Promise<{ docsDir: string; isNew: boolean }> {
+  private async initManifest(flow: SetupFlow): Promise<boolean> {
     const existing = await this.manifestRepo.load();
-    if (existing !== null) return { docsDir: DOCS_DIR, isNew: false };
-    const result = await new InitUseCase(this.fs, this.manifestRepo).execute({
+    if (existing !== null) return false;
+    await new InitUseCase(this.fs, this.manifestRepo).execute({
       projectRoot: flow.projectRoot,
       force: false,
     });
-    return { docsDir: result.docsDir, isNew: true };
+    return true;
   }
 
   private async guardRemoteAuth(source: MarketplaceSourceMode): Promise<void> {
@@ -143,8 +142,8 @@ export class SetupUseCase {
     });
   }
 
-  private buildResult(isNew: boolean, docsDir: string, install: SetupToolsResult): SetupResult {
-    if (isNew) return { kind: "initialized", docsDir, install };
+  private buildResult(isNew: boolean, install: SetupToolsResult): SetupResult {
+    if (isNew) return { kind: "initialized", install };
     return { kind: "up-to-date", install };
   }
 }

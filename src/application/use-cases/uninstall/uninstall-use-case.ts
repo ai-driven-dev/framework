@@ -1,12 +1,10 @@
 import type { Manifest } from "../../../domain/models/manifest.js";
-import { DOCS_DIR } from "../../../domain/models/paths.js";
 import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import { type ToolId, VALID_TOOL_IDS } from "../../../domain/tools/registry.js";
 import { InputRequiredError, NoManifestError, ToolNotInstalledError } from "../../errors.js";
-import { CatalogUseCase } from "../shared/catalog-use-case.js";
 import { UninstallMcpExclusionUseCase } from "./uninstall-mcp-exclusion-use-case.js";
 import { UninstallPluginUseCase } from "./uninstall-plugin-use-case.js";
 import { UninstallToolsUseCase } from "./uninstall-tools-use-case.js";
@@ -60,7 +58,6 @@ export class UninstallUseCase {
         : await this.toolsUninstall.execute({ toolIds, manifest, projectRoot });
 
     await this.manifestRepo.save(manifest);
-    await new CatalogUseCase(this.fs).execute({ manifest, docsDir: DOCS_DIR, projectRoot });
     return results;
   }
 

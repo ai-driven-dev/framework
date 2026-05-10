@@ -1,12 +1,10 @@
-import { join } from "node:path";
 import { Manifest } from "../../domain/models/manifest.js";
-import { AIDD_DIR, DOCS_DIR } from "../../domain/models/paths.js";
+import { AIDD_DIR } from "../../domain/models/paths.js";
 import type { FileReader } from "../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../domain/ports/file-writer.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { getAllRegisteredTools, hasToolSignals } from "../../domain/tools/registry.js";
 import { AiddFilesDetectedError, AlreadyInitializedError, NoManifestError } from "../errors.js";
-import { CatalogUseCase } from "./shared/catalog-use-case.js";
 import { GitignoreUseCase } from "./shared/gitignore-use-case.js";
 
 interface InitOptions {
@@ -15,7 +13,6 @@ interface InitOptions {
 }
 
 interface InitResult {
-  docsDir: string;
   manifest: Manifest;
 }
 
@@ -38,7 +35,7 @@ export class InitUseCase {
 
     if (existing !== null) {
       throw new AlreadyInitializedError(
-        `Already initialized (docs in "${DOCS_DIR}"). Use \`aidd init --force\` to recreate the docs directory, or \`aidd clean --force\` to reset completely.`
+        `Already initialized. Use \`aidd init --force\` to reinitialize, or \`aidd clean --force\` to reset completely.`
       );
     }
 
@@ -60,23 +57,18 @@ export class InitUseCase {
     const existing = await this.manifestRepo.load();
     await this.checkPreconditions({ projectRoot, force });
 
-    await this.fs.createDirectory(join(projectRoot, DOCS_DIR));
-
     const manifest = force && existing !== null ? existing : Manifest.create();
     await this.persistInit(manifest, projectRoot, force);
-    return { docsDir: DOCS_DIR, manifest };
+    return { manifest };
   }
 
-  /** Saves manifest, regenerates catalog, and conditionally adds gitignore entry. */
+  /** Saves manifest and conditionally adds gitignore entry. */
   private async persistInit(
     manifest: Manifest,
     projectRoot: string,
     force: boolean
   ): Promise<void> {
-    // Init calls save + catalog + gitignore directly (not via PostInstallPipelineUseCase):
-    // no tools are installed during init, so catalog generation uses an empty tool set.
     await this.manifestRepo.save(manifest);
-    await new CatalogUseCase(this.fs).execute({ manifest, docsDir: DOCS_DIR, projectRoot });
     if (!force) {
       await new GitignoreUseCase(this.fs).execute(projectRoot, [`${AIDD_DIR}/cache/`]);
     }

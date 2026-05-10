@@ -4,7 +4,7 @@ import {
   type MergeFileEntry,
   removeEntriesFromJson,
 } from "../../domain/models/merge.js";
-import { AIDD_DIR, DOCS_DIR } from "../../domain/models/paths.js";
+import { AIDD_DIR } from "../../domain/models/paths.js";
 import { AI_TOOL_IDS } from "../../domain/models/tool-ids.js";
 import type { FileReader } from "../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../domain/ports/file-writer.js";
@@ -81,10 +81,6 @@ export class CleanUseCase {
         }
       }
     }
-
-    const catalogPath = join(options.projectRoot, DOCS_DIR, "CATALOG.md");
-    await this.fs.deleteFile(catalogPath);
-    await this.fs.deleteEmptyDirectories(join(options.projectRoot, DOCS_DIR));
 
     await this.fs.deleteDirectory(join(options.projectRoot, AIDD_DIR));
     await new GitignoreUseCase(this.fs).remove(options.projectRoot, [`${AIDD_DIR}/cache/`]);

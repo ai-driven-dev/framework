@@ -8,8 +8,8 @@ paths:
 ## Rules
 
 - Any use-case writing files and updating manifest → delegate to `PostInstallPipelineUseCase`
-- Never call `CatalogUseCase`, `GitignoreUseCase` outside the pipeline
-- Steps: manifestRepo.save → CatalogUseCase → GitignoreUseCase
+- Never call `GitignoreUseCase` outside the pipeline
+- Steps: manifestRepo.save → GitignoreUseCase
 
 ## InitUseCase exception
 

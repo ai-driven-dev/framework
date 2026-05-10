@@ -170,25 +170,6 @@ describe("doctor", () => {
     expect(report.issues.every((i) => !i.message.includes("example.md"))).toBe(true);
   });
 
-  it("reports an error when the docs directory is missing from disk", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
-
-    // Remove docs dir files from in-memory FS
-    const docsFiles = deps.fs.listUnder(join(PROJECT_ROOT, "aidd_docs"));
-    for (const f of docsFiles) {
-      await deps.fs.deleteFile(f);
-    }
-
-    const useCase = buildDoctorUseCase(deps);
-    const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
-
-    const issue = report.issues.find((i) => i.message.includes("does not exist on disk"));
-    expect(issue).toBeDefined();
-    expect(issue?.severity).toBe("error");
-    expect(report.healthy).toBe(false);
-  });
-
   describe("orphan and missing file checks", () => {
     it("does not warn about standard GitHub directories when Copilot is not installed", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);

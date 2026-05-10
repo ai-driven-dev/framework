@@ -1,7 +1,5 @@
-import { join } from "node:path";
 import type { DoctorIssue } from "../../../domain/models/doctor.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
-import { DOCS_DIR } from "../../../domain/models/paths.js";
 import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { TokenProvider } from "../../../domain/ports/token-provider.js";
 import { getAllRegisteredTools, hasToolSignals } from "../../../domain/tools/registry.js";
@@ -19,24 +17,9 @@ export class DoctorLayoutUseCase {
 
   async execute(options: DoctorLayoutOptions): Promise<DoctorIssue[]> {
     const { manifest, projectRoot } = options;
-    const docsIssues = await this.checkDocsDirectory(projectRoot);
     const orphanIssues = await this.checkOrphanedDirectories(manifest, projectRoot);
     const authIssues = await this.checkAuth();
-    return [...docsIssues, ...orphanIssues, ...authIssues];
-  }
-
-  private async checkDocsDirectory(projectRoot: string): Promise<DoctorIssue[]> {
-    const docsDirPath = join(projectRoot, DOCS_DIR);
-    if (!(await this.fs.fileExists(docsDirPath))) {
-      return [
-        {
-          severity: "error",
-          message: `Docs directory '${DOCS_DIR}' does not exist on disk`,
-          fix: "Run `aidd init --force` to recreate the docs directory.",
-        },
-      ];
-    }
-    return [];
+    return [...orphanIssues, ...authIssues];
   }
 
   private async checkOrphanedDirectories(
