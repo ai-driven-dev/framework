@@ -330,6 +330,7 @@ export const copilot: AiTool<
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
       staticContent: COPILOT_VSCODE_DEFAULTS,
+      requiresTool: "vscode",
     }),
     plugins: new PluginsCapability({
       mode: "native",

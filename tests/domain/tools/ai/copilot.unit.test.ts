@@ -67,6 +67,10 @@ describe("copilot", () => {
     it("does not consume framework signals (content is CLI-owned)", () => {
       expect(settings.consumes).toHaveLength(0);
     });
+
+    it("declares requiresTool: vscode (gate merge to IDE-present context)", () => {
+      expect(settings.requiresTool).toBe("vscode");
+    });
   });
 
   describe("capabilities.commands.buildInstallPath()", () => {

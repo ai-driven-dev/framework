@@ -38,11 +38,11 @@ export class SetupToolsUseCase {
     }
     const manifest = (await this.manifestRepo.load()) ?? Manifest.create();
     const results: ToolInstallResult[] = [];
-    for (const toolId of options.aiTools) {
-      results.push(await this.installAiTool(toolId as AiToolId, manifest, options));
-    }
     for (const toolId of options.ideTools) {
       results.push(await this.installIdeTool(toolId as IdeToolId, manifest, options));
+    }
+    for (const toolId of options.aiTools) {
+      results.push(await this.installAiTool(toolId as AiToolId, manifest, options));
     }
     return { results };
   }

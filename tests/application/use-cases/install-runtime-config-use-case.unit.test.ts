@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { InstallRuntimeConfigUseCase } from "../../../src/application/use-cases/install/install-runtime-config-use-case.js";
 import { Manifest } from "../../../src/domain/models/manifest.js";
-import { buildUnitDeps, initProject } from "../../helpers/ports/build-unit-deps.js";
+import { buildUnitDeps, initProject, installTool } from "../../helpers/ports/build-unit-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -114,5 +114,43 @@ describe("InstallRuntimeConfigUseCase", () => {
     const settingsTracked = result.files.some((f) => f.relativePath === ".claude/settings.json");
     expect(settingsTracked).toBe(false);
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(".claude/settings.json"));
+  });
+
+  describe("copilot requiresTool gate", () => {
+    it("does not create .vscode/settings.json when vscode is not installed", async () => {
+      const deps = await buildUnitDeps(PROJECT_ROOT);
+      await initProject(deps, PROJECT_ROOT);
+      const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+
+      await buildUseCase(deps).execute({
+        toolId: "copilot",
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        force: false,
+        version: "1.0.0",
+      });
+
+      expect(deps.fs.has(join(PROJECT_ROOT, ".vscode/settings.json"))).toBe(false);
+    });
+
+    it("creates .vscode/settings.json with copilot keys when vscode is already installed", async () => {
+      const deps = await buildUnitDeps(PROJECT_ROOT);
+      await initProject(deps, PROJECT_ROOT);
+      await installTool(deps, PROJECT_ROOT, "vscode");
+
+      const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+
+      await buildUseCase(deps).execute({
+        toolId: "copilot",
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        force: false,
+        version: "1.0.0",
+      });
+
+      expect(deps.fs.has(join(PROJECT_ROOT, ".vscode/settings.json"))).toBe(true);
+      const content = deps.fs.getFile(join(PROJECT_ROOT, ".vscode/settings.json")) ?? "";
+      expect(content).toContain("github.copilot.enable");
+    });
   });
 });

@@ -111,4 +111,38 @@ describe.concurrent("E2E: aidd ai install — individual tool install", () => {
       await cleanup();
     }
   });
+
+  it("ai install copilot without vscode — no .vscode directory created", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-copilot-no-vscode");
+    try {
+      await seedManifest(projectDir);
+
+      const { exitCode } = await runCli(["ai", "install", "copilot"], projectDir, fakeHome);
+
+      expect(exitCode).toBe(0);
+      expect(existsSync(join(projectDir, ".vscode"))).toBe(false);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("ai install copilot with vscode — .vscode/settings.json has copilot keys", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-copilot-with-vscode");
+    try {
+      await seedManifest(projectDir);
+      await runCli(["ide", "install", "vscode"], projectDir, fakeHome);
+
+      const { exitCode } = await runCli(["ai", "install", "copilot"], projectDir, fakeHome);
+
+      expect(exitCode).toBe(0);
+      const settingsPath = join(projectDir, ".vscode", "settings.json");
+      expect(existsSync(settingsPath)).toBe(true);
+      const content = await readFile(settingsPath, "utf-8");
+      const parsed = JSON.parse(content) as Record<string, unknown>;
+      expect(parsed).toHaveProperty("github.copilot.enable");
+      expect(parsed).toHaveProperty("editor.formatOnSave");
+    } finally {
+      await cleanup();
+    }
+  });
 });

@@ -45,6 +45,38 @@ describe("SettingsCapability", () => {
     });
   });
 
+  describe("requiresTool", () => {
+    it("is undefined when not set", () => {
+      const cap = new SettingsCapability({
+        outputPath: ".vscode/settings.json",
+        mergeStrategy: "framework-prime",
+        staticContent: '{"key": true}',
+      });
+      expect(cap.requiresTool).toBeUndefined();
+    });
+
+    it("is set when provided alongside staticContent", () => {
+      const cap = new SettingsCapability({
+        outputPath: ".vscode/settings.json",
+        mergeStrategy: "framework-prime",
+        staticContent: '{"key": true}',
+        requiresTool: "vscode",
+      });
+      expect(cap.requiresTool).toBe("vscode");
+    });
+
+    it("throws when requiresTool is set without staticContent", () => {
+      expect(
+        () =>
+          new SettingsCapability({
+            outputPath: ".vscode/settings.json",
+            mergeStrategy: "framework-prime",
+            requiresTool: "vscode",
+          })
+      ).toThrow("SettingsCapability: 'requiresTool' is only meaningful with 'staticContent'.");
+    });
+  });
+
   describe("buildOutputPath", () => {
     it("returns the configured output path", () => {
       const cap = new SettingsCapability({

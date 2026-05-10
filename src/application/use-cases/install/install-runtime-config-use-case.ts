@@ -90,6 +90,7 @@ export class InstallRuntimeConfigUseCase {
     const result: InstallationFile[] = [];
     for (const cap of capabilities) {
       if (cap instanceof SettingsCapability && cap.staticContent !== undefined) {
+        if (cap.requiresTool && !options.manifest.hasTool(cap.requiresTool)) continue;
         const content = cap.staticContent;
         result.push(
           new InstallationFile({
