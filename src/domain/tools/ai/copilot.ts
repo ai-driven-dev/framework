@@ -13,7 +13,6 @@ import {
 import {
   AT_DOCS_PLACEHOLDER,
   AT_TOOLS_PLACEHOLDER,
-  CONFIG_COPILOT_VSCODE_SETTINGS,
   CONFIG_MCP,
   DOCS_PLACEHOLDER,
   GITKEEP_FILE,
@@ -31,6 +30,23 @@ import type {
   UserFileSectionKey,
 } from "../contracts.js";
 import { registerTool } from "../registry.js";
+
+const COPILOT_VSCODE_DEFAULTS = JSON.stringify(
+  {
+    "github.copilot.enable": { "*": true, markdown: true },
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "chat.notifyWindowOnConfirmation": true,
+    "chat.notifyWindowOnResponseReceived": true,
+    "accessibility.signals.chatResponseReceived": { sound: "auto" },
+    "accessibility.signals.chatEditModifiedFile": { sound: "auto" },
+    "accessibility.signals.chatUserActionRequired": { sound: "auto", announcement: "auto" },
+    "github.copilot.chat.cli.mcp.enabled": true,
+    "chat.tools.global.autoApprove": true,
+    "chat.tools.terminal.autoApprove": { npm: true, pnpm: true, node: true, git: true },
+  },
+  null,
+  2
+);
 
 const DIRECTORY = ".github/";
 const TOOL_SUFFIX = ".copilot.md";
@@ -260,7 +276,6 @@ export const copilot: AiTool<
   toolSuffix: TOOL_SUFFIX,
   signalDir: ".github/prompts",
   requiredIdeIds: ["vscode"] as const,
-  configOutputPaths: { "settings.json": ".vscode/settings.json" },
 
   capabilities: {
     agents: new AgentsCapability({
@@ -314,7 +329,7 @@ export const copilot: AiTool<
     settings: new SettingsCapability({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
-      consumes: [CONFIG_COPILOT_VSCODE_SETTINGS],
+      staticContent: COPILOT_VSCODE_DEFAULTS,
     }),
     plugins: new PluginsCapability({
       mode: "native",

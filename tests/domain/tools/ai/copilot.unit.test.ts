@@ -45,20 +45,27 @@ describe("copilot", () => {
       ? copilot.capabilities.settings[0]
       : copilot.capabilities.settings;
 
-    it("maps copilotVscodeSettings to .vscode/settings.json", () => {
+    it("writes to .vscode/settings.json", () => {
       expect(settings.params.outputPath).toBe(".vscode/settings.json");
     });
 
-    it("copilotVscodeSettings uses framework-prime strategy", () => {
+    it("uses framework-prime merge strategy", () => {
       expect(settings.getMergeStrategy()).toBe("framework-prime");
     });
 
-    it("consumes copilotVscodeSettings config name", () => {
-      expect(settings.consumes).toContain("copilotVscodeSettings");
+    it("has staticContent containing github.copilot.enable", () => {
+      expect(settings.staticContent).toBeDefined();
+      const parsed = JSON.parse(settings.staticContent as string);
+      expect(parsed).toHaveProperty("github.copilot.enable");
     });
 
-    it("does not consume vscodeSettings (handled by vscode tool)", () => {
-      expect(settings.consumes).not.toContain("vscodeSettings");
+    it("has staticContent containing chat.tools.global.autoApprove", () => {
+      const parsed = JSON.parse(settings.staticContent as string);
+      expect(parsed).toHaveProperty("chat.tools.global.autoApprove", true);
+    });
+
+    it("does not consume framework signals (content is CLI-owned)", () => {
+      expect(settings.consumes).toHaveLength(0);
     });
   });
 

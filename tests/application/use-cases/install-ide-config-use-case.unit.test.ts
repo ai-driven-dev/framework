@@ -64,7 +64,7 @@ describe("InstallIdeConfigUseCase", () => {
     expect(result.fileCount).toBe(0);
   });
 
-  it("overwrites existing tracked files when force is true", async () => {
+  it("re-runs install when force is true and preserves user-prime keys", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
@@ -91,7 +91,10 @@ describe("InstallIdeConfigUseCase", () => {
 
     expect(result.skipped).toBe(false);
     const content = deps.fs.getFile(settingsPath) ?? "";
-    expect(content).not.toContain('"modified"');
+    // user-prime strategy preserves user modifications on force reinstall
+    expect(content).toContain('"modified"');
+    // framework keys are also present
+    expect(content).toContain('"editor.formatOnSave"');
   });
 
   it("skips user-owned untracked settings file and emits warning", async () => {

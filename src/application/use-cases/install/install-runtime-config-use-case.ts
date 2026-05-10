@@ -1,8 +1,11 @@
 import { join } from "node:path";
+import { SettingsCapability } from "../../../domain/capabilities/settings-capability.js";
 import { InstallationFile } from "../../../domain/models/file.js";
+import { extractMergeEntries, type MergeFileEntry } from "../../../domain/models/merge.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
+import type { FileMerger } from "../../../domain/ports/file-merger.js";
 import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
@@ -29,7 +32,7 @@ export interface InstallRuntimeConfigResult {
 
 export class InstallRuntimeConfigUseCase {
   constructor(
-    private readonly fs: FileReader & FileWriter,
+    private readonly fs: FileReader & FileWriter & FileMerger,
     private readonly manifestRepo: ManifestRepository,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
@@ -41,14 +44,24 @@ export class InstallRuntimeConfigUseCase {
     if (manifest.hasTool(toolId) && !force) {
       return { toolId, fileCount: 0, files: [], skipped: true, warnings: [] };
     }
-    const allFiles = await this.buildConfigFiles(options);
-    await this.writeFiles(allFiles, options.projectRoot);
-    manifest.addTool(toolId, options.version, allFiles);
+    const regularFiles = await this.buildConfigFiles(options);
+    const mergeFiles = this.buildStaticSettingsFiles(options);
+    await this.writeRegularFiles(regularFiles, options.projectRoot);
+    await this.writeMergeFiles(mergeFiles, options.projectRoot);
+    const mergeEntries = await this.buildMergeEntries(mergeFiles, options.projectRoot);
+    const allFiles = [...regularFiles, ...mergeFiles];
+    manifest.addTool(toolId, options.version, regularFiles, mergeEntries);
     await new PostInstallPipelineUseCase(this.fs, this.manifestRepo).execute({
       projectRoot: options.projectRoot,
       manifest,
     });
-    return { toolId, fileCount: allFiles.length, files: allFiles, skipped: false, warnings: [] };
+    return {
+      toolId,
+      fileCount: allFiles.length,
+      files: allFiles,
+      skipped: false,
+      warnings: [],
+    };
   }
 
   private async buildConfigFiles(
@@ -68,6 +81,29 @@ export class InstallRuntimeConfigUseCase {
     return files;
   }
 
+  private buildStaticSettingsFiles(options: InstallRuntimeConfigOptions): InstallationFile[] {
+    const toolConfig = getToolConfig(options.toolId);
+    if (!isAiTool(toolConfig)) return [];
+    const caps = toolConfig.capabilities as Record<string, unknown>;
+    const raw = caps.settings;
+    const capabilities = Array.isArray(raw) ? raw : raw !== undefined ? [raw] : [];
+    const result: InstallationFile[] = [];
+    for (const cap of capabilities) {
+      if (cap instanceof SettingsCapability && cap.staticContent !== undefined) {
+        const content = cap.staticContent;
+        result.push(
+          new InstallationFile({
+            relativePath: cap.buildOutputPath(),
+            content,
+            hash: this.hasher.hash(content),
+            mergeStrategy: cap.getMergeStrategy(),
+          })
+        );
+      }
+    }
+    return result;
+  }
+
   private async isUserOwned(
     relativePath: string,
     options: InstallRuntimeConfigOptions
@@ -79,9 +115,33 @@ export class InstallRuntimeConfigUseCase {
     return true;
   }
 
-  private async writeFiles(files: InstallationFile[], projectRoot: string): Promise<void> {
+  private async writeRegularFiles(files: InstallationFile[], projectRoot: string): Promise<void> {
     for (const file of files) {
       await this.fs.writeFile(join(projectRoot, file.relativePath), file.content);
     }
+  }
+
+  private async writeMergeFiles(files: InstallationFile[], projectRoot: string): Promise<void> {
+    for (const file of files) {
+      await this.fs.mergeJsonFile(
+        join(projectRoot, file.relativePath),
+        file.content,
+        file.mergeStrategy
+      );
+    }
+  }
+
+  private async buildMergeEntries(
+    files: InstallationFile[],
+    projectRoot: string
+  ): Promise<MergeFileEntry[]> {
+    const entries: MergeFileEntry[] = [];
+    for (const file of files) {
+      const fullPath = join(projectRoot, file.relativePath);
+      const diskContent = await this.fs.readFile(fullPath);
+      const hashes = extractMergeEntries(diskContent, null, this.hasher);
+      entries.push({ relativePath: file.relativePath, sectionKey: null, entries: hashes });
+    }
+    return entries;
   }
 }

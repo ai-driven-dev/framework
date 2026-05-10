@@ -67,6 +67,12 @@ export class InstallConfigUseCase {
       );
       if (file !== null) results.push(file);
     }
+    for (const capability of capabilities) {
+      if (capability instanceof SettingsCapability && capability.staticContent !== undefined) {
+        const file = await this.processStatic(capability, projectRoot);
+        if (file !== null) results.push(file);
+      }
+    }
     return results;
   }
 
@@ -88,6 +94,21 @@ export class InstallConfigUseCase {
       hash: this.hasher.hash(content),
       mergeStrategy: this.getCapabilityMergeStrategy(capability),
       frameworkPath: ref.path,
+    });
+  }
+
+  private async processStatic(
+    capability: SettingsCapability,
+    projectRoot: string
+  ): Promise<InstallationFile | null> {
+    const content = capability.staticContent as string;
+    const outputPath = await this.resolveCapabilityOutputPath(capability, projectRoot);
+    if (outputPath === null) return null;
+    return new InstallationFile({
+      relativePath: outputPath,
+      content,
+      hash: this.hasher.hash(content),
+      mergeStrategy: capability.getMergeStrategy(),
     });
   }
 

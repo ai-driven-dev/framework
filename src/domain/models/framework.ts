@@ -9,7 +9,6 @@ export const CONFIG_MCP = "mcp";
 export const CONFIG_VSCODE_SETTINGS = "vscodeSettings";
 export const CONFIG_VSCODE_EXTENSIONS = "vscodeExtensions";
 export const CONFIG_VSCODE_KEYBINDINGS = "vscodeKeybindings";
-export const CONFIG_COPILOT_VSCODE_SETTINGS = "copilotVscodeSettings";
 export const CONFIG_OPENCODE = "opencode";
 
 export const GITKEEP_FILE = ".gitkeep";

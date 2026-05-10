@@ -1,9 +1,11 @@
 import { basename, join } from "node:path";
 import type { SettingsCapability } from "../../../domain/capabilities/settings-capability.js";
 import { InstallationFile } from "../../../domain/models/file.js";
+import { extractMergeEntries, type MergeFileEntry } from "../../../domain/models/merge.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { IdeToolId } from "../../../domain/models/tool-ids.js";
 import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
+import type { FileMerger } from "../../../domain/ports/file-merger.js";
 import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
@@ -30,7 +32,7 @@ export interface InstallIdeConfigResult {
 
 export class InstallIdeConfigUseCase {
   constructor(
-    private readonly fs: FileReader & FileWriter,
+    private readonly fs: FileReader & FileWriter & FileMerger,
     private readonly manifestRepo: ManifestRepository,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
@@ -42,27 +44,41 @@ export class InstallIdeConfigUseCase {
     if (manifest.hasTool(toolId) && !force) {
       return { toolId, fileCount: 0, files: [], skipped: true, warnings: [] };
     }
-    const files = await this.buildSettingsFiles(options);
-    await this.writeFiles(files, options.projectRoot);
-    manifest.addTool(toolId, options.version, files);
+    const { regularFiles, mergeFiles } = await this.buildSettingsFiles(options);
+    await this.writeRegularFiles(regularFiles, options.projectRoot);
+    await this.writeMergeFiles(mergeFiles, options.projectRoot);
+    const mergeEntries = await this.buildMergeEntries(mergeFiles, options.projectRoot);
+    const allFiles = [...regularFiles, ...mergeFiles];
+    manifest.addTool(toolId, options.version, regularFiles, mergeEntries);
     await new PostInstallPipelineUseCase(this.fs, this.manifestRepo).execute({
       projectRoot: options.projectRoot,
       manifest,
     });
-    return { toolId, fileCount: files.length, files, skipped: false, warnings: [] };
+    return {
+      toolId,
+      fileCount: allFiles.length,
+      files: allFiles,
+      skipped: false,
+      warnings: [],
+    };
   }
 
-  private async buildSettingsFiles(options: InstallIdeConfigOptions): Promise<InstallationFile[]> {
+  private async buildSettingsFiles(
+    options: InstallIdeConfigOptions
+  ): Promise<{ regularFiles: InstallationFile[]; mergeFiles: InstallationFile[] }> {
     const toolConfig = getToolConfig(options.toolId);
-    if (!("settings" in toolConfig)) return [];
+    if (!("settings" in toolConfig)) return { regularFiles: [], mergeFiles: [] };
     const raw = toolConfig.settings as SettingsCapability | SettingsCapability[];
     const capabilities = Array.isArray(raw) ? raw : [raw];
-    const files: InstallationFile[] = [];
+    const regularFiles: InstallationFile[] = [];
+    const mergeFiles: InstallationFile[] = [];
     for (const capability of capabilities) {
       const file = await this.buildSettingsFile(capability, options);
-      if (file !== null) files.push(file);
+      if (file === null) continue;
+      if (file.mergeStrategy !== "none") mergeFiles.push(file);
+      else regularFiles.push(file);
     }
-    return files;
+    return { regularFiles, mergeFiles };
   }
 
   private async buildSettingsFile(
@@ -78,6 +94,7 @@ export class InstallIdeConfigUseCase {
       relativePath: outputPath,
       content,
       hash: this.hasher.hash(content),
+      mergeStrategy: capability.getMergeStrategy(),
     });
   }
 
@@ -92,9 +109,33 @@ export class InstallIdeConfigUseCase {
     return true;
   }
 
-  private async writeFiles(files: InstallationFile[], projectRoot: string): Promise<void> {
+  private async writeRegularFiles(files: InstallationFile[], projectRoot: string): Promise<void> {
     for (const file of files) {
       await this.fs.writeFile(join(projectRoot, file.relativePath), file.content);
     }
+  }
+
+  private async writeMergeFiles(files: InstallationFile[], projectRoot: string): Promise<void> {
+    for (const file of files) {
+      await this.fs.mergeJsonFile(
+        join(projectRoot, file.relativePath),
+        file.content,
+        file.mergeStrategy
+      );
+    }
+  }
+
+  private async buildMergeEntries(
+    files: InstallationFile[],
+    projectRoot: string
+  ): Promise<MergeFileEntry[]> {
+    const entries: MergeFileEntry[] = [];
+    for (const file of files) {
+      const fullPath = join(projectRoot, file.relativePath);
+      const diskContent = await this.fs.readFile(fullPath);
+      const hashes = extractMergeEntries(diskContent, null, this.hasher);
+      entries.push({ relativePath: file.relativePath, sectionKey: null, entries: hashes });
+    }
+    return entries;
   }
 }
