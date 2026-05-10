@@ -13,6 +13,7 @@ import { DoctorTrackedFilesUseCase } from "../application/use-cases/doctor/docto
 import { DoctorUseCase } from "../application/use-cases/doctor/doctor-use-case.js";
 import { InstallAiToolUseCase } from "../application/use-cases/install/install-ai-tool-use-case.js";
 import { InstallIdeConfigUseCase } from "../application/use-cases/install/install-ide-config-use-case.js";
+import { InstallIdeToolUseCase } from "../application/use-cases/install/install-ide-tool-use-case.js";
 import { InstallRuntimeConfigUseCase } from "../application/use-cases/install/install-runtime-config-use-case.js";
 import { MarketplaceAddUseCase } from "../application/use-cases/marketplace/marketplace-add-use-case.js";
 import { MarketplaceBrowseUseCase } from "../application/use-cases/marketplace/marketplace-browse-use-case.js";
@@ -112,6 +113,7 @@ interface Deps {
   installRuntimeConfigUseCase: InstallRuntimeConfigUseCase;
   installAiToolUseCase: InstallAiToolUseCase;
   installIdeConfigUseCase: InstallIdeConfigUseCase;
+  installIdeToolUseCase: InstallIdeToolUseCase;
   uninstallIdeUseCase: UninstallIdeUseCase;
   assetProvider: AssetProvider;
   pluginSearchUseCase: PluginSearchUseCase;
@@ -240,6 +242,12 @@ export async function createDeps(
     logger,
     assetProvider
   );
+  const installIdeToolUseCase = new InstallIdeToolUseCase(
+    installIdeConfigUseCase,
+    manifestRepo,
+    fs,
+    hasher
+  );
   const uninstallIdeUseCase = new UninstallIdeUseCase(fs, manifestRepo);
   const pluginInstallFromMarketplaceUseCase = new PluginInstallFromMarketplaceUseCase(
     resolveMarketplaceUseCase,
@@ -335,6 +343,7 @@ export async function createDeps(
     installRuntimeConfigUseCase,
     installAiToolUseCase,
     installIdeConfigUseCase,
+    installIdeToolUseCase,
     uninstallIdeUseCase,
     assetProvider,
     pluginSearchUseCase,

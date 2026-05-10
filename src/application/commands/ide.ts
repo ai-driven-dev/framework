@@ -46,7 +46,7 @@ export function registerIdeCommand(program: Command): void {
         const deps = await createDeps(projectRoot, { verbose }, output);
         const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
         const version = deps.currentVersionProvider.get();
-        const result = await deps.installIdeConfigUseCase.execute({
+        const result = await deps.installIdeToolUseCase.execute({
           toolId: toolArg,
           projectRoot,
           manifest,
