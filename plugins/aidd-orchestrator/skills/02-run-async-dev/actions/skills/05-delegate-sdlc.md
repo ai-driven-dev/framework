@@ -1,6 +1,6 @@
 # 05 -- Delegate SDLC
 
-Hands the implementation off to the SDLC capability discovered at runtime, on a dedicated feature branch. The orchestrator owns the branch, the push, and the PR creation -- the SDLC capability only writes the code and the tests.
+Hands the implementation off to the SDLC capability. The orchestrator picks the branch name and the PR contract; the SDLC owns code, tests, push, and PR creation. The orchestrator only verifies the contract was honoured.
 
 ## Inputs
 
@@ -30,31 +30,46 @@ Hands the implementation off to the SDLC capability discovered at runtime, on a 
 
 ## Process
 
-1. Record the current default-branch SHA: `git fetch origin && BEFORE=$(git rev-parse origin/<default>)`. Contract baseline; must not change.
-2. Compute a feature branch name: `feat/issue-<issue.number>-<kebab-slug-of-title>` (truncate slug to 40 chars). The branch must not equal the default branch.
-3. Create and check out the branch from `origin/<default>`: `git checkout -B "$BRANCH" "origin/<default>"`.
-4. Compose the delegation prompt with these strict constraints, **stated up front and repeated at the bottom**:
-   - "You must work only on the current branch `<BRANCH>`."
-   - "**Do NOT** `git push`, **do NOT** `gh pr create`. The orchestrator will push and open the PR after you return."
-   - "**Do NOT** make any commit on `<default>`. Never `--force` on the default branch."
-   - "Write the source files and test files, then run the project's test command. Tests must pass before you return."
-   - "Return a structured result naming the local commit SHA(s), the test outcome, and the file list."
-   - Include the issue title, body, labels.
-5. Invoke the skill named in `discovered_skill` via the `Skill` tool with that prompt. Read the skill name from input; never hardcode.
-6. Capture the SDLC result: local commit SHAs, test outcome, file list. If tests failed, abort with a structured error and route to `06-write-audit` as a failure.
-7. **Enforce the no-push-to-main contract**:
-   - `AFTER=$(git rev-parse origin/<default>)` after `git fetch origin`.
-   - If `AFTER != BEFORE`: hard violation. Recover by cherry-picking `$BEFORE..$AFTER` onto `<BRANCH>`, then `git revert --no-edit $BEFORE..$AFTER` on `<default>` and push. Set `default_branch_advanced = true`. If recovery is impossible, mark the run failed and route to `06-write-audit`.
-   - Else `default_branch_advanced = false`.
-8. **Push the feature branch and open the PR** (the orchestrator owns this step; never delegate it):
-   - `git push -u origin "$BRANCH"`.
-   - Generate the PR body: `## Summary\n\n<concise bullet list from SDLC's file list>\n\nCloses #<issue.number>`. Title: `feat: <issue.title> (#<issue.number>)`.
-   - `gh pr create --base <default> --head "$BRANCH" --title "<title>" --body "<body>"`.
-   - Capture the returned PR number and URL.
-9. Forward the structured result to `06-write-audit`. Do not transition labels here; that happens in `06`.
+1. Record the default-branch SHA: `git fetch origin && BEFORE=$(git rev-parse origin/<default>)`. Contract baseline.
+2. Compute the feature branch name: `feat/issue-<issue.number>-<kebab-slug-of-title>` (truncate slug to 40 chars). Must not equal the default branch.
+3. Compose the delegation prompt with these explicit, non-negotiable constraints (state at the top AND repeat at the bottom):
+
+   ```
+   You are implementing GitHub issue #<n>: "<title>".
+
+   Constraints:
+   - Work on a new branch named exactly: feat/issue-<n>-<slug>.
+     Create it from origin/<default>: git checkout -B feat/issue-<n>-<slug> origin/<default>.
+   - Do NOT make commits on <default>. Do NOT --force on <default>. Do NOT merge anything.
+   - Run the project's test command before opening the PR; tests must pass.
+   - Push the branch: git push -u origin feat/issue-<n>-<slug>.
+   - Open a Pull Request:
+       title: "feat: <title> (#<n>)"
+       base:  <default>
+       head:  feat/issue-<n>-<slug>
+       body:  must contain "Closes #<n>" so GitHub auto-links the issue.
+     Use `gh pr create --base <default> --head feat/issue-<n>-<slug> --title "..." --body "..."`.
+   - Return a structured result with: { branch, pr_number, pr_url, tests_passed, commit_shas[] }.
+
+   Issue body and labels follow.
+   <issue body>
+   <issue labels>
+   ```
+
+4. Invoke the skill named in `discovered_skill` via the `Skill` tool with that prompt. Read the skill name from input; never hardcode.
+5. Capture the SDLC result. If the SDLC did not return a `pr_number`, query the API: `gh pr list --repo <owner>/<repo> --head feat/issue-<n>-<slug> --state open --json number,url --jq '.[0]'`.
+6. **Verify the contract** (the SDLC could have ignored instructions):
+   - `AFTER=$(git fetch origin && git rev-parse origin/<default>)`.
+   - **No commits on default**: if `AFTER != BEFORE`, the SDLC pushed to `<default>`. Recover:
+     - Cherry-pick `$BEFORE..$AFTER` onto `feat/issue-<n>-<slug>`, push.
+     - `git revert --no-edit $BEFORE..$AFTER` on `<default>`, push.
+     - Set `default_branch_advanced = true`. The audit comment names the offending SHAs.
+   - **PR exists**: if no PR was returned and none can be found via the API, mark the run failed and route to `06-write-audit` as a contract violation.
+   - **PR shape**: assert `headRefName == feat/issue-<n>-<slug>`, `baseRefName == <default>`, body contains `Closes #<n>`. If any field is wrong, post a comment on the PR with the contract violation and let the human fix it; the run still succeeds (PR exists; the lifecycle continues).
+7. Forward the structured result to `06-write-audit`. Do not transition labels here; that happens in `06`.
 
 ## Test
 
-After a clean delegation: `default_branch_advanced == false`, `gh pr view <pr_number> --json number,headRefName,baseRefName` returns the PR with `headRefName == <BRANCH>` and `baseRefName == <default branch>`. The PR body contains `Closes #<issue.number>`. `git log origin/<default>` does NOT contain bot commits for this run id. The branch and the PR exist on the remote even though the SDLC capability did neither.
+Clean delegation: `default_branch_advanced == false`, `gh pr view <pr_number>` returns a PR with `headRefName == feat/issue-<n>-<slug>`, `baseRefName == <default>`, body contains `Closes #<n>`. `git log origin/<default>` does NOT contain bot commits for this run id.
 
-After a delegation where the SDLC violated and committed on default: action recovers commits onto the feature branch, reverts on default, opens the PR, and emits `default_branch_advanced == true` so `06-write-audit` flags the violation in the audit record.
+Violation: SDLC pushed to default. Action recovers commits onto the feature branch, reverts on default, opens (or recovers) the PR, and emits `default_branch_advanced == true` so `06-write-audit` flags the violation.
