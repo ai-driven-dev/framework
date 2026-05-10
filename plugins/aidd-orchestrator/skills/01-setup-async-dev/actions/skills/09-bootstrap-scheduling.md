@@ -1,6 +1,6 @@
 # 09 -- Bootstrap Scheduling
 
-Schedules `scripts/aidd-async-poll.sh` via a Claude Code-native path. No OS-level cron.
+Schedules `scripts/aidd-async-poll.sh` via the cheapest path that fits the user's needs. **Never recommends OS-level cron**, but for the local daemon path uses tmux/launchd/systemd so the user keeps Claude Code's Tasks quota for other things.
 
 ## Inputs
 
@@ -11,12 +11,14 @@ Schedules `scripts/aidd-async-poll.sh` via a Claude Code-native path. No OS-leve
 
 ```json
 {
-  "path": "desktop_task_pending",
-  "interval_minutes": 5
+  "path": "local_daemon",
+  "interval_seconds": 300,
+  "supervisor": "tmux",
+  "supervisor_artefact": "scripts/aidd-async-daemon.sh"
 }
 ```
 
-`path` is `"desktop_task_pending"` (Desktop UI step pending), `"schedule_routine"` (cloud routine created), or `"manual_only"` (no schedule, user runs the script by hand).
+`path` is one of: `manual`, `local_daemon`, `desktop_task_pending`, `schedule_routine`.
 
 ## Depends on
 
@@ -24,27 +26,35 @@ Schedules `scripts/aidd-async-poll.sh` via a Claude Code-native path. No OS-leve
 
 ## Process
 
-1. Skip when `answers.mode == "remote"`.
-2. Print the cadence options up front so the user can pick the path that matches the interval they want:
+1. Skip when `answers.mode == "remote"`. Print: "Remote mode runs the pipeline on GitHub Actions; no local scheduling needed."
+2. Print the cadence and quota tradeoffs up front so the user picks the path that matches their needs:
 
-   | Path | Tool | Min interval | Runs when |
-   | ---- | ---- | ------------ | --------- |
-   | A. Desktop scheduled task (recommended for < 1h) | Claude Code Desktop UI | 1 minute | When the machine is awake |
-   | B. `/schedule` cloud routine | Claude Code session | 1 hour | Always (server-side) |
-   | C. Manual only | none | n/a | When the user runs `./scripts/aidd-async-poll.sh` |
+   | # | Path | Uses Claude Tasks quota | Min interval | Persistence |
+   | - | ---- | ----------------------- | ------------ | ----------- |
+   | C | Local daemon (tmux/launchd/systemd) **(recommended local default)** | no | seconds | supervisor-managed |
+   | B | Manual run on demand | no | n/a | none |
+   | D | Desktop scheduled task | **yes (1 per tick)** | 1 minute | machine awake |
+   | E | `/schedule` cloud routine | **yes (1 routine)** | 1 hour | server-side |
 
-3. Ask the user to pick A, B, or C. Default A.
-4. Ask the desired interval (default `5` minutes for path A, `1` hour for path B, n/a for path C). Validate path B's interval is at least `60` minutes; reject lower values with a message pointing to path A.
-5. Branch on the choice:
-   - **Path A (Desktop)**: print a four-bullet checklist for the Desktop UI: open Scheduled tasks, set working directory to the repo root, set the cadence, paste the prompt `Run ./scripts/aidd-async-poll.sh and report what was processed.`. Set `path = "desktop_task_pending"`. The user finishes the UI step manually.
-   - **Path B (cloud routine)**: invoke the runtime `/schedule` skill via the `Skill` tool with the cron expression and the prompt `Use skill aidd-orchestrator:02:run-async-dev on the next ready issue in <owner>/<repo>`. Capture the routine id. Set `path = "schedule_routine"`.
-   - **Path C (manual)**: print the one-liner `./scripts/aidd-async-poll.sh` and a reminder that nothing runs until the user invokes it. Set `path = "manual_only"`.
-6. Emit the structured result.
+3. Ask the user to pick C, B, D, or E. Default C.
+4. Branch on the choice:
+   - **C (local daemon)**:
+     - Render `scripts/aidd-async-daemon.sh` from `assets/local-daemon-template.sh` (no placeholders to substitute today; the daemon delegates to `aidd-async-poll.sh`). Write with mode `0755`.
+     - Ask the supervisor: `tmux`, `launchd` (macOS), `systemd-user` (Linux), or `nohup`. Default `tmux`.
+     - Ask the interval in seconds (default `300`).
+     - Print the exact one-liner for the chosen supervisor (templates in `references/local-mode-scheduling.md`, Path C). Do not install the supervisor automatically; the user runs the printed command.
+     - Set `path = "local_daemon"`.
+   - **B (manual)**: print `./scripts/aidd-async-poll.sh` and a reminder that nothing runs until invoked. Set `path = "manual"`.
+   - **D (Desktop task)**: print the four UI bullets from the reference (Path D), filled with the working directory, schedule, and prompt. Warn about the per-tick Tasks quota. Set `path = "desktop_task_pending"`.
+   - **E (cloud routine)**: invoke the runtime `/schedule` skill via the `Skill` tool with a cron expression (must be at least hourly) and the prompt `Use skill aidd-orchestrator:02:run-async-dev on the next ready issue in <owner>/<repo>`. Capture the routine id. Set `path = "schedule_routine"`.
+5. Emit the structured result.
 
 ## Test
 
-**Path A**: action prints a four-bullet checklist that includes the literal repo working directory and the literal prompt; returns `path = "desktop_task_pending"` and the chosen interval in minutes.
+**Path C (default)**: action writes `scripts/aidd-async-daemon.sh` with mode 0755, prints the chosen supervisor's one-liner with the absolute repo path filled in, and returns `path = "local_daemon"` with the chosen interval. The daemon script does NOT mention Claude Code Scheduled Tasks.
 
-**Path B with interval = 30**: action rejects the input with a message pointing to path A and re-prompts. With interval >= 60: invokes the schedule skill, returns `path = "schedule_routine"` with a non-empty routine id.
+**Path B**: returns `path = "manual"` and prints exactly `./scripts/aidd-async-poll.sh`.
 
-**Path C**: action prints `./scripts/aidd-async-poll.sh` and returns `path = "manual_only"`.
+**Path D**: prints the four UI bullets and a warning about Tasks quota; returns `path = "desktop_task_pending"`.
+
+**Path E with interval = 30**: action rejects (cloud routines minimum 1 hour) and re-prompts. With interval >= 60: invokes the schedule skill, returns `path = "schedule_routine"` with a non-empty routine id.

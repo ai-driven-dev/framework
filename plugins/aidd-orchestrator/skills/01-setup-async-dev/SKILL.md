@@ -60,5 +60,6 @@ Sequential: `01 -> 02 -> 03 -> 04 -> 05 -> 06 -> 07 -> 08 -> 09 -> 10 -> 11`. Ea
 ## Assets
 
 - `assets/workflow-template.yml` -- GitHub Actions workflow skeleton (for `remote`)
-- `assets/local-poll-template.sh` -- poll script skeleton (for `local`)
+- `assets/local-poll-template.sh` -- single-shot poll script skeleton (for `local`)
+- `assets/local-daemon-template.sh` -- long-running daemon skeleton wrapping the poll script (for `local`, recommended over Claude Code Scheduled Tasks)
 - `assets/config-template.json` -- `.claude/aidd-orchestrator.json` skeleton

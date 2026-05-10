@@ -27,6 +27,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description |
 |-------|------|---|
 | `assets` | [config-template.json](skills/01-setup-async-dev/assets/config-template.json) | - |
+| `assets` | [local-daemon-template.sh](skills/01-setup-async-dev/assets/local-daemon-template.sh) | - |
 | `assets` | [local-poll-template.sh](skills/01-setup-async-dev/assets/local-poll-template.sh) | - |
 | `evals` | [scenarios.json](skills/01-setup-async-dev/evals/scenarios.json) | - |
 | `references` | [auth-modes.md](skills/01-setup-async-dev/references/auth-modes.md) | - |
