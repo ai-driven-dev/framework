@@ -24,8 +24,9 @@ Walks the user through adding the GitHub Action secrets the workflow needs. For 
 
 1. Skip this action when `answers.mode == "local"`.
 2. Build the required-secrets list from `answers`:
-   - exactly one of `CLAUDE_CODE_OAUTH_TOKEN` (when `claude_action_auth.mode == "oauth_token"`) or `ANTHROPIC_API_KEY` (when `api_key`).
-   - the marketplace PAT secret named in `answers.marketplace.token_secret_name` when `answers.marketplace.access == "private"`.
+   - `answers.claude_action_auth.default_secret_name` (always required; this is the team fallback).
+   - Every value in `answers.claude_action_auth.account_routing` (one secret per developer). Each gets its own prompt with that developer's GitHub username shown so the user knows which token to paste.
+   - The marketplace PAT secret named in `answers.marketplace.token_secret_name` when `answers.marketplace.access == "private"`.
 3. For each required secret, query existing secrets with `gh secret list --repo <owner>/<repo>`:
    - if already present, ask "keep, rotate, or skip"; on "rotate" continue to step 4.
    - if missing, continue to step 4.

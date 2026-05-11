@@ -133,8 +133,8 @@ The skill writes:
 
 At minimum, one Anthropic auth secret:
 
-| Auth mode | Secret name | How to get it |
-| --------- | ----------- | ------------- |
+| Auth mode | Default secret name | How to get it |
+| --------- | ------------------- | ------------- |
 | OAuth | `CLAUDE_CODE_OAUTH_TOKEN` | `claude setup-token` |
 | API key | `ANTHROPIC_API_KEY` | https://console.anthropic.com/settings/keys |
 
@@ -144,6 +144,45 @@ Plus (private marketplace only):
 ```bash
 gh secret set CLAUDE_CODE_OAUTH_TOKEN --repo OWNER/REPO
 ```
+
+#### Per-developer routing (multi-account)
+
+By default the workflow uses one team-wide secret (`default_secret_name`) for every run. To route runs to a per-developer Anthropic account so each developer's quota is consumed for their own work, populate `claude_action_auth.account_routing` in `.claude/aidd-orchestrator.json`:
+
+```json
+"claude_action_auth": {
+  "mode": "oauth_token",
+  "default_secret_name": "CLAUDE_CODE_OAUTH_TOKEN",
+  "account_routing": {
+    "alice-gh-username": "CLAUDE_CODE_OAUTH_TOKEN_ALICE",
+    "bob-gh-username":   "CLAUDE_CODE_OAUTH_TOKEN_BOB"
+  }
+}
+```
+
+Add one GitHub Action secret per developer:
+```bash
+gh secret set CLAUDE_CODE_OAUTH_TOKEN_ALICE --repo OWNER/REPO   # paste Alice's token
+gh secret set CLAUDE_CODE_OAUTH_TOKEN_BOB   --repo OWNER/REPO   # paste Bob's token
+```
+
+Resolution at dispatch time (in order):
+1. First issue assignee (`github.event.issue.assignees[0].login`) -> look up in `account_routing`.
+2. Event sender (`github.event.sender.login`) -> look up in `account_routing`.
+3. Fall back to `default_secret_name`.
+
+**Override pattern**: a developer takes over a teammate's ticket by self-assigning the issue before labelling (or any time before the run picks it up):
+
+```bash
+gh issue edit <N> --add-assignee bob
+gh issue edit <N> --add-label to-implement
+```
+
+The assignee takes precedence over the labeller, so Bob's quota pays for Alice's original ticket. Removing the assignee falls back to sender then to the team default secret.
+
+Caveats:
+- Only the **Anthropic quota** is routed. PR and commit authorship still come from the runner's `GITHUB_TOKEN` (typically `github-actions[bot]`), not from the routed developer.
+- The secret name is resolved per-run via `secrets[<dynamic-name>]`; it must be a literal key set on the repo. Missing entries fall back to `default_secret_name`; an empty default name fails the workflow with an explicit error.
 
 ### 4a. Remote-mode finalisation
 

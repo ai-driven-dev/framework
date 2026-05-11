@@ -14,7 +14,8 @@
   },
   "claude_action_auth": {
     "mode": "oauth_token",
-    "secret_name": "CLAUDE_CODE_OAUTH_TOKEN"
+    "default_secret_name": "CLAUDE_CODE_OAUTH_TOKEN",
+    "account_routing": {}
   },
   "marketplace": {
     "repo": "ai-driven-dev/aidd-framework",
