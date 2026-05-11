@@ -1,0 +1,13 @@
+{
+  "github.copilot.enable": { "*": true, "markdown": true },
+  "github.copilot.nextEditSuggestions.enabled": true,
+  "chat.plugins.enabled": true,
+  "chat.notifyWindowOnConfirmation": true,
+  "chat.notifyWindowOnResponseReceived": true,
+  "accessibility.signals.chatResponseReceived": { "sound": "auto" },
+  "accessibility.signals.chatEditModifiedFile": { "sound": "auto" },
+  "accessibility.signals.chatUserActionRequired": { "sound": "auto", "announcement": "auto" },
+  "github.copilot.chat.cli.mcp.enabled": true,
+  "chat.tools.global.autoApprove": true,
+  "chat.tools.terminal.autoApprove": { "npm": true, "pnpm": true, "node": true, "git": true }
+}
