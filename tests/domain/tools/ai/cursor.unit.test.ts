@@ -204,7 +204,7 @@ describe("cursor", () => {
         });
       });
 
-      it("includes ref when github source has ref", () => {
+      it("does not include ref in github source (ref dropped — not in documented spec)", () => {
         const result = ms?.toEntry({
           name: "my-plugin",
           source: { kind: "github", repo: "org/my-plugin", ref: "v1.2.3" },
@@ -212,7 +212,7 @@ describe("cursor", () => {
         expect(result).toEqual({
           valueShape: "map",
           key: "my-plugin",
-          value: { source: { source: "github", repo: "org/my-plugin", ref: "v1.2.3" } },
+          value: { source: { source: "github", repo: "org/my-plugin" } },
         });
       });
 

@@ -1,6 +1,6 @@
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
-import { buildVscodeStyleMarketplaceEntry } from "../../capabilities/marketplace-entry.js";
+import { buildClaudeStyleMarketplaceEntry } from "../../capabilities/marketplace-entry.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
@@ -321,13 +321,15 @@ export const copilot: AiTool<
       pluginManifestRelativePath: "plugin.json",
       acceptsHooks: true,
       acceptsMcp: true,
-      // VS Code Copilot: chat.plugins.marketplaces (array) in .vscode/settings.json.
-      // Source: https://code.visualstudio.com/docs/copilot/customization/agent-plugins#_configure-plugin-marketplaces
+      // VS Code Copilot: extraKnownMarketplaces in .github/copilot/settings.json.
+      // chat.plugins.marketplaces has application scope and cannot be set in workspace
+      // .vscode/settings.json — VSCode rejects it with "This setting has an application scope".
+      // Source: https://code.visualstudio.com/docs/copilot/customization/agent-plugins
       marketplaceSettings: {
-        settingsPath: ".vscode/settings.json",
-        settingsKey: "chat.plugins.marketplaces",
-        valueShape: "array",
-        toEntry: buildVscodeStyleMarketplaceEntry,
+        settingsPath: ".github/copilot/settings.json",
+        settingsKey: "extraKnownMarketplaces",
+        enabledPluginsKey: "enabledPlugins",
+        toEntry: buildClaudeStyleMarketplaceEntry,
       },
     }),
   },

@@ -180,53 +180,53 @@ describe("copilot", () => {
       expect(ms).not.toBeNull();
     });
 
-    it("writes to .vscode/settings.json", () => {
-      expect(ms?.settingsPath).toBe(".vscode/settings.json");
+    it("writes to .github/copilot/settings.json", () => {
+      expect(ms?.settingsPath).toBe(".github/copilot/settings.json");
     });
 
-    it("uses chat.plugins.marketplaces as settings key", () => {
-      expect(ms?.settingsKey).toBe("chat.plugins.marketplaces");
+    it("uses extraKnownMarketplaces as settings key", () => {
+      expect(ms?.settingsKey).toBe("extraKnownMarketplaces");
     });
 
-    it("uses array value shape", () => {
-      expect(ms?.valueShape).toBe("array");
-    });
-
-    it("has no enabledPluginsKey (marketplace is the unit for VSCode)", () => {
-      expect(ms?.enabledPluginsKey).toBeUndefined();
+    it("uses enabledPlugins as enabled plugins key", () => {
+      expect(ms?.enabledPluginsKey).toBe("enabledPlugins");
     });
 
     describe("toEntry()", () => {
-      it("returns owner/repo shorthand string for github source", () => {
+      it("returns map entry with github source shape for github source", () => {
         const result = ms?.toEntry({
           name: "aidd-framework",
           source: { kind: "github", repo: "ai-driven-dev/aidd-framework" },
         });
         expect(result).toEqual({
-          valueShape: "array",
-          value: "ai-driven-dev/aidd-framework",
+          valueShape: "map",
+          key: "aidd-framework",
+          value: { source: { source: "github", repo: "ai-driven-dev/aidd-framework" } },
         });
       });
 
-      it("returns owner/repo shorthand regardless of ref (ref ignored in array entry)", () => {
+      it("does not include ref in github source (ref dropped per VSCode spec)", () => {
         const result = ms?.toEntry({
           name: "aidd-framework",
           source: { kind: "github", repo: "ai-driven-dev/aidd-framework", ref: "v1.0.0" },
         });
-        expect(result).toEqual({
-          valueShape: "array",
-          value: "ai-driven-dev/aidd-framework",
-        });
+        expect(result).not.toBeNull();
+        if (result?.valueShape === "map") {
+          const src = result.value.source as Record<string, unknown>;
+          expect(src).not.toHaveProperty("ref");
+          expect(src).toEqual({ source: "github", repo: "ai-driven-dev/aidd-framework" });
+        }
       });
 
-      it("returns file:// URI for local source", () => {
+      it("returns map entry with directory source for local source", () => {
         const result = ms?.toEntry({
           name: "my-marketplace",
           source: { kind: "local", path: "/Users/dev/aidd-framework" },
         });
         expect(result).toEqual({
-          valueShape: "array",
-          value: "file:///Users/dev/aidd-framework",
+          valueShape: "map",
+          key: "my-marketplace",
+          value: { source: { source: "directory", path: "/Users/dev/aidd-framework" } },
         });
       });
 
