@@ -1,6 +1,8 @@
 import claudeSettings from "../../../assets/configs/claude/settings.json" with { type: "json" };
 import codexConfigToml from "../../../assets/configs/codex/config.toml";
-import copilotSettings from "../../../assets/configs/copilot/settings.json" with { type: "json" };
+import copilotVscodeSettings from "../../../assets/configs/copilot/vscode-settings.json" with {
+  type: "json",
+};
 import cursorSettings from "../../../assets/configs/cursor/settings.json" with { type: "json" };
 import opencodeJson from "../../../assets/configs/opencode/opencode.json" with { type: "json" };
 import vscodeExtensions from "../../../assets/configs/vscode/extensions.json" with { type: "json" };
@@ -21,7 +23,7 @@ import type {
 const CONFIG_ASSETS: Readonly<Record<ToolId, Readonly<Record<string, ConfigAsset>>>> = {
   claude: { "settings.json": claudeSettings },
   cursor: { "settings.json": cursorSettings },
-  copilot: { "settings.json": copilotSettings },
+  copilot: { "vscode-settings.json": copilotVscodeSettings },
   opencode: { "opencode.json": opencodeJson },
   codex: { "config.toml": codexConfigToml },
   vscode: {

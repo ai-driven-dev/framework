@@ -29,6 +29,20 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
     });
   });
 
+  describe("copilot", () => {
+    it("returns merged vscode-settings.json with ≥26 keys including both asset origins", () => {
+      const asset = provider.loadConfigAsset("copilot", "vscode-settings.json") as Record<
+        string,
+        unknown
+      >;
+      expect(Object.keys(asset).length).toBeGreaterThanOrEqual(26);
+      expect(asset).toHaveProperty("chat.plugins.enabled", true);
+      expect(asset).toHaveProperty("chat.useAgentSkills", true);
+      expect(asset).toHaveProperty("chat.tools.urls.autoApprove");
+      expect(asset).toHaveProperty("github.copilot.chat.agent.autoFix", true);
+    });
+  });
+
   describe("vscode", () => {
     it("returns settings.json as object", () => {
       const asset = provider.loadConfigAsset("vscode", "settings.json") as Record<string, unknown>;
