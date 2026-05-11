@@ -43,7 +43,10 @@ ${script}
 `;
   await writeFile(scriptPath, fullScript);
   try {
-    const { stdout } = await execFileAsync(EXPECT_BIN, ["-f", scriptPath], { cwd: projectDir });
+    const { stdout } = await execFileAsync(EXPECT_BIN, ["-f", scriptPath], {
+      cwd: projectDir,
+      env: { ...process.env, PWD: projectDir },
+    });
     return { stdout, exitCode: 0 };
   } catch (err) {
     const e = err as { stdout?: string; stderr?: string; code?: number };

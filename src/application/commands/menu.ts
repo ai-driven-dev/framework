@@ -2,6 +2,7 @@ import readline from "node:readline";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import { createMenuDeps } from "../../infrastructure/deps.js";
+import { resolveProjectRoot } from "../../infrastructure/project-root.js";
 import { spawnCliCommand } from "./shared/spawn-cli-command.js";
 
 interface MenuLeaf {
@@ -450,7 +451,7 @@ function printBanner(): void {
 
 export async function runMenuLoop(): Promise<never> {
   printBanner();
-  const { manifestRepo, prompter } = createMenuDeps(process.cwd());
+  const { manifestRepo, prompter } = createMenuDeps(resolveProjectRoot());
   for (;;) {
     try {
       const result = await new InteractiveMenuUseCase(manifestRepo, prompter).execute();
