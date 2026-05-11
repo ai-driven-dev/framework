@@ -29,7 +29,37 @@ jobs:
       mode: ${{ steps.route.outputs.mode }}
       ref: ${{ steps.route.outputs.ref }}
       issue_number: ${{ steps.route.outputs.issue_number }}
+      account_secret: ${{ steps.route_account.outputs.account_secret }}
+      account_owner: ${{ steps.route_account.outputs.account_owner }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .claude/aidd-orchestrator.json
+          sparse-checkout-cone-mode: false
+
+      - name: Resolve Anthropic account by assignee then sender
+        id: route_account
+        run: |
+          CONFIG=.claude/aidd-orchestrator.json
+          ASSIGNEE='${{ github.event.issue.assignees[0].login }}'
+          SENDER='${{ github.event.sender.login }}'
+          KEY=""
+          if [ -n "$ASSIGNEE" ] && [ "$ASSIGNEE" != "null" ]; then
+            KEY=$(jq -r --arg u "$ASSIGNEE" '.claude_action_auth.account_routing[$u] // empty' "$CONFIG")
+          fi
+          if [ -z "$KEY" ]; then
+            KEY=$(jq -r --arg u "$SENDER" '.claude_action_auth.account_routing[$u] // empty' "$CONFIG")
+          fi
+          if [ -z "$KEY" ]; then
+            KEY=$(jq -r '.claude_action_auth.default_secret_name' "$CONFIG")
+          fi
+          OWNER="${ASSIGNEE:-$SENDER}"
+          {
+            echo "account_secret=$KEY"
+            echo "account_owner=$OWNER"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Route to run vs review based on linked PR
         id: route
         run: |

@@ -25,9 +25,9 @@ A file at `.github/workflows/aidd-async.yml`.
    - `__MENTION_IMPLEMENT__` -> `answers.mentions.implement`
    - `__MENTION_REVIEW__` -> `answers.mentions.review`
    - `__DEFAULT_BRANCH__` -> `detection.default_branch`
-   - `__CLAUDE_AUTH_LINE__` -> matches `answers.claude_action_auth.mode`:
-     - `oauth_token` -> `claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}`
-     - `api_key` -> `anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}`
+   - `__CLAUDE_AUTH_LINE__` -> matches `answers.claude_action_auth.mode` (the secret name is resolved per-run via the dispatch step `route_account`, which reads `.claude/aidd-orchestrator.json`'s `account_routing` and `default_secret_name`):
+     - `oauth_token` -> `claude_code_oauth_token: ${{ secrets[needs.dispatch.outputs.account_secret] }}`
+     - `api_key` -> `anthropic_api_key: ${{ secrets[needs.dispatch.outputs.account_secret] }}`
    - `__MARKETPLACE_REPO__` -> `answers.marketplace.repo`
    - `__MARKETPLACE_TOKEN_NAME__` -> matches `answers.marketplace.access`:
      - `public` -> `GITHUB_TOKEN` (the runner's default token works for public repos)
