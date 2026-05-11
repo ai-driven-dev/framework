@@ -7,15 +7,15 @@ How a developer should operate AI coding assistants to maximize quality, speed, 
 - [1) Operating mindset](#1-operating-mindset)
 - [2) Start of task checklist](#2-start-of-task-checklist)
 - [3) Planning before coding](#3-planning-before-coding)
-- [5) Implementation loop](#5-implementation-loop)
-- [6) Review loop](#6-review-loop)
-- [7) Prompting hygiene](#7-prompting-hygiene)
-- [8) Context hygiene](#8-context-hygiene)
-- [9) Quality discipline](#9-quality-discipline)
-- [10) Delegation strategy](#10-delegation-strategy)
-- [11) Failure and recovery strategy](#11-failure-and-recovery-strategy)
-- [12) Team-level practices](#12-team-level-practices)
-- [13) Anti-patterns to avoid](#13-anti-patterns-to-avoid)
+- [4) Implementation loop](#4-implementation-loop)
+- [5) Review loop](#5-review-loop)
+- [6) Prompting hygiene](#6-prompting-hygiene)
+- [7) Context hygiene](#7-context-hygiene)
+- [8) Quality discipline](#8-quality-discipline)
+- [9) Delegation strategy](#9-delegation-strategy)
+- [10) Failure and recovery strategy](#10-failure-and-recovery-strategy)
+- [11) Team-level practices](#11-team-level-practices)
+- [12) Anti-patterns to avoid](#12-anti-patterns-to-avoid)
 - [References (official)](#references-official)
 
 ---
@@ -44,7 +44,7 @@ How a developer should operate AI coding assistants to maximize quality, speed, 
 - Keep one behavior per increment.
 - Refuse execution if plan has ambiguity.
 
-## 5) Implementation loop
+## 4) Implementation loop
 
 For each increment:
 
@@ -55,14 +55,14 @@ For each increment:
 5. Ask AI to fix only failing points.
 6. Re-run checks until green.
 
-## 6) Review loop
+## 5) Review loop
 
 - Run technical review (`rules`, defects, regressions).
 - Run functional review (expected behavior vs implementation).
 - Manually read staged diff before commit.
 - Require evidence for claims ("works", "tested", "fixed").
 
-## 7) Prompting hygiene
+## 6) Prompting hygiene
 
 - Give context, constraints, and expected output format.
 - Request concrete file paths and commands.
@@ -71,7 +71,7 @@ For each increment:
 - Keep prompts scoped; avoid multi-objective prompts.
 - If output quality drops, reset with a fresh focused prompt.
 
-## 8) Context hygiene
+## 7) Context hygiene
 
 - Keep rules concise and non-conflicting.
 - Avoid duplicate sources of truth.
@@ -79,7 +79,7 @@ For each increment:
 - Prefer canonical docs referenced by path.
 - Remove stale instructions quickly.
 
-## 9) Quality discipline
+## 8) Quality discipline
 
 - For bug fixes: failing test first, then fix.
 - Keep structural and behavioral changes separated.
@@ -87,14 +87,14 @@ For each increment:
 - Never skip validation to "save time".
 - Never merge code you do not understand.
 
-## 10) Delegation strategy
+## 9) Delegation strategy
 
 - Low risk: semi-autonomous execution with checkpoints.
 - Medium risk: tighter loop, smaller increments, frequent review.
 - High risk: manual supervision, explicit approvals at every gate.
 - Critical systems: mandatory peer review before merge.
 
-## 11) Failure and recovery strategy
+## 10) Failure and recovery strategy
 
 - Stop if AI drifts from objective.
 - If same failure repeats, change approach (not just prompt wording).
@@ -102,7 +102,7 @@ For each increment:
 - Keep checkpoint commits before long autonomous runs.
 - Escalate early when uncertainty remains high.
 
-## 12) Team-level practices
+## 11) Team-level practices
 
 - Standardize shared prompts/commands/rules in repo.
 - Use common commit and PR templates.
@@ -110,7 +110,7 @@ For each increment:
 - Review and improve guidelines monthly.
 - Keep onboarding docs short and actionable.
 
-## 13) Anti-patterns to avoid
+## 12) Anti-patterns to avoid
 
 - Asking for implementation before validation of plan.
 - Approving giant diffs without incremental checkpoints.

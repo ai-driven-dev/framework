@@ -22,14 +22,15 @@ One or more context files exist and each contains the mandatory block :
 
 ## Process
 
-1. Identify current tools based on current tool configuration.
-2. Deduplicate target paths (multiple tools may share `AGENTS.md`).
-3. For each target file, apply the first matching case:
-   - **File absent** → copy `@../assets/AGENTS.md`; replace the main title with the tool-appropriate heading.
-   - **File present, `## Memory Management` section missing** → append the full `## Memory Management` block extracted from `@../assets/AGENTS.md` (from `## Memory Management` to end of file).
-   - **File present, section exists, `<aidd_project_memory>` tag missing** → inject `<aidd_project_memory>\n</aidd_project_memory>` immediately after the `### Project memory` heading (create the heading if absent).
-   - **`<aidd_project_memory>` tag already present** → skip; print `already ok`.
-4. Print a summary table: `file | action taken`.
+1. **Detect installed context files**. Check the project for existing `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`. Note which are already present.
+2. **Ask the user**. Display the detected files and the full tool list (`claude`, `cursor`, `codex`, `copilot`, `opencode`). Ask which tools the user actively uses. Default: tools whose context file is already present, else `claude` alone. Wait for explicit user confirmation before continuing.
+3. **Resolve target paths**. From the confirmed tool list, map each to its context file per the mapping reference. Deduplicate (multiple tools may share `AGENTS.md`).
+4. For each target file, apply the first matching case:
+   - **File absent** -> copy `@../assets/AGENTS.md`; replace the main title with the tool-appropriate heading.
+   - **File present, `## Memory Management` section missing** -> append the full `## Memory Management` block extracted from `@../assets/AGENTS.md` (from `## Memory Management` to end of file).
+   - **File present, section exists, `<aidd_project_memory>` tag missing** -> inject `<aidd_project_memory>\n</aidd_project_memory>` immediately after the `### Project memory` heading (create the heading if absent).
+   - **`<aidd_project_memory>` tag already present** -> skip; print `already ok`.
+5. Print a summary table: `tool | file | action taken`.
 
 ## Test
 
