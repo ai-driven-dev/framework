@@ -61,11 +61,12 @@ aidd_docs/
 1. Check if memory bank already exists in `aidd_docs/memory/` folder:
    - If exists, update with newer information
    - If not, create from scratch
-2. **Auto-detect project type**: Quickly explore the codebase to determine if it's frontend or backend. Use the `scope` frontmatter field to select which templates to generate.
-3. **Inform user of detection**: Display detected type and list files that will be generated
-4. Spawn parallel task sub-agents for each template files
-5. Write generated files to `aidd_docs/memory/`
-6. Wait for all sub-agents to complete. Print a list of written files.
+2. **Auto-detect project type**. Quickly explore the codebase (package.json, pyproject.toml, lockfiles, src layout, etc.) to classify as `frontend`, `backend`, or `all`.
+3. **Confirm with user**. Display detected type plus the list of template files that would be generated. Ask the user to confirm or override (`frontend` / `backend` / `all` / `cancel`). Wait for explicit answer before continuing.
+4. Filter templates using the `scope` frontmatter field against the confirmed type.
+5. Spawn parallel sub-agents, one per selected template.
+6. Write generated files to `aidd_docs/memory/`.
+7. Wait for all sub-agents to complete. Print a summary table: `template | output file | written | scope`.
 
 ## Test
 
