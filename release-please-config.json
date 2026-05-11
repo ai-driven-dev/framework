@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
-  "release-type": "simple",
+  "release-type": "generic",
   "include-component-in-tag": true,
   "include-v-in-tag": true,
   "bump-minor-pre-major": false,
@@ -43,8 +43,8 @@
         }
       ]
     },
-    "plugins/aidd-vcs": {
-      "package-name": "aidd-vcs",
+    "plugins/aidd-orchestrator": {
+      "package-name": "aidd-orchestrator",
       "extra-files": [
         {
           "type": "json",
@@ -56,6 +56,26 @@
     "plugins/aidd-pm": {
       "package-name": "aidd-pm",
       "release-as": "1.0.0-rc.1",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": ".claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "plugins/aidd-refine": {
+      "package-name": "aidd-refine",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": ".claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "plugins/aidd-vcs": {
+      "package-name": "aidd-vcs",
       "extra-files": [
         {
           "type": "json",
