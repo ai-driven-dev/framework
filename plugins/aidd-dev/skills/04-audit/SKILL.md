@@ -1,5 +1,5 @@
 ---
-name: aidd-dev:03:audit
+name: aidd-dev:04:audit
 description: Perform deep codebase analysis to identify technical debt, dead code, and improvement opportunities.
 ---
 

@@ -96,8 +96,8 @@ The way you compute `quality_score` depends on the validator format.
 
 # Skills you may invoke
 
-- `aidd-dev:04:review`
-- `aidd-dev:03:audit`
+- `aidd-dev:05:review`
+- `aidd-dev:04:audit`
 
 Anything else is out of bounds.
 

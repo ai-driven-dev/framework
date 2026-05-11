@@ -1,6 +1,7 @@
 {
   "mcpServers": {
     "mcp-atlassian": {
+      "disabled": true,
       "command": "uvx",
       "args": ["mcp-atlassian"],
       "env": {

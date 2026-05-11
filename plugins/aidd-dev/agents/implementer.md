@@ -78,11 +78,11 @@ Your output is complete when:
 # Skills you may invoke
 
 - `aidd-dev:01:plan` (read-only — for context)
-- `aidd-dev:02:assert`
-- `aidd-dev:05:test`
-- `aidd-dev:07:debug`
-- `aidd-dev:03:audit`
-- `aidd-dev:06:refactor`
+- `aidd-dev:03:assert`
+- `aidd-dev:06:test`
+- `aidd-dev:08:debug`
+- `aidd-dev:04:audit`
+- `aidd-dev:07:refactor`
 - `aidd-vcs:01:commit`
 
 Anything else is out of bounds.

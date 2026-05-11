@@ -93,6 +93,14 @@ AIDD is delivered as a plugin marketplace. Pick what you need; do not install ev
 - **Remote marketplace** (default): add the AIDD marketplace via your AI tool's plugin manager, then install only the plugins your project actually uses (e.g. `aidd-context` + `aidd-dev` + `aidd-vcs`).
 - **Local marketplace**: clone the AIDD framework repo and point your AI tool's plugin manager at the local folder. Useful for offline work, custom forks, or contributing to the framework.
 
+| Plugin       | Skills                                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------------------------- |
+| aidd-context | 01-bootstrap, 02-project-init, 03-context-generate, 04-mermaid, 05-learn, 06-discovery                              |
+| aidd-refine  | 01-brainstorm, 02-challenge, 03-condense                                                                            |
+| aidd-dev     | 00-sdlc, 01-plan, 02-implement, 03-assert, 04-audit, 05-review, 06-test, 07-refactor, 08-debug, 09-for-sure         |
+| aidd-vcs     | 01-commit, 02-pull-request, 03-release-tag, 04-issue-create                                                         |
+| aidd-pm      | 01-ticket-info, 02-user-stories-create, 03-prd                                                                      |
+
 Each plugin is independently installable; install incrementally. Smaller surface, fewer triggers competing.
 
 ## Typical Workflow
@@ -103,12 +111,12 @@ A typical change cycles through skills from several plugins. The order below is 
 2. **Project init** (once per project, re-runnable to refresh): `aidd-context:02:project-init` scaffolds `aidd_docs/`, the memory bank, and the AI context files for the tools you use. Re-running later refreshes the scaffold without overwriting your customizations.
 3. **Frame the request**: `aidd-refine:01:brainstorm` to clarify, `aidd-pm:01:ticket-info` to pull tracker data, `aidd-pm:02:user-stories-create` and `aidd-pm:03:prd` or `aidd-pm:05:spec` to formalize scope.
 4. **Plan**: `aidd-dev:01:plan` produces the technical plan, component behavior model, or design-image extraction.
-5. **Implement and assert**: write code against the plan, then `aidd-dev:02:assert` verifies the result.
-6. **Review**: `aidd-dev:04:review` for code and functional review; `aidd-refine:02:challenge` to stress-test the result.
-7. **Test**: `aidd-dev:05:test` adds or runs tests and validates user journeys.
+5. **Implement and assert**: `aidd-dev:02:implement` writes code against the plan; `aidd-dev:03:assert` verifies the result.
+6. **Review**: `aidd-dev:05:review` for code and functional review; `aidd-refine:02:challenge` to stress-test the result.
+7. **Test**: `aidd-dev:06:test` adds or runs tests and validates user journeys.
 8. **Document and learn**: `aidd-context:04:mermaid` for diagrams; `aidd-context:05:learn` to feed insights back into the memory bank or rules.
 9. **Ship**: `aidd-vcs:01:commit`, `aidd-vcs:02:pull-request`, then `aidd-vcs:03:release-tag` when the work is in production. File issues with `aidd-vcs:04:issue-create`.
-10. **Refactor and maintain**: `aidd-dev:06:refactor` for performance or security, `aidd-dev:03:audit` for technical-debt sweeps, `aidd-dev:07:debug` to reproduce and fix bugs.
+10. **Refactor and maintain**: `aidd-dev:07:refactor` for performance or security, `aidd-dev:04:audit` for technical-debt sweeps, `aidd-dev:08:debug` to reproduce and fix bugs.
 
 When you want the whole synchronous pipeline run in one go (spec, plan, implementation, finalize), invoke `aidd-dev:00:sdlc`.
 

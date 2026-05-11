@@ -1,12 +1,14 @@
 {
   "mcpServers": {
     "playwright": {
+      "disabled": true,
       "type": "stdio",
       "command": "npx",
       "args": ["@playwright/mcp@latest"],
       "env": {}
     },
     "figma": {
+      "disabled": true,
       "url": "https://mcp.figma.com/mcp",
       "type": "http"
     }

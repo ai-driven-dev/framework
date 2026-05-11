@@ -1,5 +1,5 @@
 ---
-name: aidd-dev:02:assert
+name: aidd-dev:03:assert
 description: Assert features work as intended — general assertions, architecture conformance, and frontend UI validation.
 ---
 
