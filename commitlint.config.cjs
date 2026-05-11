@@ -7,9 +7,12 @@ module.exports = {
       [
         "aidd-context",
         "aidd-dev",
-        "aidd-vcs",
+        "aidd-orchestrator",
         "aidd-pm",
+        "aidd-refine",
+        "aidd-vcs",
         "framework",
+        "marketplace",
       ],
     ],
   },
