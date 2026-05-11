@@ -8,10 +8,18 @@ const DEFAULT_MCP_PATH = ".mcp.json";
 const DEFAULT_HOOKS_PATH = "hooks/hooks.json";
 const DEFAULT_HOOKS_FORMAT: HooksContentFormat = "claude";
 
-export interface MarketplaceSettingsEntry {
+export interface MarketplaceSettingsEntryMap {
+  valueShape: "map";
   key: string;
   value: Record<string, unknown>;
 }
+
+export interface MarketplaceSettingsEntryArray {
+  valueShape: "array";
+  value: string;
+}
+
+export type MarketplaceSettingsEntry = MarketplaceSettingsEntryMap | MarketplaceSettingsEntryArray;
 
 export interface MarketplaceSettingsInput {
   name: string;
@@ -22,6 +30,7 @@ export interface MarketplaceSettingsInput {
 export interface MarketplaceSettings {
   settingsPath: string;
   settingsKey: string;
+  valueShape?: "map" | "array";
   enabledPluginsKey?: string;
   enabledPluginsSettingsPath?: string;
   toEntry(input: MarketplaceSettingsInput): MarketplaceSettingsEntry | null;

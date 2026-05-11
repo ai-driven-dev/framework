@@ -1,6 +1,6 @@
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
-import { buildClaudeStyleMarketplaceEntry } from "../../capabilities/marketplace-entry.js";
+import { buildVscodeStyleMarketplaceEntry } from "../../capabilities/marketplace-entry.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
@@ -30,23 +30,6 @@ import type {
   UserFileSectionKey,
 } from "../contracts.js";
 import { registerTool } from "../registry.js";
-
-const COPILOT_VSCODE_DEFAULTS = JSON.stringify(
-  {
-    "github.copilot.enable": { "*": true, markdown: true },
-    "github.copilot.nextEditSuggestions.enabled": true,
-    "chat.notifyWindowOnConfirmation": true,
-    "chat.notifyWindowOnResponseReceived": true,
-    "accessibility.signals.chatResponseReceived": { sound: "auto" },
-    "accessibility.signals.chatEditModifiedFile": { sound: "auto" },
-    "accessibility.signals.chatUserActionRequired": { sound: "auto", announcement: "auto" },
-    "github.copilot.chat.cli.mcp.enabled": true,
-    "chat.tools.global.autoApprove": true,
-    "chat.tools.terminal.autoApprove": { npm: true, pnpm: true, node: true, git: true },
-  },
-  null,
-  2
-);
 
 const DIRECTORY = ".github/";
 const TOOL_SUFFIX = ".copilot.md";
@@ -329,7 +312,7 @@ export const copilot: AiTool<
     settings: new SettingsCapability({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
-      staticContent: COPILOT_VSCODE_DEFAULTS,
+      staticContentAssetFile: "vscode-settings.json",
       requiresTool: "vscode",
     }),
     plugins: new PluginsCapability({
@@ -338,14 +321,13 @@ export const copilot: AiTool<
       pluginManifestRelativePath: "plugin.json",
       acceptsHooks: true,
       acceptsMcp: true,
-      // VS Code Copilot workspace plugin settings: .github/copilot/settings.json
-      // uses the same extraKnownMarketplaces + enabledPlugins schema as Claude Code.
-      // Source: https://docs.github.com/en/copilot/customizing-copilot/managing-copilot-plugins
+      // VS Code Copilot: chat.plugins.marketplaces (array) in .vscode/settings.json.
+      // Source: https://code.visualstudio.com/docs/copilot/customization/agent-plugins#_configure-plugin-marketplaces
       marketplaceSettings: {
-        settingsPath: ".github/copilot/settings.json",
-        settingsKey: "extraKnownMarketplaces",
-        enabledPluginsKey: "enabledPlugins",
-        toEntry: buildClaudeStyleMarketplaceEntry,
+        settingsPath: ".vscode/settings.json",
+        settingsKey: "chat.plugins.marketplaces",
+        valueShape: "array",
+        toEntry: buildVscodeStyleMarketplaceEntry,
       },
     }),
   },

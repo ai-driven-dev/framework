@@ -4,7 +4,7 @@ import type { MarketplaceSettingsEntry, MarketplaceSettingsInput } from "./plugi
  * Shared toEntry implementation for tools that use the Claude Code marketplace schema:
  *   { source: { source: "github"|"directory", repo/path: "..." }, version? }
  *
- * Used by: claude, copilot, cursor, codex
+ * Used by: claude, cursor, codex
  */
 export function buildClaudeStyleMarketplaceEntry(
   input: MarketplaceSettingsInput
@@ -23,5 +23,25 @@ export function buildClaudeStyleMarketplaceEntry(
   }
 
   if (version != null) value.version = version;
-  return { key: name, value };
+  return { valueShape: "map", key: name, value };
+}
+
+/**
+ * toEntry implementation for VSCode Copilot chat.plugins.marketplaces (array of strings).
+ * GitHub source: "owner/repo" shorthand.
+ * Local source: "file:///abs/path" URI.
+ *
+ * Used by: copilot
+ */
+export function buildVscodeStyleMarketplaceEntry(
+  input: MarketplaceSettingsInput
+): MarketplaceSettingsEntry | null {
+  const { source } = input;
+  if (source.kind === "github") {
+    return { valueShape: "array", value: source.repo };
+  }
+  if (source.kind === "local") {
+    return { valueShape: "array", value: `file://${source.path}` };
+  }
+  return null;
 }

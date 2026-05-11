@@ -144,12 +144,47 @@ export class MarketplaceSyncSettingsUseCase {
     versionByName: Map<string, string | undefined>,
     projectRoot: string
   ): boolean {
+    if (settings.valueShape === "array") {
+      return this.mergeMarketplacesArray(json, settings, marketplaces, versionByName, projectRoot);
+    }
+    return this.mergeMarketplacesMap(json, settings, marketplaces, versionByName, projectRoot);
+  }
+
+  private mergeMarketplacesArray(
+    json: Record<string, unknown>,
+    settings: MarketplaceSettings,
+    marketplaces: readonly Marketplace[],
+    versionByName: Map<string, string | undefined>,
+    projectRoot: string
+  ): boolean {
+    const existing = this.existingArray(json, settings.settingsKey);
+    const toAdd: string[] = [];
+    for (const m of marketplaces) {
+      const source = this.resolveSourceForSettings(m.source, projectRoot);
+      const entry = settings.toEntry({ name: m.name, source, version: versionByName.get(m.name) });
+      if (entry === null || entry.valueShape !== "array") continue;
+      if (!existing.includes(entry.value) && !toAdd.includes(entry.value)) {
+        toAdd.push(entry.value);
+      }
+    }
+    if (toAdd.length === 0) return false;
+    json[settings.settingsKey] = [...existing, ...toAdd];
+    return true;
+  }
+
+  private mergeMarketplacesMap(
+    json: Record<string, unknown>,
+    settings: MarketplaceSettings,
+    marketplaces: readonly Marketplace[],
+    versionByName: Map<string, string | undefined>,
+    projectRoot: string
+  ): boolean {
     const existing = this.existingRecord(json, settings.settingsKey);
     const toMerge: Record<string, Record<string, unknown>> = {};
     for (const m of marketplaces) {
       const source = this.resolveSourceForSettings(m.source, projectRoot);
       const entry = settings.toEntry({ name: m.name, source, version: versionByName.get(m.name) });
-      if (entry === null || entry.key in toMerge) continue;
+      if (entry === null || entry.valueShape !== "map" || entry.key in toMerge) continue;
       if (
         entry.key in existing &&
         JSON.stringify(existing[entry.key]) === JSON.stringify(entry.value)
@@ -185,7 +220,7 @@ export class MarketplaceSyncSettingsUseCase {
         source: marketplace.source,
         version: versionByName.get(marketplace.name),
       });
-      if (entry == null) continue;
+      if (entry == null || entry.valueShape !== "map") continue;
       const key = `${plugin.name}@${entry.key}`;
       if (!(key in existing)) toAdd[key] = true;
     }
@@ -225,6 +260,12 @@ export class MarketplaceSyncSettingsUseCase {
       return raw as Record<string, unknown>;
     }
     return {};
+  }
+
+  private existingArray(json: Record<string, unknown>, settingsKey: string): string[] {
+    const raw = json[settingsKey];
+    if (Array.isArray(raw)) return raw.filter((v): v is string => typeof v === "string");
+    return [];
   }
 
   private resolveSourceForSettings(source: PluginSource, projectRoot: string): PluginSource {

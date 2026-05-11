@@ -194,6 +194,7 @@ describe("codex", () => {
           source: { kind: "local", path: "/workspace/my-plugin" },
         });
         expect(result).toEqual({
+          valueShape: "map",
           key: "my-plugin",
           value: { source: { source: "directory", path: "/workspace/my-plugin" } },
         });
@@ -205,6 +206,7 @@ describe("codex", () => {
           source: { kind: "github", repo: "org/my-plugin" },
         });
         expect(result).toEqual({
+          valueShape: "map",
           key: "my-plugin",
           value: { source: { source: "github", repo: "org/my-plugin" } },
         });
@@ -216,6 +218,7 @@ describe("codex", () => {
           source: { kind: "github", repo: "org/my-plugin", ref: "v1.2.3" },
         });
         expect(result).toEqual({
+          valueShape: "map",
           key: "my-plugin",
           value: { source: { source: "github", repo: "org/my-plugin", ref: "v1.2.3" } },
         });
@@ -228,6 +231,7 @@ describe("codex", () => {
           version: "2.0.0",
         });
         expect(result).toEqual({
+          valueShape: "map",
           key: "my-plugin",
           value: { source: { source: "github", repo: "org/my-plugin" }, version: "2.0.0" },
         });
