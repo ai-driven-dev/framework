@@ -35,19 +35,24 @@ This repository follows [Semantic Versioning](https://semver.org/) with automate
 1. Every push to `main` with conventional commits triggers a **Release PR** (changelog + version bump)
 2. When the Release PR is merged → GitHub Release + tag + downloadable tarball
 
-The tarball contains only the framework content: `agents/`, `commands/`, `config/`, `rules/`, `skills/`, `templates/`, `aidd_docs/`, `version.txt`.
+**Root releases** (tag shape `v<X.Y.Z>`) ship one `aidd-framework-v<X.Y.Z>.tar.gz` containing the shared framework assets plus eight per-plugin bundles (`aidd-<plugin>-v<X.Y.Z>.tar.gz`).
+
+**Plugin releases** (tag shape `<plugin>-v<X.Y.Z>`, e.g. `aidd-dev-v1.2.0`) ship exactly one bundle — `aidd-<plugin>-v<X.Y.Z>.tar.gz` — containing only that plugin's files.
 
 ## Commit scope discipline
 
-Every commit must use one of the five allowed scopes:
+Every commit must use one of the eight allowed scopes:
 
-| Scope          | Use for                                                           |
-| -------------- | ----------------------------------------------------------------- |
-| `aidd-context` | Changes inside `plugins/aidd-context/`                            |
-| `aidd-dev`     | Changes inside `plugins/aidd-dev/`                                |
-| `aidd-vcs`     | Changes inside `plugins/aidd-vcs/`                                |
-| `aidd-pm`      | Changes inside `plugins/aidd-pm/`                                 |
-| `framework`    | Root-level changes: build scripts, CI, config, docs, `aidd_docs/` |
+| Scope               | Bumps                                              | Use for                                                                            |
+| ------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `framework`         | root (`marketplace.json`)                          | Repo-wide infra, CI scripts, and conventions not tied to a specific plugin         |
+| `marketplace`       | root (`marketplace.json`)                          | Catalog edits: descriptions, ordering, recommended flag, plugin add/remove         |
+| `aidd-context`      | `plugins/aidd-context/.claude-plugin/plugin.json`  | Changes inside `plugins/aidd-context/`                                             |
+| `aidd-dev`          | `plugins/aidd-dev/.claude-plugin/plugin.json`      | Changes inside `plugins/aidd-dev/`                                                 |
+| `aidd-orchestrator` | `plugins/aidd-orchestrator/.claude-plugin/plugin.json` | Changes inside `plugins/aidd-orchestrator/`                                    |
+| `aidd-pm`           | `plugins/aidd-pm/.claude-plugin/plugin.json`       | Changes inside `plugins/aidd-pm/` (pre-release — tracks `release-as` in config)   |
+| `aidd-refine`       | `plugins/aidd-refine/.claude-plugin/plugin.json`   | Changes inside `plugins/aidd-refine/`                                              |
+| `aidd-vcs`          | `plugins/aidd-vcs/.claude-plugin/plugin.json`      | Changes inside `plugins/aidd-vcs/`                                                 |
 
 Examples:
 
