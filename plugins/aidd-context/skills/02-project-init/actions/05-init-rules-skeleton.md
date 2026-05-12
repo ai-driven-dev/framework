@@ -27,7 +27,7 @@ rules/
 1. Check if `rules/` exists. If it does, list existing subdirectories.
 2. Create each of the 10 directories if absent. Skip existing ones without error.
 3. Print a summary: directories created vs skipped.
-4. Suggest next step: use `aidd-context:01:generate_rules` to populate rules in the appropriate category.
+4. Suggest next step: use `aidd-context:03:context-generate` to populate rules in the appropriate category.
 
 ## Test
 

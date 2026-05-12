@@ -15,7 +15,7 @@ You aim at <goal>.
 - <List of best practices relevant to the new agent's domain.>
 - <...>
 
-## Ressources
+## Resources
 
 ### <Ressource 1 Name>
 

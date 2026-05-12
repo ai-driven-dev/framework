@@ -26,7 +26,7 @@ Apply project conventions and coding standards.
 ### Review template
 
 ```markdown
-@./assets/review-template.md
+@../assets/review-template.md
 ```
 
 ## Process steps
