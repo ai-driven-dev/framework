@@ -5,7 +5,7 @@ Ensure every installed tool's AI context file contains the `<aidd_project_memory
 ## Context
 
 ```markdown
-@../../references/mapping-ai-context-file.md
+@../references/mapping-ai-context-file.md
 ```
 
 ## Inputs

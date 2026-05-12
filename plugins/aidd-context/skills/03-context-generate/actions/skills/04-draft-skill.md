@@ -9,11 +9,11 @@ Write the SKILL.md. Router only - no business logic.
 
 ## Outputs
 
-`<skill>/SKILL.md` produced from `@assets/skills/skill-template.md`.
+`<skill>/SKILL.md` produced from `@../../assets/skills/skill-template.md`.
 
 ## Process
 
-1. Read `@assets/skills/skill-template.md`. Copy its contents to `<skill>/SKILL.md`.
+1. Read `@../../assets/skills/skill-template.md`. Copy its contents to `<skill>/SKILL.md`.
 2. Fill the frontmatter per R5 and `references/naming-conventions.md`. If `invocation_mode = manual`, add `disable-model-invocation: true`.
 3. Write the action table from the plan: `#`, slug, role, required input.
 4. Sequential → chain `01 → 02 → ...`; non-sequential → trigger-to-action mapping.

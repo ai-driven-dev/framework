@@ -36,3 +36,7 @@ Naming pattern for React rules in `03-frameworks-and-libraries` category:
 - `3-react@19`
 - `3-react@19-hooks`
 - `3-react@19.1-hooks`
+
+## Frontmatter and tool-specific syntax
+
+Frontmatter fields, file extensions, glob path syntax, and on-disk locations are tool-specific. Refer to `@ai-mapping.md` for the exact shape per AI tool.

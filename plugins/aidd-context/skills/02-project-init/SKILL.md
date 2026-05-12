@@ -38,9 +38,7 @@ Bootstraps the full AIDD context layer for a project: AI context files with memo
 
 ### Schema rules to apply to generated Mermaid diagrams
 
-```md
-@../../04-mermaid/references/mermaid-conventions.md
-```
+When this skill emits Mermaid diagrams, follow the project's Mermaid conventions.
 
 ## Assets
 
