@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { SettingsCapability } from "../../../domain/capabilities/settings-capability.js";
 import { InstallationFile } from "../../../domain/models/file.js";
-import { extractMergeEntries, type MergeFileEntry } from "../../../domain/models/merge.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
+import { extractMergeEntries, type MergeFileEntry } from "../../../domain/models/merge.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileMerger } from "../../../domain/ports/file-merger.js";
@@ -89,20 +89,34 @@ export class InstallRuntimeConfigUseCase {
     const capabilities = Array.isArray(raw) ? raw : raw !== undefined ? [raw] : [];
     const result: InstallationFile[] = [];
     for (const cap of capabilities) {
-      if (cap instanceof SettingsCapability && cap.staticContent !== undefined) {
-        if (cap.requiresTool && !options.manifest.hasTool(cap.requiresTool)) continue;
-        const content = cap.staticContent;
-        result.push(
-          new InstallationFile({
-            relativePath: cap.buildOutputPath(),
-            content,
-            hash: this.hasher.hash(content),
-            mergeStrategy: cap.getMergeStrategy(),
-          })
-        );
-      }
+      const file = this.buildStaticSettingsFile(cap, options);
+      if (file !== null) result.push(file);
     }
     return result;
+  }
+
+  private buildStaticSettingsFile(
+    cap: unknown,
+    options: InstallRuntimeConfigOptions
+  ): InstallationFile | null {
+    if (!(cap instanceof SettingsCapability)) return null;
+    const hasStaticForm =
+      cap.staticContent !== undefined || cap.staticContentAssetFile !== undefined;
+    if (!hasStaticForm) return null;
+    if (cap.requiresTool && !options.manifest.hasTool(cap.requiresTool)) return null;
+    const content = this.resolveStaticContent(cap, options.toolId);
+    return new InstallationFile({
+      relativePath: cap.buildOutputPath(),
+      content,
+      hash: this.hasher.hash(content),
+      mergeStrategy: cap.getMergeStrategy(),
+    });
+  }
+
+  private resolveStaticContent(cap: SettingsCapability, toolId: AiToolId): string {
+    if (cap.staticContent !== undefined) return cap.staticContent;
+    const asset = this.assets.loadConfigAsset(toolId, cap.staticContentAssetFile as string);
+    return typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
   }
 
   private async isUserOwned(

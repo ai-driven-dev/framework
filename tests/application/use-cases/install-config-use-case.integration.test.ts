@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { SettingsCapability } from "../../../src/domain/capabilities/settings-capability.js";
 import {
   extractConfigCapabilities,
   InstallConfigUseCase,
 } from "../../../src/application/use-cases/install/install-config-use-case.js";
+import { SettingsCapability } from "../../../src/domain/capabilities/settings-capability.js";
 import { FrameworkDescriptor } from "../../../src/domain/models/framework.js";
 import { copilot } from "../../../src/domain/tools/ai/copilot.js";
+import { BundledAssetProviderAdapter } from "../../../src/infrastructure/assets/asset-loader.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { linuxPlatform } from "./helpers.js";
@@ -73,6 +74,7 @@ describe("InstallConfigUseCase — staticContent", () => {
   it("copilot staticContent contains all required Copilot keys", async () => {
     const { useCase } = buildUseCase();
     const descriptor = emptyDescriptor();
+    const assetProvider = new BundledAssetProviderAdapter();
 
     const results = await useCase.execute({
       capabilities: extractConfigCapabilities(copilot),
@@ -80,6 +82,8 @@ describe("InstallConfigUseCase — staticContent", () => {
       contentFiles: new Map(),
       projectRoot: PROJECT_ROOT,
       platform: linuxPlatform,
+      assetProvider,
+      toolId: "copilot",
     });
 
     const settingsFile = results.find((f) => f.relativePath === ".vscode/settings.json");

@@ -17,7 +17,8 @@ function buildUseCase(deps: Awaited<ReturnType<typeof buildUnitDeps>>) {
     deps.installIdeConfigUseCase,
     deps.manifestRepo,
     deps.fs,
-    deps.hasher
+    deps.hasher,
+    deps.assetProvider
   );
 }
 

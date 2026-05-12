@@ -246,7 +246,8 @@ export async function createDeps(
     installIdeConfigUseCase,
     manifestRepo,
     fs,
-    hasher
+    hasher,
+    assetProvider
   );
   const uninstallIdeUseCase = new UninstallIdeUseCase(fs, manifestRepo);
   const pluginInstallFromMarketplaceUseCase = new PluginInstallFromMarketplaceUseCase(

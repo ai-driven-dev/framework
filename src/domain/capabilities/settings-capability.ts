@@ -4,6 +4,7 @@ import type { ToolId } from "../models/tool-ids.js";
 export class SettingsCapability {
   readonly consumes: readonly string[];
   readonly staticContent: string | undefined;
+  readonly staticContentAssetFile: string | undefined;
   readonly requiresTool: ToolId | undefined;
 
   constructor(
@@ -12,17 +13,28 @@ export class SettingsCapability {
       mergeStrategy: MergeStrategy;
       consumes?: readonly string[];
       staticContent?: string;
+      staticContentAssetFile?: string;
       requiresTool?: ToolId;
     }
   ) {
-    if (params.consumes?.length && params.staticContent !== undefined) {
+    if (params.staticContent !== undefined && params.staticContentAssetFile !== undefined) {
+      throw new Error(
+        "SettingsCapability: set either 'staticContent' or 'staticContentAssetFile', not both."
+      );
+    }
+    const hasStaticForm =
+      params.staticContent !== undefined || params.staticContentAssetFile !== undefined;
+    if (params.consumes?.length && hasStaticForm) {
       throw new Error("SettingsCapability: set either 'consumes' or 'staticContent', not both.");
     }
-    if (params.requiresTool !== undefined && params.staticContent === undefined) {
-      throw new Error("SettingsCapability: 'requiresTool' is only meaningful with 'staticContent'.");
+    if (params.requiresTool !== undefined && !hasStaticForm) {
+      throw new Error(
+        "SettingsCapability: 'requiresTool' is only meaningful with 'staticContent'."
+      );
     }
     this.consumes = params.consumes ?? [];
     this.staticContent = params.staticContent;
+    this.staticContentAssetFile = params.staticContentAssetFile;
     this.requiresTool = params.requiresTool;
   }
 

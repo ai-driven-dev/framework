@@ -1,7 +1,7 @@
 import {
   AI_TOOL_IDS,
-  IDE_TOOL_IDS,
   type AiToolId,
+  IDE_TOOL_IDS,
   type IdeToolId,
 } from "../../../domain/models/tool-ids.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";

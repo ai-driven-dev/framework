@@ -170,10 +170,7 @@ export function registerSetupCommand(program: Command): void {
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
 
-        const releaseResolver = new GitHubReleaseResolverAdapter(
-          deps.http,
-          deps.authReader
-        );
+        const releaseResolver = new GitHubReleaseResolverAdapter(deps.http, deps.authReader);
         const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
           deps.prompter,
           releaseResolver

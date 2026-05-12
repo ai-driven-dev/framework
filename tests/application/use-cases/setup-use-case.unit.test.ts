@@ -215,7 +215,9 @@ describe("setup without TTY", () => {
 });
 
 describe("setup interactive tool selection", () => {
-  function interactiveFlow(opts: Partial<{ aiTools: ToolId[]; ideTools: ToolId[] }> = {}): SetupFlow {
+  function interactiveFlow(
+    opts: Partial<{ aiTools: ToolId[]; ideTools: ToolId[] }> = {}
+  ): SetupFlow {
     return new SetupFlow({
       projectRoot: PROJECT_ROOT,
       source: MarketplaceSourceMode.remote(),

@@ -150,7 +150,9 @@ describe("InstallRuntimeConfigUseCase", () => {
 
       expect(deps.fs.has(join(PROJECT_ROOT, ".vscode/settings.json"))).toBe(true);
       const content = deps.fs.getFile(join(PROJECT_ROOT, ".vscode/settings.json")) ?? "";
-      expect(content).toContain("github.copilot.enable");
+      const parsed = JSON.parse(content) as Record<string, unknown>;
+      expect(parsed).toHaveProperty("github.copilot.enable");
+      expect(parsed).toHaveProperty("chat.plugins.enabled", true);
     });
   });
 });

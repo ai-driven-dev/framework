@@ -1,8 +1,8 @@
 import { basename, join } from "node:path";
 import type { SettingsCapability } from "../../../domain/capabilities/settings-capability.js";
 import { InstallationFile } from "../../../domain/models/file.js";
-import { extractMergeEntries, type MergeFileEntry } from "../../../domain/models/merge.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
+import { extractMergeEntries, type MergeFileEntry } from "../../../domain/models/merge.js";
 import type { IdeToolId } from "../../../domain/models/tool-ids.js";
 import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileMerger } from "../../../domain/ports/file-merger.js";

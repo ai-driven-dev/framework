@@ -35,6 +35,43 @@ describe("SettingsCapability", () => {
       ).toThrow("SettingsCapability: set either 'consumes' or 'staticContent', not both.");
     });
 
+    it("throws when both staticContent and staticContentAssetFile are provided", () => {
+      expect(
+        () =>
+          new SettingsCapability({
+            outputPath: ".vscode/settings.json",
+            mergeStrategy: "framework-prime",
+            staticContent: '{"key": true}',
+            staticContentAssetFile: "vscode-settings.json",
+          })
+      ).toThrow(
+        "SettingsCapability: set either 'staticContent' or 'staticContentAssetFile', not both."
+      );
+    });
+
+    it("throws when consumes and staticContentAssetFile are both provided", () => {
+      expect(
+        () =>
+          new SettingsCapability({
+            outputPath: ".vscode/settings.json",
+            mergeStrategy: "framework-prime",
+            consumes: ["mySignal"],
+            staticContentAssetFile: "vscode-settings.json",
+          })
+      ).toThrow("SettingsCapability: set either 'consumes' or 'staticContent', not both.");
+    });
+
+    it("accepts staticContentAssetFile without consumes", () => {
+      const cap = new SettingsCapability({
+        outputPath: ".vscode/settings.json",
+        mergeStrategy: "framework-prime",
+        staticContentAssetFile: "vscode-settings.json",
+      });
+      expect(cap.staticContentAssetFile).toBe("vscode-settings.json");
+      expect(cap.staticContent).toBeUndefined();
+      expect(cap.consumes).toHaveLength(0);
+    });
+
     it("accepts neither consumes nor staticContent (empty capability)", () => {
       const cap = new SettingsCapability({
         outputPath: ".vscode/settings.json",
@@ -74,6 +111,18 @@ describe("SettingsCapability", () => {
             requiresTool: "vscode",
           })
       ).toThrow("SettingsCapability: 'requiresTool' is only meaningful with 'staticContent'.");
+    });
+
+    it("accepts staticContentAssetFile with requiresTool", () => {
+      const cap = new SettingsCapability({
+        outputPath: ".vscode/settings.json",
+        mergeStrategy: "framework-prime",
+        staticContentAssetFile: "vscode-settings.json",
+        requiresTool: "vscode",
+      });
+      expect(cap.staticContentAssetFile).toBe("vscode-settings.json");
+      expect(cap.requiresTool).toBe("vscode");
+      expect(cap.staticContent).toBeUndefined();
     });
   });
 

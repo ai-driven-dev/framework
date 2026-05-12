@@ -4,6 +4,7 @@ import type { Manifest } from "../../../domain/models/manifest.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../../domain/models/merge.js";
 import type { AiToolId, IdeToolId } from "../../../domain/models/tool-ids.js";
 import { AI_TOOL_IDS } from "../../../domain/models/tool-ids.js";
+import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileMerger } from "../../../domain/ports/file-merger.js";
 import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../domain/ports/file-writer.js";
@@ -29,7 +30,8 @@ export class InstallIdeToolUseCase {
     private readonly installIdeConfigUseCase: InstallIdeConfigUseCase,
     private readonly manifestRepo: ManifestRepository,
     private readonly fs: FileReader & FileWriter & FileMerger,
-    private readonly hasher: Hasher
+    private readonly hasher: Hasher,
+    private readonly assetProvider?: AssetProvider
   ) {}
 
   async execute(options: InstallIdeToolOptions): Promise<InstallIdeConfigResult> {
@@ -61,7 +63,9 @@ export class InstallIdeToolUseCase {
     const capabilities = Array.isArray(raw) ? raw : raw !== undefined ? [raw] : [];
     const toMerge = capabilities.filter(
       (c): c is SettingsCapability =>
-        c instanceof SettingsCapability && c.staticContent !== undefined && c.requiresTool === ideId
+        c instanceof SettingsCapability &&
+        (c.staticContent !== undefined || c.staticContentAssetFile !== undefined) &&
+        c.requiresTool === ideId
     );
     if (toMerge.length === 0) return;
     const existingEntries = [...manifest.getMergeFiles(aiId)];
@@ -78,7 +82,8 @@ export class InstallIdeToolUseCase {
     manifest: Manifest
   ): Promise<void> {
     const fullPath = join(projectRoot, cap.buildOutputPath());
-    await this.fs.mergeJsonFile(fullPath, cap.staticContent as string, cap.getMergeStrategy());
+    const content = this.resolveCapabilityContent(cap, aiId);
+    await this.fs.mergeJsonFile(fullPath, content, cap.getMergeStrategy());
     const diskContent = await this.fs.readFile(fullPath);
     const hashes = extractMergeEntries(diskContent, null, this.hasher);
     const newEntry: MergeFileEntry = {
@@ -95,5 +100,14 @@ export class InstallIdeToolUseCase {
       projectRoot,
       manifest,
     });
+  }
+
+  private resolveCapabilityContent(cap: SettingsCapability, aiId: AiToolId): string {
+    if (cap.staticContent !== undefined) return cap.staticContent;
+    if (cap.staticContentAssetFile !== undefined && this.assetProvider !== undefined) {
+      const asset = this.assetProvider.loadConfigAsset(aiId, cap.staticContentAssetFile);
+      return typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
+    }
+    return "{}";
   }
 }
