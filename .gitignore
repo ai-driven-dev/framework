@@ -29,3 +29,4 @@ temp/
 setup-test/
 tmp-test/
 tmp/
+.aidd/cache/

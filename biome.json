@@ -38,6 +38,7 @@
       "!tmp-test",
       "!tmp",
       "!.stryker-tmp",
+      "!reports",
       "!**/fixtures/**/*.json"
     ]
   },
