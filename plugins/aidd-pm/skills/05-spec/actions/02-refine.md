@@ -1,19 +1,18 @@
 # 02 - Refine
 
-Rewrite an existing spec to address reviewer findings.
+Rewrite an existing spec in place to address reviewer findings.
 
 ## Inputs
 
 ```yaml
 existing_spec: <path to the current spec>   # required
 findings: <reviewer findings>                # required; list or text
-working_dir: <directory>                     # required; where the refined spec.md is written
 ```
 
 ## Outputs
 
 ```yaml
-spec_path: <path to the refined spec.md>
+spec_path: <path to the refined spec.md>     # same as existing_spec
 status: refined
 notes: <changes applied, residual TBD questions>
 ```
@@ -25,7 +24,7 @@ notes: <changes applied, residual TBD questions>
 3. **Rewrite**. Apply each finding in place: clarify wording, add missing fields, remove invalid claims. Preserve sections the findings do not touch.
 4. **Mark gaps**. Replace any field still unanswered with `TBD: <precise question>`. Never guess.
 5. **Section check**. Confirm every section listed in `assets/spec-validator.yml` is present.
-6. **Write**. Save the refined spec to `working_dir/spec.md` (overwriting when `working_dir` matches the source location).
+6. **Write**. Save the refined spec back to the same path as `existing_spec` (overwrite).
 7. **Return** the structured Outputs block with `status: refined`.
 
 ## Test

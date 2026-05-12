@@ -11,8 +11,8 @@ Generates or refines the immutable contract between human intent and downstream 
 
 | #   | Action    | Role                                                              | Input                                  |
 | --- | --------- | ----------------------------------------------------------------- | -------------------------------------- |
-| 01  | `build`   | Create a fresh spec from a free-form request or an existing PRD    | request or prd_path, working_dir       |
-| 02  | `refine`  | Rewrite an existing spec to address reviewer findings              | existing_spec, findings, working_dir   |
+| 01  | `build`   | Create a fresh spec from a free-form request or an existing PRD    | request or prd_path, feature_name      |
+| 02  | `refine`  | Rewrite an existing spec to address reviewer findings              | existing_spec, findings                |
 
 ## Default flow
 

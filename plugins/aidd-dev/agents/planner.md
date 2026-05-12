@@ -85,11 +85,10 @@ The plan is complete when:
 
 # Skills you may invoke
 
-- `aidd-context:04:brainstorm`
-- `aidd-context:05:challenge`
-- `aidd-pm:04:clarity`
-- `aidd-context:06:mermaid`
-- `aidd-context:07:learn`
+- `aidd-refine:01:brainstorm`
+- `aidd-refine:02:challenge`
+- `aidd-context:04:mermaid`
+- `aidd-context:05:learn`
 - `aidd-dev:01:plan`
 
 Anything else is out of bounds.

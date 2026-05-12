@@ -31,6 +31,8 @@ All instructions and information above are willing to be up to date, but always 
 
 ## Memory Management
 
+Project docs, memory, specs, and plans live in `aidd_docs/`.
+
 ### Project memory
 
 <aidd_project_memory>

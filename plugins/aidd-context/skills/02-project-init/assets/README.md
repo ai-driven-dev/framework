@@ -39,7 +39,7 @@ Skills are grouped into plugins by domain. Install only the plugins you need.
 | aidd-context      | Bootstrap, project init, context generation, mermaid diagrams, learn, discovery    | `02:project-init`, `03:context-generate`, `04:mermaid`      |
 | aidd-refine       | Meta-cognition: brainstorm, challenge prior work, condensed communication mode     | `01:brainstorm`, `02:challenge`, `03:condense`              |
 | aidd-pm           | Product management: ticket info, user stories, PRD, spec                            | `01:ticket-info`, `02:user-stories-create`, `03:prd`, `05:spec` |
-| aidd-dev          | Code transformation: Dev SDLC orchestrator, plan, assert, audit, review, test, refactor, debug | `00:sdlc`, `01:plan`, `04:review`, `05:test`        |
+| aidd-dev          | Code transformation: Dev SDLC orchestrator, plan, implement, assert, audit, review, test, refactor, debug, for-sure | `00:sdlc`, `01:plan`, `02:implement`, `05:review`, `06:test` |
 | aidd-vcs          | VCS workflows: commit, pull/merge request, release tag, issue creation             | `01:commit`, `02:pull-request`, `04:issue-create`           |
 | aidd-orchestrator | Async orchestration of the SDLC on labeled issues (optional, extra)                | `02:run-async-dev`, `03:review-async-dev`                   |
 

@@ -7,13 +7,13 @@ Create a fresh spec from a free-form request or by extracting fields from an exi
 ```yaml
 request: <free-form human description>   # required when prd_path is absent
 prd_path: <path to an existing PRD file> # required when request is absent
-working_dir: <directory>                  # required; where spec.md is written
+feature_name: <kebab-case slug>          # required; derived from the request when absent
 ```
 
 ## Outputs
 
 ```yaml
-spec_path: <path to the generated spec.md>
+spec_path: aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<feature_name>-spec.md
 status: draft
 notes: <ambiguities, assumptions made, questions for the human>
 ```
@@ -25,7 +25,7 @@ notes: <ambiguities, assumptions made, questions for the human>
    - `request` provided -> use `assets/spec-template.md` directly and map the request onto its sections
 2. **Mark gaps**. Replace any missing required field with `TBD: <precise question>`. Never guess.
 3. **Section check**. Confirm every section listed in `assets/spec-validator.yml` is present.
-4. **Write**. Save the spec to `working_dir/spec.md`.
+4. **Write**. Save the spec to `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<feature_name>-spec.md`. Create the month directory when missing.
 5. **Return** the structured Outputs block with `status: draft`.
 
 ## Test
