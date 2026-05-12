@@ -1,0 +1,9 @@
+[
+  { "prompt": "Audit the codebase", "expect_action": "audit" },
+  { "prompt": "/audit", "expect_action": "audit" },
+  { "prompt": "Find technical debt in the auth module", "expect_action": "audit" },
+  { "prompt": "Scan for dead code and unused exports", "expect_action": "audit" },
+  { "prompt": "Implement the auth feature", "expect_action": null },
+  { "prompt": "Commit my changes", "expect_action": null },
+  { "prompt": "Write tests for parseUser", "expect_action": null }
+]

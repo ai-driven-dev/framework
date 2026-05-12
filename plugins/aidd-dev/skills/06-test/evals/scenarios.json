@@ -1,0 +1,11 @@
+[
+  { "prompt": "Write tests for the authentication module", "expect_action": "test" },
+  { "prompt": "Add unit tests for the payment service", "expect_action": "test" },
+  { "prompt": "Iterate on tests until they pass", "expect_action": "test" },
+  { "prompt": "Write and run tests for this feature", "expect_action": "test" },
+  { "prompt": "Validate the user journey for the checkout flow in the browser", "expect_action": "test-journey" },
+  { "prompt": "Test the end-to-end user registration flow", "expect_action": "test-journey" },
+  { "prompt": "Review my code for quality issues", "expect_action": null },
+  { "prompt": "Debug the failing login test", "expect_action": null },
+  { "prompt": "Optimize the database queries", "expect_action": null }
+]

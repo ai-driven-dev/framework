@@ -7,7 +7,7 @@ model: opus
 
 # Codebase Audit Prompt
 
-## Ressources
+## Resources
 
 ### Coding rules
 
@@ -16,7 +16,7 @@ Apply project conventions and coding standards.
 ### Template
 
 ```markdown
-@./assets/code-review-template.md
+@../assets/audit-template.md
 ```
 
 ## Goal

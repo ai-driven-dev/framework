@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * update_memory.js — Syncs <aidd_project_memory> block in AI context files.
+ * update_memory.js - Syncs <aidd_project_memory> block in AI context files.
  *
  * Scans aidd_docs/memory/ for .md files and updates the <aidd_project_memory>
  * block in each context file (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md)
@@ -68,7 +68,7 @@ function gitAdd(childProcess, files) {
       stdio: ["pipe", "pipe", "pipe"],
     });
   } catch {
-    // silent — no git or not a repo
+    // silent - no git or not a repo
   }
 }
 

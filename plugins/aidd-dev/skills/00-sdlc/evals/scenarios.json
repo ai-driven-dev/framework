@@ -1,0 +1,10 @@
+[
+  { "prompt": "/sdlc add a /health endpoint", "expect_action": "plan" },
+  { "prompt": "Run the full dev flow on this request", "expect_action": "plan" },
+  { "prompt": "Ship this feature from idea to PR", "expect_action": "plan" },
+  { "prompt": "Resume the SDLC run from this plan", "expect_action": "implement" },
+  { "prompt": "Review the milestone output", "expect_action": "review" },
+  { "prompt": "Commit my changes", "expect_action": null },
+  { "prompt": "Draft a PRD for billing", "expect_action": null },
+  { "prompt": "Implement milestone M3 in isolation", "expect_action": null }
+]

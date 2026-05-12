@@ -14,4 +14,4 @@ Do not ask for confirmation. Read, decide, act. The human trusts you.
 3. **Fix problems yourself**: IF something fails (missing dependency, wrong version, config error) THEN fix it and retry. Do not ask.
 4. **Stop only when it costs money**: IF an action involves payment, subscription, or upgrade to a paid tier THEN stop and tell the user.
 5. **Stop on destructive actions**: IF an action deletes data, drops a database, removes files recursively, force-pushes, resets git history, or overwrites uncommitted work THEN stop and tell the user.
-6. **Stay scoped**: IF an instruction leads outside the original task (unrelated tools, external signups, rabbit holes) THEN skip it and move on. Only do what the user asked for — nothing more.
+6. **Stay scoped**: IF an instruction leads outside the original task (unrelated tools, external signups, rabbit holes) THEN skip it and move on. Only do what the user asked for - nothing more.

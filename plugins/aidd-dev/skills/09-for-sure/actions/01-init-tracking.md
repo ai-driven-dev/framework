@@ -15,7 +15,7 @@ Last interactive step. Validates prerequisites, builds journey map, creates trac
 
 2. **Collect** from user: task name, description, success condition, rules.
 
-3. **Research approach.** Before planning steps, read the relevant documentation (README, docs, official guides). Identify the recommended method. Do not default to what you already know — use what the source recommends.
+3. **Research approach.** Before planning steps, read the relevant documentation (README, docs, official guides). Identify the recommended method. Do not default to what you already know - use what the source recommends.
 
 4. **Validate goal.** "Could I execute this with zero ambiguity?" If NO → ask to reformulate. Examples:
    - "Make the code better" → Reject. "What metric?"
@@ -27,17 +27,17 @@ Last interactive step. Validates prerequisites, builds journey map, creates trac
 
 6. **Pre-flight checklist.** For each step, list: tools, secrets, API access, data, permissions. Use markers:
    - `[✓]` already satisfied
-   - `[~]` SOFT — agent will self-serve (sign up, generate key, install tool)
-   - `[!]` HARD — only the user can provide (DB ID, channel ID, env var, password, owned API key)
+   - `[~]` SOFT - agent will self-serve (sign up, generate key, install tool)
+   - `[!]` HARD - only the user can provide (DB ID, channel ID, env var, password, owned API key)
 
-   Collect every `[!]` from the user now. **If any `[!]` remains unresolved, STOP — do not proceed to step 7.**
+   Collect every `[!]` from the user now. **If any `[!]` remains unresolved, STOP - do not proceed to step 7.**
 
    ```
    [✓] Node.js v20 installed
    [✓] npm test configured in package.json
-   [~] Stripe API key — agent generates via dashboard
-   [!] DATABASE_URL — only the user knows it
-   [!] SLACK_CHANNEL_ID — only the user knows it
+   [~] Stripe API key - agent generates via dashboard
+   [!] DATABASE_URL - only the user knows it
+   [!] SLACK_CHANNEL_ID - only the user knows it
    ```
 
 7. **Build ASCII journey map.** Project entire path. Show steps, dependencies, tools, blockers. Ask user to confirm.
@@ -55,7 +55,7 @@ Last interactive step. Validates prerequisites, builds journey map, creates trac
    │   └─ needs: access to auth service API           │
    │       │                                          │
    │  [3] Fix token refresh test                      │
-   │   └─ needs: API key (SOFT — agent generates)     │
+   │   └─ needs: API key (SOFT - agent generates)     │
    │       │                                          │
    │  [4] Add coverage for edge cases                 │
    │   └─ needs: test data from step 2                │
@@ -91,5 +91,5 @@ Read `../../01-plan/assets/plan-template.md` for file format. Acceptance criteri
 - **Assertion**: Task file exists as `.in-progress.md` AND `success_condition` is a runnable command AND journey map present AND autonomous agent spawned.
 - **Exit condition**: Autonomous agent is running.
 - **Expected result**: Path to `.in-progress.md`, loop started.
-- **Retry loop**: Interactive — if unclear, ask again.
+- **Retry loop**: Interactive - if unclear, ask again.
 - **On failure**: Tell user what is missing.

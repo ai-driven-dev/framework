@@ -11,7 +11,7 @@ Code the whole feature based on the implementation plan, phase by phase, sequent
 
 ## Rules
 
-- Follow all project rules @{{TOOLS}}/rules/
+- Follow all project rules
 - Never format code
 - Never run dev mode
 - If a phase is incorrect, incomplete, or blocked by missing information, amend the plan directly. Mark every change with 🤖 and a brief rationale.

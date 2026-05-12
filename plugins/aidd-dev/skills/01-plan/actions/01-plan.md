@@ -79,13 +79,13 @@ Spawn a new sub-agent task to:
 3. **Verify API feasibility** before committing to an approach
 4. **Find flag blockers early** identify issues and risks that will certainly occur if not addressed in the plan.
 5. **Check against official documentation** to validate assumptions and identify potential issues
-6. **Produce the architecture projection** — three lists, each with `path — one-line reason`:
+6. **Produce the architecture projection** - three lists, each with `path - one-line reason`:
    - files to modify
    - files to create
    - files to delete
-7. **Inventory the project rules** — run `node scripts/list-rules.mjs` (from project root). If `aidd_docs/rules/` does not exist, the script returns `[]` — accept silently.
+7. **Inventory the project rules** - run `node scripts/list-rules.mjs` (from project root). If `aidd_docs/rules/` does not exist, the script returns `[]` - accept silently.
 
-### Step 4: Architecture projection & rules — user validation
+### Step 4: Architecture projection & rules - user validation
 
 > Gate before plan writing. Nothing is written until the human approves.
 
@@ -115,7 +115,7 @@ Spawn a new sub-agent task to:
 2. Determine feature name from requirements
 3. Insert user journey in mermaid syntax in plan for better visualization and validation
 4. Fill the appropriate template based on decisions, including the validated `Architecture projection` (M/C/D) and `Applicable rules` from Step 4.
-5. **Fill execution frontmatter** (required — the plan IS the For Sure tracking file):
+5. **Fill execution frontmatter** (required - the plan IS the For Sure tracking file):
    - `objective`: one-sentence statement of what must be true when done
    - `success_condition`: a **runnable command** that proves done (e.g. `npm test exits 0 AND coverage > 80%`). If no obvious command exists, ask the user. Reject vague conditions.
    - `iteration: 0`

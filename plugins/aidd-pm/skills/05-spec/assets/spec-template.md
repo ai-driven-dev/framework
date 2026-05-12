@@ -15,14 +15,14 @@
 
 ## Non-goals
 
-<Explicit list of what is OUT of scope for this run. Avoid the trap of "we'll do it later" — say it explicitly here so downstream agents don't assume otherwise.>
+<Explicit list of what is OUT of scope for this run. Avoid the trap of "we'll do it later" - say it explicitly here so downstream agents don't assume otherwise.>
 
 - <Out-of-scope item 1>
 - <Out-of-scope item 2>
 
 ## Done-when
 
-<Verifiable conditions. The run is complete when ALL of these are true. Each condition specifies how it's verified (a check, a test, a metric — not a feeling).>
+<Verifiable conditions. The run is complete when ALL of these are true. Each condition specifies how it's verified (a check, a test, a metric - not a feeling).>
 
 - <Condition 1, with how it's verified>
 - <Condition 2, with how it's verified>
@@ -35,4 +35,4 @@
 
 ## Context (optional)
 
-<Background, links to relevant docs, prior decisions, related tickets, constraints from upstream systems. Keep concise — link out rather than restate.>
+<Background, links to relevant docs, prior decisions, related tickets, constraints from upstream systems. Keep concise - link out rather than restate.>

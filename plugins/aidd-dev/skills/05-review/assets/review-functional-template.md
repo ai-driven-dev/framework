@@ -12,7 +12,7 @@ argument-hint: N/A
 
 ## Verdict
 
-{PASS | PARTIAL | FAIL} — {one-line rationale}
+{PASS | PARTIAL | FAIL} - {one-line rationale}
 
 ## Scoring Matrix
 
@@ -44,7 +44,7 @@ Acceptance criteria with no trace in the diff.
 
 Changes present in the diff but not traced to any acceptance criterion.
 
-- [ ] {unplanned change — confirm scope with author}
+- [ ] {unplanned change - confirm scope with author}
 
 ## Flow / Edge-case Gaps
 

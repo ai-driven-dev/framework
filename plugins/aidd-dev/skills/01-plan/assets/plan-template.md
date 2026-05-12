@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Living implementation plan — frozen objective, phases, and append-only execution Log. Used as input artifact AND as the autonomous-loop tracking file.
+description: Living implementation plan - frozen objective, phases, and append-only execution Log. Used as input artifact AND as the autonomous-loop tracking file.
 argument-hint: N/A
 objective: "{What must be true when done. One sentence.}"
 success_condition: "{Runnable command that proves done. Example: 'npm test exits 0 AND coverage > 80%'}"
@@ -40,15 +40,15 @@ created_at: "{YYYY-MM-DDTHH:MM:SSZ}"
 
 ### Files to modify
 
-- `path/to/file.ts` — {one-line reason}
+- `path/to/file.ts` - {one-line reason}
 
 ### Files to create
 
-- `path/to/new-file.ts` — {one-line purpose}
+- `path/to/new-file.ts` - {one-line purpose}
 
 ### Files to delete
 
-- `path/to/dead.ts` — {one-line reason}
+- `path/to/dead.ts` - {one-line reason}
 
 ## Applicable rules
 
@@ -97,8 +97,8 @@ flowchart TD
 ## Log
 
 <!-- APPEND ONLY. One entry per step attempt. Never rewrite. -->
-<!-- ### #N — YYYY-MM-DDTHH:MM:SSZ -->
-<!-- > step — what worker tried -->
+<!-- ### #N - YYYY-MM-DDTHH:MM:SSZ -->
+<!-- > step - what worker tried -->
 <!-- = ✓|✗ verification result (orchestrator-checked, not worker-claimed) -->
 <!-- → next step or RETRY: why -->
 

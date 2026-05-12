@@ -1,0 +1,10 @@
+[
+  { "prompt": "Implement the plan for the payment feature", "expect_action": "implement" },
+  { "prompt": "Execute this implementation plan phase by phase", "expect_action": "implement" },
+  { "prompt": "Run the plan and write the code", "expect_action": "implement" },
+  { "prompt": "Implement phase 2 of the auth plan", "expect_action": "implement" },
+  { "prompt": "Start implementing from the plan file in aidd_docs/plans/", "expect_action": "implement" },
+  { "prompt": "Create a plan for the notifications feature", "expect_action": null },
+  { "prompt": "Review the code I just wrote", "expect_action": null },
+  { "prompt": "Fix the bug in the payment service", "expect_action": null }
+]

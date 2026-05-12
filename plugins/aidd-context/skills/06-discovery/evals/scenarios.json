@@ -1,0 +1,10 @@
+[
+  { "prompt": "What skills are available for me to use?", "expect_action": "find-skill" },
+  { "prompt": "Help me find the right skill for writing tests", "expect_action": "find-skill" },
+  { "prompt": "Which skill should I use to create a plan?", "expect_action": "find-skill" },
+  { "prompt": "List all installed skills and what they do", "expect_action": "find-skill" },
+  { "prompt": "I want to debug a bug, which skill handles that?", "expect_action": "find-skill" },
+  { "prompt": "Update the memory bank with the new ADR", "expect_action": null },
+  { "prompt": "Generate a Mermaid diagram for the auth flow", "expect_action": null },
+  { "prompt": "Write an implementation plan for the checkout feature", "expect_action": null }
+]

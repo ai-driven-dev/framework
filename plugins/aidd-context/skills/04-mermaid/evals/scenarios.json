@@ -1,0 +1,10 @@
+[
+  { "prompt": "Generate a Mermaid diagram for the authentication flow", "expect_action": "mermaid" },
+  { "prompt": "Create a sequence diagram showing the checkout process", "expect_action": "mermaid" },
+  { "prompt": "Draw a state machine diagram for the order lifecycle", "expect_action": "mermaid" },
+  { "prompt": "Make a flowchart of the onboarding steps", "expect_action": "mermaid" },
+  { "prompt": "Visualize the CI/CD pipeline as a Mermaid diagram", "expect_action": "mermaid" },
+  { "prompt": "Update memory bank with the new architecture decision", "expect_action": null },
+  { "prompt": "Generate a plan for the notifications feature", "expect_action": null },
+  { "prompt": "List all installed skills", "expect_action": null }
+]

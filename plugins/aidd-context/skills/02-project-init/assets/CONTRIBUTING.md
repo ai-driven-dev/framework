@@ -9,7 +9,7 @@ Use the generator skills to scaffold new content that follows the framework stru
 | Skill                              | Creates              |
 | ---------------------------------- | -------------------- |
 | `aidd-context:03:context-generate` | New skill, agent, or rule (router-based, with actions and evals) |
-| `aidd-context:07:learn`            | New memory or rule capturing a learning                          |
+| `aidd-context:05:learn`            | New memory or rule capturing a learning                          |
 
 Generator skills consume the templates inside their `assets/` folder and write the output to the correct location for your AI tool (Claude Code, Cursor, Copilot, Codex, OpenCode).
 

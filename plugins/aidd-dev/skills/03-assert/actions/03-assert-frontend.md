@@ -21,7 +21,7 @@ $ARGUMENTS
 - Suppose all servers are already started
 - Minor visual discrepancies (1-2px differences, slight color variations) are acceptable unless explicitly specified in the initial request.
 
-## Ressources
+## Resources
 
 ### Tracking issue template
 

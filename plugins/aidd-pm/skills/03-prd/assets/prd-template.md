@@ -264,7 +264,7 @@ flowchart LR
 
 ## 15. Scope Boundaries (3 Tiers)
 
-### Tier 1 — MVP (Must Have)
+### Tier 1 - MVP (Must Have)
 
 > What is included in the first release.
 
@@ -273,7 +273,7 @@ flowchart LR
 | [Feature 1] | [Why it's MVP] |
 | [Feature 2] | [Why it's MVP] |
 
-### Tier 2 — Next Release (Should/Could Have)
+### Tier 2 - Next Release (Should/Could Have)
 
 > What is explicitly deferred to V2. Each feature has a promotion trigger.
 
@@ -282,7 +282,7 @@ flowchart LR
 | [Feature X] | [Why deferred] | [Metric or condition to promote to Tier 1] |
 | [Feature Y] | [Why deferred] | [Metric or condition]                      |
 
-### Tier 3 — Never (Won't Have)
+### Tier 3 - Never (Won't Have)
 
 > What we will never build.
 

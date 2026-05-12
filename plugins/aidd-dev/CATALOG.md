@@ -57,7 +57,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-components-behavior.md](skills/01-plan/actions/02-components-behavior.md) | `Define the expected behavior of frontend components into a state machine format.` | `names of the components to define behavior for.` |
 | `actions` | [03-image-extract-details.md](skills/01-plan/actions/03-image-extract-details.md) | `Analyze image to identify and extract main components with hierarchical organization` | `the image to analyze` |
 | `assets` | [master-plan-template.md](skills/01-plan/assets/master-plan-template.md) | `Parent plan template orchestrating multiple child plans with validation gates` | - |
-| `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | `Living implementation plan — frozen objective, phases, and append-only execution Log. Used as input artifact AND as the autonomous-loop tracking file.` | - |
+| `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | `Living implementation plan - frozen objective, phases, and append-only execution Log. Used as input artifact AND as the autonomous-loop tracking file.` | - |
 | `assets` | [tech-choice-template.md](skills/01-plan/assets/tech-choice-template.md) | `Technology selection and comparison template` | - |
 | `references` | [mermaid-conventions.md](skills/01-plan/references/mermaid-conventions.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` | - |
 | `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Generate technical implementation plans, define component behaviors, and extract design details from images.` | - |
@@ -77,7 +77,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-assert-architecture.md](skills/03-assert/actions/02-assert-architecture.md) | `Verify code conforms to architecture diagrams, ADRs, and project structure.` | `[Optional scope to verify (module, service, or layer name)]` |
 | `actions` | [03-assert-frontend.md](skills/03-assert/actions/03-assert-frontend.md) | `Assert a frontend feature works as intended.` | `The frontend behavior you need to assert and validate.` |
 | `assets` | [task-template.md](skills/03-assert/assets/task-template.md) | `Task tracking system to ensure all tasks are categorized and addressed` | - |
-| `-` | [SKILL.md](skills/03-assert/SKILL.md) | `Assert features work as intended — general assertions, architecture conformance, and frontend UI validation.` | - |
+| `-` | [SKILL.md](skills/03-assert/SKILL.md) | `Assert features work as intended - general assertions, architecture conformance, and frontend UI validation.` | - |
 
 #### `skills/04-audit`
 

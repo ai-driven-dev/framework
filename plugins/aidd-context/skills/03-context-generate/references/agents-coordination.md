@@ -7,9 +7,9 @@ description: Multi-agent coordination and workflows template
 
 | AGENT NAME    | ROLE DESCRIPTION                                                                       | RESPONSIBILITIES                                                                                                                                                                              | STATUS |
 | ------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| `planner`     | Run orchestrator — turns a validated spec into milestones and drives execution         | - Decompose spec into milestones with acceptance criteria <br> - Spawn `implementer` and `reviewer` in fresh contexts per milestone <br> - Re-spawn on incomplete or low-quality output, escalate on cap | prod   |
-| `implementer` | Milestone executor — codes, tests, repairs within the input scope                      | - Implement substep by substep, validate after each <br> - Commit atomically per ticked checkbox (one box = one commit) <br> - Report `completion_score` honestly                                       | prod   |
-| `reviewer`    | Independent critic — verifies an artifact against an explicit validator                | - Judge each criterion as fulfilled / partial / unfulfilled with evidence <br> - Compute `completion_score` and `quality_score` <br> - Surface findings precise enough to act on without further investigation | prod   |
+| `planner`     | Run orchestrator - turns a validated spec into milestones and drives execution         | - Decompose spec into milestones with acceptance criteria <br> - Spawn `implementer` and `reviewer` in fresh contexts per milestone <br> - Re-spawn on incomplete or low-quality output, escalate on cap | prod   |
+| `implementer` | Milestone executor - codes, tests, repairs within the input scope                      | - Implement substep by substep, validate after each <br> - Commit atomically per ticked checkbox (one box = one commit) <br> - Report `completion_score` honestly                                       | prod   |
+| `reviewer`    | Independent critic - verifies an artifact against an explicit validator                | - Judge each criterion as fulfilled / partial / unfulfilled with evidence <br> - Compute `completion_score` and `quality_score` <br> - Surface findings precise enough to act on without further investigation | prod   |
 
 ## Communication flow
 
@@ -34,8 +34,8 @@ graph LR
 Use-cases :
 
 - **New spec to plan** : decompose into milestones with acceptance criteria sized for one implementer pass.
-- **Re-spawn loop** : a previous implementer or reviewer returned `completion_score < 100` or quality below threshold — feed the findings back, decide whether to re-spawn or escalate.
-- **Replan on human input** : a human surfaced a missing constraint or asked for a scope change — incorporate and reschedule.
+- **Re-spawn loop** : a previous implementer or reviewer returned `completion_score < 100` or quality below threshold - feed the findings back, decide whether to re-spawn or escalate.
+- **Replan on human input** : a human surfaced a missing constraint or asked for a scope change - incorporate and reschedule.
 
 ### `implementer`
 

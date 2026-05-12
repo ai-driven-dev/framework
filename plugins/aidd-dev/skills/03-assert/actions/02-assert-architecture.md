@@ -36,7 +36,7 @@ $ARGUMENTS
 - Read ALL architecture sources before checking code
 - Report violations with file path, line, and which constraint is violated
 - Distinguish macro violations (service boundaries, tree structure) from micro violations (layer imports, patterns)
-- Do not fix violations — only report them
+- Do not fix violations - only report them
 - If no scope is provided, check the entire project
 - Use `!` backtick pattern to inspect project structure and imports
 

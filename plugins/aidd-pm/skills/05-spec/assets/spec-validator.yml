@@ -18,7 +18,7 @@ criteria:
     weight: 20
 
   - id: done_when
-    description: Conditions for completion listed and each is verifiable (defined check, test, or metric — not a feeling or vague heuristic).
+    description: Conditions for completion listed and each is verifiable (defined check, test, or metric - not a feeling or vague heuristic).
     required: true
     weight: 25
 
