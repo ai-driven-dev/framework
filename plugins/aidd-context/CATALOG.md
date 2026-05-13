@@ -68,8 +68,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-scaffold-docs.md](skills/02-project-init/actions/02-scaffold-docs.md) | - |
 | `actions` | [03-generate-memory.md](skills/02-project-init/actions/03-generate-memory.md) | - |
 | `actions` | [04-review-memory.md](skills/02-project-init/actions/04-review-memory.md) | - |
-| `actions` | [05-init-rules-skeleton.md](skills/02-project-init/actions/05-init-rules-skeleton.md) | - |
-| `actions` | [06-sync-memory.md](skills/02-project-init/actions/06-sync-memory.md) | - |
+| `actions` | [05-sync-memory.md](skills/02-project-init/actions/05-sync-memory.md) | - |
 | `assets` | [AGENTS.md](skills/02-project-init/assets/AGENTS.md) | `AI agent configuration and guidelines` |
 | `assets` | [CONTRIBUTING.md](skills/02-project-init/assets/CONTRIBUTING.md) | - |
 | `assets` | [golden-principles.md](skills/02-project-init/assets/golden-principles.md) | - |
@@ -77,7 +76,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [README.md](skills/02-project-init/assets/README.md) | - |
 | `evals` | [scenarios.json](skills/02-project-init/evals/scenarios.json) | - |
 | `references` | [mapping-ai-context-file.md](skills/02-project-init/references/mapping-ai-context-file.md) | - |
-| `-` | [SKILL.md](skills/02-project-init/SKILL.md) | `Initialize or refresh the project memory bank, scaffold the rules directory, and ensure AI context files contain the project memory block. Use when running `aidd init` for the first time, bootstrapping a new project, or re-running the init flow on an existing project. Do NOT use for updating individual memory files after they exist - use `aidd-context:05:learn` instead; do NOT use for editing a single rule - edit the file directly.` |
+| `-` | [SKILL.md](skills/02-project-init/SKILL.md) | `Initialize or refresh the project memory bank and ensure AI context files contain the project memory block. Use when running `aidd init` for the first time, bootstrapping a new project, or re-running the init flow on an existing project. Do NOT use for updating individual memory files after they exist - use `aidd-context:05:learn` instead; do NOT use for editing a single rule - edit the file directly.` |
 
 #### `skills/03-context-generate`
 
@@ -96,7 +95,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-mermaid.md](skills/04-mermaid/actions/01-mermaid.md) | `When need to generate Mermaid diagrams` |
+| `actions` | [01-mermaid.md](skills/04-mermaid/actions/01-mermaid.md) | - |
 | `evals` | [scenarios.json](skills/04-mermaid/evals/scenarios.json) | - |
 | `references` | [mermaid-conventions.md](skills/04-mermaid/references/mermaid-conventions.md) | - |
 | `-` | [SKILL.md](skills/04-mermaid/SKILL.md) | `Generate high-quality Mermaid diagrams from markdown content using a structured plan-validate workflow.` |
@@ -117,7 +116,11 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-find-skill.md](skills/06-discovery/actions/01-find-skill.md) | `Help the user discover installed skills and find the right one for their use case.` |
+| `actions` | [01-find-skill.md](skills/06-discovery/actions/01-find-skill.md) | - |
+| `actions` | [02-find-agent.md](skills/06-discovery/actions/02-find-agent.md) | - |
+| `actions` | [03-find-command.md](skills/06-discovery/actions/03-find-command.md) | - |
+| `actions` | [04-find-plugin.md](skills/06-discovery/actions/04-find-plugin.md) | - |
+| `actions` | [05-find-mcp.md](skills/06-discovery/actions/05-find-mcp.md) | - |
 | `evals` | [scenarios.json](skills/06-discovery/evals/scenarios.json) | - |
-| `-` | [SKILL.md](skills/06-discovery/SKILL.md) | `Help users discover installed skills and find the right one for their use case.` |
+| `-` | [SKILL.md](skills/06-discovery/SKILL.md) | `Enumerate installed surfaces of the AI tool (skills, agents, commands, plugins, MCP servers) and recommend the best match for the user's stated intent. Use when the user asks "what's available?", "which skill/agent/command/plugin handles X?", "what MCPs are connected?", or wants a cross-plugin overview before picking a flow. Do NOT use for picking a specific item inside one plugin (the plugin's own onboard handles that), creating a new surface, or executing a recommended item (this skill only points; the user invokes).` |
 

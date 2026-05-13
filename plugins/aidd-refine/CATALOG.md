@@ -7,6 +7,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 ## Table of Contents
 
 - [`.claude-plugin`](#claude-plugin)
+- [`hooks`](#hooks)
 - [`skills`](#skills)
   - [`skills/01-brainstorm`](#skills01-brainstorm)
   - [`skills/02-challenge`](#skills02-challenge)
@@ -19,6 +20,13 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | File |
 |------|
 | [plugin.json](.claude-plugin/plugin.json) |
+
+### `hooks`
+
+| File |
+|------|
+| [condense-stats.js](hooks/condense-stats.js) |
+| [hooks.json](hooks/hooks.json) |
 
 ### `skills`
 
@@ -50,7 +58,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description |
 |-------|------|---|
 | `actions` | [01-condense.md](skills/03-condense/actions/01-condense.md) | - |
+| `actions` | [02-stats.md](skills/03-condense/actions/02-stats.md) | - |
 | `evals` | [scenarios.json](skills/03-condense/evals/scenarios.json) | - |
 | `references` | [intensity-levels.md](skills/03-condense/references/intensity-levels.md) | - |
-| `-` | [SKILL.md](skills/03-condense/SKILL.md) | `Toggle terse output mode with intensity levels (lite, full, ultra) so prose drops articles, filler, and pleasantries while code, quoted errors, and security warnings stay verbatim. Use when the user says "condense", "condense output", "be more concise", "shorter answers", "tighten output", "/condense", "/condense full", "/condense ultra", or "stop condense". Do NOT use for editing existing prose, summarizing a long document, or compressing source code (only output style is affected, not content).` |
+| `-` | [SKILL.md](skills/03-condense/SKILL.md) | `Toggle terse output mode with intensity levels (lite, full, ultra) so prose drops articles, filler, and pleasantries while code, quoted errors, and security warnings stay verbatim. Also reports real token usage and estimated savings under condense mode for the current session. Use when the user says "condense", "condense output", "be more concise", "shorter answers", "tighten output", "/condense", "/condense full", "/condense ultra", "stop condense", "normal mode", "/condense-stats", "how much have we saved", or "token savings". Do NOT use for editing existing prose, summarizing a long document, or compressing source code (only output style is affected, not content).` |
 
