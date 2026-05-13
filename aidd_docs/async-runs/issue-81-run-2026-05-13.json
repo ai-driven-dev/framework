@@ -1,0 +1,36 @@
+{
+  "run_id": "issue-81-run-2026-05-13",
+  "created_at": "2026-05-13T00:00:00Z",
+  "issue": {
+    "number": 81,
+    "title": "chore(framework): unify version management across marketplace and plugins via release-please",
+    "url": "https://github.com/ai-driven-dev/aidd-framework/issues/81"
+  },
+  "pr": {
+    "number": 89,
+    "url": "https://github.com/ai-driven-dev/aidd-framework/pull/89",
+    "branch": "feat/issue-81-unify-version-management"
+  },
+  "plan": "aidd_docs/plans/issue-81-version-management.md",
+  "phases_completed": ["phase-1", "phase-2", "phase-3", "phase-4", "phase-5"],
+  "review": {
+    "verdict": "ship",
+    "completion_score": 100,
+    "quality_score": 92,
+    "findings": [
+      {
+        "severity": "minor",
+        "description": "CONTRIBUTING.md Releases section still describes legacy tarball contents — plan item C3 (Could, not Must)"
+      },
+      {
+        "severity": "minor",
+        "description": "Phase 3 used 6 explicit steps instead of a matrix strategy — functionally equivalent, plan deviation"
+      }
+    ]
+  },
+  "final_status": "awaiting-review",
+  "labels": {
+    "lock_acquired": "claude/working",
+    "transitioned_to": "claude/awaiting-review"
+  }
+}
