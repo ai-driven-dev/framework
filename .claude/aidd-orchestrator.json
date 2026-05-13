@@ -1,0 +1,34 @@
+{
+  "version": "1.0.0",
+  "created_at": "2026-05-13T00:00:00Z",
+  "mode": "both",
+  "labels": {
+    "to_implement": "to-implement",
+    "to_review": "to-review",
+    "working": "claude/working",
+    "awaiting_review": "claude/awaiting-review",
+    "blocked": "claude/blocked"
+  },
+  "mentions": {
+    "implement": "@claude /implement",
+    "review": "@claude /review"
+  },
+  "claude_action_auth": {
+    "mode": "oauth_token",
+    "default_secret_name": "CLAUDE_CODE_OAUTH_TOKEN",
+    "account_routing": {
+      "blafourcade": "CLAUDE_CODE_OAUTH_TOKEN_BAPTISTE",
+      "alexsoyes": "CLAUDE_CODE_OAUTH_TOKEN_ALEX"
+    }
+  },
+  "marketplace": {
+    "repo": "ai-driven-dev/aidd-framework",
+    "access": "public",
+    "token_secret_name": null
+  },
+  "max_iterations": 3,
+  "audit": {
+    "log_dir": "aidd_docs/async-runs",
+    "github_check_run": true
+  }
+}
