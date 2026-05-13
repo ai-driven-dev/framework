@@ -121,6 +121,9 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-find-command.md](skills/06-discovery/actions/03-find-command.md) | - |
 | `actions` | [04-find-plugin.md](skills/06-discovery/actions/04-find-plugin.md) | - |
 | `actions` | [05-find-mcp.md](skills/06-discovery/actions/05-find-mcp.md) | - |
+| `actions` | [06-find-rule.md](skills/06-discovery/actions/06-find-rule.md) | - |
+| `actions` | [07-find-hook.md](skills/06-discovery/actions/07-find-hook.md) | - |
+| `actions` | [08-find-memory.md](skills/06-discovery/actions/08-find-memory.md) | - |
 | `evals` | [scenarios.json](skills/06-discovery/evals/scenarios.json) | - |
-| `-` | [SKILL.md](skills/06-discovery/SKILL.md) | `Enumerate installed surfaces of the AI tool (skills, agents, commands, plugins, MCP servers) and recommend the best match for the user's stated intent. Use when the user asks "what's available?", "which skill/agent/command/plugin handles X?", "what MCPs are connected?", or wants a cross-plugin overview before picking a flow. Do NOT use for picking a specific item inside one plugin (the plugin's own onboard handles that), creating a new surface, or executing a recommended item (this skill only points; the user invokes).` |
+| `-` | [SKILL.md](skills/06-discovery/SKILL.md) | `Enumerate installed surfaces of the AI tool (skills, agents, commands, plugins, MCP servers, rules, hooks, memory) and recommend the best match for the user's stated intent. Use when the user asks "what's available?", "which skill/agent/command/plugin handles X?", "what MCPs are connected?", "which rule applies here?", "which hook fires on X?", "what memory files do we have?", or wants a cross-surface overview before picking a flow. Do NOT use for picking a specific item inside one plugin (the plugin's own onboard handles that), creating a new surface, or executing a recommended item (this skill only points; the user invokes).` |
 
