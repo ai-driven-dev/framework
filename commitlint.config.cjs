@@ -12,6 +12,7 @@ module.exports = {
         "aidd-refine",
         "aidd-orchestrator",
         "framework",
+        "marketplace",
       ],
     ],
     "body-max-line-length": [0, "always"],
