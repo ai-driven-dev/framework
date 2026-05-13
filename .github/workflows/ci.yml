@@ -40,9 +40,27 @@ jobs:
       github.event_name == 'push' &&
       (needs.commitlint.result == 'success' || needs.commitlint.result == 'skipped')
     outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
-      version: ${{ steps.release.outputs.version }}
+      root_release_created: ${{ steps.release.outputs['.--release_created'] }}
+      root_tag_name: ${{ steps.release.outputs['.--tag_name'] }}
+      root_version: ${{ steps.release.outputs['.--version'] }}
+      context_release_created: ${{ steps.release.outputs['plugins/aidd-context--release_created'] }}
+      context_tag_name: ${{ steps.release.outputs['plugins/aidd-context--tag_name'] }}
+      context_version: ${{ steps.release.outputs['plugins/aidd-context--version'] }}
+      dev_release_created: ${{ steps.release.outputs['plugins/aidd-dev--release_created'] }}
+      dev_tag_name: ${{ steps.release.outputs['plugins/aidd-dev--tag_name'] }}
+      dev_version: ${{ steps.release.outputs['plugins/aidd-dev--version'] }}
+      vcs_release_created: ${{ steps.release.outputs['plugins/aidd-vcs--release_created'] }}
+      vcs_tag_name: ${{ steps.release.outputs['plugins/aidd-vcs--tag_name'] }}
+      vcs_version: ${{ steps.release.outputs['plugins/aidd-vcs--version'] }}
+      pm_release_created: ${{ steps.release.outputs['plugins/aidd-pm--release_created'] }}
+      pm_tag_name: ${{ steps.release.outputs['plugins/aidd-pm--tag_name'] }}
+      pm_version: ${{ steps.release.outputs['plugins/aidd-pm--version'] }}
+      orchestrator_release_created: ${{ steps.release.outputs['plugins/aidd-orchestrator--release_created'] }}
+      orchestrator_tag_name: ${{ steps.release.outputs['plugins/aidd-orchestrator--tag_name'] }}
+      orchestrator_version: ${{ steps.release.outputs['plugins/aidd-orchestrator--version'] }}
+      refine_release_created: ${{ steps.release.outputs['plugins/aidd-refine--release_created'] }}
+      refine_tag_name: ${{ steps.release.outputs['plugins/aidd-refine--tag_name'] }}
+      refine_version: ${{ steps.release.outputs['plugins/aidd-refine--version'] }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -50,10 +68,10 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  build-and-attach:
-    name: Build and attach
+  build-and-attach-root:
+    name: Build and attach (root)
     needs: [release-please]
-    if: needs.release-please.outputs.release_created == 'true'
+    if: needs.release-please.outputs.root_release_created == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -81,16 +99,15 @@ jobs:
 
       - name: Build source tarball
         run: |
-          VERSION="${{ needs.release-please.outputs.version }}"
+          VERSION="${{ needs.release-please.outputs.root_version }}"
           tar czf "/tmp/aidd-framework-${VERSION}.tar.gz" \
             plugins/ \
             .claude-plugin/ \
-            aidd_docs/ \
-            version.txt
+            aidd_docs/
 
       - name: Build per-tool tarballs
         run: |
-          VERSION="${{ needs.release-please.outputs.version }}"
+          VERSION="${{ needs.release-please.outputs.root_version }}"
           for tool in claude cursor copilot codex; do
             tar czf "/tmp/aidd-${tool}-${VERSION}.tar.gz" \
               -C dist/${tool}-local \
@@ -106,8 +123,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="${{ needs.release-please.outputs.version }}"
-          TAG="${{ needs.release-please.outputs.tag_name }}"
+          VERSION="${{ needs.release-please.outputs.root_version }}"
+          TAG="${{ needs.release-please.outputs.root_tag_name }}"
           gh release upload "${TAG}" \
             "/tmp/aidd-framework-${VERSION}.tar.gz" \
             "/tmp/aidd-claude-${VERSION}.tar.gz" \
@@ -118,4 +135,68 @@ jobs:
             "/tmp/aidd-copilot-remote-${VERSION}.tar.gz" \
             "/tmp/aidd-codex-${VERSION}.tar.gz" \
             "/tmp/aidd-codex-remote-${VERSION}.tar.gz" \
+            --clobber
+
+  build-and-attach-plugin:
+    name: Build and attach (${{ matrix.plugin }})
+    needs: [release-please]
+    if: |
+      needs.release-please.outputs.context_release_created == 'true' ||
+      needs.release-please.outputs.dev_release_created == 'true' ||
+      needs.release-please.outputs.vcs_release_created == 'true' ||
+      needs.release-please.outputs.pm_release_created == 'true' ||
+      needs.release-please.outputs.orchestrator_release_created == 'true' ||
+      needs.release-please.outputs.refine_release_created == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - plugin: aidd-context
+            release_created: ${{ needs.release-please.outputs.context_release_created }}
+            tag_name: ${{ needs.release-please.outputs.context_tag_name }}
+            version: ${{ needs.release-please.outputs.context_version }}
+          - plugin: aidd-dev
+            release_created: ${{ needs.release-please.outputs.dev_release_created }}
+            tag_name: ${{ needs.release-please.outputs.dev_tag_name }}
+            version: ${{ needs.release-please.outputs.dev_version }}
+          - plugin: aidd-vcs
+            release_created: ${{ needs.release-please.outputs.vcs_release_created }}
+            tag_name: ${{ needs.release-please.outputs.vcs_tag_name }}
+            version: ${{ needs.release-please.outputs.vcs_version }}
+          - plugin: aidd-pm
+            release_created: ${{ needs.release-please.outputs.pm_release_created }}
+            tag_name: ${{ needs.release-please.outputs.pm_tag_name }}
+            version: ${{ needs.release-please.outputs.pm_version }}
+          - plugin: aidd-orchestrator
+            release_created: ${{ needs.release-please.outputs.orchestrator_release_created }}
+            tag_name: ${{ needs.release-please.outputs.orchestrator_tag_name }}
+            version: ${{ needs.release-please.outputs.orchestrator_version }}
+          - plugin: aidd-refine
+            release_created: ${{ needs.release-please.outputs.refine_release_created }}
+            tag_name: ${{ needs.release-please.outputs.refine_tag_name }}
+            version: ${{ needs.release-please.outputs.refine_version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build plugin tarball
+        if: matrix.release_created == 'true'
+        run: |
+          PLUGIN="${{ matrix.plugin }}"
+          VERSION="${{ matrix.version }}"
+          tar czf "/tmp/${PLUGIN}-v${VERSION}.tar.gz" \
+            -C "plugins/${PLUGIN}" \
+            --exclude='.aidd/cache' \
+            .
+
+      - name: Attach tarball to release
+        if: matrix.release_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PLUGIN="${{ matrix.plugin }}"
+          VERSION="${{ matrix.version }}"
+          TAG="${{ matrix.tag_name }}"
+          gh release upload "${TAG}" \
+            "/tmp/${PLUGIN}-v${VERSION}.tar.gz" \
             --clobber
