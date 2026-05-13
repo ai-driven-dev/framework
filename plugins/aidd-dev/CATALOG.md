@@ -46,11 +46,13 @@ No files found.
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-plan.md](skills/00-sdlc/actions/01-plan.md) | - |
-| `actions` | [02-implement.md](skills/00-sdlc/actions/02-implement.md) | - |
-| `actions` | [03-review.md](skills/00-sdlc/actions/03-review.md) | - |
+| `actions` | [01-spec.md](skills/00-sdlc/actions/01-spec.md) | - |
+| `actions` | [02-plan.md](skills/00-sdlc/actions/02-plan.md) | - |
+| `actions` | [03-implement.md](skills/00-sdlc/actions/03-implement.md) | - |
+| `actions` | [04-review.md](skills/00-sdlc/actions/04-review.md) | - |
+| `actions` | [05-ship.md](skills/00-sdlc/actions/05-ship.md) | - |
 | `evals` | [scenarios.json](skills/00-sdlc/evals/scenarios.json) | - |
-| `-` | [SKILL.md](skills/00-sdlc/SKILL.md) | `Pure orchestrator for the full AIDD development flow. Use when a human (or Gardener) needs to take a free-form request from idea to shipped code, end-to-end. Coordinates spec generation, planning, implementation, and review by composing other skills and agents. Holds no business logic of its own; every step is delegated.` |
+| `-` | [SKILL.md](skills/00-sdlc/SKILL.md) | `Pure orchestrator for the full AIDD development flow. Use when a human (or Gardener) needs to take a free-form request from idea to shipped code, end-to-end. Coordinates spec generation, planning, implementation, review, and shipping by composing other skills and agents. Supports two modes - `auto` (default, no human interaction) and `interactive` (pauses for human confirmation at key gates). Holds no business logic of its own; every step is delegated.` |
 
 #### `skills/01-plan`
 
