@@ -38,6 +38,7 @@ Sequential: `01 -> 02 -> 03 -> 04 -> 05 -> 06`. Action 03 runs once per selected
 - On any failure between 03 and 06, attach the error to the audit record and the issue as a comment, replace `claude/working` with `claude/blocked`, and stop.
 - Never auto-merge. The pipeline ends at PR creation.
 - Apply `tool_allowlist` from config via the plugin `PreToolUse` hook when hooks are wired.
+- **MUST execute every action 01 → 06 in order.** No action may be skipped or inlined into another. In particular: action 05 MUST call the SDLC skill via the `Skill` tool, and action 06 MUST write + commit + push the audit JSON to the PR branch. The orchestrator is a coordinator; the implementation work belongs to the SDLC capability. Direct Edit/Write/Bash mutations in place of action 05 are a contract violation. If you find yourself about to edit a feature file, stop and call the SDLC skill instead.
 
 ## External data
 

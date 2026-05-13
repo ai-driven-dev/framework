@@ -30,6 +30,8 @@ Hands the implementation off to the SDLC capability. The orchestrator picks the 
 
 ## Process
 
+**CRITICAL — DO NOT BYPASS.** This action's sole purpose is to invoke the SDLC capability. You MUST NOT write code, edit files, run tests, push branches, or open PRs yourself. Those tasks belong to the SDLC skill. Your only job is: build the delegation prompt, call the Skill tool, then verify the contract. Any direct Edit/Write/Bash usage to implement the feature is a contract violation and must be aborted.
+
 1. Record the default-branch SHA: `git fetch origin && BEFORE=$(git rev-parse origin/<default>)`. Contract baseline.
 2. Compute the feature branch name: `feat/issue-<issue.number>-<kebab-slug-of-title>` (truncate slug to 40 chars). Must not equal the default branch.
 3. Compose the delegation prompt with these explicit, non-negotiable constraints (state at the top AND repeat at the bottom):
@@ -56,7 +58,7 @@ Hands the implementation off to the SDLC capability. The orchestrator picks the 
    <issue labels>
    ```
 
-4. Invoke the skill named in `discovered_skill` via the `Skill` tool with that prompt. Read the skill name from input; never hardcode.
+4. **MANDATORY — invoke the SDLC skill via the `Skill` tool.** Use the skill name returned in `discovered_skill` (never hardcode). The orchestrator MUST issue exactly one `Skill` tool call with that name and the prompt from step 3 as `args`. Do not call Edit, Write, Bash-with-mutations, or `gh pr create` yourself; the SDLC owns those. If `discovered_skill` is empty, abort with a `claude/blocked` outcome and a comment listing the issue. The `Skill` tool call is the only way this action can succeed.
 5. Capture the SDLC result. If the SDLC did not return a `pr_number`, query the API: `gh pr list --repo <owner>/<repo> --head feat/issue-<n>-<slug> --state open --json number,url --jq '.[0]'`.
 6. **Verify the contract** (the SDLC could have ignored instructions):
    - `AFTER=$(git fetch origin && git rev-parse origin/<default>)`.
