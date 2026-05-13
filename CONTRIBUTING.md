@@ -35,27 +35,34 @@ This repository follows [Semantic Versioning](https://semver.org/) with automate
 1. Every push to `main` with conventional commits triggers a **Release PR** (changelog + version bump)
 2. When the Release PR is merged → GitHub Release + tag + downloadable tarball
 
-The tarball contains only the framework content: `agents/`, `commands/`, `config/`, `rules/`, `skills/`, `templates/`, `aidd_docs/`, `version.txt`.
+The root release tarball contains the framework content: `plugins/`, `.claude-plugin/`, `aidd_docs/`. Plugin releases each produce their own `aidd-<plugin>-v<X.Y.Z>.tar.gz`.
 
 ## Commit scope discipline
 
-Every commit must use one of the five allowed scopes:
+Every commit must use one of the allowed scopes. The scope determines **which package release-please bumps**:
 
-| Scope          | Use for                                                           |
-| -------------- | ----------------------------------------------------------------- |
-| `aidd-context` | Changes inside `plugins/aidd-context/`                            |
-| `aidd-dev`     | Changes inside `plugins/aidd-dev/`                                |
-| `aidd-vcs`     | Changes inside `plugins/aidd-vcs/`                                |
-| `aidd-pm`      | Changes inside `plugins/aidd-pm/`                                 |
-| `framework`    | Root-level changes: build scripts, CI, config, docs, `aidd_docs/` |
+| Scope               | Bumps                    | Use for                                                           |
+| ------------------- | ------------------------ | ----------------------------------------------------------------- |
+| `aidd-context`      | `plugins/aidd-context`   | Changes inside `plugins/aidd-context/`                            |
+| `aidd-dev`          | `plugins/aidd-dev`       | Changes inside `plugins/aidd-dev/`                                |
+| `aidd-vcs`          | `plugins/aidd-vcs`       | Changes inside `plugins/aidd-vcs/`                                |
+| `aidd-pm`           | `plugins/aidd-pm`        | Changes inside `plugins/aidd-pm/`                                 |
+| `aidd-orchestrator` | `plugins/aidd-orchestrator` | Changes inside `plugins/aidd-orchestrator/`                    |
+| `aidd-refine`       | `plugins/aidd-refine`    | Changes inside `plugins/aidd-refine/`                             |
+| `framework`         | root (`marketplace.json`)| Root-level changes: build scripts, CI, config, docs, `aidd_docs/` |
+| `marketplace`       | root (`marketplace.json`)| Catalog-level changes: adding/removing plugins, updating metadata |
+
+Plugin scopes (`aidd-*`) bump only that plugin's `plugin.json` and create a tag like `aidd-<plugin>-v<X.Y.Z>`.
+Root scopes (`framework`, `marketplace`) bump `marketplace.json` and create a root tag like `v<X.Y.Z>`.
 
 Examples:
 
 ```bash
 git commit -m "feat(aidd-dev): add for-sure skill"
 git commit -m "fix(aidd-vcs): correct commit template"
+git commit -m "feat(aidd-orchestrator): add review skill"
 git commit -m "docs(framework): update README for plugin model"
-git commit -m "build(framework): regenerate catalogs"
+git commit -m "chore(marketplace): register aidd-refine in catalog"
 ```
 
 Cross-plugin changes must be split into separate commits, one per scope.

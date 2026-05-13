@@ -63,6 +63,26 @@
           "jsonpath": "$.version"
         }
       ]
+    },
+    "plugins/aidd-orchestrator": {
+      "package-name": "aidd-orchestrator",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": ".claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "plugins/aidd-refine": {
+      "package-name": "aidd-refine",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": ".claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
     }
   }
 }
