@@ -35,19 +35,24 @@ This repository follows [Semantic Versioning](https://semver.org/) with automate
 1. Every push to `main` with conventional commits triggers a **Release PR** (changelog + version bump)
 2. When the Release PR is merged → GitHub Release + tag + downloadable tarball
 
-The tarball contains only the framework content: `agents/`, `commands/`, `config/`, `rules/`, `skills/`, `templates/`, `aidd_docs/`, `version.txt`.
+The tarball contains only the framework content: `agents/`, `commands/`, `config/`, `rules/`, `skills/`, `templates/`, `aidd_docs/`.
 
 ## Commit scope discipline
 
-Every commit must use one of the five allowed scopes:
+Every commit must use one of the eight allowed scopes:
 
-| Scope          | Use for                                                           |
-| -------------- | ----------------------------------------------------------------- |
-| `aidd-context` | Changes inside `plugins/aidd-context/`                            |
-| `aidd-dev`     | Changes inside `plugins/aidd-dev/`                                |
-| `aidd-vcs`     | Changes inside `plugins/aidd-vcs/`                                |
-| `aidd-pm`      | Changes inside `plugins/aidd-pm/`                                 |
-| `framework`    | Root-level changes: build scripts, CI, config, docs, `aidd_docs/` |
+| Scope              | Use for                                                                              |
+| ------------------ | ------------------------------------------------------------------------------------ |
+| `aidd-context`     | Changes inside `plugins/aidd-context/`                                               |
+| `aidd-dev`         | Changes inside `plugins/aidd-dev/`                                                   |
+| `aidd-vcs`         | Changes inside `plugins/aidd-vcs/`                                                   |
+| `aidd-pm`          | Changes inside `plugins/aidd-pm/`                                                    |
+| `aidd-orchestrator`| Changes inside `plugins/aidd-orchestrator/`                                          |
+| `aidd-refine`      | Changes inside `plugins/aidd-refine/`                                                |
+| `marketplace`      | Changes to `.claude-plugin/marketplace.json` and marketplace-level metadata          |
+| `framework`        | Root-level: build scripts, CI, config, docs, `aidd_docs/`                            |
+
+Each scope maps to a release-please package. A `feat(aidd-refine):` commit bumps `plugins/aidd-refine/.claude-plugin/plugin.json` and creates an `aidd-refine-v<X.Y.Z>` tag. A `feat(framework):` or `feat(marketplace):` commit bumps the root, which updates `.claude-plugin/marketplace.json` and creates a `v<X.Y.Z>` tag.
 
 Examples:
 

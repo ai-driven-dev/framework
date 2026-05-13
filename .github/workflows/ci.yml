@@ -40,9 +40,34 @@ jobs:
       github.event_name == 'push' &&
       (needs.commitlint.result == 'success' || needs.commitlint.result == 'skipped')
     outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
-      version: ${{ steps.release.outputs.version }}
+      # Root package (.) outputs — release-please-action v4 uses unprefixed keys for the root
+      root_release_created: ${{ steps.release.outputs.release_created }}
+      root_version: ${{ steps.release.outputs.version }}
+      root_tag: ${{ steps.release.outputs.tag_name }}
+      # Plugin: aidd-context
+      aidd_context_release_created: ${{ steps.release.outputs['plugins/aidd-context--release_created'] }}
+      aidd_context_version: ${{ steps.release.outputs['plugins/aidd-context--version'] }}
+      aidd_context_tag: ${{ steps.release.outputs['plugins/aidd-context--tag_name'] }}
+      # Plugin: aidd-dev
+      aidd_dev_release_created: ${{ steps.release.outputs['plugins/aidd-dev--release_created'] }}
+      aidd_dev_version: ${{ steps.release.outputs['plugins/aidd-dev--version'] }}
+      aidd_dev_tag: ${{ steps.release.outputs['plugins/aidd-dev--tag_name'] }}
+      # Plugin: aidd-orchestrator
+      aidd_orchestrator_release_created: ${{ steps.release.outputs['plugins/aidd-orchestrator--release_created'] }}
+      aidd_orchestrator_version: ${{ steps.release.outputs['plugins/aidd-orchestrator--version'] }}
+      aidd_orchestrator_tag: ${{ steps.release.outputs['plugins/aidd-orchestrator--tag_name'] }}
+      # Plugin: aidd-pm
+      aidd_pm_release_created: ${{ steps.release.outputs['plugins/aidd-pm--release_created'] }}
+      aidd_pm_version: ${{ steps.release.outputs['plugins/aidd-pm--version'] }}
+      aidd_pm_tag: ${{ steps.release.outputs['plugins/aidd-pm--tag_name'] }}
+      # Plugin: aidd-refine
+      aidd_refine_release_created: ${{ steps.release.outputs['plugins/aidd-refine--release_created'] }}
+      aidd_refine_version: ${{ steps.release.outputs['plugins/aidd-refine--version'] }}
+      aidd_refine_tag: ${{ steps.release.outputs['plugins/aidd-refine--tag_name'] }}
+      # Plugin: aidd-vcs
+      aidd_vcs_release_created: ${{ steps.release.outputs['plugins/aidd-vcs--release_created'] }}
+      aidd_vcs_version: ${{ steps.release.outputs['plugins/aidd-vcs--version'] }}
+      aidd_vcs_tag: ${{ steps.release.outputs['plugins/aidd-vcs--tag_name'] }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -53,7 +78,14 @@ jobs:
   build-and-attach:
     name: Build and attach
     needs: [release-please]
-    if: needs.release-please.outputs.release_created == 'true'
+    if: |
+      needs.release-please.outputs.root_release_created == 'true' ||
+      needs.release-please.outputs.aidd_context_release_created == 'true' ||
+      needs.release-please.outputs.aidd_dev_release_created == 'true' ||
+      needs.release-please.outputs.aidd_orchestrator_release_created == 'true' ||
+      needs.release-please.outputs.aidd_pm_release_created == 'true' ||
+      needs.release-please.outputs.aidd_refine_release_created == 'true' ||
+      needs.release-please.outputs.aidd_vcs_release_created == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -76,21 +108,25 @@ jobs:
           npm config set //npm.pkg.github.com/:_authToken ${{ secrets.PACKAGES_TOKEN }}
           npm install -g @ai-driven-dev/cli@beta
 
+      # ── Root / framework branch ───────────────────────────────────────────────
+
       - name: Build distributions
+        if: needs.release-please.outputs.root_release_created == 'true'
         run: bash scripts/build-dist.sh
 
       - name: Build source tarball
+        if: needs.release-please.outputs.root_release_created == 'true'
         run: |
-          VERSION="${{ needs.release-please.outputs.version }}"
+          VERSION="${{ needs.release-please.outputs.root_version }}"
           tar czf "/tmp/aidd-framework-${VERSION}.tar.gz" \
             plugins/ \
             .claude-plugin/ \
-            aidd_docs/ \
-            version.txt
+            aidd_docs/
 
       - name: Build per-tool tarballs
+        if: needs.release-please.outputs.root_release_created == 'true'
         run: |
-          VERSION="${{ needs.release-please.outputs.version }}"
+          VERSION="${{ needs.release-please.outputs.root_version }}"
           for tool in claude cursor copilot codex; do
             tar czf "/tmp/aidd-${tool}-${VERSION}.tar.gz" \
               -C dist/${tool}-local \
@@ -102,12 +138,13 @@ jobs:
               .
           done
 
-      - name: Attach tarballs to release
+      - name: Attach root tarballs to release
+        if: needs.release-please.outputs.root_release_created == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="${{ needs.release-please.outputs.version }}"
-          TAG="${{ needs.release-please.outputs.tag_name }}"
+          VERSION="${{ needs.release-please.outputs.root_version }}"
+          TAG="${{ needs.release-please.outputs.root_tag }}"
           gh release upload "${TAG}" \
             "/tmp/aidd-framework-${VERSION}.tar.gz" \
             "/tmp/aidd-claude-${VERSION}.tar.gz" \
@@ -119,3 +156,65 @@ jobs:
             "/tmp/aidd-codex-${VERSION}.tar.gz" \
             "/tmp/aidd-codex-remote-${VERSION}.tar.gz" \
             --clobber
+
+      # ── Plugin branch ─────────────────────────────────────────────────────────
+
+      - name: Pack and attach aidd-context plugin tarball
+        if: needs.release-please.outputs.aidd_context_release_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.release-please.outputs.aidd_context_version }}"
+          TAG="${{ needs.release-please.outputs.aidd_context_tag }}"
+          tar czf "/tmp/aidd-context-v${VERSION}.tar.gz" -C plugins/aidd-context .
+          gh release upload "${TAG}" "/tmp/aidd-context-v${VERSION}.tar.gz" --clobber
+
+      - name: Pack and attach aidd-dev plugin tarball
+        if: needs.release-please.outputs.aidd_dev_release_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.release-please.outputs.aidd_dev_version }}"
+          TAG="${{ needs.release-please.outputs.aidd_dev_tag }}"
+          tar czf "/tmp/aidd-dev-v${VERSION}.tar.gz" -C plugins/aidd-dev .
+          gh release upload "${TAG}" "/tmp/aidd-dev-v${VERSION}.tar.gz" --clobber
+
+      - name: Pack and attach aidd-orchestrator plugin tarball
+        if: needs.release-please.outputs.aidd_orchestrator_release_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.release-please.outputs.aidd_orchestrator_version }}"
+          TAG="${{ needs.release-please.outputs.aidd_orchestrator_tag }}"
+          tar czf "/tmp/aidd-orchestrator-v${VERSION}.tar.gz" -C plugins/aidd-orchestrator .
+          gh release upload "${TAG}" "/tmp/aidd-orchestrator-v${VERSION}.tar.gz" --clobber
+
+      - name: Pack and attach aidd-pm plugin tarball
+        if: needs.release-please.outputs.aidd_pm_release_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.release-please.outputs.aidd_pm_version }}"
+          TAG="${{ needs.release-please.outputs.aidd_pm_tag }}"
+          tar czf "/tmp/aidd-pm-v${VERSION}.tar.gz" -C plugins/aidd-pm .
+          gh release upload "${TAG}" "/tmp/aidd-pm-v${VERSION}.tar.gz" --clobber
+
+      - name: Pack and attach aidd-refine plugin tarball
+        if: needs.release-please.outputs.aidd_refine_release_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.release-please.outputs.aidd_refine_version }}"
+          TAG="${{ needs.release-please.outputs.aidd_refine_tag }}"
+          tar czf "/tmp/aidd-refine-v${VERSION}.tar.gz" -C plugins/aidd-refine .
+          gh release upload "${TAG}" "/tmp/aidd-refine-v${VERSION}.tar.gz" --clobber
+
+      - name: Pack and attach aidd-vcs plugin tarball
+        if: needs.release-please.outputs.aidd_vcs_release_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.release-please.outputs.aidd_vcs_version }}"
+          TAG="${{ needs.release-please.outputs.aidd_vcs_tag }}"
+          tar czf "/tmp/aidd-vcs-v${VERSION}.tar.gz" -C plugins/aidd-vcs .
+          gh release upload "${TAG}" "/tmp/aidd-vcs-v${VERSION}.tar.gz" --clobber
