@@ -33,21 +33,33 @@ This repository follows [Semantic Versioning](https://semver.org/) with automate
 **How it works:**
 
 1. Every push to `main` with conventional commits triggers a **Release PR** (changelog + version bump)
-2. When the Release PR is merged → GitHub Release + tag + downloadable tarball
+2. When the Release PR is merged → GitHub Release(s) + tag(s) + downloadable tarball(s)
 
-The tarball contains only the framework content: `agents/`, `commands/`, `config/`, `rules/`, `skills/`, `templates/`, `aidd_docs/`, `version.txt`.
+Each plugin versions independently with its own tag (`aidd-<plugin>-v<X.Y.Z>`) and changelog. The framework root (`marketplace.json`) is the single public face of the catalog and is bumped by commits scoped to `framework` or `marketplace` (root tag stays `v<X.Y.Z>`).
+
+**Release artifacts:**
+
+| Trigger                 | Tag                          | Tarballs attached                                                         |
+| ----------------------- | ---------------------------- | ------------------------------------------------------------------------- |
+| Root release            | `v<X.Y.Z>`                   | `aidd-framework-v<X.Y.Z>.tar.gz` + per-tool bundles (`claude`, `cursor`, `copilot`, `codex`, local + remote) |
+| Per-plugin release      | `aidd-<plugin>-v<X.Y.Z>`     | `aidd-<plugin>-v<X.Y.Z>.tar.gz` (contents of `plugins/aidd-<plugin>/`)    |
+
+The framework tarball contains `plugins/`, `.claude-plugin/`, and `aidd_docs/`.
 
 ## Commit scope discipline
 
-Every commit must use one of the five allowed scopes:
+Every commit must use one of the allowed scopes. The scope decides which package release-please will bump.
 
-| Scope          | Use for                                                           |
-| -------------- | ----------------------------------------------------------------- |
-| `aidd-context` | Changes inside `plugins/aidd-context/`                            |
-| `aidd-dev`     | Changes inside `plugins/aidd-dev/`                                |
-| `aidd-vcs`     | Changes inside `plugins/aidd-vcs/`                                |
-| `aidd-pm`      | Changes inside `plugins/aidd-pm/`                                 |
-| `framework`    | Root-level changes: build scripts, CI, config, docs, `aidd_docs/` |
+| Scope               | Use for                                                                  | Bumps                              |
+| ------------------- | ------------------------------------------------------------------------ | ---------------------------------- |
+| `aidd-context`      | Changes inside `plugins/aidd-context/`                                   | `plugins/aidd-context/plugin.json` |
+| `aidd-dev`          | Changes inside `plugins/aidd-dev/`                                       | `plugins/aidd-dev/plugin.json`     |
+| `aidd-vcs`          | Changes inside `plugins/aidd-vcs/`                                       | `plugins/aidd-vcs/plugin.json`     |
+| `aidd-pm`           | Changes inside `plugins/aidd-pm/`                                        | `plugins/aidd-pm/plugin.json`      |
+| `aidd-orchestrator` | Changes inside `plugins/aidd-orchestrator/`                              | `plugins/aidd-orchestrator/plugin.json` |
+| `aidd-refine`       | Changes inside `plugins/aidd-refine/`                                    | `plugins/aidd-refine/plugin.json`  |
+| `framework`         | Root-level changes: build scripts, CI, config, docs, `aidd_docs/`        | `.claude-plugin/marketplace.json`  |
+| `marketplace`       | Catalog edits to `.claude-plugin/marketplace.json` (alias for root bump) | `.claude-plugin/marketplace.json`  |
 
 Examples:
 
@@ -56,6 +68,7 @@ git commit -m "feat(aidd-dev): add for-sure skill"
 git commit -m "fix(aidd-vcs): correct commit template"
 git commit -m "docs(framework): update README for plugin model"
 git commit -m "build(framework): regenerate catalogs"
+git commit -m "feat(marketplace): register new plugin in catalog"
 ```
 
 Cross-plugin changes must be split into separate commits, one per scope.

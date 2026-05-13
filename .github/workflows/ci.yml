@@ -40,9 +40,11 @@ jobs:
       github.event_name == 'push' &&
       (needs.commitlint.result == 'success' || needs.commitlint.result == 'skipped')
     outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
-      version: ${{ steps.release.outputs.version }}
+      releases_created: ${{ steps.release.outputs.releases_created }}
+      paths_released: ${{ steps.release.outputs.paths_released }}
+      root_released: ${{ steps.release.outputs.release_created }}
+      root_tag_name: ${{ steps.release.outputs.tag_name }}
+      root_version: ${{ steps.release.outputs.version }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -50,10 +52,10 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  build-and-attach:
-    name: Build and attach
+  build-framework:
+    name: Build framework release artifacts
     needs: [release-please]
-    if: needs.release-please.outputs.release_created == 'true'
+    if: needs.release-please.outputs.root_released == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -81,16 +83,15 @@ jobs:
 
       - name: Build source tarball
         run: |
-          VERSION="${{ needs.release-please.outputs.version }}"
+          VERSION="${{ needs.release-please.outputs.root_version }}"
           tar czf "/tmp/aidd-framework-${VERSION}.tar.gz" \
             plugins/ \
             .claude-plugin/ \
-            aidd_docs/ \
-            version.txt
+            aidd_docs/
 
       - name: Build per-tool tarballs
         run: |
-          VERSION="${{ needs.release-please.outputs.version }}"
+          VERSION="${{ needs.release-please.outputs.root_version }}"
           for tool in claude cursor copilot codex; do
             tar czf "/tmp/aidd-${tool}-${VERSION}.tar.gz" \
               -C dist/${tool}-local \
@@ -106,8 +107,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="${{ needs.release-please.outputs.version }}"
-          TAG="${{ needs.release-please.outputs.tag_name }}"
+          VERSION="${{ needs.release-please.outputs.root_version }}"
+          TAG="${{ needs.release-please.outputs.root_tag_name }}"
           gh release upload "${TAG}" \
             "/tmp/aidd-framework-${VERSION}.tar.gz" \
             "/tmp/aidd-claude-${VERSION}.tar.gz" \
@@ -119,3 +120,35 @@ jobs:
             "/tmp/aidd-codex-${VERSION}.tar.gz" \
             "/tmp/aidd-codex-remote-${VERSION}.tar.gz" \
             --clobber
+
+  build-plugins:
+    name: Build plugin release artifacts
+    needs: [release-please]
+    if: |
+      needs.release-please.outputs.releases_created == 'true' &&
+      contains(needs.release-please.outputs.paths_released, 'plugins/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and attach per-plugin tarballs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PATHS_RELEASED: ${{ needs.release-please.outputs.paths_released }}
+        run: |
+          set -euo pipefail
+          for path in $(echo "${PATHS_RELEASED}" | jq -r '.[]'); do
+            case "${path}" in
+              plugins/*)
+                name="${path#plugins/}"
+                version="$(jq -r '.version' "${path}/.claude-plugin/plugin.json")"
+                tag="${name}-v${version}"
+                tarball="/tmp/${name}-v${version}.tar.gz"
+                tar czf "${tarball}" \
+                  -C plugins \
+                  --exclude='.aidd/cache' \
+                  "${name}"
+                gh release upload "${tag}" "${tarball}" --clobber
+                ;;
+            esac
+          done
