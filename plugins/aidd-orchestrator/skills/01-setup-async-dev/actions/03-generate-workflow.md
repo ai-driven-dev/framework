@@ -22,9 +22,13 @@ A file at `.github/workflows/aidd-async.yml`.
 3. Substitute placeholders:
    - `__TO_IMPLEMENT_LABEL__` -> `answers.labels.to_implement`
    - `__TO_REVIEW_LABEL__` -> `answers.labels.to_review`
+   - `__WORKING_LABEL__` -> `answers.labels.working`
+   - `__AWAITING_LABEL__` -> `answers.labels.awaiting_review`
+   - `__BLOCKED_LABEL__` -> `answers.labels.blocked`
    - `__MENTION_IMPLEMENT__` -> `answers.mentions.implement`
    - `__MENTION_REVIEW__` -> `answers.mentions.review`
    - `__DEFAULT_BRANCH__` -> `detection.default_branch`
+   - `__GITHUB_WRITE_SECRET__` -> matches `answers.github_write_auth.mode`: `pat` -> `answers.github_write_auth.secret_name`; `github_app` -> the secret name holding the app token; `default` -> `GITHUB_TOKEN` (the runner's default; will lack workflow-edit scope).
    - `__CLAUDE_AUTH_LINE__` -> matches `answers.claude_action_auth.mode` (the secret name is resolved per-run via the dispatch step `route_account`, which reads `.claude/aidd-orchestrator.json`'s `account_routing` and `default_secret_name`):
      - `oauth_token` -> `claude_code_oauth_token: ${{ secrets[needs.dispatch.outputs.account_secret] }}`
      - `api_key` -> `anthropic_api_key: ${{ secrets[needs.dispatch.outputs.account_secret] }}`

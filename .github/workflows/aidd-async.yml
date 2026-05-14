@@ -168,6 +168,62 @@ jobs:
           claude_args: --permission-mode bypassPermissions
           show_full_output: true
 
+      - name: Finalize run (audit + labels + marker)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.AIDD_BOT_TOKEN }}
+          ISSUE_NUMBER: ${{ needs.dispatch.outputs.issue_number }}
+          JOB_STATUS: ${{ job.status }}
+          WORKING_LABEL: claude/working
+          AWAITING_LABEL: claude/awaiting-review
+          BLOCKED_LABEL: claude/blocked
+        run: |
+          set +e
+          RESULT="${RUNNER_TEMP}/run-result.json"
+          if [ ! -s "$RESULT" ]; then
+            outcome="blocked"
+            pr_number=""
+            error="run-result.json missing; agent exited without recording outcome"
+            run_id="unknown-$(date -u +%Y%m%dT%H%M%SZ)"
+          else
+            outcome=$(jq -r '.outcome // "blocked"' "$RESULT")
+            pr_number=$(jq -r '.pr_number // empty' "$RESULT")
+            run_id=$(jq -r '.run_id // empty' "$RESULT")
+            error=$(jq -r '.error // empty' "$RESULT")
+          fi
+          if [ "$JOB_STATUS" != "success" ]; then
+            outcome="blocked"
+            error="${error:-claude-code-action exited with status $JOB_STATUS}"
+          fi
+          if [ -n "$pr_number" ]; then
+            branch=$(gh pr view "$pr_number" --repo "$GITHUB_REPOSITORY" --json headRefName --jq .headRefName)
+          else
+            branch=$(gh api "repos/$GITHUB_REPOSITORY" --jq .default_branch)
+          fi
+          audit_path="aidd_docs/async-runs/$(date -u +%Y_%m)/${run_id}.json"
+          existing_sha=$(gh api "repos/$GITHUB_REPOSITORY/contents/$audit_path?ref=$branch" --jq .sha 2>/dev/null || echo "")
+          content_b64=$(base64 < "$RESULT" | tr -d '\n')
+          payload=$(jq -n --arg msg "chore(orchestrator): record async run audit $run_id" \
+            --arg content "$content_b64" --arg branch "$branch" --arg sha "$existing_sha" \
+            '{message:$msg, content:$content, branch:$branch} + (if $sha == "" then {} else {sha:$sha} end)')
+          gh api -X PUT "repos/$GITHUB_REPOSITORY/contents/$audit_path" --input - <<< "$payload" >/dev/null || true
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/$ISSUE_NUMBER/labels/$(printf '%s' "$WORKING_LABEL" | jq -sRr @uri)" >/dev/null 2>&1 || true
+          if [ "$outcome" = "blocked" ]; then
+            new_label="$BLOCKED_LABEL"
+            gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "Async run blocked: ${error:-no PR opened}." >/dev/null || true
+          else
+            new_label="$AWAITING_LABEL"
+          fi
+          gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$ISSUE_NUMBER/labels" -f "labels[]=$new_label" >/dev/null || true
+          marker_target="$ISSUE_NUMBER"
+          [ -n "$pr_number" ] && marker_target="$pr_number"
+          existing=$(gh api "repos/$GITHUB_REPOSITORY/issues/$marker_target/comments" \
+            --jq "[.[] | select(.body | contains(\"aidd-orchestrator:run-complete run_id=$run_id\"))] | length")
+          if [ "$existing" = "0" ]; then
+            gh issue comment "$marker_target" --repo "$GITHUB_REPOSITORY" --body "<!-- aidd-orchestrator:run-complete run_id=$run_id -->
+          ✅ Async run \`$outcome\`. Audit: \`$audit_path\`." >/dev/null || true
+          fi
+
   review:
     needs: dispatch
     if: needs.dispatch.outputs.mode == 'review'

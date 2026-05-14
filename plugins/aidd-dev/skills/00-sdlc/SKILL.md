@@ -36,7 +36,7 @@ Detect the mode from `$ARGUMENTS` once, at skill entry, before dispatching the f
 | 02  | `plan`      | Produce the mandatory plan file                                        | plan via `planner`             |
 | 03  | `implement` | Loop milestones until complete                                         | implement via `implementer`    |
 | 04  | `review`    | Verdict `ship` or `iterate`                                            | review via `reviewer`          |
-| 05  | `ship`      | Commit and open the pull request                                       | commit, pull-request           |
+| 05  | `ship`      | Commit and open a change request via the project's VCS                 | commit, pull-request           |
 
 Files: `actions/01-spec.md` ... `actions/05-ship.md`.
 
@@ -54,7 +54,7 @@ Activate only in `interactive` mode. In `auto` mode, never pause.
 2. **After `02-plan`** - show the plan; confirm scope before any code change.
 3. **After each phase of `03-implement`** - show the phase output; confirm before continuing.
 4. **After `04-review`** - show findings and verdict; confirm ship vs iterate.
-5. **Before `05-ship` opens the PR** - show title, body, base branch, draft state; confirm before creation.
+5. **Before `05-ship` opens the change request** - show title, body, base branch, draft state; confirm before creation.
 
 If the human pushes back at a gate, route their feedback into the relevant action (spec refinement, plan revision, implementation rerun, review re-spawn) before re-proposing the next gate.
 
@@ -69,7 +69,7 @@ Materialize the flow as a task list at skill entry; a task closes only when its 
 - Always run `02-plan`. Minimum: frontmatter + M/C/D + rules table + phases. Never inline ticket or spec as plan.
 - Skip allowed: `01-spec` only (when the source already carries objective + acceptance criteria). Never: plan, implement, review, ship.
 - Choose the best decision based on the facts.
-- Open a pull request once implementation is reviewed and complete.
+- Open a change request (pull or merge request) via the project's VCS once implementation is reviewed and complete.
 - **Branch discipline (caller responsibility).** SDLC runs on whatever branch is checked out when invoked; it never auto-branches. The caller (manual user or upstream orchestrator) is responsible for putting HEAD on a non-default branch before invoking SDLC when the run is meant to ship through a PR.
 
 ## References
