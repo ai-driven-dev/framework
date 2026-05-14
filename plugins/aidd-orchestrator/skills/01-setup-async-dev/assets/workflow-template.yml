@@ -29,6 +29,9 @@ jobs:
       mode: ${{ steps.route.outputs.mode }}
       ref: ${{ steps.route.outputs.ref }}
       issue_number: ${{ steps.route.outputs.issue_number }}
+      source_issue_number: ${{ steps.route.outputs.source_issue_number }}
+      trigger_kind: ${{ steps.route.outputs.trigger_kind }}
+      trigger_comment_url: ${{ steps.route.outputs.trigger_comment_url }}
       account_secret: ${{ steps.route_account.outputs.account_secret }}
       account_owner: ${{ steps.route_account.outputs.account_owner }}
     steps:
@@ -60,36 +63,82 @@ jobs:
             echo "account_owner=$OWNER"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Route to run vs review based on linked PR
+      - name: Route to run or review and capture trigger context
         id: route
         run: |
           NUM="${{ github.event.issue.number }}"
           IS_PR="${{ github.event.issue.pull_request != null }}"
+          EVENT_NAME="${{ github.event_name }}"
+          LABEL_NAME='${{ github.event.label.name }}'
+          COMMENT_BODY='${{ github.event.comment.body }}'
+          COMMENT_URL='${{ github.event.comment.html_url }}'
+          # Trigger kind: `comment` when fired by issue_comment, else `label`.
+          if [ "$EVENT_NAME" = "issue_comment" ]; then
+            TRIGGER_KIND="comment"
+          else
+            TRIGGER_KIND="label"
+          fi
+          # Detect human intent (implement vs review).
+          IMPLEMENT_INTENT="false"
+          REVIEW_INTENT="false"
+          case "$LABEL_NAME" in
+            __TO_IMPLEMENT_LABEL__) IMPLEMENT_INTENT="true" ;;
+            __TO_REVIEW_LABEL__)    REVIEW_INTENT="true" ;;
+          esac
+          case "$COMMENT_BODY" in
+            *__MENTION_IMPLEMENT__*) IMPLEMENT_INTENT="true" ;;
+            *__MENTION_REVIEW__*)    REVIEW_INTENT="true" ;;
+          esac
+
+          post_skip () {
+            local body="$1"
+            gh issue comment "$NUM" --repo "$GITHUB_REPOSITORY" --body "$body" >/dev/null || true
+          }
+
           if [ "$IS_PR" = "true" ]; then
-            # Event was posted on a PR directly; review that PR.
+            # Event posted on a PR -> review that PR directly.
             REF=$(gh pr view "$NUM" --repo "$GITHUB_REPOSITORY" --json headRefName --jq .headRefName)
             {
               echo "mode=review"
               echo "ref=$REF"
               echo "issue_number=$NUM"
+              echo "trigger_kind=$TRIGGER_KIND"
+              echo "trigger_comment_url=$COMMENT_URL"
             } >> "$GITHUB_OUTPUT"
           else
-            # Event was posted on an issue; check if any open PR closes that issue.
+            # Event posted on an issue; look for an open PR closing it.
             PR_NUM=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json number,body \
               --jq "[.[] | select(.body | test(\"(?i)\\\\b(Closes|Fixes|Resolves)\\\\s+#${NUM}\\\\b\"))][0].number" || echo "")
             if [ -n "$PR_NUM" ] && [ "$PR_NUM" != "null" ]; then
-              REF=$(gh pr view "$PR_NUM" --repo "$GITHUB_REPOSITORY" --json headRefName --jq .headRefName)
-              {
-                echo "mode=review"
-                echo "ref=$REF"
-                echo "issue_number=$PR_NUM"
-              } >> "$GITHUB_OUTPUT"
+              if [ "$IMPLEMENT_INTENT" = "true" ]; then
+                # Issue already has an open PR; refuse to re-run implementation.
+                post_skip "Skipping: this issue already has an open PR (#$PR_NUM). Comment on that PR (or apply \`__TO_REVIEW_LABEL__\` on this issue) to request changes; do not re-trigger \`__TO_IMPLEMENT_LABEL__\`."
+                echo "mode=skip" >> "$GITHUB_OUTPUT"
+              else
+                REF=$(gh pr view "$PR_NUM" --repo "$GITHUB_REPOSITORY" --json headRefName --jq .headRefName)
+                {
+                  echo "mode=review"
+                  echo "ref=$REF"
+                  echo "issue_number=$PR_NUM"
+                  echo "source_issue_number=$NUM"
+                  echo "trigger_kind=$TRIGGER_KIND"
+                  echo "trigger_comment_url=$COMMENT_URL"
+                } >> "$GITHUB_OUTPUT"
+              fi
             else
-              {
-                echo "mode=run"
-                echo "ref=__DEFAULT_BRANCH__"
-                echo "issue_number=$NUM"
-              } >> "$GITHUB_OUTPUT"
+              if [ "$REVIEW_INTENT" = "true" ] && [ "$IMPLEMENT_INTENT" != "true" ]; then
+                # Review intent on an issue with no open PR -> nothing to review.
+                post_skip "Skipping: cannot review issue #$NUM because no open PR closes it. Apply \`__TO_IMPLEMENT_LABEL__\` (or comment \`__MENTION_IMPLEMENT__\`) to start the implementation flow."
+                echo "mode=skip" >> "$GITHUB_OUTPUT"
+              else
+                {
+                  echo "mode=run"
+                  echo "ref=__DEFAULT_BRANCH__"
+                  echo "issue_number=$NUM"
+                  echo "trigger_kind=$TRIGGER_KIND"
+                  echo "trigger_comment_url=$COMMENT_URL"
+                } >> "$GITHUB_OUTPUT"
+              fi
             fi
           fi
         env:
@@ -108,7 +157,7 @@ jobs:
       - name: Run aidd-orchestrator pipeline
         uses: anthropics/claude-code-action@v1
         with:
-          prompt: "Use skill aidd-orchestrator:02:run-async-dev on issue #${{ needs.dispatch.outputs.issue_number }}"
+          prompt: "Use skill aidd-orchestrator:02:run-async-dev on issue #${{ needs.dispatch.outputs.issue_number }} (trigger_kind=${{ needs.dispatch.outputs.trigger_kind }}, trigger_comment_url=${{ needs.dispatch.outputs.trigger_comment_url }}). Fetch every comment newer than the last bot activity on the issue and feed them to the SDLC delegation as additional user direction."
           __CLAUDE_AUTH_LINE__
           __GITHUB_WRITE_TOKEN_LINE__
           plugins: |
@@ -132,7 +181,7 @@ jobs:
       - name: Run aidd-orchestrator review loop
         uses: anthropics/claude-code-action@v1
         with:
-          prompt: "Use skill aidd-orchestrator:03:review-async-dev on PR #${{ needs.dispatch.outputs.issue_number }}"
+          prompt: "Use skill aidd-orchestrator:03:review-async-dev on PR #${{ needs.dispatch.outputs.issue_number }} (trigger_kind=${{ needs.dispatch.outputs.trigger_kind }}, trigger_comment_url=${{ needs.dispatch.outputs.trigger_comment_url }}, source_issue_number=${{ needs.dispatch.outputs.source_issue_number }}). Collect comments from both the PR and its linked issue newer than the last iteration before deciding stop vs continue."
           __CLAUDE_AUTH_LINE__
           __GITHUB_WRITE_TOKEN_LINE__
           plugins: |

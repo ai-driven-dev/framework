@@ -11,7 +11,7 @@ Closes the loop after a PR is opened by this plugin's run skill. Detects when to
 
 | #   | Action              | Role                                                                                | Input        |
 | --- | ------------------- | ----------------------------------------------------------------------------------- | ------------ |
-| 01  | `collect-comments`  | Add `eyes` reaction, transition issue to `claude/working`, fetch comments           | PR number    |
+| 01  | `collect-comments`  | Add `eyes` reaction, transition issue to `claude/working`, fetch PR + issue comments | PR number    |
 | 02  | `detect-stop`       | Decide stop vs continue (max-N, blocked label, human reviewer)                      | comments + state |
 | 03  | `fix-iteration`     | Delegate fixes, push commit, reply per comment, resolve threads                     | comments     |
 | 04  | `finalize`          | Post structured summary, set final reaction, transition issue to awaiting-review or blocked | iteration log |

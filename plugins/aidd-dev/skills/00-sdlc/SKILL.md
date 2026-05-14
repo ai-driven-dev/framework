@@ -70,6 +70,7 @@ Materialize the flow as a task list at skill entry; a task closes only when its 
 - Skip allowed: `01-spec` only (when the source already carries objective + acceptance criteria). Never: plan, implement, review, ship.
 - Choose the best decision based on the facts.
 - Open a pull request once implementation is reviewed and complete.
+- **Branch discipline (caller responsibility).** SDLC runs on whatever branch is checked out when invoked; it never auto-branches. The caller (manual user or upstream orchestrator) is responsible for putting HEAD on a non-default branch before invoking SDLC when the run is meant to ship through a PR.
 
 ## References
 
