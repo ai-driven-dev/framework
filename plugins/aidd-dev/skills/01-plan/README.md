@@ -20,7 +20,7 @@ images. The plan file is the single source of truth that downstream skills
   [02-implement](../02-implement/README.md).
 - The task is a single fix with no planning surface → use
   [08-debug](../08-debug/README.md) or edit directly.
-- You want spec drafting, not planning → use the spec skill from `aidd-pm`.
+- You want spec drafting, not planning -> use the project's spec-drafting capability.
 
 ## How to invoke
 

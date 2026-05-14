@@ -14,7 +14,7 @@ the project memory.
 
 ## When NOT to use
 
-- To create a new issue → use `aidd-vcs:04-issue-create`.
+- To create a new issue, use the project's issue-creation capability.
 - To comment on, transition, or reassign a ticket - this skill is read-only.
 - For free-form ticket searches across a project; this skill targets one id.
 

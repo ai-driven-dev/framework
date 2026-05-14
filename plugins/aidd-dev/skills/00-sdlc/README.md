@@ -1,9 +1,9 @@
 # 00 - sdlc
 
 Pure orchestrator for the full AIDD development flow. Takes a free-form request
-from idea to shipped code by composing the other skills in this plugin (and the
-commit + pull-request skills from `aidd-vcs`). Holds no business logic of its
-own; every step is delegated.
+from idea to shipped code by composing the other skills in this plugin (and any
+VCS-providing capabilities loaded at runtime, e.g. commit and pull-request).
+Holds no business logic of its own; every step is delegated.
 
 ## When to use
 
@@ -54,8 +54,8 @@ The skill walks 5 actions:
 - HEAD is on a non-default branch when the run is meant to ship. `05-ship`
   aborts with `contract_violation: on_default_branch` otherwise.
 - The `planner`, `implementer`, and `reviewer` agents are available.
-- `aidd-vcs:01-commit` and `aidd-vcs:02-pull-request` are loaded for the
-  ship step.
+- A VCS-providing capability is loaded at runtime for the ship step
+  (commit + pull-request creation).
 
 ## Technical details
 
