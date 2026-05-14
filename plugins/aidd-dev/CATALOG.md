@@ -52,6 +52,7 @@ No files found.
 | `actions` | [04-review.md](skills/00-sdlc/actions/04-review.md) | - |
 | `actions` | [05-ship.md](skills/00-sdlc/actions/05-ship.md) | - |
 | `evals` | [scenarios.json](skills/00-sdlc/evals/scenarios.json) | - |
+| `-` | [README.md](skills/00-sdlc/README.md) | - |
 | `-` | [SKILL.md](skills/00-sdlc/SKILL.md) | `Pure orchestrator for the full AIDD development flow. Use when a human (or Gardener) needs to take a free-form request from idea to shipped code, end-to-end. Coordinates spec generation, planning, implementation, review, and shipping by composing other skills and agents. Supports two modes - `auto` (default, no human interaction) and `interactive` (pauses for human confirmation at key gates). Holds no business logic of its own; every step is delegated.` |
 
 #### `skills/01-plan`
@@ -65,6 +66,7 @@ No files found.
 | `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | `Living implementation plan - frozen objective, phases, and append-only execution Log. Used as input artifact AND as the autonomous-loop tracking file.` | - |
 | `assets` | [tech-choice-template.md](skills/01-plan/assets/tech-choice-template.md) | `Technology selection and comparison template` | - |
 | `evals` | [scenarios.json](skills/01-plan/evals/scenarios.json) | - | - |
+| `-` | [README.md](skills/01-plan/README.md) | - | - |
 | `references` | [mermaid-conventions.md](skills/01-plan/references/mermaid-conventions.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` | - |
 | `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Generate technical implementation plans, define component behaviors, and extract design details from images.` | - |
 
@@ -74,6 +76,7 @@ No files found.
 |-------|------|---|
 | `actions` | [01-implement.md](skills/02-implement/actions/01-implement.md) | - |
 | `evals` | [scenarios.json](skills/02-implement/evals/scenarios.json) | - |
+| `-` | [README.md](skills/02-implement/README.md) | - |
 | `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Execute an implementation plan phase by phase via the implementer agent, iterating until 100% completeness.` |
 
 #### `skills/03-assert`
@@ -85,6 +88,7 @@ No files found.
 | `actions` | [03-assert-frontend.md](skills/03-assert/actions/03-assert-frontend.md) | - |
 | `assets` | [task-template.md](skills/03-assert/assets/task-template.md) | `Task tracking system to ensure all tasks are categorized and addressed` |
 | `evals` | [scenarios.json](skills/03-assert/evals/scenarios.json) | - |
+| `-` | [README.md](skills/03-assert/README.md) | - |
 | `-` | [SKILL.md](skills/03-assert/SKILL.md) | `Assert features work as intended - general assertions, architecture conformance, and frontend UI validation.` |
 
 #### `skills/04-audit`
@@ -94,6 +98,7 @@ No files found.
 | `actions` | [01-audit.md](skills/04-audit/actions/01-audit.md) | - | - |
 | `assets` | [audit-template.md](skills/04-audit/assets/audit-template.md) | `Codebase audit report template` | - |
 | `evals` | [scenarios.json](skills/04-audit/evals/scenarios.json) | - | - |
+| `-` | [README.md](skills/04-audit/README.md) | - | - |
 | `-` | [SKILL.md](skills/04-audit/SKILL.md) | `Perform deep codebase analysis to identify technical debt, dead code, and improvement opportunities.` | - |
 
 #### `skills/05-review`
@@ -106,6 +111,7 @@ No files found.
 | `assets` | [review-functional-template.md](skills/05-review/assets/review-functional-template.md) | `Functional review report template` | - |
 | `assets` | [review-template.md](skills/05-review/assets/review-template.md) | `Code review checklist and scoring template` | - |
 | `evals` | [scenarios.json](skills/05-review/evals/scenarios.json) | - | - |
+| `-` | [README.md](skills/05-review/README.md) | - | - |
 | `-` | [SKILL.md](skills/05-review/SKILL.md) | `Review code quality against project rules and validate feature behavior against plan specifications.` | - |
 
 #### `skills/06-test`
@@ -115,6 +121,7 @@ No files found.
 | `actions` | [01-test.md](skills/06-test/actions/01-test.md) | - |
 | `actions` | [02-test-journey.md](skills/06-test/actions/02-test-journey.md) | - |
 | `evals` | [scenarios.json](skills/06-test/evals/scenarios.json) | - |
+| `-` | [README.md](skills/06-test/README.md) | - |
 | `-` | [SKILL.md](skills/06-test/SKILL.md) | `Write and iterate on tests until they pass, and validate user journeys end-to-end in the browser.` |
 
 #### `skills/07-refactor`
@@ -124,6 +131,7 @@ No files found.
 | `actions` | [01-performance.md](skills/07-refactor/actions/01-performance.md) | - |
 | `actions` | [02-security.md](skills/07-refactor/actions/02-security.md) | - |
 | `evals` | [scenarios.json](skills/07-refactor/evals/scenarios.json) | - |
+| `-` | [README.md](skills/07-refactor/README.md) | - |
 | `-` | [SKILL.md](skills/07-refactor/SKILL.md) | `Optimize code for performance and fix security vulnerabilities following OWASP guidelines.` |
 
 #### `skills/08-debug`
@@ -135,6 +143,7 @@ No files found.
 | `actions` | [03-reflect-issue.md](skills/08-debug/actions/03-reflect-issue.md) | - |
 | `assets` | [task-template.md](skills/08-debug/assets/task-template.md) | `Task tracking system to ensure all tasks are categorized and addressed` |
 | `evals` | [scenarios.json](skills/08-debug/evals/scenarios.json) | - |
+| `-` | [README.md](skills/08-debug/README.md) | - |
 | `references` | [mermaid-conventions.md](skills/08-debug/references/mermaid-conventions.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` |
 | `-` | [SKILL.md](skills/08-debug/SKILL.md) | `Reproduce and fix bugs systematically using test-driven workflow, root cause analysis, and hypothesis validation.` |
 
@@ -146,5 +155,6 @@ No files found.
 | `actions` | [02-auto-accept.md](skills/09-for-sure/actions/02-auto-accept.md) | - |
 | `actions` | [03-autonomous-loop.md](skills/09-for-sure/actions/03-autonomous-loop.md) | - |
 | `evals` | [scenarios.json](skills/09-for-sure/evals/scenarios.json) | - |
+| `-` | [README.md](skills/09-for-sure/README.md) | - |
 | `-` | [SKILL.md](skills/09-for-sure/SKILL.md) | `Iterative agent loop that tracks attempts and retries until a success condition is met. Use when the user says "for sure", "make sure", "keep trying until", "loop until done", "don't stop until", or needs guaranteed completion of a task with explicit success criteria.` |
 

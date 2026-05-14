@@ -41,6 +41,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [local-daemon-template.sh](skills/01-setup-async-dev/assets/local-daemon-template.sh) | - |
 | `assets` | [local-poll-template.sh](skills/01-setup-async-dev/assets/local-poll-template.sh) | - |
 | `evals` | [scenarios.json](skills/01-setup-async-dev/evals/scenarios.json) | - |
+| `-` | [README.md](skills/01-setup-async-dev/README.md) | - |
 | `references` | [auth-modes.md](skills/01-setup-async-dev/references/auth-modes.md) | - |
 | `references` | [claude-action-auth.md](skills/01-setup-async-dev/references/claude-action-auth.md) | - |
 | `references` | [local-mode-scheduling.md](skills/01-setup-async-dev/references/local-mode-scheduling.md) | - |
@@ -57,7 +58,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [05-delegate-sdlc.md](skills/02-run-async-dev/actions/05-delegate-sdlc.md) | - |
 | `actions` | [06-write-audit.md](skills/02-run-async-dev/actions/06-write-audit.md) | - |
 | `evals` | [scenarios.json](skills/02-run-async-dev/evals/scenarios.json) | - |
-| `-` | [SKILL.md](skills/02-run-async-dev/SKILL.md) | `Runs one async development pipeline cycle: polls issues labeled with the `to-implement` label (or its mention equivalent), resolves dependencies, locks the issue with `claude/working`, delegates implementation to whichever SDLC capability is loaded at runtime, opens a PR, and ends with the issue marked `claude/awaiting-review`. Use when a fresh issue is labeled or mentioned for implementation, or when the user says "run async dev", "implement ready issues", "process the async queue". Do NOT use for setup or for handling PR review comment loops; other skills in this plugin cover those.` |
+| `-` | [README.md](skills/02-run-async-dev/README.md) | - |
+| `-` | [SKILL.md](skills/02-run-async-dev/SKILL.md) | `Runs one async development pipeline cycle: polls issues labeled with the `to-implement` label (or its mention equivalent), resolves dependencies, locks the issue with `claude/working`, delegates implementation to whichever SDLC capability is loaded at runtime, verifies the outcome against the real state of git and the VCS host, and writes a `run-result.json` artifact for the workflow's post-job to finalize lifecycle effects. Use when a fresh issue is labeled or mentioned for implementation, or when the user says "run async dev", "implement ready issues", "process the async queue". Do NOT use for setup or for handling change-request review comment loops; other skills in this plugin cover those.` |
 
 #### `skills/03-review-async-dev`
 
@@ -68,6 +70,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-fix-iteration.md](skills/03-review-async-dev/actions/03-fix-iteration.md) | - |
 | `actions` | [04-finalize.md](skills/03-review-async-dev/actions/04-finalize.md) | - |
 | `evals` | [scenarios.json](skills/03-review-async-dev/evals/scenarios.json) | - |
+| `-` | [README.md](skills/03-review-async-dev/README.md) | - |
 | `references` | [stop-conditions.md](skills/03-review-async-dev/references/stop-conditions.md) | - |
 | `-` | [SKILL.md](skills/03-review-async-dev/SKILL.md) | `Handles the post-PR review-fix loop for runs created by this plugin's run skill. Triggered when the human labels the linked issue with `to-review` (or comments `@claude /review` on the PR). Collects review comments, decides whether to keep iterating, delegates fixes to whichever SDLC capability is loaded at runtime, replies to each addressed comment, resolves the threads, and posts a structured summary when stop conditions trigger. Use when the user (or a webhook / cron) says "handle review comments", "iterate on PR <n>", "address review feedback automatically", or invokes this skill on a specific PR. Do NOT use for the initial implementation or for setup; other skills in this plugin cover those.` |
 
