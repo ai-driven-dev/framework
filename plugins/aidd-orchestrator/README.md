@@ -1,307 +1,35 @@
 # aidd-orchestrator
 
-Async development orchestration for Claude Code. Label a GitHub issue, get a pull request. Re-label the same issue once you have left review comments, get the feedback applied. v1 ships one use case (async-dev); the plugin is designed to host more orchestration use cases later.
-
-## What it does
-
-`aidd-orchestrator` does not implement the development lifecycle itself. It listens for two GitHub triggers (a label or a comment mention) and delegates the actual work to whichever SDLC orchestration skill is loaded in the runtime, discovered by description match.
-
-The plugin keeps the human contract simple: humans only ever set `to-*` labels (or post a mention); Claude only ever sets `claude/*` labels.
-
-## Lifecycle
-
-```
-                       Human                                       Claude
-                       -----                                       ------
-
-  Issue created
-        |
-        | apply  to-implement  (or comment @claude /implement)
-        v
-                                                          claude/working   (lock)
-                                                                |
-                                                                | run skill
-                                                                v
-                                                          claude/awaiting-review   (PR open)
-        |
-        | leave review feedback
-        | apply  to-review     (or comment @claude /review on the PR)
-        v
-                                                          claude/working   (lock)
-                                                                |
-                                                                | review skill (loop)
-                                                                v
-                                                          claude/awaiting-review
-        |
-        | merge the PR
-        v
-  Issue closed by PR
-```
-
-On any failure or unresolved dependency, Claude swaps `claude/working` for `claude/blocked` and posts a comment with the cause.
-
-## Labels
-
-| Label                     | Owner   | Meaning                                                |
-| ------------------------- | ------- | ------------------------------------------------------ |
-| `to-implement`            | Human   | "Claude, implement this issue."                       |
-| `to-review`               | Human   | "Claude, apply the review feedback on the linked PR." |
-| `claude/working`          | Claude  | A run is in progress (lock).                          |
-| `claude/awaiting-review`  | Claude  | A PR is open and waiting for human review.            |
-| `claude/blocked`          | Claude  | Failure or dependency blocker; human action needed.   |
-
-The two namespaces are strictly separated. Humans never touch `claude/*`. Claude only removes the `to-*` label that triggered a run, and only at lock time.
-
-## Triggers
-
-| Intent                  | Label form     | Mention form                              |
-| ----------------------- | -------------- | ----------------------------------------- |
-| Implement an issue      | `to-implement` | comment `@claude /implement` on the issue |
-| Apply review feedback   | `to-review`    | comment `@claude /review` on the PR       |
-
-The workflow's dispatch step inspects whether the issue has an open linked PR. If yes, the trigger routes to the review skill. Otherwise it routes to the run skill. The same trigger therefore covers both phases.
-
-## Modes
-
-| Mode     | Trigger surface         | Runs on            | Best for                                      |
-| -------- | ----------------------- | ------------------ | --------------------------------------------- |
-| `remote` | GitHub Actions          | GitHub-hosted runner | Repos with Actions enabled; team workflows  |
-| `local`  | Cron / launchd / Desktop scheduled task | Your machine | Offline-first; repos without Actions; quick iterations |
-| `both`   | Both surfaces enabled   | Either; deduplicated by `claude/working` lock | Hybrid setups |
-
-The same labels and the same skills drive both surfaces. Concurrency is naturally deduplicated server-side by the `claude/working` lock label, so a remote run and a local run cannot interleave.
+Orchestration plugin. Composes Claude capabilities into deterministic, auditable
+flows. Each skill is one orchestration brick; several use cases coexist inside
+the same plugin.
 
 ## Skills
 
-| Skill                                          | Purpose                                                              |
-| ---------------------------------------------- | -------------------------------------------------------------------- |
-| `aidd-orchestrator:01:setup-async-dev`         | Generate the workflow and/or the local poll script, write the config, bootstrap the labels. |
-| `aidd-orchestrator:02:run-async-dev`           | Pick a candidate issue, resolve blockers, acquire the lock, delegate to the SDLC capability, audit. |
-| `aidd-orchestrator:03:review-async-dev`        | Loop on PR feedback: reply per comment, resolve threads, post a structured summary. |
+### Use case: `async-dev` (v1)
 
-## Project board (optional)
+| Skill | Role |
+|-------|------|
+| [`01-setup-async-dev`](skills/01-setup-async-dev/README.md) | Bootstrap the async-dev pipeline in a target repo |
+| [`02-run-async-dev`](skills/02-run-async-dev/README.md) | Drive the implementation of a labelled issue into a pull request |
+| [`03-review-async-dev`](skills/03-review-async-dev/README.md) | Drive the review-and-fix loop on the resulting PR |
 
-GitHub Projects v2 maps labels to columns natively. A typical board:
+### Roadmap
 
-| Column            | Auto-add rule                              |
-| ----------------- | ------------------------------------------ |
-| Backlog           | issue created without a `to-*` label       |
-| Ready             | label `to-implement` or `to-review` added  |
-| In progress       | label `claude/working` added               |
-| Awaiting review   | label `claude/awaiting-review` added       |
-| Blocked           | label `claude/blocked` added               |
-| Done              | issue closed                               |
+| Use case | Direction |
+|----------|-----------|
+| `agentic-orchestration` | Multi-agent coordination (sub-agents, hand-offs, supervision) |
+| `flow-orchestration`    | Conditional / branching pipelines (human gates, fallbacks, retries) |
 
-No custom code: the labels drive the columns through the project's built-in automations.
-
-## Setup
-
-### 1. Install the plugin
+## Install
 
 ```bash
 claude plugin marketplace add ai-driven-dev/aidd-framework
 claude plugin install aidd-orchestrator@aidd-framework
 ```
 
-Also install one SDLC capability provider on the same marketplace (e.g. `aidd-dev@aidd-framework`). The orchestrator discovers it at runtime by description.
+Each skill's own README explains what it does, when to use it, and how to invoke it.
 
-### 2. Run the setup skill in your repo
+## License
 
-Open Claude Code in the target repo and run:
-
-```
-Use skill aidd-orchestrator:01:setup-async-dev
-```
-
-The skill asks five questions:
-
-| # | Question | Default | Notes |
-|---|----------|---------|-------|
-| 1 | Mode | `both` | `local`, `remote`, or `both` |
-| 2 | Anthropic auth | `oauth_token` | OAuth uses your Claude Pro/Max plan; API key is pay-per-token |
-| 3 | Marketplace repo | `ai-driven-dev/aidd-framework` | Where the SDLC plugin lives |
-| 4 | Marketplace access | `public` | If `private`, asks for the PAT secret name |
-| 5 | Max review iterations | `3` | Cap on auto-fix passes per PR |
-
-The skill writes:
-- `.github/workflows/aidd-async.yml` (when mode includes `remote`)
-- `scripts/aidd-async-poll.sh` and `scripts/aidd-async-poll.scheduler.txt` (when mode includes `local`)
-- `.claude/aidd-orchestrator.json` (always)
-- The 5 lifecycle labels on the GitHub repo (always)
-
-### 3. Add the secrets
-
-Three independent auth dimensions, each addressed by its own secret(s):
-
-| # | What it authenticates | Default secret | When required |
-| - | --------------------- | -------------- | ------------- |
-| A | Anthropic API (OAuth) | `CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`) | always |
-| A | Anthropic API (key) | `ANTHROPIC_API_KEY` (from https://console.anthropic.com/settings/keys) | always (alternative to OAuth) |
-| B | Cloning the marketplace repo at runtime | `${{ secrets.GITHUB_TOKEN }}` for public; `AIDD_FRAMEWORK_TOKEN` (or named) for private | always |
-| C | `claude-code-action` git writes (push, PR, audit commit) | depends on `github_write_auth.mode` (see below) | when issues may touch `.github/workflows/**` |
-
-`B` is set by `marketplace.access`; `C` is set by `github_write_auth.mode`. They are *not* the same setting: B authenticates the runtime plugin install, C authenticates everything else the action does on your repo (push, PR, commits).
-
-#### Why `github_write_auth` matters
-
-The default `GITHUB_TOKEN` issued to a workflow lacks the `workflows` scope. Any change under `.github/workflows/**` is rejected with `refusing to allow a GitHub App to update workflow without 'workflows' scope`, leaving the run blocked. The orchestrator handles the block gracefully (`claude/blocked` + a comment), but the implementation work is lost. To unblock the path, supply a token with the right scope via `github_write_auth`.
-
-Three modes:
-
-| `github_write_auth.mode` | What you provide | Pros | Cons |
-| ------------------------ | ---------------- | ---- | ---- |
-| `default` | nothing | zero setup | runs that edit `.github/workflows/**` get blocked |
-| `pat` (recommended) | one fine-grained PAT secret | works on workflow files; one secret to manage | commits attributed to the PAT owner; rotate every 90 days |
-| `github_app` | App ID + PEM private key secrets | commits attributed to a bot; scoped per-repo; rotates automatically | one-time App creation + install per repo |
-
-The setup skill provisions the matching secrets in action `08-configure-remote-secrets` and the workflow template wires them into the `claude-code-action` step.
-
-```bash
-gh secret set CLAUDE_CODE_OAUTH_TOKEN --repo OWNER/REPO
-```
-
-#### Per-developer routing (multi-account)
-
-By default the workflow uses one team-wide secret (`default_secret_name`) for every run. To route runs to a per-developer Anthropic account so each developer's quota is consumed for their own work, populate `claude_action_auth.account_routing` in `.claude/aidd-orchestrator.json`:
-
-```json
-"claude_action_auth": {
-  "mode": "oauth_token",
-  "default_secret_name": "CLAUDE_CODE_OAUTH_TOKEN",
-  "account_routing": {
-    "alice-gh-username": "CLAUDE_CODE_OAUTH_TOKEN_ALICE",
-    "bob-gh-username":   "CLAUDE_CODE_OAUTH_TOKEN_BOB"
-  }
-}
-```
-
-Add one GitHub Action secret per developer:
-```bash
-gh secret set CLAUDE_CODE_OAUTH_TOKEN_ALICE --repo OWNER/REPO   # paste Alice's token
-gh secret set CLAUDE_CODE_OAUTH_TOKEN_BOB   --repo OWNER/REPO   # paste Bob's token
-```
-
-Resolution at dispatch time (in order):
-1. First issue assignee (`github.event.issue.assignees[0].login`) -> look up in `account_routing`.
-2. Event sender (`github.event.sender.login`) -> look up in `account_routing`.
-3. Fall back to `default_secret_name`.
-
-**Override pattern**: a developer takes over a teammate's ticket by self-assigning the issue before labelling (or any time before the run picks it up):
-
-```bash
-gh issue edit <N> --add-assignee bob
-gh issue edit <N> --add-label to-implement
-```
-
-The assignee takes precedence over the labeller, so Bob's quota pays for Alice's original ticket. Removing the assignee falls back to sender then to the team default secret.
-
-Caveats:
-- Only the **Anthropic quota** is routed. PR and commit authorship still come from the runner's `GITHUB_TOKEN` (typically `github-actions[bot]`), not from the routed developer.
-- The secret name is resolved per-run via `secrets[<dynamic-name>]`; it must be a literal key set on the repo. Missing entries fall back to `default_secret_name`; an empty default name fails the workflow with an explicit error.
-
-### 4a. Remote-mode finalisation
-
-```bash
-git add .github/workflows/aidd-async.yml .claude/aidd-orchestrator.json
-git commit -m "ci: add aidd-orchestrator workflow"
-git push
-```
-
-The next time you apply `to-implement` on an issue, the workflow runs.
-
-### 4b. Local-mode finalisation
-
-The setup skill drops one file in your repo:
-
-```
-scripts/aidd-async-poll.sh             # the poll runner (wraps claude -p)
-```
-
-Plus the setup skill itself:
-- installs the orchestrator and SDLC plugins at user scope (action 07),
-- schedules the poll routine via `/schedule` cloud routine OR prints the Desktop scheduled task fields (action 09),
-- offers a smoke test that applies `to-implement` on a chosen issue and waits for the first run to land (action 11).
-
-Manual sanity check first:
-
-```bash
-./scripts/aidd-async-poll.sh --dry-run    # lists what it would do
-./scripts/aidd-async-poll.sh              # runs once for real
-```
-
-The script invokes `claude -p` under the hood, so the local machine must have:
-- Claude Code installed (`claude --version`)
-- `gh auth status` OK
-- The `aidd-orchestrator` and SDLC plugins installed at user scope (`claude plugin install …`)
-
-Then schedule via one of the two Claude Code-native paths documented in `aidd_docs/local-mode-scheduling.md`:
-
-| Path | Uses Claude Tasks quota | Min interval | Runs when | Best for |
-| ---- | ----------------------- | ------------ | --------- | -------- |
-| **A. Remote (GitHub Actions)** | no | event-driven | GitHub managed | **default; production** |
-| **B. Local manual** | no | n/a | when you run it | testing |
-| **C. Local daemon** (tmux / launchd / systemd) | no | seconds | machine running | offline-first dev |
-| D. Desktop scheduled task | **yes (1 per tick)** | 1 minute | machine awake | small backlog |
-| E. `/schedule` cloud routine | **yes (1 routine)** | 1 hour | server-side | low-volume hands-off |
-
-Pick **A** unless you have a reason not to. **C** is the default local fallback (no Tasks quota).
-
-Both paths call the same poll script (or invoke the same skill prompt), so behaviour is identical. Pick the one that fits your availability needs. OS-level cron and launchd are intentionally not used here: the scheduling stays inside Claude Code so it is visible and pausable from the same UI as the rest of the workflow.
-
-## Daily workflow
-
-| You do | Claude does |
-| ------ | ----------- |
-| Open an issue and write the spec | nothing yet |
-| Apply `to-implement` (or comment `@claude /implement`) | locks (`claude/working`), opens a feature branch, writes code + tests, opens a PR, swaps to `claude/awaiting-review` |
-| Read the diff, leave inline review comments | nothing yet |
-| Apply `to-review` (or comment `@claude /review` on the PR) | locks again, addresses each comment, replies in-thread, resolves threads, posts a summary, swaps to `claude/awaiting-review` |
-| Merge the PR | issue closes; labels remain as-is for audit |
-
-Repeat. The same flow scales to N issues in parallel; each one has its own concurrency group keyed by issue number.
-
-## Failure modes
-
-| Symptom | Cause | What to do |
-| ------- | ----- | ---------- |
-| `claude/blocked` appears, comment lists missing capability | No SDLC plugin loaded | Install one (e.g. `aidd-dev`), remove `claude/blocked`, re-apply `to-implement` |
-| `claude/blocked` appears, comment lists open dependency issues | Issue depends on others not yet merged | Merge or close the blockers, remove `claude/blocked`, re-apply `to-implement` |
-| Review loop stops with `max_iterations` | Auto-fix did not converge | Read the summary, push a manual fix, then re-apply `to-review` if you want another pass |
-| Review loop stops with `human_reviewer` | A reviewer commented mid-loop | Continue the conversation; the next pass requires an explicit `to-review` |
-| Pipeline fails with "Workflow validation failed" | Workflow file diverged on the PR branch from `main` | Use the mention triggers (which run from `main`) until the branch catches up; or rebase the branch |
-| Local mode does nothing | `claude` CLI missing, plugin not installed at user scope, or `gh` not authenticated | Run the three checks listed in step 4b |
-
-## Files generated in your repo
-
-| File                                  | Purpose                                                       |
-| ------------------------------------- | ------------------------------------------------------------- |
-| `.github/workflows/aidd-async.yml`    | GitHub Actions workflow: dispatch + run + review jobs (remote mode). |
-| `scripts/aidd-async-poll.sh`          | Local poll script wrapping `claude -p` (local mode).          |
-| `.claude/aidd-orchestrator.json`      | Runtime config (committed; no secrets).                       |
-| `aidd_docs/async-runs/<YYYY_MM>/<run-id>.json` | Per-run audit log: trigger, dependency check, lock timestamps, SDLC outcome, iteration log. |
-
-## Audit and observability
-
-Every run writes a JSON audit record at `aidd_docs/async-runs/<YYYY_MM>/<run-id>.json`. The pipeline also creates a GitHub Check Run named `aidd-async/<run-id>` for the visible run in the PR UI. The summary comment on each PR carries a structured iteration table that links to the commits.
-
-There is no external webhook in v1; the audit log is the source of truth and lives in the repo, versioned and diffable.
-
-## Safety guardrails
-
-- **No push to `main`.** Every run uses a feature branch `feat/issue-<n>-<slug>`. The run skill aborts if delegation would land on the default branch.
-- **No auto-merge.** The pipeline ends at PR creation. Review iterations only append commits; humans always merge.
-- **Dedicated lock.** A second trigger on the same issue with `claude/working` already set is a no-op, both server-side (workflow `if`) and client-side (script `is_skipped`).
-- **Bot loop guard.** Comments authored by `claude[bot]` never re-trigger the workflow; the `if` block filters by `github.event.sender.type`.
-
-## Compatibility
-
-- GitHub repos (private or public). GitLab is not supported in v1.
-- Claude Code 2.1+ (uses `--plugin-dir`, `claude plugin marketplace`, `claude plugin install`).
-- Node 20+ for the SDLC capability tests it runs (whatever your project requires).
-- Bash 3.2 portable for the local poll script (works on stock macOS).
-
-## Limitations
-
-- One SDLC capability per repo: the discovery picks the first match. If two SDLC-advertising plugins are loaded, the tie-break order is documented in `02:run-async-dev/04-check-sdlc.md`.
-- Cross-issue dependency auto-unblock is manual: when a blocker closes, you re-apply `to-implement` on the dependent issue. An automatic listener is post-MVP.
-- Local mode requires `claude` CLI on the machine; cloud-only setups should use remote mode.
+MIT
