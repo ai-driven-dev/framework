@@ -189,7 +189,6 @@ jobs:
             # No agent-recorded result. Observe reality: did an open PR get opened that closes this issue?
             pr_number=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json number,body \
               --jq "[.[] | select(.body | test(\"(?i)\\\\b(Closes|Fixes|Resolves)\\\\s+#${ISSUE_NUMBER}\\\\b\"))][0].number // empty")
-            run_id="auto-$(date -u +%Y%m%dT%H%M%SZ)-i${ISSUE_NUMBER}"
             if [ -n "$pr_number" ]; then
               outcome="success"
               error=""
@@ -198,6 +197,8 @@ jobs:
               error="agent did not record run-result.json and no open PR closes #${ISSUE_NUMBER}"
             fi
           fi
+          # Always have a non-empty run_id for the marker / audit filename.
+          [ -z "$run_id" ] && run_id="auto-$(date -u +%Y%m%dT%H%M%SZ)-i${ISSUE_NUMBER}"
           if [ "$JOB_STATUS" != "success" ] && [ "$outcome" = "success" ]; then
             outcome="recovered"
             error="${error:-claude-code-action exited non-zero but a closing PR exists}"
@@ -278,9 +279,9 @@ jobs:
             run_id=$(jq -r '.run_id // empty' "$RESULT")
             stop_reason=$(jq -r '.stop_reason // "no_comments"' "$RESULT")
           else
-            run_id="auto-$(date -u +%Y%m%dT%H%M%SZ)-pr${PR_NUMBER}"
             stop_reason="agent-no-record"
           fi
+          [ -z "$run_id" ] && run_id="auto-$(date -u +%Y%m%dT%H%M%SZ)-pr${PR_NUMBER}"
           issue_number=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json closingIssuesReferences --jq '.closingIssuesReferences[0].number // empty')
           case "$stop_reason" in
             blocked_label) new_label="$BLOCKED_LABEL" ;;
@@ -290,9 +291,12 @@ jobs:
             gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/$issue_number/labels/$(printf '%s' "$WORKING_LABEL" | jq -sRr @uri)" >/dev/null 2>&1 || true
             gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$issue_number/labels" -f "labels[]=$new_label" >/dev/null || true
           fi
+          # Post a fallback summary only when the agent has not already produced one.
+          agent_summary_count=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
+            --jq "[.[] | select(.body | test(\"(?i)(review loop summary|async review summary)\"))] | length")
           if [ -s "${RUNNER_TEMP}/run-summary.md" ]; then
-            gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file "${RUNNER_TEMP}/run-summary.md" >/dev/null || true
-          else
+            [ "$agent_summary_count" = "0" ] && gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file "${RUNNER_TEMP}/run-summary.md" >/dev/null || true
+          elif [ "$agent_summary_count" = "0" ]; then
             summary_body=$(printf '## Async review summary\n\n**Stop reason** -- `%s`\n**Run id** -- `%s`\n_No iteration summary recorded by the agent; see workflow logs for details._' "$stop_reason" "$run_id")
             gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$summary_body" >/dev/null || true
           fi
