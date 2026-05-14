@@ -26,7 +26,7 @@
 
 ## What is AI-Driven Dev?
 
-[AI-Driven Dev](https://www.ai-driven-dev.fr/) (AIDD) is a methodology and community for shipping production-quality code with AI assistants under rigorous human supervision. Think of it as TDD/BDD for the AI era: the AI pilots the writing of code, the developer pilots the AI. This repository is the Claude Code distribution of the methodology: the skills, agents, and rules that turn the AIDD principles into actions you can invoke inside Claude Code.
+[AI-Driven Dev](https://www.ai-driven-dev.fr/) (AIDD) is a community that proposes a development flow and a set of tools built around the AI-Driven Development methodology. The flow covers the full SDLC under rigorous human supervision; the tools are the skills, agents, rules, and conventions that make that flow concrete inside an AI coding assistant. This repository is the Claude Code distribution of that toolset.
 
 Join the conversation: [Discord](https://discord.gg/ai-driven-dev) · [YouTube](https://www.youtube.com/@ai-driven-dev) · [LinkedIn](https://www.linkedin.com/company/ai-driven-dev) · [Website](https://www.ai-driven-dev.fr/)
 
