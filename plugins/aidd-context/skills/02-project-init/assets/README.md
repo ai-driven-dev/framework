@@ -39,7 +39,7 @@ Skills are grouped into plugins by domain. Install only the plugins you need.
 | aidd-context      | Bootstrap, project init, context generation, mermaid diagrams, learn, discovery    | `02:project-init`, `03:context-generate`, `04:mermaid`      |
 | aidd-refine       | Meta-cognition: brainstorm, challenge prior work, condensed communication mode     | `01:brainstorm`, `02:challenge`, `03:condense`              |
 | aidd-pm           | Product management: ticket info, user stories, PRD, spec                            | `01:ticket-info`, `02:user-stories-create`, `03:prd`, `05:spec` |
-| aidd-dev          | Code transformation: Dev SDLC orchestrator, plan, implement, assert, audit, review, test, refactor, debug, for-sure | `00:sdlc`, `01:plan`, `02:implement`, `05:review`, `06:test` |
+| aidd-dev          | Code transformation: Dev SDLC orchestrator, plan, implement, assert, audit, review, test, refactor, debug, for-sure | `00:sdlc`, `01:plan`, `02:implement`, `05:review`, `06:write-tests` |
 | aidd-vcs          | VCS workflows: commit, pull/merge request, release tag, issue creation             | `01:commit`, `02:pull-request`, `04:issue-create`           |
 | aidd-orchestrator | Async orchestration of the SDLC on labeled issues (optional, extra)                | `02:run-async-dev`, `03:review-async-dev`                   |
 
@@ -97,7 +97,7 @@ AIDD is delivered as a plugin marketplace. Pick what you need; do not install ev
 | ------------ | ------------------------------------------------------------------------------------------------------------------- |
 | aidd-context | 01-bootstrap, 02-project-init, 03-context-generate, 04-mermaid, 05-learn, 06-discovery                              |
 | aidd-refine  | 01-brainstorm, 02-challenge, 03-condense                                                                            |
-| aidd-dev     | 00-sdlc, 01-plan, 02-implement, 03-assert, 04-audit, 05-review, 06-test, 07-refactor, 08-debug, 09-for-sure         |
+| aidd-dev     | 00-sdlc, 01-plan, 02-implement, 03-assert, 04-audit, 05-review, 06-write-tests, 07-refactor, 08-debug, 09-for-sure         |
 | aidd-vcs     | 01-commit, 02-pull-request, 03-release-tag, 04-issue-create                                                         |
 | aidd-pm      | 01-ticket-info, 02-user-stories-create, 03-prd                                                                      |
 
@@ -113,7 +113,7 @@ A typical change cycles through skills from several plugins. The order below is 
 4. **Plan**: `aidd-dev:01:plan` produces the technical plan, component behavior model, or design-image extraction.
 5. **Implement and assert**: `aidd-dev:02:implement` writes code against the plan; `aidd-dev:03:assert` verifies the result.
 6. **Review**: `aidd-dev:05:review` for code and functional review; `aidd-refine:02:challenge` to stress-test the result.
-7. **Test**: `aidd-dev:06:test` adds or runs tests and validates user journeys.
+7. **Test**: `aidd-dev:06:write-tests` adds tests and validates user journeys.
 8. **Document and learn**: `aidd-context:04:mermaid` for diagrams; `aidd-context:05:learn` to feed insights back into the memory bank or rules.
 9. **Ship**: `aidd-vcs:01:commit`, `aidd-vcs:02:pull-request`, then `aidd-vcs:03:release-tag` when the work is in production. File issues with `aidd-vcs:04:issue-create`.
 10. **Refactor and maintain**: `aidd-dev:07:refactor` for performance or security, `aidd-dev:04:audit` for technical-debt sweeps, `aidd-dev:08:debug` to reproduce and fix bugs.
