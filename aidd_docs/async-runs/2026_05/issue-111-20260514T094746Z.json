@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0.0",
+  "run_id": "issue-111-20260514T094746Z",
+  "timestamp": "2026-05-14T09:47:46Z",
+  "trigger": {
+    "kind": "label",
+    "issue_number": 111,
+    "comment_url": ""
+  },
+  "issue": {
+    "number": 111,
+    "title": "test: add ola.txt",
+    "body": "Add aidd_docs/ola.txt containing 'ola'. Acceptance: file present, content equals 'ola'.",
+    "labels_at_trigger": ["to-implement"]
+  },
+  "outcome": "success",
+  "branch": "feat/issue-111-ola-txt",
+  "commit_sha": "2b26673",
+  "pull_request": {
+    "number": 112,
+    "url": "https://github.com/ai-driven-dev/aidd-framework/pull/112",
+    "title": "chore(aidd_docs): add ola.txt fixture",
+    "state": "OPEN",
+    "base": "main",
+    "head": "feat/issue-111-ola-txt"
+  },
+  "sdlc": {
+    "spec_status": "skipped",
+    "plan_path": "aidd_docs/plans/issue-111-ola-txt.md",
+    "review_verdict": "ship",
+    "files_changed": ["aidd_docs/ola.txt"]
+  },
+  "label_transition": {
+    "removed": "to-implement",
+    "added": "claude/working",
+    "next": "claude/awaiting-review"
+  }
+}
