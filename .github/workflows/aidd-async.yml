@@ -55,7 +55,6 @@ jobs:
             KEY=$(jq -r '.claude_action_auth.default_secret_name' "$CONFIG")
           fi
           OWNER="${ASSIGNEE:-$SENDER}"
-          echo "DEBUG account_resolution ASSIGNEE='$ASSIGNEE' SENDER='$SENDER' KEY='$KEY' OWNER='$OWNER'"
           {
             echo "account_secret=$KEY"
             echo "account_owner=$OWNER"
