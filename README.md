@@ -1,6 +1,13 @@
 # AI-Driven Dev Framework (AIDD)
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/ai-driven-dev/aidd-framework?include_prereleases&sort=semver)](https://github.com/ai-driven-dev/aidd-framework/releases)
+[![CI](https://github.com/ai-driven-dev/aidd-framework/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ai-driven-dev/aidd-framework/actions/workflows/ci.yml)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
 A plugin marketplace for AI-driven development. Install focused skill sets into your AI coding assistant.
+
+<!-- TODO: record a 30-60s demo (label issue -> workflow runs -> PR opens) and embed as docs/demo.gif. Use asciinema + agg, QuickTime + ffmpeg, or LICEcap. -->
 
 ---
 
@@ -52,5 +59,13 @@ Skills catalog: [aidd_docs/CATALOG.md](aidd_docs/CATALOG.md)
 ## 👌 Contributing
 
 To add or modify elements (agents, commands, rules, skills, or templates), see the [contribution guide](./CONTRIBUTING.md).
+
+By participating you agree to our [Code of Conduct](./CODE_OF_CONDUCT.md). For security issues, see [SECURITY.md](./SECURITY.md).
+
+## Contributors
+
+<a href="https://github.com/ai-driven-dev/aidd-framework/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=ai-driven-dev/aidd-framework" alt="aidd-framework contributors" />
+</a>
 
 ← [Back to main repo](https://github.com/ai-driven-dev/aidd/blob/main/README.md)
