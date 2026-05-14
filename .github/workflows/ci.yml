@@ -43,6 +43,25 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
       version: ${{ steps.release.outputs.version }}
+      paths_released: ${{ steps.release.outputs.paths_released }}
+      aidd_context_release_created: ${{ steps.release.outputs['plugins/aidd-context--release_created'] }}
+      aidd_context_version: ${{ steps.release.outputs['plugins/aidd-context--version'] }}
+      aidd_context_tag_name: ${{ steps.release.outputs['plugins/aidd-context--tag_name'] }}
+      aidd_dev_release_created: ${{ steps.release.outputs['plugins/aidd-dev--release_created'] }}
+      aidd_dev_version: ${{ steps.release.outputs['plugins/aidd-dev--version'] }}
+      aidd_dev_tag_name: ${{ steps.release.outputs['plugins/aidd-dev--tag_name'] }}
+      aidd_vcs_release_created: ${{ steps.release.outputs['plugins/aidd-vcs--release_created'] }}
+      aidd_vcs_version: ${{ steps.release.outputs['plugins/aidd-vcs--version'] }}
+      aidd_vcs_tag_name: ${{ steps.release.outputs['plugins/aidd-vcs--tag_name'] }}
+      aidd_pm_release_created: ${{ steps.release.outputs['plugins/aidd-pm--release_created'] }}
+      aidd_pm_version: ${{ steps.release.outputs['plugins/aidd-pm--version'] }}
+      aidd_pm_tag_name: ${{ steps.release.outputs['plugins/aidd-pm--tag_name'] }}
+      aidd_orchestrator_release_created: ${{ steps.release.outputs['plugins/aidd-orchestrator--release_created'] }}
+      aidd_orchestrator_version: ${{ steps.release.outputs['plugins/aidd-orchestrator--version'] }}
+      aidd_orchestrator_tag_name: ${{ steps.release.outputs['plugins/aidd-orchestrator--tag_name'] }}
+      aidd_refine_release_created: ${{ steps.release.outputs['plugins/aidd-refine--release_created'] }}
+      aidd_refine_version: ${{ steps.release.outputs['plugins/aidd-refine--version'] }}
+      aidd_refine_tag_name: ${{ steps.release.outputs['plugins/aidd-refine--tag_name'] }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -85,8 +104,7 @@ jobs:
           tar czf "/tmp/aidd-framework-${VERSION}.tar.gz" \
             plugins/ \
             .claude-plugin/ \
-            aidd_docs/ \
-            version.txt
+            aidd_docs/
 
       - name: Build per-tool tarballs
         run: |
@@ -118,4 +136,55 @@ jobs:
             "/tmp/aidd-copilot-remote-${VERSION}.tar.gz" \
             "/tmp/aidd-codex-${VERSION}.tar.gz" \
             "/tmp/aidd-codex-remote-${VERSION}.tar.gz" \
+            --clobber
+
+  build-plugin:
+    name: Build and attach plugin
+    needs: [release-please]
+    if: needs.release-please.outputs.paths_released != '' && needs.release-please.outputs.paths_released != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: [aidd-context, aidd-dev, aidd-vcs, aidd-pm, aidd-orchestrator, aidd-refine]
+    steps:
+      - name: Check if this plugin was released
+        id: check
+        run: |
+          PATHS='${{ needs.release-please.outputs.paths_released }}'
+          if echo "$PATHS" | jq -e --arg p "plugins/${{ matrix.plugin }}" 'map(. == $p) | any' > /dev/null 2>&1; then
+            echo "released=true" >> $GITHUB_OUTPUT
+          else
+            echo "released=false" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.released == 'true'
+
+      - name: Get plugin version
+        id: version
+        if: steps.check.outputs.released == 'true'
+        run: |
+          VERSION=$(jq -r '.version' "plugins/${{ matrix.plugin }}/.claude-plugin/plugin.json")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build plugin tarball
+        if: steps.check.outputs.released == 'true'
+        run: |
+          PLUGIN="${{ matrix.plugin }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          tar czf "/tmp/${PLUGIN}-v${VERSION}.tar.gz" \
+            -C "plugins/${PLUGIN}" \
+            .
+
+      - name: Attach plugin tarball to release
+        if: steps.check.outputs.released == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PLUGIN="${{ matrix.plugin }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${PLUGIN}-v${VERSION}"
+          gh release upload "${TAG}" \
+            "/tmp/${PLUGIN}-v${VERSION}.tar.gz" \
             --clobber
