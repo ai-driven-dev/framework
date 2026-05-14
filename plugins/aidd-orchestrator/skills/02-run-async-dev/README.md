@@ -4,6 +4,38 @@ Drives one async-dev cycle: locks a ready issue, delegates the implementation
 to the loaded SDLC capability, opens a pull request, and writes an audit
 record. The skill never implements code itself — it coordinates.
 
+## Lifecycle
+
+```mermaid
+---
+title: async-dev lifecycle
+---
+stateDiagram-v2
+  state "backlog (no label)" as Backlog
+  state "ready (to-implement)" as Ready
+  state "working (claude/working)" as Working
+  state "awaiting review (claude/awaiting-review)" as Awaiting
+  state "review requested (to-review)" as ReviewRequested
+  state "fixing (claude/working)" as Fixing
+  state "blocked (claude/blocked)" as Blocked
+  state "closed (issue closed via merged PR)" as Closed
+
+  [*] --> Backlog
+  Backlog --> Ready: human labels to-implement
+  Ready --> Working: orchestrator acquires lock
+  Working --> Awaiting: PR opened
+  Working --> Blocked: run fails or dependency missing
+  Awaiting --> ReviewRequested: human labels to-review
+  ReviewRequested --> Fixing: orchestrator acquires lock
+  Fixing --> Awaiting: fix commits pushed and summary posted
+  Fixing --> Blocked: max iterations or human reviewer mid-loop
+  Awaiting --> Closed: human merges PR
+  Blocked --> Ready: human resolves and re-labels to-implement
+  Closed --> [*]
+```
+
+Humans only touch the `to-*` labels. Claude only touches the `claude/*` labels. The split is enforced by the workflow's dispatch step.
+
 ## When to use
 
 - A fresh GitHub issue carries `to-implement` (or the equivalent `@claude
