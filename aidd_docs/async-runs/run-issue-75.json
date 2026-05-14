@@ -31,5 +31,22 @@
   "labels_applied": {
     "removed": ["to-implement", "claude/working"],
     "added": ["claude/awaiting-review"]
-  }
+  },
+  "loop_closed_at": "2026-05-14T03:30:00Z",
+  "stop_reason": "no_comments",
+  "iterations": [
+    {
+      "iteration": 1,
+      "started_at": "2026-05-14T03:20:00Z",
+      "comments_collected": 1,
+      "comments_addressed": 1,
+      "comment_ids": ["PRR_kwDORKYxFM7_hnCJ"],
+      "commit_sha": null,
+      "new_commit": false,
+      "note": "Fix already present in commit 4342422 — replied to reviewer explaining the three README locations updated; no code change needed.",
+      "replies_posted": 1,
+      "threads_resolved": 0,
+      "reply_url": "https://github.com/ai-driven-dev/aidd-framework/pull/90#issuecomment-4447156124"
+    }
+  ]
 }
