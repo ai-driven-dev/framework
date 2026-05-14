@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "run_id": "run-issue-75",
+  "issue": {
+    "number": 75,
+    "title": "feat: rename 06-test prompt?",
+    "url": "https://github.com/ai-driven-dev/aidd-framework/issues/75"
+  },
+  "pr": {
+    "number": 90,
+    "url": "https://github.com/ai-driven-dev/aidd-framework/pull/90",
+    "branch": "75-rename-06-test-to-06-write-tests"
+  },
+  "started_at": "2026-05-14T00:00:00Z",
+  "completed_at": "2026-05-14T00:00:00Z",
+  "status": "awaiting_review",
+  "sdlc_skill": "aidd-dev:00-sdlc",
+  "plan": "aidd_docs/plans/issue-75-rename-06-test.md",
+  "milestones": [
+    { "id": "M1", "status": "done", "commit": "ff725d5", "summary": "Renamed skills/06-test → skills/06-write-tests via git mv; updated SKILL.md frontmatter and heading" },
+    { "id": "M2", "status": "done", "commit": "4342422", "summary": "Updated cross-references in implementer.md and project-init README.md" },
+    { "id": "M3", "status": "done", "commit": "9bf53b0", "summary": "Hand-edited CATALOG.md — TOC, section heading, file path cells" },
+    { "id": "M4", "status": "done", "commit": null, "summary": "Final grep sweep — zero hits for 06[-:]test across plugins/, aidd_docs/memory/, .claude/" }
+  ],
+  "review": {
+    "verdict": "ship",
+    "completion_score": 100,
+    "quality_score": 100,
+    "findings": []
+  },
+  "labels_applied": {
+    "removed": ["to-implement", "claude/working"],
+    "added": ["claude/awaiting-review"]
+  }
+}
