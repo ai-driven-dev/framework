@@ -133,16 +133,18 @@ Changes impact all teams using the framework and must be reviewed before merge.
 
 ---
 
-## Existing templates
+## Existing patterns
 
-When adding or modifying content, always follow the existing templates:
+When adding or modifying content, follow the existing patterns used across the marketplace:
 
-| Content | Template                              | Examples    |
-| ------- | ------------------------------------- | ----------- |
-| Agent   | `aidd_docs/templates/aidd/agent.md`   | `agents/`   |
-| Command | `aidd_docs/templates/aidd/command.md` | `commands/` |
-| Skill   | `aidd_docs/templates/aidd/skill.md`   | `skills/`   |
-| Rule    | `aidd_docs/templates/aidd/rule.md`    | `rules/`    |
+| Content | Reference example | Notes |
+| ------- | ----------------- | ----- |
+| Plugin  | [`plugins/aidd-refine/`](plugins/aidd-refine/) | Minimal three-skill plugin with stable status. |
+| Skill   | [`plugins/aidd-context/skills/00-onboard/`](plugins/aidd-context/skills/00-onboard/) | Router-based skill with SKILL.md, actions/, and README. |
+| Agent   | [`plugins/aidd-dev/agents/`](plugins/aidd-dev/agents/) | Frontmatter-driven agent definitions. |
+| Rule    | [`.claude/rules/`](.claude/rules/) (project-local) | Frontmatter `paths` plus a short body. |
+
+For a step-by-step walk-through of building a brand-new plugin, see [`docs/CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md).
 
 ---
 
