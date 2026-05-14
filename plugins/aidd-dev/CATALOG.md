@@ -16,7 +16,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/03-assert`](#skills03-assert)
   - [`skills/04-audit`](#skills04-audit)
   - [`skills/05-review`](#skills05-review)
-  - [`skills/06-test`](#skills06-test)
+  - [`skills/06-write-tests`](#skills06-write-tests)
   - [`skills/07-refactor`](#skills07-refactor)
   - [`skills/08-debug`](#skills08-debug)
   - [`skills/09-for-sure`](#skills09-for-sure)
@@ -108,14 +108,14 @@ No files found.
 | `evals` | [scenarios.json](skills/05-review/evals/scenarios.json) | - | - |
 | `-` | [SKILL.md](skills/05-review/SKILL.md) | `Review code quality against project rules and validate feature behavior against plan specifications.` | - |
 
-#### `skills/06-test`
+#### `skills/06-write-tests`
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-test.md](skills/06-test/actions/01-test.md) | - |
-| `actions` | [02-test-journey.md](skills/06-test/actions/02-test-journey.md) | - |
-| `evals` | [scenarios.json](skills/06-test/evals/scenarios.json) | - |
-| `-` | [SKILL.md](skills/06-test/SKILL.md) | `Write and iterate on tests until they pass, and validate user journeys end-to-end in the browser.` |
+| `actions` | [01-test.md](skills/06-write-tests/actions/01-test.md) | - |
+| `actions` | [02-test-journey.md](skills/06-write-tests/actions/02-test-journey.md) | - |
+| `evals` | [scenarios.json](skills/06-write-tests/evals/scenarios.json) | - |
+| `-` | [SKILL.md](skills/06-write-tests/SKILL.md) | `Write and iterate on tests until they pass, and validate user journeys end-to-end in the browser.` |
 
 #### `skills/07-refactor`
 
