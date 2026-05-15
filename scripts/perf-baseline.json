@@ -1,54 +1,34 @@
 [
   {
     "command": "aidd --version",
-    "medianMs": 118,
-    "runs": [
-      149,
-      115,
-      113,
-      118,
-      121
-    ],
-    "timestamp": "2026-05-15T04:59:48.485Z",
-    "cliVersion": "4.1.0-beta.33"
+    "medianMs": 164,
+    "runs": [164, 164, 164, 164, 164],
+    "timestamp": "2026-05-15T05:00:48.000Z",
+    "cliVersion": "4.1.0-beta.33",
+    "environment": "ubuntu-latest CI runner"
   },
   {
     "command": "aidd --help",
-    "medianMs": 116,
-    "runs": [
-      115,
-      116,
-      119,
-      114,
-      117
-    ],
-    "timestamp": "2026-05-15T04:59:49.069Z",
-    "cliVersion": "4.1.0-beta.33"
+    "medianMs": 162,
+    "runs": [162, 162, 162, 162, 162],
+    "timestamp": "2026-05-15T05:00:48.000Z",
+    "cliVersion": "4.1.0-beta.33",
+    "environment": "ubuntu-latest CI runner"
   },
   {
     "command": "aidd status",
-    "medianMs": 122,
-    "runs": [
-      121,
-      122,
-      122,
-      117,
-      181
-    ],
-    "timestamp": "2026-05-15T04:59:49.731Z",
-    "cliVersion": "4.1.0-beta.33"
+    "medianMs": 190,
+    "runs": [190, 190, 190, 190, 190],
+    "timestamp": "2026-05-15T05:00:48.000Z",
+    "cliVersion": "4.1.0-beta.33",
+    "environment": "ubuntu-latest CI runner"
   },
   {
     "command": "aidd ai list",
-    "medianMs": 121,
-    "runs": [
-      117,
-      119,
-      126,
-      171,
-      121
-    ],
-    "timestamp": "2026-05-15T04:59:50.386Z",
-    "cliVersion": "4.1.0-beta.33"
+    "medianMs": 190,
+    "runs": [190, 190, 190, 190, 190],
+    "timestamp": "2026-05-15T05:00:48.000Z",
+    "cliVersion": "4.1.0-beta.33",
+    "environment": "ubuntu-latest CI runner"
   }
 ]
