@@ -74,6 +74,8 @@ jobs:
     needs: [commitlint]
     steps:
       - uses: actions/checkout@v4
+      - name: Install expect (TTY persona tests)
+        run: sudo apt-get update && sudo apt-get install -y expect
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:

@@ -28,13 +28,13 @@ export class UninstallUseCase {
   private readonly mcpExclusion: UninstallMcpExclusionUseCase;
 
   constructor(
-    private readonly fs: FileReader & FileWriter,
+    fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository,
-    readonly _logger: Logger
+    logger: Logger
   ) {
     this.pluginUninstall = new UninstallPluginUseCase(fs, manifestRepo);
-    this.toolsUninstall = new UninstallToolsUseCase(fs, _logger);
-    this.mcpExclusion = new UninstallMcpExclusionUseCase(fs, _logger);
+    this.toolsUninstall = new UninstallToolsUseCase(fs, logger);
+    this.mcpExclusion = new UninstallMcpExclusionUseCase(fs, logger);
   }
 
   async execute(options: UninstallOptions): Promise<UninstallToolResult[]> {
