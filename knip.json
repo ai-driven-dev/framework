@@ -12,7 +12,8 @@
     "tests/**/helpers.ts",
     "tests/helpers/**",
     "tests/fixtures/**",
-    "tmp/**"
+    "tmp/**",
+    "src/domain/models/marketplace-entry.ts"
   ],
   "ignoreExportsUsedInFile": true
 }

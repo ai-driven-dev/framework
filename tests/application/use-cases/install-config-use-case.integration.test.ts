@@ -88,8 +88,9 @@ describe("InstallConfigUseCase — staticContent", () => {
 
     const settingsFile = results.find((f) => f.relativePath === ".vscode/settings.json");
     expect(settingsFile).toBeDefined();
+    if (!settingsFile) return;
 
-    const parsed = JSON.parse(settingsFile!.content);
+    const parsed = JSON.parse(settingsFile.content);
     expect(parsed).toHaveProperty("github.copilot.enable");
     expect(parsed).toHaveProperty("chat.tools.global.autoApprove", true);
     expect(parsed).toHaveProperty("github.copilot.chat.cli.mcp.enabled", true);
