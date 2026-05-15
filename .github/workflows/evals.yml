@@ -47,10 +47,13 @@ jobs:
             if [ "$count" -lt 1 ]; then
               echo "::warning file=$f::no scenarios declared"
             fi
-            # Each scenario must have prompt + expect_action (or expect_skip)
-            invalid=$(jq '[.[] | select((.prompt == null) or (.expect_action == null and .expect_skip == null and .expect == null))] | length' "$f")
+            # Each scenario must declare a non-null `prompt` and at least one of
+            # `expect_action`, `expect_skip`, `expect` as a key. The value may
+            # legitimately be null: a `expect_action: null` entry is a decoy
+            # test asserting the prompt should NOT trigger this skill.
+            invalid=$(jq '[.[] | select((.prompt == null) or ((has("expect_action") | not) and (has("expect_skip") | not) and (has("expect") | not)))] | length' "$f")
             if [ "$invalid" -gt 0 ]; then
-              echo "::error file=$f::$invalid scenario(s) missing required fields (prompt + expect_action/expect_skip/expect)"
+              echo "::error file=$f::$invalid scenario(s) missing required keys (prompt + at least one of expect_action/expect_skip/expect)"
               fail=1
               continue
             fi

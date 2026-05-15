@@ -17,6 +17,10 @@ permissions:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
+    # CodeQL requires GitHub Advanced Security, which is free on public repos
+    # and paid on private ones. Skip while the repo is private to avoid
+    # spamming the run history with "Advanced Security must be enabled" failures.
+    if: github.event.repository.visibility == 'public'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -27,15 +31,15 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@1521896cd211af95be3f02edf6f436e10b819c27 # v3.35.4
+        uses: github/codeql-action/init@7fd177fa680c9881b53cdab4d346d32574c9f7f4 # v3.35.4
         with:
           languages: ${{ matrix.language }}
           queries: security-and-quality
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@1521896cd211af95be3f02edf6f436e10b819c27 # v3.35.4
+        uses: github/codeql-action/autobuild@7fd177fa680c9881b53cdab4d346d32574c9f7f4 # v3.35.4
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@1521896cd211af95be3f02edf6f436e10b819c27 # v3.35.4
+        uses: github/codeql-action/analyze@7fd177fa680c9881b53cdab4d346d32574c9f7f4 # v3.35.4
         with:
           category: "/language:${{ matrix.language }}"
