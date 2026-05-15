@@ -75,9 +75,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-render-report.md](skills/04-shadow-areas/actions/02-render-report.md) | - |
 | `actions` | [03-diff.md](skills/04-shadow-areas/actions/03-diff.md) | - |
 | `assets` | [report-template.md](skills/04-shadow-areas/assets/report-template.md) | - |
-| `evals` | [sample-invalid-report.md](skills/04-shadow-areas/evals/sample-invalid-report.md) | - |
-| `evals` | [sample-no-frontmatter.md](skills/04-shadow-areas/evals/sample-no-frontmatter.md) | - |
-| `evals` | [sample-valid-report.md](skills/04-shadow-areas/evals/sample-valid-report.md) | - |
 | `evals` | [scenarios.json](skills/04-shadow-areas/evals/scenarios.json) | - |
 | `-` | [README.md](skills/04-shadow-areas/README.md) | - |
 | `references` | [categories.md](skills/04-shadow-areas/references/categories.md) | - |

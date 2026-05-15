@@ -1,34 +1,25 @@
 [
-  {
-    "prompt": "run shadow-areas on aidd_docs/tasks/2026_05/foo-prd.md",
-    "expect_action": "shadow-areas"
-  },
-  {
-    "prompt": "The system must allow users to reset their password via email. No rate limiting is specified.",
-    "expect_action": "shadow-areas"
-  },
-  {
-    "prompt": "run shadow-areas on aidd_docs/tasks/nonexistent/missing-file.md",
-    "expect_action": null
-  },
-  {
-    "prompt": "run shadow-areas on aidd_docs/tasks/2026_05/empty-file.md",
-    "expect_action": "shadow-areas"
-  },
-  {
-    "prompt": "run shadow-areas on aidd_docs/tasks/2026_05/diagram.png",
-    "expect_action": "shadow-areas"
-  },
-  {
-    "prompt": "run shadow-areas on aidd_docs/tasks/2026_05/giant-spec.md",
-    "expect_action": "shadow-areas"
-  },
-  {
-    "prompt": "run shadow-areas on aidd_docs/tasks/2026_05/new-prd.md with prior report aidd_docs/tasks/2026_05/new-prd-shadow-report.md",
-    "expect_action": "shadow-areas"
-  },
-  {
-    "prompt": "run shadow-areas on aidd_docs/tasks/2026_05/new-prd-shadow-report.md",
-    "expect_action": null
-  }
+  { "prompt": "run shadow-areas on aidd_docs/tasks/2026_05/foo-prd.md", "expect_action": "shadow-areas" },
+  { "prompt": "find blind spots in this spec", "expect_action": "shadow-areas" },
+  { "prompt": "what's missing in this PRD", "expect_action": "shadow-areas" },
+  { "prompt": "shadow report on the spec", "expect_action": "shadow-areas" },
+  { "prompt": "shadow analysis of the user stories", "expect_action": "shadow-areas" },
+  { "prompt": "scan for gaps in the requirements", "expect_action": "shadow-areas" },
+  { "prompt": "find what's missing in the auth PRD", "expect_action": "shadow-areas" },
+  { "prompt": "spot blind spots in the design", "expect_action": "shadow-areas" },
+  { "prompt": "review for gaps the checkout spec", "expect_action": "shadow-areas" },
+  { "prompt": "analytical gap scan of this artifact", "expect_action": "shadow-areas" },
+  { "prompt": "trouve les blind spots dans ce PRD", "expect_action": "shadow-areas" },
+  { "prompt": "scanne les gaps de la spec", "expect_action": "shadow-areas" },
+  { "prompt": "qu'est-ce qui manque dans ce PRD", "expect_action": "shadow-areas" },
+  { "prompt": "rapport shadow sur la spec", "expect_action": "shadow-areas" },
+  { "prompt": "run shadow-areas on aidd_docs/tasks/2026_05/empty-file.md", "expect_action": "shadow-areas" },
+  { "prompt": "run shadow-areas on aidd_docs/tasks/2026_05/diagram.png", "expect_action": "shadow-areas" },
+  { "prompt": "run shadow-areas on aidd_docs/tasks/2026_05/giant-spec.md", "expect_action": "shadow-areas" },
+  { "prompt": "run shadow-areas on aidd_docs/tasks/2026_05/new-prd.md with prior report aidd_docs/tasks/2026_05/new-prd-shadow-report.md", "expect_action": "shadow-areas" },
+  { "prompt": "run shadow-areas on aidd_docs/tasks/nonexistent/missing-file.md", "expect_action": null },
+  { "prompt": "run shadow-areas on aidd_docs/tasks/2026_05/new-prd-shadow-report.md", "expect_action": null },
+  { "prompt": "brainstorm a new feature idea", "expect_action": null },
+  { "prompt": "implement the auth feature", "expect_action": null },
+  { "prompt": "commit my changes", "expect_action": null }
 ]
