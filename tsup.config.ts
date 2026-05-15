@@ -14,4 +14,11 @@ export default defineConfig({
   splitting: false,
   shims: false,
   skipNodeModulesBundle: true,
+  esbuildOptions(options) {
+    options.loader = {
+      ...options.loader,
+      ".md": "text",
+      ".toml": "text",
+    };
+  },
 });

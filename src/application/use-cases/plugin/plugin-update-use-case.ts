@@ -1,12 +1,12 @@
 import { join } from "node:path";
 import type { Manifest } from "../../../domain/models/manifest.js";
-import { PLUGIN_CACHE_SUBDIR } from "../../../domain/models/paths.js";
+import { DOCS_DIR, PLUGIN_CACHE_SUBDIR } from "../../../domain/models/paths.js";
 import { Plugin } from "../../../domain/models/plugin.js";
 import type { PluginDistribution } from "../../../domain/models/plugin-distribution.js";
 import { PluginTranslator } from "../../../domain/models/plugin-translator.js";
 import { compareSemver } from "../../../domain/models/semver.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { PluginDistributionReader } from "../../../domain/ports/plugin-distribution-reader.js";
@@ -22,7 +22,7 @@ export interface PluginUpdateOptions {
 
 export class PluginUpdateUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileWriter,
     private readonly manifestRepo: ManifestRepository,
     private readonly pluginFetcher: PluginFetcher,
     private readonly pluginDistributionReader: PluginDistributionReader,
@@ -34,6 +34,7 @@ export class PluginUpdateUseCase {
     const manifest = await loadPluginManifest(this.manifestRepo);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest);
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
+    const docsDir = DOCS_DIR;
     const updated: string[] = [];
     for (const toolId of resolvedToolIds) {
       const names = await this.updatePluginsForTool(
@@ -41,7 +42,8 @@ export class PluginUpdateUseCase {
         pluginNames,
         projectRoot,
         cacheDir,
-        manifest
+        manifest,
+        docsDir
       );
       updated.push(...names);
     }
@@ -54,7 +56,8 @@ export class PluginUpdateUseCase {
     pluginNames: string[] | undefined,
     projectRoot: string,
     cacheDir: string,
-    manifest: Manifest
+    manifest: Manifest,
+    docsDir: string
   ): Promise<string[]> {
     const plugins = manifest.getPlugins(toolId);
     const targets = pluginNames
@@ -62,7 +65,14 @@ export class PluginUpdateUseCase {
       : [...plugins];
     const updated: string[] = [];
     for (const plugin of targets) {
-      const didUpdate = await this.updateOnePlugin(plugin, toolId, projectRoot, cacheDir, manifest);
+      const didUpdate = await this.updateOnePlugin(
+        plugin,
+        toolId,
+        projectRoot,
+        cacheDir,
+        manifest,
+        docsDir
+      );
       if (didUpdate) updated.push(plugin.name);
     }
     return updated;
@@ -73,14 +83,15 @@ export class PluginUpdateUseCase {
     toolId: AiToolId,
     projectRoot: string,
     cacheDir: string,
-    manifest: Manifest
+    manifest: Manifest,
+    docsDir: string
   ): Promise<boolean> {
     const localPath = await this.pluginFetcher.fetch(plugin.source, cacheDir, {
       forceRefresh: true,
     });
     const dist = await this.pluginDistributionReader.read(localPath);
     if (compareSemver(dist.manifest.version, plugin.version) <= 0) return false;
-    await this.replacePluginFiles(plugin, dist, toolId, projectRoot, manifest);
+    await this.replacePluginFiles(plugin, dist, toolId, projectRoot, manifest, docsDir);
     return true;
   }
 
@@ -89,13 +100,25 @@ export class PluginUpdateUseCase {
     dist: PluginDistribution,
     toolId: AiToolId,
     projectRoot: string,
-    manifest: Manifest
+    manifest: Manifest,
+    docsDir: string
   ): Promise<void> {
     await this.deleteOldFiles(plugin.files, projectRoot);
     const toolConfig = getToolConfig(toolId);
-    const newFiles = new PluginTranslator(this.hasher).translate(dist, toolConfig);
-    await writePluginFiles(newFiles, projectRoot, this.fs);
-    manifest.updatePlugin(toolId, Plugin.fromDistribution(dist, plugin.source, newFiles));
+    const { files: newFiles, componentPaths } = new PluginTranslator(
+      this.hasher
+    ).translateWithComponentPaths(dist, toolConfig, docsDir);
+    const isLocalMarketplace = plugin.source.kind === "local" && plugin.marketplace !== undefined;
+    if (!isLocalMarketplace) await writePluginFiles(newFiles, projectRoot, this.fs);
+    manifest.updatePlugin(
+      toolId,
+      Plugin.fromDistribution(
+        dist,
+        plugin.source,
+        isLocalMarketplace ? [] : newFiles,
+        isLocalMarketplace ? new Map() : componentPaths
+      )
+    );
   }
 
   private async deleteOldFiles(

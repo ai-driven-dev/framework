@@ -2,16 +2,6 @@ import { ManifestValidationError } from "../errors.js";
 import { GITKEEP_FILE } from "./framework.js";
 import type { MergeStrategy } from "./merge.js";
 
-// ── FileDiff ─────────────────────────────────────────────────────────────────
-
-export type FileDiffKind = "added" | "removed" | "changed" | "unchanged";
-
-export interface FileDiff {
-  relativePath: string;
-  kind: FileDiffKind;
-  conflict?: boolean;
-}
-
 // ── FileHash ──────────────────────────────────────────────────────────────────
 
 const MD5_PATTERN = /^[0-9a-f]{32}$/;
@@ -55,6 +45,16 @@ export class InstallationFile {
     this.mergeStrategy = params.mergeStrategy ?? "none";
     this.frameworkPath = params.frameworkPath;
   }
+}
+
+// ── FileDiff ──────────────────────────────────────────────────────────────────
+
+export type FileDiffKind = "added" | "removed" | "changed" | "unchanged";
+
+export interface FileDiff {
+  readonly relativePath: string;
+  readonly kind: FileDiffKind;
+  readonly conflict?: boolean;
 }
 
 export function removeRedundantGitkeeps(files: InstallationFile[]): InstallationFile[] {

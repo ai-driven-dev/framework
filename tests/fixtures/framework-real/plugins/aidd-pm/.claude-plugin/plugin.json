@@ -1,0 +1,7 @@
+{
+  "name": "aidd-pm",
+  "version": "1.0.0-rc.1",
+  "description": "Product management (release candidate): ticket-info, user-stories-create, prd",
+  "author": { "name": "AI-Driven Dev" },
+  "strict": true
+}

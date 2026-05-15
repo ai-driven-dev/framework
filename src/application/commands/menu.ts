@@ -1,7 +1,9 @@
-import { spawn } from "node:child_process";
+import readline from "node:readline";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Prompter } from "../../domain/ports/prompter.js";
 import { createMenuDeps } from "../../infrastructure/deps.js";
+import { resolveProjectRoot } from "../../infrastructure/project-root.js";
+import { spawnCliCommand } from "./shared/spawn-cli-command.js";
 
 interface MenuLeaf {
   name: string;
@@ -29,20 +31,11 @@ function toChoice(node: MenuNode): { name: string; value: string; description?: 
   return { name: node.name, value: node.value, description: node.description };
 }
 
-const FRESH_NODES: MenuNode[] = [
-  {
-    name: "Install AIDD in this project",
-    value: "setup",
-    description: "Set up the AI-Driven Development framework",
-    command: ["setup"],
-  },
-];
-
 const INSTALLED_NODES: MenuNode[] = [
   {
     name: "Inspect",
     value: "inspect",
-    description: "Check status, health and drift detection",
+    description: "Check status, health and installed items",
     children: [
       {
         name: "Status",
@@ -56,131 +49,316 @@ const INSTALLED_NODES: MenuNode[] = [
         description: "Run a structural health check",
         command: ["doctor"],
       },
+      {
+        name: "List installed",
+        value: "list-installed",
+        description: "List installed tools and plugins",
+        children: [
+          {
+            name: "AI tools",
+            value: "ai-list",
+            description: "Show installed AI tools",
+            command: ["ai", "list"],
+          },
+          {
+            name: "IDE tools",
+            value: "ide-list",
+            description: "Show installed IDE tools",
+            command: ["ide", "list"],
+          },
+          {
+            name: "Plugins",
+            value: "plugin-list",
+            description: "Show installed plugins per tool",
+            command: ["plugin", "list"],
+          },
+        ],
+      },
     ],
   },
   {
-    name: "Manage tools",
-    value: "manage-tools",
+    name: "Manage AI tools",
+    value: "manage-ai",
     description: "Install, remove and sync AI tools",
     children: [
       {
         name: "Install",
-        value: "install",
-        description: "Add AI tools to this project",
-        command: ["install"],
+        value: "ai-install",
+        description: "Add an AI tool to this project",
+        command: ["ai", "install"],
+        inputPrompt: "AI tool (e.g. claude, cursor, copilot, codex)",
       },
       {
         name: "Uninstall",
-        value: "uninstall",
-        description: "Remove installed tools",
-        command: ["uninstall"],
+        value: "ai-uninstall",
+        description: "Remove an installed AI tool",
+        command: ["ai", "uninstall"],
+        inputPrompt: "AI tool to remove",
+      },
+      {
+        name: "Update",
+        value: "ai-update",
+        description: "Re-install AI tool configs from bundled assets",
+        command: ["ai", "update"],
       },
       {
         name: "Sync",
-        value: "sync",
-        description: "Propagate changes across installed tools",
-        command: ["sync"],
+        value: "ai-sync",
+        description: "Propagate changes across installed AI tools",
+        command: ["ai", "sync"],
+      },
+      {
+        name: "Restore",
+        value: "ai-restore",
+        description: "Restore AI tool tracked files",
+        command: ["ai", "restore"],
+      },
+      {
+        name: "Doctor",
+        value: "ai-doctor",
+        description: "Check AI tool installation health",
+        command: ["ai", "doctor"],
+      },
+    ],
+  },
+  {
+    name: "Manage IDE tools",
+    value: "manage-ide",
+    description: "Install, remove and maintain IDE tools",
+    children: [
+      {
+        name: "Install",
+        value: "ide-install",
+        description: "Add an IDE tool to this project",
+        command: ["ide", "install"],
+        inputPrompt: "IDE tool (e.g. vscode)",
+      },
+      {
+        name: "Uninstall",
+        value: "ide-uninstall",
+        description: "Remove an installed IDE tool",
+        command: ["ide", "uninstall"],
+        inputPrompt: "IDE tool to remove",
+      },
+      {
+        name: "Update",
+        value: "ide-update",
+        description: "Re-install IDE tool configs from bundled assets",
+        command: ["ide", "update"],
+      },
+      {
+        name: "Doctor",
+        value: "ide-doctor",
+        description: "Check IDE tool installation health",
+        command: ["ide", "doctor"],
+      },
+    ],
+  },
+  {
+    name: "Manage plugins",
+    value: "manage-plugins",
+    description: "Browse, install and manage AI tool plugins",
+    children: [
+      {
+        name: "Install from marketplace",
+        value: "plugin-install",
+        description: "Install a plugin by name from registered marketplaces",
+        command: ["plugin", "install"],
+        inputPrompt: "Plugin name (e.g. aidd-dev or aidd-dev@1.0.0)",
+      },
+      {
+        name: "Add local plugin",
+        value: "plugin-add",
+        description: "Add a plugin from a local directory",
+        command: ["plugin", "add"],
+        inputPrompt: "Path to plugin directory",
+      },
+      {
+        name: "Pick (interactive)",
+        value: "plugin-pick",
+        description: "Interactively browse and install plugins from a marketplace",
+        command: ["plugin", "pick"],
+      },
+      {
+        name: "Search",
+        value: "plugin-search",
+        description: "Search plugins across all registered marketplaces",
+        command: ["plugin", "search"],
+        inputPrompt: "Search query",
+      },
+      {
+        name: "Update",
+        value: "plugin-update",
+        description: "Update all installed plugins to latest version",
+        command: ["plugin", "update"],
+      },
+      {
+        name: "Remove",
+        value: "plugin-remove",
+        description: "Remove an installed plugin",
+        command: ["plugin", "remove"],
+        inputPrompt: "Plugin name to remove",
+      },
+      {
+        name: "List",
+        value: "plugin-list",
+        description: "Show all installed plugins per tool",
+        command: ["plugin", "list"],
+      },
+      {
+        name: "Sync",
+        value: "plugin-sync",
+        description: "Propagate plugins from source tool to targets",
+        command: ["plugin", "sync"],
+      },
+      {
+        name: "Restore",
+        value: "plugin-restore",
+        description: "Restore a plugin to its cached version",
+        command: ["plugin", "restore"],
+      },
+      {
+        name: "Doctor",
+        value: "plugin-doctor",
+        description: "Check plugin installation health",
+        command: ["plugin", "doctor"],
+      },
+    ],
+  },
+  {
+    name: "Marketplaces",
+    value: "marketplaces",
+    description: "Manage plugin marketplace registrations",
+    children: [
+      {
+        name: "List",
+        value: "marketplace-list",
+        description: "Show all registered marketplaces",
+        command: ["marketplace", "list"],
+      },
+      {
+        name: "Add",
+        value: "marketplace-add",
+        description: "Register a new plugin marketplace",
+        command: ["marketplace", "add"],
+      },
+      {
+        name: "Browse",
+        value: "marketplace-browse",
+        description: "Browse plugins in a registered marketplace",
+        command: ["marketplace", "browse"],
+        inputPrompt: "Marketplace name",
+      },
+      {
+        name: "Refresh",
+        value: "marketplace-refresh",
+        description: "Refresh all registered marketplaces",
+        command: ["marketplace", "refresh"],
+      },
+      {
+        name: "Remove",
+        value: "marketplace-remove",
+        description: "Unregister a marketplace",
+        command: ["marketplace", "remove"],
+        inputPrompt: "Marketplace name to remove",
+      },
+      {
+        name: "Check freshness",
+        value: "marketplace-check",
+        description: "Report stale marketplaces",
+        command: ["marketplace", "check"],
+      },
+      {
+        name: "Cache",
+        value: "marketplace-cache",
+        description: "Manage marketplace cache",
+        children: [
+          {
+            name: "List",
+            value: "cache-list",
+            description: "Show cached marketplaces with size and last fetch time",
+            command: ["marketplace", "cache", "list"],
+          },
+          {
+            name: "Clear",
+            value: "cache-clear",
+            description: "Clear marketplace cache",
+            command: ["marketplace", "cache", "clear"],
+          },
+        ],
       },
     ],
   },
   {
     name: "Maintain & repair",
     value: "maintain",
-    description: "Update, restore and clean your files",
+    description: "Update, sync, restore and clean everything",
     children: [
       {
-        name: "Update",
-        value: "update",
-        description: "Pull the latest framework version",
+        name: "Update everything",
+        value: "update-all",
+        description: "Update all installed tools and plugins",
         command: ["update"],
       },
       {
-        name: "Restore",
-        value: "restore",
-        description: "Restore modified or deleted tracked files",
+        name: "Sync everything",
+        value: "sync-all",
+        description: "Sync configs and plugins across all installed tools",
+        command: ["sync"],
+      },
+      {
+        name: "Restore everything",
+        value: "restore-all",
+        description: "Restore all modified or deleted tracked files",
         command: ["restore"],
       },
       {
-        name: "Clean",
+        name: "Clean (nuke .aidd)",
         value: "clean",
-        description: "Remove untracked or orphaned files",
+        description: "Remove all AIDD-managed files from this project",
         command: ["clean"],
       },
     ],
   },
   {
+    name: "Migrate from older version",
+    value: "migrate",
+    description: "Upgrade project from a previous AIDD version",
+    command: ["migrate"],
+  },
+  {
     name: "System",
     value: "system",
-    description: "CLI updates, configuration and cache",
+    description: "CLI self-update and authentication",
     children: [
       {
-        name: "Self-update",
+        name: "Self-update CLI",
         value: "self-update",
         description: "Update the AIDD CLI binary",
         command: ["self-update"],
       },
       {
-        name: "Config",
-        value: "config",
-        description: "View or edit project settings",
+        name: "Authentication",
+        value: "auth",
+        description: "Manage authentication credentials",
         children: [
           {
-            name: "Show all settings",
-            value: "list",
-            description: "List all config values",
-            command: ["config", "list"],
+            name: "Status",
+            value: "auth-status",
+            description: "Show current authentication status",
+            command: ["auth", "status"],
           },
           {
-            name: "Get a value",
-            value: "get",
-            description: "Read a specific config key",
-            children: [
-              { name: "Docs directory", value: "docsDir", command: ["config", "get", "docsDir"] },
-              { name: "Repository", value: "repo", command: ["config", "get", "repo"] },
-              { name: "Installed tools", value: "tools", command: ["config", "get", "tools"] },
-            ],
+            name: "Login",
+            value: "auth-login",
+            description: "Authenticate with your credentials",
+            command: ["auth", "login"],
           },
           {
-            name: "Set docs directory",
-            value: "set-docs",
-            description: "Change the docs folder name",
-            command: ["config", "set", "docsDir"],
-            inputPrompt: "New value for docsDir",
-            commandSuffix: ["--force"],
-          },
-          {
-            name: "Set repository",
-            value: "set-repo",
-            description: "Change the framework repository",
-            command: ["config", "set", "repo"],
-            inputPrompt: "New value for repo",
-            commandSuffix: ["--force"],
-          },
-        ],
-      },
-      {
-        name: "Cache",
-        value: "cache",
-        description: "Manage cached framework versions",
-        children: [
-          {
-            name: "List cached versions",
-            value: "list",
-            description: "Show all cached framework versions",
-            command: ["cache", "list"],
-          },
-          {
-            name: "Clear a specific version",
-            value: "clear-version",
-            description: "Remove one cached version",
-            command: ["cache", "clear"],
-            inputPrompt: "Version to clear (e.g. v3.2.0)",
-          },
-          {
-            name: "Clear all versions",
-            value: "clear-all",
-            description: "Remove all cached versions",
-            command: ["cache", "clear", "--all"],
+            name: "Logout",
+            value: "auth-logout",
+            description: "Remove stored credentials",
+            command: ["auth", "logout"],
           },
         ],
       },
@@ -191,18 +369,12 @@ const INSTALLED_NODES: MenuNode[] = [
 const BACK = { name: "← Back", value: "back" } as const;
 const EXIT = { name: "Exit", value: "exit" } as const;
 
-type NavResult =
-  | { type: "command"; command: string[]; returnTo: string[] }
-  | { type: "back" }
-  | { type: "exit" };
+type NavResult = { type: "command"; command: string[] } | { type: "back" } | { type: "exit" };
 
-export interface InteractiveMenuOptions {
-  startAt?: string[];
-}
+export type InteractiveMenuOptions = Record<never, never>;
 
 export interface InteractiveMenuResult {
   command: string[];
-  returnTo?: string[];
 }
 
 export class InteractiveMenuUseCase {
@@ -211,41 +383,17 @@ export class InteractiveMenuUseCase {
     private readonly prompter: Prompter
   ) {}
 
-  async execute(options?: InteractiveMenuOptions): Promise<InteractiveMenuResult> {
+  async execute(_options?: InteractiveMenuOptions): Promise<InteractiveMenuResult> {
     const manifest = await this.manifestRepo.load();
-    const rootNodes = manifest === null ? FRESH_NODES : INSTALLED_NODES;
-    const result = await this.navigateFrom(
-      rootNodes,
-      "What would you like to do?",
-      options?.startAt ?? [],
-      []
-    );
+    if (manifest === null) return this.handleFreshInstall();
+    const result = await this.showMenu(INSTALLED_NODES, "What would you like to do?", []);
     if (result.type !== "command") return { command: ["exit"] };
-    return {
-      command: result.command,
-      returnTo: result.returnTo.length > 0 ? result.returnTo : undefined,
-    };
+    return { command: result.command };
   }
 
-  private async navigateFrom(
-    nodes: MenuNode[],
-    label: string,
-    path: string[],
-    breadcrumb: string[]
-  ): Promise<NavResult> {
-    if (path.length > 0) {
-      const [head, ...tail] = path;
-      const node = nodes.find((n) => n.value === head);
-      if (node && isBranch(node)) {
-        const result = await this.navigateFrom(node.children, node.name, tail, [
-          ...breadcrumb,
-          node.value,
-        ]);
-        if (result.type === "back") return this.showMenu(nodes, label, breadcrumb);
-        return result;
-      }
-    }
-    return this.showMenu(nodes, label, breadcrumb);
+  private async handleFreshInstall(): Promise<InteractiveMenuResult> {
+    const confirmed = await this.prompter.confirm("AIDD not initialized. Run setup now?", true);
+    return { command: confirmed ? ["setup"] : ["exit"] };
   }
 
   private async showMenu(
@@ -266,7 +414,7 @@ export class InteractiveMenuUseCase {
       return result;
     }
 
-    return { type: "command", command: await this.resolveCommand(node), returnTo: breadcrumb };
+    return { type: "command", command: await this.resolveCommand(node) };
   }
 
   private async resolveCommand(node: MenuLeaf): Promise<string[]> {
@@ -278,29 +426,41 @@ export class InteractiveMenuUseCase {
   }
 }
 
-function spawnCliCommand(command: string[]): Promise<void> {
-  return new Promise((resolve) => {
-    spawn(process.execPath, [process.argv[1], ...command], { stdio: "inherit" }).on(
-      "close",
-      resolve
-    );
+async function waitForEnter(): Promise<void> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  await new Promise<void>((resolve) => {
+    rl.question("\nPress ENTER to continue...", () => {
+      rl.close();
+      resolve();
+    });
   });
 }
 
+const BANNER = `
+   _    ___ ___  ___
+  /_\\  |_ _|   \\|   \\
+ / _ \\  | || |) | |) |
+/_/ \\_\\|___|___/|___/
+
+ AI-Driven Development CLI
+`;
+
+function printBanner(): void {
+  process.stdout.write(BANNER);
+}
+
 export async function runMenuLoop(): Promise<never> {
-  const { manifestRepo, prompter } = createMenuDeps(process.cwd());
-  let returnTo: string[] | undefined;
+  printBanner();
+  const { manifestRepo, prompter } = createMenuDeps(resolveProjectRoot());
   for (;;) {
     try {
-      const result = await new InteractiveMenuUseCase(manifestRepo, prompter).execute({
-        startAt: returnTo,
-      });
+      const result = await new InteractiveMenuUseCase(manifestRepo, prompter).execute();
       if (result.command[0] === "exit") process.exit(0);
-      returnTo = result.returnTo;
-      await spawnCliCommand(result.command);
+      const exitCode = await spawnCliCommand(result.command);
+      await waitForEnter();
+      if (exitCode !== 0 && result.command[0] === "setup") process.exit(exitCode);
     } catch (error) {
       if (error instanceof Error && error.name === "ExitPromptError") process.exit(0);
-      returnTo = undefined;
     }
   }
 }

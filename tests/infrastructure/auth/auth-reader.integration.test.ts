@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { AuthConfig } from "../../../src/domain/models/auth.js";
 import type { TokenResolver } from "../../../src/domain/ports/oauth-provider.js";
-import { AuthReader } from "../../../src/infrastructure/auth/auth-reader.js";
-import type { AuthStorage } from "../../../src/infrastructure/auth/auth-storage.js";
+import { AuthReader } from "../../../src/infrastructure/adapters/auth-reader.js";
+import type { AuthStorage } from "../../../src/infrastructure/adapters/auth-storage.js";
 
 function makeStorage(
   overrides: Partial<{
@@ -194,6 +194,31 @@ describe("AuthReader", () => {
         reader.resolveContext("/project")
       );
       expect(result).toEqual({ token: "user-token", method: "stored", level: "user" });
+    });
+  });
+
+  describe("memoization", () => {
+    it("calls storage read only once across multiple resolve() calls", async () => {
+      let readCount = 0;
+      const storage: AuthStorage = {
+        userConfigPath: () => "/home/user/.config/aidd/auth.json",
+        projectConfigPath: (_root: string) => "/project/.aidd/auth.json",
+        read: async () => {
+          readCount++;
+          return null;
+        },
+        write: async () => {},
+        delete: async () => {},
+        save: async () => {},
+        readActive: async () => null,
+      } as AuthStorage;
+      const reader = new AuthReader(storage, "/project");
+      await withEnv({ AIDD_TOKEN: undefined }, async () => {
+        await reader.resolve();
+        await reader.resolve();
+        await reader.resolve();
+      });
+      expect(readCount).toBe(2); // projectConfig + userConfig, each read once total
     });
   });
 

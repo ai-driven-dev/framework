@@ -1,0 +1,17 @@
+[
+  { "prompt": "Create user stories for the new search feature", "expect_action": "create-user-stories" },
+  { "prompt": "/create-user-stories auth flow", "expect_action": "create-user-stories" },
+  { "prompt": "Write INVEST stories for the onboarding redesign", "expect_action": "create-user-stories" },
+  { "prompt": "Draft user stories for billing", "expect_action": "create-user-stories" },
+  { "prompt": "Generate INVEST user stories for login", "expect_action": "create-user-stories" },
+  { "prompt": "Write user stories with acceptance criteria for checkout", "expect_action": "create-user-stories" },
+  { "prompt": "User stories en INVEST pour l'auth", "expect_action": "create-user-stories" },
+  { "prompt": "Rédige les user stories du panier", "expect_action": "create-user-stories" },
+  { "prompt": "Génère des user stories INVEST pour le module search", "expect_action": "create-user-stories" },
+  { "prompt": "Écris les histoires utilisateur du checkout", "expect_action": "create-user-stories" },
+  { "prompt": "User stories INVEST pour onboarding", "expect_action": "create-user-stories" },
+  { "prompt": "Stories utilisateur du module billing", "expect_action": "create-user-stories" },
+  { "prompt": "Implement the auth feature", "expect_action": null },
+  { "prompt": "Draft a PRD for billing", "expect_action": null },
+  { "prompt": "Commit my changes", "expect_action": null }
+]

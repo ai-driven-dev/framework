@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 import "../../../src/domain/tools/ai/claude.js";
-import { DoctorUseCase } from "../../../src/application/use-cases/doctor-use-case.js";
+import { DoctorLayoutUseCase } from "../../../src/application/use-cases/doctor/doctor-layout-use-case.js";
+import { DoctorMergeFilesUseCase } from "../../../src/application/use-cases/doctor/doctor-merge-files-use-case.js";
+import { DoctorPluginUseCase } from "../../../src/application/use-cases/doctor/doctor-plugin-use-case.js";
+import { DoctorReferencesUseCase } from "../../../src/application/use-cases/doctor/doctor-references-use-case.js";
+import { DoctorTrackedFilesUseCase } from "../../../src/application/use-cases/doctor/doctor-tracked-files-use-case.js";
+import { DoctorUseCase } from "../../../src/application/use-cases/doctor/doctor-use-case.js";
 import { FileHash } from "../../../src/domain/models/file.js";
 import { Manifest } from "../../../src/domain/models/manifest.js";
 import { Plugin } from "../../../src/domain/models/plugin.js";
-import type { FileSystem } from "../../../src/domain/ports/file-system.js";
+import type { FileReader } from "../../../src/domain/ports/file-reader.js";
 import type { Hasher } from "../../../src/domain/ports/hasher.js";
-import type { Logger } from "../../../src/domain/ports/logger.js";
 import type { ManifestRepository } from "../../../src/domain/ports/manifest-repository.js";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";
@@ -14,7 +18,7 @@ const DRIFTED_HASH = "def456def456def456def456def456de";
 const PLUGIN_FILE = ".claude/plugins/my-plugin/commands/cmd.md";
 
 function makeManifest(pluginFileHash: string): Manifest {
-  const manifest = Manifest.create("aidd_docs");
+  const manifest = Manifest.create();
   manifest.addTool("claude", "1.0.0", []);
   manifest.addPlugin(
     "claude",
@@ -29,7 +33,7 @@ function makeManifest(pluginFileHash: string): Manifest {
   return manifest;
 }
 
-function makeFs(fileExists: boolean, diskHash: string): FileSystem {
+function makeFs(fileExists: boolean, diskHash: string): FileReader {
   return {
     fileExists: async () => fileExists,
     readFileHash: async () => new FileHash(diskHash),
@@ -39,29 +43,34 @@ function makeFs(fileExists: boolean, diskHash: string): FileSystem {
     listDirectory: async () => [],
     deleteEmptyDirectories: async () => {},
     copyFile: async () => {},
-  } as unknown as FileSystem;
+  } as unknown as FileReader;
 }
 
 function makeManifestRepo(manifest: Manifest): ManifestRepository {
   return { load: async () => manifest, save: async () => {}, delete: async () => {} };
 }
 
-const noopLogger: Logger = {
-  info: () => {},
-  warn: () => {},
-  debug: () => {},
-};
-
 const noopHasher: Hasher = {
   hash: () => new FileHash("00000000000000000000000000000000"),
 };
+
+function makeDoctorUseCase(fs: FileReader, manifest: Manifest): DoctorUseCase {
+  return new DoctorUseCase(
+    makeManifestRepo(manifest),
+    new DoctorTrackedFilesUseCase(fs),
+    new DoctorMergeFilesUseCase(fs, noopHasher),
+    new DoctorPluginUseCase(fs),
+    new DoctorReferencesUseCase(fs),
+    new DoctorLayoutUseCase(fs)
+  );
+}
 
 describe("DoctorUseCase — plugin integrity", () => {
   describe("when plugin file is missing", () => {
     it("reports a missing plugin issue", async () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(false, EXPECTED_HASH);
-      const useCase = new DoctorUseCase(fs, makeManifestRepo(manifest), noopHasher, noopLogger);
+      const useCase = makeDoctorUseCase(fs, manifest);
 
       const report = await useCase.execute({ projectRoot: "/proj" });
 
@@ -77,7 +86,7 @@ describe("DoctorUseCase — plugin integrity", () => {
     it("reports a hash-mismatch plugin issue", async () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(true, DRIFTED_HASH);
-      const useCase = new DoctorUseCase(fs, makeManifestRepo(manifest), noopHasher, noopLogger);
+      const useCase = makeDoctorUseCase(fs, manifest);
 
       const report = await useCase.execute({ projectRoot: "/proj" });
 
@@ -91,7 +100,7 @@ describe("DoctorUseCase — plugin integrity", () => {
     it("returns empty pluginIssues", async () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(true, EXPECTED_HASH);
-      const useCase = new DoctorUseCase(fs, makeManifestRepo(manifest), noopHasher, noopLogger);
+      const useCase = makeDoctorUseCase(fs, manifest);
 
       const report = await useCase.execute({ projectRoot: "/proj" });
 
@@ -103,7 +112,7 @@ describe("DoctorUseCase — plugin integrity", () => {
     it("only checks the specified plugin", async () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(false, EXPECTED_HASH);
-      const useCase = new DoctorUseCase(fs, makeManifestRepo(manifest), noopHasher, noopLogger);
+      const useCase = makeDoctorUseCase(fs, manifest);
 
       const report = await useCase.execute({ projectRoot: "/proj", pluginName: "other-plugin" });
 

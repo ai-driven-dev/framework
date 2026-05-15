@@ -1,0 +1,200 @@
+import type { Command } from "commander";
+import { Manifest } from "../../domain/models/manifest.js";
+import { IDE_TOOL_IDS, type IdeToolId } from "../../domain/models/tool-ids.js";
+import { createDeps, createMenuDeps } from "../../infrastructure/deps.js";
+import { ErrorHandler } from "../error-handler.js";
+import { parseGlobalOptions } from "./global-options.js";
+import { spawnCliCommand } from "./shared/spawn-cli-command.js";
+
+function assertIdeToolId(toolId: string): asserts toolId is IdeToolId {
+  if (!(IDE_TOOL_IDS as readonly string[]).includes(toolId)) {
+    throw new Error(`Unknown IDE tool: ${toolId}. Valid IDE tools: ${IDE_TOOL_IDS.join(", ")}`);
+  }
+}
+
+export function registerIdeCommand(program: Command): void {
+  const ide = program.command("ide").description("Manage IDE integrations (vscode)");
+
+  ide.action(async () => {
+    if (!process.stdout.isTTY) {
+      ide.help();
+      return;
+    }
+    const { prompter } = createMenuDeps(process.cwd());
+    const choice = await prompter.select("ide: what do you want to do?", [
+      { name: "Install an IDE tool", value: "install", description: "requires tool arg" },
+      { name: "Uninstall an IDE tool", value: "uninstall", description: "requires tool arg" },
+      { name: "List installed IDE tools", value: "list" },
+      { name: "Show IDE tool status", value: "status" },
+      { name: "Update IDE tools", value: "update" },
+      { name: "Doctor IDE tools", value: "doctor" },
+    ]);
+    await spawnCliCommand(["ide", choice]);
+  });
+
+  ide
+    .command("install <tool>")
+    .description(
+      "Install an IDE integration from bundled assets. Note: IDE configs are merge-based — sync/restore semantics do not apply."
+    )
+    .option("-f, --force", "Overwrite already-installed tool", false)
+    .action(async (toolArg: string, cmdOptions: { force: boolean }) => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
+      try {
+        assertIdeToolId(toolArg);
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+        const version = deps.currentVersionProvider.get();
+        const result = await deps.installIdeToolUseCase.execute({
+          toolId: toolArg,
+          projectRoot,
+          manifest,
+          force: cmdOptions.force,
+          version,
+        });
+        if (result.skipped) {
+          output.warn(`${result.toolId} is already installed. Use \`--force\` to reinstall.`);
+          return;
+        }
+        for (const w of result.warnings) output.warn(w);
+        output.success(`Installed ${result.toolId} (${result.fileCount} files)`);
+      } catch (error) {
+        errorHandler.handle(error);
+      }
+    });
+
+  ide
+    .command("uninstall <tool>")
+    .description("Remove an IDE tool from the manifest")
+    .action(async (toolArg: string) => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
+      try {
+        assertIdeToolId(toolArg);
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const result = await deps.uninstallIdeUseCase.execute({ toolId: toolArg, projectRoot });
+        output.success(`Uninstalled ${result.toolId} (${result.fileCount} files removed)`);
+      } catch (error) {
+        errorHandler.handle(error);
+      }
+    });
+
+  ide
+    .command("list")
+    .description("List installed IDE tools")
+    .action(async () => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
+      try {
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const manifest = await deps.manifestRepo.load();
+        if (!manifest) {
+          output.info("No tools installed. Run `aidd setup` to get started.");
+          return;
+        }
+        const ideIds = manifest
+          .getInstalledToolIds()
+          .filter((id) => (IDE_TOOL_IDS as readonly string[]).includes(id));
+        if (ideIds.length === 0) {
+          output.info("No IDE tools installed.");
+          return;
+        }
+        for (const id of ideIds) output.print(id);
+      } catch (error) {
+        errorHandler.handle(error);
+      }
+    });
+
+  ide
+    .command("status")
+    .description("Show drift for IDE tools")
+    .action(async () => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
+      try {
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const { StatusUseCase } = await import("../use-cases/status-use-case.js");
+        const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
+        const report = await useCase.execute({
+          projectRoot,
+          filterToolId: undefined,
+          category: "ide",
+        });
+        if (report.inSync) {
+          output.success("All IDE tool files are in sync");
+          return;
+        }
+        for (const tool of report.tools) {
+          if (tool.drifted.length === 0) {
+            output.print(`${tool.toolId} (v${tool.version}): in sync`);
+            continue;
+          }
+          output.print(`${tool.toolId} (v${tool.version}):`);
+          for (const f of tool.drifted) output.print(`  ${f.status} ${f.relativePath}`);
+        }
+      } catch (error) {
+        errorHandler.handle(error);
+      }
+    });
+
+  ide
+    .command("update [tool]")
+    .description("Re-install IDE tool configs from bundled CLI assets (force overwrite)")
+    .action(async (toolArg: string | undefined) => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
+      try {
+        if (toolArg !== undefined) assertIdeToolId(toolArg);
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+        const installedIdeIds = manifest
+          .getInstalledToolIds()
+          .filter((id) => (IDE_TOOL_IDS as readonly string[]).includes(id)) as IdeToolId[];
+        const targetIds: IdeToolId[] = toolArg ? [toolArg] : installedIdeIds;
+        if (targetIds.length === 0) {
+          output.info("No IDE tools installed.");
+          return;
+        }
+        const version = deps.currentVersionProvider.get();
+        for (const toolId of targetIds) {
+          const result = await deps.installIdeConfigUseCase.execute({
+            toolId,
+            projectRoot,
+            manifest,
+            force: true,
+            version,
+          });
+          for (const w of result.warnings) output.warn(w);
+          if (!result.skipped)
+            output.success(`Updated ${result.toolId} (${result.fileCount} files)`);
+        }
+      } catch (error) {
+        errorHandler.handle(error);
+      }
+    });
+
+  ide
+    .command("doctor")
+    .description("Check IDE tool installation health and detect issues")
+    .action(async () => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
+      try {
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const report = await deps.doctorUseCase.execute({ projectRoot, category: "ide" });
+        if (report.healthy) {
+          output.success("IDE tool installation is healthy");
+          return;
+        }
+        for (const issue of report.issues) {
+          const text = `${issue.message}\n  Fix: ${issue.fix}`;
+          if (issue.severity === "error") output.error(text);
+          else output.warn(text);
+        }
+        process.exit(1);
+      } catch (error) {
+        errorHandler.handle(error);
+      }
+    });
+}

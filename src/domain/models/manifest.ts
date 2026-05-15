@@ -2,8 +2,6 @@ import {
   DuplicatePluginError,
   InvalidManifestDataError,
   InvalidManifestToolIdError,
-  InvalidRepoFormatError,
-  ManifestValidationError,
   PluginNotFoundError,
   ToolNotInManifestError,
 } from "../errors.js";
@@ -13,24 +11,16 @@ import type { MergeFileEntry } from "./merge.js";
 import { Plugin, type PluginEntryData } from "./plugin.js";
 import { type ToolId, VALID_TOOL_IDS } from "./tool-ids.js";
 
-const MANIFEST_VERSION = 3;
+const MANIFEST_VERSION = 6;
 
 // VSCode file paths that were tracked under "copilot" in manifest v1.
 // Used exclusively by migrateV1toV2 to move them to the "vscode" tool entry.
+// It can only be removed when the manifest version is bumped again and v1 support is explicitly dropped.
 const VSCODE_MIGRATION_PATHS = new Set([
   ".vscode/extensions.json",
   ".vscode/keybindings.json",
   ".vscode/settings.json",
 ]);
-
-const REPO_FORMAT_REGEX = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
-const DOCS_DIR_REGEX = /^[a-zA-Z0-9_-]+$/;
-
-export function validateRepoFormat(repo: string): void {
-  if (!REPO_FORMAT_REGEX.test(repo)) {
-    throw new InvalidRepoFormatError();
-  }
-}
 
 interface TrackedFile {
   readonly relativePath: string;
@@ -38,12 +28,14 @@ interface TrackedFile {
   readonly frameworkPath?: string;
 }
 
-interface DocsEntry {
+// Retained for legacy manifest round-trip and isFileTracked coverage.
+interface ScriptsEntry {
   readonly version: string;
   readonly files: readonly TrackedFile[];
 }
 
-interface ScriptsEntry {
+// Retained for legacy manifest round-trip and isFileTracked coverage.
+interface PluginsEntry {
   readonly version: string;
   readonly files: readonly TrackedFile[];
 }
@@ -57,18 +49,20 @@ interface ToolEntry {
   readonly plugins: readonly Plugin[];
 }
 
+// Kept for legacy manifest round-trip: v3/v4 manifests may carry these sections until migrate runs.
 interface ScriptsEntryData {
   version: string;
   files: TrackedFileData[];
 }
 
+interface PluginsSectionData {
+  version: string;
+  files: TrackedFileData[];
+}
+
 interface ManifestData {
-  version: number;
-  docsDir: string;
-  repo?: string;
+  version: 6;
   tools: Record<string, ToolEntryData>;
-  docs: DocsEntryData | null;
-  scripts: ScriptsEntryData | null;
 }
 
 interface MergeFileEntryData {
@@ -86,11 +80,6 @@ interface ToolEntryData {
   plugins?: PluginEntryData[];
 }
 
-interface DocsEntryData {
-  version: string;
-  files: TrackedFileData[];
-}
-
 interface TrackedFileData {
   relativePath: string;
   hash: string;
@@ -99,7 +88,6 @@ interface TrackedFileData {
 
 // This migration block must remain until all users have upgraded past v1.
 // Removing it would corrupt manifests that still have VSCode files tracked under "copilot".
-// It can only be removed when the manifest version is bumped again and v1 support is explicitly dropped.
 function migrateV1toV2(raw: Record<string, unknown>): void {
   const tools = raw.tools as Record<string, ToolEntryData> | undefined;
   if (!tools) return;
@@ -133,45 +121,51 @@ function migrateV2toV3(raw: Record<string, unknown>): void {
   }
 }
 
+function migrateV3toV4(raw: Record<string, unknown>): void {
+  if (!("mode" in raw)) raw.mode = "local";
+  if (!("plugins" in raw)) raw.plugins = null;
+}
+
+// Strips dead top-level fields: docs, mode, repo, docsDir, scripts, plugins.
+// migrate-use-case.ts uses raw JSON inspection before deserialization, so it is
+// safe to strip scripts/plugins here during the round-trip.
+function migrateV4toV5(raw: Record<string, unknown>): void {
+  delete raw.docs;
+  delete raw.mode;
+  delete raw.repo;
+  delete raw.docsDir;
+  delete raw.scripts;
+  delete raw.plugins;
+  if (!("marketplaces" in raw)) raw.marketplaces = {};
+}
+
+// Strips the dead marketplaces aggregate. The actual marketplace registry now lives
+// exclusively in .aidd/marketplaces.json (managed by MarketplaceRegistryAdapter).
+function migrateV5toV6(raw: Record<string, unknown>): void {
+  delete raw.marketplaces;
+}
+
 export class Manifest {
-  static readonly DEFAULT_DOCS_DIR = "aidd_docs";
-  static readonly DEFAULT_REPO = "ai-driven-dev/aidd-framework";
-
-  static validateDocsDir(name: string): void {
-    if (!DOCS_DIR_REGEX.test(name) || name.includes("..")) {
-      throw new ManifestValidationError(
-        `Invalid directory name: "${name}". Use alphanumeric characters, hyphens, and underscores only.`
-      );
-    }
-  }
-
   private readonly _tools: Map<ToolId, ToolEntry>;
-  private _docs: DocsEntry | null;
+  // Phase 8 deferred: _scripts/_plugins kept to support migrate-use-case legacy detection.
   private _scripts: ScriptsEntry | null;
-  readonly docsDir: string;
-  readonly repo?: string;
+  private _plugins: PluginsEntry | null;
 
   private constructor(params: {
     tools: Map<ToolId, ToolEntry>;
-    docs: DocsEntry | null;
     scripts: ScriptsEntry | null;
-    docsDir: string;
-    repo?: string;
+    plugins: PluginsEntry | null;
   }) {
     this._tools = new Map(params.tools);
-    this._docs = params.docs;
     this._scripts = params.scripts;
-    this.docsDir = params.docsDir;
-    this.repo = params.repo;
+    this._plugins = params.plugins;
   }
 
-  static create(docsDir?: string, repo?: string): Manifest {
+  static create(): Manifest {
     return new Manifest({
       tools: new Map(),
-      docs: null,
       scripts: null,
-      docsDir: docsDir ?? Manifest.DEFAULT_DOCS_DIR,
-      repo,
+      plugins: null,
     });
   }
 
@@ -193,24 +187,14 @@ export class Manifest {
     });
   }
 
-  addDocs(version: string, files: InstallationFile[]): void {
-    this._docs = { version, files: this.toTrackedFiles(files) };
-  }
-
-  addScripts(version: string, files: InstallationFile[]): void {
-    this._scripts = { version, files: this.toTrackedFiles(files) };
-  }
-
-  getScriptsFiles(): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
-    return this._scripts?.files ?? [];
-  }
-
-  getScriptsVersion(): string | undefined {
-    return this._scripts?.version;
-  }
-
+  /** Returns true when the loaded JSON carried a legacy scripts section. Used by isFileTracked. */
   hasScripts(): boolean {
     return this._scripts !== null;
+  }
+
+  /** Returns true when the loaded JSON carried a legacy top-level plugins section. Used by isFileTracked. */
+  hasPlugins(): boolean {
+    return this._plugins !== null;
   }
 
   private toTrackedFiles(files: InstallationFile[]): TrackedFile[] {
@@ -285,6 +269,15 @@ export class Manifest {
     this._tools.set(toolId, { ...entry, excludedMcp: [] });
   }
 
+  updateTrackedFileHash(toolId: ToolId, relativePath: string, hash: FileHash): void {
+    const entry = this._tools.get(toolId);
+    if (!entry) return;
+    const updatedFiles = entry.files.map((f) =>
+      f.relativePath === relativePath ? { ...f, hash } : f
+    );
+    this._tools.set(toolId, { ...entry, files: updatedFiles });
+  }
+
   updateToolMergeFiles(
     toolId: ToolId,
     mergeFiles: MergeFileEntry[],
@@ -297,18 +290,6 @@ export class Manifest {
       mergeFiles,
       ...(excludedMcp !== undefined && { excludedMcp }),
     });
-  }
-
-  getDocsFiles(): ReadonlyArray<{ relativePath: string; hash: FileHash }> {
-    return this._docs?.files ?? [];
-  }
-
-  getDocsVersion(): string | undefined {
-    return this._docs?.version;
-  }
-
-  hasDocs(): boolean {
-    return this._docs !== null;
   }
 
   removeTool(toolId: ToolId): void {
@@ -362,8 +343,8 @@ export class Manifest {
       if (entry.mergeFiles.some((m) => m.relativePath === relativePath)) return true;
       if (this.isFileTrackedInPlugins(entry.plugins, relativePath)) return true;
     }
-    if (this._docs?.files.some((f) => f.relativePath === relativePath)) return true;
     if (this._scripts?.files.some((f) => f.relativePath === relativePath)) return true;
+    if (this._plugins?.files.some((f) => f.relativePath === relativePath)) return true;
     return false;
   }
 
@@ -372,26 +353,6 @@ export class Manifest {
       if (plugin.isFileTracked(relativePath)) return true;
     }
     return false;
-  }
-
-  withDocsDir(newDocsDir: string): Manifest {
-    return new Manifest({
-      tools: new Map(this._tools),
-      docs: this._docs,
-      scripts: this._scripts,
-      docsDir: newDocsDir,
-      repo: this.repo,
-    });
-  }
-
-  withRepo(newRepo: string): Manifest {
-    return new Manifest({
-      tools: new Map(this._tools),
-      docs: this._docs,
-      scripts: this._scripts,
-      docsDir: this.docsDir,
-      repo: newRepo,
-    });
   }
 
   getToolVersion(toolId: ToolId): string | undefined {
@@ -408,7 +369,14 @@ export class Manifest {
     return dirs;
   }
 
+  // --- Serialization ---
+
   toJSON(): ManifestData {
+    const tools = this.serializeTools();
+    return { version: MANIFEST_VERSION as 6, tools };
+  }
+
+  private serializeTools(): Record<string, ToolEntryData> {
     const tools: Record<string, ToolEntryData> = {};
     for (const [toolId, entry] of this._tools.entries()) {
       tools[toolId] = {
@@ -427,19 +395,7 @@ export class Manifest {
         }),
       };
     }
-
-    return {
-      version: MANIFEST_VERSION,
-      docsDir: this.docsDir,
-      ...(this.repo !== undefined && { repo: this.repo }),
-      tools,
-      docs: this._docs
-        ? { version: this._docs.version, files: this.toTrackedFileData(this._docs.files) }
-        : null,
-      scripts: this._scripts
-        ? { version: this._scripts.version, files: this.toTrackedFileData(this._scripts.files) }
-        : null,
-    };
+    return tools;
   }
 
   private toTrackedFileData(files: readonly TrackedFile[]): TrackedFileData[] {
@@ -490,44 +446,39 @@ export class Manifest {
     if (data === null || typeof data !== "object") {
       throw new InvalidManifestDataError("expected an object.");
     }
-
     const raw = data as Record<string, unknown>;
+    Manifest.applyMigrations(raw);
+    const tools = Manifest.parseTools(raw);
+    const { scripts, plugins } = Manifest.parseLegacySections(raw);
+    return new Manifest({ tools, scripts, plugins });
+  }
 
+  private static applyMigrations(raw: Record<string, unknown>): void {
     if (raw.version === 1) {
       migrateV1toV2(raw);
       migrateV2toV3(raw);
+      migrateV3toV4(raw);
+      migrateV4toV5(raw);
+      migrateV5toV6(raw);
     } else if (raw.version === 2) {
       migrateV2toV3(raw);
-    } else if (raw.version !== 3) {
+      migrateV3toV4(raw);
+      migrateV4toV5(raw);
+      migrateV5toV6(raw);
+    } else if (raw.version === 3) {
+      migrateV3toV4(raw);
+      migrateV4toV5(raw);
+      migrateV5toV6(raw);
+    } else if (raw.version === 4) {
+      migrateV4toV5(raw);
+      migrateV5toV6(raw);
+    } else if (raw.version === 5) {
+      migrateV5toV6(raw);
+    } else if (raw.version !== 6) {
       throw new InvalidManifestDataError(
         `Unsupported manifest version: ${String(raw.version)}. Expected ${MANIFEST_VERSION}.`
       );
     }
-
-    const tools = Manifest.parseTools(raw);
-
-    let docs: DocsEntry | null = null;
-    if (raw.docs !== null && raw.docs !== undefined && typeof raw.docs === "object") {
-      const docsRaw = raw.docs as DocsEntryData;
-      docs = {
-        version: docsRaw.version,
-        files: Manifest.parseTrackedFiles(docsRaw.files),
-      };
-    }
-
-    const docsDir = typeof raw.docsDir === "string" ? raw.docsDir : Manifest.DEFAULT_DOCS_DIR;
-    const repo = typeof raw.repo === "string" ? raw.repo : undefined;
-
-    let scripts: ScriptsEntry | null = null;
-    if (raw.scripts !== null && raw.scripts !== undefined && typeof raw.scripts === "object") {
-      const scriptsRaw = raw.scripts as ScriptsEntryData;
-      scripts = {
-        version: scriptsRaw.version,
-        files: Manifest.parseTrackedFiles(scriptsRaw.files),
-      };
-    }
-
-    return new Manifest({ tools, docs, scripts, docsDir, repo });
   }
 
   private static parseTools(raw: Record<string, unknown>): Map<ToolId, ToolEntry> {
@@ -551,6 +502,31 @@ export class Manifest {
       });
     }
     return tools;
+  }
+
+  // Phase 8 deferred: parse legacy scripts/plugins for migrate-use-case detection.
+  private static parseLegacySections(raw: Record<string, unknown>): {
+    scripts: ScriptsEntry | null;
+    plugins: PluginsEntry | null;
+  } {
+    let scripts: ScriptsEntry | null = null;
+    if (raw.scripts !== null && raw.scripts !== undefined && typeof raw.scripts === "object") {
+      const scriptsRaw = raw.scripts as ScriptsEntryData;
+      scripts = {
+        version: scriptsRaw.version,
+        files: Manifest.parseTrackedFiles(scriptsRaw.files),
+      };
+    }
+
+    let plugins: PluginsEntry | null = null;
+    if (raw.plugins !== null && raw.plugins !== undefined && typeof raw.plugins === "object") {
+      const pluginsRaw = raw.plugins as PluginsSectionData;
+      plugins = {
+        version: pluginsRaw.version,
+        files: Manifest.parseTrackedFiles(pluginsRaw.files),
+      };
+    }
+    return { scripts, plugins };
   }
 
   private static parsePluginEntries(data: PluginEntryData[]): Plugin[] {

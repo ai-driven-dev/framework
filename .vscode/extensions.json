@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "streetsidesoftware.code-spell-checker",
+    "streetsidesoftware.code-spell-checker-french",
+    "ms-azuretools.vscode-docker",
+    "eamodio.gitlens",
+    "yzhang.markdown-all-in-one",
+    "davidanson.vscode-markdownlint",
+    "MermaidChart.vscode-mermaid-chart",
+    "mechatroner.rainbow-csv",
+    "DorianMassoulier.repomix-runner",
+    "specstory.specstory-vscode"
+  ],
+  "unwantedRecommendations": []
+}

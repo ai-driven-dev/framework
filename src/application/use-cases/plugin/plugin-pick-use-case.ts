@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import {
   InteractiveOnlyError,
   InvalidPluginManifestError,
@@ -10,8 +9,8 @@ import type { PluginCatalog, PluginCatalogEntry } from "../../../domain/models/p
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
 import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
-import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
+import type { FetchMarketplaceSourceUseCase } from "../shared/fetch-marketplace-source-use-case.js";
 import type { PluginAddUseCase } from "./plugin-add-use-case.js";
 
 export interface PluginPickOptions {
@@ -29,7 +28,7 @@ export class PluginPickUseCase {
   constructor(
     private readonly catalogRepo: PluginCatalogRepository,
     private readonly registry: MarketplaceRegistry,
-    private readonly pluginFetcher: PluginFetcher,
+    private readonly fetchMarketplaceSource: FetchMarketplaceSourceUseCase,
     private readonly pluginAddUseCase: PluginAddUseCase,
     private readonly prompter: Prompter
   ) {}
@@ -55,7 +54,7 @@ export class PluginPickUseCase {
 
   private async loadCatalog(marketplace: Marketplace, projectRoot: string): Promise<PluginCatalog> {
     const cacheDir = marketplaceCacheDir(projectRoot, marketplace.name);
-    const localPath = await this.pluginFetcher.fetch(marketplace.source, cacheDir);
+    const localPath = await this.fetchMarketplaceSource.execute({ marketplace, cacheDir });
     const catalog = await this.catalogRepo.load(localPath);
     if (catalog === null) {
       throw new InvalidPluginManifestError(`marketplace.json not found at "${localPath}"`);
@@ -90,6 +89,12 @@ export class PluginPickUseCase {
         projectRoot: options.projectRoot,
         interactive: options.interactive,
         marketplace: marketplace.name,
+        pluginMetadata: {
+          name: entry.name,
+          version: entry.version ?? "",
+          strict: entry.strict ?? false,
+        },
+        replace: true,
       });
       installed.push(entry.name);
     }

@@ -14,13 +14,13 @@ import {
 import type { PluginFormat } from "../../domain/models/plugin-format.js";
 import { PLUGIN_MANIFEST_PROBES } from "../../domain/models/plugin-format.js";
 import { isSemver } from "../../domain/models/semver.js";
-import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { FileReader } from "../../domain/ports/file-reader.js";
 import type { PluginDistributionReader } from "../../domain/ports/plugin-distribution-reader.js";
 
 const README_FILENAME = "README.md";
 
 export class PluginDistributionReaderAdapter implements PluginDistributionReader {
-  constructor(private readonly fs: FileSystem) {}
+  constructor(private readonly fs: FileReader) {}
 
   async read(pluginRoot: string): Promise<PluginDistribution> {
     const { format, manifestPath } = await this.probeManifest(pluginRoot);
@@ -82,7 +82,7 @@ function toPosix(p: string): string {
 function isComponentFile(relativePath: string): boolean {
   const top = relativePath.split("/")[0];
   if (top === "skills" || top === "commands" || top === "agents" || top === "rules") return true;
-  if (relativePath === "hooks/hooks.json") return true;
+  if (top === "hooks") return true;
   if (relativePath === ".mcp.json") return true;
   return false;
 }

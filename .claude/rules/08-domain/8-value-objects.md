@@ -73,7 +73,6 @@ paths:
 | `CommandsCapability`   | `src/domain/capabilities/commands-capability.ts` |
 | `HooksCapability`      | `src/domain/capabilities/hooks-capability.ts`    |
 | `McpCapability`        | `src/domain/capabilities/mcp-capability.ts`      |
-| `MemoryCapability`     | `src/domain/capabilities/memory-capability.ts`   |
 | `RulesCapability`      | `src/domain/capabilities/rules-capability.ts`    |
 | `SettingsCapability`   | `src/domain/capabilities/settings-capability.ts` |
 | `SkillsCapability`     | `src/domain/capabilities/skills-capability.ts`   |

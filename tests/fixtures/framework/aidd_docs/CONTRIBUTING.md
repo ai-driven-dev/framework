@@ -13,4 +13,4 @@ Use the generate commands to create content that follows the framework structure
 | `/generate_rules`   | New rule    |
 | `/generate_skill`   | New skill   |
 
-Templates live in `{{DOCS}}/templates/` and can be modified to match your team's conventions.
+Templates live in `aidd_docs/templates/` and can be modified to match your team's conventions.

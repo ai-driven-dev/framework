@@ -1,18 +1,35 @@
-import { type FileHash, InstallationFile } from "../../../domain/models/file.js";
+import { join } from "node:path";
+import {
+  type ConfigRef,
+  FRAMEWORK_CONFIG_PREFIX,
+  FrameworkDescriptor,
+} from "../../../domain/models/framework.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
-import type { MergeFileEntry } from "../../../domain/models/merge.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
-import type { FrameworkLoader } from "../../../domain/ports/framework-loader.js";
+import type { FileMerger } from "../../../domain/ports/file-merger.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../../domain/ports/platform.js";
+import type { PluginDistributionReader } from "../../../domain/ports/plugin-distribution-reader.js";
+import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
-import { getToolConfig, type ToolId } from "../../../domain/tools/registry.js";
+import type { ToolId } from "../../../domain/tools/registry.js";
 import { NoManifestError } from "../../errors.js";
-import { GenerateToolDistributionUseCase } from "../shared/generate-tool-distribution-use-case.js";
-import { RestoreMergeFilesUseCase } from "../shared/restore-merge-files-use-case.js";
-import { RestoreRegularFilesUseCase } from "../shared/restore-regular-files-use-case.js";
+import { RestoreAllPluginsUseCase } from "./restore-all-plugins-use-case.js";
+import {
+  type RestoreToolFilesResult,
+  RestoreToolFilesUseCase,
+} from "./restore-tool-files-use-case.js";
+
+const CONFIG_REFS: readonly ConfigRef[] = [
+  { name: "mcp", path: `${FRAMEWORK_CONFIG_PREFIX}mcp.json` },
+  { name: "vscodeExtensions", path: `${FRAMEWORK_CONFIG_PREFIX}vscode/extensions.json` },
+  { name: "vscodeKeybindings", path: `${FRAMEWORK_CONFIG_PREFIX}vscode/keybindings.json` },
+  { name: "vscodeSettings", path: `${FRAMEWORK_CONFIG_PREFIX}vscode/settings.json` },
+  { name: "opencode", path: `${FRAMEWORK_CONFIG_PREFIX}.opencode/opencode.json` },
+];
 
 interface RestoreOptions {
   frameworkPath?: string;
@@ -20,70 +37,42 @@ interface RestoreOptions {
   docsDir?: string;
   projectRoot: string;
   toolIds?: ToolId[];
-  docsOnly?: boolean;
   files?: string[];
   force?: boolean;
   interactive?: boolean;
   manifest?: Manifest;
-  repo?: string;
-}
-
-interface RestoreToolResult {
-  toolId: ToolId;
-  nothingToRestore: boolean;
-  restored: string[];
-  kept: string[];
-}
-
-interface RestoreDocsResult {
-  nothingToRestore: boolean;
-  restored: string[];
-  kept: string[];
-}
-
-interface RestoreResult {
-  tools: RestoreToolResult[];
-  docs: RestoreDocsResult | null;
-  totalRestored: number;
-  totalKept: number;
-}
-
-interface SectionRestoreResult {
-  restored: string[];
-  kept: string[];
-  updatedFiles: InstallationFile[];
-}
-
-interface MergeSectionRestoreResult {
-  restored: string[];
-  kept: string[];
-  updatedMergeFiles: MergeFileEntry[];
 }
 
 interface RestoreCtx {
-  options: RestoreOptions;
-  docsOnly: boolean;
   manifest: Manifest;
-  descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"];
-  contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"];
-  docsFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["docsFiles"];
+  descriptor: FrameworkDescriptor;
+  contentFiles: Map<string, string>;
   docsDir: string;
   projectRoot: string;
   version: string;
   force: boolean;
   interactive: boolean;
   fileFilter: ((p: string) => boolean) | null;
+  toolIds: ToolId[];
+}
+
+interface RestoreResult {
+  tools: RestoreToolFilesResult[];
+  totalRestored: number;
+  totalKept: number;
+  totalPluginFilesRestored: number;
 }
 
 export class RestoreUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter & FileMerger,
     private readonly manifestRepo: ManifestRepository,
-    private readonly loader: FrameworkLoader,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly platform: Platform,
-    private readonly prompter: Prompter
+    private readonly prompter: Prompter,
+    private readonly pluginFetcher?: PluginFetcher,
+    private readonly pluginDistributionReader?: PluginDistributionReader
   ) {}
 
   async execute(options: RestoreOptions): Promise<RestoreResult> {
@@ -94,289 +83,103 @@ export class RestoreUseCase {
       projectRoot,
       force = false,
       interactive = false,
-      repo,
     } = options;
-
-    if (frameworkPath === undefined || version === undefined || docsDir === undefined) {
-      throw new Error("frameworkPath, version, and docsDir are required for non-plugin restore.");
-    }
-
-    const docsOnly = options.docsOnly ?? false;
     const manifest = options.manifest ?? (await this.manifestRepo.load());
-    if (manifest === null) throw new NoManifestError(repo);
-
-    const { descriptor, contentFiles, docsFiles } = await this.loader.loadFromDirectory(
-      frameworkPath,
-      version
-    );
-    const fileFilter = buildFileFilter(options.files);
-
-    return this.executeRestore({
-      options,
-      docsOnly,
+    if (manifest === null) throw new NoManifestError();
+    const resolvedVersion = version ?? "unknown";
+    const ctx: RestoreCtx = {
       manifest,
-      descriptor,
-      contentFiles,
-      docsFiles,
-      docsDir,
+      descriptor: this.buildStaticDescriptor(resolvedVersion),
+      contentFiles: frameworkPath ? await this.buildContentFiles(frameworkPath) : new Map(),
+      docsDir: docsDir ?? "",
       projectRoot,
-      version,
+      version: resolvedVersion,
       force,
       interactive,
-      fileFilter,
-    });
+      fileFilter: buildFileFilter(options.files),
+      toolIds: options.toolIds?.length ? options.toolIds : manifest.getInstalledToolIds(),
+    };
+    return this.executeRestore(ctx);
   }
 
   private async executeRestore(ctx: RestoreCtx): Promise<RestoreResult> {
-    const {
-      options,
-      docsOnly,
-      manifest,
-      descriptor,
-      contentFiles,
-      docsFiles,
-      docsDir,
-      projectRoot,
-      version,
-      force,
-      interactive,
-      fileFilter,
-    } = ctx;
-    const toolIds = this.resolveToolIds(options, docsOnly, manifest);
-    const toolResults = await this.restoreAllTools(
-      toolIds,
-      manifest,
-      descriptor,
-      contentFiles,
-      docsDir,
-      projectRoot,
-      version,
-      force,
-      interactive,
-      fileFilter
-    );
-    const hasExplicitToolFilter =
-      !docsOnly && options.toolIds !== undefined && options.toolIds.length > 0;
-    const docsResult = hasExplicitToolFilter
-      ? null
-      : await this.restoreDocs(
-          manifest,
-          docsFiles,
-          docsDir,
-          projectRoot,
-          version,
-          force,
-          interactive,
-          fileFilter
-        );
-    const hasChanges =
-      toolResults.some((t) => t.restored.length > 0) ||
-      (docsResult !== null && docsResult.restored.length > 0);
-    if (hasChanges) await this.manifestRepo.save(manifest);
-    return this.buildRestoreTotals(toolResults, docsResult);
+    const toolResults = await this.runToolRestores(ctx);
+    const totalPluginFilesRestored = await this.runPluginRestore(ctx);
+    await this.saveIfChanged(toolResults, totalPluginFilesRestored, ctx.manifest);
+    return this.buildTotals(toolResults, totalPluginFilesRestored);
   }
 
-  private resolveToolIds(options: RestoreOptions, docsOnly: boolean, manifest: Manifest): ToolId[] {
-    if (docsOnly) return [];
-    return options.toolIds?.length ? options.toolIds : manifest.getInstalledToolIds();
-  }
-
-  private async restoreAllTools(
-    toolIds: ToolId[],
-    manifest: Manifest,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
-    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
-    docsDir: string,
-    projectRoot: string,
-    version: string,
-    force: boolean,
-    interactive: boolean,
-    fileFilter: ((p: string) => boolean) | null
-  ): Promise<RestoreToolResult[]> {
-    const toolResults: RestoreToolResult[] = [];
-    for (const toolId of toolIds) {
-      const result = await this.restoreOneTool(
-        toolId,
-        manifest,
-        descriptor,
-        contentFiles,
-        docsDir,
-        projectRoot,
-        version,
-        force,
-        interactive,
-        fileFilter
-      );
-      toolResults.push(result);
-    }
-    return toolResults;
-  }
-
-  private async restoreOneTool(
-    toolId: ToolId,
-    manifest: Manifest,
-    descriptor: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["descriptor"],
-    contentFiles: Awaited<ReturnType<FrameworkLoader["loadFromDirectory"]>>["contentFiles"],
-    docsDir: string,
-    projectRoot: string,
-    version: string,
-    force: boolean,
-    interactive: boolean,
-    fileFilter: ((p: string) => boolean) | null
-  ): Promise<RestoreToolResult> {
-    this.logger.info(`Checking ${toolId} for files to restore...`);
-    const config = getToolConfig(toolId);
-    const distribution = await new GenerateToolDistributionUseCase(
+  private async runToolRestores(ctx: RestoreCtx): Promise<RestoreToolFilesResult[]> {
+    const toolUseCase = new RestoreToolFilesUseCase(
       this.fs,
       this.hasher,
-      this.platform
-    ).execute({ config, descriptor, contentFiles, docsDir, projectRoot });
-    const distMap = new Map(distribution.map((f) => [f.relativePath, f]));
-    const section = await this.restoreSection(
-      manifest.getToolFiles(toolId),
-      distMap,
-      projectRoot,
-      force,
-      interactive,
-      fileFilter
+      this.logger,
+      this.platform,
+      this.prompter
     );
-    const mergeSection = await this.restoreMergeSection(
-      manifest.getMergeFiles(toolId),
-      distMap,
-      projectRoot,
-      force,
-      interactive,
-      fileFilter
-    );
-    if (section === null && mergeSection === null) {
-      return { toolId, nothingToRestore: true, restored: [], kept: [] };
+    const results: RestoreToolFilesResult[] = [];
+    for (const toolId of ctx.toolIds) {
+      results.push(await toolUseCase.execute({ toolId, ...ctx }));
     }
-    return this.commitToolRestore(toolId, manifest, version, section, mergeSection);
+    return results;
   }
 
-  private commitToolRestore(
-    toolId: ToolId,
-    manifest: Manifest,
-    version: string,
-    section: SectionRestoreResult | null,
-    mergeSection: MergeSectionRestoreResult | null
-  ): RestoreToolResult {
-    const files =
-      section?.updatedFiles ?? this.existingFilesAsGenerated(manifest.getToolFiles(toolId));
-    const mergeFiles = mergeSection?.updatedMergeFiles ?? [...manifest.getMergeFiles(toolId)];
-    manifest.addTool(toolId, manifest.getToolVersion(toolId) ?? version, files, mergeFiles);
-    const restored = [...(section?.restored ?? []), ...(mergeSection?.restored ?? [])];
-    const kept = [...(section?.kept ?? []), ...(mergeSection?.kept ?? [])];
-    return { toolId, nothingToRestore: false, restored, kept };
-  }
-
-  private existingFilesAsGenerated(
-    files: ReadonlyArray<{ relativePath: string; hash: FileHash }>
-  ): InstallationFile[] {
-    return files.map(
-      (f) => new InstallationFile({ relativePath: f.relativePath, content: "", hash: f.hash })
-    );
-  }
-
-  private async restoreSection(
-    manifestFiles: ReadonlyArray<{ relativePath: string; hash: FileHash }>,
-    distMap: Map<string, InstallationFile>,
-    projectRoot: string,
-    force: boolean,
-    interactive: boolean,
-    fileFilter: ((p: string) => boolean) | null
-  ): Promise<SectionRestoreResult | null> {
-    return new RestoreRegularFilesUseCase(this.fs, this.prompter).execute({
-      manifestFiles,
-      distMap,
-      projectRoot,
-      force,
-      interactive,
-      fileFilter,
+  private async runPluginRestore(ctx: RestoreCtx): Promise<number> {
+    if (this.pluginFetcher === undefined || this.pluginDistributionReader === undefined) return 0;
+    return new RestoreAllPluginsUseCase(
+      this.fs,
+      this.hasher,
+      this.pluginFetcher,
+      this.pluginDistributionReader
+    ).execute({
+      projectRoot: ctx.projectRoot,
+      manifest: ctx.manifest,
+      docsDir: ctx.docsDir,
+      fileFilter: ctx.fileFilter,
     });
   }
 
-  private async restoreMergeSection(
-    mergeFiles: readonly MergeFileEntry[],
-    distMap: Map<string, InstallationFile>,
-    projectRoot: string,
-    force: boolean,
-    interactive: boolean,
-    fileFilter: ((p: string) => boolean) | null
-  ): Promise<MergeSectionRestoreResult | null> {
-    return new RestoreMergeFilesUseCase(this.fs, this.hasher, this.prompter).execute({
-      mergeFiles,
-      distMap,
-      projectRoot,
-      force,
-      interactive,
-      fileFilter,
-    });
+  private async saveIfChanged(
+    toolResults: RestoreToolFilesResult[],
+    totalPluginFilesRestored: number,
+    manifest: Manifest
+  ): Promise<void> {
+    const hasChanges =
+      toolResults.some((t) => t.restored.length > 0) || totalPluginFilesRestored > 0;
+    if (hasChanges) await this.manifestRepo.save(manifest);
   }
 
-  private async restoreDocs(
-    manifest: Manifest,
-    docsFiles: Map<string, string>,
-    docsDir: string,
-    projectRoot: string,
-    version: string,
-    force: boolean,
-    interactive: boolean,
-    fileFilter: ((p: string) => boolean) | null
-  ): Promise<RestoreDocsResult | null> {
-    const docsManifestFiles = manifest.getDocsFiles();
-    const filesIncludeDocs =
-      fileFilter === null || docsManifestFiles.some((f) => fileFilter(f.relativePath));
-
-    if (!manifest.hasDocs() || !filesIncludeDocs) return null;
-
-    this.logger.info("Checking docs for files to restore...");
-
-    const distribution = this.buildDocsDistribution(docsFiles, docsDir);
-    const distMap = new Map(distribution.map((f) => [f.relativePath, f]));
-
-    const section = await this.restoreSection(
-      docsManifestFiles,
-      distMap,
-      projectRoot,
-      force,
-      interactive,
-      fileFilter
-    );
-    if (section === null) return { nothingToRestore: true, restored: [], kept: [] };
-
-    manifest.addDocs(manifest.getDocsVersion() ?? version, section.updatedFiles);
-    return { nothingToRestore: false, restored: section.restored, kept: section.kept };
-  }
-
-  private buildRestoreTotals(
-    toolResults: RestoreToolResult[],
-    docsResult: RestoreDocsResult | null
+  private buildTotals(
+    toolResults: RestoreToolFilesResult[],
+    totalPluginFilesRestored: number
   ): RestoreResult {
-    const totalRestored =
-      toolResults.reduce((s, t) => s + t.restored.length, 0) + (docsResult?.restored.length ?? 0);
-    const totalKept =
-      toolResults.reduce((s, t) => s + t.kept.length, 0) + (docsResult?.kept.length ?? 0);
-    return { tools: toolResults, docs: docsResult, totalRestored, totalKept };
+    return {
+      tools: toolResults,
+      totalRestored: toolResults.reduce((s, t) => s + t.restored.length, 0),
+      totalKept: toolResults.reduce((s, t) => s + t.kept.length, 0),
+      totalPluginFilesRestored,
+    };
   }
 
-  private buildDocsDistribution(
-    docsFiles: Map<string, string>,
-    docsDir: string
-  ): InstallationFile[] {
-    const distribution: InstallationFile[] = [];
-    for (const [frameworkRelPath, rawContent] of docsFiles.entries()) {
-      if (frameworkRelPath.endsWith("CATALOG.md")) continue;
-      const relativePath = frameworkRelPath.startsWith("aidd_docs/")
-        ? `${docsDir}/${frameworkRelPath.slice("aidd_docs/".length)}`
-        : frameworkRelPath;
-      const content = rawContent
-        .replaceAll("{{DOCS}}/", `${docsDir}/`)
-        .replaceAll("{{TOOLS}}/", `${docsDir}/`);
-      const hash = this.hasher.hash(content);
-      distribution.push(new InstallationFile({ relativePath, content, hash }));
+  private buildStaticDescriptor(version: string): FrameworkDescriptor {
+    return new FrameworkDescriptor({
+      version,
+      contentSections: [],
+      templateRefs: [],
+      configRefs: [...CONFIG_REFS],
+    });
+  }
+
+  private async buildContentFiles(frameworkPath: string): Promise<Map<string, string>> {
+    const contentFiles = new Map<string, string>();
+    for (const ref of CONFIG_REFS) {
+      try {
+        contentFiles.set(ref.path, await this.fs.readFile(join(frameworkPath, ref.path)));
+      } catch {
+        // skip missing optional refs
+      }
     }
-    return distribution;
+    return contentFiles;
   }
 }
 

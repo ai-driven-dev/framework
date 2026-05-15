@@ -1,0 +1,38 @@
+[
+  {
+    "command": "aidd --version",
+    "medianMs": 200,
+    "runs": [200, 200, 200, 200, 200],
+    "timestamp": "2026-05-15T07:04:11.000Z",
+    "cliVersion": "4.1.0-beta.33",
+    "environment": "ubuntu-latest CI runner",
+    "notes": "Conservative baseline absorbing CI variance"
+  },
+  {
+    "command": "aidd --help",
+    "medianMs": 200,
+    "runs": [200, 200, 200, 200, 200],
+    "timestamp": "2026-05-15T07:04:11.000Z",
+    "cliVersion": "4.1.0-beta.33",
+    "environment": "ubuntu-latest CI runner",
+    "notes": "Conservative baseline absorbing CI variance"
+  },
+  {
+    "command": "aidd status",
+    "medianMs": 350,
+    "runs": [350, 350, 350, 350, 350],
+    "timestamp": "2026-05-15T07:04:11.000Z",
+    "cliVersion": "4.1.0-beta.33",
+    "environment": "ubuntu-latest CI runner",
+    "notes": "Conservative baseline absorbing CI variance"
+  },
+  {
+    "command": "aidd ai list",
+    "medianMs": 350,
+    "runs": [350, 350, 350, 350, 350],
+    "timestamp": "2026-05-15T07:04:11.000Z",
+    "cliVersion": "4.1.0-beta.33",
+    "environment": "ubuntu-latest CI runner",
+    "notes": "Conservative baseline absorbing CI variance"
+  }
+]

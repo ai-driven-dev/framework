@@ -2,11 +2,11 @@ import type { Command } from "commander";
 import type { AuthCredential, AuthLevel } from "../../domain/models/auth.js";
 import { AIDD_DIR } from "../../domain/models/paths.js";
 import { AuthProviderAdapter } from "../../infrastructure/adapters/auth-provider-adapter.js";
+import { AuthStorage } from "../../infrastructure/adapters/auth-storage.js";
 import { GhCliAdapter } from "../../infrastructure/adapters/gh-cli-adapter.js";
 import { GhTokenAdapter } from "../../infrastructure/adapters/gh-token-adapter.js";
+import { HttpClient } from "../../infrastructure/adapters/http-client.js";
 import { InquirerPrompterAdapter } from "../../infrastructure/adapters/prompter-adapter.js";
-import { AuthStorage } from "../../infrastructure/auth/auth-storage.js";
-import { HttpClient } from "../../infrastructure/http/http-client.js";
 import { ErrorHandler } from "../error-handler.js";
 import { InputRequiredError } from "../errors.js";
 import { AuthLoginUseCase } from "../use-cases/auth/auth-login-use-case.js";
@@ -124,6 +124,10 @@ export function registerAuthCommand(program: Command): void {
 
       try {
         const result = await new AuthStatusUseCase(buildAuthProvider(projectRoot)).execute();
+        if (!result.authenticated) {
+          output.info("Not authenticated.");
+          return;
+        }
         output.success(`Authenticated as ${result.login} (${result.level})`);
       } catch (error) {
         errorHandler.handle(error);

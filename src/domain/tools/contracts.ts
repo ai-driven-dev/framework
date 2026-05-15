@@ -2,7 +2,6 @@ import type { AgentsCapability } from "../capabilities/agents-capability.js";
 import type { CommandsCapability } from "../capabilities/commands-capability.js";
 import type { HooksCapability } from "../capabilities/hooks-capability.js";
 import type { McpCapability } from "../capabilities/mcp-capability.js";
-import type { MemoryCapability } from "../capabilities/memory-capability.js";
 import type { PluginsCapability } from "../capabilities/plugins-capability.js";
 import type { RulesCapability } from "../capabilities/rules-capability.js";
 import type { SettingsCapability } from "../capabilities/settings-capability.js";
@@ -40,10 +39,6 @@ export interface HasHooks {
   readonly hooks: HooksCapability;
 }
 
-export interface HasMemory {
-  readonly memory: MemoryCapability;
-}
-
 export interface HasSettings {
   readonly settings: SettingsCapability | SettingsCapability[];
 }
@@ -60,6 +55,7 @@ export interface AiTool<C> {
   readonly signalDir: string | null;
   readonly requiredIdeIds?: readonly IdeToolId[];
   readonly capabilities: C;
+  readonly configOutputPaths?: Readonly<Record<string, string>>;
   rewriteContent(content: string, docsDir: string): string;
   reverseRewriteContent(content: string, docsDir: string): string;
   detectUserFileSectionKey(relativePath: string): UserFileSectionKey | null;

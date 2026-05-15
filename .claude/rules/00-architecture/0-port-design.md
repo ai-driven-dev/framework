@@ -23,3 +23,7 @@ paths:
 
 - Implementation details (hook names, runtime strings, system paths) stay in the adapter
 - Port signature must not leak the adapter's internal structure
+
+## Exceptions
+
+- `FileWriter` (6 methods) — pragmatic exception; write-class ports may have up to 6 methods. `FileReader` (5 methods) and `FileMerger` (3 methods) are within the ≤5 budget. `FileSystem` aggregate split landed in Part 9. All other ports must still respect ≤5 methods.

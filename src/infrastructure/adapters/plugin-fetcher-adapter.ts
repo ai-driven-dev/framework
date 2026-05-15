@@ -10,8 +10,10 @@ import type {
   PluginSourceNpm,
   PluginSourceUrl,
 } from "../../domain/models/plugin-source.js";
-import type { FileSystem } from "../../domain/ports/file-system.js";
+import type { FileReader } from "../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../domain/ports/file-writer.js";
 import type { PluginFetcher, PluginFetchOptions } from "../../domain/ports/plugin-fetcher.js";
+import type { TokenProvider } from "../../domain/ports/token-provider.js";
 import { injectTokenIntoUrl } from "../git/inject-token.js";
 
 const execFile = promisify(execFileCb);
@@ -21,8 +23,8 @@ const AUTH_ERROR_PATTERN =
 
 export class PluginFetcherAdapter implements PluginFetcher {
   constructor(
-    private readonly fs: FileSystem,
-    private readonly token?: string
+    private readonly fs: FileReader & FileWriter,
+    private readonly tokenProvider?: TokenProvider
   ) {}
 
   async fetch(
@@ -63,7 +65,8 @@ export class PluginFetcherAdapter implements PluginFetcher {
     const targetDir = join(cacheDir, key);
     await this.bustCacheIfNeeded(targetDir, forceRefresh);
     if (!(await this.fs.fileExists(targetDir))) {
-      await this.cloneShallow(this.injectGitHubToken(baseUrl), baseUrl, targetDir, source.ref);
+      const token = (await this.tokenProvider?.resolve()) ?? undefined;
+      await this.cloneShallow(injectTokenIntoUrl(baseUrl, token), baseUrl, targetDir, source.ref);
     }
     return targetDir;
   }
@@ -77,12 +80,11 @@ export class PluginFetcherAdapter implements PluginFetcher {
     const targetDir = join(cacheDir, key);
     await this.bustCacheIfNeeded(targetDir, forceRefresh);
     if (!(await this.fs.fileExists(targetDir))) {
-      await this.cloneShallow(
-        this.injectTokenForUrl(source.url),
-        source.url,
-        targetDir,
-        source.ref
-      );
+      const token = (await this.tokenProvider?.resolve()) ?? undefined;
+      const authUrl = source.url.startsWith("git@")
+        ? source.url
+        : injectTokenIntoUrl(source.url, token);
+      await this.cloneShallow(authUrl, source.url, targetDir, source.ref);
     }
     return targetDir;
   }
@@ -97,7 +99,9 @@ export class PluginFetcherAdapter implements PluginFetcher {
     const targetDir = join(cacheDir, key);
     await this.bustCacheIfNeeded(targetDir, forceRefresh);
     if (!(await this.fs.fileExists(targetDir))) {
-      await this.cloneSparse(this.injectTokenForUrl(url), url, targetDir, subpath, ref);
+      const token = (await this.tokenProvider?.resolve()) ?? undefined;
+      const authUrl = url.startsWith("git@") ? url : injectTokenIntoUrl(url, token);
+      await this.cloneSparse(authUrl, url, targetDir, subpath, ref);
     }
     return join(targetDir, subpath);
   }
@@ -127,13 +131,9 @@ export class PluginFetcherAdapter implements PluginFetcher {
     return pkgDir;
   }
 
-  private injectGitHubToken(url: string): string {
-    return injectTokenIntoUrl(url, this.token);
-  }
-
-  private injectTokenForUrl(url: string): string {
-    if (url.startsWith("git@")) return url;
-    return injectTokenIntoUrl(url, this.token);
+  private gitWithNoPrompt(baseDir?: string): ReturnType<typeof simpleGit> {
+    const git = baseDir ? simpleGit(baseDir) : simpleGit();
+    return git.env("GIT_TERMINAL_PROMPT", "0");
   }
 
   private async cloneShallow(
@@ -144,7 +144,7 @@ export class PluginFetcherAdapter implements PluginFetcher {
   ): Promise<void> {
     const args = ["--depth", "1", ...(ref ? ["--branch", ref] : [])];
     try {
-      await simpleGit().clone(authUrl, targetDir, args);
+      await this.gitWithNoPrompt().clone(authUrl, targetDir, args);
     } catch (err) {
       this.classifyAndThrow(err, displayUrl);
     }
@@ -158,9 +158,12 @@ export class PluginFetcherAdapter implements PluginFetcher {
     ref?: string
   ): Promise<void> {
     try {
-      await simpleGit().clone(authUrl, targetDir, ["--filter=blob:none", "--no-checkout"]);
-      await simpleGit(targetDir).raw(["sparse-checkout", "set", subpath]);
-      await simpleGit(targetDir).checkout(ref ?? "HEAD");
+      await this.gitWithNoPrompt().clone(authUrl, targetDir, [
+        "--filter=blob:none",
+        "--no-checkout",
+      ]);
+      await this.gitWithNoPrompt(targetDir).raw(["sparse-checkout", "set", subpath]);
+      await this.gitWithNoPrompt(targetDir).checkout(ref ?? "HEAD");
     } catch (err) {
       this.classifyAndThrow(err, displayUrl);
     }

@@ -1,3 +1,10 @@
+---
+paths:
+  - "src/application/commands/**/*.ts"
+  - "src/cli.ts"
+  - "src/infrastructure/deps.ts"
+---
+
 # Dependency Wiring
 
 ## Factories

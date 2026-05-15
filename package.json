@@ -1,7 +1,7 @@
 {
   "name": "@ai-driven-dev/cli",
-  "version": "4.0.0",
-  "description": "AI-Driven Development CLI — distribute the AIDD framework across AI coding assistants",
+  "version": "4.1.0-beta.33",
+  "description": "AI-Driven Development CLI — install AI tool configs and plugins from the AIDD marketplace",
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
@@ -15,8 +15,12 @@
     "node": ">=20"
   },
   "packageManager": "pnpm@9.15.9",
+  "bundleBudgetKB": 500,
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && node scripts/check-bundle-size.mjs",
+    "build:check-size": "node scripts/check-bundle-size.mjs",
+    "bench": "node scripts/benchmark.mjs",
+    "bench:check": "node scripts/check-perf-regression.mjs",
     "dev": "tsup --watch",
     "test": "pnpm build && vitest run",
     "test:unit": "vitest run --project=unit",
@@ -29,11 +33,13 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "knip:production": "knip --production",
+    "knip:production": "knip --production --exclude exports,types",
     "jscpd": "jscpd src/",
     "pack:local": "pnpm build && pnpm pack --pack-destination ./dist",
     "install:local": "pnpm run pack:local && npm install -g ./dist/ai-driven-dev-cli-$(node -p \"require('./package.json').version\").tgz --force",
-    "prepare": "lefthook install"
+    "test:mutation": "stryker run",
+    "prepare": "lefthook install",
+    "fixture:refresh": "bash scripts/refresh-framework-fixture.sh"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.0.0",
@@ -45,8 +51,12 @@
     "@biomejs/biome": "^2.4.7",
     "@commitlint/cli": "^19.0.0",
     "@commitlint/config-conventional": "^19.0.0",
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/typescript-checker": "^9.6.1",
+    "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^24.0.0",
     "@vitest/coverage-v8": "^2.1.9",
+    "fast-check": "^4.7.0",
     "jscpd": "^4.0.0",
     "knip": "^5.0.0",
     "lefthook": "^1.13.1",

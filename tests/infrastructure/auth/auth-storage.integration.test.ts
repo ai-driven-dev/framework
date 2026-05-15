@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { AuthStorage } from "../../../src/infrastructure/auth/auth-storage.js";
+import { AuthStorage } from "../../../src/infrastructure/adapters/auth-storage.js";
 import { makeAuthConfig } from "../../helpers/auth.js";
 
 describe("AuthStorage", () => {

@@ -1,0 +1,17 @@
+[
+  { "prompt": "Challenge what you just did", "expect_action": "challenge" },
+  { "prompt": "Is this 100% correct based on what we agreed?", "expect_action": "challenge" },
+  { "prompt": "Review my last decision and find deal-breakers", "expect_action": "challenge" },
+  { "prompt": "Rethink the plan you proposed", "expect_action": "challenge" },
+  { "prompt": "Find flaws in this approach", "expect_action": "challenge" },
+  { "prompt": "Criticize the design and propose deal-breakers", "expect_action": "challenge" },
+  { "prompt": "Challenge this decision", "expect_action": "challenge" },
+  { "prompt": "/challenge this work", "expect_action": "challenge" },
+  { "prompt": "Remets en cause cette décision", "expect_action": "challenge" },
+  { "prompt": "Critique ce plan et trouve les failles", "expect_action": "challenge" },
+  { "prompt": "Challenge ma décision sur ce design", "expect_action": "challenge" },
+  { "prompt": "Trouve les deal-breakers dans cette approche", "expect_action": "challenge" },
+  { "prompt": "Implement the auth feature", "expect_action": null },
+  { "prompt": "Write a unit test for parseUser", "expect_action": null },
+  { "prompt": "Generate a Mermaid diagram of the data flow", "expect_action": null }
+]

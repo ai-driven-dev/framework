@@ -8,6 +8,7 @@ export class RulesCapability {
     readonly params: {
       directory: string;
       toolSuffix: string;
+      inputSuffix?: string;
       buildInstallPath: (fileName: string) => string | null;
       convertFrontmatter: (fm: Record<string, unknown>) => Record<string, unknown>;
       reverseConvertFrontmatter: (fm: Record<string, unknown>) => Record<string, unknown>;
@@ -32,7 +33,8 @@ export class RulesCapability {
 
   acceptsFileName(fileName: string): boolean {
     const basename = fileName.split("/").at(-1) ?? fileName;
-    const otherSuffixes = ALL_TOOL_SUFFIXES.filter((s) => s !== this.params.toolSuffix);
+    const effectiveSuffix = this.params.inputSuffix ?? this.params.toolSuffix;
+    const otherSuffixes = ALL_TOOL_SUFFIXES.filter((s) => s !== effectiveSuffix);
     return !otherSuffixes.some((s) => basename.endsWith(s));
   }
 

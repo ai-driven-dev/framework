@@ -1,0 +1,17 @@
+[
+  { "prompt": "Generate a technical plan for the authentication feature", "expect_action": "plan" },
+  { "prompt": "Create an implementation plan from the spec", "expect_action": "plan" },
+  { "prompt": "Plan the refactoring of the payment module", "expect_action": "plan" },
+  { "prompt": "Define component behavior for the checkout flow", "expect_action": "components-behavior" },
+  { "prompt": "Create a state machine for the onboarding wizard", "expect_action": "components-behavior" },
+  { "prompt": "Extract component details from this design screenshot", "expect_action": "image-extract-details" },
+  { "prompt": "Analyze this Figma image and list all components", "expect_action": "image-extract-details" },
+  { "prompt": "Rédige un plan technique pour l'auth", "expect_action": "plan" },
+  { "prompt": "Génère le plan d'implémentation depuis la spec", "expect_action": "plan" },
+  { "prompt": "Crée le plan d'implémentation phase par phase", "expect_action": "plan" },
+  { "prompt": "Définis le comportement du composant checkout", "expect_action": "components-behavior" },
+  { "prompt": "Extrais les composants de cette image Figma", "expect_action": "image-extract-details" },
+  { "prompt": "Write the code for the login page", "expect_action": null },
+  { "prompt": "Review my pull request", "expect_action": null },
+  { "prompt": "Debug the failing test in auth.test.ts", "expect_action": null }
+]

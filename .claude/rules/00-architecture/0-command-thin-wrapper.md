@@ -1,29 +1,34 @@
+---
+paths:
+  - "src/application/commands/**/*.ts"
+---
+
 # Command: Thin Wrapper
 
-Each command handler calls exactly ONE use-case. Commands wire, not orchestrate.
+## Rules
 
-## What belongs in a command
-
-- Parse and validate CLI flags before `try/catch` (abort: `output.error()` + `process.exit(1)`)
+- One use-case per command handler
+- Commands wire, not orchestrate
+- Parse and validate CLI flags before `try/catch`
+- Abort with `output.error()` + `process.exit(1)`
 - Create deps via `createDeps()`
-- Resolve framework via `resolveFramework()` (input preparation from flags, not business logic)
-- Call ONE use-case via `new FooUseCase(...deps).execute({ ..., interactive: process.stdout.isTTY })`
-- Display the typed result with `CLIOutput`
+- Call one use-case with `interactive: process.stdout.isTTY`
+- Display typed result with `CLIOutput`
 - Catch all errors: `errorHandler.handle(error)`
 
-## FORBIDDEN in a command
+## FORBIDDEN
 
-- Prompter calls for domain decisions (conflict resolution, strategy selection) => move into the use-case
-- Repository or manifest access => move into the use-case
-- Multiple use-case calls or orchestration between use-cases
+- Prompter for domain decisions → move to use-case
+- Repository or manifest access → move to use-case
+- Multiple use-case calls or orchestration
 - Business decisions or domain logic
 
 ## Interactive mode
 
-- Commands has to use `Prompter` to resolve missing CLI inputs (level, credential) before calling the use-case
-- Use-cases receive fully-resolved values — no `Prompter` for input collection inside a use-case
-- Prompter in use-cases is only for domain-level interaction (e.g. conflict resolution, strategy selection)
-- Non-interactive guards stay in the command (fast early exit before deps creation)
+- Use `Prompter` to resolve missing CLI inputs before use-case
+- Use-cases receive fully-resolved values
+- Prompter in use-cases: domain interaction only
+- Non-interactive guards stay in the command
 
 ## Template
 
@@ -42,7 +47,6 @@ export function registerFooCommand(program: Command): void {
 
       try {
         const deps = await createDeps(projectRoot, globalOptions, output);
-        const { path: frameworkPath, version } = await resolveFramework(...); // input prep only
         const result = await new FooUseCase(...deps).execute({
           ...,
           interactive: process.stdout.isTTY,

@@ -1,9 +1,10 @@
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 
 const GITIGNORE_FILENAME = ".gitignore";
 
 export class GitignoreUseCase {
-  constructor(private readonly fs: FileSystem) {}
+  constructor(private readonly fs: FileReader & FileWriter) {}
 
   async execute(projectRoot: string, entries: string[]): Promise<void> {
     const gitignorePath = `${projectRoot}/${GITIGNORE_FILENAME}`;
@@ -42,6 +43,11 @@ export class GitignoreUseCase {
 
     if (filtered === existing) return;
 
-    await this.fs.writeFile(gitignorePath, filtered);
+    const trimmed = filtered.replace(/^\n+|\n+$/g, "");
+    if (trimmed === "") {
+      await this.fs.deleteFile(gitignorePath);
+      return;
+    }
+    await this.fs.writeFile(gitignorePath, `${trimmed}\n`);
   }
 }

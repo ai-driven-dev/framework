@@ -1,11 +1,19 @@
 {
+  "entry": [
+    "src/cli.ts",
+    "scripts/check-bundle-size.mjs",
+    "scripts/pre-release-check.mjs",
+    "scripts/benchmark.mjs",
+    "scripts/check-perf-regression.mjs"
+  ],
   "ignore": [
-    "demo/**",
-    ".claude/worktrees/**",
     ".aidd/**",
+    "config/vitest-text-loader.ts",
     "tests/**/helpers.ts",
     "tests/helpers/**",
-    "tests/fixtures/**"
+    "tests/fixtures/**",
+    "tmp/**",
+    "src/domain/models/marketplace-entry.ts"
   ],
   "ignoreExportsUsedInFile": true
 }

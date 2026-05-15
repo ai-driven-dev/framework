@@ -1,17 +1,15 @@
-import { join } from "node:path";
 import {
   AmbiguousPluginMatchError,
   PluginNotInMarketplaceError,
   VersionMismatchError,
 } from "../../../domain/errors.js";
 import type { Marketplace } from "../../../domain/models/marketplace.js";
-import { marketplaceCacheDir } from "../../../domain/models/paths.js";
 import type { PluginCatalogEntry } from "../../../domain/models/plugin-catalog.js";
+import { resolvePluginSourceFromMarketplace } from "../../../domain/models/plugin-source-resolver.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
-import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
-import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
+import type { ResolveMarketplaceUseCase } from "../shared/resolve-marketplace-use-case.js";
 import type { PluginAddUseCase } from "./plugin-add-use-case.js";
 
 export interface PluginInstallFromMarketplaceOptions {
@@ -22,6 +20,8 @@ export interface PluginInstallFromMarketplaceOptions {
   projectRoot: string;
   interactive: boolean;
   autoSelect?: boolean;
+  /** When true, drop existing plugin entry before adding (idempotent setup re-runs). */
+  replace?: boolean;
 }
 
 export interface PluginInstallFromMarketplaceResult {
@@ -32,13 +32,13 @@ export interface PluginInstallFromMarketplaceResult {
 interface MatchEntry {
   marketplace: Marketplace;
   entry: PluginCatalogEntry;
+  localPath: string;
 }
 
 export class PluginInstallFromMarketplaceUseCase {
   constructor(
-    private readonly catalogRepo: PluginCatalogRepository,
+    private readonly resolveMarketplace: ResolveMarketplaceUseCase,
     private readonly registry: MarketplaceRegistry,
-    private readonly pluginFetcher: PluginFetcher,
     private readonly pluginAddUseCase: PluginAddUseCase,
     private readonly prompter: Prompter
   ) {}
@@ -49,13 +49,23 @@ export class PluginInstallFromMarketplaceUseCase {
     const matches = await this.findMatches(options);
     const chosen = await this.chooseOne(matches, options);
     this.assertCatalogVersionMatches(chosen.entry, options.version);
+    const resolvedSource = resolvePluginSourceFromMarketplace(
+      chosen.entry.source,
+      chosen.marketplace,
+      chosen.localPath
+    );
     await this.pluginAddUseCase.execute({
-      source: chosen.entry.source,
+      source: resolvedSource,
       toolIds: options.toolIds,
       projectRoot: options.projectRoot,
       interactive: options.interactive,
       marketplace: chosen.marketplace.name,
       requiredVersion: options.version,
+      pluginMetadata:
+        chosen.entry.version !== undefined
+          ? { name: chosen.entry.name, version: chosen.entry.version, strict: chosen.entry.strict }
+          : undefined,
+      replace: options.replace,
     });
     return { marketplace: chosen.marketplace, entry: chosen.entry };
   }
@@ -77,13 +87,14 @@ export class PluginInstallFromMarketplaceUseCase {
     m: Marketplace,
     options: PluginInstallFromMarketplaceOptions
   ): Promise<MatchEntry[]> {
-    const cacheDir = marketplaceCacheDir(options.projectRoot, m.name);
-    const localPath = await this.pluginFetcher.fetch(m.source, cacheDir);
-    const catalog = await this.catalogRepo.load(localPath);
+    const { catalog, localPath } = await this.resolveMarketplace.execute({
+      marketplace: m,
+      projectRoot: options.projectRoot,
+    });
     if (!catalog) return [];
     return catalog.plugins
       .filter((entry) => entry.name === options.pluginName)
-      .map((entry) => ({ marketplace: m, entry }));
+      .map((entry) => ({ marketplace: m, entry, localPath }));
   }
 
   private async chooseOne(

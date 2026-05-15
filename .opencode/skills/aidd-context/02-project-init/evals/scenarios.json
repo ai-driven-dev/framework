@@ -1,0 +1,18 @@
+[
+  { "prompt": "aidd init", "expect_action": "init-context-file" },
+  { "prompt": "Initialize the project memory bank", "expect_action": "init-context-file" },
+  { "prompt": "Bootstrap this repo with AIDD context", "expect_action": "init-context-file" },
+  { "prompt": "Set up aidd_docs and rules scaffold", "expect_action": "scaffold-docs" },
+  { "prompt": "Refresh the memory bank for this project", "expect_action": "generate-memory" },
+  { "prompt": "Run aidd init for the first time", "expect_action": "init-context-file" },
+  { "prompt": "Initialize aidd_docs structure", "expect_action": "scaffold-docs" },
+  { "prompt": "Set up project memory bank initial scaffold", "expect_action": "scaffold-docs" },
+  { "prompt": "Generate the memory bank for my project", "expect_action": "generate-memory" },
+  { "prompt": "Initialise aidd dans ce projet", "expect_action": "init-context-file" },
+  { "prompt": "Crée le memory bank du projet", "expect_action": "scaffold-docs" },
+  { "prompt": "Génère la memory bank du projet", "expect_action": "generate-memory" },
+  { "prompt": "Configure aidd pour mon repo", "expect_action": "init-context-file" },
+  { "prompt": "Implement the auth feature", "expect_action": null },
+  { "prompt": "Update a single memory file", "expect_action": null },
+  { "prompt": "Edit a rule file", "expect_action": null }
+]

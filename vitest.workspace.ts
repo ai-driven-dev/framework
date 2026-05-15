@@ -1,7 +1,11 @@
 import { defineWorkspace } from "vitest/config";
+import { textLoader } from "./config/vitest-text-loader.js";
+
+const TEXT_EXTENSIONS = [".md", ".toml"] as const;
 
 export default defineWorkspace([
   {
+    plugins: [textLoader(TEXT_EXTENSIONS)],
     test: {
       name: "unit",
       include: ["tests/**/*.unit.test.ts"],
@@ -10,6 +14,7 @@ export default defineWorkspace([
     },
   },
   {
+    plugins: [textLoader(TEXT_EXTENSIONS)],
     test: {
       name: "integration",
       include: ["tests/**/*.integration.test.ts"],
@@ -19,6 +24,7 @@ export default defineWorkspace([
     },
   },
   {
+    plugins: [textLoader(TEXT_EXTENSIONS)],
     test: {
       name: "e2e",
       include: ["tests/**/*.e2e.test.ts"],

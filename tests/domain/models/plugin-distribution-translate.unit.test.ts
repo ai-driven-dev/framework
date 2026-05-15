@@ -77,7 +77,7 @@ function makeDist(
 }
 
 function pathsFor(tool: ToolConfig, dist = makeDist()): string[] {
-  return translator.translate(dist, tool).map((f) => f.relativePath);
+  return translator.translate(dist, tool, "").map((f) => f.relativePath);
 }
 
 describe("PluginTranslator.translate()", () => {
@@ -92,13 +92,40 @@ describe("PluginTranslator.translate()", () => {
       expect(paths).toContain(".claude/plugins/sample-plugin/.mcp.json");
     });
 
-    it("emits native plugin manifest at .claude-plugin/plugin.json", () => {
-      const files = translator.translate(makeDist(), claude);
+    it("emits native plugin manifest at plugin.json", () => {
+      const files = translator.translate(makeDist(), claude, "");
       const manifest = files.find(
-        (f) => f.relativePath === ".claude/plugins/sample-plugin/.claude-plugin/plugin.json"
+        (f) => f.relativePath === ".claude/plugins/sample-plugin/plugin.json"
       );
       expect(manifest).toBeDefined();
       expect(manifest?.content).toContain("sample-plugin");
+    });
+
+    it("emits hooks companion scripts alongside hooks.json", () => {
+      const scriptFile = makeFile("hooks/update_memory.js", "console.log('updated');");
+      const hooksFiles = [makeFile("hooks/hooks.json", hooksJsonContent), scriptFile];
+      const dist = makeDist({
+        files: [
+          makeFile("skills/hello/SKILL.md", skillContent),
+          makeFile("commands/greet.md", greetContent),
+          makeFile("agents/reviewer.md", agentContent),
+          makeFile("rules/standards.md", ruleContent),
+          ...hooksFiles,
+          makeFile(".mcp.json", mcpJsonContent),
+          makeFile(".claude-plugin/plugin.json", claudeManifestContent),
+        ],
+        components: {
+          skills: [makeFile("skills/hello/SKILL.md", skillContent)],
+          commands: [makeFile("commands/greet.md", greetContent)],
+          agents: [makeFile("agents/reviewer.md", agentContent)],
+          rules: [makeFile("rules/standards.md", ruleContent)],
+          hooks: hooksFiles,
+          mcp: [makeFile(".mcp.json", mcpJsonContent)],
+        },
+      });
+      const paths = pathsFor(claude, dist);
+      expect(paths).toContain(".claude/plugins/sample-plugin/hooks/hooks.json");
+      expect(paths).toContain(".claude/plugins/sample-plugin/hooks/update_memory.js");
     });
   });
 
@@ -108,21 +135,57 @@ describe("PluginTranslator.translate()", () => {
     });
 
     it("emits cursor-format frontmatter on rules (globs key)", () => {
-      const files = translator.translate(makeDist(), cursor);
+      const files = translator.translate(makeDist(), cursor, "");
       const rule = files.find((f) => f.relativePath.endsWith("standards.mdc"));
       expect(rule?.content).toContain("globs:");
     });
 
-    it("emits native plugin manifest at .cursor-plugin/plugin.json", () => {
-      const files = translator.translate(makeDist(), cursor);
+    it("emits native plugin manifest at plugin.json", () => {
+      const files = translator.translate(makeDist(), cursor, "");
       const manifest = files.find(
-        (f) => f.relativePath === ".cursor/plugins/sample-plugin/.cursor-plugin/plugin.json"
+        (f) => f.relativePath === ".cursor/plugins/sample-plugin/plugin.json"
       );
       expect(manifest).toBeDefined();
     });
 
-    it("emits hooks at cursor's flat hooks.json path", () => {
-      expect(pathsFor(cursor)).toContain(".cursor/plugins/sample-plugin/hooks.json");
+    it("emits hooks at cursor's hooks/hooks.json path inside plugin dir", () => {
+      expect(pathsFor(cursor)).toContain(".cursor/plugins/sample-plugin/hooks/hooks.json");
+    });
+
+    it("converts hooks content from Claude format to Cursor format", () => {
+      const claudeHooks = JSON.stringify({
+        hooks: {
+          SessionStart: [
+            // biome-ignore lint/suspicious/noTemplateCurlyInString: intentional literal string in test fixture (Claude hooks format)
+            { hooks: [{ type: "command", command: "node ${CLAUDE_PLUGIN_ROOT}/hooks/run.js" }] },
+          ],
+        },
+      });
+      const dist = makeDist({
+        files: [
+          makeFile("hooks/hooks.json", claudeHooks),
+          makeFile(".claude-plugin/plugin.json", claudeManifestContent),
+        ],
+        components: {
+          skills: [],
+          commands: [],
+          agents: [],
+          rules: [],
+          hooks: [makeFile("hooks/hooks.json", claudeHooks)],
+          mcp: [],
+        },
+      });
+      const files = translator.translate(dist, cursor, "");
+      const hooks = files.find(
+        (f) => f.relativePath === ".cursor/plugins/sample-plugin/hooks/hooks.json"
+      );
+      expect(hooks).toBeDefined();
+      if (!hooks) throw new Error("hooks file not found");
+      const parsed = JSON.parse(hooks.content) as { hooks: Record<string, unknown[]> };
+      expect(parsed.hooks).toHaveProperty("sessionStart");
+      expect(parsed.hooks).not.toHaveProperty("SessionStart");
+      const items = parsed.hooks.sessionStart as Array<{ command: string }>;
+      expect(items[0].command).toBe("node ./hooks/run.js");
     });
 
     it("emits mcp at cursor's mcp.json (no leading dot)", () => {
@@ -136,17 +199,17 @@ describe("PluginTranslator.translate()", () => {
     });
 
     it("agent content is TOML format", () => {
-      const files = translator.translate(makeDist(), codex);
+      const files = translator.translate(makeDist(), codex, "");
       const agent = files.find((f) => f.relativePath.endsWith("reviewer.toml"));
       expect(agent?.content).toContain("name =");
       expect(agent?.content).toContain("description =");
       expect(agent?.content).toContain("developer_instructions =");
     });
 
-    it("emits native plugin manifest at .codex-plugin/plugin.json", () => {
-      const files = translator.translate(makeDist(), codex);
+    it("emits native plugin manifest at plugin.json", () => {
+      const files = translator.translate(makeDist(), codex, "");
       const manifest = files.find(
-        (f) => f.relativePath === ".codex/plugins/sample-plugin/.codex-plugin/plugin.json"
+        (f) => f.relativePath === ".codex/plugins/sample-plugin/plugin.json"
       );
       expect(manifest).toBeDefined();
     });
@@ -170,7 +233,7 @@ describe("PluginTranslator.translate()", () => {
 
   describe("opencode target (flat mode)", () => {
     it("emits commands under .opencode/commands/sample-plugin/ with name prefix", () => {
-      const files = translator.translate(makeDist(), opencode);
+      const files = translator.translate(makeDist(), opencode, "");
       const greet = files.find(
         (f) => f.relativePath === ".opencode/commands/sample-plugin/greet.md"
       );
@@ -193,7 +256,7 @@ describe("PluginTranslator.translate()", () => {
 
   describe("vscode (IDE tool)", () => {
     it("returns empty array", () => {
-      expect(translator.translate(makeDist(), vscodeToolConfig)).toEqual([]);
+      expect(translator.translate(makeDist(), vscodeToolConfig, "")).toEqual([]);
     });
   });
 });
@@ -207,9 +270,9 @@ describe("cross-format matrix (source × target)", () => {
   ];
 
   const targets = [
-    { name: "claude", tool: claude, manifestExpected: ".claude-plugin/plugin.json" },
-    { name: "cursor", tool: cursor, manifestExpected: ".cursor-plugin/plugin.json" },
-    { name: "codex", tool: codex, manifestExpected: ".codex-plugin/plugin.json" },
+    { name: "claude", tool: claude, manifestExpected: "plugin.json" },
+    { name: "cursor", tool: cursor, manifestExpected: "plugin.json" },
+    { name: "codex", tool: codex, manifestExpected: "plugin.json" },
     { name: "copilot", tool: copilot, manifestExpected: "plugin.json" },
   ];
 
@@ -230,7 +293,7 @@ describe("cross-format matrix (source × target)", () => {
     for (const target of targets) {
       it(`${source.format} source → ${target.name} target: emits manifest at ${target.manifestExpected}`, () => {
         const dist = makeSourceDist(source);
-        const files = translator.translate(dist, target.tool);
+        const files = translator.translate(dist, target.tool, "");
         const expected = `${target.tool.capabilities.plugins.pluginsDir}sample-plugin/${target.manifestExpected}`;
         expect(files.map((f) => f.relativePath)).toContain(expected);
       });

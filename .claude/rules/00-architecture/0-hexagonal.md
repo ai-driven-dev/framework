@@ -10,7 +10,7 @@ paths:
 - `domain/models/` — entities, value objects, discriminant types
 - `domain/ports/` — interface contracts only, no implementations
 - `domain/formats/` — pure string transforms (TOML, JSON, Markdown, placeholders)
-- `domain/capabilities/` — capability classes (agents, commands, hooks, mcp, memory, rules, settings, skills)
+- `domain/capabilities/` — capability classes (agents, commands, hooks, mcp, plugins, rules, settings, skills)
 - `domain/tools/contracts.ts` — `AiTool<C>`, `Has*` interfaces, `IdeToolConfig`
 - `domain/tools/registry.ts` — tool registry, `ToolConfig` union, guards
 - `domain/tools/ai/` — AI tool definitions (claude, cursor, copilot, opencode, codex)

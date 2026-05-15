@@ -2,45 +2,6 @@ import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../src/domain/tools/ai/copilot.js";
 
 describe("copilot", () => {
-  describe("rewriteContent()", () => {
-    it("installed content uses the .github/ tool directory path", () => {
-      const result = copilot.rewriteContent("{{TOOLS}}/agents/", "aidd_docs");
-      expect(result).toBe(".github/agents/");
-    });
-
-    it("installed content uses the configured docs directory path", () => {
-      const result = copilot.rewriteContent("{{DOCS}}/memory/", "aidd_docs");
-      expect(result).toBe("aidd_docs/memory/");
-    });
-
-    it("replaces @{{TOOLS}}/ with a markdown link using installed path", () => {
-      const result = copilot.rewriteContent("@{{TOOLS}}/rules/naming.md", "aidd_docs");
-      expect(result).toBe(
-        "[.github/instructions/naming.instructions.md](../../.github/instructions/naming.instructions.md)"
-      );
-    });
-
-    it("replaces @{{TOOLS}}/rules/ (directory reference) with .github/instructions/ directory link", () => {
-      const result = copilot.rewriteContent("Follow all rules @{{TOOLS}}/rules/", "aidd_docs");
-      expect(result).toBe("Follow all rules [.github/instructions/](../../.github/instructions/)");
-    });
-
-    it("replaces @{{TOOLS}}/agents/ (directory reference) with .github/agents/ directory link", () => {
-      const result = copilot.rewriteContent("@{{TOOLS}}/agents/", "aidd_docs");
-      expect(result).toBe("[.github/agents/](../../.github/agents/)");
-    });
-
-    it("replaces @{{DOCS}}/ with a markdown link using docsDir path", () => {
-      const result = copilot.rewriteContent("@{{DOCS}}/memory/project.md", "aidd_docs");
-      expect(result).toBe("[aidd_docs/memory/project.md](../../aidd_docs/memory/project.md)");
-    });
-
-    it("plain {{TOOLS}}/ still works after @ include handling", () => {
-      const result = copilot.rewriteContent("{{TOOLS}}/agents/", "aidd_docs");
-      expect(result).toBe(".github/agents/");
-    });
-  });
-
   describe("capabilities.rules.convertFrontmatter()", () => {
     it("converts paths: list to applyTo: comma-joined string", () => {
       const result = copilot.capabilities.rules?.convertFrontmatter({
@@ -84,32 +45,25 @@ describe("copilot", () => {
       ? copilot.capabilities.settings[0]
       : copilot.capabilities.settings;
 
-    it("maps copilotVscodeSettings to .vscode/settings.json", () => {
+    it("writes to .vscode/settings.json", () => {
       expect(settings.params.outputPath).toBe(".vscode/settings.json");
     });
 
-    it("copilotVscodeSettings uses framework-prime strategy", () => {
+    it("uses framework-prime merge strategy", () => {
       expect(settings.getMergeStrategy()).toBe("framework-prime");
     });
 
-    it("consumes copilotVscodeSettings config name", () => {
-      expect(settings.consumes).toContain("copilotVscodeSettings");
+    it("references vscode-settings.json asset file (not hardcoded staticContent)", () => {
+      expect(settings.staticContentAssetFile).toBe("vscode-settings.json");
+      expect(settings.staticContent).toBeUndefined();
     });
 
-    it("does not consume vscodeSettings (handled by vscode tool)", () => {
-      expect(settings.consumes).not.toContain("vscodeSettings");
-    });
-  });
-
-  describe("capabilities.memory.buildInstallPath()", () => {
-    it("returns .github/copilot-instructions.md for agentsMd template", () => {
-      expect(copilot.capabilities.memory.buildInstallPath("agentsMd")).toBe(
-        ".github/copilot-instructions.md"
-      );
+    it("does not consume framework signals (content is CLI-owned)", () => {
+      expect(settings.consumes).toHaveLength(0);
     });
 
-    it("returns null for unknown template names", () => {
-      expect(copilot.capabilities.memory.buildInstallPath("unknown")).toBeNull();
+    it("declares requiresTool: vscode (gate merge to IDE-present context)", () => {
+      expect(settings.requiresTool).toBe("vscode");
     });
   });
 
@@ -195,46 +149,6 @@ describe("copilot", () => {
     });
   });
 
-  describe("reverseRewriteContent()", () => {
-    it("reverses markdown link for agents to @{{TOOLS}}/agents/", () => {
-      const input = "[.github/agents/alexia.agent.md](../../.github/agents/alexia.agent.md)";
-      const result = copilot.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toContain("@{{TOOLS}}/agents/alexia.agent.md");
-    });
-
-    it("reverses markdown link for prompts to @{{TOOLS}}/commands/", () => {
-      const input =
-        "[.github/prompts/01-implement.prompt.md](../../.github/prompts/01-implement.prompt.md)";
-      const result = copilot.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toContain("@{{TOOLS}}/commands/01-implement.prompt.md");
-    });
-
-    it("reverses markdown link for instructions to @{{TOOLS}}/rules/", () => {
-      const input =
-        "[.github/instructions/naming.instructions.md](../../.github/instructions/naming.instructions.md)";
-      const result = copilot.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toContain("@{{TOOLS}}/rules/naming.instructions.md");
-    });
-
-    it("reverses markdown link for skills to @{{TOOLS}}/skills/", () => {
-      const input = "[.github/skills/foo/SKILL.md](../../.github/skills/foo/SKILL.md)";
-      const result = copilot.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toContain("@{{TOOLS}}/skills/foo/SKILL.md");
-    });
-
-    it("reverses docs markdown link to @{{DOCS}}/", () => {
-      const input = "[aidd_docs/memory/CATALOG.md](../../aidd_docs/memory/CATALOG.md)";
-      const result = copilot.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toContain("@{{DOCS}}/memory/CATALOG.md");
-    });
-
-    it("reverses .github/prompts/ plain text to {{TOOLS}}/commands/", () => {
-      const input = "Located at .github/prompts/implement.prompt.md";
-      const result = copilot.reverseRewriteContent(input, "aidd_docs");
-      expect(result).toContain("{{TOOLS}}/commands/");
-    });
-  });
-
   describe("capabilities.plugins", () => {
     it("has a plugins capability", () => {
       expect("plugins" in copilot.capabilities).toBe(true);
@@ -256,6 +170,81 @@ describe("copilot", () => {
       expect(copilot.capabilities.plugins.pluginOutputDir("my-plugin")).toBe(
         ".github/plugins/my-plugin/"
       );
+    });
+  });
+
+  describe("capabilities.plugins.marketplaceSettings", () => {
+    const ms = copilot.capabilities.plugins.marketplaceSettings;
+
+    it("has marketplaceSettings configured", () => {
+      expect(ms).not.toBeNull();
+    });
+
+    it("writes to .github/copilot/settings.json", () => {
+      expect(ms?.settingsPath).toBe(".github/copilot/settings.json");
+    });
+
+    it("uses extraKnownMarketplaces as settings key", () => {
+      expect(ms?.settingsKey).toBe("extraKnownMarketplaces");
+    });
+
+    it("uses enabledPlugins as enabled plugins key", () => {
+      expect(ms?.enabledPluginsKey).toBe("enabledPlugins");
+    });
+
+    describe("toEntry()", () => {
+      it("returns map entry with github source shape for github source", () => {
+        const result = ms?.toEntry({
+          name: "aidd-framework",
+          source: { kind: "github", repo: "ai-driven-dev/aidd-framework" },
+        });
+        expect(result).toEqual({
+          valueShape: "map",
+          key: "aidd-framework",
+          value: { source: { source: "github", repo: "ai-driven-dev/aidd-framework" } },
+        });
+      });
+
+      it("does not include ref in github source (ref dropped per VSCode spec)", () => {
+        const result = ms?.toEntry({
+          name: "aidd-framework",
+          source: { kind: "github", repo: "ai-driven-dev/aidd-framework", ref: "v1.0.0" },
+        });
+        expect(result).not.toBeNull();
+        if (result?.valueShape === "map") {
+          const src = result.value.source as Record<string, unknown>;
+          expect(src).not.toHaveProperty("ref");
+          expect(src).toEqual({ source: "github", repo: "ai-driven-dev/aidd-framework" });
+        }
+      });
+
+      it("returns map entry with directory source for local source", () => {
+        const result = ms?.toEntry({
+          name: "my-marketplace",
+          source: { kind: "local", path: "/Users/dev/aidd-framework" },
+        });
+        expect(result).toEqual({
+          valueShape: "map",
+          key: "my-marketplace",
+          value: { source: { source: "directory", path: "/Users/dev/aidd-framework" } },
+        });
+      });
+
+      it("returns null for unsupported source kind (npm)", () => {
+        const result = ms?.toEntry({
+          name: "my-plugin",
+          source: { kind: "npm", package: "my-plugin" },
+        });
+        expect(result).toBeNull();
+      });
+
+      it("returns null for unsupported source kind (url)", () => {
+        const result = ms?.toEntry({
+          name: "my-plugin",
+          source: { kind: "url", url: "https://example.com/plugin.zip" },
+        });
+        expect(result).toBeNull();
+      });
     });
   });
 });

@@ -100,29 +100,38 @@ export function computeMcpExclusions(
   return exclusions;
 }
 
-/**
- * Returns MCP entries present in the new distribution that are genuinely new:
- * not tracked in manifest merge entries, and not already excluded.
- */
+/** Returns MCP entries present in generated files but not tracked in known entries and not already excluded. */
 export function detectNewMcpEntries(
   generated: InstallationFile[],
   getEntrySection: (frameworkPath: string) => string | null,
-  manifestEntries: readonly MergeFileEntry[],
+  knownEntries: readonly MergeFileEntry[],
   excluded: readonly McpExclusion[]
 ): McpExclusion[] {
   const newEntries: McpExclusion[] = [];
   forEachMcpFile(generated, getEntrySection, (file, sectionKey) => {
-    const manifestEntry = manifestEntries.find((m) => m.relativePath === file.relativePath);
-    const knownKeys = manifestEntry
-      ? new Set(Object.keys(manifestEntry.entries))
-      : new Set<string>();
+    const known = findKnownEntries(knownEntries, file.relativePath, sectionKey);
+    const excludedKeys = excludedKeysFor(excluded, file.relativePath);
     for (const key of parseEntryKeys(file.content, sectionKey)) {
-      if (knownKeys.has(key)) continue;
-      if (excluded.some((e) => e.configPath === file.relativePath && e.entryKey === key)) continue;
+      if (known.has(key) || excludedKeys.has(key)) continue;
       newEntries.push({ configPath: file.relativePath, entryKey: key });
     }
   });
   return newEntries;
+}
+
+function findKnownEntries(
+  knownEntries: readonly MergeFileEntry[],
+  relativePath: string,
+  sectionKey: string
+): Set<string> {
+  const match = knownEntries.find(
+    (e) => e.relativePath === relativePath && e.sectionKey === sectionKey
+  );
+  return new Set(match ? Object.keys(match.entries) : []);
+}
+
+function excludedKeysFor(excluded: readonly McpExclusion[], relativePath: string): Set<string> {
+  return new Set(excluded.filter((e) => e.configPath === relativePath).map((e) => e.entryKey));
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

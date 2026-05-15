@@ -1,0 +1,4 @@
+{
+  "instructions": [".opencode/rules/**/*.md"],
+  "mcp": {}
+}

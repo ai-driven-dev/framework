@@ -23,8 +23,8 @@ export function registerCleanCommand(program: Command): void {
           interactive: process.stdout.isTTY,
         });
 
-        if (result.preview.totalFileCount === 0 && !result.dryRun) {
-          output.success("Nothing to clean. No AIDD installation found.");
+        if (!result.manifestFound) {
+          output.success("Nothing to clean");
           return;
         }
 
@@ -32,9 +32,6 @@ export function registerCleanCommand(program: Command): void {
           output.print("The following will be removed:");
           for (const tool of result.preview.tools) {
             output.print(`  ${tool.toolId}: ${tool.fileCount} files`);
-          }
-          if (result.preview.docsFileCount > 0) {
-            output.print(`  docs: ${result.preview.docsFileCount} files`);
           }
           output.print("  manifest: .aidd/");
           const toolCount = result.preview.tools.length;

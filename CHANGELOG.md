@@ -1,5 +1,183 @@
 # Changelog
 
+## [4.1.0] — Unreleased — Noun-first surface + plugin architecture (CLI v5)
+
+> Consolidates `4.1.0-beta.1` through `4.1.0-beta.23`. Full details in each beta section below.
+> Version bump and npm publish are handled by the release-please PR on `main`.
+
+### Breaking changes
+
+All `4.0.x` command spellings are removed. Run `aidd migrate` to clean obsolete manifest entries.
+
+| Old command (4.0.x) | New command (4.1.0) | Notes |
+|---|---|---|
+| `aidd install ai <tool>` | `aidd ai install <tool>` | Noun-first |
+| `aidd install ide <tool>` | `aidd ide install <tool>` | Noun-first |
+| `aidd uninstall ai <tool>` | `aidd ai uninstall <tool>` | Noun-first |
+| `aidd uninstall ide <tool>` | `aidd ide uninstall <tool>` | Noun-first |
+| `aidd cache list` | `aidd marketplace cache list` | Cache scoped to marketplace |
+| `aidd cache clear` | `aidd marketplace cache clear` | Cache scoped to marketplace |
+| `aidd config list\|get\|set` | removed | `docsDir`/`repo` keys dropped from manifest v5 |
+| `aidd sync --source <tool>` | `aidd ai sync --source <tool>` | Under `ai` noun |
+| `aidd restore` | `aidd ai restore` | Under `ai` noun |
+| `--repo` global flag | removed | Use `aidd marketplace add` |
+| `--docs-dir` on setup | removed | `docsDir` field removed from manifest v5 |
+| `--mode` on setup/install | removed | Replaced by `--source local\|remote` on `aidd setup` |
+| `--path` on install | removed | Local path only via `aidd setup --source local --path` |
+| `--release`, `--from`, `--switch-mode` on install/setup | removed | Framework tarball download eliminated |
+
+### New features
+
+- **Noun-first command surface** — `aidd ai <verb>`, `aidd ide <verb>`, `aidd marketplace <verb>`, `aidd plugin <verb>`
+- **Manifest v5 schema** — removed `docsDir`, `repo`, `mode`, `scripts`, `topPlugins` fields; structure is `{ version, tools, marketplaces }`
+- **Plugin architecture** — memory stubs (CLAUDE.md, AGENTS.md, copilot-instructions.md) are plugin-owned via `aidd-context`; not bundled in the CLI binary
+- **Marketplace cache** — `aidd marketplace cache list|clear` manages fetched catalogs; `MarketplaceCacheEntry` tracks fetch time and size
+- **Plugin sync** — `aidd ai sync` propagates installed plugins from source to target tools via content translation
+- **Format adapters** — ingest Cursor, GitHub Copilot, Codex, and OpenCode native marketplace formats (normalized into the common AIDD schema)
+- **`--release <tag>` on setup** — pins the marketplace version fetched during `aidd setup --source remote`
+- **Bundle budget** — `dist/cli.js` gated at 500 KB; checked on every build (current: ~440 KB)
+- **`aidd migrate` command** — detects and strips obsolete manifest entries (scripts, top-level plugins, docsDir); backs up manifest before write; idempotent
+- **Default marketplace pre-registered** — `aidd setup` registers `github.com/ai-driven-dev/aidd-framework` automatically; no auth required for public marketplace
+- **OpenCode sync support** — sync matrix expanded from 4×4 (16 pairs) to 5×5 (20 pairs) including OpenCode
+- **Persona-driven E2E** — real-framework-fixture E2E journeys for all 5 AI tools; no network gates in default suite
+- **Perf regression detection** — `pnpm bench` + `pnpm bench:check` compare against committed baseline; >50% regression fails CI
+- **Raw catalog fetch** — `aidd marketplace refresh` routes all catalog reads through a raw GitHub fetcher (preserves ref, surfaces auth errors)
+
+### Bug fixes
+
+- **setup:** show defaults in repo + version prompts (interactive)
+- **setup:** drop marketplace repo prompt — use default automatically
+- **setup:** sync settings AFTER plugin install (was written before tools were registered)
+- **setup:** force re-register marketplace so ref updates on re-run
+- **setup:** accept relative local paths + restore banner + direct setup prompt
+- **plugin:** skip fetch/translate/write for GitHub marketplaces (was duplicating content)
+- **plugin:** pass catalog metadata to `plugin add` for GitHub marketplaces
+- **plugin:** materialize flat files for OpenCode on local marketplace installs
+- **marketplace:** route all catalog reads through raw fetcher (preserve ref)
+- **claude:** include `ref` in `extraKnownMarketplaces.source`
+- **ux:** fail-fast git auth surfacing + progress indicators on remote fetch
+
+### Internal
+
+- **Test pyramid inversion** — 6 main-journey E2E tests; most integration tests demoted to unit
+- **Mutation testing baseline** — Stryker scoped to `migration-plan.ts`; baseline established
+- **DDD splits** — `sync-use-case` (876 LOC), `restore-use-case` (396 LOC), `uninstall-use-case` (360 LOC), `doctor-use-case` (400 LOC) each split into orchestrator + sub-use-cases
+- **FileSystem port split** — `FileSystem` split into `FileReader` + `FileWriter` + `FileMerger`
+- **Infra collapse** — `auth/` and `http/` single-file subdirs merged into `adapters/`
+- **Property-based tests** — Manifest serialize/deserialize/migrate round-trips (fast-check)
+- **Automated command matrix** — `command-matrix.md` → table-driven E2E; `sync-matrix.md` → 12-pair plugin sync E2E
+- **Nightly network E2E** — gated behind `RUN_NETWORK_TESTS=1`; runs automatically via `.github/workflows/network-e2e.yml`
+
+### Included beta releases
+
+- `4.1.0-beta.23` — OpenCode flat-file plugin install, per-tool plugin strategy
+- `4.1.0-beta.22` — marketplaceSettings for Cursor + Codex (forward-compat)
+- `4.1.0-beta.21` — fix setup: sync settings order, marketplace re-register, persona E2E
+- `4.1.0-beta.20` — setup: prompt marketplace version with last-tag default; raw catalog fetch
+- `4.1.0-beta.19` — Copilot + OpenCode marketplaceSettings; fix plugin github skip
+- `4.1.0-beta.18` — OpenCode format adapter (Phase D); fix catalog metadata in plugin add
+- `4.1.0-beta.17` — Codex format adapter (Phase C)
+- `4.1.0-beta.16` — Copilot VS Code format adapter (Phase B)
+- `4.1.0-beta.15` — Cursor marketplace parser integration (Phase A.5)
+- `4.1.0-beta.14` — OpenCode in sync matrix (4×4 → 5×5); Codex commands/rules gap close
+- `4.1.0-beta.13` — FileSystem port split (FileReader + FileWriter + FileMerger)
+- `4.1.0-beta.12` — Perf regression detection; AIDD_USER_CONFIG_DIR env override; mutation testing baseline; network E2E nightly workflow
+- `4.1.0-beta.11` — noun-first surface, plugin sync, build-dist, bundle budget; DDD splits; test pyramid inversion
+- `4.1.0-beta.10` and earlier — marketplace architecture, migrate command, bundled configs
+
+---
+
+## [4.1.0-beta.11] — Noun-first surface + plugin architecture (CLI v5)
+
+### Breaking Changes
+
+Commands removed or restructured since 4.0.x:
+
+| Old command | New command | Notes |
+|---|---|---|
+| `aidd install ai <tool>` | `aidd ai install <tool>` | Noun-first: `ai` is the noun |
+| `aidd install ide <tool>` | `aidd ide install <tool>` | Noun-first: `ide` is the noun |
+| `aidd uninstall ai <tool>` | `aidd ai uninstall <tool>` | Noun-first |
+| `aidd uninstall ide <tool>` | `aidd ide uninstall <tool>` | Noun-first |
+| `aidd cache list` | `aidd marketplace cache list` | Cache scoped to marketplace |
+| `aidd cache clear` | `aidd marketplace cache clear` | Cache scoped to marketplace |
+| `aidd config list\|get\|set` | removed | `docsDir`/`repo` keys dropped from manifest v5 |
+| `aidd sync --source <tool>` | `aidd ai sync --source <tool>` | Under `ai` noun |
+| `aidd restore` | `aidd ai restore` | Under `ai` noun |
+| `aidd status` | `aidd ai status` / `aidd ide status` | Per-noun subcommands (global `aidd status` still works) |
+| `aidd doctor` | `aidd ai doctor` / `aidd ide doctor` | Per-noun subcommands (global `aidd doctor` still works) |
+| `aidd update` | `aidd ai update` / `aidd ide update` | Per-noun subcommands (global `aidd update` still works) |
+| `--docs-dir` on setup | removed | `docsDir` field removed from manifest v5 |
+| `--mode` on setup/install | removed | Replaced by `--source local\|remote` on `aidd setup` |
+| `--path` on install | removed | Local framework path only used in `aidd setup --source local --path` |
+| `--release`, `--repo`, `--from`, `--switch-mode` on install/setup | removed | Framework tarball download eliminated |
+
+### New Surface (noun-first commands)
+
+```bash
+# AI tools
+aidd ai install claude
+aidd ai uninstall cursor
+aidd ai list
+aidd ai status
+aidd ai update [tool]
+aidd ai sync --source claude [--target cursor] [--force] [--no-plugins]
+aidd ai restore [files...] [--tool claude] [--force]
+aidd ai doctor
+
+# IDE tools
+aidd ide install vscode
+aidd ide uninstall vscode
+aidd ide list
+aidd ide status
+aidd ide update [tool]
+aidd ide doctor
+
+# Setup (scriptable, non-interactive)
+aidd setup --source remote --ai claude --ide vscode --recommended-plugins --yes
+
+# Marketplace cache
+aidd marketplace cache list
+aidd marketplace cache clear [--all]
+```
+
+### Migration Guide (from 4.0.x)
+
+1. Run `aidd migrate` to clean obsolete manifest entries (scripts, top-level plugins, docsDir).
+2. Replace `aidd install ai <tool>` → `aidd ai install <tool>` in scripts.
+3. Replace `aidd install ide <tool>` → `aidd ide install <tool>` in scripts.
+4. Replace `aidd uninstall ai <tool>` → `aidd ai uninstall <tool>` in scripts.
+5. Replace `aidd cache` → `aidd marketplace cache` in scripts.
+6. Replace `aidd sync --source <tool>` → `aidd ai sync --source <tool>` in scripts.
+7. Remove any `aidd config` calls — config keys (docsDir, repo) are no longer in the manifest.
+
+### Plugin Architecture
+
+- Memory ownership moved to plugins: CLAUDE.md/AGENTS.md/copilot-instructions.md stubs are no longer bundled in the CLI; the `aidd-context` plugin provides them.
+- Plugin sync (`aidd ai sync`) propagates installed plugins from source tool to target tools via re-translation of capability files.
+- `MarketplaceCacheEntry` tracks catalog fetch time and size; `aidd marketplace cache` manages this cache.
+- Manifest v5 schema: removed `docsDir`, `repo`, `mode`, `scripts`, `topPlugins`.
+
+## [4.1.0-beta.1] — Marketplace-only architecture
+
+### ⚠ BREAKING CHANGES
+
+* **install**: `aidd install ai <tool>` and `aidd install ide <tool>` now write bundled runtime configs from the CLI binary instead of downloading a framework tarball. The `--release`, `--path`, `--repo`, `--from`, and `--mode` flags are removed from `install` and `setup`.
+* **setup**: `aidd setup` no longer downloads a framework tarball. It initializes the manifest, registers the default marketplace, and writes bundled configs. `--switch-mode` and `--mode` flags removed.
+* **framework**: Framework is now a pure plugin marketplace (Git repo with `marketplace.json` + `plugins/`). The CLI no longer fetches or caches framework tarballs. `aidd cache` command removed.
+* **config**: `repo` config key removed. Use `aidd marketplace` to manage marketplace sources.
+
+### Features
+
+* **migrate**: new `aidd migrate` command — detects and strips obsolete manifest entries (scripts section, top-level plugins section, bundled plugins) from projects on previous CLI versions. Backs up manifest before write. `--dry-run` and `--non-interactive` flags.
+* **assets**: runtime configs (Claude, Cursor, Copilot, OpenCode, Codex) and memory stubs (CLAUDE.md, AGENTS.md, copilot-instructions.md) bundled inside the CLI binary — no network required for `aidd install ai`.
+* **plugin install**: prompts for target tools when multiple AI tools installed; `--tool` flag for non-interactive use.
+* **marketplace**: default marketplace (`github.com/ai-driven-dev/aidd-framework`) pre-registered on `aidd setup`. No auth required for public marketplace.
+
+### Migration
+
+Run `aidd migrate` to clean up any project initialized with CLI < 4.1.0.
+
 ## [4.0.0](https://github.com/ai-driven-dev/aidd-cli/compare/v3.3.1...v4.0.0) (2026-04-23)
 
 

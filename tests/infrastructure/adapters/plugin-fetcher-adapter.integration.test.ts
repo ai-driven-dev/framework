@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 import { PluginFetchError } from "../../../src/domain/errors.js";
-import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
+import { FileAdapter } from "../../../src/infrastructure/adapters/file-adapter.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
 import { PluginFetcherAdapter } from "../../../src/infrastructure/adapters/plugin-fetcher-adapter.js";
 
@@ -52,7 +52,7 @@ async function setupBareRepoWithPlugin(repoPath: string, workPath: string): Prom
 }
 
 function makeAdapter(): PluginFetcherAdapter {
-  return new PluginFetcherAdapter(new FileSystemAdapter(new HasherAdapter()));
+  return new PluginFetcherAdapter(new FileAdapter(new HasherAdapter()));
 }
 
 describe("PluginFetcherAdapter", () => {
@@ -174,26 +174,6 @@ describe("PluginFetcherAdapter", () => {
         );
         expect(existsSync(join(localPath, ".claude-plugin/plugin.json"))).toBe(true);
         expect(existsSync(join(localPath, "commands/cmd.md"))).toBe(true);
-      } finally {
-        await rm(sandbox, { recursive: true, force: true });
-      }
-    });
-  });
-
-  describe("github source (unreachable repo)", () => {
-    it("surfaces a PluginFetchError when the github repo cannot be cloned", async () => {
-      const sandbox = await mkdtemp(join(tmpdir(), "aidd-fetcher-gh-"));
-      try {
-        const adapter = makeAdapter();
-        await expect(
-          adapter.fetch(
-            {
-              kind: "github",
-              repo: "aidd-test-nonexistent-org/nonexistent-plugin-repo-xyz-12345",
-            },
-            sandbox
-          )
-        ).rejects.toThrow(PluginFetchError);
       } finally {
         await rm(sandbox, { recursive: true, force: true });
       }

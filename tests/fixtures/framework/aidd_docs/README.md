@@ -5,7 +5,7 @@ AIDD structures your AI coding assistant with commands, agents, rules, and memor
 ## Structure
 
 ```text
-{{DOCS}}/
+aidd_docs/
 ├── memory/
 │   ├── internal/
 │   └── external/

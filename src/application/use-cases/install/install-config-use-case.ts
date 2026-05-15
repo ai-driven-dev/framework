@@ -6,7 +6,9 @@ import type { ConfigRef } from "../../../domain/models/framework.js";
 import { CONFIG_MCP } from "../../../domain/models/framework.js";
 import { transformFor as transformMcpForPlatform } from "../../../domain/models/mcp-exclusion.js";
 import type { MergeStrategy } from "../../../domain/models/merge.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { AiToolId } from "../../../domain/models/tool-ids.js";
+import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Platform } from "../../../domain/ports/platform.js";
 import type { ToolConfig } from "../../../domain/tools/registry.js";
@@ -43,11 +45,13 @@ interface InstallConfigOptions {
   contentFiles: Map<string, string>;
   projectRoot: string;
   platform: Platform;
+  assetProvider?: AssetProvider;
+  toolId?: AiToolId;
 }
 
 export class InstallConfigUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader,
     private readonly hasher: Hasher
   ) {}
 
@@ -65,6 +69,11 @@ export class InstallConfigUseCase {
         projectRoot,
         win32Transform
       );
+      if (file !== null) results.push(file);
+    }
+    for (const capability of capabilities) {
+      if (!(capability instanceof SettingsCapability)) continue;
+      const file = await this.processStaticCapability(capability, projectRoot, options);
       if (file !== null) results.push(file);
     }
     return results;
@@ -89,6 +98,39 @@ export class InstallConfigUseCase {
       mergeStrategy: this.getCapabilityMergeStrategy(capability),
       frameworkPath: ref.path,
     });
+  }
+
+  private async processStaticCapability(
+    capability: SettingsCapability,
+    projectRoot: string,
+    options: InstallConfigOptions
+  ): Promise<InstallationFile | null> {
+    const content = this.resolveStaticContent(capability, options);
+    if (content === null) return null;
+    const outputPath = await this.resolveCapabilityOutputPath(capability, projectRoot);
+    if (outputPath === null) return null;
+    return new InstallationFile({
+      relativePath: outputPath,
+      content,
+      hash: this.hasher.hash(content),
+      mergeStrategy: capability.getMergeStrategy(),
+    });
+  }
+
+  private resolveStaticContent(
+    capability: SettingsCapability,
+    options: InstallConfigOptions
+  ): string | null {
+    if (capability.staticContent !== undefined) return capability.staticContent;
+    if (capability.staticContentAssetFile !== undefined) {
+      if (options.assetProvider === undefined || options.toolId === undefined) return null;
+      const asset = options.assetProvider.loadConfigAsset(
+        options.toolId,
+        capability.staticContentAssetFile
+      );
+      return typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
+    }
+    return null;
   }
 
   private async resolveCapabilityOutputPath(

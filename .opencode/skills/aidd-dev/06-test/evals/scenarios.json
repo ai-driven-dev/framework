@@ -1,0 +1,19 @@
+[
+  { "prompt": "Write tests for the authentication module", "expect_action": "test" },
+  { "prompt": "Add unit tests for the payment service", "expect_action": "test" },
+  { "prompt": "Iterate on tests until they pass", "expect_action": "test" },
+  { "prompt": "Write and run tests for this feature", "expect_action": "test" },
+  { "prompt": "Validate the user journey for the checkout flow in the browser", "expect_action": "test-journey" },
+  { "prompt": "Test the end-to-end user registration flow", "expect_action": "test-journey" },
+  { "prompt": "Write unit tests for the auth module", "expect_action": "test" },
+  { "prompt": "Add coverage tests for the payment service", "expect_action": "test" },
+  { "prompt": "Test end-to-end user journey via the browser", "expect_action": "test-journey" },
+  { "prompt": "List untested behaviors and iterate on test creation", "expect_action": "test" },
+  { "prompt": "Écris les tests unitaires du module auth", "expect_action": "test" },
+  { "prompt": "Test le parcours user en bout-en-bout dans le browser", "expect_action": "test-journey" },
+  { "prompt": "Itère sur les tests jusqu'à ce qu'ils passent", "expect_action": "test" },
+  { "prompt": "Valide le user journey du checkout", "expect_action": "test-journey" },
+  { "prompt": "Review my code for quality issues", "expect_action": null },
+  { "prompt": "Debug the failing login test", "expect_action": null },
+  { "prompt": "Optimize the database queries", "expect_action": null }
+]

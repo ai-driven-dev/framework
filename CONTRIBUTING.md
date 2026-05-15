@@ -112,18 +112,53 @@ pnpm test -- --coverage      # same + coverage report with thresholds
 
 All CI checks must pass locally before pushing.
 
+### 5b. Performance regression check
+
+CLI boot time and key command durations are tracked via a committed baseline snapshot.
+
+```bash
+pnpm bench            # run benchmark, writes reports/benchmark/latest.json
+pnpm bench:check      # compare latest vs scripts/perf-baseline.json
+```
+
+Thresholds:
+- >20% slower than baseline → warning (exit 0)
+- >50% slower than baseline → hard failure (exit 1)
+- >5% faster than baseline → note (suggests baseline update)
+
+**When to update the baseline:**
+If you make an intentional performance improvement, regenerate the baseline in the same PR:
+
+```bash
+pnpm bench
+cp reports/benchmark/latest.json scripts/perf-baseline.json
+# commit scripts/perf-baseline.json alongside your changes
+```
+
+CI runs the benchmark on every PR and push to `main` (`.github/workflows/perf-regression.yml`).
+
+#### Network E2E tests (opt-in)
+
+Network E2E tests exercise the real GitHub fetch path (`ai-driven-dev/aidd-framework`). They are skipped in the default `pnpm test` run and require opt-in:
+
+```bash
+RUN_NETWORK_TESTS=1 pnpm test:e2e tests/e2e/network.e2e.test.ts
+```
+
+These tests run automatically every night via the `network-e2e.yml` workflow. They do not count against the regular E2E budget and must not be run in offline/CI environments that lack GitHub access.
+
 ### 6. Test the CLI manually _(optional)_
 
 ```bash
 pnpm run install:local      # build + install globally
 
 mkdir /tmp/aidd-test && cd /tmp/aidd-test
-aidd init
+aidd setup
 
-aidd install                        # all tools
-aidd install claude                 # single tool
-aidd install claude cursor          # multiple tools
-aidd install --force                # reinstall (overwrite existing)
+aidd ai install claude              # single AI tool
+aidd ai install claude --force      # reinstall (overwrite existing)
+aidd ai list                        # list installed AI tools
+aidd ai status                      # show drift for AI tools
 
 ls .claude/                         # verify output was generated
 ```
@@ -153,7 +188,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/). The type de
 ```bash
 feat: add restore --docs flag
 fix(status): correct hash comparison for merged files
-docs: update adopt command examples
+docs: update aidd ai install examples
 ci: add coverage thresholds to pipeline
 ```
 
@@ -173,6 +208,7 @@ Every PR triggers:
 | Test & Coverage | `pnpm test -- --coverage` | Yes |
 | Dead code | `pnpm knip:production` | No |
 | Duplication | `pnpm jscpd` | No |
+| Perf regression | `pnpm bench && pnpm bench:check` | Yes (>50% regression) |
 
 All blocking jobs must pass before merge.
 

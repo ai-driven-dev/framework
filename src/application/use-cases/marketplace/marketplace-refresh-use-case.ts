@@ -1,9 +1,9 @@
-import { join } from "node:path";
 import type { Marketplace } from "../../../domain/models/marketplace.js";
 import { marketplaceCacheDir } from "../../../domain/models/paths.js";
+import type { Logger } from "../../../domain/ports/logger.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
 import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
-import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
+import type { FetchMarketplaceSourceUseCase } from "../shared/fetch-marketplace-source-use-case.js";
 
 export interface MarketplaceRefreshOptions {
   projectRoot: string;
@@ -25,7 +25,8 @@ export class MarketplaceRefreshUseCase {
   constructor(
     private readonly catalogRepo: PluginCatalogRepository,
     private readonly registry: MarketplaceRegistry,
-    private readonly pluginFetcher: PluginFetcher
+    private readonly fetchMarketplaceSource: FetchMarketplaceSourceUseCase,
+    private readonly logger?: Logger
   ) {}
 
   async execute(options: MarketplaceRefreshOptions): Promise<MarketplaceRefreshResult> {
@@ -43,12 +44,14 @@ export class MarketplaceRefreshUseCase {
   // batch refresh. Each failure is reported via the result, never thrown.
   private async refreshOne(projectRoot: string, m: Marketplace): Promise<RefreshEntryResult> {
     try {
+      this.logger?.info(`Fetching marketplace '${m.name}'...`);
       const cacheDir = marketplaceCacheDir(projectRoot, m.name);
-      const localPath = await this.pluginFetcher.fetch(m.source, cacheDir, {
-        forceRefresh: true,
-      });
-      await this.catalogRepo.load(localPath);
+      const localPath = await this.fetchSource(m, cacheDir);
+      const catalog = await this.catalogRepo.load(localPath);
       await this.registry.updateLastFetched(projectRoot, m.name, m.scope, new Date().toISOString());
+      if (catalog?.version !== undefined) {
+        await this.registry.updateVersion(projectRoot, m.name, m.scope, catalog.version);
+      }
       return { name: m.name, status: "ok" };
     } catch (err) {
       return {
@@ -57,5 +60,13 @@ export class MarketplaceRefreshUseCase {
         error: err instanceof Error ? err.message : String(err),
       };
     }
+  }
+
+  private async fetchSource(m: Marketplace, cacheDir: string): Promise<string> {
+    return this.fetchMarketplaceSource.execute({
+      marketplace: m,
+      cacheDir,
+      fetchOptions: { forceRefresh: true },
+    });
   }
 }

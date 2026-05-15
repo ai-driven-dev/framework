@@ -1,7 +1,7 @@
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
+import { buildClaudeStyleMarketplaceEntry } from "../../capabilities/marketplace-entry.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { MemoryCapability } from "../../capabilities/memory-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SettingsCapability } from "../../capabilities/settings-capability.js";
@@ -10,11 +10,9 @@ import {
   convertCommandFrontmatter,
   reverseConvertCommandFrontmatter,
 } from "../../formats/command.js";
-import { parseFrontmatter } from "../../formats/markdown.js";
 import {
   AT_DOCS_PLACEHOLDER,
   AT_TOOLS_PLACEHOLDER,
-  CONFIG_COPILOT_VSCODE_SETTINGS,
   CONFIG_MCP,
   DOCS_PLACEHOLDER,
   GITKEEP_FILE,
@@ -25,7 +23,6 @@ import type {
   HasAgents,
   HasCommands,
   HasMcp,
-  HasMemory,
   HasPlugins,
   HasRules,
   HasSettings,
@@ -253,18 +250,8 @@ function reverseCopilotContent(content: string, docsDir: string): string {
     .replaceAll(`${docsDir}/`, DOCS_PLACEHOLDER);
 }
 
-function rewriteCopilotMemoryContent(content: string, docsDir: string): string {
-  const rewritten = rewriteCopilotContent(content, docsDir);
-  const { body } = parseFrontmatter(rewritten);
-  return body
-    .replace(/^\n+/, "")
-    .replace(/^# AGENTS\.md[ \t]*\n/, "# Copilot Instructions\n")
-    .replace(/\]\(\.\.\/\.\.\//g, "](../")
-    .replace(new RegExp(`\\]\\(${docsDir}/`, "g"), `](../${docsDir}/`);
-}
-
 export const copilot: AiTool<
-  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasMemory & HasSettings & HasPlugins
+  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasSettings & HasPlugins
 > = {
   kind: "ai",
   toolId: "copilot",
@@ -300,6 +287,7 @@ export const copilot: AiTool<
     rules: new RulesCapability({
       directory: DIRECTORY,
       toolSuffix: EXT_INSTRUCTIONS,
+      inputSuffix: TOOL_SUFFIX,
       buildInstallPath: (fileName) => rulesHandler.buildFilePath(fileName),
       convertFrontmatter: (fm) => rulesHandler.convertFrontmatter(fm),
       reverseConvertFrontmatter: (fm) => rulesHandler.reverseConvertFrontmatter(fm),
@@ -321,14 +309,11 @@ export const copilot: AiTool<
         return content;
       },
     }),
-    memory: new MemoryCapability({
-      outputFileName: `${DIRECTORY}copilot-instructions.md`,
-      rewriteContent: rewriteCopilotMemoryContent,
-    }),
     settings: new SettingsCapability({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
-      consumes: [CONFIG_COPILOT_VSCODE_SETTINGS],
+      staticContentAssetFile: "vscode-settings.json",
+      requiresTool: "vscode",
     }),
     plugins: new PluginsCapability({
       mode: "native",
@@ -336,6 +321,16 @@ export const copilot: AiTool<
       pluginManifestRelativePath: "plugin.json",
       acceptsHooks: true,
       acceptsMcp: true,
+      // VS Code Copilot: extraKnownMarketplaces in .github/copilot/settings.json.
+      // chat.plugins.marketplaces has application scope and cannot be set in workspace
+      // .vscode/settings.json — VSCode rejects it with "This setting has an application scope".
+      // Source: https://code.visualstudio.com/docs/copilot/customization/agent-plugins
+      marketplaceSettings: {
+        settingsPath: ".github/copilot/settings.json",
+        settingsKey: "extraKnownMarketplaces",
+        enabledPluginsKey: "enabledPlugins",
+        toEntry: buildClaudeStyleMarketplaceEntry,
+      },
     }),
   },
 

@@ -3,11 +3,11 @@
 ## Environment Variables
 
 - `AIDD_TOKEN` — authentication token for GitHub Packages (private registry)
-- `AIDD_REPO` — custom framework repository override in `owner/repo` format (optional)
 
 ## Build & Publish
 
-- Build: `pnpm build` → `dist/cli.js` (tsup, ESM bundle)
+- Build: `pnpm build` → `dist/cli.js` (tsup, ESM bundle); runs `scripts/check-bundle-size.mjs` automatically
+- Bundle budget: 500 KB (`bundleBudgetKB` in `package.json`); build fails if exceeded
 - Local install test: `pnpm run install:local` (packs and installs globally via npm)
 - Publish: `pnpm publish` targeting GitHub Packages registry (`@ai-driven-dev` scope)
 - Runtime requirements: Node.js >= 24, pnpm >= 9
@@ -27,10 +27,19 @@
 
 | Script | Purpose |
 | --- | --- |
-| `pnpm build` | tsup production build |
+| `pnpm build` | tsup production build + bundle size check |
 | `pnpm test` | build + vitest run (all tests) |
 | `pnpm typecheck` | tsc --noEmit |
 | `pnpm lint` | biome check |
 | `pnpm format` | biome format --write |
 | `pnpm pack:local` | build + pack to dist/ |
 | `pnpm install:local` | pack + npm install -g |
+| `pnpm build:check-size` | run bundle size check only (no rebuild) |
+| `pnpm bench:check` | run perf regression check against baseline |
+| `pnpm test:mutation` | Stryker mutation testing (slow; CI gate) |
+
+## Perf Regression
+
+- Baseline: `scripts/perf-baseline.json` — 4 commands tracked (`--version`, `--help`, `status`, `ai list`)
+- Checker: `scripts/check-perf-regression.mjs` — fails build if median exceeds baseline by threshold
+- Update baseline with `scripts/benchmark.mjs`

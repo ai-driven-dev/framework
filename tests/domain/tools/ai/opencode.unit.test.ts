@@ -1,72 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { OpencodeDualConfigError } from "../../../../src/domain/errors.js";
-import type { FileSystem } from "../../../../src/domain/ports/file-system.js";
+import type { FileReader } from "../../../../src/domain/ports/file-reader.js";
 import { opencode } from "../../../../src/domain/tools/ai/opencode.js";
 
-function makeFs(existingPaths: string[]): FileSystem {
+function makeFs(existingPaths: string[]): FileReader {
   return {
     fileExists: async (path: string) => existingPaths.some((p) => path.endsWith(p)),
-  } as unknown as FileSystem;
+  } as unknown as FileReader;
 }
 
 describe("opencode", () => {
-  describe("rewriteContent()", () => {
-    it("installed content uses the .opencode/ tool directory path", () => {
-      const result = opencode.rewriteContent("{{TOOLS}}/agents/", "aidd_docs");
-      expect(result).toBe(".opencode/agents/");
-    });
-
-    it("installed content uses the configured docs directory path", () => {
-      const result = opencode.rewriteContent("{{DOCS}}/memory/", "aidd_docs");
-      expect(result).toBe("aidd_docs/memory/");
-    });
-
-    it("include references in installed content point to the tool directory", () => {
-      const result = opencode.rewriteContent("@{{TOOLS}}/agents/alexia.md", "aidd_docs");
-      expect(result).toBe("@.opencode/agents/alexia.md");
-    });
-
-    it("include references in installed content point to the docs directory", () => {
-      const result = opencode.rewriteContent("@{{DOCS}}/memory/project.md", "aidd_docs");
-      expect(result).toBe("@aidd_docs/memory/project.md");
-    });
-
-    it("command cross-references in installed content use the AIDD-namespaced path", () => {
-      const result = opencode.rewriteContent("@{{TOOLS}}/commands/04_code/assert.md", "aidd_docs");
-      expect(result).toBe("@.opencode/commands/aidd/04/assert.md");
-    });
-
-    it("skills listing bare command paths produce working references in installed content", () => {
-      const result = opencode.rewriteContent(
-        "1. Brainstorm: {{TOOLS}}/commands/02_context/brainstorm.md",
-        "aidd_docs"
-      );
-      expect(result).toBe("1. Brainstorm: .opencode/commands/aidd/02/brainstorm.md");
-    });
-
-    it("command cross-references with @ prefix still produce working references in installed content", () => {
-      const result = opencode.rewriteContent(
-        "@{{TOOLS}}/commands/04_code/implement.md",
-        "aidd_docs"
-      );
-      expect(result).toBe("@.opencode/commands/aidd/04/implement.md");
-    });
-  });
-
-  describe("reverseRewriteContent()", () => {
-    it("tool include paths are restored to canonical placeholders when syncing back", () => {
-      const result = opencode.reverseRewriteContent("@.opencode/agents/alexia.md", "aidd_docs");
-      expect(result).toBe("@{{TOOLS}}/agents/alexia.md");
-    });
-
-    it("roundtrip: rewrite then reverse produces canonical content", () => {
-      const canonical = "Use @{{TOOLS}}/agents/alexia.md and @{{DOCS}}/CATALOG.md";
-      const rewritten = opencode.rewriteContent(canonical, "aidd_docs");
-      const reversed = opencode.reverseRewriteContent(rewritten, "aidd_docs");
-      expect(reversed).toBe(canonical);
-    });
-  });
-
   describe("capabilities.agents.buildInstallPath()", () => {
     it("builds path under .opencode/agents/", () => {
       const path = opencode.capabilities.agents.buildInstallPath("code-reviewer.md");
@@ -297,7 +240,7 @@ describe("opencode", () => {
   describe("capabilities.mcp.resolveOutput()", () => {
     const PROJECT_ROOT = "/project";
 
-    async function resolve(fs: FileSystem): Promise<string> {
+    async function resolve(fs: FileReader): Promise<string> {
       return opencode.capabilities.mcp.resolveOutput(PROJECT_ROOT, fs);
     }
 
@@ -317,23 +260,6 @@ describe("opencode", () => {
       await expect(resolve(makeFs(["opencode.json", "opencode.jsonc"]))).rejects.toThrow(
         OpencodeDualConfigError
       );
-    });
-  });
-
-  describe("capabilities.memory.buildInstallPath()", () => {
-    it("returns AGENTS.md for agentsMd template", () => {
-      expect(opencode.capabilities.memory.buildInstallPath("agentsMd")).toBe("AGENTS.md");
-    });
-
-    it("returns null for unknown template names", () => {
-      expect(opencode.capabilities.memory.buildInstallPath("unknown")).toBeNull();
-    });
-  });
-
-  describe("capabilities.memory.rewriteContent()", () => {
-    it("applies content rewriting to memory bank content", () => {
-      const result = opencode.capabilities.memory.rewriteContent("@{{TOOLS}}/agents/", "aidd_docs");
-      expect(result).toBe("@.opencode/agents/");
     });
   });
 

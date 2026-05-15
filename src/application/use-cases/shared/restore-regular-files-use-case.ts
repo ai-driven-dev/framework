@@ -1,8 +1,9 @@
 import { join } from "node:path";
 import { type FileHash, InstallationFile } from "../../../domain/models/file.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
-import { resolveRestoreDecision } from "./resolve-restore-decision.js";
+import { ResolveRestoreDecisionUseCase } from "./resolve-restore-decision.js";
 
 interface DriftEntry {
   relativePath: string;
@@ -33,7 +34,7 @@ export interface RegularFilesRestoreResult {
 
 export class RestoreRegularFilesUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader & FileWriter,
     private readonly prompter: Prompter
   ) {}
 
@@ -110,13 +111,12 @@ export class RestoreRegularFilesUseCase {
     const updatedHashMap = new Map(initialHashMap);
 
     for (const { relativePath, content, reason } of drift) {
-      const skip = await resolveRestoreDecision(
-        this.prompter,
+      const skip = await new ResolveRestoreDecisionUseCase(this.prompter).execute({
         relativePath,
         reason,
         force,
-        interactive
-      );
+        interactive,
+      });
       if (skip) {
         kept.push(relativePath);
         continue;

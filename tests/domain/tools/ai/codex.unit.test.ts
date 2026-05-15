@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  codex,
-  mergeCodexConfigToml,
-  reverseRewriteCodexContent,
-  rewriteCodexContent,
-} from "../../../../src/domain/tools/ai/codex.js";
+import { codex, mergeCodexConfigToml } from "../../../../src/domain/tools/ai/codex.js";
 import { getToolConfig } from "../../../../src/domain/tools/registry.js";
 
 describe("codex", () => {
@@ -20,34 +15,13 @@ describe("codex", () => {
     expect(codex.toolSuffix).toBe(".codex.md");
   });
 
-  it("has no signalDir", () => {
-    expect(codex.signalDir).toBeNull();
+  it("has signalDir pointing at .codex/commands", () => {
+    expect(codex.signalDir).toBe(".codex/commands");
   });
 
   it("is registered in the tool registry", () => {
     const config = getToolConfig("codex");
     expect(config.toolId).toBe("codex");
-  });
-
-  describe("rewriteContent()", () => {
-    it("replaces TOOLS placeholder with .codex/ directory", () => {
-      const result = codex.rewriteContent("{{TOOLS}}/agents/", "aidd_docs");
-      expect(result).toBe(".codex/agents/");
-    });
-
-    it("replaces DOCS placeholder with docs directory", () => {
-      const result = codex.rewriteContent("{{DOCS}}/memory/", "aidd_docs");
-      expect(result).toBe("aidd_docs/memory/");
-    });
-  });
-
-  describe("reverseRewriteContent()", () => {
-    it("round-trip: rewrite then reverse restores canonical content", () => {
-      const canonical = "Use @{{TOOLS}}/agents/ and {{DOCS}}/CATALOG.md";
-      const rewritten = codex.rewriteContent(canonical, "aidd_docs");
-      const reversed = codex.reverseRewriteContent(rewritten, "aidd_docs");
-      expect(reversed).toBe(canonical);
-    });
   });
 
   describe("capabilities.skills.buildInstallPath()", () => {
@@ -117,13 +91,53 @@ describe("codex", () => {
     });
   });
 
-  describe("capabilities.memory.buildInstallPath()", () => {
-    it("returns AGENTS.md for agentsMd template", () => {
-      expect(codex.capabilities.memory.buildInstallPath("agentsMd")).toBe("AGENTS.md");
+  describe("capabilities.commands.buildInstallPath()", () => {
+    it("maps phase-prefixed path to .codex/commands/aidd/<phase>/ subfolder", () => {
+      const path = codex.capabilities.commands.buildInstallPath("04_code/implement.md");
+      expect(path).toBe(".codex/commands/aidd/04/implement.md");
     });
 
-    it("returns null for unknown template names", () => {
-      expect(codex.capabilities.memory.buildInstallPath("unknown")).toBeNull();
+    it("maps top-level file to .codex/commands/aidd/ without phase", () => {
+      const path = codex.capabilities.commands.buildInstallPath("commit.md");
+      expect(path).toBe(".codex/commands/aidd/commit.md");
+    });
+  });
+
+  describe("capabilities.commands.convertFrontmatter()", () => {
+    it("prefixes name with aidd:<phase>: and strips extra fields", () => {
+      const fm = { name: "implement", description: "Implement", model: "sonnet" };
+      const result = codex.capabilities.commands.convertFrontmatter(fm, "04_code/implement.md");
+      expect(result).toEqual({ name: "aidd:04:implement", description: "Implement" });
+    });
+  });
+
+  describe("capabilities.commands.reverseConvertFrontmatter()", () => {
+    it("strips aidd:<phase>: prefix from name", () => {
+      const result = codex.capabilities.commands.reverseConvertFrontmatter({
+        name: "aidd:04:implement",
+        description: "Impl",
+      });
+      expect(result).toEqual({ name: "implement", description: "Impl" });
+    });
+  });
+
+  describe("capabilities.rules.buildInstallPath()", () => {
+    it("builds path for rules under .codex/rules/", () => {
+      const path = codex.capabilities.rules.buildInstallPath("01-standards/naming.md");
+      expect(path).toBe(".codex/rules/01-standards/naming.md");
+    });
+
+    it("strips .codex.md tool suffix from rules path", () => {
+      const path = codex.capabilities.rules.buildInstallPath("01-standards/naming.codex.md");
+      expect(path).toBe(".codex/rules/01-standards/naming.md");
+    });
+  });
+
+  describe("capabilities.rules.convertFrontmatter()", () => {
+    it("passes frontmatter through unchanged", () => {
+      const fm = { paths: ["src/**/*.ts"], description: "TS rules" };
+      const result = codex.capabilities.rules.convertFrontmatter(fm);
+      expect(result).toEqual(fm);
     });
   });
 
@@ -138,9 +152,106 @@ describe("codex", () => {
       expect(key).toEqual({ section: "skills", key: "my-skill/SKILL.md" });
     });
 
+    it("detects commands section for .codex/commands/aidd/ paths", () => {
+      const key = codex.detectUserFileSectionKey(".codex/commands/aidd/04/implement.md");
+      expect(key).toEqual({ section: "commands", key: "04/implement.md" });
+    });
+
+    it("detects rules section for .codex/rules/ paths", () => {
+      const key = codex.detectUserFileSectionKey(".codex/rules/01-standards/naming.md");
+      expect(key).toEqual({ section: "rules", key: "01-standards/naming.md" });
+    });
+
     it("returns null for unrecognised paths", () => {
       expect(codex.detectUserFileSectionKey("AGENTS.md")).toBeNull();
       expect(codex.detectUserFileSectionKey("unknown.json")).toBeNull();
+    });
+  });
+
+  describe("capabilities.plugins.marketplaceSettings", () => {
+    const ms = codex.capabilities.plugins.marketplaceSettings;
+
+    it("has marketplaceSettings configured", () => {
+      expect(ms).not.toBeNull();
+    });
+
+    it("writes to .codex/config.json", () => {
+      expect(ms?.settingsPath).toBe(".codex/config.json");
+    });
+
+    it("uses extraKnownMarketplaces as settings key", () => {
+      expect(ms?.settingsKey).toBe("extraKnownMarketplaces");
+    });
+
+    it("uses enabledPlugins as enabled plugins key", () => {
+      expect(ms?.enabledPluginsKey).toBe("enabledPlugins");
+    });
+
+    describe("toEntry()", () => {
+      it("returns directory entry for local source", () => {
+        const result = ms?.toEntry({
+          name: "my-plugin",
+          source: { kind: "local", path: "/workspace/my-plugin" },
+        });
+        expect(result).toEqual({
+          valueShape: "map",
+          key: "my-plugin",
+          value: { source: { source: "directory", path: "/workspace/my-plugin" } },
+        });
+      });
+
+      it("returns github entry for github source without ref", () => {
+        const result = ms?.toEntry({
+          name: "my-plugin",
+          source: { kind: "github", repo: "org/my-plugin" },
+        });
+        expect(result).toEqual({
+          valueShape: "map",
+          key: "my-plugin",
+          value: { source: { source: "github", repo: "org/my-plugin" } },
+        });
+      });
+
+      it("does not include ref in github source (ref dropped — not in documented spec)", () => {
+        const result = ms?.toEntry({
+          name: "my-plugin",
+          source: { kind: "github", repo: "org/my-plugin", ref: "v1.2.3" },
+        });
+        expect(result).toEqual({
+          valueShape: "map",
+          key: "my-plugin",
+          value: { source: { source: "github", repo: "org/my-plugin" } },
+        });
+      });
+
+      it("includes version when provided", () => {
+        const result = ms?.toEntry({
+          name: "my-plugin",
+          source: { kind: "github", repo: "org/my-plugin" },
+          version: "2.0.0",
+        });
+        expect(result).toEqual({
+          valueShape: "map",
+          key: "my-plugin",
+          value: { source: { source: "github", repo: "org/my-plugin" }, version: "2.0.0" },
+        });
+      });
+
+      it("returns null for unsupported source kind (npm)", () => {
+        const result = ms?.toEntry({
+          name: "my-plugin",
+          source: { kind: "npm", package: "my-plugin" },
+        });
+        expect(result).toBeNull();
+      });
+
+      it("returns null for unsupported source kind (url)", () => {
+        const result = ms?.toEntry({
+          name: "my-plugin",
+          source: { kind: "url", url: "https://example.com/plugin.zip" },
+        });
+        expect(result).toBeNull();
+      });
     });
   });
 });
@@ -224,105 +335,5 @@ codex_hooks = false
     const second = mergeCodexConfigToml(first, MCP_PAYLOAD);
     const count = (second.match(/\.agents\/skills/g) ?? []).length;
     expect(count).toBe(1);
-  });
-});
-
-describe("rewriteCodexContent()", () => {
-  it("replaces {{TOOLS}}/ placeholder with .codex/ directory", () => {
-    const result = rewriteCodexContent("{{TOOLS}}/agents/", {
-      directory: ".codex/",
-      docsDir: "aidd_docs",
-    });
-    expect(result).toBe(".codex/agents/");
-  });
-
-  it("replaces @{{TOOLS}}/ placeholder with @.codex/", () => {
-    const result = rewriteCodexContent("@{{TOOLS}}/agents/alexia.md", {
-      directory: ".codex/",
-      docsDir: "aidd_docs",
-    });
-    expect(result).toBe("@.codex/agents/alexia.md");
-  });
-
-  it("replaces {{DOCS}}/ placeholder with docs directory", () => {
-    const result = rewriteCodexContent("{{DOCS}}/memory/", {
-      directory: ".codex/",
-      docsDir: "aidd_docs",
-    });
-    expect(result).toBe("aidd_docs/memory/");
-  });
-
-  it("remaps .codex/skills/ to .agents/skills/aidd-", () => {
-    const result = rewriteCodexContent(".codex/skills/my-skill", {
-      directory: ".codex/",
-      docsDir: "aidd_docs",
-    });
-    expect(result).toBe(".agents/skills/aidd-my-skill");
-  });
-
-  it("remaps .codex/commands/ to .agents/skills/aidd-", () => {
-    const result = rewriteCodexContent(".codex/commands/my-cmd", {
-      directory: ".codex/",
-      docsDir: "aidd_docs",
-    });
-    expect(result).toBe(".agents/skills/aidd-my-cmd");
-  });
-});
-
-describe("reverseRewriteCodexContent()", () => {
-  it("restores .codex/ directory to {{TOOLS}}/ placeholder", () => {
-    const result = reverseRewriteCodexContent(".codex/agents/", "aidd_docs");
-    expect(result).toBe("{{TOOLS}}/agents/");
-  });
-
-  it("restores @.codex/ to @{{TOOLS}}/", () => {
-    const result = reverseRewriteCodexContent("@.codex/agents/alexia.md", "aidd_docs");
-    expect(result).toBe("@{{TOOLS}}/agents/alexia.md");
-  });
-
-  it("reverses .agents/skills/aidd-{phase}-{name} to {{TOOLS}}/commands/{name}", () => {
-    const result = reverseRewriteCodexContent(".agents/skills/aidd-04-implement", "aidd_docs");
-    expect(result).toBe("{{TOOLS}}/commands/implement");
-  });
-
-  it("reverses .agents/skills/aidd-{name} (no phase) to {{TOOLS}}/skills/{name}", () => {
-    const result = reverseRewriteCodexContent(".agents/skills/aidd-my-skill", "aidd_docs");
-    expect(result).toBe("{{TOOLS}}/skills/my-skill");
-  });
-
-  it("round-trip: rewrite then reverse restores canonical content", () => {
-    const canonical = "Use @{{TOOLS}}/agents/ and {{DOCS}}/CATALOG.md";
-    const rewritten = rewriteCodexContent(canonical, {
-      directory: ".codex/",
-      docsDir: "aidd_docs",
-    });
-    const reversed = reverseRewriteCodexContent(rewritten, "aidd_docs");
-    expect(reversed).toBe(canonical);
-  });
-
-  describe("capabilities.plugins", () => {
-    it("has a plugins capability", () => {
-      expect("plugins" in codex.capabilities).toBe(true);
-    });
-
-    it("is native mode", () => {
-      expect(codex.capabilities.plugins.mode).toBe("native");
-    });
-
-    it("uses .codex/plugins/ as plugins directory", () => {
-      expect(codex.capabilities.plugins.pluginsDir).toBe(".codex/plugins/");
-    });
-
-    it("uses .codex-plugin/plugin.json as plugin manifest path", () => {
-      expect(codex.capabilities.plugins.pluginManifestRelativePath).toBe(
-        ".codex-plugin/plugin.json"
-      );
-    });
-
-    it("pluginOutputDir returns correct path for a plugin name", () => {
-      expect(codex.capabilities.plugins.pluginOutputDir("my-plugin")).toBe(
-        ".codex/plugins/my-plugin/"
-      );
-    });
   });
 });

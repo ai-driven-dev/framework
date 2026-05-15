@@ -9,16 +9,23 @@ import "../../../src/domain/tools/ai/opencode.js";
 import "../../../src/domain/tools/ide/vscode.js";
 import { CLIOutput } from "../../../src/application/output.js";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
-import { InstallUseCase } from "../../../src/application/use-cases/install/install-use-case.js";
+import { InstallIdeConfigUseCase } from "../../../src/application/use-cases/install/install-ide-config-use-case.js";
+import { InstallRuntimeConfigUseCase } from "../../../src/application/use-cases/install/install-runtime-config-use-case.js";
+import { Manifest } from "../../../src/domain/models/manifest.js";
 import type { Platform } from "../../../src/domain/ports/platform.js";
 import type { Prompter } from "../../../src/domain/ports/prompter.js";
 import type { VersionControl } from "../../../src/domain/ports/version-control.js";
-import type { ToolId } from "../../../src/domain/tools/registry.js";
-import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
-import { FrameworkLoaderAdapter } from "../../../src/infrastructure/adapters/framework-loader-adapter.js";
+import type { VersionReader } from "../../../src/domain/ports/version-reader.js";
+import { isIdeToolId, type ToolId } from "../../../src/domain/tools/registry.js";
+import { CurrentVersionAdapter } from "../../../src/infrastructure/adapters/current-version-adapter.js";
+import { FileAdapter } from "../../../src/infrastructure/adapters/file-adapter.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
 import { ManifestRepositoryAdapter } from "../../../src/infrastructure/adapters/manifest-repository-adapter.js";
+import { PluginCatalogRepositoryAdapter } from "../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
+import { PluginDistributionReaderAdapter } from "../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
+import { PluginFetcherAdapter } from "../../../src/infrastructure/adapters/plugin-fetcher-adapter.js";
 import { SilentPrompterAdapter } from "../../../src/infrastructure/adapters/prompter-adapter.js";
+import { BundledAssetProviderAdapter } from "../../../src/infrastructure/assets/asset-loader.js";
 
 export const linuxPlatform: Platform = { current: () => "linux" };
 export const win32Platform: Platform = { current: () => "win32" };
@@ -177,11 +184,41 @@ export const FIXTURE_DIR_V2 = join(process.cwd(), "tests/fixtures/framework-v2")
 
 export function buildDeps(projectRoot: string) {
   const hasher = new HasherAdapter();
-  const fs = new FileSystemAdapter(hasher);
+  const fs = new FileAdapter(hasher);
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
-  const loader = new FrameworkLoaderAdapter();
   const logger = new CLIOutput(false);
-  return { hasher, fs, manifestRepo, loader, logger };
+  const assetProvider = new BundledAssetProviderAdapter();
+  const pluginFetcher = new PluginFetcherAdapter(fs);
+  const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
+  const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
+  const installRuntimeConfigUseCase = new InstallRuntimeConfigUseCase(
+    fs,
+    manifestRepo,
+    hasher,
+    logger,
+    assetProvider
+  );
+  const installIdeConfigUseCase = new InstallIdeConfigUseCase(
+    fs,
+    manifestRepo,
+    hasher,
+    logger,
+    assetProvider
+  );
+  const currentVersionProvider: VersionReader = new CurrentVersionAdapter();
+  return {
+    hasher,
+    fs,
+    manifestRepo,
+    logger,
+    assetProvider,
+    pluginFetcher,
+    pluginDistributionReader,
+    pluginCatalogRepository,
+    installRuntimeConfigUseCase,
+    installIdeConfigUseCase,
+    currentVersionProvider,
+  };
 }
 
 export async function createTempProject(): Promise<{ tempDir: string; projectRoot: string }> {
@@ -199,18 +236,8 @@ export async function initProject(
   deps: ReturnType<typeof buildDeps>,
   projectRoot: string
 ): Promise<void> {
-  const initUseCase = new InitUseCase(
-    deps.fs,
-    deps.manifestRepo,
-    deps.loader,
-    deps.hasher,
-    deps.logger,
-    new SilentPrompterAdapter()
-  );
+  const initUseCase = new InitUseCase(deps.fs, deps.manifestRepo);
   await initUseCase.execute({
-    frameworkPath: FIXTURE_DIR,
-    version: "test",
-    docsDir: "aidd_docs",
     projectRoot,
   });
 }
@@ -220,25 +247,24 @@ export async function installTool(
   projectRoot: string,
   toolId: ToolId
 ) {
-  const installUseCase = new InstallUseCase(
-    deps.fs,
-    deps.manifestRepo,
-    deps.loader,
-    deps.hasher,
-    deps.logger,
-    noGit,
-    linuxPlatform,
-    new SilentPrompterAdapter()
-  );
-  const results = await installUseCase.execute({
-    toolIds: [toolId],
-    frameworkPath: FIXTURE_DIR,
-    version: "test",
-    docsDir: "aidd_docs",
+  const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+  const version = "test";
+  if (isIdeToolId(toolId)) {
+    return deps.installIdeConfigUseCase.execute({
+      toolId,
+      projectRoot,
+      manifest,
+      force: false,
+      version,
+    });
+  }
+  return deps.installRuntimeConfigUseCase.execute({
+    toolId,
     projectRoot,
-    mcpFilter: ["playwright", "github"],
+    manifest,
+    force: false,
+    version,
   });
-  return results[0];
 }
 
 export async function initAndInstall(

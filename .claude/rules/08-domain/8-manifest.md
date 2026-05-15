@@ -30,9 +30,3 @@ paths:
 - Framework content may be JSONC — `extractMergeEntries` strips comments
 - `isFileTracked()` checks both `files` and `mergeFiles`
 - Uninstall/clean must delete merge files alongside regular files
-
-## Field ownership
-
-- Writable: `docsDir`, `repo`
-- Read-only: `tools` (modified only by install/uninstall use-cases)
-- Framework repo resolution: `--repo` flag > `AIDD_REPO` env > manifest `repo` field > default `ai-driven-dev/aidd-framework`

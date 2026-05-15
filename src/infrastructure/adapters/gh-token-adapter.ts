@@ -1,6 +1,6 @@
 import { AuthenticationError } from "../../domain/errors.js";
 import type { TokenAuthProvider } from "../../domain/ports/oauth-provider.js";
-import type { HttpClient } from "../http/http-client.js";
+import type { HttpClient } from "./http-client.js";
 
 export class GhTokenAdapter implements TokenAuthProvider {
   constructor(private readonly http: HttpClient) {}

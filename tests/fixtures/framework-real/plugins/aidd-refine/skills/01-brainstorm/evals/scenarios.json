@@ -1,0 +1,8 @@
+[
+  { "prompt": "Build a chat app but I'm not sure about the details", "expect_action": "capture-request" },
+  { "prompt": "I have an idea for a feature but it's vague", "expect_action": "capture-request" },
+  { "prompt": "Need to clarify these requirements", "expect_action": "capture-request" },
+  { "prompt": "The specs are clear, implement the login feature", "expect_action": null },
+  { "prompt": "Write code for user authentication", "expect_action": null },
+  { "prompt": "Debug this error in the app", "expect_action": null }
+]

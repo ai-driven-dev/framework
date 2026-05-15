@@ -8,7 +8,7 @@ import type {
   CredentialStore,
 } from "../../domain/ports/credential-store.js";
 import type { CliAuthProvider, TokenAuthProvider } from "../../domain/ports/oauth-provider.js";
-import type { AuthStorage } from "../auth/auth-storage.js";
+import type { AuthStorage } from "./auth-storage.js";
 
 export class AuthProviderAdapter implements CredentialStore {
   constructor(
@@ -28,9 +28,10 @@ export class AuthProviderAdapter implements CredentialStore {
   }
 
   async status(): Promise<AuthStatus> {
-    const config = await this.readActiveConfig();
+    const config = await this.storage.readActive(this.projectRoot);
+    if (config === null) return { authenticated: false };
     const login = await this.verifyConfig(config);
-    return { login, level: config.level };
+    return { authenticated: true, login, level: config.level };
   }
 
   async logout(): Promise<AuthLogoutResult> {
@@ -51,12 +52,6 @@ export class AuthProviderAdapter implements CredentialStore {
       return { found: true, level: userConfig.level, hint: this.logoutHint(userConfig.method) };
     }
     return { found: false };
-  }
-
-  private async readActiveConfig(): Promise<AuthConfig> {
-    const config = await this.storage.readActive(this.projectRoot);
-    if (config === null) throw new AuthenticationError("not authenticated");
-    return config;
   }
 
   private async verifyConfig(config: AuthConfig): Promise<string> {

@@ -1,0 +1,51 @@
+[
+  {
+    "key": "cmd+k cmd+o",
+    "command": "workbench.action.files.openFolder"
+  },
+  {
+    "key": "ctrl+shift+v",
+    "command": "editor.action.pasteAs",
+    "args": {
+      "preferences": [
+        "text.updateImports"
+      ]
+    }
+  },
+  {
+    "key": "cmd+n",
+    "command": "explorer.newFile"
+  },
+  {
+    "key": "f12",
+    "command": "git.openFile",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "f12",
+    "command": "editor.action.revealDefinition",
+    "when": "editorFocus"
+  },
+  {
+    "key": "ctrl+m",
+    "command": "cursor.generateGitCommitMessage"
+  },
+  {
+    "key": "shift+cmd+k",
+    "command": "-aipopup.action.modal.generate"
+  },
+  {
+    "key": "shift+cmd+k",
+    "command": "editor.action.deleteLines",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "cmd+y",
+    "command": "editor.action.deleteLines",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "cmd+shift+b",
+    "command": "workbench.action.toggleAuxiliaryBar"
+  }
+]

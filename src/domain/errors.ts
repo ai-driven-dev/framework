@@ -9,9 +9,7 @@ export class AuthenticationError extends Error {
 
 export class NoFrameworkSourceError extends Error {
   constructor() {
-    super(
-      "No framework source configured. Use --path for a local framework or --repo owner/repo for a remote one."
-    );
+    super("No framework source configured. Use --path for a local framework path.");
     this.name = "NoFrameworkSourceError";
   }
 }
@@ -74,13 +72,6 @@ export class ToolNotInManifestError extends Error {
   constructor(toolId: string) {
     super(`Tool '${toolId}' is not installed in the manifest.`);
     this.name = "ToolNotInManifestError";
-  }
-}
-
-export class InvalidRepoFormatError extends Error {
-  constructor() {
-    super("Invalid repository format. Expected: owner/repo");
-    this.name = "InvalidRepoFormatError";
   }
 }
 
@@ -257,5 +248,42 @@ export class InteractiveOnlyError extends Error {
   constructor(action: string) {
     super(`'${action}' requires an interactive terminal.`);
     this.name = "InteractiveOnlyError";
+  }
+}
+
+export class ForeignSchemaValidationError extends Error {
+  constructor(source: string, detail: string) {
+    super(`Foreign marketplace schema validation failed (${source}): ${detail}`);
+    this.name = "ForeignSchemaValidationError";
+  }
+}
+
+export class CatalogFetchNotFoundError extends Error {
+  constructor(url: string) {
+    super(`Catalog not found (HTTP 404): ${url}`);
+    this.name = "CatalogFetchNotFoundError";
+  }
+}
+
+export class CatalogFetchAuthError extends Error {
+  constructor(url: string) {
+    super(
+      `Authentication required to fetch catalog from "${url}". Run \`aidd auth login\` first or use \`--source local --path <dir>\`.`
+    );
+    this.name = "CatalogFetchAuthError";
+  }
+}
+
+export class CatalogFetchError extends Error {
+  constructor(url: string, detail: string) {
+    super(`Failed to fetch catalog from "${url}": ${detail}`);
+    this.name = "CatalogFetchError";
+  }
+}
+
+export class MissingPluginVersionError extends Error {
+  constructor() {
+    super("Cannot register github marketplace plugin: catalog entry is missing a version field.");
+    this.name = "MissingPluginVersionError";
   }
 }

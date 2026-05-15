@@ -1,14 +1,14 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { InvalidPluginManifestError, InvalidPluginNameError } from "../../../src/domain/errors.js";
-import { FileSystemAdapter } from "../../../src/infrastructure/adapters/file-system-adapter.js";
+import { FileAdapter } from "../../../src/infrastructure/adapters/file-adapter.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins");
 
 function makeAdapter(): PluginDistributionReaderAdapter {
-  return new PluginDistributionReaderAdapter(new FileSystemAdapter(new HasherAdapter()));
+  return new PluginDistributionReaderAdapter(new FileAdapter(new HasherAdapter()));
 }
 
 describe("PluginDistributionReaderAdapter", () => {
@@ -17,6 +17,14 @@ describe("PluginDistributionReaderAdapter", () => {
       const adapter = makeAdapter();
       const dist = await adapter.read(join(FIXTURE_DIR, "claude-format/sample-plugin"));
       expect(dist.format).toBe("claude");
+    });
+
+    it("includes all hooks/ files including companion scripts", async () => {
+      const adapter = makeAdapter();
+      const dist = await adapter.read(join(FIXTURE_DIR, "claude-format/sample-plugin"));
+      const paths = dist.files.map((f) => f.relativePath);
+      expect(paths).toContain("hooks/hooks.json");
+      expect(paths).toContain("hooks/update_memory.js");
     });
 
     it("parses manifest fields", async () => {

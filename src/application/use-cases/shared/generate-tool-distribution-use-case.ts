@@ -1,13 +1,14 @@
 import { type InstallationFile, removeRedundantGitkeeps } from "../../../domain/models/file.js";
 import type { ContentSection, FrameworkDescriptor } from "../../../domain/models/framework.js";
-import type { FileSystem } from "../../../domain/ports/file-system.js";
+import type { AiToolId } from "../../../domain/models/tool-ids.js";
+import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Platform } from "../../../domain/ports/platform.js";
 import type {
   AiTool,
   HasAgents,
   HasCommands,
-  HasMemory,
   HasRules,
   HasSkills,
 } from "../../../domain/tools/contracts.js";
@@ -18,7 +19,6 @@ import {
   extractConfigCapabilities,
   InstallConfigUseCase,
 } from "../install/install-config-use-case.js";
-import { InstallMemoryBankUseCase } from "../install/install-memory-bank-use-case.js";
 import { InstallRulesUseCase } from "../install/install-rules-use-case.js";
 import { InstallSkillsUseCase } from "../install/install-skills-use-case.js";
 
@@ -32,9 +32,10 @@ interface GenerateToolDistributionOptions {
 
 export class GenerateToolDistributionUseCase {
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: FileReader,
     private readonly hasher: Hasher,
-    private readonly platform: Platform
+    private readonly platform: Platform,
+    private readonly assetProvider?: AssetProvider
   ) {}
 
   async execute(options: GenerateToolDistributionOptions): Promise<InstallationFile[]> {
@@ -82,14 +83,10 @@ export class GenerateToolDistributionUseCase {
       contentFiles,
       projectRoot,
       platform: this.platform,
+      assetProvider: this.assetProvider,
+      toolId: config.toolId as AiToolId,
     });
-    const memoryFiles = new InstallMemoryBankUseCase(this.hasher).execute({
-      toolConfig: config as AiTool<HasMemory>,
-      templateRefs: descriptor.templateRefs,
-      contentFiles,
-      docsDir,
-    });
-    return removeRedundantGitkeeps([...sectionFiles, ...configFiles, ...memoryFiles]);
+    return removeRedundantGitkeeps([...sectionFiles, ...configFiles]);
   }
 
   private generateCapabilitySectionFiles(

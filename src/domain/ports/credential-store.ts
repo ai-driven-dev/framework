@@ -7,10 +7,9 @@ export interface AuthLoginResult {
   level: AuthLevel;
 }
 
-export interface AuthStatus {
-  login: string;
-  level: AuthLevel;
-}
+export type AuthStatus =
+  | { authenticated: true; login: string; level: AuthLevel }
+  | { authenticated: false };
 
 export type AuthLogoutResult =
   | { found: false }

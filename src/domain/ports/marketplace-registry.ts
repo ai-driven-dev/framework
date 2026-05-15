@@ -10,4 +10,10 @@ export interface MarketplaceRegistry {
     scope: MarketplaceScope,
     when: string
   ): Promise<void>;
+  updateVersion(
+    projectRoot: string,
+    name: string,
+    scope: MarketplaceScope,
+    version: string
+  ): Promise<void>;
 }

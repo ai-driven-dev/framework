@@ -15,8 +15,8 @@ export class SilentPrompterAdapter implements Prompter {
     return "overwrite";
   }
 
-  async confirm(_message: string): Promise<boolean> {
-    return true;
+  async confirm(_message: string, defaultValue?: boolean): Promise<boolean> {
+    return defaultValue ?? true;
   }
 
   async input(_message: string, defaultValue?: string): Promise<string> {
@@ -62,8 +62,8 @@ export class InquirerPrompterAdapter implements Prompter {
     );
   }
 
-  async confirm(message: string): Promise<boolean> {
-    return confirm({ message, default: false }, this.context);
+  async confirm(message: string, defaultValue?: boolean): Promise<boolean> {
+    return confirm({ message, default: defaultValue ?? false }, this.context);
   }
 
   async input(message: string, defaultValue?: string): Promise<string> {

@@ -53,6 +53,18 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
     await this.write(path, updated);
   }
 
+  async updateVersion(
+    projectRoot: string,
+    name: string,
+    scope: MarketplaceScope,
+    version: string
+  ): Promise<void> {
+    const path = this.pathFor(projectRoot, scope);
+    const entries = await this.read(path, scope);
+    const updated = entries.map((m) => (m.name === name ? m.withVersion(version) : m));
+    await this.write(path, updated);
+  }
+
   private pathFor(projectRoot: string, scope: MarketplaceScope): string {
     return scope === "project" ? this.projectPath(projectRoot) : this.userPath();
   }
@@ -62,7 +74,9 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
   }
 
   private userPath(): string {
-    return join(homedir(), ".config", "aidd", REGISTRY_FILENAME);
+    const override = process.env.AIDD_USER_CONFIG_DIR;
+    const dir = override ?? join(homedir(), ".config", "aidd");
+    return join(dir, REGISTRY_FILENAME);
   }
 
   private async read(path: string, scope: MarketplaceScope): Promise<Marketplace[]> {

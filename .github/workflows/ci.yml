@@ -38,6 +38,7 @@ jobs:
       - uses: wagoid/commitlint-github-action@v6
         with:
           configFile: commitlint.config.cjs
+          commitDepth: 30
 
   typecheck:
     name: Typecheck
@@ -68,7 +69,23 @@ jobs:
       - run: pnpm lint
 
   test:
-    name: Test & Coverage
+    name: Test
+    runs-on: ubuntu-latest
+    needs: [commitlint]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install expect (TTY persona tests)
+        run: sudo apt-get update && sudo apt-get install -y expect
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+
+  build:
+    name: Build & Bundle Budget
     runs-on: ubuntu-latest
     needs: [commitlint]
     steps:
@@ -79,7 +96,7 @@ jobs:
           node-version: "24"
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test -- --coverage
+      - run: pnpm build
 
   knip:
     name: Knip (dead code)
@@ -114,13 +131,14 @@ jobs:
   release-please:
     name: Release Please
     runs-on: ubuntu-latest
-    needs: [typecheck, lint, test, knip, jscpd]
+    needs: [typecheck, lint, test, build, knip, jscpd]
     if: |
       always() &&
       github.event_name == 'push' &&
       (needs.typecheck.result == 'success' || needs.typecheck.result == 'skipped') &&
       (needs.lint.result == 'success' || needs.lint.result == 'skipped') &&
       (needs.test.result == 'success' || needs.test.result == 'skipped') &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped') &&
       (needs.knip.result == 'success' || needs.knip.result == 'skipped') &&
       (needs.jscpd.result == 'success' || needs.jscpd.result == 'skipped')
     outputs:
