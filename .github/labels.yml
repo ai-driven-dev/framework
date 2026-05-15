@@ -1,0 +1,83 @@
+# Canonical issue and PR label list for ai-driven-dev/aidd-framework.
+#
+# This file is the source of truth. When the GitHub label set drifts from
+# this file, sync manually with:
+#
+#   for label in $(yq '.[].name' .github/labels.yml); do ... ; done
+#
+# or use a sync action (e.g. EndBug/label-sync@v2 driven by a workflow_dispatch
+# job). Kept here for visibility; orchestrator-related labels are also
+# created on-the-fly by aidd-orchestrator:01:setup-async-dev on any repo
+# where the plugin is installed.
+
+# --- Triage --------------------------------------------------------------
+
+- name: bug
+  description: Something isn't working
+  color: d73a4a
+
+- name: enhancement
+  description: New feature or request
+  color: a2eeef
+
+- name: documentation
+  description: Improvements or additions to documentation
+  color: 0075ca
+
+- name: security
+  description: Security-sensitive issue or fix
+  color: B60205
+
+- name: good first issue
+  description: Good for newcomers
+  color: 7057ff
+
+- name: help wanted
+  description: Extra attention is needed
+  color: 008672
+
+# --- Dependencies --------------------------------------------------------
+
+- name: dependencies
+  description: Dependency update (dependabot)
+  color: 0366d6
+
+- name: github-actions
+  description: GitHub Actions workflow change
+  color: "000000"
+
+- name: npm
+  description: npm dependency update
+  color: cb3837
+
+# --- Release tooling -----------------------------------------------------
+
+- name: "autorelease: pending"
+  description: Release Please release PR awaiting merge
+  color: ededed
+
+- name: "autorelease: tagged"
+  description: Release Please release tagged
+  color: ededed
+
+# --- Orchestrator lifecycle (managed by aidd-orchestrator) ---------------
+
+- name: to-implement
+  description: "Human request: Claude, implement this issue"
+  color: 0E8A16
+
+- name: to-review
+  description: "Human request: Claude, apply the review feedback on the linked PR"
+  color: 0E8A16
+
+- name: claude/working
+  description: Claude is working (lock)
+  color: FBCA04
+
+- name: claude/awaiting-review
+  description: Claude opened a PR; waiting for human review
+  color: 1D76DB
+
+- name: claude/blocked
+  description: Failure or dependency blocker; human takeover required
+  color: B60205

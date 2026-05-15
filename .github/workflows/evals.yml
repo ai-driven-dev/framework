@@ -1,0 +1,75 @@
+name: Evals
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate evals/scenarios.json
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Validate every scenarios.json
+        run: |
+          set -euo pipefail
+          fail=0
+          total_skills=0
+          total_scenarios=0
+          uncovered=()
+          while IFS= read -r f; do
+            total_skills=$((total_skills + 1))
+            if [ ! -f "$f" ]; then
+              echo "::error file=$f::evals/scenarios.json missing"
+              uncovered+=("$(dirname "$f")")
+              fail=1
+              continue
+            fi
+            if ! jq empty "$f" >/dev/null 2>&1; then
+              echo "::error file=$f::invalid JSON"
+              fail=1
+              continue
+            fi
+            type=$(jq -r 'type' "$f")
+            if [ "$type" != "array" ]; then
+              echo "::error file=$f::root must be an array, got $type"
+              fail=1
+              continue
+            fi
+            count=$(jq 'length' "$f")
+            if [ "$count" -lt 1 ]; then
+              echo "::warning file=$f::no scenarios declared"
+            fi
+            # Each scenario must have prompt + expect_action (or expect_skip)
+            invalid=$(jq '[.[] | select((.prompt == null) or (.expect_action == null and .expect_skip == null and .expect == null))] | length' "$f")
+            if [ "$invalid" -gt 0 ]; then
+              echo "::error file=$f::$invalid scenario(s) missing required fields (prompt + expect_action/expect_skip/expect)"
+              fail=1
+              continue
+            fi
+            total_scenarios=$((total_scenarios + count))
+          done < <(find plugins -path 'plugins/*/skills/*/evals/scenarios.json')
+
+          # Find skills missing their evals file entirely.
+          while IFS= read -r skill_dir; do
+            if [ ! -f "$skill_dir/evals/scenarios.json" ]; then
+              echo "::warning::skill $skill_dir has no evals/scenarios.json"
+              uncovered+=("$skill_dir")
+            fi
+          done < <(find plugins -mindepth 3 -maxdepth 3 -type d -name '[0-9][0-9]-*' -path 'plugins/*/skills/*')
+
+          echo ""
+          echo "Skills with evals/scenarios.json: $total_skills"
+          echo "Total scenarios: $total_scenarios"
+          if [ ${#uncovered[@]} -gt 0 ]; then
+            echo "Uncovered skills:"
+            printf '  - %s\n' "${uncovered[@]}"
+          fi
+          exit $fail

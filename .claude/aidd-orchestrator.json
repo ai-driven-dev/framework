@@ -16,10 +16,7 @@
   "claude_action_auth": {
     "mode": "oauth_token",
     "default_secret_name": "CLAUDE_CODE_OAUTH_TOKEN",
-    "account_routing": {
-      "alexsoyes": "CLAUDE_CODE_OAUTH_TOKEN_ALEX",
-      "blafourcade": "CLAUDE_CODE_OAUTH_TOKEN_BAPTISTE"
-    }
+    "account_routing": {}
   },
   "marketplace": {
     "repo": "ai-driven-dev/aidd-framework",
