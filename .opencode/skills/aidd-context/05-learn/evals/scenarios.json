@@ -1,0 +1,21 @@
+[
+  { "prompt": "Update the memory bank after implementing the auth feature", "expect_action": "scope" },
+  { "prompt": "Capture what we learned from this sprint into project memory", "expect_action": "scope" },
+  { "prompt": "Store the decision to use Redis for caching as an ADR", "expect_action": "scope" },
+  { "prompt": "Update the coding rules with the new pattern we adopted", "expect_action": "scope" },
+  { "prompt": "Learn from this implementation and update project context", "expect_action": "scope" },
+  { "prompt": "For next we have to keep this rule: always check context-generate when creating skills, agents, commands, or rules", "expect_action": "scope" },
+  { "prompt": "From now on, all DB writes go through the repository layer, never the ORM directly", "expect_action": "scope" },
+  { "prompt": "We switched from REST to GraphQL because of nested query needs", "expect_action": "scope" },
+  { "prompt": "Next time we should mock the network layer at the fetch boundary, not at the component", "expect_action": "scope" },
+  { "prompt": "Deprecated the legacy auth middleware, all routes now use the new guard", "expect_action": "scope" },
+  { "prompt": "Remember that I prefer concise answers", "expect_action": null },
+  { "prompt": "Always call me Baptiste, never Bap", "expect_action": null },
+  { "prompt": "Fixed a typo in README", "expect_action": null },
+  { "prompt": "Renamed variable foo to bar", "expect_action": null },
+  { "prompt": "Bumped lodash to 4.17.21", "expect_action": null },
+  { "prompt": "Refactored auth middleware", "expect_action": null },
+  { "prompt": "Generate a Mermaid diagram for the auth flow", "expect_action": null },
+  { "prompt": "Help me discover what skills are available", "expect_action": null },
+  { "prompt": "Create an implementation plan for the dashboard", "expect_action": null }
+]

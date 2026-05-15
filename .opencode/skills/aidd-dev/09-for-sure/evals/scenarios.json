@@ -1,0 +1,17 @@
+[
+  { "prompt": "For sure make all tests pass", "expect_action": "init-tracking" },
+  { "prompt": "Make sure the deployment succeeds", "expect_action": "init-tracking" },
+  { "prompt": "Keep trying until the CI pipeline is green", "expect_action": "init-tracking" },
+  { "prompt": "Loop until done: get the linter to exit 0", "expect_action": "init-tracking" },
+  { "prompt": "Don't stop until all tests pass and coverage is above 80%", "expect_action": "init-tracking" },
+  { "prompt": "For sure fix this until tests are green", "expect_action": "init-tracking" },
+  { "prompt": "Keep looping until the build succeeds", "expect_action": "init-tracking" },
+  { "prompt": "Loop until done: all assertions pass", "expect_action": "init-tracking" },
+  { "prompt": "Make sure the lint exits zero, retry until it does", "expect_action": "init-tracking" },
+  { "prompt": "Ne lâche pas tant que les tests ne passent pas", "expect_action": "init-tracking" },
+  { "prompt": "Boucle jusqu'à ce que le CI soit vert", "expect_action": "init-tracking" },
+  { "prompt": "For sure jusqu'à ce que ça marche", "expect_action": "init-tracking" },
+  { "prompt": "Write a plan for the authentication feature", "expect_action": null },
+  { "prompt": "Review my code for quality issues", "expect_action": null },
+  { "prompt": "Run the tests once and report results", "expect_action": null }
+]

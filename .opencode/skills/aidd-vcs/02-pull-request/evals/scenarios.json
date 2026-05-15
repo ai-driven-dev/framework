@@ -1,0 +1,19 @@
+[
+  { "prompt": "Open a pull request", "expect_action": "pull-request" },
+  { "prompt": "/pull-request", "expect_action": "pull-request" },
+  { "prompt": "Create a merge request from this branch", "expect_action": "pull-request" },
+  { "prompt": "Draft a PR for the current branch", "expect_action": "pull-request" },
+  { "prompt": "Open PR", "expect_action": "pull-request" },
+  { "prompt": "Submit a merge request", "expect_action": "pull-request" },
+  { "prompt": "Make a draft pull request", "expect_action": "pull-request" },
+  { "prompt": "Open MR", "expect_action": "pull-request" },
+  { "prompt": "Ouvre une PR", "expect_action": "pull-request" },
+  { "prompt": "Crée une merge request", "expect_action": "pull-request" },
+  { "prompt": "Demande de merge sur main", "expect_action": "pull-request" },
+  { "prompt": "Soumets une pull request", "expect_action": "pull-request" },
+  { "prompt": "Commit my changes", "expect_action": null },
+  { "prompt": "Push the current branch", "expect_action": null },
+  { "prompt": "Tag this release v1.2.0", "expect_action": null },
+  { "prompt": "Review this pull request", "expect_action": null },
+  { "prompt": "Merge that pull request now", "expect_action": null }
+]

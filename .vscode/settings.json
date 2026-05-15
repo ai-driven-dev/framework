@@ -1,3 +1,65 @@
 {
-    "specstory.cloudSync.enabled": "never"
+  "specstory.cloudSync.enabled": "never",
+  "accessibility.signals.chatEditModifiedFile": {
+    "sound": "auto"
+  },
+  "accessibility.signals.chatResponseReceived": {
+    "sound": "auto"
+  },
+  "accessibility.signals.chatUserActionRequired": {
+    "sound": "auto",
+    "announcement": "auto"
+  },
+  "chat.agent.maxRequests": 200,
+  "chat.instructionsFilesLocations": {
+    ".github/instructions": true
+  },
+  "chat.notifyWindowOnConfirmation": true,
+  "chat.notifyWindowOnResponseReceived": true,
+  "chat.plugins.enabled": true,
+  "chat.tools.edits.autoApprove": {
+    "**/*": true,
+    "**/.vscode/*.json": false,
+    "**/.git/**": false,
+    "**/{package.json,package-lock.json,server.xml,build.rs,web.config,.gitattributes,.env}": false,
+    "**/*.{code-workspace,csproj,fsproj,vbproj,vcxproj,proj,targets,props}": false
+  },
+  "chat.tools.global.autoApprove": true,
+  "chat.tools.terminal.autoApprove": {
+    "npm": true,
+    "npx": true,
+    "pnpm": true,
+    "git": true,
+    "pkill": true,
+    "killall": true,
+    "kill": true
+  },
+  "chat.tools.terminal.enableAutoApprove": true,
+  "chat.tools.urls.autoApprove": {
+    "*": true
+  },
+  "chat.useAgentSkills": true,
+  "chat.useAgentsMdFile": true,
+  "chat.useNestedAgentsMdFiles": true,
+  "github.copilot.chat.agent.autoFix": true,
+  "github.copilot.chat.cli.mcp.enabled": true,
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+  "github.copilot.chat.codesearch.enabled": true,
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "file": "aidd_docs/templates/vcs/commit.md"
+    }
+  ],
+  "github.copilot.chat.edits.suggestRelatedFilesFromGitHistory": true,
+  "github.copilot.chat.pullRequestDescriptionGeneration.instructions": [
+    {
+      "file": "aidd_docs/templates/vcs/pull_request.md"
+    }
+  ],
+  "github.copilot.chat.summarizeAgentConversationHistory.enabled": true,
+  "github.copilot.enable": {
+    "*": true,
+    "markdown": true
+  },
+  "github.copilot.nextEditSuggestions.enabled": true
 }

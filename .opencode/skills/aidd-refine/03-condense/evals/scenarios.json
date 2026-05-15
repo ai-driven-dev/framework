@@ -1,0 +1,20 @@
+[
+  { "prompt": "Condense your output", "expect_action": "condense" },
+  { "prompt": "Be more concise from now on", "expect_action": "condense" },
+  { "prompt": "/condense full", "expect_action": "condense" },
+  { "prompt": "/condense ultra", "expect_action": "condense" },
+  { "prompt": "/condense lite", "expect_action": "condense" },
+  { "prompt": "Stop condense", "expect_action": "condense" },
+  { "prompt": "Normal mode", "expect_action": "condense" },
+  { "prompt": "Tighten output", "expect_action": "condense" },
+  { "prompt": "Shorter answers please", "expect_action": "condense" },
+  { "prompt": "/condense-stats", "expect_action": "stats" },
+  { "prompt": "How much have we saved this session?", "expect_action": "stats" },
+  { "prompt": "Show me the token savings", "expect_action": "stats" },
+  { "prompt": "Condense stats", "expect_action": "stats" },
+  { "prompt": "Explain in detail how React reconciliation works", "expect_action": null },
+  { "prompt": "Write a long README for this repo", "expect_action": null },
+  { "prompt": "Implement the auth feature", "expect_action": null },
+  { "prompt": "Summarize this long document into one paragraph", "expect_action": null },
+  { "prompt": "Compress this Python source file", "expect_action": null }
+]

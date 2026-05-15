@@ -1,0 +1,15 @@
+[
+  { "prompt": "/sdlc add a /health endpoint", "expect_action": "spec" },
+  { "prompt": "Run the full dev flow on this request", "expect_action": "spec" },
+  { "prompt": "Ship this feature from idea to PR", "expect_action": "spec" },
+  { "prompt": "/sdlc interactive add a /health endpoint", "expect_action": "spec" },
+  { "prompt": "Run the SDLC in interactive mode on this request", "expect_action": "spec" },
+  { "prompt": "Interactive sdlc, pause at every gate", "expect_action": "spec" },
+  { "prompt": "Plan this ticket end to end", "expect_action": "plan" },
+  { "prompt": "Resume the SDLC run from this plan", "expect_action": "implement" },
+  { "prompt": "Review the milestone output", "expect_action": "review" },
+  { "prompt": "Open the PR for this branch", "expect_action": "ship" },
+  { "prompt": "Commit my changes", "expect_action": null },
+  { "prompt": "Draft a PRD for billing", "expect_action": null },
+  { "prompt": "Implement milestone M3 in isolation", "expect_action": null }
+]

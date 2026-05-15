@@ -1,0 +1,17 @@
+[
+  { "prompt": "Draft a spec for the billing feature", "expect_action": "build" },
+  { "prompt": "/spec for billing", "expect_action": "build" },
+  { "prompt": "Generate a spec from the PRD at aidd_docs/tasks/2026_05/billing-prd.md", "expect_action": "build" },
+  { "prompt": "Refine the spec to address reviewer findings", "expect_action": "refine" },
+  { "prompt": "Generate spec from PRD file", "expect_action": "build" },
+  { "prompt": "Build a project spec for checkout", "expect_action": "build" },
+  { "prompt": "Spec normalized contract for the auth feature", "expect_action": "build" },
+  { "prompt": "Draft spec for login from existing PRD", "expect_action": "build" },
+  { "prompt": "Rédige la spec du module billing", "expect_action": "build" },
+  { "prompt": "Spec normalisée pour la feature checkout", "expect_action": "build" },
+  { "prompt": "Génère la spec depuis le PRD", "expect_action": "build" },
+  { "prompt": "Affine la spec selon les retours reviewer", "expect_action": "refine" },
+  { "prompt": "Implement the billing feature", "expect_action": null },
+  { "prompt": "Draft a PRD for billing", "expect_action": null },
+  { "prompt": "Commit my changes", "expect_action": null }
+]

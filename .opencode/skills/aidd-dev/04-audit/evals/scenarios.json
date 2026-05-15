@@ -1,0 +1,17 @@
+[
+  { "prompt": "Audit the codebase", "expect_action": "audit" },
+  { "prompt": "/audit", "expect_action": "audit" },
+  { "prompt": "Find technical debt in the auth module", "expect_action": "audit" },
+  { "prompt": "Scan for dead code and unused exports", "expect_action": "audit" },
+  { "prompt": "Deep codebase analysis for tech debt", "expect_action": "audit" },
+  { "prompt": "Detect technical debt across the project", "expect_action": "audit" },
+  { "prompt": "Identify dead code and unused exports", "expect_action": "audit" },
+  { "prompt": "Audit improvements opportunities in the codebase", "expect_action": "audit" },
+  { "prompt": "Audit complet du codebase pour dette technique", "expect_action": "audit" },
+  { "prompt": "Détecte la dette technique du projet", "expect_action": "audit" },
+  { "prompt": "Trouve le code mort dans le module auth", "expect_action": "audit" },
+  { "prompt": "Analyse profonde du codebase pour debt", "expect_action": "audit" },
+  { "prompt": "Implement the auth feature", "expect_action": null },
+  { "prompt": "Commit my changes", "expect_action": null },
+  { "prompt": "Write tests for parseUser", "expect_action": null }
+]

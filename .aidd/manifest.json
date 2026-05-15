@@ -1,0 +1,624 @@
+{
+  "version": 6,
+  "tools": {
+    "vscode": {
+      "toolId": "vscode",
+      "version": "4.1.0-beta.33",
+      "files": [
+        {
+          "relativePath": ".vscode/keybindings.json",
+          "hash": "817a28d8b09bc64367f2226f3ba7a565"
+        }
+      ],
+      "mergeFiles": [
+        {
+          "relativePath": ".vscode/extensions.json",
+          "sectionKey": null,
+          "entries": {
+            "recommendations": "95e89184612d8a75b6e482871ba20e2d",
+            "unwantedRecommendations": "d751713988987e9331980363e24189ce"
+          }
+        }
+      ]
+    },
+    "claude": {
+      "toolId": "claude",
+      "version": "4.1.0-beta.33",
+      "files": [],
+      "mergeFiles": [],
+      "plugins": [
+        {
+          "name": "aidd-context",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-context"
+          },
+          "version": "1.0.0",
+          "strict": false,
+          "files": {},
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-dev",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-dev"
+          },
+          "version": "1.0.0",
+          "strict": true,
+          "files": {},
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-vcs",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-vcs"
+          },
+          "version": "1.0.0",
+          "strict": true,
+          "files": {},
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-pm",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-pm"
+          },
+          "version": "1.0.0-rc.1",
+          "strict": true,
+          "files": {},
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-refine",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-refine"
+          },
+          "version": "1.0.0",
+          "strict": false,
+          "files": {},
+          "marketplace": "aidd-framework"
+        }
+      ]
+    },
+    "cursor": {
+      "toolId": "cursor",
+      "version": "4.1.0-beta.33",
+      "files": [
+        {
+          "relativePath": ".cursor/settings.json",
+          "hash": "b8faf9306564409a7a5298c4b00b4dfb"
+        }
+      ],
+      "mergeFiles": [],
+      "plugins": [
+        {
+          "name": "aidd-context",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-context"
+          },
+          "version": "1.0.0",
+          "strict": false,
+          "files": {},
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-dev",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-dev"
+          },
+          "version": "1.0.0",
+          "strict": true,
+          "files": {},
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-vcs",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-vcs"
+          },
+          "version": "1.0.0",
+          "strict": true,
+          "files": {},
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-pm",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-pm"
+          },
+          "version": "1.0.0-rc.1",
+          "strict": true,
+          "files": {},
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-refine",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-refine"
+          },
+          "version": "1.0.0",
+          "strict": false,
+          "files": {},
+          "marketplace": "aidd-framework"
+        }
+      ]
+    },
+    "copilot": {
+      "toolId": "copilot",
+      "version": "4.1.0-beta.33",
+      "files": [],
+      "mergeFiles": [
+        {
+          "relativePath": ".vscode/settings.json",
+          "sectionKey": null,
+          "entries": {
+            "specstory.cloudSync.enabled": "161cb594e73635d5fdc3ff865c19ce8f",
+            "accessibility.signals.chatEditModifiedFile": "b825071189e1399cac0b38c31d8f96dd",
+            "accessibility.signals.chatResponseReceived": "b825071189e1399cac0b38c31d8f96dd",
+            "accessibility.signals.chatUserActionRequired": "738229cedd50c05f8610c17567fd06ed",
+            "chat.agent.maxRequests": "3644a684f98ea8fe223c713b77189a77",
+            "chat.instructionsFilesLocations": "822a5c53811d32ddc4eae09e30a50659",
+            "chat.notifyWindowOnConfirmation": "b326b5062b2f0e69046810717534cb09",
+            "chat.notifyWindowOnResponseReceived": "b326b5062b2f0e69046810717534cb09",
+            "chat.plugins.enabled": "b326b5062b2f0e69046810717534cb09",
+            "chat.tools.edits.autoApprove": "c29b1dac1ec30f37b2023be7230f82e7",
+            "chat.tools.global.autoApprove": "b326b5062b2f0e69046810717534cb09",
+            "chat.tools.terminal.autoApprove": "12e9d585126c717cb920c3ce7158b7aa",
+            "chat.tools.terminal.enableAutoApprove": "b326b5062b2f0e69046810717534cb09",
+            "chat.tools.urls.autoApprove": "8e5ebb682b8b1e5a71fa55d97b07d6aa",
+            "chat.useAgentSkills": "b326b5062b2f0e69046810717534cb09",
+            "chat.useAgentsMdFile": "b326b5062b2f0e69046810717534cb09",
+            "chat.useNestedAgentsMdFiles": "b326b5062b2f0e69046810717534cb09",
+            "github.copilot.chat.agent.autoFix": "b326b5062b2f0e69046810717534cb09",
+            "github.copilot.chat.cli.mcp.enabled": "b326b5062b2f0e69046810717534cb09",
+            "github.copilot.chat.codeGeneration.useInstructionFiles": "b326b5062b2f0e69046810717534cb09",
+            "github.copilot.chat.codesearch.enabled": "b326b5062b2f0e69046810717534cb09",
+            "github.copilot.chat.commitMessageGeneration.instructions": "0124effcdcd6093fe4be245d7cd649d4",
+            "github.copilot.chat.edits.suggestRelatedFilesFromGitHistory": "b326b5062b2f0e69046810717534cb09",
+            "github.copilot.chat.pullRequestDescriptionGeneration.instructions": "abb284187bcc14225cc06e394a2eac11",
+            "github.copilot.chat.summarizeAgentConversationHistory.enabled": "b326b5062b2f0e69046810717534cb09",
+            "github.copilot.enable": "0412f7ca788d3415aad4730b110a5548",
+            "github.copilot.nextEditSuggestions.enabled": "b326b5062b2f0e69046810717534cb09"
+          }
+        }
+      ],
+      "plugins": [
+        {
+          "name": "aidd-context",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-context"
+          },
+          "version": "1.0.0",
+          "strict": false,
+          "files": {},
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-dev",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-dev"
+          },
+          "version": "1.0.0",
+          "strict": true,
+          "files": {},
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-vcs",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-vcs"
+          },
+          "version": "1.0.0",
+          "strict": true,
+          "files": {},
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-pm",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-pm"
+          },
+          "version": "1.0.0-rc.1",
+          "strict": true,
+          "files": {},
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-refine",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-refine"
+          },
+          "version": "1.0.0",
+          "strict": false,
+          "files": {},
+          "marketplace": "aidd-framework"
+        }
+      ]
+    },
+    "opencode": {
+      "toolId": "opencode",
+      "version": "4.1.0-beta.33",
+      "files": [
+        {
+          "relativePath": "opencode.json",
+          "hash": "2f40b8f1c96c86e89b7bd1cb3fc234d4"
+        }
+      ],
+      "mergeFiles": [],
+      "plugins": [
+        {
+          "name": "aidd-context",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-context"
+          },
+          "version": "1.0.0",
+          "strict": false,
+          "files": {
+            ".opencode/skills/aidd-context/00-onboard/README.md": "2c9bcc9c951f05db46cb54de1790b6a9",
+            ".opencode/skills/aidd-context/00-onboard/SKILL.md": "03c8705d8a2f0e97dd2537599c83fd21",
+            ".opencode/skills/aidd-context/00-onboard/actions/01-detect-state.md": "c04ca9745fab40c2177af81919c54e92",
+            ".opencode/skills/aidd-context/00-onboard/actions/02-recommend-next.md": "12d327ff65b34bbd2230fcff0f0a8c01",
+            ".opencode/skills/aidd-context/00-onboard/actions/03-execute-or-handoff.md": "57ae258ff4e8c79c575bda2b8d1e25ea",
+            ".opencode/skills/aidd-context/00-onboard/assets/state-matrix.md": "4234a9c76b00edabc8f98a4ab54a735a",
+            ".opencode/skills/aidd-context/00-onboard/evals/scenarios.json": "d9325e56381d441e0af3689088ee24e5",
+            ".opencode/skills/aidd-context/01-bootstrap/README.md": "191ba535c29239c47af9b6e63bdd0ec4",
+            ".opencode/skills/aidd-context/01-bootstrap/SKILL.md": "d213d8dcef7fa53e6d8c8e190bc82d1d",
+            ".opencode/skills/aidd-context/01-bootstrap/actions/01-gather-needs.md": "dbbbaca2858dbc4872f5d973e1343bb7",
+            ".opencode/skills/aidd-context/01-bootstrap/actions/02-propose-candidates.md": "ea452e0c4ef0362572c425eddab1abbd",
+            ".opencode/skills/aidd-context/01-bootstrap/actions/03-audit-candidates.md": "8aad2f591159686ca3613e43793bbfc8",
+            ".opencode/skills/aidd-context/01-bootstrap/actions/04-pick-and-design.md": "8e2c99371c1180cdf6549875795e2204",
+            ".opencode/skills/aidd-context/01-bootstrap/actions/05-write-install-md.md": "3e5da8cdf22bb2f063095fcc50223b59",
+            ".opencode/skills/aidd-context/01-bootstrap/assets/checklist.md": "3735116476479e0daa8f745dc5f2f3d3",
+            ".opencode/skills/aidd-context/01-bootstrap/assets/install-template.md": "4725932f3553ff673e2a76457911f54c",
+            ".opencode/skills/aidd-context/01-bootstrap/evals/scenarios.json": "8129b6fd1214c8e289fbb73741e54757",
+            ".opencode/skills/aidd-context/01-bootstrap/references/stack-heuristics.md": "b6763009ad28f06c73102185c3e749f6",
+            ".opencode/skills/aidd-context/02-project-init/README.md": "6edbce5a5bc975e63c7df918490bfea4",
+            ".opencode/skills/aidd-context/02-project-init/SKILL.md": "ed0197c3b6f91c61c0e86e6eecb8e782",
+            ".opencode/skills/aidd-context/02-project-init/actions/01-init-context-file.md": "30c599fd95655e6b368d4da209d45c60",
+            ".opencode/skills/aidd-context/02-project-init/actions/02-scaffold-docs.md": "68dcb7ec81cc6366c1f3ba6181007b77",
+            ".opencode/skills/aidd-context/02-project-init/actions/03-generate-memory.md": "a3c03eae6d40ee173a3cc5d15cad7cae",
+            ".opencode/skills/aidd-context/02-project-init/actions/04-review-memory.md": "0813762930dd21d43196ffecae07dff3",
+            ".opencode/skills/aidd-context/02-project-init/actions/05-sync-memory.md": "760a8660c3be1d8296c94d5198752cc1",
+            ".opencode/skills/aidd-context/02-project-init/assets/AGENTS.md": "2a8cf843a75a098acb6f3ec9c192a7b9",
+            ".opencode/skills/aidd-context/02-project-init/assets/CONTRIBUTING.md": "d8c1a6a1073108ded6b9f09c3a4c37df",
+            ".opencode/skills/aidd-context/02-project-init/assets/GUIDELINES.md": "e99d2bc98118d97afd14b813545d5f06",
+            ".opencode/skills/aidd-context/02-project-init/assets/README.md": "3e9d43ae2d5c59749126189690599a52",
+            ".opencode/skills/aidd-context/02-project-init/assets/golden-principles.md": "698b3776c364ece0470990ba2a7656eb",
+            ".opencode/skills/aidd-context/02-project-init/assets/templates/memory/README.md": "68ce0784b702678ccf35a2b1bfc90fa9",
+            ".opencode/skills/aidd-context/02-project-init/assets/templates/memory/architecture.md": "8849b48a858e4f1b67963d024c2b43f1",
+            ".opencode/skills/aidd-context/02-project-init/assets/templates/memory/backend/api-docs.md": "8613368e09894e1214476edf321a9c60",
+            ".opencode/skills/aidd-context/02-project-init/assets/templates/memory/backend/backend-communication.md": "173786f1d8c2e4de6a45505992ca43ef",
+            ".opencode/skills/aidd-context/02-project-init/assets/templates/memory/backend/database.md": "2541b84ebceb856b5d9e2fc9f6a7e08a",
+            ".opencode/skills/aidd-context/02-project-init/assets/templates/memory/codebase-map.md": "39eaf08994298ee903eee83675bd2c4d",
+            ".opencode/skills/aidd-context/02-project-init/assets/templates/memory/coding-assertions.md": "ade0db3bd98d5b020eba3dfa8ad7d78b",
+            ".opencode/skills/aidd-context/02-project-init/assets/templates/memory/deployment.md": "29a20f5e5bda748716b82841264d3df7",
+            ".opencode/skills/aidd-context/02-project-init/assets/templates/memory/frontend/browsing.md": "7fdf8a59acabb42626a8f5e396f49017",
+            ".opencode/skills/aidd-context/02-project-init/assets/templates/memory/frontend/design.md": "ba4fdd1420f8555aa1ed52766953f45f",
+            ".opencode/skills/aidd-context/02-project-init/assets/templates/memory/frontend/forms.md": "00ed9bf243d220a80432b8aec7fd18a2",
+            ".opencode/skills/aidd-context/02-project-init/assets/templates/memory/project-brief.md": "90d0415bce11b6167684cea548e4a23e",
+            ".opencode/skills/aidd-context/02-project-init/assets/templates/memory/testing.md": "f7b1c8b4eb517631ebb4a45f96c6b3bc",
+            ".opencode/skills/aidd-context/02-project-init/assets/templates/memory/vcs.md": "8e1d46e5617d48d44209fd1ffdcf3213",
+            ".opencode/skills/aidd-context/02-project-init/assets/templates/stack/README.md": "04e1a05c8abfba1be282af88f741af63",
+            ".opencode/skills/aidd-context/02-project-init/assets/templates/workflows/README.md": "c14f4202561648960b5666e2180e1a36",
+            ".opencode/skills/aidd-context/02-project-init/evals/scenarios.json": "065e65ff930e819542abf2f8593dfadf",
+            ".opencode/skills/aidd-context/02-project-init/references/mapping-ai-context-file.md": "a7370789fc3312430beaf747ddb6b53a",
+            ".opencode/skills/aidd-context/03-context-generate/README.md": "b48473671aed7e49decbcb332387f6cd",
+            ".opencode/skills/aidd-context/03-context-generate/SKILL.md": "c6f1bdf089d2d9c8c5b8ebeca4cc91a0",
+            ".opencode/skills/aidd-context/03-context-generate/actions/agents/01-generate-agent.md": "5055531bc96d942e933c1d750262fd71",
+            ".opencode/skills/aidd-context/03-context-generate/actions/rules/01-generate-rules.md": "a5fb7ec61b5e18ab7ac7de150da60e74",
+            ".opencode/skills/aidd-context/03-context-generate/actions/skills/01-capture-intent.md": "730aaa75d1187b955b32589afd7096c0",
+            ".opencode/skills/aidd-context/03-context-generate/actions/skills/02-design-evals.md": "2c0c1303453429576a837d02e6a527a3",
+            ".opencode/skills/aidd-context/03-context-generate/actions/skills/03-decompose-actions.md": "7372a4960e61b4e2ae0ce0e6fc5284ac",
+            ".opencode/skills/aidd-context/03-context-generate/actions/skills/04-draft-skill.md": "629701a3e3e72ee6c5c9fa220e852168",
+            ".opencode/skills/aidd-context/03-context-generate/actions/skills/05-write-actions.md": "b58bb12ccc961512646dba6504d08e76",
+            ".opencode/skills/aidd-context/03-context-generate/actions/skills/06-validate.md": "ec83dd529565366b524fead918a65057",
+            ".opencode/skills/aidd-context/03-context-generate/assets/agents/agent-template.md": "608fa1efb59b767ba71776efde4d7182",
+            ".opencode/skills/aidd-context/03-context-generate/assets/rules/rule-template.md": "f0688bd0bfc7a1307eb9c4a01a5abef5",
+            ".opencode/skills/aidd-context/03-context-generate/assets/skills/action-template.md": "b0717d4da8a24099221c606b000d110c",
+            ".opencode/skills/aidd-context/03-context-generate/assets/skills/evals-template.md": "f0a3e5404a5d4a3074d5f6b568118ff3",
+            ".opencode/skills/aidd-context/03-context-generate/assets/skills/skill-template.md": "c8400f8ae68a397fafcc469c695a0329",
+            ".opencode/skills/aidd-context/03-context-generate/evals/scenarios.json": "745fa6dc889ea6a4a746fc50e48b0a0a",
+            ".opencode/skills/aidd-context/03-context-generate/references/agents-coordination.md": "fc2db98f4611fd1013f8fc2fe4962ecc",
+            ".opencode/skills/aidd-context/03-context-generate/references/ai-mapping.md": "cb29f56300565980c4664827a4614f1a",
+            ".opencode/skills/aidd-context/03-context-generate/references/naming-conventions.md": "9d56b014fe7d0e22f5b3384504fca1c3",
+            ".opencode/skills/aidd-context/03-context-generate/references/rule-structure.md": "157e620c289404c9b6cd5dbfa92e8db6",
+            ".opencode/skills/aidd-context/03-context-generate/references/rule-writing.md": "89d15a4619bfe9b6b4e670900f32c652",
+            ".opencode/skills/aidd-context/03-context-generate/references/skill-structure.md": "7f273b4eb10e3e610c8124cddb1bb3c5",
+            ".opencode/skills/aidd-context/04-mermaid/README.md": "a9875d4a4c9215a78aeb6adc42452e5d",
+            ".opencode/skills/aidd-context/04-mermaid/SKILL.md": "18f2435338085919f531657b53621c09",
+            ".opencode/skills/aidd-context/04-mermaid/actions/01-mermaid.md": "7b88e7c6c9a5ababcb21070dd3eb01dc",
+            ".opencode/skills/aidd-context/04-mermaid/evals/scenarios.json": "994aa09f36f4a98325370ca59598de8d",
+            ".opencode/skills/aidd-context/04-mermaid/references/mermaid-conventions.md": "5693c55c50dca1b0dbf4883733dceccd",
+            ".opencode/skills/aidd-context/05-learn/README.md": "d85608b5d420975724530212e848aa51",
+            ".opencode/skills/aidd-context/05-learn/SKILL.md": "3f6d10a418a621050cc81371da42e3ab",
+            ".opencode/skills/aidd-context/05-learn/actions/01-scope.md": "bf614abdefe862c8d712f2583cbb5aea",
+            ".opencode/skills/aidd-context/05-learn/actions/02-write.md": "6cb66b8ea2339765217d75d24851da79",
+            ".opencode/skills/aidd-context/05-learn/actions/03-sync.md": "c86775cf30d360244d63017ea2d6beb5",
+            ".opencode/skills/aidd-context/05-learn/assets/adr-template.md": "f90091c3f42abe42f034f9a25f143f03",
+            ".opencode/skills/aidd-context/05-learn/assets/decision-template.md": "3addc7ffad726f6d80ae611565e0e720",
+            ".opencode/skills/aidd-context/05-learn/evals/scenarios.json": "87de942347fdec600666268161b34086",
+            ".opencode/skills/aidd-context/06-discovery/README.md": "f0fd4a10df77163c3569a70cffce8d26",
+            ".opencode/skills/aidd-context/06-discovery/SKILL.md": "ded8e89d2ae329aeb36305f41b2a45ca",
+            ".opencode/skills/aidd-context/06-discovery/actions/01-find-skill.md": "d88b24abf9674d6550ab1a2ccfe98309",
+            ".opencode/skills/aidd-context/06-discovery/actions/02-find-agent.md": "2ef6de62eb75c2b74871d80de42a482d",
+            ".opencode/skills/aidd-context/06-discovery/actions/03-find-command.md": "ca08fcac66bd8fcf6abe68cab580a1f2",
+            ".opencode/skills/aidd-context/06-discovery/actions/04-find-plugin.md": "3a4388e6b1764295d5e34f563f8f3e42",
+            ".opencode/skills/aidd-context/06-discovery/actions/05-find-mcp.md": "ba16f3f13b2123c0ac6f84d7e01c74b8",
+            ".opencode/skills/aidd-context/06-discovery/actions/06-find-rule.md": "a7178bf3be0db9186a66e3847340e712",
+            ".opencode/skills/aidd-context/06-discovery/actions/07-find-hook.md": "3046f10e38e1ef59b7ce4b10ba26e988",
+            ".opencode/skills/aidd-context/06-discovery/actions/08-find-memory.md": "0e4d91842472cb96b7430e4a68cbdb7e",
+            ".opencode/skills/aidd-context/06-discovery/evals/scenarios.json": "849a7110d9e4a87afddd05068b592a5e"
+          },
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-dev",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-dev"
+          },
+          "version": "1.0.0",
+          "strict": true,
+          "files": {
+            ".opencode/agents/aidd-dev/implementer.md": "7fbc8c86dccbc433e0fcf10a29b9f35c",
+            ".opencode/agents/aidd-dev/planner.md": "350c9d274a354159936c172c952ef9bd",
+            ".opencode/agents/aidd-dev/reviewer.md": "e2edfd297fcedb39ba135d4593e5ba5d",
+            ".opencode/skills/aidd-dev/00-sdlc/README.md": "697426c956ad749003c5dfe252e051a0",
+            ".opencode/skills/aidd-dev/00-sdlc/SKILL.md": "42fe6888fabdf5c5643ef2522d4ec4ef",
+            ".opencode/skills/aidd-dev/00-sdlc/actions/01-spec.md": "8ecb0883d51fdc122e4d9b88b326c8b0",
+            ".opencode/skills/aidd-dev/00-sdlc/actions/02-plan.md": "d3d033a663fbb186652804846cd13cd1",
+            ".opencode/skills/aidd-dev/00-sdlc/actions/03-implement.md": "2f8027052d4cbc8e204157f971a355fd",
+            ".opencode/skills/aidd-dev/00-sdlc/actions/04-review.md": "cacaea2893a2485dce84ec8a9466da74",
+            ".opencode/skills/aidd-dev/00-sdlc/actions/05-ship.md": "e29cad7c5e0fd5571f23bed714f6bbc7",
+            ".opencode/skills/aidd-dev/00-sdlc/evals/scenarios.json": "5dfb8d3db6da29f0cc0870053bb672c0",
+            ".opencode/skills/aidd-dev/01-plan/README.md": "a0272e27748d6206c88d5c7fa28c4941",
+            ".opencode/skills/aidd-dev/01-plan/SKILL.md": "7dc89ae781f74ba853e76ad7de99c043",
+            ".opencode/skills/aidd-dev/01-plan/actions/01-plan.md": "be175a7f837a878feb659f008925b3b0",
+            ".opencode/skills/aidd-dev/01-plan/actions/02-components-behavior.md": "1ec87cff1ea83dbcac056eabb914f8a7",
+            ".opencode/skills/aidd-dev/01-plan/actions/03-image-extract-details.md": "cdb057b1afdbbb06bcd135598759a924",
+            ".opencode/skills/aidd-dev/01-plan/assets/master-plan-template.md": "0dc25d287f14ffd56b9e68551381b001",
+            ".opencode/skills/aidd-dev/01-plan/assets/plan-template.md": "e91dfabebe1dbda4a214a10e109a6c4f",
+            ".opencode/skills/aidd-dev/01-plan/assets/tech-choice-template.md": "7372335de874251c1fd4950bb5ca020b",
+            ".opencode/skills/aidd-dev/01-plan/evals/scenarios.json": "5f0996530bc6aa69773e2301de2cbe1c",
+            ".opencode/skills/aidd-dev/01-plan/references/mermaid-conventions.md": "fe91d8f1ca9b4051e89a04605442120d",
+            ".opencode/skills/aidd-dev/02-implement/README.md": "3ff5867603f7286921b713f733f37eb0",
+            ".opencode/skills/aidd-dev/02-implement/SKILL.md": "92d754ee56c1214448a901da0e56fc81",
+            ".opencode/skills/aidd-dev/02-implement/actions/01-implement.md": "aa34e065e0dec5f6fae40531612a8ced",
+            ".opencode/skills/aidd-dev/02-implement/evals/scenarios.json": "703e64b66f817678a9ab47739d57cd82",
+            ".opencode/skills/aidd-dev/03-assert/README.md": "affd60765a9aeaa48686d0e1b55f1356",
+            ".opencode/skills/aidd-dev/03-assert/SKILL.md": "9c2543c76d956887140e0ef663ca7db6",
+            ".opencode/skills/aidd-dev/03-assert/actions/01-assert.md": "2ea9dc2f311a8932bdc8260958ed8c80",
+            ".opencode/skills/aidd-dev/03-assert/actions/02-assert-architecture.md": "a198511fa9944d09717aaec3e6eb3c7d",
+            ".opencode/skills/aidd-dev/03-assert/actions/03-assert-frontend.md": "c9af144cd68bb0c83ad684c9ad2591cb",
+            ".opencode/skills/aidd-dev/03-assert/assets/task-template.md": "fcce34071d1fe9804914abd459a87c7e",
+            ".opencode/skills/aidd-dev/03-assert/evals/scenarios.json": "330a2bf422de7508d361cd51661f1c07",
+            ".opencode/skills/aidd-dev/04-audit/README.md": "85576fa86bd565bba8e9cccc3f375077",
+            ".opencode/skills/aidd-dev/04-audit/SKILL.md": "c8a7894180a791cb41db8c0d38b64ad5",
+            ".opencode/skills/aidd-dev/04-audit/actions/01-audit.md": "4d00dcbf631087242552c21140afa859",
+            ".opencode/skills/aidd-dev/04-audit/assets/audit-template.md": "1eb2890a373df730557895c38bbb01e8",
+            ".opencode/skills/aidd-dev/04-audit/evals/scenarios.json": "0e53310838b13404aecb1fabd709451f",
+            ".opencode/skills/aidd-dev/05-review/README.md": "82255ae7997937d85b48eb19abc30a4a",
+            ".opencode/skills/aidd-dev/05-review/SKILL.md": "6d9f33ae8a842a6381a80af2caed60be",
+            ".opencode/skills/aidd-dev/05-review/actions/01-review-code.md": "bb4b154c0ad8cad556d7550df0bf3b8b",
+            ".opencode/skills/aidd-dev/05-review/actions/02-review-functional.md": "f9cb26044f55da88f17a0f37c542c28a",
+            ".opencode/skills/aidd-dev/05-review/assets/code-review-template.md": "1f6b8099d457c30852880757db90ef5e",
+            ".opencode/skills/aidd-dev/05-review/assets/review-functional-template.md": "a8594e414f0edc580b47bca4bf06e02c",
+            ".opencode/skills/aidd-dev/05-review/assets/review-template.md": "40957d1ebfa40e7c39a6078034c15e70",
+            ".opencode/skills/aidd-dev/05-review/evals/scenarios.json": "97738aa8e67ceeb76f094669c008be45",
+            ".opencode/skills/aidd-dev/06-test/README.md": "7f66fa72da393c0fe14b34b21bf47ab7",
+            ".opencode/skills/aidd-dev/06-test/SKILL.md": "6fce8dce7c6bfbbb76174f15db5ab525",
+            ".opencode/skills/aidd-dev/06-test/actions/01-test.md": "42f5c2fc3ec4d644421b711d6eac6434",
+            ".opencode/skills/aidd-dev/06-test/actions/02-test-journey.md": "fdb8212185fc131cc132232b1e98ccc2",
+            ".opencode/skills/aidd-dev/06-test/evals/scenarios.json": "7d117a79e2d087f96869a68e004aac88",
+            ".opencode/skills/aidd-dev/07-refactor/README.md": "42d46bf0582c48fa0ba4f8e246464d5e",
+            ".opencode/skills/aidd-dev/07-refactor/SKILL.md": "a813650afcfc12ffc753833d20e6a57d",
+            ".opencode/skills/aidd-dev/07-refactor/actions/01-performance.md": "d6ba86422d328d8f1df6313a97615fa6",
+            ".opencode/skills/aidd-dev/07-refactor/actions/02-security.md": "457cb43212e76f2d910a750bcac5ea30",
+            ".opencode/skills/aidd-dev/07-refactor/evals/scenarios.json": "3181d6dab607d78fbf7e3c8605fedcd0",
+            ".opencode/skills/aidd-dev/08-debug/README.md": "a70ac4db237aa82b12c0c86348096198",
+            ".opencode/skills/aidd-dev/08-debug/SKILL.md": "46f2dec0c74dd8f053ffa705449640cd",
+            ".opencode/skills/aidd-dev/08-debug/actions/01-reproduce.md": "09073117414368d7a704b54cec9f7b22",
+            ".opencode/skills/aidd-dev/08-debug/actions/02-debug.md": "4783672c7c76d661b5b90f430afbc301",
+            ".opencode/skills/aidd-dev/08-debug/actions/03-reflect-issue.md": "11ebb4e16f2c6e2df9955fb527e4bd2e",
+            ".opencode/skills/aidd-dev/08-debug/assets/task-template.md": "fcce34071d1fe9804914abd459a87c7e",
+            ".opencode/skills/aidd-dev/08-debug/evals/scenarios.json": "db756871b518c13bf5559aee5e3839b2",
+            ".opencode/skills/aidd-dev/08-debug/references/mermaid-conventions.md": "fe91d8f1ca9b4051e89a04605442120d",
+            ".opencode/skills/aidd-dev/09-for-sure/README.md": "9dc32bd4b6a3e2c72736d806ba9f3c92",
+            ".opencode/skills/aidd-dev/09-for-sure/SKILL.md": "9fb263ad65b577abc7d3c2a5c5046799",
+            ".opencode/skills/aidd-dev/09-for-sure/actions/01-init-tracking.md": "8376dc9fb38ca7ac050873c4d2a05822",
+            ".opencode/skills/aidd-dev/09-for-sure/actions/02-auto-accept.md": "666517db894b93be6215bbe366ad4f3f",
+            ".opencode/skills/aidd-dev/09-for-sure/actions/03-autonomous-loop.md": "2e2c4708be3d252e7d1efb3adc3a8405",
+            ".opencode/skills/aidd-dev/09-for-sure/evals/scenarios.json": "1c2dadc7764fcf9c8ccc65ee702ca139"
+          },
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-vcs",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-vcs"
+          },
+          "version": "1.0.0",
+          "strict": true,
+          "files": {
+            ".opencode/skills/aidd-vcs/01-commit/README.md": "1e1bd569c7166bbfcbd73662461798b2",
+            ".opencode/skills/aidd-vcs/01-commit/SKILL.md": "703bada345ff68480238f22712cf274b",
+            ".opencode/skills/aidd-vcs/01-commit/actions/01-commit.md": "69941df9356926bb58da2ca0bbdc75d9",
+            ".opencode/skills/aidd-vcs/01-commit/assets/commit-template.md": "d4914e391e7f6621f0486d9665334935",
+            ".opencode/skills/aidd-vcs/01-commit/evals/scenarios.json": "d33413263656ddbeeb8753d9c4732b6b",
+            ".opencode/skills/aidd-vcs/02-pull-request/README.md": "391cc82b8900fe98c9ac66d686cfa2a8",
+            ".opencode/skills/aidd-vcs/02-pull-request/SKILL.md": "f0ff1736351adaf549a38c6c7152151f",
+            ".opencode/skills/aidd-vcs/02-pull-request/actions/01-pull-request.md": "8b1dde8821f2c235ffe967e56071c7fe",
+            ".opencode/skills/aidd-vcs/02-pull-request/assets/CONTRIBUTING.md": "613ec5b0416d7ae5f982e208f060beb4",
+            ".opencode/skills/aidd-vcs/02-pull-request/assets/README.md": "2623a26fc638dc4693f1670bf971650a",
+            ".opencode/skills/aidd-vcs/02-pull-request/assets/branch.md": "a084f945bef0bd928d21cdd8bf348ccc",
+            ".opencode/skills/aidd-vcs/02-pull-request/assets/pull_request.md": "03ef8b312e1ba40e704cf0d65f914021",
+            ".opencode/skills/aidd-vcs/02-pull-request/evals/scenarios.json": "3fa413e3be6c49a2f0c32c422db947a9",
+            ".opencode/skills/aidd-vcs/03-release-tag/README.md": "8e300974e0a2ec48104674b17699e533",
+            ".opencode/skills/aidd-vcs/03-release-tag/SKILL.md": "ea3b25ee219fb01155b14fd0b98ed7d6",
+            ".opencode/skills/aidd-vcs/03-release-tag/actions/01-release-tag.md": "815fcef664bd303e7cf9b7888177f8f5",
+            ".opencode/skills/aidd-vcs/03-release-tag/assets/release-template.md": "3a82a1224d2b32dabfc9206894306ea0",
+            ".opencode/skills/aidd-vcs/03-release-tag/evals/scenarios.json": "082f2a05ec6bead6eaf48a0dc4867128",
+            ".opencode/skills/aidd-vcs/04-issue-create/README.md": "2ca3c6557ed9a7a87583b9ba645f9705",
+            ".opencode/skills/aidd-vcs/04-issue-create/SKILL.md": "405a37c20115ef176b3037449d156891",
+            ".opencode/skills/aidd-vcs/04-issue-create/actions/01-issue-create.md": "161692ae3fac72ad6ca0027076ea4ff1",
+            ".opencode/skills/aidd-vcs/04-issue-create/assets/CONTRIBUTING.md": "613ec5b0416d7ae5f982e208f060beb4",
+            ".opencode/skills/aidd-vcs/04-issue-create/assets/issue-template.md": "74eed09de8da701db75723ce5896b103",
+            ".opencode/skills/aidd-vcs/04-issue-create/evals/scenarios.json": "5b67a4e6b49bd892601811bb4523f047"
+          },
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-pm",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-pm"
+          },
+          "version": "1.0.0-rc.1",
+          "strict": true,
+          "files": {
+            ".opencode/skills/aidd-pm/01-ticket-info/README.md": "bfc23760121bbe971daba51bdb593258",
+            ".opencode/skills/aidd-pm/01-ticket-info/SKILL.md": "0be8371adb7debd870789c3ec5371122",
+            ".opencode/skills/aidd-pm/01-ticket-info/actions/01-ticket-info.md": "462c869e01143eafc685431743ec039d",
+            ".opencode/skills/aidd-pm/01-ticket-info/evals/scenarios.json": "2abc871daecd7256fefb635022b4d26e",
+            ".opencode/skills/aidd-pm/02-user-stories-create/README.md": "ff68b0af6cdba8697370bc4fd4e06d6d",
+            ".opencode/skills/aidd-pm/02-user-stories-create/SKILL.md": "7a1896582ce1aff88508497b60efbd07",
+            ".opencode/skills/aidd-pm/02-user-stories-create/actions/01-create-user-stories.md": "89a9d7cf59692430530d86ed050590d4",
+            ".opencode/skills/aidd-pm/02-user-stories-create/assets/user-story-template.md": "5c8c1eda55750d4537838c7d71680119",
+            ".opencode/skills/aidd-pm/02-user-stories-create/evals/scenarios.json": "9015167e9f218e347beafa0a92b5c3cf",
+            ".opencode/skills/aidd-pm/03-prd/README.md": "2a6c657b2a5058f7d32ff9d79799cf13",
+            ".opencode/skills/aidd-pm/03-prd/SKILL.md": "27629acfa323fe44701d0c162b4f7e53",
+            ".opencode/skills/aidd-pm/03-prd/actions/01-prd.md": "1a039fa626bde9d51ae691da1d254f6d",
+            ".opencode/skills/aidd-pm/03-prd/assets/prd-template.md": "a0856e2e11d4c8f3b055b570503309b5",
+            ".opencode/skills/aidd-pm/03-prd/assets/task-template.md": "fcce34071d1fe9804914abd459a87c7e",
+            ".opencode/skills/aidd-pm/03-prd/evals/scenarios.json": "bb34a1d58f68cc93ec2796bf8266ae07",
+            ".opencode/skills/aidd-pm/04-spec/README.md": "68d60c8c3c24a41a59b51dafdd81a400",
+            ".opencode/skills/aidd-pm/04-spec/SKILL.md": "2ad3c368646e1f8091469a5a3ae31ab1",
+            ".opencode/skills/aidd-pm/04-spec/actions/01-build.md": "3a4034b26eb9b86d61602b91f1d67cf1",
+            ".opencode/skills/aidd-pm/04-spec/actions/02-refine.md": "d69a86929f5b1264179a6cdf24a3bae4",
+            ".opencode/skills/aidd-pm/04-spec/assets/spec-template.md": "6f99c8a9e32a11a2a38c14ed438f3741",
+            ".opencode/skills/aidd-pm/04-spec/assets/spec-validator.yml": "7b7f44603de9eae8384dfc0aabb70c64",
+            ".opencode/skills/aidd-pm/04-spec/evals/scenarios.json": "173b95cf04c708295a20f98033d4a0c0"
+          },
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-refine",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-refine"
+          },
+          "version": "1.0.0",
+          "strict": false,
+          "files": {
+            ".opencode/skills/aidd-refine/01-brainstorm/README.md": "00904f4bc0f3d03f33f16ffd872fbede",
+            ".opencode/skills/aidd-refine/01-brainstorm/SKILL.md": "9c2e2a9704a911323c4286253f5b68d5",
+            ".opencode/skills/aidd-refine/01-brainstorm/actions/01-capture-request.md": "e40bdc669453add3640aae99f509da1b",
+            ".opencode/skills/aidd-refine/01-brainstorm/actions/02-ask-probing-questions.md": "61fdc4f7e8e220ec5c4288a82c02832a",
+            ".opencode/skills/aidd-refine/01-brainstorm/actions/03-integrate-answers.md": "489cf9dbc00b6a850aad6ff6f871db3a",
+            ".opencode/skills/aidd-refine/01-brainstorm/actions/04-refine-and-validate.md": "7de14ff623adda1f226dd319e00e23a5",
+            ".opencode/skills/aidd-refine/01-brainstorm/actions/05-confirm-approval.md": "5d53723109ad575d5202e08a6aecb74a",
+            ".opencode/skills/aidd-refine/01-brainstorm/assets/question-templates.md": "b538384909a6d8277656f79f7610fb1d",
+            ".opencode/skills/aidd-refine/01-brainstorm/evals/scenarios.json": "c54be30ba8096d863f480a19d01c2b14",
+            ".opencode/skills/aidd-refine/01-brainstorm/references/ambiguity-detection.md": "ffb3652a14bbdfef915cc70bc5f6693d",
+            ".opencode/skills/aidd-refine/02-challenge/README.md": "b5dfee5d3c28ff17e1492629935420d9",
+            ".opencode/skills/aidd-refine/02-challenge/SKILL.md": "0fa13a5e92d4995061efe07f92213c72",
+            ".opencode/skills/aidd-refine/02-challenge/actions/01-challenge.md": "6ca15ff50d8cea9982e67f8f4f4ccb31",
+            ".opencode/skills/aidd-refine/02-challenge/evals/scenarios.json": "22b2e3660f03c1bbf6996486e55354a7",
+            ".opencode/skills/aidd-refine/02-challenge/references/confidence-rubric.md": "501e95a5dfdd150560cd7f0257c5f938",
+            ".opencode/skills/aidd-refine/03-condense/README.md": "0d330c6cf6251dc3db630b760ad4fd39",
+            ".opencode/skills/aidd-refine/03-condense/SKILL.md": "7a2d777c16c83f33b50b26f6d6c0e4c3",
+            ".opencode/skills/aidd-refine/03-condense/actions/01-condense.md": "92af86abfff304d221ddb28618647b8f",
+            ".opencode/skills/aidd-refine/03-condense/actions/02-stats.md": "86e2a79df0a2e7761fc4124cc88c695b",
+            ".opencode/skills/aidd-refine/03-condense/evals/scenarios.json": "2b2c6c985f1d6985257a27095e1d8a8b",
+            ".opencode/skills/aidd-refine/03-condense/references/intensity-levels.md": "876398223b928b24a163eeafbf89eb0f"
+          },
+          "marketplace": "aidd-framework"
+        }
+      ]
+    },
+    "codex": {
+      "toolId": "codex",
+      "version": "4.1.0-beta.33",
+      "files": [
+        {
+          "relativePath": ".codex/config.toml",
+          "hash": "760064e18bc32338726becdbbd6b1103"
+        }
+      ],
+      "mergeFiles": [],
+      "plugins": [
+        {
+          "name": "aidd-context",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-context"
+          },
+          "version": "1.0.0",
+          "strict": false,
+          "files": {},
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-dev",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-dev"
+          },
+          "version": "1.0.0",
+          "strict": true,
+          "files": {},
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-vcs",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-vcs"
+          },
+          "version": "1.0.0",
+          "strict": true,
+          "files": {},
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-pm",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-pm"
+          },
+          "version": "1.0.0-rc.1",
+          "strict": true,
+          "files": {},
+          "marketplace": "aidd-framework"
+        },
+        {
+          "name": "aidd-refine",
+          "source": {
+            "kind": "local",
+            "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-refine"
+          },
+          "version": "1.0.0",
+          "strict": false,
+          "files": {},
+          "marketplace": "aidd-framework"
+        }
+      ]
+    }
+  }
+}

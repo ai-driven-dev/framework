@@ -1,0 +1,16 @@
+[
+  { "prompt": "Review the code I just implemented", "expect_action": "review-code" },
+  { "prompt": "Do a code review of the PR changes", "expect_action": "review-code" },
+  { "prompt": "Check code quality against project rules", "expect_action": "review-code" },
+  { "prompt": "Review whether the feature behavior matches the plan", "expect_action": "review-functional" },
+  { "prompt": "Validate the implementation against the acceptance criteria in the plan", "expect_action": "review-functional" },
+  { "prompt": "Functional review of the checkout feature", "expect_action": "review-functional" },
+  { "prompt": "Code review against project conventions", "expect_action": "review-code" },
+  { "prompt": "Functional review against the plan specification", "expect_action": "review-functional" },
+  { "prompt": "Revue de code contre les règles du projet", "expect_action": "review-code" },
+  { "prompt": "Revue fonctionnelle contre le plan d'implémentation", "expect_action": "review-functional" },
+  { "prompt": "Vérifie la qualité du code selon nos rules", "expect_action": "review-code" },
+  { "prompt": "Generate an implementation plan for the dashboard", "expect_action": null },
+  { "prompt": "Write unit tests for the auth module", "expect_action": null },
+  { "prompt": "Fix the bug in the payment service", "expect_action": null }
+]

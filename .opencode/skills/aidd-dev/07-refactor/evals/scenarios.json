@@ -1,0 +1,17 @@
+[
+  { "prompt": "Optimize the performance of the product listing query", "expect_action": "performance" },
+  { "prompt": "Profile and fix slow database calls in the dashboard", "expect_action": "performance" },
+  { "prompt": "Improve performance of the image upload pipeline", "expect_action": "performance" },
+  { "prompt": "Fix security vulnerabilities in the auth module", "expect_action": "security" },
+  { "prompt": "Run an OWASP audit and harden the API endpoints", "expect_action": "security" },
+  { "prompt": "Identify and patch security issues in the codebase", "expect_action": "security" },
+  { "prompt": "Run OWASP audit and harden the endpoints", "expect_action": "security" },
+  { "prompt": "Refactor for better performance and latency", "expect_action": "performance" },
+  { "prompt": "Optimise la performance du module produit", "expect_action": "performance" },
+  { "prompt": "Profile et corrige les requêtes DB lentes", "expect_action": "performance" },
+  { "prompt": "Corrige les vulnérabilités OWASP du module auth", "expect_action": "security" },
+  { "prompt": "Sécurise le code selon les guidelines OWASP", "expect_action": "security" },
+  { "prompt": "Write tests for the payment service", "expect_action": null },
+  { "prompt": "Review my pull request", "expect_action": null },
+  { "prompt": "Debug the failing authentication test", "expect_action": null }
+]
