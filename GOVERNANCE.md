@@ -47,6 +47,23 @@ Prompt-only changes that alter how a skill behaves without changing its name or 
 
 A maintainer or plugin owner with a direct stake in a PR (e.g. their employer or a paid integration) should disclose it in the PR description and abstain from being the sole approver. The lazy-consensus window stays the same, but a second maintainer approval becomes mandatory.
 
+## Branch protection on `main`
+
+Direct pushes to `main` are forbidden; every change lands through a pull request that satisfies the rules below. The machine-readable form lives at [`.github/rulesets/main.json`](.github/rulesets/main.json) and can be applied with:
+
+```
+gh api -X POST /repos/ai-driven-dev/aidd-framework/rulesets --input .github/rulesets/main.json
+```
+
+Rules:
+
+- **Pull request required.** No direct push to `main`, no force-push, no deletion.
+- **At least one approving review** from a maintainer (CODEOWNERS-aware).
+- **Required status checks**: `lefthook (framework-local checks)` (the [`validate`](.github/workflows/validate.yml) workflow) and `Commitlint` (from the [`CI`](.github/workflows/ci.yml) workflow) must pass.
+- **Unresolved review threads block merge.**
+
+The ruleset depends on GitHub's repository-rulesets API, which is free on public repos and bundled with paid plans on private repos. While the repo is private and on the free plan the rules are documented but not enforced by GitHub; they are enforced socially by maintainers.
+
 ## Code of Conduct
 
 All decisions and interactions are bound by the [Code of Conduct](./CODE_OF_CONDUCT.md). Enforcement contacts are listed there.
