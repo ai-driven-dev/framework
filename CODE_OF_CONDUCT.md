@@ -10,7 +10,7 @@ The Code of Conduct applies to all community spaces, and also applies when an in
 
 ## Reporting
 
-Instances of conduct that violate the Covenant may be reported to the project maintainers via [GitHub Security Advisories](https://github.com/ai-driven-dev/aidd-framework/security/advisories/new) (private channel) or by opening a confidential discussion with the maintainers.
+Instances of conduct that violate the Covenant may be reported privately by email to `conduct@ai-driven-dev.fr`, or via [GitHub Security Advisories](https://github.com/ai-driven-dev/aidd-framework/security/advisories/new) for time-sensitive cases. Reports are routed to the active maintainer team listed in [`GOVERNANCE.md`](./GOVERNANCE.md).
 
 All reports will be reviewed and investigated promptly and fairly. The maintainers are obligated to respect the privacy and security of the reporter of any incident.
 

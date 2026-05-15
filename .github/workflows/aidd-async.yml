@@ -15,7 +15,6 @@ permissions:
   issues: write
   pull-requests: write
   checks: write
-  id-token: write
 
 jobs:
   dispatch:

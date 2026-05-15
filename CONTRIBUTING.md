@@ -37,7 +37,9 @@ pnpm install
 pnpm exec lefthook install
 ```
 
-After that, every commit will run the framework-local checks (json/yaml validity, schema validation on the three Claude Code surfaces, SKILL.md frontmatter, commitlint).
+After that, every commit will run the framework-local checks (json/yaml validity, schema validation on the three Claude Code surfaces, SKILL.md frontmatter, per-plugin CATALOG.md regeneration, commitlint).
+
+Verify your environment any time with `./scripts/doctor.sh` (`user`, `contributor`, or `all`); it reports a colour-coded OK / WARN / FAIL per check and exits non-zero on critical failures. The canonical issue and PR label list lives in [`.github/labels.yml`](./.github/labels.yml); the [`evals`](./.github/workflows/evals.yml) workflow validates every `plugins/*/skills/*/evals/scenarios.json` on push and pull request.
 
 ---
 
