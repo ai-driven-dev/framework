@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.1.2](https://github.com/ai-driven-dev/aidd-cli/compare/v4.1.1...v4.1.2) (2026-05-18)
+
+
+### Bug Fixes
+
+* 3 v4.1.0 polish bugs found in live smoke (v4.1.2) ([aa668a2](https://github.com/ai-driven-dev/aidd-cli/commit/aa668a2d260ffdfdd6a166025e1376ce4e3a1ebb))
+* 3 v4.1.0 polish bugs found in live smoke test ([b4b3e99](https://github.com/ai-driven-dev/aidd-cli/commit/b4b3e9969c02dec987d41c0600c8e0c0db408840))
+
 ## [4.1.1](https://github.com/ai-driven-dev/aidd-cli/compare/v4.1.0...v4.1.1) (2026-05-18)
 
 
