@@ -7,7 +7,7 @@
 ### A community-maintained marketplace of skills, agents, and rules for Claude Code.
 
 <p>
-  <kbd>6 plugins</kbd> · <kbd>32 skills</kbd> · <kbd>3 agents</kbd> · <kbd>MIT</kbd>
+  <kbd>6 plugins</kbd> · <kbd>33 skills</kbd> · <kbd>3 agents</kbd> · <kbd>MIT</kbd>
 </p>
 
 <p>
