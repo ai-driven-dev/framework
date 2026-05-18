@@ -1,4 +1,6 @@
+import { homedir as nodeHomedir } from "node:os";
 import { join } from "node:path";
+import type { PluginsCapability } from "../../../domain/capabilities/plugins-capability.js";
 import type { Plugin } from "../../../domain/models/plugin.js";
 import { SyncPolicy } from "../../../domain/models/sync-policy.js";
 import {
@@ -432,7 +434,8 @@ export class SyncFilePropagationUseCase {
     const tgtRelPath = targetByComponent.get(componentPath);
     if (tgtRelPath === undefined) return;
 
-    const diskSrcPath = join(projectRoot, srcRelPath);
+    const srcBaseDir = resolvePluginBaseDir(sourceConfig, projectRoot);
+    const diskSrcPath = join(srcBaseDir, srcRelPath);
     if (!(await this.fs.fileExists(diskSrcPath))) return;
     const diskHash = await this.fs.readFileHash(diskSrcPath);
     if (diskHash.value === manifestHash) return;
@@ -445,7 +448,8 @@ export class SyncFilePropagationUseCase {
       sectionKey,
       docsDir
     );
-    const diskTgtPath = join(projectRoot, tgtRelPath);
+    const tgtBaseDir = resolvePluginBaseDir(targetConfig, projectRoot);
+    const diskTgtPath = join(tgtBaseDir, tgtRelPath);
 
     const outcome = await this.conflictResolver.resolvePluginWriteOutcome({
       diskTargetPath: diskTgtPath,
@@ -467,24 +471,35 @@ export class SyncFilePropagationUseCase {
     for (const srcPlugin of sourcePlugins) {
       const tgtPlugin = targetPlugins.find((p) => p.name === srcPlugin.name);
       if (tgtPlugin === undefined) continue;
-      await this.propagatePluginDeletedFiles(srcPlugin, tgtPlugin, fileResults, projectRoot);
+      await this.propagatePluginDeletedFiles(
+        srcPlugin,
+        tgtPlugin,
+        sourceConfig,
+        targetConfig,
+        fileResults,
+        projectRoot
+      );
     }
   }
 
   private async propagatePluginDeletedFiles(
     srcPlugin: Plugin,
     tgtPlugin: Plugin,
+    sourceConfig: AiTool<unknown>,
+    targetConfig: AiTool<unknown>,
     fileResults: SyncFileResult[],
     projectRoot: string
   ): Promise<void> {
     const targetByComponent = buildReverseComponentMap(tgtPlugin);
+    const srcBaseDir = resolvePluginBaseDir(sourceConfig, projectRoot);
+    const tgtBaseDir = resolvePluginBaseDir(targetConfig, projectRoot);
     for (const [srcRelPath] of srcPlugin.files) {
-      if (await this.fs.fileExists(join(projectRoot, srcRelPath))) continue;
+      if (await this.fs.fileExists(join(srcBaseDir, srcRelPath))) continue;
       const componentPath = srcPlugin.componentPaths.get(srcRelPath);
       if (componentPath === undefined) continue;
       const tgtRelPath = targetByComponent.get(componentPath);
       if (tgtRelPath === undefined) continue;
-      const diskTgtPath = join(projectRoot, tgtRelPath);
+      const diskTgtPath = join(tgtBaseDir, tgtRelPath);
       if (!(await this.fs.fileExists(diskTgtPath))) continue;
       await this.fs.deleteFile(diskTgtPath);
       fileResults.push({
@@ -514,4 +529,16 @@ export class SyncFilePropagationUseCase {
       fileResults.push({ relativePath, conflict: conflictFlag, skipped: false, written: true });
     }
   }
+}
+
+/**
+ * Resolves the plugin install base directory for a tool.
+ * Returns projectRoot for project-scope tools and the user-homedir-resolved path for user-scope tools.
+ * Matches the base-dir resolution used by ModeBFlatMaterializationAdapter and StatusUseCase.
+ */
+function resolvePluginBaseDir(toolConfig: AiTool<unknown>, projectRoot: string): string {
+  const caps = toolConfig.capabilities as Record<string, unknown>;
+  const pluginsCap = caps.plugins as PluginsCapability | undefined;
+  if (pluginsCap === undefined) return projectRoot;
+  return pluginsCap.resolvePluginsBaseDir(projectRoot, nodeHomedir());
 }

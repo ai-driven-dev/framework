@@ -1,3 +1,4 @@
+import { homedir as nodeHomedir } from "node:os";
 import { join } from "node:path";
 import type { PluginsCapability } from "../../../domain/capabilities/plugins-capability.js";
 import {
@@ -210,6 +211,10 @@ export class PluginAddUseCase {
     if (toolConfig === undefined || !isAiTool(toolConfig)) return null;
     if (!("plugins" in (toolConfig.capabilities as object))) return null;
     const caps = toolConfig.capabilities as { plugins: PluginsCapability };
-    return resolveTranslationAdapter(caps.plugins, { fs: this.fs, hasher: this.hasher });
+    return resolveTranslationAdapter(caps.plugins, {
+      fs: this.fs,
+      hasher: this.hasher,
+      homedir: nodeHomedir,
+    });
   }
 }

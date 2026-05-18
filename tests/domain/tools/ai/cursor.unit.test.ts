@@ -145,105 +145,33 @@ describe("cursor", () => {
       expect(cursor.capabilities.plugins.mode).toBe("native");
     });
 
-    it("uses .cursor/plugins/ as plugins directory", () => {
-      expect(cursor.capabilities.plugins.pluginsDir).toBe(".cursor/plugins/");
+    it("pluginsDir is empty string (base-relative path prefix)", () => {
+      expect(cursor.capabilities.plugins.pluginsDir).toBe("");
     });
 
-    it("uses plugin.json as plugin manifest path", () => {
-      expect(cursor.capabilities.plugins.pluginManifestRelativePath).toBe("plugin.json");
+    it("pluginManifestRelativePath is null (no manifest file written into plugin dir)", () => {
+      expect(cursor.capabilities.plugins.pluginManifestRelativePath).toBeNull();
     });
 
-    it("pluginOutputDir returns correct path for a plugin name", () => {
-      expect(cursor.capabilities.plugins.pluginOutputDir("my-plugin")).toBe(
-        ".cursor/plugins/my-plugin/"
-      );
-    });
-  });
-
-  describe("capabilities.plugins.marketplaceSettings", () => {
-    const ms = cursor.capabilities.plugins.marketplaceSettings;
-
-    it("has marketplaceSettings configured", () => {
-      expect(ms).not.toBeNull();
+    it("installScope is user", () => {
+      expect(cursor.capabilities.plugins.installScope).toBe("user");
     });
 
-    it("writes to .cursor/settings.json", () => {
-      expect(ms?.settingsPath).toBe(".cursor/settings.json");
+    it("acceptsHooks is false", () => {
+      expect(cursor.capabilities.plugins.acceptsHooks).toBe(false);
     });
 
-    it("uses extraKnownMarketplaces as settings key", () => {
-      expect(ms?.settingsKey).toBe("extraKnownMarketplaces");
+    it("acceptsMcp is false", () => {
+      expect(cursor.capabilities.plugins.acceptsMcp).toBe(false);
     });
 
-    it("uses enabledPlugins as enabled plugins key", () => {
-      expect(ms?.enabledPluginsKey).toBe("enabledPlugins");
+    it("marketplaceSettings is null", () => {
+      expect(cursor.capabilities.plugins.marketplaceSettings).toBeNull();
     });
 
-    describe("toEntry()", () => {
-      it("returns directory entry for local source", () => {
-        const result = ms?.toEntry({
-          name: "my-plugin",
-          source: { kind: "local", path: "/workspace/my-plugin" },
-        });
-        expect(result).toEqual({
-          valueShape: "map",
-          key: "my-plugin",
-          value: { source: { source: "directory", path: "/workspace/my-plugin" } },
-        });
-      });
-
-      it("returns github entry for github source without ref", () => {
-        const result = ms?.toEntry({
-          name: "my-plugin",
-          source: { kind: "github", repo: "org/my-plugin" },
-        });
-        expect(result).toEqual({
-          valueShape: "map",
-          key: "my-plugin",
-          value: { source: { source: "github", repo: "org/my-plugin" } },
-        });
-      });
-
-      it("does not include ref in github source (ref dropped — not in documented spec)", () => {
-        const result = ms?.toEntry({
-          name: "my-plugin",
-          source: { kind: "github", repo: "org/my-plugin", ref: "v1.2.3" },
-        });
-        expect(result).toEqual({
-          valueShape: "map",
-          key: "my-plugin",
-          value: { source: { source: "github", repo: "org/my-plugin" } },
-        });
-      });
-
-      it("includes version when provided", () => {
-        const result = ms?.toEntry({
-          name: "my-plugin",
-          source: { kind: "github", repo: "org/my-plugin" },
-          version: "2.0.0",
-        });
-        expect(result).toEqual({
-          valueShape: "map",
-          key: "my-plugin",
-          value: { source: { source: "github", repo: "org/my-plugin" }, version: "2.0.0" },
-        });
-      });
-
-      it("returns null for unsupported source kind (npm)", () => {
-        const result = ms?.toEntry({
-          name: "my-plugin",
-          source: { kind: "npm", package: "my-plugin" },
-        });
-        expect(result).toBeNull();
-      });
-
-      it("returns null for unsupported source kind (url)", () => {
-        const result = ms?.toEntry({
-          name: "my-plugin",
-          source: { kind: "url", url: "https://example.com/plugin.zip" },
-        });
-        expect(result).toBeNull();
-      });
+    it("resolvePluginsBaseDir returns ~/.cursor/plugins/local resolved from given homedir", () => {
+      const result = cursor.capabilities.plugins.resolvePluginsBaseDir("/proj", "/home/user");
+      expect(result).toBe("/home/user/.cursor/plugins/local");
     });
   });
 });

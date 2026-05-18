@@ -1,6 +1,6 @@
+import { join } from "node:path";
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
-import { buildClaudeStyleMarketplaceEntry } from "../../capabilities/marketplace-entry.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
@@ -109,24 +109,14 @@ export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
       }),
       plugins: new PluginsCapability({
         mode: "native",
-        pluginsDir: ".cursor/plugins/",
-        pluginManifestRelativePath: "plugin.json",
-        mcpRelativePath: "mcp.json",
-        acceptsHooks: true,
-        acceptsMcp: true,
-        hooksContentFormat: "cursor",
-        translationMode: "marketplace",
-        // Project-local mirror using the same schema as Claude Code / Copilot.
-        // Cursor's native marketplace install path is UI-dashboard-driven (no
-        // project-scoped JSON spec today). This file provides forward-compat
-        // when Cursor ships a project-local spec, and an audit trail for users
-        // inspecting setup output.
-        marketplaceSettings: {
-          settingsPath: ".cursor/settings.json",
-          settingsKey: "extraKnownMarketplaces",
-          enabledPluginsKey: "enabledPlugins",
-          toEntry: buildClaudeStyleMarketplaceEntry,
-        },
+        // Empty pluginsDir so translateNativeWithPaths computes pluginRoot = "<pluginName>/"
+        // (base-relative keys like "aidd-context/commands/foo.md" per D2).
+        pluginsDir: "",
+        pluginManifestRelativePath: null,
+        acceptsHooks: false,
+        acceptsMcp: false,
+        installScope: "user",
+        userPluginsDir: (h) => join(h, ".cursor", "plugins", "local"),
       }),
     },
 

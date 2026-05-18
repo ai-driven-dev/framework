@@ -1,7 +1,9 @@
+import "../../../../../src/domain/tools/ai/claude.js";
 import "../../../../../src/domain/tools/ai/opencode.js";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationAdapter } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-adapter.js";
+import { CursorProjectScopeUnsupportedError } from "../../../../../src/domain/errors.js";
 import { Manifest } from "../../../../../src/domain/models/manifest.js";
 import { PluginDistribution } from "../../../../../src/domain/models/plugin-distribution.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -29,10 +31,10 @@ function buildDist(name = "test-plugin"): PluginDistribution {
   });
 }
 
-function buildAdapter() {
+function buildAdapter(homedir = "/stub-home") {
   const fs = new InMemoryFileAdapter();
   const hasher = new DeterministicHasher();
-  return { adapter: new ModeBFlatMaterializationAdapter(fs, hasher), fs };
+  return { adapter: new ModeBFlatMaterializationAdapter(fs, hasher, () => homedir), fs };
 }
 
 describe("ModeBFlatMaterializationAdapter", () => {
@@ -106,6 +108,26 @@ describe("ModeBFlatMaterializationAdapter", () => {
       expect(fs.listAll().length).toBe(0);
       const plugins = manifest.getPlugins("opencode");
       expect(plugins.find((p) => p.name === "empty-plugin")).toBeUndefined();
+    });
+  });
+
+  describe("when tool has native mode and project-scope (not user-scope)", () => {
+    it("throws CursorProjectScopeUnsupportedError", async () => {
+      const { adapter } = buildAdapter();
+      const manifest = Manifest.create();
+      manifest.addTool("claude", "test", []);
+      const dist = buildDist("test-plugin");
+      await expect(
+        adapter.addPlugin(
+          dist,
+          "claude",
+          { kind: "local", path: "/plugin-source" },
+          PROJECT_ROOT,
+          manifest,
+          undefined,
+          "docs"
+        )
+      ).rejects.toThrow(CursorProjectScopeUnsupportedError);
     });
   });
 

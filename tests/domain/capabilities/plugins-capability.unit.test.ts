@@ -87,6 +87,56 @@ describe("PluginsCapability", () => {
     });
   });
 
+  describe("user scope (native mode)", () => {
+    const cap = new PluginsCapability({
+      mode: "native",
+      pluginsDir: "",
+      pluginManifestRelativePath: null,
+      installScope: "user",
+      userPluginsDir: (h) => `${h}/.cursor/plugins/local`,
+    });
+
+    it("exposes installScope as user", () => {
+      expect(cap.installScope).toBe("user");
+    });
+
+    it("resolvePluginsBaseDir returns homedir-based path", () => {
+      expect(cap.resolvePluginsBaseDir("/proj", "/home/user")).toBe(
+        "/home/user/.cursor/plugins/local"
+      );
+    });
+  });
+
+  describe("project scope (default)", () => {
+    const cap = new PluginsCapability({
+      mode: "native",
+      pluginsDir: ".claude/plugins/",
+      pluginManifestRelativePath: "plugin.json",
+    });
+
+    it("exposes installScope as project", () => {
+      expect(cap.installScope).toBe("project");
+    });
+
+    it("resolvePluginsBaseDir returns projectRoot", () => {
+      expect(cap.resolvePluginsBaseDir("/my-project", "/home/user")).toBe("/my-project");
+    });
+  });
+
+  describe("user scope without userPluginsDir resolver", () => {
+    it("throws CapabilityConfigError", () => {
+      expect(
+        () =>
+          new PluginsCapability({
+            mode: "native",
+            pluginsDir: "",
+            pluginManifestRelativePath: null,
+            installScope: "user",
+          })
+      ).toThrow("installScope 'user' requires a userPluginsDir resolver function.");
+    });
+  });
+
   describe("translationMode", () => {
     describe("native with marketplaceSettings and translationMode marketplace", () => {
       it("exposes translationMode as marketplace", () => {

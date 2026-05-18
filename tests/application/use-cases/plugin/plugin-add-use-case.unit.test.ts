@@ -238,9 +238,11 @@ describe("PluginAddUseCase", () => {
       expect(installed?.files.size).toBeGreaterThan(0);
     });
 
-    it("cursor: register-only for github marketplace (no files written)", async () => {
+    it("cursor: Mode B (user-scope) fetches and materializes files for github marketplace", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initAndInstall(deps, PROJECT_ROOT, "cursor");
+      await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
+      deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
       const registry = await makeGithubRegistry(PROJECT_ROOT);
       const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
       const useCase = new PluginAddUseCase(
@@ -259,12 +261,12 @@ describe("PluginAddUseCase", () => {
         interactive: false,
         pluginMetadata: PLUGIN_METADATA,
       });
-      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(fetchSpy).toHaveBeenCalled();
       const manifest = await deps.manifestRepo.load();
       const plugins = manifest?.getPlugins("cursor") ?? [];
       const installed = plugins.find((p) => p.name === "sample-plugin");
       expect(installed).toBeDefined();
-      expect(installed?.files.size).toBe(0);
+      expect(installed?.files.size).toBeGreaterThan(0);
     });
 
     it("codex: register-only for github marketplace (no files written)", async () => {
