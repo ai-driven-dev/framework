@@ -13,10 +13,10 @@ import { DoctorPluginUseCase } from "../../../src/application/use-cases/doctor/d
 import { DoctorReferencesUseCase } from "../../../src/application/use-cases/doctor/doctor-references-use-case.js";
 import { DoctorTrackedFilesUseCase } from "../../../src/application/use-cases/doctor/doctor-tracked-files-use-case.js";
 import { DoctorUseCase } from "../../../src/application/use-cases/doctor/doctor-use-case.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../src/application/use-cases/marketplace/marketplace-sync-settings-use-case.js";
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
 import { InstallIdeConfigUseCase } from "../../../src/application/use-cases/install/install-ide-config-use-case.js";
 import { InstallRuntimeConfigUseCase } from "../../../src/application/use-cases/install/install-runtime-config-use-case.js";
+import { MarketplaceSyncSettingsUseCase } from "../../../src/application/use-cases/marketplace/marketplace-sync-settings-use-case.js";
 import { SyncConflictResolverUseCase } from "../../../src/application/use-cases/sync/sync-conflict-resolver-use-case.js";
 import { SyncFilePropagationUseCase } from "../../../src/application/use-cases/sync/sync-file-propagation-use-case.js";
 import { SyncSourceResolverUseCase } from "../../../src/application/use-cases/sync/sync-source-resolver-use-case.js";
