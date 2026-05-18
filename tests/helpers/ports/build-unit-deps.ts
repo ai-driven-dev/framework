@@ -16,6 +16,7 @@ import { DoctorUseCase } from "../../../src/application/use-cases/doctor/doctor-
 import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js";
 import { InstallIdeConfigUseCase } from "../../../src/application/use-cases/install/install-ide-config-use-case.js";
 import { InstallRuntimeConfigUseCase } from "../../../src/application/use-cases/install/install-runtime-config-use-case.js";
+import { MarketplaceSyncSettingsUseCase } from "../../../src/application/use-cases/marketplace/marketplace-sync-settings-use-case.js";
 import { SyncConflictResolverUseCase } from "../../../src/application/use-cases/sync/sync-conflict-resolver-use-case.js";
 import { SyncFilePropagationUseCase } from "../../../src/application/use-cases/sync/sync-file-propagation-use-case.js";
 import { SyncSourceResolverUseCase } from "../../../src/application/use-cases/sync/sync-source-resolver-use-case.js";
@@ -69,6 +70,13 @@ export async function buildUnitDeps(_projectRoot: string) {
   const syncConflictResolver = new SyncConflictResolverUseCase(fs);
   const syncFilePropagation = new SyncFilePropagationUseCase(fs, syncConflictResolver, logger);
   const syncSourceResolver = new SyncSourceResolverUseCase(fs);
+  const marketplaceSyncSettings = new MarketplaceSyncSettingsUseCase(
+    fs,
+    manifestRepo,
+    marketplaceRegistry,
+    pluginCatalogRepository,
+    hasher
+  );
 
   // Seed the framework fixture content so the install use-case can read it
   await seedFromDirectory(fs, FIXTURE_DIR, { useAbsolutePaths: true });
@@ -83,6 +91,7 @@ export async function buildUnitDeps(_projectRoot: string) {
     pluginDistributionReader,
     pluginCatalogRepository,
     marketplaceRegistry,
+    marketplaceSyncSettings,
     installRuntimeConfigUseCase,
     installIdeConfigUseCase,
     currentVersionProvider,

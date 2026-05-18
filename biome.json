@@ -39,7 +39,7 @@
       "!tmp",
       "!.stryker-tmp",
       "!reports",
-      "!**/fixtures/**"
+      "!**/fixtures"
     ]
   },
   "overrides": [

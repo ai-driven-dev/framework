@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import type { PluginsCapability } from "../../../domain/capabilities/plugins-capability.js";
 import {
   DuplicatePluginError,
   MissingPluginVersionError,
@@ -19,8 +20,7 @@ import type { PluginDistributionReader } from "../../../domain/ports/plugin-dist
 import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
 import { loadPluginManifest, resolvePluginToolIds, writePluginFiles } from "./plugin-helpers.js";
-
-const FLAT_PLUGINS_MODE = "flat";
+import { resolveTranslationAdapter } from "./translator/plugin-translation-adapter-factory.js";
 
 export interface PluginAddOptions {
   source: PluginSource;
@@ -71,8 +71,9 @@ export class PluginAddUseCase {
     if (pluginMetadata === undefined) throw new MissingPluginVersionError();
     if (options.replace === true) this.dropExistingPlugin(pluginMetadata.name, toolIds, manifest);
     else this.validateNoDuplicates(pluginMetadata.name, toolIds, manifest);
-    const flatToolIds = toolIds.filter((id) => this.isFlatTool(id));
-    const nativeToolIds = toolIds.filter((id) => !this.isFlatTool(id));
+    const adapterMap = this.buildAdapterMap(toolIds);
+    const flatToolIds = toolIds.filter((id) => adapterMap.get(id)?.mode === "flat");
+    const nativeToolIds = toolIds.filter((id) => adapterMap.get(id)?.mode !== "flat");
     if (flatToolIds.length > 0) {
       await this.addLocalPlugin(
         options,
@@ -85,13 +86,14 @@ export class PluginAddUseCase {
     this.registerNativeGithubPlugins(options, nativeToolIds, manifest);
   }
 
-  private isFlatTool(toolId: AiToolId): boolean {
-    const toolConfig = getToolConfig(toolId);
-    if (!isAiTool(toolConfig)) return false;
-    if (!("plugins" in (toolConfig.capabilities as object))) return false;
-    return (
-      (toolConfig.capabilities as { plugins: { mode: string } }).plugins.mode === FLAT_PLUGINS_MODE
-    );
+  private buildAdapterMap(
+    toolIds: AiToolId[]
+  ): Map<AiToolId, ReturnType<typeof resolveTranslationAdapter>> {
+    const map = new Map<AiToolId, ReturnType<typeof resolveTranslationAdapter>>();
+    for (const id of toolIds) {
+      map.set(id, this.resolveAdapter(getToolConfig(id)));
+    }
+    return map;
   }
 
   private registerNativeGithubPlugins(
@@ -180,24 +182,34 @@ export class PluginAddUseCase {
   ): Promise<void> {
     const toolConfig = getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return;
+    const adapter = this.resolveAdapter(toolConfig);
+    if (adapter?.mode === "flat") {
+      await adapter.addPlugin(dist, toolId, source, projectRoot, manifest, marketplace, docsDir);
+      return;
+    }
     const { files, componentPaths } = new PluginTranslator(this.hasher).translateWithComponentPaths(
       dist,
       toolConfig,
       docsDir
     );
     if (files.length === 0) return;
-    const isLocalMarketplace =
-      !this.isFlatTool(toolId) && source.kind === "local" && marketplace !== undefined;
-    if (!isLocalMarketplace) await writePluginFiles(files, projectRoot, this.fs);
+    if (adapter?.mode === "marketplace" && source.kind === "local" && marketplace !== undefined) {
+      await adapter.addPlugin(dist, toolId, source, projectRoot, manifest, marketplace, docsDir);
+      return;
+    }
+    await writePluginFiles(files, projectRoot, this.fs);
     manifest.addPlugin(
       toolId,
-      Plugin.fromDistribution(
-        dist,
-        source,
-        isLocalMarketplace ? [] : files,
-        isLocalMarketplace ? new Map() : componentPaths,
-        marketplace
-      )
+      Plugin.fromDistribution(dist, source, files, componentPaths, marketplace)
     );
+  }
+
+  private resolveAdapter(
+    toolConfig: ReturnType<typeof getToolConfig>
+  ): ReturnType<typeof resolveTranslationAdapter> {
+    if (toolConfig === undefined || !isAiTool(toolConfig)) return null;
+    if (!("plugins" in (toolConfig.capabilities as object))) return null;
+    const caps = toolConfig.capabilities as { plugins: PluginsCapability };
+    return resolveTranslationAdapter(caps.plugins, { fs: this.fs, hasher: this.hasher });
   }
 }
