@@ -37,6 +37,8 @@ src/
 
 For full details: [aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)
 
+**Plugin translator (dual-mode core):** [aidd_docs/translator-dual-mode.md](aidd_docs/translator-dual-mode.md) — required reading before adding a new AI tool.
+
 ---
 
 ## Development setup

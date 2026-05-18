@@ -59,6 +59,8 @@ All `4.0.x` command spellings are removed. Run `aidd migrate` to clean obsolete 
 
 ### Internal
 
+- **Translator dual-mode reference doc** — `aidd_docs/translator-dual-mode.md` documents the three routing dimensions (`mode`, `translationMode`, `installScope`), tool×mode matrix, and step-by-step new-tool guide; linked from CONTRIBUTING.md
+- **Per-mode integration suite** — `install-plugin-<tool>-mode-<a|b>.integration.test.ts` for Claude/Copilot/Codex (Mode A) and OpenCode/Cursor (Mode B); quality gate for the core translator
 - **Test pyramid inversion** — 6 main-journey E2E tests; most integration tests demoted to unit
 - **Mutation testing baseline** — Stryker scoped to `migration-plan.ts`; baseline established
 - **DDD splits** — `sync-use-case` (876 LOC), `restore-use-case` (396 LOC), `uninstall-use-case` (360 LOC), `doctor-use-case` (400 LOC) each split into orchestrator + sub-use-cases
