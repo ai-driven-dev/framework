@@ -1,6 +1,7 @@
 import { CatalogFetchAuthError } from "../../domain/errors.js";
 import type { MarketplaceSourceMode } from "../../domain/models/marketplace-source-mode.js";
 import type { PluginSource } from "../../domain/models/plugin-source.js";
+import type { ProjectContext } from "../../domain/models/project-context.js";
 import type { SetupFlow } from "../../domain/models/setup-flow.js";
 import type { AiToolId, IdeToolId } from "../../domain/models/tool-ids.js";
 import type { FileReader } from "../../domain/ports/file-reader.js";
@@ -15,6 +16,7 @@ import type {
   MarketplaceRegisterFrameworkUseCase,
 } from "./marketplace/marketplace-register-framework-use-case.js";
 import type { MarketplaceSyncSettingsUseCase } from "./marketplace/marketplace-sync-settings-use-case.js";
+import type { ProjectContextDetectorUseCase } from "./setup/project-context-detector-use-case.js";
 import type { SetupMarketplaceSourceUseCase } from "./setup/setup-marketplace-source-use-case.js";
 import type { SetupPluginsPromptUseCase } from "./setup/setup-plugins-prompt-use-case.js";
 import type { SetupToolsPromptUseCase } from "./setup/setup-tools-prompt-use-case.js";
@@ -24,8 +26,8 @@ export type { ToolInstallResult } from "./setup/setup-tools-use-case.js";
 export type { SetupToolsResult };
 
 export type SetupResult =
-  | { kind: "initialized"; install: SetupToolsResult }
-  | { kind: "up-to-date"; install: SetupToolsResult };
+  | { kind: "initialized"; install: SetupToolsResult; context?: ProjectContext }
+  | { kind: "up-to-date"; install: SetupToolsResult; context?: ProjectContext };
 
 export class SetupUseCase {
   constructor(
@@ -39,10 +41,12 @@ export class SetupUseCase {
     private readonly setupPluginsPromptUseCase: SetupPluginsPromptUseCase,
     private readonly currentVersionProvider: VersionReader,
     private readonly tokenProvider?: TokenProvider,
-    private readonly setupToolsPromptUseCase?: SetupToolsPromptUseCase
+    private readonly setupToolsPromptUseCase?: SetupToolsPromptUseCase,
+    private readonly projectContextDetector?: ProjectContextDetectorUseCase
   ) {}
 
   async execute(flow: SetupFlow): Promise<SetupResult> {
+    const context = await this.detectContext(flow);
     const isNew = await this.initManifest(flow);
     if (flow.registerDefaultMarketplace) {
       const source = await this.resolveSource(flow);
@@ -50,10 +54,15 @@ export class SetupUseCase {
       await this.registerMarketplace(flow, source);
       await this.refreshCatalog(flow);
     }
-    const install = await this.installTools(flow);
+    const install = await this.installTools(flow, context);
     if (flow.registerDefaultMarketplace) await this.promptPlugins(flow);
     await this.syncSettings(flow);
-    return this.buildResult(isNew, install);
+    return this.buildResult(isNew, install, context);
+  }
+
+  private async detectContext(flow: SetupFlow): Promise<ProjectContext | undefined> {
+    if (this.projectContextDetector === undefined) return undefined;
+    return this.projectContextDetector.execute({ projectRoot: flow.projectRoot });
   }
 
   private async syncSettings(flow: SetupFlow): Promise<void> {
@@ -110,8 +119,11 @@ export class SetupUseCase {
     await this.marketplaceRefreshUseCase.execute({ projectRoot: flow.projectRoot });
   }
 
-  private async installTools(flow: SetupFlow): Promise<SetupToolsResult> {
-    const { aiTools, ideTools } = await this.resolveTools(flow);
+  private async installTools(
+    flow: SetupFlow,
+    context: ProjectContext | undefined
+  ): Promise<SetupToolsResult> {
+    const { aiTools, ideTools } = await this.resolveTools(flow, context);
     const version = this.currentVersionProvider.get();
     return this.setupToolsUseCase.execute({
       projectRoot: flow.projectRoot,
@@ -123,7 +135,8 @@ export class SetupUseCase {
   }
 
   private async resolveTools(
-    flow: SetupFlow
+    flow: SetupFlow,
+    context: ProjectContext | undefined
   ): Promise<{ aiTools: readonly AiToolId[]; ideTools: readonly IdeToolId[] }> {
     if (this.setupToolsPromptUseCase === undefined) {
       return { aiTools: flow.aiTools as AiToolId[], ideTools: flow.ideTools as IdeToolId[] };
@@ -132,6 +145,7 @@ export class SetupUseCase {
       interactive: flow.interactive,
       aiTools: flow.aiTools as AiToolId[],
       ideTools: flow.ideTools as IdeToolId[],
+      context,
     });
   }
 
@@ -144,8 +158,12 @@ export class SetupUseCase {
     });
   }
 
-  private buildResult(isNew: boolean, install: SetupToolsResult): SetupResult {
-    if (isNew) return { kind: "initialized", install };
-    return { kind: "up-to-date", install };
+  private buildResult(
+    isNew: boolean,
+    install: SetupToolsResult,
+    context: ProjectContext | undefined
+  ): SetupResult {
+    if (isNew) return { kind: "initialized", install, context };
+    return { kind: "up-to-date", install, context };
   }
 }
