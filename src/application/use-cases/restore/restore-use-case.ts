@@ -41,6 +41,7 @@ interface RestoreOptions {
   force?: boolean;
   interactive?: boolean;
   manifest?: Manifest;
+  pluginName?: string;
 }
 
 interface RestoreCtx {
@@ -54,6 +55,7 @@ interface RestoreCtx {
   interactive: boolean;
   fileFilter: ((p: string) => boolean) | null;
   toolIds: ToolId[];
+  pluginName?: string;
 }
 
 interface RestoreResult {
@@ -98,6 +100,7 @@ export class RestoreUseCase {
       interactive,
       fileFilter: buildFileFilter(options.files),
       toolIds: options.toolIds?.length ? options.toolIds : manifest.getInstalledToolIds(),
+      pluginName: options.pluginName,
     };
     return this.executeRestore(ctx);
   }
@@ -136,6 +139,7 @@ export class RestoreUseCase {
       manifest: ctx.manifest,
       docsDir: ctx.docsDir,
       fileFilter: ctx.fileFilter,
+      pluginName: ctx.pluginName,
     });
   }
 

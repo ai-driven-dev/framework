@@ -116,18 +116,22 @@ export function registerAiCommand(program: Command): void {
     });
 
   ai.command("status")
-    .description("Show drift for AI tools")
-    .action(async () => {
+    .description("Show drift for AI tools (optionally filtered by tool and/or plugin)")
+    .option("--tool <tool>", "Limit status to a specific AI tool")
+    .option("--plugin <name>", "Limit status to a specific plugin")
+    .action(async (cmdOptions: { tool?: string; plugin?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
+        if (cmdOptions.tool !== undefined) assertAiToolId(cmdOptions.tool);
         const deps = await createDeps(projectRoot, { verbose }, output);
         const { StatusUseCase } = await import("../use-cases/status-use-case.js");
         const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.hasher);
         const report = await useCase.execute({
           projectRoot,
-          filterToolId: undefined,
+          filterToolId: cmdOptions.tool as AiToolId | undefined,
           category: "ai",
+          pluginName: cmdOptions.plugin,
         });
         if (report.inSync) {
           output.success("All AI tool files are in sync");
@@ -140,6 +144,11 @@ export function registerAiCommand(program: Command): void {
           }
           output.print(`${tool.toolId} (v${tool.version}):`);
           for (const f of tool.drifted) output.print(`  ${f.status} ${f.relativePath}`);
+        }
+        for (const entry of report.pluginDrift) {
+          output.print(
+            `  plugin ${entry.pluginName} (${entry.toolId}): ${entry.driftedFiles.length} file(s) modified`
+          );
         }
       } catch (error) {
         errorHandler.handle(error);
@@ -185,6 +194,7 @@ export function registerAiCommand(program: Command): void {
     .description("Propagate local modifications from one AI tool to others")
     .option("--source <tool>", "Source tool to sync from")
     .option("--target <tool>", "Target tool to sync to (default: all other installed tools)")
+    .option("--plugin <name>", "Sync hashes for a specific plugin only")
     .option("-f, --force", "Overwrite conflicting files without prompting", false)
     .option("--include-user-files", "Also sync user-created files not tracked in manifest", false)
     .option("--no-plugins", "Skip plugin propagation (sync configs only)")
@@ -192,6 +202,7 @@ export function registerAiCommand(program: Command): void {
       async (cmdOptions: {
         source?: string;
         target?: string;
+        plugin?: string;
         force: boolean;
         includeUserFiles: boolean;
         plugins: boolean;
@@ -235,6 +246,7 @@ export function registerAiCommand(program: Command): void {
             includeUserFiles: cmdOptions.includeUserFiles,
             interactive: process.stdout.isTTY,
             includePlugins: cmdOptions.plugins,
+            pluginName: cmdOptions.plugin,
           });
           const { totalWritten, totalDeleted, totalConflicts } = result;
           if (totalWritten === 0 && totalDeleted === 0 && totalConflicts === 0) {
@@ -257,72 +269,84 @@ export function registerAiCommand(program: Command): void {
     .description("Restore AI tool tracked files to their installed version")
     .option("-f, --force", "Restore without prompting", false)
     .option("--tool <tool>", "Limit restore to a specific AI tool")
-    .action(async (fileArgs: string[], cmdOptions: { force: boolean; tool?: string }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-      try {
-        if (cmdOptions.tool !== undefined) {
-          assertAiToolId(cmdOptions.tool);
-        }
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const { NoManifestError } = await import("../errors.js");
-        const manifest = await deps.manifestRepo.load();
-        if (!manifest) throw new NoManifestError();
-        const version =
-          manifest
-            .getInstalledToolIds()
-            .map((id) => manifest.getToolVersion(id))
-            .find((v) => v !== undefined) ?? deps.currentVersionProvider.get();
-        const toolIds: ToolId[] | undefined = cmdOptions.tool
-          ? [cmdOptions.tool as ToolId]
-          : (manifest
+    .option("--plugin <name>", "Limit restore to a specific plugin")
+    .action(
+      async (
+        fileArgs: string[],
+        cmdOptions: { force: boolean; tool?: string; plugin?: string }
+      ) => {
+        const { verbose, output, projectRoot } = parseGlobalOptions(program);
+        const errorHandler = new ErrorHandler(output);
+        try {
+          if (cmdOptions.tool !== undefined) {
+            assertAiToolId(cmdOptions.tool);
+          }
+          const deps = await createDeps(projectRoot, { verbose }, output);
+          const { NoManifestError } = await import("../errors.js");
+          const manifest = await deps.manifestRepo.load();
+          if (!manifest) throw new NoManifestError();
+          const version =
+            manifest
               .getInstalledToolIds()
-              .filter((id) => (AI_TOOL_IDS as readonly string[]).includes(id)) as ToolId[]);
-        const { DOCS_DIR } = await import("../../domain/models/paths.js");
-        const { RestoreUseCase } = await import("../use-cases/restore/restore-use-case.js");
-        const restoreUseCase = new RestoreUseCase(
-          deps.fs,
-          deps.manifestRepo,
-          deps.hasher,
-          deps.logger,
-          deps.platform,
-          deps.prompter,
-          deps.pluginFetcher,
-          deps.pluginDistributionReader
-        );
-        const result = await restoreUseCase.execute({
-          version,
-          docsDir: DOCS_DIR,
-          projectRoot,
-          toolIds,
-          files: fileArgs.length > 0 ? fileArgs : undefined,
-          force: cmdOptions.force,
-          interactive: process.stdout.isTTY,
-          manifest,
-        });
-        const nothingDone = result.tools.every((t) => t.nothingToRestore);
-        if (nothingDone) {
-          output.success("Nothing to restore — all files are unmodified.");
-          return;
+              .map((id) => manifest.getToolVersion(id))
+              .find((v) => v !== undefined) ?? deps.currentVersionProvider.get();
+          const toolIds: ToolId[] | undefined = cmdOptions.tool
+            ? [cmdOptions.tool as ToolId]
+            : (manifest
+                .getInstalledToolIds()
+                .filter((id) => (AI_TOOL_IDS as readonly string[]).includes(id)) as ToolId[]);
+          const { DOCS_DIR } = await import("../../domain/models/paths.js");
+          const { RestoreUseCase } = await import("../use-cases/restore/restore-use-case.js");
+          const restoreUseCase = new RestoreUseCase(
+            deps.fs,
+            deps.manifestRepo,
+            deps.hasher,
+            deps.logger,
+            deps.platform,
+            deps.prompter,
+            deps.pluginFetcher,
+            deps.pluginDistributionReader
+          );
+          const result = await restoreUseCase.execute({
+            version,
+            docsDir: DOCS_DIR,
+            projectRoot,
+            toolIds,
+            files: fileArgs.length > 0 ? fileArgs : undefined,
+            force: cmdOptions.force,
+            interactive: process.stdout.isTTY,
+            manifest,
+            pluginName: cmdOptions.plugin,
+          });
+          const nothingDone = result.tools.every((t) => t.nothingToRestore);
+          if (nothingDone) {
+            output.success("Nothing to restore — all files are unmodified.");
+            return;
+          }
+          const restored = result.totalRestored;
+          const kept = result.totalKept;
+          output.success(
+            `Restored ${restored} ${restored === 1 ? "file" : "files"}, kept ${kept} ${kept === 1 ? "file" : "files"}`
+          );
+        } catch (error) {
+          errorHandler.handle(error);
         }
-        const restored = result.totalRestored;
-        const kept = result.totalKept;
-        output.success(
-          `Restored ${restored} ${restored === 1 ? "file" : "files"}, kept ${kept} ${kept === 1 ? "file" : "files"}`
-        );
-      } catch (error) {
-        errorHandler.handle(error);
       }
-    });
+    );
 
   ai.command("doctor")
-    .description("Check AI tool installation health and detect issues")
-    .action(async () => {
+    .description("Check AI tool installation health (optionally filtered by plugin)")
+    .option("--plugin <name>", "Limit doctor to a specific plugin")
+    .action(async (cmdOptions: { plugin?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const report = await deps.doctorUseCase.execute({ projectRoot, category: "ai" });
+        const report = await deps.doctorUseCase.execute({
+          projectRoot,
+          category: "ai",
+          pluginName: cmdOptions.plugin,
+        });
         if (report.healthy) {
           output.success("AI tool installation is healthy");
           return;

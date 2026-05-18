@@ -15,6 +15,7 @@ interface RestoreAllPluginsOptions {
   manifest: Manifest;
   docsDir: string;
   fileFilter: ((p: string) => boolean) | null;
+  pluginName?: string;
 }
 
 export class RestoreAllPluginsUseCase {
@@ -26,7 +27,7 @@ export class RestoreAllPluginsUseCase {
   ) {}
 
   async execute(options: RestoreAllPluginsOptions): Promise<number> {
-    const { projectRoot, manifest, docsDir, fileFilter } = options;
+    const { projectRoot, manifest, docsDir, fileFilter, pluginName } = options;
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
     let total = 0;
     for (const toolId of AI_TOOL_IDS) {
@@ -40,7 +41,8 @@ export class RestoreAllPluginsUseCase {
         projectRoot,
         cacheDir,
         docsDir,
-        fileFilter
+        fileFilter,
+        pluginName
       );
     }
     return total;
@@ -53,10 +55,14 @@ export class RestoreAllPluginsUseCase {
     projectRoot: string,
     cacheDir: string,
     docsDir: string,
-    fileFilter: ((p: string) => boolean) | null
+    fileFilter: ((p: string) => boolean) | null,
+    pluginName: string | undefined
   ): Promise<number> {
     let total = 0;
-    for (const plugin of manifest.getPlugins(toolId)) {
+    const plugins = manifest.getPlugins(toolId);
+    const targets =
+      pluginName !== undefined ? plugins.filter((p) => p.name === pluginName) : plugins;
+    for (const plugin of targets) {
       total += await new ApplyPluginFilesUseCase(
         this.fs,
         this.hasher,
