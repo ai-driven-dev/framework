@@ -1,5 +1,6 @@
 import { DOCS_DIR } from "../../../domain/models/paths.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
+import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileMerger } from "../../../domain/ports/file-merger.js";
 import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../domain/ports/file-writer.js";
@@ -32,7 +33,8 @@ export class RestoreAllUseCase {
     private readonly platform: Platform,
     private readonly prompter: Prompter,
     private readonly pluginFetcher: PluginFetcher,
-    private readonly pluginDistributionReader: PluginDistributionReader
+    private readonly pluginDistributionReader: PluginDistributionReader,
+    private readonly assetProvider?: AssetProvider
   ) {}
 
   async execute(projectRoot: string, interactive: boolean): Promise<RestoreAllResult> {
@@ -102,7 +104,8 @@ export class RestoreAllUseCase {
         this.platform,
         this.prompter,
         this.pluginFetcher,
-        this.pluginDistributionReader
+        this.pluginDistributionReader,
+        this.assetProvider
       );
       if (manifest === null) return { totalRestored: 0, totalKept: 0 };
       const result = await restoreUseCase.execute({

@@ -157,6 +157,7 @@ export function registerAiCommand(program: Command): void {
 
   ai.command("update [tool]")
     .description("Re-install AI tool configs from bundled CLI assets (force overwrite)")
+    .option("-f, --force", "Force overwrite (default for this command)", true)
     .action(async (toolArg: string | undefined) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
@@ -305,7 +306,8 @@ export function registerAiCommand(program: Command): void {
             deps.platform,
             deps.prompter,
             deps.pluginFetcher,
-            deps.pluginDistributionReader
+            deps.pluginDistributionReader,
+            deps.assetProvider
           );
           const result = await restoreUseCase.execute({
             version,

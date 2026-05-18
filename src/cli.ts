@@ -60,17 +60,29 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
   );
   if (!deps) return;
   const cmd = actionCommand.name();
+  const cmdPath = resolveCommandPath(actionCommand);
   await new CheckUpdateUseCase(deps.cliUpdater, deps.currentVersionProvider, output).execute({
     skipCliCheck: cmd === "self-update",
   });
-  if (MIGRATION_BYPASS_COMMANDS.has(cmd)) return;
-  await checkAndOfferMigration(deps, output, cmd);
+  if (MIGRATION_BYPASS_COMMANDS.has(cmd) || MIGRATION_BYPASS_COMMANDS.has(cmdPath.split(" ")[0]))
+    return;
+  await checkAndOfferMigration(deps, output, cmdPath);
 });
+
+function resolveCommandPath(actionCommand: Command): string {
+  const parts: string[] = [];
+  let current: Command | null = actionCommand;
+  while (current && current.name() !== "aidd") {
+    parts.unshift(current.name());
+    current = current.parent;
+  }
+  return parts.join(" ");
+}
 
 async function checkAndOfferMigration(
   deps: Awaited<ReturnType<typeof createDeps>>,
   output: CLIOutput,
-  cmd: string
+  cmdPath: string
 ): Promise<void> {
   const projectRoot = process.cwd();
   const useCase = new MigrateUseCase(
@@ -88,7 +100,7 @@ async function checkAndOfferMigration(
   if (dryRun.kind !== "dry-run" || !needsSchemaUpgrade(dryRun.plan)) return;
   if (!process.stdout.isTTY) {
     output.error(
-      `Outdated manifest detected. Run \`aidd migrate\` to update before running \`aidd ${cmd}\`.`
+      `Outdated manifest detected. Run \`aidd migrate\` to update before running \`aidd ${cmdPath}\`.`
     );
     process.exit(1);
   }

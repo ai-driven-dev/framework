@@ -2,6 +2,7 @@ import { type FileHash, InstallationFile } from "../../../domain/models/file.js"
 import type { FrameworkDescriptor } from "../../../domain/models/framework.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { MergeFileEntry } from "../../../domain/models/merge.js";
+import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileMerger } from "../../../domain/ports/file-merger.js";
 import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../domain/ports/file-writer.js";
@@ -52,7 +53,8 @@ export class RestoreToolFilesUseCase {
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly platform: Platform,
-    private readonly prompter: Prompter
+    private readonly prompter: Prompter,
+    private readonly assetProvider?: AssetProvider
   ) {}
 
   async execute(options: RestoreToolFilesOptions): Promise<RestoreToolFilesResult> {
@@ -74,7 +76,8 @@ export class RestoreToolFilesUseCase {
     const distribution = await new GenerateToolDistributionUseCase(
       this.fs,
       this.hasher,
-      this.platform
+      this.platform,
+      this.assetProvider
     ).execute({ config, descriptor, contentFiles, docsDir, projectRoot });
     return new Map(distribution.map((f) => [f.relativePath, f]));
   }

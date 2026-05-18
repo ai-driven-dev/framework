@@ -140,6 +140,7 @@ export function registerIdeCommand(program: Command): void {
   ide
     .command("update [tool]")
     .description("Re-install IDE tool configs from bundled CLI assets (force overwrite)")
+    .option("-f, --force", "Force overwrite (default for this command)", true)
     .action(async (toolArg: string | undefined) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
@@ -212,7 +213,8 @@ export function registerIdeCommand(program: Command): void {
           deps.platform,
           deps.prompter,
           deps.pluginFetcher,
-          deps.pluginDistributionReader
+          deps.pluginDistributionReader,
+          deps.assetProvider
         );
         const result = await restoreUseCase.execute({
           version,
