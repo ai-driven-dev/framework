@@ -206,18 +206,6 @@ const INSTALLED_NODES: MenuNode[] = [
         command: ["plugin", "list"],
       },
       {
-        name: "Sync",
-        value: "plugin-sync",
-        description: "Propagate plugins from source tool to targets",
-        command: ["plugin", "sync"],
-      },
-      {
-        name: "Restore",
-        value: "plugin-restore",
-        description: "Restore a plugin to its cached version",
-        command: ["plugin", "restore"],
-      },
-      {
         name: "Doctor",
         value: "plugin-doctor",
         description: "Check plugin installation health",

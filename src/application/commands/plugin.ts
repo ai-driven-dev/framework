@@ -4,14 +4,9 @@ import {
   describePluginSource,
   parsePluginSourceShorthand,
 } from "../../domain/models/plugin-source.js";
-import type { AiToolId } from "../../domain/models/tool-ids.js";
-import { AI_TOOL_IDS, assertValidAiToolId, parseToolOption } from "../../domain/models/tool-ids.js";
+import { assertValidAiToolId, parseToolOption } from "../../domain/models/tool-ids.js";
 import { createDeps, createMenuDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
-import { NoManifestError } from "../errors.js";
-import { RestorePluginUseCase } from "../use-cases/restore/restore-plugin-use-case.js";
-import { StatusUseCase } from "../use-cases/status-use-case.js";
-import { SyncPluginsUseCase } from "../use-cases/sync/sync-plugins-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./shared/spawn-cli-command.js";
 
@@ -31,9 +26,6 @@ export function registerPluginCommand(program: Command): void {
       { name: "Search plugins", value: "search", description: "requires query arg" },
       { name: "Update plugins", value: "update" },
       { name: "Remove a plugin", value: "remove", description: "requires name arg" },
-      { name: "Plugin status", value: "status" },
-      { name: "Sync plugins", value: "sync", description: "requires --source" },
-      { name: "Restore a plugin", value: "restore", description: "requires --plugin" },
       { name: "Plugin doctor", value: "doctor" },
     ]);
     await spawnCliCommand(["plugin", choice]);
@@ -232,104 +224,6 @@ export function registerPluginCommand(program: Command): void {
     });
 
   plugin
-    .command("status")
-    .description("Show drift for plugins")
-    .option("--plugin <name>", "Filter status to one plugin")
-    .action(async (cmdOptions: { plugin?: string }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
-        const report = await useCase.execute({
-          projectRoot,
-          filterToolId: undefined,
-          pluginName: cmdOptions.plugin,
-        });
-        if (report.inSync) {
-          output.success("All plugin files are in sync");
-          return;
-        }
-        for (const entry of report.pluginDrift) {
-          output.print(`plugin ${entry.pluginName} (${entry.toolId}):`);
-          for (const f of entry.driftedFiles) output.print(`  ~ ${f}`);
-        }
-      } catch (error) {
-        errorHandler.handle(error);
-      }
-    });
-
-  plugin
-    .command("sync")
-    .description("Propagate installed plugins from source tool to target tools")
-    .requiredOption("--source <tool>", "Source AI tool to sync plugins from")
-    .option("--target <tool>", "Target AI tool (default: all other installed AI tools)")
-    .option("-f, --force", "Force reinstall even if versions match", false)
-    .action(async (cmdOptions: { source: string; target?: string; force: boolean }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-      try {
-        assertValidAiToolId(cmdOptions.source);
-        if (cmdOptions.target !== undefined) assertValidAiToolId(cmdOptions.target);
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const manifest = await deps.manifestRepo.load();
-        if (manifest === null) throw new NoManifestError();
-        const allAiIds = manifest
-          .getInstalledToolIds()
-          .filter((id): id is AiToolId => (AI_TOOL_IDS as readonly string[]).includes(id));
-        const targetIds = cmdOptions.target
-          ? [cmdOptions.target as AiToolId]
-          : allAiIds.filter((id) => id !== cmdOptions.source);
-        const useCase = new SyncPluginsUseCase(
-          deps.manifestRepo,
-          deps.pluginInstallFromMarketplaceUseCase,
-          deps.logger
-        );
-        const result = await useCase.execute({
-          projectRoot,
-          sourceToolId: cmdOptions.source as AiToolId,
-          targetToolIds: targetIds,
-          force: cmdOptions.force,
-          interactive: process.stdout.isTTY,
-        });
-        if (result.totalWarnings > 0) {
-          output.warn(`${result.totalWarnings} plugin(s) could not be propagated.`);
-        }
-        if (result.totalInstalled === 0) {
-          output.success("Plugins are in sync.");
-        } else {
-          output.success(
-            `Propagated ${result.totalInstalled} plugin(s) across ${result.tools.length} tool(s).`
-          );
-        }
-      } catch (error) {
-        errorHandler.handle(error);
-      }
-    });
-
-  plugin
-    .command("restore")
-    .description("Restore a plugin to its cached version")
-    .requiredOption("--plugin <name>", "Plugin to restore")
-    .action(async (cmdOptions: { plugin: string }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        await new RestorePluginUseCase(
-          deps.fs,
-          deps.manifestRepo,
-          deps.pluginFetcher,
-          deps.pluginDistributionReader,
-          deps.hasher
-        ).execute({ pluginName: cmdOptions.plugin, projectRoot });
-        output.success(`Plugin ${cmdOptions.plugin} restored.`);
-      } catch (error) {
-        errorHandler.handle(error);
-      }
-    });
-
-  plugin
     .command("doctor")
     .description("Check plugin installation health")
     .option("--plugin <name>", "Filter check to one plugin")
@@ -348,7 +242,7 @@ export function registerPluginCommand(program: Command): void {
         }
         for (const pi of report.pluginIssues) {
           output.error(
-            `Plugin ${pi.pluginName} (${pi.toolId}): ${pi.issue} — ${pi.filePath}\n  Fix: Run \`aidd plugin restore --plugin ${pi.pluginName}\` to restore.`
+            `Plugin ${pi.pluginName} (${pi.toolId}): ${pi.issue} — ${pi.filePath}\n  Fix: Run \`aidd ai restore\` to restore.`
           );
         }
         process.exit(1);

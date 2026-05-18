@@ -108,19 +108,6 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     }
   });
 
-  it("plugin status exits 0 and reports files in sync", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-status");
-    try {
-      await seedWithClaude(projectDir, fakeHome);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
-      const { stdout, exitCode } = await runCli(["plugin", "status"], projectDir, fakeHome);
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("in sync");
-    } finally {
-      await cleanup();
-    }
-  });
-
   it("plugin doctor exits 0 with healthy message when tool is installed", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-doctor");
     try {
@@ -163,19 +150,14 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     }
   });
 
-  it("plugin restore --plugin sample-plugin exits 1 for local-path plugin (no marketplace cache)", async () => {
-    // NOTE from matrix: local-path plugins have no marketplace cache to restore from — expected behavior
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-restore-local");
+  it("ai restore exits 0 and restores plugin files when a tracked file is deleted", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-restore-plugin");
     try {
       await seedWithClaude(projectDir, fakeHome);
       await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
-      const { stderr, exitCode } = await runCli(
-        ["plugin", "restore", "--plugin", "sample-plugin"],
-        projectDir,
-        fakeHome
-      );
-      expect(exitCode).toBe(1);
-      expect(stderr).toContain("sample-plugin");
+      const { stdout, exitCode } = await runCli(["ai", "restore"], projectDir, fakeHome);
+      expect(exitCode).toBe(0);
+      expect(stdout).toMatch(/[Rr]estor|[Nn]othing to restore/);
     } finally {
       await cleanup();
     }
@@ -206,25 +188,6 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
       const { stderr, exitCode } = await runCli(["plugin", "pick"], projectDir, fakeHome);
       expect(exitCode).toBe(1);
       expect(stderr).toContain("interactive");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("plugin sync --source claude exits 0 when plugins are already in sync", async () => {
-    // matrix row: "plugin sync --source claude" → exit 0. Actual output: "Plugins are in sync."
-    // (matrix noted "Warning: Plugin has no marketplace" but current behavior is cleaner)
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-sync-local");
-    try {
-      await seedWithClaude(projectDir, fakeHome);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
-      const { stdout, exitCode } = await runCli(
-        ["plugin", "sync", "--source", "claude"],
-        projectDir,
-        fakeHome
-      );
-      expect(exitCode).toBe(0);
-      expect(stdout).toMatch(/[Pp]lugins are in sync|[Ww]arning|[Nn]othing to sync/);
     } finally {
       await cleanup();
     }

@@ -13,7 +13,7 @@ import { SyncUseCase } from "../sync/sync-use-case.js";
 export class NonInteractiveSyncError extends Error {
   constructor() {
     super(
-      "Non-interactive mode: use `aidd ai sync --source <tool>` or `aidd plugin sync --source <tool>` instead."
+      "Non-interactive mode: use `aidd ai sync --source <tool>` instead."
     );
     this.name = "NonInteractiveSyncError";
   }

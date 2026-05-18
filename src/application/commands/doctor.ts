@@ -54,7 +54,7 @@ function printScopeIssues(
   }
   for (const pi of report.pluginIssues) {
     output.error(
-      `  Plugin ${pi.pluginName} (${pi.toolId}): ${pi.issue} — ${pi.filePath}\n    Fix: Run \`aidd plugin restore --plugin ${pi.pluginName}\``
+      `  Plugin ${pi.pluginName} (${pi.toolId}): ${pi.issue} — ${pi.filePath}\n    Fix: Run \`aidd ai restore\``
     );
   }
 }
