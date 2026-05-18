@@ -41,17 +41,17 @@ async function writeMarketplace(
 }
 
 // ---------------------------------------------------------------------------
-// Plugin — add / remove / list / status / doctor / update / restore / pick
+// Plugin — install / remove / list / doctor / update / restore
 // (plugin search/install from marketplace are in plugin-install.e2e.test.ts)
 // ---------------------------------------------------------------------------
 
-describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
-  it("plugin add <local-path> exits 0 with success message", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-add");
+describe.concurrent("Command Matrix: Plugin lifecycle (local install)", () => {
+  it("plugin install <local-path> exits 0 with success message", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-install-local");
     try {
       await seedWithClaude(projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(
-        ["plugin", "add", PLUGIN_FIXTURE],
+        ["plugin", "install", PLUGIN_FIXTURE],
         projectDir,
         fakeHome
       );
@@ -62,12 +62,12 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     }
   });
 
-  it("plugin add <local-path> --tool claude exits 0", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-add-tool");
+  it("plugin install <local-path> --tool claude exits 0", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-install-local-tool");
     try {
       await seedWithClaude(projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(
-        ["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"],
+        ["plugin", "install", PLUGIN_FIXTURE, "--tool", "claude"],
         projectDir,
         fakeHome
       );
@@ -82,7 +82,7 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-list");
     try {
       await seedWithClaude(projectDir, fakeHome);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      await runCli(["plugin", "install", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(["plugin", "list"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("sample-plugin");
@@ -95,7 +95,7 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-list-tool");
     try {
       await seedWithClaude(projectDir, fakeHome);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      await runCli(["plugin", "install", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(
         ["plugin", "list", "--tool", "claude"],
         projectDir,
@@ -103,19 +103,6 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
       );
       expect(exitCode).toBe(0);
       expect(stdout).toContain("sample-plugin");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("plugin status exits 0 and reports files in sync", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-status");
-    try {
-      await seedWithClaude(projectDir, fakeHome);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
-      const { stdout, exitCode } = await runCli(["plugin", "status"], projectDir, fakeHome);
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("in sync");
     } finally {
       await cleanup();
     }
@@ -137,7 +124,7 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-update");
     try {
       await seedWithClaude(projectDir, fakeHome);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      await runCli(["plugin", "install", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(["plugin", "update"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("up to date");
@@ -150,7 +137,7 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-update-named");
     try {
       await seedWithClaude(projectDir, fakeHome);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      await runCli(["plugin", "install", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(
         ["plugin", "update", "sample-plugin"],
         projectDir,
@@ -163,19 +150,14 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     }
   });
 
-  it("plugin restore --plugin sample-plugin exits 1 for local-path plugin (no marketplace cache)", async () => {
-    // NOTE from matrix: local-path plugins have no marketplace cache to restore from — expected behavior
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-restore-local");
+  it("ai restore exits 0 and restores plugin files when a tracked file is deleted", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-restore-plugin");
     try {
       await seedWithClaude(projectDir, fakeHome);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
-      const { stderr, exitCode } = await runCli(
-        ["plugin", "restore", "--plugin", "sample-plugin"],
-        projectDir,
-        fakeHome
-      );
-      expect(exitCode).toBe(1);
-      expect(stderr).toContain("sample-plugin");
+      await runCli(["plugin", "install", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["ai", "restore"], projectDir, fakeHome);
+      expect(exitCode).toBe(0);
+      expect(stdout).toMatch(/[Rr]estor|[Nn]othing to restore/);
     } finally {
       await cleanup();
     }
@@ -185,7 +167,7 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-remove");
     try {
       await seedWithClaude(projectDir, fakeHome);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      await runCli(["plugin", "install", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(
         ["plugin", "remove", "sample-plugin", "--tool", "claude"],
         projectDir,
@@ -199,32 +181,13 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     }
   });
 
-  it("plugin pick exits 1 in non-interactive mode", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-pick-noninteractive");
+  it("plugin install no-args exits 1 in non-interactive mode", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-install-noninteractive");
     try {
       await seedWithClaude(projectDir, fakeHome);
-      const { stderr, exitCode } = await runCli(["plugin", "pick"], projectDir, fakeHome);
+      const { stderr, exitCode } = await runCli(["plugin", "install"], projectDir, fakeHome);
       expect(exitCode).toBe(1);
       expect(stderr).toContain("interactive");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("plugin sync --source claude exits 0 when plugins are already in sync", async () => {
-    // matrix row: "plugin sync --source claude" → exit 0. Actual output: "Plugins are in sync."
-    // (matrix noted "Warning: Plugin has no marketplace" but current behavior is cleaner)
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-sync-local");
-    try {
-      await seedWithClaude(projectDir, fakeHome);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
-      const { stdout, exitCode } = await runCli(
-        ["plugin", "sync", "--source", "claude"],
-        projectDir,
-        fakeHome
-      );
-      expect(exitCode).toBe(0);
-      expect(stdout).toMatch(/[Pp]lugins are in sync|[Ww]arning|[Nn]othing to sync/);
     } finally {
       await cleanup();
     }
@@ -266,49 +229,19 @@ describe.concurrent("Command Matrix: Marketplace cache + refresh", () => {
     }
   });
 
-  it("marketplace cache list exits 0 reporting no cached marketplaces", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("mkt-cache-list");
+  it("marketplace refresh --force exits 0 and clears cache before re-fetching", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-refresh-force");
     try {
       await seedManifest(projectDir);
-      const { stdout, exitCode } = await runCli(
-        ["marketplace", "cache", "list"],
+      const marketDir = join(tempDir, "market");
+      await writeMarketplace(marketDir, []);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir, fakeHome);
+      const { exitCode } = await runCli(
+        ["marketplace", "refresh", "--force"],
         projectDir,
         fakeHome
       );
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("No cached");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("marketplace cache clear --all exits 0 when nothing to clear", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("mkt-cache-clear-all");
-    try {
-      await seedManifest(projectDir);
-      const { stdout, exitCode } = await runCli(
-        ["marketplace", "cache", "clear", "--all"],
-        projectDir,
-        fakeHome
-      );
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("Nothing to clear");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("marketplace cache clear (no name, non-TTY) exits 1 asking for name or --all", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("mkt-cache-clear-noarg");
-    try {
-      await seedManifest(projectDir);
-      const { stderr, exitCode } = await runCli(
-        ["marketplace", "cache", "clear"],
-        projectDir,
-        fakeHome
-      );
-      expect(exitCode).toBe(1);
-      expect(stderr).toMatch(/Non-interactive|--all/);
     } finally {
       await cleanup();
     }

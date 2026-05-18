@@ -144,32 +144,6 @@ describe("interactive menu", () => {
       expect(result.command).toEqual(["self-update"]);
     });
 
-    describe("marketplace cache submenu", () => {
-      it("lists cached marketplaces via marketplaces > marketplace-cache > cache-list", async () => {
-        const deps = await buildUnitDeps(PROJECT_ROOT);
-        await initProject(deps, PROJECT_ROOT);
-        const { prompter } = makeQueuedPrompter([
-          "marketplaces",
-          "marketplace-cache",
-          "cache-list",
-        ]);
-        const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
-        expect(result.command).toEqual(["marketplace", "cache", "list"]);
-      });
-
-      it("clears marketplace cache via marketplaces > marketplace-cache > cache-clear", async () => {
-        const deps = await buildUnitDeps(PROJECT_ROOT);
-        await initProject(deps, PROJECT_ROOT);
-        const { prompter } = makeQueuedPrompter([
-          "marketplaces",
-          "marketplace-cache",
-          "cache-clear",
-        ]);
-        const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
-        expect(result.command).toEqual(["marketplace", "cache", "clear"]);
-      });
-    });
-
     it("exit is available directly from a group submenu", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);

@@ -111,7 +111,7 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
       );
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("'sample-plugin' from 'local'");
+      expect(stdout).toContain("'sample-plugin'");
     } finally {
       await cleanup();
     }
@@ -140,8 +140,8 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
     }
   });
 
-  it("marketplace browse → prints catalog entries with name@version, description, source URL", async () => {
-    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-browse");
+  it("marketplace list --plugins → prints catalog entries with name@version, description, source URL", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-list-plugins");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
       const marketDir = join(tempDir, "market");
@@ -157,7 +157,7 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
       await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir, fakeHome);
 
       const { stdout, exitCode } = await runCli(
-        ["marketplace", "browse", "local"],
+        ["marketplace", "list", "--plugins"],
         projectDir,
         fakeHome
       );

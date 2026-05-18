@@ -142,14 +142,14 @@ describe.concurrent("E2E: aidd ai sync", () => {
       await runCli(["ai", "install", "claude"], projectDir, fakeHome);
       await runCli(["ai", "install", "cursor"], projectDir, fakeHome);
 
-      // Install same plugin (different format) to both tools via plugin add (writes real files)
+      // Install same plugin (different format) to both tools via plugin install (writes real files)
       await runCli(
-        ["plugin", "add", CLAUDE_PLUGIN_FIXTURE, "--tool", "claude"],
+        ["plugin", "install", CLAUDE_PLUGIN_FIXTURE, "--tool", "claude"],
         projectDir,
         fakeHome
       );
       await runCli(
-        ["plugin", "add", CURSOR_PLUGIN_FIXTURE, "--tool", "cursor"],
+        ["plugin", "install", CURSOR_PLUGIN_FIXTURE, "--tool", "cursor"],
         projectDir,
         fakeHome
       );

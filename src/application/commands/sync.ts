@@ -15,9 +15,7 @@ export function registerSyncCommand(program: Command): void {
       const errorHandler = new ErrorHandler(output);
 
       if (!process.stdout.isTTY) {
-        output.error(
-          "Non-interactive mode: use `aidd ai sync --source <tool>` or `aidd plugin sync --source <tool>` instead."
-        );
+        output.error("Non-interactive mode: use `aidd ai sync --source <tool>` instead.");
         process.exit(1);
       }
 

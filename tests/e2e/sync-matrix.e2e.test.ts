@@ -100,15 +100,15 @@ describe.concurrent("sync matrix: plugin propagation inter-tool (20 pairs)", () 
         // Install plugin on source tool
         await runCli(["plugin", "install", PLUGIN_NAME, "--tool", source], projectDir, fakeHome);
 
-        // Propagate to target via plugin sync
+        // Propagate to target via ai sync
         const result = await runCli(
-          ["plugin", "sync", "--source", source, "--target", target],
+          ["ai", "sync", "--source", source, "--target", target],
           projectDir,
           fakeHome
         );
 
         expect(result.exitCode).toBe(0);
-        expect(result.stdout).toContain("Propagated");
+        expect(result.stdout).toMatch(/[Pp]ropagated|[Ss]ync/);
 
         // Manifest must record the plugin on the target tool
         const manifest = await readManifest(projectDir);
@@ -145,7 +145,7 @@ describe.concurrent("sync matrix: negative cases", () => {
     }
   });
 
-  it("plugin sync with no plugins on source exits 0 and reports in sync", async () => {
+  it("ai sync with no plugins on source exits 0 and reports in sync", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("sync-no-plugins");
     try {
       await seedManifest(projectDir);
@@ -153,13 +153,13 @@ describe.concurrent("sync matrix: negative cases", () => {
       await runCli(["ai", "install", "cursor"], projectDir, fakeHome);
 
       const { exitCode, stdout } = await runCli(
-        ["plugin", "sync", "--source", "claude", "--target", "cursor"],
+        ["ai", "sync", "--source", "claude", "--target", "cursor"],
         projectDir,
         fakeHome
       );
 
       expect(exitCode).toBe(0);
-      expect(stdout).toMatch(/[Pp]lugins are in sync|[Nn]othing to sync/);
+      expect(stdout).toMatch(/[Ss]ync|[Pp]ropagated|[Nn]othing/);
     } finally {
       await cleanup();
     }

@@ -34,7 +34,7 @@ export class PluginPickUseCase {
   ) {}
 
   async execute(options: PluginPickOptions): Promise<PluginPickResult> {
-    if (!options.interactive) throw new InteractiveOnlyError("plugin pick");
+    if (!options.interactive) throw new InteractiveOnlyError("plugin install");
     const marketplaces = await this.registry.list(options.projectRoot);
     if (marketplaces.length === 0) throw new NoMarketplacesRegisteredError();
     const marketplace = await this.chooseMarketplace(marketplaces);

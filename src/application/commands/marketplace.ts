@@ -7,8 +7,6 @@ import {
 import { MarketplaceCacheAdapter } from "../../infrastructure/adapters/marketplace-cache-adapter.js";
 import { createDeps, createMenuDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
-import { MarketplaceCacheClearUseCase } from "../use-cases/marketplace/marketplace-cache-clear-use-case.js";
-import { MarketplaceCacheListUseCase } from "../use-cases/marketplace/marketplace-cache-list-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./shared/spawn-cli-command.js";
 
@@ -24,7 +22,6 @@ export function registerMarketplaceCommand(program: Command): void {
     const choice = await prompter.select("marketplace: what do you want to do?", [
       { name: "List marketplaces", value: "list" },
       { name: "Add marketplace", value: "add" },
-      { name: "Browse marketplace", value: "browse", description: "requires name arg" },
       { name: "Refresh marketplaces", value: "refresh" },
       { name: "Remove marketplace", value: "remove", description: "requires name arg" },
       { name: "Check marketplaces", value: "check" },
@@ -83,16 +80,21 @@ export function registerMarketplaceCommand(program: Command): void {
   marketplace
     .command("list")
     .description("List registered plugin marketplaces")
-    .action(async () => {
+    .option("--plugins", "Also fetch and print all plugins from each marketplace catalog")
+    .action(async (cmdOptions: { plugins?: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const { marketplaces } = await deps.marketplaceListUseCase.execute({ projectRoot });
+        const { marketplaces, catalogs } = await deps.marketplaceListUseCase.execute({
+          projectRoot,
+          withCatalogs: cmdOptions.plugins ?? false,
+        });
         if (marketplaces.length === 0) output.info("No marketplaces registered.");
         for (const m of marketplaces) {
           const ver = m.version !== undefined ? ` v${m.version}` : "";
           output.print(`${m.name}${ver} [${m.scope}]`);
+          if (catalogs !== undefined) printCatalogEntries(m.name, catalogs, output);
         }
       } catch (error) {
         errorHandler.handle(error);
@@ -125,10 +127,15 @@ export function registerMarketplaceCommand(program: Command): void {
   marketplace
     .command("refresh [name]")
     .description("Refresh registered marketplaces")
-    .action(async (name: string | undefined) => {
+    .option("--force", "Clear cache before re-fetching")
+    .action(async (name: string | undefined, cmdOptions: { force?: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
+        if (cmdOptions.force) {
+          const cacheAdapter = new MarketplaceCacheAdapter(projectRoot);
+          await cacheAdapter.clear(name);
+        }
         const deps = await createDeps(projectRoot, { verbose }, output);
         const { results, failedCount } = await deps.marketplaceRefreshUseCase.execute({
           projectRoot,
@@ -138,32 +145,6 @@ export function registerMarketplaceCommand(program: Command): void {
         for (const r of results)
           output.print(`${r.name}: ${r.status}${r.error ? ` (${r.error})` : ""}`);
         if (failedCount > 0) process.exit(1);
-      } catch (error) {
-        errorHandler.handle(error);
-      }
-    });
-
-  marketplace
-    .command("browse <name>")
-    .description("Browse plugins in a registered marketplace")
-    .option("--use-cache", "Use the cached catalog if fetch fails")
-    .action(async (name: string, cmdOptions: { useCache?: boolean }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const { catalog, fromCache } = await deps.marketplaceBrowseUseCase.execute({
-          name,
-          projectRoot,
-          useCachedOnFailure: cmdOptions.useCache ?? false,
-        });
-        if (fromCache) output.warn("Showing cached catalog.");
-        for (const e of catalog.plugins) {
-          const flag = e.recommended ? " (recommended)" : "";
-          output.print(
-            `${e.name}@${e.version ?? "?"} — ${e.description ?? ""} — ${describePluginSource(e.source)}${flag}`
-          );
-        }
       } catch (error) {
         errorHandler.handle(error);
       }
@@ -190,86 +171,22 @@ export function registerMarketplaceCommand(program: Command): void {
         errorHandler.handle(error);
       }
     });
+}
 
-  const cache = marketplace.command("cache").description("Manage marketplace fetch cache");
-
-  cache
-    .command("list")
-    .description("List cached marketplaces with size and last fetch time")
-    .action(async () => {
-      const { output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-      try {
-        const adapter = new MarketplaceCacheAdapter(projectRoot);
-        const { entries } = await new MarketplaceCacheListUseCase(adapter).execute();
-        if (entries.length === 0) {
-          output.info("No cached marketplaces.");
-          return;
-        }
-        for (const e of entries) {
-          const size = `${(e.sizeBytes / 1024).toFixed(1)}KB`;
-          const fetched = e.lastFetchedAt ? e.lastFetchedAt.toISOString() : "unknown";
-          output.print(`${e.name}  ${size}  last fetched: ${fetched}`);
-        }
-      } catch (error) {
-        errorHandler.handle(error);
-      }
-    });
-
-  cache
-    .command("clear [name]")
-    .description("Clear marketplace cache for one or all marketplaces")
-    .option("--all", "Clear all cached marketplaces")
-    .action(async (nameArg: string | undefined, cmdOptions: { all?: boolean }) => {
-      const { output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-      try {
-        const adapter = new MarketplaceCacheAdapter(projectRoot);
-        const listUseCase = new MarketplaceCacheListUseCase(adapter);
-        const clearUseCase = new MarketplaceCacheClearUseCase(adapter);
-        const interactive = process.stdout.isTTY;
-
-        const name = nameArg;
-        let all = cmdOptions.all ?? false;
-
-        if (!name && !all) {
-          if (!interactive) {
-            output.error("Non-interactive mode: provide a marketplace name or --all.");
-            process.exit(1);
-          }
-          const { entries } = await listUseCase.execute();
-          if (entries.length === 0) {
-            output.info("No cached marketplaces.");
-            return;
-          }
-          const { prompter } = createMenuDeps(projectRoot);
-          const selected = await prompter.checkbox(
-            "Select marketplaces to clear:",
-            entries.map((e) => ({ name: e.name, value: e.name }))
-          );
-          if (selected.length === 0) {
-            output.info("No selection.");
-            return;
-          }
-          if (selected.length === entries.length) {
-            all = true;
-          } else {
-            for (const n of selected) {
-              await clearUseCase.execute({ name: n });
-            }
-            output.success(`Cleared: ${selected.join(", ")}`);
-            return;
-          }
-        }
-
-        const result = await clearUseCase.execute({ name, all });
-        if (result.cleared.length === 0) {
-          output.info("Nothing to clear.");
-          return;
-        }
-        output.success(`Cleared: ${result.cleared.join(", ")}`);
-      } catch (error) {
-        errorHandler.handle(error);
-      }
-    });
+function printCatalogEntries(
+  marketplaceName: string,
+  catalogs: Map<string, import("../../domain/models/plugin-catalog.js").PluginCatalog>,
+  output: ReturnType<typeof parseGlobalOptions>["output"]
+): void {
+  const catalog = catalogs.get(marketplaceName);
+  if (catalog === undefined) {
+    output.warn(`  (could not fetch catalog for '${marketplaceName}')`);
+    return;
+  }
+  for (const e of catalog.plugins) {
+    const flag = e.recommended ? " (recommended)" : "";
+    output.print(
+      `  ${e.name}@${e.version ?? "?"} — ${e.description ?? ""} — ${describePluginSource(e.source)}${flag}`
+    );
+  }
 }
