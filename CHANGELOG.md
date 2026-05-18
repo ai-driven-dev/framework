@@ -28,6 +28,7 @@ All `4.0.x` command spellings are removed. Run `aidd migrate` to clean obsolete 
 
 ### New features
 
+- **`aidd ide restore [files...]`** — symmetric to `ai restore`; reverts tracked IDE-managed files to installed state (manifest hashes); supports `--tool <vscode>` and `--force`
 - **Noun-first command surface** — `aidd ai <verb>`, `aidd ide <verb>`, `aidd marketplace <verb>`, `aidd plugin <verb>`
 - **Manifest v5 schema** — removed `docsDir`, `repo`, `mode`, `scripts`, `topPlugins` fields; structure is `{ version, tools, marketplaces }`
 - **Plugin architecture** — memory stubs (CLAUDE.md, AGENTS.md, copilot-instructions.md) are plugin-owned via `aidd-context`; not bundled in the CLI binary

@@ -309,6 +309,18 @@ describe.concurrent("Command Matrix: IDE list/status/update/doctor/uninstall", (
     }
   });
 
+  it("ide restore exits 0 reporting nothing to restore when files unmodified", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("ide-restore");
+    try {
+      await seedWithVscode(projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["ide", "restore"], projectDir, fakeHome);
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Nothing to restore");
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("ide install claude exits 1 — cross-category rejection", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("ide-cross-category");
     try {
