@@ -1,5 +1,8 @@
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../src/domain/tools/ai/claude.js";
+import "../../../src/domain/tools/ai/cursor.js";
 import { DoctorLayoutUseCase } from "../../../src/application/use-cases/doctor/doctor-layout-use-case.js";
 import { DoctorMergeFilesUseCase } from "../../../src/application/use-cases/doctor/doctor-merge-files-use-case.js";
 import { DoctorPluginUseCase } from "../../../src/application/use-cases/doctor/doctor-plugin-use-case.js";
@@ -117,6 +120,51 @@ describe("DoctorUseCase — plugin integrity", () => {
       const report = await useCase.execute({ projectRoot: "/proj", pluginName: "other-plugin" });
 
       expect(report.pluginIssues).toHaveLength(0);
+    });
+  });
+
+  describe("when plugin is installed under user-scope (Cursor Mode B)", () => {
+    it("checks files under the resolved user-scope base dir, not projectRoot", async () => {
+      const manifest = Manifest.create();
+      manifest.addTool("cursor", "1.0.0", []);
+      const cursorBaseDir = join(homedir(), ".cursor", "plugins", "local");
+      const userScopeRelPath = "aidd-context/skills/06-discovery/SKILL.md";
+      manifest.addPlugin(
+        "cursor",
+        Plugin.fromJSON({
+          name: "aidd-context",
+          source: { kind: "local", path: "/some/path" },
+          version: "1.0.0",
+          strict: false,
+          files: { [userScopeRelPath]: EXPECTED_HASH },
+        })
+      );
+      const checkedPaths: string[] = [];
+      const fs = {
+        fileExists: async (p: string) => {
+          checkedPaths.push(p);
+          return true;
+        },
+        readFileHash: async () => new FileHash(EXPECTED_HASH),
+        readFile: async () => "",
+        writeFile: async () => {},
+        deleteFile: async () => {},
+        listDirectory: async () => [],
+        listFilesRecursive: async () => [],
+        deleteEmptyDirectories: async () => {},
+        copyFile: async () => {},
+      } as unknown as FileReader;
+      const pluginUseCase = new DoctorPluginUseCase(fs);
+
+      await pluginUseCase.execute({
+        manifest,
+        projectRoot: "/proj",
+        allowedIds: null,
+      });
+
+      const expectedAbs = join(cursorBaseDir, userScopeRelPath);
+      expect(checkedPaths).toContain(expectedAbs);
+      expect(checkedPaths.every((p) => !p.startsWith("/proj/aidd-context"))).toBe(true);
     });
   });
 });
