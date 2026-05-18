@@ -7,7 +7,7 @@
 #
 # or use a sync action (e.g. EndBug/label-sync@v2 driven by a workflow_dispatch
 # job). Kept here for visibility; orchestrator-related labels are also
-# created on-the-fly by aidd-orchestrator:01:setup-async-dev on any repo
+# created on-the-fly by aidd-orchestrator:00:async-dev (action=setup) on any repo
 # where the plugin is installed.
 
 # --- Triage --------------------------------------------------------------

@@ -13,6 +13,19 @@ Hooks are deterministic handlers fired at specific points in Claude Code's lifec
 | Skill / agent frontmatter `hooks` | Component lifetime     | Yes       |
 | Managed policy settings           | Org-wide               | Yes       |
 
+### Scope precedence and resolution
+
+When the user asks for a "project hook" without naming a file, resolve in this order and stop at the first match:
+
+1. **Plugin context detected** (`hook_request` mentions a specific plugin name OR the current working directory is inside a plugin) -> `<plugin>/hooks/hooks.json`.
+2. **Component context detected** (the hook only fires inside a single skill / agent) -> `hooks:` block in that component's frontmatter.
+3. **Project default** -> `.claude/settings.json`.
+4. **Project local-only** (user explicitly says "don't share") -> `.claude/settings.local.json`.
+5. **User-wide** -> `~/.claude/settings.json`.
+6. **Org-wide** -> managed policy settings (requires admin scope).
+
+Enterprise > project > user when the same hook is declared at multiple scopes.
+
 ## Top-level shape
 
 In `hooks.json` (plugin) the file is the hooks object itself. In `settings.json` it sits under a top-level `hooks` key.

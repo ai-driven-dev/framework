@@ -1,61 +1,130 @@
 ---
 name: aidd-orchestrator:00:async-dev
-description: Pure dispatcher for the async-dev pipeline. Use when the user says "async dev", "/async-dev", "claude on issues", or when the entry point is ambiguous (e.g. "set up async dev and run on issue 42"). Detects intent (setup vs run vs review) from `$ARGUMENTS`, trigger source (env, label, PR comment), and repo state, then delegates to the matching specialized skill. Holds no business logic; every step is delegated. Do NOT use when the user explicitly names setup, run, or review (invoke the matching skill directly), or for plain status checks on the async pipeline.
+description: Single entry point for the async-dev pipeline (setup, run, review). Hybrid router decides which sub-flow to execute from $ARGUMENTS keyword (`setup` / `run` / `review`), trigger source (label `to-implement` / `to-review`, comment `@claude /implement` / `/review`), repo state (workflow + config presence, PR linked to issue), or natural-language intent. Use when the user says "set up async dev", "run async dev on issue #N", "address review on PR #N", "/async-dev", "claude on issues", or when triggered by a webhook with the matching labels or comments. Do NOT use for plain status checks on the async pipeline or for SDLC orchestration unrelated to issue/PR automation.
 ---
 
 # Async-dev
 
-Single entry point for the async-dev pipeline. Routes one human or automated trigger to exactly one downstream skill.
+Single skill that drives the async development pipeline end to end. Three sub-flows live inside, accessed through one router:
+
+| Sub-flow | When                                                                                          |
+| -------- | --------------------------------------------------------------------------------------------- |
+| Setup    | Repo not yet configured for async dev; user wants to install.                                 |
+| Run      | An issue is labeled `to-implement` (or commented `@claude /implement`); no open PR closes it. |
+| Review   | A PR is labeled `to-review` (or commented `@claude /review`); change requests pending.        |
 
 ## Iron rule
 
-**You are the dispatcher, not a doer.**
+**You are the router until you commit to a sub-flow. Once committed, run that sub-flow's actions in order; do not jump back to routing mid-flow.**
 
-You inspect the trigger and the repo, pick one downstream skill, then delegate. You never edit files, call `gh`, or run CI yourself.
+## Routing — hybrid contract
 
-## Downstream targets
+Walk in order. First match wins.
 
-| Target skill                              | Domain                                         |
-| ----------------------------------------- | ---------------------------------------------- |
-| `aidd-orchestrator:01:setup-async-dev`    | First-time install or major config rotation    |
-| `aidd-orchestrator:02:run-async-dev`      | One pipeline cycle on a ready issue            |
-| `aidd-orchestrator:03:review-async-dev`   | Review-fix loop on an open PR                  |
+1. **`$ARGUMENTS` keyword override.** If `$ARGUMENTS` contains exactly `setup`, `run`, or `review` (case-insensitive, standalone token), route there immediately. This is the explicit override the CI workflow uses.
+2. **Trigger env.** When invoked from CI (`GITHUB_EVENT_NAME` set):
+   - Label payload `to-implement` → `run`.
+   - Label payload `to-review` → `review`.
+   - Comment body matches `@claude /implement` (or `/aidd-dev:02:implement`) → `run`.
+   - Comment body matches `@claude /review` → `review`.
+3. **Repo state.**
+   - Missing `.github/workflows/aidd-async.yml` AND missing `.claude/aidd-orchestrator.json` → `setup`.
+   - Open PR closes the referenced issue → `review`.
+   - Fresh issue with no linked PR + intent to implement → `run`.
+4. **Natural-language intent.** Verbs in the user prompt:
+   - `install / configure / set up / bootstrap / rotate config` → `setup`.
+   - `implement / run / process / handle queue / claude on issue` → `run`.
+   - `address review / iterate on PR / fix comments / handle review` → `review`.
 
-## Actions
+**Tie-break:** most-specific signal wins (PR number > label > free-text keyword > config absence).
 
-| #   | Action     | Role                                                          |
-| --- | ---------- | ------------------------------------------------------------- |
-| 01  | `dispatch` | Detect signals, pick target skill, invoke once, return result |
+**If none of the above resolves**, surface the three sub-flows with one-line triggers and ask the human which to run. **Never proceed blindly.**
 
-Files: `actions/01-dispatch.md`.
+**If repo state contradicts intent** (e.g. user says "run" but `.claude/aidd-orchestrator.json` is absent), surface the conflict before delegating; never silently switch.
 
-## Detection matrix
+See [`references/routing.md`](references/routing.md) for the full decision tree, signal precedence, and edge cases.
 
-| Signal                                                                                          | Route                       |
-| ----------------------------------------------------------------------------------------------- | --------------------------- |
-| Missing `.github/workflows/aidd-async.yml` AND missing `.claude/aidd-orchestrator.json`         | `setup-async-dev`           |
-| `$ARGUMENTS` contains `setup`, `install`, `configure`, `bootstrap`                              | `setup-async-dev`           |
-| Issue labeled `to-implement`, or `$ARGUMENTS` contains `run`, `implement`, `process`, an issue id | `run-async-dev`             |
-| Issue labeled `to-review`, PR comment `@claude /review`, or `$ARGUMENTS` contains `review`, `iterate`, a PR id | `review-async-dev`          |
-| `GITHUB_EVENT_NAME=issues` + label payload                                                       | derive from label name      |
-| `GITHUB_EVENT_NAME=issue_comment` + comment body                                                 | parse comment for `/review` |
+## Sub-flows
 
-Tie-break: most-specific signal wins (PR number > label > free-text keyword > config absence).
+### Setup (11 actions)
+
+Sets up async-dev in a repo. Detects context, asks for runtime parameters, generates artefacts, bootstraps labels, installs user-scope plugins (local mode), configures secrets (remote mode), schedules the poll routine (local mode), commits and pushes the generated files, and offers a smoke test on the chosen issue.
+
+| #   | Action                            | Role                                                                                          |
+| --- | --------------------------------- | --------------------------------------------------------------------------------------------- |
+| 01  | `detect-context`                  | Identify repo, default branch, existing config, CI permissions                                |
+| 02  | `ask-config`                      | Collect runtime parameters (mode, auth, labels, schedule, agents)                             |
+| 03  | `generate-workflow`               | Emit `.github/workflows/aidd-async.yml` from `assets/setup/workflow-template.yml`             |
+| 04  | `generate-local-script`           | Emit poll/daemon scripts (local mode only) from `assets/setup/local-*-template.sh`            |
+| 05  | `write-config`                    | Persist `.claude/aidd-orchestrator.json` from `assets/setup/config-template.json`             |
+| 06  | `bootstrap-labels`                | Create `to-implement` / `to-review` / `claude/*` labels via `gh`                              |
+| 07  | `install-user-scope-plugins`      | Install `aidd-orchestrator` + `aidd-dev` at user scope (local mode)                           |
+| 08  | `configure-remote-secrets`        | Sync `CLAUDE_CODE_OAUTH_TOKEN`, `AIDD_BOT_TOKEN`, etc. (remote mode)                          |
+| 09  | `bootstrap-scheduling`            | Schedule the poll routine (local) or rely on workflow webhook (remote)                        |
+| 10  | `commit-and-push`                 | Stage generated files, conventional-commit, push                                              |
+| 11  | `smoke-test`                      | Label a throwaway issue with `to-implement`; verify the pipeline reacts                       |
+
+Files: `actions/setup/01-detect-context.md` … `actions/setup/11-smoke-test.md`.
+
+Default flow: `01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11`. Actions self-skip when their preconditions are not met (e.g. `07` skips in remote mode, `08` skips in local mode).
+
+### Run (6 actions)
+
+Executes one orchestration cycle on a fresh issue. Reads ready issues, resolves blockers, acquires the lock label, hands the implementation to the active SDLC orchestration capability, observes the resulting git and VCS state, and emits a `run-result.json` summary the workflow's post-job consumes.
+
+| #   | Action            | Role                                                                                           |
+| --- | ----------------- | ---------------------------------------------------------------------------------------------- |
+| 01  | `poll-ready`      | Find the next issue with `to-implement`, no `claude/working`, no open closing PR               |
+| 02  | `resolve-deps`    | Check linked issues / dependencies; abort if blocked                                           |
+| 03  | `acquire-lock`    | Apply `claude/working` label; refuse if already held                                           |
+| 04  | `check-sdlc`      | Verify an SDLC orchestrator is loaded (`aidd-dev:00-sdlc` or equivalent)                       |
+| 05  | `delegate-sdlc`   | Hand the issue to the SDLC capability; observe outcome                                         |
+| 06  | `write-audit`     | Emit `run-result.json` for the workflow's post-job                                             |
+
+Files: `actions/run/01-poll-ready.md` … `actions/run/06-write-audit.md`.
+
+Default flow: `01 → 02 → 03 → 04 → 05 → 06`. One cycle per ready issue.
+
+### Review (4 actions)
+
+Closes the loop after a PR is opened by the run flow. Detects when to keep auto-fixing and when to hand off to a human. Idempotent on re-runs.
+
+| #   | Action               | Role                                                                                       |
+| --- | -------------------- | ------------------------------------------------------------------------------------------ |
+| 01  | `collect-comments`   | Read all PR + linked-issue comments newer than the last bot activity                       |
+| 02  | `detect-stop`        | Decide stop vs continue using `references/review/stop-conditions.md`                       |
+| 03  | `fix-iteration`      | Delegate fixes to the SDLC capability; reply to each addressed comment                     |
+| 04  | `finalize`           | Resolve threads, post the structured summary, set `claude/awaiting-review` or `blocked`    |
+
+Files: `actions/review/01-collect-comments.md` … `actions/review/04-finalize.md`.
+
+Default flow: `01 → 02 → (03 → 01 loop if continue) → 04`. Stop conditions in `references/review/stop-conditions.md`.
 
 ## Rules
 
-- Exactly one downstream skill is invoked per dispatch. If two signals tie, ask the human (interactive) or pick the most-specific (auto).
-- Never inline the downstream skill's logic. Delegate by name.
-- Never re-dispatch from the downstream skill. Each downstream skill is allowed to invoke peer skills, but not this dispatcher (no recursion).
-- If no signal matches, list the three downstream skills with one-line triggers and ask the human which to run.
-- If the repo state contradicts the requested intent (e.g. user says "run" but config absent), surface the conflict before delegating; never silently switch.
+- Exactly one sub-flow runs per invocation. The router commits, then runs that sub-flow to completion.
+- Never inline a sub-flow's logic at the router level. The router decides; the actions execute.
+- Each action enforces its own pre-flight checks and exit codes. The router never enforces post-conditions.
+- If a sub-flow aborts, surface the exit state; do not retry by switching sub-flows.
+- For batch invocations (e.g. multiple ready issues), the workflow re-invokes the skill once per item; the router does not loop.
 
 ## References
 
-- `aidd-orchestrator:01:setup-async-dev`
-- `aidd-orchestrator:02:run-async-dev`
-- `aidd-orchestrator:03:review-async-dev`
+- [`references/routing.md`](references/routing.md) — full decision tree, signal precedence, conflict resolution.
+- [`references/setup/auth-modes.md`](references/setup/auth-modes.md) — local vs remote auth contracts.
+- [`references/setup/claude-action-auth.md`](references/setup/claude-action-auth.md) — `claude-code-action` token setup.
+- [`references/setup/local-mode-scheduling.md`](references/setup/local-mode-scheduling.md) — poll routine options.
+- [`references/review/stop-conditions.md`](references/review/stop-conditions.md) — when the review loop hands off to a human.
 
 ## Assets
 
-- None.
+Setup-only templates copied into the target repo by the setup sub-flow:
+
+- `assets/setup/workflow-template.yml` — `.github/workflows/aidd-async.yml` skeleton.
+- `assets/setup/local-poll-template.sh` — local-mode poll script.
+- `assets/setup/local-daemon-template.sh` — local-mode daemon script.
+- `assets/setup/config-template.json` — `.claude/aidd-orchestrator.json` skeleton.
+
+## Test
+
+Each sub-flow's final action carries a `## Test` block that exercises the full sub-flow with mocked dependencies. The router itself is tested by the dispatch scenarios in `evals/scenarios.json` (signal → expected sub-flow).

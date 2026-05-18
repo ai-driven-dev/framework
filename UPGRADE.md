@@ -157,4 +157,27 @@ Open an issue: <https://github.com/ai-driven-dev/aidd-framework/issues>.
 
 ---
 
+## Appendix: aidd-orchestrator v4 → v4.1
+
+The four async-dev skills collapsed into a single router-based skill, mirroring the `aidd-context:03-context-generate` pattern.
+
+**Skill name changes:**
+
+| Before                                | After                                                          |
+| ------------------------------------- | -------------------------------------------------------------- |
+| `aidd-orchestrator:01:setup-async-dev` | `aidd-orchestrator:00:async-dev` with `action=setup`           |
+| `aidd-orchestrator:02:run-async-dev`   | `aidd-orchestrator:00:async-dev` with `action=run`             |
+| `aidd-orchestrator:03:review-async-dev`| `aidd-orchestrator:00:async-dev` with `action=review`          |
+
+**What also changed:**
+
+- Actions moved into `actions/{setup,run,review}/` sub-domains under the single skill.
+- Assets and references regrouped under `assets/setup/` and `references/{setup,review}/`.
+- Hybrid invocation: `$ARGUMENTS` keyword > trigger env (label / comment) > repo state > natural intent. See `plugins/aidd-orchestrator/skills/00-async-dev/references/routing.md`.
+- The bundled `.github/workflows/aidd-async.yml` template (and the framework's own workflow) were updated to pass `action=` keywords.
+
+**Action for users**: update any external invocation of `:01`, `:02`, or `:03` skill names to the new router with an explicit `action=` keyword, or rely on auto-detection.
+
+---
+
 For the raw list of every change, see [`CHANGELOG.md`](CHANGELOG.md).

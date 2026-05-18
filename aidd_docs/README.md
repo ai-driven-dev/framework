@@ -102,7 +102,7 @@ Add review and tests:
 Use the orchestrator for end-to-end runs:
 
 - `aidd-dev:00:sdlc` drives the full pipeline: spec, plan, implementation, finalize. It adapts entry to whichever artifacts already exist.
-- `aidd-orchestrator:02:run-async-dev` handles async runs that turn ready issues into PRs.
+- `aidd-orchestrator:00:async-dev` (with `action=run`) handles async runs that turn ready issues into PRs.
 
 ---
 

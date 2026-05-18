@@ -1,12 +1,210 @@
 [
-  { "prompt": "async dev", "expect_action": "dispatch" },
-  { "prompt": "/async-dev", "expect_action": "dispatch" },
-  { "prompt": "set up async dev and run on issue 42", "expect_action": "dispatch" },
-  { "prompt": "claude on issues", "expect_action": "dispatch" },
-  { "prompt": "process the async queue", "expect_action": "dispatch" },
-  { "prompt": "iterate on PR 17", "expect_action": "dispatch" },
-  { "prompt": "is async dev configured here?", "expect_action": "dispatch" },
-  { "prompt": "Setup async dev in this repo", "expect_action": null },
-  { "prompt": "Run async pipeline on issue #42", "expect_action": null },
-  { "prompt": "Handle review comments on PR 17", "expect_action": null }
+  {
+    "prompt": "async dev",
+    "expect_action": "dispatch"
+  },
+  {
+    "prompt": "/async-dev",
+    "expect_action": "dispatch"
+  },
+  {
+    "prompt": "set up async dev and run on issue 42",
+    "expect_action": "dispatch"
+  },
+  {
+    "prompt": "claude on issues",
+    "expect_action": "dispatch"
+  },
+  {
+    "prompt": "process the async queue",
+    "expect_action": "dispatch"
+  },
+  {
+    "prompt": "iterate on PR 17",
+    "expect_action": "dispatch"
+  },
+  {
+    "prompt": "is async dev configured here?",
+    "expect_action": "dispatch"
+  },
+  {
+    "prompt": "Setup async dev in this repo",
+    "expect_action": null
+  },
+  {
+    "prompt": "Run async pipeline on issue #42",
+    "expect_action": null
+  },
+  {
+    "prompt": "Handle review comments on PR 17",
+    "expect_action": null
+  },
+  {
+    "prompt": "Setup async dev in this repo",
+    "expect_action": "setup/detect-context"
+  },
+  {
+    "prompt": "Configure aidd-orchestrator plugin",
+    "expect_action": "setup/detect-context"
+  },
+  {
+    "prompt": "Install async-dev so Claude picks up ready issues automatically",
+    "expect_action": "setup/detect-context"
+  },
+  {
+    "prompt": "Generate the GitHub Actions workflow for async dev",
+    "expect_action": "setup/generate-workflow"
+  },
+  {
+    "prompt": "Install aidd-orchestrator end-to-end",
+    "expect_action": "setup/detect-context"
+  },
+  {
+    "prompt": "Configure async-dev pipeline in this repo",
+    "expect_action": "setup/detect-context"
+  },
+  {
+    "prompt": "Setup auto-implementation orchestration on issues",
+    "expect_action": "setup/detect-context"
+  },
+  {
+    "prompt": "Wire up async-dev workflow in GitHub Actions",
+    "expect_action": "setup/generate-workflow"
+  },
+  {
+    "prompt": "Installe async-dev dans ce repo",
+    "expect_action": "setup/detect-context"
+  },
+  {
+    "prompt": "Configure aidd-orchestrator pour ce projet",
+    "expect_action": "setup/detect-context"
+  },
+  {
+    "prompt": "Met en place auto-implémentation sur issues",
+    "expect_action": "setup/detect-context"
+  },
+  {
+    "prompt": "Génère le workflow GitHub Actions async-dev",
+    "expect_action": "setup/generate-workflow"
+  },
+  {
+    "prompt": "Run the async pipeline on issue #42",
+    "expect_action": "setup/"
+  },
+  {
+    "prompt": "Handle the review comments on the open PR",
+    "expect_action": "setup/"
+  },
+  {
+    "prompt": "Run async dev on issue #42",
+    "expect_action": "run/poll-ready"
+  },
+  {
+    "prompt": "Process the async queue now",
+    "expect_action": "run/poll-ready"
+  },
+  {
+    "prompt": "Implement the next ready issue with Claude",
+    "expect_action": "run/poll-ready"
+  },
+  {
+    "prompt": "@claude /implement on this issue",
+    "expect_action": "run/poll-ready"
+  },
+  {
+    "prompt": "Poll issues labeled to-implement",
+    "expect_action": "run/poll-ready"
+  },
+  {
+    "prompt": "Process issues with the to-implement label",
+    "expect_action": "run/poll-ready"
+  },
+  {
+    "prompt": "Run the async-dev pipeline cycle",
+    "expect_action": "run/poll-ready"
+  },
+  {
+    "prompt": "Trigger async dev to process ready issues",
+    "expect_action": "run/poll-ready"
+  },
+  {
+    "prompt": "Lance le pipeline async-dev",
+    "expect_action": "run/poll-ready"
+  },
+  {
+    "prompt": "Traite les issues to-implement",
+    "expect_action": "run/poll-ready"
+  },
+  {
+    "prompt": "Run async dev queue process",
+    "expect_action": "run/poll-ready"
+  },
+  {
+    "prompt": "Process to-implement labeled issues",
+    "expect_action": "run/poll-ready"
+  },
+  {
+    "prompt": "Setup the aidd-orchestrator plugin",
+    "expect_action": "run/"
+  },
+  {
+    "prompt": "Handle the review comments on PR #117",
+    "expect_action": "run/"
+  },
+  {
+    "prompt": "Handle review comments on PR #117",
+    "expect_action": "review/collect-comments"
+  },
+  {
+    "prompt": "Address review feedback automatically on the open PR",
+    "expect_action": "review/collect-comments"
+  },
+  {
+    "prompt": "Iterate fixes on PR 89 until reviewer approves or max retries",
+    "expect_action": "review/collect-comments"
+  },
+  {
+    "prompt": "Process review feedback loop on PR 42",
+    "expect_action": "review/collect-comments"
+  },
+  {
+    "prompt": "Address reviewer comments on the open async-dev PR",
+    "expect_action": "review/collect-comments"
+  },
+  {
+    "prompt": "Loop until reviewer approves the async-dev PR",
+    "expect_action": "review/collect-comments"
+  },
+  {
+    "prompt": "@claude /review on PR 42",
+    "expect_action": "review/collect-comments"
+  },
+  {
+    "prompt": "Iterate review-fix loop until done",
+    "expect_action": "review/collect-comments"
+  },
+  {
+    "prompt": "Adresse les comments de la PR async-dev",
+    "expect_action": "review/collect-comments"
+  },
+  {
+    "prompt": "Itère sur les retours reviewer du PR ouvert",
+    "expect_action": "review/collect-comments"
+  },
+  {
+    "prompt": "Gère le loop review-fix async-dev",
+    "expect_action": "review/collect-comments"
+  },
+  {
+    "prompt": "Process le feedback du reviewer en boucle",
+    "expect_action": "review/collect-comments"
+  },
+  {
+    "prompt": "Setup async dev plugin",
+    "expect_action": "review/"
+  },
+  {
+    "prompt": "Run the async pipeline on issue #50",
+    "expect_action": "review/"
+  }
 ]

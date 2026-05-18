@@ -103,7 +103,7 @@ Convenient when you want the routine to keep running even with the laptop off. *
 
 1. In any Claude Code session, run `/schedule`.
 2. Cron: `0 * * * *` (every hour) or coarser.
-3. Prompt: `Use skill aidd-orchestrator:02:run-async-dev on the next ready issue in {owner}/{repo}.`
+3. Prompt: `Use skill aidd-orchestrator:00:async-dev with action=run on the next ready issue in {owner}/{repo}.`
 
 ## Sanity check before scheduling anything
 

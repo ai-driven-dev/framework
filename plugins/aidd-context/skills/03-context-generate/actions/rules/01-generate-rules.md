@@ -36,9 +36,11 @@ files_written:
    - Plan the new rule(s) structure: file, groups and sub-groups, display the proposed architecture.
    - WAIT FOR USER APPROVAL before proceeding to step 3.
 
-3. **Generate.** For every installed AI tool, write the rule file inside that tool's rules root using `@../../assets/rules/rule-template.md` and the conventions in `@../../references/ai-mapping.md` (path, naming, extension, frontmatter). Skip any tool whose rules surface is marked "not supported". Create the rules root and the category subdirectory on demand (`mkdir -p`) before writing; do not assume the directory tree has been pre-scaffolded.
+3. **Pick category + slug deterministically.** Apply the selection rubric in `@../../references/rule-structure.md` (walk top to bottom, stop at first hit). The chosen category index drives the slug prefix (rules in `02-programming-languages/` start with `2-`; rules in `03-frameworks-and-libraries/` start with `3-`; etc.). State the chosen category + slug in writing before proceeding.
 
-   The category subdirectory and the slug stay identical across tools; only the root, extension, and frontmatter shape differ. Refer to `@../../references/rule-structure.md` and `@../../references/rule-writing.md` for content conventions.
+4. **Generate.** For every installed AI tool, write the rule file inside that tool's rules root using `@../../assets/rules/rule-template.md` and the conventions in `@../../references/ai-mapping.md` (path, naming, extension, frontmatter). Skip any tool whose rules surface is marked "not supported". Create the rules root and the category subdirectory on demand (`mkdir -p`) before writing; do not assume the directory tree has been pre-scaffolded.
+
+   The category subdirectory and the slug stay identical across tools; only the root, extension, and frontmatter shape differ.
 
    Reference example rule file structure (illustrative):
 
@@ -52,7 +54,7 @@ files_written:
    └── ...
    ```
 
-4. **Boundaries.**
+5. **Boundaries.**
    - Be concise. Less is more.
    - If multiple examples warrant separate files, create multiple rule files.
 
