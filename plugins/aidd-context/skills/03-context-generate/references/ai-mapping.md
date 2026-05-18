@@ -14,6 +14,28 @@ Map generated context artifacts to the correct AI-specific paths, syntax, file e
 | GitHub Copilot | `.github/agents/*.agent.md` | `.github/prompts/*.prompt.md`                 | `.github/instructions/*.instructions.md` | `.github/skills/`                     | `.github/copilot-instructions.md` |
 | Codex CLI      | `.codex/agents/{name}.toml` | `.agents/skills/aidd-{phase}-{name}/SKILL.md` (fallback: `.agents/skills/aidd-{name}/SKILL.md` when the command has no SDLC phase) | Not supported (skip rules at install)    | `.agents/skills/aidd-{name}/SKILL.md` | `AGENTS.md`                       |
 
+## Per-surface frontmatter reconciliation
+
+When a frontmatter field is recognized by some tools but not others, apply this rule per field:
+
+| Field                      | Claude | Cursor | OpenCode | Copilot | Codex | Reconciliation when unsupported                              |
+| -------------------------- | ------ | ------ | -------- | ------- | ----- | ------------------------------------------------------------ |
+| `name`                     | yes    | yes    | derived  | yes     | yes   | OpenCode derives from filename; emit nothing.                |
+| `description`              | yes    | yes    | yes      | yes     | yes   | Always emit.                                                 |
+| `argument-hint`            | yes    | yes    | n/a      | yes     | stripped | Drop for OpenCode/Codex.                                  |
+| `model`                    | yes    | yes    | yes      | n/a     | stripped | Drop for Copilot/Codex.                                   |
+| `effort`                   | yes    | n/a    | n/a      | n/a     | n/a   | Drop for all except Claude.                                  |
+| `allowed-tools`            | yes    | yes    | `tools`  | n/a     | n/a   | OpenCode uses `tools:` list; drop for Copilot/Codex.        |
+| `disable-model-invocation` | yes    | yes    | n/a      | n/a     | n/a   | Preserve intent in the description ("manual-only ..."). Drop the field. |
+| `user-invocable`           | yes    | n/a    | n/a      | n/a     | n/a   | Drop. Document intent in description.                        |
+| `context: fork`            | yes    | n/a    | n/a      | n/a     | n/a   | Drop. Equivalent OpenCode/Cursor behavior is the subagent model. |
+| `agent`                    | yes    | n/a    | n/a      | n/a     | n/a   | Drop.                                                        |
+| `hooks`                    | yes    | n/a    | n/a      | n/a     | n/a   | Drop (component-scoped hooks are a Claude-only feature).     |
+| `paths`                    | yes    | `globs` | n/a     | `applyTo` | n/a | Rename per target; drop where unsupported.                  |
+| `shell`                    | yes    | n/a    | n/a      | n/a     | n/a   | Drop.                                                        |
+
+General rule: **drop unsupported fields; never invent a substitute key**. When an intent (e.g. manual-only) is otherwise expressible in the body or description, preserve it there.
+
 ## AI quick map - hooks, plugins, marketplaces
 
 | AI             | Hooks                                                                                          | Plugin manifest                  | Marketplace catalog                                                  |
