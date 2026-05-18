@@ -108,7 +108,7 @@ Two plugins (currently `aidd-dev:00:sdlc` and `aidd-orchestrator`) advertise the
 title: SDLC capability discovery
 ---
 flowchart TB
-  Run["aidd-orchestrator:02:run-async-dev"]
+  Run["aidd-orchestrator:00:async-dev (action=run)"]
   Discover["check-sdlc action"]
   Catalog["skill catalog (runtime)"]
   SDLC1["aidd-dev:00:sdlc (matches)"]

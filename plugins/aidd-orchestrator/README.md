@@ -6,7 +6,7 @@ Orchestration plugin for the AI-Driven Development framework.
 
 > Status: stable for use case `async-dev`; other use cases on the roadmap are experimental.
 
-First time? Install with `/plugin install aidd-orchestrator@aidd-framework`, then run `aidd-orchestrator:01:setup-async-dev`.
+First time? Install with `/plugin install aidd-orchestrator@aidd-framework`, then run `aidd-orchestrator:00:async-dev` with `action=setup` (or just describe what you want — the router decides).
 
 Composes capabilities into deterministic, auditable flows. Each skill is one orchestration brick; several use cases coexist inside the same plugin.
 
@@ -16,11 +16,9 @@ Composes capabilities into deterministic, auditable flows. Each skill is one orc
 
 | Bracket ID | Skill | Description |
 |------------|-------|-------------|
-| [6.1] | [setup-async-dev](skills/01-setup-async-dev/README.md) | Bootstrap the async-dev pipeline in a target repo (workflow, scripts, labels, secrets). |
-| [6.2] | [run-async-dev](skills/02-run-async-dev/README.md) | Drive the implementation of a labelled issue into a pull request via the loaded SDLC capability. |
-| [6.3] | [review-async-dev](skills/03-review-async-dev/README.md) | Drive the review-and-fix loop on the resulting PR until stop conditions trigger. |
+| [6.0] | [async-dev](skills/00-async-dev/README.md) | Single router-based skill covering the full pipeline — setup, run, and review — selected by `$ARGUMENTS` keyword, trigger source, repo state, or natural-language intent. |
 
-Each skill has its own README covering when to use, how to invoke, prerequisites, and outputs.
+See the [skill README](skills/00-async-dev/README.md) for the sub-flow inventory and invocation contract.
 
 ### Roadmap
 

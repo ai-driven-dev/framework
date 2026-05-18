@@ -76,7 +76,7 @@ process_label() {
   done <<< "$issues"
 }
 
-process_label "$TO_IMPLEMENT" "Use skill aidd-orchestrator:02:run-async-dev on issue #NUM in $REPO"
-process_label "$TO_REVIEW" "Use skill aidd-orchestrator:03:review-async-dev for issue #NUM in $REPO"
+process_label "$TO_IMPLEMENT" "Use skill aidd-orchestrator:00:async-dev with action=run on issue #NUM in $REPO"
+process_label "$TO_REVIEW" "Use skill aidd-orchestrator:00:async-dev with action=review for issue #NUM in $REPO"
 
 log "done"

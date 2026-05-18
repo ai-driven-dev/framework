@@ -7,7 +7,7 @@
 ### A community-maintained marketplace of skills, agents, and rules for Claude Code.
 
 <p>
-  <kbd>6 plugins</kbd> · <kbd>33 skills</kbd> · <kbd>3 agents</kbd> · <kbd>MIT</kbd>
+  <kbd>6 plugins</kbd> · <kbd>30 skills</kbd> · <kbd>3 agents</kbd> · <kbd>MIT</kbd>
 </p>
 
 <p>
@@ -121,18 +121,18 @@ Ticket info, user stories, PRD, spec drafting.
 
 ### 🎼 [aidd-orchestrator](plugins/aidd-orchestrator/README.md)
 
-`3 skills` · stable (`async-dev`)
+`1 skill` · stable (`async-dev`)
 
-Label an issue, get a PR; re-label, get the review applied.
+Label an issue, get a PR; re-label, get the review applied. Router-based skill: one entry point, three sub-flows (setup, run, review).
 
 </td>
 <td width="33%" valign="top">
 
 ### 🪞 [aidd-refine](plugins/aidd-refine/README.md)
 
-`3 skills` · stable
+`4 skills` · stable
 
-Meta-cognition: brainstorm, challenge, condense.
+Meta-cognition: brainstorm, challenge, condense, shadow-areas.
 
 </td>
 </tr>
