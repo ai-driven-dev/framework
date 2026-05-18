@@ -19,13 +19,14 @@ const MARKETPLACE_SETTINGS = {
 };
 
 describe("resolveTranslationAdapter", () => {
-  describe("when mode is native and marketplaceSettings is present", () => {
+  describe("when translationMode is marketplace", () => {
     it("returns ModeAMarketplaceAdapter", () => {
       const deps = buildDeps();
       const plugins = new PluginsCapability({
         mode: "native",
         pluginsDir: ".claude/plugins/",
         pluginManifestRelativePath: "plugin.json",
+        translationMode: "marketplace",
         marketplaceSettings: MARKETPLACE_SETTINGS,
       });
       const adapter = resolveTranslationAdapter(plugins, deps);
@@ -34,7 +35,7 @@ describe("resolveTranslationAdapter", () => {
     });
   });
 
-  describe("when mode is flat", () => {
+  describe("when translationMode is flat", () => {
     it("returns ModeBFlatMaterializationAdapter", () => {
       const deps = buildDeps();
       const plugins = new PluginsCapability({
@@ -47,7 +48,7 @@ describe("resolveTranslationAdapter", () => {
     });
   });
 
-  describe("when mode is unsupported", () => {
+  describe("when translationMode is null (unsupported)", () => {
     it("returns null", () => {
       const deps = buildDeps();
       const plugins = new PluginsCapability({ mode: "unsupported" });
@@ -56,8 +57,8 @@ describe("resolveTranslationAdapter", () => {
     });
   });
 
-  describe("when mode is native but marketplaceSettings is null", () => {
-    it("returns null (neutral native, no marketplace sync needed)", () => {
+  describe("when translationMode is null (native without marketplace)", () => {
+    it("returns null (neutral native, no translation strategy applies)", () => {
       const deps = buildDeps();
       const plugins = new PluginsCapability({
         mode: "native",

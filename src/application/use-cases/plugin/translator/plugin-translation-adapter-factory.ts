@@ -8,21 +8,19 @@ import type { PluginTranslationAdapter } from "./plugin-translation-adapter.js";
 /**
  * Resolves the appropriate translation adapter for a given PluginsCapability.
  *
- * - `mode === "native"` AND `marketplaceSettings != null` → ModeAMarketplaceAdapter
- * - `mode === "flat"` → ModeBFlatMaterializationAdapter
- * - `mode === "native"` AND `marketplaceSettings === null` → null (neutral native, no sync)
- * - `mode === "unsupported"` → null (tool has no plugin capability)
- *
- * Returns null when no translation strategy applies for the given capability.
+ * Reads `plugins.translationMode` as the single routing decision point:
+ * - `"marketplace"` → ModeAMarketplaceAdapter (Mode A: register in native config)
+ * - `"flat"` → ModeBFlatMaterializationAdapter (Mode B: materialize files on disk)
+ * - `null` → null (neutral native or unsupported; no translation strategy applies)
  */
 export function resolveTranslationAdapter(
   plugins: PluginsCapability,
   deps: { fs: FileWriter; hasher: Hasher }
 ): PluginTranslationAdapter | null {
-  if (plugins.mode === "native" && plugins.marketplaceSettings !== null) {
+  if (plugins.translationMode === "marketplace") {
     return new ModeAMarketplaceAdapter();
   }
-  if (plugins.mode === "flat") {
+  if (plugins.translationMode === "flat") {
     return new ModeBFlatMaterializationAdapter(deps.fs, deps.hasher);
   }
   return null;
