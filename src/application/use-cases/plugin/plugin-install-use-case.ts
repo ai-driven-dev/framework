@@ -1,7 +1,12 @@
 import { InteractiveOnlyError } from "../../../domain/errors.js";
+import {
+  assertToolSupportsScope,
+  type InstallScope,
+} from "../../../domain/models/install-scope.js";
 import { parsePluginSpec } from "../../../domain/models/plugin.js";
 import { parsePluginSourceShorthand } from "../../../domain/models/plugin-source.js";
-import type { AiToolId } from "../../../domain/models/tool-ids.js";
+import { AI_TOOL_IDS, type AiToolId } from "../../../domain/models/tool-ids.js";
+import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { PluginAddUseCase } from "./plugin-add-use-case.js";
 import type { PluginInstallFromMarketplaceUseCase } from "./plugin-install-from-marketplace-use-case.js";
 import type { PluginPickUseCase } from "./plugin-pick-use-case.js";
@@ -14,6 +19,7 @@ export interface PluginInstallOptions {
   fromMarketplace?: string;
   token?: string;
   yes?: boolean;
+  scope?: InstallScope;
 }
 
 export interface PluginInstallResult {
@@ -25,13 +31,28 @@ export class PluginInstallUseCase {
   constructor(
     private readonly pluginPickUseCase: PluginPickUseCase,
     private readonly pluginAddUseCase: PluginAddUseCase,
-    private readonly pluginInstallFromMarketplaceUseCase: PluginInstallFromMarketplaceUseCase
+    private readonly pluginInstallFromMarketplaceUseCase: PluginInstallFromMarketplaceUseCase,
+    private readonly manifestRepo: ManifestRepository
   ) {}
 
   async execute(options: PluginInstallOptions): Promise<PluginInstallResult> {
+    if (options.scope !== undefined) await this.validateScope(options.toolIds, options.scope);
     if (options.pluginArg === undefined) return this.executeNoArg(options);
     if (this.isSourceArg(options.pluginArg)) return this.executeLocalSource(options);
     return this.executeMarketplace(options);
+  }
+
+  private async validateScope(toolIds: AiToolId[] | "all", scope: InstallScope): Promise<void> {
+    const targets = await this.resolveTargetTools(toolIds);
+    for (const toolId of targets) assertToolSupportsScope(toolId, scope);
+  }
+
+  private async resolveTargetTools(toolIds: AiToolId[] | "all"): Promise<readonly AiToolId[]> {
+    if (toolIds !== "all") return toolIds;
+    const manifest = await this.manifestRepo.load();
+    if (manifest === null) return AI_TOOL_IDS;
+    const installed = manifest.getInstalledToolIds();
+    return AI_TOOL_IDS.filter((id) => installed.includes(id));
   }
 
   private isSourceArg(arg: string): boolean {

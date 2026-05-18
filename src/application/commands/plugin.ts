@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import { parseInstallScope } from "../../domain/models/install-scope.js";
 import { assertValidAiToolId, parseToolOption } from "../../domain/models/tool-ids.js";
 import { createDeps, createMenuDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
@@ -79,16 +80,24 @@ export function registerPluginCommand(program: Command): void {
     .option("--from <market>", "Marketplace name (when multiple match)")
     .option("--tool <toolId>", "Target AI tool (default: all installed)")
     .option("--token <value>", "Auth token (host detected from source URL at fetch time)")
+    .option("--scope <user|project>", "Install scope; must match the tool's supported scope")
     .option("--yes", "Auto-resolve interactive prompts (CI mode)")
     .action(
       async (
         pluginArg: string | undefined,
-        cmdOptions: { from?: string; tool?: string; token?: string; yes?: boolean }
+        cmdOptions: {
+          from?: string;
+          tool?: string;
+          token?: string;
+          scope?: string;
+          yes?: boolean;
+        }
       ) => {
         const { verbose, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
         try {
           assertValidAiToolId(cmdOptions.tool);
+          const scope = parseInstallScope(cmdOptions.scope);
           const deps = await createDeps(projectRoot, { verbose }, output);
           const result = await deps.pluginInstallUseCase.execute({
             pluginArg,
@@ -98,6 +107,7 @@ export function registerPluginCommand(program: Command): void {
             fromMarketplace: cmdOptions.from,
             token: cmdOptions.token,
             yes: cmdOptions.yes,
+            scope,
           });
           await deps.marketplaceSyncSettingsUseCase.execute({ projectRoot });
           if (result.kind === "picked") {
