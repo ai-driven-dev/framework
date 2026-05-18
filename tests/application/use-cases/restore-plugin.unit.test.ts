@@ -25,7 +25,8 @@ describe("RestorePluginUseCase", () => {
         deps.pluginFetcher,
         pluginReader,
         deps.hasher,
-        deps.marketplaceRegistry
+        deps.marketplaceRegistry,
+        deps.marketplaceSyncSettings
       ).execute({
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: ["claude"],

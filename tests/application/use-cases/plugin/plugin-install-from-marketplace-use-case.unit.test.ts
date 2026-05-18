@@ -43,7 +43,8 @@ async function buildUseCase() {
     deps.pluginFetcher,
     new PluginDistributionReaderAdapter(deps.fs),
     deps.hasher,
-    registry
+    registry,
+    deps.marketplaceSyncSettings
   );
   const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(deps.pluginFetcher);
   const useCase = new PluginInstallFromMarketplaceUseCase(

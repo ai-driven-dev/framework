@@ -169,13 +169,21 @@ export async function createDeps(
   const prompter = process.stdout.isTTY
     ? new InquirerPrompterAdapter()
     : new SilentPrompterAdapter();
+  const marketplaceSyncSettingsUseCase = new MarketplaceSyncSettingsUseCase(
+    fs,
+    manifestRepo,
+    marketplaceRegistry,
+    pluginCatalogRepository,
+    hasher
+  );
   const pluginAddUseCase = new PluginAddUseCase(
     fs,
     manifestRepo,
     pluginFetcher,
     pluginDistributionReader,
     hasher,
-    marketplaceRegistry
+    marketplaceRegistry,
+    marketplaceSyncSettingsUseCase
   );
   const pluginRemoveUseCase = new PluginRemoveUseCase(fs, manifestRepo);
   const pluginListUseCase = new PluginListUseCase(manifestRepo);
@@ -270,13 +278,6 @@ export async function createDeps(
     fetchMarketplaceSource,
     pluginAddUseCase,
     prompter
-  );
-  const marketplaceSyncSettingsUseCase = new MarketplaceSyncSettingsUseCase(
-    fs,
-    manifestRepo,
-    marketplaceRegistry,
-    pluginCatalogRepository,
-    hasher
   );
   const installAiToolUseCase = new InstallAiToolUseCase(
     installRuntimeConfigUseCase,

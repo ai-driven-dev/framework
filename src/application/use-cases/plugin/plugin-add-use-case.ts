@@ -18,6 +18,9 @@ import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-regi
 import type { PluginDistributionReader } from "../../../domain/ports/plugin-distribution-reader.js";
 import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
+import type { PluginsCapability } from "../../../domain/capabilities/plugins-capability.js";
+import type { MarketplaceSyncSettingsUseCase } from "../marketplace/marketplace-sync-settings-use-case.js";
+import { resolveTranslationAdapter } from "./translator/plugin-translation-adapter-factory.js";
 import { loadPluginManifest, resolvePluginToolIds, writePluginFiles } from "./plugin-helpers.js";
 
 const FLAT_PLUGINS_MODE = "flat";
@@ -41,7 +44,8 @@ export class PluginAddUseCase {
     private readonly pluginFetcher: PluginFetcher,
     private readonly pluginDistributionReader: PluginDistributionReader,
     private readonly hasher: Hasher,
-    private readonly marketplaceRegistry: MarketplaceRegistry
+    private readonly marketplaceRegistry: MarketplaceRegistry,
+    private readonly marketplaceSyncSettings: MarketplaceSyncSettingsUseCase
   ) {}
 
   async execute(options: PluginAddOptions): Promise<void> {
@@ -186,18 +190,36 @@ export class PluginAddUseCase {
       docsDir
     );
     if (files.length === 0) return;
-    const isLocalMarketplace =
-      !this.isFlatTool(toolId) && source.kind === "local" && marketplace !== undefined;
-    if (!isLocalMarketplace) await writePluginFiles(files, projectRoot, this.fs);
+    if (this.isLocalMarketplaceForModeA(toolId, source, marketplace)) {
+      const adapter = this.resolveAdapter(toolConfig);
+      if (adapter?.mode === "marketplace") {
+        await adapter.addPlugin(dist, toolId, source, projectRoot, manifest, marketplace, docsDir);
+        return;
+      }
+    }
+    await writePluginFiles(files, projectRoot, this.fs);
     manifest.addPlugin(
       toolId,
-      Plugin.fromDistribution(
-        dist,
-        source,
-        isLocalMarketplace ? [] : files,
-        isLocalMarketplace ? new Map() : componentPaths,
-        marketplace
-      )
+      Plugin.fromDistribution(dist, source, files, componentPaths, marketplace)
     );
+  }
+
+  private isLocalMarketplaceForModeA(
+    toolId: AiToolId,
+    source: PluginSource,
+    marketplace: string | undefined
+  ): boolean {
+    return !this.isFlatTool(toolId) && source.kind === "local" && marketplace !== undefined;
+  }
+
+  private resolveAdapter(
+    toolConfig: ReturnType<typeof getToolConfig>
+  ): ReturnType<typeof resolveTranslationAdapter> {
+    if (toolConfig === undefined || !isAiTool(toolConfig)) return null;
+    if (!("plugins" in (toolConfig.capabilities as object))) return null;
+    const caps = toolConfig.capabilities as { plugins: PluginsCapability };
+    return resolveTranslationAdapter(caps.plugins, {
+      marketplaceSyncSettings: this.marketplaceSyncSettings,
+    });
   }
 }

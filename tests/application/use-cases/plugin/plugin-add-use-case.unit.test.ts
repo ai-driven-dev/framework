@@ -19,7 +19,8 @@ async function makeUseCase(deps: Awaited<ReturnType<typeof buildUnitDeps>>) {
     deps.pluginFetcher,
     new PluginDistributionReaderAdapter(deps.fs),
     deps.hasher,
-    deps.marketplaceRegistry
+    deps.marketplaceRegistry,
+    deps.marketplaceSyncSettings
   );
 }
 
@@ -87,7 +88,8 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
-        registry
+        registry,
+        deps.marketplaceSyncSettings
       );
       await useCase.execute({
         source: {
@@ -128,7 +130,8 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
-        registry
+        registry,
+        deps.marketplaceSyncSettings
       );
       await expect(
         useCase.execute({
@@ -166,7 +169,8 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
-        registry
+        registry,
+        deps.marketplaceSyncSettings
       );
       await useCase.execute({
         source: { kind: "local", path: PLUGIN_FIXTURE },
@@ -218,7 +222,8 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
-        registry
+        registry,
+        deps.marketplaceSyncSettings
       );
       await useCase.execute({
         source: GIT_SUBDIR_SOURCE,
@@ -247,7 +252,8 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
-        registry
+        registry,
+        deps.marketplaceSyncSettings
       );
       await useCase.execute({
         source: GIT_SUBDIR_SOURCE,
@@ -276,7 +282,8 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
-        registry
+        registry,
+        deps.marketplaceSyncSettings
       );
       await useCase.execute({
         source: GIT_SUBDIR_SOURCE,
@@ -305,7 +312,8 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
-        registry
+        registry,
+        deps.marketplaceSyncSettings
       );
       await useCase.execute({
         source: GIT_SUBDIR_SOURCE,
@@ -346,7 +354,8 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
-        registry
+        registry,
+        deps.marketplaceSyncSettings
       );
       await useCase.execute({
         source: { kind: "local", path: PLUGIN_FIXTURE },
