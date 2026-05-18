@@ -1,0 +1,110 @@
+import "../../../../../src/domain/tools/ai/claude.js";
+import { describe, expect, it } from "vitest";
+import { ModeAMarketplaceAdapter } from "../../../../../src/application/use-cases/plugin/translator/mode-a-marketplace-adapter.js";
+import { MarketplaceSyncSettingsUseCase } from "../../../../../src/application/use-cases/marketplace/marketplace-sync-settings-use-case.js";
+import { Manifest } from "../../../../../src/domain/models/manifest.js";
+import { PluginDistribution } from "../../../../../src/domain/models/plugin-distribution.js";
+import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { PluginCatalogRepositoryAdapter } from "../../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
+
+function buildDist(name = "test-plugin"): PluginDistribution {
+  return new PluginDistribution({
+    manifest: { name, version: "1.0.0" },
+    format: "claude",
+    files: [{ relativePath: "commands/hello.md", content: "# Hello" }],
+    components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
+  });
+}
+
+function buildAdapter() {
+  const fs = new InMemoryFileAdapter();
+  const hasher = new DeterministicHasher();
+  const manifestRepo = new InMemoryManifestRepository();
+  const marketplaceRegistry = new InMemoryMarketplaceRegistry();
+  const catalogRepo = new PluginCatalogRepositoryAdapter(fs);
+  const syncSettings = new MarketplaceSyncSettingsUseCase(
+    fs,
+    manifestRepo,
+    marketplaceRegistry,
+    catalogRepo,
+    hasher
+  );
+  return { adapter: new ModeAMarketplaceAdapter(syncSettings), fs };
+}
+
+describe("ModeAMarketplaceAdapter", () => {
+  describe("mode discriminant", () => {
+    it("exposes mode as marketplace", () => {
+      const { adapter } = buildAdapter();
+      expect(adapter.mode).toBe("marketplace");
+    });
+  });
+
+  describe("when adding a plugin for a native tool with marketplace", () => {
+    it("registers plugin in manifest with empty files (no materialization)", async () => {
+      const { adapter } = buildAdapter();
+      const manifest = Manifest.create();
+      manifest.addTool("claude", "test", []);
+      const dist = buildDist("aidd-context");
+      await adapter.addPlugin(
+        dist,
+        "claude",
+        { kind: "local", path: "/plugin-source" },
+        "/project",
+        manifest,
+        "aidd-framework",
+        "docs"
+      );
+      const plugins = manifest.getPlugins("claude");
+      const installed = plugins.find((p) => p.name === "aidd-context");
+      expect(installed).toBeDefined();
+      expect(installed?.files.size).toBe(0);
+      expect(installed?.marketplace).toBe("aidd-framework");
+    });
+  });
+
+  describe("when adding a plugin without marketplace", () => {
+    it("registers plugin in manifest with undefined marketplace", async () => {
+      const { adapter } = buildAdapter();
+      const manifest = Manifest.create();
+      manifest.addTool("claude", "test", []);
+      const dist = buildDist("test-plugin");
+      await adapter.addPlugin(
+        dist,
+        "claude",
+        { kind: "local", path: "/plugin-source" },
+        "/project",
+        manifest,
+        undefined,
+        "docs"
+      );
+      const plugins = manifest.getPlugins("claude");
+      const installed = plugins.find((p) => p.name === "test-plugin");
+      expect(installed).toBeDefined();
+      expect(installed?.marketplace).toBeUndefined();
+      expect(installed?.files.size).toBe(0);
+    });
+  });
+
+  describe("when filesystem is not written", () => {
+    it("does not write any files to the filesystem", async () => {
+      const { adapter, fs } = buildAdapter();
+      const manifest = Manifest.create();
+      manifest.addTool("claude", "test", []);
+      const dist = buildDist("test-plugin");
+      await adapter.addPlugin(
+        dist,
+        "claude",
+        { kind: "local", path: "/plugin-source" },
+        "/project",
+        manifest,
+        "aidd-framework",
+        "docs"
+      );
+      expect(fs.has("/project/.claude/plugins/test-plugin/commands/hello.md")).toBe(false);
+    });
+  });
+});
