@@ -28,6 +28,7 @@ All `4.0.x` command spellings are removed. Run `aidd migrate` to clean obsolete 
 
 ### New features
 
+- **Migration auto-prompt on CLI entry** — every command checks the manifest for legacy schema fields (docsDir, repo, mode, scripts top-level, etc.); TTY prompts to migrate inline, non-TTY exits 1 with `Run aidd migrate` hint. Bypassed for `migrate`, `self-update`, `auth` commands.
 - **Setup wizard with project context detection** — interactive `aidd setup` now prints a welcome banner, detects the project context (TypeScript / Python / monorepo / AIDD already installed), uses it to mark recommended tools in the multi-checkbox prompt, and prints next-step suggestions after install
 - **Setup flag simplification (10 → 6)** — unified `--plugins <none|all|recommended|name1,name2>`; dropped `--all`, `--all-plugins`, `--recommended-plugins`, `--no-plugins`. Use `--ai all --ide all` instead of `--all`. Migration table in MIGRATION.md.
 - **`aidd ide restore [files...]`** — symmetric to `ai restore`; reverts tracked IDE-managed files to installed state (manifest hashes); supports `--tool <vscode>` and `--force`
