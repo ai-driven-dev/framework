@@ -16,6 +16,16 @@ export class CursorProjectScopeUnsupportedError extends Error {
   }
 }
 
+export class InvalidPluginScopeError extends Error {
+  constructor(toolId: string, requested: "project" | "user", supported: "project" | "user") {
+    super(
+      `Tool '${toolId}' does not support scope '${requested}'. Supported scope: '${supported}'. ` +
+        `Re-run with --scope ${supported} or omit the flag.`
+    );
+    this.name = "InvalidPluginScopeError";
+  }
+}
+
 export class AuthenticationError extends Error {
   constructor(source: string) {
     super(`Authentication failed (${source}). Run \`aidd auth login\` to authenticate.`);

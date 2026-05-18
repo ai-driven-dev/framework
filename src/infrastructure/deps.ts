@@ -279,7 +279,8 @@ export async function createDeps(
   const pluginInstallUseCase = new PluginInstallUseCase(
     pluginPickUseCase,
     pluginAddUseCase,
-    pluginInstallFromMarketplaceUseCase
+    pluginInstallFromMarketplaceUseCase,
+    manifestRepo
   );
   const installAiToolUseCase = new InstallAiToolUseCase(
     installRuntimeConfigUseCase,

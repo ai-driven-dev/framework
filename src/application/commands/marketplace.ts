@@ -32,7 +32,7 @@ export function registerMarketplaceCommand(program: Command): void {
   marketplace
     .command("add [name] [source]")
     .description("Register a plugin marketplace")
-    .option("--user", "Register at user scope (default: project)")
+    .option("--scope <user|project>", "Registration scope (default: project)", "project")
     .option("--yes", "Skip the trust + cleanup prompts")
     .option("--overwrite", "Replace an existing marketplace with the same name")
     .option("--token <value>", "Auth token (host detected from source URL at fetch time)")
@@ -41,7 +41,7 @@ export function registerMarketplaceCommand(program: Command): void {
         nameArg: string | undefined,
         sourceArg: string | undefined,
         cmdOptions: {
-          user?: boolean;
+          scope?: string;
           yes?: boolean;
           overwrite?: boolean;
           token?: string;
@@ -54,9 +54,17 @@ export function registerMarketplaceCommand(program: Command): void {
           output.error("name and source are required in non-interactive mode.");
           process.exit(1);
         }
+        if (
+          cmdOptions.scope !== undefined &&
+          cmdOptions.scope !== "project" &&
+          cmdOptions.scope !== "user"
+        ) {
+          output.error(`Invalid --scope '${cmdOptions.scope}'. Expected 'project' or 'user'.`);
+          process.exit(1);
+        }
         try {
           if (cmdOptions.token) process.env.AIDD_TOKEN = cmdOptions.token;
-          const scope: MarketplaceScope = cmdOptions.user ? "user" : "project";
+          const scope: MarketplaceScope = cmdOptions.scope === "user" ? "user" : "project";
           const deps = await createDeps(projectRoot, { verbose }, output);
           const name = nameArg ?? (await deps.prompter.input("Marketplace name:"));
           const rawSource = sourceArg ?? (await deps.prompter.input("Source (path or user/repo):"));

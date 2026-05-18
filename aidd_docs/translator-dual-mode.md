@@ -118,6 +118,22 @@ Note: `installScope === "user"` wins over `translationMode === "marketplace"` be
 
 ---
 
+## Scope matrix and `--scope` flag
+
+`aidd plugin install --scope user|project` validates the requested scope against the tool's capability before any install work. Same flag exists on `aidd marketplace add` (replaces the old `--user` boolean).
+
+| Tool     | Supported scope | `--scope user`     | `--scope project`  |
+| -------- | --------------- | ------------------ | ------------------ |
+| Claude   | `project`       | rejected           | accepted (default) |
+| Copilot  | `project`       | rejected           | accepted (default) |
+| Codex    | `project`       | rejected           | accepted (default) |
+| OpenCode | `project`       | rejected           | accepted (default) |
+| Cursor   | `user`          | accepted (default) | rejected           |
+
+Mismatch raises `InvalidPluginScopeError` with a clear message including the supported scope. Default scope is read from the tool's `PluginsCapability.installScope` — Cursor is the only tool that currently uses `"user"`.
+
+---
+
 ## Reference files
 
 - `src/domain/capabilities/plugins-capability.ts` — capability surface, validation rules.
