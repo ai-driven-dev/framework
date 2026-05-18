@@ -182,8 +182,7 @@ export async function createDeps(
     pluginFetcher,
     pluginDistributionReader,
     hasher,
-    marketplaceRegistry,
-    marketplaceSyncSettingsUseCase
+    marketplaceRegistry
   );
   const pluginRemoveUseCase = new PluginRemoveUseCase(fs, manifestRepo);
   const pluginListUseCase = new PluginListUseCase(manifestRepo);

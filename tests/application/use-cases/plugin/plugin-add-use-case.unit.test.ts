@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import { PluginAddUseCase } from "../../../../src/application/use-cases/plugin/plugin-add-use-case.js";
 import { DuplicatePluginError, MissingPluginVersionError } from "../../../../src/domain/errors.js";
 import { Marketplace } from "../../../../src/domain/models/marketplace.js";
+import { PluginDistribution } from "../../../../src/domain/models/plugin-distribution.js";
+import type { PluginDistributionReader } from "../../../../src/domain/ports/plugin-distribution-reader.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
@@ -19,8 +21,7 @@ async function makeUseCase(deps: Awaited<ReturnType<typeof buildUnitDeps>>) {
     deps.pluginFetcher,
     new PluginDistributionReaderAdapter(deps.fs),
     deps.hasher,
-    deps.marketplaceRegistry,
-    deps.marketplaceSyncSettings
+    deps.marketplaceRegistry
   );
 }
 
@@ -88,8 +89,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
-        registry,
-        deps.marketplaceSyncSettings
+        registry
       );
       await useCase.execute({
         source: {
@@ -130,8 +130,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
-        registry,
-        deps.marketplaceSyncSettings
+        registry
       );
       await expect(
         useCase.execute({
@@ -169,8 +168,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
-        registry,
-        deps.marketplaceSyncSettings
+        registry
       );
       await useCase.execute({
         source: { kind: "local", path: PLUGIN_FIXTURE },
@@ -222,8 +220,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
-        registry,
-        deps.marketplaceSyncSettings
+        registry
       );
       await useCase.execute({
         source: GIT_SUBDIR_SOURCE,
@@ -252,8 +249,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
-        registry,
-        deps.marketplaceSyncSettings
+        registry
       );
       await useCase.execute({
         source: GIT_SUBDIR_SOURCE,
@@ -282,8 +278,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
-        registry,
-        deps.marketplaceSyncSettings
+        registry
       );
       await useCase.execute({
         source: GIT_SUBDIR_SOURCE,
@@ -312,8 +307,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
-        registry,
-        deps.marketplaceSyncSettings
+        registry
       );
       await useCase.execute({
         source: GIT_SUBDIR_SOURCE,
@@ -354,8 +348,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
-        registry,
-        deps.marketplaceSyncSettings
+        registry
       );
       await useCase.execute({
         source: { kind: "local", path: PLUGIN_FIXTURE },
@@ -370,6 +363,54 @@ describe("PluginAddUseCase", () => {
       const installed = plugins.find((p) => p.name === "sample-plugin");
       expect(installed).toBeDefined();
       expect(installed?.files.size).toBeGreaterThan(0);
+    });
+  });
+
+  describe("zero-files guard regression (Blocker 2)", () => {
+    it("native tool + local source + marketplace + zero-translation distribution → manifest entry NOT added", async () => {
+      // Regression: on main, if translateWithComponentPaths yields zero files the plugin is
+      // NOT added to the manifest. Before this fix, ModeAMarketplaceAdapter bypassed the guard.
+      // A distribution with no recognized manifest path produces zero translated files for
+      // any native tool (findSourceManifestContent returns null, no component files → files=[]).
+      const deps = await buildUnitDeps(PROJECT_ROOT);
+      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      const zeroFilesReader: PluginDistributionReader = {
+        read: async () =>
+          new PluginDistribution({
+            manifest: { name: "zero-plugin", version: "1.0.0" },
+            format: "claude",
+            files: [],
+            components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
+          }),
+      };
+      const registry = new InMemoryMarketplaceRegistry();
+      await registry.save(
+        PROJECT_ROOT,
+        Marketplace.create({
+          name: "local-mkt",
+          source: { kind: "local", path: "/mkt-source" },
+          scope: "project",
+          addedAt: "2026-05-01T00:00:00.000Z",
+        })
+      );
+      const useCase = new PluginAddUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.pluginFetcher,
+        zeroFilesReader,
+        deps.hasher,
+        registry
+      );
+      await useCase.execute({
+        source: { kind: "local", path: "/some-plugin" },
+        toolIds: ["claude"],
+        projectRoot: PROJECT_ROOT,
+        marketplace: "local-mkt",
+        interactive: false,
+      });
+      const manifest = await deps.manifestRepo.load();
+      const plugins = manifest?.getPlugins("claude") ?? [];
+      expect(plugins.find((p) => p.name === "zero-plugin")).toBeUndefined();
     });
   });
 });

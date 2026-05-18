@@ -3,7 +3,6 @@ import type { PluginDistribution } from "../../../../domain/models/plugin-distri
 import type { PluginSource } from "../../../../domain/models/plugin-source.js";
 import type { AiToolId } from "../../../../domain/models/tool-ids.js";
 import type { Manifest } from "../../../../domain/models/manifest.js";
-import type { MarketplaceSyncSettingsUseCase } from "../../marketplace/marketplace-sync-settings-use-case.js";
 import type { PluginTranslationAdapter } from "./plugin-translation-adapter.js";
 
 /**
@@ -20,8 +19,6 @@ import type { PluginTranslationAdapter } from "./plugin-translation-adapter.js";
 export class ModeAMarketplaceAdapter implements PluginTranslationAdapter {
   readonly mode = "marketplace" as const;
 
-  constructor(private readonly marketplaceSyncSettings: MarketplaceSyncSettingsUseCase) {}
-
   async addPlugin(
     dist: PluginDistribution,
     toolId: AiToolId,
@@ -32,10 +29,5 @@ export class ModeAMarketplaceAdapter implements PluginTranslationAdapter {
     _docsDir: string
   ): Promise<void> {
     manifest.addPlugin(toolId, Plugin.fromDistribution(dist, source, [], new Map(), marketplace));
-  }
-
-  /** Exposes the injected sync use-case for callers that need Mode A marketplace sync. */
-  getSyncSettingsUseCase(): MarketplaceSyncSettingsUseCase {
-    return this.marketplaceSyncSettings;
   }
 }

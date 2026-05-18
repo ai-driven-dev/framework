@@ -26,8 +26,7 @@ describe("UninstallUseCase — plugin scope", () => {
       deps.pluginFetcher,
       reader,
       deps.hasher,
-      deps.marketplaceRegistry,
-      deps.marketplaceSyncSettings
+      deps.marketplaceRegistry
     ).execute({
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: ["claude"],

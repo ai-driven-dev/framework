@@ -5,25 +5,11 @@ import { ModeBFlatMaterializationAdapter } from "../../../../../src/application/
 import { resolveTranslationAdapter } from "../../../../../src/application/use-cases/plugin/translator/plugin-translation-adapter-factory.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { PluginCatalogRepositoryAdapter } from "../../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/application/use-cases/marketplace/marketplace-sync-settings-use-case.js";
 
 function buildDeps() {
   const fs = new InMemoryFileAdapter();
   const hasher = new DeterministicHasher();
-  const manifestRepo = new InMemoryManifestRepository();
-  const marketplaceRegistry = new InMemoryMarketplaceRegistry();
-  const catalogRepo = new PluginCatalogRepositoryAdapter(fs);
-  const marketplaceSyncSettings = new MarketplaceSyncSettingsUseCase(
-    fs,
-    manifestRepo,
-    marketplaceRegistry,
-    catalogRepo,
-    hasher
-  );
-  return { fs, hasher, marketplaceSyncSettings };
+  return { fs, hasher };
 }
 
 const MARKETPLACE_SETTINGS = {

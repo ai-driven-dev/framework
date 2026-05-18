@@ -18,8 +18,7 @@ async function installPlugin(deps: Awaited<ReturnType<typeof buildUnitDeps>>): P
     deps.pluginFetcher,
     new PluginDistributionReaderAdapter(deps.fs),
     deps.hasher,
-    deps.marketplaceRegistry,
-    deps.marketplaceSyncSettings
+    deps.marketplaceRegistry
   );
   await addUseCase.execute({
     source: { kind: "local", path: PLUGIN_FIXTURE },

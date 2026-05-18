@@ -1,14 +1,9 @@
 import "../../../../../src/domain/tools/ai/claude.js";
 import { describe, expect, it } from "vitest";
 import { ModeAMarketplaceAdapter } from "../../../../../src/application/use-cases/plugin/translator/mode-a-marketplace-adapter.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/application/use-cases/marketplace/marketplace-sync-settings-use-case.js";
 import { Manifest } from "../../../../../src/domain/models/manifest.js";
 import { PluginDistribution } from "../../../../../src/domain/models/plugin-distribution.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { PluginCatalogRepositoryAdapter } from "../../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 
 function buildDist(name = "test-plugin"): PluginDistribution {
   return new PluginDistribution({
@@ -21,18 +16,7 @@ function buildDist(name = "test-plugin"): PluginDistribution {
 
 function buildAdapter() {
   const fs = new InMemoryFileAdapter();
-  const hasher = new DeterministicHasher();
-  const manifestRepo = new InMemoryManifestRepository();
-  const marketplaceRegistry = new InMemoryMarketplaceRegistry();
-  const catalogRepo = new PluginCatalogRepositoryAdapter(fs);
-  const syncSettings = new MarketplaceSyncSettingsUseCase(
-    fs,
-    manifestRepo,
-    marketplaceRegistry,
-    catalogRepo,
-    hasher
-  );
-  return { adapter: new ModeAMarketplaceAdapter(syncSettings), fs };
+  return { adapter: new ModeAMarketplaceAdapter(), fs };
 }
 
 describe("ModeAMarketplaceAdapter", () => {
