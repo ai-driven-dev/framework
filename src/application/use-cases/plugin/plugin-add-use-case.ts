@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import type { PluginsCapability } from "../../../domain/capabilities/plugins-capability.js";
 import {
   DuplicatePluginError,
   MissingPluginVersionError,
@@ -18,9 +19,8 @@ import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-regi
 import type { PluginDistributionReader } from "../../../domain/ports/plugin-distribution-reader.js";
 import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
-import type { PluginsCapability } from "../../../domain/capabilities/plugins-capability.js";
-import { resolveTranslationAdapter } from "./translator/plugin-translation-adapter-factory.js";
 import { loadPluginManifest, resolvePluginToolIds, writePluginFiles } from "./plugin-helpers.js";
+import { resolveTranslationAdapter } from "./translator/plugin-translation-adapter-factory.js";
 
 export interface PluginAddOptions {
   source: PluginSource;

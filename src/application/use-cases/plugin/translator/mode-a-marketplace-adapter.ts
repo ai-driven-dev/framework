@@ -1,8 +1,8 @@
+import type { Manifest } from "../../../../domain/models/manifest.js";
 import { Plugin } from "../../../../domain/models/plugin.js";
 import type { PluginDistribution } from "../../../../domain/models/plugin-distribution.js";
 import type { PluginSource } from "../../../../domain/models/plugin-source.js";
 import type { AiToolId } from "../../../../domain/models/tool-ids.js";
-import type { Manifest } from "../../../../domain/models/manifest.js";
 import type { PluginTranslationAdapter } from "./plugin-translation-adapter.js";
 
 /**

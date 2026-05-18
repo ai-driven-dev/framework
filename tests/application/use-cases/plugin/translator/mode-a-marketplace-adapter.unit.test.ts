@@ -1,3 +1,7 @@
+// Note: idempotency (already-present marketplace) and empty-marketplace-list scenarios are
+// NOT covered here. Those behaviors live on MarketplaceSyncSettingsUseCase, which owns the
+// marketplace registration logic. ModeAMarketplaceAdapter is a thin translator adapter that
+// only registers the plugin reference in the manifest with empty files.
 import "../../../../../src/domain/tools/ai/claude.js";
 import { describe, expect, it } from "vitest";
 import { ModeAMarketplaceAdapter } from "../../../../../src/application/use-cases/plugin/translator/mode-a-marketplace-adapter.js";

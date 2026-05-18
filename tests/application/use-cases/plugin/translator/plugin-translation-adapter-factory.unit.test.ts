@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { PluginsCapability } from "../../../../../src/domain/capabilities/plugins-capability.js";
 import { ModeAMarketplaceAdapter } from "../../../../../src/application/use-cases/plugin/translator/mode-a-marketplace-adapter.js";
 import { ModeBFlatMaterializationAdapter } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-adapter.js";
 import { resolveTranslationAdapter } from "../../../../../src/application/use-cases/plugin/translator/plugin-translation-adapter-factory.js";
+import { PluginsCapability } from "../../../../../src/domain/capabilities/plugins-capability.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 

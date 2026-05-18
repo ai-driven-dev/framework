@@ -13,9 +13,13 @@ function buildDist(name = "test-plugin"): PluginDistribution {
   return new PluginDistribution({
     manifest: { name, version: "1.0.0" },
     format: "claude",
-    files: [{ relativePath: "commands/hello.md", content: "---\nname: aidd:01:hello\n---\n# Hello" }],
+    files: [
+      { relativePath: "commands/hello.md", content: "---\nname: aidd:01:hello\n---\n# Hello" },
+    ],
     components: {
-      commands: [{ relativePath: "commands/hello.md", content: "---\nname: aidd:01:hello\n---\n# Hello" }],
+      commands: [
+        { relativePath: "commands/hello.md", content: "---\nname: aidd:01:hello\n---\n# Hello" },
+      ],
       agents: [],
       rules: [],
       skills: [],
@@ -54,10 +58,7 @@ describe("ModeBFlatMaterializationAdapter", () => {
         undefined,
         "docs"
       );
-      const expectedPath = join(
-        PROJECT_ROOT,
-        ".opencode/commands/test-plugin/hello.md"
-      );
+      const expectedPath = join(PROJECT_ROOT, ".opencode/commands/test-plugin/hello.md");
       expect(fs.has(expectedPath)).toBe(true);
     });
 

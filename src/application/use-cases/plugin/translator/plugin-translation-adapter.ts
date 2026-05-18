@@ -1,14 +1,8 @@
 import type { Manifest } from "../../../../domain/models/manifest.js";
 import type { PluginDistribution } from "../../../../domain/models/plugin-distribution.js";
 import type { PluginSource } from "../../../../domain/models/plugin-source.js";
+import type { PluginTranslationMode } from "../../../../domain/models/plugin-translation-mode.js";
 import type { AiToolId } from "../../../../domain/models/tool-ids.js";
-
-/**
- * Discriminant for the two translation strategies.
- * - "marketplace": Mode A — register plugin reference in tool's native config (no file materialization).
- * - "flat": Mode B — materialize plugin content as files on disk.
- */
-export type PluginTranslationMode = "marketplace" | "flat";
 
 /**
  * Contract implemented by both translation strategy adapters.
