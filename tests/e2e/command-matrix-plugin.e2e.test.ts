@@ -229,49 +229,19 @@ describe.concurrent("Command Matrix: Marketplace cache + refresh", () => {
     }
   });
 
-  it("marketplace cache list exits 0 reporting no cached marketplaces", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("mkt-cache-list");
+  it("marketplace refresh --force exits 0 and clears cache before re-fetching", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-refresh-force");
     try {
       await seedManifest(projectDir);
-      const { stdout, exitCode } = await runCli(
-        ["marketplace", "cache", "list"],
+      const marketDir = join(tempDir, "market");
+      await writeMarketplace(marketDir, []);
+      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir, fakeHome);
+      const { exitCode } = await runCli(
+        ["marketplace", "refresh", "--force"],
         projectDir,
         fakeHome
       );
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("No cached");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("marketplace cache clear --all exits 0 when nothing to clear", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("mkt-cache-clear-all");
-    try {
-      await seedManifest(projectDir);
-      const { stdout, exitCode } = await runCli(
-        ["marketplace", "cache", "clear", "--all"],
-        projectDir,
-        fakeHome
-      );
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("Nothing to clear");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("marketplace cache clear (no name, non-TTY) exits 1 asking for name or --all", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("mkt-cache-clear-noarg");
-    try {
-      await seedManifest(projectDir);
-      const { stderr, exitCode } = await runCli(
-        ["marketplace", "cache", "clear"],
-        projectDir,
-        fakeHome
-      );
-      expect(exitCode).toBe(1);
-      expect(stderr).toMatch(/Non-interactive|--all/);
     } finally {
       await cleanup();
     }

@@ -249,25 +249,6 @@ const INSTALLED_NODES: MenuNode[] = [
         description: "Report stale marketplaces",
         command: ["marketplace", "check"],
       },
-      {
-        name: "Cache",
-        value: "marketplace-cache",
-        description: "Manage marketplace cache",
-        children: [
-          {
-            name: "List",
-            value: "cache-list",
-            description: "Show cached marketplaces with size and last fetch time",
-            command: ["marketplace", "cache", "list"],
-          },
-          {
-            name: "Clear",
-            value: "cache-clear",
-            description: "Clear marketplace cache",
-            command: ["marketplace", "cache", "clear"],
-          },
-        ],
-      },
     ],
   },
   {
