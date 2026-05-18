@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.1.1](https://github.com/ai-driven-dev/aidd-cli/compare/v4.1.0...v4.1.1) (2026-05-18)
+
+
+### Bug Fixes
+
+* **doctor:** plugin doctor false-positive missing for Cursor user-scope plugins ([692d262](https://github.com/ai-driven-dev/aidd-cli/commit/692d262172ea74f23cf9bb689ce97fc56daebcf5))
+* **doctor:** resolve user-scope base dir for plugin file existence check ([211a916](https://github.com/ai-driven-dev/aidd-cli/commit/211a9164ea5190d427d404fb8f29e9c7e7f96217))
+
 ## [4.1.0](https://github.com/ai-driven-dev/aidd-cli/compare/v4.0.0...v4.1.0) (2026-05-18)
 
 
