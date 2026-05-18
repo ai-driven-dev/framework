@@ -1,6 +1,5 @@
 import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
-import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import { StatusUseCase } from "../status-use-case.js";
 import type { GlobalExecutionError } from "./update-all-use-case.js";
@@ -16,13 +15,12 @@ export class StatusAllUseCase {
   constructor(
     private readonly fs: FileReader,
     private readonly manifestRepo: ManifestRepository,
-    private readonly logger: Logger,
     private readonly hasher: Hasher
   ) {}
 
   async execute(projectRoot: string): Promise<StatusAllResult> {
     const errors: GlobalExecutionError[] = [];
-    const useCase = new StatusUseCase(this.fs, this.manifestRepo, this.logger, this.hasher);
+    const useCase = new StatusUseCase(this.fs, this.manifestRepo, this.hasher);
     const aiTools = await this.runScope(
       () => useCase.execute({ projectRoot, category: "ai" }),
       "ai",

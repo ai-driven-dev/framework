@@ -62,6 +62,8 @@ All `4.0.x` command spellings are removed. Run `aidd migrate` to clean obsolete 
 
 ### Internal
 
+- **Drop unused `Logger` constructor injection** from `StatusUseCase` and `StatusAllUseCase` — eliminates biome `noUnusedPrivateClassMembers` warning; updates 5 call sites and 3 test files
+- **Split `InstallRuntimeConfigUseCase.execute`** into `execute` + `applyAndTrack` private helper — each method ≤20 lines per the size rule
 - **`--no-default-marketplace` flag** on `aidd setup` — opts out of auto-registering `aidd-framework`. Skips the marketplace source prompt, register, refresh, and plugin install steps. Tool installs still proceed normally.
 - **`--scope user|project` flag** on `aidd plugin install` and `aidd marketplace add` (replaces `--user`). Validates against the tool's supported scope: Cursor user-only, Claude/Codex/Copilot/OpenCode project-only. Mismatch surfaces `InvalidPluginScopeError`.
 - **Translator dual-mode reference doc** — `aidd_docs/translator-dual-mode.md` documents the three routing dimensions (`mode`, `translationMode`, `installScope`), tool×mode matrix, and step-by-step new-tool guide; linked from CONTRIBUTING.md

@@ -114,7 +114,7 @@ export function registerIdeCommand(program: Command): void {
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
         const { StatusUseCase } = await import("../use-cases/status-use-case.js");
-        const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
+        const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.hasher);
         const report = await useCase.execute({
           projectRoot,
           filterToolId: undefined,
