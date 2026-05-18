@@ -1,13 +1,16 @@
 import type { PluginsCapability } from "../../../../domain/capabilities/plugins-capability.js";
+import type { FileWriter } from "../../../../domain/ports/file-writer.js";
+import type { Hasher } from "../../../../domain/ports/hasher.js";
 import type { MarketplaceSyncSettingsUseCase } from "../../marketplace/marketplace-sync-settings-use-case.js";
 import { ModeAMarketplaceAdapter } from "./mode-a-marketplace-adapter.js";
+import { ModeBFlatMaterializationAdapter } from "./mode-b-flat-materialization-adapter.js";
 import type { PluginTranslationAdapter } from "./plugin-translation-adapter.js";
 
 /**
  * Resolves the appropriate translation adapter for a given PluginsCapability.
  *
  * - `mode === "native"` AND `marketplaceSettings != null` → ModeAMarketplaceAdapter
- * - `mode === "flat"` → ModeBFlatMaterializationAdapter (wired in Phase 3)
+ * - `mode === "flat"` → ModeBFlatMaterializationAdapter
  * - `mode === "native"` AND `marketplaceSettings === null` → null (neutral native, no sync)
  * - `mode === "unsupported"` → null (tool has no plugin capability)
  *
@@ -15,11 +18,13 @@ import type { PluginTranslationAdapter } from "./plugin-translation-adapter.js";
  */
 export function resolveTranslationAdapter(
   plugins: PluginsCapability,
-  deps: { marketplaceSyncSettings: MarketplaceSyncSettingsUseCase }
+  deps: { marketplaceSyncSettings: MarketplaceSyncSettingsUseCase; fs: FileWriter; hasher: Hasher }
 ): PluginTranslationAdapter | null {
   if (plugins.mode === "native" && plugins.marketplaceSettings !== null) {
     return new ModeAMarketplaceAdapter(deps.marketplaceSyncSettings);
   }
-  // Mode B (flat) wired in Phase 3
+  if (plugins.mode === "flat") {
+    return new ModeBFlatMaterializationAdapter(deps.fs, deps.hasher);
+  }
   return null;
 }

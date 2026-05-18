@@ -23,8 +23,6 @@ import type { MarketplaceSyncSettingsUseCase } from "../marketplace/marketplace-
 import { resolveTranslationAdapter } from "./translator/plugin-translation-adapter-factory.js";
 import { loadPluginManifest, resolvePluginToolIds, writePluginFiles } from "./plugin-helpers.js";
 
-const FLAT_PLUGINS_MODE = "flat";
-
 export interface PluginAddOptions {
   source: PluginSource;
   toolIds: AiToolId[] | "all";
@@ -75,27 +73,17 @@ export class PluginAddUseCase {
     if (pluginMetadata === undefined) throw new MissingPluginVersionError();
     if (options.replace === true) this.dropExistingPlugin(pluginMetadata.name, toolIds, manifest);
     else this.validateNoDuplicates(pluginMetadata.name, toolIds, manifest);
-    const flatToolIds = toolIds.filter((id) => this.isFlatTool(id));
-    const nativeToolIds = toolIds.filter((id) => !this.isFlatTool(id));
+    const flatToolIds = toolIds.filter((id) => this.resolveAdapterForTool(id)?.mode === "flat");
+    const nativeToolIds = toolIds.filter((id) => this.resolveAdapterForTool(id)?.mode !== "flat");
     if (flatToolIds.length > 0) {
-      await this.addLocalPlugin(
-        options,
-        flatToolIds,
-        manifest,
-        options.source,
-        options.projectRoot
-      );
+      await this.addLocalPlugin(options, flatToolIds, manifest, options.source, options.projectRoot);
     }
     this.registerNativeGithubPlugins(options, nativeToolIds, manifest);
   }
 
-  private isFlatTool(toolId: AiToolId): boolean {
+  private resolveAdapterForTool(toolId: AiToolId): ReturnType<typeof resolveTranslationAdapter> {
     const toolConfig = getToolConfig(toolId);
-    if (!isAiTool(toolConfig)) return false;
-    if (!("plugins" in (toolConfig.capabilities as object))) return false;
-    return (
-      (toolConfig.capabilities as { plugins: { mode: string } }).plugins.mode === FLAT_PLUGINS_MODE
-    );
+    return this.resolveAdapter(toolConfig);
   }
 
   private registerNativeGithubPlugins(
@@ -184,32 +172,26 @@ export class PluginAddUseCase {
   ): Promise<void> {
     const toolConfig = getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return;
+    const adapter = this.resolveAdapter(toolConfig);
+    if (adapter?.mode === "flat") {
+      await adapter.addPlugin(dist, toolId, source, projectRoot, manifest, marketplace, docsDir);
+      return;
+    }
+    if (adapter?.mode === "marketplace" && source.kind === "local" && marketplace !== undefined) {
+      await adapter.addPlugin(dist, toolId, source, projectRoot, manifest, marketplace, docsDir);
+      return;
+    }
     const { files, componentPaths } = new PluginTranslator(this.hasher).translateWithComponentPaths(
       dist,
       toolConfig,
       docsDir
     );
     if (files.length === 0) return;
-    if (this.isLocalMarketplaceForModeA(toolId, source, marketplace)) {
-      const adapter = this.resolveAdapter(toolConfig);
-      if (adapter?.mode === "marketplace") {
-        await adapter.addPlugin(dist, toolId, source, projectRoot, manifest, marketplace, docsDir);
-        return;
-      }
-    }
     await writePluginFiles(files, projectRoot, this.fs);
     manifest.addPlugin(
       toolId,
       Plugin.fromDistribution(dist, source, files, componentPaths, marketplace)
     );
-  }
-
-  private isLocalMarketplaceForModeA(
-    toolId: AiToolId,
-    source: PluginSource,
-    marketplace: string | undefined
-  ): boolean {
-    return !this.isFlatTool(toolId) && source.kind === "local" && marketplace !== undefined;
   }
 
   private resolveAdapter(
@@ -220,6 +202,8 @@ export class PluginAddUseCase {
     const caps = toolConfig.capabilities as { plugins: PluginsCapability };
     return resolveTranslationAdapter(caps.plugins, {
       marketplaceSyncSettings: this.marketplaceSyncSettings,
+      fs: this.fs,
+      hasher: this.hasher,
     });
   }
 }
