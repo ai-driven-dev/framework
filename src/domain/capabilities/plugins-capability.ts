@@ -1,5 +1,6 @@
 import type { HooksContentFormat } from "../formats/cursor-hooks.js";
 import type { PluginSource } from "../models/plugin-source.js";
+import type { PluginTranslationMode } from "../models/plugin-translation-mode.js";
 
 export type PluginsMode = "native" | "flat" | "unsupported";
 export type { HooksContentFormat };
@@ -46,6 +47,12 @@ export interface NativePluginsParams {
   acceptsHooks?: boolean;
   acceptsMcp?: boolean;
   marketplaceSettings?: MarketplaceSettings;
+  /**
+   * Explicit translation mode for this native capability.
+   * Pass `"marketplace"` when `marketplaceSettings` is provided and Mode A routing is intended.
+   * Defaults to `null` (neutral native, no translation strategy applies).
+   */
+  translationMode?: PluginTranslationMode;
 }
 
 export interface FlatPluginsParams {
@@ -70,9 +77,20 @@ export class PluginsCapability {
   readonly hooksRelativePath: string;
   readonly hooksContentFormat: HooksContentFormat;
   readonly marketplaceSettings: MarketplaceSettings | null;
+  /**
+   * Explicit declaration of the plugin translation strategy for this capability.
+   * - `"marketplace"`: Mode A — register plugin reference in the tool's native config (no file materialization).
+   * - `"flat"`: Mode B — materialize plugin content as files on disk.
+   * - `null`: no translation strategy applies (neutral native or unsupported).
+   *
+   * Set explicitly via `NativePluginsParams.translationMode` for native tools that use Mode A.
+   * Flat mode always resolves to `"flat"` automatically; unsupported always resolves to `null`.
+   */
+  readonly translationMode: PluginTranslationMode | null;
 
   constructor(params: PluginsParams) {
     this.mode = params.mode;
+    this.translationMode = PluginsCapability.resolveTranslationMode(params);
     if (params.mode === "native") {
       this.pluginsDir = params.pluginsDir;
       this.pluginManifestRelativePath = params.pluginManifestRelativePath;
@@ -94,6 +112,12 @@ export class PluginsCapability {
       this.hooksContentFormat = DEFAULT_HOOKS_FORMAT;
       this.marketplaceSettings = null;
     }
+  }
+
+  private static resolveTranslationMode(params: PluginsParams): PluginTranslationMode | null {
+    if (params.mode === "native") return params.translationMode ?? null;
+    if (params.mode === "flat") return "flat";
+    return null;
   }
 
   pluginOutputDir(pluginName: string): string | null {

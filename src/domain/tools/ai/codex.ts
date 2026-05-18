@@ -241,6 +241,7 @@ export const codex: AiTool<
       pluginsDir: ".codex/plugins/",
       pluginManifestRelativePath: "plugin.json",
       acceptsMcp: true,
+      translationMode: "marketplace",
       // Codex auto-discovers .claude-plugin/marketplace.json natively (already
       // shipped via setup). User-global plugin enable lives in ~/.codex/config.toml
       // and is managed manually via `codex /plugins`. This project-local JSON

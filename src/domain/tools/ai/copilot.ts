@@ -321,6 +321,7 @@ export const copilot: AiTool<
       pluginManifestRelativePath: "plugin.json",
       acceptsHooks: true,
       acceptsMcp: true,
+      translationMode: "marketplace",
       // VS Code Copilot: extraKnownMarketplaces in .github/copilot/settings.json.
       // chat.plugins.marketplaces has application scope and cannot be set in workspace
       // .vscode/settings.json — VSCode rejects it with "This setting has an application scope".
