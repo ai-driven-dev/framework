@@ -65,12 +65,14 @@ async function buildUseCase(setupToolsPromptUseCase?: SetupToolsPromptUseCase) {
     makeNoOpMarketplaceRegistry(),
     makeNoOpResolveMarketplace()
   );
+  const marketplaceRegisterFramework = makeNoOpMarketplaceRegisterFramework();
+  const marketplaceRefresh = makeNoOpMarketplaceRefresh();
   const useCase = new SetupUseCase(
     deps.fs,
     deps.manifestRepo,
     setupMarketplaceSourceUseCase,
-    makeNoOpMarketplaceRegisterFramework(),
-    makeNoOpMarketplaceRefresh(),
+    marketplaceRegisterFramework,
+    marketplaceRefresh,
     makeNoOpMarketplaceSyncSettings(),
     setupToolsUseCase,
     setupPluginsPromptUseCase,
@@ -78,7 +80,7 @@ async function buildUseCase(setupToolsPromptUseCase?: SetupToolsPromptUseCase) {
     undefined,
     setupToolsPromptUseCase
   );
-  return { useCase, deps };
+  return { useCase, deps, marketplaceRegisterFramework, marketplaceRefresh };
 }
 
 function remoteFlow(opts: Partial<{ aiTools: ToolId[]; ideTools: ToolId[] }> = {}): SetupFlow {
@@ -162,6 +164,52 @@ describe("setup without TTY", () => {
     const result = await useCase.execute(remoteFlow());
 
     expect(result.kind).toBe("up-to-date");
+  });
+
+  describe("default marketplace opt-out (#197)", () => {
+    it("registers framework marketplace by default", async () => {
+      const { useCase, marketplaceRegisterFramework, marketplaceRefresh } = await buildUseCase();
+      await useCase.execute(remoteFlow({ aiTools: ["claude" as ToolId] }));
+      expect(marketplaceRegisterFramework.execute).toHaveBeenCalledOnce();
+      expect(marketplaceRefresh.execute).toHaveBeenCalledOnce();
+    });
+
+    it("skips framework register + refresh when registerDefaultMarketplace=false", async () => {
+      const { useCase, marketplaceRegisterFramework, marketplaceRefresh } = await buildUseCase();
+      await useCase.execute(
+        new SetupFlow({
+          projectRoot: PROJECT_ROOT,
+          source: MarketplaceSourceMode.remote(),
+          aiTools: ["claude" as ToolId],
+          ideTools: [],
+          pluginMode: "none",
+          interactive: false,
+          registerDefaultMarketplace: false,
+        })
+      );
+      expect(marketplaceRegisterFramework.execute).not.toHaveBeenCalled();
+      expect(marketplaceRefresh.execute).not.toHaveBeenCalled();
+    });
+
+    it("still installs tools when default marketplace is opted out", async () => {
+      const { useCase } = await buildUseCase();
+      const result = await useCase.execute(
+        new SetupFlow({
+          projectRoot: PROJECT_ROOT,
+          source: MarketplaceSourceMode.remote(),
+          aiTools: ["claude" as ToolId],
+          ideTools: [],
+          pluginMode: "none",
+          interactive: false,
+          registerDefaultMarketplace: false,
+        })
+      );
+      expect(result.kind).toBe("initialized");
+      if (result.kind === "initialized") {
+        const claudeResult = result.install.results.find((r) => r.toolId === "claude");
+        expect(claudeResult).toBeDefined();
+      }
+    });
   });
 
   describe("issue #141 — post-uninstall regression", () => {

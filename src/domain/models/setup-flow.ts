@@ -12,6 +12,7 @@ export interface SetupFlowParams {
   pluginNames?: readonly string[];
   interactive?: boolean;
   force?: boolean;
+  registerDefaultMarketplace?: boolean;
 }
 
 export class SetupFlow {
@@ -23,6 +24,7 @@ export class SetupFlow {
   readonly pluginNames: readonly string[];
   readonly interactive: boolean;
   readonly force: boolean;
+  readonly registerDefaultMarketplace: boolean;
 
   constructor(params: SetupFlowParams) {
     this.validateToolIds(params.aiTools ?? [], params.ideTools ?? []);
@@ -35,6 +37,7 @@ export class SetupFlow {
     this.pluginNames = params.pluginNames ?? [];
     this.interactive = params.interactive ?? false;
     this.force = params.force ?? false;
+    this.registerDefaultMarketplace = params.registerDefaultMarketplace ?? true;
   }
 
   private validateToolIds(aiTools: readonly ToolId[], ideTools: readonly ToolId[]): void {

@@ -43,13 +43,15 @@ export class SetupUseCase {
   ) {}
 
   async execute(flow: SetupFlow): Promise<SetupResult> {
-    const source = await this.resolveSource(flow);
     const isNew = await this.initManifest(flow);
-    await this.guardRemoteAuth(source);
-    await this.registerMarketplace(flow, source);
-    await this.refreshCatalog(flow);
+    if (flow.registerDefaultMarketplace) {
+      const source = await this.resolveSource(flow);
+      await this.guardRemoteAuth(source);
+      await this.registerMarketplace(flow, source);
+      await this.refreshCatalog(flow);
+    }
     const install = await this.installTools(flow);
-    await this.promptPlugins(flow);
+    if (flow.registerDefaultMarketplace) await this.promptPlugins(flow);
     await this.syncSettings(flow);
     return this.buildResult(isNew, install);
   }

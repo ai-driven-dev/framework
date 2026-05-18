@@ -32,6 +32,7 @@ interface SetupCmdOptions {
   recommendedPlugins?: boolean;
   noPlugins?: boolean;
   yes?: boolean;
+  defaultMarketplace?: boolean;
 }
 
 function parseSourceFlag(
@@ -127,6 +128,10 @@ export function registerSetupCommand(program: Command): void {
     .option("--all-plugins", "Install all available plugins")
     .option("--recommended-plugins", "Install only recommended plugins")
     .option("--no-plugins", "Skip plugin installation")
+    .option(
+      "--no-default-marketplace",
+      "Skip auto-registering aidd-framework (no source prompt, no plugin install)"
+    )
     .option("--yes", "Accept defaults without prompting")
     .action(async (cmdOptions: SetupCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
@@ -156,6 +161,7 @@ export function registerSetupCommand(program: Command): void {
             .filter(Boolean)
         : [];
 
+      const registerDefaultMarketplace = cmdOptions.defaultMarketplace !== false;
       const flow = new SetupFlow({
         projectRoot,
         source,
@@ -165,6 +171,7 @@ export function registerSetupCommand(program: Command): void {
         pluginNames,
         interactive,
         force: false,
+        registerDefaultMarketplace,
       });
 
       try {
