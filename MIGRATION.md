@@ -49,6 +49,11 @@ aidd migrate
 | `--release <tag>` | install | removed from `install`; available on `aidd setup --source remote --release <tag>` |
 | `--docs-dir <path>` | setup | removed — `docsDir` field dropped from manifest v5 |
 | `--plugins`, `--mcp`, `--all-plugins`, `--recommended-plugins`, `--no-plugins` | install | `--recommended-plugins` moved to `aidd setup`; plugin management via `aidd plugin` |
+| `--all` | setup | removed — use `aidd setup --ai all --ide all` |
+| `--all-plugins` | setup | removed — use `aidd setup --plugins all` |
+| `--recommended-plugins` | setup | removed — use `aidd setup --plugins recommended` |
+| `--no-plugins` | setup | removed — use `aidd setup --plugins none` |
+| `--user` | marketplace add | removed — use `aidd marketplace add --scope user` |
 
 ---
 

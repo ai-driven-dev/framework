@@ -12,6 +12,7 @@ import { GitHubReleaseResolverAdapter } from "../../infrastructure/adapters/gith
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
+import { ProjectContextDetectorUseCase } from "../use-cases/setup/project-context-detector-use-case.js";
 import { SetupMarketplaceSourceUseCase } from "../use-cases/setup/setup-marketplace-source-use-case.js";
 import { SetupPluginsPromptUseCase } from "../use-cases/setup/setup-plugins-prompt-use-case.js";
 import { SetupToolsPromptUseCase } from "../use-cases/setup/setup-tools-prompt-use-case.js";
@@ -26,11 +27,7 @@ interface SetupCmdOptions {
   release?: string;
   ai?: string;
   ide?: string;
-  all?: boolean;
   plugins?: string;
-  allPlugins?: boolean;
-  recommendedPlugins?: boolean;
-  noPlugins?: boolean;
   yes?: boolean;
   defaultMarketplace?: boolean;
 }
@@ -50,45 +47,31 @@ function parseSourceFlag(
   return MarketplaceSourceMode.remote(undefined, cmdOptions.release);
 }
 
+function expandAllKeyword(raw: string | undefined, all: readonly ToolId[]): ToolId[] {
+  if (raw === undefined) return [];
+  if (raw.trim() === "all") return [...all];
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean) as ToolId[];
+}
+
 function parseToolIds(
   cmdOptions: SetupCmdOptions,
   errorHandler: ErrorHandler
 ): { aiTools: ToolId[]; ideTools: ToolId[] } | null {
-  if (cmdOptions.all) {
-    return { aiTools: [...AI_TOOL_IDS], ideTools: [...IDE_TOOL_IDS] };
-  }
-  const aiIds =
-    cmdOptions.ai
-      ?.split(",")
-      .map((s) => s.trim())
-      .filter(Boolean) ?? [];
-  const ideIds =
-    cmdOptions.ide
-      ?.split(",")
-      .map((s) => s.trim())
-      .filter(Boolean) ?? [];
+  const aiIds = expandAllKeyword(cmdOptions.ai, AI_TOOL_IDS);
+  const ideIds = expandAllKeyword(cmdOptions.ide, IDE_TOOL_IDS);
   try {
-    if (aiIds.length > 0) assertToolIdsMatchCategory(aiIds as ToolId[], "ai");
-    if (ideIds.length > 0) assertToolIdsMatchCategory(ideIds as ToolId[], "ide");
+    if (aiIds.length > 0 && cmdOptions.ai?.trim() !== "all")
+      assertToolIdsMatchCategory(aiIds, "ai");
+    if (ideIds.length > 0 && cmdOptions.ide?.trim() !== "all")
+      assertToolIdsMatchCategory(ideIds, "ide");
   } catch (e) {
     errorHandler.handle(e);
     return null;
   }
-  return { aiTools: aiIds as ToolId[], ideTools: ideIds as ToolId[] };
-}
-
-function validatePluginFlags(cmdOptions: SetupCmdOptions, output: CLIOutput): void {
-  const count =
-    (cmdOptions.plugins ? 1 : 0) +
-    (cmdOptions.allPlugins ? 1 : 0) +
-    (cmdOptions.recommendedPlugins ? 1 : 0) +
-    (cmdOptions.noPlugins ? 1 : 0);
-  if (count > 1) {
-    output.error(
-      "--plugins, --all-plugins, --recommended-plugins, and --no-plugins are mutually exclusive."
-    );
-    process.exit(1);
-  }
+  return { aiTools: aiIds, ideTools: ideIds };
 }
 
 function displayInstall(
@@ -121,13 +104,12 @@ export function registerSetupCommand(program: Command): void {
     .option("--source <mode>", "Framework source: remote or local")
     .option("--path <dir>", "Absolute path to local framework (required with --source local)")
     .option("--release <tag>", "Marketplace release tag to fetch (e.g., v1.2.3)")
-    .option("--ai <ids>", "Comma-separated AI tool IDs (e.g., claude,cursor)")
-    .option("--ide <ids>", "Comma-separated IDE tool IDs (e.g., vscode)")
-    .option("--all", "Install all available tools (AI + IDE)")
-    .option("--plugins <names>", "Comma-separated plugin names to install")
-    .option("--all-plugins", "Install all available plugins")
-    .option("--recommended-plugins", "Install only recommended plugins")
-    .option("--no-plugins", "Skip plugin installation")
+    .option("--ai <ids>", "Comma-separated AI tool IDs, or 'all' (e.g., claude,cursor or all)")
+    .option("--ide <ids>", "Comma-separated IDE tool IDs, or 'all' (e.g., vscode or all)")
+    .option(
+      "--plugins <mode>",
+      "Plugin install mode: none | all | recommended | comma-separated names"
+    )
     .option(
       "--no-default-marketplace",
       "Skip auto-registering aidd-framework (no source prompt, no plugin install)"
@@ -137,8 +119,6 @@ export function registerSetupCommand(program: Command): void {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
 
-      validatePluginFlags(cmdOptions, output);
-
       const source = parseSourceFlag(cmdOptions, output);
       const toolIds = parseToolIds(cmdOptions, errorHandler);
       if (toolIds === null) return;
@@ -146,20 +126,17 @@ export function registerSetupCommand(program: Command): void {
       const hasScriptingFlags = !!(
         cmdOptions.source ||
         cmdOptions.release ||
-        cmdOptions.all ||
         cmdOptions.ai ||
         cmdOptions.ide ||
+        cmdOptions.plugins ||
         cmdOptions.yes
       );
       const interactive = process.stdout.isTTY && !hasScriptingFlags;
 
-      const pluginMode = resolvePluginMode(cmdOptions, interactive);
-      const pluginNames = cmdOptions.plugins
-        ? cmdOptions.plugins
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : [];
+      const { mode: pluginMode, names: pluginNames } = parsePluginsFlag(
+        cmdOptions.plugins,
+        interactive
+      );
 
       const registerDefaultMarketplace = cmdOptions.defaultMarketplace !== false;
       const flow = new SetupFlow({
@@ -173,6 +150,8 @@ export function registerSetupCommand(program: Command): void {
         force: false,
         registerDefaultMarketplace,
       });
+
+      if (interactive) printWelcomeBanner(output);
 
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
@@ -194,6 +173,7 @@ export function registerSetupCommand(program: Command): void {
           deps.resolveMarketplaceUseCase
         );
         const setupToolsPromptUseCase = new SetupToolsPromptUseCase(deps.prompter);
+        const projectContextDetector = new ProjectContextDetectorUseCase(deps.fs);
 
         const result = await new SetupUseCase(
           deps.fs,
@@ -206,9 +186,13 @@ export function registerSetupCommand(program: Command): void {
           setupPluginsPromptUseCase,
           deps.currentVersionProvider,
           deps.authReader,
-          setupToolsPromptUseCase
+          setupToolsPromptUseCase,
+          projectContextDetector
         ).execute(flow);
 
+        if (interactive && result.context !== undefined) {
+          output.info(`Detected: ${result.context.describe()}.`);
+        }
         switch (result.kind) {
           case "initialized": {
             output.success("Project initialized.");
@@ -221,20 +205,44 @@ export function registerSetupCommand(program: Command): void {
             break;
           }
         }
+        if (interactive) printNextSteps(output, result.install.results.length > 0);
       } catch (error) {
         errorHandler.handle(error);
       }
     });
 }
 
-function resolvePluginMode(
-  cmdOptions: SetupCmdOptions,
+function printWelcomeBanner(output: CLIOutput): void {
+  output.print("");
+  output.print("AI-Driven Development setup");
+  output.print("Wires your AI tools, registers the framework marketplace, installs plugins.");
+  output.print("Press Ctrl-C any time to abort.");
+  output.print("");
+}
+
+function printNextSteps(output: CLIOutput, installedAnything: boolean): void {
+  output.print("");
+  output.print("Next steps:");
+  if (installedAnything) output.print("  aidd ai status          # verify drift");
+  output.print("  aidd marketplace list   # see registered marketplaces");
+  output.print("  aidd plugin install     # add plugins");
+  output.print("  aidd --help             # explore commands");
+}
+
+type PluginsMode = "interactive" | "all" | "recommended" | "named" | "none";
+
+function parsePluginsFlag(
+  raw: string | undefined,
   interactive: boolean
-): "interactive" | "all" | "recommended" | "named" | "none" {
-  if (cmdOptions.noPlugins) return "none";
-  if (cmdOptions.allPlugins) return "all";
-  if (cmdOptions.recommendedPlugins) return "recommended";
-  if (cmdOptions.plugins) return "named";
-  if (interactive) return "interactive";
-  return "none";
+): { mode: PluginsMode; names: string[] } {
+  if (raw === undefined) return { mode: interactive ? "interactive" : "none", names: [] };
+  const value = raw.trim();
+  if (value === "none") return { mode: "none", names: [] };
+  if (value === "all") return { mode: "all", names: [] };
+  if (value === "recommended") return { mode: "recommended", names: [] };
+  const names = value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return { mode: "named", names };
 }

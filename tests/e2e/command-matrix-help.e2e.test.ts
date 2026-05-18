@@ -122,7 +122,7 @@ describe.concurrent("Command Matrix: Help", () => {
     }
   });
 
-  it("aidd setup --help shows --source --ai --ide --all and no removed flags", async () => {
+  it("aidd setup --help shows simplified flag surface (6 flags + --no-default-marketplace)", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("help-setup");
     try {
       const { stdout, exitCode } = await runCli(["setup", "--help"], projectDir, fakeHome);
@@ -130,8 +130,13 @@ describe.concurrent("Command Matrix: Help", () => {
       expect(stdout).toContain("--source");
       expect(stdout).toContain("--ai");
       expect(stdout).toContain("--ide");
-      expect(stdout).toContain("--all");
+      expect(stdout).toContain("--plugins");
       expect(stdout).toContain("--release");
+      expect(stdout).toContain("--yes");
+      expect(stdout).not.toContain("--all-plugins");
+      expect(stdout).not.toContain("--recommended-plugins");
+      // --all dropped (use --ai all --ide all)
+      expect(stdout).not.toMatch(/--all\b(?! options)/);
       expect(stdout).not.toContain("--from");
       expect(stdout).not.toContain("--switch-mode");
       expect(stdout).not.toContain("--mode");
