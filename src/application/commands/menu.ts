@@ -231,13 +231,6 @@ const INSTALLED_NODES: MenuNode[] = [
         command: ["marketplace", "add"],
       },
       {
-        name: "Browse",
-        value: "marketplace-browse",
-        description: "Browse plugins in a registered marketplace",
-        command: ["marketplace", "browse"],
-        inputPrompt: "Marketplace name",
-      },
-      {
         name: "Refresh",
         value: "marketplace-refresh",
         description: "Refresh all registered marketplaces",

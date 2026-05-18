@@ -16,7 +16,6 @@ import { InstallIdeConfigUseCase } from "../application/use-cases/install/instal
 import { InstallIdeToolUseCase } from "../application/use-cases/install/install-ide-tool-use-case.js";
 import { InstallRuntimeConfigUseCase } from "../application/use-cases/install/install-runtime-config-use-case.js";
 import { MarketplaceAddUseCase } from "../application/use-cases/marketplace/marketplace-add-use-case.js";
-import { MarketplaceBrowseUseCase } from "../application/use-cases/marketplace/marketplace-browse-use-case.js";
 import { MarketplaceCheckUseCase } from "../application/use-cases/marketplace/marketplace-check-use-case.js";
 import { MarketplaceListUseCase } from "../application/use-cases/marketplace/marketplace-list-use-case.js";
 import { MarketplaceRefreshUseCase } from "../application/use-cases/marketplace/marketplace-refresh-use-case.js";
@@ -106,7 +105,6 @@ interface Deps {
   marketplaceListUseCase: MarketplaceListUseCase;
   marketplaceRemoveUseCase: MarketplaceRemoveUseCase;
   marketplaceRefreshUseCase: MarketplaceRefreshUseCase;
-  marketplaceBrowseUseCase: MarketplaceBrowseUseCase;
   marketplaceCheckUseCase: MarketplaceCheckUseCase;
   pluginInstallFromMarketplaceUseCase: PluginInstallFromMarketplaceUseCase;
   resolveMarketplaceUseCase: ResolveMarketplaceUseCase;
@@ -197,7 +195,11 @@ export async function createDeps(
     pluginFetcher,
     rawCatalogFetcher
   );
-  const marketplaceListUseCase = new MarketplaceListUseCase(marketplaceRegistry);
+  const marketplaceListUseCase = new MarketplaceListUseCase(
+    marketplaceRegistry,
+    pluginCatalogRepository,
+    fetchMarketplaceSource
+  );
   const marketplaceRemoveUseCase = new MarketplaceRemoveUseCase(
     fs,
     manifestRepo,
@@ -217,12 +219,6 @@ export async function createDeps(
     marketplaceRegistry,
     fetchMarketplaceSource,
     logger
-  );
-  const marketplaceBrowseUseCase = new MarketplaceBrowseUseCase(
-    pluginCatalogRepository,
-    marketplaceRegistry,
-    fetchMarketplaceSource,
-    prompter
   );
   const marketplaceCheckUseCase = new MarketplaceCheckUseCase(
     manifestRepo,
@@ -337,7 +333,6 @@ export async function createDeps(
     marketplaceListUseCase,
     marketplaceRemoveUseCase,
     marketplaceRefreshUseCase,
-    marketplaceBrowseUseCase,
     marketplaceCheckUseCase,
     pluginInstallFromMarketplaceUseCase,
     resolveMarketplaceUseCase,

@@ -103,7 +103,7 @@ describe.concurrent("Command Matrix: Help", () => {
       expect(stdout).toContain("list");
       expect(stdout).toContain("remove");
       expect(stdout).toContain("refresh");
-      expect(stdout).toContain("browse");
+      expect(stdout).not.toContain("browse");
     } finally {
       await cleanup();
     }
