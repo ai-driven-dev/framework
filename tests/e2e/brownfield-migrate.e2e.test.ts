@@ -139,6 +139,19 @@ describe.concurrent("E2E: marketplace brownfield migrate", () => {
     }
   });
 
+  it("non-TTY auto-prompt: other commands exit 1 with hint when manifest is outdated (#198)", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("brownfield-auto-prompt");
+    try {
+      await seedManifest(projectDir, MANIFEST_WITH_BUNDLED_PLUGIN);
+      const { stderr, exitCode } = await runCli(["ai", "list"], projectDir, fakeHome);
+      expect(exitCode).toBe(1);
+      expect(stderr).toContain("Outdated manifest detected");
+      expect(stderr).toContain("aidd migrate");
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("is idempotent — second run reports nothing to migrate", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("brownfield-idempotent");
     try {
