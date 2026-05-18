@@ -1,5 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import type { MarketplaceRefreshUseCase } from "../../../src/application/use-cases/marketplace/marketplace-refresh-use-case.js";
+import type { MarketplaceRegisterFrameworkUseCase } from "../../../src/application/use-cases/marketplace/marketplace-register-framework-use-case.js";
 import { SetupMarketplaceSourceUseCase } from "../../../src/application/use-cases/setup/setup-marketplace-source-use-case.js";
 import { SetupPluginsPromptUseCase } from "../../../src/application/use-cases/setup/setup-plugins-prompt-use-case.js";
 import { SetupToolsPromptUseCase } from "../../../src/application/use-cases/setup/setup-tools-prompt-use-case.js";
@@ -15,12 +17,19 @@ function makeNoOpLatestResolver() {
   return { resolveLatest: vi.fn().mockResolvedValue(null) } as never;
 }
 
-function makeNoOpMarketplaceRegisterFramework() {
-  return { execute: vi.fn().mockResolvedValue({ registered: false }) } as never;
+type RegisterFrameworkMock = MarketplaceRegisterFrameworkUseCase & {
+  execute: ReturnType<typeof vi.fn>;
+};
+type RefreshMock = MarketplaceRefreshUseCase & { execute: ReturnType<typeof vi.fn> };
+
+function makeNoOpMarketplaceRegisterFramework(): RegisterFrameworkMock {
+  const execute = vi.fn().mockResolvedValue({ registered: false });
+  return { execute } as unknown as RegisterFrameworkMock;
 }
 
-function makeNoOpMarketplaceRefresh() {
-  return { execute: vi.fn().mockResolvedValue({ results: [], failedCount: 0 }) } as never;
+function makeNoOpMarketplaceRefresh(): RefreshMock {
+  const execute = vi.fn().mockResolvedValue({ results: [], failedCount: 0 });
+  return { execute } as unknown as RefreshMock;
 }
 
 function makeNoOpMarketplaceSyncSettings() {
@@ -65,12 +74,14 @@ async function buildUseCase(setupToolsPromptUseCase?: SetupToolsPromptUseCase) {
     makeNoOpMarketplaceRegistry(),
     makeNoOpResolveMarketplace()
   );
+  const marketplaceRegisterFramework = makeNoOpMarketplaceRegisterFramework();
+  const marketplaceRefresh = makeNoOpMarketplaceRefresh();
   const useCase = new SetupUseCase(
     deps.fs,
     deps.manifestRepo,
     setupMarketplaceSourceUseCase,
-    makeNoOpMarketplaceRegisterFramework(),
-    makeNoOpMarketplaceRefresh(),
+    marketplaceRegisterFramework,
+    marketplaceRefresh,
     makeNoOpMarketplaceSyncSettings(),
     setupToolsUseCase,
     setupPluginsPromptUseCase,
@@ -78,7 +89,7 @@ async function buildUseCase(setupToolsPromptUseCase?: SetupToolsPromptUseCase) {
     undefined,
     setupToolsPromptUseCase
   );
-  return { useCase, deps };
+  return { useCase, deps, marketplaceRegisterFramework, marketplaceRefresh };
 }
 
 function remoteFlow(opts: Partial<{ aiTools: ToolId[]; ideTools: ToolId[] }> = {}): SetupFlow {
@@ -162,6 +173,52 @@ describe("setup without TTY", () => {
     const result = await useCase.execute(remoteFlow());
 
     expect(result.kind).toBe("up-to-date");
+  });
+
+  describe("default marketplace opt-out (#197)", () => {
+    it("registers framework marketplace by default", async () => {
+      const { useCase, marketplaceRegisterFramework, marketplaceRefresh } = await buildUseCase();
+      await useCase.execute(remoteFlow({ aiTools: ["claude" as ToolId] }));
+      expect(marketplaceRegisterFramework.execute).toHaveBeenCalledOnce();
+      expect(marketplaceRefresh.execute).toHaveBeenCalledOnce();
+    });
+
+    it("skips framework register + refresh when registerDefaultMarketplace=false", async () => {
+      const { useCase, marketplaceRegisterFramework, marketplaceRefresh } = await buildUseCase();
+      await useCase.execute(
+        new SetupFlow({
+          projectRoot: PROJECT_ROOT,
+          source: MarketplaceSourceMode.remote(),
+          aiTools: ["claude" as ToolId],
+          ideTools: [],
+          pluginMode: "none",
+          interactive: false,
+          registerDefaultMarketplace: false,
+        })
+      );
+      expect(marketplaceRegisterFramework.execute).not.toHaveBeenCalled();
+      expect(marketplaceRefresh.execute).not.toHaveBeenCalled();
+    });
+
+    it("still installs tools when default marketplace is opted out", async () => {
+      const { useCase } = await buildUseCase();
+      const result = await useCase.execute(
+        new SetupFlow({
+          projectRoot: PROJECT_ROOT,
+          source: MarketplaceSourceMode.remote(),
+          aiTools: ["claude" as ToolId],
+          ideTools: [],
+          pluginMode: "none",
+          interactive: false,
+          registerDefaultMarketplace: false,
+        })
+      );
+      expect(result.kind).toBe("initialized");
+      if (result.kind === "initialized") {
+        const claudeResult = result.install.results.find((r) => r.toolId === "claude");
+        expect(claudeResult).toBeDefined();
+      }
+    });
   });
 
   describe("issue #141 — post-uninstall regression", () => {

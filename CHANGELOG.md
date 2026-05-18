@@ -59,6 +59,7 @@ All `4.0.x` command spellings are removed. Run `aidd migrate` to clean obsolete 
 
 ### Internal
 
+- **`--no-default-marketplace` flag** on `aidd setup` — opts out of auto-registering `aidd-framework`. Skips the marketplace source prompt, register, refresh, and plugin install steps. Tool installs still proceed normally.
 - **`--scope user|project` flag** on `aidd plugin install` and `aidd marketplace add` (replaces `--user`). Validates against the tool's supported scope: Cursor user-only, Claude/Codex/Copilot/OpenCode project-only. Mismatch surfaces `InvalidPluginScopeError`.
 - **Translator dual-mode reference doc** — `aidd_docs/translator-dual-mode.md` documents the three routing dimensions (`mode`, `translationMode`, `installScope`), tool×mode matrix, and step-by-step new-tool guide; linked from CONTRIBUTING.md
 - **Per-mode integration suite** — `install-plugin-<tool>-mode-<a|b>.integration.test.ts` for Claude/Copilot/Codex (Mode A) and OpenCode/Cursor (Mode B); quality gate for the core translator
