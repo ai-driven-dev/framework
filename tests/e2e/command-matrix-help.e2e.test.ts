@@ -85,7 +85,7 @@ describe.concurrent("Command Matrix: Help", () => {
     try {
       const { stdout, exitCode } = await runCli(["plugin", "--help"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("add");
+      expect(stdout).not.toContain("add");
       expect(stdout).toContain("remove");
       expect(stdout).toContain("install");
       expect(stdout).toContain("search");

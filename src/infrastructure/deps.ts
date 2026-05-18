@@ -27,6 +27,7 @@ import { MigrateRewirePluginsUseCase } from "../application/use-cases/migrate/mi
 import { MigrateStripDeadFilesUseCase } from "../application/use-cases/migrate/migrate-strip-dead-files-use-case.js";
 import { PluginAddUseCase } from "../application/use-cases/plugin/plugin-add-use-case.js";
 import { PluginInstallFromMarketplaceUseCase } from "../application/use-cases/plugin/plugin-install-from-marketplace-use-case.js";
+import { PluginInstallUseCase } from "../application/use-cases/plugin/plugin-install-use-case.js";
 import { PluginListUseCase } from "../application/use-cases/plugin/plugin-list-use-case.js";
 import { PluginPickUseCase } from "../application/use-cases/plugin/plugin-pick-use-case.js";
 import { PluginRemoveUseCase } from "../application/use-cases/plugin/plugin-remove-use-case.js";
@@ -117,6 +118,7 @@ interface Deps {
   pluginSearchUseCase: PluginSearchUseCase;
   marketplaceRegisterFrameworkUseCase: MarketplaceRegisterFrameworkUseCase;
   pluginPickUseCase: PluginPickUseCase;
+  pluginInstallUseCase: PluginInstallUseCase;
   marketplaceSyncSettingsUseCase: MarketplaceSyncSettingsUseCase;
   migrateBackupUseCase: MigrateBackupUseCase;
   migrateStripDeadFilesUseCase: MigrateStripDeadFilesUseCase;
@@ -274,6 +276,11 @@ export async function createDeps(
     pluginAddUseCase,
     prompter
   );
+  const pluginInstallUseCase = new PluginInstallUseCase(
+    pluginPickUseCase,
+    pluginAddUseCase,
+    pluginInstallFromMarketplaceUseCase
+  );
   const installAiToolUseCase = new InstallAiToolUseCase(
     installRuntimeConfigUseCase,
     manifestRepo,
@@ -345,6 +352,7 @@ export async function createDeps(
     pluginSearchUseCase,
     marketplaceRegisterFrameworkUseCase,
     pluginPickUseCase,
+    pluginInstallUseCase,
     marketplaceSyncSettingsUseCase,
     migrateBackupUseCase,
     migrateStripDeadFilesUseCase,

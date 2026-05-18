@@ -160,24 +160,11 @@ const INSTALLED_NODES: MenuNode[] = [
     description: "Browse, install and manage AI tool plugins",
     children: [
       {
-        name: "Install from marketplace",
+        name: "Install plugin",
         value: "plugin-install",
-        description: "Install a plugin by name from registered marketplaces",
+        description: "Install a plugin by name, local path, or interactive pick",
         command: ["plugin", "install"],
-        inputPrompt: "Plugin name (e.g. aidd-dev or aidd-dev@1.0.0)",
-      },
-      {
-        name: "Add local plugin",
-        value: "plugin-add",
-        description: "Add a plugin from a local directory",
-        command: ["plugin", "add"],
-        inputPrompt: "Path to plugin directory",
-      },
-      {
-        name: "Pick (interactive)",
-        value: "plugin-pick",
-        description: "Interactively browse and install plugins from a marketplace",
-        command: ["plugin", "pick"],
+        inputPrompt: "Plugin name, path, or leave empty for interactive pick",
       },
       {
         name: "Search",

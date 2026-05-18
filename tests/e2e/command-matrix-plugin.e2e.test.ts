@@ -41,17 +41,17 @@ async function writeMarketplace(
 }
 
 // ---------------------------------------------------------------------------
-// Plugin — add / remove / list / status / doctor / update / restore / pick
+// Plugin — install / remove / list / doctor / update / restore
 // (plugin search/install from marketplace are in plugin-install.e2e.test.ts)
 // ---------------------------------------------------------------------------
 
-describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
-  it("plugin add <local-path> exits 0 with success message", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-add");
+describe.concurrent("Command Matrix: Plugin lifecycle (local install)", () => {
+  it("plugin install <local-path> exits 0 with success message", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-install-local");
     try {
       await seedWithClaude(projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(
-        ["plugin", "add", PLUGIN_FIXTURE],
+        ["plugin", "install", PLUGIN_FIXTURE],
         projectDir,
         fakeHome
       );
@@ -62,12 +62,12 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     }
   });
 
-  it("plugin add <local-path> --tool claude exits 0", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-add-tool");
+  it("plugin install <local-path> --tool claude exits 0", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-install-local-tool");
     try {
       await seedWithClaude(projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(
-        ["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"],
+        ["plugin", "install", PLUGIN_FIXTURE, "--tool", "claude"],
         projectDir,
         fakeHome
       );
@@ -82,7 +82,7 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-list");
     try {
       await seedWithClaude(projectDir, fakeHome);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      await runCli(["plugin", "install", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(["plugin", "list"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("sample-plugin");
@@ -95,7 +95,7 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-list-tool");
     try {
       await seedWithClaude(projectDir, fakeHome);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      await runCli(["plugin", "install", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(
         ["plugin", "list", "--tool", "claude"],
         projectDir,
@@ -124,7 +124,7 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-update");
     try {
       await seedWithClaude(projectDir, fakeHome);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      await runCli(["plugin", "install", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(["plugin", "update"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("up to date");
@@ -137,7 +137,7 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-update-named");
     try {
       await seedWithClaude(projectDir, fakeHome);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      await runCli(["plugin", "install", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(
         ["plugin", "update", "sample-plugin"],
         projectDir,
@@ -154,7 +154,7 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("ai-restore-plugin");
     try {
       await seedWithClaude(projectDir, fakeHome);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      await runCli(["plugin", "install", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(["ai", "restore"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toMatch(/[Rr]estor|[Nn]othing to restore/);
@@ -167,7 +167,7 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-remove");
     try {
       await seedWithClaude(projectDir, fakeHome);
-      await runCli(["plugin", "add", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
+      await runCli(["plugin", "install", PLUGIN_FIXTURE, "--tool", "claude"], projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(
         ["plugin", "remove", "sample-plugin", "--tool", "claude"],
         projectDir,
@@ -181,11 +181,11 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local add)", () => {
     }
   });
 
-  it("plugin pick exits 1 in non-interactive mode", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-pick-noninteractive");
+  it("plugin install no-args exits 1 in non-interactive mode", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-install-noninteractive");
     try {
       await seedWithClaude(projectDir, fakeHome);
-      const { stderr, exitCode } = await runCli(["plugin", "pick"], projectDir, fakeHome);
+      const { stderr, exitCode } = await runCli(["plugin", "install"], projectDir, fakeHome);
       expect(exitCode).toBe(1);
       expect(stderr).toContain("interactive");
     } finally {

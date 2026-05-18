@@ -111,7 +111,7 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
       );
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("'sample-plugin' from 'local'");
+      expect(stdout).toContain("'sample-plugin'");
     } finally {
       await cleanup();
     }
