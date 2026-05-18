@@ -70,7 +70,7 @@ export class RestoreAllUseCase {
   }
 
   private async promptForFiles(projectRoot: string): Promise<string[] | undefined> {
-    const statusUseCase = new StatusUseCase(this.fs, this.manifestRepo, this.logger, this.hasher);
+    const statusUseCase = new StatusUseCase(this.fs, this.manifestRepo, this.hasher);
     const report = await statusUseCase.execute({ projectRoot });
     const driftedFiles = report.tools.flatMap((t) =>
       t.drifted

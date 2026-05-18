@@ -46,22 +46,24 @@ export class InstallRuntimeConfigUseCase {
     }
     const regularFiles = await this.buildConfigFiles(options);
     const mergeFiles = this.buildStaticSettingsFiles(options);
+    await this.applyAndTrack(regularFiles, mergeFiles, options);
+    const allFiles = [...regularFiles, ...mergeFiles];
+    return { toolId, fileCount: allFiles.length, files: allFiles, skipped: false, warnings: [] };
+  }
+
+  private async applyAndTrack(
+    regularFiles: InstallationFile[],
+    mergeFiles: InstallationFile[],
+    options: InstallRuntimeConfigOptions
+  ): Promise<void> {
     await this.writeRegularFiles(regularFiles, options.projectRoot);
     await this.writeMergeFiles(mergeFiles, options.projectRoot);
     const mergeEntries = await this.buildMergeEntries(mergeFiles, options.projectRoot);
-    const allFiles = [...regularFiles, ...mergeFiles];
-    manifest.addTool(toolId, options.version, regularFiles, mergeEntries);
+    options.manifest.addTool(options.toolId, options.version, regularFiles, mergeEntries);
     await new PostInstallPipelineUseCase(this.fs, this.manifestRepo).execute({
       projectRoot: options.projectRoot,
-      manifest,
+      manifest: options.manifest,
     });
-    return {
-      toolId,
-      fileCount: allFiles.length,
-      files: allFiles,
-      skipped: false,
-      warnings: [],
-    };
   }
 
   private async buildConfigFiles(

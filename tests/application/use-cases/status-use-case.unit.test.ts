@@ -17,7 +17,7 @@ describe("status", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await new InitUseCase(deps.fs, deps.manifestRepo).execute({ projectRoot: PROJECT_ROOT });
 
-    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
+    const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.hasher);
     const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(report.tools).toHaveLength(0);

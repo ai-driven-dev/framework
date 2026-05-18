@@ -28,7 +28,7 @@ export function registerStatusCommand(program: Command): void {
 
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const useCase = new StatusAllUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.hasher);
+        const useCase = new StatusAllUseCase(deps.fs, deps.manifestRepo, deps.hasher);
         const result = await useCase.execute(projectRoot);
 
         for (const e of result.errors) output.warn(`[${e.scope}] ${e.message}`);

@@ -6,7 +6,6 @@ import { extractMergeEntries, type MergeFileEntry } from "../../domain/models/me
 import type { AiToolId } from "../../domain/models/tool-ids.js";
 import type { FileReader } from "../../domain/ports/file-reader.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
-import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import {
   getToolConfig,
@@ -52,7 +51,6 @@ export class StatusUseCase {
   constructor(
     private readonly fs: FileReader,
     private readonly manifestRepo: ManifestRepository,
-    readonly _logger: Logger,
     private readonly hasher: Hasher
   ) {}
 

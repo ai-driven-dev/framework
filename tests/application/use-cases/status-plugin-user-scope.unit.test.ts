@@ -7,7 +7,6 @@ import { Manifest } from "../../../src/domain/models/manifest.js";
 import { Plugin } from "../../../src/domain/models/plugin.js";
 import type { FileReader } from "../../../src/domain/ports/file-reader.js";
 import type { Hasher } from "../../../src/domain/ports/hasher.js";
-import type { Logger } from "../../../src/domain/ports/logger.js";
 import type { ManifestRepository } from "../../../src/domain/ports/manifest-repository.js";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";
@@ -49,12 +48,6 @@ function makeManifestRepo(manifest: Manifest): ManifestRepository {
   return { load: async () => manifest, save: async () => {}, delete: async () => {} };
 }
 
-const noopLogger: Logger = {
-  info: () => {},
-  warn: () => {},
-  debug: () => {},
-};
-
 const noopHasher: Hasher = {
   hash: () => new FileHash("00000000000000000000000000000000"),
 };
@@ -78,7 +71,7 @@ describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
         copyFile: async () => {},
       } as unknown as FileReader;
 
-      const useCase = new StatusUseCase(fs, makeManifestRepo(manifest), noopLogger, noopHasher);
+      const useCase = new StatusUseCase(fs, makeManifestRepo(manifest), noopHasher);
       await useCase.execute({ projectRoot: "/proj" });
 
       // All checked paths must be absolute (resolved from user home, not from projectRoot)
@@ -89,7 +82,7 @@ describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
     it("returns plugin drift entry with the relative key", async () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(true, DRIFTED_HASH);
-      const useCase = new StatusUseCase(fs, makeManifestRepo(manifest), noopLogger, noopHasher);
+      const useCase = new StatusUseCase(fs, makeManifestRepo(manifest), noopHasher);
 
       const report = await useCase.execute({ projectRoot: "/proj" });
 
@@ -104,7 +97,7 @@ describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
     it("returns empty pluginDrift", async () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(true, EXPECTED_HASH);
-      const useCase = new StatusUseCase(fs, makeManifestRepo(manifest), noopLogger, noopHasher);
+      const useCase = new StatusUseCase(fs, makeManifestRepo(manifest), noopHasher);
 
       const report = await useCase.execute({ projectRoot: "/proj" });
 
