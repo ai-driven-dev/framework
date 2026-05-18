@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { PluginsCapability } from "../../../src/domain/capabilities/plugins-capability.js";
 
+const MARKETPLACE_SETTINGS = {
+  settingsPath: ".claude/settings.json",
+  settingsKey: "extraKnownMarketplaces",
+  toEntry: () => null,
+};
+
 describe("PluginsCapability", () => {
   describe("native mode", () => {
     const cap = new PluginsCapability({
@@ -78,6 +84,49 @@ describe("PluginsCapability", () => {
 
     it("pluginOutputDir returns null", () => {
       expect(cap.pluginOutputDir("any-plugin")).toBeNull();
+    });
+  });
+
+  describe("translationMode", () => {
+    describe("native with marketplaceSettings and translationMode marketplace", () => {
+      it("exposes translationMode as marketplace", () => {
+        const cap = new PluginsCapability({
+          mode: "native",
+          pluginsDir: ".claude/plugins/",
+          pluginManifestRelativePath: "plugin.json",
+          translationMode: "marketplace",
+          marketplaceSettings: MARKETPLACE_SETTINGS,
+        });
+        expect(cap.translationMode).toBe("marketplace");
+      });
+    });
+
+    describe("native without translationMode", () => {
+      it("exposes translationMode as null (neutral native)", () => {
+        const cap = new PluginsCapability({
+          mode: "native",
+          pluginsDir: ".claude/plugins/",
+          pluginManifestRelativePath: "plugin.json",
+        });
+        expect(cap.translationMode).toBeNull();
+      });
+    });
+
+    describe("flat mode", () => {
+      it("exposes translationMode as flat automatically", () => {
+        const cap = new PluginsCapability({
+          mode: "flat",
+          flatNamespacePrefix: "aidd-",
+        });
+        expect(cap.translationMode).toBe("flat");
+      });
+    });
+
+    describe("unsupported mode", () => {
+      it("exposes translationMode as null", () => {
+        const cap = new PluginsCapability({ mode: "unsupported" });
+        expect(cap.translationMode).toBeNull();
+      });
     });
   });
 });

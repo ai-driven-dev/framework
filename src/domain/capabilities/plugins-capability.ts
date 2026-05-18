@@ -1,6 +1,6 @@
 import type { HooksContentFormat } from "../formats/cursor-hooks.js";
-import type { PluginTranslationMode } from "../models/plugin-translation-mode.js";
 import type { PluginSource } from "../models/plugin-source.js";
+import type { PluginTranslationMode } from "../models/plugin-translation-mode.js";
 
 export type PluginsMode = "native" | "flat" | "unsupported";
 export type { HooksContentFormat };
