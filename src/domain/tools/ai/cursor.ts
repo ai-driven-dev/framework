@@ -115,6 +115,7 @@ export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         acceptsHooks: true,
         acceptsMcp: true,
         hooksContentFormat: "cursor",
+        translationMode: "marketplace",
         // Project-local mirror using the same schema as Claude Code / Copilot.
         // Cursor's native marketplace install path is UI-dashboard-driven (no
         // project-scoped JSON spec today). This file provides forward-compat

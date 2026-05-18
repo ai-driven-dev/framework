@@ -107,6 +107,7 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         pluginManifestRelativePath: "plugin.json",
         acceptsHooks: true,
         acceptsMcp: true,
+        translationMode: "marketplace",
         marketplaceSettings: {
           settingsPath: ".claude/settings.json",
           settingsKey: "extraKnownMarketplaces",
