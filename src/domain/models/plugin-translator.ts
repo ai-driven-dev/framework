@@ -85,9 +85,7 @@ export class PluginTranslator {
     docsDir: string
   ): { files: InstallationFile[]; componentPaths: ReadonlyMap<string, string> } {
     const { pluginsDir, pluginManifestRelativePath } = tool.capabilities.plugins;
-    if (pluginsDir === null || pluginManifestRelativePath === null) {
-      return { files: [], componentPaths: new Map() };
-    }
+    if (pluginsDir === null) return { files: [], componentPaths: new Map() };
     const pluginRoot = `${pluginsDir}${dist.manifest.name}/`;
     const result: InstallationFile[] = [];
     const componentPaths = new Map<string, string>();
@@ -102,9 +100,11 @@ export class PluginTranslator {
         componentPaths.set(installedPath, file.relativePath);
       }
     }
-    const sourceManifest = findSourceManifestContent(dist);
-    if (sourceManifest !== null) {
-      result.push(this.makeFile(`${pluginRoot}${pluginManifestRelativePath}`, sourceManifest));
+    if (pluginManifestRelativePath !== null) {
+      const sourceManifest = findSourceManifestContent(dist);
+      if (sourceManifest !== null) {
+        result.push(this.makeFile(`${pluginRoot}${pluginManifestRelativePath}`, sourceManifest));
+      }
     }
     return { files: result, componentPaths };
   }

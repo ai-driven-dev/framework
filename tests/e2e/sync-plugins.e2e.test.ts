@@ -175,10 +175,12 @@ describe.concurrent("E2E: aidd ai sync", () => {
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Synced 1 file");
 
+      // Cursor Mode B: files are installed at user-scope path (fakeHome resolved via HOME env)
       const cursorCommandPath = join(
-        projectDir,
+        fakeHome,
         ".cursor",
         "plugins",
+        "local",
         "sample-plugin",
         "commands",
         "greet.md"

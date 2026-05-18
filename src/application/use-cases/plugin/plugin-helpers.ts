@@ -20,8 +20,8 @@ export async function loadPluginManifest(manifestRepo: ManifestRepository): Prom
 
 export async function writePluginFiles(
   files: InstallationFile[],
-  projectRoot: string,
+  baseDir: string,
   fs: FileWriter
 ): Promise<void> {
-  await Promise.all(files.map((f) => fs.writeFile(join(projectRoot, f.relativePath), f.content)));
+  await Promise.all(files.map((f) => fs.writeFile(join(baseDir, f.relativePath), f.content)));
 }

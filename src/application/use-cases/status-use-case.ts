@@ -1,3 +1,4 @@
+import { homedir as nodeHomedir } from "node:os";
 import { join } from "node:path";
 import type { FileHash } from "../../domain/models/file.js";
 import type { Manifest } from "../../domain/models/manifest.js";
@@ -121,6 +122,8 @@ export class StatusUseCase {
     directory: string,
     trackedSet: Set<string>,
     projectRoot: string
+    // User-scope plugin dirs (e.g. ~/.cursor/plugins/local/) are not scanned for added files;
+    // only tracked-file drift is detected for user-scope plugins.
   ): Promise<FileDrift[]> {
     const toolDir = join(projectRoot, directory);
     if (!(await this.fs.fileExists(toolDir))) return [];
@@ -223,9 +226,11 @@ export class StatusUseCase {
   ): Promise<PluginDriftEntry[]> {
     const plugins = manifest.getPlugins(toolId);
     const targets = pluginName ? plugins.filter((p) => p.name === pluginName) : plugins;
+    const baseDir = this.resolvePluginBaseDir(toolId, projectRoot);
     const result: PluginDriftEntry[] = [];
     for (const plugin of targets) {
-      const driftedFiles = await this.checkOnePluginDrift(plugin.files, projectRoot);
+      // baseDir is projectRoot for project-scope, or homedir-resolved path for user-scope plugins (see D3 in 192-cursor-mode-b-plan)
+      const driftedFiles = await this.checkOnePluginDrift(plugin.files, baseDir);
       if (driftedFiles.length > 0) {
         result.push({ toolId, pluginName: plugin.name, driftedFiles });
       }
@@ -233,13 +238,27 @@ export class StatusUseCase {
     return result;
   }
 
+  private resolvePluginBaseDir(toolId: AiToolId, projectRoot: string): string {
+    const toolConfig = getToolConfig(toolId);
+    if (!toolConfig || !("capabilities" in toolConfig)) return projectRoot;
+    const caps = toolConfig.capabilities as Record<string, unknown>;
+    if (!("plugins" in caps)) return projectRoot;
+    const pluginsCap = caps.plugins as {
+      installScope: "project" | "user";
+      resolvePluginsBaseDir: (projectRoot: string, homedir: string) => string;
+    };
+    if (pluginsCap.installScope !== "user") return projectRoot;
+    return pluginsCap.resolvePluginsBaseDir(projectRoot, nodeHomedir());
+  }
+
   private async checkOnePluginDrift(
     files: ReadonlyMap<string, string>,
-    projectRoot: string
+    // baseDir is projectRoot for project-scope, or homedir-resolved path for user-scope plugins (see D3 in 192-cursor-mode-b-plan)
+    baseDir: string
   ): Promise<string[]> {
     const drifted: string[] = [];
     for (const [relativePath, expectedHashValue] of files.entries()) {
-      const fullPath = join(projectRoot, relativePath);
+      const fullPath = join(baseDir, relativePath);
       if (!(await this.fs.fileExists(fullPath))) {
         drifted.push(relativePath);
       } else {

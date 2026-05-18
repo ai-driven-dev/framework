@@ -1,5 +1,21 @@
 import type { ToolCategory } from "./tools/registry.js";
 
+export class CapabilityConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CapabilityConfigError";
+  }
+}
+
+export class CursorProjectScopeUnsupportedError extends Error {
+  constructor() {
+    super(
+      "Cursor plugins only support user-scope install (~/.cursor/plugins/local/). Project-scope is not auto-loaded by Cursor."
+    );
+    this.name = "CursorProjectScopeUnsupportedError";
+  }
+}
+
 export class AuthenticationError extends Error {
   constructor(source: string) {
     super(`Authentication failed (${source}). Run \`aidd auth login\` to authenticate.`);

@@ -1,4 +1,6 @@
+import { homedir as nodeHomedir } from "node:os";
 import { join } from "node:path";
+import type { PluginsCapability } from "../../../domain/capabilities/plugins-capability.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import { DOCS_DIR, PLUGIN_CACHE_SUBDIR } from "../../../domain/models/paths.js";
 import { Plugin } from "../../../domain/models/plugin.js";
@@ -11,7 +13,7 @@ import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { PluginDistributionReader } from "../../../domain/ports/plugin-distribution-reader.js";
 import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
-import { getToolConfig } from "../../../domain/tools/registry.js";
+import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
 import { loadPluginManifest, resolvePluginToolIds, writePluginFiles } from "./plugin-helpers.js";
 
 export interface PluginUpdateOptions {
@@ -103,13 +105,14 @@ export class PluginUpdateUseCase {
     manifest: Manifest,
     docsDir: string
   ): Promise<void> {
-    await this.deleteOldFiles(plugin.files, projectRoot);
+    const baseDir = this.resolveBaseDir(toolId, projectRoot);
+    await this.deleteOldFiles(plugin.files, baseDir);
     const toolConfig = getToolConfig(toolId);
     const { files: newFiles, componentPaths } = new PluginTranslator(
       this.hasher
     ).translateWithComponentPaths(dist, toolConfig, docsDir);
     const isLocalMarketplace = plugin.source.kind === "local" && plugin.marketplace !== undefined;
-    if (!isLocalMarketplace) await writePluginFiles(newFiles, projectRoot, this.fs);
+    if (!isLocalMarketplace) await writePluginFiles(newFiles, baseDir, this.fs);
     manifest.updatePlugin(
       toolId,
       Plugin.fromDistribution(
@@ -121,12 +124,19 @@ export class PluginUpdateUseCase {
     );
   }
 
-  private async deleteOldFiles(
-    files: ReadonlyMap<string, string>,
-    projectRoot: string
-  ): Promise<void> {
+  private async deleteOldFiles(files: ReadonlyMap<string, string>, baseDir: string): Promise<void> {
     for (const relativePath of files.keys()) {
-      await this.fs.deleteFile(join(projectRoot, relativePath));
+      await this.fs.deleteFile(join(baseDir, relativePath));
     }
+  }
+
+  private resolveBaseDir(toolId: AiToolId, projectRoot: string): string {
+    const toolConfig = getToolConfig(toolId);
+    if (!isAiTool(toolConfig)) return projectRoot;
+    const caps = toolConfig.capabilities as Record<string, unknown>;
+    if (!("plugins" in caps)) return projectRoot;
+    const pluginsCap = caps.plugins as PluginsCapability;
+    if (pluginsCap.installScope !== "user") return projectRoot;
+    return pluginsCap.resolvePluginsBaseDir(projectRoot, nodeHomedir());
   }
 }

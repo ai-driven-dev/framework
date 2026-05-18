@@ -6,10 +6,10 @@ import { PluginsCapability } from "../../../../../src/domain/capabilities/plugin
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 
-function buildDeps() {
+function buildDeps(homedir = "/stub-home") {
   const fs = new InMemoryFileAdapter();
   const hasher = new DeterministicHasher();
-  return { fs, hasher };
+  return { fs, hasher, homedir: () => homedir };
 }
 
 const MARKETPLACE_SETTINGS = {

@@ -1,3 +1,4 @@
+import { CapabilityConfigError } from "../errors.js";
 import type { HooksContentFormat } from "../formats/cursor-hooks.js";
 import type { PluginSource } from "../models/plugin-source.js";
 import type { PluginTranslationMode } from "../models/plugin-translation-mode.js";
@@ -40,7 +41,8 @@ export interface MarketplaceSettings {
 export interface NativePluginsParams {
   mode: "native";
   pluginsDir: string;
-  pluginManifestRelativePath: string;
+  /** Set to `null` to suppress writing a plugin manifest file into the plugin directory. */
+  pluginManifestRelativePath: string | null;
   mcpRelativePath?: string;
   hooksRelativePath?: string;
   hooksContentFormat?: HooksContentFormat;
@@ -53,6 +55,17 @@ export interface NativePluginsParams {
    * Defaults to `null` (neutral native, no translation strategy applies).
    */
   translationMode?: PluginTranslationMode;
+  /**
+   * Declare `"user"` to install plugins relative to the user home directory instead of the project root.
+   * Requires `userPluginsDir` when set to `"user"`.
+   * Defaults to `"project"` (project-root-relative install).
+   */
+  installScope?: "project" | "user";
+  /**
+   * Resolver that returns the absolute user-scope plugins base directory given a homedir string.
+   * Required when `installScope === "user"`. Example: `(h) => join(h, ".cursor", "plugins", "local")`.
+   */
+  userPluginsDir?: (homedir: string) => string;
 }
 
 export interface FlatPluginsParams {
@@ -87,10 +100,20 @@ export class PluginsCapability {
    * Flat mode always resolves to `"flat"` automatically; unsupported always resolves to `null`.
    */
   readonly translationMode: PluginTranslationMode | null;
+  /**
+   * Scope for plugin installation.
+   * - `"project"` (default): plugins are installed relative to the project root.
+   * - `"user"`: plugins are installed relative to the user home directory via `resolvePluginsBaseDir`.
+   */
+  readonly installScope: "project" | "user";
+
+  private readonly _userPluginsDir?: (homedir: string) => string;
 
   constructor(params: PluginsParams) {
     this.mode = params.mode;
     this.translationMode = PluginsCapability.resolveTranslationMode(params);
+    this.installScope = PluginsCapability.resolveInstallScope(params);
+    PluginsCapability.validateUserScope(params);
     if (params.mode === "native") {
       this.pluginsDir = params.pluginsDir;
       this.pluginManifestRelativePath = params.pluginManifestRelativePath;
@@ -101,6 +124,7 @@ export class PluginsCapability {
       this.hooksRelativePath = params.hooksRelativePath ?? DEFAULT_HOOKS_PATH;
       this.hooksContentFormat = params.hooksContentFormat ?? DEFAULT_HOOKS_FORMAT;
       this.marketplaceSettings = params.marketplaceSettings ?? null;
+      this._userPluginsDir = params.userPluginsDir;
     } else {
       this.pluginsDir = null;
       this.pluginManifestRelativePath = null;
@@ -111,7 +135,25 @@ export class PluginsCapability {
       this.hooksRelativePath = DEFAULT_HOOKS_PATH;
       this.hooksContentFormat = DEFAULT_HOOKS_FORMAT;
       this.marketplaceSettings = null;
+      this._userPluginsDir = undefined;
     }
+  }
+
+  /**
+   * Resolves the absolute base directory for plugin file writes.
+   * - For `installScope === "project"`: returns `projectRoot`.
+   * - For `installScope === "user"`: returns the user-scope plugins dir resolved from `homedir`.
+   */
+  resolvePluginsBaseDir(projectRoot: string, homedir: string): string {
+    if (this.installScope === "user" && this._userPluginsDir !== undefined) {
+      return this._userPluginsDir(homedir);
+    }
+    return projectRoot;
+  }
+
+  pluginOutputDir(pluginName: string): string | null {
+    if (this.mode !== "native" || this.pluginsDir === null) return null;
+    return `${this.pluginsDir}${pluginName}/`;
   }
 
   private static resolveTranslationMode(params: PluginsParams): PluginTranslationMode | null {
@@ -120,8 +162,17 @@ export class PluginsCapability {
     return null;
   }
 
-  pluginOutputDir(pluginName: string): string | null {
-    if (this.mode !== "native" || this.pluginsDir === null) return null;
-    return `${this.pluginsDir}${pluginName}/`;
+  private static resolveInstallScope(params: PluginsParams): "project" | "user" {
+    if (params.mode === "native") return params.installScope ?? "project";
+    return "project";
+  }
+
+  private static validateUserScope(params: PluginsParams): void {
+    if (params.mode !== "native") return;
+    if (params.installScope === "user" && params.userPluginsDir === undefined) {
+      throw new CapabilityConfigError(
+        "installScope 'user' requires a userPluginsDir resolver function."
+      );
+    }
   }
 }

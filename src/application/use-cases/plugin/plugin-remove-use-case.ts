@@ -1,9 +1,12 @@
+import { homedir as nodeHomedir } from "node:os";
 import { dirname, join } from "node:path";
+import type { PluginsCapability } from "../../../domain/capabilities/plugins-capability.js";
 import { PluginNotFoundError } from "../../../domain/errors.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
+import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
 import { loadPluginManifest, resolvePluginToolIds } from "./plugin-helpers.js";
 
 export interface PluginRemoveOptions {
@@ -38,7 +41,8 @@ export class PluginRemoveUseCase {
       const plugins = manifest.getPlugins(toolId);
       const plugin = plugins.find((p) => p.name === pluginName);
       if (plugin === undefined) continue;
-      await this.deletePluginFiles(plugin.files, projectRoot);
+      const baseDir = this.resolveBaseDir(toolId, projectRoot);
+      await this.deletePluginFiles(plugin.files, baseDir);
       manifest.removePlugin(toolId, pluginName);
       removed = true;
     }
@@ -47,12 +51,22 @@ export class PluginRemoveUseCase {
 
   private async deletePluginFiles(
     files: ReadonlyMap<string, string>,
-    projectRoot: string
+    baseDir: string
   ): Promise<void> {
     for (const relativePath of files.keys()) {
-      const fullPath = join(projectRoot, relativePath);
+      const fullPath = join(baseDir, relativePath);
       await this.fs.deleteFile(fullPath);
       await this.fs.deleteEmptyDirectories(dirname(fullPath));
     }
+  }
+
+  private resolveBaseDir(toolId: AiToolId, projectRoot: string): string {
+    const toolConfig = getToolConfig(toolId);
+    if (!isAiTool(toolConfig)) return projectRoot;
+    const caps = toolConfig.capabilities as Record<string, unknown>;
+    if (!("plugins" in caps)) return projectRoot;
+    const pluginsCap = caps.plugins as PluginsCapability;
+    if (pluginsCap.installScope !== "user") return projectRoot;
+    return pluginsCap.resolvePluginsBaseDir(projectRoot, nodeHomedir());
   }
 }

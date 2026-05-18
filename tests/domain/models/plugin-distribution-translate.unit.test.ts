@@ -129,9 +129,9 @@ describe("PluginTranslator.translate()", () => {
     });
   });
 
-  describe("cursor target", () => {
-    it("emits rules with .mdc extension", () => {
-      expect(pathsFor(cursor)).toContain(".cursor/plugins/sample-plugin/rules/standards.mdc");
+  describe("cursor target (Mode B — user-scope flat materialization)", () => {
+    it("emits rules with .mdc extension under plugin-name-prefixed path", () => {
+      expect(pathsFor(cursor)).toContain("sample-plugin/rules/standards.mdc");
     });
 
     it("emits cursor-format frontmatter on rules (globs key)", () => {
@@ -140,56 +140,30 @@ describe("PluginTranslator.translate()", () => {
       expect(rule?.content).toContain("globs:");
     });
 
-    it("emits native plugin manifest at plugin.json", () => {
+    it("does not emit plugin.json (pluginManifestRelativePath is null)", () => {
       const files = translator.translate(makeDist(), cursor, "");
-      const manifest = files.find(
-        (f) => f.relativePath === ".cursor/plugins/sample-plugin/plugin.json"
-      );
-      expect(manifest).toBeDefined();
+      const manifest = files.find((f) => f.relativePath.endsWith("plugin.json"));
+      expect(manifest).toBeUndefined();
     });
 
-    it("emits hooks at cursor's hooks/hooks.json path inside plugin dir", () => {
-      expect(pathsFor(cursor)).toContain(".cursor/plugins/sample-plugin/hooks/hooks.json");
+    it("does not emit hooks (acceptsHooks is false)", () => {
+      expect(pathsFor(cursor)).not.toContain(expect.stringContaining("hooks/hooks.json"));
     });
 
-    it("converts hooks content from Claude format to Cursor format", () => {
-      const claudeHooks = JSON.stringify({
-        hooks: {
-          SessionStart: [
-            // biome-ignore lint/suspicious/noTemplateCurlyInString: intentional literal string in test fixture (Claude hooks format)
-            { hooks: [{ type: "command", command: "node ${CLAUDE_PLUGIN_ROOT}/hooks/run.js" }] },
-          ],
-        },
-      });
-      const dist = makeDist({
-        files: [
-          makeFile("hooks/hooks.json", claudeHooks),
-          makeFile(".claude-plugin/plugin.json", claudeManifestContent),
-        ],
-        components: {
-          skills: [],
-          commands: [],
-          agents: [],
-          rules: [],
-          hooks: [makeFile("hooks/hooks.json", claudeHooks)],
-          mcp: [],
-        },
-      });
-      const files = translator.translate(dist, cursor, "");
-      const hooks = files.find(
-        (f) => f.relativePath === ".cursor/plugins/sample-plugin/hooks/hooks.json"
-      );
-      expect(hooks).toBeDefined();
-      if (!hooks) throw new Error("hooks file not found");
-      const parsed = JSON.parse(hooks.content) as { hooks: Record<string, unknown[]> };
-      expect(parsed.hooks).toHaveProperty("sessionStart");
-      expect(parsed.hooks).not.toHaveProperty("SessionStart");
-      const items = parsed.hooks.sessionStart as Array<{ command: string }>;
-      expect(items[0].command).toBe("node ./hooks/run.js");
+    it("does not emit mcp (acceptsMcp is false)", () => {
+      expect(pathsFor(cursor)).not.toContain(expect.stringContaining("mcp.json"));
     });
 
-    it("emits mcp at cursor's mcp.json (no leading dot)", () => {
-      expect(pathsFor(cursor)).toContain(".cursor/plugins/sample-plugin/mcp.json");
+    it("emits commands under plugin-name-prefixed path", () => {
+      // greet.md → buildInstallPath yields ".cursor/commands/aidd/greet.md"
+      // toPluginRelativePath strips ".cursor/" then removes /aidd/ → "commands/greet.md"
+      // pluginRoot prepend → "sample-plugin/commands/greet.md"
+      expect(pathsFor(cursor)).toContain("sample-plugin/commands/greet.md");
+    });
+
+    it("file paths are base-relative (no .cursor/ prefix — base resolved at install time)", () => {
+      const paths = pathsFor(cursor);
+      expect(paths.every((p) => !p.startsWith(".cursor/"))).toBe(true);
     });
   });
 
@@ -291,12 +265,23 @@ describe("cross-format matrix (source × target)", () => {
 
   for (const source of sourceFormats) {
     for (const target of targets) {
-      it(`${source.format} source → ${target.name} target: emits manifest at ${target.manifestExpected}`, () => {
-        const dist = makeSourceDist(source);
-        const files = translator.translate(dist, target.tool, "");
-        const expected = `${target.tool.capabilities.plugins.pluginsDir}sample-plugin/${target.manifestExpected}`;
-        expect(files.map((f) => f.relativePath)).toContain(expected);
-      });
+      if (target.name === "cursor") {
+        // Cursor Mode B: pluginManifestRelativePath is null — no manifest file written into plugin dir.
+        it(`${source.format} source → ${target.name} target: does not emit manifest (Mode B, null pluginManifestRelativePath)`, () => {
+          const dist = makeSourceDist(source);
+          const files = translator.translate(dist, target.tool, "");
+          expect(files.map((f) => f.relativePath)).not.toContain(
+            expect.stringMatching(/plugin\.json$/)
+          );
+        });
+      } else {
+        it(`${source.format} source → ${target.name} target: emits manifest at ${target.manifestExpected}`, () => {
+          const dist = makeSourceDist(source);
+          const files = translator.translate(dist, target.tool, "");
+          const expected = `${target.tool.capabilities.plugins.pluginsDir}sample-plugin/${target.manifestExpected}`;
+          expect(files.map((f) => f.relativePath)).toContain(expected);
+        });
+      }
     }
   }
 });
