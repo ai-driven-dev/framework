@@ -104,7 +104,9 @@ export function registerPluginCommand(program: Command): void {
             if (result.installed.length === 0) {
               output.info("No plugins selected.");
             } else {
-              output.success(`Installed ${result.installed.length} plugin(s): ${result.installed.join(", ")}`);
+              output.success(
+                `Installed ${result.installed.length} plugin(s): ${result.installed.join(", ")}`
+              );
             }
           } else if (result.kind === "local") {
             output.success("Plugin added successfully.");

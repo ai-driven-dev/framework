@@ -19,17 +19,33 @@ function makeUseCases(overrides?: {
   const marketplaceExecute = overrides?.marketplaceExecute ?? vi.fn();
   const pluginPickUseCase = { execute: pickExecute } as unknown as PluginPickUseCase;
   const pluginAddUseCase = { execute: addExecute } as unknown as PluginAddUseCase;
-  const pluginInstallFromMarketplaceUseCase = { execute: marketplaceExecute } as unknown as PluginInstallFromMarketplaceUseCase;
-  return { pluginPickUseCase, pluginAddUseCase, pluginInstallFromMarketplaceUseCase, pickExecute, addExecute, marketplaceExecute };
+  const pluginInstallFromMarketplaceUseCase = {
+    execute: marketplaceExecute,
+  } as unknown as PluginInstallFromMarketplaceUseCase;
+  return {
+    pluginPickUseCase,
+    pluginAddUseCase,
+    pluginInstallFromMarketplaceUseCase,
+    pickExecute,
+    addExecute,
+    marketplaceExecute,
+  };
 }
 
 describe("PluginInstallUseCase", () => {
   describe("no-arg routing", () => {
     it("delegates to PluginPickUseCase when no arg and interactive", async () => {
-      const pickExecute = vi.fn().mockResolvedValue({ marketplace: { name: "m" }, installed: ["p1"] });
-      const { pluginPickUseCase, pluginAddUseCase, pluginInstallFromMarketplaceUseCase } = makeUseCases({ pickExecute });
+      const pickExecute = vi
+        .fn()
+        .mockResolvedValue({ marketplace: { name: "m" }, installed: ["p1"] });
+      const { pluginPickUseCase, pluginAddUseCase, pluginInstallFromMarketplaceUseCase } =
+        makeUseCases({ pickExecute });
 
-      const result = await new PluginInstallUseCase(pluginPickUseCase, pluginAddUseCase, pluginInstallFromMarketplaceUseCase).execute({
+      const result = await new PluginInstallUseCase(
+        pluginPickUseCase,
+        pluginAddUseCase,
+        pluginInstallFromMarketplaceUseCase
+      ).execute({
         pluginArg: undefined,
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
@@ -42,10 +58,15 @@ describe("PluginInstallUseCase", () => {
     });
 
     it("throws InteractiveOnlyError when no arg and non-interactive", async () => {
-      const { pluginPickUseCase, pluginAddUseCase, pluginInstallFromMarketplaceUseCase } = makeUseCases();
+      const { pluginPickUseCase, pluginAddUseCase, pluginInstallFromMarketplaceUseCase } =
+        makeUseCases();
 
       await expect(
-        new PluginInstallUseCase(pluginPickUseCase, pluginAddUseCase, pluginInstallFromMarketplaceUseCase).execute({
+        new PluginInstallUseCase(
+          pluginPickUseCase,
+          pluginAddUseCase,
+          pluginInstallFromMarketplaceUseCase
+        ).execute({
           pluginArg: undefined,
           toolIds: "all",
           projectRoot: PROJECT_ROOT,
@@ -58,9 +79,14 @@ describe("PluginInstallUseCase", () => {
   describe("source arg routing", () => {
     it("delegates to PluginAddUseCase when arg is an absolute local path", async () => {
       const addExecute = vi.fn().mockResolvedValue(undefined);
-      const { pluginPickUseCase, pluginAddUseCase, pluginInstallFromMarketplaceUseCase } = makeUseCases({ addExecute });
+      const { pluginPickUseCase, pluginAddUseCase, pluginInstallFromMarketplaceUseCase } =
+        makeUseCases({ addExecute });
 
-      const result = await new PluginInstallUseCase(pluginPickUseCase, pluginAddUseCase, pluginInstallFromMarketplaceUseCase).execute({
+      const result = await new PluginInstallUseCase(
+        pluginPickUseCase,
+        pluginAddUseCase,
+        pluginInstallFromMarketplaceUseCase
+      ).execute({
         pluginArg: PLUGIN_FIXTURE,
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
@@ -73,9 +99,14 @@ describe("PluginInstallUseCase", () => {
 
     it("delegates to PluginInstallFromMarketplaceUseCase when arg is a plugin name", async () => {
       const marketplaceExecute = vi.fn().mockResolvedValue({ entry: { name: "my-plugin" } });
-      const { pluginPickUseCase, pluginAddUseCase, pluginInstallFromMarketplaceUseCase } = makeUseCases({ marketplaceExecute });
+      const { pluginPickUseCase, pluginAddUseCase, pluginInstallFromMarketplaceUseCase } =
+        makeUseCases({ marketplaceExecute });
 
-      const result = await new PluginInstallUseCase(pluginPickUseCase, pluginAddUseCase, pluginInstallFromMarketplaceUseCase).execute({
+      const result = await new PluginInstallUseCase(
+        pluginPickUseCase,
+        pluginAddUseCase,
+        pluginInstallFromMarketplaceUseCase
+      ).execute({
         pluginArg: "my-plugin",
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
