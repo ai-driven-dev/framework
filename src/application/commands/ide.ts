@@ -27,6 +27,7 @@ export function registerIdeCommand(program: Command): void {
       { name: "List installed IDE tools", value: "list" },
       { name: "Show IDE tool status", value: "status" },
       { name: "Update IDE tools", value: "update" },
+      { name: "Restore IDE tool files", value: "restore" },
       { name: "Doctor IDE tools", value: "doctor" },
     ]);
     await spawnCliCommand(["ide", choice]);
@@ -34,9 +35,7 @@ export function registerIdeCommand(program: Command): void {
 
   ide
     .command("install <tool>")
-    .description(
-      "Install an IDE integration from bundled assets. Note: IDE configs are merge-based — sync/restore semantics do not apply."
-    )
+    .description("Install an IDE integration from bundled assets")
     .option("-f, --force", "Overwrite already-installed tool", false)
     .action(async (toolArg: string, cmdOptions: { force: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
@@ -169,6 +168,70 @@ export function registerIdeCommand(program: Command): void {
           if (!result.skipped)
             output.success(`Updated ${result.toolId} (${result.fileCount} files)`);
         }
+      } catch (error) {
+        errorHandler.handle(error);
+      }
+    });
+
+  ide
+    .command("restore [files...]")
+    .description("Restore IDE tool tracked files to their installed version")
+    .option("-f, --force", "Restore without prompting", false)
+    .option("--tool <tool>", "Limit restore to a specific IDE tool")
+    .action(async (fileArgs: string[], cmdOptions: { force: boolean; tool?: string }) => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const errorHandler = new ErrorHandler(output);
+      try {
+        if (cmdOptions.tool !== undefined) assertIdeToolId(cmdOptions.tool);
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const { NoManifestError } = await import("../errors.js");
+        const manifest = await deps.manifestRepo.load();
+        if (!manifest) throw new NoManifestError();
+        const version =
+          manifest
+            .getInstalledToolIds()
+            .map((id) => manifest.getToolVersion(id))
+            .find((v) => v !== undefined) ?? deps.currentVersionProvider.get();
+        const installedIdeIds = manifest
+          .getInstalledToolIds()
+          .filter((id) => (IDE_TOOL_IDS as readonly string[]).includes(id)) as IdeToolId[];
+        const toolIds: IdeToolId[] = cmdOptions.tool
+          ? [cmdOptions.tool as IdeToolId]
+          : installedIdeIds;
+        if (toolIds.length === 0) {
+          output.info("No IDE tools installed.");
+          return;
+        }
+        const { DOCS_DIR } = await import("../../domain/models/paths.js");
+        const { RestoreUseCase } = await import("../use-cases/restore/restore-use-case.js");
+        const restoreUseCase = new RestoreUseCase(
+          deps.fs,
+          deps.manifestRepo,
+          deps.hasher,
+          deps.logger,
+          deps.platform,
+          deps.prompter,
+          deps.pluginFetcher,
+          deps.pluginDistributionReader
+        );
+        const result = await restoreUseCase.execute({
+          version,
+          docsDir: DOCS_DIR,
+          projectRoot,
+          toolIds,
+          files: fileArgs.length > 0 ? fileArgs : undefined,
+          force: cmdOptions.force,
+          interactive: process.stdout.isTTY,
+          manifest,
+        });
+        const nothingDone = result.tools.every((t) => t.nothingToRestore);
+        if (nothingDone) {
+          output.success("Nothing to restore — all files are unmodified.");
+          return;
+        }
+        output.success(
+          `Restored ${result.totalRestored} ${result.totalRestored === 1 ? "file" : "files"}, kept ${result.totalKept} ${result.totalKept === 1 ? "file" : "files"}`
+        );
       } catch (error) {
         errorHandler.handle(error);
       }
