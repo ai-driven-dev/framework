@@ -1,6 +1,6 @@
 import { InteractiveOnlyError } from "../../../domain/errors.js";
-import { parsePluginSourceShorthand } from "../../../domain/models/plugin-source.js";
 import { parsePluginSpec } from "../../../domain/models/plugin.js";
+import { parsePluginSourceShorthand } from "../../../domain/models/plugin-source.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import type { PluginAddUseCase } from "./plugin-add-use-case.js";
 import type { PluginInstallFromMarketplaceUseCase } from "./plugin-install-from-marketplace-use-case.js";

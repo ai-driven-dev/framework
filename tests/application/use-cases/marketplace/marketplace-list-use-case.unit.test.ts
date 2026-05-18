@@ -60,7 +60,15 @@ describe("MarketplaceListUseCase", () => {
       await registry.save(projectRoot, SAMPLE_MARKETPLACE);
 
       const fakeCatalog: PluginCatalog = {
-        plugins: [{ name: "my-plugin", version: "1.0.0", source: { kind: "local", path: "/fake" }, recommended: false, strict: false }],
+        plugins: [
+          {
+            name: "my-plugin",
+            version: "1.0.0",
+            source: { kind: "local", path: "/fake" },
+            recommended: false,
+            strict: false,
+          },
+        ],
       };
       const fakeFetcher = {
         execute: async () => "/fake/local-path",

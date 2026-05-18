@@ -171,7 +171,6 @@ export function registerMarketplaceCommand(program: Command): void {
         errorHandler.handle(error);
       }
     });
-
 }
 
 function printCatalogEntries(
