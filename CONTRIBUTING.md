@@ -60,6 +60,8 @@ This repository follows [Semantic Versioning](https://semver.org/) with automate
 
 The tarball contains only the framework content: `plugins/`, `.claude-plugin/`, `aidd_docs/`.
 
+For the full maintainer playbook (multi-package manifest, forcing versions, pre-releases, hotfix, recovery) see [`docs/releasing.md`](docs/releasing.md).
+
 ## Commit scope discipline
 
 Every commit must use one of the five allowed scopes:
