@@ -5,6 +5,7 @@ import {
   FrameworkDescriptor,
 } from "../../../domain/models/framework.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
+import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileMerger } from "../../../domain/ports/file-merger.js";
 import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../domain/ports/file-writer.js";
@@ -74,7 +75,8 @@ export class RestoreUseCase {
     private readonly platform: Platform,
     private readonly prompter: Prompter,
     private readonly pluginFetcher?: PluginFetcher,
-    private readonly pluginDistributionReader?: PluginDistributionReader
+    private readonly pluginDistributionReader?: PluginDistributionReader,
+    private readonly assetProvider?: AssetProvider
   ) {}
 
   async execute(options: RestoreOptions): Promise<RestoreResult> {
@@ -118,7 +120,8 @@ export class RestoreUseCase {
       this.hasher,
       this.logger,
       this.platform,
-      this.prompter
+      this.prompter,
+      this.assetProvider
     );
     const results: RestoreToolFilesResult[] = [];
     for (const toolId of ctx.toolIds) {

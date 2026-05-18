@@ -24,7 +24,8 @@ export function registerRestoreCommand(program: Command): void {
           deps.platform,
           deps.prompter,
           deps.pluginFetcher,
-          deps.pluginDistributionReader
+          deps.pluginDistributionReader,
+          deps.assetProvider
         );
         const result = await useCase.execute(projectRoot, interactive);
 

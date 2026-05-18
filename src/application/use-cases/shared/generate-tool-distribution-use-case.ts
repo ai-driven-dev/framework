@@ -1,4 +1,4 @@
-import { type InstallationFile, removeRedundantGitkeeps } from "../../../domain/models/file.js";
+import { InstallationFile, removeRedundantGitkeeps } from "../../../domain/models/file.js";
 import type { ContentSection, FrameworkDescriptor } from "../../../domain/models/framework.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
 import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
@@ -86,7 +86,27 @@ export class GenerateToolDistributionUseCase {
       assetProvider: this.assetProvider,
       toolId: config.toolId as AiToolId,
     });
-    return removeRedundantGitkeeps([...sectionFiles, ...configFiles]);
+    const outputPathFiles = this.buildConfigOutputPathFiles(config);
+    return removeRedundantGitkeeps([...sectionFiles, ...configFiles, ...outputPathFiles]);
+  }
+
+  private buildConfigOutputPathFiles(config: AiTool<unknown>): InstallationFile[] {
+    if (this.assetProvider === undefined) return [];
+    const outputPaths = config.configOutputPaths;
+    if (outputPaths === undefined) return [];
+    const files: InstallationFile[] = [];
+    for (const [fileName, outputPath] of Object.entries(outputPaths)) {
+      const asset = this.assetProvider.loadConfigAsset(config.toolId as AiToolId, fileName);
+      const content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
+      files.push(
+        new InstallationFile({
+          relativePath: outputPath,
+          content,
+          hash: this.hasher.hash(content),
+        })
+      );
+    }
+    return files;
   }
 
   private generateCapabilitySectionFiles(
