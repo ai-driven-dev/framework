@@ -1,5 +1,5 @@
-import { Plugin } from "../../../../domain/models/plugin.js";
 import type { Manifest } from "../../../../domain/models/manifest.js";
+import { Plugin } from "../../../../domain/models/plugin.js";
 import type { PluginDistribution } from "../../../../domain/models/plugin-distribution.js";
 import type { PluginSource } from "../../../../domain/models/plugin-source.js";
 import { PluginTranslator } from "../../../../domain/models/plugin-translator.js";
