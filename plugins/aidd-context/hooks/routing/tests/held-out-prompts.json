@@ -78,9 +78,9 @@
   { "prompt": "challenge this", "expect": "aidd-refine:02-challenge", "category": "challenge-en" },
   { "prompt": "brainstorm", "expect": "aidd-refine:01-brainstorm", "category": "brainstorm-en" },
 
-  { "prompt": "setup async dev", "expect": "aidd-orchestrator:01-setup-async-dev", "category": "orch-setup-en" },
-  { "prompt": "run async pipeline", "expect": "aidd-orchestrator:02-run-async-dev", "category": "orch-run-en" },
-  { "prompt": "handle review feedback", "expect": "aidd-orchestrator:03-review-async-dev", "category": "orch-review-en" },
+  { "prompt": "setup async dev", "expect": "aidd-orchestrator:00-async-dev", "category": "orch-setup-en" },
+  { "prompt": "run async pipeline", "expect": "aidd-orchestrator:00-async-dev", "category": "orch-run-en" },
+  { "prompt": "handle review feedback", "expect": "aidd-orchestrator:00-async-dev", "category": "orch-review-en" },
 
   { "prompt": "list all skills", "expect": "aidd-context:06-discovery", "category": "discovery" },
   { "prompt": "what hooks are installed", "expect": "aidd-context:06-discovery", "category": "discovery" },
