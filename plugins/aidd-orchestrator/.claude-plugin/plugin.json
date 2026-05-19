@@ -3,5 +3,7 @@
   "name": "aidd-orchestrator",
   "version": "1.0.0",
   "description": "Orchestration plugin. v1 use case: async development - turn ready issues into pull requests, then iterate on review feedback until a human takes over. Designed to host more orchestration use cases (refactoring, docs, audits) in future versions.",
-  "author": { "name": "AI-Driven Dev" }
+  "author": {
+    "name": "AI-Driven Dev"
+  }
 }

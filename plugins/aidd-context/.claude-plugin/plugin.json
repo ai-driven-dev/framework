@@ -3,5 +3,7 @@
   "name": "aidd-context",
   "version": "1.0.0",
   "description": "Knowledge production: project bootstrap, project init, generation of Claude Code context artifacts (skills, agents, rules, commands, hooks, plugins, marketplaces), mermaid diagrams, learn, discovery",
-  "author": { "name": "AI-Driven Dev" }
+  "author": {
+    "name": "AI-Driven Dev"
+  }
 }

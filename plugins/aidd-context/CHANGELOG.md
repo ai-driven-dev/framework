@@ -1,0 +1,88 @@
+# Changelog
+
+## [1.0.0](https://github.com/ai-driven-dev/aidd-framework/compare/aidd-context-v1.0.0...aidd-context-v1.0.0) (2026-05-19)
+
+
+### Features
+
+* **aidd-context:** add 00-onboard skill (state-aware guided loop) ([4f3d0fa](https://github.com/ai-driven-dev/aidd-framework/commit/4f3d0fa19f1104cdfd2f9f8442965182f403f181))
+* **aidd-context:** add 01-bootstrap skill for SaaS architecture imagination ([4643594](https://github.com/ai-driven-dev/aidd-framework/commit/4643594163686a92bc02211770a7906e3d07c99f))
+* **aidd-context:** extend 06-discovery with rule, hook, and memory finders ([3ad5661](https://github.com/ai-driven-dev/aidd-framework/commit/3ad56614eabdb2313b3e4951c7daa724b7a816cb))
+* **aidd-context:** extend context-generate with plugins, commands, hooks, marketplaces; add async-dev router ([d409bab](https://github.com/ai-driven-dev/aidd-framework/commit/d409babb029aca89355c4d7bc9d21d007ff012a2))
+* **aidd-context:** implement interactive brainstorming skill with structured actions for clarifying feature requests ([edba00c](https://github.com/ai-driven-dev/aidd-framework/commit/edba00c65f4323bfbf046ad24805841a263dd424))
+* **aidd-context:** migrate commands to numbered actions ([324357a](https://github.com/ai-driven-dev/aidd-framework/commit/324357a8acef153b929fe6d1c85dff262bb041f8))
+* **aidd-dev:** add 02-implement skill, renumber downstream skills ([16fa5d6](https://github.com/ai-driven-dev/aidd-framework/commit/16fa5d61cac55f5e8223cb55ce9e213dfcb7fdb6))
+* **aidd-dev:** scan rules and project files modifications in plan template ([0509421](https://github.com/ai-driven-dev/aidd-framework/commit/05094211fc6f79cd033c08a3409d3b494e3fd8ce))
+* async-dev router + context-generate determinism tightening ([#128](https://github.com/ai-driven-dev/aidd-framework/issues/128)) ([213a82e](https://github.com/ai-driven-dev/aidd-framework/commit/213a82efbfc85aa4bed5de33b1079fba29ec4fac))
+* **framework:** delete legacy commands/ directory ([dac60bb](https://github.com/ai-driven-dev/aidd-framework/commit/dac60bbb7c953abadf19f0cb239987c81c006376))
+* **framework:** migrate 5 pre-refactored skills into plugins ([da2987c](https://github.com/ai-driven-dev/aidd-framework/commit/da2987c7c281d3b087e6c09f5079decf7e066bd2))
+* **framework:** refactor to marketplace plugin architecture and skills ([27128a9](https://github.com/ai-driven-dev/aidd-framework/commit/27128a96314904b7b57b0bc419e4d29b7a7edaf0))
+* **framework:** relocate templates and conventions into skill assets ([6920182](https://github.com/ai-driven-dev/aidd-framework/commit/692018202f84cd6f5d885f5737f305f77f79ac5f))
+* **framework:** scaffold 4-plugin marketplace catalog ([7be5466](https://github.com/ai-driven-dev/aidd-framework/commit/7be5466ae78f432a5477a6f35d23cbff56b7f2df))
+* **framework:** split MCP and SessionStart hook into plugins ([527f9b8](https://github.com/ai-driven-dev/aidd-framework/commit/527f9b8c13ea1c7e45b277218569e6881559cadc))
+* **framework:** update build script for plugin layout and regenerate catalogs ([ea18188](https://github.com/ai-driven-dev/aidd-framework/commit/ea1818850a6c9d8b39de2aa5bae2b6ecf6741ddd))
+
+
+### Bug Fixes
+
+* **aidd-context:** correct hooks.json format for Claude Code and Copilot ([f66ca72](https://github.com/ai-driven-dev/aidd-framework/commit/f66ca7247ea7b135b6792781ff978055b747392b))
+* **aidd-context:** rename skill frontmatter name from generate-skill to context-generate ([805cf6f](https://github.com/ai-driven-dev/aidd-framework/commit/805cf6f8b8897ce2283679d991041345d2192f12))
+* **aidd-context:** repair @-paths, generalize mermaid reference, delegate frontmatter to references ([1ff4a04](https://github.com/ai-driven-dev/aidd-framework/commit/1ff4a04c0f1fedbfbcc7db6a362c08f787e34815))
+* **aidd-context:** replace placeholder with generic path pattern in copilot rule example ([e22b358](https://github.com/ai-driven-dev/aidd-framework/commit/e22b358c39a30ad6a0b38246b469bee41f2573cf))
+* **framework:** correct slash command naming in docs ([adad60a](https://github.com/ai-driven-dev/aidd-framework/commit/adad60aacaa120f3abf55100625bed7a3a87a50a))
+* **framework:** namespace frontmatter for relocated skills ([ea220a1](https://github.com/ai-driven-dev/aidd-framework/commit/ea220a19667da43cbe88c0dca87913b1d1c381cb))
+* **framework:** repair broken @-paths, stale skill ref, and Ressources typo across plugins ([558bb34](https://github.com/ai-driven-dev/aidd-framework/commit/558bb347a6358240556e6c27d0ec09ff4b443bc0))
+* **framework:** repair internal broken markdown links ([8ae9dc1](https://github.com/ai-driven-dev/aidd-framework/commit/8ae9dc1ae729ab65c512661a9e0ec6fb8dc618ed))
+
+
+### Miscellaneous
+
+* **aidd-context:** refresh stale async-dev refs in project-init template and routing evals ([13a424c](https://github.com/ai-driven-dev/aidd-framework/commit/13a424cbad77b1afde7f8867e867ad1e2068f443))
+* **ci:** SHA-pin every external action and add CodeQL workflow ([66d5fcf](https://github.com/ai-driven-dev/aidd-framework/commit/66d5fcf99776df2885a84b2ef70943ff63099748))
+* **framework:** adopt release-please monorepo with per-plugin versioning ([9706606](https://github.com/ai-driven-dev/aidd-framework/commit/9706606207f1474033fb9b73ce089636362616c9))
+* **framework:** bulk alignment — evals everywhere, em-dash purge, audit template, stale refs fixed ([0dfd79d](https://github.com/ai-driven-dev/aidd-framework/commit/0dfd79dac5ce7f15194b4aa9b58b5dd61fdf14b6))
+* **framework:** bump aidd-pm to 1.0.0 and apply audit fixes ([97573bc](https://github.com/ai-driven-dev/aidd-framework/commit/97573bcf1b7624f6cf1acaa62791b9cdbe1b237b))
+* **framework:** bump marketplace to 4.0.0 and refresh aidd-dev SDLC docs ([073a4a6](https://github.com/ai-driven-dev/aidd-framework/commit/073a4a617f08841d950ae0d5ebd3b45fdcbb0f93))
+* **framework:** merge feat/plugin-content-tool-agnostic ([11cce19](https://github.com/ai-driven-dev/aidd-framework/commit/11cce1963826a1ed3e28837b9ccee8ed11fe2229))
+* **framework:** merge origin/feat/plugin-architecture ([0082b4c](https://github.com/ai-driven-dev/aidd-framework/commit/0082b4cc7916fca6e3060362a0ce762c155a0e19))
+* **framework:** regenerate plugin catalogs after aidd-context audit ([7b5907a](https://github.com/ai-driven-dev/aidd-framework/commit/7b5907ac00bc661b7ce0bd66f335d6980badfa31))
+* **framework:** regenerate plugin catalogs after audit sweep ([448b111](https://github.com/ai-driven-dev/aidd-framework/commit/448b111662335197c9e4e415db391fc4e8d5c79f))
+* **framework:** release as 4.0.0 ([5b0fc9d](https://github.com/ai-driven-dev/aidd-framework/commit/5b0fc9d9116e37abe7ef5dbb5d06438f607475e8))
+* **framework:** remove PostToolUse hook from hooks configuration ([0b1eb66](https://github.com/ai-driven-dev/aidd-framework/commit/0b1eb664adf74d3d552c23e5da69def8fc9dbbb8))
+* **framework:** roll back root version to 3.9.1 for release-please cut ([a2535e7](https://github.com/ai-driven-dev/aidd-framework/commit/a2535e7478941d09aac9e33baaffc13f1345fdec))
+* **framework:** self-host summarize-markdown.mjs for per-plugin CATALOG ([ee62862](https://github.com/ai-driven-dev/aidd-framework/commit/ee6286237d3b1b97ebaf67aa68f8152015d61e90))
+* **framework:** trigger ci recheck after history rewrite ([391760e](https://github.com/ai-driven-dev/aidd-framework/commit/391760e19eb69fe80e098c3aefc3c527cda2169a))
+* **framework:** wave 1 audit fixes (schemas, gitignore, dependabot, links) ([4bcb670](https://github.com/ai-driven-dev/aidd-framework/commit/4bcb67069cd7af57f2a73fb55e19d89a583e2e7d))
+* refresh stale references to deleted async-dev skills + three-artifact context-generate ([4697d19](https://github.com/ai-driven-dev/aidd-framework/commit/4697d198e9f45a1c983da362d9c08f6162f1dd9b))
+
+
+### Documentation
+
+* **aidd-context:** fix [1.3] skill name to match SKILL.md frontmatter (generate-skill) ([9d4192b](https://github.com/ai-driven-dev/aidd-framework/commit/9d4192b682d9fc0c786fef2b10d7062db95dbc2b))
+* **aidd-context:** refresh descriptions to cover all seven generated artifacts ([8cbb5a2](https://github.com/ai-driven-dev/aidd-framework/commit/8cbb5a2d6d5b5e5f51aa125cf2066f1322b987fd))
+* **aidd-context:** refresh descriptions to cover the seven generated artifacts ([b1bef44](https://github.com/ai-driven-dev/aidd-framework/commit/b1bef44b87d6e02d071b75ce513dfbf0f881a547))
+* **framework:** add per-plugin CATALOG.md (auto-generated) ([d613282](https://github.com/ai-driven-dev/aidd-framework/commit/d61328242639bb77909055019629b1da3891bffc))
+* **framework:** rewrite for plugin marketplace model ([9529d4c](https://github.com/ai-driven-dev/aidd-framework/commit/9529d4cbc8fef430354300e2bfcd8bff526c67a2))
+* **framework:** update feature request template and contributing guidelines ([1592df3](https://github.com/ai-driven-dev/aidd-framework/commit/1592df36e5c3ebad2943ca624a6c07c5da1d5d00))
+* phase 1 critical audit fixes (skill invocations, catalog, templates) ([5b5342b](https://github.com/ai-driven-dev/aidd-framework/commit/5b5342b890ae0be4eb8302fd36e5a4d8882b9cbb))
+* phase 2 high-severity audit fixes (security, lefthook, accuracy) ([95f29c3](https://github.com/ai-driven-dev/aidd-framework/commit/95f29c33c6a523166eaf09e0293000ee356a27dd))
+* phase 3 medium/low audit fixes (OSS scaffolding, UX, accuracy) ([5e43650](https://github.com/ai-driven-dev/aidd-framework/commit/5e436502d7632b377f73129cfb73d312c3eea9ce))
+* propagate per-skill README pattern across all plugins ([4427e3e](https://github.com/ai-driven-dev/aidd-framework/commit/4427e3ee7c096d03f7d7b30d418f3484e9d0541a))
+
+
+### Refactoring
+
+* **aidd-context:** align audit fixes across 04-mermaid, 01-bootstrap, 02-project-init, 03-context-generate, 05-learn ([8f69261](https://github.com/ai-driven-dev/aidd-framework/commit/8f692619beb1e90b3154134d4cb0c7cc795036db))
+* **aidd-context:** cross-tool prompts, .gitkeep enforcement, plugin-based README, CONTRIBUTING ([04e74c6](https://github.com/ai-driven-dev/aidd-framework/commit/04e74c605bbd574fd87a5b58ebab1d366b043b34))
+* **aidd-context:** merge 09-generate-skill into 03-context-generate with skills/ subfolder ([e9aa546](https://github.com/ai-driven-dev/aidd-framework/commit/e9aa546051620f7300c8a751e0b098a25e566217))
+* **aidd-context:** remove architecture-generate skill and renumber project-init to 02 ([1e80beb](https://github.com/ai-driven-dev/aidd-framework/commit/1e80bebfbbee2dfb0f3314cba46a0f8155bcc7f1))
+* **aidd-context:** restructure project init ([da90ed8](https://github.com/ai-driven-dev/aidd-framework/commit/da90ed8ac6c53aff7d1fae6d49477f4b1089a029))
+* **aidd-dev:** rewrite SDLC as pure orchestrator with role-based agents ([dbc6edd](https://github.com/ai-driven-dev/aidd-framework/commit/dbc6edd360256154a14a82fb206b301b77684822))
+* **framework:** align sdlc orchestrator and sub-skills around alex baseline ([92535cd](https://github.com/ai-driven-dev/aidd-framework/commit/92535cdf285effeee4cba9027dd7fd6a88c8c737))
+* **framework:** canonical action shape, model-A rules, plugin audit sweep ([29ef579](https://github.com/ai-driven-dev/aidd-framework/commit/29ef579a683302c28f23de383acc1912ebcfe01e))
+* **framework:** extract meta-cognition skills into dedicated plugin ([2bf0b6e](https://github.com/ai-driven-dev/aidd-framework/commit/2bf0b6e5e8cb2d300808332cbe68af626d72009f))
+* **framework:** make content tool-agnostic and self-contained ([84165a9](https://github.com/ai-driven-dev/aidd-framework/commit/84165a917c9c36b6bca10599e9f4699908bd79ba))
+* **framework:** move ide-mapping rules to aidd-context plugin ([791ac84](https://github.com/ai-driven-dev/aidd-framework/commit/791ac849e94e53bff674e3b6b295b1e351337b3f))
+* **framework:** remove embedded skill content for distribution-mode migration ([ee43a32](https://github.com/ai-driven-dev/aidd-framework/commit/ee43a323505791ffb7d41395539c7bc665e8a6c5))
+* **framework:** rename skill folders from [X.X] to NN-name format ([c8968bc](https://github.com/ai-driven-dev/aidd-framework/commit/c8968bc79dd7f24976392a6bce0c7f30c35b2ede))
+* **framework:** unify plan/status/tracking into living plan template ([180c504](https://github.com/ai-driven-dev/aidd-framework/commit/180c5047750f5aaf6093c425cec9ce6657ca3ad9))

@@ -1,0 +1,41 @@
+# Changelog
+
+## [1.0.0](https://github.com/ai-driven-dev/aidd-framework/compare/aidd-refine-v1.0.0...aidd-refine-v1.0.0) (2026-05-19)
+
+
+### Features
+
+* **aidd-refine:** add shadow-areas gap analyzer skill + evals CI ([0a731ad](https://github.com/ai-driven-dev/aidd-framework/commit/0a731adce448786520701a64d69ed0af24994087))
+* **framework:** refactor to marketplace plugin architecture and skills ([27128a9](https://github.com/ai-driven-dev/aidd-framework/commit/27128a96314904b7b57b0bc419e4d29b7a7edaf0))
+
+
+### Bug Fixes
+
+* **framework:** correct slash command naming in docs ([adad60a](https://github.com/ai-driven-dev/aidd-framework/commit/adad60aacaa120f3abf55100625bed7a3a87a50a))
+
+
+### Miscellaneous
+
+* **aidd-refine:** clean up shadow-areas evals and catalog ([f577db6](https://github.com/ai-driven-dev/aidd-framework/commit/f577db65837b9e59617526f4dd055d3f7147bef7))
+* **ci:** SHA-pin every external action and add CodeQL workflow ([66d5fcf](https://github.com/ai-driven-dev/aidd-framework/commit/66d5fcf99776df2885a84b2ef70943ff63099748))
+* **framework:** bump aidd-pm to 1.0.0 and apply audit fixes ([97573bc](https://github.com/ai-driven-dev/aidd-framework/commit/97573bcf1b7624f6cf1acaa62791b9cdbe1b237b))
+* **framework:** merge feat/readme-wow into main ([8f42cfc](https://github.com/ai-driven-dev/aidd-framework/commit/8f42cfc067dd973d0d689593a59da0582f2168e6))
+* **framework:** regenerate plugin catalogs after audit sweep ([448b111](https://github.com/ai-driven-dev/aidd-framework/commit/448b111662335197c9e4e415db391fc4e8d5c79f))
+* **framework:** release as 4.0.0 ([5b0fc9d](https://github.com/ai-driven-dev/aidd-framework/commit/5b0fc9d9116e37abe7ef5dbb5d06438f607475e8))
+* **framework:** self-host summarize-markdown.mjs for per-plugin CATALOG ([ee62862](https://github.com/ai-driven-dev/aidd-framework/commit/ee6286237d3b1b97ebaf67aa68f8152015d61e90))
+* **framework:** trigger ci recheck after history rewrite ([391760e](https://github.com/ai-driven-dev/aidd-framework/commit/391760e19eb69fe80e098c3aefc3c527cda2169a))
+
+
+### Documentation
+
+* **framework:** add per-plugin CATALOG.md (auto-generated) ([d613282](https://github.com/ai-driven-dev/aidd-framework/commit/d61328242639bb77909055019629b1da3891bffc))
+* phase 1 critical audit fixes (skill invocations, catalog, templates) ([5b5342b](https://github.com/ai-driven-dev/aidd-framework/commit/5b5342b890ae0be4eb8302fd36e5a4d8882b9cbb))
+* phase 2 high-severity audit fixes (security, lefthook, accuracy) ([95f29c3](https://github.com/ai-driven-dev/aidd-framework/commit/95f29c33c6a523166eaf09e0293000ee356a27dd))
+* phase 3 medium/low audit fixes (OSS scaffolding, UX, accuracy) ([5e43650](https://github.com/ai-driven-dev/aidd-framework/commit/5e436502d7632b377f73129cfb73d312c3eea9ce))
+* propagate per-skill README pattern across all plugins ([4427e3e](https://github.com/ai-driven-dev/aidd-framework/commit/4427e3ee7c096d03f7d7b30d418f3484e9d0541a))
+
+
+### Refactoring
+
+* **framework:** canonical action shape, model-A rules, plugin audit sweep ([29ef579](https://github.com/ai-driven-dev/aidd-framework/commit/29ef579a683302c28f23de383acc1912ebcfe01e))
+* **framework:** extract meta-cognition skills into dedicated plugin ([2bf0b6e](https://github.com/ai-driven-dev/aidd-framework/commit/2bf0b6e5e8cb2d300808332cbe68af626d72009f))

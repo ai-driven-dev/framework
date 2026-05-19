@@ -1,5 +1,5 @@
 {
-  ".": "3.9.1",
+  ".": "4.0.0",
   "plugins/aidd-context": "1.0.0",
   "plugins/aidd-dev": "1.0.0",
   "plugins/aidd-vcs": "1.0.0",

@@ -3,5 +3,7 @@
   "name": "aidd-refine",
   "version": "1.0.0",
   "description": "Meta-cognition: refine input through brainstorming, refine output through challenge and condensed communication mode.",
-  "author": { "name": "AI-Driven Dev" }
+  "author": {
+    "name": "AI-Driven Dev"
+  }
 }
