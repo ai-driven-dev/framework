@@ -25,6 +25,7 @@
     },
     "plugins/aidd-context": {
       "package-name": "aidd-context",
+      "release-as": "1.0.0",
       "extra-files": [
         {
           "type": "json",
@@ -35,6 +36,7 @@
     },
     "plugins/aidd-dev": {
       "package-name": "aidd-dev",
+      "release-as": "1.0.0",
       "extra-files": [
         {
           "type": "json",
@@ -45,6 +47,7 @@
     },
     "plugins/aidd-vcs": {
       "package-name": "aidd-vcs",
+      "release-as": "1.0.0",
       "extra-files": [
         {
           "type": "json",
@@ -66,6 +69,7 @@
     },
     "plugins/aidd-orchestrator": {
       "package-name": "aidd-orchestrator",
+      "release-as": "1.0.0",
       "extra-files": [
         {
           "type": "json",
@@ -76,6 +80,7 @@
     },
     "plugins/aidd-refine": {
       "package-name": "aidd-refine",
+      "release-as": "1.0.0",
       "extra-files": [
         {
           "type": "json",
