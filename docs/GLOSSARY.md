@@ -52,7 +52,7 @@ A GitHub label the `async-dev` use case uses to track an issue through the pipel
 
 ## `claude/working` lock
 
-The label the `run-async-dev` skill adds to an issue at the start of a run and removes when the PR opens. It exists to prevent two concurrent agents from picking up the same issue. It is set after dependency resolution and before any code is written.
+The label the `async-dev` skill adds to an issue at the start of a run and removes when the PR opens. It exists to prevent two concurrent agents from picking up the same issue. It is set after dependency resolution and before any code is written.
 
 ## Run id
 
