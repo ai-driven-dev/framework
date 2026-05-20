@@ -87,7 +87,7 @@ Examples:
 - **User says "run" but config is absent.**
   Surface the conflict and stop: `Setup must complete before run. Run /aidd-orchestrator:00:async-dev with action=setup first.`
 - **Workflow webhook fires `to-implement` but the issue already has an open closing PR.**
-  Route to `review` (the PR is the active surface). Comment on the issue: `Issue #N has open PR #M — routed to review instead of run. Apply /to-review to PR #M to trigger review explicitly.`
+  Route to `review` (the PR is the active surface). Comment on the issue: `Issue #N has open PR #M — routed to review instead of run. Apply the `to-review` label to PR #M to trigger review explicitly.`
 - **Label `to-implement` AND label `to-review` both present.**
   Route to `review` (more specific to the PR lifecycle). Comment to clarify.
 
