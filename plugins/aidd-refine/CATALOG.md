@@ -13,6 +13,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/02-challenge`](#skills02-challenge)
   - [`skills/03-condense`](#skills03-condense)
   - [`skills/04-shadow-areas`](#skills04-shadow-areas)
+  - [`skills/05-fact-check`](#skills05-fact-check)
 
 ---
 
@@ -82,4 +83,18 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [probe-style.md](skills/04-shadow-areas/references/probe-style.md) | - |
 | `references` | [severity-rubric.md](skills/04-shadow-areas/references/severity-rubric.md) | - |
 | `-` | [SKILL.md](skills/04-shadow-areas/SKILL.md) | `Analytical scan of a markdown artifact (idea, user-stories, PRD, spec) to surface blind spots - unstated assumption, missing actor, missing failure mode, ambiguous term, missing acceptance criterion, missing edge case, and missing dependency - emitting a structured shadow report grouped by category and sorted by severity. Use when the user says "find blind spots in this spec", "what's missing in this PRD", "shadow report", "shadow analysis", "scan for gaps", "find what's missing", "spot blind spots", "review for gaps", or asks for an analytical gap scan of a written artifact. Do NOT use for interactive clarification through iterative Q&A (use aidd-refine:01:brainstorm for that), implementing features, writing tests, or reviewing code style.` |
+
+#### `skills/05-fact-check`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-identify-claims.md](skills/05-fact-check/actions/01-identify-claims.md) | - |
+| `actions` | [02-verify.md](skills/05-fact-check/actions/02-verify.md) | - |
+| `actions` | [03-report.md](skills/05-fact-check/actions/03-report.md) | - |
+| `assets` | [report-template.md](skills/05-fact-check/assets/report-template.md) | - |
+| `evals` | [scenarios.json](skills/05-fact-check/evals/scenarios.json) | - |
+| `-` | [README.md](skills/05-fact-check/README.md) | - |
+| `references` | [claim-categories.md](skills/05-fact-check/references/claim-categories.md) | - |
+| `references` | [verification-cascade.md](skills/05-fact-check/references/verification-cascade.md) | - |
+| `-` | [SKILL.md](skills/05-fact-check/SKILL.md) | `Verify factual claims in a piece of text against authoritative sources and rewrite it with footnote citations, hedging any claim that cannot be confirmed. Runs a cheapest-first verification cascade (project memory and docs, then codebase inspection, then web lookup) and reports both sources when they disagree. Use when the user says "fact-check this", "verify that claim", "are you sure about that", "is that actually true", "cite your sources", "where did you get that fact", "did you make that up", "double-check the version you gave me", "vérifie cette information", or "es-tu sûr de ça". Do NOT use to auto-guard the AI's own output (this skill only fires on an explicit request), to judge code logic correctness, or to clarify vague requirements through iterative Q&A - use `aidd-refine:01:brainstorm` for that.` |
 
