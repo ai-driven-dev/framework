@@ -1,6 +1,6 @@
 # Auth modes (local poll script)
 
-How `scripts/aidd-async-poll.sh` authenticates against GitHub when running on a developer machine. This document covers the **local** path only; the **remote** (GitHub Actions) path uses `github_write_auth.mode` and is documented in [`../actions/02-ask-config.md`](../actions/02-ask-config.md) step 4.
+How `scripts/aidd-async-poll.sh` authenticates against GitHub when running on a developer machine. This document covers the **local** path only; the **remote** (GitHub Actions) path uses `github_write_auth.mode` and is documented in [`02-ask-config.md`](../../actions/setup/02-ask-config.md) step 4.
 
 The local poll script does not own a config object for authentication. It shells out to the `gh` CLI (`gh issue list`, `gh issue view`, `gh pr list`), and `gh` resolves credentials itself. Two practical sources are supported, with one fallback path between them.
 
