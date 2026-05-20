@@ -101,7 +101,7 @@ Each action is a self-contained markdown file with inputs, outputs, depends-on, 
 
 ## SDLC capability discovery
 
-Two plugins (currently `aidd-dev:00:sdlc` and `aidd-orchestrator`) advertise themselves as SDLC orchestrators in their `description` frontmatter. Other plugins discover them at runtime by matching the description (never by hardcoded plugin name), which keeps the system swappable: replace `aidd-dev` with any plugin that advertises SDLC orchestration and the orchestrator's `02:run-async-dev` skill will delegate to it instead.
+Two plugins (currently `aidd-dev:00:sdlc` and `aidd-orchestrator`) advertise themselves as SDLC orchestrators in their `description` frontmatter. Other plugins discover them at runtime by matching the description (never by hardcoded plugin name), which keeps the system swappable: replace `aidd-dev` with any plugin that advertises SDLC orchestration and the orchestrator's `00:async-dev` skill will delegate to it instead.
 
 ```mermaid
 ---

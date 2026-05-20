@@ -7,7 +7,7 @@
 ### A community-maintained marketplace of skills, agents, and rules for Claude Code.
 
 <p>
-  <kbd>6 plugins</kbd> · <kbd>30 skills</kbd> · <kbd>3 agents</kbd> · <kbd>MIT</kbd>
+  <kbd>6 plugins</kbd> · <kbd>31 skills</kbd> · <kbd>3 agents</kbd> · <kbd>MIT</kbd>
 </p>
 
 <p>
@@ -67,7 +67,7 @@ Inside any Claude Code session, register this marketplace and install a plugin:
 
 If the marketplace repo is private, `/plugin marketplace add <owner>/<repo>` requires that you be authenticated with read access to that repo (typically via `gh auth login` or a PAT on the machine running Claude Code). See the Anthropic [Discover and install plugins](https://code.claude.com/docs/en/discover-plugins) docs for the full install flow.
 
-Browse the plugin catalog below and install whichever plugins fit your workflow. Each plugin ships its own onboarding skill (`<plugin>:00:onboard`) that walks you through the skills it owns - so once you install `aidd-context`, running `Use skill aidd-context:00:onboard` guides you through that plugin specifically. There is no cross-plugin tour today; pick a plugin from the table below, install it, then run its onboard skill.
+Browse the plugin catalog below and install whichever plugins fit your workflow. The `aidd-context` plugin ships an onboarding skill - after installing it, run `Use skill aidd-context:00:onboard` for a guided tour of that plugin. The other plugins have no onboard skill; pick one from the table below, install it, and consult its README for the skills it owns. There is no cross-plugin tour today.
 
 Prefer browsing inside Claude Code? Run `/plugin` and open the **Discover** tab once the marketplace is registered.
 
@@ -94,7 +94,7 @@ Project init, architecture, generation of Claude Code context artifacts (skills,
 
 `10 skills` · stable
 
-SDLC loop: plan, implement, assert, review, test, refactor, debug.
+SDLC loop: sdlc, plan, implement, assert, audit, review, test, refactor, debug, for-sure.
 
 </td>
 <td width="33%" valign="top">
@@ -119,20 +119,20 @@ Ticket info, user stories, PRD, spec drafting.
 </td>
 <td width="33%" valign="top">
 
+### 🪞 [aidd-refine](plugins/aidd-refine/README.md)
+
+`5 skills` · stable
+
+Meta-cognition: brainstorm, challenge, condense, shadow-areas, fact-check.
+
+</td>
+<td width="33%" valign="top">
+
 ### 🎼 [aidd-orchestrator](plugins/aidd-orchestrator/README.md)
 
 `1 skill` · stable (`async-dev`)
 
 Label an issue, get a PR; re-label, get the review applied. Router-based skill: one entry point, three sub-flows (setup, run, review).
-
-</td>
-<td width="33%" valign="top">
-
-### 🪞 [aidd-refine](plugins/aidd-refine/README.md)
-
-`4 skills` · stable
-
-Meta-cognition: brainstorm, challenge, condense, shadow-areas.
 
 </td>
 </tr>

@@ -1,8 +1,6 @@
 # Skills catalog
 
-Aggregated index of every skill across the framework. Sourced from each plugin's `SKILL.md` `description` frontmatter; regenerate by running the same logic the lefthook `summarize-plugin-catalogs` step uses, scoped to the framework root.
-
-Generated: 2026-05-15
+Aggregated index of every skill across the framework. Sourced from each plugin's `SKILL.md` `description` frontmatter; regenerate with `node scripts/generate-skills-catalog.mjs`.
 
 ## aidd-context
 
@@ -41,7 +39,7 @@ VCS workflow plugin for the AI-Driven Development framework.
 
 | Skill | Description |
 |-------|-------------|
-| [`aidd-vcs:01:commit`](../plugins/aidd-vcs/skills/01-commit/README.md) | Create an atomic git commit with conventional message format. Use when the user says "commit", "git commit", "create a commit", "commit my changes", "commit and push", or invokes `/aidd-vcs:01:commit`. Do NOT use for amending existing commits, force-pushing, rebasing, opening pull requests, or release tagging. |
+| [`aidd-vcs:01:commit`](../plugins/aidd-vcs/skills/01-commit/README.md) | Create an atomic git commit with conventional message format. Use when the user says "commit", "git commit", "create a commit", "commit my changes", "commit and push", or invokes `/commit`. Do NOT use for amending existing commits, force-pushing, rebasing, opening pull requests, or release tagging. |
 | [`aidd-vcs:02:pull-request`](../plugins/aidd-vcs/skills/02-pull-request/README.md) | Create a draft pull or merge request from the current branch. Use when the user says "open a pr", "open a pull request", "create a pr", "create a merge request", "open mr", "draft a pr for this branch", or invokes `/pull-request`. Do NOT use for committing changes, pushing a branch directly, tagging releases, merging an existing request, or amending commits. |
 | [`aidd-vcs:03:release-tag`](../plugins/aidd-vcs/skills/03-release-tag/README.md) | Cut a semver release with annotated tag and release notes. Use when the user says "release", "tag", "tag this release", "bump version", "release v1.2.0", "cut a release", or invokes `/release-tag`. Do NOT use for plain commits without a tag, opening pull requests, pushing a branch only, or amending existing tags. |
 | [`aidd-vcs:04:issue-create`](../plugins/aidd-vcs/skills/04-issue-create/README.md) | Create an issue in the configured ticketing tool. Use when the user says "new issue", "create an issue", "file a bug", "file an issue", "report bug", "open an issue", or invokes `/issue-create`. Do NOT use for committing changes, opening pull requests, tagging releases, or commenting on existing issues. |
@@ -57,14 +55,6 @@ Product management plugin for the AI-Driven Development framework.
 | [`aidd-pm:03:prd`](../plugins/aidd-pm/skills/03-prd/README.md) | Generate a structured Product Requirements Document from a feature description or user stories, validated with the user before save. Use when the user says "prd", "draft prd", "write prd", "product requirements for X", "generate a prd", or invokes `/prd`. Do NOT use for writing user stories, drafting a technical implementation plan, or writing source code. |
 | [`aidd-pm:04:spec`](../plugins/aidd-pm/skills/04-spec/README.md) | Generate or refine a project spec from a free-form human request, an existing PRD, or reviewer findings. Use when the user says "draft spec", "spec for X", "refine the spec", "generate spec from prd", "/spec", or when an orchestrator needs a normalized contract before planning. Do NOT use for writing source code, drafting a full PRD, or modifying a validated and locked spec. |
 
-## aidd-orchestrator
-
-Orchestration plugin for the AI-Driven Development framework.
-
-| Skill | Description |
-|-------|-------------|
-| [`aidd-orchestrator:00:async-dev`](../plugins/aidd-orchestrator/skills/00-async-dev/README.md) | Single router-based skill covering the full async-dev pipeline (setup, run, review). Picks the sub-flow from `$ARGUMENTS` keyword (`setup` / `run` / `review`), trigger source (label `to-implement` / `to-review`, comment `@claude /implement` / `/review`), repo state (workflow + config presence, PR linked), or natural-language intent. Use when the user wants to install async-dev, implement a ready issue, address review comments on a PR, or for any webhook-triggered run. Do NOT use for plain status checks or for SDLC orchestration unrelated to issue/PR automation. |
-
 ## aidd-refine
 
 Meta-cognition plugin for the AI-Driven Development framework.
@@ -74,6 +64,16 @@ Meta-cognition plugin for the AI-Driven Development framework.
 | [`aidd-refine:01:brainstorm`](../plugins/aidd-refine/skills/01-brainstorm/README.md) | Interactive brainstorming session to clarify and refine requests through iterative questioning. Use when user mentions unclear requirements, vague ideas, or needs clarification on features. Do NOT use for clear technical specs, implementation details, or when requirements are already well-defined. |
 | [`aidd-refine:02:challenge`](../plugins/aidd-refine/skills/02-challenge/README.md) | Rethink prior work to verify correctness against an agreed plan, classifying findings as deal-breakers, suggestions, or correct, with a confidence score. Use when the user says "challenge this", "rethink your plan", "is this correct", "review my last decision", "challenge my decision", "challenge what you did", "is my decision right", "criticize this", "find flaws", or asks for a critical review of just-completed work. Do NOT use for line-by-line code review against a style guide, implementing features, writing tests, or generating new code. |
 | [`aidd-refine:03:condense`](../plugins/aidd-refine/skills/03-condense/README.md) | Toggle terse output mode with intensity levels (lite, full, ultra) so prose drops articles, filler, and pleasantries while code, quoted errors, and security warnings stay verbatim. Also reports real token usage and estimated savings under condense mode for the current session. Use when the user says "condense", "condense output", "be more concise", "shorter answers", "tighten output", "/condense", "/condense full", "/condense ultra", "stop condense", "normal mode", "/condense-stats", "how much have we saved", or "token savings". Do NOT use for editing existing prose, summarizing a long document, or compressing source code (only output style is affected, not content). |
+| [`aidd-refine:04:shadow-areas`](../plugins/aidd-refine/skills/04-shadow-areas/README.md) | Analytical scan of a markdown artifact (idea, user-stories, PRD, spec) to surface blind spots - unstated assumption, missing actor, missing failure mode, ambiguous term, missing acceptance criterion, missing edge case, and missing dependency - emitting a structured shadow report grouped by category and sorted by severity. Use when the user says "find blind spots in this spec", "what's missing in this PRD", "shadow report", "shadow analysis", "scan for gaps", "find what's missing", "spot blind spots", "review for gaps", or asks for an analytical gap scan of a written artifact. Do NOT use for interactive clarification through iterative Q&A (use aidd-refine:01:brainstorm for that), implementing features, writing tests, or reviewing code style. |
+| [`aidd-refine:05:fact-check`](../plugins/aidd-refine/skills/05-fact-check/README.md) | Verify factual claims in a piece of text against authoritative sources and rewrite it with footnote citations, hedging any claim that cannot be confirmed. Runs a cheapest-first verification cascade (project memory and docs, then codebase inspection, then web lookup) and reports both sources when they disagree. Use when the user says "fact-check this", "verify that claim", "are you sure about that", "is that actually true", "cite your sources", "where did you get that fact", "did you make that up", "double-check the version you gave me", "vérifie cette information", or "es-tu sûr de ça". Do NOT use to auto-guard the AI's own output (this skill only fires on an explicit request), to judge code logic correctness, or to clarify vague requirements through iterative Q&A - use `aidd-refine:01:brainstorm` for that. |
+
+## aidd-orchestrator
+
+Orchestration plugin for the AI-Driven Development framework.
+
+| Skill | Description |
+|-------|-------------|
+| [`aidd-orchestrator:00:async-dev`](../plugins/aidd-orchestrator/skills/00-async-dev/README.md) | Single entry point for the async-dev pipeline (setup, run, review). Hybrid router decides which sub-flow to execute from $ARGUMENTS keyword (`setup` / `run` / `review`), trigger source (label `to-implement` / `to-review`, comment `@claude /implement` / `/review`), repo state (workflow + config presence, PR linked to issue), or natural-language intent. Use when the user says "set up async dev", "run async dev on issue #N", "address review on PR #N", "/async-dev", "claude on issues", or when triggered by a webhook with the matching labels or comments. Do NOT use for plain status checks on the async pipeline or for SDLC orchestration unrelated to issue/PR automation. |
 
 ## See also
 
