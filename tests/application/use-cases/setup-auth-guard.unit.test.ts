@@ -11,7 +11,10 @@ import { buildUnitDeps } from "../../helpers/ports/build-unit-deps.js";
 import { OverwritePrompter } from "../../helpers/ports/scripted-prompter.js";
 
 function makeNoOpLatestResolver() {
-  return { resolveLatest: vi.fn().mockResolvedValue(null) } as never;
+  return {
+    resolveLatest: vi.fn().mockResolvedValue(null),
+    listRootReleases: vi.fn().mockResolvedValue([]),
+  } as never;
 }
 
 function makeNoOp(value: unknown) {

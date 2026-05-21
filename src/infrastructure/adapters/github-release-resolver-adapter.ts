@@ -10,6 +10,9 @@ import type { HttpClient } from "./http-client.js";
 
 const GITHUB_API_BASE = "https://api.github.com";
 
+/** Root release tag: `v` followed by a digit (`v4.0.0`, `v3.7.3-pm.1`). */
+const ROOT_RELEASE_TAG_REGEX = /^v\d/;
+
 export class GitHubReleaseResolverAdapter implements LatestReleaseResolver {
   constructor(
     private readonly http: HttpClient,
@@ -30,6 +33,24 @@ export class GitHubReleaseResolverAdapter implements LatestReleaseResolver {
       return typeof first.tag_name === "string" ? first.tag_name : null;
     } catch (err) {
       return this.handleError(err, url);
+    }
+  }
+
+  async listRootReleases(repo: string): Promise<string[]> {
+    // per_page=100 (GitHub max) so root tags are not buried under
+    // release-please per-component tags on busy repos.
+    const url = `${GITHUB_API_BASE}/repos/${repo}/releases?per_page=100`;
+    const token = (await this.tokenProvider?.resolve()) ?? undefined;
+    try {
+      const response = await this.http.get(url, { token });
+      const body = response.body as unknown[];
+      if (!Array.isArray(body)) return [];
+      return body
+        .map((r) => (r as Record<string, unknown>).tag_name)
+        .filter((t): t is string => typeof t === "string" && ROOT_RELEASE_TAG_REGEX.test(t));
+    } catch (err) {
+      this.handleError(err, url);
+      return [];
     }
   }
 

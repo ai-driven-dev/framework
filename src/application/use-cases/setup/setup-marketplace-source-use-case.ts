@@ -4,6 +4,9 @@ import type { LatestReleaseResolver } from "../../../domain/ports/latest-release
 import type { Prompter } from "../../../domain/ports/prompter.js";
 import { InputRequiredError } from "../../errors.js";
 
+/** Sentinel select value for "install from main branch tip" — maps to ref undefined. */
+const HEAD_CHOICE = "__HEAD__";
+
 export interface SetupMarketplaceSourceOptions {
   projectRoot: string;
   sourceFromCli?: MarketplaceSourceMode;
@@ -32,9 +35,9 @@ export class SetupMarketplaceSourceUseCase {
   ): Promise<MarketplaceSourceMode> {
     if (source.kind !== "remote") return source;
     if (source.ref !== undefined) return source;
-    const defaultRef = await this.releaseResolver.resolveLatest(source.repo);
-    if (interactive) return this.promptVersion(source.repo, defaultRef);
-    return MarketplaceSourceMode.remote(source.repo, defaultRef ?? undefined);
+    const rootReleases = await this.releaseResolver.listRootReleases(source.repo);
+    if (interactive) return this.promptVersion(source.repo, rootReleases);
+    return MarketplaceSourceMode.remote(source.repo, rootReleases[0]);
   }
 
   private async promptSource(): Promise<MarketplaceSourceMode> {
@@ -48,22 +51,26 @@ export class SetupMarketplaceSourceUseCase {
   }
 
   private async promptRemoteSource(): Promise<MarketplaceSourceMode> {
-    const defaultRef = await this.releaseResolver.resolveLatest(
-      MarketplaceSourceMode.remote().repo
-    );
-    return this.promptVersion(MarketplaceSourceMode.remote().repo, defaultRef);
+    const repo = MarketplaceSourceMode.remote().repo;
+    const rootReleases = await this.releaseResolver.listRootReleases(repo);
+    return this.promptVersion(repo, rootReleases);
   }
 
   private async promptVersion(
     repo: string,
-    defaultRef: string | null
+    rootReleases: readonly string[]
   ): Promise<MarketplaceSourceMode> {
-    const defaultLabel = defaultRef ?? "HEAD";
-    const input = await this.prompter.input(
-      `Marketplace version (default: ${defaultLabel}):`,
-      defaultLabel
+    const choices = [
+      ...rootReleases.map((tag, i) => ({
+        name: i === 0 ? `${tag} (latest)` : tag,
+        value: tag,
+      })),
+      { name: "HEAD (main branch tip — unreleased)", value: HEAD_CHOICE },
+    ];
+    const picked = await this.prompter.select<string>(
+      "Select framework release to install:",
+      choices
     );
-    const ref = input.trim() === "" ? (defaultRef ?? undefined) : input.trim();
-    return MarketplaceSourceMode.remote(repo, ref);
+    return MarketplaceSourceMode.remote(repo, picked === HEAD_CHOICE ? undefined : picked);
   }
 }
