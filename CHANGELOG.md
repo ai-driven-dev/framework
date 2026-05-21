@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.1.3](https://github.com/ai-driven-dev/aidd-cli/compare/v4.1.2...v4.1.3) (2026-05-21)
+
+
+### Bug Fixes
+
+* **setup:** release picker + self-update EPERM hint ([#255](https://github.com/ai-driven-dev/aidd-cli/issues/255)) ([8205411](https://github.com/ai-driven-dev/aidd-cli/commit/82054111a69ca5e286eacc2c799ea3e40d41271e))
+* **setup:** release picker for framework version + self-update EPERM hint ([7c3a151](https://github.com/ai-driven-dev/aidd-cli/commit/7c3a15177bf3cc07bd233496a6c44d59e4be0594))
+
 ## [4.1.2](https://github.com/ai-driven-dev/aidd-cli/compare/v4.1.1...v4.1.2) (2026-05-18)
 
 
