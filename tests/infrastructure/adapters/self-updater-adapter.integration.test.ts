@@ -148,4 +148,30 @@ describe("self-updater-adapter — install", () => {
       });
     expect(() => makeAdapter().install()).toThrow("read:packages");
   });
+
+  it("surfaces an elevation hint when the install fails with EPERM", () => {
+    mockPlatform.mockReturnValue("win32");
+    mockExecSync
+      .mockReturnValueOnce(
+        "C:\\Program Files\\nodejs\\aidd.cmd" as unknown as ReturnType<typeof execSync>
+      )
+      .mockImplementationOnce(() => {
+        const err = new Error("Command failed") as Error & { stderr: Buffer };
+        err.stderr = Buffer.from("npm error code EPERM\nnpm error syscall mkdir");
+        throw err;
+      });
+    expect(() => makeAdapter().install()).toThrow(/Administrator|npm config set prefix/);
+  });
+
+  it("classifies EACCES failures as elevation errors too", () => {
+    mockPlatform.mockReturnValue("linux");
+    mockExecSync
+      .mockReturnValueOnce("/usr/local/bin/aidd" as unknown as ReturnType<typeof execSync>)
+      .mockImplementationOnce(() => {
+        const err = new Error("Command failed") as Error & { stderr: string };
+        err.stderr = "npm error code EACCES";
+        throw err;
+      });
+    expect(() => makeAdapter().install()).toThrow(/npm config set prefix/);
+  });
 });

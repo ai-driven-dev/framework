@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import { platform } from "node:os";
 import {
+  ElevatedPermissionUpdateError,
   FrameworkResolutionError,
   PackageManagerDetectionError,
   UpdateError,
@@ -92,11 +93,29 @@ export class SelfUpdaterAdapter implements SelfUpdater {
 
   install(): string {
     const { pm, binaryPath } = detectPackageManager();
+    const command = PM_INSTALL_COMMANDS[pm];
     try {
-      execSync(PM_INSTALL_COMMANDS[pm], { stdio: "inherit" });
-    } catch {
+      // stderr piped (not inherited) so EPERM/EACCES can be classified;
+      // captured stderr is echoed back to the user before throwing.
+      execSync(command, { stdio: ["inherit", "inherit", "pipe"] });
+    } catch (err) {
+      const stderr = extractStderr(err);
+      if (stderr.length > 0) process.stderr.write(stderr);
+      if (isPermissionError(stderr)) throw new ElevatedPermissionUpdateError(command);
       throw new UpdateError();
     }
     return binaryPath;
   }
+}
+
+function extractStderr(err: unknown): string {
+  if (err === null || typeof err !== "object" || !("stderr" in err)) return "";
+  const raw = (err as { stderr: unknown }).stderr;
+  if (typeof raw === "string") return raw;
+  if (raw instanceof Buffer) return raw.toString("utf8");
+  return "";
+}
+
+function isPermissionError(stderr: string): boolean {
+  return /\bEPERM\b|\bEACCES\b/.test(stderr);
 }

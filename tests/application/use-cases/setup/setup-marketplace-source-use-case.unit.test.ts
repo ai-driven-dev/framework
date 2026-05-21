@@ -8,8 +8,11 @@ import {
 import type { LatestReleaseResolver } from "../../../../src/domain/ports/latest-release-resolver.js";
 import { ScriptedPrompter } from "../../../helpers/ports/scripted-prompter.js";
 
-function makeResolver(tag: string | null): LatestReleaseResolver {
-  return { resolveLatest: vi.fn().mockResolvedValue(tag) };
+function makeResolver(rootReleases: string[]): LatestReleaseResolver {
+  return {
+    resolveLatest: vi.fn().mockResolvedValue(rootReleases[0] ?? null),
+    listRootReleases: vi.fn().mockResolvedValue(rootReleases),
+  };
 }
 
 const PROJECT_ROOT = "/test-project";
@@ -17,7 +20,7 @@ const PROJECT_ROOT = "/test-project";
 describe("SetupMarketplaceSourceUseCase", () => {
   describe("--release flag path (ref pre-supplied)", () => {
     it("returns source unchanged when ref is already set", async () => {
-      const resolver = makeResolver("v9.9.9");
+      const resolver = makeResolver(["v9.9.9"]);
       const prompter = new ScriptedPrompter([]);
       const uc = new SetupMarketplaceSourceUseCase(prompter, resolver);
 
@@ -29,11 +32,11 @@ describe("SetupMarketplaceSourceUseCase", () => {
       });
 
       expect(result.ref).toBe("v1.0.0");
-      expect(resolver.resolveLatest).not.toHaveBeenCalled();
+      expect(resolver.listRootReleases).not.toHaveBeenCalled();
     });
 
     it("local source is returned unchanged (no release resolution)", async () => {
-      const resolver = makeResolver("v1.0.0");
+      const resolver = makeResolver(["v1.0.0"]);
       const prompter = new ScriptedPrompter([]);
       const uc = new SetupMarketplaceSourceUseCase(prompter, resolver);
 
@@ -45,36 +48,34 @@ describe("SetupMarketplaceSourceUseCase", () => {
       });
 
       expect(result.kind).toBe("local");
-      expect(resolver.resolveLatest).not.toHaveBeenCalled();
+      expect(resolver.listRootReleases).not.toHaveBeenCalled();
     });
   });
 
   describe("non-interactive auto-resolve path", () => {
-    it("resolves latest tag and stores it in ref when no ref given", async () => {
-      const resolver = makeResolver("v2.3.4");
+    it("pins the newest root release when no ref given", async () => {
+      const resolver = makeResolver(["v2.3.4", "v2.3.3"]);
       const prompter = new ScriptedPrompter([]);
       const uc = new SetupMarketplaceSourceUseCase(prompter, resolver);
 
-      const source = MarketplaceSourceMode.remote();
       const result = await uc.execute({
         projectRoot: PROJECT_ROOT,
-        sourceFromCli: source,
+        sourceFromCli: MarketplaceSourceMode.remote(),
         interactive: false,
       });
 
       expect(result.ref).toBe("v2.3.4");
-      expect(resolver.resolveLatest).toHaveBeenCalledWith(DEFAULT_FRAMEWORK_REPO);
+      expect(resolver.listRootReleases).toHaveBeenCalledWith(DEFAULT_FRAMEWORK_REPO);
     });
 
-    it("falls back to HEAD (undefined ref) when no releases exist", async () => {
-      const resolver = makeResolver(null);
+    it("falls back to HEAD (undefined ref) when no root releases exist", async () => {
+      const resolver = makeResolver([]);
       const prompter = new ScriptedPrompter([]);
       const uc = new SetupMarketplaceSourceUseCase(prompter, resolver);
 
-      const source = MarketplaceSourceMode.remote();
       const result = await uc.execute({
         projectRoot: PROJECT_ROOT,
-        sourceFromCli: source,
+        sourceFromCli: MarketplaceSourceMode.remote(),
         interactive: false,
       });
 
@@ -82,7 +83,7 @@ describe("SetupMarketplaceSourceUseCase", () => {
     });
 
     it("throws InputRequiredError when no source given and non-interactive", async () => {
-      const resolver = makeResolver(null);
+      const resolver = makeResolver([]);
       const prompter = new ScriptedPrompter([]);
       const uc = new SetupMarketplaceSourceUseCase(prompter, resolver);
 
@@ -92,39 +93,40 @@ describe("SetupMarketplaceSourceUseCase", () => {
     });
   });
 
-  describe("interactive prompt path", () => {
-    it("prompts source kind and version, uses default tag when user presses enter", async () => {
-      const resolver = makeResolver("v3.0.0");
+  describe("interactive release picker", () => {
+    it("pins the release the user selects from the root-release list", async () => {
+      const resolver = makeResolver(["v3.0.0", "v2.9.0"]);
       const prompter = new ScriptedPrompter([
         ScriptedPrompter.answer.select("remote"),
-        ScriptedPrompter.answer.input("v3.0.0"),
+        ScriptedPrompter.answer.select("v2.9.0"),
       ]);
       const uc = new SetupMarketplaceSourceUseCase(prompter, resolver);
 
       const result = await uc.execute({ projectRoot: PROJECT_ROOT, interactive: true });
 
       expect(result.kind).toBe("remote");
-      expect(result.ref).toBe("v3.0.0");
+      expect(result.ref).toBe("v2.9.0");
     });
 
-    it("stores user-typed ref when user enters a different tag", async () => {
-      const resolver = makeResolver("v3.0.0");
+    it("maps the HEAD choice to an undefined ref", async () => {
+      const resolver = makeResolver(["v3.0.0"]);
       const prompter = new ScriptedPrompter([
         ScriptedPrompter.answer.select("remote"),
-        ScriptedPrompter.answer.input("v1.0.0"),
+        ScriptedPrompter.answer.select("__HEAD__"),
       ]);
       const uc = new SetupMarketplaceSourceUseCase(prompter, resolver);
 
       const result = await uc.execute({ projectRoot: PROJECT_ROOT, interactive: true });
 
-      expect(result.ref).toBe("v1.0.0");
+      expect(result.kind).toBe("remote");
+      expect(result.ref).toBeUndefined();
     });
 
-    it("uses undefined ref when user enters empty string and no releases exist", async () => {
-      const resolver = makeResolver(null);
+    it("offers only HEAD when the repo has no root releases", async () => {
+      const resolver = makeResolver([]);
       const prompter = new ScriptedPrompter([
         ScriptedPrompter.answer.select("remote"),
-        ScriptedPrompter.answer.input(""),
+        ScriptedPrompter.answer.select("__HEAD__"),
       ]);
       const uc = new SetupMarketplaceSourceUseCase(prompter, resolver);
 
@@ -135,7 +137,7 @@ describe("SetupMarketplaceSourceUseCase", () => {
     });
 
     it("prompts for local path when user selects local", async () => {
-      const resolver = makeResolver(null);
+      const resolver = makeResolver([]);
       const prompter = new ScriptedPrompter([
         ScriptedPrompter.answer.select("local"),
         ScriptedPrompter.answer.input("/abs/framework"),
@@ -149,7 +151,7 @@ describe("SetupMarketplaceSourceUseCase", () => {
     });
 
     it("resolves relative path to absolute when user enters a relative local path", async () => {
-      const resolver = makeResolver(null);
+      const resolver = makeResolver([]);
       const prompter = new ScriptedPrompter([
         ScriptedPrompter.answer.select("local"),
         ScriptedPrompter.answer.input("./some/relative/path"),
@@ -159,20 +161,19 @@ describe("SetupMarketplaceSourceUseCase", () => {
       const result = await uc.execute({ projectRoot: PROJECT_ROOT, interactive: true });
 
       expect(result.kind).toBe("local");
-      expect(result.path).toMatch(/^[/\\]/); // starts with / (POSIX) or \ (Windows)
+      expect(result.path).toMatch(/^[/\\]/);
     });
   });
 
   describe("interactive with sourceFromCli (ref not set)", () => {
-    it("prompts for version when interactive and no ref supplied", async () => {
-      const resolver = makeResolver("v4.0.0");
-      const prompter = new ScriptedPrompter([ScriptedPrompter.answer.input("v4.0.0")]);
+    it("shows the release picker when interactive and no ref supplied", async () => {
+      const resolver = makeResolver(["v4.0.0"]);
+      const prompter = new ScriptedPrompter([ScriptedPrompter.answer.select("v4.0.0")]);
       const uc = new SetupMarketplaceSourceUseCase(prompter, resolver);
 
-      const source = MarketplaceSourceMode.remote();
       const result = await uc.execute({
         projectRoot: PROJECT_ROOT,
-        sourceFromCli: source,
+        sourceFromCli: MarketplaceSourceMode.remote(),
         interactive: true,
       });
 

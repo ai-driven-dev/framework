@@ -14,8 +14,8 @@
   "chat.instructionsFilesLocations": {
     ".github/instructions": true
   },
-  "chat.notifyWindowOnConfirmation": true,
-  "chat.notifyWindowOnResponseReceived": true,
+  "chat.notifyWindowOnConfirmation": "windowNotFocused",
+  "chat.notifyWindowOnResponseReceived": "windowNotFocused",
   "chat.plugins.enabled": true,
   "chat.tools.edits.autoApprove": {
     "**/*": true,

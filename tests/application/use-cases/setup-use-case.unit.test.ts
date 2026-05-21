@@ -14,7 +14,10 @@ import { buildUnitDeps, initAndInstall, initProject } from "../../helpers/ports/
 import { OverwritePrompter, ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
 
 function makeNoOpLatestResolver() {
-  return { resolveLatest: vi.fn().mockResolvedValue(null) } as never;
+  return {
+    resolveLatest: vi.fn().mockResolvedValue(null),
+    listRootReleases: vi.fn().mockResolvedValue([]),
+  } as never;
 }
 
 type RegisterFrameworkMock = MarketplaceRegisterFrameworkUseCase & {
