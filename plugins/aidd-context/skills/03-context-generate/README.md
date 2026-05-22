@@ -2,7 +2,7 @@
 
 # 03 - Context Generate
 
-Generates the seven context artifacts a project can consume:
+Generates the seven context artifacts a project can consume, across the host AI tool(s) detected in the project. Before writing any artifact the skill runs the Model Y gate: detect installed tools from D1 signals, propose the set to the user, wait for explicit confirmation (1..N), then for each (artifact, confirmed tool) look up `references/ai-mapping.md`; if unsupported, block with explanation (D2) and continue the rest.
 
 - **Skills** - router-based: `SKILL.md` router + atomic testable actions + minimal evals.
 - **Agents** - single-file agent definitions following the framework's agent template.
@@ -42,14 +42,14 @@ For skill generation, the skill walks 6 atomic actions:
 5. `write-actions` - write each action file.
 6. `validate` - spawn one agent per action, run its `## Test`, and aggregate into a pass/fail report.
 
-The other six artifact types have their own sub-flows under `actions/<sub-domain>/`:
+The other six artifact types have their own sub-flows under `actions/<sub-domain>/`. Each entry action runs the Model Y tool-resolution gate (detect -> propose -> confirm -> D2 block) before writing.
 
-- `actions/agents/` - single-action agent generation.
-- `actions/rules/` - single-action rule generation with deterministic category selection.
-- `actions/commands/` - single-action flat slash command generation.
-- `actions/hooks/` - single-action hook entry generation, branching on target tool (Claude/Cursor/Codex -> JSON; OpenCode -> JS module; Copilot -> plugin-bundled).
-- `actions/plugins/` - 4-action plugin scaffold flow (capture-intent -> scaffold-tree -> seed-first-skill -> validate).
-- `actions/marketplaces/` - 3-action marketplace catalog flow (init -> add-plugin-entry -> validate).
+- `actions/agents/` - single-action agent generation; writes once per confirmed tool.
+- `actions/rules/` - single-action rule generation with deterministic category selection; writes once per confirmed tool.
+- `actions/commands/` - single-action flat slash command generation; path resolved per tool from `ai-mapping.md`.
+- `actions/hooks/` - single-action hook entry generation; iterates over confirmed tools (Claude/Cursor/Codex -> JSON; OpenCode -> JS module; Copilot -> D2 block for project/user-scope hooks).
+- `actions/plugins/` - 4-action plugin scaffold flow (capture-intent -> scaffold-tree -> seed-first-skill -> validate); OpenCode D2-blocks (no plugin manifest).
+- `actions/marketplaces/` - 3-action marketplace catalog flow (init -> add-plugin-entry -> validate); OpenCode and Copilot D2-block for marketplaces.
 
 ## Outputs
 
