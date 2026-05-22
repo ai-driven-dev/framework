@@ -42,7 +42,7 @@ General rule: **drop unsupported fields; never invent a substitute key**. When a
 | -------------- | ---------------------------------------------------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------- |
 | Claude Code    | `.claude/settings.json` `hooks` key OR `<plugin>/hooks/hooks.json` OR skill/agent frontmatter | `.claude-plugin/plugin.json`     | `.claude-plugin/marketplace.json`                                    |
 | Cursor         | `.cursor/hooks.json` (project), `~/.cursor/hooks.json` (user), `<plugin>/hooks.json` (plugin) | `.cursor-plugin/plugin.json`     | `.cursor-plugin/marketplace.json`                                    |
-| OpenCode       | Plugin code only: JS/TS module under `.opencode/plugins/` exports a hooks object              | npm package OR JS/TS file (no manifest file) | None - ecosystem page only                                          |
+| OpenCode       | Plugin code only: JS/TS module under `.opencode/plugins/` exports a hooks object              | **Not supported** (see O1 rationale in the OpenCode section below) | None - ecosystem page only                                          |
 | GitHub Copilot | `<plugin>/hooks.json` OR `<plugin>/hooks/hooks.json` (plugin-bundled only)                    | `plugin.json` at plugin root     | Configured via `chat.plugins.marketplaces` setting; no per-repo file |
 | Codex CLI      | `.codex/hooks.json` (project / user) OR `[hooks]` table in `.codex/config.toml`               | `.codex-plugin/plugin.json`      | `.agents/plugins/marketplace.json` (project, personal)               |
 
@@ -198,8 +198,11 @@ General rule: **drop unsupported fields; never invent a substitute key**. When a
 
 ### Plugins
 
-- No separate manifest file. A plugin IS the JS/TS module
-- Registration: either drop a file under one of the plugin dirs above, or list an npm package under `plugin: ["pkg-name"]` in `opencode.json`
+**Not supported (O1 block).** OpenCode has no plugin manifest format and no slot tree. A plugin is a single JS/TS module, not a collection of declarative files. This skill scaffolds declarative file sets, which have no direct equivalent here.
+
+Block message: "Plugin scaffold for OpenCode is not supported: OpenCode has no plugin manifest and no slot tree. A plugin is a single JS/TS module. Place skills or agents directly under `.opencode/`, or publish an npm package."
+
+- Registration for JS/TS plugins: drop a file under `.opencode/plugins/` (project) or `~/.config/opencode/plugins/` (global), or list an npm package under `plugin: ["pkg-name"]` in `opencode.json`.
 - Cache for npm-installed plugins: `~/.cache/opencode/node_modules/`
 
 ### Marketplaces
