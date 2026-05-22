@@ -1,6 +1,6 @@
 # 01 - Generate agent
 
-Generate a specialized agent file tailored to user requirements, validated with the user before write, and saved to every installed AI tool's native agents location.
+Generate a specialized agent file tailored to user requirements, validated with the user before write, and saved to each confirmed AI tool's native agents location.
 
 ## Inputs
 
@@ -12,7 +12,11 @@ mode: interactive | auto   # optional, default interactive
 ## Outputs
 
 ```yaml
-agent_path: <tool-specific agents location>/<generated-agent-name>.<ext>
+files_written:
+  - { tool: <id>, path: <tool-specific agents location>/<generated-agent-name>.<ext> }
+  - ...
+blocked_tools:
+  - { tool: <id>, reason: <D2 explanation> }
 name_proposals:
   - <short catchy name 1>
   - <short catchy name 2>
@@ -27,8 +31,9 @@ quality_score: 1-10
 3. **Review.** Score the generated agent 1-10 on clarity and completeness. Inputs and outputs MUST be ultra concise and precise.
 4. **Wait for user confirmation** before finalizing. In `mode = auto` (called from an upstream skill that has already validated inputs), skip the gate and continue.
 5. **Propose 3 first names** for the agent. Each name must be short and catchy, making sense with the agent's purpose (word game, acronym, etc.).
-6. **Save.** Write the completed agent file to every installed AI tool's native agents location using its path, naming, and extension conventions from `@../../references/ai-mapping.md`. Skip tools whose agents surface is marked "not supported". Indexing the new file (catalog, docs page, README section, etc.) is the host's responsibility, not this action's.
+6. **Resolve target tools.** Follow `@../../references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the agents surface in `@../../references/ai-mapping.md`; if the cell is marked unsupported, apply the D2 block for that tool and record it in `blocked_tools`. Continue with the remaining supported tools.
+7. **Save.** Write the completed agent file to each confirmed supported tool's native agents location using its path, naming, and extension conventions from `@../../references/ai-mapping.md`. Indexing the new file (catalog, docs page, README section, etc.) is the host's responsibility, not this action's.
 
 ## Test
 
-The agent file exists at `agent_path` in every installed tool's agents location (skipping unsupported surfaces); the file matches the structure of `@../../assets/agents/agent-template.md`; `quality_score >= 8`.
+For each confirmed tool whose agents surface is supported, the agent file exists at the tool-specific path in `files_written`, matches the structure of `@../../assets/agents/agent-template.md`, and uses the correct extension and frontmatter shape from `@../../references/ai-mapping.md`. Each D2-blocked tool appears in `blocked_tools` with a non-empty reason; no tool is silently skipped. `quality_score >= 8`.
