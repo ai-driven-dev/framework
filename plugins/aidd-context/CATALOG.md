@@ -60,7 +60,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [state-matrix.md](skills/00-onboard/assets/state-matrix.md) | - |
 | `evals` | [scenarios.json](skills/00-onboard/evals/scenarios.json) | - |
 | `-` | [README.md](skills/00-onboard/README.md) | - |
-| `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Detect the project's aidd-context state and guide the user to one concrete next aidd-context action through a state -> recommend -> execute loop. Use when the user says "where do I start", "I'm new to this plugin", "onboard me", "what should I run next", "guide me through aidd-context", or invokes `aidd-context:00:onboard`. Do NOT use to enumerate every installed skill from raw user intent (a dedicated discovery skill in this plugin handles that), and do NOT use to teach the global cross-plugin AIDD flow (a separate cross-plugin onboard owns that scope).` |
+| `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Detect the current project's state and open a hub of project actions - understand the project, set up or refresh the memory bank, or continue the AIDD development journey. Silently inspects the project, the AIDD setup, and which AIDD plugins are installed, then adapts the menu to that context. Use when the user says "where do I start", "onboard me", "onboard me to this project", "what should I run next", "what should I work on next", "what's the state of this project", "guide me through aidd", "guide me through aidd-context", or invokes `aidd-context:00:onboard`. Do NOT use to enumerate every installed surface from raw user intent (the discovery skill in this plugin handles that).` |
 
 #### `skills/01-bootstrap`
 

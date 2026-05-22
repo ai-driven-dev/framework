@@ -1,50 +1,128 @@
 # State matrix
 
-Two-stage decision used by `actions/01-detect-state.md` and `actions/02-recommend-next.md`.
+Decision model for `actions/01-detect-state.md` and `actions/02-recommend-next.md`.
 
-## Stage 1 - filesystem rows
+Onboard is a **hub**, not a linear track. After detecting the project state it shows a short briefing and a menu of project actions, marks the natural starting point, and lets the user choose. It never forces a single next step, and it never assumes the user is "done" or "not done" with a phase.
 
-Evaluated top-down by `01-detect-state`. First match wins. These rows are decidable from filesystem probes alone.
+Onboard never hard-codes a skill from another plugin. It works in **categories**. A category is a function ("technical planning", "shipping"), not a skill id. Each category resolves to a real installed skill at runtime by matching skill descriptions. A category with no matching installed skill is a gap, reported by function, never invented.
 
-| #   | State signal                                                                                              | Next aidd-context skill        | Why                                                                                  |
-| --- | --------------------------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------ |
-| 1   | Greenfield: empty repo, no `aidd_docs/`, no source code, no `INSTALL.md`                                  | `aidd-context:01:bootstrap`    | Architect the stack and produce `aidd_docs/INSTALL.md` before any other context work |
-| 2   | `aidd_docs/` missing OR memory bank missing OR no `<aidd_project_memory>` block in any AI context file    | `aidd-context:02:project-init` | The memory bank and context block are prerequisites for every other aidd-context skill |
-| 3   | `aidd_docs/memory/` exists but one or more files still match the unedited template (placeholder content)  | `aidd-context:02:project-init` | Re-run `generate-memory` and `review-memory` to fill placeholders                    |
-| 4   | Setup complete: memory bank populated, context block present, no obvious gap                              | `ask`                          | Filesystem cannot decide next step; defer to Stage 2                                 |
+## The hub menu
 
-When `recommended_skill == ask`, action 02 jumps to Stage 2 instead of rendering the run/explain/handoff menu.
+Rendered by `02-recommend-next` on every pass, after a three-line briefing header.
 
-## Stage 2 - intent menu
+| Option | Action                       | Drill-down                                                        |
+| ------ | ---------------------------- | ----------------------------------------------------------------- |
+| 1      | Understand this project      | Print the full project briefing, then re-show the hub             |
+| 2      | Memory bank                  | Resolve `bootstrap` (greenfield), `context-setup` (init), or `memory-upkeep` (refresh) |
+| 3      | Continue the SDLC            | Show the SDLC sub-menu of journey legs                            |
+| 4      | List every installed surface | Resolve `discovery`                                               |
+| 5      | Stop                         | End the loop                                                      |
 
-Rendered by `02-recommend-next` only when Stage 1 returns `ask`. The user picks the situation that matches them. Each option maps to one aidd-context skill (or stop).
+## Suggested option
 
-| Option | Situation                                                                  | Maps to                          |
-| ------ | -------------------------------------------------------------------------- | -------------------------------- |
-| 1      | I need to capture a learning, decision, or new convention                  | `aidd-context:05:learn`          |
-| 2      | I want to add or update a Mermaid diagram                                  | `aidd-context:04:mermaid`        |
-| 3      | I want to generate a new skill, agent, or rule                             | `aidd-context:03:context-generate` |
-| 4      | I want to see every installed skill across plugins, not just aidd-context  | `aidd-context:06:discovery`      |
-| 5      | I'm just exploring, nothing to do right now                                | stop                             |
+Detection marks ONE hub option as the natural starting point. A suggestion, never a forced run - the user may pick any option.
 
-Stage 2 is the only place where `06-discovery` is ever proposed by onboard, and only because the user explicitly asked for a cross-plugin lister.
+| Detected state                                                       | Suggested option                       |
+| -------------------------------------------------------------------- | -------------------------------------- |
+| Greenfield empty repo                                                | 2 (memory bank, resolves to `bootstrap`) |
+| `aidd_docs/`, memory bank, or `<aidd_project_memory>` block missing  | 2 (memory bank, resolves to `context-setup`) |
+| Memory files still match the unedited template                       | 2 (memory bank, resolves to `context-setup`) |
+| Setup complete                                                       | 3 (continue the SDLC)                  |
+
+Option 1 is always available and never marked "suggested" - it is read-only orientation the user picks when they want it.
+
+## The SDLC sub-menu
+
+Rendered by `02-recommend-next` when the user picks hub option 3. The detected `sdlc_phase` is shown as a one-line **hint** above the menu, never as a forced choice.
+
+| Option | Situation                                          | Category    |
+| ------ | -------------------------------------------------- | ----------- |
+| 1      | Clarify a raw idea                                 | `refine`    |
+| 2      | Write user stories, a PRD, or a spec               | `specify`   |
+| 3      | Produce a technical implementation plan            | `plan`      |
+| 4      | Implement a feature                                | `implement` |
+| 5      | Review code or feature behavior                    | `review`    |
+| 6      | Commit, open a pull request, or release            | `ship`      |
+| 7      | Back to the hub menu                               | -           |
+
+## The AIDD journey
+
+The backbone the hub and the SDLC sub-menu walk together. Legs 0 and 1 (`bootstrap`, `context-setup`) are reached through hub option 2; legs 2 to 7 (`refine` through `ship`) through the SDLC sub-menu. Leg 0 (`bootstrap`) fires only on a greenfield empty repo.
+
+| Leg | Category        | Function                                          |
+| --- | --------------- | ------------------------------------------------- |
+| 0   | `bootstrap`     | Architect a greenfield stack and produce `INSTALL.md` |
+| 1   | `context-setup` | Project memory bank and AI context block          |
+| 2   | `refine`        | Clarify and challenge a raw idea                  |
+| 3   | `specify`       | User stories, a PRD, or a spec                    |
+| 4   | `plan`          | Produce a technical implementation plan           |
+| 5   | `implement`     | Write the code against the plan                   |
+| 6   | `review`        | Review code quality and feature behavior          |
+| 7   | `ship`          | Commit, open a pull request, release              |
+
+Cross-cutting categories (reachable from the hub, not journey legs): `memory-upkeep`, `diagram`, `generate`, `discovery`.
+
+`memory-upkeep` resolves to the installed skill whose description covers updating or refreshing project memory **after** initial setup. It is distinct from `context-setup`, which covers the initial creation of the memory bank. If both a setup skill and an upkeep skill match, prefer the one whose description mentions updating, refreshing, or capturing learnings over the one that mentions initializing or bootstrapping.
+
+## Category resolution
+
+For every category that needs a skill, `02-recommend-next` resolves it:
+
+1. Take the installed AIDD skill list captured by `01-detect-state`.
+2. Match the category function against each installed skill's `description`.
+3. Exactly one fit -> use that skill.
+4. No fit -> the category is a **gap**: report that this action needs an AIDD plugin that is not installed, described by function only. Never invent a skill id, never name a plugin id.
+5. Several fit -> list them and let the user pick.
+
+## aidd-context-installed-alone
+
+When `only_aidd_context` is true, the categories `refine`, `specify`, `plan`, `implement`, `review`, `ship` all resolve to gaps. Onboard then:
+
+- Keeps the hub fully usable: options 1, 2, 4 and the cross-cutting categories all resolve inside the context layer.
+- When the user opens the SDLC sub-menu, states once that those legs unlock when their AIDD plugins are installed, naming the legs by function, never by plugin id.
+
+## `sdlc_phase` - a hint only
+
+`sdlc_phase` is derived best-effort and shown to orient the user. It NEVER selects a step on its own. "Source code present" cannot distinguish mid-build from build-finished, so onboard always lets the user pick the SDLC leg from the sub-menu.
+
+Derivation, ambiguity always resolving to `unknown`:
+
+- No `specs_present`, no `has_source_code` -> `idea`
+- `specs_present`, little/no `has_source_code` -> `specified`
+- `plan_present`, little/no `has_source_code` -> `planned`
+- `has_source_code`, no `open_pr` -> `in-progress`
+- `open_pr` -> `in-review`
+- Signals contradict each other, or none are present -> `unknown`
 
 ## Conflict rules
 
-- Stage 1 rows are evaluated top-down. First match wins.
-- If the user picks an option from Stage 2 that conflicts with Stage 1 (e.g. invokes onboard before memory exists, then picks "I want to add a diagram"), Stage 1 wins; surface the conflict in one sentence before letting the user override.
-- Stop (Stage 2 option 5) is the only outcome that terminates the loop. Every other outcome loops back to `01-detect-state` after execution or handoff.
+- The suggested option is advisory. The user may pick any hub option.
+- If the user picks an SDLC leg that needs setup not yet done (e.g. implement before the memory bank exists), surface the conflict in one sentence before complying.
+- Stop (hub option 5) is the only outcome that ends the loop. Every other outcome loops back to `01-detect-state`.
 
 ## State signals reference
 
-Used by `01-detect-state` to decide which Stage 1 row matches.
+| Signal                   | Check                                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------------ |
+| `aidd_docs_present`       | `aidd_docs/` directory exists at project root                                                    |
+| `memory_dir_present`      | `aidd_docs/memory/` exists                                                                       |
+| `memory_files_filled`    | At least one memory file has more than the template's placeholder content                        |
+| `memory_state`           | Derived: `absent`, `placeholder`, or `filled`                                                    |
+| `context_block_present`  | `grep -l '<aidd_project_memory>' CLAUDE.md AGENTS.md .github/copilot-instructions.md` returns 1+ |
+| `install_md_present`      | `aidd_docs/INSTALL.md` exists                                                                     |
+| `repo_is_empty`          | No source files outside `aidd_docs/`, `.git/`, lockfiles, and dotfiles                            |
+| `has_source_code`        | Source files exist outside `aidd_docs/`                                                           |
+| `detected_stack`         | A stack manifest is present (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`) |
+| `specs_present`          | Requirement docs exist in `aidd_docs/` (user stories, PRD, or spec)                              |
+| `plan_present`           | A technical plan doc exists in `aidd_docs/`                                                       |
+| `open_pr`                | The current branch has an open pull or merge request                                             |
+| `installed_aidd_plugins` | AIDD plugins enabled in the AI tool                                                              |
+| `installed_aidd_skills`  | Skills exposed by those plugins, with their `description`                                         |
+| `only_aidd_context`      | `aidd-context` is the sole installed AIDD plugin                                                  |
+| `sdlc_phase`             | Derived hint: `idea`, `specified`, `planned`, `in-progress`, `in-review`, or `unknown`            |
 
-| Signal                       | Check                                                                                            |
-| ---------------------------- | ------------------------------------------------------------------------------------------------ |
-| `aidd_docs_present`          | `aidd_docs/` directory exists at project root                                                    |
-| `memory_dir_present`         | `aidd_docs/memory/` exists                                                                       |
-| `memory_files_count`         | Number of `.md` files in `aidd_docs/memory/`                                                     |
-| `memory_files_filled`        | At least one memory file has more than the template's placeholder content                        |
-| `context_block_present`      | `grep -l '<aidd_project_memory>' CLAUDE.md AGENTS.md .github/copilot-instructions.md` returns 1+ |
-| `install_md_present`         | `aidd_docs/INSTALL.md` exists                                                                    |
-| `repo_is_empty`              | No source files outside `aidd_docs/`, `.git/`, lockfiles, and dotfiles                           |
+### `memory_state` derivation
+
+- No `aidd_docs/memory/` -> `absent`
+- `aidd_docs/memory/` exists but `memory_files_filled` is false -> `placeholder`
+- `memory_files_filled` is true -> `filled`
