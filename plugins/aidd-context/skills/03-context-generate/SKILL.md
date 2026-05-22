@@ -12,8 +12,8 @@ Generates the seven context artifacts a project consumes, across the host AI too
 - **Rules** - framework rule files governing editor/agent behavior.
 - **Commands** - flat `.md` slash command files (frontmatter + body), for one-shot manual triggers.
 - **Hooks** - JSON / TOML entries (or a JS/TS plugin module for OpenCode) bound to lifecycle events.
-- **Plugins** - full plugin scaffold (`.claude-plugin/plugin.json`, README, dirs, optional seed skill).
-- **Marketplaces** - `.claude-plugin/marketplace.json` catalogs that distribute one or more plugins.
+- **Plugins** - full plugin scaffold (a plugin manifest + README + slot dirs, path resolved per tool from `references/ai-mapping.md`; optional seed skill).
+- **Marketplaces** - a marketplace catalog file (path resolved per tool from `references/ai-mapping.md`) that distributes one or more plugins.
 
 ## Skill-generation actions
 
@@ -33,7 +33,7 @@ Files: `actions/skills/01-capture-intent.md` … `actions/skills/06-validate.md`
 - `actions/agents/01-generate-agent.md` - generate an agent file from `assets/agents/agent-template.md`.
 - `actions/rules/01-generate-rules.md` - generate a rule file from `assets/rules/rule-template.md`.
 - `actions/commands/01-generate-command.md` - generate a flat slash command from `assets/commands/command-template.md`.
-- `actions/hooks/01-generate-hook.md` - generate a hook entry, branching on the target tool's hooks surface.
+- `actions/hooks/01-generate-hook.md` - generate a hook entry, iterating over the confirmed tools' hooks surfaces.
 - `actions/plugins/01..04` - plugin scaffold flow: capture-intent → scaffold-tree → seed-first-skill → validate.
 - `actions/marketplaces/01..03` - marketplace catalog flow: init-marketplace → add-plugin-entry → validate.
 

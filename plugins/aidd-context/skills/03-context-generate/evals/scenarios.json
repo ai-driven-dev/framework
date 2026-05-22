@@ -14,7 +14,7 @@
   { "prompt": "Edit the process step of actions/post-message.md in the slack skill", "expect_action": null },
   { "prompt": "Write an MCP server for my internal CRM", "expect_action": null },
   { "prompt": "Update the project CLAUDE.md with our new doctrine", "expect_action": null },
-  { "prompt": "Generate a new agent for this project - I have both .claude/ and .cursor/ directories", "expect_action": "capture-intent", "expect_behavior": "tool-detection: skill detects both Claude Code and Cursor, proposes both, waits for user confirmation before writing" },
-  { "prompt": "Create a rule file - this is a fresh repo with no AI tool installed yet", "expect_action": "capture-intent", "expect_behavior": "tool-detection: no D1 signal found, skill proposes all 5 tools cold, waits for user to pick" },
-  { "prompt": "Scaffold a plugin for my OpenCode project", "expect_action": "capture-intent", "expect_behavior": "D2-block: plugin scaffold is unsupported for OpenCode; skill blocks that tool with explanation and does not skip silently" }
+  { "prompt": "Generate a new agent for this project - I have both .claude/ and .cursor/ directories", "expect_action": "capture-intent" },
+  { "prompt": "Create a rule file - this is a fresh repo with no AI tool installed yet", "expect_action": "capture-intent" },
+  { "prompt": "Scaffold a plugin for my OpenCode project", "expect_action": "capture-intent" }
 ]

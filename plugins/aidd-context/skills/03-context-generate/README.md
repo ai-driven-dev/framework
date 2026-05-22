@@ -9,8 +9,8 @@ Generates the seven context artifacts a project can consume, across the host AI 
 - **Rules** - framework rule files governing editor / agent behaviour.
 - **Commands** - flat `.md` slash command files (frontmatter + body), for one-shot manual triggers without supporting files.
 - **Hooks** - JSON / TOML entries (or a JS/TS plugin module for OpenCode) for lifecycle events, written to the matching scope.
-- **Plugins** - full plugin scaffold (`.claude-plugin/plugin.json`, README, dirs, optional seed skill).
-- **Marketplaces** - `.claude-plugin/marketplace.json` catalogs that distribute one or more plugins.
+- **Plugins** - full plugin scaffold (a plugin manifest + README + slot dirs, path resolved per tool from `references/ai-mapping.md`; optional seed skill).
+- **Marketplaces** - a marketplace catalog file (path resolved per tool from `references/ai-mapping.md`) that distributes one or more plugins.
 
 Evaluations are declared before implementation; every action carries a `## Test`.
 
@@ -58,8 +58,8 @@ The other six artifact types have their own sub-flows under `actions/<sub-domain
 - Or a generated rule file from `assets/rules/rule-template.md`.
 - Or a flat slash command file from `assets/commands/command-template.md`.
 - Or a hook entry merged into the matching scope's hooks surface (JSON file, TOML table, or JS module per target tool).
-- Or a fresh plugin tree with `.claude-plugin/plugin.json` + README + selected slot dirs.
-- Or a marketplace catalogue `.claude-plugin/marketplace.json` + one or more plugin entries.
+- Or a fresh plugin tree with a plugin manifest + README + selected slot dirs (path resolved per tool from `references/ai-mapping.md`).
+- Or a marketplace catalog file + one or more plugin entries (path resolved per tool from `references/ai-mapping.md`).
 
 ## Prerequisites
 
@@ -68,8 +68,8 @@ The other six artifact types have their own sub-flows under `actions/<sub-domain
 
 ## Rules
 
-R1-R10 in [`SKILL.md`](SKILL.md) are the non-bypassable invariants:
-`SKILL.md` is a pure router, one skill = one domain, references one-level deep, `SKILL.md` ≤ 500 lines, descriptions must include explicit triggers and a "Do NOT use for..." clause, every action has a `## Test`, and auto-trigger skills ship at least 3 eval scenarios.
+R1-R11 in [`SKILL.md`](SKILL.md) are the non-bypassable invariants:
+`SKILL.md` is a pure router, one skill = one domain, references one-level deep, `SKILL.md` ≤ 500 lines, descriptions must include explicit triggers and a "Do NOT use for..." clause, every action has a `## Test`, auto-trigger skills ship at least 3 eval scenarios, and the tool-resolution gate (detect -> propose -> confirm -> D2 block) runs before writing any artifact in generate mode.
 
 ## Technical details
 
