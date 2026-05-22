@@ -1,39 +1,46 @@
 # 03 - Execute or handoff
 
-Apply the user's numeric choice from action 02. Run the skill, explain it, hand it off to a new session, swap the recommendation, or stop the loop.
+Carry out the single action that `02-recommend-next` resolved: print the project briefing, run the resolved skill, explain it, hand it off, swap the choice, or stop.
 
 ## Inputs
 
-- `stage` (required) - `A` (run/explain/handoff/swap/stop menu) or `B` (intent menu). Set by action 02.
-- `choice` (required) - integer between 1 and 5 from action 02.
-- `skill` (required) - the aidd-context skill identifier resolved by action 02 (from Stage 1 row or Stage 2 mapping). Ignored when Case B option 5 was picked.
+- `action` (required) - one of `briefing`, `run`, `explain`, `handoff`, `swap`, `stop`.
+- `skill` - the resolved skill id, or `gap` when no installed skill matched. Required for `run`, `explain`, `handoff`.
+- `category` - the category `02-recommend-next` resolved.
+- `origin_menu` - `hub` or `sdlc`, the menu the user last picked from. Used by `swap`.
+- Internal state from `01-detect-state` - held in conversation context, the source for the `briefing` content.
 
 ## Outputs
 
-The user sees one of five outcomes depending on `choice`. Every outcome ends with an explicit next instruction (either a re-detect loop or a stop).
+The user sees one of six outcomes. Every outcome ends with an explicit next instruction (a re-detect loop, a menu re-render, or a stop).
 
-| Choice | Outcome                                                                                                                                                       | Loop back to action 01? |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| 1      | Skill invoked inline in this session. After it finishes, ask the user to confirm the result in one word.                                                      | yes, after confirmation |
-| 2      | Print a 3 to 5 line plain-text summary of the skill (purpose, expected output, side effects). Then re-render the menu from action 02.                          | no, re-render menu       |
-| 3      | Print the exact invocation string (`/<skill-id>` or equivalent) for a new session. Ask the user to paste it into a fresh chat and report back.                | yes, after report-back  |
-| 4      | Ask the user which aidd-context skill they want instead. Validate it is one of the six aidd-context skills. Then run the chosen skill with the same outcomes 1 to 3 menu. | yes, after execution    |
-| 5      | Print a one-line goodbye listing the next likely step for the future ("when memory drifts, run `aidd-context:05:learn`"). End the loop.                       | no, terminate           |
+| Action     | Outcome                                                                                                          | Loop back to action 01? |
+| ---------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| `briefing` | Print the full project briefing. Read-only, no writes.                                                           | yes                     |
+| `run`      | Skill invoked inline in this session. After it finishes, ask the user to confirm the result with `ok / not ok / explain`. | yes, after confirmation |
+| `explain`  | Print a 3 to 5 line plain-text summary of the skill. Then re-render the skill menu from action 02.                | no, re-render menu      |
+| `handoff`  | Print the exact invocation string for a new session. Ask the user to paste it and report back.                   | yes, after report-back  |
+| `swap`     | Re-render the menu the user last picked from (`origin_menu`: hub or SDLC sub-menu).                               | no, back to action 02   |
+| `stop`     | Print a one-line goodbye. End the loop.                                                                           | no, terminate           |
 
 ## Process
 
-1. **Branch on `choice`.** Implement each row in the table above. `skill` refers to whichever aidd-context skill action 02 resolved (Stage 1 row or Stage 2 mapping).
-2. **Choice 1 - run inline.** Invoke `skill` the same way a slash command would. Stream its output. Once it returns, ask the user: `Result OK? Reply ok / not ok / explain.` Wait for the reply. On `ok`, return to action 01 to re-detect state. On `not ok`, ask one follow-up to capture what went wrong, then return to action 01.
-3. **Choice 2 - explain.** Pull the `description` frontmatter from the `skill`'s `SKILL.md`. Render: 1 line purpose, 1 to 2 lines on what it produces, 1 line on side effects (writes to `aidd_docs/`, modifies AI context files, etc.). Do not invoke. Re-render the menu unchanged.
-4. **Choice 3 - handoff.** Print: `Open a new session and run: /<skill-id>`. Then: `Reply done when you've come back with the result.` Wait. On `done`, return to action 01.
-5. **Choice 4 - swap.** Ask: `Which aidd-context skill? Reply with its id (e.g. 05-learn).` Validate the id is in `{01-bootstrap, 02-project-init, 03-context-generate, 04-mermaid, 05-learn, 06-discovery}`. If not, repeat once. Once valid, set `skill` to the chosen id and re-enter this action from step 1 with a fresh Case A menu render.
-6. **Choice 5 - stop.** Print the goodbye line. Terminate the skill cleanly. Do not loop.
-7. **Never invent skills.** Never name a skill outside the six aidd-context skills. If the user pushes for one, redirect them to discovery via choice 4.
+1. **Branch on `action`.**
+2. **`briefing`.** Print the full project briefing from the internal state: project name and stack, AIDD setup detail (memory bank state, context block, `INSTALL.md`), SDLC standing with its reasoning and the hedge that "source code present" cannot prove done-ness, the installed AIDD plugins and what each unlocks described by function, and the suggested starting point. No writes. Then return to action 01 to re-detect and re-render the hub.
+3. **`run`.** Invoke `skill` the same way a slash command would. Stream its output. Once it returns, ask: `Result OK? Reply ok / not ok / explain.` Wait. On `ok`, return to action 01. On `not ok`, ask one follow-up to capture what went wrong, then return to action 01.
+4. **`explain`.** Pull the `description` frontmatter from the resolved `skill`'s `SKILL.md`. Render: 1 line purpose, 1 to 2 lines on what it produces, 1 line on side effects. Do not invoke. Re-render the skill menu unchanged.
+5. **`handoff`.** Print: `Open a new session and run: /<skill-id>`. Then: `Reply done when you've come back with the result.` Wait. On `done`, return to action 01.
+6. **`swap`.** Return to action 02 and re-render the menu named by `origin_menu`: the hub menu if `hub`, the SDLC sub-menu if `sdlc`. The user picks again. Do not invoke anything.
+7. **`stop`.** Print the goodbye line. Terminate the skill cleanly. Do not loop.
+8. **`gap` skill.** If `skill` is `gap`, `run` and `handoff` are unavailable. Tell the user the action needs an AIDD plugin that is not installed, by function only, then offer `explain`, `swap`, or `stop`.
+9. **Resolve, never invent.** Only ever invoke or name a skill that action 01 found installed. Never name a skill or plugin that is not installed.
 
 ## Test
 
-- Choice 1 produces a skill invocation and ends with a yes/no/explain prompt.
-- Choice 2 produces a 3 to 5 line description and re-renders the menu without invoking anything.
-- Choice 3 produces an exact `/<skill-id>` invocation string and a `done` wait state.
-- Choice 4 only accepts one of the six aidd-context skill ids; any other input triggers a re-ask.
-- Choice 5 prints a goodbye and the skill exits. No further actions run.
+- `briefing` prints the full project briefing and writes nothing, then loops back to action 01.
+- `run` produces a skill invocation and ends with an `ok / not ok / explain` prompt.
+- `explain` produces a 3 to 5 line description and re-renders the skill menu without invoking anything.
+- `handoff` produces an exact `/<skill-id>` invocation string and a `done` wait state.
+- `swap` re-renders the menu named by `origin_menu` (hub or SDLC sub-menu) and invokes nothing.
+- `stop` prints a goodbye and the skill exits.
+- A `gap` skill never produces a skill invocation; it offers explain, swap, or stop only.

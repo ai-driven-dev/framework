@@ -1,72 +1,83 @@
 # 02 - Recommend next
 
-Turn the Stage 1 snapshot from action 01 into ONE concrete next step. When Stage 1 returns `ask`, render the Stage 2 intent menu first to discover the user's situation, then propose the matched skill.
+Render the project briefing header and the hub menu, route the user's choice down to a single concrete action, and hand it to `03-execute-or-handoff`. The user sees only clean briefing text and numbered menus - never a raw snapshot, never an `Analysis:` label.
 
 ## Inputs
 
-- State snapshot block emitted by `actions/01-detect-state.md` (held in conversation context).
+- Internal working state from `actions/01-detect-state.md` (held in conversation context, not printed).
 
 ## Outputs
 
-Two possible renderings, depending on Stage 1.
-
-### Case A - Stage 1 matched a setup row (rows 1 to 3)
+### The hub render
 
 ```text
-Analysis: <one line summary of detected state>
+Project: <name> - <stack, or "no stack detected">
+AIDD setup: memory bank <absent|placeholder|filled>, context block <present|missing>
+Standing: <one plain-language line derived from sdlc_phase>
 
-Next step: <skill name> - <one-line purpose>
+What do you want to do?
+  1. Understand this project
+  2. Memory bank - <set up | refresh>
+  3. Continue the SDLC
+  4. List every installed surface
+  5. Stop
 
-Choose:
+Suggested: <N> - <one short reason>. Reply with a digit between 1 and 5.
+```
+
+### The SDLC sub-menu - rendered on hub option 3
+
+```text
+Standing: <sdlc_phase as a one-line hint, e.g. "source code is present - you could be mid-build or ready to review">
+
+Where do you want to work?
+  1. Clarify a raw idea
+  2. Write user stories, a PRD, or a spec
+  3. Produce a technical plan
+  4. Implement a feature
+  5. Review code or feature behavior
+  6. Commit, open a pull request, or release
+  7. Back to the hub menu
+
+Reply with a digit between 1 and 7.
+```
+
+### The skill menu - rendered after a category resolves to a skill
+
+```text
+Next: <skill name> - <one-line purpose>
+
   1. Run it now in this session
   2. Explain what it will do, then ask again
   3. Hand off: tell me the command to run in a new session
-  4. Pick a different aidd-context skill
+  4. Pick a different option
   5. Stop the onboard loop
-```
-
-### Case B - Stage 1 returned `ask` (row 4)
-
-```text
-Analysis: Setup looks complete. What brings you here?
-
-  1. I need to capture a learning, decision, or new convention
-  2. I want to add or update a Mermaid diagram
-  3. I want to generate a new skill, agent, or rule
-  4. I want to see every installed skill across plugins, not just aidd-context
-  5. I'm just exploring, nothing to do right now
 
 Reply with a digit between 1 and 5.
 ```
 
-After the user picks an option in Case B, the action maps it to a skill via the Stage 2 table in `state-matrix.md` and re-renders the Case A run/explain/handoff menu for that skill. Option 5 in Case B prints a one-line goodbye and ends the loop.
-
 ## Process
 
-1. **Read the snapshot**. Pull `matched_row` and `recommended_skill` from the action 01 output.
-2. **Branch on `recommended_skill`**.
-   - `aidd-context:01:bootstrap` or `aidd-context:02:project-init` -> Case A.
-   - `ask` -> Case B, then Case A on the resolved skill.
-3. **Case A render**.
-   - One analysis line. Mention only the signals that decided the row (e.g., "Memory bank is empty - the project memory block is the prerequisite for every other skill").
-   - One next-step line. Name the recommended skill and its purpose. Never list more than one skill.
-   - The 5-option run/explain/handoff/swap/stop menu in the exact order shown.
-4. **Case B render**.
-   - One analysis line confirming setup is complete.
-   - The 5 numbered situations from `state-matrix.md` Stage 2, in order.
-   - The digit reminder line.
-5. **Wait for a numeric reply.** Stop until the user answers.
-6. **Reject non-numeric input.** If the user replies with free text, repeat the same menu unchanged and append: `Reply with a digit between 1 and 5.` Do not interpret the text.
-7. **Case B chaining**. When the user picks a situation in Case B:
-   - Map it to the skill via the Stage 2 table.
-   - For option 5 (stop), print a one-line goodbye and exit the skill cleanly.
-   - For options 1 to 4, render Case A for the resolved skill, then wait for the user's run/explain/handoff/swap/stop reply.
-8. **Challenge conflicting picks**. If the user invoked option 4 in Case A and names a skill that does not match `matched_row`, surface the conflict in one sentence (`Detected state recommends X. You asked for Y. Confirm?`) before accepting.
-9. **Pass the choice to action 03**. The handoff payload is `{ stage: A|B, choice: <int>, skill: <skill> }`.
+1. **Read the internal state from 01.** Print nothing from it directly. No `state:` block, no signal dump.
+2. **Render the hub.** The three-line briefing header in clean prose - no `Analysis:` label - then the 5-option menu, then the one-line suggested-option marker and the digit prompt. The `Standing` line turns `sdlc_phase` into plain language, never a raw enum value.
+3. **Wait for a digit.** Free text -> re-render the hub unchanged plus `Reply with a digit between 1 and 5.`
+4. **Route the pick.** Each route that resolves a skill records `origin_menu` - `hub` for picks made on the hub, `sdlc` for picks made on the SDLC sub-menu.
+   - `1` -> hand to 03 with `action=briefing`.
+   - `2` -> resolve the memory category: `bootstrap` if the repo is greenfield, `context-setup` if `memory_state` is `absent` or `placeholder`, `memory-upkeep` if `filled`. Resolve it to a skill, render the skill menu. `origin_menu=hub`.
+   - `3` -> render the SDLC sub-menu. On a leg pick (1 to 6), resolve the category to a skill and render the skill menu with `origin_menu=sdlc`. On `7`, re-render the hub.
+   - `4` -> resolve `discovery`, render the skill menu. `origin_menu=hub`.
+   - `5` -> hand to 03 with `action=stop`.
+5. **Resolve categories** per the matrix `Category resolution` rules. A gap -> replace the `Next:` line with `This action needs an AIDD plugin that is not installed: <function>.` and offer only explain / swap / stop. Never name a skill id or plugin id that is not installed.
+6. **`only_aidd_context`.** When the user opens the SDLC sub-menu and its legs resolve to gaps, add once: `Only the context layer is installed. The legs refine, specify, plan, implement, review, and ship unlock when their AIDD plugins are added.`
+7. **Wait for the skill-menu reply**, then hand to 03 with `{ action: run|explain|handoff|swap|stop, skill, category, origin_menu }`. Skill-menu option 4 (`Pick a different option`) maps to `action=swap`.
+8. **Challenge conflicting picks.** If the user picks an SDLC leg that needs setup not yet done, surface the conflict in one sentence (`Detected state suggests setting up X first. Continue anyway?`) before complying.
+9. **Wait for an explicit reply at every menu.** Do not auto-advance.
 
 ## Test
 
-- Stage 1 rows 1 to 3 produce Case A only: one analysis line, one next-step line, the 5-option run/explain/handoff/swap/stop menu.
-- Stage 1 row 4 produces Case B first; after the user picks 1 to 4, Case A re-renders for the resolved skill; picking 5 ends the loop with a goodbye line.
-- Any free-text reply at either case triggers a re-render plus the digit reminder line.
-- The action never auto-proposes `aidd-context:06:discovery`. It is reachable only via Case B option 4.
+- No raw snapshot, `state:` block, or `Analysis:` label ever appears. The first user-visible output is the three-line briefing header.
+- The hub always renders 5 options and exactly one suggested marker.
+- Hub option 3 renders the 7-option SDLC sub-menu; option 7 returns to the hub.
+- A category with no matching installed skill renders the gap line, never a skill id or foreign plugin id.
+- Free-text input at any menu re-renders that menu plus a digit reminder.
+- The `Standing` line is plain language, never a raw `sdlc_phase` enum value.
