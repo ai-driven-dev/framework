@@ -1,11 +1,11 @@
 ---
 name: aidd-context:03:context-generate
-description: Generate context artifacts - skills (router-based), agents, rules, slash commands, hooks, plugins, and marketplaces. Use when the user wants to create, refactor, add or remove actions in a skill, migrate a legacy slash command into a router-based skill, or generate a new agent, rule, command, hook, plugin, or marketplace. Do NOT use for editing a single action inside an existing skill (edit directly), writing MCP servers, or modifying project-level files.
+description: Generate context artifacts (skills, agents, rules, commands, hooks, plugins, marketplaces) across the host AI tool(s) the project uses. Detects installed tools, proposes the target set, and the user confirms before writing. Use when the user wants to create, refactor, add or remove actions in a skill, migrate a legacy slash command into a router-based skill, or generate a new agent, rule, command, hook, plugin, or marketplace. Do NOT use for editing a single action inside an existing skill (edit directly), writing MCP servers, or modifying project-level files.
 ---
 
 # Context Generate
 
-Generates the seven context artifacts a project consumes:
+Generates the seven context artifacts a project consumes, across the host AI tool(s) detected in the project. Before writing any artifact, the skill detects installed tools (Model Y: detect → propose → confirm), blocks unsupported combinations (D2), and renders once per confirmed tool.
 
 - **Skills** - router-based: `SKILL.md` router + atomic testable actions + minimal evals.
 - **Agents** - single-file agent definitions following the framework's agent template.
@@ -45,6 +45,8 @@ Files: `actions/skills/01-capture-intent.md` … `actions/skills/06-validate.md`
 
 `01` (detects modify) → `03` (re-decompose if structure changes) → `05` (targeted edit) → `06` (re-validate).
 
+Gate exception: in modify mode the target tool is fixed by the existing artifact's on-disk location. Skip detect, propose, confirm, and D2.
+
 ## Runtime tracking
 
 Materialize the flow as a task list at skill entry; a task closes only when its `## Test` passes.
@@ -61,9 +63,11 @@ Materialize the flow as a task list at skill entry; a task closes only when its 
 - **R8** - Every action has a `## Test`: one sentence describing how to verify its intent - a command to run, a concrete check on the produced artifact, or an observable side-effect (API/MCP/state).
 - **R9** - Auto-trigger skills (`disable-model-invocation: false`, default) ship `evals/scenarios.json` = JSON array of at least 3 `{prompt, expect_action}`. Manual-only skills skip.
 - **R10** - Generated skills are written in **English only** (frontmatter, body, actions, references, assets). Holds regardless of conversation language.
+- **R11** - Tool resolution gate (generate-only): detect installed tools (D1 signal set), propose the set to the user, wait for explicit confirmation (1..N), then for each (artifact, confirmed tool) look up `references/ai-mapping.md`; if unsupported, block with explanation (D2) and continue the rest. In modify mode the tool is fixed by the existing artifact's on-disk location - skip the gate entirely. Full procedure: `references/tool-resolution.md`.
 
 ## References
 
+- `references/tool-resolution.md` - shared detect/propose/confirm/D2 procedure (called by every entry action)
 - `references/naming-conventions.md` - tool vs activity naming, hard constraints
 - `references/skill-structure.md` - skill anatomy
 - `references/agents-coordination.md` - multi-agent coordination patterns
