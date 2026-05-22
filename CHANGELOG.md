@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.1.1](https://github.com/ai-driven-dev/aidd-framework/compare/v4.1.0...v4.1.1) (2026-05-22)
+
+
+### Documentation
+
+* **aidd-context:** document seven artifacts and tool-agnostic wording ([7f57ec9](https://github.com/ai-driven-dev/aidd-framework/commit/7f57ec97e6fa515b07d817d9f692ffdecc1c0a56))
+* **aidd-context:** document seven artifacts and tool-agnostic wording ([5594ec8](https://github.com/ai-driven-dev/aidd-framework/commit/5594ec8a590caed0ca1d96e945cdee7460216c5f))
+
 ## [4.1.0](https://github.com/ai-driven-dev/aidd-framework/compare/v4.0.0...v4.1.0) (2026-05-21)
 
 
