@@ -1,6 +1,6 @@
 # 01 - Generate rules
 
-Generate or modify coding rules, either from user input (manual mode) or by scanning the codebase (auto mode), then write each rule into every installed AI tool's native rules surface.
+Generate or modify coding rules, either from user input (manual mode) or by scanning the codebase (auto mode), then write each rule to the confirmed AI tools' native rules surfaces.
 
 ## Inputs
 
@@ -15,6 +15,8 @@ mode: auto | manual
 files_written:
   - { tool: <id>, path: <tool rules root>/<category>/<slug>.<ext> }
   - ...
+blocked_tools:
+  - { tool: <id>, reason: <D2 explanation> }
 ```
 
 ## Process
@@ -36,9 +38,11 @@ files_written:
    - Plan the new rule(s) structure: file, groups and sub-groups, display the proposed architecture.
    - WAIT FOR USER APPROVAL before proceeding to step 3.
 
-3. **Pick category + slug deterministically.** Apply the selection rubric in `@../../references/rule-structure.md` (walk top to bottom, stop at first hit). The chosen category index drives the slug prefix (rules in `02-programming-languages/` start with `2-`; rules in `03-frameworks-and-libraries/` start with `3-`; etc.). State the chosen category + slug in writing before proceeding.
+3. **Resolve target tools.** Follow `@../../references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the rules surface in `@../../references/ai-mapping.md`; if the cell is marked unsupported, apply the D2 block for that tool and record it in `blocked_tools`. Continue with the remaining supported tools.
 
-4. **Generate.** For every installed AI tool, write the rule file inside that tool's rules root using `@../../assets/rules/rule-template.md` and the conventions in `@../../references/ai-mapping.md` (path, naming, extension, frontmatter). Skip any tool whose rules surface is marked "not supported". Create the rules root and the category subdirectory on demand (`mkdir -p`) before writing; do not assume the directory tree has been pre-scaffolded.
+4. **Pick category + slug deterministically.** Apply the selection rubric in `@../../references/rule-structure.md` (walk top to bottom, stop at first hit). The chosen category index drives the slug prefix (rules in `02-programming-languages/` start with `2-`; rules in `03-frameworks-and-libraries/` start with `3-`; etc.). State the chosen category + slug in writing before proceeding.
+
+5. **Generate.** Build one canonical rule from the user's intent using `@../../assets/rules/rule-template.md` and the conventions in `@../../references/ai-mapping.md`. Render it once per confirmed supported tool (path, naming, extension, frontmatter). Create the rules root and the category subdirectory on demand (`mkdir -p`) before writing; do not assume the directory tree has been pre-scaffolded.
 
    The category subdirectory and the slug stay identical across tools; only the root, extension, and frontmatter shape differ.
 
@@ -54,10 +58,10 @@ files_written:
    └── ...
    ```
 
-5. **Boundaries.**
+6. **Boundaries.**
    - Be concise. Less is more.
    - If multiple examples warrant separate files, create multiple rule files.
 
 ## Test
 
-For every installed AI tool whose rules surface is supported, the generated rule file exists at `<tool rules root>/<category>/<slug>.<ext>` with frontmatter matching the tool-specific shape from `@../../references/ai-mapping.md`. Content follows the conventions in `@../../references/rule-writing.md` and `@../../references/rule-structure.md`.
+For each confirmed tool whose rules surface is supported, the generated rule file exists at `<tool rules root>/<category>/<slug>.<ext>` with frontmatter matching the tool-specific shape from `@../../references/ai-mapping.md`. Content follows the conventions in `@../../references/rule-writing.md` and `@../../references/rule-structure.md`. Each D2-blocked tool appears in `blocked_tools` with a non-empty reason; no tool is silently skipped.
