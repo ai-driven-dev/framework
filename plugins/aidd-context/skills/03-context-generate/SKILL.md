@@ -1,15 +1,19 @@
 ---
 name: aidd-context:03:context-generate
-description: Generate Claude Code context artifacts - skills (router-based: SKILL.md + atomic testable actions + minimal evals), agents, and rules. Use when the user wants to create, refactor, add or remove actions in a skill, migrate a slash command into a skill, or generate a new agent or rule. Do NOT use for editing a single action inside an existing skill (edit directly), creating slash commands (no router needed), writing MCP servers, or modifying project-level CLAUDE.md files.
+description: Generate context artifacts - skills (router-based), agents, rules, slash commands, hooks, plugins, and marketplaces. Use when the user wants to create, refactor, add or remove actions in a skill, migrate a legacy slash command into a router-based skill, or generate a new agent, rule, command, hook, plugin, or marketplace. Do NOT use for editing a single action inside an existing skill (edit directly), writing MCP servers, or modifying project-level files.
 ---
 
 # Context Generate
 
-Generates the three context artifacts a project consumes:
+Generates the seven context artifacts a project consumes:
 
-- **Skills** - router-based: `SKILL.md` router + atomic testable actions, evaluations declared before implementation.
+- **Skills** - router-based: `SKILL.md` router + atomic testable actions + minimal evals.
 - **Agents** - single-file agent definitions following the framework's agent template.
-- **Rules** - framework rule files that govern editor/agent behavior.
+- **Rules** - framework rule files governing editor/agent behavior.
+- **Commands** - flat `.md` slash command files (frontmatter + body), for one-shot manual triggers.
+- **Hooks** - JSON / TOML entries (or a JS/TS plugin module for OpenCode) bound to lifecycle events.
+- **Plugins** - full plugin scaffold (`.claude-plugin/plugin.json`, README, dirs, optional seed skill).
+- **Marketplaces** - `.claude-plugin/marketplace.json` catalogs that distribute one or more plugins.
 
 ## Skill-generation actions
 
@@ -26,8 +30,12 @@ Files: `actions/skills/01-capture-intent.md` … `actions/skills/06-validate.md`
 
 ## Other generation actions
 
-- `actions/agents/01-generate-agent.md` - generate a project agent file from `assets/agents/agent-template.md`.
-- `actions/rules/01-generate-rules.md` - generate framework rules from `assets/rules/rule-template.md`.
+- `actions/agents/01-generate-agent.md` - generate an agent file from `assets/agents/agent-template.md`.
+- `actions/rules/01-generate-rules.md` - generate a rule file from `assets/rules/rule-template.md`.
+- `actions/commands/01-generate-command.md` - generate a flat slash command from `assets/commands/command-template.md`.
+- `actions/hooks/01-generate-hook.md` - generate a hook entry, branching on the target tool's hooks surface.
+- `actions/plugins/01..04` - plugin scaffold flow: capture-intent → scaffold-tree → seed-first-skill → validate.
+- `actions/marketplaces/01..03` - marketplace catalog flow: init-marketplace → add-plugin-entry → validate.
 
 ## Default skill flow
 
@@ -70,3 +78,7 @@ Materialize the flow as a task list at skill entry; a task closes only when its 
 - `assets/skills/evals-template.md` - `scenarios.json` minimal schema
 - `assets/agents/agent-template.md` - agent file skeleton
 - `assets/rules/rule-template.md` - rule file skeleton
+- `assets/commands/command-template.md` - flat slash command skeleton
+- `assets/hooks/hooks-template.json` - hook entry skeleton (JSON); `hook-template.js` for OpenCode
+- `assets/plugins/plugin-template.json` - plugin manifest skeleton; `plugin-readme-template.md`, `plugin-entry-template.json`
+- `assets/marketplaces/marketplace-template.json` - marketplace catalog skeleton

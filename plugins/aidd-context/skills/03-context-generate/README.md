@@ -2,13 +2,13 @@
 
 # 03 - Context Generate
 
-Generates the seven Claude Code context artifacts a project can consume:
+Generates the seven context artifacts a project can consume:
 
 - **Skills** - router-based: `SKILL.md` router + atomic testable actions + minimal evals.
 - **Agents** - single-file agent definitions following the framework's agent template.
 - **Rules** - framework rule files governing editor / agent behaviour.
 - **Commands** - flat `.md` slash command files (frontmatter + body), for one-shot manual triggers without supporting files.
-- **Hooks** - JSON / TOML entries (or a JS/TS plugin module for OpenCode) for Claude Code lifecycle events, written to the matching scope.
+- **Hooks** - JSON / TOML entries (or a JS/TS plugin module for OpenCode) for lifecycle events, written to the matching scope.
 - **Plugins** - full plugin scaffold (`.claude-plugin/plugin.json`, README, dirs, optional seed skill).
 - **Marketplaces** - `.claude-plugin/marketplace.json` catalogs that distribute one or more plugins.
 

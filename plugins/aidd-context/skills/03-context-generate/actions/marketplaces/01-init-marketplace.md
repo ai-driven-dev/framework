@@ -27,4 +27,4 @@ plugins_root: <repo-root>/<plugin_root>/
 
 ## Test
 
-`<repo-root>/.claude-plugin/marketplace.json` exists and validates via `claude plugin validate .` (or `/plugin validate .` inside Claude Code) with zero errors; the `plugins` array is an empty `[]` ready for entries from `@02-add-plugin-entry.md`.
+`<repo-root>/.claude-plugin/marketplace.json` exists and validates via `claude plugin validate .` (or `/plugin validate .` inside AI tool) with zero errors; the `plugins` array is an empty `[]` ready for entries from `@02-add-plugin-entry.md`.
