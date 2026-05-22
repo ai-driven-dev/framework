@@ -108,7 +108,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [hook.md](skills/03-context-generate/references/hook.md) | - |
 | `references` | [marketplace.md](skills/03-context-generate/references/marketplace.md) | - |
 | `references` | [naming-conventions.md](skills/03-context-generate/references/naming-conventions.md) | - |
-| `references` | [plugin-manifest.md](skills/03-context-generate/references/plugin-manifest.md) | - |
 | `references` | [rule-structure.md](skills/03-context-generate/references/rule-structure.md) | - |
 | `references` | [rule-writing.md](skills/03-context-generate/references/rule-writing.md) | - |
 | `references` | [skill-structure.md](skills/03-context-generate/references/skill-structure.md) | - |

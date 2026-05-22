@@ -36,3 +36,6 @@ coverage/
 # OS / temp
 Thumbs.db
 *.tmp
+
+# Playwright
+.playwright-mcp/
