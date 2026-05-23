@@ -21,6 +21,7 @@ async function makeUseCase(deps: Awaited<ReturnType<typeof buildUnitDeps>>) {
     deps.pluginFetcher,
     new PluginDistributionReaderAdapter(deps.fs),
     deps.hasher,
+    deps.logger,
     deps.marketplaceRegistry
   );
 }
@@ -89,6 +90,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
+        deps.logger,
         registry
       );
       await useCase.execute({
@@ -130,6 +132,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
+        deps.logger,
         registry
       );
       await expect(
@@ -168,6 +171,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
+        deps.logger,
         registry
       );
       await useCase.execute({
@@ -220,6 +224,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
+        deps.logger,
         registry
       );
       await useCase.execute({
@@ -251,6 +256,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
+        deps.logger,
         registry
       );
       await useCase.execute({
@@ -280,6 +286,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
+        deps.logger,
         registry
       );
       await useCase.execute({
@@ -309,6 +316,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
+        deps.logger,
         registry
       );
       await useCase.execute({
@@ -350,6 +358,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
+        deps.logger,
         registry
       );
       await useCase.execute({
@@ -401,6 +410,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher,
         zeroFilesReader,
         deps.hasher,
+        deps.logger,
         registry
       );
       await useCase.execute({

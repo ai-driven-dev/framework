@@ -19,6 +19,7 @@ export interface PluginEntryData {
   strict: boolean;
   files: Record<string, string>;
   componentPaths?: Record<string, string>;
+  mcpEntries?: Record<string, string>;
   marketplace?: string;
 }
 
@@ -30,6 +31,8 @@ export class Plugin {
   readonly files: ReadonlyMap<string, string>;
   /** Maps installedRelPath → plugin component path (e.g. rules/01-standards/naming.md) */
   readonly componentPaths: ReadonlyMap<string, string>;
+  /** Maps MCP server name → MD5 hash of the contributed server JSON (OpenCode merge tracking). */
+  readonly mcpEntries: ReadonlyMap<string, string>;
   readonly marketplace?: string;
 
   private constructor(params: {
@@ -39,6 +42,7 @@ export class Plugin {
     strict: boolean;
     files: ReadonlyMap<string, string>;
     componentPaths: ReadonlyMap<string, string>;
+    mcpEntries: ReadonlyMap<string, string>;
     marketplace?: string;
   }) {
     this.name = params.name;
@@ -47,6 +51,7 @@ export class Plugin {
     this.strict = params.strict;
     this.files = params.files;
     this.componentPaths = params.componentPaths;
+    this.mcpEntries = params.mcpEntries;
     this.marketplace = params.marketplace;
   }
 
@@ -66,6 +71,19 @@ export class Plugin {
     };
     if (marketplace !== undefined) data.marketplace = marketplace;
     return Plugin.fromJSON(data);
+  }
+
+  static withMcpEntries(plugin: Plugin, mcpEntries: ReadonlyMap<string, string>): Plugin {
+    return new Plugin({
+      name: plugin.name,
+      source: plugin.source,
+      version: plugin.version,
+      strict: plugin.strict,
+      files: plugin.files,
+      componentPaths: plugin.componentPaths,
+      mcpEntries,
+      marketplace: plugin.marketplace,
+    });
   }
 
   static fromDistribution(
@@ -95,6 +113,18 @@ export class Plugin {
     return Plugin.fromJSON(data);
   }
 
+  static fromDistributionWithMcp(
+    dist: PluginDistribution,
+    source: PluginSource,
+    files: InstallationFile[],
+    mcpEntries: ReadonlyMap<string, string>,
+    componentPaths?: ReadonlyMap<string, string>,
+    marketplace?: string
+  ): Plugin {
+    const base = Plugin.fromDistribution(dist, source, files, componentPaths, marketplace);
+    return Plugin.withMcpEntries(base, mcpEntries);
+  }
+
   static fromJSON(data: PluginEntryData): Plugin {
     if (!PLUGIN_NAME_REGEX.test(data.name)) {
       throw new InvalidPluginNameError(data.name);
@@ -105,6 +135,7 @@ export class Plugin {
     const source = parsePluginSource(data.source);
     const files = new Map(Object.entries(data.files));
     const componentPaths = new Map(Object.entries(data.componentPaths ?? {}));
+    const mcpEntries = new Map(Object.entries(data.mcpEntries ?? {}));
     return new Plugin({
       name: data.name,
       source,
@@ -112,6 +143,7 @@ export class Plugin {
       strict: data.strict,
       files,
       componentPaths,
+      mcpEntries,
       marketplace: data.marketplace,
     });
   }
@@ -125,6 +157,10 @@ export class Plugin {
     for (const [key, value] of this.componentPaths) {
       componentPaths[key] = value;
     }
+    const mcpEntries: Record<string, string> = {};
+    for (const [key, value] of this.mcpEntries) {
+      mcpEntries[key] = value;
+    }
     const data: PluginEntryData = {
       name: this.name,
       source: serializePluginSource(this.source),
@@ -133,6 +169,7 @@ export class Plugin {
       files,
     };
     if (this.componentPaths.size > 0) data.componentPaths = componentPaths;
+    if (this.mcpEntries.size > 0) data.mcpEntries = mcpEntries;
     if (this.marketplace !== undefined) data.marketplace = this.marketplace;
     return data;
   }
@@ -149,6 +186,7 @@ export class Plugin {
       strict: this.strict,
       files: this.files,
       componentPaths: this.componentPaths,
+      mcpEntries: this.mcpEntries,
       marketplace: this.marketplace,
     });
   }
@@ -161,6 +199,7 @@ export class Plugin {
       strict: this.strict,
       files: f,
       componentPaths: this.componentPaths,
+      mcpEntries: this.mcpEntries,
       marketplace: this.marketplace,
     });
   }

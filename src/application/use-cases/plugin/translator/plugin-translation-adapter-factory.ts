@@ -1,4 +1,5 @@
 import type { PluginsCapability } from "../../../../domain/capabilities/plugins-capability.js";
+import type { FileReader } from "../../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../../domain/ports/hasher.js";
 import { ModeAMarketplaceAdapter } from "./mode-a-marketplace-adapter.js";
@@ -16,7 +17,7 @@ import type { PluginTranslationAdapter } from "./plugin-translation-adapter.js";
  */
 export function resolveTranslationAdapter(
   plugins: PluginsCapability,
-  deps: { fs: FileWriter; hasher: Hasher; homedir: () => string }
+  deps: { fs: FileWriter & FileReader; hasher: Hasher; homedir: () => string }
 ): PluginTranslationAdapter | null {
   if (plugins.installScope === "user") {
     return new ModeBFlatMaterializationAdapter(deps.fs, deps.hasher, deps.homedir);

@@ -1,9 +1,13 @@
 import { homedir as nodeHomedir } from "node:os";
 import { dirname, join } from "node:path";
+import { McpCapability } from "../../../domain/capabilities/mcp-capability.js";
 import type { PluginsCapability } from "../../../domain/capabilities/plugins-capability.js";
 import { PluginNotFoundError } from "../../../domain/errors.js";
+import { unmergeOpencodeMcp } from "../../../domain/formats/opencode-mcp-merge.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
+import type { Plugin } from "../../../domain/models/plugin.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
@@ -17,7 +21,7 @@ export interface PluginRemoveOptions {
 
 export class PluginRemoveUseCase {
   constructor(
-    private readonly fs: FileWriter,
+    private readonly fs: FileWriter & FileReader,
     private readonly manifestRepo: ManifestRepository
   ) {}
 
@@ -43,10 +47,48 @@ export class PluginRemoveUseCase {
       if (plugin === undefined) continue;
       const baseDir = this.resolveBaseDir(toolId, projectRoot);
       await this.deletePluginFiles(plugin.files, baseDir);
+      await this.removeMcpEntries(plugin, toolId, projectRoot);
       manifest.removePlugin(toolId, pluginName);
       removed = true;
     }
     return removed;
+  }
+
+  private async removeMcpEntries(
+    plugin: Plugin,
+    toolId: AiToolId,
+    projectRoot: string
+  ): Promise<void> {
+    if (plugin.mcpEntries.size === 0) return;
+    const toolConfig = getToolConfig(toolId);
+    if (!isAiTool(toolConfig)) return;
+    const caps = toolConfig.capabilities as Record<string, unknown>;
+    if (!this.qualifiesForOpencodeMcpMerge(caps)) return;
+    const mcpCap = caps.mcp as McpCapability;
+    const outputRelPath = await mcpCap.resolveOutput(projectRoot, this.fs);
+    const outputPath = join(projectRoot, outputRelPath);
+    const existing = await this.readExistingJson(outputPath);
+    if (existing === null) return;
+    const updated = unmergeOpencodeMcp(existing, plugin.mcpEntries);
+    await this.fs.writeFile(outputPath, updated);
+  }
+
+  private qualifiesForOpencodeMcpMerge(caps: Record<string, unknown>): boolean {
+    if (!("mcp" in caps)) return false;
+    const mcp = caps.mcp;
+    if (!(mcp instanceof McpCapability)) return false;
+    if (mcp.params.mergeStrategy !== "framework-prime") return false;
+    const plugins = caps.plugins as PluginsCapability;
+    return plugins.mode === "flat";
+  }
+
+  private async readExistingJson(path: string): Promise<string | null> {
+    try {
+      return await this.fs.readFile(path);
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+      throw err;
+    }
   }
 
   private async deletePluginFiles(

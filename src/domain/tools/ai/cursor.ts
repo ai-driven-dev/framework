@@ -113,8 +113,12 @@ export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         // (base-relative keys like "aidd-context/commands/foo.md" per D2).
         pluginsDir: "",
         pluginManifestRelativePath: null,
-        acceptsHooks: false,
-        acceptsMcp: false,
+        // plugin-local: Cursor auto-discovers hooks.json and mcp.json at the plugin root.
+        acceptsHooks: true,
+        hooksRelativePath: "hooks.json",
+        hooksContentFormat: "cursor",
+        acceptsMcp: true,
+        mcpRelativePath: "mcp.json",
         installScope: "user",
         userPluginsDir: (h) => join(h, ".cursor", "plugins", "local"),
       }),
