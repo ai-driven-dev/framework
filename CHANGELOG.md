@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.2.0](https://github.com/ai-driven-dev/aidd-cli/compare/v4.1.3...v4.2.0) (2026-05-23)
+
+
+### Features
+
+* **translator:** Mode B full parity — hooks + mcp for OpenCode & Cursor ([be45344](https://github.com/ai-driven-dev/aidd-cli/commit/be45344ffd7a8ae5507012a808b1656358a672fc))
+* **translator:** Mode B full parity — hooks + mcp for OpenCode & Cursor ([#258](https://github.com/ai-driven-dev/aidd-cli/issues/258)) ([c3d79cc](https://github.com/ai-driven-dev/aidd-cli/commit/c3d79cc98034006a68eeee9232f3e6ac81568f2d))
+
 ## [Unreleased]
 
 ### Features
