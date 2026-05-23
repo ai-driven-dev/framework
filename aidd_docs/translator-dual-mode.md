@@ -100,6 +100,26 @@ Note: `installScope === "user"` wins over `translationMode === "marketplace"` be
 
 ---
 
+## Mode B component matrix (LOCKED)
+
+This matrix defines the exact fate of each plugin component for each Mode B tool. It is locked — changes require a separate spec ticket.
+
+| Component | Cursor (native / user-scope) | OpenCode (flat / project-scope) |
+| --------- | ---------------------------- | -------------------------------- |
+| `commands/` | Materialized under `<plugin>/commands/` | Materialized under `.opencode/commands/<plugin>/` (aidd- prefix on name) |
+| `agents/`   | Materialized under `<plugin>/agents/`   | Materialized under `.opencode/agents/<plugin>/` |
+| `rules/`    | Materialized under `<plugin>/rules/`    | Materialized under `.opencode/rules/<plugin>/` |
+| `skills/`   | Materialized under `<plugin>/skills/`   | Materialized under `.opencode/skills/<plugin>/` |
+| `hooks/hooks.json` | Converted to Cursor format (`preToolUse`/`postToolUse` camelCase; `${CLAUDE_PLUGIN_ROOT}/` → `./`) and written to `<plugin>/hooks.json`. Tracked in `Plugin.files` → deleted on uninstall. | **Skipped** — emits one `logger.warn`: `Plugin "<name>": hooks skipped for opencode — OpenCode plugin runtime is JS modules; declarative hooks.json is not supported.` |
+| `.mcp.json` | Passed through as-is to `<plugin>/mcp.json` (Cursor reads Claude-format natively). Tracked in `Plugin.files` → deleted on uninstall. | **Merged** into `opencode.json` (or `opencode.jsonc` → `OpencodeDualConfigError`). Transformed via `transformMcpToOpencode` (Claude → OpenCode format). Server name is the key; `disabled: true` in source → `enabled: false` in output. User-owned servers preserved. Contributed server names tracked in `Plugin.mcpEntries` → removed on uninstall. |
+| `scripts/`  | Dropped (reader-level filter; never reaches translator) | Dropped (same) |
+
+**Known limitation (R2):** Cursor user-scope plugins are installed globally under `~/.cursor/plugins/local/<plugin>/`. If two projects install the same plugin, removing from one project removes the files for both. This is pre-existing behavior (plan 192 D4); not introduced by this feature.
+
+**Collision policy (OpenCode MCP):** if an incoming server name already exists in `opencode.json` and is not owned by this plugin (user-added), the server is skipped and a `logger.warn` is emitted. The user's server is never overwritten.
+
+---
+
 ## How to add a new tool
 
 1. **Decide the routing combination** from the table above. Pick `mode`, `translationMode`, `installScope` to match the tool's actual behavior — verify against the tool's documentation, not assumptions.

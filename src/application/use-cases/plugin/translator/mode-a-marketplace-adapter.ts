@@ -2,6 +2,7 @@ import type { Manifest } from "../../../../domain/models/manifest.js";
 import { Plugin } from "../../../../domain/models/plugin.js";
 import type { PluginDistribution } from "../../../../domain/models/plugin-distribution.js";
 import type { PluginSource } from "../../../../domain/models/plugin-source.js";
+import type { ReadonlySkipList } from "../../../../domain/models/plugin-translation-skip.js";
 import type { AiToolId } from "../../../../domain/models/tool-ids.js";
 import type { PluginTranslationAdapter } from "./plugin-translation-adapter.js";
 
@@ -27,7 +28,8 @@ export class ModeAMarketplaceAdapter implements PluginTranslationAdapter {
     manifest: Manifest,
     marketplace: string | undefined,
     _docsDir: string
-  ): Promise<void> {
+  ): Promise<{ skipped: ReadonlySkipList }> {
     manifest.addPlugin(toolId, Plugin.fromDistribution(dist, source, [], new Map(), marketplace));
+    return { skipped: [] };
   }
 }

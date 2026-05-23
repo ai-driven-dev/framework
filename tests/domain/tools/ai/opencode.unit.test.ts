@@ -235,6 +235,39 @@ describe("opencode", () => {
       const content = '{"instructions":[".opencode/rules/**/*.md"]}';
       expect(transform("opencode", content)).toBe(content);
     });
+
+    it("sets enabled: false on local server with disabled: true", () => {
+      const input = JSON.stringify({
+        mcpServers: { "my-server": { command: "node", args: ["server.js"], disabled: true } },
+      });
+      expect(JSON.parse(transform("mcp", input)).mcp["my-server"].enabled).toBe(false);
+    });
+
+    it("sets enabled: false on remote server with disabled: true", () => {
+      const input = JSON.stringify({
+        mcpServers: { figma: { url: "https://mcp.figma.com/mcp", disabled: true } },
+      });
+      expect(JSON.parse(transform("mcp", input)).mcp.figma.enabled).toBe(false);
+    });
+
+    it("preserves mixed enabled/disabled servers correctly", () => {
+      const input = JSON.stringify({
+        mcpServers: {
+          enabled: { command: "node", args: ["on.js"] },
+          disabled: { command: "node", args: ["off.js"], disabled: true },
+        },
+      });
+      const result = JSON.parse(transform("mcp", input));
+      expect(result.mcp.enabled.enabled).toBe(true);
+      expect(result.mcp.disabled.enabled).toBe(false);
+    });
+
+    it("sets enabled: true when disabled is explicitly false", () => {
+      const input = JSON.stringify({
+        mcpServers: { "my-server": { command: "node", disabled: false } },
+      });
+      expect(JSON.parse(transform("mcp", input)).mcp["my-server"].enabled).toBe(true);
+    });
   });
 
   describe("capabilities.mcp.resolveOutput()", () => {

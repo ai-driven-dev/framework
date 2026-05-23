@@ -35,8 +35,8 @@ const DIRECTORY = ".opencode/";
 const TOOL_SUFFIX = ".opencode.md";
 
 type RawServer =
-  | { command: string; args?: string[]; env?: Record<string, string> }
-  | { url: string };
+  | { command: string; args?: string[]; env?: Record<string, string>; disabled?: boolean }
+  | { url: string; disabled?: boolean };
 
 interface OpencodeMcpLocalServer {
   type: "local";
@@ -53,6 +53,20 @@ interface OpencodeMcpRemoteServer {
 
 type OpencodeMcpServer = OpencodeMcpLocalServer | OpencodeMcpRemoteServer;
 
+function convertRawServer(name: string, server: RawServer): OpencodeMcpServer {
+  const enabled = server.disabled !== true;
+  if ("command" in server) {
+    const { command, args = [], env } = server;
+    const local: OpencodeMcpLocalServer = { type: "local", command: [command, ...args], enabled };
+    if (env && Object.keys(env).length > 0) local.environment = env;
+    return local;
+  }
+  if ("url" in server) {
+    return { type: "remote", url: server.url, enabled };
+  }
+  throw new InvalidMcpServerConfigError(name);
+}
+
 function transformMcpToOpencode(content: string): string {
   let parsed: { mcpServers?: Record<string, RawServer> };
   try {
@@ -62,30 +76,13 @@ function transformMcpToOpencode(content: string): string {
       `Cannot parse MCP config: ${err instanceof Error ? err.message : String(err)}`
     );
   }
-
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
     throw new McpConfigError("MCP config must be a JSON object");
   }
-
   const mcp: Record<string, OpencodeMcpServer> = {};
-
   for (const [name, server] of Object.entries(parsed.mcpServers ?? {})) {
-    if ("command" in server) {
-      const { command, args = [], env } = server;
-      const local: OpencodeMcpLocalServer = {
-        type: "local",
-        command: [command, ...args],
-        enabled: true,
-      };
-      if (env && Object.keys(env).length > 0) local.environment = env;
-      mcp[name] = local;
-    } else if ("url" in server) {
-      mcp[name] = { type: "remote", url: server.url, enabled: true };
-    } else {
-      throw new InvalidMcpServerConfigError(name);
-    }
+    mcp[name] = convertRawServer(name, server);
   }
-
   return JSON.stringify({ mcp }, null, 2);
 }
 

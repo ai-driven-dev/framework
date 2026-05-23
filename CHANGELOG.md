@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+### Features
+
+* **plugin:** Mode B parity — Cursor user-scope hooks + mcp materialization, OpenCode MCP merge into opencode.json, OpenCode hooks skip-with-warn ([#258](https://github.com/ai-driven-dev/aidd-cli/issues/258))
+  * Cursor flat install writes `<plugin>/hooks.json` (Cursor-format, `${CLAUDE_PLUGIN_ROOT}/` rewritten) and `<plugin>/mcp.json` (passthrough), both tracked in `Plugin.files` for clean uninstall
+  * OpenCode flat install merges `.mcp.json` servers into `opencode.json`; disabled servers stay disabled; user-owned servers preserved; idempotent re-install; replace path drops orphaned v1 servers
+  * OpenCode hooks skip emits a `logger.warn` naming the plugin and reason; zero-component plugins produce zero warnings
+  * `Plugin.mcpEntries` (server-name → hash map) tracks OpenCode-contributed servers; `aidd plugin remove` unmerges them without touching user-owned servers
+  * `Plugin.files` and `Plugin.mcpEntries` both round-trip through manifest JSON
+
 ## [4.1.3](https://github.com/ai-driven-dev/aidd-cli/compare/v4.1.2...v4.1.3) (2026-05-21)
 
 

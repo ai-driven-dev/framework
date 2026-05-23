@@ -11,10 +11,13 @@ import { DOCS_DIR, PLUGIN_CACHE_SUBDIR } from "../../../domain/models/paths.js";
 import { Plugin } from "../../../domain/models/plugin.js";
 import type { PluginDistribution } from "../../../domain/models/plugin-distribution.js";
 import type { PluginSource } from "../../../domain/models/plugin-source.js";
+import type { ReadonlySkipList } from "../../../domain/models/plugin-translation-skip.js";
 import { PluginTranslator } from "../../../domain/models/plugin-translator.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
+import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
 import type { PluginDistributionReader } from "../../../domain/ports/plugin-distribution-reader.js";
@@ -37,11 +40,12 @@ export interface PluginAddOptions {
 
 export class PluginAddUseCase {
   constructor(
-    private readonly fs: FileWriter,
+    private readonly fs: FileWriter & FileReader,
     private readonly manifestRepo: ManifestRepository,
     private readonly pluginFetcher: PluginFetcher,
     private readonly pluginDistributionReader: PluginDistributionReader,
     private readonly hasher: Hasher,
+    private readonly logger: Logger,
     private readonly marketplaceRegistry: MarketplaceRegistry
   ) {}
 
@@ -125,28 +129,79 @@ export class PluginAddUseCase {
     source: PluginSource,
     projectRoot: string
   ): Promise<void> {
-    const { marketplace, requiredVersion } = options;
+    const { marketplace, requiredVersion, replace } = options;
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
     const localPath = await this.pluginFetcher.fetch(source, cacheDir);
     const dist = await this.pluginDistributionReader.read(localPath);
-    this.assertPluginVersionMatches(dist.manifest.name, dist.manifest.version, requiredVersion);
-    if (options.replace === true) {
-      this.dropExistingPlugin(dist.manifest.name, resolvedToolIds, manifest);
+    const pluginName = dist.manifest.name;
+    this.assertPluginVersionMatches(pluginName, dist.manifest.version, requiredVersion);
+    const { prevMcpMap } = this.prepareForInstall(pluginName, resolvedToolIds, manifest, replace);
+    await this.installPluginForAllTools(
+      dist,
+      resolvedToolIds,
+      source,
+      projectRoot,
+      manifest,
+      marketplace,
+      prevMcpMap
+    );
+  }
+
+  private prepareForInstall(
+    pluginName: string,
+    toolIds: AiToolId[],
+    manifest: Manifest,
+    replace: boolean | undefined
+  ): { prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>> } {
+    const prevMcpMap = this.collectPreviousMcpEntries(pluginName, toolIds, manifest);
+    if (replace === true) {
+      this.dropExistingPlugin(pluginName, toolIds, manifest);
     } else {
-      this.validateNoDuplicates(dist.manifest.name, resolvedToolIds, manifest);
+      this.validateNoDuplicates(pluginName, toolIds, manifest);
     }
-    const docsDir = DOCS_DIR;
-    for (const toolId of resolvedToolIds) {
-      await this.addPluginForTool(
+    return { prevMcpMap };
+  }
+
+  private async installPluginForAllTools(
+    dist: PluginDistribution,
+    toolIds: AiToolId[],
+    source: PluginSource,
+    projectRoot: string,
+    manifest: Manifest,
+    marketplace: string | undefined,
+    prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>>
+  ): Promise<void> {
+    const allSkipped: ReadonlySkipList[] = [];
+    for (const toolId of toolIds) {
+      const prev = prevMcpMap.get(toolId) ?? new Map();
+      const { skipped } = await this.addPluginForTool(
         dist,
         toolId,
         source,
         projectRoot,
         manifest,
         marketplace,
-        docsDir
+        DOCS_DIR,
+        prev
       );
+      allSkipped.push(skipped);
     }
+    this.emitSkipWarnings(allSkipped.flat());
+  }
+
+  private collectPreviousMcpEntries(
+    pluginName: string,
+    toolIds: AiToolId[],
+    manifest: Manifest
+  ): Map<AiToolId, ReadonlyMap<string, string>> {
+    const result = new Map<AiToolId, ReadonlyMap<string, string>>();
+    for (const toolId of toolIds) {
+      const existing = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
+      if (existing !== undefined && existing.mcpEntries.size > 0) {
+        result.set(toolId, existing.mcpEntries);
+      }
+    }
+    return result;
   }
 
   private assertPluginVersionMatches(
@@ -179,30 +234,45 @@ export class PluginAddUseCase {
     projectRoot: string,
     manifest: Manifest,
     marketplace: string | undefined,
-    docsDir: string
-  ): Promise<void> {
+    docsDir: string,
+    previousMcpEntries: ReadonlyMap<string, string> = new Map()
+  ): Promise<{ skipped: ReadonlySkipList }> {
     const toolConfig = getToolConfig(toolId);
-    if (!isAiTool(toolConfig)) return;
+    if (!isAiTool(toolConfig)) return { skipped: [] };
     const adapter = this.resolveAdapter(toolConfig);
     if (adapter?.mode === "flat") {
-      await adapter.addPlugin(dist, toolId, source, projectRoot, manifest, marketplace, docsDir);
-      return;
+      return adapter.addPlugin(
+        dist,
+        toolId,
+        source,
+        projectRoot,
+        manifest,
+        marketplace,
+        docsDir,
+        previousMcpEntries
+      );
     }
-    const { files, componentPaths } = new PluginTranslator(this.hasher).translateWithComponentPaths(
-      dist,
-      toolConfig,
-      docsDir
-    );
-    if (files.length === 0) return;
+    const { files, componentPaths, skipped } = new PluginTranslator(
+      this.hasher
+    ).translateWithComponentPaths(dist, toolConfig, docsDir);
+    if (files.length === 0) return { skipped };
     if (adapter?.mode === "marketplace" && source.kind === "local" && marketplace !== undefined) {
-      await adapter.addPlugin(dist, toolId, source, projectRoot, manifest, marketplace, docsDir);
-      return;
+      return adapter.addPlugin(dist, toolId, source, projectRoot, manifest, marketplace, docsDir);
     }
     await writePluginFiles(files, projectRoot, this.fs);
     manifest.addPlugin(
       toolId,
       Plugin.fromDistribution(dist, source, files, componentPaths, marketplace)
     );
+    return { skipped };
+  }
+
+  private emitSkipWarnings(skipped: ReadonlySkipList): void {
+    for (const entry of skipped) {
+      this.logger.warn(
+        `Plugin "${entry.pluginName}": ${entry.component} skipped for ${entry.toolId} — ${entry.reason}`
+      );
+    }
   }
 
   private resolveAdapter(

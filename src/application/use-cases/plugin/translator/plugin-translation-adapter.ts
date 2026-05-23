@@ -2,6 +2,7 @@ import type { Manifest } from "../../../../domain/models/manifest.js";
 import type { PluginDistribution } from "../../../../domain/models/plugin-distribution.js";
 import type { PluginSource } from "../../../../domain/models/plugin-source.js";
 import type { PluginTranslationMode } from "../../../../domain/models/plugin-translation-mode.js";
+import type { ReadonlySkipList } from "../../../../domain/models/plugin-translation-skip.js";
 import type { AiToolId } from "../../../../domain/models/tool-ids.js";
 
 /**
@@ -18,6 +19,11 @@ export interface PluginTranslationAdapter {
   /**
    * Add a plugin for a specific tool, writing files and/or registering the plugin reference
    * in the manifest according to this adapter's strategy.
+   *
+   * Returns a skip list — non-empty when the plugin contains components the tool cannot consume.
+   *
+   * `previousMcpEntries` — pass the plugin's previous mcpEntries when replacing an existing
+   * plugin install (--replace path). Used for idempotent re-merge of OpenCode MCP servers.
    */
   addPlugin(
     dist: PluginDistribution,
@@ -26,6 +32,7 @@ export interface PluginTranslationAdapter {
     projectRoot: string,
     manifest: Manifest,
     marketplace: string | undefined,
-    docsDir: string
-  ): Promise<void>;
+    docsDir: string,
+    previousMcpEntries?: ReadonlyMap<string, string>
+  ): Promise<{ skipped: ReadonlySkipList }>;
 }

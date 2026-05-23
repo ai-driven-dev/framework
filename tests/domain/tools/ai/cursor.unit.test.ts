@@ -157,12 +157,12 @@ describe("cursor", () => {
       expect(cursor.capabilities.plugins.installScope).toBe("user");
     });
 
-    it("acceptsHooks is false", () => {
-      expect(cursor.capabilities.plugins.acceptsHooks).toBe(false);
+    it("acceptsHooks is true (Cursor auto-discovers hooks.json at plugin root)", () => {
+      expect(cursor.capabilities.plugins.acceptsHooks).toBe(true);
     });
 
-    it("acceptsMcp is false", () => {
-      expect(cursor.capabilities.plugins.acceptsMcp).toBe(false);
+    it("acceptsMcp is true (Cursor auto-discovers mcp.json at plugin root)", () => {
+      expect(cursor.capabilities.plugins.acceptsMcp).toBe(true);
     });
 
     it("marketplaceSettings is null", () => {

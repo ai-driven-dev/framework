@@ -13,6 +13,11 @@ import type { ToolConfig } from "../tools/registry.js";
 import { isAiTool } from "../tools/registry.js";
 import { InstallationFile } from "./file.js";
 import type { PluginComponentFile, PluginDistribution } from "./plugin-distribution.js";
+import {
+  OPENCODE_HOOKS_SKIP_REASON,
+  type PluginTranslationSkip,
+  type ReadonlySkipList,
+} from "./plugin-translation-skip.js";
 
 const PLUGIN_MANIFEST_PATHS: readonly string[] = [
   ".claude-plugin/plugin.json",
@@ -48,14 +53,20 @@ export class PluginTranslator {
     dist: PluginDistribution,
     toolConfig: ToolConfig,
     docsDir: string
-  ): { files: InstallationFile[]; componentPaths: ReadonlyMap<string, string> } {
+  ): {
+    files: InstallationFile[];
+    componentPaths: ReadonlyMap<string, string>;
+    skipped: ReadonlySkipList;
+  } {
     const tool = asPluginTool(toolConfig);
-    if (tool === null) return { files: [], componentPaths: new Map() };
+    if (tool === null) return { files: [], componentPaths: new Map(), skipped: [] };
     const { mode } = tool.capabilities.plugins;
     if (mode === "native") return this.translateNativeWithPaths(dist, tool, docsDir);
-    if (mode === "flat")
-      return { files: this.translateFlat(dist, tool, docsDir), componentPaths: new Map() };
-    return { files: [], componentPaths: new Map() };
+    if (mode === "flat") {
+      const { files, skipped } = this.translateFlat(dist, tool, docsDir);
+      return { files, componentPaths: new Map(), skipped };
+    }
+    return { files: [], componentPaths: new Map(), skipped: [] };
   }
 
   detectFlatCollisions(
@@ -83,9 +94,13 @@ export class PluginTranslator {
     dist: PluginDistribution,
     tool: AiTool<HasPlugins>,
     docsDir: string
-  ): { files: InstallationFile[]; componentPaths: ReadonlyMap<string, string> } {
+  ): {
+    files: InstallationFile[];
+    componentPaths: ReadonlyMap<string, string>;
+    skipped: ReadonlySkipList;
+  } {
     const { pluginsDir, pluginManifestRelativePath } = tool.capabilities.plugins;
-    if (pluginsDir === null) return { files: [], componentPaths: new Map() };
+    if (pluginsDir === null) return { files: [], componentPaths: new Map(), skipped: [] };
     const pluginRoot = `${pluginsDir}${dist.manifest.name}/`;
     const result: InstallationFile[] = [];
     const componentPaths = new Map<string, string>();
@@ -106,7 +121,7 @@ export class PluginTranslator {
         result.push(this.makeFile(`${pluginRoot}${pluginManifestRelativePath}`, sourceManifest));
       }
     }
-    return { files: result, componentPaths };
+    return { files: result, componentPaths, skipped: [] };
   }
 
   private maybeConvertHooks(sourcePath: string, content: string, tool: AiTool<HasPlugins>): string {
@@ -159,9 +174,9 @@ export class PluginTranslator {
     dist: PluginDistribution,
     tool: AiTool<HasPlugins>,
     docsDir: string
-  ): InstallationFile[] {
+  ): { files: InstallationFile[]; skipped: ReadonlySkipList } {
     const { flatNamespacePrefix } = tool.capabilities.plugins;
-    if (flatNamespacePrefix === null) return [];
+    if (flatNamespacePrefix === null) return { files: [], skipped: [] };
     const result: InstallationFile[] = [];
     for (const file of dist.components.commands) {
       result.push(
@@ -174,7 +189,20 @@ export class PluginTranslator {
         if (f !== null) result.push(f);
       }
     }
-    return result;
+    const skipped = this.collectHooksSkips(dist, tool);
+    return { files: result, skipped };
+  }
+
+  private collectHooksSkips(dist: PluginDistribution, tool: AiTool<HasPlugins>): ReadonlySkipList {
+    if (dist.components.hooks.length === 0) return [];
+    if (tool.capabilities.plugins.acceptsHooks) return [];
+    const entry: PluginTranslationSkip = {
+      pluginName: dist.manifest.name,
+      component: "hooks",
+      toolId: tool.toolId,
+      reason: OPENCODE_HOOKS_SKIP_REASON,
+    };
+    return [entry];
   }
 
   private flatCommandFile(
