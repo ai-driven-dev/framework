@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.3.0](https://github.com/ai-driven-dev/aidd-cli/compare/v4.2.1...v4.3.0) (2026-05-24)
+
+
+### Features
+
+* **plugin:** aidd plugin create &lt;name&gt; template generator ([b91cd4c](https://github.com/ai-driven-dev/aidd-cli/commit/b91cd4c0fea7e422e064ad318b1359475358778c))
+* **plugin:** aidd plugin create &lt;name&gt; template generator ([#214](https://github.com/ai-driven-dev/aidd-cli/issues/214)) ([179056e](https://github.com/ai-driven-dev/aidd-cli/commit/179056ea0f14406fb36e9b9e08b11a34d1dd2f90))
+
+
+### Documentation
+
+* **readme:** promote npx as recommended install method ([#208](https://github.com/ai-driven-dev/aidd-cli/issues/208)) ([2760ee6](https://github.com/ai-driven-dev/aidd-cli/commit/2760ee6cafb4751d98c082fe404f6a39df33cb0a))
+* **readme:** promote npx as the recommended install method ([#208](https://github.com/ai-driven-dev/aidd-cli/issues/208)) ([f04db4b](https://github.com/ai-driven-dev/aidd-cli/commit/f04db4bb1ca96eb709797b177475dada6b0cfa8a))
+
 ## [4.2.1](https://github.com/ai-driven-dev/aidd-cli/compare/v4.2.0...v4.2.1) (2026-05-24)
 
 
