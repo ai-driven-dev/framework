@@ -501,4 +501,43 @@ describe("Manifest", () => {
       expect(restored.toJSON().version).toBe(6);
     });
   });
+
+  describe("updateTrackedFileHash()", () => {
+    it("updates the hash when the file is already tracked", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
+      manifest.updateTrackedFileHash(
+        "claude" as ToolId,
+        ".claude/agents/code-reviewer.md",
+        makeHash("999999")
+      );
+      const tracked = manifest
+        .getToolFiles("claude" as ToolId)
+        .find((f) => f.relativePath === ".claude/agents/code-reviewer.md");
+      expect(tracked?.hash.value).toBe(makeHash("999999").value);
+    });
+
+    it("appends a new tracked file entry when the path is not yet tracked", () => {
+      const manifest = Manifest.create();
+      manifest.addTool("codex" as ToolId, "3.0.0", []);
+      manifest.updateTrackedFileHash("codex" as ToolId, ".codex/config.json", makeHash("abcdef"));
+      expect(manifest.isFileTracked(".codex/config.json")).toBe(true);
+      const tracked = manifest
+        .getToolFiles("codex" as ToolId)
+        .find((f) => f.relativePath === ".codex/config.json");
+      expect(tracked?.hash.value).toBe(makeHash("abcdef").value);
+    });
+
+    it("is a no-op when the tool is not installed", () => {
+      const manifest = Manifest.create();
+      expect(() =>
+        manifest.updateTrackedFileHash(
+          "claude" as ToolId,
+          ".claude/settings.json",
+          makeHash("111111")
+        )
+      ).not.toThrow();
+      expect(manifest.hasTool("claude" as ToolId)).toBe(false);
+    });
+  });
 });

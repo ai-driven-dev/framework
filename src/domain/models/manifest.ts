@@ -272,9 +272,10 @@ export class Manifest {
   updateTrackedFileHash(toolId: ToolId, relativePath: string, hash: FileHash): void {
     const entry = this._tools.get(toolId);
     if (!entry) return;
-    const updatedFiles = entry.files.map((f) =>
-      f.relativePath === relativePath ? { ...f, hash } : f
-    );
+    const existing = entry.files.find((f) => f.relativePath === relativePath);
+    const updatedFiles = existing
+      ? entry.files.map((f) => (f.relativePath === relativePath ? { ...f, hash } : f))
+      : [...entry.files, { relativePath, hash }];
     this._tools.set(toolId, { ...entry, files: updatedFiles });
   }
 
