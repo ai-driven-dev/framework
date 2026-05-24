@@ -328,3 +328,31 @@ export class MissingPluginVersionError extends Error {
     this.name = "MissingPluginVersionError";
   }
 }
+
+export class InvalidPluginComponentKindError extends Error {
+  constructor(kind: string) {
+    super(`Invalid kind: "${kind}". Valid: skills|agents|hooks|mcp|full.`);
+    this.name = "InvalidPluginComponentKindError";
+  }
+}
+
+export class JsonSchemaValidationError extends Error {
+  constructor(errors: string[]) {
+    super(`Manifest validation failed: ${errors.join("; ")}`);
+    this.name = "JsonSchemaValidationError";
+  }
+}
+
+export class PluginTargetExistsError extends Error {
+  constructor(path: string) {
+    super(`Directory '${path}' already exists. Use '--force' to overwrite.`);
+    this.name = "PluginTargetExistsError";
+  }
+}
+
+export class MarketplaceEntryAlreadyExistsError extends Error {
+  constructor(name: string, index: number, marketplacePath: string) {
+    super(`Plugin '${name}' already in ${marketplacePath} at index ${index}.`);
+    this.name = "MarketplaceEntryAlreadyExistsError";
+  }
+}

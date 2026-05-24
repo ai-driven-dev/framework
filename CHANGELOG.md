@@ -20,6 +20,8 @@
 
 ### Features
 
+* **plugin:** `aidd plugin create <name>` — scaffold a full Claude Code plugin tree (`full | skills | agents | hooks | mcp`) with JSON Schema-validated `plugin.json` manifest and optional `marketplace.json` registration ([#214](https://github.com/ai-driven-dev/aidd-cli/issues/214))
+
 * **plugin:** Mode B parity — Cursor user-scope hooks + mcp materialization, OpenCode MCP merge into opencode.json, OpenCode hooks skip-with-warn ([#258](https://github.com/ai-driven-dev/aidd-cli/issues/258))
   * Cursor flat install writes `<plugin>/hooks.json` (Cursor-format, `${CLAUDE_PLUGIN_ROOT}/` rewritten) and `<plugin>/mcp.json` (passthrough), both tracked in `Plugin.files` for clean uninstall
   * OpenCode flat install merges `.mcp.json` servers into `opencode.json`; disabled servers stay disabled; user-owned servers preserved; idempotent re-install; replace path drops orphaned v1 servers
