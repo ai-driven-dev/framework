@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.2.1](https://github.com/ai-driven-dev/aidd-cli/compare/v4.2.0...v4.2.1) (2026-05-24)
+
+
+### Bug Fixes
+
+* **manifest:** updateTrackedFileHash upserts new files ([b9cf7d7](https://github.com/ai-driven-dev/aidd-cli/commit/b9cf7d76ea2628bc05abe6868b8d760688dfdd22))
+* **manifest:** updateTrackedFileHash upserts new files (codex .codex/config.json drift) ([e0b5699](https://github.com/ai-driven-dev/aidd-cli/commit/e0b56994fefe2f9f2e65d7768f1c1ef7ce7f99e2))
+
 ## [4.2.0](https://github.com/ai-driven-dev/aidd-cli/compare/v4.1.3...v4.2.0) (2026-05-23)
 
 
