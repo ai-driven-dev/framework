@@ -26,6 +26,7 @@ import { MigrateBackupUseCase } from "../application/use-cases/migrate/migrate-b
 import { MigrateRewirePluginsUseCase } from "../application/use-cases/migrate/migrate-rewire-plugins-use-case.js";
 import { MigrateStripDeadFilesUseCase } from "../application/use-cases/migrate/migrate-strip-dead-files-use-case.js";
 import { PluginAddUseCase } from "../application/use-cases/plugin/plugin-add-use-case.js";
+import { PluginCreateUseCase } from "../application/use-cases/plugin/plugin-create-use-case.js";
 import { PluginInstallFromMarketplaceUseCase } from "../application/use-cases/plugin/plugin-install-from-marketplace-use-case.js";
 import { PluginInstallUseCase } from "../application/use-cases/plugin/plugin-install-use-case.js";
 import { PluginListUseCase } from "../application/use-cases/plugin/plugin-list-use-case.js";
@@ -56,6 +57,7 @@ import type { Prompter } from "../domain/ports/prompter.js";
 import type { SelfUpdater } from "../domain/ports/self-updater.js";
 import type { VersionControl } from "../domain/ports/version-control.js";
 import type { VersionReader } from "../domain/ports/version-reader.js";
+import { AjvSchemaValidatorAdapter } from "./adapters/ajv-schema-validator-adapter.js";
 import { AuthReader } from "./adapters/auth-reader.js";
 import { AuthStorage } from "./adapters/auth-storage.js";
 import { CurrentVersionAdapter } from "./adapters/current-version-adapter.js";
@@ -99,6 +101,7 @@ interface Deps {
   marketplaceRegistry: MarketplaceRegistry;
   marketplaceTrustStore: MarketplaceTrustStore;
   pluginAddUseCase: PluginAddUseCase;
+  pluginCreateUseCase: PluginCreateUseCase;
   pluginRemoveUseCase: PluginRemoveUseCase;
   pluginListUseCase: PluginListUseCase;
   pluginUpdateUseCase: PluginUpdateUseCase;
@@ -234,6 +237,14 @@ export async function createDeps(
     pluginCatalogRepository
   );
   const assetProvider = new BundledAssetProviderAdapter();
+  const jsonSchemaValidator = new AjvSchemaValidatorAdapter();
+  const pluginCreateUseCase = new PluginCreateUseCase(
+    fs,
+    prompter,
+    jsonSchemaValidator,
+    assetProvider,
+    logger
+  );
   const installRuntimeConfigUseCase = new InstallRuntimeConfigUseCase(
     fs,
     manifestRepo,
@@ -335,6 +346,7 @@ export async function createDeps(
     marketplaceRegistry,
     marketplaceTrustStore,
     pluginAddUseCase,
+    pluginCreateUseCase,
     pluginRemoveUseCase,
     pluginListUseCase,
     pluginUpdateUseCase,

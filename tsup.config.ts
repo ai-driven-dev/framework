@@ -1,3 +1,4 @@
+import { copyFileSync } from "node:fs";
 import { defineConfig } from "tsup";
 
 export default defineConfig({
@@ -20,5 +21,12 @@ export default defineConfig({
       ".md": "text",
       ".toml": "text",
     };
+    options.minifySyntax = true;
+  },
+  async onSuccess() {
+    copyFileSync(
+      "assets/schemas/claude-code-plugin-manifest.json",
+      "dist/claude-code-plugin-manifest.json"
+    );
   },
 });
