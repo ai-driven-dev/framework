@@ -23,22 +23,30 @@ The **AIDD CLI** (`@ai-driven-dev/cli`) installs AI tool runtime configs, IDE in
 
 Available on [npmjs.org](https://www.npmjs.com/package/@ai-driven-dev/cli).
 
+### Zero-install (recommended)
+
+Run any `aidd` command directly via `npx` — no global install needed:
+
 ```bash
-# Stable release (post v4.1.0)
+npx @ai-driven-dev/cli@latest setup
+npx @ai-driven-dev/cli@latest --version
+```
+
+First call fetches the package (~3 s cold start, then cached by npm). Use this when you want a one-shot run or want to pin a specific version per project (`@4.2.1`).
+
+### Global install
+
+For repeated use across many projects:
+
+```bash
 npm install -g @ai-driven-dev/cli@latest
+# or
+pnpm add -g @ai-driven-dev/cli@latest
 
-# Current beta (v4.1.0-beta.*)
-npm install -g @ai-driven-dev/cli@beta
-# or with pnpm / yarn / bun
-pnpm add -g @ai-driven-dev/cli@beta
-
-# Verify
 aidd --version
 ```
 
 > Run `which aidd` to identify the active binary and use the matching package manager (`npm`, `pnpm`, `yarn`, `bun`).
-
-> **Beta users:** Once v4.1.0 is published as stable, switch to `@latest` and remove any `@beta` version pins from install scripts.
 
 ---
 
@@ -96,7 +104,7 @@ aidd auth logout                                # remove stored credential
 aidd setup
 
 # 2. Non-interactive scriptable setup (CI / onboarding scripts)
-aidd setup --source remote --ai claude --ide vscode --recommended-plugins --yes
+aidd setup --source remote --ai claude --ide vscode --plugins recommended --yes
 
 # 3. Install an AI tool or IDE integration (noun-first surface)
 aidd ai install claude
