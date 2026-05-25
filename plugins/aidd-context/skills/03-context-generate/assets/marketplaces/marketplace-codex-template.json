@@ -1,0 +1,7 @@
+{
+  "name": "{{marketplace_name}}",
+  "interface": {
+    "displayName": "{{description}}"
+  },
+  "plugins": []
+}
