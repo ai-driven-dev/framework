@@ -26,6 +26,8 @@ Present the detected set to the user:
 - Ask which tools to target. Multi-select is allowed (1..N).
 - Wait for explicit confirmation before proceeding.
 
+In `mode = auto`, skip the prompt: the detected set becomes the confirmed set automatically. The gate still runs; only the user-confirmation step is omitted.
+
 No-signal fallback: if no detection signal is found (fresh repo with no AI tool installed), propose all five tools cold:
 
 - Claude Code
