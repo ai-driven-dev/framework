@@ -9,7 +9,7 @@ Every file has its own template to follow.
 ### Hard copy into memory bank (always generated)
 
 ```text
-@../assets/templates/memory
+@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/templates/memory
 ```
 
 ### Memory templates
@@ -27,14 +27,14 @@ Each has a `scope` front-matter field:
 All templates are in:
 
 ```text
-@../assets/templates/memory
+@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/templates/memory
 ```
 
 #### Internal templates (frontend / backend)
 
 ```text
-@../assets/templates/memory/frontend
-@../assets/templates/memory/backend
+@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/templates/memory/frontend
+@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/templates/memory/backend
 ```
 
 ## Inputs
@@ -58,7 +58,7 @@ aidd_docs/
 
 ## Process
 
-1. **Verify asset access.** Read at least one canonical template (e.g. `@../assets/templates/memory/architecture.md`). If the read fails or returns empty content, FAIL with `status: blocked_assets_unreachable: cannot read @../assets/templates/memory/. Templates are required and this action does not invent content. Ensure the aidd-context plugin assets are accessible to this AI host.` Do NOT proceed, do NOT write any memory file.
+1. **Verify asset access.** Read at least one canonical template (e.g. `@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/templates/memory/architecture.md`). If the read fails or returns empty content, FAIL with `status: blocked_assets_unreachable: cannot read @${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/templates/memory/. Templates are required and this action does not invent content. Ensure the aidd-context plugin assets are accessible to this AI host.` Do NOT proceed, do NOT write any memory file.
 2. Check if memory bank already exists in `aidd_docs/memory/` folder:
    - If exists, update with newer information
    - If not, create from scratch

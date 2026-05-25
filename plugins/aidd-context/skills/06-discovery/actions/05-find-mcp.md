@@ -25,7 +25,7 @@ Tool prefix: <mcp__server__tool> (or invocation hint for the current AI)
 
 ## Process
 
-1. **Enumerate connected MCP servers.** Read the AI tool's MCP config (`.mcp.json` for Claude Code, equivalent paths per tool; see `@../../03-context-generate/references/ai-mapping.md`).
+1. **Enumerate connected MCP servers.** Read the AI tool's MCP config (`.mcp.json` for Claude Code, equivalent paths per tool; see `@${CLAUDE_PLUGIN_ROOT}/skills/06-discovery/03-context-generate/references/ai-mapping.md`).
 2. **Extract metadata.** For each server, list the tools it exposes and group them by capability area.
 3. **Render the table.** Columns: `Server | Capabilities | Source`. One row per server.
 4. **Ask the user for intent.** `Which external system or capability do you need?` Wait for an explicit reply.

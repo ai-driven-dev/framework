@@ -35,18 +35,18 @@ per_tool:
 | Codex CLI      | none                                          | JSON parse `.codex-plugin/plugin.json` + required-key check (`name`, `version`, `description`) |
 | OpenCode       | D2-blocked (O1) - no manifest, no validator  | n/a                                                            |
 
-Required keys per tool are sourced from `@../../references/ai-mapping.md` (each tool's Plugins section).
+Required keys per tool are sourced from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md` (each tool's Plugins section).
 
 ## Process
 
-1. For each confirmed (non-blocked) tool, resolve the manifest directory from `@../../references/ai-mapping.md`.
+1. For each confirmed (non-blocked) tool, resolve the manifest directory from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`.
 2. **Schema check.**
    - Claude Code: run `claude plugin validate <plugins-root>/<plugin_name>`. Map every error/warning into `findings[]`.
    - All other tools: JSON-parse the manifest file; if invalid JSON, record an error finding. Then check that every required key for that tool (per `ai-mapping.md`) is present and non-empty; record an error finding for each missing required key.
 3. **Name parity.** For each tool: `plugin.json` `name` matches the directory name and matches the `<plugin>` segment used in every nested skill frontmatter `name:`.
 4. **Artifact-set parity.** For each slot enabled in `artifact_set`, at least one artifact file exists (or a `.gitkeep` is present and intentional). For each slot disabled, the corresponding subdir is absent.
    - Special case for `commands/`: if the tool is Codex CLI, the `commands/` subdir must be ABSENT regardless of `artifact_set.commands` value (scaffold skipped it per the Codex D2 rule). Record a warning finding if `commands/` exists under a Codex CLI plugin tree.
-5. **Seed-skill structure.** If a seed skill was created, run `@../skills/06-validate.md` against `<plugins-root>/<plugin_name>/skills/01-<seed_skill.name>/`; any `❌` row downgrades `validation_status` to `fail`.
+5. **Seed-skill structure.** If a seed skill was created, run `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/skills/06-validate.md` against `<plugins-root>/<plugin_name>/skills/01-<seed_skill.name>/`; any `❌` row downgrades `validation_status` to `fail`.
 6. **Plugin reload smoke.** For Claude Code only: when the host runtime supports it, invoke `/reload-plugins` and confirm the new plugin appears in the load report. Skip with a warning otherwise.
 7. Set `validation_status = pass` iff no `error`-severity finding was recorded across all confirmed tools.
 

@@ -46,7 +46,7 @@ OpenCode is D2-blocked (O1): no manifest tree is written for it.
 
 ## Manifest schema approach
 
-Plugin manifest schemas diverge across tools in their required keys. This action uses per-tool manifest rendering driven by `@../../references/ai-mapping.md` (each tool's Plugins section lists its required keys):
+Plugin manifest schemas diverge across tools in their required keys. This action uses per-tool manifest rendering driven by `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md` (each tool's Plugins section lists its required keys):
 
 - **Claude Code**: `name` only required; `version`, `description`, `author` optional.
 - **Cursor**: `name` only required; other fields optional.
@@ -59,8 +59,8 @@ For each confirmed tool, render `plugin.json` with that tool's required keys alw
 
 1. **Resolve `<plugins-root>`** from `location`. Refuse to write outside the user's known plugins surface.
 2. **Refuse overwrite.** If `<plugins-root>/<plugin_name>/` already exists for any confirmed tool, abort with a clear message; this action never overwrites a plugin folder.
-3. **For each confirmed (non-blocked) tool**, resolve the manifest directory from `@../../references/ai-mapping.md` (`.claude-plugin/` for Claude Code, `.cursor-plugin/` for Cursor, `.codex-plugin/` for Codex CLI, plugin root for GitHub Copilot). Render `plugin.json` with only that tool's required fields plus any optional fields the user supplied. For `author`: if the user supplied a value, use it; else read `git config user.name` and `git config user.email` and populate `author: { name, email }` when both succeed; else drop the key.
-4. **Render `README.md`** by copying `@../../assets/plugins/plugin-readme-template.md` and substituting `{{plugin_name}}` and `{{plugin_description}}`. One `README.md` per plugin tree (shared across tools when writing to the same directory; separate when paths diverge).
+3. **For each confirmed (non-blocked) tool**, resolve the manifest directory from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md` (`.claude-plugin/` for Claude Code, `.cursor-plugin/` for Cursor, `.codex-plugin/` for Codex CLI, plugin root for GitHub Copilot). Render `plugin.json` with only that tool's required fields plus any optional fields the user supplied. For `author`: if the user supplied a value, use it; else read `git config user.name` and `git config user.email` and populate `author: { name, email }` when both succeed; else drop the key.
+4. **Render `README.md`** by copying `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/plugins/plugin-readme-template.md` and substituting `{{plugin_name}}` and `{{plugin_description}}`. One `README.md` per plugin tree (shared across tools when writing to the same directory; separate when paths diverge).
 5. **Create selected subdirs** (`skills/`, `agents/`, `commands/`, `hooks/` per `artifact_set`). Add a `.gitkeep` only if needed for the tooling the user uses.
    - `commands/` is created for Claude Code, Cursor, and GitHub Copilot when `artifact_set.commands` is true.
    - `commands/` is SKIPPED for Codex CLI even if `artifact_set.commands` is true - Codex CLI does not support custom slash commands per `ai-mapping.md`; emit a note: "commands slot skipped for Codex CLI; use a skill instead if a reusable workflow is needed."

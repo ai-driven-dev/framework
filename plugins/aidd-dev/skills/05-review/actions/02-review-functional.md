@@ -29,7 +29,7 @@ edge_case_gaps: <int>
 5. **List missing behaviors** (criteria with no trace in the diff).
 6. **List unplanned behaviors** (diff changes that trace to no criterion).
 7. **List flow and edge-case gaps** surfaced by walking through each criterion.
-8. **Format and write** the report using `@../assets/review-functional-template.md` to `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<task_name>.review_functional.md`. Create the month directory when missing.
+8. **Format and write** the report using `@${CLAUDE_PLUGIN_ROOT}/skills/05-review/assets/review-functional-template.md` to `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<task_name>.review_functional.md`. Create the month directory when missing.
 
 ## Test
 

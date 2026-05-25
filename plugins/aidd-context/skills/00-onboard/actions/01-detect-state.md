@@ -19,7 +19,7 @@ The internal state covers three signal groups plus three derived values:
 
 ## Process
 
-1. **Read the matrix**. Load `@../assets/state-matrix.md` to confirm the signals, the `memory_state` and `sdlc_phase` derivations, and the suggested-option table.
+1. **Read the matrix**. Load `@${CLAUDE_PLUGIN_ROOT}/skills/00-onboard/assets/state-matrix.md` to confirm the signals, the `memory_state` and `sdlc_phase` derivations, and the suggested-option table.
 2. **Probe Group A in parallel**. Filesystem checks for each AIDD setup signal:
    - `test -d aidd_docs`
    - `test -d aidd_docs/memory && ls -1 aidd_docs/memory/*.md 2>/dev/null`

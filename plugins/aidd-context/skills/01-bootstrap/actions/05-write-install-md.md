@@ -11,7 +11,7 @@ Produce `aidd_docs/INSTALL.md` from the filled checklist, folder tree, diagram, 
 
 ## Outputs
 
-A new file at `aidd_docs/INSTALL.md` filled from `@../assets/install-template.md`.
+A new file at `aidd_docs/INSTALL.md` filled from `@${CLAUDE_PLUGIN_ROOT}/skills/01-bootstrap/assets/install-template.md`.
 
 ```markdown
 # INSTALL.md - acme-invoicing
@@ -40,7 +40,7 @@ Technical vision and installation guide.
 
 ## Process
 
-1. Read `@../assets/install-template.md`. This is the skeleton.
+1. Read `@${CLAUDE_PLUGIN_ROOT}/skills/01-bootstrap/assets/install-template.md`. This is the skeleton.
 2. Fill each placeholder from upstream artifacts:
    - **Vision**: project name + one-liner from block 1
    - **Decisions table**: each row from block 4 paired with a one-line `Why` derived from block 2-3 constraints

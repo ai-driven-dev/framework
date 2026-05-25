@@ -26,10 +26,10 @@ A Mermaid diagram fenced as ```mermaid + an optional review note. On first user 
    - Relationships (colors, connections, dependencies).
    - Notes and labels per element when needed.
 3. **Confirm the plan.** Ask the user "Do you confirm the plan?" and wait for explicit confirmation.
-4. **Generate** the 100% valid Mermaid diagram from the plan. Flow direction defaults to `LR`. Minimum Mermaid version 10.8.0. Apply the conventions in `@../references/mermaid-conventions.md`.
+4. **Generate** the 100% valid Mermaid diagram from the plan. Flow direction defaults to `LR`. Minimum Mermaid version 10.8.0. Apply the conventions in `@${CLAUDE_PLUGIN_ROOT}/skills/04-mermaid/references/mermaid-conventions.md`.
 5. **Offer a review.** Ask the user "Do you want me to review it?" and wait for an answer.
 6. **Review on confirm.** Check syntax, look for empty or misplaced nodes, suggest improvements. Do NOT add any extra elements that were not in the confirmed plan.
 
 ## Test
 
-The generated block is fenced with ```mermaid, parses without error against Mermaid 10.8.0+, follows the conventions in `@../references/mermaid-conventions.md`, and contains no nodes or relationships absent from the user-confirmed plan.
+The generated block is fenced with ```mermaid, parses without error against Mermaid 10.8.0+, follows the conventions in `@${CLAUDE_PLUGIN_ROOT}/skills/04-mermaid/references/mermaid-conventions.md`, and contains no nodes or relationships absent from the user-confirmed plan.

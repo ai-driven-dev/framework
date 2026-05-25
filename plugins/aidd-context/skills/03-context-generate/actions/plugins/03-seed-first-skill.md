@@ -25,14 +25,14 @@ seed_skill_status: created | skipped
 1. Self-skip when `seed_skill.name` is empty. Set `seed_skill_status = skipped` and return.
 2. Set working location to `<plugins-root>/<plugin_name>/skills/` with skill prefix pinned to `01-`.
 3. Run the skill-generation flow against that location, in order, passing `skill_name = seed_skill.name` and `expected_output = seed_skill.description`:
-   - `@../skills/01-capture-intent.md`
-   - `@../skills/02-design-evals.md`
-   - `@../skills/03-decompose-actions.md`
-   - `@../skills/04-draft-skill.md`
-   - `@../skills/05-write-actions.md`
-   - `@../skills/06-validate.md`
+   - `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/skills/01-capture-intent.md`
+   - `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/skills/02-design-evals.md`
+   - `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/skills/03-decompose-actions.md`
+   - `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/skills/04-draft-skill.md`
+   - `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/skills/05-write-actions.md`
+   - `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/skills/06-validate.md`
 4. Each upstream action's `## Test` must pass before the next is invoked, per the skill flow's own contract.
-5. Record `seed_skill_status = created` once `@../skills/06-validate.md` returns a green table.
+5. Record `seed_skill_status = created` once `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/skills/06-validate.md` returns a green table.
 
 ## Test
 

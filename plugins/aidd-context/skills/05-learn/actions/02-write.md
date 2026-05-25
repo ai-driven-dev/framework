@@ -21,8 +21,8 @@ A summary table: `item | destination | action taken (created | updated)`.
 ## Process
 
 1. **For each approved item**, apply by category:
-   - **Decision** → create `aidd_docs/internal/decisions/XXX-<title>.md` from `@../assets/decision-template.md`; assign the next `DEC-XXX` id.
-   - **ADR row** → update `ADR.md` using `@../assets/adr-template.md` shape (one new row referencing the decision file).
+   - **Decision** → create `aidd_docs/internal/decisions/XXX-<title>.md` from `@${CLAUDE_PLUGIN_ROOT}/skills/05-learn/assets/decision-template.md`; assign the next `DEC-XXX` id.
+   - **ADR row** → update `ADR.md` using `@${CLAUDE_PLUGIN_ROOT}/skills/05-learn/assets/adr-template.md` shape (one new row referencing the decision file).
    - **Memory** → update the matching `aidd_docs/memory/<file>.md`. Append or revise the relevant section; preserve user customizations.
    - **Rule** → create or update the file under the project rules location.
    - **Skill / Template** → create or update under the project skills or assets location.

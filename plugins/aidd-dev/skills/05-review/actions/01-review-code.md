@@ -25,9 +25,9 @@ severity_breakdown:
 1. **Resolve the diff.** Use `$ARGUMENTS` when provided; otherwise fall back to `git diff main`.
 2. **Deep review every changed line.** Apply project conventions and global clean-code principles. No runtime checks.
 3. **Findings only.** Focus on issues; do not propose feature-level changes. Suggested fixes are described, not patched.
-4. **Format the report** using `@../assets/review-template.md`.
+4. **Format the report** using `@${CLAUDE_PLUGIN_ROOT}/skills/05-review/assets/review-template.md`.
 5. **Write to disk** at `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<task_name>.review.md`. Create the month directory when missing.
 
 ## Test
 
-The review file exists at the emitted `review_path`, every finding cites the changed file and line, and the report contains every section listed in `@../assets/review-template.md`.
+The review file exists at the emitted `review_path`, every finding cites the changed file and line, and the report contains every section listed in `@${CLAUDE_PLUGIN_ROOT}/skills/05-review/assets/review-template.md`.

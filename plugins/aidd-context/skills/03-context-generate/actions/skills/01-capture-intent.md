@@ -34,7 +34,7 @@ blocked_tools:
 ## Process
 
 1. Ask: **generate** a new skill or **modify** an existing one?
-2. Inventory project + global skills across all AI tools' skills roots (resolved from `@../../references/ai-mapping.md`). Read each `SKILL.md` frontmatter (`name`, first line of `description`). Print as a markdown table.
+2. Inventory project + global skills across all AI tools' skills roots (resolved from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`). Read each `SKILL.md` frontmatter (`name`, first line of `description`). Print as a markdown table.
 3. Branch:
    - `modify` → confirm target name exists, read its `SKILL.md`, jump to action 03. (Generate-only gate does not apply in modify mode.)
    - `generate` → ask the skill's single purpose in one sentence. If multiple unrelated domains, propose a split.
@@ -48,7 +48,7 @@ blocked_tools:
      - Flat command (`actions/commands/01-generate-command.md`) - lighter, single `.md`, no folder overhead. Right when no supporting files needed.
      - Skill - heavier shell, but supports `assets/`, `references/`, `evals/`, `scripts/`. Right when even one action benefits from templates, fixtures, secrets, or test scenarios.
    - **Let the user decide.** Honor an explicit "skill" choice even for a 1-action artifact.
-8. **Resolve target tools.** Follow `@../../references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the skills surface in `@../../references/ai-mapping.md`; if the cell is marked unsupported, apply the D2 block for that tool and record it in `blocked_tools`. Continue with the remaining supported tools.
+8. **Resolve target tools.** Follow `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the skills surface in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`; if the cell is marked unsupported, apply the D2 block for that tool and record it in `blocked_tools`. Continue with the remaining supported tools.
 
 ## Test
 

@@ -5,7 +5,7 @@ Execute `update_memory.js` to fill the `<aidd_project_memory>` blocks in all con
 ## Context
 
 ```markdown
-@../references/mapping-ai-context-file.md
+@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/references/mapping-ai-context-file.md
 ```
 
 ## Inputs

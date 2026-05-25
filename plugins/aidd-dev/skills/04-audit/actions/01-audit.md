@@ -34,7 +34,7 @@ categories_covered:
    - File, function, and component length above project thresholds.
    - Missing tests on critical paths.
 3. **Aggregate findings.** Group per check; quote concrete file paths and line numbers for every entry.
-4. **Write the report** to `aidd_docs/tasks/audits/<yyyy>_<mm>_<slug>.md` using `@../assets/audit-template.md` as the skeleton.
+4. **Write the report** to `aidd_docs/tasks/audits/<yyyy>_<mm>_<slug>.md` using `@${CLAUDE_PLUGIN_ROOT}/skills/04-audit/assets/audit-template.md` as the skeleton.
 
 ## Test
 

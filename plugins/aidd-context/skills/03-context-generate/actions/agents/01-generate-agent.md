@@ -27,16 +27,16 @@ quality_score: 1-10
 ## Process
 
 1. **Gather requirements.** Ask the user clarifying questions until the agent template is fillable. Iterate until the agent's purpose, tools, inputs, and instructions are unambiguous.
-2. **Fill the template** at `@../../assets/agents/agent-template.md`. Apply the coordination conventions in `@../../references/agents-coordination.md`.
+2. **Fill the template** at `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/agents/agent-template.md`. Apply the coordination conventions in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/agents-coordination.md`.
 3. **Review.** Score the generated agent 1-10 on clarity and completeness. Inputs and outputs MUST be ultra concise and precise.
 4. **Wait for user confirmation** before finalizing. In `mode = auto` (called from an upstream skill that has already validated inputs), skip this user-confirmation review gate and continue. Note: the tool-resolution gate (step 6) always runs regardless of mode; in `mode = auto`, the detected signal set becomes the confirmed set automatically without prompting the user.
 5. **Propose 3 first names** for the agent. Each name must be short and catchy, making sense with the agent's purpose (word game, acronym, etc.).
-6. **Resolve target tools.** Follow `@../../references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the agents surface in `@../../references/ai-mapping.md`; if the cell is marked unsupported, apply the D2 block for that tool and record it in `blocked_tools`. Continue with the remaining supported tools.
-7. **Save.** Write the completed agent file to each confirmed supported tool's native agents location using its path, naming, and extension conventions from `@../../references/ai-mapping.md`.
-   - If a confirmed tool is **Codex CLI**, convert the canonical markdown agent to TOML per the Codex CLI section of `@../../references/ai-mapping.md`: frontmatter fields become top-level TOML keys; the markdown body becomes the value of `developer_instructions`. Write the result to `.codex/agents/{name}.toml`.
-   - For all other tools, write the markdown directly with field-level reconciliation per `@../../references/ai-mapping.md`.
+6. **Resolve target tools.** Follow `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the agents surface in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`; if the cell is marked unsupported, apply the D2 block for that tool and record it in `blocked_tools`. Continue with the remaining supported tools.
+7. **Save.** Write the completed agent file to each confirmed supported tool's native agents location using its path, naming, and extension conventions from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`.
+   - If a confirmed tool is **Codex CLI**, convert the canonical markdown agent to TOML per the Codex CLI section of `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`: frontmatter fields become top-level TOML keys; the markdown body becomes the value of `developer_instructions`. Write the result to `.codex/agents/{name}.toml`.
+   - For all other tools, write the markdown directly with field-level reconciliation per `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`.
    Indexing the new file (catalog, docs page, README section, etc.) is the host's responsibility, not this action's.
 
 ## Test
 
-For each confirmed tool whose agents surface is supported, the agent file exists at the tool-specific path in `files_written`, matches the structure of `@../../assets/agents/agent-template.md`, and uses the correct extension and frontmatter shape from `@../../references/ai-mapping.md`. Each D2-blocked tool appears in `blocked_tools` with a non-empty reason; no tool is silently skipped. `quality_score >= 8`.
+For each confirmed tool whose agents surface is supported, the agent file exists at the tool-specific path in `files_written`, matches the structure of `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/agents/agent-template.md`, and uses the correct extension and frontmatter shape from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`. Each D2-blocked tool appears in `blocked_tools` with a non-empty reason; no tool is silently skipped. `quality_score >= 8`.

@@ -26,7 +26,7 @@ Iterate over the steps below until each component is fully defined.
 2. **Per component**:
    - Identify the key states the component can be in.
    - Determine the events or actions that trigger transitions between states.
-   - Define the state machine in Mermaid syntax, applying `@../references/mermaid-conventions.md`.
+   - Define the state machine in Mermaid syntax, applying `@${CLAUDE_PLUGIN_ROOT}/skills/01-plan/references/mermaid-conventions.md`.
 3. **Sanity-check the model.** Confirm the state machine captures every state and every transition relevant to the component's behavior.
 4. **Present the final state machines** to the user for validation. Wait for an explicit OK before exiting.
 

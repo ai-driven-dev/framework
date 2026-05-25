@@ -46,9 +46,9 @@ For each confirmed (non-blocked) tool:
 
 1. **Schema check.**
    - Claude Code: run `claude plugin validate <repo-root>`. Map every error/warning into `findings[]`. Block on any `error` severity.
-   - Cursor / Codex CLI: JSON-parse the marketplace file; if invalid JSON, record an error finding. Check that required keys are present and non-empty per `@../../references/marketplace.md` and `@../../references/ai-mapping.md`. Record error findings for missing keys.
-2. **Reserved-name check.** Reload the marketplace JSON and re-confirm `name` is not on the reserved list in `@../../references/marketplace.md`.
-3. **Source-shape check** (shape rules: `@../../references/marketplace.md`):
+   - Cursor / Codex CLI: JSON-parse the marketplace file; if invalid JSON, record an error finding. Check that required keys are present and non-empty per `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/marketplace.md` and `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`. Record error findings for missing keys.
+2. **Reserved-name check.** Reload the marketplace JSON and re-confirm `name` is not on the reserved list in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/marketplace.md`.
+3. **Source-shape check** (shape rules: `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/marketplace.md`):
    - relative path -> directory exists, contains the tool's expected manifest file, no `..` segments.
    - `github` -> `repo` is `owner/name` shape; `sha` (if present) is 40 hex chars.
    - `url` / `git-subdir` -> `url` is a valid git URL; `git-subdir` has a non-empty `path`.
