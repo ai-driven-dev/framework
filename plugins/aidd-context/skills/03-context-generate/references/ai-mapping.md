@@ -12,7 +12,7 @@ Map generated context artifacts to the correct AI-specific paths, syntax, file e
 | Cursor         | `.cursor/agents/`           | `.cursor/commands/`                           | `.cursor/rules/`                         | `.cursor/skills/`                     | `AGENTS.md`                       |
 | OpenCode       | `.opencode/agents/`         | `.opencode/commands/`                         | **Not supported** (fold into AGENTS.md)  | `.opencode/skills/`                   | `AGENTS.md`                       |
 | GitHub Copilot | `.github/agents/*.agent.md` | `.github/prompts/*.prompt.md`                 | `.github/instructions/*.instructions.md` | `.github/skills/`                     | `.github/copilot-instructions.md` |
-| Codex CLI      | `.codex/agents/{name}.toml` | `.agents/skills/aidd-{phase}-{name}/SKILL.md` (fallback: `.agents/skills/aidd-{name}/SKILL.md` when the command has no SDLC phase) | Not supported (skip rules at install)    | `.agents/skills/aidd-{name}/SKILL.md` | `AGENTS.md`                       |
+| Codex CLI      | `.codex/agents/{name}.toml` | **Not supported** (Codex CLI does not support custom slash commands; only built-ins) | Not supported (skip rules at install)    | `.agents/skills/aidd-{name}/SKILL.md` | `AGENTS.md`                       |
 
 ## Path layout per tool
 
@@ -21,7 +21,7 @@ Rules and commands follow a two-layout scheme. Subdir-tools organize files under
 | Layout          | Surface   | Tools                                    | Example                                                        |
 | --------------- | --------- | ---------------------------------------- | -------------------------------------------------------------- |
 | Subdir          | Rules     | Claude Code, Cursor                      | `<rules root>/02-programming-languages/2-typescript-naming.md` |
-| Subdir          | Commands  | Claude Code, Cursor, OpenCode, Codex CLI | `<commands root>/10_maintenance/fix-issue.md`                  |
+| Subdir          | Commands  | Claude Code, Cursor, OpenCode            | `<commands root>/10_maintenance/fix-issue.md`                  |
 | Flat            | Both      | GitHub Copilot                           | `.github/instructions/02-typescript-naming.instructions.md`    |
 
 For flat-tools, the descriptive slug is the canonical slug with its leading `<n>-` category-index prefix stripped, then prefixed with the full two-digit category or phase index (e.g. canonical slug `2-typescript-naming` in category `02-programming-languages` becomes `02-typescript-naming`).
@@ -284,10 +284,13 @@ Block message: "Plugin scaffold for OpenCode is not supported: OpenCode has no p
 
 ### File creation conventions
 
-- Commands are installed as phase-prefixed skills (`aidd-{phase}-{name}/SKILL.md`). When the command has no SDLC phase, drop the phase segment and use `aidd-{name}/SKILL.md` (same shape as plain skills).
 - Agents use TOML (`.codex/agents/{name}.toml`)
 - Skills are flat under `.agents/skills/aidd-{name}/SKILL.md`
 - Rules are not supported and should be skipped at install
+
+### Commands - Not supported
+
+Codex CLI plugins do not bundle custom slash commands per https://developers.openai.com/codex/plugins/build - only built-in commands exist. Generators must D2-block on command x Codex CLI with a message stating "Codex CLI does not support custom slash commands; use a skill instead if a reusable workflow is needed."
 
 ### Include syntax
 
