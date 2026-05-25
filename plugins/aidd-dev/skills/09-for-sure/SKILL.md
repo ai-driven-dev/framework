@@ -12,7 +12,7 @@ Autonomous loop that runs until a success condition is verified. Two phases: int
 - **Goal**: Task's `success_condition` verified by running a command. All steps/acceptance criteria checked. File renamed to `.done.md`.
 - **Tools required**: Agent tool (spawning iterations), Read/Write/Edit (tracking file), task-specific tools.
 - **Trigger**: Manual - `/for-sure`.
-- **Tracking file format**: Uses the `plan` template from skill `aidd-dev:01:plan` (`../../01-plan/assets/plan-template.md`). Filename: `aidd_docs/tasks/<task-name>.<status>.md`.
+- **Tracking file format**: Uses the `plan` template from skill `aidd-dev:01:plan` (`${CLAUDE_PLUGIN_ROOT}/skills/01-plan/assets/plan-template.md`). Filename: `aidd_docs/tasks/<task-name>.<status>.md`.
 
 ## Environment
 
@@ -39,11 +39,11 @@ None - task secrets are validated during pre-flight and documented in the tracki
 ## Actions
 
 ```markdown
-@actions/01-init-tracking.md
-@actions/02-auto-accept.md
-@actions/03-autonomous-loop.md
+@${CLAUDE_PLUGIN_ROOT}/skills/09-for-sure/actions/01-init-tracking.md
+@${CLAUDE_PLUGIN_ROOT}/skills/09-for-sure/actions/02-auto-accept.md
+@${CLAUDE_PLUGIN_ROOT}/skills/09-for-sure/actions/03-autonomous-loop.md
 ```
 
 ## References
 
-- `../../01-plan/assets/plan-template.md` - tracking file format (frontmatter, phases, acceptance criteria, Log)
+- `${CLAUDE_PLUGIN_ROOT}/skills/01-plan/assets/plan-template.md` - tracking file format (frontmatter, phases, acceptance criteria, Log)

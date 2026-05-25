@@ -11,7 +11,7 @@ Diagnoses issues through structured hypothesis validation, root cause analysis, 
 ## Actions
 
 ```markdown
-@actions/01-reproduce.md
-@actions/02-debug.md
-@actions/03-reflect-issue.md
+@${CLAUDE_PLUGIN_ROOT}/skills/08-debug/actions/01-reproduce.md
+@${CLAUDE_PLUGIN_ROOT}/skills/08-debug/actions/02-debug.md
+@${CLAUDE_PLUGIN_ROOT}/skills/08-debug/actions/03-reflect-issue.md
 ```

@@ -11,5 +11,5 @@ Conducts comprehensive codebase audits against project rules and outputs a struc
 ## Actions
 
 ```markdown
-@actions/01-audit.md
+@${CLAUDE_PLUGIN_ROOT}/skills/04-audit/actions/01-audit.md
 ```
