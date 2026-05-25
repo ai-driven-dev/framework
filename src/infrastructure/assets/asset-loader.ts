@@ -23,6 +23,7 @@ import type {
 } from "../../domain/ports/asset-provider.js";
 
 const SCHEMA_FILE = "claude-code-plugin-manifest.json";
+const MARKETPLACE_SCHEMA_FILE = "copilot-plugin-marketplace.json";
 
 const CONFIG_ASSETS: Readonly<Record<ToolId, Readonly<Record<string, ConfigAsset>>>> = {
   claude: { "settings.json": claudeSettings },
@@ -39,6 +40,7 @@ const CONFIG_ASSETS: Readonly<Record<ToolId, Readonly<Record<string, ConfigAsset
 
 export class BundledAssetProviderAdapter implements AssetProvider {
   private cachedSchema: object | undefined;
+  private cachedMarketplaceSchema: object | undefined;
 
   loadConfigAsset(toolId: ToolId, fileName: string): ConfigAsset {
     const asset = CONFIG_ASSETS[toolId][fileName];
@@ -54,14 +56,20 @@ export class BundledAssetProviderAdapter implements AssetProvider {
 
   loadPluginManifestSchema(): object {
     if (this.cachedSchema !== undefined) return this.cachedSchema;
-    this.cachedSchema = this.readSchemaFromDisk();
+    this.cachedSchema = this.readSchemaFileFromDisk(SCHEMA_FILE);
     return this.cachedSchema;
   }
 
-  private readSchemaFromDisk(): object {
+  loadMarketplaceSchema(): object {
+    if (this.cachedMarketplaceSchema !== undefined) return this.cachedMarketplaceSchema;
+    this.cachedMarketplaceSchema = this.readSchemaFileFromDisk(MARKETPLACE_SCHEMA_FILE);
+    return this.cachedMarketplaceSchema;
+  }
+
+  private readSchemaFileFromDisk(fileName: string): object {
     const candidates = [
-      new URL(`../../../assets/schemas/${SCHEMA_FILE}`, import.meta.url),
-      new URL(`./${SCHEMA_FILE}`, import.meta.url),
+      new URL(`../../../assets/schemas/${fileName}`, import.meta.url),
+      new URL(`./${fileName}`, import.meta.url),
     ];
     for (const url of candidates) {
       const p = fileURLToPath(url);
@@ -69,6 +77,6 @@ export class BundledAssetProviderAdapter implements AssetProvider {
         return JSON.parse(readFileSync(p, "utf8")) as object;
       }
     }
-    throw new Error(`Plugin manifest schema not found.`);
+    throw new Error(`Schema file '${fileName}' not found.`);
   }
 }

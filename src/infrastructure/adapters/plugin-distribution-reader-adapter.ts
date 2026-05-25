@@ -23,20 +23,24 @@ export class PluginDistributionReaderAdapter implements PluginDistributionReader
   constructor(private readonly fs: FileReader) {}
 
   async read(pluginRoot: string): Promise<PluginDistribution> {
-    const { format, manifestPath } = await this.probeManifest(pluginRoot);
+    const { format, manifestPath, manifestRelativePath } = await this.probeManifest(pluginRoot);
     const manifest = await this.readManifest(manifestPath);
-    const files = await this.collectFiles(pluginRoot, manifestPath, format);
+    const files = await this.collectFiles(pluginRoot, manifestPath, manifestRelativePath);
     const components = categorize(files);
     return new PluginDistribution({ manifest, format, files, components });
   }
 
   private async probeManifest(
     pluginRoot: string
-  ): Promise<{ format: PluginFormat; manifestPath: string }> {
+  ): Promise<{ format: PluginFormat; manifestPath: string; manifestRelativePath: string }> {
     for (const probe of PLUGIN_MANIFEST_PROBES) {
       const fullPath = join(pluginRoot, probe.relativePath);
       if (await this.fs.fileExists(fullPath)) {
-        return { format: probe.format, manifestPath: fullPath };
+        return {
+          format: probe.format,
+          manifestPath: fullPath,
+          manifestRelativePath: probe.relativePath,
+        };
       }
     }
     throw new InvalidPluginManifestError(`no plugin.json found in "${pluginRoot}"`);
@@ -55,7 +59,7 @@ export class PluginDistributionReaderAdapter implements PluginDistributionReader
   private async collectFiles(
     pluginRoot: string,
     manifestPath: string,
-    format: PluginFormat
+    manifestRelativePath: string
   ): Promise<PluginComponentFile[]> {
     const allPaths = await this.fs.listDirectory(pluginRoot);
     const files: PluginComponentFile[] = [];
@@ -66,11 +70,8 @@ export class PluginDistributionReaderAdapter implements PluginDistributionReader
       const content = await this.fs.readFile(join(pluginRoot, rawPath));
       files.push({ relativePath, content });
     }
-    const manifestProbe = PLUGIN_MANIFEST_PROBES.find((p) => p.format === format);
-    if (manifestProbe) {
-      const manifestContent = await this.fs.readFile(manifestPath);
-      files.push({ relativePath: manifestProbe.relativePath, content: manifestContent });
-    }
+    const manifestContent = await this.fs.readFile(manifestPath);
+    files.push({ relativePath: manifestRelativePath, content: manifestContent });
     return files;
   }
 }

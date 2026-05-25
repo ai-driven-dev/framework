@@ -11,6 +11,7 @@ import { DoctorPluginUseCase } from "../application/use-cases/doctor/doctor-plug
 import { DoctorReferencesUseCase } from "../application/use-cases/doctor/doctor-references-use-case.js";
 import { DoctorTrackedFilesUseCase } from "../application/use-cases/doctor/doctor-tracked-files-use-case.js";
 import { DoctorUseCase } from "../application/use-cases/doctor/doctor-use-case.js";
+import { FrameworkBuildUseCase } from "../application/use-cases/framework/framework-build-use-case.js";
 import { InstallAiToolUseCase } from "../application/use-cases/install/install-ai-tool-use-case.js";
 import { InstallIdeConfigUseCase } from "../application/use-cases/install/install-ide-config-use-case.js";
 import { InstallIdeToolUseCase } from "../application/use-cases/install/install-ide-tool-use-case.js";
@@ -101,6 +102,7 @@ interface Deps {
   marketplaceRegistry: MarketplaceRegistry;
   marketplaceTrustStore: MarketplaceTrustStore;
   pluginAddUseCase: PluginAddUseCase;
+  frameworkBuildUseCase: FrameworkBuildUseCase;
   pluginCreateUseCase: PluginCreateUseCase;
   pluginRemoveUseCase: PluginRemoveUseCase;
   pluginListUseCase: PluginListUseCase;
@@ -238,6 +240,12 @@ export async function createDeps(
   );
   const assetProvider = new BundledAssetProviderAdapter();
   const jsonSchemaValidator = new AjvSchemaValidatorAdapter();
+  const frameworkBuildUseCase = new FrameworkBuildUseCase(
+    fs,
+    jsonSchemaValidator,
+    assetProvider,
+    logger
+  );
   const pluginCreateUseCase = new PluginCreateUseCase(
     fs,
     prompter,
@@ -346,6 +354,7 @@ export async function createDeps(
     marketplaceRegistry,
     marketplaceTrustStore,
     pluginAddUseCase,
+    frameworkBuildUseCase,
     pluginCreateUseCase,
     pluginRemoveUseCase,
     pluginListUseCase,

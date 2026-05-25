@@ -356,3 +356,28 @@ export class MarketplaceEntryAlreadyExistsError extends Error {
     this.name = "MarketplaceEntryAlreadyExistsError";
   }
 }
+
+export class FrameworkPlaceholderInPluginError extends Error {
+  constructor(pluginName: string, relativePath: string) {
+    super(
+      `Framework placeholder '@{{TOOLS}}/' is not allowed inside plugin '${pluginName}' (file: ${relativePath}).`
+    );
+    this.name = "FrameworkPlaceholderInPluginError";
+  }
+}
+
+export class InvalidBuildPathsError extends Error {
+  constructor(sourceDir: string, outDir: string) {
+    super(
+      `Refusing to build: --out '${outDir}' and --source '${sourceDir}' must not contain each other.`
+    );
+    this.name = "InvalidBuildPathsError";
+  }
+}
+
+export class InvalidSourceMarketplaceError extends Error {
+  constructor(detail: string) {
+    super(`Invalid source marketplace: ${detail}.`);
+    this.name = "InvalidSourceMarketplaceError";
+  }
+}

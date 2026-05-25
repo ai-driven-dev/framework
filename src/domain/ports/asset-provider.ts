@@ -12,4 +12,5 @@ export interface AssetProvider {
   loadConfigAsset(toolId: ToolId, fileName: string): ConfigAsset;
   loadDefaultMarketplace(): DefaultMarketplace;
   loadPluginManifestSchema(): object;
+  loadMarketplaceSchema(): object;
 }

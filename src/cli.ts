@@ -4,6 +4,7 @@ import { registerAiCommand } from "./application/commands/ai.js";
 import { registerAuthCommand } from "./application/commands/auth.js";
 import { registerCleanCommand } from "./application/commands/clean.js";
 import { registerDoctorCommand } from "./application/commands/doctor.js";
+import { registerFrameworkCommand } from "./application/commands/framework.js";
 import { registerIdeCommand } from "./application/commands/ide.js";
 import { registerMarketplaceCommand } from "./application/commands/marketplace.js";
 import { runMenuLoop } from "./application/commands/menu.js";
@@ -36,6 +37,7 @@ program
   .option("--verbose", "Show detailed diagnostic output", false);
 
 registerSetupCommand(program);
+registerFrameworkCommand(program);
 registerAiCommand(program);
 registerIdeCommand(program);
 registerPluginCommand(program);

@@ -29,6 +29,9 @@ function makeAssetProvider(schema = makeMinimalManifestSchema()): AssetProvider 
       throw new Error("not used");
     },
     loadPluginManifestSchema: () => schema,
+    loadMarketplaceSchema: () => {
+      throw new Error("not used");
+    },
   };
 }
 

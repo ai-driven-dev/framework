@@ -28,5 +28,9 @@ export default defineConfig({
       "assets/schemas/claude-code-plugin-manifest.json",
       "dist/claude-code-plugin-manifest.json"
     );
+    copyFileSync(
+      "assets/schemas/copilot-plugin-marketplace.json",
+      "dist/copilot-plugin-marketplace.json"
+    );
   },
 });

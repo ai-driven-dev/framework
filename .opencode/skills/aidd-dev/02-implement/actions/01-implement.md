@@ -22,7 +22,7 @@ notes:
 
 1. **Branch.** Create a new branch if the plan specifies one (`git checkout -b <branch>`).
 2. **Phase loop.** For each phase listed in the plan, in order:
-   - Spawn the `implementer` agent via the `Task` tool, passing the phase scope and acceptance criteria.
+   - Spawn the `implementer` agent via the `Agent` tool, passing the phase scope and acceptance criteria.
    - Wait for the agent's structured output. If `completion_score < 100`, re-spawn with `items_remaining` until the phase reaches 100 %.
 3. **Plan amendments.** If a phase is incorrect, incomplete, or blocked by missing information, amend the plan directly. Mark every change with 🤖 and a brief rationale.
 4. **Boundaries.** Never format code. Never run dev mode. Follow project rules already loaded in context.

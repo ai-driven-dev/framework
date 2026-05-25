@@ -77,6 +77,57 @@ describe("PluginCatalogRepositoryAdapter", () => {
   });
 });
 
+describe("PluginCatalogRepositoryAdapter.load (Copilot-native path)", () => {
+  describe("copilot marketplace-multi-sample fixture", () => {
+    it("returns a catalog with two entries from .github/plugin/marketplace.json", async () => {
+      const adapter = makeAdapter();
+      const catalog = await adapter.load(join(COPILOT_FIXTURE_DIR, "marketplace-multi-sample"));
+      expect(catalog).not.toBeNull();
+      expect(catalog?.plugins).toHaveLength(2);
+    });
+
+    it("carries the catalog name", async () => {
+      const adapter = makeAdapter();
+      const catalog = await adapter.load(join(COPILOT_FIXTURE_DIR, "marketplace-multi-sample"));
+      expect(catalog?.name).toBe("aidd-framework");
+    });
+
+    it("resolves relative local source path against framework directory", async () => {
+      const adapter = makeAdapter();
+      const frameworkDir = join(COPILOT_FIXTURE_DIR, "marketplace-multi-sample");
+      const catalog = await adapter.load(frameworkDir);
+      expect(catalog?.plugins[0].source).toEqual({
+        kind: "local",
+        path: join(frameworkDir, "plugins/aidd-dev"),
+      });
+    });
+
+    it("sets recommended and strict to false", async () => {
+      const adapter = makeAdapter();
+      const catalog = await adapter.load(join(COPILOT_FIXTURE_DIR, "marketplace-multi-sample"));
+      expect(catalog?.plugins[0].recommended).toBe(false);
+      expect(catalog?.plugins[0].strict).toBe(false);
+    });
+  });
+
+  describe("copilot marketplace-multi-missing fixture", () => {
+    it("returns null when neither .github/plugin/marketplace.json nor .claude-plugin/marketplace.json exists", async () => {
+      const adapter = makeAdapter();
+      const catalog = await adapter.load(join(COPILOT_FIXTURE_DIR, "marketplace-multi-missing"));
+      expect(catalog).toBeNull();
+    });
+  });
+
+  describe("copilot marketplace-multi-malformed fixture", () => {
+    it("throws InvalidPluginManifestError for invalid JSON in .github/plugin/marketplace.json", async () => {
+      const adapter = makeAdapter();
+      await expect(
+        adapter.load(join(COPILOT_FIXTURE_DIR, "marketplace-multi-malformed"))
+      ).rejects.toThrow(InvalidPluginManifestError);
+    });
+  });
+});
+
 describe("PluginCatalogRepositoryAdapter.loadForeign", () => {
   describe("cursor marketplace-sample fixture", () => {
     it("returns three normalized plugins", async () => {

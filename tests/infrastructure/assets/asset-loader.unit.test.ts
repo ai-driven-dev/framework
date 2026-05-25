@@ -78,3 +78,36 @@ describe("BundledAssetProviderAdapter.loadDefaultMarketplace", () => {
     expect(marketplace.source).toMatch(/^https:\/\/github\.com\/.+\.git$/);
   });
 });
+
+describe("BundledAssetProviderAdapter.loadMarketplaceSchema", () => {
+  it("returns a Copilot-native schema with required fields including metadata", () => {
+    const schema = provider.loadMarketplaceSchema() as Record<string, unknown>;
+    expect(schema).toHaveProperty("required");
+    expect(schema).toHaveProperty("properties");
+    const required = schema.required as string[];
+    expect(required).toContain("name");
+    expect(required).toContain("metadata");
+    expect(required).toContain("owner");
+    expect(required).toContain("plugins");
+  });
+
+  it("requires metadata.pluginRoot in the schema properties", () => {
+    const schema = provider.loadMarketplaceSchema() as {
+      properties: { metadata: { properties: { pluginRoot: unknown } } };
+    };
+    expect(schema.properties.metadata.properties.pluginRoot).toBeDefined();
+  });
+
+  it("documents the awesome-copilot empirical source in $comment", () => {
+    const schema = provider.loadMarketplaceSchema() as Record<string, unknown>;
+    const comment = schema.$comment as string;
+    expect(typeof comment).toBe("string");
+    expect(comment.toLowerCase()).toContain("awesome-copilot");
+  });
+
+  it("returns the same object on a second call (memoized)", () => {
+    const first = provider.loadMarketplaceSchema();
+    const second = provider.loadMarketplaceSchema();
+    expect(first).toBe(second);
+  });
+});

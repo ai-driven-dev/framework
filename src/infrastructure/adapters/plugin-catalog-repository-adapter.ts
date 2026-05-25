@@ -2,6 +2,7 @@ import { isAbsolute, join, resolve } from "node:path";
 import { InvalidPluginManifestError } from "../../domain/errors.js";
 import { parseCodexMarketplace } from "../../domain/formats/codex-marketplace.js";
 import { parseCopilotMarketplace } from "../../domain/formats/copilot-marketplace.js";
+import { parseCopilotMarketplaceCatalog } from "../../domain/formats/copilot-marketplace-catalog.js";
 import { parseCursorMarketplace } from "../../domain/formats/cursor-marketplace.js";
 import { parseOpencodeMarketplace } from "../../domain/formats/opencode-marketplace.js";
 import type { NormalizedPlugin } from "../../domain/models/normalized-plugin.js";
@@ -11,17 +12,23 @@ import type { PluginSource } from "../../domain/models/plugin-source.js";
 import type { FileReader } from "../../domain/ports/file-reader.js";
 import type { PluginCatalogRepository } from "../../domain/ports/plugin-catalog-repository.js";
 
+const COPILOT_MARKETPLACE_PATH = ".github/plugin/marketplace.json";
 const CLAUDE_MARKETPLACE_PATH = ".claude-plugin/marketplace.json";
 
 export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {
   constructor(private readonly fs: FileReader) {}
 
   async load(frameworkPath: string): Promise<PluginCatalog | null> {
-    const fullPath = join(frameworkPath, CLAUDE_MARKETPLACE_PATH);
-    if (!(await this.fs.fileExists(fullPath))) {
+    const copilotPath = join(frameworkPath, COPILOT_MARKETPLACE_PATH);
+    if (await this.fs.fileExists(copilotPath)) {
+      const catalog = await this.readCopilotNativeCatalog(copilotPath);
+      return this.resolveLocalPaths(catalog, frameworkPath);
+    }
+    const claudePath = join(frameworkPath, CLAUDE_MARKETPLACE_PATH);
+    if (!(await this.fs.fileExists(claudePath))) {
       return null;
     }
-    const catalog = await this.readClaudeCatalog(fullPath);
+    const catalog = await this.readClaudeCatalog(claudePath);
     return this.resolveLocalPaths(catalog, frameworkPath);
   }
 
@@ -36,6 +43,11 @@ export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {
       if (probe.format === "opencode") return this.readOpencodeCatalog(fullPath);
     }
     return [];
+  }
+
+  private async readCopilotNativeCatalog(fullPath: string): Promise<PluginCatalog> {
+    const raw = await this.fs.readFile(fullPath);
+    return parseCopilotMarketplaceCatalog(raw);
   }
 
   private async readClaudeCatalog(fullPath: string): Promise<PluginCatalog> {

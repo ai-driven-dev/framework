@@ -149,6 +149,10 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
 
   // ── Inspection helpers for test assertions ──────────────────────────────────
 
+  setFile(path: string, content: string): void {
+    this.files.set(path, content);
+  }
+
   getFile(path: string): string | undefined {
     return this.files.get(path);
   }
