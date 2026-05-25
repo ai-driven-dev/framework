@@ -35,6 +35,7 @@ Bootstraps the AIDD context layer for a project: AI context files with memory bl
 - Memory templates land at the root of `aidd_docs/memory/`. `aidd_docs/memory/internal/` is reserved for AIDD workflow traces (project-init audit notes, learn captures).
 - Bullets stay short. Code in backticks. No version numbers in tech names (`React`, not `React 19`).
 - Reflect current state only.
+- Output names and paths are derived from the framework's templates/mapping references, never invented. One output file per matching template; no consolidation; no inside-subdirectory placement unless the mapping explicitly says so.
 
 ### Schema rules to apply to generated Mermaid diagrams
 

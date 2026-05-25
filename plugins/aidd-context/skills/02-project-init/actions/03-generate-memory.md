@@ -69,8 +69,15 @@ aidd_docs/
    c. FILL the template's sections with the extracted facts.
    d. Per the transversal rule "If not applicable / found, remove entire section": sections with no extractable content are REMOVED, not left with placeholder text.
    e. Verbatim template copy is NOT a silent fallback. If content is insufficient or ambiguous, ASK the user how to proceed.
-7. **Write generated files** to `aidd_docs/memory/<template-name>.md` (ROOT of the memory directory, not under `internal/`). The `internal/` subdir is reserved for AIDD workflow traces and MUST NOT contain template-generated memory files.
-8. Wait for all sub-agents to complete. Print a summary table: `template | output file | written | scope`.
+7. **Output contract (parametrized, do not invent).** Write outputs by deriving names and paths from the framework's `assets/templates/memory/` directory:
+   - For EVERY `*.md` template in `assets/templates/memory/` whose `scope` frontmatter matches the confirmed project type, write EXACTLY ONE output file.
+   - Output filename = the template's basename, verbatim. Example: `architecture.md` template -> output `aidd_docs/memory/architecture.md`.
+   - Output path = `aidd_docs/memory/<basename>` at the ROOT of the memory directory. NOT under `internal/`. NOT consolidated with another template.
+   - MUST NOT invent a filename (e.g. `PROJECT_MEMORY.md`, `INIT_AUDIT.md` are forbidden - they are not derived from any template basename).
+   - MUST NOT consolidate (writing multiple templates into one file is forbidden).
+   - Sub-directory templates (e.g. `assets/templates/memory/frontend/*.md`) follow the same rule: output filename = template's basename at `aidd_docs/memory/<basename>` root.
+   - Skip writing only when scope filter excludes the template, NEVER for content-judgement reasons.
+8. Wait for all sub-agents to complete. Print a summary table with one row per matching template: `template | output file | status`. Valid statuses: `written` or `scope-excluded`. Verbatim-copy and AI-invented filenames are NOT valid statuses.
 
 ## Test
 
