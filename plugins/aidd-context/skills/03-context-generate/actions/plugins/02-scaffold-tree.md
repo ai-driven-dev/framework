@@ -15,7 +15,7 @@ One manifest tree per confirmed (non-blocked) tool:
 <plugins-root>/<plugin_name>/
   .claude-plugin/plugin.json
   README.md
-  skills/   agents/   hooks/   .mcp.json  (per artifact_set)
+  skills/   agents/   commands/   hooks/   .mcp.json  (per artifact_set)
 
 # Cursor
 <plugins-root>/<plugin_name>/
@@ -61,7 +61,10 @@ For each confirmed tool, render `plugin.json` with that tool's required keys alw
 2. **Refuse overwrite.** If `<plugins-root>/<plugin_name>/` already exists for any confirmed tool, abort with a clear message; this action never overwrites a plugin folder.
 3. **For each confirmed (non-blocked) tool**, resolve the manifest directory from `@../../references/ai-mapping.md` (`.claude-plugin/` for Claude Code, `.cursor-plugin/` for Cursor, `.codex-plugin/` for Codex CLI, plugin root for GitHub Copilot). Render `plugin.json` with only that tool's required fields plus any optional fields the user supplied. For `author`: if the user supplied a value, use it; else read `git config user.name` and `git config user.email` and populate `author: { name, email }` when both succeed; else drop the key.
 4. **Render `README.md`** by copying `@../../assets/plugins/plugin-readme-template.md` and substituting `{{plugin_name}}` and `{{plugin_description}}`. One `README.md` per plugin tree (shared across tools when writing to the same directory; separate when paths diverge).
-5. **Create selected subdirs** (`skills/`, `agents/`, `hooks/` per `artifact_set`). Add a `.gitkeep` only if needed for the tooling the user uses.
+5. **Create selected subdirs** (`skills/`, `agents/`, `commands/`, `hooks/` per `artifact_set`). Add a `.gitkeep` only if needed for the tooling the user uses.
+   - `commands/` is created for Claude Code, Cursor, and GitHub Copilot when `artifact_set.commands` is true.
+   - `commands/` is SKIPPED for Codex CLI even if `artifact_set.commands` is true - Codex CLI does not support custom slash commands per `ai-mapping.md`; emit a note: "commands slot skipped for Codex CLI; use a skill instead if a reusable workflow is needed."
+   - `commands/` is N/A for OpenCode (plugin is a single JS/TS module; OpenCode is D2-blocked per O1).
 6. **Write `.mcp.json`** from a minimal template if `artifact_set.mcp` is true. Empty `mcpServers: {}` map.
 
 ## Test

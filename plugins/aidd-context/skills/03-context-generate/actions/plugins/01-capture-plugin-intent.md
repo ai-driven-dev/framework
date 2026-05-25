@@ -17,6 +17,7 @@ domain_type: tool | activity
 artifact_set:
   skills: true | false
   agents: true | false
+  commands: true | false
   hooks: true | false
   mcp: true | false
 location: local | global
@@ -38,7 +39,7 @@ Plus a **plugin landscape** report (existing plugins inventory + overlap alerts)
 3. **Ask the plugin's single purpose** in one sentence. If the purpose overlaps an existing plugin, propose merge, scope-tighten, or rename.
 4. **Validate `plugin_name`** per `../../references/naming-conventions.md` (kebab-case, no spaces, prefix conventions like `aidd-` allowed when appropriate).
 5. **Choose `domain_type`** (tool vs activity). Same rule as skills: tool = singular noun (`slack`); activity = action verb (`audit`).
-6. **Pick `artifact_set`.** Ask which slots the plugin needs: skills (always at least one), agents (optional), hooks (optional), MCP servers (optional). Empty plugins are blocked.
+6. **Pick `artifact_set`.** Ask which slots the plugin needs: skills (always at least one), agents (optional), commands (optional - slash commands bundled with the plugin), hooks (optional), MCP servers (optional). Empty plugins are blocked. Note: commands are supported by Claude Code, Cursor, and GitHub Copilot; Codex CLI does not support custom slash commands (D2); OpenCode is D2-blocked for plugins entirely (O1).
 7. **Surface overlaps.** Same `plugin_name` already on disk for any confirmed tool -> block. Description trigger overlap with another plugin -> ask for resolution before continuing.
 8. **Optionally collect a seed skill.** If the user names one, capture `seed_skill.name` and `seed_skill.description` so action 03 can delegate to the existing `actions/skills/` flow.
 
