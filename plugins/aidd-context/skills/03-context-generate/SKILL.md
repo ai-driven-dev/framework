@@ -1,11 +1,11 @@
 ---
 name: aidd-context:03:context-generate
-description: Generate context artifacts (skills, agents, rules, commands, hooks, plugins, marketplaces) across the host AI tool(s) the project uses. Detects installed tools, proposes the target set, and the user confirms before writing. Use when the user wants to create, refactor, add or remove actions in a skill, migrate a legacy slash command into a router-based skill, or generate a new agent, rule, command, hook, plugin, or marketplace. Do NOT use for editing a single action inside an existing skill (edit directly), writing MCP servers, or modifying project-level files.
+description: Generate context artifacts (skills, agents, rules, commands, hooks, plugins, marketplaces) across the host AI tool(s) the project uses. Use when the user wants to create, refactor, add or remove actions in a skill, migrate a legacy slash command into a router-based skill, or generate a new agent, rule, command, hook, plugin, or marketplace. Do NOT use for editing a single action inside an existing skill (edit directly), writing MCP servers, or modifying project-level files.
 ---
 
 # Context Generate
 
-Generates the seven context artifacts a project consumes, across the host AI tool(s) detected in the project. Before writing any artifact, the skill detects installed tools (Model Y: detect → propose → confirm), blocks unsupported combinations (D2), and renders once per confirmed tool.
+Generates the seven context artifacts a project consumes, with per-tool path resolution.
 
 - **Skills** - router-based: `SKILL.md` router + atomic testable actions + minimal evals.
 - **Agents** - single-file agent definitions following the framework's agent template.
