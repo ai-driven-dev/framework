@@ -6,5 +6,33 @@
   "author": {
     "name": "AI-Driven Dev"
   },
-  "strict": true
+  "strict": true,
+  "skills": [
+    "./skills/00-sdlc",
+    "./skills/01-plan",
+    "./skills/02-implement",
+    "./skills/03-assert",
+    "./skills/04-audit",
+    "./skills/05-review",
+    "./skills/06-test",
+    "./skills/07-refactor",
+    "./skills/08-debug",
+    "./skills/09-for-sure"
+  ],
+  "agents": [
+    "./agents/implementer.md",
+    "./agents/planner.md",
+    "./agents/reviewer.md"
+  ],
+  "keywords": [
+    "sdlc",
+    "implementation",
+    "review",
+    "testing",
+    "refactor",
+    "debug"
+  ],
+  "repository": "https://github.com/ai-driven-dev/aidd-framework",
+  "homepage": "https://ai-driven.dev",
+  "license": "MIT"
 }
