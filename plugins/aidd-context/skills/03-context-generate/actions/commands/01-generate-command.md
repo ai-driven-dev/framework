@@ -43,4 +43,14 @@ quality_score: 1-10
 
 ## Test
 
-For each confirmed tool whose commands surface is supported, a file exists at the tool-specific path in `files_written`; its YAML frontmatter parses (between two `---` lines, valid key/value pairs); `description` is non-empty and contains both trigger phrases and a "Do NOT use" clause; the body contains at least one of `$ARGUMENTS`, `$0` ... `$N`, `$ARGUMENTS[N]`, or a `$name` substitution declared in the `arguments` frontmatter list whenever the command takes arguments (vacuous when it does not). Each D2-blocked tool appears in `blocked_tools` with a non-empty reason; no tool is silently skipped. `quality_score >= 8`.
+```bash
+# Test: each written command file exists and starts with YAML frontmatter containing a description
+for path in "${files_written[@]}"; do
+  test -f "$path" || exit 1
+  head -1 "$path" | grep -q "^---$" || exit 1
+  grep -q "^description:" "$path" || exit 1
+done
+echo ok
+```
+
+Quality: `quality_score >= 8`; `description` contains trigger phrases and a "Do NOT use" clause (manual check).

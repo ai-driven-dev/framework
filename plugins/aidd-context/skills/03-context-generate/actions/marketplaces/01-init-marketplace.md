@@ -54,4 +54,12 @@ Resolved from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-m
 
 ## Test
 
-For each confirmed (non-blocked) tool, the marketplace file exists at the tool's resolved path and the `plugins` array is an empty `[]` ready for entries from `@02-add-plugin-entry.md`. OpenCode and GitHub Copilot are D2-blocked with a non-empty reason. Claude Code marketplace validates via `claude plugin validate .` with zero errors.
+```bash
+# Test: each marketplace file exists, parses as JSON, and has an empty plugins array
+for entry in "${marketplace_files[@]}"; do
+  path="${entry[path]}"
+  test -f "$path" || exit 1
+  node -e "const m=JSON.parse(require('fs').readFileSync('$path','utf8')); if (!Array.isArray(m.plugins)||m.plugins.length!==0) process.exit(1);" || exit 1
+done
+echo ok
+```

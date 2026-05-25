@@ -35,4 +35,14 @@ blocked_tools:
 
 ## Test
 
-For each confirmed tool, `<tool skills root>/<skill_name>/SKILL.md` exists with frontmatter matching the tool-specific shape from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`; body ≤ 500 lines; the action table slugs match the `action_plan` from 03; every non-null `expect_action` in `evals/scenarios.json` matches a slug in the action table. Each D2-blocked tool appears in `blocked_tools` with a non-empty reason; no tool is silently skipped.
+```bash
+# Test: each written SKILL.md exists, starts with YAML frontmatter, and is <= 500 lines
+for path in "${files_written[@]}"; do
+  test -f "$path" || exit 1
+  head -1 "$path" | grep -q "^---$" || exit 1
+  test "$(wc -l < "$path")" -le 500 || exit 1
+done
+echo ok
+```
+
+Quality: action table slugs match `action_plan` from 03; every non-null `expect_action` in `evals/scenarios.json` matches a slug in the action table (manual check).

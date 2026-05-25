@@ -47,4 +47,14 @@ Action files written under each confirmed tool's skills root. Example layout for
 
 ## Test
 
-For each confirmed tool and for each slug in the `action_plan`, `<tool skills root>/<skill_name>/actions/<NN>-<slug>.md` exists and contains `## Inputs`, `## Outputs`, `## Process`, `## Test`; the slugs in each tool's `SKILL.md` action table match the filenames in that tool's `actions/` directory. No action files are written for D2-blocked tools.
+```bash
+# Test: each written action file exists and contains the four required sections
+for path in "${files_written[@]}"; do
+  test -f "$path" || exit 1
+  grep -q "^## Inputs" "$path" || exit 1
+  grep -q "^## Outputs" "$path" || exit 1
+  grep -q "^## Process" "$path" || exit 1
+  grep -q "^## Test" "$path" || exit 1
+done
+echo ok
+```

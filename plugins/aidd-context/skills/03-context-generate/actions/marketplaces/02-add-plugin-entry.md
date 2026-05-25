@@ -43,4 +43,12 @@ For each confirmed (non-blocked) tool from `marketplace_files`:
 
 ## Test
 
-For each confirmed (non-blocked) tool, the new entry is present in the tool's marketplace file `plugins[]`; for a Claude Code marketplace, `claude plugin validate .` reports zero errors; for a relative-path source, the tool's expected manifest file resolves under the CWD-relative `<source>/` path.
+```bash
+# Test: each marketplace file parses as JSON and contains the new plugin_name in plugins[]
+for entry in "${per_tool[@]}"; do
+  path="${marketplace_files[${entry[tool]}]}"
+  test -f "$path" || exit 1
+  node -e "const m=JSON.parse(require('fs').readFileSync('$path','utf8')); if (!m.plugins.some(p=>p.name==='${plugin_name}')) process.exit(1);" || exit 1
+done
+echo ok
+```

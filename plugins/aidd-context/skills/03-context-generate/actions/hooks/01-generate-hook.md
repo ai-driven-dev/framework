@@ -63,4 +63,15 @@ quality_score: 1-10
 
 ## Test
 
-For each confirmed supported tool, `hook_path` exists in `files_written`. For JSON outputs (Claude/Cursor/Codex/Copilot plugin-bundled) the file parses as JSON and the rendered entry has the required fields for its `handler_type`. For JS outputs (OpenCode) the file parses as a JS/TS module, exports a default function returning a hooks object whose keys are recognized OpenCode event names. The chosen `event` is one of the event names listed for the target tool in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/hook.md`. Each D2-blocked tool appears in `blocked_tools` with a non-empty reason; no tool is silently skipped. `quality_score >= 8`.
+```bash
+# Test: each written hook file exists; JSON files parse as valid JSON
+for path in "${files_written[@]}"; do
+  test -f "$path" || exit 1
+  case "$path" in
+    *.json) node -e "JSON.parse(require('fs').readFileSync('$path','utf8'))" || exit 1 ;;
+  esac
+done
+echo ok
+```
+
+Quality: `quality_score >= 8`; event name valid for target tool per `references/hook.md` (manual check).

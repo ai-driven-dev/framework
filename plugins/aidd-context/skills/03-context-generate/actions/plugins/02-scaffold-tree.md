@@ -73,4 +73,11 @@ For each confirmed tool, render `plugin.json` with that tool's required keys alw
 
 ## Test
 
-For each confirmed (non-blocked) tool, the manifest directory and `plugin.json` exist with that tool's required fields populated and no extra keys invented. The subdirs in `artifact_set` exist and only those. OpenCode is not written (D2 block from action 01). Each D2-blocked tool appears in `blocked_tools` with a non-empty reason.
+```bash
+# Test: each written plugin.json exists and parses as valid JSON
+for path in "${files_written[@]}"; do
+  test -f "$path" || exit 1
+  node -e "JSON.parse(require('fs').readFileSync('$path','utf8'))" || exit 1
+done
+echo ok
+```

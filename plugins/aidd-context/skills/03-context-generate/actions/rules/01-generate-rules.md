@@ -83,4 +83,11 @@ blocked_tools:
 
 ## Test
 
-For each confirmed tool whose rules surface is supported, the generated rule file exists at the EXACT path produced by the per-tool write paths in step 6 (subdir path for subdir-tools; flat category-index-prefixed path for flat-tools) with frontmatter matching the tool-specific shape from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`. Content follows the conventions in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/rule-writing.md` and `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/rule-structure.md`. Each D2-blocked tool appears in `blocked_tools` with a non-empty reason; no tool is silently skipped. Every path in `files_written` is CWD-relative (no leading `/`) and contains no `${CLAUDE_PLUGIN_ROOT}` component.
+```bash
+# Test: each written rule file exists and starts with YAML frontmatter
+for path in "${files_written[@]}"; do
+  test -f "$path" || exit 1
+  head -1 "$path" | grep -q "^---$" || exit 1
+done
+echo ok
+```

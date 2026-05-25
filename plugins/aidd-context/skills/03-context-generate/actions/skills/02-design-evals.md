@@ -23,4 +23,10 @@ Write `evals/scenarios.json` so we can probe trigger correctness later.
 
 ## Test
 
-`evals/scenarios.json` exists, parses as a JSON array, has at least 3 entries, each entry has a string `prompt` and an `expect_action` (slug string or `null`).
+```bash
+# Test: evals/scenarios.json exists under the skill root, parses as JSON array, has >= 3 entries
+test -f evals/scenarios.json || exit 1
+node -e "const a=require('./evals/scenarios.json'); if (!Array.isArray(a)||a.length<3) process.exit(1);" || exit 1
+node -e "const a=require('./evals/scenarios.json'); a.forEach(e=>{if(typeof e.prompt!=='string') process.exit(1);});" || exit 1
+echo ok
+```

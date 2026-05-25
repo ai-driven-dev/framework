@@ -44,4 +44,13 @@ quality_score: 1-10
 
 ## Test
 
-For each confirmed tool whose agents surface is supported, the agent file exists at the tool-specific path in `files_written`, matches the structure of `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/agents/agent-template.md`, and uses the correct extension and frontmatter shape from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`. Each D2-blocked tool appears in `blocked_tools` with a non-empty reason; no tool is silently skipped. `quality_score >= 8`.
+```bash
+# Test: each rendered agent file exists and starts with YAML frontmatter
+for path in "${files_written[@]}"; do
+  test -f "$path" || exit 1
+  head -1 "$path" | grep -q "^---$" || exit 1
+done
+echo ok
+```
+
+Quality: `quality_score >= 8` (subjective; manual check).

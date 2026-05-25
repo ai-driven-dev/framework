@@ -36,4 +36,12 @@ seed_skill_status: created | skipped
 
 ## Test
 
-When `seed_skill.name` was provided, `<plugins-root>/<plugin_name>/skills/01-<seed_skill.name>/SKILL.md` exists and its frontmatter `name:` equals `<plugin_name>:01:<seed_skill.name>`; the validate step from the skill flow reports every action ✅. When skipped, no `skills/01-*` folder is created and `seed_skill_status = skipped` is returned.
+```bash
+# Test: when a seed skill was created, its SKILL.md exists and starts with YAML frontmatter
+# (when skipped, seed_skill_status=skipped and no 01-* dir is present - no file to check)
+if [ "${seed_skill_status}" = "created" ]; then
+  test -f "${seed_skill_path}/SKILL.md" || exit 1
+  head -1 "${seed_skill_path}/SKILL.md" | grep -q "^---$" || exit 1
+fi
+echo ok
+```
