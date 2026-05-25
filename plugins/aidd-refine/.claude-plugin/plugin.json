@@ -5,5 +5,23 @@
   "description": "Meta-cognition: refine input through brainstorming, refine output through challenge and condensed communication mode.",
   "author": {
     "name": "AI-Driven Dev"
-  }
+  },
+  "skills": [
+    "./skills/01-brainstorm",
+    "./skills/02-challenge",
+    "./skills/03-condense",
+    "./skills/04-shadow-areas",
+    "./skills/05-fact-check"
+  ],
+  "hooks": "./hooks/hooks.json",
+  "keywords": [
+    "brainstorm",
+    "challenge",
+    "fact-check",
+    "meta-cognition",
+    "refinement"
+  ],
+  "repository": "https://github.com/ai-driven-dev/aidd-framework",
+  "homepage": "https://ai-driven.dev",
+  "license": "MIT"
 }
