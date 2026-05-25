@@ -58,6 +58,7 @@ target_base: "" | "plugins/<plugin-name>/"
    **Exact write paths per tool (non-negotiable, prepend `target_base`):**
 
    - **GitHub Copilot:** MUST write to EXACTLY `<target_base>.github/instructions/<NN-flat-slug>.instructions.md`. The `<NN-flat-slug>` is the category-index prefix followed by the descriptive slug with no leading `<n>-` (e.g. category `02-programming-languages`, canonical slug `2-typescript-naming` -> `<target_base>.github/instructions/02-typescript-naming.instructions.md`). Write directly into `<target_base>.github/instructions/`; no subdirectory is created. MUST NOT write to `<target_base>.github/copilot-instructions.md` - that file is a context artifact owned by a different action (`02-project-init`), not a rules file.
+     Copilot frontmatter contains EXACTLY one field: `applyTo`. The value is a STRING (single glob pattern), NOT a YAML array. Example: `applyTo: "src/**/*.ts"`. If the canonical artifact has multiple globs in its `paths`, render them as a comma-separated string. Do NOT use `-` list notation under `applyTo`.
    - **Claude Code:** MUST write to EXACTLY `<target_base>.claude/rules/<NN-category-subdir>/<n-slug>.md`. Create the category subdirectory on demand (`mkdir -p`) before writing.
    - **Cursor:** MUST write to EXACTLY `<target_base>.cursor/rules/<NN-category-subdir>/<n-slug>.mdc`. Create the category subdirectory on demand (`mkdir -p`) before writing.
 

@@ -43,7 +43,7 @@ When a frontmatter field is recognized by some tools but not others, apply this 
 | `context: fork`            | yes    | n/a    | n/a      | n/a     | n/a   | Drop. Equivalent OpenCode/Cursor behavior is the subagent model. |
 | `agent`                    | yes    | n/a    | n/a      | n/a     | n/a   | Drop.                                                        |
 | `hooks`                    | yes    | n/a    | n/a      | n/a     | n/a   | Drop (component-scoped hooks are a Claude-only feature).     |
-| `paths`                    | yes    | `globs` | n/a     | `applyTo` | n/a | Rename per target; drop where unsupported.                  |
+| `paths`                    | yes (array) | `globs` (array) | n/a | `applyTo` (string) | n/a | Rename per target. Copilot uses a single glob STRING (not an array): if the canonical artifact has multiple globs in `paths`, join with comma or pick the most-encompassing one. Drop where unsupported. |
 | `shell`                    | yes    | n/a    | n/a      | n/a     | n/a   | Drop.                                                        |
 | `color`                    | yes    | n/a    | n/a      | n/a     | n/a   | Drop for all except Claude.                                  |
 
@@ -254,7 +254,7 @@ Block message: "Plugin scaffold for OpenCode is not supported: OpenCode has no p
   - `description`
   - `argument-hint` (if applicable)
 - Instructions:
-  - `applyTo` (use `**` for all files)
+  - `applyTo` (single glob STRING, NOT an array; use `**` for all files; combine multiple globs with commas if needed)
 
 ### MCP config
 
