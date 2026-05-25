@@ -32,7 +32,10 @@ quality_score: 1-10
 4. **Wait for user confirmation** before finalizing. In `mode = auto` (called from an upstream skill that has already validated inputs), skip this user-confirmation review gate and continue. Note: the tool-resolution gate (step 6) always runs regardless of mode; in `mode = auto`, the detected signal set becomes the confirmed set automatically without prompting the user.
 5. **Propose 3 first names** for the agent. Each name must be short and catchy, making sense with the agent's purpose (word game, acronym, etc.).
 6. **Resolve target tools.** Follow `@../../references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the agents surface in `@../../references/ai-mapping.md`; if the cell is marked unsupported, apply the D2 block for that tool and record it in `blocked_tools`. Continue with the remaining supported tools.
-7. **Save.** Write the completed agent file to each confirmed supported tool's native agents location using its path, naming, and extension conventions from `@../../references/ai-mapping.md`. Indexing the new file (catalog, docs page, README section, etc.) is the host's responsibility, not this action's.
+7. **Save.** Write the completed agent file to each confirmed supported tool's native agents location using its path, naming, and extension conventions from `@../../references/ai-mapping.md`.
+   - If a confirmed tool is **Codex CLI**, convert the canonical markdown agent to TOML per the Codex CLI section of `@../../references/ai-mapping.md`: frontmatter fields become top-level TOML keys; the markdown body becomes the value of `developer_instructions`. Write the result to `.codex/agents/{name}.toml`.
+   - For all other tools, write the markdown directly with field-level reconciliation per `@../../references/ai-mapping.md`.
+   Indexing the new file (catalog, docs page, README section, etc.) is the host's responsibility, not this action's.
 
 ## Test
 
