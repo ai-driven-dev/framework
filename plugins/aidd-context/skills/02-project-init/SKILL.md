@@ -32,6 +32,7 @@ Bootstraps the AIDD context layer for a project: AI context files with memory bl
 - Blocking on user input: if a step asks a question, await an explicit answer; never invent or stub.
 - Templates structure the output; project facts come from the codebase scan. Never invent facts the repo does not contain. ALSO never pre-filter content as "not AIDD-relevant" - every file in the repo counts as project content, with the exception listed below.
 - Memory files document the USER'S project. AIDD's own scaffold (`aidd_docs/`, `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.aidd/`) is framework metadata, never project content, and MUST NOT appear in memory files as if it were architecture or features of the project.
+- For ambiguous directories or files (anything that looks like tooling, IDE metadata, vendor cache, recording state, etc., not clearly project content), ASK the user before including OR excluding. No silent decision either way. Do not enumerate vendor folders in this rule - the principle holds for any unknown tool footprint.
 - Write files, do not display their content.
 - Drop unused sections; empty placeholders are not preserved.
 - Memory templates land at the root of `aidd_docs/memory/`. `aidd_docs/memory/internal/` is reserved for AIDD workflow traces (project-init audit notes, learn captures).

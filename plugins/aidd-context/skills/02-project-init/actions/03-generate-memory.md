@@ -72,7 +72,10 @@ aidd_docs/
       - `.github/copilot-instructions.md` (AIDD-managed context file)
       - `.aidd/` (AIDD-related tooling state, when present)
       The memory files describe the USER'S PROJECT, not AIDD. Mentioning the AIDD scaffold inside a memory file as if it were project architecture is a documentation defect.
-      If anything else is ambiguous (whether a file or directory belongs to the project, or whether content fits the template's domain), ASK the user before excluding it.
+      For ANY other directory or file that looks like tooling, IDE metadata, recording state, vendor cache, or any artifact that may or may not be project content, ASK the user before deciding. The "ASK on doubt" rule is bidirectional:
+      - Before EXCLUDING (a dir/file might be project content the user wants documented - e.g. an agent bundle dir prefixed with a dot).
+      - Before INCLUDING (a dir/file might be tooling/metadata that does not belong in memory templates - e.g. a recording or session-state dir).
+      Do NOT enumerate specific tool names in the action; the goal is the principle, not a maintenance burden of every possible vendor folder.
    c. FILL the template's sections with the extracted facts.
    d. Per the transversal rule "If not applicable / found, remove entire section": sections with no extractable content are REMOVED, not left with placeholder text.
    e. Verbatim template copy is NOT a silent fallback. If content is insufficient or ambiguous, ASK the user how to proceed.
