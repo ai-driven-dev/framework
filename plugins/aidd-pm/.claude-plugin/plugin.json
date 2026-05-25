@@ -6,5 +6,21 @@
   "author": {
     "name": "AI-Driven Dev"
   },
-  "strict": true
+  "strict": true,
+  "skills": [
+    "./skills/01-ticket-info",
+    "./skills/02-user-stories-create",
+    "./skills/03-prd",
+    "./skills/04-spec"
+  ],
+  "keywords": [
+    "product-management",
+    "user-stories",
+    "prd",
+    "specification",
+    "tickets"
+  ],
+  "repository": "https://github.com/ai-driven-dev/aidd-framework",
+  "homepage": "https://ai-driven.dev",
+  "license": "MIT"
 }
