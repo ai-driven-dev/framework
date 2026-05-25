@@ -35,3 +35,15 @@ Rules and commands follow a two-layout scheme. Subdir-tools organize files under
 | Subdir          | Rules     | Claude Code, Cursor                      | `<rules root>/02-programming-languages/2-typescript-naming.md` |
 | Subdir          | Commands  | Claude Code, Cursor, OpenCode            | `<commands root>/10_maintenance/fix-issue.md`                  |
 | Flat            | Both      | GitHub Copilot                           | `.github/instructions/02-typescript-naming.instructions.md`    |
+
+## Plugin install locations per tool
+
+Where to scan when enumerating installed plugins (not the plugin manifest path inside the plugin tree).
+
+| Tool | Install location(s) |
+| ---- | ------------------- |
+| Claude Code    | `~/.claude/plugins/cache/` (marketplace-installed); project-local `.claude-plugin/` for plugins committed to the repo |
+| Cursor         | `~/.cursor/plugins/local/<plugin>` (local symlink); marketplace install path (managed by Cursor) |
+| OpenCode       | `~/.config/opencode/plugins/` (global JS/TS modules); `~/.cache/opencode/node_modules/` (npm-installed); project `.opencode/plugins/` |
+| GitHub Copilot | macOS: `~/Library/Application Support/Code/agentPlugins/` ; Linux: `~/.config/Code/agentPlugins/` ; Windows: `%APPDATA%\Code\agentPlugins\` ; CLI-installed: `~/.copilot/installed-plugins/` |
+| Codex CLI      | `~/.codex/plugins/cache/$MARKETPLACE/$PLUGIN/$VERSION/` |
