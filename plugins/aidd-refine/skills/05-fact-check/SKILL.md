@@ -22,9 +22,9 @@ Sequential skill: `01 → 02 → 03`. No skipping. The router materializes the t
 ## Transversal rules
 
 - Never alter the meaning of a claim while verifying it - verify what was stated, not a charitable reinterpretation.
-- The verification cascade is cheapest-first and short-circuits: stop at the first tier that resolves a claim. See `references/verification-cascade.md`.
+- The verification cascade is cheapest-first and short-circuits: stop at the first tier that resolves a claim. See `${CLAUDE_PLUGIN_ROOT}/skills/05-fact-check/references/verification-cascade.md`.
 - A web lookup is the last resort, never the first. Reach it only when project memory and codebase inspection both fail to resolve a claim.
-- Claim categories come from the locked set in `references/claim-categories.md`. Opinion, preference, and trivially-known statements are not claims and are skipped.
+- Claim categories come from the locked set in `${CLAUDE_PLUGIN_ROOT}/skills/05-fact-check/references/claim-categories.md`. Opinion, preference, and trivially-known statements are not claims and are skipped.
 - When two sources disagree, report both with their origin - never silently pick one.
 - An unverified claim is never deleted and never asserted as fact: it is kept and marked `(unverified - no source found)`.
 - Caching a verified fact is opt-in: propose it with a recommendation, never cache silently. The skill itself stores nothing - on approval it restates the fact for the user's own memory tooling. Persistence is out of scope.
@@ -33,12 +33,12 @@ Sequential skill: `01 → 02 → 03`. No skipping. The router materializes the t
 
 ## References
 
-- `references/claim-categories.md` - locked taxonomy of verifiable claim categories with definition and example.
-- `references/verification-cascade.md` - the three-tier cascade, short-circuit rule, web-cost guardrail.
+- `${CLAUDE_PLUGIN_ROOT}/skills/05-fact-check/references/claim-categories.md` - locked taxonomy of verifiable claim categories with definition and example.
+- `${CLAUDE_PLUGIN_ROOT}/skills/05-fact-check/references/verification-cascade.md` - the three-tier cascade, short-circuit rule, web-cost guardrail.
 
 ## Assets
 
-- `assets/report-template.md` - rewritten-answer skeleton with the `## Sources` footnote block.
+- `${CLAUDE_PLUGIN_ROOT}/skills/05-fact-check/assets/report-template.md` - rewritten-answer skeleton with the `## Sources` footnote block.
 
 ## External data
 

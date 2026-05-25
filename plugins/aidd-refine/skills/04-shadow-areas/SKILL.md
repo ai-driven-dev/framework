@@ -29,20 +29,20 @@ The `02-render-report` action always runs last and writes `<source>-shadow-repor
 - Never modify the source artifact.
 - Every emitted gap must have all three fields populated: `category`, `severity`, `probe`.
 - Every probe must be a direct question ending with `?`.
-- Categories and severities must come from the locked sets in `references/locked-sets.json`.
+- Categories and severities must come from the locked sets in `${CLAUDE_PLUGIN_ROOT}/skills/04-shadow-areas/references/locked-sets.json`.
 - When zero blockers and zero majors remain, stamp the report `status: clean`.
 - On re-runs, the identity key for diffing is `category + normalized snippet` - not probe wording - so minor probe rephrasing does not create spurious "newly introduced" gaps.
 
 ## References
 
-- `references/categories.md`: locked 7-category taxonomy with definition and example per category.
-- `references/severity-rubric.md`: blocker / major / minor decision rules and examples.
-- `references/probe-style.md`: direct-question form rules.
-- `references/locked-sets.json`: machine-readable sets reused by the validator.
+- `${CLAUDE_PLUGIN_ROOT}/skills/04-shadow-areas/references/categories.md`: locked 7-category taxonomy with definition and example per category.
+- `${CLAUDE_PLUGIN_ROOT}/skills/04-shadow-areas/references/severity-rubric.md`: blocker / major / minor decision rules and examples.
+- `${CLAUDE_PLUGIN_ROOT}/skills/04-shadow-areas/references/probe-style.md`: direct-question form rules.
+- `${CLAUDE_PLUGIN_ROOT}/skills/04-shadow-areas/references/locked-sets.json`: machine-readable sets reused by the validator.
 
 ## Assets
 
-- `assets/report-template.md`: report skeleton with header, per-category sections, and `status: clean` block.
+- `${CLAUDE_PLUGIN_ROOT}/skills/04-shadow-areas/assets/report-template.md`: report skeleton with header, per-category sections, and `status: clean` block.
 
 ## External data
 

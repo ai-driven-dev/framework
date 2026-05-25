@@ -36,7 +36,7 @@ Router dispatches by intent:
 
 ## References
 
-- `references/intensity-levels.md`: detailed per-level rules and side-by-side examples.
+- `${CLAUDE_PLUGIN_ROOT}/skills/03-condense/references/intensity-levels.md`: detailed per-level rules and side-by-side examples.
 
 ## Assets
 

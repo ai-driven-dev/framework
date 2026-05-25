@@ -30,7 +30,7 @@ When invoked as a slash command, the trailing argument controls the push behavio
 - Messages use imperative mood ("Add feature" not "Added feature").
 - Explain "why" not "what" in the body.
 - Never `--force` push. `--force-with-lease` is acceptable when explicitly required.
-- Follow the conventional commit format defined in `assets/commit-template.md`.
+- Follow the conventional commit format defined in `${CLAUDE_PLUGIN_ROOT}/skills/01-commit/assets/commit-template.md`.
 - Reference issues in the commit body when applicable.
 - `auto` mode never asks for confirmation. `interactive` mode requires user approval before staging and before committing splits.
 
@@ -40,7 +40,7 @@ When invoked as a slash command, the trailing argument controls the push behavio
 
 ## Assets
 
-- `assets/commit-template.md`: Conventional commit format reference.
+- `${CLAUDE_PLUGIN_ROOT}/skills/01-commit/assets/commit-template.md`: Conventional commit format reference.
 
 ## External data
 

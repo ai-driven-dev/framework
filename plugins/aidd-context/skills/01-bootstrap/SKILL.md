@@ -27,16 +27,16 @@ Plays the role of technical architect for a new SaaS project. Walks the user thr
 - **Anti-sycophancy.** When the user expresses a stack preference that conflicts with their needs (e.g. wants Mongo for heavily relational data), challenge it before accepting: surface audit concerns and ask whether the user has a mitigation plan.
 - **Recommend opinionated, not encyclopedic.** Each action proposes 2-3 options max, never a long catalog. The user should leave with a concrete decision, not a research paper.
 - **Stop on full checklist.** Action 01 keeps asking until the 18 user-input items (blocks 1-3) are filled; the 6 derived items (block 4) are filled across actions 02 and 04.
-- **Apply heuristics from `references/stack-heuristics.md`** when proposing candidates.
+- **Apply heuristics from `${CLAUDE_PLUGIN_ROOT}/skills/01-bootstrap/references/stack-heuristics.md`** when proposing candidates.
 
 ## References
 
-- `references/stack-heuristics.md` - input → recommended-stack-family heuristics
+- `${CLAUDE_PLUGIN_ROOT}/skills/01-bootstrap/references/stack-heuristics.md` - input → recommended-stack-family heuristics
 
 ## Assets
 
-- `assets/checklist.md` - the 24-item checklist (4 blocks)
-- `assets/install-template.md` - the `INSTALL.md` skeleton
+- `${CLAUDE_PLUGIN_ROOT}/skills/01-bootstrap/assets/checklist.md` - the 24-item checklist (4 blocks)
+- `${CLAUDE_PLUGIN_ROOT}/skills/01-bootstrap/assets/install-template.md` - the `INSTALL.md` skeleton
 
 ## External data
 

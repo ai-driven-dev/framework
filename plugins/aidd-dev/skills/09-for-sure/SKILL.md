@@ -29,12 +29,12 @@ None - task secrets are validated during pre-flight and documented in the tracki
 
 ### Phase 1 - Interactive (human present)
 
-1. `actions/01-init-tracking.md` - Pre-flight, create tracking file, spawn first autonomous agent.
+1. `${CLAUDE_PLUGIN_ROOT}/skills/09-for-sure/actions/01-init-tracking.md` - Pre-flight, create tracking file, spawn first autonomous agent.
 
 ### Phase 2 - Autonomous (human gone)
 
-2. `actions/02-auto-accept.md` - Auto-accept mode activation (Phase 3).
-3. `actions/03-autonomous-loop.md` - Orchestrator: spawns one worker per step, verifies, checks/retries, evaluates success.
+2. `${CLAUDE_PLUGIN_ROOT}/skills/09-for-sure/actions/02-auto-accept.md` - Auto-accept mode activation (Phase 3).
+3. `${CLAUDE_PLUGIN_ROOT}/skills/09-for-sure/actions/03-autonomous-loop.md` - Orchestrator: spawns one worker per step, verifies, checks/retries, evaluates success.
 
 ## Actions
 
