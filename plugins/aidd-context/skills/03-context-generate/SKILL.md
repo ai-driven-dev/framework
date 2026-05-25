@@ -46,6 +46,7 @@ Materialize the sub-flow as a task list at skill entry; a task closes only when 
 
 ## Transversal rules
 
+- All write paths are CWD-relative; the host runtime is expected to set the current working directory to the user's workspace root. `${CLAUDE_PLUGIN_ROOT}` is for READING templates only and MUST NEVER appear as a prefix on a write target.
 - Skills sub-flow MUST apply R1-R10 from `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/generated-skill-rules.md` to every generated skill. Other sub-flows (agents/rules/commands/hooks/plugins/marketplaces) follow their own conventions in `assets/` and `references/`.
 - **R11** - Tool resolution gate (generate-only): detect installed tools (D1 signal set), propose the set to the user, wait for explicit confirmation (1..N), then for each (artifact, confirmed tool) look up `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`; if unsupported, block with explanation (D2) and continue the rest. In modify mode the tool is fixed by the existing artifact's on-disk location - skip the gate entirely. Full procedure: `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/tool-resolution.md`.
 

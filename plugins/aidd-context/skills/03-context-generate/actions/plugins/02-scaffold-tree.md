@@ -5,7 +5,6 @@ Write the minimum directory tree and manifest files a plugin needs to load, for 
 ## Inputs
 
 - `plugin_name`, `plugin_description`, `domain_type`, `artifact_set`, `location`, `confirmed_tools`, `blocked_tools` from action 01.
-- `project_root` (required) - absolute path of the user's VS Code workspace (NOT the plugin install location). Resolve from `${workspaceFolder}` in Copilot, `${CLAUDE_PROJECT_DIR}` in Claude Code, or the equivalent host variable.
 
 ## Outputs
 
@@ -39,7 +38,7 @@ One manifest tree per confirmed (non-blocked) tool:
 
 OpenCode is D2-blocked (O1): no manifest tree is written for it.
 
-`<plugins-root>` is `<project_root>/<plugin_root>/` when `location=local` (default `<project_root>/plugins/`), or the user's global plugins directory when `location=global`. Never resolve `<plugins-root>` relative to the plugin install directory.
+`<plugins-root>` is `<plugin_root>/` (CWD-relative) when `location=local` (default `plugins/`), or the user's global plugins directory when `location=global`. Never resolve `<plugins-root>` relative to the plugin install directory.
 
 ## Depends on
 
@@ -58,7 +57,7 @@ For each confirmed tool, render `plugin.json` with that tool's required keys alw
 
 ## Process
 
-1. **Resolve `<plugins-root>`** from `location` and `<project_root>`: when `location=local`, `<plugins-root>` = `<project_root>/<plugin_root>/` (default `<project_root>/plugins/`). Refuse to write outside the user's known plugins surface.
+1. **Resolve `<plugins-root>`** from `location`: when `location=local`, `<plugins-root>` = `<plugin_root>/` (CWD-relative, default `plugins/`). Refuse to write outside the user's known plugins surface.
 2. **Refuse overwrite.** If `<plugins-root>/<plugin_name>/` already exists for any confirmed tool, abort with a clear message; this action never overwrites a plugin folder.
 3. **For each confirmed (non-blocked) tool**, resolve the manifest directory from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md` (`.claude-plugin/` for Claude Code, `.cursor-plugin/` for Cursor, `.codex-plugin/` for Codex CLI, plugin root for GitHub Copilot). Render `plugin.json` with only that tool's required fields plus any optional fields the user supplied. For `author`: if the user supplied a value, use it; else read `git config user.name` and `git config user.email` and populate `author: { name, email }` when both succeed; else drop the key.
 4. **Render `README.md`** by copying `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/plugins/plugin-readme-template.md` and substituting `{{plugin_name}}` and `{{plugin_description}}`. One `README.md` per plugin tree (shared across tools when writing to the same directory; separate when paths diverge).

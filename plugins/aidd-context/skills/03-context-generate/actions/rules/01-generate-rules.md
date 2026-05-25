@@ -6,7 +6,6 @@ Generate or modify coding rules, either from user input (manual mode) or by scan
 
 ```yaml
 arguments: <rule topic to write, or "auto"/"scan" to scan the codebase and propose rules>
-project_root: <absolute path of the user's VS Code workspace — NOT the plugin install location; resolve from ${workspaceFolder} in Copilot, ${CLAUDE_PROJECT_DIR} in Claude Code, or equivalent host variable>
 ```
 
 ## Outputs
@@ -51,11 +50,11 @@ blocked_tools:
 
    **Exact write paths per tool (non-negotiable):**
 
-   - **GitHub Copilot:** MUST write to EXACTLY `<project_root>/.github/instructions/<NN-flat-slug>.instructions.md`. The `<NN-flat-slug>` is the category-index prefix followed by the descriptive slug with no leading `<n>-` (e.g. category `02-programming-languages`, canonical slug `2-typescript-naming` -> `<project_root>/.github/instructions/02-typescript-naming.instructions.md`). Write directly into `.github/instructions/`; no subdirectory is created. MUST NOT write to `.github/copilot-instructions.md` - that file is a context artifact owned by a different action (`02-project-init`), not a rules file.
-   - **Claude Code:** MUST write to EXACTLY `<project_root>/.claude/rules/<NN-category-subdir>/<n-slug>.md`. Create the category subdirectory on demand (`mkdir -p`) before writing.
-   - **Cursor:** MUST write to EXACTLY `<project_root>/.cursor/rules/<NN-category-subdir>/<n-slug>.mdc`. Create the category subdirectory on demand (`mkdir -p`) before writing.
+   - **GitHub Copilot:** MUST write to EXACTLY `.github/instructions/<NN-flat-slug>.instructions.md`. The `<NN-flat-slug>` is the category-index prefix followed by the descriptive slug with no leading `<n>-` (e.g. category `02-programming-languages`, canonical slug `2-typescript-naming` -> `.github/instructions/02-typescript-naming.instructions.md`). Write directly into `.github/instructions/`; no subdirectory is created. MUST NOT write to `.github/copilot-instructions.md` - that file is a context artifact owned by a different action (`02-project-init`), not a rules file.
+   - **Claude Code:** MUST write to EXACTLY `.claude/rules/<NN-category-subdir>/<n-slug>.md`. Create the category subdirectory on demand (`mkdir -p`) before writing.
+   - **Cursor:** MUST write to EXACTLY `.cursor/rules/<NN-category-subdir>/<n-slug>.mdc`. Create the category subdirectory on demand (`mkdir -p`) before writing.
 
-   The base of every output path MUST be `<project_root>` (the user's VS Code workspace root). `${CLAUDE_PLUGIN_ROOT}` (the plugin install directory) is for READING template and reference files ONLY - MUST NOT be used as a write target for any output file.
+   All paths are CWD-relative; the host runtime sets the current working directory to the workspace root. `${CLAUDE_PLUGIN_ROOT}` (the plugin install directory) is for READING template and reference files ONLY - MUST NOT be used as a write target for any output file.
 
    Reference example rule file structure (illustrative):
 
@@ -69,7 +68,7 @@ blocked_tools:
    └── ...
    ```
 
-7. **Post-write path check (MANDATORY).** After writing, MUST verify that every file listed in `files_written` has an absolute path that starts with `<project_root>/`. If any written file path does NOT start with `<project_root>/` (e.g. it starts with the plugin directory path), FAIL immediately with `status: bad_write_target: wrote to <actual-path>, expected under <project_root>`. This check exists so path-invention bugs are caught at write time rather than silently corrupting the plugin directory.
+7. **Post-write path check (MANDATORY).** After writing, MUST verify that every file in `files_written` satisfies BOTH: the path is RELATIVE (no leading `/`), so it lives under the host's CWD (= workspace root); and the path does NOT contain `${CLAUDE_PLUGIN_ROOT}` (would mean we wrote into the plugin install dir, which is read-only). If any path violates either invariant, FAIL with `status: bad_write_target: wrote to <actual-path>, expected a CWD-relative path under the workspace root`.
 
 8. **Boundaries.**
    - Be concise. Less is more.
@@ -84,4 +83,4 @@ blocked_tools:
 
 ## Test
 
-For each confirmed tool whose rules surface is supported, the generated rule file exists at the EXACT path produced by the per-tool write paths in step 6 (subdir path for subdir-tools; flat category-index-prefixed path for flat-tools) with frontmatter matching the tool-specific shape from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`. Content follows the conventions in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/rule-writing.md` and `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/rule-structure.md`. Each D2-blocked tool appears in `blocked_tools` with a non-empty reason; no tool is silently skipped. The absolute path of every written file starts with `<project_root>/`; no written file resides under `${CLAUDE_PLUGIN_ROOT}` or any path outside the user's workspace root.
+For each confirmed tool whose rules surface is supported, the generated rule file exists at the EXACT path produced by the per-tool write paths in step 6 (subdir path for subdir-tools; flat category-index-prefixed path for flat-tools) with frontmatter matching the tool-specific shape from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`. Content follows the conventions in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/rule-writing.md` and `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/rule-structure.md`. Each D2-blocked tool appears in `blocked_tools` with a non-empty reason; no tool is silently skipped. Every path in `files_written` is CWD-relative (no leading `/`) and contains no `${CLAUDE_PLUGIN_ROOT}` component.

@@ -5,7 +5,6 @@ Clarify what the user wants before any file is touched.
 ## Inputs
 
 - Free-form user request about creating or modifying a skill.
-- `project_root` (required) - absolute path of the user's VS Code workspace (NOT the plugin install location). Resolve from `${workspaceFolder}` in Copilot, `${CLAUDE_PROJECT_DIR}` in Claude Code, or the equivalent host variable.
 
 ## Outputs
 
@@ -38,7 +37,7 @@ Skill-generation rules (R1-R10) are in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context
 
 1. **Verify asset access.** Read `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md` AND `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/tool-resolution.md`. If EITHER read fails, returns empty content, or `${CLAUDE_PLUGIN_ROOT}` is not resolved by the host (resulting in a literal string Read attempt rather than absolute-path access), FAIL with `status: blocked_assets_unreachable: cannot read references via ${CLAUDE_PLUGIN_ROOT}. The aidd-context plugin is not properly installed in this AI host's runtime. Install it as a plugin (or ensure ${CLAUDE_PLUGIN_ROOT} resolves to the plugin install root) before running this action.` Do NOT proceed, do NOT invent a tool list, do NOT guess paths.
 2. Ask: **generate** a new skill or **modify** an existing one?
-3. Inventory project + global skills across all AI tools' skills roots (resolved from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`, prepend `<project_root>/` to each relative root before scanning). Read each `SKILL.md` frontmatter (`name`, first line of `description`). Print as a markdown table.
+3. Inventory project + global skills across all AI tools' skills roots (resolved from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`; paths are CWD-relative, scan them directly from the workspace root). Read each `SKILL.md` frontmatter (`name`, first line of `description`). Print as a markdown table.
 4. Branch:
    - `modify` → confirm target name exists, read its `SKILL.md`, jump to action 03. (Generate-only gate does not apply in modify mode.)
    - `generate` → ask the skill's single purpose in one sentence. If multiple unrelated domains, propose a split.
