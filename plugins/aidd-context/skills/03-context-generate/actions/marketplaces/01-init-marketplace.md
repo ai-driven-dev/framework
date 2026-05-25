@@ -1,11 +1,12 @@
 # 01 - Init marketplace
 
-Scaffold a brand-new plugin marketplace file at the repo root, for each confirmed tool that supports a marketplace.
+Scaffold a brand-new plugin marketplace file at `<project_root>`, for each confirmed tool that supports a marketplace.
 
 ## Inputs
 
 - `marketplace_name` (required) - kebab-case identifier. Must not be on the reserved list (checked in process step 3).
 - `owner_name` (required) - string; the maintainer or team name.
+- `project_root` (required) - absolute path of the user's VS Code workspace (NOT the plugin install location). Resolve from `${workspaceFolder}` in Copilot, `${CLAUDE_PROJECT_DIR}` in Claude Code, or the equivalent host variable.
 - `owner_email` (optional) - contact email.
 - `description` (optional) - one-sentence marketplace summary.
 - `plugin_root` (optional, default `./plugins`) - base directory prepended to relative plugin sources.
@@ -19,7 +20,7 @@ blocked_tools:
   - { tool: <id>, reason: <D2 explanation> }
 marketplace_files:
   - { tool: <id>, path: <marketplace file path> }
-plugins_root: <repo-root>/<plugin_root>/
+plugins_root: <project_root>/<plugin_root>/
 ```
 
 ## Marketplace paths per tool
@@ -28,9 +29,9 @@ Resolved from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-m
 
 | Tool           | Marketplace file path                          | Supported |
 | -------------- | ---------------------------------------------- | --------- |
-| Claude Code    | `<repo-root>/.claude-plugin/marketplace.json`  | yes       |
-| Cursor         | `<repo-root>/.cursor-plugin/marketplace.json`  | yes       |
-| Codex CLI      | `<repo-root>/.agents/plugins/marketplace.json` | yes       |
+| Claude Code    | `<project_root>/.claude-plugin/marketplace.json`  | yes       |
+| Cursor         | `<project_root>/.cursor-plugin/marketplace.json`  | yes       |
+| Codex CLI      | `<project_root>/.agents/plugins/marketplace.json` | yes       |
 | OpenCode       | none                                           | no (D2)   |
 | GitHub Copilot | none (settings-driven, no per-repo file)       | no (D2)   |
 
@@ -44,7 +45,7 @@ Resolved from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-m
    - Claude Code and Cursor: use `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/marketplaces/marketplace-template.json`. Substitute `marketplace_name`, `owner_name`, `owner_email`, `description`, and `metadata.pluginRoot`. Drop optional keys not supplied.
    - Codex CLI: use `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/marketplaces/marketplace-codex-template.json`. Substitute `marketplace_name` into `name` and `description` into `interface.displayName`. Drop `interface.displayName` if no description was supplied. Do not emit `owner`, `metadata`, or `$schema` (not part of the Codex schema).
 
-   Write to the path resolved in step 2.
+   Write to `<project_root>/<relative-marketplace-path>` as resolved from the table above. Never write relative to the plugin install directory.
 6. **Ensure `<plugin_root>` directory exists**; create it empty if missing.
 7. Return all paths.
 

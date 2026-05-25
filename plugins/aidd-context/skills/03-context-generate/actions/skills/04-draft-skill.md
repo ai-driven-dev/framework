@@ -7,6 +7,7 @@ Write the SKILL.md. Router only - no business logic.
 - `skill_name`, `domain_type`, `expected_output`, `invocation_mode` (from 01)
 - `confirmed_tools`, `blocked_tools` (from 01)
 - `action_plan` (from 03)
+- `project_root` (required) - absolute path of the user's VS Code workspace (NOT the plugin install location). Resolve from `${workspaceFolder}` in Copilot, `${CLAUDE_PROJECT_DIR}` in Claude Code, or the equivalent host variable.
 
 ## Outputs
 
@@ -25,8 +26,8 @@ blocked_tools:
 2. Fill the frontmatter per R5 and `references/naming-conventions.md`. If `invocation_mode = manual`, add `disable-model-invocation: true`. Apply field-level reconciliation from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md` for each tool (drop unsupported fields, rename as needed).
 3. Write the action table from the plan: `#`, slug, role, required input.
 4. Sequential → chain `01 → 02 → ...`; non-sequential → trigger-to-action mapping.
-5. Render once per confirmed tool. For each confirmed tool, resolve the skills root from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md` (for example: Claude Code → `.claude/skills/`, Cursor → `.cursor/skills/`, Codex CLI → `.agents/skills/aidd-<skill_name>/`). Write the rendered `SKILL.md` to `<tool skills root>/<skill_name>/SKILL.md`.
-   - Codex CLI path exception: the full path is `.agents/skills/aidd-<skill_name>/SKILL.md` (the `aidd-` prefix and skill name form the directory name directly - no additional `<skill_name>/` nesting under a separate root).
+5. Render once per confirmed tool. For each confirmed tool, resolve the skills root from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md` (for example: Claude Code → `.claude/skills/`, Cursor → `.cursor/skills/`, Codex CLI → `.agents/skills/aidd-<skill_name>/`). Prepend `<project_root>/` to every output path before writing (e.g. `<project_root>/.claude/skills/<skill_name>/SKILL.md`). Never write relative to the plugin install directory.
+   - Codex CLI path exception: the full path is `<project_root>/.agents/skills/aidd-<skill_name>/SKILL.md` (the `aidd-` prefix and skill name form the directory name directly - no additional `<skill_name>/` nesting under a separate root).
    - For any tool in `blocked_tools`, skip writing and carry the reason forward.
 
 ## Test

@@ -6,6 +6,7 @@ Generate or modify coding rules, either from user input (manual mode) or by scan
 
 ```yaml
 arguments: <rule topic to write, or "auto"/"scan" to scan the codebase and propose rules>
+project_root: <absolute path of the user's VS Code workspace — NOT the plugin install location; resolve from ${workspaceFolder} in Copilot, ${CLAUDE_PROJECT_DIR} in Claude Code, or equivalent host variable>
 ```
 
 ## Outputs
@@ -43,9 +44,9 @@ blocked_tools:
 
 5. **Pick category + slug deterministically.** Apply the selection rubric in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/rule-structure.md` (walk top to bottom, stop at first hit). The chosen category index drives the slug prefix (rules in `02-programming-languages/` start with `2-`; rules in `03-frameworks-and-libraries/` start with `3-`; etc.). State the chosen category + slug in writing before proceeding.
 
-6. **Generate.** Build one canonical rule from the user's intent using `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/rules/rule-template.md` and the conventions in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`. Render it once per confirmed supported tool (path, naming, extension, frontmatter) using the per-tool path layout defined in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`:
-   - **Subdir-tools** (Claude Code, Cursor): write to `<tool rules root>/<category-subdir>/<slug>.<ext>`. Create the rules root and the category subdirectory on demand (`mkdir -p`) before writing.
-   - **Flat-tools** (GitHub Copilot): write to `<tool rules root>/<category-index>-<descriptive-slug>.<ext>` where the descriptive slug is the canonical slug with its leading `<n>-` category-index prefix removed (e.g. category `02-programming-languages`, canonical slug `2-typescript-naming` -> Copilot path `.github/instructions/02-typescript-naming.instructions.md`). Write directly into the rules root; no subdirectory is created.
+6. **Generate.** Build one canonical rule from the user's intent using `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/rules/rule-template.md` and the conventions in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`. Render it once per confirmed supported tool (path, naming, extension, frontmatter) using the per-tool path layout defined in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`. Prepend `<project_root>/` to every output path before writing. Never resolve output paths relative to the plugin install directory.
+   - **Subdir-tools** (Claude Code, Cursor): write to `<project_root>/<tool rules root>/<category-subdir>/<slug>.<ext>`. Create the rules root and the category subdirectory on demand (`mkdir -p`) before writing.
+   - **Flat-tools** (GitHub Copilot): write to `<project_root>/<tool rules root>/<category-index>-<descriptive-slug>.<ext>` where the descriptive slug is the canonical slug with its leading `<n>-` category-index prefix removed (e.g. category `02-programming-languages`, canonical slug `2-typescript-naming` -> Copilot path `<project_root>/.github/instructions/02-typescript-naming.instructions.md`). Write directly into the rules root; no subdirectory is created.
 
    Reference example rule file structure (illustrative):
 

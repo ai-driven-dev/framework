@@ -46,7 +46,7 @@ applicable_rules: [{ tool: <claude|cursor|copilot|opencode>, name: <id>, path: <
    - Flag blockers and risks that will arise if not addressed.
    - Check assumptions against official documentation.
    - Produce the architecture projection (three lists, each `path - one-line reason`): files to modify, files to create, files to delete.
-   - Inventory project rules by running `node ${CLAUDE_PLUGIN_ROOT}/scripts/list-rules.mjs` from the user's project root. The script scans every installed AI tool's rules surface and emits a tool-tagged JSON inventory; accept a silent empty array when no surface contains rules.
+   - Inventory project rules from the user's project root; accept a silent empty array when no surface contains rules.
 4. **Architecture projection and rules - user validation (gate).**
    - From the rules inventory, select rules that apply to the projection using each rule's `description` and `paths` when present. Justify every selected rule in one line.
    - Display: the three modify / create / delete lists; the table of applicable rules `tool | name | path | why it applies`.

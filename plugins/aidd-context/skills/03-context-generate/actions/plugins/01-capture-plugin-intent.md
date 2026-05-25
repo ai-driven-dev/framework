@@ -5,6 +5,7 @@ Clarify what plugin the user wants before any file is touched.
 ## Inputs
 
 - Free-form user request about creating a new plugin.
+- `project_root` (required) - absolute path of the user's VS Code workspace (NOT the plugin install location). Resolve from `${workspaceFolder}` in Copilot, `${CLAUDE_PROJECT_DIR}` in Claude Code, or the equivalent host variable.
 
 ## Outputs
 
@@ -36,7 +37,7 @@ Plus a **plugin landscape** report (existing plugins inventory + overlap alerts)
 
 1. **Verify asset access.** Read `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md` AND `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/tool-resolution.md`. If EITHER read fails, returns empty content, or `${CLAUDE_PLUGIN_ROOT}` is not resolved by the host (resulting in a literal string Read attempt rather than absolute-path access), FAIL with `status: blocked_assets_unreachable: cannot read references via ${CLAUDE_PLUGIN_ROOT}. The aidd-context plugin is not properly installed in this AI host's runtime. Install it as a plugin (or ensure ${CLAUDE_PLUGIN_ROOT} resolves to the plugin install root) before running this action.` Do NOT proceed, do NOT invent a tool list, do NOT guess paths.
 2. **Resolve target tools.** Follow `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the plugin manifest location in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`; if the cell is marked unsupported (e.g. OpenCode, per O1), apply the D2 block for that tool and record it in `blocked_tools`. Continue with the remaining supported tools.
-3. **Inventory plugins.** For each confirmed (non-blocked) tool, iterate over the Plugin manifest column in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md` to resolve that tool's manifest location (e.g. `.claude-plugin/plugin.json` for Claude Code). Scan each location and print a merged markdown table: `tool`, `name`, `version`, first sentence of `description`. `ai-mapping.md` is the source of truth for manifest paths; do not hard-code them here.
+3. **Inventory plugins.** For each confirmed (non-blocked) tool, iterate over the Plugin manifest column in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md` to resolve that tool's manifest location (e.g. `.claude-plugin/plugin.json` for Claude Code). Prepend `<project_root>/` to each relative manifest path before scanning (e.g. `<project_root>/.claude-plugin/plugin.json`). Scan each location and print a merged markdown table: `tool`, `name`, `version`, first sentence of `description`. `ai-mapping.md` is the source of truth for manifest paths; do not hard-code them here.
 4. **Ask the plugin's single purpose** in one sentence. If the purpose overlaps an existing plugin, propose merge, scope-tighten, or rename.
 5. **Validate `plugin_name`** per `../../references/naming-conventions.md` (kebab-case, no spaces, prefix conventions like `aidd-` allowed when appropriate).
 6. **Choose `domain_type`** (tool vs activity). Same rule as skills: tool = singular noun (`slack`); activity = action verb (`audit`).

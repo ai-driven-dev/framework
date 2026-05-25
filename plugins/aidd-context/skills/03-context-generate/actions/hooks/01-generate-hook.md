@@ -5,6 +5,7 @@ Generate a hook entry (one event + one matcher + one or more handlers) for each 
 ## Inputs
 
 - `hook_request` (required) - free-form description of what to react to (event), under what condition (matcher / `if`), and what should happen (handler).
+- `project_root` (required) - absolute path of the user's VS Code workspace (NOT the plugin install location). Resolve from `${workspaceFolder}` in Copilot, `${CLAUDE_PROJECT_DIR}` in Claude Code, or the equivalent host variable.
 
 ## Outputs
 
@@ -36,7 +37,7 @@ quality_score: 1-10
    - **OpenCode** -> JS/TS module. OpenCode does not load a standalone `hooks.json`; hooks live inside plugin code. Use the JS template at `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/hooks/hook-template.js`.
    - **Copilot (plugin-bundled scope only)** -> JSON file (`<plugin>/hooks.json` or `<plugin>/hooks/hooks.json`). Use the JSON template at `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/hooks/hooks-template.json`.
 
-5. **Resolve `hook_path`** for each confirmed supported tool per `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/hook.md` "File locations and scope" section. Honor the precedence rule: plugin > project > user.
+5. **Resolve `hook_path`** for each confirmed supported tool per `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/hook.md` "File locations and scope" section. Honor the precedence rule: plugin > project > user. For project-scope hooks, the absolute path is `<project_root>/<relative-hook-path>` where `<project_root>` is the user's workspace root, not the plugin install directory.
 
 6. **Validate the event name** per tool: Claude and Codex events are validated against the PascalCase table in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/hook.md`; Cursor events are validated against the camelCase events in the Cursor hooks section of `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`; OpenCode events are validated against the dotted-lowercase events in the OpenCode hooks section of `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`. Block on typo or casing mismatch.
 
@@ -55,7 +56,7 @@ quality_score: 1-10
 
 11. **Score 1-10** on event-handler fit, matcher specificity, and blocking-mode appropriateness (e.g. never expect `PostToolUse` exit code 2 to undo a tool call).
 
-12. **Save** to each `hook_path`.
+12. **Save** to each `hook_path`, resolved as `<project_root>/<hook_path>` using `<project_root>` as the base. Never write relative to the plugin install directory.
 
 ## Test
 
