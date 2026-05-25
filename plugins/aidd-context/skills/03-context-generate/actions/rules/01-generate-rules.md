@@ -21,28 +21,29 @@ blocked_tools:
 
 ## Process
 
-1. **Detect mode.**
-   - `arguments` is `auto` or `scan` -> auto mode (step 2A).
-   - Otherwise -> manual mode (step 2B).
+1. **Verify asset access.** Read `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md` AND `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/tool-resolution.md`. If EITHER read fails, returns empty content, or `${CLAUDE_PLUGIN_ROOT}` is not resolved by the host (resulting in a literal string Read attempt rather than absolute-path access), FAIL with `status: blocked_assets_unreachable: cannot read references via ${CLAUDE_PLUGIN_ROOT}. The aidd-context plugin is not properly installed in this AI host's runtime. Install it as a plugin (or ensure ${CLAUDE_PLUGIN_ROOT} resolves to the plugin install root) before running this action.` Do NOT proceed, do NOT invent a tool list, do NOT guess paths.
+2. **Detect mode.**
+   - `arguments` is `auto` or `scan` -> auto mode (step 3A).
+   - Otherwise -> manual mode (step 3B).
 
-2A. **Auto mode - scan codebase.**
+3A. **Auto mode - scan codebase.**
    - Scan source files, configs, dependencies, and directory structure.
    - Identify patterns, conventions, tech stack usage, existing rules.
    - Propose a complete rules architecture: list categories and rule files, show groups and sub-groups per file, display the proposed file tree.
-   - WAIT FOR USER APPROVAL before proceeding to step 3.
+   - WAIT FOR USER APPROVAL before proceeding to step 4.
 
-2B. **Manual mode - user-guided.**
+3B. **Manual mode - user-guided.**
    - Remind project context: tech stack, versions, architecture, existing rules.
    - Define categories, one file per category.
    - Look for existing rules to update.
    - Plan the new rule(s) structure: file, groups and sub-groups, display the proposed architecture.
-   - WAIT FOR USER APPROVAL before proceeding to step 3.
+   - WAIT FOR USER APPROVAL before proceeding to step 4.
 
-3. **Resolve target tools.** Follow `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the rules surface in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`; if the cell is marked unsupported, apply the D2 block for that tool and record it in `blocked_tools`. Continue with the remaining supported tools.
+4. **Resolve target tools.** Follow `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the rules surface in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`; if the cell is marked unsupported, apply the D2 block for that tool and record it in `blocked_tools`. Continue with the remaining supported tools.
 
-4. **Pick category + slug deterministically.** Apply the selection rubric in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/rule-structure.md` (walk top to bottom, stop at first hit). The chosen category index drives the slug prefix (rules in `02-programming-languages/` start with `2-`; rules in `03-frameworks-and-libraries/` start with `3-`; etc.). State the chosen category + slug in writing before proceeding.
+5. **Pick category + slug deterministically.** Apply the selection rubric in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/rule-structure.md` (walk top to bottom, stop at first hit). The chosen category index drives the slug prefix (rules in `02-programming-languages/` start with `2-`; rules in `03-frameworks-and-libraries/` start with `3-`; etc.). State the chosen category + slug in writing before proceeding.
 
-5. **Generate.** Build one canonical rule from the user's intent using `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/rules/rule-template.md` and the conventions in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`. Render it once per confirmed supported tool (path, naming, extension, frontmatter) using the per-tool path layout defined in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`:
+6. **Generate.** Build one canonical rule from the user's intent using `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/rules/rule-template.md` and the conventions in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`. Render it once per confirmed supported tool (path, naming, extension, frontmatter) using the per-tool path layout defined in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`:
    - **Subdir-tools** (Claude Code, Cursor): write to `<tool rules root>/<category-subdir>/<slug>.<ext>`. Create the rules root and the category subdirectory on demand (`mkdir -p`) before writing.
    - **Flat-tools** (GitHub Copilot): write to `<tool rules root>/<category-index>-<descriptive-slug>.<ext>` where the descriptive slug is the canonical slug with its leading `<n>-` category-index prefix removed (e.g. category `02-programming-languages`, canonical slug `2-typescript-naming` -> Copilot path `.github/instructions/02-typescript-naming.instructions.md`). Write directly into the rules root; no subdirectory is created.
 
@@ -58,7 +59,7 @@ blocked_tools:
    └── ...
    ```
 
-6. **Boundaries.**
+7. **Boundaries.**
    - Be concise. Less is more.
    - If multiple examples warrant separate files, create multiple rule files.
 
