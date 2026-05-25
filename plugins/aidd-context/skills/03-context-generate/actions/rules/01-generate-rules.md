@@ -43,7 +43,7 @@ blocked_tools:
 4. **Pick category + slug deterministically.** Apply the selection rubric in `@../../references/rule-structure.md` (walk top to bottom, stop at first hit). The chosen category index drives the slug prefix (rules in `02-programming-languages/` start with `2-`; rules in `03-frameworks-and-libraries/` start with `3-`; etc.). State the chosen category + slug in writing before proceeding.
 
 5. **Generate.** Build one canonical rule from the user's intent using `@../../assets/rules/rule-template.md` and the conventions in `@../../references/ai-mapping.md`. Render it once per confirmed supported tool (path, naming, extension, frontmatter) using the per-tool path layout defined in `@../../references/ai-mapping.md`:
-   - **Subdir-tools** (Claude Code, Cursor, OpenCode, Codex CLI): write to `<tool rules root>/<category-subdir>/<slug>.<ext>`. Create the rules root and the category subdirectory on demand (`mkdir -p`) before writing.
+   - **Subdir-tools** (Claude Code, Cursor): write to `<tool rules root>/<category-subdir>/<slug>.<ext>`. Create the rules root and the category subdirectory on demand (`mkdir -p`) before writing.
    - **Flat-tools** (GitHub Copilot): write to `<tool rules root>/<category-index>-<descriptive-slug>.<ext>` where the descriptive slug is the canonical slug with its leading `<n>-` category-index prefix removed (e.g. category `02-programming-languages`, canonical slug `2-typescript-naming` -> Copilot path `.github/instructions/02-typescript-naming.instructions.md`). Write directly into the rules root; no subdirectory is created.
 
    Reference example rule file structure (illustrative):
