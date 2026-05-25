@@ -215,7 +215,7 @@ Plus event-specific fields (e.g. tool name + input for tool events).
 
 ## Conventions
 
-- Prefer `command` handler with an absolute path under `${CLAUDE_PLUGIN_ROOT}/scripts/` for plugin hooks; the script is the artifact, the JSON entry is just the wiring.
+- Prefer `command` handler with an absolute path under `${CLAUDE_PLUGIN_ROOT}/skills/<skill-name>/scripts/` for plugin hooks; the script is the artifact, the JSON entry is just the wiring.
 - Use `if` (permission-rule filter) instead of regex matchers when possible - clearer intent.
 - Never block on `PostToolUse` exit code 2 expecting it to undo the tool call (it does not).
 - For long operations, set `async: true` so the event is not blocked, then signal completion via a follow-up event or by writing state files.

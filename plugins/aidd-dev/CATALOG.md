@@ -8,7 +8,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 - [`.claude-plugin`](#claude-plugin)
 - [`agents`](#agents)
-- [`scripts`](#scripts)
 - [`skills`](#skills)
   - [`skills/00-sdlc`](#skills00-sdlc)
   - [`skills/01-plan`](#skills01-plan)
@@ -37,9 +36,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | [planner.md](agents/planner.md) | `Planning agent. Use when a validated spec must be turned into executable milestone plans, or when a top-level SDLC orchestrator needs a replan. Writes plans and decisions only. Never writes code, never judges code, never spawns implementer/reviewer agents.` |
 | [reviewer.md](agents/reviewer.md) | `Independent critic in fresh context. Use when an artifact (code, spec, plan, doc) needs verification against a validator (acceptance criteria, checklist file, or any explicit ruleset). Returns reviewed items, findings, completion score and quality score. Never edits the artifact, never decides what to do next.` |
 
-### `scripts`
-
-No files found.
 ### `skills`
 
 #### `skills/00-sdlc`
