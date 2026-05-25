@@ -37,8 +37,8 @@ per_tool:
 | Claude Code    | `claude plugin validate <repo-root>`        | n/a (validator available)                                   |
 | Cursor         | none                                        | JSON parse `.cursor-plugin/marketplace.json` + reserved-name check |
 | Codex CLI      | none                                        | JSON parse `.agents/plugins/marketplace.json` + required-key check |
-| OpenCode       | D2-blocked (O1) — no marketplace file      | n/a                                                         |
-| GitHub Copilot | D2-blocked — settings-driven, no per-repo file | n/a                                                      |
+| OpenCode       | D2-blocked (O1) - no marketplace file      | n/a                                                         |
+| GitHub Copilot | D2-blocked - settings-driven, no per-repo file | n/a                                                      |
 
 ## Process
 

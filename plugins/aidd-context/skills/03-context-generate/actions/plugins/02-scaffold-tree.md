@@ -53,7 +53,7 @@ Plugin manifest schemas diverge across tools in their required keys. This action
 - **Codex CLI**: `name`, `version`, `description` all required; component slot keys (`skills`, `agents`, `hooks`, `mcpServers`) must be relative paths starting with `./`.
 - **GitHub Copilot**: `name` required (kebab-case, max 64 chars); standard plugin-manifest metadata optional.
 
-For each confirmed tool, render `plugin.json` with that tool's required keys always populated and optional keys emitted only when the user supplied a value (or git-derived). Do not emit a key for another tool's required field — never invent keys not listed in `ai-mapping.md`.
+For each confirmed tool, render `plugin.json` with that tool's required keys always populated and optional keys emitted only when the user supplied a value (or git-derived). Do not emit a key for another tool's required field - never invent keys not listed in `ai-mapping.md`.
 
 ## Process
 

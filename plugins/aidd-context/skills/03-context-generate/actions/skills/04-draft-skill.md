@@ -26,7 +26,7 @@ blocked_tools:
 3. Write the action table from the plan: `#`, slug, role, required input.
 4. Sequential → chain `01 → 02 → ...`; non-sequential → trigger-to-action mapping.
 5. Render once per confirmed tool. For each confirmed tool, resolve the skills root from `@../../references/ai-mapping.md` (for example: Claude Code → `.claude/skills/`, Cursor → `.cursor/skills/`, Codex CLI → `.agents/skills/aidd-<skill_name>/`). Write the rendered `SKILL.md` to `<tool skills root>/<skill_name>/SKILL.md`.
-   - Codex CLI path exception: the full path is `.agents/skills/aidd-<skill_name>/SKILL.md` (the `aidd-` prefix and skill name form the directory name directly — no additional `<skill_name>/` nesting under a separate root).
+   - Codex CLI path exception: the full path is `.agents/skills/aidd-<skill_name>/SKILL.md` (the `aidd-` prefix and skill name form the directory name directly - no additional `<skill_name>/` nesting under a separate root).
    - For any tool in `blocked_tools`, skip writing and carry the reason forward.
 
 ## Test

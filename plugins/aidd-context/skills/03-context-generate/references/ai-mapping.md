@@ -231,7 +231,7 @@ Block message: "Plugin scaffold for OpenCode is not supported: OpenCode has no p
 
 ### Include syntax
 
-- Use relative markdown links — for example `[label]` then `(relative/path.md)`
+- Use relative markdown links - for example `[label]` then `(relative/path.md)`
 - Never use `@path` syntax
 
 ### File extensions
