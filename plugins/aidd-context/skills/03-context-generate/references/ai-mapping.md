@@ -14,6 +14,17 @@ Map generated context artifacts to the correct AI-specific paths, syntax, file e
 | GitHub Copilot | `.github/agents/*.agent.md` | `.github/prompts/*.prompt.md`                 | `.github/instructions/*.instructions.md` | `.github/skills/`                     | `.github/copilot-instructions.md` |
 | Codex CLI      | `.codex/agents/{name}.toml` | `.agents/skills/aidd-{phase}-{name}/SKILL.md` (fallback: `.agents/skills/aidd-{name}/SKILL.md` when the command has no SDLC phase) | Not supported (skip rules at install)    | `.agents/skills/aidd-{name}/SKILL.md` | `AGENTS.md`                       |
 
+## Path layout per tool
+
+Rules and commands follow a two-layout scheme. Subdir-tools (Claude Code, Cursor, OpenCode, Codex CLI) organize files under named category or phase subdirectories; flat-tools (GitHub Copilot) write all files directly into the surface root with a category or phase index as a filename prefix.
+
+| Layout     | Tools                                        | Rules example                                                  | Commands example                                        |
+| ---------- | -------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------- |
+| Subdir     | Claude Code, Cursor, OpenCode, Codex CLI     | `<rules root>/02-programming-languages/2-typescript-naming.md` | `<commands root>/10_maintenance/fix-issue.md`           |
+| Flat       | GitHub Copilot                               | `.github/instructions/02-typescript-naming.instructions.md`    | `.github/prompts/10-fix-issue.prompt.md`                |
+
+For flat-tools, the descriptive slug is the canonical slug with its leading `<n>-` category-index prefix stripped, then prefixed with the full two-digit category or phase index (e.g. canonical slug `2-typescript-naming` in category `02-programming-languages` becomes `02-typescript-naming`).
+
 ## Per-surface frontmatter reconciliation
 
 When a frontmatter field is recognized by some tools but not others, apply this rule per field:
