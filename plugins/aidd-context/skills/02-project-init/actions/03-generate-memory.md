@@ -60,20 +60,15 @@ aidd_docs/
 2. Check if memory bank already exists in `aidd_docs/memory/` folder:
    - If exists, update with newer information
    - If not, create from scratch
-3. **Auto-detect project type.** Explore the codebase signal set:
-   - **Programming-language markers**: `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, lockfiles, `src/`, `lib/`, `app/` directories.
-   - **Doc-heavy signals**: 20+ `.md` files outside `node_modules/`, a `docs/` or `articles/` dir, mkdocs/sphinx/docusaurus config.
-   - **Agent / config repos**: `*.agent.md`, `*.skill.md`, `*.prompt.md`, `*.instructions.md` files; `.copilot/`, `.claude/`, `.cursor/`, `.opencode/`, `.codex/` dirs.
-   - **Mixed**: any combination of the above.
-   Classify the project as `frontend`, `backend`, `all` (programming), `docs`, `agent-config`, or `mixed`. If signals are AMBIGUOUS or NONE detected, classify as `unknown` and fall back to the user-confirm step (step 4) with the full template list so the user picks the scope.
+3. **Auto-detect project type.** Analyze the project root: scan files and directories, infer the dominant domain (frontend, backend, full-stack, docs, agent config, library, mixed, etc.). Do not restrict to a predefined file-marker list - use any evidence the codebase provides. If the evidence is ambiguous or insufficient to classify, set the type to `unknown` and fall back to step 4 (user confirm).
 4. **Confirm with user**. Display the detected type plus the list of template files that would be generated. Ask the user to confirm or override (`frontend` / `backend` / `all` / `cancel`). **The action is blocking on this answer.** If no answer is received OR if detection returned `unknown` AND no user override is provided, FAIL with `status: blocked_awaiting_user_project_type` and stop. Do NOT write any memory file, do NOT invent stub content (e.g. a hand-rolled `project.md`). Templates are the ONLY allowed content source.
 5. Filter templates using the `scope` frontmatter field against the confirmed type.
 6. **Spawn parallel sub-agents, one per selected template.** Each sub-agent receives: the template file path, the project root path, and the detected project type. Each sub-agent MUST:
    a. READ the template structure (sections, placeholders).
-   b. SCAN the project root for relevant source files: code files matching the template's domain (architecture.md -> src/, lib/; codebase-map.md -> tree walk; deployment.md -> Dockerfiles, CI configs; vcs.md -> .git/, CHANGELOG.md; testing.md -> tests/, *.test.*, *.spec.*; coding-assertions.md -> linter configs, formatters; project-brief.md -> README, ABOUT.md, package.json description, pyproject.toml description).
-   c. EXTRACT project-specific facts from those files into the template's sections.
+   b. ANALYZE the project root and extract project-specific facts relevant to the template's domain. Use any source available (code, configs, docs, READMEs, lockfiles, whatever the repo provides). Do not restrict to a hardcoded file list.
+   c. FILL the template's sections with the extracted facts.
    d. Per the transversal rule "If not applicable / found, remove entire section": sections with no extractable content are REMOVED, not left with placeholder text.
-   e. Templates copied verbatim is ONLY allowed when the entire scan returns nothing for that template (e.g., truly empty repo); flag this in the summary.
+   e. Verbatim template copy is allowed ONLY when the analysis returns no relevant content at all (truly empty repo or repo with content the AI cannot interpret); flag this case in the summary.
 7. **Write generated files** to `aidd_docs/memory/<template-name>.md` (ROOT of the memory directory, not under `internal/`). The `internal/` subdir is reserved for AIDD workflow traces and MUST NOT contain template-generated memory files.
 8. Wait for all sub-agents to complete. Print a summary table: `template | output file | written | scope`.
 
