@@ -15,41 +15,33 @@ Generates the seven context artifacts a project consumes, across the host AI too
 - **Plugins** - full plugin scaffold (a plugin manifest + README + slot dirs, path resolved per tool from `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`; optional seed skill).
 - **Marketplaces** - a marketplace catalog file (path resolved per tool from `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`) that distributes one or more plugins.
 
-## Skill-generation actions
+## Sub-flows
 
-| #   | Action              | Role                                          | Input              |
-| --- | ------------------- | --------------------------------------------- | ------------------ |
-| 01  | `capture-intent`    | Clarify output + decide generate vs modify    | user intent        |
-| 02  | `design-evals`      | Write minimal `scenarios.json`                | expected output    |
-| 03  | `decompose-actions` | List actions + their tests                    | evals + output     |
-| 04  | `draft-skill`       | Write SKILL.md router                         | decomposed actions |
-| 05  | `write-actions`     | Write each action file                        | validated SKILL.md |
-| 06  | `validate`          | Spawn one agent per action, run its `## Test`, aggregate into a pass/fail report | complete skill |
+Each artifact type has its own sub-flow under `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/<sub-domain>/`. All sub-flows are equal-weight siblings; pick the one matching the user's artifact type.
 
-Files: `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/skills/01-capture-intent.md` ... `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/skills/06-validate.md`.
+| Sub-domain     | Actions count | Entry action                                                                                                          | Flow type           |
+| -------------- | ------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `skills`       | 6             | `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/skills/01-capture-intent.md`                               | sequential 01..06   |
+| `agents`       | 1             | `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/agents/01-generate-agent.md`                               | single action       |
+| `rules`        | 1             | `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/rules/01-generate-rules.md`                                | single action       |
+| `commands`     | 1             | `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/commands/01-generate-command.md`                           | single action       |
+| `hooks`        | 1             | `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/hooks/01-generate-hook.md`                                 | single action       |
+| `plugins`      | 4             | `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/plugins/01-capture-plugin-intent.md`                       | sequential 01..04   |
+| `marketplaces` | 3             | `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/marketplaces/01-init-marketplace.md`                       | sequential 01..03   |
 
-## Other generation actions
+## Default flow
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/agents/01-generate-agent.md` - generate an agent file from `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/agents/agent-template.md`.
-- `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/rules/01-generate-rules.md` - generate a rule file from `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/rules/rule-template.md`.
-- `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/commands/01-generate-command.md` - generate a flat slash command from `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/commands/command-template.md`.
-- `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/hooks/01-generate-hook.md` - generate a hook entry, iterating over the confirmed tools' hooks surfaces.
-- `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/plugins/01..04` - plugin scaffold flow: capture-intent → scaffold-tree → seed-first-skill → validate.
-- `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/actions/marketplaces/01..03` - marketplace catalog flow: init-marketplace → add-plugin-entry → validate.
-
-## Default skill flow
-
-`01 → 02 → 03 → 04 → 05 → 06`. After each action, run its `## Test` before moving to the next. Action 02 self-skips when `01` outputs `invocation_mode = manual`.
+For sequential sub-flows, run actions in order. After each action, run its `## Test` before moving to the next. In the `skills` sub-flow, action 02 self-skips when `01` outputs `invocation_mode = manual`.
 
 ## Modify flow
 
-`01` (detects modify) → `03` (re-decompose if structure changes) → `05` (targeted edit) → `06` (re-validate).
+`01` of the matching sub-flow (detects modify) → re-decompose or re-edit as needed → final validate action of that sub-flow.
 
 Gate exception: in modify mode the target tool is fixed by the existing artifact's on-disk location. Skip detect, propose, confirm, and D2.
 
 ## Runtime tracking
 
-Materialize the flow as a task list at skill entry; a task closes only when its `## Test` passes.
+Materialize the sub-flow as a task list at skill entry; a task closes only when its `## Test` passes.
 
 ## Rules
 
