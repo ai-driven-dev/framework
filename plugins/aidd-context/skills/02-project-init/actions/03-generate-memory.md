@@ -58,15 +58,16 @@ aidd_docs/
 
 ## Process
 
-1. Check if memory bank already exists in `aidd_docs/memory/` folder:
+1. **Verify asset access.** Read at least one canonical template (e.g. `@../assets/templates/memory/architecture.md`). If the read fails or returns empty content, FAIL with `status: blocked_assets_unreachable: cannot read @../assets/templates/memory/. Templates are required and this action does not invent content. Ensure the aidd-context plugin assets are accessible to this AI host.` Do NOT proceed, do NOT write any memory file.
+2. Check if memory bank already exists in `aidd_docs/memory/` folder:
    - If exists, update with newer information
    - If not, create from scratch
-2. **Auto-detect project type**. Quickly explore the codebase (package.json, pyproject.toml, lockfiles, src layout, etc.) to classify as `frontend`, `backend`, or `all`.
-3. **Confirm with user**. Display the detected type plus the list of template files that would be generated. Ask the user to confirm or override (`frontend` / `backend` / `all` / `cancel`). **The action is blocking on this answer.** If no answer is received OR if detection returned `unknown` AND no user override is provided, FAIL with `status: blocked_awaiting_user_project_type` and stop. Do NOT write any memory file, do NOT invent stub content (e.g. a hand-rolled `project.md`). Templates are the ONLY allowed content source.
-4. Filter templates using the `scope` frontmatter field against the confirmed type.
-5. Spawn parallel sub-agents, one per selected template.
-6. Write generated files to `aidd_docs/memory/`.
-7. Wait for all sub-agents to complete. Print a summary table: `template | output file | written | scope`.
+3. **Auto-detect project type**. Quickly explore the codebase (package.json, pyproject.toml, lockfiles, src layout, etc.) to classify as `frontend`, `backend`, or `all`.
+4. **Confirm with user**. Display the detected type plus the list of template files that would be generated. Ask the user to confirm or override (`frontend` / `backend` / `all` / `cancel`). **The action is blocking on this answer.** If no answer is received OR if detection returned `unknown` AND no user override is provided, FAIL with `status: blocked_awaiting_user_project_type` and stop. Do NOT write any memory file, do NOT invent stub content (e.g. a hand-rolled `project.md`). Templates are the ONLY allowed content source.
+5. Filter templates using the `scope` frontmatter field against the confirmed type.
+6. Spawn parallel sub-agents, one per selected template.
+7. Write generated files to `aidd_docs/memory/`.
+8. Wait for all sub-agents to complete. Print a summary table: `template | output file | written | scope`.
 
 ## Test
 

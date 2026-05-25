@@ -8,6 +8,10 @@ model: opus
 
 Bootstraps the AIDD context layer for a project: AI context files with memory block, `aidd_docs/` documentation structure, and the memory bank files. Rule directories are created lazily by `aidd-context:03:context-generate` when the first rule is written; project-init does not pre-scaffold them.
 
+## Prerequisites
+
+- This skill requires read access to its own `assets/` directory via `@<relative-path>` resolution. AI hosts that cannot resolve `@` paths to actual files on disk cannot run this skill. The actions self-check asset reachability at their first step and FAIL with `status: blocked_assets_unreachable` if access is denied.
+
 ## Available actions
 
 | #   | Action                | Role                                                              | Input                       |
