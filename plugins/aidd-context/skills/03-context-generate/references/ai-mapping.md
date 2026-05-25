@@ -10,18 +10,19 @@ Map generated context artifacts to the correct AI-specific paths, syntax, file e
 | -------------- | --------------------------- | --------------------------------------------- | ---------------------------------------- | ------------------------------------- | --------------------------------- |
 | Claude Code    | `.claude/agents/`           | `.claude/commands/`                           | `.claude/rules/`                         | `.claude/skills/`                     | `CLAUDE.md`                       |
 | Cursor         | `.cursor/agents/`           | `.cursor/commands/`                           | `.cursor/rules/`                         | `.cursor/skills/`                     | `AGENTS.md`                       |
-| OpenCode       | `.opencode/agents/`         | `.opencode/commands/`                         | `.opencode/rules/`                       | `.opencode/skills/`                   | `AGENTS.md`                       |
+| OpenCode       | `.opencode/agents/`         | `.opencode/commands/`                         | **Not supported** (fold into AGENTS.md)  | `.opencode/skills/`                   | `AGENTS.md`                       |
 | GitHub Copilot | `.github/agents/*.agent.md` | `.github/prompts/*.prompt.md`                 | `.github/instructions/*.instructions.md` | `.github/skills/`                     | `.github/copilot-instructions.md` |
 | Codex CLI      | `.codex/agents/{name}.toml` | `.agents/skills/aidd-{phase}-{name}/SKILL.md` (fallback: `.agents/skills/aidd-{name}/SKILL.md` when the command has no SDLC phase) | Not supported (skip rules at install)    | `.agents/skills/aidd-{name}/SKILL.md` | `AGENTS.md`                       |
 
 ## Path layout per tool
 
-Rules and commands follow a two-layout scheme. Subdir-tools (Claude Code, Cursor, OpenCode, Codex CLI) organize files under named category or phase subdirectories; flat-tools (GitHub Copilot) write all files directly into the surface root with a category or phase index as a filename prefix.
+Rules and commands follow a two-layout scheme. Subdir-tools organize files under named category or phase subdirectories; flat-tools (GitHub Copilot) write all files directly into the surface root with a category or phase index as a filename prefix. Note: OpenCode and Codex CLI do not support a rules surface, so the Subdir layout applies to rules only for Claude Code and Cursor.
 
-| Layout     | Tools                                        | Rules example                                                  | Commands example                                        |
-| ---------- | -------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------- |
-| Subdir     | Claude Code, Cursor, OpenCode, Codex CLI     | `<rules root>/02-programming-languages/2-typescript-naming.md` | `<commands root>/10_maintenance/fix-issue.md`           |
-| Flat       | GitHub Copilot                               | `.github/instructions/02-typescript-naming.instructions.md`    | `.github/prompts/10-fix-issue.prompt.md`                |
+| Layout          | Surface   | Tools                                    | Example                                                        |
+| --------------- | --------- | ---------------------------------------- | -------------------------------------------------------------- |
+| Subdir          | Rules     | Claude Code, Cursor                      | `<rules root>/02-programming-languages/2-typescript-naming.md` |
+| Subdir          | Commands  | Claude Code, Cursor, OpenCode, Codex CLI | `<commands root>/10_maintenance/fix-issue.md`                  |
+| Flat            | Both      | GitHub Copilot                           | `.github/instructions/02-typescript-naming.instructions.md`    |
 
 For flat-tools, the descriptive slug is the canonical slug with its leading `<n>-` category-index prefix stripped, then prefixed with the full two-digit category or phase index (e.g. canonical slug `2-typescript-naming` in category `02-programming-languages` becomes `02-typescript-naming`).
 
@@ -169,7 +170,6 @@ General rule: **drop unsupported fields; never invent a substitute key**. When a
 ### File creation conventions
 
 - Commands: phase subfolders, underscore naming (`plugins/aidd-dev/skills/02-implement/SKILL.md`)
-- Rules: category subfolders (`plugins/aidd-context/skills/04-mermaid/references/mermaid-conventions.md`)
 - Agents: flat (`agents/name.md`)
 - Skills: one subfolder per skill (`skills/skill-name/SKILL.md`)
 
@@ -192,8 +192,10 @@ General rule: **drop unsupported fields; never invent a substitute key**. When a
   - `description`
   - Name is derived from filename
   - Use `$ARGUMENTS` or `$1`, `$2` for argument injection
-- Rules:
-  - No frontmatter
+
+### Rules - Not supported
+
+OpenCode has no rules surface. Project conventions belong in `AGENTS.md` (the context file). Generators must D2-block on rule x OpenCode with a message pointing to `AGENTS.md`: "OpenCode has no rules surface. Add project conventions directly to AGENTS.md instead."
 
 ### MCP config
 
