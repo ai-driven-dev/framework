@@ -31,12 +31,13 @@ quality_score: 1-10
 
 3. **Branch on artifact shape for each confirmed supported tool:**
    - **Claude / Cursor / Codex** -> JSON file (or TOML for Codex `[hooks]` table). Use the JSON template at `@../../assets/hooks/hooks-template.json`.
+     - Render the event name in the tool's required casing per `@../../references/ai-mapping.md`: Claude and Codex use PascalCase (`PreToolUse`); Cursor uses camelCase (`preToolUse`); OpenCode uses dotted-lowercase event keys (`tool.execute.before`).
    - **OpenCode** -> JS/TS module. OpenCode does not load a standalone `hooks.json`; hooks live inside plugin code. Use the JS template at `@../../assets/hooks/hook-template.js`.
    - **Copilot (plugin-bundled scope only)** -> JSON file (`<plugin>/hooks.json` or `<plugin>/hooks/hooks.json`). Use the JSON template at `@../../assets/hooks/hooks-template.json`.
 
 4. **Resolve `hook_path`** for each confirmed supported tool per `@../../references/hook.md` "File locations and scope" section. Honor the precedence rule: plugin > project > user.
 
-5. **Validate the event name** against the table in `@../../references/hook.md`. Event names differ across tools (e.g. Cursor uses camelCase `preToolUse`; Claude/Codex use PascalCase `PreToolUse`). Block on typo.
+5. **Validate the event name** per tool: Claude and Codex events are validated against the PascalCase table in `@../../references/hook.md`; Cursor events are validated against the camelCase events in the Cursor hooks section of `@../../references/ai-mapping.md`; OpenCode events are validated against the dotted-lowercase events in the OpenCode hooks section of `@../../references/ai-mapping.md`. Block on typo or casing mismatch.
 
 6. **Build the handler object** with only the fields the user supplied, plus the required fields for the chosen handler type per `@../../references/hook.md`. Drop empty optional fields.
 
