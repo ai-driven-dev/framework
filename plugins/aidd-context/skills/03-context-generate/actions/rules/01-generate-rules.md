@@ -42,9 +42,9 @@ blocked_tools:
 
 4. **Pick category + slug deterministically.** Apply the selection rubric in `@../../references/rule-structure.md` (walk top to bottom, stop at first hit). The chosen category index drives the slug prefix (rules in `02-programming-languages/` start with `2-`; rules in `03-frameworks-and-libraries/` start with `3-`; etc.). State the chosen category + slug in writing before proceeding.
 
-5. **Generate.** Build one canonical rule from the user's intent using `@../../assets/rules/rule-template.md` and the conventions in `@../../references/ai-mapping.md`. Render it once per confirmed supported tool (path, naming, extension, frontmatter). Create the rules root and the category subdirectory on demand (`mkdir -p`) before writing; do not assume the directory tree has been pre-scaffolded.
-
-   The category subdirectory and the slug stay identical across tools; only the root, extension, and frontmatter shape differ.
+5. **Generate.** Build one canonical rule from the user's intent using `@../../assets/rules/rule-template.md` and the conventions in `@../../references/ai-mapping.md`. Render it once per confirmed supported tool (path, naming, extension, frontmatter) using the per-tool path layout defined in `@../../references/ai-mapping.md`:
+   - **Subdir-tools** (Claude Code, Cursor, OpenCode, Codex CLI): write to `<tool rules root>/<category-subdir>/<slug>.<ext>`. Create the rules root and the category subdirectory on demand (`mkdir -p`) before writing.
+   - **Flat-tools** (GitHub Copilot): write to `<tool rules root>/<category-index>-<descriptive-slug>.<ext>` where the descriptive slug is the canonical slug with its leading `<n>-` category-index prefix removed (e.g. category `02-programming-languages`, canonical slug `2-typescript-naming` -> Copilot path `.github/instructions/02-typescript-naming.instructions.md`). Write directly into the rules root; no subdirectory is created.
 
    Reference example rule file structure (illustrative):
 
@@ -64,4 +64,4 @@ blocked_tools:
 
 ## Test
 
-For each confirmed tool whose rules surface is supported, the generated rule file exists at `<tool rules root>/<category>/<slug>.<ext>` with frontmatter matching the tool-specific shape from `@../../references/ai-mapping.md`. Content follows the conventions in `@../../references/rule-writing.md` and `@../../references/rule-structure.md`. Each D2-blocked tool appears in `blocked_tools` with a non-empty reason; no tool is silently skipped.
+For each confirmed tool whose rules surface is supported, the generated rule file exists at the path produced by the per-tool layout in `@../../references/ai-mapping.md` (subdir path for subdir-tools; flat category-index-prefixed path for flat-tools) with frontmatter matching the tool-specific shape from `@../../references/ai-mapping.md`. Content follows the conventions in `@../../references/rule-writing.md` and `@../../references/rule-structure.md`. Each D2-blocked tool appears in `blocked_tools` with a non-empty reason; no tool is silently skipped.
