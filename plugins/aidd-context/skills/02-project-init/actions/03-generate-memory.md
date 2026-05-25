@@ -48,8 +48,6 @@ All templates are in:
 aidd_docs/
   memory/
     <file>.md   ← one per selected template (scope: all + detected type)
-  internal/
-    <file>.md   ← one per selected template (scope: all + detected type)
 ```
 
 ## Depends on
@@ -66,7 +64,7 @@ aidd_docs/
 4. **Confirm with user**. Display the detected type plus the list of template files that would be generated. Ask the user to confirm or override (`frontend` / `backend` / `all` / `cancel`). **The action is blocking on this answer.** If no answer is received OR if detection returned `unknown` AND no user override is provided, FAIL with `status: blocked_awaiting_user_project_type` and stop. Do NOT write any memory file, do NOT invent stub content (e.g. a hand-rolled `project.md`). Templates are the ONLY allowed content source.
 5. Filter templates using the `scope` frontmatter field against the confirmed type.
 6. Spawn parallel sub-agents, one per selected template.
-7. Write generated files to `aidd_docs/memory/`.
+7. Write generated files to `aidd_docs/memory/<template-name>.md` (ROOT of the memory directory, not under `internal/`). The `internal/` subdir is reserved for AIDD workflow traces and MUST NOT contain template-generated memory files.
 8. Wait for all sub-agents to complete. Print a summary table: `template | output file | written | scope`.
 
 ## Test
