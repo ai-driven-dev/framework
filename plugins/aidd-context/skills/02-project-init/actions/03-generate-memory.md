@@ -65,7 +65,14 @@ aidd_docs/
 5. Filter templates using the `scope` frontmatter field against the confirmed type.
 6. **Spawn parallel sub-agents, one per selected template.** Each sub-agent receives the template file path, the project root path, and the detected project type. Each sub-agent MUST:
    a. READ the template structure (sections, placeholders).
-   b. ANALYZE the project root for content relevant to the template's domain. If anything is ambiguous (whether a file or directory belongs to the project, or whether content fits the template's domain), ASK the user before excluding it.
+   b. ANALYZE the project root for content relevant to the template's domain. EXCLUDE AIDD's own scaffold artifacts from the scan - these are framework metadata, NOT project content:
+      - `aidd_docs/` (AIDD documentation tree this skill itself creates)
+      - `AGENTS.md` (AIDD-managed context file at the workspace root)
+      - `CLAUDE.md` (AIDD-managed context file at the workspace root)
+      - `.github/copilot-instructions.md` (AIDD-managed context file)
+      - `.aidd/` (AIDD-related tooling state, when present)
+      The memory files describe the USER'S PROJECT, not AIDD. Mentioning the AIDD scaffold inside a memory file as if it were project architecture is a documentation defect.
+      If anything else is ambiguous (whether a file or directory belongs to the project, or whether content fits the template's domain), ASK the user before excluding it.
    c. FILL the template's sections with the extracted facts.
    d. Per the transversal rule "If not applicable / found, remove entire section": sections with no extractable content are REMOVED, not left with placeholder text.
    e. Verbatim template copy is NOT a silent fallback. If content is insufficient or ambiguous, ASK the user how to proceed.
