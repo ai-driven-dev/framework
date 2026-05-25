@@ -419,6 +419,58 @@ Marketplace registration and plugin enable state are written to per-tool setting
 | Codex | `.codex/config.json` |
 | OpenCode | `opencode.json` (project root) |
 
+> **GitHub Copilot — workspace recommendations only.** Per [VS Code docs](https://code.visualstudio.com/docs/copilot/customization/agent-plugins), `.github/copilot/settings.json` registers marketplaces as **team recommendations**, not auto-activated. On first chat in the workspace VS Code shows a notification — the user must accept it (or filter Extensions by `@agentPlugins @recommended` and enable manually) before plugins load. To skip the per-project click, add the marketplace to the user-level setting `chat.plugins.marketplaces` (application-scoped, not writable from workspace). See [Framework distribution → Copilot](#framework-distribution--copilot) for the full flow.
+
+### `aidd framework build`
+
+Generates a tool-native plugin marketplace tree from a Claude-format framework source. Ships with `--target copilot` in v4.4.0; codex / cursor / opencode follow-up.
+
+```bash
+aidd framework build \
+  --source <framework-path> \
+  --target copilot \
+  --out <dist-dir>
+```
+
+| Flag | Required | Description |
+|---|---|---|
+| `--source` | yes | Path to a framework root with `plugins/<name>/.claude-plugin/plugin.json` entries |
+| `--target` | yes | Target tool (`copilot` only in v4.4.0) |
+| `--out` | yes | Output directory; auto-wiped and recreated when present |
+
+The build produces a self-contained marketplace tree in the **Copilot-native layout** (`<out>/.github/plugin/marketplace.json` + `<out>/plugins/<name>/.github/plugin/plugin.json`, plain `.md` agents, paths rewritten so no `${CLAUDE_PLUGIN_ROOT}` survives). Output mirrors the convention used by [`github/awesome-copilot`](https://github.com/github/awesome-copilot).
+
+#### Framework distribution → Copilot
+
+Two-step workflow for an end user installing your framework into a Copilot project:
+
+```bash
+# 1. (framework author, once per release) — produce the dist tree
+aidd framework build --source ./framework --target copilot --out ./dist/aidd-framework-copilot
+
+# 2. (end user) — register and install
+aidd ai install copilot
+aidd marketplace add aidd-fw ./dist/aidd-framework-copilot --yes
+aidd plugin install aidd-dev --tool copilot --yes
+```
+
+After step 2, the CLI writes `.github/copilot/settings.json` with `extraKnownMarketplaces` + `enabledPlugins`. **VS Code shows a workspace recommendation notification on the first chat**; the user must accept it once for plugins to surface in the slash menu.
+
+To skip the per-project notification, the end user can add the dist path to the user-level `chat.plugins.marketplaces` setting via VS Code Settings UI (search "chat plugins marketplaces"):
+
+```jsonc
+// ~/Library/Application Support/Code/User/settings.json (macOS)
+// %APPDATA%\Code\User\settings.json (Windows)
+// ~/.config/Code/User/settings.json (Linux)
+{
+  "chat.plugins.marketplaces": [
+    "file:///absolute/path/to/dist/aidd-framework-copilot"
+  ]
+}
+```
+
+The CLI cannot write this setting programmatically (VS Code enforces application scope on it).
+
 ### `aidd migrate`
 
 Detects and strips obsolete manifest entries left over from previous CLI versions (bundled `scripts` section, top-level `plugins` section, plugins without a marketplace source). Backs up the manifest before any write. Idempotent — safe to run multiple times.
