@@ -45,6 +45,7 @@ When a frontmatter field is recognized by some tools but not others, apply this 
 | `hooks`                    | yes    | n/a    | n/a      | n/a     | n/a   | Drop (component-scoped hooks are a Claude-only feature).     |
 | `paths`                    | yes    | `globs` | n/a     | `applyTo` | n/a | Rename per target; drop where unsupported.                  |
 | `shell`                    | yes    | n/a    | n/a      | n/a     | n/a   | Drop.                                                        |
+| `color`                    | yes    | n/a    | n/a      | n/a     | n/a   | Drop for all except Claude.                                  |
 
 General rule: **drop unsupported fields; never invent a substitute key**. When an intent (e.g. manual-only) is otherwise expressible in the body or description, preserve it there.
 
