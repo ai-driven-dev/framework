@@ -270,7 +270,8 @@ Block message: "Plugin scaffold for OpenCode is not supported: OpenCode has no p
 ### Plugins
 
 - Manifest: `plugin.json` at plugin root (required field: `name`, kebab-case, max 64 chars)
-- VS Code install path: `~/Library/Application Support/Code/agentPlugins/github.com/{org}/{repo}` (macOS), `~/.config/Code/agentPlugins/...` (Linux), `%APPDATA%\Code\agentPlugins\...` (Windows)
+- VS Code install path: `~/Library/Application Support/Code/agentPlugins/` (macOS), `~/.config/Code/agentPlugins/` (Linux), `%APPDATA%\Code\agentPlugins\` (Windows)
+- CLI install path: `~/.copilot/installed-plugins/` (Copilot CLI-installed plugins)
 - Local plugin registration: `chat.pluginLocations` setting maps directory -> boolean (enabled/disabled)
 - Cross-format compatibility: the same plugin layout works across VS Code, Copilot CLI, and Claude Code
 
