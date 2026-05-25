@@ -29,7 +29,7 @@ Bootstraps the AIDD context layer for a project: AI context files with memory bl
 ## Transversal rules
 
 - Blocking on user input: if a step asks a question, await an explicit answer; never invent or stub.
-- Templates structure the output; project facts come from the codebase scan. Never invent facts the repo does not contain.
+- Templates structure the output; project facts come from the codebase scan. Never invent facts the repo does not contain. ALSO never pre-filter content as "not AIDD-relevant" - every file in the repo counts as project content.
 - Write files, do not display their content.
 - Drop unused sections; empty placeholders are not preserved.
 - Memory templates land at the root of `aidd_docs/memory/`. `aidd_docs/memory/internal/` is reserved for AIDD workflow traces (project-init audit notes, learn captures).
