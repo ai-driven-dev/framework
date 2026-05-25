@@ -34,6 +34,8 @@ blocked_tools:
 
 ## Process
 
+Skill-generation rules (R1-R10) are in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/generated-skill-rules.md`. All steps below MUST comply with those rules when generating a new skill.
+
 1. **Verify asset access.** Read `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md` AND `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/tool-resolution.md`. If EITHER read fails, returns empty content, or `${CLAUDE_PLUGIN_ROOT}` is not resolved by the host (resulting in a literal string Read attempt rather than absolute-path access), FAIL with `status: blocked_assets_unreachable: cannot read references via ${CLAUDE_PLUGIN_ROOT}. The aidd-context plugin is not properly installed in this AI host's runtime. Install it as a plugin (or ensure ${CLAUDE_PLUGIN_ROOT} resolves to the plugin install root) before running this action.` Do NOT proceed, do NOT invent a tool list, do NOT guess paths.
 2. Ask: **generate** a new skill or **modify** an existing one?
 3. Inventory project + global skills across all AI tools' skills roots (resolved from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`, prepend `<project_root>/` to each relative root before scanning). Read each `SKILL.md` frontmatter (`name`, first line of `description`). Print as a markdown table.

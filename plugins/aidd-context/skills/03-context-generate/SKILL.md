@@ -43,22 +43,14 @@ Gate exception: in modify mode the target tool is fixed by the existing artifact
 
 Materialize the sub-flow as a task list at skill entry; a task closes only when its `## Test` passes.
 
-## Rules
+## Transversal rules
 
-- **R1** - SKILL.md is a pure router: description + action table + transversal rules. Zero business logic.
-- **R2** - One skill = one domain (tool OR activity). Tool → singular noun (`slack`); activity → action verb (`review`). See `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/naming-conventions.md`.
-- **R3** - References one-level deep. Never chain reference → reference.
-- **R4** - SKILL.md ≤ 500 lines. If exceeded, split into references.
-- **R5** - Description must include: what, explicit triggers, "Do NOT use for..." clause.
-- **R6** - Zero duplication. Templates live in `assets/`; actions point to them via `@<path>`.
-- **R7** - `references/` = documents to READ (conventions, cheatsheets). `assets/` = files to COPY or INJECT (templates, ID tables).
-- **R8** - Every action has a `## Test`: one sentence describing how to verify its intent - a command to run, a concrete check on the produced artifact, or an observable side-effect (API/MCP/state).
-- **R9** - Auto-trigger skills (`disable-model-invocation: false`, default) ship `evals/scenarios.json` = JSON array of at least 3 `{prompt, expect_action}`. Manual-only skills skip.
-- **R10** - Generated skills are written in **English only** (frontmatter, body, actions, references, assets). Holds regardless of conversation language.
+- Skills sub-flow MUST apply R1-R10 from `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/generated-skill-rules.md` to every generated skill. Other sub-flows (agents/rules/commands/hooks/plugins/marketplaces) follow their own conventions in `assets/` and `references/`.
 - **R11** - Tool resolution gate (generate-only): detect installed tools (D1 signal set), propose the set to the user, wait for explicit confirmation (1..N), then for each (artifact, confirmed tool) look up `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`; if unsupported, block with explanation (D2) and continue the rest. In modify mode the tool is fixed by the existing artifact's on-disk location - skip the gate entirely. Full procedure: `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/tool-resolution.md`.
 
 ## References
 
+- `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/generated-skill-rules.md` - R1-R10 rules applied exclusively by the skills sub-flow to every generated skill
 - `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/tool-resolution.md` - shared detect/propose/confirm/D2 procedure (called by every entry action)
 - `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/naming-conventions.md` - tool vs activity naming, hard constraints
 - `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/skill-structure.md` - skill anatomy

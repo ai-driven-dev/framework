@@ -106,6 +106,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [agents-coordination.md](skills/03-context-generate/references/agents-coordination.md) | `Multi-agent coordination and workflows template` |
 | `references` | [ai-mapping.md](skills/03-context-generate/references/ai-mapping.md) | - |
 | `references` | [command-structure.md](skills/03-context-generate/references/command-structure.md) | - |
+| `references` | [generated-skill-rules.md](skills/03-context-generate/references/generated-skill-rules.md) | - |
 | `references` | [hook.md](skills/03-context-generate/references/hook.md) | - |
 | `references` | [marketplace.md](skills/03-context-generate/references/marketplace.md) | - |
 | `references` | [naming-conventions.md](skills/03-context-generate/references/naming-conventions.md) | - |
