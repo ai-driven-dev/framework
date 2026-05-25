@@ -23,7 +23,11 @@ One or more context files exist and each contains the mandatory block :
 ## Process
 
 1. **Verify asset access.** Read `@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/AGENTS.md`. If the read fails or returns empty content, FAIL with `status: blocked_assets_unreachable: cannot read ${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/AGENTS.md. The aidd-context plugin assets are not accessible in this AI host's runtime. Ensure the plugin is installed in a location your host can read via @-path resolution.` Do NOT proceed, do NOT invent template content.
-2. **Detect installed context files**. Check the project for existing `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`. Note which are already present.
+2. **Detect installed context files (white-list only).** Check ONLY these THREE canonical paths at the workspace root:
+   - `<project_root>/CLAUDE.md`
+   - `<project_root>/AGENTS.md`
+   - `<project_root>/.github/copilot-instructions.md`
+   No other file is a valid AI context file for this skill. Files matching `*.agent.md`, `*.skill.md`, `*-agent.md`, `<vendor>-*.md`, or any pattern outside this exact white-list are USER PROJECT FILES and MUST NOT be modified, even if their name contains the word "agent", "skill", or "instructions". Note which of the three canonical paths are already present.
 2.5. **Detect modify mode.** If ALL detected context files (from step 2) already contain the `<aidd_project_memory>` block, this is a re-run on an already-initialized project (modify mode). Skip step 3 (do not re-prompt for tool selection); jump directly to step 5 with the existing tools as the confirmed set. Print "modify mode - all context files already initialized; skipping tool prompt."
 3. **Ask the user**. Display the detected files and the full tool list (`claude`, `cursor`, `codex`, `copilot`, `opencode`). Ask which tools the user actively uses. Default proposal: tools whose context file is already present, else `claude` alone. **The action is blocking on this answer.** If no answer is received, FAIL with `status: blocked_awaiting_user_tool_selection` and stop. Do NOT proceed to step 4, do NOT write any file, do NOT invent a default beyond proposing `claude`.
 4. **Resolve target paths**. From the confirmed tool list, map each to its context file per the mapping reference. Deduplicate (multiple tools may share `AGENTS.md`).

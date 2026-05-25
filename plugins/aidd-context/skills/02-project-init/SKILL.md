@@ -28,6 +28,7 @@ Bootstraps the AIDD context layer for a project: AI context files with memory bl
 
 ## Transversal rules
 
+- AI context files are EXCLUSIVELY the three canonical paths white-listed in action 01 step 1. Any other file (including agent/skill/vendor files with similar naming) is user project content and is OFF-LIMITS for this skill.
 - Blocking on user input: if a step asks a question, await an explicit answer; never invent or stub.
 - Templates structure the output; project facts come from the codebase scan. Never invent facts the repo does not contain. ALSO never pre-filter content as "not AIDD-relevant" - every file in the repo counts as project content.
 - Write files, do not display their content.
