@@ -62,7 +62,7 @@ aidd_docs/
    - If exists, update with newer information
    - If not, create from scratch
 2. **Auto-detect project type**. Quickly explore the codebase (package.json, pyproject.toml, lockfiles, src layout, etc.) to classify as `frontend`, `backend`, or `all`.
-3. **Confirm with user**. Display detected type plus the list of template files that would be generated. Ask the user to confirm or override (`frontend` / `backend` / `all` / `cancel`). Wait for explicit answer before continuing.
+3. **Confirm with user**. Display the detected type plus the list of template files that would be generated. Ask the user to confirm or override (`frontend` / `backend` / `all` / `cancel`). **The action is blocking on this answer.** If no answer is received OR if detection returned `unknown` AND no user override is provided, FAIL with `status: blocked_awaiting_user_project_type` and stop. Do NOT write any memory file, do NOT invent stub content (e.g. a hand-rolled `project.md`). Templates are the ONLY allowed content source.
 4. Filter templates using the `scope` frontmatter field against the confirmed type.
 5. Spawn parallel sub-agents, one per selected template.
 6. Write generated files to `aidd_docs/memory/`.

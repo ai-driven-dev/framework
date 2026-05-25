@@ -24,6 +24,7 @@ Bootstraps the AIDD context layer for a project: AI context files with memory bl
 
 ## Transversal rules
 
+- **Interactive Q&A steps are blocking.** If a step asks the user a question, the action MUST receive an explicit answer before continuing. If no answer is received, the action FAILS with a `status: blocked_awaiting_user_*` outcome rather than writing placeholder, stub, or AI-invented content. Templates and asset files are the ONLY allowed content source; never invent project facts, project types, or path values.
 - Do not display content, just write the files
 - IMPORTANT : **If not applicable / found, remove entire section**
 - "?" means optional, do not add section if not applicable

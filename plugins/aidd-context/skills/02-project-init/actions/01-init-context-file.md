@@ -23,7 +23,7 @@ One or more context files exist and each contains the mandatory block :
 ## Process
 
 1. **Detect installed context files**. Check the project for existing `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`. Note which are already present.
-2. **Ask the user**. Display the detected files and the full tool list (`claude`, `cursor`, `codex`, `copilot`, `opencode`). Ask which tools the user actively uses. Default: tools whose context file is already present, else `claude` alone. Wait for explicit user confirmation before continuing.
+2. **Ask the user**. Display the detected files and the full tool list (`claude`, `cursor`, `codex`, `copilot`, `opencode`). Ask which tools the user actively uses. Default proposal: tools whose context file is already present, else `claude` alone. **The action is blocking on this answer.** If no answer is received, FAIL with `status: blocked_awaiting_user_tool_selection` and stop. Do NOT proceed to step 3, do NOT write any file, do NOT invent a default beyond proposing `claude`.
 3. **Resolve target paths**. From the confirmed tool list, map each to its context file per the mapping reference. Deduplicate (multiple tools may share `AGENTS.md`).
 4. For each target file, apply the first matching case:
    - **File absent** -> copy `@../assets/AGENTS.md`; replace the main title with the tool-appropriate heading.
