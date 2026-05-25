@@ -22,6 +22,7 @@ export default defineConfig({
       ".toml": "text",
     };
     options.minifySyntax = true;
+    options.minifyWhitespace = true;
   },
   async onSuccess() {
     copyFileSync(

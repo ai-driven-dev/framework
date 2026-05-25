@@ -1,3 +1,4 @@
+import { stat } from "node:fs/promises";
 import "../domain/tools/ai/claude.js";
 import "../domain/tools/ai/codex.js";
 import "../domain/tools/ai/copilot.js";
@@ -12,6 +13,7 @@ import { DoctorReferencesUseCase } from "../application/use-cases/doctor/doctor-
 import { DoctorTrackedFilesUseCase } from "../application/use-cases/doctor/doctor-tracked-files-use-case.js";
 import { DoctorUseCase } from "../application/use-cases/doctor/doctor-use-case.js";
 import { FrameworkBuildUseCase } from "../application/use-cases/framework/framework-build-use-case.js";
+import { FlatOutputStrategy } from "../application/use-cases/framework/strategies/flat-output-strategy.js";
 import { InstallAiToolUseCase } from "../application/use-cases/install/install-ai-tool-use-case.js";
 import { InstallIdeConfigUseCase } from "../application/use-cases/install/install-ide-config-use-case.js";
 import { InstallIdeToolUseCase } from "../application/use-cases/install/install-ide-tool-use-case.js";
@@ -135,6 +137,30 @@ interface Deps {
 }
 
 const _cache = new Map<string, Deps>();
+
+async function isDirectory(path: string): Promise<boolean> {
+  try {
+    return (await stat(path)).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+export function createFlatFrameworkBuildUseCase(
+  deps: Deps,
+  outDir: string,
+  force: boolean
+): FrameworkBuildUseCase {
+  const strategy = new FlatOutputStrategy(deps.fs, force, outDir, isDirectory);
+  const jsonSchemaValidator = new AjvSchemaValidatorAdapter();
+  return new FrameworkBuildUseCase(
+    deps.fs,
+    jsonSchemaValidator,
+    deps.assetProvider,
+    deps.logger,
+    strategy
+  );
+}
 
 export function createMenuDeps(projectRoot: string): {
   manifestRepo: ManifestRepository;

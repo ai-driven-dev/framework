@@ -381,3 +381,20 @@ export class InvalidSourceMarketplaceError extends Error {
     this.name = "InvalidSourceMarketplaceError";
   }
 }
+
+export class OutDirNotDirectoryError extends Error {
+  constructor(outDir: string) {
+    super(`Refusing to build: --out '${outDir}' does not exist or is not a directory.`);
+    this.name = "OutDirNotDirectoryError";
+  }
+}
+
+export class FlatTargetExistsError extends Error {
+  constructor(targetPath: string, pluginName: string) {
+    super(
+      `Flat build conflict: '${targetPath}' already exists (plugin '${pluginName}'). ` +
+        "Re-run with --force to overwrite."
+    );
+    this.name = "FlatTargetExistsError";
+  }
+}

@@ -113,4 +113,34 @@ describe("rewriteClaudeRootInJson", () => {
       expect(rewriteClaudeRootInJson(input)).toEqual(expected);
     });
   });
+
+  describe("substitute override", () => {
+    it("uses custom substitute instead of default prefix replacement", () => {
+      const input = SCRIPTS_PATH;
+      const result = rewriteClaudeRootInJson(input, (suffix) => `/custom/${suffix}`);
+      expect(result).toBe("/custom/scripts/check.sh");
+    });
+
+    it("applies custom substitute in nested objects", () => {
+      const input = { command: SCRIPTS_PATH };
+      const result = rewriteClaudeRootInJson(input, (suffix) => `PREFIX/${suffix}`);
+      expect(result).toEqual({ command: "PREFIX/scripts/check.sh" });
+    });
+
+    it("applies custom substitute in arrays", () => {
+      const input = [SCRIPTS_PATH, BIN_PATH];
+      const result = rewriteClaudeRootInJson(input, (suffix) => `OUT/${suffix}`);
+      expect(result).toEqual(["OUT/scripts/check.sh", "OUT/bin/server.js"]);
+    });
+
+    it("rewrites multiple occurrences in same string with substitute", () => {
+      const input = `${CLAUDE_ROOT}/a.sh and ${CLAUDE_ROOT}/b.sh`;
+      const result = rewriteClaudeRootInJson(input, (suffix) => `X/${suffix}`);
+      expect(result).toBe("X/a.sh and X/b.sh");
+    });
+
+    it("default behaviour (no substitute) is unchanged", () => {
+      expect(rewriteClaudeRootInJson(SCRIPTS_PATH)).toBe(RELATIVE_SCRIPTS);
+    });
+  });
 });

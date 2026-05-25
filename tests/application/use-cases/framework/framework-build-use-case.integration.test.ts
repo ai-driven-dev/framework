@@ -219,7 +219,7 @@ describe("FrameworkBuildUseCase", () => {
       const dest = fs.getFile(destPath) ?? "";
       const varRef = "$" + "{CLAUDE_PLUGIN_ROOT}";
       expect(dest).not.toContain(varRef);
-      expect(dest).toContain("./scripts/check.sh");
+      expect(dest).toContain("./hooks/check.sh");
     });
 
     it("hooks.json output is valid JSON with same structure (minus the variable substitution)", async () => {

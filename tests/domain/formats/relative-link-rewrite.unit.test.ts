@@ -113,4 +113,36 @@ describe("rewriteRelativeLinks", () => {
       expect(output).toBe(input);
     });
   });
+
+  describe("resolveTargetPath override", () => {
+    it("uses the override to compute the link path instead of the default relative computation", () => {
+      // currentFile at "agents/reviewer.md" → dirname = "agents"
+      // resolveTargetPath returns ".github/agents/my-plugin/agents/reviewer.md"
+      // posix.relative("agents", ".github/agents/my-plugin/agents/reviewer.md") = "../.github/agents/my-plugin/agents/reviewer.md"
+      const opts = {
+        currentFilePluginRelative: "agents/reviewer.md",
+        resolveTargetPath: (rel: string) => `.github/agents/my-plugin/${rel}`,
+      };
+      const input = `See @${CLAUDE_ROOT}/agents/reviewer.md here`;
+      const output = rewriteRelativeLinks(input, opts);
+      expect(output).toBe("See [reviewer.md](../.github/agents/my-plugin/agents/reviewer.md) here");
+    });
+
+    it("without override, Mode A relative computation is unchanged", () => {
+      const opts = { currentFilePluginRelative: "agents/reviewer.md" };
+      const input = `See @${CLAUDE_ROOT}/agents/reviewer.md here`;
+      const output = rewriteRelativeLinks(input, opts);
+      expect(output).toBe("See [reviewer.md](./reviewer.md) here");
+    });
+
+    it("override is applied per match — multiple references in same content", () => {
+      const opts = {
+        currentFilePluginRelative: "agents/foo.md",
+        resolveTargetPath: (rel: string) => `flat/${rel}`,
+      };
+      const input = `A: @${CLAUDE_ROOT}/agents/foo.md B: @${CLAUDE_ROOT}/skills/bar.md`;
+      const output = rewriteRelativeLinks(input, opts);
+      expect(output).toBe("A: [foo.md](../flat/agents/foo.md) B: [bar.md](../flat/skills/bar.md)");
+    });
+  });
 });

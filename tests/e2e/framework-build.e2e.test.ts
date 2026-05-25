@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { readdir, readFile } from "node:fs/promises";
+import { mkdir, readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
@@ -178,7 +178,7 @@ describe.concurrent("E2E: aidd framework build", () => {
       const hooksPath = join(outDir, "plugins", "aidd-test", "hooks", "hooks.json");
       const hooksContent = await readFile(hooksPath, "utf-8");
       expect(hooksContent).not.toContain(varRef);
-      expect(hooksContent).toContain("./scripts/check.sh");
+      expect(hooksContent).toContain("./hooks/check.sh");
 
       const mcpPath = join(outDir, "plugins", "aidd-test", ".mcp.json");
       const mcpContent = await readFile(mcpPath, "utf-8");
@@ -213,6 +213,232 @@ describe.concurrent("E2E: aidd framework build", () => {
       expect(raw).not.toContain("$schema");
       expect(raw).not.toContain("strict");
       expect(raw).not.toContain("recommended");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  // ── Flat mode (AC #1, #2, #4, #9 flat variant) ────────────────────────────
+
+  it("flat AC #1: --flat writes agents, skills, hooks, mcp under canonical paths", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-tree");
+    try {
+      const projRoot = join(tempDir, "proj");
+      await mkdir(projRoot, { recursive: true });
+
+      const build = await runCli(
+        [
+          "framework",
+          "build",
+          "--source",
+          FRAMEWORK_PATH,
+          "--target",
+          "copilot",
+          "--flat",
+          "--out",
+          projRoot,
+        ],
+        projectDir,
+        fakeHome
+      );
+      expect(build.exitCode).toBe(0);
+      expect(build.stdout).toContain("Flat-installed");
+
+      expect(
+        existsSync(join(projRoot, ".github", "agents", "aidd-test", "code-reviewer.agent.md"))
+      ).toBe(true);
+      expect(
+        existsSync(join(projRoot, ".github", "skills", "aidd-test", "commit", "SKILL.md"))
+      ).toBe(true);
+      expect(existsSync(join(projRoot, ".github", "hooks", "aidd-test.hooks.json"))).toBe(true);
+      expect(existsSync(join(projRoot, ".vscode", "mcp.json"))).toBe(true);
+      expect(existsSync(join(projRoot, ".github", "plugin", "marketplace.json"))).toBe(false);
+
+      // AC #5: agent frontmatter restricted to Copilot allowlist (name, description, model, tools, agents, argument-hint)
+      const COPILOT_ALLOWED_KEYS = new Set([
+        "name",
+        "description",
+        "model",
+        "tools",
+        "agents",
+        "argument-hint",
+      ]);
+      const agentContent = await readFile(
+        join(projRoot, ".github", "agents", "aidd-test", "code-reviewer.agent.md"),
+        "utf-8"
+      );
+      const fmMatch = agentContent.match(/^---\n([\s\S]*?)\n---/);
+      if (fmMatch) {
+        const fmKeys = fmMatch[1]
+          .split("\n")
+          .map((l) => l.split(":")[0].trim())
+          .filter(Boolean);
+        for (const key of fmKeys) {
+          expect(COPILOT_ALLOWED_KEYS.has(key)).toBe(true);
+        }
+      }
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("flat AC #2 + AC #9: re-run with --force is byte-identical; re-run without --force halts", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-idempotent");
+    try {
+      const projRoot = join(tempDir, "proj");
+      await mkdir(projRoot, { recursive: true });
+
+      const run1 = await runCli(
+        [
+          "framework",
+          "build",
+          "--source",
+          FRAMEWORK_PATH,
+          "--target",
+          "copilot",
+          "--flat",
+          "--out",
+          projRoot,
+        ],
+        projectDir,
+        fakeHome
+      );
+      expect(run1.exitCode).toBe(0);
+
+      const snapshot1 = await hashDirectory(projRoot);
+
+      const run2 = await runCli(
+        [
+          "framework",
+          "build",
+          "--source",
+          FRAMEWORK_PATH,
+          "--target",
+          "copilot",
+          "--flat",
+          "--force",
+          "--out",
+          projRoot,
+        ],
+        projectDir,
+        fakeHome
+      );
+      expect(run2.exitCode).toBe(0);
+
+      const snapshot2 = await hashDirectory(projRoot);
+      expect(snapshot1.size).toBeGreaterThan(0);
+      expect(snapshot1.size).toBe(snapshot2.size);
+      for (const [path, hash] of snapshot1) {
+        expect(snapshot2.get(path)).toBe(hash);
+      }
+
+      const run3 = await runCli(
+        [
+          "framework",
+          "build",
+          "--source",
+          FRAMEWORK_PATH,
+          "--target",
+          "copilot",
+          "--flat",
+          "--out",
+          projRoot,
+        ],
+        projectDir,
+        fakeHome
+      );
+      expect(run3.exitCode).not.toBe(0);
+      expect(run3.stderr).toMatch(/FlatTargetExistsError|already exists|--force/i);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("flat AC #4 + AC #7: CLAUDE_PLUGIN_ROOT absent; MCP shape, prefix, user entries preserved", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-rewrite");
+    try {
+      const projRoot = join(tempDir, "proj");
+      await mkdir(projRoot, { recursive: true });
+
+      // AC #7: pre-seed .vscode/mcp.json with a user-owned server to assert preservation
+      const vscodePath = join(projRoot, ".vscode");
+      await mkdir(vscodePath, { recursive: true });
+      const existingMcp = {
+        servers: { "my-existing-server": { command: "node", args: ["server.js"] } },
+      };
+      await import("node:fs/promises").then((fs) =>
+        fs.writeFile(join(vscodePath, "mcp.json"), JSON.stringify(existingMcp, null, 2), "utf-8")
+      );
+
+      const build = await runCli(
+        [
+          "framework",
+          "build",
+          "--source",
+          FRAMEWORK_PATH,
+          "--target",
+          "copilot",
+          "--flat",
+          "--out",
+          projRoot,
+        ],
+        projectDir,
+        fakeHome
+      );
+      expect(build.exitCode).toBe(0);
+
+      const agentContent = await readFile(
+        join(projRoot, ".github", "agents", "aidd-test", "code-reviewer.agent.md"),
+        "utf-8"
+      );
+      const varRef = "$" + "{CLAUDE_PLUGIN_ROOT}";
+      expect(agentContent).not.toContain(varRef);
+
+      const hooksContent = await readFile(
+        join(projRoot, ".github", "hooks", "aidd-test.hooks.json"),
+        "utf-8"
+      );
+      expect(hooksContent).not.toContain(varRef);
+
+      const mcpRaw = await readFile(join(projRoot, ".vscode", "mcp.json"), "utf-8");
+      expect(mcpRaw).not.toContain(varRef);
+      expect(mcpRaw).toContain(projRoot);
+
+      // AC #7: top-level key must be "servers"; plugin keys prefixed with "aidd-test-"
+      const mcpParsed = JSON.parse(mcpRaw) as { servers: Record<string, unknown> };
+      expect(typeof mcpParsed.servers).toBe("object");
+      const serverKeys = Object.keys(mcpParsed.servers);
+      const pluginKeys = serverKeys.filter((k) => k.startsWith("aidd-test-"));
+      expect(pluginKeys.length).toBeGreaterThan(0);
+
+      // AC #7: user-owned server must survive
+      expect(mcpParsed.servers["my-existing-server"]).toBeDefined();
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("flat guard: --force without --flat exits non-zero with hint", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-guard-force");
+    try {
+      const outDir = join(tempDir, "dist");
+      const result = await runCli(
+        [
+          "framework",
+          "build",
+          "--source",
+          FRAMEWORK_PATH,
+          "--target",
+          "copilot",
+          "--force",
+          "--out",
+          outDir,
+        ],
+        projectDir,
+        fakeHome
+      );
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stderr).toContain("--force requires --flat");
     } finally {
       await cleanup();
     }

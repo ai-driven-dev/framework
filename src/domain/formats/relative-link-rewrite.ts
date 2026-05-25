@@ -14,6 +14,13 @@ const CLAUDE_ROOT_RE = new RegExp(`@\\$\\{CLAUDE_PLUGIN_ROOT\\}\\/(${REFERENCE_C
 
 export interface RewriteRelativeLinksOptions {
   readonly currentFilePluginRelative: string;
+  /**
+   * Optional override for how @${CLAUDE_PLUGIN_ROOT}/<rel> target paths are
+   * resolved before computing the markdown link. Receives the plugin-relative
+   * path (e.g. "agents/foo.md") and returns the path to use in the link.
+   * Defaults to identity (Mode A behaviour — relative path from current file).
+   */
+  readonly resolveTargetPath?: (pluginRelPath: string) => string;
 }
 
 /**
@@ -31,13 +38,18 @@ export function rewriteRelativeLinks(
   const afterParent = content.replace(RELATIVE_PARENT_RE, "[$1](../$1)");
   const afterCurrent = afterParent.replace(RELATIVE_CURRENT_RE, "[$1](./$1)");
   return afterCurrent.replace(CLAUDE_ROOT_RE, (_match, rel: string) =>
-    rewriteClaudeRootRef(rel, options.currentFilePluginRelative)
+    rewriteClaudeRootRef(rel, options.currentFilePluginRelative, options.resolveTargetPath)
   );
 }
 
-function rewriteClaudeRootRef(targetPluginRel: string, currentFilePluginRelative: string): string {
+function rewriteClaudeRootRef(
+  targetPluginRel: string,
+  currentFilePluginRelative: string,
+  resolveTargetPath?: (pluginRelPath: string) => string
+): string {
+  const resolved = resolveTargetPath ? resolveTargetPath(targetPluginRel) : targetPluginRel;
   const currentDirPluginRel = dirname(currentFilePluginRelative);
-  let linkPath = posix.relative(currentDirPluginRel, targetPluginRel);
+  let linkPath = posix.relative(currentDirPluginRel, resolved);
   if (!linkPath.startsWith(".")) linkPath = `./${linkPath}`;
   const label = basename(targetPluginRel);
   return `[${label}](${linkPath})`;

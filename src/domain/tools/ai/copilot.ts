@@ -30,8 +30,9 @@ import type {
   UserFileSectionKey,
 } from "../contracts.js";
 import { registerTool } from "../registry.js";
+import { COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
 
-const DIRECTORY = ".github/";
+const DIRECTORY = COPILOT_WORKSPACE_DIR;
 const TOOL_SUFFIX = ".copilot.md";
 
 const EXT_AGENT = ".agent.md";
