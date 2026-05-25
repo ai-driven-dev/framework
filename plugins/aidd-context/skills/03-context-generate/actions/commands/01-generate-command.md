@@ -36,6 +36,10 @@ quality_score: 1-10
 7. **Wait for user confirmation** before writing.
 8. **Propose 3 first names** for the command. Each must be short kebab-case and reflect the single objective.
 9. **Resolve target tools.** Follow `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the commands surface in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`; if the cell is marked unsupported, apply the D2 block for that tool and record it in `blocked_tools`. Continue with the remaining supported tools. Write the rendered file to each confirmed supported tool's commands location using CWD-relative paths from the mapping (e.g. `.claude/commands/<phase>/<slug>.md`, `.github/prompts/<slug>.prompt.md`). Never resolve output paths relative to the plugin install directory.
+10. **Post-write path check (MANDATORY).** After writing, MUST verify that every file in `files_written` satisfies BOTH:
+    - the path is RELATIVE (no leading `/`), so it lives under the host's CWD (= workspace root); and
+    - the path does NOT contain `${CLAUDE_PLUGIN_ROOT}` (would mean we wrote into the plugin install dir, which is read-only).
+    If any path violates either invariant, FAIL with `status: bad_write_target: wrote to <actual-path>, expected a CWD-relative path under the workspace root`.
 
 ## Test
 

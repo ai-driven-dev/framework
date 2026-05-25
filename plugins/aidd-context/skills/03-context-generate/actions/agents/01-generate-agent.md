@@ -37,6 +37,10 @@ quality_score: 1-10
    - If a confirmed tool is **Codex CLI**, convert the canonical markdown agent to TOML per the Codex CLI section of `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`: frontmatter fields become top-level TOML keys; the markdown body becomes the value of `developer_instructions`. Write the result to `.codex/agents/{name}.toml`.
    - For all other tools, write the markdown directly with field-level reconciliation per `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`.
    Indexing the new file (catalog, docs page, README section, etc.) is the host's responsibility, not this action's.
+9. **Post-write path check (MANDATORY).** After writing, MUST verify that every file in `files_written` satisfies BOTH:
+   - the path is RELATIVE (no leading `/`), so it lives under the host's CWD (= workspace root); and
+   - the path does NOT contain `${CLAUDE_PLUGIN_ROOT}` (would mean we wrote into the plugin install dir, which is read-only).
+   If any path violates either invariant, FAIL with `status: bad_write_target: wrote to <actual-path>, expected a CWD-relative path under the workspace root`.
 
 ## Test
 

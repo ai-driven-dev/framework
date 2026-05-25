@@ -66,6 +66,10 @@ For each confirmed tool, render `plugin.json` with that tool's required keys alw
    - `commands/` is SKIPPED for Codex CLI even if `artifact_set.commands` is true - Codex CLI does not support custom slash commands per `ai-mapping.md`; emit a note: "commands slot skipped for Codex CLI; use a skill instead if a reusable workflow is needed."
    - `commands/` is N/A for OpenCode (plugin is a single JS/TS module; OpenCode is D2-blocked per O1).
 6. **Write `.mcp.json`** from a minimal template if `artifact_set.mcp` is true. Empty `mcpServers: {}` map.
+7. **Post-write path check (MANDATORY).** After writing, MUST verify that every file in `files_written` satisfies BOTH:
+   - the path is RELATIVE (no leading `/`), so it lives under the host's CWD (= workspace root); and
+   - the path does NOT contain `${CLAUDE_PLUGIN_ROOT}` (would mean we wrote into the plugin install dir, which is read-only).
+   If any path violates either invariant, FAIL with `status: bad_write_target: wrote to <actual-path>, expected a CWD-relative path under the workspace root`.
 
 ## Test
 

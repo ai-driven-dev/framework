@@ -28,6 +28,10 @@ blocked_tools:
 5. Render once per confirmed tool. For each confirmed tool, resolve the skills root from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md` (for example: Claude Code → `.claude/skills/`, Cursor → `.cursor/skills/`, Codex CLI → `.agents/skills/aidd-<skill_name>/`). Write to the CWD-relative path directly (e.g. `.claude/skills/<skill_name>/SKILL.md`). Never write relative to the plugin install directory.
    - Codex CLI path exception: the full path is `.agents/skills/aidd-<skill_name>/SKILL.md` (the `aidd-` prefix and skill name form the directory name directly - no additional `<skill_name>/` nesting under a separate root).
    - For any tool in `blocked_tools`, skip writing and carry the reason forward.
+6. **Post-write path check (MANDATORY).** After writing, MUST verify that every file in `files_written` satisfies BOTH:
+   - the path is RELATIVE (no leading `/`), so it lives under the host's CWD (= workspace root); and
+   - the path does NOT contain `${CLAUDE_PLUGIN_ROOT}` (would mean we wrote into the plugin install dir, which is read-only).
+   If any path violates either invariant, FAIL with `status: bad_write_target: wrote to <actual-path>, expected a CWD-relative path under the workspace root`.
 
 ## Test
 

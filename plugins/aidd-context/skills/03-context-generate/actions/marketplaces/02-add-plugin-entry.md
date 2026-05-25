@@ -36,6 +36,10 @@ For each confirmed (non-blocked) tool from `marketplace_files`:
 4. For relative-path sources, verify the target directory exists (CWD-relative) and contains the tool's expected manifest file (e.g. `.claude-plugin/plugin.json` for Claude Code, `.cursor-plugin/plugin.json` for Cursor, `.codex-plugin/plugin.json` for Codex CLI). For `github` / `url` / `git-subdir` / `npm` sources, no local check.
 5. Append the entry to the `plugins` array. Write the file back with stable 2-space indentation.
 6. Return the rendered entry and the new `plugin_count` per tool.
+7. **Post-write path check (MANDATORY).** After writing, MUST verify that every file in `files_written` satisfies BOTH:
+   - the path is RELATIVE (no leading `/`), so it lives under the host's CWD (= workspace root); and
+   - the path does NOT contain `${CLAUDE_PLUGIN_ROOT}` (would mean we wrote into the plugin install dir, which is read-only).
+   If any path violates either invariant, FAIL with `status: bad_write_target: wrote to <actual-path>, expected a CWD-relative path under the workspace root`.
 
 ## Test
 

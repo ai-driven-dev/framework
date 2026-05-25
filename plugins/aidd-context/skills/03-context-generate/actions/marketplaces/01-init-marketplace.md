@@ -47,6 +47,10 @@ Resolved from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-m
    Write to the CWD-relative path as resolved from the table above. Never write relative to the plugin install directory.
 6. **Ensure `<plugin_root>` directory exists**; create it empty if missing.
 7. Return all paths.
+8. **Post-write path check (MANDATORY).** After writing, MUST verify that every file in `files_written` satisfies BOTH:
+   - the path is RELATIVE (no leading `/`), so it lives under the host's CWD (= workspace root); and
+   - the path does NOT contain `${CLAUDE_PLUGIN_ROOT}` (would mean we wrote into the plugin install dir, which is read-only).
+   If any path violates either invariant, FAIL with `status: bad_write_target: wrote to <actual-path>, expected a CWD-relative path under the workspace root`.
 
 ## Test
 
