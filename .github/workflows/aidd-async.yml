@@ -154,7 +154,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run aidd-orchestrator pipeline
-        uses: anthropics/claude-code-action@24492741e0ccfdef4c1d19da8e11e0f373d07494 # v1.0.124
+        uses: anthropics/claude-code-action@787c5a0ce96a9a6cfb050ea0c8f4c05f2447c251 # v1.0.133
         with:
           prompt: "Use skill aidd-orchestrator:00:async-dev with action=run on issue #${{ needs.dispatch.outputs.issue_number }} (trigger_kind=${{ needs.dispatch.outputs.trigger_kind }}, trigger_comment_url=${{ needs.dispatch.outputs.trigger_comment_url }}). Fetch every comment newer than the last bot activity on the issue and feed them to the SDLC delegation as additional user direction."
           claude_code_oauth_token: ${{ secrets[needs.dispatch.outputs.account_secret] }}
@@ -247,7 +247,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run aidd-orchestrator review loop
-        uses: anthropics/claude-code-action@24492741e0ccfdef4c1d19da8e11e0f373d07494 # v1.0.124
+        uses: anthropics/claude-code-action@787c5a0ce96a9a6cfb050ea0c8f4c05f2447c251 # v1.0.133
         with:
           prompt: "Use skill aidd-orchestrator:00:async-dev with action=review on PR #${{ needs.dispatch.outputs.issue_number }} (trigger_kind=${{ needs.dispatch.outputs.trigger_kind }}, trigger_comment_url=${{ needs.dispatch.outputs.trigger_comment_url }}, source_issue_number=${{ needs.dispatch.outputs.source_issue_number }}). Collect comments from both the PR and its linked issue newer than the last iteration before deciding stop vs continue."
           claude_code_oauth_token: ${{ secrets[needs.dispatch.outputs.account_secret] }}
