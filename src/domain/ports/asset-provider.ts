@@ -13,4 +13,6 @@ export interface AssetProvider {
   loadDefaultMarketplace(): DefaultMarketplace;
   loadPluginManifestSchema(): object;
   loadMarketplaceSchema(): object;
+  loadClaudeMarketplaceSchema(): object;
+  loadCodexPluginManifestSchema(): object;
 }

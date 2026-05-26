@@ -32,6 +32,8 @@ function makeAssetProvider(schema = makeMinimalManifestSchema()): AssetProvider 
     loadMarketplaceSchema: () => {
       throw new Error("not used");
     },
+    loadClaudeMarketplaceSchema: () => ({}),
+    loadCodexPluginManifestSchema: () => ({}),
   };
 }
 

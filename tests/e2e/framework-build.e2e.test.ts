@@ -418,6 +418,32 @@ describe.concurrent("E2E: aidd framework build", () => {
     }
   });
 
+  it("codex AC #11/#12: --target codex exits 0, emits marketplace + plugin manifest + TOML", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-build-codex");
+    try {
+      const outDir = join(tempDir, "dist-codex");
+      await mkdir(outDir, { recursive: true });
+      const build = await runCli(
+        ["framework", "build", "--source", FRAMEWORK_PATH, "--target", "codex", "--out", outDir],
+        projectDir,
+        fakeHome
+      );
+      expect(build.exitCode).toBe(0);
+      expect(build.stdout).toContain("Built");
+      expect(build.stdout).toContain("files written to");
+
+      expect(existsSync(join(outDir, ".claude-plugin", "marketplace.json"))).toBe(true);
+      expect(existsSync(join(outDir, "plugins", "aidd-test", ".codex-plugin", "plugin.json"))).toBe(
+        true
+      );
+      expect(
+        existsSync(join(outDir, "plugins", "aidd-test", "codex-agents", "code-reviewer.toml"))
+      ).toBe(true);
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("flat guard: --force without --flat exits non-zero with hint", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-guard-force");
     try {

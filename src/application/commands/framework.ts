@@ -4,7 +4,11 @@ import type {
   FrameworkBuildMode,
   FrameworkBuildTarget,
 } from "../../domain/models/framework-build.js";
-import { createDeps, createFlatFrameworkBuildUseCase } from "../../infrastructure/deps.js";
+import {
+  createCodexFrameworkBuildUseCase,
+  createDeps,
+  createFlatFrameworkBuildUseCase,
+} from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
 
@@ -16,10 +20,10 @@ export function registerFrameworkCommand(program: Command): void {
   framework
     .command("build")
     .description(
-      "Build a Claude-format framework into a Copilot-native plugin marketplace tree or project workspace"
+      "Build a Claude-format framework into a target-native plugin marketplace tree or project workspace"
     )
     .requiredOption("--source <path>", "Path to the source framework directory")
-    .requiredOption("--target <target>", "Build target (copilot)")
+    .requiredOption("--target <target>", "Build target (copilot, codex)")
     .requiredOption("--out <dir>", "Output directory (marketplace dist or project root)")
     .option("--flat", "Materialize directly into project workspace, bypass marketplace")
     .option("--force", "Overwrite existing files at canonical paths (flat mode only)")
@@ -34,8 +38,10 @@ export function registerFrameworkCommand(program: Command): void {
         const { verbose, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
 
-        if (cmdOptions.target !== "copilot") {
-          output.error(`Unsupported target '${cmdOptions.target}'. MVP1 supports 'copilot' only.`);
+        if (cmdOptions.target !== "copilot" && cmdOptions.target !== "codex") {
+          output.error(
+            `Unsupported target '${cmdOptions.target}'. Supported targets: copilot, codex.`
+          );
           process.exit(1);
         }
         if (cmdOptions.force && !cmdOptions.flat) {
@@ -58,7 +64,9 @@ export function registerFrameworkCommand(program: Command): void {
           const useCase =
             mode === "flat"
               ? createFlatFrameworkBuildUseCase(deps, outDir, force)
-              : deps.frameworkBuildUseCase;
+              : target === "codex"
+                ? createCodexFrameworkBuildUseCase(deps)
+                : deps.frameworkBuildUseCase;
           const result = await useCase.execute({ sourceDir, outDir, target, mode, force });
           if (mode === "flat") {
             output.success(

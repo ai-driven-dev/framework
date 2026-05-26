@@ -1,7 +1,7 @@
 import { COPILOT_VSCODE_MCP_PATH, COPILOT_WORKSPACE_DIR } from "../tools/ai/copilot-paths.js";
 
-/** Single accepted target for MVP1. Widens to a union in MVP2/3. */
-export type FrameworkBuildTarget = "copilot";
+/** Build target: copilot (Mode A or flat) or codex (Mode A marketplace only). */
+export type FrameworkBuildTarget = "copilot" | "codex";
 
 /** Output layout discriminant: marketplace dist (Mode A) vs direct workspace inject (Mode B flat). */
 export type FrameworkBuildMode = "marketplace" | "flat";

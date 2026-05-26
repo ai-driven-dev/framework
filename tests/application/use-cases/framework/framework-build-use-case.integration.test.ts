@@ -57,6 +57,8 @@ function makeAssetProvider(
     },
     loadPluginManifestSchema: () => manifestSchema,
     loadMarketplaceSchema: () => marketplaceSchema,
+    loadClaudeMarketplaceSchema: () => ({}),
+    loadCodexPluginManifestSchema: () => ({}),
   };
 }
 

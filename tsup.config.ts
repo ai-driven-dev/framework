@@ -33,5 +33,10 @@ export default defineConfig({
       "assets/schemas/copilot-plugin-marketplace.json",
       "dist/copilot-plugin-marketplace.json"
     );
+    copyFileSync(
+      "assets/schemas/claude-marketplace-manifest.json",
+      "dist/claude-marketplace-manifest.json"
+    );
+    copyFileSync("assets/schemas/codex-plugin-manifest.json", "dist/codex-plugin-manifest.json");
   },
 });

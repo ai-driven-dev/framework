@@ -24,6 +24,8 @@ import type {
 
 const SCHEMA_FILE = "claude-code-plugin-manifest.json";
 const MARKETPLACE_SCHEMA_FILE = "copilot-plugin-marketplace.json";
+const CLAUDE_MARKETPLACE_SCHEMA_FILE = "claude-marketplace-manifest.json";
+const CODEX_PLUGIN_MANIFEST_SCHEMA_FILE = "codex-plugin-manifest.json";
 
 const CONFIG_ASSETS: Readonly<Record<ToolId, Readonly<Record<string, ConfigAsset>>>> = {
   claude: { "settings.json": claudeSettings },
@@ -41,6 +43,8 @@ const CONFIG_ASSETS: Readonly<Record<ToolId, Readonly<Record<string, ConfigAsset
 export class BundledAssetProviderAdapter implements AssetProvider {
   private cachedSchema: object | undefined;
   private cachedMarketplaceSchema: object | undefined;
+  private cachedClaudeMarketplaceSchema: object | undefined;
+  private cachedCodexPluginManifestSchema: object | undefined;
 
   loadConfigAsset(toolId: ToolId, fileName: string): ConfigAsset {
     const asset = CONFIG_ASSETS[toolId][fileName];
@@ -64,6 +68,24 @@ export class BundledAssetProviderAdapter implements AssetProvider {
     if (this.cachedMarketplaceSchema !== undefined) return this.cachedMarketplaceSchema;
     this.cachedMarketplaceSchema = this.readSchemaFileFromDisk(MARKETPLACE_SCHEMA_FILE);
     return this.cachedMarketplaceSchema;
+  }
+
+  loadClaudeMarketplaceSchema(): object {
+    if (this.cachedClaudeMarketplaceSchema !== undefined) return this.cachedClaudeMarketplaceSchema;
+    this.cachedClaudeMarketplaceSchema = this.readSchemaFileFromDisk(
+      CLAUDE_MARKETPLACE_SCHEMA_FILE
+    );
+    return this.cachedClaudeMarketplaceSchema;
+  }
+
+  loadCodexPluginManifestSchema(): object {
+    if (this.cachedCodexPluginManifestSchema !== undefined) {
+      return this.cachedCodexPluginManifestSchema;
+    }
+    this.cachedCodexPluginManifestSchema = this.readSchemaFileFromDisk(
+      CODEX_PLUGIN_MANIFEST_SCHEMA_FILE
+    );
+    return this.cachedCodexPluginManifestSchema;
   }
 
   private readSchemaFileFromDisk(fileName: string): object {

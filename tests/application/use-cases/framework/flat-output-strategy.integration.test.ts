@@ -54,6 +54,8 @@ function makeAssetProvider(): AssetProvider {
     },
     loadPluginManifestSchema: () => MINIMAL_MANIFEST_SCHEMA,
     loadMarketplaceSchema: () => MINIMAL_MARKETPLACE_SCHEMA,
+    loadClaudeMarketplaceSchema: () => ({}),
+    loadCodexPluginManifestSchema: () => ({}),
   };
 }
 

@@ -13,6 +13,7 @@ import { DoctorReferencesUseCase } from "../application/use-cases/doctor/doctor-
 import { DoctorTrackedFilesUseCase } from "../application/use-cases/doctor/doctor-tracked-files-use-case.js";
 import { DoctorUseCase } from "../application/use-cases/doctor/doctor-use-case.js";
 import { FrameworkBuildUseCase } from "../application/use-cases/framework/framework-build-use-case.js";
+import { CodexOutputStrategy } from "../application/use-cases/framework/strategies/codex-output-strategy.js";
 import { FlatOutputStrategy } from "../application/use-cases/framework/strategies/flat-output-strategy.js";
 import { InstallAiToolUseCase } from "../application/use-cases/install/install-ai-tool-use-case.js";
 import { InstallIdeConfigUseCase } from "../application/use-cases/install/install-ide-config-use-case.js";
@@ -144,6 +145,18 @@ async function isDirectory(path: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export function createCodexFrameworkBuildUseCase(deps: Deps): FrameworkBuildUseCase {
+  const jsonSchemaValidator = new AjvSchemaValidatorAdapter();
+  const strategy = new CodexOutputStrategy(deps.fs, jsonSchemaValidator, deps.assetProvider);
+  return new FrameworkBuildUseCase(
+    deps.fs,
+    jsonSchemaValidator,
+    deps.assetProvider,
+    deps.logger,
+    strategy
+  );
 }
 
 export function createFlatFrameworkBuildUseCase(
