@@ -57,4 +57,4 @@ When this skill emits Mermaid diagrams, follow the project's Mermaid conventions
 
 ## External data
 
-- `../hooks/update_memory.js` - syncs `<aidd_project_memory>` block content across all context files
+- `../../hooks/update_memory.js` - syncs `<aidd_project_memory>` block content across all context files

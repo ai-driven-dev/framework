@@ -98,7 +98,7 @@ General rule: **drop unsupported fields; never invent a substitute key**. When a
 - User: `~/.claude/settings.json` (same shape)
 - Plugin-bundled: `<plugin>/hooks/hooks.json` (file IS the hooks object)
 - Component-scoped: `hooks:` block in a skill or agent frontmatter
-- Path env vars available in hook command strings (wrapped as `${VAR}` where the runtime substitutes them): project root, plugin install directory, plugin persistent data directory. See `@references/hook.md` "Path placeholders in handlers" for the exact variable names and their descriptions.
+- Path env vars available in hook command strings (wrapped as `${VAR}` where the runtime substitutes them): project root, plugin install directory, plugin persistent data directory. See `@hook.md` "Path placeholders in handlers" for the exact variable names and their descriptions.
 
 ### Plugins
 

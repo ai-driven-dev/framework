@@ -85,6 +85,8 @@ aidd_docs/
    - Output path = `aidd_docs/memory/<basename>` at the root of the memory directory (not under `internal/`, one file per template).
    - Sub-directory templates (e.g. `assets/templates/memory/frontend/*.md`) follow the same rule: output filename = template's basename at `aidd_docs/memory/<basename>` root.
    - Skip writing only when scope filter excludes the template, not for content-judgement reasons.
+   - MUST NOT invent a filename not derived from a template basename (e.g. PROJECT_MEMORY.md, INIT_AUDIT.md are forbidden).
+   - MUST NOT consolidate multiple templates into one file.
 8. Wait for all sub-agents to complete. Print a summary table with one row per matching template: `template | output file | status`. Valid statuses: `written` or `scope-excluded`.
 
 ## Test
