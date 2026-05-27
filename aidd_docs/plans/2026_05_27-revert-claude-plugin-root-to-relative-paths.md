@@ -7,7 +7,7 @@ source_research: deep search of 6 tools (Claude Code, VS Code Copilot, Copilot C
 execution_vehicle: "aidd-context:03:context-generate (refactor-skill mode)"
 ---
 
-# Plan — Revert `${CLAUDE_PLUGIN_ROOT}` to relative paths in skill markdown
+# Plan - Revert `${CLAUDE_PLUGIN_ROOT}` to relative paths in skill markdown
 
 ## Implementation deviation from the plan
 
@@ -43,7 +43,7 @@ Our framework's adoption of `${CLAUDE_PLUGIN_ROOT}/skills/<n>/...` in action mar
 
 ## Milestones
 
-### M1 — Audit and classify
+### M1 - Audit and classify
 
 For every file containing `CLAUDE_PLUGIN_ROOT` under `plugins/aidd-context/`, classify each occurrence:
 - (a) Path reference inside skill content (router, action, reference, prose docs) → REVERT
@@ -51,7 +51,7 @@ For every file containing `CLAUDE_PLUGIN_ROOT` under `plugins/aidd-context/`, cl
 
 Produce a table: file | line | string | decision (revert / keep). The table drives M2 mechanically.
 
-### M2 — Mechanical revert
+### M2 - Mechanical revert
 
 For each (revert) line:
 - Replace `${CLAUDE_PLUGIN_ROOT}/skills/<this-skill>/<rest>` with the **file-relative** equivalent (`@<dots>/<rest>` where the dot count matches the action file's depth under the skill, or `@<rest>` from a SKILL.md / reference at the skill root).
@@ -63,40 +63,40 @@ Conventions:
 - From SKILL.md (root): `@<rest>`.
 - From `references/X.md` (root): `@<rest>`.
 
-### M3 — Verify generated-artifact templates untouched
+### M3 - Verify generated-artifact templates untouched
 
 Confirm none of the following lost their `${CLAUDE_PLUGIN_ROOT}`:
 - `plugins/aidd-context/skills/03-context-generate/assets/hooks/hooks-template.json`
 - `plugins/aidd-context/skills/03-context-generate/assets/plugins/plugin-template.json`
-- `plugins/aidd-context/skills/03-context-generate/assets/plugins/plugin-entry-template.json`
+- `plugins/aidd-context/skills/03-context-generate/assets/marketplaces/plugin-entry-template.json`
 - `plugins/aidd-context/skills/03-context-generate/assets/marketplaces/marketplace-template.json` and `marketplace-codex-template.json`
 - Any MCP-server-config template if present.
 
-These files contain the token deliberately — the AI copies them verbatim into the user's `.claude/settings.json` / `.mcp.json` / etc., where the host runtime DOES expand the token.
+These files contain the token deliberately - the AI copies them verbatim into the user's `.claude/settings.json` / `.mcp.json` / etc., where the host runtime DOES expand the token.
 
-### M4 — Update SKILL.md path-convention notes
+### M4 - Update SKILL.md path-convention notes
 
 `tool-resolution.md` (and any reference that documents the path convention) currently says paths can be `${CLAUDE_PLUGIN_ROOT}/...`. Update to state the actual convention:
 
 > Inside skill content (SKILL.md, action.md, reference.md), use relative paths from the file's location (`@../assets/X` from an action file, `@assets/X` from SKILL.md). `${CLAUDE_PLUGIN_ROOT}` survives only in generated configuration artifacts (hooks, MCP servers, plugin manifests, marketplace catalogs) where the host runtime substitutes it at process-spawn time.
 
-### M5 — Re-run Claude E2E to confirm no regression
+### M5 - Re-run Claude E2E to confirm no regression
 
 Spawn the same E2E suite as the last full test pass (02-project-init full + modify + fallback; 03-context-generate skills + rules + commands + agents + hooks + plugins + marketplaces). Verify:
 - All `@` references resolve when Claude follows the action files.
 - Generated artifacts (hook settings.json, MCP configs, plugin manifests) still carry `${CLAUDE_PLUGIN_ROOT}` and the host substitutes correctly at runtime.
 
-### M6 — Update PR description
+### M6 - Update PR description
 
 Edit PR #155 description to reflect the revised path convention and document the runtime-substitution boundary. Note in the PR: "Relative paths inside skill content; `${CLAUDE_PLUGIN_ROOT}` only in generated artifacts where the host runtime substitutes."
 
 ## Open questions (resolve in M1)
 
-### O1 — Cross-skill content that was duplicated by the strict skill-auto-porteur rule
+### O1 - Cross-skill content that was duplicated by the strict skill-auto-porteur rule
 
-Earlier commits duplicated `ai-mapping.md`, `plan-template.md`, `1-command-structure.md` into consumer skills under the "skill auto-porteur strict" decision. Their absolute-path forms (`${CLAUDE_PLUGIN_ROOT}/skills/<other-skill>/...`) are gone because the content moved local. After revert, the surviving local copies are referenced via `@<relative>` — no env var needed. Verify nothing slipped through.
+Earlier commits duplicated `ai-mapping.md`, `plan-template.md`, `1-command-structure.md` into consumer skills under the "skill auto-porteur strict" decision. Their absolute-path forms (`${CLAUDE_PLUGIN_ROOT}/skills/<other-skill>/...`) are gone because the content moved local. After revert, the surviving local copies are referenced via `@<relative>` - no env var needed. Verify nothing slipped through.
 
-### O2 — Cross-plugin references
+### O2 - Cross-plugin references
 
 If any file in `aidd-context/` still references something in `aidd-dev/` or another plugin via `${CLAUDE_PLUGIN_ROOT}/../../aidd-dev/...`-style absolute form, decide:
 - (a) Replace with a local copy (strict skill-auto-porteur, already the policy).
@@ -107,9 +107,9 @@ Default lean: (a), consistent with the existing policy.
 ## Risks / constraints
 
 - **R6 (zero duplication) reinforcement**: this revert is in the same direction as the recent R6-fold cleanup. Action files become shorter. No risk of new duplication.
-- **Claude Code behavior**: Claude Code does NOT expand `${CLAUDE_PLUGIN_ROOT}` inside skill markdown either (per the open issue #9354). So Claude was also resolving the token by interpreting the string — relative paths are strictly closer to documented behavior.
+- **Claude Code behavior**: Claude Code does NOT expand `${CLAUDE_PLUGIN_ROOT}` inside skill markdown either (per the open issue #9354). So Claude was also resolving the token by interpreting the string - relative paths are strictly closer to documented behavior.
 - **Generated artifacts unchanged**: the user-facing output (the rule file Copilot reads, the hook script settings.json invokes) is unaffected by this revert. Only the framework's authoring layer changes.
-- **R4 budget**: SKILL.md and action files shrink — well within the 500-line ceiling.
+- **R4 budget**: SKILL.md and action files shrink - well within the 500-line ceiling.
 
 ## Files touched (estimate)
 
@@ -121,6 +121,6 @@ Default lean: (a), consistent with the existing policy.
 ## Acceptance
 
 - `grep -rln 'CLAUDE_PLUGIN_ROOT' plugins/aidd-context/skills/*/actions/ plugins/aidd-context/skills/*/references/ plugins/aidd-context/skills/*/SKILL.md` returns ZERO matches.
-- `grep -rln 'CLAUDE_PLUGIN_ROOT' plugins/aidd-context/skills/*/assets/` returns one or more matches (the survivors).
+- Templates in `plugins/aidd-context/skills/*/assets/` use `{{command}}` placeholders that the AI populates during generation; no literal `CLAUDE_PLUGIN_ROOT` survives in tracked source. The only surviving literal in the plugin is `plugins/aidd-context/hooks/hooks.json` (the plugin's runtime hook config, outside the skills tree).
 - Claude E2E re-test passes the same matrix that passed at HEAD.
 - PR #155 description updated.
