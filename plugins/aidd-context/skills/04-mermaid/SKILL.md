@@ -10,5 +10,5 @@ Produces valid, structured Mermaid diagrams through iterative planning and user 
 ## Actions
 
 ```markdown
-@${CLAUDE_PLUGIN_ROOT}/skills/04-mermaid/actions/01-mermaid.md
+@actions/01-mermaid.md
 ```

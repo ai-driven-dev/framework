@@ -80,3 +80,47 @@ Build **one canonical artifact** from the user's intent. Render it **once per co
 - The canonical artifact captures the intent: content, behavior, and tool-neutral field values.
 - Each render applies the tool's path, extension, field reconciliation, and structural conversion as needed.
 - All N renders are produced before the write action exits.
+
+---
+
+## Path conventions
+
+Path conventions inside skill content (SKILL.md, action.md, reference.md):
+
+- Use relative paths from the file's location, with the `@` prefix: `@../assets/X` from an action file at depth 1 under the skill, `@../../assets/X` from depth 2, `@assets/X` from SKILL.md or reference files at the skill root.
+- The Agent Skills spec at agentskills.io mandates "use relative paths from the skill root" - this aligns.
+- The plugin install directory variable (see `references/hook.md` "Path placeholders in handlers") is reserved for content the framework GENERATES into the user's workspace (hook config under `.claude/settings.json`, MCP server configs, plugin manifests, marketplace catalogs). The host runtime substitutes the variable at process-spawn time only in those surfaces.
+
+---
+
+## Shared gates (call these from entry actions, do not inline)
+
+### Asset access precheck
+
+Read `@references/ai-mapping.md` AND `@references/tool-resolution.md` (relative to the skill root). If either read fails or returns empty content, FAIL with:
+
+```
+status: blocked_assets_unreachable: cannot read skill references. The aidd-context plugin is not properly installed in this AI host's runtime. Install it as a plugin (or ensure the plugin root resolves to the install directory) before running this action.
+```
+
+Do not proceed. Do not invent a tool list. Do not guess paths.
+
+### Target scope selection
+
+Ask the user: "Write artifacts at the project root, or inside an existing/new plugin?"
+
+- `project root` (default) -- set `target_base = ""` (empty string). All write paths are CWD-relative literals, landing under the user's workspace root (the host must set CWD = workspace).
+- `plugin:<plugin-name>` -- set `target_base = "plugins/<plugin-name>/"`. Confirm the plugin dir exists or create it. All write paths are prepended with `target_base`.
+
+This step is blocking. If no answer is received, FAIL with `status: blocked_awaiting_target_scope`.
+
+### Write target validation
+
+After writing, verify that every file in `files_written` satisfies all of the following:
+
+1. The path is relative (no leading `/`), so it lives under the host's CWD (workspace root).
+2. The path does not reference the plugin install directory (writing into the plugin install directory is not allowed; the path must not start with or contain the plugin root prefix).
+3. If `target_scope = project root`: the path does not start with `plugins/<anything>/` (prevents accidental plugin writes).
+4. If `target_scope = plugin:<plugin-name>`: the path starts with `plugins/<plugin-name>/`.
+
+If any path violates any invariant, FAIL with `status: bad_write_target: wrote to <actual-path>, expected under <target_base>`.

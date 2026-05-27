@@ -24,29 +24,26 @@ target_base: "" | "plugins/<plugin-name>/"
 
 ## Process
 
-1. **Verify asset access.** Read `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md` AND `${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/tool-resolution.md`. If EITHER read fails, returns empty content, or `${CLAUDE_PLUGIN_ROOT}` is not resolved by the host (resulting in a literal string Read attempt rather than absolute-path access), FAIL with `status: blocked_assets_unreachable: cannot read references via ${CLAUDE_PLUGIN_ROOT}. The aidd-context plugin is not properly installed in this AI host's runtime. Install it as a plugin (or ensure ${CLAUDE_PLUGIN_ROOT} resolves to the plugin install root) before running this action.` Do NOT proceed, do NOT invent a tool list, do NOT guess paths.
-2. **Choose target scope.** Ask the user: "Write artifacts at the project root, or inside an existing/new plugin?"
-   - `project root` (default) -- set `target_base = ""` (empty string). All write paths are CWD-relative literals, landing under the user's workspace root (the host MUST set CWD = workspace).
-   - `plugin:<plugin-name>` -- set `target_base = "plugins/<plugin-name>/"`. Confirm the plugin dir exists or create it. All write paths are prepended with `target_base`.
-   The action is BLOCKING on this answer. If no answer is received, FAIL with `status: blocked_awaiting_target_scope`.
-3. **Resolve target tools.** Follow `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the hooks surface in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`; if the cell is marked unsupported (D2), record the tool in `blocked_tools` with an explanation and continue with the remaining supported tools.
+1. Apply the **asset-access precheck** from `@../../references/tool-resolution.md` (## Asset access precheck).
+2. Apply the **target scope selection** from `@../../references/tool-resolution.md` (## Target scope selection).
+3. **Resolve target tools.** Follow `@../../references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the hooks surface in `@../../references/ai-mapping.md`; if the cell is marked unsupported (D2), record the tool in `blocked_tools` with an explanation and continue with the remaining supported tools.
 
    D2 cases to apply at this step:
    - **Copilot + project or user scope**: Copilot hooks are plugin-bundled only; project/user scope is not supported. Block with: "Copilot hooks are plugin-bundled only; project/user scope is not supported. Bundle the hook inside a plugin or choose a different tool." Plugin-bundled scope for Copilot remains supported.
 
-4. **Clarify.** Ask the user until the following are unambiguous (event, matcher, handler type, blocking expectation, scope). Use the spec in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/hook.md` as the source of truth for events, handler fields, exit-code semantics, and the scope -> file resolution table.
+4. **Clarify.** Ask the user until the following are unambiguous (event, matcher, handler type, blocking expectation, scope). Use the spec in `@../../references/hook.md` as the source of truth for events, handler fields, exit-code semantics, and the scope -> file resolution table.
 
 5. **Branch on artifact shape for each confirmed supported tool:**
-   - **Claude / Cursor / Codex** -> JSON file (or TOML for Codex `[hooks]` table). Use the JSON template at `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/hooks/hooks-template.json`.
-     - Render the event name in the tool's required casing per `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`: Claude and Codex use PascalCase (`PreToolUse`); Cursor uses camelCase (`preToolUse`); OpenCode uses dotted-lowercase event keys (`tool.execute.before`).
-   - **OpenCode** -> JS/TS module. OpenCode does not load a standalone `hooks.json`; hooks live inside plugin code. Use the JS template at `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/hooks/hook-template.js`.
-   - **Copilot (plugin-bundled scope only)** -> JSON file (`<plugin>/hooks.json` or `<plugin>/hooks/hooks.json`). Use the JSON template at `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/hooks/hooks-template.json`.
+   - **Claude / Cursor / Codex** -> JSON file (or TOML for Codex `[hooks]` table). Use the JSON template at `@../../assets/hooks/hooks-template.json`.
+     - Render the event name in the tool's required casing per `@../../references/ai-mapping.md`: Claude and Codex use PascalCase (`PreToolUse`); Cursor uses camelCase (`preToolUse`); OpenCode uses dotted-lowercase event keys (`tool.execute.before`).
+   - **OpenCode** -> JS/TS module. OpenCode does not load a standalone `hooks.json`; hooks live inside plugin code. Use the JS template at `@../../assets/hooks/hook-template.js`.
+   - **Copilot (plugin-bundled scope only)** -> JSON file (`<plugin>/hooks.json` or `<plugin>/hooks/hooks.json`). Use the JSON template at `@../../assets/hooks/hooks-template.json`.
 
-6. **Resolve `hook_path`** for each confirmed supported tool per `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/hook.md` "File locations and scope" section. Honor the precedence rule: plugin > project > user. For project-scope hooks, prepend `target_base` to the CWD-relative path (e.g. `<target_base>.claude/settings.json`); the host runtime sets CWD to the workspace root, not the plugin install directory.
+6. **Resolve `hook_path`** for each confirmed supported tool per `@../../references/hook.md` "File locations and scope" section. Honor the precedence rule: plugin > project > user. For project-scope hooks, prepend `target_base` to the CWD-relative path (e.g. `<target_base>.claude/settings.json`); the host runtime sets CWD to the workspace root, not the plugin install directory.
 
-7. **Validate the event name** per tool: Claude and Codex events are validated against the PascalCase table in `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/hook.md`; Cursor events are validated against the camelCase events in the Cursor hooks section of `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`; OpenCode events are validated against the dotted-lowercase events in the OpenCode hooks section of `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`. Block on typo or casing mismatch.
+7. **Validate the event name** per tool: Claude and Codex events are validated against the PascalCase table in `@../../references/hook.md`; Cursor events are validated against the camelCase events in the Cursor hooks section of `@../../references/ai-mapping.md`; OpenCode events are validated against the dotted-lowercase events in the OpenCode hooks section of `@../../references/ai-mapping.md`. Block on typo or casing mismatch.
 
-8. **Build the handler object** with only the fields the user supplied, plus the required fields for the chosen handler type per `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/hook.md`. Drop empty optional fields.
+8. **Build the handler object** with only the fields the user supplied, plus the required fields for the chosen handler type per `@../../references/hook.md`. Drop empty optional fields.
 
 9. **Build the matcher entry** for each tool:
    - JSON tools (Claude / Cursor / Codex / Copilot): `{ "matcher": <value or "*">, "hooks": [<handler>] }`.
@@ -62,12 +59,7 @@ target_base: "" | "plugins/<plugin-name>/"
 12. **Score 1-10** on event-handler fit, matcher specificity, and blocking-mode appropriateness (e.g. never expect `PostToolUse` exit code 2 to undo a tool call).
 
 13. **Save** to each `hook_path` (prepended with `target_base`). Never write relative to the plugin install directory.
-14. **Post-write path check (MANDATORY).** After writing, MUST verify that every file in `files_written` satisfies ALL of the following:
-    - the path is RELATIVE (no leading `/`), so it lives under the host's CWD (= workspace root); and
-    - the path does NOT contain `${CLAUDE_PLUGIN_ROOT}` (would mean we wrote into the plugin install dir, which is read-only); and
-    - if `target_scope = project root`: the path MUST NOT start with `plugins/<anything>/` (prevents accidental plugin writes); and
-    - if `target_scope = plugin:<plugin-name>`: the path MUST start with `plugins/<plugin-name>/`.
-    If any path violates any invariant, FAIL with `status: bad_write_target: wrote to <actual-path>, expected under <target_base>`.
+14. Apply the **write target validation** from `@../../references/tool-resolution.md` (## Write target validation).
 
 ## Test
 

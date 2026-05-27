@@ -14,7 +14,7 @@ Write `evals/scenarios.json` so we can probe trigger correctness later.
 
 ## Outputs
 
-One `evals/scenarios.json` per confirmed tool, written to that tool's skill root - see `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/assets/skills/evals-template.md` for schema and example.
+One `evals/scenarios.json` per confirmed tool, written to that tool's skill root - see `@../../assets/skills/evals-template.md` for schema and example.
 
 ```yaml
 files_written:
@@ -25,13 +25,9 @@ files_written:
 
 1. Ask the user for 3+ realistic prompts (verbatim, not invented).
 2. For each prompt, map to an `expect_action` slug - or `null` if the skill must NOT trigger.
-3. For each confirmed tool (skip any in `blocked_tools`), resolve the tool skills root from `@${CLAUDE_PLUGIN_ROOT}/skills/03-context-generate/references/ai-mapping.md`. Write `evals/scenarios.json` to `<target_base><tool skills root>/<skill_name>/evals/scenarios.json`. If `target_base` is empty, the path is CWD-relative (e.g. `.claude/skills/<skill_name>/evals/scenarios.json`); if non-empty, prepend it (e.g. `plugins/my-plugin/.claude/skills/<skill_name>/evals/scenarios.json`).
+3. For each confirmed tool (skip any in `blocked_tools`), resolve the tool skills root from `@../../references/ai-mapping.md`. Write `evals/scenarios.json` to `<target_base><tool skills root>/<skill_name>/evals/scenarios.json`. If `target_base` is empty, the path is CWD-relative (e.g. `.claude/skills/<skill_name>/evals/scenarios.json`); if non-empty, prepend it (e.g. `plugins/my-plugin/.claude/skills/<skill_name>/evals/scenarios.json`).
 4. Read scenarios back to the user. Wait for written validation before action 03.
-5. **Post-write path check (MANDATORY).** After writing, MUST verify that every file in `files_written` satisfies ALL of:
-   - the path is RELATIVE (no leading `/`), so it lives under the host's CWD (= workspace root); and
-   - the path does NOT contain `${CLAUDE_PLUGIN_ROOT}` (would mean we wrote into the plugin install dir, which is read-only); and
-   - when `target_base != ""`, the path starts with `target_base`.
-   If any path violates any invariant, FAIL with `status: bad_write_target: wrote to <actual-path>, expected a CWD-relative path under the workspace root prefixed with <target_base>`.
+5. Apply the **write target validation** from `@../../references/tool-resolution.md` (## Write target validation).
 
 ## Test
 

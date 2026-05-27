@@ -5,7 +5,7 @@ Ensure every installed tool's AI context file contains the `<aidd_project_memory
 ## Context
 
 ```markdown
-@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/references/mapping-ai-context-file.md
+@../references/mapping-ai-context-file.md
 ```
 
 ## Inputs
@@ -22,21 +22,21 @@ One or more context files exist and each contains the mandatory block :
 
 ## Process
 
-1. **Verify asset access.** Read `@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/AGENTS.md`. If the read fails or returns empty content, FAIL with `status: blocked_assets_unreachable: cannot read ${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/AGENTS.md. The aidd-context plugin assets are not accessible in this AI host's runtime. Ensure the plugin is installed in a location your host can read via @-path resolution.` Do NOT proceed, do NOT invent template content.
+1. **Verify asset access.** Read `@../assets/AGENTS.md`. If the read fails or returns empty content, FAIL with `status: blocked_assets_unreachable: cannot read assets/AGENTS.md from the aidd-context plugin. The plugin assets are not accessible in this AI host's runtime. Ensure the plugin is installed in a location your host can read via @-path resolution.` Do NOT proceed, do NOT invent template content.
 2. **Detect installed context files (white-list only).** Check ONLY these THREE canonical paths at the workspace root:
    - `<project_root>/CLAUDE.md`
    - `<project_root>/AGENTS.md`
    - `<project_root>/.github/copilot-instructions.md`
    No other file is a valid AI context file for this skill. Files matching `*.agent.md`, `*.skill.md`, `*-agent.md`, `<vendor>-*.md`, or any pattern outside this exact white-list are USER PROJECT FILES and MUST NOT be modified, even if their name contains the word "agent", "skill", or "instructions". Note which of the three canonical paths are already present.
 2.5. **Detect modify mode.** If ALL detected context files (from step 2) already contain the `<aidd_project_memory>` block, this is a re-run on an already-initialized project (modify mode). Skip step 3 (do not re-prompt for tool selection); jump directly to step 5 with the existing tools as the confirmed set. Print "modify mode - all context files already initialized; skipping tool prompt."
-3. **Ask the user**. Display the detected files and the full tool list (`claude`, `cursor`, `codex`, `copilot`, `opencode`). Ask which tools the user actively uses. Default proposal: tools whose context file is already present, else `claude` alone. The "default proposal" is what the agent SHOWS as a suggestion. It is NOT the default action. The action does NOT auto-apply the default; it shows it and waits for the user's explicit pick (which may match the default or override it). **The action is blocking on this answer.** If the agent has NOT received an explicit tool list from the user, FAIL with `status: blocked_awaiting_user_tool_selection` and stop. No user answer = action FAILS, no file is written. Do NOT proceed to step 4, do NOT write any file, do NOT invent a default beyond proposing `claude`. Do NOT default to "create all canonical files just to cover bases". Do NOT infer tools from filenames or repo signals; the user explicitly states which tools they use.
+3. **Ask the user**. Display the detected files and the full tool list (`claude`, `cursor`, `codex`, `copilot`, `opencode`). Ask which tools the user actively uses. Default proposal: tools whose context file is already present, else `claude` alone. **The action is blocking on this answer.** If no explicit tool list is received, FAIL with `status: blocked_awaiting_user_tool_selection`. Block on the user's explicit pick; no inference; no auto-creation of unsolicited files.
 4. **Resolve target paths**. From the confirmed tool list, map each to its context file per the mapping reference. Deduplicate (multiple tools may share `AGENTS.md`).
 5. **Filename and location pattern guard (apply before the per-target loop).** Filename and location are determined ONLY by the mapping at `references/mapping-ai-context-file.md`. The context file lives at `<project_root>/<filename>` (e.g. `<project_root>/CLAUDE.md` for Claude Code, `<project_root>/AGENTS.md` for Cursor/OpenCode/Codex, `<project_root>/.github/copilot-instructions.md` for Copilot). The file MUST NOT be placed inside `aidd_docs/` or any subdirectory. Never invent a filename not present in the mapping reference.
 
-   **Single-file-per-confirmed-tool invariant (enforced before the loop runs).** Create ONE context file per tool the user EXPLICITLY confirmed in step 3. Never create a context file for a tool the user did not confirm. Never create "all three canonical files just in case". If the user confirmed `claude_code`, create CLAUDE.md only. If they confirmed `copilot`, create `.github/copilot-instructions.md` only. Multi-tool only when the user explicitly picked multiple tools. Any tool absent from the confirmed list in step 3 MUST be skipped entirely; do not create, modify, or touch its file.
+   **Single-file-per-confirmed-tool invariant (enforced before the loop runs).** Create exactly one context file per tool the user confirmed in step 3. Any tool absent from the confirmed list is skipped entirely (not created, not modified). Multi-tool only when the user explicitly picked multiple tools.
 
    For each target file, apply the first matching case:
-   - **File absent** -> copy `@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/AGENTS.md`; replace the main title with the tool-appropriate heading.
+   - **File absent** -> copy `@../assets/AGENTS.md`; replace the main title with the tool-appropriate heading.
    - **File present, `## Memory Management` section missing** -> append the full `## Memory Management` block extracted from `assets/AGENTS.md` (from `## Memory Management` to end of file).
    - **File present, section exists, `<aidd_project_memory>` tag missing** -> inject `<aidd_project_memory>\n</aidd_project_memory>` immediately after the `### Project memory` heading (create the heading if absent).
    - **`<aidd_project_memory>` tag already present** -> skip; print `already ok`.

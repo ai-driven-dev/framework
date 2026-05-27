@@ -26,7 +26,7 @@ Source: <relative path>
 
 ## Process
 
-1. **Enumerate rules.** Run `node ${CLAUDE_PLUGIN_ROOT}/skills/06-discovery/scripts/list-rules.mjs` from the user's project root; accept a silent empty array when no surface contains rules.
+1. **Enumerate rules.** Run the `list-rules.mjs` script located at `scripts/list-rules.mjs` under the `06-discovery` skill root (resolve via the plugin install path) from the user's project root; accept a silent empty array when no surface contains rules.
 2. **Extract metadata.** For each entry, read `tool`, `path`, `name`, `description`, `paths` from the JSON output.
 3. **Render the table.** Columns: `Tool | Path | Rule | Purpose | Scope (paths)`. Sort by tool then rule name.
 4. **Ask the user for intent.** `Which behavior or scope are you looking for?` Wait for an explicit reply.

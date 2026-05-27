@@ -20,9 +20,9 @@ aidd_docs/
 
 ## Process
 
-1. If `aidd_docs/README.md` is absent -> write from `@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/README.md`. If present -> update it but take care to preserve any user customizations.
-2. If `aidd_docs/GUIDELINES.md` is absent -> write from `@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/GUIDELINES.md`. If present -> update it but take care to preserve any user customizations.
-3. If `aidd_docs/CONTRIBUTING.md` is absent -> write from `@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/CONTRIBUTING.md`. If present -> update it but take care to preserve any user customizations.
+1. If `aidd_docs/README.md` is absent -> write from `@../assets/README.md`. If present -> update it but take care to preserve any user customizations.
+2. If `aidd_docs/GUIDELINES.md` is absent -> write from `@../assets/GUIDELINES.md`. If present -> update it but take care to preserve any user customizations.
+3. If `aidd_docs/CONTRIBUTING.md` is absent -> write from `@../assets/CONTRIBUTING.md`. If present -> update it but take care to preserve any user customizations.
 4. If `aidd_docs/memory/internal/` is absent -> create it. Always ensure `aidd_docs/memory/internal/.gitkeep` exists.
 5. If `aidd_docs/memory/external/` is absent -> create it. Always ensure `aidd_docs/memory/external/.gitkeep` exists.
 6. Print a summary table: `path | action taken (created | updated | skipped)`.

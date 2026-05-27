@@ -46,14 +46,14 @@ When this skill emits Mermaid diagrams, follow the project's Mermaid conventions
 
 ## Assets
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/AGENTS.md` - canonical AI context file template
-- `${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/README.md` - `aidd_docs/README.md` template
-- `${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/GUIDELINES.md` - `aidd_docs/GUIDELINES.md` template
-- `${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/templates/memory/` - memory file templates (scope: `all` | `frontend` | `backend`)
+- `@assets/AGENTS.md` - canonical AI context file template
+- `@assets/README.md` - `aidd_docs/README.md` template
+- `@assets/GUIDELINES.md` - `aidd_docs/GUIDELINES.md` template
+- `@assets/templates/memory/` - memory file templates (scope: `all` | `frontend` | `backend`)
 
 ## References
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/references/mapping-ai-context-file.md` - mapping of AI context files across tools
+- `@references/mapping-ai-context-file.md` - mapping of AI context files across tools
 
 ## External data
 

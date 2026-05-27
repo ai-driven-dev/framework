@@ -36,7 +36,7 @@ State-aware onboarding hub for the current project. Silently inspects the projec
 
 ## Assets
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/00-onboard/assets/state-matrix.md` - the hub menu, the SDLC sub-menu, the AIDD journey backbone, and the category resolution rules
+- `@assets/state-matrix.md` - the hub menu, the SDLC sub-menu, the AIDD journey backbone, and the category resolution rules
 
 ## References
 

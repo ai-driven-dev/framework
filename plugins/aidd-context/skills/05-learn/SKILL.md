@@ -28,5 +28,5 @@ Updates memory bank, decisions, and rules to keep project context accurate after
 
 ## Assets
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/05-learn/assets/decision-template.md` - individual decision record template
-- `${CLAUDE_PLUGIN_ROOT}/skills/05-learn/assets/adr-template.md` - ADR log template
+- `@assets/decision-template.md` - individual decision record template
+- `@assets/adr-template.md` - ADR log template

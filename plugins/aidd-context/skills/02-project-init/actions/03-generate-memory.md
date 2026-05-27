@@ -9,7 +9,7 @@ Every file has its own template to follow.
 ### Hard copy into memory bank (always generated)
 
 ```text
-@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/templates/memory
+@../assets/templates/memory
 ```
 
 ### Memory templates
@@ -27,14 +27,14 @@ Each has a `scope` front-matter field:
 All templates are in:
 
 ```text
-@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/templates/memory
+@../assets/templates/memory
 ```
 
 #### Internal templates (frontend / backend)
 
 ```text
-@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/templates/memory/frontend
-@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/templates/memory/backend
+@../assets/templates/memory/frontend
+@../assets/templates/memory/backend
 ```
 
 ## Inputs
@@ -56,7 +56,7 @@ aidd_docs/
 
 ## Process
 
-1. **Verify asset access.** Read at least one canonical template (e.g. `@${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/templates/memory/architecture.md`). If the read fails or returns empty content, FAIL with `status: blocked_assets_unreachable: cannot read @${CLAUDE_PLUGIN_ROOT}/skills/02-project-init/assets/templates/memory/. Templates are required and this action does not invent content. Ensure the aidd-context plugin assets are accessible to this AI host.` Do NOT proceed, do NOT write any memory file.
+1. **Verify asset access.** Read at least one canonical template (e.g. `@../assets/templates/memory/architecture.md`). If the read fails or returns empty content, FAIL with `status: blocked_assets_unreachable: cannot read @../assets/templates/memory/. Templates are required and this action does not invent content. Ensure the aidd-context plugin assets are accessible to this AI host.` Do NOT proceed, do NOT write any memory file.
 2. Check if memory bank already exists in `aidd_docs/memory/` folder:
    - If exists, update with newer information
    - If not, create from scratch
@@ -80,14 +80,12 @@ aidd_docs/
    d. Per the transversal rule "If not applicable / found, remove entire section": sections with no extractable content are REMOVED, not left with placeholder text.
    e. Verbatim template copy is NOT a silent fallback. If content is insufficient or ambiguous, ASK the user how to proceed.
 7. **Output contract (parametrized, do not invent).** Write outputs by deriving names and paths from the framework's `assets/templates/memory/` directory:
-   - For EVERY `*.md` template in `assets/templates/memory/` whose `scope` frontmatter matches the confirmed project type, write EXACTLY ONE output file.
+   - For every `*.md` template in `assets/templates/memory/` whose `scope` frontmatter matches the confirmed project type, write exactly one output file.
    - Output filename = the template's basename, verbatim. Example: `architecture.md` template -> output `aidd_docs/memory/architecture.md`.
-   - Output path = `aidd_docs/memory/<basename>` at the ROOT of the memory directory. NOT under `internal/`. NOT consolidated with another template.
-   - MUST NOT invent a filename (e.g. `PROJECT_MEMORY.md`, `INIT_AUDIT.md` are forbidden - they are not derived from any template basename).
-   - MUST NOT consolidate (writing multiple templates into one file is forbidden).
+   - Output path = `aidd_docs/memory/<basename>` at the root of the memory directory (not under `internal/`, one file per template).
    - Sub-directory templates (e.g. `assets/templates/memory/frontend/*.md`) follow the same rule: output filename = template's basename at `aidd_docs/memory/<basename>` root.
-   - Skip writing only when scope filter excludes the template, NEVER for content-judgement reasons.
-8. Wait for all sub-agents to complete. Print a summary table with one row per matching template: `template | output file | status`. Valid statuses: `written` or `scope-excluded`. Verbatim-copy and AI-invented filenames are NOT valid statuses.
+   - Skip writing only when scope filter excludes the template, not for content-judgement reasons.
+8. Wait for all sub-agents to complete. Print a summary table with one row per matching template: `template | output file | status`. Valid statuses: `written` or `scope-excluded`.
 
 ## Test
 

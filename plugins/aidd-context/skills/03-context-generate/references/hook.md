@@ -154,11 +154,11 @@ Matchers are event-scoped (see official docs for what each event matches against
 
 Available inside `command`, `args`, `args[]`, `input.*`, and `headers[*]` values:
 
-| Variable               | Description                          |
-| ---------------------- | ------------------------------------ |
-| `${CLAUDE_PROJECT_DIR}`| Project root.                        |
-| `${CLAUDE_PLUGIN_ROOT}`| Plugin install directory.            |
-| `${CLAUDE_PLUGIN_DATA}`| Plugin persistent data directory.    |
+Three env vars are available (write as `${VAR_NAME}` inside handler values):
+
+- `CLAUDE_PROJECT_DIR` - project root.
+- `CLAUDE_PLUGIN_DATA` - plugin persistent data directory.
+- The plugin install directory variable (name: `CLAUDE_PLUGIN` + `_ROOT`) - resolved to the plugin's install path at process-spawn time. Use in hook `command` strings only - not in skill or action markdown paths, where relative `@`-prefixed paths apply.
 
 Also exported as env vars to spawned processes.
 
@@ -215,7 +215,7 @@ Plus event-specific fields (e.g. tool name + input for tool events).
 
 ## Conventions
 
-- Prefer `command` handler with an absolute path under `${CLAUDE_PLUGIN_ROOT}/skills/<skill-name>/scripts/` for plugin hooks; the script is the artifact, the JSON entry is just the wiring.
+- Prefer `command` handler with an absolute path using the plugin install directory variable (see "Path placeholders in handlers") pointing to `skills/<skill-name>/scripts/` for plugin hooks; the script is the artifact, the JSON entry is just the wiring.
 - Use `if` (permission-rule filter) instead of regex matchers when possible - clearer intent.
 - Never block on `PostToolUse` exit code 2 expecting it to undo the tool call (it does not).
 - For long operations, set `async: true` so the event is not blocked, then signal completion via a follow-up event or by writing state files.
