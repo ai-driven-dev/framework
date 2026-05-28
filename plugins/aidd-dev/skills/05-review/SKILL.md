@@ -17,6 +17,6 @@ Spawn the `reviewer` agent to execute this skill. For tools that do not support 
 ## Actions
 
 ```markdown
-@${CLAUDE_PLUGIN_ROOT}/skills/05-review/actions/01-review-code.md
-@${CLAUDE_PLUGIN_ROOT}/skills/05-review/actions/02-review-functional.md
+@actions/01-review-code.md
+@actions/02-review-functional.md
 ```

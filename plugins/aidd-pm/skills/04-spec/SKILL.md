@@ -29,7 +29,7 @@ Non-sequential. The router dispatches based on inputs:
 - The spec is the contract; it is immutable once validated.
 - Keep the spec readable: clear section headers, bulleted criteria, explicit non-goals.
 - Never include implementation detail (libraries, patterns, file layout); those belong to the plan.
-- Do not self-validate. The caller spawns a reviewer with `${CLAUDE_PLUGIN_ROOT}/skills/04-spec/assets/spec-validator.yml`; findings come back through the `refine` action for the next iteration.
+- Do not self-validate. The caller spawns a reviewer with `@assets/spec-validator.yml`; findings come back through the `refine` action for the next iteration.
 
 ## References
 
@@ -37,8 +37,8 @@ Non-sequential. The router dispatches based on inputs:
 
 ## Assets
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/04-spec/assets/spec-template.md`: canonical structure of a spec.
-- `${CLAUDE_PLUGIN_ROOT}/skills/04-spec/assets/spec-validator.yml`: checklist used by the reviewer to validate a spec.
+- `@assets/spec-template.md`: canonical structure of a spec.
+- `@assets/spec-validator.yml`: checklist used by the reviewer to validate a spec.
 
 ## External data
 

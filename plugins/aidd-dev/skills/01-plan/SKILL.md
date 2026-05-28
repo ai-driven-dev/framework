@@ -17,7 +17,7 @@ Spawn the `planner` agent to execute this skill. For tools that do not support `
 ## Actions
 
 ```markdown
-@${CLAUDE_PLUGIN_ROOT}/skills/01-plan/actions/01-plan.md
-@${CLAUDE_PLUGIN_ROOT}/skills/01-plan/actions/02-components-behavior.md
-@${CLAUDE_PLUGIN_ROOT}/skills/01-plan/actions/03-image-extract-details.md
+@actions/01-plan.md
+@actions/02-components-behavior.md
+@actions/03-image-extract-details.md
 ```

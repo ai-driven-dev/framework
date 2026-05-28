@@ -22,12 +22,12 @@ next_steps:
 ## Process
 
 1. **Summarize the issue** in your own words.
-2. **Map action paths** with a Mermaid flowchart (e.g. user clicks button -> calls function in file1 -> updates state in file2). Apply `@${CLAUDE_PLUGIN_ROOT}/skills/08-debug/references/mermaid-conventions.md`.
+2. **Map action paths** with a Mermaid flowchart (e.g. user clicks button -> calls function in file1 -> updates state in file2). Apply `@../references/mermaid-conventions.md`.
 3. **Apply 5 Whys.** Start from the symptom and ask "why" iteratively (minimum 3, up to 5). Document each level in a numbered list.
 4. **Identify inspection tools** (MCP, CLI commands, logs, traces).
 5. **Locate relevant files** in the codebase based on the issue.
 6. **List 3-5 potential causes** in a table with columns: Analysis, Evidence, Confidence (1-10).
-7. **Track hypotheses** using the project task system and `@${CLAUDE_PLUGIN_ROOT}/skills/08-debug/assets/task-template.md`. One task per hypothesis.
+7. **Track hypotheses** using the project task system and `@../assets/task-template.md`. One task per hypothesis.
 8. **Validate one by one.** Tick each task when validated or invalidated. Add evidence inside the task. Stop when the root cause is found.
 9. **State conclusions and next steps.**
 10. **Wait for user validation** before moving on.

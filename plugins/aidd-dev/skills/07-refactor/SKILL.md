@@ -10,6 +10,6 @@ Improves code performance and hardens security through structured analysis and t
 ## Actions
 
 ```markdown
-@${CLAUDE_PLUGIN_ROOT}/skills/07-refactor/actions/01-performance.md
-@${CLAUDE_PLUGIN_ROOT}/skills/07-refactor/actions/02-security.md
+@actions/01-performance.md
+@actions/02-security.md
 ```

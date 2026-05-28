@@ -11,6 +11,6 @@ Identifies untested behaviors, iterates on test creation until quality criteria 
 ## Actions
 
 ```markdown
-@${CLAUDE_PLUGIN_ROOT}/skills/06-test/actions/01-test.md
-@${CLAUDE_PLUGIN_ROOT}/skills/06-test/actions/02-test-journey.md
+@actions/01-test.md
+@actions/02-test-journey.md
 ```

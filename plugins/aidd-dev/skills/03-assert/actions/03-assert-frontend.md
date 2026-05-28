@@ -26,7 +26,7 @@ Iterate over the steps below until the feature works as intended.
 1. **Parse the request.** Extract expected requirements (visual, functional, technical) from `expected_behavior`. Summarize and list action paths (e.g. user clicks button -> calls function in file1 -> updates state in file2).
 2. **Inspect the running app.** Open the URL via the configured browsing tool. Inspect the page visually and technically. Take screenshots to confirm the issue.
 3. **Locate the code.** Explore the codebase to find the files and snippets related to the issue.
-4. **Fill the tracking template** from `@${CLAUDE_PLUGIN_ROOT}/skills/03-assert/assets/task-template.md`. List the three best potential causes with a short description and confidence level.
+4. **Fill the tracking template** from `@../assets/task-template.md`. List the three best potential causes with a short description and confidence level.
 5. **Fix-loop.**
    - Take the first potential cause.
    - Apply a candidate fix.

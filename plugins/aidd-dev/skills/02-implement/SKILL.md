@@ -16,5 +16,5 @@ Spawn the `implementer` agent to execute this skill. For tools that do not suppo
 ## Actions
 
 ```markdown
-@${CLAUDE_PLUGIN_ROOT}/skills/02-implement/actions/01-implement.md
+@actions/01-implement.md
 ```

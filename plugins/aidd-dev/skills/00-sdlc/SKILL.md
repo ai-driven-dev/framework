@@ -38,7 +38,7 @@ Detect the mode from `$ARGUMENTS` once, at skill entry, before dispatching the f
 | 04  | `review`    | Verdict `ship` or `iterate`                                            | review via `reviewer`          |
 | 05  | `ship`      | Commit and open a change request via the project's VCS                 | commit, pull-request           |
 
-Files: `${CLAUDE_PLUGIN_ROOT}/skills/00-sdlc/actions/01-spec.md` ... `${CLAUDE_PLUGIN_ROOT}/skills/00-sdlc/actions/05-ship.md`.
+Files: `@actions/01-spec.md` ... `@actions/05-ship.md`.
 
 ## Default flow
 

@@ -11,7 +11,7 @@ Validates correctness of implementations through iterative assertion loops, arch
 ## Actions
 
 ```markdown
-@${CLAUDE_PLUGIN_ROOT}/skills/03-assert/actions/01-assert.md
-@${CLAUDE_PLUGIN_ROOT}/skills/03-assert/actions/02-assert-architecture.md
-@${CLAUDE_PLUGIN_ROOT}/skills/03-assert/actions/03-assert-frontend.md
+@actions/01-assert.md
+@actions/02-assert-architecture.md
+@actions/03-assert-frontend.md
 ```

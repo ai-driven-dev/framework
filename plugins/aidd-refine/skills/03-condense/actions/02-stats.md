@@ -33,7 +33,7 @@ Top savings: full (-42%), ultra (-58%), lite (-18%).
 
 ## Implementation
 
-A `UserPromptSubmit` hook at `${CLAUDE_PLUGIN_ROOT}/hooks/condense-stats.js` intercepts the trigger phrase, reads the active session transcript, detects intensity transitions emitted by `01-condense`, computes the report, and returns `{ decision: "block", reason: "<report>" }` so the model is not invoked.
+A `UserPromptSubmit` hook bundled with this plugin at `hooks/condense-stats.js` intercepts the trigger phrase, reads the active session transcript, detects intensity transitions emitted by `01-condense`, computes the report, and returns `{ decision: "block", reason: "<report>" }` so the model is not invoked.
 
 The model only runs this action's inline logic on AI tools that lack hook support; on Claude Code the hook owns the path.
 

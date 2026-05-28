@@ -32,7 +32,7 @@ Single action skill. The router dispatches to `create-user-stories` whenever a s
 
 ## Assets
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/02-user-stories-create/assets/user-story-template.md`: User story body template.
+- `@assets/user-story-template.md`: User story body template.
 
 ## External data
 

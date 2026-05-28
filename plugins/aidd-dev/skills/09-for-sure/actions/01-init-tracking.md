@@ -44,7 +44,7 @@ preflight_blockers: []                          # non-empty halts before spawn
    - `[!]` HARD - only the user can provide it (DB id, channel id, env var, owned API key)
    - Collect every `[!]` now. If any `[!]` remains unresolved, STOP - do not proceed to step 7.
 7. **Build the ASCII journey map.** Project the entire path with steps, dependencies, tools, blockers. Ask the user to confirm. Iterate until "does this map look correct? Anything missing?" returns confirmation.
-8. **Load the plan template** from `@${CLAUDE_PLUGIN_ROOT}/skills/09-for-sure/assets/plan-template.md`. Create `aidd_docs/tasks/` when missing.
+8. **Load the plan template** from `@../assets/plan-template.md`. Create `aidd_docs/tasks/` when missing.
 9. **Create `aidd_docs/tasks/<task-name>.in-progress.md`** using the plan template. Fill frontmatter (`objective`, `success_condition`, `iteration: 0`, `created_at`), Phases with Tasks and Acceptance criteria (the steps), and include the journey map.
 10. **Spawn the autonomous loop.** Read the Orchestrator prompt from `@./03-autonomous-loop.md` and pass it to the Agent tool with `<task-name>` filled in.
 

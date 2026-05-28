@@ -23,7 +23,7 @@ Single action skill. The router dispatches to `prd` whenever a PRD-generation ph
 - Sections stay concise and actionable.
 - Always wait for explicit user validation before saving.
 - Save path: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<feature_name>-prd.md`.
-- Source of truth for structure: `${CLAUDE_PLUGIN_ROOT}/skills/03-prd/assets/prd-template.md`.
+- Source of truth for structure: `@assets/prd-template.md`.
 
 ## References
 
@@ -31,8 +31,8 @@ Single action skill. The router dispatches to `prd` whenever a PRD-generation ph
 
 ## Assets
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/03-prd/assets/prd-template.md`: PRD body template.
-- `${CLAUDE_PLUGIN_ROOT}/skills/03-prd/assets/task-template.md`: Lightweight task template referenced from the PRD when needed.
+- `@assets/prd-template.md`: PRD body template.
+- `@assets/task-template.md`: Lightweight task template referenced from the PRD when needed.
 
 ## External data
 

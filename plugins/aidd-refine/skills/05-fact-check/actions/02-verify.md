@@ -28,7 +28,7 @@ A verdict list. Each claim gains a verdict and its supporting sources.
 
 ## Process
 
-1. For each claim, walk the cascade in `@${CLAUDE_PLUGIN_ROOT}/skills/05-fact-check/references/verification-cascade.md`: tier 1 project memory and docs, tier 2 codebase inspection, tier 3 web lookup.
+1. For each claim, walk the cascade in `@../../references/verification-cascade.md`: tier 1 project memory and docs, tier 2 codebase inspection, tier 3 web lookup.
 2. Route by category - `project-fact` favors tiers 1 and 2; other categories favor tier 1 then tier 3.
 3. Short-circuit: the first tier that resolves the claim sets the verdict. Do not consult later tiers.
 4. Respect the web-cost guardrail - reach tier 3 only after tiers 1 and 2 fail, prefer one authoritative source, stop once resolved.

@@ -26,8 +26,8 @@ applicable_rules: [{ tool: <claude|cursor|copilot|opencode>, name: <id>, path: <
 
 1. **Parse the input.** Detect ticket URL vs raw text. For URLs, fetch and parse ticket content. For raw text, clean and structure. Normalize text (handle vocal dictation issues). Print the user journey as a simplified ASCII diagram for validation.
 2. **Score risk and impact.** Compute the score and pick the plan kind:
-   - Score < 3 -> simple plan (`@${CLAUDE_PLUGIN_ROOT}/skills/01-plan/assets/plan-template.md`)
-   - Score >= 3 -> master plan (`@${CLAUDE_PLUGIN_ROOT}/skills/01-plan/assets/master-plan-template.md` + child plans)
+   - Score < 3 -> simple plan (`@../assets/plan-template.md`)
+   - Score >= 3 -> master plan (`@../assets/master-plan-template.md` + child plans)
    
    | Criterion                       | Points |
    | ------------------------------- | ------ |
@@ -56,7 +56,7 @@ applicable_rules: [{ tool: <claude|cursor|copilot|opencode>, name: <id>, path: <
 6. **Generate and save the plan.**
    - Use the current `!`date`!` for the date stamp.
    - Determine the feature name from the requirements.
-   - Insert the user journey as Mermaid syntax in the plan (apply `@${CLAUDE_PLUGIN_ROOT}/skills/01-plan/references/mermaid-conventions.md`).
+   - Insert the user journey as Mermaid syntax in the plan (apply `@../references/mermaid-conventions.md`).
    - Fill the chosen template, including the validated architecture projection and applicable rules.
    - Fill execution frontmatter (required - the plan IS the For Sure tracking file): `objective`, `success_condition` (a runnable command; reject vague conditions), `iteration: 0`, `created_at` (ISO 8601 from step 1).
    - Save to disk:

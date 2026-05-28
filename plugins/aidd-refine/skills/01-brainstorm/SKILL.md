@@ -30,11 +30,11 @@ Sequential skill: `01 → 02 → 03 → 04 → 05`. Loop `02 → 03` until no am
 
 ## References
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/01-brainstorm/references/ambiguity-detection.md`: How to identify and resolve unclear requirements.
+- `@references/ambiguity-detection.md`: How to identify and resolve unclear requirements.
 
 ## Assets
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/01-brainstorm/assets/question-templates.md`: Reusable probing question categories.
+- `@assets/question-templates.md`: Reusable probing question categories.
 
 ## External data
 
