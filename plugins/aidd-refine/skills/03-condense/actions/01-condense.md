@@ -29,7 +29,7 @@ Normal prose resumed.
    - `toggle` flips on/off; default level when turning on is `full`.
    - Off phrases (`stop condense`, `normal mode`, `/condense off`) force off.
 3. Emit the confirmation block with the resolved state filled in.
-4. Apply the transversal rules to every subsequent prose turn until the next off signal, using per-level rules from `@../../references/intensity-levels.md`.
+4. Apply the transversal rules to every subsequent prose turn until the next off signal, using per-level rules from `@../references/intensity-levels.md`.
 5. **Hold persistence.** Do not drift back to verbose prose across many turns, when uncertain, or when the topic changes. Auto-pause only for the specific passages listed in the reference.
 
 ## Test

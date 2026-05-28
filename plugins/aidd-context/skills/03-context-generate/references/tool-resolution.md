@@ -97,7 +97,7 @@ Path conventions inside skill content (SKILL.md, action.md, reference.md):
 
 ### Asset access precheck
 
-Read `@references/ai-mapping.md` AND `@references/tool-resolution.md` (relative to the skill root). If either read fails or returns empty content, FAIL with:
+Read `@ai-mapping.md` AND `@tool-resolution.md` (relative to the skill root). If either read fails or returns empty content, FAIL with:
 
 ```
 status: blocked_assets_unreachable: cannot read skill references. The aidd-context plugin is not properly installed in this AI host's runtime. Install it as a plugin (or ensure the plugin root resolves to the install directory) before running this action.

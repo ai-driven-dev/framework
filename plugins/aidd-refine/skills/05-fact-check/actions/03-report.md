@@ -27,7 +27,7 @@ Before delivering, scan the draft: if any line contains a forbidden item, delete
 
 ## Outputs
 
-The rewritten answer following `@../../assets/report-template.md`: original content preserved, a `[n]` marker on each verified claim, a `(unverified - no source found)` marker on each unverified claim, conflicts stated with both sides, and a `## Sources` footnote block.
+The rewritten answer following `@../assets/report-template.md`: original content preserved, a `[n]` marker on each verified claim, a `(unverified - no source found)` marker on each unverified claim, conflicts stated with both sides, and a `## Sources` footnote block.
 
 ## Depends on
 
@@ -35,7 +35,7 @@ The rewritten answer following `@../../assets/report-template.md`: original cont
 
 ## Process
 
-1. Copy `@../../assets/report-template.md` as the structure.
+1. Copy `@../assets/report-template.md` as the structure.
 2. Rewrite `target_text`: append `[n]` to each `verified` claim, numbered in reading order.
 3. For each `conflict`, state both sides in full ("Source A reports X; source B reports Y") - choose no winner.
 4. Append `(unverified - no source found)` to each `unverified` claim; never delete it, never assert it.
