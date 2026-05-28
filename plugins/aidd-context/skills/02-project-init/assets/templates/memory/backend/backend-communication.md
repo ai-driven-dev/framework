@@ -2,7 +2,7 @@
 name: backend-communication
 description: Frontend-backend communication patterns
 argument-hint: N/A
-scope: frontend
+scope: backend
 ---
 
 # Communication between backend and frontend

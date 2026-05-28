@@ -1,4 +1,4 @@
-# 06 - Sync memory
+# 05 - Sync memory
 
 Execute `update_memory.js` to fill the `<aidd_project_memory>` blocks in all context files with references to the generated memory files.
 
@@ -15,7 +15,7 @@ Execute `update_memory.js` to fill the `<aidd_project_memory>` blocks in all con
 
 ## Depends on
 
-- `01-upsert-context-file`
+- `01-init-context-file`
 - `04-review-memory`
 
 ## Outputs
