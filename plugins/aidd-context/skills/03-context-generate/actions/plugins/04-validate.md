@@ -27,15 +27,7 @@ per_tool:
 
 ## Validation commands per tool
 
-| Tool           | Validator command                             | Fallback when no validator                                     |
-| -------------- | --------------------------------------------- | -------------------------------------------------------------- |
-| Claude Code    | `claude plugin validate <manifest-dir>`       | n/a (validator available)                                      |
-| Cursor         | none                                          | JSON parse `.cursor-plugin/plugin.json` + required-key check (`name`) |
-| GitHub Copilot | none                                          | JSON parse `plugin.json` + required-key check (`name`, max 64 chars, kebab-case) |
-| Codex CLI      | none                                          | JSON parse `.codex-plugin/plugin.json` + required-key check (`name`, `version`, `description`) |
-| OpenCode       | D2-blocked (O1) - no manifest, no validator  | n/a                                                            |
-
-Required keys per tool are sourced from `@../../references/ai-mapping.md` (each tool's Plugins section).
+Resolve each tool's validator command and no-validator fallback from the **Plugin and marketplace validator commands** table in `@../../references/ai-mapping.md`. Required keys per tool come from each tool's Plugins section in the same file. Do not hardcode tool specifics here.
 
 ## Process
 

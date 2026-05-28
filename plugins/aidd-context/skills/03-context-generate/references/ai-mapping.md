@@ -35,15 +35,15 @@ When a frontmatter field is recognized by some tools but not others, apply this 
 | `name`                     | yes    | yes    | derived  | yes     | yes   | OpenCode derives from filename; emit nothing.                |
 | `description`              | yes    | yes    | yes      | yes     | yes   | Always emit.                                                 |
 | `argument-hint`            | yes    | yes    | n/a      | yes     | stripped | Drop for OpenCode/Codex.                                  |
-| `model`                    | yes    | yes    | yes      | n/a     | stripped | Drop for Copilot/Codex.                                   |
+| `model`                    | yes    | yes    | yes      | yes (agents/prompts) | stripped | Codex strips. Copilot supports it on agents and prompts (not instructions). |
 | `effort`                   | yes    | n/a    | n/a      | n/a     | n/a   | Drop for all except Claude.                                  |
-| `allowed-tools`            | yes    | yes    | `tools`  | n/a     | n/a   | OpenCode uses `tools:` list; drop for Copilot/Codex.        |
+| `allowed-tools`            | yes    | yes    | `permission` | `tools` (agents/prompts) | n/a   | OpenCode uses `permission:` (`tools` deprecated legacy). Copilot agents/prompts use `tools`. Drop for Codex. |
 | `disable-model-invocation` | yes    | yes    | n/a      | n/a     | n/a   | Preserve intent in the description ("manual-only ..."). Drop the field. |
 | `user-invocable`           | yes    | n/a    | n/a      | n/a     | n/a   | Drop. Document intent in description.                        |
 | `context: fork`            | yes    | n/a    | n/a      | n/a     | n/a   | Drop. Equivalent OpenCode/Cursor behavior is the subagent model. |
 | `agent`                    | yes    | n/a    | n/a      | n/a     | n/a   | Drop.                                                        |
 | `hooks`                    | yes    | n/a    | n/a      | n/a     | n/a   | Drop (component-scoped hooks are a Claude-only feature).     |
-| `paths`                    | yes (array) | `globs` (array) | n/a | `applyTo` (string) | n/a | Rename per target. Copilot uses a single glob STRING (not an array): if the canonical artifact has multiple globs in `paths`, join with comma or pick the most-encompassing one. Drop where unsupported. |
+| `paths`                    | yes (array) | `globs` (comma-separated string) | n/a | `applyTo` (string) | n/a | Rename per target. Cursor `globs` and Copilot `applyTo` are both single glob STRINGs (not arrays): if the canonical artifact has multiple globs in `paths`, join with comma or pick the most-encompassing one. Drop where unsupported. |
 | `shell`                    | yes    | n/a    | n/a      | n/a     | n/a   | Drop.                                                        |
 | `color`                    | yes    | n/a    | n/a      | n/a     | n/a   | Drop for all except Claude.                                  |
 
@@ -56,8 +56,32 @@ General rule: **drop unsupported fields; never invent a substitute key**. When a
 | Claude Code    | `.claude/settings.json` `hooks` key OR `<plugin>/hooks/hooks.json` OR skill/agent frontmatter | `.claude-plugin/plugin.json`     | `.claude-plugin/marketplace.json`                                    |
 | Cursor         | `.cursor/hooks.json` (project), `~/.cursor/hooks.json` (user), `<plugin>/hooks.json` (plugin) | `.cursor-plugin/plugin.json`     | `.cursor-plugin/marketplace.json`                                    |
 | OpenCode       | Plugin code only: JS/TS module under `.opencode/plugins/` exports a hooks object              | **Not supported** (see O1 rationale in the OpenCode section below) | None - ecosystem page only                                          |
-| GitHub Copilot | `<plugin>/hooks.json` OR `<plugin>/hooks/hooks.json` (plugin-bundled only)                    | `plugin.json` at plugin root     | Configured via `chat.plugins.marketplaces` setting; no per-repo file |
+| GitHub Copilot | Standalone: `.github/hooks/*.json` (workspace), `~/.copilot/hooks` (user), `.claude/settings.json`, agent frontmatter `hooks:`; AND plugin-bundled: `<plugin>/hooks.json` or `<plugin>/hooks/hooks.json`; customize via `chat.hookFilesLocations`. Events PascalCase. | `plugin.json` at plugin root     | `.github/plugin/marketplace.json` (alt `.claude-plugin/marketplace.json`); registered additionally via `chat.plugins.marketplaces` / `extraKnownMarketplaces` (VS Code) or `copilot plugin marketplace add` (CLI) |
 | Codex CLI      | `.codex/hooks.json` (project / user) OR `[hooks]` table in `.codex/config.toml`               | `.codex-plugin/plugin.json`      | `.agents/plugins/marketplace.json` (project, personal)               |
+
+### Hook event casing per tool
+
+The same canonical event renders in each tool's required casing. Validate a generated event name against this row.
+
+| Tool           | Casing                                          | Example               |
+| -------------- | ----------------------------------------------- | --------------------- |
+| Claude Code    | PascalCase                                       | `PreToolUse`          |
+| Codex CLI      | PascalCase                                        | `PreToolUse`          |
+| Cursor         | camelCase                                         | `preToolUse`          |
+| OpenCode       | dotted-lowercase                                 | `tool.execute.before` |
+| GitHub Copilot | PascalCase (plugin-bundled, Claude-compatible)   | `PreToolUse`          |
+
+### Plugin and marketplace validator commands
+
+Used by the plugin and marketplace validate actions. When a tool has no validator, fall back to a JSON parse plus the required-key check from that tool's Plugins section below.
+
+| Tool           | Validator command               | Fallback when no validator                                                                 |
+| -------------- | ------------------------------- | ------------------------------------------------------------------------------------------ |
+| Claude Code    | `claude plugin validate <dir>`  | n/a (validator available)                                                                  |
+| Cursor         | none                            | JSON-parse manifest/catalog + required-key check (`name`)                                   |
+| Codex CLI      | none                            | JSON-parse + required-key check (`name`, `version`, `description`)                          |
+| GitHub Copilot | none                            | JSON-parse `.github/plugin/marketplace.json` + required-key check (`name`, `owner`, `plugins[]`); plugin manifest JSON-parse + `name` (kebab-case, max 64) |
+| OpenCode       | D2-blocked                      | n/a (no plugin manifest, no marketplace file)                                               |
 
 ## Claude Code
 
@@ -79,7 +103,10 @@ General rule: **drop unsupported fields; never invent a substitute key**. When a
 
 ### Frontmatter
 
-- Agents and commands:
+- Agents:
+  - `name`
+  - `description`
+- Commands:
   - `name`
   - `description`
   - `argument-hint` (if applicable)
@@ -90,7 +117,7 @@ General rule: **drop unsupported fields; never invent a substitute key**. When a
 ### MCP config
 
 - File: `.mcp.json` at project root
-- Servers declared at root level
+- Servers declared under a top-level `mcpServers` object key (shape: `{ "mcpServers": { "<name>": {...} } }`)
 
 ### Hooks
 
@@ -102,7 +129,7 @@ General rule: **drop unsupported fields; never invent a substitute key**. When a
 
 ### Plugins
 
-- Manifest: `.claude-plugin/plugin.json` (required field: `name`)
+- Manifest: `.claude-plugin/plugin.json` (OPTIONAL; auto-discovery + name-from-directory; `name` is the only required field when manifest is present)
 - Install cache: `~/.claude/plugins/cache/`
 - Component slots resolved automatically from default dirs (`skills/`, `agents/`, `commands/`, `hooks/`)
 
@@ -117,7 +144,7 @@ General rule: **drop unsupported fields; never invent a substitute key**. When a
 ### File creation conventions
 
 - Commands: phase subfolders, underscore naming (`plugins/aidd-dev/skills/02-implement/SKILL.md`)
-- Rules: category subfolders, `.mdc` extension (`plugins/aidd-context/skills/04-mermaid/references/mermaid-conventions.mdc`)
+- Rules: category subfolders, `.mdc` extension (default; `.md` also valid) (`plugins/aidd-context/skills/04-mermaid/references/mermaid-conventions.mdc`)
 - Agents: flat (`agents/name.md`)
 - Skills: one subfolder per skill (`skills/skill-name/SKILL.md`)
 
@@ -128,19 +155,22 @@ General rule: **drop unsupported fields; never invent a substitute key**. When a
 ### File extensions
 
 - Agents: `.md`
-- Commands: `.md`
-- Rules: `.mdc`
+- Commands: `.md` (plain Markdown, no frontmatter; name from filename; args via `$ARGUMENTS`)
+- Rules: `.mdc` (default; `.md` also valid)
 - Skills: `SKILL.md`
 
 ### Frontmatter
 
-- Agents and commands:
-  - `name`
+- Agents:
+  - `name` (optional; derived from filename)
   - `description`
-  - `argument-hint` (if applicable)
+  - `model`
+  - `readonly`
+  - `is_background`
+- Commands: plain Markdown, no frontmatter; name from filename; args via `$ARGUMENTS`
 - Rules:
   - `description`
-  - `globs`
+  - `globs` (comma-separated string, not an array; join multiple globs with comma)
   - `alwaysApply`
 
 ### MCP config
@@ -187,7 +217,7 @@ General rule: **drop unsupported fields; never invent a substitute key**. When a
 
 - Agents:
   - `description`
-  - Optional: `mode`, `model`, `temperature`, `tools`, `permission`
+  - Optional: `mode`, `model`, `temperature`, `permission` (`tools` is deprecated; use `permission`)
   - Name is derived from filename
 - Commands:
   - `description`
@@ -196,7 +226,7 @@ General rule: **drop unsupported fields; never invent a substitute key**. When a
 
 ### Rules - Not supported
 
-OpenCode has no rules surface. Project conventions belong in `AGENTS.md` (the context file). Generators must D2-block on rule x OpenCode with a message pointing to `AGENTS.md`: "OpenCode has no rules surface. Add project conventions directly to AGENTS.md instead."
+OpenCode has no per-file rules/ directory. Project conventions belong in `AGENTS.md` (the context file) or the `instructions:` array in `opencode.json` (accepts local paths, globs, and remote URLs). Generators must D2-block on rule x OpenCode with a message: "OpenCode has no rules surface. Add project conventions directly to AGENTS.md or list instruction paths under the `instructions:` array in opencode.json instead."
 
 ### MCP config
 
@@ -263,13 +293,18 @@ Block message: "Plugin scaffold for OpenCode is not supported: OpenCode has no p
 
 ### Hooks
 
-- Plugin-bundled only: `<plugin>/hooks.json` at plugin root OR `<plugin>/hooks/hooks.json`
-- No standalone user / project / workspace scope - hooks must ship inside a plugin
-- Path resolution at runtime checks (in order): `.plugin/plugin.json`, `plugin.json`, `.github/plugin/plugin.json`, `.claude-plugin/plugin.json`
+- Standalone workspace: `.github/hooks/*.json`
+- Standalone user: `~/.copilot/hooks`
+- Claude-format: `.claude/settings.json`
+- Agent frontmatter: `hooks:` field
+- Plugin-bundled: `<plugin>/hooks.json` or `<plugin>/hooks/hooks.json`
+- Customize locations via `chat.hookFilesLocations`
+- Event names are PascalCase
 
 ### Plugins
 
 - Manifest: `plugin.json` at plugin root (required field: `name`, kebab-case, max 64 chars)
+- Plugin manifest detection order: `.plugin/plugin.json`, `plugin.json`, `.github/plugin/plugin.json`, `.claude-plugin/plugin.json`
 - VS Code install path: `~/Library/Application Support/Code/agentPlugins/` (macOS), `~/.config/Code/agentPlugins/` (Linux), `%APPDATA%\Code\agentPlugins\` (Windows)
 - CLI install path: `~/.copilot/installed-plugins/` (Copilot CLI-installed plugins)
 - Local plugin registration: `chat.pluginLocations` setting maps directory -> boolean (enabled/disabled)
@@ -277,9 +312,9 @@ Block message: "Plugin scaffold for OpenCode is not supported: OpenCode has no p
 
 ### Marketplaces
 
-- No per-repo `marketplace.json`. Marketplaces are Git repos referenced from settings
-- Setting: `chat.plugins.marketplaces` accepts shorthand (`owner/repo`), HTTPS, SSH, or `file://` paths
-- Defaults: `copilot-plugins` and `awesome-copilot` (GitHub)
+- Catalog file: `.github/plugin/marketplace.json` (also recognized at `.claude-plugin/marketplace.json`). "The only required component of a marketplace."
+- Schema: `{ name, owner: { name, email? }, metadata: { description?, version? }, plugins: [ { name, description?, version?, source } ] }` where `source` is a relative path to the plugin dir within the repo.
+- Registration (additional, not the only mechanism): settings `chat.plugins.marketplaces` / `extraKnownMarketplaces`, or CLI `copilot plugin marketplace add owner/repo`. Defaults: `github/copilot-plugins`, `github/awesome-copilot`.
 
 ## Codex CLI
 
@@ -332,8 +367,9 @@ Codex CLI plugins do not bundle custom slash commands per https://developers.ope
 ### Plugins
 
 - Manifest: `.codex-plugin/plugin.json` at plugin root
-- Required keys: `name`, `version`, `description`
+- Required keys: `name`, `version`, `description`; optional: `keywords`
 - Component slot keys: `skills`, `mcpServers`, `apps`, `hooks` - each a relative path starting with `./`
+- Note: manifest uses camelCase `mcpServers` (vs config.toml `[mcp_servers.*]` snake_case)
 - Install cache: `~/.codex/plugins/cache/$MARKETPLACE/$PLUGIN/$VERSION/`
 - All manifest paths MUST be relative to the plugin root and start with `./`
 
@@ -342,4 +378,7 @@ Codex CLI plugins do not bundle custom slash commands per https://developers.ope
 - Project file: `$REPO_ROOT/.agents/plugins/marketplace.json`
 - Personal file: `~/.agents/plugins/marketplace.json`
 - Legacy fallback: `.claude-plugin/marketplace.json` (still recognized)
-- Schema differs from Claude/Cursor: `{ name, interface: { displayName }, plugins: [ { name, source: { source: "local" | ..., path }, policy: { installation, authentication }, category } ] }`
+- Top-level schema: `{ name (required), interface: { displayName? }, plugins: [...] (required) }`.
+- Plugin entry: `{ name (required), source (required), policy?, category? }`.
+- `source` accepts: a bare string `"./plugins/x"` (= local), OR `{ source: "local", path: "./..." }`, OR `{ source: "url", url, path?, ref?, sha? }`, OR `{ source: "git-subdir", url, path, ref?, sha? }`.
+- `policy`: `{ installation?: NOT_AVAILABLE | AVAILABLE | INSTALLED_BY_DEFAULT (default AVAILABLE), authentication?: ON_INSTALL | ON_USE (default ON_INSTALL) }`. CRITICAL: authentication enum is `ON_INSTALL | ON_USE` (source-verified; the incorrect third variant sometimes cited in unofficial docs does not exist in the authoritative source).

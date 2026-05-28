@@ -12,7 +12,7 @@ Eight decisions held in conversation context (not written to disk):
 
 ```text
 intent           = generate | modify
-skill_name       = <kebab-case, see references/naming-conventions.md>
+skill_name       = <kebab-case, see references/skill-authoring.md>
 domain_type      = tool | activity
 expected_output  = <one-sentence description of what the skill produces>
 sequential       = true | false
@@ -35,7 +35,7 @@ blocked_tools:
 
 ## Process
 
-Skill-generation rules (R1-R10) are in `@../../references/generated-skill-rules.md`. All steps below MUST comply with those rules when generating a new skill.
+Skill-generation rules (R1-R10) are in `@../../references/skill-authoring.md`. All steps below MUST comply with those rules when generating a new skill.
 
 1. Apply the **asset-access precheck** from `@../../references/tool-resolution.md` (## Asset access precheck).
 2. Apply the **target scope selection** from `@../../references/tool-resolution.md` (## Target scope selection).
@@ -44,7 +44,7 @@ Skill-generation rules (R1-R10) are in `@../../references/generated-skill-rules.
 5. Branch:
    - `modify` -- confirm target name exists, read its `SKILL.md`, jump to action 03. (Generate-only gate does not apply in modify mode.)
    - `generate` -- ask the skill's single purpose in one sentence. If multiple unrelated domains, propose a split.
-6. Pick `domain_type` (tool/activity), validate `skill_name` per `references/naming-conventions.md`.
+6. Pick `domain_type` (tool/activity), validate `skill_name` per `references/skill-authoring.md`.
 7. Surface overlaps: same name -- block; trigger/MCP overlap with another skill -- ask merge / rename / scope-tighten / abort. Cross-skill dependency -- declare it for the SKILL.md "External data" section.
 8. Ask: sequential execution? local or global (default local)? `invocation_mode` auto or manual (default auto; pick manual for side effects the user must time)?
 9. Architecture sanity (transparent trade-offs, NOT a directive):

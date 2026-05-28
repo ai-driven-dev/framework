@@ -4,7 +4,8 @@
   "version": "1.0.1",
   "description": "Knowledge production: project bootstrap, project init, generation of Claude Code context artifacts (skills, agents, rules, commands, hooks, plugins, marketplaces), mermaid diagrams, learn, discovery",
   "author": {
-    "name": "AI-Driven Dev"
+    "name": "AI-Driven Dev",
+    "url": "https://github.com/ai-driven-dev"
   },
   "skills": [
     "./skills/00-onboard",
@@ -15,7 +16,6 @@
     "./skills/05-learn",
     "./skills/06-discovery"
   ],
-  "hooks": "./hooks/hooks.json",
   "keywords": [
     "context",
     "bootstrap",

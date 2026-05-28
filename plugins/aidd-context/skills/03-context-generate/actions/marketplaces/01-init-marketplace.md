@@ -26,28 +26,16 @@ target_base: "" | "plugins/<plugin-name>/"
 
 ## Marketplace paths per tool
 
-Resolved from `@../../references/ai-mapping.md`:
-
-| Tool           | Marketplace file path                      | Supported |
-| -------------- | ------------------------------------------ | --------- |
-| Claude Code    | `.claude-plugin/marketplace.json`          | yes       |
-| Cursor         | `.cursor-plugin/marketplace.json`          | yes       |
-| Codex CLI      | `.agents/plugins/marketplace.json`         | yes       |
-| OpenCode       | none                                       | no (D2)   |
-| GitHub Copilot | none (settings-driven, no per-repo file)   | no (D2)   |
+Resolve each tool's marketplace file path and its supported / D2-blocked status from the hooks/plugins/marketplaces map in `@../../references/ai-mapping.md`. Do not hardcode tool specifics here.
 
 ## Process
 
 1. Apply the **asset-access precheck** from `@../../references/tool-resolution.md` (## Asset access precheck).
 2. Apply the **target scope selection** from `@../../references/tool-resolution.md` (## Target scope selection).
-3. **Resolve target tools.** Follow `@../../references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the marketplace surface in `@../../references/ai-mapping.md`; if the cell is marked unsupported (OpenCode, GitHub Copilot), apply the D2 block and record it in `blocked_tools`. Continue with the remaining supported tools (Claude Code, Cursor, Codex CLI).
+3. **Resolve target tools.** Follow `@../../references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the marketplace surface in `@../../references/ai-mapping.md`; if the cell is marked unsupported (OpenCode only), apply the D2 block and record it in `blocked_tools`. Continue with the remaining supported tools (Claude Code, Cursor, Codex CLI, GitHub Copilot).
 4. **Refuse overwrite.** For each confirmed (non-blocked) tool, if the marketplace file already exists, abort for that tool with a clear message and tell the user to use `@02-add-plugin-entry.md` instead. Continue with the remaining tools.
 5. **Validate `marketplace_name`** against the reserved-name list in `@../../references/marketplace.md`. Block on match (exact or impersonation pattern).
-6. **Write marketplace file.** For each confirmed (non-blocked) tool, pick the template based on the tool:
-   - Claude Code and Cursor: use `@../../assets/marketplaces/marketplace-template.json`. Substitute `marketplace_name`, `owner_name`, `owner_email`, `description`, and `metadata.pluginRoot`. Drop optional keys not supplied.
-   - Codex CLI: use `@../../assets/marketplaces/marketplace-codex-template.json`. Substitute `marketplace_name` into `name` and `description` into `interface.displayName`. Drop `interface.displayName` if no description was supplied. Do not emit `owner`, `metadata`, or `$schema` (not part of the Codex schema).
-
-   Write to the `target_base`-prefixed CWD-relative path as resolved from the table above (e.g. `<target_base>.claude-plugin/marketplace.json`). Never write relative to the plugin install directory.
+6. **Write marketplace file.** For each confirmed (non-blocked) tool `<tool>`, copy the template under `@../../assets/marketplaces/<tool>/marketplace-template.json` (where `<tool>` is: `claude`, `cursor`, `copilot`, `codex`), fill the `{{placeholders}}` with `marketplace_name`, `owner_name`, `owner_email`, `description`, and any other fields the template exposes. Drop optional keys not supplied, then drop any optional container object left empty by that pruning (e.g. an unused `metadata` or `interface`); never emit an empty `{}` object. Write to the `target_base`-prefixed CWD-relative path resolved from `@../../references/ai-mapping.md` for that tool. Never write relative to the plugin install directory.
 7. **Ensure `<plugin_root>` directory exists**; create it empty if missing.
 8. Return all paths.
 9. Apply the **write target validation** from `@../../references/tool-resolution.md` (## Write target validation). Use `marketplace_files` as the file list.

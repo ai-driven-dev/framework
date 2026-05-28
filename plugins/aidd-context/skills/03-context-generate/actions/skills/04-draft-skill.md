@@ -23,7 +23,7 @@ blocked_tools:
 ## Process
 
 1. Read `@../../assets/skills/skill-template.md`. Build one canonical `SKILL.md` from the user's intent.
-2. Fill the frontmatter per R5 (see `@../../references/generated-skill-rules.md`) and `references/naming-conventions.md`. If `invocation_mode = manual`, add `disable-model-invocation: true`. Apply field-level reconciliation from `@../../references/ai-mapping.md` for each tool (drop unsupported fields, rename as needed).
+2. Fill the frontmatter per R5 and the naming constraints in `@../../references/skill-authoring.md`. If `invocation_mode = manual`, add `disable-model-invocation: true`. Apply field-level reconciliation from `@../../references/ai-mapping.md` for each tool (drop unsupported fields, rename as needed).
 3. Write the action table from the plan: `#`, slug, role, required input.
 4. Sequential → chain `01 → 02 → ...`; non-sequential → trigger-to-action mapping.
 5. Render once per confirmed tool. For each confirmed tool, resolve the skills root from `@../../references/ai-mapping.md` (for example: Claude Code → `.claude/skills/`, Cursor → `.cursor/skills/`, Codex CLI → `.agents/skills/aidd-<skill_name>/`). Prepend `target_base` to the resolved path before writing (e.g. when `target_base = ""`: `.claude/skills/<skill_name>/SKILL.md`; when `target_base = "plugins/my-plugin/"`: `plugins/my-plugin/.claude/skills/<skill_name>/SKILL.md`). Never write relative to the plugin install directory.

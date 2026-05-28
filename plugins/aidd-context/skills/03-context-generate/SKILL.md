@@ -47,28 +47,71 @@ Materialize the sub-flow as a task list at skill entry; a task closes only when 
 ## Transversal rules
 
 - Writes are CWD-relative; the plugin install root is for reading templates only, never for prefixing a write target.
-- Skills sub-flow applies R1-R10 from `references/generated-skill-rules.md` to every generated skill. Other sub-flows follow their own conventions in `assets/` and `references/`.
+- Skills sub-flow applies R1-R10 from `references/skill-authoring.md` to every generated skill. Other sub-flows follow their own conventions in `assets/` and `references/`.
 - R11 - Tool resolution gate (generate-only): detect, propose, confirm 1..N, then look up `references/ai-mapping.md` per (artifact, tool); block unsupported pairs (D2) and continue the rest. Skip the gate in modify mode (tool fixed by the existing artifact's on-disk location). Procedure: `references/tool-resolution.md`.
 
 ## References
 
-- `@references/generated-skill-rules.md` - R1-R10 rules applied exclusively by the skills sub-flow to every generated skill
 - `@references/tool-resolution.md` - shared detect/propose/confirm/D2 procedure (called by every entry action)
-- `@references/naming-conventions.md` - tool vs activity naming, hard constraints
-- `@references/skill-structure.md` - skill anatomy
-- `@references/agents-coordination.md` - multi-agent coordination patterns
-- `@references/rule-structure.md` - rule file anatomy
-- `@references/rule-writing.md` - rule authoring conventions
-- `@references/ai-mapping.md` - syntax and file location reference for AI files (agents, commands, rules, skills)
+- `@references/ai-mapping.md` - per-tool paths, frontmatter reconciliation, hooks/plugins/marketplaces map, event casing, validator commands
+- `@references/skill-authoring.md` - generated-skill authoring: R1-R10 rules, anatomy, naming
+- `@references/command.md` - generated-command authoring: forms, scopes, frontmatter, phases, arguments
+- `@references/rule.md` - generated-rule authoring: naming, category taxonomy, content format
+- `@references/hook.md` - Claude Code hooks deep reference: handler types, events, exit codes
+- `@references/marketplace.md` - marketplace catalog schema deep reference
 
 ## Assets (templates to copy)
+
+Skills templates (cross-tool, shared):
 
 - `@assets/skills/skill-template.md` - SKILL.md skeleton
 - `@assets/skills/action-template.md` - action file skeleton
 - `@assets/skills/evals-template.md` - `scenarios.json` minimal schema
-- `@assets/agents/agent-template.md` - agent file skeleton
-- `@assets/rules/rule-template.md` - rule file skeleton
-- `@assets/commands/command-template.md` - flat slash command skeleton
-- `@assets/hooks/hooks-template.json` - hook entry skeleton (JSON); `hook-template.js` for OpenCode
-- `@assets/plugins/plugin-template.json` - plugin manifest skeleton; `plugin-readme-template.md`, `plugin-entry-template.json`
-- `@assets/marketplaces/marketplace-template.json` - marketplace catalog skeleton
+
+Per-tool agent templates:
+
+- `@assets/agents/claude/agent-template.md`
+- `@assets/agents/cursor/agent-template.md`
+- `@assets/agents/opencode/agent-template.md`
+- `@assets/agents/copilot/agent-template.agent.md`
+- `@assets/agents/codex/agent-template.toml`
+
+Per-tool rule templates:
+
+- `@assets/rules/claude/rule-template.md`
+- `@assets/rules/cursor/rule-template.mdc`
+- `@assets/rules/copilot/instructions-template.md`
+
+Per-tool command templates:
+
+- `@assets/commands/claude/command-template.md`
+- `@assets/commands/cursor/command-template.md`
+- `@assets/commands/opencode/command-template.md`
+- `@assets/commands/copilot/prompt-template.prompt.md`
+
+Per-tool hook templates:
+
+- `@assets/hooks/claude/hooks-template.json`
+- `@assets/hooks/cursor/hooks-template.json`
+- `@assets/hooks/codex/hooks-template.json`
+- `@assets/hooks/copilot/hooks-template.json`
+- `@assets/hooks/opencode/hook-template.js`
+
+Per-tool plugin templates:
+
+- `@assets/plugins/claude/plugin-template.json`
+- `@assets/plugins/cursor/plugin-template.json`
+- `@assets/plugins/copilot/plugin-template.json`
+- `@assets/plugins/codex/plugin-template.json`
+- `@assets/plugins/plugin-readme-template.md` (shared)
+
+Per-tool marketplace templates:
+
+- `@assets/marketplaces/claude/marketplace-template.json`
+- `@assets/marketplaces/claude/plugin-entry-template.json`
+- `@assets/marketplaces/cursor/marketplace-template.json`
+- `@assets/marketplaces/cursor/plugin-entry-template.json`
+- `@assets/marketplaces/copilot/marketplace-template.json`
+- `@assets/marketplaces/copilot/plugin-entry-template.json`
+- `@assets/marketplaces/codex/marketplace-template.json`
+- `@assets/marketplaces/codex/plugin-entry-template.json`

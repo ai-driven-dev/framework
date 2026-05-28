@@ -26,33 +26,21 @@ target_base: "" | "plugins/<plugin-name>/"
 
 1. Apply the **asset-access precheck** from `@../../references/tool-resolution.md` (## Asset access precheck).
 2. Apply the **target scope selection** from `@../../references/tool-resolution.md` (## Target scope selection).
-3. **Resolve target tools.** Follow `@../../references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the hooks surface in `@../../references/ai-mapping.md`; if the cell is marked unsupported (D2), record the tool in `blocked_tools` with an explanation and continue with the remaining supported tools.
-
-   D2 cases to apply at this step:
-   - **Copilot + project or user scope**: Copilot hooks are plugin-bundled only; project/user scope is not supported. Block with: "Copilot hooks are plugin-bundled only; project/user scope is not supported. Bundle the hook inside a plugin or choose a different tool." Plugin-bundled scope for Copilot remains supported.
+3. **Resolve target tools.** Follow `@../../references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the hooks surface in `@../../references/ai-mapping.md`; if the cell is marked unsupported (D2), record the tool in `blocked_tools` with an explanation and continue with the remaining supported tools. All five tools support hooks, each with its own surface and scope set per `@../../references/ai-mapping.md` (resolve the scope path from there); there is no per-tool hook D2.
 
 4. **Clarify.** Ask the user until the following are unambiguous (event, matcher, handler type, blocking expectation, scope). Use the spec in `@../../references/hook.md` as the source of truth for events, handler fields, exit-code semantics, and the scope -> file resolution table.
 
-5. **Branch on artifact shape for each confirmed supported tool:**
-   - **Claude / Cursor / Codex** -> JSON file (or TOML for Codex `[hooks]` table). Use the JSON template at `@../../assets/hooks/hooks-template.json`.
-     - Render the event name in the tool's required casing per `@../../references/ai-mapping.md`: Claude and Codex use PascalCase (`PreToolUse`); Cursor uses camelCase (`preToolUse`); OpenCode uses dotted-lowercase event keys (`tool.execute.before`).
-   - **OpenCode** -> JS/TS module. OpenCode does not load a standalone `hooks.json`; hooks live inside plugin code. Use the JS template at `@../../assets/hooks/hook-template.js`.
-   - **Copilot (plugin-bundled scope only)** -> JSON file (`<plugin>/hooks.json` or `<plugin>/hooks/hooks.json`). Use the JSON template at `@../../assets/hooks/hooks-template.json`.
+5. **Render artifact for each confirmed supported tool.** For each confirmed (non-blocked) tool `<tool>`, copy the template under `@../../assets/hooks/<tool>/` (where `<tool>` is the confirmed tool id: `claude`, `cursor`, `codex`, `copilot`, `opencode`), fill the `{{placeholders}}`, and resolve the event name casing and scope path from `@../../references/ai-mapping.md`.
 
 6. **Resolve `hook_path`** for each confirmed supported tool per `@../../references/hook.md` "File locations and scope" section. Honor the precedence rule: plugin > project > user. For project-scope hooks, prepend `target_base` to the CWD-relative path (e.g. `<target_base>.claude/settings.json`); the host runtime sets CWD to the workspace root, not the plugin install directory.
 
-7. **Validate the event name** per tool: Claude and Codex events are validated against the PascalCase table in `@../../references/hook.md`; Cursor events are validated against the camelCase events in the Cursor hooks section of `@../../references/ai-mapping.md`; OpenCode events are validated against the dotted-lowercase events in the OpenCode hooks section of `@../../references/ai-mapping.md`. Block on typo or casing mismatch.
+7. **Validate the event name** for each tool against the **Hook event casing per tool** table in `@../../references/ai-mapping.md` (casing) and the event-name list in `@../../references/hook.md` (Claude Code depth). Block on typo or casing mismatch.
 
 8. **Build the handler object** with only the fields the user supplied, plus the required fields for the chosen handler type per `@../../references/hook.md`. Drop empty optional fields.
 
-9. **Build the matcher entry** for each tool:
-   - JSON tools (Claude / Cursor / Codex / Copilot): `{ "matcher": <value or "*">, "hooks": [<handler>] }`.
-   - JS module (OpenCode): exported hooks object keyed by event name.
+9. **Build the matcher entry** for each confirmed (non-blocked) tool by following the structure defined in the template copied in step 5 for that tool. The template encodes whether the artifact is a JSON matcher entry or a JS module export.
 
-10. **Read each existing hooks surface** (if present). Merge per tool:
-    - JSON file: parse, append/merge under the event key, write back.
-    - JS module: re-export augmented hooks object; preserve unrelated handlers.
-    - If file absent: copy the matching template and substitute placeholders.
+10. **Read each existing hooks surface** (if present). Merge per tool: append/merge the new entry under the event key, preserving unrelated handlers. If the file is absent, copy the template from step 5 and substitute placeholders. The merge strategy (JSON key merge vs JS module re-export) is determined by the template format for that tool.
 
 11. **Confirm with the user** by printing the diff before write. Wait for written approval.
 

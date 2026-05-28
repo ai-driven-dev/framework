@@ -1,0 +1,5 @@
+name = "{{agent_name}}"
+description = "{{agent_description}}"
+developer_instructions = """
+{{agent_body}}
+"""

@@ -26,7 +26,7 @@ Tests must be real-execution: status 200, artifact created, MCP returning the ex
 1. For each `expect_action` in evals (excluding `null`), trace backward: what action produces that output? What feeds it?
 2. Group by atomicity. Split if process > ~100 lines. Merge + parameterize if ≥ 80% logic shared.
 3. One-shot configs (API key load, `.env` source, client init) stay inline in the consuming action's `## Process`. Create a dedicated action only if independently callable OR reused by ≥ 2 downstream actions.
-4. Ordering: `sequential = true` → numbered prefixes `01-`, `02-` (see `references/naming-conventions.md`).
+4. Ordering: `sequential = true` → numbered prefixes `01-`, `02-` (see `references/skill-authoring.md` ## Naming).
 5. Write the `test` cell row by row - concrete inputs, concrete assertion. Pick whichever fits: a command to run, an artifact check, or an API/MCP/state side-effect.
 6. Present the table. **Validate the `test` column row by row with the user, in writing.** No silent acceptance.
 

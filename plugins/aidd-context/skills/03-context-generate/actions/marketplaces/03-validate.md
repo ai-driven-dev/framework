@@ -32,21 +32,13 @@ per_tool:
 
 ## Validation commands per tool
 
-| Tool           | Validator command                           | Fallback when no validator                                  |
-| -------------- | ------------------------------------------- | ----------------------------------------------------------- |
-| Claude Code    | `claude plugin validate <repo-root>`        | n/a (validator available)                                   |
-| Cursor         | none                                        | JSON parse `.cursor-plugin/marketplace.json` + reserved-name check |
-| Codex CLI      | none                                        | JSON parse `.agents/plugins/marketplace.json` + required-key check |
-| OpenCode       | D2-blocked (O1) - no marketplace file      | n/a                                                         |
-| GitHub Copilot | D2-blocked - settings-driven, no per-repo file | n/a                                                      |
+Resolve each tool's validator command and no-validator fallback from the **Plugin and marketplace validator commands** table in `@../../references/ai-mapping.md`. Marketplace file paths come from the hooks/plugins/marketplaces map and required keys + reserved-name list from `@../../references/marketplace.md`. Do not hardcode tool specifics here.
 
 ## Process
 
 For each confirmed (non-blocked) tool:
 
-1. **Schema check.**
-   - Claude Code: run `claude plugin validate <repo-root>`. Map every error/warning into `findings[]`. Block on any `error` severity.
-   - Cursor / Codex CLI: JSON-parse the marketplace file; if invalid JSON, record an error finding. Check that required keys are present and non-empty per `@../../references/marketplace.md` and `@../../references/ai-mapping.md`. Record error findings for missing keys.
+1. **Schema check.** For each confirmed (non-blocked) tool, resolve its validator command (or no-validator fallback) from the **Plugin and marketplace validator commands** table in `@../../references/ai-mapping.md`. Run the validator when available; otherwise JSON-parse the marketplace file and check that all required keys per `@../../references/ai-mapping.md` are present and non-empty. Map every error/warning into `findings[]`. Block on any `error` severity.
 2. **Reserved-name check.** Reload the marketplace JSON and re-confirm `name` is not on the reserved list in `@../../references/marketplace.md`.
 3. **Source-shape check** (shape rules: `@../../references/marketplace.md`):
    - relative path -> directory exists, contains the tool's expected manifest file, no `..` segments.
@@ -63,4 +55,4 @@ For each confirmed (non-blocked) tool:
 
 ## Test
 
-`validation_status == pass`; for Claude Code with at least one entry, `install_smoke.added == true` and every `installed_plugins` entry is `ok` (or explicitly skipped with a logged warning); Cursor and Codex CLI marketplace files parse as valid JSON with required keys present; each D2-blocked tool has `status: blocked`.
+`validation_status == pass`; for Claude Code with at least one entry, `install_smoke.added == true` and every `installed_plugins` entry is `ok` (or explicitly skipped with a logged warning); for all no-validator tools, marketplace files parse as valid JSON with required keys present per `@../../references/ai-mapping.md`; each D2-blocked tool has `status: blocked`.

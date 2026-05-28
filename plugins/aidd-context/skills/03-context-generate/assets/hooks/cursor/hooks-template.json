@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "{{event}}": [
+      {
+        "command": "{{command}}",
+        "type": "command"
+      }
+    ]
+  }
+}

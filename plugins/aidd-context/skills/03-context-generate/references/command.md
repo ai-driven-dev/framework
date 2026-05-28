@@ -1,4 +1,8 @@
-# Slash commands
+# Command authoring
+
+Conventions for every slash command the `commands` sub-flow produces. These govern the CLIENT artifact (the command written into the user's workspace), not this generator's own files. Each tool's on-disk path and file extension come from `@ai-mapping.md`.
+
+## Forms
 
 Two valid forms produce the same `/<name>` invocation:
 
@@ -18,9 +22,16 @@ When both exist with the same name, the skill wins. Flat commands are right for 
 
 Precedence (highest wins): enterprise > personal > project. Plugin commands live in their own namespace and never collide.
 
+## File naming
+
+- Follow the tool's path conventions in `@ai-mapping.md`.
+- Name matches frontmatter `name:` field.
+- Slugified, lowercase.
+- For commands organized by SDLC phase, place under `commands/<NN>_<phase>/<slug>.md`.
+
 ## Frontmatter fields
 
-All optional unless noted. Only fields below are recognized.
+All optional unless noted. Only fields below are recognized. Skills share this schema.
 
 | Field                      | Type                         | Notes                                                                 |
 | -------------------------- | ---------------------------- | --------------------------------------------------------------------- |
@@ -40,6 +51,25 @@ All optional unless noted. Only fields below are recognized.
 | `paths`                    | string (comma-sep) or list   | Glob filters; auto-trigger only when working files match.             |
 | `shell`                    | `bash` / `powershell`        | Shell used for `` !`...` `` injection. Default `bash`.                |
 
+Field support and rename per tool (e.g. Copilot uses `applyTo`, no `model`): see the per-surface frontmatter reconciliation table in `@ai-mapping.md`.
+
+## SDLC phase taxonomy
+
+When grouping commands by phase, each command belongs to one phase:
+
+| Phase | Category        | Examples                                               |
+| ----- | --------------- | ------------------------------------------------------ |
+| `01`  | `onboard`       | Framework setup, generators, prompt scaffolding        |
+| `02`  | `context`       | Discovery, PRD, user stories, brainstorming, flows     |
+| `03`  | `plan`          | Technical planning, component behavior, image analysis |
+| `04`  | `code`          | Implementation, assertions, frontend validation        |
+| `05`  | `review`        | Code review, functional review                         |
+| `06`  | `tests`         | Test writing, user journey testing, untested listing   |
+| `07`  | `documentation` | Learning, JIRA info, Mermaid diagrams                  |
+| `08`  | `deploy`        | Commits, pull/merge requests, tagging                  |
+| `09`  | `refactor`      | Performance optimization, security refactoring         |
+| `10`  | `maintenance`   | Debugging, issue tracking, codebase audits             |
+
 ## Argument substitution
 
 | Placeholder           | Value                                                            |
@@ -56,12 +86,12 @@ Indexed args use shell-style quoting: `/cmd "hello world" two` -> `$0` = `hello 
 
 ## Inline shell injection
 
-Use `` !`<command>` `` (inline) or a fenced code block opened with ` ```! ` (multi-line). The runtime executes the command before sending the prompt; output replaces the placeholder. Single pass: command output is not re-scanned for further placeholders.
-
-Disabled by `disableSkillShellExecution: true` in settings.
+Use `` !`<command>` `` (inline) or a fenced code block opened with ` ```! ` (multi-line). The runtime executes the command before sending the prompt; output replaces the placeholder. Single pass: command output is not re-scanned for further placeholders. Disabled by `disableSkillShellExecution: true` in settings.
 
 ## Conventions in this framework
 
 - Single objective per command. < 10 steps. Body in English only. No markdown formatting in the rendered output.
 - Description must include explicit triggers AND a `Do NOT use for...` clause.
-- For commands organized by SDLC phase, place under `commands/<NN>_<phase>/<slug>.md` per the project's IDE mapping rule.
+- `$ARGUMENTS` is the reserved keyword for the command parameter.
+- Use the `` !`...` `` backtick pattern for CLI execution.
+- No "Role & Expertise" section - the role is implicit in the goal.

@@ -1,13 +1,12 @@
 {
-  "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
   "name": "{{marketplace_name}}",
-  "description": "{{description}}",
   "owner": {
     "name": "{{owner_name}}",
     "email": "{{owner_email}}"
   },
   "metadata": {
-    "pluginRoot": "{{plugin_root}}"
+    "description": "{{description}}",
+    "version": "1.0.0"
   },
   "plugins": []
 }

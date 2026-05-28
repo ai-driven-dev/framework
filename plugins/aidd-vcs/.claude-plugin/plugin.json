@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "description": "External artifacts: commit, pull-request, release-tag, issue-create",
   "author": {
-    "name": "AI-Driven Dev"
+    "name": "AI-Driven Dev",
+    "url": "https://github.com/ai-driven-dev"
   },
-  "strict": true,
   "skills": [
     "./skills/01-commit",
     "./skills/02-pull-request",

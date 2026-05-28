@@ -1,0 +1,6 @@
+{
+  "name": "{{plugin_name}}",
+  "description": "{{plugin_description}}",
+  "version": "0.1.0",
+  "source": "./plugins/{{plugin_name}}"
+}

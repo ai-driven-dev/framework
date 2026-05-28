@@ -31,15 +31,12 @@ target_base: "" | "plugins/<plugin-name>/"
 1. Apply the **asset-access precheck** from `@../../references/tool-resolution.md` (## Asset access precheck).
 2. Apply the **target scope selection** from `@../../references/tool-resolution.md` (## Target scope selection).
 3. **Gather requirements.** Ask the user clarifying questions until the agent template is fillable. Iterate until the agent's purpose, tools, inputs, and instructions are unambiguous.
-4. **Fill the template** at `@../../assets/agents/agent-template.md`. Apply the coordination conventions in `@../../references/agents-coordination.md`.
+4. **Fill the canonical agent content** using the conventions in `@../../references/ai-mapping.md`. The per-tool templates under `@../../assets/agents/<tool>/` encode the target-specific shape; they are used at step 9 when writing.
 5. **Review.** Score the generated agent 1-10 on clarity and completeness. Inputs and outputs MUST be ultra concise and precise.
 6. **Wait for user confirmation** before finalizing. In `mode = auto` (called from an upstream skill that has already validated inputs), skip this user-confirmation review gate and continue. Note: the tool-resolution gate (step 8) always runs regardless of mode; in `mode = auto`, the detected signal set becomes the confirmed set automatically without prompting the user.
 7. **Propose 3 first names** for the agent. Each name must be short and catchy, making sense with the agent's purpose (word game, acronym, etc.).
 8. **Resolve target tools.** Follow `@../../references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the agents surface in `@../../references/ai-mapping.md`; if the cell is marked unsupported, apply the D2 block for that tool and record it in `blocked_tools`. Continue with the remaining supported tools.
-9. **Save.** Write the completed agent file to each confirmed supported tool's native agents location using its path, naming, and extension conventions from `@../../references/ai-mapping.md`. Prepend `target_base` to every write path (e.g. `<target_base>.claude/agents/<name>.md`). Never resolve these paths relative to the plugin install directory.
-   - If a confirmed tool is **Codex CLI**, convert the canonical markdown agent to TOML per the Codex CLI section of `@../../references/ai-mapping.md`: frontmatter fields become top-level TOML keys; the markdown body becomes the value of `developer_instructions`. Write the result to `<target_base>.codex/agents/{name}.toml`.
-   - For all other tools, write the markdown directly with field-level reconciliation per `@../../references/ai-mapping.md`.
-   Indexing the new file (catalog, docs page, README section, etc.) is the host's responsibility, not this action's.
+9. **Save.** For each confirmed (non-blocked) tool `<tool>`, copy the template under `@../../assets/agents/<tool>/` (where `<tool>` is the confirmed tool id: `claude`, `cursor`, `opencode`, `copilot`, `codex`), fill the `{{placeholders}}`, and write it to the path resolved from `@../../references/ai-mapping.md` for that tool. Prepend `target_base` to every write path. Never resolve output paths relative to the plugin install directory. Indexing the new file (catalog, docs page, README section, etc.) is the host's responsibility, not this action's.
 10. Apply the **write target validation** from `@../../references/tool-resolution.md` (## Write target validation).
 
 ## Test

@@ -91,6 +91,20 @@ Path conventions inside skill content (SKILL.md, action.md, reference.md):
 - The Agent Skills spec at agentskills.io mandates "use relative paths from the skill root" - this aligns.
 - The plugin install directory variable (see `references/hook.md` "Path placeholders in handlers") is reserved for content the framework GENERATES into the user's workspace (hook config under `.claude/settings.json`, MCP server configs, plugin manifests, marketplace catalogs). The host runtime substitutes the variable at process-spawn time only in those surfaces.
 
+### `${CLAUDE_PLUGIN_ROOT}` as a translation anchor (config artifacts)
+
+In **config artifacts** (hook command strings, MCP server configs, plugin manifests, marketplace catalogs), any plugin-root-relative path is written as the canonical token `${CLAUDE_PLUGIN_ROOT}/...`. This serves two purposes:
+
+1. **Runtime**: it expands natively on Claude Code, on Codex CLI (compat alias of `PLUGIN_ROOT`), and in Copilot Claude-format plugin hooks.
+2. **Translation anchor**: it is the single deterministic pattern a Claude-to-other-tool translator (CLI) greps to find every plugin-root path and rewrite it for the target host.
+
+Rules that make the anchor reliable:
+
+- **Consistency**: in Claude-form config artifacts, a plugin-root path is ALWAYS `${CLAUDE_PLUGIN_ROOT}/...` - never a hardcoded absolute path, never a bare relative path. One ad-hoc path defeats the grep.
+- **Exhaustive translation + leak check**: a translator MUST rewrite every `${CLAUDE_PLUGIN_ROOT}` for the target, then assert zero stray tokens remain. A surviving token on a host that does not expand it (Cursor, OpenCode, Copilot native-format) is a broken path. Per-target rewrite: Claude/Codex/Copilot-Claude-format keep the token; Cursor and OpenCode resolve it to a concrete relative path (or `{env:...}` for OpenCode config).
+
+This anchor convention is scoped to config artifacts only. **Content** (skill/agent/rule/command bodies) stays on relative `@`-paths - already portable, no token, no translation beyond depth adjustment.
+
 ---
 
 ## Shared gates (call these from entry actions, do not inline)

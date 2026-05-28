@@ -4,9 +4,9 @@
   "version": "1.0.1",
   "description": "Code transformation: Dev SDLC orchestrator (code-shipping pipeline), plan, assert, audit, review, test, refactor, debug, for-sure. Hosts engineering agents.",
   "author": {
-    "name": "AI-Driven Dev"
+    "name": "AI-Driven Dev",
+    "url": "https://github.com/ai-driven-dev"
   },
-  "strict": true,
   "skills": [
     "./skills/00-sdlc",
     "./skills/01-plan",

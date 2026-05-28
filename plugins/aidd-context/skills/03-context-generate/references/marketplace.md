@@ -1,4 +1,4 @@
-# Plugin marketplace (`marketplace.json`)
+# Claude Code plugin marketplace (deep reference, `marketplace.json`)
 
 Lives at `<repo-root>/.claude-plugin/marketplace.json`. Validated by `claude plugin validate <dir>` or `/plugin validate .`.
 

@@ -74,4 +74,4 @@ R1-R11 in [`SKILL.md`](SKILL.md) are the non-bypassable invariants:
 ## Technical details
 
 See [`SKILL.md`](SKILL.md) for the full action contract and rules,
-`actions/<sub-domain>/` for the sub-domain flows, and the `references/` and `assets/` directories for naming conventions, plugin/marketplace/hook/slash-command specs, and templates.
+`actions/<sub-domain>/` for the sub-domain flows, and the `references/` and `assets/` directories for the per-tool mapping, skill/command/rule authoring conventions, plugin/marketplace/hook specs, and templates.

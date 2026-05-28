@@ -1,5 +1,4 @@
 {
-  "$schema": "https://www.schemastore.org/claude-code-plugin-manifest.json",
   "name": "{{plugin_name}}",
   "version": "0.1.0",
   "description": "{{plugin_description}}",

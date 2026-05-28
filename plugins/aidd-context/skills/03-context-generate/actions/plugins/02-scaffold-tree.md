@@ -46,25 +46,19 @@ OpenCode is D2-blocked (O1): no manifest tree is written for it.
 
 ## Manifest schema approach
 
-Plugin manifest schemas diverge across tools in their required keys. This action uses per-tool manifest rendering driven by `@../../references/ai-mapping.md` (each tool's Plugins section lists its required keys):
-
-- **Claude Code**: `name` only required; `version`, `description`, `author` optional.
-- **Cursor**: `name` only required; other fields optional.
-- **Codex CLI**: `name`, `version`, `description` all required; component slot keys (`skills`, `agents`, `hooks`, `mcpServers`) must be relative paths starting with `./`.
-- **GitHub Copilot**: `name` required (kebab-case, max 64 chars); standard plugin-manifest metadata optional.
-
-For each confirmed tool, render `plugin.json` with that tool's required keys always populated and optional keys emitted only when the user supplied a value (or git-derived). Do not emit a key for another tool's required field - never invent keys not listed in `ai-mapping.md`.
+For each confirmed (non-blocked) tool `<tool>`, copy the template under `@../../assets/plugins/<tool>/plugin-template.json` (where `<tool>` is: `claude`, `cursor`, `copilot`, `codex`; OpenCode is D2-blocked per O1), fill the `{{placeholders}}`, and write it to the manifest directory resolved from `@../../references/ai-mapping.md`. Required keys and optional keys are encoded in the per-tool template; emit optional keys only when the user supplied a value or the key is git-derived. Never invent keys not present in the template.
 
 ## Process
 
 1. **Resolve `<plugins-root>`** from `location`: when `location=local`, `<plugins-root>` = `<plugin_root>/` (CWD-relative, default `plugins/`). Refuse to write outside the user's known plugins surface.
 2. **Refuse overwrite.** If `<plugins-root>/<plugin_name>/` already exists for any confirmed tool, abort with a clear message; this action never overwrites a plugin folder.
-3. **For each confirmed (non-blocked) tool**, resolve the manifest directory from `@../../references/ai-mapping.md` (`.claude-plugin/` for Claude Code, `.cursor-plugin/` for Cursor, `.codex-plugin/` for Codex CLI, plugin root for GitHub Copilot). Render `plugin.json` with only that tool's required fields plus any optional fields the user supplied. For `author`: if the user supplied a value, use it; else read `git config user.name` and `git config user.email` and populate `author: { name, email }` when both succeed; else drop the key.
+3. **For each confirmed (non-blocked) tool**, resolve the manifest directory from `@../../references/ai-mapping.md` (hooks/plugins/marketplaces map). Copy `@../../assets/plugins/<tool>/plugin-template.json`, fill `{{placeholders}}` with required fields and any optional fields that are user-supplied or auto-derived below. Never guess a value: if a field cannot be supplied or derived, drop the key.
+   - `author`: if the user supplied a value, use it; else read `git config user.name` and `git config user.email` and populate `author: { name, email }` when both succeed; else drop the key.
+   - `repository`: derive from `git config --get remote.origin.url`, normalized to https (strip a trailing `.git`; convert `git@host:org/repo` to `https://host/org/repo`). Drop if no remote.
+   - `homepage`: reuse the normalized `repository` URL unless the user supplied a distinct homepage. Drop if neither exists.
+   - `license`: read the SPDX identifier from a top-level `LICENSE` or `LICENSE.md` (plugin root, else repo root) when detectable; else drop. Never infer a license.
 4. **Render `README.md`** by copying `@../../assets/plugins/plugin-readme-template.md` and substituting `{{plugin_name}}` and `{{plugin_description}}`. One `README.md` per plugin tree (shared across tools when writing to the same directory; separate when paths diverge).
-5. **Create selected subdirs** (`skills/`, `agents/`, `commands/`, `hooks/` per `artifact_set`). Add a `.gitkeep` only if needed for the tooling the user uses.
-   - `commands/` is created for Claude Code, Cursor, and GitHub Copilot when `artifact_set.commands` is true.
-   - `commands/` is SKIPPED for Codex CLI even if `artifact_set.commands` is true - Codex CLI does not support custom slash commands per `ai-mapping.md`; emit a note: "commands slot skipped for Codex CLI; use a skill instead if a reusable workflow is needed."
-   - `commands/` is N/A for OpenCode (plugin is a single JS/TS module; OpenCode is D2-blocked per O1).
+5. **Create selected subdirs** (`skills/`, `agents/`, `commands/`, `hooks/` per `artifact_set`). Add a `.gitkeep` only if needed for the tooling the user uses. For each confirmed tool, consult `@../../references/ai-mapping.md` to determine whether the `commands/` slot is supported; if the tool lists commands as unsupported, skip creating `commands/` and emit the note from `ai-mapping.md`. OpenCode is D2-blocked per O1 and never reaches this step.
 6. **Write `.mcp.json`** from a minimal template if `artifact_set.mcp` is true. Empty `mcpServers: {}` map.
 7. Apply the **write target validation** from `@../../references/tool-resolution.md` (## Write target validation).
 
@@ -76,5 +70,9 @@ for path in "${files_written[@]}"; do
   test -f "$path" || exit 1
   node -e "JSON.parse(require('fs').readFileSync('$path','utf8'))" || exit 1
 done
+# Test: when a git remote exists, a lenient-schema manifest carries the derived repository
+if git config --get remote.origin.url >/dev/null 2>&1; then
+  grep -q '"repository"' "${files_written[0]}" || exit 1
+fi
 echo ok
 ```

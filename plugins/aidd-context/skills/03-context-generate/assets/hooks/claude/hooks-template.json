@@ -1,0 +1,14 @@
+{
+  "PreToolUse": [
+    {
+      "matcher": "{{matcher}}",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "{{command}}",
+          "timeout": 30
+        }
+      ]
+    }
+  ]
+}

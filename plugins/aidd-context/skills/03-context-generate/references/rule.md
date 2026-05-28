@@ -1,4 +1,6 @@
-# Rule file structure
+# Rule authoring
+
+Conventions for every rule file the `rules` sub-flow produces. These govern the CLIENT artifact (the rule written into the user's workspace), not this generator's own files. Frontmatter shape, file extension, glob syntax, and on-disk location are tool-specific: see `@ai-mapping.md`.
 
 ## File naming
 
@@ -8,11 +10,9 @@ Format: `#-rule-name[@version][-specificity].<ext>`
 - `-rule-name` : Slugified short rule name
 - `@version` : Optional framework/lib version
 - `-specificity` : Optional sub-part
-- `.<ext>` : Extension (see ide-mapping rule)
+- `.<ext>` : Extension (tool-specific, see `@ai-mapping.md`)
 
 ## Directory structure
-
-Output rules following ide-mapping conventions for path and structure.
 
 | #    | Category                   | Content                     | Examples                        |
 | ---- | -------------------------- | --------------------------- | ------------------------------- |
@@ -42,24 +42,29 @@ Pick the category with the most-specific match. Walk this list top to bottom and
 9. Business-domain logic (entities, validation, DTOs) -> `08-domain`.
 10. None of the above -> `09-other`.
 
-The leading number of the filename slug equals the leading number of the chosen category directory (single digit, no zero-pad). All rules inside `02-programming-languages/` start with `2-`; all rules inside `03-frameworks-and-libraries/` start with `3-`; etc. This is by design - the slug carries the category index, not a sequential counter.
+The leading number of the filename slug equals the leading number of the chosen category directory (single digit, no zero-pad). All rules inside `02-programming-languages/` start with `2-`; all inside `03-frameworks-and-libraries/` start with `3-`; etc. The slug carries the category index, not a sequential counter.
 
-## Example
+Naming example for React rules in `03-frameworks-and-libraries`: `3-react`, `3-react@18`, `3-react@19`, `3-react@19-hooks`, `3-react@19.1-hooks`.
 
-Naming pattern for React rules in `03-frameworks-and-libraries` category:
+## Content format
 
-- `3-react`
-- `3-react@18`
-- `3-react@19`
-- `3-react@19-hooks`
-- `3-react@19.1-hooks`
+- Bullet points only, no prose.
+- 1 ultra short (3-7 words) rule per bullet.
+- Remove non-essential fluff. Less is more.
+
+## Code references
+
+- Existing code: use the tool's include syntax (see `@ai-mapping.md`).
+- Globs: format without `@`.
+- Inline code: use backticks.
+
+## Groups and examples
+
+- Identify logical rule groups. Not needed for short rules.
+- Optional: one tiny generic example per group IF NEEDED. Good code only.
 
 ## Path convention
 
 The physical location of a rule encodes its `category` and `slug`. The category is the subdirectory; the slug is the file name (`<#-slug[@version][-specificity]>.<ext>`). Frontmatter never carries the rule path; downstream tools derive it from the file location alone.
 
 The base directory and the file extension are tool-specific. Refer to `@ai-mapping.md` for the exact path per AI tool, including tools where rules are not supported.
-
-## Frontmatter and tool-specific syntax
-
-Frontmatter fields, file extensions, glob path syntax, and on-disk locations are tool-specific. Refer to `@ai-mapping.md` for the exact shape per AI tool.

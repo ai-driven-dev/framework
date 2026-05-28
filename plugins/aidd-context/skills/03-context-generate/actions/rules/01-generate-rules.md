@@ -48,30 +48,9 @@ target_base: "" | "plugins/<plugin-name>/"
 
 4. **Resolve target tools.** Follow `@../../references/tool-resolution.md` (detect, propose, confirm 1..N). For each confirmed tool, look up the rules surface in `@../../references/ai-mapping.md`; if the cell is marked unsupported, apply the D2 block for that tool and record it in `blocked_tools`. Continue with the remaining supported tools. The valid tool IDs are exactly those listed in `ai-mapping.md` - MUST NOT invent tool names. The known tool IDs are: `claude_code`, `cursor`, `opencode`, `github_copilot`, `codex_cli`.
 
-5. **Pick category + slug deterministically.** Apply the selection rubric in `@../../references/rule-structure.md` (walk top to bottom, stop at first hit). The chosen category index drives the slug prefix (rules in `02-programming-languages/` start with `2-`; rules in `03-frameworks-and-libraries/` start with `3-`; etc.). State the chosen category + slug in writing before proceeding.
+5. **Pick category + slug deterministically.** Apply the selection rubric in `@../../references/rule.md` (walk top to bottom, stop at first hit). The chosen category index drives the slug prefix (rules in `02-programming-languages/` start with `2-`; rules in `03-frameworks-and-libraries/` start with `3-`; etc.). State the chosen category + slug in writing before proceeding.
 
-6. **Generate and write.** Build one canonical rule from the user's intent using `@../../assets/rules/rule-template.md` and the conventions in `@../../references/ai-mapping.md`. Render it once per confirmed supported tool using the EXACT per-tool write paths below, prepending `target_base` to every path. These paths are authoritative and MUST NOT be overridden by general AI knowledge.
-
-   **Exact write paths per tool (non-negotiable, prepend `target_base`):**
-
-   - **GitHub Copilot:** MUST write to EXACTLY `<target_base>.github/instructions/<NN-flat-slug>.instructions.md`. The `<NN-flat-slug>` is the category-index prefix followed by the descriptive slug with no leading `<n>-` (e.g. category `02-programming-languages`, canonical slug `2-typescript-naming` -> `<target_base>.github/instructions/02-typescript-naming.instructions.md`). Write directly into `<target_base>.github/instructions/`; no subdirectory is created. MUST NOT write to `<target_base>.github/copilot-instructions.md` - that file is a context artifact owned by a different action (`02-project-init`), not a rules file.
-     Copilot frontmatter contains EXACTLY one field: `applyTo`. The value is a STRING (single glob pattern), NOT a YAML array. Example: `applyTo: "src/**/*.ts"`. If the canonical artifact has multiple globs in its `paths`, render them as a comma-separated string. Do NOT use `-` list notation under `applyTo`.
-   - **Claude Code:** MUST write to EXACTLY `<target_base>.claude/rules/<NN-category-subdir>/<n-slug>.md`. Create the category subdirectory on demand (`mkdir -p`) before writing.
-   - **Cursor:** MUST write to EXACTLY `<target_base>.cursor/rules/<NN-category-subdir>/<n-slug>.mdc`. Create the category subdirectory on demand (`mkdir -p`) before writing.
-
-   All paths are CWD-relative; the host runtime sets the current working directory to the workspace root. The plugin install directory is for READING template and reference files ONLY - MUST NOT be used as a write target for any output file.
-
-   Reference example rule file structure (illustrative):
-
-   ```text
-   03-frameworks-and-libraries/
-   ├── 3-react@19-components-structure.<ext> (paths: ['**/*.tsx', '**/components/**', ...])
-   │   ├── Component definition basics
-   │   ├── Export patterns
-   │   ├── Props and typing
-   │   └── Naming conventions
-   └── ...
-   ```
+6. **Generate and write.** Build one canonical rule from the user's intent using the conventions in `@../../references/ai-mapping.md`. For each confirmed (non-blocked) tool `<tool>`, copy the template under `@../../assets/rules/<tool>/` (where `<tool>` is the confirmed tool id: `claude`, `cursor`, `copilot`; note that `opencode` and `codex` have no rules template - they are D2-blocked for rules), fill the `{{placeholders}}`, and write it to the path and extension resolved from `@../../references/ai-mapping.md` for that tool. Prepend `target_base` to every write path. All paths are CWD-relative; the plugin install directory is for reading templates only - MUST NOT be used as a write target.
 
 7. Apply the **write target validation** from `@../../references/tool-resolution.md` (## Write target validation).
 

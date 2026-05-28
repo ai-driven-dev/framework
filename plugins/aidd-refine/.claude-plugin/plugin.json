@@ -4,7 +4,8 @@
   "version": "1.1.0",
   "description": "Meta-cognition: refine input through brainstorming, refine output through challenge and condensed communication mode.",
   "author": {
-    "name": "AI-Driven Dev"
+    "name": "AI-Driven Dev",
+    "url": "https://github.com/ai-driven-dev"
   },
   "skills": [
     "./skills/01-brainstorm",
@@ -13,7 +14,6 @@
     "./skills/04-shadow-areas",
     "./skills/05-fact-check"
   ],
-  "hooks": "./hooks/hooks.json",
   "keywords": [
     "brainstorm",
     "challenge",
