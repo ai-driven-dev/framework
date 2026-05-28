@@ -222,6 +222,28 @@ describe("InstallAiToolUseCase", () => {
     });
   });
 
+  describe("propagation version policy", () => {
+    it("passes prefer-catalog policy to pluginInstallFromMarketplace on propagation", async () => {
+      const deps = await buildUnitDeps(PROJECT_ROOT);
+      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
+
+      const { useCase, pluginInstallMock } = buildUseCase(deps);
+
+      await useCase.execute({
+        toolId: "opencode",
+        projectRoot: PROJECT_ROOT,
+        force: false,
+        version: VERSION,
+        propagatePlugins: true,
+      });
+
+      expect(pluginInstallMock.execute).toHaveBeenCalledWith(
+        expect.objectContaining({ requestedVersionPolicy: "prefer-catalog" })
+      );
+    });
+  });
+
   describe("propagation failure", () => {
     it("records a warning and continues when plugin installation fails", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);

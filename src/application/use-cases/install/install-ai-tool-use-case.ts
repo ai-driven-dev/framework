@@ -114,6 +114,7 @@ export class InstallAiToolUseCase {
         interactive: false,
         autoSelect: true,
         replace: true,
+        requestedVersionPolicy: "prefer-catalog",
       });
       propagated.push(plugin.name);
     } catch (err) {

@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { PluginAddUseCase } from "../../../../src/application/use-cases/plugin/plugin-add-use-case.js";
 import { PluginInstallFromMarketplaceUseCase } from "../../../../src/application/use-cases/plugin/plugin-install-from-marketplace-use-case.js";
 import { FetchMarketplaceSourceUseCase } from "../../../../src/application/use-cases/shared/fetch-marketplace-source-use-case.js";
@@ -51,7 +51,8 @@ async function buildUseCase() {
     new ResolveMarketplaceUseCase(fetchMarketplaceSource, catalogRepo),
     registry,
     pluginAdd,
-    new KeepPrompter()
+    new KeepPrompter(),
+    deps.logger
   );
   return { useCase, deps, registry };
 }
@@ -236,6 +237,107 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
         interactive: false,
       })
     ).rejects.toThrow(VersionMismatchError);
+  });
+
+  describe("version policy", () => {
+    it("throws VersionMismatchError with strict policy (default) when catalog version differs from requested", async () => {
+      const { useCase, deps, registry } = await buildUseCase();
+      seedMarketplaceFile(deps.fs, MKT1_DIR, [
+        {
+          name: "sample-plugin",
+          source: { kind: "local", path: PLUGIN_FIXTURE },
+          version: "2.0.0",
+        },
+      ]);
+      await registry.save(
+        PROJECT_ROOT,
+        Marketplace.create({
+          name: "mkt1",
+          source: { kind: "local", path: MKT1_DIR },
+          scope: "project",
+          addedAt: "2026-04-29T10:00:00.000Z",
+        })
+      );
+
+      await expect(
+        useCase.execute({
+          pluginName: "sample-plugin",
+          version: "1.0.0",
+          toolIds: ["claude"],
+          projectRoot: PROJECT_ROOT,
+          interactive: false,
+        })
+      ).rejects.toThrow(VersionMismatchError);
+    });
+
+    it("succeeds and logs info with prefer-catalog policy when catalog version differs from requested", async () => {
+      const { useCase, deps, registry } = await buildUseCase();
+      const infoSpy = vi.spyOn(deps.logger, "info");
+      seedMarketplaceFile(deps.fs, MKT1_DIR, [
+        {
+          name: "sample-plugin",
+          source: { kind: "local", path: PLUGIN_FIXTURE },
+          version: "2.0.0",
+        },
+      ]);
+      await registry.save(
+        PROJECT_ROOT,
+        Marketplace.create({
+          name: "mkt1",
+          source: { kind: "local", path: MKT1_DIR },
+          scope: "project",
+          addedAt: "2026-04-29T10:00:00.000Z",
+        })
+      );
+
+      await expect(
+        useCase.execute({
+          pluginName: "sample-plugin",
+          version: "1.0.0",
+          requestedVersionPolicy: "prefer-catalog",
+          toolIds: ["claude"],
+          projectRoot: PROJECT_ROOT,
+          interactive: false,
+        })
+      ).resolves.toBeDefined();
+      expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining("2.0.0"));
+      expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining("1.0.0"));
+    });
+
+    it("does not log info with prefer-catalog policy when catalog and requested versions match", async () => {
+      const { useCase, deps, registry } = await buildUseCase();
+      const infoSpy = vi.spyOn(deps.logger, "info");
+      seedMarketplaceFile(deps.fs, MKT1_DIR, [
+        {
+          name: "sample-plugin",
+          source: { kind: "local", path: PLUGIN_FIXTURE },
+          version: "1.0.0",
+        },
+      ]);
+      await registry.save(
+        PROJECT_ROOT,
+        Marketplace.create({
+          name: "mkt1",
+          source: { kind: "local", path: MKT1_DIR },
+          scope: "project",
+          addedAt: "2026-04-29T10:00:00.000Z",
+        })
+      );
+
+      await useCase.execute({
+        pluginName: "sample-plugin",
+        version: "1.0.0",
+        requestedVersionPolicy: "prefer-catalog",
+        toolIds: ["claude"],
+        projectRoot: PROJECT_ROOT,
+        interactive: false,
+      });
+
+      const driftCalls = infoSpy.mock.calls.filter(
+        (args) => typeof args[0] === "string" && args[0].includes("differs from")
+      );
+      expect(driftCalls).toHaveLength(0);
+    });
   });
 
   it("autoSelect resolves multi-match in non-interactive mode", async () => {

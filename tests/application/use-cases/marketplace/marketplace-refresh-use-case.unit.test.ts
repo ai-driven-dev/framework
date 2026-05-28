@@ -1,8 +1,9 @@
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { MarketplaceRefreshUseCase } from "../../../../src/application/use-cases/marketplace/marketplace-refresh-use-case.js";
 import { FetchMarketplaceSourceUseCase } from "../../../../src/application/use-cases/shared/fetch-marketplace-source-use-case.js";
 import { Marketplace } from "../../../../src/domain/models/marketplace.js";
+import { MARKETPLACE_CACHE_SUBDIR } from "../../../../src/domain/models/paths.js";
 import { serializePluginSource } from "../../../../src/domain/models/plugin-source.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
@@ -151,5 +152,94 @@ describe("MarketplaceRefreshUseCase", () => {
 
     const list = await registry.list(PROJECT_ROOT);
     expect(list[0]?.version).toBeUndefined();
+  });
+
+  describe("stale cache detection", () => {
+    it("emits info line when cache has relative plugin sources but plugin dirs are missing", async () => {
+      const hasher = new DeterministicHasher();
+      const fs = new InMemoryFileAdapter({}, hasher);
+      await seedFromDirectory(fs, VALID_FIXTURE, { useAbsolutePaths: true });
+      const registry = new InMemoryMarketplaceRegistry();
+      const pluginFetcher = new FixturePluginFetcher({
+        [JSON.stringify(serializePluginSource({ kind: "local", path: VALID_FIXTURE }))]:
+          VALID_FIXTURE,
+      });
+      const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(pluginFetcher);
+      const logger = { info: vi.fn(), debug: vi.fn(), warn: vi.fn() };
+
+      const cacheDir = join(PROJECT_ROOT, MARKETPLACE_CACHE_SUBDIR, "stale-mkt");
+      const staleCatalogJson = JSON.stringify({
+        plugins: [{ name: "aidd-dev", source: "./plugins/aidd-dev" }],
+      });
+      await fs.writeFile(join(cacheDir, ".claude-plugin/marketplace.json"), staleCatalogJson);
+
+      const useCase = new MarketplaceRefreshUseCase(
+        new PluginCatalogRepositoryAdapter(fs),
+        registry,
+        fetchMarketplaceSource,
+        logger,
+        fs
+      );
+      await registry.save(
+        PROJECT_ROOT,
+        Marketplace.create({
+          name: "stale-mkt",
+          source: { kind: "local", path: VALID_FIXTURE },
+          scope: "project",
+          addedAt: "2026-04-29T10:00:00.000Z",
+        })
+      );
+
+      await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining("Detected stale cache for 'stale-mkt'")
+      );
+    });
+
+    it("does not emit stale notice when plugin dirs already exist on disk", async () => {
+      const hasher = new DeterministicHasher();
+      const fs = new InMemoryFileAdapter({}, hasher);
+      await seedFromDirectory(fs, VALID_FIXTURE, { useAbsolutePaths: true });
+      const registry = new InMemoryMarketplaceRegistry();
+      const pluginFetcher = new FixturePluginFetcher({
+        [JSON.stringify(serializePluginSource({ kind: "local", path: VALID_FIXTURE }))]:
+          VALID_FIXTURE,
+      });
+      const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(pluginFetcher);
+      const logger = { info: vi.fn(), debug: vi.fn(), warn: vi.fn() };
+
+      const cacheDir = join(PROJECT_ROOT, MARKETPLACE_CACHE_SUBDIR, "fresh-mkt");
+      const freshCatalogJson = JSON.stringify({
+        plugins: [{ name: "aidd-dev", source: "./plugins/aidd-dev" }],
+      });
+      await fs.writeFile(join(cacheDir, ".claude-plugin/marketplace.json"), freshCatalogJson);
+      await fs.writeFile(join(cacheDir, "plugins/aidd-dev/plugin.json"), "{}");
+
+      const useCase = new MarketplaceRefreshUseCase(
+        new PluginCatalogRepositoryAdapter(fs),
+        registry,
+        fetchMarketplaceSource,
+        logger,
+        fs
+      );
+      await registry.save(
+        PROJECT_ROOT,
+        Marketplace.create({
+          name: "fresh-mkt",
+          source: { kind: "local", path: VALID_FIXTURE },
+          scope: "project",
+          addedAt: "2026-04-29T10:00:00.000Z",
+        })
+      );
+
+      await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+      const infoCallsWithStale = (logger.info as ReturnType<typeof vi.fn>).mock.calls.filter(
+        (args: unknown[]) =>
+          typeof args[0] === "string" && (args[0] as string).includes("Detected stale")
+      );
+      expect(infoCallsWithStale).toHaveLength(0);
+    });
   });
 });

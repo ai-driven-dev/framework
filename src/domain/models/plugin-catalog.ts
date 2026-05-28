@@ -1,3 +1,4 @@
+import { isAbsolute } from "node:path";
 import { InvalidPluginManifestError } from "../errors.js";
 import { type PluginSource, parsePluginSource } from "./plugin-source.js";
 
@@ -43,6 +44,12 @@ function parseEntry(raw: unknown, index: number): PluginCatalogEntry {
   if (typeof obj.version === "string") entry.version = obj.version;
 
   return entry;
+}
+
+export function hasRelativePluginSources(catalog: PluginCatalog): boolean {
+  return catalog.plugins.some(
+    (entry) => entry.source.kind === "local" && !isAbsolute(entry.source.path)
+  );
 }
 
 export function parsePluginCatalog(raw: unknown): PluginCatalog {

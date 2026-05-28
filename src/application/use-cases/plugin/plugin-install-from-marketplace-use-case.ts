@@ -6,7 +6,12 @@ import {
 import type { Marketplace } from "../../../domain/models/marketplace.js";
 import type { PluginCatalogEntry } from "../../../domain/models/plugin-catalog.js";
 import { resolvePluginSourceFromMarketplace } from "../../../domain/models/plugin-source-resolver.js";
+import {
+  DEFAULT_REQUESTED_VERSION_POLICY,
+  type RequestedVersionPolicy,
+} from "../../../domain/models/requested-version-policy.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
+import type { Logger } from "../../../domain/ports/logger.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
 import type { ResolveMarketplaceUseCase } from "../shared/resolve-marketplace-use-case.js";
@@ -22,6 +27,7 @@ export interface PluginInstallFromMarketplaceOptions {
   autoSelect?: boolean;
   /** When true, drop existing plugin entry before adding (idempotent setup re-runs). */
   replace?: boolean;
+  requestedVersionPolicy?: RequestedVersionPolicy;
 }
 
 export interface PluginInstallFromMarketplaceResult {
@@ -40,15 +46,21 @@ export class PluginInstallFromMarketplaceUseCase {
     private readonly resolveMarketplace: ResolveMarketplaceUseCase,
     private readonly registry: MarketplaceRegistry,
     private readonly pluginAddUseCase: PluginAddUseCase,
-    private readonly prompter: Prompter
+    private readonly prompter: Prompter,
+    private readonly logger?: Logger
   ) {}
 
   async execute(
     options: PluginInstallFromMarketplaceOptions
   ): Promise<PluginInstallFromMarketplaceResult> {
+    const policy = options.requestedVersionPolicy ?? DEFAULT_REQUESTED_VERSION_POLICY;
     const matches = await this.findMatches(options);
     const chosen = await this.chooseOne(matches, options);
-    this.assertCatalogVersionMatches(chosen.entry, options.version);
+    const effectiveVersion = this.assertOrCoerceCatalogVersion(
+      chosen.entry,
+      options.version,
+      policy
+    );
     const resolvedSource = resolvePluginSourceFromMarketplace(
       chosen.entry.source,
       chosen.marketplace,
@@ -60,7 +72,7 @@ export class PluginInstallFromMarketplaceUseCase {
       projectRoot: options.projectRoot,
       interactive: options.interactive,
       marketplace: chosen.marketplace.name,
-      requiredVersion: options.version,
+      requiredVersion: effectiveVersion,
       pluginMetadata:
         chosen.entry.version !== undefined
           ? { name: chosen.entry.name, version: chosen.entry.version, strict: chosen.entry.strict }
@@ -119,14 +131,24 @@ export class PluginInstallFromMarketplaceUseCase {
     );
   }
 
-  // Catalog-level fast-fail. Plugin-level (plugin.json) check happens in PluginAddUseCase.
-  private assertCatalogVersionMatches(
+  // Catalog-level version check. Policy controls whether mismatch is fatal or silent.
+  // Plugin-level (plugin.json) check happens in PluginAddUseCase.
+  private assertOrCoerceCatalogVersion(
     entry: PluginCatalogEntry,
-    requested: string | undefined
-  ): void {
-    if (!requested) return;
-    if (entry.version && entry.version !== requested) {
-      throw new VersionMismatchError(entry.name, requested, entry.version);
+    requested: string | undefined,
+    policy: RequestedVersionPolicy
+  ): string | undefined {
+    if (policy === "prefer-catalog") {
+      if (requested && entry.version && entry.version !== requested) {
+        this.logger?.info(
+          `Plugin '${entry.name}': catalog version ${entry.version} differs from requested ${requested}; using catalog version.`
+        );
+      }
+      // prefer-catalog always bypasses both the catalog-entry check (this site)
+      // and the downstream plugin.json on-disk check in PluginAddUseCase.
+      return undefined;
     }
+    if (!requested || !entry.version || entry.version === requested) return requested;
+    throw new VersionMismatchError(entry.name, requested, entry.version);
   }
 }

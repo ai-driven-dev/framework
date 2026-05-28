@@ -240,7 +240,8 @@ export async function createDeps(
   );
   const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(
     pluginFetcher,
-    rawCatalogFetcher
+    rawCatalogFetcher,
+    fs
   );
   const marketplaceListUseCase = new MarketplaceListUseCase(
     marketplaceRegistry,
@@ -265,7 +266,8 @@ export async function createDeps(
     pluginCatalogRepository,
     marketplaceRegistry,
     fetchMarketplaceSource,
-    logger
+    logger,
+    fs
   );
   const marketplaceCheckUseCase = new MarketplaceCheckUseCase(
     manifestRepo,
@@ -318,7 +320,8 @@ export async function createDeps(
     resolveMarketplaceUseCase,
     marketplaceRegistry,
     pluginAddUseCase,
-    prompter
+    prompter,
+    logger
   );
   const pluginSearchUseCase = new PluginSearchUseCase(
     pluginCatalogRepository,

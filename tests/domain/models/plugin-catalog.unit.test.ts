@@ -3,7 +3,10 @@ import {
   InvalidPluginManifestError,
   InvalidPluginSourceError,
 } from "../../../src/domain/errors.js";
-import { parsePluginCatalog } from "../../../src/domain/models/plugin-catalog.js";
+import {
+  hasRelativePluginSources,
+  parsePluginCatalog,
+} from "../../../src/domain/models/plugin-catalog.js";
 
 const VALID_RAW = {
   plugins: [
@@ -23,6 +26,44 @@ const VALID_RAW = {
     },
   ],
 };
+
+describe("hasRelativePluginSources", () => {
+  it("returns true for catalog with a local relative path entry", () => {
+    const catalog = parsePluginCatalog({
+      plugins: [{ name: "x", source: { kind: "local", path: "./plugins/x" } }],
+    });
+    expect(hasRelativePluginSources(catalog)).toBe(true);
+  });
+
+  it("returns true for mixed entries when at least one is relative local", () => {
+    const catalog = parsePluginCatalog({
+      plugins: [
+        { name: "rel", source: { kind: "local", path: "./plugins/rel" } },
+        { name: "abs", source: { kind: "github", repo: "owner/repo" } },
+      ],
+    });
+    expect(hasRelativePluginSources(catalog)).toBe(true);
+  });
+
+  it("returns false for catalog with only github entries", () => {
+    const catalog = parsePluginCatalog({
+      plugins: [{ name: "g", source: { kind: "github", repo: "owner/repo" } }],
+    });
+    expect(hasRelativePluginSources(catalog)).toBe(false);
+  });
+
+  it("returns false for catalog with local absolute paths only", () => {
+    const catalog = parsePluginCatalog({
+      plugins: [{ name: "abs", source: { kind: "local", path: "/absolute/path" } }],
+    });
+    expect(hasRelativePluginSources(catalog)).toBe(false);
+  });
+
+  it("returns false for empty plugins array", () => {
+    const catalog = parsePluginCatalog({ plugins: [] });
+    expect(hasRelativePluginSources(catalog)).toBe(false);
+  });
+});
 
 describe("parsePluginCatalog", () => {
   describe("valid input", () => {
