@@ -1,5 +1,23 @@
 # Changelog
 
+## [4.5.0](https://github.com/ai-driven-dev/aidd-cli/compare/v4.4.0...v4.5.0) (2026-05-28)
+
+
+### Features
+
+* **framework-build:** add --flat / --force flags for copilot flat target ([e7c29a3](https://github.com/ai-driven-dev/aidd-cli/commit/e7c29a3834e2193d36e389b73e2bc85d844a75af)), closes [#270](https://github.com/ai-driven-dev/aidd-cli/issues/270)
+* **framework-build:** aidd framework build --target codex (Mode A + agents TOML staging) ([088d294](https://github.com/ai-driven-dev/aidd-cli/commit/088d294b58939702c3cb92829009d0b42a781690)), closes [#272](https://github.com/ai-driven-dev/aidd-cli/issues/272)
+
+
+### Bug Fixes
+
+* **plugin:** aidd setup cache resolution + propagation version mismatch ([#271](https://github.com/ai-driven-dev/aidd-cli/issues/271)) ([71f5e65](https://github.com/ai-driven-dev/aidd-cli/commit/71f5e65231a201b86d8156fd8f0c97a104482591))
+
+
+### Documentation
+
+* **readme:** aidd framework build section + Copilot 2-click activation flow ([9a573de](https://github.com/ai-driven-dev/aidd-cli/commit/9a573dee06152caa519cc31aa109c33a6f75c494)), closes [#266](https://github.com/ai-driven-dev/aidd-cli/issues/266)
+
 ## [4.4.0](https://github.com/ai-driven-dev/aidd-cli/compare/v4.3.0...v4.4.0) (2026-05-25)
 
 
