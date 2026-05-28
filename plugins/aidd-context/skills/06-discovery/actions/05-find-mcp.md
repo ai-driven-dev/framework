@@ -5,7 +5,7 @@ Enumerate connected MCP servers, summarize their capabilities, and recommend the
 ## Inputs
 
 - Free-form user intent (which external system the user wants to reach).
-- MCP servers configured for the current AI tool.
+- Confirmed tools from the SKILL.md tool gate.
 
 ## Outputs
 
@@ -25,7 +25,7 @@ Tool prefix: <mcp__server__tool> (or invocation hint for the current AI)
 
 ## Process
 
-1. **Enumerate connected MCP servers.** Read the AI tool's MCP config (`.mcp.json` for Claude Code, equivalent paths per tool; see `@../references/ai-mapping.md`).
+1. **Enumerate connected MCP servers.** For each confirmed tool, read its MCP config file and servers key from `@../references/ai-mapping.md` (## MCP config per tool).
 2. **Extract metadata.** For each server, list the tools it exposes and group them by capability area.
 3. **Render the table.** Columns: `Server | Capabilities | Source`. One row per server.
 4. **Ask the user for intent.** `Which external system or capability do you need?` Wait for an explicit reply.

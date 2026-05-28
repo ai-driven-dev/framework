@@ -1,12 +1,11 @@
 # 07 - Find hook
 
-Enumerate installed hooks across every plugin and the project's Claude settings, recommend the best match for the user's stated intent.
+Enumerate installed hooks across every confirmed tool's hook surfaces, recommend the best match for the user's stated intent.
 
 ## Inputs
 
 - Free-form user intent.
-- Installed plugins and their `hooks/hooks.json` files.
-- Project `.claude/settings.json` and `.claude/settings.local.json` if present.
+- Confirmed tools from the SKILL.md tool gate.
 
 ## Outputs
 
@@ -26,7 +25,7 @@ Source: <relative path to hooks.json or settings.json>
 
 ## Process
 
-1. **Enumerate hooks.** Scan `plugins/*/hooks/hooks.json` and the project's `.claude/settings.json` + `.claude/settings.local.json` `hooks` blocks.
+1. **Enumerate hooks.** For each confirmed tool, scan its hook surface(s) and parse each per the format noted in `@../references/ai-mapping.md` (project/user hook config, plugin-bundled `hooks/hooks.json`, or a JS module). Tag each row with its owning tool.
 2. **Extract metadata.** For each registered hook, capture owning plugin (or `project`), event name, trigger pattern or matcher, script path, and a one-line purpose drawn from the script's header comment when present.
 3. **Render the table.** Columns: `Plugin | Event | Trigger / Matcher | Script | Purpose`. Sort by event then plugin.
 4. **Ask the user for intent.** `Which event or behavior do you want to intercept?` Wait for an explicit reply.

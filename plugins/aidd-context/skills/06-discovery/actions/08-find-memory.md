@@ -1,6 +1,6 @@
 # 08 - Find memory
 
-Enumerate the project memory files under `aidd_docs/memory/`, recommend the best match for the user's stated intent.
+Enumerate the project memory files under `aidd_docs/memory/`, recommend the best match for the user's stated intent. Tool-independent: this action skips the SKILL.md tool-detection gate.
 
 ## Inputs
 

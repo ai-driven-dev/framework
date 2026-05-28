@@ -5,10 +5,29 @@ description: Enumerate installed surfaces of the AI tool (skills, agents, comman
 
 # Skill: discovery
 
-Scans installed surfaces of the AI tool and guides the user to the most relevant item for their current intent.
+Scans installed surfaces of the AI tool(s) the project uses and guides the user to the most relevant item for their current intent.
+
+## Tool detection (run first)
+
+Before scanning, detect which AI tools the project uses, propose the set, and confirm the scan scope. This gate applies to actions 01-07; `08-find-memory` is tool-independent and skips it.
+
+1. **Detect.** Scan the project root for these signals:
+
+   | Signal                            | Tool                                       |
+   | --------------------------------- | ------------------------------------------ |
+   | `.claude/` or `CLAUDE.md`         | Claude Code                                |
+   | `.cursor/`                        | Cursor                                     |
+   | `.opencode/`                      | OpenCode                                   |
+   | `.codex/`                         | Codex CLI                                  |
+   | `.github/copilot-instructions.md`, or any `.github/` Copilot surface dir (`agents/`, `prompts/`, `instructions/`, `skills/`, `hooks/`) | GitHub Copilot |
+   | `AGENTS.md`                       | Cursor / OpenCode / Codex CLI (list all)   |
+
+2. **Propose.** List the detected tools. If no signal is found, propose all five cold (Claude Code, Cursor, OpenCode, GitHub Copilot, Codex CLI). Never default silently to Claude Code.
+3. **Confirm.** Ask which tools to scan (1..N). Then run the matching action, scanning only the confirmed tools' surfaces resolved from `references/ai-mapping.md`. A tool with no surface for the requested artifact is skipped (note it; never error).
 
 ## Rules
 
+- Never hardcode a tool in an action. Per-tool scan paths and formats live in `references/ai-mapping.md` only.
 - List only what is actually installed; never invent.
 - Describe each item's purpose in one line.
 - Recommend a single best match; mention alternatives only if very close.

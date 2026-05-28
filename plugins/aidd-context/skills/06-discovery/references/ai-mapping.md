@@ -1,10 +1,6 @@
-# NOTE: synced from skills/03-context-generate/references/ai-mapping.md. Keep in sync when the source changes.
+# AI mapping (discovery scan paths)
 
-# AI mapping
-
-## Purpose
-
-Where to look for each artifact type per AI tool, for discovery purposes.
+Where to look for each artifact type per AI tool. Scan-only: the paths and formats the find actions read. This is discovery's own minimal map - the single source of per-tool surfaces; actions never hardcode a tool.
 
 ## AI quick map - content artifacts
 
@@ -16,15 +12,25 @@ Where to look for each artifact type per AI tool, for discovery purposes.
 | GitHub Copilot | `.github/agents/*.agent.md` | `.github/prompts/*.prompt.md`                 | `.github/instructions/*.instructions.md` | `.github/skills/`                     | `.github/copilot-instructions.md` |
 | Codex CLI      | `.codex/agents/{name}.toml` | **Not supported**                             | Not supported                            | `.agents/skills/aidd-{name}/SKILL.md` | `AGENTS.md`                       |
 
-## AI quick map - hooks, plugins, marketplaces
+## AI quick map - hooks, plugins
 
-| AI             | Hooks                                                                                          | Plugin manifest                  | Marketplace catalog                                                  |
-| -------------- | ---------------------------------------------------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------- |
-| Claude Code    | `.claude/settings.json` `hooks` key OR `<plugin>/hooks/hooks.json` OR inline in skill/agent header | `.claude-plugin/plugin.json`     | `.claude-plugin/marketplace.json`                                    |
-| Cursor         | `.cursor/hooks.json` (project), `~/.cursor/hooks.json` (user), `<plugin>/hooks.json` (plugin) | `.cursor-plugin/plugin.json`     | `.cursor-plugin/marketplace.json`                                    |
-| OpenCode       | Plugin code only: JS/TS module under `.opencode/plugins/`                                     | Not supported                    | None                                                                 |
-| GitHub Copilot | `<plugin>/hooks.json` OR `<plugin>/hooks/hooks.json` (plugin-bundled only)                    | `plugin.json` at plugin root     | Configured via `chat.plugins.marketplaces` setting; no per-repo file |
-| Codex CLI      | `.codex/hooks.json` (project / user) OR `[hooks]` table in `.codex/config.toml`               | `.codex-plugin/plugin.json`      | `.agents/plugins/marketplace.json` (project, personal)               |
+| AI             | Hooks                                                                                          | Plugin manifest              |
+| -------------- | ---------------------------------------------------------------------------------------------- | ---------------------------- |
+| Claude Code    | `.claude/settings.json` `hooks` key OR `<plugin>/hooks/hooks.json` OR inline in skill/agent header | `.claude-plugin/plugin.json` |
+| Cursor         | `.cursor/hooks.json` (project), `~/.cursor/hooks.json` (user), `<plugin>/hooks/hooks.json` (plugin) | `.cursor-plugin/plugin.json` |
+| OpenCode       | JS/TS module under `.opencode/plugins/` (parse as JS, not JSON)                                | Not supported                |
+| GitHub Copilot | `.github/hooks/*.json` (workspace), `~/.copilot/hooks` (user), `<plugin>/hooks.json` or `<plugin>/hooks/hooks.json` (plugin) | `plugin.json` at plugin root |
+| Codex CLI      | `.codex/hooks.json` (project / user) OR `[hooks]` table in `.codex/config.toml`               | `.codex-plugin/plugin.json`  |
+
+## MCP config per tool
+
+| Tool           | MCP config file                                  | Servers key   |
+| -------------- | ------------------------------------------------ | ------------- |
+| Claude Code    | `.mcp.json` (project root)                       | `mcpServers`  |
+| Cursor         | `.cursor/mcp.json`                               | `mcpServers`  |
+| OpenCode       | `opencode.json`                                  | `mcp`         |
+| GitHub Copilot | `.vscode/mcp.json` (VS Code); `~/.copilot/mcp-config.json` (CLI) | `servers` (VS Code); `mcpServers` (CLI) |
+| Codex CLI      | `.codex/config.toml`                             | `[mcp_servers.*]` |
 
 ## Path layout per tool
 

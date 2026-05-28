@@ -2,11 +2,13 @@
 
 # 06 - Discovery
 
-Enumerates installed surfaces of the AI tool (skills, agents, commands,
-plugins, MCP servers, rules, hooks, memory files) and recommends the
-single best match for the user's stated intent. Lists only what is
-actually installed - never invents - and stops at the recommendation
-without invoking the target.
+Enumerates installed surfaces across the AI tool(s) the project uses
+(skills, agents, commands, plugins, MCP servers, rules, hooks, memory
+files) and recommends the single best match for the user's stated
+intent. Detects which tools are installed, proposes them, and scans
+only the confirmed surfaces (per `references/ai-mapping.md`). Lists only
+what is actually installed - never invents - and stops at the
+recommendation without invoking the target.
 
 ## When to use
 

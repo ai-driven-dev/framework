@@ -5,19 +5,19 @@ Enumerate installed plugins, summarize each one's scope, and recommend the plugi
 ## Inputs
 
 - Free-form user intent (broad goal, not a specific skill).
-- Installed plugins available to the current AI tool.
+- Confirmed tools from the SKILL.md tool gate.
 
 ## Outputs
 
 A markdown table of installed plugins + a recommendation block.
 
 ```text
-| Plugin             | Scope                                                 |
-| ------------------ | ----------------------------------------------------- |
-| aidd-context       | Onboarding, memory bank, context generation, mermaid  |
-| aidd-dev           | Dev SDLC: spec / plan / implement / review            |
-| aidd-vcs           | Commit, PR, release tag, issue                        |
-| ...                | ...                                                   |
+| Tool   | Plugin             | Scope                                                 |
+| ------ | ------------------ | ----------------------------------------------------- |
+| claude | aidd-context       | Onboarding, memory bank, context generation, mermaid  |
+| claude | aidd-dev           | Dev SDLC: spec / plan / implement / review            |
+| claude | aidd-vcs           | Commit, PR, release tag, issue                        |
+| ...    | ...                | ...                                                   |
 
 Recommendation: <best-match plugin>
 Why: <one sentence>
@@ -26,9 +26,9 @@ Next step: see the plugin's onboard or skill list via `01-find-skill`.
 
 ## Process
 
-1. **Enumerate installed plugins.** Use the AI tool's native plugin discovery to list every enabled plugin.
+1. **Enumerate plugins.** For each confirmed tool, list enabled plugins from its plugin install location(s) in `@../references/ai-mapping.md`.
 2. **Extract metadata.** Read the plugin's `plugin.json` (or equivalent) for `name` and `description`. Fall back to the plugin's README or CATALOG for a one-line scope.
-3. **Render the table.** Columns: `Plugin | Scope`. One row per plugin.
+3. **Render the table.** Columns: `Tool | Plugin | Scope`. Sort by tool then plugin. One row per plugin.
 4. **Ask the user for intent.** `What are you trying to achieve at a high level?` Wait for an explicit reply.
 5. **Match.** Pick the single best plugin. If two are tied, list both.
 6. **Print the recommendation block.** Plugin name, one-sentence rationale, suggested next step (drill into the plugin via `01-find-skill`).

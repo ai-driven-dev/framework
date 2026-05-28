@@ -5,7 +5,7 @@ Enumerate installed rules across every AI tool surface, recommend the best match
 ## Inputs
 
 - Free-form user intent.
-- Installed AI tool surfaces (one or more of: Claude, Cursor, Copilot, OpenCode).
+- Confirmed tools from the SKILL.md tool gate.
 
 ## Outputs
 

@@ -5,18 +5,18 @@ Enumerate installed slash commands across all plugins, capture the user's intent
 ## Inputs
 
 - Free-form user intent.
-- Installed plugins available to the current AI tool.
+- Confirmed tools from the SKILL.md tool gate.
 
 ## Outputs
 
 A markdown table of installed commands + a recommendation block.
 
 ```text
-| Plugin       | Command          | Purpose                       |
-| ------------ | ---------------- | ----------------------------- |
-| aidd-vcs     | /commit          | Stage + commit with conv-cc   |
-| aidd-vcs     | /pull-request    | Open PR with summary          |
-| ...          | ...              | ...                           |
+| Tool   | Plugin       | Command          | Purpose                       |
+| ------ | ------------ | ---------------- | ----------------------------- |
+| claude | aidd-vcs     | /commit          | Stage + commit with conv-cc   |
+| claude | aidd-vcs     | /pull-request    | Open PR with summary          |
+| ...    | ...          | ...              | ...                           |
 
 Recommendation: <best-match command>
 Why: <one sentence>
@@ -25,9 +25,9 @@ Invoke with: <exact /command string>
 
 ## Process
 
-1. **Enumerate installed commands.** Use the AI tool's native command discovery to list every installed slash command.
+1. **Enumerate commands.** For each confirmed tool, list its slash commands from the commands surface and plugin install locations in `@../references/ai-mapping.md`.
 2. **Extract metadata.** Read `name`, `description`, and `argument-hint` (if present) from each command's frontmatter. Skip malformed entries and log them.
-3. **Render the table.** Columns: `Plugin | Command | Purpose`. Sort by plugin then command name. One row per command.
+3. **Render the table.** Columns: `Tool | Plugin | Command | Purpose`. Sort by tool then plugin then command name. One row per command.
 4. **Ask the user for intent.** `What do you want to run?` Wait for an explicit reply.
 5. **Match.** Pick the single best command. If two are tied, list both.
 6. **Print the recommendation block.** Command, one-sentence rationale, exact invocation string with placeholders for any required arguments.
