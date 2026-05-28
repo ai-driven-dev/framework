@@ -1,32 +1,32 @@
 ---
 name: backend-communication
-description: Frontend-backend communication patterns
+description: How clients communicate with the backend - exposed API surface and contracts
 argument-hint: N/A
 scope: backend
 ---
 
-# Communication between backend and frontend
+# Communicating with the backend
 
-This part describe how the frontend communicates with backend services, including the services used, types of requests, and main entities involved.
+This part describes how clients (frontend, other services) communicate with the backend, globally: the API surface it exposes, the request and response contracts, and the main entities involved.
 
 ## Overview
 
-When frontend component communicates with the backend, it typically does so through a series of services and API endpoints. This section outlines the key components involved in this communication process.
+The backend exposes its capabilities through services and API endpoints that clients consume. This section outlines that communication surface.
 
 - **API definition**: [link to OpenAPI files or similar, if applicable]
-- **Services**: [List of services used for communication between frontend and backend, e.g., API service, authentication service, data fetching service, etc.]
-- **Request Types**: [Types of requests made from frontend to backend, e.g., GET, POST, PUT, DELETE, etc.]
-- **Entities**: [Where are the entities located?]
-- **Data Flow**: [Describe how data flows between frontend and backend.]
-- **Error Handling**: [How are errors handled in the communication process?]
-- **Validation**: [How is data validated during communication?]
+- **Services**: [List of services the backend exposes, e.g. authentication service, data API, ...]
+- **Request Types**: [Types of requests the backend accepts, e.g. GET, POST, PUT, DELETE, ...]
+- **Entities**: [Main entities exposed over the API and where they are defined]
+- **Data Flow**: [How a request is handled from entry point to response]
+- **Error Handling**: [Error contract: status codes, error body shape]
+- **Validation**: [How incoming requests are validated]
 
 ### Data Flow
 
-When a new entity is created on the frontend, the following flow is typically followed to reach backend:
+When a client creates a new entity, the backend typically handles the request as follows:
 
 ```mermaid
 sequenceDiagram
     participant TODO
-%% {{Detailed schema of the frontend flow to finally reach the backend service}}
+%% {{Detailed schema of how the backend receives, processes, and responds to a request}}
 ```
