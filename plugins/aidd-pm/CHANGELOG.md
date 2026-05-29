@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/ai-driven-dev/aidd-framework/compare/aidd-pm-v1.0.0...aidd-pm-v1.0.1) (2026-05-29)
+
+
+### Refactoring
+
+* **aidd-context:** unify 03-context-generate on Model Y tool-resolution ([#155](https://github.com/ai-driven-dev/aidd-framework/issues/155)) ([09e3c56](https://github.com/ai-driven-dev/aidd-framework/commit/09e3c564a3c1c12e9915f85dff7902a613919a98))
+
 ## [1.0.0](https://github.com/ai-driven-dev/aidd-framework/compare/aidd-pm-v1.0.0...aidd-pm-v1.0.0) (2026-05-19)
 
 

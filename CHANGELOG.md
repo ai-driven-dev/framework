@@ -1,5 +1,24 @@
 # Changelog
 
+## [4.2.0](https://github.com/ai-driven-dev/aidd-framework/compare/v4.1.1...v4.2.0) (2026-05-29)
+
+
+### Features
+
+* **aidd-context:** multitool discovery - detect/propose/confirm gate + per-tool scan ([#162](https://github.com/ai-driven-dev/aidd-framework/issues/162)) ([43d18f0](https://github.com/ai-driven-dev/aidd-framework/commit/43d18f04e1acb01e21aa6b7ce953ffb348f3dfe9))
+* **aidd-context:** re-scope 00-onboard to AIDD-wide project onboarding hub ([#153](https://github.com/ai-driven-dev/aidd-framework/issues/153)) ([935e37c](https://github.com/ai-driven-dev/aidd-framework/commit/935e37c3415fd30f5a5b46e138486194ff5a93bb))
+* **aidd-dev:** restructure audit into a read-only 7-pillar router ([#164](https://github.com/ai-driven-dev/aidd-framework/issues/164)) ([4b3a37b](https://github.com/ai-driven-dev/aidd-framework/commit/4b3a37b65ee678db7580c35d26bd33ffcbf91950))
+
+
+### Bug Fixes
+
+* **aidd-dev:** add routing dispatch to choice-router skills for weak-model hosts ([#163](https://github.com/ai-driven-dev/aidd-framework/issues/163)) ([148b6e3](https://github.com/ai-driven-dev/aidd-framework/commit/148b6e3faf650165017b4ae146fadaa394d47b6e))
+
+
+### Refactoring
+
+* **aidd-context:** unify 03-context-generate on Model Y tool-resolution ([#155](https://github.com/ai-driven-dev/aidd-framework/issues/155)) ([09e3c56](https://github.com/ai-driven-dev/aidd-framework/commit/09e3c564a3c1c12e9915f85dff7902a613919a98))
+
 ## [4.1.1](https://github.com/ai-driven-dev/aidd-framework/compare/v4.1.0...v4.1.1) (2026-05-22)
 
 
