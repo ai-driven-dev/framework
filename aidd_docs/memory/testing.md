@@ -97,3 +97,16 @@ Test names must describe user-visible or system-level behaviour:
 - Application integration: mock all ports via in-memory implementations from `tests/helpers/ports/`
 - Infrastructure integration: mock only the HTTP/external layer
 - E2E: no mocks — full real CLI binary invocation
+
+## Smoke / dogfood install isolation
+
+- Smoke-tests and dogfood CLI installs (`ai install`, `marketplace add`, `plugin install`) MUST run in a fresh `/tmp/<name>` dir with `git init` — NEVER in the repo root.
+- In-repo installs leak tracked per-tool residue (`.codex/`, `.cursor/`, `.github/copilot/`, `.opencode/`, `opencode.json`, `.vscode/`) that gets committed by accident (cleaned in PR #276).
+- This repo is Claude-only: only `.claude/` and `.aidd/` are legitimate in-repo install artifacts.
+- If an in-repo per-tool install is unavoidable for a test, gitignore the non-Claude install dirs.
+
+## Golden / snapshot machine-independence
+
+- Golden/snapshot tests MUST be machine-independent. Never snapshot a value derived from an absolute path — including content hashes computed over path-bearing content.
+- Symptom of violation: passes locally, fails CI with a different hash (different absolute path on the runner).
+- Fix pattern + full detail: `.claude/skills/test/references/golden-machine-independence.md` (recompute hash over normalized content).
