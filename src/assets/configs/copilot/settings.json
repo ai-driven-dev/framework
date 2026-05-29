@@ -1,6 +1,0 @@
-{
-  "github.copilot.enable": true,
-  "github.copilot.editor.enableAutoCompletions": true,
-  "chat.agent.enabled": true,
-  "github.copilot.chat.agent.thinkingTool.enabled": true
-}
