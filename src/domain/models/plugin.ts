@@ -149,27 +149,15 @@ export class Plugin {
   }
 
   toJSON(): PluginEntryData {
-    const files: Record<string, string> = {};
-    for (const [key, value] of this.files) {
-      files[key] = value;
-    }
-    const componentPaths: Record<string, string> = {};
-    for (const [key, value] of this.componentPaths) {
-      componentPaths[key] = value;
-    }
-    const mcpEntries: Record<string, string> = {};
-    for (const [key, value] of this.mcpEntries) {
-      mcpEntries[key] = value;
-    }
     const data: PluginEntryData = {
       name: this.name,
       source: serializePluginSource(this.source),
       version: this.version,
       strict: this.strict,
-      files,
+      files: mapToRecord(this.files),
     };
-    if (this.componentPaths.size > 0) data.componentPaths = componentPaths;
-    if (this.mcpEntries.size > 0) data.mcpEntries = mcpEntries;
+    if (this.componentPaths.size > 0) data.componentPaths = mapToRecord(this.componentPaths);
+    if (this.mcpEntries.size > 0) data.mcpEntries = mapToRecord(this.mcpEntries);
     if (this.marketplace !== undefined) data.marketplace = this.marketplace;
     return data;
   }
@@ -203,4 +191,12 @@ export class Plugin {
       marketplace: this.marketplace,
     });
   }
+}
+
+function mapToRecord(map: ReadonlyMap<string, string>): Record<string, string> {
+  const record: Record<string, string> = {};
+  for (const [key, value] of map) {
+    record[key] = value;
+  }
+  return record;
 }

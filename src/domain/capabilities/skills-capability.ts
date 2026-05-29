@@ -1,3 +1,4 @@
+import { CapabilityConfigError } from "../errors.js";
 import { serializeFrontmatter } from "../formats/markdown.js";
 import { AI_TOOL_IDS } from "../tools/registry.js";
 
@@ -16,7 +17,7 @@ export class SkillsCapability {
     }
   ) {
     if (!params.prefix && !params.directory) {
-      throw new Error("SkillsCapability requires either prefix or directory");
+      throw new CapabilityConfigError("SkillsCapability requires either prefix or directory");
     }
   }
 

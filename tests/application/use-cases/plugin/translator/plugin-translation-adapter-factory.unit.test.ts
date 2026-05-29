@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ModeAMarketplaceAdapter } from "../../../../../src/application/use-cases/plugin/translator/mode-a-marketplace-adapter.js";
-import { ModeBFlatMaterializationAdapter } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-adapter.js";
-import { resolveTranslationAdapter } from "../../../../../src/application/use-cases/plugin/translator/plugin-translation-adapter-factory.js";
+import { ModeAMarketplaceTranslator } from "../../../../../src/application/use-cases/plugin/translator/mode-a-marketplace-translator.js";
+import { ModeBFlatMaterializationTranslator } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-translator.js";
+import { resolveTranslator } from "../../../../../src/application/use-cases/plugin/translator/plugin-translator-factory.js";
 import { PluginsCapability } from "../../../../../src/domain/capabilities/plugins-capability.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
@@ -18,9 +18,9 @@ const MARKETPLACE_SETTINGS = {
   toEntry: () => null,
 };
 
-describe("resolveTranslationAdapter", () => {
+describe("resolveTranslator", () => {
   describe("when translationMode is marketplace", () => {
-    it("returns ModeAMarketplaceAdapter", () => {
+    it("returns ModeAMarketplaceTranslator", () => {
       const deps = buildDeps();
       const plugins = new PluginsCapability({
         mode: "native",
@@ -29,21 +29,21 @@ describe("resolveTranslationAdapter", () => {
         translationMode: "marketplace",
         marketplaceSettings: MARKETPLACE_SETTINGS,
       });
-      const adapter = resolveTranslationAdapter(plugins, deps);
-      expect(adapter).toBeInstanceOf(ModeAMarketplaceAdapter);
+      const adapter = resolveTranslator(plugins, deps);
+      expect(adapter).toBeInstanceOf(ModeAMarketplaceTranslator);
       expect(adapter?.mode).toBe("marketplace");
     });
   });
 
   describe("when translationMode is flat", () => {
-    it("returns ModeBFlatMaterializationAdapter", () => {
+    it("returns ModeBFlatMaterializationTranslator", () => {
       const deps = buildDeps();
       const plugins = new PluginsCapability({
         mode: "flat",
         flatNamespacePrefix: "aidd-",
       });
-      const adapter = resolveTranslationAdapter(plugins, deps);
-      expect(adapter).toBeInstanceOf(ModeBFlatMaterializationAdapter);
+      const adapter = resolveTranslator(plugins, deps);
+      expect(adapter).toBeInstanceOf(ModeBFlatMaterializationTranslator);
       expect(adapter?.mode).toBe("flat");
     });
   });
@@ -52,7 +52,7 @@ describe("resolveTranslationAdapter", () => {
     it("returns null", () => {
       const deps = buildDeps();
       const plugins = new PluginsCapability({ mode: "unsupported" });
-      const adapter = resolveTranslationAdapter(plugins, deps);
+      const adapter = resolveTranslator(plugins, deps);
       expect(adapter).toBeNull();
     });
   });
@@ -65,7 +65,7 @@ describe("resolveTranslationAdapter", () => {
         pluginsDir: ".custom/plugins/",
         pluginManifestRelativePath: "plugin.json",
       });
-      const adapter = resolveTranslationAdapter(plugins, deps);
+      const adapter = resolveTranslator(plugins, deps);
       expect(adapter).toBeNull();
     });
   });

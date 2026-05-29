@@ -38,13 +38,9 @@ export class ProjectContextDetectorUseCase {
   private async hasPackageJsonWorkspaces(projectRoot: string): Promise<boolean> {
     const pkgPath = join(projectRoot, "package.json");
     if (!(await this.fs.fileExists(pkgPath))) return false;
-    try {
-      const content = await this.fs.readFile(pkgPath);
-      const parsed = JSON.parse(content) as { workspaces?: unknown };
-      return parsed.workspaces !== undefined;
-    } catch {
-      return false;
-    }
+    const content = await this.fs.readFile(pkgPath);
+    const parsed = JSON.parse(content) as { workspaces?: unknown };
+    return parsed.workspaces !== undefined;
   }
 
   private async detectFramework(projectRoot: string): Promise<boolean> {

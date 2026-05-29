@@ -81,26 +81,35 @@ export class RestoreMergeFilesUseCase {
     projectRoot: string
   ): Promise<MergeDriftEntry | null> {
     const diskPath = join(projectRoot, entry.relativePath);
-    const diskExists = await this.fs.fileExists(diskPath);
-    if (!diskExists) {
-      return {
-        relativePath: entry.relativePath,
-        content: distFile.content,
-        reason: "deleted",
-        mergeStrategy: distFile.mergeStrategy,
-        sectionKey: entry.sectionKey,
-      };
+    if (!(await this.fs.fileExists(diskPath))) {
+      return this.buildDriftEntry(entry, distFile, "deleted");
     }
+    return this.checkModifiedDrift(diskPath, entry, distFile);
+  }
+
+  private async checkModifiedDrift(
+    diskPath: string,
+    entry: MergeFileEntry,
+    distFile: InstallationFile
+  ): Promise<MergeDriftEntry | null> {
     const diskContent = await this.fs.readFile(diskPath);
     const diskEntries = extractMergeEntries(diskContent, entry.sectionKey, this.hasher);
     const hasDrift = Object.keys(entry.entries).some(
       (key) => diskEntries[key]?.value !== entry.entries[key].value
     );
     if (!hasDrift) return null;
+    return this.buildDriftEntry(entry, distFile, "modified");
+  }
+
+  private buildDriftEntry(
+    entry: MergeFileEntry,
+    distFile: InstallationFile,
+    reason: MergeDriftEntry["reason"]
+  ): MergeDriftEntry {
     return {
       relativePath: entry.relativePath,
       content: distFile.content,
-      reason: "modified",
+      reason,
       mergeStrategy: distFile.mergeStrategy,
       sectionKey: entry.sectionKey,
     };

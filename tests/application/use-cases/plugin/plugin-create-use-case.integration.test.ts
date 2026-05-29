@@ -28,12 +28,10 @@ function makeAssetProvider(schema = makeMinimalManifestSchema()): AssetProvider 
     loadDefaultMarketplace: () => {
       throw new Error("not used");
     },
-    loadPluginManifestSchema: () => schema,
-    loadMarketplaceSchema: () => {
+    loadSchema: (name) => {
+      if (name === "plugin-manifest") return schema;
       throw new Error("not used");
     },
-    loadClaudeMarketplaceSchema: () => ({}),
-    loadCodexPluginManifestSchema: () => ({}),
   };
 }
 

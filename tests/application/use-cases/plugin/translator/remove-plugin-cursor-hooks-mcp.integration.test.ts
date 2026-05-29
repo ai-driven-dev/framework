@@ -10,7 +10,7 @@
 import "../../../../../src/domain/tools/ai/cursor.js";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ModeBFlatMaterializationAdapter } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-adapter.js";
+import { ModeBFlatMaterializationTranslator } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/domain/models/manifest.js";
 import { PluginDistribution } from "../../../../../src/domain/models/plugin-distribution.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -63,7 +63,7 @@ describe("Cursor plugin.files tracking enables uninstall of hooks.json and mcp.j
   it("Plugin.files keys join to the exact written absolute paths (uninstall can find the files)", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationAdapter(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool("cursor", "test", []);
 

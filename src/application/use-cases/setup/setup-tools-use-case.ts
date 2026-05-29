@@ -1,5 +1,7 @@
+import { CategoryMismatchError } from "../../../domain/errors.js";
 import { Manifest } from "../../../domain/models/manifest.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../../domain/models/tool-ids.js";
+import { AI_TOOL_IDS } from "../../../domain/models/tool-ids.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
 import type {
@@ -53,7 +55,7 @@ export class SetupToolsUseCase {
     options: SetupToolsOptions
   ): Promise<InstallRuntimeConfigResult> {
     const config = getToolConfig(toolId);
-    if (!isAiTool(config)) throw new Error(`"${toolId}" is not an AI tool`);
+    if (!isAiTool(config)) throw new CategoryMismatchError([toolId], "ai", AI_TOOL_IDS);
     return this.installRuntimeConfigUseCase.execute({
       toolId,
       projectRoot: options.projectRoot,

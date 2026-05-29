@@ -1,3 +1,4 @@
+import { MissingAbsOutError } from "../errors.js";
 import {
   FLAT_AGENT_OUTPUT_EXT,
   FLAT_GITHUB_AGENTS_PREFIX,
@@ -94,7 +95,7 @@ export function resolveClaudeRootSuffixForFlat(
 ): string {
   const flatPath = resolveFlatPath(suffix, plugin);
   if (mode === "relative") return `./${flatPath}`;
-  if (!absOut) throw new Error("absOut is required for absolute MCP path resolution");
+  if (!absOut) throw new MissingAbsOutError();
   return `${absOut}/${flatPath}`;
 }
 

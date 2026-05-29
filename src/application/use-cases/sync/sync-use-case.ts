@@ -7,6 +7,7 @@ import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
+import type { AiTool } from "../../../domain/tools/contracts.js";
 import { getToolConfig, isAiTool, type ToolId } from "../../../domain/tools/registry.js";
 import { InputRequiredError, NoManifestError } from "../../errors.js";
 import type {
@@ -65,25 +66,39 @@ export class SyncUseCase {
     options: SyncOptions,
     manifest: ManifestShape
   ): Promise<SyncResult> {
-    const docsDir = options.docsDir ?? DOCS_DIR;
-    const force = options.force ?? false;
-    const includeUserFiles = options.includeUserFiles ?? false;
-
     const { sourceTool, targetTools } = await this.sourceResolver.execute(manifest, {
       projectRoot: options.projectRoot,
       sourceTool: options.sourceTool,
       targetTools: options.targetTools,
       interactive: options.interactive,
     });
-
     const sourceConfigRaw = getToolConfig(sourceTool);
     if (!isAiTool(sourceConfigRaw))
       throw new InputRequiredError(`Source tool '${sourceTool}' does not support sync.`);
+    const toolResults = await this.propagateToTargets(
+      options,
+      manifest,
+      sourceTool,
+      targetTools,
+      sourceConfigRaw
+    );
+    await this.maybeSyncPlugins(options, sourceTool, targetTools);
+    return this.buildSyncTotals(sourceTool, toolResults);
+  }
 
+  private async propagateToTargets(
+    options: SyncOptions,
+    manifest: ManifestShape,
+    sourceTool: ToolId,
+    targetTools: ToolId[],
+    sourceConfigRaw: AiTool<unknown>
+  ): Promise<
+    ReturnType<SyncFilePropagationUseCase["syncAllTargets"]> extends Promise<infer R> ? R : never
+  > {
+    const docsDir = options.docsDir ?? DOCS_DIR;
     const sourceManifestFiles = manifest.getToolFiles(sourceTool);
     const sourceManifestMap = new Map(sourceManifestFiles.map((f) => [f.relativePath, f.hash]));
-
-    const toolResults = await this.filePropagation.syncAllTargets({
+    return this.filePropagation.syncAllTargets({
       targetTools,
       sourceTool,
       sourceConfig: sourceConfigRaw,
@@ -92,12 +107,9 @@ export class SyncUseCase {
       manifest,
       projectRoot: options.projectRoot,
       docsDir,
-      force,
-      includeUserFiles,
+      force: options.force ?? false,
+      includeUserFiles: options.includeUserFiles ?? false,
     });
-
-    await this.maybeSyncPlugins(options, sourceTool, targetTools);
-    return this.buildSyncTotals(sourceTool, toolResults);
   }
 
   private async maybeSyncPlugins(

@@ -1,6 +1,6 @@
-import { HooksCapability } from "../../../domain/capabilities/hooks-capability.js";
 import { McpCapability } from "../../../domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../../domain/capabilities/settings-capability.js";
+import type { ConfigCapability } from "../../../domain/models/config-capability.js";
 import { InstallationFile } from "../../../domain/models/file.js";
 import type { ConfigRef } from "../../../domain/models/framework.js";
 import { CONFIG_MCP } from "../../../domain/models/framework.js";
@@ -11,33 +11,6 @@ import type { AssetProvider } from "../../../domain/ports/asset-provider.js";
 import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { Platform } from "../../../domain/ports/platform.js";
-import type { ToolConfig } from "../../../domain/tools/registry.js";
-
-export type ConfigCapability = McpCapability | HooksCapability | SettingsCapability;
-
-export function extractConfigCapabilities(config: ToolConfig): ConfigCapability[] {
-  const result: ConfigCapability[] = [];
-
-  // IDE tools expose settings directly
-  if ("settings" in config) {
-    const s = (config as { settings: unknown }).settings;
-    if (s instanceof SettingsCapability) result.push(s);
-    else if (Array.isArray(s)) result.push(...(s as SettingsCapability[]));
-  }
-
-  // AI tools expose capabilities bag
-  if (config.kind === "ai") {
-    const aiCaps = config.capabilities as Record<string, unknown>;
-    if (typeof aiCaps === "object" && aiCaps !== null) {
-      if (aiCaps.mcp instanceof McpCapability) result.push(aiCaps.mcp);
-      if (aiCaps.hooks instanceof HooksCapability) result.push(aiCaps.hooks);
-      if (aiCaps.settings instanceof SettingsCapability) result.push(aiCaps.settings);
-      if (Array.isArray(aiCaps.settings)) result.push(...(aiCaps.settings as SettingsCapability[]));
-    }
-  }
-
-  return result;
-}
 
 interface InstallConfigOptions {
   capabilities: readonly ConfigCapability[];

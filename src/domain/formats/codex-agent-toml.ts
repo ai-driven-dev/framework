@@ -12,6 +12,10 @@ import { stringifyToml } from "./toml.js";
  *   developer_instructions — verbatim body, no rewrite (D-4)
  *
  * Key insertion order is fixed for deterministic output (D-15).
+ *
+ * No inverse: codexAgentMarkdownToToml is lossy — the model field is intentionally
+ * omitted (D-5) and the TOML schema diverges from markdown frontmatter, making a
+ * lossless round-trip technically impossible.
  */
 export function codexAgentMarkdownToToml(
   content: string,

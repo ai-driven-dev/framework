@@ -1,7 +1,7 @@
 import "../../../../../src/domain/tools/ai/cursor.js";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ModeBFlatMaterializationAdapter } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-adapter.js";
+import { ModeBFlatMaterializationTranslator } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/domain/models/manifest.js";
 import { PluginDistribution } from "../../../../../src/domain/models/plugin-distribution.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -34,7 +34,7 @@ describe("install cursor plugin via Mode B (integration)", () => {
   it("materializes files at user-scope path under stubbed homedir", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationAdapter(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool("cursor", "test", []);
 
@@ -56,7 +56,7 @@ describe("install cursor plugin via Mode B (integration)", () => {
   it("does not write any file under projectRoot", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationAdapter(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool("cursor", "test", []);
 
@@ -76,7 +76,7 @@ describe("install cursor plugin via Mode B (integration)", () => {
   it("stores base-relative keys in Plugin.files (not absolute paths)", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationAdapter(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool("cursor", "test", []);
 
@@ -103,7 +103,7 @@ describe("install cursor plugin via Mode B (integration)", () => {
   it("join(resolvedBase, key) matches the written absolute path", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationAdapter(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool("cursor", "test", []);
 

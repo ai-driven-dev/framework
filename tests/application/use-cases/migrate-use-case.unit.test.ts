@@ -5,7 +5,7 @@ import "../../../src/domain/tools/ai/cursor.js";
 import "../../../src/domain/tools/ai/opencode.js";
 import "../../../src/domain/tools/ide/vscode.js";
 import { describe, expect, it } from "vitest";
-import { computeMigrationPlan } from "../../../src/application/use-cases/migrate-use-case.js";
+import { computeMigrationPlan } from "../../../src/domain/models/migration-plan.js";
 
 const BASE = {
   version: 5,

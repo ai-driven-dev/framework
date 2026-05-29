@@ -5,6 +5,10 @@ import {
   IDE_TOOL_IDS,
   type IdeToolId,
 } from "../../../domain/models/tool-ids.js";
+import {
+  recommendAiTools,
+  recommendIdeTools,
+} from "../../../domain/models/tool-recommendations.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
 
 export interface SetupToolsPromptOptions {
@@ -48,20 +52,4 @@ export class SetupToolsPromptUseCase {
     ]);
     return { aiTools, ideTools };
   }
-}
-
-export function recommendAiTools(context?: ProjectContext): readonly AiToolId[] {
-  if (context === undefined) return ["claude"];
-  if (context.hasFramework) return [];
-  if (context.isMonorepo) return ["claude", "copilot"];
-  if (context.stack === "typescript") return ["claude", "copilot"];
-  if (context.stack === "python") return ["claude", "codex"];
-  return ["claude"];
-}
-
-export function recommendIdeTools(context?: ProjectContext): readonly IdeToolId[] {
-  if (context === undefined) return [];
-  if (context.hasFramework) return [];
-  if (context.stack === "typescript" || context.isMonorepo) return ["vscode"];
-  return [];
 }

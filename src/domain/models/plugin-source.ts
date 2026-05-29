@@ -117,15 +117,20 @@ function parseLocal(raw: Record<string, unknown>): PluginSourceLocal {
 }
 
 export function parsePluginSource(raw: unknown): PluginSource {
-  if (typeof raw === "string") {
-    if (raw.startsWith("./") || raw.startsWith("/")) return { kind: "local", path: raw };
-    if (GITHUB_REPO_REGEX.test(raw)) return { kind: "github", repo: raw };
-    throw new InvalidPluginSourceError(`string source "${raw}" is not a recognized path or repo.`);
-  }
+  if (typeof raw === "string") return parseStringPluginSource(raw);
   if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
     throw new InvalidPluginSourceError("expected an object.");
   }
-  const obj = raw as Record<string, unknown>;
+  return parseObjectPluginSource(raw as Record<string, unknown>);
+}
+
+function parseStringPluginSource(raw: string): PluginSource {
+  if (raw.startsWith("./") || raw.startsWith("/")) return { kind: "local", path: raw };
+  if (GITHUB_REPO_REGEX.test(raw)) return { kind: "github", repo: raw };
+  throw new InvalidPluginSourceError(`string source "${raw}" is not a recognized path or repo.`);
+}
+
+function parseObjectPluginSource(obj: Record<string, unknown>): PluginSource {
   const kind = obj.kind;
   switch (kind) {
     case "github":
@@ -148,35 +153,28 @@ export function parsePluginSource(raw: unknown): PluginSource {
 const GITLAB_PREFIX = "gitlab:";
 
 export function parsePluginSourceShorthand(raw: string): PluginSource {
-  if (raw.startsWith("https://") || raw.startsWith("http://")) {
-    return { kind: "url", url: raw };
-  }
-  if (raw.startsWith("git@")) {
-    return { kind: "url", url: raw };
-  }
-  if (raw.startsWith("./") || raw.startsWith("/")) {
-    return { kind: "local", path: raw };
-  }
-  if (raw.startsWith(GITLAB_PREFIX)) {
-    return parseGitLabShorthand(raw.slice(GITLAB_PREFIX.length));
-  }
-  if (GITHUB_REPO_REGEX.test(raw)) {
-    return { kind: "github", repo: raw };
-  }
-  const atIndex = raw.lastIndexOf("@");
-  if (atIndex > 0) {
-    const repo = raw.slice(0, atIndex);
-    const ref = raw.slice(atIndex + 1);
-    if (GITHUB_REPO_REGEX.test(repo)) {
-      return { kind: "github", repo, ref };
-    }
-  }
+  if (raw.startsWith("https://") || raw.startsWith("http://")) return { kind: "url", url: raw };
+  if (raw.startsWith("git@")) return { kind: "url", url: raw };
+  if (raw.startsWith("./") || raw.startsWith("/")) return { kind: "local", path: raw };
+  if (raw.startsWith(GITLAB_PREFIX)) return parseGitLabShorthand(raw.slice(GITLAB_PREFIX.length));
+  if (GITHUB_REPO_REGEX.test(raw)) return { kind: "github", repo: raw };
+  const versioned = parseGitHubVersionedShorthand(raw);
+  if (versioned !== null) return versioned;
   try {
     return parsePluginSource(JSON.parse(raw));
   } catch (err) {
     if (err instanceof InvalidPluginSourceError) throw err;
     throw new InvalidPluginSourceError(`unrecognized source format: "${raw}"`);
   }
+}
+
+function parseGitHubVersionedShorthand(raw: string): PluginSourceGitHub | null {
+  const atIndex = raw.lastIndexOf("@");
+  if (atIndex <= 0) return null;
+  const repo = raw.slice(0, atIndex);
+  const ref = raw.slice(atIndex + 1);
+  if (!GITHUB_REPO_REGEX.test(repo)) return null;
+  return { kind: "github", repo, ref };
 }
 
 function parseGitLabShorthand(raw: string): PluginSourceUrl {

@@ -17,7 +17,6 @@ import { registerStatusCommand } from "./application/commands/status.js";
 import { registerSyncCommand } from "./application/commands/sync.js";
 import { registerUpdateCommand } from "./application/commands/update.js";
 import { CLIOutput } from "./application/output.js";
-import { CheckUpdateUseCase } from "./application/use-cases/check-update-use-case.js";
 import { MigrateUseCase } from "./application/use-cases/migrate-use-case.js";
 import { CurrentVersionAdapter } from "./infrastructure/adapters/current-version-adapter.js";
 import { createDeps } from "./infrastructure/deps.js";
@@ -63,7 +62,7 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
   if (!deps) return;
   const cmd = actionCommand.name();
   const cmdPath = resolveCommandPath(actionCommand);
-  await new CheckUpdateUseCase(deps.cliUpdater, deps.currentVersionProvider, output).execute({
+  await deps.checkUpdateUseCase.execute({
     skipCliCheck: cmd === "self-update",
   });
   if (MIGRATION_BYPASS_COMMANDS.has(cmd) || MIGRATION_BYPASS_COMMANDS.has(cmdPath.split(" ")[0]))

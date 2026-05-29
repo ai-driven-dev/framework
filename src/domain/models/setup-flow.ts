@@ -1,3 +1,4 @@
+import { InvalidPluginModeConfigError, InvalidSetupToolIdError } from "../errors.js";
 import type { MarketplaceSourceMode } from "./marketplace-source-mode.js";
 import { type ToolId, VALID_TOOL_IDS } from "./tool-ids.js";
 
@@ -44,17 +45,21 @@ export class SetupFlow {
     const all = [...aiTools, ...ideTools];
     for (const id of all) {
       if (!(VALID_TOOL_IDS as readonly string[]).includes(id)) {
-        throw new Error(`Invalid tool ID: "${id}". Valid IDs: ${VALID_TOOL_IDS.join(", ")}`);
+        throw new InvalidSetupToolIdError(id, VALID_TOOL_IDS);
       }
     }
   }
 
   private validatePluginMode(mode: PluginInstallMode, names: readonly string[]): void {
     if (mode === "named" && names.length === 0) {
-      throw new Error('Plugin mode "named" requires at least one plugin name.');
+      throw new InvalidPluginModeConfigError(
+        'Plugin mode "named" requires at least one plugin name.'
+      );
     }
     if (mode !== "named" && names.length > 0) {
-      throw new Error(`Plugin names provided but mode is "${mode}" (expected "named").`);
+      throw new InvalidPluginModeConfigError(
+        `Plugin names provided but mode is "${mode}" (expected "named").`
+      );
     }
   }
 

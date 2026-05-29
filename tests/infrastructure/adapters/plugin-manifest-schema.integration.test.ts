@@ -15,7 +15,7 @@ const ALL_KINDS: PluginComponentKind[] = ["full", "skills", "agents", "hooks", "
 describe("plugin manifest schema validation (real adapters)", () => {
   const assetProvider = new BundledAssetProviderAdapter();
   const validator = new AjvSchemaValidatorAdapter();
-  const schema = assetProvider.loadPluginManifestSchema();
+  const schema = assetProvider.loadSchema("plugin-manifest");
 
   for (const kind of ALL_KINDS) {
     it(`scaffold kind '${kind}' generates a valid plugin.json`, () => {

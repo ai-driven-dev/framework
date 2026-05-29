@@ -14,6 +14,9 @@ export const COPILOT_AGENT_FRONTMATTER_KEYS: readonly [
 /**
  * Returns a new object containing only the Copilot-supported frontmatter keys
  * with non-undefined values. Iteration order matches the allowlist constant.
+ *
+ * No inverse: stripAgentFrontmatter is lossy — keys not in the allowlist are
+ * permanently discarded and cannot be recovered from the output.
  */
 export function stripAgentFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};

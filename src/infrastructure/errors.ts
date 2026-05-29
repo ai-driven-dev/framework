@@ -56,3 +56,10 @@ export class CacheMissError extends Error {
     this.name = "CacheMissError";
   }
 }
+
+export class AssetNotFoundError extends Error {
+  constructor(assetName: string) {
+    super(`Bundled asset not found: '${assetName}'`);
+    this.name = "AssetNotFoundError";
+  }
+}

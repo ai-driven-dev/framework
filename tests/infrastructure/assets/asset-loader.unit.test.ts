@@ -65,7 +65,7 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
 
   it("throws for an unknown file name", () => {
     expect(() => provider.loadConfigAsset("claude", "missing.json")).toThrow(
-      "No config asset for tool 'claude' with file 'missing.json'"
+      "Bundled asset not found: 'claude/missing.json'"
     );
   });
 });
@@ -79,9 +79,9 @@ describe("BundledAssetProviderAdapter.loadDefaultMarketplace", () => {
   });
 });
 
-describe("BundledAssetProviderAdapter.loadMarketplaceSchema", () => {
+describe("BundledAssetProviderAdapter.loadSchema — marketplace", () => {
   it("returns a Copilot-native schema with required fields including metadata", () => {
-    const schema = provider.loadMarketplaceSchema() as Record<string, unknown>;
+    const schema = provider.loadSchema("marketplace") as Record<string, unknown>;
     expect(schema).toHaveProperty("required");
     expect(schema).toHaveProperty("properties");
     const required = schema.required as string[];
@@ -92,22 +92,22 @@ describe("BundledAssetProviderAdapter.loadMarketplaceSchema", () => {
   });
 
   it("requires metadata.pluginRoot in the schema properties", () => {
-    const schema = provider.loadMarketplaceSchema() as {
+    const schema = provider.loadSchema("marketplace") as {
       properties: { metadata: { properties: { pluginRoot: unknown } } };
     };
     expect(schema.properties.metadata.properties.pluginRoot).toBeDefined();
   });
 
   it("documents the awesome-copilot empirical source in $comment", () => {
-    const schema = provider.loadMarketplaceSchema() as Record<string, unknown>;
+    const schema = provider.loadSchema("marketplace") as Record<string, unknown>;
     const comment = schema.$comment as string;
     expect(typeof comment).toBe("string");
     expect(comment.toLowerCase()).toContain("awesome-copilot");
   });
 
   it("returns the same object on a second call (memoized)", () => {
-    const first = provider.loadMarketplaceSchema();
-    const second = provider.loadMarketplaceSchema();
+    const first = provider.loadSchema("marketplace");
+    const second = provider.loadSchema("marketplace");
     expect(first).toBe(second);
   });
 });

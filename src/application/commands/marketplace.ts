@@ -4,7 +4,6 @@ import {
   describePluginSource,
   parsePluginSourceShorthand,
 } from "../../domain/models/plugin-source.js";
-import { MarketplaceCacheAdapter } from "../../infrastructure/adapters/marketplace-cache-adapter.js";
 import { createDeps, createMenuDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
@@ -140,11 +139,10 @@ export function registerMarketplaceCommand(program: Command): void {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        if (cmdOptions.force) {
-          const cacheAdapter = new MarketplaceCacheAdapter(projectRoot);
-          await cacheAdapter.clear(name);
-        }
         const deps = await createDeps(projectRoot, { verbose }, output);
+        if (cmdOptions.force) {
+          await deps.marketplaceCache.clear(name);
+        }
         const { results, failedCount } = await deps.marketplaceRefreshUseCase.execute({
           projectRoot,
           name,

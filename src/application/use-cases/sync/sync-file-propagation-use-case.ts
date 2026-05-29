@@ -14,7 +14,7 @@ import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
-import type { AiTool } from "../../../domain/tools/contracts.js";
+import type { AiTool, UserFileSectionKey } from "../../../domain/tools/contracts.js";
 import type { ToolId } from "../../../domain/tools/registry.js";
 import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
 import type { SyncConflictResolverUseCase } from "./sync-conflict-resolver-use-case.js";
@@ -99,8 +99,6 @@ export class SyncFilePropagationUseCase {
   }): Promise<SyncToolResult> {
     const {
       targetToolId,
-      sourceConfig,
-      sourceManifestFiles,
       sourceManifestMap,
       manifest,
       projectRoot,
@@ -110,8 +108,50 @@ export class SyncFilePropagationUseCase {
     } = opts;
     const targetConfigRaw = getToolConfig(targetToolId);
     if (!isAiTool(targetConfigRaw)) return { targetToolId, files: [] };
+    const fileResults: SyncFileResult[] = [];
+    const ctx = this.buildPropagationContext({
+      ...opts,
+      targetConfig: targetConfigRaw,
+      fileResults,
+    });
+    await this.runAllPropagations(
+      ctx,
+      sourceManifestMap,
+      manifest,
+      projectRoot,
+      docsDir,
+      force,
+      includeUserFiles
+    );
+    return { targetToolId, files: fileResults };
+  }
 
-    const targetConfig = targetConfigRaw;
+  private buildPropagationContext(opts: {
+    sourceManifestFiles: ReadonlyArray<{
+      relativePath: string;
+      hash: { value: string };
+      frameworkPath?: string;
+    }>;
+    sourceConfig: AiTool<unknown>;
+    targetConfig: AiTool<unknown>;
+    targetToolId: ToolId;
+    manifest: ManifestShape;
+    fileResults: SyncFileResult[];
+    projectRoot: string;
+    docsDir: string;
+    force: boolean;
+  }): PropagationContext {
+    const {
+      sourceManifestFiles,
+      sourceConfig,
+      targetConfig,
+      targetToolId,
+      manifest,
+      fileResults,
+      projectRoot,
+      docsDir,
+      force,
+    } = opts;
     const targetManifestFiles = manifest.getToolFiles(targetToolId);
     const targetManifestMap = new Map(targetManifestFiles.map((f) => [f.relativePath, f.hash]));
     const targetByFrameworkPath = new Map(
@@ -119,8 +159,7 @@ export class SyncFilePropagationUseCase {
         .filter((f): f is typeof f & { frameworkPath: string } => f.frameworkPath !== undefined)
         .map((f) => [canonicalFrameworkKey(f.frameworkPath), f.relativePath])
     );
-    const fileResults: SyncFileResult[] = [];
-    const ctx: PropagationContext = {
+    return {
       sourceManifestFiles,
       sourceConfig,
       targetConfig,
@@ -131,42 +170,50 @@ export class SyncFilePropagationUseCase {
       docsDir,
       force,
     };
+  }
 
+  private async runAllPropagations(
+    ctx: PropagationContext,
+    sourceManifestMap: Map<string, { value: string }>,
+    manifest: ManifestShape,
+    projectRoot: string,
+    docsDir: string,
+    force: boolean,
+    includeUserFiles: boolean
+  ): Promise<void> {
     await this.propagateModified(ctx);
     await this.propagateAdded({
       sourceManifestMap,
-      sourceConfig,
-      targetConfig,
-      fileResults,
+      sourceConfig: ctx.sourceConfig,
+      targetConfig: ctx.targetConfig,
+      fileResults: ctx.fileResults,
       projectRoot,
       docsDir,
       includeUserFiles,
     });
     await this.propagateDeleted({
-      sourceManifestFiles,
-      targetByFrameworkPath,
-      fileResults,
+      sourceManifestFiles: ctx.sourceManifestFiles,
+      targetByFrameworkPath: ctx.targetByFrameworkPath,
+      fileResults: ctx.fileResults,
       projectRoot,
       docsDir,
     });
     await this.propagatePluginsModified(
-      sourceConfig,
-      targetConfig,
+      ctx.sourceConfig,
+      ctx.targetConfig,
       manifest,
-      fileResults,
+      ctx.fileResults,
       projectRoot,
       docsDir,
       force
     );
     await this.propagatePluginsDeleted(
-      sourceConfig,
-      targetConfig,
+      ctx.sourceConfig,
+      ctx.targetConfig,
       manifest,
-      fileResults,
+      ctx.fileResults,
       projectRoot
     );
-
-    return { targetToolId, files: fileResults };
   }
 
   private async propagateModified(ctx: PropagationContext): Promise<void> {
@@ -180,52 +227,62 @@ export class SyncFilePropagationUseCase {
     ctx: PropagationContext
   ): Promise<void> {
     const { relativePath, hash: manifestHash, frameworkPath } = sourceFile;
-    const {
-      sourceConfig,
-      targetConfig,
-      targetManifestMap,
-      targetByFrameworkPath,
-      fileResults,
-      projectRoot,
-      docsDir,
-      force,
-    } = ctx;
-    if (new SyncPolicy(docsDir).isProtected(relativePath) || frameworkPath === undefined) return;
-
-    const diskSourcePath = join(projectRoot, relativePath);
+    if (new SyncPolicy(ctx.docsDir).isProtected(relativePath) || frameworkPath === undefined)
+      return;
+    const diskSourcePath = join(ctx.projectRoot, relativePath);
     if (!(await this.fs.fileExists(diskSourcePath))) return;
     const diskSourceHash = await this.fs.readFileHash(diskSourcePath);
     if (diskSourceHash.value === manifestHash.value) return;
+    const mapping = this.resolveTargetMapping(frameworkPath, ctx);
+    if (mapping === null) return;
+    await this.propagateDirtyFile(
+      diskSourcePath,
+      mapping.targetRelativePath,
+      mapping.sectionKey,
+      ctx
+    );
+  }
 
+  private resolveTargetMapping(
+    frameworkPath: string,
+    ctx: PropagationContext
+  ): { sectionKey: UserFileSectionKey; targetRelativePath: string } | null {
     const sectionKey = getSectionKeyFromFrameworkPath(frameworkPath);
-    const targetRelativePath = targetByFrameworkPath.get(canonicalFrameworkKey(frameworkPath));
-    if (sectionKey === null || targetRelativePath === undefined) return;
+    const targetRelativePath = ctx.targetByFrameworkPath.get(canonicalFrameworkKey(frameworkPath));
+    if (sectionKey === null || targetRelativePath === undefined) return null;
+    return { sectionKey, targetRelativePath };
+  }
 
+  private async propagateDirtyFile(
+    diskSourcePath: string,
+    targetRelativePath: string,
+    sectionKey: UserFileSectionKey,
+    ctx: PropagationContext
+  ): Promise<void> {
     const diskSourceContent = await this.fs.readFile(diskSourcePath);
     const targetContent = transformContent(
       diskSourceContent,
-      sourceConfig,
-      targetConfig,
+      ctx.sourceConfig,
+      ctx.targetConfig,
       sectionKey,
-      docsDir
+      ctx.docsDir
     );
-    const diskTargetPath = join(projectRoot, targetRelativePath);
+    const diskTargetPath = join(ctx.projectRoot, targetRelativePath);
     const diskTargetExists = await this.fs.fileExists(diskTargetPath);
-
     const { outcome, conflict } = await this.conflictResolver.resolveWriteOutcome({
       diskTargetPath,
       diskTargetExists,
       targetRelativePath,
-      targetManifestMap,
+      targetManifestMap: ctx.targetManifestMap,
       targetContent,
-      force,
+      force: ctx.force,
     });
     await this.applyOutcome(
       outcome,
       diskTargetPath,
       targetContent,
       targetRelativePath,
-      fileResults,
+      ctx.fileResults,
       conflict
     );
   }
@@ -534,7 +591,7 @@ export class SyncFilePropagationUseCase {
 /**
  * Resolves the plugin install base directory for a tool.
  * Returns projectRoot for project-scope tools and the user-homedir-resolved path for user-scope tools.
- * Matches the base-dir resolution used by ModeBFlatMaterializationAdapter and StatusUseCase.
+ * Matches the base-dir resolution used by ModeBFlatMaterializationTranslator and StatusUseCase.
  */
 function resolvePluginBaseDir(toolConfig: AiTool<unknown>, projectRoot: string): string {
   const caps = toolConfig.capabilities as Record<string, unknown>;

@@ -10,7 +10,7 @@ import type { PluginSourceGitHub } from "../../domain/models/plugin-source.js";
 import type { RawCatalogFetcher } from "../../domain/ports/raw-catalog-fetcher.js";
 import type { TokenProvider } from "../../domain/ports/token-provider.js";
 import { HttpNotFoundError } from "../errors.js";
-import type { HttpClient } from "./http-client.js";
+import type { HttpClient } from "../http/http-client.js";
 
 const GITHUB_API_BASE = "https://api.github.com";
 const RAW_ACCEPT = "application/vnd.github.raw";

@@ -12,7 +12,7 @@ import "../../../../../src/domain/tools/ai/opencode.js";
 import "../../../../../src/domain/tools/ai/claude.js";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ModeBFlatMaterializationAdapter } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-adapter.js";
+import { ModeBFlatMaterializationTranslator } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/domain/models/manifest.js";
 import { PluginDistribution } from "../../../../../src/domain/models/plugin-distribution.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -48,12 +48,12 @@ function buildDist(name = PLUGIN_NAME, mcpContent = MCP_CONTENT): PluginDistribu
 }
 
 function buildAdapter(seed: Record<string, string> = {}): {
-  adapter: ModeBFlatMaterializationAdapter;
+  adapter: ModeBFlatMaterializationTranslator;
   fs: InMemoryFileAdapter;
 } {
   const fs = new InMemoryFileAdapter(seed);
   const hasher = new DeterministicHasher();
-  const adapter = new ModeBFlatMaterializationAdapter(fs, hasher, () => STUB_HOME);
+  const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
   return { adapter, fs };
 }
 
@@ -291,7 +291,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
     expect(parsed.mcp["local-tool"]).toBeDefined();
   });
 
-  it("collision: plugin server name matches user-owned server → skip entry returned, user server preserved", async () => {
+  it("skips a colliding plugin server entry and preserves the user-owned server", async () => {
     const userServer = { type: "local", command: "node", args: ["user.js"], enabled: true };
     const { adapter, fs } = buildAdapter({
       [OPENCODE_JSON]: JSON.stringify({ mcp: { "local-tool": userServer } }, null, 2),

@@ -1,4 +1,5 @@
 import { dirname, join } from "node:path";
+import type { Manifest } from "../../domain/models/manifest.js";
 import {
   isMergeContentEmpty,
   type MergeFileEntry,
@@ -46,46 +47,65 @@ export class CleanUseCase {
       const emptyPreview: CleanPreview = { tools: [], totalFileCount: 0 };
       return { dryRun: false, manifestFound: false, preview: emptyPreview, fileCount: 0 };
     }
+    const preview = this.buildPreview(manifest);
+    const dryRunResult = await this.confirmOrDryRun(options, preview);
+    if (dryRunResult !== null) return dryRunResult;
+    const deleted = await this.deleteAllToolFiles(manifest, options.projectRoot);
+    await this.fs.deleteDirectory(join(options.projectRoot, AIDD_DIR));
+    await new GitignoreUseCase(this.fs).remove(options.projectRoot, [`${AIDD_DIR}/cache/`]);
+    return { dryRun: false, manifestFound: true, preview, fileCount: deleted };
+  }
 
+  private buildPreview(manifest: Manifest): CleanPreview {
     const tools = manifest.getInstalledToolIds().map((toolId) => ({
       toolId,
       fileCount: manifest.getToolFiles(toolId).length + manifest.getMergeFiles(toolId).length,
     }));
     const totalFileCount = tools.reduce((s, t) => s + t.fileCount, 0);
+    return { tools, totalFileCount };
+  }
 
-    const preview: CleanPreview = { tools, totalFileCount };
-
-    if (!options.force) {
-      if (options.interactive && this.prompter) {
-        const confirmed = await this.prompter.confirm("Remove all AIDD files?");
-        if (!confirmed) return { dryRun: true, manifestFound: true, preview, fileCount: 0 };
-      } else {
-        return { dryRun: true, manifestFound: true, preview, fileCount: 0 };
-      }
+  private async confirmOrDryRun(
+    options: CleanOptions,
+    preview: CleanPreview
+  ): Promise<CleanResult | null> {
+    if (options.force) return null;
+    if (options.interactive && this.prompter) {
+      const confirmed = await this.prompter.confirm("Remove all AIDD files?");
+      if (!confirmed) return { dryRun: true, manifestFound: true, preview, fileCount: 0 };
+      return null;
     }
+    return { dryRun: true, manifestFound: true, preview, fileCount: 0 };
+  }
 
+  private async deleteAllToolFiles(manifest: Manifest, projectRoot: string): Promise<number> {
     let deleted = 0;
-
     for (const toolId of manifest.getInstalledToolIds()) {
       this.logger.info(`Removing ${toolId} files...`);
-      deleted += await this.deleteFiles(manifest.getToolFiles(toolId), options.projectRoot);
-      deleted += await this.cleanMergeFileKeys(manifest.getMergeFiles(toolId), options.projectRoot);
+      deleted += await this.deleteFiles(manifest.getToolFiles(toolId), projectRoot);
+      deleted += await this.cleanMergeFileKeys(manifest.getMergeFiles(toolId), projectRoot);
       if ((AI_TOOL_IDS as readonly string[]).includes(toolId)) {
-        for (const plugin of manifest.getPlugins(toolId)) {
-          for (const relativePath of plugin.files.keys()) {
-            const fullPath = join(options.projectRoot, relativePath);
-            await this.fs.deleteFile(fullPath);
-            await this.fs.deleteEmptyDirectories(dirname(fullPath));
-            deleted++;
-          }
-        }
+        deleted += await this.deleteToolPluginFiles(manifest, toolId, projectRoot);
       }
     }
+    return deleted;
+  }
 
-    await this.fs.deleteDirectory(join(options.projectRoot, AIDD_DIR));
-    await new GitignoreUseCase(this.fs).remove(options.projectRoot, [`${AIDD_DIR}/cache/`]);
-
-    return { dryRun: false, manifestFound: true, preview, fileCount: deleted };
+  private async deleteToolPluginFiles(
+    manifest: Manifest,
+    toolId: ToolId,
+    projectRoot: string
+  ): Promise<number> {
+    let count = 0;
+    for (const plugin of manifest.getPlugins(toolId as Parameters<Manifest["getPlugins"]>[0])) {
+      for (const relativePath of plugin.files.keys()) {
+        const fullPath = join(projectRoot, relativePath);
+        await this.fs.deleteFile(fullPath);
+        await this.fs.deleteEmptyDirectories(dirname(fullPath));
+        count++;
+      }
+    }
+    return count;
   }
 
   private async cleanMergeFileKeys(
@@ -96,24 +116,27 @@ export class CleanUseCase {
     for (const mergeFile of mergeFiles) {
       const fullPath = join(projectRoot, mergeFile.relativePath);
       if (!(await this.fs.fileExists(fullPath))) continue;
-      const keys = Object.keys(mergeFile.entries);
-      if (keys.length === 0) {
-        await this.fs.deleteFile(fullPath);
-        await this.fs.deleteEmptyDirectories(dirname(fullPath));
-        count++;
-        continue;
-      }
-      const content = await this.fs.readFile(fullPath);
-      const cleaned = removeEntriesFromJson(content, mergeFile.sectionKey, keys);
-      if (isMergeContentEmpty(cleaned, mergeFile.sectionKey)) {
-        await this.fs.deleteFile(fullPath);
-        await this.fs.deleteEmptyDirectories(dirname(fullPath));
-      } else {
-        await this.fs.writeFile(fullPath, cleaned);
-      }
+      await this.applyMergeFileCleaning(fullPath, mergeFile);
       count++;
     }
     return count;
+  }
+
+  private async applyMergeFileCleaning(fullPath: string, mergeFile: MergeFileEntry): Promise<void> {
+    const keys = Object.keys(mergeFile.entries);
+    if (keys.length === 0) {
+      await this.fs.deleteFile(fullPath);
+      await this.fs.deleteEmptyDirectories(dirname(fullPath));
+      return;
+    }
+    const content = await this.fs.readFile(fullPath);
+    const cleaned = removeEntriesFromJson(content, mergeFile.sectionKey, keys);
+    if (isMergeContentEmpty(cleaned, mergeFile.sectionKey)) {
+      await this.fs.deleteFile(fullPath);
+      await this.fs.deleteEmptyDirectories(dirname(fullPath));
+    } else {
+      await this.fs.writeFile(fullPath, cleaned);
+    }
   }
 
   private async deleteFiles(

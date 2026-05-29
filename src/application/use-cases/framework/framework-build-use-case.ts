@@ -118,7 +118,7 @@ export class FrameworkBuildUseCase {
     const manifestPath = join(pluginSrc, SOURCE_PLUGIN_MANIFEST_RELATIVE);
     const raw = await this.fs.readFile(manifestPath);
     const data = JSON.parse(raw) as unknown;
-    this.jsonSchemaValidator.validate(this.assetProvider.loadPluginManifestSchema(), data);
+    this.jsonSchemaValidator.validate(this.assetProvider.loadSchema("plugin-manifest"), data);
   }
 
   private async warnOutOfScopeSections(

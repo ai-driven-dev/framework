@@ -4,10 +4,12 @@ import type { ManifestRepository } from "../../../domain/ports/manifest-reposito
 import { StatusUseCase } from "../status-use-case.js";
 import type { GlobalExecutionError } from "./update-all-use-case.js";
 
+type StatusReport = Awaited<ReturnType<StatusUseCase["execute"]>>;
+
 export interface StatusAllResult {
-  aiTools: Awaited<ReturnType<StatusUseCase["execute"]>>;
-  ideTools: Awaited<ReturnType<StatusUseCase["execute"]>>;
-  plugins: Awaited<ReturnType<StatusUseCase["execute"]>>;
+  aiTools: StatusReport;
+  ideTools: StatusReport;
+  plugins: StatusReport;
   errors: GlobalExecutionError[];
 }
 
@@ -21,6 +23,24 @@ export class StatusAllUseCase {
   async execute(projectRoot: string): Promise<StatusAllResult> {
     const errors: GlobalExecutionError[] = [];
     const useCase = new StatusUseCase(this.fs, this.manifestRepo, this.hasher);
+    const [aiTools, ideTools, plugins] = await this.collectCategoryReports(
+      useCase,
+      projectRoot,
+      errors
+    );
+    return {
+      aiTools: aiTools ?? emptyReport(),
+      ideTools: ideTools ?? emptyReport(),
+      plugins: plugins ?? emptyReport(),
+      errors,
+    };
+  }
+
+  private async collectCategoryReports(
+    useCase: StatusUseCase,
+    projectRoot: string,
+    errors: GlobalExecutionError[]
+  ): Promise<[StatusReport | null, StatusReport | null, StatusReport | null]> {
     const aiTools = await this.runScope(
       () => useCase.execute({ projectRoot, category: "ai" }),
       "ai",
@@ -36,12 +56,7 @@ export class StatusAllUseCase {
       "plugins",
       errors
     );
-    return {
-      aiTools: aiTools ?? emptyReport(),
-      ideTools: ideTools ?? emptyReport(),
-      plugins: plugins ?? emptyReport(),
-      errors,
-    };
+    return [aiTools, ideTools, plugins];
   }
 
   private async runScope<T>(

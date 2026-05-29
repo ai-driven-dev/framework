@@ -20,7 +20,9 @@ import type {
   AssetProvider,
   ConfigAsset,
   DefaultMarketplace,
+  SchemaName,
 } from "../../domain/ports/asset-provider.js";
+import { AssetNotFoundError } from "../errors.js";
 
 const SCHEMA_FILE = "claude-code-plugin-manifest.json";
 const MARKETPLACE_SCHEMA_FILE = "copilot-plugin-marketplace.json";
@@ -40,16 +42,20 @@ const CONFIG_ASSETS: Readonly<Record<ToolId, Readonly<Record<string, ConfigAsset
   },
 };
 
+const SCHEMA_FILES: Record<SchemaName, string> = {
+  "plugin-manifest": SCHEMA_FILE,
+  marketplace: MARKETPLACE_SCHEMA_FILE,
+  "claude-marketplace": CLAUDE_MARKETPLACE_SCHEMA_FILE,
+  "codex-plugin-manifest": CODEX_PLUGIN_MANIFEST_SCHEMA_FILE,
+};
+
 export class BundledAssetProviderAdapter implements AssetProvider {
-  private cachedSchema: object | undefined;
-  private cachedMarketplaceSchema: object | undefined;
-  private cachedClaudeMarketplaceSchema: object | undefined;
-  private cachedCodexPluginManifestSchema: object | undefined;
+  private readonly schemaCache = new Map<SchemaName, object>();
 
   loadConfigAsset(toolId: ToolId, fileName: string): ConfigAsset {
     const asset = CONFIG_ASSETS[toolId][fileName];
     if (asset === undefined) {
-      throw new Error(`No config asset for tool '${toolId}' with file '${fileName}'`);
+      throw new AssetNotFoundError(`${toolId}/${fileName}`);
     }
     return asset;
   }
@@ -58,34 +64,12 @@ export class BundledAssetProviderAdapter implements AssetProvider {
     return defaultMarketplaceJson as DefaultMarketplace;
   }
 
-  loadPluginManifestSchema(): object {
-    if (this.cachedSchema !== undefined) return this.cachedSchema;
-    this.cachedSchema = this.readSchemaFileFromDisk(SCHEMA_FILE);
-    return this.cachedSchema;
-  }
-
-  loadMarketplaceSchema(): object {
-    if (this.cachedMarketplaceSchema !== undefined) return this.cachedMarketplaceSchema;
-    this.cachedMarketplaceSchema = this.readSchemaFileFromDisk(MARKETPLACE_SCHEMA_FILE);
-    return this.cachedMarketplaceSchema;
-  }
-
-  loadClaudeMarketplaceSchema(): object {
-    if (this.cachedClaudeMarketplaceSchema !== undefined) return this.cachedClaudeMarketplaceSchema;
-    this.cachedClaudeMarketplaceSchema = this.readSchemaFileFromDisk(
-      CLAUDE_MARKETPLACE_SCHEMA_FILE
-    );
-    return this.cachedClaudeMarketplaceSchema;
-  }
-
-  loadCodexPluginManifestSchema(): object {
-    if (this.cachedCodexPluginManifestSchema !== undefined) {
-      return this.cachedCodexPluginManifestSchema;
-    }
-    this.cachedCodexPluginManifestSchema = this.readSchemaFileFromDisk(
-      CODEX_PLUGIN_MANIFEST_SCHEMA_FILE
-    );
-    return this.cachedCodexPluginManifestSchema;
+  loadSchema(name: SchemaName): object {
+    const cached = this.schemaCache.get(name);
+    if (cached !== undefined) return cached;
+    const schema = this.readSchemaFileFromDisk(SCHEMA_FILES[name]);
+    this.schemaCache.set(name, schema);
+    return schema;
   }
 
   private readSchemaFileFromDisk(fileName: string): object {
@@ -99,6 +83,6 @@ export class BundledAssetProviderAdapter implements AssetProvider {
         return JSON.parse(readFileSync(p, "utf8")) as object;
       }
     }
-    throw new Error(`Schema file '${fileName}' not found.`);
+    throw new AssetNotFoundError(fileName);
   }
 }

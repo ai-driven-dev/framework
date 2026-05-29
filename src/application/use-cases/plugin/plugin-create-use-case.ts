@@ -73,7 +73,7 @@ export class PluginCreateUseCase {
   ): Promise<ReadonlyMap<string, string>> {
     const scaffold = buildScaffold({ name, kind, version: PLUGIN_VERSION, description });
     const manifestStr = scaffold.get(".claude-plugin/plugin.json");
-    const schema = this.assetProvider.loadPluginManifestSchema();
+    const schema = this.assetProvider.loadSchema("plugin-manifest");
     this.jsonSchemaValidator.validate(schema, JSON.parse(manifestStr ?? "{}"));
     return scaffold;
   }

@@ -2,7 +2,7 @@ import "../../../../../src/domain/tools/ai/copilot.js";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/application/use-cases/marketplace/marketplace-sync-settings-use-case.js";
-import { ModeAMarketplaceAdapter } from "../../../../../src/application/use-cases/plugin/translator/mode-a-marketplace-adapter.js";
+import { ModeAMarketplaceTranslator } from "../../../../../src/application/use-cases/plugin/translator/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/domain/models/manifest.js";
 import { Marketplace } from "../../../../../src/domain/models/marketplace.js";
 import { PluginDistribution } from "../../../../../src/domain/models/plugin-distribution.js";
@@ -41,7 +41,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const manifest = Manifest.create();
     manifest.addTool("copilot", "test", []);
 
-    await new ModeAMarketplaceAdapter().addPlugin(
+    await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
       "copilot",
       { kind: "github", repo: "ai-driven-dev/aidd-framework" },

@@ -1,8 +1,10 @@
 import type { Command } from "commander";
 import { Manifest } from "../../domain/models/manifest.js";
+import { DOCS_DIR } from "../../domain/models/paths.js";
 import { IDE_TOOL_IDS, type IdeToolId } from "../../domain/models/tool-ids.js";
 import { createDeps, createMenuDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
+import { NoManifestError } from "../errors.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./shared/spawn-cli-command.js";
 
@@ -113,9 +115,7 @@ export function registerIdeCommand(program: Command): void {
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const { StatusUseCase } = await import("../use-cases/status-use-case.js");
-        const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.hasher);
-        const report = await useCase.execute({
+        const report = await deps.statusUseCase.execute({
           projectRoot,
           filterToolId: undefined,
           category: "ide",
@@ -185,7 +185,6 @@ export function registerIdeCommand(program: Command): void {
       try {
         if (cmdOptions.tool !== undefined) assertIdeToolId(cmdOptions.tool);
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const { NoManifestError } = await import("../errors.js");
         const manifest = await deps.manifestRepo.load();
         if (!manifest) throw new NoManifestError();
         const version =
@@ -203,20 +202,7 @@ export function registerIdeCommand(program: Command): void {
           output.info("No IDE tools installed.");
           return;
         }
-        const { DOCS_DIR } = await import("../../domain/models/paths.js");
-        const { RestoreUseCase } = await import("../use-cases/restore/restore-use-case.js");
-        const restoreUseCase = new RestoreUseCase(
-          deps.fs,
-          deps.manifestRepo,
-          deps.hasher,
-          deps.logger,
-          deps.platform,
-          deps.prompter,
-          deps.pluginFetcher,
-          deps.pluginDistributionReader,
-          deps.assetProvider
-        );
-        const result = await restoreUseCase.execute({
+        const result = await deps.restoreUseCase.execute({
           version,
           docsDir: DOCS_DIR,
           projectRoot,

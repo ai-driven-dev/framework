@@ -9,7 +9,7 @@
 import "../../../../../src/domain/tools/ai/cursor.js";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ModeBFlatMaterializationAdapter } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-adapter.js";
+import { ModeBFlatMaterializationTranslator } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/domain/models/manifest.js";
 import { PluginDistribution } from "../../../../../src/domain/models/plugin-distribution.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -91,7 +91,7 @@ describe("install cursor plugin with hooks and mcp (Phase 2)", () => {
   it("writes converted hooks.json at plugin root with camelCase events", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationAdapter(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool("cursor", "test", []);
 
@@ -119,7 +119,7 @@ describe("install cursor plugin with hooks and mcp (Phase 2)", () => {
   it("rewrites ${CLAUDE_PLUGIN_ROOT}/ to ./ in hook commands", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationAdapter(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool("cursor", "test", []);
 
@@ -143,7 +143,7 @@ describe("install cursor plugin with hooks and mcp (Phase 2)", () => {
   it("writes mcp.json at plugin root with the source content unchanged", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationAdapter(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool("cursor", "test", []);
 
@@ -168,7 +168,7 @@ describe("install cursor plugin with hooks and mcp (Phase 2)", () => {
   it("tracks hooks.json and mcp.json in Plugin.files for uninstall", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationAdapter(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool("cursor", "test", []);
 
@@ -193,7 +193,7 @@ describe("install cursor plugin with hooks and mcp (Phase 2)", () => {
   it("emits no skip warnings for hooks or mcp", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationAdapter(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool("cursor", "test", []);
 

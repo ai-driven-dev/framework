@@ -2,7 +2,7 @@ import "../../../../../src/domain/tools/ai/claude.js";
 import "../../../../../src/domain/tools/ai/opencode.js";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ModeBFlatMaterializationAdapter } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-adapter.js";
+import { ModeBFlatMaterializationTranslator } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-translator.js";
 import { CursorProjectScopeUnsupportedError } from "../../../../../src/domain/errors.js";
 import { Manifest } from "../../../../../src/domain/models/manifest.js";
 import { PluginDistribution } from "../../../../../src/domain/models/plugin-distribution.js";
@@ -34,10 +34,10 @@ function buildDist(name = "test-plugin"): PluginDistribution {
 function buildAdapter(homedir = "/stub-home") {
   const fs = new InMemoryFileAdapter();
   const hasher = new DeterministicHasher();
-  return { adapter: new ModeBFlatMaterializationAdapter(fs, hasher, () => homedir), fs };
+  return { adapter: new ModeBFlatMaterializationTranslator(fs, hasher, () => homedir), fs };
 }
 
-describe("ModeBFlatMaterializationAdapter", () => {
+describe("ModeBFlatMaterializationTranslator", () => {
   describe("mode discriminant", () => {
     it("exposes mode as flat", () => {
       const { adapter } = buildAdapter();

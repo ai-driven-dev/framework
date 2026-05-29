@@ -1,3 +1,5 @@
+import { UnknownAiToolIdError } from "../errors.js";
+
 export type AiToolId = "claude" | "cursor" | "copilot" | "opencode" | "codex";
 export type IdeToolId = "vscode";
 export type ToolId = AiToolId | IdeToolId;
@@ -21,6 +23,6 @@ export function parseToolOption(tool: string | undefined): AiToolId[] | "all" {
 export function assertValidAiToolId(tool: string | undefined): void {
   if (tool === undefined || tool === "all") return;
   if (!(AI_TOOL_IDS as readonly string[]).includes(tool)) {
-    throw new Error(`Unknown AI tool: ${tool}. Valid AI tools: ${AI_TOOL_IDS.join(", ")}`);
+    throw new UnknownAiToolIdError(tool, AI_TOOL_IDS);
   }
 }

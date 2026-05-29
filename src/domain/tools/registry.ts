@@ -1,5 +1,10 @@
 import { join } from "node:path";
-import { CategoryMismatchError, InvalidToolIdError, UnregisteredToolError } from "../errors.js";
+import {
+  CategoryMismatchError,
+  InvalidToolIdError,
+  UnknownToolCategoryError,
+  UnregisteredToolError,
+} from "../errors.js";
 import {
   AI_TOOL_IDS,
   type AiToolId,
@@ -29,7 +34,7 @@ export function toolIdsForCategory(category: ToolCategory): readonly ToolId[] {
       return IDE_TOOL_IDS;
     default: {
       const _exhaustive: never = category;
-      throw new Error(`Unknown category: ${String(_exhaustive)}`);
+      throw new UnknownToolCategoryError(String(_exhaustive));
     }
   }
 }

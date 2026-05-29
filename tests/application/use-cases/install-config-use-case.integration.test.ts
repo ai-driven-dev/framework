@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
-import {
-  extractConfigCapabilities,
-  InstallConfigUseCase,
-} from "../../../src/application/use-cases/install/install-config-use-case.js";
+import { InstallConfigUseCase } from "../../../src/application/use-cases/install/install-config-use-case.js";
 import { SettingsCapability } from "../../../src/domain/capabilities/settings-capability.js";
+import { extractConfigCapabilities } from "../../../src/domain/models/config-capability.js";
 import { FrameworkDescriptor } from "../../../src/domain/models/framework.js";
 import { copilot } from "../../../src/domain/tools/ai/copilot.js";
 import { BundledAssetProviderAdapter } from "../../../src/infrastructure/assets/asset-loader.js";

@@ -455,30 +455,22 @@ export class Manifest {
   }
 
   private static applyMigrations(raw: Record<string, unknown>): void {
-    if (raw.version === 1) {
-      migrateV1toV2(raw);
-      migrateV2toV3(raw);
-      migrateV3toV4(raw);
-      migrateV4toV5(raw);
-      migrateV5toV6(raw);
-    } else if (raw.version === 2) {
-      migrateV2toV3(raw);
-      migrateV3toV4(raw);
-      migrateV4toV5(raw);
-      migrateV5toV6(raw);
-    } else if (raw.version === 3) {
-      migrateV3toV4(raw);
-      migrateV4toV5(raw);
-      migrateV5toV6(raw);
-    } else if (raw.version === 4) {
-      migrateV4toV5(raw);
-      migrateV5toV6(raw);
-    } else if (raw.version === 5) {
-      migrateV5toV6(raw);
-    } else if (raw.version !== 6) {
+    const version = raw.version;
+    if (version === 6) return;
+    if (typeof version !== "number" || version < 1 || version > 6) {
       throw new InvalidManifestDataError(
-        `Unsupported manifest version: ${String(raw.version)}. Expected ${MANIFEST_VERSION}.`
+        `Unsupported manifest version: ${String(version)}. Expected ${MANIFEST_VERSION}.`
       );
+    }
+    const migrations: ((r: Record<string, unknown>) => void)[] = [
+      migrateV1toV2,
+      migrateV2toV3,
+      migrateV3toV4,
+      migrateV4toV5,
+      migrateV5toV6,
+    ];
+    for (const migrate of migrations.slice(version - 1)) {
+      migrate(raw);
     }
   }
 

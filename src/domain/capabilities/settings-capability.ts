@@ -1,3 +1,4 @@
+import { CapabilityConfigError } from "../errors.js";
 import type { MergeStrategy } from "../models/merge.js";
 import type { ToolId } from "../models/tool-ids.js";
 
@@ -18,17 +19,19 @@ export class SettingsCapability {
     }
   ) {
     if (params.staticContent !== undefined && params.staticContentAssetFile !== undefined) {
-      throw new Error(
+      throw new CapabilityConfigError(
         "SettingsCapability: set either 'staticContent' or 'staticContentAssetFile', not both."
       );
     }
     const hasStaticForm =
       params.staticContent !== undefined || params.staticContentAssetFile !== undefined;
     if (params.consumes?.length && hasStaticForm) {
-      throw new Error("SettingsCapability: set either 'consumes' or 'staticContent', not both.");
+      throw new CapabilityConfigError(
+        "SettingsCapability: set either 'consumes' or 'staticContent', not both."
+      );
     }
     if (params.requiresTool !== undefined && !hasStaticForm) {
-      throw new Error(
+      throw new CapabilityConfigError(
         "SettingsCapability: 'requiresTool' is only meaningful with 'staticContent'."
       );
     }

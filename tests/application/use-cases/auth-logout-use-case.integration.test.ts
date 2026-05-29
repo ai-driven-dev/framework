@@ -2,10 +2,10 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AuthLogoutUseCase } from "../../../src/application/use-cases/auth/auth-logout-use-case.js";
 import type { CredentialStore } from "../../../src/domain/ports/credential-store.js";
 import { AuthProviderAdapter } from "../../../src/infrastructure/adapters/auth-provider-adapter.js";
-import type { AuthStorage } from "../../../src/infrastructure/adapters/auth-storage.js";
 import { GhCliAdapter } from "../../../src/infrastructure/adapters/gh-cli-adapter.js";
 import { GhTokenAdapter } from "../../../src/infrastructure/adapters/gh-token-adapter.js";
-import { HttpClient } from "../../../src/infrastructure/adapters/http-client.js";
+import type { AuthStorage } from "../../../src/infrastructure/auth/auth-storage.js";
+import { HttpClient } from "../../../src/infrastructure/http/http-client.js";
 import { makeAuthConfig, makeTempAuthStorage } from "../../helpers/auth.js";
 
 describe("auth logout", () => {

@@ -54,7 +54,7 @@ export class CodexOutputStrategy implements BuildOutputStrategy {
     const presence = await detectPluginPresenceFlags(this.fs, pluginSrc);
     const synthesized = this.synthesizeCodexPluginManifest(sourceManifest, presence);
     this.jsonSchemaValidator.validate(
-      this.assetProvider.loadCodexPluginManifestSchema(),
+      this.assetProvider.loadSchema("codex-plugin-manifest"),
       synthesized
     );
     const dest = join(pluginOut, OUTPUT_CODEX_MANIFEST_RELATIVE);
@@ -117,7 +117,7 @@ export class CodexOutputStrategy implements BuildOutputStrategy {
     );
     const marketplaceObj = this.buildCodexMarketplaceObject(sourceMarketplace, pluginEntries);
     this.jsonSchemaValidator.validate(
-      this.assetProvider.loadClaudeMarketplaceSchema(),
+      this.assetProvider.loadSchema("claude-marketplace"),
       marketplaceObj
     );
     const destPath = join(outDir, OUTPUT_CODEX_MARKETPLACE_RELATIVE);

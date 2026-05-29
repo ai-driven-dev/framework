@@ -56,6 +56,15 @@ export class PluginInstallFromMarketplaceUseCase {
     const policy = options.requestedVersionPolicy ?? DEFAULT_REQUESTED_VERSION_POLICY;
     const matches = await this.findMatches(options);
     const chosen = await this.chooseOne(matches, options);
+    await this.installChosen(chosen, options, policy);
+    return { marketplace: chosen.marketplace, entry: chosen.entry };
+  }
+
+  private async installChosen(
+    chosen: MatchEntry,
+    options: PluginInstallFromMarketplaceOptions,
+    policy: RequestedVersionPolicy
+  ): Promise<void> {
     const effectiveVersion = this.assertOrCoerceCatalogVersion(
       chosen.entry,
       options.version,
@@ -79,7 +88,6 @@ export class PluginInstallFromMarketplaceUseCase {
           : undefined,
       replace: options.replace,
     });
-    return { marketplace: chosen.marketplace, entry: chosen.entry };
   }
 
   private async findMatches(options: PluginInstallFromMarketplaceOptions): Promise<MatchEntry[]> {

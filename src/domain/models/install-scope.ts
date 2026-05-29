@@ -1,4 +1,4 @@
-import { InvalidPluginScopeError } from "../errors.js";
+import { InvalidInstallScopeError, InvalidPluginScopeError } from "../errors.js";
 import { getToolConfig, isAiTool } from "../tools/registry.js";
 import type { AiToolId } from "./tool-ids.js";
 
@@ -13,7 +13,7 @@ export function isInstallScope(value: unknown): value is InstallScope {
 export function parseInstallScope(value: string | undefined): InstallScope | undefined {
   if (value === undefined) return undefined;
   if (!isInstallScope(value)) {
-    throw new Error(`Invalid scope '${value}'. Expected 'project' or 'user'.`);
+    throw new InvalidInstallScopeError(value);
   }
   return value;
 }

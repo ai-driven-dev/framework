@@ -1,8 +1,8 @@
 import { execSync } from "node:child_process";
 import { platform } from "node:os";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { HttpClient } from "../../../src/infrastructure/adapters/http-client.js";
 import { SelfUpdaterAdapter } from "../../../src/infrastructure/adapters/self-updater-adapter.js";
+import { HttpClient } from "../../../src/infrastructure/http/http-client.js";
 
 vi.mock("node:child_process", () => ({ execSync: vi.fn() }));
 vi.mock("node:os", () => ({ platform: vi.fn() }));

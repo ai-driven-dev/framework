@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import type { Manifest } from "../../domain/models/manifest.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../domain/models/marketplace.js";
-import { MigrationPlan, type PluginToRewire } from "../../domain/models/migration-plan.js";
+import { computeMigrationPlan, type MigrationPlan } from "../../domain/models/migration-plan.js";
 import { AIDD_DIR } from "../../domain/models/paths.js";
 import { AI_TOOL_IDS, type AiToolId } from "../../domain/models/tool-ids.js";
 import type { FileReader } from "../../domain/ports/file-reader.js";
@@ -104,90 +104,4 @@ export class MigrateUseCase {
     if (!interactive) return true;
     return this.prompter.confirm("Apply migration? (A backup will be created first)");
   }
-}
-
-// --- Pure plan computation (no I/O) ---
-
-const USER_MEMORY_FILES: readonly string[] = ["CLAUDE.md", "AGENTS.md", "copilot-instructions.md"];
-const LEGACY_TOP_LEVEL_FIELDS: readonly string[] = [
-  "docs",
-  "mode",
-  "repo",
-  "docsDir",
-  "scripts",
-  "plugins",
-];
-
-export function computeMigrationPlan(
-  raw: Record<string, unknown>,
-  registryHasDefault = false
-): MigrationPlan {
-  const fromVersion = typeof raw.version === "number" ? raw.version : 0;
-  const fieldsToStrip = detectFieldsToStrip(raw);
-  const filesToDelete = collectLegacyFiles(raw);
-  const pluginsToRewire = detectBundledPlugins(raw);
-  const defaultMarketplaceMissing = !registryHasDefault && !hasDefaultMarketplace(raw);
-  return new MigrationPlan({
-    fromVersion,
-    fieldsToStrip,
-    filesToDelete,
-    pluginsToRewire,
-    defaultMarketplaceMissing,
-    userMemoryFiles: [...USER_MEMORY_FILES],
-  });
-}
-
-function detectFieldsToStrip(raw: Record<string, unknown>): string[] {
-  return LEGACY_TOP_LEVEL_FIELDS.filter((f) => f in raw && raw[f] !== undefined && raw[f] !== null);
-}
-
-function collectLegacyFiles(raw: Record<string, unknown>): string[] {
-  const files: string[] = [];
-  for (const section of ["scripts", "plugins"] as const) {
-    const entry = raw[section];
-    if (entry && typeof entry === "object" && "files" in entry) {
-      const rawFiles = (entry as { files: unknown }).files;
-      if (Array.isArray(rawFiles)) {
-        for (const f of rawFiles) {
-          if (
-            f &&
-            typeof f === "object" &&
-            "relativePath" in f &&
-            typeof f.relativePath === "string"
-          ) {
-            files.push(f.relativePath);
-          }
-        }
-      }
-    }
-  }
-  return files;
-}
-
-function detectBundledPlugins(raw: Record<string, unknown>): PluginToRewire[] {
-  const map = new Map<string, AiToolId[]>();
-  const tools = raw.tools as
-    | Record<string, { plugins?: Array<{ name: string; marketplace?: string }> }>
-    | undefined;
-  if (!tools) return [];
-  for (const [toolId, entry] of Object.entries(tools)) {
-    if (!(AI_TOOL_IDS as readonly string[]).includes(toolId)) continue;
-    for (const plugin of entry.plugins ?? []) {
-      if (plugin.marketplace !== undefined) continue;
-      const existing = map.get(plugin.name) ?? [];
-      existing.push(toolId as AiToolId);
-      map.set(plugin.name, existing);
-    }
-  }
-  return [...map.entries()].map(([name, toolIds]) => ({
-    name,
-    marketplace: FRAMEWORK_MARKETPLACE_NAME,
-    toolIds,
-  }));
-}
-
-function hasDefaultMarketplace(raw: Record<string, unknown>): boolean {
-  const marketplaces = raw.marketplaces as Record<string, unknown> | undefined;
-  if (!marketplaces) return false;
-  return FRAMEWORK_MARKETPLACE_NAME in marketplaces;
 }

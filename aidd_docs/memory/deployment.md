@@ -12,6 +12,11 @@
 - Publish: `pnpm publish` targeting GitHub Packages registry (`@ai-driven-dev` scope)
 - Runtime requirements: Node.js >= 24, pnpm >= 9
 
+## Tooling facts
+
+- **Biome** is the sole linter + formatter — no ESLint, no Prettier. Config at repo root (`biome.json`). Fix with `biome check --write`.
+- **Lefthook** runs git hooks; commitlint enforces Conventional Commits.
+
 ## Git Hooks
 
 - lefthook delegates `pre-commit` and `pre-push` to parent monorepo via `pnpm exec lefthook run <hook>`

@@ -24,7 +24,7 @@ import type { PluginDistributionReader } from "../../../domain/ports/plugin-dist
 import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
 import { loadPluginManifest, resolvePluginToolIds, writePluginFiles } from "./plugin-helpers.js";
-import { resolveTranslationAdapter } from "./translator/plugin-translation-adapter-factory.js";
+import { resolveTranslator } from "./translator/plugin-translator-factory.js";
 
 export interface PluginAddOptions {
   source: PluginSource;
@@ -93,8 +93,8 @@ export class PluginAddUseCase {
 
   private buildAdapterMap(
     toolIds: AiToolId[]
-  ): Map<AiToolId, ReturnType<typeof resolveTranslationAdapter>> {
-    const map = new Map<AiToolId, ReturnType<typeof resolveTranslationAdapter>>();
+  ): Map<AiToolId, ReturnType<typeof resolveTranslator>> {
+    const map = new Map<AiToolId, ReturnType<typeof resolveTranslator>>();
     for (const id of toolIds) {
       map.set(id, this.resolveAdapter(getToolConfig(id)));
     }
@@ -277,11 +277,11 @@ export class PluginAddUseCase {
 
   private resolveAdapter(
     toolConfig: ReturnType<typeof getToolConfig>
-  ): ReturnType<typeof resolveTranslationAdapter> {
+  ): ReturnType<typeof resolveTranslator> {
     if (toolConfig === undefined || !isAiTool(toolConfig)) return null;
     if (!("plugins" in (toolConfig.capabilities as object))) return null;
     const caps = toolConfig.capabilities as { plugins: PluginsCapability };
-    return resolveTranslationAdapter(caps.plugins, {
+    return resolveTranslator(caps.plugins, {
       fs: this.fs,
       hasher: this.hasher,
       homedir: nodeHomedir,

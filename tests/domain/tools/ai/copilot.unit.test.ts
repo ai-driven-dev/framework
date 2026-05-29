@@ -108,7 +108,7 @@ describe("copilot", () => {
   });
 
   describe("capabilities.agents.buildInstallPath()", () => {
-    it("agents: adds .agent.md extension", () => {
+    it("adds .agent.md extension", () => {
       const path = copilot.capabilities.agents.buildInstallPath("code-reviewer.md");
       expect(path).toBe(".github/agents/code-reviewer.agent.md");
     });
@@ -119,7 +119,7 @@ describe("copilot", () => {
   });
 
   describe("capabilities.skills.buildInstallPath()", () => {
-    it("skills: no flattening, preserved structure", () => {
+    it("preserves directory structure without flattening", () => {
       const path = copilot.capabilities.skills.buildInstallPath("commit/SKILL.md");
       expect(path).toBe(".github/skills/commit/SKILL.md");
     });

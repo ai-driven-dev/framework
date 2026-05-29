@@ -9,12 +9,9 @@ export class GitignoreUseCase {
   async execute(projectRoot: string, entries: string[]): Promise<void> {
     const gitignorePath = `${projectRoot}/${GITIGNORE_FILENAME}`;
 
-    let existing = "";
-    try {
-      existing = await this.fs.readFile(gitignorePath);
-    } catch {
-      // file doesn't exist yet — will be created
-    }
+    const existing = (await this.fs.fileExists(gitignorePath))
+      ? await this.fs.readFile(gitignorePath)
+      : "";
 
     const lines = existing.split("\n");
     const missing = entries.filter((entry) => !lines.some((line) => line.trim() === entry));
@@ -28,12 +25,8 @@ export class GitignoreUseCase {
   async remove(projectRoot: string, entries: string[]): Promise<void> {
     const gitignorePath = `${projectRoot}/${GITIGNORE_FILENAME}`;
 
-    let existing = "";
-    try {
-      existing = await this.fs.readFile(gitignorePath);
-    } catch {
-      return;
-    }
+    if (!(await this.fs.fileExists(gitignorePath))) return;
+    const existing = await this.fs.readFile(gitignorePath);
 
     const entrySet = new Set(entries);
     const filtered = existing

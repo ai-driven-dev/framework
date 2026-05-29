@@ -144,7 +144,7 @@ export class MarketplaceOutputStrategy implements BuildOutputStrategy {
       outDir
     );
     const marketplaceObj = this.buildCopilotMarketplaceObject(sourceMarketplace, pluginEntries);
-    this.jsonSchemaValidator.validate(this.assetProvider.loadMarketplaceSchema(), marketplaceObj);
+    this.jsonSchemaValidator.validate(this.assetProvider.loadSchema("marketplace"), marketplaceObj);
     const destPath = join(outDir, OUTPUT_MARKETPLACE_RELATIVE);
     await this.fs.writeFile(destPath, `${JSON.stringify(marketplaceObj, null, 2)}\n`);
   }

@@ -211,176 +211,186 @@ describe("PluginAddUseCase", () => {
 
     const PLUGIN_METADATA = { name: "sample-plugin", version: "1.0.0", strict: false };
 
-    it("opencode: fetches and materializes flat files when github marketplace", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "opencode");
-      await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
-      deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
-      const registry = await makeGithubRegistry(PROJECT_ROOT);
-      const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-      const useCase = new PluginAddUseCase(
-        deps.fs,
-        deps.manifestRepo,
-        deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs),
-        deps.hasher,
-        deps.logger,
-        registry
-      );
-      await useCase.execute({
-        source: GIT_SUBDIR_SOURCE,
-        toolIds: ["opencode"],
-        projectRoot: PROJECT_ROOT,
-        marketplace: "aidd-framework",
-        interactive: false,
-        pluginMetadata: PLUGIN_METADATA,
+    describe("opencode", () => {
+      it("fetches and materializes flat files", async () => {
+        const deps = await buildUnitDeps(PROJECT_ROOT);
+        await initAndInstall(deps, PROJECT_ROOT, "opencode");
+        await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
+        deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
+        const registry = await makeGithubRegistry(PROJECT_ROOT);
+        const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
+        const useCase = new PluginAddUseCase(
+          deps.fs,
+          deps.manifestRepo,
+          deps.pluginFetcher,
+          new PluginDistributionReaderAdapter(deps.fs),
+          deps.hasher,
+          deps.logger,
+          registry
+        );
+        await useCase.execute({
+          source: GIT_SUBDIR_SOURCE,
+          toolIds: ["opencode"],
+          projectRoot: PROJECT_ROOT,
+          marketplace: "aidd-framework",
+          interactive: false,
+          pluginMetadata: PLUGIN_METADATA,
+        });
+        expect(fetchSpy).toHaveBeenCalled();
+        const manifest = await deps.manifestRepo.load();
+        const plugins = manifest?.getPlugins("opencode") ?? [];
+        const installed = plugins.find((p) => p.name === "sample-plugin");
+        expect(installed).toBeDefined();
+        expect(installed?.files.size).toBeGreaterThan(0);
       });
-      expect(fetchSpy).toHaveBeenCalled();
-      const manifest = await deps.manifestRepo.load();
-      const plugins = manifest?.getPlugins("opencode") ?? [];
-      const installed = plugins.find((p) => p.name === "sample-plugin");
-      expect(installed).toBeDefined();
-      expect(installed?.files.size).toBeGreaterThan(0);
     });
 
-    it("cursor: Mode B (user-scope) fetches and materializes files for github marketplace", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "cursor");
-      await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
-      deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
-      const registry = await makeGithubRegistry(PROJECT_ROOT);
-      const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-      const useCase = new PluginAddUseCase(
-        deps.fs,
-        deps.manifestRepo,
-        deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs),
-        deps.hasher,
-        deps.logger,
-        registry
-      );
-      await useCase.execute({
-        source: GIT_SUBDIR_SOURCE,
-        toolIds: ["cursor"],
-        projectRoot: PROJECT_ROOT,
-        marketplace: "aidd-framework",
-        interactive: false,
-        pluginMetadata: PLUGIN_METADATA,
+    describe("cursor", () => {
+      it("fetches and materializes files in Mode B user-scope", async () => {
+        const deps = await buildUnitDeps(PROJECT_ROOT);
+        await initAndInstall(deps, PROJECT_ROOT, "cursor");
+        await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
+        deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
+        const registry = await makeGithubRegistry(PROJECT_ROOT);
+        const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
+        const useCase = new PluginAddUseCase(
+          deps.fs,
+          deps.manifestRepo,
+          deps.pluginFetcher,
+          new PluginDistributionReaderAdapter(deps.fs),
+          deps.hasher,
+          deps.logger,
+          registry
+        );
+        await useCase.execute({
+          source: GIT_SUBDIR_SOURCE,
+          toolIds: ["cursor"],
+          projectRoot: PROJECT_ROOT,
+          marketplace: "aidd-framework",
+          interactive: false,
+          pluginMetadata: PLUGIN_METADATA,
+        });
+        expect(fetchSpy).toHaveBeenCalled();
+        const manifest = await deps.manifestRepo.load();
+        const plugins = manifest?.getPlugins("cursor") ?? [];
+        const installed = plugins.find((p) => p.name === "sample-plugin");
+        expect(installed).toBeDefined();
+        expect(installed?.files.size).toBeGreaterThan(0);
       });
-      expect(fetchSpy).toHaveBeenCalled();
-      const manifest = await deps.manifestRepo.load();
-      const plugins = manifest?.getPlugins("cursor") ?? [];
-      const installed = plugins.find((p) => p.name === "sample-plugin");
-      expect(installed).toBeDefined();
-      expect(installed?.files.size).toBeGreaterThan(0);
     });
 
-    it("codex: register-only for github marketplace (no files written)", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "codex");
-      const registry = await makeGithubRegistry(PROJECT_ROOT);
-      const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-      const useCase = new PluginAddUseCase(
-        deps.fs,
-        deps.manifestRepo,
-        deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs),
-        deps.hasher,
-        deps.logger,
-        registry
-      );
-      await useCase.execute({
-        source: GIT_SUBDIR_SOURCE,
-        toolIds: ["codex"],
-        projectRoot: PROJECT_ROOT,
-        marketplace: "aidd-framework",
-        interactive: false,
-        pluginMetadata: PLUGIN_METADATA,
+    describe("codex", () => {
+      it("registers only without writing files", async () => {
+        const deps = await buildUnitDeps(PROJECT_ROOT);
+        await initAndInstall(deps, PROJECT_ROOT, "codex");
+        const registry = await makeGithubRegistry(PROJECT_ROOT);
+        const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
+        const useCase = new PluginAddUseCase(
+          deps.fs,
+          deps.manifestRepo,
+          deps.pluginFetcher,
+          new PluginDistributionReaderAdapter(deps.fs),
+          deps.hasher,
+          deps.logger,
+          registry
+        );
+        await useCase.execute({
+          source: GIT_SUBDIR_SOURCE,
+          toolIds: ["codex"],
+          projectRoot: PROJECT_ROOT,
+          marketplace: "aidd-framework",
+          interactive: false,
+          pluginMetadata: PLUGIN_METADATA,
+        });
+        expect(fetchSpy).not.toHaveBeenCalled();
+        const manifest = await deps.manifestRepo.load();
+        const plugins = manifest?.getPlugins("codex") ?? [];
+        const installed = plugins.find((p) => p.name === "sample-plugin");
+        expect(installed).toBeDefined();
+        expect(installed?.files.size).toBe(0);
       });
-      expect(fetchSpy).not.toHaveBeenCalled();
-      const manifest = await deps.manifestRepo.load();
-      const plugins = manifest?.getPlugins("codex") ?? [];
-      const installed = plugins.find((p) => p.name === "sample-plugin");
-      expect(installed).toBeDefined();
-      expect(installed?.files.size).toBe(0);
     });
 
-    it("claude: register-only for github marketplace (no files written)", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
-      const registry = await makeGithubRegistry(PROJECT_ROOT);
-      const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-      const useCase = new PluginAddUseCase(
-        deps.fs,
-        deps.manifestRepo,
-        deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs),
-        deps.hasher,
-        deps.logger,
-        registry
-      );
-      await useCase.execute({
-        source: GIT_SUBDIR_SOURCE,
-        toolIds: ["claude"],
-        projectRoot: PROJECT_ROOT,
-        marketplace: "aidd-framework",
-        interactive: false,
-        pluginMetadata: PLUGIN_METADATA,
+    describe("claude", () => {
+      it("registers only without writing files", async () => {
+        const deps = await buildUnitDeps(PROJECT_ROOT);
+        await initAndInstall(deps, PROJECT_ROOT, "claude");
+        const registry = await makeGithubRegistry(PROJECT_ROOT);
+        const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
+        const useCase = new PluginAddUseCase(
+          deps.fs,
+          deps.manifestRepo,
+          deps.pluginFetcher,
+          new PluginDistributionReaderAdapter(deps.fs),
+          deps.hasher,
+          deps.logger,
+          registry
+        );
+        await useCase.execute({
+          source: GIT_SUBDIR_SOURCE,
+          toolIds: ["claude"],
+          projectRoot: PROJECT_ROOT,
+          marketplace: "aidd-framework",
+          interactive: false,
+          pluginMetadata: PLUGIN_METADATA,
+        });
+        expect(fetchSpy).not.toHaveBeenCalled();
+        const manifest = await deps.manifestRepo.load();
+        const plugins = manifest?.getPlugins("claude") ?? [];
+        const installed = plugins.find((p) => p.name === "sample-plugin");
+        expect(installed).toBeDefined();
+        expect(installed?.files.size).toBe(0);
       });
-      expect(fetchSpy).not.toHaveBeenCalled();
-      const manifest = await deps.manifestRepo.load();
-      const plugins = manifest?.getPlugins("claude") ?? [];
-      const installed = plugins.find((p) => p.name === "sample-plugin");
-      expect(installed).toBeDefined();
-      expect(installed?.files.size).toBe(0);
     });
   });
 
   describe("per-tool install strategy (local marketplace)", () => {
-    it("opencode: materializes flat files even when source is local marketplace", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "opencode");
-      await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
-      const registry = new InMemoryMarketplaceRegistry();
-      await registry.save(
-        PROJECT_ROOT,
-        Marketplace.create({
-          name: "local-mkt",
-          source: { kind: "local", path: "/mkt-source" },
-          scope: "project",
-          addedAt: "2026-05-01T00:00:00.000Z",
-        })
-      );
-      const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-      const useCase = new PluginAddUseCase(
-        deps.fs,
-        deps.manifestRepo,
-        deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs),
-        deps.hasher,
-        deps.logger,
-        registry
-      );
-      await useCase.execute({
-        source: { kind: "local", path: PLUGIN_FIXTURE },
-        toolIds: ["opencode"],
-        projectRoot: PROJECT_ROOT,
-        marketplace: "local-mkt",
-        interactive: false,
+    describe("opencode", () => {
+      it("materializes flat files even when source is local marketplace", async () => {
+        const deps = await buildUnitDeps(PROJECT_ROOT);
+        await initAndInstall(deps, PROJECT_ROOT, "opencode");
+        await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
+        const registry = new InMemoryMarketplaceRegistry();
+        await registry.save(
+          PROJECT_ROOT,
+          Marketplace.create({
+            name: "local-mkt",
+            source: { kind: "local", path: "/mkt-source" },
+            scope: "project",
+            addedAt: "2026-05-01T00:00:00.000Z",
+          })
+        );
+        const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
+        const useCase = new PluginAddUseCase(
+          deps.fs,
+          deps.manifestRepo,
+          deps.pluginFetcher,
+          new PluginDistributionReaderAdapter(deps.fs),
+          deps.hasher,
+          deps.logger,
+          registry
+        );
+        await useCase.execute({
+          source: { kind: "local", path: PLUGIN_FIXTURE },
+          toolIds: ["opencode"],
+          projectRoot: PROJECT_ROOT,
+          marketplace: "local-mkt",
+          interactive: false,
+        });
+        expect(fetchSpy).toHaveBeenCalled();
+        const manifest = await deps.manifestRepo.load();
+        const plugins = manifest?.getPlugins("opencode") ?? [];
+        const installed = plugins.find((p) => p.name === "sample-plugin");
+        expect(installed).toBeDefined();
+        expect(installed?.files.size).toBeGreaterThan(0);
       });
-      expect(fetchSpy).toHaveBeenCalled();
-      const manifest = await deps.manifestRepo.load();
-      const plugins = manifest?.getPlugins("opencode") ?? [];
-      const installed = plugins.find((p) => p.name === "sample-plugin");
-      expect(installed).toBeDefined();
-      expect(installed?.files.size).toBeGreaterThan(0);
     });
   });
 
   describe("zero-files guard regression (Blocker 2)", () => {
     it("native tool + local source + marketplace + zero-translation distribution → manifest entry NOT added", async () => {
       // Regression: on main, if translateWithComponentPaths yields zero files the plugin is
-      // NOT added to the manifest. Before this fix, ModeAMarketplaceAdapter bypassed the guard.
+      // NOT added to the manifest. Before this fix, ModeAMarketplaceTranslator bypassed the guard.
       // A distribution with no recognized manifest path produces zero translated files for
       // any native tool (findSourceManifestContent returns null, no component files → files=[]).
       const deps = await buildUnitDeps(PROJECT_ROOT);

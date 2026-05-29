@@ -1,7 +1,8 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { compareSemver, isSemver } from "../../domain/models/semver.js";
+import type { FileReader } from "../../domain/ports/file-reader.js";
+import type { FileWriter } from "../../domain/ports/file-writer.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { SelfUpdater } from "../../domain/ports/self-updater.js";
 import type { VersionReader } from "../../domain/ports/version-reader.js";
@@ -21,37 +22,17 @@ function isOutdated(version: string, latest: string): boolean {
   return isSemver(version) && compareSemver(version, latest) < 0;
 }
 
-function cachePath(): string {
+function resolveCachePath(): string {
   const dir = process.env.AIDD_USER_CONFIG_DIR ?? join(homedir(), ".config", "aidd");
   return join(dir, "update-check.json");
-}
-
-async function readCache(): Promise<CachedCheck | null> {
-  try {
-    const raw = await readFile(cachePath(), "utf-8");
-    const data = JSON.parse(raw) as CachedCheck;
-    if (Date.now() - data.checkedAt > CHECK_TTL_MS) return null;
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-async function writeCache(latest: string): Promise<void> {
-  try {
-    const path = cachePath();
-    await mkdir(join(path, ".."), { recursive: true });
-    await writeFile(path, JSON.stringify({ checkedAt: Date.now(), latest }), "utf-8");
-  } catch {
-    /* cache write best-effort */
-  }
 }
 
 export class CheckUpdateUseCase {
   constructor(
     private readonly cliUpdater: SelfUpdater,
     private readonly versionReader: VersionReader,
-    private readonly logger: Logger
+    private readonly logger: Logger,
+    private readonly fs: FileReader & FileWriter
   ) {}
 
   async execute(options: CheckUpdateOptions = {}): Promise<void> {
@@ -74,10 +55,33 @@ export class CheckUpdateUseCase {
   }
 
   private async resolveLatest(): Promise<string | null> {
-    const cached = await readCache();
+    const cached = await this.readCache();
     if (cached !== null) return cached.latest;
     const { version: latest } = await this.cliUpdater.fetchLatestRelease();
-    await writeCache(latest);
+    await this.writeCache(latest);
     return latest;
+  }
+
+  private async readCache(): Promise<CachedCheck | null> {
+    const path = resolveCachePath();
+    if (!(await this.fs.fileExists(path))) return null;
+    try {
+      const raw = await this.fs.readFile(path);
+      const data = JSON.parse(raw) as CachedCheck;
+      if (Date.now() - data.checkedAt > CHECK_TTL_MS) return null;
+      return data;
+    } catch {
+      return null;
+    }
+  }
+
+  private async writeCache(latest: string): Promise<void> {
+    try {
+      const path = resolveCachePath();
+      await this.fs.createDirectory(join(path, ".."));
+      await this.fs.writeFile(path, JSON.stringify({ checkedAt: Date.now(), latest }));
+    } catch {
+      /* cache write best-effort */
+    }
   }
 }

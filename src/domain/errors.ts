@@ -398,3 +398,73 @@ export class FlatTargetExistsError extends Error {
     this.name = "FlatTargetExistsError";
   }
 }
+
+export class UnknownToolCategoryError extends Error {
+  constructor(category: string) {
+    super(`Unknown category: ${category}`);
+    this.name = "UnknownToolCategoryError";
+  }
+}
+
+export class MarketplaceSourceKindError extends Error {
+  constructor(expected: "remote" | "local") {
+    super(expected === "remote" ? "Not a remote source" : "Not a local source");
+    this.name = "MarketplaceSourceKindError";
+  }
+}
+
+export class EmptyLocalSourcePathError extends Error {
+  constructor() {
+    super("Local source path must not be empty.");
+    this.name = "EmptyLocalSourcePathError";
+  }
+}
+
+export class InvalidSetupToolIdError extends Error {
+  constructor(id: string, validIds: readonly string[]) {
+    super(`Invalid tool ID: "${id}". Valid IDs: ${validIds.join(", ")}`);
+    this.name = "InvalidSetupToolIdError";
+  }
+}
+
+export class InvalidPluginModeConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidPluginModeConfigError";
+  }
+}
+
+export class InvalidMigrationFromVersionError extends Error {
+  constructor(fromVersion: number, validVersions: readonly number[]) {
+    super(`Invalid fromVersion: ${fromVersion}. Must be one of ${validVersions.join(", ")}.`);
+    this.name = "InvalidMigrationFromVersionError";
+  }
+}
+
+export class InvalidInstallScopeError extends Error {
+  constructor(value: string) {
+    super(`Invalid scope '${value}'. Expected 'project' or 'user'.`);
+    this.name = "InvalidInstallScopeError";
+  }
+}
+
+export class UnknownAiToolIdError extends Error {
+  constructor(tool: string, validIds: readonly string[]) {
+    super(`Unknown AI tool: ${tool}. Valid AI tools: ${validIds.join(", ")}`);
+    this.name = "UnknownAiToolIdError";
+  }
+}
+
+export class EmptyMarketplaceCacheNameError extends Error {
+  constructor() {
+    super("MarketplaceCacheEntry: name must not be empty");
+    this.name = "EmptyMarketplaceCacheNameError";
+  }
+}
+
+export class MissingAbsOutError extends Error {
+  constructor() {
+    super("absOut is required for absolute MCP path resolution");
+    this.name = "MissingAbsOutError";
+  }
+}

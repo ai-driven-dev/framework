@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { ProjectContext } from "../../../../src/domain/models/project-context.js";
 import {
   recommendAiTools,
   recommendIdeTools,
-} from "../../../../src/application/use-cases/setup/setup-tools-prompt-use-case.js";
-import { ProjectContext } from "../../../../src/domain/models/project-context.js";
+} from "../../../../src/domain/models/tool-recommendations.js";
 
 function ctx(over: Partial<ConstructorParameters<typeof ProjectContext>[0]> = {}) {
   return new ProjectContext({

@@ -1,3 +1,5 @@
+import { EmptyMarketplaceCacheNameError } from "../errors.js";
+
 const MIN_NAME_LENGTH = 1;
 
 export interface MarketplaceCacheEntryParams {
@@ -15,7 +17,7 @@ export class MarketplaceCacheEntry {
 
   constructor(params: MarketplaceCacheEntryParams) {
     if (params.name.trim().length < MIN_NAME_LENGTH) {
-      throw new Error("MarketplaceCacheEntry: name must not be empty");
+      throw new EmptyMarketplaceCacheNameError();
     }
     this.name = params.name;
     this.path = params.path;

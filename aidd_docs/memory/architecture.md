@@ -28,7 +28,7 @@ Infrastructure → Application → Domain
 - `Manifest` — aggregate root, tracks every installed file with MD5 hash (`.aidd/manifest.json`)
 - Framework layout is code-defined — no `framework.json` on disk
 
-## Domain Models (added in v5 / post-beta.23)
+## Domain Models (notable)
 
 | Model | File | Description |
 |---|---|---|
@@ -57,6 +57,14 @@ InstallIdeConfigUseCase → AssetLoader (bundled in binary) → FileSystem + Man
 PluginInstallFromMarketplaceUseCase → MarketplaceRegistry + PluginFetcher (git clone)
 → Distribution (per-tool rewrite) → FileSystem → PostInstallPipeline
 ```
+
+**Framework build** (`aidd framework build --target <tool>`):
+```
+FrameworkBuildUseCase → BuildOutputStrategy (Marketplace | Flat | Codex)
+→ tool-native plugin tree (author-side distribution; copilot + codex shipped, cursor/opencode pending)
+```
+Author-side, not user-side: translates the Claude-format framework into a tool-native
+marketplace dist (Mode A) or flat workspace materialization (Mode B `--flat`).
 
 **Migration** (`aidd migrate`):
 ```

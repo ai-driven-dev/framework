@@ -4,6 +4,9 @@ type ClaudeHookMatcher = { hooks: ClaudeHookItem[] };
 type ClaudeHookItem = { type?: string; command?: string; [key: string]: unknown };
 type ClaudeHooksJson = { hooks?: Record<string, ClaudeHookMatcher[]> };
 
+// No inverse: convertHooksFormat (and convertClaudeHooksToCursorPlugin) is a one-way
+// schema transformation — the Cursor plugin format drops Claude-specific matcher
+// structure and cannot be reversed to the original Claude hooks JSON.
 export function convertHooksFormat(content: string, format: HooksContentFormat): string {
   if (format === "cursor") return convertClaudeHooksToCursorPlugin(content);
   return content;

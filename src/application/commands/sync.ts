@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
-import { NonInteractiveSyncError, SyncAllUseCase } from "../use-cases/global/sync-all-use-case.js";
+import { NonInteractiveSyncError } from "../use-cases/global/sync-all-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 export function registerSyncCommand(program: Command): void {
@@ -21,16 +21,10 @@ export function registerSyncCommand(program: Command): void {
 
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const useCase = new SyncAllUseCase(
-          deps.fs,
-          deps.manifestRepo,
-          deps.hasher,
-          deps.logger,
-          deps.syncSourceResolverUseCase,
-          deps.syncFilePropagationUseCase,
-          deps.pluginInstallFromMarketplaceUseCase
-        );
-        const result = await useCase.execute({ projectRoot, interactive: process.stdout.isTTY });
+        const result = await deps.syncAllUseCase.execute({
+          projectRoot,
+          interactive: process.stdout.isTTY,
+        });
 
         if (result.totalWritten === 0 && result.totalDeleted === 0 && result.totalConflicts === 0) {
           output.success("Nothing to sync.");

@@ -80,31 +80,32 @@ export class RestoreUseCase {
   ) {}
 
   async execute(options: RestoreOptions): Promise<RestoreResult> {
-    const {
-      frameworkPath,
-      version,
-      docsDir,
-      projectRoot,
-      force = false,
-      interactive = false,
-    } = options;
     const manifest = options.manifest ?? (await this.manifestRepo.load());
     if (manifest === null) throw new NoManifestError();
-    const resolvedVersion = version ?? "unknown";
-    const ctx: RestoreCtx = {
+    const ctx = await this.buildRestoreContext(options, manifest);
+    return this.executeRestore(ctx);
+  }
+
+  private async buildRestoreContext(
+    options: RestoreOptions,
+    manifest: Manifest
+  ): Promise<RestoreCtx> {
+    const resolvedVersion = options.version ?? "unknown";
+    return {
       manifest,
       descriptor: this.buildStaticDescriptor(resolvedVersion),
-      contentFiles: frameworkPath ? await this.buildContentFiles(frameworkPath) : new Map(),
-      docsDir: docsDir ?? "",
-      projectRoot,
+      contentFiles: options.frameworkPath
+        ? await this.buildContentFiles(options.frameworkPath)
+        : new Map(),
+      docsDir: options.docsDir ?? "",
+      projectRoot: options.projectRoot,
       version: resolvedVersion,
-      force,
-      interactive,
+      force: options.force ?? false,
+      interactive: options.interactive ?? false,
       fileFilter: buildFileFilter(options.files),
       toolIds: options.toolIds?.length ? options.toolIds : manifest.getInstalledToolIds(),
       pluginName: options.pluginName,
     };
-    return this.executeRestore(ctx);
   }
 
   private async executeRestore(ctx: RestoreCtx): Promise<RestoreResult> {
@@ -180,10 +181,9 @@ export class RestoreUseCase {
   private async buildContentFiles(frameworkPath: string): Promise<Map<string, string>> {
     const contentFiles = new Map<string, string>();
     for (const ref of CONFIG_REFS) {
-      try {
-        contentFiles.set(ref.path, await this.fs.readFile(join(frameworkPath, ref.path)));
-      } catch {
-        // skip missing optional refs
+      const absPath = join(frameworkPath, ref.path);
+      if (await this.fs.fileExists(absPath)) {
+        contentFiles.set(ref.path, await this.fs.readFile(absPath));
       }
     }
     return contentFiles;

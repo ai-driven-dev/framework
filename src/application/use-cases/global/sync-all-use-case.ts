@@ -45,18 +45,7 @@ export class SyncAllUseCase {
     if (!options.interactive && !options.sourceTool) {
       throw new NonInteractiveSyncError();
     }
-    const syncPluginsUseCase =
-      this.pluginInstallFromMarketplace !== undefined
-        ? new SyncPluginsUseCase(this.manifestRepo, this.pluginInstallFromMarketplace, this.logger)
-        : undefined;
-    const syncUseCase = new SyncUseCase(
-      this.fs,
-      this.manifestRepo,
-      this.hasher,
-      this.syncSourceResolver,
-      this.syncFilePropagation,
-      syncPluginsUseCase
-    );
+    const syncUseCase = this.buildSyncUseCase();
     const result = await syncUseCase.execute({
       projectRoot: options.projectRoot,
       sourceTool: options.sourceTool,
@@ -71,5 +60,20 @@ export class SyncAllUseCase {
       totalConflicts: result.totalConflicts,
       sourceTool: result.sourceTool,
     };
+  }
+
+  private buildSyncUseCase(): SyncUseCase {
+    const syncPluginsUseCase =
+      this.pluginInstallFromMarketplace !== undefined
+        ? new SyncPluginsUseCase(this.manifestRepo, this.pluginInstallFromMarketplace, this.logger)
+        : undefined;
+    return new SyncUseCase(
+      this.fs,
+      this.manifestRepo,
+      this.hasher,
+      this.syncSourceResolver,
+      this.syncFilePropagation,
+      syncPluginsUseCase
+    );
   }
 }

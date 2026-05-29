@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { AuthConfig } from "../../../src/domain/models/auth.js";
 import type { TokenResolver } from "../../../src/domain/ports/oauth-provider.js";
-import { AuthReader } from "../../../src/infrastructure/adapters/auth-reader.js";
-import type { AuthStorage } from "../../../src/infrastructure/adapters/auth-storage.js";
+import { AuthReaderAdapter } from "../../../src/infrastructure/adapters/auth-reader-adapter.js";
+import type { AuthStorage } from "../../../src/infrastructure/auth/auth-storage.js";
 
 function makeStorage(
   overrides: Partial<{
@@ -54,11 +54,11 @@ function withEnv<T>(vars: Record<string, string | undefined>, fn: () => T): T {
   }
 }
 
-describe("AuthReader", () => {
+describe("AuthReaderAdapter", () => {
   describe("AIDD_TOKEN env var (path 1)", () => {
     it("returns env token immediately", async () => {
       const storage = makeStorage();
-      const reader = new AuthReader(storage, "/project");
+      const reader = new AuthReaderAdapter(storage, "/project");
       const result = await withEnv({ AIDD_TOKEN: "env-token" }, () => reader.resolve());
       expect(result).toBe("env-token");
     });
@@ -74,7 +74,7 @@ describe("AuthReader", () => {
         createdAt: "2026-03-20T00:00:00.000Z",
       };
       const storage = makeStorage({ projectConfig: config });
-      const reader = new AuthReader(storage, "/project");
+      const reader = new AuthReaderAdapter(storage, "/project");
       const result = await withEnv({ AIDD_TOKEN: undefined }, () => reader.resolve());
       expect(result).toBe("project-token");
     });
@@ -87,7 +87,7 @@ describe("AuthReader", () => {
         createdAt: "2026-03-20T00:00:00.000Z",
       };
       const storage = makeStorage({ projectConfig: config });
-      const reader = new AuthReader(
+      const reader = new AuthReaderAdapter(
         storage,
         "/project",
         undefined,
@@ -108,7 +108,7 @@ describe("AuthReader", () => {
         createdAt: "2026-03-20T00:00:00.000Z",
       };
       const storage = makeStorage({ userConfig: config });
-      const reader = new AuthReader(storage, "/project");
+      const reader = new AuthReaderAdapter(storage, "/project");
       const result = await withEnv({ AIDD_TOKEN: undefined }, () => reader.resolve());
       expect(result).toBe("user-token");
     });
@@ -121,7 +121,7 @@ describe("AuthReader", () => {
         createdAt: "2026-03-20T00:00:00.000Z",
       };
       const storage = makeStorage({ userConfig: config });
-      const reader = new AuthReader(
+      const reader = new AuthReaderAdapter(
         storage,
         "/project",
         undefined,
@@ -135,7 +135,12 @@ describe("AuthReader", () => {
   describe("null fallback (path 4)", () => {
     it("returns null when no token source is available", async () => {
       const storage = makeStorage();
-      const reader = new AuthReader(storage, "/project", undefined, makeExternalProvider(null));
+      const reader = new AuthReaderAdapter(
+        storage,
+        "/project",
+        undefined,
+        makeExternalProvider(null)
+      );
       const result = await withEnv({ AIDD_TOKEN: undefined }, () => reader.resolve());
       expect(result).toBeNull();
     });
@@ -144,7 +149,12 @@ describe("AuthReader", () => {
   describe("resolveContext", () => {
     it("returns null when no token is available", async () => {
       const storage = makeStorage();
-      const reader = new AuthReader(storage, "/project", undefined, makeExternalProvider(null));
+      const reader = new AuthReaderAdapter(
+        storage,
+        "/project",
+        undefined,
+        makeExternalProvider(null)
+      );
       const result = await withEnv({ AIDD_TOKEN: undefined }, () =>
         reader.resolveContext("/project")
       );
@@ -153,7 +163,7 @@ describe("AuthReader", () => {
 
     it("returns defaults method=stored and level=user when no config exists", async () => {
       const storage = makeStorage();
-      const reader = new AuthReader(storage, "/project");
+      const reader = new AuthReaderAdapter(storage, "/project");
       const result = await withEnv({ AIDD_TOKEN: "env-token" }, () =>
         reader.resolveContext("/project")
       );
@@ -168,7 +178,7 @@ describe("AuthReader", () => {
         createdAt: "2026-03-20T00:00:00.000Z",
       };
       const storage = makeStorage({ projectConfig: config });
-      const reader = new AuthReader(
+      const reader = new AuthReaderAdapter(
         storage,
         "/project",
         undefined,
@@ -189,7 +199,7 @@ describe("AuthReader", () => {
         createdAt: "2026-03-20T00:00:00.000Z",
       };
       const storage = makeStorage({ userConfig: config });
-      const reader = new AuthReader(storage, "/project");
+      const reader = new AuthReaderAdapter(storage, "/project");
       const result = await withEnv({ AIDD_TOKEN: undefined }, () =>
         reader.resolveContext("/project")
       );
@@ -212,7 +222,7 @@ describe("AuthReader", () => {
         save: async () => {},
         readActive: async () => null,
       } as AuthStorage;
-      const reader = new AuthReader(storage, "/project");
+      const reader = new AuthReaderAdapter(storage, "/project");
       await withEnv({ AIDD_TOKEN: undefined }, async () => {
         await reader.resolve();
         await reader.resolve();
@@ -231,7 +241,7 @@ describe("AuthReader", () => {
         warn: (_msg: string) => {},
       };
       const storage = makeStorage();
-      const reader = new AuthReader(storage, "/project", logger);
+      const reader = new AuthReaderAdapter(storage, "/project", logger);
       await withEnv({ AIDD_TOKEN: "my-secret" }, () => reader.resolve());
       expect(logged.some((m) => m.includes("AIDD_TOKEN"))).toBe(true);
       expect(logged.every((m) => !m.includes("my-secret"))).toBe(true);

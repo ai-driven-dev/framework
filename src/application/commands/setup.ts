@@ -8,16 +8,10 @@ import {
   IDE_TOOL_IDS,
   type ToolId,
 } from "../../domain/tools/registry.js";
-import { GitHubReleaseResolverAdapter } from "../../infrastructure/adapters/github-release-resolver-adapter.js";
 import { createDeps } from "../../infrastructure/deps.js";
+import { displayInstall, printNextSteps, printWelcomeBanner } from "../display/setup-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
-import { ProjectContextDetectorUseCase } from "../use-cases/setup/project-context-detector-use-case.js";
-import { SetupMarketplaceSourceUseCase } from "../use-cases/setup/setup-marketplace-source-use-case.js";
-import { SetupPluginsPromptUseCase } from "../use-cases/setup/setup-plugins-prompt-use-case.js";
-import { SetupToolsPromptUseCase } from "../use-cases/setup/setup-tools-prompt-use-case.js";
-import { SetupToolsUseCase } from "../use-cases/setup/setup-tools-use-case.js";
-import type { ToolInstallResult } from "../use-cases/setup-use-case.js";
 import { SetupUseCase } from "../use-cases/setup-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
@@ -74,27 +68,22 @@ function parseToolIds(
   return { aiTools: aiIds, ideTools: ideIds };
 }
 
-function displayInstall(
-  output: CLIOutput,
-  results: readonly ToolInstallResult[],
-  verbose: boolean
-): void {
-  const skipped = results.filter((r) => r.skipped);
-  const installed = results.filter((r) => !r.skipped);
-  for (const r of skipped) output.warn(`${r.toolId} is already installed.`);
-  for (const r of installed) for (const w of r.warnings) output.warn(w);
-  if (verbose) {
-    for (const r of installed) {
-      output.debug(`Tool: ${r.toolId}`);
-      for (const f of r.files) output.debug(`  + ${f.relativePath}`);
-    }
-  }
-  if (installed.length === 1) {
-    output.success(`Installed ${installed[0].toolId} (${installed[0].fileCount} files)`);
-  } else if (installed.length > 1) {
-    const total = installed.reduce((s, r) => s + r.fileCount, 0);
-    output.success(`Installed ${installed.map((r) => r.toolId).join(", ")} (${total} files)`);
-  }
+type PluginsMode = "interactive" | "all" | "recommended" | "named" | "none";
+
+function parsePluginsFlag(
+  raw: string | undefined,
+  interactive: boolean
+): { mode: PluginsMode; names: string[] } {
+  if (raw === undefined) return { mode: interactive ? "interactive" : "none", names: [] };
+  const value = raw.trim();
+  if (value === "none") return { mode: "none", names: [] };
+  if (value === "all") return { mode: "all", names: [] };
+  if (value === "recommended") return { mode: "recommended", names: [] };
+  const names = value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return { mode: "named", names };
 }
 
 export function registerSetupCommand(program: Command): void {
@@ -156,38 +145,19 @@ export function registerSetupCommand(program: Command): void {
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
 
-        const releaseResolver = new GitHubReleaseResolverAdapter(deps.http, deps.authReader);
-        const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
-          deps.prompter,
-          releaseResolver
-        );
-        const setupToolsUseCase = new SetupToolsUseCase(
-          deps.manifestRepo,
-          deps.installRuntimeConfigUseCase,
-          deps.installIdeConfigUseCase
-        );
-        const setupPluginsPromptUseCase = new SetupPluginsPromptUseCase(
-          deps.pluginPickUseCase,
-          deps.pluginInstallFromMarketplaceUseCase,
-          deps.marketplaceRegistry,
-          deps.resolveMarketplaceUseCase
-        );
-        const setupToolsPromptUseCase = new SetupToolsPromptUseCase(deps.prompter);
-        const projectContextDetector = new ProjectContextDetectorUseCase(deps.fs);
-
         const result = await new SetupUseCase(
           deps.fs,
           deps.manifestRepo,
-          setupMarketplaceSourceUseCase,
+          deps.setupMarketplaceSourceUseCase,
           deps.marketplaceRegisterFrameworkUseCase,
           deps.marketplaceRefreshUseCase,
           deps.marketplaceSyncSettingsUseCase,
-          setupToolsUseCase,
-          setupPluginsPromptUseCase,
+          deps.setupToolsUseCase,
+          deps.setupPluginsPromptUseCase,
           deps.currentVersionProvider,
           deps.authReader,
-          setupToolsPromptUseCase,
-          projectContextDetector
+          deps.setupToolsPromptUseCase,
+          deps.projectContextDetector
         ).execute(flow);
 
         if (interactive && result.context !== undefined) {
@@ -210,39 +180,4 @@ export function registerSetupCommand(program: Command): void {
         errorHandler.handle(error);
       }
     });
-}
-
-function printWelcomeBanner(output: CLIOutput): void {
-  output.print("");
-  output.print("AI-Driven Development setup");
-  output.print("Wires your AI tools, registers the framework marketplace, installs plugins.");
-  output.print("Press Ctrl-C any time to abort.");
-  output.print("");
-}
-
-function printNextSteps(output: CLIOutput, installedAnything: boolean): void {
-  output.print("");
-  output.print("Next steps:");
-  if (installedAnything) output.print("  aidd ai status          # verify drift");
-  output.print("  aidd marketplace list   # see registered marketplaces");
-  output.print("  aidd plugin install     # add plugins");
-  output.print("  aidd --help             # explore commands");
-}
-
-type PluginsMode = "interactive" | "all" | "recommended" | "named" | "none";
-
-function parsePluginsFlag(
-  raw: string | undefined,
-  interactive: boolean
-): { mode: PluginsMode; names: string[] } {
-  if (raw === undefined) return { mode: interactive ? "interactive" : "none", names: [] };
-  const value = raw.trim();
-  if (value === "none") return { mode: "none", names: [] };
-  if (value === "all") return { mode: "all", names: [] };
-  if (value === "recommended") return { mode: "recommended", names: [] };
-  const names = value
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return { mode: "named", names };
 }

@@ -1,7 +1,6 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
-import { CleanUseCase } from "../use-cases/clean-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 export function registerCleanCommand(program: Command): void {
@@ -15,9 +14,7 @@ export function registerCleanCommand(program: Command): void {
 
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-
-        const useCase = new CleanUseCase(deps.fs, deps.manifestRepo, deps.logger, deps.prompter);
-        const result = await useCase.execute({
+        const result = await deps.cleanUseCase.execute({
           projectRoot,
           force: cmdOptions.force,
           interactive: process.stdout.isTTY,

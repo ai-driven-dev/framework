@@ -3,7 +3,7 @@
 // (not under a single `.opencode/plugins/<name>/` root — that shape is exclusive to native mode).
 import "../../../../../src/domain/tools/ai/opencode.js";
 import { describe, expect, it } from "vitest";
-import { ModeBFlatMaterializationAdapter } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-adapter.js";
+import { ModeBFlatMaterializationTranslator } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/domain/models/manifest.js";
 import { PluginDistribution } from "../../../../../src/domain/models/plugin-distribution.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -43,7 +43,7 @@ describe("install opencode plugin via Mode B (integration)", () => {
   it("materializes flat plugin files under .opencode/<section>/<plugin>/ at projectRoot", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationAdapter(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool("opencode", "test", []);
 
@@ -69,7 +69,7 @@ describe("install opencode plugin via Mode B (integration)", () => {
   it("does not write any file under user home for project-scope flat tools", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationAdapter(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool("opencode", "test", []);
 
@@ -89,7 +89,7 @@ describe("install opencode plugin via Mode B (integration)", () => {
   it("registers plugin in manifest with files map keyed by relative path", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationAdapter(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool("opencode", "test", []);
 

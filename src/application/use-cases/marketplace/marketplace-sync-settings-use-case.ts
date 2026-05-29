@@ -274,14 +274,11 @@ export class MarketplaceSyncSettingsUseCase {
   }
 
   private async loadSettings(absPath: string): Promise<Record<string, unknown>> {
-    try {
-      const content = await this.fs.readFile(absPath);
-      const parsed = JSON.parse(content);
-      if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
-        return parsed as Record<string, unknown>;
-      }
-    } catch {
-      /* file missing or unparseable — start fresh */
+    if (!(await this.fs.fileExists(absPath))) return {};
+    const content = await this.fs.readFile(absPath);
+    const parsed = JSON.parse(content) as unknown;
+    if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
     }
     return {};
   }

@@ -1,11 +1,12 @@
 import type { Command } from "commander";
 import { Manifest } from "../../domain/models/manifest.js";
+import { DOCS_DIR } from "../../domain/models/paths.js";
 import type { AiToolId } from "../../domain/models/tool-ids.js";
 import { AI_TOOL_IDS } from "../../domain/models/tool-ids.js";
 import type { ToolId } from "../../domain/tools/registry.js";
 import { createDeps, createMenuDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
-import { UninstallUseCase } from "../use-cases/uninstall/uninstall-use-case.js";
+import { NoManifestError } from "../errors.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./shared/spawn-cli-command.js";
 
@@ -77,8 +78,7 @@ export function registerAiCommand(program: Command): void {
       try {
         assertAiToolId(toolArg);
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-        const results = await useCase.execute({
+        const results = await deps.uninstallUseCase.execute({
           toolIds: [toolArg as ToolId],
           projectRoot,
           mcpFilter: [],
@@ -125,9 +125,7 @@ export function registerAiCommand(program: Command): void {
       try {
         if (cmdOptions.tool !== undefined) assertAiToolId(cmdOptions.tool);
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const { StatusUseCase } = await import("../use-cases/status-use-case.js");
-        const useCase = new StatusUseCase(deps.fs, deps.manifestRepo, deps.hasher);
-        const report = await useCase.execute({
+        const report = await deps.statusUseCase.execute({
           projectRoot,
           filterToolId: cmdOptions.tool as AiToolId | undefined,
           category: "ai",
@@ -222,24 +220,7 @@ export function registerAiCommand(program: Command): void {
             assertAiToolId(cmdOptions.target);
           }
           const deps = await createDeps(projectRoot, { verbose }, output);
-          const { SyncUseCase } = await import("../use-cases/sync/sync-use-case.js");
-          const { SyncPluginsUseCase } = await import("../use-cases/sync/sync-plugins-use-case.js");
-          const syncPluginsUseCase = cmdOptions.plugins
-            ? new SyncPluginsUseCase(
-                deps.manifestRepo,
-                deps.pluginInstallFromMarketplaceUseCase,
-                deps.logger
-              )
-            : undefined;
-          const syncUseCase = new SyncUseCase(
-            deps.fs,
-            deps.manifestRepo,
-            deps.hasher,
-            deps.syncSourceResolverUseCase,
-            deps.syncFilePropagationUseCase,
-            syncPluginsUseCase
-          );
-          const result = await syncUseCase.execute({
+          const result = await deps.syncUseCase.execute({
             projectRoot,
             sourceTool: cmdOptions.source as ToolId | undefined,
             targetTools: cmdOptions.target ? [cmdOptions.target as ToolId] : undefined,
@@ -283,7 +264,6 @@ export function registerAiCommand(program: Command): void {
             assertAiToolId(cmdOptions.tool);
           }
           const deps = await createDeps(projectRoot, { verbose }, output);
-          const { NoManifestError } = await import("../errors.js");
           const manifest = await deps.manifestRepo.load();
           if (!manifest) throw new NoManifestError();
           const version =
@@ -296,20 +276,7 @@ export function registerAiCommand(program: Command): void {
             : (manifest
                 .getInstalledToolIds()
                 .filter((id) => (AI_TOOL_IDS as readonly string[]).includes(id)) as ToolId[]);
-          const { DOCS_DIR } = await import("../../domain/models/paths.js");
-          const { RestoreUseCase } = await import("../use-cases/restore/restore-use-case.js");
-          const restoreUseCase = new RestoreUseCase(
-            deps.fs,
-            deps.manifestRepo,
-            deps.hasher,
-            deps.logger,
-            deps.platform,
-            deps.prompter,
-            deps.pluginFetcher,
-            deps.pluginDistributionReader,
-            deps.assetProvider
-          );
-          const result = await restoreUseCase.execute({
+          const result = await deps.restoreUseCase.execute({
             version,
             docsDir: DOCS_DIR,
             projectRoot,

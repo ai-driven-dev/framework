@@ -55,10 +55,11 @@ function makeAssetProvider(
     loadDefaultMarketplace: () => {
       throw new Error("not used");
     },
-    loadPluginManifestSchema: () => manifestSchema,
-    loadMarketplaceSchema: () => marketplaceSchema,
-    loadClaudeMarketplaceSchema: () => ({}),
-    loadCodexPluginManifestSchema: () => ({}),
+    loadSchema: (name) => {
+      if (name === "plugin-manifest") return manifestSchema;
+      if (name === "marketplace") return marketplaceSchema;
+      return {};
+    },
   };
 }
 

@@ -29,6 +29,9 @@ interface VscodeMcpDoc {
  * @param force    - When true, overwrite colliding entries instead of recording them.
  * @returns mergedContent (the new file content) and collisions (keys that were skipped
  *          because they already existed and force was false).
+ *
+ * No inverse: mergeVscodeMcp is a fire-and-forget additive merge — flat mode has no
+ * plugin manifest to track what was contributed, so there is no strip/unmerge operation.
  */
 export function mergeVscodeMcp(
   existing: string | null,

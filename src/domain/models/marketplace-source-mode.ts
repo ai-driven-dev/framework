@@ -1,3 +1,5 @@
+import { EmptyLocalSourcePathError, MarketplaceSourceKindError } from "../errors.js";
+
 export const DEFAULT_FRAMEWORK_REPO = "ai-driven-dev/aidd-framework";
 
 export type MarketplaceSourceModeValue =
@@ -12,7 +14,7 @@ export class MarketplaceSourceMode {
   }
 
   get repo(): string {
-    if (this.value.kind !== "remote") throw new Error("Not a remote source");
+    if (this.value.kind !== "remote") throw new MarketplaceSourceKindError("remote");
     return this.value.repo;
   }
 
@@ -22,7 +24,7 @@ export class MarketplaceSourceMode {
   }
 
   get path(): string {
-    if (this.value.kind !== "local") throw new Error("Not a local source");
+    if (this.value.kind !== "local") throw new MarketplaceSourceKindError("local");
     return this.value.path;
   }
 
@@ -35,7 +37,7 @@ export class MarketplaceSourceMode {
   }
 
   static local(path: string): MarketplaceSourceMode {
-    if (!path) throw new Error("Local source path must not be empty.");
+    if (!path) throw new EmptyLocalSourcePathError();
     return new MarketplaceSourceMode({ kind: "local", path });
   }
 

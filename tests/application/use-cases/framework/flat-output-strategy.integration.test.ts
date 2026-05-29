@@ -52,10 +52,11 @@ function makeAssetProvider(): AssetProvider {
     loadDefaultMarketplace: () => {
       throw new Error("not used");
     },
-    loadPluginManifestSchema: () => MINIMAL_MANIFEST_SCHEMA,
-    loadMarketplaceSchema: () => MINIMAL_MARKETPLACE_SCHEMA,
-    loadClaudeMarketplaceSchema: () => ({}),
-    loadCodexPluginManifestSchema: () => ({}),
+    loadSchema: (name) => {
+      if (name === "plugin-manifest") return MINIMAL_MANIFEST_SCHEMA;
+      if (name === "marketplace") return MINIMAL_MARKETPLACE_SCHEMA;
+      return {};
+    },
   };
 }
 

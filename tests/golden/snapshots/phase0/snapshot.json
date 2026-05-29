@@ -1,0 +1,115 @@
+[
+  {
+    "command": "setup --source local --path <FRAMEWORK_FIXTURE> --ai claude --plugins none --yes",
+    "exitCode": 0,
+    "stdout": "Fetching marketplace 'aidd-framework'...\nProject initialized.\nInstalled claude (1 files)\n",
+    "stderr": "",
+    "filesWritten": [
+      ".aidd/manifest.json",
+      ".aidd/marketplaces.json",
+      ".claude/settings.json",
+      ".gitignore"
+    ],
+    "manifest": {
+      "version": 6,
+      "tools": {
+        "claude": {
+          "toolId": "claude",
+          "version": "<VERSION>",
+          "files": [
+            {
+              "relativePath": ".claude/settings.json",
+              "hash": "649e4d11beb54c6763ee7880f5227564"
+            }
+          ],
+          "mergeFiles": []
+        }
+      }
+    }
+  },
+  {
+    "command": "status",
+    "exitCode": 0,
+    "stdout": "All files are in sync\n",
+    "stderr": "",
+    "filesWritten": [],
+    "manifest": {
+      "version": 6,
+      "tools": {
+        "claude": {
+          "toolId": "claude",
+          "version": "<VERSION>",
+          "files": [
+            {
+              "relativePath": ".claude/settings.json",
+              "hash": "649e4d11beb54c6763ee7880f5227564"
+            }
+          ],
+          "mergeFiles": []
+        }
+      }
+    }
+  },
+  {
+    "command": "restore --force",
+    "exitCode": 0,
+    "stdout": "Checking claude for files to restore...\nNothing to restore — all files are unmodified.\n",
+    "stderr": "",
+    "filesWritten": [],
+    "manifest": {
+      "version": 6,
+      "tools": {
+        "claude": {
+          "toolId": "claude",
+          "version": "<VERSION>",
+          "files": [
+            {
+              "relativePath": ".claude/settings.json",
+              "hash": "649e4d11beb54c6763ee7880f5227564"
+            }
+          ],
+          "mergeFiles": []
+        }
+      }
+    }
+  },
+  {
+    "command": "migrate",
+    "exitCode": 0,
+    "stdout": "Nothing to migrate.\n",
+    "stderr": "",
+    "filesWritten": [],
+    "manifest": {
+      "version": 6,
+      "tools": {
+        "claude": {
+          "toolId": "claude",
+          "version": "<VERSION>",
+          "files": [
+            {
+              "relativePath": ".claude/settings.json",
+              "hash": "649e4d11beb54c6763ee7880f5227564"
+            }
+          ],
+          "mergeFiles": []
+        }
+      }
+    }
+  },
+  {
+    "command": "clean --force",
+    "exitCode": 0,
+    "stdout": "Removing claude files...\nCleaned all AIDD files (1 files removed)\n",
+    "stderr": "",
+    "filesWritten": [],
+    "manifest": null
+  },
+  {
+    "command": "status",
+    "exitCode": 0,
+    "stdout": "\nAI tools:\n  (none installed)\n\nIDE tools:\n  (none installed)\n\nPlugins:\n  (all in sync)\n\nLegend: ~ modified  - deleted  + added\n",
+    "stderr": "Warning: [ai] No AIDD manifest found. Run `aidd setup` to initialize your project.\nWarning: [ide] No AIDD manifest found. Run `aidd setup` to initialize your project.\nWarning: [plugins] No AIDD manifest found. Run `aidd setup` to initialize your project.\n",
+    "filesWritten": [],
+    "manifest": null
+  }
+]

@@ -6,6 +6,9 @@ import "../domain/tools/ai/cursor.js";
 import "../domain/tools/ai/opencode.js";
 import "../domain/tools/ide/vscode.js";
 import { CLIOutput } from "../application/output.js";
+import { RequireAuthUseCase } from "../application/use-cases/auth/require-auth-use-case.js";
+import { CheckUpdateUseCase } from "../application/use-cases/check-update-use-case.js";
+import { CleanUseCase } from "../application/use-cases/clean-use-case.js";
 import { DoctorLayoutUseCase } from "../application/use-cases/doctor/doctor-layout-use-case.js";
 import { DoctorMergeFilesUseCase } from "../application/use-cases/doctor/doctor-merge-files-use-case.js";
 import { DoctorPluginUseCase } from "../application/use-cases/doctor/doctor-plugin-use-case.js";
@@ -15,6 +18,11 @@ import { DoctorUseCase } from "../application/use-cases/doctor/doctor-use-case.j
 import { FrameworkBuildUseCase } from "../application/use-cases/framework/framework-build-use-case.js";
 import { CodexOutputStrategy } from "../application/use-cases/framework/strategies/codex-output-strategy.js";
 import { FlatOutputStrategy } from "../application/use-cases/framework/strategies/flat-output-strategy.js";
+import { DoctorAllUseCase } from "../application/use-cases/global/doctor-all-use-case.js";
+import { RestoreAllUseCase } from "../application/use-cases/global/restore-all-use-case.js";
+import { StatusAllUseCase } from "../application/use-cases/global/status-all-use-case.js";
+import { SyncAllUseCase } from "../application/use-cases/global/sync-all-use-case.js";
+import { UpdateAllUseCase } from "../application/use-cases/global/update-all-use-case.js";
 import { InstallAiToolUseCase } from "../application/use-cases/install/install-ai-tool-use-case.js";
 import { InstallIdeConfigUseCase } from "../application/use-cases/install/install-ide-config-use-case.js";
 import { InstallIdeToolUseCase } from "../application/use-cases/install/install-ide-tool-use-case.js";
@@ -29,6 +37,7 @@ import { MarketplaceSyncSettingsUseCase } from "../application/use-cases/marketp
 import { MigrateBackupUseCase } from "../application/use-cases/migrate/migrate-backup-use-case.js";
 import { MigrateRewirePluginsUseCase } from "../application/use-cases/migrate/migrate-rewire-plugins-use-case.js";
 import { MigrateStripDeadFilesUseCase } from "../application/use-cases/migrate/migrate-strip-dead-files-use-case.js";
+import { MigrateUseCase } from "../application/use-cases/migrate-use-case.js";
 import { PluginAddUseCase } from "../application/use-cases/plugin/plugin-add-use-case.js";
 import { PluginCreateUseCase } from "../application/use-cases/plugin/plugin-create-use-case.js";
 import { PluginInstallFromMarketplaceUseCase } from "../application/use-cases/plugin/plugin-install-from-marketplace-use-case.js";
@@ -38,19 +47,33 @@ import { PluginPickUseCase } from "../application/use-cases/plugin/plugin-pick-u
 import { PluginRemoveUseCase } from "../application/use-cases/plugin/plugin-remove-use-case.js";
 import { PluginSearchUseCase } from "../application/use-cases/plugin/plugin-search-use-case.js";
 import { PluginUpdateUseCase } from "../application/use-cases/plugin/plugin-update-use-case.js";
+import { RestoreUseCase } from "../application/use-cases/restore/restore-use-case.js";
+import { SelfUpdateUseCase } from "../application/use-cases/self-update-use-case.js";
+import { ProjectContextDetectorUseCase } from "../application/use-cases/setup/project-context-detector-use-case.js";
+import { SetupMarketplaceSourceUseCase } from "../application/use-cases/setup/setup-marketplace-source-use-case.js";
+import { SetupPluginsPromptUseCase } from "../application/use-cases/setup/setup-plugins-prompt-use-case.js";
+import { SetupToolsPromptUseCase } from "../application/use-cases/setup/setup-tools-prompt-use-case.js";
+import { SetupToolsUseCase } from "../application/use-cases/setup/setup-tools-use-case.js";
 import { FetchMarketplaceSourceUseCase } from "../application/use-cases/shared/fetch-marketplace-source-use-case.js";
 import { ResolveMarketplaceUseCase } from "../application/use-cases/shared/resolve-marketplace-use-case.js";
+import { StatusUseCase } from "../application/use-cases/status-use-case.js";
 import { SyncConflictResolverUseCase } from "../application/use-cases/sync/sync-conflict-resolver-use-case.js";
 import { SyncFilePropagationUseCase } from "../application/use-cases/sync/sync-file-propagation-use-case.js";
+import { SyncPluginsUseCase } from "../application/use-cases/sync/sync-plugins-use-case.js";
 import { SyncSourceResolverUseCase } from "../application/use-cases/sync/sync-source-resolver-use-case.js";
+import { SyncUseCase } from "../application/use-cases/sync/sync-use-case.js";
 import { UninstallIdeUseCase } from "../application/use-cases/uninstall/uninstall-ide-use-case.js";
+import { UninstallUseCase } from "../application/use-cases/uninstall/uninstall-use-case.js";
 import type { AssetProvider } from "../domain/ports/asset-provider.js";
+import type { CredentialStore } from "../domain/ports/credential-store.js";
 import type { FileMerger } from "../domain/ports/file-merger.js";
 import type { FileReader } from "../domain/ports/file-reader.js";
 import type { FileWriter } from "../domain/ports/file-writer.js";
 import type { Hasher } from "../domain/ports/hasher.js";
+import type { LatestReleaseResolver } from "../domain/ports/latest-release-resolver.js";
 import type { Logger } from "../domain/ports/logger.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
+import type { MarketplaceCachePort } from "../domain/ports/marketplace-cache.js";
 import type { MarketplaceRegistry } from "../domain/ports/marketplace-registry.js";
 import type { MarketplaceTrustStore } from "../domain/ports/marketplace-trust-store.js";
 import type { Platform } from "../domain/ports/platform.js";
@@ -62,16 +85,18 @@ import type { SelfUpdater } from "../domain/ports/self-updater.js";
 import type { VersionControl } from "../domain/ports/version-control.js";
 import type { VersionReader } from "../domain/ports/version-reader.js";
 import { AjvSchemaValidatorAdapter } from "./adapters/ajv-schema-validator-adapter.js";
-import { AuthReader } from "./adapters/auth-reader.js";
-import { AuthStorage } from "./adapters/auth-storage.js";
+import { AuthProviderAdapter } from "./adapters/auth-provider-adapter.js";
+import { AuthReaderAdapter } from "./adapters/auth-reader-adapter.js";
 import { CurrentVersionAdapter } from "./adapters/current-version-adapter.js";
 import { FileAdapter } from "./adapters/file-adapter.js";
 import { GhCliAdapter } from "./adapters/gh-cli-adapter.js";
+import { GhTokenAdapter } from "./adapters/gh-token-adapter.js";
 import { GitAdapter } from "./adapters/git-adapter.js";
 import { GitHubRawFetcherAdapter } from "./adapters/github-raw-fetcher-adapter.js";
+import { GitHubReleaseResolverAdapter } from "./adapters/github-release-resolver-adapter.js";
 import { HasherAdapter } from "./adapters/hasher-adapter.js";
-import { HttpClient } from "./adapters/http-client.js";
 import { ManifestRepositoryAdapter } from "./adapters/manifest-repository-adapter.js";
+import { MarketplaceCacheAdapter } from "./adapters/marketplace-cache-adapter.js";
 import { MarketplaceRegistryAdapter } from "./adapters/marketplace-registry-adapter.js";
 import { MarketplaceTrustStoreAdapter } from "./adapters/marketplace-trust-store-adapter.js";
 import { PlatformAdapter } from "./adapters/platform-adapter.js";
@@ -81,6 +106,8 @@ import { PluginFetcherAdapter } from "./adapters/plugin-fetcher-adapter.js";
 import { InquirerPrompterAdapter, SilentPrompterAdapter } from "./adapters/prompter-adapter.js";
 import { SelfUpdaterAdapter } from "./adapters/self-updater-adapter.js";
 import { BundledAssetProviderAdapter } from "./assets/asset-loader.js";
+import { AuthStorage } from "./auth/auth-storage.js";
+import { HttpClient } from "./http/http-client.js";
 
 interface GlobalOptions {
   verbose: boolean;
@@ -96,12 +123,14 @@ interface Deps {
   git: VersionControl;
   platform: Platform;
   prompter: Prompter;
-  authReader: AuthReader;
+  authReader: AuthReaderAdapter;
   authStorage: AuthStorage;
+  credentialStore: CredentialStore;
   http: HttpClient;
   pluginCatalogRepository: PluginCatalogRepository;
   pluginFetcher: PluginFetcher;
   pluginDistributionReader: PluginDistributionReader;
+  marketplaceCache: MarketplaceCachePort;
   marketplaceRegistry: MarketplaceRegistry;
   marketplaceTrustStore: MarketplaceTrustStore;
   pluginAddUseCase: PluginAddUseCase;
@@ -135,6 +164,27 @@ interface Deps {
   syncFilePropagationUseCase: SyncFilePropagationUseCase;
   syncSourceResolverUseCase: SyncSourceResolverUseCase;
   doctorUseCase: DoctorUseCase;
+  releaseResolver: LatestReleaseResolver;
+  setupMarketplaceSourceUseCase: SetupMarketplaceSourceUseCase;
+  setupToolsUseCase: SetupToolsUseCase;
+  setupPluginsPromptUseCase: SetupPluginsPromptUseCase;
+  setupToolsPromptUseCase: SetupToolsPromptUseCase;
+  projectContextDetector: ProjectContextDetectorUseCase;
+  requireAuthUseCase: RequireAuthUseCase;
+  selfUpdateUseCase: SelfUpdateUseCase;
+  statusUseCase: StatusUseCase;
+  restoreUseCase: RestoreUseCase;
+  uninstallUseCase: UninstallUseCase;
+  syncPluginsUseCase: SyncPluginsUseCase;
+  syncUseCase: SyncUseCase;
+  statusAllUseCase: StatusAllUseCase;
+  restoreAllUseCase: RestoreAllUseCase;
+  updateAllUseCase: UpdateAllUseCase;
+  syncAllUseCase: SyncAllUseCase;
+  migrateUseCase: MigrateUseCase;
+  cleanUseCase: CleanUseCase;
+  doctorAllUseCase: DoctorAllUseCase;
+  checkUpdateUseCase: CheckUpdateUseCase;
 }
 
 const _cache = new Map<string, Deps>();
@@ -196,6 +246,7 @@ export async function createDeps(
   const fs = new FileAdapter(hasher);
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
   const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
+  const marketplaceCache = new MarketplaceCacheAdapter(projectRoot);
   const marketplaceRegistry = new MarketplaceRegistryAdapter();
   const marketplaceTrustStore = new MarketplaceTrustStoreAdapter(hasher);
   const logger = output ?? new CLIOutput(options.verbose);
@@ -203,11 +254,19 @@ export async function createDeps(
   const http = new HttpClient();
   const authStorage = new AuthStorage();
   const ghCliAdapter = new GhCliAdapter();
-  const authReader = new AuthReader(authStorage, projectRoot, logger, ghCliAdapter);
+  const authReader = new AuthReaderAdapter(authStorage, projectRoot, logger, ghCliAdapter);
+  const credentialStore = new AuthProviderAdapter(
+    authStorage,
+    new Map([["gh", ghCliAdapter]]),
+    new GhTokenAdapter(http),
+    projectRoot
+  );
   const pluginFetcher = new PluginFetcherAdapter(fs, authReader);
   const rawCatalogFetcher = new GitHubRawFetcherAdapter(http, authReader);
   const cliUpdater = new SelfUpdaterAdapter(http, { tokenProvider: authReader });
   const currentVersionProvider = new CurrentVersionAdapter();
+  const requireAuthUseCase = new RequireAuthUseCase(authReader);
+  const selfUpdateUseCase = new SelfUpdateUseCase(cliUpdater, currentVersionProvider);
   const git = new GitAdapter(fs);
   const platform = new PlatformAdapter();
   const prompter = process.stdout.isTTY
@@ -377,6 +436,93 @@ export async function createDeps(
     doctorReferencesUseCase,
     doctorLayoutUseCase
   );
+  const releaseResolver = new GitHubReleaseResolverAdapter(http, authReader);
+  const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
+    prompter,
+    releaseResolver
+  );
+  const setupToolsUseCase = new SetupToolsUseCase(
+    manifestRepo,
+    installRuntimeConfigUseCase,
+    installIdeConfigUseCase
+  );
+  const setupPluginsPromptUseCase = new SetupPluginsPromptUseCase(
+    pluginPickUseCase,
+    pluginInstallFromMarketplaceUseCase,
+    marketplaceRegistry,
+    resolveMarketplaceUseCase
+  );
+  const setupToolsPromptUseCase = new SetupToolsPromptUseCase(prompter);
+  const projectContextDetector = new ProjectContextDetectorUseCase(fs);
+  const statusUseCase = new StatusUseCase(fs, manifestRepo, hasher);
+  const restoreUseCase = new RestoreUseCase(
+    fs,
+    manifestRepo,
+    hasher,
+    logger,
+    platform,
+    prompter,
+    pluginFetcher,
+    pluginDistributionReader,
+    assetProvider
+  );
+  const uninstallUseCase = new UninstallUseCase(fs, manifestRepo, logger);
+  const syncPluginsUseCase = new SyncPluginsUseCase(
+    manifestRepo,
+    pluginInstallFromMarketplaceUseCase,
+    logger
+  );
+  const syncUseCase = new SyncUseCase(
+    fs,
+    manifestRepo,
+    hasher,
+    syncSourceResolverUseCase,
+    syncFilePropagationUseCase,
+    syncPluginsUseCase
+  );
+  const statusAllUseCase = new StatusAllUseCase(fs, manifestRepo, hasher);
+  const restoreAllUseCase = new RestoreAllUseCase(
+    fs,
+    manifestRepo,
+    hasher,
+    logger,
+    platform,
+    prompter,
+    pluginFetcher,
+    pluginDistributionReader,
+    assetProvider
+  );
+  const updateAllUseCase = new UpdateAllUseCase(
+    manifestRepo,
+    currentVersionProvider,
+    installRuntimeConfigUseCase,
+    installIdeConfigUseCase,
+    pluginUpdateUseCase,
+    marketplaceRefreshUseCase
+  );
+  const syncAllUseCase = new SyncAllUseCase(
+    fs,
+    manifestRepo,
+    hasher,
+    logger,
+    syncSourceResolverUseCase,
+    syncFilePropagationUseCase,
+    pluginInstallFromMarketplaceUseCase
+  );
+  const migrateUseCase = new MigrateUseCase(
+    fs,
+    manifestRepo,
+    logger,
+    prompter,
+    marketplaceRegisterFrameworkUseCase,
+    migrateBackupUseCase,
+    migrateStripDeadFilesUseCase,
+    migrateRewirePluginsUseCase,
+    marketplaceRegistry
+  );
+  const cleanUseCase = new CleanUseCase(fs, manifestRepo, logger, prompter);
+  const doctorAllUseCase = new DoctorAllUseCase(doctorUseCase);
+  const checkUpdateUseCase = new CheckUpdateUseCase(cliUpdater, currentVersionProvider, logger, fs);
   const deps: Deps = {
     fs,
     manifestRepo,
@@ -389,10 +535,12 @@ export async function createDeps(
     prompter,
     authReader,
     authStorage,
+    credentialStore,
     http,
     pluginCatalogRepository,
     pluginFetcher,
     pluginDistributionReader,
+    marketplaceCache,
     marketplaceRegistry,
     marketplaceTrustStore,
     pluginAddUseCase,
@@ -426,6 +574,27 @@ export async function createDeps(
     syncFilePropagationUseCase,
     syncSourceResolverUseCase,
     doctorUseCase,
+    releaseResolver,
+    setupMarketplaceSourceUseCase,
+    setupToolsUseCase,
+    setupPluginsPromptUseCase,
+    setupToolsPromptUseCase,
+    projectContextDetector,
+    requireAuthUseCase,
+    selfUpdateUseCase,
+    statusUseCase,
+    restoreUseCase,
+    uninstallUseCase,
+    syncPluginsUseCase,
+    syncUseCase,
+    statusAllUseCase,
+    restoreAllUseCase,
+    updateAllUseCase,
+    syncAllUseCase,
+    migrateUseCase,
+    cleanUseCase,
+    doctorAllUseCase,
+    checkUpdateUseCase,
   };
   _cache.set(projectRoot, deps);
   return deps;

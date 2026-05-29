@@ -55,11 +55,8 @@ export class ApplyPluginFilesUseCase {
     outputPath: string,
     expectedHashValue: string
   ): Promise<boolean> {
-    try {
-      const content = await this.fs.readFile(outputPath);
-      return this.hasher.hash(content).value === expectedHashValue;
-    } catch {
-      return false;
-    }
+    if (!(await this.fs.fileExists(outputPath))) return false;
+    const content = await this.fs.readFile(outputPath);
+    return this.hasher.hash(content).value === expectedHashValue;
   }
 }

@@ -1,3 +1,4 @@
+import { extractConfigCapabilities } from "../../../domain/models/config-capability.js";
 import { InstallationFile, removeRedundantGitkeeps } from "../../../domain/models/file.js";
 import type { ContentSection, FrameworkDescriptor } from "../../../domain/models/framework.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
@@ -15,10 +16,7 @@ import type {
 import { isAiTool, type ToolConfig } from "../../../domain/tools/registry.js";
 import { InstallAgentsUseCase } from "../install/install-agents-use-case.js";
 import { InstallCommandsUseCase } from "../install/install-commands-use-case.js";
-import {
-  extractConfigCapabilities,
-  InstallConfigUseCase,
-} from "../install/install-config-use-case.js";
+import { InstallConfigUseCase } from "../install/install-config-use-case.js";
 import { InstallRulesUseCase } from "../install/install-rules-use-case.js";
 import { InstallSkillsUseCase } from "../install/install-skills-use-case.js";
 

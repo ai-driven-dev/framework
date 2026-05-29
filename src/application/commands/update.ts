@@ -1,7 +1,6 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
-import { UpdateAllUseCase } from "../use-cases/global/update-all-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 export function registerUpdateCommand(program: Command): void {
@@ -15,15 +14,7 @@ export function registerUpdateCommand(program: Command): void {
 
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const useCase = new UpdateAllUseCase(
-          deps.manifestRepo,
-          deps.currentVersionProvider,
-          deps.installRuntimeConfigUseCase,
-          deps.installIdeConfigUseCase,
-          deps.pluginUpdateUseCase,
-          deps.marketplaceRefreshUseCase
-        );
-        const result = await useCase.execute(projectRoot);
+        const result = await deps.updateAllUseCase.execute(projectRoot);
 
         for (const t of result.updatedTools) {
           output.success(`Updated ${t.toolId} (${t.fileCount} files)`);

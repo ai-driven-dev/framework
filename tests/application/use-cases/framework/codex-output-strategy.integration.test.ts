@@ -131,7 +131,7 @@ describe("CodexOutputStrategy", () => {
       const raw = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/.codex-plugin/plugin.json`) ?? "{}";
       const parsed = JSON.parse(raw) as unknown;
       const av = new AjvSchemaValidatorAdapter();
-      const schema = new BundledAssetProviderAdapter().loadCodexPluginManifestSchema();
+      const schema = new BundledAssetProviderAdapter().loadSchema("codex-plugin-manifest");
       expect(() => av.validate(schema, parsed)).not.toThrow();
     });
 
@@ -153,7 +153,7 @@ describe("CodexOutputStrategy", () => {
       const raw = fs.getFile(`${OUT_DIR}/.claude-plugin/marketplace.json`) ?? "{}";
       const parsed = JSON.parse(raw) as unknown;
       const av = new AjvSchemaValidatorAdapter();
-      const schema = new BundledAssetProviderAdapter().loadClaudeMarketplaceSchema();
+      const schema = new BundledAssetProviderAdapter().loadSchema("claude-marketplace");
       expect(() => av.validate(schema, parsed)).not.toThrow();
     });
 

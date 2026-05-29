@@ -30,6 +30,10 @@ export interface RewriteRelativeLinksOptions {
  *
  * Does NOT rewrite @{{TOOLS}}/... — callers must detect and halt on that pattern.
  * Does NOT touch bare ${CLAUDE_PLUGIN_ROOT} without a leading @ (spec C-v2.2).
+ *
+ * No inverse: rewriteRelativeLinks is a one-way expansion — @-shorthand is
+ * replaced with full markdown links that cannot be unambiguously reversed to the
+ * original @-syntax (the label and path are indistinguishable from user-authored links).
  */
 export function rewriteRelativeLinks(
   content: string,

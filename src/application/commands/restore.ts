@@ -1,7 +1,6 @@
 import type { Command } from "commander";
 import { createDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
-import { RestoreAllUseCase } from "../use-cases/global/restore-all-use-case.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 export function registerRestoreCommand(program: Command): void {
@@ -16,18 +15,7 @@ export function registerRestoreCommand(program: Command): void {
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
         const interactive = !cmdOptions.force && process.stdout.isTTY;
-        const useCase = new RestoreAllUseCase(
-          deps.fs,
-          deps.manifestRepo,
-          deps.hasher,
-          deps.logger,
-          deps.platform,
-          deps.prompter,
-          deps.pluginFetcher,
-          deps.pluginDistributionReader,
-          deps.assetProvider
-        );
-        const result = await useCase.execute(projectRoot, interactive);
+        const result = await deps.restoreAllUseCase.execute(projectRoot, interactive);
 
         for (const e of result.errors) output.warn(`[${e.scope}] ${e.message}`);
 
