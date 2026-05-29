@@ -4,99 +4,46 @@ description: Codebase audit report template
 argument-hint: N/A
 ---
 
-# Codebase Audit for {scope}
+# Codebase Audit: {{scope}}
 
-{{summary}}
+{{one_line_summary}}
 
-- Status: {{status}}
-- Confidence: {{confidence}}
-- Scope: {{scope}}
+- **Date**: {{yyyy_mm_dd}}
+- **Scope**: {{scope}}
+- **Health**: {{good | fair | poor}}
+- **Findings**: {{n_critical}} critical, {{n_warning}} warning, {{n_minor}} minor
+
+Health: `good` = no critical findings; `fair` = critical findings exist but are isolated and addressable; `poor` = systemic or widespread critical findings.
 
 ## Findings
 
-Fill the checklist under with:
+One row per issue. Every row MUST cite a concrete `file:line`. Sort by severity (critical first). Read-only: an audit reports, it never edits code.
 
-```markdown
-- [🟢|🟡|🔴] [**{category}**]: `{affected file:line}` {issue} ({suggested fix})
-```
+Severity (shared rubric across every audit pillar, so a full audit ranks consistently):
+- 🔴 critical - exploitable security hole, data loss, or broken correctness. Fix now.
+- 🟡 warning - real debt or risk that will bite later. Fix soon.
+- 🟢 minor - nit or cleanup. Fix when convenient.
 
-Example:
+Effort: `S` (under 1h), `M` (under 1d), `L` (over 1d).
+Category (the audit pillar, one of): `code-quality`, `architecture`, `security`, `dependencies`, `performance`, `tests`, `ui`.
 
-```markdown
-- [🔴] **Dead code**: `src/legacy/utils.ts:120` Unused export `formatLegacyDate`, no inbound references (delete the function and its imports)
-- [🟡] **Duplication**: `src/views/login.tsx:45` Same toast logic copy-pasted in 3 views (extract a `useToast` helper)
-- [🟢] **Coverage**: `src/services/auth.ts` Critical path covered by integration tests
-```
+| Sev | Category     | Location                  | Issue                                  | Suggested fix                        | Effort |
+| --- | ------------ | ------------------------- | -------------------------------------- | ------------------------------------ | ------ |
+| 🔴  | security     | `src/api/user.ts:30`      | Request body used without validation   | Validate with the project schema lib | S      |
+| 🟡  | code-quality | `src/views/login.tsx:45`  | Toast logic copy-pasted across 3 views | Extract a `useToast` helper          | M      |
+| 🟢  | code-quality | `src/legacy/utils.ts:120` | Unused export `formatLegacyDate`       | Delete the function and its imports  | S      |
 
-## ✅ Audit Checklist
+## Top actions (ranked by impact)
 
-### Dead and unused code
+Highest impact first. Each action names the finding rows it resolves and, when a fix is wanted, the act-skill to hand off to (refactor, test, impeccable - the audit itself never edits code).
 
-- [ ] Unreachable code paths
-- [ ] Unused exports, types, helpers
-- [ ] Stale comments, TODOs older than 6 months
-- [ ] Vestigial feature flags
+1. {{action_1}}
+2. {{action_2}}
+3. {{action_3}}
 
-### Duplication
+## Coverage
 
-- [ ] Same logic copy-pasted across files
-- [ ] Re-implemented standard library helpers
-- [ ] Repeated test setup blocks
+Proves each pillar was examined. A pillar with no findings is still scanned and listed here. A pillar that could not be examined (missing tool or runtime) is listed under Skipped with the reason - never silently dropped.
 
-### Complexity
-
-- [ ] Cyclomatic complexity per function within target
-- [ ] File length within target
-- [ ] Component or class scope within target
-- [ ] Nesting depth within target
-
-### Standards and conventions
-
-- [ ] Naming conventions followed
-- [ ] Project coding rules respected
-- [ ] Linting and formatting clean
-- [ ] Folder structure matches architecture
-
-### Error handling
-
-- [ ] Errors caught at the right boundary
-- [ ] User-facing messages clear
-- [ ] No silent swallows
-- [ ] Recovery paths tested
-
-### Test coverage
-
-- [ ] Critical paths covered
-- [ ] Tests assert behavior, not implementation
-- [ ] No flaky tests
-- [ ] No skipped or xfailed without recorded reason
-
-### Performance
-
-- [ ] N+1 queries flagged
-- [ ] Heavy operations batched or memoized
-- [ ] Large payloads paginated
-- [ ] Hot paths benchmarked when meaningful
-
-### Security
-
-- [ ] Input validation at boundaries
-- [ ] Secrets never committed
-- [ ] Dependencies free of known critical CVEs
-- [ ] Authentication and authorization gates verified
-
-## Recommendations
-
-Ranked by impact (high to low):
-
-1. {{rec_1}}
-2. {{rec_2}}
-3. {{rec_3}}
-
-## Final Audit
-
-- **Score**: {{final_score}}
-- **Top risks**: {{top_risks}}
-- **Quick wins**: {{quick_wins}}
-- **Follow-up actions**: {{follow_up_actions}}
-- **Additional notes**: {{additional_notes}}
+- **Scanned**: {{pillars examined, comma-separated}}
+- **Skipped**: {{pillars not examined + reason, or "none"}}

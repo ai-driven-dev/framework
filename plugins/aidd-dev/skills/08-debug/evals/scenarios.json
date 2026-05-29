@@ -2,7 +2,7 @@
   { "prompt": "Reproduce the bug reported in issue #42", "expect_action": "reproduce" },
   { "prompt": "Write a failing test that reproduces the login crash", "expect_action": "reproduce" },
   { "prompt": "Debug the payment service error", "expect_action": "debug" },
-  { "prompt": "Fix the bug causing the checkout to fail", "expect_action": "debug" },
+  { "prompt": "Figure out what is causing the checkout to fail", "expect_action": "debug" },
   { "prompt": "Find and fix the root cause of the auth token expiration issue", "expect_action": "debug" },
   { "prompt": "Reflect on what caused the issue and document learnings", "expect_action": "reflect-issue" },
   { "prompt": "Post-mortem: what went wrong with the deployment bug", "expect_action": "reflect-issue" },

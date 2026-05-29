@@ -18,13 +18,13 @@ Validates correctness of implementations through iterative assertion loops, arch
 
 ## Routing (run first)
 
-Assert comprehensively: these actions are complementary facets, not mutually exclusive choices. Select every action applicable to the target; do NOT stop at action 01. Do not ask the user to pick - decide from what the feature needs.
+These actions are complementary facets, not mutually exclusive. This skill is run-one-OR-run-all:
 
-- `01-assert` - ALWAYS run for a feature assertion (the project's coding assertions are the baseline).
-- `03-assert-frontend` - ALSO run when the feature has a UI and a running frontend URL is available.
-- `02-assert-architecture` - run when the request is about architecture conformance (C4 / ADRs / tree), either standalone or added to a feature assertion when conformance is in scope.
+- The user named a facet ("assert the frontend", "check architecture conformance") -> run that ONE action.
+- The user asked for an unscoped assertion ("assert this works", "make the feature pass") -> ask ONE question: "Assert everything applicable, or a specific facet (coding / architecture / frontend)?" Then run all applicable, or the chosen one.
+- Never silently default to action 01. Never run a blind all without offering the choice first.
 
-Run the applicable actions in order (01, then 03 if UI, then 02 if conformance). Read and follow each selected action file.
+When running all applicable: `01-assert` is the baseline (project coding assertions); add `03-assert-frontend` when the feature has a UI and a running frontend URL; add `02-assert-architecture` when architecture conformance is in scope. A facet whose precondition is absent (e.g. no running URL) is skipped with a noted reason, never forced. Run the selected actions in order (01, then 03, then 02). Read and follow each selected action file.
 
 ## Actions
 
