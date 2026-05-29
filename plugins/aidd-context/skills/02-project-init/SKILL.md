@@ -26,12 +26,9 @@ Bootstraps the AIDD context layer for a project: AI context files with memory bl
 
 The context files this skill writes are tool-specific. Detect, propose, and confirm the target tools ONCE at flow entry; the confirmed set drives action 01 (write context files) and, downstream, action 05 (sync the memory block into them). The memory steps (02, 03, 04) are tool-agnostic and do not depend on this gate.
 
-1. **Detect.** Check the three canonical context-file paths at the project root (no other file qualifies; `*.agent.md`, `<vendor>-*.md`, and lookalikes are user project content, off-limits):
-   - `CLAUDE.md` -> Claude Code
-   - `AGENTS.md` -> Cursor / OpenCode / Codex CLI
-   - `.github/copilot-instructions.md` -> GitHub Copilot
+1. **Detect.** Check the canonical context-file paths listed in `@references/mapping-ai-context-file.md` (one row per tool) at the project root. Only those paths qualify; any other file (`*.agent.md`, `<vendor>-*.md`, and lookalikes) is user project content, off-limits.
 2. **Modify-mode shortcut.** If every detected context file already contains the `<aidd_project_memory>` block, this is a re-run on an initialized project: the confirmed set = the tools already present. Skip the prompt.
-3. **Propose and confirm.** Otherwise present the detected files plus the full tool list (`claude`, `cursor`, `codex`, `copilot`, `opencode`) and ask which tools the user actively uses. Blocking: await an explicit pick; if none is received, FAIL with `status: blocked_awaiting_user_tool_selection`.
+3. **Propose and confirm.** Otherwise present the detected files plus the tool list from `@references/mapping-ai-context-file.md` and ask which tools the user actively uses. Blocking: await an explicit pick; if none is received, FAIL with `status: blocked_awaiting_user_tool_selection`.
    - Default proposal: the tools whose context file is already present (propose, do not silently apply).
    - MUST NOT default to creating all three canonical files to "cover bases".
    - MUST NOT infer tools from filenames or repo signals.
