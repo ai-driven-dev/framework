@@ -22,13 +22,30 @@ Bootstraps the AIDD context layer for a project: AI context files with memory bl
 | 04  | `review-memory`       | Cross-file consistency review of all generated memory files       | `aidd_docs/memory/` from 03 |
 | 05  | `sync-memory`         | Execute `update_memory.js` to fill `<aidd_project_memory>` blocks | context files from 01       |
 
+## Tool detection (run first)
+
+The context files this skill writes are tool-specific. Detect, propose, and confirm the target tools ONCE at flow entry; the confirmed set drives action 01 (write context files) and, downstream, action 05 (sync the memory block into them). The memory steps (02, 03, 04) are tool-agnostic and do not depend on this gate.
+
+1. **Detect.** Check the three canonical context-file paths at the project root (no other file qualifies; `*.agent.md`, `<vendor>-*.md`, and lookalikes are user project content, off-limits):
+   - `CLAUDE.md` -> Claude Code
+   - `AGENTS.md` -> Cursor / OpenCode / Codex CLI
+   - `.github/copilot-instructions.md` -> GitHub Copilot
+2. **Modify-mode shortcut.** If every detected context file already contains the `<aidd_project_memory>` block, this is a re-run on an initialized project: the confirmed set = the tools already present. Skip the prompt.
+3. **Propose and confirm.** Otherwise present the detected files plus the full tool list (`claude`, `cursor`, `codex`, `copilot`, `opencode`) and ask which tools the user actively uses. Blocking: await an explicit pick; if none is received, FAIL with `status: blocked_awaiting_user_tool_selection`.
+   - Default proposal: the tools whose context file is already present (propose, do not silently apply).
+   - MUST NOT default to creating all three canonical files to "cover bases".
+   - MUST NOT infer tools from filenames or repo signals.
+   - In a non-interactive / auto run: the detected set becomes the confirmed set; if nothing is detected, use the explicit `aidd init` target, else `claude` alone. Never silently fan out to all three.
+
+Output of the gate: `confirmed_tools`. Actions consume this set; they do not re-derive it.
+
 ## Default flow
 
-`01 → 02 → 03 → 04 → 05`. Run each action's `## Test` before moving to the next.
+Run the **Tool detection** gate first, then `01 → 02 → 03 → 04 → 05`. Run each action's `## Test` before moving to the next.
 
 ## Transversal rules
 
-- AI context files are EXCLUSIVELY the three canonical paths white-listed in action 01 step 1. Any other file (including agent/skill/vendor files with similar naming) is user project content and is OFF-LIMITS for this skill.
+- AI context files are EXCLUSIVELY the three canonical paths white-listed in the Tool detection gate. Any other file (including agent/skill/vendor files with similar naming) is user project content and is OFF-LIMITS for this skill.
 - Blocking on user input: if a step asks a question, await an explicit answer; never invent or stub.
 - Templates structure the output; project facts come from the codebase scan. Never invent facts the repo does not contain. ALSO never pre-filter content as "not AIDD-relevant" - every file in the repo counts as project content, with the exception listed below.
 - Memory files document the USER'S project. AIDD's own scaffold (`aidd_docs/`, `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.aidd/`) is framework metadata, never project content, and MUST NOT appear in memory files as if it were architecture or features of the project.
