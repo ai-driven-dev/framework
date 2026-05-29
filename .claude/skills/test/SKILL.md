@@ -23,12 +23,15 @@ scenario before any production code is touched.
 | 02  | `name-behaviorally`   | Draft behavior-sentence test names               | list of scenarios to cover              |
 | 03  | `write`               | Write the test file following tier conventions    | tier + names from 01-02                 |
 | 04  | `empirical-repro`     | Produce an empirical reproduction transcript for user-reported bugs | bug report   |
+| 05  | `smoke`               | Run real CLI binary in /tmp, verify end-to-end   | command + expected behavior             |
 
 ## Default flow
 
 `01 → 02 → 03`
 
 For user-reported bugs: `01 → 02 → 03 → 04`
+
+Smoke (`05`) is standalone: invoke it when validating that a CLI command or feature works for a real user, after a feature ships or before a release. It is not part of the `01 → 03` write flow.
 
 ## Transversal rules
 
@@ -38,20 +41,16 @@ For user-reported bugs: `01 → 02 → 03 → 04`
 - `describe.concurrent()` is forbidden in unit tests; required in E2E tests.
 - Zero real network, zero real machine state outside temp dirs in any automated test.
 - Write the failing test FIRST for every bug fix.
+- Smoke tests run the real built binary in a fresh `/tmp` dir, never the repo root.
 
 ## References
 
-- `references/test-pyramid.md` — tier definitions, rules per tier, forbidden patterns
-- `references/bug-empirical-reproduction.md` — empirical reproduction mandate, transcript format
-- `references/golden-machine-independence.md` — golden/snapshot tests must never snapshot values derived from absolute paths (including hashes over path-bearing content); normalize source content before hashing
+- `references/test-pyramid.md` — tier definitions, rules per tier, forbidden patterns (authoritative)
+- `references/bug-empirical-reproduction.md` — empirical reproduction mandate, transcript format (authoritative)
+- `references/golden-machine-independence.md` — golden/snapshot tests must never snapshot values derived from absolute paths (including hashes over path-bearing content); normalize source content before hashing (authoritative)
+- `references/smoke-in-tmp.md` — smoke/dogfood installs must run in /tmp only; in-repo leaks tool residue; gitignore non-Claude install dirs if unavoidable
 
 ## Test infrastructure
 
 - `tests/helpers/ports/` — in-memory port implementations for unit mocking
 - `tests/fixtures/` — local fixture directory (never mutate; copy before use)
-
-## Invariant rules
-
-- `references/test-pyramid.md` — authoritative test pyramid rules
-- `references/bug-empirical-reproduction.md` — authoritative empirical reproduction rule
-- `references/golden-machine-independence.md` — authoritative golden snapshot portability rule
