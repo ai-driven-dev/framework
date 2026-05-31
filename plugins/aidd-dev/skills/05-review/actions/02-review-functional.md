@@ -1,6 +1,6 @@
 # 02 - Review Functional
 
-Verify the implemented feature matches the plan's acceptance criteria, flows, and edge cases. Static review of the current diff against plan intent. No app execution, no browser, no code-quality checks.
+Verify the implemented feature matches the plan's acceptance criteria, flows, and edge cases. Static review of the current diff against plan intent. No app execution, no browser, no code-quality checks. Read-only: surface gaps, never patch them - hand a missing behavior off to `aidd-dev:02:implement`, a broken one to `aidd-dev:08:debug`.
 
 ## Inputs
 

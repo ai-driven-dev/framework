@@ -40,10 +40,16 @@ The skill exposes 2 actions:
 
 ## Outputs
 
-- A findings list (severity, location, rationale, rule reference).
-- A completion score (acceptance criteria coverage).
-- A quality score (rule compliance).
-- A verdict `ship` or `iterate` consumable by the SDLC orchestrator.
+- A read-only report (never patches the code):
+  - `review-code` - a verdict (`approve` / `changes-requested` / `blocked`)
+    plus a findings table with 3-level severity (🔴 critical / 🟡 warning /
+    🟢 minor), `file:line`, issue, and a suggested fix to hand off to
+    [07-refactor](../07-refactor/README.md).
+  - `review-functional` - a verdict (`PASS` / `PARTIAL` / `FAIL`) and a
+    per-criterion scoring matrix; missing or broken behaviors hand off to
+    [02-implement](../02-implement/README.md) / [08-debug](../08-debug/README.md).
+- The `reviewer` agent still returns `ship` / `iterate` to the SDLC
+  orchestrator.
 
 ## Prerequisites
 
