@@ -19,6 +19,19 @@ You call agents by role:
 - `implementer` - when code must be written
 - `reviewer` - when completed work must be verified
 
+## Mandatory steps (enforce - never skip)
+
+The flow has exactly ONE skippable step. Every other step is MANDATORY: it runs on every host (including weak-model hosts), in every mode (including `auto`), and for every change (including trivial ones).
+
+- `01-spec` - the ONLY skippable step, and only when the source ticket already carries an explicit objective + acceptance criteria (it then returns `spec_status = skipped`).
+- `02-plan`, `03-implement`, `04-review`, `05-ship` - MANDATORY. Never skip, never collapse two into one, never declare the run done with one missing. Skipping any of them is a FAILED run, not a shortcut.
+
+Enforcement (self-check, not optional):
+
+- A mandatory step closes only when its `## Test` passes and its artifact exists: a plan file (02), implemented + verified milestones (03), a `04-review` verdict on the final diff (04), an opened change request (05).
+- **`04-review` is non-negotiable: code is never shipped unreviewed.** If you arrive at `05-ship` without a `04-review` verdict on the final diff, STOP and run `04-review` first.
+- Before declaring the SDLC complete, verify all four mandatory steps produced their artifact. If any is missing, the run is NOT done - resume at the missing step. Do not report success with a skipped step.
+
 ## Modes
 
 | Mode          | Trigger                                                     | Behavior                                                                      |
@@ -44,7 +57,7 @@ Files: `@actions/01-spec.md` ... `@actions/05-ship.md`.
 
 `01 → 02 → 03 → 04 → 05`. On `04 = iterate`, loop back to `03` with the findings as the implementer's fix list. After each action, run its `## Test` before moving to the next.
 
-`01-spec` self-skips (returns `spec_status = skipped`) when the source ticket already carries an explicit objective + acceptance criteria. `02-plan` is never skipped.
+`01-spec` self-skips (returns `spec_status = skipped`) when the source ticket already carries an explicit objective + acceptance criteria. It is the ONLY skippable step. `02-plan`, `03-implement`, `04-review`, `05-ship` are mandatory and never skipped (see **Mandatory steps**).
 
 ## Interactive gates
 
@@ -60,14 +73,14 @@ If the human pushes back at a gate, route their feedback into the relevant actio
 
 ## Runtime tracking
 
-Materialize the flow as a task list at skill entry; a task closes only when its `## Test` passes.
+Materialize the flow as a task list at skill entry; it MUST contain every mandatory step (02-plan, 03-implement, 04-review, 05-ship) plus 01-spec unless skipped. A task closes only when its `## Test` passes and its artifact exists; a mandatory task is never closed by skipping it.
 
 ## Rules
 
 - In `auto` mode, you are alone and never ask the human; all decisions are yours.
 - In `interactive` mode, the human owns the gate decisions; you still decide everything between gates.
 - Always run `02-plan`. Minimum: frontmatter + M/C/D + rules table + phases. Never inline ticket or spec as plan.
-- Skip allowed: `01-spec` only (when the source already carries objective + acceptance criteria). Never: plan, implement, review, ship.
+- Skip allowed: `01-spec` only (when the source already carries objective + acceptance criteria). `02-plan`, `03-implement`, `04-review`, `05-ship` are mandatory and enforced (see **Mandatory steps**); skipping any is a failed run.
 - Choose the best decision based on the facts.
 - Open a change request (pull or merge request) via the project's VCS once implementation is reviewed and complete.
 - **Branch discipline (caller responsibility).** SDLC runs on whatever branch is checked out when invoked; it never auto-branches. The caller (manual user or upstream orchestrator) is responsible for putting HEAD on a non-default branch before invoking SDLC when the run is meant to ship through a PR.
