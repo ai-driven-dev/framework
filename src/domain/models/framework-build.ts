@@ -1,7 +1,7 @@
 import { COPILOT_VSCODE_MCP_PATH, COPILOT_WORKSPACE_DIR } from "../tools/ai/copilot-paths.js";
 
-/** Build target: copilot (Mode A or flat) or codex (Mode A marketplace only). */
-export type FrameworkBuildTarget = "copilot" | "codex";
+/** Build target: supported tool identifiers for framework build. */
+export type FrameworkBuildTarget = "claude" | "cursor" | "copilot" | "codex" | "opencode";
 
 /** Output layout discriminant: marketplace dist (Mode A) vs direct workspace inject (Mode B flat). */
 export type FrameworkBuildMode = "marketplace" | "flat";

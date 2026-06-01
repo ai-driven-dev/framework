@@ -24,13 +24,15 @@ intersection of `Has*` interfaces sourced from `domain/tools/contracts.ts`, regi
 | 02  | `content-rewrite`          | Implement lossless rewriteContent / reverseRewriteContent | tool file from 01                      |
 | 03  | `plugins-and-marketplace`  | Configure PluginsCapability + marketplaceSettings        | tool file from 01                       |
 | 04  | `register-and-test`        | Call registerTool and validate the full definition       | completed tool from 01-03               |
+| 05  | `build-contract`           | Declare the tool's `framework build` behavior via `ToolBuildContract` | tool from 01 + modes (marketplace/flat) |
 
 ## Default flow
 
-`01 → 02 → 03 → 04`
+`01 → 02 → 03 → 04` then `05` when the tool must be an `aidd framework build` target.
 
 Skip 03 when the tool has no plugin capability. Skip 02 when the tool reuses base rewrite
-helpers without modification (document this explicitly).
+helpers without modification (document this explicitly). Skip 05 when the tool is not a
+framework-build target.
 
 ## Transversal rules
 
@@ -44,13 +46,16 @@ helpers without modification (document this explicitly).
 - Named export only; no default export.
 - `.js` extensions on all relative imports.
 - No `any` types.
+- Framework-build behavior is declared by ONE artifact-symmetric `ToolBuildContract` (all six
+  artifact kinds: skills/agents/mcp/hooks/rules/commands), consumed by the two per-mode
+  orchestrators — NEVER a per-tool `*OutputStrategy` class, NEVER a per-tool/per-artifact branch in
+  an orchestrator. Unsupported kinds are `{ supported: false }` (warn-and-skip).
+- Build contracts reuse existing path/transform/merge helpers; generalize a helper rather than
+  reimplement it. Flat MCP merges key-prefix servers by `<plugin>-`.
 
 ## References
 
 - `references/aitool-shape.md` — AiTool<C> fields, Has* interfaces, IdeToolConfig, ToolConfig union
 - `references/plugins-capability.md` — PluginsCapability constructor params, modes, marketplaceSettings, translationMode, installScope
 - `references/content-rewrite.md` — rewriteContent/reverseRewriteContent contract, base helpers, lossless-round-trip requirement
-
-## Invariant rules
-
-- `references/aitool-shape.md` — authoritative AiTool type rules
+- `references/build-contract.md` — ToolBuildContract + ArtifactContract shape, artifact symmetry, the two per-mode orchestrators, reuse points, registry wiring

@@ -809,19 +809,21 @@
           ]
         },
         {
-          "description": "List of paths to additional agent files",
+          "description": "List of paths to additional agent files or the agents directory",
           "type": "array",
           "items": {
-            "description": "Path to additional agent file (in addition to those in the agents/ directory, if it exists), relative to the plugin root",
             "type": "string",
-            "allOf": [
+            "anyOf": [
               {
-                "type": "string",
-                "pattern": "^\\.\\/.*"
+                "description": "Path to an additional agent file (.md), relative to the plugin root (e.g. './agents/my-agent.md')",
+                "allOf": [
+                  { "type": "string", "pattern": "^\\.\\/.*" },
+                  { "type": "string", "pattern": ".*\\.md$" }
+                ]
               },
               {
-                "type": "string",
-                "pattern": ".*\\.md$"
+                "description": "The agents auto-discovery directory",
+                "const": "./agents"
               }
             ]
           }

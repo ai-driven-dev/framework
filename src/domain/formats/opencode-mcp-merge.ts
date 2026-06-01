@@ -36,6 +36,25 @@ export function mergeOpencodeMcp(
 }
 
 /**
+ * Additive merge for flat-build mode (no tracking manifest, no hasher).
+ *
+ * Merges incoming prefixed MCP servers into the existing opencode.json content.
+ * Incoming entries win on collision (last-write-wins, suitable for flat install).
+ * Any malformed existing content throws — no silent discard.
+ *
+ * @param existing - Raw content of the existing opencode.json (or null if absent)
+ * @param incoming - Already-prefixed MCP server entries to merge in
+ */
+export function mergeOpencodeJsonAdditive(
+  existing: string | null,
+  incoming: Record<string, unknown>
+): string {
+  const { full, mcp } = parseExisting(existing);
+  const merged = { ...mcp, ...incoming };
+  return JSON.stringify({ ...full, mcp: merged }, null, 2);
+}
+
+/**
  * Removes servers previously contributed by a plugin from the opencode.json mcp section.
  * Keys not present in `entries` are preserved untouched.
  */

@@ -4,13 +4,11 @@ import type {
   FrameworkBuildMode,
   FrameworkBuildTarget,
 } from "../../domain/models/framework-build.js";
-import {
-  createCodexFrameworkBuildUseCase,
-  createDeps,
-  createFlatFrameworkBuildUseCase,
-} from "../../infrastructure/deps.js";
+import { createDeps, createFrameworkBuildUseCase } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
+
+const SUPPORTED_TARGETS: readonly string[] = ["claude", "cursor", "copilot", "codex", "opencode"];
 
 export function registerFrameworkCommand(program: Command): void {
   const framework = program
@@ -23,7 +21,7 @@ export function registerFrameworkCommand(program: Command): void {
       "Build a Claude-format framework into a target-native plugin marketplace tree or project workspace"
     )
     .requiredOption("--source <path>", "Path to the source framework directory")
-    .requiredOption("--target <target>", "Build target (copilot, codex)")
+    .requiredOption("--target <target>", "Build target (claude, cursor, copilot, codex)")
     .requiredOption("--out <dir>", "Output directory (marketplace dist or project root)")
     .option("--flat", "Materialize directly into project workspace, bypass marketplace")
     .option("--force", "Overwrite existing files at canonical paths (flat mode only)")
@@ -38,9 +36,9 @@ export function registerFrameworkCommand(program: Command): void {
         const { verbose, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
 
-        if (cmdOptions.target !== "copilot" && cmdOptions.target !== "codex") {
+        if (!SUPPORTED_TARGETS.includes(cmdOptions.target)) {
           output.error(
-            `Unsupported target '${cmdOptions.target}'. Supported targets: copilot, codex.`
+            `Unsupported target '${cmdOptions.target}'. Supported targets: ${SUPPORTED_TARGETS.join(", ")}.`
           );
           process.exit(1);
         }
@@ -48,11 +46,6 @@ export function registerFrameworkCommand(program: Command): void {
           output.error("--force requires --flat.");
           process.exit(1);
         }
-        if (cmdOptions.flat && cmdOptions.target !== "copilot") {
-          output.error("--flat is only supported with --target copilot.");
-          process.exit(1);
-        }
-
         const sourceDir = resolve(projectRoot, cmdOptions.source);
         const outDir = resolve(projectRoot, cmdOptions.out);
         const target = cmdOptions.target as FrameworkBuildTarget;
@@ -61,12 +54,13 @@ export function registerFrameworkCommand(program: Command): void {
 
         try {
           const deps = await createDeps(projectRoot, { verbose }, output);
-          const useCase =
-            mode === "flat"
-              ? createFlatFrameworkBuildUseCase(deps, outDir, force)
-              : target === "codex"
-                ? createCodexFrameworkBuildUseCase(deps)
-                : deps.frameworkBuildUseCase;
+          const useCase = createFrameworkBuildUseCase(deps, { target, mode, outDir, force });
+          if (useCase === undefined) {
+            output.error(
+              `Unsupported target/mode combination: --target ${target}${cmdOptions.flat ? " --flat" : ""}.`
+            );
+            process.exit(1);
+          }
           const result = await useCase.execute({ sourceDir, outDir, target, mode, force });
           if (mode === "flat") {
             output.success(

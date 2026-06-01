@@ -104,20 +104,12 @@ function ensureCodexHooks(existing: TomlRecord): void {
   existing.features = { ...(features ?? {}), codex_hooks: true };
 }
 
-function ensureSkillsConfig(existing: TomlRecord): void {
-  const configs = existing.skills as { config?: { path?: string }[] } | undefined;
-  const entries = configs?.config ?? [];
-  if (entries.some((e) => e.path === ".agents/skills")) return;
-  existing.skills = { config: [...entries, { path: ".agents/skills", enabled: true }] };
-}
-
 export function mergeCodexConfigToml(existing: string, aiddPayload: string): string {
   const result = parseSafe(existing);
   const payload = parseSafe(aiddPayload);
   mergeMcpServers(result, payload);
   ensureProjectDocMaxBytes(result, payload);
   ensureCodexHooks(result);
-  ensureSkillsConfig(result);
   return stringifyToml(result);
 }
 

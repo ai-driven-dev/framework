@@ -325,15 +325,19 @@ codex_hooks = false
     expect(result).toContain("codex_hooks = false");
   });
 
-  it("adds skills.config pointing to .agents/skills when absent", () => {
+  it("does NOT emit [[skills.config]] — discovery is by placement", () => {
     const result = mergeCodexConfigToml("", MCP_PAYLOAD);
-    expect(result).toContain(".agents/skills");
+    expect(result).not.toContain(".agents/skills");
+    expect(result).not.toContain("skills.config");
   });
 
-  it("is idempotent for skills.config on second run", () => {
-    const first = mergeCodexConfigToml("", MCP_PAYLOAD);
-    const second = mergeCodexConfigToml(first, MCP_PAYLOAD);
-    const count = (second.match(/\.agents\/skills/g) ?? []).length;
-    expect(count).toBe(1);
+  it("preserves existing skills.config if user has one", () => {
+    const existing = `
+[skills.config]
+path = ".agents/skills"
+enabled = true
+`;
+    const result = mergeCodexConfigToml(existing, MCP_PAYLOAD);
+    expect(result).toContain(".agents/skills");
   });
 });

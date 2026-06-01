@@ -175,11 +175,12 @@ describe("codexAgentMarkdownToToml()", () => {
   });
 
   describe("empty frontmatter", () => {
-    it("produces TOML with only developer_instructions when frontmatter is empty", () => {
+    it("always emits description (defaults to empty string when absent)", () => {
       const toml = codexAgentMarkdownToToml("No frontmatter.", "aidd-dev", "agent.md");
       const parsed = parseToml(toml);
       expect(parsed.developer_instructions).toBeDefined();
-      expect(parsed.description).toBeUndefined();
+      // description is a required subagent key; always emitted even when absent in source.
+      expect(parsed.description).toBe("");
     });
   });
 });

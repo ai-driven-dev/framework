@@ -1,6 +1,8 @@
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { FrameworkBuildUseCase } from "../../../../src/application/use-cases/framework/framework-build-use-case.js";
+import { MarketplaceBuildStrategy } from "../../../../src/application/use-cases/framework/strategies/marketplace-build-strategy.js";
+import { buildCopilotMarketplaceContract } from "../../../../src/application/use-cases/framework/strategies/tool-contracts.js";
 import {
   FrameworkPlaceholderInPluginError,
   InvalidBuildPathsError,
@@ -74,11 +76,14 @@ function makeUseCase(
   validator?: JsonSchemaValidator,
   assetProvider?: AssetProvider
 ): FrameworkBuildUseCase {
+  const v = validator ?? makeValidator();
+  const ap = assetProvider ?? makeAssetProvider();
   return new FrameworkBuildUseCase(
     fs,
-    validator ?? makeValidator(),
-    assetProvider ?? makeAssetProvider(),
-    new CapturingLogger()
+    v,
+    ap,
+    new CapturingLogger(),
+    new MarketplaceBuildStrategy(fs, v, ap, buildCopilotMarketplaceContract())
   );
 }
 
@@ -93,7 +98,15 @@ describe("FrameworkBuildUseCase", () => {
 
   describe("manifest validation", () => {
     it("throws JsonSchemaValidationError when manifest is invalid", async () => {
-      const uc = new FrameworkBuildUseCase(fs, makeValidator(true), makeAssetProvider(), logger);
+      const v = makeValidator(true);
+      const ap = makeAssetProvider();
+      const uc = new FrameworkBuildUseCase(
+        fs,
+        v,
+        ap,
+        logger,
+        new MarketplaceBuildStrategy(fs, v, ap, buildCopilotMarketplaceContract())
+      );
       await expect(
         uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" })
       ).rejects.toThrow(JsonSchemaValidationError);
@@ -268,7 +281,15 @@ describe("FrameworkBuildUseCase", () => {
 
   describe("out-of-scope sections", () => {
     it("logs a warning for commands/ and rules/ directories and lists them in skippedSections", async () => {
-      const uc = new FrameworkBuildUseCase(fs, makeValidator(), makeAssetProvider(), logger);
+      const v = makeValidator();
+      const ap = makeAssetProvider();
+      const uc = new FrameworkBuildUseCase(
+        fs,
+        v,
+        ap,
+        logger,
+        new MarketplaceBuildStrategy(fs, v, ap, buildCopilotMarketplaceContract())
+      );
       const result = await uc.execute({
         sourceDir: SOURCE_DIR,
         outDir: OUT_DIR,
@@ -440,11 +461,18 @@ describe("FrameworkBuildUseCase", () => {
           }
         },
       };
+      const ap = makeAssetProvider();
       const uc = new FrameworkBuildUseCase(
         fs,
         failingMarketplaceValidator,
-        makeAssetProvider(),
-        logger
+        ap,
+        logger,
+        new MarketplaceBuildStrategy(
+          fs,
+          failingMarketplaceValidator,
+          ap,
+          buildCopilotMarketplaceContract()
+        )
       );
       await expect(
         uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" })

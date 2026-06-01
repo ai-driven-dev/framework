@@ -1,7 +1,11 @@
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { FrameworkBuildUseCase } from "../../../../src/application/use-cases/framework/framework-build-use-case.js";
-import { FlatOutputStrategy } from "../../../../src/application/use-cases/framework/strategies/flat-output-strategy.js";
+import { FlatBuildStrategy } from "../../../../src/application/use-cases/framework/strategies/flat-build-strategy.js";
+import {
+  buildCopilotFlatContract,
+  buildOpencodeFlatContract,
+} from "../../../../src/application/use-cases/framework/strategies/tool-contracts.js";
 import {
   FlatTargetExistsError,
   JsonSchemaValidationError,
@@ -9,6 +13,7 @@ import {
 } from "../../../../src/domain/errors.js";
 import type { AssetProvider } from "../../../../src/domain/ports/asset-provider.js";
 import type { JsonSchemaValidator } from "../../../../src/domain/ports/json-schema-validator.js";
+import { AjvSchemaValidatorAdapter } from "../../../../src/infrastructure/adapters/ajv-schema-validator-adapter.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
@@ -84,14 +89,19 @@ function makeUseCase(
   force = false,
   validator?: JsonSchemaValidator
 ): FrameworkBuildUseCase {
-  const strategy = new FlatOutputStrategy(memFs, force, ABS_OUT, makeIsDirectory(memFs));
-  return new FrameworkBuildUseCase(
+  const v = validator ?? makeValidator();
+  const ap = makeAssetProvider();
+  const av = new AjvSchemaValidatorAdapter();
+  const strategy = new FlatBuildStrategy(
     memFs,
-    validator ?? makeValidator(),
-    makeAssetProvider(),
-    new CapturingLogger(),
-    strategy
+    av,
+    ap,
+    buildCopilotFlatContract(),
+    force,
+    ABS_OUT,
+    makeIsDirectory(memFs)
   );
+  return new FrameworkBuildUseCase(memFs, v, ap, new CapturingLogger(), strategy);
 }
 
 describe("FlatOutputStrategy integration", () => {
@@ -102,39 +112,39 @@ describe("FlatOutputStrategy integration", () => {
   });
 
   describe("happy path", () => {
-    it("writes agent under .github/agents/<plugin>/<name>.agent.md", async () => {
+    it("writes agent under .github/agents/<name>.agent.md (bare — no plugin segment)", async () => {
       const useCase = makeUseCase(memFs);
       await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
-      const agentPath = `${ABS_OUT}/.github/agents/${PLUGIN}/code-reviewer.agent.md`;
+      const agentPath = `${ABS_OUT}/.github/agents/code-reviewer.agent.md`;
       expect(memFs.has(agentPath)).toBe(true);
     });
 
     it("strips frontmatter to Copilot allowlist in agent file", async () => {
       const useCase = makeUseCase(memFs);
       await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
-      const content = memFs.getFile(`${ABS_OUT}/.github/agents/${PLUGIN}/code-reviewer.agent.md`);
+      const content = memFs.getFile(`${ABS_OUT}/.github/agents/code-reviewer.agent.md`);
       expect(content).toContain("code-reviewer");
       expect(content).toContain("description");
     });
 
-    it("writes skill files under .github/skills/<plugin>/", async () => {
+    it("writes skill files under .github/skills/<skill>/ (bare — no plugin segment)", async () => {
       const useCase = makeUseCase(memFs);
       await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
-      const skillPath = `${ABS_OUT}/.github/skills/${PLUGIN}/commit/SKILL.md`;
+      const skillPath = `${ABS_OUT}/.github/skills/commit/SKILL.md`;
       expect(memFs.has(skillPath)).toBe(true);
     });
 
     it("rewrites @./ references in skill files", async () => {
       const useCase = makeUseCase(memFs);
       await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
-      const content = memFs.getFile(`${ABS_OUT}/.github/skills/${PLUGIN}/hello.md`);
+      const content = memFs.getFile(`${ABS_OUT}/.github/skills/hello.md`);
       expect(content).toContain("[SKILL.md](./SKILL.md)");
     });
 
     it("rewrites @CLAUDE_ROOT/skills/<X> in skill files to relative flat path", async () => {
       const useCase = makeUseCase(memFs);
       await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
-      const content = memFs.getFile(`${ABS_OUT}/.github/skills/${PLUGIN}/hello.md`);
+      const content = memFs.getFile(`${ABS_OUT}/.github/skills/hello.md`);
       expect(content).not.toContain(`@${CLAUDE_ROOT_VAR}`);
     });
 
@@ -190,7 +200,7 @@ describe("FlatOutputStrategy integration", () => {
     it("re-run with force produces byte-identical files", async () => {
       const useCase1 = makeUseCase(memFs, false);
       await useCase1.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
-      const agentPath = `${ABS_OUT}/.github/agents/${PLUGIN}/code-reviewer.agent.md`;
+      const agentPath = `${ABS_OUT}/.github/agents/code-reviewer.agent.md`;
       const snapshot = memFs.getFile(agentPath);
 
       const useCase2 = makeUseCase(memFs, true);
@@ -215,19 +225,18 @@ describe("FlatOutputStrategy integration", () => {
     it("throws OutDirNotDirectoryError when outDir does not exist", async () => {
       const emptyFs = new InMemoryFileAdapter();
       await seedFromDirectory(emptyFs, FIXTURE_DIR, { useAbsolutePaths: true });
-      const strategy = new FlatOutputStrategy(
+      const v = makeValidator();
+      const ap = makeAssetProvider();
+      const strategy = new FlatBuildStrategy(
         emptyFs,
+        new AjvSchemaValidatorAdapter(),
+        ap,
+        buildCopilotFlatContract(),
         false,
         "/nonexistent",
         makeIsDirectory(emptyFs)
       );
-      const useCase = new FrameworkBuildUseCase(
-        emptyFs,
-        makeValidator(),
-        makeAssetProvider(),
-        new CapturingLogger(),
-        strategy
-      );
+      const useCase = new FrameworkBuildUseCase(emptyFs, v, ap, new CapturingLogger(), strategy);
       await expect(
         useCase.execute({ sourceDir: FIXTURE_DIR, outDir: "/nonexistent", target: "copilot" })
       ).rejects.toBeInstanceOf(OutDirNotDirectoryError);
@@ -237,14 +246,18 @@ describe("FlatOutputStrategy integration", () => {
       const fileFs = new InMemoryFileAdapter();
       await seedFromDirectory(fileFs, FIXTURE_DIR, { useAbsolutePaths: true });
       fileFs.setFile(ABS_OUT, "I am a file, not a directory");
-      const strategy = new FlatOutputStrategy(fileFs, false, ABS_OUT, makeIsDirectory(fileFs));
-      const useCase = new FrameworkBuildUseCase(
+      const v2 = makeValidator();
+      const ap2 = makeAssetProvider();
+      const strategy = new FlatBuildStrategy(
         fileFs,
-        makeValidator(),
-        makeAssetProvider(),
-        new CapturingLogger(),
-        strategy
+        new AjvSchemaValidatorAdapter(),
+        ap2,
+        buildCopilotFlatContract(),
+        false,
+        ABS_OUT,
+        makeIsDirectory(fileFs)
       );
+      const useCase = new FrameworkBuildUseCase(fileFs, v2, ap2, new CapturingLogger(), strategy);
       await expect(
         useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" })
       ).rejects.toBeInstanceOf(OutDirNotDirectoryError);
@@ -261,7 +274,7 @@ describe("FlatOutputStrategy integration", () => {
   });
 
   describe("hooks path resolution for CLAUDE_ROOT/skills/<X>", () => {
-    it("rewrites skills ref to ./.github/skills/<plugin>/<X> in hooks JSON", async () => {
+    it("rewrites skills ref to ./.github/skills/<X> in hooks JSON (bare — no plugin segment)", async () => {
       const useCase = makeUseCase(memFs);
       const hooksKey = `${FIXTURE_DIR}/plugins/${PLUGIN}/hooks/hooks.json`;
       const skillsRef = `${CLAUDE_ROOT_VAR}/skills/commit/SKILL.md`;
@@ -275,7 +288,7 @@ describe("FlatOutputStrategy integration", () => {
       );
       await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
       const content = memFs.getFile(`${ABS_OUT}/.github/hooks/${PLUGIN}.hooks.json`) ?? "";
-      expect(content).toContain(`./.github/skills/${PLUGIN}/commit/SKILL.md`);
+      expect(content).toContain("./.github/skills/commit/SKILL.md");
     });
   });
 
@@ -291,11 +304,45 @@ describe("FlatOutputStrategy integration", () => {
   describe("MCP key collision detection", () => {
     it("throws FlatTargetExistsError when two writeMcp calls produce the same prefixed key", async () => {
       const pluginSrc = `${FIXTURE_DIR}/plugins/${PLUGIN}`;
-      const strategy = new FlatOutputStrategy(memFs, false, ABS_OUT, makeIsDirectory(memFs));
+      const strategy = new FlatBuildStrategy(
+        memFs,
+        new AjvSchemaValidatorAdapter(),
+        makeAssetProvider(),
+        buildCopilotFlatContract(),
+        false,
+        ABS_OUT,
+        makeIsDirectory(memFs)
+      );
       await strategy.writeMcp(PLUGIN, pluginSrc);
       await expect(strategy.writeMcp(PLUGIN, pluginSrc)).rejects.toBeInstanceOf(
         FlatTargetExistsError
       );
+    });
+  });
+
+  describe("AC #11: unsupported hooks warn-and-skip (opencode contract)", () => {
+    it("warns and skips hooks for a hooks-bearing plugin when hooks is unsupported", async () => {
+      const captLogger = new CapturingLogger();
+      const strategy = new FlatBuildStrategy(
+        memFs,
+        new AjvSchemaValidatorAdapter(),
+        makeAssetProvider(),
+        buildOpencodeFlatContract(),
+        false,
+        ABS_OUT,
+        makeIsDirectory(memFs),
+        captLogger
+      );
+      const pluginSrc = `${FIXTURE_DIR}/plugins/${PLUGIN}`;
+      // plugin fixture has hooks — ensure hooks.json exists
+      memFs.setFile(`${FIXTURE_DIR}/plugins/${PLUGIN}/hooks/hooks.json`, '{"hooks":{}}');
+      await strategy.writeHooks(PLUGIN, pluginSrc);
+      expect(captLogger.warnMessages.some((m) => m.includes("hooks"))).toBe(true);
+      // No hooks file emitted in the output
+      const hooksFiles = memFs
+        .listAll()
+        .filter((p) => p.startsWith(ABS_OUT) && p.includes("hooks"));
+      expect(hooksFiles).toHaveLength(0);
     });
   });
 });

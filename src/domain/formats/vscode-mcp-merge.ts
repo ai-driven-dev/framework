@@ -1,32 +1,32 @@
 /**
- * Purely additive merge helper for .vscode/mcp.json (workspace MCP config).
+ * Purely additive merge helper for workspace MCP config files.
  *
  * Distinct from opencode-mcp-merge (which is manifest-driven and strips previous
  * plugin-owned entries before merging). This helper has NO manifest and NO strip
  * step — flat mode is fire-and-forget (spec §Out of scope).
  *
  * Contract:
- *  - Read existing `servers` object from .vscode/mcp.json (or start empty).
+ *  - Read existing servers object from the target file (or start empty).
  *  - For each incoming key: if already present and force === false, record a collision
  *    and skip; if force === true, overwrite.
  *  - Keys in `incoming` are pre-prefixed by the caller (flatMcpKeyPrefix from
- *    copilot-flat-paths.ts). This helper is agnostic to plugin identity.
+ *    flat-paths.ts). This helper is agnostic to plugin identity.
  *  - User-owned servers (any key not in incoming) are always preserved.
  *  - Returns merged JSON (2-space indent, trailing newline) and collisions list.
+ *
+ * The `serversKey` parameter controls which JSON property holds the servers map:
+ *  - "servers" for .vscode/mcp.json (Copilot/VS Code format)
+ *  - "mcpServers" for .mcp.json (Claude) or .cursor/mcp.json (Cursor)
  */
-
-interface VscodeMcpDoc {
-  servers?: Record<string, unknown>;
-  [key: string]: unknown;
-}
 
 /**
  * Merges incoming MCP server entries (pre-prefixed with plugin name) into the
- * existing .vscode/mcp.json content.
+ * existing workspace MCP config content.
  *
- * @param existing - Current .vscode/mcp.json contents, or null if file does not exist.
- * @param incoming - Pre-prefixed server entries to add (keys like "<plugin>-<server>").
- * @param force    - When true, overwrite colliding entries instead of recording them.
+ * @param existing    - Current file contents, or null if file does not exist.
+ * @param incoming    - Pre-prefixed server entries to add (keys like "<plugin>-<server>").
+ * @param force       - When true, overwrite colliding entries instead of recording them.
+ * @param serversKey  - JSON property name for the servers map (default: "servers").
  * @returns mergedContent (the new file content) and collisions (keys that were skipped
  *          because they already existed and force was false).
  *
@@ -36,25 +36,29 @@ interface VscodeMcpDoc {
 export function mergeVscodeMcp(
   existing: string | null,
   incoming: Record<string, unknown>,
-  force: boolean
+  force: boolean,
+  serversKey = "servers"
 ): { mergedContent: string; collisions: ReadonlyArray<string> } {
-  const { full, servers } = parseExisting(existing);
+  const { full, servers } = parseExisting(existing, serversKey);
   const { servers: mergedServers, collisions } = applyIncoming(servers, incoming, force);
-  const merged: Record<string, unknown> = { ...full, servers: mergedServers };
+  const merged: Record<string, unknown> = { ...full, [serversKey]: mergedServers };
   return { mergedContent: `${JSON.stringify(merged, null, 2)}\n`, collisions };
 }
 
 // ── Private helpers ──────────────────────────────────────────────────────────
 
-function parseExisting(content: string | null): {
+function parseExisting(
+  content: string | null,
+  serversKey: string
+): {
   full: Record<string, unknown>;
   servers: Record<string, unknown>;
 } {
   if (content === null) return { full: {}, servers: {} };
-  const parsed = JSON.parse(content) as VscodeMcpDoc;
+  const parsed = JSON.parse(content) as Record<string, unknown>;
   return {
-    full: parsed as Record<string, unknown>,
-    servers: (parsed.servers as Record<string, unknown>) ?? {},
+    full: parsed,
+    servers: (parsed[serversKey] as Record<string, unknown>) ?? {},
   };
 }
 

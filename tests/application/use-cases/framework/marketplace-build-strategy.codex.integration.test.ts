@@ -2,7 +2,8 @@ import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { FrameworkBuildUseCase } from "../../../../src/application/use-cases/framework/framework-build-use-case.js";
-import { CodexOutputStrategy } from "../../../../src/application/use-cases/framework/strategies/codex-output-strategy.js";
+import { MarketplaceBuildStrategy } from "../../../../src/application/use-cases/framework/strategies/marketplace-build-strategy.js";
+import { buildCodexContract } from "../../../../src/application/use-cases/framework/strategies/tool-contracts.js";
 import {
   FrameworkPlaceholderInPluginError,
   InvalidBuildPathsError,
@@ -34,7 +35,7 @@ function makeUseCase(
 ): FrameworkBuildUseCase {
   const av = new AjvSchemaValidatorAdapter();
   const ap = assetProvider ?? makeBundledAssetProvider();
-  const strategy = new CodexOutputStrategy(fs, av, ap);
+  const strategy = new MarketplaceBuildStrategy(fs, av, ap, buildCodexContract());
   return new FrameworkBuildUseCase(fs, av, ap, logger ?? new CapturingLogger(), strategy);
 }
 
@@ -314,7 +315,7 @@ describe("CodexOutputStrategy", () => {
         },
       };
       const ap = makeBundledAssetProvider();
-      const strategy = new CodexOutputStrategy(fs, av, ap);
+      const strategy = new MarketplaceBuildStrategy(fs, av, ap, buildCodexContract());
       const uc = new FrameworkBuildUseCase(fs, av, ap, new CapturingLogger(), strategy);
       await expect(
         uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" })

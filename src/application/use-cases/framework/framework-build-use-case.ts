@@ -18,21 +18,15 @@ import type {
   SourceMarketplace,
   SourcePluginEntry,
 } from "./strategies/build-output-strategy.js";
-import { MarketplaceOutputStrategy } from "./strategies/marketplace-output-strategy.js";
 
 export class FrameworkBuildUseCase {
-  private readonly strategy: BuildOutputStrategy;
-
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly jsonSchemaValidator: JsonSchemaValidator,
     private readonly assetProvider: AssetProvider,
     private readonly logger: Logger,
-    strategy?: BuildOutputStrategy
-  ) {
-    this.strategy =
-      strategy ?? new MarketplaceOutputStrategy(fs, jsonSchemaValidator, assetProvider);
-  }
+    private readonly strategy: BuildOutputStrategy
+  ) {}
 
   async execute(options: FrameworkBuildOptions): Promise<FrameworkBuildResult> {
     const sourceDir = resolve(options.sourceDir);

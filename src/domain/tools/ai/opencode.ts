@@ -67,7 +67,7 @@ function convertRawServer(name: string, server: RawServer): OpencodeMcpServer {
   throw new InvalidMcpServerConfigError(name);
 }
 
-function transformMcpToOpencode(content: string): string {
+export function transformMcpToOpencode(content: string): string {
   let parsed: { mcpServers?: Record<string, RawServer> };
   try {
     parsed = JSON.parse(content) as typeof parsed;

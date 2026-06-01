@@ -4,7 +4,7 @@ const TOOLS_PLACEHOLDER = "@{{TOOLS}}/";
 
 /**
  * Guards against @{{TOOLS}}/ references inside plugin content.
- * Used by both MarketplaceOutputStrategy and FlatOutputStrategy.
+ * Used by all BuildOutputStrategy implementations.
  */
 export function assertNoToolsPlaceholder(
   content: string,

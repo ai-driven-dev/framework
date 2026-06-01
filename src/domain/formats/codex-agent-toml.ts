@@ -47,9 +47,8 @@ function buildTomlObject(
 ): Record<string, unknown> {
   const obj: Record<string, unknown> = {};
   obj.name = name;
-  if (typeof frontmatter.description === "string" && frontmatter.description.length > 0) {
-    obj.description = frontmatter.description;
-  }
+  // description is a required subagent key; default to "" when absent.
+  obj.description = typeof frontmatter.description === "string" ? frontmatter.description : "";
   // model is intentionally omitted in MVP1 (D-5): no known Codex model id set.
   obj.developer_instructions = body;
   return obj;

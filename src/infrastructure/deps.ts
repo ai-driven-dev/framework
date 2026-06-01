@@ -16,8 +16,19 @@ import { DoctorReferencesUseCase } from "../application/use-cases/doctor/doctor-
 import { DoctorTrackedFilesUseCase } from "../application/use-cases/doctor/doctor-tracked-files-use-case.js";
 import { DoctorUseCase } from "../application/use-cases/doctor/doctor-use-case.js";
 import { FrameworkBuildUseCase } from "../application/use-cases/framework/framework-build-use-case.js";
-import { CodexOutputStrategy } from "../application/use-cases/framework/strategies/codex-output-strategy.js";
-import { FlatOutputStrategy } from "../application/use-cases/framework/strategies/flat-output-strategy.js";
+import { FlatBuildStrategy } from "../application/use-cases/framework/strategies/flat-build-strategy.js";
+import { MarketplaceBuildStrategy } from "../application/use-cases/framework/strategies/marketplace-build-strategy.js";
+import {
+  buildClaudeContract,
+  buildClaudeFlatContract,
+  buildCodexContract,
+  buildCodexFlatContract,
+  buildCopilotFlatContract,
+  buildCopilotMarketplaceContract,
+  buildCursorContract,
+  buildCursorFlatContract,
+  buildOpencodeFlatContract,
+} from "../application/use-cases/framework/strategies/tool-contracts.js";
 import { DoctorAllUseCase } from "../application/use-cases/global/doctor-all-use-case.js";
 import { RestoreAllUseCase } from "../application/use-cases/global/restore-all-use-case.js";
 import { StatusAllUseCase } from "../application/use-cases/global/status-all-use-case.js";
@@ -197,32 +208,138 @@ async function isDirectory(path: string): Promise<boolean> {
   }
 }
 
-export function createCodexFrameworkBuildUseCase(deps: Deps): FrameworkBuildUseCase {
-  const jsonSchemaValidator = new AjvSchemaValidatorAdapter();
-  const strategy = new CodexOutputStrategy(deps.fs, jsonSchemaValidator, deps.assetProvider);
+export interface FrameworkBuildContext {
+  readonly target: string;
+  readonly mode: string;
+  readonly outDir: string;
+  readonly force: boolean;
+}
+
+type FrameworkBuildFactory = (deps: Deps, ctx: FrameworkBuildContext) => FrameworkBuildUseCase;
+
+function buildFrameworkUseCase(
+  deps: Deps,
+  makeStrategy: (
+    deps: Deps,
+    av: AjvSchemaValidatorAdapter
+  ) => MarketplaceBuildStrategy | FlatBuildStrategy
+): FrameworkBuildUseCase {
+  const av = new AjvSchemaValidatorAdapter();
   return new FrameworkBuildUseCase(
     deps.fs,
-    jsonSchemaValidator,
+    av,
     deps.assetProvider,
     deps.logger,
-    strategy
+    makeStrategy(deps, av)
   );
 }
 
-export function createFlatFrameworkBuildUseCase(
+const FRAMEWORK_BUILD_REGISTRY: Record<string, FrameworkBuildFactory> = {
+  "claude:marketplace": (deps) =>
+    buildFrameworkUseCase(
+      deps,
+      (d, av) => new MarketplaceBuildStrategy(d.fs, av, d.assetProvider, buildClaudeContract())
+    ),
+  "cursor:marketplace": (deps) =>
+    buildFrameworkUseCase(
+      deps,
+      (d, av) => new MarketplaceBuildStrategy(d.fs, av, d.assetProvider, buildCursorContract())
+    ),
+  "copilot:marketplace": (deps) =>
+    buildFrameworkUseCase(
+      deps,
+      (d, av) =>
+        new MarketplaceBuildStrategy(d.fs, av, d.assetProvider, buildCopilotMarketplaceContract())
+    ),
+  "codex:marketplace": (deps) =>
+    buildFrameworkUseCase(
+      deps,
+      (d, av) => new MarketplaceBuildStrategy(d.fs, av, d.assetProvider, buildCodexContract())
+    ),
+  "copilot:flat": (deps, ctx) =>
+    buildFrameworkUseCase(
+      deps,
+      (d, av) =>
+        new FlatBuildStrategy(
+          d.fs,
+          av,
+          d.assetProvider,
+          buildCopilotFlatContract(),
+          ctx.force,
+          ctx.outDir,
+          isDirectory,
+          d.logger
+        )
+    ),
+  "claude:flat": (deps, ctx) =>
+    buildFrameworkUseCase(
+      deps,
+      (d, av) =>
+        new FlatBuildStrategy(
+          d.fs,
+          av,
+          d.assetProvider,
+          buildClaudeFlatContract(),
+          ctx.force,
+          ctx.outDir,
+          isDirectory,
+          d.logger
+        )
+    ),
+  "cursor:flat": (deps, ctx) =>
+    buildFrameworkUseCase(
+      deps,
+      (d, av) =>
+        new FlatBuildStrategy(
+          d.fs,
+          av,
+          d.assetProvider,
+          buildCursorFlatContract(),
+          ctx.force,
+          ctx.outDir,
+          isDirectory,
+          d.logger
+        )
+    ),
+  "codex:flat": (deps, ctx) =>
+    buildFrameworkUseCase(
+      deps,
+      (d, av) =>
+        new FlatBuildStrategy(
+          d.fs,
+          av,
+          d.assetProvider,
+          buildCodexFlatContract(),
+          ctx.force,
+          ctx.outDir,
+          isDirectory,
+          d.logger
+        )
+    ),
+  "opencode:flat": (deps, ctx) =>
+    buildFrameworkUseCase(
+      deps,
+      (d, av) =>
+        new FlatBuildStrategy(
+          d.fs,
+          av,
+          d.assetProvider,
+          buildOpencodeFlatContract(),
+          ctx.force,
+          ctx.outDir,
+          isDirectory,
+          d.logger
+        )
+    ),
+};
+
+export function createFrameworkBuildUseCase(
   deps: Deps,
-  outDir: string,
-  force: boolean
-): FrameworkBuildUseCase {
-  const strategy = new FlatOutputStrategy(deps.fs, force, outDir, isDirectory);
-  const jsonSchemaValidator = new AjvSchemaValidatorAdapter();
-  return new FrameworkBuildUseCase(
-    deps.fs,
-    jsonSchemaValidator,
-    deps.assetProvider,
-    deps.logger,
-    strategy
-  );
+  ctx: FrameworkBuildContext
+): FrameworkBuildUseCase | undefined {
+  const key = `${ctx.target}:${ctx.mode}`;
+  const factory = FRAMEWORK_BUILD_REGISTRY[key];
+  return factory?.(deps, ctx);
 }
 
 export function createMenuDeps(projectRoot: string): {
@@ -344,7 +461,13 @@ export async function createDeps(
     fs,
     jsonSchemaValidator,
     assetProvider,
-    logger
+    logger,
+    new MarketplaceBuildStrategy(
+      fs,
+      jsonSchemaValidator,
+      assetProvider,
+      buildCopilotMarketplaceContract()
+    )
   );
   const pluginCreateUseCase = new PluginCreateUseCase(
     fs,

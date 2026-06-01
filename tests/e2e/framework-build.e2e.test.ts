@@ -244,12 +244,10 @@ describe.concurrent("E2E: aidd framework build", () => {
       expect(build.exitCode).toBe(0);
       expect(build.stdout).toContain("Flat-installed");
 
-      expect(
-        existsSync(join(projRoot, ".github", "agents", "aidd-test", "code-reviewer.agent.md"))
-      ).toBe(true);
-      expect(
-        existsSync(join(projRoot, ".github", "skills", "aidd-test", "commit", "SKILL.md"))
-      ).toBe(true);
+      // flat agents are now bare (no plugin segment) for discoverability
+      expect(existsSync(join(projRoot, ".github", "agents", "code-reviewer.agent.md"))).toBe(true);
+      // flat skills are now bare (no plugin segment) for discoverability
+      expect(existsSync(join(projRoot, ".github", "skills", "commit", "SKILL.md"))).toBe(true);
       expect(existsSync(join(projRoot, ".github", "hooks", "aidd-test.hooks.json"))).toBe(true);
       expect(existsSync(join(projRoot, ".vscode", "mcp.json"))).toBe(true);
       expect(existsSync(join(projRoot, ".github", "plugin", "marketplace.json"))).toBe(false);
@@ -264,7 +262,7 @@ describe.concurrent("E2E: aidd framework build", () => {
         "argument-hint",
       ]);
       const agentContent = await readFile(
-        join(projRoot, ".github", "agents", "aidd-test", "code-reviewer.agent.md"),
+        join(projRoot, ".github", "agents", "code-reviewer.agent.md"),
         "utf-8"
       );
       const fmMatch = agentContent.match(/^---\n([\s\S]*?)\n---/);
@@ -388,7 +386,7 @@ describe.concurrent("E2E: aidd framework build", () => {
       expect(build.exitCode).toBe(0);
 
       const agentContent = await readFile(
-        join(projRoot, ".github", "agents", "aidd-test", "code-reviewer.agent.md"),
+        join(projRoot, ".github", "agents", "code-reviewer.agent.md"),
         "utf-8"
       );
       const varRef = "$" + "{CLAUDE_PLUGIN_ROOT}";
@@ -444,6 +442,76 @@ describe.concurrent("E2E: aidd framework build", () => {
     }
   });
 
+  it("claude AC #1: --target claude exits 0, emits marketplace + plugin manifest + agents", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-build-claude");
+    try {
+      const outDir = join(tempDir, "dist-claude");
+      await mkdir(outDir, { recursive: true });
+      const build = await runCli(
+        ["framework", "build", "--source", FRAMEWORK_PATH, "--target", "claude", "--out", outDir],
+        projectDir,
+        fakeHome
+      );
+      expect(build.exitCode).toBe(0);
+      expect(build.stdout).toContain("Built");
+      expect(build.stdout).toContain("files written to");
+
+      expect(existsSync(join(outDir, ".claude-plugin", "marketplace.json"))).toBe(true);
+      expect(
+        existsSync(join(outDir, "plugins", "aidd-test", ".claude-plugin", "plugin.json"))
+      ).toBe(true);
+      expect(existsSync(join(outDir, "plugins", "aidd-test", "agents", "code-reviewer.md"))).toBe(
+        true
+      );
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("cursor AC #2: --target cursor exits 0, emits marketplace + plugin manifest + agents without tools/color", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-build-cursor");
+    try {
+      const outDir = join(tempDir, "dist-cursor");
+      await mkdir(outDir, { recursive: true });
+      const build = await runCli(
+        ["framework", "build", "--source", FRAMEWORK_PATH, "--target", "cursor", "--out", outDir],
+        projectDir,
+        fakeHome
+      );
+      expect(build.exitCode).toBe(0);
+      expect(build.stdout).toContain("Built");
+
+      expect(existsSync(join(outDir, ".cursor-plugin", "marketplace.json"))).toBe(true);
+      expect(
+        existsSync(join(outDir, "plugins", "aidd-test", ".cursor-plugin", "plugin.json"))
+      ).toBe(true);
+
+      const agentPath = join(outDir, "plugins", "aidd-test", "agents", "code-reviewer.md");
+      expect(existsSync(agentPath)).toBe(true);
+      const agentContent = await readFile(agentPath, "utf-8");
+      expect(agentContent).not.toMatch(/^tools:/m);
+      expect(agentContent).not.toMatch(/^color:/m);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("unknown target guard: --target opencode exits non-zero with hint", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-unknown-target");
+    try {
+      const outDir = join(tempDir, "dist");
+      const result = await runCli(
+        ["framework", "build", "--source", FRAMEWORK_PATH, "--target", "opencode", "--out", outDir],
+        projectDir,
+        fakeHome
+      );
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stderr).toMatch(/Unsupported target/i);
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("flat guard: --force without --flat exits non-zero with hint", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-guard-force");
     try {
@@ -465,6 +533,165 @@ describe.concurrent("E2E: aidd framework build", () => {
       );
       expect(result.exitCode).not.toBe(0);
       expect(result.stderr).toContain("--force requires --flat");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  // ── New flat targets (P4-P6) ─────────────────────────────────────────────────
+
+  it("AC #2: --target claude --flat materializes .claude/skills, .claude/agents, .mcp.json", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-claude");
+    try {
+      const projRoot = join(tempDir, "proj");
+      await mkdir(projRoot, { recursive: true });
+      const result = await runCli(
+        [
+          "framework",
+          "build",
+          "--source",
+          FRAMEWORK_PATH,
+          "--target",
+          "claude",
+          "--flat",
+          "--out",
+          projRoot,
+        ],
+        projectDir,
+        fakeHome
+      );
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain("Flat-installed");
+      // flat agents are bare (no plugin segment) under .claude/agents/
+      expect(existsSync(join(projRoot, ".claude", "agents"))).toBe(true);
+      // flat skills are bare (no plugin segment) under .claude/skills/
+      expect(existsSync(join(projRoot, ".claude", "skills"))).toBe(true);
+      expect(existsSync(join(projRoot, ".mcp.json"))).toBe(true);
+      const mcp = JSON.parse(await readFile(join(projRoot, ".mcp.json"), "utf-8")) as Record<
+        string,
+        unknown
+      >;
+      expect(Object.keys(mcp)).toContain("mcpServers");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("AC #3: --target cursor --flat materializes .cursor/skills, .cursor/agents (no tools/color), .cursor/mcp.json", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-cursor");
+    try {
+      const projRoot = join(tempDir, "proj");
+      await mkdir(projRoot, { recursive: true });
+      const result = await runCli(
+        [
+          "framework",
+          "build",
+          "--source",
+          FRAMEWORK_PATH,
+          "--target",
+          "cursor",
+          "--flat",
+          "--out",
+          projRoot,
+        ],
+        projectDir,
+        fakeHome
+      );
+      expect(result.exitCode).toBe(0);
+      // flat agents are bare (no plugin segment) under .cursor/agents/
+      expect(existsSync(join(projRoot, ".cursor", "agents"))).toBe(true);
+      // flat skills are bare (no plugin segment) under .cursor/skills/
+      expect(existsSync(join(projRoot, ".cursor", "skills"))).toBe(true);
+      expect(existsSync(join(projRoot, ".cursor", "mcp.json"))).toBe(true);
+      const agents = await readdir(join(projRoot, ".cursor", "agents"));
+      const agentContent = await readFile(join(projRoot, ".cursor", "agents", agents[0]), "utf-8");
+      expect(agentContent).not.toMatch(/^tools:/m);
+      expect(agentContent).not.toMatch(/^color:/m);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("AC #4: --target codex --flat emits TOML agents, skills under .agents/skills, config.toml with mcp_servers", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-codex");
+    try {
+      const projRoot = join(tempDir, "proj");
+      await mkdir(projRoot, { recursive: true });
+      const result = await runCli(
+        [
+          "framework",
+          "build",
+          "--source",
+          FRAMEWORK_PATH,
+          "--target",
+          "codex",
+          "--flat",
+          "--out",
+          projRoot,
+        ],
+        projectDir,
+        fakeHome
+      );
+      expect(result.exitCode).toBe(0);
+      expect(existsSync(join(projRoot, ".codex", "agents"))).toBe(true);
+      // flat skills are bare (no plugin segment) under .agents/skills/
+      expect(existsSync(join(projRoot, ".agents", "skills"))).toBe(true);
+      const config = await readFile(join(projRoot, ".codex", "config.toml"), "utf-8");
+      // [[skills.config]] is intentionally NOT emitted — discovery is by placement
+      expect(config).not.toContain("[[skills.config]]");
+      expect(config).not.toContain("skills.config");
+      // AC #4: merges mcp_servers into config.toml
+      expect(config).toContain("mcp_servers");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("AC #5: --target opencode --flat emits .opencode/skills, .opencode/agents, opencode.json with mcp", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-opencode");
+    try {
+      const projRoot = join(tempDir, "proj");
+      await mkdir(projRoot, { recursive: true });
+      const result = await runCli(
+        [
+          "framework",
+          "build",
+          "--source",
+          FRAMEWORK_PATH,
+          "--target",
+          "opencode",
+          "--flat",
+          "--out",
+          projRoot,
+        ],
+        projectDir,
+        fakeHome
+      );
+      expect(result.exitCode).toBe(0);
+      expect(existsSync(join(projRoot, ".opencode", "agents"))).toBe(true);
+      // flat skills are bare (no plugin segment) under .opencode/skills/
+      expect(existsSync(join(projRoot, ".opencode", "skills"))).toBe(true);
+      expect(existsSync(join(projRoot, "opencode.json"))).toBe(true);
+      const opencode = JSON.parse(
+        await readFile(join(projRoot, "opencode.json"), "utf-8")
+      ) as Record<string, unknown>;
+      expect(opencode.mcp).toBeDefined();
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("AC #7: --target opencode (non-flat) exits 1 with unsupported error", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-opencode-no-flat");
+    try {
+      const outDir = join(tempDir, "dist");
+      const result = await runCli(
+        ["framework", "build", "--source", FRAMEWORK_PATH, "--target", "opencode", "--out", outDir],
+        projectDir,
+        fakeHome
+      );
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stderr).toMatch(/Unsupported target.mode/i);
     } finally {
       await cleanup();
     }
