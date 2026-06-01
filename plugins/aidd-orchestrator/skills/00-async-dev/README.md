@@ -20,15 +20,15 @@ Single entry point for the async-dev pipeline. Hybrid router that picks one of t
 ## How to invoke
 
 ```text
-Use skill aidd-orchestrator:00:async-dev
+Use skill aidd-orchestrator:00-async-dev
 ```
 
 With an explicit sub-flow keyword (preferred from CI):
 
 ```text
-Use skill aidd-orchestrator:00:async-dev with action=setup
-Use skill aidd-orchestrator:00:async-dev with action=run on issue #42
-Use skill aidd-orchestrator:00:async-dev with action=review on PR #17
+Use skill aidd-orchestrator:00-async-dev with action=setup
+Use skill aidd-orchestrator:00-async-dev with action=run on issue #42
+Use skill aidd-orchestrator:00-async-dev with action=review on PR #17
 ```
 
 The router reads `$ARGUMENTS`, then trigger env, then repo state, then natural intent. See [`references/routing.md`](references/routing.md) for the full decision tree.

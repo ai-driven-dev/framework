@@ -27,7 +27,7 @@ reports, refactor fixes.
 ## How to invoke
 
 ```
-Use skill aidd-dev:07:refactor
+Use skill aidd-dev:07-refactor
 ```
 
 Run-one or run-all:

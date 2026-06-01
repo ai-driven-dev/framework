@@ -26,7 +26,7 @@ then drives test creation until quality criteria are met.
 ## How to invoke
 
 ```
-Use skill aidd-dev:06:test
+Use skill aidd-dev:06-test
 ```
 
 The skill exposes 2 actions:

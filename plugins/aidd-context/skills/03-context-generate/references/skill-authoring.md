@@ -38,7 +38,7 @@ The router. Contains a YAML frontmatter block and a markdown body.
 
 Frontmatter fields - see `@command.md` for the full table (skills and commands share the same frontmatter schema). The most relevant for skills:
 
-- `name` (string, kebab-case, <=64 chars) - falls back to the folder name.
+- `name` (string, kebab-case, <=64 chars) - must equal the skill's folder name; never a colon/namespaced chain (see Hard constraints).
 - `description` (recommended) - drives auto-invocation. Must include explicit triggers AND a "Do NOT use" clause.
 - `disable-model-invocation` (boolean) - `true` makes the skill user-only.
 - `allowed-tools` - pre-approved tools while the skill runs.
@@ -122,10 +122,24 @@ Two valid patterns, one per domain type.
 
 The `## Available actions` table in SKILL.md MUST always number entries (`01`, `02`, ...) even when the action files themselves are not prefixed. The numbers are lint anchors used by `scripts/validate-actions.js` to cross-reference; they do not imply execution order unless the skill is sequential.
 
-### Hard constraints (Anthropic spec)
+### Hard constraints (Agent Skills spec)
 
-- SKILL.md frontmatter `name`: lowercase, letters/digits/hyphens only, <= 64 chars. Reserved words forbidden: `anthropic`, `claude`.
+- SKILL.md frontmatter `name`: lowercase letters, digits, and single hyphens only - regex `^[a-z0-9]+(-[a-z0-9]+)*$`, <= 64 chars. It MUST equal the skill's folder name. No colons, no slashes, no dots, no plugin prefix, no namespace. Reserved words forbidden: `anthropic`, `claude`.
 - SKILL.md frontmatter `description`: <= 1024 chars, non-empty, third person, no XML tags.
+
+### The `name` field is NOT the invocation token
+
+A frequent mistake is to put the full invocation chain in `name` (e.g. `name: aidd-dev:04:audit`). Do NOT. The `name` field is just the skill's local identity and must equal its folder (`04-audit`). The host builds the invocation token itself from the plugin name plus the skill folder:
+
+| Host | Invocation token built from `plugin` + `name` |
+| ---- | --------------------------------------------- |
+| Claude Code | `/aidd-dev:04-audit` (one colon = namespace separator, host-generated) |
+| GitHub Copilot | `04-audit` (bare; a colon/prefix in `name` makes the skill SILENTLY fail to load) |
+| Cursor / Codex CLI / OpenCode | their own scheme from the same `name` |
+
+So there is no single cross-tool invocation string you can author. The stable identity is the pair (plugin name in `plugin.json`, skill `name` = folder); each host renders the address. Authoring the colon chain in `name` does the opposite of consistency: it is non-conformant and silently breaks loading on every host except Claude Code (where it only survives via an unfixed bug).
+
+When referring to a skill from prose (hand-offs, docs), use the `plugin:folder` form (`aidd-dev:07-refactor`) as a readable pointer, never the double-colon `aidd-dev:07:refactor`.
 
 ### Language
 

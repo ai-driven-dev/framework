@@ -1,6 +1,6 @@
 ---
-name: aidd-context:00:onboard
-description: Detect the current project's state and open a hub of project actions - understand the project, set up or refresh the memory bank, or continue the AIDD development journey. Silently inspects the project, the AIDD setup, and which AIDD plugins are installed, then adapts the menu to that context. Use when the user says "where do I start", "onboard me", "onboard me to this project", "what should I run next", "what should I work on next", "what's the state of this project", "guide me through aidd", "guide me through aidd-context", or invokes `aidd-context:00:onboard`. Do NOT use to enumerate every installed surface from raw user intent (the discovery skill in this plugin handles that).
+name: 00-onboard
+description: Detect the current project's state and open a hub of project actions - understand the project, set up or refresh the memory bank, or continue the AIDD development journey. Silently inspects the project, the AIDD setup, and which AIDD plugins are installed, then adapts the menu to that context. Use when the user says "where do I start", "onboard me", "onboard me to this project", "what should I run next", "what should I work on next", "what's the state of this project", "guide me through aidd", "guide me through aidd-context", or invokes `aidd-context:00-onboard`. Do NOT use to enumerate every installed surface from raw user intent (the discovery skill in this plugin handles that).
 model: opus
 ---
 

@@ -24,7 +24,7 @@ steps. Documentation only - no code, no scaffolding.
 ## How to invoke
 
 ```
-Use skill aidd-context:01:bootstrap
+Use skill aidd-context:01-bootstrap
 ```
 
 The skill walks 5 atomic actions in sequence:

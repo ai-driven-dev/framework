@@ -1,5 +1,5 @@
 ---
-name: aidd-vcs:02:pull-request
+name: 02-pull-request
 description: Create a draft pull or merge request from the current branch. Use when the user says "open a pr", "open a pull request", "create a pr", "create a merge request", "open mr", "draft a pr for this branch", or invokes `/pull-request`. Do NOT use for committing changes, pushing a branch directly, tagging releases, merging an existing request, or amending commits.
 ---
 

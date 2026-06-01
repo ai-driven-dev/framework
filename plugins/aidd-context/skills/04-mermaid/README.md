@@ -24,7 +24,7 @@ direction `LR` and targets Mermaid 10.8.0+.
 ## How to invoke
 
 ```
-Use skill aidd-context:04:mermaid
+Use skill aidd-context:04-mermaid
 ```
 
 The skill runs one action with a six-step loop:

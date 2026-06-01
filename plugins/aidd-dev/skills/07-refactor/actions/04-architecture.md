@@ -19,7 +19,7 @@ changes_applied:
   - { file: <path>, change: <one-line summary>, severity: "🔴|🟡|🟢" }
 verification: <summary of test, type-check, and import-graph results confirming no behavioral regression>
 deferred_to_plan:
-  - <structural move too large for direct execution - route to aidd-dev:01:plan first>
+  - <structural move too large for direct execution - route to aidd-dev:01-plan first>
 ```
 
 ## Process

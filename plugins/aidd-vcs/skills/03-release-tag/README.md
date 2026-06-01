@@ -24,7 +24,7 @@ annotated git tag, and pushes it.
 ## How to invoke
 
 ```
-Use skill aidd-vcs:03:release-tag
+Use skill aidd-vcs:03-release-tag
 ```
 
 Or via the slash command: `/release-tag`.

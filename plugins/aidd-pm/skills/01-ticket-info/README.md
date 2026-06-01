@@ -23,13 +23,13 @@ the project memory.
 ## How to invoke
 
 ```
-Use skill aidd-pm:01:ticket-info on <ticket-id>
+Use skill aidd-pm:01-ticket-info on <ticket-id>
 ```
 
 Or, with no id, let the skill auto-detect from the current git branch:
 
 ```
-Use skill aidd-pm:01:ticket-info
+Use skill aidd-pm:01-ticket-info
 ```
 
 ## Outputs

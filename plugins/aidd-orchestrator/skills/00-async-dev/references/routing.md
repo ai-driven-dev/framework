@@ -1,6 +1,6 @@
 # Routing — decision tree
 
-Full contract for picking a sub-flow inside `aidd-orchestrator:00:async-dev`. The router walks these signals in order; the first match wins.
+Full contract for picking a sub-flow inside `aidd-orchestrator:00-async-dev`. The router walks these signals in order; the first match wins.
 
 ---
 
@@ -11,8 +11,8 @@ If `$ARGUMENTS` contains exactly `setup`, `run`, or `review` as a standalone cas
 This is the contract the bundled CI workflow relies on:
 
 ```yaml
-prompt: "Use skill aidd-orchestrator:00:async-dev with action=run on issue #..."
-prompt: "Use skill aidd-orchestrator:00:async-dev with action=review on PR #..."
+prompt: "Use skill aidd-orchestrator:00-async-dev with action=run on issue #..."
+prompt: "Use skill aidd-orchestrator:00-async-dev with action=review on PR #..."
 ```
 
 The router parses `action=<keyword>` from the prompt body. Plain `setup` / `run` / `review` words elsewhere in the body do NOT match — only the explicit `action=` form, or `$ARGUMENTS` set to exactly one of the three keywords.
@@ -33,8 +33,8 @@ When invoked from a GitHub workflow, the router has access to the event context:
 
 Comment regex (case-insensitive):
 
-- `run`: `@claude\s+/(implement|aidd-dev:02:implement|run)`
-- `review`: `@claude\s+/(review|aidd-dev:05:review)`
+- `run`: `@claude\s+/(implement|aidd-dev:02-implement|run)`
+- `review`: `@claude\s+/(review|aidd-dev:05-review)`
 
 ---
 
@@ -85,7 +85,7 @@ The router NEVER silently switches sub-flow when the request and the state disag
 Examples:
 
 - **User says "run" but config is absent.**
-  Surface the conflict and stop: `Setup must complete before run. Run /aidd-orchestrator:00:async-dev with action=setup first.`
+  Surface the conflict and stop: `Setup must complete before run. Run /aidd-orchestrator:00-async-dev with action=setup first.`
 - **Workflow webhook fires `to-implement` but the issue already has an open closing PR.**
   Route to `review` (the PR is the active surface). Comment on the issue: `Issue #N has open PR #M — routed to review instead of run. Apply the `to-review` label to PR #M to trigger review explicitly.`
 - **Label `to-implement` AND label `to-review` both present.**

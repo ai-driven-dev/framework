@@ -23,7 +23,7 @@ loops until the agent reports 100 % completion.
 ## How to invoke
 
 ```
-Use skill aidd-dev:02:implement
+Use skill aidd-dev:02-implement
 ```
 
 Pass the plan path or content as `$ARGUMENTS`. The skill exposes 1 action:

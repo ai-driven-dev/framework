@@ -12,7 +12,7 @@ Internal working state only - **never printed to the user**. Onboard must not du
 
 The internal state covers three signal groups plus three derived values:
 
-- Group A - AIDD setup: `aidd_docs_present`, `memory_dir_present`, `memory_files_filled`, `context_block_present`, `install_md_present`, `repo_is_empty`
+- Group A - AIDD setup: `aidd_docs_present`, `memory_dir_present`, `memory_files_filled`, `context_block_present`, `repo_is_empty`
 - Group B - project context: `has_source_code`, `detected_stack`, `specs_present`, `plan_present`, `open_pr`
 - Group C - installed AIDD surface: `installed_aidd_plugins`, `installed_aidd_skills`, `only_aidd_context`
 - Derived: `memory_state`, `sdlc_phase`, `suggested_hub_option`
@@ -24,15 +24,14 @@ The internal state covers three signal groups plus three derived values:
    - `test -d aidd_docs`
    - `test -d aidd_docs/memory && ls -1 aidd_docs/memory/*.md 2>/dev/null`
    - `grep -l '<aidd_project_memory>' CLAUDE.md AGENTS.md .github/copilot-instructions.md 2>/dev/null`
-   - `test -f aidd_docs/INSTALL.md`
    - count of files outside `aidd_docs/`, `.git/`, `node_modules/`, lockfiles, dotfiles -> if zero, `repo_is_empty=true`
 
    The context-block check covers the supported AI-context files (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`); a tool that uses a different context filename is not detected.
-3. **`memory_files_filled` heuristic**. For each memory file, compare against the corresponding template under `aidd-context:02:project-init`'s `assets/templates/memory/` directory (templates are mostly flat - `<name>.md` - with a few under a `backend/` or `frontend/` subfolder). If at least one file differs from its template by more than YAML frontmatter and a few placeholder lines, set `memory_files_filled=true`. Derive `memory_state` (`absent` / `placeholder` / `filled`) per the matrix.
+3. **`memory_files_filled` heuristic**. For each memory file, compare against the corresponding template under `aidd-context:02-project-init`'s `assets/templates/memory/` directory (templates are mostly flat - `<name>.md` - with a few under a `backend/` or `frontend/` subfolder). If at least one file differs from its template by more than YAML frontmatter and a few placeholder lines, set `memory_files_filled=true`. Derive `memory_state` (`absent` / `placeholder` / `filled`) per the matrix.
 4. **Probe Group B - project context**.
    - `has_source_code`: any source file outside `aidd_docs/`.
    - `detected_stack`: first stack manifest found (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`); else `none`.
-   - `specs_present`: requirement docs in `aidd_docs/` (user stories, PRD, or spec).
+   - `specs_present`: `test -d aidd_docs/specs` returns true, OR `find aidd_docs -not -path 'aidd_docs/tasks/*' \( -name '*-spec.md' -o -name '*-prd.md' -o -name '*-stories.md' \)` returns at least one file.
    - `plan_present`: a technical plan doc in `aidd_docs/`.
    - `open_pr`: the current branch has an open pull or merge request.
    - `sdlc_phase`: derive per the matrix rules. Conflicting or absent signals -> `unknown`. Never guess.

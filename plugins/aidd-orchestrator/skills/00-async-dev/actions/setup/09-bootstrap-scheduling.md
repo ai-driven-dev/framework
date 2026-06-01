@@ -46,7 +46,7 @@ Schedules `scripts/aidd-async-poll.sh` via the cheapest path that fits the user'
      - Set `path = "local_daemon"`.
    - **B (manual)**: print `./scripts/aidd-async-poll.sh` and a reminder that nothing runs until invoked. Set `path = "manual"`.
    - **D (Desktop task)**: print the four UI bullets from the reference (Path D), filled with the working directory, schedule, and prompt. Warn about the per-tick Tasks quota. Set `path = "desktop_task_pending"`.
-   - **E (cloud routine)**: invoke the runtime `/schedule` skill via the `Skill` tool with a cron expression (must be at least hourly) and the prompt `Use skill aidd-orchestrator:00:async-dev with action=run on the next ready issue in <owner>/<repo>`. Capture the routine id. Set `path = "schedule_routine"`.
+   - **E (cloud routine)**: invoke the runtime `/schedule` skill via the `Skill` tool with a cron expression (must be at least hourly) and the prompt `Use skill aidd-orchestrator:00-async-dev with action=run on the next ready issue in <owner>/<repo>`. Capture the routine id. Set `path = "schedule_routine"`.
 5. Emit the structured result.
 
 ## Test

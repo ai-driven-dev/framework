@@ -24,7 +24,7 @@ as a draft for manual promotion.
 ## How to invoke
 
 ```
-Use skill aidd-vcs:02:pull-request
+Use skill aidd-vcs:02-pull-request
 ```
 
 Or via the slash command: `/pull-request`.

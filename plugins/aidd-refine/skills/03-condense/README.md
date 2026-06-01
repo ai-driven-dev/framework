@@ -28,7 +28,7 @@ token usage and estimated savings for the current session.
 ## How to invoke
 
 ```
-Use skill aidd-refine:03:condense
+Use skill aidd-refine:03-condense
 ```
 
 The router dispatches by intent:

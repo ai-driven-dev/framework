@@ -1,5 +1,5 @@
 ---
-name: aidd-dev:02:implement
+name: 02-implement
 description: Execute an implementation plan phase by phase via the implementer agent, iterating until 100% completeness.
 context: fork
 agent: implementer

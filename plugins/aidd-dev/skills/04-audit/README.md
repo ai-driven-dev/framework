@@ -26,7 +26,7 @@ wanted.
 ## How to invoke
 
 ```
-Use skill aidd-dev:04:audit
+Use skill aidd-dev:04-audit
 ```
 
 Run-one or run-all:

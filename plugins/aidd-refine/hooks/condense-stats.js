@@ -2,7 +2,7 @@
 /**
  * condense-stats.js
  *
- * UserPromptSubmit hook for aidd-refine:03:condense :: action 02-stats.
+ * UserPromptSubmit hook for aidd-refine:03-condense :: action 02-stats.
  *
  * Triggers on user prompts that ask for condense stats. Reads the current
  * Claude Code session transcript, detects intensity transitions emitted by

@@ -1,5 +1,5 @@
 ---
-name: aidd-orchestrator:00:async-dev
+name: 00-async-dev
 description: Single entry point for the async-dev pipeline (setup, run, review). Hybrid router decides which sub-flow to execute from $ARGUMENTS keyword (`setup` / `run` / `review`), trigger source (label `to-implement` / `to-review`, comment `@claude /implement` / `/review`), repo state (workflow + config presence, PR linked to issue), or natural-language intent. Use when the user says "set up async dev", "run async dev on issue #N", "address review on PR #N", "/async-dev", "claude on issues", or when triggered by a webhook with the matching labels or comments. Do NOT use for plain status checks on the async pipeline or for SDLC orchestration unrelated to issue/PR automation.
 ---
 
@@ -25,7 +25,7 @@ Walk in order. First match wins.
 2. **Trigger env.** When invoked from CI (`GITHUB_EVENT_NAME` set):
    - Label payload `to-implement` → `run`.
    - Label payload `to-review` → `review`.
-   - Comment body matches `@claude /implement` (or `/aidd-dev:02:implement`) → `run`.
+   - Comment body matches `@claude /implement` (or `/aidd-dev:02-implement`) → `run`.
    - Comment body matches `@claude /review` → `review`.
 3. **Repo state.**
    - Missing `.github/workflows/aidd-async.yml` AND missing `.claude/aidd-orchestrator.json` → `setup`.

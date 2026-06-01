@@ -27,7 +27,7 @@ structure), and browser-based frontend UI checks.
 ## How to invoke
 
 ```
-Use skill aidd-dev:03:assert
+Use skill aidd-dev:03-assert
 ```
 
 The skill exposes 3 actions:
