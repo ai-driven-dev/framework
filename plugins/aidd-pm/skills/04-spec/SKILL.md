@@ -1,5 +1,5 @@
 ---
-name: aidd-pm:04:spec
+name: 04-spec
 description: Generate or refine a project spec from a free-form human request, an existing PRD, or reviewer findings. Use when the user says "draft spec", "spec for X", "refine the spec", "generate spec from prd", "/spec", or when an orchestrator needs a normalized contract before planning. Do NOT use for writing source code, drafting a full PRD, or modifying a validated and locked spec.
 ---
 

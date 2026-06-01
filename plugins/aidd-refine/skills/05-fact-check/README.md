@@ -23,19 +23,19 @@ they disagree.
   request. A permanent "always verify" guard belongs in an always-loaded rule.
 - To judge code logic correctness or review code style.
 - To clarify vague requirements through iterative Q&A - use the
-  `aidd-refine:01:brainstorm` skill.
+  `aidd-refine:01-brainstorm` skill.
 
 ## How to invoke
 
 ```
-Use skill aidd-refine:05:fact-check
+Use skill aidd-refine:05-fact-check
 ```
 
 Provide the text to check - the prior answer, a quoted passage, or a pasted
 block:
 
 ```
-Use skill aidd-refine:05:fact-check on <text or path>
+Use skill aidd-refine:05-fact-check on <text or path>
 ```
 
 The skill runs a fixed three-step pipeline:

@@ -6,7 +6,7 @@ Knowledge production plugin for the AI-Driven Development framework.
 
 > Status: stable.
 
-First time? Install with `/plugin install aidd-context@aidd-framework`, then run `aidd-context:00:onboard`.
+First time? Install with `/plugin install aidd-context@aidd-framework`, then run `aidd-context:00-onboard`.
 
 Covers project bootstrap, project initialisation, generation of Claude Code context artifacts (skills, agents, rules, commands, hooks, plugins, marketplaces), Mermaid diagrams, learning, discovery, and a state-aware onboarding loop.
 
@@ -24,7 +24,7 @@ Covers project bootstrap, project initialisation, generation of Claude Code cont
 
 ## Onboarding
 
-New to aidd-context, or unsure what to run next? Invoke `aidd-context:00:onboard`. The skill:
+New to aidd-context, or unsure what to run next? Invoke `aidd-context:00-onboard`. The skill:
 
 1. Probes the filesystem (no questions) to snapshot what already exists - `aidd_docs/`, memory bank, rules skeleton, the `<aidd_project_memory>` block in your AI context file.
 2. Picks ONE next aidd-context skill from the state matrix and presents a 5-option numbered menu (run / explain / handoff / swap / stop).

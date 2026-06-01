@@ -24,7 +24,7 @@ Stays at the "what and why" level; never crosses into implementation detail.
 ## How to invoke
 
 ```
-Use skill aidd-pm:03:prd for <feature description or path to user stories>
+Use skill aidd-pm:03-prd for <feature description or path to user stories>
 ```
 
 The skill parses the input, drafts each section per template, shows the

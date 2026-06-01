@@ -23,7 +23,7 @@ optionally pushing the branch when the caller asks for it.
 ## How to invoke
 
 ```
-Use skill aidd-vcs:01:commit
+Use skill aidd-vcs:01-commit
 ```
 
 Or via the slash command:

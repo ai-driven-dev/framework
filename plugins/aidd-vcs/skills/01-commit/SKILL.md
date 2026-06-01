@@ -1,5 +1,5 @@
 ---
-name: aidd-vcs:01:commit
+name: 01-commit
 description: Create an atomic git commit with conventional message format. Use when the user says "commit", "git commit", "create a commit", "commit my changes", "commit and push", or invokes `/commit`. Do NOT use for amending existing commits, force-pushing, rebasing, opening pull requests, or release tagging.
 ---
 

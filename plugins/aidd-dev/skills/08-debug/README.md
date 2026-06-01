@@ -27,7 +27,7 @@ apply a targeted fix. Drives the loop from issue to PR.
 ## How to invoke
 
 ```
-Use skill aidd-dev:08:debug
+Use skill aidd-dev:08-debug
 ```
 
 The skill exposes 3 actions:

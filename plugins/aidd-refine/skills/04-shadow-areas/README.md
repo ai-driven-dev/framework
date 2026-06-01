@@ -21,20 +21,20 @@ direct-question probe the author can act on, and written to a structured
 ## When NOT to use
 
 - The artifact does not yet exist and the user needs to clarify a vague intent
-  through iterative questioning - use the `aidd-refine:01:brainstorm` skill.
+  through iterative questioning - use the `aidd-refine:01-brainstorm` skill.
 - The request is to review code style or check implementation correctness.
 - The user needs a general chat about what to do next, not a gap analysis.
 
 ## How to invoke
 
 ```
-Use skill aidd-refine:04:shadow-areas
+Use skill aidd-refine:04-shadow-areas
 ```
 
 Provide either a file path or inline text as the source:
 
 ```
-Use skill aidd-refine:04:shadow-areas with <path-to-artifact>
+Use skill aidd-refine:04-shadow-areas with <path-to-artifact>
 ```
 
 The router dispatches based on whether a prior report is already present:

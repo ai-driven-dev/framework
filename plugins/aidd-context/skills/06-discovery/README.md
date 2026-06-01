@@ -33,7 +33,7 @@ recommendation without invoking the target.
 ## How to invoke
 
 ```
-Use skill aidd-context:06:discovery
+Use skill aidd-context:06-discovery
 ```
 
 The skill picks one action based on what the user is enumerating:

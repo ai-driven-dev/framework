@@ -24,7 +24,7 @@ findings_count: <int>
    - **Tech debt (structural)**: dead and unreachable code, unused exports/types/helpers, stale TODOs, vestigial flags, cyclomatic complexity and file/function/component length above project thresholds, nesting depth, error handling caught at the wrong boundary or silently swallowed.
    - Use dedicated tools when available (e.g. an unused-export finder); never assert dead code without evidence.
 3. **Rate each finding.** Severity (🔴 / 🟡 / 🟢) and effort (S/M/L) per `@../assets/audit-template.md` legend. Quote a concrete `file:line` for every finding. Category is always `code-quality`.
-4. **Write the report** using `@../assets/audit-template.md`: fill the Findings table (one row per issue, severity-first), ranked Top actions (hand off fixes to `aidd-dev:07:refactor`), and the Coverage section. In a full audit run, contribute these finding rows to the single merged report per the skill output contract instead of writing a separate file. Read-only: emit the report and stop; do not edit code.
+4. **Write the report** using `@../assets/audit-template.md`: fill the Findings table (one row per issue, severity-first), ranked Top actions (hand off fixes to `aidd-dev:07-refactor`), and the Coverage section. In a full audit run, contribute these finding rows to the single merged report per the skill output contract instead of writing a separate file. Read-only: emit the report and stop; do not edit code.
 
 ## Test
 

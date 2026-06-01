@@ -29,7 +29,7 @@ One row per acceptance criterion. Severity uses the shared 3-level scale (it app
 
 ## Missing behaviors
 
-Acceptance criteria with no trace in the diff (hand off implementation to `aidd-dev:02:implement`; if a criterion is implemented but broken, hand off to `aidd-dev:08:debug`).
+Acceptance criteria with no trace in the diff (hand off implementation to `aidd-dev:02-implement`; if a criterion is implemented but broken, hand off to `aidd-dev:08-debug`).
 
 - [ ] {{criterion not found in diff}}
 

@@ -6,7 +6,7 @@ Meta-cognition plugin for the AI-Driven Development framework.
 
 > Status: stable.
 
-First time? Install with `/plugin install aidd-refine@aidd-framework`, then run `aidd-refine:01:brainstorm`.
+First time? Install with `/plugin install aidd-refine@aidd-framework`, then run `aidd-refine:01-brainstorm`.
 
 Five skills that refine inputs and outputs through reflection: clarify vague requests, challenge prior work for correctness, toggle a condensed output mode, analytically scan artifacts for blind spots, and verify factual claims against authoritative sources.
 

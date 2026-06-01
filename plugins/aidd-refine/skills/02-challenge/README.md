@@ -24,7 +24,7 @@ to ship, iterate, or rework.
 ## How to invoke
 
 ```
-Use skill aidd-refine:02:challenge
+Use skill aidd-refine:02-challenge
 ```
 
 The skill is single-action - the router dispatches to `challenge` whenever

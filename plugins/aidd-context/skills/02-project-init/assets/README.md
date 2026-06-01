@@ -79,7 +79,7 @@ my-project/
 
 Each AI context file (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, etc.) contains an `<aidd_project_memory>` block. It is:
 
-1. **Seeded** the first time by `aidd-context:02:project-init` (the skill creates the block if absent).
+1. **Seeded** the first time by `aidd-context:02-project-init` (the skill creates the block if absent).
 2. **Kept in sync** automatically by a session-start hook (`aidd-context/hooks/update_memory.js`) that scans `aidd_docs/memory/` and writes the current list of `.md` files into the block.
 
 You never edit the block by hand. To change what the AI sees, add or remove files under `aidd_docs/memory/`; the hook picks them up at the next session.
@@ -107,18 +107,18 @@ Each plugin is independently installable; install incrementally. Smaller surface
 
 A typical change cycles through skills from several plugins. The order below is indicative; skip what you do not need and loop back as the work demands.
 
-1. **Bootstrap** (only for a brand-new project): `aidd-context:01:bootstrap` imagines the stack and architecture, comparing candidate stacks and writing an `INSTALL.md`. Skip this step on an existing project.
-2. **Project init** (once per project, re-runnable to refresh): `aidd-context:02:project-init` scaffolds `aidd_docs/`, the memory bank, and the AI context files for the tools you use. Re-running later refreshes the scaffold without overwriting your customizations.
-3. **Frame the request**: `aidd-refine:01:brainstorm` to clarify, `aidd-pm:01:ticket-info` to pull tracker data, `aidd-pm:02:user-stories-create` and `aidd-pm:03:prd` or `aidd-pm:04:spec` to formalize scope.
-4. **Plan**: `aidd-dev:01:plan` produces the technical plan, component behavior model, or design-image extraction.
-5. **Implement and assert**: `aidd-dev:02:implement` writes code against the plan; `aidd-dev:03:assert` verifies the result.
-6. **Review**: `aidd-dev:05:review` for code and functional review; `aidd-refine:02:challenge` to stress-test the result.
-7. **Test**: `aidd-dev:06:test` adds or runs tests and validates user journeys.
-8. **Document and learn**: `aidd-context:04:mermaid` for diagrams; `aidd-context:05:learn` to feed insights back into the memory bank or rules.
-9. **Ship**: `aidd-vcs:01:commit`, `aidd-vcs:02:pull-request`, then `aidd-vcs:03:release-tag` when the work is in production. File issues with `aidd-vcs:04:issue-create`.
-10. **Refactor and maintain**: `aidd-dev:07:refactor` for performance or security, `aidd-dev:04:audit` for technical-debt sweeps, `aidd-dev:08:debug` to reproduce and fix bugs.
+1. **Bootstrap** (only for a brand-new project): `aidd-context:01-bootstrap` imagines the stack and architecture, comparing candidate stacks and writing an `INSTALL.md`. Skip this step on an existing project.
+2. **Project init** (once per project, re-runnable to refresh): `aidd-context:02-project-init` scaffolds `aidd_docs/`, the memory bank, and the AI context files for the tools you use. Re-running later refreshes the scaffold without overwriting your customizations.
+3. **Frame the request**: `aidd-refine:01-brainstorm` to clarify, `aidd-pm:01-ticket-info` to pull tracker data, `aidd-pm:02-user-stories-create` and `aidd-pm:03-prd` or `aidd-pm:04-spec` to formalize scope.
+4. **Plan**: `aidd-dev:01-plan` produces the technical plan, component behavior model, or design-image extraction.
+5. **Implement and assert**: `aidd-dev:02-implement` writes code against the plan; `aidd-dev:03-assert` verifies the result.
+6. **Review**: `aidd-dev:05-review` for code and functional review; `aidd-refine:02-challenge` to stress-test the result.
+7. **Test**: `aidd-dev:06-test` adds or runs tests and validates user journeys.
+8. **Document and learn**: `aidd-context:04-mermaid` for diagrams; `aidd-context:05-learn` to feed insights back into the memory bank or rules.
+9. **Ship**: `aidd-vcs:01-commit`, `aidd-vcs:02-pull-request`, then `aidd-vcs:03-release-tag` when the work is in production. File issues with `aidd-vcs:04-issue-create`.
+10. **Refactor and maintain**: `aidd-dev:07-refactor` for performance or security, `aidd-dev:04-audit` for technical-debt sweeps, `aidd-dev:08-debug` to reproduce and fix bugs.
 
-When you want the whole synchronous pipeline run in one go (spec, plan, implementation, finalize), invoke `aidd-dev:00:sdlc`.
+When you want the whole synchronous pipeline run in one go (spec, plan, implementation, finalize), invoke `aidd-dev:00-sdlc`.
 
 ---
 
@@ -126,7 +126,7 @@ When you want the whole synchronous pipeline run in one go (spec, plan, implemen
 
 Beyond the synchronous path above, `aidd-orchestrator` runs the SDLC asynchronously on labeled issues (webhook or cron). This is extra: most projects do not need it. Use only when you want the AI to pick up `to-implement` issues without a human pressing a key.
 
-Inside the synchronous path, `aidd-dev:00:sdlc` is the Dev SDLC orchestrator that drives spec, plan, implementation, finalize in one go when you want the whole pipeline at once.
+Inside the synchronous path, `aidd-dev:00-sdlc` is the Dev SDLC orchestrator that drives spec, plan, implementation, finalize in one go when you want the whole pipeline at once.
 
 ---
 

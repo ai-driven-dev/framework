@@ -1,5 +1,5 @@
 ---
-name: aidd-vcs:04:issue-create
+name: 04-issue-create
 description: Create an issue in the configured ticketing tool. Use when the user says "new issue", "create an issue", "file a bug", "file an issue", "report bug", "open an issue", or invokes `/issue-create`. Do NOT use for committing changes, opening pull requests, tagging releases, or commenting on existing issues.
 ---
 

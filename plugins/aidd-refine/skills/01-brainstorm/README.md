@@ -23,7 +23,7 @@ explicitly approves the result.
 ## How to invoke
 
 ```
-Use skill aidd-refine:01:brainstorm
+Use skill aidd-refine:01-brainstorm
 ```
 
 The skill walks 5 atomic actions:

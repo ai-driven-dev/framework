@@ -1,5 +1,5 @@
 ---
-name: aidd-dev:05:review
+name: 05-review
 description: Read-only review of a diff (a PR or working changes) - code quality against project rules, and feature behavior against the plan's acceptance criteria. Surfaces findings with a verdict; never patches. Use to review changes in progress. Do NOT use for a whole-codebase health check (use 04-audit), fixing the findings (hand off to 07-refactor / 02-implement / 08-debug), or validating a feature runs (use 03-assert).
 model: opus
 context: fork
@@ -8,7 +8,7 @@ agent: reviewer
 
 # Skill: review
 
-Read-only review of a diff (a PR or working changes): code quality against project rules, and feature behavior against the plan's acceptance criteria. It surfaces findings and a verdict; it never edits code. The fix hands off to the act-skills (`07-refactor` for code, `02-implement` / `08-debug` for behavior gaps). Diff-scoped - for a whole-codebase read-only diagnosis use `aidd-dev:04:audit` instead.
+Read-only review of a diff (a PR or working changes): code quality against project rules, and feature behavior against the plan's acceptance criteria. It surfaces findings and a verdict; it never edits code. The fix hands off to the act-skills (`07-refactor` for code, `02-implement` / `08-debug` for behavior gaps). Diff-scoped - for a whole-codebase read-only diagnosis use `aidd-dev:04-audit` instead.
 
 ## Agent delegation
 

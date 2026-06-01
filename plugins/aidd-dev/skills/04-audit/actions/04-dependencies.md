@@ -26,7 +26,7 @@ findings_count: <int>
    - **Unused declared dependencies**: flag packages listed in the manifest but with no import found in the scanned source.
    - **Lockfile integrity and supply-chain**: verify the lockfile is present and committed; flag direct git/URL dependencies and any package with no integrity hash.
 3. **Rate each finding.** Severity (🔴 / 🟡 / 🟢) and effort (S/M/L) per `@../assets/audit-template.md` legend. Quote a concrete `file:line` (manifest or lockfile line) for every finding. Category is always `dependencies`.
-4. **Write the report** using `@../assets/audit-template.md`: fill the Findings table (one row per issue, severity-first), ranked Top actions (hand off upgrades to `aidd-dev:07:refactor` or manual upgrade), and the Coverage section. In a full audit run, contribute these finding rows to the single merged report per the skill output contract instead of writing a separate file. Read-only: emit the report and stop; do not edit code.
+4. **Write the report** using `@../assets/audit-template.md`: fill the Findings table (one row per issue, severity-first), ranked Top actions (hand off upgrades to `aidd-dev:07-refactor` or manual upgrade), and the Coverage section. In a full audit run, contribute these finding rows to the single merged report per the skill output contract instead of writing a separate file. Read-only: emit the report and stop; do not edit code.
 
 ## Test
 

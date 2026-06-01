@@ -23,7 +23,7 @@ enough context to be actionable, validated with the user before creation.
 ## How to invoke
 
 ```
-Use skill aidd-vcs:04:issue-create
+Use skill aidd-vcs:04-issue-create
 ```
 
 Or via the slash command: `/issue-create`.

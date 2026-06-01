@@ -7,7 +7,7 @@
   { "prompt": "Guide me through the AIDD journey", "expect_action": "detect-state" },
   { "prompt": "Guide me through aidd-context", "expect_action": "detect-state" },
   { "prompt": "I'm new here, onboard me", "expect_action": "detect-state" },
-  { "prompt": "Run /aidd-context:00:onboard", "expect_action": "detect-state" },
+  { "prompt": "Run /aidd-context:00-onboard", "expect_action": "detect-state" },
   { "prompt": "Présente-moi l'état du projet et la prochaine étape", "expect_action": "detect-state" },
   { "prompt": "Par où je commence sur ce projet", "expect_action": "detect-state" },
   { "prompt": "Quelle est la prochaine étape AIDD", "expect_action": "detect-state" },

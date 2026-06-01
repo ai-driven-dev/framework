@@ -5,7 +5,7 @@
  *
  * Inventory project rules across every installed AI tool surface.
  *
- * Tools and locations (see aidd-context:03:context-generate/references/ai-mapping.md):
+ * Tools and locations (see aidd-context:03-context-generate/references/ai-mapping.md):
  *   - Claude Code:    .claude/rules/**\/*.md
  *   - Cursor:         .cursor/rules/**\/*.mdc
  *   - GitHub Copilot: .github/instructions/**\/*.instructions.md

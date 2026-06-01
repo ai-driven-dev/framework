@@ -1,5 +1,5 @@
 ---
-name: aidd-pm:03:prd
+name: 03-prd
 description: Generate a structured Product Requirements Document from a feature description or user stories, validated with the user before save. Use when the user says "prd", "draft prd", "write prd", "product requirements for X", "generate a prd", or invokes `/prd`. Do NOT use for writing user stories, drafting a technical implementation plan, or writing source code.
 ---
 

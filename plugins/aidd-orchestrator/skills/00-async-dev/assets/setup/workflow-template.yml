@@ -157,7 +157,7 @@ jobs:
       - name: Run aidd-orchestrator pipeline
         uses: anthropics/claude-code-action@v1
         with:
-          prompt: "Use skill aidd-orchestrator:00:async-dev with action=run on issue #${{ needs.dispatch.outputs.issue_number }} (trigger_kind=${{ needs.dispatch.outputs.trigger_kind }}, trigger_comment_url=${{ needs.dispatch.outputs.trigger_comment_url }}). Fetch every comment newer than the last bot activity on the issue and feed them to the SDLC delegation as additional user direction."
+          prompt: "Use skill aidd-orchestrator:00-async-dev with action=run on issue #${{ needs.dispatch.outputs.issue_number }} (trigger_kind=${{ needs.dispatch.outputs.trigger_kind }}, trigger_comment_url=${{ needs.dispatch.outputs.trigger_comment_url }}). Fetch every comment newer than the last bot activity on the issue and feed them to the SDLC delegation as additional user direction."
           __CLAUDE_AUTH_LINE__
           __GITHUB_WRITE_TOKEN_LINE__
           plugins: |
@@ -252,7 +252,7 @@ jobs:
       - name: Run aidd-orchestrator review loop
         uses: anthropics/claude-code-action@v1
         with:
-          prompt: "Use skill aidd-orchestrator:00:async-dev with action=review on PR #${{ needs.dispatch.outputs.issue_number }} (trigger_kind=${{ needs.dispatch.outputs.trigger_kind }}, trigger_comment_url=${{ needs.dispatch.outputs.trigger_comment_url }}, source_issue_number=${{ needs.dispatch.outputs.source_issue_number }}). Collect comments from both the PR and its linked issue newer than the last iteration before deciding stop vs continue."
+          prompt: "Use skill aidd-orchestrator:00-async-dev with action=review on PR #${{ needs.dispatch.outputs.issue_number }} (trigger_kind=${{ needs.dispatch.outputs.trigger_kind }}, trigger_comment_url=${{ needs.dispatch.outputs.trigger_comment_url }}, source_issue_number=${{ needs.dispatch.outputs.source_issue_number }}). Collect comments from both the PR and its linked issue newer than the last iteration before deciding stop vs continue."
           __CLAUDE_AUTH_LINE__
           __GITHUB_WRITE_TOKEN_LINE__
           plugins: |

@@ -27,7 +27,7 @@ images. The plan file is the single source of truth that downstream skills
 ## How to invoke
 
 ```
-Use skill aidd-dev:01:plan
+Use skill aidd-dev:01-plan
 ```
 
 The skill exposes 3 actions:

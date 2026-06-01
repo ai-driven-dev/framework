@@ -62,7 +62,12 @@ The backbone the hub and the SDLC sub-menu walk together. Legs 0 and 1 (`bootstr
 
 Cross-cutting categories (reachable from the hub, not journey legs): `memory-upkeep`, `diagram`, `generate`, `discovery`.
 
-`memory-upkeep` resolves to the installed skill whose description covers updating or refreshing project memory **after** initial setup. It is distinct from `context-setup`, which covers the initial creation of the memory bank. If both a setup skill and an upkeep skill match, prefer the one whose description mentions updating, refreshing, or capturing learnings over the one that mentions initializing or bootstrapping.
+`memory-upkeep` resolves to one of two skills depending on scope:
+
+- **Capture a specific learning or convention** (default) -> resolve to the installed skill whose description covers capturing or recording individual project learnings, rules, or conventions.
+- **Rebuild the full memory bank** -> resolve to the installed skill whose description covers initializing or refreshing the entire project memory bank.
+
+When the user picks hub option 2 on a filled memory bank, default to the capture-specific-learning skill unless they explicitly ask for a full refresh. If only one skill matches either scope, use it for both. `context-setup` covers the initial creation of the memory bank and is distinct from both upkeep variants.
 
 ## Category resolution
 
@@ -72,7 +77,7 @@ For every category that needs a skill, `02-recommend-next` resolves it:
 2. Match the category function against each installed skill's `description`.
 3. Exactly one fit -> use that skill.
 4. No fit -> the category is a **gap**: report that this action needs an AIDD plugin that is not installed, described by function only. Never invent a skill id, never name a plugin id.
-5. Several fit -> list them and let the user pick.
+5. Several fit -> resolve inline, before showing any menu. Replace the single `Next: <skill>` line with a numbered pick: `Several skills match - which do you want? 1. <skill A> - <purpose> / 2. <skill B> - <purpose>`. Wait for a digit, then continue with the chosen skill. Do not show the SDLC sub-menu until this pick is resolved.
 
 ## aidd-context-installed-alone
 
@@ -109,11 +114,10 @@ Derivation, ambiguity always resolving to `unknown`:
 | `memory_files_filled`    | At least one memory file has more than the template's placeholder content                        |
 | `memory_state`           | Derived: `absent`, `placeholder`, or `filled`                                                    |
 | `context_block_present`  | `grep -l '<aidd_project_memory>' CLAUDE.md AGENTS.md .github/copilot-instructions.md` returns 1+ |
-| `install_md_present`      | `aidd_docs/INSTALL.md` exists                                                                     |
 | `repo_is_empty`          | No source files outside `aidd_docs/`, `.git/`, lockfiles, and dotfiles                            |
 | `has_source_code`        | Source files exist outside `aidd_docs/`                                                           |
 | `detected_stack`         | A stack manifest is present (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`) |
-| `specs_present`          | Requirement docs exist in `aidd_docs/` (user stories, PRD, or spec)                              |
+| `specs_present`          | `aidd_docs/specs/` directory exists, OR at least one file matching `*-spec.md`, `*-prd.md`, or `*-stories.md` exists anywhere in `aidd_docs/` except `aidd_docs/tasks/` |
 | `plan_present`           | A technical plan doc exists in `aidd_docs/`                                                       |
 | `open_pr`                | The current branch has an open pull or merge request                                             |
 | `installed_aidd_plugins` | AIDD plugins enabled in the AI tool                                                              |

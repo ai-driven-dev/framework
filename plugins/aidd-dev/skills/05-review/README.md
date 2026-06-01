@@ -28,7 +28,7 @@ and quality scores. Never edits the artifact.
 ## How to invoke
 
 ```
-Use skill aidd-dev:05:review
+Use skill aidd-dev:05-review
 ```
 
 The skill exposes 2 actions:

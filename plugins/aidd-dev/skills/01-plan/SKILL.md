@@ -1,5 +1,5 @@
 ---
-name: aidd-dev:01:plan
+name: 01-plan
 description: Generate technical implementation plans, define component behaviors, and extract design details from images.
 model: opus
 context: fork

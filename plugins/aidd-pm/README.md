@@ -6,7 +6,7 @@ Product management plugin for the AI-Driven Development framework.
 
 > Status: stable.
 
-First time? Install with `/plugin install aidd-pm@aidd-framework`, then run `aidd-pm:01:ticket-info`.
+First time? Install with `/plugin install aidd-pm@aidd-framework`, then run `aidd-pm:01-ticket-info`.
 
 Covers ticket information retrieval, user story creation, product requirement documents, and spec generation for downstream agents.
 

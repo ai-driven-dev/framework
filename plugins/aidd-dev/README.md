@@ -6,7 +6,7 @@ Code transformation plugin for the AI-Driven Development framework.
 
 > Status: stable.
 
-First time? Install with `/plugin install aidd-dev@aidd-framework`, then run `aidd-dev:00:sdlc`.
+First time? Install with `/plugin install aidd-dev@aidd-framework`, then run `aidd-dev:00-sdlc`.
 
 Covers the full SDLC coding loop: orchestrator, planning, implementation, assertions, audits, code review, testing, refactoring, debugging, and the for-sure workflow. Also hosts AI agents.
 

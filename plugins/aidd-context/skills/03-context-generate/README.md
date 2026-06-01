@@ -30,7 +30,7 @@ Evaluations are declared before implementation; every action carries a `## Test`
 ## How to invoke
 
 ```
-Use skill aidd-context:03:context-generate
+Use skill aidd-context:03-context-generate
 ```
 
 For skill generation, the skill walks 6 atomic actions:
