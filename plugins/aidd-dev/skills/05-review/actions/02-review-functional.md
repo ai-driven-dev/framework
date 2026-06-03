@@ -20,6 +20,15 @@ unplanned_behaviors: <int>
 edge_case_gaps: <int>
 ```
 
+## Rules
+
+Check against:
+
+- Inconsistencies
+- Duplications
+- Non logical Flows or Steps
+
+
 ## Process
 
 1. **Read the plan.** Use `plan_path` from `$ARGUMENTS` when provided; otherwise ask the user to supply the acceptance criteria directly.
