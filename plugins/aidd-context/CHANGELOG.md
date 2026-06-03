@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.1](https://github.com/ai-driven-dev/aidd-framework/compare/aidd-context-v1.1.0...aidd-context-v1.1.1) (2026-06-03)
+
+
+### Bug Fixes
+
+* **aidd-context:** lift project-init tool selection into a flow-entry gate ([#165](https://github.com/ai-driven-dev/aidd-framework/issues/165)) ([6fe2d07](https://github.com/ai-driven-dev/aidd-framework/commit/6fe2d07b7d55adda38a6a4c7a42a84eda7bde762))
+* **framework:** make all 31 skill names spec-compliant (kebab, folder-matched, no colons) ([#172](https://github.com/ai-driven-dev/aidd-framework/issues/172)) ([a47505f](https://github.com/ai-driven-dev/aidd-framework/commit/a47505f5d63e939db0bf28629adbafec888e28e6))
+
+
+### Miscellaneous
+
+* **framework:** prepare repository for open-source launch ([35b20ae](https://github.com/ai-driven-dev/aidd-framework/commit/35b20ae5c5b4000d6f2773790b6abd8b7600a97d))
+
 ## [1.1.0](https://github.com/ai-driven-dev/aidd-framework/compare/aidd-context-v1.0.1...aidd-context-v1.1.0) (2026-05-29)
 
 

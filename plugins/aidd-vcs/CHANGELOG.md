@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/ai-driven-dev/aidd-framework/compare/aidd-vcs-v1.0.1...aidd-vcs-v1.0.2) (2026-06-03)
+
+
+### Bug Fixes
+
+* **framework:** make all 31 skill names spec-compliant (kebab, folder-matched, no colons) ([#172](https://github.com/ai-driven-dev/aidd-framework/issues/172)) ([a47505f](https://github.com/ai-driven-dev/aidd-framework/commit/a47505f5d63e939db0bf28629adbafec888e28e6))
+
 ## [1.0.1](https://github.com/ai-driven-dev/aidd-framework/compare/aidd-vcs-v1.0.0...aidd-vcs-v1.0.1) (2026-05-29)
 
 

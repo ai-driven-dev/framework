@@ -1,5 +1,30 @@
 # Changelog
 
+## [4.3.0](https://github.com/ai-driven-dev/aidd-framework/compare/v4.2.0...v4.3.0) (2026-06-03)
+
+
+### Features
+
+* **aidd-dev:** expand refactor into a 4-axis router with push-only audit handoff ([#169](https://github.com/ai-driven-dev/aidd-framework/issues/169)) ([5c5272e](https://github.com/ai-driven-dev/aidd-framework/commit/5c5272e0c8f978b20404c48f33badef60e4d3227))
+
+
+### Bug Fixes
+
+* **aidd-context:** lift project-init tool selection into a flow-entry gate ([#165](https://github.com/ai-driven-dev/aidd-framework/issues/165)) ([6fe2d07](https://github.com/ai-driven-dev/aidd-framework/commit/6fe2d07b7d55adda38a6a4c7a42a84eda7bde762))
+* **aidd-dev:** enforce mandatory SDLC steps so weak-model hosts cannot skip review ([#171](https://github.com/ai-driven-dev/aidd-framework/issues/171)) ([7037fdb](https://github.com/ai-driven-dev/aidd-framework/commit/7037fdb53ef3b40e10b6f135cfde61d8e9f1762c))
+* **aidd-dev:** make review coherent - dedup templates, 3-level severity, read-only identity ([#170](https://github.com/ai-driven-dev/aidd-framework/issues/170)) ([a022a1a](https://github.com/ai-driven-dev/aidd-framework/commit/a022a1a46664dc846b88e6d1097372be1a06c86d))
+* **framework:** make all 31 skill names spec-compliant (kebab, folder-matched, no colons) ([#172](https://github.com/ai-driven-dev/aidd-framework/issues/172)) ([a47505f](https://github.com/ai-driven-dev/aidd-framework/commit/a47505f5d63e939db0bf28629adbafec888e28e6))
+
+
+### Miscellaneous
+
+* **framework:** prepare repository for open-source launch ([35b20ae](https://github.com/ai-driven-dev/aidd-framework/commit/35b20ae5c5b4000d6f2773790b6abd8b7600a97d))
+
+
+### Documentation
+
+* rewrite v3.9.1 to v4.x upgrade guide with accurate command-to-skill mapping ([f041acd](https://github.com/ai-driven-dev/aidd-framework/commit/f041acd1a0d1d1b4fa502add6e901eb277be9ab6))
+
 ## [4.2.0](https://github.com/ai-driven-dev/aidd-framework/compare/v4.1.1...v4.2.0) (2026-05-29)
 
 
