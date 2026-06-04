@@ -139,7 +139,9 @@ jobs:
         run: |
           VERSION="${{ needs.release-please.outputs.version }}"
           NAME="aidd-framework-${{ matrix.tool }}-${{ matrix.mode }}-${VERSION}"
-          OUT="dist/${{ matrix.tool }}/${{ matrix.mode }}"
+          # --out must live outside --source: the CLI refuses to build when one
+          # path contains the other. Stage under RUNNER_TEMP, not the repo tree.
+          OUT="${RUNNER_TEMP}/dist/${{ matrix.tool }}/${{ matrix.mode }}"
           mkdir -p "$OUT"
           npx --yes @ai-driven-dev/cli@4.6.1 framework build \
             --source . --target ${{ matrix.tool }} --out "$OUT" ${{ matrix.flag }}
