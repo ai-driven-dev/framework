@@ -7,7 +7,7 @@ Most "how do I…" answers live in the README; this page covers what isn't docum
 - **Install / first run** → [Quick start](../README.md#quick-start).
 - **Update plugins** → [Versioning and updates](../README.md#versioning-and-updates).
 - **Private repo?** Yes - `/plugin marketplace add` just needs GitHub read access (via `gh auth login` or a PAT).
-- **Cursor / Copilot / Codex / OpenCode?** This repo is the Claude Code distribution; for another tool, grab the per-release archive the `aidd-cli` builds for it (coming).
+- **Cursor / Copilot / Codex / OpenCode?** This repo is the Claude Code distribution; for another tool, grab the per-release archive (`aidd-framework-<tool>-<mode>-<version>.zip`) attached to each [release](https://github.com/ai-driven-dev/aidd-framework/releases/latest), unzip, and install per the [Another AI tool?](../README.md#another-ai-tool) table.
 
 ## Cost and quotas
 

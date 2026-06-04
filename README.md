@@ -36,7 +36,7 @@
 
 The **AIDD Framework** is a marketplace of **skills, agents, rules, and conventions** that make the AI-Driven Development flow concrete inside your AI coding assistant - the full SDLC (plan → implement → review → ship) under rigorous human supervision. It is the open toolset of the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community.
 
-The framework is **authored for Claude Code**, and this repository is its native marketplace. For every release, our CLI **also generates archives adapted to each tool we support** - Cursor, GitHub Copilot, Codex, OpenCode (marketplace or flat format per tool) - so you grab the build that matches your assistant. (Those per-tool archives ship with the `aidd-cli`; the Claude install is live today.)
+The framework is **authored for Claude Code**, and this repository is its native marketplace. Every release **also attaches archives adapted to each tool we support** - Cursor, GitHub Copilot, Codex, OpenCode (marketplace or flat format per tool) - so you grab the build that matches your assistant. See [Another AI tool?](#another-ai-tool) for the per-tool download + install table.
 
 Founded by Alex Soyes - [Blog](https://alexsoyes.com/) · [GitHub](https://github.com/alexsoyes) · [LinkedIn](https://www.linkedin.com/in/alexsoyes/) · [X](https://x.com/alexsoyes).
 
@@ -105,7 +105,25 @@ flowchart TD
 - **Whole loop in one command?** `/aidd-dev:00-sdlc` runs plan → implement → review → ship.
 - **More plugins?** Browse the [catalog](#plugins) or the `/plugin` Discover tab.
 
-> **Another AI tool?** The marketplace is Claude Code native. For Cursor, GitHub Copilot, Codex, or OpenCode, grab the per-release archive the `aidd-cli` builds for that tool (coming) - and map each tier to that tool's model via the **LLM tier reference** below.
+### Another AI tool?
+
+The marketplace is Claude Code native. For Cursor, GitHub Copilot, Codex, or OpenCode, each
+[release](https://github.com/ai-driven-dev/aidd-framework/releases/latest) attaches a target-native
+archive. Download the one for your tool, unzip it, and install per the table - then map each tier to
+that tool's model via the **LLM tier reference** below.
+
+| Tool | Download (release asset) | Install |
+| --- | --- | --- |
+| **Claude Code** | — (native) | `/plugin marketplace add ai-driven-dev/aidd-framework` (no download needed) |
+| **GitHub Copilot** | `aidd-framework-copilot-marketplace-<version>.zip` | unzip, then `aidd marketplace add aidd-framework ./aidd-framework-copilot-marketplace-<version>` |
+| **Codex** | `aidd-framework-codex-marketplace-<version>.zip` | unzip, then `aidd marketplace add aidd-framework ./aidd-framework-codex-marketplace-<version>` |
+| **Cursor** | `aidd-framework-cursor-flat-<version>.zip` | unzip into your project (materializes `.cursor/`) |
+| **OpenCode** | `aidd-framework-opencode-flat-<version>.zip` | unzip into your project (materializes `.opencode/`) |
+
+> Today this is **download → unzip → install** (no one-command remote fetch yet). Marketplace
+> archives (`-marketplace-`) register through `aidd marketplace add`; flat archives (`-flat-`)
+> materialize straight into a project workspace. A flat variant of every tool and a marketplace
+> variant for Claude/Copilot/Codex are attached too - pick the format that fits your workflow.
 
 > **Private repo?** `/plugin marketplace add` needs read access (`gh auth login` or a PAT) - see the Anthropic [install docs](https://code.claude.com/docs/en/discover-plugins).
 

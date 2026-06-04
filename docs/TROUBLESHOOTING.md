@@ -23,7 +23,7 @@ Run `/reload-plugins` in the same session, or restart the tool if a hook config 
 ## Limitations (what AIDD does not do)
 
 - **Not autonomous by default.** Skills run under human supervision; you drive each step.
-- **Authored for Claude Code.** Other tools get a per-release archive built by the `aidd-cli`; native parity is a roadmap item, not a guarantee today.
+- **Authored for Claude Code.** Other tools get a per-release archive built by the `aidd-cli` (download → unzip → install; see [Another AI tool?](../README.md#another-ai-tool)); native parity is a roadmap item, not a guarantee today.
 - **Plugins assume their own context.** A skill that expects a git repo, a `package.json`, or a ticketing tool will not work without it - check the plugin's README.
 - **No hosted service.** AIDD is prompt content you install into your own tool; there is no AIDD server, account, or telemetry.
 

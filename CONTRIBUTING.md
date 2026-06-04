@@ -84,9 +84,9 @@ Automated by [release-please](https://github.com/googleapis/release-please) in m
 
 - Every push to `main` opens / updates a `chore: release main` PR (changelog + version bumps).
 - Merging it tags each bumped package and creates the GitHub Releases; CI then attaches the bundles:
-  - `aidd-framework-marketplace-X.Y.Z.zip` - the Claude Code marketplace (`.claude-plugin/` + `plugins/`).
+  - `aidd-framework-marketplace-X.Y.Z.zip` - the Claude Code marketplace (`.claude-plugin/` + `plugins/`); kept as the legacy Claude alias of `aidd-framework-claude-marketplace-X.Y.Z.zip`.
   - `<plugin>-vX.Y.Z.zip` - per released plugin.
-- **Planned:** per-tool archives (Cursor, Copilot, Codex, OpenCode - in marketplace or flat format per tool) will be attached to each release by the `aidd-cli` once it lands. Until then the marketplace is Claude Code native and other-tool users adapt it manually.
+  - `aidd-framework-<tool>-<mode>-X.Y.Z.zip` - **per-tool distributions** built by `aidd-cli` (`framework build`) on the root release: 4 marketplace (claude/cursor/copilot/codex) + 5 flat (+opencode, flat-only) = 9 archives. Produced by the `build-per-tool` matrix job in `.github/workflows/ci.yml`, pinned to a specific `@ai-driven-dev/cli` version.
 
 Config: `release-please-config.json` + `.release-please-manifest.json` (pre-releases, forced versions, and recovery are driven through those files).
 
