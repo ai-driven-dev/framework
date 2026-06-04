@@ -36,14 +36,14 @@ Skills are grouped into plugins by domain. Install only the plugins you need.
 
 | Plugin            | Purpose                                                                            | Example skills                                              |
 | ----------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| aidd-context      | Bootstrap, project init, generation of Claude Code context artifacts (skills, agents, rules, commands, hooks, plugins, marketplaces), mermaid diagrams, learn, discovery | `02:project-init`, `03:context-generate`, `04:mermaid`      |
-| aidd-refine       | Meta-cognition: brainstorm, challenge prior work, condensed communication mode     | `01:brainstorm`, `02:challenge`, `03:condense`              |
-| aidd-pm           | Product management: ticket info, user stories, PRD, spec                            | `01:ticket-info`, `02:user-stories-create`, `03:prd`, `05:spec` |
-| aidd-dev          | Code transformation: Dev SDLC orchestrator, plan, implement, assert, audit, review, test, refactor, debug, for-sure | `00:sdlc`, `01:plan`, `02:implement`, `05:review`, `06:test` |
-| aidd-vcs          | VCS workflows: commit, pull/merge request, release tag, issue creation             | `01:commit`, `02:pull-request`, `04:issue-create`           |
-| aidd-orchestrator | Async orchestration of the SDLC on labeled issues (optional, extra)                | `00:async-dev` (router with setup / run / review sub-flows) |
+| aidd-context      | Bootstrap, project init, generation of context artifacts (skills, agents, rules, commands, hooks, plugins, marketplaces), mermaid diagrams, learn, discovery | `02-project-init`, `03-context-generate`, `04-mermaid`      |
+| aidd-refine       | Meta-cognition: brainstorm, challenge prior work, condensed communication mode     | `01-brainstorm`, `02-challenge`, `03-condense`              |
+| aidd-pm           | Product management: ticket info, user stories, PRD, spec                            | `01-ticket-info`, `02-user-stories-create`, `03-prd`, `04-spec` |
+| aidd-dev          | Code transformation: Dev SDLC orchestrator, plan, implement, assert, audit, review, test, refactor, debug, for-sure | `00-sdlc`, `01-plan`, `02-implement`, `05-review`, `06-test` |
+| aidd-vcs          | VCS workflows: commit, pull/merge request, release tag, issue creation             | `01-commit`, `02-pull-request`, `04-issue-create`           |
+| aidd-orchestrator | Async orchestration of the SDLC on labeled issues (optional, extra)                | `00-async-dev` (router with setup / run / review sub-flows) |
 
-> See [CATALOG.md](../../../../../docs/CATALOG.md) for the exhaustive list of skills and actions.
+> See the [CATALOG](https://github.com/ai-driven-dev/aidd-framework/blob/main/docs/CATALOG.md) for the exhaustive list of skills and actions.
 
 ### Framework Structure
 
@@ -58,7 +58,7 @@ my-project/
 ├── CLAUDE.md                    # Claude Code
 ├── aidd_docs/
 │   ├── memory/                  # Project context (loaded each conversation)
-│   │   ├── internal/            #   Internal docs (API, DB schema, design)
+│   │   ├── internal/            #   AIDD workflow traces (learn captures, audit notes)
 │   │   ├── external/            #   External documentation references
 │   │   ├── architecture.md
 │   │   ├── codebase-map.md
@@ -67,7 +67,10 @@ my-project/
 │   │   ├── project-brief.md
 │   │   ├── testing.md
 │   │   └── vcs.md
+│   ├── internal/
+│   │   └── decisions/           # Decision records written by aidd-context:05-learn
 │   ├── tasks/                   # Specs, plans, run summaries
+│   ├── ADR.md                   # Architecture decision log (aidd-context:05-learn)
 │   ├── README.md                # This file
 │   ├── GUIDELINES.md            # Developer operating guidelines
 │   └── CONTRIBUTING.md          # How to add or modify skills, agents, rules
@@ -95,11 +98,11 @@ AIDD is delivered as a plugin marketplace. Pick what you need; do not install ev
 
 | Plugin       | Skills                                                                                                              |
 | ------------ | ------------------------------------------------------------------------------------------------------------------- |
-| aidd-context | 01-bootstrap, 02-project-init, 03-context-generate, 04-mermaid, 05-learn, 06-discovery                              |
-| aidd-refine  | 01-brainstorm, 02-challenge, 03-condense                                                                            |
+| aidd-context | 00-onboard, 01-bootstrap, 02-project-init, 03-context-generate, 04-mermaid, 05-learn, 06-discovery                  |
+| aidd-refine  | 01-brainstorm, 02-challenge, 03-condense, 04-shadow-areas, 05-fact-check                                            |
 | aidd-dev     | 00-sdlc, 01-plan, 02-implement, 03-assert, 04-audit, 05-review, 06-test, 07-refactor, 08-debug, 09-for-sure         |
 | aidd-vcs     | 01-commit, 02-pull-request, 03-release-tag, 04-issue-create                                                         |
-| aidd-pm      | 01-ticket-info, 02-user-stories-create, 03-prd                                                                      |
+| aidd-pm      | 01-ticket-info, 02-user-stories-create, 03-prd, 04-spec                                                             |
 
 Each plugin is independently installable; install incrementally. Smaller surface, fewer triggers competing.
 

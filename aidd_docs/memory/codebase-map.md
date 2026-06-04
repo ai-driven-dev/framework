@@ -16,8 +16,8 @@ flowchart TD
     Plugins --> AiddRefine["aidd-refine"]
     Plugins --> AiddOrchestrator["aidd-orchestrator"]
 
-    AiddContext --> CtxSkills["skills/ (bootstrap, project-init, context-generate, mermaid, learn, discovery)"]
+    AiddContext --> CtxSkills["skills/ (onboard, bootstrap, project-init, context-generate, mermaid, learn, discovery)"]
     AiddContext --> CtxHooks["hooks/update_memory.js"]
-    AiddDev --> DevSkills["skills/ (00-sdlc, 01-plan, 02-assert, 03-audit, 04-review, 05-test, 06-refactor, 07-debug, 08-for-sure)"]
-    AiddDev --> DevAgents["agents/ (planner, implementer, reviewer, alexia, ...)"]
+    AiddDev --> DevSkills["skills/ (00-sdlc, 01-plan, 02-implement, 03-assert, 04-audit, 05-review, 06-test, 07-refactor, 08-debug, 09-for-sure)"]
+    AiddDev --> DevAgents["agents/ (planner, implementer, reviewer)"]
 ```

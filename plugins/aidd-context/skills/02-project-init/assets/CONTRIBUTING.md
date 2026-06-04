@@ -43,7 +43,7 @@ When tools differ in syntax (frontmatter, slash command name, references), follo
 
 ## Conventions
 
-- Skill names: `<plugin>:<NN>:<slug>`. Slug is kebab-case verb for activity domains, singular noun for tool domains.
+- Skill names: `<plugin>:<NN>-<slug>`. Slug is kebab-case verb for activity domains, singular noun for tool domains.
 - Action files: only `## Inputs`, `## Outputs`, `## Process`, `## Test` (`## Depends on` optional).
 - `## Process` steps start with `**Bold title**.` and use decision-list `Pick first match` for branching.
 - `## Test` bullets start with `**Bold name**:` and are checkable (command, artifact check, or observable side effect).

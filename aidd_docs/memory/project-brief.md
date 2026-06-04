@@ -34,7 +34,7 @@ AI-assisted software development tooling. The framework ships workflows, not cod
 
 - Install plugins per AI tool with `aidd plugin add <plugin> --tool <tool>`
 - Execute skills via slash commands (`/sdlc`, `/commit`, `/plan`, etc.)
-- Bootstrap project memory bank and context files with `aidd-context:02:project-init`
+- Bootstrap project memory bank and context files with `aidd-context:02-project-init`
 - Sync memory references across all AI context files automatically
 - Generate plans, assertions, reviews, and PRs through structured action chains
 - Run async development pipelines via `aidd-orchestrator`
