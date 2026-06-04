@@ -1,6 +1,6 @@
 {
-  ".": "4.3.1",
-  "plugins/aidd-context": "1.1.1",
+  ".": "4.4.0",
+  "plugins/aidd-context": "1.1.2",
   "plugins/aidd-dev": "1.2.1",
   "plugins/aidd-vcs": "1.0.2",
   "plugins/aidd-pm": "1.0.2",
