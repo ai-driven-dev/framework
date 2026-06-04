@@ -41,6 +41,12 @@ jobs:
               echo "skip merge commit ${sha}"
               continue
             fi
+            # Skip commits authored by a bot (release-please, dependabot, ...);
+            # the DCO applies to human contributions.
+            author_name="$(git show -s --format='%an' "${sha}")"
+            case "${author_name}" in
+              *"[bot]") echo "skip bot commit ${sha} (${author_name})"; continue ;;
+            esac
             if git show -s --format='%B' "${sha}" | grep -qiE "^Signed-off-by: .+ <.+@.+>"; then
               echo "ok ${sha}"
             else
