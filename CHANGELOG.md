@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.3.1](https://github.com/ai-driven-dev/aidd-framework/compare/v4.3.0...v4.3.1) (2026-06-04)
+
+
+### Miscellaneous
+
+* **deps-dev:** bump @commitlint/cli from 21.0.1 to 21.0.2 ([#175](https://github.com/ai-driven-dev/aidd-framework/issues/175)) ([61fedcd](https://github.com/ai-driven-dev/aidd-framework/commit/61fedcd390e4c7288c45f43d5ebbcf9a8fa8fe96))
+* **deps-dev:** bump @commitlint/config-conventional ([#178](https://github.com/ai-driven-dev/aidd-framework/issues/178)) ([5ad7d74](https://github.com/ai-driven-dev/aidd-framework/commit/5ad7d745deb515cba34aa892bb9a4858443a0261))
+* **deps-dev:** bump lefthook from 2.1.6 to 2.1.9 ([#176](https://github.com/ai-driven-dev/aidd-framework/issues/176)) ([d2b28ad](https://github.com/ai-driven-dev/aidd-framework/commit/d2b28ad363435457937ccd1487747e124043de4b))
+* **framework:** require DCO check and add admin PR-bypass to main ruleset ([#181](https://github.com/ai-driven-dev/aidd-framework/issues/181)) ([44704e4](https://github.com/ai-driven-dev/aidd-framework/commit/44704e4ad7e401f2abf5348049725d4e23995360))
+* reviewing rules ([6cd310a](https://github.com/ai-driven-dev/aidd-framework/commit/6cd310a18a60b25839e84e7b909d553d318f289d))
+
+
+### Documentation
+
+* **framework:** re-enable release and CI badges for public launch ([55d6d96](https://github.com/ai-driven-dev/aidd-framework/commit/55d6d961b726135b97e36d6eb398e62b8821a5b3))
+
 ## [4.3.0](https://github.com/ai-driven-dev/aidd-framework/compare/v4.2.0...v4.3.0) (2026-06-03)
 
 

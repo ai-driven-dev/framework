@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/ai-driven-dev/aidd-framework/compare/aidd-dev-v1.2.0...aidd-dev-v1.2.1) (2026-06-04)
+
+
+### Miscellaneous
+
+* reviewing rules ([6cd310a](https://github.com/ai-driven-dev/aidd-framework/commit/6cd310a18a60b25839e84e7b909d553d318f289d))
+
 ## [1.2.0](https://github.com/ai-driven-dev/aidd-framework/compare/aidd-dev-v1.1.0...aidd-dev-v1.2.0) (2026-06-03)
 
 
