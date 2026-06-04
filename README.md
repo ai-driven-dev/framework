@@ -238,6 +238,7 @@ If you spot a vulnerability, please report it privately via [SECURITY.md](./SECU
 | Frequently asked questions | [`docs/FAQ.md`](docs/FAQ.md) |
 | Troubleshooting & limits | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) |
 | Contribution guide | [`CONTRIBUTING.md`](./CONTRIBUTING.md) |
+| Maintainers guide | [`docs/MAINTAINERS.md`](docs/MAINTAINERS.md) |
 | Governance | [`GOVERNANCE.md`](./GOVERNANCE.md) |
 | Roadmap | [`ROADMAP.md`](./ROADMAP.md) |
 | Contributors | [`CONTRIBUTORS.md`](./CONTRIBUTORS.md) |
