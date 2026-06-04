@@ -1,6 +1,6 @@
 {
   "name": "@ai-driven-dev/cli",
-  "version": "4.6.0",
+  "version": "4.6.1",
   "description": "AI-Driven Development CLI — install AI tool configs and plugins from the AIDD marketplace",
   "type": "module",
   "main": "dist/cli.js",

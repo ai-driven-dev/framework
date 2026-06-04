@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.6.1](https://github.com/ai-driven-dev/aidd-cli/compare/v4.6.0...v4.6.1) (2026-06-04)
+
+
+### Documentation
+
+* **framework:** align framework build docs with 5-target/dual-mode reality ([#284](https://github.com/ai-driven-dev/aidd-cli/issues/284)) ([486a2d2](https://github.com/ai-driven-dev/aidd-cli/commit/486a2d24c9f35e01e976940a64c24fa4ae6e0d2c))
+
 ## [4.6.0](https://github.com/ai-driven-dev/aidd-cli/compare/v4.5.0...v4.6.0) (2026-06-04)
 
 
