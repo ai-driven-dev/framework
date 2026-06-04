@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.4.0](https://github.com/ai-driven-dev/aidd-framework/compare/v4.3.1...v4.4.0) (2026-06-04)
+
+
+### Features
+
+* **ci:** build and attach per-tool framework distributions on release ([#188](https://github.com/ai-driven-dev/aidd-framework/issues/188)) ([7f94c82](https://github.com/ai-driven-dev/aidd-framework/commit/7f94c82a5cff5e15ad172784f9e483ace474432f))
+
+
+### Documentation
+
+* **framework:** add maintainers guide ([#184](https://github.com/ai-driven-dev/aidd-framework/issues/184)) ([09dc949](https://github.com/ai-driven-dev/aidd-framework/commit/09dc949e713ef14b0d8bb813f7959cf351e756be))
+* **framework:** sync aidd_docs with current skill catalog for OSS release ([#187](https://github.com/ai-driven-dev/aidd-framework/issues/187)) ([bebcac3](https://github.com/ai-driven-dev/aidd-framework/commit/bebcac35b88691c122ac46eef44035cd4dee012c))
+
 ## [4.3.1](https://github.com/ai-driven-dev/aidd-framework/compare/v4.3.0...v4.3.1) (2026-06-04)
 
 

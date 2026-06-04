@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/ai-driven-dev/aidd-framework/compare/aidd-context-v1.1.1...aidd-context-v1.1.2) (2026-06-04)
+
+
+### Documentation
+
+* **framework:** sync aidd_docs with current skill catalog for OSS release ([#187](https://github.com/ai-driven-dev/aidd-framework/issues/187)) ([bebcac3](https://github.com/ai-driven-dev/aidd-framework/commit/bebcac35b88691c122ac46eef44035cd4dee012c))
+
 ## [1.1.1](https://github.com/ai-driven-dev/aidd-framework/compare/aidd-context-v1.1.0...aidd-context-v1.1.1) (2026-06-03)
 
 
