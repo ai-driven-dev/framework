@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.4.1](https://github.com/ai-driven-dev/aidd-framework/compare/v4.4.0...v4.4.1) (2026-06-04)
+
+
+### Bug Fixes
+
+* **ci:** build per-tool dist outside source tree ([#196](https://github.com/ai-driven-dev/aidd-framework/issues/196)) ([7fd66f8](https://github.com/ai-driven-dev/aidd-framework/commit/7fd66f8b3b6452b9fb680510c8b7266e04301a48))
+
 ## [4.4.0](https://github.com/ai-driven-dev/aidd-framework/compare/v4.3.1...v4.4.0) (2026-06-04)
 
 
