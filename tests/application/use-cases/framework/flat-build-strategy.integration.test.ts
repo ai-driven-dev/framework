@@ -112,39 +112,39 @@ describe("FlatOutputStrategy integration", () => {
   });
 
   describe("happy path", () => {
-    it("writes agent under .github/agents/<name>.agent.md (bare — no plugin segment)", async () => {
+    it("writes agent under .github/agents/<plugin>-<name>.agent.md (plugin-prefixed)", async () => {
       const useCase = makeUseCase(memFs);
       await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
-      const agentPath = `${ABS_OUT}/.github/agents/code-reviewer.agent.md`;
+      const agentPath = `${ABS_OUT}/.github/agents/${PLUGIN}-code-reviewer.agent.md`;
       expect(memFs.has(agentPath)).toBe(true);
     });
 
-    it("strips frontmatter to Copilot allowlist in agent file", async () => {
+    it("strips frontmatter to Copilot allowlist in agent file and uses plugin-prefixed name", async () => {
       const useCase = makeUseCase(memFs);
       await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
-      const content = memFs.getFile(`${ABS_OUT}/.github/agents/code-reviewer.agent.md`);
-      expect(content).toContain("code-reviewer");
+      const content = memFs.getFile(`${ABS_OUT}/.github/agents/${PLUGIN}-code-reviewer.agent.md`);
+      expect(content).toContain(`${PLUGIN}-code-reviewer`);
       expect(content).toContain("description");
     });
 
-    it("writes skill files under .github/skills/<skill>/ (bare — no plugin segment)", async () => {
+    it("writes skill files under .github/skills/<plugin>-<skill>/ (plugin-prefixed)", async () => {
       const useCase = makeUseCase(memFs);
       await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
-      const skillPath = `${ABS_OUT}/.github/skills/commit/SKILL.md`;
+      const skillPath = `${ABS_OUT}/.github/skills/${PLUGIN}-commit/SKILL.md`;
       expect(memFs.has(skillPath)).toBe(true);
     });
 
     it("rewrites @./ references in skill files", async () => {
       const useCase = makeUseCase(memFs);
       await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
-      const content = memFs.getFile(`${ABS_OUT}/.github/skills/hello.md`);
+      const content = memFs.getFile(`${ABS_OUT}/.github/skills/${PLUGIN}-hello.md`);
       expect(content).toContain("[SKILL.md](./SKILL.md)");
     });
 
     it("rewrites @CLAUDE_ROOT/skills/<X> in skill files to relative flat path", async () => {
       const useCase = makeUseCase(memFs);
       await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
-      const content = memFs.getFile(`${ABS_OUT}/.github/skills/hello.md`);
+      const content = memFs.getFile(`${ABS_OUT}/.github/skills/${PLUGIN}-hello.md`);
       expect(content).not.toContain(`@${CLAUDE_ROOT_VAR}`);
     });
 
@@ -191,8 +191,8 @@ describe("FlatOutputStrategy integration", () => {
     it("does NOT write a marketplace.json", async () => {
       const useCase = makeUseCase(memFs);
       await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
-      const marketplacePath = `${ABS_OUT}/.github/plugin/marketplace.json`;
-      expect(memFs.has(marketplacePath)).toBe(false);
+      expect(memFs.has(`${ABS_OUT}/.plugin/marketplace.json`)).toBe(false);
+      expect(memFs.has(`${ABS_OUT}/.github/plugin/marketplace.json`)).toBe(false);
     });
   });
 
@@ -200,7 +200,7 @@ describe("FlatOutputStrategy integration", () => {
     it("re-run with force produces byte-identical files", async () => {
       const useCase1 = makeUseCase(memFs, false);
       await useCase1.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
-      const agentPath = `${ABS_OUT}/.github/agents/code-reviewer.agent.md`;
+      const agentPath = `${ABS_OUT}/.github/agents/${PLUGIN}-code-reviewer.agent.md`;
       const snapshot = memFs.getFile(agentPath);
 
       const useCase2 = makeUseCase(memFs, true);
@@ -274,7 +274,7 @@ describe("FlatOutputStrategy integration", () => {
   });
 
   describe("hooks path resolution for CLAUDE_ROOT/skills/<X>", () => {
-    it("rewrites skills ref to ./.github/skills/<X> in hooks JSON (bare — no plugin segment)", async () => {
+    it("rewrites skills ref to ./.github/skills/<plugin>-<X> in hooks JSON (plugin-prefixed)", async () => {
       const useCase = makeUseCase(memFs);
       const hooksKey = `${FIXTURE_DIR}/plugins/${PLUGIN}/hooks/hooks.json`;
       const skillsRef = `${CLAUDE_ROOT_VAR}/skills/commit/SKILL.md`;
@@ -288,7 +288,7 @@ describe("FlatOutputStrategy integration", () => {
       );
       await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
       const content = memFs.getFile(`${ABS_OUT}/.github/hooks/${PLUGIN}.hooks.json`) ?? "";
-      expect(content).toContain("./.github/skills/commit/SKILL.md");
+      expect(content).toContain(`./.github/skills/${PLUGIN}-commit/SKILL.md`);
     });
   });
 

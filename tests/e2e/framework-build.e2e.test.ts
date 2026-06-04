@@ -38,8 +38,8 @@ describe.concurrent("E2E: aidd framework build", () => {
       expect(build.stdout).toContain("Built");
       expect(build.stdout).toContain("files written to");
 
-      // AC #1: verify Copilot-native layout
-      const marketplacePath = join(outDir, ".github", "plugin", "marketplace.json");
+      // AC #1: verify OpenPlugin layout
+      const marketplacePath = join(outDir, ".plugin", "marketplace.json");
       expect(existsSync(marketplacePath)).toBe(true);
 
       const addMarket = await runCli(
@@ -162,7 +162,7 @@ describe.concurrent("E2E: aidd framework build", () => {
     }
   });
 
-  it("AC #7: CLAUDE_PLUGIN_ROOT rewritten to relative path in hooks.json and .mcp.json", async () => {
+  it("AC #7: CLAUDE_PLUGIN_ROOT rewritten to OpenPlugin native token in hooks.json and .mcp.json", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-build-root-rewrite");
     try {
       const outDir = join(tempDir, "dist");
@@ -173,17 +173,18 @@ describe.concurrent("E2E: aidd framework build", () => {
       );
       expect(build.exitCode).toBe(0);
 
-      const varRef = "$" + "{CLAUDE_PLUGIN_ROOT}";
+      const claudeVarRef = "$" + "{CLAUDE_PLUGIN_ROOT}";
+      const pluginRootRef = "$" + "{PLUGIN_ROOT}";
 
       const hooksPath = join(outDir, "plugins", "aidd-test", "hooks", "hooks.json");
       const hooksContent = await readFile(hooksPath, "utf-8");
-      expect(hooksContent).not.toContain(varRef);
-      expect(hooksContent).toContain("./hooks/check.sh");
+      expect(hooksContent).not.toContain(claudeVarRef);
+      expect(hooksContent).toContain(`${pluginRootRef}/hooks/check.sh`);
 
       const mcpPath = join(outDir, "plugins", "aidd-test", ".mcp.json");
       const mcpContent = await readFile(mcpPath, "utf-8");
-      expect(mcpContent).not.toContain(varRef);
-      expect(mcpContent).toContain("./bin/server.js");
+      expect(mcpContent).not.toContain(claudeVarRef);
+      expect(mcpContent).toContain(`${pluginRootRef}/bin/server.js`);
     } finally {
       await cleanup();
     }
@@ -200,7 +201,7 @@ describe.concurrent("E2E: aidd framework build", () => {
       );
       expect(build.exitCode).toBe(0);
 
-      const marketplacePath = join(outDir, ".github", "plugin", "marketplace.json");
+      const marketplacePath = join(outDir, ".plugin", "marketplace.json");
       expect(existsSync(marketplacePath)).toBe(true);
       const raw = await readFile(marketplacePath, "utf-8");
       const parsed = JSON.parse(raw) as {
@@ -244,10 +245,14 @@ describe.concurrent("E2E: aidd framework build", () => {
       expect(build.exitCode).toBe(0);
       expect(build.stdout).toContain("Flat-installed");
 
-      // flat agents are now bare (no plugin segment) for discoverability
-      expect(existsSync(join(projRoot, ".github", "agents", "code-reviewer.agent.md"))).toBe(true);
-      // flat skills are now bare (no plugin segment) for discoverability
-      expect(existsSync(join(projRoot, ".github", "skills", "commit", "SKILL.md"))).toBe(true);
+      // flat agents use plugin-prefixed leaf name for collision-free discoverability
+      expect(
+        existsSync(join(projRoot, ".github", "agents", "aidd-test-code-reviewer.agent.md"))
+      ).toBe(true);
+      // flat skills use plugin-prefixed folder name for collision-free discoverability
+      expect(existsSync(join(projRoot, ".github", "skills", "aidd-test-commit", "SKILL.md"))).toBe(
+        true
+      );
       expect(existsSync(join(projRoot, ".github", "hooks", "aidd-test.hooks.json"))).toBe(true);
       expect(existsSync(join(projRoot, ".vscode", "mcp.json"))).toBe(true);
       expect(existsSync(join(projRoot, ".github", "plugin", "marketplace.json"))).toBe(false);
@@ -262,7 +267,7 @@ describe.concurrent("E2E: aidd framework build", () => {
         "argument-hint",
       ]);
       const agentContent = await readFile(
-        join(projRoot, ".github", "agents", "code-reviewer.agent.md"),
+        join(projRoot, ".github", "agents", "aidd-test-code-reviewer.agent.md"),
         "utf-8"
       );
       const fmMatch = agentContent.match(/^---\n([\s\S]*?)\n---/);
@@ -386,7 +391,7 @@ describe.concurrent("E2E: aidd framework build", () => {
       expect(build.exitCode).toBe(0);
 
       const agentContent = await readFile(
-        join(projRoot, ".github", "agents", "code-reviewer.agent.md"),
+        join(projRoot, ".github", "agents", "aidd-test-code-reviewer.agent.md"),
         "utf-8"
       );
       const varRef = "$" + "{CLAUDE_PLUGIN_ROOT}";
@@ -612,7 +617,7 @@ describe.concurrent("E2E: aidd framework build", () => {
     }
   });
 
-  it("AC #4: --target codex --flat emits TOML agents, skills under .agents/skills, config.toml with mcp_servers", async () => {
+  it("AC #4: --target codex --flat emits TOML agents, skills under .codex/skills, config.toml with mcp_servers", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-codex");
     try {
       const projRoot = join(tempDir, "proj");
@@ -634,8 +639,10 @@ describe.concurrent("E2E: aidd framework build", () => {
       );
       expect(result.exitCode).toBe(0);
       expect(existsSync(join(projRoot, ".codex", "agents"))).toBe(true);
-      // flat skills are bare (no plugin segment) under .agents/skills/
-      expect(existsSync(join(projRoot, ".agents", "skills"))).toBe(true);
+      // Codex discovers workspace skills from .codex/skills/ (verified live: native
+      // "Available skills"); plugin-prefixed at one level, e.g. .codex/skills/aidd-context-00-onboard/
+      expect(existsSync(join(projRoot, ".codex", "skills"))).toBe(true);
+      expect(existsSync(join(projRoot, ".agents", "skills"))).toBe(false);
       const config = await readFile(join(projRoot, ".codex", "config.toml"), "utf-8");
       // [[skills.config]] is intentionally NOT emitted — discovery is by placement
       expect(config).not.toContain("[[skills.config]]");

@@ -150,3 +150,39 @@ free (marketplace byte-identical). The deep validation closed the highest-risk g
 skill/agent discovery), which format-conformance alone had missed. The remaining confidence gap is
 **executing each of the five real tools** against a built tree — a human-run checklist (Residual
 risks §1), not a code change.
+
+---
+
+## Live validation against real tools (2026-06-04) — the human gate, now CLOSED
+
+Every tool exercised against its REAL runtime (not just format). Results + fixes the live runs forced:
+
+### Per-tool plugin-root token (final, verified)
+| tool | token | how verified |
+|---|---|---|
+| claude | `${CLAUDE_PLUGIN_ROOT}` | native (source format) |
+| cursor | `${CURSOR_PLUGIN_ROOT}` | cursor.com/plugins official plugin |
+| codex | `${PLUGIN_ROOT}` | binary env-build; CLI hook log resolves abs path |
+| copilot | `${PLUGIN_ROOT}` (**OpenPlugin format `.plugin/`**) | VS Code Hooks.log: `${PLUGIN_ROOT}` resolved; Copilot-format = (Not defined) → empty (broken) |
+| opencode | flat relative (no marketplace) | `opencode agent list` |
+
+### Validation results
+- **opencode** flat: `opencode agent list` → 4 agents `(subagent)` + 31 skills discovered. ✅
+- **codex** marketplace: `codex plugin add aidd-dev@aidd-framework` → "installed, enabled". **Fix forced**: manifest `skills` must be a STRING `./skills` (array → "missing or invalid plugin.json"); schema relaxed to string|array. flat: skills must live at `.codex/skills/` (NOT `.agents/skills/`) — verified via `codex exec` native "Available skills" (31). agents load when project trusted ("role is present in available agent list"). ✅
+- **cursor** flat: 31 skills + 3 agents + hooks + mcp, proposed natively (clean test after backing up global aidd). marketplace: Cursor Plugins UI "Imported" aidd-context → Skills 7 + Hooks 2 (`sessionStart`/`beforeSubmitPrompt` = our event-map). ✅
+- **copilot**: migrated marketplace target from Copilot-format (`.github/plugin/`, editor plugin-root = (Not defined) → hooks unreachable) to **OpenPlugin (`.plugin/` + `${PLUGIN_ROOT}`)**. VS Code **Hooks.log** proof: 4 framework hooks (`update_memory`, `build-on-session`, `routing-hint`, `condense-stats`) `Completed (Success)`, `${PLUGIN_ROOT}` resolved to abs path. Copilot CLI: install "7 skills"/"10 skills" + debug log `Loaded 3 hook(s)` + `Executing hook: node /abs/.../routing-hint.js` (resolved). ✅
+- **claude** flat: clean test (global aidd plugins temporarily disabled) → only workspace `.claude/skills/<plugin>-<skill>/` + agents + settings.json hooks. ✅
+
+### Code fixes forced by live validation (all on `fix/flat-plugin-prefixed-names`)
+1. Flat skill/agent names: per-plugin DIR nesting → bare-then-plugin-prefixed ONE level (discovery).
+2. Per-tool flat hook registration (claude settings.json `hooks`; cursor single `.cursor/hooks.json` event-mapped; copilot flat shape; codex `.codex/hooks.json`).
+3. copilot marketplace → OpenPlugin format + `${PLUGIN_ROOT}`.
+4. codex marketplace skills STRING `./skills` (+ schema); codex flat skills `.codex/skills/`.
+
+### Known limitations (not our output)
+- **codex subagents**: load when trusted, but spawn needs a model the account supports (gpt-5.4 unsupported on ChatGPT tier → user-side).
+- **copilot Copilot-format** (`.github/plugin/`) editor hooks: no plugin-root token (VS Code limitation) — why we use OpenPlugin.
+- **opencode hooks**: JS-module only; declarative `hooks.json` warn-skipped (backlog #282).
+- **codex flat subagent native delegation**: codex exposes fixed roles; custom TOML loads but delegation is model/trust-gated (backlog #283).
+
+**Verdict: all 5 tools validated against real runtimes.** The build is correct per-tool; the residual items above are upstream/account constraints, not generation defects.

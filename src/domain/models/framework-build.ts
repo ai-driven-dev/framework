@@ -33,14 +33,14 @@ export interface FrameworkBuildResult {
 /** Path to the source (Claude-format) plugin manifest inside each plugin directory. */
 export const SOURCE_PLUGIN_MANIFEST_RELATIVE = ".claude-plugin/plugin.json";
 
-/** Path where the synthesized Copilot-native plugin manifest is written. */
-export const OUTPUT_PLUGIN_MANIFEST_RELATIVE = `${COPILOT_WORKSPACE_DIR}plugin/plugin.json`;
+/** Path where the synthesized OpenPlugin-format plugin manifest is written. */
+export const OUTPUT_PLUGIN_MANIFEST_RELATIVE = ".plugin/plugin.json";
 
 /** Path to the source (Claude-format) marketplace catalog. */
 export const SOURCE_MARKETPLACE_RELATIVE = ".claude-plugin/marketplace.json";
 
-/** Path where the synthesized Copilot-native marketplace catalog is written. */
-export const OUTPUT_MARKETPLACE_RELATIVE = `${COPILOT_WORKSPACE_DIR}plugin/marketplace.json`;
+/** Path where the synthesized OpenPlugin-format marketplace catalog is written. */
+export const OUTPUT_MARKETPLACE_RELATIVE = ".plugin/marketplace.json";
 
 export const PLUGIN_HOOKS_RELATIVE = "hooks/hooks.json";
 export const PLUGIN_MCP_RELATIVE = ".mcp.json";

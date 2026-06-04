@@ -145,9 +145,9 @@ describe("synthesizeClaudeStyleManifest", () => {
       expect(result.name).toBe("aidd-dev");
     });
 
-    it("accepts .github/plugin as manifestDir (field set unchanged)", () => {
+    it("accepts .plugin as manifestDir (field set unchanged)", () => {
       const result = synthesizeClaudeStyleManifest(BASE_SOURCE, FULL_PRESENCE, {
-        manifestDir: ".github/plugin",
+        manifestDir: ".plugin",
         agentsField: true,
       });
       expect(result.agents).toEqual(["./agents"]);

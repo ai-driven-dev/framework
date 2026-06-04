@@ -4,30 +4,67 @@ import { parseToml } from "../../../src/domain/formats/toml.js";
 
 describe("codexAgentMarkdownToToml()", () => {
   describe("name resolution (D-16)", () => {
-    it("uses frontmatter name when present", () => {
-      const toml = codexAgentMarkdownToToml(
-        "---\nname: planner\ndescription: A planner.\n---\n\nBody.",
-        "aidd-dev",
-        "planner.md"
-      );
-      const parsed = parseToml(toml);
-      expect(parsed.name).toBe("planner");
+    describe("marketplace mode (prefixName=false, default)", () => {
+      it("uses frontmatter name when present", () => {
+        const toml = codexAgentMarkdownToToml(
+          "---\nname: planner\ndescription: A planner.\n---\n\nBody.",
+          "aidd-dev",
+          "planner.md"
+        );
+        const parsed = parseToml(toml);
+        expect(parsed.name).toBe("planner");
+      });
+
+      it("falls back to plugin-prefixed basename when frontmatter name is absent", () => {
+        const toml = codexAgentMarkdownToToml(
+          "---\ndescription: A reviewer.\n---\n\nBody.",
+          "aidd-dev",
+          "reviewer.md"
+        );
+        const parsed = parseToml(toml);
+        expect(parsed.name).toBe("aidd-dev-reviewer");
+      });
+
+      it("falls back to plugin-prefixed basename when frontmatter is empty", () => {
+        const toml = codexAgentMarkdownToToml("No frontmatter here.", "aidd-dev", "implementer.md");
+        const parsed = parseToml(toml);
+        expect(parsed.name).toBe("aidd-dev-implementer");
+      });
     });
 
-    it("uses plugin-prefix fallback when frontmatter name is absent", () => {
-      const toml = codexAgentMarkdownToToml(
-        "---\ndescription: A reviewer.\n---\n\nBody.",
-        "aidd-dev",
-        "reviewer.md"
-      );
-      const parsed = parseToml(toml);
-      expect(parsed.name).toBe("aidd-dev-reviewer");
-    });
+    describe("flat mode (prefixName=true)", () => {
+      it("always uses plugin-prefixed basename (ignores frontmatter name)", () => {
+        const toml = codexAgentMarkdownToToml(
+          "---\nname: planner\ndescription: A planner.\n---\n\nBody.",
+          "aidd-dev",
+          "planner.md",
+          true
+        );
+        const parsed = parseToml(toml);
+        expect(parsed.name).toBe("aidd-dev-planner");
+      });
 
-    it("uses plugin-prefix fallback when frontmatter is empty", () => {
-      const toml = codexAgentMarkdownToToml("No frontmatter here.", "aidd-dev", "implementer.md");
-      const parsed = parseToml(toml);
-      expect(parsed.name).toBe("aidd-dev-implementer");
+      it("uses plugin-prefix when frontmatter name is absent", () => {
+        const toml = codexAgentMarkdownToToml(
+          "---\ndescription: A reviewer.\n---\n\nBody.",
+          "aidd-dev",
+          "reviewer.md",
+          true
+        );
+        const parsed = parseToml(toml);
+        expect(parsed.name).toBe("aidd-dev-reviewer");
+      });
+
+      it("uses plugin-prefix when frontmatter is empty", () => {
+        const toml = codexAgentMarkdownToToml(
+          "No frontmatter here.",
+          "aidd-dev",
+          "implementer.md",
+          true
+        );
+        const parsed = parseToml(toml);
+        expect(parsed.name).toBe("aidd-dev-implementer");
+      });
     });
   });
 

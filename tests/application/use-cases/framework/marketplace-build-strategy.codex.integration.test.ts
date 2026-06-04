@@ -23,6 +23,7 @@ const OUT_DIR = "/tmp/aidd-codex-test-out";
 
 // Avoid biome noTemplateCurlyInString: split literal
 const CLAUDE_ROOT_VAR = "$" + "{CLAUDE_PLUGIN_ROOT}";
+const CODEX_ROOT_VAR = "$" + "{PLUGIN_ROOT}";
 
 function makeBundledAssetProvider(): AssetProvider {
   return new BundledAssetProviderAdapter();
@@ -230,23 +231,22 @@ describe("CodexOutputStrategy", () => {
     });
   });
 
-  describe("hooks byte-for-byte (AC #7)", () => {
-    it("hooks.json output matches source SHA-256 hash", async () => {
+  describe("hooks token rewrite (AC #7)", () => {
+    it("hooks.json rewrites claude token to codex native token", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
-      const srcHooks =
-        fs.getFile(`${REAL_FIXTURE_DIR}/plugins/aidd-context/hooks/hooks.json`) ?? "";
       const destHooks = fs.getFile(`${OUT_DIR}/plugins/aidd-context/hooks/hooks.json`) ?? "";
-      expect(sha256(destHooks)).toBe(sha256(srcHooks));
+      expect(destHooks).toContain(CODEX_ROOT_VAR);
+      expect(destHooks).not.toContain(CLAUDE_ROOT_VAR);
     });
 
-    it("hooks.json output preserves CLAUDE_PLUGIN_ROOT (not rewritten)", async () => {
+    it("hooks.json path separator preserved after token rewrite", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
       const destHooks = fs.getFile(`${OUT_DIR}/plugins/aidd-context/hooks/hooks.json`) ?? "";
-      expect(destHooks).toContain(CLAUDE_ROOT_VAR);
+      expect(destHooks).toContain(`${CODEX_ROOT_VAR}/hooks/`);
     });
   });
 

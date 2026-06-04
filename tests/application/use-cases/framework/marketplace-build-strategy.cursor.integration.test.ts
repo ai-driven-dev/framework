@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { FrameworkBuildUseCase } from "../../../../src/application/use-cases/framework/framework-build-use-case.js";
@@ -21,6 +20,7 @@ const OUT_DIR = "/tmp/aidd-cursor-test-out";
 
 // Avoid biome noTemplateCurlyInString: split literal
 const CLAUDE_ROOT_VAR = "$" + "{CLAUDE_PLUGIN_ROOT}";
+const CURSOR_ROOT_VAR = "$" + "{CURSOR_PLUGIN_ROOT}";
 
 function makeBundledAssetProvider(): AssetProvider {
   return new BundledAssetProviderAdapter();
@@ -41,10 +41,6 @@ async function makeSeededFsFromReal(): Promise<InMemoryFileAdapter> {
   const fs = new InMemoryFileAdapter();
   await seedFromDirectory(fs, REAL_FIXTURE_DIR, { useAbsolutePaths: true });
   return fs;
-}
-
-function sha256(content: string): string {
-  return createHash("sha256").update(content).digest("hex");
 }
 
 describe("CursorOutputStrategy", () => {
@@ -194,23 +190,22 @@ describe("CursorOutputStrategy", () => {
     });
   });
 
-  describe("hooks byte-for-byte (D-6)", () => {
-    it("hooks.json output matches source SHA-256 hash", async () => {
+  describe("hooks token rewrite (D-6)", () => {
+    it("hooks.json rewrites claude token to cursor native token", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
-      const srcHooks =
-        fs.getFile(`${REAL_FIXTURE_DIR}/plugins/aidd-context/hooks/hooks.json`) ?? "";
       const destHooks = fs.getFile(`${OUT_DIR}/plugins/aidd-context/hooks/hooks.json`) ?? "";
-      expect(sha256(destHooks)).toBe(sha256(srcHooks));
+      expect(destHooks).toContain(CURSOR_ROOT_VAR);
+      expect(destHooks).not.toContain(CLAUDE_ROOT_VAR);
     });
 
-    it("hooks.json preserves CLAUDE_PLUGIN_ROOT (not rewritten)", async () => {
+    it("hooks.json path separator preserved after token rewrite", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
       const destHooks = fs.getFile(`${OUT_DIR}/plugins/aidd-context/hooks/hooks.json`) ?? "";
-      expect(destHooks).toContain(CLAUDE_ROOT_VAR);
+      expect(destHooks).toContain(`${CURSOR_ROOT_VAR}/hooks/`);
     });
   });
 

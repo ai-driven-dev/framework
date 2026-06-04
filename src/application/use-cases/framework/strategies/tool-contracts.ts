@@ -18,7 +18,6 @@ import {
   OUTPUT_CLAUDE_MANIFEST_RELATIVE,
   OUTPUT_CLAUDE_MARKETPLACE_RELATIVE,
 } from "../../../../domain/formats/claude-build-paths.js";
-import { rewriteClaudeRootInJson } from "../../../../domain/formats/claude-root-path-rewrite.js";
 import { codexAgentMarkdownToToml } from "../../../../domain/formats/codex-agent-toml.js";
 import {
   OUTPUT_CODEX_AGENTS_DIR,
@@ -29,6 +28,12 @@ import {
   OUTPUT_CURSOR_MANIFEST_RELATIVE,
   OUTPUT_CURSOR_MARKETPLACE_RELATIVE,
 } from "../../../../domain/formats/cursor-paths.js";
+import {
+  flattenCopilotHooksShape,
+  mergeClaudeSettingsHooks,
+  mergeCodexFrameworkHooksJson,
+  mergeCursorFlatHooks,
+} from "../../../../domain/formats/flat-hooks-merge.js";
 import {
   flatMcpKeyPrefix,
   genericFlatAgentPath,
@@ -52,7 +57,7 @@ import {
 } from "../../../../domain/models/framework-build.js";
 import type { FileReader } from "../../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../../domain/ports/file-writer.js";
-import { mergeCodexConfigToml, mergeCodexHooksJson } from "../../../../domain/tools/ai/codex.js";
+import { mergeCodexConfigToml } from "../../../../domain/tools/ai/codex.js";
 import { transformMcpToOpencode } from "../../../../domain/tools/ai/opencode.js";
 import type { PluginPresence, ToolBuildContract } from "../../../../domain/tools/build-contract.js";
 import {
@@ -87,21 +92,6 @@ function transformCursorAgent(content: string, _plugin: string, outName: string)
   return serializeFrontmatter(stripped, rewrittenBody);
 }
 
-function transformCopilotAgent(content: string, _plugin: string, outName: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const stripped = stripAgentFrontmatter(frontmatter);
-  const rewrittenBody = rewriteRelativeLinks(body, {
-    currentFilePluginRelative: `agents/${outName}`,
-  });
-  return serializeFrontmatter(stripped, rewrittenBody);
-}
-
-function rewriteJsonContent(content: string, _plugin: string, _name: string): string {
-  const parsed = JSON.parse(content) as unknown;
-  const rewritten = rewriteClaudeRootInJson(parsed);
-  return `${JSON.stringify(rewritten, null, 2)}\n`;
-}
-
 // ── Shared catalog builders ────────────────────────────────────────────────────
 
 async function buildClaudeStyleEntry(
@@ -127,9 +117,12 @@ async function buildClaudeStyleEntry(
 export function buildClaudeContract(): ToolBuildContract {
   const manifestRelative = OUTPUT_CLAUDE_MANIFEST_RELATIVE;
   const marketplaceRelative = OUTPUT_CLAUDE_MARKETPLACE_RELATIVE;
+  // Split literal to avoid biome's noTemplateCurlyInString warning.
+  const claudeToken = "$" + "{CLAUDE_PLUGIN_ROOT}";
   return {
     manifestDir: ".claude-plugin",
     marketplaceRelative,
+    pluginRootToken: claudeToken,
     manifestFileRelative: manifestRelative,
     synthesizeManifest: (source, presence) =>
       synthesizeClaudeStyleManifest(source, presence, {
@@ -180,9 +173,12 @@ export function buildClaudeContract(): ToolBuildContract {
 export function buildCursorContract(): ToolBuildContract {
   const manifestRelative = OUTPUT_CURSOR_MANIFEST_RELATIVE;
   const marketplaceRelative = OUTPUT_CURSOR_MARKETPLACE_RELATIVE;
+  // Split literal to avoid biome's noTemplateCurlyInString warning.
+  const cursorToken = "$" + "{CURSOR_PLUGIN_ROOT}";
   return {
     manifestDir: ".cursor-plugin",
     marketplaceRelative,
+    pluginRootToken: cursorToken,
     manifestFileRelative: manifestRelative,
     synthesizeManifest: (source, presence) =>
       synthesizeClaudeStyleManifest(source, presence, {
@@ -228,18 +224,21 @@ export function buildCursorContract(): ToolBuildContract {
   };
 }
 
-// ── Copilot marketplace contract ───────────────────────────────────────────────
+// ── Copilot marketplace contract (OpenPlugin format) ──────────────────────────
 
 export function buildCopilotMarketplaceContract(): ToolBuildContract {
   const manifestRelative = OUTPUT_PLUGIN_MANIFEST_RELATIVE;
   const marketplaceRelative = OUTPUT_MARKETPLACE_RELATIVE;
+  // Split literal to avoid biome's noTemplateCurlyInString warning.
+  const copilotToken = "$" + "{PLUGIN_ROOT}";
   return {
-    manifestDir: ".github/plugin",
+    manifestDir: ".plugin",
     marketplaceRelative,
+    pluginRootToken: copilotToken,
     manifestFileRelative: manifestRelative,
     synthesizeManifest: (source, presence) =>
       synthesizeClaudeStyleManifest(source, presence, {
-        manifestDir: ".github/plugin",
+        manifestDir: ".plugin",
         agentsField: true,
       }),
     manifestSchemaName: null, // Copilot does not use AJV for the plugin manifest
@@ -253,19 +252,17 @@ export function buildCopilotMarketplaceContract(): ToolBuildContract {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         path: (_p, rel) => rel,
-        transform: transformCopilotAgent,
+        transform: transformClaudeAgent,
       },
       mcp: {
         supported: true,
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".mcp.json",
-        transform: rewriteJsonContent,
       },
       hooks: {
         supported: true,
         source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
         path: (_p, rel) => rel,
-        transform: rewriteJsonContent,
       },
       rules: { supported: false },
       commands: { supported: false },
@@ -324,8 +321,9 @@ function buildCodexManifest(
   const manifest: Record<string, unknown> = {};
   copyCodexManifestStringFields(source, manifest);
   // agents field intentionally omitted: Codex plugin schema does not support it
-  if (presence.skillsList.length > 0)
-    manifest.skills = presence.skillsList.map((n) => `./skills/${n}`);
+  // Codex requires `skills` as a STRING dir (like the official gmail plugin); the array
+  // form makes `codex plugin add` fail with "missing or invalid plugin.json".
+  if (presence.skillsList.length > 0) manifest.skills = "./skills";
   if (presence.hasHooksJson) manifest.hooks = "./hooks/hooks.json";
   if (presence.hasMcpJson) manifest.mcpServers = "./.mcp.json";
   return manifest;
@@ -334,9 +332,12 @@ function buildCodexManifest(
 export function buildCodexContract(): ToolBuildContract {
   const manifestRelative = OUTPUT_CODEX_MANIFEST_RELATIVE;
   const marketplaceRelative = OUTPUT_CODEX_MARKETPLACE_RELATIVE;
+  // Split literal to avoid biome's noTemplateCurlyInString warning.
+  const codexToken = "$" + "{PLUGIN_ROOT}";
   return {
     manifestDir: ".codex-plugin",
     marketplaceRelative,
+    pluginRootToken: codexToken,
     manifestFileRelative: manifestRelative,
     synthesizeManifest: buildCodexManifest,
     manifestSchemaName: "codex-plugin-manifest",
@@ -409,7 +410,8 @@ function transformCopilotFlatAgent(content: string, plugin: string, outName: str
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => copilotFlatResolveTarget(plugin, rel),
   });
-  return serializeFrontmatter(stripped, rewrittenBody);
+  const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
+  return serializeFrontmatter({ ...stripped, name: prefixedName }, rewrittenBody);
 }
 
 function copilotFlatResolveTarget(plugin: string, rel: string): string {
@@ -452,6 +454,7 @@ export function buildCopilotFlatContract(): ToolBuildContract {
         supported: true,
         source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
         path: copilotFlatHooksPath,
+        hooksTransform: (rewrittenJson) => flattenCopilotHooksShape(rewrittenJson),
       },
       rules: { supported: false },
       commands: { supported: false },
@@ -490,7 +493,8 @@ function transformClaudeFlatAgent(content: string, plugin: string, outName: stri
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => claudeFlatResolveTarget(plugin, rel),
   });
-  return serializeFrontmatter(frontmatter, rewrittenBody);
+  const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
+  return serializeFrontmatter({ ...frontmatter, name: prefixedName }, rewrittenBody);
 }
 
 export function buildClaudeFlatContract(): ToolBuildContract {
@@ -526,6 +530,8 @@ export function buildClaudeFlatContract(): ToolBuildContract {
         supported: true,
         source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
         path: claudeFlatHooksPath,
+        hooksMerge: (existing, incoming) => mergeClaudeSettingsHooks(existing, incoming),
+        hooksMergeDest: (outDir) => `${outDir}/.claude/settings.json`,
       },
       rules: { supported: false },
       commands: { supported: false },
@@ -565,7 +571,8 @@ function transformCursorFlatAgent(content: string, plugin: string, outName: stri
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => cursorFlatResolveTarget(plugin, rel),
   });
-  return serializeFrontmatter(stripped, rewrittenBody);
+  const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
+  return serializeFrontmatter({ ...stripped, name: prefixedName }, rewrittenBody);
 }
 
 export function buildCursorFlatContract(): ToolBuildContract {
@@ -601,6 +608,8 @@ export function buildCursorFlatContract(): ToolBuildContract {
         supported: true,
         source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
         path: cursorFlatHooksPath,
+        hooksMerge: (existing, incoming) => mergeCursorFlatHooks(existing, incoming),
+        hooksMergeDest: (outDir) => `${outDir}/.cursor/hooks.json`,
       },
       rules: { supported: false },
       commands: { supported: false },
@@ -612,15 +621,22 @@ export function buildCursorFlatContract(): ToolBuildContract {
 
 // ── Codex flat contract ────────────────────────────────────────────────────────
 
-const CODEX_AGENTS_SKILLS_PREFIX = ".agents/skills/";
+// Codex discovers workspace skills from `.codex/skills/` (verified live: a SKILL.md there
+// appears in Codex's native "Available skills" context; `.agents/skills/` is NOT a native root).
+const CODEX_SKILLS_PREFIX = ".codex/skills/";
 
-function codexFlatSkillPath(_plugin: string, rel: string): string {
-  return `${CODEX_AGENTS_SKILLS_PREFIX}${rel.replace(/^skills\//, "")}`;
+function codexFlatSkillPath(plugin: string, rel: string): string {
+  return genericFlatSkillPath(CODEX_SKILLS_PREFIX, plugin, rel.replace(/^skills\//, ""));
 }
 
-function codexFlatAgentPath(_plugin: string, rel: string): string {
+function codexFlatAgentPath(plugin: string, rel: string): string {
   const base = rel.replace(/^agents\//, "").replace(/\.md$/, ".toml");
-  return `.codex/agents/${base}`;
+  return `.codex/agents/${plugin}-${base}`;
+}
+
+function codexFlatHooksPath(plugin: string, rel: string): string {
+  const rest = rel.replace(/^hooks\//, "");
+  return genericFlatHooksScriptPath(".codex/hooks/", plugin, rest);
 }
 
 async function collectPrefixedMcpServers(
@@ -665,14 +681,15 @@ export function buildCodexFlatContract(): ToolBuildContract {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         path: codexFlatAgentPath,
-        transform: (content, plugin, outName) => codexAgentMarkdownToToml(content, plugin, outName),
+        transform: (content, plugin, outName) =>
+          codexAgentMarkdownToToml(content, plugin, outName, true),
       },
       mcp: { supported: false }, // handled by emitConfigArtifact (config.toml mcp_servers)
       hooks: {
         supported: true,
         source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-        path: (_p, _rel) => ".codex/hooks.json", // merged dest, not per-plugin
-        hooksMerge: (existing, _incoming) => mergeCodexHooksJson(existing ?? ""),
+        path: codexFlatHooksPath,
+        hooksMerge: (existing, incoming) => mergeCodexFrameworkHooksJson(existing, incoming),
         hooksMergeDest: (outDir) => `${outDir}/.codex/hooks.json`,
       },
       rules: { supported: false },
@@ -715,8 +732,12 @@ function transformOpencodeFlatAgent(content: string, plugin: string, outName: st
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => opencodeFlatResolveTarget(plugin, rel),
   });
+  const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
   // mode: subagent ensures opencode treats copied agents as subagents, not primary agents.
-  return serializeFrontmatter({ ...frontmatter, mode: "subagent" }, rewrittenBody);
+  return serializeFrontmatter(
+    { ...frontmatter, name: prefixedName, mode: "subagent" },
+    rewrittenBody
+  );
 }
 
 async function resolveOpencodeJsonPath(outDir: string, fs: FsType): Promise<string> {

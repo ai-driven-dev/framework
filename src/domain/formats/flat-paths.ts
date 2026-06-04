@@ -10,42 +10,43 @@
  * Returns the flat-output path for an agent file.
  * The source `.md` extension is stripped and replaced with `outputExt`.
  *
- * Flat mode is BARE single level: no `<plugin>/` segment so tools that
- * require a flat agents directory (cursor, copilot, claude, opencode) can
- * discover the files.
+ * Flat mode is PLUGIN-PREFIXED single level: no `<plugin>/` directory segment,
+ * but the plugin name is prepended to the leaf filename with a hyphen so tools
+ * can discover the files and the plugin origin is preserved in the name.
  *
  * @param agentsPrefix - Full prefix for agents dir (e.g. ".github/agents/", ".claude/agents/")
- * @param plugin       - Plugin name (kept for API compat; not included in path)
+ * @param plugin       - Plugin name (prepended to the output filename)
  * @param agentBaseName - Source basename without path (e.g. "implementer.md")
  * @param outputExt    - Output extension (e.g. ".agent.md", ".md")
  */
 export function genericFlatAgentPath(
   agentsPrefix: string,
-  _plugin: string,
+  plugin: string,
   agentBaseName: string,
   outputExt: string
 ): string {
   const withoutMd = agentBaseName.endsWith(".md") ? agentBaseName.slice(0, -3) : agentBaseName;
-  return `${agentsPrefix}${withoutMd}${outputExt}`;
+  return `${agentsPrefix}${plugin}-${withoutMd}${outputExt}`;
 }
 
 /**
  * Returns the flat-output path for a skill file (preserves the skill's internal subtree).
  *
- * Flat mode is BARE single level: the skill's own folder (e.g. `01-plan/`) sits
- * directly under the skills root, removing the interposed `<plugin>/` level so
- * tools can discover skills at the expected depth.
+ * Flat mode is PLUGIN-PREFIXED single level: no `<plugin>/` directory segment,
+ * but the plugin name is prepended to the first path segment (the skill folder)
+ * with a hyphen. Tools can discover skills at the expected depth and the plugin
+ * origin is preserved in the folder name.
  *
  * @param skillsPrefix - Full prefix for skills dir (e.g. ".github/skills/", ".claude/skills/")
- * @param plugin       - Plugin name (kept for API compat; not included in path)
+ * @param plugin       - Plugin name (prepended to the skill folder segment)
  * @param skillRelPath - Path relative to the plugin's skills/ directory
  */
 export function genericFlatSkillPath(
   skillsPrefix: string,
-  _plugin: string,
+  plugin: string,
   skillRelPath: string
 ): string {
-  return `${skillsPrefix}${skillRelPath}`;
+  return `${skillsPrefix}${plugin}-${skillRelPath}`;
 }
 
 /**

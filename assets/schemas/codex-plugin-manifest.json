@@ -43,9 +43,8 @@
       "items": { "type": "string" }
     },
     "skills": {
-      "type": "array",
-      "items": { "type": "string" },
-      "description": "Relative paths to skill directories."
+      "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }],
+      "description": "Relative path to the skills directory (string, e.g. './skills' — the form Codex `plugin add` requires) or array of skill-dir paths."
     },
     "hooks": {
       "type": "string",

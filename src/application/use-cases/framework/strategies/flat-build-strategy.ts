@@ -86,10 +86,7 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     const hooksSrc = join(pluginSrc, PLUGIN_HOOKS_RELATIVE);
     if (!(await this.fs.fileExists(hooksSrc))) return 0;
     const jsonCount = await this.writeFlatHooksJson(artifact, pluginName, hooksSrc);
-    // When hooksMerge is set, scripts are not separately materialized (codex merges all into one file)
-    const scriptCount = artifact.hooksMerge
-      ? 0
-      : await this.writeFlatHooksScripts(artifact, pluginName, pluginSrc);
+    const scriptCount = await this.writeFlatHooksScripts(artifact, pluginName, pluginSrc);
     return jsonCount + scriptCount;
   }
 
@@ -192,21 +189,32 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
   ): Promise<number> {
     const raw = await this.fs.readFile(hooksSrc);
     if (artifact.hooksMerge && artifact.hooksMergeDest) {
-      return this.writeMergedHooksJson(artifact, raw);
+      return this.writeMergedHooksJson(artifact, pluginName, raw);
     }
     return this.writeRewrittenHooksJson(artifact, pluginName, raw);
   }
 
   private async writeMergedHooksJson(
     artifact: Extract<ArtifactContract, { supported: true }>,
+    pluginName: string,
     raw: string
   ): Promise<number> {
     if (!artifact.hooksMerge || !artifact.hooksMergeDest) return 0;
+    const rewritten = this.rewriteHooksRawPaths(raw, pluginName);
     const destPath = artifact.hooksMergeDest(this.absOut);
     const existing = (await this.fs.fileExists(destPath)) ? await this.fs.readFile(destPath) : null;
-    const merged = artifact.hooksMerge(existing, raw);
-    await this.fs.writeFile(destPath, merged);
+    const { content, warnings } = artifact.hooksMerge(existing, rewritten);
+    for (const w of warnings) this.logger?.warn(w);
+    await this.fs.writeFile(destPath, content);
     return 1;
+  }
+
+  private rewriteHooksRawPaths(raw: string, pluginName: string): string {
+    const parsed = JSON.parse(raw) as unknown;
+    const rewritten = rewriteClaudeRootInJson(parsed, (suffix) =>
+      this.resolveClaudeRootRelative(suffix, pluginName)
+    );
+    return JSON.stringify(rewritten);
   }
 
   private async writeRewrittenHooksJson(
@@ -218,9 +226,13 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     const rewritten = rewriteClaudeRootInJson(parsed, (suffix) =>
       this.resolveClaudeRootRelative(suffix, pluginName)
     );
+    const rewrittenJson = `${JSON.stringify(rewritten, null, 2)}\n`;
+    const finalContent = artifact.hooksTransform
+      ? artifact.hooksTransform(rewrittenJson)
+      : rewrittenJson;
     const destPath = join(this.absOut, artifact.path(pluginName, `hooks/${pluginName}.hooks.json`));
     await this.checkCollision(destPath, pluginName);
-    await this.fs.writeFile(destPath, `${JSON.stringify(rewritten, null, 2)}\n`);
+    await this.fs.writeFile(destPath, finalContent);
     return 1;
   }
 

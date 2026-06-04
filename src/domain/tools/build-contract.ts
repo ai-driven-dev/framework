@@ -58,12 +58,22 @@ export type ArtifactContract =
       readonly mergeDest?: (outDir: string) => string;
       /**
        * Merge function for hooks — used when hooks.json must be merged with an existing file
-       * rather than per-plugin written (e.g. codex flat → .codex/hooks.json).
-       * Receives existing content (or null) and raw plugin hooks content; returns merged string.
+       * rather than per-plugin written (e.g. codex flat → .codex/hooks.json, claude settings).
+       * Receives existing content (or null) and path-rewritten plugin hooks content.
+       * Returns merged content + optional warnings to surface to the user.
        */
-      readonly hooksMerge?: (existing: string | null, incoming: string) => string;
+      readonly hooksMerge?: (
+        existing: string | null,
+        incoming: string
+      ) => { content: string; warnings: readonly string[] };
       /** Absolute path to the shared hooks merge target; only for hooksMerge contracts. */
       readonly hooksMergeDest?: (outDir: string) => string;
+      /**
+       * Optional shape transform for per-plugin hooks files (non-merge path).
+       * Applied after ${CLAUDE_PLUGIN_ROOT} path rewriting, before writing the file.
+       * Used to reshape the Claude nested format to a tool-specific flat format.
+       */
+      readonly hooksTransform?: (rewrittenJson: string) => string;
     };
 
 /**
@@ -73,6 +83,13 @@ export type ArtifactContract =
 export interface ToolBuildContract {
   /** Subdirectory name for the marketplace plugin tree (e.g. ".claude-plugin"). null for opencode. */
   readonly manifestDir: string | null;
+  /**
+   * Native plugin-root token for this tool in marketplace mode.
+   * Used to rewrite the source ${CLAUDE_PLUGIN_ROOT} placeholder in hooks/mcp content.
+   * Absent for flat-only contracts (no substitution needed).
+   * Examples: "${CLAUDE_PLUGIN_ROOT}", "${CURSOR_PLUGIN_ROOT}", "${PLUGIN_ROOT}", "${COPILOT_PLUGIN_ROOT}".
+   */
+  readonly pluginRootToken?: string;
   /** Relative path under the output dir where the marketplace catalog is written. null if no marketplace. */
   readonly marketplaceRelative: string | null;
   /** Plugin-manifest file relative to plugin tree root (e.g. ".claude-plugin/plugin.json"). null if no manifest. */

@@ -1,4 +1,5 @@
 import { basename, join, relative } from "node:path";
+import { rewritePluginRootToken } from "../../../../domain/formats/plugin-root-token-rewrite.js";
 import {
   PLUGIN_AGENT_INPUT_EXT,
   SOURCE_PLUGIN_MANIFEST_RELATIVE,
@@ -94,10 +95,11 @@ export class MarketplaceBuildStrategy implements BuildOutputStrategy {
       const relPath = relative(hooksSrc, absPath).replace(/\\/g, "/");
       const destPath = join(pluginOut, "hooks", relPath);
       const content = await this.fs.readFile(absPath);
-      const outContent =
+      const outContent = this.applyPluginRootToken(
         artifact.transform && absPath.endsWith(".json")
           ? artifact.transform(content, pluginName, basename(absPath))
-          : content;
+          : content
+      );
       await this.fs.writeFile(destPath, outContent);
       count++;
     }
@@ -111,10 +113,10 @@ export class MarketplaceBuildStrategy implements BuildOutputStrategy {
     const mcpSrc = join(pluginSrc, ".mcp.json");
     if (!(await this.fs.fileExists(mcpSrc))) return 0;
     const content = await this.fs.readFile(mcpSrc);
-    const outContent = artifact.transform
+    const transformed = artifact.transform
       ? artifact.transform(content, pluginName, ".mcp.json")
       : content;
-    await this.fs.writeFile(join(pluginOut, ".mcp.json"), outContent);
+    await this.fs.writeFile(join(pluginOut, ".mcp.json"), this.applyPluginRootToken(transformed));
     return 1;
   }
 
@@ -141,6 +143,11 @@ export class MarketplaceBuildStrategy implements BuildOutputStrategy {
   }
 
   // ── Private helpers ──────────────────────────────────────────────────────────
+
+  private applyPluginRootToken(content: string): string {
+    if (!this.contract.pluginRootToken) return content;
+    return rewritePluginRootToken(content, this.contract.pluginRootToken);
+  }
 
   private async buildAllEntries(
     sourceMarketplace: SourceMarketplace,

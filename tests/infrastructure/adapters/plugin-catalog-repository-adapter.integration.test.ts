@@ -79,7 +79,7 @@ describe("PluginCatalogRepositoryAdapter", () => {
 
 describe("PluginCatalogRepositoryAdapter.load (Copilot-native path)", () => {
   describe("copilot marketplace-multi-sample fixture", () => {
-    it("returns a catalog with two entries from .github/plugin/marketplace.json", async () => {
+    it("returns a catalog with two entries from .plugin/marketplace.json", async () => {
       const adapter = makeAdapter();
       const catalog = await adapter.load(join(COPILOT_FIXTURE_DIR, "marketplace-multi-sample"));
       expect(catalog).not.toBeNull();
@@ -111,7 +111,7 @@ describe("PluginCatalogRepositoryAdapter.load (Copilot-native path)", () => {
   });
 
   describe("copilot marketplace-multi-missing fixture", () => {
-    it("returns null when neither .github/plugin/marketplace.json nor .claude-plugin/marketplace.json exists", async () => {
+    it("returns null when neither .plugin/marketplace.json nor .claude-plugin/marketplace.json exists", async () => {
       const adapter = makeAdapter();
       const catalog = await adapter.load(join(COPILOT_FIXTURE_DIR, "marketplace-multi-missing"));
       expect(catalog).toBeNull();
@@ -119,7 +119,7 @@ describe("PluginCatalogRepositoryAdapter.load (Copilot-native path)", () => {
   });
 
   describe("copilot marketplace-multi-malformed fixture", () => {
-    it("throws InvalidPluginManifestError for invalid JSON in .github/plugin/marketplace.json", async () => {
+    it("throws InvalidPluginManifestError for invalid JSON in .plugin/marketplace.json", async () => {
       const adapter = makeAdapter();
       await expect(
         adapter.load(join(COPILOT_FIXTURE_DIR, "marketplace-multi-malformed"))

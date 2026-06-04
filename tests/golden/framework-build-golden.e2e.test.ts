@@ -40,11 +40,13 @@ const MARKETPLACE_TARGETS = ["copilot", "codex", "claude", "cursor"] as const;
 const FLAT_TARGETS = ["claude", "cursor", "copilot", "codex", "opencode"] as const;
 
 /**
- * The 4 frozen pre-change marketplace cells. Never regenerated.
+ * Frozen marketplace cells: byte-identical to the pre-change P1 baseline.
+ * Only claude is frozen — cursor/codex/copilot were re-baselined in the
+ * plugin-root-token-rewrite pass (${CLAUDE_PLUGIN_ROOT} → tool-native token).
  * copilot:flat was re-baselined in the flat-discovery-fix pass (plugin segment
  * removed from skill/agent paths) and is therefore no longer frozen.
  */
-const FROZEN_CELLS = new Set(["copilot", "codex", "claude", "cursor"]);
+const FROZEN_CELLS = new Set(["claude"]);
 
 async function hashDirectory(dir: string): Promise<TargetSnapshot> {
   const result: TargetSnapshot = {};

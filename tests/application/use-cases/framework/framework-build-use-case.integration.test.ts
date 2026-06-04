@@ -114,17 +114,17 @@ describe("FrameworkBuildUseCase", () => {
   });
 
   describe("plugin manifest synthesis", () => {
-    it("writes synthesized plugin.json at the Copilot output path", async () => {
+    it("writes synthesized plugin.json at the OpenPlugin output path", async () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" });
-      const destPath = `${OUT_DIR}/plugins/aidd-test/.github/plugin/plugin.json`;
+      const destPath = `${OUT_DIR}/plugins/aidd-test/.plugin/plugin.json`;
       expect(fs.has(destPath)).toBe(true);
     });
 
     it("synthesized plugin.json does not contain strict or $schema", async () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" });
-      const raw = fs.getFile(`${OUT_DIR}/plugins/aidd-test/.github/plugin/plugin.json`) ?? "";
+      const raw = fs.getFile(`${OUT_DIR}/plugins/aidd-test/.plugin/plugin.json`) ?? "";
       expect(raw).not.toContain("strict");
       expect(raw).not.toContain("$schema");
     });
@@ -133,7 +133,7 @@ describe("FrameworkBuildUseCase", () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" });
       const parsed = JSON.parse(
-        fs.getFile(`${OUT_DIR}/plugins/aidd-test/.github/plugin/plugin.json`) ?? "{}"
+        fs.getFile(`${OUT_DIR}/plugins/aidd-test/.plugin/plugin.json`) ?? "{}"
       ) as { skills: string[] };
       expect(Array.isArray(parsed.skills)).toBe(true);
       expect(parsed.skills.some((s: string) => s.startsWith("./skills/"))).toBe(true);
@@ -147,7 +147,7 @@ describe("FrameworkBuildUseCase", () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" });
       const parsed = JSON.parse(
-        fs.getFile(`${OUT_DIR}/plugins/aidd-test/.github/plugin/plugin.json`) ?? "{}"
+        fs.getFile(`${OUT_DIR}/plugins/aidd-test/.plugin/plugin.json`) ?? "{}"
       ) as Record<string, unknown>;
       expect(parsed.skills).toBeUndefined();
     });
@@ -156,7 +156,7 @@ describe("FrameworkBuildUseCase", () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" });
       const parsed = JSON.parse(
-        fs.getFile(`${OUT_DIR}/plugins/aidd-test/.github/plugin/plugin.json`) ?? "{}"
+        fs.getFile(`${OUT_DIR}/plugins/aidd-test/.plugin/plugin.json`) ?? "{}"
       ) as { agents: string[] };
       expect(parsed.agents).toEqual(["./agents"]);
     });
@@ -168,7 +168,7 @@ describe("FrameworkBuildUseCase", () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" });
       const parsed = JSON.parse(
-        fs.getFile(`${OUT_DIR}/plugins/aidd-test/.github/plugin/plugin.json`) ?? "{}"
+        fs.getFile(`${OUT_DIR}/plugins/aidd-test/.plugin/plugin.json`) ?? "{}"
       ) as Record<string, unknown>;
       expect(parsed.agents).toBeUndefined();
     });
@@ -188,7 +188,7 @@ describe("FrameworkBuildUseCase", () => {
       expect(fs.has(`${OUT_DIR}/plugins/aidd-test/agents/code-reviewer.agent.md`)).toBe(false);
     });
 
-    it("strips non-allowlisted frontmatter fields from agents", async () => {
+    it("preserves all frontmatter fields from agents (OpenPlugin does not strip)", async () => {
       const agentPath = `${SOURCE_DIR}/plugins/aidd-test/agents/extra.md`;
       fs.setFile(
         agentPath,
@@ -199,8 +199,8 @@ describe("FrameworkBuildUseCase", () => {
       const out = fs.getFile(`${OUT_DIR}/plugins/aidd-test/agents/extra.md`) ?? "";
       expect(out).toContain("name: 'extra'");
       expect(out).toContain("description: 'desc'");
-      expect(out).not.toContain("version");
-      expect(out).not.toContain("tags");
+      expect(out).toContain("version");
+      expect(out).toContain("tags");
     });
   });
 
@@ -228,14 +228,15 @@ describe("FrameworkBuildUseCase", () => {
   });
 
   describe("hooks rewrite", () => {
-    it("writes hooks.json with CLAUDE_PLUGIN_ROOT rewritten to relative paths", async () => {
+    it("writes hooks.json with CLAUDE_PLUGIN_ROOT rewritten to OpenPlugin native token", async () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" });
       const destPath = `${OUT_DIR}/plugins/aidd-test/hooks/hooks.json`;
       const dest = fs.getFile(destPath) ?? "";
-      const varRef = "$" + "{CLAUDE_PLUGIN_ROOT}";
-      expect(dest).not.toContain(varRef);
-      expect(dest).toContain("./hooks/check.sh");
+      const claudeVarRef = "$" + "{CLAUDE_PLUGIN_ROOT}";
+      const pluginRootRef = "$" + "{PLUGIN_ROOT}";
+      expect(dest).not.toContain(claudeVarRef);
+      expect(dest).toContain(`${pluginRootRef}/hooks/check.sh`);
     });
 
     it("hooks.json output is valid JSON with same structure (minus the variable substitution)", async () => {
@@ -248,21 +249,23 @@ describe("FrameworkBuildUseCase", () => {
   });
 
   describe("mcp rewrite", () => {
-    it("writes .mcp.json with CLAUDE_PLUGIN_ROOT rewritten to relative paths", async () => {
+    it("writes .mcp.json with CLAUDE_PLUGIN_ROOT rewritten to OpenPlugin native token", async () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" });
       const dest = fs.getFile(`${OUT_DIR}/plugins/aidd-test/.mcp.json`) ?? "";
-      const varRef = "$" + "{CLAUDE_PLUGIN_ROOT}";
-      expect(dest).not.toContain(varRef);
-      expect(dest).toContain("./bin/server.js");
+      const claudeVarRef = "$" + "{CLAUDE_PLUGIN_ROOT}";
+      const pluginRootRef = "$" + "{PLUGIN_ROOT}";
+      expect(dest).not.toContain(claudeVarRef);
+      expect(dest).toContain(`${pluginRootRef}/bin/server.js`);
     });
 
     it(".mcp.json output preserves mcpServers structure", async () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" });
       const dest = fs.getFile(`${OUT_DIR}/plugins/aidd-test/.mcp.json`) ?? "";
+      const pluginRootRef = "$" + "{PLUGIN_ROOT}";
       const parsed = JSON.parse(dest) as { mcpServers: Record<string, { command: string }> };
-      expect(parsed.mcpServers["aidd-test-server"].command).toBe("./bin/server.js");
+      expect(parsed.mcpServers["aidd-test-server"].command).toBe(`${pluginRootRef}/bin/server.js`);
     });
   });
 
@@ -386,7 +389,7 @@ describe("FrameworkBuildUseCase", () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" });
       const marketplaceOut = JSON.parse(
-        fs.getFile(`${OUT_DIR}/.github/plugin/marketplace.json`) ?? "{}"
+        fs.getFile(`${OUT_DIR}/.plugin/marketplace.json`) ?? "{}"
       ) as { plugins: { version: string }[] };
       expect(marketplaceOut.plugins[0].version).toBe("9.9.9");
     });
@@ -395,7 +398,7 @@ describe("FrameworkBuildUseCase", () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" });
       const marketplaceOut = JSON.parse(
-        fs.getFile(`${OUT_DIR}/.github/plugin/marketplace.json`) ?? "{}"
+        fs.getFile(`${OUT_DIR}/.plugin/marketplace.json`) ?? "{}"
       ) as { plugins: { version: string }[] };
       expect(marketplaceOut.plugins[0].version).toBe("0.1.0");
     });
@@ -433,16 +436,16 @@ describe("FrameworkBuildUseCase", () => {
   });
 
   describe("marketplace emission", () => {
-    it("emits marketplace.json at the Copilot output path", async () => {
+    it("emits marketplace.json at the OpenPlugin output path", async () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" });
-      expect(fs.has(`${OUT_DIR}/.github/plugin/marketplace.json`)).toBe(true);
+      expect(fs.has(`${OUT_DIR}/.plugin/marketplace.json`)).toBe(true);
     });
 
     it("emitted marketplace.json has Copilot-native shape with metadata.pluginRoot", async () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" });
-      const raw = fs.getFile(`${OUT_DIR}/.github/plugin/marketplace.json`) ?? "";
+      const raw = fs.getFile(`${OUT_DIR}/.plugin/marketplace.json`) ?? "";
       const parsed = JSON.parse(raw) as {
         metadata: { pluginRoot: string };
         plugins: { source: string }[];
