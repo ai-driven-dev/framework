@@ -3,7 +3,8 @@
   "target": "branch",
   "enforcement": "active",
   "bypass_actors": [
-    {"actor_id": 3959336, "actor_type": "Integration", "bypass_mode": "pull_request"}
+    {"actor_id": 3959336, "actor_type": "Integration", "bypass_mode": "pull_request"},
+    {"actor_id": 11783938, "actor_type": "Team", "bypass_mode": "pull_request"}
   ],
   "conditions": {
     "ref_name": {

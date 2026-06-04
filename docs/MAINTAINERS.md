@@ -40,7 +40,9 @@ Versions live in `.release-please-manifest.json`. Forcing a version / pre-releas
 
 `main` accepts only PRs (no direct push, no force-push, no deletion) with a CODEOWNERS review and passing `lefthook` / `Commitlint` / `DCO`.
 
-The only bypass actor is the **aidd-bot GitHub App** (`Integration`, `pull_request` mode) - there is **no admin bypass**. release-please and the Dependabot auto-merge both mint a token from that App (`actions/create-github-app-token`), so their PRs are App-authored: they trigger the required checks *and* the App can merge them past the human-review rule. Humans always go through review + checks; the bypass never allows a direct push to `main`.
+Two bypass actors (both `pull_request` mode, so neither can push directly to `main`):
+- the **aidd-bot GitHub App** (`Integration`) - release-please and the Dependabot auto-merge mint a token from it (`actions/create-github-app-token`), so their PRs trigger the required checks *and* the App merges them past the human-review rule.
+- the **`admin` team** (`alexsoyes`, `blafourcade`, `victor-langlois`) - lead maintainers can merge their own PR without a second review. Everyone else needs a code-owner review.
 
 The App: ID in secret `AIDD_BOT_APP_ID`, key in `AIDD_BOT_PRIVATE_KEY`. If the App is broken/uninstalled, release and Dependabot PRs stop merging - fix the App rather than re-adding an admin bypass.
 
