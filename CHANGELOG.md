@@ -1,5 +1,28 @@
 # Changelog
 
+## [4.6.0](https://github.com/ai-driven-dev/aidd-cli/compare/v4.5.0...v4.6.0) (2026-06-04)
+
+
+### Features
+
+* **framework:** unified ToolBuildContract + multi-target build, both modes (marketplace + flat, all 5 tools) ([#279](https://github.com/ai-driven-dev/aidd-cli/issues/279)) ([d43cf63](https://github.com/ai-driven-dev/aidd-cli/commit/d43cf63c534ecd2560f9ab126e32fa1af87511eb))
+* **skills:** add smoke-test action to test skill (/tmp isolation) ([f0eb440](https://github.com/ai-driven-dev/aidd-cli/commit/f0eb4401820847b746a90eb7801339cef7119a28))
+
+
+### Bug Fixes
+
+* **framework:** flat-mode discovery + per-tool hooks + copilot OpenPlugin + codex skills (5 tools live-validated) ([#281](https://github.com/ai-driven-dev/aidd-cli/issues/281)) ([5622d47](https://github.com/ai-driven-dev/aidd-cli/commit/5622d47c9b1d2143cccdc2a6028aa4f6c5ac5d95))
+
+
+### Documentation
+
+* **memory:** capture smoke-in-tmp + golden machine-independence conventions ([#277](https://github.com/ai-driven-dev/aidd-cli/issues/277)) ([4e4f1ee](https://github.com/ai-driven-dev/aidd-cli/commit/4e4f1ee0f4f4ba680274be3cbdd0b04cbbc2e3b6))
+
+
+### Refactoring
+
+* **knowledge:** dev-skills architecture + skill-guided code remediation ([4f53ea9](https://github.com/ai-driven-dev/aidd-cli/commit/4f53ea99eb9ed7b43c0098efed37eff902b25cb7))
+
 ## [4.5.0](https://github.com/ai-driven-dev/aidd-cli/compare/v4.4.0...v4.5.0) (2026-05-28)
 
 
