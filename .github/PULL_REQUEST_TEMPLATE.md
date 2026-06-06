@@ -22,6 +22,10 @@ re-assert them here. Spend your words on the *how*.
 
 -
 
+## ⚠️ Heads-up
+
+<!-- Deferred work, known gaps, or anything a reviewer should track. Delete if none. -->
+
 ## 🔗 Linked issue
 
 <!-- "Closes #N" auto-closes the issue on merge; "Refs #N" links without closing. Delete this whole section if there is no issue. -->
