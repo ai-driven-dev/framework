@@ -111,7 +111,7 @@ The [`DCO`](./.github/workflows/dco.yml) check fails any unsigned commit. Versio
 
 - Work on a branch, not `main`.
 - **Fill the PR template** (applied automatically): explain *what* changed and *how* you resolved it technically - that narrative is the point of the PR. The conventional title, DCO sign-off, and pre-commit hooks are already enforced by CI, so don't spend the description re-asserting them.
-- **Add the matching label** - `documentation`, `enhancement`, `bug`, `security`, ... The canonical list is [`.github/labels.yml`](./.github/labels.yml); it doubles as the triage signal for the [Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8).
+- **Add the matching label** so reviewers and the [Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8) triage at a glance: `bug` (a fix), `enhancement` (a new skill, agent, or feature), `documentation` (docs only), `security` (security-sensitive). `dependencies` / `npm` / `github-actions` / `autorelease: *` are set by automation, not by hand. Full list: [`.github/labels.yml`](./.github/labels.yml).
 - The PR title follows the same conventional format (the **Commitlint** CI job enforces it); PRs are squash-merged using that title.
 - A **Habilité** review gates every merge ([`CODEOWNERS`](./.github/CODEOWNERS)); Certifié contributors cannot self-merge.
 - Decision rules (lazy consensus, explicit consensus for cross-plugin/contract changes, the quality veto) live in [`GOVERNANCE.md`](./GOVERNANCE.md#code-decisions-merging).

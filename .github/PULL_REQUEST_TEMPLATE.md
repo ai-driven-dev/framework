@@ -28,6 +28,14 @@ re-assert them here. Spend your words on the *how*.
 
 Closes #
 
+## ✅ I certify
+
+<!-- The author ticks these on GitHub before merge. Not for the AI to fill or delete - these are the checks no CI job can make. -->
+
+- [ ] Docs updated to match the new behaviour.
+- [ ] I self-reviewed this PR.
+- [ ] No cross-plugin references introduced.
+
 ---
 
 🏷️ **Before submitting** - add the matching label (`documentation`, `enhancement`, `bug`, `security`, ...). Canonical list: [`labels.yml`](labels.yml).
