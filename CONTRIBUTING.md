@@ -40,6 +40,70 @@ pnpm exec lefthook install
 
 Every commit then runs the framework checks (json/yaml validity, schema validation, SKILL.md frontmatter, CATALOG regeneration, commitlint). Check your environment anytime with `./scripts/doctor.sh`.
 
+### Test your changes locally
+
+Before opening a PR, exercise the skills you touched in a real session. Clone the framework, then point your assistant at the checkout instead of a published release:
+
+```bash
+git clone https://github.com/ai-driven-dev/aidd-framework ~/projects/aidd-framework
+```
+
+#### Claude Code
+
+Register the checkout as a local marketplace, then install the plugins:
+
+```text
+/plugin marketplace add ~/projects/aidd-framework
+/plugin install aidd-context@aidd-framework
+/plugin install aidd-dev@aidd-framework
+/plugin install aidd-vcs@aidd-framework
+/plugin install aidd-pm@aidd-framework
+/plugin install aidd-orchestrator@aidd-framework
+/plugin install aidd-refine@aidd-framework
+```
+
+After editing a `SKILL.md`, an agent, or any action, run `/reload-plugins` in the same session to pick up the change - no reinstall needed.
+
+To load the plugins into a personal project, point its `.claude/settings.local.json` at the checkout:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "aidd-framework": {
+      "source": {
+        "source": "directory",
+        "path": "~/projects/aidd-framework"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "aidd-context@aidd-framework": true,
+    "aidd-dev@aidd-framework": true,
+    "aidd-vcs@aidd-framework": true,
+    "aidd-pm@aidd-framework": true,
+    "aidd-orchestrator@aidd-framework": true,
+    "aidd-refine@aidd-framework": true
+  }
+}
+```
+
+#### Codex
+
+Register the checkout (pass an absolute path; `./` is rejected), then install the plugins:
+
+```bash
+codex plugin marketplace add ~/projects/aidd-framework
+codex plugin add aidd-context@aidd-framework
+codex plugin add aidd-dev@aidd-framework
+codex plugin add aidd-vcs@aidd-framework
+codex plugin add aidd-pm@aidd-framework
+codex plugin add aidd-orchestrator@aidd-framework
+codex plugin add aidd-refine@aidd-framework
+codex plugin list --marketplace aidd-framework   # confirm every plugin is `installed, enabled`
+```
+
+No live reload - run `codex plugin marketplace upgrade` after each change to refresh.
+
 ## 2. Commit
 
 Format: `<type>(<scope>): description`, **signed off** for the [DCO](https://developercertificate.org/).
@@ -73,8 +137,16 @@ The [`DCO`](./.github/workflows/dco.yml) check fails any unsigned commit. Versio
 ## 3. Open a pull request
 
 - Work on a branch, not `main`.
-- **Fill the PR template** (applied automatically): summary, changes, test plan, and the checklist (conventional title + correct scope, DCO sign-off, docs updated).
-- The PR title follows the same conventional format (a `lint-pr` check enforces it); PRs are squash-merged using that title.
+- **Fill the PR template** (applied automatically): explain *what* changed and *how* you resolved it technically - that narrative is the point of the PR. The conventional title, DCO sign-off, and pre-commit hooks are already enforced by CI, so don't spend the description re-asserting them.
+- **Label the PR** so reviewers and the [Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8) triage at a glance:
+
+  | Label | When to use |
+  | ----- | ----------- |
+  | `bug` | A fix for broken behaviour. |
+  | `enhancement` | A new skill, agent, rule, or feature. |
+  | `documentation` | A docs-only change (README, CONTRIBUTING, skill docs). |
+  | `security` | A security-sensitive change or fix. |
+- The PR title follows the same conventional format (the **Commitlint** CI job enforces it); PRs are squash-merged using that title.
 - A **Habilité** review gates every merge ([`CODEOWNERS`](./.github/CODEOWNERS)); Certifié contributors cannot self-merge.
 - Decision rules (lazy consensus, explicit consensus for cross-plugin/contract changes, the quality veto) live in [`GOVERNANCE.md`](./GOVERNANCE.md#code-decisions-merging).
 

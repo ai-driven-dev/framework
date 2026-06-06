@@ -1,29 +1,43 @@
-# Summary
+<!--
+🤖 RULES (filling this template):
+1. Less is more. Reviewers scan hundreds of PRs - keep every section short, concrete, skimmable. Cut anything readable from the diff or CI. Delete any section that adds nothing.
+2. Point to a file with a real markdown link and its line number, GitHub-style: [README.md:119](README.md#L119).
+-->
 
-<!-- One or two sentences describing the change and why it matters. -->
+## 🎯 What & why
 
-## Changes
+<!-- One or two sentences: what this changes and the problem it solves. -->
 
-<!-- Bullet list of the concrete edits. Group by plugin or area when relevant. -->
+## 🛠️ How it works
 
-- 
+<!--
+Walk a reviewer through the technical resolution: the approach you took, why
+this way over the alternatives, and anything non-obvious (trade-offs, edge
+cases, follow-ups). This narrative is the point of the PR. The conventional
+title, DCO sign-off, and pre-commit hooks are already enforced by CI, so don't
+re-assert them here. Spend your words on the *how*.
+-->
 
-## Test plan
+## 🧪 How to verify
 
-<!-- How you verified this change. Commands, screenshots, manual steps. -->
+<!-- Concrete steps, commands, or screenshots a reviewer can run to see it work. -->
 
-- [ ] 
+-
 
-## Related issues
+## ⚠️ Heads-up
 
-<!-- "Closes #N" auto-links and closes the issue on merge. Use "Refs #N" for related-but-not-closing links. -->
+<!-- Deferred work, known gaps, or anything a reviewer should track. Delete if none. -->
+
+## 🔗 Linked issue
+
+<!-- "Closes #N" auto-closes the issue on merge; "Refs #N" links without closing. Delete this whole section if there is no issue. -->
 
 Closes #
 
-## Checklist
+## ✅ I certify
 
-- [ ] Commit messages follow the conventional format and use a scope listed in `commitlint.config.cjs`.
-- [ ] Every commit is signed off (`git commit -s`) per the [DCO](../CONTRIBUTING.md#2-commit).
-- [ ] Documentation updated when behaviour or contracts changed (plugin README, skill README, references).
-- [ ] No cross-plugin references introduced in plugin docs.
-- [ ] Pre-commit hooks pass locally (`lefthook run pre-commit`).
+<!-- The author ticks these on GitHub before merge. Not for the AI to fill or delete - these are the checks no CI job can make. -->
+
+- [ ] Docs updated to match the new behaviour.
+- [ ] I self-reviewed this PR.
+- [ ] No cross-plugin references introduced.
