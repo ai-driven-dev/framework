@@ -77,15 +77,16 @@ After editing a `SKILL.md`, an agent, or any action, run `/reload-plugins` in th
 
 Claude Code then loads the plugins straight from your working tree: edit the framework, run `/reload-plugins`, and test the result in that project. The loop is edit - reload - try, with no publish step in between.
 
-**With Codex (or another non-Claude tool)** - the framework is authored in Claude Code syntax, so Codex loads a *built* distribution, not the working tree. Build the target-native marketplace from your checkout (the `--out` must sit outside `--source`), then register it the same way the [README install table](./README.md#another-ai-tool) does for a release asset:
+**With Codex (or another non-Claude tool)** - the framework is authored in Claude Code syntax, so Codex needs a *built* distribution with codex-native plugin internals (`.codex-plugin/`, `codex-agents/`), not the working tree. Build it from your checkout (`--out` must sit outside `--source`), register the build with Codex's own CLI, then install the plugins:
 
 ```bash
 # CLI version is pinned in .github/workflows/ci.yml (build-per-tool job)
 npx @ai-driven-dev/cli@4.6.1 framework build --source . --target codex --out /tmp/aidd-codex
-aidd marketplace add aidd-framework /tmp/aidd-codex
+codex plugin marketplace add /tmp/aidd-codex
+codex plugin add aidd-dev@aidd-framework      # repeat per plugin; check `codex plugin list`
 ```
 
-No live reload here - rebuild and re-add after each change; that build step is exactly what Claude Code skips by reading the source directly. Swap `--target codex` for `cursor`, `copilot`, or `opencode` to test another tool.
+Point Codex at the build, not the repo root: the root ships Claude-format internals, so Codex would list the plugins but fail to load their agents. No live reload - rebuild, then `codex plugin marketplace upgrade`, after each change. Swap `--target codex` for `cursor`, `copilot`, or `opencode` to target another tool.
 
 ## 2. Commit
 
@@ -129,10 +130,8 @@ The [`DCO`](./.github/workflows/dco.yml) check fails any unsigned commit. Versio
   | `enhancement` | A new skill, agent, rule, or feature. |
   | `documentation` | A docs-only change (README, CONTRIBUTING, skill docs). |
   | `security` | A security-sensitive change or fix. |
-  | `dependencies` / `npm` / `github-actions` | Dependency or workflow bumps - usually set by Dependabot, not by hand. |
-  | `autorelease: pending` / `autorelease: tagged` | Set by release-please; never applied by hand. |
 
-  Canonical list: [`.github/labels.yml`](./.github/labels.yml).
+  The rest (`dependencies`, `npm`, `github-actions`, `autorelease: *`) are applied by automation, not by hand. Canonical list: [`.github/labels.yml`](./.github/labels.yml).
 - The PR title follows the same conventional format (the **Commitlint** CI job enforces it); PRs are squash-merged using that title.
 - A **Habilité** review gates every merge ([`CODEOWNERS`](./.github/CODEOWNERS)); Certifié contributors cannot self-merge.
 - Decision rules (lazy consensus, explicit consensus for cross-plugin/contract changes, the quality veto) live in [`GOVERNANCE.md`](./GOVERNANCE.md#code-decisions-merging).
