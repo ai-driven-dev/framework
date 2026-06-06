@@ -38,8 +38,4 @@ Closes #
 
 <!-- The author ticks these on GitHub before merge. Not for the AI to fill or delete - these are the checks no CI job can make. -->
 
-**I DO CERTIFY I READ EACH LINE OF THE PULL REQUEST BECAUSE I AM A SOFTWARE ENGINEER, NOT A AI PUPPY.**
-
-- [ ] Docs updated to match the new behaviour.
-- [ ] I self-reviewed this PR.
-- [ ] No cross-plugin references introduced.
+- [ ] **I DO CERTIFY I READ EACH LINE OF THE PULL REQUEST BECAUSE I AM A SOFTWARE ENGINEER, NOT A AI PUPPY.**
