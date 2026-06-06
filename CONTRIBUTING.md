@@ -40,6 +40,43 @@ pnpm exec lefthook install
 
 Every commit then runs the framework checks (json/yaml validity, schema validation, SKILL.md frontmatter, CATALOG regeneration, commitlint). Check your environment anytime with `./scripts/doctor.sh`.
 
+### Test your changes locally
+
+Before opening a PR, load your working tree into a real project and exercise the skills you touched. This repository is itself a marketplace, so you point an assistant at your local checkout instead of a published release.
+
+**With Claude Code (recommended)** - register the checkout as a local marketplace, then install the plugins you are working on:
+
+```text
+/plugin marketplace add .                  # from the repo root; or pass an absolute path
+/plugin install aidd-dev@aidd-framework
+```
+
+After editing a `SKILL.md`, an agent, or any action, run `/reload-plugins` in the same session to pick up the change - no reinstall needed.
+
+**Pin the checkout from a personal project** - to keep one of your own projects wired to your local framework while you develop, add a `directory` marketplace in that project's `.claude/settings.local.json` (the personal, machine-local settings file, not the team-shared `settings.json`):
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "aidd-framework": {
+      "source": {
+        "source": "directory",
+        "path": "/absolute/path/to/aidd-framework"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "aidd-context@aidd-framework": true,
+    "aidd-dev@aidd-framework": true,
+    "aidd-vcs@aidd-framework": true,
+    "aidd-pm@aidd-framework": true,
+    "aidd-refine@aidd-framework": true
+  }
+}
+```
+
+Claude Code then loads the plugins straight from your working tree: edit the framework, run `/reload-plugins`, and test the result in that project. The loop is edit - reload - try, with no publish step in between.
+
 ## 2. Commit
 
 Format: `<type>(<scope>): description`, **signed off** for the [DCO](https://developercertificate.org/).
