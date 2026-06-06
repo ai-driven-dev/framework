@@ -144,8 +144,6 @@ The [`DCO`](./.github/workflows/dco.yml) check fails any unsigned commit. Versio
   | `enhancement` | A new skill, agent, rule, or feature. |
   | `documentation` | A docs-only change (README, CONTRIBUTING, skill docs). |
   | `security` | A security-sensitive change or fix. |
-
-  The rest (`dependencies`, `npm`, `github-actions`, `autorelease: *`) are applied by automation, not by hand. Canonical list: [`.github/labels.yml`](./.github/labels.yml).
 - The PR title follows the same conventional format (the **Commitlint** CI job enforces it); PRs are squash-merged using that title.
 - A **Habilité** review gates every merge ([`CODEOWNERS`](./.github/CODEOWNERS)); Certifié contributors cannot self-merge.
 - Decision rules (lazy consensus, explicit consensus for cross-plugin/contract changes, the quality veto) live in [`GOVERNANCE.md`](./GOVERNANCE.md#code-decisions-merging).
