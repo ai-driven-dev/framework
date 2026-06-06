@@ -110,8 +110,9 @@ The [`DCO`](./.github/workflows/dco.yml) check fails any unsigned commit. Versio
 ## 3. Open a pull request
 
 - Work on a branch, not `main`.
-- **Fill the PR template** (applied automatically): summary, changes, test plan, and the checklist (conventional title + correct scope, DCO sign-off, docs updated).
-- The PR title follows the same conventional format (a `lint-pr` check enforces it); PRs are squash-merged using that title.
+- **Fill the PR template** (applied automatically): explain *what* changed and *how* you resolved it technically - that narrative is the point of the PR. The conventional title, DCO sign-off, and pre-commit hooks are already enforced by CI, so don't spend the description re-asserting them.
+- **Add the matching label** - `documentation`, `enhancement`, `bug`, `security`, ... The canonical list is [`.github/labels.yml`](./.github/labels.yml); it doubles as the triage signal for the [Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8).
+- The PR title follows the same conventional format (the **Commitlint** CI job enforces it); PRs are squash-merged using that title.
 - A **Habilité** review gates every merge ([`CODEOWNERS`](./.github/CODEOWNERS)); Certifié contributors cannot self-merge.
 - Decision rules (lazy consensus, explicit consensus for cross-plugin/contract changes, the quality veto) live in [`GOVERNANCE.md`](./GOVERNANCE.md#code-decisions-merging).
 
