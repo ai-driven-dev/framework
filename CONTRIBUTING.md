@@ -45,14 +45,13 @@ Every commit then runs the framework checks (json/yaml validity, schema validati
 Before opening a PR, exercise the skills you touched in a real session. Clone the framework, then point your assistant at the checkout instead of a published release:
 
 ```bash
-git clone https://github.com/ai-driven-dev/aidd-framework
-cd aidd-framework
+git clone https://github.com/ai-driven-dev/aidd-framework ~/projects/aidd-framework
 ```
 
 **With Claude Code (recommended)** - register the checkout as a local marketplace, then install the plugins you are working on:
 
 ```text
-/plugin marketplace add .                  # from the repo root
+/plugin marketplace add ~/projects/aidd-framework
 /plugin install aidd-context@aidd-framework
 /plugin install aidd-dev@aidd-framework
 /plugin install aidd-vcs@aidd-framework
@@ -71,7 +70,7 @@ After editing a `SKILL.md`, an agent, or any action, run `/reload-plugins` in th
     "aidd-framework": {
       "source": {
         "source": "directory",
-        "path": "/absolute/path/to/aidd-framework"
+        "path": "~/projects/aidd-framework"
       }
     }
   },
@@ -91,7 +90,7 @@ Claude Code then loads the plugins straight from your working tree: edit the fra
 **With Codex** - Codex reads the same marketplace manifest, so register the cloned checkout with Codex's own CLI (pass an absolute path; `./` is rejected), then install the plugins:
 
 ```bash
-codex plugin marketplace add "$(pwd)"
+codex plugin marketplace add ~/projects/aidd-framework
 codex plugin add aidd-context@aidd-framework
 codex plugin add aidd-dev@aidd-framework
 codex plugin add aidd-vcs@aidd-framework
