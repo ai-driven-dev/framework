@@ -16,6 +16,8 @@ All instructions and information above are willing to be up to date, but always 
 ## Technical guidelines
 
 - Do not commit or push yourself unless I ask you to.
+- For every plugin change, think hard about where responsibility belongs; follow the placement and orchestration rules in `docs/ARCHITECTURE.md`.
+- Never duplicate across docs - link to the canonical home.
 
 ### Answering Guidelines
 
