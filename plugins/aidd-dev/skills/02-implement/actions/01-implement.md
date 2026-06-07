@@ -32,4 +32,4 @@ notes:
 
 ## Test
 
-After the loop terminates: every phase has its acceptance criteria checked off, validation commands exit zero, and the plan carries `status: done` — OR, if a blocking condition held, the loop stopped and the plan carries `status: blocked`.
+After the loop terminates: every phase has its acceptance criteria checked off, validation commands exit zero, and the plan's frontmatter `status` is `done` — OR, if a blocking condition held, the loop stopped and it is `blocked`.
