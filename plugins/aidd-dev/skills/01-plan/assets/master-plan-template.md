@@ -29,8 +29,7 @@ argument-hint: N/A
 | 1   | {plan-name} | `./*-part-1.md` | pending | [ ]       |
 | 2   | {plan-name} | `./*-part-2.md` | blocked | [ ]       |
 
-<!-- Status values: pending, in-progress, done, verified, blocked -->
-<!-- Source of truth: each child's frontmatter `status`. This table is a derived view; don't maintain a second source. -->
+<!-- Status per the plan-status reference. Source of truth = each child's frontmatter `status`; this table is a derived view. -->
 <!-- RULE: Plan N+1 blocked until Plan N checkbox checked -->
 
 ## Validation Protocol

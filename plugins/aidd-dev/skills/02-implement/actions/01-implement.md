@@ -27,7 +27,7 @@ notes:
 3. **Plan amendments.** If a phase is incorrect, incomplete, or blocked by missing information, amend the plan directly. Mark every change with 🤖 and a brief rationale.
 4. **Boundaries.** Never format code. Never run dev mode. Follow project rules already loaded in context.
 5. **Verify the feature.** Run validation commands, tests, and any manual checks required to confirm the feature works end to end.
-6. **Mark done.** Every phase at 100% + validation passes → set `status: done`. `done` = implemented; review layer (`05-review`) sets `verified`.
+6. **Mark done.** Every phase at 100% + validation passes → set `status: done`.
 
 ## Test
 

@@ -64,6 +64,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `evals` | [scenarios.json](skills/01-plan/evals/scenarios.json) | - | - |
 | `-` | [README.md](skills/01-plan/README.md) | - | - |
 | `references` | [mermaid-conventions.md](skills/01-plan/references/mermaid-conventions.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` | - |
+| `references` | [plan-status.md](skills/01-plan/references/plan-status.md) | `Plan lifecycle status field - values, meaning, who writes each, and when.` | - |
 | `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Generate technical implementation plans, define component behaviors, and extract design details from images.` | - |
 
 #### `skills/02-implement`

@@ -22,7 +22,7 @@ completion_score: 0-100
 1. **Mark in-progress.** Before spawning, set `status: in-progress` on `plan_path` (skip if already set). Flow bookkeeping, not delegated work.
 2. **Spawn implementer** (`implementer` agent) with the inputs above. Brief: run `implement` for the milestone or fix list, then `assert` + `test`.
 3. **On failure**, run `debug` and re-spawn the implementer with the diagnostic notes until tests pass.
-4. **Mark done (end of milestone loop).** One implementer pass scores ITS input scope only — never set `done` per-milestone. Set `status: done` only when the whole plan is implemented: no milestones remain AND last pass `items_remaining` empty. `done` = implemented, not reviewed; `04-review` sets `verified`.
+4. **Mark done (end of milestone loop).** One implementer pass scores ITS input scope only — never set `done` per-milestone. Set `status: done` only when the whole plan is implemented (no milestones remain, last pass `items_remaining` empty).
 5. **Return** the implementer's YAML as-is to the SDLC orchestrator.
 
 ## Test
