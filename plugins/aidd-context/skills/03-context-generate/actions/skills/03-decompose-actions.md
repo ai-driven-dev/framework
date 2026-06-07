@@ -9,7 +9,9 @@ Break the skill into atomic, testable actions - one action, one unambiguous job.
 
 ## Outputs
 
-An `action_plan` table. Example for a hypothetical `slack` skill:
+An `action_plan` table plus a `file_tree` preview of the complete proposed skill (SKILL.md + every action file + references/assets/evals), both gated before any write.
+
+Example for a hypothetical `slack` skill:
 
 | slug             | description (input → output)                     | test                                                                                           | depends_on |
 | ---------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------- | ---------- |
@@ -29,7 +31,9 @@ Tests must be real-execution: status 200, artifact created, MCP returning the ex
 4. Ordering: `sequential = true` → numbered prefixes `01-`, `02-` (see `references/skill-authoring.md` ## Naming).
 5. Write the `test` cell row by row - concrete inputs, concrete assertion. Pick whichever fits: a command to run, an artifact check, or an API/MCP/state side-effect.
 6. Present the table. **Validate the `test` column row by row with the user, in writing.** No silent acceptance.
+7. **Preview gate (tree + human).** Render the full proposed `file_tree` of the skill - SKILL.md, every action file, and any references/assets/evals - so the user sees the complete structure before a single file is written. Get explicit written approval. No write in `04`+ proceeds without it.
+8. **Preview gate (AI review).** Discover a review capability by matching loaded-skill descriptions for keywords such as `review`, `verify correctness against plan`, `find flaws`, `architecture conformance`. Have it review the `action_plan` + `file_tree` for gaps, naming, and R1-R10 conformance. Surface its findings; block on deal-breakers before `04` writes.
 
 ## Test
 
-Every `expect_action` from evals (excluding `null`) appears in the table exactly once; every row has a non-empty `test` cell explicitly approved by the user in writing; no row depends on a downstream slug.
+Every `expect_action` from evals (excluding `null`) appears in the table exactly once; every row has a non-empty `test` cell explicitly approved by the user in writing; no row depends on a downstream slug; and the full `file_tree` was both human-approved and AI-reviewed before any file was written.
