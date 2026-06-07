@@ -21,8 +21,10 @@ Single action skill. The router dispatches to `wireframe` whenever a wireframe-g
 
 - Low fidelity only. Describe layout and structure, never visual design (colors, typography, spacing).
 - Never produce executable code. No HTML, CSS, JS, or component snippets; wireframes are read, not run.
-- Derive screens from the PRD user flows, information architecture, and acceptance criteria. Never invent intent; mark every gap as `TBD: <precise question>`.
+- Read the PRD when a path is given and reuse its `feature_name` so the wireframe sits next to it. Derive screens from its user flows, information architecture, and acceptance criteria. Never invent intent; mark every gap as `TBD: <precise question>`.
+- Confirm the screen inventory and screen types with the user before drawing any layout.
 - Always wait for explicit user validation before saving.
+- Do not self-validate. The caller spawns a reviewer with `@assets/wireframe-validator.yml`; findings come back for the next revision.
 - Save path: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<feature_name>-wireframe.md`.
 - Source of truth for structure: `@assets/wireframe-template.md`.
 
@@ -33,6 +35,7 @@ Single action skill. The router dispatches to `wireframe` whenever a wireframe-g
 ## Assets
 
 - `@assets/wireframe-template.md`: wireframe body template.
+- `@assets/wireframe-validator.yml`: checklist a reviewer uses to validate a wireframe.
 
 ## External data
 

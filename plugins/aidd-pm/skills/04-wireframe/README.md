@@ -27,7 +27,8 @@ Stays at the structure level; never visual design and never code.
 Use skill aidd-pm:04-wireframe for <PRD path or feature description>
 ```
 
-The skill parses the input, drafts each screen per template, shows the
+The skill reads the PRD, proposes a screen inventory and screen types for
+you to confirm or challenge, then drafts each screen per template, shows the
 draft, and waits for explicit validation before saving.
 
 ## Outputs
@@ -47,5 +48,7 @@ draft, and waits for explicit validation before saving.
 
 See [`SKILL.md`](SKILL.md) for the action contract,
 [`actions/01-wireframe.md`](actions/01-wireframe.md) for the single atomic
-action, and [`assets/wireframe-template.md`](assets/wireframe-template.md)
-for the wireframe structure.
+action, [`assets/wireframe-template.md`](assets/wireframe-template.md) for
+the wireframe structure, and
+[`assets/wireframe-validator.yml`](assets/wireframe-validator.yml) for the
+checklist a caller's reviewer uses to validate the result.

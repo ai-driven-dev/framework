@@ -1,0 +1,51 @@
+# Checklist used by the reviewer agent to validate a wireframe.
+# Each criterion is independently scored. Required criteria must be `fulfilled` for the wireframe to pass.
+
+criteria:
+  - id: flows_covered
+    description: Every user flow in scope maps to at least one screen. No flow from the source is left without a screen.
+    required: true
+    weight: 25
+
+  - id: screens_complete
+    description: Each screen has a layout and a component hierarchy. No screen is named without being drawn.
+    required: true
+    weight: 20
+
+  - id: navigation_flow
+    description: A navigation flow is present as a Mermaid flowchart and every screen is reachable in it.
+    required: true
+    weight: 15
+
+  - id: states_annotated
+    description: Empty, loading, and error states are addressed for screens where they apply.
+    required: true
+    weight: 15
+
+  - id: responsive_addressed
+    description: Responsive behavior is stated (breakpoints, what reflows or collapses), or explicitly marked not applicable.
+    required: true
+    weight: 10
+
+  - id: low_fidelity
+    description: Structure only. No visual design (colors, typography, spacing) and no executable UI code.
+    required: true
+    weight: 10
+
+  - id: open_questions
+    description: Unknowns captured as TBD with a precise question rather than guessed.
+    required: false
+    weight: 5
+
+hard_thresholds:
+  any_required_unfulfilled: invalid
+  contains_executable_code: invalid
+  flow_without_screen: invalid
+  contains_visual_design: invalid
+
+scoring:
+  pass_threshold: 90
+  notes: |
+    A wireframe is valid when every required criterion is fulfilled AND the weighted score
+    is at or above the pass_threshold. Hard thresholds force `invalid` regardless of score.
+    Visual design (colors, typography) and UI code belong to downstream design and dev, not the wireframe.
