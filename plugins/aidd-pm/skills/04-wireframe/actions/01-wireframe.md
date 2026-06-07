@@ -10,7 +10,6 @@ platform: web | mobile | responsive      # optional; asked during clarify when o
 screen_types: [<page type>]              # optional; asked during clarify when omitted
 ```
 
-No document is required. The action auto-loads related context from `aidd_docs/` when it exists; a PRD is never a precondition.
 
 ## Outputs
 
