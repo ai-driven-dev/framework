@@ -5,6 +5,7 @@ argument-hint: N/A
 objective: "{What must be true when done. One sentence.}"
 success_condition: "{Runnable command that proves done. Example: 'npm test exits 0 AND coverage > 80%'}"
 iteration: 0
+status: pending
 ---
 
 <!--  AI INSTRUCTIONS ONLY -- Follow those rules, do not output them.
@@ -16,8 +17,8 @@ iteration: 0
 - Interpret comments on this file to help you fill it.
 - Each phase MUST have acceptance criteria.
 - During implementation, the AI may amend this plan. Every AI change MUST be prefixed with 🤖 and include a brief rationale.
-- This file IS the live tracking file for For Sure. Filename status: `<task>.pending.md` → `.in-progress.md` → `.done.md`.
-- `success_condition` MUST be a runnable command. The loop renames to `.done.md` only when it passes.
+- This file IS the live tracking file for For Sure. State lives in the `status` frontmatter field (`pending → in-progress → done`); the filename carries no status suffix.
+- `success_condition` MUST be a runnable command. The loop sets `status: done` only when it passes.
 - Log is APPEND-ONLY. One entry per step attempt. Never rewrite history.
 -->
 

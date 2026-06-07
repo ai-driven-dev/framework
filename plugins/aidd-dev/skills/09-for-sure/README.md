@@ -43,11 +43,12 @@ The skill exposes 3 actions across two phases:
 
 ## Outputs
 
-- A tracking file at `aidd_docs/tasks/<task-name>.<status>.md` following
-  the plan template format from [01-plan](../01-plan/README.md).
+- A tracking file at `aidd_docs/tasks/<task-name>.md` (state in the
+  `status` frontmatter field) following the plan template format from
+  [01-plan](../01-plan/README.md).
 - Per-attempt log entries inside the tracking file.
-- The tracking file renamed to `<task-name>.done.md` once and only once
-  the success condition genuinely verifies.
+- The tracking file's `status` set to `done` once and only once the
+  success condition genuinely verifies.
 
 ## Prerequisites
 

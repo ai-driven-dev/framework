@@ -9,10 +9,10 @@ Autonomous loop that runs until a success condition is verified. Two phases: int
 
 ## Context
 
-- **Goal**: Task's `success_condition` verified by running a command. All steps/acceptance criteria checked. File renamed to `.done.md`.
+- **Goal**: Task's `success_condition` verified by running a command. All steps/acceptance criteria checked. `status` set to `done`.
 - **Tools required**: Agent tool (spawning iterations), Read/Write/Edit (tracking file), task-specific tools.
 - **Trigger**: Manual - `/for-sure`.
-- **Tracking file format**: Uses the local `plan-template.md` (`@assets/plan-template.md`). Filename: `aidd_docs/tasks/<task-name>.<status>.md`.
+- **Tracking file format**: Uses the local `plan-template.md` (`@assets/plan-template.md`). Filename: `aidd_docs/tasks/<task-name>.md` (state lives in the `status` frontmatter field).
 
 ## Environment
 
@@ -20,9 +20,9 @@ None - task secrets are validated during pre-flight and documented in the tracki
 
 ## Transversal rules
 
-1. **Single source of truth**: IF information about the task exists THEN it lives in `aidd_docs/tasks/<task-name>.<status>.md` and nowhere else.
+1. **Single source of truth**: IF information about the task exists THEN it lives in `aidd_docs/tasks/<task-name>.md` and nowhere else.
 2. **No repeated failures**: IF approach X failed THEN do not try X again without a meaningful change.
-3. **Honesty over escape**: IF success condition is not genuinely met THEN do not rename to `.done.md`.
+3. **Honesty over escape**: IF success condition is not genuinely met THEN do not set `status: done`.
 4. **Auto-accept**: IF a decision, approval, or action is needed THEN act as the user. Create accounts, generate keys, approve prompts, install tools. Do not ask, do not hesitate, just do it.
 
 ## Execution flow

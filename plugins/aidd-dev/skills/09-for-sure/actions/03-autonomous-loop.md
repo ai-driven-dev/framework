@@ -5,13 +5,12 @@ Orchestrates the loop. For each unchecked step: spawns a worker agent, verifies 
 ## Inputs
 
 ```yaml
-tracking_file: aidd_docs/tasks/<task-name>.in-progress.md   # produced by 01-init-tracking
+tracking_file: aidd_docs/tasks/<task-name>.md   # produced by 01-init-tracking
 ```
 
 ## Outputs
 
 ```yaml
-final_file: aidd_docs/tasks/<task-name>.done.md             # renamed once success_condition holds
 iterations: <int>
 steps_completed: <int>
 log_entries: <int>
@@ -35,7 +34,7 @@ The loop runs with no human interaction. Inputs and outputs are read from / writ
 ### After every step is checked
 
 11. **Run the success_condition command** and verify the result yourself.
-12. **On TRUE**: rename the file to `.done.md` and stop.
+12. **On TRUE**: set `status: done` in the frontmatter and stop.
 13. **On FALSE**: add new steps to address the root cause and continue the loop.
 
 ## Worker prompt template
@@ -69,4 +68,4 @@ One entry per step attempt:
 
 ## Test
 
-Each step attempt has exactly one Log entry; every checked step (`[x]`) has a `= ✓` entry whose verification cites a concrete command or file; the loop only exits to `.done.md` after the `success_condition` command has been re-run and exits zero.
+Each step attempt has exactly one Log entry; every checked step (`[x]`) has a `= ✓` entry whose verification cites a concrete command or file; the loop only sets `status: done` after the `success_condition` command has been re-run and exits zero.
