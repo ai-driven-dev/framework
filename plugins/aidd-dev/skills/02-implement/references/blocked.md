@@ -2,6 +2,7 @@
 name: blocked
 description: Conditions that make a plan blocked (needs a human), plus the retry budget.
 ---
+
 # When a plan is blocked
 `blocked` = implementation cannot proceed; only a human can unblock. Stop, set `status: blocked`, escalate.
 

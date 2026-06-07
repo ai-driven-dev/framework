@@ -21,7 +21,7 @@ Spawn the `implementer` agent to execute this skill. For tools that do not suppo
 
 ## Transversal rules
 
-- Retry on failure, but when a blocking condition holds (see `@references/blocked.md`) — physically impossible for the AI, or no progress after repeated attempts — set `status: blocked` and escalate to a human instead of looping forever.
+- Retry on failure, but when a blocking condition holds (see `@references/blocked.md`), set `status: blocked` and escalate to a human instead of looping forever.
 
 ## References
 
