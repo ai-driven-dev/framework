@@ -18,6 +18,8 @@ When invoked, you receive:
 - A **validator**  -  either explicit acceptance criteria (e.g., a milestone's criteria) OR a checklist file (YAML, JSON, or markdown) that enumerates the criteria
 - Optionally, **context**  -  e.g., the spec when reviewing a plan, or the plan when reviewing code
 
+On every review, read the project review checklist at `aidd_docs/review-checklist.md` (path relative to the repository root, your working directory) with your Read tool, and apply each item; skip silently if the file is absent. Render the checklist ticked in your output — `- [x]` when met, `- [ ]` with the offending `file:line` when not.
+
 # Outputs
 
 When you return, your output is structured:

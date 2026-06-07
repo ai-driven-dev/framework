@@ -63,6 +63,7 @@ When this skill emits Mermaid diagrams, follow the project's Mermaid conventions
 - `@assets/AGENTS.md` - canonical AI context file template
 - `@assets/README.md` - `aidd_docs/README.md` template
 - `@assets/GUIDELINES.md` - `aidd_docs/GUIDELINES.md` template
+- `@assets/review-checklist.md` - `aidd_docs/review-checklist.md` template (baseline rules the reviewer agent applies on code reviews)
 - `@assets/templates/memory/` - memory file templates (scope: `all` | `frontend` | `backend`)
 
 ## References

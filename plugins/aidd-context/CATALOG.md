@@ -92,6 +92,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [golden-principles.md](skills/02-project-init/assets/golden-principles.md) | - |
 | `assets` | [GUIDELINES.md](skills/02-project-init/assets/GUIDELINES.md) | - |
 | `assets` | [README.md](skills/02-project-init/assets/README.md) | - |
+| `assets` | [review-checklist.md](skills/02-project-init/assets/review-checklist.md) | - |
 | `evals` | [scenarios.json](skills/02-project-init/evals/scenarios.json) | - |
 | `-` | [README.md](skills/02-project-init/README.md) | - |
 | `references` | [mapping-ai-context-file.md](skills/02-project-init/references/mapping-ai-context-file.md) | - |
