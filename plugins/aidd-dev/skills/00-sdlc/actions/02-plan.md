@@ -23,9 +23,7 @@ plan_status: in_progress | done | blocked
 
 1. **Spawn planner** (`planner` agent) with the inputs above. Brief: run `plan` end to end (URL detection, ticket fetch, normalization, architecture projection, rules selection, phase breakdown). Never inline raw ticket or spec as the plan body.
 2. **Read output.** Capture the YAML returned by the planner.
-3. **Return** it as-is to the SDLC orchestrator.
-
-> `plan_status` (returned YAML) = transient orchestration signal. Distinct from persisted frontmatter `status` (kanban lifecycle: `pending | in-progress | done | verified | blocked`). Planner creates plan at `status: pending`; later steps advance it — 03 → `in-progress`/`done`, 04 → `verified`.
+3. **Return** it as-is to the SDLC orchestrator. Note: returned `plan_status` = transient orchestration signal, distinct from persisted frontmatter `status` (kanban lifecycle `pending | in-progress | done | verified | blocked`); planner writes `status: pending`, then 03 → `in-progress`/`done`, 04 → `verified`.
 
 ## Test
 

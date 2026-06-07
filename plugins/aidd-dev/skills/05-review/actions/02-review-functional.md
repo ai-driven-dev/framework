@@ -38,9 +38,7 @@ Check against:
 5. **List missing behaviors** (criteria with no trace in the diff).
 6. **List unplanned behaviors** (diff changes that trace to no criterion).
 7. **List flow and edge-case gaps** surfaced by walking through each criterion.
-8. **Format and write** the report using `@../assets/review-functional-template.md` to `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<task_name>.review_functional.md`. Create the month directory when missing.
-
-> Read-only on the plan: never writes `status`. The plan is the validator; the read-only reviewer agent (`reviewer.md`) may pass it and must not modify it. `status: verified` is owned by the top-level caller (SDLC `04-review`). Standalone: caller advances `status` from the verdict.
+8. **Format and write** the report using `@../assets/review-functional-template.md` to `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<task_name>.review_functional.md`. Create the month directory when missing. Never write the plan's `status`: read-only on the plan (it is the validator; the reviewer agent that may invoke this must not modify it). `status: verified` is the caller's job — SDLC `04-review`; standalone, the caller advances it from the verdict.
 
 ## Test
 
