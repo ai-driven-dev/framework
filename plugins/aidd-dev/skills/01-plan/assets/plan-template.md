@@ -3,9 +3,6 @@ name: plan
 description: Living implementation plan - frozen objective, phases, and append-only execution Log. Used as input artifact AND as the autonomous-loop tracking file.
 argument-hint: N/A
 objective: "{What must be true when done. One sentence.}"
-success_condition: "{Runnable command that proves done. Example: 'npm test exits 0 AND coverage > 80%'}"
-iteration: 0
-created_at: "{YYYY-MM-DDTHH:MM:SSZ}"
 status: pending
 ---
 
@@ -19,7 +16,6 @@ status: pending
 - Each phase MUST have acceptance criteria.
 - During implementation, the AI may amend this plan. Every AI change MUST be prefixed with 🤖 and include a brief rationale.
 - `status` = lifecycle field; set `pending` at creation. Values and ownership per the plan-status reference. Filename carries NO status suffix; status lives here.
-- `success_condition` MUST be a runnable command (reject vague conditions).
 - Log is APPEND-ONLY. One entry per step attempt. Never rewrite history.
 -->
 

@@ -58,7 +58,7 @@ applicable_rules: [{ tool: <claude|cursor|copilot|opencode>, name: <id>, path: <
    - Determine the feature name from the requirements.
    - Insert the user journey as Mermaid syntax in the plan (apply `@../references/mermaid-conventions.md`).
    - Fill the chosen template, including the validated architecture projection and applicable rules.
-   - Fill execution frontmatter (required): `objective`, `success_condition` (a runnable command; reject vague conditions), `iteration: 0`, `created_at` (ISO 8601 from step 1), `status: pending` (lifecycle field; see the plan-status reference for values/ownership; filename carries no status suffix).
+   - Fill execution frontmatter (required): `objective`, `status: pending` (lifecycle field; see the plan-status reference for values/ownership; filename carries no status suffix).
    - Save to disk:
      - Simple plan: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>.md`
      - Master plan: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>-master.md`
@@ -69,4 +69,4 @@ applicable_rules: [{ tool: <claude|cursor|copilot|opencode>, name: <id>, path: <
 
 ## Test
 
-The plan file exists at `plan_path`; its frontmatter contains `objective`, a runnable `success_condition`, `iteration: 0`, a valid `created_at`, and `status: pending`; the architecture projection (M / C / D) is non-empty and matches the validated lists; the applicable rules table is consistent with the project's rules inventory; confidence is `>= 9`.
+The plan file exists at `plan_path`; its frontmatter contains `objective` and `status: pending`; the architecture projection (M / C / D) is non-empty and matches the validated lists; the applicable rules table is consistent with the project's rules inventory; confidence is `>= 9`.

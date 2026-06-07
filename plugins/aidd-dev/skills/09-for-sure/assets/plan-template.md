@@ -1,5 +1,3 @@
-# NOTE: synced from skills/01-plan/assets/plan-template.md. Keep in sync when the source changes.
-
 ---
 name: plan
 description: Living implementation plan - frozen objective, phases, and append-only execution Log. Used as input artifact AND as the autonomous-loop tracking file.
@@ -7,7 +5,6 @@ argument-hint: N/A
 objective: "{What must be true when done. One sentence.}"
 success_condition: "{Runnable command that proves done. Example: 'npm test exits 0 AND coverage > 80%'}"
 iteration: 0
-created_at: "{YYYY-MM-DDTHH:MM:SSZ}"
 ---
 
 <!--  AI INSTRUCTIONS ONLY -- Follow those rules, do not output them.
