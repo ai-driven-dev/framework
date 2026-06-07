@@ -13,7 +13,7 @@ The plan's `status` frontmatter field tracks its lifecycle for kanban views. The
 | `in-progress` | implementation started        | implement layer (SDLC `03-implement`; standalone `02-implement`) | at the first implementer pass                                    |
 | `done`        | implemented, not yet reviewed | implement layer                                                  | whole plan implemented (no milestones remain, `items_remaining` empty) |
 | `verified`    | reviewed and approved         | review layer (SDLC `04-review`)                                   | review verdict = ship / approve                                  |
-| `blocked`     | cannot proceed                | whoever escalates                                                | on a blocking escalation                                         |
+| `blocked`     | cannot proceed; needs a human | implement layer (implementer decides)                            | a blocking condition holds (see the implement skill's blocked reference) |
 
 ## Rules
 

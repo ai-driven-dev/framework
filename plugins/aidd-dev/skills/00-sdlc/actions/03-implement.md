@@ -22,9 +22,10 @@ completion_score: 0-100
 1. **Mark in-progress.** Before spawning, set `status: in-progress` on `plan_path` (skip if already set). Flow bookkeeping, not delegated work.
 2. **Spawn implementer** (`implementer` agent) with the inputs above. Brief: run `implement` for the milestone or fix list, then `assert` + `test`.
 3. **On failure**, run `debug` and re-spawn the implementer with the diagnostic notes until tests pass.
-4. **Mark done (end of milestone loop).** One implementer pass scores ITS input scope only — never set `done` per-milestone. Set `status: done` only when the whole plan is implemented (no milestones remain, last pass `items_remaining` empty).
-5. **Return** the implementer's YAML as-is to the SDLC orchestrator.
+4. **Blocked.** If the implementer surfaces a blocking condition (`BLOCKED` in `notes`) or shows no progress after repeated re-spawns, write `status: blocked` on `plan_path`, stop (do NOT proceed to 04), and escalate to a human.
+5. **Mark done (end of milestone loop).** One implementer pass scores ITS input scope only — never set `done` per-milestone. Set `status: done` only when the whole plan is implemented (no milestones remain, last pass `items_remaining` empty).
+6. **Return** the implementer's YAML as-is to the SDLC orchestrator.
 
 ## Test
 
-`completion_score` is an integer between 0 and 100; `items_implemented` and `items_remaining` are both present; the validation commands declared in the input return exit code 0 after the run; when fully implemented, `plan_path` carries `status: done`.
+`completion_score` is an integer between 0 and 100; `items_implemented` and `items_remaining` are both present; the validation commands declared in the input return exit code 0 after the run; when fully implemented, `plan_path` carries `status: done` — or, on a surfaced block, `status: blocked` and the run stops before 04.

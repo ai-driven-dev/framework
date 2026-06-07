@@ -74,6 +74,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-implement.md](skills/02-implement/actions/01-implement.md) | - |
 | `evals` | [scenarios.json](skills/02-implement/evals/scenarios.json) | - |
 | `-` | [README.md](skills/02-implement/README.md) | - |
+| `references` | [blocked.md](skills/02-implement/references/blocked.md) | `Conditions that make a plan blocked (needs a human).` |
 | `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Execute an implementation plan phase by phase via the implementer agent, iterating until 100% completeness.` |
 
 #### `skills/03-assert`

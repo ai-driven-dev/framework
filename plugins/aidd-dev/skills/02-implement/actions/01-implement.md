@@ -27,8 +27,9 @@ notes:
 3. **Plan amendments.** If a phase is incorrect, incomplete, or blocked by missing information, amend the plan directly. Mark every change with 🤖 and a brief rationale.
 4. **Boundaries.** Never format code. Never run dev mode. Follow project rules already loaded in context.
 5. **Verify the feature.** Run validation commands, tests, and any manual checks required to confirm the feature works end to end.
-6. **Mark done.** Every phase at 100% + validation passes → set `status: done`.
+6. **Blocked.** If the implementer surfaces a blocking condition (`BLOCKED` in its notes, per the blocked reference), set `status: blocked`, stop the loop, and escalate to a human — never fake `done`.
+7. **Mark done.** Every phase at 100% + validation passes → set `status: done`.
 
 ## Test
 
-After the loop terminates: every phase in the plan has its acceptance criteria checked off, validation commands exit zero, no plan section is left in a `TBD` or `BLOCKED` state, and the plan carries `status: done`.
+After the loop terminates: every phase has its acceptance criteria checked off, validation commands exit zero, and the plan carries `status: done` — OR, if a blocking condition held, the loop stopped and the plan carries `status: blocked`.
