@@ -1,6 +1,6 @@
 ---
 name: 04-wireframe
-description: Produce low-fidelity wireframes from a PRD or feature description, validated with the user before save. Use when the user says "wireframe", "wireframes", "wireframe the feature", "screen layout", "low-fi mockup", "maquette fil de fer", or asks for the screens and navigation flow of a feature. Do NOT use for high-fidelity visual design, generating UI code, drafting a PRD, or writing a spec.
+description: Produce low-fidelity wireframes from a feature description, auto-loading a PRD from aidd_docs when one exists, validated with the user before save. Use when the user says "wireframe", "wireframes", "wireframe the feature", "screen layout", "low-fi mockup", "maquette fil de fer", or asks for the screens and navigation flow of a feature. Do NOT use for high-fidelity visual design, generating UI code, drafting a PRD, or writing a spec.
 ---
 
 # Wireframe
@@ -11,7 +11,7 @@ Turns product requirements into low-fidelity wireframes: a screen inventory, ASC
 
 | #   | Action      | Role                                                              | Input                                            |
 | --- | ----------- | ---------------------------------------------------------------- | ------------------------------------------------ |
-| 01  | `wireframe` | Parse PRD or description, draft wireframes per template, validate, save | prd_path or feature_description, user_flows (optional) |
+| 01  | `wireframe` | Load context from aidd_docs, clarify screens, draft per template, validate, save | feature_description, platform (optional) |
 
 ## Default flow
 
@@ -21,7 +21,7 @@ Single action skill. The router dispatches to `wireframe` whenever a wireframe-g
 
 - Low fidelity only. Describe layout and structure, never visual design (colors, typography, spacing).
 - Never produce executable code. No HTML, CSS, JS, or component snippets; wireframes are read, not run.
-- Read the PRD when a path is given and reuse its `feature_name` so the wireframe sits next to it. Derive screens from its user flows, information architecture, and acceptance criteria. Never invent intent; mark every gap as `TBD: <precise question>`.
+- Auto-load related documents (PRD, user stories) from `aidd_docs/` when they exist and reuse the PRD `feature_name` so the wireframe sits next to it. A PRD is never required; a wireframe can be produced from the feature description alone. Never invent intent; mark every gap as `TBD: <precise question>`.
 - Confirm the screen inventory and screen types with the user before drawing any layout.
 - Always wait for explicit user validation before saving.
 - Do not self-validate. The caller spawns a reviewer with `@assets/wireframe-validator.yml`; findings come back for the next revision.

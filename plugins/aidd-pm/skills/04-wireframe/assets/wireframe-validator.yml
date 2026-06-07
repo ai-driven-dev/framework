@@ -3,7 +3,7 @@
 
 criteria:
   - id: flows_covered
-    description: Every user flow in scope maps to at least one screen. No flow from the source is left without a screen.
+    description: Every user flow in scope maps to at least one screen. No in-scope flow is left without a screen.
     required: true
     weight: 25
 

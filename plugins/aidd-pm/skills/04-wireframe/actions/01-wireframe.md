@@ -5,12 +5,12 @@ Parse the product input, draft low-fidelity wireframes per the template, validat
 ## Inputs
 
 ```yaml
-prd_path: aidd_docs/tasks/<...>-prd.md   # optional; preferred source when available
-feature_description: <free text>         # required when no prd_path is given
-user_flows: [<flow name or text>]        # optional; flows to anchor the screens
+feature_description: <free text>         # required; the feature to wireframe
 platform: web | mobile | responsive      # optional; asked during clarify when omitted
 screen_types: [<page type>]              # optional; asked during clarify when omitted
 ```
+
+No document is required. The action auto-loads related context from `aidd_docs/` when it exists; a PRD is never a precondition.
 
 ## Outputs
 
@@ -29,8 +29,8 @@ sections_present:
 
 ## Process
 
-1. **Read the source**. When `prd_path` is given, read the PRD and extract the screens from its user flows, information architecture, and acceptance criteria; reuse its `feature_name` so the wireframe sits next to the PRD. Otherwise work from `feature_description`. If neither is usable, ask the user to point to a PRD or describe the feature before continuing.
-2. **Clarify before drawing**. Propose a screen inventory derived from the source and, for each screen, the screen type (form, list, detail, dashboard, ...). Confirm `platform` (web / mobile / responsive) and the user flows in scope. Surface assumptions and ask the user to confirm or adjust. Iterate until the inventory and screen types are agreed; never start layouts on an unconfirmed inventory.
+1. **Gather context from `aidd_docs/`**. Search `aidd_docs/` for documents related to `feature_description` (a PRD, user stories) and load any that exist; they seed the screen inventory and `feature_name`. Treat them as optional context, never a precondition: when nothing is found, derive everything from `feature_description` and the clarify dialogue.
+2. **Clarify before drawing**. Propose a screen inventory and, for each screen, the screen type (form, list, detail, dashboard, ...). Confirm `platform` (web / mobile / responsive) and the user flows in scope. Surface assumptions and ask the user to confirm or adjust. Iterate until the inventory and screen types are agreed; never start layouts on an unconfirmed inventory.
 3. **Draft**. Fill `assets/wireframe-template.md`: list every agreed screen, draw an ASCII layout and component hierarchy per screen, express the navigation flow as a Mermaid `flowchart`, annotate empty, loading, and error states, and note responsive behavior. Mark unknowns as `TBD: <question>`.
 4. **Validate**. Show the full draft to the user. Wait for explicit approval. Apply revisions and re-show on each iteration.
 5. **Save**. Write the approved wireframe to `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<feature_name>-wireframe.md`. Create the month directory when missing.
@@ -41,8 +41,8 @@ Do not self-validate. When a caller needs a quality gate, it spawns a reviewer w
 ## Test
 
 - **File saved**: `wireframe_path` exists on disk after the action completes.
-- **No orphan screens**: every screen in the file traces to a user flow, information-architecture entry, or acceptance criterion in the source.
-- **Traceable to source**: when `prd_path` was given, `feature_name` matches the PRD's and every user flow in scope maps to at least one screen.
+- **No orphan screens**: every screen in the file traces to a user flow or a screen the user agreed during clarify.
+- **Aligned with loaded context**: when a related document was found in `aidd_docs/`, `feature_name` matches it and every user flow it describes maps to at least one screen.
 - **All sections**: the file contains every heading listed in `sections_present`.
 - **Navigation flow**: the file contains at least one Mermaid `flowchart` block.
 - **No code**: the file has no executable code blocks (no ```html, ```css, ```js) and no component markup describing how to build the UI.

@@ -62,7 +62,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [wireframe-template.md](skills/04-wireframe/assets/wireframe-template.md) | `Low-fidelity wireframe template (screens, layouts, navigation flow)` | - |
 | `evals` | [scenarios.json](skills/04-wireframe/evals/scenarios.json) | - | - |
 | `-` | [README.md](skills/04-wireframe/README.md) | - | - |
-| `-` | [SKILL.md](skills/04-wireframe/SKILL.md) | `Produce low-fidelity wireframes from a PRD or feature description, validated with the user before save. Use when the user says "wireframe", "wireframes", "wireframe the feature", "screen layout", "low-fi mockup", "maquette fil de fer", or asks for the screens and navigation flow of a feature. Do NOT use for high-fidelity visual design, generating UI code, drafting a PRD, or writing a spec.` | - |
+| `-` | [SKILL.md](skills/04-wireframe/SKILL.md) | `Produce low-fidelity wireframes from a feature description, auto-loading a PRD from aidd_docs when one exists, validated with the user before save. Use when the user says "wireframe", "wireframes", "wireframe the feature", "screen layout", "low-fi mockup", "maquette fil de fer", or asks for the screens and navigation flow of a feature. Do NOT use for high-fidelity visual design, generating UI code, drafting a PRD, or writing a spec.` | - |
 
 #### `skills/05-spec`
 

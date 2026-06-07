@@ -10,8 +10,8 @@ Stays at the structure level; never visual design and never code.
 
 - "wireframe", "wireframes", "wireframe the feature".
 - "screen layout", "low-fi mockup", "maquette fil de fer".
-- When a PRD is ready and you need to lay out the screens and navigation
-  before writing the spec.
+- When you need to lay out the screens and navigation of a feature, with or
+  without an existing PRD.
 
 ## When NOT to use
 
@@ -24,12 +24,13 @@ Stays at the structure level; never visual design and never code.
 ## How to invoke
 
 ```
-Use skill aidd-pm:04-wireframe for <PRD path or feature description>
+Use skill aidd-pm:04-wireframe for <feature to wireframe>
 ```
 
-The skill reads the PRD, proposes a screen inventory and screen types for
-you to confirm or challenge, then drafts each screen per template, shows the
-draft, and waits for explicit validation before saving.
+The skill auto-loads a related PRD from `aidd_docs/` when one exists, proposes
+a screen inventory and screen types for you to confirm or challenge, then
+drafts each screen per template, shows the draft, and waits for explicit
+validation before saving. No document is required to start.
 
 ## Outputs
 
@@ -41,7 +42,8 @@ draft, and waits for explicit validation before saving.
 
 ## Prerequisites
 
-- A PRD path, a feature description, or both.
+- A feature to wireframe. A PRD is optional; it is auto-loaded from
+  `aidd_docs/` when present.
 - Write access to `aidd_docs/tasks/` in the current repo.
 
 ## Technical details
