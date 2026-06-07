@@ -30,9 +30,9 @@ Use skill aidd-pm:04-wireframe for <feature to wireframe>
 ```
 
 The skill auto-loads a related PRD from `aidd_docs/` when one exists, proposes
-a screen inventory and screen types for you to confirm or challenge, then
-drafts each screen per template, shows the draft, and waits for explicit
-validation before saving. No document is required to start.
+a screen inventory and screen types for you to confirm or challenge, copies the
+template into `aidd_docs/tasks/`, then fills that copy in place and waits for
+explicit validation. No document is required to start.
 
 ## Outputs
 
