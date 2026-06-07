@@ -16,15 +16,14 @@ plan_path: <path>
 child_paths: [<path>]
 decisions_made: [...]
 decisions_blocked: [...]
-plan_status: in_progress | done | blocked
 ```
 
 ## Process
 
 1. **Spawn planner** (`planner` agent) with the inputs above. Brief: run `plan` end to end (URL detection, ticket fetch, normalization, architecture projection, rules selection, phase breakdown). Never inline raw ticket or spec as the plan body.
 2. **Read output.** Capture the YAML returned by the planner.
-3. **Return** it as-is to the SDLC orchestrator. Note: returned `plan_status` is a transient orchestration signal, distinct from the persisted frontmatter `status` the plan carries.
+3. **Return** it as-is to the SDLC orchestrator.
 
 ## Test
 
-`plan_path` exists on disk; its frontmatter contains `objective`, runnable `success_condition`, `iteration: 0`, `created_at`, `status: pending`; `plan_status` is one of `in_progress | done | blocked`; the plan's `objective` matches the spec's `objective` (or the request when spec was skipped).
+`plan_path` exists on disk; its frontmatter contains `objective`, runnable `success_condition`, `iteration: 0`, `created_at`, `status: pending`; the plan's `objective` matches the spec's `objective` (or the request when spec was skipped).
