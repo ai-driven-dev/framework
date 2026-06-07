@@ -58,7 +58,7 @@ applicable_rules: [{ tool: <claude|cursor|copilot|opencode>, name: <id>, path: <
    - Determine the feature name from the requirements.
    - Insert the user journey as Mermaid syntax in the plan (apply `@../references/mermaid-conventions.md`).
    - Fill the chosen template, including the validated architecture projection and applicable rules.
-   - Fill execution frontmatter (required): `objective`, `status: pending` (lifecycle field; see the plan-status reference for values/ownership; filename carries no status suffix).
+   - Fill execution frontmatter (required): `objective`, `status: pending`.
    - Save to disk:
      - Simple plan: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>.md`
      - Master plan: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket_number>-<feature_name>-master.md`

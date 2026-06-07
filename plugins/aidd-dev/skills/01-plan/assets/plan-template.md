@@ -15,7 +15,7 @@ status: pending
 - Interpret comments on this file to help you fill it.
 - Each phase MUST have acceptance criteria.
 - During implementation, the AI may amend this plan. Every AI change MUST be prefixed with 🤖 and include a brief rationale.
-- `status` = lifecycle field; set `pending` at creation. Values and ownership per the plan-status reference. Filename carries NO status suffix; status lives here.
+- `status`: set `pending` at creation (see the plan-status reference).
 - Log is APPEND-ONLY. One entry per step attempt. Never rewrite history.
 -->
 

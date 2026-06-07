@@ -17,7 +17,7 @@ status: pending
 - Interpret comments on this file to help you fill it.
 - Each phase MUST have acceptance criteria.
 - During implementation, the AI may amend this plan. Every AI change MUST be prefixed with 🤖 and include a brief rationale.
-- This file IS the live tracking file for For Sure. State lives in the `status` frontmatter field (`pending → in-progress → done`); the filename carries no status suffix.
+- This file IS the live tracking file for For Sure. State lives in the `status` frontmatter field (`pending → in-progress → done`).
 - `success_condition` MUST be a runnable command. The loop sets `status: done` only when it passes.
 - Log is APPEND-ONLY. One entry per step attempt. Never rewrite history.
 -->

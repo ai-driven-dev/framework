@@ -19,10 +19,6 @@ Spawn the `implementer` agent to execute this skill. For tools that do not suppo
 @actions/01-implement.md
 ```
 
-## Transversal rules
-
-- Retry on failure, but when a blocking condition holds (see `@references/blocked.md`), set `status: blocked` and escalate to a human instead of looping forever.
-
 ## References
 
 - `@references/blocked.md` - conditions that make a plan `blocked` (needs a human). All actions inherit it.
