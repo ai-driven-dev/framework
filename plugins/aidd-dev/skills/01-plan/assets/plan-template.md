@@ -6,6 +6,7 @@ objective: "{What must be true when done. One sentence.}"
 success_condition: "{Runnable command that proves done. Example: 'npm test exits 0 AND coverage > 80%'}"
 iteration: 0
 created_at: "{YYYY-MM-DDTHH:MM:SSZ}"
+status: pending
 ---
 
 <!--  AI INSTRUCTIONS ONLY -- Follow those rules, do not output them.
@@ -17,8 +18,8 @@ created_at: "{YYYY-MM-DDTHH:MM:SSZ}"
 - Interpret comments on this file to help you fill it.
 - Each phase MUST have acceptance criteria.
 - During implementation, the AI may amend this plan. Every AI change MUST be prefixed with 🤖 and include a brief rationale.
-- This file IS the live tracking file for For Sure. Filename status: `<task>.pending.md` → `.in-progress.md` → `.done.md`.
-- `success_condition` MUST be a runnable command. The loop renames to `.done.md` only when it passes.
+- `status` is the lifecycle field (kanban-facing): `pending | in-progress | done | verified | blocked`. `pending` at creation; the implement layer sets `in-progress` then `done`; the review layer sets `verified`. The FILENAME carries NO status suffix - the status lives here.
+- `success_condition` MUST be a runnable command (reject vague conditions).
 - Log is APPEND-ONLY. One entry per step attempt. Never rewrite history.
 -->
 

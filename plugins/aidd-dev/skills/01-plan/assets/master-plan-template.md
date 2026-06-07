@@ -29,7 +29,8 @@ argument-hint: N/A
 | 1   | {plan-name} | `./*-part-1.md` | pending | [ ]       |
 | 2   | {plan-name} | `./*-part-2.md` | blocked | [ ]       |
 
-<!-- Status values: pending, in-progress, done, blocked -->
+<!-- Status values: pending, in-progress, done, verified, blocked -->
+<!-- Source of truth: each child plan's frontmatter `status`. This table is a derived view - do not maintain it as a second source. -->
 <!-- RULE: Plan N+1 blocked until Plan N checkbox checked -->
 
 ## Validation Protocol

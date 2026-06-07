@@ -25,6 +25,8 @@ plan_status: in_progress | done | blocked
 2. **Read output.** Capture the YAML returned by the planner.
 3. **Return** it as-is to the SDLC orchestrator.
 
+> `plan_status` (returned YAML) is a transient orchestration signal, distinct from the persisted plan frontmatter `status` (the kanban lifecycle field `pending | in-progress | done | verified | blocked`). The planner creates the plan with `status: pending`; later steps advance the frontmatter `status` (03 → `in-progress`/`done`, 04 → `verified`).
+
 ## Test
 
-`plan_path` exists on disk; its frontmatter contains `objective`, runnable `success_condition`, `iteration: 0`, `created_at`; `plan_status` is one of `in_progress | done | blocked`; the plan's `objective` matches the spec's `objective` (or the request when spec was skipped).
+`plan_path` exists on disk; its frontmatter contains `objective`, runnable `success_condition`, `iteration: 0`, `created_at`, `status: pending`; `plan_status` is one of `in_progress | done | blocked`; the plan's `objective` matches the spec's `objective` (or the request when spec was skipped).

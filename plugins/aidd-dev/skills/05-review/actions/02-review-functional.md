@@ -40,6 +40,8 @@ Check against:
 7. **List flow and edge-case gaps** surfaced by walking through each criterion.
 8. **Format and write** the report using `@../assets/review-functional-template.md` to `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<task_name>.review_functional.md`. Create the month directory when missing.
 
+> Read-only on the plan: this action never writes the plan's `status`. The plan is the validator and may be passed by the read-only reviewer agent (`reviewer.md`), which must not modify it. The `status: verified` transition is owned by the top-level caller (the SDLC `04-review` orchestrator). When run standalone, the caller advances `status` from the reported verdict.
+
 ## Test
 
-The report file exists at the emitted `review_path`, contains a scoring matrix with exactly one row per acceptance criterion, and includes explicit `Missing behaviors`, `Unplanned behaviors`, and `Edge-case gaps` sections (empty sections show an explicit "none" rather than being omitted).
+The report file exists at the emitted `review_path`, contains a scoring matrix with exactly one row per acceptance criterion, and includes explicit `Missing behaviors`, `Unplanned behaviors`, and `Edge-case gaps` sections (empty sections show an explicit "none" rather than being omitted). The plan's `status` is left untouched by this action.
