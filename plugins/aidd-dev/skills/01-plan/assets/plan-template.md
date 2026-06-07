@@ -18,7 +18,7 @@ status: pending
 - Interpret comments on this file to help you fill it.
 - Each phase MUST have acceptance criteria.
 - During implementation, the AI may amend this plan. Every AI change MUST be prefixed with 🤖 and include a brief rationale.
-- `status` is the lifecycle field (kanban-facing): `pending | in-progress | done | verified | blocked`. `pending` at creation; the implement layer sets `in-progress` then `done`; the review layer sets `verified`. The FILENAME carries NO status suffix - the status lives here.
+- `status` = lifecycle field (kanban): `pending | in-progress | done | verified | blocked`. `pending` at creation; implement layer → `in-progress` → `done`; review layer → `verified`. Filename carries NO status suffix; status lives here.
 - `success_condition` MUST be a runnable command (reject vague conditions).
 - Log is APPEND-ONLY. One entry per step attempt. Never rewrite history.
 -->
