@@ -10,8 +10,8 @@ The plan's `status` frontmatter field tracks its lifecycle for kanban views. The
 | status        | meaning                       | written by                                                        | when                                                              |
 | ------------- | ----------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------- |
 | `pending`     | created, not started          | `01-plan`                                                         | at plan creation                                                 |
-| `in-progress` | implementation started        | implement layer (SDLC `03-implement`; standalone `02-implement`) | at the first implementer pass                                    |
-| `done`        | implemented, not yet reviewed | implement layer                                                  | whole plan implemented (no milestones remain, `items_remaining` empty) |
+| `in-progress` | implementation started        | implement layer (SDLC `03-implement`; standalone `02-implement`) | when implementation starts                                       |
+| `done`        | implemented, not yet reviewed | implement layer                                                  | all phases complete / all acceptance criteria ticked            |
 | `verified`    | reviewed and approved         | review layer (SDLC `04-review`)                                   | review verdict = ship / approve                                  |
 | `blocked`     | cannot proceed; needs a human | implement layer                                                  | a blocking condition holds (see the implement skill's blocked reference) |
 

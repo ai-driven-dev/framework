@@ -44,8 +44,9 @@ The skill exposes 3 actions across two phases:
 ## Outputs
 
 - A tracking file at `aidd_docs/tasks/<task-name>.md` (state in the
-  `status` frontmatter field) following the plan template format from
-  [01-plan](../01-plan/README.md).
+  `status` frontmatter field) from For Sure's own plan template, which
+  extends the [01-plan](../01-plan/README.md) format with
+  `success_condition` and `iteration`.
 - Per-attempt log entries inside the tracking file.
 - The tracking file's `status` set to `done` once and only once the
   success condition genuinely verifies.
@@ -62,4 +63,4 @@ The skill exposes 3 actions across two phases:
 See [`SKILL.md`](SKILL.md) for the iron rules (single source of truth,
 no repeated failures, honesty over escape, auto-accept) and
 [`actions/`](actions/) for the per-phase contracts. The tracking file
-uses the plan template asset from the `01-plan` skill.
+uses For Sure's own plan template asset (`@assets/plan-template.md`).

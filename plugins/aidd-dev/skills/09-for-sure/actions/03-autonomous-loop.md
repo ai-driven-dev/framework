@@ -21,7 +21,7 @@ log_entries: <int>
 The loop runs with no human interaction. Inputs and outputs are read from / written to the tracking file.
 
 1. **Read the entire file.** Frontmatter, journey map, steps, full Log.
-2. **Increment `iteration`** in frontmatter.
+2. **Increment `iteration`** in frontmatter, and set `status: in-progress` if still `pending`.
 3. **Read the Log** to learn from prior attempts.
 4. **Find the next unchecked step.**
 5. **Spawn a worker agent** for that step with the Worker prompt template (below). Pass the step description and the relevant context (objective, rules, prior Log entries for this step).

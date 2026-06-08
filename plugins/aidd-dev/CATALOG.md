@@ -159,7 +159,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-init-tracking.md](skills/09-for-sure/actions/01-init-tracking.md) | - | - |
 | `actions` | [02-auto-accept.md](skills/09-for-sure/actions/02-auto-accept.md) | - | - |
 | `actions` | [03-autonomous-loop.md](skills/09-for-sure/actions/03-autonomous-loop.md) | - | - |
-| `assets` | [plan-template.md](skills/09-for-sure/assets/plan-template.md) | `Living implementation plan - frozen objective, phases, and append-only execution Log. Used as input artifact AND as the autonomous-loop tracking file.` | - |
+| `assets` | [plan-template.md](skills/09-for-sure/assets/plan-template.md) | `For Sure autonomous-loop tracking file. Extends the 01-plan format with `success_condition` and `iteration` (For-Sure-only), which the loop runs and increments.` | - |
 | `evals` | [scenarios.json](skills/09-for-sure/evals/scenarios.json) | - | - |
 | `-` | [README.md](skills/09-for-sure/README.md) | - | - |
 | `-` | [SKILL.md](skills/09-for-sure/SKILL.md) | `Iterative agent loop that tracks attempts and retries until a success condition is met. Use when the user says "for sure", "make sure", "keep trying until", "loop until done", "don't stop until", or needs guaranteed completion of a task with explicit success criteria.` | - |

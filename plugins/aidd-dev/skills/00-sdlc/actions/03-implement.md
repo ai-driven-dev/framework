@@ -1,26 +1,31 @@
 # 03 - Implement
 
-Implement the plan, or apply a review fix list, by delegating to the implement skill. Mandatory.
+Build a milestone, apply a fix list, or finish a remaining scope via the implementer agent. Mandatory.
 
 ## Inputs
 
-- `plan_path` (from 02) - required
-- `fix_list` (from 04, on an iterate pass) - optional
-- `spec_slice`, `validation_commands` - optional
+- one of `milestone` (with acceptance criteria), `fix_list`, `items_remaining` - required
+- `spec_slice` - relevant portion of the spec (optional)
+- `validation_commands` - shell commands the implementer must run before reporting done (optional)
+- `plan_path` (from 02)
 
 ## Outputs
 
 ```yaml
-phases_completed: <int>
-acceptance_satisfied: true | false
-notes: [...]
+items_implemented: [...]
+items_remaining: [...]
+completion_score: 0-100
 ```
 
 ## Process
 
-1. **Delegate to the implement skill.** Invoke `aidd-dev:02-implement` with `plan_path` (and the `fix_list` as the scope on an iterate pass). The skill spawns the implementer, loops to completion, and writes the plan `status` (`in-progress` → `done`, or `blocked`).
-2. **Return** its output to the SDLC orchestrator. Do not re-implement the loop or write the status here - the implement skill owns both.
+1. **Mark in-progress.** Set `status: in-progress` in the plan frontmatter at `plan_path` (skip if already set).
+2. **Spawn implementer** (`implementer` agent) with the inputs above. Brief: run `implement` for the milestone or fix list, then `assert` + `test`.
+3. **On failure**, run `debug` and re-spawn the implementer with the diagnostic notes until tests pass.
+4. **Blocked.** If the implementer surfaces `BLOCKED` in `notes`, write `status: blocked` in the plan frontmatter at `plan_path`, stop (do NOT proceed to 04), and escalate to a human.
+5. **Mark done.** When the whole plan is implemented (no milestones remain, last pass `items_remaining` empty), set `status: done` in the plan frontmatter at `plan_path`.
+6. **Return** the implementer's YAML as-is to the SDLC orchestrator.
 
 ## Test
 
-The implement skill ran to completion; the plan `status` is `done` (or `blocked` if it surfaced a blocker) - written by the implement skill, not here.
+`completion_score` is an integer between 0 and 100; `items_implemented` and `items_remaining` are present; the validation commands return exit code 0; when fully implemented the plan's frontmatter `status` is `done` (or `blocked` if it surfaced a blocker, stopping before 04).
