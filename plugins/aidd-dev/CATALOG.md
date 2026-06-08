@@ -59,7 +59,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-components-behavior.md](skills/01-plan/actions/02-components-behavior.md) | - | - |
 | `actions` | [03-image-extract-details.md](skills/01-plan/actions/03-image-extract-details.md) | - | - |
 | `assets` | [master-plan-template.md](skills/01-plan/assets/master-plan-template.md) | `Parent plan template orchestrating multiple child plans with validation gates` | - |
-| `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | `Living implementation plan - frozen objective, phases, and append-only execution Log. Used as input artifact AND as the autonomous-loop tracking file.` | - |
+| `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | `Living implementation plan - frozen objective, phases, and acceptance criteria.` | - |
 | `assets` | [tech-choice-template.md](skills/01-plan/assets/tech-choice-template.md) | `Technology selection and comparison template` | - |
 | `evals` | [scenarios.json](skills/01-plan/evals/scenarios.json) | - | - |
 | `-` | [README.md](skills/01-plan/README.md) | - | - |

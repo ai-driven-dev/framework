@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Living implementation plan - frozen objective, phases, and append-only execution Log. Used as input artifact AND as the autonomous-loop tracking file.
+description: Living implementation plan - frozen objective, phases, and acceptance criteria.
 argument-hint: N/A
 objective: "{What must be true when done. One sentence.}"
 status: pending
