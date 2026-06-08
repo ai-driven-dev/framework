@@ -8,7 +8,7 @@ Knowledge production plugin for the AI-Driven Development framework.
 
 First time? Install with `/plugin install aidd-context@aidd-framework`, then run `aidd-context:00-onboard`.
 
-Covers project bootstrap, project initialisation, generation of Claude Code context artifacts (skills, agents, rules, commands, hooks, plugins, marketplaces), Mermaid diagrams, learning, discovery, and a state-aware onboarding loop.
+Covers project bootstrap, project initialisation, generation of Claude Code context artifacts (skills, agents, rules, commands, hooks, plugins, marketplaces), Mermaid diagrams, learning, discovery, design-system onboarding, and a state-aware onboarding loop.
 
 ## Skills
 
@@ -21,6 +21,7 @@ Covers project bootstrap, project initialisation, generation of Claude Code cont
 | [1.4]      | [mermaid](skills/04-mermaid/README.md)                 | Generate high-quality Mermaid diagrams from markdown content using a structured plan-validate workflow.                                                         |
 | [1.5]      | [learn](skills/05-learn/README.md)                     | Capture and store learnings from recently implemented features into memory bank, decisions, or coding rules.                                                    |
 | [1.6]      | [discovery](skills/06-discovery/README.md)             | Help users discover installed skills and find the right one for their use case.                                                                                 |
+| [1.7]      | [design-system](skills/07-design-system/README.md)     | Guided playbook to author a quality design system by wrapping the Impeccable skill; routes each step to the right Impeccable command. Produces no files of its own - Impeccable's DESIGN.md stays canonical. |
 
 ## Onboarding
 

@@ -26,7 +26,7 @@ A single markdown table delivered to the user. One row per action, in numeric or
    - **Every file referenced by `@<path>` inside the action** - templates, references, helpers.
    - **A concrete value for each `## Inputs` field**, derived from the action's input declaration (or upstream action's outputs if depends_on).
    - **`cwd`** = repo root.
-   - **Instruction** : execute `## Process`, then run the `## Test`; report pass/fail and the cause if fail in ≤ 100 words.
+   - **Instruction** : execute `## Process`, then run the `## Test`; report pass/fail and the cause if fail in ≤ 100 words. For a **delegation/playbook action** (R11) the test verifies the external tool's artifact on disk (e.g. `DESIGN.md` exists); if that tool is not installed in the validation environment, mark the row ⏭️ with the reason rather than ❌.
 2. Capture for each action: slug, the `## Test` sentence verbatim, status. Add a row.
 3. On `❌`, the agent diagnoses the root cause, **resolves it in the real environment** (install MCP, generate API key per `.env.local`, authenticate, etc.), then **patches the action source file on disk** to point to the working solution. Re-run `## Test` via a fresh agent. Repeat until ✅. The patched action is the documentation - no separate change log.
 4. If `disable-model-invocation: false` in `<skill_path>/SKILL.md`: for each scenario in `<skill_path>/evals/scenarios.json`, spawn one fresh agent that reproduces the prompt verbatim and reports whether the dispatched action matches `expect_action`. Add one row per scenario.

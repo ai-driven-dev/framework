@@ -1,8 +1,16 @@
 ---
+description: <One line. Comprehensive description that provides full context and clearly indicates when this rule should be applied. Include key scenarios, impacted areas, and why following this rule is important. While being thorough, remain focused and relevant. The description should be detailed enough that the agent can confidently determine whether to apply the rule in any given situation>
 paths:
   - "{{glob1}}"
 ---
 
-# {{rule_title}}
+# Rule name
 
-- {{rule_bullet}}
+## Group 1
+
+- Rule 1
+- Rule 2
+
+```<language>
+// <small example>
+```

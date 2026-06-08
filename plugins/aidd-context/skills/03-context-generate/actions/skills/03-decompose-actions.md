@@ -21,7 +21,7 @@ Example for a hypothetical `slack` skill:
 
 The `test` cell of each row will be **transcribed verbatim** into the `## Test` section of the generated action file in 05. No transformation. Concrete inputs, concrete assertions, observable side-effect.
 
-Tests must be real-execution: status 200, artifact created, MCP returning the expected value. Never a mocked `*.test.js` - the first successful run is the test.
+Tests must be real-execution: status 200, artifact created, MCP returning the expected value. Never a mocked `*.test.js` - the first successful run is the test. For a **delegation/playbook action** (R11, see `@../../references/skill-authoring.md`), real-execution means the **external command's artifact** exists on disk / its side-effect is observable (e.g. `DESIGN.md` written by the delegated tool), or the correct command was surfaced - not an MCP call the skill never makes.
 
 ## Process
 
@@ -29,7 +29,7 @@ Tests must be real-execution: status 200, artifact created, MCP returning the ex
 2. Group by atomicity. Split if process > ~100 lines. Merge + parameterize if ≥ 80% logic shared.
 3. One-shot configs (API key load, `.env` source, client init) stay inline in the consuming action's `## Process`. Create a dedicated action only if independently callable OR reused by ≥ 2 downstream actions.
 4. Ordering: `sequential = true` → numbered prefixes `01-`, `02-` (see `references/skill-authoring.md` ## Naming).
-5. Write the `test` cell row by row - concrete inputs, concrete assertion. Pick whichever fits: a command to run, an artifact check, or an API/MCP/state side-effect.
+5. Write the `test` cell row by row - concrete inputs, concrete assertion. Pick whichever fits: a command to run, an artifact check, an API/MCP/state side-effect, or - for a delegation/playbook action (R11) - the artifact the delegated external command produced, or that the correct command was surfaced.
 6. Present the table. **Validate the `test` column row by row with the user, in writing.** No silent acceptance.
 7. **Preview gate (tree + human).** Render the full proposed `file_tree` of the skill - SKILL.md, every action file, and any references/assets/evals - so the user sees the complete structure before a single file is written. Get explicit written approval. No write in `04`+ proceeds without it.
 8. **Preview gate (AI review).** Discover a review capability by matching loaded-skill descriptions for keywords such as `review`, `verify correctness against plan`, `find flaws`, `architecture conformance`. Have it review the `action_plan` + `file_tree` for gaps, naming, and R1-R10 conformance. Surface its findings; block on deal-breakers before `04` writes.

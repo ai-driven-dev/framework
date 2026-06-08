@@ -25,7 +25,7 @@ files_written:
 
 1. Ask the user for 3+ realistic prompts (verbatim, not invented).
 2. For each prompt, map to an `expect_action` slug - or `null` if the skill must NOT trigger.
-3. For each confirmed tool (skip any in `blocked_tools`), resolve the tool skills root from `@../../references/ai-mapping.md`. Write `evals/scenarios.json` to `<target_base><tool skills root>/<skill_name>/evals/scenarios.json`. If `target_base` is empty, the path is CWD-relative (e.g. `.claude/skills/<skill_name>/evals/scenarios.json`); if non-empty, prepend it (e.g. `plugins/my-plugin/.claude/skills/<skill_name>/evals/scenarios.json`).
+3. For each confirmed tool (skip any in `blocked_tools`), resolve the tool skills root from `@../../references/ai-mapping.md`. Write `evals/scenarios.json` to `<target_base><tool skills root>/<skill_name>/evals/scenarios.json`. If `target_base` is empty, the path is CWD-relative (e.g. `.claude/skills/<skill_name>/evals/scenarios.json`); if non-empty, prepend it using the plugin-source layout (e.g. `plugins/my-plugin/skills/<skill_name>/evals/scenarios.json`, NOT `.claude/skills/`; see `@../../references/ai-mapping.md` ## Plugin-source vs project-root layout).
 4. Read scenarios back to the user. Wait for written validation before action 03.
 5. Apply the **write target validation** from `@../../references/tool-resolution.md` (## Write target validation).
 
