@@ -2,7 +2,7 @@
 
 <img src="docs/assets/logo.png" alt="AIDD" width="140" />
 
-# AI-Driven Dev Framework
+# AI-Driven Dev Framework `alpha`
 
 ### A community-maintained marketplace of skills, agents, and rules for Claude Code.
 
