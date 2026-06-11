@@ -15,7 +15,7 @@ flowchart TD
     Who{"Your profile?"}
     Pub["Public - discuss, react, upvote"]
     Core["Core Team - vote on roadmap priority"]
-    Cert["Certifie AIDD - branch, commit (DCO), open PR"]
+    Cert["Certifie AIDD - branch, commit, open PR"]
     Rev["Habilite AIDD - review (CODEOWNERS)"]
     Merge["Habilite AIDD - merge, release-please ships"]
 
@@ -57,10 +57,10 @@ make reload                        # all plugins; or PLUGIN="aidd-refine aidd-pm
 
 ## 2. Commit
 
-Format: `<type>(<scope>): description`, **signed off** for the [DCO](https://developercertificate.org/).
+Format: `<type>(<scope>): description`.
 
 ```bash
-git commit -s -m "feat(aidd-dev): add for-sure skill"
+git commit -m "feat(aidd-dev): add for-sure skill"
 ```
 
 **Scope** - one per commit (split cross-plugin changes):
@@ -76,19 +76,12 @@ git commit -s -m "feat(aidd-dev): add for-sure skill"
 - `feat` → minor · `fix` / `perf` → patch · `!` or `BREAKING CHANGE:` → major
 - `docs` / `refactor` / `style` / `test` / `build` / `ci` / `chore` → no release
 
-**DCO** - `-s` adds the `Signed-off-by` trailer. Forgot one?
-
-```bash
-git commit --amend --signoff       # last commit
-git rebase --signoff origin/main   # whole branch
-```
-
-The [`DCO`](./.github/workflows/dco.yml) check fails any unsigned commit. Versioning and the release bundles are automated - see [Releases](#releases).
+Versioning and the release bundles are automated - see [Releases](#releases).
 
 ## 3. Open a pull request
 
 - Work on a branch, not `main`.
-- **Fill the PR template** (applied automatically): explain *what* changed and *how* you resolved it technically - that narrative is the point of the PR. The conventional title, DCO sign-off, and pre-commit hooks are already enforced by CI, so don't spend the description re-asserting them.
+- **Fill the PR template** (applied automatically): explain *what* changed and *how* you resolved it technically - that narrative is the point of the PR. The conventional title and pre-commit hooks are already enforced by CI, so don't spend the description re-asserting them.
 - **Label the PR** so reviewers and the [Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8) triage at a glance:
 
   | Label | When to use |
