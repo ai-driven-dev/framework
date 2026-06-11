@@ -1,0 +1,33 @@
+# 01 - Todo
+
+Categorize the user prompt into independent todos, implement each in parallel, report.
+
+## Inputs
+
+User's requirement.
+
+## Outputs
+
+```markdown
+| Category | Launched | Output |
+| -------- | -------- | ------ |
+```
+
+## Process
+
+1. **Read.** Take `prompt` from `$ARGUMENTS`; if empty, use the latest user message.
+2. **Categorize.** Split the prompt into distinct, independent todos (category + task). Inline, no agent, using template.
+3. **Launch.** Spawn one `implementer` agent per todo, all in parallel (one message, multiple Task calls). Each agent prompt mandates, in order:
+   ```markdown
+   1. Refine the todo first - discover at runtime a skill whose description covers refining or clarifying a request (never a hardcoded plugin name) and run it on the todo.
+   2. Implement the refined todo.
+   3. Return a one-line output summary.
+   ```
+4. **Report.** Print exactly one table, nothing else:
+
+## Test
+
+- Every todo is one row in the table.
+- Agents were spawned in a single parallel batch.
+- Each agent ran a refine step before implementing.
+- No output besides the table.

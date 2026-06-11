@@ -7,7 +7,7 @@
 ### A community-maintained marketplace of skills, agents, and rules for Claude Code.
 
 <p>
-  <!--counts:start--><kbd>6 plugins</kbd> · <kbd>31 skills</kbd> · <kbd>3 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
+  <!--counts:start--><kbd>6 plugins</kbd> · <kbd>32 skills</kbd> · <kbd>3 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
 </p>
 
 <p>
@@ -146,7 +146,7 @@ Project init, architecture, generation of Claude Code context artifacts (skills,
 
 ### ⚙️ [aidd-dev](plugins/aidd-dev/README.md)
 
-`10 skills` · stable
+`11 skills` · stable
 
 SDLC loop: sdlc, plan, implement, assert, audit, review, test, refactor, debug, for-sure.
 

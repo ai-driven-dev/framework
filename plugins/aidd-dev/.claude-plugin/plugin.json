@@ -17,7 +17,8 @@
     "./skills/06-test",
     "./skills/07-refactor",
     "./skills/08-debug",
-    "./skills/09-for-sure"
+    "./skills/09-for-sure",
+    "./skills/10-todo"
   ],
   "agents": [
     "./agents/implementer.md",

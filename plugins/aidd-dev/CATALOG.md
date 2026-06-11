@@ -19,6 +19,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/07-refactor`](#skills07-refactor)
   - [`skills/08-debug`](#skills08-debug)
   - [`skills/09-for-sure`](#skills09-for-sure)
+  - [`skills/10-todo`](#skills10-todo)
 
 ---
 
@@ -161,4 +162,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `evals` | [scenarios.json](skills/09-for-sure/evals/scenarios.json) | - |
 | `-` | [README.md](skills/09-for-sure/README.md) | - |
 | `-` | [SKILL.md](skills/09-for-sure/SKILL.md) | `Iterative agent loop that tracks attempts and retries until a success condition is met. Use when the user says "for sure", "make sure", "keep trying until", "loop until done", "don't stop until", or needs guaranteed completion of a task with explicit success criteria.` |
+
+#### `skills/10-todo`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-todo.md](skills/10-todo/actions/01-todo.md) | - |
+| `-` | [README.md](skills/10-todo/README.md) | - |
+| `-` | [SKILL.md](skills/10-todo/SKILL.md) | `Split the user prompt into independent todos, run one implementer agent per todo in parallel (each refines its todo first), and report a minimal table. Use when the user says "todo", "/todo", or asks to fan out a multi-part request into parallel implementations.` |
 
