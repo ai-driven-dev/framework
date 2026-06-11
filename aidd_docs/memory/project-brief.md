@@ -30,7 +30,7 @@
 | ToolConfig           | Per-tool configuration: output paths, frontmatter conversion, merge rules. Tools: `claude` → `.claude/`, `cursor` → `.cursor/`, `copilot` → `.github/`, `opencode` → `.opencode/`, `codex` → `.codex/` |
 | Plugin               | Capability files (agents, commands, hooks, mcp, rules, skills) distributed per AI tool format via marketplace catalogs                                                            |
 | Drift                | Installed file modified locally vs. what was written at install time                                                                                                              |
-| Init                 | Bootstrap: creates `aidd_docs/` structure + manifest                                                                                                                              |
+| Init                 | Bootstrap: CLI writes `.aidd/manifest.json` (+ `.aidd/cache` gitignore). The `aidd_docs/` memory bank is scaffolded by the `aidd-context` project-init skill, not the CLI binary    |
 | Install              | Generates and writes tool-specific distribution files                                                                                                                             |
 
 ## Commands
@@ -38,8 +38,8 @@
 ### Bootstrap
 | Command | Purpose |
 |---|---|
-| `aidd setup --source remote\|local [--all] [--ai <ids>] [--ide <ids>] [--plugins/--all-plugins/--recommended-plugins/--no-plugins] [--yes]` | Initialize project: marketplace + tools + plugins |
-| `aidd migrate [--dry-run] [--non-interactive]` | Migrate brownfield v3/v4 manifest to v5 |
+| `aidd setup --source remote\|local [--path <dir>] [--release <tag>] [--ai <ids>] [--ide <ids>] [--plugins <none\|all\|recommended\|names>] [--no-default-marketplace] [--yes]` | Initialize project: marketplace + tools + plugins (`--ai all` / `--ide all` for everything) |
+| `aidd migrate [--dry-run] [--non-interactive]` | Migrate brownfield v3/v4/v5 manifest to v6 |
 
 ### AI tools (claude, cursor, copilot, codex, opencode)
 | Command | Purpose |
@@ -57,16 +57,14 @@
 ### Plugins
 | Command | Purpose |
 |---|---|
-| `aidd plugin install <name> [--from <market>] [--tool <id>] [--token <v>] [--yes]` | Install from marketplace |
-| `aidd plugin add <local-path> [--tool <id>]` | Add local plugin |
-| `aidd plugin remove / list / update / search / pick / status / sync / restore / doctor` | Plugin ops |
+| `aidd plugin install [name\|local-path] [--from <market>] [--tool <id>] [--scope <user\|project>] [--token <v>] [--yes]` | Install from marketplace or local path; no arg → interactive pick |
+| `aidd plugin create [name] / remove / list / update / search / doctor` | Plugin ops |
 
 ### Marketplaces
 | Command | Purpose |
 |---|---|
-| `aidd marketplace add <name> <source> [--user] [--yes] [--overwrite] [--token <v>]` | Register marketplace |
-| `aidd marketplace list / remove / refresh / browse / check` | Marketplace ops |
-| `aidd marketplace cache list / clear` | Cache management |
+| `aidd marketplace add [name] [source] [--scope <user\|project>] [--yes] [--overwrite] [--token <v>]` | Register marketplace |
+| `aidd marketplace list [--plugins] / remove / refresh [--force] / check` | Marketplace ops (cache cleared via `refresh --force`) |
 
 ### Auth
 | Command | Purpose |
@@ -81,8 +79,8 @@
 | `aidd clean [--force]` | Nuke .aidd + tracked files |
 | `aidd self-update` | Update CLI binary |
 
-### Removed (v5 / post-beta.23 architecture cleanup)
-- `aidd cache list/clear` — replaced by `aidd marketplace cache`
+### Removed (architecture cleanup; current manifest = v6)
+- `aidd cache list/clear` — removed; cache cleared via `aidd marketplace refresh --force`
 - `aidd config list/get/set` — no remaining writable fields
 - `aidd install [category] [tool]` — replaced by `aidd ai/ide install`
 - `aidd uninstall [category] [tool]` — replaced by `aidd ai/ide uninstall`

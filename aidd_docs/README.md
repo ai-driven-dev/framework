@@ -53,8 +53,6 @@ The framework is built on 6 building blocks:
 | 🔧 Skills    | Context-matched          | Reusable workflows loaded when context matches          |
 | 📐 Templates | `aidd_docs/templates/`    | Scaffolding to generate agents, commands, rules, skills |
 
-> See the [Full catalog](CATALOG.md) — exhaustive list of all commands, agents, rules, skills
-
 #### Commands structure
 
 We have decided to put those into categories that serve the **Software Development Lifecycle** (`SDLC`).
@@ -71,8 +69,6 @@ We have decided to put those into categories that serve the **Software Developme
 | 08    | Deploy        | Commits, pull/merge requests, tagging                  |
 | 09    | Refactor      | Performance optimization, security refactoring         |
 | 10    | Maintenance   | Debugging, issue tracking, codebase audits             |
-
-> See more here: [CATALOG.md](CATALOG.md) — the 10 phases from Onboard to Maintenance
 
 ### Framework Structure
 
@@ -148,10 +144,10 @@ Start at **Initialization**, then follow the path step by step. Each box shows t
 
    | 📄 File                | 🎯 Purpose                                  |
    | ---------------------- | ------------------------------------------- |
-   | `project_brief.md`     | Vision, objectives, what the project does   |
+   | `project-brief.md`     | Vision, objectives, what the project does   |
    | `architecture.md`      | Tech stack, patterns, folder structure      |
-   | `codebase_map.md`      | Key files, entry points, dependencies       |
-   | `coding_assertions.md` | Linting, formatting, type checking commands |
+   | `codebase-map.md`      | Key files, entry points, dependencies       |
+   | `coding-assertions.md` | Linting, formatting, type checking commands |
    | `testing.md`           | Test framework, patterns, coverage targets  |
    | `deployment.md`        | CI/CD, environments, infrastructure         |
    | `vcs.md`               | Branching model, commit conventions         |
@@ -202,7 +198,7 @@ Your project is configured, assertions pass. Now pick the right workflow for you
 
 #### Where will rules be stored?
 
-> See full [CATALOG.md](CATALOG.md) — the 10 rule directories from Architecture to Other
+Rules live under each tool's rules directory (e.g. `.claude/rules/`), grouped by category subfolder.
 
 | #    | Category                   | Content                     | Examples                        |
 | ---- | -------------------------- | --------------------------- | ------------------------------- |
@@ -681,6 +677,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on modifying or contributi
 
 ## 📚 References
 
-- [`CATALOG.md`](CATALOG.md) — Full reference: all commands, agents, rules, skills, and templates.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — Guidelines for adding or modifying content.
-- [Agents Coordination](templates/aidd/agents_coordination.md) — Multi-agent workflows and communication flow.

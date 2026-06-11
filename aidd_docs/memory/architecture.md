@@ -60,8 +60,8 @@ PluginInstallFromMarketplaceUseCase → MarketplaceRegistry + PluginFetcher (git
 
 **Framework build** (`aidd framework build --target <tool>`):
 ```
-FrameworkBuildUseCase → BuildOutputStrategy (Marketplace | Flat | Codex)
-→ tool-native plugin tree (author-side distribution; copilot + codex shipped, cursor/opencode pending)
+FrameworkBuildUseCase → BuildOutputStrategy (MarketplaceBuildStrategy | FlatBuildStrategy, reading per-tool ToolBuildContract)
+→ tool-native plugin tree (author-side distribution; all 5 targets shipped — claude/cursor/copilot/codex marketplace+flat, opencode flat-only)
 ```
 Author-side, not user-side: translates the Claude-format framework into a tool-native
 marketplace dist (Mode A) or flat workspace materialization (Mode B `--flat`).

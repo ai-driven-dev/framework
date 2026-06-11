@@ -47,7 +47,7 @@ requires installing each tool and is the human gate in [Residual risks](#residua
 |---|---|---|---|---|---|---|
 | claude | `.claude-plugin/plugin.json` | `.claude-plugin/marketplace.json` | `agents/*.md` (manifest `agents:["./agents"]`) | `skills/<n>/SKILL.md` | code.claude.com/docs/en/plugins-reference, /plugin-marketplaces | ✓ catalog valid, 6 manifests, 30 skills |
 | cursor | `.cursor-plugin/plugin.json` | `.cursor-plugin/marketplace.json` | `agents/*.md` (no tools/color) | `skills/<n>/SKILL.md` | cursor.com/docs/reference/plugins | ✓ catalog valid, 6 manifests, 30 skills |
-| copilot | `.github/plugin/plugin.json` | `.github/plugin/marketplace.json` | `agents/*.md` | `skills/<n>/SKILL.md` | code.visualstudio.com/docs/copilot/customization/agent-plugins; github/awesome-copilot | ✓ catalog valid, 6 manifests, 30 skills |
+| copilot | `.plugin/plugin.json` | `.plugin/marketplace.json` | `agents/*.md` | `skills/<n>/SKILL.md` | code.visualstudio.com/docs/copilot/customization/agent-plugins; github/awesome-copilot | ✓ catalog valid, 6 manifests, 30 skills (OpenPlugin `.plugin/`, `${PLUGIN_ROOT}`) |
 | codex | `.codex-plugin/plugin.json` | `.claude-plugin/marketplace.json` (legacy-compat path Codex discovers) | **TOML** (out-of-band; manifest **omits** `agents`) | `skills/<n>/SKILL.md` | developers.openai.com/codex/plugins/build, /subagents | ✓ catalog valid, 6 manifests, 30 skills, 4 TOML agents, no-agents-field confirmed |
 
 ## Flat mode — conformance
@@ -64,7 +64,7 @@ requires installing each tool and is the human gate in [Residual risks](#residua
 | claude | `.claude/skills/<skill>/SKILL.md` | `.claude/agents/<name>.md` | `.mcp.json` (`mcpServers`) | — | plugins-reference; skills; sub-agents | ✓ 30 skills (1 level, name===folder), agents, mcp `<plugin>-`prefixed |
 | cursor | `.cursor/skills/<skill>/SKILL.md` | `.cursor/agents/<name>.md` (no tools/color) | `.cursor/mcp.json` (`mcpServers`) | — | cursor.com/docs/{skills,subagents,context/mcp} | ✓ 30 skills, agents flat, mcp prefixed |
 | copilot | `.github/skills/<skill>/SKILL.md` | `.github/agents/<name>.agent.md` | `.vscode/mcp.json` (`servers`) | — | vscode agent-plugins, custom-agents, agent-skills, mcp-servers | ✓ 30 skills (name===folder), agents flat, mcp prefixed |
-| codex | `.agents/skills/<skill>/SKILL.md` | `.codex/agents/<name>.toml` | `.codex/config.toml` (`mcp_servers`) | — (no `skills.config`; discovery by placement) | developers.openai.com/codex/{skills,subagents,config-reference} | ✓ 30 skills, TOML agents (name/description always/developer_instructions), mcp prefixed |
+| codex | `.codex/skills/<skill>/SKILL.md` | `.codex/agents/<name>.toml` | `.codex/config.toml` (`mcp_servers`) | — (no `skills.config`; discovery by placement) | developers.openai.com/codex/{skills,subagents,config-reference} | ✓ 30 skills, TOML agents (name/description always/developer_instructions), mcp prefixed |
 | opencode | `.opencode/skills/<skill>/SKILL.md` (plural) | `.opencode/agents/<name>.md` (`mode: subagent`) | `opencode.json` (`mcp`, type local/remote) | `opencode.json` | opencode.ai/docs/{config,skills,agents,mcp-servers,plugins} | ✓ 30 skills, agents w/ mode, valid json, mcp prefixed, hooks warn-skipped |
 
 ## Cross-cutting guarantees (verified)
@@ -121,7 +121,7 @@ What this conformance proof does NOT cover — close before relying on a tool in
    - claude: `aidd marketplace add` + `aidd plugin install --tool claude`, confirm skills load.
    - cursor: confirm Cursor 2.5+ lists the plugin; flat skills resolve in IDE **and CLI/Automations**.
    - copilot: register the marketplace via `chat.plugins.marketplaces`; confirm VS Code lists it.
-   - codex: confirm `.codex/agents/*.toml` + `.agents/skills/<skill>/SKILL.md` are picked up.
+   - codex: confirm `.codex/agents/*.toml` + `.codex/skills/<skill>/SKILL.md` are picked up.
    - opencode: confirm `.opencode/skills/` discovery and `opencode.json` `mcp` servers load.
 2. **Cursor flat skills off-IDE**: docs say recursive, but forum reports flag nested-skill
    resolution bugs in Cursor CLI/Automations. We flatten to 1 level (the documented-safe shape), so

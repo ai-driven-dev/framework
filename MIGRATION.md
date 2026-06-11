@@ -26,8 +26,8 @@ aidd migrate
 | `aidd install ide vscode` | `aidd ide install vscode` | Noun-first: `ide` is the noun |
 | `aidd uninstall ai claude` | `aidd ai uninstall claude` | Noun-first |
 | `aidd uninstall ide vscode` | `aidd ide uninstall vscode` | Noun-first |
-| `aidd cache list` | `aidd marketplace cache list` | Cache scoped to marketplace |
-| `aidd cache clear` | `aidd marketplace cache clear` | |
+| `aidd cache list` | removed | Caches are internal; no list command |
+| `aidd cache clear` | `aidd marketplace refresh --force` | Clears cache before re-fetch |
 | `aidd config get/set/list` | (removed) | Manifest fields no longer user-configurable |
 | `aidd sync --source claude` | `aidd ai sync --source claude` | Under `ai` noun |
 | `aidd restore` | `aidd ai restore` | Under `ai` noun |
@@ -59,7 +59,9 @@ aidd migrate
 
 ## Manifest schema changes (v5)
 
-The manifest (`aidd_docs/manifest.json`) structure changes to `{ version, tools, marketplaces }`.
+The manifest (`.aidd/manifest.json`) structure changes to `{ version, tools, marketplaces }`.
+
+> This guide covers the v4.1-era schema (v5). The current CLI ships manifest **v6** (same top-level shape); `aidd migrate` upgrades any older manifest to the latest. See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 **Removed fields:**
 
@@ -71,7 +73,7 @@ The manifest (`aidd_docs/manifest.json`) structure changes to `{ version, tools,
 | `scripts` | Script install removed from the CLI |
 | `topPlugins` | Replaced by per-tool `plugins[]` under `tools[id]` |
 
-**Auto-migration:** Run `aidd migrate` — it detects and strips all removed fields, backs up the manifest to `aidd_docs/manifest.backup.json`, and is idempotent (safe to run multiple times).
+**Auto-migration:** Run `aidd migrate` — it detects and strips all removed fields, backs up the manifest to `.aidd/manifest.backup.json`, and is idempotent (safe to run multiple times).
 
 If you are on v3.x: a backup is written to `.aidd/manifest.backup.json` before any mutation.
 
@@ -91,7 +93,7 @@ aidd plugin install aidd-context
 
 ## New features worth knowing
 
-- **Marketplace cache:** `aidd marketplace cache list|clear` manages fetched catalogs locally.
+- **Marketplace cache:** catalogs are cached locally and re-fetched with `aidd marketplace refresh --force`.
 - **Plugin sync:** `aidd ai sync --source claude --target cursor` propagates installed plugins across tools.
 - **Format adapters:** The CLI can ingest Cursor, Copilot, Codex, and OpenCode native marketplace formats.
 - **Pinned marketplace version:** `aidd setup --source remote --release v4.1.0` pins the catalog version.
@@ -129,7 +131,7 @@ Marketplace registration and plugin enable state are written to these files:
 - [ ] Replace `aidd install ai <tool>` → `aidd ai install <tool>` in all CI and onboarding scripts
 - [ ] Replace `aidd install ide <tool>` → `aidd ide install <tool>`
 - [ ] Replace `aidd uninstall ai|ide <tool>` → `aidd ai|ide uninstall <tool>`
-- [ ] Replace `aidd cache` → `aidd marketplace cache`
+- [ ] Remove `aidd cache` calls — cache is internal; use `aidd marketplace refresh --force`
 - [ ] Replace `aidd sync --source <tool>` → `aidd ai sync --source <tool>`
 - [ ] Remove any `aidd config` calls
 - [ ] Remove `--repo`, `--mode`, `--path` (on install), `--from`, `--switch-mode`, `--docs-dir` flags

@@ -32,7 +32,7 @@
 
 Dependencies point inward only: infrastructure → application → domain. Domain never imports from application or infrastructure.
 
-## Key Domain Models (v5)
+## Key Domain Models (manifest v6)
 
 | Model | Description |
 |---|---|
@@ -41,7 +41,7 @@ Dependencies point inward only: infrastructure → application → domain. Domai
 | `MigrationPlan` | Plan for upgrading a manifest — strips obsolete entries, records what changed |
 | `MarketplaceEntry` | A registered marketplace (name, source, trustLevel) |
 | `MarketplaceCacheEntry` | Cached catalog fetch (marketplace name, fetchedAt, size) |
-| `Manifest` (v5) | Schema: `version`, `tools`, `plugins` (per-tool), `marketplaces`. Removed: `docsDir`, `repo`, `mode`, `scripts`, `topPlugins` |
+| `Manifest` (v6) | Top-level schema: `version`, `tools`, `marketplaces`. Plugins live per-tool under `tools[id].plugins`. Stripped top-level fields: `docsDir`, `repo`, `mode`, `scripts`, `plugins`, `topPlugins`. Stored at `.aidd/manifest.json` |
 | `Plugin` | Installed plugin: id, source (marketplace + version), tool, files |
 | `PluginDistribution` | Capability files for a plugin as fetched from the source |
 
@@ -51,9 +51,9 @@ Dependencies point inward only: infrastructure → application → domain. Domai
 aidd setup          — orchestrator: init + marketplace + tools + plugins
 aidd ai             — AI tool management (install/uninstall/list/status/update/sync/restore/doctor)
 aidd ide            — IDE tool management (install/uninstall/list/status/update/doctor)
-aidd plugin         — plugin management (add/remove/list/install/search/pick/update)
-aidd marketplace    — marketplace management (add/list/remove/refresh/browse/check/cache)
-aidd migrate        — manifest v3→v5 migration
+aidd plugin         — plugin management (create/remove/list/install/search/update/doctor)
+aidd marketplace    — marketplace management (add/list/remove/refresh/check)
+aidd migrate        — manifest migration to v6 (from older v3/v4/v5 manifests)
 aidd status         — global drift view (delegates to ai + ide status)
 aidd doctor         — global integrity check (delegates to ai + ide doctor)
 aidd restore        — global file restore (delegates to ai restore)
@@ -64,13 +64,17 @@ aidd auth           — credential management
 aidd self-update    — update the CLI binary
 ```
 
-Legacy commands removed in v5: `aidd cache`, `aidd config`, `aidd install` (top-level), `aidd uninstall` (top-level).
+Legacy commands removed: `aidd cache`, `aidd config`, `aidd install` (top-level), `aidd uninstall` (top-level). Plugin browsing folded into `aidd plugin install` (no arg); marketplace cache managed via `aidd marketplace refresh --force`.
 
 ## Plugin Architecture
 
 Plugins are distributed via marketplace catalogs (Git repos with `marketplace.json` + `plugins/`). Each plugin provides capability files (agents, commands, hooks, mcp, rules, skills) per AI tool format. The CLI translates plugin distributions between tool formats using reverse + forward content rewriting (plugin sync pipeline).
 
 Memory ownership (CLAUDE.md, AGENTS.md, copilot-instructions.md) is delegated to the `aidd-context` plugin — not bundled in the CLI binary.
+
+## Framework Build (author-side)
+
+`aidd framework build` translates a Claude-format framework source into a target-native distribution. Five targets (`claude`, `cursor`, `copilot`, `codex`, `opencode`) × two modes (`marketplace`, `flat`); `opencode` is flat-only, so 9 build cells. The orchestrators (`MarketplaceBuildStrategy`, `FlatBuildStrategy`) read a per-tool `ToolBuildContract` — no per-tool branching. **Scope:** skills, agents, mcp, and hooks are emitted; `rules` and `commands` are currently out of scope (warn + skip per plugin). See `README.md` → `aidd framework build` for the per-tool layout matrix.
 
 ## Dependency Wiring
 

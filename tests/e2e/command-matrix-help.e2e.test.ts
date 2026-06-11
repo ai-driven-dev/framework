@@ -4,7 +4,7 @@
  *
  * Already covered by existing E2E journeys (not duplicated here):
  *   clean.e2e.test.ts             — clean, clean --force, clean dry-run
- *   update-global.e2e.test.ts     — update, update --force, update multi-tool
+ *   update-global.e2e.test.ts     — update, update re-install, update multi-tool
  *   sync-plugins.e2e.test.ts      — ai sync variants (missing source, noop, force)
  *   brownfield-migrate.e2e.test.ts — migrate --non-interactive, --dry-run, idempotent
  *

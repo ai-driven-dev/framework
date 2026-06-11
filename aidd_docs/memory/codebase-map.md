@@ -12,9 +12,9 @@ src/
 │   │   ├── doctor/           # orchestrator + layout / merge-files / plugin / references / tracked-files
 │   │   ├── global/           # cross-tool chains: update-all / status-all / sync-all / restore-all / doctor-all
 │   │   ├── install/          # capability sub-use-cases: runtime-config / ide-config / agents / commands / rules / skills / config
-│   │   ├── marketplace/      # marketplace lifecycle: add / list / remove / refresh / browse / check / cache / register-framework / sync-settings
+│   │   ├── marketplace/      # marketplace lifecycle: add / list / remove / refresh / check / register-framework / sync-settings
 │   │   ├── migrate/          # sub-use-cases: backup / strip-dead-files / rewire-plugins
-│   │   ├── plugin/           # add / remove / list / update / install-from-marketplace / search / pick
+│   │   ├── plugin/           # create / add / install / install-from-marketplace / remove / list / update / search / pick
 │   │   ├── restore/          # orchestrator + tool-files / all-plugins / plugin
 │   │   ├── setup/            # sub-use-cases: marketplace-source / tools / plugins-prompt
 │   │   ├── sync/             # orchestrator + source-resolver / conflict-resolver / file-propagation / plugins / status

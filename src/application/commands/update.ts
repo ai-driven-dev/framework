@@ -7,8 +7,7 @@ export function registerUpdateCommand(program: Command): void {
   program
     .command("update")
     .description("Re-install runtime configs, update plugins, and refresh marketplaces")
-    .option("-f, --force", "Overwrite conflicting files without prompting", false)
-    .action(async (_cmdOptions: { force: boolean }) => {
+    .action(async () => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
 

@@ -31,13 +31,13 @@ describe.concurrent("E2E: aidd update", () => {
     }
   });
 
-  it("re-installs runtime configs from bundled assets with --force", async () => {
+  it("re-installs runtime configs from bundled assets", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("update-force");
     try {
       await seedProject(projectDir);
       await runCli(["ai", "install", "claude"], projectDir, fakeHome);
 
-      const { stdout, exitCode } = await runCli(["update", "--force"], projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["update"], projectDir, fakeHome);
 
       expect(exitCode).toBe(0);
       expect(stdout.toLowerCase()).toMatch(/updated|up to date/);
@@ -68,7 +68,7 @@ describe.concurrent("E2E: aidd update", () => {
       await runCli(["ai", "install", "claude"], projectDir, fakeHome);
       await runCli(["ai", "install", "cursor"], projectDir, fakeHome);
 
-      const { stdout, exitCode } = await runCli(["update", "--force"], projectDir, fakeHome);
+      const { stdout, exitCode } = await runCli(["update"], projectDir, fakeHome);
 
       expect(exitCode).toBe(0);
       // Both tools should be mentioned
