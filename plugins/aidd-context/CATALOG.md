@@ -16,6 +16,11 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/04-mermaid`](#skills04-mermaid)
   - [`skills/05-learn`](#skills05-learn)
   - [`skills/06-discovery`](#skills06-discovery)
+  - [`skills/07-skill-generate`](#skills07-skill-generate)
+  - [`skills/08-rule-generate`](#skills08-rule-generate)
+  - [`skills/09-agent-generate`](#skills09-agent-generate)
+  - [`skills/10-command-generate`](#skills10-command-generate)
+  - [`skills/11-hook-generate`](#skills11-hook-generate)
 
 ---
 
@@ -128,4 +133,72 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `-` | [README.md](skills/06-discovery/README.md) | - |
 | `references` | [ai-mapping.md](skills/06-discovery/references/ai-mapping.md) | - |
 | `-` | [SKILL.md](skills/06-discovery/SKILL.md) | `Enumerate installed surfaces of the AI tool (skills, agents, commands, plugins, MCP servers, rules, hooks, memory files) and recommend the best match for the user's stated intent. Use proactively whenever the user asks the model to list, show, enumerate, find, or pick among any of these surfaces - including imperative phrasings ("list hooks", "show me the rules", "enumerate skills", "find a memory file", "which agent reviews code"), question phrasings ("what's available?", "what hooks do we have?", "which rule applies here?", "what memory files do we have?"), and indirect phrasings ("what can I use for X?", "do we have something that does Y?"). Always pick this skill over scanning the filesystem with grep, find, ls, or reading action files directly when the user is enumerating a surface. Do NOT use for picking a specific item inside one plugin (the plugin's own onboard handles that), creating a new surface, or executing a recommended item (this skill only points; the user invokes).` |
+
+#### `skills/07-skill-generate`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-capture-intent.md](skills/07-skill-generate/actions/01-capture-intent.md) | - |
+| `actions` | [02-decompose-actions.md](skills/07-skill-generate/actions/02-decompose-actions.md) | - |
+| `actions` | [03-draft-skill.md](skills/07-skill-generate/actions/03-draft-skill.md) | - |
+| `actions` | [04-write-actions.md](skills/07-skill-generate/actions/04-write-actions.md) | - |
+| `actions` | [05-validate.md](skills/07-skill-generate/actions/05-validate.md) | - |
+| `assets` | [action-template.md](skills/07-skill-generate/assets/action-template.md) | - |
+| `assets` | [skill-template.md](skills/07-skill-generate/assets/skill-template.md) | `<What the skill does, third person, one clause>. Use when <explicit, slightly pushy trigger phrases users actually type; the model under-triggers, so over-list>. <Optional: "Not for <X>, use <Y>" only when a sibling skill could mis-trigger.> (<= 1024 chars, third person, no XML tags; all "when" lives here, not in the body.)` |
+| `-` | [README.md](skills/07-skill-generate/README.md) | - |
+| `references` | [skill-authoring.md](skills/07-skill-generate/references/skill-authoring.md) | - |
+| `references` | [tool-paths.md](skills/07-skill-generate/references/tool-paths.md) | - |
+| `-` | [SKILL.md](skills/07-skill-generate/SKILL.md) | `Generate a router-based skill across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor a skill, or turn a workflow into one. Not for other artifacts like rules, agents, commands, hooks.` |
+
+#### `skills/08-rule-generate`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-capture-rule.md](skills/08-rule-generate/actions/01-capture-rule.md) | - |
+| `actions` | [02-write-rule.md](skills/08-rule-generate/actions/02-write-rule.md) | - |
+| `actions` | [03-validate.md](skills/08-rule-generate/actions/03-validate.md) | - |
+| `assets` | [rule-template.md](skills/08-rule-generate/assets/rule-template.md) | - |
+| `-` | [README.md](skills/08-rule-generate/README.md) | - |
+| `references` | [rule-authoring.md](skills/08-rule-generate/references/rule-authoring.md) | - |
+| `references` | [tool-paths.md](skills/08-rule-generate/references/tool-paths.md) | - |
+| `-` | [SKILL.md](skills/08-rule-generate/SKILL.md) | `Generate a coding rule that governs editor and agent behavior, across the host AI tools a project uses. Use when the user wants to write, add, or refactor a rule, a convention, or a coding standard, or to scan a codebase and propose rules. Not for other artifacts like skills, agents, commands, hooks.` |
+
+#### `skills/09-agent-generate`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-capture-agent.md](skills/09-agent-generate/actions/01-capture-agent.md) | - |
+| `actions` | [02-write-agent.md](skills/09-agent-generate/actions/02-write-agent.md) | - |
+| `actions` | [03-validate.md](skills/09-agent-generate/actions/03-validate.md) | - |
+| `assets` | [agent-template.md](skills/09-agent-generate/assets/agent-template.md) | `<what it does + when to use>  # required, third person` |
+| `-` | [README.md](skills/09-agent-generate/README.md) | - |
+| `references` | [agent-authoring.md](skills/09-agent-generate/references/agent-authoring.md) | - |
+| `references` | [tool-paths.md](skills/09-agent-generate/references/tool-paths.md) | - |
+| `-` | [SKILL.md](skills/09-agent-generate/SKILL.md) | `Generate an agent across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor an agent, subagent or specialized role. Not for other artifacts like skills, rules, commands, hooks.` |
+
+#### `skills/10-command-generate`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-capture-command.md](skills/10-command-generate/actions/01-capture-command.md) | - |
+| `actions` | [02-write-command.md](skills/10-command-generate/actions/02-write-command.md) | - |
+| `actions` | [03-validate.md](skills/10-command-generate/actions/03-validate.md) | - |
+| `assets` | [command-template.md](skills/10-command-generate/assets/command-template.md) | - |
+| `-` | [README.md](skills/10-command-generate/README.md) | - |
+| `references` | [command-authoring.md](skills/10-command-generate/references/command-authoring.md) | - |
+| `references` | [tool-paths.md](skills/10-command-generate/references/tool-paths.md) | - |
+| `-` | [SKILL.md](skills/10-command-generate/SKILL.md) | `Generate a flat slash command across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor a one-shot slash command. Not for multi-step skills or other artifacts like rules, agents, hooks.` |
+
+#### `skills/11-hook-generate`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-capture-hook.md](skills/11-hook-generate/actions/01-capture-hook.md) | - |
+| `actions` | [02-write-hook.md](skills/11-hook-generate/actions/02-write-hook.md) | - |
+| `actions` | [03-validate.md](skills/11-hook-generate/actions/03-validate.md) | - |
+| `assets` | [hook-script-template.sh](skills/11-hook-generate/assets/hook-script-template.sh) | - |
+| `assets` | [hook-template.json](skills/11-hook-generate/assets/hook-template.json) | - |
+| `references` | [hook-authoring.md](skills/11-hook-generate/references/hook-authoring.md) | - |
+| `references` | [tool-paths.md](skills/11-hook-generate/references/tool-paths.md) | - |
+| `-` | [SKILL.md](skills/11-hook-generate/SKILL.md) | `Generate a hook (a handler that runs automatically at a lifecycle event) across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor a hook, or automate an action at a lifecycle point. Not for other artifacts like skills, rules, agents, commands.` |
 

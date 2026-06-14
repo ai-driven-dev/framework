@@ -12,6 +12,11 @@
     "./skills/01-bootstrap",
     "./skills/02-project-init",
     "./skills/03-context-generate",
+    "./skills/07-skill-generate",
+    "./skills/08-rule-generate",
+    "./skills/09-agent-generate",
+    "./skills/10-command-generate",
+    "./skills/11-hook-generate",
     "./skills/04-mermaid",
     "./skills/05-learn",
     "./skills/06-discovery"
