@@ -1,6 +1,6 @@
 import { InvalidMigrationFromVersionError } from "../errors.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "./marketplace.js";
-import { AI_TOOL_IDS, type AiToolId } from "./tool-ids.js";
+import { type AiToolId, isAiToolId } from "./tool-ids.js";
 
 export interface PluginToRewire {
   readonly name: string;
@@ -173,7 +173,7 @@ function detectBundledPlugins(raw: Record<string, unknown>): PluginToRewire[] {
     | undefined;
   if (!tools) return [];
   for (const [toolId, entry] of Object.entries(tools)) {
-    if (!(AI_TOOL_IDS as readonly string[]).includes(toolId)) continue;
+    if (!isAiToolId(toolId)) continue;
     for (const plugin of entry.plugins ?? []) {
       if (plugin.marketplace !== undefined) continue;
       const existing = map.get(plugin.name) ?? [];

@@ -1,6 +1,7 @@
 import type { Marketplace } from "../../../domain/models/marketplace.js";
 import { marketplaceCacheDir } from "../../../domain/models/paths.js";
 import type { PluginCatalog } from "../../../domain/models/plugin-catalog.js";
+import type { Logger } from "../../../domain/ports/logger.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
 import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
 import type { FetchMarketplaceSourceUseCase } from "../shared/fetch-marketplace-source-use-case.js";
@@ -19,7 +20,8 @@ export class MarketplaceListUseCase {
   constructor(
     private readonly registry: MarketplaceRegistry,
     private readonly catalogRepo?: PluginCatalogRepository,
-    private readonly fetchMarketplaceSource?: FetchMarketplaceSourceUseCase
+    private readonly fetchMarketplaceSource?: FetchMarketplaceSourceUseCase,
+    private readonly logger?: Logger
   ) {}
 
   async execute(options: MarketplaceListOptions): Promise<MarketplaceListResult> {
@@ -55,8 +57,8 @@ export class MarketplaceListUseCase {
       });
       const catalog = await this.catalogRepo.load(localPath);
       if (catalog !== null) catalogs.set(marketplace.name, catalog);
-    } catch {
-      // continue — resilience: skip failing marketplace
+    } catch (err) {
+      this.logger?.warn(`Skipping marketplace '${marketplace.name}': ${String(err)}`);
     }
   }
 }

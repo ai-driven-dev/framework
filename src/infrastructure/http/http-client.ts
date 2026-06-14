@@ -67,7 +67,7 @@ export class HttpClient {
       // Consume the body to free the socket
       await collectBuffer(response);
       // Do not forward token or accept: redirect targets (S3/CDN) use signed URLs
-      const redirected = await doGet(location);
+      const redirected = await doGet(location, undefined, undefined);
       return this.parseResponse(redirected, location);
     }
 

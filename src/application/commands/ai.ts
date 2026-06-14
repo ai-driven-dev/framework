@@ -1,8 +1,7 @@
 import type { Command } from "commander";
-import { Manifest } from "../../domain/models/manifest.js";
 import { DOCS_DIR } from "../../domain/models/paths.js";
 import type { AiToolId } from "../../domain/models/tool-ids.js";
-import { AI_TOOL_IDS } from "../../domain/models/tool-ids.js";
+import { AI_TOOL_IDS, isAiToolId } from "../../domain/models/tool-ids.js";
 import type { ToolId } from "../../domain/tools/registry.js";
 import { createDeps, createMenuDeps } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
@@ -11,7 +10,7 @@ import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./shared/spawn-cli-command.js";
 
 function assertAiToolId(toolId: string): asserts toolId is AiToolId {
-  if (!(AI_TOOL_IDS as readonly string[]).includes(toolId)) {
+  if (!isAiToolId(toolId)) {
     throw new Error(`Unknown AI tool: ${toolId}. Valid AI tools: ${AI_TOOL_IDS.join(", ")}`);
   }
 }
@@ -102,9 +101,7 @@ export function registerAiCommand(program: Command): void {
           output.info("No tools installed. Run `aidd setup` to get started.");
           return;
         }
-        const aiIds = manifest
-          .getInstalledToolIds()
-          .filter((id) => (AI_TOOL_IDS as readonly string[]).includes(id));
+        const aiIds = manifest.getInstalledToolIds().filter(isAiToolId);
         if (aiIds.length === 0) {
           output.info("No AI tools installed.");
           return;
@@ -161,27 +158,19 @@ export function registerAiCommand(program: Command): void {
       try {
         if (toolArg !== undefined) assertAiToolId(toolArg);
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-        const installedAiIds = manifest
-          .getInstalledToolIds()
-          .filter((id) => (AI_TOOL_IDS as readonly string[]).includes(id)) as AiToolId[];
-        const targetIds: AiToolId[] = toolArg ? [toolArg] : installedAiIds;
-        if (targetIds.length === 0) {
+        const result = await deps.updateAiToolsUseCase.execute({
+          toolArg: toolArg as AiToolId | undefined,
+          projectRoot,
+        });
+        if (result.updatedTools.length === 0 && result.errors.length === 0) {
           output.info("No AI tools installed.");
           return;
         }
-        const version = deps.currentVersionProvider.get();
-        for (const toolId of targetIds) {
-          const result = await deps.installRuntimeConfigUseCase.execute({
-            toolId,
-            projectRoot,
-            manifest,
-            force: true,
-            version,
-          });
-          for (const w of result.warnings) output.warn(w);
-          if (!result.skipped)
-            output.success(`Updated ${result.toolId} (${result.fileCount} files)`);
+        for (const t of result.updatedTools) {
+          output.success(`Updated ${t.toolId} (${t.fileCount} files)`);
+        }
+        for (const e of result.errors) {
+          output.warn(`[${e.scope}] ${e.message}`);
         }
       } catch (error) {
         errorHandler.handle(error);
@@ -272,9 +261,7 @@ export function registerAiCommand(program: Command): void {
               .find((v) => v !== undefined) ?? deps.currentVersionProvider.get();
           const toolIds: ToolId[] | undefined = cmdOptions.tool
             ? [cmdOptions.tool as ToolId]
-            : (manifest
-                .getInstalledToolIds()
-                .filter((id) => (AI_TOOL_IDS as readonly string[]).includes(id)) as ToolId[]);
+            : manifest.getInstalledToolIds().filter(isAiToolId);
           const result = await deps.restoreUseCase.execute({
             version,
             docsDir: DOCS_DIR,

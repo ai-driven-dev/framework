@@ -8,6 +8,7 @@ import {
 import type { PluginSourceGitHub } from "../../../domain/models/plugin-source.js";
 import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../domain/ports/file-writer.js";
+import type { Logger } from "../../../domain/ports/logger.js";
 import type { PluginFetcher, PluginFetchOptions } from "../../../domain/ports/plugin-fetcher.js";
 import type { RawCatalogFetcher } from "../../../domain/ports/raw-catalog-fetcher.js";
 
@@ -23,7 +24,8 @@ export class FetchMarketplaceSourceUseCase {
   constructor(
     private readonly pluginFetcher: PluginFetcher,
     private readonly rawCatalogFetcher?: RawCatalogFetcher,
-    private readonly fs?: FileReader & FileWriter
+    private readonly fs?: FileReader & FileWriter,
+    private readonly logger?: Logger
   ) {}
 
   async execute(options: FetchMarketplaceSourceOptions): Promise<string> {
@@ -49,7 +51,10 @@ export class FetchMarketplaceSourceUseCase {
       const catalog = await this.loadRawCatalogSafely(this.fs, cacheDir);
       if (catalog === null || !hasRelativePluginSources(catalog)) return cacheDir;
       return this.runFallback(this.fs, marketplace, cacheDir, fetchOptions);
-    } catch {
+    } catch (err) {
+      this.logger?.warn(
+        `Probe failed for ${marketplace.name}, falling back to cache: ${String(err)}`
+      );
       return cacheDir;
     }
   }
@@ -62,7 +67,8 @@ export class FetchMarketplaceSourceUseCase {
       const catalogFilePath = join(cacheDir, CLAUDE_CATALOG_PATH);
       const raw = JSON.parse(await fs.readFile(catalogFilePath)) as unknown;
       return parsePluginCatalog(raw);
-    } catch {
+    } catch (err) {
+      this.logger?.warn(`Could not load raw catalog from ${cacheDir}: ${String(err)}`);
       return null;
     }
   }

@@ -1,8 +1,7 @@
 import { join } from "node:path";
 import { PluginNotFoundError } from "../../../domain/errors.js";
 import { DOCS_DIR } from "../../../domain/models/paths.js";
-import type { AiToolId } from "../../../domain/models/tool-ids.js";
-import { AI_TOOL_IDS } from "../../../domain/models/tool-ids.js";
+import { AI_TOOL_IDS, type AiToolId, isAiToolId } from "../../../domain/models/tool-ids.js";
 import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
@@ -120,9 +119,7 @@ export class SyncUseCase {
     if (options.includePlugins === false || this.syncPluginsUseCase === undefined) return;
     const aiSourceId = AI_TOOL_IDS.find((id) => id === sourceTool);
     if (aiSourceId === undefined) return;
-    const aiTargetIds = targetTools.filter((id): id is AiToolId =>
-      (AI_TOOL_IDS as readonly string[]).includes(id)
-    );
+    const aiTargetIds = targetTools.filter(isAiToolId);
     if (aiTargetIds.length === 0) return;
     await this.syncPluginsUseCase.execute({
       projectRoot: options.projectRoot,

@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import {
   CategoryMismatchError,
-  InvalidToolIdError,
   UnknownToolCategoryError,
   UnregisteredToolError,
 } from "../errors.js";
@@ -10,6 +9,7 @@ import {
   type AiToolId,
   IDE_TOOL_IDS,
   type IdeToolId,
+  isAiToolId,
   type ToolCategory,
   type ToolId,
   VALID_TOOL_IDS,
@@ -18,7 +18,7 @@ import type { FileReader } from "../ports/file-reader.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
 
 export type { AiToolId, IdeToolId, ToolCategory, ToolId };
-export { AI_TOOL_IDS, IDE_TOOL_IDS, VALID_TOOL_IDS };
+export { AI_TOOL_IDS, IDE_TOOL_IDS, isAiToolId, VALID_TOOL_IDS };
 
 export type ToolConfig = AiTool<unknown> | IdeToolConfig;
 
@@ -37,12 +37,6 @@ export function toolIdsForCategory(category: ToolCategory): readonly ToolId[] {
       throw new UnknownToolCategoryError(String(_exhaustive));
     }
   }
-}
-
-export function assertValidToolIds(toolIds: string[]): void {
-  const invalid = toolIds.filter((t) => !VALID_TOOL_IDS.includes(t as ToolId));
-  if (invalid.length === 0) return;
-  throw new InvalidToolIdError(invalid, VALID_TOOL_IDS);
 }
 
 export function isIdeToolId(id: string): id is IdeToolId {

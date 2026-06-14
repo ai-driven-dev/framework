@@ -3,7 +3,13 @@
 ## Stack
 
 - TypeScript ESM, Node.js >= 24, bundled via tsup → `dist/cli.js`
-- 2 runtime deps max: `commander` (CLI), `@inquirer/prompts` (interactive); rest = Node.js built-ins
+- Runtime dependencies (6 allowed; each requires explicit justification; new additions require an ADR):
+  - `commander` — CLI argument/command parsing
+  - `@inquirer/prompts` — interactive terminal prompts
+  - `ajv` — JSON-schema validation for marketplace/plugin schemas
+  - `ajv-formats` — standard format validators (uri, date, etc.) for ajv
+  - `simple-git` — git clone/fetch for plugin distribution
+  - `smol-toml` — TOML read/write for Codex config round-trips
 - Vitest (tests), Biome (lint/format), Lefthook (git hooks via parent monorepo)
 
 ## Layers

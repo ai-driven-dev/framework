@@ -7,6 +7,8 @@ import type { Logger } from "../../src/domain/ports/logger.js";
 import type { SelfUpdater } from "../../src/domain/ports/self-updater.js";
 import type { VersionReader } from "../../src/domain/ports/version-reader.js";
 
+const CACHE_PATH_SUFFIX = "update-check.json";
+
 function makeLogger(): { logger: Logger; logs: string[] } {
   const logs: string[] = [];
   const logger: Logger = {
@@ -52,71 +54,89 @@ function makeFsStub(store: Map<string, string> = new Map()): FileReader & FileWr
   };
 }
 
+function seedCache(
+  store: Map<string, string>,
+  latest: string,
+  ageMs = 0,
+  configDir?: string
+): void {
+  const dir = configDir ?? process.env.AIDD_USER_CONFIG_DIR ?? `${process.env.HOME}/.config/aidd`;
+  const path = `${dir}/${CACHE_PATH_SUFFIX}`;
+  store.set(path, JSON.stringify({ checkedAt: Date.now() - ageMs, latest }));
+}
+
 describe("CheckUpdateUseCase", () => {
-  it("warns when CLI is outdated", async () => {
-    const { logger, logs } = makeLogger();
-    await new CheckUpdateUseCase(
-      makeSelfUpdater("v2.0.0"),
-      makeVersionReader("1.0.0"),
-      logger,
-      makeFsStub()
-    ).execute();
-    expect(logs.some((l) => l.includes("CLI update available"))).toBe(true);
-    expect(logs.some((l) => l.includes("aidd self-update"))).toBe(true);
+  describe("printFromCacheOnly", () => {
+    it("warns when CLI is outdated and cache present", async () => {
+      const { logger, logs } = makeLogger();
+      const store = new Map<string, string>();
+      seedCache(store, "v2.0.0");
+      await new CheckUpdateUseCase(
+        makeSelfUpdater("v2.0.0"),
+        makeVersionReader("1.0.0"),
+        logger,
+        makeFsStub(store)
+      ).printFromCacheOnly();
+      expect(logs.some((l) => l.includes("CLI update available"))).toBe(true);
+      expect(logs.some((l) => l.includes("aidd self-update"))).toBe(true);
+    });
+
+    it("stays silent when CLI version matches latest in cache", async () => {
+      const { logger, logs } = makeLogger();
+      const store = new Map<string, string>();
+      seedCache(store, "1.0.0");
+      await new CheckUpdateUseCase(
+        makeSelfUpdater("1.0.0"),
+        makeVersionReader("1.0.0"),
+        logger,
+        makeFsStub(store)
+      ).printFromCacheOnly();
+      expect(logs).toHaveLength(0);
+    });
+
+    it("stays silent when cache is absent (no network call)", async () => {
+      const { logger, logs } = makeLogger();
+      const selfUpdater = makeSelfUpdater("v2.0.0");
+      await new CheckUpdateUseCase(
+        selfUpdater,
+        makeVersionReader("1.0.0"),
+        logger,
+        makeFsStub()
+      ).printFromCacheOnly();
+      expect(logs).toHaveLength(0);
+      expect(vi.mocked(selfUpdater.fetchLatestRelease)).not.toHaveBeenCalled();
+    });
+
+    it("warns from stale cache (fresh OR stale — notice always shows)", async () => {
+      const { logger, logs } = makeLogger();
+      const store = new Map<string, string>();
+      const STALE_MS = 25 * 60 * 60 * 1000; // 25h — past 24h TTL
+      seedCache(store, "v2.0.0", STALE_MS);
+      await new CheckUpdateUseCase(
+        makeSelfUpdater("v2.0.0"),
+        makeVersionReader("1.0.0"),
+        logger,
+        makeFsStub(store)
+      ).printFromCacheOnly();
+      expect(logs.some((l) => l.includes("CLI update available"))).toBe(true);
+    });
   });
 
-  it("stays silent when CLI version matches latest", async () => {
-    const { logger, logs } = makeLogger();
-    await new CheckUpdateUseCase(
-      makeSelfUpdater("v1.0.0"),
-      makeVersionReader("1.0.0"),
-      logger,
-      makeFsStub()
-    ).execute();
-    expect(logs).toHaveLength(0);
-  });
-
-  it("stays silent when fetch fails", async () => {
-    const { logger, logs } = makeLogger();
-    const failing: SelfUpdater = {
-      fetchLatestRelease: vi.fn().mockRejectedValue(new Error("network failure")),
-      install: vi.fn().mockReturnValue("/usr/local/bin/aidd"),
-    };
-    await new CheckUpdateUseCase(
-      failing,
-      makeVersionReader("1.0.0"),
-      logger,
-      makeFsStub()
-    ).execute();
-    expect(logs).toHaveLength(0);
-  });
-
-  it("skips banner when skipCliCheck is true", async () => {
-    const { logger, logs } = makeLogger();
-    await new CheckUpdateUseCase(
-      makeSelfUpdater("v2.0.0"),
-      makeVersionReader("1.0.0"),
-      logger,
-      makeFsStub()
-    ).execute({ skipCliCheck: true });
-    expect(logs).toHaveLength(0);
-  });
-
-  it("uses cached result within TTL", async () => {
-    const { logger, logs } = makeLogger();
-    const store = new Map<string, string>();
-    const fs = makeFsStub(store);
-    const selfUpdater = makeSelfUpdater("v2.0.0");
-
-    // First call: fetch and cache
-    await new CheckUpdateUseCase(selfUpdater, makeVersionReader("1.0.0"), logger, fs).execute();
-    expect(logs.some((l) => l.includes("CLI update available"))).toBe(true);
-    expect(vi.mocked(selfUpdater.fetchLatestRelease)).toHaveBeenCalledTimes(1);
-
-    // Second call: should use cache, not fetch again
-    const { logger: logger2, logs: logs2 } = makeLogger();
-    await new CheckUpdateUseCase(selfUpdater, makeVersionReader("1.0.0"), logger2, fs).execute();
-    expect(logs2.some((l) => l.includes("CLI update available"))).toBe(true);
-    expect(vi.mocked(selfUpdater.fetchLatestRelease)).toHaveBeenCalledTimes(1); // still 1, used cache
+  describe("refresh (online piggyback)", () => {
+    it("fetches and persists the cache", async () => {
+      const { logger } = makeLogger();
+      const store = new Map<string, string>();
+      const selfUpdater = makeSelfUpdater("v2.0.0");
+      await new CheckUpdateUseCase(
+        selfUpdater,
+        makeVersionReader("1.0.0"),
+        logger,
+        makeFsStub(store)
+      ).refresh();
+      expect(vi.mocked(selfUpdater.fetchLatestRelease)).toHaveBeenCalledTimes(1);
+      const written = [...store.values()].find((v) => v.includes("latest"));
+      expect(written).toBeDefined();
+      expect(JSON.parse(written as string).latest).toBe("v2.0.0");
+    });
   });
 });

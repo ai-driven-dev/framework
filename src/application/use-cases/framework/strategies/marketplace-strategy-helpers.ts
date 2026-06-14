@@ -142,15 +142,6 @@ export function synthesizeClaudeStyleManifest(
   return manifest;
 }
 
-export interface ClaudeStyleMarketplaceEntry {
-  readonly name: string;
-  readonly source: string;
-  readonly description: string;
-  readonly version: string;
-  readonly strict?: boolean;
-  readonly recommended?: boolean;
-}
-
 /**
  * Build a Claude-style marketplace catalog object shared by claude + cursor + codex strategies.
  */

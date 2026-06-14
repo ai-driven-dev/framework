@@ -33,7 +33,9 @@ import { DoctorAllUseCase } from "../application/use-cases/global/doctor-all-use
 import { RestoreAllUseCase } from "../application/use-cases/global/restore-all-use-case.js";
 import { StatusAllUseCase } from "../application/use-cases/global/status-all-use-case.js";
 import { SyncAllUseCase } from "../application/use-cases/global/sync-all-use-case.js";
+import { UpdateAiToolsUseCase } from "../application/use-cases/global/update-ai-tools-use-case.js";
 import { UpdateAllUseCase } from "../application/use-cases/global/update-all-use-case.js";
+import { UpdateIdeToolsUseCase } from "../application/use-cases/global/update-ide-tools-use-case.js";
 import { InstallAiToolUseCase } from "../application/use-cases/install/install-ai-tool-use-case.js";
 import { InstallIdeConfigUseCase } from "../application/use-cases/install/install-ide-config-use-case.js";
 import { InstallIdeToolUseCase } from "../application/use-cases/install/install-ide-tool-use-case.js";
@@ -67,6 +69,7 @@ import { SetupToolsPromptUseCase } from "../application/use-cases/setup/setup-to
 import { SetupToolsUseCase } from "../application/use-cases/setup/setup-tools-use-case.js";
 import { FetchMarketplaceSourceUseCase } from "../application/use-cases/shared/fetch-marketplace-source-use-case.js";
 import { ResolveMarketplaceUseCase } from "../application/use-cases/shared/resolve-marketplace-use-case.js";
+import { UpdateOneToolUseCase } from "../application/use-cases/shared/update-one-tool-use-case.js";
 import { StatusUseCase } from "../application/use-cases/status-use-case.js";
 import { SyncConflictResolverUseCase } from "../application/use-cases/sync/sync-conflict-resolver-use-case.js";
 import { SyncFilePropagationUseCase } from "../application/use-cases/sync/sync-file-propagation-use-case.js";
@@ -191,6 +194,8 @@ interface Deps {
   statusAllUseCase: StatusAllUseCase;
   restoreAllUseCase: RestoreAllUseCase;
   updateAllUseCase: UpdateAllUseCase;
+  updateAiToolsUseCase: UpdateAiToolsUseCase;
+  updateIdeToolsUseCase: UpdateIdeToolsUseCase;
   syncAllUseCase: SyncAllUseCase;
   migrateUseCase: MigrateUseCase;
   cleanUseCase: CleanUseCase;
@@ -360,13 +365,13 @@ export async function createDeps(
   const cached = _cache.get(projectRoot);
   if (cached !== undefined) return cached;
   const hasher = new HasherAdapter();
-  const fs = new FileAdapter(hasher);
+  const logger = output ?? new CLIOutput(options.verbose);
+  const fs = new FileAdapter(hasher, logger);
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
   const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
   const marketplaceCache = new MarketplaceCacheAdapter(projectRoot);
   const marketplaceRegistry = new MarketplaceRegistryAdapter();
   const marketplaceTrustStore = new MarketplaceTrustStoreAdapter(hasher);
-  const logger = output ?? new CLIOutput(options.verbose);
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
   const http = new HttpClient();
   const authStorage = new AuthStorage();
@@ -380,7 +385,10 @@ export async function createDeps(
   );
   const pluginFetcher = new PluginFetcherAdapter(fs, authReader);
   const rawCatalogFetcher = new GitHubRawFetcherAdapter(http, authReader);
-  const cliUpdater = new SelfUpdaterAdapter(http, { tokenProvider: authReader });
+  const cliUpdater = new SelfUpdaterAdapter(http, {
+    tokenProvider: authReader,
+    githubApiBase: process.env.AIDD_SELF_UPDATE_API_BASE,
+  });
   const currentVersionProvider = new CurrentVersionAdapter();
   const requireAuthUseCase = new RequireAuthUseCase(authReader);
   const selfUpdateUseCase = new SelfUpdateUseCase(cliUpdater, currentVersionProvider);
@@ -417,12 +425,14 @@ export async function createDeps(
   const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(
     pluginFetcher,
     rawCatalogFetcher,
-    fs
+    fs,
+    logger
   );
   const marketplaceListUseCase = new MarketplaceListUseCase(
     marketplaceRegistry,
     pluginCatalogRepository,
-    fetchMarketplaceSource
+    fetchMarketplaceSource,
+    logger
   );
   const marketplaceRemoveUseCase = new MarketplaceRemoveUseCase(
     fs,
@@ -524,7 +534,9 @@ export async function createDeps(
     pluginPickUseCase,
     pluginAddUseCase,
     pluginInstallFromMarketplaceUseCase,
-    manifestRepo
+    manifestRepo,
+    marketplaceTrustStore,
+    prompter
   );
   const installAiToolUseCase = new InstallAiToolUseCase(
     installRuntimeConfigUseCase,
@@ -615,6 +627,10 @@ export async function createDeps(
     pluginDistributionReader,
     assetProvider
   );
+  const updateOneToolUseCase = new UpdateOneToolUseCase(
+    installRuntimeConfigUseCase,
+    installIdeConfigUseCase
+  );
   const updateAllUseCase = new UpdateAllUseCase(
     manifestRepo,
     currentVersionProvider,
@@ -622,6 +638,16 @@ export async function createDeps(
     installIdeConfigUseCase,
     pluginUpdateUseCase,
     marketplaceRefreshUseCase
+  );
+  const updateAiToolsUseCase = new UpdateAiToolsUseCase(
+    manifestRepo,
+    currentVersionProvider,
+    updateOneToolUseCase
+  );
+  const updateIdeToolsUseCase = new UpdateIdeToolsUseCase(
+    manifestRepo,
+    currentVersionProvider,
+    updateOneToolUseCase
   );
   const syncAllUseCase = new SyncAllUseCase(
     fs,
@@ -713,6 +739,8 @@ export async function createDeps(
     statusAllUseCase,
     restoreAllUseCase,
     updateAllUseCase,
+    updateAiToolsUseCase,
+    updateIdeToolsUseCase,
     syncAllUseCase,
     migrateUseCase,
     cleanUseCase,

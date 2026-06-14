@@ -33,13 +33,6 @@ export class AuthenticationError extends Error {
   }
 }
 
-export class NoFrameworkSourceError extends Error {
-  constructor() {
-    super("No framework source configured. Use --path for a local framework path.");
-    this.name = "NoFrameworkSourceError";
-  }
-}
-
 export class UpdateError extends Error {
   constructor() {
     super(
@@ -202,13 +195,6 @@ export class PluginFetchError extends Error {
   }
 }
 
-export class FlatCollisionError extends Error {
-  constructor(plugin: string, path: string) {
-    super(`Plugin '${plugin}' collides with an existing file at '${path}'.`);
-    this.name = "FlatCollisionError";
-  }
-}
-
 export class InvalidMarketplaceNameError extends Error {
   constructor(detail: string) {
     super(
@@ -268,13 +254,6 @@ export class AmbiguousPluginMatchError extends Error {
       `Plugin '${plugin}' matches multiple marketplaces: ${marketplaces.join(", ")}. Use --from <marketplace>.`
     );
     this.name = "AmbiguousPluginMatchError";
-  }
-}
-
-export class OfflineError extends Error {
-  constructor(detail: string) {
-    super(`Offline: ${detail}`);
-    this.name = "OfflineError";
   }
 }
 
@@ -459,12 +438,5 @@ export class EmptyMarketplaceCacheNameError extends Error {
   constructor() {
     super("MarketplaceCacheEntry: name must not be empty");
     this.name = "EmptyMarketplaceCacheNameError";
-  }
-}
-
-export class MissingAbsOutError extends Error {
-  constructor() {
-    super("absOut is required for absolute MCP path resolution");
-    this.name = "MissingAbsOutError";
   }
 }

@@ -146,27 +146,19 @@ export function registerIdeCommand(program: Command): void {
       try {
         if (toolArg !== undefined) assertIdeToolId(toolArg);
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-        const installedIdeIds = manifest
-          .getInstalledToolIds()
-          .filter((id) => (IDE_TOOL_IDS as readonly string[]).includes(id)) as IdeToolId[];
-        const targetIds: IdeToolId[] = toolArg ? [toolArg] : installedIdeIds;
-        if (targetIds.length === 0) {
+        const result = await deps.updateIdeToolsUseCase.execute({
+          toolArg: toolArg as IdeToolId | undefined,
+          projectRoot,
+        });
+        if (result.updatedTools.length === 0 && result.errors.length === 0) {
           output.info("No IDE tools installed.");
           return;
         }
-        const version = deps.currentVersionProvider.get();
-        for (const toolId of targetIds) {
-          const result = await deps.installIdeConfigUseCase.execute({
-            toolId,
-            projectRoot,
-            manifest,
-            force: true,
-            version,
-          });
-          for (const w of result.warnings) output.warn(w);
-          if (!result.skipped)
-            output.success(`Updated ${result.toolId} (${result.fileCount} files)`);
+        for (const t of result.updatedTools) {
+          output.success(`Updated ${t.toolId} (${t.fileCount} files)`);
+        }
+        for (const e of result.errors) {
+          output.warn(`[${e.scope}] ${e.message}`);
         }
       } catch (error) {
         errorHandler.handle(error);

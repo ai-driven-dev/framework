@@ -77,3 +77,38 @@ describe("serializeFrontmatter()", () => {
     expect(reparsed.body).toBe(body);
   });
 });
+
+describe("parseFrontmatter() — block scalars", () => {
+  it("parses literal block scalar (|) preserving newlines", () => {
+    const content = "---\ndescription: |\n  line one\n  line two\n---\nbody";
+    const { frontmatter } = parseFrontmatter(content);
+    expect(typeof frontmatter.description).toBe("string");
+    expect(frontmatter.description as string).toContain("line one");
+    expect(frontmatter.description as string).toContain("line two");
+  });
+
+  it("parses folded block scalar (>) joining lines with space", () => {
+    const content = "---\ndescription: >\n  folded line one\n  folded line two\n---\nbody";
+    const { frontmatter } = parseFrontmatter(content);
+    expect(typeof frontmatter.description).toBe("string");
+    expect((frontmatter.description as string).trim()).toContain("folded line one");
+  });
+
+  it("parses null scalar value", () => {
+    const content = "---\nvalue: null\n---\nbody";
+    const { frontmatter } = parseFrontmatter(content);
+    expect(frontmatter.value).toBeNull();
+  });
+
+  it("parses inline JSON array string as array", () => {
+    const content = '---\ntools: ["read","write"]\n---\nbody';
+    const { frontmatter } = parseFrontmatter(content);
+    expect(frontmatter.tools).toEqual(["read", "write"]);
+  });
+
+  it("falls back to string for malformed inline JSON array", () => {
+    const content = "---\ntools: [invalid json}\n---\nbody";
+    const { frontmatter } = parseFrontmatter(content);
+    expect(frontmatter.tools).toBe("[invalid json}");
+  });
+});

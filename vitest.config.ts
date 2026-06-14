@@ -18,7 +18,6 @@ export default defineConfig({
         "src/application/commands/**",
         "src/domain/ports/**",
         "src/infrastructure/deps.ts",
-        "src/infrastructure/auth/**",
       ],
       thresholds: {
         statements: 85,

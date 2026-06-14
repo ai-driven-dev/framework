@@ -6,7 +6,7 @@ import {
   removeEntriesFromJson,
 } from "../../domain/models/merge.js";
 import { AIDD_DIR } from "../../domain/models/paths.js";
-import { AI_TOOL_IDS } from "../../domain/models/tool-ids.js";
+import { isAiToolId } from "../../domain/models/tool-ids.js";
 import type { FileReader } from "../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../domain/ports/file-writer.js";
 import type { Logger } from "../../domain/ports/logger.js";
@@ -84,7 +84,7 @@ export class CleanUseCase {
       this.logger.info(`Removing ${toolId} files...`);
       deleted += await this.deleteFiles(manifest.getToolFiles(toolId), projectRoot);
       deleted += await this.cleanMergeFileKeys(manifest.getMergeFiles(toolId), projectRoot);
-      if ((AI_TOOL_IDS as readonly string[]).includes(toolId)) {
+      if (isAiToolId(toolId)) {
         deleted += await this.deleteToolPluginFiles(manifest, toolId, projectRoot);
       }
     }

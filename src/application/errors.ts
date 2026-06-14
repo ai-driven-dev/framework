@@ -1,7 +1,3 @@
-import type { ToolCategory } from "../domain/tools/registry.js";
-
-export { NoFrameworkSourceError } from "../domain/errors.js";
-
 export class NoManifestError extends Error {
   constructor() {
     super("No AIDD manifest found. Run `aidd setup` to initialize your project.");
@@ -53,13 +49,6 @@ export class ToolNotInstalledError extends Error {
   constructor(toolId: string, context?: string) {
     super(context ? `${context} '${toolId}' is not installed.` : `${toolId} is not installed`);
     this.name = "ToolNotInstalledError";
-  }
-}
-
-export class NoToolsInstalledError extends Error {
-  constructor(category?: ToolCategory) {
-    super(category ? `No ${category.toUpperCase()} tools installed.` : "No tools installed.");
-    this.name = "NoToolsInstalledError";
   }
 }
 

@@ -124,7 +124,7 @@ export class PluginFetcherAdapter implements PluginFetcher {
     }
     const spec = `${pkg}@${version ?? "latest"}`;
     try {
-      await execFile("pnpm", ["add", "--prefix", cacheDir, spec]);
+      await execFile("pnpm", ["add", "--prefix", cacheDir, "--", spec]);
     } catch (err) {
       throw new PluginFetchError(`npm install failed for "${spec}": ${String(err)}`);
     }

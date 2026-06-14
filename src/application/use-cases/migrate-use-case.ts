@@ -3,7 +3,7 @@ import type { Manifest } from "../../domain/models/manifest.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../domain/models/marketplace.js";
 import { computeMigrationPlan, type MigrationPlan } from "../../domain/models/migration-plan.js";
 import { AIDD_DIR } from "../../domain/models/paths.js";
-import { AI_TOOL_IDS, type AiToolId } from "../../domain/models/tool-ids.js";
+import { type AiToolId, isAiToolId } from "../../domain/models/tool-ids.js";
 import type { FileReader } from "../../domain/ports/file-reader.js";
 import type { Logger } from "../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -91,7 +91,7 @@ export class MigrateUseCase {
   private stripBundledPlugins(manifest: Manifest, plan: MigrationPlan): void {
     const toStrip = new Set(plan.pluginsToRewire.map((p) => p.name));
     for (const toolId of manifest.getInstalledToolIds()) {
-      if (!(AI_TOOL_IDS as readonly string[]).includes(toolId)) continue;
+      if (!isAiToolId(toolId)) continue;
       for (const plugin of [...manifest.getPlugins(toolId as AiToolId)]) {
         if (plugin.marketplace === undefined && toStrip.has(plugin.name)) {
           manifest.removePlugin(toolId as AiToolId, plugin.name);

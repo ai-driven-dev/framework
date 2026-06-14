@@ -53,6 +53,16 @@ registerSelfUpdateCommand(program);
 
 const MIGRATION_BYPASS_COMMANDS = new Set(["migrate", "self-update", "auth"]);
 
+// Commands already paying for network I/O: piggyback the update-check refresh on them.
+// Subcommand-path-granular — `marketplace remove` (offline) and `self-update` are deliberately absent.
+const ONLINE_COMMAND_PATHS = new Set([
+  "update",
+  "marketplace refresh",
+  "marketplace check",
+  "marketplace list",
+  "marketplace add",
+]);
+
 program.hook("preAction", async (_thisCommand, actionCommand) => {
   const opts = program.opts<{ verbose?: boolean }>();
   const output = new CLIOutput(opts.verbose ?? false);
@@ -62,12 +72,31 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
   if (!deps) return;
   const cmd = actionCommand.name();
   const cmdPath = resolveCommandPath(actionCommand);
-  await deps.checkUpdateUseCase.execute({
-    skipCliCheck: cmd === "self-update",
-  });
+  if (cmd !== "self-update") {
+    await deps.checkUpdateUseCase.printFromCacheOnly().catch((err: unknown) => {
+      deps.logger.debug(
+        `CLI update check failed: ${err instanceof Error ? err.message : String(err)}`
+      );
+    });
+  }
   if (MIGRATION_BYPASS_COMMANDS.has(cmd) || MIGRATION_BYPASS_COMMANDS.has(cmdPath.split(" ")[0]))
     return;
   await checkAndOfferMigration(deps, output, cmdPath);
+});
+
+program.hook("postAction", async (_thisCommand, actionCommand) => {
+  if (!ONLINE_COMMAND_PATHS.has(resolveCommandPath(actionCommand))) return;
+  const opts = program.opts<{ verbose?: boolean }>();
+  const output = new CLIOutput(opts.verbose ?? false);
+  const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(
+    () => null
+  );
+  if (!deps) return;
+  await deps.checkUpdateUseCase.refresh().catch((err: unknown) => {
+    deps.logger.debug(
+      `CLI update refresh failed: ${err instanceof Error ? err.message : String(err)}`
+    );
+  });
 });
 
 function resolveCommandPath(actionCommand: Command): string {

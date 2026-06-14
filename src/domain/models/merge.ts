@@ -1,7 +1,6 @@
 import { stripJsonComments } from "../formats/jsonc.js";
 import type { Hasher } from "../ports/hasher.js";
 import type { FileHash, InstallationFile } from "./file.js";
-import type { ConfigRef } from "./framework.js";
 
 // ── MergeStrategy ────────────────────────────────────────────────────────────
 
@@ -92,12 +91,6 @@ export function isMergeContentEmpty(content: string, sectionKey: string | null):
   } catch {
     return false;
   }
-}
-
-export function buildConfigNameLookup(configRefs: readonly ConfigRef[]): Map<string, string> {
-  const lookup = new Map<string, string>();
-  for (const ref of configRefs) lookup.set(ref.path, ref.name);
-  return lookup;
 }
 
 export function buildMergeFileEntries(

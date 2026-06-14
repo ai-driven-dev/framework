@@ -10,6 +10,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
+import { stripJsonComments } from "../../domain/formats/jsonc.js";
 import type { FileHash } from "../../domain/models/file.js";
 import {
   isPerKeyMergeStrategy,
@@ -20,10 +21,14 @@ import type { FileMerger } from "../../domain/ports/file-merger.js";
 import type { FileReader } from "../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../domain/ports/file-writer.js";
 import type { Hasher } from "../../domain/ports/hasher.js";
+import type { Logger } from "../../domain/ports/logger.js";
 import { JsonParseError } from "../errors.js";
 
 export class FileAdapter implements FileReader, FileWriter, FileMerger {
-  constructor(private readonly hasher: Hasher) {}
+  constructor(
+    private readonly hasher: Hasher,
+    private readonly logger?: Logger
+  ) {}
 
   async writeFile(path: string, content: string): Promise<void> {
     await mkdir(dirname(path), { recursive: true });
@@ -83,6 +88,10 @@ export class FileAdapter implements FileReader, FileWriter, FileMerger {
     const entries = await readdir(currentDir, { withFileTypes: true });
     for (const entry of entries) {
       const fullPath = join(currentDir, entry.name);
+      if (entry.isSymbolicLink()) {
+        this.logger?.warn(`Skipping symlink: ${fullPath}`);
+        continue;
+      }
       if (entry.isDirectory()) {
         await this.collectFiles(baseDir, fullPath, results);
       } else {
@@ -144,6 +153,10 @@ export class FileAdapter implements FileReader, FileWriter, FileMerger {
     }
     for (const entry of entries) {
       const fullPath = join(dir, entry.name);
+      if (entry.isSymbolicLink()) {
+        this.logger?.warn(`Skipping symlink: ${fullPath}`);
+        continue;
+      }
       if (entry.isDirectory()) {
         await this.collectAbsolutePaths(fullPath, results);
       } else {
@@ -157,7 +170,7 @@ export class FileAdapter implements FileReader, FileWriter, FileMerger {
 
     try {
       const raw = await readFile(path, "utf-8");
-      existing = JSON.parse(stripJsoncComments(raw)) as Record<string, unknown>;
+      existing = JSON.parse(stripJsonComments(raw)) as Record<string, unknown>;
     } catch (err) {
       const code = (err as NodeJS.ErrnoException).code;
       if (code !== "ENOENT") {
@@ -165,7 +178,7 @@ export class FileAdapter implements FileReader, FileWriter, FileMerger {
       }
     }
 
-    const incoming = JSON.parse(stripJsoncComments(content)) as Record<string, unknown>;
+    const incoming = JSON.parse(stripJsonComments(content)) as Record<string, unknown>;
 
     if (isPerKeyMergeStrategy(strategy)) {
       await this.writeFile(
@@ -202,6 +215,8 @@ function mergePerKey(
   return result;
 }
 
+const PROTOTYPE_POLLUTION_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
 function deepMerge(
   target: Record<string, unknown>,
   source: Record<string, unknown>
@@ -209,6 +224,7 @@ function deepMerge(
   const result: Record<string, unknown> = { ...target };
 
   for (const [key, value] of Object.entries(source)) {
+    if (PROTOTYPE_POLLUTION_KEYS.has(key)) continue;
     const existing = result[key];
 
     if (Array.isArray(value) && Array.isArray(existing)) {
@@ -231,59 +247,4 @@ function deepMerge(
 
 function isPlainObject(value: unknown): boolean {
   return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
-function stripJsoncComments(content: string): string {
-  let result = "";
-  let i = 0;
-  let inString = false;
-
-  while (i < content.length) {
-    const ch = content[i];
-
-    if (inString) {
-      if (ch === "\\") {
-        result += ch + content[i + 1];
-        i += 2;
-        continue;
-      }
-      if (ch === '"') inString = false;
-      result += ch;
-      i++;
-      continue;
-    }
-
-    if (ch === '"') {
-      inString = true;
-      result += ch;
-      i++;
-      continue;
-    }
-
-    if (ch === "/" && content[i + 1] === "/") {
-      while (i < content.length && content[i] !== "\n") i++;
-      continue;
-    }
-
-    if (ch === "/" && content[i + 1] === "*") {
-      i += 2;
-      while (i < content.length && !(content[i] === "*" && content[i + 1] === "/")) i++;
-      i += 2;
-      continue;
-    }
-
-    if (ch === ",") {
-      let j = i + 1;
-      while (j < content.length && " \t\n\r".includes(content[j])) j++;
-      if (content[j] === "}" || content[j] === "]") {
-        i++;
-        continue;
-      }
-    }
-
-    result += ch;
-    i++;
-  }
-
-  return result;
 }

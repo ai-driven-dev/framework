@@ -8,8 +8,6 @@ const RELATIVE_CURRENT_RE = new RegExp(`@\\.\\/(${REFERENCE_CHAR_CLASS})`, "g");
 const RELATIVE_PARENT_RE = new RegExp(`@\\.\\.\\/(${REFERENCE_CHAR_CLASS})`, "g");
 
 // Matches @${CLAUDE_PLUGIN_ROOT}/<rel> — only when prefixed with @ (spec C-v2.2).
-// The variable part is written as a split literal to avoid biome's noTemplateCurlyInString warning.
-const CLAUDE_ROOT_PREFIX = "@$" + "{CLAUDE_PLUGIN_ROOT}/";
 const CLAUDE_ROOT_RE = new RegExp(`@\\$\\{CLAUDE_PLUGIN_ROOT\\}\\/(${REFERENCE_CHAR_CLASS})`, "g");
 
 export interface RewriteRelativeLinksOptions {
@@ -58,6 +56,3 @@ function rewriteClaudeRootRef(
   const label = basename(targetPluginRel);
   return `[${label}](${linkPath})`;
 }
-
-// Exported only for test assertions that check the prefix is handled correctly.
-export { CLAUDE_ROOT_PREFIX as _CLAUDE_ROOT_PREFIX };

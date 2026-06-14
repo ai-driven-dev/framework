@@ -22,13 +22,6 @@ export class HttpRedirectError extends Error {
   }
 }
 
-export class TarExtractionError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "TarExtractionError";
-  }
-}
-
 export class JsonParseError extends Error {
   constructor(path: string, cause: string) {
     super(`Cannot parse existing JSON at ${path}: ${cause}`);
@@ -47,13 +40,6 @@ export class GhCliError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "GhCliError";
-  }
-}
-
-export class CacheMissError extends Error {
-  constructor(version: string) {
-    super(`No cached framework found for version '${version}'.`);
-    this.name = "CacheMissError";
   }
 }
 

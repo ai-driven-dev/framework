@@ -1,17 +1,17 @@
 import { Manifest } from "../../../domain/models/manifest.js";
-import type { AiToolId, IdeToolId } from "../../../domain/models/tool-ids.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { VersionReader } from "../../../domain/ports/version-reader.js";
-import { getToolConfig, isAiTool, type ToolId } from "../../../domain/tools/registry.js";
+import type { ToolId } from "../../../domain/tools/registry.js";
 import type { InstallIdeConfigUseCase } from "../install/install-ide-config-use-case.js";
 import type { InstallRuntimeConfigUseCase } from "../install/install-runtime-config-use-case.js";
 import type { MarketplaceRefreshUseCase } from "../marketplace/marketplace-refresh-use-case.js";
 import type { PluginUpdateUseCase } from "../plugin/plugin-update-use-case.js";
+import {
+  type GlobalExecutionError,
+  UpdateOneToolUseCase,
+} from "../shared/update-one-tool-use-case.js";
 
-export interface GlobalExecutionError {
-  scope: string;
-  message: string;
-}
+export type { GlobalExecutionError };
 
 export interface UpdateAllResult {
   updatedTools: { toolId: ToolId; fileCount: number }[];
@@ -21,14 +21,21 @@ export interface UpdateAllResult {
 }
 
 export class UpdateAllUseCase {
+  private readonly updateOneToolUseCase: UpdateOneToolUseCase;
+
   constructor(
     private readonly manifestRepo: ManifestRepository,
     private readonly versionReader: VersionReader,
-    private readonly installRuntimeConfigUseCase: InstallRuntimeConfigUseCase,
-    private readonly installIdeConfigUseCase: InstallIdeConfigUseCase,
+    installRuntimeConfigUseCase: InstallRuntimeConfigUseCase,
+    installIdeConfigUseCase: InstallIdeConfigUseCase,
     private readonly pluginUpdateUseCase: PluginUpdateUseCase,
     private readonly marketplaceRefreshUseCase: MarketplaceRefreshUseCase
-  ) {}
+  ) {
+    this.updateOneToolUseCase = new UpdateOneToolUseCase(
+      installRuntimeConfigUseCase,
+      installIdeConfigUseCase
+    );
+  }
 
   async execute(projectRoot: string): Promise<UpdateAllResult> {
     const manifest = (await this.manifestRepo.load()) ?? Manifest.create();
@@ -48,42 +55,16 @@ export class UpdateAllUseCase {
   ): Promise<{ toolId: ToolId; fileCount: number }[]> {
     const updated: { toolId: ToolId; fileCount: number }[] = [];
     for (const toolId of manifest.getInstalledToolIds()) {
-      const entry = await this.updateOneTool(toolId, manifest, projectRoot, version, errors);
+      const entry = await this.updateOneToolUseCase.execute(
+        toolId,
+        manifest,
+        projectRoot,
+        version,
+        errors
+      );
       if (entry) updated.push(entry);
     }
     return updated;
-  }
-
-  private async updateOneTool(
-    toolId: ToolId,
-    manifest: Manifest,
-    projectRoot: string,
-    version: string,
-    errors: GlobalExecutionError[]
-  ): Promise<{ toolId: ToolId; fileCount: number } | null> {
-    try {
-      const config = getToolConfig(toolId);
-      const result = isAiTool(config)
-        ? await this.installRuntimeConfigUseCase.execute({
-            toolId: toolId as AiToolId,
-            projectRoot,
-            manifest,
-            force: true,
-            version,
-          })
-        : await this.installIdeConfigUseCase.execute({
-            toolId: toolId as IdeToolId,
-            projectRoot,
-            manifest,
-            force: true,
-            version,
-          });
-      if (result.skipped) return null;
-      return { toolId, fileCount: result.fileCount };
-    } catch (err) {
-      errors.push({ scope: toolId, message: err instanceof Error ? err.message : String(err) });
-      return null;
-    }
   }
 
   private async updatePlugins(

@@ -1,12 +1,18 @@
-import { InteractiveOnlyError } from "../../../domain/errors.js";
+import { InteractiveOnlyError, TrustDeniedError } from "../../../domain/errors.js";
 import {
   assertToolSupportsScope,
   type InstallScope,
 } from "../../../domain/models/install-scope.js";
 import { parsePluginSpec } from "../../../domain/models/plugin.js";
-import { parsePluginSourceShorthand } from "../../../domain/models/plugin-source.js";
+import {
+  describePluginSource,
+  type PluginSource,
+  parsePluginSourceShorthand,
+} from "../../../domain/models/plugin-source.js";
 import { AI_TOOL_IDS, type AiToolId } from "../../../domain/models/tool-ids.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
+import type { MarketplaceTrustStore } from "../../../domain/ports/marketplace-trust-store.js";
+import type { Prompter } from "../../../domain/ports/prompter.js";
 import type { PluginAddUseCase } from "./plugin-add-use-case.js";
 import type { PluginInstallFromMarketplaceUseCase } from "./plugin-install-from-marketplace-use-case.js";
 import type { PluginPickUseCase } from "./plugin-pick-use-case.js";
@@ -32,7 +38,9 @@ export class PluginInstallUseCase {
     private readonly pluginPickUseCase: PluginPickUseCase,
     private readonly pluginAddUseCase: PluginAddUseCase,
     private readonly pluginInstallFromMarketplaceUseCase: PluginInstallFromMarketplaceUseCase,
-    private readonly manifestRepo: ManifestRepository
+    private readonly manifestRepo: ManifestRepository,
+    private readonly trustStore: MarketplaceTrustStore,
+    private readonly prompter: Prompter
   ) {}
 
   async execute(options: PluginInstallOptions): Promise<PluginInstallResult> {
@@ -71,6 +79,7 @@ export class PluginInstallUseCase {
 
   private async executeLocalSource(options: PluginInstallOptions): Promise<PluginInstallResult> {
     const source = parsePluginSourceShorthand(options.pluginArg as string);
+    await this.ensureDirectSourceTrusted(source, options);
     await this.pluginAddUseCase.execute({
       source,
       toolIds: options.toolIds,
@@ -78,6 +87,21 @@ export class PluginInstallUseCase {
       interactive: options.interactive,
     });
     return { kind: "local", installed: [] };
+  }
+
+  private async ensureDirectSourceTrusted(
+    source: PluginSource,
+    options: PluginInstallOptions
+  ): Promise<void> {
+    if (await this.trustStore.isTrusted(options.projectRoot, source)) return;
+    if (options.yes) {
+      await this.trustStore.trust(options.projectRoot, source);
+      return;
+    }
+    const label = describePluginSource(source);
+    const confirmed = await this.prompter.confirm(`Trust plugin source '${label}'?`);
+    if (!confirmed) throw new TrustDeniedError(label);
+    await this.trustStore.trust(options.projectRoot, source);
   }
 
   private async executeMarketplace(options: PluginInstallOptions): Promise<PluginInstallResult> {

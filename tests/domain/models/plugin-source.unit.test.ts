@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { InvalidPluginSourceError } from "../../../src/domain/errors.js";
 import {
   parsePluginSource,
+  parsePluginSourceShorthand,
   serializePluginSource,
 } from "../../../src/domain/models/plugin-source.js";
 
@@ -97,6 +98,59 @@ describe("parsePluginSource", () => {
 
     it("throws when package is missing", () => {
       expect(() => parsePluginSource({ kind: "npm" })).toThrow(InvalidPluginSourceError);
+    });
+
+    describe("npm name security validation", () => {
+      it("accepts a valid unscoped package name", () => {
+        expect(() => parsePluginSource({ kind: "npm", package: "my-plugin" })).not.toThrow();
+      });
+
+      it("accepts a valid scoped package name", () => {
+        expect(() =>
+          parsePluginSource({ kind: "npm", package: "@my-org/my-plugin" })
+        ).not.toThrow();
+      });
+
+      it("rejects a package name starting with a dash (injection vector)", () => {
+        expect(() => parsePluginSource({ kind: "npm", package: "-x" })).toThrow(
+          InvalidPluginSourceError
+        );
+      });
+
+      it("rejects a package name starting with double-dash (option injection)", () => {
+        expect(() =>
+          parsePluginSource({ kind: "npm", package: "--registry=https://evil.com" })
+        ).toThrow(InvalidPluginSourceError);
+      });
+
+      it("rejects a package name starting with a dot", () => {
+        expect(() => parsePluginSource({ kind: "npm", package: ".my-plugin" })).toThrow(
+          InvalidPluginSourceError
+        );
+      });
+
+      it("rejects a package name with uppercase letters", () => {
+        expect(() => parsePluginSource({ kind: "npm", package: "My-Plugin" })).toThrow(
+          InvalidPluginSourceError
+        );
+      });
+    });
+  });
+
+  describe("URL scheme validation (shorthand)", () => {
+    it("accepts an https URL", () => {
+      const src = parsePluginSourceShorthand("https://github.com/org/repo.git");
+      expect(src.kind).toBe("url");
+    });
+
+    it("accepts an http URL", () => {
+      const src = parsePluginSourceShorthand("http://example.com/repo.git");
+      expect(src.kind).toBe("url");
+    });
+
+    it("accepts a git@ SSH URL", () => {
+      const src = parsePluginSourceShorthand("git@github.com:org/repo.git");
+      expect(src.kind).toBe("url");
     });
   });
 

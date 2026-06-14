@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   AdoptRequiresVersionError,
   AiddFilesDetectedError,
+  AlreadyInitializedError,
+  InputRequiredError,
+  InvalidCategoryError,
   NoManifestError,
+  NotAuthenticatedError,
+  ToolNotInstalledError,
 } from "../../src/application/errors.js";
 import { FlatTargetExistsError, OutDirNotDirectoryError } from "../../src/domain/errors.js";
 
@@ -86,5 +91,58 @@ describe("OutDirNotDirectoryError", () => {
     const error = new OutDirNotDirectoryError("/tmp/some-out");
     expect(error.message).not.toContain("--source");
     expect(error.message).toContain("not a directory");
+  });
+});
+
+describe("NotAuthenticatedError", () => {
+  it("has correct error name and auth hint in message", () => {
+    const error = new NotAuthenticatedError();
+    expect(error.name).toBe("NotAuthenticatedError");
+    expect(error.message).toContain("aidd auth login");
+  });
+});
+
+describe("AlreadyInitializedError", () => {
+  it("has default message when no argument provided", () => {
+    const error = new AlreadyInitializedError();
+    expect(error.name).toBe("AlreadyInitializedError");
+    expect(error.message).toContain("Already initialized");
+  });
+
+  it("uses provided message when given", () => {
+    const error = new AlreadyInitializedError("Custom message here.");
+    expect(error.message).toBe("Custom message here.");
+  });
+});
+
+describe("InputRequiredError", () => {
+  it("carries the provided message", () => {
+    const error = new InputRequiredError("Prompt answer is required.");
+    expect(error.name).toBe("InputRequiredError");
+    expect(error.message).toBe("Prompt answer is required.");
+  });
+});
+
+describe("ToolNotInstalledError", () => {
+  it("includes tool ID in message without context", () => {
+    const error = new ToolNotInstalledError("claude");
+    expect(error.name).toBe("ToolNotInstalledError");
+    expect(error.message).toContain("claude");
+  });
+
+  it("includes context and tool ID when context is provided", () => {
+    const error = new ToolNotInstalledError("cursor", "The target tool");
+    expect(error.message).toContain("cursor");
+    expect(error.message).toContain("The target tool");
+  });
+});
+
+describe("InvalidCategoryError", () => {
+  it("includes the invalid category in the message", () => {
+    const error = new InvalidCategoryError("invalid-cat");
+    expect(error.name).toBe("InvalidCategoryError");
+    expect(error.message).toContain("invalid-cat");
+    expect(error.message).toContain("ai");
+    expect(error.message).toContain("ide");
   });
 });

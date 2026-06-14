@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -355,6 +355,59 @@ describe("FileAdapter", () => {
       expect(result.model).toBe("neogen/swe-dev");
       expect(result.share).toBe("disabled");
       expect((result.provider as Record<string, unknown>).neogen).toBeDefined();
+    });
+
+    describe("prototype pollution guard", () => {
+      it("does not pollute Object.prototype after merging __proto__ payload", async () => {
+        const path = join(tempDir, "proto-test.json");
+        // Must pass a raw JSON string — a JS literal { __proto__: ... } would set the prototype,
+        // not create an own key, and test nothing.
+        const malicious = '{"__proto__":{"polluted":true}}';
+        await fs.mergeJsonFile(path, malicious, "framework-prime");
+        expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+      });
+
+      it("does not pollute Object.prototype after merging constructor payload", async () => {
+        const path = join(tempDir, "constructor-test.json");
+        const malicious = '{"constructor":{"prototype":{"polluted":true}}}';
+        await fs.mergeJsonFile(path, malicious, "framework-prime");
+        expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+      });
+
+      it("merges regular keys correctly when prototype keys are present", async () => {
+        const path = join(tempDir, "mixed-test.json");
+        await writeFile(path, JSON.stringify({ safe: "original" }), "utf-8");
+        const malicious = '{"safe":"updated","__proto__":{"polluted":true}}';
+        await fs.mergeJsonFile(path, malicious, "framework-prime");
+        const result = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+        expect(result.safe).toBe("updated");
+        expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+      });
+    });
+  });
+
+  describe("listDirectory() — symlink security", () => {
+    it("skips symbolic links and does not read their content", async () => {
+      const real = join(tempDir, "real-file.txt");
+      const outside = join(tempDir, "secret.txt");
+      const skillsDir = join(tempDir, "skills");
+      const linkPath = join(skillsDir, "secret-link.txt");
+      const normalFile = join(skillsDir, "normal.md");
+
+      await writeFile(real, "real content", "utf-8");
+      await writeFile(outside, "secret content", "utf-8");
+      await mkdir(skillsDir, { recursive: true });
+      await symlink(outside, linkPath);
+      await writeFile(normalFile, "normal content", "utf-8");
+
+      const files = await fs.listDirectory(tempDir);
+
+      // symlink must NOT appear
+      const posixFiles = files.map((f) => f.split("\\").join("/"));
+      expect(posixFiles).not.toContain("skills/secret-link.txt");
+
+      // regular file inside skills/ must still appear
+      expect(posixFiles.some((f) => f.includes("normal"))).toBe(true);
     });
   });
 });

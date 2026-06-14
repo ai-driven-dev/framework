@@ -1,6 +1,10 @@
 import { InvalidPluginSourceError } from "../errors.js";
 
 export const GITHUB_REPO_REGEX = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
+
+// npm package name grammar: unscoped my-pkg or scoped @scope/name.
+// Leading `-` or `.` is forbidden (would be parsed as a pnpm flag or relative path).
+export const NPM_PACKAGE_NAME_REGEX = /^(?:@[a-z0-9][a-z0-9-._]*\/)?[a-z0-9][a-z0-9-._]*$/;
 export const SHA_REGEX = /^[a-f0-9]{40}$/;
 
 export interface PluginSourceGitHub {
@@ -100,10 +104,20 @@ function parseGitSubdir(raw: Record<string, unknown>): PluginSourceGitSubdir {
   };
 }
 
+function assertNpmPackageName(raw: Record<string, unknown>): string {
+  const pkg = assertString(raw.package, "package");
+  if (!NPM_PACKAGE_NAME_REGEX.test(pkg)) {
+    throw new InvalidPluginSourceError(
+      `"package" must be a valid npm package name (e.g. my-plugin or @scope/my-plugin). Got: "${pkg}"`
+    );
+  }
+  return pkg;
+}
+
 function parseNpm(raw: Record<string, unknown>): PluginSourceNpm {
   return {
     kind: "npm",
-    package: assertString(raw.package, "package"),
+    package: assertNpmPackageName(raw),
     version: optionalString(raw, "version"),
     registry: optionalString(raw, "registry"),
   };
