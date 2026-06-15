@@ -14,7 +14,7 @@
 Walk a reviewer through the technical resolution: the approach you took, why
 this way over the alternatives, and anything non-obvious (trade-offs, edge
 cases, follow-ups). This narrative is the point of the PR. The conventional
-title, DCO sign-off, and pre-commit hooks are already enforced by CI, so don't
+title and pre-commit hooks are already enforced by CI, so don't
 re-assert them here. Spend your words on the *how*.
 -->
 

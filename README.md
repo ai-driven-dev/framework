@@ -316,7 +316,7 @@ Install issues, load problems, and the framework's current limits → [`docs/TRO
 
 ## Contributing
 
-Everyone can shape this project. **Anyone** can open issues, react, and upvote ideas in [Discussions](https://github.com/ai-driven-dev/framework/discussions) (a signal); a counted roadmap vote is a benefit of **Core Team** membership in the [AIDD](https://www.ai-driven-dev.fr/) programme (training/community/coaching) and up, and **pull-request rights** are held by [Certifié and Habilité contributors](./GOVERNANCE.md#roles) so the standard stays consistent. Contributions are made under the [DCO](./CONTRIBUTING.md#2-commit) (sign off with `git commit -s`). See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the contribution flow, the commit scope discipline, and the templates each surface (skill, agent, rule, command) follows, and [`GOVERNANCE.md`](./GOVERNANCE.md) for the roles and how decisions get made.
+Everyone can shape this project. **Anyone** can open issues, react, and upvote ideas in [Discussions](https://github.com/ai-driven-dev/framework/discussions) (a signal); a counted roadmap vote is a benefit of **Core Team** membership in the [AIDD](https://www.ai-driven-dev.fr/) programme (training/community/coaching) and up, and **pull-request rights** are held by [Certifié and Habilité contributors](./GOVERNANCE.md#roles) so the standard stays consistent. See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the contribution flow, the commit scope discipline, and the templates each surface (skill, agent, rule, command) follows, and [`GOVERNANCE.md`](./GOVERNANCE.md) for the roles and how decisions get made.
 
 To build and ship a brand-new plugin through this marketplace, see [`docs/CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md).
 
