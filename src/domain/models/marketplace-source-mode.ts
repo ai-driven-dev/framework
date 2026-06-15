@@ -1,6 +1,6 @@
 import { EmptyLocalSourcePathError, MarketplaceSourceKindError } from "../errors.js";
 
-export const DEFAULT_FRAMEWORK_REPO = "ai-driven-dev/aidd-framework";
+export const DEFAULT_FRAMEWORK_REPO = "ai-driven-dev/framework";
 
 export type MarketplaceSourceModeValue =
   | { kind: "remote"; repo: string; ref?: string }

@@ -36,7 +36,7 @@ Domain pure: `SetupFlow` and `MarketplaceSourceMode` live in `src/domain/models/
 
 - [ ] Create `src/domain/models/marketplace-source-mode.ts`:
   - Discriminated union: `{ kind: "remote"; url: string } | { kind: "local"; path: string }`
-  - Factory `MarketplaceSourceMode.remote(url?)` — defaults to `https://github.com/ai-driven-dev/aidd-framework.git`
+  - Factory `MarketplaceSourceMode.remote(url?)` — defaults to `https://github.com/ai-driven-dev/framework.git`
   - Factory `MarketplaceSourceMode.local(path)` — validates path is absolute
   - `.equals()` method
   - Ctor throws on invalid path (empty string, relative path)

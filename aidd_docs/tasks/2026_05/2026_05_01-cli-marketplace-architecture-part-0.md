@@ -87,7 +87,7 @@ flowchart TD
    ```json
    {
      "name": "aidd-framework",
-     "source": "https://github.com/ai-driven-dev/aidd-framework.git",
+     "source": "https://github.com/ai-driven-dev/framework.git",
      "type": "git"
    }
    ```

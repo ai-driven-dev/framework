@@ -78,7 +78,7 @@ describe("PluginAddUseCase", () => {
         PROJECT_ROOT,
         Marketplace.create({
           name: "aidd-framework",
-          source: { kind: "github", repo: "ai-driven-dev/aidd-framework" },
+          source: { kind: "github", repo: "ai-driven-dev/framework" },
           scope: "project",
           addedAt: "2026-05-01T00:00:00.000Z",
         })
@@ -96,7 +96,7 @@ describe("PluginAddUseCase", () => {
       await useCase.execute({
         source: {
           kind: "git-subdir",
-          url: "https://github.com/ai-driven-dev/aidd-framework.git",
+          url: "https://github.com/ai-driven-dev/framework.git",
           path: "plugins/aidd-context",
         },
         toolIds: ["claude"],
@@ -121,7 +121,7 @@ describe("PluginAddUseCase", () => {
         PROJECT_ROOT,
         Marketplace.create({
           name: "aidd-framework",
-          source: { kind: "github", repo: "ai-driven-dev/aidd-framework" },
+          source: { kind: "github", repo: "ai-driven-dev/framework" },
           scope: "project",
           addedAt: "2026-05-01T00:00:00.000Z",
         })
@@ -139,7 +139,7 @@ describe("PluginAddUseCase", () => {
         useCase.execute({
           source: {
             kind: "git-subdir",
-            url: "https://github.com/ai-driven-dev/aidd-framework.git",
+            url: "https://github.com/ai-driven-dev/framework.git",
             path: "plugins/aidd-context",
           },
           toolIds: ["claude"],
@@ -195,7 +195,7 @@ describe("PluginAddUseCase", () => {
         projectRoot,
         Marketplace.create({
           name: "aidd-framework",
-          source: { kind: "github", repo: "ai-driven-dev/aidd-framework" },
+          source: { kind: "github", repo: "ai-driven-dev/framework" },
           scope: "project",
           addedAt: "2026-05-01T00:00:00.000Z",
         })
@@ -205,7 +205,7 @@ describe("PluginAddUseCase", () => {
 
     const GIT_SUBDIR_SOURCE = {
       kind: "git-subdir" as const,
-      url: "https://github.com/ai-driven-dev/aidd-framework.git",
+      url: "https://github.com/ai-driven-dev/framework.git",
       path: "plugins/sample-plugin",
     };
 

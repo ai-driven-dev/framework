@@ -12,7 +12,7 @@ const CURSOR = "cursor" as ToolId;
 const makeV2ProdManifest = () => ({
   version: 2,
   docsDir: "aidd_docs",
-  repo: "ai-driven-dev/aidd-framework",
+  repo: "ai-driven-dev/framework",
   tools: {
     claude: {
       toolId: "claude",

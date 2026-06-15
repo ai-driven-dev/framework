@@ -35,7 +35,7 @@ describe("Manifest v5 → v6 migration", () => {
       marketplaces: {
         "aidd-framework": {
           name: "aidd-framework",
-          source: { kind: "github", repo: "ai-driven-dev/aidd-framework" },
+          source: { kind: "github", repo: "ai-driven-dev/framework" },
           scope: "project",
           addedAt: "2024-01-01T00:00:00.000Z",
         },

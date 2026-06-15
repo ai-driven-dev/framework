@@ -132,7 +132,7 @@ flowchart TD
 
 1. Modify `src/application/use-cases/setup-use-case.ts`:
    - After manifest creation, call `marketplaceRegistry.save(projectRoot, defaultMarketplace, scope: "project")`
-   - Read default marketplace from `loadDefaultMarketplace()` (Phase 0 asset) — `https://github.com/ai-driven-dev/aidd-framework.git`
+   - Read default marketplace from `loadDefaultMarketplace()` (Phase 0 asset) — `https://github.com/ai-driven-dev/framework.git`
    - Interactive prompt: which tools to install? (claude/cursor/copilot/opencode/codex) + IDE (vscode)
    - For each selected tool: call `InstallRuntimeConfigUseCase` (auto-install runtime configs + memory stubs)
    - Idempotent: re-running `aidd setup` = no-op for already-installed tools, prompts for additions only

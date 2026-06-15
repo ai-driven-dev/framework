@@ -203,4 +203,4 @@ aidd migrate                            # interactive: detects old manifest, plu
 - VSCode integration: only IDE tool today; expand later if needed
 - Trust/security model for arbitrary remote marketplaces
 - Plugin versioning across marketplaces (semver, channels)
-- Default marketplace URL final value (likely `github.com/ai-driven-dev/aidd-framework`)
+- Default marketplace URL final value (likely `github.com/ai-driven-dev/framework`)

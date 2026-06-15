@@ -196,25 +196,25 @@ describe("copilot", () => {
       it("returns map entry with github source shape for github source", () => {
         const result = ms?.toEntry({
           name: "aidd-framework",
-          source: { kind: "github", repo: "ai-driven-dev/aidd-framework" },
+          source: { kind: "github", repo: "ai-driven-dev/framework" },
         });
         expect(result).toEqual({
           valueShape: "map",
           key: "aidd-framework",
-          value: { source: { source: "github", repo: "ai-driven-dev/aidd-framework" } },
+          value: { source: { source: "github", repo: "ai-driven-dev/framework" } },
         });
       });
 
       it("does not include ref in github source (ref dropped per VSCode spec)", () => {
         const result = ms?.toEntry({
           name: "aidd-framework",
-          source: { kind: "github", repo: "ai-driven-dev/aidd-framework", ref: "v1.0.0" },
+          source: { kind: "github", repo: "ai-driven-dev/framework", ref: "v1.0.0" },
         });
         expect(result).not.toBeNull();
         if (result?.valueShape === "map") {
           const src = result.value.source as Record<string, unknown>;
           expect(src).not.toHaveProperty("ref");
-          expect(src).toEqual({ source: "github", repo: "ai-driven-dev/aidd-framework" });
+          expect(src).toEqual({ source: "github", repo: "ai-driven-dev/framework" });
         }
       });
 

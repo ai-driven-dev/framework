@@ -141,7 +141,7 @@ CI runs the benchmark on every PR and push to `main` (`.github/workflows/perf-re
 
 #### Network E2E tests (opt-in)
 
-Network E2E tests exercise the real GitHub fetch path (`ai-driven-dev/aidd-framework`). They are skipped in the default `pnpm test` run and require opt-in:
+Network E2E tests exercise the real GitHub fetch path (`ai-driven-dev/framework`). They are skipped in the default `pnpm test` run and require opt-in:
 
 ```bash
 RUN_NETWORK_TESTS=1 pnpm test:e2e tests/e2e/network.e2e.test.ts

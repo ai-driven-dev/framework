@@ -90,7 +90,7 @@ FW_CURRENT_BRANCH="$(git -C "$FRAMEWORK_ROOT" branch --show-current)"
 
 step "Framework: create GitHub prerelease $TAG"
 gh release create "$TAG" \
-  --repo ai-driven-dev/aidd-framework \
+  --repo ai-driven-dev/framework \
   --prerelease \
   --target "$FRAMEWORK_BRANCH" \
   --title "$TAG" \

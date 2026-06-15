@@ -5,14 +5,14 @@
 ## Pre-requisites
 
 - Part 4 (stable release) recommended — run network E2E against stable published binary, not dev build
-- GitHub secret `AIDD_TEST_PAT` provisioned in repo settings (fine-grained, read-only on `ai-driven-dev/aidd-framework`)
+- GitHub secret `AIDD_TEST_PAT` provisioned in repo settings (fine-grained, read-only on `ai-driven-dev/framework`)
 - Existing `ci.yml` not modified — this is a new separate workflow file
 
 ## Goal
 
 All current E2E tests run against a local fixture framework repo (`tests/fixtures/aidd-framework/`). This does not catch:
 
-1. Default marketplace URL (`https://github.com/ai-driven-dev/aidd-framework.git`) drifting or becoming unreachable
+1. Default marketplace URL (`https://github.com/ai-driven-dev/framework.git`) drifting or becoming unreachable
 2. Authentication token plumbing regressions (gh CLI, GITHUB_TOKEN env)
 3. Real `marketplace.json` schema changes in the framework repo
 4. Plugin install from real catalog (real plugin IDs, real file content)

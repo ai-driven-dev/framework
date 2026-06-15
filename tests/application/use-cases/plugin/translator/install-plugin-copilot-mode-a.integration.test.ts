@@ -44,7 +44,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
       "copilot",
-      { kind: "github", repo: "ai-driven-dev/aidd-framework" },
+      { kind: "github", repo: "ai-driven-dev/framework" },
       PROJECT_ROOT,
       manifest,
       MARKETPLACE_NAME,
@@ -55,7 +55,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
       PROJECT_ROOT,
       Marketplace.create({
         name: MARKETPLACE_NAME,
-        source: { kind: "github", repo: "ai-driven-dev/aidd-framework" },
+        source: { kind: "github", repo: "ai-driven-dev/framework" },
         scope: "project",
         addedAt: "2026-01-01T00:00:00Z",
       })
@@ -69,7 +69,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const settings = JSON.parse(await fs.readFile(settingsPath)) as Record<string, unknown>;
     expect(settings.extraKnownMarketplaces).toBeDefined();
     expect((settings.extraKnownMarketplaces as Record<string, unknown>)[MARKETPLACE_NAME]).toEqual({
-      source: { source: "github", repo: "ai-driven-dev/aidd-framework" },
+      source: { source: "github", repo: "ai-driven-dev/framework" },
     });
     expect(settings.enabledPlugins).toBeDefined();
   });

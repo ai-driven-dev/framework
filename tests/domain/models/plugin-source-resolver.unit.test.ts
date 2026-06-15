@@ -36,7 +36,7 @@ describe("resolvePluginSourceFromMarketplace", () => {
   describe("github marketplace + local entry source (relative path)", () => {
     it("transforms ./path to git-subdir with normalized path and ref", () => {
       const entrySource: PluginSource = { kind: "local", path: "./plugins/aidd-context" };
-      const marketplace = makeGithubMarketplace("ai-driven-dev/aidd-framework", "v4.1.0-beta.14");
+      const marketplace = makeGithubMarketplace("ai-driven-dev/framework", "v4.1.0-beta.14");
 
       const result = resolvePluginSourceFromMarketplace(
         entrySource,
@@ -46,7 +46,7 @@ describe("resolvePluginSourceFromMarketplace", () => {
 
       expect(result).toEqual({
         kind: "git-subdir",
-        url: "https://github.com/ai-driven-dev/aidd-framework.git",
+        url: "https://github.com/ai-driven-dev/framework.git",
         path: "plugins/aidd-context",
         ref: "v4.1.0-beta.14",
       });
@@ -105,7 +105,7 @@ describe("resolvePluginSourceFromMarketplace", () => {
     it("transforms absolute path under marketplace local dir to git-subdir", () => {
       const absPath = `${MARKETPLACE_LOCAL_PATH}/plugins/aidd-context`;
       const entrySource: PluginSource = { kind: "local", path: absPath };
-      const marketplace = makeGithubMarketplace("ai-driven-dev/aidd-framework", "v4.1.0-beta.14");
+      const marketplace = makeGithubMarketplace("ai-driven-dev/framework", "v4.1.0-beta.14");
 
       const result = resolvePluginSourceFromMarketplace(
         entrySource,
@@ -115,7 +115,7 @@ describe("resolvePluginSourceFromMarketplace", () => {
 
       expect(result).toEqual({
         kind: "git-subdir",
-        url: "https://github.com/ai-driven-dev/aidd-framework.git",
+        url: "https://github.com/ai-driven-dev/framework.git",
         path: "plugins/aidd-context",
         ref: "v4.1.0-beta.14",
       });

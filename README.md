@@ -1,6 +1,6 @@
 # AIDD CLI
 
-The **AIDD CLI** (`@ai-driven-dev/cli`) installs AI tool runtime configs, IDE integrations, and plugins from the [AIDD marketplace](https://github.com/ai-driven-dev/aidd-framework) across AI coding assistants. Runtime configs are bundled in the CLI binary; memory and context files are provided by the `aidd-context` plugin, not the binary. Plugins are fetched from the marketplace on demand. Every installed file is hash-tracked in a manifest for drift detection.
+The **AIDD CLI** (`@ai-driven-dev/cli`) installs AI tool runtime configs, IDE integrations, and plugins from the [AIDD marketplace](https://github.com/ai-driven-dev/framework) across AI coding assistants. Runtime configs are bundled in the CLI binary; memory and context files are provided by the `aidd-context` plugin, not the binary. Plugins are fetched from the marketplace on demand. Every installed file is hash-tracked in a manifest for drift detection.
 
 **Supported tools:** Claude Code · Cursor · GitHub Copilot · OpenCode · Codex · VS Code (IDE integration)
 
@@ -52,7 +52,7 @@ aidd --version
 
 ## Authentication
 
-Authentication is **not required** for the default public marketplace (`github.com/ai-driven-dev/aidd-framework`). Authentication is only needed for private marketplaces.
+Authentication is **not required** for the default public marketplace (`github.com/ai-driven-dev/framework`). Authentication is only needed for private marketplaces.
 
 To authenticate for a private marketplace:
 
@@ -595,4 +595,4 @@ Private repository — all AIDD team members.
 
 ---
 
-← [Back to aidd-framework](https://github.com/ai-driven-dev/aidd-framework)
+← [Back to aidd-framework](https://github.com/ai-driven-dev/framework)

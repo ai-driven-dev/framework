@@ -167,7 +167,7 @@ See: `2026_05_01-cli-marketplace-architecture-part-4.md`
 **Confidence raised to 9/10 — all blockers resolved:**
 - ✅ Asset source: test fixtures + greenfield Cursor/Codex/Claude templates
 - ✅ FrameworkResolver phase-out: parallel (1a) → migrate 8 callers (1b) → delete (1c)
-- ✅ Default marketplace URL: `https://github.com/ai-driven-dev/aidd-framework.git` (git clone, anonymous)
+- ✅ Default marketplace URL: `https://github.com/ai-driven-dev/framework.git` (git clone, anonymous)
 - ✅ tsup esbuild loader POC: PASSED (Phase −1 spike completed 2026-05-01)
 - ✅ Docs dir hardcoded to `aidd_docs` (no user customization)
 
@@ -199,7 +199,7 @@ esbuildOptions(options) {
 
 | # | Topic | Lock |
 |---|---|---|
-| 1 | Default marketplace URL | **Git clone** — `https://github.com/ai-driven-dev/aidd-framework.git`. Anonymous read. Reuses existing PluginFetcher. Auth only when user adds private marketplace |
+| 1 | Default marketplace URL | **Git clone** — `https://github.com/ai-driven-dev/framework.git`. Anonymous read. Reuses existing PluginFetcher. Auth only when user adds private marketplace |
 | 2 | Memory stub content | **Existing AGENTS.md template format** — frontmatter + behavior guidelines + empty `<aidd_project_memory>` block with `{{DOCS}}` placeholder + ls fallback (matches `framework/plugins/aidd-context/skills/01-project-init/assets/AGENTS.md`) |
 | 3 | `aidd migrate` atomicity | **Combined a+b+c** — backup `.aidd/manifest.backup.json` before mutation + `--dry-run` flag + accept partial on failure with documented recovery |
 | 4 | E2E plugin source | **Mock HTTP server** — vitest mocks simulating real marketplace responses |
@@ -225,7 +225,7 @@ Each phase = 1 PR, releasable to beta. Public release after Phase 3.
 | Claim | Truth | Notes |
 |---|---|---|
 | `framework/config/` files exist | FALSE | Only in `tests/fixtures/framework/config/` |
-| `framework` is standalone Git repo | TRUE | Remote: `git@github.com:ai-driven-dev/aidd-framework.git` |
+| `framework` is standalone Git repo | TRUE | Remote: `git@github.com:ai-driven-dev/framework.git` |
 | Install/uninstall commands have `ai|ide` subcommands | TRUE | Already implemented today |
 | Codex MCP→TOML conversion | TRUE | `mergeCodexConfigToml()` in codex.ts; `domain/formats/toml.ts` |
 | CLI creates rules scaffold | FALSE | Zero grep matches; framework has static dirs only |

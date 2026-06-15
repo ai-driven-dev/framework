@@ -12,7 +12,7 @@ describe("MarketplaceRegisterFrameworkUseCase", () => {
 
     const result = await useCase.execute({
       projectRoot: PROJECT_ROOT,
-      pluginSource: { kind: "github", repo: "ai-driven-dev/aidd-framework" },
+      pluginSource: { kind: "github", repo: "ai-driven-dev/framework" },
     });
 
     expect(result.registered).toBe(true);
@@ -21,7 +21,7 @@ describe("MarketplaceRegisterFrameworkUseCase", () => {
     expect(list[0]?.scope).toBe("project");
     expect(list[0]?.source.kind).toBe("github");
     if (list[0]?.source.kind === "github") {
-      expect(list[0]?.source.repo).toBe("ai-driven-dev/aidd-framework");
+      expect(list[0]?.source.repo).toBe("ai-driven-dev/framework");
     }
   });
 
