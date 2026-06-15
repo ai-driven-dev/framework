@@ -21,6 +21,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/09-mermaid`](#skills09-mermaid)
   - [`skills/10-learn`](#skills10-learn)
   - [`skills/11-discovery`](#skills11-discovery)
+  - [`skills/12-design-system`](#skills12-design-system)
 
 ---
 
@@ -194,4 +195,13 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `-` | [README.md](skills/11-discovery/README.md) | - |
 | `references` | [ai-mapping.md](skills/11-discovery/references/ai-mapping.md) | - |
 | `-` | [SKILL.md](skills/11-discovery/SKILL.md) | `Enumerate installed surfaces of the AI tool (skills, agents, commands, plugins, MCP servers, rules, hooks, memory files) and recommend the best match for the user's stated intent. Use proactively whenever the user asks the model to list, show, enumerate, find, or pick among any of these surfaces - including imperative phrasings ("list hooks", "show me the rules", "enumerate skills", "find a memory file", "which agent reviews code"), question phrasings ("what's available?", "what hooks do we have?", "which rule applies here?", "what memory files do we have?"), and indirect phrasings ("what can I use for X?", "do we have something that does Y?"). Always pick this skill over scanning the filesystem with grep, find, ls, or reading action files directly when the user is enumerating a surface. Do NOT use for picking a specific item inside one plugin (the plugin's own onboard handles that), creating a new surface, or executing a recommended item (this skill only points; the user invokes).` |
+
+#### `skills/12-design-system`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-create-design-system.md](skills/12-design-system/actions/01-create-design-system.md) | - |
+| `actions` | [02-redesign-page.md](skills/12-design-system/actions/02-redesign-page.md) | - |
+| `-` | [README.md](skills/12-design-system/README.md) | - |
+| `-` | [SKILL.md](skills/12-design-system/SKILL.md) | `Initialize a project's design system through a guided, ordered playbook that routes each step to the right Impeccable command - register and color strategy, palette with accessibility validation, typography, spacing, elevation, motion, components, and the canonical DESIGN.md.` |
 
