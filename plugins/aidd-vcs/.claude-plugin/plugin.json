@@ -20,7 +20,7 @@
     "release",
     "version-control"
   ],
-  "repository": "https://github.com/ai-driven-dev/aidd-framework",
+  "repository": "https://github.com/ai-driven-dev/framework",
   "homepage": "https://ai-driven.dev",
   "license": "MIT"
 }

@@ -64,7 +64,7 @@ A plugin can bundle any of the Claude Code surfaces above; only the manifest and
   "author": { "name": "AI-Driven Dev", "url": "https://github.com/ai-driven-dev" },
   "skills": ["./skills/01-hello"],
   "keywords": ["example"],
-  "repository": "https://github.com/ai-driven-dev/aidd-framework",
+  "repository": "https://github.com/ai-driven-dev/framework",
   "homepage": "https://ai-driven.dev",
   "license": "MIT"
 }

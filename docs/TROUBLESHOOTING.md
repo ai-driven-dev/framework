@@ -29,4 +29,4 @@ Run `/reload-plugins` in the same session, or restart the tool if a hook config 
 
 ## Still stuck?
 
-Ask in [Discussions](https://github.com/ai-driven-dev/aidd-framework/discussions) or on [Discord](https://discord.gg/ai-driven-dev). For a bug, open an [issue](https://github.com/ai-driven-dev/aidd-framework/issues/new/choose). See [`SUPPORT.md`](../.github/SUPPORT.md).
+Ask in [Discussions](https://github.com/ai-driven-dev/framework/discussions) or on [Discord](https://discord.gg/ai-driven-dev). For a bug, open an [issue](https://github.com/ai-driven-dev/framework/issues/new/choose). See [`SUPPORT.md`](../.github/SUPPORT.md).

@@ -43,7 +43,7 @@ Skills are grouped into plugins by domain. Install only the plugins you need.
 | aidd-vcs          | VCS workflows: commit, pull/merge request, release tag, issue creation             | `01-commit`, `02-pull-request`, `04-issue-create`           |
 | aidd-orchestrator | Async orchestration of the SDLC on labeled issues (optional, extra)                | `00-async-dev` (router with setup / run / review sub-flows) |
 
-> See the [CATALOG](https://github.com/ai-driven-dev/aidd-framework/blob/main/docs/CATALOG.md) for the exhaustive list of skills and actions.
+> See the [CATALOG](https://github.com/ai-driven-dev/framework/blob/main/docs/CATALOG.md) for the exhaustive list of skills and actions.
 
 ### Framework Structure
 

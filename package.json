@@ -7,10 +7,10 @@
   "homepage": "https://www.ai-driven-dev.fr/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ai-driven-dev/aidd-framework.git"
+    "url": "https://github.com/ai-driven-dev/framework.git"
   },
   "bugs": {
-    "url": "https://github.com/ai-driven-dev/aidd-framework/issues"
+    "url": "https://github.com/ai-driven-dev/framework/issues"
   },
   "keywords": [
     "claude-code",

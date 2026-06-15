@@ -5,7 +5,7 @@ Where to get help with the AI-Driven Dev framework.
 ## Asking questions
 
 - **Usage questions, ideas, show-and-tell** - open a thread in
-  [GitHub Discussions](https://github.com/ai-driven-dev/aidd-framework/discussions).
+  [GitHub Discussions](https://github.com/ai-driven-dev/framework/discussions).
   This is the best place if you are not sure something is a bug.
 - **Real-time chat** - join the community on
   [Discord](https://discord.gg/ai-driven-dev).
@@ -17,7 +17,7 @@ Discussions.
 ## Reporting a problem
 
 - **Bug** (incorrect content, broken syntax, missing field) - open a
-  [Bug Report](https://github.com/ai-driven-dev/aidd-framework/issues/new/choose).
+  [Bug Report](https://github.com/ai-driven-dev/framework/issues/new/choose).
 - **Feature request** - open a Feature Request issue or an idea in Discussions;
   the community votes on priority (see
   [`ROADMAP.md`](../ROADMAP.md#how-to-influence)).

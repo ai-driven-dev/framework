@@ -45,7 +45,7 @@ Every commit then runs the framework checks (json/yaml validity, schema validati
 Before opening a PR, exercise the skills you touched in a real session. Clone the framework, then point your assistant at the checkout instead of a published release:
 
 ```bash
-git clone https://github.com/ai-driven-dev/aidd-framework ~/projects/aidd-framework
+git clone https://github.com/ai-driven-dev/framework ~/projects/framework
 ```
 
 #### Claude Code
@@ -53,7 +53,7 @@ git clone https://github.com/ai-driven-dev/aidd-framework ~/projects/aidd-framew
 Register the checkout as a local marketplace, then install the plugins:
 
 ```text
-/plugin marketplace add ~/projects/aidd-framework
+/plugin marketplace add ~/projects/framework
 /plugin install aidd-context@aidd-framework
 /plugin install aidd-dev@aidd-framework
 /plugin install aidd-vcs@aidd-framework
@@ -72,7 +72,7 @@ To load the plugins into a personal project, point its `.claude/settings.local.j
     "aidd-framework": {
       "source": {
         "source": "directory",
-        "path": "~/projects/aidd-framework"
+        "path": "~/projects/framework"
       }
     }
   },
@@ -92,7 +92,7 @@ To load the plugins into a personal project, point its `.claude/settings.local.j
 Register the checkout (pass an absolute path; `./` is rejected), then install the plugins:
 
 ```bash
-codex plugin marketplace add ~/projects/aidd-framework
+codex plugin marketplace add ~/projects/framework
 codex plugin add aidd-context@aidd-framework
 codex plugin add aidd-dev@aidd-framework
 codex plugin add aidd-vcs@aidd-framework
@@ -164,7 +164,7 @@ Config: `release-please-config.json` + `.release-please-manifest.json` (pre-rele
 
 ## Reporting issues
 
-[Open an issue](https://github.com/ai-driven-dev/aidd-framework/issues/new/choose) (🐛 Bug or ✨ Feature). New issues are auto-added to the [AIDD Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8). For **usage questions**, use [Discussions](https://github.com/ai-driven-dev/aidd-framework/discussions), not issues (see [`SUPPORT.md`](./.github/SUPPORT.md)).
+[Open an issue](https://github.com/ai-driven-dev/framework/issues/new/choose) (🐛 Bug or ✨ Feature). New issues are auto-added to the [AIDD Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8). For **usage questions**, use [Discussions](https://github.com/ai-driven-dev/framework/discussions), not issues (see [`SUPPORT.md`](./.github/SUPPORT.md)).
 
 ## Reference
 

@@ -51,7 +51,7 @@ Each plugin ships:
 Type these inside a Claude Code session (they are slash commands, not shell commands):
 
 ```text
-/plugin marketplace add ai-driven-dev/aidd-framework
+/plugin marketplace add ai-driven-dev/framework
 /plugin install aidd-context@aidd-framework
 /plugin install aidd-dev@aidd-framework
 /plugin install aidd-vcs@aidd-framework
@@ -189,7 +189,7 @@ Invocation in v4 is `plugin:NN-action`. Where a column says "sub-flow", the old 
 
 **The old invocation used `:` between number and name. Is that still valid?** No. The skill name uses a hyphen: `aidd-dev:02-implement`, not `aidd-dev:02:implement`. The colon form can silently fail on non-Claude hosts.
 
-**How do I get help?** Open an issue: <https://github.com/ai-driven-dev/aidd-framework/issues>.
+**How do I get help?** Open an issue: <https://github.com/ai-driven-dev/framework/issues>.
 
 
 ---

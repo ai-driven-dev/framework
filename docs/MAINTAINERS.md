@@ -48,7 +48,7 @@ The App: ID in secret `AIDD_BOT_APP_ID`, key in `AIDD_BOT_PRIVATE_KEY`. If the A
 
 To change protection, edit `.github/rulesets/main.json`, then apply it live:
 ```bash
-gh api -X PUT repos/ai-driven-dev/aidd-framework/rulesets/<id> --input .github/rulesets/main.json
+gh api -X PUT repos/ai-driven-dev/framework/rulesets/<id> --input .github/rulesets/main.json
 ```
 Keep the file and the live ruleset in sync.
 

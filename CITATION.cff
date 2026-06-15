@@ -7,7 +7,7 @@ abstract: >-
 type: software
 authors:
   - name: "The AI-Driven Dev contributors"
-repository-code: "https://github.com/ai-driven-dev/aidd-framework"
+repository-code: "https://github.com/ai-driven-dev/framework"
 url: "https://www.ai-driven-dev.fr/"
 license: MIT
 keywords:
