@@ -127,8 +127,8 @@ function migrateV3toV4(raw: Record<string, unknown>): void {
 }
 
 // Strips dead top-level fields: docs, mode, repo, docsDir, scripts, plugins.
-// migrate-use-case.ts uses raw JSON inspection before deserialization, so it is
-// safe to strip scripts/plugins here during the round-trip.
+// The legacy scripts/plugins file lists are parsed separately (parseLegacySections)
+// before this strip, so removing them here during the round-trip is safe.
 function migrateV4toV5(raw: Record<string, unknown>): void {
   delete raw.docs;
   delete raw.mode;
@@ -147,7 +147,8 @@ function migrateV5toV6(raw: Record<string, unknown>): void {
 
 export class Manifest {
   private readonly _tools: Map<ToolId, ToolEntry>;
-  // Phase 8 deferred: _scripts/_plugins kept to support migrate-use-case legacy detection.
+  // Legacy _scripts/_plugins file lists retained so isFileTracked still recognises files
+  // written by pre-v6 manifests (the fields themselves are stripped from serialized output).
   private _scripts: ScriptsEntry | null;
   private _plugins: PluginsEntry | null;
 
@@ -497,7 +498,7 @@ export class Manifest {
     return tools;
   }
 
-  // Phase 8 deferred: parse legacy scripts/plugins for migrate-use-case detection.
+  // Parse legacy scripts/plugins file lists for backward-compatible file tracking of pre-v6 manifests.
   private static parseLegacySections(raw: Record<string, unknown>): {
     scripts: ScriptsEntry | null;
     plugins: PluginsEntry | null;

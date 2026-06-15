@@ -266,12 +266,6 @@ const INSTALLED_NODES: MenuNode[] = [
     ],
   },
   {
-    name: "Migrate from older version",
-    value: "migrate",
-    description: "Upgrade project from a previous AIDD version",
-    command: ["migrate"],
-  },
-  {
     name: "System",
     value: "system",
     description: "CLI self-update and authentication",

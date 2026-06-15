@@ -413,13 +413,6 @@ export class InvalidPluginModeConfigError extends Error {
   }
 }
 
-export class InvalidMigrationFromVersionError extends Error {
-  constructor(fromVersion: number, validVersions: readonly number[]) {
-    super(`Invalid fromVersion: ${fromVersion}. Must be one of ${validVersions.join(", ")}.`);
-    this.name = "InvalidMigrationFromVersionError";
-  }
-}
-
 export class InvalidInstallScopeError extends Error {
   constructor(value: string) {
     super(`Invalid scope '${value}'. Expected 'project' or 'user'.`);

@@ -11,8 +11,8 @@
 │  Thin wiring: parse flags → call use-case → display result  │
 ├─────────────────────────────────────────────────────────────┤
 │  Use Cases (src/application/use-cases/)                     │
-│  Orchestration: auth/ global/ install/ marketplace/ migrate/ plugin/ restore/ setup/ shared/ sync/       │
-│  SetupUseCase (orchestrator), MigrateUseCase, SyncUseCase   │
+│  Orchestration: auth/ global/ install/ marketplace/ plugin/ restore/ setup/ shared/ sync/       │
+│  SetupUseCase (orchestrator), SyncUseCase, UpdateUseCase    │
 ├─────────────────────────────────────────────────────────────┤
 │  Domain (src/domain/)                                       │
 │  models/   — entities, value objects, pure functions        │
@@ -38,7 +38,6 @@ Dependencies point inward only: infrastructure → application → domain. Domai
 |---|---|
 | `SetupFlow` | Aggregate carrying all setup parameters (source, tools, pluginMode, interactive) |
 | `MarketplaceSourceMode` | Value object: `remote()` or `local(path)` |
-| `MigrationPlan` | Plan for upgrading a manifest — strips obsolete entries, records what changed |
 | `MarketplaceEntry` | A registered marketplace (name, source, trustLevel) |
 | `MarketplaceCacheEntry` | Cached catalog fetch (marketplace name, fetchedAt, size) |
 | `Manifest` (v6) | Top-level schema: `version`, `tools`, `marketplaces`. Plugins live per-tool under `tools[id].plugins`. Stripped top-level fields: `docsDir`, `repo`, `mode`, `scripts`, `plugins`, `topPlugins`. Stored at `.aidd/manifest.json` |
@@ -53,7 +52,6 @@ aidd ai             — AI tool management (install/uninstall/list/status/update
 aidd ide            — IDE tool management (install/uninstall/list/status/update/doctor)
 aidd plugin         — plugin management (create/remove/list/install/search/update/doctor)
 aidd marketplace    — marketplace management (add/list/remove/refresh/check)
-aidd migrate        — manifest migration to v6 (from older v3/v4/v5 manifests)
 aidd status         — global drift view (delegates to ai + ide status)
 aidd doctor         — global integrity check (delegates to ai + ide doctor)
 aidd restore        — global file restore (delegates to ai restore)

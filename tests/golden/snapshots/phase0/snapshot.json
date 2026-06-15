@@ -74,29 +74,6 @@
     }
   },
   {
-    "command": "migrate",
-    "exitCode": 0,
-    "stdout": "Nothing to migrate.\n",
-    "stderr": "",
-    "filesWritten": [],
-    "manifest": {
-      "version": 6,
-      "tools": {
-        "claude": {
-          "toolId": "claude",
-          "version": "<VERSION>",
-          "files": [
-            {
-              "relativePath": ".claude/settings.json",
-              "hash": "649e4d11beb54c6763ee7880f5227564"
-            }
-          ],
-          "mergeFiles": []
-        }
-      }
-    }
-  },
-  {
     "command": "clean --force",
     "exitCode": 0,
     "stdout": "Removing claude files...\nCleaned all AIDD files (1 files removed)\n",

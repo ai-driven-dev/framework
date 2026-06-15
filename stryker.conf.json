@@ -3,7 +3,7 @@
   "packageManager": "pnpm",
   "testRunner": "vitest",
   "plugins": ["@stryker-mutator/vitest-runner"],
-  "mutate": ["src/domain/models/migration-plan.ts"],
+  "mutate": ["src/domain/models/manifest.ts"],
   "coverageAnalysis": "perTest",
   "thresholds": { "high": 80, "low": 60, "break": 50 },
   "reporters": ["html", "json", "progress"],

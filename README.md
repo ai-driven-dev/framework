@@ -136,9 +136,11 @@ aidd setup --ai all --ide all --yes
 
 ### Brownfield (existing project)
 
+A manifest from an older CLI version is upgraded to the latest schema automatically the
+first time it is loaded — no manual migration command. Just run any `aidd` command:
+
 ```bash
-# Migrate obsolete manifest entries from previous CLI versions
-aidd migrate
+aidd status
 ```
 
 ---
@@ -225,7 +227,6 @@ aidd ide uninstall vscode       # remove VS Code integration only
 | `aidd ide status`               | Show drift for IDE tools                                                             | —                                                                 |
 | `aidd ide update [tool]`        | Re-install IDE tool configs from bundled CLI assets (always overwrites)              | —                                                                 |
 | `aidd ide doctor`               | Check IDE tool installation health and detect issues                                 | —                                                                 |
-| `aidd migrate`                  | Detect and strip obsolete manifest entries from previous CLI versions                | `--dry-run`, `--non-interactive`                                  |
 | `aidd status`                   | Show drift across all tools (AI + IDE)                                               | —                                                                 |
 | `aidd doctor`                   | Structural integrity check — exits 1 on errors or warnings                           | —                                                                 |
 | `aidd restore [files...]`       | Revert modified/deleted files to the manifest-pinned version                         | `--force`, `--tool`                                               |
@@ -507,15 +508,9 @@ done
 aidd framework build --source ./framework --target opencode --out ./dist/aidd-framework-opencode-flat --flat
 ```
 
-### `aidd migrate`
+### Manifest schema upgrades
 
-Detects and strips obsolete manifest entries left over from previous CLI versions (bundled `scripts` section, top-level `plugins` section, plugins without a marketplace source). Backs up the manifest before any write. Idempotent — safe to run multiple times.
-
-```bash
-aidd migrate                    # interactive migration
-aidd migrate --dry-run          # show plan without applying changes
-aidd migrate --non-interactive  # apply without confirmation prompts
-```
+There is no `aidd migrate` command. A manifest written by an older CLI version is upgraded to the current schema (v6) automatically when it is loaded — the version-to-version migrations live in `manifest.ts` and run on `Manifest.deserialize`. The upgraded shape is persisted the next time the manifest is written (e.g. on the next `install` or `update`). The migration chain is idempotent.
 
 ### `aidd clean`
 

@@ -47,10 +47,6 @@ import { MarketplaceRefreshUseCase } from "../application/use-cases/marketplace/
 import { MarketplaceRegisterFrameworkUseCase } from "../application/use-cases/marketplace/marketplace-register-framework-use-case.js";
 import { MarketplaceRemoveUseCase } from "../application/use-cases/marketplace/marketplace-remove-use-case.js";
 import { MarketplaceSyncSettingsUseCase } from "../application/use-cases/marketplace/marketplace-sync-settings-use-case.js";
-import { MigrateBackupUseCase } from "../application/use-cases/migrate/migrate-backup-use-case.js";
-import { MigrateRewirePluginsUseCase } from "../application/use-cases/migrate/migrate-rewire-plugins-use-case.js";
-import { MigrateStripDeadFilesUseCase } from "../application/use-cases/migrate/migrate-strip-dead-files-use-case.js";
-import { MigrateUseCase } from "../application/use-cases/migrate-use-case.js";
 import { PluginAddUseCase } from "../application/use-cases/plugin/plugin-add-use-case.js";
 import { PluginCreateUseCase } from "../application/use-cases/plugin/plugin-create-use-case.js";
 import { PluginInstallFromMarketplaceUseCase } from "../application/use-cases/plugin/plugin-install-from-marketplace-use-case.js";
@@ -171,9 +167,6 @@ interface Deps {
   pluginPickUseCase: PluginPickUseCase;
   pluginInstallUseCase: PluginInstallUseCase;
   marketplaceSyncSettingsUseCase: MarketplaceSyncSettingsUseCase;
-  migrateBackupUseCase: MigrateBackupUseCase;
-  migrateStripDeadFilesUseCase: MigrateStripDeadFilesUseCase;
-  migrateRewirePluginsUseCase: MigrateRewirePluginsUseCase;
   syncConflictResolverUseCase: SyncConflictResolverUseCase;
   syncFilePropagationUseCase: SyncFilePropagationUseCase;
   syncSourceResolverUseCase: SyncSourceResolverUseCase;
@@ -197,7 +190,6 @@ interface Deps {
   updateAiToolsUseCase: UpdateAiToolsUseCase;
   updateIdeToolsUseCase: UpdateIdeToolsUseCase;
   syncAllUseCase: SyncAllUseCase;
-  migrateUseCase: MigrateUseCase;
   cleanUseCase: CleanUseCase;
   doctorAllUseCase: DoctorAllUseCase;
   checkUpdateUseCase: CheckUpdateUseCase;
@@ -545,12 +537,6 @@ export async function createDeps(
     marketplaceSyncSettingsUseCase,
     logger
   );
-  const migrateBackupUseCase = new MigrateBackupUseCase(fs);
-  const migrateStripDeadFilesUseCase = new MigrateStripDeadFilesUseCase(fs, logger);
-  const migrateRewirePluginsUseCase = new MigrateRewirePluginsUseCase(
-    pluginInstallFromMarketplaceUseCase,
-    logger
-  );
   const syncConflictResolverUseCase = new SyncConflictResolverUseCase(fs);
   const syncFilePropagationUseCase = new SyncFilePropagationUseCase(
     fs,
@@ -658,17 +644,6 @@ export async function createDeps(
     syncFilePropagationUseCase,
     pluginInstallFromMarketplaceUseCase
   );
-  const migrateUseCase = new MigrateUseCase(
-    fs,
-    manifestRepo,
-    logger,
-    prompter,
-    marketplaceRegisterFrameworkUseCase,
-    migrateBackupUseCase,
-    migrateStripDeadFilesUseCase,
-    migrateRewirePluginsUseCase,
-    marketplaceRegistry
-  );
   const cleanUseCase = new CleanUseCase(fs, manifestRepo, logger, prompter);
   const doctorAllUseCase = new DoctorAllUseCase(doctorUseCase);
   const checkUpdateUseCase = new CheckUpdateUseCase(cliUpdater, currentVersionProvider, logger, fs);
@@ -716,9 +691,6 @@ export async function createDeps(
     pluginPickUseCase,
     pluginInstallUseCase,
     marketplaceSyncSettingsUseCase,
-    migrateBackupUseCase,
-    migrateStripDeadFilesUseCase,
-    migrateRewirePluginsUseCase,
     syncConflictResolverUseCase,
     syncFilePropagationUseCase,
     syncSourceResolverUseCase,
@@ -742,7 +714,6 @@ export async function createDeps(
     updateAiToolsUseCase,
     updateIdeToolsUseCase,
     syncAllUseCase,
-    migrateUseCase,
     cleanUseCase,
     doctorAllUseCase,
     checkUpdateUseCase,

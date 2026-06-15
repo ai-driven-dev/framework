@@ -11,8 +11,9 @@ This guide covers the breaking changes introduced in v4.1.0 and the steps requir
 npm install -g @ai-driven-dev/cli@beta   # beta
 npm install -g @ai-driven-dev/cli@latest  # stable (post v4.1.0)
 
-# 2. Migrate obsolete manifest entries (backs up manifest before write)
-aidd migrate
+# 2. Run any CLI command — the manifest auto-upgrades to the latest schema on load.
+#    Obsolete fields are stripped the next time the manifest is written.
+aidd status
 ```
 
 ---
@@ -61,7 +62,7 @@ aidd migrate
 
 The manifest (`.aidd/manifest.json`) structure changes to `{ version, tools, marketplaces }`.
 
-> This guide covers the v4.1-era schema (v5). The current CLI ships manifest **v6** (same top-level shape); `aidd migrate` upgrades any older manifest to the latest. See [ARCHITECTURE.md](ARCHITECTURE.md).
+> This guide covers the v4.1-era schema (v5). The current CLI ships manifest **v6** (same top-level shape); any older manifest is upgraded to the latest automatically when it is loaded (schema migration in `manifest.ts`). See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 **Removed fields:**
 
@@ -73,9 +74,7 @@ The manifest (`.aidd/manifest.json`) structure changes to `{ version, tools, mar
 | `scripts` | Script install removed from the CLI |
 | `topPlugins` | Replaced by per-tool `plugins[]` under `tools[id]` |
 
-**Auto-migration:** Run `aidd migrate` — it detects and strips all removed fields, backs up the manifest to `.aidd/manifest.backup.json`, and is idempotent (safe to run multiple times).
-
-If you are on v3.x: a backup is written to `.aidd/manifest.backup.json` before any mutation.
+**Auto-migration:** No manual step is required. The CLI detects the manifest schema version on load and applies the version-to-version migrations in `manifest.ts` (v1→v2→…→v6), stripping all removed fields. The upgraded shape is persisted the next time the manifest is written (e.g. on the next `install` / `update`). The migration chain is idempotent — loading a v6 manifest is a no-op.
 
 ---
 
@@ -127,7 +126,7 @@ Marketplace registration and plugin enable state are written to these files:
 ## Checklist
 
 - [ ] `npm install -g @ai-driven-dev/cli@latest` (or `@beta`)
-- [ ] Run `aidd migrate` in each project initialized with CLI < 4.1.0
+- [ ] Run any `aidd` command in each project initialized with CLI < 4.1.0 — the manifest auto-upgrades on load (no manual migrate command)
 - [ ] Replace `aidd install ai <tool>` → `aidd ai install <tool>` in all CI and onboarding scripts
 - [ ] Replace `aidd install ide <tool>` → `aidd ide install <tool>`
 - [ ] Replace `aidd uninstall ai|ide <tool>` → `aidd ai|ide uninstall <tool>`

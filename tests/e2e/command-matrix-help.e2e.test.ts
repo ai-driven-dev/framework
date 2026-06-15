@@ -6,7 +6,6 @@
  *   clean.e2e.test.ts             — clean, clean --force, clean dry-run
  *   update-global.e2e.test.ts     — update, update re-install, update multi-tool
  *   sync-plugins.e2e.test.ts      — ai sync variants (missing source, noop, force)
- *   brownfield-migrate.e2e.test.ts — migrate --non-interactive, --dry-run, idempotent
  *
  * See also: command-matrix-ai.e2e.test.ts, command-matrix-plugin.e2e.test.ts
  */
@@ -206,7 +205,7 @@ describe.concurrent("Command Matrix: Help", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Globals — status / doctor / restore / migrate dry-run / self-update --check
+// Globals — status / doctor / restore / self-update --check
 // (update and clean are in update-global.e2e.test.ts and clean.e2e.test.ts)
 // ---------------------------------------------------------------------------
 
@@ -243,18 +242,6 @@ describe.concurrent("Command Matrix: Globals", () => {
       const { stdout, exitCode } = await runCli(["restore"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Nothing to restore");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("migrate --dry-run exits 0 reporting nothing to migrate on empty project", async () => {
-    // Uses empty projectDir (no manifest) — "Nothing to migrate."
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("global-migrate-dry");
-    try {
-      const { stdout, exitCode } = await runCli(["migrate", "--dry-run"], projectDir, fakeHome);
-      expect(exitCode).toBe(0);
-      expect(stdout).toMatch(/[Nn]othing to migrate|[Dd]ry-run complete/);
     } finally {
       await cleanup();
     }

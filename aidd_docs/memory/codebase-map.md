@@ -13,7 +13,6 @@ src/
 │   │   ├── global/           # cross-tool chains: update-all / status-all / sync-all / restore-all / doctor-all
 │   │   ├── install/          # capability sub-use-cases: runtime-config / ide-config / agents / commands / rules / skills / config
 │   │   ├── marketplace/      # marketplace lifecycle: add / list / remove / refresh / check / register-framework / sync-settings
-│   │   ├── migrate/          # sub-use-cases: backup / strip-dead-files / rewire-plugins
 │   │   ├── plugin/           # create / add / install / install-from-marketplace / remove / list / update / search / pick
 │   │   ├── restore/          # orchestrator + tool-files / all-plugins / plugin
 │   │   ├── setup/            # sub-use-cases: marketplace-source / tools / plugins-prompt
@@ -48,7 +47,6 @@ src/
 | doctor | `doctor-use-case.ts` | layout, merge-files, plugin, references, tracked-files |
 | restore | `restore-use-case.ts` | tool-files, all-plugins, plugin (shared: restore-merge-files, restore-regular-files) |
 | uninstall | `uninstall-use-case.ts` | tools, plugin, mcp-exclusion, ide |
-| migrate | `migrate-use-case.ts` | backup, strip-dead-files, rewire-plugins |
 | setup | `setup-use-case.ts` | marketplace-source, tools, plugins-prompt |
 | global | — | update-all, status-all, sync-all, restore-all, doctor-all (5 chain orchestrators) |
 
@@ -90,8 +88,6 @@ tests/
 | `domain/tools/contracts.ts` | All tool/capability interfaces |
 | `domain/tools/registry.ts` | Tool lookup, guards, signal detection |
 | `application/use-cases/shared/post-install-pipeline-use-case.ts` | Mandatory post-write sequence |
-| `application/use-cases/migrate-use-case.ts` | Brownfield migration — strip obsolete manifest entries |
-| `domain/models/manifest.ts` | Aggregate root — all installed file tracking |
+| `domain/models/manifest.ts` | Aggregate root — all installed file tracking + schema migration (v1→v6) on load |
 | `domain/models/normalized-plugin.ts` | Internal AST for foreign-format plugin ingestion |
-| `domain/models/migration-plan.ts` | Value object — brownfield migration decisions |
 | `domain/models/setup-flow.ts` | Aggregate — setup orchestration state |

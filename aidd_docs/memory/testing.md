@@ -6,7 +6,7 @@
 - Runner: `pnpm test` (runs `pnpm build` first, then `vitest run`)
 - Test files: in `tests/` directory (not co-located with `src/`)
 - Watch mode: `pnpm test:watch`
-- Mutation testing: `pnpm test:mutation` (Stryker, scoped to `domain/models/migration-plan.ts`)
+- Mutation testing: `pnpm test:mutation` (Stryker, scoped to `domain/models/manifest.ts`)
 
 ## Test Pyramid — 3 Tiers
 
@@ -49,7 +49,7 @@ Two sub-scopes:
 - No edge cases (those belong in integration)
 
 E2E files live in `tests/e2e/*.e2e.test.ts` — one per journey (persona, greenfield setup,
-brownfield migrate, clean, plugin install/create, sync, update, command-surface matrices,
+clean, plugin install/create, sync, update, command-surface matrices,
 framework build). List them live: `ls tests/e2e/*.e2e.test.ts`. Each new command journey
 adds one file here.
 

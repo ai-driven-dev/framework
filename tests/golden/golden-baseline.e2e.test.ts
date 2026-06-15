@@ -213,13 +213,10 @@ async function captureMatrix(projectDir: string, fakeHome: string): Promise<Comm
   // 3. restore --force — no-op since nothing modified
   entries.push(await captureCommand(["restore", "--force"], projectDir, fakeHome));
 
-  // 4. migrate — should be a no-op on a fresh manifest
-  entries.push(await captureCommand(["migrate"], projectDir, fakeHome));
-
-  // 5. clean --force — removes all AIDD files
+  // 4. clean --force — removes all AIDD files
   entries.push(await captureCommand(["clean", "--force"], projectDir, fakeHome));
 
-  // 6. status after clean — warns about missing manifest
+  // 5. status after clean — warns about missing manifest
   entries.push(await captureCommand(["status"], projectDir, fakeHome));
 
   return entries;

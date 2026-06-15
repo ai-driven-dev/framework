@@ -545,29 +545,6 @@ Removes ALL AIDD-managed files.
 
 ---
 
-## `aidd migrate`
-
-Brownfield migration: detects obsolete manifest entries (legacy `docs`, `scripts`, top-level `plugins` sections, bundled-plugin entries) and rewrites the manifest to the marketplace-only architecture. Preserves user-edited memory files. Backs up manifest before mutation.
-
-| Option | Type | Default | Notes |
-|--------|------|---------|-------|
-| `--dry-run` | boolean | false | Show migration plan without writing |
-| `--non-interactive` | boolean | false | Apply plan without prompts; fails on conflicts |
-
-### Test cases
-
-| # | Scenario | Expected |
-|---|----------|----------|
-| MG1 | `migrate` (clean project, no obsolete entries) | "Nothing to migrate", exit 0 |
-| MG2 | `migrate --dry-run` (project with obsolete sections) | Plan shown, no writes, no manifest backup |
-| MG3 | `migrate` (manifest with `scripts` section) | Strips `scripts`, manifest backup created at `.aidd/manifest.backup.json` |
-| MG4 | `migrate` (manifest with top-level `plugins` section) | Strips top-level `plugins`, plugins re-registered via marketplace where possible |
-| MG5 | `migrate` (already migrated) | Idempotent — "Nothing to migrate" on second run |
-| MG6 | `migrate` (no manifest exists) | Exits 0 with no-op message |
-| MG7 | User-edited memory files (CLAUDE.md/AGENTS.md hash mismatch) | Files preserved on disk and in manifest |
-
----
-
 ## `aidd sync`
 
 Propagates local modifications from one tool to others.

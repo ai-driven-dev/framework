@@ -109,7 +109,7 @@ describe("interactive menu", () => {
 
       const choices = selectMock.mock.calls[0][1] as Array<{ value: string; description?: string }>;
       const groupsWithDescription = choices.filter((c) => c.value !== "exit" && c.description);
-      expect(groupsWithDescription.length).toBe(8);
+      expect(groupsWithDescription.length).toBe(7);
     });
 
     it("status is reachable from the inspect group", async () => {

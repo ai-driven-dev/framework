@@ -39,7 +39,6 @@
 | Command | Purpose |
 |---|---|
 | `aidd setup --source remote\|local [--path <dir>] [--release <tag>] [--ai <ids>] [--ide <ids>] [--plugins <none\|all\|recommended\|names>] [--no-default-marketplace] [--yes]` | Initialize project: marketplace + tools + plugins (`--ai all` / `--ide all` for everything) |
-| `aidd migrate [--dry-run] [--non-interactive]` | Migrate brownfield v3/v4/v5 manifest to v6 |
 
 ### AI tools (claude, cursor, copilot, codex, opencode)
 | Command | Purpose |
@@ -72,6 +71,11 @@
 | `aidd auth login [--gh] [--token <v>] [--level user\|project]` | GitHub auth |
 | `aidd auth logout / status` | Auth ops |
 
+### Framework (authoring)
+| Command | Purpose |
+|---|---|
+| `aidd framework build` | Build tool-specific framework distributions (5 targets × 2 modes). Maintainer/authoring command, not part of the consumer install flow |
+
 ### Globals (chain unitaries)
 | Command | Purpose |
 |---|---|
@@ -84,6 +88,7 @@
 - `aidd config list/get/set` — no remaining writable fields
 - `aidd install [category] [tool]` — replaced by `aidd ai/ide install`
 - `aidd uninstall [category] [tool]` — replaced by `aidd ai/ide uninstall`
+- `aidd migrate [--dry-run] [--non-interactive]` — removed; manifests auto-upgrade to v6 on load (schema migration in `manifest.ts`), no explicit brownfield command
 - Setup flags `--from / --switch-mode / --mode / --path` (path kept only with `--source local`) / `--release`
 - Install flags `--path / --release / --plugins / --mcp / --all-plugins / --recommended-plugins / --no-plugins`
 - Global `--repo` flag; `AIDD_REPO` env var gone from source

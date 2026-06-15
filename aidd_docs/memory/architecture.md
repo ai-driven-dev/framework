@@ -40,7 +40,6 @@ Infrastructure → Application → Domain
 |---|---|---|
 | `MarketplaceSourceMode` | `domain/models/marketplace-source-mode.ts` | Marketplace source type with optional `ref` |
 | `SetupFlow` | `domain/models/setup-flow.ts` | Aggregate: setup orchestration state |
-| `MigrationPlan` | `domain/models/migration-plan.ts` | Value object: brownfield migration decisions |
 | `MarketplaceEntry` | `domain/capabilities/marketplace-entry.ts` | Per-tool marketplace registration entry |
 | `MarketplaceCacheEntry` | `domain/models/marketplace-cache-entry.ts` | Cached catalog TTL entry |
 | `NormalizedPlugin` | `domain/models/normalized-plugin.ts` | Foreign-format AST (internal; non-versioned) |
@@ -72,11 +71,13 @@ FrameworkBuildUseCase → BuildOutputStrategy (MarketplaceBuildStrategy | FlatBu
 Author-side, not user-side: translates the Claude-format framework into a tool-native
 marketplace dist (Mode A) or flat workspace materialization (Mode B `--flat`).
 
-**Migration** (`aidd migrate`):
+**Manifest schema migration** (no command — runs on load):
 ```
-MigrateUseCase → ManifestRepository (detect obsolete scripts/plugins sections + bundled plugins)
-→ backup + strip entries + best-effort rewire via marketplace
+Manifest.deserialize → version-to-version migrations in manifest.ts (v1→v2→…→v6)
+→ strips obsolete fields; upgraded shape persisted on next manifest write; idempotent on v6
 ```
+The brownfield `aidd migrate` command (backup + strip dead files + rewire plugins) was removed;
+older manifests now auto-upgrade when loaded.
 
 ## Per-Tool Plugin Install Strategy
 
@@ -116,7 +117,7 @@ Runtime configs and IDE configs ship inside the CLI binary (tsup bundles them):
 - IDE-conditional distribution: AI tools declare `requiredIdeIds`; filtered at install time
 - IDE tool files (user-prime): never deleted on uninstall
 - Error handling: typed exceptions thrown from use-cases/adapters; caught only at command layer
-- `aidd migrate`: idempotent, `--dry-run` safe, backup before writes, best-effort plugin rewire via marketplace
+- Manifest schema migration: idempotent version-to-version upgrade applied on load (`manifest.ts`), no manual command
 
 ## Foreign-Format Adapters (COMPLETE)
 
