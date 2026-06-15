@@ -15,7 +15,7 @@ User's requirement.
 
 ## Process
 
-1. **Read.** Take `prompt` from `$ARGUMENTS`; if empty, use the latest user message.
+1. **Read.** Take `prompt` from `$ARGUMENTS`; if empty, ask the user.
 2. **Categorize.** Split the prompt into distinct, independent todos (category + task). Inline, no agent, using template.
 3. **Launch.** Spawn one `implementer` agent per todo, all in parallel (one message, multiple Task calls). Each agent prompt mandates, in order:
    ```markdown
