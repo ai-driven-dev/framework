@@ -1,0 +1,14 @@
+[
+  { "prompt": "Generate a technical plan for the authentication feature", "expect_action": "plan" },
+  { "prompt": "Create an implementation plan from the spec", "expect_action": "plan" },
+  { "prompt": "Plan the refactoring of the payment module", "expect_action": "plan" },
+  { "prompt": "Design the checkout page", "expect_action": "design" },
+  { "prompt": "Define component behavior and the dumb/smart split for the onboarding wizard", "expect_action": "design" },
+  { "prompt": "Rédige un plan technique pour l'auth", "expect_action": "plan" },
+  { "prompt": "Génère le plan d'implémentation depuis la spec", "expect_action": "plan" },
+  { "prompt": "Crée le plan d'implémentation phase par phase", "expect_action": "plan" },
+  { "prompt": "Conçois le design de la page checkout", "expect_action": "design" },
+  { "prompt": "Write the code for the login page", "expect_action": null },
+  { "prompt": "Review my pull request", "expect_action": null },
+  { "prompt": "Debug the failing test in auth.test.ts", "expect_action": null }
+]

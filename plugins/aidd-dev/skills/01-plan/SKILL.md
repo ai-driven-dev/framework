@@ -1,6 +1,6 @@
 ---
 name: 01-plan
-description: Generate technical implementation plans, define component behaviors, and extract design details from images.
+description: Generate technical implementation plans, and define a frontend page's design - component behaviors as state machines plus the dumb/smart split that delegates the visual to the design tool.
 model: opus
 context: fork
 agent: planner
@@ -8,7 +8,7 @@ agent: planner
 
 # Skill: plan
 
-Produces implementation plans from requirements, state machines for component behavior, and structured component inventories from design images.
+Produces implementation plans from requirements, and a frontend page's design: component behavior as state machines, the dumb/smart split, and the render decision.
 
 ## Agent delegation
 
@@ -16,24 +16,21 @@ Spawn the `planner` agent to execute this skill. For tools that do not support `
 
 ## Available actions
 
-| #   | Action                   | When to use                                                                 |
-| --- | ------------------------ | --------------------------------------------------------------------------- |
-| 01  | `plan`                   | Turn requirements into a technical implementation plan saved to a task file |
-| 02  | `components-behavior`    | Define a frontend component's behavior as a state machine (Mermaid)         |
-| 03  | `image-extract-details`  | Analyze a design image into a hierarchical component inventory              |
+| #   | Action     | When to use                                                                          |
+| --- | ---------- | ------------------------------------------------------------------------------------ |
+| 01  | `plan`     | Turn requirements into a technical implementation plan saved to a task file          |
+| 02  | `design`   | Define a frontend page's design: component behavior (state machines) + dumb/smart split + render decision |
 
 ## Routing (run first)
 
 The planner auto-adapts to the INPUT - do not ask the user to choose. Detect the input type and route; do NOT always fall to action 01.
 
-- A design image or mockup is provided -> `03-image-extract-details` (then feed the inventory into planning).
-- The request is about a frontend component's behavior, states, or transitions -> `02-components-behavior`.
+- The request is about a frontend page/feature's design - component behavior, states, the dumb/smart split, or whether to render -> `02-design`.
 - Anything else (requirements, a feature to build) -> `01-plan`.
 
-Actions may chain (e.g. extract from image, then plan). Read and follow each selected action file.
+Actions may chain (e.g. design the page, then plan its build). Read and follow each selected action file.
 
 ## Actions
 
 - `@actions/01-plan.md`
-- `@actions/02-components-behavior.md`
-- `@actions/03-image-extract-details.md`
+- `@actions/02-design.md`

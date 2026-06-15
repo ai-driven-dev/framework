@@ -2,19 +2,18 @@
 
 # 01 - plan
 
-Generates technical implementation plans, defines component behaviors as
-state machines, and extracts structured component inventories from design
-images. The plan file is the single source of truth that downstream skills
-(`02-implement`, `05-review`) consume.
+Generates technical implementation plans, and defines a frontend page's
+design - component behaviors as state machines plus the dumb/smart split that
+delegates the visual to the design tool. The plan file is the single source of
+truth that downstream skills (`02-implement`, `05-review`) consume.
 
 ## When to use
 
 - A validated spec or ticket exists and you need a phased plan with
   milestones, rules, and acceptance criteria before any code change.
-- A frontend component needs its behavior pinned down as a state machine
-  before implementation.
-- A design image (Figma export, mockup, screenshot) needs to be turned into
-  a hierarchical component inventory.
+- A frontend page/feature needs its design pinned down before implementation:
+  component behavior (state machines), the dumb/smart split, and whether to
+  render it.
 
 ## When NOT to use
 
@@ -30,19 +29,18 @@ images. The plan file is the single source of truth that downstream skills
 Use skill aidd-dev:01-plan
 ```
 
-The skill exposes 3 actions:
+The skill exposes 2 actions:
 
 1. `plan` - produce a phased implementation plan from a spec or ticket.
-2. `components-behavior` - define a component's behavior as a state machine.
-3. `image-extract-details` - analyze a design image and emit a hierarchical
-   component inventory.
+2. `design` - define a frontend page's design: component behavior (state
+   machines), the dumb/smart split, and the render decision.
 
 ## Outputs
 
 - A plan file in `aidd_docs/plans/` with frontmatter, M/C/D (must / could /
   done), rules table, and ordered phases.
-- A state-machine description (Mermaid) for the target component.
-- A structured component inventory derived from the image source.
+- A frontend page design: state machines (Mermaid), the dumb/smart split, and
+  the render flag.
 
 ## Prerequisites
 

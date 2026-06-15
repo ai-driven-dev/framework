@@ -56,14 +56,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description | Argument Hint |
 |-------|------|---|---|
 | `actions` | [01-plan.md](skills/01-plan/actions/01-plan.md) | - | - |
-| `actions` | [02-components-behavior.md](skills/01-plan/actions/02-components-behavior.md) | - | - |
-| `actions` | [03-image-extract-details.md](skills/01-plan/actions/03-image-extract-details.md) | - | - |
+| `actions` | [02-design.md](skills/01-plan/actions/02-design.md) | - | - |
 | `assets` | [master-plan-template.md](skills/01-plan/assets/master-plan-template.md) | `Parent plan template orchestrating multiple child plans with validation gates` | - |
 | `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | `Living implementation plan - frozen objective, phases, and append-only execution Log. Used as input artifact AND as the autonomous-loop tracking file.` | - |
 | `assets` | [tech-choice-template.md](skills/01-plan/assets/tech-choice-template.md) | `Technology selection and comparison template` | - |
+| `evals` | [scenarios.json](skills/01-plan/evals/scenarios.json) | - | - |
 | `-` | [README.md](skills/01-plan/README.md) | - | - |
 | `references` | [mermaid-conventions.md](skills/01-plan/references/mermaid-conventions.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` | - |
-| `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Generate technical implementation plans, define component behaviors, and extract design details from images.` | - |
+| `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Generate technical implementation plans, and define a frontend page's design - component behaviors as state machines plus the dumb/smart split that delegates the visual to the design tool.` | - |
 
 #### `skills/02-implement`
 
