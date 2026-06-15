@@ -48,7 +48,7 @@ The skill exposes 3 actions across two phases:
   extends the [01-plan](../01-plan/README.md) format with
   `success_condition` and `iteration`.
 - Per-attempt log entries inside the tracking file.
-- The tracking file's `status` set to `done` once and only once the
+- The tracking file's `status` set to `implemented` once and only once the
   success condition genuinely verifies.
 
 ## Prerequisites

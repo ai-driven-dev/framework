@@ -25,7 +25,7 @@ preflight_blockers: []                          # non-empty halts before spawn
 
 1. Check `aidd_docs/tasks/` for a file matching the task name, and read its frontmatter `status`:
    - `status: pending` or `in-progress` -> report status (iteration, steps remaining), then skip to step 10 to resume.
-   - `status: done` -> report "Task already completed." Stop.
+   - `status: implemented` -> report "Task already completed." Stop.
    - No file -> continue to step 2.
 
 ### New task flow

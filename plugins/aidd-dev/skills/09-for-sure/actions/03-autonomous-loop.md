@@ -34,7 +34,7 @@ The loop runs with no human interaction. Inputs and outputs are read from / writ
 ### After every step is checked
 
 11. **Run the success_condition command** and verify the result yourself.
-12. **On TRUE**: set `status: done` in the frontmatter and stop.
+12. **On TRUE**: set `status: implemented` in the frontmatter and stop.
 13. **On FALSE**: add new steps to address the root cause and continue the loop.
 
 ## Worker prompt template
@@ -68,4 +68,4 @@ One entry per step attempt:
 
 ## Test
 
-Each step attempt has exactly one Log entry; every checked step (`[x]`) has a `= ✓` entry whose verification cites a concrete command or file; the loop only sets `status: done` after the `success_condition` command has been re-run and exits zero.
+Each step attempt has exactly one Log entry; every checked step (`[x]`) has a `= ✓` entry whose verification cites a concrete command or file; the loop only sets `status: implemented` after the `success_condition` command has been re-run and exits zero.
