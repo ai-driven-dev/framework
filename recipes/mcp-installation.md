@@ -1,6 +1,6 @@
 # Install an MCP server
 
-> **Goal:** decide when to use an MCP server vs a CLI, and wire up the recommended ones.
+> **Goal:** Decide when to use an MCP server vs a CLI, and wire up the recommended ones.
 
 | | |
 | --- | --- |

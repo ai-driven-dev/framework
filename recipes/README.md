@@ -2,9 +2,9 @@
 
 Task-oriented how-to sheets for the AIDD Framework. Each recipe is a self-contained tutorial: a clear goal, prerequisites, and steps you can follow end to end.
 
-| Recipe | What you'll do | Level |
+| Recipe | Goal | Level |
 | --- | --- | --- |
-| [Install an MCP server](mcp-installation.md) | Choose between CLI and MCP, and wire up the recommended servers | Beginner |
+| [Install an MCP server](mcp-installation.md) | Decide when to use an MCP server vs a CLI, and wire up the recommended ones | Beginner |
 
 > More coming — token optimisation, custom plugins, and others.
 
