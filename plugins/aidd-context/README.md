@@ -21,6 +21,7 @@ Covers project bootstrap, project initialisation, generation of Claude Code cont
 | [1.4]      | [mermaid](skills/09-mermaid/README.md)                 | Generate high-quality Mermaid diagrams from markdown content using a structured plan-validate workflow.                                                         |
 | [1.5]      | [learn](skills/10-learn/README.md)                     | Capture and store learnings from recently implemented features into memory bank, decisions, or coding rules.                                                    |
 | [1.6]      | [discovery](skills/11-discovery/README.md)             | Help users discover installed skills and find the right one for their use case.                                                                                 |
+| [1.7]      | [cook](skills/12-cook/README.md)                       | Maintain the framework's `recipes/` how-to sheets - list every recipe, or create and update one from the canonical recipe template.                              |
 
 ## Onboarding
 

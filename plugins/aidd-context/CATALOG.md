@@ -21,6 +21,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/09-mermaid`](#skills09-mermaid)
   - [`skills/10-learn`](#skills10-learn)
   - [`skills/11-discovery`](#skills11-discovery)
+  - [`skills/12-cook`](#skills12-cook)
 
 ---
 
@@ -194,4 +195,15 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `-` | [README.md](skills/11-discovery/README.md) | - |
 | `references` | [ai-mapping.md](skills/11-discovery/references/ai-mapping.md) | - |
 | `-` | [SKILL.md](skills/11-discovery/SKILL.md) | `Enumerate installed surfaces of the AI tool (skills, agents, commands, plugins, MCP servers, rules, hooks, memory files) and recommend the best match for the user's stated intent. Use proactively whenever the user asks the model to list, show, enumerate, find, or pick among any of these surfaces - including imperative phrasings ("list hooks", "show me the rules", "enumerate skills", "find a memory file", "which agent reviews code"), question phrasings ("what's available?", "what hooks do we have?", "which rule applies here?", "what memory files do we have?"), and indirect phrasings ("what can I use for X?", "do we have something that does Y?"). Always pick this skill over scanning the filesystem with grep, find, ls, or reading action files directly when the user is enumerating a surface. Do NOT use for picking a specific item inside one plugin (the plugin's own onboard handles that), creating a new surface, or executing a recommended item (this skill only points; the user invokes).` |
+
+#### `skills/12-cook`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-list.md](skills/12-cook/actions/01-list.md) | - |
+| `actions` | [02-upsert.md](skills/12-cook/actions/02-upsert.md) | - |
+| `assets` | [recipe-template.md](skills/12-cook/assets/recipe-template.md) | - |
+| `-` | [README.md](skills/12-cook/README.md) | - |
+| `references` | [recipe-authoring.md](skills/12-cook/references/recipe-authoring.md) | - |
+| `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manage the framework's recipe how-to sheets under recipes/ - list every recipe as a table, or create and update a recipe scaffolded from the canonical template. Use when the user says "list recipes", "show the recipes", "what recipes do we have", "new recipe", "add a recipe", "create a recipe", "write a recipe for X", "update the recipe", "edit a recipe", "cook a recipe", or invokes aidd-context:12-cook. Do NOT use to generate a context artifact like a skill, rule, agent, command, or hook (use the matching generator), or to read project memory.` |
 
