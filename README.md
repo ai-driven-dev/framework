@@ -4,17 +4,10 @@
 
 # AI-Driven Dev Framework
 
-### Skills, agents & rules that run the full SDLC inside Claude Code — under human supervision.
+### Skills, agents & rules that run the full SDLC inside your AI coding assistant — under human supervision.
 
 <p>
-  <!--counts:start--><kbd>6 plugins</kbd> · <kbd>37 skills</kbd> · <kbd>3 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
-</p>
-
-<p>
-  <a href="#-quick-start"><strong>Quick start →</strong></a> ·
-  <a href="#-plugins"><strong>Plugins →</strong></a> ·
-  <a href="recipes/"><strong>Recipes →</strong></a> ·
-  <a href="https://discord.gg/ai-driven-dev"><strong>Discord 🇫🇷 →</strong></a>
+  <!--counts:start--><kbd>6 plugins</kbd> · <kbd>38 skills</kbd> · <kbd>3 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -27,34 +20,27 @@
 
 ---
 
-The **AIDD Framework** is a marketplace of **skills, agents, and rules** that make the AI-Driven Development flow concrete inside your AI coding assistant — the full SDLC (plan → implement → review → ship) under rigorous human supervision. It is the open toolset of the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community, authored for **Claude Code**.
+The **AIDD Framework** is a marketplace of **skills, agents, and rules** that make the AI-Driven Development flow concrete inside your AI coding assistant — the full SDLC (plan → implement → review → ship) under rigorous human supervision. It is the open toolset of the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: authored for **Claude Code** and shipped for every major AI assistant.
 
-## 👋 Who we are
+## Community
 
-Built by the **[AI-Driven Dev](https://www.ai-driven-dev.fr/)** community, founded by **Alex Soyes**.
+Built and maintained by the **[AI-Driven Dev](https://www.ai-driven-dev.fr/)** community.
 
-- 💬 **[Discord 🇫🇷](https://discord.gg/ai-driven-dev)** — live sessions every **Thursday**
-- 🎓 **[Training & community](https://www.ai-driven-dev.fr/)** — the AIDD programme (training · coaching · community)
-- ▶️ **[YouTube](https://www.youtube.com/@aidd_off)** · 💼 **[LinkedIn](https://www.linkedin.com/company/ai-driven-dev)** · 🌐 **[Website](https://www.ai-driven-dev.fr/)**
-- 👤 Alex Soyes — [Blog](https://alexsoyes.com/) · [GitHub](https://github.com/alexsoyes) · [LinkedIn](https://www.linkedin.com/in/alexsoyes/) · [X](https://x.com/alexsoyes)
+> ### → [Join the Discord 🇫🇷](https://discord.gg/ai-driven-dev)
+> Live coding sessions every **Thursday**. Come build, ask, and share.
 
-## 🧰 Supported tools
+**[Discover the AIDD programme →](https://www.ai-driven-dev.fr/)** — training, coaching, and community.
 
-The marketplace is **Claude Code native**. Every [release](https://github.com/ai-driven-dev/framework/releases/latest) also attaches an archive adapted to each other tool — download the one for your assistant and install it.
+[YouTube](https://www.youtube.com/@aidd_off) · [LinkedIn](https://www.linkedin.com/company/ai-driven-dev) · [Website](https://www.ai-driven-dev.fr/)
 
-| Tool | Support | Install |
-| --- | --- | --- |
-| **Claude Code** | ✅ **Recommended** · native | `/plugin marketplace add ai-driven-dev/framework` |
-| **Cursor** | Supported | Download `…-cursor-flat-<version>.zip`, unzip into your project |
-| **GitHub Copilot** | Supported | Download `…-copilot-marketplace-<version>.zip`, `aidd marketplace add` |
-| **Codex** | Supported | Download `…-codex-marketplace-<version>.zip`, `aidd marketplace add` |
-| **OpenCode** | Supported | Download `…-opencode-flat-<version>.zip`, unzip into your project |
+## Installation
 
-> On a non-Claude tool, map each skill's model tier to your tool's nearest model — see the [LLM tier reference](docs/MARKETPLACE.md#llm-tier-reference).
+There are two ways to install, depending on your tool:
 
-## 🚀 Quick start
+- **Marketplace** *(recommended)* — register the marketplace once, then install and update plugins on demand. Native in Claude Code; for Copilot and Codex, download the `-marketplace-` release archive and register it with `aidd marketplace add`.
+- **Flat** — unzip a `-flat-` release archive straight into your project (it materializes `.cursor/`, `.opencode/`, …). For tools without marketplace support.
 
-**1. Install** — register the marketplace and the plugins (Claude Code slash commands, not shell):
+**Claude Code** — register the marketplace and install the plugins (slash commands, not shell):
 
 ```text
 /plugin marketplace add ai-driven-dev/framework
@@ -66,27 +52,48 @@ The marketplace is **Claude Code native**. Every [release](https://github.com/ai
 /plugin install aidd-orchestrator@aidd-framework
 ```
 
-**2. Onboard** — one command inspects your project and guides you:
+**Other tools** — grab the archive for your assistant from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest):
+
+| Tool | Format | Install |
+| --- | --- | --- |
+| **Claude Code** | Marketplace *(native)* ✅ **recommended** | `/plugin marketplace add ai-driven-dev/framework` |
+| **GitHub Copilot** | Marketplace archive | Download `…-copilot-marketplace-<version>.zip`, then `aidd marketplace add` |
+| **Codex** | Marketplace archive | Download `…-codex-marketplace-<version>.zip`, then `aidd marketplace add` |
+| **Cursor** | Flat archive | Download `…-cursor-flat-<version>.zip`, unzip into your project |
+| **OpenCode** | Flat archive | Download `…-opencode-flat-<version>.zip`, unzip into your project |
+
+> A flat variant is attached for every tool too — pick the format that fits your workflow. On a non-Claude tool, map each skill's model tier to your tool's nearest model ([LLM tier reference](docs/MARKETPLACE.md#llm-tier-reference)).
+
+## Quick start
+
+Once installed, let one command inspect your project and guide you:
 
 ```text
 /aidd-context:00-onboard
 ```
 
-**3. Run the flow** — take a feature from idea to shipped PR:
+Then run the flow — here's a feature going from idea to shipped PR:
 
 ```mermaid
-flowchart LR
-    Onboard["/aidd-context:00-onboard"] --> Brainstorm["/aidd-refine:01-brainstorm"]
-    Brainstorm --> Plan["/aidd-dev:01-plan"]
-    Plan --> Implement["/aidd-dev:02-implement"]
-    Implement --> Review["/aidd-dev:05-review"]
-    Review --> Commit["/aidd-vcs:01-commit"]
-    Commit --> PR["/aidd-vcs:02-pull-request"]
+flowchart TD
+    Idea(["💡 'Add a dark-mode toggle'"])
+    Onboard["/aidd-context:00-onboard<br/><i>understand the project</i>"]
+    Brainstorm["/aidd-refine:01-brainstorm<br/><i>clarify the request</i>"]
+    Plan["/aidd-dev:01-plan<br/><i>draft the technical plan</i>"]
+    Implement["/aidd-dev:02-implement<br/><i>write the code</i>"]
+    Review["/aidd-dev:05-review<br/><i>review the diff</i>"]
+    Commit["/aidd-vcs:01-commit<br/><i>atomic commit</i>"]
+    PR(["🚀 /aidd-vcs:02-pull-request"])
+
+    Idea --> Onboard --> Brainstorm --> Plan --> Implement --> Review --> Commit --> PR
+
+    classDef edge fill:#D97757,stroke:#9c4f37,color:#fff;
+    class Idea,PR edge;
 ```
 
-> Want the whole loop in a single command? `/aidd-dev:00-sdlc` runs plan → implement → review → ship.
+> Prefer one command for the whole loop? `/aidd-dev:00-sdlc` runs plan → implement → review → ship.
 
-## 🧩 Plugins
+## Plugins
 
 <table>
 <tr>
@@ -94,7 +101,7 @@ flowchart LR
 
 ### 🧭 [aidd-context](plugins/aidd-context/README.md)
 
-`12 skills` · stable
+`13 skills` · stable
 
 Project init, architecture, generation of Claude Code context artifacts (skills, agents, rules, commands, hooks), diagrams, learning, discovery.
 
@@ -149,44 +156,40 @@ Label an issue, get a PR; re-label, get the review applied.
 </tr>
 </table>
 
-## 📖 Recipes
+## Recipes
 
 Task-oriented how-to sheets — install an MCP server, optimise your tokens, and more.
 
-➡️ **[Browse the recipes →](recipes/)**
+**[Browse the recipes →](recipes/)**
 
-## 🤝 Contributing
+## Contributing
 
-- 🐛 **Open an [issue](https://github.com/ai-driven-dev/framework/issues)** or share an idea in [Discussions](https://github.com/ai-driven-dev/framework/discussions).
-- 💬 **Join the [Discord 🇫🇷](https://discord.gg/ai-driven-dev)** — live every **Thursday**.
-- 📦 Building a plugin or a recipe? See [`CONTRIBUTING.md`](./CONTRIBUTING.md) and [`docs/CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md).
+- Open an [issue](https://github.com/ai-driven-dev/framework/issues) or share an idea in [Discussions](https://github.com/ai-driven-dev/framework/discussions).
+- Join the [Discord 🇫🇷](https://discord.gg/ai-driven-dev) — live every **Thursday**.
+- Building a plugin or a recipe? See [`CONTRIBUTING.md`](./CONTRIBUTING.md) and [`docs/CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md).
 
-Roles, rights, and how decisions get made → [`GOVERNANCE.md`](./GOVERNANCE.md). By participating you agree to the [Code of Conduct](./CODE_OF_CONDUCT.md).
-
-## 🔒 Trust & safety
+## Trust & safety
 
 Plugins can run commands, edit files, and call external services on your behalf. Before installing any plugin from any marketplace, including this one: read its `README` and `SKILL.md`, inspect its actions, and check the permissions in its hooks and MCP servers. Spot a vulnerability? Report it privately via [`SECURITY.md`](./SECURITY.md).
 
-## 📚 Documentation
+## Documentation
 
-| Resource | Where |
-| -------- | ----- |
-| How it works (architecture) | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
-| Marketplace, scopes & versioning · LLM tiers | [`docs/MARKETPLACE.md`](docs/MARKETPLACE.md) |
-| Skills catalog | [`docs/CATALOG.md`](docs/CATALOG.md) |
-| Build your own plugin | [`docs/CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md) |
-| Recipes | [`recipes/`](recipes/) |
-| FAQ · Troubleshooting | [`docs/FAQ.md`](docs/FAQ.md) · [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) |
-| Glossary | [`docs/GLOSSARY.md`](docs/GLOSSARY.md) |
-| Contributing · Governance | [`CONTRIBUTING.md`](./CONTRIBUTING.md) · [`GOVERNANCE.md`](./GOVERNANCE.md) |
-| Changelog · Roadmap | [`CHANGELOG.md`](./CHANGELOG.md) · [`ROADMAP.md`](./ROADMAP.md) |
-| Security | [`SECURITY.md`](./SECURITY.md) |
+| Doc | What's inside |
+| --- | --- |
+| [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) | How the framework is structured |
+| [`MARKETPLACE.md`](docs/MARKETPLACE.md) | Marketplaces, install scopes, versioning, LLM tiers |
+| [`CATALOG.md`](docs/CATALOG.md) | Full skills catalog |
+| [`CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md) | Build your own plugin |
+| [`FAQ.md`](docs/FAQ.md) | Frequently asked questions |
+| [`TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Install issues, load problems, limits |
+| [`GLOSSARY.md`](docs/GLOSSARY.md) | Terms used across the framework |
+| [`MAINTAINERS.md`](docs/MAINTAINERS.md) | Maintainer guide |
 
 ---
 
 <div align="center">
 
-🇫🇷 🥖 🐓 · Made with care in France by the AIDD community · 🐓 🥖 🇫🇷
+Made with care in France 🇫🇷 by the AIDD community
 
 ← [Back to the AIDD organisation](https://github.com/ai-driven-dev)
 
