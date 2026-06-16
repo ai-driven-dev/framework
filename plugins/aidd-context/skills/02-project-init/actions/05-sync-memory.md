@@ -1,36 +1,21 @@
 # 05 - Sync memory
 
-Execute `update_memory.js` to fill the `<aidd_project_memory>` blocks in all context files with references to the generated memory files.
+Fill the `<aidd_project_memory>` block in every context file with references to the generated memory files.
 
-## Context
+## Input
 
-```markdown
-@../references/mapping-ai-context-file.md
-```
+The context files with the block, and the populated `aidd_docs/memory/`.
 
-## Inputs
+## Output
 
-- context files with `<aidd_project_memory>` block
-- `aidd_docs/memory/` populated with `.md` files
-
-## Depends on
-
-- `01-init-context-file`
-- `04-review-memory`
-
-## Outputs
-
-```
-The <aidd_project_memory> block contains all generated memory files as references.
-```
+Each `<aidd_project_memory>` block lists the generated memory files as references.
 
 ## Process
 
-1. Execute the `update_memory.js` script located at `hooks/update_memory.js` under the plugin install root to sync memory references in context files.
-2. If the script exits with a non-zero code, print the error output and stop. Instruct the user to verify `aidd_docs/memory/` contains at least one `.md` file and that `node` is available.
-3. Read the script output. Count the number of AI context files updated and the number of memory references injected into each block.
-4. Print a summary line: `Updated <N> AI context files (<comma-separated paths>). Each <aidd_project_memory> block now references <M> memory files from aidd_docs/memory/.` Then, for each context file, list the injected references.
+1. **Run.** Execute the memory-sync script (`update_memory.js` in the plugin's `hooks/`) to inject the references.
+2. **Guard.** On a non-zero exit, print the error and stop. Tell the user to confirm `aidd_docs/memory/` holds a `.md` file and that `node` is available.
+3. **Report.** Print how many context files were updated and how many references went into each block, then list the references per file.
 
 ## Test
 
-Check the root context file based on tools contains all memory references as expected. For example, if `aidd_docs/memory/` contains `architecture.md` and `project-brief.md`, the `<aidd_project_memory>` block in the root context file should contain references to both files. The printed summary names the actual context files updated (not a hardcoded count).
+- Each context file's `<aidd_project_memory>` block references every file in `aidd_docs/memory/`.

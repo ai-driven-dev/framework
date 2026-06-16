@@ -1,23 +1,28 @@
-# memory/ - Project Memory Templates
+# memory/ - Project Memory
 
-## What is memory/?
+Structured context the AI assistant reads at the start of a session, so it does not rediscover the project each time.
 
-`memory/` holds structured context files that Claude reads at the start of each session. Each file documents a specific dimension of the project so the assistant does not need to rediscover it.
+## How it loads
 
-## Who reads it?
+- The files at the root of `memory/` are referenced by the `<aidd_project_memory>` block in the AI context file and load every session.
+- `internal/` and `external/` are listed there too, but load on demand, only when relevant.
 
-These files are loaded by the `<aidd_project_memory>` block in `AGENTS.md`. Claude reads them automatically on the first message of each conversation.
+## Files
 
-## How to maintain it?
+The list below is refreshed automatically by the memory hook. Do not edit it by hand.
 
-- One file per concern (architecture, testing, VCS, etc.)
-- Keep each file under 200 lines - favour pointers to code over copying code
-- Update a file whenever the underlying reality changes (new stack decision, changed test strategy, etc.)
-- Never add personal notes or TODO items - memory files describe current state, not future intent
+<!-- files:start -->
+<!-- files:end -->
+
+## How to maintain it
+
+- One file per concern (architecture, database, vcs, ...).
+- Capture the macro and the non-derivable. Point to the code, do not copy it.
+- Keep each file small, well under 200 lines.
+- Update a file when the underlying reality changes.
+- Current state only. Never personal notes or future TODOs.
 
 ## Subdirectories
 
-- `backend/` - optional context specific to server-side concerns (API contracts, database schema conventions, inter-service communication)
-- `frontend/` - optional context specific to client-side concerns (UI patterns, form handling, design tokens)
-
-Drop the subfolder you do not need for your project type.
+- `internal/`: AIDD workflow traces (the capability profile, audit notes, learn captures).
+- `external/`: external references the project pulls in (specs, design docs).

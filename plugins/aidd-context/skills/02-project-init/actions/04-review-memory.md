@@ -1,31 +1,21 @@
 # 04 - Review memory
 
-Spawn a single review agent with all memory files in context to catch cross-file inconsistencies that per-file agents cannot detect.
+Review every memory file together for cross-file consistency, and fix what is safe.
 
-## Inputs
+## Input
 
-- `aidd_docs/memory/` directory populated with generated memory files.
+The `aidd_docs/memory/` directory with the generated files.
 
-## Outputs
+## Output
 
-```
-aidd_docs/memory/
-  <file>.md   ← corrected in place where needed
-
-Status table delivered to user:
-  file | status (✅ clean | ✅ fixed: <reason> | ❌ manual review needed)
-```
-
-## Depends on
-
-- `03-generate-memory`
+The memory files, corrected in place where needed, and a status table.
 
 ## Process
 
-1. Read all `.md` files from `aidd_docs/memory/` (recursive, all subdirs).
-2. Launch an agent to review all files for consistency and accuracy
-3. Deliver the status table.
+1. **Read.** Load every `.md` under `aidd_docs/memory/`, recursively.
+2. **Review.** In one pass with all files in context, check consistency and accuracy across them. Fix a safe inconsistency in place. Flag one that needs a human.
+3. **Report.** A table: file, status (clean, fixed with reason, or needs review).
 
 ## Test
 
-Review agent delivers the status table and no file has status `❌` after the review pass.
+- The status table covers every memory file, and each flagged file carries a reason a human can act on.

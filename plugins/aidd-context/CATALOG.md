@@ -74,14 +74,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-generate-memory.md](skills/02-project-init/actions/03-generate-memory.md) | - |
 | `actions` | [04-review-memory.md](skills/02-project-init/actions/04-review-memory.md) | - |
 | `actions` | [05-sync-memory.md](skills/02-project-init/actions/05-sync-memory.md) | - |
-| `assets` | [AGENTS.md](skills/02-project-init/assets/AGENTS.md) | `AI agent configuration and guidelines` |
+| `assets` | [AGENTS.md](skills/02-project-init/assets/AGENTS.md) | - |
 | `assets` | [CONTRIBUTING.md](skills/02-project-init/assets/CONTRIBUTING.md) | - |
-| `assets` | [golden-principles.md](skills/02-project-init/assets/golden-principles.md) | - |
 | `assets` | [GUIDELINES.md](skills/02-project-init/assets/GUIDELINES.md) | - |
 | `assets` | [README.md](skills/02-project-init/assets/README.md) | - |
 | `-` | [README.md](skills/02-project-init/README.md) | - |
+| `references` | [capability-signals.md](skills/02-project-init/references/capability-signals.md) | - |
 | `references` | [mapping-ai-context-file.md](skills/02-project-init/references/mapping-ai-context-file.md) | - |
-| `-` | [SKILL.md](skills/02-project-init/SKILL.md) | `Initialize or refresh the project memory bank and ensure AI context files contain the project memory block. Use when running `aidd init` for the first time, bootstrapping a new project, or re-running the init flow on an existing project. Do NOT use for updating individual memory files after they exist - use `aidd-context:10-learn` instead; do NOT use for editing a single rule - edit the file directly.` |
+| `-` | [SKILL.md](skills/02-project-init/SKILL.md) | `Initialize or refresh the project memory bank. Not for updating one memory file after it exists (use the learn skill) or editing a single rule (edit it directly).` |
 
 #### `skills/03-context-generate`
 

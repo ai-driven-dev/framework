@@ -1,127 +1,20 @@
-# Developer Guidelines (AI Pilot)
+# AI Operating Guidelines
 
-How a developer should operate AI coding assistants to maximize quality, speed, and reliability.
+How this team drives AI coding assistants on this project. Keep it short and specific to this repo. Fill the placeholders, drop what does not apply.
 
----
+## House rules
 
-- [1) Operating mindset](#1-operating-mindset)
-- [2) Start of task checklist](#2-start-of-task-checklist)
-- [3) Planning before coding](#3-planning-before-coding)
-- [4) Implementation loop](#4-implementation-loop)
-- [5) Review loop](#5-review-loop)
-- [6) Prompting hygiene](#6-prompting-hygiene)
-- [7) Context hygiene](#7-context-hygiene)
-- [8) Quality discipline](#8-quality-discipline)
-- [9) Delegation strategy](#9-delegation-strategy)
-- [10) Failure and recovery strategy](#10-failure-and-recovery-strategy)
-- [11) Team-level practices](#11-team-level-practices)
-- [12) Anti-patterns to avoid](#12-anti-patterns-to-avoid)
-- [References (official)](#references-official)
+- <A rule the AI must follow here, for example "a failing test comes before any bug fix">
+- <A boundary, for example "never edit the generated client under src/api/">
+- <A convention the AI keeps, for example "commits stay atomic and intention-revealing">
 
----
+## Validation depth
 
-## 1) Operating mindset
+- <When a change here needs a quick check versus a full review>
+- <What must be green before a merge>
 
-- Treat AI as a powerful pair, not as an authority.
-- Keep human accountability for architecture, product impact, and merge decisions.
-- Prefer explicit instructions over implied expectations.
-- Optimize for correct outcomes first, speed second.
+## When the AI drifts
 
-## 2) Start of task checklist
+- <How this team recovers, for example "reset the session and restate the objective in one sentence">
 
-- [ ] Clarify objective in one sentence.
-- [ ] Define explicit done criteria.
-- [ ] Define non-goals (what must not be changed).
-- [ ] Identify impacted files/modules.
-- [ ] Decide risk level (low, medium, high).
-- [ ] Decide required validation depth (`minimal`, `standard`, `full`).
-
-## 3) Planning before coding
-
-- Ask AI for a short implementation plan first.
-- Validate 100% of plan before execution.
-- Split large tasks into small increments.
-- Keep one behavior per increment.
-- Refuse execution if plan has ambiguity.
-
-## 4) Implementation loop
-
-For each increment:
-
-1. Ask for minimal change set.
-2. Read generated diff.
-3. Stage intentionally (file by file or hunk by hunk).
-4. Run assertions and tests.
-5. Ask AI to fix only failing points.
-6. Re-run checks until green.
-
-## 5) Review loop
-
-- Run technical review (`rules`, defects, regressions).
-- Run functional review (expected behavior vs implementation).
-- Manually read staged diff before commit.
-- Require evidence for claims ("works", "tested", "fixed").
-
-## 6) Prompting hygiene
-
-- Give context, constraints, and expected output format.
-- Request concrete file paths and commands.
-- Ask for assumptions explicitly.
-- Ask for tradeoffs when options exist.
-- Keep prompts scoped; avoid multi-objective prompts.
-- If output quality drops, reset with a fresh focused prompt.
-
-## 7) Context hygiene
-
-- Keep rules concise and non-conflicting.
-- Avoid duplicate sources of truth.
-- Keep project memory updated (`architecture`, `testing`, `vcs`, `decisions`).
-- Prefer canonical docs referenced by path.
-- Remove stale instructions quickly.
-
-## 8) Quality discipline
-
-- For bug fixes: failing test first, then fix.
-- Keep structural and behavioral changes separated.
-- Keep commits atomic and intention-revealing.
-- Never skip validation to "save time".
-- Never merge code you do not understand.
-
-## 9) Delegation strategy
-
-- Low risk: semi-autonomous execution with checkpoints.
-- Medium risk: tighter loop, smaller increments, frequent review.
-- High risk: manual supervision, explicit approvals at every gate.
-- Critical systems: mandatory peer review before merge.
-
-## 10) Failure and recovery strategy
-
-- Stop if AI drifts from objective.
-- If same failure repeats, change approach (not just prompt wording).
-- If context is polluted, restart session with minimal clean context.
-- Keep checkpoint commits before long autonomous runs.
-- Escalate early when uncertainty remains high.
-
-## 11) Team-level practices
-
-- Standardize shared prompts/commands/rules in repo.
-- Use common commit and PR templates.
-- Track recurring failures and add guardrails.
-- Review and improve guidelines monthly.
-- Keep onboarding docs short and actionable.
-
-## 12) Anti-patterns to avoid
-
-- Asking for implementation before validation of plan.
-- Approving giant diffs without incremental checkpoints.
-- Combining unrelated changes in one PR.
-- Trusting green tests when scope of tests is unclear.
-- Letting AI decide merge/deploy without explicit approval.
-- Keeping endless chat sessions after coherence loss.
-
-## References (official)
-
-- Anthropic, "Prompt engineering overview": <https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview>
-- Anthropic, "Claude Code memory": <https://docs.claude.com/en/docs/claude-code/memory>
-- OpenAI, "Prompt engineering best practices": <https://help.openai.com/en/articles/6654000-best-practices-for-prompting>
-- GitHub Docs, "Repository custom instructions for Copilot": <https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/adding-repository-custom-instructions-for-github-copilot>
+For the general AIDD playbook (planning, review loops, prompting and context hygiene, anti-patterns), see the framework docs: <https://github.com/ai-driven-dev/framework>.

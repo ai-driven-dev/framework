@@ -1,55 +1,17 @@
-# Contributing
+# Contributing to this project's AI context
 
-Guidelines for adding skills, agents, rules, and templates inside your AIDD-equipped project.
+How to add or change the context the AI relies on here. For authoring AIDD skills, agents, rules, and templates, see the framework guide: <https://github.com/ai-driven-dev/framework/blob/main/CONTRIBUTING.md>.
 
-## Creating New Content
+## Changing project memory
 
-Use the generator skills to scaffold new content that follows the framework structure.
+Add or edit a file under `aidd_docs/memory/`. See [`memory/README.md`](memory/README.md) for what belongs there and how it loads.
 
-| Skill                              | Creates              |
-| ---------------------------------- | -------------------- |
-| `aidd-context:04-skill-generate`   | A new router-based skill                                         |
-| `aidd-context:05-rule-generate`    | A new coding rule                                               |
-| `aidd-context:06-agent-generate`   | A new agent                                                    |
-| `aidd-context:07-command-generate` | A new slash command                                            |
-| `aidd-context:08-hook-generate`    | A new lifecycle hook                                           |
-| `aidd-context:10-learn`            | New memory or rule capturing a learning                         |
+## Adding AI content (skills, rules, agents, commands, hooks)
 
-Generator skills consume the templates inside their `assets/` folder and write the output to the correct location for your AI tool (Claude Code, Cursor, Copilot, Codex, OpenCode).
+- Use the generator skills (`aidd-context:04-skill-generate` through `08-hook-generate`, and `10-learn` for memory or rules). They scaffold the right shape and write to the right place for each tool you use.
+- Open a pull request for anything that changes how the AI behaves on this project. The team reviews it like any code change.
 
-## Templates
+## House conventions
 
-All templates live alongside the skill that owns them, under `plugins/<plugin>/skills/<NN-name>/assets/`. They can be adapted to your team's conventions.
-
-| Where                                              | What it scaffolds                                        |
-| -------------------------------------------------- | -------------------------------------------------------- |
-| `aidd-context:04-skill-generate/assets/`           | `SKILL.md` and action templates                          |
-| `aidd-context:05-rule-generate/assets/`            | Rule file template                                       |
-| `aidd-context:06-agent-generate/assets/`           | Agent file template                                      |
-| `aidd-context:07-command-generate/assets/`         | Command file template                                    |
-| `aidd-context:08-hook-generate/assets/`            | Hook entry and script templates                          |
-| `aidd-pm:03-prd/assets/`                           | PRD body template                                        |
-| `aidd-pm:04-spec/assets/`                          | Spec template and validator                              |
-| `aidd-dev:01-plan/assets/`                         | Plan and master-plan templates                           |
-| `aidd-vcs:01-commit/assets/`                       | Conventional commit message template                     |
-| `aidd-vcs:02-pull-request/assets/`                 | Pull/merge request body template, contributing example   |
-
-## Syncing Across Tools
-
-If the project uses multiple AI tools (e.g. Claude Code plus Cursor), the same content must be available to each. The memory bank is shared automatically via the `<aidd_project_memory>` block kept in sync by `aidd-context:02-project-init`. Skills are loaded per-plugin by the runtime, so any skill installed via the marketplace is available across tools that support skills.
-
-When tools differ in syntax (frontmatter, slash command name, references), follow the IDE mapping reference shipped with each plugin.
-
-## Recommended Workflow
-
-- Open a pull request for any new skill, agent, rule, or template. Visible changes that affect how the AI behaves on the project deserve team review.
-- Keep skills router-pure: SKILL.md holds no business logic; everything lives inside actions.
-- Stay within 5 to 10 percent deviation from a template structure. Beyond that, update the template first, then derive the new content from it.
-
-## Conventions
-
-- Skill names: `<plugin>:<NN>-<slug>`. Slug is kebab-case verb for activity domains, singular noun for tool domains.
-- Action files: only `## Inputs`, `## Outputs`, `## Process`, `## Test` (`## Depends on` optional).
-- `## Process` steps start with `**Bold title**.` and use decision-list `Pick first match` for branching.
-- `## Test` bullets start with `**Bold name**:` and are checkable (command, artifact check, or observable side effect).
-- Descriptions in SKILL.md frontmatter include explicit "Use when ..." triggers and "Do NOT use for ..." exclusions.
+- <A naming or placement rule specific to this repo>
+- <What belongs in memory versus a rule versus a doc here>
