@@ -11,7 +11,6 @@
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Built for Claude Code](https://img.shields.io/badge/built%20for-Claude%20Code-D97757.svg)](https://code.claude.com/docs/en/discover-plugins)
 [![Latest Release](https://img.shields.io/github/v/release/ai-driven-dev/framework?include_prereleases&sort=semver)](https://github.com/ai-driven-dev/framework/releases)
 [![CI](https://github.com/ai-driven-dev/framework/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ai-driven-dev/framework/actions/workflows/ci.yml)
 [![Made in France](https://img.shields.io/badge/made%20in-France-0055A4?labelColor=EF4135)](https://www.ai-driven-dev.fr/)
@@ -23,6 +22,8 @@
 The **AI-Driven Dev Framework** is a marketplace — **skills, agents, commands, rules, prompts, templates, recipes…** — that helps you ship **high-quality features to production**.
 
 > Orchestrate your SDLC (Software Development Life Cycle) at scale, the agentic engineering way.
+
+**Who we are** — built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: 3 years of R&D, 500+ developers trained, shipping production software with 100% AI-generated code.
 
 ## ✅ Compatibility
 
@@ -39,8 +40,6 @@ The **AI-Driven Dev Framework** is a marketplace — **skills, agents, commands,
 | **Mistral** | 🚧 In progress |
 
 ## 👥 Community
-
-Three years of R&D and **500+ developers trained** — so we open-sourced the framework we use ourselves to ship production-grade software with **100% AI-generated code**.
 
 > ### → [Join the Discord 🇫🇷](https://discord.gg/ai-driven-dev)
 > Live coding sessions every **Thursday**. Come build, ask, and share.
@@ -211,7 +210,6 @@ Task-oriented how-to sheets. **[Browse all recipes →](recipes/)**
 | Recipe | What you'll do |
 | --- | --- |
 | [Install an MCP server](recipes/mcp-installation.md) | Choose between CLI and MCP, and wire up the recommended servers |
-| Optimise your tokens *(soon)* | Cut context cost on day-to-day development |
 
 > Manage recipes straight from your assistant with **`/cook`** — `list` what exists, `upsert` a new one from the template.
 
@@ -223,7 +221,7 @@ Every contribution shapes the framework — ideas, issues, and plugins all move 
 - **Want to go further?** [Join the Discord 🇫🇷](https://discord.gg/ai-driven-dev) — live every **Thursday**.
 - **Building a plugin or a recipe?** Start from [`CONTRIBUTING.md`](./CONTRIBUTING.md) and [`docs/CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md).
 
-> **Note** — code (pull-request) rights on this repo are reserved for **certified Core Team members** ([`GOVERNANCE.md`](./GOVERNANCE.md)). Everyone else can open issues, join discussions, and shape the roadmap.
+> **Note** — code (pull-request) rights on this repo are reserved for **certified Core Team members** ([`GOVERNANCE.md`](./GOVERNANCE.md)). Everyone else can open issues, join discussions, and shape the [roadmap](./ROADMAP.md).
 
 ## 🔒 Trust & safety
 
