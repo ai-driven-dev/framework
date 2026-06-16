@@ -62,6 +62,11 @@ pre-commit:
             exit 1
           fi
         done
+    check-mermaid:
+      glob: "**/*.md"
+      exclude:
+        - ".specstory/**"
+      run: "node scripts/check-mermaid-syntax.js {staged_files}"
     summarize-plugin-catalogs:
       run: |
         [ -d plugins ] || exit 0

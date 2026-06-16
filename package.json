@@ -28,11 +28,14 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "prepare": "lefthook install || true"
+    "prepare": "lefthook install || true",
+    "test": "node --test scripts/__tests__/",
+    "check:mermaid": "node scripts/check-mermaid-syntax.js"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
-    "lefthook": "^2.1.9"
+    "lefthook": "^2.1.9",
+    "mermaid": "^11.12.2"
   }
 }
