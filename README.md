@@ -25,6 +25,10 @@ The **AI-Driven Dev Framework** is a marketplace — **skills, agents, commands,
 
 **Who we are** — built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: 3 years of R&D, 500+ developers trained, shipping production software with 100% AI-generated code.
 
+- **[Join the Discord 🇫🇷](https://discord.gg/ai-driven-dev)** — public [roadmap](./ROADMAP.md) decisions every Thursday morning.
+- **Want to train your team?** [See the programme](https://www.ai-driven-dev.fr/entreprise).
+- **AI is important to you?** [Join the ecosystem](https://www.ai-driven-dev.fr/ecosysteme).
+
 ## ✅ Compatibility
 
 > Primarily built on **Claude Code** (they set the standards), but compatibility with the other tools is ensured.
@@ -38,13 +42,6 @@ The **AI-Driven Dev Framework** is a marketplace — **skills, agents, commands,
 | **OpenCode** | ✅ Supported |
 | **Gemini** | 🚧 In progress |
 | **Mistral** | 🚧 In progress |
-
-## 👥 Community
-
-> ### → [Join the Discord 🇫🇷](https://discord.gg/ai-driven-dev)
-> Live coding sessions every **Thursday**. Come build, ask, and share.
-
-> **Want to train your team?** [See the programme →](https://www.ai-driven-dev.fr/entreprise) or [join the ecosystem](https://www.ai-driven-dev.fr/ecosysteme).
 
 ## 📦 Installation
 
@@ -211,18 +208,12 @@ Task-oriented how-to sheets. **[Browse all recipes →](recipes/)**
 | --- | --- |
 | [Install an MCP server](recipes/mcp-installation.md) | Choose between CLI and MCP, and wire up the recommended servers |
 
-> Manage recipes straight from your assistant with **`/cook`** — `list` what exists, `upsert` a new one from the template.
-
 ## 🤝 Contributing
 
 > ### 🗺️ [See the roadmap →](./ROADMAP.md)
 > Actively maintained — see what's shipping next and help shape what comes after.
 
-Every contribution shapes the framework — ideas, issues, and plugins all move it forward.
-
-- **Got an idea or hit a bug?** [Open an issue](https://github.com/ai-driven-dev/framework/issues) or start a [Discussion](https://github.com/ai-driven-dev/framework/discussions).
-- **Want to go further?** [Join the Discord 🇫🇷](https://discord.gg/ai-driven-dev) — live every **Thursday**.
-- **Building a plugin or a recipe?** Start from [`CONTRIBUTING.md`](./CONTRIBUTING.md) and [`docs/CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md).
+Got an idea or hit a bug? **[Open an issue](https://github.com/ai-driven-dev/framework/issues)** or **[start a discussion](https://github.com/ai-driven-dev/framework/discussions)**. For everything else, **[join the Discord 🇫🇷](https://discord.gg/ai-driven-dev)**.
 
 > **Note** — code (pull-request) rights on this repo are reserved for **certified Core Team members** ([`GOVERNANCE.md`](./GOVERNANCE.md)). Everyone else can open issues, join discussions, and shape the roadmap.
 
