@@ -16,7 +16,7 @@ are created lazily by `03-context-generate` when the first rule is written.
 
 ## When NOT to use
 
-- To update individual memory files after they exist → use `05-learn`.
+- To update individual memory files after they exist → use `10-learn`.
 - To edit a single rule → edit the file directly.
 - To generate a new skill, agent, or rule file → use `03-context-generate`.
 

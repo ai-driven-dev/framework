@@ -23,7 +23,7 @@ jobs:
 
       - name: Dependabot metadata
         id: meta
-        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
 
       - name: Enable auto-merge for non-major updates
         if: steps.meta.outputs.update-type != 'version-update:semver-major'

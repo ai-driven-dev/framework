@@ -56,4 +56,4 @@ for each step, `references/stack-heuristics.md` for the input → recommended
 stack-family heuristics, and `assets/checklist.md` + `assets/install-template.md`
 for the canonical 24-item checklist and `INSTALL.md` skeleton. The Mermaid
 architecture diagram in action 04 is rendered via the sibling
-`04-mermaid` skill.
+`09-mermaid` skill.

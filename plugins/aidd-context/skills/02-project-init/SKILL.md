@@ -1,6 +1,6 @@
 ---
 name: 02-project-init
-description: Initialize or refresh the project memory bank and ensure AI context files contain the project memory block. Use when running `aidd init` for the first time, bootstrapping a new project, or re-running the init flow on an existing project. Do NOT use for updating individual memory files after they exist - use `aidd-context:05-learn` instead; do NOT use for editing a single rule - edit the file directly.
+description: Initialize or refresh the project memory bank and ensure AI context files contain the project memory block. Use when running `aidd init` for the first time, bootstrapping a new project, or re-running the init flow on an existing project. Do NOT use for updating individual memory files after they exist - use `aidd-context:10-learn` instead; do NOT use for editing a single rule - edit the file directly.
 model: opus
 ---
 

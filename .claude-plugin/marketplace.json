@@ -11,7 +11,7 @@
       "name": "aidd-context",
       "version": "1.0.0",
       "source": "./plugins/aidd-context",
-      "description": "Knowledge production: project bootstrap, project init, generation of Claude Code context artifacts (skills, agents, rules, commands, hooks, plugins, marketplaces), mermaid diagrams, learn, discovery",
+      "description": "Knowledge production: project bootstrap, project init, generation of context artifacts (skills, agents, rules, commands, hooks), mermaid diagrams, learn, discovery",
       "strict": true,
       "recommended": true
     },

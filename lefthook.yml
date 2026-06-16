@@ -62,26 +62,6 @@ pre-commit:
             exit 1
           fi
         done
-    evals-validity:
-      glob: "plugins/*/skills/*/evals/scenarios.json"
-      run: |
-        for f in {files}; do
-          [ -f "$f" ] || continue
-          if ! jq empty "$f" >/dev/null 2>&1; then
-            echo "❌ invalid JSON: $f"
-            exit 1
-          fi
-          type=$(jq -r 'type' "$f")
-          if [ "$type" != "array" ]; then
-            echo "❌ $f: root must be an array, got $type"
-            exit 1
-          fi
-          invalid=$(jq '[.[] | select((.prompt == null) or ((has("expect_action") | not) and (has("expect_skip") | not) and (has("expect") | not)))] | length' "$f")
-          if [ "$invalid" -gt 0 ]; then
-            echo "❌ $f: $invalid scenario(s) missing required keys (prompt + at least one of expect_action/expect_skip/expect)"
-            exit 1
-          fi
-        done
     summarize-plugin-catalogs:
       run: |
         [ -d plugins ] || exit 0

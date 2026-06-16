@@ -4,6 +4,15 @@ This guide walks through building a new plugin for the AI-Driven Dev marketplace
 
 For broader OSS contribution rules (commit scopes, release flow), see [`../CONTRIBUTING.md`](../CONTRIBUTING.md). For the framework's architecture, see [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
+## Adding a skill to an existing plugin
+
+Most contributions add a *skill* to an existing plugin, not a new plugin. Decide two things first:
+
+- **Which plugin** - the owning concern decides; see the [concern taxonomy](ARCHITECTURE.md#plugin-concerns-and-layers). A capability owned by another concern goes in that plugin and you delegate to it. A skill that sequences across several concerns goes in `aidd-orchestrator`.
+- **Which number** - `<NN>-<name>` encodes the plugin's logical pipeline order, not a next-free counter. Inserting mid-flow means renumbering downstream folders, their `skills[]` entries, and every `<plugin>:<NN>-name` invocation token - so weigh appending against inserting.
+
+The rest of this guide applies to the skill directory; skip the plugin-registration steps (the plugin already exists - you only edit its `plugin.json` `skills[]`).
+
 ## Prerequisites
 
 The same toolchain as any framework contribution:
@@ -55,7 +64,7 @@ A plugin can bundle any of the Claude Code surfaces above; only the manifest and
   "author": { "name": "AI-Driven Dev", "url": "https://github.com/ai-driven-dev" },
   "skills": ["./skills/01-hello"],
   "keywords": ["example"],
-  "repository": "https://github.com/ai-driven-dev/aidd-framework",
+  "repository": "https://github.com/ai-driven-dev/framework",
   "homepage": "https://ai-driven.dev",
   "license": "MIT"
 }
@@ -147,7 +156,6 @@ When you change SKILL.md or actions, run `/reload-plugins` in the same Claude Co
 ## Step 5 - document, test, ship
 
 - Run `pnpm exec lefthook run pre-commit` to confirm JSON validity, YAML validity, and SKILL.md frontmatter checks pass. The pre-commit hook also regenerates your `plugins/aidd-example/CATALOG.md` automatically.
-- Add at least one scenario under `skills/01-hello/evals/scenarios.json` if you expect future evaluation runs.
 - Open a PR using the project template and pick the right commit scope (`feat(aidd-example): ...`). Listing the scope in `commitlint.config.cjs` is encouraged (an unlisted scope warns but does not block).
 
 ## Step 6 - release

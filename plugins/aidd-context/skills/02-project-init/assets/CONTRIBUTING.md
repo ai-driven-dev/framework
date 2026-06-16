@@ -8,8 +8,12 @@ Use the generator skills to scaffold new content that follows the framework stru
 
 | Skill                              | Creates              |
 | ---------------------------------- | -------------------- |
-| `aidd-context:03-context-generate` | New skill, agent, or rule (router-based, with actions and evals) |
-| `aidd-context:05-learn`            | New memory or rule capturing a learning                          |
+| `aidd-context:04-skill-generate`   | A new router-based skill                                         |
+| `aidd-context:05-rule-generate`    | A new coding rule                                               |
+| `aidd-context:06-agent-generate`   | A new agent                                                    |
+| `aidd-context:07-command-generate` | A new slash command                                            |
+| `aidd-context:08-hook-generate`    | A new lifecycle hook                                           |
+| `aidd-context:10-learn`            | New memory or rule capturing a learning                         |
 
 Generator skills consume the templates inside their `assets/` folder and write the output to the correct location for your AI tool (Claude Code, Cursor, Copilot, Codex, OpenCode).
 
@@ -19,9 +23,11 @@ All templates live alongside the skill that owns them, under `plugins/<plugin>/s
 
 | Where                                              | What it scaffolds                                        |
 | -------------------------------------------------- | -------------------------------------------------------- |
-| `aidd-context:03-context-generate/assets/skills/`  | `SKILL.md`, action, evals templates                      |
-| `aidd-context:03-context-generate/assets/agents/`  | Agent file template                                      |
-| `aidd-context:03-context-generate/assets/rules/`   | Rule file template                                       |
+| `aidd-context:04-skill-generate/assets/`           | `SKILL.md` and action templates                          |
+| `aidd-context:05-rule-generate/assets/`            | Rule file template                                       |
+| `aidd-context:06-agent-generate/assets/`           | Agent file template                                      |
+| `aidd-context:07-command-generate/assets/`         | Command file template                                    |
+| `aidd-context:08-hook-generate/assets/`            | Hook entry and script templates                          |
 | `aidd-pm:03-prd/assets/`                           | PRD body template                                        |
 | `aidd-pm:04-spec/assets/`                          | Spec template and validator                              |
 | `aidd-dev:01-plan/assets/`                         | Plan and master-plan templates                           |
@@ -38,7 +44,6 @@ When tools differ in syntax (frontmatter, slash command name, references), follo
 
 - Open a pull request for any new skill, agent, rule, or template. Visible changes that affect how the AI behaves on the project deserve team review.
 - Keep skills router-pure: SKILL.md holds no business logic; everything lives inside actions.
-- Add evals (`evals/scenarios.json`) for every auto-trigger skill so router behavior stays correct over time.
 - Stay within 5 to 10 percent deviation from a template structure. Beyond that, update the template first, then derive the new content from it.
 
 ## Conventions

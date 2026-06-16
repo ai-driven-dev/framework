@@ -124,5 +124,4 @@ For each increment:
 - Anthropic, "Prompt engineering overview": <https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview>
 - Anthropic, "Claude Code memory": <https://docs.claude.com/en/docs/claude-code/memory>
 - OpenAI, "Prompt engineering best practices": <https://help.openai.com/en/articles/6654000-best-practices-for-prompting>
-- OpenAI Cookbook, "Eval-driven development": <https://cookbook.openai.com/examples/evaluation/use-cases/evalsapi_tools_evaluation>
 - GitHub Docs, "Repository custom instructions for Copilot": <https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/adding-repository-custom-instructions-for-github-copilot>

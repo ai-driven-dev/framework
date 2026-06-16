@@ -1,4 +1,0 @@
-{
-  "name": "{{plugin_name}}",
-  "source": "./plugins/{{plugin_name}}"
-}

@@ -14,7 +14,7 @@
 Walk a reviewer through the technical resolution: the approach you took, why
 this way over the alternatives, and anything non-obvious (trade-offs, edge
 cases, follow-ups). This narrative is the point of the PR. The conventional
-title, DCO sign-off, and pre-commit hooks are already enforced by CI, so don't
+title and pre-commit hooks are already enforced by CI, so don't
 re-assert them here. Spend your words on the *how*.
 -->
 
@@ -38,6 +38,4 @@ Closes #
 
 <!-- The author ticks these on GitHub before merge. Not for the AI to fill or delete - these are the checks no CI job can make. -->
 
-- [ ] Docs updated to match the new behaviour.
-- [ ] I self-reviewed this PR.
-- [ ] No cross-plugin references introduced.
+- [ ] **I DO CERTIFY I READ EACH LINE OF THE PULL REQUEST BECAUSE I AM A SOFTWARE ENGINEER, NOT A AI PUPPY.**

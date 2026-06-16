@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Thanks for reporting. Fill in the fields below so a maintainer can reproduce quickly.
-        For **usage questions**, use [Discussions](https://github.com/ai-driven-dev/aidd-framework/discussions) instead.
+        For **usage questions**, use [Discussions](https://github.com/ai-driven-dev/framework/discussions) instead.
   - type: textarea
     id: description
     attributes:
@@ -69,5 +69,5 @@ body:
     attributes:
       label: Code of Conduct
       options:
-        - label: I agree to follow this project's [Code of Conduct](https://github.com/ai-driven-dev/aidd-framework/blob/main/CODE_OF_CONDUCT.md).
+        - label: I agree to follow this project's [Code of Conduct](https://github.com/ai-driven-dev/framework/blob/main/CODE_OF_CONDUCT.md).
           required: true

@@ -36,7 +36,7 @@ Skills are grouped into plugins by domain. Install only the plugins you need.
 
 | Plugin            | Purpose                                                                            | Example skills                                              |
 | ----------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| aidd-context      | Bootstrap, project init, generation of context artifacts (skills, agents, rules, commands, hooks, plugins, marketplaces), mermaid diagrams, learn, discovery | `02-project-init`, `03-context-generate`, `04-mermaid`      |
+| aidd-context      | Bootstrap, project init, generation of context artifacts (skills, agents, rules, commands, hooks, plugins, marketplaces), mermaid diagrams, learn, discovery | `02-project-init`, `03-context-generate`, `09-mermaid`      |
 | aidd-refine       | Meta-cognition: brainstorm, challenge prior work, condensed communication mode     | `01-brainstorm`, `02-challenge`, `03-condense`              |
 | aidd-pm           | Product management: ticket info, user stories, PRD, spec                            | `01-ticket-info`, `02-user-stories-create`, `03-prd`, `04-spec` |
 | aidd-dev          | Code transformation: Dev SDLC orchestrator, plan, implement, assert, audit, review, test, refactor, debug, for-sure | `00-sdlc`, `01-plan`, `02-implement`, `05-review`, `06-test` |
@@ -68,9 +68,9 @@ my-project/
 │   │   ├── testing.md
 │   │   └── vcs.md
 │   ├── internal/
-│   │   └── decisions/           # Decision records written by aidd-context:05-learn
+│   │   └── decisions/           # Decision records written by aidd-context:10-learn
 │   ├── tasks/                   # Specs, plans, run summaries
-│   ├── ADR.md                   # Architecture decision log (aidd-context:05-learn)
+│   ├── ADR.md                   # Architecture decision log (aidd-context:10-learn)
 │   ├── README.md                # This file
 │   ├── GUIDELINES.md            # Developer operating guidelines
 │   └── CONTRIBUTING.md          # How to add or modify skills, agents, rules
@@ -98,7 +98,7 @@ AIDD is delivered as a plugin marketplace. Pick what you need; do not install ev
 
 | Plugin       | Skills                                                                                                              |
 | ------------ | ------------------------------------------------------------------------------------------------------------------- |
-| aidd-context | 00-onboard, 01-bootstrap, 02-project-init, 03-context-generate, 04-mermaid, 05-learn, 06-discovery                  |
+| aidd-context | 00-onboard, 01-bootstrap, 02-project-init, 03-context-generate, 09-mermaid, 10-learn, 11-discovery                  |
 | aidd-refine  | 01-brainstorm, 02-challenge, 03-condense, 04-shadow-areas, 05-fact-check                                            |
 | aidd-dev     | 00-sdlc, 01-plan, 02-implement, 03-assert, 04-audit, 05-review, 06-test, 07-refactor, 08-debug, 09-for-sure         |
 | aidd-vcs     | 01-commit, 02-pull-request, 03-release-tag, 04-issue-create                                                         |
@@ -117,7 +117,7 @@ A typical change cycles through skills from several plugins. The order below is 
 5. **Implement and assert**: `aidd-dev:02-implement` writes code against the plan; `aidd-dev:03-assert` verifies the result.
 6. **Review**: `aidd-dev:05-review` for code and functional review; `aidd-refine:02-challenge` to stress-test the result.
 7. **Test**: `aidd-dev:06-test` adds or runs tests and validates user journeys.
-8. **Document and learn**: `aidd-context:04-mermaid` for diagrams; `aidd-context:05-learn` to feed insights back into the memory bank or rules.
+8. **Document and learn**: `aidd-context:09-mermaid` for diagrams; `aidd-context:10-learn` to feed insights back into the memory bank or rules.
 9. **Ship**: `aidd-vcs:01-commit`, `aidd-vcs:02-pull-request`, then `aidd-vcs:03-release-tag` when the work is in production. File issues with `aidd-vcs:04-issue-create`.
 10. **Refactor and maintain**: `aidd-dev:07-refactor` for performance or security, `aidd-dev:04-audit` for technical-debt sweeps, `aidd-dev:08-debug` to reproduce and fix bugs.
 
@@ -138,7 +138,6 @@ Inside the synchronous path, `aidd-dev:00-sdlc` is the Dev SDLC orchestrator tha
 - Skills must have an `## Available actions` table, `## Default flow`, `## Transversal rules`.
 - Actions must contain only `## Inputs`, `## Outputs`, `## Process`, `## Test`.
 - Tests must be observable: command, artifact check, or side effect.
-- Evals (`evals/scenarios.json`) ship for every auto-trigger skill.
 
 ---
 

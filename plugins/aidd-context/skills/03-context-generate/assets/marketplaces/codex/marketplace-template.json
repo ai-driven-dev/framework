@@ -1,7 +1,0 @@
-{
-  "name": "{{marketplace_name}}",
-  "interface": {
-    "displayName": "{{display_name}}"
-  },
-  "plugins": []
-}

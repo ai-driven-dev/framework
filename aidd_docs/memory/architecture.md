@@ -44,7 +44,6 @@ flowchart TD
     Skills --> SkillMd["SKILL.md"]
     Skills --> Actions["actions/NN-action.md"]
     Skills --> Assets["assets/"]
-    Skills --> Evals["evals/scenarios.json"]
 ```
 
 ## Services Communication

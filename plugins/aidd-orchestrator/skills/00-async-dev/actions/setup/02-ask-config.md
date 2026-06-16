@@ -31,7 +31,7 @@ Interactively collects the small set of runtime parameters from the user.
     }
   },
   "marketplace": {
-    "repo": "ai-driven-dev/aidd-framework",
+    "repo": "ai-driven-dev/framework",
     "access": "public",
     "token_secret_name": null
   },
@@ -67,7 +67,7 @@ Interactively collects the small set of runtime parameters from the user.
      bob-gh-username:   CLAUDE_CODE_OAUTH_TOKEN_BOB
    ```
    The actual secrets are created in action `08-configure-remote-secrets`.
-3. Ask the marketplace location: `marketplace.repo` (default `ai-driven-dev/aidd-framework`) and `marketplace.access`: `public` or `private`.
+3. Ask the marketplace location: `marketplace.repo` (default `ai-driven-dev/framework`) and `marketplace.access`: `public` or `private`.
    - If `private`: ask `token_secret_name` (default `AIDD_FRAMEWORK_TOKEN`). The user must add a fine-grained PAT with `Contents: Read` on the marketplace repo.
    - If `public`: leave `token_secret_name` null and the workflow uses `${{ github.token }}` for the clone.
 4. Ask `github_write_auth.mode`: how `claude-code-action` authenticates for git write operations (push, commit, `gh pr create`, audit-log commit). This is independent of the marketplace clone token (step 3) and of the Anthropic auth (step 2).

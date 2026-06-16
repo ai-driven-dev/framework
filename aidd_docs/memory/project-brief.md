@@ -28,7 +28,6 @@ AI-assisted software development tooling. The framework ships workflows, not cod
 | Memory | Structured context file loaded at conversation start | context file |
 | SDLC | Software Development Life Cycle — the end-to-end pipeline from idea to deployed PR | |
 | Marketplace | Central registry listing available plugins with version metadata | |
-| Eval | Scenario JSON file verifying a skill's routing logic | test |
 
 ## Features & Use-cases
 

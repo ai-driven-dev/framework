@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-If you discover a security vulnerability in the AI-Driven Dev framework or any of its plugins, please report it privately via [GitHub Security Advisories](https://github.com/ai-driven-dev/aidd-framework/security/advisories/new).
+If you discover a security vulnerability in the AI-Driven Dev framework or any of its plugins, please report it privately via [GitHub Security Advisories](https://github.com/ai-driven-dev/framework/security/advisories/new).
 
 If GitHub Security Advisories are unreachable, email `security@ai-driven-dev.fr` instead. PGP-encrypted reports are accepted on request to the same address.
 

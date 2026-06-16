@@ -40,4 +40,4 @@ Plays the role of technical architect for a new SaaS project. Walks the user thr
 
 ## External data
 
-- `aidd-context/skills/04-mermaid/SKILL.md` - invoked from action 04 to render the architecture diagram
+- `aidd-context/skills/09-mermaid/SKILL.md` - invoked from action 04 to render the architecture diagram

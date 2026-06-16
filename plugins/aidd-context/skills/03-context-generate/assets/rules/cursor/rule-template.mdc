@@ -1,9 +1,0 @@
----
-description: "{{description}}"
-globs: "{{glob1}}, {{glob2}}"
-alwaysApply: false
----
-
-# {{rule_title}}
-
-- {{rule_bullet}}

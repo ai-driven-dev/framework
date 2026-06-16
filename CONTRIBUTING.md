@@ -15,7 +15,7 @@ flowchart TD
     Who{"Your profile?"}
     Pub["Public - discuss, react, upvote"]
     Core["Core Team - vote on roadmap priority"]
-    Cert["Certifie AIDD - branch, commit (DCO), open PR"]
+    Cert["Certifie AIDD - branch, commit, open PR"]
     Rev["Habilite AIDD - review (CODEOWNERS)"]
     Merge["Habilite AIDD - merge, release-please ships"]
 
@@ -45,7 +45,7 @@ Every commit then runs the framework checks (json/yaml validity, schema validati
 Before opening a PR, exercise the skills you touched in a real session. Clone the framework, then point your assistant at the checkout instead of a published release:
 
 ```bash
-git clone https://github.com/ai-driven-dev/aidd-framework ~/projects/aidd-framework
+git clone https://github.com/ai-driven-dev/framework ~/projects/framework
 ```
 
 #### Claude Code
@@ -53,7 +53,7 @@ git clone https://github.com/ai-driven-dev/aidd-framework ~/projects/aidd-framew
 Register the checkout as a local marketplace, then install the plugins:
 
 ```text
-/plugin marketplace add ~/projects/aidd-framework
+/plugin marketplace add ~/projects/framework
 /plugin install aidd-context@aidd-framework
 /plugin install aidd-dev@aidd-framework
 /plugin install aidd-vcs@aidd-framework
@@ -72,7 +72,7 @@ To load the plugins into a personal project, point its `.claude/settings.local.j
     "aidd-framework": {
       "source": {
         "source": "directory",
-        "path": "~/projects/aidd-framework"
+        "path": "~/projects/framework"
       }
     }
   },
@@ -92,7 +92,7 @@ To load the plugins into a personal project, point its `.claude/settings.local.j
 Register the checkout (pass an absolute path; `./` is rejected), then install the plugins:
 
 ```bash
-codex plugin marketplace add ~/projects/aidd-framework
+codex plugin marketplace add ~/projects/framework
 codex plugin add aidd-context@aidd-framework
 codex plugin add aidd-dev@aidd-framework
 codex plugin add aidd-vcs@aidd-framework
@@ -106,10 +106,10 @@ No live reload - run `codex plugin marketplace upgrade` after each change to ref
 
 ## 2. Commit
 
-Format: `<type>(<scope>): description`, **signed off** for the [DCO](https://developercertificate.org/).
+Format: `<type>(<scope>): description`.
 
 ```bash
-git commit -s -m "feat(aidd-dev): add for-sure skill"
+git commit -m "feat(aidd-dev): add for-sure skill"
 ```
 
 **Scope** - one per commit (split cross-plugin changes):
@@ -125,19 +125,12 @@ git commit -s -m "feat(aidd-dev): add for-sure skill"
 - `feat` → minor · `fix` / `perf` → patch · `!` or `BREAKING CHANGE:` → major
 - `docs` / `refactor` / `style` / `test` / `build` / `ci` / `chore` → no release
 
-**DCO** - `-s` adds the `Signed-off-by` trailer. Forgot one?
-
-```bash
-git commit --amend --signoff       # last commit
-git rebase --signoff origin/main   # whole branch
-```
-
-The [`DCO`](./.github/workflows/dco.yml) check fails any unsigned commit. Versioning and the release bundles are automated - see [Releases](#releases).
+Versioning and the release bundles are automated - see [Releases](#releases).
 
 ## 3. Open a pull request
 
 - Work on a branch, not `main`.
-- **Fill the PR template** (applied automatically): explain *what* changed and *how* you resolved it technically - that narrative is the point of the PR. The conventional title, DCO sign-off, and pre-commit hooks are already enforced by CI, so don't spend the description re-asserting them.
+- **Fill the PR template** (applied automatically): explain *what* changed and *how* you resolved it technically - that narrative is the point of the PR. The conventional title and pre-commit hooks are already enforced by CI, so don't spend the description re-asserting them.
 - **Label the PR** so reviewers and the [Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8) triage at a glance:
 
   | Label | When to use |
@@ -164,7 +157,7 @@ Config: `release-please-config.json` + `.release-please-manifest.json` (pre-rele
 
 ## Reporting issues
 
-[Open an issue](https://github.com/ai-driven-dev/aidd-framework/issues/new/choose) (🐛 Bug or ✨ Feature). New issues are auto-added to the [AIDD Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8). For **usage questions**, use [Discussions](https://github.com/ai-driven-dev/aidd-framework/discussions), not issues (see [`SUPPORT.md`](./.github/SUPPORT.md)).
+[Open an issue](https://github.com/ai-driven-dev/framework/issues/new/choose) (🐛 Bug or ✨ Feature). New issues are auto-added to the [AIDD Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8). For **usage questions**, use [Discussions](https://github.com/ai-driven-dev/framework/discussions), not issues (see [`SUPPORT.md`](./.github/SUPPORT.md)).
 
 ## Reference
 

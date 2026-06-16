@@ -66,8 +66,7 @@ plugins/<plugin>/
 │       ├── README.md       # human-facing skill landing
 │       ├── actions/        # atomic actions invoked by the router
 │       ├── assets/         # templates and static files
-│       ├── references/     # extended docs the skill links into
-│       └── evals/          # scenario fixtures
+│       └── references/     # extended docs the skill links into
 ├── agents/                 # named AI agents          (optional)
 ├── commands/               # slash commands           (optional)
 ├── hooks/hooks.json        # lifecycle hooks          (optional)
@@ -78,6 +77,25 @@ plugins/<plugin>/
 A plugin bundles **any subset** of the Claude Code surfaces (skills, agents, commands, hooks, rules, MCP servers); only `skills/` and the manifest are universal. Browse the [plugins](../plugins/) to see which surfaces each one ships.
 
 The `plugin.json` is validated against [`claude-code-plugin-manifest`](https://www.schemastore.org/claude-code-plugin-manifest.json) by the `lefthook` pre-commit hook (when the JSON-schema validator, `pipx`/`check-jsonschema`, is available); the same hook validates `marketplace.json` against [`claude-code-marketplace`](https://www.schemastore.org/claude-code-marketplace.json). The `validate` workflow re-runs the hooks on every push and PR.
+
+## Plugin concerns and layers
+
+Every capability lives in exactly one plugin, chosen by **concern**. This taxonomy decides placement; it is only implicit in each `plugin.json`, so it is canonical here.
+
+| Plugin              | Concern              | Layer        |
+| ------------------- | -------------------- | ------------ |
+| `aidd-context`      | Knowledge production | Knowledge    |
+| `aidd-pm`           | Product management   | Knowledge    |
+| `aidd-refine`       | Meta-cognition       | Knowledge    |
+| `aidd-dev`          | Code transformation  | Execution    |
+| `aidd-vcs`          | Version control      | External     |
+| `aidd-orchestrator` | Orchestration        | Coordination |
+
+Three rules follow:
+
+- **Knowledge vs execution is a firewall.** Knowledge plugins produce artifacts you *read* (docs, plans, memory) and never write or run application source - `aidd-context`'s bootstrap deliberately creates no `package.json` or source files. Real code belongs to `aidd-dev` or an orchestrator's own setup actions.
+- **Concern decides placement, not existence.** A missing capability goes in the plugin whose concern owns it, then the caller delegates. Never reimplement it in the calling plugin because the right home lacks it today.
+- **Orchestration = sequencing across multiple concerns** with little domain logic. Any skill may delegate a sub-step ([Cross-plugin orthogonality](#cross-plugin-orthogonality)); doing so once does not make it an orchestrator. The orchestrator owns only glue and delegates the depth, handing off through a seam artifact (e.g. an `INSTALL.md` one plugin produces and another consumes).
 
 ## Skills are routers
 

@@ -86,8 +86,8 @@ The plan is complete when:
 
 - `aidd-refine:01-brainstorm`
 - `aidd-refine:02-challenge`
-- `aidd-context:04-mermaid`
-- `aidd-context:05-learn`
+- `aidd-context:09-mermaid`
+- `aidd-context:10-learn`
 - `aidd-dev:01-plan`
 
 Anything else is out of bounds.

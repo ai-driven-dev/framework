@@ -127,4 +127,4 @@ Setup-only templates copied into the target repo by the setup sub-flow:
 
 ## Test
 
-Each sub-flow's final action carries a `## Test` block that exercises the full sub-flow with mocked dependencies. The router itself is tested by the dispatch scenarios in `evals/scenarios.json` (signal → expected sub-flow).
+Each sub-flow's final action carries a `## Test` block that exercises the full sub-flow with mocked dependencies.

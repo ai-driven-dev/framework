@@ -1,7 +1,0 @@
-{
-  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
-  "name": "{{marketplace_name}}",
-  "owner": { "name": "{{owner_name}}", "email": "{{owner_email}}" },
-  "metadata": { "description": "{{description}}" },
-  "plugins": []
-}

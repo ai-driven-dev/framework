@@ -64,7 +64,7 @@ none object.
 ## Plugins, breaking changes, conflicts
 
 - **New plugin**: lands via PR following [`docs/CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md)
-  (description on every skill, ≥1 `evals/scenarios.json`, registered in
+  (description on every skill, registered in
   `marketplace.json` + `release-please-config.json`, a Habilité owner). Starts
   `experimental` → `release candidate` (one external success) → `stable` (Habilité
   review).

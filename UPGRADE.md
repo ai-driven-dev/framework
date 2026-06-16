@@ -20,7 +20,7 @@ This guide tells you exactly what disappears, what each old command becomes, and
 
 1. **Delivery: marketplace, not clone.** In `v3` an external CLI copied the whole repo into each project and generated per-tool copies (Claude Code, Cursor, Copilot). In `v4` you point Claude Code at the marketplace and install plugins on demand.
 2. **Split into 6 plugins.** Each plugin owns one slice of the SDLC and ships its own version.
-3. **Commands became skills.** Every former `/command` is a skill with structured frontmatter, references, assets and evals. A skill can auto-trigger from your intent or be invoked by name.
+3. **Commands became skills.** Every former `/command` is a skill with structured frontmatter, references, and assets. A skill can auto-trigger from your intent or be invoked by name.
 4. **Many commands were merged into routers.** Related v3 commands (the three `assert_*`, the two `review_*`, `performance` + `security_refactor`, the three debug-family commands, the five `generate_*`) collapsed into a single skill that routes to the right sub-action. See the mapping in section 4.
 5. **Agents, hooks, templates moved into their owning plugin** (for example `plugins/aidd-dev/agents/`).
 
@@ -42,7 +42,7 @@ Each plugin ships:
 - `.claude-plugin/plugin.json` (manifest + version)
 - `skills/NN-action-name/SKILL.md` (one skill per former command or command family)
 - `CATALOG.md` (auto-generated index of the plugin's skills)
-- its own assets, agents, references and evals
+- its own assets, agents, and references
 
 ---
 
@@ -51,7 +51,7 @@ Each plugin ships:
 Type these inside a Claude Code session (they are slash commands, not shell commands):
 
 ```text
-/plugin marketplace add ai-driven-dev/aidd-framework
+/plugin marketplace add ai-driven-dev/framework
 /plugin install aidd-context@aidd-framework
 /plugin install aidd-dev@aidd-framework
 /plugin install aidd-vcs@aidd-framework
@@ -86,8 +86,8 @@ Invocation in v4 is `plugin:NN-action`. Where a column says "sub-flow", the old 
 | `/generate_command` | `aidd-context:03-context-generate` (command sub-flow) |
 | `/generate_rules` | `aidd-context:03-context-generate` (rules sub-flow) |
 | `/generate_skill` | `aidd-context:03-context-generate` (skill sub-flow) - or the built-in `skill-creator` |
-| `/learn` | `aidd-context:05-learn` |
-| `/mermaid` | `aidd-context:04-mermaid` |
+| `/learn` | `aidd-context:10-learn` |
+| `/mermaid` | `aidd-context:09-mermaid` |
 
 ### product and refinement
 
@@ -151,7 +151,7 @@ Invocation in v4 is `plugin:NN-action`. Where a column says "sub-flow", the old 
 
 | v4 skill | What it does | Added in |
 |---|---|---|
-| `aidd-context:06-discovery` | Enumerates installed skills, agents, rules, hooks, memory and recommends a match. | 4.0 |
+| `aidd-context:11-discovery` | Enumerates installed skills, agents, rules, hooks, memory and recommends a match. | 4.0 |
 | `aidd-dev:00-sdlc` | Orchestrates the full plan to ship loop (auto or interactive). | 4.0 |
 | `aidd-dev:09-for-sure` | Loops and retries a task until an explicit success condition is met. | 4.0 |
 | `aidd-orchestrator:00-async-dev` | Async, label/comment-driven runs from GitHub issues (setup / run / review). | 4.0 |
@@ -171,7 +171,7 @@ Invocation in v4 is `plugin:NN-action`. Where a column says "sub-flow", the old 
 4. **Re-wire the project.** Run `aidd-context:02-project-init` to set up the new layout in `.claude/` and ensure the project memory block is present in your AI context files. Run `aidd-context:00-onboard` if you want a guided walkthrough of what to do next.
 5. **Translate each custom command into a skill.** Use the built-in `skill-creator` (or `aidd-context:03-context-generate`), put the result in your own local plugin, and load it through `.claude/settings.json`.
 6. **Update CI and scripts.** Anywhere CI called `/some_command`, switch to the new skill (auto-trigger by intent, or name `plugin:NN-action`). For `aidd-orchestrator`, see section 7.
-7. **Verify.** Run `aidd-context:06-discovery` to confirm the installed skills, agents, rules and hooks match what you expect.
+7. **Verify.** Run `aidd-context:11-discovery` to confirm the installed skills, agents, rules and hooks match what you expect.
 
 ---
 
@@ -189,7 +189,7 @@ Invocation in v4 is `plugin:NN-action`. Where a column says "sub-flow", the old 
 
 **The old invocation used `:` between number and name. Is that still valid?** No. The skill name uses a hyphen: `aidd-dev:02-implement`, not `aidd-dev:02:implement`. The colon form can silently fail on non-Claude hosts.
 
-**How do I get help?** Open an issue: <https://github.com/ai-driven-dev/aidd-framework/issues>.
+**How do I get help?** Open an issue: <https://github.com/ai-driven-dev/framework/issues>.
 
 
 ---

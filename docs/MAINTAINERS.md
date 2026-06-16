@@ -17,7 +17,7 @@ How to operate this repository day to day. For **who** may do what and the decis
 
 - **Triage issues.** New issues auto-add to board #8. Set `Status` / `Area` / `Priority` / `Work Type`; link under an epic (native sub-issues) if relevant.
 - **Roadmap.** Priority is set by the community vote (mechanism in `GOVERNANCE.md`). Accepted items live on board #8 - keep `ROADMAP.md` as a pointer, do not maintain a second list.
-- **Review PRs.** Every PR needs a Habilité (CODEOWNERS) approval; checks `lefthook`, `Commitlint`, `DCO` must pass; squash-merge.
+- **Review PRs.** Every PR needs a Habilité (CODEOWNERS) approval; checks `lefthook`, `Commitlint` must pass; squash-merge.
 
 ## Releases
 
@@ -38,7 +38,7 @@ Versions live in `.release-please-manifest.json`. Forcing a version / pre-releas
 
 ## Branch protection & the bot bypass
 
-`main` accepts only PRs (no direct push, no force-push, no deletion) with a CODEOWNERS review and passing `lefthook` / `Commitlint` / `DCO`.
+`main` accepts only PRs (no direct push, no force-push, no deletion) with a CODEOWNERS review and passing `lefthook` / `Commitlint`.
 
 Two bypass actors (both `pull_request` mode, so neither can push directly to `main`):
 - the **aidd-bot GitHub App** (`Integration`) - release-please and the Dependabot auto-merge mint a token from it (`actions/create-github-app-token`), so their PRs trigger the required checks *and* the App merges them past the human-review rule.
@@ -48,7 +48,7 @@ The App: ID in secret `AIDD_BOT_APP_ID`, key in `AIDD_BOT_PRIVATE_KEY`. If the A
 
 To change protection, edit `.github/rulesets/main.json`, then apply it live:
 ```bash
-gh api -X PUT repos/ai-driven-dev/aidd-framework/rulesets/<id> --input .github/rulesets/main.json
+gh api -X PUT repos/ai-driven-dev/framework/rulesets/<id> --input .github/rulesets/main.json
 ```
 Keep the file and the live ruleset in sync.
 

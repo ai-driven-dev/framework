@@ -6,9 +6,9 @@ Roles are defined in [`GOVERNANCE.md`](./GOVERNANCE.md).
 
 Open a PR, get it merged, and your avatar appears below automatically - no manual
 list to maintain. The mosaic is generated from the GitHub
-[contributors graph](https://github.com/ai-driven-dev/aidd-framework/graphs/contributors).
+[contributors graph](https://github.com/ai-driven-dev/framework/graphs/contributors).
 
-[![Contributors](https://contrib.rocks/image?repo=ai-driven-dev/aidd-framework)](https://github.com/ai-driven-dev/aidd-framework/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=ai-driven-dev/framework)](https://github.com/ai-driven-dev/framework/graphs/contributors)
 
 > The avatar mosaic renders only once the repository is **public** (the
 > contrib.rocks image API needs public access). Until then, see the graph link

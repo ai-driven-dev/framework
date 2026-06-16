@@ -59,7 +59,7 @@ graph TD
 3. If the picked candidate has verdict `❌`, refuse the pick and loop back to letting the user choose differently. (Do not proceed with a known-broken stack.)
 4. Fill block 4 of the checklist with the picked candidate's concrete choices. Show the user the full filled checklist and ask them to confirm "go".
 5. Generate the folder-structure tree following conventions from the picked stack: monorepo (`apps/`, `packages/`) for modular monolith; flat `src/` for monolith; `services/` per service for microservices; `functions/` for serverless. Reflect every component listed in block 4.
-6. Generate the Mermaid module diagram by invoking `aidd-context:04-mermaid`. Pass it the list of modules and their relations derived from the folder tree. Verify the rendered diagram passes Mermaid syntax (no parser errors).
+6. Generate the Mermaid module diagram by invoking `aidd-context:09-mermaid`. Pass it the list of modules and their relations derived from the folder tree. Verify the rendered diagram passes Mermaid syntax (no parser errors).
 7. Print the tree + diagram together. Wait for user confirmation before action 05.
 
 ## Test
