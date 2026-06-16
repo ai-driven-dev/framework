@@ -37,3 +37,7 @@ Actions may chain (e.g. extract from image, then plan). Read and follow each sel
 - `@actions/01-plan.md`
 - `@actions/02-components-behavior.md`
 - `@actions/03-image-extract-details.md`
+
+## References
+
+- `@references/plan-status.md` - plan lifecycle `status` values, meaning, and who writes each. All actions inherit it; do not re-specify the table elsewhere.

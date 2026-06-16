@@ -18,3 +18,7 @@ Spawn the `implementer` agent to execute this skill. For tools that do not suppo
 ```markdown
 @actions/01-implement.md
 ```
+
+## References
+
+- `@references/blocked.md` - conditions that make a plan `blocked` (needs a human). All actions inherit it.

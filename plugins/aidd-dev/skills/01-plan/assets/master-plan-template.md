@@ -10,7 +10,7 @@ argument-hint: N/A
 - Text is straight to the point, no emojis, no style, use bullet points.
 - Replace placeholders (`{variables}`) with actual user inputs.
 - Each child plan uses the standard `plan.md` template format.
-- Execution is sequential: next child blocked until previous validated.
+- Execution is sequential: next child gated until previous validated.
 - Validation is manual via checkbox approval.
 -->
 
@@ -27,10 +27,10 @@ argument-hint: N/A
 | #   | Plan        | File            | Status  | Validated |
 | --- | ----------- | --------------- | ------- | --------- |
 | 1   | {plan-name} | `./*-part-1.md` | pending | [ ]       |
-| 2   | {plan-name} | `./*-part-2.md` | blocked | [ ]       |
+| 2   | {plan-name} | `./*-part-2.md` | pending | [ ]       |
 
-<!-- Status values: pending, in-progress, done, blocked -->
-<!-- RULE: Plan N+1 blocked until Plan N checkbox checked -->
+<!-- Status per the plan-status reference. Source of truth = each child's frontmatter `status`; this table is a derived view. -->
+<!-- RULE: Plan N+1 gated until Plan N checkbox checked -->
 
 ## Validation Protocol
 

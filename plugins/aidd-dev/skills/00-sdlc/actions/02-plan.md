@@ -16,7 +16,6 @@ plan_path: <path>
 child_paths: [<path>]
 decisions_made: [...]
 decisions_blocked: [...]
-plan_status: in_progress | done | blocked
 ```
 
 ## Process
@@ -27,4 +26,4 @@ plan_status: in_progress | done | blocked
 
 ## Test
 
-`plan_path` exists on disk; its frontmatter contains `objective`, runnable `success_condition`, `iteration: 0`, `created_at`; `plan_status` is one of `in_progress | done | blocked`; the plan's `objective` matches the spec's `objective` (or the request when spec was skipped).
+`plan_path` exists on disk; its frontmatter contains `objective`, `status: pending`; the plan's `objective` matches the spec's `objective` (or the request when spec was skipped).

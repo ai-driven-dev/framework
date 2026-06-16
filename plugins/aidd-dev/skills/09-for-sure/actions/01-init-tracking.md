@@ -14,7 +14,7 @@ rules: <bullet list of constraints>             # optional
 ## Outputs
 
 ```yaml
-tracking_file: aidd_docs/tasks/<task-name>.in-progress.md
+tracking_file: aidd_docs/tasks/<task-name>.md
 state: resumed | created
 preflight_blockers: []                          # non-empty halts before spawn
 ```
@@ -23,9 +23,9 @@ preflight_blockers: []                          # non-empty halts before spawn
 
 ### Resume flow (existing task)
 
-1. Check `aidd_docs/tasks/` for files matching the task name:
-   - `*.in-progress.md` -> report status (iteration, steps remaining), then skip to step 10 to resume.
-   - `*.done.md` -> report "Task already completed." Stop.
+1. Check `aidd_docs/tasks/` for a file matching the task name, and read its frontmatter `status`:
+   - `status: pending` or `in-progress` -> report status (iteration, steps remaining), then skip to step 10 to resume.
+   - `status: implemented` -> report "Task already completed." Stop.
    - No file -> continue to step 2.
 
 ### New task flow
@@ -45,9 +45,9 @@ preflight_blockers: []                          # non-empty halts before spawn
    - Collect every `[!]` now. If any `[!]` remains unresolved, STOP - do not proceed to step 7.
 7. **Build the ASCII journey map.** Project the entire path with steps, dependencies, tools, blockers. Ask the user to confirm. Iterate until "does this map look correct? Anything missing?" returns confirmation.
 8. **Load the plan template** from `@../assets/plan-template.md`. Create `aidd_docs/tasks/` when missing.
-9. **Create `aidd_docs/tasks/<task-name>.in-progress.md`** using the plan template. Fill frontmatter (`objective`, `success_condition`, `iteration: 0`, `created_at`), Phases with Tasks and Acceptance criteria (the steps), and include the journey map.
+9. **Create `aidd_docs/tasks/<task-name>.md`** using the plan template. Fill frontmatter (`objective`, `success_condition`, `iteration: 0`, `status: pending`), Phases with Tasks and Acceptance criteria (the steps), and include the journey map.
 10. **Spawn the autonomous loop.** Read the Orchestrator prompt from `@./03-autonomous-loop.md` and pass it to the Agent tool with `<task-name>` filled in.
 
 ## Test
 
-After step 10: the file at `tracking_file` exists with `.in-progress.md` suffix, its `success_condition` field is a runnable command, the journey map is present, every `[!]` blocker has been resolved before spawn, and an autonomous agent has been launched.
+After step 10: the file at `tracking_file` exists with frontmatter `status` (`pending` at creation), its `success_condition` field is a runnable command, the journey map is present, every `[!]` blocker has been resolved before spawn, and an autonomous agent has been launched.
