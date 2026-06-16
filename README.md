@@ -215,13 +215,16 @@ Task-oriented how-to sheets. **[Browse all recipes →](recipes/)**
 
 ## 🤝 Contributing
 
+> ### 🗺️ [See the roadmap →](./ROADMAP.md)
+> Actively maintained — see what's shipping next and help shape what comes after.
+
 Every contribution shapes the framework — ideas, issues, and plugins all move it forward.
 
 - **Got an idea or hit a bug?** [Open an issue](https://github.com/ai-driven-dev/framework/issues) or start a [Discussion](https://github.com/ai-driven-dev/framework/discussions).
 - **Want to go further?** [Join the Discord 🇫🇷](https://discord.gg/ai-driven-dev) — live every **Thursday**.
 - **Building a plugin or a recipe?** Start from [`CONTRIBUTING.md`](./CONTRIBUTING.md) and [`docs/CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md).
 
-> **Note** — code (pull-request) rights on this repo are reserved for **certified Core Team members** ([`GOVERNANCE.md`](./GOVERNANCE.md)). Everyone else can open issues, join discussions, and shape the [roadmap](./ROADMAP.md).
+> **Note** — code (pull-request) rights on this repo are reserved for **certified Core Team members** ([`GOVERNANCE.md`](./GOVERNANCE.md)). Everyone else can open issues, join discussions, and shape the roadmap.
 
 ## 🔒 Trust & safety
 
