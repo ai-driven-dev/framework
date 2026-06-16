@@ -4,7 +4,7 @@
 
 # AI-Driven Dev Framework
 
-### Skills, agents & rules that run the full SDLC inside your AI coding assistant — under human supervision.
+### Vibe Coding for professional developers — focused on 100% quality on AI-generated code.
 
 <p>
   <!--counts:start--><kbd>6 plugins</kbd> · <kbd>37 skills</kbd> · <kbd>3 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
@@ -20,7 +20,9 @@
 
 ---
 
-The **AIDD Framework** is a marketplace of **skills, agents, and rules** that make the AI-Driven Development flow concrete inside your AI coding assistant — the full SDLC (plan → implement → review → ship) under rigorous human supervision. It is the open toolset of the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: authored for **Claude Code** and shipped for every major AI assistant.
+The **AI-Driven Dev Framework** is a marketplace — **skills, agents, commands, rules, prompts, templates, recipes…** — that helps you ship **high-quality features to production**.
+
+> Orchestrate your SDLC (Software Development Life Cycle) at scale, the agentic engineering way.
 
 ## ✅ Compatibility
 
@@ -34,6 +36,8 @@ The **AIDD Framework** is a marketplace of **skills, agents, and rules** that ma
 | **Gemini** | 🚧 In progress |
 | **Mistral** | 🚧 In progress |
 
+> Primarily built on **Claude Code** (they set the standards), but compatibility with the other tools is ensured.
+
 ## 👥 Community
 
 Three years of R&D and **500+ developers trained** — so we open-sourced the framework we use ourselves to ship production-grade software with **100% AI-generated code**.
@@ -41,7 +45,7 @@ Three years of R&D and **500+ developers trained** — so we open-sourced the fr
 > ### → [Join the Discord 🇫🇷](https://discord.gg/ai-driven-dev)
 > Live coding sessions every **Thursday**. Come build, ask, and share.
 
-> **Want to train your team?** [See the programme →](https://www.ai-driven-dev.fr/) or [join the ecosystem](https://discord.gg/ai-driven-dev).
+> **Want to train your team?** [See the programme →](https://www.ai-driven-dev.fr/entreprise) or [join the ecosystem](https://www.ai-driven-dev.fr/ecosysteme).
 
 ## 📦 Installation
 
@@ -64,29 +68,47 @@ All builds are attached to each [GitHub release](https://github.com/ai-driven-de
 /plugin install aidd-orchestrator@aidd-framework
 ```
 
-**Other tools** — every release attaches a per-tool archive. Download yours from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest), then:
+**Other tools** — every release attaches a per-tool archive. Grab yours from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest):
 
-**GitHub Copilot** *(marketplace)*
+<details>
+<summary><strong>GitHub Copilot</strong> — marketplace</summary>
 
-1. Download `aidd-framework-copilot-marketplace-<version>.zip` and unzip it.
-2. Register it: `aidd marketplace add aidd-framework ./aidd-framework-copilot-marketplace-<version>`
-3. Install the plugins from the registered marketplace.
+1. Download [`aidd-framework-copilot-marketplace-<version>.zip`](https://github.com/ai-driven-dev/framework/releases/latest) and unzip it.
+2. Register the marketplace:
+   ```bash
+   aidd marketplace add aidd-framework ./aidd-framework-copilot-marketplace-<version>
+   ```
+3. Install the plugins from the registered `aidd-framework` marketplace (same plugin names as Claude Code).
 
-**Codex** *(marketplace)*
+</details>
 
-1. Download `aidd-framework-codex-marketplace-<version>.zip` and unzip it.
-2. Register it: `aidd marketplace add aidd-framework ./aidd-framework-codex-marketplace-<version>`
-3. Install the plugins from the registered marketplace.
+<details>
+<summary><strong>Codex</strong> — marketplace</summary>
 
-**Cursor** *(flat)*
+1. Download [`aidd-framework-codex-marketplace-<version>.zip`](https://github.com/ai-driven-dev/framework/releases/latest) and unzip it.
+2. Register the marketplace:
+   ```bash
+   aidd marketplace add aidd-framework ./aidd-framework-codex-marketplace-<version>
+   ```
+3. Install the plugins from the registered `aidd-framework` marketplace (same plugin names as Claude Code).
 
-1. Download `aidd-framework-cursor-flat-<version>.zip`.
-2. Unzip it into your project root — it materializes `.cursor/`.
+</details>
 
-**OpenCode** *(flat)*
+<details>
+<summary><strong>Cursor</strong> — flat</summary>
 
-1. Download `aidd-framework-opencode-flat-<version>.zip`.
-2. Unzip it into your project root — it materializes `.opencode/`.
+1. Download [`aidd-framework-cursor-flat-<version>.zip`](https://github.com/ai-driven-dev/framework/releases/latest).
+2. Unzip it into your project root — it materializes `.cursor/`, ready to use.
+
+</details>
+
+<details>
+<summary><strong>OpenCode</strong> — flat</summary>
+
+1. Download [`aidd-framework-opencode-flat-<version>.zip`](https://github.com/ai-driven-dev/framework/releases/latest).
+2. Unzip it into your project root — it materializes `.opencode/`, ready to use.
+
+</details>
 
 ## 🚀 Quick start
 
