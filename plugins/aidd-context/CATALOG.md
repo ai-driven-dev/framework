@@ -204,6 +204,5 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-upsert.md](skills/12-cook/actions/02-upsert.md) | - |
 | `assets` | [recipe-template.md](skills/12-cook/assets/recipe-template.md) | - |
 | `-` | [README.md](skills/12-cook/README.md) | - |
-| `references` | [recipe-authoring.md](skills/12-cook/references/recipe-authoring.md) | - |
-| `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manage the framework's recipe how-to sheets under recipes/ - list every recipe as a table, or create and update a recipe scaffolded from the canonical template. Use when the user says "list recipes", "show the recipes", "what recipes do we have", "new recipe", "add a recipe", "create a recipe", "write a recipe for X", "update the recipe", "edit a recipe", "cook a recipe", or invokes aidd-context:12-cook. Do NOT use to generate a context artifact like a skill, rule, agent, command, or hook (use the matching generator), or to read project memory.` |
+| `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manage the framework's recipes/ how-to sheets - list them as a table, or create/update one from the canonical template. Use for "list recipes", "new recipe", "update a recipe", "cook a recipe".` |
 
