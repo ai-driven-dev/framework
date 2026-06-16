@@ -22,16 +22,26 @@
 
 The **AIDD Framework** is a marketplace of **skills, agents, and rules** that make the AI-Driven Development flow concrete inside your AI coding assistant — the full SDLC (plan → implement → review → ship) under rigorous human supervision. It is the open toolset of the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: authored for **Claude Code** and shipped for every major AI assistant.
 
+## ✅ Compatibility
+
+| Tool | Status |
+| --- | --- |
+| **Claude Code** | ✅ Native · **recommended** |
+| **GitHub Copilot** | ✅ Supported |
+| **Codex** | ✅ Supported |
+| **Cursor** | ✅ Supported |
+| **OpenCode** | ✅ Supported |
+| **Gemini** | 🚧 In progress |
+| **Mistral** | 🚧 In progress |
+
 ## 👥 Community
 
-Built and maintained by the **[AI-Driven Dev](https://www.ai-driven-dev.fr/)** community.
+Three years of R&D and **500+ developers trained** — so we open-sourced the framework we use ourselves to ship production-grade software with **100% AI-generated code**.
 
 > ### → [Join the Discord 🇫🇷](https://discord.gg/ai-driven-dev)
 > Live coding sessions every **Thursday**. Come build, ask, and share.
 
-**[Discover the AIDD programme →](https://www.ai-driven-dev.fr/)** — training, coaching, and community.
-
-[YouTube](https://www.youtube.com/@aidd_off) · [LinkedIn](https://www.linkedin.com/company/ai-driven-dev) · [Website](https://www.ai-driven-dev.fr/)
+> **Want to train your team?** [See the programme →](https://www.ai-driven-dev.fr/) or [join the ecosystem](https://discord.gg/ai-driven-dev).
 
 ## 📦 Installation
 
@@ -54,17 +64,29 @@ All builds are attached to each [GitHub release](https://github.com/ai-driven-de
 /plugin install aidd-orchestrator@aidd-framework
 ```
 
-**Other tools** — grab the archive for your assistant from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest):
+**Other tools** — every release attaches a per-tool archive. Download yours from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest), then:
 
-| Tool | Format | Install |
-| --- | --- | --- |
-| **Claude Code** | Marketplace *(native)* ✅ **recommended** | `/plugin marketplace add ai-driven-dev/framework` |
-| **GitHub Copilot** | Marketplace archive | Download `…-copilot-marketplace-<version>.zip`, then `aidd marketplace add` |
-| **Codex** | Marketplace archive | Download `…-codex-marketplace-<version>.zip`, then `aidd marketplace add` |
-| **Cursor** | Flat archive | Download `…-cursor-flat-<version>.zip`, unzip into your project |
-| **OpenCode** | Flat archive | Download `…-opencode-flat-<version>.zip`, unzip into your project |
+**GitHub Copilot** *(marketplace)*
 
-> A flat variant is attached for every tool too — pick the format that fits your workflow. On a non-Claude tool, map each skill's model tier to your tool's nearest model ([LLM tier reference](docs/MARKETPLACE.md#llm-tier-reference)).
+1. Download `aidd-framework-copilot-marketplace-<version>.zip` and unzip it.
+2. Register it: `aidd marketplace add aidd-framework ./aidd-framework-copilot-marketplace-<version>`
+3. Install the plugins from the registered marketplace.
+
+**Codex** *(marketplace)*
+
+1. Download `aidd-framework-codex-marketplace-<version>.zip` and unzip it.
+2. Register it: `aidd marketplace add aidd-framework ./aidd-framework-codex-marketplace-<version>`
+3. Install the plugins from the registered marketplace.
+
+**Cursor** *(flat)*
+
+1. Download `aidd-framework-cursor-flat-<version>.zip`.
+2. Unzip it into your project root — it materializes `.cursor/`.
+
+**OpenCode** *(flat)*
+
+1. Download `aidd-framework-opencode-flat-<version>.zip`.
+2. Unzip it into your project root — it materializes `.opencode/`.
 
 ## 🚀 Quick start
 
@@ -96,6 +118,8 @@ flowchart TD
 > Prefer one command for the whole loop? `/aidd-dev:00-sdlc` runs plan → implement → review → ship.
 
 ## 🧩 Plugins
+
+Six plugins covering the whole SDLC — **install all of them**; they're designed to work together.
 
 <table>
 <tr>
@@ -167,11 +191,17 @@ Task-oriented how-to sheets. **[Browse all recipes →](recipes/)**
 | [Install an MCP server](recipes/mcp_installation.md) | Choose between CLI and MCP, and wire up the recommended servers |
 | Optimise your tokens *(soon)* | Cut context cost on day-to-day development |
 
+> Manage recipes straight from your assistant with **`/cook`** — `list` what exists, `upsert` a new one from the template.
+
 ## 🤝 Contributing
 
-- Open an [issue](https://github.com/ai-driven-dev/framework/issues) or share an idea in [Discussions](https://github.com/ai-driven-dev/framework/discussions).
-- Join the [Discord 🇫🇷](https://discord.gg/ai-driven-dev) — live every **Thursday**.
-- Building a plugin or a recipe? See [`CONTRIBUTING.md`](./CONTRIBUTING.md) and [`docs/CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md).
+Every contribution shapes the framework — ideas, issues, and plugins all move it forward.
+
+- **Got an idea or hit a bug?** [Open an issue](https://github.com/ai-driven-dev/framework/issues) or start a [Discussion](https://github.com/ai-driven-dev/framework/discussions).
+- **Want to go further?** [Join the Discord 🇫🇷](https://discord.gg/ai-driven-dev) — live every **Thursday**.
+- **Building a plugin or a recipe?** Start from [`CONTRIBUTING.md`](./CONTRIBUTING.md) and [`docs/CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md).
+
+> **Note** — code (pull-request) rights on this repo are reserved for **certified Core Team members** ([`GOVERNANCE.md`](./GOVERNANCE.md)). Everyone else can open issues, join discussions, and shape the roadmap.
 
 ## 🔒 Trust & safety
 
