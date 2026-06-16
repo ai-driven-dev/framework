@@ -23,7 +23,7 @@ The **AI-Driven Dev Framework** is a marketplace — **skills, agents, commands,
 
 > Orchestrate your SDLC (Software Development Life Cycle) at scale, the agentic engineering way.
 
-## 👥 Who we are
+## 🧑‍💻 The AI-Driven Dev
 
 Built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: 3 years of R&D, 500+ developers trained in English 🇬🇧 and French 🇫🇷, shipping production software with 100% AI-generated code.
 
