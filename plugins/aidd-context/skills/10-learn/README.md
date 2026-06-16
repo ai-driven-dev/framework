@@ -1,60 +1,43 @@
-← [aidd-framework](../../../../README.md) / [aidd-context](../../README.md)
+← [framework](../../../../README.md) / [aidd-context](../../README.md)
 
-# 05 - Learn
+# 10 - Learn
 
-Captures durable project-level learnings, conventions, and decisions
-surfaced during work and stores them as memory entries, decision records,
-or rules. Then refreshes the `<aidd_project_memory>` block in installed AI
-context files so the new knowledge is in scope on the next turn.
+Distills what a piece of work taught into the project's lasting context. It picks a source, scores each candidate learning, asks the user what to do with each one, writes only the approved lessons, and refreshes the memory block so the next session starts from them.
 
 ## When to use
 
-- The user states a durable rule or convention ("for next", "always do X",
-  "from now on", "going forward", "rule:", "convention:").
-- A technical decision is made and worth recording with its rationale.
-- Something is deprecated, or an insight should outlive the current task.
+- The user states a lasting rule or convention ("from now on", "always", "going forward").
+- A decision is made and worth recording with its rationale.
+- Something is deprecated, or a piece of work is worth distilling before moving on.
 
-## When NOT to use
+## When not to use
 
-- For personal or AI-preference reminders (those belong in user memory,
-  not project memory).
-- For routine code edits, minor fixes, or anything already captured.
-- To initialize the memory bank itself → use `02-project-memory`.
+- For personal or AI-preference reminders. Those belong in user memory, not the project.
+- For routine edits, minor fixes, or anything already captured.
+- To stand up the memory bank itself. Use `aidd-context:02-project-memory`.
 
-## How to invoke
+## Requires
 
-```
-Use skill aidd-context:10-learn
-```
+An existing memory bank (`aidd_docs/memory/`). If it is missing, run `aidd-context:02-project-memory` first.
 
-The skill walks 3 atomic actions:
+## Flow
 
-1. `scope` - worth-learning check, auto-analyze, categorize, and get
-   explicit user approval. Exits cleanly here when nothing is
-   learning-worthy (gates 02 and 03 out).
-2. `write` - create or update files for each approved item (memory entry,
-   decision record, or rule).
-3. `sync` - refresh the `<aidd_project_memory>` block in installed AI
-   context files so the new content is loaded next turn.
+Four actions, in order:
 
-## Outputs
+1. `gather`: pick a source (the conversation, the git history, or one the user names), collect candidates, drop the noise.
+2. `assess`: score each candidate from 0 to 10 with a reason, propose a destination, and ask the user what to do with each.
+3. `write`: write the lessons the user approved to their destinations.
+4. `sync`: refresh the memory block in every context file.
 
-- New or updated files under `aidd_docs/memory/`, `aidd_docs/decisions/`,
-  or the rules directory, depending on the categorization in action 01.
-- Refreshed `<aidd_project_memory>` block across every installed AI
-  context file.
-- A short summary table of what was learned and where it went.
+## Destinations
 
-## Prerequisites
+- **Memory**: a fact or convention, into the matching memory file.
+- **Decision**: a choice with a rationale, a record in `aidd_docs/memory/internal/decisions/` from `assets/decision-template.md`.
+- **Rule**: a convention to enforce, handed to `aidd-context:05-rule-generate`.
+- **Skill**: a reusable workflow, handed to `aidd-context:04-skill-generate`.
 
-- Project initialized with the AIDD context layer (run `02-project-memory`
-  first if `aidd_docs/memory/` is missing).
-- A conversation signal worth capturing - the skill exits cleanly when
-  there isn't one.
+The score is the brake (bar 6 of 10), and the user decides every item before anything is written.
 
-## Technical details
+## Details
 
-See [`SKILL.md`](SKILL.md) for the action contract,
-[`actions/`](actions/) for each step, and the templates in
-`assets/decision-template.md` and `assets/adr-template.md` for decision
-records.
+See [`SKILL.md`](SKILL.md) and [`actions/`](actions/).

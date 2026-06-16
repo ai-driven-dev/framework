@@ -169,15 +169,15 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 #### `skills/10-learn`
 
-| Group | File | Description | Argument Hint |
-|-------|------|---|---|
-| `actions` | [01-scope.md](skills/10-learn/actions/01-scope.md) | - | - |
-| `actions` | [02-write.md](skills/10-learn/actions/02-write.md) | - | - |
-| `actions` | [03-sync.md](skills/10-learn/actions/03-sync.md) | - | - |
-| `assets` | [adr-template.md](skills/10-learn/assets/adr-template.md) | `Architecture Decision Record template` | - |
-| `assets` | [decision-template.md](skills/10-learn/assets/decision-template.md) | `Individual decision record template` | `<title>` |
-| `-` | [README.md](skills/10-learn/README.md) | - | - |
-| `-` | [SKILL.md](skills/10-learn/SKILL.md) | `Capture and store project-level learnings, conventions, and decisions surfaced during work into memory, decisions, or rules. Use proactively when the user states a durable project rule or convention ("for next", "always do X", "from now on", "going forward", "rule:", "convention:"), records a technical decision and its rationale, deprecates something, or notes an insight that should outlive the current task. Do NOT use for personal or AI-preference reminders (those belong to user memory), routine code edits, minor fixes, or anything already captured.` | - |
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-gather.md](skills/10-learn/actions/01-gather.md) | - |
+| `actions` | [02-assess.md](skills/10-learn/actions/02-assess.md) | - |
+| `actions` | [03-write.md](skills/10-learn/actions/03-write.md) | - |
+| `actions` | [04-sync.md](skills/10-learn/actions/04-sync.md) | - |
+| `assets` | [decision-template.md](skills/10-learn/assets/decision-template.md) | - |
+| `-` | [README.md](skills/10-learn/README.md) | - |
+| `-` | [SKILL.md](skills/10-learn/SKILL.md) | `Capture durable project learnings from the conversation or the project's git history and route them to memory, a decision record, a rule, or a new skill. Use when the user asks to capture, record, or remember a decision, a convention, or a lesson, or to distill what recent work taught. Scores each candidate and confirms before writing. Not for personal or AI preferences, routine edits, or anything already captured.` |
 
 #### `skills/11-discovery`
 
