@@ -7,7 +7,7 @@
 ### Skills, agents & rules that run the full SDLC inside your AI coding assistant — under human supervision.
 
 <p>
-  <!--counts:start--><kbd>6 plugins</kbd> · <kbd>38 skills</kbd> · <kbd>3 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
+  <!--counts:start--><kbd>6 plugins</kbd> · <kbd>37 skills</kbd> · <kbd>3 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -101,7 +101,7 @@ flowchart TD
 
 ### 🧭 [aidd-context](plugins/aidd-context/README.md)
 
-`13 skills` · stable
+`12 skills` · stable
 
 Project init, architecture, generation of Claude Code context artifacts (skills, agents, rules, commands, hooks), diagrams, learning, discovery.
 
