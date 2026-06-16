@@ -26,6 +26,8 @@ The **AI-Driven Dev Framework** is a marketplace — **skills, agents, commands,
 
 ## ✅ Compatibility
 
+> Primarily built on **Claude Code** (they set the standards), but compatibility with the other tools is ensured.
+
 | Tool | Status |
 | --- | --- |
 | **Claude Code** | ✅ Native · **recommended** |
@@ -35,8 +37,6 @@ The **AI-Driven Dev Framework** is a marketplace — **skills, agents, commands,
 | **OpenCode** | ✅ Supported |
 | **Gemini** | 🚧 In progress |
 | **Mistral** | 🚧 In progress |
-
-> Primarily built on **Claude Code** (they set the standards), but compatibility with the other tools is ensured.
 
 ## 👥 Community
 
