@@ -29,6 +29,7 @@ coverage/
 
 # Claude Code session-local
 .claude/settings.local.json
+.claude/worktrees/
 
 # SpecStory captures (may contain transcripts / secrets)
 .specstory/

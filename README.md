@@ -210,7 +210,7 @@ Task-oriented how-to sheets. **[Browse all recipes →](recipes/)**
 
 | Recipe | What you'll do |
 | --- | --- |
-| [Install an MCP server](recipes/mcp_installation.md) | Choose between CLI and MCP, and wire up the recommended servers |
+| [Install an MCP server](recipes/mcp-installation.md) | Choose between CLI and MCP, and wire up the recommended servers |
 | Optimise your tokens *(soon)* | Cut context cost on day-to-day development |
 
 > Manage recipes straight from your assistant with **`/cook`** — `list` what exists, `upsert` a new one from the template.

@@ -30,8 +30,8 @@ An MCP server loads its full tool schema into **every** turn — that bloats the
 
 ## Steps
 
-1. **Check for a CLI first.** If the service has one (GitHub → `gh`, Jira → `acli`), install and authenticate it instead of an MCP server.
-2. **If MCP is the only option**, add the server to your `.mcp.json`:
+1. 🔎 **Check for a CLI first** — if the service has one (GitHub → `gh`, Jira → `acli`), install and authenticate it instead of an MCP server.
+2. 🔌 **If MCP is the only option**, add the server to your `.mcp.json`:
    ```json
    {
      "mcpServers": {
@@ -39,8 +39,8 @@ An MCP server loads its full tool schema into **every** turn — that bloats the
      }
    }
    ```
-3. **Audit the server** before connecting — read its docs and the permissions it requests.
-4. **Restart** your assistant so it picks up the new configuration.
+3. 🛡️ **Audit the server** before connecting — read its docs and the permissions it requests.
+4. ✅ **Restart** your assistant so it picks up the new configuration.
 
 ## Verify
 
