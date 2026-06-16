@@ -22,7 +22,7 @@
 
 The **AIDD Framework** is a marketplace of **skills, agents, and rules** that make the AI-Driven Development flow concrete inside your AI coding assistant — the full SDLC (plan → implement → review → ship) under rigorous human supervision. It is the open toolset of the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: authored for **Claude Code** and shipped for every major AI assistant.
 
-## Community
+## 👥 Community
 
 Built and maintained by the **[AI-Driven Dev](https://www.ai-driven-dev.fr/)** community.
 
@@ -33,12 +33,14 @@ Built and maintained by the **[AI-Driven Dev](https://www.ai-driven-dev.fr/)** c
 
 [YouTube](https://www.youtube.com/@aidd_off) · [LinkedIn](https://www.linkedin.com/company/ai-driven-dev) · [Website](https://www.ai-driven-dev.fr/)
 
-## Installation
+## 📦 Installation
 
-There are two ways to install, depending on your tool:
+Two install formats, depending on your tool:
 
-- **Marketplace** *(recommended)* — register the marketplace once, then install and update plugins on demand. Native in Claude Code; for Copilot and Codex, download the `-marketplace-` release archive and register it with `aidd marketplace add`.
-- **Flat** — unzip a `-flat-` release archive straight into your project (it materializes `.cursor/`, `.opencode/`, …). For tools without marketplace support.
+1. **Marketplace** *(recommended)* — register once, then install and update plugins on demand. Native in Claude Code; for Copilot and Codex, grab the `-marketplace-` archive and run `aidd marketplace add`.
+2. **Flat** — unzip a `-flat-` archive straight into your project (it materializes `.cursor/`, `.opencode/`, …). For tools without marketplace support.
+
+All builds are attached to each [GitHub release](https://github.com/ai-driven-dev/framework/releases) → [latest release](https://github.com/ai-driven-dev/framework/releases/latest).
 
 **Claude Code** — register the marketplace and install the plugins (slash commands, not shell):
 
@@ -64,36 +66,36 @@ There are two ways to install, depending on your tool:
 
 > A flat variant is attached for every tool too — pick the format that fits your workflow. On a non-Claude tool, map each skill's model tier to your tool's nearest model ([LLM tier reference](docs/MARKETPLACE.md#llm-tier-reference)).
 
-## Quick start
+## 🚀 Quick start
 
-Once installed, let one command inspect your project and guide you:
-
-```text
-/aidd-context:00-onboard
-```
-
-Then run the flow — here's a feature going from idea to shipped PR:
+1. **Onboard** — one command inspects your project and guides you:
+   ```text
+   /aidd-context:00-onboard
+   ```
+2. **Run the flow** — take a feature from idea to a tested, shipped PR:
 
 ```mermaid
 flowchart TD
-    Idea(["💡 'Add a dark-mode toggle'"])
-    Onboard["/aidd-context:00-onboard<br/><i>understand the project</i>"]
-    Brainstorm["/aidd-refine:01-brainstorm<br/><i>clarify the request</i>"]
-    Plan["/aidd-dev:01-plan<br/><i>draft the technical plan</i>"]
-    Implement["/aidd-dev:02-implement<br/><i>write the code</i>"]
-    Review["/aidd-dev:05-review<br/><i>review the diff</i>"]
-    Commit["/aidd-vcs:01-commit<br/><i>atomic commit</i>"]
-    PR(["🚀 /aidd-vcs:02-pull-request"])
+    Idea(["💡 <i>'Add a dark-mode toggle'</i>"])
+    Onboard["<b>/aidd-context:00-onboard</b><br/><i>understand the project</i>"]
+    Brainstorm["<b>/aidd-refine:01-brainstorm</b><br/><i>clarify the request</i>"]
+    Plan["<b>/aidd-dev:01-plan</b><br/><i>draft the technical plan</i>"]
+    Implement["<b>/aidd-dev:02-implement</b><br/><i>write the code</i>"]
+    Review["<b>/aidd-dev:05-review</b><br/><i>review the diff</i>"]
+    Commit["<b>/aidd-vcs:01-commit</b><br/><i>atomic commit</i>"]
+    PR(["✅ <b>/aidd-vcs:02-pull-request</b><br/><i>tested · shipped</i>"])
 
     Idea --> Onboard --> Brainstorm --> Plan --> Implement --> Review --> Commit --> PR
 
-    classDef edge fill:#D97757,stroke:#9c4f37,color:#fff;
-    class Idea,PR edge;
+    classDef start fill:#D97757,stroke:#9c4f37,color:#fff;
+    classDef done fill:#2ea043,stroke:#1a7f37,color:#fff;
+    class Idea start;
+    class PR done;
 ```
 
 > Prefer one command for the whole loop? `/aidd-dev:00-sdlc` runs plan → implement → review → ship.
 
-## Plugins
+## 🧩 Plugins
 
 <table>
 <tr>
@@ -156,23 +158,26 @@ Label an issue, get a PR; re-label, get the review applied.
 </tr>
 </table>
 
-## Recipes
+## 📖 Recipes
 
-Task-oriented how-to sheets — install an MCP server, optimise your tokens, and more.
+Task-oriented how-to sheets. **[Browse all recipes →](recipes/)**
 
-**[Browse the recipes →](recipes/)**
+| Recipe | What you'll do |
+| --- | --- |
+| [Install an MCP server](recipes/mcp_installation.md) | Choose between CLI and MCP, and wire up the recommended servers |
+| Optimise your tokens *(soon)* | Cut context cost on day-to-day development |
 
-## Contributing
+## 🤝 Contributing
 
 - Open an [issue](https://github.com/ai-driven-dev/framework/issues) or share an idea in [Discussions](https://github.com/ai-driven-dev/framework/discussions).
 - Join the [Discord 🇫🇷](https://discord.gg/ai-driven-dev) — live every **Thursday**.
 - Building a plugin or a recipe? See [`CONTRIBUTING.md`](./CONTRIBUTING.md) and [`docs/CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md).
 
-## Trust & safety
+## 🔒 Trust & safety
 
 Plugins can run commands, edit files, and call external services on your behalf. Before installing any plugin from any marketplace, including this one: read its `README` and `SKILL.md`, inspect its actions, and check the permissions in its hooks and MCP servers. Spot a vulnerability? Report it privately via [`SECURITY.md`](./SECURITY.md).
 
-## Documentation
+## 📚 Documentation
 
 | Doc | What's inside |
 | --- | --- |
