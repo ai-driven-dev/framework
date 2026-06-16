@@ -36,7 +36,7 @@ Skills are grouped into plugins by domain. Install only the plugins you need.
 
 | Plugin            | Purpose                                                                            | Example skills                                              |
 | ----------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| aidd-context      | Bootstrap, project init, generation of context artifacts (skills, agents, rules, commands, hooks, plugins, marketplaces), mermaid diagrams, learn, discovery | `02-project-init`, `03-context-generate`, `09-mermaid`      |
+| aidd-context      | Bootstrap, project init, generation of context artifacts (skills, agents, rules, commands, hooks, plugins, marketplaces), mermaid diagrams, learn, discovery | `02-project-memory`, `03-context-generate`, `09-mermaid`      |
 | aidd-refine       | Meta-cognition: brainstorm, challenge prior work, condensed communication mode     | `01-brainstorm`, `02-challenge`, `03-condense`              |
 | aidd-pm           | Product management: ticket info, user stories, PRD, spec                            | `01-ticket-info`, `02-user-stories-create`, `03-prd`, `04-spec` |
 | aidd-dev          | Code transformation: Dev SDLC orchestrator, plan, implement, assert, audit, review, test, refactor, debug, for-sure | `00-sdlc`, `01-plan`, `02-implement`, `05-review`, `06-test` |
@@ -82,7 +82,7 @@ my-project/
 
 Each AI context file (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, etc.) contains an `<aidd_project_memory>` block. It is:
 
-1. **Seeded** the first time by `aidd-context:02-project-init` (the skill creates the block if absent).
+1. **Seeded** the first time by `aidd-context:02-project-memory` (the skill creates the block if absent).
 2. **Kept in sync** automatically by a session-start hook (`aidd-context/hooks/update_memory.js`) that scans `aidd_docs/memory/` and writes the current list of `.md` files into the block.
 
 You never edit the block by hand. To change what the AI sees, add or remove files under `aidd_docs/memory/`; the hook picks them up at the next session.
@@ -98,7 +98,7 @@ AIDD is delivered as a plugin marketplace. Pick what you need; do not install ev
 
 | Plugin       | Skills                                                                                                              |
 | ------------ | ------------------------------------------------------------------------------------------------------------------- |
-| aidd-context | 00-onboard, 01-bootstrap, 02-project-init, 03-context-generate, 09-mermaid, 10-learn, 11-discovery                  |
+| aidd-context | 00-onboard, 01-bootstrap, 02-project-memory, 03-context-generate, 09-mermaid, 10-learn, 11-discovery                  |
 | aidd-refine  | 01-brainstorm, 02-challenge, 03-condense, 04-shadow-areas, 05-fact-check                                            |
 | aidd-dev     | 00-sdlc, 01-plan, 02-implement, 03-assert, 04-audit, 05-review, 06-test, 07-refactor, 08-debug, 09-for-sure         |
 | aidd-vcs     | 01-commit, 02-pull-request, 03-release-tag, 04-issue-create                                                         |
@@ -111,7 +111,7 @@ Each plugin is independently installable; install incrementally. Smaller surface
 A typical change cycles through skills from several plugins. The order below is indicative; skip what you do not need and loop back as the work demands.
 
 1. **Bootstrap** (only for a brand-new project): `aidd-context:01-bootstrap` imagines the stack and architecture, comparing candidate stacks and writing an `INSTALL.md`. Skip this step on an existing project.
-2. **Project init** (once per project, re-runnable to refresh): `aidd-context:02-project-init` scaffolds `aidd_docs/`, the memory bank, and the AI context files for the tools you use. Re-running later refreshes the scaffold without overwriting your customizations.
+2. **Project init** (once per project, re-runnable to refresh): `aidd-context:02-project-memory` scaffolds `aidd_docs/`, the memory bank, and the AI context files for the tools you use. Re-running later refreshes the scaffold without overwriting your customizations.
 3. **Frame the request**: `aidd-refine:01-brainstorm` to clarify, `aidd-pm:01-ticket-info` to pull tracker data, `aidd-pm:02-user-stories-create` and `aidd-pm:03-prd` or `aidd-pm:04-spec` to formalize scope.
 4. **Plan**: `aidd-dev:01-plan` produces the technical plan, component behavior model, or design-image extraction.
 5. **Implement and assert**: `aidd-dev:02-implement` writes code against the plan; `aidd-dev:03-assert` verifies the result.

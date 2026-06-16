@@ -27,7 +27,7 @@ The internal state covers three signal groups plus three derived values:
    - count of files outside `aidd_docs/`, `.git/`, `node_modules/`, lockfiles, dotfiles -> if zero, `repo_is_empty=true`
 
    The context-block check covers the supported AI-context files (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`); a tool that uses a different context filename is not detected.
-3. **`memory_files_filled` heuristic**. For each memory file, compare against the corresponding template under `aidd-context:02-project-init`'s `assets/templates/memory/` directory (templates are mostly flat - `<name>.md` - with a few under a `backend/` or `frontend/` subfolder). If at least one file differs from its template by more than YAML frontmatter and a few placeholder lines, set `memory_files_filled=true`. Derive `memory_state` (`absent` / `placeholder` / `filled`) per the matrix.
+3. **`memory_files_filled` heuristic**. For each memory file, compare against the corresponding template under `aidd-context:02-project-memory`'s `assets/templates/memory/` directory (templates are mostly flat - `<name>.md` - with a few under a `backend/` or `frontend/` subfolder). If at least one file differs from its template by more than YAML frontmatter and a few placeholder lines, set `memory_files_filled=true`. Derive `memory_state` (`absent` / `placeholder` / `filled`) per the matrix.
 4. **Probe Group B - project context**.
    - `has_source_code`: any source file outside `aidd_docs/`.
    - `detected_stack`: first stack manifest found (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`); else `none`.

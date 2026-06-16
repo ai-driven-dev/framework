@@ -1,6 +1,6 @@
 ← [aidd-framework](../../../../README.md) / [aidd-context](../../README.md)
 
-# 02 - Project Init
+# 02 - Project Memory
 
 Bootstraps the project's context layer: the AI context files with the `<aidd_project_memory>` block, the `aidd_docs/` structure, and the memory bank.
 

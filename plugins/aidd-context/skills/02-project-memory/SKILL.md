@@ -1,9 +1,9 @@
 ---
-name: 02-project-init
+name: 02-project-memory
 description: Initialize or refresh the project memory bank. Not for updating one memory file after it exists (use the learn skill) or editing a single rule (edit it directly).
 ---
 
-# Project Init
+# Project Memory
 
 Bootstraps the project's context layer: the AI context files with a memory block, the `aidd_docs/` structure, and the memory bank.
 

@@ -80,7 +80,7 @@ Invocation in v4 is `plugin:NN-action`. Where a column says "sub-flow", the old 
 | v3 command | v4 skill |
 |---|---|
 | `/onboard` | `aidd-context:00-onboard` |
-| `/init` | `aidd-context:02-project-init` |
+| `/init` | `aidd-context:02-project-memory` |
 | `/generate_architecture` | `aidd-context:01-bootstrap` |
 | `/generate_agent` | `aidd-context:03-context-generate` (agent sub-flow) |
 | `/generate_command` | `aidd-context:03-context-generate` (command sub-flow) |
@@ -168,7 +168,7 @@ Invocation in v4 is `plugin:NN-action`. Where a column says "sub-flow", the old 
 1. **Back up your v3 customisations.** Note any commands you added yourself under `commands/`. They do not migrate automatically.
 2. **Delete the legacy framework folders** that the v3 CLI copied into your project: `commands/`, and any framework-managed `agents/`, `config/` copies. Your project's own `aidd_docs/` (memory, templates, tasks) stays. The memory bank format is unchanged.
 3. **Add the marketplace and install plugins** (section 3). Most users start with `aidd-context` + `aidd-dev` + `aidd-vcs` + `aidd-refine`.
-4. **Re-wire the project.** Run `aidd-context:02-project-init` to set up the new layout in `.claude/` and ensure the project memory block is present in your AI context files. Run `aidd-context:00-onboard` if you want a guided walkthrough of what to do next.
+4. **Re-wire the project.** Run `aidd-context:02-project-memory` to set up the new layout in `.claude/` and ensure the project memory block is present in your AI context files. Run `aidd-context:00-onboard` if you want a guided walkthrough of what to do next.
 5. **Translate each custom command into a skill.** Use the built-in `skill-creator` (or `aidd-context:03-context-generate`), put the result in your own local plugin, and load it through `.claude/settings.json`.
 6. **Update CI and scripts.** Anywhere CI called `/some_command`, switch to the new skill (auto-trigger by intent, or name `plugin:NN-action`). For `aidd-orchestrator`, see section 7.
 7. **Verify.** Run `aidd-context:11-discovery` to confirm the installed skills, agents, rules and hooks match what you expect.

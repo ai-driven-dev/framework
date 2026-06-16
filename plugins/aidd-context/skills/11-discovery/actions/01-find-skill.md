@@ -14,7 +14,7 @@ A markdown table of installed skills + a recommendation block.
 ```text
 | Tool   | Plugin       | Skill           | Purpose                           |
 | ------ | ------------ | --------------- | --------------------------------- |
-| claude | aidd-context | 02:project-init | Bootstrap memory bank + scaffold  |
+| claude | aidd-context | 02:project-memory | Bootstrap memory bank + scaffold  |
 | claude | aidd-dev     | 00:sdlc         | End-to-end dev SDLC orchestrator  |
 | ...    | ...          | ...             | ...                               |
 

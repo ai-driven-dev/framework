@@ -10,7 +10,7 @@
   "skills": [
     "./skills/00-onboard",
     "./skills/01-bootstrap",
-    "./skills/02-project-init",
+    "./skills/02-project-memory",
     "./skills/03-context-generate",
     "./skills/04-skill-generate",
     "./skills/05-rule-generate",

@@ -11,7 +11,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 - [`skills`](#skills)
   - [`skills/00-onboard`](#skills00-onboard)
   - [`skills/01-bootstrap`](#skills01-bootstrap)
-  - [`skills/02-project-init`](#skills02-project-init)
+  - [`skills/02-project-memory`](#skills02-project-memory)
   - [`skills/03-context-generate`](#skills03-context-generate)
   - [`skills/04-skill-generate`](#skills04-skill-generate)
   - [`skills/05-rule-generate`](#skills05-rule-generate)
@@ -65,23 +65,23 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [stack-heuristics.md](skills/01-bootstrap/references/stack-heuristics.md) | - |
 | `-` | [SKILL.md](skills/01-bootstrap/SKILL.md) | `Imagine and validate the technical architecture of a new SaaS through interactive Q&A, candidate-stack comparison, multi-agent audit, and an INSTALL.md output. Use when starting a new SaaS project, choosing a stack, designing the architecture pattern (monolith vs microservices vs serverless), or producing a project's INSTALL.md. Do NOT use for editing an existing project's stack, database schema design, or scaffolding actual files (this skill produces docs only, no code).` |
 
-#### `skills/02-project-init`
+#### `skills/02-project-memory`
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-init-context-file.md](skills/02-project-init/actions/01-init-context-file.md) | - |
-| `actions` | [02-scaffold-docs.md](skills/02-project-init/actions/02-scaffold-docs.md) | - |
-| `actions` | [03-generate-memory.md](skills/02-project-init/actions/03-generate-memory.md) | - |
-| `actions` | [04-review-memory.md](skills/02-project-init/actions/04-review-memory.md) | - |
-| `actions` | [05-sync-memory.md](skills/02-project-init/actions/05-sync-memory.md) | - |
-| `assets` | [AGENTS.md](skills/02-project-init/assets/AGENTS.md) | - |
-| `assets` | [CONTRIBUTING.md](skills/02-project-init/assets/CONTRIBUTING.md) | - |
-| `assets` | [GUIDELINES.md](skills/02-project-init/assets/GUIDELINES.md) | - |
-| `assets` | [README.md](skills/02-project-init/assets/README.md) | - |
-| `-` | [README.md](skills/02-project-init/README.md) | - |
-| `references` | [capability-signals.md](skills/02-project-init/references/capability-signals.md) | - |
-| `references` | [mapping-ai-context-file.md](skills/02-project-init/references/mapping-ai-context-file.md) | - |
-| `-` | [SKILL.md](skills/02-project-init/SKILL.md) | `Initialize or refresh the project memory bank. Not for updating one memory file after it exists (use the learn skill) or editing a single rule (edit it directly).` |
+| `actions` | [01-init-context-file.md](skills/02-project-memory/actions/01-init-context-file.md) | - |
+| `actions` | [02-scaffold-docs.md](skills/02-project-memory/actions/02-scaffold-docs.md) | - |
+| `actions` | [03-generate-memory.md](skills/02-project-memory/actions/03-generate-memory.md) | - |
+| `actions` | [04-review-memory.md](skills/02-project-memory/actions/04-review-memory.md) | - |
+| `actions` | [05-sync-memory.md](skills/02-project-memory/actions/05-sync-memory.md) | - |
+| `assets` | [AGENTS.md](skills/02-project-memory/assets/AGENTS.md) | - |
+| `assets` | [CONTRIBUTING.md](skills/02-project-memory/assets/CONTRIBUTING.md) | - |
+| `assets` | [GUIDELINES.md](skills/02-project-memory/assets/GUIDELINES.md) | - |
+| `assets` | [README.md](skills/02-project-memory/assets/README.md) | - |
+| `-` | [README.md](skills/02-project-memory/README.md) | - |
+| `references` | [capability-signals.md](skills/02-project-memory/references/capability-signals.md) | - |
+| `references` | [mapping-ai-context-file.md](skills/02-project-memory/references/mapping-ai-context-file.md) | - |
+| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Initialize or refresh the project memory bank. Not for updating one memory file after it exists (use the learn skill) or editing a single rule (edit it directly).` |
 
 #### `skills/03-context-generate`
 
