@@ -19,7 +19,7 @@ context files so the new knowledge is in scope on the next turn.
 - For personal or AI-preference reminders (those belong in user memory,
   not project memory).
 - For routine code edits, minor fixes, or anything already captured.
-- To initialize the memory bank itself → use `02-project-init`.
+- To initialize the memory bank itself → use `02-project-memory`.
 
 ## How to invoke
 
@@ -47,7 +47,7 @@ The skill walks 3 atomic actions:
 
 ## Prerequisites
 
-- Project initialized with the AIDD context layer (run `02-project-init`
+- Project initialized with the AIDD context layer (run `02-project-memory`
   first if `aidd_docs/memory/` is missing).
 - A conversation signal worth capturing - the skill exits cleanly when
   there isn't one.
