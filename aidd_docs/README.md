@@ -98,7 +98,7 @@ AIDD is delivered as a plugin marketplace. Pick what you need; do not install ev
 
 | Plugin       | Skills                                                                                                              |
 | ------------ | ------------------------------------------------------------------------------------------------------------------- |
-| aidd-context | 00-onboard, 01-bootstrap, 02-project-memory, 03-context-generate, 09-mermaid, 10-learn, 11-discovery                  |
+| aidd-context | 00-onboard, 01-bootstrap, 02-project-memory, 03-context-generate, 09-mermaid, 10-learn, 11-explore                    |
 | aidd-refine  | 01-brainstorm, 02-challenge, 03-condense, 04-shadow-areas, 05-fact-check                                            |
 | aidd-dev     | 00-sdlc, 01-plan, 02-implement, 03-assert, 04-audit, 05-review, 06-test, 07-refactor, 08-debug, 09-for-sure         |
 | aidd-vcs     | 01-commit, 02-pull-request, 03-release-tag, 04-issue-create                                                         |

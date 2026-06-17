@@ -1,6 +1,6 @@
-# AI mapping (discovery scan paths)
+# AI mapping (explore scan paths)
 
-Where to look for each artifact type per AI tool. Scan-only: the paths and formats the find actions read. This is discovery's own minimal map - the single source of per-tool surfaces; actions never hardcode a tool.
+Where to look for each artifact type per AI tool. Scan-only: the paths and formats the survey and drill actions read. This is explore's own minimal map, the single source of per-tool surfaces. Actions never hardcode a tool.
 
 ## AI quick map - content artifacts
 

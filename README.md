@@ -149,7 +149,7 @@ Six plugins covering the whole SDLC — **install all of them**; they're designe
 
 `13 skills` · stable
 
-Project init, architecture, generation of Claude Code context artifacts (skills, agents, rules, commands, hooks), diagrams, learning, discovery.
+Project init, architecture, generation of Claude Code context artifacts (skills, agents, rules, commands, hooks), diagrams, learning, exploration.
 
 </td>
 <td width="33%" valign="top">

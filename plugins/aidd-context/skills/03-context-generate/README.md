@@ -21,4 +21,4 @@ A router. It sends a request to generate a context artifact to the dedicated gen
 ## When not to use
 
 - A named kind: the dedicated generator triggers directly.
-- Listing or discovering existing artifacts: use `aidd-context:11-discovery`.
+- Surveying or listing existing artifacts: use `aidd-context:11-explore`.

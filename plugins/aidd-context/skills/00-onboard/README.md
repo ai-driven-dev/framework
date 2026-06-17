@@ -13,7 +13,7 @@ A plain-language guide to the AIDD framework for the current project. It reads t
 
 ## When not to use
 
-- To list every installed surface. Use the discovery skill in this plugin.
+- To list every installed surface. Use the explore skill in this plugin.
 - To run a specific skill you already know you need. Invoke it directly.
 
 ## Flow

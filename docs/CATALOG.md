@@ -13,7 +13,7 @@ The exhaustive list of AIDD plugins, skills, and actions. Skills are invoked thr
 
 ## aidd-context
 
-Bootstrap, project init, context-artifact generation, diagrams, learning, and discovery.
+Bootstrap, project init, context-artifact generation, diagrams, learning, and exploration.
 
 | Skill                  | Role                                                                          | Actions                                                                                                  |
 | ---------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
@@ -23,7 +23,7 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and di
 | `03-context-generate`  | Generate context artifacts across the host AI tool(s)                         | sub-generators: `agents`, `commands`, `hooks`, `marketplaces`, `plugins`, `rules`, `skills`             |
 | `04-mermaid`           | Generate Mermaid diagrams via a plan-validate workflow                        | `01-mermaid`                                                                                             |
 | `05-learn`             | Capture learnings, conventions, and decisions into memory, decisions, rules   | `01-scope`, `02-write`, `03-sync`                                                                        |
-| `06-discovery`         | Enumerate installed surfaces and recommend the best match for an intent       | `01-find-skill`, `02-find-agent`, `03-find-command`, `04-find-plugin`, `05-find-mcp`, `06-find-rule`, `07-find-hook`, `08-find-memory` |
+| `11-explore`           | Survey the project across tooling, context, and codebase, then drill into one axis | `01-survey`, `02-drill`                                                                                  |
 
 ## aidd-dev
 
