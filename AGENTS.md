@@ -1,9 +1,9 @@
 <aidd_project_memory>
 @aidd_docs/memory/architecture.md
-@aidd_docs/memory/codebase_map.md
-@aidd_docs/memory/coding_assertions.md
+@aidd_docs/memory/codebase-map.md
+@aidd_docs/memory/coding-assertions.md
 @aidd_docs/memory/deployment.md
-@aidd_docs/memory/project_brief.md
+@aidd_docs/memory/project-brief.md
 @aidd_docs/memory/testing.md
 @aidd_docs/memory/vcs.md
 </aidd_project_memory>
