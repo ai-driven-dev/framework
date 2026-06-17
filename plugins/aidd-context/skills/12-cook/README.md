@@ -1,8 +1,8 @@
-← [aidd-framework](../../../../README.md) / [aidd-context](../../README.md)
+← [framework](../../../../README.md) / [aidd-context](../../README.md)
 
 # 12 - cook
 
-Maintain the framework's `recipes/` how-to sheets — list them, or create and update one from the canonical template. A maintainer tool for this repository's recipe docs.
+Maintain the project's `recipes/` how-to sheets: list them, or create and update one from the canonical template. The recipes are the short runbooks at the root of whatever project the skill runs in.
 
 | #   | Action                         | Purpose                                        |
 | --- | ------------------------------ | ---------------------------------------------- |

@@ -1,11 +1,11 @@
 ---
 name: 12-cook
-description: Manage the framework's recipes/ how-to sheets - list them as a table, or create/update one from the canonical template. Use for "list recipes", "new recipe", "update a recipe", "cook a recipe".
+description: Manage the project's recipes/ how-to sheets: list them as a table, or create and update one from the canonical template. Use for "list recipes", "new recipe", "update a recipe", "cook a recipe".
 ---
 
 # Cook
 
-Maintains the repository's `recipes/` how-to sheets.
+Maintains the project's `recipes/` how-to sheets, the short runbooks that live at the project root.
 
 ## Actions
 

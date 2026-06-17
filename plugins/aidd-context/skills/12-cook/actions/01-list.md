@@ -1,6 +1,6 @@
 # 01 - List recipes
 
-List every recipe under `recipes/` (repo root) as a table, excluding `README.md`.
+List every recipe under `recipes/` at the project root as a table, excluding `README.md`.
 
 ## Output
 

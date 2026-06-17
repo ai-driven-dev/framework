@@ -14,4 +14,4 @@ The recipe topic. Ask for any missing field (level, time, prerequisites, steps, 
 
 ## Test
 
-- `recipes/<slug>.md` exists and matches the template — every section present, no `<...>` placeholder left.
+- `recipes/<slug>.md` exists and matches the template, every section present, no `<...>` placeholder left.
