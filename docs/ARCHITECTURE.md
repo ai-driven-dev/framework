@@ -93,7 +93,7 @@ Every capability lives in exactly one plugin, chosen by **concern**. This taxono
 
 Three rules follow:
 
-- **Knowledge vs execution is a firewall.** Knowledge plugins produce artifacts you *read* (docs, plans, memory) and never write or run application source - `aidd-context`'s bootstrap deliberately creates no `package.json` or source files. Real code belongs to `aidd-dev` or an orchestrator's own setup actions.
+- **Knowledge vs execution is a firewall.** Knowledge plugins produce artifacts you *read* (docs, plans, memory) and never author business logic. One scoped exception: `aidd-context`'s bootstrap may *materialize a validated `INSTALL.md`* into a running skeleton - folder structure, swappable building blocks, tooling (typecheck/lint/format, tests, containers), smoke tests - staying **architecture-100% / business-0%**. Application logic still belongs to `aidd-dev`; an orchestrator owns only the sequencing across concerns.
 - **Concern decides placement, not existence.** A missing capability goes in the plugin whose concern owns it, then the caller delegates. Never reimplement it in the calling plugin because the right home lacks it today.
 - **Orchestration = sequencing across multiple concerns** with little domain logic. Any skill may delegate a sub-step ([Cross-plugin orthogonality](#cross-plugin-orthogonality)); doing so once does not make it an orchestrator. The orchestrator owns only glue and delegates the depth, handing off through a seam artifact (e.g. an `INSTALL.md` one plugin produces and another consumes).
 

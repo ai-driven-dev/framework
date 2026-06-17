@@ -1,75 +1,32 @@
-# Stack heuristics
+# Stack choice guide
 
-Mapping rules from checklist signals to recommended stack families. Use these when proposing candidates in action 02. Heuristics, not laws - override when audit (action 03) flags a conflict.
+Reason about a stack from checklist signals - **axes to decide, not products to impose**. Never name one right answer. Any product mentioned is one illustration, never a default. When axes conflict, surface the trade-off to the user; don't choose silently.
 
-## Architecture pattern
+## Decide along these axes
 
-| Signal (from checklist)                                                | Pattern                |
-| ---------------------------------------------------------------------- | ---------------------- |
-| Solo or 2-dev team, < 10k users, < 5 features, no real-time            | **Monolith**           |
-| Mid-size team, growing features, want clean modules                    | **Modular monolith**   |
-| Many decoupled domains, each with its own scaling profile              | **Microservices**      |
-| Bursty traffic, low ops budget, short-lived requests, no persistent connections | **Serverless**  |
-| Real-time + low latency required + WebSockets                          | **Monolith / serverless edge** (avoid pure microservices) |
+1. **Form factor** - what's being built? Web app, mobile (native or cross-platform), desktop, CLI, library/SDK, API-only service, data pipeline. Decides almost everything downstream; settle first.
+2. **Product type** - SaaS, internal tool, marketing/content site, prototype, API product. Drives need for multi-tenancy, auth, SEO, billing.
+3. **Front-end** (if any) - rendering need (server-rendered vs single-page vs static), interactivity, SEO requirement, accessibility, offline. Pick rendering model first, framework second.
+4. **Back-end** (if any) - compute profile (request/response, long-running, real-time, heavy compute), team language expertise, throughput. Expertise usually beats "best tool" when learning curve is long.
+5. **Tests** - which layers matter (unit, integration, end-to-end), what each must prove. Test framework follows language and layers, not fashion.
+6. **Data** (if any) - persistence needed at all? Shape (relational, document, key-value, search, event log), consistency, compliance/region. "No database" is a valid, common answer.
 
-## Front-end
+## How to weigh conflicts
 
-| Signal                                                            | Recommendation                    |
-| ----------------------------------------------------------------- | --------------------------------- |
-| SEO important + content-heavy                                     | **Next.js SSR** or **Astro SSR**  |
-| SEO not important + interactive dashboard                         | **Vite + React SPA**              |
-| Mobile native required                                            | **React Native / Expo** + web app |
-| Marketing site + product app                                      | **Astro (marketing) + Next.js (app)** or **Next.js everything** |
-| Offline-first (PWA, local sync)                                   | **Next.js + service worker** or **RxDB-based stack** |
+Prioritize in this order, let the rest follow:
 
-## Back-end
+1. **Compliance / data sensitivity** (GDPR, health) - caps hosting region and data choices.
+2. **Hard functional needs** (real-time, offline, multi-tenant) - rule out incompatible options early.
+3. **Team expertise** - a stack the team can't operate is the wrong stack.
+4. **Budget and ops capacity** - prune anything the team can't afford to run.
 
-| Signal                                                            | Recommendation                    |
-| ----------------------------------------------------------------- | --------------------------------- |
-| Team knows TypeScript, no exotic perf needs                       | **Next.js API routes** or **NestJS** |
-| Team knows Python, ML/data-heavy                                  | **FastAPI**                       |
-| Team knows Go, high-throughput backend                            | **Echo / Fiber**                  |
-| Real-time chat, websockets, live sync                             | **Node + Socket.io** or **Phoenix (Elixir)** |
-| Heavy compute (video, ML inference)                               | **FastAPI + worker queue (Celery / BullMQ)** |
+## Architecture patterns (generic, language-agnostic)
 
-## Database
+Patterns, not products - applicable in any language:
 
-| Signal                                                            | Recommendation                    |
-| ----------------------------------------------------------------- | --------------------------------- |
-| Relational data, transactions, GDPR                               | **PostgreSQL** (Supabase, Neon, RDS) |
-| Document-shaped data, schema fluctuates often                     | **MongoDB** or **Postgres JSONB**    |
-| Existing Airtable as source of truth                              | **Airtable SDK + Postgres cache layer** |
-| Search-heavy (full-text, faceted)                                 | **Postgres + tsvector** OR **Postgres + Meilisearch** |
-| Real-time pub/sub                                                 | **Supabase Realtime** or **Redis pub/sub** |
-| Event sourcing                                                    | **Postgres + outbox pattern**       |
+- **Monolith** - one deployable; simplest to build and operate; default until a constraint forces otherwise.
+- **Modular monolith** - one deployable with enforced internal module boundaries; good when team wants future extractability.
+- **Microservices** - many independently deployable services; justified by independent scaling or team boundaries, not by default.
+- **Serverless / functions** - per-request units; fits bursty, short-lived, low-ops workloads; avoid when long-lived connections are core.
 
-## Auth
-
-| Signal                                                            | Recommendation                    |
-| ----------------------------------------------------------------- | --------------------------------- |
-| Next.js + Postgres                                                | **NextAuth (Auth.js)**            |
-| Need polished UI, magic links, OAuth, no time to build            | **Clerk**                         |
-| Already on Supabase                                               | **Supabase Auth**                 |
-| Enterprise SSO required                                           | **Auth0** or **WorkOS**           |
-| B2B with org-level access control                                 | **Clerk Organizations** or **WorkOS** |
-
-## Hosting
-
-| Signal                                                            | Recommendation                    |
-| ----------------------------------------------------------------- | --------------------------------- |
-| Next.js + low ops budget                                          | **Vercel**                        |
-| Solo dev + Postgres + bootstrap budget                            | **Vercel + Supabase** or **Railway** |
-| Heavy backend, custom infra                                       | **AWS (ECS / Fargate)** or **GCP Cloud Run** |
-| EU data residency required                                        | **Scaleway**, **OVH**, or AWS eu-west-3 |
-| Self-hosted preference                                            | **Coolify** or **Dokku** on VPS   |
-
-## Conflicting-signal triage
-
-When two signals push to different stacks, prioritize in this order:
-
-1. **Data sensitivity (GDPR/health)** - overrides hosting region preference
-2. **Real-time + multi-tenant** - overrides cost preference (forces non-trivial backend)
-3. **Team language expertise** - overrides "best tool" if learning curve > 2 weeks
-4. **Budget** - caps everything else; prune candidates that exceed it
-
-When still ambiguous, surface the trade-off to the user in the comparison table (action 02) instead of choosing silently.
+Match pattern to real constraints (team size, scaling profile, ops budget), not trend. When ambiguous, propose two candidates and let the user choose.

@@ -54,16 +54,25 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-gather-needs.md](skills/01-bootstrap/actions/01-gather-needs.md) | - |
-| `actions` | [02-propose-candidates.md](skills/01-bootstrap/actions/02-propose-candidates.md) | - |
-| `actions` | [03-audit-candidates.md](skills/01-bootstrap/actions/03-audit-candidates.md) | - |
-| `actions` | [04-pick-and-design.md](skills/01-bootstrap/actions/04-pick-and-design.md) | - |
-| `actions` | [05-write-install-md.md](skills/01-bootstrap/actions/05-write-install-md.md) | - |
-| `assets` | [checklist.md](skills/01-bootstrap/assets/checklist.md) | - |
-| `assets` | [install-template.md](skills/01-bootstrap/assets/install-template.md) | - |
+| `actions` | [01-check-prd.md](skills/01-bootstrap/actions/01-check-prd.md) | - |
+| `actions` | [02-gather-needs.md](skills/01-bootstrap/actions/02-gather-needs.md) | - |
+| `actions` | [03-choose-stack.md](skills/01-bootstrap/actions/03-choose-stack.md) | - |
+| `actions` | [04-init-install-md.md](skills/01-bootstrap/actions/04-init-install-md.md) | - |
+| `actions` | [05-init-architecture.md](skills/01-bootstrap/actions/05-init-architecture.md) | - |
+| `actions` | [06-init-dependencies.md](skills/01-bootstrap/actions/06-init-dependencies.md) | - |
+| `actions` | [07-init-env.md](skills/01-bootstrap/actions/07-init-env.md) | - |
+| `actions` | [08-init-database.md](skills/01-bootstrap/actions/08-init-database.md) | - |
+| `actions` | [09-init-quality-gate.md](skills/01-bootstrap/actions/09-init-quality-gate.md) | - |
+| `actions` | [10-init-tests.md](skills/01-bootstrap/actions/10-init-tests.md) | - |
+| `actions` | [11-init-containers.md](skills/01-bootstrap/actions/11-init-containers.md) | - |
+| `actions` | [12-init-design-system.md](skills/01-bootstrap/actions/12-init-design-system.md) | - |
+| `actions` | [13-init-ci.md](skills/01-bootstrap/actions/13-init-ci.md) | - |
+| `assets` | [INSTALL.md](skills/01-bootstrap/assets/INSTALL.md) | - |
+| `assets` | [README.md](skills/01-bootstrap/assets/README.md) | - |
 | `-` | [README.md](skills/01-bootstrap/README.md) | - |
+| `references` | [checklist.md](skills/01-bootstrap/references/checklist.md) | - |
 | `references` | [stack-heuristics.md](skills/01-bootstrap/references/stack-heuristics.md) | - |
-| `-` | [SKILL.md](skills/01-bootstrap/SKILL.md) | `Imagine and validate the technical architecture of a new SaaS through interactive Q&A, candidate-stack comparison, multi-agent audit, and an INSTALL.md output. Use when starting a new SaaS project, choosing a stack, designing the architecture pattern (monolith vs microservices vs serverless), or producing a project's INSTALL.md. Do NOT use for editing an existing project's stack, database schema design, or scaffolding actual files (this skill produces docs only, no code).` |
+| `-` | [SKILL.md](skills/01-bootstrap/SKILL.md) | `Imagine, validate, then stand up a new project. First designs the technical architecture - checks the PRD, gathers technical needs, chooses & audits the stack - into a validated `INSTALL.md` + `README.md`; then materializes that `INSTALL.md` into a running, proven skeleton via atomic `init-*` actions (architecture, dependencies, env, database, quality gate, tests, containers, design system, CI). Stack-agnostic - every build action reads `INSTALL.md` and names no technology. Architecture-100% / business-0%: never writes business logic. Use when starting a new project, choosing a stack, or standing up the running skeleton. Do NOT use to add features to an existing project or to write business logic.` |
 
 #### `skills/02-project-init`
 

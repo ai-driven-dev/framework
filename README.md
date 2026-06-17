@@ -7,7 +7,7 @@
 ### Vibe Coding for professional developers — focused on 100% quality on AI-generated code.
 
 <p>
-  <!--counts:start--><kbd>6 plugins</kbd> · <kbd>37 skills</kbd> · <kbd>3 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
+  <!--counts:start--><kbd>6 plugins</kbd> · <kbd>38 skills</kbd> · <kbd>3 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -194,7 +194,7 @@ Meta-cognition: brainstorm, challenge, condense, shadow-areas, fact-check.
 
 ### 🎼 [aidd-orchestrator](plugins/aidd-orchestrator/README.md)
 
-`1 skill` · stable (`async-dev`)
+`2 skills` · stable (`async-dev`)
 
 Label an issue, get a PR; re-label, get the review applied.
 

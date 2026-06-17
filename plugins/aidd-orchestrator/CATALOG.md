@@ -9,6 +9,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 - [`.claude-plugin`](#claude-plugin)
 - [`skills`](#skills)
   - [`skills/00-async-dev`](#skills00-async-dev)
+  - [`skills/01-scaffold`](#skills01-scaffold)
 
 ---
 
@@ -27,4 +28,11 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `-` | [README.md](skills/00-async-dev/README.md) | - |
 | `references` | [routing.md](skills/00-async-dev/references/routing.md) | - |
 | `-` | [SKILL.md](skills/00-async-dev/SKILL.md) | `Single entry point for the async-dev pipeline (setup, run, review). Hybrid router decides which sub-flow to execute from $ARGUMENTS keyword (`setup` / `run` / `review`), trigger source (label `to-implement` / `to-review`, comment `@claude /implement` / `/review`), repo state (workflow + config presence, PR linked to issue), or natural-language intent. Use when the user says "set up async dev", "run async dev on issue #N", "address review on PR #N", "/async-dev", "claude on issues", or when triggered by a webhook with the matching labels or comments. Do NOT use for plain status checks on the async pipeline or for SDLC orchestration unrelated to issue/PR automation.` |
+
+#### `skills/01-scaffold`
+
+| File | Description |
+|------|---|
+| [README.md](skills/01-scaffold/README.md) | - |
+| [SKILL.md](skills/01-scaffold/SKILL.md) | `Sequencing tutorial that launches the right skills, in order, to turn a project idea into a running skeleton.` |
 

@@ -1,43 +1,62 @@
 ---
 name: 01-bootstrap
-description: Imagine and validate the technical architecture of a new SaaS through interactive Q&A, candidate-stack comparison, multi-agent audit, and an INSTALL.md output. Use when starting a new SaaS project, choosing a stack, designing the architecture pattern (monolith vs microservices vs serverless), or producing a project's INSTALL.md. Do NOT use for editing an existing project's stack, database schema design, or scaffolding actual files (this skill produces docs only, no code).
+description: Imagine, validate, then stand up a new project. First designs the technical architecture - checks the PRD, gathers technical needs, chooses & audits the stack - into a validated `INSTALL.md` + `README.md`; then materializes that `INSTALL.md` into a running, proven skeleton via atomic `init-*` actions (architecture, dependencies, env, database, quality gate, tests, containers, design system, CI). Stack-agnostic - every build action reads `INSTALL.md` and names no technology. Architecture-100% / business-0%: never writes business logic. Use when starting a new project, choosing a stack, or standing up the running skeleton. Do NOT use to add features to an existing project or to write business logic.
 ---
 
 # Bootstrap
 
-Plays the role of technical architect for a new SaaS project. Walks the user through a 24-item checklist (18 user-input + 6 derived), proposes 2-3 candidate stacks, audits each via parallel agents, then produces `aidd_docs/INSTALL.md` capturing the technical vision, decisions, stack, architecture pattern, folder tree, and install steps. Documentation only - no code, no scaffolding.
+Technical architect **and** builder for a new project. Two phases. **Design** (01-04): check the PRD, gather technical needs, choose & audit the stack, write a validated `INSTALL.md` + `README.md`. **Build** (05-13): materialize that validated `INSTALL.md` into a running, proven skeleton through atomic, stack-agnostic `init-*` actions. Architecture-100% / business-0% - never writes business logic (per the firewall in `docs/ARCHITECTURE.md`).
 
 ## Available actions
 
-| #   | Action                | Role                                                           | Input              |
-| --- | --------------------- | -------------------------------------------------------------- | ------------------ |
-| 01  | `gather-needs`        | Q&A across the 24-item checklist                               | user intent        |
-| 02  | `propose-candidates`  | Derive 2-3 candidate stacks, render comparison table           | filled checklist   |
-| 03  | `audit-candidates`    | Spawn parallel agents to validate each candidate, emit verdict | candidates table   |
-| 04  | `pick-and-design`     | User picks winner; generate folder tree + Mermaid diagram      | audit report       |
-| 05  | `write-install-md`    | Produce `aidd_docs/INSTALL.md`                                 | design + decisions |
+**Design phase** - produces the validated `INSTALL.md` (docs only):
+
+| #   | Action            | Role                                                                          | Input              |
+| --- | ----------------- | ----------------------------------------------------------------------------- | ------------------ |
+| 01  | `check-prd`       | Verify a PRD exists; if not, stop and ask the user to create one              | project            |
+| 02  | `gather-needs`    | Ask the technical questions; product facts come from the PRD                  | PRD                |
+| 03  | `choose-stack`    | Propose 2-3 candidates + audit (parallel) + user picks + architecture pattern | needs              |
+| 04  | `init-install-md` | Write `INSTALL.md` + project-root `README.md`. **INSTALL.md is born here.**   | chosen stack       |
+
+**Build phase** - materializes the validated `INSTALL.md` into a running skeleton. `05`-`06` read `INSTALL.md` (design → code); each later action builds on the previous one's output - the materialized project, where the stack is already concrete. No action names a technology; each has its own gate:
+
+| #   | Action               | Role                                                                  | Delegate          |
+| --- | -------------------- | --------------------------------------------------------------------- | ----------------- |
+| 05  | `init-architecture`  | Folder tree + reachable route stubs from `INSTALL.md`'s pattern       | owns              |
+| 06  | `init-dependencies`  | Dependency manager + building blocks (swappable) + boot               | owns              |
+| 07  | `init-env`           | `.env.example` + config loading                                       | owns              |
+| 08  | `init-database`      | Engine + baseline migration + fixtures + round-trip *(conditional)*   | owns              |
+| 09  | `init-quality-gate`  | typecheck + format + lint + commit-linter + pre-commit (one gate)     | owns              |
+| 10  | `init-tests`         | Runner + 1 unit + 1 e2e + coverage                                    | testing capability |
+| 11  | `init-containers`    | Container/compose ups & downs clean *(conditional)*                   | owns              |
+| 12  | `init-design-system` | Design system *(front-only, conditional)*                             | design-system capability |
+| 13  | `init-ci`            | Pipeline runs the quality gate + tests, green on the server *(conditional)* | owns              |
 
 ## Default flow
 
-`01 → 02 → 03 → 04 → 05`. Sequential. The audit (03) is a gate: if every candidate returns `❌`, loop back to 02 to revise candidates or 01 to revisit needs.
+**Design** `01 → 02 → 03 → 04`, then **Build** `05 → 06 → 07 → 08 → 09 → 10 → 11 → 12 → 13`. Sequential. `01-check-prd` is a hard gate: no PRD → stop. The audit inside `03` is a gate: if every candidate is `❌`, revise candidates and re-audit. **No build action runs until `INSTALL.md` is written and validated** (end of `04`). Conditional build actions (08, 11, 12, 13) skip when the project does not call for them. Each build action advances only when its own `## Test` gate is green.
 
 ## Transversal rules
 
-- **No file scaffolding.** This skill writes only `aidd_docs/INSTALL.md`. It never creates `package.json`, source files, or empty directories.
-- **Anti-sycophancy.** When the user expresses a stack preference that conflicts with their needs (e.g. wants Mongo for heavily relational data), challenge it before accepting: surface audit concerns and ask whether the user has a mitigation plan.
-- **Recommend opinionated, not encyclopedic.** Each action proposes 2-3 options max, never a long catalog. The user should leave with a concrete decision, not a research paper.
-- **Stop on full checklist.** Action 01 keeps asking until the 18 user-input items (blocks 1-3) are filled; the 6 derived items (block 4) are filled across actions 02 and 04.
+- **PRD first.** `01-check-prd` halts the whole skill when no PRD exists - bootstrap never starts without product context.
+- **Design before build; never fabricate.** No build action (05+) runs until the human has validated `INSTALL.md`. The design phase invents nothing - it waits for the human at every gate.
+- **Architecture-100% / business-0%.** The build phase materializes a *validated* `INSTALL.md` - structure, building blocks, tooling, smoke tests - but never business logic (auth, domain rules, real features). Per the firewall in `docs/ARCHITECTURE.md`.
+- **Stack-agnostic build.** No `init-*` action names a technology of its own. The stack comes from `INSTALL.md` (read by `05`-`06`) and from the materialized project thereafter - never from the action prompt.
+- **Delegate, don't reinvent.** `init-tests` and `init-design-system` delegate to the capability that owns them (discovered by description, never a hardcoded plugin name).
+- **Anti-sycophancy.** When a user stack preference conflicts with the needs (e.g. wants Mongo for heavily relational data), challenge before accepting: surface the audit concerns, ask for a mitigation plan.
+- **Recommend opinionated, not encyclopedic.** Propose 2-3 options max, never a long catalog. The user leaves with a concrete decision, not a research paper.
 - **Apply heuristics from `@references/stack-heuristics.md`** when proposing candidates.
 
 ## References
 
+- `@references/checklist.md` - the needs checklist walked in `02-gather-needs`
 - `@references/stack-heuristics.md` - input → recommended-stack-family heuristics
 
 ## Assets
 
-- `@assets/checklist.md` - the 24-item checklist (4 blocks)
-- `@assets/install-template.md` - the `INSTALL.md` skeleton
+- `@assets/INSTALL.md` - the `INSTALL.md` skeleton
+- `@assets/README.md` - the project-root `README.md` template
 
 ## External data
 
-- `aidd-context/skills/09-mermaid/SKILL.md` - invoked from action 04 to render the architecture diagram
+- `aidd-context/skills/09-mermaid/SKILL.md` - invoked from `03-choose-stack` to render the architecture diagram

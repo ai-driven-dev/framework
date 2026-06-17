@@ -8,14 +8,16 @@
     "url": "https://github.com/ai-driven-dev"
   },
   "skills": [
-    "./skills/00-async-dev"
+    "./skills/00-async-dev",
+    "./skills/01-scaffold"
   ],
   "keywords": [
     "orchestration",
     "async",
     "pipeline",
     "pull-request",
-    "automation"
+    "automation",
+    "scaffold"
   ],
   "repository": "https://github.com/ai-driven-dev/framework",
   "homepage": "https://ai-driven.dev",
