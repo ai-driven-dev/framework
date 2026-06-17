@@ -24,7 +24,7 @@ Surveys the current project across three axes so you see what is there, then let
 
 ## Flow
 
-Two actions: `survey` reads the three axes and presents a compact map, then `drill` digs into the axis you pick and, when you name a goal, recommends the single best match with its invocation path.
+It detects your AI tools first, then routes by what you asked. Name nothing and `survey` reads the three axes and presents a compact map, then proposes one axis or all. Name an axis (or all) and `drill` goes straight in. `drill` lists the level in full, recommends the single best match with its invocation path when you name a goal, and descends one level deeper on request, a skill into its actions, a memory file into its sections, until a leaf or a stop.
 
 ## Details
 

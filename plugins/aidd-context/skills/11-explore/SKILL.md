@@ -15,18 +15,20 @@ Surveys the current project across three axes so the user sees what is there and
 
 ## Actions
 
-| #   | Action   | Role                                                        | Input         |
-| --- | -------- | ---------------------------------------------------------- | ------------- |
-| 01  | `survey` | Detect the tools, scan the three axes, present the map      | project root  |
-| 02  | `drill`  | Dig into one axis, list it in full, match an intent if any  | a chosen axis |
+| #   | Action   | Role                                                              | Input             |
+| --- | -------- | ---------------------------------------------------------------- | ----------------- |
+| 01  | `survey` | Scan the three axes and present a compact map                     | project root      |
+| 02  | `drill`  | Descend one axis or all, level by level, match an intent if any   | a scope or a goal |
 
-Run `survey` first, then `drill` into the axis the user picks. Run each action's `## Test` before the next.
+Detect the project's AI tools first, from the signals in `references/ai-mapping.md`. Then route by what the user asked: no scope given runs `survey` for a compact map, a named axis or "all" runs `drill` straight away. Always propose the axes when the request is open, never assume one. Run each action's `## Test` before the next.
 
 ## Transversal rules
 
-- Map, never prescribe. Explore shows what is there across the axes. It never tells the user the next step, that is the onboard skill's job.
+- Map, never prescribe. Explore shows what is there across the axes and descends into it on request. It never tells the user the next step, that is the onboard skill's job, at any depth.
+- Detect the tools before either action. A surface a tool does not have is skipped, never an error.
+- Propose, then accept. Offer the axes or all when the request is open, run the user's pick directly when they name one.
+- Descend one level per confirmation. Wait for the user at every level, stop at a leaf or when they are done.
 - List only what is actually installed or present, never invent an item.
-- Describe each item in one line, grouped by axis.
 - Never hardcode a tool. Per-tool scan paths and formats live in `references/ai-mapping.md`.
 - Point, do not run. Return an item's invocation path and stop.
 

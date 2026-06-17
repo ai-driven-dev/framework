@@ -8,7 +8,7 @@ The project root.
 
 ## Output
 
-A map grouped by axis, Tooling, Context, and Codebase. Each axis lists what is there, one line per item or a short count, with no recommendation. Then an offer to dig into one axis.
+A map grouped by axis, Tooling, Context, and Codebase. Each axis lists what is there, one line per item or a short count, with no recommendation. Then a proposal to dig into one axis or all.
 
 ## Process
 
@@ -17,8 +17,8 @@ A map grouped by axis, Tooling, Context, and Codebase. Each axis lists what is t
 3. **Scan Context.** The memory bank under `aidd_docs/memory/` and whether its files are filled, any specs or plans under `aidd_docs/`, and whether the AI context files carry the `<aidd_project_memory>` block.
 4. **Scan Codebase.** The stack, from the manifest or from the memory bank, and the few top-level modules or layers.
 5. **Present the map.** One section per axis, each a short list or count with one-line purposes. No next-step advice, that belongs to the onboard skill.
-6. **Offer to dig in.** Ask which axis the user wants in detail, and hand it to `02-drill`. Wait for the answer.
+6. **Propose to dig in.** Offer the three axes or all, and hand the pick to `02-drill`. Never assume one. Wait for the answer.
 
 ## Test
 
-- The output has the three axes, each listing only what is actually present, with no invented item and no next-step recommendation.
+- The output has the three axes, each listing only what is actually present, with no invented item and no next-step recommendation, and it ends by proposing one axis or all.
