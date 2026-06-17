@@ -1,35 +1,24 @@
 # 01 - Mermaid
 
-Produce a 100% valid, high-quality Mermaid diagram from a markdown document through a plan-confirm-generate-review loop.
+Produce a valid, high-quality Mermaid diagram from a written source through a plan, confirm, generate, review loop.
 
-## Inputs
+## Input
 
-```yaml
-source: <markdown document to convert>
-```
+The written source to diagram: a paragraph, a list, or a section describing an architecture, a lifecycle, or a flow. Ask for it when it is not provided.
 
-## Outputs
+## Output
 
-A Mermaid diagram fenced as ```mermaid + an optional review note. On first user message, the action prints the six numbered steps below as short bullets so the user knows what is coming.
-
-```mermaid
-<rendered diagram>
-```
+A Mermaid diagram in a fenced block, plus an optional review note. On the first message, list the steps below as short bullets so the user knows what is coming.
 
 ## Process
 
-1. **Ask for the document to convert** when not already provided.
-2. **Plan the diagram.** Analyze the source and write down a detailed plan identifying at least:
-   - Components (main elements, logical groups; use colors).
-   - Children and parent elements.
-   - Directions and hierarchies.
-   - Relationships (colors, connections, dependencies).
-   - Notes and labels per element when needed.
-3. **Confirm the plan.** Ask the user "Do you confirm the plan?" and wait for explicit confirmation.
-4. **Generate** the 100% valid Mermaid diagram from the plan. Flow direction defaults to `LR`. Minimum Mermaid version 10.8.0. Apply the conventions in `@../references/mermaid-conventions.md`.
-5. **Offer a review.** Ask the user "Do you want me to review it?" and wait for an answer.
-6. **Review on confirm.** Check syntax, look for empty or misplaced nodes, suggest improvements. Do NOT add any extra elements that were not in the confirmed plan.
+1. **Get the source.** Ask for the document to diagram when it is not already provided.
+2. **Plan.** Analyze the source and write a plan that names: the components and their logical groups, the parent and child elements, the directions and the hierarchy, the relationships (connections, dependencies), and the labels or notes each element needs.
+3. **Confirm.** Ask the user to confirm the plan. Block on the answer.
+4. **Generate.** Produce a valid Mermaid diagram from the confirmed plan, following the conventions and defaults in `@../references/mermaid-conventions.md`.
+5. **Offer a review.** Ask whether the user wants a review, and wait.
+6. **Review on confirm.** Check the syntax, look for an empty or misplaced node, and suggest improvements. Never add an element that was not in the confirmed plan.
 
 ## Test
 
-The generated block is fenced with ```mermaid, parses without error against Mermaid 10.8.0+, follows the conventions in `@../references/mermaid-conventions.md`, and contains no nodes or relationships absent from the user-confirmed plan.
+- The diagram is in a fenced Mermaid block, parses without error, follows the conventions reference, and holds no node or relationship absent from the confirmed plan.

@@ -1,5 +1,10 @@
 # Mermaid generation rules
 
+## Defaults
+
+- Target Mermaid 10.8.0 or newer.
+- Flow direction defaults to `LR` unless the source implies another.
+
 ## Header
 
 - Always have title in schema using "---" to define it

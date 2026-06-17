@@ -1,59 +1,29 @@
-← [aidd-framework](../../../../README.md) / [aidd-context](../../README.md)
+← [framework](../../../../README.md) / [aidd-context](../../README.md)
 
-# 04 - Mermaid
+# 09 - Mermaid
 
-Generates a 100% valid, high-quality Mermaid diagram from a markdown source
-through a structured plan-confirm-generate-review loop. Defaults to flow
-direction `LR` and targets Mermaid 10.8.0+.
+Generates a valid, high-quality Mermaid diagram from a written source through a plan, confirm, generate, review loop.
 
 ## When to use
 
-- Turning a written description (architecture, lifecycle, flow) into a
-  Mermaid diagram.
-- Producing a diagram to embed in an `INSTALL.md`, ADR, or memory file.
-- Invoked by other aidd-context skills that need a diagram (e.g.
-  `01-bootstrap` calls this from action 04).
+- Turning a written description (architecture, lifecycle, flow) into a Mermaid diagram.
+- Producing a diagram to embed in an `INSTALL.md`, a decision record, or a memory file.
+- When another skill needs a diagram (for example `01-bootstrap` calls it).
 
-## When NOT to use
+## When not to use
 
-- For non-Mermaid diagram formats (PlantUML, Graphviz, draw.io).
+- For other diagram formats (PlantUML, Graphviz, draw.io).
 - To freehand a diagram without a written source to plan from.
-- To render or export a diagram to PNG/SVG - this skill produces fenced
-  Mermaid text only.
+- To render or export to an image. This skill produces fenced Mermaid text only.
 
-## How to invoke
+## Flow
 
-```
-Use skill aidd-context:09-mermaid
-```
+One action with a six-step loop: get the source, plan, confirm the plan, generate, offer a review, review on confirm. The diagram is generated only from the confirmed plan, and never adds an element the user did not confirm.
 
-The skill runs one action with a six-step loop:
+## Requires
 
-1. Ask for the document to convert.
-2. Plan the diagram (components, parents/children, directions, relations,
-   labels).
-3. Confirm the plan with the user.
-4. Generate a 100% valid Mermaid diagram from the confirmed plan.
-5. Offer a review.
-6. Review on confirm: check syntax, empty/misplaced nodes, and suggest
-   improvements without adding elements absent from the confirmed plan.
+A written source (a paragraph, a list, or a section) describing what to diagram.
 
-## Outputs
+## Details
 
-- A fenced ```mermaid block containing a syntactically valid diagram that
-  parses against Mermaid 10.8.0+.
-- An optional review note when the user accepts the review step.
-
-## Prerequisites
-
-- A markdown source (paragraph, list, or section) describing what to
-  diagram.
-- Awareness of the project's Mermaid conventions (see
-  `references/mermaid-conventions.md`).
-
-## Technical details
-
-See [`SKILL.md`](SKILL.md) for the entry contract,
-[`actions/01-mermaid.md`](actions/01-mermaid.md) for the full process,
-and `references/mermaid-conventions.md` for the conventions enforced
-during generation.
+See [`SKILL.md`](SKILL.md) for the contract, [`actions/01-mermaid.md`](actions/01-mermaid.md) for the process, and [`references/mermaid-conventions.md`](references/mermaid-conventions.md) for the conventions and defaults every diagram follows.

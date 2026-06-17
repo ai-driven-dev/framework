@@ -166,7 +166,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-mermaid.md](skills/09-mermaid/actions/01-mermaid.md) | - |
 | `-` | [README.md](skills/09-mermaid/README.md) | - |
 | `references` | [mermaid-conventions.md](skills/09-mermaid/references/mermaid-conventions.md) | - |
-| `-` | [SKILL.md](skills/09-mermaid/SKILL.md) | `Generate high-quality Mermaid diagrams from markdown content using a structured plan-validate workflow.` |
+| `-` | [SKILL.md](skills/09-mermaid/SKILL.md) | `Generate a valid, high-quality Mermaid diagram from a written source through a plan, confirm, generate, review loop. Use when the user wants to turn an architecture, lifecycle, or flow description into a Mermaid diagram, or when another skill needs one. Not for other diagram formats like PlantUML or Graphviz, or for rendering a diagram to an image.` |
 
 #### `skills/10-learn`
 
