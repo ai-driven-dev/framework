@@ -1,11 +1,12 @@
 import { isAbsolute, join, resolve } from "node:path";
-import { InvalidPluginManifestError } from "../../domain/errors.js";
+import { MalformedMarketplaceCatalogError } from "../../domain/errors.js";
 import { parseCodexMarketplace } from "../../domain/formats/codex-marketplace.js";
 import { parseCopilotMarketplace } from "../../domain/formats/copilot-marketplace.js";
 import { parseCopilotMarketplaceCatalog } from "../../domain/formats/copilot-marketplace-catalog.js";
 import { parseCursorMarketplace } from "../../domain/formats/cursor-marketplace.js";
 import { parseOpencodeMarketplace } from "../../domain/formats/opencode-marketplace.js";
 import type { NormalizedPlugin } from "../../domain/models/normalized-plugin.js";
+import { MARKETPLACE_CACHE_SUBDIR } from "../../domain/models/paths.js";
 import { type PluginCatalog, parsePluginCatalog } from "../../domain/models/plugin-catalog.js";
 import { MARKETPLACE_PROBES } from "../../domain/models/plugin-format.js";
 import type { PluginSource } from "../../domain/models/plugin-source.js";
@@ -45,25 +46,40 @@ export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {
     return [];
   }
 
+  private isCachePath(fullPath: string): boolean {
+    return fullPath.includes(MARKETPLACE_CACHE_SUBDIR);
+  }
+
+  private parseDetail(err: unknown): string {
+    const message = err instanceof Error ? err.message : String(err);
+    return message.replace(/^Invalid plugin manifest:\s*/, "");
+  }
+
   private async readCopilotNativeCatalog(fullPath: string): Promise<PluginCatalog> {
     const raw = await this.fs.readFile(fullPath);
-    return parseCopilotMarketplaceCatalog(raw);
+    try {
+      return parseCopilotMarketplaceCatalog(raw);
+    } catch (err) {
+      throw new MalformedMarketplaceCatalogError(
+        fullPath,
+        this.parseDetail(err),
+        this.isCachePath(fullPath)
+      );
+    }
   }
 
   private async readClaudeCatalog(fullPath: string): Promise<PluginCatalog> {
+    const cached = this.isCachePath(fullPath);
     let raw: unknown;
     try {
       raw = JSON.parse(await this.fs.readFile(fullPath));
     } catch {
-      throw new InvalidPluginManifestError(`marketplace.json at "${fullPath}" is not valid JSON`);
+      throw new MalformedMarketplaceCatalogError(fullPath, "not valid JSON", cached);
     }
     try {
       return parsePluginCatalog(raw);
     } catch (err) {
-      if (err instanceof InvalidPluginManifestError) throw err;
-      throw new InvalidPluginManifestError(
-        `marketplace.json at "${fullPath}": ${err instanceof Error ? err.message : String(err)}`
-      );
+      throw new MalformedMarketplaceCatalogError(fullPath, this.parseDetail(err), cached);
     }
   }
 

@@ -1,8 +1,11 @@
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   ForeignSchemaValidationError,
   InvalidPluginManifestError,
+  MalformedMarketplaceCatalogError,
 } from "../../../src/domain/errors.js";
 import { FileAdapter } from "../../../src/infrastructure/adapters/file-adapter.js";
 import { HasherAdapter } from "../../../src/infrastructure/adapters/hasher-adapter.js";
@@ -367,5 +370,56 @@ describe("PluginCatalogRepositoryAdapter.loadForeign (OpenCode)", () => {
       const plugins = await adapter.loadForeign(join(FIXTURE_DIR, "marketplace-missing"));
       expect(plugins).toEqual([]);
     });
+  });
+});
+
+// Regression: a user (framework 4.4.1, claude) hit a cryptic
+// `Invalid plugin manifest: "plugins" must be an array` crash when a cached
+// marketplace.json held a non-array object (stale / interrupted fetch).
+// The catalog reader must surface an actionable, recovery-bearing error
+// instead, and the hint must differ for cache vs user-provided sources.
+describe("PluginCatalogRepositoryAdapter.load — malformed catalog recovery", () => {
+  async function writeCatalog(frameworkDir: string, content: string): Promise<void> {
+    await mkdir(join(frameworkDir, ".claude-plugin"), { recursive: true });
+    await writeFile(join(frameworkDir, ".claude-plugin/marketplace.json"), content, "utf-8");
+  }
+
+  it("non-array object under a cache path → MalformedMarketplaceCatalogError with refresh hint", async () => {
+    const tmp = await mkdtemp(join(tmpdir(), "aidd-catalog-cache-"));
+    const cacheDir = join(tmp, ".aidd/cache/marketplaces/aidd-framework/github-x");
+    await writeCatalog(cacheDir, '{"message":"API rate limit exceeded"}');
+    const adapter = makeAdapter();
+    try {
+      await expect(adapter.load(cacheDir)).rejects.toThrow(MalformedMarketplaceCatalogError);
+      await expect(adapter.load(cacheDir)).rejects.toThrow(/marketplace refresh --force/);
+      // Backward-compat: still an InvalidPluginManifestError for existing catchers.
+      await expect(adapter.load(cacheDir)).rejects.toThrow(InvalidPluginManifestError);
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("malformed JSON under a cache path → recovery hint, never a raw JSON.parse crash", async () => {
+    const tmp = await mkdtemp(join(tmpdir(), "aidd-catalog-cache-"));
+    const cacheDir = join(tmp, ".aidd/cache/marketplaces/aidd-framework/github-x");
+    await writeCatalog(cacheDir, "{ not valid json");
+    const adapter = makeAdapter();
+    try {
+      await expect(adapter.load(cacheDir)).rejects.toThrow(/marketplace refresh --force/);
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("malformed catalog from a user-provided (non-cache) source → fix-the-file hint", async () => {
+    const tmp = await mkdtemp(join(tmpdir(), "aidd-catalog-local-"));
+    await writeCatalog(tmp, '{"plugins":{}}');
+    const adapter = makeAdapter();
+    try {
+      await expect(adapter.load(tmp)).rejects.toThrow(MalformedMarketplaceCatalogError);
+      await expect(adapter.load(tmp)).rejects.toThrow(/Fix or re-create/);
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
   });
 });

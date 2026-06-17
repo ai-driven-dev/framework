@@ -9,7 +9,7 @@
  * See also: command-matrix-help.e2e.test.ts, command-matrix-ai.e2e.test.ts
  */
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createTestEnv, runCli } from "./helpers.js";
@@ -114,6 +114,32 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local install)", () => {
       await seedWithClaude(projectDir, fakeHome);
       const { stdout, exitCode } = await runCli(["plugin", "doctor"], projectDir, fakeHome);
       expect(exitCode).toBe(0);
+      expect(stdout).toContain("healthy");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("plugin doctor stays 0/healthy when non-plugin drift exists (regression: silent exit 1)", async () => {
+    // Regression for a silent exit-1: plugin doctor used to gate on the FULL
+    // doctor health (tracked-file / reference / layout warnings included) while
+    // only rendering pluginIssues — so unrelated drift made it exit 1 printing
+    // nothing. Here a tracked file is mutated (non-plugin drift): global doctor
+    // must flag it (exit 1), plugin doctor must stay scoped (exit 0 + healthy).
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("plugin-doctor-scope");
+    try {
+      await seedWithClaude(projectDir, fakeHome);
+      const manifest = JSON.parse(
+        await readFile(join(projectDir, AIDD_DIR, "manifest.json"), "utf-8")
+      );
+      const tracked = manifest.tools.claude.files[0].relativePath as string;
+      await appendFile(join(projectDir, tracked), "\n<!-- drift -->\n");
+
+      const global = await runCli(["doctor"], projectDir, fakeHome);
+      expect(global.exitCode).toBe(1); // full doctor sees the drift
+
+      const { stdout, exitCode } = await runCli(["plugin", "doctor"], projectDir, fakeHome);
+      expect(exitCode).toBe(0); // plugin doctor is plugin-scoped
       expect(stdout).toContain("healthy");
     } finally {
       await cleanup();

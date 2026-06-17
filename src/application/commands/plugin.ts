@@ -241,7 +241,11 @@ export function registerPluginCommand(program: Command): void {
           projectRoot,
           pluginName: cmdOptions.plugin,
         });
-        if (report.healthy) {
+        // Plugin doctor is plugin-scoped: gate on plugin issues only, never on
+        // unrelated tracked-file / reference / layout warnings the full report
+        // also carries. Otherwise it exits non-zero while printing nothing (it
+        // only renders pluginIssues) — a silent failure.
+        if (report.pluginIssues.length === 0) {
           output.success("Plugin installation is healthy");
           return;
         }

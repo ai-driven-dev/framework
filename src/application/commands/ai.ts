@@ -311,6 +311,13 @@ export function registerAiCommand(program: Command): void {
           if (issue.severity === "error") output.error(text);
           else output.warn(text);
         }
+        // Health also accounts for plugin issues; render them too so an exit
+        // driven solely by a plugin defect never goes silent.
+        for (const pi of report.pluginIssues) {
+          output.error(
+            `Plugin ${pi.pluginName} (${pi.toolId}): ${pi.issue} — ${pi.filePath}\n  Fix: Run \`aidd ai restore\` to restore.`
+          );
+        }
         process.exit(1);
       } catch (error) {
         errorHandler.handle(error);

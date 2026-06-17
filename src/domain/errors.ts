@@ -174,6 +174,21 @@ export class InvalidPluginManifestError extends Error {
   }
 }
 
+// Thrown when a marketplace catalog file (.claude-plugin/marketplace.json or
+// .plugin/marketplace.json) exists but cannot be parsed. Extends
+// InvalidPluginManifestError so existing `instanceof` checks still hold, while
+// adding an actionable recovery hint — a cached catalog is healed by re-fetch,
+// a user-provided source must be fixed by hand.
+export class MalformedMarketplaceCatalogError extends InvalidPluginManifestError {
+  constructor(path: string, detail: string, cached: boolean) {
+    const recovery = cached
+      ? "Run 'aidd marketplace refresh --force' to re-fetch a clean copy."
+      : "Fix or re-create the marketplace catalog file.";
+    super(`catalog at "${path}" is malformed (${detail}). ${recovery}`);
+    this.name = "MalformedMarketplaceCatalogError";
+  }
+}
+
 export class PluginNotFoundError extends Error {
   constructor(name: string) {
     super(`Plugin '${name}' is not installed.`);
