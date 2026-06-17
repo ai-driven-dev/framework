@@ -188,7 +188,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-drill.md](skills/11-explore/actions/02-drill.md) | - |
 | `-` | [README.md](skills/11-explore/README.md) | - |
 | `references` | [ai-mapping.md](skills/11-explore/references/ai-mapping.md) | - |
-| `-` | [SKILL.md](skills/11-explore/SKILL.md) | `Explore the current project across its tooling, context, and codebase, then dig into one axis. Use when the user wants a survey of what is installed and set up, asks what is available, or wants to browse the AIDD capabilities, the context layer, or the project shape. Not for the next step to take (the onboard skill guides that) or for running an item (this skill only points).` |
+| `-` | [SKILL.md](skills/11-explore/SKILL.md) | `Explore the current project across its tooling, context, and codebase, then drill into one axis. Use to survey what is installed and set up, see what is available, or find which installed skill, agent, or rule fits a goal. Not for the next step to take (onboard does that) or running an item (this skill only points).` |
 
 #### `skills/12-cook`
 
