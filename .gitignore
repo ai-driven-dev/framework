@@ -29,6 +29,7 @@ coverage/
 
 # Claude Code session-local
 .claude/settings.local.json
+.claude/worktrees/
 
 # SpecStory captures (may contain transcripts / secrets)
 .specstory/
@@ -39,3 +40,5 @@ Thumbs.db
 
 # Playwright
 .playwright-mcp/
+# Impeccable tool cache
+.impeccable/
