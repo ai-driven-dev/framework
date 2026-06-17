@@ -43,12 +43,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-detect-state.md](skills/00-onboard/actions/01-detect-state.md) | - |
-| `actions` | [02-recommend-next.md](skills/00-onboard/actions/02-recommend-next.md) | - |
-| `actions` | [03-execute-or-handoff.md](skills/00-onboard/actions/03-execute-or-handoff.md) | - |
-| `assets` | [state-matrix.md](skills/00-onboard/assets/state-matrix.md) | - |
+| `actions` | [01-read-project.md](skills/00-onboard/actions/01-read-project.md) | - |
+| `actions` | [02-orient.md](skills/00-onboard/actions/02-orient.md) | - |
+| `actions` | [03-act.md](skills/00-onboard/actions/03-act.md) | - |
 | `-` | [README.md](skills/00-onboard/README.md) | - |
-| `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Detect the current project's state and open a hub of project actions - understand the project, set up or refresh the memory bank, or continue the AIDD development journey. Silently inspects the project, the AIDD setup, and which AIDD plugins are installed, then adapts the menu to that context. Use when the user says "where do I start", "onboard me", "onboard me to this project", "what should I run next", "what should I work on next", "what's the state of this project", "guide me through aidd", "guide me through aidd-context", or invokes `aidd-context:00-onboard`. Do NOT use to enumerate every installed surface from raw user intent (the discovery skill in this plugin handles that).` |
+| `references` | [journey.md](skills/00-onboard/references/journey.md) | - |
+| `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Guide the user through the AIDD framework on the current project. Explain the flow in plain language and suggest the next logical step, adapted to what is already set up and which AIDD plugins are installed. Use when the user asks where to start, what to do next, how AIDD works, or to be onboarded. Not for listing every installed surface (the discovery skill does that) or running a skill the user already knows they need (invoke it directly).` |
 
 #### `skills/01-bootstrap`
 

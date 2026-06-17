@@ -1,43 +1,32 @@
 ---
 name: 00-onboard
-description: Detect the current project's state and open a hub of project actions - understand the project, set up or refresh the memory bank, or continue the AIDD development journey. Silently inspects the project, the AIDD setup, and which AIDD plugins are installed, then adapts the menu to that context. Use when the user says "where do I start", "onboard me", "onboard me to this project", "what should I run next", "what should I work on next", "what's the state of this project", "guide me through aidd", "guide me through aidd-context", or invokes `aidd-context:00-onboard`. Do NOT use to enumerate every installed surface from raw user intent (the discovery skill in this plugin handles that).
-model: opus
+description: Guide the user through the AIDD framework on the current project. Explain the flow in plain language and suggest the next logical step, adapted to what is already set up and which AIDD plugins are installed. Use when the user asks where to start, what to do next, how AIDD works, or to be onboarded. Not for listing every installed surface (the discovery skill does that) or running a skill the user already knows they need (invoke it directly).
 ---
 
 # Onboard
 
-State-aware onboarding hub for the current project. Silently inspects the project, the AIDD setup, and the installed AIDD plugins, then opens a briefing and a menu: understand the project, set up or refresh the memory bank, or continue the AIDD development journey. Loops until the user stops.
+A plain-language guide to the AIDD framework for the current project. It reads the project lightly, explains where the project sits in the AIDD flow, and suggests the next logical step using only the plugins that are installed. It loops until the user stops.
 
-## Available actions
+## Actions
 
-| #   | Action               | Role                                                                       | Input                  |
-| --- | -------------------- | -------------------------------------------------------------------------- | ---------------------- |
-| 01  | `detect-state`       | Silently probe the project, the AIDD setup, and the installed AIDD surface  | project root           |
-| 02  | `recommend-next`     | Render the briefing and the hub menu, route the pick to one concrete action | internal state from 01 |
-| 03  | `execute-or-handoff` | Carry out the choice: briefing, run, explain, handoff, swap, or stop        | choice from 02         |
+| #   | Action         | Role                                                              | Input             |
+| --- | -------------- | ---------------------------------------------------------------- | ----------------- |
+| 01  | `read-project` | Lightly and silently read the project and the installed skills    | project root      |
+| 02  | `orient`       | Explain where the project sits and suggest the next step, in plain language | the read from 01  |
+| 03  | `act`          | Run the suggestion, explain it, teach the flow, switch step, or stop | the user's choice |
 
-## Default flow
-
-`01 -> 02 -> 03 -> back to 01` after each action, until the user picks Stop. Run each action's `## Test` before moving to the next.
+Run `01 → 02 → 03`, then loop back to `01` after each step until the user stops. Run each action's `## Test` before the next.
 
 ## Transversal rules
 
-- Hub, not a track. Onboard shows a briefing and a menu of project actions; it never forces a single next step.
-- Silent detection. `01-detect-state` prints nothing - no `state:` snapshot, no signal dump, no `Analysis:` label ever reaches the user. The first visible output is the briefing header.
-- Briefing first. Every pass opens with a clean three-line briefing header: project, AIDD setup, standing.
-- Categories, never hard-coded foreign skills. Onboard recommends by category - a function such as "technical planning" or "shipping" - and resolves it at runtime against the skills actually installed. It never names a skill or plugin id that is not installed.
-- Honest gaps. A category that resolves to no installed skill is reported as a gap, described by function. Onboard never invents a skill to fill it.
-- `sdlc_phase` is a hint, never a verdict. Onboard shows where the project seems to stand but always lets the user pick the SDLC leg. It never assumes a phase is finished or unfinished.
-- Numbered choices only. The user replies with a digit. Free-text replies re-render the same menu with a one-line digit reminder.
-- Never assume the user will run a skill in this conversation. For a resolved skill always offer: run-in-session, explain, hand off to a new session, swap, stop.
-- Always loop back to `01-detect-state` after an action runs or is handed off. The project state changes; re-detect before re-rendering.
-- Anti-sycophancy. If the user picks an option that conflicts with the detected state, challenge once before complying.
-- Wait for an explicit user response between every menu. Do not auto-advance.
-
-## Assets
-
-- `@assets/state-matrix.md` - the hub menu, the SDLC sub-menu, the AIDD journey backbone, and the category resolution rules
+- Teach, do not assume. The user may be new to AIDD. Explain a term the first time it appears (the memory bank is the project memory the AI loads each session), never assume framework literacy.
+- Suggest, never force. Show where the project seems to stand and the next logical step, and always let the user choose another.
+- Plain language only. No internal state names, no raw phase labels, no signal dump reaches the user. The user reads guidance, not a state machine.
+- Adapt to what is installed. Suggest by function and resolve it to a skill that is actually installed. If none is installed, name the missing capability by function, never invent a skill.
+- Silent read. `01-read-project` prints nothing. The first visible output is the plain briefing from `02-orient`.
+- Re-read after each step. The project changes, so read again before suggesting again.
+- Wait for an explicit reply between prompts. Never auto-advance.
 
 ## References
 
-- The AI tool's native plugin and skill discovery - the runtime source of truth for which categories onboard can resolve to a real skill
+- `references/journey.md`: the AIDD flow stages, what each unblocks, and how a step resolves to an installed skill.
