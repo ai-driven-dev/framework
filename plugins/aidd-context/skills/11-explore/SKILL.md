@@ -1,6 +1,6 @@
 ---
 name: 11-explore
-description: Explore the current project across its tooling, context, and codebase, then drill into one axis. Use to survey what is installed and set up, see what is available, or find which installed skill, agent, or rule fits a goal. Not for the next step to take (onboard does that) or running an item (this skill only points).
+description: Explore the current project across its tooling, context, and codebase, then drill into an axis the user names or this skill proposes. Use to survey what is installed and set up, see what is available, or find which installed skill, agent, or rule fits a goal. Not for the next step to take (onboard does that) or running an item (this skill only points).
 ---
 
 # Explore
