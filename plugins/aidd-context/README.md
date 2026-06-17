@@ -8,7 +8,7 @@ Knowledge production plugin for the AI-Driven Development framework.
 
 First time? Install with `/plugin install aidd-context@aidd-framework`, then run `aidd-context:00-onboard`.
 
-Covers project bootstrap, the project memory bank, generation of context artifacts (skills, agents, rules, commands, hooks), Mermaid diagrams, learning, discovery, recipes, and a plain-language onboarding guide.
+Covers project bootstrap, the project memory bank, generation of context artifacts (skills, agents, rules, commands, hooks), Mermaid diagrams, learning, project exploration, recipes, and a plain-language onboarding guide.
 
 ## Skills
 
@@ -20,7 +20,7 @@ Covers project bootstrap, the project memory bank, generation of context artifac
 | [1.3]      | [context-generate](skills/03-context-generate/README.md) | Generate context artifacts: router-based skills, agents, rules, slash commands, hooks, plugin scaffolds, and plugin marketplaces.                               |
 | [1.4]      | [mermaid](skills/09-mermaid/README.md)                 | Generate high-quality Mermaid diagrams from markdown content using a structured plan-validate workflow.                                                         |
 | [1.5]      | [learn](skills/10-learn/README.md)                     | Capture durable learnings from the conversation or git history, score each, and route the worthwhile ones to memory, a decision record, a rule, or a new skill. |
-| [1.6]      | [discovery](skills/11-discovery/README.md)             | Help users discover installed skills and find the right one for their use case.                                                                                 |
+| [1.6]      | [explore](skills/11-explore/README.md)                 | Survey the project across three axes (tooling, context, codebase), then drill into one axis and point to the best-matching item for a goal.                      |
 | [1.7]      | [cook](skills/12-cook/README.md)                       | Maintain the project's `recipes/` how-to sheets: list every recipe, or create and update one from the canonical recipe template.                              |
 
 ## Onboarding

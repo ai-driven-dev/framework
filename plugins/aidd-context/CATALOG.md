@@ -20,7 +20,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/08-hook-generate`](#skills08-hook-generate)
   - [`skills/09-mermaid`](#skills09-mermaid)
   - [`skills/10-learn`](#skills10-learn)
-  - [`skills/11-discovery`](#skills11-discovery)
+  - [`skills/11-explore`](#skills11-explore)
   - [`skills/12-cook`](#skills12-cook)
 
 ---
@@ -49,7 +49,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-act.md](skills/00-onboard/actions/03-act.md) | - |
 | `-` | [README.md](skills/00-onboard/README.md) | - |
 | `references` | [journey.md](skills/00-onboard/references/journey.md) | - |
-| `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Guide the user through the AIDD framework on the current project. Explain the flow in plain language and suggest the next logical step, adapted to what is already set up and which AIDD plugins are installed. Use when the user asks where to start, what to do next, how AIDD works, or to be onboarded. Not for listing every installed surface (the discovery skill does that) or running a skill the user already knows they need (invoke it directly).` |
+| `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Guide the user through the AIDD framework on the current project. Explain the flow in plain language and suggest the next logical step, adapted to what is already set up and which AIDD plugins are installed. Use when the user asks where to start, what to do next, how AIDD works, or to be onboarded. Not for listing every installed surface (the explore skill does that) or running a skill the user already knows they need (invoke it directly).` |
 
 #### `skills/01-bootstrap`
 
@@ -89,7 +89,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | File | Description |
 |------|---|
 | [README.md](skills/03-context-generate/README.md) | - |
-| [SKILL.md](skills/03-context-generate/SKILL.md) | `Route a request to generate a context artifact (skill, rule, agent, command, or hook) to its dedicated generator when the user has not named which kind. For a named kind, that generator triggers directly. Not for listing existing artifacts (use discovery).` |
+| [SKILL.md](skills/03-context-generate/SKILL.md) | `Route a request to generate a context artifact (skill, rule, agent, command, or hook) to its dedicated generator when the user has not named which kind. For a named kind, that generator triggers directly. Not for listing existing artifacts (use explore).` |
 
 #### `skills/04-skill-generate`
 
@@ -180,21 +180,15 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `-` | [README.md](skills/10-learn/README.md) | - |
 | `-` | [SKILL.md](skills/10-learn/SKILL.md) | `Capture durable project learnings from the conversation or the project's git history and route them to memory, a decision record, a rule, or a new skill. Use when the user asks to capture, record, or remember a decision, a convention, or a lesson, or to distill what recent work taught. Scores each candidate and confirms before writing. Not for personal or AI preferences, routine edits, or anything already captured.` |
 
-#### `skills/11-discovery`
+#### `skills/11-explore`
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-find-skill.md](skills/11-discovery/actions/01-find-skill.md) | - |
-| `actions` | [02-find-agent.md](skills/11-discovery/actions/02-find-agent.md) | - |
-| `actions` | [03-find-command.md](skills/11-discovery/actions/03-find-command.md) | - |
-| `actions` | [04-find-plugin.md](skills/11-discovery/actions/04-find-plugin.md) | - |
-| `actions` | [05-find-mcp.md](skills/11-discovery/actions/05-find-mcp.md) | - |
-| `actions` | [06-find-rule.md](skills/11-discovery/actions/06-find-rule.md) | - |
-| `actions` | [07-find-hook.md](skills/11-discovery/actions/07-find-hook.md) | - |
-| `actions` | [08-find-memory.md](skills/11-discovery/actions/08-find-memory.md) | - |
-| `-` | [README.md](skills/11-discovery/README.md) | - |
-| `references` | [ai-mapping.md](skills/11-discovery/references/ai-mapping.md) | - |
-| `-` | [SKILL.md](skills/11-discovery/SKILL.md) | `Enumerate installed surfaces of the AI tool (skills, agents, commands, plugins, MCP servers, rules, hooks, memory files) and recommend the best match for the user's stated intent. Use proactively whenever the user asks the model to list, show, enumerate, find, or pick among any of these surfaces - including imperative phrasings ("list hooks", "show me the rules", "enumerate skills", "find a memory file", "which agent reviews code"), question phrasings ("what's available?", "what hooks do we have?", "which rule applies here?", "what memory files do we have?"), and indirect phrasings ("what can I use for X?", "do we have something that does Y?"). Always pick this skill over scanning the filesystem with grep, find, ls, or reading action files directly when the user is enumerating a surface. Do NOT use for picking a specific item inside one plugin (the plugin's own onboard handles that), creating a new surface, or executing a recommended item (this skill only points; the user invokes).` |
+| `actions` | [01-survey.md](skills/11-explore/actions/01-survey.md) | - |
+| `actions` | [02-drill.md](skills/11-explore/actions/02-drill.md) | - |
+| `-` | [README.md](skills/11-explore/README.md) | - |
+| `references` | [ai-mapping.md](skills/11-explore/references/ai-mapping.md) | - |
+| `-` | [SKILL.md](skills/11-explore/SKILL.md) | `Explore the current project across its tooling, context, and codebase. Use to survey what is installed and set up, see what is available, or find which installed skill, agent, or rule fits a goal. Not for the next step to take (onboard does that) or running an item (this skill only points).` |
 
 #### `skills/12-cook`
 
