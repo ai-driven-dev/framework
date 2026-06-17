@@ -1,5 +1,28 @@
 # Changelog
 
+## [5.0.0](https://github.com/ai-driven-dev/aidd-cli/compare/v4.6.1...v5.0.0) (2026-06-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* **cli:** `aidd migrate` is removed. Projects on pre-v6 manifests no longer need it — the manifest auto-upgrades the next time any command loads it.
+
+### Bug Fixes
+
+* **cli:** actionable malformed-catalog error + doctor silent-exit + full-matrix smoke ([7dd9aac](https://github.com/ai-driven-dev/aidd-cli/commit/7dd9aacc688ba1f792e00c07d209b803350ae3ba))
+* **cli:** align docs with code, remove dead --force flags ([#287](https://github.com/ai-driven-dev/aidd-cli/issues/287)) ([60ab985](https://github.com/ai-driven-dev/aidd-cli/commit/60ab98568b8024772732ae416aefd25b1891d493))
+* **cli:** remediate June 2026 6-pillar audit + harden dead update-check ([#289](https://github.com/ai-driven-dev/aidd-cli/issues/289)) ([305fe7e](https://github.com/ai-driven-dev/aidd-cli/commit/305fe7ef5eebed82c9d33049f230054a3cb69e8c))
+
+
+### Documentation
+
+* **cli:** fix AGENTS.md memory refs to dash filenames + add command-surface rework plan ([81249b4](https://github.com/ai-driven-dev/aidd-cli/commit/81249b4121d2ef83a4d3215825e5e7bc2212cccb))
+
+
+### Refactoring
+
+* **cli:** remove migrate command; manifests auto-upgrade on load ([#291](https://github.com/ai-driven-dev/aidd-cli/issues/291)) ([5a1d5d5](https://github.com/ai-driven-dev/aidd-cli/commit/5a1d5d5f51b403a10ebf511dd374c166d6f86af0))
+
 ## [4.6.1](https://github.com/ai-driven-dev/aidd-cli/compare/v4.6.0...v4.6.1) (2026-06-04)
 
 
