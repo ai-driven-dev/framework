@@ -44,10 +44,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile=false --ignore-scripts
 
-      - name: Install pipx (for JSON schema validation)
-        run: |
-          python3 -m pip install --user pipx
-          python3 -m pipx ensurepath
-
       - name: Run pre-commit hooks against the full tree
         run: pnpm exec lefthook run pre-commit --all-files --force

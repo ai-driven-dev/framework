@@ -4,50 +4,21 @@ pre-commit:
     json-validity:
       glob: "**/*.json"
       run: |
-        has_schema_validator=0
-        if command -v pipx >/dev/null 2>&1; then
-          has_schema_validator=1
+        if ! command -v node >/dev/null 2>&1; then
+          echo "❌ node not available; cannot validate JSON"
+          exit 1
         fi
-        for f in {files}; do
-          [ -f "$f" ] || continue
-          if ! jq empty "$f" >/dev/null 2>&1; then
-            echo "❌ invalid JSON: $f"
-            exit 1
-          fi
-          schema=""
-          case "$f" in
-            *.claude-plugin/plugin.json|*/.claude-plugin/plugin.json)
-              schema="https://www.schemastore.org/claude-code-plugin-manifest.json" ;;
-            *.claude-plugin/marketplace.json|*/.claude-plugin/marketplace.json)
-              schema="https://www.schemastore.org/claude-code-marketplace.json" ;;
-            *.claude/settings.json|*.claude/settings.local.json|*/.claude/settings.json|*/.claude/settings.local.json)
-              schema="https://www.schemastore.org/claude-code-settings.json" ;;
-          esac
-          if [ -n "$schema" ] && [ "$has_schema_validator" = "1" ]; then
-            if ! pipx run check-jsonschema --schemafile "$schema" "$f" >/dev/null 2>&1; then
-              pipx run check-jsonschema --schemafile "$schema" "$f"
-              echo "❌ schema validation failed: $f against $schema"
-              exit 1
-            fi
-          fi
-        done
+        node scripts/validate-json.mjs {files}
     yaml-validity:
       glob: "**/*.{yml,yaml}"
       exclude:
         - "plugins/*/skills/*/assets/**"
       run: |
-        if ! command -v python3 >/dev/null 2>&1; then
-          echo "ℹ️  python3 not available; skipping yaml-validity"
-          exit 0
+        if ! command -v node >/dev/null 2>&1; then
+          echo "❌ node not available; cannot validate YAML"
+          exit 1
         fi
-        if ! python3 -c "import yaml" >/dev/null 2>&1; then
-          echo "ℹ️  python3 yaml module not available; skipping yaml-validity"
-          exit 0
-        fi
-        for f in {files}; do
-          [ -f "$f" ] || continue
-          python3 -c "import yaml; yaml.safe_load(open('$f'))" 2>/dev/null || { echo "❌ invalid YAML: $f"; exit 1; }
-        done
+        node scripts/validate-yaml.mjs {files}
     skill-frontmatter:
       glob: "plugins/*/skills/*/SKILL.md"
       run: |
