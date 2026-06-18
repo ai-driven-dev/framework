@@ -96,7 +96,7 @@
     "plugins/aidd-dev/agents/implementer.md": "61b4531baa060e9b77c41cf1938c6c6433482dfdfe5eb3a774453d45cfe8b092",
     "plugins/aidd-dev/agents/planner.md": "de6efeda286fe33a5245a9ed3cf9e60b78946575a5bd66b359b2428adac51ba5",
     "plugins/aidd-dev/agents/reviewer.md": "bc5ffdc650d701c73b5da1e5eba904419e33346aac5c68bffdcd53b1e0476432",
-    "plugins/aidd-dev/.plugin/plugin.json": "27b0747e714ae17e95b6bf7cc9bca72b895341c9138ed531e9e5ecff30881a27",
+    "plugins/aidd-dev/.plugin/plugin.json": "6e892c043c48fdc258cf7d13f1feba463483a91543686da3b30b260296235334",
     "plugins/aidd-context/skills/06-discovery/SKILL.md": "28f82e034ed5707ad6e59b012680a94ff5935bc7f8a0b5407caeea20ccb2667a",
     "plugins/aidd-context/skills/06-discovery/actions/01-find-skill.md": "600caf7822017bfe75d40773e1673ada784227b98f5b88d4ba98a57822fa0dcf",
     "plugins/aidd-context/skills/05-learn/SKILL.md": "a1628b6311634de75b8260df3ab1271713dcb06136c6e66bad1e290594f81339",
@@ -196,7 +196,7 @@
     "plugins/aidd-async-dev/skills/01-setup/actions/skills/05-bootstrap-labels.md": "f53177ce1c58767f1bdfcfa3e72f7d4cc5e3d4fd782c35c3998815317be108b1",
     "plugins/aidd-async-dev/hooks/hooks.json": "78922a784ee78e9e50587e93628cd3b9d4dfbe49087adc4514e6781cea38cbb9",
     "plugins/aidd-async-dev/agents/async-orchestrator.md": "8b29ba73f27414e75c89c6453c0557212790d00d6becfadba363466999f2c9de",
-    "plugins/aidd-async-dev/.plugin/plugin.json": "24abf657211d16c43d33a89d21ca56d04239fe8dc6b92b748d7f407107952f61",
+    "plugins/aidd-async-dev/.plugin/plugin.json": "8d9b5b5edc8ac5d51cdb24bc5605b30ed3149616bfbbcc69db45f35d477315d5",
     ".plugin/marketplace.json": "fda47ddacff304f5bc06b1807f5c1c1be3f787995ed2f26cc8791c0c38ee3d19"
   },
   "codex": {
@@ -496,7 +496,7 @@
     "plugins/aidd-dev/agents/implementer.md": "61b4531baa060e9b77c41cf1938c6c6433482dfdfe5eb3a774453d45cfe8b092",
     "plugins/aidd-dev/agents/planner.md": "de6efeda286fe33a5245a9ed3cf9e60b78946575a5bd66b359b2428adac51ba5",
     "plugins/aidd-dev/agents/reviewer.md": "bc5ffdc650d701c73b5da1e5eba904419e33346aac5c68bffdcd53b1e0476432",
-    "plugins/aidd-dev/.claude-plugin/plugin.json": "27b0747e714ae17e95b6bf7cc9bca72b895341c9138ed531e9e5ecff30881a27",
+    "plugins/aidd-dev/.claude-plugin/plugin.json": "6e892c043c48fdc258cf7d13f1feba463483a91543686da3b30b260296235334",
     "plugins/aidd-context/skills/06-discovery/SKILL.md": "28f82e034ed5707ad6e59b012680a94ff5935bc7f8a0b5407caeea20ccb2667a",
     "plugins/aidd-context/skills/06-discovery/actions/01-find-skill.md": "600caf7822017bfe75d40773e1673ada784227b98f5b88d4ba98a57822fa0dcf",
     "plugins/aidd-context/skills/05-learn/SKILL.md": "a1628b6311634de75b8260df3ab1271713dcb06136c6e66bad1e290594f81339",
@@ -596,7 +596,7 @@
     "plugins/aidd-async-dev/skills/01-setup/actions/skills/05-bootstrap-labels.md": "f53177ce1c58767f1bdfcfa3e72f7d4cc5e3d4fd782c35c3998815317be108b1",
     "plugins/aidd-async-dev/hooks/hooks.json": "78922a784ee78e9e50587e93628cd3b9d4dfbe49087adc4514e6781cea38cbb9",
     "plugins/aidd-async-dev/agents/async-orchestrator.md": "8b29ba73f27414e75c89c6453c0557212790d00d6becfadba363466999f2c9de",
-    "plugins/aidd-async-dev/.claude-plugin/plugin.json": "24abf657211d16c43d33a89d21ca56d04239fe8dc6b92b748d7f407107952f61",
+    "plugins/aidd-async-dev/.claude-plugin/plugin.json": "8d9b5b5edc8ac5d51cdb24bc5605b30ed3149616bfbbcc69db45f35d477315d5",
     ".claude-plugin/marketplace.json": "d660f4eb03d90f2b2384c9ff61626d6ded7ede5664816681991ddebe622e099f"
   },
   "cursor": {
@@ -696,7 +696,7 @@
     "plugins/aidd-dev/agents/implementer.md": "61b4531baa060e9b77c41cf1938c6c6433482dfdfe5eb3a774453d45cfe8b092",
     "plugins/aidd-dev/agents/planner.md": "de6efeda286fe33a5245a9ed3cf9e60b78946575a5bd66b359b2428adac51ba5",
     "plugins/aidd-dev/agents/reviewer.md": "bc5ffdc650d701c73b5da1e5eba904419e33346aac5c68bffdcd53b1e0476432",
-    "plugins/aidd-dev/.cursor-plugin/plugin.json": "27b0747e714ae17e95b6bf7cc9bca72b895341c9138ed531e9e5ecff30881a27",
+    "plugins/aidd-dev/.cursor-plugin/plugin.json": "6e892c043c48fdc258cf7d13f1feba463483a91543686da3b30b260296235334",
     "plugins/aidd-context/skills/06-discovery/SKILL.md": "28f82e034ed5707ad6e59b012680a94ff5935bc7f8a0b5407caeea20ccb2667a",
     "plugins/aidd-context/skills/06-discovery/actions/01-find-skill.md": "600caf7822017bfe75d40773e1673ada784227b98f5b88d4ba98a57822fa0dcf",
     "plugins/aidd-context/skills/05-learn/SKILL.md": "a1628b6311634de75b8260df3ab1271713dcb06136c6e66bad1e290594f81339",
@@ -796,7 +796,7 @@
     "plugins/aidd-async-dev/skills/01-setup/actions/skills/05-bootstrap-labels.md": "f53177ce1c58767f1bdfcfa3e72f7d4cc5e3d4fd782c35c3998815317be108b1",
     "plugins/aidd-async-dev/hooks/hooks.json": "78922a784ee78e9e50587e93628cd3b9d4dfbe49087adc4514e6781cea38cbb9",
     "plugins/aidd-async-dev/agents/async-orchestrator.md": "8b29ba73f27414e75c89c6453c0557212790d00d6becfadba363466999f2c9de",
-    "plugins/aidd-async-dev/.cursor-plugin/plugin.json": "24abf657211d16c43d33a89d21ca56d04239fe8dc6b92b748d7f407107952f61",
+    "plugins/aidd-async-dev/.cursor-plugin/plugin.json": "8d9b5b5edc8ac5d51cdb24bc5605b30ed3149616bfbbcc69db45f35d477315d5",
     ".cursor-plugin/marketplace.json": "d660f4eb03d90f2b2384c9ff61626d6ded7ede5664816681991ddebe622e099f"
   },
   "claude:flat": {

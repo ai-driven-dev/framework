@@ -8,6 +8,7 @@ import {
 
 const EMPTY_PRESENCE: PluginPresenceFlags = {
   hasAgents: false,
+  agentsList: [],
   skillsList: [],
   hasHooksJson: false,
   hasMcpJson: false,
@@ -15,6 +16,7 @@ const EMPTY_PRESENCE: PluginPresenceFlags = {
 
 const FULL_PRESENCE: PluginPresenceFlags = {
   hasAgents: true,
+  agentsList: ["implementer.md", "planner.md", "reviewer.md"],
   skillsList: ["commit", "plan"],
   hasHooksJson: true,
   hasMcpJson: true,
@@ -60,15 +62,19 @@ describe("synthesizeClaudeStyleManifest", () => {
   });
 
   describe("agents field", () => {
-    it("includes agents: [./agents] when agentsField:true and hasAgents:true", () => {
+    it("includes agents as ./agents/*.md file paths when agentsField:true and agents present", () => {
       const result = synthesizeClaudeStyleManifest(BASE_SOURCE, FULL_PRESENCE, {
         manifestDir: ".claude-plugin",
         agentsField: true,
       });
-      expect(result.agents).toEqual(["./agents"]);
+      expect(result.agents).toEqual([
+        "./agents/implementer.md",
+        "./agents/planner.md",
+        "./agents/reviewer.md",
+      ]);
     });
 
-    it("omits agents when agentsField:true but hasAgents:false", () => {
+    it("omits agents when agentsField:true but no agents present", () => {
       const result = synthesizeClaudeStyleManifest(BASE_SOURCE, EMPTY_PRESENCE, {
         manifestDir: ".claude-plugin",
         agentsField: true,
@@ -141,7 +147,11 @@ describe("synthesizeClaudeStyleManifest", () => {
         manifestDir: ".cursor-plugin",
         agentsField: true,
       });
-      expect(result.agents).toEqual(["./agents"]);
+      expect(result.agents).toEqual([
+        "./agents/implementer.md",
+        "./agents/planner.md",
+        "./agents/reviewer.md",
+      ]);
       expect(result.name).toBe("aidd-dev");
     });
 
@@ -150,7 +160,11 @@ describe("synthesizeClaudeStyleManifest", () => {
         manifestDir: ".plugin",
         agentsField: true,
       });
-      expect(result.agents).toEqual(["./agents"]);
+      expect(result.agents).toEqual([
+        "./agents/implementer.md",
+        "./agents/planner.md",
+        "./agents/reviewer.md",
+      ]);
     });
   });
 

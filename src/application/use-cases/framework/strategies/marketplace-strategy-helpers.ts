@@ -12,15 +12,23 @@ import { assertNoToolsPlaceholder } from "../shared-plugin-helpers.js";
 
 export interface PluginPresenceFlags {
   readonly hasAgents: boolean;
+  /** Agent markdown files relative to the plugin's `agents/` dir (e.g. "planner.md"), sorted. */
+  readonly agentsList: readonly string[];
   readonly skillsList: readonly string[];
   readonly hasHooksJson: boolean;
   readonly hasMcpJson: boolean;
 }
 
-export async function hasAgentFiles(fs: FileReader, agentsDir: string): Promise<boolean> {
-  if (!(await fs.fileExists(agentsDir))) return false;
+export async function listAgentFiles(
+  fs: FileReader,
+  agentsDir: string
+): Promise<readonly string[]> {
+  if (!(await fs.fileExists(agentsDir))) return [];
   const files = await fs.listFilesRecursive(agentsDir);
-  return files.some((f) => f.endsWith(PLUGIN_AGENT_INPUT_EXT));
+  return files
+    .filter((f) => f.endsWith(PLUGIN_AGENT_INPUT_EXT))
+    .map((f) => relative(agentsDir, f).replace(/\\/g, "/"))
+    .sort();
 }
 
 export async function listSkillNames(
@@ -47,11 +55,11 @@ export async function detectPluginPresenceFlags(
   pluginSrc: string
 ): Promise<PluginPresenceFlags> {
   const agentsDir = join(pluginSrc, "agents");
-  const hasAgents = await hasAgentFiles(fs, agentsDir);
+  const agentsList = await listAgentFiles(fs, agentsDir);
   const skillsList = await listSkillNames(fs, pluginSrc);
   const hasHooksJson = await fs.fileExists(join(pluginSrc, PLUGIN_HOOKS_RELATIVE));
   const hasMcpJson = await fs.fileExists(join(pluginSrc, PLUGIN_MCP_RELATIVE));
-  return { hasAgents, skillsList, hasHooksJson, hasMcpJson };
+  return { hasAgents: agentsList.length > 0, agentsList, skillsList, hasHooksJson, hasMcpJson };
 }
 
 export async function writeSkillTree(
@@ -110,7 +118,7 @@ export async function resolveVersion(
 export interface SynthesizeClaudeStyleManifestOpts {
   /** Output manifest subdirectory name (e.g. ".claude-plugin" or ".cursor-plugin"). Reserved for caller/future divergence. */
   readonly manifestDir: string;
-  /** When true, include `agents: ["./agents"]` if agents are present. */
+  /** When true, include `agents` as a list of `./agents/*.md` file paths if agents are present. */
   readonly agentsField: boolean;
 }
 
@@ -134,7 +142,8 @@ export function synthesizeClaudeStyleManifest(
   if (typeof source.repository === "string") manifest.repository = source.repository;
   if (typeof source.license === "string") manifest.license = source.license;
   if (Array.isArray(source.keywords)) manifest.keywords = source.keywords;
-  if (opts.agentsField && presence.hasAgents) manifest.agents = ["./agents"];
+  if (opts.agentsField && presence.agentsList.length > 0)
+    manifest.agents = presence.agentsList.map((n) => `./agents/${n}`);
   if (presence.skillsList.length > 0)
     manifest.skills = presence.skillsList.map((n) => `./skills/${n}`);
   if (presence.hasHooksJson) manifest.hooks = "./hooks/hooks.json";

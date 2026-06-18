@@ -152,13 +152,13 @@ describe("FrameworkBuildUseCase", () => {
       expect(parsed.skills).toBeUndefined();
     });
 
-    it("synthesized plugin.json has agents array when agents directory has .md files", async () => {
+    it("synthesized plugin.json lists ./agents/*.md file paths when agents directory has .md files", async () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" });
       const parsed = JSON.parse(
         fs.getFile(`${OUT_DIR}/plugins/aidd-test/.plugin/plugin.json`) ?? "{}"
       ) as { agents: string[] };
-      expect(parsed.agents).toEqual(["./agents"]);
+      expect(parsed.agents).toEqual(["./agents/code-reviewer.md"]);
     });
 
     it("synthesized plugin.json omits agents when no .md files exist in agents directory", async () => {

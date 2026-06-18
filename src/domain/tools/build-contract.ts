@@ -184,6 +184,8 @@ export interface SourcePluginEntryRef {
  */
 export interface PluginPresence {
   readonly hasAgents: boolean;
+  /** Agent markdown files relative to the plugin's `agents/` dir (e.g. "planner.md"), sorted. */
+  readonly agentsList: readonly string[];
   readonly skillsList: readonly string[];
   readonly hasHooksJson: boolean;
   readonly hasMcpJson: boolean;

@@ -10,10 +10,13 @@
  * All values are derived from file content only (no absolute paths, no timestamps).
  * This makes the snapshot machine-independent.
  *
- * FROZEN CELLS (P1 marketplace baseline, never regenerate):
- *   copilot, codex, claude, cursor (marketplace only)
+ * FROZEN CELLS (marketplace baseline, never regenerate casually):
+ *   claude — re-baselined once in the agents-manifest-fix pass (see below), still frozen since.
  * RE-BASELINED CELLS (flat-discovery-fix pass: bare paths, no plugin segment):
  *   claude:flat, cursor:flat, copilot:flat, codex:flat, opencode:flat
+ * RE-BASELINED CELLS (agents-manifest-fix pass: `agents` is now a list of
+ *   ./agents/*.md file paths instead of the invalid `["./agents"]` dir form):
+ *   claude, cursor, copilot (marketplace)
  *
  * USAGE:
  *   Capture all:   UPDATE_FRAMEWORK_GOLDEN=1 pnpm test:e2e tests/golden/framework-build-golden.e2e.test.ts
@@ -40,11 +43,12 @@ const MARKETPLACE_TARGETS = ["copilot", "codex", "claude", "cursor"] as const;
 const FLAT_TARGETS = ["claude", "cursor", "copilot", "codex", "opencode"] as const;
 
 /**
- * Frozen marketplace cells: byte-identical to the pre-change P1 baseline.
- * Only claude is frozen — cursor/codex/copilot were re-baselined in the
- * plugin-root-token-rewrite pass (${CLAUDE_PLUGIN_ROOT} → tool-native token).
- * copilot:flat was re-baselined in the flat-discovery-fix pass (plugin segment
- * removed from skill/agent paths) and is therefore no longer frozen.
+ * Frozen marketplace cell: its fresh build is byte-compared to the stored hash on
+ * every run. Only claude is frozen — cursor/codex/copilot were re-baselined in the
+ * plugin-root-token-rewrite pass (${CLAUDE_PLUGIN_ROOT} → tool-native token), and
+ * copilot:flat in the flat-discovery-fix pass. claude itself was re-baselined once
+ * in the agents-manifest-fix pass (agents → ./agents/*.md file list) and is frozen
+ * at that value since.
  */
 const FROZEN_CELLS = new Set(["claude"]);
 
@@ -153,7 +157,7 @@ describe.concurrent("Framework build golden — 9-cell matrix", () => {
     }
   });
 
-  it("stored golden baseline covers all 9 cells and frozen 4 marketplace cells are byte-identical (AC #1)", async () => {
+  it("stored golden baseline covers all 9 cells and the frozen claude cell is byte-identical (AC #1)", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fb-golden-baseline");
     try {
       const captured = await captureAllCells(projectDir, fakeHome, tempDir);
@@ -174,7 +178,7 @@ describe.concurrent("Framework build golden — 9-cell matrix", () => {
         expect(Object.keys(stored[key]).length, `cell ${key} must have files`).toBeGreaterThan(0);
       }
 
-      // Assert frozen 5 cells byte-identical to P1 baseline
+      // Assert the frozen cell(s) are byte-identical to the stored baseline
       for (const key of FROZEN_CELLS) {
         const capturedCell = captured[key];
         const storedCell = stored[key];

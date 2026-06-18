@@ -132,13 +132,17 @@ describe("ClaudeOutputStrategy", () => {
   });
 
   describe("plugin manifest has agents field (AC #7)", () => {
-    it("synthesized plugin.json has agents: ['./agents'] when source has agents", async () => {
+    it("synthesized plugin.json lists ./agents/*.md file paths when source has agents", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
       const raw = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/.claude-plugin/plugin.json`) ?? "{}";
       const parsed = JSON.parse(raw) as Record<string, unknown>;
-      expect(parsed.agents).toEqual(["./agents"]);
+      expect(parsed.agents).toEqual([
+        "./agents/implementer.md",
+        "./agents/planner.md",
+        "./agents/reviewer.md",
+      ]);
     });
 
     it("synthesized plugin.json omits agents when no agents present", async () => {
