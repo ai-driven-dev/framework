@@ -1,6 +1,7 @@
 ---
 name: 05-rule-generate
 description: Generate a coding rule that governs editor and agent behavior, across the host AI tools a project uses. Use when the user wants to write, add, or refactor a rule, a convention, or a coding standard, or to scan a codebase and propose rules. Not for other artifacts like skills, agents, commands, hooks.
+argument-hint: capture-rule | write-rule | validate
 ---
 
 # Rule Generate

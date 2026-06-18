@@ -1,6 +1,7 @@
 ---
 name: 04-skill-generate
 description: Generate a router-based skill across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor a skill, or turn a workflow into one. Not for other artifacts like rules, agents, commands, hooks.
+argument-hint: capture-intent | decompose-actions | draft-skill | write-actions | validate
 ---
 
 # Skill Generate

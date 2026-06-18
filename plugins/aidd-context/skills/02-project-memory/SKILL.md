@@ -1,6 +1,7 @@
 ---
 name: 02-project-memory
 description: Initialize or refresh the project memory bank. Not for updating one memory file after it exists (use the learn skill) or editing a single rule (edit it directly).
+argument-hint: init-context-file | scaffold-docs | generate-memory | review-memory | sync-memory
 ---
 
 # Project Memory

@@ -1,6 +1,7 @@
 ---
 name: 01-plan
 description: Generate technical implementation plans, define component behaviors, and extract design details from images.
+argument-hint: plan | components-behavior | image-extract-details
 model: opus
 context: fork
 agent: planner

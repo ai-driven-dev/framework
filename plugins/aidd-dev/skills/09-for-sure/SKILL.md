@@ -1,6 +1,7 @@
 ---
 name: 09-for-sure
 description: Iterative agent loop that tracks attempts and retries until a success condition is met. Use when the user says "for sure", "make sure", "keep trying until", "loop until done", "don't stop until", or needs guaranteed completion of a task with explicit success criteria.
+argument-hint: init-tracking | auto-accept | autonomous-loop
 ---
 
 # For Sure

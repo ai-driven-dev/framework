@@ -1,6 +1,7 @@
 ---
 name: 04-audit
 description: Read-only codebase audit across quality pillars (code-quality, architecture, security, dependencies, performance, tests, ui). Diagnoses and reports findings; never edits code. Use when the user wants to assess, audit, or health-check a codebase or one dimension of it, then hands off to the act-skills (refactor, test, impeccable) to fix. Do NOT use for fixing the findings (hand off to refactor/test/impeccable), per-PR code review (use 05-review), or validating that a feature works (use 03-assert).
+argument-hint: code-quality | architecture | security | dependencies | performance | tests | ui
 model: opus
 ---
 

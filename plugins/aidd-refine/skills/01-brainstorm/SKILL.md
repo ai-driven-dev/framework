@@ -1,6 +1,7 @@
 ---
 name: 01-brainstorm
 description: Interactive brainstorming session to clarify and refine requests through iterative questioning. Use when user mentions unclear requirements, vague ideas, or needs clarification on features. Do NOT use for clear technical specs, implementation details, or when requirements are already well-defined.
+argument-hint: capture-request | ask-probing-questions | integrate-answers | refine-and-validate | confirm-approval
 ---
 
 # Brainstorm
