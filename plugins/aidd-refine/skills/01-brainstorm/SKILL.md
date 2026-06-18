@@ -1,42 +1,42 @@
 ---
 name: 01-brainstorm
-description: Interactive brainstorming session to clarify and refine requests through iterative questioning. Use when user mentions unclear requirements, vague ideas, or needs clarification on features. Do NOT use for clear technical specs, implementation details, or when requirements are already well-defined.
+description: Clarify a vague idea through deep back-and-forth questioning until it is precise enough to act on. Works at any level, functional, technical, or mixed. Use when the user surfaces a half-formed idea, a fuzzy feature, a technical question, or an under-specified request, or asks to brainstorm, clarify, or refine before committing. Keeps probing and following each answer's threads until no real ambiguity remains or the user is satisfied. Not for analytically scanning a written artifact for gaps (use aidd-refine:04-shadow-areas), critiquing finished work (use aidd-refine:02-challenge), or any implementation, planning, or code.
 argument-hint: capture-request | ask-probing-questions | integrate-answers | refine-and-validate | confirm-approval
 ---
 
 # Brainstorm
 
-Clarifies and refines a feature request through structured iterative questioning until no ambiguity remains. Auto-triggers on prompts indicating uncertainty or need for clarification.
+Turns a vague idea into a precise one through a deep, natural conversation. Each round asks pointed questions, follows the threads the answers open, and challenges assumptions, until the idea is clear enough to act on. It digs, it does not tick boxes.
 
-## Available actions
+## Actions
 
-| #   | Action              | Role                                          | Input              |
-| --- | ------------------- | --------------------------------------------- | ------------------ |
-| 01  | `capture-request`   | Detail initial request in bullet points       | user intent        |
-| 02  | `ask-probing-questions` | Ask questions to challenge assumptions     | captured request   |
-| 03  | `integrate-answers` | Update request with user responses           | answers + request  |
-| 04  | `refine-and-validate` | Finalize and check for ambiguity            | updated request    |
-| 05  | `confirm-approval`  | Wait for user approval                       | refined request    |
+| #   | Action      | Role                                                       | Input               |
+| --- | ----------- | --------------------------------------------------------- | ------------------- |
+| 01  | `capture`   | Restate the idea and read its altitude                     | the user's idea     |
+| 02  | `probe`     | Ask pointed questions, follow the open thread, challenge    | the idea so far     |
+| 03  | `integrate` | Fold answers in, judge if real ambiguity remains           | answers + the idea  |
+| 04  | `finalize`  | Consolidate, flag open assumptions, offer to persist       | the clarified idea  |
 
 ## Default flow
 
-Sequential skill: `01 → 02 → 03 → 04 → 05`. Loop `02 → 03` until no ambiguity (router checks `03` output for `needs_more`).
+`capture` once, then loop `probe → integrate` until no real ambiguity remains or the user is satisfied, then `finalize`. There is no fixed round count, the idea is done when it is clear, not on a timer. Run each action's `## Test` before the next.
 
 ## Transversal rules
 
-- Never assume technical solutions upfront.
-- Use bullet points for clarity.
-- DO NOT IMPLEMENT ANYTHING.
-- Wait for user response after questions or approval prompts.
+- Clarify the idea, never build it. Surface the leaning and its tradeoff when the facts point one way, but do not lock a solution, write a plan, or produce code.
+- Stay tool-agnostic. Refine the idea on its own terms. Never write a `plugin:skill` identifier, name the capability in plain words instead (the project's rule-writing, its planning step), never the skill that provides it. How it gets built is the next step's job, not brainstorm's.
+- Work at the user's altitude, functional or technical, and probe at that grain, never one level finer.
+- Follow the thread. Pull on what each answer opens, especially a fork where two materially different builds are still possible, rather than cycling fixed topics. Depth over breadth.
+- Challenge assumptions and surface limit cases as they appear, do not save them for the end.
+- Ask a focused set of pointed questions, several when they share the thread, never a question already answered, never a flat checklist. Keep it a conversation.
+- Keep going until the idea is clear or the user stops. Never stop on a count.
+- Flag every open assumption, never present a guess as settled.
+- Wait for the user after every question and at approval.
 
 ## References
 
-- `@references/ambiguity-detection.md`: How to identify and resolve unclear requirements.
+- `references/probing.md`: how to read altitude, follow threads, the probing tactics, and when to stop.
 
 ## Assets
 
-- `@assets/question-templates.md`: Reusable probing question categories.
-
-## External data
-
-- None.
+- `assets/question-angles.md`: concrete question prompts to draw from when probing.

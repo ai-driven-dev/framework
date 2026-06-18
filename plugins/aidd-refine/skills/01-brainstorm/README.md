@@ -2,54 +2,31 @@
 
 # 01 - Brainstorm
 
-Interactive brainstorming session that clarifies and refines a vague request
-through iterative questioning, until no ambiguity remains and the user
-explicitly approves the result.
+Turns a vague idea into a precise one through a deep, natural conversation, at whatever level the user is thinking, functional or technical. It asks pointed questions, follows the threads each answer opens, and challenges assumptions until the idea is clear enough to act on. It digs, it does not tick boxes.
 
 ## When to use
 
-- The user surfaces an unclear requirement, a half-formed idea, or a fuzzy
-  feature description.
-- A request feels under-specified and the next step (plan, code, test) would
-  rest on assumptions.
-- The user explicitly asks to brainstorm, refine, or clarify a request.
+- The user surfaces a half-formed idea, a fuzzy feature, a technical question, or an under-specified request.
+- An idea would otherwise force the next step (plan, code, test) to rest on assumptions.
+- The user asks to brainstorm, clarify, or refine before committing.
 
-## When NOT to use
+## When not to use
 
-- The technical spec is already clear and actionable.
-- The user only needs implementation details on a settled requirement.
-- The request is concrete enough that planning or coding can start directly.
+- To scan a written artifact for gaps. Use `aidd-refine:04-shadow-areas`.
+- To critique finished work. Use `aidd-refine:02-challenge`.
+- The idea is already concrete enough to plan or code.
 
-## How to invoke
+## The loop
 
-```
-Use skill aidd-refine:01-brainstorm
-```
+`capture` restates the idea and reads its altitude. Then `probe → integrate` repeats: each round asks pointed questions on the live thread, follows the forks the answers open, challenges assumptions, and folds the answers back in. It keeps going until no real ambiguity remains or the user is satisfied. There is no fixed round count, the idea is done when it is clear, not on a timer. `finalize` consolidates the refined idea, flags every open assumption and risk, and offers to persist it to a dated file under `aidd_docs/brainstorm/`, a ticket, or the session only.
 
-The skill walks 5 atomic actions:
+## What makes it dig
 
-1. `capture-request` - restate the initial intent as bullet points.
-2. `ask-probing-questions` - challenge assumptions with targeted questions.
-3. `integrate-answers` - fold the user's answers back into the request.
-4. `refine-and-validate` - finalize and scan for residual ambiguity.
-5. `confirm-approval` - wait for explicit user sign-off.
+- **Follows threads, not topics.** It pulls on the fork an answer opens (filename versus full-text search, for instance), where the depth is, instead of cycling a fixed list.
+- **Works at your altitude.** A technical question gets technical probing, a fuzzy feature gets product probing, never one level finer than you opened.
+- **Leans when the facts point.** When the answers favor one option it says so with the tradeoff, and keeps the implementation as a flagged assumption for planning.
+- **Flags, never fakes.** Whatever stays open is reported as an assumption or risk, never dressed up as settled.
 
-The router loops `02 → 03` until the validator marks the request unambiguous.
+## Details
 
-## Outputs
-
-- A refined, bullet-pointed request the user has explicitly approved.
-- No code, no plan, no files. Intent only.
-
-## Prerequisites
-
-- A user-supplied request, even if vague.
-- Willingness to answer clarifying questions before moving forward.
-
-## Technical details
-
-See [`SKILL.md`](SKILL.md) for the action contract, [`actions/`](actions/) for
-each step, [`references/ambiguity-detection.md`](references/ambiguity-detection.md)
-for the ambiguity heuristics, and
-[`assets/question-templates.md`](assets/question-templates.md) for the reusable
-question categories.
+See [`SKILL.md`](SKILL.md) for the contract, [`actions/`](actions/) for the four actions, [`references/probing.md`](references/probing.md) for how to read altitude, follow threads, the tactics, and when to stop, and [`assets/question-angles.md`](assets/question-angles.md) for the topical prompt banks.

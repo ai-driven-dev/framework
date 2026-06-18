@@ -36,15 +36,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-capture-request.md](skills/01-brainstorm/actions/01-capture-request.md) | - |
-| `actions` | [02-ask-probing-questions.md](skills/01-brainstorm/actions/02-ask-probing-questions.md) | - |
-| `actions` | [03-integrate-answers.md](skills/01-brainstorm/actions/03-integrate-answers.md) | - |
-| `actions` | [04-refine-and-validate.md](skills/01-brainstorm/actions/04-refine-and-validate.md) | - |
-| `actions` | [05-confirm-approval.md](skills/01-brainstorm/actions/05-confirm-approval.md) | - |
-| `assets` | [question-templates.md](skills/01-brainstorm/assets/question-templates.md) | - |
+| `actions` | [01-capture.md](skills/01-brainstorm/actions/01-capture.md) | - |
+| `actions` | [02-probe.md](skills/01-brainstorm/actions/02-probe.md) | - |
+| `actions` | [03-integrate.md](skills/01-brainstorm/actions/03-integrate.md) | - |
+| `actions` | [04-finalize.md](skills/01-brainstorm/actions/04-finalize.md) | - |
+| `assets` | [question-angles.md](skills/01-brainstorm/assets/question-angles.md) | - |
 | `-` | [README.md](skills/01-brainstorm/README.md) | - |
-| `references` | [ambiguity-detection.md](skills/01-brainstorm/references/ambiguity-detection.md) | - |
-| `-` | [SKILL.md](skills/01-brainstorm/SKILL.md) | `Interactive brainstorming session to clarify and refine requests through iterative questioning. Use when user mentions unclear requirements, vague ideas, or needs clarification on features. Do NOT use for clear technical specs, implementation details, or when requirements are already well-defined.` |
+| `references` | [probing.md](skills/01-brainstorm/references/probing.md) | - |
+| `-` | [SKILL.md](skills/01-brainstorm/SKILL.md) | `Clarify a vague idea through deep back-and-forth questioning until it is precise enough to act on. Works at any level, functional, technical, or mixed. Use when the user surfaces a half-formed idea, a fuzzy feature, a technical question, or an under-specified request, or asks to brainstorm, clarify, or refine before committing. Keeps probing and following each answer's threads until no real ambiguity remains or the user is satisfied. Not for analytically scanning a written artifact for gaps (use aidd-refine:04-shadow-areas), critiquing finished work (use aidd-refine:02-challenge), or any implementation, planning, or code.` |
 
 #### `skills/02-challenge`
 
