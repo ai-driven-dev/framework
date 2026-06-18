@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# dev-setup.sh - register this checkout as a local marketplace, then install every plugin
-# into Claude and Codex (delegates the install to dev-sync.sh, current versions, no bump).
-# This mutates your GLOBAL (user-scope) config, so it asks to confirm first. Bypass with
-# `-y` / `--yes` / `YES=1`; a non-interactive shell skips rather than hangs. Called by
-# `make setup`. For iterating after edits use `make reload`.
+# dev-setup.sh - confirm, then install every plugin into Claude and Codex by delegating to
+# dev-sync.sh (which builds this checkout into each tool's native tree, registers the
+# marketplace against it, and installs - current versions, no bump). This mutates your
+# GLOBAL (user-scope) config, so it asks to confirm first. Bypass with `-y` / `--yes` /
+# `YES=1`; a non-interactive shell skips rather than hangs. Called by `make setup`. For
+# iterating after edits use `make reload`.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-FW="${FW:-$(dirname "$SCRIPT_DIR")}"        # repo root = parent of scripts/
 MKT="${MKT:-aidd-framework}"
 
 HAVE_CODEX=0;  command -v codex  >/dev/null 2>&1 && HAVE_CODEX=1
@@ -32,7 +32,5 @@ if [ "${YES:-}" != "1" ] && [ "${1:-}" != "-y" ] && [ "${1:-}" != "--yes" ]; the
   fi
 fi
 
-# Register the marketplace (no-op if already registered), then install via dev-sync.
-[ "$HAVE_CODEX" = 1 ]  && codex  plugin marketplace add "$FW" >/dev/null 2>&1 || true
-[ "$HAVE_CLAUDE" = 1 ] && claude plugin marketplace add "$FW" >/dev/null 2>&1 || true
+# dev-sync builds each tool's native tree, registers the marketplace against it, and installs.
 exec "$SCRIPT_DIR/dev-sync.sh" all
