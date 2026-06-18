@@ -21,3 +21,8 @@ Format: `type(scope): description` (Conventional Commits)
 - Imperative mood, lowercase, max 72 chars
 
 Example: `feat(install): add plugin registry support`
+
+## Releases
+
+- Driven by **release-please** (Conventional Commits → semver). A `!` or `BREAKING CHANGE` footer forces a major bump.
+- The bot keeps one open release PR off `main`; merging it tags `vX.Y.Z` and triggers publish (see `deployment.md`). Never bump the version or tag by hand.

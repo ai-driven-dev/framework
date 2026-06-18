@@ -9,7 +9,7 @@
 - No silent errors — throw early, fail loudly
 - No duplication — eliminate ruthlessly, reuse existing code
 - Domain layer has zero infrastructure imports
-- Max 2 runtime dependencies: `commander`, `@inquirer/prompts`
+- Runtime deps capped at the 6 justified in `architecture.md` (`commander`, `@inquirer/prompts`, `ajv`, `ajv-formats`, `simple-git`, `smol-toml`); a new one needs an ADR
 - 3-layer architecture respected: Domain → Application → Infrastructure (no Presentation layer — output formatting lives in `application/output.ts`)
 
 ## Steps to follow

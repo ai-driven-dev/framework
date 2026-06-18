@@ -100,6 +100,7 @@ Test names must describe user-visible or system-level behaviour:
 
 ## Smoke / dogfood install isolation
 
+- Smoke harness: single `pnpm smoke` → `scripts/smoke-tools.sh`. Drives the real built binary across the full command matrix (all leaf commands × tools); robust `perl alarm` per-command timeout + `grep`-based content guards; coverage-gated.
 - Smoke-tests and dogfood CLI installs (`ai install`, `marketplace add`, `plugin install`) MUST run in a fresh `/tmp/<name>` dir with `git init` — NEVER in the repo root.
 - In-repo installs leak tracked per-tool residue (`.codex/`, `.cursor/`, `.github/copilot/`, `.opencode/`, `opencode.json`, `.vscode/`) that gets committed by accident (cleaned in PR #276).
 - This repo is Claude-only: only `.claude/` and `.aidd/` are legitimate in-repo install artifacts.

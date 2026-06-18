@@ -6,4 +6,6 @@
 @aidd_docs/memory/project-brief.md
 @aidd_docs/memory/testing.md
 @aidd_docs/memory/vcs.md
+@aidd_docs/memory/auth.md
+@aidd_docs/memory/cli.md
 </aidd_project_memory>

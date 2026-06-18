@@ -2,31 +2,37 @@
 
 ## Environment Variables
 
-- `AIDD_TOKEN` — authentication token for GitHub Packages (private registry)
+- `AIDD_TOKEN` — GitHub token used to fetch private marketplaces / plugin sources (see `auth.md`). Not a registry credential.
 
 ## Build & Publish
 
-- Build: `pnpm build` → `dist/cli.js` (tsup, ESM bundle); runs `scripts/check-bundle-size.mjs` automatically
-- Bundle budget: 500 KB (`bundleBudgetKB` in `package.json`); build fails if exceeded
-- Local install test: `pnpm run install:local` (packs and installs globally via npm)
-- Publish: `pnpm publish` targeting GitHub Packages registry (`@ai-driven-dev` scope)
-- Runtime requirements: Node.js >= 24, pnpm >= 9
+- Build: `pnpm build` → `dist/cli.js` (tsup, ESM bundle); runs `scripts/check-bundle-size.mjs` automatically.
+- Bundle budget: 500 KB (`bundleBudgetKB` in `package.json`); build fails if exceeded.
+- Local install test: `pnpm run install:local` (packs, then `npm install -g` the tarball with `--force`).
+- Runtime requirements: Node.js >= 24, pnpm >= 9.
+- **Release is automated, not manual.** `release-please` maintains a single open release PR off `main`; merging it bumps the version, writes the CHANGELOG, and tags `vX.Y.Z`.
+- The tag fires the **Publish** job (`.github/workflows/ci.yml`), which publishes to **both** registries:
+  - GitHub Packages — `pnpm publish --no-git-checks`
+  - public npm — `registry.npmjs.org`, `pnpm publish --access public`, via OIDC trusted publishing (`id-token: write` + `NPM_TOKEN`).
 
 ## Tooling facts
 
 - **Biome** is the sole linter + formatter — no ESLint, no Prettier. Config at repo root (`biome.json`). Fix with `biome check --write`.
-- **Lefthook** runs git hooks; commitlint enforces Conventional Commits.
+- **Lefthook** runs git hooks; **commitlint** enforces Conventional Commits.
 
-## Git Hooks
+## Git Hooks (`lefthook.yml`)
 
-- lefthook delegates `pre-commit` and `pre-push` to parent monorepo via `pnpm exec lefthook run <hook>`
-- commitlint validates commit message format on commit
+Hooks run this repo's own checks directly (no parent-monorepo delegation):
+
+- `pre-commit`: `pnpm lint` (biome) + `pnpm typecheck`
+- `pre-push`: `pnpm knip:production` + `pnpm test`
+- `commit-msg`: `commitlint --edit`
 
 ## CI/CD
 
-- `.github/workflows/ci-commitlint.yml` — commitlint on push to `main` and all PRs
-- No containerization
-- No monitoring infrastructure
+- `.github/workflows/ci.yml` — "CI & Publish", on push to `main`: commitlint → (typecheck, lint, test, build & bundle budget, knip, jscpd) → release-please → publish.
+- `.github/workflows/perf-regression.yml` — perf baseline check (separate workflow).
+- No containerization, no monitoring infrastructure.
 
 ## Scripts
 
@@ -37,14 +43,15 @@
 | `pnpm typecheck` | tsc --noEmit |
 | `pnpm lint` | biome check |
 | `pnpm format` | biome format --write |
+| `pnpm smoke` | build + `scripts/smoke-tools.sh` (full-matrix smoke on the real binary) |
 | `pnpm pack:local` | build + pack to dist/ |
-| `pnpm install:local` | pack + npm install -g |
+| `pnpm install:local` | pack + npm install -g (`--force`) |
 | `pnpm build:check-size` | run bundle size check only (no rebuild) |
 | `pnpm bench:check` | run perf regression check against baseline |
 | `pnpm test:mutation` | Stryker mutation testing (slow; CI gate) |
 
 ## Perf Regression
 
-- Baseline: `scripts/perf-baseline.json` — 4 commands tracked (`--version`, `--help`, `status`, `ai list`)
-- Checker: `scripts/check-perf-regression.mjs` — fails build if median exceeds baseline by threshold
-- Update baseline with `scripts/benchmark.mjs`
+- Baseline: `scripts/perf-baseline.json` — 4 commands tracked (`--version`, `--help`, `status`, `ai list`).
+- Checker: `scripts/check-perf-regression.mjs` — fails build if median exceeds baseline by threshold.
+- Update baseline with `scripts/benchmark.mjs`.
