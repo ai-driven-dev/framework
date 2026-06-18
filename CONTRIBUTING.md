@@ -52,7 +52,8 @@ make reload                        # all plugins; or PLUGIN="aidd-refine aidd-pm
 ```
 
 - reinstalls each plugin from the checkout (current versions, no bump - nothing to revert)
-- purges + refreshes the cache in Claude + Codex
+- Claude installs straight from the raw repo (already native Claude format); Codex installs from a tree the `aidd` CLI builds (Claude syntax -> Codex, e.g. agents -> TOML)
+- refreshes the cache in Claude + Codex; Codex agents are copied to `~/.codex/agents/` (Codex does not load plugin-bundled agents yet)
 - restart the session to load it (`/reload-plugins` covers a Claude-only edit to an existing skill)
 
 ## 2. Commit
