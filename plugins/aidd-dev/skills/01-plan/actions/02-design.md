@@ -12,6 +12,10 @@ The page or feature to design (free text). Nothing else.
 
 The page, **described**: what it is, its components and their behavior, the dumb/smart split. Plus a bullet list (or small table) of the elements covered, and the delegation prompt for the implementer.
 
+## Requirement
+
+`impeccable` skill installed.
+
 ## Process
 
 1. **Describe the page.** Purpose, sections, components. Per component, its behavior (states + transitions) - the SMART layer, owned in-house.

@@ -57,12 +57,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|---|
 | `actions` | [01-plan.md](skills/01-plan/actions/01-plan.md) | - | - |
 | `actions` | [02-design.md](skills/01-plan/actions/02-design.md) | - | - |
-| `assets` | [master-plan-template.md](skills/01-plan/assets/master-plan-template.md) | `Parent plan template orchestrating multiple child plans with validation gates` | - |
-| `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | `Living implementation plan - frozen objective, phases, and append-only execution Log. Used as input artifact AND as the autonomous-loop tracking file.` | - |
+| `assets` | [phase-template.md](skills/01-plan/assets/phase-template.md) | `Living implementation plan - frozen objective, phases, and append-only execution Log. Used as input artifact AND as the autonomous-loop tracking file.` | - |
+| `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | `Parent plan template orchestrating multiple child plans with validation gates` | - |
 | `assets` | [tech-choice-template.md](skills/01-plan/assets/tech-choice-template.md) | `Technology selection and comparison template` | - |
-| `evals` | [scenarios.json](skills/01-plan/evals/scenarios.json) | - | - |
-| `-` | [README.md](skills/01-plan/README.md) | - | - |
 | `references` | [mermaid-conventions.md](skills/01-plan/references/mermaid-conventions.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` | - |
+| `references` | [phase-rules.md](skills/01-plan/references/phase-rules.md) | - | - |
+| `references` | [plan-rules.md](skills/01-plan/references/plan-rules.md) | - | - |
 | `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Generate technical implementation plans, and define a frontend page's design - component behaviors as state machines plus the dumb/smart split that delegates the visual to the design tool.` | - |
 
 #### `skills/02-implement`

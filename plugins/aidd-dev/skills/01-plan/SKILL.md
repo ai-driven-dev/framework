@@ -1,9 +1,10 @@
 ---
 name: 01-plan
 description: Generate technical implementation plans, and define a frontend page's design - component behaviors as state machines plus the dumb/smart split that delegates the visual to the design tool.
-model: opus
 context: fork
 agent: planner
+model: sonnet
+effort: medium
 ---
 
 # Skill: plan
@@ -32,5 +33,15 @@ Actions may chain (e.g. design the page, then plan its build). Read and follow e
 
 ## Actions
 
-- `@actions/01-plan.md`
-- `@actions/02-design.md`
+- `actions/01-plan.md`
+- `actions/02-design.md`
+
+## References
+
+```markdown
+@references/phase-template.md
+````
+
+```markdown
+@references/phase-rules.md
+```
