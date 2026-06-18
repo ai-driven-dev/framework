@@ -196,7 +196,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-list.md](skills/12-cook/actions/01-list.md) | - |
 | `actions` | [02-upsert.md](skills/12-cook/actions/02-upsert.md) | - |
+| `actions` | [03-research.md](skills/12-cook/actions/03-research.md) | - |
+| `actions` | [04-apply.md](skills/12-cook/actions/04-apply.md) | - |
 | `assets` | [recipe-template.md](skills/12-cook/assets/recipe-template.md) | - |
+| `assets` | [refine-goal-checklist.md](skills/12-cook/assets/refine-goal-checklist.md) | - |
+| `assets` | [research-checklist.md](skills/12-cook/assets/research-checklist.md) | - |
 | `-` | [README.md](skills/12-cook/README.md) | - |
-| `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manage the project's recipes/ how-to sheets: list them as a table, or create and update one from the canonical template. Use for "list recipes", "new recipe", "update a recipe", "cook a recipe".` |
+| `references` | [research-playbook.md](skills/12-cook/references/research-playbook.md) | - |
+| `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manage the project's recipes/ how-to sheets: list them as a table, create or update one from the canonical template, research modern alternatives for a recipe, or apply a recipe to the project. Use for "list recipes", "new recipe", "update a recipe", "cook a recipe", "research a recipe", "modernize a recipe", "apply a recipe", "run a recipe".` |
 
