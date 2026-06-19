@@ -22,9 +22,11 @@ description: <What the skill does, third person, one clause>. Use when <explicit
 OPTIONAL sections below. Include a section ONLY when it has content (R9); never write an empty section or a "None." placeholder. Delete this comment and any section you do not use.
 
 ## References    documents the actions READ (conventions, schemas). Plain paths, no `@`.
+List ONLY global includes (used skill-wide). An action-specific include lives with its action and carries that action's slug prefix (R13).
 - `references/<file>.md`: <what it covers>
 
 ## Assets       files the actions COPY or INJECT (templates, fixed snippets).
+List ONLY global includes (used skill-wide). An action-specific include lives with its action and carries that action's slug prefix (R13).
 - `assets/<file>`: <what it provides>
 
 ## Transversal rules   rules applying to every action that are NOT already owned by a reference.
