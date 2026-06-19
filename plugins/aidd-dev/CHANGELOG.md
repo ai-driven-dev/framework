@@ -1,5 +1,30 @@
 # Changelog
 
+## [2.0.0](https://github.com/ai-driven-dev/framework/compare/aidd-dev-v1.2.1...aidd-dev-v2.0.0) (2026-06-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* **framework:** auto-routing is removed. Skills are now manual-invoke only; the prompt-to-skill routing hint no longer runs.
+
+### Features
+
+* **aidd-context:** per-artifact context generators (skill, rule, agent, command, hook) ([#264](https://github.com/ai-driven-dev/framework/issues/264)) ([647fe5a](https://github.com/ai-driven-dev/framework/commit/647fe5afed81c27e9201bd3f0ae119f422e75fb6))
+* **aidd-dev:** add 10-todo skill for parallel todo fan-out ([#262](https://github.com/ai-driven-dev/framework/issues/262)) ([c086e05](https://github.com/ai-driven-dev/framework/commit/c086e05e7564f1be1414ebf1a6956e74cd4d7903))
+* **aidd-dev:** track plan lifecycle status in frontmatter ([#251](https://github.com/ai-driven-dev/framework/issues/251)) ([3f63ae2](https://github.com/ai-driven-dev/framework/commit/3f63ae20a2a04eb44caed53bf9ddb79c29f951d0))
+* **framework:** remove evals system end-to-end ([#261](https://github.com/ai-driven-dev/framework/issues/261)) ([9a3c1b8](https://github.com/ai-driven-dev/framework/commit/9a3c1b8237359842f3200683732bc73b825582f6))
+
+
+### Miscellaneous
+
+* **framework:** rename repository URLs aidd-framework to framework ([#266](https://github.com/ai-driven-dev/framework/issues/266)) ([7cfc0a3](https://github.com/ai-driven-dev/framework/commit/7cfc0a3cf5fcd8eb068000744f2854d19624546f))
+* **framework:** stop shipping .mcp.json, recommend MCP servers in README ([#263](https://github.com/ai-driven-dev/framework/issues/263)) ([e602fa0](https://github.com/ai-driven-dev/framework/commit/e602fa0c8d49fbbd7d0b65f85a0d5122ee8d9c6c))
+
+
+### Documentation
+
+* **framework:** streamline README, add recipes, extract marketplace doc ([#280](https://github.com/ai-driven-dev/framework/issues/280)) ([a139b52](https://github.com/ai-driven-dev/framework/commit/a139b523143000dc3229194a9269f0eca4194bea))
+
 ## [1.2.1](https://github.com/ai-driven-dev/aidd-framework/compare/aidd-dev-v1.2.0...aidd-dev-v1.2.1) (2026-06-04)
 
 

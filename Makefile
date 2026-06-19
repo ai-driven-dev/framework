@@ -7,8 +7,8 @@ help: ## List targets
 	@grep -hE '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*## /\t/' | sort
 
 setup: ## Install deps, git hooks, and register+install the plugins in Claude/Codex
-	pnpm install
-	pnpm exec lefthook install
+	pnpm install --ignore-scripts
+	pnpm exec lefthook install --force
 	scripts/dev-setup.sh
 
 doctor: ## Check the local toolchain
@@ -17,5 +17,5 @@ doctor: ## Check the local toolchain
 check: ## Run the pre-commit checks
 	pnpm exec lefthook run pre-commit
 
-reload: ## Dev: reinstall plugins into Claude+Codex from the checkout (PLUGIN="aidd-refine aidd-pm", default all)
+reload: ## Dev: CLI-build this checkout into Claude+Codex native trees and reinstall (PLUGIN="aidd-refine aidd-pm", default all)
 	scripts/dev-sync.sh $(PLUGIN)

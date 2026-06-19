@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "aidd-framework",
-  "version": "4.4.1",
+  "version": "5.0.0",
   "description": "Official plugin marketplace for the AI-Driven Development framework",
   "owner": {
     "name": "AI-Driven Dev"
@@ -9,7 +9,6 @@
   "plugins": [
     {
       "name": "aidd-context",
-      "version": "1.0.0",
       "source": "./plugins/aidd-context",
       "description": "Knowledge production: project bootstrap, project init, generation of context artifacts (skills, agents, rules, commands, hooks), mermaid diagrams, learn, discovery",
       "strict": true,
@@ -17,7 +16,6 @@
     },
     {
       "name": "aidd-dev",
-      "version": "1.0.0",
       "source": "./plugins/aidd-dev",
       "description": "Code transformation: Dev SDLC orchestrator (code-shipping pipeline), plan, assert, audit, review, test, refactor, debug, for-sure. Hosts engineering agents.",
       "strict": true,
@@ -25,7 +23,6 @@
     },
     {
       "name": "aidd-vcs",
-      "version": "1.0.0",
       "source": "./plugins/aidd-vcs",
       "description": "External artifacts: commit, pull-request, release-tag, issue-create",
       "strict": true,
@@ -33,7 +30,6 @@
     },
     {
       "name": "aidd-pm",
-      "version": "1.0.0",
       "source": "./plugins/aidd-pm",
       "description": "Product management: ticket-info, user-stories-create, prd, spec",
       "strict": true,
@@ -41,7 +37,6 @@
     },
     {
       "name": "aidd-orchestrator",
-      "version": "1.0.0",
       "source": "./plugins/aidd-orchestrator",
       "description": "Async development orchestration: turn ready issues into pull requests, then iterate on review feedback until a human takes over.",
       "strict": true,
@@ -49,7 +44,6 @@
     },
     {
       "name": "aidd-refine",
-      "version": "1.0.0",
       "source": "./plugins/aidd-refine",
       "description": "Meta-cognition: refine input through brainstorming, refine output through challenge and condensed communication mode.",
       "strict": true,

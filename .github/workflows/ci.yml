@@ -74,6 +74,20 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
+      # Auto-merge the Release PR release-please just opened/updated, with the
+      # App token. `--admin` is required: a plain `gh pr merge` is refused by the
+      # branch policy ("base branch policy prohibits the merge") even for a
+      # bypass actor (verified in a sandbox). `--admin` performs the override
+      # merge that the ruleset's bypass_actors entry permits for this App.
+      # An App-token merge also re-fires the `push: main` and `release: published`
+      # workflows that a GITHUB_TOKEN merge would not.
+      # Guard on prs_created (PR opened), not releases_created (fires on merge).
+      - name: Auto-merge the Release PR
+        if: ${{ steps.release.outputs.prs_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: gh pr merge "${{ fromJSON(steps.release.outputs.pr).number }}" --squash --admin --repo "${{ github.repository }}"
+
   build-and-attach:
     name: Build and attach marketplace
     needs: [release-please]
