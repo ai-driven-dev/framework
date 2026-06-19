@@ -39,6 +39,12 @@ Changes present in the diff but traced to no acceptance criterion.
 
 - [ ] {{unplanned change - confirm scope with author}}
 
+## Dominance issues
+
+Criteria, behaviors, or doc statements subsumed, overridden without scope, or invalidated by another active element.
+
+- [ ] {{dominance issue - merge, delete, or scope explicitly}}
+
 ## Flow / edge-case gaps
 
 Gaps surfaced while walking each criterion against the diff.

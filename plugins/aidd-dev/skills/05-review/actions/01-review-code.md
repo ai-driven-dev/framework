@@ -24,11 +24,12 @@ severity_breakdown:
 
 1. **Resolve the diff.** Use `$ARGUMENTS` when provided; otherwise fall back to `git diff main`.
 2. **Deep review every changed line.** Apply project conventions and global clean-code principles. No runtime checks.
-3. **Findings only.** Focus on issues on the changed lines; do not propose feature-level changes. Rate each with the 3-level severity (🔴 critical / 🟡 warning / 🟢 minor) and cite a `file:line`. Suggested fixes are described, not patched (read-only).
-4. **Set the verdict** per the template: `blocked` if any unaddressed 🔴, `changes-requested` if 🟡 (or a fixable 🔴), else `approve`.
-5. **Format the report** using `@../assets/review-code-template.md` (Expected changes, Findings, Coverage, Follow-up). Top fixes hand off to `aidd-dev:07-refactor`.
-6. **Write to disk** at `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<task_name>.review.md`. Create the month directory when missing.
+3. **Dominance.** For changed instructions, criteria, findings, docs, and code rules, flag elements that are subsumed, overridden without scope, or invalidated by another active element. Use category `dominance`.
+4. **Findings only.** Focus on issues on the changed lines; do not propose feature-level changes. Rate each with the 3-level severity (🔴 critical / 🟡 warning / 🟢 minor) and cite a `file:line`. Suggested fixes are described, not patched (read-only).
+5. **Set the verdict** per the template: `blocked` if any unaddressed 🔴, `changes-requested` if 🟡 (or a fixable 🔴), else `approve`.
+6. **Format the report** using `@../assets/review-code-template.md` (Expected changes, Findings, Coverage, Follow-up). Top fixes hand off to `aidd-dev:07-refactor`.
+7. **Write to disk** at `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<task_name>.review.md`. Create the month directory when missing.
 
 ## Test
 
-The review file exists at the emitted `review_path`; it has a defined `verdict`; every finding row carries a 3-level severity and cites a changed `file:line`; the report contains the Findings and Coverage sections from `@../assets/review-code-template.md`. No code was patched.
+The review file exists at the emitted `review_path`; it has a defined `verdict`; every finding row carries a 3-level severity and cites a changed `file:line`; dominance issues use category `dominance`; the report contains the Findings and Coverage sections from `@../assets/review-code-template.md`. No code was patched.

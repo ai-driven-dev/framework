@@ -59,6 +59,14 @@ Your output is complete when:
 - Start fresh. Don't try to reconstruct how the artifact was produced. Read the artifact, not the production history.
 - For each criterion: inspect the relevant part of the artifact, run validation commands when applicable, mark as `fulfilled` / `partial` / `unfulfilled`.
 - Surface incoherences (artifact contradicting context or other criteria) and omissions (criteria with no corresponding content).
+- Run a dominance check on instructions, criteria, findings, documentation statements, and code rules. If one element covers, overrides, contradicts, or makes another impossible, report a finding unless the weaker element is clearly marked as an example, migration note, or historical context.
+
+| Case | What to detect | Example | Action |
+| --- | --- | --- | --- |
+| Subsumption | A stronger element already implies a weaker one. | "All fixtures must be TypeScript" plus "Do not add legacy fixture formats." | Delete the weaker element, or convert it into an example under the stronger one. |
+| Override | A specific element changes a general one. | "All docs are English" plus "Onboarding examples may stay French." | Rewrite with explicit scope, priority, and exception. |
+| Invalidation | One element makes another obsolete, impossible, or false. | A doc explains an active command that another doc says was removed. | Remove the invalid element, or mark it historical with a current replacement. |
+
 - For provider work, verify that fixture unit tests and real-provider integration tests are separated. Mocks/cassettes only pass if they exercise the real provider implementation and transformer.
 - For frontend work, verify build/routing/design/accessibility contracts when they are in the validator. Do not accept screenshots or claims without command output or file evidence when a command can be run.
 - Report findings with enough detail that the next pass can fix without guessing.

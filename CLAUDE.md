@@ -18,6 +18,8 @@ All instructions and information above are willing to be up to date, but always 
 - Do not commit or push yourself unless I ask you to.
 - For every plugin change, think hard about where responsibility belongs; follow the placement and orchestration rules in `docs/ARCHITECTURE.md`.
 - Never duplicate across docs - link to the canonical home.
+- Run a dominance check before adding instructions, criteria, findings, docs, or code rules: if one element covers, overrides, contradicts, or invalidates another, delete, merge, or rewrite with explicit scope, priority, and exceptions.
+- Keep weaker repetition only when it is clearly marked as an example, migration note, or historical context.
 
 ### Answering Guidelines
 
