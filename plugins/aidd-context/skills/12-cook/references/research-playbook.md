@@ -1,8 +1,8 @@
-<!-- Read before spawning research agents in 03-research. The scouting angles and the bar each candidate must clear. Not a recipe itself. -->
+<!-- Read before spawning research agents in 03-research. The scouting angles, the bar each candidate must clear, and how to verify them. Not a recipe itself. -->
 
 # Research playbook
 
-Guidance for `03-research`: the angles to scout and the criteria each candidate must clear. Define the target with `assets/refine-goal-checklist.md` first, and clear `assets/research-checklist.md` before drafting.
+Guidance for `03-research`: the angles to scout, the criteria each candidate must clear, and the verification each must pass. Define the target with `assets/refine-goal-checklist.md` first, and clear `assets/research-checklist.md` before drafting.
 
 ## Angles to cover
 
@@ -21,8 +21,17 @@ Spawn one agent per angle so coverage stays wide:
 - **Tips and gotchas** — capture practical advice, common pitfalls, and migration notes worth keeping.
 - **Credibility** — corroborate across sources. Trust official docs over a single blog post.
 
+## Verify each candidate
+
+After curating, confirm every surviving candidate before presenting it. Spawn one agent per candidate to check:
+
+- **Exists** — confirm it is real and current, not invented or abandoned.
+- **Official link** — capture the canonical source: official docs, repository, or release page.
+- **Latest state** — record the current version or release date.
+- Drop any candidate that cannot be confirmed against an official source.
+
 ## Reporting
 
-- Return each candidate with its angle, level, value, and a one-line source.
+- Return each candidate with its angle, level, value, and a source; verified ones carry an official link.
 - Push for the most insights possible, then drop anything that neither beats nor extends the recipe.
 - `03-research` sorts them into three buckets: alternatives (with pros/cons), coverage gaps, and counter-intuitive wins.
