@@ -1,40 +1,43 @@
 ---
-name: phase
-description: One phase of a plan - its projection slice, user journey, tasks, and acceptance criteria. The implementer loop tracks it via status and iteration.
 status: pending
-iteration: 0
-created_at: "{YYYY-MM-DDTHH:MM:SSZ}"
 ---
 
-<!-- Phase contract: phase-<n>.md next to plan.md · status starts pending · projection is this phase's slice as a tree (❌ delete, ✅ create, 🔁 rename) · every task has one deterministic acceptance criterion a command can check · embed the confirmed wireframe when there is one · English, lists and tables over prose. -->
-
-# Phase: {title}
+# Instruction: {title}
 
 Part of [`plan.md`](./plan.md).
 
 ## Architecture projection
 
+<!-- Tree of the final architecture: ❌ deleted, ✅ created, 🔁 renamed. -->
+
 ```txt
 .
 ```
 
-## User journey
+## User Journey
 
 ```mermaid
 flowchart TD
   A[TODO]
 ```
 
-## Tasks
+## Wireframe
 
-### {n}) {name}
+```txt
+{the confirmed wireframe, or omit this section when the phase has no UI}
+```
 
-> {goal, straight to the point}
+## Tasks to do
+
+### `{number})` {name}
+
+> {straight to point goal}
 
 1. {ultra concise step}
+   ...
 
-## Acceptance criteria
+## Test acceptance criteria
 
-| Task | Criterion                     |
-| ---- | ----------------------------- |
-| 1    | {focused deterministic check} |
+| Task | Acceptance criteria                  |
+| ---- | ------------------------------------ |
+| 1... | {focused deterministic verification} |

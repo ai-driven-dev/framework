@@ -56,14 +56,16 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description |
 |-------|------|---|
 | `actions` | [01-gather.md](skills/01-plan/actions/01-gather.md) | - |
-| `actions` | [02-wireframe.md](skills/01-plan/actions/02-wireframe.md) | - |
-| `actions` | [03-plan.md](skills/01-plan/actions/03-plan.md) | - |
-| `assets` | [phase-template.md](skills/01-plan/assets/phase-template.md) | `One phase of a plan - its projection slice, user journey, tasks, and acceptance criteria. The implementer loop tracks it via status and iteration.` |
-| `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | `A feature's implementation plan - rules, phases, risks, decisions. One phase file sits next to it per phase.` |
+| `actions` | [02-explore.md](skills/01-plan/actions/02-explore.md) | - |
+| `actions` | [03-wireframe.md](skills/01-plan/actions/03-wireframe.md) | - |
+| `actions` | [04-plan.md](skills/01-plan/actions/04-plan.md) | - |
+| `assets` | [phase-template.md](skills/01-plan/assets/phase-template.md) | - |
+| `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | - |
 | `-` | [README.md](skills/01-plan/README.md) | - |
 | `references` | [mermaid-conventions.md](skills/01-plan/references/mermaid-conventions.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` |
 | `references` | [plan-status.md](skills/01-plan/references/plan-status.md) | `Plan lifecycle status field - values, meaning, who writes each, and when.` |
-| `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Turn a request, ticket, or file into a phased implementation plan, gathering the source first and optionally wireframing a screen before planning. Use when the user wants to plan a feature, turn a ticket or requirements into a phased plan, or wireframe a screen before building. Do NOT use to write code (use 02-implement), review a diff (use 05-review), or audit code (use 04-audit).` |
+| `references` | [wireframe-conventions.md](skills/01-plan/references/wireframe-conventions.md) | - |
+| `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Turn a request, ticket, or file into a phased implementation plan: gather the source, explore the codebase, optionally wireframe a screen, then plan. Use when the user wants to plan a feature, turn a ticket or requirements into a phased plan, or wireframe a screen before building. Do NOT use to write code (use 02-implement), review a diff (use 05-review), or audit code (use 04-audit).` |
 
 #### `skills/02-implement`
 

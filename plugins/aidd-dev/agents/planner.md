@@ -64,7 +64,7 @@ The plan is complete when:
 - If the repo may contain tracked generated artifacts (`node_modules`, `dist`, `.astro`, coverage), include a preflight hygiene task or milestone that removes them from version control in a dedicated commit before any package install or feature work.
 - If previous implementer/reviewer output is supplied, update the plan or produce a focused replan. Do not execute the fix yourself.
 - Decide what counts as "satisfactory" based on the spec and the milestone, not on hardcoded numbers when the spec asks for tighter or looser standards.
-- Keep the plan small enough to execute. Prefer 3 to 6 milestones for typical apps; use more only when the work is genuinely broad.
+- Keep the plan small enough to execute. Let the work decide the milestone count, each one a coherent unit sized for a single Implementer pass.
 - Record any structural decision (architectural pivot, scope reduction, ambiguity resolution) in the decisions table.
 
 # Decisions in scope

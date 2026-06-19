@@ -21,15 +21,16 @@ Turns a request, ticket, or file into a phased implementation plan and its phase
 Use skill aidd-dev:01-plan
 ```
 
-The skill runs three actions in order, the plan being the culmination:
+The skill runs four actions in order, the plan being the culmination:
 
 1. `gather` collects the source the plan rests on and restates it. Always first.
-2. `wireframe` sketches a low-fidelity ASCII layout of any screen the feature needs. Frontend only, skipped when there is no UI.
-3. `plan` turns the gathered source, and any confirmed wireframe, into the plan and its phases.
+2. `explore` reads the codebase for the architecture projection, the applicable rules, and feasibility. Gated with the user.
+3. `wireframe` sketches a low-fidelity ASCII layout of any screen the feature needs, using the explored context. Frontend only, skipped when there is no UI.
+4. `plan` breaks the work into phases and writes the plan and its phase files.
 
 A feature folder `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slug>/`:
 
-- `plan.md` from the plan template: rules, phases, risks, decisions, external resources.
+- `plan.md` from the plan template: objective, phases, resources, decisions.
 - `phase-<n>.md` per phase from the phase template: projection slice, user journey, tasks, acceptance criteria, any wireframe.
 
 The plan reuses the folder when the source already lives in one, so a `brainstorm.md` or `spec.md` already there sits alongside, not duplicated.
