@@ -13,7 +13,7 @@ feature_name: <kebab-case slug>          # required; derived from the request wh
 ## Outputs
 
 ```yaml
-spec_path: aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<feature_name>-spec.md
+spec_path: aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature_name>/spec.md
 status: draft
 notes: <ambiguities, assumptions made, questions for the human>
 ```
@@ -25,7 +25,7 @@ notes: <ambiguities, assumptions made, questions for the human>
    - `request` provided -> use `assets/spec-template.md` directly and map the request onto its sections
 2. **Mark gaps**. Replace any missing required field with `TBD: <precise question>`. Never guess.
 3. **Section check**. Confirm every section listed in `assets/spec-validator.yml` is present.
-4. **Write**. Save the spec to `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<feature_name>-spec.md`. Create the month directory when missing.
+4. **Write**. Resolve the feature folder: reuse the one for this feature when it already exists under `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature_name>/`, otherwise create it. Save the spec there as `spec.md`.
 5. **Return** the structured Outputs block with `status: draft`.
 
 ## Test

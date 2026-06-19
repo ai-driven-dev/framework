@@ -15,7 +15,7 @@ Covers the full SDLC coding loop: orchestrator, planning, implementation, assert
 | Bracket ID | Skill | Description |
 |---|---|---|
 | [2.0] | [sdlc](skills/00-sdlc/README.md) | Dev SDLC orchestrator (code-shipping pipeline): spec, plan, implement, test, review, commit, PR. |
-| [2.1] | [plan](skills/01-plan/README.md) | Generate an implementation plan from requirements, design a frontend page (behavior, dumb/smart split), or wireframe a screen at low fidelity. |
+| [2.1] | [plan](skills/01-plan/README.md) | Turn a request, ticket, or file into a phased implementation plan, gathering the source first and optionally wireframing a screen before planning. |
 | [2.2] | [implement](skills/02-implement/README.md) | Execute an implementation plan phase by phase via the implementer agent, iterating until 100% completeness. |
 | [2.3] | [assert](skills/03-assert/README.md) | Assert features work as intended - general assertions, architecture conformance, and frontend UI validation. |
 | [2.4] | [audit](skills/04-audit/README.md) | Perform deep codebase analysis to identify technical debt, dead code, and improvement opportunities. |

@@ -24,8 +24,8 @@ When invoked, you receive:
 When you return, your output is a structured table:
 
 ```yaml
-plan_path: <absolute path to the plan or master-plan written to disk>
-child_paths: [<paths to child plans, empty if simple plan>]
+plan_path: <absolute path to the plan file written to disk>
+child_paths: [<absolute paths to the phase files, one per phase>]
 decisions_made:
   - id: <n>
     topic: <what>
@@ -40,7 +40,7 @@ plan_status: in_progress | done | blocked
 notes: <observations relevant to next iteration>
 ```
 
-`plan_path` and `child_paths` reflect what `aidd-dev:01-plan` actually wrote  -  the skill picks the path (typically `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-?<#ticket>-<feature>.md` for simple plans, plus `*-master.md` and `*-part-N.md` for master plans). Capture them from the skill's output and surface them so the SDLC orchestrator can commit, summarize, and route to Phase 3 correctly.
+`plan_path` and `child_paths` reflect what `aidd-dev:01-plan` actually wrote  -  the skill saves them in one feature folder `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slug>/`, the plan as `plan.md` and one phase file `phase-<n>.md` next to it per phase. Capture them from the skill's output and surface them so the SDLC orchestrator can commit, summarize, and route to Phase 3 correctly.
 
 # Definition of Ready
 

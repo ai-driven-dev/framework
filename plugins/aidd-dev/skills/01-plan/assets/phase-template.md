@@ -1,48 +1,40 @@
 ---
 name: phase
-description: Living implementation plan - frozen objective, phases, and append-only execution Log. Used as input artifact AND as the autonomous-loop tracking file.
+description: One phase of a plan - its projection slice, user journey, tasks, and acceptance criteria. The implementer loop tracks it via status and iteration.
 status: pending
 iteration: 0
 created_at: "{YYYY-MM-DDTHH:MM:SSZ}"
 ---
 
-# Instruction: {title}
+<!-- Phase contract: phase-<n>.md next to plan.md · status starts pending · projection is this phase's slice as a tree (❌ delete, ✅ create, 🔁 rename) · every task has one deterministic acceptance criterion a command can check · embed the confirmed wireframe when there is one · English, lists and tables over prose. -->
 
-| Element         |  Value          |
-| --------------- | --------------- |
-| **Plan**        | `{plan}/`       |
-| **Branch name** | `{branch-name}` |
+# Phase: {title}
+
+Part of [`plan.md`](./plan.md).
 
 ## Architecture projection
-
-<!-- Validated projection using tree to preview the final architecture:  use # ❌ when deleted, ✅ when created, 🔁 when renamed and files/folders -->
 
 ```txt
 .
 ```
 
-## User Journey
-
-<!-- A short demo showing the feature works end-to-end, what a REAL user would do to 100% validate the feature. -->
+## User journey
 
 ```mermaid
 flowchart TD
   A[TODO]
 ```
 
-## Tasks to do
+## Tasks
 
-### `{number})` {name}
+### {n}) {name}
 
-> {straight to point goal}
-
-<!-- Including wireframe if chosen -->
+> {goal, straight to the point}
 
 1. {ultra concise step}
-   ...
 
-## Test acceptance criteria
+## Acceptance criteria
 
-| Task | Acceptance criteria                  |
-| ---- | ------------------------------------ |
-| 1... | {focused deterministic verification} |
+| Task | Criterion                     |
+| ---- | ----------------------------- |
+| 1    | {focused deterministic check} |

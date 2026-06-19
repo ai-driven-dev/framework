@@ -2,12 +2,12 @@
 
 # 01 - plan
 
-Generates a technical implementation plan from requirements, or designs a frontend page before building it. The plan file is the single source of truth that downstream skills (`02-implement`, `05-review`) consume.
+Turns a request, ticket, or file into a phased implementation plan and its phase files. The plan is the single source of truth that downstream skills (`02-implement`, `05-review`) consume.
 
 ## When to use
 
-- A validated spec or ticket exists and you need a phased plan with milestones, rules, and acceptance criteria before any code change.
-- A frontend page needs its design pinned down, component behavior as state machines and the dumb/smart split, before implementation.
+- A spec, ticket, or request exists and you need a phased plan with deterministic acceptance criteria before any code change.
+- A screen needs its layout fixed with a low-fidelity wireframe before the plan.
 
 ## When NOT to use
 
@@ -21,26 +21,24 @@ Generates a technical implementation plan from requirements, or designs a fronte
 Use skill aidd-dev:01-plan
 ```
 
-The skill exposes three actions:
+The skill runs three actions in order, the plan being the culmination:
 
-1. `plan` produces a phased implementation plan from requirements, saved to a task file.
-2. `design` defines a frontend page's design, component behavior as state machines and the dumb/smart split, with a render decision and a delegation prompt for the implementer.
-3. `wireframe` sketches a low-fidelity ASCII layout of a screen before designing it.
+1. `gather` collects the source the plan rests on and restates it. Always first.
+2. `wireframe` sketches a low-fidelity ASCII layout of any screen the feature needs. Frontend only, skipped when there is no UI.
+3. `plan` turns the gathered source, and any confirmed wireframe, into the plan and its phases.
 
-The planner adapts to the input and routes to the right action, it does not ask the user to choose. The actions chain naturally: wireframe a screen, then design it, then plan its build.
+A feature folder `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slug>/`:
 
-## Outputs
+- `plan.md` from the plan template: rules, phases, risks, decisions, external resources.
+- `phase-<n>.md` per phase from the phase template: projection slice, user journey, tasks, acceptance criteria, any wireframe.
 
-- A plan file under `aidd_docs/tasks/<yyyy_mm>/`, dated and feature-named, with execution frontmatter, the architecture projection (modify, create, delete), an applicable-rules table, and ordered phases.
-- A page design with the dumb/smart split and a delegation prompt that builds the smart layer in-house and delegates each dumb visual to the design tool.
-- A low-fidelity ASCII wireframe of a screen, its regions labeled, for layout validation before design.
+The plan reuses the folder when the source already lives in one, so a `brainstorm.md` or `spec.md` already there sits alongside, not duplicated.
 
 ## Prerequisites
 
-- Requirements, a ticket, or a page to design as input.
+- A request, ticket, or file as the source.
 - The plan and phase templates bundled with this skill.
-- Optional: a UI-craft skill (`impeccable`) enhances the design action's visual delegation. The design action works without it, authoring dumb visuals inline.
 
 ## Technical details
 
-See [`SKILL.md`](SKILL.md) for the action list and routing, [`assets/plan-template.md`](assets/plan-template.md) for the plan format, and [`actions/`](actions/) for the per-action contracts.
+See [`SKILL.md`](SKILL.md) for the action flow, [`assets/plan-template.md`](assets/plan-template.md) for the plan format, and [`actions/`](actions/) for the per-action contracts.

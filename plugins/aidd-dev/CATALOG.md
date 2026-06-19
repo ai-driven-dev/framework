@@ -53,19 +53,16 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 #### `skills/01-plan`
 
-| Group | File | Description | Argument Hint |
-|-------|------|---|---|
-| `actions` | [01-plan.md](skills/01-plan/actions/01-plan.md) | - | - |
-| `actions` | [02-design.md](skills/01-plan/actions/02-design.md) | - | - |
-| `actions` | [03-wireframe.md](skills/01-plan/actions/03-wireframe.md) | - | - |
-| `assets` | [phase-template.md](skills/01-plan/assets/phase-template.md) | `Living implementation plan - frozen objective, phases, and append-only execution Log. Used as input artifact AND as the autonomous-loop tracking file.` | - |
-| `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | `Parent plan template orchestrating multiple child plans with validation gates` | - |
-| `assets` | [tech-choice-template.md](skills/01-plan/assets/tech-choice-template.md) | `Technology selection and comparison template` | - |
-| `-` | [README.md](skills/01-plan/README.md) | - | - |
-| `references` | [mermaid-conventions.md](skills/01-plan/references/mermaid-conventions.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` | - |
-| `references` | [phase-rules.md](skills/01-plan/references/phase-rules.md) | - | - |
-| `references` | [plan-rules.md](skills/01-plan/references/plan-rules.md) | - | - |
-| `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Generate a technical implementation plan from requirements, design a frontend page before building it (component behavior as state machines, the dumb/smart split, and the render decision), or sketch a low-fidelity wireframe of a screen. Use when the user wants to plan a feature, turn a ticket or requirements into an implementation plan, design a page's structure and behavior, or wireframe a screen layout. Do NOT use for writing the code (use 02-implement), reviewing a diff (use 05-review), or auditing existing code (use 04-audit).` | - |
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-gather.md](skills/01-plan/actions/01-gather.md) | - |
+| `actions` | [02-wireframe.md](skills/01-plan/actions/02-wireframe.md) | - |
+| `actions` | [03-plan.md](skills/01-plan/actions/03-plan.md) | - |
+| `assets` | [phase-template.md](skills/01-plan/assets/phase-template.md) | `One phase of a plan - its projection slice, user journey, tasks, and acceptance criteria. The implementer loop tracks it via status and iteration.` |
+| `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | `A feature's implementation plan - rules, phases, risks, decisions. One phase file sits next to it per phase.` |
+| `-` | [README.md](skills/01-plan/README.md) | - |
+| `references` | [mermaid-conventions.md](skills/01-plan/references/mermaid-conventions.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` |
+| `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Turn a request, ticket, or file into a phased implementation plan, gathering the source first and optionally wireframing a screen before planning. Use when the user wants to plan a feature, turn a ticket or requirements into a phased plan, or wireframe a screen before building. Do NOT use to write code (use 02-implement), review a diff (use 05-review), or audit code (use 04-audit).` |
 
 #### `skills/02-implement`
 

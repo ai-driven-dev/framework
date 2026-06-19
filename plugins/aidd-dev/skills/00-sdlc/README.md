@@ -46,7 +46,7 @@ The skill walks 5 actions:
 ## Outputs
 
 - A spec file (unless skipped).
-- A plan file in `aidd_docs/plans/`.
+- A plan file in `aidd_docs/tasks/`.
 - Atomic commits on the active branch, one per ticked checkbox.
 - A pull request with title, body, base branch, and draft state.
 - Findings + completion + quality scores from the reviewer.
