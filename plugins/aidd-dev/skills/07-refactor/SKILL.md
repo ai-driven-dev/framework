@@ -1,6 +1,7 @@
 ---
 name: 07-refactor
 description: Improve code without breaking behavior across four axes - cleanup (clean-code + tech debt), performance, security, architecture. Scans and fixes, or fixes the findings of an audit report pushed in by the caller. Use when the user wants to refactor, clean up, optimize, harden, or restructure code. Do NOT use for read-only diagnosis (use 04-audit), adding tests (use 06-test), or UI redesign (use the impeccable skill).
+argument-hint: performance | security | cleanup | architecture
 ---
 
 # Skill: refactor

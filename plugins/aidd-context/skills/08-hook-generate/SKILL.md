@@ -1,6 +1,7 @@
 ---
 name: 08-hook-generate
 description: Generate a hook (a handler that runs automatically at a lifecycle event) across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor a hook, or automate an action at a lifecycle point. Not for other artifacts like skills, rules, agents, commands.
+argument-hint: capture-hook | write-hook | validate
 ---
 
 # Hook Generate

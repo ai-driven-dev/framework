@@ -41,6 +41,7 @@ The router: YAML frontmatter + markdown body.
 
 - `name` (kebab-case, <= 64 chars) MUST equal the skill's folder name. No colon, slash, dot, plugin prefix, or namespace. Reserved words forbidden: `anthropic`, `claude`. Regex `^[a-z0-9]+(-[a-z0-9]+)*$`.
 - `description`: per R5.
+- `argument-hint` when supported or in plugin source and the skill has two or more actions: action names only, joined with ` | `, matching the files in `actions/`. Omit it for one-action skills.
 - A manual-only flag makes the skill user-only. The exact frontmatter key is per tool.
 - Body: pure router. The action table maps each `#` and slug to a role and input. State the flow (a sequential chain or a trigger-to-action map). Self-skips stated explicitly.
 

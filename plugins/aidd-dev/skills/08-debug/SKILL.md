@@ -1,6 +1,7 @@
 ---
 name: 08-debug
 description: Reproduce and fix bugs systematically using test-driven workflow, root cause analysis, and hypothesis validation.
+argument-hint: reproduce | debug | reflect-issue
 model: opus
 ---
 

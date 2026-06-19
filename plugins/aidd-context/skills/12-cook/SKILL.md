@@ -1,6 +1,7 @@
 ---
 name: 12-cook
 description: Manage the project's recipes/ how-to sheets: list them as a table, or create and update one from the canonical template. Use for "list recipes", "new recipe", "update a recipe", "cook a recipe".
+argument-hint: list | upsert
 ---
 
 # Cook

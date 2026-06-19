@@ -89,29 +89,29 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 #### `skills/04-audit`
 
-| Group | File | Description | Argument Hint |
-|-------|------|---|---|
-| `actions` | [01-code-quality.md](skills/04-audit/actions/01-code-quality.md) | - | - |
-| `actions` | [02-architecture.md](skills/04-audit/actions/02-architecture.md) | - | - |
-| `actions` | [03-security.md](skills/04-audit/actions/03-security.md) | - | - |
-| `actions` | [04-dependencies.md](skills/04-audit/actions/04-dependencies.md) | - | - |
-| `actions` | [05-performance.md](skills/04-audit/actions/05-performance.md) | - | - |
-| `actions` | [06-tests.md](skills/04-audit/actions/06-tests.md) | - | - |
-| `actions` | [07-ui.md](skills/04-audit/actions/07-ui.md) | - | - |
-| `assets` | [audit-template.md](skills/04-audit/assets/audit-template.md) | `Codebase audit report template` | - |
-| `-` | [README.md](skills/04-audit/README.md) | - | - |
-| `-` | [SKILL.md](skills/04-audit/SKILL.md) | `Read-only codebase audit across quality pillars (code-quality, architecture, security, dependencies, performance, tests, ui). Diagnoses and reports findings; never edits code. Use when the user wants to assess, audit, or health-check a codebase or one dimension of it, then hands off to the act-skills (refactor, test, impeccable) to fix. Do NOT use for fixing the findings (hand off to refactor/test/impeccable), per-PR code review (use 05-review), or validating that a feature works (use 03-assert).` | - |
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-code-quality.md](skills/04-audit/actions/01-code-quality.md) | - |
+| `actions` | [02-architecture.md](skills/04-audit/actions/02-architecture.md) | - |
+| `actions` | [03-security.md](skills/04-audit/actions/03-security.md) | - |
+| `actions` | [04-dependencies.md](skills/04-audit/actions/04-dependencies.md) | - |
+| `actions` | [05-performance.md](skills/04-audit/actions/05-performance.md) | - |
+| `actions` | [06-tests.md](skills/04-audit/actions/06-tests.md) | - |
+| `actions` | [07-ui.md](skills/04-audit/actions/07-ui.md) | - |
+| `assets` | [audit-template.md](skills/04-audit/assets/audit-template.md) | `Codebase audit report template` |
+| `-` | [README.md](skills/04-audit/README.md) | - |
+| `-` | [SKILL.md](skills/04-audit/SKILL.md) | `Read-only codebase audit across quality pillars (code-quality, architecture, security, dependencies, performance, tests, ui). Diagnoses and reports findings; never edits code. Use when the user wants to assess, audit, or health-check a codebase or one dimension of it, then hands off to the act-skills (refactor, test, impeccable) to fix. Do NOT use for fixing the findings (hand off to refactor/test/impeccable), per-PR code review (use 05-review), or validating that a feature works (use 03-assert).` |
 
 #### `skills/05-review`
 
-| Group | File | Description | Argument Hint |
-|-------|------|---|---|
-| `actions` | [01-review-code.md](skills/05-review/actions/01-review-code.md) | - | - |
-| `actions` | [02-review-functional.md](skills/05-review/actions/02-review-functional.md) | - | - |
-| `assets` | [review-code-template.md](skills/05-review/assets/review-code-template.md) | `Code review report template for a diff` | - |
-| `assets` | [review-functional-template.md](skills/05-review/assets/review-functional-template.md) | `Functional review report template for a diff against a plan` | - |
-| `-` | [README.md](skills/05-review/README.md) | - | - |
-| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Read-only review of a diff (a PR or working changes) - code quality against project rules, and feature behavior against the plan's acceptance criteria. Surfaces findings with a verdict; never patches. Use to review changes in progress. Do NOT use for a whole-codebase health check (use 04-audit), fixing the findings (hand off to 07-refactor / 02-implement / 08-debug), or validating a feature runs (use 03-assert).` | - |
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-review-code.md](skills/05-review/actions/01-review-code.md) | - |
+| `actions` | [02-review-functional.md](skills/05-review/actions/02-review-functional.md) | - |
+| `assets` | [review-code-template.md](skills/05-review/assets/review-code-template.md) | `Code review report template for a diff` |
+| `assets` | [review-functional-template.md](skills/05-review/assets/review-functional-template.md) | `Functional review report template for a diff against a plan` |
+| `-` | [README.md](skills/05-review/README.md) | - |
+| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Read-only review of a diff (a PR or working changes) - code quality against project rules, and feature behavior against the plan's acceptance criteria. Surfaces findings with a verdict; never patches. Use to review changes in progress. Do NOT use for a whole-codebase health check (use 04-audit), fixing the findings (hand off to 07-refactor / 02-implement / 08-debug), or validating a feature runs (use 03-assert).` |
 
 #### `skills/06-test`
 
@@ -147,14 +147,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 #### `skills/09-for-sure`
 
-| Group | File | Description | Argument Hint |
-|-------|------|---|---|
-| `actions` | [01-init-tracking.md](skills/09-for-sure/actions/01-init-tracking.md) | - | - |
-| `actions` | [02-auto-accept.md](skills/09-for-sure/actions/02-auto-accept.md) | - | - |
-| `actions` | [03-autonomous-loop.md](skills/09-for-sure/actions/03-autonomous-loop.md) | - | - |
-| `assets` | [plan-template.md](skills/09-for-sure/assets/plan-template.md) | `For Sure autonomous-loop tracking file. Extends the 01-plan format with `success_condition` and `iteration` (For-Sure-only), which the loop runs and increments.` | - |
-| `-` | [README.md](skills/09-for-sure/README.md) | - | - |
-| `-` | [SKILL.md](skills/09-for-sure/SKILL.md) | `Iterative agent loop that tracks attempts and retries until a success condition is met. Use when the user says "for sure", "make sure", "keep trying until", "loop until done", "don't stop until", or needs guaranteed completion of a task with explicit success criteria.` | - |
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-init-tracking.md](skills/09-for-sure/actions/01-init-tracking.md) | - |
+| `actions` | [02-auto-accept.md](skills/09-for-sure/actions/02-auto-accept.md) | - |
+| `actions` | [03-autonomous-loop.md](skills/09-for-sure/actions/03-autonomous-loop.md) | - |
+| `assets` | [plan-template.md](skills/09-for-sure/assets/plan-template.md) | `For Sure autonomous-loop tracking file. Extends the 01-plan format with `success_condition` and `iteration` (For-Sure-only), which the loop runs and increments.` |
+| `-` | [README.md](skills/09-for-sure/README.md) | - |
+| `-` | [SKILL.md](skills/09-for-sure/SKILL.md) | `Iterative agent loop that tracks attempts and retries until a success condition is met. Use when the user says "for sure", "make sure", "keep trying until", "loop until done", "don't stop until", or needs guaranteed completion of a task with explicit success criteria.` |
 
 #### `skills/10-todo`
 

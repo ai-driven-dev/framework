@@ -69,6 +69,8 @@ for (const arg of process.argv) {
 const fs = require("node:fs");
 const path = require("node:path");
 
+const NON_TABLE_FRONTMATTER_KEYS = new Set(["argument-hint"]);
+
 function parseFrontmatter(content) {
 	const lines = content.split("\n");
 
@@ -242,6 +244,11 @@ function truncateText(text, maxLength = 50) {
 	return `${text.substring(0, maxLength - 3)}...`;
 }
 
+function formatFrontmatterValue(value) {
+	if (!value || value === "N/A") return "-";
+	return `\`${value}\``;
+}
+
 /**
  * Group files by their first path component (subfolder)
  * @param {Array} files - Array of file objects
@@ -326,7 +333,7 @@ function generateTable(files, outputFile) {
 			}
 			parsedFiles.push({ file, frontmatter });
 			for (const key of Object.keys(frontmatter)) {
-				if (key !== "name") allKeys.add(key);
+				if (key !== "name" && !NON_TABLE_FRONTMATTER_KEYS.has(key)) allKeys.add(key);
 			}
 		} catch (error) {
 			console.warn(
@@ -354,7 +361,7 @@ function generateTable(files, outputFile) {
 		const fileLink = `[${template}](${relativePath})`;
 		const values = extraColumns.map((key) => {
 			const val = frontmatter[key];
-			return val && val !== "N/A" ? `\`${val}\`` : "-";
+			return formatFrontmatterValue(val);
 		});
 		rows.push({ group, fileLink, values });
 	}

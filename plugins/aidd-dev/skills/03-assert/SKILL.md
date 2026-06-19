@@ -1,6 +1,7 @@
 ---
 name: 03-assert
 description: Assert features work as intended - general assertions, architecture conformance, and frontend UI validation.
+argument-hint: assert | assert-architecture | assert-frontend
 model: sonnet
 ---
 
