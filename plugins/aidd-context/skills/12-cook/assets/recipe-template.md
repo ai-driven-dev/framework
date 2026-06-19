@@ -4,8 +4,7 @@
 
 |                   |                                          |
 | ----------------- | ---------------------------------------- |
-| **Level**         | <Beginner \| Intermediate \| Advanced>   |
-| **Time**          | ~<N> min                                 |
+| **Level**         | <Beginner \| Intermediate \| Expert>     |
 | **Prerequisites** | <what the reader needs first, or "None"> |
 
 ## Why
@@ -13,6 +12,8 @@
 <Short and benefit-first. Lead with the keywords a reader would search, **bold** the key terms. A few sentences, no filler.>
 
 ## Steps to <the outcome the reader achieves>
+
+### 🟢 Beginner
 
 #### 1) <emoji> <First step title>
 
@@ -27,6 +28,8 @@ $ <command the reader runs>
 <the useful output it prints, trimmed to what matters>
 ```
 
+### 🟡 Intermediate
+
 #### 2) <emoji> <Next step title>
 
 <Benefit-focused what and why.>
@@ -37,6 +40,8 @@ $ <command the reader runs>
 ```<lang>
 <a config or snippet the reader can copy>
 ```
+
+### 🔴 Expert
 
 #### 3) <emoji> <Last step title — until the goal is reached>
 
