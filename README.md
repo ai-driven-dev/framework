@@ -1,5 +1,11 @@
 <div align="center">
 
+⭐ **AI-Driven Dev helps you?** Give it a star — the button is at the **top-right** of this page ↗️ &nbsp;·&nbsp; [![GitHub stars](https://img.shields.io/github/stars/ai-driven-dev/framework?style=social)](https://github.com/ai-driven-dev/framework/stargazers)
+
+</div>
+
+<div align="center">
+
 <img src="docs/assets/logo.png" alt="AIDD" width="140" />
 
 # AI-Driven Dev Framework
@@ -27,7 +33,7 @@ The **AI-Driven Dev Framework** is a marketplace — **skills, agents, commands,
 
 Built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: 3 years of R&D, 500+ developers trained in English 🇬🇧 and French 🇫🇷, shipping production software with 100% AI-generated code.
 
-- **[Join the Discord 🇫🇷](https://discord.gg/ai-driven-dev)** — public [roadmap](./ROADMAP.md) decisions every Thursday morning.
+- **[Join the Discord 🇫🇷](https://discord.gg/EWySJSpjWs)** — public [roadmap](./ROADMAP.md) decisions every Thursday morning.
 - **Want to train your team?** [See the programme](https://www.ai-driven-dev.fr/entreprise).
 - **AI is important to you?** [Join the ecosystem](https://www.ai-driven-dev.fr/ecosysteme).
 
@@ -210,12 +216,19 @@ Task-oriented how-to sheets. **[Browse all recipes →](recipes/)**
 | --- | --- |
 | [MCP installations](recipes/mcp-installation.md) | Choose CLI vs MCP, and wire up the recommended servers (GitHub, Atlassian, Figma, Notion…) |
 
+## 🗺️ Roadmap
+
+The live **Now / Next / Later** board — per-item status across the framework and CLI — is the single source of truth:
+
+> ### [Open the AIDD Roadmap board →](https://github.com/orgs/ai-driven-dev/projects/8/views/1)
+
+Priority is set by community vote. Open a `feat:` issue or an idea in [Discussions](https://github.com/ai-driven-dev/framework/discussions), 👍 what you want, and discuss it on Discord — see [`ROADMAP.md`](./ROADMAP.md) for the full mechanism.
+
 ## 🤝 Contributing
 
-> ### 🗺️ [See the roadmap →](./ROADMAP.md)
-> Actively maintained — see what's shipping next and help shape what comes after.
+> Actively maintained — see what's shipping next on the [roadmap](https://github.com/orgs/ai-driven-dev/projects/8/views/1) and help shape what comes after.
 
-Got an idea or hit a bug? **[Open an issue](https://github.com/ai-driven-dev/framework/issues)** or **[start a discussion](https://github.com/ai-driven-dev/framework/discussions)**. For everything else, **[join the Discord 🇫🇷](https://discord.gg/ai-driven-dev)**.
+Got an idea or hit a bug? **[Open an issue](https://github.com/ai-driven-dev/framework/issues)** or **[start a discussion](https://github.com/ai-driven-dev/framework/discussions)**. For everything else, **[join the Discord 🇫🇷](https://discord.gg/EWySJSpjWs)**.
 
 > **Note** — code (pull-request) rights on this repo are reserved for **certified Core Team members** ([`GOVERNANCE.md`](./GOVERNANCE.md)). Everyone else can open issues, join discussions, and shape the roadmap.
 
@@ -235,6 +248,12 @@ Plugins can run commands, edit files, and call external services on your behalf.
 | [`TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Install issues, load problems, limits |
 | [`GLOSSARY.md`](docs/GLOSSARY.md) | Terms used across the framework |
 | [`MAINTAINERS.md`](docs/MAINTAINERS.md) | Maintainer guide |
+
+## 📈 Star History
+
+<a href="https://star-history.com/#ai-driven-dev/framework&Date">
+  <img src="https://api.star-history.com/svg?repos=ai-driven-dev/framework&type=Date" alt="Star History Chart" width="600" />
+</a>
 
 ---
 
