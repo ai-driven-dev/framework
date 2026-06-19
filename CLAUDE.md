@@ -31,14 +31,14 @@ All instructions and information above are willing to be up to date, but always 
 
 <aidd_project_memory>
 @aidd_docs/memory/architecture.md
+@aidd_docs/memory/auth.md
+@aidd_docs/memory/cli.md
 @aidd_docs/memory/codebase-map.md
 @aidd_docs/memory/coding-assertions.md
 @aidd_docs/memory/deployment.md
 @aidd_docs/memory/project-brief.md
 @aidd_docs/memory/testing.md
 @aidd_docs/memory/vcs.md
-@aidd_docs/memory/auth.md
-@aidd_docs/memory/cli.md
 </aidd_project_memory>
 
 - If memory is not loaded above: run `ls -1tr aidd_docs/memory/` then read each file
