@@ -5,8 +5,9 @@ Task-oriented how-to sheets for the AIDD Framework. Each recipe is a self-contai
 | Recipe | Goal | Level |
 | --- | --- | --- |
 | [MCP installations](mcp-installation.md) | Decide when to use an MCP server vs a CLI, and wire up the recommended ones | Beginner |
+| [Token optimization for AI IDEs](token-optimization.md) | Cut token usage and cost in AI coding assistants without losing output quality | Intermediate |
 
-> More coming — token optimisation, custom plugins, and others.
+> More coming — custom plugins, and others.
 
 ## Contributing a recipe
 
