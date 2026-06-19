@@ -26,6 +26,6 @@ The recipe file at `recipes/<slug>.md`, filled from the template, with its row a
 ## Test
 
 - A new or substantially-updated recipe is drafted from `research` results, not from memory.
-- `recipes/<slug>.md` exists and follows the recipe contract: every section present, steps grouped under the three level subheadings, each step a `#### N)` emoji heading with an example, no `<...>` placeholder left.
+- `recipes/<slug>.md` exists and follows the recipe contract: every section present, each step a `#### N)` emoji heading with an example, with level subheadings used only when they help, no `<...>` placeholder left.
 - `recipes/README.md` carries a row for `<slug>`: its title linked, plus the goal and level.
 - A new recipe that highly overlaps an existing one triggers an update-or-create prompt before scaffolding.
