@@ -1,23 +1,32 @@
 #!/usr/bin/env node
 /**
- * update_memory.js - Syncs <aidd_project_memory> block in AI context files.
+ * update_memory.js - Syncs the <aidd_project_memory> block in AI context files.
  *
- * Scans aidd_docs/memory/ for .md files and updates the <aidd_project_memory>
- * block in each context file (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md)
- * with tool-appropriate references.
+ * Scans aidd_docs/memory/ and updates the <aidd_project_memory> block in each
+ * context file with two tiers:
+ *   - Root memory files       -> always loaded, via a tool-appropriate reference.
+ *   - internal/ and external/ -> listed (plain paths, no @), read on demand.
  *
- * Syntax:
- *   CLAUDE.md / AGENTS.md        → @aidd_docs/memory/file.md
- *   .github/copilot-instructions → [aidd_docs/memory/file.md](../aidd_docs/memory/file.md)
+ * Reference syntax for the always-loaded tier:
+ *   CLAUDE.md / AGENTS.md        -> @aidd_docs/memory/file.md
+ *   .github/copilot-instructions -> [aidd_docs/memory/file.md](../aidd_docs/memory/file.md)
  */
 
 // ── Constants ─────────────────────────────────────────────────────
 
 const DOCS_DIR = "aidd_docs";
 const MEMORY_SUBDIR = "memory";
+const ON_DEMAND_DIRS = ["internal", "external"];
 const BLOCK_OPEN = "<aidd_project_memory>";
 const BLOCK_CLOSE = "</aidd_project_memory>";
-const EXCLUDED_FILES = new Set([".gitkeep"]);
+const ON_DEMAND_NOTE = "<!-- read on demand, not auto-loaded -->";
+const EXCLUDED_FILES = new Set([".gitkeep", "README.md"]);
+
+// Human-facing index of the memory bank. The hook refreshes the list between
+// these markers; everything else in the file is hand-written and preserved.
+const MEMORY_README = "README.md";
+const TOC_OPEN = "<!-- files:start -->";
+const TOC_CLOSE = "<!-- files:end -->";
 
 const TARGET_FILES = [
   { path: "CLAUDE.md", syntax: "at" },
@@ -27,39 +36,100 @@ const TARGET_FILES = [
 
 // ── Helpers ───────────────────────────────────────────────────────
 
-function scanMemoryFiles(fs, path) {
-  const memoryDir = path.join(DOCS_DIR, MEMORY_SUBDIR);
-  if (!fs.existsSync(memoryDir)) return [];
-  return fs
-    .readdirSync(memoryDir)
-    .filter((f) => f.endsWith(".md") && !EXCLUDED_FILES.has(f))
-    .sort()
-    .map((f) => path.join(DOCS_DIR, MEMORY_SUBDIR, f));
+function memoryPath(path, ...parts) {
+  return path.join(DOCS_DIR, MEMORY_SUBDIR, ...parts);
+}
+
+// Read a file's text, or null if it does not exist. Opening directly (instead
+// of an existsSync check first) avoids a time-of-check/time-of-use race: the
+// file is touched exactly once. Real errors (permissions, etc.) still throw.
+function readTextOrNull(fs, filePath) {
+  try {
+    return fs.readFileSync(filePath, "utf8");
+  } catch (err) {
+    if (err.code === "ENOENT") return null;
+    throw err;
+  }
+}
+
+// List a directory, or [] if it does not exist. Same single-touch rationale as
+// readTextOrNull: no separate existence check before reading.
+function readDirOrEmpty(fs, dir) {
+  try {
+    return fs.readdirSync(dir, { withFileTypes: true });
+  } catch (err) {
+    if (err.code === "ENOENT") return [];
+    throw err;
+  }
+}
+
+// Top-level .md at the root of memory/ (always-loaded tier).
+function scanRootFiles(fs, path) {
+  return readDirOrEmpty(fs, memoryPath(path))
+    .filter((e) => e.isFile() && e.name.endsWith(".md") && !EXCLUDED_FILES.has(e.name))
+    .map((e) => memoryPath(path, e.name))
+    .sort();
+}
+
+// .md under memory/<sub>/ recursively (on-demand tier).
+function scanSubdir(fs, path, sub) {
+  const out = [];
+  const walk = (dir) => {
+    for (const e of readDirOrEmpty(fs, dir)) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) walk(full);
+      else if (e.name.endsWith(".md") && !EXCLUDED_FILES.has(e.name)) out.push(full);
+    }
+  };
+  walk(memoryPath(path, sub));
+  return out.sort();
 }
 
 function buildReference(syntax, filePath) {
-  const relativePath = filePath.replace(/\\/g, "/");
-  if (syntax === "link") {
-    return `[${relativePath}](../${relativePath})`;
-  }
-  return `@${relativePath}`;
+  const rel = filePath.replace(/\\/g, "/");
+  return syntax === "link" ? `[${rel}](../${rel})` : `@${rel}`;
 }
 
-function buildBlockContent(memoryFiles, syntax) {
-  if (memoryFiles.length === 0) return "";
-  const refs = memoryFiles.map((f) => buildReference(syntax, f));
-  return `\n${refs.join("\n")}\n`;
+function buildBlockContent(rootFiles, onDemandFiles, syntax) {
+  const lines = [];
+  for (const f of rootFiles) lines.push(buildReference(syntax, f));
+  if (onDemandFiles.length > 0) {
+    lines.push("", ON_DEMAND_NOTE);
+    for (const f of onDemandFiles) lines.push(`- ${f.replace(/\\/g, "/")}`);
+  }
+  if (lines.length === 0) return "";
+  return `\n${lines.join("\n")}\n`;
+}
+
+// Replace the text between an open and close marker, leaving the rest intact.
+function updateMarkers(content, open, close, innerContent) {
+  const openIdx = content.indexOf(open);
+  const closeIdx = content.indexOf(close);
+  if (openIdx === -1 || closeIdx === -1 || closeIdx < openIdx) return null;
+  return content.slice(0, openIdx + open.length) + innerContent + content.slice(closeIdx);
 }
 
 function updateBlock(content, innerContent) {
-  const openIdx = content.indexOf(BLOCK_OPEN);
-  const closeIdx = content.indexOf(BLOCK_CLOSE);
-  if (openIdx === -1 || closeIdx === -1 || closeIdx < openIdx) return null;
-  return (
-    content.slice(0, openIdx + BLOCK_OPEN.length) +
-    innerContent +
-    content.slice(closeIdx)
-  );
+  return updateMarkers(content, BLOCK_OPEN, BLOCK_CLOSE, innerContent);
+}
+
+// memory/-relative path, e.g. aidd_docs/memory/internal/x.md -> internal/x.md.
+function memoryRelative(path, filePath) {
+  return filePath.replace(/\\/g, "/").replace(`${memoryPath(path)}/`, "");
+}
+
+// Human-facing TOC of the memory bank, grouped by load tier.
+function buildToc(rootFiles, onDemandFiles, path) {
+  const link = (f) => {
+    const rel = memoryRelative(path, f);
+    return `- [${rel}](${rel})`;
+  };
+  const lines = rootFiles.map(link);
+  if (onDemandFiles.length > 0) {
+    lines.push("", "Read on demand:", "", ...onDemandFiles.map(link));
+  }
+  if (lines.length === 0) lines.push("_No memory files yet._");
+  return `\n${lines.join("\n")}\n`;
 }
 
 function gitAdd(childProcess, files) {
@@ -68,7 +138,7 @@ function gitAdd(childProcess, files) {
       stdio: ["pipe", "pipe", "pipe"],
     });
   } catch {
-    // silent - no git or not a repo
+    // silent: no git or not a repo
   }
 }
 
@@ -81,20 +151,33 @@ function gitAdd(childProcess, files) {
 
   if (!fs.existsSync(DOCS_DIR)) process.exit(0);
 
-  const memoryFiles = scanMemoryFiles(fs, path);
+  const rootFiles = scanRootFiles(fs, path);
+  const onDemandFiles = ON_DEMAND_DIRS.flatMap((sub) => scanSubdir(fs, path, sub));
   const changed = [];
 
   for (const target of TARGET_FILES) {
-    if (!fs.existsSync(target.path)) continue;
+    const original = readTextOrNull(fs, target.path);
+    if (original === null) continue;
 
-    const original = fs.readFileSync(target.path, "utf8");
-    const innerContent = buildBlockContent(memoryFiles, target.syntax);
+    const innerContent = buildBlockContent(rootFiles, onDemandFiles, target.syntax);
     const updated = updateBlock(original, innerContent);
 
     if (updated === null || updated === original) continue;
 
     fs.writeFileSync(target.path, updated, "utf8");
     changed.push(target.path);
+  }
+
+  // Refresh the human-facing TOC in memory/README.md, only if it opts in with markers.
+  const readmePath = memoryPath(path, MEMORY_README);
+  const readmeOriginal = readTextOrNull(fs, readmePath);
+  if (readmeOriginal !== null) {
+    const toc = buildToc(rootFiles, onDemandFiles, path);
+    const updated = updateMarkers(readmeOriginal, TOC_OPEN, TOC_CLOSE, toc);
+    if (updated !== null && updated !== readmeOriginal) {
+      fs.writeFileSync(readmePath, updated, "utf8");
+      changed.push(readmePath);
+    }
   }
 
   if (changed.length > 0) gitAdd(childProcess, changed);

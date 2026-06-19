@@ -31,78 +31,29 @@ flowchart TD
 
 ## 1. Set up
 
-Needs **Node 20+** and **pnpm**, plus **jq**, **python3**, and **pipx** for the pre-commit hooks (`gh` optional). Then:
+Needs **Node 20+**, **pnpm**, **jq**, **python3**, and **pipx** (`gh` and the Claude/Codex CLI optional). Then:
 
 ```bash
-pnpm install
-pnpm exec lefthook install
+make setup
 ```
 
-Every commit then runs the framework checks (json/yaml validity, schema validation, SKILL.md frontmatter, CATALOG regeneration, commitlint). Check your environment anytime with `./scripts/doctor.sh`.
+- installs deps + git hooks
+- registers this checkout as a local marketplace
+- installs the plugins into Claude + Codex (`y/N` confirm, since it writes your global config; `YES=1` skips)
+
+`make` lists every target; `make doctor` / `make check` verify the environment and run the pre-commit checks.
 
 ### Test your changes locally
 
-Before opening a PR, exercise the skills you touched in a real session. Clone the framework, then point your assistant at the checkout instead of a published release:
+Exercise the skills you touched before opening a PR. Neither tool hot-reloads the checkout (both serve a copied cache), so after editing:
 
 ```bash
-git clone https://github.com/ai-driven-dev/framework ~/projects/framework
+make reload                        # all plugins; or PLUGIN="aidd-refine aidd-pm" for a subset
 ```
 
-#### Claude Code
-
-Register the checkout as a local marketplace, then install the plugins:
-
-```text
-/plugin marketplace add ~/projects/framework
-/plugin install aidd-context@aidd-framework
-/plugin install aidd-dev@aidd-framework
-/plugin install aidd-vcs@aidd-framework
-/plugin install aidd-pm@aidd-framework
-/plugin install aidd-orchestrator@aidd-framework
-/plugin install aidd-refine@aidd-framework
-```
-
-After editing a `SKILL.md`, an agent, or any action, run `/reload-plugins` in the same session to pick up the change - no reinstall needed.
-
-To load the plugins into a personal project, point its `.claude/settings.local.json` at the checkout:
-
-```json
-{
-  "extraKnownMarketplaces": {
-    "aidd-framework": {
-      "source": {
-        "source": "directory",
-        "path": "~/projects/framework"
-      }
-    }
-  },
-  "enabledPlugins": {
-    "aidd-context@aidd-framework": true,
-    "aidd-dev@aidd-framework": true,
-    "aidd-vcs@aidd-framework": true,
-    "aidd-pm@aidd-framework": true,
-    "aidd-orchestrator@aidd-framework": true,
-    "aidd-refine@aidd-framework": true
-  }
-}
-```
-
-#### Codex
-
-Register the checkout (pass an absolute path; `./` is rejected), then install the plugins:
-
-```bash
-codex plugin marketplace add ~/projects/framework
-codex plugin add aidd-context@aidd-framework
-codex plugin add aidd-dev@aidd-framework
-codex plugin add aidd-vcs@aidd-framework
-codex plugin add aidd-pm@aidd-framework
-codex plugin add aidd-orchestrator@aidd-framework
-codex plugin add aidd-refine@aidd-framework
-codex plugin list --marketplace aidd-framework   # confirm every plugin is `installed, enabled`
-```
-
-No live reload - run `codex plugin marketplace upgrade` after each change to refresh.
+- reinstalls each plugin from the checkout (current versions, no bump - nothing to revert)
+- purges + refreshes the cache in Claude + Codex
+- restart the session to load it (`/reload-plugins` covers a Claude-only edit to an existing skill)
 
 ## 2. Commit
 

@@ -1,6 +1,6 @@
 ---
 name: 03-context-generate
-description: Route a request to generate a context artifact (skill, rule, agent, command, or hook) to its dedicated generator when the user has not named which kind. For a named kind, that generator triggers directly. Not for listing existing artifacts (use discovery).
+description: Route a request to generate a context artifact (skill, rule, agent, command, or hook) to its dedicated generator when the user has not named which kind. For a named kind, that generator triggers directly. Not for listing existing artifacts (use explore).
 ---
 
 # Context Generate
@@ -17,4 +17,4 @@ Routes a generation request to the dedicated generator for the artifact kind. Ho
 | command  | `aidd-context:07-command-generate` |
 | hook     | `aidd-context:08-hook-generate`  |
 
-Identify the artifact kind from the request, then hand off to the matching generator. If the kind is unclear, ask which one. To list or discover existing artifacts, use the discovery skill instead.
+Identify the artifact kind from the request, then hand off to the matching generator. If the kind is unclear, ask which one. To survey or list existing artifacts, use the explore skill instead.

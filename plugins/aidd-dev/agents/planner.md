@@ -36,7 +36,6 @@ decisions_blocked:
     topic: <what>
     blocker: <why I cannot decide alone>
     needs: human_approval | clarification | external_input
-plan_status: in_progress | done | blocked
 notes: <observations relevant to next iteration>
 ```
 
@@ -95,7 +94,7 @@ Anything else is out of bounds.
 
 # Handoffs
 
-- Return `plan_path`, `child_paths`, `decisions_made`, `decisions_blocked`, and `plan_status`.
+- Return `plan_path`, `child_paths`, `decisions_made`, and `decisions_blocked`.
 - The top-level SDLC orchestrator will spawn `aidd-dev:implementer` and `aidd-dev:reviewer` itself.
 - If a decision can be made conservatively, make it and record it. Prefer progress over escalation.
 - Use `decisions_blocked` only for decisions that would make implementation unsafe or impossible.

@@ -12,7 +12,7 @@ The Git repository that publishes plugins. When you run `/plugin marketplace add
 
 ## Memory bank
 
-Per-project context files under `aidd_docs/memory/` (architecture, conventions, decisions, and similar) that give the AI durable knowledge of your codebase. Built or refreshed by `aidd-context` (the onboard / project-init skills) and read by skills that need project context. "Onboard builds the memory bank" in the Quick start refers to this.
+Per-project context files under `aidd_docs/memory/` (architecture, conventions, decisions, and similar) that give the AI durable knowledge of your codebase. Built or refreshed by `aidd-context` (the onboard / project-memory skills) and read by skills that need project context. "Onboard builds the memory bank" in the Quick start refers to this.
 
 ## Skill
 

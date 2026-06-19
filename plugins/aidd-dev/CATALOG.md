@@ -62,6 +62,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | `A feature's implementation plan - rules, phases, risks, decisions. One phase file sits next to it per phase.` |
 | `-` | [README.md](skills/01-plan/README.md) | - |
 | `references` | [mermaid-conventions.md](skills/01-plan/references/mermaid-conventions.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` |
+| `references` | [plan-status.md](skills/01-plan/references/plan-status.md) | `Plan lifecycle status field - values, meaning, who writes each, and when.` |
 | `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Turn a request, ticket, or file into a phased implementation plan, gathering the source first and optionally wireframing a screen before planning. Use when the user wants to plan a feature, turn a ticket or requirements into a phased plan, or wireframe a screen before building. Do NOT use to write code (use 02-implement), review a diff (use 05-review), or audit code (use 04-audit).` |
 
 #### `skills/02-implement`
@@ -70,6 +71,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-implement.md](skills/02-implement/actions/01-implement.md) | - |
 | `-` | [README.md](skills/02-implement/README.md) | - |
+| `references` | [blocked.md](skills/02-implement/references/blocked.md) | `Conditions that make a plan blocked (needs a human).` |
 | `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Execute an implementation plan phase by phase via the implementer agent, iterating until 100% completeness.` |
 
 #### `skills/03-assert`
@@ -143,14 +145,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 #### `skills/09-for-sure`
 
-| Group | File | Description |
-|-------|------|---|
-| `actions` | [01-init-tracking.md](skills/09-for-sure/actions/01-init-tracking.md) | - |
-| `actions` | [02-auto-accept.md](skills/09-for-sure/actions/02-auto-accept.md) | - |
-| `actions` | [03-autonomous-loop.md](skills/09-for-sure/actions/03-autonomous-loop.md) | - |
-| `assets` | [plan-template.md](skills/09-for-sure/assets/plan-template.md) | - |
-| `-` | [README.md](skills/09-for-sure/README.md) | - |
-| `-` | [SKILL.md](skills/09-for-sure/SKILL.md) | `Iterative agent loop that tracks attempts and retries until a success condition is met. Use when the user says "for sure", "make sure", "keep trying until", "loop until done", "don't stop until", or needs guaranteed completion of a task with explicit success criteria.` |
+| Group | File | Description | Argument Hint |
+|-------|------|---|---|
+| `actions` | [01-init-tracking.md](skills/09-for-sure/actions/01-init-tracking.md) | - | - |
+| `actions` | [02-auto-accept.md](skills/09-for-sure/actions/02-auto-accept.md) | - | - |
+| `actions` | [03-autonomous-loop.md](skills/09-for-sure/actions/03-autonomous-loop.md) | - | - |
+| `assets` | [plan-template.md](skills/09-for-sure/assets/plan-template.md) | `For Sure autonomous-loop tracking file. Extends the 01-plan format with `success_condition` and `iteration` (For-Sure-only), which the loop runs and increments.` | - |
+| `-` | [README.md](skills/09-for-sure/README.md) | - | - |
+| `-` | [SKILL.md](skills/09-for-sure/SKILL.md) | `Iterative agent loop that tracks attempts and retries until a success condition is met. Use when the user says "for sure", "make sure", "keep trying until", "loop until done", "don't stop until", or needs guaranteed completion of a task with explicit success criteria.` | - |
 
 #### `skills/10-todo`
 
