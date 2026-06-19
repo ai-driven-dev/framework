@@ -1,5 +1,3 @@
-<!-- Recipe contract: file is recipes/<kebab-slug>.md · Level ∈ {Beginner, Intermediate, Advanced} · Time prefixed with ~ · one idea per sentence, prefer removing over adding. -->
-
 # <Recipe title>
 
 > **Goal:** <one line stating the outcome the reader achieves>
@@ -12,13 +10,41 @@
 
 ## Why
 
-<One short paragraph: the problem this recipe solves and when to reach for it.>
+<Short and benefit-first. Lead with the keywords a reader would search, **bold** the key terms. A few sentences, no filler.>
 
-## Steps
+## Steps to <the outcome the reader achieves>
 
-1. 📋 **<First step>** — <imperative instruction.>
-2. 🔧 **<Next step>** — <imperative instruction.>
-3. ✅ **<Last step>** — <until the goal is reached.>
+#### 1) <emoji> <First step title>
+
+<One benefit-focused line: what this gets the reader and why.>
+
+- <where it is / what it is>
+- <install it from its URL>
+- <how to use it>
+
+```bash
+$ <command the reader runs>
+<the useful output it prints, trimmed to what matters>
+```
+
+#### 2) <emoji> <Next step title>
+
+<Benefit-focused what and why.>
+
+- <how>
+- <how>
+
+```<lang>
+<a config or snippet the reader can copy>
+```
+
+#### 3) <emoji> <Last step title — until the goal is reached>
+
+<Benefit-focused what and why.>
+
+- <how>
+
+![<what this screenshot or video shows>](<path-or-url>)
 
 ## Verify
 
