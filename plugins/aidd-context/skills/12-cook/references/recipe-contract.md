@@ -7,7 +7,7 @@ Rules for every `recipes/<kebab-slug>.md` the skill writes.
 ## File
 
 - Path: `recipes/<kebab-slug>.md`.
-- `Level` is one of Beginner, Intermediate, Advanced. `Time` is prefixed with `~`.
+- `Level` is one of Beginner, Intermediate, Expert.
 
 ## Writing
 
@@ -18,7 +18,8 @@ Rules for every `recipes/<kebab-slug>.md` the skill writes.
 ## Steps
 
 - The steps section heading is named after the goal: `## Steps to <outcome>`, never a bare `## Steps`.
-- Each step is a `#### N) <emoji> Title` heading: it opens with an emoji, then one benefit-focused line of what and why.
+- Group the steps under three level subheadings, in order: `### 🟢 Beginner`, `### 🟡 Intermediate`, `### 🔴 Expert`. Put each step under the level it fits; drop a level that has no step.
+- Each step is a `#### N) <emoji> Title` heading: it opens with an emoji, then one benefit-focused line of what and why. Number steps continuously across levels.
 - How-bullets are straight to the point and ordered for action. For a tool: where it is, then install it from its URL, then how to use it.
 - Every step carries one concrete example: a command with its useful output (show what it prints, not just the command), a config or snippet, a screenshot, or a short video/GIF link.
 - Link to a reference when applicable.

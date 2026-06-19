@@ -21,10 +21,7 @@ Run `list` to survey recipes, `research` to gather insights, `upsert` to author 
 ## References
 
 - `references/recipe-contract.md`: the rules every recipe file follows; `upsert` writes to it.
-- `references/research-playbook.md`: the scouting angles and per-candidate criteria `research` applies (freshness, community signal, tips).
 
 ## Assets
 
 - `assets/recipe-template.md`: the canonical recipe scaffold `upsert` renders from, and the shape `list` parses.
-- `assets/refine-goal-checklist.md`: the checklist `research` fills with the user to define the target recipe.
-- `assets/research-checklist.md`: the done-when gate `research` clears before drafting.
