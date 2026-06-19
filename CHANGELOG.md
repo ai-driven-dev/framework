@@ -1,5 +1,19 @@
 # Changelog
 
+## [5.0.1](https://github.com/ai-driven-dev/aidd-cli/compare/v5.0.0...v5.0.1) (2026-06-19)
+
+
+### Bug Fixes
+
+* **docs:** remove duplicate memory references in AGENTS.md and CLAUDE.md ([a159f4f](https://github.com/ai-driven-dev/aidd-cli/commit/a159f4f14e965473ccbc0d27f69bf4b7cfd71c9f))
+* **framework:** emit Claude plugin agents as a file list, not a directory ([#293](https://github.com/ai-driven-dev/aidd-cli/issues/293)) ([0c8fdc3](https://github.com/ai-driven-dev/aidd-cli/commit/0c8fdc36c2a155f35d46096d976627414cb12b93))
+* **opencode:** tolerate JSONC in user-owned opencode.json during install ([#296](https://github.com/ai-driven-dev/aidd-cli/issues/296)) ([13a15fe](https://github.com/ai-driven-dev/aidd-cli/commit/13a15fef224bd697ba0bc1bf3aa93d1e54d68178))
+
+
+### Documentation
+
+* **cli:** refresh project memory + add cli/auth capability files ([25a1143](https://github.com/ai-driven-dev/aidd-cli/commit/25a11439b8dbc7f0f5cd984bf2aaf835c010ddc7))
+
 ## [5.0.0](https://github.com/ai-driven-dev/aidd-cli/compare/v4.6.1...v5.0.0) (2026-06-17)
 
 
