@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.2](https://github.com/ai-driven-dev/aidd-cli/compare/v5.0.1...v5.0.2) (2026-06-19)
+
+
+### Bug Fixes
+
+* **plugin:** read version from plugin.json when marketplace omits it ([#297](https://github.com/ai-driven-dev/aidd-cli/issues/297)) ([4af591e](https://github.com/ai-driven-dev/aidd-cli/commit/4af591eec914278c529d83e88126b180f4d6ba0f))
+
 ## [5.0.1](https://github.com/ai-driven-dev/aidd-cli/compare/v5.0.0...v5.0.1) (2026-06-19)
 
 
