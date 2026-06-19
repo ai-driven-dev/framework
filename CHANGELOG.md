@@ -1,5 +1,57 @@
 # Changelog
 
+## [5.0.0](https://github.com/ai-driven-dev/framework/compare/v4.4.1...v5.0.0) (2026-06-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* **framework:** auto-routing is removed. Skills are now manual-invoke only; the prompt-to-skill routing hint no longer runs.
+
+### Features
+
+* **aidd-context:** add cook skill for recipe how-to sheets ([#281](https://github.com/ai-driven-dev/framework/issues/281)) ([da350b4](https://github.com/ai-driven-dev/framework/commit/da350b4f020cbeb33ae3ffd20668f92e7d9d5535))
+* **aidd-context:** per-artifact context generators (skill, rule, agent, command, hook) ([#264](https://github.com/ai-driven-dev/framework/issues/264)) ([647fe5a](https://github.com/ai-driven-dev/framework/commit/647fe5afed81c27e9201bd3f0ae119f422e75fb6))
+* **aidd-dev:** add 10-todo skill for parallel todo fan-out ([#262](https://github.com/ai-driven-dev/framework/issues/262)) ([c086e05](https://github.com/ai-driven-dev/framework/commit/c086e05e7564f1be1414ebf1a6956e74cd4d7903))
+* **aidd-dev:** track plan lifecycle status in frontmatter ([#251](https://github.com/ai-driven-dev/framework/issues/251)) ([3f63ae2](https://github.com/ai-driven-dev/framework/commit/3f63ae20a2a04eb44caed53bf9ddb79c29f951d0))
+* **framework:** remove evals system end-to-end ([#261](https://github.com/ai-driven-dev/framework/issues/261)) ([9a3c1b8](https://github.com/ai-driven-dev/framework/commit/9a3c1b8237359842f3200683732bc73b825582f6))
+* **framework:** rolling weekly release model (main/next) ([#308](https://github.com/ai-driven-dev/framework/issues/308)) ([2908b7a](https://github.com/ai-driven-dev/framework/commit/2908b7a9f86b8b06f805a16a1efe2c7009de4c9f))
+
+
+### Bug Fixes
+
+* **framework:** make reload installs via the CLI from the local clone ([#299](https://github.com/ai-driven-dev/framework/issues/299)) ([9799b8b](https://github.com/ai-driven-dev/framework/commit/9799b8b9ccbc0a959bc535c364bae4b237850fcc))
+* **framework:** make setup work in worktrees ([b560fd9](https://github.com/ai-driven-dev/framework/commit/b560fd9247c1668dbce53df1a3c90f8ac447f0f8))
+* **framework:** use node validators in hooks ([#295](https://github.com/ai-driven-dev/framework/issues/295)) ([e6b8355](https://github.com/ai-driven-dev/framework/commit/e6b8355d8daa452e8ac076f34eb39f8c1e55b3c6))
+
+
+### Miscellaneous
+
+* **framework:** allow full access in worktrees ([#306](https://github.com/ai-driven-dev/framework/issues/306)) ([15e279b](https://github.com/ai-driven-dev/framework/commit/15e279b104ec195ff9999c78a874341c153aee49))
+* **framework:** enable local AIDD plugins for repo dogfooding ([#247](https://github.com/ai-driven-dev/framework/issues/247)) ([3564872](https://github.com/ai-driven-dev/framework/commit/35648729b1de6981911c9409adda10408b351c38))
+* **framework:** make-based dev workflow (setup, reload, check) ([#273](https://github.com/ai-driven-dev/framework/issues/273)) ([844989c](https://github.com/ai-driven-dev/framework/commit/844989c40bad2e4d387379e2cc3976965029e230))
+* **framework:** rename repository URLs aidd-framework to framework ([#266](https://github.com/ai-driven-dev/framework/issues/266)) ([7cfc0a3](https://github.com/ai-driven-dev/framework/commit/7cfc0a3cf5fcd8eb068000744f2854d19624546f))
+* **framework:** share Codex worktree setup ([a40fca1](https://github.com/ai-driven-dev/framework/commit/a40fca11a271cd26cca3a17ca524cc6138e55b56))
+* **framework:** stop shipping .mcp.json, recommend MCP servers in README ([#263](https://github.com/ai-driven-dev/framework/issues/263)) ([e602fa0](https://github.com/ai-driven-dev/framework/commit/e602fa0c8d49fbbd7d0b65f85a0d5122ee8d9c6c))
+
+
+### Documentation
+
+* **aidd-context:** refresh plugin README for the reworked skills ([#285](https://github.com/ai-driven-dev/framework/issues/285)) ([fdd7bc0](https://github.com/ai-driven-dev/framework/commit/fdd7bc0c8a21f8af8c4ac7189ef29079ea83c2d8))
+* **contributing:** local testing guide, PR template overhaul, and label guide ([#244](https://github.com/ai-driven-dev/framework/issues/244)) ([cc5c090](https://github.com/ai-driven-dev/framework/commit/cc5c090621eef446ae8ce714675f71e7c0bcf22d))
+* **framework:** add a human self-review attestation to the PR template ([#249](https://github.com/ai-driven-dev/framework/issues/249)) ([c3beb5d](https://github.com/ai-driven-dev/framework/commit/c3beb5d2a847608033ed6690ee2d91ff90c5d787))
+* **framework:** add plugin concern taxonomy and skill placement rules ([#248](https://github.com/ai-driven-dev/framework/issues/248)) ([c6b474f](https://github.com/ai-driven-dev/framework/commit/c6b474fe1ed76c34196a476967bd520abb4e7cdc))
+* **framework:** streamline README, add recipes, extract marketplace doc ([#280](https://github.com/ai-driven-dev/framework/issues/280)) ([a139b52](https://github.com/ai-driven-dev/framework/commit/a139b523143000dc3229194a9269f0eca4194bea))
+
+
+### Refactoring
+
+* **aidd-context:** conform 09-mermaid to the skill contract ([#286](https://github.com/ai-driven-dev/framework/issues/286)) ([4d8e942](https://github.com/ai-driven-dev/framework/commit/4d8e942367966ab5cb93938cfc6c8b2b089872b8))
+* **aidd-context:** rebuild 00-onboard as a plain-language guide ([#284](https://github.com/ai-driven-dev/framework/issues/284)) ([5d7351a](https://github.com/ai-driven-dev/framework/commit/5d7351adb2b1e9e4b7c91a09dd265b72a0f720d1))
+* **aidd-context:** rebuild 11-discovery as 11-explore ([#287](https://github.com/ai-driven-dev/framework/issues/287)) ([c16a397](https://github.com/ai-driven-dev/framework/commit/c16a39717ca9448ec41ce4bee5440ec36c61d2f5))
+* **aidd-context:** rework 10-learn around scoring and explicit confirm ([#282](https://github.com/ai-driven-dev/framework/issues/282)) ([89935c0](https://github.com/ai-driven-dev/framework/commit/89935c032b5a64768c99b603efe4eabe5a3435ce))
+* **aidd-context:** rework project-memory skill with capability model ([#279](https://github.com/ai-driven-dev/framework/issues/279)) ([a0e8da7](https://github.com/ai-driven-dev/framework/commit/a0e8da7fdaea4539da098e3a946b2a5b89f8473f))
+* **aidd-refine:** rebuild brainstorm as a deep conversational prober ([#298](https://github.com/ai-driven-dev/framework/issues/298)) ([51a86b5](https://github.com/ai-driven-dev/framework/commit/51a86b52c6dd05e4b81b3cf33cd14d5a5ad6ed6e))
+
 ## [4.4.1](https://github.com/ai-driven-dev/aidd-framework/compare/v4.4.0...v4.4.1) (2026-06-04)
 
 

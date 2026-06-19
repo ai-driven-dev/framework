@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.0.0](https://github.com/ai-driven-dev/framework/compare/aidd-refine-v1.1.2...aidd-refine-v2.0.0) (2026-06-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* **framework:** auto-routing is removed. Skills are now manual-invoke only; the prompt-to-skill routing hint no longer runs.
+
+### Features
+
+* **framework:** remove evals system end-to-end ([#261](https://github.com/ai-driven-dev/framework/issues/261)) ([9a3c1b8](https://github.com/ai-driven-dev/framework/commit/9a3c1b8237359842f3200683732bc73b825582f6))
+
+
+### Miscellaneous
+
+* **framework:** rename repository URLs aidd-framework to framework ([#266](https://github.com/ai-driven-dev/framework/issues/266)) ([7cfc0a3](https://github.com/ai-driven-dev/framework/commit/7cfc0a3cf5fcd8eb068000744f2854d19624546f))
+
+
+### Refactoring
+
+* **aidd-refine:** rebuild brainstorm as a deep conversational prober ([#298](https://github.com/ai-driven-dev/framework/issues/298)) ([51a86b5](https://github.com/ai-driven-dev/framework/commit/51a86b52c6dd05e4b81b3cf33cd14d5a5ad6ed6e))
+
 ## [1.1.2](https://github.com/ai-driven-dev/aidd-framework/compare/aidd-refine-v1.1.1...aidd-refine-v1.1.2) (2026-06-03)
 
 

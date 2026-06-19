@@ -1,5 +1,37 @@
 # Changelog
 
+## [2.0.0](https://github.com/ai-driven-dev/framework/compare/aidd-context-v1.1.2...aidd-context-v2.0.0) (2026-06-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* **framework:** auto-routing is removed. Skills are now manual-invoke only; the prompt-to-skill routing hint no longer runs.
+
+### Features
+
+* **aidd-context:** add cook skill for recipe how-to sheets ([#281](https://github.com/ai-driven-dev/framework/issues/281)) ([da350b4](https://github.com/ai-driven-dev/framework/commit/da350b4f020cbeb33ae3ffd20668f92e7d9d5535))
+* **aidd-context:** per-artifact context generators (skill, rule, agent, command, hook) ([#264](https://github.com/ai-driven-dev/framework/issues/264)) ([647fe5a](https://github.com/ai-driven-dev/framework/commit/647fe5afed81c27e9201bd3f0ae119f422e75fb6))
+* **framework:** remove evals system end-to-end ([#261](https://github.com/ai-driven-dev/framework/issues/261)) ([9a3c1b8](https://github.com/ai-driven-dev/framework/commit/9a3c1b8237359842f3200683732bc73b825582f6))
+
+
+### Miscellaneous
+
+* **framework:** rename repository URLs aidd-framework to framework ([#266](https://github.com/ai-driven-dev/framework/issues/266)) ([7cfc0a3](https://github.com/ai-driven-dev/framework/commit/7cfc0a3cf5fcd8eb068000744f2854d19624546f))
+
+
+### Documentation
+
+* **aidd-context:** refresh plugin README for the reworked skills ([#285](https://github.com/ai-driven-dev/framework/issues/285)) ([fdd7bc0](https://github.com/ai-driven-dev/framework/commit/fdd7bc0c8a21f8af8c4ac7189ef29079ea83c2d8))
+
+
+### Refactoring
+
+* **aidd-context:** conform 09-mermaid to the skill contract ([#286](https://github.com/ai-driven-dev/framework/issues/286)) ([4d8e942](https://github.com/ai-driven-dev/framework/commit/4d8e942367966ab5cb93938cfc6c8b2b089872b8))
+* **aidd-context:** rebuild 00-onboard as a plain-language guide ([#284](https://github.com/ai-driven-dev/framework/issues/284)) ([5d7351a](https://github.com/ai-driven-dev/framework/commit/5d7351adb2b1e9e4b7c91a09dd265b72a0f720d1))
+* **aidd-context:** rebuild 11-discovery as 11-explore ([#287](https://github.com/ai-driven-dev/framework/issues/287)) ([c16a397](https://github.com/ai-driven-dev/framework/commit/c16a39717ca9448ec41ce4bee5440ec36c61d2f5))
+* **aidd-context:** rework 10-learn around scoring and explicit confirm ([#282](https://github.com/ai-driven-dev/framework/issues/282)) ([89935c0](https://github.com/ai-driven-dev/framework/commit/89935c032b5a64768c99b603efe4eabe5a3435ce))
+* **aidd-context:** rework project-memory skill with capability model ([#279](https://github.com/ai-driven-dev/framework/issues/279)) ([a0e8da7](https://github.com/ai-driven-dev/framework/commit/a0e8da7fdaea4539da098e3a946b2a5b89f8473f))
+
 ## [1.1.2](https://github.com/ai-driven-dev/aidd-framework/compare/aidd-context-v1.1.1...aidd-context-v1.1.2) (2026-06-04)
 
 

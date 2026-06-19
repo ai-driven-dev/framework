@@ -1,9 +1,9 @@
 {
-  ".": "4.4.1",
-  "plugins/aidd-context": "1.1.2",
-  "plugins/aidd-dev": "1.2.1",
-  "plugins/aidd-vcs": "1.0.2",
-  "plugins/aidd-pm": "1.0.2",
-  "plugins/aidd-orchestrator": "1.0.3",
-  "plugins/aidd-refine": "1.1.2"
+  ".": "5.0.0",
+  "plugins/aidd-context": "2.0.0",
+  "plugins/aidd-dev": "2.0.0",
+  "plugins/aidd-vcs": "2.0.0",
+  "plugins/aidd-pm": "2.0.0",
+  "plugins/aidd-orchestrator": "2.0.0",
+  "plugins/aidd-refine": "2.0.0"
 }
