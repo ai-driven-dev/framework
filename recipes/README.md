@@ -7,8 +7,9 @@ Task-oriented how-to sheets for the AIDD Framework. Each recipe is a self-contai
 | [Start a project](start-a-project.md) | Take a greenfield idea to a set-up project with its AIDD context | Beginner |
 | [Ship a feature](ship-a-feature.md) | Take a feature from idea to a reviewed, shipped PR | Beginner |
 | [MCP installations](mcp-installation.md) | Decide when to use an MCP server vs a CLI, and wire up the recommended ones | Beginner |
+| [Token optimization for AI IDEs](token-optimization.md) | Cut token usage and cost in AI coding assistants without losing output quality | Intermediate |
 
-> More coming — token optimisation, custom plugins, and others.
+> More coming — custom plugins, and others.
 
 ## Contributing a recipe
 
