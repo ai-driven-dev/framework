@@ -1,8 +1,6 @@
-<div align="center">
-
-⭐ **AI-Driven Dev helps you?** Give it a star — the button is at the **top-right** of this page ↗️ &nbsp;·&nbsp; [![GitHub stars](https://img.shields.io/github/stars/ai-driven-dev/framework?style=social)](https://github.com/ai-driven-dev/framework/stargazers)
-
-</div>
+<p align="right">
+  <a href="https://github.com/ai-driven-dev/framework/stargazers"><img src="docs/assets/star-cta.svg" alt="Enjoying AIDD? Give it a star — the button is at the top-right of this page" width="320" /></a>
+</p>
 
 <div align="center">
 
@@ -20,6 +18,8 @@
 [![Latest Release](https://img.shields.io/github/v/release/ai-driven-dev/framework?include_prereleases&sort=semver)](https://github.com/ai-driven-dev/framework/releases)
 [![CI](https://github.com/ai-driven-dev/framework/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ai-driven-dev/framework/actions/workflows/ci.yml)
 [![Made in France](https://img.shields.io/badge/made%20in-France-0055A4?labelColor=EF4135)](https://www.ai-driven-dev.fr/)
+
+<p>🗺️ <a href="https://github.com/orgs/ai-driven-dev/projects/8/views/1"><b>Live roadmap</b></a> — what's shipping Now / Next / Later</p>
 
 </div>
 
@@ -216,13 +216,16 @@ Task-oriented how-to sheets. **[Browse all recipes →](recipes/)**
 | --- | --- |
 | [MCP installations](recipes/mcp-installation.md) | Choose CLI vs MCP, and wire up the recommended servers (GitHub, Atlassian, Figma, Notion…) |
 
-## 🗺️ Roadmap
+<div align="center">
 
-The live **Now / Next / Later** board — per-item status across the framework and CLI — is the single source of truth:
+### ⭐ A French open-source initiative
 
-> ### [Open the AIDD Roadmap board →](https://github.com/orgs/ai-driven-dev/projects/8/views/1)
+**AIDD is built in the open by a French developer community** — no company, no funding behind it.<br/>
+If it saves you time, a star genuinely helps us keep going and helps other developers find it.
 
-Priority is set by community vote. Open a `feat:` issue or an idea in [Discussions](https://github.com/ai-driven-dev/framework/discussions), 👍 what you want, and discuss it on Discord — see [`ROADMAP.md`](./ROADMAP.md) for the full mechanism.
+[![Star the repo](https://img.shields.io/github/stars/ai-driven-dev/framework?style=social)](https://github.com/ai-driven-dev/framework/stargazers)
+
+</div>
 
 ## 🤝 Contributing
 
@@ -251,9 +254,7 @@ Plugins can run commands, edit files, and call external services on your behalf.
 
 ## 📈 Star History
 
-<a href="https://star-history.com/#ai-driven-dev/framework&Date">
-  <img src="https://api.star-history.com/svg?repos=ai-driven-dev/framework&type=Date" alt="Star History Chart" width="600" />
-</a>
+<img src="https://api.star-history.com/svg?repos=ai-driven-dev/framework&type=Date" alt="Star History Chart" width="600" />
 
 ---
 
