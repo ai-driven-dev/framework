@@ -64,24 +64,11 @@ Format: `<type>(<scope>): description`.
 git commit -m "feat(aidd-dev): add for-sure skill"
 ```
 
-**Scope** - one per commit (split cross-plugin changes):
-
-| Scope | Path |
-| ----- | ---- |
-| `aidd-context` / `aidd-dev` / `aidd-vcs` / `aidd-pm` / `aidd-orchestrator` / `aidd-refine` | the matching `plugins/<name>/` |
-| `marketplace` | `.claude-plugin/marketplace.json` |
-| `framework` | root: scripts, CI, configs, docs, `aidd_docs/` |
-
-**Type** - drives the release:
-
-- `feat` → minor · `fix` / `perf` → patch · `!` or `BREAKING CHANGE:` → major
-- `docs` / `refactor` / `style` / `test` / `build` / `ci` / `chore` → no release
-
-Versioning and the release bundles are automated - see [Releases](#releases).
+One scope per commit (split cross-plugin changes). The types, the scopes, and the rules live in [`aidd_docs/memory/vcs.md`](aidd_docs/memory/vcs.md#commit-convention) - it mirrors `commitlint.config.cjs`, the source of truth. **Type** drives the release; see [`RELEASE.md`](./RELEASE.md) for what each type produces.
 
 ## 3. Open a pull request
 
-- Work on a branch, not `main`.
+- Branch off `next` and target `next` (the integration branch); `hotfix/*` branches off `main` for urgent production fixes. See [`RELEASE.md`](./RELEASE.md).
 - **Fill the PR template** (applied automatically): explain *what* changed and *how* you resolved it technically - that narrative is the point of the PR. The conventional title and pre-commit hooks are already enforced by CI, so don't spend the description re-asserting them.
 - **Label the PR** so reviewers and the [Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8) triage at a glance:
 
@@ -97,15 +84,13 @@ Versioning and the release bundles are automated - see [Releases](#releases).
 
 ## Releases
 
-Automated by [release-please](https://github.com/googleapis/release-please) in manifest mode. The repo ships **7 independently-versioned packages** (root `aidd-framework` + the 6 plugins); each bumps from the conventional commits touching its path.
+How releases flow (the `main`/`next` model, weekly cadence, hotfix, auto-merge) is in [`RELEASE.md`](./RELEASE.md); the release tooling is in [`aidd_docs/memory/vcs.md`](aidd_docs/memory/vcs.md). What a release produces, for contributors:
 
-- Every push to `main` opens / updates a `chore: release main` PR (changelog + version bumps).
-- Merging it tags each bumped package and creates the GitHub Releases; CI then attaches the bundles:
+- **7 independently-versioned packages** (root `aidd-framework` + the 6 plugins).
+- On release, CI attaches the bundles:
   - `aidd-framework-marketplace-X.Y.Z.zip` - the Claude Code marketplace (`.claude-plugin/` + `plugins/`); kept as the legacy Claude alias of `aidd-framework-claude-marketplace-X.Y.Z.zip`.
   - `<plugin>-vX.Y.Z.zip` - per released plugin.
   - `aidd-framework-<tool>-<mode>-X.Y.Z.zip` - **per-tool distributions** built by `aidd-cli` (`framework build`) on the root release: 4 marketplace (claude/cursor/copilot/codex) + 5 flat (+opencode, flat-only) = 9 archives. Produced by the `build-per-tool` matrix job in `.github/workflows/ci.yml`, pinned to a specific `@ai-driven-dev/cli` version.
-
-Config: `release-please-config.json` + `.release-please-manifest.json` (pre-releases, forced versions, and recovery are driven through those files).
 
 ## Reporting issues
 

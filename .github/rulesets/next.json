@@ -1,0 +1,39 @@
+{
+  "name": "next protection",
+  "target": "branch",
+  "enforcement": "active",
+  "bypass_actors": [
+    {"actor_id": 3959336, "actor_type": "Integration", "bypass_mode": "always"},
+    {"actor_id": 11783938, "actor_type": "Team", "bypass_mode": "pull_request"}
+  ],
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/next"],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "pull_request",
+      "parameters": {
+        "required_approving_review_count": 0,
+        "dismiss_stale_reviews_on_push": false,
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": false
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "strict_required_status_checks_policy": false,
+        "required_status_checks": [
+          {"context": "lefthook (framework-local checks)"},
+          {"context": "Commitlint"}
+        ]
+      }
+    },
+    {"type": "non_fast_forward"},
+    {"type": "deletion"}
+  ]
+}

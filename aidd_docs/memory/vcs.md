@@ -1,6 +1,7 @@
 # Versioning Control System (VCS) Guidelines
 
-- Main Branch: `main`
+- Production branch: `main`
+- Integration branch: `next` (default target for day-to-day work)
 - Platform: `github`
 - CLI: `gh`
 - Ticketing Tool: GitHub Issues
@@ -15,15 +16,15 @@ type/ticket-short-description
 
 ### Types
 
-| Prefix | Usage |
-| --- | --- |
-| `feat/` | New feature |
-| `fix/` | Bug fix |
-| `docs/` | Documentation only |
-| `refactor/` | Code change (no feat/fix) |
-| `chore/` | Build, config, deps |
-| `test/` | Add/update tests |
-| `hotfix/` | Urgent production fix |
+| Prefix | Usage | Branch from | PR target |
+| --- | --- | --- | --- |
+| `feat/` | New feature | `next` | `next` |
+| `fix/` | Bug fix | `next` | `next` |
+| `docs/` | Documentation only | `next` | `next` |
+| `refactor/` | Code change (no feat/fix) | `next` | `next` |
+| `chore/` | Build, config, deps | `next` | `next` |
+| `test/` | Add/update tests | `next` | `next` |
+| `hotfix/` | Urgent production fix | `main` | `main` |
 
 ### Examples
 
@@ -33,6 +34,8 @@ fix/orchestrator-sdlc-push
 docs/update-api-examples
 chore/release-please-config
 ```
+
+`next` is the day-to-day branch: branch from it, target it. `main` is production and only takes promotions from `next` plus `hotfix/*`. The release flow is in [`RELEASE.md`](../../RELEASE.md).
 
 ## Commit Convention
 
@@ -103,7 +106,11 @@ BREAKING CHANGE: plugin.json now requires a `strict` field.
 
 ## Release Management
 
-- Automated via `release-please` (GitHub Actions)
-- Config: `release-please-config.json`, manifest: `.release-please-manifest.json`
-- Per-plugin versioning with `include-component-in-tag: true`
-- Tags format: `<plugin>-v<semver>` (e.g. `aidd-dev-v1.2.0`)
+The release flow (main/next model, weekly cadence, hotfix) lives in [`RELEASE.md`](../../RELEASE.md). This section is the tooling only.
+
+- Automated via `release-please`, in `.github/workflows/ci.yml` on push to `main`.
+- The Release PR is auto-merged in that workflow (AIDD bot App token, a bypass actor on `main`).
+- Back-merge `main` -> `next` is automated in `.github/workflows/back-merge.yml`.
+- Config: `release-please-config.json`, manifest: `.release-please-manifest.json`.
+- Per-plugin versioning with `include-component-in-tag: true`.
+- Tags format: `<plugin>-v<semver>` (e.g. `aidd-dev-v1.2.0`).

@@ -1,0 +1,52 @@
+name: Back-merge
+
+# After a release on main, sync main back into next so its changelog, manifest,
+# and version bumps do not drift. No conflict -> push next directly (the App is
+# an "always" bypass actor on next). Conflict -> open a PR for a human.
+
+on:
+  release:
+    types: [published]
+
+concurrency:
+  group: back-merge
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  back-merge:
+    name: Back-merge main into next
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: app-token
+        with:
+          app-id: ${{ secrets.AIDD_BOT_APP_ID }}
+          private-key: ${{ secrets.AIDD_BOT_PRIVATE_KEY }}
+
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: next
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Merge main into next
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git config user.name "aidd-bot[bot]"
+          git config user.email "aidd-bot[bot]@users.noreply.github.com"
+          git fetch origin main
+          if git merge --no-edit origin/main; then
+            git push origin next
+          else
+            git merge --abort
+            BRANCH="back-merge/main-to-next-${{ github.run_id }}"
+            git checkout -b "$BRANCH" origin/main
+            git push origin "$BRANCH"
+            gh pr create --base next --head "$BRANCH" \
+              --title "chore: back-merge main into next (conflicts)" \
+              --body "Automated back-merge hit conflicts (CHANGELOG / manifest / version files). Resolve manually, then merge into next." \
+              --repo "${{ github.repository }}"
+          fi
