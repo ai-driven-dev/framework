@@ -10,6 +10,8 @@
 
 ### Vibe Coding for professional developers — focused on 100% quality on AI-generated code.
 
+<p><b>🇫🇷 The first French open-source framework for developers.</b></p>
+
 <p>
   <!--counts:start--><kbd>6 plugins</kbd> · <kbd>38 skills</kbd> · <kbd>3 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
 </p>
@@ -216,18 +218,9 @@ Task-oriented how-to sheets. **[Browse all recipes →](recipes/)**
 | --- | --- |
 | [MCP installations](recipes/mcp-installation.md) | Choose CLI vs MCP, and wire up the recommended servers (GitHub, Atlassian, Figma, Notion…) |
 
-<div align="center">
-
-### ⭐ A French open-source initiative
-
-**AIDD is built in the open by a French developer community** — no company, no funding behind it.<br/>
-If it saves you time, a star genuinely helps us keep going and helps other developers find it.
-
-[![Star the repo](https://img.shields.io/github/stars/ai-driven-dev/framework?style=social)](https://github.com/ai-driven-dev/framework/stargazers)
-
-</div>
-
 ## 🤝 Contributing
+
+> ⭐ **Built in the open by a French 🇫🇷 community — no company behind it.** If AIDD saves you time, [**a star**](https://github.com/ai-driven-dev/framework/stargazers) genuinely helps us keep going and helps other developers find it.
 
 > Actively maintained — see what's shipping next on the [roadmap](https://github.com/orgs/ai-driven-dev/projects/8/views/1) and help shape what comes after.
 
