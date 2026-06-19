@@ -7,8 +7,8 @@ help: ## List targets
 	@grep -hE '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*## /\t/' | sort
 
 setup: ## Install deps, git hooks, and register+install the plugins in Claude/Codex
-	pnpm install
-	pnpm exec lefthook install
+	pnpm install --ignore-scripts
+	pnpm exec lefthook install --force
 	scripts/dev-setup.sh
 
 doctor: ## Check the local toolchain
