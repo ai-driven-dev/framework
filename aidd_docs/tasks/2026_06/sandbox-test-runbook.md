@@ -117,11 +117,19 @@ PR, ruleset enforcement, App bypass, workflow triggering on `push`/`release`.
    - tags created, GitHub Releases created, `build-*` jobs attach the bundles.
    - `back-merge.yml` fires on `release: published` and `next` advances to `main`.
 
-WATCH (the known unknowns):
-- Does `gh pr merge --squash` succeed IMMEDIATELY for the App with the skipped
-  `Commitlint` check and a required code-owner review? If it errors on pending
-  state -> switch the ci.yml step to `gh pr merge --squash --auto` and enable
-  repo "Allow auto-merge".
+RESOLVED in a sandbox probe (ai-driven-dev/aidd-release-sandbox):
+- A plain `gh pr merge --squash` is REFUSED by the branch policy ("base branch
+  policy prohibits the merge") even for a bypass actor with unmet review +
+  pending required checks. `gh pr merge --squash --admin` performs the override
+  merge that the ruleset bypass permits, and succeeds. The ci.yml step therefore
+  uses `--admin`. (`--auto` is not viable here: a bot can never satisfy the
+  required review, so it would wait forever, and the repo had `allow_auto_merge`
+  off.)
+
+STILL WATCH:
+- Confirm the App-token `--admin` merge works for the App specifically (the probe
+  used an admin user; the App is a bypass actor in the prod ruleset, which should
+  grant the same override - confirm on the first real run).
 - Confirm the App-token merge RE-FIRES the downstream jobs (build + back-merge). A
   `GITHUB_TOKEN` merge would not; that is why the step uses the App token.
 
