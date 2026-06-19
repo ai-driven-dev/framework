@@ -239,6 +239,54 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
     ).rejects.toThrow(VersionMismatchError);
   });
 
+  it("native github tool: reads version from plugin.json when github catalog omits it", async () => {
+    const { useCase, deps, registry } = await buildUseCase();
+    const GH_MKT_DIR = "/gh-mkt";
+    const githubSource = { kind: "github" as const, repo: "ai-driven-dev/framework" };
+    deps.fs.writeFile(
+      join(GH_MKT_DIR, ".claude-plugin/marketplace.json"),
+      JSON.stringify({
+        plugins: [{ name: "sample-plugin", source: { kind: "local", path: "sample-plugin" } }],
+      })
+    );
+    // github marketplace source → local catalog dir; resolved git-subdir plugin → on-disk fixture
+    deps.pluginFetcher.register(githubSource, GH_MKT_DIR);
+    deps.pluginFetcher.register(
+      {
+        kind: "git-subdir",
+        url: "https://github.com/ai-driven-dev/framework.git",
+        path: "sample-plugin",
+      },
+      PLUGIN_FIXTURE
+    );
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: "aidd-framework",
+        source: githubSource,
+        scope: "project",
+        addedAt: "2026-05-01T00:00:00.000Z",
+      })
+    );
+
+    await useCase.execute({
+      pluginName: "sample-plugin",
+      toolIds: ["claude"],
+      projectRoot: PROJECT_ROOT,
+      interactive: false,
+      autoSelect: true,
+      replace: true,
+    });
+
+    const manifest = await deps.manifestRepo.load();
+    const installed = (manifest?.getPlugins("claude") ?? []).find(
+      (p) => p.name === "sample-plugin"
+    );
+    expect(installed?.marketplace).toBe("aidd-framework");
+    expect(installed?.version).toBe("1.0.0");
+    expect(installed?.files.size).toBe(0);
+  });
+
   describe("version policy", () => {
     it("throws VersionMismatchError with strict policy (default) when catalog version differs from requested", async () => {
       const { useCase, deps, registry } = await buildUseCase();

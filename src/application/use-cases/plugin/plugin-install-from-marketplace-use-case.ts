@@ -82,10 +82,11 @@ export class PluginInstallFromMarketplaceUseCase {
       interactive: options.interactive,
       marketplace: chosen.marketplace.name,
       requiredVersion: effectiveVersion,
-      pluginMetadata:
-        chosen.entry.version !== undefined
-          ? { name: chosen.entry.name, version: chosen.entry.version, strict: chosen.entry.strict }
-          : undefined,
+      pluginMetadata: {
+        name: chosen.entry.name,
+        version: chosen.entry.version,
+        strict: chosen.entry.strict,
+      },
       replace: options.replace,
     });
   }

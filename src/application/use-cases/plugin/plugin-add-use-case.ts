@@ -3,7 +3,7 @@ import { join } from "node:path";
 import type { PluginsCapability } from "../../../domain/capabilities/plugins-capability.js";
 import {
   DuplicatePluginError,
-  MissingPluginVersionError,
+  MissingPluginMetadataError,
   VersionMismatchError,
 } from "../../../domain/errors.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
@@ -33,7 +33,7 @@ export interface PluginAddOptions {
   interactive: boolean;
   marketplace?: string;
   requiredVersion?: string;
-  pluginMetadata?: { name: string; version: string; strict: boolean };
+  pluginMetadata?: { name: string; version?: string; strict: boolean };
   /** When true, drop any existing entry with the same name before adding (idempotent re-add for setup re-runs). */
   replace?: boolean;
 }
@@ -73,7 +73,7 @@ export class PluginAddUseCase {
     manifest: Manifest
   ): Promise<void> {
     const { pluginMetadata } = options;
-    if (pluginMetadata === undefined) throw new MissingPluginVersionError();
+    if (pluginMetadata === undefined) throw new MissingPluginMetadataError();
     if (options.replace === true) this.dropExistingPlugin(pluginMetadata.name, toolIds, manifest);
     else this.validateNoDuplicates(pluginMetadata.name, toolIds, manifest);
     const adapterMap = this.buildAdapterMap(toolIds);
@@ -88,7 +88,7 @@ export class PluginAddUseCase {
         options.projectRoot
       );
     }
-    this.registerNativeGithubPlugins(options, nativeToolIds, manifest);
+    await this.registerNativeGithubPlugins(options, nativeToolIds, manifest);
   }
 
   private buildAdapterMap(
@@ -101,25 +101,46 @@ export class PluginAddUseCase {
     return map;
   }
 
-  private registerNativeGithubPlugins(
+  private async registerNativeGithubPlugins(
     options: PluginAddOptions,
     toolIds: AiToolId[],
     manifest: Manifest
-  ): void {
+  ): Promise<void> {
     const { pluginMetadata, marketplace, source } = options;
-    if (pluginMetadata === undefined) return;
+    if (pluginMetadata === undefined || toolIds.length === 0) return;
+    const version = await this.resolveNativeVersion(options, pluginMetadata);
     for (const toolId of toolIds) {
       manifest.addPlugin(
         toolId,
         Plugin.fromMetadata(
           pluginMetadata.name,
-          pluginMetadata.version,
+          version,
           source,
           pluginMetadata.strict,
           marketplace
         )
       );
     }
+  }
+
+  // Catalog versions are optional: when omitted, plugin.json is the authoritative
+  // source, so fetch the distribution to read its version (no files materialized).
+  private async resolveNativeVersion(
+    options: PluginAddOptions,
+    pluginMetadata: NonNullable<PluginAddOptions["pluginMetadata"]>
+  ): Promise<string> {
+    if (pluginMetadata.version) return pluginMetadata.version;
+    const dist = await this.readDistribution(options.source, options.projectRoot);
+    return dist.manifest.version;
+  }
+
+  private async readDistribution(
+    source: PluginSource,
+    projectRoot: string
+  ): Promise<PluginDistribution> {
+    const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
+    const localPath = await this.pluginFetcher.fetch(source, cacheDir);
+    return this.pluginDistributionReader.read(localPath);
   }
 
   private async addLocalPlugin(
@@ -130,9 +151,7 @@ export class PluginAddUseCase {
     projectRoot: string
   ): Promise<void> {
     const { marketplace, requiredVersion, replace } = options;
-    const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
-    const localPath = await this.pluginFetcher.fetch(source, cacheDir);
-    const dist = await this.pluginDistributionReader.read(localPath);
+    const dist = await this.readDistribution(source, projectRoot);
     const pluginName = dist.manifest.name;
     this.assertPluginVersionMatches(pluginName, dist.manifest.version, requiredVersion);
     const { prevMcpMap } = this.prepareForInstall(pluginName, resolvedToolIds, manifest, replace);

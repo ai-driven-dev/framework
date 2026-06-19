@@ -316,10 +316,10 @@ export class CatalogFetchError extends Error {
   }
 }
 
-export class MissingPluginVersionError extends Error {
+export class MissingPluginMetadataError extends Error {
   constructor() {
-    super("Cannot register github marketplace plugin: catalog entry is missing a version field.");
-    this.name = "MissingPluginVersionError";
+    super("Cannot register github marketplace plugin: catalog entry is missing plugin metadata.");
+    this.name = "MissingPluginMetadataError";
   }
 }
 

@@ -91,7 +91,7 @@ export class PluginPickUseCase {
         marketplace: marketplace.name,
         pluginMetadata: {
           name: entry.name,
-          version: entry.version ?? "",
+          version: entry.version,
           strict: entry.strict ?? false,
         },
         replace: true,

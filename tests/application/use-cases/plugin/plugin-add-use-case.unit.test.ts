@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { PluginAddUseCase } from "../../../../src/application/use-cases/plugin/plugin-add-use-case.js";
-import { DuplicatePluginError, MissingPluginVersionError } from "../../../../src/domain/errors.js";
+import { DuplicatePluginError, MissingPluginMetadataError } from "../../../../src/domain/errors.js";
 import { Marketplace } from "../../../../src/domain/models/marketplace.js";
 import { PluginDistribution } from "../../../../src/domain/models/plugin-distribution.js";
 import type { PluginDistributionReader } from "../../../../src/domain/ports/plugin-distribution-reader.js";
@@ -113,7 +113,7 @@ describe("PluginAddUseCase", () => {
       expect(installed?.files.size).toBe(0);
     });
 
-    it("throws MissingPluginVersionError when pluginMetadata is absent for github marketplace", async () => {
+    it("throws MissingPluginMetadataError when pluginMetadata is absent for github marketplace", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initAndInstall(deps, PROJECT_ROOT, "claude");
       const registry = new InMemoryMarketplaceRegistry();
@@ -147,7 +147,7 @@ describe("PluginAddUseCase", () => {
           marketplace: "aidd-framework",
           interactive: false,
         })
-      ).rejects.toThrow(MissingPluginVersionError);
+      ).rejects.toThrow(MissingPluginMetadataError);
     });
 
     it("preserves fetch behavior for local marketplace plugin", async () => {
@@ -280,6 +280,39 @@ describe("PluginAddUseCase", () => {
     });
 
     describe("codex", () => {
+      it("reads version from plugin.json when catalog omits it", async () => {
+        const deps = await buildUnitDeps(PROJECT_ROOT);
+        await initAndInstall(deps, PROJECT_ROOT, "codex");
+        await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
+        deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
+        const registry = await makeGithubRegistry(PROJECT_ROOT);
+        const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
+        const useCase = new PluginAddUseCase(
+          deps.fs,
+          deps.manifestRepo,
+          deps.pluginFetcher,
+          new PluginDistributionReaderAdapter(deps.fs),
+          deps.hasher,
+          deps.logger,
+          registry
+        );
+        await useCase.execute({
+          source: GIT_SUBDIR_SOURCE,
+          toolIds: ["codex"],
+          projectRoot: PROJECT_ROOT,
+          marketplace: "aidd-framework",
+          interactive: false,
+          pluginMetadata: { name: "sample-plugin", strict: false },
+        });
+        expect(fetchSpy).toHaveBeenCalled();
+        const manifest = await deps.manifestRepo.load();
+        const installed = (manifest?.getPlugins("codex") ?? []).find(
+          (p) => p.name === "sample-plugin"
+        );
+        expect(installed?.version).toBe("1.0.0");
+        expect(installed?.files.size).toBe(0);
+      });
+
       it("registers only without writing files", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
         await initAndInstall(deps, PROJECT_ROOT, "codex");
@@ -312,6 +345,37 @@ describe("PluginAddUseCase", () => {
     });
 
     describe("claude", () => {
+      it("reads version from plugin.json when catalog omits it", async () => {
+        const deps = await buildUnitDeps(PROJECT_ROOT);
+        await initAndInstall(deps, PROJECT_ROOT, "claude");
+        await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
+        deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
+        const registry = await makeGithubRegistry(PROJECT_ROOT);
+        const useCase = new PluginAddUseCase(
+          deps.fs,
+          deps.manifestRepo,
+          deps.pluginFetcher,
+          new PluginDistributionReaderAdapter(deps.fs),
+          deps.hasher,
+          deps.logger,
+          registry
+        );
+        await useCase.execute({
+          source: GIT_SUBDIR_SOURCE,
+          toolIds: ["claude"],
+          projectRoot: PROJECT_ROOT,
+          marketplace: "aidd-framework",
+          interactive: false,
+          pluginMetadata: { name: "sample-plugin", strict: false },
+        });
+        const manifest = await deps.manifestRepo.load();
+        const installed = (manifest?.getPlugins("claude") ?? []).find(
+          (p) => p.name === "sample-plugin"
+        );
+        expect(installed?.version).toBe("1.0.0");
+        expect(installed?.files.size).toBe(0);
+      });
+
       it("registers only without writing files", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
         await initAndInstall(deps, PROJECT_ROOT, "claude");
@@ -339,6 +403,39 @@ describe("PluginAddUseCase", () => {
         const plugins = manifest?.getPlugins("claude") ?? [];
         const installed = plugins.find((p) => p.name === "sample-plugin");
         expect(installed).toBeDefined();
+        expect(installed?.files.size).toBe(0);
+      });
+    });
+
+    describe("copilot", () => {
+      it("reads version from plugin.json when catalog omits it", async () => {
+        const deps = await buildUnitDeps(PROJECT_ROOT);
+        await initAndInstall(deps, PROJECT_ROOT, "copilot");
+        await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
+        deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
+        const registry = await makeGithubRegistry(PROJECT_ROOT);
+        const useCase = new PluginAddUseCase(
+          deps.fs,
+          deps.manifestRepo,
+          deps.pluginFetcher,
+          new PluginDistributionReaderAdapter(deps.fs),
+          deps.hasher,
+          deps.logger,
+          registry
+        );
+        await useCase.execute({
+          source: GIT_SUBDIR_SOURCE,
+          toolIds: ["copilot"],
+          projectRoot: PROJECT_ROOT,
+          marketplace: "aidd-framework",
+          interactive: false,
+          pluginMetadata: { name: "sample-plugin", strict: false },
+        });
+        const manifest = await deps.manifestRepo.load();
+        const installed = (manifest?.getPlugins("copilot") ?? []).find(
+          (p) => p.name === "sample-plugin"
+        );
+        expect(installed?.version).toBe("1.0.0");
         expect(installed?.files.size).toBe(0);
       });
     });
