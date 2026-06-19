@@ -24,7 +24,7 @@ Most "how do I…" answers live in the README; this page covers what isn't docum
 
 - **Write your own plugin** → [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md).
 - **File a bug / request a feature** → [issue templates](https://github.com/ai-driven-dev/framework/issues/new/choose).
-- **Community** → [Discord](https://discord.gg/ai-driven-dev) · [website](https://www.ai-driven-dev.fr/) (more links in the [README](../README.md#what-is-the-aidd-framework)).
+- **Community** → [Discord](https://discord.gg/EWySJSpjWs) · [website](https://www.ai-driven-dev.fr/) (more links in the [README](../README.md#what-is-the-aidd-framework)).
 
 ## Troubleshooting
 
