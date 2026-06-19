@@ -18,7 +18,7 @@ Turns a vague idea into a precise one through a deep, natural conversation, at w
 
 ## The loop
 
-`capture` restates the idea and reads its altitude. Then `probe → integrate` repeats: each round asks pointed questions on the live thread, follows the forks the answers open, challenges assumptions, and folds the answers back in. It keeps going until no real ambiguity remains or the user is satisfied. There is no fixed round count, the idea is done when it is clear, not on a timer. `finalize` consolidates the refined idea, flags every open assumption and risk, and offers to persist it to a dated file under `aidd_docs/brainstorm/`, a ticket, or the session only.
+`capture` restates the idea and reads its altitude. Then `probe → integrate` repeats: each round asks pointed questions on the live thread, follows the forks the answers open, challenges assumptions, and folds the answers back in. It keeps going until no real ambiguity remains or the user is satisfied. There is no fixed round count, the idea is done when it is clear, not on a timer. `finalize` consolidates the refined idea, flags every open assumption and risk, and offers to persist it as `brainstorm.md` in the feature folder under `aidd_docs/tasks/`, a ticket, or the session only.
 
 ## What makes it dig
 

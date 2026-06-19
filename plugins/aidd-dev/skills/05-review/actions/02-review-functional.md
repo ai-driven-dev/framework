@@ -12,7 +12,7 @@ diff_scope: <git ref range>                # optional; defaults to `git diff mai
 ## Outputs
 
 ```yaml
-review_path: aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<task_name>.review_functional.md
+review_path: aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<task_name>/review-functional.md
 criteria_total: <int>
 criteria_traced: <int>
 missing_behaviors: <int>
@@ -38,7 +38,7 @@ Check against:
 5. **List missing behaviors** (criteria with no trace in the diff).
 6. **List unplanned behaviors** (diff changes that trace to no criterion).
 7. **List flow and edge-case gaps** surfaced by walking through each criterion.
-8. **Format and write** the report using `@../assets/review-functional-template.md` to `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<task_name>.review_functional.md`. Create the month directory when missing.
+8. **Format and write** the report using `@../assets/review-functional-template.md` to `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<task_name>/review-functional.md`. Reuse the feature folder of the reviewed work when it exists, otherwise create it.
 
 ## Test
 
