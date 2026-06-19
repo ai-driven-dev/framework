@@ -57,13 +57,15 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|---|
 | `actions` | [01-plan.md](skills/01-plan/actions/01-plan.md) | - | - |
 | `actions` | [02-design.md](skills/01-plan/actions/02-design.md) | - | - |
+| `actions` | [03-wireframe.md](skills/01-plan/actions/03-wireframe.md) | - | - |
 | `assets` | [phase-template.md](skills/01-plan/assets/phase-template.md) | `Living implementation plan - frozen objective, phases, and append-only execution Log. Used as input artifact AND as the autonomous-loop tracking file.` | - |
 | `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | `Parent plan template orchestrating multiple child plans with validation gates` | - |
 | `assets` | [tech-choice-template.md](skills/01-plan/assets/tech-choice-template.md) | `Technology selection and comparison template` | - |
+| `-` | [README.md](skills/01-plan/README.md) | - | - |
 | `references` | [mermaid-conventions.md](skills/01-plan/references/mermaid-conventions.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` | - |
 | `references` | [phase-rules.md](skills/01-plan/references/phase-rules.md) | - | - |
 | `references` | [plan-rules.md](skills/01-plan/references/plan-rules.md) | - | - |
-| `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Generate technical implementation plans, and define a frontend page's design - component behaviors as state machines plus the dumb/smart split that delegates the visual to the design tool.` | - |
+| `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Generate a technical implementation plan from requirements, design a frontend page before building it (component behavior as state machines, the dumb/smart split, and the render decision), or sketch a low-fidelity wireframe of a screen. Use when the user wants to plan a feature, turn a ticket or requirements into an implementation plan, design a page's structure and behavior, or wireframe a screen layout. Do NOT use for writing the code (use 02-implement), reviewing a diff (use 05-review), or auditing existing code (use 04-audit).` | - |
 
 #### `skills/02-implement`
 

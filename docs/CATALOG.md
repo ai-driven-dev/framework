@@ -32,7 +32,7 @@ The development SDLC: plan, implement, assert, audit, review, test, refactor, de
 | Skill           | Role                                                                       | Actions                                                                         |
 | --------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `00-sdlc`       | Pure orchestrator driving the full dev flow end to end                     | `01-spec`, `02-plan`, `03-implement`, `04-review`, `05-ship`                     |
-| `01-plan`       | Technical implementation plans, component behavior, image extraction       | `01-plan`, `02-components-behavior`, `03-image-extract-details`                  |
+| `01-plan`       | Generate an implementation plan, design a frontend page, or wireframe a screen | `01-plan`, `02-design`, `03-wireframe`                                       |
 | `02-implement`  | Execute a plan phase by phase until 100% complete                          | `01-implement`                                                                   |
 | `03-assert`     | Assert features work - general, architecture, frontend UI                  | `01-assert`, `02-assert-architecture`, `03-assert-frontend`                      |
 | `04-audit`      | Read-only codebase audit across quality pillars                            | `01-code-quality`, `02-architecture`, `03-security`, `04-dependencies`, `05-performance`, `06-tests`, `07-ui` |

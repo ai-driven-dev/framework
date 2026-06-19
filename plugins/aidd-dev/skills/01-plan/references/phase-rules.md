@@ -7,5 +7,5 @@
 - Interpret comments on this file to help you fill it.
 - Each phase MUST have acceptance criteria.
 - During implementation, the AI may amend this plan. Every AI change MUST be prefixed with 🤖 and include a brief rationale.
-- `status`: set `pending` at creation (see the plan-status reference).
+- `status`: set `pending` at creation, in the frontmatter.
 - Log is APPEND-ONLY. One entry per step attempt. Never rewrite history.
