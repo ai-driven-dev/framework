@@ -27,7 +27,7 @@ What the diff was meant to deliver (from the ticket or plan). Tick what the diff
 One row per issue, on the CHANGED lines only (this is a diff review, not a codebase audit). Every row cites a `file:line`. Sort by severity. Read-only: describe the fix, do not patch it - hand fixes off to `aidd-dev:07-refactor`.
 
 Severity: 🔴 critical (must not merge as-is), 🟡 warning (should fix), 🟢 minor (nit).
-Category (one of): `standards`, `architecture`, `code-health`, `security`, `error-handling`, `performance`, `frontend`, `backend`, `dominance`.
+Category (one of): `standards`, `architecture`, `code-health`, `security`, `error-handling`, `performance`, `frontend`, `backend`.
 
 | Sev | Category    | Location              | Issue                                | Suggested fix                        |
 | --- | ----------- | --------------------- | ------------------------------------ | ------------------------------------ |

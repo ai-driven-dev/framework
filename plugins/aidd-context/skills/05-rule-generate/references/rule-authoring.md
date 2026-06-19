@@ -8,17 +8,8 @@ The contract every generated rule must satisfy. A rule governs editor and agent 
 - **R2.** Bullets only, no prose. One ultra-short rule per bullet (3-7 words). Less is more.
 - **R3.** Scope every rule to the files it applies to, or mark it as applying to all.
 - **R4.** English only, regardless of conversation language.
-- **R5.** Every normative bullet must change the compliance boundary. Delete, merge, or scope bullets already covered, overridden, contradicted, or invalidated by another element.
-
-## Dominance check
-
-Run this check before keeping a rule bullet.
-
-| Case | What to detect | Action |
-| --- | --- | --- |
-| Subsumption | A stronger rule already implies a weaker one. | Delete the weaker rule, or convert it into an example under the stronger one. |
-| Override | A specific rule changes a general one. | Rewrite with explicit scope, priority, and exception. |
-| Invalidation | One rule makes another obsolete, impossible, or false. | Remove the invalid rule, or mark it historical with a current replacement. |
+- **R5.** Run a dominance check before adding instructions, criteria, findings, docs, or code rules: if one element covers, overrides, contradicts, or invalidates another, delete, merge, or rewrite with explicit scope, priority, and exceptions.
+- **R6.** Keep weaker repetition only when it is clearly marked as an example, migration note, or historical context.
 
 ## File naming
 
