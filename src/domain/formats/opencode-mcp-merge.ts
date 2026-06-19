@@ -1,4 +1,5 @@
 import type { Hasher } from "../ports/hasher.js";
+import { stripJsonComments } from "./jsonc.js";
 
 interface OpencodeMcpSection {
   mcp?: Record<string, unknown>;
@@ -62,7 +63,7 @@ export function unmergeOpencodeMcp(
   existingContent: string,
   entries: ReadonlyMap<string, string>
 ): string {
-  const parsed = JSON.parse(existingContent) as OpencodeMcpSection;
+  const parsed = JSON.parse(stripJsonComments(existingContent)) as OpencodeMcpSection;
   const mcp = { ...(parsed.mcp ?? {}) };
   for (const name of entries.keys()) {
     delete mcp[name];
@@ -77,7 +78,8 @@ function parseExisting(content: string | null): {
   mcp: Record<string, unknown>;
 } {
   if (content === null) return { full: {}, mcp: {} };
-  const parsed = JSON.parse(content) as OpencodeMcpSection;
+  // opencode.json is user-owned and may be JSONC (comments / trailing commas).
+  const parsed = JSON.parse(stripJsonComments(content)) as OpencodeMcpSection;
   return {
     full: parsed as Record<string, unknown>,
     mcp: (parsed.mcp as Record<string, unknown>) ?? {},

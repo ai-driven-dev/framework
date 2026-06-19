@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  mergeOpencodeJsonAdditive,
   mergeOpencodeMcp,
   unmergeOpencodeMcp,
 } from "../../../src/domain/formats/opencode-mcp-merge.js";
@@ -135,6 +136,41 @@ describe("mergeOpencodeMcp", () => {
     };
     expect(parsed.instructions).toEqual([".opencode/rules/**/*.md"]);
     expect(parsed.mcp["my-server"]).toEqual(LOCAL_SERVER);
+  });
+});
+
+describe("tolerates a JSONC user-owned opencode.json", () => {
+  // Regression for #295: a user opencode.json with comments / trailing commas
+  // crashed `aidd setup` with "Expected double-quoted property name in JSON".
+  const JSONC_EXISTING = `{
+  "$schema": "https://opencode.ai/config.json",
+  // user-authored comment
+  "theme": "dark",
+  "mcp": {
+    "user": ${JSON.stringify(REMOTE_SERVER)},
+  },
+}`;
+
+  it("merges into JSONC content without throwing, preserving user keys", () => {
+    const incoming = { "aidd-context__server": LOCAL_SERVER };
+    let merged = "";
+    expect(() => {
+      merged = mergeOpencodeJsonAdditive(JSONC_EXISTING, incoming);
+    }).not.toThrow();
+    const parsed = JSON.parse(merged) as {
+      $schema: string;
+      theme: string;
+      mcp: Record<string, unknown>;
+    };
+    expect(parsed.$schema).toBe("https://opencode.ai/config.json");
+    expect(parsed.theme).toBe("dark");
+    expect(parsed.mcp.user).toEqual(REMOTE_SERVER);
+    expect(parsed.mcp["aidd-context__server"]).toEqual(LOCAL_SERVER);
+  });
+
+  it("unmerges from JSONC content without throwing", () => {
+    const entries = new Map([["aidd-context__server", "hash"]]);
+    expect(() => unmergeOpencodeMcp(JSONC_EXISTING, entries)).not.toThrow();
   });
 });
 
