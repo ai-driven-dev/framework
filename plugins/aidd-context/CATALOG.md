@@ -194,5 +194,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [recipe-template.md](skills/12-cook/assets/recipe-template.md) | - |
 | `assets` | [refine-goal-checklist.md](skills/12-cook/assets/refine-goal-checklist.md) | - |
 | `assets` | [research-checklist.md](skills/12-cook/assets/research-checklist.md) | - |
+| `references` | [recipe-contract.md](skills/12-cook/references/recipe-contract.md) | - |
 | `references` | [research-playbook.md](skills/12-cook/references/research-playbook.md) | - |
-| `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manage the project's recipes/ how-to sheets: list them as a table, create or update one from the canonical template, research modern alternatives for a recipe, or apply a recipe to the project. Use for "list recipes", "new recipe", "update a recipe", "cook a recipe", "research a recipe", "modernize a recipe", "apply a recipe", "run a recipe".` |
+| `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manage the project's recipes/ how-to sheets: list, create or update, research, or apply a recipe. Use for "recipe", "cook", "/cook", "list/new/update/research/apply a recipe".` |

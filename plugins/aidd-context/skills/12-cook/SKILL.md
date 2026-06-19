@@ -1,6 +1,6 @@
 ---
 name: 12-cook
-description: Manage the project's recipes/ how-to sheets: list them as a table, create or update one from the canonical template, research modern alternatives for a recipe, or apply a recipe to the project. Use for "list recipes", "new recipe", "update a recipe", "cook a recipe", "research a recipe", "modernize a recipe", "apply a recipe", "run a recipe".
+description: Manage the project's recipes/ how-to sheets: list, create or update, research, or apply a recipe. Use for "recipe", "cook", "/cook", "list/new/update/research/apply a recipe".
 argument-hint: list | upsert | research | apply
 ---
 
@@ -22,10 +22,11 @@ Before running an action, read its file in `actions/`, not only the table or ass
 
 ## References
 
+- `references/recipe-contract.md`: the rules every recipe file follows; `upsert` writes to it.
 - `references/research-playbook.md`: the scouting angles and per-candidate criteria `research` applies (freshness, community signal, tips).
 
 ## Assets
 
-- `assets/recipe-template.md`: the canonical recipe scaffold `upsert` renders from, and the shape `list` parses. Its header comment carries the field rules.
+- `assets/recipe-template.md`: the canonical recipe scaffold `upsert` renders from, and the shape `list` parses.
 - `assets/refine-goal-checklist.md`: the checklist `research` fills with the user to define the target recipe.
 - `assets/research-checklist.md`: the done-when gate `research` clears before drafting.

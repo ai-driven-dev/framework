@@ -1,5 +1,3 @@
-<!-- Recipe contract: file is recipes/<kebab-slug>.md · Level ∈ {Beginner, Intermediate, Advanced} · Time prefixed with ~ · one idea per sentence, prefer removing over adding. Each step is a `#### N) Title` heading: a short what/why, actionable how bullets, then a concrete example — a command with its useful output, a config or snippet, a screenshot, or a short video/GIF link. For a command, show what it prints, not just the command. Every step carries an example. Link to references when applicable. Prefer concrete examples over prose. -->
-
 # <Recipe title>
 
 > **Goal:** <one line stating the outcome the reader achieves>
@@ -12,25 +10,26 @@
 
 ## Why
 
-<One short paragraph: the problem this recipe solves and when to reach for it.>
+<Short and benefit-first. Lead with the keywords a reader would search, **bold** the key terms. A few sentences, no filler.>
 
-## Steps
+## Steps to <the outcome the reader achieves>
 
-#### 1) <First step title>
+#### 1) <emoji> <First step title>
 
-<One or two sentences: what this step does and why it matters.>
+<One benefit-focused line: what this gets the reader and why.>
 
-- <how: an ultra-actionable instruction>
-- <how: another concrete action>
+- <where it is / what it is>
+- <install it from its URL>
+- <how to use it>
 
 ```bash
 $ <command the reader runs>
 <the useful output it prints, trimmed to what matters>
 ```
 
-#### 2) <Next step title>
+#### 2) <emoji> <Next step title>
 
-<What and why.>
+<Benefit-focused what and why.>
 
 - <how>
 - <how>
@@ -39,9 +38,9 @@ $ <command the reader runs>
 <a config or snippet the reader can copy>
 ```
 
-#### 3) <Last step title — until the goal is reached>
+#### 3) <emoji> <Last step title — until the goal is reached>
 
-<What and why.>
+<Benefit-focused what and why.>
 
 - <how>
 
