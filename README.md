@@ -1,5 +1,5 @@
 <p align="right">
-  <a href="https://github.com/ai-driven-dev/framework/stargazers"><img src="docs/assets/star-cta.svg" alt="Enjoying AIDD? Give it a star — the button is at the top-right of this page" width="320" /></a>
+  <a href="https://github.com/ai-driven-dev/framework/stargazers"><img src="docs/assets/star-cta.svg" alt="Support the community, star us! The button is at the top-right of this page" width="290" /></a>
 </p>
 
 <div align="center">
