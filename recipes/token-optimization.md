@@ -102,9 +102,11 @@ $ /compact keep the repro steps and the failing test; drop the file dumps
 Output is repetition you pay to generate, so cap the chatter.
 
 - Install the [`caveman`](https://github.com/JuliusBrussee/caveman) skill (auto-detects 30+ agents).
+- Invoke it like any skill: `/caveman` (or `/caveman ultra` for the hardest cut); stop with "normal mode".
 - It forces short, filler-free replies (reported ~65% output cut, code intact).
 
 ```text
+/caveman
 before: "Great question! Let me walk you through each step involved…"
 after:  "3 steps:"
 ```
@@ -114,23 +116,29 @@ after:  "3 steps:"
 Test, install, and build logs flood context with lines the model never needs.
 
 - Install a CLI proxy: [`RTK`](https://github.com/rtk-ai/rtk) (Rust) or [`SNIP`](https://github.com/edouard-claude/snip) (Go, YAML filters).
-- Run noisy commands through it; it keeps only the signal (reported 60–90%).
+- Prefix your command with it — `rtk git status`, `rtk cargo test` — it runs the command and returns only the signal.
 
-```bash
-$ rtk proxy npm test
-# full build log in → only failures + final summary kept
+```mermaid
+flowchart LR
+  A[your command] --> R[RTK proxy]
+  R --> C[real command runs]
+  C --> R
+  R -->|filter · group · truncate · dedupe| M[compact output to model]
 ```
+
+Real saving: `git push` (15 lines, ~200 tokens) -> `rtk git push` (1 line, ~10 tokens).
 
 #### 9) 🔌 Prefer CLI over MCP
 
-An MCP server loads its full schema every turn, while a CLI costs tokens only when called.
+An MCP server's schema rides along every turn; a CLI costs tokens only when you call it.
 
-- Use the CLI when one exists (`gh`, `acli`, …); keep MCP for what has none.
-- See [`mcp-installation.md`](mcp-installation.md).
+| | CLI (`gh`, `acli`, …) | MCP server |
+| --- | --- | --- |
+| Token cost | a few, only when called | full tool schema, every turn |
+| Context footprint | zero when idle | always present |
+| Use when | a CLI exists | no CLI, or you need typed/live tool calls |
 
-```bash
-$ gh pr list   # a few tokens per call, vs a GitHub MCP schema riding along every turn
-```
+See [`mcp-installation.md`](mcp-installation.md).
 
 ### 🔴 Expert
 
