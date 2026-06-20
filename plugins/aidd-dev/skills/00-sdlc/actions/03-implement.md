@@ -1,31 +1,23 @@
 # 03 - Implement
 
-Build a milestone, apply a fix list, or finish a remaining scope via the implementer agent. Mandatory.
+Build the plan's code by delegating to the `implement` skill, which loops the phases, drives status, and validates. Mandatory.
 
 ## Inputs
 
-- one of `milestone` (with acceptance criteria), `fix_list`, `items_remaining` - required
-- `spec_slice` - relevant portion of the spec (optional)
-- `validation_commands` - shell commands the implementer must run before reporting done (optional)
-- `plan_path` (from 02)
+- `plan_path` (from 02) - required
+- On an `04 = iterate` loop-back, the review findings as a fix list - optional
 
 ## Outputs
 
-```yaml
-items_implemented: [...]
-items_remaining: [...]
-completion_score: 0-100
-```
+The plan reaches frontmatter `status: implemented` (or `status: blocked`), every phase `done`, validation green.
 
 ## Process
 
-1. **Mark in-progress.** Set `status: in-progress` in the plan frontmatter at `plan_path` (skip if already set). Status values and their meaning come from the plan-status reference (`01-plan/references/plan-status.md`) - the single source of truth; never restate the table here.
-2. **Spawn implementer** (`implementer` agent) with the inputs above. Brief: run `implement` for the milestone or fix list, then `assert` + `test`.
-3. **On failure**, run `debug` and re-spawn the implementer with the diagnostic notes until tests pass.
-4. **Blocked.** If the implementer surfaces `BLOCKED` in `notes`, write `status: blocked` in the plan frontmatter at `plan_path`, stop (do NOT proceed to 04), and escalate to a human.
-5. **Mark implemented.** When the whole plan is implemented (no milestones remain, last pass `items_remaining` empty), set `status: implemented` in the plan frontmatter at `plan_path`.
-6. **Return** the implementer's YAML as-is to the SDLC orchestrator.
+1. **Delegate.** Invoke the `implement` skill with `plan_path`. It branches, loops each phase through the `implementer`, commits the code and the status transitions, and runs the plan's validation. The orchestrator writes no status itself.
+2. **Iterate.** On a loop-back from `04 = iterate`, fold the findings into the plan (set the affected phases back to `pending` or add a fix phase), then delegate again.
+3. **Blocked.** The skill stops at `status: blocked` when the implementer hits a human-only condition. Do NOT proceed to `04`; escalate to a human.
+4. **Surface.** Report the skill's outcome to the orchestrator so it can move to `04`.
 
 ## Test
 
-`completion_score` is an integer between 0 and 100; `items_implemented` and `items_remaining` are present; the validation commands return exit code 0; when fully implemented the plan's frontmatter `status` is `implemented` (or `blocked` if it surfaced a blocker, stopping before 04).
+The plan frontmatter `status` is `implemented` (or `blocked`, stopping before `04`); every phase reads `status: done`; the validation commands return exit code 0.

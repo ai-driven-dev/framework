@@ -71,10 +71,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-implement.md](skills/02-implement/actions/01-implement.md) | - |
+| `actions` | [01-prepare.md](skills/02-implement/actions/01-prepare.md) | - |
+| `actions` | [02-execute.md](skills/02-implement/actions/02-execute.md) | - |
+| `actions` | [03-finalize.md](skills/02-implement/actions/03-finalize.md) | - |
 | `-` | [README.md](skills/02-implement/README.md) | - |
 | `references` | [blocked.md](skills/02-implement/references/blocked.md) | `Conditions that make a plan blocked (needs a human).` |
-| `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Execute an implementation plan phase by phase via the implementer agent, iterating until 100% completeness.` |
+| `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Execute an implementation plan phase by phase, spawning an implementer agent per phase and tracking status until every acceptance criterion is met. Use when a plan exists and its code must be written, or when the SDLC delegates the implement step. Do NOT use to write a plan (use 01-plan), review a diff (use 05-review), or fix a bug with no plan (use 08-debug).` |
 
 #### `skills/03-assert`
 

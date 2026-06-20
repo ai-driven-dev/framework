@@ -48,7 +48,7 @@ Detect the mode from `$ARGUMENTS` once, at skill entry, before dispatching the f
 | --- | ----------- | ---------------------------------------------------------------------- | ------------------------------ |
 | 01  | `spec`      | Consolidate sources, draft or refine the contract (skippable)          | spec                           |
 | 02  | `plan`      | Produce the mandatory plan file                                        | plan via `planner`             |
-| 03  | `implement` | Loop milestones until complete                                         | implement via `implementer`    |
+| 03  | `implement` | Build the plan's code, every phase, until complete                     | the `implement` skill          |
 | 04  | `review`    | Verdict `ship` or `iterate`                                            | review via `reviewer`          |
 | 05  | `ship`      | Commit and open a change request via the project's VCS                 | commit, pull-request           |
 
@@ -66,7 +66,7 @@ Activate only in `interactive` mode. In `auto` mode, never pause.
 
 1. **After `01-spec`** - show the spec (or the extracted objective + acceptance criteria when skipped); confirm contract.
 2. **After `02-plan`** - show the plan; confirm scope before any code change.
-3. **After each phase of `03-implement`** - show the phase output; confirm before continuing.
+3. **After `03-implement`** - show the implemented diff; confirm before review. The phase loop runs inside the delegated `implement` skill, so the gate is the whole step, not each phase.
 4. **After `04-review`** - show findings and verdict; confirm ship vs iterate.
 5. **Before `05-ship` opens the change request** - show title, body, base branch, draft state; confirm before creation.
 

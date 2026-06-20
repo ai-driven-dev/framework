@@ -2,23 +2,18 @@
 
 # 02 - implement
 
-Executes an existing implementation plan phase by phase via the `implementer`
-agent, iterating until every acceptance criterion is satisfied. Each phase
-loops until the agent reports 100 % completion.
+Executes an existing implementation plan phase by phase, spawning an `implementer` agent per phase and iterating until every acceptance criterion is satisfied. Tracks status in the plan and phase frontmatter as it goes.
 
 ## When to use
 
-- A plan produced by [01-plan](../01-plan/README.md) is ready and you need
-  the code written end-to-end against it.
-- An iteration of [00-sdlc](../00-sdlc/README.md) is delegating the
-  `implement` step to this skill.
+- A plan produced by [01-plan](../01-plan/README.md) is ready and you need the code written against it.
+- An iteration of [00-sdlc](../00-sdlc/README.md) delegates the implement step.
 
 ## When NOT to use
 
 - No plan exists yet → use [01-plan](../01-plan/README.md) first.
 - The plan is wrong and needs replanning → amend the plan, not the code.
-- The task is a bug fix without a plan surface → use
-  [08-debug](../08-debug/README.md).
+- A bug fix with no plan surface → use [08-debug](../08-debug/README.md).
 
 ## How to invoke
 
@@ -26,29 +21,26 @@ loops until the agent reports 100 % completion.
 Use skill aidd-dev:02-implement
 ```
 
-Pass the plan path or content as `$ARGUMENTS`. The skill exposes 1 action:
+Pass the plan path or content as `$ARGUMENTS`. The skill runs three actions in order:
 
-1. `implement` - loop each plan phase: spawn the `implementer` agent, wait
-   for structured output, re-spawn with `items_remaining` until the phase
-   hits 100 %. Branching is the caller's responsibility; this skill never
-   creates branches. Plan amendments are made inline and tagged with the
-   robot marker.
+1. **prepare** — fails fast when the plan is missing (never fabricates one); puts `HEAD` on a feature branch when it is on the default branch, otherwise keeps the current branch; sets the plan `status: in-progress`.
+2. **execute** — loops the plan's phases: per phase it sets `status: in-progress`, spawns the `implementer` agent, re-spawns with `items_remaining` until 100 %, then sets `status: done`; stops at `status: blocked` when the implementer hits a human-only condition.
+3. **finalize** — runs validation, then marks the plan `status: implemented` once every phase is done.
+
+**Code** commits are the `implementer` agent's job (one per ticked acceptance criterion); the skill commits only its own **tracking** — each status transition, the moment it makes it. That split keeps the same audit trail whether the agent is reached through this skill, the SDLC, or a direct spawn, and stops the implementer's clean-tree hygiene from reverting an uncommitted status edit.
 
 ## Outputs
 
-- Code changes on the active branch, one phase at a time.
-- `phases_completed` count and `acceptance_satisfied: true` when done.
-- Plan amendments inline in the plan file when the loop discovers gaps.
+- Code for the feature, one phase at a time, committed by the `implementer` agent on the active feature branch.
+- Plan and phase frontmatter status driven `pending → in-progress → done / implemented`, or `blocked` — each transition committed by the skill as it happens.
+- Plan amendments inline, tagged 🤖, when the loop finds a gap.
 
 ## Prerequisites
 
-- A plan file with phases, M/C/D, and acceptance criteria.
+- A plan file with phases and acceptance criteria, from `01-plan`.
 - The `implementer` agent available in context.
 - Project rules already loaded for the implementer to respect.
 
 ## Technical details
 
-See [`SKILL.md`](SKILL.md) and
-[`actions/01-implement.md`](actions/01-implement.md) for the phase loop
-contract, the re-spawn rule, and the boundary constraints (no formatting,
-no dev mode).
+See [`SKILL.md`](SKILL.md) and [`actions/`](actions/) for the prepare/execute/finalize split: the branch guard, the phase loop, the re-spawn rule, the status lifecycle, and the boundary constraints (no formatting, no dev mode).
