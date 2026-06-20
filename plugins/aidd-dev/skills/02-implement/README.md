@@ -12,7 +12,7 @@ Executes an existing implementation plan phase by phase, spawning an `implemente
 ## When NOT to use
 
 - No plan exists yet → use [01-plan](../01-plan/README.md) first.
-- The plan is wrong and needs replanning → amend the plan, not the code.
+- The plan is wrong and needs replanning → replan with [01-plan](../01-plan/README.md); this skill never rewrites the plan.
 - A bug fix with no plan surface → use [08-debug](../08-debug/README.md).
 
 ## How to invoke
@@ -33,7 +33,7 @@ Pass the plan path or content as `$ARGUMENTS`. The skill runs three actions in o
 
 - Code for the feature, one phase at a time, committed by the `implementer` agent on the active feature branch.
 - Plan and phase frontmatter status driven `pending → in-progress → done / implemented`, or `blocked` — each transition committed by the skill as it happens.
-- Plan amendments inline, tagged 🤖, when the loop finds a gap.
+- A `replan needed` report when the plan no longer matches reality; this skill never rewrites the plan.
 
 ## Prerequisites
 

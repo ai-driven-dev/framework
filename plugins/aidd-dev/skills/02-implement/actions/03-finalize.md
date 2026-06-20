@@ -13,7 +13,7 @@ The feature validated green with the plan frontmatter `status: implemented`.
 ## Process
 
 1. **Verify.** Run the plan's validation commands and tests. Never format code, never run dev mode.
-2. **Mark implemented.** Every phase done and validation green, set the plan `status: implemented` and commit it.
+2. **Mark.** Every phase done and validation green, set the plan `status: implemented` and commit it.
 
 ## Test
 
