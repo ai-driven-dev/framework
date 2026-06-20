@@ -2,7 +2,7 @@
 
 # Research playbook
 
-Guidance for `03-research`: the angles to scout, the criteria each candidate must clear, and the verification each must pass. Define the target with `assets/refine-goal-checklist.md` first, and clear `assets/research-checklist.md` before drafting.
+Guidance for `03-research`: the angles to scout, the criteria each candidate must clear, and the verification each must pass. Define the target with `assets/research-goal-checklist.md` first, and clear `assets/research-checklist.md` before drafting.
 
 ## Angles to cover
 
@@ -28,6 +28,7 @@ After curating, confirm every surviving candidate before presenting it. Spawn on
 - **Exists** — confirm it is real and current, not invented or abandoned.
 - **Official link** — capture the canonical source: official docs, repository, or release page.
 - **Latest state** — record the current version or release date.
+- **Real example** — capture a usable example: copy a real output from the official docs, or run the command and capture what it prints. For an interactive command that cannot be scripted, mark the output for the human to paste. Never fabricate output.
 - Drop any candidate that cannot be confirmed against an official source.
 
 ## Reporting
