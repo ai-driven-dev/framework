@@ -1,15 +1,10 @@
 # <Recipe title>
 
-> **Goal:** <one line stating the outcome the reader achieves>
-
-|                   |                                          |
-| ----------------- | ---------------------------------------- |
-| **Level**         | <Beginner \| Intermediate \| Expert>     |
-| **Prerequisites** | <what the reader needs first, or "None"> |
+<One sentence describing what this recipe gets the reader.>
 
 ## Why
 
-<Short and benefit-first. Lead with the keywords a reader would search, **bold** the key terms. A few sentences, no filler.>
+<Short and benefit-first, one idea per line. Lead with the keywords a reader would search, **bold** the key terms.>
 
 ## Steps to <the outcome the reader achieves>
 

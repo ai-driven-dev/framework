@@ -9,7 +9,7 @@ Create or update one recipe at `recipes/<slug>.md`, scaffolded from the recipe t
 
 ## Input
 
-The recipe topic. Ask for any missing field (level, prerequisites, steps, verify, related) before writing.
+The recipe topic. Ask for any missing field (description, steps, verify, related) before writing.
 
 ## Process
 
@@ -17,10 +17,10 @@ The recipe topic. Ask for any missing field (level, prerequisites, steps, verify
 2. Derive a kebab-case `<slug>` from the topic → `recipes/<slug>.md`.
 3. If `recipes/<slug>.md` is new, run `list` and rate each near match in an overlap table `| Existing recipe | Shared scope | Overlap |`, where `Overlap` is none, partial, or high. On any `high`, recommend updating that recipe instead, and ask update-or-create before scaffolding.
 4. If it exists, update in place; else scaffold from the template. Apply the contract to every section.
-5. Fill every placeholder, then add or refresh the recipe's row in the `recipes/README.md` index. The index table is `| Recipe | Goal | Level |`: link the title to `<slug>.md` (relative), copy the `> **Goal:**` text, and copy the **Level**. Same columns `list` emits.
+5. Fill every placeholder, then add or refresh the recipe's row in the `recipes/README.md` index. The index table is `| Recipe | Description |`: link the title to `<slug>.md` (relative) and copy the one-sentence description. Same columns `list` emits.
 
 ## Test
 
 - A new or substantially-updated recipe is drafted from `research` results, not from memory.
-- `recipes/<slug>.md` exists and follows the recipe contract: every section present, each step a `#### N)` emoji heading with an example, with level subheadings used only when they help, no `<...>` placeholder left.
+- `recipes/<slug>.md` exists and follows the recipe contract: opens with a one-sentence description (no Goal label, no table), each step a `#### N)` emoji heading with a real example, no `<...>` placeholder left.
 - A new recipe that highly overlaps an existing one triggers an update-or-create prompt before scaffolding.

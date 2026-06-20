@@ -5,9 +5,9 @@ List every recipe under `recipes/` at the project root as a table, excluding `RE
 ## Output
 
 ```md
-| Recipe | Goal | Level |
-| --- | --- | --- |
-| [<title>](recipes/<file>) | <goal> | <level> |
+| Recipe | Description |
+| --- | --- |
+| [<title>](recipes/<file>) | <description> |
 ```
 
 One row per `recipes/*.md`, sorted by file name. If `recipes/` is absent or empty: `No recipes yet.`
@@ -15,10 +15,10 @@ One row per `recipes/*.md`, sorted by file name. If `recipes/` is absent or empt
 ## Process
 
 1. Read each `recipes/*.md` except `README.md`.
-2. Pull the H1 title, the `> **Goal:**` line, and the **Level** row.
+2. Pull the H1 title and the one-sentence description right below it.
 3. Render the table above.
 
 ## Test
 
-- One row per recipe file, each with title, goal, and level.
+- One row per recipe file, each with title and description.
 - Absent/empty `recipes/` → `No recipes yet`, no error.
