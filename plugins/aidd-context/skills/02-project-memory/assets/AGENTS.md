@@ -22,6 +22,7 @@
 - Do not commit or push unless the user asks.
 - Do not assume your knowledge is current. Be sure of an answer before giving it.
 - Before adding any instruction, criterion, finding, documentation sentence, or code rule, check whether an existing element already covers, overrides, contradicts, or makes it impossible. If so, do not add a parallel element: delete it, merge it into the stronger element, or rewrite the set with explicit scope, priority, and exception.
+- When naming anything, prefer intention-revealing names over technical ones: describe the goal or responsibility, not the mechanism, tool, or file format.
 
 ## Memory Management
 

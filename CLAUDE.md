@@ -19,6 +19,7 @@ All instructions and information above are willing to be up to date, but always 
 - For every plugin change, think hard about where responsibility belongs; follow the placement and orchestration rules in `docs/ARCHITECTURE.md`.
 - Never duplicate across docs - link to the canonical home.
 - Before adding any instruction, criterion, finding, documentation sentence, or code rule, check whether an existing element already covers, overrides, contradicts, or makes it impossible. If so, do not add a parallel element: delete it, merge it into the stronger element, or rewrite the set with explicit scope, priority, and exception.
+- When naming anything, prefer intention-revealing names over technical ones: describe the goal or responsibility, not the mechanism, tool, or file format.
 
 ### Answering Guidelines
 
