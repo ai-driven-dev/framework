@@ -107,8 +107,10 @@ Output is repetition you pay to generate, so cap the chatter.
 
 ```text
 /caveman
-before: "Great question! Let me walk you through each step involved…"
-after:  "3 steps:"
+
+before: The reason your React component is re-rendering is likely because you're creating a new object reference on each render cycle. When you pass an inline object as a prop, React's shallow comparison sees it as a different object every time, which triggers a re-render. I'd recommend using useMemo to memoize the object.
+
+after:  New object ref each render. Inline object prop = new ref = re-render. Wrap in `useMemo`.
 ```
 
 #### 8) 🧹 Filter noisy command output
