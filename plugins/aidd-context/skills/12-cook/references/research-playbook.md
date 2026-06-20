@@ -28,7 +28,7 @@ After curating, confirm every surviving candidate before presenting it. Spawn on
 - **Exists** — confirm it is real and current, not invented or abandoned.
 - **Official link** — capture the canonical source: official docs, repository, or release page.
 - **Latest state** — record the current version or release date.
-- **Real example** — capture a usable example: copy a real output from the official docs, or run the command and capture what it prints. For an interactive command that cannot be scripted, mark the output for the human to paste. Never fabricate output.
+- **Real example** — prefer an image: grab the official screenshot or GIF that matches the action. Else a real output: copy it from the docs, or run the command and capture what it prints. For interactive output that cannot be scripted, mark it for the human to paste (ideally a screenshot). Never fabricate.
 - Drop any candidate that cannot be confirmed against an official source.
 
 ## Reporting
