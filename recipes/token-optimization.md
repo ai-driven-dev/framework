@@ -141,28 +141,40 @@ See [`mcp-installation.md`](mcp-installation.md).
 
 ### 🔴 Expert
 
-#### 10) 📚 Load knowledge on demand
+#### 10) 🔬 Audit which skills and tools run — `Ctrl+O`
 
-Big procedural docs pasted into context are taxed every turn. Keep them as skills or rules instead: each loads only when its trigger matches the task, so it costs zero tokens until needed.
+You optimise what you can see, so expand the transcript to watch what each turn actually invokes and pulls into context.
 
-1. Install an AIDD framework so skills, rules, and runbooks load on demand.
+1. Press `Ctrl+O` to toggle the transcript — it shows detailed tool and skill usage and expands collapsed MCP calls.
+2. Spot skills or tools that load on turns that don't need them, then scope or remove them.
 
 ```text
-skill trigger matches the task → its steps load
-no match → 0 tokens spent
+Ctrl+O — transcript expanded
+  ⎿ Skill: token-optimization
+  ⎿ Called slack 3 times → expanded: 3 tool calls
+(illustrative — replace with a screenshot of your real Ctrl+O transcript)
 ```
+
+See the [keyboard shortcuts](https://code.claude.com/docs/en/interactive-mode).
 
 #### 11) 🎯 Route by difficulty
 
-The top model on routine work is wasted spend, so match the model to the task.
+The top model on routine work is wasted spend, so pin the model per skill or agent — cheap for routine, top-tier for hard reasoning.
 
-1. Send research and boilerplate to a cheaper model or a fresh subagent.
-2. Reserve the strongest model for hard reasoning.
+1. Set `model` in a skill's or an agent's frontmatter (`haiku` / `sonnet` / `opus`, a full id, or `inherit`).
+2. Give routine scouts a small model; reserve `opus` for the hard reasoning.
 
-```text
-research / boilerplate → small model or subagent
-architecture / tricky bug → top model
+```yaml
+# .claude/agents/explore.md — routine scouting on a cheap model
+---
+name: explore
+description: Read-only codebase scout
+tools: Read, Grep, Glob
+model: haiku
+---
 ```
+
+A skill's `SKILL.md` takes the same `model:` field (e.g. `model: opus` for a heavy step). See [sub-agents](https://code.claude.com/docs/en/sub-agents) and [skills](https://code.claude.com/docs/en/skills).
 
 #### 12) ✅ Cap extended thinking
 
