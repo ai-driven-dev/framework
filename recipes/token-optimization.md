@@ -28,7 +28,7 @@ $ /context
   file reads         ████████      19%
   CLAUDE.md          ████          9%
   system + tools     ███████████   …
-(illustrative — paste your real /context here)
+(illustrative — replace with a screenshot of your real /context)
 ```
 
 #### 2) 💸 Read the bill — `/cost`
@@ -43,7 +43,7 @@ $ /context
 $ /cost
   Session: $0.42 · 1.2M tokens
   By: subagents 38% · MCP 21% · main 41%
-(illustrative — paste your real /cost here)
+(illustrative — replace with a screenshot of your real /cost)
 ```
 
 #### 3) 🔍 Find your bad habits — `/insights`
@@ -57,7 +57,7 @@ $ /cost
 $ /insights
   • You restate the test command in ~60% of sessions → put it in CLAUDE.md
   • Long "summary" turns inflate output → ask for terse replies
-(illustrative — paste your real /insights here)
+(illustrative — replace with a screenshot of your real /insights)
 ```
 
 #### 4) 📈 Track per-prompt with an analytics tool
@@ -65,17 +65,10 @@ $ /insights
 Built-ins show one session; an analytics tool reads all your local logs and reveals where the bill truly sits.
 
 - Several exist: [`prompt-analytics-for-claude-code`](https://github.com/romainfjgaspard/prompt-analytics-for-claude-code) and [`ccusage`](https://www.npmjs.com/package/ccusage).
-- Run one against your local history — no setup, it parses `~/.claude`.
+- Run it — `uvx --from prompt-analytics-for-claude-code prompt-analytics summary` — no setup, it parses `~/.claude`.
 - The lesson it surfaces: **cache reads dwarf input + output**, so caching, not generation, is most of the bill.
 
-```text
-$ uvx --from prompt-analytics-for-claude-code prompt-analytics summary
-  Input tokens        ~8M
-  Output tokens       ~22M
-  Cache read tokens   ~4.5B    ← dominates the total
-  Source: live parse of ~/.claude/projects
-(real run, token volumes rounded; cost figures omitted)
-```
+![prompt-analytics dashboard — cost by token type shows cache reads dominate the bill](https://raw.githubusercontent.com/romainfjgaspard/prompt-analytics-for-claude-code/main/docs/screenshots/dashboard-home.png)
 
 #### 5) ✂️ Trim your instruction file
 
