@@ -12,11 +12,10 @@
 
 #### 1) <emoji> <First step title>
 
-<One benefit-focused line: what this gets the reader and why.>
+<One benefit-focused line of what and why, in prose.>
 
-- <where it is / what it is>
-- <install it from its URL>
-- <how to use it>
+1. <where it is, then install it from its URL>
+2. <how to invoke it — its real command or slash>
 
 ```bash
 $ <command the reader runs>
@@ -27,10 +26,10 @@ $ <command the reader runs>
 
 #### 2) <emoji> <Next step title>
 
-<Benefit-focused what and why.>
+<Benefit-focused what and why, in prose.>
 
-- <how>
-- <how>
+1. <action>
+2. <action>
 
 ```<lang>
 <a config or snippet the reader can copy>
@@ -40,16 +39,12 @@ $ <command the reader runs>
 
 #### 3) <emoji> <Last step title — until the goal is reached>
 
-<Benefit-focused what and why.>
+<Benefit-focused what and why, in prose.>
 
-- <how>
+1. <action>
 
 ![<what this screenshot or video shows>](<path-or-url>)
 
 ## Verify
 
-- <An observable check that proves it worked: a command, a UI state, a file that now exists.>
-
-## Related
-
-- <Link to a sibling recipe, a skill, or a doc the reader needs next.>
+- <Optional. An observable check that proves it worked: a command, a UI state, a file that now exists.>
