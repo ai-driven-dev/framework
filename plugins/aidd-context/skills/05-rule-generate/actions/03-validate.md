@@ -13,11 +13,10 @@ A short pass or fail line per rule file.
 ## Process
 
 1. **Exists.** Confirm each file is on disk at its expected path.
-2. **Frontmatter.** Confirm each carries its tool's scope frontmatter matching the rule's reach, per `@../references/tool-paths.md`. An all-files rule may carry no scope field.
-3. **Concise.** Confirm the body is terse and on one topic. Flag a crowded file to split.
-4. **Rule bullets.** Confirm no bullet repeats, weakens, or contradicts another active bullet in the same rule.
+2. **Contract.** Validate the file against `@../references/rule-authoring.md`.
+3. **Target.** Validate target path and frontmatter against `@../references/tool-paths.md`.
+4. **Report.** Emit one pass/fail line per file.
 
 ## Test
 
-- Every written rule file exists. Its scope frontmatter matches its reach, or is absent for an all-files rule.
-- No generated rule contains duplicate, weaker, or contradictory bullets.
+Every written rule file has one pass/fail result against both referenced contracts.
