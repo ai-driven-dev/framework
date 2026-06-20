@@ -8,8 +8,7 @@ The contract every generated rule must satisfy. A rule governs editor and agent 
 - **R2.** Bullets only, no prose. One ultra-short rule per bullet (3-7 words). Less is more.
 - **R3.** Scope every rule to the files it applies to, or mark it as applying to all.
 - **R4.** English only, regardless of conversation language.
-- **R5.** Run a dominance check before adding instructions, criteria, findings, docs, or code rules: if one element covers, overrides, contradicts, or invalidates another, delete, merge, or rewrite with explicit scope, priority, and exceptions.
-- **R6.** Keep weaker repetition only when it is clearly marked as an example, migration note, or historical context.
+- **R5.** Do not add a rule bullet that repeats, weakens, or contradicts another active bullet in the same rule.
 
 ## File naming
 

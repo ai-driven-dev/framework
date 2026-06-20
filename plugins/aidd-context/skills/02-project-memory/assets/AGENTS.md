@@ -21,8 +21,7 @@
 
 - Do not commit or push unless the user asks.
 - Do not assume your knowledge is current. Be sure of an answer before giving it.
-- Run a dominance check before adding instructions, criteria, findings, docs, or code rules: if one element covers, overrides, contradicts, or invalidates another, delete, merge, or rewrite with explicit scope, priority, and exceptions.
-- Keep weaker repetition only when it is clearly marked as an example, migration note, or historical context.
+- Before adding any instruction, criterion, finding, documentation sentence, or code rule, check whether an existing element already covers, overrides, contradicts, or makes it impossible. If so, do not add a parallel element: delete it, merge it into the stronger element, or rewrite the set with explicit scope, priority, and exception.
 
 ## Memory Management
 

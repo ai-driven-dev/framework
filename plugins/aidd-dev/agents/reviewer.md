@@ -59,7 +59,7 @@ Your output is complete when:
 - Start fresh. Don't try to reconstruct how the artifact was produced. Read the artifact, not the production history.
 - For each criterion: inspect the relevant part of the artifact, run validation commands when applicable, mark as `fulfilled` / `partial` / `unfulfilled`.
 - Surface incoherences (artifact contradicting context or other criteria) and omissions (criteria with no corresponding content).
-- Run a dominance check on instructions, criteria, findings, documentation statements, and code rules. If one element covers, overrides, contradicts, or makes another impossible, report a finding unless the weaker element is clearly marked as an example, migration note, or historical context.
+- Before adding any instruction, criterion, finding, documentation sentence, or code rule, check whether an existing element already covers, overrides, contradicts, or makes it impossible. If so, do not add a parallel element: delete it, merge it into the stronger element, or rewrite the set with explicit scope, priority, and exception.
 
 | Case | What to detect | Example | Action |
 | --- | --- | --- | --- |
