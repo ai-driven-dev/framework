@@ -24,6 +24,7 @@ function makeQueuedPrompter(
   });
   const prompter: Prompter = {
     resolveConflict: vi.fn(),
+    resolveConflictBulk: vi.fn(),
     confirm: vi.fn(),
     input: inputMock,
     select: selectMock,
@@ -39,6 +40,7 @@ describe("interactive menu", () => {
       const confirmMock = vi.fn().mockResolvedValue(true);
       const prompter: Prompter = {
         resolveConflict: vi.fn(),
+        resolveConflictBulk: vi.fn(),
         confirm: confirmMock,
         input: vi.fn(),
         select: vi.fn(),
@@ -55,6 +57,7 @@ describe("interactive menu", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       const prompter: Prompter = {
         resolveConflict: vi.fn(),
+        resolveConflictBulk: vi.fn(),
         confirm: vi.fn().mockResolvedValue(false),
         input: vi.fn(),
         select: vi.fn(),
@@ -71,6 +74,7 @@ describe("interactive menu", () => {
       const selectMock = vi.fn();
       const prompter: Prompter = {
         resolveConflict: vi.fn(),
+        resolveConflictBulk: vi.fn(),
         confirm: vi.fn().mockResolvedValue(false),
         input: vi.fn(),
         select: selectMock,
@@ -173,6 +177,7 @@ describe("interactive menu", () => {
       });
       const prompter: Prompter = {
         resolveConflict: vi.fn(),
+        resolveConflictBulk: vi.fn(),
         confirm: vi.fn(),
         input: vi.fn().mockResolvedValue(""),
         select: selectMock,

@@ -152,9 +152,12 @@ aidd status
 ```bash
 aidd status                     # see what changed (drift + available update)
 aidd update                     # re-install all tool configs, update plugins, refresh marketplaces
+aidd update --force             # overwrite modified files without prompting (CI-safe)
 ```
 
 `aidd update` takes no scope flags — it refreshes every installed tool. To re-install a single tool, use `aidd ai update <tool>` / `aidd ide update <tool>`.
+
+**Conflict behavior**: unmodified files (disk hash matches manifest hash) are always updated silently. Modified files prompt keep / overwrite / overwrite-all / skip-all in an interactive terminal; in non-interactive mode (no TTY, CI), the command exits 1 unless `--force` is passed. `--force` overwrites all modified files without prompting. Plugin and marketplace updates are never gated by this guard.
 
 ### Restoring modified files
 
@@ -217,7 +220,7 @@ aidd ide uninstall vscode       # remove VS Code integration only
 | `aidd ai uninstall <tool>`      | Remove an AI tool's generated configuration files                                    | —                                                                 |
 | `aidd ai list`                  | List installed AI tools                                                              | —                                                                 |
 | `aidd ai status`                | Show drift for AI tools                                                              | —                                                                 |
-| `aidd ai update [tool]`         | Re-install AI tool configs from bundled CLI assets (always overwrites)               | —                                                                 |
+| `aidd ai update [tool]`         | Re-install AI tool configs from bundled CLI assets; prompts on conflicts in TTY, exits 1 in non-TTY | `--force`                                                |
 | `aidd ai sync`                  | Propagate local modifications from one AI tool to others                             | `--source` (required), `--target`, `--force`, `--no-plugins`      |
 | `aidd ai restore [files...]`    | Restore AI tool tracked files to their installed version                             | `--force`, `--tool`                                               |
 | `aidd ai doctor`                | Check AI tool installation health and detect issues                                  | —                                                                 |
@@ -225,7 +228,7 @@ aidd ide uninstall vscode       # remove VS Code integration only
 | `aidd ide uninstall <tool>`     | Remove an IDE integration from the manifest                                          | —                                                                 |
 | `aidd ide list`                 | List installed IDE tools                                                             | —                                                                 |
 | `aidd ide status`               | Show drift for IDE tools                                                             | —                                                                 |
-| `aidd ide update [tool]`        | Re-install IDE tool configs from bundled CLI assets (always overwrites)              | —                                                                 |
+| `aidd ide update [tool]`        | Re-install IDE tool configs from bundled CLI assets; prompts on conflicts in TTY, exits 1 in non-TTY | `--force`                                                |
 | `aidd ide doctor`               | Check IDE tool installation health and detect issues                                 | —                                                                 |
 | `aidd status`                   | Show drift across all tools (AI + IDE)                                               | —                                                                 |
 | `aidd doctor`                   | Structural integrity check — exits 1 on errors or warnings                           | —                                                                 |
@@ -288,8 +291,9 @@ aidd ai install cursor --force              # overwrite existing files
 aidd ai uninstall claude                    # remove Claude Code files
 aidd ai list                                # list installed AI tools
 aidd ai status                             # show drift for all AI tools
-aidd ai update                             # re-install all AI tool configs
+aidd ai update                             # re-install all AI tool configs (prompts on conflicts)
 aidd ai update claude                      # re-install a specific AI tool
+aidd ai update --force                     # overwrite modified files without prompting
 aidd ai sync --source claude               # propagate claude changes to all other AI tools
 aidd ai sync --source claude --target cursor --force  # to a specific target
 aidd ai restore --tool claude              # restore modified Claude files
@@ -305,7 +309,8 @@ aidd ide install vscode                    # install VS Code integration
 aidd ide uninstall vscode                  # remove VS Code integration
 aidd ide list                              # list installed IDE tools
 aidd ide status                            # show drift for IDE tools
-aidd ide update                            # re-install all IDE tool configs
+aidd ide update                            # re-install all IDE tool configs (prompts on conflicts)
+aidd ide update --force                    # overwrite modified files without prompting
 aidd ide doctor                            # check IDE tool installation health
 ```
 
@@ -340,6 +345,8 @@ Detects: missing or corrupted manifest, orphaned tool directories, broken `@path
 Re-applies bundled configs and fetches updated plugin content. See [Updating the framework](#updating-the-framework) for examples.
 
 > `aidd update` refreshes every installed tool. To re-install one tool, use `aidd ai update <tool>` / `aidd ide update <tool>` (these only touch tools already in the manifest). Use `aidd ai install <tool>` to add a new tool.
+
+Per-file conflict guard: unmodified files are always updated silently. Modified files prompt in TTY or exit 1 in non-TTY. Use `--force` to overwrite all modified files without prompting. Plugin and marketplace branches are always ungated.
 
 ### `aidd restore`
 

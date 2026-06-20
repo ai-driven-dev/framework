@@ -3,6 +3,10 @@ export interface Prompter {
     relativePath: string,
     reason: "deleted" | "modified"
   ): Promise<"keep" | "overwrite">;
+  resolveConflictBulk(
+    relativePath: string,
+    reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite" | "overwrite-all" | "skip-all">;
   confirm(message: string, defaultValue?: boolean): Promise<boolean>;
   input(message: string, defaultValue?: string): Promise<string>;
   select<T>(

@@ -1,4 +1,5 @@
 import { Manifest } from "../../../domain/models/manifest.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { VersionReader } from "../../../domain/ports/version-reader.js";
 import type { ToolId } from "../../../domain/tools/registry.js";
@@ -7,11 +8,22 @@ import type { InstallRuntimeConfigUseCase } from "../install/install-runtime-con
 import type { MarketplaceRefreshUseCase } from "../marketplace/marketplace-refresh-use-case.js";
 import type { PluginUpdateUseCase } from "../plugin/plugin-update-use-case.js";
 import {
+  BulkConflictState,
+  type ResolveUpdateDecisionUseCase,
+} from "../shared/resolve-update-decision-use-case.js";
+import {
   type GlobalExecutionError,
   UpdateOneToolUseCase,
 } from "../shared/update-one-tool-use-case.js";
+import type { SyncConflictResolverUseCase } from "../sync/sync-conflict-resolver-use-case.js";
 
 export type { GlobalExecutionError };
+
+export interface UpdateAllInput {
+  projectRoot: string;
+  userForce: boolean;
+  interactive: boolean;
+}
 
 export interface UpdateAllResult {
   updatedTools: { toolId: ToolId; fileCount: number }[];
@@ -29,19 +41,31 @@ export class UpdateAllUseCase {
     installRuntimeConfigUseCase: InstallRuntimeConfigUseCase,
     installIdeConfigUseCase: InstallIdeConfigUseCase,
     private readonly pluginUpdateUseCase: PluginUpdateUseCase,
-    private readonly marketplaceRefreshUseCase: MarketplaceRefreshUseCase
+    private readonly marketplaceRefreshUseCase: MarketplaceRefreshUseCase,
+    conflictResolver: SyncConflictResolverUseCase,
+    decisionUseCase: ResolveUpdateDecisionUseCase,
+    fs: FileReader
   ) {
     this.updateOneToolUseCase = new UpdateOneToolUseCase(
       installRuntimeConfigUseCase,
-      installIdeConfigUseCase
+      installIdeConfigUseCase,
+      conflictResolver,
+      decisionUseCase,
+      fs
     );
   }
 
-  async execute(projectRoot: string): Promise<UpdateAllResult> {
+  async execute(input: UpdateAllInput): Promise<UpdateAllResult> {
+    const { projectRoot, userForce, interactive } = input;
     const manifest = (await this.manifestRepo.load()) ?? Manifest.create();
     const version = this.versionReader.get();
     const errors: GlobalExecutionError[] = [];
-    const updatedTools = await this.updateTools(manifest, projectRoot, version, errors);
+    const bulkState = new BulkConflictState();
+    const updatedTools = await this.updateTools(manifest, projectRoot, version, errors, {
+      userForce,
+      interactive,
+      bulkState,
+    });
     const updatedPlugins = await this.updatePlugins(projectRoot, errors);
     const marketplaceRefreshFailed = await this.refreshMarketplaces(projectRoot, errors);
     return { updatedTools, updatedPlugins, marketplaceRefreshFailed, errors };
@@ -51,7 +75,8 @@ export class UpdateAllUseCase {
     manifest: Manifest,
     projectRoot: string,
     version: string,
-    errors: GlobalExecutionError[]
+    errors: GlobalExecutionError[],
+    options: { userForce: boolean; interactive: boolean; bulkState: BulkConflictState }
   ): Promise<{ toolId: ToolId; fileCount: number }[]> {
     const updated: { toolId: ToolId; fileCount: number }[] = [];
     for (const toolId of manifest.getInstalledToolIds()) {
@@ -60,7 +85,8 @@ export class UpdateAllUseCase {
         manifest,
         projectRoot,
         version,
-        errors
+        errors,
+        options
       );
       if (entry) updated.push(entry);
     }

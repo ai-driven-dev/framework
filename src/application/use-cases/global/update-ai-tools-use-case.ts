@@ -4,6 +4,7 @@ import { isAiToolId } from "../../../domain/models/tool-ids.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { VersionReader } from "../../../domain/ports/version-reader.js";
 import type { ToolId } from "../../../domain/tools/registry.js";
+import { BulkConflictState } from "../shared/resolve-update-decision-use-case.js";
 import type {
   GlobalExecutionError,
   UpdateOneToolUseCase,
@@ -12,6 +13,8 @@ import type {
 export interface UpdateAiToolsInput {
   toolArg?: AiToolId;
   projectRoot: string;
+  userForce: boolean;
+  interactive: boolean;
 }
 
 export interface UpdateAiToolsResult {
@@ -27,17 +30,23 @@ export class UpdateAiToolsUseCase {
   ) {}
 
   async execute(input: UpdateAiToolsInput): Promise<UpdateAiToolsResult> {
-    const { toolArg, projectRoot } = input;
+    const { toolArg, projectRoot, userForce, interactive } = input;
     const manifest = (await this.manifestRepo.load()) ?? Manifest.create();
     const targetIds = this.resolveTargetIds(manifest, toolArg);
     const version = this.versionReader.get();
     const errors: GlobalExecutionError[] = [];
+    const bulkState = new BulkConflictState();
     const updatedTools = await this.updateTargets(
       targetIds,
       manifest,
       projectRoot,
       version,
-      errors
+      errors,
+      {
+        userForce,
+        interactive,
+        bulkState,
+      }
     );
     return { updatedTools, errors };
   }
@@ -52,7 +61,8 @@ export class UpdateAiToolsUseCase {
     manifest: Manifest,
     projectRoot: string,
     version: string,
-    errors: GlobalExecutionError[]
+    errors: GlobalExecutionError[],
+    options: { userForce: boolean; interactive: boolean; bulkState: BulkConflictState }
   ): Promise<{ toolId: ToolId; fileCount: number }[]> {
     const updated: { toolId: ToolId; fileCount: number }[] = [];
     for (const toolId of targetIds) {
@@ -61,7 +71,8 @@ export class UpdateAiToolsUseCase {
         manifest,
         projectRoot,
         version,
-        errors
+        errors,
+        options
       );
       if (entry) updated.push(entry);
     }

@@ -65,6 +65,7 @@ import { SetupToolsPromptUseCase } from "../application/use-cases/setup/setup-to
 import { SetupToolsUseCase } from "../application/use-cases/setup/setup-tools-use-case.js";
 import { FetchMarketplaceSourceUseCase } from "../application/use-cases/shared/fetch-marketplace-source-use-case.js";
 import { ResolveMarketplaceUseCase } from "../application/use-cases/shared/resolve-marketplace-use-case.js";
+import { ResolveUpdateDecisionUseCase } from "../application/use-cases/shared/resolve-update-decision-use-case.js";
 import { UpdateOneToolUseCase } from "../application/use-cases/shared/update-one-tool-use-case.js";
 import { StatusUseCase } from "../application/use-cases/status-use-case.js";
 import { SyncConflictResolverUseCase } from "../application/use-cases/sync/sync-conflict-resolver-use-case.js";
@@ -613,9 +614,13 @@ export async function createDeps(
     pluginDistributionReader,
     assetProvider
   );
+  const resolveUpdateDecisionUseCase = new ResolveUpdateDecisionUseCase(prompter);
   const updateOneToolUseCase = new UpdateOneToolUseCase(
     installRuntimeConfigUseCase,
-    installIdeConfigUseCase
+    installIdeConfigUseCase,
+    syncConflictResolverUseCase,
+    resolveUpdateDecisionUseCase,
+    fs
   );
   const updateAllUseCase = new UpdateAllUseCase(
     manifestRepo,
@@ -623,7 +628,10 @@ export async function createDeps(
     installRuntimeConfigUseCase,
     installIdeConfigUseCase,
     pluginUpdateUseCase,
-    marketplaceRefreshUseCase
+    marketplaceRefreshUseCase,
+    syncConflictResolverUseCase,
+    resolveUpdateDecisionUseCase,
+    fs
   );
   const updateAiToolsUseCase = new UpdateAiToolsUseCase(
     manifestRepo,

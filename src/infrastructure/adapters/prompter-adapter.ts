@@ -15,6 +15,13 @@ export class SilentPrompterAdapter implements Prompter {
     return "overwrite";
   }
 
+  async resolveConflictBulk(
+    _relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite" | "overwrite-all" | "skip-all"> {
+    return "overwrite";
+  }
+
   async confirm(_message: string, defaultValue?: boolean): Promise<boolean> {
     return defaultValue ?? true;
   }
@@ -45,17 +52,39 @@ export class SilentPrompterAdapter implements Prompter {
 export class InquirerPrompterAdapter implements Prompter {
   constructor(private readonly context?: PromptContext) {}
 
+  private conflictMessage(relativePath: string, reason: "deleted" | "modified"): string {
+    const description = reason === "deleted" ? "was deleted" : "was locally modified";
+    return `Conflict: ${relativePath} ${description}. What do you want to do?`;
+  }
+
   async resolveConflict(
     relativePath: string,
     reason: "deleted" | "modified"
   ): Promise<"keep" | "overwrite"> {
-    const description = reason === "deleted" ? "was deleted" : "was locally modified";
     return select(
       {
-        message: `Conflict: ${relativePath} ${description}. What do you want to do?`,
+        message: this.conflictMessage(relativePath, reason),
         choices: [
           { name: "Overwrite with latest version", value: "overwrite" as const },
           { name: "Keep my local version", value: "keep" as const },
+        ],
+      },
+      this.context
+    );
+  }
+
+  async resolveConflictBulk(
+    relativePath: string,
+    reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite" | "overwrite-all" | "skip-all"> {
+    return select(
+      {
+        message: this.conflictMessage(relativePath, reason),
+        choices: [
+          { name: "Overwrite with latest version", value: "overwrite" as const },
+          { name: "Keep my local version", value: "keep" as const },
+          { name: "Overwrite all remaining conflicts", value: "overwrite-all" as const },
+          { name: "Skip all remaining conflicts", value: "skip-all" as const },
         ],
       },
       this.context

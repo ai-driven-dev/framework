@@ -17,6 +17,8 @@ import { InitUseCase } from "../../../src/application/use-cases/init-use-case.js
 import { InstallIdeConfigUseCase } from "../../../src/application/use-cases/install/install-ide-config-use-case.js";
 import { InstallRuntimeConfigUseCase } from "../../../src/application/use-cases/install/install-runtime-config-use-case.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../src/application/use-cases/marketplace/marketplace-sync-settings-use-case.js";
+import { ResolveUpdateDecisionUseCase } from "../../../src/application/use-cases/shared/resolve-update-decision-use-case.js";
+import { UpdateOneToolUseCase } from "../../../src/application/use-cases/shared/update-one-tool-use-case.js";
 import { SyncConflictResolverUseCase } from "../../../src/application/use-cases/sync/sync-conflict-resolver-use-case.js";
 import { SyncFilePropagationUseCase } from "../../../src/application/use-cases/sync/sync-file-propagation-use-case.js";
 import { SyncSourceResolverUseCase } from "../../../src/application/use-cases/sync/sync-source-resolver-use-case.js";
@@ -25,6 +27,7 @@ import { Manifest } from "../../../src/domain/models/manifest.js";
 import { isIdeToolId, type ToolId } from "../../../src/domain/tools/registry.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
+import { SilentPrompterAdapter } from "../../../src/infrastructure/adapters/prompter-adapter.js";
 import { BundledAssetProviderAdapter } from "../../../src/infrastructure/assets/asset-loader.js";
 import { DeterministicHasher } from "./deterministic-hasher.js";
 import { FakeCurrentVersion } from "./fake-current-version.js";
@@ -141,6 +144,22 @@ export async function initAndInstall(
 ) {
   await initProject(deps, projectRoot);
   return installTool(deps, projectRoot, toolId);
+}
+
+export function buildUpdateOneToolUseCase(
+  deps: Awaited<ReturnType<typeof buildUnitDeps>>,
+  prompter?: ConstructorParameters<typeof ResolveUpdateDecisionUseCase>[0]
+): UpdateOneToolUseCase {
+  const resolveUpdateDecision = new ResolveUpdateDecisionUseCase(
+    prompter ?? new SilentPrompterAdapter()
+  );
+  return new UpdateOneToolUseCase(
+    deps.installRuntimeConfigUseCase,
+    deps.installIdeConfigUseCase,
+    deps.syncConflictResolver,
+    resolveUpdateDecision,
+    deps.fs
+  );
 }
 
 export function buildSyncUseCase(

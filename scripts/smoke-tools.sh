@@ -226,6 +226,40 @@ else
   done
   run "plugin remove aidd-dev (claude)" 0 "" "$P_PLUG" -- plugin remove aidd-dev --tool claude
 
+  # ── #286 update conflict guard ────────────────────────────────
+  # The hermetic e2e proves the guard on a fake tree; this pins it against the
+  # REAL remote framework files: a user-modified tracked file must BLOCK update
+  # in non-TTY (exit 1, demand --force) and --force must overwrite it (exit 0).
+  # Covers all three fan-outs: top-level `update`, `ai update`, `ide update`.
+  section "update conflict guard (#286) — modified file blocks, --force overwrites"
+  # Pick the FIRST manifest-tracked file for a tool (any extension) — deterministic,
+  # unlike a `.md` find heuristic which is empty with --plugins none.
+  first_tracked() {
+    node -e 'const m=require(process.argv[1]);const f=(m.tools?.[process.argv[2]]?.files||[])[0];process.stdout.write(f?f.relativePath:"")' \
+      "$1/.aidd/manifest.json" "$2" 2>/dev/null
+  }
+  P_GUARD=$(new_project)
+  (cd "$P_GUARD" && node "$CLI" setup --source remote --ai claude --ide vscode --plugins none --yes >/dev/null 2>&1)
+  gc=$(first_tracked "$P_GUARD" claude)
+  if [[ -z "$gc" ]]; then
+    bad "no tracked claude file in manifest (#286 guard)"
+  else
+    printf '\nUSER EDIT\n' >> "$P_GUARD/$gc"
+    run "update (modified, non-TTY) → exit 1, demands --force" 1 "force" "$P_GUARD" -- update
+    run "update --force overwrites modified file" 0 "" "$P_GUARD" -- update --force
+    printf '\nUSER EDIT 2\n' >> "$P_GUARD/$gc"
+    run "ai update (modified, non-TTY) → exit 1, demands --force" 1 "force" "$P_GUARD" -- ai update
+    run "ai update --force overwrites modified file" 0 "" "$P_GUARD" -- ai update --force
+  fi
+  gv=$(first_tracked "$P_GUARD" vscode)
+  if [[ -z "$gv" ]]; then
+    skip "ide update guard (no tracked vscode file in manifest)"
+  else
+    printf '\n; user edit\n' >> "$P_GUARD/$gv"
+    run "ide update (modified, non-TTY) → exit 1, demands --force" 1 "force" "$P_GUARD" -- ide update
+    run "ide update --force overwrites modified file" 0 "" "$P_GUARD" -- ide update --force
+  fi
+
   section "clean"
   P_CLEAN=$(new_project)
   (cd "$P_CLEAN" && node "$CLI" setup --source remote --ai claude --plugins none --yes >/dev/null 2>&1)

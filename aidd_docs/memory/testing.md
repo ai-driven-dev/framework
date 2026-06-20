@@ -105,6 +105,7 @@ Test names must describe user-visible or system-level behaviour:
 - In-repo installs leak tracked per-tool residue (`.codex/`, `.cursor/`, `.github/copilot/`, `.opencode/`, `opencode.json`, `.vscode/`) that gets committed by accident (cleaned in PR #276).
 - This repo is Claude-only: only `.claude/` and `.aidd/` are legitimate in-repo install artifacts.
 - If an in-repo per-tool install is unavoidable for a test, gitignore the non-Claude install dirs.
+- A smoke case counts only once **executed** against the real binary — a plausible-looking guard can be silently dead (e.g. a filesystem-find heuristic that returns empty). Pick a tool's tracked file from the manifest (the source of truth), never by walking the filesystem.
 
 ## Golden / snapshot machine-independence
 

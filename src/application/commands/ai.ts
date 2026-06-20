@@ -151,8 +151,9 @@ export function registerAiCommand(program: Command): void {
     });
 
   ai.command("update [tool]")
-    .description("Re-install AI tool configs from bundled CLI assets (force overwrite)")
-    .action(async (toolArg: string | undefined) => {
+    .description("Re-install AI tool configs from bundled CLI assets")
+    .option("-f, --force", "Overwrite modified files without prompting", false)
+    .action(async (toolArg: string | undefined, cmdOptions: { force: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
@@ -161,6 +162,8 @@ export function registerAiCommand(program: Command): void {
         const result = await deps.updateAiToolsUseCase.execute({
           toolArg: toolArg as AiToolId | undefined,
           projectRoot,
+          userForce: cmdOptions.force,
+          interactive: process.stdout.isTTY ?? false,
         });
         if (result.updatedTools.length === 0 && result.errors.length === 0) {
           output.info("No AI tools installed.");

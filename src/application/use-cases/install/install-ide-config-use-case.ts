@@ -20,6 +20,8 @@ export interface InstallIdeConfigOptions {
   manifest: Manifest;
   force: boolean;
   version: string;
+  /** Optional per-file gate for the update path. Returns "skip" to leave the file unwritten. Defaults to always-write. */
+  onBeforeWriteRegularFile?: (relativePath: string) => Promise<"write" | "skip">;
 }
 
 export interface InstallIdeConfigResult {
@@ -45,11 +47,15 @@ export class InstallIdeConfigUseCase {
       return { toolId, fileCount: 0, files: [], skipped: true, warnings: [] };
     }
     const { regularFiles, mergeFiles } = await this.buildSettingsFiles(options);
-    await this.writeRegularFiles(regularFiles, options.projectRoot);
+    const allTracked = await this.writeRegularFiles(
+      regularFiles,
+      options.projectRoot,
+      options.onBeforeWriteRegularFile
+    );
     await this.writeMergeFiles(mergeFiles, options.projectRoot);
     const mergeEntries = await this.buildMergeEntries(mergeFiles, options.projectRoot);
     const allFiles = [...regularFiles, ...mergeFiles];
-    manifest.addTool(toolId, options.version, regularFiles, mergeEntries);
+    manifest.addTool(toolId, options.version, allTracked, mergeEntries);
     await new PostInstallPipelineUseCase(this.fs, this.manifestRepo).execute({
       projectRoot: options.projectRoot,
       manifest,
@@ -109,10 +115,32 @@ export class InstallIdeConfigUseCase {
     return true;
   }
 
-  private async writeRegularFiles(files: InstallationFile[], projectRoot: string): Promise<void> {
+  private async writeRegularFiles(
+    files: InstallationFile[],
+    projectRoot: string,
+    onBeforeWrite?: (relativePath: string) => Promise<"write" | "skip">
+  ): Promise<InstallationFile[]> {
+    const allTracked: InstallationFile[] = [];
     for (const file of files) {
+      const decision = onBeforeWrite ? await onBeforeWrite(file.relativePath) : "write";
+      if (decision === "skip") {
+        const diskFile = await this.buildSkippedFileEntry(file, projectRoot);
+        allTracked.push(diskFile);
+        continue;
+      }
       await this.fs.writeFile(join(projectRoot, file.relativePath), file.content);
+      allTracked.push(file);
     }
+    return allTracked;
+  }
+
+  private async buildSkippedFileEntry(
+    file: InstallationFile,
+    projectRoot: string
+  ): Promise<InstallationFile> {
+    const diskPath = join(projectRoot, file.relativePath);
+    const diskHash = await this.fs.readFileHash(diskPath);
+    return new InstallationFile({ relativePath: file.relativePath, content: "", hash: diskHash });
   }
 
   private async writeMergeFiles(files: InstallationFile[], projectRoot: string): Promise<void> {

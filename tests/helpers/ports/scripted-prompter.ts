@@ -2,6 +2,7 @@ import type { Prompter } from "../../../src/domain/ports/prompter.js";
 
 type PromptAnswer =
   | { type: "conflict"; value: "keep" | "overwrite" }
+  | { type: "conflict-bulk"; value: "keep" | "overwrite" | "overwrite-all" | "skip-all" }
   | { type: "confirm"; value: boolean }
   | { type: "input"; value: string }
   | { type: "select"; value: string }
@@ -25,6 +26,14 @@ export class ScriptedPrompter implements Prompter {
   ): Promise<"keep" | "overwrite"> {
     const answer = this.next("conflict", relativePath);
     return answer.value as "keep" | "overwrite";
+  }
+
+  async resolveConflictBulk(
+    relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite" | "overwrite-all" | "skip-all"> {
+    const answer = this.next("conflict-bulk", relativePath);
+    return answer.value as "keep" | "overwrite" | "overwrite-all" | "skip-all";
   }
 
   async confirm(message: string, defaultValue?: boolean): Promise<boolean> {
@@ -91,6 +100,9 @@ export class ScriptedPrompter implements Prompter {
     conflict(value: "keep" | "overwrite"): PromptAnswer {
       return { type: "conflict", value };
     },
+    conflictBulk(value: "keep" | "overwrite" | "overwrite-all" | "skip-all"): PromptAnswer {
+      return { type: "conflict-bulk", value };
+    },
     confirm(value: boolean): PromptAnswer {
       return { type: "confirm", value };
     },
@@ -114,6 +126,13 @@ export class OverwritePrompter implements Prompter {
     _relativePath: string,
     _reason: "deleted" | "modified"
   ): Promise<"keep" | "overwrite"> {
+    return "overwrite";
+  }
+
+  async resolveConflictBulk(
+    _relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite" | "overwrite-all" | "skip-all"> {
     return "overwrite";
   }
 
@@ -150,6 +169,13 @@ export class KeepPrompter implements Prompter {
     _relativePath: string,
     _reason: "deleted" | "modified"
   ): Promise<"keep" | "overwrite"> {
+    return "keep";
+  }
+
+  async resolveConflictBulk(
+    _relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite" | "overwrite-all" | "skip-all"> {
     return "keep";
   }
 

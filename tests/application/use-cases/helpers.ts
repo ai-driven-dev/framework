@@ -41,6 +41,13 @@ export class KeepPrompter implements Prompter {
     return "keep";
   }
 
+  async resolveConflictBulk(
+    _relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite" | "overwrite-all" | "skip-all"> {
+    return "keep";
+  }
+
   async confirm(_message: string): Promise<boolean> {
     return true;
   }
@@ -80,6 +87,13 @@ abstract class QueuedSelectPrompter implements Prompter {
     relativePath: string,
     reason: "deleted" | "modified"
   ): Promise<"keep" | "overwrite">;
+
+  async resolveConflictBulk(
+    _relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite" | "overwrite-all" | "skip-all"> {
+    return "overwrite";
+  }
 
   async confirm(_message: string): Promise<boolean> {
     return true;
@@ -149,6 +163,13 @@ export class RecordingPrompter implements Prompter {
     reason: "deleted" | "modified"
   ): Promise<"keep" | "overwrite"> {
     this.calls.push({ relativePath, reason });
+    return this.response;
+  }
+
+  async resolveConflictBulk(
+    _relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite" | "overwrite-all" | "skip-all"> {
     return this.response;
   }
 
