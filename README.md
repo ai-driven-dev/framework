@@ -1,5 +1,10 @@
 <p align="right">
-  <a href="https://github.com/ai-driven-dev/framework/stargazers"><img src="docs/assets/star-cta.svg" alt="Support the community, star us! The button is at the top-right of this page" width="290" /></a>
+  <a href="https://github.com/ai-driven-dev/framework/stargazers">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/star-cta-dark.svg" />
+      <img src="docs/assets/star-cta-light.svg" alt="Support the community, star us! The button is at the top-right of this page" width="290" />
+    </picture>
+  </a>
 </p>
 
 <div align="center">
