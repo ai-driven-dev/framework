@@ -20,7 +20,10 @@ Rules for every `recipes/<kebab-slug>.md` the skill writes.
 - The steps section heading is named after the goal: `## Steps to <outcome>`, never a bare `## Steps`.
 - One step = one action: never bundle several tools or commands under one heading; split them.
 - Each step is a `#### N) <emoji> Title` heading: it opens with an emoji, then one benefit-focused line of what and why. Number steps continuously.
-- How-bullets are straight to the point and ordered for action. For a tool: where it is, then install it from its URL, then how to use it.
+- How-bullets are straight to the point and ordered for action. For a tool: where it is, install it from its URL, then how to invoke it (its real command or slash invocation, e.g. `/caveman`).
 - Every step carries one concrete example. Prefer an image — a screenshot or short video/GIF that matches the action — over text whenever one exists; for a tool, use its official screenshot. Otherwise: a command with its real output (show what it prints, not just the command), or a config or snippet.
+- Reuse the canonical example from the tool's own site or README, never an invented one.
+- A step that prefers one option over another uses a comparison table, not prose.
+- For a structural or flow concept (a proxy, a pipeline, an architecture), add a small Mermaid diagram.
 - Level subheadings are optional. Group steps under `### 🟢 Beginner`, `### 🟡 Intermediate`, `### 🔴 Expert` only when the recipe spans difficulty levels and grouping helps the reader; a short or single-level recipe lists its steps directly. Include only the levels that have a step.
 - Link to a reference when applicable.
