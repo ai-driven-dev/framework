@@ -1,6 +1,6 @@
 # Token optimization for AI IDEs
 
-**Goal:** Cut token usage and cost in AI coding assistants without losing output quality.
+Cut token usage and cost in AI coding assistants without losing output quality.
 
 ## Why optimize your tokens
 
