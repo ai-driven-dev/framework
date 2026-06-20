@@ -15,7 +15,7 @@
 
 ### Vibe Coding for professional developers — focused on 100% quality on AI-generated code.
 
-<p><b>🇫🇷 The first French open-source framework for developers.</b></p>
+<p><b>🇫🇷 The first French open-source framework for AI-driven development.</b></p>
 
 <p>
   <!--counts:start--><kbd>6 plugins</kbd> · <kbd>38 skills</kbd> · <kbd>3 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
@@ -225,11 +225,11 @@ Task-oriented how-to sheets. **[Browse all recipes →](recipes/)**
 
 ## 🤝 Contributing
 
-> ⭐ **Free & open-source (MIT), built by the French 🇫🇷 AIDD community.** If AIDD saves you time, [**a star**](https://github.com/ai-driven-dev/framework/stargazers) genuinely helps the project grow and helps other developers find it.
+> ⭐ **Free & open-source (MIT), built by the AIDD community.** If AIDD saves you time, [**a star**](https://github.com/ai-driven-dev/framework/stargazers) genuinely helps the project grow and helps other developers find it.
 
-> Actively maintained — see what's shipping next on the [roadmap](https://github.com/orgs/ai-driven-dev/projects/8/views/1) and help shape what comes after.
+> Actively maintained — the [roadmap](https://github.com/orgs/ai-driven-dev/projects/8/views/1) is public; help shape what comes after.
 
-Got an idea or hit a bug? **[Open an issue](https://github.com/ai-driven-dev/framework/issues)** or **[start a discussion](https://github.com/ai-driven-dev/framework/discussions)**. For everything else, **[join the Discord 🇫🇷](https://discord.gg/EWySJSpjWs)**.
+Got an idea or hit a bug? **[Open an issue](https://github.com/ai-driven-dev/framework/issues)** or **[start a discussion](https://github.com/ai-driven-dev/framework/discussions)**. For everything else, **[join the Discord](https://discord.gg/EWySJSpjWs)**.
 
 > **Note** — code (pull-request) rights on this repo are reserved for **certified Core Team members** ([`GOVERNANCE.md`](./GOVERNANCE.md)). Everyone else can open issues, join discussions, and shape the roadmap.
 
