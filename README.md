@@ -225,7 +225,7 @@ Task-oriented how-to sheets. **[Browse all recipes →](recipes/)**
 
 ## 🤝 Contributing
 
-> ⭐ **Built in the open by a French 🇫🇷 community — no company behind it.** If AIDD saves you time, [**a star**](https://github.com/ai-driven-dev/framework/stargazers) genuinely helps us keep going and helps other developers find it.
+> ⭐ **Free & open-source (MIT), built by the French 🇫🇷 AIDD community.** If AIDD saves you time, [**a star**](https://github.com/ai-driven-dev/framework/stargazers) genuinely helps the project grow and helps other developers find it.
 
 > Actively maintained — see what's shipping next on the [roadmap](https://github.com/orgs/ai-driven-dev/projects/8/views/1) and help shape what comes after.
 
