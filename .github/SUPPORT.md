@@ -8,7 +8,7 @@ Where to get help with the AI-Driven Dev framework.
   [GitHub Discussions](https://github.com/ai-driven-dev/framework/discussions).
   This is the best place if you are not sure something is a bug.
 - **Real-time chat** - join the community on
-  [Discord](https://discord.gg/ai-driven-dev).
+  [Discord](https://discord.gg/EWySJSpjWs).
 - **Methodology, guides, training** - see [ai-driven-dev.fr](https://www.ai-driven-dev.fr/).
 
 Please do **not** open issues for support questions, they are routed to

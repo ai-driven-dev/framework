@@ -1,3 +1,12 @@
+<p align="right">
+  <a href="https://github.com/ai-driven-dev/framework/stargazers">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/star-cta-dark.svg" />
+      <img src="docs/assets/star-cta-light.svg" alt="Support the community, star us! The button is at the top-right of this page" width="290" />
+    </picture>
+  </a>
+</p>
+
 <div align="center">
 
 <img src="docs/assets/logo.png" alt="AIDD" width="140" />
@@ -5,6 +14,8 @@
 # AI-Driven Dev Framework
 
 ### Vibe Coding for professional developers — focused on 100% quality on AI-generated code.
+
+<p><b>🇫🇷 The first French open-source framework for AI-driven development.</b></p>
 
 <p>
   <!--counts:start--><kbd>6 plugins</kbd> · <kbd>38 skills</kbd> · <kbd>3 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
@@ -14,6 +25,8 @@
 [![Latest Release](https://img.shields.io/github/v/release/ai-driven-dev/framework?include_prereleases&sort=semver)](https://github.com/ai-driven-dev/framework/releases)
 [![CI](https://github.com/ai-driven-dev/framework/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ai-driven-dev/framework/actions/workflows/ci.yml)
 [![Made in France](https://img.shields.io/badge/made%20in-France-0055A4?labelColor=EF4135)](https://www.ai-driven-dev.fr/)
+
+<p>🗺️ <a href="https://github.com/orgs/ai-driven-dev/projects/8/views/1"><b>Live roadmap</b></a> — what's shipping Now / Next / Later</p>
 
 </div>
 
@@ -27,7 +40,7 @@ The **AI-Driven Dev Framework** is a marketplace — **skills, agents, commands,
 
 Built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: 3 years of R&D, 500+ developers trained in English 🇬🇧 and French 🇫🇷, shipping production software with 100% AI-generated code.
 
-- **[Join the Discord 🇫🇷](https://discord.gg/ai-driven-dev)** — public [roadmap](./ROADMAP.md) decisions every Thursday morning.
+- **[Join the Discord 🇫🇷](https://discord.gg/EWySJSpjWs)** — public [roadmap](./ROADMAP.md) decisions every Thursday morning.
 - **Want to train your team?** [See the programme](https://www.ai-driven-dev.fr/entreprise).
 - **AI is important to you?** [Join the ecosystem](https://www.ai-driven-dev.fr/ecosysteme).
 
@@ -212,10 +225,11 @@ Task-oriented how-to sheets. **[Browse all recipes →](recipes/)**
 
 ## 🤝 Contributing
 
-> ### 🗺️ [See the roadmap →](./ROADMAP.md)
-> Actively maintained — see what's shipping next and help shape what comes after.
+> ⭐ **Free & open-source (MIT), built by the AIDD community.** If AIDD saves you time, [**a star**](https://github.com/ai-driven-dev/framework/stargazers) genuinely helps the project grow and helps other developers find it.
 
-Got an idea or hit a bug? **[Open an issue](https://github.com/ai-driven-dev/framework/issues)** or **[start a discussion](https://github.com/ai-driven-dev/framework/discussions)**. For everything else, **[join the Discord 🇫🇷](https://discord.gg/ai-driven-dev)**.
+> Actively maintained — the [roadmap](https://github.com/orgs/ai-driven-dev/projects/8/views/1) is public; help shape what comes after.
+
+Got an idea or hit a bug? **[Open an issue](https://github.com/ai-driven-dev/framework/issues)** or **[start a discussion](https://github.com/ai-driven-dev/framework/discussions)**. For everything else, **[join the Discord](https://discord.gg/EWySJSpjWs)**.
 
 > **Note** — code (pull-request) rights on this repo are reserved for **certified Core Team members** ([`GOVERNANCE.md`](./GOVERNANCE.md)). Everyone else can open issues, join discussions, and shape the roadmap.
 
@@ -235,6 +249,10 @@ Plugins can run commands, edit files, and call external services on your behalf.
 | [`TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Install issues, load problems, limits |
 | [`GLOSSARY.md`](docs/GLOSSARY.md) | Terms used across the framework |
 | [`MAINTAINERS.md`](docs/MAINTAINERS.md) | Maintainer guide |
+
+## 📈 Star History
+
+<img src="https://api.star-history.com/svg?repos=ai-driven-dev/framework&type=Date" alt="Star History Chart" width="600" />
 
 ---
 
