@@ -1,33 +1,83 @@
 # Token optimization for AI IDEs
 
-> **Goal:** Cut token usage and cost in AI coding assistants without losing output quality.
+**Goal:** Cut token usage and cost in AI coding assistants without losing output quality.
 
-|                   |                                                                                    |
-| ----------------- | ---------------------------------------------------------------------------------- |
-| **Level**         | Intermediate                                                                       |
-| **Prerequisites** | An AI coding assistant (Claude Code, GitHub Copilot, Codex, Cursor, …); a terminal |
+## Why optimize your tokens
 
-## Why
+**Token usage** is the bill — every turn re-sends your whole **context window** and you pay for it again.
 
-**Token usage** is the bill. Every turn re-sends your whole **context window** — instructions, file reads, command output, narration — and you pay for it again. Most of it is waste: filler prose, noisy logs, stale context, bloated instruction files. Reach for this recipe when **cost** climbs faster than output.
+Most of it is **waste**: filler prose, noisy logs, stale context, bloated instruction files.
+
+Reach for this recipe when **cost** climbs faster than your output.
 
 ## Steps to cut token usage
 
 ### 🟢 Beginner
 
-#### 1) 📊 Measure first
+#### 1) 🔎 See what fills the window — `/context`
 
-You cannot cut what you cannot see, so find what fills the window before changing anything.
+`/context` paints your context as a grid, so you cut the biggest consumers instead of guessing.
 
-- Built-in: run `/context`, `/cost`, and `/insights` in Claude Code.
-- Cross-session detail: install [`prompt-analytics-for-claude-code`](https://github.com/romainfjgaspard/prompt-analytics-for-claude-code) and run it with `uvx`.
+- Run `/context` in Claude Code.
+- Read the grid and find the heavy blocks: tool schemas, instruction files, long file reads.
+- Attack the biggest block first.
 
-```bash
-$ uvx --from prompt-analytics-for-claude-code prompt-analytics summary
-# per-prompt tokens & cost from local logs — cache reads usually dominate
+```text
+$ /context
+  MCP tool schemas   ████████████  28%   ← biggest, cut first
+  file reads         ████████      19%
+  CLAUDE.md          ████          9%
+  system + tools     ███████████   …
+(illustrative — paste your real /context here)
 ```
 
-#### 2) ✂️ Trim your instruction file
+#### 2) 💸 Read the bill — `/cost`
+
+`/cost` tells you what a session actually costs and where the spend goes.
+
+- Run `/cost` (alias `/usage`).
+- Read the breakdown by skill, subagent, and MCP server.
+- Re-run it after a change to confirm the spend really dropped.
+
+```text
+$ /cost
+  Session: $0.42 · 1.2M tokens
+  By: subagents 38% · MCP 21% · main 41%
+(illustrative — paste your real /cost here)
+```
+
+#### 3) 🔍 Find your bad habits — `/insights`
+
+`/insights` analyses how you prompt — which is probably sub-optimal — so you fix the pattern, not one prompt.
+
+- What you repeat every session → move it into the knowledge base (`CLAUDE.md`, rules).
+- Counter-intuitive habits you never noticed → surfaced so you can drop them.
+
+```text
+$ /insights
+  • You restate the test command in ~60% of sessions → put it in CLAUDE.md
+  • Long "summary" turns inflate output → ask for terse replies
+(illustrative — paste your real /insights here)
+```
+
+#### 4) 📈 Track per-prompt with an analytics tool
+
+Built-ins show one session; an analytics tool reads all your local logs and reveals where the bill truly sits.
+
+- Several exist: [`prompt-analytics-for-claude-code`](https://github.com/romainfjgaspard/prompt-analytics-for-claude-code) and [`ccusage`](https://www.npmjs.com/package/ccusage).
+- Run one against your local history — no setup, it parses `~/.claude`.
+- The lesson it surfaces: **cache reads dwarf input + output**, so caching, not generation, is most of the bill.
+
+```text
+$ uvx --from prompt-analytics-for-claude-code prompt-analytics summary
+  Input tokens        ~8M
+  Output tokens       ~22M
+  Cache read tokens   ~4.5B    ← dominates the total
+  Source: live parse of ~/.claude/projects
+(real run, token volumes rounded; cost figures omitted)
+```
+
+#### 5) ✂️ Trim your instruction file
 
 Your instruction file ships every turn, so each cut line saves on every message.
 
@@ -41,20 +91,20 @@ Your instruction file ships every turn, so each cut line saves on every message.
 - Keep verbatim: code, quoted errors, security warnings. Cut the rest.
 ```
 
-#### 3) 🗜️ Compact deliberately
+#### 6) 🗜️ Compact deliberately
 
 Compacting on your terms keeps what matters instead of letting auto-compaction guess.
 
 - Watch context use and act around 60–70%.
 - Run `/compact` with focus instructions naming what to keep.
 
-```bash
+```text
 $ /compact keep the repro steps and the failing test; drop the file dumps
 ```
 
 ### 🟡 Intermediate
 
-#### 4) 🗣️ Make the agent talk less
+#### 7) 🗣️ Make the agent talk less
 
 Output is repetition you pay to generate, so cap the chatter.
 
@@ -66,7 +116,7 @@ before: "Great question! Let me walk you through each step involved…"
 after:  "3 steps:"
 ```
 
-#### 5) 🧹 Filter noisy command output
+#### 8) 🧹 Filter noisy command output
 
 Test, install, and build logs flood context with lines the model never needs.
 
@@ -78,7 +128,7 @@ $ rtk proxy npm test
 # full build log in → only failures + final summary kept
 ```
 
-#### 6) 🔌 Prefer CLI over MCP
+#### 9) 🔌 Prefer CLI over MCP
 
 An MCP server loads its full schema every turn, while a CLI costs tokens only when called.
 
@@ -91,7 +141,7 @@ $ gh pr list   # a few tokens per call, vs a GitHub MCP schema riding along ever
 
 ### 🔴 Expert
 
-#### 7) 📚 Use progressive disclosure
+#### 10) 📚 Use progressive disclosure
 
 Load knowledge only when the task needs it, instead of riding along every turn.
 
@@ -102,7 +152,7 @@ skill description matched → its steps load
 no match → 0 tokens spent
 ```
 
-#### 8) 🎯 Route by difficulty
+#### 11) 🎯 Route by difficulty
 
 The top model on routine work is wasted spend.
 
@@ -114,7 +164,7 @@ research / boilerplate → small model or subagent
 architecture / tricky bug → top model
 ```
 
-#### 9) ✅ Cap extended thinking
+#### 12) ✅ Cap extended thinking
 
 Extended reasoning can silently add thousands of tokens on tasks that don't need it.
 
@@ -136,4 +186,4 @@ Extended reasoning can silently add thousands of tokens on tasks that don't need
 
 - [`mcp-installation.md`](mcp-installation.md) — why CLI beats MCP for context efficiency
 - [Anthropic — Claude Code costs](https://code.claude.com/docs/en/costs) · [settings](https://code.claude.com/docs/en/settings)
-- Tools: [`prompt-analytics-for-claude-code`](https://github.com/romainfjgaspard/prompt-analytics-for-claude-code) · [`caveman`](https://github.com/JuliusBrussee/caveman) · [`RTK`](https://github.com/rtk-ai/rtk) · [`SNIP`](https://github.com/edouard-claude/snip) · [`claude-token-efficient`](https://github.com/drona23/claude-token-efficient)
+- Tools: [`prompt-analytics-for-claude-code`](https://github.com/romainfjgaspard/prompt-analytics-for-claude-code) · [`ccusage`](https://www.npmjs.com/package/ccusage) · [`caveman`](https://github.com/JuliusBrussee/caveman) · [`RTK`](https://github.com/rtk-ai/rtk) · [`SNIP`](https://github.com/edouard-claude/snip) · [`claude-token-efficient`](https://github.com/drona23/claude-token-efficient)
