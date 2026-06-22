@@ -22,7 +22,7 @@ Short imperative sentences. Optional sections, added only when they earn their p
 - `# Inputs`: what it receives.
 - `# Outputs`: what it returns.
 - `# Guardrails`: what it must never do.
-- `# Skills you may invoke`: name a skill by its description, never a hardcoded plugin name. The agent discovers it at runtime.
+- `# Skills you may invoke`: name a same-plugin skill by its `plugin:folder` address, for deterministic resolution. Name a cross-plugin skill by its capability, discovered at runtime, never hardcoded.
 - `# Definition of Ready` / `# Definition of Done`: start and finish gates.
 - `# Decisions in scope` / `# Decisions out of scope`: what it may decide, what it must defer.
 - `# Handoffs`: who it returns to.

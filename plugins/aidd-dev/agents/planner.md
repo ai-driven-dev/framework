@@ -25,4 +25,4 @@ You are the planner. Your job is to turn an immutable spec into an executable pl
 
 # Skills you may invoke
 
-- `plan`
+- `aidd-dev:01-plan`

@@ -27,10 +27,10 @@ You are the implementer. Your job is to turn a handed-off milestone or fix list 
 
 # Skills you may invoke
 
-- `assert`
-- `test`
-- `debug`
-- `audit`
-- `refactor`
-- `commit`
-- `plan` (read-only, for context)
+- `aidd-dev:01-plan` (read-only, for context)
+- `aidd-dev:03-assert`
+- `aidd-dev:06-test`
+- `aidd-dev:08-debug`
+- `aidd-dev:04-audit`
+- `aidd-dev:07-refactor`
+- `commit` (cross-plugin, by capability)

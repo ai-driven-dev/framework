@@ -16,7 +16,7 @@ model: <e.g. opus>                         # optional, per tool-paths.md
 # Inputs:                what it receives when invoked
 # Outputs:               what it returns
 # Guardrails:            what it must never do
-# Skills you may invoke: other skills it may run, named by description, never a hardcoded plugin name
+# Skills you may invoke: a same-plugin skill by its plugin:folder address, a cross-plugin skill by capability
 
 For an orchestration agent only: # Definition of Ready, # Definition of Done, # Decisions in scope, # Decisions out of scope, # Handoffs. See references/agent-authoring.md.
 -->

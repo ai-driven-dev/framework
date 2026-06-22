@@ -32,5 +32,5 @@ You are the reviewer. Your job is to judge a finished artifact against its valid
 
 # Skills you may invoke
 
-- `review`
-- `audit`
+- `aidd-dev:05-review`
+- `aidd-dev:04-audit`
