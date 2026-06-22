@@ -7,7 +7,7 @@
 ### Vibe Coding for professional developers — focused on 100% quality on AI-generated code.
 
 <p>
-  <!--counts:start--><kbd>6 plugins</kbd> · <kbd>38 skills</kbd> · <kbd>3 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
+  <!--counts:start--><kbd>7 plugins</kbd> · <kbd>39 skills</kbd> · <kbd>3 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -139,7 +139,7 @@ flowchart TD
 
 ## 🧩 Plugins
 
-Six plugins covering the whole SDLC — **install all of them**; they're designed to work together.
+Seven plugins covering the whole SDLC — **install all of them**; they're designed to work together. (`aidd-ui` is experimental and off the curated install path.)
 
 <table>
 <tr>
@@ -197,6 +197,17 @@ Meta-cognition: brainstorm, challenge, condense, shadow-areas, fact-check.
 `1 skill` · stable (`async-dev`)
 
 Label an issue, get a PR; re-label, get the review applied.
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+### 🎨 [aidd-ui](plugins/aidd-ui/README.md)
+
+`1 skill` · experimental
+
+UI and UX: design, review, and improve frontend interfaces.
 
 </td>
 </tr>

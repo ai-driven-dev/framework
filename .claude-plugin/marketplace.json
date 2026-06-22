@@ -48,6 +48,13 @@
       "description": "Meta-cognition: refine input through brainstorming, refine output through challenge and condensed communication mode.",
       "strict": true,
       "recommended": true
+    },
+    {
+      "name": "aidd-ui",
+      "source": "./plugins/aidd-ui",
+      "description": "UI and UX concern: design, review, and improve frontend interfaces.",
+      "strict": true,
+      "recommended": false
     }
   ]
 }
