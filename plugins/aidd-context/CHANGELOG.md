@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.0.0...aidd-context-v2.0.1) (2026-06-22)
+
+
+### Documentation
+
+* **aidd-context:** add explicit-scoped-includes rule (R13) to skill-generate ([#309](https://github.com/ai-driven-dev/framework/issues/309)) ([527e646](https://github.com/ai-driven-dev/framework/commit/527e6466c5052eb4f0a80739f3059c8f6dab1c41))
+
 ## [2.0.0](https://github.com/ai-driven-dev/framework/compare/aidd-context-v1.1.2...aidd-context-v2.0.0) (2026-06-19)
 
 

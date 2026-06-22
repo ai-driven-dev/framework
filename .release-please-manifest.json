@@ -1,6 +1,6 @@
 {
-  ".": "5.0.0",
-  "plugins/aidd-context": "2.0.0",
+  ".": "5.0.1",
+  "plugins/aidd-context": "2.0.1",
   "plugins/aidd-dev": "2.0.0",
   "plugins/aidd-vcs": "2.0.0",
   "plugins/aidd-pm": "2.0.0",
