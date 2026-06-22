@@ -83,7 +83,35 @@ Your instruction file ships every turn, so each cut line saves on every message.
 - Keep verbatim: code, quoted errors, security warnings. Cut the rest.
 ```
 
-#### 6) 🗜️ Compact deliberately
+#### 6) 🧭 Plan before you edit — plan mode
+
+Approving the wrong direction burns tokens on rework, so let Claude explore read-only and propose a plan first.
+
+1. Press `Shift+Tab` twice to enter plan mode (or start with `claude --permission-mode plan`).
+2. Review the plan, then approve to switch to execution.
+
+```text
+Shift+Tab Shift+Tab → ⏸ plan mode
+  Claude reads and proposes; no edits until you approve
+```
+
+See [permission modes](https://code.claude.com/docs/en/permission-modes).
+
+#### 7) ♻️ Clear context between tasks — `/clear`
+
+Stale early turns ride along and get re-billed every turn, so reset when the task changes.
+
+1. Finish a task, then run `/clear` to drop the history and reload only `CLAUDE.md` and memory.
+2. Use `/compact` instead when you want to keep a summary of the same task.
+
+```text
+$ /clear
+  history dropped → fresh window, CLAUDE.md + memory reloaded
+```
+
+See [reduce token usage](https://code.claude.com/docs/en/costs).
+
+#### 8) 🗜️ Compact deliberately
 
 Compacting on your terms keeps what matters instead of letting auto-compaction guess.
 
@@ -96,12 +124,12 @@ $ /compact keep the repro steps and the failing test; drop the file dumps
 
 ### 🟡 Intermediate
 
-#### 7) 🗣️ Make the agent talk less
+#### 9) 🗣️ Make the agent talk less
 
 Output is repetition you pay to generate, so cap the chatter. caveman forces short, filler-free replies (reported ~65% output cut, code intact) and auto-detects 30+ agents.
 
-1. Install the [`caveman`](https://github.com/JuliusBrussee/caveman) skill.
-2. Invoke it like any skill: `/caveman` (or `/caveman ultra` for the hardest cut); stop with "normal mode".
+1. Built-in route: set `"outputStyle": "concise"` in `settings.json`.
+2. Harder cut: install the [`caveman`](https://github.com/JuliusBrussee/caveman) skill and invoke it like any skill — `/caveman` (or `/caveman ultra`); stop with "normal mode".
 
 ```text
 /caveman
@@ -111,7 +139,9 @@ before: The reason your React component is re-rendering is likely because you're
 after:  New object ref each render. Inline object prop = new ref = re-render. Wrap in `useMemo`.
 ```
 
-#### 8) 🧹 Filter noisy command output
+See [output styles](https://code.claude.com/docs/en/output-styles).
+
+#### 10) 🧹 Filter noisy command output
 
 Test, install, and build logs flood context with lines the model never needs.
 
@@ -128,7 +158,24 @@ flowchart LR
 
 Real saving: `git push` (15 lines, ~200 tokens) -> `rtk git push` (1 line, ~10 tokens).
 
-#### 9) 🔌 Prefer CLI over MCP
+#### 11) 🚫 Keep big paths out of context — deny reads
+
+Vendor dirs, build output, and secrets get pulled into context by accident. Deny reads on them so they stay out — they remain grep-able.
+
+1. In `settings.json`, add `Read(...)` deny rules for large or sensitive paths.
+2. `.claudeignore` is not shipped — deny rules are the official way.
+
+```json
+{
+  "permissions": {
+    "deny": ["Read(./vendor/**)", "Read(./dist/**)", "Read(./.env)"]
+  }
+}
+```
+
+See [permissions](https://code.claude.com/docs/en/permissions).
+
+#### 12) 🔌 Prefer CLI over MCP
 
 An MCP server's schema rides along every turn; a CLI costs tokens only when you call it. Newer MCP tooling adds tool/context selection that loads only the tools you pick — cheaper than before — but a CLI is still leaner and faster.
 
@@ -142,7 +189,7 @@ See [`mcp-installation.md`](mcp-installation.md).
 
 ### 🔴 Expert
 
-#### 10) 🔬 Audit which skills and tools run — `Ctrl+O`
+#### 13) 🔬 Audit which skills and tools run — `Ctrl+O`
 
 You optimise what you can see, so expand the transcript to watch what each turn actually invokes and pulls into context.
 
@@ -158,7 +205,7 @@ Ctrl+O — transcript expanded
 
 See the [keyboard shortcuts](https://code.claude.com/docs/en/interactive-mode).
 
-#### 11) 🎯 Route by difficulty
+#### 14) 🎯 Route by difficulty
 
 The top model on routine work is wasted spend, so pin the model per skill or agent — cheap for routine, top-tier for hard reasoning.
 
@@ -177,7 +224,40 @@ model: haiku
 
 A skill's `SKILL.md` takes the same `model:` field (e.g. `model: opus` for a heavy step). See [sub-agents](https://code.claude.com/docs/en/sub-agents) and [skills](https://code.claude.com/docs/en/skills).
 
-#### 12) ✅ Cap extended thinking
+#### 15) 🧫 Offload high-volume work to subagents
+
+Test runs, log parsing, and wide exploration flood the main window. A subagent does it in its own context and hands back only a summary, so the bloat never lands in your session.
+
+1. Define an agent in `.claude/agents/<name>.md` with only the tools it needs and a small `model`.
+2. Let it run the noisy op and return a short result.
+
+```yaml
+# .claude/agents/test-runner.md
+---
+name: test-runner
+description: Run the suite and return only the failures
+tools: Bash, Read
+model: haiku
+---
+```
+
+See [sub-agents](https://code.claude.com/docs/en/sub-agents).
+
+#### 16) 🧊 Protect your cache hits
+
+Cached input bills far cheaper, and cache reads are most of your tokens (step 4) — so don't throw the cache away mid-task. A model switch, an MCP connect or disconnect, or an effort change rebuilds it from scratch.
+
+1. Set the model and reasoning effort at the start of a task, not mid-work.
+2. Switch model or toggle MCP servers only at task boundaries, where a cache rebuild is acceptable.
+
+```text
+mid-task model switch → cache invalidated → full re-bill
+same model to a boundary → cache reads stay cheap
+```
+
+See [prompt caching](https://code.claude.com/docs/en/prompt-caching).
+
+#### 17) ✅ Cap extended thinking
 
 Extended reasoning can silently add thousands of tokens on tasks that don't need it.
 
@@ -194,4 +274,4 @@ Extended reasoning can silently add thousands of tokens on tasks that don't need
 
 ## In short
 
-Measure first, then stack the cheap wins — trimmed instructions, less chatter, filtered output — before reaching for model routing. Most of the bill is cache and repetition; cut those and the cost follows.
+Measure first, then stack the cheap wins — trimmed instructions, plan mode, a clean context, less chatter, filtered output — before the advanced routing, subagents, and cache discipline. Most of the bill is cache and repetition; cut those and the cost follows.

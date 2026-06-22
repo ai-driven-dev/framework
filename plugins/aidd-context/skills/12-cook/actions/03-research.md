@@ -21,19 +21,19 @@ Every presented item is confirmed to exist, with its latest state and official l
 1. **Refine.** Fill the goal checklist with the user until the target is precise: outcome, level, scope, grouping. Read `recipes/<slug>.md` first when the recipe exists. Run `list` when it is unnamed.
 
 ```md
-@assets/research-goal-checklist.md
+@../assets/research-goal-checklist.md
 ```
 
 2. **Fan out.** Spawn one agent per angle in the playbook via the `Task` tool. Each applies the playbook criteria (freshness, community signal, tips), pushes for the most insights it can, and includes counter-intuitive ones with evidence. Each returns candidates with sources.
 
 ```md
-@references/research-playbook.md
+@../references/research-playbook.md
 ```
 
 3. **Curate.** Dedupe the candidates. Drop anything that neither beats nor extends the recipe. Sort each bucket by value. Clear the research checklist: gaps filled, unknowns surfaced, claims corroborated.
 
 ```md
-@assets/research-checklist.md
+@../assets/research-checklist.md
 ```
 
 4. **Verify.** Spawn one agent per surviving candidate via the `Task` tool to confirm it exists, capture its official link, and record its latest state (version or date). Drop any candidate that cannot be confirmed against an official source.
