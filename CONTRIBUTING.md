@@ -43,6 +43,16 @@ make setup
 
 `make` lists every target; `make doctor` / `make check` verify the environment and run the pre-commit checks.
 
+### Markdown links
+
+Lefthook runs the Markdown link checker during pre-commit. `make setup` installs the hooks; if dependencies are already installed and you only need the hook wiring, run:
+
+```bash
+pnpm exec lefthook install --force
+```
+
+Run `node scripts/check-markdown-links.js` to scan the repository. Detailed usage, supported forms, exclusions, and fix guidance live in `node scripts/check-markdown-links.js --help`.
+
 ### Test your changes locally
 
 Exercise the skills you touched before opening a PR. Neither tool hot-reloads the checkout (both serve a copied cache), so after editing:
