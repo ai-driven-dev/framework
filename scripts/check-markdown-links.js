@@ -264,6 +264,13 @@ function resolveLocalPath(target, sourceFile) {
     if (!fs.existsSync(absolute) && fs.existsSync(generatedTemplateAbsolute)) {
       return { absolute: generatedTemplateAbsolute };
     }
+    // A *-template.md scaffold links to files emitted next to the generated
+    // output at runtime (e.g. ./plan.md, ./phase-1.md), which never exist in
+    // the repo. A dot-relative target that resolves nowhere is an intentional
+    // placeholder for that generated sibling, not a broken link.
+    if (!fs.existsSync(absolute) && /-template\.md$/u.test(sourceRelative) && /^\.\.?\//u.test(decoded)) {
+      return { ignored: true };
+    }
   }
 
   if (normalizePathForDisplay(sourceFile).startsWith(".github/")) {
