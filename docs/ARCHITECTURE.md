@@ -134,9 +134,9 @@ Choose by context, not complexity: keep the work visible to the caller → skill
 Composition rules:
 
 - A skill may delegate to an agent.
-- An agent may invoke the skills it declares under `# Skills you may invoke`, as capabilities — never by reading a skill's files.
-- Only the conductor (the SDLC skill) delegates to agents; a worker agent (`planner`, `implementer`, `reviewer`) never delegates to another agent.
-- A worker never declares an orchestration skill (`implement`, `sdlc`), so delegation cannot cycle.
+- An agent invokes only the skills it declares under `# Skills you may invoke`, and never reads a skill's files. It names a skill from its own plugin directly (deterministic); it names a skill from another plugin by capability, per cross-plugin orthogonality.
+- An agent never delegates to another agent. The high-level skill that runs the flow (for example the SDLC) is the only place that delegates to agents.
+- A worker never declares a flow-level skill (`implement`, `sdlc`), so delegation cannot cycle.
 
 ## Cross-plugin orthogonality
 

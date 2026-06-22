@@ -4,20 +4,23 @@ Build the plan's code by delegating to the `implement` skill, which loops the ph
 
 ## Inputs
 
-- `plan_path` (from 02) - required
-- On an `04 = iterate` loop-back, the review findings as a fix list - optional
+- `plan_path` from `02` (required).
+- On an `iterate` loop-back, the review findings to fold in (optional).
 
-## Outputs
+## Output
 
-The plan reaches frontmatter `status: implemented` (or `status: blocked`), every phase `done`, validation green.
+The plan reaches `status: implemented`, every phase `done`, validation green. Or it stops at `status: blocked` when a human is needed.
 
 ## Process
 
-1. **Delegate.** Invoke the `implement` skill with `plan_path`. It branches, loops each phase through the `implementer`, commits the code and the status transitions, and runs the plan's validation. The orchestrator writes no status itself.
-2. **Iterate.** On a loop-back from `04 = iterate`, fold the findings into the plan (set the affected phases back to `pending` or add a fix phase), then delegate again.
-3. **Blocked.** The skill stops at `status: blocked` when the implementer hits a human-only condition. Do NOT proceed to `04`; escalate to a human.
-4. **Surface.** Report the skill's outcome to the orchestrator so it can move to `04`.
+1. **Implement.** Run the `implement` skill on `plan_path`. It branches, codes every phase through the `implementer`, commits the code and the status transitions, and validates. This action writes no status itself.
+2. **Iterate.** When the step runs after an `iterate` verdict, first fold the findings into the plan: reopen the affected phases or add a fix phase. Then run the `implement` skill again.
+3. **Resolve.** Read the plan's final `status`.
+   - `implemented`: the step is done.
+   - `blocked`: a human-only condition stopped the run. Do not continue. Escalate to a human.
 
 ## Test
 
-The plan frontmatter `status` is `implemented` (or `blocked`, stopping before `04`); every phase reads `status: done`; the validation commands return exit code 0.
+- The plan `status` is `implemented`, or `blocked` when a human-only condition stopped it.
+- Every phase reads `status: done`.
+- The validation commands return exit code 0.

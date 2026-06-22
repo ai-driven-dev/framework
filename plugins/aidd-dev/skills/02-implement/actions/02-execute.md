@@ -16,7 +16,7 @@ Every phase coded, asserted, and its frontmatter marked `status: done`, with the
 2. **Delegate.** Hand the phase scope and acceptance criteria to the `implementer` agent.
 3. **Assert.** Assert the phase against its acceptance criteria. On failure, hand the failures back to the `implementer` and repeat. The gate is the assertion passing, not the implementer's self-report. Then set `status: done` and commit it.
 4. **Blocked.** On `BLOCKED` (see `@../references/blocked.md`), set the plan `status: blocked`, commit it, and stop the loop.
-5. **Drift.** Follow the plan as written. Never rewrite it. On any mismatch — trivial or substantive — stop and report `replan needed: <reason>` to the caller. Replanning is the planner's job, not this skill's.
+5. **Drift.** Follow the plan as written. Never rewrite it. On any mismatch, trivial or substantive, stop and report `replan needed: <reason>` to the caller. Replanning is the planner's job, not this skill's.
 
 ## Test
 

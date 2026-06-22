@@ -23,16 +23,16 @@ Use skill aidd-dev:02-implement
 
 Pass the plan path or content as `$ARGUMENTS`. The skill runs three actions in order:
 
-1. **prepare** — fails fast when the plan is missing (never fabricates one); puts `HEAD` on a feature branch when it is on the default branch, otherwise keeps the current branch; sets the plan `status: in-progress`.
-2. **execute** — loops the plan's phases: per phase it sets `status: in-progress`, spawns the `implementer` agent, re-spawns with `items_remaining` until 100 %, then sets `status: done`; stops at `status: blocked` when the implementer hits a human-only condition.
-3. **finalize** — runs validation, then marks the plan `status: implemented` once every phase is done.
+1. **prepare**: fails fast when the plan is missing (never fabricates one); puts `HEAD` on a feature branch when it is on the default branch, otherwise keeps the current branch; sets the plan `status: in-progress`.
+2. **execute**: loops the plan's phases: per phase it sets `status: in-progress`, spawns the `implementer` agent, re-spawns until the phase asserts clean, then sets `status: done`; stops at `status: blocked` when the implementer hits a human-only condition.
+3. **finalize**: runs validation, then marks the plan `status: implemented` once every phase is done.
 
-**Code** commits are the `implementer` agent's job (one per ticked acceptance criterion); the skill commits only its own **tracking** — each status transition, the moment it makes it. That split keeps the same audit trail whether the agent is reached through this skill, the SDLC, or a direct spawn, and stops the implementer's clean-tree hygiene from reverting an uncommitted status edit.
+**Code** commits are the `implementer` agent's job (one per ticked acceptance criterion); the skill commits only its own **tracking**: each status transition, the moment it makes it. That split keeps the same audit trail whether the agent is reached through this skill, the SDLC, or a direct spawn, and stops the implementer's clean-tree hygiene from reverting an uncommitted status edit.
 
 ## Outputs
 
 - Code for the feature, one phase at a time, committed by the `implementer` agent on the active feature branch.
-- Plan and phase frontmatter status driven `pending → in-progress → done / implemented`, or `blocked` — each transition committed by the skill as it happens.
+- Plan and phase frontmatter status driven `pending → in-progress → done / implemented`, or `blocked`, each transition committed by the skill as it happens.
 - A `replan needed` report when the plan no longer matches reality; this skill never rewrites the plan.
 
 ## Prerequisites
