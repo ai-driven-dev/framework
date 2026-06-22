@@ -139,7 +139,7 @@ flowchart TD
 
 ## 🧩 Plugins
 
-Seven plugins covering the whole SDLC — **install all of them**; they're designed to work together. (`aidd-ui` is experimental and off the curated install path.)
+Seven plugins covering the whole SDLC — **install all of them**; they're designed to work together. (`aidd-ui` is 🚧 **alpha — not ready for use**, off the curated install path.)
 
 <table>
 <tr>
@@ -203,11 +203,11 @@ Label an issue, get a PR; re-label, get the review applied.
 <tr>
 <td width="33%" valign="top">
 
-### 🎨 [aidd-ui](plugins/aidd-ui/README.md)
+### 🎨 [aidd-ui](plugins/aidd-ui/README.md) 🚧
 
-`1 skill` · experimental
+`1 skill` · **alpha — not ready**
 
-UI and UX: design, review, and improve frontend interfaces.
+UI and UX: design, review, and improve frontend interfaces. ⚠️ Alpha (`0.1.0-alpha.0`), smoke-test only — do not rely on it yet.
 
 </td>
 </tr>

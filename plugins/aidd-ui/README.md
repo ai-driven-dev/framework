@@ -1,10 +1,12 @@
 ← [aidd-framework](../../README.md)
 
-# aidd-ui
+# aidd-ui 🚧 alpha
 
 UI and UX concern for the AI-Driven Development framework.
 
-> Status: experimental.
+> ⚠️ **ALPHA — NOT READY FOR USE.** `0.1.0-alpha.0`. This plugin ships a single smoke-test skill and no real UI/UX capability yet. Do not install it expecting to use it; it exists only to validate the scaffold. APIs, skills, and naming may change or be removed without notice.
+
+> Status: alpha (experimental).
 
 This plugin is in alpha (`0.1.0-alpha.0`). It lives on a dedicated branch off `next` and is registered with `recommended: false`, so it stays off the curated install path until it stabilises and graduates to `main`. While it is not in the published marketplace yet, test it from a local checkout of this branch:
 
