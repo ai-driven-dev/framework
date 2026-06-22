@@ -74,11 +74,12 @@ Your instruction file ships every turn, so each cut line saves on every message.
 
 1. Open `CLAUDE.md` (or `.github/copilot-instructions.md`).
 2. Cut it to essentials and add explicit conciseness rules.
-3. Reuse the [`claude-token-efficient`](https://github.com/drona23/claude-token-efficient) ruleset.
+3. Model it on a real concise instruction file: [AGENTS.md](../plugins/aidd-context/skills/02-project-memory/assets/AGENTS.md).
 
 ```md
-# CLAUDE.md
-- Terse answers. No preamble, no "Let me…", no closing summary.
+# CLAUDE.md — keep it terse (see AGENTS.md for the full example)
+- Answer first. Lead with the result, then the reason. Drop pleasantries and hedging.
+- No tool-call narration. No decorative tables or emoji unless they carry information.
 - Keep verbatim: code, quoted errors, security warnings. Cut the rest.
 ```
 
