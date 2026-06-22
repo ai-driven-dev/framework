@@ -44,13 +44,13 @@ Detect the mode from `$ARGUMENTS` once, at skill entry, before dispatching the f
 
 ## Actions
 
-| #   | Action      | Role                                                                   | Delegate                       |
-| --- | ----------- | ---------------------------------------------------------------------- | ------------------------------ |
-| 01  | `spec`      | Consolidate sources, draft or refine the contract (skippable)          | spec                           |
-| 02  | `plan`      | Produce the mandatory plan file                                        | plan via `planner`             |
-| 03  | `implement` | Build the plan's code, every phase, until complete                     | the `implement` skill          |
-| 04  | `review`    | Verdict `ship` or `iterate`                                            | review via `reviewer`          |
-| 05  | `ship`      | Commit and open a change request via the project's VCS                 | commit, pull-request           |
+| #   | Action      | Role                                                          | Delegate                             |
+| --- | ----------- | ------------------------------------------------------------- | ------------------------------------ |
+| 01  | `spec`      | Consolidate sources, draft or refine the contract (skippable) | `spec`                               |
+| 02  | `plan`      | Produce the mandatory plan file                               | `planner` runs `aidd-dev:01-plan`    |
+| 03  | `implement` | Build the plan's code, every phase, until complete            | `aidd-dev:02-implement`              |
+| 04  | `review`    | Verdict `ship` or `iterate`                                   | `reviewer` runs `aidd-dev:05-review` |
+| 05  | `ship`      | Commit and open a change request via the project's VCS        | `commit`, `pull-request`             |
 
 Files: `@actions/01-spec.md` ... `@actions/05-ship.md`.
 
@@ -88,10 +88,10 @@ Materialize the flow as a task list at skill entry; it MUST contain every mandat
 
 ## References
 
+- `aidd-dev:01-plan`
+- `aidd-dev:02-implement`
+- `aidd-dev:05-review`
 - `spec`
-- `plan`
-- `implement`
-- `review`
 - `commit`
 - `pull-request`
 

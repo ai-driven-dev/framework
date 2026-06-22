@@ -2,30 +2,24 @@
 
 Consolidate every available source into the normalized contract consumed downstream.
 
-**Skip condition:** if the source ticket already carries an explicit objective + at least one acceptance criterion, set `spec_status = skipped`, surface them verbatim, jump to action 02.
+**Skip condition:** when the source ticket already carries an explicit objective and at least one acceptance criterion, set `spec_status = skipped`, surface them verbatim, and jump to `02`.
 
-## Inputs
+## Input
 
-- `request` - raw `$ARGUMENTS` (free-form text or ticket URL)
-- `sources` - one or more of: ticket body, existing PRD, in-session conversation, prior reviewer findings
-- `working_dir` - repo root
+The raw `$ARGUMENTS` (free-form text or a ticket URL), any available sources (ticket body, existing PRD, in-session conversation, prior reviewer findings), and the repo root.
 
-## Outputs
+## Output
 
-```yaml
-spec_path: <path | null when skipped>
-spec_status: drafted | refined | skipped
-objective: <one-sentence intent>
-acceptance_criteria: [<line>]
-```
+The spec path on disk with its status (`drafted`, `refined`, or `skipped`), the one-sentence objective, and the acceptance criteria. The path is null when skipped.
 
 ## Process
 
-1. **Collect.** Resolve every non-empty source: fetch ticket bodies, read PRD files, snapshot reviewer findings, capture conversation turns. Concatenate into a single brief.
-2. **Skip check.** Apply the skip condition above. If skipped, return.
-3. **Delegate.** Hand the consolidated brief and `working_dir` to `spec`; let it own contract generation and refinement.
-4. **Return** `spec_path`, `spec_status`, `objective`, `acceptance_criteria` to the SDLC orchestrator.
+1. **Collect.** Resolve every non-empty source: fetch ticket bodies, read PRD files, snapshot reviewer findings, capture conversation turns. Concatenate them into one brief.
+2. **Skip.** Apply the skip condition above. If it holds, return the extracted objective and criteria.
+3. **Delegate.** Hand the consolidated brief and the repo root to `spec`. Let it own contract generation and refinement.
+4. **Return.** Surface the spec path, status, objective, and acceptance criteria.
 
 ## Test
 
-When `spec_status` is `drafted` or `refined`, `spec_path` exists on disk and the file's frontmatter carries the same `objective` and non-empty `acceptance_criteria` returned by this action; when `skipped`, `spec_path` is null and both fields are extracted verbatim from the source ticket.
+- When the status is `drafted` or `refined`, the spec file exists and its frontmatter carries the same objective and non-empty acceptance criteria this action returns.
+- When `skipped`, the path is null and both fields are taken verbatim from the source ticket.

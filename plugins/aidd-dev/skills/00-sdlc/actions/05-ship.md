@@ -2,26 +2,23 @@
 
 Commit and open a change request (pull or merge request) via the project's VCS once the review verdict is `ship`.
 
-## Inputs
+## Input
 
-- `verdict = ship` (from 04) - required
-- `plan_path` (from 02) - required
-- `phase_results` (from 03) - optional, drives the commit and change-request body
+The `ship` verdict from `04`, the plan path from `02`, and the phase results from `03` that drive the commit and the change-request body.
 
-## Outputs
+## Output
 
-```yaml
-commit_sha: <sha>
-change_request_url: <pull or merge request url on the project's VCS host>
-```
+The commit SHA and the change-request URL on the project's VCS host.
 
 ## Process
 
-0. **Review gate (mandatory, run first).** Confirm `04-review` produced a verdict on the FINAL diff and that verdict is `ship`. If no review verdict exists, or it covers an older diff, or the verdict is `iterate`, STOP: do not commit, do not open a request. Run `04-review` first (loop back to `03-implement` on `iterate`). Code is never shipped unreviewed.
-1. **Commit.** Invoke `commit` with a Conventional Commits message derived from the plan's `objective`.
-2. **Push and open.** Invoke `pull-request` to push the branch and open the change request. Reference `plan_path` in the body.
-3. **Return** `commit_sha` and `change_request_url` to the SDLC orchestrator.
+1. **Gate.** Confirm `04` produced a verdict on the final diff and that it is `ship`. If no verdict exists, it covers an older diff, or it is `iterate`, stop: do not commit, do not open a request. Run `04` first, looping back to `03` on `iterate`. Code is never shipped unreviewed.
+2. **Commit.** Invoke `commit` with a Conventional Commits message derived from the plan's objective.
+3. **Open.** Invoke `pull-request` to push the branch and open the change request. Reference the plan path in the body.
+4. **Return.** Surface the commit SHA and the change-request URL.
 
 ## Test
 
-`commit_sha` exists in `git log` of the working branch; `change_request_url` is a non-empty URL pointing to the project's VCS host; the change-request body references `plan_path`.
+- The commit SHA exists in `git log` of the working branch.
+- The change-request URL is non-empty and points to the project's VCS host.
+- The change-request body references the plan path.

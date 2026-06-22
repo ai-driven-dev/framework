@@ -2,10 +2,9 @@
 
 Build the plan's code by delegating to the `implement` skill, which loops the phases, drives status, and validates. Mandatory.
 
-## Inputs
+## Input
 
-- `plan_path` from `02` (required).
-- On an `iterate` loop-back, the review findings to fold in (optional).
+The plan path from `02` (required), and on an `iterate` loop-back the review findings to fold in (optional).
 
 ## Output
 
