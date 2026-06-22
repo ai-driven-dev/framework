@@ -7,7 +7,9 @@ import { Manifest } from "../../../../../src/domain/models/manifest.js";
 import { Marketplace } from "../../../../../src/domain/models/marketplace.js";
 import { PluginDistribution } from "../../../../../src/domain/models/plugin-distribution.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
+import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { FakeCodexActivator } from "../../../../helpers/ports/fake-codex-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
@@ -61,7 +63,15 @@ describe("install claude plugin via Mode A (integration)", () => {
       })
     );
 
-    const useCase = new MarketplaceSyncSettingsUseCase(fs, manifestRepo, registry, catalog, hasher);
+    const useCase = new MarketplaceSyncSettingsUseCase(
+      fs,
+      manifestRepo,
+      registry,
+      catalog,
+      hasher,
+      new CapturingLogger(),
+      new FakeCodexActivator()
+    );
     const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(result.updatedTools).toContain("claude");

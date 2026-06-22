@@ -1,7 +1,6 @@
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { HooksCapability } from "../../capabilities/hooks-capability.js";
-import { buildClaudeStyleMarketplaceEntry } from "../../capabilities/marketplace-entry.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
@@ -234,16 +233,10 @@ export const codex: AiTool<
       pluginManifestRelativePath: "plugin.json",
       acceptsMcp: true,
       translationMode: "marketplace",
-      // Codex auto-discovers .claude-plugin/marketplace.json natively (already
-      // shipped via setup). User-global plugin enable lives in ~/.codex/config.toml
-      // and is managed manually via `codex /plugins`. This project-local JSON
-      // mirrors the Claude Code schema for forward-compat + audit trail.
-      marketplaceSettings: {
-        settingsPath: ".codex/config.json",
-        settingsKey: "extraKnownMarketplaces",
-        enabledPluginsKey: "enabledPlugins",
-        toEntry: buildClaudeStyleMarketplaceEntry,
-      },
+      // Codex only enables plugins from its user-global config (~/.codex/config.toml)
+      // plus its plugin cache (~/.codex/plugins/cache/). A project-local settings file
+      // is inert, so we drive the `codex` CLI directly during marketplace sync instead.
+      nativeActivation: { binary: "codex" },
     }),
   },
 

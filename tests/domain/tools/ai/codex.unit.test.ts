@@ -168,90 +168,17 @@ describe("codex", () => {
     });
   });
 
-  describe("capabilities.plugins.marketplaceSettings", () => {
-    const ms = codex.capabilities.plugins.marketplaceSettings;
-
-    it("has marketplaceSettings configured", () => {
-      expect(ms).not.toBeNull();
+  describe("capabilities.plugins", () => {
+    it("declares native codex CLI activation", () => {
+      expect(codex.capabilities.plugins.nativeActivation).toEqual({ binary: "codex" });
     });
 
-    it("writes to .codex/config.json", () => {
-      expect(ms?.settingsPath).toBe(".codex/config.json");
+    it("does not write a project-local marketplace settings file", () => {
+      expect(codex.capabilities.plugins.marketplaceSettings).toBeNull();
     });
 
-    it("uses extraKnownMarketplaces as settings key", () => {
-      expect(ms?.settingsKey).toBe("extraKnownMarketplaces");
-    });
-
-    it("uses enabledPlugins as enabled plugins key", () => {
-      expect(ms?.enabledPluginsKey).toBe("enabledPlugins");
-    });
-
-    describe("toEntry()", () => {
-      it("returns directory entry for local source", () => {
-        const result = ms?.toEntry({
-          name: "my-plugin",
-          source: { kind: "local", path: "/workspace/my-plugin" },
-        });
-        expect(result).toEqual({
-          valueShape: "map",
-          key: "my-plugin",
-          value: { source: { source: "directory", path: "/workspace/my-plugin" } },
-        });
-      });
-
-      it("returns github entry for github source without ref", () => {
-        const result = ms?.toEntry({
-          name: "my-plugin",
-          source: { kind: "github", repo: "org/my-plugin" },
-        });
-        expect(result).toEqual({
-          valueShape: "map",
-          key: "my-plugin",
-          value: { source: { source: "github", repo: "org/my-plugin" } },
-        });
-      });
-
-      it("does not include ref in github source (ref dropped — not in documented spec)", () => {
-        const result = ms?.toEntry({
-          name: "my-plugin",
-          source: { kind: "github", repo: "org/my-plugin", ref: "v1.2.3" },
-        });
-        expect(result).toEqual({
-          valueShape: "map",
-          key: "my-plugin",
-          value: { source: { source: "github", repo: "org/my-plugin" } },
-        });
-      });
-
-      it("includes version when provided", () => {
-        const result = ms?.toEntry({
-          name: "my-plugin",
-          source: { kind: "github", repo: "org/my-plugin" },
-          version: "2.0.0",
-        });
-        expect(result).toEqual({
-          valueShape: "map",
-          key: "my-plugin",
-          value: { source: { source: "github", repo: "org/my-plugin" }, version: "2.0.0" },
-        });
-      });
-
-      it("returns null for unsupported source kind (npm)", () => {
-        const result = ms?.toEntry({
-          name: "my-plugin",
-          source: { kind: "npm", package: "my-plugin" },
-        });
-        expect(result).toBeNull();
-      });
-
-      it("returns null for unsupported source kind (url)", () => {
-        const result = ms?.toEntry({
-          name: "my-plugin",
-          source: { kind: "url", url: "https://example.com/plugin.zip" },
-        });
-        expect(result).toBeNull();
-      });
+    it("keeps the marketplace translation mode", () => {
+      expect(codex.capabilities.plugins.translationMode).toBe("marketplace");
     });
   });
 });

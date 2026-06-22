@@ -1,17 +1,22 @@
 import { resolve } from "node:path";
 import type { MarketplaceSettings } from "../../../domain/capabilities/plugins-capability.js";
+import { CodexCliError } from "../../../domain/errors.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { Marketplace } from "../../../domain/models/marketplace.js";
 import { marketplaceCacheDir } from "../../../domain/models/paths.js";
 import type { PluginSource } from "../../../domain/models/plugin-source.js";
 import type { ToolId } from "../../../domain/models/tool-ids.js";
+import type { CodexActivator } from "../../../domain/ports/codex-activator.js";
 import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
+import type { Logger } from "../../../domain/ports/logger.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-registry.js";
 import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
 import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
+
+const CODEX_ACTIVATION_BINARY = "codex";
 
 export interface MarketplaceSyncSettingsOptions {
   projectRoot: string;
@@ -28,7 +33,9 @@ export class MarketplaceSyncSettingsUseCase {
     private readonly manifestRepo: ManifestRepository,
     private readonly marketplaceRegistry: MarketplaceRegistry,
     private readonly catalogRepo: PluginCatalogRepository,
-    private readonly hasher: Hasher
+    private readonly hasher: Hasher,
+    private readonly logger: Logger,
+    private readonly codexActivator: CodexActivator
   ) {}
 
   async execute(options: MarketplaceSyncSettingsOptions): Promise<MarketplaceSyncSettingsResult> {
@@ -44,7 +51,97 @@ export class MarketplaceSyncSettingsUseCase {
       if (updated) updatedTools.push(toolId);
     }
     if (updatedTools.length > 0) await this.manifestRepo.save(manifest);
+    this.activateNativeTools(projectRoot, manifest, marketplaces);
     return { updatedTools };
+  }
+
+  private activateNativeTools(
+    projectRoot: string,
+    manifest: Manifest,
+    marketplaces: readonly Marketplace[]
+  ): void {
+    const toolIds = manifest.getInstalledToolIds().filter((id) => this.usesCodexActivation(id));
+    if (toolIds.length === 0) return;
+    if (!this.codexActivator.isAvailable()) {
+      this.logger.warn("Codex CLI not found on PATH — skipping native plugin activation.");
+      return;
+    }
+    for (const toolId of toolIds) {
+      this.activateCodexTool(toolId, projectRoot, manifest, marketplaces);
+    }
+  }
+
+  private usesCodexActivation(toolId: ToolId): boolean {
+    const toolConfig = getToolConfig(toolId);
+    if (toolConfig === undefined || !isAiTool(toolConfig)) return false;
+    const caps = toolConfig.capabilities as {
+      plugins?: { nativeActivation?: { binary: string } | null };
+    };
+    return caps.plugins?.nativeActivation?.binary === CODEX_ACTIVATION_BINARY;
+  }
+
+  private activateCodexTool(
+    toolId: ToolId,
+    projectRoot: string,
+    manifest: Manifest,
+    marketplaces: readonly Marketplace[]
+  ): void {
+    const { refs, marketplaces: used } = this.codexPluginActivation(toolId, manifest, marketplaces);
+    if (refs.length === 0) return;
+    // Each step is independently best-effort: one failing plugin or marketplace
+    // must warn and let the others through, never abort the whole activation.
+    for (const marketplace of used) this.registerCodexMarketplace(marketplace, projectRoot);
+    this.bestEffort(() => this.codexActivator.upgradeMarketplaces(), "upgrade marketplaces");
+    for (const ref of refs) {
+      this.bestEffort(() => this.codexActivator.enablePlugin(ref), `enable plugin '${ref}'`);
+    }
+  }
+
+  private bestEffort(action: () => void, label: string): void {
+    try {
+      action();
+    } catch (error) {
+      if (!(error instanceof CodexCliError)) throw error;
+      this.logger.warn(`Codex: ${label} failed — ${error.message}`);
+    }
+  }
+
+  private codexPluginActivation(
+    toolId: ToolId,
+    manifest: Manifest,
+    marketplaces: readonly Marketplace[]
+  ): { refs: string[]; marketplaces: Marketplace[] } {
+    const byName = new Map(marketplaces.map((m) => [m.name, m]));
+    const refs: string[] = [];
+    const used = new Map<string, Marketplace>();
+    for (const plugin of manifest.getPlugins(toolId)) {
+      const marketplace = plugin.marketplace == null ? undefined : byName.get(plugin.marketplace);
+      if (marketplace === undefined) continue;
+      refs.push(`${plugin.name}@${marketplace.name}`);
+      used.set(marketplace.name, marketplace);
+    }
+    return { refs, marketplaces: [...used.values()] };
+  }
+
+  private registerCodexMarketplace(marketplace: Marketplace, projectRoot: string): void {
+    const source = this.codexMarketplaceSourceArg(marketplace.source, projectRoot);
+    if (source === null) {
+      this.logger.warn(
+        `Codex: unsupported marketplace source for '${marketplace.name}' — skipped.`
+      );
+      return;
+    }
+    this.bestEffort(
+      () => this.codexActivator.addMarketplace(source),
+      `register marketplace '${marketplace.name}'`
+    );
+  }
+
+  private codexMarketplaceSourceArg(source: PluginSource, projectRoot: string): string | null {
+    if (source.kind === "local") return resolve(projectRoot, source.path);
+    if (source.kind === "github") return source.ref ? `${source.repo}@${source.ref}` : source.repo;
+    if (source.kind === "url") return source.url;
+    return null;
   }
 
   private async syncTool(

@@ -617,7 +617,7 @@ describe.concurrent("E2E: aidd framework build", () => {
     }
   });
 
-  it("AC #4: --target codex --flat emits TOML agents, skills under .codex/skills, config.toml with mcp_servers", async () => {
+  it("AC #4: --target codex --flat emits TOML agents, skills under .agents/skills, config.toml with mcp_servers", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-codex");
     try {
       const projRoot = join(tempDir, "proj");
@@ -639,10 +639,10 @@ describe.concurrent("E2E: aidd framework build", () => {
       );
       expect(result.exitCode).toBe(0);
       expect(existsSync(join(projRoot, ".codex", "agents"))).toBe(true);
-      // Codex discovers workspace skills from .codex/skills/ (verified live: native
-      // "Available skills"); plugin-prefixed at one level, e.g. .codex/skills/aidd-context-00-onboard/
-      expect(existsSync(join(projRoot, ".codex", "skills"))).toBe(true);
-      expect(existsSync(join(projRoot, ".agents", "skills"))).toBe(false);
+      // Codex scans .agents/skills/ for workspace skills (documented project skill root,
+      // verified live on 0.136); plugin-prefixed at one level, e.g. .agents/skills/aidd-context-00-onboard/
+      expect(existsSync(join(projRoot, ".agents", "skills"))).toBe(true);
+      expect(existsSync(join(projRoot, ".codex", "skills"))).toBe(false);
       const config = await readFile(join(projRoot, ".codex", "config.toml"), "utf-8");
       // [[skills.config]] is intentionally NOT emitted — discovery is by placement
       expect(config).not.toContain("[[skills.config]]");

@@ -621,9 +621,11 @@ export function buildCursorFlatContract(): ToolBuildContract {
 
 // ── Codex flat contract ────────────────────────────────────────────────────────
 
-// Codex discovers workspace skills from `.codex/skills/` (verified live: a SKILL.md there
-// appears in Codex's native "Available skills" context; `.agents/skills/` is NOT a native root).
-const CODEX_SKILLS_PREFIX = ".codex/skills/";
+// Codex scans `.agents/skills/` (cwd → repo root) for workspace skills — the documented
+// project skill root (developers.openai.com/codex/skills). Verified live on codex-cli 0.136:
+// a SKILL.md there appears in Codex's "Available skills" context. (`.codex/skills/` also
+// resolves on 0.136 but is undocumented, so we target the documented root.)
+const CODEX_SKILLS_PREFIX = ".agents/skills/";
 
 function codexFlatSkillPath(plugin: string, rel: string): string {
   return genericFlatSkillPath(CODEX_SKILLS_PREFIX, plugin, rel.replace(/^skills\//, ""));

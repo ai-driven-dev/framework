@@ -98,6 +98,7 @@ import type { VersionReader } from "../domain/ports/version-reader.js";
 import { AjvSchemaValidatorAdapter } from "./adapters/ajv-schema-validator-adapter.js";
 import { AuthProviderAdapter } from "./adapters/auth-provider-adapter.js";
 import { AuthReaderAdapter } from "./adapters/auth-reader-adapter.js";
+import { CodexCliAdapter } from "./adapters/codex-cli-adapter.js";
 import { CurrentVersionAdapter } from "./adapters/current-version-adapter.js";
 import { FileAdapter } from "./adapters/file-adapter.js";
 import { GhCliAdapter } from "./adapters/gh-cli-adapter.js";
@@ -395,7 +396,9 @@ export async function createDeps(
     manifestRepo,
     marketplaceRegistry,
     pluginCatalogRepository,
-    hasher
+    hasher,
+    logger,
+    new CodexCliAdapter()
   );
   const pluginAddUseCase = new PluginAddUseCase(
     fs,

@@ -1,7 +1,6 @@
-// Note: Codex does not natively consume `.codex/config.json` (its real config lives in
-// `~/.codex/config.toml`). The project-local JSON is an audit-trail mirror of the Claude Code
-// marketplace schema — see comment in `src/domain/tools/ai/codex.ts`. Test asserts the file
-// is written with the correct shape; consumption by Codex itself is out of scope.
+// Codex enables plugins through its own CLI (`codex plugin add`), which writes the
+// user-global `~/.codex/config.toml` and plugin cache — a project-local settings file is
+// inert. This test asserts the sync drives the CodexActivator and writes NO `.codex/config.json`.
 import "../../../../../src/domain/tools/ai/codex.js";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -10,8 +9,11 @@ import { ModeAMarketplaceTranslator } from "../../../../../src/application/use-c
 import { Manifest } from "../../../../../src/domain/models/manifest.js";
 import { Marketplace } from "../../../../../src/domain/models/marketplace.js";
 import { PluginDistribution } from "../../../../../src/domain/models/plugin-distribution.js";
+import type { PluginSource } from "../../../../../src/domain/models/plugin-source.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
+import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { FakeCodexActivator } from "../../../../helpers/ports/fake-codex-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
@@ -35,18 +37,44 @@ function buildDist(name = "aidd-context"): PluginDistribution {
   });
 }
 
-describe("install codex plugin via Mode A (integration)", () => {
-  it("writes extraKnownMarketplaces in .codex/config.json after sync", async () => {
-    const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
-    const manifestRepo = new InMemoryManifestRepository();
-    const registry = new InMemoryMarketplaceRegistry();
-    const catalog = new PluginCatalogRepositoryAdapter(fs);
-    const manifest = Manifest.create();
-    manifest.addTool("codex", "test", []);
+async function seedCodexPlugin(
+  manifestRepo: InMemoryManifestRepository,
+  registry: InMemoryMarketplaceRegistry,
+  source: PluginSource = { kind: "local", path: "/marketplace-source" }
+): Promise<void> {
+  const manifest = Manifest.create();
+  manifest.addTool("codex", "test", []);
+  await new ModeAMarketplaceTranslator().addPlugin(
+    buildDist(),
+    "codex",
+    { kind: "local", path: "/plugin-source" },
+    PROJECT_ROOT,
+    manifest,
+    MARKETPLACE_NAME,
+    "docs"
+  );
+  await manifestRepo.save(manifest);
+  await registry.save(
+    PROJECT_ROOT,
+    Marketplace.create({
+      name: MARKETPLACE_NAME,
+      source,
+      scope: "project",
+      addedAt: "2026-01-01T00:00:00Z",
+    })
+  );
+}
 
-    await new ModeAMarketplaceTranslator().addPlugin(
-      buildDist(),
+async function seedTwoCodexPlugins(
+  manifestRepo: InMemoryManifestRepository,
+  registry: InMemoryMarketplaceRegistry
+): Promise<void> {
+  const manifest = Manifest.create();
+  manifest.addTool("codex", "test", []);
+  const translator = new ModeAMarketplaceTranslator();
+  for (const name of ["aidd-context", "aidd-vcs"]) {
+    await translator.addPlugin(
+      buildDist(name),
       "codex",
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
@@ -54,26 +82,116 @@ describe("install codex plugin via Mode A (integration)", () => {
       MARKETPLACE_NAME,
       "docs"
     );
-    await manifestRepo.save(manifest);
-    await registry.save(
-      PROJECT_ROOT,
-      Marketplace.create({
-        name: MARKETPLACE_NAME,
-        source: { kind: "local", path: "/marketplace-source" },
-        scope: "project",
-        addedAt: "2026-01-01T00:00:00Z",
-      })
+  }
+  await manifestRepo.save(manifest);
+  await registry.save(
+    PROJECT_ROOT,
+    Marketplace.create({
+      name: MARKETPLACE_NAME,
+      source: { kind: "local", path: "/marketplace-source" },
+      scope: "project",
+      addedAt: "2026-01-01T00:00:00Z",
+    })
+  );
+}
+
+describe("install codex plugin via Mode A (integration)", () => {
+  it("drives the codex CLI and writes no project-local config.json", async () => {
+    const fs = new InMemoryFileAdapter();
+    const hasher = new DeterministicHasher();
+    const manifestRepo = new InMemoryManifestRepository();
+    const registry = new InMemoryMarketplaceRegistry();
+    const catalog = new PluginCatalogRepositoryAdapter(fs);
+    const activator = new FakeCodexActivator({ available: true });
+    await seedCodexPlugin(manifestRepo, registry);
+
+    const useCase = new MarketplaceSyncSettingsUseCase(
+      fs,
+      manifestRepo,
+      registry,
+      catalog,
+      hasher,
+      new CapturingLogger(),
+      activator
     );
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    const useCase = new MarketplaceSyncSettingsUseCase(fs, manifestRepo, registry, catalog, hasher);
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    expect(activator.addedMarketplaces).toEqual([resolve(PROJECT_ROOT, "/marketplace-source")]);
+    expect(activator.upgradeCount).toBe(1);
+    expect(activator.enabledPlugins).toEqual([`aidd-context@${MARKETPLACE_NAME}`]);
+    expect(await fs.fileExists(resolve(PROJECT_ROOT, ".codex/config.json"))).toBe(false);
+  });
 
-    expect(result.updatedTools).toContain("codex");
-    const settingsPath = resolve(PROJECT_ROOT, ".codex/config.json");
-    const settings = JSON.parse(await fs.readFile(settingsPath)) as Record<string, unknown>;
-    expect(settings.extraKnownMarketplaces).toBeDefined();
-    expect((settings.extraKnownMarketplaces as Record<string, unknown>)[MARKETPLACE_NAME]).toEqual({
-      source: { source: "directory", path: "/marketplace-source" },
+  it("maps a github marketplace source to an owner/repo argument", async () => {
+    const fs = new InMemoryFileAdapter();
+    const manifestRepo = new InMemoryManifestRepository();
+    const registry = new InMemoryMarketplaceRegistry();
+    const activator = new FakeCodexActivator({ available: true });
+    await seedCodexPlugin(manifestRepo, registry, {
+      kind: "github",
+      repo: "ai-driven-dev/framework",
     });
+
+    const useCase = new MarketplaceSyncSettingsUseCase(
+      fs,
+      manifestRepo,
+      registry,
+      new PluginCatalogRepositoryAdapter(fs),
+      new DeterministicHasher(),
+      new CapturingLogger(),
+      activator
+    );
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(activator.addedMarketplaces).toEqual(["ai-driven-dev/framework"]);
+    expect(activator.enabledPlugins).toEqual([`aidd-context@${MARKETPLACE_NAME}`]);
+  });
+
+  it("enables the remaining plugins when one plugin fails (per-plugin best-effort)", async () => {
+    const fs = new InMemoryFileAdapter();
+    const manifestRepo = new InMemoryManifestRepository();
+    const registry = new InMemoryMarketplaceRegistry();
+    const logger = new CapturingLogger();
+    const activator = new FakeCodexActivator({
+      available: true,
+      failOnPlugins: [`aidd-context@${MARKETPLACE_NAME}`],
+    });
+    await seedTwoCodexPlugins(manifestRepo, registry);
+
+    const useCase = new MarketplaceSyncSettingsUseCase(
+      fs,
+      manifestRepo,
+      registry,
+      new PluginCatalogRepositoryAdapter(fs),
+      new DeterministicHasher(),
+      logger,
+      activator
+    );
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(activator.enabledPlugins).toEqual([`aidd-vcs@${MARKETPLACE_NAME}`]);
+    expect(logger.warnMessages.some((m) => m.includes("aidd-context@aidd-framework"))).toBe(true);
+  });
+
+  it("skips activation when the codex CLI is unavailable", async () => {
+    const fs = new InMemoryFileAdapter();
+    const manifestRepo = new InMemoryManifestRepository();
+    const registry = new InMemoryMarketplaceRegistry();
+    const activator = new FakeCodexActivator({ available: false });
+    await seedCodexPlugin(manifestRepo, registry);
+
+    const useCase = new MarketplaceSyncSettingsUseCase(
+      fs,
+      manifestRepo,
+      registry,
+      new PluginCatalogRepositoryAdapter(fs),
+      new DeterministicHasher(),
+      new CapturingLogger(),
+      activator
+    );
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(activator.addedMarketplaces).toEqual([]);
+    expect(activator.enabledPlugins).toEqual([]);
   });
 });

@@ -1,6 +1,7 @@
 export { CapturingLogger } from "./capturing-logger.js";
 export { DeterministicHasher } from "./deterministic-hasher.js";
 export { FakeAuthReader } from "./fake-auth-reader.js";
+export { FakeCodexActivator } from "./fake-codex-activator.js";
 export { FakeCurrentVersion } from "./fake-current-version.js";
 export { darwinPlatform, FakePlatform, linuxPlatform, win32Platform } from "./fake-platform.js";
 export { FixturePluginFetcher } from "./fixture-plugin-fetcher.js";

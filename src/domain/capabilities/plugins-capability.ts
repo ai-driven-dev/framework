@@ -38,6 +38,14 @@ export interface MarketplaceSettings {
   toEntry(input: MarketplaceSettingsInput): MarketplaceSettingsEntry | null;
 }
 
+/**
+ * Declares that a tool enables plugins by driving an external CLI binary
+ * (e.g. `codex plugin add`) instead of writing a project-local settings file.
+ */
+export interface NativeActivation {
+  binary: "codex";
+}
+
 export interface NativePluginsParams {
   mode: "native";
   pluginsDir: string;
@@ -49,6 +57,8 @@ export interface NativePluginsParams {
   acceptsHooks?: boolean;
   acceptsMcp?: boolean;
   marketplaceSettings?: MarketplaceSettings;
+  /** Enables native CLI-driven plugin activation (e.g. Codex). See {@link NativeActivation}. */
+  nativeActivation?: NativeActivation;
   /**
    * Explicit translation mode for this native capability.
    * Pass `"marketplace"` when `marketplaceSettings` is provided and Mode A routing is intended.
@@ -90,6 +100,8 @@ export class PluginsCapability {
   readonly hooksRelativePath: string;
   readonly hooksContentFormat: HooksContentFormat;
   readonly marketplaceSettings: MarketplaceSettings | null;
+  /** Native CLI-driven plugin activation declaration, or `null` when not applicable. */
+  readonly nativeActivation: NativeActivation | null;
   /**
    * Explicit declaration of the plugin translation strategy for this capability.
    * - `"marketplace"`: Mode A — register plugin reference in the tool's native config (no file materialization).
@@ -124,6 +136,7 @@ export class PluginsCapability {
       this.hooksRelativePath = params.hooksRelativePath ?? DEFAULT_HOOKS_PATH;
       this.hooksContentFormat = params.hooksContentFormat ?? DEFAULT_HOOKS_FORMAT;
       this.marketplaceSettings = params.marketplaceSettings ?? null;
+      this.nativeActivation = params.nativeActivation ?? null;
       this._userPluginsDir = params.userPluginsDir;
     } else {
       this.pluginsDir = null;
@@ -135,6 +148,7 @@ export class PluginsCapability {
       this.hooksRelativePath = DEFAULT_HOOKS_PATH;
       this.hooksContentFormat = DEFAULT_HOOKS_FORMAT;
       this.marketplaceSettings = null;
+      this.nativeActivation = null;
       this._userPluginsDir = undefined;
     }
   }

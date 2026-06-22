@@ -448,3 +448,10 @@ export class EmptyMarketplaceCacheNameError extends Error {
     this.name = "EmptyMarketplaceCacheNameError";
   }
 }
+
+export class CodexCliError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CodexCliError";
+  }
+}
