@@ -124,6 +124,20 @@ flowchart LR
 
 Each action is a self-contained markdown file with inputs, outputs, depends-on, process steps, and a test checklist. Actions can call other skills via the `Skill` tool, so a skill discovers a capability it needs at runtime (by matching skill descriptions, never by hardcoded plugin name) and delegates to it.
 
+## Skills and agents
+
+- A **skill** is a caller-agnostic recipe; it runs in the context of whoever invokes it.
+- An **agent** is an isolated executor; it runs in its own context and returns only a result.
+
+Choose by context, not complexity: keep the work visible to the caller → skill; isolate it and take only the result → agent.
+
+Composition rules:
+
+- A skill may delegate to an agent.
+- An agent may invoke the skills it declares under `# Skills you may invoke`, as capabilities — never by reading a skill's files.
+- Only the conductor (the SDLC skill) delegates to agents; a worker agent (`planner`, `implementer`, `reviewer`) never delegates to another agent.
+- A worker never declares an orchestration skill (`implement`, `sdlc`), so delegation cannot cycle.
+
 ## Cross-plugin orthogonality
 
 Plugins do not reference each other by name. When skill A needs a capability owned by skill B, it discovers a candidate at runtime through description matching. This rule keeps the marketplace forkable, the plugins swappable, and the docs maintainable.

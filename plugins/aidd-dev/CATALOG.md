@@ -33,9 +33,9 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | File | Description |
 |------|---|
-| [implementer.md](agents/implementer.md) | `Milestone executor. Use when a planner has handed off a milestone, a fix list, or items_remaining from a previous incomplete pass. Codes, tests, repairs. Returns what's done, what's remaining, and a completion score. Never replans, never judges.` |
-| [planner.md](agents/planner.md) | `Planning agent. Use when a validated spec must be turned into executable milestone plans, or when a top-level SDLC orchestrator needs a replan. Writes plans and decisions only. Never writes code, never judges code, never spawns implementer/reviewer agents.` |
-| [reviewer.md](agents/reviewer.md) | `Independent critic in fresh context. Use when an artifact (code, spec, plan, doc) needs verification against a validator (acceptance criteria, checklist file, or any explicit ruleset). Returns reviewed items, findings, completion score and quality score. Never edits the artifact, never decides what to do next.` |
+| [implementer.md](agents/implementer.md) | `Codes a handed-off milestone or fix list, tests it, and reports back. Use when an approved scope must become working, validated code. Never plans, never judges its own work.` |
+| [planner.md](agents/planner.md) | `Turns an approved spec into an executable plan with milestones, acceptance criteria, and recorded decisions. Use when a spec must become a plan, or a finished pass needs replanning. Never writes code, never judges it.` |
+| [reviewer.md](agents/reviewer.md) | `Judges a finished artifact against an explicit validator and reports findings with a score. Use when code, a spec, a plan, or a doc needs independent verification. Never edits the artifact, never decides what happens next.` |
 
 ### `skills`
 
