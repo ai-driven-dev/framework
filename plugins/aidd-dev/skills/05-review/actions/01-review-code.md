@@ -1,6 +1,6 @@
 # 01 - Review Code
 
-Deep code review of a diff against project rules and clean-code principles. Read-only: surface quality violations only, never patch them - hand fixes off to `aidd-dev:07-refactor`.
+Deep code review of a diff against clean-code principles. Conformance to the project's declared rules is the relevancy axis (`03-review-relevancy`), not this one. Read-only: surface quality violations only, never patch them - hand fixes off to `aidd-dev:07-refactor`.
 
 ## Inputs
 
@@ -23,7 +23,7 @@ severity_breakdown:
 ## Process
 
 1. **Resolve the diff.** Use `$ARGUMENTS` when provided; otherwise fall back to `git diff main`.
-2. **Deep review every changed line.** Apply project conventions and global clean-code principles. No runtime checks.
+2. **Deep review every changed line.** Apply global clean-code principles: naming, structure, complexity, smells. No runtime checks. Declared-rule conformance belongs to `03-review-relevancy`.
 3. **Findings only.** Focus on issues on the changed lines; do not propose feature-level changes. Rate each with the 3-level severity (🔴 critical / 🟡 warning / 🟢 minor) and cite a `file:line`. Suggested fixes are described, not patched (read-only).
 4. **Set the verdict** per the template: `blocked` if any unaddressed 🔴, `changes-requested` if 🟡 (or a fixable 🔴), else `approve`.
 5. **Format the report** using `@../assets/review-code-template.md` (Expected changes, Findings, Coverage, Follow-up). Top fixes hand off to `aidd-dev:07-refactor`.

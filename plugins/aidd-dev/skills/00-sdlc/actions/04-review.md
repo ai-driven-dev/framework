@@ -13,7 +13,7 @@ A `ship` or `iterate` verdict with the reviewed items, the findings, the complet
 ## Process
 
 1. **Capture.** Record `git rev-parse HEAD` as the reviewed SHA. This is the exact code the checker judges, and the anchor `05-ship` checks against.
-2. **Spawn.** Spawn the `checker` agent with the inputs above. Brief it to run `aidd-dev:05-review`, code and functional, on that diff, and return its verdict.
+2. **Spawn.** Spawn the `checker` agent with the inputs above. Brief it to run `aidd-dev:05-review`, code, functional, and relevancy, on that diff, and return its verdict.
 3. **Map.** When every check passes, the verdict is `ship`. On any blocking finding, the verdict is `iterate`.
 4. **Mark.** On `ship`, set the plan frontmatter `status: reviewed` and commit it. Carry the reviewed SHA in the verdict. On `iterate`, leave the plan `implemented`: the loop fixes the diff, not the plan.
 5. **Iterate.** On `iterate`, return the findings as the fix list for `03`. The next `04` re-captures the SHA on the fixed diff; ship is reached only when a review of the current diff passes.

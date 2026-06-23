@@ -2,10 +2,11 @@
 
 # 05 - review
 
-Reviews completed work along two axes: code quality against project rules,
-and feature behavior against the plan's acceptance criteria. A recipe that
-runs in the caller's context (the SDLC isolates it by spawning a `checker`)
-and returns findings plus completion and quality scores. Never edits the artifact.
+Reviews completed work along three axes: code quality (clean-code),
+feature behavior against the plan's acceptance criteria, and relevancy
+(does the change belong: fit to the need, declared-rule conformance, no rot).
+A recipe that runs in the caller's context (the SDLC isolates it by spawning
+a `checker`) and returns findings plus completion and quality scores. Never edits the artifact.
 
 ## When to use
 
@@ -31,12 +32,15 @@ and returns findings plus completion and quality scores. Never edits the artifac
 Use skill aidd-dev:05-review
 ```
 
-The skill exposes 2 actions:
+The skill exposes 3 actions:
 
-1. `review-code` - grade the diff against project rules; surface
-   violations with file, line, and rule reference.
+1. `review-code` - grade the diff against clean-code principles; surface
+   violations with file and line.
 2. `review-functional` - verify the feature against the plan's acceptance
    criteria; emit per-criterion pass / fail.
+3. `review-relevancy` - judge whether the change belongs: fit to the need,
+   conformance to the project's declared rules, and no duplication or
+   over-engineering.
 
 ## Outputs
 
@@ -48,6 +52,9 @@ The skill exposes 2 actions:
   - `review-functional` - a verdict (`PASS` / `PARTIAL` / `FAIL`) and a
     per-criterion scoring matrix; missing or broken behaviors hand off to
     [02-implement](../02-implement/README.md) / [08-debug](../08-debug/README.md).
+  - `review-relevancy` - a verdict plus misfit findings (lens `fit` /
+    `conform` / `rot`), each tied to a declared rule, a duplication site, an
+    over-engineering smell, or a named need-gap; fixes hand off per complexity.
 - The `checker` agent running this recipe returns `ship` / `iterate` to the
   SDLC orchestrator.
 
