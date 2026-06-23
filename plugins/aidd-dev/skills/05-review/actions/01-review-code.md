@@ -15,7 +15,7 @@ The `Code` section of the feature folder's `review.md`, filled with severity-rat
 1. **Resolve.** Take the diff from `$ARGUMENTS`, otherwise `git diff main`.
 2. **Review.** Read every changed line for clean-code: naming, structure, complexity, smells, error handling. No runtime checks. Declared-rule conformance belongs to the relevancy axis, not this one.
 3. **Rate.** One finding per issue on the changed lines, rated and categorized per `@../references/review-rubric.md`, citing a `file:line`. Describe the fix, never patch.
-4. **Record.** Write the findings into the `Code` section of `review.md` (per the skill's transversal rules). Hand the top fixes to `aidd-dev:07-refactor`.
+4. **Record.** Write the findings into the `Code` section of `review.md`, each with its fix described.
 
 ## Test
 

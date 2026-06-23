@@ -43,5 +43,5 @@ Does the change belong (or "Not run"). Every finding ties to evidence, never an 
 
 ## Follow-up
 
-- **Top fixes** (ranked, hand off per complexity to `aidd-dev:07-refactor`, `aidd-dev:02-implement`, or `aidd-dev:08-debug`): {{top_fixes}}
+- **Top fixes** (ranked): {{top_fixes}}
 - **Notes**: {{additional_notes}}

@@ -7,7 +7,7 @@ model: opus
 
 # Skill: review
 
-Read-only review of a diff along three axes, code quality, feature behavior, and relevancy, composed into one report. Diff-scoped; for a whole-codebase diagnosis use `aidd-dev:04-audit`.
+Read-only review of a diff along three axes, code quality, feature behavior, and relevancy, composed into one report.
 
 ## Actions
 
@@ -21,7 +21,7 @@ Run all three by default, composing one report. Run a single axis only when the 
 
 ## Transversal rules
 
-- Read-only: surface findings, never patch. Hand fixes off per complexity: `07-refactor` for code, `02-implement` or `08-debug` for behavior.
+- Read-only: surface each finding with its fix described, never patch.
 - Output: one `review.md` in the reviewed work's feature folder, beside `plan.md`, from `@assets/review-template.md`. Each axis fills its section; an axis not run is marked "Not run".
 - Verdict: one overall verdict, the strictest across the axes run, per `@references/review-rubric.md`.
 
