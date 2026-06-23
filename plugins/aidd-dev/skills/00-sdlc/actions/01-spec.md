@@ -16,7 +16,7 @@ The spec path on disk with its status (`drafted`, `refined`, or `skipped`), the 
 
 1. **Collect.** Resolve every non-empty source: fetch ticket bodies, read PRD files, snapshot checker findings, capture conversation turns. Concatenate them into one brief.
 2. **Skip.** Apply the skip condition above. If it holds, return the extracted objective and criteria.
-3. **Delegate.** Hand the consolidated brief and the repo root to `spec`. Let it own contract generation and refinement.
+3. **Delegate.** Hand the consolidated brief and the repo root to a spec capability, discovered at runtime by description. Let it own contract generation and refinement.
 4. **Return.** Surface the spec path, status, objective, and acceptance criteria.
 
 ## Test

@@ -48,7 +48,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [04-review.md](skills/00-sdlc/actions/04-review.md) | - |
 | `actions` | [05-ship.md](skills/00-sdlc/actions/05-ship.md) | - |
 | `-` | [README.md](skills/00-sdlc/README.md) | - |
-| `-` | [SKILL.md](skills/00-sdlc/SKILL.md) | `Pure orchestrator for the full AIDD development flow. Use when a human (or Gardener) needs to take a free-form request from idea to shipped code, end-to-end. Coordinates spec generation, planning, implementation, review, and shipping by composing other skills and agents. Supports two modes - `auto` (default, no human interaction) and `interactive` (pauses for human confirmation at key gates). Holds no business logic of its own; every step is delegated.` |
+| `-` | [SKILL.md](skills/00-sdlc/SKILL.md) | `Pure orchestrator for the full AIDD development flow, from a free-form request to shipped code. Use when a request must go end to end: spec, plan, implement, review, ship. Runs auto by default (no human interaction) or interactive (pauses at each step). Delegates every step and holds no logic of its own. Do NOT use to run one step in isolation; call that step's skill directly.` |
 
 #### `skills/01-plan`
 
