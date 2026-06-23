@@ -21,9 +21,8 @@
     "./skills/10-todo"
   ],
   "agents": [
-    "./agents/implementer.md",
-    "./agents/planner.md",
-    "./agents/reviewer.md"
+    "./agents/executor.md",
+    "./agents/checker.md"
   ],
   "keywords": [
     "sdlc",
