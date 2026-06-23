@@ -18,7 +18,7 @@
 <p><b>🇫🇷 The first French open-source framework for AI-driven development.</b></p>
 
 <p>
-  <!--counts:start--><kbd>7 plugins</kbd> · <kbd>39 skills</kbd> · <kbd>3 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
+  <!--counts:start--><kbd>7 plugins</kbd> · <kbd>40 skills</kbd> · <kbd>3 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -178,7 +178,7 @@ SDLC loop: sdlc, plan, implement, assert, audit, review, test, refactor, debug, 
 
 ### 🌿 [aidd-vcs](plugins/aidd-vcs/README.md)
 
-`4 skills` · stable
+`5 skills` · stable
 
 Commits, pull / merge requests, release tags, issue creation.
 

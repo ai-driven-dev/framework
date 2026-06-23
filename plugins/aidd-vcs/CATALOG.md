@@ -8,6 +8,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 - [`.claude-plugin`](#claude-plugin)
 - [`skills`](#skills)
+  - [`skills/00-repo-init`](#skills00-repo-init)
   - [`skills/01-commit`](#skills01-commit)
   - [`skills/02-pull-request`](#skills02-pull-request)
   - [`skills/03-release-tag`](#skills03-release-tag)
@@ -22,6 +23,16 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | [plugin.json](.claude-plugin/plugin.json) |
 
 ### `skills`
+
+#### `skills/00-repo-init`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-init.md](skills/00-repo-init/actions/01-init.md) | - |
+| `actions` | [02-publish.md](skills/00-repo-init/actions/02-publish.md) | - |
+| `assets` | [CONTRIBUTING.md](skills/00-repo-init/assets/CONTRIBUTING.md) | - |
+| `-` | [README.md](skills/00-repo-init/README.md) | - |
+| `-` | [SKILL.md](skills/00-repo-init/SKILL.md) | `Initialize a project's repository - resolve the default branch and VCS provider, run git init with a bootstrap commit, write CONTRIBUTING.md, and on request create the remote repository and push. Use when the user says "init a repo", "git init", "initialize version control", "set up a new repo", "start a project", "create the remote and push", or "publish this repo". Do NOT use for committing changes (use 01-commit), opening pull requests (use 02-pull-request), tagging releases (use 03-release-tag), or cloning an existing remote.` |
 
 #### `skills/01-commit`
 
@@ -42,7 +53,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [pull_request.md](skills/02-pull-request/assets/pull_request.md) | `VCS pull/merge request template` |
 | `assets` | [README.md](skills/02-pull-request/assets/README.md) | `Project README template` |
 | `-` | [README.md](skills/02-pull-request/README.md) | - |
-| `-` | [SKILL.md](skills/02-pull-request/SKILL.md) | `Create a draft pull or merge request from the current branch. Use when the user says "open a pr", "open a pull request", "create a pr", "create a merge request", "open mr", "draft a pr for this branch", or invokes `/pull-request`. Do NOT use for committing changes, pushing a branch directly, tagging releases, merging an existing request, or amending commits.` |
+| `-` | [SKILL.md](skills/02-pull-request/SKILL.md) | `Create a draft pull or merge request from the current branch. Use when the user ask to create a PR or invokes `/pull-request`.` |
 
 #### `skills/03-release-tag`
 
