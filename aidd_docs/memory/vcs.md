@@ -16,29 +16,33 @@ type/ticket-short-description
 
 ### Types
 
-This table is the single source of truth for change routing. The branch
-**prefix** alone decides where a PR targets — not a label, not a board field. The
-`aidd-vcs:02-pull-request` skill reads it to set the base branch automatically.
+The single source of truth: find your row, read left to right — it tells you the
+branch to create, the label that applies, and where the PR goes. The branch
+**prefix** alone decides the target (not a label, not a board field); the
+`aidd-vcs:02-pull-request` skill reads this table to set the base automatically.
 
-| Kind | Branch prefix | Commit type | Triage label | `next` | `main` |
-| ---- | ------------- | ----------- | ------------ | :----: | :----: |
-| Feature | `feat/` | `feat` | `enhancement` | ✓ | – |
-| Fix | `fix/` | `fix` | `bug` | ✓ | – |
-| Docs | `docs/` | `docs` | `documentation` | ✓ | – |
-| Refactor | `refactor/` | `refactor` | – | ✓ | – |
-| Chore | `chore/` | `chore` | `dependencies` | ✓ | – |
-| Test | `test/` | `test` | – | ✓ | – |
-| Hotfix | `hotfix/` | `fix` | `bug` | – | ✓ |
+| I want to… | Issue template | Branch | Commit | Label (auto) | PR targets |
+| ---------- | -------------- | ------ | ------ | ------------ | ---------- |
+| ship a feature | ✨ Feature | `feat/…` | `feat:` | `enhancement` | `next` |
+| fix a bug | 🐛 Bug | `fix/…` | `fix:` | `bug` | `next` |
+| change docs only | ✨ Feature | `docs/…` | `docs:` | `documentation` | `next` |
+| refactor (no behaviour change) | — | `refactor/…` | `refactor:` | — | `next` |
+| build / config / deps | — | `chore/…` | `chore:` | `dependencies` | `next` |
+| add or update tests | — | `test/…` | `test:` | — | `next` |
+| 🚨 urgent production fix | 🐛 Bug | `hotfix/…` | `fix:` | `bug` | **`main`** |
 
 #### Routing rule (strict)
 
 - Everything batches on `next` and ships in the weekly release.
 - **Only `hotfix/*` targets `main`** — an urgent production fix, out of cycle.
 
+Once the PR is open, the board advances on its own:
+`Todo → In review` (PR opened) `→ Ready` (review approved) `→ Done` (merged).
+
 Labels are **triage only**: they categorize, they never route. `security` is
 cross-cutting — add it to any kind when the change is security-sensitive. The
-"Commit type" column above is illustrative; the authoritative commit type list
-is the [Commit Convention](#commit-convention) below (mirrors `commitlint.config.cjs`).
+"Commit" column shows the conventional type; the authoritative type list is the
+[Commit Convention](#commit-convention) below (mirrors `commitlint.config.cjs`).
 
 ### Examples
 
