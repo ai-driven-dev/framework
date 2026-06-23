@@ -48,7 +48,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [04-review.md](skills/00-sdlc/actions/04-review.md) | - |
 | `actions` | [05-ship.md](skills/00-sdlc/actions/05-ship.md) | - |
 | `-` | [README.md](skills/00-sdlc/README.md) | - |
-| `-` | [SKILL.md](skills/00-sdlc/SKILL.md) | `Orchestrate the full dev flow from a free-form request to shipped code: spec, plan, implement, review, ship, every step delegated. Use to take a request end to end to a change request, not a single step. Auto by default, interactive on demand.` |
+| `-` | [SKILL.md](skills/00-sdlc/SKILL.md) | `Orchestrate the full dev flow from a free-form request to shipped code: spec, plan, implement, review, ship, every step delegated. Use to take a request end to end to a change request, not a single step. Interactive by default (pauses at each gate); say auto for an unattended run.` |
 
 #### `skills/01-plan`
 

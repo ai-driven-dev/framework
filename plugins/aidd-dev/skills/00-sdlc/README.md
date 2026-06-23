@@ -11,8 +11,8 @@ Holds no business logic of its own; every step is delegated.
 
 - A human (or upstream orchestrator) hands over a free-form request and you
   need to drive it end-to-end: spec, plan, implement, review, ship.
-- You want the default autonomous run (`auto` mode) with no human prompts.
-- You want the same flow but with confirmation gates (`interactive` mode).
+- You want the default run with confirmation gates (`interactive` mode).
+- You want an unattended run with no human prompts (`auto` mode).
 
 ## When NOT to use
 
@@ -29,8 +29,8 @@ Holds no business logic of its own; every step is delegated.
 ## How to invoke
 
 ```
-/sdlc <request>                # auto mode (default)
-/sdlc interactive <request>    # pauses at each gate for human confirmation
+/sdlc <request>                # interactive (default): pauses at each gate
+/sdlc auto <request>           # unattended: no human prompts
 ```
 
 The skill walks 5 actions:
