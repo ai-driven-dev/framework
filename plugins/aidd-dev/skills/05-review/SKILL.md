@@ -1,36 +1,34 @@
 ---
 name: 05-review
-description: Read-only review of a diff (a PR or working changes) along three axes - code quality (clean-code), feature behavior (the plan's acceptance criteria), and relevancy (does the change belong: fit to the need, conformance to declared rules, no duplication or over-engineering). Surfaces findings with a verdict; never patches. Use to review changes in progress. Do NOT use for a whole-codebase health check (use 04-audit), fixing the findings (hand off to 07-refactor / 02-implement / 08-debug), or validating a feature runs (use 03-assert).
+description: Read-only review of a diff (a PR or working changes) into one report, along three axes - code quality (clean-code), feature behavior (the plan's acceptance criteria), and relevancy (does the change belong: fit to the need, declared-rule conformance, no duplication or over-engineering). Runs all three axes by default, or one when named. Surfaces findings with a verdict; never patches. Do NOT use for a whole-codebase health check (use 04-audit), fixing findings (hand off to 07-refactor / 02-implement / 08-debug), or validating a feature runs (use 03-assert).
 argument-hint: review-code | review-functional | review-relevancy
 model: opus
 ---
 
 # Skill: review
 
-Read-only review of a diff (a PR or working changes) along three axes: code quality, feature behavior against the plan's acceptance criteria, and relevancy. It surfaces findings and a verdict; it never edits code. The fix hands off to the act-skills (`07-refactor` for code, `02-implement` / `08-debug` for behavior gaps). Diff-scoped - for a whole-codebase read-only diagnosis use `aidd-dev:04-audit` instead.
-
-This is a recipe: it runs in the context of whoever invokes it and never spawns an agent. The SDLC isolates it by spawning a `checker` to run it; a direct caller runs it inline.
-
-## Available actions
-
-| #   | Action              | When to use                                                              |
-| --- | ------------------- | ------------------------------------------------------------------------ |
-| 01  | `review-code`       | Quality review of a diff against clean-code principles                   |
-| 02  | `review-functional` | Verify the diff matches the plan's acceptance criteria, flows, edge cases |
-| 03  | `review-relevancy`  | Judge whether the change belongs: fit to the need, declared-rule conformance, no rot |
-
-## Routing (run first)
-
-Pick the ONE action matching the user's intent; do NOT default to action 01.
-
-- "review the code", "check code quality", "clean code review" -> `01-review-code`
-- "does it match the plan", "functional review", "behavior vs acceptance criteria" -> `02-review-functional`
-- "does this belong", "is it relevant", "rules compliance", "over-engineering", "duplication", "coherence with the need" -> `03-review-relevancy`
-
-If the intent is ambiguous, ask one clarifying question before picking. Then read and follow only the matching action file.
+Read-only review of a diff along three axes, code quality, feature behavior, and relevancy, composed into one report. Diff-scoped; for a whole-codebase diagnosis use `aidd-dev:04-audit`.
 
 ## Actions
 
-- `@actions/01-review-code.md`
-- `@actions/02-review-functional.md`
-- `@actions/03-review-relevancy.md`
+| #   | Action              | Axis                                                              |
+| --- | ------------------- | ---------------------------------------------------------------- |
+| 01  | `review-code`       | Clean-code quality on the changed lines                          |
+| 02  | `review-functional` | The diff against the plan's acceptance criteria                  |
+| 03  | `review-relevancy`  | Does the change belong: fit to the need, rule conformance, no rot |
+
+Run all three by default, composing one report. Run a single axis only when the caller names it; if it is unclear whether they want all or one, ask. Files: `@actions/01-review-code.md` ... `@actions/03-review-relevancy.md`.
+
+## Transversal rules
+
+- Read-only: surface findings, never patch. Hand fixes off per complexity: `07-refactor` for code, `02-implement` or `08-debug` for behavior.
+- Output: one `review.md` in the reviewed work's feature folder, beside `plan.md`, from `@assets/review-template.md`. Each axis fills its section; an axis not run is marked "Not run".
+- Verdict: one overall verdict, the strictest across the axes run, per `@references/review-rubric.md`.
+
+## References
+
+- `references/review-rubric.md`: the severity scale, the verdict rule, the code categories, and the relevancy lenses.
+
+## Assets
+
+- `assets/review-template.md`: the single report the three axes fill.

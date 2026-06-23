@@ -20,7 +20,6 @@ Run them in order, `01 → 03`.
 
 ## Transversal rules
 
-- Context: this is a recipe. It runs in the context of whoever invokes it (a user, or an `executor` agent the SDLC spawned) and never spawns an agent itself.
 - Status: drive the plan through `pending → in-progress → implemented` (or `blocked`), and each phase through `pending → in-progress → done`. The `in-progress` values are runtime markers; only `done` and `implemented` need to land in a commit.
 - Commits: one commit per phase, its code together with the phase reaching `done`, plus a final commit for the plan reaching `implemented`. Never leave the tree dirty at a phase boundary. Do not scatter separate `in-progress` status commits: one context now owns both code and status, so there is nothing to guard against.
 

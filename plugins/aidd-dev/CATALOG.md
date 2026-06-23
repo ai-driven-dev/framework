@@ -110,11 +110,10 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-review-code.md](skills/05-review/actions/01-review-code.md) | - |
 | `actions` | [02-review-functional.md](skills/05-review/actions/02-review-functional.md) | - |
 | `actions` | [03-review-relevancy.md](skills/05-review/actions/03-review-relevancy.md) | - |
-| `assets` | [review-code-template.md](skills/05-review/assets/review-code-template.md) | `Code review report template for a diff` |
-| `assets` | [review-functional-template.md](skills/05-review/assets/review-functional-template.md) | `Functional review report template for a diff against a plan` |
-| `assets` | [review-relevancy-template.md](skills/05-review/assets/review-relevancy-template.md) | `Relevancy review report template for a diff` |
+| `assets` | [review-template.md](skills/05-review/assets/review-template.md) | `One review report for a diff, all three axes in one file` |
 | `-` | [README.md](skills/05-review/README.md) | - |
-| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Read-only review of a diff (a PR or working changes) along three axes - code quality (clean-code), feature behavior (the plan's acceptance criteria), and relevancy (does the change belong: fit to the need, conformance to declared rules, no duplication or over-engineering). Surfaces findings with a verdict; never patches. Use to review changes in progress. Do NOT use for a whole-codebase health check (use 04-audit), fixing the findings (hand off to 07-refactor / 02-implement / 08-debug), or validating a feature runs (use 03-assert).` |
+| `references` | [review-rubric.md](skills/05-review/references/review-rubric.md) | - |
+| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Read-only review of a diff (a PR or working changes) into one report, along three axes - code quality (clean-code), feature behavior (the plan's acceptance criteria), and relevancy (does the change belong: fit to the need, declared-rule conformance, no duplication or over-engineering). Runs all three axes by default, or one when named. Surfaces findings with a verdict; never patches. Do NOT use for a whole-codebase health check (use 04-audit), fixing findings (hand off to 07-refactor / 02-implement / 08-debug), or validating a feature runs (use 03-assert).` |
 
 #### `skills/06-test`
 
