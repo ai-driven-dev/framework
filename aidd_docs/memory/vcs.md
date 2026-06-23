@@ -16,15 +16,29 @@ type/ticket-short-description
 
 ### Types
 
-| Prefix | Usage | Branch from | PR target |
-| --- | --- | --- | --- |
-| `feat/` | New feature | `next` | `next` |
-| `fix/` | Bug fix | `next` | `next` |
-| `docs/` | Documentation only | `next` | `next` |
-| `refactor/` | Code change (no feat/fix) | `next` | `next` |
-| `chore/` | Build, config, deps | `next` | `next` |
-| `test/` | Add/update tests | `next` | `next` |
-| `hotfix/` | Urgent production fix | `main` | `main` |
+This table is the single source of truth for change routing. The branch
+**prefix** alone decides where a PR targets — not a label, not a board field. The
+`aidd-vcs:02-pull-request` skill reads it to set the base branch automatically.
+
+| Kind | Branch prefix | Commit type | Triage label | `next` | `main` |
+| ---- | ------------- | ----------- | ------------ | :----: | :----: |
+| Feature | `feat/` | `feat` | `enhancement` | ✓ | – |
+| Fix | `fix/` | `fix` | `bug` | ✓ | – |
+| Docs | `docs/` | `docs` | `documentation` | ✓ | – |
+| Refactor | `refactor/` | `refactor` | – | ✓ | – |
+| Chore | `chore/` | `chore` | `dependencies` | ✓ | – |
+| Test | `test/` | `test` | – | ✓ | – |
+| Hotfix | `hotfix/` | `fix` | `bug` | – | ✓ |
+
+#### Routing rule (strict)
+
+- Everything batches on `next` and ships in the weekly release.
+- **Only `hotfix/*` targets `main`** — an urgent production fix, out of cycle.
+
+Labels are **triage only**: they categorize, they never route. `security` is
+cross-cutting — add it to any kind when the change is security-sensitive. The
+"Commit type" column above is illustrative; the authoritative commit type list
+is the [Commit Convention](#commit-convention) below (mirrors `commitlint.config.cjs`).
 
 ### Examples
 

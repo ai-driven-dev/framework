@@ -15,9 +15,72 @@ How to operate this repository day to day. For **who** may do what and the decis
 
 ## Daily
 
-- **Triage issues.** New issues auto-add to board #8. Set `Status` / `Area` / `Priority` / `Work Type`; link under an epic (native sub-issues) if relevant.
+- **Triage issues.** New issues auto-add to board #8. Set `Status` / `Area` / `Priority`; link under an epic (native sub-issues) if relevant. **Type** is the issue/PR label, not a board field (see [Project board layout](#project-board-project-8)).
 - **Roadmap.** Priority is set by the community vote (mechanism in `GOVERNANCE.md`). Accepted items live on board #8 - keep `ROADMAP.md` as a pointer, do not maintain a second list.
 - **Review PRs.** Every PR needs a Habilité (CODEOWNERS) approval; checks `lefthook`, `Commitlint` must pass; squash-merge.
+
+## Project board (Project 8)
+
+The board is a **view** of the same taxonomy the docs define — it never invents its own. Each property answers one question: **Type** = the label, **Priority** = how urgent, **Status** = where in the flow, **When** = the Timeline. Routing (`next` vs `main`) is *not* a board property — it derives from the branch prefix ([routing table](../aidd_docs/memory/vcs.md#types)).
+
+Apply this layout once (org-admin or board-write needed). Read field IDs first:
+
+```bash
+gh project field-list 8 --owner ai-driven-dev   # note the IDs you need below
+```
+
+### Fields
+
+- **Drop `Work type`** — duplicates the Type label. **Drop `Phases`** — duplicates Status/Milestone (and no milestone exists, so it is noise):
+  ```bash
+  gh project field-delete --id <WORK_TYPE_FIELD_ID>
+  gh project field-delete --id <PHASES_FIELD_ID>
+  ```
+- **Keep `Priority`** (P0 · P1 · P2) and `Area`. No action.
+- **`Status`** — single-select options, in order: `Todo` · `In progress` · `In review` · `Ready` · `Done`. `Status` is a built-in field; edit its options in the UI (Board → `Status` field header → Edit values). The CLI only *creates* fields, so use it only if you are rebuilding from scratch:
+  ```bash
+  # from-scratch alternative only — NOT for editing the existing Status field
+  gh project field-create 8 --owner ai-driven-dev --name Status \
+    --data-type SINGLE_SELECT \
+    --single-select-options "Todo,In progress,In review,Ready,Done"
+  ```
+
+### Status automation (UI: Project → ⋯ → Workflows)
+
+GitHub built-in workflows drive most transitions; `In progress` is the one manual move.
+
+| Trigger (built-in) | Set `Status` to |
+| ------------------ | --------------- |
+| Item added to project | `Todo` |
+| Pull request linked / ready for review | `In review` |
+| Code review approved | `Ready` |
+| Pull request merged · item closed | `Done` |
+| *(manual — picked up by a maintainer)* | `In progress` |
+
+### Timeline view
+
+Replaces the old "Phases". UI: **New view → Timeline**, date field = the Milestone / target date. Use it as the roadmap horizon (`this week` / `next` / `later`).
+
+### Apply checklist
+
+- [ ] `Work type` field deleted
+- [ ] `Phases` field deleted
+- [ ] `Priority` kept
+- [ ] `Status` options = Todo · In progress · In review · Ready · Done
+- [ ] Built-in Status workflows enabled (added→Todo, ready→In review, approved→Ready, merged/closed→Done)
+- [ ] Timeline view present
+
+## Labels
+
+[`.github/labels.yml`](../.github/labels.yml) is the canonical set (triage only — routing is by branch prefix). The documented sync loop **creates/updates** from the file; it does **not** delete. So when you remove a label from the file, also delete it on GitHub:
+
+```bash
+gh label delete "help wanted" --yes
+gh label delete npm --yes
+gh label delete "github-actions" --yes
+```
+
+Dependabot labels its PRs `dependencies` only (ecosystem sub-labels were dropped); confirm `.github/dependabot.yml` does not re-add a deleted label before deleting it.
 
 ## Releases
 
