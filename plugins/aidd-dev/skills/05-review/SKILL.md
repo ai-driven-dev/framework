@@ -1,6 +1,6 @@
 ---
 name: 05-review
-description: Read-only review of a diff (a PR or working changes) into one report, along three axes - code quality (clean-code), feature behavior (the plan's acceptance criteria), and relevancy (does the change belong: fit to the need, declared-rule conformance, no duplication or over-engineering). Runs all three axes by default, or one when named. Surfaces findings with a verdict; never patches. Do NOT use for a whole-codebase health check (use 04-audit), fixing findings (hand off to 07-refactor / 02-implement / 08-debug), or validating a feature runs (use 03-assert).
+description: Read-only review of a diff along three axes, code quality, behavior versus the plan, and relevancy, into one report with a verdict. Use to review changes before they ship. Do NOT use to fix the findings or to audit a whole codebase (use 04-audit).
 argument-hint: review-code | review-functional | review-relevancy
 model: opus
 ---
