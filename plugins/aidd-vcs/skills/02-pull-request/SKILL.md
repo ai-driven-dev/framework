@@ -19,9 +19,10 @@ Single action skill. The router dispatches to `pull-request` whenever a PR/MR ph
 
 ## Transversal rules
 
-- Detect the base branch from repo state. Do NOT assume `main` or `master` (common alternatives: `develop`, `staging`).
+- Resolve the base branch from the head branch's prefix via the project's branch-naming convention (project memory); fall back to repo state when no prefix mapping exists. Never assume `main` or `master` (common alternatives: `next`, `develop`, `staging`).
 - Always ask the user to validate the title, body, and base branch before creating the request.
 - Open the request as a draft. The user promotes it manually when ready.
+- After opening, apply the triage label the branch prefix maps to, when that label exists; labels triage only, they never change the resolved base.
 - Never commit, never push the working branch, never create new branches inside this skill.
 - Tool-agnostic: read the VCS tool from project memory; fall back to inspecting the remote URL.
 
