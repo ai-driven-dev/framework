@@ -1,6 +1,6 @@
 ---
 name: 00-sdlc
-description: Pure orchestrator for the full AIDD development flow, from a free-form request to shipped code. Use when a request must go end to end: spec, plan, implement, review, ship. Runs auto by default (no human interaction) or interactive (pauses at each step). Delegates every step and holds no logic of its own. Do NOT use to run one step in isolation; call that step's skill directly.
+description: Orchestrate the full dev flow from a free-form request to shipped code: spec, plan, implement, review, ship, every step delegated. Use to take a request end to end to a change request, not a single step. Auto by default, interactive on demand.
 argument-hint: spec | plan | implement | review | ship
 ---
 
