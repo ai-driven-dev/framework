@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.3](https://github.com/ai-driven-dev/framework/compare/v5.0.2...v5.0.3) (2026-06-23)
+
+
+### Miscellaneous
+
+* **deps-dev:** bump js-yaml from 4.2.0 to 5.0.0 ([#322](https://github.com/ai-driven-dev/framework/issues/322)) ([f71bdd2](https://github.com/ai-driven-dev/framework/commit/f71bdd2be31c34aa43e5280659432fb3a9f1cdab))
+
 ## [5.0.2](https://github.com/ai-driven-dev/framework/compare/v5.0.1...v5.0.2) (2026-06-22)
 
 
