@@ -1,10 +1,10 @@
 # 03 - Implement
 
-Build the plan's code by delegating to the `implement` skill, which loops the phases, drives status, and validates. Mandatory.
+Build the plan's code by spawning the `implementer` agent to run the `aidd-dev:02-implement` recipe, which loops the phases, drives status, and validates. Mandatory.
 
 ## Input
 
-The plan path from `02` (required), and on an `iterate` loop-back the review findings to fold in (optional).
+The plan path from `02` (required), and on an `iterate` loop-back the review findings to hand over as a fix list (optional).
 
 ## Output
 
@@ -12,8 +12,8 @@ The plan reaches `status: implemented`, every phase `done`, validation green. Or
 
 ## Process
 
-1. **Implement.** Run the `implement` skill on `plan_path`. It branches, codes every phase through the `implementer`, commits the code and the status transitions, and validates. This action writes no status itself.
-2. **Iterate.** When the step runs after an `iterate` verdict, first fold the findings into the plan: reopen the affected phases or add a fix phase. Then run the `implement` skill again.
+1. **Implement.** Spawn the `implementer` agent and brief it to run the `aidd-dev:02-implement` recipe on `plan_path`. The agent branches, codes every phase, commits the code and the status transitions in its own context, and validates. The conductor never codes; the agent is the isolation, and the recipe inside it never spawns again.
+2. **Iterate.** When the step runs after an `iterate` verdict, spawn the `implementer` again and hand it the findings as a fix list. It codes the fixes against the current diff, then asserts and validates them before returning, exactly as the recipe gates a phase: a fix is finished only when it passes. Do not edit the plan or its phases: the loop fixes what was implemented, not the plan.
 3. **Resolve.** Read the plan's final `status`.
    - `implemented`: the step is done.
    - `blocked`: a human-only condition stopped the run. Do not continue. Escalate to a human.

@@ -12,13 +12,13 @@ Complete end-to-end software delivery. Defaults to autonomous; switches to inter
 
 **You are the conductor, not a player.**
 
-You orchestrate skills and agents; you never write code yourself.
+You orchestrate; you never write code yourself. Each step you isolate as a leaf agent that runs a recipe in its own context and returns only a result. The agent is the isolation; the recipe inside it never spawns again, so the write path stays exactly two layers deep (a leaf may still spawn a read-only recon helper).
 
-You call agents by role:
+You spawn agents by role:
 
-- `planner` - when scope must be planned
-- `implementer` - when code must be written
-- `reviewer` - when completed work must be verified
+- `planner` - runs `aidd-dev:01-plan` when scope must be planned
+- `implementer` - runs `aidd-dev:02-implement` when code must be written
+- `reviewer` - runs `aidd-dev:05-review` when completed work must be verified
 
 ## Mandatory steps (enforce - never skip)
 
@@ -48,7 +48,7 @@ Detect the mode from `$ARGUMENTS` once, at skill entry, before dispatching the f
 | --- | ----------- | ------------------------------------------------------------- | ------------------------------------ |
 | 01  | `spec`      | Consolidate sources, draft or refine the contract (skippable) | `spec`                               |
 | 02  | `plan`      | Produce the mandatory plan file                               | `planner` runs `aidd-dev:01-plan`    |
-| 03  | `implement` | Build the plan's code, every phase, until complete            | `aidd-dev:02-implement`              |
+| 03  | `implement` | Build the plan's code, every phase, until complete            | `implementer` runs `aidd-dev:02-implement` |
 | 04  | `review`    | Verdict `ship` or `iterate`                                   | `reviewer` runs `aidd-dev:05-review` |
 | 05  | `ship`      | Commit and open a change request via the project's VCS        | `commit`, `pull-request`             |
 

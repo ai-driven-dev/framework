@@ -20,14 +20,20 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 | `00-onboard`           | Detect project state and open a hub of project actions                        | `01-detect-state`, `02-recommend-next`, `03-execute-or-handoff`                                          |
 | `01-bootstrap`         | Imagine and validate a new SaaS architecture, output an `INSTALL.md`          | `01-gather-needs`, `02-propose-candidates`, `03-audit-candidates`, `04-pick-and-design`, `05-write-install-md` |
 | `02-project-memory`      | Initialize or refresh the memory bank and AI context files                    | `01-init-context-file`, `02-scaffold-docs`, `03-generate-memory`, `04-review-memory`, `05-sync-memory`  |
-| `03-context-generate`  | Generate context artifacts across the host AI tool(s)                         | sub-generators: `agents`, `commands`, `hooks`, `marketplaces`, `plugins`, `rules`, `skills`             |
-| `04-mermaid`           | Generate Mermaid diagrams via a plan-validate workflow                        | `01-mermaid`                                                                                             |
-| `05-learn`             | Capture learnings, conventions, and decisions into memory, decisions, rules   | `01-scope`, `02-write`, `03-sync`                                                                        |
+| `03-context-generate`  | Router that dispatches an artifact-generation request to the dedicated generator below | delegates to `04`–`08` (and plugins / marketplaces)                                            |
+| `04-skill-generate`    | Generate a router-based skill across the host AI tool(s)                       | `01-capture-intent`, `02-decompose-actions`, `03-draft-skill`, `04-write-actions`, `05-validate`        |
+| `05-rule-generate`     | Generate a coding rule that governs editor and agent behavior                 | `01-capture-rule`, `02-write-rule`, `03-validate`                                                        |
+| `06-agent-generate`    | Generate an agent across the host AI tool(s)                                   | `01-capture-agent`, `02-write-agent`, `03-validate`                                                      |
+| `07-command-generate`  | Generate a flat slash command across the host AI tool(s)                       | `01-capture-command`, `02-write-command`, `03-validate`                                                  |
+| `08-hook-generate`     | Generate a lifecycle hook across the host AI tool(s)                           | `01-capture-hook`, `02-write-hook`, `03-validate`                                                        |
+| `09-mermaid`           | Generate Mermaid diagrams via a plan-validate workflow                        | `01-mermaid`                                                                                             |
+| `10-learn`             | Capture learnings, conventions, and decisions into memory, decisions, rules   | `01-gather`, `02-assess`, `03-write`, `04-sync`                                                          |
 | `11-explore`           | Survey the project across tooling, context, and codebase, then drill into one axis | `01-survey`, `02-drill`                                                                                  |
+| `12-cook`              | Manage the project's recipes/ how-to sheets: list, create, or update one      | `01-list`, `02-upsert`                                                                                   |
 
 ## aidd-dev
 
-The development SDLC: plan, implement, assert, audit, review, test, refactor, debug.
+The development SDLC: plan, implement, assert, audit, review, test, refactor, debug, for-sure, todo.
 
 | Skill           | Role                                                                       | Actions                                                                         |
 | --------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -41,6 +47,7 @@ The development SDLC: plan, implement, assert, audit, review, test, refactor, de
 | `07-refactor`   | Improve code without changing behavior across four axes                    | `01-performance`, `02-security`, `03-cleanup`, `04-architecture`                 |
 | `08-debug`      | Reproduce and fix bugs with a test-driven workflow                         | `01-reproduce`, `02-debug`, `03-reflect-issue`                                   |
 | `09-for-sure`   | Iterative loop that retries until a success condition is met               | `01-init-tracking`, `02-auto-accept`, `03-autonomous-loop`                       |
+| `10-todo`       | Split the prompt into independent todos, run one implementer agent per todo in parallel | `01-todo`                                                            |
 
 ## aidd-pm
 
