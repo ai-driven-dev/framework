@@ -3,9 +3,9 @@
 # 05 - review
 
 Reviews completed work along two axes: code quality against project rules,
-and feature behavior against the plan's acceptance criteria. Runs in a
-fresh context via the `reviewer` agent and returns findings plus completion
-and quality scores. Never edits the artifact.
+and feature behavior against the plan's acceptance criteria. A recipe that
+runs in the caller's context (the SDLC isolates it by spawning a `checker`)
+and returns findings plus completion and quality scores. Never edits the artifact.
 
 ## When to use
 
@@ -48,8 +48,8 @@ The skill exposes 2 actions:
   - `review-functional` - a verdict (`PASS` / `PARTIAL` / `FAIL`) and a
     per-criterion scoring matrix; missing or broken behaviors hand off to
     [02-implement](../02-implement/README.md) / [08-debug](../08-debug/README.md).
-- The `reviewer` agent still returns `ship` / `iterate` to the SDLC
-  orchestrator.
+- The `checker` agent running this recipe returns `ship` / `iterate` to the
+  SDLC orchestrator.
 
 ## Prerequisites
 
@@ -60,5 +60,5 @@ The skill exposes 2 actions:
 ## Technical details
 
 See [`SKILL.md`](SKILL.md) and [`actions/`](actions/) for the two
-review contracts. The skill runs the `reviewer` agent in fresh context to
-avoid bias from the implementation conversation.
+review contracts. The SDLC runs this recipe inside a fresh-context `checker`
+agent to avoid bias from the implementation conversation.

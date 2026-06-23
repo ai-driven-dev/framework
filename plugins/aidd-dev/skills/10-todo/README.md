@@ -2,7 +2,7 @@
 
 # 10 - todo
 
-Split one prompt into independent todos, run one implementer agent per
+Split one prompt into independent todos, run one executor agent per
 todo in parallel (each refines its todo before coding), and report a
 minimal table: category, what was launched, output.
 

@@ -12,7 +12,7 @@ The contract every generated agent must satisfy. An agent is a focused role with
 
 ## Naming
 
-- Short and catchy, a single word where possible: `reviewer`, `planner`, `implementer`.
+- Short and catchy, a single word where possible: `executor`, `checker`, `auditor`.
 - Fits the role at a glance. Propose three options for the user to pick.
 
 ## Body shape

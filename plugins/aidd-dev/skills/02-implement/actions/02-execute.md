@@ -16,7 +16,7 @@ Every phase coded, asserted, and its frontmatter marked `status: done`, with the
 2. **Code.** Build the phase scope against its acceptance criteria. This recipe runs in the caller's context and never spawns an agent.
 3. **Assert.** Assert the phase against its acceptance criteria. On failure, repair and repeat. The gate is the assertion passing, not a self-report. Only once it passes, set `status: done` and commit the phase as one unit, its code and its status together, via the `commit` skill.
 4. **Blocked.** On `BLOCKED` (see `@../references/blocked.md`), set the plan `status: blocked`, commit it, and stop the loop.
-5. **Drift.** Follow the plan as written. Never rewrite it. On any mismatch, trivial or substantive, stop and report `replan needed: <reason>` to the caller. Replanning is the planner's job, not this skill's.
+5. **Drift.** Follow the plan as written. Never rewrite it. On any mismatch, trivial or substantive, stop and report `replan needed: <reason>` to the caller. Replanning is the orchestrator's job, not this recipe's.
 
 ## Test
 

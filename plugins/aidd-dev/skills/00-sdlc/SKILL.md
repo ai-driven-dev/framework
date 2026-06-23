@@ -12,13 +12,12 @@ Complete end-to-end software delivery. Defaults to autonomous; switches to inter
 
 **You are the conductor, not a player.**
 
-You orchestrate; you never write code yourself. Each step you isolate as a leaf agent that runs a recipe in its own context and returns only a result. The agent is the isolation; the recipe inside it never spawns again, so the write path stays exactly two layers deep (a leaf may still spawn a read-only recon helper).
+You orchestrate; you never write code or judge it yourself. You own the plan: you run `aidd-dev:01-plan` in your own context, because the plan is the contract no worker may rewrite. Every other step you isolate as a leaf agent that runs a recipe and returns only a result. The agent is the isolation; the recipe inside it never spawns again, so the write path stays two layers deep (a leaf may still spawn a read-only recon helper).
 
-You spawn agents by role:
+You spawn two workers:
 
-- `planner` - runs `aidd-dev:01-plan` when scope must be planned
-- `implementer` - runs `aidd-dev:02-implement` when code must be written
-- `reviewer` - runs `aidd-dev:05-review` when completed work must be verified
+- `executor` - runs `aidd-dev:02-implement` when code must be written. It never holds the plan-authoring skill, so it cannot rewrite the contract.
+- `checker` - runs `aidd-dev:05-review` when completed work must be verified.
 
 ## Mandatory steps (enforce - never skip)
 
@@ -47,16 +46,16 @@ Detect the mode from `$ARGUMENTS` once, at skill entry, before dispatching the f
 | #   | Action      | Role                                                          | Delegate                             |
 | --- | ----------- | ------------------------------------------------------------- | ------------------------------------ |
 | 01  | `spec`      | Consolidate sources, draft or refine the contract (skippable) | `spec`                               |
-| 02  | `plan`      | Produce the mandatory plan file                               | `planner` runs `aidd-dev:01-plan`    |
-| 03  | `implement` | Build the plan's code, every phase, until complete            | `implementer` runs `aidd-dev:02-implement` |
-| 04  | `review`    | Verdict `ship` or `iterate`                                   | `reviewer` runs `aidd-dev:05-review` |
+| 02  | `plan`      | Produce the mandatory plan file                               | self: runs `aidd-dev:01-plan`        |
+| 03  | `implement` | Build the plan's code, every phase, until complete            | `executor` runs `aidd-dev:02-implement` |
+| 04  | `review`    | Verdict `ship` or `iterate`                                   | `checker` runs `aidd-dev:05-review`  |
 | 05  | `ship`      | Commit and open a change request via the project's VCS        | `commit`, `pull-request`             |
 
 Files: `@actions/01-spec.md` ... `@actions/05-ship.md`.
 
 ## Default flow
 
-`01 → 02 → 03 → 04 → 05`. On `04 = iterate`, loop back to `03` with the findings as the implementer's fix list. After each action, run its `## Test` before moving to the next.
+`01 → 02 → 03 → 04 → 05`. On `04 = iterate`, loop back to `03` with the findings as the executor's fix list. After each action, run its `## Test` before moving to the next.
 
 `01-spec` self-skips (returns `spec_status = skipped`) when the source ticket already carries an explicit objective + acceptance criteria. It is the ONLY skippable step. `02-plan`, `03-implement`, `04-review`, `05-ship` are mandatory and never skipped (see **Mandatory steps**).
 

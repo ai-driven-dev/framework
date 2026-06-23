@@ -134,7 +134,7 @@ Choose by context, not complexity: keep the work visible to the caller → skill
 Composition rules:
 
 - **Spawning is an orchestration decision, never a skill's.** A recipe skill never spawns an agent; it runs in the caller's context. Only a high-level orchestrator skill (for example the SDLC) spawns agents, and it decides per step whether to isolate the work in an agent or run the recipe inline.
-- An orchestrator spawns each step as a leaf agent that runs a recipe: the SDLC spawns `planner` (runs `01-plan`), `implementer` (runs `02-implement`), and `reviewer` (runs `05-review`). The agent is the isolation; the recipe inside it never spawns again.
+- An orchestrator spawns each step as a leaf agent that runs a recipe, or runs the recipe itself when the step needs no isolation. The SDLC owns planning (runs `01-plan` in its own context) and spawns two workers: `executor` (runs `02-implement`) and `checker` (runs `05-review`). The agent is the isolation; the recipe inside it never spawns again.
 - An agent invokes only the recipe skills it declares under `# Skills you may invoke`, never an orchestrator skill, and never reads a skill's files. It names a same-plugin skill by its `plugin:folder` address (deterministic); it names a cross-plugin skill by capability, per cross-plugin orthogonality.
 - An agent never delegates flow work to another agent and never invokes an orchestrator skill. It may spawn a read-only recon helper (for example `Explore`) that mutates nothing and spawns nothing. So the write path stays two layers deep and delegation can never cycle.
 

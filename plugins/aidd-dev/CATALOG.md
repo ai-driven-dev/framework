@@ -33,9 +33,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | File | Description |
 |------|---|
-| [implementer.md](agents/implementer.md) | `Codes a handed-off milestone or fix list, tests it, and reports back. Use when an approved scope must become working, validated code. Never plans, never judges its own work.` |
-| [planner.md](agents/planner.md) | `Turns an approved spec into an executable plan with milestones, acceptance criteria, and recorded decisions. Use when a spec must become a plan, or a finished pass needs replanning. Never writes code, never judges it.` |
-| [reviewer.md](agents/reviewer.md) | `Judges a finished artifact against an explicit validator and reports findings with a score. Use when code, a spec, a plan, or a doc needs independent verification. Never edits the artifact, never decides what happens next.` |
+| [checker.md](agents/checker.md) | `Judges finished work against its validator and the real need, leaving nothing unchecked. Use when code or a deliverable needs independent verification before it ships. Never edits the work, never implements the fix.` |
+| [executor.md](agents/executor.md) | `Turns a dispatched task into working, validated code that fits the project. Use when an approved scope must become code. Never plans, never judges its own work.` |
 
 ### `skills`
 
@@ -164,5 +163,5 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-todo.md](skills/10-todo/actions/01-todo.md) | - |
 | `-` | [README.md](skills/10-todo/README.md) | - |
-| `-` | [SKILL.md](skills/10-todo/SKILL.md) | `Split the user prompt into independent todos, run one implementer agent per todo in parallel (each refines its todo first), and report a minimal table. Use when the user says "todo", "/todo", or asks to fan out a multi-part request into parallel implementations.` |
+| `-` | [SKILL.md](skills/10-todo/SKILL.md) | `Split the user prompt into independent todos, run one executor agent per todo in parallel (each refines its todo first), and report a minimal table. Use when the user says "todo", "/todo", or asks to fan out a multi-part request into parallel implementations.` |
 

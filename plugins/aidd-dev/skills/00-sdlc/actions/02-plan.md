@@ -8,13 +8,13 @@ The spec path from `01` (null when skipped), the objective and acceptance criter
 
 ## Output
 
-The plan path and its phase paths, plus the decisions the planner made and any it could not make alone.
+The plan path and its phase paths, plus the decisions you made and any you could not make alone.
 
 ## Process
 
-1. **Spawn.** Spawn the `planner` agent with the inputs above. Brief it to run `aidd-dev:01-plan` end to end, and never to inline a raw ticket or spec as the plan body.
-2. **Read.** Capture what the planner returns.
-3. **Return.** Surface the plan path, the phase paths, and the decisions.
+1. **Author.** Run `aidd-dev:01-plan` end to end in your own context. You own the plan: it is the contract the executor may not rewrite, so you write it, never a worker. Never inline a raw ticket or spec as the plan body.
+2. **Capture.** Read the plan path, the phase paths, and the decisions the plan records.
+3. **Return.** Surface them for the next step.
 
 ## Test
 

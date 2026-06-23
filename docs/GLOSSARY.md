@@ -28,7 +28,7 @@ A single atomic step inside a skill, stored at `plugins/<plugin>/skills/<NN-name
 
 ## Agent
 
-A specialized AI persona under `plugins/<plugin>/agents/<name>.md`. Agents are scoped (for example `planner`, `implementer`, `reviewer`) and called from skills when a step needs a dedicated role rather than the main thread. Currently agents ship only in `aidd-dev`.
+A specialized AI persona under `plugins/<plugin>/agents/<name>.md`. Agents are scoped (for example `executor`, `checker`) and spawned by an orchestrator when a step needs isolation in a dedicated role rather than the main thread. Currently agents ship only in `aidd-dev`.
 
 ## Rule
 
