@@ -78,16 +78,9 @@ One scope per commit (split cross-plugin changes). The types, the scopes, and th
 
 ## 3. Open a pull request
 
-- Branch off `next` and target `next` (the integration branch); `hotfix/*` branches off `main` for urgent production fixes. See [`RELEASE.md`](./RELEASE.md).
+- Branch off `next` and target `next` (the integration branch); only `hotfix/*` branches off `main` for urgent production fixes. The branch prefix alone decides the target — the full prefix → label → target table is in [`aidd_docs/memory/vcs.md`](aidd_docs/memory/vcs.md#types).
 - **Fill the PR template** (applied automatically): explain *what* changed and *how* you resolved it technically - that narrative is the point of the PR. The conventional title and pre-commit hooks are already enforced by CI, so don't spend the description re-asserting them.
-- **Label the PR** so reviewers and the [Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8) triage at a glance:
-
-  | Label | When to use |
-  | ----- | ----------- |
-  | `bug` | A fix for broken behaviour. |
-  | `enhancement` | A new skill, agent, rule, or feature. |
-  | `documentation` | A docs-only change (README, CONTRIBUTING, skill docs). |
-  | `security` | A security-sensitive change or fix. |
+- **Label the PR** so reviewers and the [Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8) triage at a glance. The triage label follows your branch kind and the PR skill applies it automatically; the label per kind is in that same [routing table](aidd_docs/memory/vcs.md#types) (`security` is cross-cutting — add it to any kind).
 - The PR title follows the same conventional format (the **Commitlint** CI job enforces it); PRs are squash-merged using that title.
 - A **Habilité** review gates every merge ([`CODEOWNERS`](./.github/CODEOWNERS)); Certifié contributors cannot self-merge.
 - Decision rules (lazy consensus, explicit consensus for cross-plugin/contract changes, the quality veto) live in [`GOVERNANCE.md`](./GOVERNANCE.md#code-decisions-merging).

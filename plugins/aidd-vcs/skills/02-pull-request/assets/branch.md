@@ -18,7 +18,7 @@ type/ticket-short-description
 | ------------ | ------------------------- |
 | `feat/`      | New feature               |
 | `fix/`       | Bug fix                   |
-| `aidd_docs/` | Documentation only        |
+| `docs/`      | Documentation only        |
 | `refactor/`  | Code change (no feat/fix) |
 | `chore/`     | Build, config, deps       |
 | `test/`      | Add/update tests          |

@@ -15,7 +15,6 @@ updates:
       include: "scope"
     labels:
       - "dependencies"
-      - "github-actions"
 
   - package-ecosystem: "npm"
     directory: "/"
@@ -29,4 +28,3 @@ updates:
       include: "scope"
     labels:
       - "dependencies"
-      - "npm"
