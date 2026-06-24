@@ -33,7 +33,7 @@ verification: <summary of test and type-check results confirming no behavioral r
    - Replace magic numbers and inline strings with named constants.
    - Remove dead, misleading, or out-of-date comments; add a brief comment only where intent is genuinely non-obvious.
 3. **Apply tech-debt fixes** from the finding list:
-   - Delete dead code and unused exports.
+   - Delete dead code and unused exports, and sweep for the orphaned references a deletion leaves behind.
    - Reduce cyclomatic complexity by extracting early returns, guard clauses, and helper functions.
    - Shorten oversized files and functions to a single responsibility.
    - Flatten excessive nesting.

@@ -1,6 +1,6 @@
 ---
 name: 07-refactor
-description: Improve code without breaking behavior across four axes - cleanup (clean-code + tech debt), performance, security, architecture. Scans and fixes, or fixes the findings of an audit report pushed in by the caller. Use when the user wants to refactor, clean up, optimize, harden, or restructure code. Do NOT use for read-only diagnosis (use 04-audit), adding tests (use 06-test), or UI redesign (use the impeccable skill).
+description: Improve code without breaking behavior across four axes - cleanup (clean-code + tech debt), performance, security, architecture. Scans and fixes, or fixes the findings of an audit report pushed in by the caller. Use when the user wants to refactor, clean up, optimize, harden, restructure, or delete/remove code. Do NOT use for read-only diagnosis (use 04-audit), adding tests (use 06-test), or UI redesign (use the impeccable skill).
 argument-hint: performance | security | cleanup | architecture
 ---
 
@@ -23,6 +23,7 @@ This skill is run-one-OR-run-all:
 
 - The user named an axis ("optimize this", "harden", "clean up", "restructure") -> run that ONE action.
 - Unscoped ("refactor this", "improve the code") -> ask ONE question: "all applicable axes, or a specific one (cleanup / performance / security / architecture)?" Then run the chosen one, or all applicable.
+- The user asked to delete or remove code ("delete X", "remove this", "drop this") -> run the `cleanup` action directly; do not ask which axis.
 - Never silently default to action 01.
 
 ## Audit handoff (push, never pull)
