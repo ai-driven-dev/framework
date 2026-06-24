@@ -23,6 +23,7 @@ Run all three by default, composing one report. Run a single axis only when the 
 
 - Read-only: surface each finding with its fix described, never patch.
 - Output: one `review.md` in a feature folder (`aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`), from `@assets/review-template.md`. Reuse the reviewed work's folder when it has one (beside `plan.md`); otherwise resolve a new one from the change, by branch or a derived slug. Never create a plan. Each axis fills its section; an axis not run is marked "Not run".
+- Re-run: overwrite `review.md` with the current review. It is a snapshot of the current diff, not a history; a later review of the same work replaces the earlier one.
 - Verdict: one overall verdict, the strictest across the axes run, per `@references/review-rubric.md`.
 
 ## References
