@@ -26,5 +26,5 @@ Run `01 → 02 → 03 → 04 → 05`. On `04 = iterate`, loop to `03` then re-ru
 - Mode: default `interactive`, pausing for approval at each step; switch to `auto` only when the caller says so, then decide alone and never ask.
 - Every step runs; only `01-spec` self-skips when the source already states an objective and acceptance criteria.
 - Drive the plan status `pending → in-progress → implemented → reviewed`, or `blocked`.
-- Every artifact (spec, plan, phases, review) lands in one feature folder, `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, resolved at entry. Never `aidd_docs/plans/` or anywhere else.
+- Every artifact (spec, plan, phases, review) lands in one feature folder, `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, resolved at entry.
 - Never auto-branch; the caller sets a non-default branch before shipping.
