@@ -22,7 +22,9 @@ Run all three by default, composing one report. Run a single axis only when the 
 ## Transversal rules
 
 - Read-only: surface each finding with its fix described, never patch.
-- Output: the deliverable is the file, never an inline-only verdict. Always write one `review.md` to disk in a feature folder (`aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`), from `@assets/review-template.md`. Reuse the reviewed work's folder when it has one (beside `plan.md`); otherwise resolve a new one from the change, by branch or a derived slug. Never create a plan. Each axis fills its section; an axis not run is marked "Not run".
+- Output: always write `review.md` to disk; the file is the deliverable, never an inline-only verdict.
+- Folder: write into the reviewed work's feature folder (`aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, beside `plan.md`), or one resolved from the change when it has none. Never create a plan.
+- Sections: fill `review.md` from `@assets/review-template.md`, each axis its own section, an unrun axis marked "Not run".
 - Re-run: overwrite `review.md` with the current review. It is a snapshot of the current diff, not a history; a later review of the same work replaces the earlier one.
 - Verdict: one overall verdict, the strictest across the axes run, per `@references/review-rubric.md`.
 
