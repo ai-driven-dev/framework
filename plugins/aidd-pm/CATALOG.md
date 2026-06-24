@@ -9,7 +9,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 - [`.claude-plugin`](#claude-plugin)
 - [`skills`](#skills)
   - [`skills/01-ticket-info`](#skills01-ticket-info)
-  - [`skills/02-user-stories`](#skills02-user-stories)
   - [`skills/02-user-stories-create`](#skills02-user-stories-create)
   - [`skills/03-prd`](#skills03-prd)
   - [`skills/04-spec`](#skills04-spec)
@@ -31,12 +30,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-ticket-info.md](skills/01-ticket-info/actions/01-ticket-info.md) | - |
 | `-` | [README.md](skills/01-ticket-info/README.md) | - |
 | `-` | [SKILL.md](skills/01-ticket-info/SKILL.md) | `Retrieve and display ticket information from the configured ticketing tool. Use when the user says "ticket info", "show ticket", "get ticket", "ticket details", "what's <id>", or invokes `/ticket-info`. Do NOT use for creating issues, commenting on tickets, changing status, or reassigning.` |
-
-#### `skills/02-user-stories`
-
-| File | Description |
-|------|---|
-| [SKILL.md](skills/02-user-stories/SKILL.md) | `Turn a feature or epic into a prioritized, estimated, INVEST-compliant user-story backlog saved to the project's tracker. Use for "user stories", "split this epic", "break down this feature", "estimate/prioritize the backlog", or `/user-stories`. Not for source code or a full PRD (use `03-prd`).` |
 
 #### `skills/02-user-stories-create`
 
