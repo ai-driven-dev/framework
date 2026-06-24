@@ -1,6 +1,6 @@
 ---
 name: 02-pull-request
-description: Create a draft pull or merge request from the current branch. Use when the user ask to create a PR or invokes `/pull-request`.
+description: Create a draft pull or merge request from the current branch, in whatever VCS tool the project uses. Use to open a PR/MR ("open a pr", `/pull-request`). Do NOT use to commit, push, or merge a branch.
 ---
 
 # Pull Request
@@ -19,7 +19,7 @@ Single action skill. The router dispatches to `pull-request` whenever a PR/MR ph
 
 ## Transversal rules
 
-- Project first: follow the PR practices in `aidd_docs/memory/vcs.md` and the repo's `PULL_REQUEST_TEMPLATE` when they exist (body sections, base-branch rules, labels). The rules below and the bundled templates are the fallback.
+- Project first: follow the request practices in `aidd_docs/memory/vcs.md` and the repo's own request-template file when they exist (body sections, base-branch rules, labels). The rules below and the bundled templates are the fallback.
 - Resolve the base branch from the head branch's prefix via the project's branch-naming convention (project memory); fall back to repo state when no prefix mapping exists. Never assume `main` or `master` (common alternatives: `next`, `develop`, `staging`).
 - Always ask the user to validate the title, body, and base branch before creating the request.
 - Open the request as a draft. The user promotes it manually when ready.
