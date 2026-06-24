@@ -21,10 +21,10 @@ The human-reviewer stop **only fires from iteration 2 onwards**. On iteration 1,
 From iteration 2 onwards, if any new comment authored since the previous iteration started is from a non-bot user, the loop stops with `reason = human_reviewer`. The Check Run conclusion is `success` if the last iteration's tests passed, else `neutral`.
 
 Detection rules for "non-bot":
-- `author.type == "Bot"` from the GitHub API -> bot
-- author login ends with `[bot]` -> bot
-- author login is in `config.bot_allowlist` (optional) -> bot
-- otherwise -> human
+- `author.type == "Bot"` from the GitHub API → bot
+- author login ends with `[bot]` → bot
+- author login is in `config.bot_allowlist` (optional) → bot
+- otherwise → human
 
 Use case: a reviewer wrote feedback during the loop. Claude must not loop on top of human input. The next pass requires an explicit re-trigger.
 
