@@ -7,7 +7,7 @@ description: Cut a semver release with annotated tag and release notes. Use when
 
 Cuts annotated semver releases with notes derived from recent commits.
 
-## Available actions
+## Actions
 
 | #   | Action         | Role                                                                       | Input                              |
 | --- | -------------- | -------------------------------------------------------------------------- | ---------------------------------- |
@@ -26,14 +26,6 @@ Single action skill. The router dispatches to `release-tag` whenever a release o
 - Never `--force` push tags. Use `--force-with-lease` only when explicitly required.
 - The bump commit only includes version-manager files (e.g. `package.json`, `pyproject.toml`).
 
-## References
-
-- None.
-
 ## Assets
 
 - `@assets/release-template.md`: Release notes template.
-
-## External data
-
-- None.

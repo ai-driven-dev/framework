@@ -32,7 +32,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-publish.md](skills/00-repo-init/actions/02-publish.md) | - |
 | `assets` | [CONTRIBUTING.md](skills/00-repo-init/assets/CONTRIBUTING.md) | - |
 | `-` | [README.md](skills/00-repo-init/README.md) | - |
-| `-` | [SKILL.md](skills/00-repo-init/SKILL.md) | `Initialize a project's repository - resolve the default branch and VCS provider, run git init with a bootstrap commit, write CONTRIBUTING.md, and on request create the remote repository and push. Use when the user says "init a repo", "git init", "initialize version control", "set up a new repo", "start a project", "create the remote and push", or "publish this repo". Do NOT use for committing changes (use 01-commit), opening pull requests (use 02-pull-request), tagging releases (use 03-release-tag), or cloning an existing remote.` |
+| `-` | [SKILL.md](skills/00-repo-init/SKILL.md) | `Initialize a project's repository: resolve the default branch and VCS provider, run git init with a bootstrap commit, write CONTRIBUTING.md, and on request create and push the remote. Use when the user says "init a repo", "git init", "initialize version control", "set up a new repo", "start a project", or "publish this repo". Do NOT use to commit changes, open a pull request, tag a release, or clone an existing remote.` |
 
 #### `skills/01-commit`
 

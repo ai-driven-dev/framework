@@ -2,51 +2,30 @@
 
 Compute the next semver version from recent commits, draft release notes from the template, validate with the user, create a bump commit, then tag and push.
 
-## Inputs
+## Input
 
-```yaml
-version: <semver>              # optional; auto-computed from commits since last tag when omitted
-notes_overrides:               # optional; impose specific notes content
-  title: <imposed title>
-  body: <imposed body>
-```
+An optional explicit semver version (auto-computed from commits since the last tag when omitted), and optional note overrides imposing a specific title and body.
 
-## Outputs
+## Output
 
-```yaml
-tag: v<semver>
-commit_sha: <bump commit sha>
-pushed: true
-release_url: <url>
-```
+The created `v<semver>` tag, its bump commit sha, and the release URL, with the tag pushed to the remote.
 
 ## Process
 
-1. **Read current version**. Pick first match:
-   - version manager file present (`package.json`, `pyproject.toml`, `Cargo.toml`, etc.) -> read its version field
-   - default -> `1.0.0`
-2. **Read latest tag**. Pick first match:
-   - `git tag --sort=-version:refname | head -1` non-empty -> use it
-   - default -> treat as `v1.0.0`
-3. **Collect commits**. Run `git log --oneline "<latest>..HEAD"`.
-4. **Compute next version**. Pick first match:
-   - `version` input provided -> use it
-   - any commit body contains `BREAKING CHANGE` -> bump major
-   - any commit type is `feat` -> bump minor
-   - default -> bump patch
-5. **Draft release notes**. Fill `assets/release-template.md` with the change list from step 3. Apply `notes_overrides` when provided.
-6. **Validate**. Show full notes, computed version, and version-manager files about to change. Wait for explicit user approval.
-7. **Bump commit**. Stage only version-manager files. Create a `chore: bump version to v<semver>` commit via heredoc.
-8. **Create tag**. Run `git tag -a v<semver> -m <notes title>`.
-9. **Push commit**. Run `git push`.
-10. **Push tag**. Run `git push origin v<semver>`.
-11. **Resolve release URL**. Pick first match:
-    - configured VCS tool exposes a release-view command -> capture the returned URL
-    - default -> compose URL from `git remote get-url origin` and the tag name
+1. **Current.** Read the version from a version-manager file (`package.json`, `pyproject.toml`, `Cargo.toml`) when present, else `1.0.0`.
+2. **Latest tag.** Use `git tag --sort=-version:refname | head -1` when non-empty, else treat the latest as `v1.0.0`.
+3. **Collect.** Run `git log --oneline "<latest>..HEAD"` for the change list.
+4. **Compute.** Use the provided version when given. Otherwise bump major on a `BREAKING CHANGE`, minor on any `feat`, else patch.
+5. **Draft.** Fill `@../assets/release-template.md` with the change list, applying any note overrides.
+6. **Validate.** Show the full notes, the computed version, and the version-manager files about to change. Wait for explicit approval.
+7. **Bump.** Stage only version-manager files and create a `chore: bump version to v<semver>` commit.
+8. **Tag.** Run `git tag -a v<semver> -m <notes title>`.
+9. **Push.** Push the commit, then push the tag with `git push origin v<semver>`.
+10. **URL.** Capture the release URL from the configured VCS tool's release view when it has one, else compose it from `git remote get-url origin` and the tag.
 
 ## Test
 
-- **Local tag**: `git tag -l v<semver>` returns the new tag exactly once.
-- **Semver shape**: the tag matches `^v[0-9]+\.[0-9]+\.[0-9]+$`.
-- **Remote tag**: `git ls-remote --tags origin "refs/tags/v<semver>"` returns one row, confirming the tag is on the remote.
-- **Commit link**: `git rev-parse "v<semver>^{commit}"` resolves to the bump commit sha returned in Outputs.
+- `git tag -l v<semver>` returns the new tag exactly once.
+- The tag matches `^v[0-9]+\.[0-9]+\.[0-9]+$`.
+- `git ls-remote --tags origin "refs/tags/v<semver>"` returns one row.
+- `git rev-parse "v<semver>^{commit}"` resolves to the returned bump commit sha.

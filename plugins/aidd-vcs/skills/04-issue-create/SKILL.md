@@ -7,7 +7,7 @@ description: Create an issue in the configured ticketing tool. Use when the user
 
 Files well-formed issues in the configured tracker after gathering enough context to be actionable.
 
-## Available actions
+## Actions
 
 | #   | Action          | Role                                                                       | Input                                  |
 | --- | --------------- | -------------------------------------------------------------------------- | -------------------------------------- |
@@ -26,15 +26,7 @@ Single action skill. The router dispatches to `issue-create` whenever an issue o
 - Be thorough and concise. Short sentences. Focus on clarity, reproduction steps, and expected behavior.
 - Read `@assets/CONTRIBUTING.md` for project-specific issue rules before drafting.
 
-## References
-
-- None.
-
 ## Assets
 
 - `@assets/issue-template.md`: Issue / ticket body template.
 - `@assets/CONTRIBUTING.md`: Contribution guidelines, including issue process.
-
-## External data
-
-- None.
