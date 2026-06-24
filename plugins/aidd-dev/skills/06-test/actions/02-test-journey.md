@@ -1,38 +1,24 @@
 # 02 - Test Journey
 
-Test a user journey end-to-end and validate that each step produces the expected behavior.
+Drive a user journey end-to-end and check that each step produces the expected behavior.
 
-## Inputs
+## Input
 
-```yaml
-journey: <ordered list of action + expected outcome, passed via $ARGUMENTS>
-url: <entry URL for the journey>
-```
+The journey, an ordered list of action plus expected outcome, and the entry URL, from `$ARGUMENTS`.
 
-## Outputs
+## Output
 
-```yaml
-steps_total: <int>
-steps_passed: <int>
-steps_failed: <int>
-report:
-  - { step: <int>, action: <text>, expected: <text>, actual: <text>, status: pass|fail, screenshot: <path> }
-```
+A per-step report, each step recording its action, expected and actual result, a pass or fail, and a screenshot path, with a downstream-impact note on any failure.
 
 ## Process
 
-Spawn a sub-agent task to:
-
-1. **Parse the journey** into ordered steps. Each step has an action and an expected result.
-2. **Open the URL** with the project's configured browsing tool. Assume all servers are already running.
-3. **For each step**:
-   - Execute the action (click, fill, navigate, drag, etc.).
-   - Take a screenshot immediately after.
-   - Validate actual vs expected.
-   - Record `{ step, action, expected, actual, pass | fail, screenshot path }`.
-4. **On failure**: document the failure with the screenshot, warn the user, attempt to continue when downstream steps are still meaningful, and note any steps invalidated by the failure.
-5. **Compile the journey report** at the end. Report actual behavior even when it differs from expected; do not silently fix or skip.
+1. **Parse.** Break the journey into ordered steps, each an action and an expected result.
+2. **Open.** Open the URL with the project's configured browsing tool. Assume every server is already running.
+3. **Walk.** For each step, execute the action (click, fill, navigate, drag), screenshot immediately after, validate actual against expected, and record the result.
+4. **Failure.** On a failed step, document it with the screenshot, warn the user, continue when downstream steps stay meaningful, and note any steps the failure invalidates.
+5. **Compile.** Assemble the journey report. Report actual behavior even when it differs from expected, never silently fix or skip.
 
 ## Test
 
-The report contains one entry per parsed step, every step has a screenshot path, and at least one of `pass` or `fail` is recorded for every step. If any step failed, the report includes a downstream-impact note for the affected steps.
+- The report has one entry per parsed step, each with a screenshot path and a recorded pass or fail.
+- A failed step carries a downstream-impact note for the steps it affects.

@@ -1,38 +1,25 @@
 # 01 - Test
 
-Identify untested behaviors in the feature, then create and iterate on tests until they pass with modern testing best practices.
+Identify untested behaviors in the target, then write and iterate tests until they pass with modern testing practices.
 
-## Inputs
+## Input
 
-```yaml
-scope: <feature, module, or file glob>   # passed via $ARGUMENTS
-```
+The scope to cover, a feature, module, or file glob, from `$ARGUMENTS`.
 
-## Outputs
+## Output
 
-```yaml
-behaviors_listed: <int>
-tests_added: <int>
-tests_passing: <int>
-report:
-  - { behavior: <name>, status: pass, file: <test path> }
-  - { behavior: <name>, status: pending, reason: <why> }
-```
+The behaviors found and, per behavior, a passing test with its file path, or a `pending` entry with a one-line reason when deliberately skipped.
 
 ## Process
 
-1. **List untested behaviors** in the target area:
-   - Think about behaviors based on existing ones.
-   - Score each from 0 (not needed) to 5 (critical core flow).
-   - Group by distinct sections.
-   - Prioritize by score and impact.
-   - Display as an organized minimal bullet list.
-2. **Wait for user approval** before generating any test.
-3. **Generate the initial test** for the highest-priority behavior, applying current testing best practices and project conventions.
-4. **Run, observe, iterate.** If the test fails, analyze the failure, improve the test, repeat. If it passes, validate against the quality checklist; improve if quality is insufficient.
-5. **Move to the next behavior** and repeat from step 3 until the list is exhausted.
-6. **Boundaries.** Focus on ONE test at a time. Never compromise quality for speed. Functional aspects only; ignore implementation details.
+1. **List.** Enumerate the untested behaviors in the target area. Reason from the existing ones, score each from 0 (not needed) to 5 (critical core flow), group by section, prioritize by score and impact, and show a minimal bullet list.
+2. **Approve.** Wait for user approval before generating any test.
+3. **Generate.** Write the initial test for the highest-priority behavior, applying current testing practices and project conventions.
+4. **Iterate.** Run the test. On failure, analyze it, improve the test, and repeat. On pass, check it against the quality criteria and improve when it falls short.
+5. **Next.** Move to the next behavior and repeat from Generate until the list is exhausted.
+6. **Boundary.** One test at a time, functional behavior only. Never compromise quality for speed.
 
 ## Test
 
-For every behavior in the approved list: a corresponding test exists in the project test suite, the test passes, and the report records the test file path. Behaviors that are deliberately skipped have a `pending` entry with a one-line reason.
+- Every behavior in the approved list has a corresponding test in the project suite that passes, with its file path recorded.
+- Each deliberately skipped behavior has a `pending` entry with a one-line reason.
