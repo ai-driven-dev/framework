@@ -33,7 +33,7 @@ Examples:
   | Reader reference | See [explore skill](plugins/aidd-context/skills/11-explore/SKILL.md). |
 `;
 
-const SKIPPED_DIRS = new Set([".git", "node_modules"]);
+const SKIPPED_DIRS = new Set([".git", "node_modules", "worktrees", ".specstory"]);
 const SKIPPED_DIR_PREFIXES = [".tmp-check-markdown-links-"];
 const MARKDOWN_EXTENSIONS = new Set([".md", ".mdx"]);
 function normalizePathForDisplay(filePath) {
