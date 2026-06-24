@@ -110,7 +110,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-review-code.md](skills/05-review/actions/01-review-code.md) | - |
 | `actions` | [02-review-functional.md](skills/05-review/actions/02-review-functional.md) | - |
 | `actions` | [03-review-relevancy.md](skills/05-review/actions/03-review-relevancy.md) | - |
-| `assets` | [review-template.md](skills/05-review/assets/review-template.md) | `One review report for a diff, all three axes in one file` |
+| `assets` | [review-template.md](skills/05-review/assets/review-template.md) | - |
 | `-` | [README.md](skills/05-review/README.md) | - |
 | `references` | [review-rubric.md](skills/05-review/references/review-rubric.md) | - |
 | `-` | [SKILL.md](skills/05-review/SKILL.md) | `Read-only review of a diff along three axes, code quality, behavior versus the plan, and relevancy, into one report with a verdict. Use to review changes before they ship. Do NOT use to fix the findings or to audit a whole codebase.` |

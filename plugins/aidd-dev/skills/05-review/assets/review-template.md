@@ -1,8 +1,4 @@
----
-name: review
-description: One review report for a diff, all three axes in one file
-argument-hint: N/A
----
+<!-- Review report for a diff, all three axes in one file. Fill the placeholders; do not copy this comment. -->
 
 # Review: {{feature}}
 
