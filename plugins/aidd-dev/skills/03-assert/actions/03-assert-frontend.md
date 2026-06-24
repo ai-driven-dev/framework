@@ -12,9 +12,9 @@ A pass or fail verdict, with the per-iteration attempts (hypothesis, fix, result
 
 ## Process
 
-1. **Resolve the URL.** Use the URL the caller gave. Otherwise discover the running frontend from the project: its dev or start script, the framework's default port, or a port already listening locally. Confirm the URL responds before going on. If no frontend is running, skip this facet with a noted reason.
+1. **Resolve the URL.** Use the one the caller gave, otherwise find the running frontend and confirm it responds. Skip this facet with a noted reason when none is running.
 2. **Parse.** Extract the visual, functional, and technical requirements from the expected behavior. Trace the action paths, for example a click calls a function in one file that updates state in another.
-3. **Inspect.** Open the URL in the configured browsing tool and navigate to the screen the expected behavior targets. Inspect the page visually and technically, capturing a screenshot of the issue.
+3. **Inspect.** Open the URL with the project's configured browser tool and navigate to the screen the expected behavior targets. Inspect the page visually and technically, capturing a screenshot of the issue.
 4. **Locate.** Explore the codebase for the files behind the issue.
 5. **Track.** Fill the tracking file from `@../assets/task-template.md` with the three best candidate causes, each with a short description and a confidence level.
 6. **Fix loop.** Take a cause, apply a candidate fix, validate against the expected behavior. On failure, mark it and take the next. When the three are exhausted, add three fresh causes and repeat.
