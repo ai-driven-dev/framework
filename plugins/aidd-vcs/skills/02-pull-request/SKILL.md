@@ -7,7 +7,7 @@ description: Create a draft pull or merge request from the current branch. Use w
 
 Drafts pull or merge requests from the current branch using the team's template, ready for the user to promote.
 
-## Available actions
+## Actions
 
 | #   | Action          | Role                                                                | Input                                          |
 | --- | --------------- | ------------------------------------------------------------------- | ---------------------------------------------- |
@@ -26,17 +26,9 @@ Single action skill. The router dispatches to `pull-request` whenever a PR/MR ph
 - Never commit, never push the working branch, never create new branches inside this skill.
 - Tool-agnostic: read the VCS tool from project memory; fall back to inspecting the remote URL.
 
-## References
-
-- None.
-
 ## Assets
 
 - `@assets/pull_request.md`: Request body template.
 - `@assets/branch.md`: Branch naming conventions.
 - `@assets/CONTRIBUTING.md`: Contribution guidelines template.
 - `@assets/README.md`: README template.
-
-## External data
-
-- None.

@@ -1,13 +1,13 @@
 ---
 name: 01-commit
-description: Create an atomic git commit with conventional message format. Use when the user says "commit", "git commit", "create a commit", "commit my changes", "commit and push", or invokes `/commit`. Do NOT use for amending existing commits, force-pushing, rebasing, opening pull requests, or release tagging.
+description: Create an atomic git commit with a conventional message, optionally pushing. Use to commit changes ("commit", "/commit push"). Do NOT use to amend, rebase, open a PR, or tag a release.
 ---
 
 # Commit
 
 Generates atomic git commits with conventional messages, supporting interactive splits and agent-driven auto mode.
 
-## Available actions
+## Actions
 
 | #   | Action   | Role                                                          | Input                                       |
 | --- | -------- | ------------------------------------------------------------- | ------------------------------------------- |
@@ -34,14 +34,6 @@ When invoked as a slash command, the trailing argument controls the push behavio
 - Reference issues in the commit body when applicable.
 - `auto` mode never asks for confirmation. `interactive` mode requires user approval before staging and before committing splits.
 
-## References
-
-- None.
-
 ## Assets
 
 - `@assets/commit-template.md`: Conventional commit format reference.
-
-## External data
-
-- None.

@@ -1,55 +1,28 @@
 # 01 - Commit
 
-Stage files, generate or accept a commit message, run the commit, optionally push, and return the resulting sha.
+Stage the change, write or accept a conventional message, commit, optionally push, and return the sha.
 
-## Inputs
+## Input
 
-```yaml
-mode: interactive | auto       # default: interactive
-message: <imposed commit message>   # optional; when set, used as-is, no generation
-push: true | false             # default: false
-files: [<paths>]               # optional; restrict staging to these paths
-```
+The mode (`interactive` default, or `auto`), an optional imposed message, whether to push (default no, set by a trailing `push` in `$ARGUMENTS`), and optional paths to restrict staging.
 
-When invoked via slash command, parse `$ARGUMENTS`:
+## Output
 
-- contains the word `push` → set `push: true`
-- empty or anything else → leave `push: false`
-
-## Outputs
-
-```yaml
-commit_sha: <full sha>
-branch: <branch name>
-pushed: true | false
-```
+The new commit sha, the branch, and whether it was pushed.
 
 ## Process
 
-1. **Branch resolution**. Pick first match:
-   - branch already checked out -> use it
-   - `mode = auto` -> generate a conventional name from the change
-   - `mode = interactive` -> propose a name and wait for user approval
-2. **Staging**. Pick first match:
-   - `files` set -> `git add` exactly those paths
-   - default -> use already-staged changes; do not add unstaged paths implicitly
-3. **Message resolution**. Pick first match:
-   - `message` provided -> use it verbatim, skip steps 4 and 5
-   - `mode = auto` -> inspect diff and `git log -5 --pretty=%B`, generate a message per `assets/commit-template.md`, no approval
-   - `mode = interactive` -> draft a message per the template, then proceed to steps 4 and 5
-4. **Interactive split** (when `mode = interactive` and multiple concerns are present). For each split, show:
-   - **Scope**: file list (proposal-only).
-   - **Draft message**: conventional subject; body explains "why", never lists files.
-   Wait for user approval.
-5. **Interactive stage** (when `mode = interactive`). Run `git add -p` for each split.
-6. **Commit**. Run `git commit` with the chosen message via heredoc.
-7. **Hook recovery**. When a pre-commit hook fails, fix the underlying issue, re-stage, and create a new commit (do not amend). Loop until commit succeeds.
-8. **Capture sha**. Read `git rev-parse HEAD`.
-9. **Push**. When `push: true`, run `git push`. Use `--force-with-lease` only when explicitly required. Never `--force`.
-10. **Return** the structured Outputs block. In interactive mode, also notify the user.
+1. **Branch.** Use the checked-out branch. In `auto`, generate a conventional name from the change; in `interactive`, propose one and wait for approval.
+2. **Stage.** With explicit paths, `git add` exactly those. Otherwise commit the already-staged changes, never staging unstaged paths implicitly.
+3. **Message.** Use an imposed message verbatim when given. In `auto`, generate one from the diff and recent log per `@../assets/commit-template.md`, no approval. In `interactive`, draft one and confirm.
+4. **Split.** In `interactive` with several concerns, propose each split (its scope, and a draft message that explains why, never lists files), wait for approval, and stage each with `git add -p`.
+5. **Commit.** Run `git commit` with the chosen message.
+6. **Recover.** On a pre-commit hook failure, fix the cause, re-stage, and make a new commit, never amend. Loop until it succeeds.
+7. **Push.** When asked, `git push`. Use `--force-with-lease` only when explicitly required, never `--force`.
+8. **Return.** Surface the sha, branch, and push state.
 
 ## Test
 
-- **Sha match**: `git rev-parse HEAD` returns the new commit sha that matches the `commit_sha` field in Outputs.
-- **Format**: `git log -1 --pretty=%s` matches the conventional commit regex `^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\([^)]+\))?: .+`.
-- **Push**: when `push: true`, `git ls-remote origin <branch>` lists a sha equal to `commit_sha`.
+- `git rev-parse HEAD` equals the returned sha.
+- `git log -1 --pretty=%s` matches the conventional-commit format.
+- When pushed, `git ls-remote origin <branch>` lists the sha.
