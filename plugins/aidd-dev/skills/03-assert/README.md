@@ -2,9 +2,9 @@
 
 # 03 - assert
 
-Validates implementations through iterative assertion loops. Covers general
-feature assertions, architecture conformance (ADRs, diagrams, project
-structure), and browser-based frontend UI checks.
+A gate that validates a feature works: it iterates the project's coding
+assertions until they pass, with optional architecture-conformance and
+running-frontend facets. Returns a pass or fail verdict.
 
 ## When to use
 
@@ -30,21 +30,19 @@ structure), and browser-based frontend UI checks.
 Use skill aidd-dev:03-assert
 ```
 
-The skill exposes 3 actions:
+The skill exposes 3 facets, run together when applicable or one when named:
 
-1. `assert` - general assertion loop against an acceptance criterion.
-2. `assert-architecture` - verify code matches architecture diagrams,
-   ADRs, and the project's documented structure.
+1. `assert` - the coding-assertion loop; always applies.
+2. `assert-architecture` - report where code breaks the documented
+   architecture (ADRs, diagrams, structure); report only, opt-in.
 3. `assert-frontend` - drive a browser to confirm a frontend feature
-   behaves as intended.
+   behaves as intended; needs a running URL.
 
 ## Outputs
 
-- A pass / fail verdict per assertion, with the failing item identified.
-- Recorded findings when an assertion fails (file, line, expected vs
-  observed).
-- Browser session artifacts (screenshots, console output) for the
-  frontend variant.
+- A pass or fail verdict on the feature (this is a gate, not a stored report).
+- The fixes applied by the coding and frontend facets.
+- The conformance violations from the architecture facet.
 
 ## Prerequisites
 

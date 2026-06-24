@@ -1,32 +1,23 @@
 # 01 - Assert
 
-Iterate until a feature works as intended by running the project's coding assertions and fixing every failure.
+Iterate the project's coding assertions until the feature passes every one, fixing each failure.
 
-## Inputs
+## Input
 
-```yaml
-feature: <name or short description of the feature to assert>
-```
+The feature to assert, named or described, from `$ARGUMENTS` or the context.
 
-## Outputs
+## Output
 
-```yaml
-assertions_total: <int>
-assertions_passing: <int>
-iterations: <int>
-fixes_applied:
-  - { file: <path>, change: <one-line summary> }
-```
+A pass or fail verdict: every applicable assertion passing in a final clean sweep, with the fixes applied listed.
 
 ## Process
 
-1. **Enumerate assertions.** From the current context (project conventions and coding-assertions memory), list the assertions that apply to the feature.
-2. **Iterate per assertion.** For each one:
-   - Fix any issues preventing it from passing.
-   - Re-run the assertion to confirm it passes.
-3. **Full re-check.** Once every assertion has passed at least once, re-run all of them in one sweep to confirm none regressed.
-4. **Boundary.** Do not stop until every assertion passes in the final sweep.
+1. **Enumerate.** From the project conventions and the coding-assertions memory, list the assertions that apply to the feature.
+2. **Iterate.** For each assertion, fix what blocks it, then re-run it until it passes.
+3. **Sweep.** Once each has passed at least once, re-run them all in one pass to confirm none regressed.
+4. **Boundary.** Do not stop until every assertion passes the final sweep.
 
 ## Test
 
-The final sweep reports `assertions_passing == assertions_total`; the recorded `fixes_applied` list cites real diffs (no empty or placeholder entries when fixes were claimed).
+- The final sweep passes every applicable assertion.
+- The fixes listed cite real diffs, with no placeholder entries.

@@ -1,15 +1,11 @@
----
-name: task
-description: Task tracking system to ensure all tasks are categorized and addressed
----
+<!-- Frontend assert tracking file. Fill the placeholders; do not copy this comment. -->
 
 # Task [<feature_name>]
 
 {{Full description}}
 
-## Main step 1}
+## Main step 1
 
 - [ ] {Task 1}
 - [ ] {Task 2}
 - [ ] {Task 3}
-- ...

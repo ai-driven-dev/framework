@@ -1,40 +1,25 @@
 # 03 - Assert Frontend
 
-Iterate until a frontend feature works as intended by inspecting the running UI, mapping the behavior to the code, and tracking attempts in a task template.
+Iterate until a frontend feature works as intended by inspecting the running UI, mapping behavior to code, and tracking attempts.
 
-## Inputs
+## Input
 
-```yaml
-expected_behavior: <free-form description, passed via $ARGUMENTS>
-url: <entry URL>                       # required; the frontend must already be running
-```
+The expected behavior, from `$ARGUMENTS`, and the entry URL of the already-running frontend.
 
-## Outputs
+## Output
 
-```yaml
-task_template_path: <path where the filled template was written>
-iterations: <int>
-fixed: true|false
-report:
-  - { iteration: <int>, hypothesis: <one-line>, fix_attempted: <one-line>, validated: pass|fail }
-```
+A pass or fail verdict, with the per-iteration attempts (hypothesis, fix, result) recorded in the tracking file.
 
 ## Process
 
-Iterate over the steps below until the feature works as intended.
-
-1. **Parse the request.** Extract expected requirements (visual, functional, technical) from `expected_behavior`. Summarize and list action paths (e.g. user clicks button -> calls function in file1 -> updates state in file2).
-2. **Inspect the running app.** Open the URL via the configured browsing tool. Inspect the page visually and technically. Take screenshots to confirm the issue.
-3. **Locate the code.** Explore the codebase to find the files and snippets related to the issue.
-4. **Fill the tracking template** from `@../assets/task-template.md`. List the three best potential causes with a short description and confidence level.
-5. **Fix-loop.**
-   - Take the first potential cause.
-   - Apply a candidate fix.
-   - Validate against the expected behavior.
-   - If not fixed, mark the cause and move to the next.
-   - When the three causes are exhausted, re-evaluate, add three new causes to the template, and repeat from step 5.
-6. **Boundaries.** Assume all servers are already running. Minor visual discrepancies (1-2 px differences, slight color variations) are acceptable unless explicitly specified in the initial request. Screenshots MUST be used to validate UI changes.
+1. **Parse.** Extract the visual, functional, and technical requirements from the expected behavior. Trace the action paths, for example a click calls a function in one file that updates state in another.
+2. **Inspect.** Open the URL in the configured browsing tool. Inspect the page visually and technically, capturing a screenshot of the issue.
+3. **Locate.** Explore the codebase for the files behind the issue.
+4. **Track.** Fill the tracking file from `@../assets/task-template.md` with the three best candidate causes, each with a short description and a confidence level.
+5. **Fix loop.** Take a cause, apply a candidate fix, validate against the expected behavior. On failure, mark it and take the next. When the three are exhausted, add three fresh causes and repeat.
+6. **Boundary.** Assume the servers are running. Accept minor visual differences (1 to 2 px, slight color) unless the request specifies otherwise. Confirm every UI change with a screenshot.
 
 ## Test
 
-The task template file exists and is updated for every iteration; the final entry in `report` has `validated: pass`; the running URL renders the expected behavior, confirmed by a screenshot recorded after the final iteration.
+- The tracking file updates on every iteration.
+- The final recorded attempt validates as a pass, confirmed by a screenshot taken after it.
