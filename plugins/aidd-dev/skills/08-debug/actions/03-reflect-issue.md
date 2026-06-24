@@ -1,32 +1,24 @@
 # 03 - Reflect Issue
 
-Re-open the search space by reflecting on 5-7 fresh possible sources, distilling them down to the 1-2 most likely, and instrumenting the code with logs that will confirm or refute the picks before any fix.
+Reopen the search space: reflect on 5 to 7 fresh sources, distill to the 1 or 2 most likely, and instrument logs to confirm or refute them before any fix.
 
-## Inputs
+## Input
 
-```yaml
-issue: <free-form description of the symptom or error, carried over from the debug action>
-prior_hypotheses: <list of hypotheses already invalidated, optional>
-```
+The issue carried over from the debug action, and optionally the hypotheses already invalidated.
 
-## Outputs
+## Output
 
-```yaml
-new_sources:
-  - { id: <int>, description: <text>, rationale: <text> }
-most_likely:
-  - { id: <int>, description: <text>, confidence: 1-10 }
-logs_added:
-  - { file: <path>, location: <function or line>, log_message: <text>, purpose: <what it confirms or refutes> }
-```
+The 5 to 7 fresh sources with their rationale, the 1 or 2 most likely with a confidence score, and the validation logs added (file, location, message, what each confirms or refutes).
 
 ## Process
 
-1. **List 5-7 fresh possible sources** of the problem, distinct from those already invalidated.
-2. **Distill to 1-2 most likely** sources based on consistency with the symptom, recent code changes, and confidence in available evidence.
-3. **Add validation logs.** Instrument the relevant code paths with logs that will confirm or refute each of the most-likely sources. Each log has a clear purpose; remove temporary logs after the root cause is found.
+1. **Broaden.** List 5 to 7 fresh possible sources, distinct from those already invalidated.
+2. **Distill.** Narrow to the 1 or 2 most likely, weighing consistency with the symptom, recent code changes, and available evidence.
+3. **Instrument.** Add logs on the relevant code paths that confirm or refute each likely source, each with a clear purpose. Remove the temporary logs once the root cause is found.
 4. **Boundary.** Do not implement the fix yet. The goal is to confirm the source first.
 
 ## Test
 
-`new_sources` contains 5-7 entries; `most_likely` contains 1-2 entries selected from `new_sources` with a confidence score; `logs_added` is non-empty and every entry cites a real file path and a concrete `purpose` tied to one of the most-likely sources.
+- The fresh sources list has 5 to 7 entries.
+- The most-likely list has 1 or 2 entries drawn from them, each with a confidence score.
+- The logs added are non-empty, each citing a real file path and a concrete purpose tied to a most-likely source.

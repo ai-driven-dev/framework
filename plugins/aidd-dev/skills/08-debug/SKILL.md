@@ -1,34 +1,34 @@
 ---
 name: 08-debug
-description: Reproduce and fix bugs systematically using test-driven workflow, root cause analysis, and hypothesis validation.
+description: Reproduce and fix a known bug end to end, or find an unknown root cause through hypothesis validation. Use to fix a bug, diagnose why something breaks, or reopen a stuck investigation ("fix this bug", "find the root cause", "I'm stuck"). Do NOT use to add a feature, refactor working code, or review a diff.
 argument-hint: reproduce | debug | reflect-issue
 model: opus
 ---
 
 # Skill: debug
 
-Diagnoses issues through structured hypothesis validation, root cause analysis, and test-driven bug fixing from issue creation to PR.
+Diagnose and fix issues through structured hypothesis validation, root-cause analysis, and a test-driven fix.
 
-## Available actions
+## Actions
 
 | #   | Action          | When to use                                                                   |
 | --- | --------------- | ----------------------------------------------------------------------------- |
 | 01  | `reproduce`     | A known bug must be fixed end to end: reproduce, test-driven fix, branch, PR   |
 | 02  | `debug`         | Root cause unknown: enumerate hypotheses, validate each, confirm the cause     |
-| 03  | `reflect-issue` | Stuck or prior fixes failed: re-open the search space, instrument logs first   |
+| 03  | `reflect-issue` | Stuck or prior fixes failed: reopen the search space, instrument logs first    |
 
-## Routing (run first)
+Pick the one action matching the intent; never default to `01`. Triggers like "reproduce and fix" route to `01`, "why does this happen" to `02`, "I'm stuck" or "previous fixes didn't work" to `03`. Ask one question when the intent is ambiguous.
 
-This skill offers three distinct actions. Pick the ONE matching the user's intent; do NOT default to action 01.
+## Transversal rules
 
-- "fix this bug", "reproduce and fix", "from issue to PR" -> `01-reproduce`
-- "why does this happen", "find the root cause", "debug this", "what's causing X" -> `02-debug`
-- "I'm stuck", "previous fixes didn't work", "rethink the causes", "add logs to narrow it down" -> `03-reflect-issue`
+- One action per run: follow only the matching action file.
+- Scope each fix to its bug: never bundle drive-by refactors.
+- Confirm the root cause before fixing; the diagnostic actions stop at a confirmed cause.
 
-If the intent is ambiguous, ask one clarifying question before picking. Then read and follow only the matching action file.
+## Assets
 
-## Actions
+- `@assets/task-template.md`: the per-hypothesis tracking file the debug action fills.
 
-- `@actions/01-reproduce.md`
-- `@actions/02-debug.md`
-- `@actions/03-reflect-issue.md`
+## References
+
+- `@references/mermaid-conventions.md`: the project's Mermaid conventions for the action-path flowchart.

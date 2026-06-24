@@ -1,38 +1,31 @@
 # 02 - Debug
 
-Debug an issue in the codebase by enumerating hypotheses, validating each one, and arriving at a root cause that the user signs off on.
+Find the root cause of an issue by enumerating hypotheses, validating each, and arriving at a cause the user signs off on.
 
-## Inputs
+## Input
 
-```yaml
-issue: <free-form description of the symptom or error>
-```
+The issue, a free-form description of the symptom or error.
 
-## Outputs
+## Output
 
-```yaml
-root_cause: <one-line statement>
-hypotheses:
-  - { id: 1, description: <text>, confidence: 1-10, status: validated|invalidated, evidence: <text> }
-flowchart_path: <inline mermaid block or saved file>
-next_steps:
-  - <action>
-```
+A one-line root cause, the 3 to 5 hypotheses with their confidence and validated or invalidated status plus evidence, an action-path flowchart, and the next steps.
 
 ## Process
 
-1. **Summarize the issue** in your own words.
-2. **Map action paths** with a Mermaid flowchart (e.g. user clicks button -> calls function in file1 -> updates state in file2). Apply `@../references/mermaid-conventions.md`.
-3. **Apply 5 Whys.** Start from the symptom and ask "why" iteratively (minimum 3, up to 5). Document each level in a numbered list.
-4. **Identify inspection tools** (MCP, CLI commands, logs, traces).
-5. **Locate relevant files** in the codebase based on the issue.
-6. **List 3-5 potential causes** in a table with columns: Analysis, Evidence, Confidence (1-10).
-7. **Track hypotheses** using the project task system and `@../assets/task-template.md`. One task per hypothesis.
-8. **Validate one by one.** Tick each task when validated or invalidated. Add evidence inside the task. Stop when the root cause is found.
-9. **State conclusions and next steps.**
-10. **Wait for user validation** before moving on.
-11. **Fallback.** If all hypotheses are invalidated, invoke the `reflect_issue` action of this skill for new sources.
+1. **Summarize.** Restate the issue in your own words.
+2. **Map.** Draw the action paths as a Mermaid flowchart (a click calls a function in one file that updates state in another), per `@../references/mermaid-conventions.md`.
+3. **Five Whys.** Start from the symptom and ask "why" iteratively, three to five levels, each documented in a numbered list.
+4. **Tools.** Identify the inspection tools available (MCP, CLI commands, logs, traces).
+5. **Locate.** Find the relevant files in the codebase for the issue.
+6. **Causes.** List 3 to 5 potential causes in a table: analysis, evidence, confidence (1 to 10).
+7. **Track.** Record one task per hypothesis in the project task system, filling `@../assets/task-template.md`.
+8. **Validate.** Work the hypotheses one by one, ticking each as validated or invalidated with evidence in the task. Stop when the root cause is found.
+9. **Conclude.** State the conclusion and next steps.
+10. **Confirm.** Wait for user validation before moving on.
+11. **Fallback.** When every hypothesis is invalidated, hand off to the `reflect-issue` action for fresh sources.
 
 ## Test
 
-The hypotheses list contains 3-5 entries; every entry has a `validated` or `invalidated` status; if any is `validated`, its evidence is non-empty and `root_cause` is a one-line statement consistent with that evidence; if every hypothesis is `invalidated`, `next_steps` cites the `reflect_issue` action.
+- The hypotheses list has 3 to 5 entries, each with a validated or invalidated status.
+- A validated hypothesis has non-empty evidence and a one-line root cause consistent with it.
+- When every hypothesis is invalidated, the next steps cite the `reflect-issue` action.
