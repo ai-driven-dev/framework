@@ -1,6 +1,6 @@
 ---
 name: 03-assert
-description: Assert that the work behaves as intended by iterating the project's coding assertions until they pass, with optional architecture-conformance and running-frontend facets. Use to validate an implementation before moving on. Do NOT use to review code quality or to write new tests.
+description: Assert the work behaves: iterate the project's coding assertions until they pass, plus optional architecture and frontend facets. Use to validate an implementation. Do NOT use to review or write tests.
 argument-hint: assert | assert-architecture | assert-frontend
 model: sonnet
 ---

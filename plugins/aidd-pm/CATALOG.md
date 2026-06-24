@@ -64,5 +64,5 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-refine.md](skills/04-spec/actions/02-refine.md) | - |
 | `assets` | [spec-template.md](skills/04-spec/assets/spec-template.md) | - |
 | `-` | [README.md](skills/04-spec/README.md) | - |
-| `-` | [SKILL.md](skills/04-spec/SKILL.md) | `Generate or refine a spec, the immutable contract behind a feature, from a free-form request, an existing PRD, or review findings. Use to draft a spec ("spec for X", "/spec") or to refine one from findings. Do NOT use to write code, a full PRD, or to change a locked spec.` |
+| `-` | [SKILL.md](skills/04-spec/SKILL.md) | `Generate or refine a spec, a feature's immutable contract, from a request, a PRD, or review findings. Use to draft or refine a spec. Do NOT use to write code, a full PRD, or change a locked spec.` |
 

@@ -1,6 +1,6 @@
 ---
 name: 00-sdlc
-description: Orchestrate the full dev flow from a free-form request to shipped code: spec, plan, implement, review, ship, every step delegated. Use to take a request end to end to a change request, not a single step. Interactive by default (pauses at each gate); say auto for an unattended run.
+description: Orchestrate the full dev flow, a free-form request to shipped code, every step delegated. Use to take a request end to end, not a single step. Interactive by default; say auto for unattended.
 argument-hint: spec | plan | implement | review | ship
 ---
 

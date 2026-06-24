@@ -48,7 +48,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [04-review.md](skills/00-sdlc/actions/04-review.md) | - |
 | `actions` | [05-ship.md](skills/00-sdlc/actions/05-ship.md) | - |
 | `-` | [README.md](skills/00-sdlc/README.md) | - |
-| `-` | [SKILL.md](skills/00-sdlc/SKILL.md) | `Orchestrate the full dev flow from a free-form request to shipped code: spec, plan, implement, review, ship, every step delegated. Use to take a request end to end to a change request, not a single step. Interactive by default (pauses at each gate); say auto for an unattended run.` |
+| `-` | [SKILL.md](skills/00-sdlc/SKILL.md) | `Orchestrate the full dev flow, a free-form request to shipped code, every step delegated. Use to take a request end to end, not a single step. Interactive by default; say auto for unattended.` |
 
 #### `skills/01-plan`
 
@@ -86,7 +86,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-assert-frontend.md](skills/03-assert/actions/03-assert-frontend.md) | - |
 | `assets` | [task-template.md](skills/03-assert/assets/task-template.md) | - |
 | `-` | [README.md](skills/03-assert/README.md) | - |
-| `-` | [SKILL.md](skills/03-assert/SKILL.md) | `Assert that the work behaves as intended by iterating the project's coding assertions until they pass, with optional architecture-conformance and running-frontend facets. Use to validate an implementation before moving on. Do NOT use to review code quality or to write new tests.` |
+| `-` | [SKILL.md](skills/03-assert/SKILL.md) | `Assert the work behaves: iterate the project's coding assertions until they pass, plus optional architecture and frontend facets. Use to validate an implementation. Do NOT use to review or write tests.` |
 
 #### `skills/04-audit`
 
@@ -113,7 +113,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [review-template.md](skills/05-review/assets/review-template.md) | - |
 | `-` | [README.md](skills/05-review/README.md) | - |
 | `references` | [review-rubric.md](skills/05-review/references/review-rubric.md) | - |
-| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Read-only review of a diff along three axes, code quality, behavior versus the plan, and relevancy, into one report with a verdict. Use to review changes before they ship. Do NOT use to fix the findings or to audit a whole codebase.` |
+| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Read-only review of a diff on three axes, code, behavior versus the plan, and relevancy, into one verdict report. Use before shipping a change. Do NOT use to fix findings or audit a codebase.` |
 
 #### `skills/06-test`
 
