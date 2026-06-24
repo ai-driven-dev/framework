@@ -21,8 +21,7 @@ reports, refactor fixes.
 - The task is a functional bug fix → use [08-debug](../08-debug/README.md).
 - You want to add new behavior, not improve existing → use
   [02-implement](../02-implement/README.md).
-- You want to add tests → [06-test](../06-test/README.md). UI redesign →
-  the impeccable skill.
+- You want to add tests → [06-test](../06-test/README.md).
 
 ## How to invoke
 

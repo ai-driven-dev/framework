@@ -2,40 +2,24 @@
 
 Improve the performance of a selected code region without changing its observable behavior.
 
-## Inputs
+## Input
 
-```yaml
-selection: <code region (file path or inline snippet) to optimize>
-audit_report: <optional - path to a report under aidd_docs/tasks/audits/ or pasted findings>
-constraints:
-  - keep input and output identical
-  - keep code readable and maintainable
-```
+The code region to optimize, a file path or inline snippet. Optionally a pushed audit report, a path under `aidd_docs/tasks/audits/` or pasted findings.
 
-## Outputs
+## Output
 
-```yaml
-hotspots_found: <int>
-changes_applied:
-  - { file: <path>, change: <one-line summary>, severity: "🔴|🟡|🟢", gain: <profiling delta or rationale> }
-followups:
-  - <next optimization idea, sorted by importance>
-  - <next>
-  - <next>
-```
+The hotspots addressed and the changes applied (file, one-line summary, severity, gain), plus three follow-up optimizations not yet applied.
 
 ## Process
 
-1. **Source findings.** Two modes:
-   - If `audit_report` is provided: extract the performance-axis findings from that report and use them as the fix list. Skip the standalone scan below.
-   - Else (standalone): scan the selection for the main performance issues (allocations, redundant work, blocking calls, N+1 patterns, unnecessary I/O). Rate each hotspot with the 3-level severity scale: 🔴 critical, 🟡 warning, 🟢 minor.
-2. **List necessary steps** to address each hotspot, ordered by expected gain.
-3. **Apply changes.** Refactor the selected region. Preserve readability and maintainability; do not change logic; keep inputs and outputs identical.
-4. **Verify equivalence.** Confirm behavior is unchanged via tests, type checks, or a side-by-side run.
-5. **Propose three follow-up optimizations** not yet applied, sorted by importance.
-
-Boundary note: test creation belongs to the test skill; dependency upgrades and UI redesign are out of scope for this action.
+1. **Source.** When an audit report is pushed, take its performance-axis findings as the fix list and skip the scan. Otherwise scan the selection for the main performance issues (allocations, redundant work, blocking calls, N+1 patterns, unnecessary I/O) and rate each with the shared severity scale.
+2. **Order.** List the steps to address each hotspot, ordered by expected gain.
+3. **Apply.** Refactor the selected region. Preserve readability and logic, keep inputs and outputs identical.
+4. **Verify.** Confirm behavior is unchanged via tests, type checks, or a side-by-side run.
+5. **Follow up.** Propose three follow-up optimizations not yet applied, sorted by importance.
 
 ## Test
 
-Existing tests on the selection still pass; the public inputs and outputs of the refactored code are byte-identical to the pre-change version on representative inputs; the follow-up list contains exactly three actionable items.
+- Existing tests on the selection still pass.
+- The refactored code's public inputs and outputs are identical to the pre-change version on representative inputs.
+- The follow-up list contains exactly three actionable items.
