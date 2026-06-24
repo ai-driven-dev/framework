@@ -38,7 +38,7 @@ The 7 locked categories below come from `references/locked-sets.json`. No other 
 
 ## missing actor
 
-**Definition**: An entity - person, system, or role - that takes an action or is affected by the system is absent from the document. The process cannot be fully traced without naming it.
+**Definition**: An entity (person, system, or role) that takes an action or is affected by the system is absent from the document. The process cannot be fully traced without naming it.
 
 **Positive example**: A user-story describes the approval workflow: a request is submitted, reviewed, and approved. The document names the requester but never names the reviewer role or what system sends the approval notification.
 

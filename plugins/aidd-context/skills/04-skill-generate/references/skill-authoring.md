@@ -13,12 +13,14 @@ The contract every generated skill must satisfy. These rules govern the CLIENT s
   - Triggers explicit and slightly pushy. The model under-triggers, so over-list.
   - Lead with the plain artifact name. Parentheses for an inline definition, not dashes.
   - Optionally a short `Not for <X>` clause, only when a sibling skill could mis-trigger.
-- **R6.** Zero duplication. One fact, one home. Templates live in `assets/`. Actions cite them via `@<path>`.
-- **R7.** `references/` = documents to READ. `assets/` = files to COPY or INJECT.
+- **R6.** Zero duplication. One fact, one home. Actions cite a shared file via `@<path>` instead of restating it.
+- **R7.** `references/` = documents to READ and apply in place. `assets/` = files to COPY, INJECT, or fill in per run. A template, checklist, or form is an asset, not a reference, because each run instantiates it.
 - **R8.** Every action follows the action anatomy (below) and carries a `## Test`.
 - **R9.** Omit any optional section that would be empty. Never write a placeholder like `## External data` + `None.`.
 - **R10.** Generated skills are English only (frontmatter, body, actions, references, assets), regardless of conversation language.
 - **R11.** One idea per sentence. Split a sentence that runs past one line. Exceptions: the single-line `description` and table rows.
+- **R12.** One file = one artifact. A reference or asset holds a single coherent thing: one checklist, one template, one criteria set. When a file accumulates several independently reusable artifacts, split them so each is cited and reused alone. Prefer this split over bundling, even when the combined file is short.
+- **R13.** Includes are explicit and scoped. Cite an include with its `@<path>` alone inside a fenced ```<lang> block, never inline in prose. Naming: a global include (imported from SKILL.md, used skill-wide) takes no prefix; an include used by only one action is prefixed with that action's slug (e.g. `research-checklist.md`). SKILL.md lists only the global includes; an action-specific include is cited only from its own action.
 
 ## Action anatomy
 

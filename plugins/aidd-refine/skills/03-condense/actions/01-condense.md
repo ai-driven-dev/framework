@@ -2,39 +2,26 @@
 
 Toggle terse output mode and apply the requested intensity rules to subsequent prose turns.
 
-## Inputs
+## Input
 
-- `current_state` (required): inferred from session context. Either `on` (with current intensity level) or `off`.
-- `requested_intensity` (required): one of `lite`, `full`, `ultra`, or `toggle` to flip the current state.
+- Whether condense is currently on (and at which level) or off, read from session context.
+- The requested change: a level (lite, full, ultra) or a plain on/off toggle.
 
-## Outputs
+## Output
 
-```text
-Condense: ON (full).
-Articles dropped, filler removed. Code, errors, warnings stay verbatim. Stop with "stop condense" or "normal mode".
-```
-
-Or on off:
-
-```text
-Condense: OFF.
-Normal prose resumed.
-```
+A single confirmation line: `Condense: ON (<level>).` when enabling, or `Condense: OFF.` when disabling.
 
 ## Process
 
-1. Detect the toggle command and target intensity from the user message.
-2. Resolve the new state by combining `current_state` with `requested_intensity`:
+1. **Detect.** Read the toggle command and target level from the user message.
+2. **Resolve.** Combine the current state with the request:
    - Explicit level (`lite | full | ultra`) sets that level (or switches level if already on).
    - `toggle` flips on/off; default level when turning on is `full`.
    - Off phrases (`stop condense`, `normal mode`, `/condense off`) force off.
-3. Emit the confirmation block with the resolved state filled in.
-4. Apply the transversal rules to every subsequent prose turn until the next off signal, using per-level rules from `@../references/intensity-levels.md`.
-5. **Hold persistence.** Do not drift back to verbose prose across many turns, when uncertain, or when the topic changes. Auto-pause only for the specific passages listed in the reference.
+3. **Emit.** The reply MUST begin with this exact line, filled in and unaltered: `Condense: ON (<level>).` when enabling, or `Condense: OFF.` when disabling. The stats action and the hook parse this line from the transcript, so never paraphrase, decorate, or omit it.
+4. **Apply.** Apply the transversal rules to every subsequent prose turn until the next off signal, using per-level rules and auto-pause passages from `@../references/intensity-levels.md`.
 
 ## Test
 
-- After turning condense ON: the next non-code, non-warning assistant turn drops articles consistent with the active intensity.
-- After turning condense OFF: the next assistant turn returns to normal prose.
-- Code blocks, quoted errors, and security warnings remain verbatim regardless of condense state.
-- After 5 consecutive turns post-activation: the terse style is still applied (no drift back to verbose).
+- After ON, the next non-code, non-warning turn drops articles at the active intensity; after OFF, it returns to normal prose.
+- Code blocks, quoted errors, and security warnings stay verbatim regardless of state.

@@ -21,7 +21,9 @@ For who may merge and release, see [`GOVERNANCE.md`](GOVERNANCE.md).
 ## Where your change goes
 
 Almost everything flows through `next` and ships in the weekly release. Only an
-urgent production fix takes the fast lane straight to `main`.
+urgent production fix takes the fast lane straight to `main`. The branch prefix
+decides the target; the canonical prefix → target table lives in
+[`aidd_docs/memory/vcs.md`](aidd_docs/memory/vcs.md#types).
 
 ```mermaid
 flowchart LR

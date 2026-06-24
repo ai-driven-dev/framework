@@ -10,6 +10,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 - [`skills`](#skills)
   - [`skills/01-ticket-info`](#skills01-ticket-info)
   - [`skills/02-user-stories`](#skills02-user-stories)
+  - [`skills/02-user-stories-create`](#skills02-user-stories-create)
   - [`skills/03-prd`](#skills03-prd)
   - [`skills/04-spec`](#skills04-spec)
 
@@ -33,18 +34,18 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 #### `skills/02-user-stories`
 
+| File | Description |
+|------|---|
+| [SKILL.md](skills/02-user-stories/SKILL.md) | `Turn a feature or epic into a prioritized, estimated, INVEST-compliant user-story backlog saved to the project's tracker. Use for "user stories", "split this epic", "break down this feature", "estimate/prioritize the backlog", or `/user-stories`. Not for source code or a full PRD (use `03-prd`).` |
+
+#### `skills/02-user-stories-create`
+
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-clarify-scope.md](skills/02-user-stories/actions/01-clarify-scope.md) | - |
-| `actions` | [02-split-epic.md](skills/02-user-stories/actions/02-split-epic.md) | - |
-| `actions` | [03-draft-stories.md](skills/02-user-stories/actions/03-draft-stories.md) | - |
-| `actions` | [04-estimate-impact.md](skills/02-user-stories/actions/04-estimate-impact.md) | - |
-| `actions` | [05-prioritize.md](skills/02-user-stories/actions/05-prioritize.md) | - |
-| `actions` | [06-sync-tracker.md](skills/02-user-stories/actions/06-sync-tracker.md) | - |
-| `assets` | [user-story-template.md](skills/02-user-stories/assets/user-story-template.md) | - |
-| `-` | [README.md](skills/02-user-stories/README.md) | - |
-| `references` | [rating.md](skills/02-user-stories/references/rating.md) | - |
-| `-` | [SKILL.md](skills/02-user-stories/SKILL.md) | `Turn a feature or epic into a prioritized, estimated, INVEST-compliant user-story backlog saved to the project's tracker. Use for "user stories", "split this epic", "break down this feature", "estimate/prioritize the backlog", or `/user-stories`. Not for source code or a full PRD (use `03-prd`).` |
+| `actions` | [01-create-user-stories.md](skills/02-user-stories-create/actions/01-create-user-stories.md) | - |
+| `assets` | [user-story-template.md](skills/02-user-stories-create/assets/user-story-template.md) | `Template for defining user stories with estimation and acceptance criteria` |
+| `-` | [README.md](skills/02-user-stories-create/README.md) | - |
+| `-` | [SKILL.md](skills/02-user-stories-create/SKILL.md) | `Generate INVEST-compliant user stories from a feature description. Use when the user says "user stories", "create user stories", "write user stories for X", "INVEST stories", "draft stories", or invokes `/user-stories-create`. Do NOT use for writing code, drafting a full PRD, refining a single existing story, or copying ready text into a tracker.` |
 
 #### `skills/03-prd`
 

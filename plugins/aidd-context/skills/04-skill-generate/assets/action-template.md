@@ -18,3 +18,11 @@
 ## Test
 
 <One deterministic check: a command to run, a concrete check on the produced artifact, or an observable side-effect. State the pass condition plainly.>
+
+<!--
+Cite an include the action needs as its `@<path>` ALONE inside a fenced block, never inline in a sentence (R13). Name an include used only by this action with this action's slug prefix; cite a global include (used skill-wide) from SKILL.md instead of here.
+
+```md
+@references/<action-slug>-<file>.md
+```
+-->

@@ -1,40 +1,24 @@
 # 02 - Verify
 
-Run the cheapest-first verification cascade against each claim and assign it a verdict.
+Run the cheapest-first verification cascade against each claim and give it a verdict.
 
-## Inputs
+## Input
 
-- `claim_list` (required) - the classified claim list from action 01.
+- The tagged claims from `01-identify-claims`.
 
-## Outputs
+## Output
 
-A verdict list. Each claim gains a verdict and its supporting sources.
-
-```json
-[
-  {
-    "claim": "the source file plugins/aidd-refine/hooks/condense-stats.js exists in this repo",
-    "category": "project-fact",
-    "verdict": "verified",
-    "tier": "codebase",
-    "sources": ["plugins/aidd-refine/hooks/condense-stats.js"]
-  }
-]
-```
-
-## Depends on
-
-- `01-identify-claims`
+A list of verdicts: each claim gains one verdict (verified, refuted, conflict, or unverified) with the sources behind it and the tier that resolved it.
 
 ## Process
 
-1. For each claim, walk the cascade in `@../references/verification-cascade.md`: tier 1 project memory and docs, tier 2 codebase inspection, tier 3 web lookup.
-2. Route by category - `project-fact` favors tiers 1 and 2; other categories favor tier 1 then tier 3.
-3. Short-circuit: the first tier that resolves the claim sets the verdict. Do not consult later tiers.
-4. Respect the web-cost guardrail - reach tier 3 only after tiers 1 and 2 fail, prefer one authoritative source, stop once resolved.
-5. Assign exactly one verdict: `verified` (record every source), `conflict` (record both sides with origin, pick no winner), or `unverified` (cascade exhausted, no source).
-6. Emit the verdict list.
+1. **Walk.** For each claim, walk the cascade in `@../references/verification-cascade.md`: first project memory and docs, then codebase inspection, then web lookup.
+2. **Route.** Send repo facts to memory and codebase first; send other claims to memory then the web.
+3. **Short-circuit.** The first tier that resolves a claim sets its verdict. Do not consult later tiers.
+4. **Guard.** Reach the web only after memory and codebase both fail. Prefer one authoritative source, and stop once resolved.
+5. **Judge.** Give each claim one verdict: verified (record every source), refuted (a source contradicts the claim, record it), conflict (record both sides with their origin, pick no winner), or unverified (cascade exhausted, no source).
+6. **Emit.** Return the verdict list.
 
 ## Test
 
-Run on the single claim `"the source file plugins/aidd-refine/hooks/condense-stats.js exists in this repo"` - the cascade resolves at the codebase tier (tier 2), the verdict is `verified`, the source is that file path, and the web tier is never reached.
+- Run on `"the source file plugins/aidd-refine/hooks/condense-stats.js exists in this repo"`: the cascade resolves at the codebase tier, the verdict is verified, the source is that file path, and the web tier is never reached.

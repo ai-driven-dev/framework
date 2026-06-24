@@ -16,15 +16,33 @@ type/ticket-short-description
 
 ### Types
 
-| Prefix | Usage | Branch from | PR target |
-| --- | --- | --- | --- |
-| `feat/` | New feature | `next` | `next` |
-| `fix/` | Bug fix | `next` | `next` |
-| `docs/` | Documentation only | `next` | `next` |
-| `refactor/` | Code change (no feat/fix) | `next` | `next` |
-| `chore/` | Build, config, deps | `next` | `next` |
-| `test/` | Add/update tests | `next` | `next` |
-| `hotfix/` | Urgent production fix | `main` | `main` |
+The single source of truth: find your row, read left to right — it tells you the
+branch to create, the label that applies, and where the PR goes. The branch
+**prefix** alone decides the target (not a label, not a board field); the
+`aidd-vcs:02-pull-request` skill reads this table to set the base automatically.
+
+| I want to… | Issue template | Branch | Commit | Label (auto) | PR targets |
+| ---------- | -------------- | ------ | ------ | ------------ | ---------- |
+| ship a feature | ✨ Feature | `feat/…` | `feat:` | `enhancement` | `next` |
+| fix a bug | 🐛 Bug | `fix/…` | `fix:` | `bug` | `next` |
+| change docs only | ✨ Feature | `docs/…` | `docs:` | `documentation` | `next` |
+| refactor (no behaviour change) | — | `refactor/…` | `refactor:` | — | `next` |
+| build / config / deps | — | `chore/…` | `chore:` | `dependencies` | `next` |
+| add or update tests | — | `test/…` | `test:` | — | `next` |
+| 🚨 urgent production fix | 🐛 Bug | `hotfix/…` | `fix:` | `bug` | **`main`** |
+
+#### Routing rule (strict)
+
+- Everything batches on `next` and ships in the weekly release.
+- **Only `hotfix/*` targets `main`** — an urgent production fix, out of cycle.
+
+Once the PR is open, the board advances on its own:
+`Todo → In review` (PR opened) `→ Ready` (review approved) `→ Done` (merged).
+
+Labels are **triage only**: they categorize, they never route. `security` is
+cross-cutting — add it to any kind when the change is security-sensitive. The
+"Commit" column shows the conventional type; the authoritative type list is the
+[Commit Convention](#commit-convention) below (mirrors `commitlint.config.cjs`).
 
 ### Examples
 

@@ -2,6 +2,10 @@ version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
+    # Target `next`, not `main`. `main` only takes the weekly promotion PR and
+    # the Release PR (see RELEASE.md); dep updates batch on `next` and ship in
+    # the weekly release instead of cutting off-cycle releases.
+    target-branch: "next"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -11,10 +15,10 @@ updates:
       include: "scope"
     labels:
       - "dependencies"
-      - "github-actions"
 
   - package-ecosystem: "npm"
     directory: "/"
+    target-branch: "next"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -24,4 +28,3 @@ updates:
       include: "scope"
     labels:
       - "dependencies"
-      - "npm"

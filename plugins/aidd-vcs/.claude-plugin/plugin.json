@@ -2,12 +2,13 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "aidd-vcs",
   "version": "2.0.0",
-  "description": "External artifacts: commit, pull-request, release-tag, issue-create",
+  "description": "External artifacts: repo-init, commit, pull-request, release-tag, issue-create",
   "author": {
     "name": "AI-Driven Dev",
     "url": "https://github.com/ai-driven-dev"
   },
   "skills": [
+    "./skills/00-repo-init",
     "./skills/01-commit",
     "./skills/02-pull-request",
     "./skills/03-release-tag",
@@ -15,6 +16,7 @@
   ],
   "keywords": [
     "git",
+    "repo-init",
     "commit",
     "pull-request",
     "release",

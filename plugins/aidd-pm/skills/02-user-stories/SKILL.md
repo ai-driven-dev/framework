@@ -1,7 +1,6 @@
 ---
 name: 02-user-stories
 description: Turn a feature or epic into a prioritized, estimated, INVEST-compliant user-story backlog saved to the project's tracker. Use for "user stories", "split this epic", "break down this feature", "estimate/prioritize the backlog", or `/user-stories`. Not for source code or a full PRD (use `03-prd`).
-argument-hint: clarify-scope | split-epic | draft-stories | estimate-impact | prioritize | sync-tracker
 ---
 
 # User Stories

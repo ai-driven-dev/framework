@@ -1,5 +1,20 @@
 # Changelog
 
+## [5.0.2](https://github.com/ai-driven-dev/framework/compare/v5.0.1...v5.0.2) (2026-06-22)
+
+
+### Miscellaneous
+
+* **framework:** add setup guardrails and pet asset ([#310](https://github.com/ai-driven-dev/framework/issues/310)) ([ab317e8](https://github.com/ai-driven-dev/framework/commit/ab317e8b4f8c2ee022ec0fd1b8f79112dd67ca31))
+
+## [5.0.1](https://github.com/ai-driven-dev/framework/compare/v5.0.0...v5.0.1) (2026-06-22)
+
+
+### Documentation
+
+* **aidd-context:** add explicit-scoped-includes rule (R13) to skill-generate ([#309](https://github.com/ai-driven-dev/framework/issues/309)) ([527e646](https://github.com/ai-driven-dev/framework/commit/527e6466c5052eb4f0a80739f3059c8f6dab1c41))
+* **framework:** README star CTA, roadmap, star history + fix dead Discord link ([#312](https://github.com/ai-driven-dev/framework/issues/312)) ([032f4f0](https://github.com/ai-driven-dev/framework/commit/032f4f06aac94b4b70e9fe9d6375ae2e0158cc2b))
+
 ## [5.0.0](https://github.com/ai-driven-dev/framework/compare/v4.4.1...v5.0.0) (2026-06-19)
 
 
