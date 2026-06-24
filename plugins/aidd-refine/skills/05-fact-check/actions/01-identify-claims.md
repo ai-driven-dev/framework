@@ -20,4 +20,4 @@ A list of claims, each paired with one category from the locked taxonomy.
 
 ## Test
 
-- Run on `"Next.js 15 shipped the use cache directive in 2024. This naming is clean."` - the output lists the first sentence as a claim and excludes "This naming is clean" as opinion.
+- Run on `"Next.js 15 shipped the use cache directive in 2024. This naming is clean."`: the output lists the first sentence as a claim and excludes "This naming is clean" as opinion.

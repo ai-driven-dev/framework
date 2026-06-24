@@ -25,7 +25,7 @@ Router dispatches by intent:
 ## Transversal rules
 
 - **Persistence**: once active, terse mode applies to EVERY response until explicitly turned off. Do not drift back to verbose prose after many turns, when uncertain, or when the task changes. The level remains active for the rest of the session unless changed or stopped.
-- **Off switch**: terse mode stops only on explicit user signal - `stop condense`, `normal mode`, `/condense off`, or invoking the skill again to toggle.
+- **Off switch**: terse mode stops only on explicit user signal: `stop condense`, `normal mode`, `/condense off`, or invoking the skill again to toggle.
 - **Toggle**: invoking the skill while active toggles it off; invoking while off turns it on at the default level (`full`) unless an explicit intensity is given.
 - **Drop fluff**: drop articles (a/an/the), filler (just/really/basically/actually/simply), pleasantries (sure/certainly/of course/happy to), and hedging. Fragments are acceptable.
 - **Short synonyms**: prefer short words (big not extensive, fix not "implement a solution for"). Technical terms stay exact. Code blocks are unchanged. Errors are quoted verbatim.

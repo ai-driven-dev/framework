@@ -8,7 +8,7 @@ Run the cheapest-first verification cascade against each claim and give it a ver
 
 ## Output
 
-A list of verdicts: each claim gains one verdict - verified, conflict, or unverified - with the sources behind it and the tier that resolved it.
+A list of verdicts: each claim gains one verdict (verified, conflict, or unverified) with the sources behind it and the tier that resolved it.
 
 ## Process
 
@@ -21,4 +21,4 @@ A list of verdicts: each claim gains one verdict - verified, conflict, or unveri
 
 ## Test
 
-- Run on `"the source file plugins/aidd-refine/hooks/condense-stats.js exists in this repo"` - the cascade resolves at the codebase tier, the verdict is verified, the source is that file path, and the web tier is never reached.
+- Run on `"the source file plugins/aidd-refine/hooks/condense-stats.js exists in this repo"`: the cascade resolves at the codebase tier, the verdict is verified, the source is that file path, and the web tier is never reached.

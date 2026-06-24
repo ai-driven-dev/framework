@@ -8,7 +8,7 @@ Parse the source artifact and pull out a list of gaps, each tagged with a catego
 
 ## Output
 
-A list of gaps - each with its category, its severity, a probe question, and the quoted snippet it came from - plus any top-of-report warnings, such as a non-markdown source.
+A list of gaps, each with its category, severity, a probe question, and the quoted snippet it came from, plus any top-of-report warnings such as a non-markdown source.
 
 ## Process
 
@@ -17,7 +17,7 @@ A list of gaps - each with its category, its severity, a probe question, and the
 3. **Handle edges.** An empty source emits one blocker gap asking what content the artifact should hold, then stops. A non-markdown source adds a warning that attribution may be imprecise, then continues.
 4. **Scan.** Walk the seven categories in their locked order. Emit one gap per distinct issue, set its severity from `@../references/severity-rubric.md`, and write its question per `@../references/probe-style.md`.
 5. **Dedupe.** Treat two gaps with the same category and snippet as one. A snippet-less gap falls back to its category plus severity.
-6. **Return.** Hand the gaps and warnings to the next action - `03-diff` when a prior report exists, else `02-render-report`. Sorting happens there.
+6. **Return.** Hand the gaps and warnings to the next action: `03-diff` when a prior report exists, else `02-render-report`. Sorting happens there.
 
 ## Test
 

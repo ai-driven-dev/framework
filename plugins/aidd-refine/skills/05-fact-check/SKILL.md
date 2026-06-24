@@ -22,14 +22,14 @@ Sequential skill: `01 → 02 → 03`. No skipping. The router materializes the t
 
 ## Transversal rules
 
-- Never alter the meaning of a claim while verifying it - verify what was stated, not a charitable reinterpretation.
+- Never alter the meaning of a claim while verifying it: verify what was stated, not a charitable reinterpretation.
 - The verification cascade is cheapest-first and short-circuits: stop at the first tier that resolves a claim. See `references/verification-cascade.md`.
 - A web lookup is the last resort, never the first. Reach it only when project memory and codebase inspection both fail to resolve a claim.
 - Claim categories come from the locked set in `references/claim-categories.md`. Opinion, preference, and trivially-known statements are not claims and are skipped.
-- When two sources disagree, report both with their origin - never silently pick one.
+- When two sources disagree, report both with their origin, never silently pick one.
 - An unverified claim is never deleted and never asserted as fact: it is kept and marked `(unverified - no source found)`.
 - Caching a verified fact is opt-in: propose it with a recommendation, never cache silently. The skill persists nothing; the mechanics live in action 03.
-- The final report is reader-facing prose - the corrected text, `## Sources`, and `## Unverified claims`, nothing else. Internal mechanics never appear in the output: no cascade or tier trace (`Cascade:`, `tier 1/2/3`, `miss`, `resolved`), no category labels, no raw verdict words. State conclusions, not the process. Action 03 holds the exhaustive forbidden list.
+- The final report is reader-facing prose: the corrected text, `## Sources`, and `## Unverified claims`, nothing else. Internal mechanics never appear in the output: no cascade or tier trace (`Cascade:`, `tier 1/2/3`, `miss`, `resolved`), no category labels, no raw verdict words. State conclusions, not the process. Action 03 holds the exhaustive forbidden list.
 - The report is rendered in plain prose and is never restyled by an active session output mode (terse, caveman, condensed). The skill's output format is fixed by action 03 alone.
 
 ## References
