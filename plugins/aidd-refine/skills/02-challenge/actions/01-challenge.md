@@ -22,6 +22,5 @@ The findings report following `@../assets/report-template.md`: a confidence perc
 
 ## Test
 
-- The emitted report contains a confidence percentage and the three classification sections.
-- `confidence >= 95%` if and only if the Deal breakers section is empty.
-- The confidence value sits in the rubric tier consistent with the findings.
+- The report has a confidence percentage and the Correctness, Deal breakers, and Suggestions sections.
+- The Deal breakers section is non-empty only when confidence is below 75%.

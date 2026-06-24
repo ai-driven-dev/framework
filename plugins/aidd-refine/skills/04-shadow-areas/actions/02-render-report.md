@@ -10,7 +10,7 @@ Turn the detected gaps into a structured markdown report and write it next to th
 
 ## Output
 
-A markdown report written next to the source. Name it by stripping the source's last extension and appending `-shadow-report.md`, so `prd.md` becomes `prd-shadow-report.md` and `Makefile` becomes `Makefile-shadow-report.md`. The source itself is never touched.
+A markdown report written next to the source, named by stripping the source's last extension and appending `-shadow-report.md`.
 
 ## Process
 
@@ -29,8 +29,7 @@ A markdown report written next to the source. Name it by stripping the source's 
 - Gaps spanning several categories produce one heading per category, in locked order.
 - Within a category, blocker comes before major before minor.
 - A source named `feature-v2.draft.md` produces `feature-v2.draft-shadow-report.md`; `Makefile` produces `Makefile-shadow-report.md`.
-- Zero blocker and zero major stamps `status: clean`; otherwise no status key.
+- Zero blocker and zero major in scope stamps `status: clean`; closed gaps never count toward scope; otherwise no status key.
 - Warnings present emits `## Warnings`; none omits it.
 - The source content and timestamp are unchanged after the run.
 - In diff mode a category with entries in all three parts renders Closed, then Still Open, then Newly Introduced.
-- A blocker among the closed gaps does not block clean status; only still-open and newly-introduced gaps count.

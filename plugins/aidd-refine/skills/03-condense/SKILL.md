@@ -30,10 +30,8 @@ Router dispatches by intent:
 - **Drop fluff**: drop articles (a/an/the), filler (just/really/basically/actually/simply), pleasantries (sure/certainly/of course/happy to), and hedging. Fragments are acceptable.
 - **Short synonyms**: prefer short words (big not extensive, fix not "implement a solution for"). Technical terms stay exact. Code blocks are unchanged. Errors are quoted verbatim.
 - **Pattern**: `[thing] [action] [reason]. [next step].`
-  - Bad: "Sure! I'd be happy to help you with that. The issue you're experiencing is likely caused by..."
-  - Good: "Bug in auth middleware. Token expiry check uses `<` not `<=`. Fix:"
-- **Auto-pause** (drop terse mode for these passages, then resume): security warnings, irreversible action confirmations, multi-step sequences where fragment order or omitted conjunctions risk misread, compression itself creating technical ambiguity, user asks to clarify or repeats a question.
-- **Boundaries**: code, commits, and pull request bodies are written in normal English regardless of intensity. The intensity level persists until toggled off or until session end.
+- **Auto-pause**: drop terse mode for the passages listed in `references/intensity-levels.md` (security warnings, irreversible confirmations, ambiguity risks), then resume.
+- **Boundaries**: code, commits, and pull request bodies are written in normal English regardless of intensity.
 
 ## References
 

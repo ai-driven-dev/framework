@@ -9,7 +9,7 @@ Rewrite the original text on the evidence: cite verified claims, hedge unverifie
 
 ## Output
 
-The rewritten answer following `@../assets/report-template.md`: the original content preserved, a `[n]` marker on each verified claim, a `(unverified - no source found)` marker on each unverified claim, conflicts stated with both sides, and a `## Sources` footnote block. The output obeys `@../references/report-output-discipline.md`.
+The rewritten answer per `@../assets/report-template.md`, obeying `@../references/report-output-discipline.md`.
 
 ## Process
 

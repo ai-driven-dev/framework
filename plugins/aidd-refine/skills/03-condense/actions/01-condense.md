@@ -9,7 +9,7 @@ Toggle terse output mode and apply the requested intensity rules to subsequent p
 
 ## Output
 
-A single confirmation line stating the resolved state: `Condense: ON (<level>).` with a one-line note that articles drop while code, errors, and warnings stay verbatim, or `Condense: OFF.` when disabling.
+A single confirmation line: `Condense: ON (<level>).` when enabling, or `Condense: OFF.` when disabling.
 
 ## Process
 
@@ -19,12 +19,9 @@ A single confirmation line stating the resolved state: `Condense: ON (<level>).`
    - `toggle` flips on/off; default level when turning on is `full`.
    - Off phrases (`stop condense`, `normal mode`, `/condense off`) force off.
 3. **Emit.** Print the confirmation line with the resolved state filled in.
-4. **Apply.** Apply the transversal rules to every subsequent prose turn until the next off signal, using per-level rules from `@../references/intensity-levels.md`.
-5. **Hold.** Do not drift back to verbose prose across many turns, when uncertain, or when the topic changes. Auto-pause only for the specific passages listed in the reference.
+4. **Apply.** Apply the transversal rules to every subsequent prose turn until the next off signal, using per-level rules and auto-pause passages from `@../references/intensity-levels.md`.
 
 ## Test
 
-- After turning condense ON: the next non-code, non-warning assistant turn drops articles consistent with the active intensity.
-- After turning condense OFF: the next assistant turn returns to normal prose.
-- Code blocks, quoted errors, and security warnings remain verbatim regardless of condense state.
-- After 5 consecutive turns post-activation: the terse style is still applied (no drift back to verbose).
+- After ON, the next non-code, non-warning turn drops articles at the active intensity; after OFF, it returns to normal prose.
+- Code blocks, quoted errors, and security warnings stay verbatim regardless of state.

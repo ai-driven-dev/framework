@@ -28,7 +28,7 @@ Sequential skill: `01 → 02 → 03`. No skipping. The router materializes the t
 - Claim categories come from the locked set in `references/claim-categories.md`. Opinion, preference, and trivially-known statements are not claims and are skipped.
 - When two sources disagree, report both with their origin - never silently pick one.
 - An unverified claim is never deleted and never asserted as fact: it is kept and marked `(unverified - no source found)`.
-- Caching a verified fact is opt-in: propose it with a recommendation, never cache silently. The skill itself stores nothing - on approval it restates the fact for the user's own memory tooling. Persistence is out of scope.
+- Caching a verified fact is opt-in: propose it with a recommendation, never cache silently. The skill persists nothing; the mechanics live in action 03.
 - The final report is reader-facing prose - the corrected text, `## Sources`, and `## Unverified claims`, nothing else. Internal mechanics never appear in the output: no cascade or tier trace (`Cascade:`, `tier 1/2/3`, `miss`, `resolved`), no category labels, no raw verdict words. State conclusions, not the process. Action 03 holds the exhaustive forbidden list.
 - The report is rendered in plain prose and is never restyled by an active session output mode (terse, caveman, condensed). The skill's output format is fixed by action 03 alone.
 

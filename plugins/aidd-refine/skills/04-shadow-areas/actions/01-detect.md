@@ -4,7 +4,7 @@ Parse the source artifact and pull out a list of gaps, each tagged with a catego
 
 ## Input
 
-- The source to scan: a file path or inline markdown text. Accept paths inside the working directory; reject anything outside it and any file already named `*-shadow-report.md`.
+- The source to scan: a file path or inline markdown text.
 
 ## Output
 
@@ -17,12 +17,11 @@ A list of gaps - each with its category, its severity, a probe question, and the
 3. **Handle edges.** An empty source emits one blocker gap asking what content the artifact should hold, then stops. A non-markdown source adds a warning that attribution may be imprecise, then continues.
 4. **Scan.** Walk the seven categories in their locked order. Emit one gap per distinct issue, set its severity from `@../references/severity-rubric.md`, and write its question per `@../references/probe-style.md`.
 5. **Dedupe.** Treat two gaps with the same category and snippet as one. A snippet-less gap falls back to its category plus severity.
-6. **Return.** Hand the gaps and warnings to `02-render-report`. Sorting happens there.
+6. **Return.** Hand the gaps and warnings to the next action - `03-diff` when a prior report exists, else `02-render-report`. Sorting happens there.
 
 ## Test
 
-- A path outside the working directory is rejected with no gaps.
-- A file named `*-shadow-report.md` is rejected with no gaps.
+- A path outside the working directory, or a file named `*-shadow-report.md`, is rejected with no gaps.
 - An empty source yields exactly one blocker gap about missing content.
 - A non-markdown source adds one warning and keeps scanning.
 - Every gap has a category and severity from the locked set and a question ending in `?`.

@@ -19,11 +19,9 @@ Single action skill. The router dispatches to `challenge` whenever the trigger p
 
 ## Transversal rules
 
-- Think in first principles. Every step must be logical, with no gap and no missing information.
-- Challenge own assumptions and the user's decisions before declaring confidence.
-- Look for edge cases, errors, inconsistencies, missing parts, duplications, and optimizations.
+- Reason from first principles, no logical gaps.
 - Aim for simplifications. If the work can be smaller, say so.
-- Output the structured report following `assets/report-template.md`, filled verbatim.
+- Fill `assets/report-template.md` verbatim.
 
 ## References
 
