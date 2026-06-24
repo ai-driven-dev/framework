@@ -7,7 +7,7 @@ description: Retrieve and display ticket information from the configured ticketi
 
 Reads ticket details from the configured ticketing tool. Read-only and tool-agnostic.
 
-## Available actions
+## Actions
 
 | #   | Action         | Role                                                          | Input                              |
 | --- | -------------- | ------------------------------------------------------------- | ---------------------------------- |
@@ -23,15 +23,3 @@ Single action skill. The router dispatches to `ticket-info` whenever a ticket-lo
 - Auto-detect the ticket identifier from the current branch name when none is provided.
 - Format the identifier per project convention before querying.
 - Read-only: never create, comment, transition, or reassign from this skill.
-
-## References
-
-- None.
-
-## Assets
-
-- None.
-
-## External data
-
-- None.

@@ -7,7 +7,7 @@ description: Generate INVEST-compliant user stories from a feature description. 
 
 Drafts INVEST-compliant user stories from a feature description through Product Owner clarification.
 
-## Available actions
+## Actions
 
 | #   | Action                  | Role                                                              | Input                                              |
 | --- | ----------------------- | ----------------------------------------------------------------- | -------------------------------------------------- |
@@ -26,14 +26,6 @@ Single action skill. The router dispatches to `create-user-stories` whenever a s
 - Always wait for explicit user validation before saving to the tracker.
 - The save target is the configured ticketing tool from project memory.
 
-## References
-
-- None.
-
 ## Assets
 
 - `@assets/user-story-template.md`: User story body template.
-
-## External data
-
-- None.

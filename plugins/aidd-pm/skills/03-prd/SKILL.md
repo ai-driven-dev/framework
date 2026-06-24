@@ -7,7 +7,7 @@ description: Generate a structured Product Requirements Document from a feature 
 
 Drafts a structured Product Requirements Document covering scope, goals, and acceptance criteria.
 
-## Available actions
+## Actions
 
 | #   | Action  | Role                                                 | Input                                           |
 | --- | ------- | ---------------------------------------------------- | ----------------------------------------------- |
@@ -25,15 +25,7 @@ Single action skill. The router dispatches to `prd` whenever a PRD-generation ph
 - Save path: `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<feature_name>-prd.md`.
 - Source of truth for structure: `@assets/prd-template.md`.
 
-## References
-
-- None.
-
 ## Assets
 
 - `@assets/prd-template.md`: PRD body template.
 - `@assets/task-template.md`: Lightweight task template referenced from the PRD when needed.
-
-## External data
-
-- None.
