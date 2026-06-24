@@ -32,5 +32,6 @@ A web lookup is a last resort, never an opener.
 Each verified claim ends in exactly one verdict:
 
 - `verified`: one or more sources confirm the claim. Record every source.
+- `refuted`: a source contradicts the claim. Record the contradicting source.
 - `conflict`: sources disagree. Record both sides with their origin; do not pick a winner.
 - `unverified`: no tier produced a source. The claim is kept and hedged, never asserted and never deleted.

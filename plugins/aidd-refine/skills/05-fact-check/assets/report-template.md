@@ -13,7 +13,7 @@
 
 ## Unverified claims
 
-- "<claim text>" - cascade exhausted (memory, codebase, web), no source found.
+- "<claim text>": no source found.
 
 <!-- Omit the "Unverified claims" section entirely when every claim resolved. -->
 
