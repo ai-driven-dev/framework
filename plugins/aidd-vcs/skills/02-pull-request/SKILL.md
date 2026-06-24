@@ -19,6 +19,7 @@ Single action skill. The router dispatches to `pull-request` whenever a PR/MR ph
 
 ## Transversal rules
 
+- Project first: follow the PR practices in `aidd_docs/memory/vcs.md` and the repo's `PULL_REQUEST_TEMPLATE` when they exist (body sections, base-branch rules, labels). The rules below and the bundled templates are the fallback.
 - Resolve the base branch from the head branch's prefix via the project's branch-naming convention (project memory); fall back to repo state when no prefix mapping exists. Never assume `main` or `master` (common alternatives: `next`, `develop`, `staging`).
 - Always ask the user to validate the title, body, and base branch before creating the request.
 - Open the request as a draft. The user promotes it manually when ready.

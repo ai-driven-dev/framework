@@ -26,11 +26,12 @@ When invoked as a slash command, the trailing argument controls the push behavio
 
 ## Transversal rules
 
+- Project first: follow the VCS practices in `aidd_docs/memory/vcs.md` when it exists (message convention, scopes, branch naming). The rules below and the template are the fallback.
 - Commits stay atomic and focused on a single concern.
 - Messages use imperative mood ("Add feature" not "Added feature").
 - Explain "why" not "what" in the body.
 - Never `--force` push. `--force-with-lease` is acceptable when explicitly required.
-- Follow the conventional commit format defined in `@assets/commit-template.md`.
+- Follow the conventional commit format defined in `@assets/commit-template.md` when the project sets none.
 - Reference issues in the commit body when applicable.
 - `auto` mode never asks for confirmation. `interactive` mode requires user approval before staging and before committing splits.
 
