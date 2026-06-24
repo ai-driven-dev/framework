@@ -79,6 +79,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [CONTRIBUTING.md](skills/02-project-memory/assets/CONTRIBUTING.md) | - |
 | `assets` | [GUIDELINES.md](skills/02-project-memory/assets/GUIDELINES.md) | - |
 | `assets` | [README.md](skills/02-project-memory/assets/README.md) | - |
+| `assets` | [review-checklist.md](skills/02-project-memory/assets/review-checklist.md) | - |
 | `-` | [README.md](skills/02-project-memory/README.md) | - |
 | `references` | [capability-signals.md](skills/02-project-memory/references/capability-signals.md) | - |
 | `references` | [mapping-ai-context-file.md](skills/02-project-memory/references/mapping-ai-context-file.md) | - |

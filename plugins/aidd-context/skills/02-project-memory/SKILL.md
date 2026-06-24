@@ -42,4 +42,5 @@ The core concerns load always. The `internal/` and `external/` directories are l
 
 - `assets/AGENTS.md`: the context-file template.
 - `assets/README.md`, `assets/GUIDELINES.md`, `assets/CONTRIBUTING.md`: the `aidd_docs/` doc templates.
+- `assets/review-checklist.md`: the `aidd_docs/review-checklist.md` template — baseline rules the reviewer agent applies on code reviews.
 - `assets/templates/memory/`: the memory templates, one folder per capability (`core` always, the rest gated by signal).
