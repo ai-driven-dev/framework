@@ -30,6 +30,4 @@ Single action skill. The router dispatches to `pull-request` whenever a PR/MR ph
 ## Assets
 
 - `@assets/pull_request.md`: Request body template.
-- `@assets/branch.md`: Branch naming conventions.
-- `@assets/CONTRIBUTING.md`: Contribution guidelines template.
-- `@assets/README.md`: README template.
+- `@assets/branch.md`: Branch-naming convention, the fallback when project memory sets none.

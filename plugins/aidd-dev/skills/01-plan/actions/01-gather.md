@@ -12,8 +12,8 @@ The source restated in a few bullets: what is asked and the hard constraints it 
 
 ## Process
 
-1. **Find the source.** Identify what the request points to: a file path, a ticket URL or id, or raw text. When nothing concrete is given, ask once for a file, a ticket, or a description. Do not start without a source.
-2. **Pull it in.** Read the file, fetch the ticket, or take the text as given. Never invent content the source does not contain.
+1. **Find.** Identify what the request points to: a file path, a ticket URL or id, or raw text. When nothing concrete is given, ask once for a file, a ticket, or a description. Do not start without a source.
+2. **Pull.** Read the file, fetch the ticket, or take the text as given. Never invent content the source does not contain.
 3. **Restate.** Summarize the source in a few bullets: what is asked, and the hard constraints it states. No solution, no phases, no plan.
 
 ## Test

@@ -5,7 +5,7 @@ description: Create an atomic git commit with a conventional message, optionally
 
 # Commit
 
-Generates atomic git commits with conventional messages, supporting interactive splits and agent-driven auto mode.
+Runs interactive with split approval, or auto for agents.
 
 ## Actions
 

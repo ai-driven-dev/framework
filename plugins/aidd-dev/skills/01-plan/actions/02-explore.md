@@ -12,9 +12,9 @@ The architecture projection (files to modify, create, delete, each with a one-li
 
 ## Process
 
-1. **Read the codebase.** Explore the code the source touches. Build the projection and list the infrastructure assumptions.
-2. **Check feasibility.** Verify against the official docs or the in-repo code. Keep each source and what it settled. Flag blockers and risks.
-3. **Select rules.** Keep the project rules that apply to the projection.
+1. **Read.** Explore the code the source touches. Build the projection and list the infrastructure assumptions.
+2. **Check.** Verify against the official docs or the in-repo code. Keep each source and what it settled. Flag blockers and risks.
+3. **Select.** Keep the project rules that apply to the projection.
 
 ## Test
 
