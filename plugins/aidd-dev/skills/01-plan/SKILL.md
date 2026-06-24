@@ -1,6 +1,6 @@
 ---
 name: 01-plan
-description: Turn a request, ticket, or file into a phased implementation plan: gather the source, explore the codebase, optionally wireframe a screen, then plan. Use when the user wants to plan a feature, turn a ticket or requirements into a phased plan, or wireframe a screen before building. Do NOT use to write code (use 02-implement), review a diff (use 05-review), or audit code (use 04-audit).
+description: Turn a request, ticket, or file into a phased implementation plan. Use to plan a feature before building, or to turn a ticket into phases. Do NOT use to write code (02-implement) or review a diff (05-review).
 argument-hint: gather | explore | wireframe | plan
 ---
 

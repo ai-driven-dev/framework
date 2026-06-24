@@ -12,7 +12,7 @@ The plan reaches `status: implemented`, every phase `done`, validation green. Or
 
 ## Process
 
-1. **Implement.** Spawn the `executor` agent and brief it to run the `aidd-dev:02-implement` recipe on `plan_path`. The agent branches, codes every phase, commits the code and the status transitions in its own context, and validates. The conductor never codes; the agent is the isolation, and the recipe inside it never spawns again.
+1. **Implement.** Spawn the `executor` agent and brief it to run the `aidd-dev:02-implement` recipe on `plan_path`. The agent branches, codes every phase, commits the code and the status transitions, and validates.
 2. **Iterate.** When the step runs after an `iterate` verdict, spawn the `executor` again and hand it the findings as a fix list. It codes the fixes against the current diff, then asserts and validates them before returning, exactly as the recipe gates a phase: a fix is finished only when it passes. Do not edit the plan or its phases: the loop fixes what was implemented, not the plan.
 3. **Resolve.** Read the plan's final `status`.
    - `implemented`: the step is done.
