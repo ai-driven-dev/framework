@@ -28,9 +28,6 @@ Invoke the SDLC capability with the issue request, then verify the outcome by ob
 
 Every field is the result of an observation against git or the VCS host. None is parsed from the SDLC's return text.
 
-## Depends on
-
-- `04-check-sdlc`
 
 ## Process
 

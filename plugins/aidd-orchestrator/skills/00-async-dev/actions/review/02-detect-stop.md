@@ -18,9 +18,6 @@ Decides whether to keep iterating or hand control to a human.
 
 `decision` is `"stop"` or `"continue"`. `reason` is one of `max_iterations`, `blocked_label`, `human_reviewer`, or `null`.
 
-## Depends on
-
-- `01-collect-comments`
 
 ## Process
 

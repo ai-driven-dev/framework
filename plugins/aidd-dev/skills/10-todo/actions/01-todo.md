@@ -2,12 +2,10 @@
 
 Categorize the user prompt into independent todos, implement each in parallel, report.
 
-## Inputs
-
+## Input
 User's requirement.
 
-## Outputs
-
+## Output
 ```markdown
 | Category | Launched | Output |
 | -------- | -------- | ------ |

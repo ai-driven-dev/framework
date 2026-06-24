@@ -13,9 +13,6 @@ Creates the 5 lifecycle labels declared in the config if they do not already exi
 }
 ```
 
-## Depends on
-
-- `04-write-config`
 
 ## Process
 

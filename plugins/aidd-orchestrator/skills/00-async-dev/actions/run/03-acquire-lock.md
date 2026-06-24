@@ -15,9 +15,6 @@ Marks an issue as in-progress so concurrent triggers do not double-run.
 }
 ```
 
-## Depends on
-
-- `02-resolve-deps`
 
 ## Process
 

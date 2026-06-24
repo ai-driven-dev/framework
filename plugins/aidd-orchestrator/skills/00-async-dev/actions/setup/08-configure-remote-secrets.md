@@ -14,9 +14,6 @@ Walks the user through adding the GitHub Action secrets the workflow needs. For 
 }
 ```
 
-## Depends on
-
-- `06-bootstrap-labels`
 
 ## Process
 

@@ -43,9 +43,6 @@ Interactively collects the small set of runtime parameters from the user.
 }
 ```
 
-## Depends on
-
-- `01-detect-context`
 
 ## Process
 

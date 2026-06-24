@@ -30,9 +30,6 @@ A single file at `$RUNNER_TEMP/run-result.json` (workflow-readable):
 }
 ```
 
-## Depends on
-
-- `05-delegate-sdlc`
 
 ## Process
 

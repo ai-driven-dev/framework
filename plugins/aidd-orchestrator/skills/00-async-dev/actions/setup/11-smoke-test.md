@@ -18,10 +18,6 @@ Triggers the pipeline once on a self-contained throwaway issue (created by this 
 
 `run_outcome` is `pr_opened`, `blocked`, or `skipped`.
 
-## Depends on
-
-- `10-commit-and-push` (when `answers.mode != "local"`)
-- `09-bootstrap-scheduling` (when `answers.mode != "remote"`)
 
 ## Process
 

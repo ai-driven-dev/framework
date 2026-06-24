@@ -14,9 +14,6 @@ Discovers an active SDLC orchestration capability in the runtime before delegati
 }
 ```
 
-## Depends on
-
-- `03-acquire-lock`
 
 ## Process
 

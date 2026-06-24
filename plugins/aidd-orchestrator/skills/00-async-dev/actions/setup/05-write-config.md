@@ -8,9 +8,6 @@ Persists the plugin configuration to the repo.
 ## Output
 A file at `.claude/aidd-orchestrator.json`.
 
-## Depends on
-
-- `02-ask-config`
 
 ## Process
 

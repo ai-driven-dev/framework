@@ -9,9 +9,6 @@ Renders the local poll script. The script wraps `claude -p` invocations of the r
 ## Output
 A file at `scripts/aidd-async-poll.sh` with mode `0755`.
 
-## Depends on
-
-- `02-ask-config`
 
 ## Process
 

@@ -9,9 +9,6 @@ Renders the GitHub Actions workflow that triggers the async pipeline.
 ## Output
 A file at `.github/workflows/aidd-async.yml`.
 
-## Depends on
-
-- `02-ask-config`
 
 ## Process
 

@@ -19,9 +19,6 @@ Delegates one round of fixes to the SDLC capability discovered at runtime and pu
 }
 ```
 
-## Depends on
-
-- `02-detect-stop` (only when its `decision == "continue"`)
 
 ## Process
 

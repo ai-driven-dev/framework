@@ -28,9 +28,6 @@ A single file at `$RUNNER_TEMP/run-result.json` (workflow-readable):
 }
 ```
 
-## Depends on
-
-- `02-detect-stop` (when `decision = "stop"`)
 
 ## Process
 

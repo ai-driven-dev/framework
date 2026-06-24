@@ -18,9 +18,6 @@ Schedules `scripts/aidd-async-poll.sh` via the cheapest path that fits the user'
 
 `path` is one of: `manual`, `local_daemon`, `desktop_task_pending`, `schedule_routine`.
 
-## Depends on
-
-- `04-generate-local-script`
 
 ## Process
 
