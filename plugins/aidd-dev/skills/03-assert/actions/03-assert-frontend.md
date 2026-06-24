@@ -1,6 +1,6 @@
 # 03 - Assert Frontend
 
-Iterate until a frontend feature works as intended by inspecting the running UI, mapping behavior to code, and tracking attempts.
+Iterate until the frontend behaves as intended by inspecting the running UI, mapping behavior to code, and tracking attempts.
 
 ## Input
 

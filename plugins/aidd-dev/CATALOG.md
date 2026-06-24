@@ -86,7 +86,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-assert-frontend.md](skills/03-assert/actions/03-assert-frontend.md) | - |
 | `assets` | [task-template.md](skills/03-assert/assets/task-template.md) | - |
 | `-` | [README.md](skills/03-assert/README.md) | - |
-| `-` | [SKILL.md](skills/03-assert/SKILL.md) | `Assert a feature works as intended by iterating the project's coding assertions until they pass, with optional architecture-conformance and running-frontend facets. Use to validate that an implementation behaves correctly. Do NOT use to review code quality or to write new tests.` |
+| `-` | [SKILL.md](skills/03-assert/SKILL.md) | `Assert that the work behaves as intended by iterating the project's coding assertions until they pass, with optional architecture-conformance and running-frontend facets. Use to validate an implementation before moving on. Do NOT use to review code quality or to write new tests.` |
 
 #### `skills/04-audit`
 

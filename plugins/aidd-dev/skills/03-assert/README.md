@@ -2,13 +2,13 @@
 
 # 03 - assert
 
-A gate that validates a feature works: it iterates the project's coding
-assertions until they pass, with optional architecture-conformance and
+A gate that validates the work behaves as intended: it iterates the project's
+coding assertions until they pass, with optional architecture-conformance and
 running-frontend facets. Returns a pass or fail verdict.
 
 ## When to use
 
-- A feature is implemented and you need to assert it behaves as intended
+- Work is implemented and you need to assert it behaves as intended
   before merging or shipping.
 - You need to verify code conforms to documented architecture (ADRs,
   diagrams, structure).
@@ -35,12 +35,12 @@ The skill exposes 3 facets, run together when applicable or one when named:
 1. `assert` - the coding-assertion loop; always applies.
 2. `assert-architecture` - report where code breaks the documented
    architecture (ADRs, diagrams, structure); report only, opt-in.
-3. `assert-frontend` - drive a browser to confirm a frontend feature
+3. `assert-frontend` - drive a browser to confirm the frontend
    behaves as intended; needs a running URL.
 
 ## Outputs
 
-- A pass or fail verdict on the feature (this is a gate, not a stored report).
+- A pass or fail verdict on the work (this is a gate, not a stored report).
 - The fixes applied by the coding and frontend facets.
 - The conformance violations from the architecture facet.
 
