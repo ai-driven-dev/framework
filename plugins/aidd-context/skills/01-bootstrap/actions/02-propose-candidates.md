@@ -1,37 +1,26 @@
 # 02 - Propose candidates
 
-Derive 2-3 candidate stacks from the filled checklist using the heuristics in `@../references/stack-heuristics.md`, then render a markdown comparison table for the user.
+Derive 2 to 3 candidate stacks from the filled checklist using the heuristics in `@../references/stack-heuristics.md`, then render a markdown comparison table.
 
-## Inputs
+## Input
 
-- Filled checklist (blocks 1-3) from action 01.
+The filled checklist (blocks 1 to 3) from action 01.
 
-## Outputs
+## Output
 
-A markdown comparison table with 2-3 rows.
-
-```markdown
-| Candidate | Front | Back | DB | Hosting | Auth | Archi | Cost/mo | Risks |
-|-----------|-------|------|------|---------|------|-------|---------|-------|
-| **A. Vercel-native** | Next.js SSR | Next.js API routes | Supabase Postgres | Vercel + Supabase | NextAuth | Modular monolith | ~30€ | Vercel lock-in, cold starts on serverless functions |
-| **B. Self-hosted** | Vite + React SPA | NestJS | Postgres on VPS | Coolify on Hetzner VPS | Clerk | Modular monolith | ~15€ | Manual ops, single point of failure |
-| **C. Serverless AWS** | Next.js SSR | AWS Lambda + API Gateway | DynamoDB | AWS + CloudFront | Cognito | Serverless | ~50€ at low volume, scales linearly | Vendor lock-in, learning curve |
-```
-
-## Depends on
-
-- `01-gather-needs`
+A markdown comparison table with 2 to 3 rows, each a candidate with its front, back, DB, hosting, auth, architecture pattern, monthly cost, and risks.
 
 ## Process
 
-1. Read the filled checklist from action 01.
-2. Apply each rule from `@../references/stack-heuristics.md` to derive the recommended family for: archi pattern, front, back, DB, auth, hosting.
-3. Build 2-3 candidates that span the trade-off space - they must differ on at least one of: hosting model (PaaS vs self-host vs serverless), back-end language, or archi pattern. Never propose 3 near-identical candidates.
-4. For each candidate, estimate monthly cost at the user's volume target (Block 2 item: "Volume at 6 months"). Use rough public-pricing numbers; flag uncertainty.
-5. List 1-3 risks per candidate (lock-in, ops burden, learning curve, scaling limit). Be honest - risks are non-negotiable, no candidate has zero.
-6. Render the comparison table. Bold the candidate's name (`**A.**`).
-7. Print the table to the user. Do not pick a winner - that's action 04, after audit.
+1. **Read.** Read the filled checklist from action 01.
+2. **Derive.** Apply each rule from `@../references/stack-heuristics.md` to derive the recommended family for architecture pattern, front, back, DB, auth, and hosting.
+3. **Spread.** Build 2 to 3 candidates spanning the trade-off space, differing on at least one of hosting model (PaaS, self-host, serverless), back-end language, or architecture pattern. Never propose near-identical candidates.
+4. **Cost.** Estimate each candidate's monthly cost at the user's six-month volume target with rough public pricing, flagging uncertainty.
+5. **Risk.** List 1 to 3 honest risks per candidate (lock-in, ops burden, learning curve, scaling limit). No candidate has zero.
+6. **Render.** Render the comparison table, bolding each candidate's name. Do not pick a winner; that is action 04, after the audit.
 
 ## Test
 
-The output is a markdown table with at least 2 rows; the columns include `Front`, `Back`, `DB`, `Hosting`, `Auth`, `Archi`, `Cost`, `Risks`; each row has a non-empty value in every column; at least two rows differ on hosting model, back-end language, or archi pattern.
+- The output is a markdown table with at least two rows.
+- The columns include front, back, DB, hosting, auth, architecture, cost, and risks, each cell non-empty.
+- At least two rows differ on hosting model, back-end language, or architecture pattern.

@@ -6,9 +6,9 @@ argument-hint: gather-needs | propose-candidates | audit-candidates | pick-and-d
 
 # Bootstrap
 
-Plays the role of technical architect for a new SaaS project. Walks the user through a 24-item checklist (18 user-input + 6 derived), proposes 2-3 candidate stacks, audits each via parallel agents, then produces `aidd_docs/INSTALL.md` capturing the technical vision, decisions, stack, architecture pattern, folder tree, and install steps. Documentation only - no code, no scaffolding.
+Plays the role of technical architect for a new SaaS project. Walks the user through a 24-item checklist (18 user-input + 6 derived), proposes 2-3 candidate stacks, audits each via parallel agents, then produces `aidd_docs/INSTALL.md` capturing the technical vision, decisions, stack, architecture pattern, folder tree, and install steps. Documentation only: no code, no scaffolding.
 
-## Available actions
+## Actions
 
 | #   | Action                | Role                                                           | Input              |
 | --- | --------------------- | -------------------------------------------------------------- | ------------------ |
@@ -38,7 +38,3 @@ Plays the role of technical architect for a new SaaS project. Walks the user thr
 
 - `@assets/checklist.md` - the 24-item checklist (4 blocks)
 - `@assets/install-template.md` - the `INSTALL.md` skeleton
-
-## External data
-
-- `aidd-context/skills/09-mermaid/SKILL.md` - invoked from action 04 to render the architecture diagram
