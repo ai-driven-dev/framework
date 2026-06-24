@@ -20,7 +20,7 @@ Dispatch by input: a spec path with findings runs `refine`; a request or PRD pat
 ## Transversal rules
 
 - Never invent. Mark every gap as `TBD: <precise question>` rather than guessing. When a request is too vague to draft anything useful, stop and ask for a clearer one.
-- The spec holds intent, never implementation. No library, pattern, or file layout; those belong to the plan.
+- The spec holds intent, never implementation. It is solution-agnostic: no file, component, hook, route, library, pattern, or token, and no "how". The done-when conditions are outcome-level, not steps. Keep the acceptance criteria few. All of that belongs to the plan.
 - Keep it readable: clear section headers, bulleted criteria, explicit non-goals.
 - Output: one `spec.md` in the feature folder (`aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`), from `@assets/spec-template.md`. Reuse the folder when it exists.
 - Immutable once validated: never rewrite a spec that has been locked.
