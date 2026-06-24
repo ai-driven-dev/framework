@@ -12,7 +12,7 @@ The `Functional` section of the feature folder's `review.md`: one row per accept
 
 ## Process
 
-1. **Read.** Take the plan from `$ARGUMENTS`; if absent, ask the user for the acceptance criteria. Static review only, no app execution or browser.
+1. **Read.** Take the plan from `$ARGUMENTS`; if absent, ask for the acceptance criteria, and mark this axis "Not run" when none are available. Static review only, no app execution or browser.
 2. **Trace.** Fetch the diff, then trace each acceptance criterion to it, one matrix row per criterion: met, partial, or unmet, with evidence or the gap.
 3. **Gaps.** List missing behaviors (criteria with no trace), unplanned behaviors (diff changes tracing to no criterion), and flow or edge-case gaps. An empty list reads "none", never omitted.
 4. **Record.** Write the matrix and the gaps into the `Functional` section of `review.md`, each with the missing or broken behavior named.
