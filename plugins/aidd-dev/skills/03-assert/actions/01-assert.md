@@ -12,7 +12,7 @@ A pass or fail verdict: every applicable assertion passing in a final clean swee
 
 ## Process
 
-1. **Enumerate.** From the project conventions and the coding-assertions memory (`aidd_docs/memory/coding-assertions.md`) when it exists, list the assertions that apply to the work.
+1. **Enumerate.** List the assertions that apply, from the project conventions and `aidd_docs/memory/coding-assertions.md` when it exists.
 2. **Iterate.** For each assertion, fix what blocks it, then re-run it until it passes.
 3. **Sweep.** Once each has passed at least once, re-run them all in one pass to confirm none regressed.
 4. **Boundary.** Do not stop until every assertion passes the final sweep.

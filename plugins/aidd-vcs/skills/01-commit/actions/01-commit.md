@@ -14,7 +14,7 @@ The new commit sha, the branch, and whether it was pushed.
 
 1. **Branch.** Use the checked-out branch. In `auto`, generate a conventional name from the change; in `interactive`, propose one and wait for approval.
 2. **Stage.** With explicit paths, `git add` exactly those. Otherwise commit the already-staged changes, never staging unstaged paths implicitly.
-3. **Message.** Use an imposed message verbatim when given. Otherwise follow the project's convention in `aidd_docs/memory/vcs.md` when set, else `@../assets/commit-template.md`. In `auto`, generate one from the diff and recent log, no approval. In `interactive`, draft one and confirm.
+3. **Message.** Use an imposed message verbatim. Else follow `aidd_docs/memory/vcs.md` when set, otherwise `@../assets/commit-template.md`. In `auto`, generate from the diff and log, no approval; in `interactive`, draft and confirm.
 4. **Split.** In `interactive` with several concerns, propose each split (its scope, and a draft message that explains why, never lists files), wait for approval, and stage each with `git add -p`.
 5. **Commit.** Run `git commit` with the chosen message.
 6. **Recover.** On a pre-commit hook failure, fix the cause, re-stage, and make a new commit, never amend. Loop until it succeeds.

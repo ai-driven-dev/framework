@@ -16,7 +16,7 @@ The draft request's URL and number, with its head and resolved base branch.
 2. **Head.** Read the current branch with `git rev-parse --abbrev-ref HEAD`.
 3. **Base.** Resolve the base in order: a provided base; otherwise the target the head branch's prefix maps to in the project's branch-naming convention (for example `feat/` → `next`, `hotfix/` → `main`); otherwise `git symbolic-ref refs/remotes/origin/HEAD`, then `main`, `master`, `develop`, `staging`. Surface the chosen base and the reason.
 4. **Collect.** Summarize the commits and impacted files with `git log <base>..HEAD` and `git diff <base>...HEAD --stat`.
-5. **Fill.** Load the request template, preferring the project's own (`aidd_docs/memory/vcs.md` or the repo's request-template file, wherever the configured tool keeps it) and falling back to the bundled one, plus any contributing rules, then write a concise title and a body following it from the change summary.
+5. **Fill.** Load the request template, preferring the project's own (`aidd_docs/memory/vcs.md` or the repo's request-template file) over the bundled one, plus any contributing rules; write a concise title and body from the change summary.
 6. **Validate.** Show the title, body, and detected base. Apply any overrides, then wait for explicit approval.
 7. **Open.** Create the request as a draft via the configured tool, passing the base, title, and body. Capture the URL and number.
 8. **Label.** When the head prefix maps to a triage label that exists in the repo, apply it (for example `feat/` → `enhancement`). Skip silently otherwise. Labels triage only; they never change the base.

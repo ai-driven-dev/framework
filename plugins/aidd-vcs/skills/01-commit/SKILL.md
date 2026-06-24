@@ -26,7 +26,7 @@ When invoked as a slash command, the trailing argument controls the push behavio
 
 ## Transversal rules
 
-- Project first: follow the VCS practices in `aidd_docs/memory/vcs.md` when it exists (message convention, scopes, branch naming). The rules below and the template are the fallback.
+- Project first: follow `aidd_docs/memory/vcs.md` when it exists (message convention, scopes, branch naming); the rules below and the template are the fallback.
 - Commits stay atomic and focused on a single concern.
 - Messages use imperative mood ("Add feature" not "Added feature").
 - Explain "why" not "what" in the body.
