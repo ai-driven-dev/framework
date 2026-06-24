@@ -4,7 +4,7 @@ Iterate until the frontend behaves as intended by inspecting the running UI, map
 
 ## Input
 
-The expected behavior, from `$ARGUMENTS`, and the entry URL of the already-running frontend.
+The expected behavior, from `$ARGUMENTS`. The frontend's URL when the caller knows it, otherwise resolved at runtime.
 
 ## Output
 
@@ -12,12 +12,13 @@ A pass or fail verdict, with the per-iteration attempts (hypothesis, fix, result
 
 ## Process
 
-1. **Parse.** Extract the visual, functional, and technical requirements from the expected behavior. Trace the action paths, for example a click calls a function in one file that updates state in another.
-2. **Inspect.** Open the URL in the configured browsing tool. Inspect the page visually and technically, capturing a screenshot of the issue.
-3. **Locate.** Explore the codebase for the files behind the issue.
-4. **Track.** Fill the tracking file from `@../assets/task-template.md` with the three best candidate causes, each with a short description and a confidence level.
-5. **Fix loop.** Take a cause, apply a candidate fix, validate against the expected behavior. On failure, mark it and take the next. When the three are exhausted, add three fresh causes and repeat.
-6. **Boundary.** Assume the servers are running. Accept minor visual differences (1 to 2 px, slight color) unless the request specifies otherwise. Confirm every UI change with a screenshot.
+1. **Resolve the URL.** Use the URL the caller gave. Otherwise discover the running frontend from the project: its dev or start script, the framework's default port, or a port already listening locally. Confirm the URL responds before going on. If no frontend is running, skip this facet with a noted reason.
+2. **Parse.** Extract the visual, functional, and technical requirements from the expected behavior. Trace the action paths, for example a click calls a function in one file that updates state in another.
+3. **Inspect.** Open the URL in the configured browsing tool and navigate to the screen the expected behavior targets. Inspect the page visually and technically, capturing a screenshot of the issue.
+4. **Locate.** Explore the codebase for the files behind the issue.
+5. **Track.** Fill the tracking file from `@../assets/task-template.md` with the three best candidate causes, each with a short description and a confidence level.
+6. **Fix loop.** Take a cause, apply a candidate fix, validate against the expected behavior. On failure, mark it and take the next. When the three are exhausted, add three fresh causes and repeat.
+7. **Boundary.** Never start or restart a server. Accept minor visual differences (1 to 2 px, slight color) unless the request specifies otherwise. Confirm every UI change with a screenshot.
 
 ## Test
 

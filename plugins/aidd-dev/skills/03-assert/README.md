@@ -36,7 +36,7 @@ The skill exposes 3 facets, run together when applicable or one when named:
 2. `assert-architecture` - report where code breaks the documented
    architecture (ADRs, diagrams, structure); report only, opt-in.
 3. `assert-frontend` - drive a browser to confirm the frontend
-   behaves as intended; needs a running URL.
+   behaves as intended; needs a running frontend (it resolves the URL).
 
 ## Outputs
 
