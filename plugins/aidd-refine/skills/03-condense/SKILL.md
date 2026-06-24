@@ -1,6 +1,6 @@
 ---
 name: 03-condense
-description: Toggle terse output mode with intensity levels (lite, full, ultra) so prose drops articles, filler, and pleasantries while code, quoted errors, and security warnings stay verbatim. Also reports real token usage and estimated savings under condense mode for the current session. Use when the user says "condense", "condense output", "be more concise", "shorter answers", "tighten output", "/condense", "/condense full", "/condense ultra", "stop condense", "normal mode", "/condense-stats", "how much have we saved", or "token savings". Do NOT use for editing existing prose, summarizing a long document, or compressing source code (only output style is affected, not content).
+description: Toggle terse output mode (lite, full, ultra) that drops filler while code, errors, and warnings stay verbatim, and report token savings for the session. Use to condense output, shorten answers, switch intensity, or check savings; not for editing prose or compressing code.
 argument-hint: condense | stats
 ---
 
@@ -8,12 +8,12 @@ argument-hint: condense | stats
 
 Toggles a terse output mode with three intensity levels (lite, full, ultra). Strips articles, filler, and pleasantries from prose while preserving technical substance, code blocks, quoted errors, and security warnings.
 
-## Available actions
+## Actions
 
 | #   | Action     | Role                                                                  | Input                                |
 | --- | ---------- | --------------------------------------------------------------------- | ------------------------------------ |
-| 01  | `condense` | Toggle terse mode and apply intensity rules                           | current_state + requested_intensity  |
-| 02  | `stats`    | Report real token usage and estimated savings for the current session | session log + intensity timeline     |
+| 01  | `condense` | Toggle terse mode and apply intensity rules                           | current state + requested level      |
+| 02  | `stats`    | Report real token usage and estimated savings for the current session | session messages + level timeline    |
 
 ## Default flow
 
@@ -37,12 +37,8 @@ Router dispatches by intent:
 
 ## References
 
-- `@references/intensity-levels.md`: detailed per-level rules and side-by-side examples.
-
-## Assets
-
-- None.
+- `references/intensity-levels.md`: detailed per-level rules and side-by-side examples.
 
 ## External data
 
-- `../hooks/condense-stats.js` - UserPromptSubmit hook that intercepts stats triggers, reads the session transcript, and returns the formatted savings report without invoking the model.
+- `../hooks/condense-stats.js`: UserPromptSubmit hook that intercepts stats triggers, reads the session transcript, and returns the formatted savings report without invoking the model.

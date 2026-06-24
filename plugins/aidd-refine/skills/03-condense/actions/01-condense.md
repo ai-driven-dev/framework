@@ -2,35 +2,25 @@
 
 Toggle terse output mode and apply the requested intensity rules to subsequent prose turns.
 
-## Inputs
+## Input
 
-- `current_state` (required): inferred from session context. Either `on` (with current intensity level) or `off`.
-- `requested_intensity` (required): one of `lite`, `full`, `ultra`, or `toggle` to flip the current state.
+- Whether condense is currently on (and at which level) or off, read from session context.
+- The requested change: a level (lite, full, ultra) or a plain on/off toggle.
 
-## Outputs
+## Output
 
-```text
-Condense: ON (full).
-Articles dropped, filler removed. Code, errors, warnings stay verbatim. Stop with "stop condense" or "normal mode".
-```
-
-Or on off:
-
-```text
-Condense: OFF.
-Normal prose resumed.
-```
+A single confirmation line stating the resolved state: `Condense: ON (<level>).` with a one-line note that articles drop while code, errors, and warnings stay verbatim, or `Condense: OFF.` when disabling.
 
 ## Process
 
-1. Detect the toggle command and target intensity from the user message.
-2. Resolve the new state by combining `current_state` with `requested_intensity`:
+1. **Detect.** Read the toggle command and target level from the user message.
+2. **Resolve.** Combine the current state with the request:
    - Explicit level (`lite | full | ultra`) sets that level (or switches level if already on).
    - `toggle` flips on/off; default level when turning on is `full`.
    - Off phrases (`stop condense`, `normal mode`, `/condense off`) force off.
-3. Emit the confirmation block with the resolved state filled in.
-4. Apply the transversal rules to every subsequent prose turn until the next off signal, using per-level rules from `@../references/intensity-levels.md`.
-5. **Hold persistence.** Do not drift back to verbose prose across many turns, when uncertain, or when the topic changes. Auto-pause only for the specific passages listed in the reference.
+3. **Emit.** Print the confirmation line with the resolved state filled in.
+4. **Apply.** Apply the transversal rules to every subsequent prose turn until the next off signal, using per-level rules from `@../references/intensity-levels.md`.
+5. **Hold.** Do not drift back to verbose prose across many turns, when uncertain, or when the topic changes. Auto-pause only for the specific passages listed in the reference.
 
 ## Test
 
