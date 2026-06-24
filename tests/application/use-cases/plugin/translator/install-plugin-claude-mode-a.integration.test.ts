@@ -9,7 +9,6 @@ import { PluginDistribution } from "../../../../../src/domain/models/plugin-dist
 import { PluginCatalogRepositoryAdapter } from "../../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { FakeCodexActivator } from "../../../../helpers/ports/fake-codex-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
@@ -70,7 +69,7 @@ describe("install claude plugin via Mode A (integration)", () => {
       catalog,
       hasher,
       new CapturingLogger(),
-      new FakeCodexActivator()
+      new Map()
     );
     const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 

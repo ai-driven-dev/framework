@@ -106,6 +106,8 @@ Test names must describe user-visible or system-level behaviour:
 - This repo is Claude-only: only `.claude/` and `.aidd/` are legitimate in-repo install artifacts.
 - If an in-repo per-tool install is unavoidable for a test, gitignore the non-Claude install dirs.
 - A smoke case counts only once **executed** against the real binary — a plausible-looking guard can be silently dead (e.g. a filesystem-find heuristic that returns empty). Pick a tool's tracked file from the manifest (the source of truth), never by walking the filesystem.
+- **Native-activation tools touch USER-GLOBAL state, not just the project dir.** `codex`/`copilot` plugin installs land in `~/.codex` / `~/.copilot` (`claude` in `~/.claude`). Sandbox them per run — `codex` honors `CODEX_HOME`, `copilot`/`claude` honor `HOME`, aidd's own user config honors `AIDD_USER_CONFIG_DIR` — or snapshot+restore the real dir. A fresh `/tmp` project dir alone does NOT isolate these. (This work polluted the repo + `~/.copilot` twice before the env-sandbox was right.)
+- **Verify tool integrations against the real tool's CLI/IDE, not code+doc inference.** Whether a tool loads a project config is empirical: probe the real tool (`codex debug prompt-input`, `opencode debug skill`, `copilot plugin list`, the Cursor/VS Code plugins panel). Inference from the source + vendor docs was wrong twice here (Cursor assumed broken but works; Copilot assumed fully inert but registers the marketplace). Green unit/integration tests prove aidd's output shape, not that the tool consumes it.
 
 ## Golden / snapshot machine-independence
 

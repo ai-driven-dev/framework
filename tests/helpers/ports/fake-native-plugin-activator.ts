@@ -1,13 +1,13 @@
-import { CodexCliError } from "../../../src/domain/errors.js";
-import type { CodexActivator } from "../../../src/domain/ports/codex-activator.js";
+import { NativePluginCliError } from "../../../src/domain/errors.js";
+import type { NativePluginActivator } from "../../../src/domain/ports/native-plugin-activator.js";
 
 /**
- * Records `codex` CLI activation calls instead of shelling out.
+ * Records native plugin CLI activation calls instead of shelling out.
  * Defaults to unavailable so unit deps skip activation unless a test opts in.
  * `failOnPlugins` makes `enablePlugin` throw for the listed refs (simulates a
  * plugin missing from the marketplace snapshot).
  */
-export class FakeCodexActivator implements CodexActivator {
+export class FakeNativePluginActivator implements NativePluginActivator {
   available: boolean;
   readonly addedMarketplaces: string[] = [];
   readonly enabledPlugins: string[] = [];
@@ -33,7 +33,7 @@ export class FakeCodexActivator implements CodexActivator {
 
   enablePlugin(pluginRef: string): void {
     if (this.failOnPlugins.has(pluginRef)) {
-      throw new CodexCliError(`plugin \`${pluginRef}\` was not found in marketplace`);
+      throw new NativePluginCliError(`plugin \`${pluginRef}\` was not found in marketplace`);
     }
     this.enabledPlugins.push(pluginRef);
   }

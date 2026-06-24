@@ -40,10 +40,12 @@ export interface MarketplaceSettings {
 
 /**
  * Declares that a tool enables plugins by driving an external CLI binary
- * (e.g. `codex plugin add`) instead of writing a project-local settings file.
+ * (e.g. `codex plugin add`, `copilot plugin install`) because a project-local
+ * settings file alone does not load its plugins. The `binary` keys the matching
+ * `NativePluginActivator` in the marketplace-sync registry.
  */
 export interface NativeActivation {
-  binary: "codex";
+  binary: "codex" | "copilot";
 }
 
 export interface NativePluginsParams {

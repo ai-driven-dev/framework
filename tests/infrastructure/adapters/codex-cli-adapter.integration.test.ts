@@ -1,7 +1,24 @@
 import { spawnSync } from "node:child_process";
-import { describe, expect, it, vi } from "vitest";
-import { CodexCliError } from "../../../src/domain/errors.js";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { NativePluginCliError } from "../../../src/domain/errors.js";
 import { CodexCliAdapter } from "../../../src/infrastructure/adapters/codex-cli-adapter.js";
+
+function pathWithExecutable(name: string): { dir: string; restore: () => void } {
+  const dir = mkdtempSync(join(tmpdir(), "aidd-bin-"));
+  writeFileSync(join(dir, name), "#!/bin/sh\n", { mode: 0o755 });
+  const prev = process.env.PATH;
+  process.env.PATH = dir;
+  return {
+    dir,
+    restore: () => {
+      process.env.PATH = prev;
+      rmSync(dir, { recursive: true, force: true });
+    },
+  };
+}
 
 vi.mock("node:child_process", () => ({
   spawnSync: vi.fn(),
@@ -23,15 +40,28 @@ function makeResult(overrides: Partial<ReturnType<typeof spawnSync>>) {
 }
 
 describe("CodexCliAdapter", () => {
-  it("reports availability when `codex --version` exits 0", () => {
-    mockSpawnSync.mockReturnValue(makeResult({ stdout: "codex-cli 0.136.0" }));
-
-    expect(new CodexCliAdapter().isAvailable()).toBe(true);
-    expect(mockSpawnSync).toHaveBeenCalledWith("codex", ["--version"], expect.anything());
+  let restorePath: (() => void) | undefined;
+  afterEach(() => {
+    restorePath?.();
+    restorePath = undefined;
   });
 
-  it("reports unavailable when the codex binary is missing (ENOENT)", () => {
-    mockSpawnSync.mockReturnValue(makeResult({ error: new Error("ENOENT"), status: null }));
+  it("reports available when the codex binary is on PATH (no spawn)", () => {
+    const env = pathWithExecutable("codex");
+    restorePath = env.restore;
+
+    expect(new CodexCliAdapter().isAvailable()).toBe(true);
+    expect(mockSpawnSync).not.toHaveBeenCalled();
+  });
+
+  it("reports unavailable when the codex binary is not on PATH", () => {
+    const emptyDir = mkdtempSync(join(tmpdir(), "aidd-empty-"));
+    const prev = process.env.PATH;
+    process.env.PATH = emptyDir;
+    restorePath = () => {
+      process.env.PATH = prev;
+      rmSync(emptyDir, { recursive: true, force: true });
+    };
 
     expect(new CodexCliAdapter().isAvailable()).toBe(false);
   });
@@ -72,20 +102,20 @@ describe("CodexCliAdapter", () => {
     );
   });
 
-  it("throws CodexCliError with stderr detail on non-zero exit", () => {
+  it("throws NativePluginCliError with stderr detail on non-zero exit", () => {
     mockSpawnSync.mockReturnValue(
       makeResult({ status: 1, stderr: "plugin `ghost` was not found in marketplace `m1`" })
     );
 
-    expect(() => new CodexCliAdapter().enablePlugin("ghost@m1")).toThrow(CodexCliError);
+    expect(() => new CodexCliAdapter().enablePlugin("ghost@m1")).toThrow(NativePluginCliError);
     expect(() => new CodexCliAdapter().enablePlugin("ghost@m1")).toThrow(
       "plugin `ghost` was not found"
     );
   });
 
-  it("throws CodexCliError when the process fails to spawn", () => {
+  it("throws NativePluginCliError when the process fails to spawn", () => {
     mockSpawnSync.mockReturnValue(makeResult({ error: new Error("spawn EACCES"), status: null }));
 
-    expect(() => new CodexCliAdapter().addMarketplace("/abs/mkt")).toThrow(CodexCliError);
+    expect(() => new CodexCliAdapter().addMarketplace("/abs/mkt")).toThrow(NativePluginCliError);
   });
 });

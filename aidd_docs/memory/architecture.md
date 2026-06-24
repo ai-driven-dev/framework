@@ -81,17 +81,23 @@ older manifests now auto-upgrade when loaded.
 
 ## Per-Tool Plugin Install Strategy
 
-Controlled by `PluginsCapability` mode field in each tool definition:
+Controlled by `PluginsCapability` in each tool definition. How each tool **actually
+loads** plugins (verified live against each tool's real CLI/IDE, not inferred):
 
-| Tool | Mode | Settings path (marketplace registration) | Config output path |
-|---|---|---|---|
-| Claude | `native` | `.claude/settings.json` | `.claude/settings.json` |
-| Cursor | `native` | `.cursor/settings.json` | `.cursor/settings.json` |
-| Copilot | `native` | `.github/copilot/settings.json` | `.vscode/settings.json` |
-| Codex | `native` | `.codex/config.json` | `.codex/config.toml` |
-| OpenCode | `flat` | — (no marketplace support) | `opencode.json` |
+| Tool | How plugins load | aidd writes |
+|---|---|---|
+| Claude | `.claude/settings.json` (`extraKnownMarketplaces` + `enabledPlugins`) — read natively, no CLI step | the settings file |
+| Cursor | materialized to `~/.cursor/plugins/local/<name>/` (user-scope) — auto-discovered as "Local" plugins | the plugin files |
+| OpenCode | flat files `.opencode/skills/`, `.opencode/agents/` — auto-discovered | the flat files |
+| Codex | **native CLI activation** (`codex plugin add`) into user-global `~/.codex/` + cache | drives the CLI |
+| Copilot | **native CLI activation** (`copilot plugin install`) into user-global `~/.copilot/` | drives the CLI + a recommendations file |
 
-- `native` mode: plugins registered via `marketplaceSettings` in tool's settings JSON; files materialized under tool-specific `pluginsDir`
+- **Some tools' project config is inert — they need native CLI activation.** Codex and
+  Copilot do not load plugins from a project file (Codex reads only user-global
+  `~/.codex/`; Copilot's `enabledPlugins` only *recommends*). aidd drives their
+  `<tool> plugin` subcommands instead. Claude / Cursor / OpenCode do load their project
+  artifacts natively. Which tools auto-load vs need activation is a per-tool fact —
+  verify it against the real tool, never assume.
 - `flat` mode: plugins installed as flat files under a namespace prefix; no native marketplace concept (OpenCode only)
 
 ## Auth

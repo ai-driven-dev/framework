@@ -9,13 +9,40 @@ import { PluginDistribution } from "../../../../../src/domain/models/plugin-dist
 import { PluginCatalogRepositoryAdapter } from "../../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { FakeCodexActivator } from "../../../../helpers/ports/fake-codex-activator.js";
+import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
+
+async function seedCopilotPlugin(
+  manifestRepo: InMemoryManifestRepository,
+  registry: InMemoryMarketplaceRegistry
+): Promise<void> {
+  const manifest = Manifest.create();
+  manifest.addTool("copilot", "test", []);
+  await new ModeAMarketplaceTranslator().addPlugin(
+    buildDist(),
+    "copilot",
+    { kind: "github", repo: "ai-driven-dev/framework" },
+    PROJECT_ROOT,
+    manifest,
+    MARKETPLACE_NAME,
+    "docs"
+  );
+  await manifestRepo.save(manifest);
+  await registry.save(
+    PROJECT_ROOT,
+    Marketplace.create({
+      name: MARKETPLACE_NAME,
+      source: { kind: "github", repo: "ai-driven-dev/framework" },
+      scope: "project",
+      addedAt: "2026-01-01T00:00:00Z",
+    })
+  );
+}
 
 function buildDist(name = "aidd-context"): PluginDistribution {
   return new PluginDistribution({
@@ -40,28 +67,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
     const catalog = new PluginCatalogRepositoryAdapter(fs);
-    const manifest = Manifest.create();
-    manifest.addTool("copilot", "test", []);
-
-    await new ModeAMarketplaceTranslator().addPlugin(
-      buildDist(),
-      "copilot",
-      { kind: "github", repo: "ai-driven-dev/framework" },
-      PROJECT_ROOT,
-      manifest,
-      MARKETPLACE_NAME,
-      "docs"
-    );
-    await manifestRepo.save(manifest);
-    await registry.save(
-      PROJECT_ROOT,
-      Marketplace.create({
-        name: MARKETPLACE_NAME,
-        source: { kind: "github", repo: "ai-driven-dev/framework" },
-        scope: "project",
-        addedAt: "2026-01-01T00:00:00Z",
-      })
-    );
+    await seedCopilotPlugin(manifestRepo, registry);
 
     const useCase = new MarketplaceSyncSettingsUseCase(
       fs,
@@ -70,7 +76,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
       catalog,
       hasher,
       new CapturingLogger(),
-      new FakeCodexActivator()
+      new Map()
     );
     const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
@@ -82,5 +88,28 @@ describe("install copilot plugin via Mode A (integration)", () => {
       source: { source: "github", repo: "ai-driven-dev/framework" },
     });
     expect(settings.enabledPlugins).toBeDefined();
+  });
+
+  it("drives the copilot CLI activator and still writes the settings file", async () => {
+    const fs = new InMemoryFileAdapter();
+    const manifestRepo = new InMemoryManifestRepository();
+    const registry = new InMemoryMarketplaceRegistry();
+    const activator = new FakeNativePluginActivator({ available: true });
+    await seedCopilotPlugin(manifestRepo, registry);
+
+    const useCase = new MarketplaceSyncSettingsUseCase(
+      fs,
+      manifestRepo,
+      registry,
+      new PluginCatalogRepositoryAdapter(fs),
+      new DeterministicHasher(),
+      new CapturingLogger(),
+      new Map([["copilot", activator]])
+    );
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(activator.addedMarketplaces).toEqual(["ai-driven-dev/framework"]);
+    expect(activator.enabledPlugins).toEqual([`aidd-context@${MARKETPLACE_NAME}`]);
+    expect(await fs.fileExists(resolve(PROJECT_ROOT, ".github/copilot/settings.json"))).toBe(true);
   });
 });

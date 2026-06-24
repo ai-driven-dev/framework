@@ -87,6 +87,7 @@ import type { ManifestRepository } from "../domain/ports/manifest-repository.js"
 import type { MarketplaceCachePort } from "../domain/ports/marketplace-cache.js";
 import type { MarketplaceRegistry } from "../domain/ports/marketplace-registry.js";
 import type { MarketplaceTrustStore } from "../domain/ports/marketplace-trust-store.js";
+import type { NativePluginActivator } from "../domain/ports/native-plugin-activator.js";
 import type { Platform } from "../domain/ports/platform.js";
 import type { PluginCatalogRepository } from "../domain/ports/plugin-catalog-repository.js";
 import type { PluginDistributionReader } from "../domain/ports/plugin-distribution-reader.js";
@@ -99,6 +100,7 @@ import { AjvSchemaValidatorAdapter } from "./adapters/ajv-schema-validator-adapt
 import { AuthProviderAdapter } from "./adapters/auth-provider-adapter.js";
 import { AuthReaderAdapter } from "./adapters/auth-reader-adapter.js";
 import { CodexCliAdapter } from "./adapters/codex-cli-adapter.js";
+import { CopilotCliAdapter } from "./adapters/copilot-cli-adapter.js";
 import { CurrentVersionAdapter } from "./adapters/current-version-adapter.js";
 import { FileAdapter } from "./adapters/file-adapter.js";
 import { GhCliAdapter } from "./adapters/gh-cli-adapter.js";
@@ -391,6 +393,10 @@ export async function createDeps(
   const prompter = process.stdout.isTTY
     ? new InquirerPrompterAdapter()
     : new SilentPrompterAdapter();
+  const nativePluginActivators = new Map<string, NativePluginActivator>([
+    ["codex", new CodexCliAdapter()],
+    ["copilot", new CopilotCliAdapter()],
+  ]);
   const marketplaceSyncSettingsUseCase = new MarketplaceSyncSettingsUseCase(
     fs,
     manifestRepo,
@@ -398,7 +404,7 @@ export async function createDeps(
     pluginCatalogRepository,
     hasher,
     logger,
-    new CodexCliAdapter()
+    nativePluginActivators
   );
   const pluginAddUseCase = new PluginAddUseCase(
     fs,

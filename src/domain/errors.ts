@@ -449,9 +449,9 @@ export class EmptyMarketplaceCacheNameError extends Error {
   }
 }
 
-export class CodexCliError extends Error {
+export class NativePluginCliError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "CodexCliError";
+    this.name = "NativePluginCliError";
   }
 }

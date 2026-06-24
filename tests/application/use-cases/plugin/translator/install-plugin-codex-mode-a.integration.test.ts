@@ -13,7 +13,7 @@ import type { PluginSource } from "../../../../../src/domain/models/plugin-sourc
 import { PluginCatalogRepositoryAdapter } from "../../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { FakeCodexActivator } from "../../../../helpers/ports/fake-codex-activator.js";
+import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
@@ -102,7 +102,7 @@ describe("install codex plugin via Mode A (integration)", () => {
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
     const catalog = new PluginCatalogRepositoryAdapter(fs);
-    const activator = new FakeCodexActivator({ available: true });
+    const activator = new FakeNativePluginActivator({ available: true });
     await seedCodexPlugin(manifestRepo, registry);
 
     const useCase = new MarketplaceSyncSettingsUseCase(
@@ -112,7 +112,7 @@ describe("install codex plugin via Mode A (integration)", () => {
       catalog,
       hasher,
       new CapturingLogger(),
-      activator
+      new Map([["codex", activator]])
     );
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
@@ -126,7 +126,7 @@ describe("install codex plugin via Mode A (integration)", () => {
     const fs = new InMemoryFileAdapter();
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
-    const activator = new FakeCodexActivator({ available: true });
+    const activator = new FakeNativePluginActivator({ available: true });
     await seedCodexPlugin(manifestRepo, registry, {
       kind: "github",
       repo: "ai-driven-dev/framework",
@@ -139,7 +139,7 @@ describe("install codex plugin via Mode A (integration)", () => {
       new PluginCatalogRepositoryAdapter(fs),
       new DeterministicHasher(),
       new CapturingLogger(),
-      activator
+      new Map([["codex", activator]])
     );
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
@@ -152,7 +152,7 @@ describe("install codex plugin via Mode A (integration)", () => {
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
     const logger = new CapturingLogger();
-    const activator = new FakeCodexActivator({
+    const activator = new FakeNativePluginActivator({
       available: true,
       failOnPlugins: [`aidd-context@${MARKETPLACE_NAME}`],
     });
@@ -165,7 +165,7 @@ describe("install codex plugin via Mode A (integration)", () => {
       new PluginCatalogRepositoryAdapter(fs),
       new DeterministicHasher(),
       logger,
-      activator
+      new Map([["codex", activator]])
     );
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
@@ -177,7 +177,7 @@ describe("install codex plugin via Mode A (integration)", () => {
     const fs = new InMemoryFileAdapter();
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
-    const activator = new FakeCodexActivator({ available: false });
+    const activator = new FakeNativePluginActivator({ available: false });
     await seedCodexPlugin(manifestRepo, registry);
 
     const useCase = new MarketplaceSyncSettingsUseCase(
@@ -187,7 +187,7 @@ describe("install codex plugin via Mode A (integration)", () => {
       new PluginCatalogRepositoryAdapter(fs),
       new DeterministicHasher(),
       new CapturingLogger(),
-      activator
+      new Map([["codex", activator]])
     );
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 

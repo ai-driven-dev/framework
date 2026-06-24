@@ -30,8 +30,8 @@ import { PluginDistributionReaderAdapter } from "../../../src/infrastructure/ada
 import { SilentPrompterAdapter } from "../../../src/infrastructure/adapters/prompter-adapter.js";
 import { BundledAssetProviderAdapter } from "../../../src/infrastructure/assets/asset-loader.js";
 import { DeterministicHasher } from "./deterministic-hasher.js";
-import { FakeCodexActivator } from "./fake-codex-activator.js";
 import { FakeCurrentVersion } from "./fake-current-version.js";
+import { FakeNativePluginActivator } from "./fake-native-plugin-activator.js";
 import { FixturePluginFetcher } from "./fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "./in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "./in-memory-manifest-repository.js";
@@ -81,7 +81,7 @@ export async function buildUnitDeps(_projectRoot: string) {
     pluginCatalogRepository,
     hasher,
     logger,
-    new FakeCodexActivator()
+    new Map([["codex", new FakeNativePluginActivator()]])
   );
 
   // Seed the framework fixture content so the install use-case can read it
