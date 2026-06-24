@@ -1,6 +1,6 @@
 ---
 name: 04-shadow-areas
-description: Analytical scan of a markdown artifact (idea, user-stories, PRD, spec) to surface blind spots - unstated assumption, missing actor, missing failure mode, ambiguous term, missing acceptance criterion, missing edge case, and missing dependency - emitting a structured shadow report grouped by category and sorted by severity. Use when the user says "find blind spots in this spec", "what's missing in this PRD", "shadow report", "shadow analysis", "scan for gaps", "find what's missing", "spot blind spots", "review for gaps", or asks for an analytical gap scan of a written artifact. Do NOT use for interactive clarification through iterative Q&A (use aidd-refine:01-brainstorm for that), implementing features, writing tests, or reviewing code style.
+description: Scan a markdown artifact (idea, user stories, PRD, spec) for blind spots and emit a structured shadow report grouped by category and sorted by severity. Use to find gaps, missing parts, or what's missing in a written artifact; not for interactive Q&A (use aidd-refine:01-brainstorm) or code review.
 argument-hint: detect | render-report | diff
 ---
 
@@ -8,7 +8,7 @@ argument-hint: detect | render-report | diff
 
 Analytically scans a written artifact for gaps the author has not addressed. Unlike iterative Q&A clarification, this skill reads the existing material and emits a structured report: each gap carries a category from a locked 7-category taxonomy, a 3-tier severity, and a direct-question probe the author can act on immediately.
 
-## Available actions
+## Actions
 
 | #   | Action           | Role                                                                     | Input                                    |
 | --- | ---------------- | ------------------------------------------------------------------------ | ---------------------------------------- |
@@ -28,23 +28,19 @@ The `02-render-report` action always runs last and writes `<source>-shadow-repor
 ## Transversal rules
 
 - Never modify the source artifact.
-- Every emitted gap must have all three fields populated: `category`, `severity`, `probe`.
-- Every probe must be a direct question ending with `?`.
-- Categories and severities must come from the locked sets in `@references/locked-sets.json`.
+- Every gap carries all three: a category, a severity, and a probe question.
+- Every probe is a direct question ending with `?`.
+- Categories and severities come from the locked sets in `references/locked-sets.json`.
 - When zero blockers and zero majors remain, stamp the report `status: clean`.
-- On re-runs, the identity key for diffing is `category + normalized snippet` - not probe wording - so minor probe rephrasing does not create spurious "newly introduced" gaps.
+- On re-runs, gaps are matched by category and snippet, never by question wording, so rephrasing a question never creates a spurious "newly introduced" gap.
 
 ## References
 
-- `@references/categories.md`: locked 7-category taxonomy with definition and example per category.
-- `@references/severity-rubric.md`: blocker / major / minor decision rules and examples.
-- `@references/probe-style.md`: direct-question form rules.
-- `@references/locked-sets.json`: machine-readable sets reused by the validator.
+- `references/categories.md`: locked 7-category taxonomy with definition and example per category.
+- `references/severity-rubric.md`: blocker / major / minor decision rules and examples.
+- `references/probe-style.md`: direct-question form rules.
+- `references/locked-sets.json`: machine-readable sets reused by the validator.
 
 ## Assets
 
-- `@assets/report-template.md`: report skeleton with header, per-category sections, and `status: clean` block.
-
-## External data
-
-- None.
+- `assets/report-template.md`: report skeleton with header, per-category sections, and `status: clean` block.

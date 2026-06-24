@@ -24,7 +24,7 @@ The 3 locked severity tiers below come from `references/locked-sets.json`. Assig
 
 ## major
 
-**Decision rule**: The gap does not prevent starting work, but it will cause rework - incomplete implementation, a failed review cycle, or a missed requirement that surfaces during testing.
+**Decision rule**: The gap does not prevent starting work, but it will cause rework: incomplete implementation, a failed review cycle, or a missed requirement that surfaces during testing.
 
 **When to assign**:
 - A failure mode is undescribed; it will be discovered during integration or QA and require a code change.
@@ -39,7 +39,7 @@ The 3 locked severity tiers below come from `references/locked-sets.json`. Assig
 
 ## minor
 
-**Definition rule**: The gap is cosmetic or affects documentation clarity only. Resolving it improves precision or readability but will not change an implementation decision or require rework.
+**Decision rule**: The gap is cosmetic or affects documentation clarity only. Resolving it improves precision or readability but will not change an implementation decision or require rework.
 
 **When to assign**:
 - An ambiguous term exists in a non-critical context where both interpretations lead to the same implementation.

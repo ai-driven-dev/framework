@@ -1,0 +1,69 @@
+[
+  {
+    "skill": "04-shadow-areas",
+    "evalName": "xeval-shadow",
+    "name": "scans a PRD and writes a structured report",
+    "setup": {
+      "files": {
+        "prd.md": "# Checkout PRD\n\nUsers can buy items. The system must respond quickly when the cart is submitted.\nOn submit, the order is created and a confirmation is shown.\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill on ./prd.md to find blind spots and write the shadow report file next to it.",
+    "expect": {
+      "filesExist": ["prd-shadow-report.md"],
+      "fileContains": { "prd-shadow-report.md": ["# Shadow Areas Report", "## Gaps by Category", "Total gaps:", "[blocker]"] }
+    }
+  },
+  {
+    "skill": "04-shadow-areas",
+    "evalName": "xeval-shadow",
+    "name": "filename rule keeps a dotless name (Makefile)",
+    "setup": { "files": { "Makefile": "build:\n\techo hi\n" } },
+    "prompt": "Use the {{SKILL}} skill on ./Makefile to find blind spots and write the shadow report next to it.",
+    "expect": { "filesExist": ["Makefile-shadow-report.md"] }
+  },
+  {
+    "skill": "04-shadow-areas",
+    "evalName": "xeval-shadow",
+    "name": "empty source yields a single blocker",
+    "setup": { "files": { "empty.md": "" } },
+    "prompt": "Use the {{SKILL}} skill on ./empty.md to find blind spots and write the shadow report next to it.",
+    "expect": {
+      "filesExist": ["empty-shadow-report.md"],
+      "judge": "The report flags exactly one blocker gap, asking what content the (empty) artifact should contain.",
+      "judgeFiles": ["empty-shadow-report.md"]
+    }
+  },
+  {
+    "skill": "05-fact-check",
+    "evalName": "xeval-factcheck",
+    "name": "verifies a real file, refutes a fake one, hedges the unknowable, hides mechanics",
+    "setup": { "files": { "src/auth.ts": "export const auth = true;\n" } },
+    "prompt": "Use the {{SKILL}} skill to fact-check this text and rewrite it with citations: \"The file src/auth.ts exists in this repo. The file src/ghost9000.ts exists in this repo. The lead maintainer of this project owns exactly 47 cats.\"",
+    "expect": {
+      "stdoutContains": ["## Sources", "(unverified - no source found)"],
+      "stdoutNotContains": ["tier 1", "tier 2", "tier 3", "Cascade", "codebase inspection"],
+      "judge": "src/auth.ts is confirmed with a citation; the src/ghost9000.ts claim is corrected as not present (never restated as true); the 47-cats claim is marked unverified; no shell commands or inspection methods appear.",
+      "judgeFiles": []
+    }
+  },
+  {
+    "skill": "03-condense",
+    "evalName": "xeval-condense",
+    "name": "turning on confirms condense at the full level",
+    "prompt": "Use the {{SKILL}} skill to turn condense mode on, set to the full level (not lite, not ultra).",
+    "expect": {
+      "stdoutContains": ["condense", "full"]
+    }
+  },
+  {
+    "skill": "02-challenge",
+    "evalName": "xeval-challenge",
+    "name": "flags a plan violation as a deal breaker with low confidence",
+    "prompt": "Use the {{SKILL}} skill. Agreed plan: the function must RETURN THE SUM of a and b. Work to review: function add(a, b) { return a - b }. Challenge the work against the plan and emit the report.",
+    "expect": {
+      "stdoutContains": ["confidence", "Deal breakers"],
+      "judge": "A confidence percentage below 75% is stated, and the subtraction (returning a - b instead of a + b) is listed as a deal breaker."
+    }
+  }
+]
