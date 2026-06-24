@@ -2,13 +2,11 @@
 
 Marks an issue as in-progress so concurrent triggers do not double-run.
 
-## Inputs
-
+## Input
 - `issue` (required) -- one entry from `ready` (output of `02-resolve-deps`)
 - `config` (required) -- parsed `.claude/aidd-orchestrator.json`
 
-## Outputs
-
+## Output
 ```json
 {
   "issue_number": 42,

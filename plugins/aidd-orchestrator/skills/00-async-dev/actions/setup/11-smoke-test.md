@@ -2,13 +2,11 @@
 
 Triggers the pipeline once on a self-contained throwaway issue (created by this action) so the user sees the full setup work end-to-end before walking away. Never touches the user's real backlog.
 
-## Inputs
-
+## Input
 - `answers` (required) -- config object from `02-ask-config`
 - `detection` (required) -- detection report from `01-detect-context`
 
-## Outputs
-
+## Output
 ```json
 {
   "smoke_issue_number": 999,

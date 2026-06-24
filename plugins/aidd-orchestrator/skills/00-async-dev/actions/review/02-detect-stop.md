@@ -2,14 +2,12 @@
 
 Decides whether to keep iterating or hand control to a human.
 
-## Inputs
-
+## Input
 - `collect_output` (required) -- output of `01-collect-comments`
 - `config` (required) -- parsed `.claude/aidd-orchestrator.json`
 - `issue_labels` (required) -- current labels on the linked issue
 
-## Outputs
-
+## Output
 ```json
 {
   "decision": "stop",

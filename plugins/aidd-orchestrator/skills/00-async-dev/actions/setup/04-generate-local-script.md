@@ -2,13 +2,11 @@
 
 Renders the local poll script. The script wraps `claude -p` invocations of the run and review skills.
 
-## Inputs
-
+## Input
 - `answers` (required) -- config object from `02-ask-config`
 - `detection` (required) -- detection report from `01-detect-context`
 
-## Outputs
-
+## Output
 A file at `scripts/aidd-async-poll.sh` with mode `0755`.
 
 ## Depends on

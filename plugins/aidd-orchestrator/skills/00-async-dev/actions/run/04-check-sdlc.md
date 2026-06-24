@@ -2,12 +2,10 @@
 
 Discovers an active SDLC orchestration capability in the runtime before delegation.
 
-## Inputs
-
+## Input
 - none (reads runtime skill catalog)
 
-## Outputs
-
+## Output
 ```json
 {
   "sdlc_available": true,

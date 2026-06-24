@@ -1,10 +1,10 @@
-# Routing — decision tree
+# Routing: decision tree
 
 Full contract for picking a sub-flow inside `aidd-orchestrator:00-async-dev`. The router walks these signals in order; the first match wins.
 
 ---
 
-## 1. Explicit override — `$ARGUMENTS` keyword
+## 1. Explicit override: `$ARGUMENTS` keyword
 
 If `$ARGUMENTS` contains exactly `setup`, `run`, or `review` as a standalone case-insensitive token, route there immediately. No fallback consideration.
 
@@ -15,7 +15,7 @@ prompt: "Use skill aidd-orchestrator:00-async-dev with action=run on issue #..."
 prompt: "Use skill aidd-orchestrator:00-async-dev with action=review on PR #..."
 ```
 
-The router parses `action=<keyword>` from the prompt body. Plain `setup` / `run` / `review` words elsewhere in the body do NOT match — only the explicit `action=` form, or `$ARGUMENTS` set to exactly one of the three keywords.
+The router parses `action=<keyword>` from the prompt body. Plain `setup` / `run` / `review` words elsewhere in the body do NOT match, only the explicit `action=` form, or `$ARGUMENTS` set to exactly one of the three keywords.
 
 ---
 
@@ -62,7 +62,7 @@ Last-resort heuristic for free-form user input.
 
 ---
 
-## Tie-break — most-specific signal wins
+## Tie-break: most-specific signal wins
 
 When multiple signals match across categories:
 
@@ -87,21 +87,21 @@ Examples:
 - **User says "run" but config is absent.**
   Surface the conflict and stop: `Setup must complete before run. Run /aidd-orchestrator:00-async-dev with action=setup first.`
 - **Workflow webhook fires `to-implement` but the issue already has an open closing PR.**
-  Route to `review` (the PR is the active surface). Comment on the issue: `Issue #N has open PR #M — routed to review instead of run. Apply the `to-review` label to PR #M to trigger review explicitly.`
+  Route to `review` (the PR is the active surface). Comment on the issue: `Issue #N has open PR #M, routed to review instead of run. Apply the `to-review` label to PR #M to trigger review explicitly.`
 - **Label `to-implement` AND label `to-review` both present.**
   Route to `review` (more specific to the PR lifecycle). Comment to clarify.
 
 ---
 
-## Unresolved — ask the human
+## Unresolved: ask the human
 
 If none of the above produces a single match, surface the three sub-flows with their triggers and ask:
 
 ```text
 Async-dev: which sub-flow?
-  - setup   — install / configure async-dev in this repo
-  - run     — implement a ready issue (labeled to-implement)
-  - review  — iterate on review comments for an open PR
+  - setup  , install / configure async-dev in this repo
+  - run    , implement a ready issue (labeled to-implement)
+  - review , iterate on review comments for an open PR
 
 Reply with `setup`, `run`, or `review`.
 ```

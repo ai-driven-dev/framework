@@ -2,12 +2,10 @@
 
 Inspects the current repo and the active runtime to confirm preconditions.
 
-## Inputs
-
+## Input
 - `cwd` (required) -- string, absolute path of the target repo
 
-## Outputs
-
+## Output
 ```json
 {
   "repo_root": "/abs/path",

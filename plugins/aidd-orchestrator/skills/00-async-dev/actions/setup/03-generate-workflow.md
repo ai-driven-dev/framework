@@ -2,13 +2,11 @@
 
 Renders the GitHub Actions workflow that triggers the async pipeline.
 
-## Inputs
-
+## Input
 - `answers` (required) -- config object from `02-ask-config`
 - `detection` (required) -- detection report from `01-detect-context`
 
-## Outputs
-
+## Output
 A file at `.github/workflows/aidd-async.yml`.
 
 ## Depends on

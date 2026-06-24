@@ -18,7 +18,7 @@ Single skill that drives the async development pipeline end to end. Three sub-fl
 
 **You are the router until you commit to a sub-flow. Once committed, run that sub-flow's actions in order; do not jump back to routing mid-flow.**
 
-## Routing — hybrid contract
+## Routing: hybrid contract
 
 Walk in order. First match wins.
 

@@ -2,12 +2,10 @@
 
 Persists the plugin configuration to the repo.
 
-## Inputs
-
+## Input
 - `answers` (required) -- config object from `02-ask-config`
 
-## Outputs
-
+## Output
 A file at `.claude/aidd-orchestrator.json`.
 
 ## Depends on

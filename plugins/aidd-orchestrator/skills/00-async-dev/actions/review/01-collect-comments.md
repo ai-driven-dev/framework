@@ -2,16 +2,14 @@
 
 Pulls new review comments since the last iteration and acknowledges the loop has started.
 
-## Inputs
-
+## Input
 - `pr_number` (required) -- integer, target PR
 - `trigger_comment_id` (optional) -- id of the comment that triggered the loop; receives an `eyes` reaction
 - `trigger_comment_url` (optional) -- full URL of the triggering comment; lets the loop reply in the thread that fired the trigger
 - `source_issue_number` (optional) -- issue number when the trigger was a comment on the linked issue (not the PR itself); enables fetching that thread alongside PR comments
 - `since` (optional) -- ISO 8601 timestamp; defaults to the timestamp of the last iteration recorded in the audit record
 
-## Outputs
-
+## Output
 ```json
 {
   "pr_number": 117,
@@ -23,7 +21,7 @@ Pulls new review comments since the last iteration and acknowledges the loop has
 }
 ```
 
-Each entry carries a `source` of `pr_review` (inline review thread), `pr_conversation` (top-level PR comment), or `issue` (comment on the linked issue). Issue comments have no `path`/`line` — Claude treats them as plain user direction.
+Each entry carries a `source` of `pr_review` (inline review thread), `pr_conversation` (top-level PR comment), or `issue` (comment on the linked issue). Issue comments have no `path`/`line`, Claude treats them as plain user direction.
 
 ## Process
 

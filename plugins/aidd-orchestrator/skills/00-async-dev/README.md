@@ -15,7 +15,7 @@ Single entry point for the async-dev pipeline. Hybrid router that picks one of t
 
 - For plain status checks on the async pipeline (read labels / comments directly).
 - For SDLC orchestration unrelated to issue / PR automation (use `aidd-dev:00-sdlc`).
-- From inside a sub-flow action — actions never re-enter the router.
+- From inside a sub-flow action, actions never re-enter the router.
 
 ## How to invoke
 
@@ -41,8 +41,7 @@ The router reads `$ARGUMENTS`, then trigger env, then repo state, then natural i
 | Run      | [`actions/run/01-poll-ready.md`](actions/run/01-poll-ready.md)                   | 6 actions, run once per ready issue |
 | Review   | [`actions/review/01-collect-comments.md`](actions/review/01-collect-comments.md) | 4 actions, looped on the PR until stop |
 
-## Outputs
-
+## Output
 Each sub-flow defines its own outputs:
 
 - **Setup**: workflow file, config file, scripts, labels, schedule routine id (if applicable).

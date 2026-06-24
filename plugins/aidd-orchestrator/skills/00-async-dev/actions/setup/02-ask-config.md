@@ -2,12 +2,10 @@
 
 Interactively collects the small set of runtime parameters from the user.
 
-## Inputs
-
+## Input
 - `detection` (required) -- detection report from `01-detect-context`
 
-## Outputs
-
+## Output
 ```json
 {
   "mode": "both",

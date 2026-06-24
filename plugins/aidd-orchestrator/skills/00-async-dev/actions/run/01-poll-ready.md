@@ -2,14 +2,12 @@
 
 Lists candidate issues that the pipeline should process.
 
-## Inputs
-
+## Input
 - `config` (required) -- parsed `.claude/aidd-orchestrator.json`
 - `trigger_event` (optional) -- one of `label`, `mention`, `cron`. Defaults to `cron`
 - `issue_hint` (optional) -- a specific issue number from the trigger event
 
-## Outputs
-
+## Output
 ```json
 {
   "candidates": [

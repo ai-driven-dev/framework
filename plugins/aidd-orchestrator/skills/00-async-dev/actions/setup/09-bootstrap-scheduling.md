@@ -2,13 +2,11 @@
 
 Schedules `scripts/aidd-async-poll.sh` via the cheapest path that fits the user's needs. **Never recommends OS-level cron**, but for the local daemon path uses tmux/launchd/systemd so the user keeps Claude Code's Tasks quota for other things.
 
-## Inputs
-
+## Input
 - `answers` (required) -- config object from `02-ask-config`
 - `detection` (required) -- detection report from `01-detect-context`
 
-## Outputs
-
+## Output
 ```json
 {
   "path": "local_daemon",
