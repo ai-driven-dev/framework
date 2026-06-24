@@ -8,7 +8,7 @@ The explore output from `02-explore` (projection, rules, feasibility, risks), pl
 
 ## Output
 
-A feature folder `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slug>/` holding `plan.md` from `@../assets/plan-template.md` and one `phase-<n>.md` per phase from `@../assets/phase-template.md`.
+A feature folder, always at `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slug>/` and never `aidd_docs/plans/` or anywhere else, holding `plan.md` from `@../assets/plan-template.md` and one `phase-<n>.md` per phase from `@../assets/phase-template.md`.
 
 ## Process
 
