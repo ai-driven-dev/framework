@@ -1,6 +1,6 @@
 ---
 name: 05-review
-description: Read-only review of a diff along three axes, code quality, behavior versus the plan, and relevancy, into one report with a verdict. Use to review changes before they ship. Do NOT use to fix the findings or to audit a whole codebase (use 04-audit).
+description: Read-only review of a diff along three axes, code quality, behavior versus the plan, and relevancy, into one report with a verdict. Use to review changes before they ship. Do NOT use to fix the findings or to audit a whole codebase.
 argument-hint: review-code | review-functional | review-relevancy
 model: opus
 ---

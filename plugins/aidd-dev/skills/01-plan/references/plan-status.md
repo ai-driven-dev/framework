@@ -9,15 +9,15 @@ The plan's `status` frontmatter field tracks its lifecycle for kanban views. The
 
 | status        | meaning                       | written by                                                        | when                                                              |
 | ------------- | ----------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `pending`     | created, not started          | `01-plan`                                                         | at plan creation                                                 |
-| `in-progress` | implementation started        | implement layer (SDLC `03-implement`; standalone `02-implement`) | when implementation starts                                       |
-| `implemented` | implemented, not yet reviewed | implement layer                                                  | all phases complete / all acceptance criteria ticked            |
-| `reviewed`    | reviewed and approved         | review layer (SDLC `04-review`)                                   | the review passes (approved)                                     |
-| `blocked`     | cannot proceed; needs a human | implement layer                                                  | a blocking condition holds (see the implement skill's blocked reference) |
+| `pending`     | created, not started          | plan creation                                                    | at plan creation                                                 |
+| `in-progress` | implementation started        | the implement step                                               | when implementation starts                                       |
+| `implemented` | implemented, not yet reviewed | the implement step                                               | all phases complete / all acceptance criteria ticked            |
+| `reviewed`    | reviewed and approved         | the review step                                                  | the review passes (approved)                                     |
+| `blocked`     | cannot proceed; needs a human | the implement step                                               | a blocking condition holds                                       |
 
 ## Rules
 
 - Linear: `pending → in-progress → implemented → reviewed`. `blocked` is reachable from any active state.
 - Review reject (`iterate` / `changes-requested`) does NOT set `reviewed`. The plan stays `implemented` while the loop fixes the diff, not the plan.
 - `implemented` ≠ reviewed. Only the review layer sets `reviewed`.
-- The `checker` and `executor` agents never write `status`; only plan creation (`01-plan`) and the orchestration layers do.
+- Workers never write `status`; only plan creation and the orchestration layers do.

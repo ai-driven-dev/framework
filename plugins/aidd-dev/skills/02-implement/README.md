@@ -2,7 +2,7 @@
 
 # 02 - implement
 
-Executes an existing implementation plan phase by phase, as a recipe that runs in the caller's context and never spawns an agent, iterating until every acceptance criterion is satisfied. Tracks status in the plan and phase frontmatter as it goes.
+Executes an existing implementation plan phase by phase, iterating until every acceptance criterion is satisfied. Tracks status in the plan and phase frontmatter as it goes.
 
 ## When to use
 
@@ -27,7 +27,7 @@ Pass the plan path or content as `$ARGUMENTS`. The skill runs three actions in o
 2. **execute**: loops the plan's phases: per phase it sets `status: in-progress` as a runtime marker, codes the phase, asserts it clean, then commits the phase and sets `status: done`; stops at `status: blocked` on a human-only condition.
 3. **finalize**: runs validation, then marks the plan `status: implemented` once every phase is done.
 
-**Commits**: the recipe runs in one context, so it commits the code and its status together, one commit per phase, plus a final `implemented` commit. The `in-progress` marks are runtime-only. One context owning both code and status removes the cross-context revert the old skill-spawns-agent split had to guard against.
+**Commits**: code and status are committed together, one commit per phase, plus a final `implemented` commit. The `in-progress` marks are runtime-only, so the tree is never left dirty at a phase boundary.
 
 ## Outputs
 
@@ -38,7 +38,6 @@ Pass the plan path or content as `$ARGUMENTS`. The skill runs three actions in o
 ## Prerequisites
 
 - A plan file with phases and acceptance criteria, from `01-plan`.
-- A runner for the recipe: a user, or the `executor` agent the SDLC spawns.
 - Project conventions honoured by whoever runs the recipe.
 
 ## Technical details

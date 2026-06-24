@@ -1,6 +1,6 @@
 ---
 name: 02-implement
-description: Write an existing plan's code, phase by phase, until every acceptance criterion holds. Use when a plan exists and needs implementing. Do NOT use to write a plan (01-plan), review a diff (05-review), or fix a bug with no plan (08-debug).
+description: Write an existing plan's code, phase by phase, until every acceptance criterion holds. Use when a plan exists and needs implementing. Do NOT use to write a plan, review a diff.
 argument-hint: prepare | execute | finalize
 ---
 
