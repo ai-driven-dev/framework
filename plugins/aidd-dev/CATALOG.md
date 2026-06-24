@@ -101,7 +101,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [07-ui.md](skills/04-audit/actions/07-ui.md) | - |
 | `assets` | [audit-template.md](skills/04-audit/assets/audit-template.md) | `Codebase audit report template` |
 | `-` | [README.md](skills/04-audit/README.md) | - |
-| `-` | [SKILL.md](skills/04-audit/SKILL.md) | `Read-only codebase audit across quality pillars (code-quality, architecture, security, dependencies, performance, tests, ui). Diagnoses and reports findings; never edits code. Use when the user wants to assess, audit, or health-check a codebase or one dimension of it, then hands off to the act-skills (refactor, test, impeccable) to fix. Do NOT use for fixing the findings (hand off to refactor/test/impeccable), per-PR code review (use 05-review), or validating that a feature works (use 03-assert).` |
+| `-` | [SKILL.md](skills/04-audit/SKILL.md) | `Read-only codebase audit across seven quality pillars (code-quality, architecture, security, dependencies, performance, tests, ui) into one ranked findings report. Use to assess or health-check a codebase, or one pillar of it. Do NOT use to fix the findings, to review a single change, or to validate that a feature works.` |
 
 #### `skills/05-review`
 
@@ -122,7 +122,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-test.md](skills/06-test/actions/01-test.md) | - |
 | `actions` | [02-test-journey.md](skills/06-test/actions/02-test-journey.md) | - |
 | `-` | [README.md](skills/06-test/README.md) | - |
-| `-` | [SKILL.md](skills/06-test/SKILL.md) | `Write and iterate on tests until they pass, and validate user journeys end-to-end in the browser.` |
+| `-` | [SKILL.md](skills/06-test/SKILL.md) | `Write and iterate tests until they pass, or validate a user journey end-to-end in the browser. Use to add coverage or walk a flow ("write tests", "what's untested", "test the journey", "end-to-end"). Do NOT use to audit overall test health (use 04-audit) or to debug a known failure.` |
 
 #### `skills/07-refactor`
 
@@ -133,7 +133,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-cleanup.md](skills/07-refactor/actions/03-cleanup.md) | - |
 | `actions` | [04-architecture.md](skills/07-refactor/actions/04-architecture.md) | - |
 | `-` | [README.md](skills/07-refactor/README.md) | - |
-| `-` | [SKILL.md](skills/07-refactor/SKILL.md) | `Improve code without breaking behavior across four axes - cleanup (clean-code + tech debt), performance, security, architecture. Scans and fixes, or fixes the findings of an audit report pushed in by the caller. Use when the user wants to refactor, clean up, optimize, harden, or restructure code. Do NOT use for read-only diagnosis (use 04-audit), adding tests (use 06-test), or UI redesign (use the impeccable skill).` |
+| `-` | [SKILL.md](skills/07-refactor/SKILL.md) | `Improve code across four axes (cleanup, performance, security, architecture), scanning and fixing or applying a pushed audit report's findings. Use to refactor, clean up, optimize, harden, or restructure code. Do NOT use for read-only diagnosis, to add tests, or to redesign a UI.` |
 
 #### `skills/08-debug`
 
@@ -145,7 +145,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [task-template.md](skills/08-debug/assets/task-template.md) | `Task tracking system to ensure all tasks are categorized and addressed` |
 | `-` | [README.md](skills/08-debug/README.md) | - |
 | `references` | [mermaid-conventions.md](skills/08-debug/references/mermaid-conventions.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` |
-| `-` | [SKILL.md](skills/08-debug/SKILL.md) | `Reproduce and fix bugs systematically using test-driven workflow, root cause analysis, and hypothesis validation.` |
+| `-` | [SKILL.md](skills/08-debug/SKILL.md) | `Reproduce and fix a known bug end to end, or find an unknown root cause through hypothesis validation. Use to fix a bug, diagnose why something breaks, or reopen a stuck investigation ("fix this bug", "find the root cause", "I'm stuck"). Do NOT use to add a feature, refactor working code, or review a diff.` |
 
 #### `skills/09-for-sure`
 
@@ -154,9 +154,11 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-init-tracking.md](skills/09-for-sure/actions/01-init-tracking.md) | - |
 | `actions` | [02-auto-accept.md](skills/09-for-sure/actions/02-auto-accept.md) | - |
 | `actions` | [03-autonomous-loop.md](skills/09-for-sure/actions/03-autonomous-loop.md) | - |
+| `assets` | [autonomous-loop-worker-prompt.md](skills/09-for-sure/assets/autonomous-loop-worker-prompt.md) | - |
 | `assets` | [plan-template.md](skills/09-for-sure/assets/plan-template.md) | `For Sure autonomous-loop tracking file. Extends the 01-plan format with `success_condition` and `iteration` (For-Sure-only), which the loop runs and increments.` |
 | `-` | [README.md](skills/09-for-sure/README.md) | - |
-| `-` | [SKILL.md](skills/09-for-sure/SKILL.md) | `Iterative agent loop that tracks attempts and retries until a success condition is met. Use when the user says "for sure", "make sure", "keep trying until", "loop until done", "don't stop until", or needs guaranteed completion of a task with explicit success criteria.` |
+| `references` | [autonomous-loop-log-format.md](skills/09-for-sure/references/autonomous-loop-log-format.md) | - |
+| `-` | [SKILL.md](skills/09-for-sure/SKILL.md) | `Iterative agent loop that tracks attempts and retries until a runnable success condition passes. Use when the user says "for sure", "keep trying until", "loop until done", "don't stop until", or needs guaranteed completion against an explicit success command. Do NOT use for a one-shot task, a normal supervised build, or when success cannot be checked by a command.` |
 
 #### `skills/10-todo`
 
