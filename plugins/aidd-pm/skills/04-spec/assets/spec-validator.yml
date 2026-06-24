@@ -1,4 +1,4 @@
-# Checklist used by the reviewer agent to validate a spec.
+# Checklist a spec is validated against.
 # Each criterion is independently scored. Required criteria must be `fulfilled` for the spec to pass.
 
 criteria:

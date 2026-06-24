@@ -1,46 +1,31 @@
 ---
 name: 04-spec
-description: Generate or refine a project spec from a free-form human request, an existing PRD, or reviewer findings. Use when the user says "draft spec", "spec for X", "refine the spec", "generate spec from prd", "/spec", or when an orchestrator needs a normalized contract before planning. Do NOT use for writing source code, drafting a full PRD, or modifying a validated and locked spec.
+description: Generate or refine a spec, the immutable contract behind a feature, from a free-form request, an existing PRD, or review findings. Use to draft a spec ("spec for X", "/spec") or to refine one from findings. Do NOT use to write code, a full PRD, or to change a locked spec.
 argument-hint: build | refine
 ---
 
-# Spec
+# Skill: spec
 
-Generates or refines the immutable contract between human intent and downstream agents.
+Generate or refine the immutable contract for a feature: its target, hard constraints, non-goals, and done-when.
 
-## Available actions
+## Actions
 
-| #   | Action    | Role                                                              | Input                                  |
-| --- | --------- | ----------------------------------------------------------------- | -------------------------------------- |
-| 01  | `build`   | Create a fresh spec from a free-form request or an existing PRD    | request or prd_path, feature_name      |
-| 02  | `refine`  | Rewrite an existing spec to address reviewer findings              | existing_spec, findings                |
+| #   | Action   | Role                                                  | Input                        |
+| --- | -------- | ---------------------------------------------------- | ---------------------------- |
+| 01  | `build`  | Draft a fresh spec from a request or an existing PRD | a request or a PRD path      |
+| 02  | `refine` | Rewrite an existing spec to address review findings  | a spec path and the findings |
 
-## Default flow
-
-Non-sequential. The router dispatches based on inputs:
-
-- `existing_spec` and `findings` present -> `refine`
-- `request` or `prd_path` present -> `build`
+Dispatch by input: a spec path with findings runs `refine`; a request or PRD path runs `build`.
 
 ## Transversal rules
 
-- Never invent missing information. Mark every gap as `TBD: <precise question>` instead of guessing.
-- If the request is too vague to draft a useful spec, return early and ask the user to brainstorm the request first; do not fabricate intent.
-- Never modify a spec that has been validated and locked.
-- The spec is the contract; it is immutable once validated.
-- Keep the spec readable: clear section headers, bulleted criteria, explicit non-goals.
-- Never include implementation detail (libraries, patterns, file layout); those belong to the plan.
-- Do not self-validate. The caller spawns a reviewer with `@assets/spec-validator.yml`; findings come back through the `refine` action for the next iteration.
-
-## References
-
-- None.
+- Never invent. Mark every gap as `TBD: <precise question>` rather than guessing. When a request is too vague to draft anything useful, stop and ask for a clearer one.
+- The spec holds intent, never implementation. No library, pattern, or file layout; those belong to the plan.
+- Keep it readable: clear section headers, bulleted criteria, explicit non-goals.
+- Output: one `spec.md` in the feature folder (`aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`), from `@assets/spec-template.md`. Reuse the folder when it exists.
+- Immutable once validated: never rewrite a spec that has been locked.
 
 ## Assets
 
-- `@assets/spec-template.md`: canonical structure of a spec.
-- `@assets/spec-validator.yml`: checklist used by the reviewer to validate a spec.
-
-## External data
-
-- None.
+- `assets/spec-template.md`: the spec's structure.
+- `assets/spec-validator.yml`: the checklist a spec is validated against.

@@ -1,35 +1,25 @@
 # 01 - Build
 
-Create a fresh spec from a free-form request or by extracting fields from an existing PRD.
+Draft a fresh spec from a free-form request, or by lifting fields from an existing PRD.
 
-## Inputs
+## Input
 
-```yaml
-request: <free-form human description>   # required when prd_path is absent
-prd_path: <path to an existing PRD file> # required when request is absent
-feature_name: <kebab-case slug>          # required; derived from the request when absent
-```
+A free-form request, or a path to an existing PRD. A feature name for the folder, derived from the request when absent.
 
-## Outputs
+## Output
 
-```yaml
-spec_path: aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature_name>/spec.md
-status: draft
-notes: <ambiguities, assumptions made, questions for the human>
-```
+The path to `spec.md` in the feature folder, drafted from the template, with the ambiguities and assumptions noted.
 
 ## Process
 
-1. **Source resolution**. Pick first match:
-   - `prd_path` provided -> parse the PRD, lift target, hard constraints, non-goals, and done-when into the matching template sections; drop libraries, patterns, and file-layout content
-   - `request` provided -> use `assets/spec-template.md` directly and map the request onto its sections
-2. **Mark gaps**. Replace any missing required field with `TBD: <precise question>`. Never guess.
-3. **Section check**. Confirm every section listed in `assets/spec-validator.yml` is present.
-4. **Write**. Resolve the feature folder: reuse the one for this feature when it already exists under `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature_name>/`, otherwise create it. Save the spec there as `spec.md`.
-5. **Return** the structured Outputs block with `status: draft`.
+1. **Source.** From a PRD path, lift its target, hard constraints, non-goals, and done-when into the template, dropping any implementation detail. From a request, map it onto the template sections directly.
+2. **Gaps.** Replace any missing required field with `TBD: <precise question>`. Never guess.
+3. **Check.** Confirm every section the validator requires is present.
+4. **Write.** Resolve the feature folder, reusing it when it exists, and save the spec there as `spec.md`.
+5. **Return.** Surface the spec path and the notes.
 
 ## Test
 
-- **File saved**: `spec_path` exists on disk after the action completes.
-- **All sections**: the file contains every section listed in `assets/spec-validator.yml`.
-- **No implementation**: the file has no library names, framework patterns, or source-file layout.
+- `spec.md` exists in the feature folder.
+- It contains every section listed in `@../assets/spec-validator.yml`.
+- It carries no library name, framework pattern, or source-file layout.
