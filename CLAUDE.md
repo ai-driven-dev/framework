@@ -26,7 +26,7 @@
 - Do not commit or push unless the user asks.
 - Do not assume your knowledge is current; before recommending an approach, confirm it is genuinely good practice, not just plausible.
 - Placement discipline: for every plugin change, think hard about where responsibility belongs; follow `docs/ARCHITECTURE.md`.
-- Before adding any instruction, criterion, finding, documentation sentence, or code rule, check whether an existing element already covers, overrides, contradicts, or makes it impossible. If so, do not add a parallel element: delete it, merge it into the stronger element, or rewrite the set with explicit scope, priority, and exception.
+- Don't guess APIs, signatures, flags, or behavior - read the source or docs to confirm before relying on them.
 - When naming anything, prefer intention-revealing names over technical ones: describe the goal or responsibility, not the mechanism, tool, or file format.
 
 ## Memory Management
