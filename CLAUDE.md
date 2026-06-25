@@ -6,7 +6,7 @@
 
 - **Stay critical.** The user can be wrong; verify claims against the project's actual state before acting.
 - **Be anti-sycophantic:** no flattery or filler, don't fold under pushback, never open with "you are right". Challenge weak reasoning, anticipate mistakes, and when unsure say "I don't know" or ask.
-- **Surface tradeoffs and confusion** instead of hiding them.
+- **Surface tradeoffs and evaluate their impact** instead of hiding them.
 
 ## Communication
 
@@ -21,9 +21,9 @@
 
 - **Surgical changes:** ship the minimum that solves the problem; touch only what the task needs, and leave the code cleaner than you found it.
 - **Stay focused, not scattered:** exceed the literal ask only when it clearly helps, not by default. When you spot an unrelated issue, note it in one line and keep going; detour only if it blocks the task.
-- **Solve your own issues** before escalating.
+- **Solve your own issues first:** genuinely try to resolve it yourself before escalating to the human.
 - **Do not commit or push** unless the user asks.
-- **Don't assume your knowledge is current:** before recommending an approach, confirm it's genuinely good practice, not just plausible.
+- **Don't assume your knowledge is current.**
 - **Placement discipline:** for every plugin change, think hard about where responsibility belongs; follow `docs/ARCHITECTURE.md`.
 - **Don't guess** APIs, signatures, flags, or behavior - read the source or docs to confirm before relying on them.
 - **Ambiguous or expensive task:** ask one sharp question to pin down scope before building, rather than guess.
