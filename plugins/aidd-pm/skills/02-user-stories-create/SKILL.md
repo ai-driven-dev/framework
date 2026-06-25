@@ -28,4 +28,4 @@ Single action skill. The router dispatches to `create-user-stories` whenever a s
 
 ## Assets
 
-- `@assets/user-story-template.md`: User story body template.
+- `assets/user-story-template.md`: User story body template.

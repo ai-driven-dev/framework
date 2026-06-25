@@ -33,4 +33,4 @@ Run the one pillar named, or offer all seven when the request is unscoped.
 
 ## Assets
 
-- `@assets/audit-template.md`: the report structure both run modes fill.
+- `assets/audit-template.md`: the report structure both run modes fill.

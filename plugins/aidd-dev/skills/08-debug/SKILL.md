@@ -27,8 +27,8 @@ Pick the one action matching the intent; never default to `01`. Triggers like "r
 
 ## Assets
 
-- `@assets/task-template.md`: the per-hypothesis tracking file the debug action fills.
+- `assets/task-template.md`: the per-hypothesis tracking file the debug action fills.
 
 ## References
 
-- `@references/mermaid-conventions.md`: the project's Mermaid conventions for the action-path flowchart.
+- `references/mermaid-conventions.md`: the project's Mermaid conventions for the action-path flowchart.

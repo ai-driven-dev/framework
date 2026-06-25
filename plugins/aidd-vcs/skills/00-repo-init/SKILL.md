@@ -28,4 +28,4 @@ Chain `01 → 02`, testing each before the next. The router runs `init` alone fo
 
 ## Assets
 
-- `@assets/CONTRIBUTING.md`: the project-root `CONTRIBUTING.md` template.
+- `assets/CONTRIBUTING.md`: the project-root `CONTRIBUTING.md` template.

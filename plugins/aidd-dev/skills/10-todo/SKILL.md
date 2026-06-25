@@ -10,5 +10,5 @@ Turn one prompt into N independent todos, implement them in parallel, report a t
 ## Actions
 
 ```markdown
-@actions/01-todo.md
+actions/01-todo.md
 ```

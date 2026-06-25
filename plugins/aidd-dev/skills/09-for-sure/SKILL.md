@@ -28,9 +28,9 @@ Run `01` interactively; it spawns `03`, which runs unattended under the `02` aut
 
 ## Assets
 
-- `@assets/plan-template.md`: the tracking file format (frontmatter, phases, acceptance criteria, Log).
-- `@assets/autonomous-loop-worker-prompt.md`: the prompt the loop spawns each per-step worker with.
+- `assets/plan-template.md`: the tracking file format (frontmatter, phases, acceptance criteria, Log).
+- `assets/autonomous-loop-worker-prompt.md`: the prompt the loop spawns each per-step worker with.
 
 ## References
 
-- `@references/autonomous-loop-log-format.md`: the Log entry format the loop appends per attempt.
+- `references/autonomous-loop-log-format.md`: the Log entry format the loop appends per attempt.
