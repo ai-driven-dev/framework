@@ -1,6 +1,6 @@
 ---
 name: 04-shadow-areas
-description: Scan a markdown artifact (idea, user stories, PRD, spec) for blind spots and emit a structured shadow report grouped by category and sorted by severity. Use to find gaps, missing parts, or what's missing in a written artifact; not for interactive Q&A (use aidd-refine:01-brainstorm) or code review.
+description: Scan a markdown artifact (idea, user stories, PRD, spec) for blind spots and emit a structured shadow report grouped by category and sorted by severity. Use to find gaps, missing parts, or what's missing in a written artifact; not for interactive Q&A or code review.
 argument-hint: detect | render-report | diff
 ---
 

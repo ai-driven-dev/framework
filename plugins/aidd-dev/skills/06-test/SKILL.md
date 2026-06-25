@@ -1,6 +1,6 @@
 ---
 name: 06-test
-description: Write and iterate tests until they pass, or validate a user journey end-to-end in the browser. Use to add coverage or walk a flow ("write tests", "what's untested", "test the journey", "end-to-end"). Do NOT use to audit overall test health (use 04-audit) or to debug a known failure.
+description: Write and iterate tests until they pass, or validate a user journey end to end in the browser. Use when the user wants to add coverage, find what's untested, or walk a flow in the browser. Not for auditing overall test health or debugging a known failure.
 argument-hint: test | test-journey
 model: sonnet
 ---

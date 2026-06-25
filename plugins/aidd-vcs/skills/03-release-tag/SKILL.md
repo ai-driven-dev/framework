@@ -1,6 +1,6 @@
 ---
 name: 03-release-tag
-description: Cut a semver release with annotated tag and release notes. Use when the user says "release", "tag", "tag this release", "bump version", "release v1.2.0", "cut a release", or invokes `/release-tag`. Do NOT use for plain commits without a tag, opening pull requests, pushing a branch only, or amending existing tags.
+description: Cut a semver release with an annotated tag and release notes. Use when the user wants to release, tag a release, bump the version, or cut a version. Not for a plain commit, a pull request, or amending an existing tag.
 ---
 
 # Release Tag

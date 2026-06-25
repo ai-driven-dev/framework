@@ -13,14 +13,14 @@ The changes applied (file, one-line summary, severity, clean-code or tech-debt),
 ## Process
 
 1. **Source.** When an audit report is pushed, take its code-quality-axis findings as the fix list and skip the scan. Otherwise scan the scope with the cleanup lens and rate each issue with the shared severity scale.
-2. **Clean code.** Apply the clean-code fixes from the list:
+2. **Clean.** Apply the clean-code fixes from the list:
    - Rename symbols for clarity (misleading names, abbreviations, single-letter variables outside tight loops).
    - Extract functions or modules where a block does more than one thing.
    - Deduplicate repeated logic.
    - Raise abstraction to replace low-level mechanics with intention-revealing calls.
    - Replace magic numbers and inline strings with named constants.
    - Remove dead, misleading, or out-of-date comments, adding one only where intent is genuinely non-obvious.
-3. **Tech debt.** Apply the tech-debt fixes from the list:
+3. **Debt.** Apply the tech-debt fixes from the list:
    - Delete dead code and unused exports.
    - Reduce cyclomatic complexity with early returns, guard clauses, and helper functions.
    - Shorten oversized files and functions to a single responsibility.

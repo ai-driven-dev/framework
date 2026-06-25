@@ -1,6 +1,6 @@
 ---
 name: 03-prd
-description: Generate a structured Product Requirements Document from a feature description or user stories, validated with the user before save. Use when the user says "prd", "draft prd", "write prd", "product requirements for X", "generate a prd", or invokes `/prd`. Do NOT use for writing user stories, drafting a technical implementation plan, or writing source code.
+description: Generate a structured Product Requirements Document from a need, idea, or brainstorm, confirmed before save. Use when the user wants to draft, write, or generate a PRD or product requirements from a problem or idea. Not for breaking requirements into user stories or a technical implementation plan.
 ---
 
 # PRD

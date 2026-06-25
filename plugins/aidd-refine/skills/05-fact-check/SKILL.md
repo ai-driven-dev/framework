@@ -1,6 +1,6 @@
 ---
 name: 05-fact-check
-description: Verify factual claims in a text against authoritative sources and rewrite it with footnote citations, hedging anything unconfirmed. Use to fact-check, verify a claim, or cite sources on explicit request; not for judging code logic or clarifying vague requirements (use aidd-refine:01-brainstorm).
+description: Verify factual claims in a text against authoritative sources and rewrite it with footnote citations, hedging anything unconfirmed. Use to fact-check, verify a claim, or cite sources on explicit request; not for judging code logic or clarifying vague requirements.
 argument-hint: identify-claims | verify | report
 ---
 

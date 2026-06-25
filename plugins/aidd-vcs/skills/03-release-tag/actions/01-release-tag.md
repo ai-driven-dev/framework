@@ -13,7 +13,7 @@ The created `v<semver>` tag, its bump commit sha, and the release URL, with the 
 ## Process
 
 1. **Current.** Read the version from a version-manager file (`package.json`, `pyproject.toml`, `Cargo.toml`) when present, else `1.0.0`.
-2. **Latest tag.** Use `git tag --sort=-version:refname | head -1` when non-empty, else treat the latest as `v1.0.0`.
+2. **Latest.** Use `git tag --sort=-version:refname | head -1` when non-empty, else treat the latest as `v1.0.0`.
 3. **Collect.** Run `git log --oneline "<latest>..HEAD"` for the change list.
 4. **Compute.** Use the provided version when given. Otherwise bump major on a `BREAKING CHANGE`, minor on any `feat`, else patch.
 5. **Draft.** Fill `@../assets/release-template.md` with the change list, applying any note overrides.

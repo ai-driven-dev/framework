@@ -1,6 +1,6 @@
 ---
 name: 01-bootstrap
-description: Imagine and validate the technical architecture of a new SaaS through interactive Q&A, candidate-stack comparison, multi-agent audit, and an INSTALL.md output. Use when starting a new SaaS project, choosing a stack, designing the architecture pattern (monolith vs microservices vs serverless), or producing a project's INSTALL.md. Do NOT use for editing an existing project's stack, database schema design, or scaffolding actual files (this skill produces docs only, no code).
+description: Design and validate a new SaaS's technical architecture into an INSTALL.md, through Q&A, stack comparison, and audit. Use when the user is starting a new project, choosing a stack, or picking an architecture pattern. Not for editing an existing project's stack or scaffolding code; it produces docs only.
 argument-hint: gather-needs | propose-candidates | audit-candidates | pick-and-design | write-install-md
 ---
 

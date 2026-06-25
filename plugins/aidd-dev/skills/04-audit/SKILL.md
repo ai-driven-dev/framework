@@ -1,6 +1,6 @@
 ---
 name: 04-audit
-description: Read-only codebase audit across seven quality pillars (code-quality, architecture, security, dependencies, performance, tests, ui) into one ranked findings report. Use to assess or health-check a codebase, or one pillar of it. Do NOT use to fix the findings, to review a single change, or to validate that a feature works.
+description: Audit a codebase read-only across seven quality pillars into one ranked findings report. Use when the user wants to assess, health-check, or audit a codebase or one pillar of it. Not for fixing the findings, reviewing a single change, or checking that a feature works.
 argument-hint: code-quality | architecture | security | dependencies | performance | tests | ui
 model: opus
 ---

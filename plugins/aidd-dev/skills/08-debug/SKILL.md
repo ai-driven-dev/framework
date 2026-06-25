@@ -1,6 +1,6 @@
 ---
 name: 08-debug
-description: Reproduce and fix a known bug end to end, or find an unknown root cause through hypothesis validation. Use to fix a bug, diagnose why something breaks, or reopen a stuck investigation ("fix this bug", "find the root cause", "I'm stuck"). Do NOT use to add a feature, refactor working code, or review a diff.
+description: Reproduce and fix a known bug end to end, or find an unknown root cause through hypothesis validation. Use when the user wants to fix a bug, find why something breaks, or reopen a stuck investigation. Not for building a feature, refactoring working code, or reviewing a diff.
 argument-hint: reproduce | debug | reflect-issue
 model: opus
 ---

@@ -1,6 +1,6 @@
 ---
 name: 01-commit
-description: Create an atomic git commit with a conventional message, optionally pushing. Use to commit changes ("commit", "/commit push"). Do NOT use to amend, rebase, open a PR, or tag a release.
+description: Create an atomic git commit with a conventional message, optionally pushing. Use when the user wants to commit changes, optionally pushing the branch. Not for amending, rebasing, opening a pull request, or tagging a release.
 ---
 
 # Commit

@@ -15,7 +15,7 @@ The opened pull request (its URL), the fix branch, the failing test added before
 1. **Ticket.** Create a ticket in the configured ticketing tool with a short, descriptive title.
 2. **Branch.** Create a fix branch dedicated to this bug.
 3. **Reproduce.** Confirm the symptom, capture the minimal trigger, and pin down the root-cause hypothesis.
-4. **Failing test.** Write a test that demonstrates the bug.
+4. **Test.** Write a test that demonstrates the bug.
 5. **Commit.** Commit the failing test, linking the issue id.
 6. **Fix.** Implement the minimal fix, scoped to the bug, with no drive-by refactors.
 7. **Verify.** Confirm the new test passes, then run the full suite.

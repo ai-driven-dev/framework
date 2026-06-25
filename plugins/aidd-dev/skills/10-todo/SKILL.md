@@ -1,6 +1,6 @@
 ---
 name: 10-todo
-description: Split the user prompt into independent todos, run one executor agent per todo in parallel (each refines its todo first), and report a minimal table. Use when the user says "todo", "/todo", or asks to fan out a multi-part request into parallel implementations.
+description: Split the user prompt into independent todos, run one executor agent per todo in parallel (each refines its todo first), and report a minimal table. Use when the user says "todo" or asks to fan out a multi-part request into parallel implementations.
 ---
 
 # Todo

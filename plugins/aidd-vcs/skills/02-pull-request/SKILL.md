@@ -1,6 +1,6 @@
 ---
 name: 02-pull-request
-description: Create a draft pull or merge request from the current branch, in whatever VCS tool the project uses. Use to open a PR/MR ("open a pr", `/pull-request`). Do NOT use to commit, push, or merge a branch.
+description: Create a draft pull or merge request from the current branch, in whatever VCS tool the project uses. Use when the user wants to open a pull or merge request. Not for committing, pushing, or merging a branch.
 ---
 
 # Pull Request

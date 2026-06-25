@@ -1,6 +1,6 @@
 ---
 name: 09-for-sure
-description: Iterative agent loop that tracks attempts and retries until a runnable success condition passes. Use when the user says "for sure", "keep trying until", "loop until done", "don't stop until", or needs guaranteed completion against an explicit success command. Do NOT use for a one-shot task, a normal supervised build, or when success cannot be checked by a command.
+description: Run an iterative agent loop that tracks attempts and retries until a runnable success condition passes. Use when the user says "for sure", "keep trying until", or "loop until done", or wants guaranteed completion against an explicit success command. Not for a one-shot task or when success cannot be checked by a command.
 argument-hint: init-tracking | auto-accept | autonomous-loop
 ---
 

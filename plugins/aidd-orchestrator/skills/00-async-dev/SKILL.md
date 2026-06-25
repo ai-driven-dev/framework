@@ -1,6 +1,6 @@
 ---
 name: 00-async-dev
-description: Single entry point for the async-dev pipeline (setup, run, review). Hybrid router decides which sub-flow to execute from $ARGUMENTS keyword (`setup` / `run` / `review`), trigger source (label `to-implement` / `to-review`, comment `@claude /implement` / `/review`), repo state (workflow + config presence, PR linked to issue), or natural-language intent. Use when the user says "set up async dev", "run async dev on issue #N", "address review on PR #N", "/async-dev", "claude on issues", or when triggered by a webhook with the matching labels or comments. Do NOT use for plain status checks on the async pipeline or for SDLC orchestration unrelated to issue/PR automation.
+description: Drive the async-dev pipeline from a single entry point: setup, run, or review. Use when the user wants to install async dev, implement a ready issue, or address PR review comments, or on a matching webhook trigger. Not for plain pipeline status checks.
 argument-hint: collect-comments | detect-stop | fix-iteration | finalize | poll-ready | resolve-deps | acquire-lock | check-sdlc | delegate-sdlc | write-audit | detect-context | ask-config | generate-workflow | generate-local-script | write-config | bootstrap-labels | install-user-scope-plugins | configure-remote-secrets | bootstrap-scheduling | commit-and-push | smoke-test
 ---
 

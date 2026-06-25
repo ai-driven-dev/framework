@@ -16,7 +16,7 @@ The hotspots addressed and the changes applied (file, one-line summary, severity
 2. **Order.** List the steps to address each hotspot, ordered by expected gain.
 3. **Apply.** Refactor the selected region. Preserve readability and logic, keep inputs and outputs identical.
 4. **Verify.** Confirm behavior is unchanged via tests, type checks, or a side-by-side run.
-5. **Follow up.** Propose three follow-up optimizations not yet applied, sorted by importance.
+5. **Followup.** Propose three follow-up optimizations not yet applied, sorted by importance.
 
 ## Test
 

@@ -1,6 +1,6 @@
 ---
 name: 01-brainstorm
-description: Clarify a vague idea through deep back-and-forth questioning until it is precise enough to act on. Works at any level, functional, technical, or mixed. Use when the user surfaces a half-formed idea, a fuzzy feature, a technical question, or an under-specified request, or asks to brainstorm, clarify, or refine before committing. Keeps probing and following each answer's threads until no real ambiguity remains or the user is satisfied. Not for analytically scanning a written artifact for gaps (use aidd-refine:04-shadow-areas), critiquing finished work (use aidd-refine:02-challenge), or any implementation, planning, or code.
+description: Clarify a vague idea through deep back-and-forth questioning until it is precise enough to act on. Works at any level, functional, technical, or mixed. Use when the user surfaces a half-formed idea, a fuzzy feature, a technical question, or an under-specified request, or asks to brainstorm, clarify, or refine before committing. Keeps probing and following each answer's threads until no real ambiguity remains or the user is satisfied. Not for analytically scanning a written artifact for gaps, critiquing finished work, or any implementation, planning, or code.
 argument-hint: capture | probe | integrate | finalize
 ---
 
