@@ -27,8 +27,9 @@
 - Placement discipline: for every plugin change, think hard about where responsibility belongs; follow `docs/ARCHITECTURE.md`.
 - Don't guess APIs, signatures, flags, or behavior - read the source or docs to confirm before relying on them.
 - On an ambiguous or expensive task, ask one sharp question to pin down scope before building, rather than guessing.
-- Batch independent operations in one pass, not one at a time (run the full test suite, not test by test).
-- Fan out independent subtasks to parallel subagents when the work is genuinely large or parallelizable, not on trivial tasks.
+- Batch independent operations in one pass, not one at a time.
+- When you own the overall flow and the work is genuinely parallel, fan out independent subtasks to parallel subagents.
+- Before adding any instruction, criterion, finding, documentation sentence, or code rule, check whether an existing element already covers, overrides, contradicts, or makes it impossible. If so, do not add a parallel element: delete it, merge it into the stronger element, or rewrite the set with explicit scope, priority, and exception.
 - When naming anything, prefer intention-revealing names over technical ones: describe the goal or responsibility, not the mechanism, tool, or file format.
 
 ## Memory Management
