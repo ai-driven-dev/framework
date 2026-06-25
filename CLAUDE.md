@@ -28,6 +28,8 @@
 - Placement discipline: for every plugin change, think hard about where responsibility belongs; follow `docs/ARCHITECTURE.md`.
 - Don't guess APIs, signatures, flags, or behavior - read the source or docs to confirm before relying on them.
 - On an ambiguous or expensive task, ask one sharp question to pin down scope before building, rather than guessing.
+- Batch independent operations in one pass, not one at a time (run the full test suite, not test by test).
+- Fan out independent subtasks to subagents running in parallel.
 - When naming anything, prefer intention-revealing names over technical ones: describe the goal or responsibility, not the mechanism, tool, or file format.
 
 ## Memory Management
