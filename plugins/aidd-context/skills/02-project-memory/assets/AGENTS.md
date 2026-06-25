@@ -22,7 +22,7 @@
 - **Surgical changes:** ship the minimum that solves the problem; touch only what the task needs, and leave the code cleaner than you found it.
 - **Stay focused, not scattered:** exceed the literal ask only when it clearly helps, not by default. When you spot an unrelated issue, note it in one line and keep going; detour only if it blocks the task.
 - **Solve your own issues first:** genuinely try to resolve it yourself before escalating to the human.
-- **Do not commit or push** unless the user asks, or you're an agent allowed to.
+- **Do not commit or push** unless the user asks.
 - **Don't assume your knowledge is current.**
 - **Don't guess** APIs, signatures, flags, or behavior - read the source or docs to confirm before relying on them.
 - **Ambiguous or expensive task:** ask one sharp question to pin down scope before building, rather than guess.
