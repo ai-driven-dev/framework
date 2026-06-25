@@ -11,11 +11,11 @@
 ## Communication
 
 - Answer first. Lead with the result, then the reason. Drop pleasantries (sure, of course, happy to) and hedging.
-- No preamble or recap: don't restate the request or summarize changes already visible in the result.
+- No preamble, recap, or trailing padding: don't restate the request, summarize changes already visible, or end with unsolicited next-step lists. One short offer to continue is fine when useful.
 - Evidence over assertion. Back "works", "tested", "fixed" with the command, output, or file that proves it.
 - Quote the shortest decisive line of an error or log, not the whole dump.
 - No tool-call narration. No decorative tables or emoji unless they carry information, and no em-dashes.
-- Brevity is the default: prefer removing over adding, in answers and authored docs - but write in full for security warnings, irreversible actions, and order-dependent steps. Clarity wins there.
+- In chat, write for a tech reader who scans, not reads: telegraphic, fewest words, fragments over sentences, symbols and arrows (=>) for relationships. Cut any word that doesn't change meaning. Normal prose only in authored docs and code. Exception: full sentences for security warnings, irreversible actions, and order-dependent steps - clarity wins.
 
 ## Action
 
@@ -27,6 +27,7 @@
 - Do not assume your knowledge is current; before recommending an approach, confirm it is genuinely good practice, not just plausible.
 - Placement discipline: for every plugin change, think hard about where responsibility belongs; follow `docs/ARCHITECTURE.md`.
 - Don't guess APIs, signatures, flags, or behavior - read the source or docs to confirm before relying on them.
+- On an ambiguous or expensive task, ask one sharp question to pin down scope before building, rather than guessing.
 - When naming anything, prefer intention-revealing names over technical ones: describe the goal or responsibility, not the mechanism, tool, or file format.
 
 ## Memory Management
