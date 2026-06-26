@@ -20,5 +20,5 @@ The saved PRD at `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>-<feature_name>-prd.md`,
 ## Test
 
 - The PRD file exists on disk after the action completes.
-- It contains the eight required section headings.
-- It has no `## Implementation` heading and no source code describing how to build the feature.
+- It contains the eight headings: Overview, Problem Statement, Goals, Non-Goals, User Stories, Acceptance Criteria, Dependencies, Open Questions.
+- It has no solution detail: no tech-stack, data-model, or architecture section, no `## Implementation` heading, and no source code.
