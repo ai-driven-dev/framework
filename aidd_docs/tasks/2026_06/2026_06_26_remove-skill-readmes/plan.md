@@ -1,6 +1,6 @@
 ---
 objective: "Remove substantive per-skill README files and standardize direct skill README.md entries as symlinks to their plugin-level README.md."
-status: implemented
+status: reviewed
 ---
 
 # Plan: Remove Skill READMEs
