@@ -41,7 +41,7 @@ plugins/aidd-example/
 ├── skills/
 │   └── 01-hello/
 │       ├── SKILL.md
-│       ├── README.md
+│       ├── README.md -> SKILL.md
 │       └── actions/
 │           └── 01-greet.md
 ├── agents/               # optional
@@ -97,7 +97,13 @@ Run action `01-greet` and return its message.
 
 ### `skills/01-hello/README.md`
 
-Mirror the sibling pattern: title, paragraph, When to use, When NOT to use, How to invoke, Outputs, Prerequisites, Technical details (link to SKILL.md). ~30-50 lines.
+Create this as a local symlink to the skill file:
+
+```sh
+ln -s SKILL.md plugins/aidd-example/skills/01-hello/README.md
+```
+
+Do not write standalone per-skill README prose. Keep execution details in `SKILL.md`, `actions/`, `references/`, and `assets/`.
 
 ### `skills/01-hello/actions/01-greet.md`
 
@@ -166,7 +172,7 @@ Once the PR merges to `main`, `release-please` will propose a release PR for you
 
 - English only in committed prose.
 - No em-dash characters in text (hyphen instead).
-- No cross-plugin references in skill descriptions or READMEs.
+- No cross-plugin references in skill descriptions or plugin README prose.
 - One sentence per `Use when ... / Do NOT use for ...` cue in `description` frontmatter.
 - A skill's `name:` is the **folder slug** (`01-hello`), not a prefixed id. The **invocation** token is `<plugin>:<folder>` with a single colon, e.g. `aidd-example:01-hello`.
 

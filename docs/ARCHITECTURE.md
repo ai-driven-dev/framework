@@ -63,7 +63,7 @@ plugins/<plugin>/
 ├── skills/                # router-based skills
 │   └── <NN>-<name>/
 │       ├── SKILL.md        # contract (name, description, actions table)
-│       ├── README.md       # human-facing skill landing
+│       ├── README.md       # symlink to SKILL.md
 │       ├── actions/        # atomic actions invoked by the router
 │       ├── assets/         # templates and static files
 │       └── references/     # extended docs the skill links into

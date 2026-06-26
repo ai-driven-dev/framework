@@ -21,9 +21,15 @@ A table for the user, one row per action: name, test, status (pass, fail, or ski
    Then have it run the process and the test, and report pass or fail with the cause.
 2. **Record.** Capture the name, the test, and the status per action.
 3. **Fix.** On a fail, fix the cause for real, patch the action on disk, and re-run in a fresh context until it passes.
-4. **Report.** Deliver the table, even when all pass.
+4. **Symlink.** For plugin-source skills only, verify the direct skill README convention:
+   - `README.md` in the skill root is a symlink.
+   - Its target is exactly `SKILL.md`.
+   - Its resolved path is the skill's own `SKILL.md`.
+   Host-project skills do not need a README.
+5. **Report.** Deliver the table, even when all pass.
 
 ## Test
 
 - One table covers every action, with name, test, and status.
 - Each row that passed after a fix has its source modified on disk.
+- Plugin-source validation fails if the direct skill `README.md` is a regular file or points anywhere other than `SKILL.md`.

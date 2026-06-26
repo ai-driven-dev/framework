@@ -18,7 +18,7 @@ Composes capabilities into deterministic, auditable flows. Each skill is one orc
 |------------|-------|-------------|
 | [6.0] | [async-dev](skills/00-async-dev/README.md) | Single router-based skill covering the full pipeline — setup, run, and review — selected by `$ARGUMENTS` keyword, trigger source, repo state, or natural-language intent. |
 
-See the [skill README](skills/00-async-dev/README.md) for the sub-flow inventory and invocation contract.
+Use the skill table above and the generated catalog for the sub-flow inventory and invocation contract.
 
 ### Roadmap
 

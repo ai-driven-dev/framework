@@ -46,8 +46,8 @@ Several signals can be present at once.
 
 ## Write targets
 
-- **Host project**: one file per confirmed tool, at the paths above.
-- **Plugin source**: one canonical skill at `plugins/<plugin>/skills/<name>/SKILL.md`. No per-tool fan-out. Per-tool resolution happens at install.
+- **Host project**: one file per confirmed tool, at the paths above. Do not create or require a README.
+- **Plugin source**: one canonical skill at `plugins/<plugin>/skills/<name>/SKILL.md`, plus `plugins/<plugin>/skills/<name>/README.md` seeded at creation as a symlink to `SKILL.md`. No per-tool fan-out. Per-tool resolution happens at install.
 
 The mode is chosen in the capture action. Never pick one silently.
 
@@ -55,3 +55,4 @@ The mode is chosen in the capture action. Never pick one silently.
 
 - **Asset-access precheck**: before writing, confirm this reference is readable. If not, stop: the plugin is not installed in this host. Do not guess paths.
 - **Write-target validation**: after writing, confirm every path is relative, under the workspace, never under the plugin install directory, and under the chosen scope. Otherwise stop and report the bad path.
+- **Plugin-source README seed check**: after writing a new plugin-source skill, confirm `plugins/<plugin>/skills/<name>/README.md` is a symlink, `readlink` returns `SKILL.md`, and the resolved target is the skill's own `SKILL.md`.

@@ -168,6 +168,19 @@ function isScannableFile(filename) {
 	);
 }
 
+function isDirectSkillReadmeSymlink(itemPath, relativePath, filename) {
+	if (filename !== "README.md") {
+		return false;
+	}
+	if (path.basename(path.dirname(path.dirname(itemPath))) !== "skills") {
+		return false;
+	}
+	if (relativePath.split(path.sep).length !== 1) {
+		return false;
+	}
+	return fs.lstatSync(itemPath).isSymbolicLink() && fs.readlinkSync(itemPath) === "SKILL.md";
+}
+
 /**
  * Recursively scan a directory for markdown files up to a maximum depth
  * @param {string} dir - Directory to scan
@@ -187,6 +200,9 @@ function scanDirectoryRecursive(dir, currentDepth, maxScanDepth, relativePath = 
 
 	for (const item of items) {
 		const itemPath = path.join(dir, item);
+		if (isDirectSkillReadmeSymlink(itemPath, relativePath, item)) {
+			continue;
+		}
 		const stat = fs.statSync(itemPath);
 
 		if (stat.isFile() && isScannableFile(item) && !ignoreNames.has(item)) {
