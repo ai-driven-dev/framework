@@ -6,6 +6,10 @@ Create or update one recipe at `recipes/<slug>.md`, scaffolded from `@assets/rec
 
 The recipe topic. Ask for any missing field (level, time, prerequisites, steps, verify, related) before writing.
 
+## Output
+
+The recipe file at `recipes/<slug>.md`, filled from the template, with its row added or refreshed in `recipes/README.md`.
+
 ## Process
 
 1. Derive a kebab-case `<slug>` from the topic → `recipes/<slug>.md`.
