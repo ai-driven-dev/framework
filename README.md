@@ -18,7 +18,7 @@
 <p><b>🇫🇷 The first French open-source framework for AI-driven development.</b></p>
 
 <p>
-  <!--counts:start--><kbd>7 plugins</kbd> · <kbd>41 skills</kbd> · <kbd>2 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
+  <!--counts:start--><kbd>7 plugins</kbd> · <kbd>45 skills</kbd> · <kbd>4 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -189,7 +189,7 @@ Commits, pull / merge requests, release tags, issue creation.
 
 ### 📋 [aidd-pm](plugins/aidd-pm/README.md)
 
-`5 skills` · stable
+`4 skills` · stable
 
 Ticket info, user stories, PRD, spec drafting.
 
@@ -218,7 +218,7 @@ Label an issue, get a PR; re-label, get the review applied.
 
 ### 🎨 [aidd-ui](plugins/aidd-ui/README.md) 🚧
 
-`1 skill` · **alpha — not ready**
+`6 skills` · **alpha — not ready**
 
 UI and UX: design, review, and improve frontend interfaces. ⚠️ Alpha (`0.1.0-alpha.0`), smoke-test only — do not rely on it yet.
 
