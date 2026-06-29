@@ -4,7 +4,7 @@ Drive a user journey end-to-end and check that each step produces the expected b
 
 ## Input
 
-The journey, an ordered list of action plus expected outcome, and the entry URL, from `$ARGUMENTS`.
+The journey, an ordered list of action plus expected outcome, and the entry URL, from the arguments.
 
 ## Output
 

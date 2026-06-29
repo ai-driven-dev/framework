@@ -22,7 +22,7 @@ Single skill that drives the async development pipeline end to end. Three sub-fl
 
 Walk in order. First match wins.
 
-1. **`$ARGUMENTS` keyword override.** If `$ARGUMENTS` contains exactly `setup`, `run`, or `review` (case-insensitive, standalone token), route there immediately. This is the explicit override the CI workflow uses.
+1. **Argument override.** If the arguments contain exactly `setup`, `run`, or `review` (case-insensitive, standalone token), route there immediately. This is the explicit override the CI workflow uses.
 2. **Trigger env.** When invoked from CI (`GITHUB_EVENT_NAME` set):
    - Label payload `to-implement` → `run`.
    - Label payload `to-review` → `review`.

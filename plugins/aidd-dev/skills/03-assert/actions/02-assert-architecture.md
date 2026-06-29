@@ -4,7 +4,7 @@ Report where the codebase breaks the documented architecture: C4 diagrams, ADRs,
 
 ## Input
 
-The scope to check, a module, service, or layer, from `$ARGUMENTS`; defaults to the whole project.
+The scope to check, a module, service, or layer, from the arguments; defaults to the whole project.
 
 ## Output
 

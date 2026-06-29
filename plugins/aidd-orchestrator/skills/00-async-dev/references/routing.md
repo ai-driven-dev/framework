@@ -4,9 +4,9 @@ Full contract for picking a sub-flow inside `aidd-orchestrator:00-async-dev`. Th
 
 ---
 
-## 1. Explicit override: `$ARGUMENTS` keyword
+## 1. Explicit override: the arguments keyword
 
-If `$ARGUMENTS` contains exactly `setup`, `run`, or `review` as a standalone case-insensitive token, route there immediately. No fallback consideration.
+If the arguments contain exactly `setup`, `run`, or `review` as a standalone case-insensitive token, route there immediately. No fallback consideration.
 
 This is the contract the bundled CI workflow relies on:
 
@@ -15,7 +15,7 @@ prompt: "Use skill aidd-orchestrator:00-async-dev with action=run on issue #..."
 prompt: "Use skill aidd-orchestrator:00-async-dev with action=review on PR #..."
 ```
 
-The router parses `action=<keyword>` from the prompt body. Plain `setup` / `run` / `review` words elsewhere in the body do NOT match, only the explicit `action=` form, or `$ARGUMENTS` set to exactly one of the three keywords.
+The router parses `action=<keyword>` from the prompt body. Plain `setup` / `run` / `review` words elsewhere in the body do NOT match, only the explicit `action=` form, or the arguments set to exactly one of the three keywords.
 
 ---
 
@@ -67,12 +67,12 @@ Last-resort heuristic for free-form user input.
 When multiple signals match across categories:
 
 ```text
-$ARGUMENTS keyword (1) > trigger env (2) > repo state (3) > NL intent (4)
+Arguments keyword (1) > trigger env (2) > repo state (3) > NL intent (4)
 ```
 
 Within a category, the most specific concrete signal wins:
 
-- A PR number in `$ARGUMENTS` beats a label payload.
+- A PR number in the arguments beats a label payload.
 - A label beats a free-text keyword.
 - A specific config file presence beats a generic verb.
 

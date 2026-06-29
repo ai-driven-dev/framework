@@ -4,7 +4,7 @@ Identify untested behaviors in the target, then write and iterate tests until th
 
 ## Input
 
-The scope to cover, a feature, module, or file glob, from `$ARGUMENTS`.
+The scope to cover, a feature, module, or file glob, from the arguments.
 
 ## Output
 

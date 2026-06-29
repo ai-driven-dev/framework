@@ -4,7 +4,7 @@ Iterate until the frontend behaves as intended by inspecting the running UI, map
 
 ## Input
 
-The expected behavior, from `$ARGUMENTS`. The frontend's URL when the caller knows it, otherwise resolved at runtime.
+The expected behavior, from the arguments. The frontend's URL when the caller knows it, otherwise resolved at runtime.
 
 ## Output
 

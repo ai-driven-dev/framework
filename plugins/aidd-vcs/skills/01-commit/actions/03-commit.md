@@ -4,7 +4,7 @@ Record the commit, and push when asked.
 
 ## Input
 
-The staged set from `01-collect`, the message from `02-message`, and whether to push (a trailing `push` in `$ARGUMENTS`).
+The staged set from `01-collect`, the message from `02-message`, and whether to push (a trailing `push` argument).
 
 ## Output
 

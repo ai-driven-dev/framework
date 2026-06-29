@@ -4,7 +4,7 @@ Fix a bug with a test-driven workflow that goes from issue creation to pull requ
 
 ## Input
 
-The bug, a free-form description or issue number, from `$ARGUMENTS`.
+The bug, a free-form description or issue number, from the arguments.
 
 ## Output
 

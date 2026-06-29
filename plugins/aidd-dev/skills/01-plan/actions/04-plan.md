@@ -13,8 +13,10 @@ A feature folder, always at `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slu
 ## Process
 
 1. **Phases.** Break the work into phases, each a coherent unit of work that ships and verifies on its own, sized for one executor pass. Let the work decide how many.
-2. **Write.** Resolve the feature folder: reuse the one the source already lives in, otherwise create it. Scaffold from the templates and fill the placeholders. Fill only the sections the template defines, add nothing it does not, and omit any section that stays empty (for example resources when nothing was consulted). Slice the projection into each phase, put the resources consulted (docs or in-repo files) in the resources table, and embed any wireframe in its phase's Wireframe section. Display the paths.
-3. **Review.** Show the complete plan and its phases with a confidence score (0 to 10, ✓ reasons and ✗ risks). Take feedback, revise the files, and re-show until approved. The score is never written to the plan.
+2. **Folder.** Reuse the feature folder the source already lives in, or create one.
+3. **Fill.** Scaffold from the templates and fill only the sections they define, omitting any that stays empty (resources when nothing was consulted). Slice the projection across the phases, list the consulted resources in the resources table, and embed any wireframe in its phase's Wireframe section.
+4. **Show.** Display the written paths.
+5. **Review.** Show the complete plan and its phases with a confidence score (0 to 10, ✓ reasons and ✗ risks). Take feedback, revise the files, and re-show until approved. The score is never written to the plan.
 
 ## Test
 
