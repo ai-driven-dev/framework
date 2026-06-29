@@ -21,7 +21,7 @@ Executes an existing implementation plan phase by phase, iterating until every a
 Use skill aidd-dev:02-implement
 ```
 
-Pass the plan path or content as `$ARGUMENTS`. The skill runs three actions in order:
+Pass the plan path or content as the arguments. The skill runs three actions in order:
 
 1. **prepare**: fails fast when the plan is missing (never fabricates one); puts `HEAD` on a feature branch when it is on the default branch, otherwise keeps the current branch; sets the plan `status: in-progress`.
 2. **execute**: loops the plan's phases: per phase it sets `status: in-progress` as a runtime marker, codes the phase, asserts it clean, then commits the phase and sets `status: done`; stops at `status: blocked` on a human-only condition.

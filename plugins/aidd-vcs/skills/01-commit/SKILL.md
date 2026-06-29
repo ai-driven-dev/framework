@@ -26,7 +26,7 @@ Several concerns means several commits: repeat the chain, one concern at a time.
 - Never `--force` push; `--force-with-lease` only when explicitly asked.
 - A hook that rejects the commit is not this skill's job: report which hook and why, then stop. Re-stage only files a hook auto-formatted.
 - `auto` never prompts. `interactive` confirms before staging and before each split.
-- `/commit` commits locally; `/commit push` also pushes.
+- Commits locally by default; pushes as well only when the push option is set.
 
 ## Assets
 
