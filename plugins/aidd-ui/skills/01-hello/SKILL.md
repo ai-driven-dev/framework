@@ -1,14 +1,16 @@
 ---
 name: 01-hello
-description: Smoke-test skill that confirms the aidd-ui plugin loads. Use when the user wants to verify the alpha aidd-ui plugin is installed and reachable. Do NOT use for real UI or UX design work.
+description: Smoke-test that confirms the aidd-ui plugin loads. Use when the user wants to verify the alpha aidd-ui plugin is installed and reachable. Not for real UI or UX design work.
 ---
 
-## Available actions
+# Skill: hello
 
-| ID  | Name  | Purpose                                       |
-| --- | ----- | --------------------------------------------- |
-| 01  | greet | Greet the user and confirm the skill works.   |
+Confirm the aidd-ui plugin loads and is reachable.
 
-## Default flow
+## Actions
 
-Run action `01-greet` and return its message.
+| #   | Action  | Role                                        |
+| --- | ------- | ------------------------------------------- |
+| 01  | `greet` | Greet the user and confirm the skill works  |
+
+Single action skill: run `greet` and return its message.

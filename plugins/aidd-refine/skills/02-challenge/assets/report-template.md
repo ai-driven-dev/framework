@@ -2,8 +2,6 @@
 
 My confidence level of correctness now: XX%
 
-# Previous work to review
-
 # Correctness (100%)
 -
 

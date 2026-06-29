@@ -1,33 +1,31 @@
 ---
 name: 02-pull-request
-description: Create a draft pull or merge request from the current branch, in whatever VCS tool the project uses. Use to open a PR/MR ("open a pr", `/pull-request`). Do NOT use to commit, push, or merge a branch.
+description: Create a draft pull or merge request from the current branch, in whatever VCS tool the project uses. Use when the user wants to open a pull or merge request. Not for committing, pushing, or merging a branch.
+argument-hint: collect | draft | create
 ---
 
 # Pull Request
 
-Drafts pull or merge requests from the current branch using the team's template, ready for the user to promote.
+Collect the change, draft the request, create it as a draft. `01 → 02 → 03`.
 
 ## Actions
 
-| #   | Action          | Role                                                                | Input                                          |
-| --- | --------------- | ------------------------------------------------------------------- | ---------------------------------------------- |
-| 01  | `pull-request`  | Detect base, fill template, validate with user, open the draft request | base_branch (optional), template_overrides   |
-
-## Default flow
-
-Single action skill. The router dispatches to `pull-request` whenever a PR/MR phrase or slash command appears.
+| #   | Action    | Step                                                        |
+| --- | --------- | ----------------------------------------------------------- |
+| 01  | `collect` | Resolve the base and gather the commits since it             |
+| 02  | `draft`   | Write the title and body from the template                   |
+| 03  | `create`  | Open the draft request, label it, return the URL             |
 
 ## Transversal rules
 
-- Project first: follow `aidd_docs/memory/vcs.md` and the repo's own request-template file when they exist (body sections, base rules, labels); the rules below and the bundled templates are the fallback.
-- Resolve the base branch from the head branch's prefix via the project's branch-naming convention (project memory); fall back to repo state when no prefix mapping exists. Never assume `main` or `master` (common alternatives: `next`, `develop`, `staging`).
-- Always ask the user to validate the title, body, and base branch before creating the request.
-- Open the request as a draft. The user promotes it manually when ready.
-- After opening, apply the triage label the branch prefix maps to, when that label exists; labels triage only, they never change the resolved base.
-- Never commit, never push the working branch, never create new branches inside this skill.
-- Tool-agnostic: read the VCS tool from project memory; fall back to inspecting the remote URL.
+- Follow the project's request practices in `aidd_docs/memory/vcs.md` and the repo's own request template when set, else the bundled `assets/pull_request.md`.
+- Resolve the base from the branch's prefix per the project's convention (`vcs.md`), else the repo's default branch. Never assume `main`.
+- The request is always a draft; the user promotes it.
+- Apply only the triage label the branch prefix maps to, when it exists. Labels never change the base.
+- Read the VCS tool from project memory, else infer it from the remote URL.
+- Never commit, push, or branch here.
 
 ## Assets
 
-- `@assets/pull_request.md`: Request body template.
-- `@assets/branch.md`: Branch-naming convention, the fallback when project memory sets none.
+- `assets/pull_request.md`: Request body template.
+- `assets/branch.md`: Branch-naming convention, the fallback when project memory sets none.

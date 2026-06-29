@@ -3,9 +3,8 @@
 # 04 - audit
 
 Read-only codebase audit across seven quality pillars. Diagnoses and ranks
-findings into a structured report; it never edits code. Each finding hands
-off to the relevant act-skill (refactor, test, impeccable) when a fix is
-wanted.
+findings into a structured report; it never edits code. Each finding carries
+a suggested fix for a later act-skill to apply.
 
 ## When to use
 
@@ -17,9 +16,9 @@ wanted.
 ## When NOT to use
 
 - A specific bug is already known → use [08-debug](../08-debug/README.md).
-- You want to fix the problems → run the audit first, then the act-skill it
-  hands off to ([07-refactor](../07-refactor/README.md),
-  [06-test](../06-test/README.md), or the `impeccable` skill for UI).
+- You want to fix the problems → run the audit first, then an act-skill such
+  as [07-refactor](../07-refactor/README.md) or
+  [06-test](../06-test/README.md).
 - You want a per-PR code review → use [05-review](../05-review/README.md).
 - You want to validate a feature works → use [03-assert](../03-assert/README.md).
 

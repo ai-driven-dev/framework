@@ -1,47 +1,35 @@
 # 03 - Cleanup
 
-Improve code quality and reduce technical debt by applying clean-code principles and removing structural rot - without changing observable behavior.
+Improve code quality and reduce technical debt by applying clean-code principles and removing structural rot, without changing observable behavior.
 
-## Inputs
+## Input
 
-```yaml
-scope: <directory or file glob>   # optional; defaults to the entire codebase
-audit_report: <optional - path to a report under aidd_docs/tasks/audits/ or pasted findings>
-constraints:
-  - keep public inputs and outputs identical
-  - preserve existing test coverage
-```
+An optional scope, a directory or file glob, defaulting to the entire codebase. Optionally a pushed audit report, a path under `aidd_docs/tasks/audits/` or pasted findings.
 
-## Outputs
+## Output
 
-```yaml
-changes_applied:
-  - { file: <path>, change: <one-line summary>, severity: "🔴|🟡|🟢", category: <clean-code|tech-debt> }
-verification: <summary of test and type-check results confirming no behavioral regression>
-```
+The changes applied (file, one-line summary, severity, clean-code or tech-debt), with a verification summary confirming no behavioral regression.
 
 ## Process
 
-1. **Source findings.** Two modes:
-   - If `audit_report` is provided: extract the code-quality-axis findings from that report and use them as the fix list. Skip the standalone scan below.
-   - Else (standalone): scan the scope with the cleanup lens below. Rate each issue with the 3-level severity scale: 🔴 critical, 🟡 warning, 🟢 minor.
-2. **Apply clean-code fixes** from the finding list:
+1. **Source.** When an audit report is pushed, take its code-quality-axis findings as the fix list and skip the scan. Otherwise scan the scope with the cleanup lens and rate each issue with the shared severity scale.
+2. **Clean.** Apply the clean-code fixes from the list:
    - Rename symbols for clarity (misleading names, abbreviations, single-letter variables outside tight loops).
    - Extract functions or modules where a block does more than one thing.
-   - Deduplicate repeated logic (DRY).
+   - Deduplicate repeated logic.
    - Raise abstraction to replace low-level mechanics with intention-revealing calls.
    - Replace magic numbers and inline strings with named constants.
-   - Remove dead, misleading, or out-of-date comments; add a brief comment only where intent is genuinely non-obvious.
-3. **Apply tech-debt fixes** from the finding list:
-   - Delete dead code and unused exports, and sweep for the orphaned references a deletion leaves behind.
-   - Reduce cyclomatic complexity by extracting early returns, guard clauses, and helper functions.
+   - Remove dead, misleading, or out-of-date comments, adding one only where intent is genuinely non-obvious.
+3. **Debt.** Apply the tech-debt fixes from the list:
+   - Delete dead code and unused exports, sweeping for the orphaned references a deletion leaves behind.
+   - Reduce cyclomatic complexity with early returns, guard clauses, and helper functions.
    - Shorten oversized files and functions to a single responsibility.
    - Flatten excessive nesting.
-   - Fix error handling caught at the wrong boundary (swallowed errors, wrong abstraction level).
-4. **Verify behavior is preserved.** Run tests and type checks; confirm public inputs and outputs are identical to pre-change.
-
-Boundary note: test creation belongs to the test skill; dependency upgrades and UI redesign are out of scope for this action.
+   - Fix error handling caught at the wrong boundary.
+4. **Verify.** Run tests and type checks, confirming public inputs and outputs are identical to pre-change.
 
 ## Test
 
-All existing tests pass after changes; type checks exit zero; no public API surface has changed; each entry in `changes_applied` maps to a concrete line-level edit in the diff.
+- All existing tests pass and type checks exit zero.
+- No public API surface has changed.
+- Each change applied maps to a concrete line-level edit in the diff.

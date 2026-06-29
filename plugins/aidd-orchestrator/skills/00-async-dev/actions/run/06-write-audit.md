@@ -1,15 +1,13 @@
 # 06 -- Write Run Result
 
-Emit a single `run-result.json` artifact summarising the observation from `05-delegate-sdlc`. The workflow's post-job (CI YAML) reads this file and performs the lifecycle effects: persist the audit log, finalize the Check Run, transition issue labels, post the completion marker. Splitting those side effects out of the agent keeps them deterministic — the agent only needs to write a file.
+Emit a single `run-result.json` artifact summarising the observation from `05-delegate-sdlc`. The workflow's post-job (CI YAML) reads this file and performs the lifecycle effects: persist the audit log, finalize the Check Run, transition issue labels, post the completion marker. Splitting those side effects out of the agent keeps them deterministic, the agent only needs to write a file.
 
-## Inputs
-
+## Input
 - `delegate_output` -- structured result from `05-delegate-sdlc`
 - `run_record` -- merged data from `03-acquire-lock` and `05-delegate-sdlc`
 - `config` -- parsed `.claude/aidd-orchestrator.json`
 
-## Outputs
-
+## Output
 A single file at `$RUNNER_TEMP/run-result.json` (workflow-readable):
 
 ```json
@@ -32,9 +30,6 @@ A single file at `$RUNNER_TEMP/run-result.json` (workflow-readable):
 }
 ```
 
-## Depends on
-
-- `05-delegate-sdlc`
 
 ## Process
 

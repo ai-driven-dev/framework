@@ -2,15 +2,13 @@
 
 Delegates one round of fixes to the SDLC capability discovered at runtime and pushes a new commit on the PR branch.
 
-## Inputs
-
+## Input
 - `collect_output` (required) -- output of `01-collect-comments`
 - `pr_number` (required) -- integer
 - `discovered_skill` (required) -- skill name discovered by the same heuristic used in `02-run`
 - `trigger_comment_id` (optional) -- id of the comment that triggered the loop (e.g. `@claude /review`); used to add a reaction
 
-## Outputs
-
+## Output
 ```json
 {
   "iteration": 2,
@@ -21,9 +19,6 @@ Delegates one round of fixes to the SDLC capability discovered at runtime and pu
 }
 ```
 
-## Depends on
-
-- `02-detect-stop` (only when its `decision == "continue"`)
 
 ## Process
 

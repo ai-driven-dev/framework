@@ -2,13 +2,11 @@
 
 Filters out blocked issues by checking three dependency sources in order.
 
-## Inputs
-
+## Input
 - `candidates` (required) -- output of `01-poll-ready`
 - `config` (required) -- parsed `.claude/aidd-orchestrator.json`
 
-## Outputs
-
+## Output
 ```json
 {
   "ready": [{ "number": 42, "title": "..." }],
@@ -18,9 +16,6 @@ Filters out blocked issues by checking three dependency sources in order.
 }
 ```
 
-## Depends on
-
-- `01-poll-ready`
 
 ## Process
 

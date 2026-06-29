@@ -20,7 +20,7 @@ The rewritten answer per `@../assets/report-template.md`, obeying `@../reference
 5. **Cite.** Build the `## Sources` block: one numbered entry per source, with its title or file path, location, and the claim it backs. Each side of a conflict gets its own entry.
 6. **List.** Add the `## Unverified claims` section only when at least one claim is unverified; otherwise omit it.
 7. **Suggest.** When a verified fact is stable (project paths, pinned-version APIs), append one cache-suggestion line with a yes/no recommendation. The skill stores nothing itself: on approval, restate the fact and its source so the user's own memory tooling can keep it. When nothing qualifies, omit the line silently.
-8. **Scrub.** Apply `@../references/report-output-discipline.md`, then deliver.
+8. **Scrub.** Before delivering, re-read the draft line by line against `@../references/report-output-discipline.md`: delete any line that carries a forbidden item, and re-render in plain prose any line an active output mode restyled. Ship plain prose whatever the surrounding style.
 
 ## Test
 

@@ -14,7 +14,7 @@ The contract every generated hook must satisfy. A hook is a handler wired to a l
 
 ## Lifecycle moments
 
-The agnostic moments a hook can target. Each tool names these differently and supports a different subset. The mapping and the gaps live in `references/tool-paths.md`.
+The agnostic moments a hook can target. Each tool names these differently and supports a different subset. `references/tool-paths.md` maps the commonly supported moments to each tool's event name; a moment absent from that table has no dedicated cross-tool event, so fold it into the nearest supported moment.
 
 | Moment              | Fires when                                          |
 | ------------------- | --------------------------------------------------- |

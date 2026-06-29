@@ -1,21 +1,17 @@
 ---
 name: 01-ticket-info
-description: Retrieve and display ticket information from the configured ticketing tool. Use when the user says "ticket info", "show ticket", "get ticket", "ticket details", "what's <id>", or invokes `/ticket-info`. Do NOT use for creating issues, commenting on tickets, changing status, or reassigning.
+description: Retrieve and display a ticket from the configured ticketing tool. Use when the user wants to see, show, or look up a ticket's details. Not for creating a ticket, or commenting on, transitioning, or reassigning one.
 ---
 
 # Ticket Info
 
 Reads ticket details from the configured ticketing tool. Read-only and tool-agnostic.
 
-## Available actions
+## Actions
 
 | #   | Action         | Role                                                          | Input                              |
 | --- | -------------- | ------------------------------------------------------------- | ---------------------------------- |
 | 01  | `ticket-info`  | Resolve ticket id, query the configured tool, display fields   | ticket_id (optional)               |
-
-## Default flow
-
-Single action skill. The router dispatches to `ticket-info` whenever a ticket-lookup phrase appears.
 
 ## Transversal rules
 
@@ -23,15 +19,3 @@ Single action skill. The router dispatches to `ticket-info` whenever a ticket-lo
 - Auto-detect the ticket identifier from the current branch name when none is provided.
 - Format the identifier per project convention before querying.
 - Read-only: never create, comment, transition, or reassign from this skill.
-
-## References
-
-- None.
-
-## Assets
-
-- None.
-
-## External data
-
-- None.

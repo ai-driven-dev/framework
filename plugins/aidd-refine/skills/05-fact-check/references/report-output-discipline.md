@@ -20,6 +20,6 @@ These belong to the earlier actions and never appear in the output:
 - How a claim was checked: shell commands, `ls` / `find` / grep output, or phrases like "by inspection" or "codebase inspection". Cite the source and state the conclusion, not the method.
 - Any sentence explaining why a cache line was or was not added.
 
-The report is plain prose. No active session output mode (terse, caveman, condensed) restyles it; render it normally however the surrounding conversation is styled.
+The report is plain prose. No active output mode restyles it; render it normally however the surrounding conversation is styled.
 
 Before delivering, scan the draft: if a line carries any forbidden item, delete that line.

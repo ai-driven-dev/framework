@@ -8,11 +8,13 @@ The contract every generated skill must satisfy. These rules govern the CLIENT s
 - **R2.** One skill = one domain. A tool domain uses a singular noun (`slack`). An activity domain uses an action verb (`review`). See `## Naming`.
 - **R3.** References one level deep. A reference never `@`-chains another reference.
 - **R4.** SKILL.md <= 500 lines. If exceeded, split into references.
-- **R5.** `description` states what + when. Third person, <= 1024 chars, no XML. Conventions:
-  - All "when" lives here, not in the body.
-  - Triggers explicit and slightly pushy. The model under-triggers, so over-list.
-  - Lead with the plain artifact name. Parentheses for an inline definition, not dashes.
-  - Optionally a short `Not for <X>` clause, only when a sibling skill could mis-trigger.
+- **R5.** `description` states what + when. Third person, no XML. Conventions:
+  - **Two lines max, straight to the point.** Target ~240 characters; never more than a short paragraph. Length serves recall, not completeness. The hard ceiling is 1024 chars, not a goal.
+  - Lead with a verb naming what the skill produces (`Generate a rule...`, `Audit a codebase...`), not a noun phrase.
+  - All "when" lives here, not in the body. State it as `Use when the user wants to <intents>`. List distinct triggers (the model under-triggers, so cover the real ones), but never pad with near-duplicate phrasings.
+  - Optionally one short `Not for <X>` clause to fend off a sibling that could mis-trigger, describing the overlap in plain words.
+  - Never name another skill, and never include a `/command` token: slash commands are tool-native, the host generates them.
+  - Parentheses for an inline definition, not dashes.
 - **R6.** Zero duplication. One fact, one home. Actions cite a shared file via `@<path>` instead of restating it.
 - **R7.** `references/` = documents to READ and apply in place. `assets/` = files to COPY, INJECT, or fill in per run. A template, checklist, or form is an asset, not a reference, because each run instantiates it.
 - **R8.** Every action follows the action anatomy (below) and carries a `## Test`.

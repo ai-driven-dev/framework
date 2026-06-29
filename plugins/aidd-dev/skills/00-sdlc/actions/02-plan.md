@@ -4,7 +4,7 @@ Turn the spec, or the raw request when spec was skipped, into a validated plan f
 
 ## Input
 
-The spec path from `01` (null when skipped), the objective and acceptance criteria from `01`, the raw `$ARGUMENTS` (needed when there is no spec), and the repo root.
+The spec path from `01` (null when skipped), the objective and acceptance criteria from `01`, the raw arguments (needed when there is no spec), and the repo root.
 
 ## Output
 

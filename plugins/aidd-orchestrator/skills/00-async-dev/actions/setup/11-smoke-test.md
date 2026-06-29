@@ -2,13 +2,11 @@
 
 Triggers the pipeline once on a self-contained throwaway issue (created by this action) so the user sees the full setup work end-to-end before walking away. Never touches the user's real backlog.
 
-## Inputs
-
+## Input
 - `answers` (required) -- config object from `02-ask-config`
 - `detection` (required) -- detection report from `01-detect-context`
 
-## Outputs
-
+## Output
 ```json
 {
   "smoke_issue_number": 999,
@@ -20,10 +18,6 @@ Triggers the pipeline once on a self-contained throwaway issue (created by this 
 
 `run_outcome` is `pr_opened`, `blocked`, or `skipped`.
 
-## Depends on
-
-- `10-commit-and-push` (when `answers.mode != "local"`)
-- `09-bootstrap-scheduling` (when `answers.mode != "remote"`)
 
 ## Process
 

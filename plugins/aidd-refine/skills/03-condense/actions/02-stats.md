@@ -22,4 +22,5 @@ A stats block reporting, in order: mode, active turns and ratio, tokens out whil
 
 ## Test
 
-Output follows the `## Output` field order, every numeric field is filled (no `-`), and the active-turns ratio matches the detected intensity transitions.
+- The output follows the `## Output` field order, every numeric field filled (no `-`).
+- The active-turns ratio matches the detected intensity transitions.

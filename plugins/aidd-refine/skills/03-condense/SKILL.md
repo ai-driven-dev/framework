@@ -1,6 +1,6 @@
 ---
 name: 03-condense
-description: Toggle terse output mode (lite, full, ultra) that drops filler while code, errors, and warnings stay verbatim, and report token savings for the session. Use to condense output, shorten answers, switch intensity, or check savings; not for editing prose or compressing code.
+description: Toggle terse output mode (lite, full, ultra) that drops filler while code and errors stay verbatim, and report token savings. Use to condense output, switch intensity, or check savings. Not for editing prose or compressing code.
 argument-hint: condense | stats
 ---
 
@@ -15,17 +15,12 @@ Toggles a terse output mode with three intensity levels (lite, full, ultra). Str
 | 01  | `condense` | Toggle terse mode and apply intensity rules                           | current state + requested level      |
 | 02  | `stats`    | Report real token usage and estimated savings for the current session | session messages + level timeline    |
 
-## Default flow
-
-Router dispatches by intent:
-
-- Toggle phrase or intensity command (`condense`, `/condense full`, `stop condense`, `normal mode`, ...) → `01-condense`
-- Stats query (`/condense-stats`, `how much have we saved`, `token savings`, ...) → `02-stats`
+Dispatch by intent: a toggle phrase → `condense`, a savings query → `stats`.
 
 ## Transversal rules
 
 - **Persistence**: once active, terse mode applies to EVERY response until explicitly turned off. Do not drift back to verbose prose after many turns, when uncertain, or when the task changes. The level remains active for the rest of the session unless changed or stopped.
-- **Off switch**: terse mode stops only on explicit user signal: `stop condense`, `normal mode`, `/condense off`, or invoking the skill again to toggle.
+- **Off switch**: terse mode stops only on explicit user signal: `stop condense`, `normal mode`, or invoking the skill again to toggle.
 - **Toggle**: invoking the skill while active toggles it off; invoking while off turns it on at the default level (`full`) unless an explicit intensity is given.
 - **Drop fluff**: drop articles (a/an/the), filler (just/really/basically/actually/simply), pleasantries (sure/certainly/of course/happy to), and hedging. Fragments are acceptable.
 - **Short synonyms**: prefer short words (big not extensive, fix not "implement a solution for"). Technical terms stay exact. Code blocks are unchanged. Errors are quoted verbatim.
@@ -36,7 +31,3 @@ Router dispatches by intent:
 ## References
 
 - `references/intensity-levels.md`: detailed per-level rules and side-by-side examples.
-
-## External data
-
-- `../hooks/condense-stats.js`: UserPromptSubmit hook that intercepts stats triggers, reads the session transcript, and returns the formatted savings report without invoking the model.

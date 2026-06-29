@@ -1,32 +1,26 @@
 # 01 - Gather needs
 
-Walk the user through the 24-item checklist via interactive Q&A until all 18 user-input items (blocks 1-3) are filled. The 6 derived items (block 4) stay empty here - they are filled by actions 02 and 04.
+Walk the user through the 24-item checklist via interactive Q&A until all 18 user-input items (blocks 1 to 3) are filled. The 6 derived items (block 4) stay empty here; actions 02 and 04 fill them.
 
-## Inputs
+## Input
 
-- Free-form user request to bootstrap a new SaaS project.
+A free-form user request to bootstrap a new SaaS project.
 
-## Outputs
+## Output
 
-A filled copy of `@../assets/checklist.md` held in conversation context (not yet written to disk). Each user-input item has a concrete value replacing its `<...>` placeholder.
-
-```markdown
-- [x] **Project name** - Acme Invoicing
-- [x] **One-liner** - Smart invoice tracker for freelancers, syncs with Airtable
-- [x] **Type** - B2B SaaS
-- [x] **Target users** - solo freelancers and 2-5 person agencies, ~500 active at 6 months
-... (all 18 input items filled)
-```
+A filled copy of `@../assets/checklist.md` held in conversation context, not yet written to disk, with every user-input item's `<...>` placeholder replaced by a concrete value.
 
 ## Process
 
-1. Read `@../assets/checklist.md`. Print the four blocks as a single markdown checklist for the user to see the full scope upfront.
-2. Ask block by block, one block per message. Within a block, ask all questions at once (the user answers in batch). Do not ask block 4 - it's derived.
-3. For each user answer, fill the corresponding item. If an answer is vague ("scalable", "fast"), ask one follow-up to make it concrete (numbers, examples).
-4. After block 1, sanity-check coherence: does the type match the user volume? Are the integrations realistic for the platform target?
-5. After block 3, surface conflicts (e.g. budget < 50€/mo + AWS preference + heavy backend → impossible). Force a re-answer on the conflicting item.
-6. Print the filled checklist (blocks 1-3 only) and ask the user to confirm "go" before passing to action 02.
+1. **Show.** Read `@../assets/checklist.md` and print the four blocks as one markdown checklist so the user sees the full scope upfront.
+2. **Ask.** Ask block by block, one block per message, all questions in a block at once. Do not ask block 4; it is derived.
+3. **Fill.** Fill each item from the answer. When an answer is vague ("scalable", "fast"), ask one follow-up to make it concrete (numbers, examples).
+4. **Check.** After block 1, sanity-check coherence: does the type match the user volume, are the integrations realistic for the platform target.
+5. **Resolve.** After block 3, surface conflicts (for example budget under 50€/mo with an AWS preference and a heavy backend) and force a re-answer on the conflicting item.
+6. **Confirm.** Print the filled checklist (blocks 1 to 3) and wait for the user to confirm "go" before action 02.
 
 ## Test
 
-The 18 user-input items in the in-memory checklist have no remaining `<...>` placeholders, the 6 block-4 items are still placeholders, and the user has explicitly confirmed the filled checklist with "go" or equivalent before action 02 starts.
+- The 18 user-input items have no remaining `<...>` placeholders.
+- The 6 block-4 items are still placeholders.
+- The user explicitly confirmed the filled checklist before action 02 starts.

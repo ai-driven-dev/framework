@@ -56,7 +56,7 @@ Product management: ticket retrieval, user stories, PRD, spec.
 | Skill                     | Role                                                       | Actions                          |
 | ------------------------- | ---------------------------------------------------------- | -------------------------------- |
 | `01-ticket-info`          | Retrieve and display ticket information                    | `01-ticket-info`                 |
-| `02-user-stories-create`  | Generate INVEST-compliant user stories                     | `01-create-user-stories`         |
+| `02-user-stories`         | Prioritized, estimated INVEST user-story backlog           | `01-clarify-scope`, `02-split-epic`, `03-draft-stories`, `04-estimate-impact`, `05-prioritize`, `06-sync-tracker` |
 | `03-prd`                  | Generate a structured Product Requirements Document        | `01-prd`                         |
 | `04-spec`                 | Generate or refine a normalized project spec               | `01-build`, `02-refine`          |
 
@@ -76,12 +76,13 @@ Meta-cognition: brainstorm, challenge, condense, blind-spot scan, fact-check.
 
 Version-control workflows: commit, pull/merge request, release tag, issue.
 
-| Skill              | Role                                                | Actions             |
-| ------------------ | --------------------------------------------------- | ------------------- |
-| `01-commit`        | Create an atomic conventional commit                | `01-commit`         |
-| `02-pull-request`  | Create a draft pull or merge request                | `01-pull-request`   |
-| `03-release-tag`   | Cut a semver release with annotated tag and notes   | `01-release-tag`    |
-| `04-issue-create`  | Create an issue in the configured ticketing tool    | `01-issue-create`   |
+| Skill                  | Role                                                | Actions                 |
+| ---------------------- | --------------------------------------------------- | ----------------------- |
+| `01-commit`            | Create an atomic conventional commit                | `01-commit`             |
+| `02-pull-request`      | Create a draft pull or merge request                | `01-pull-request`       |
+| `03-release-tag`       | Cut a semver release with annotated tag and notes   | `01-release-tag`        |
+| `04-issue-create`      | Create an issue in the configured ticketing tool    | `01-issue-create`       |
+| `05-pull-request-list` | List the open pull or merge requests                | `01-pull-request-list`  |
 
 ## aidd-orchestrator
 

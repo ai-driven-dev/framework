@@ -1,6 +1,6 @@
 ---
 name: 04-shadow-areas
-description: Scan a markdown artifact (idea, user stories, PRD, spec) for blind spots and emit a structured shadow report grouped by category and sorted by severity. Use to find gaps, missing parts, or what's missing in a written artifact; not for interactive Q&A (use aidd-refine:01-brainstorm) or code review.
+description: Scan a markdown artifact (idea, stories, PRD, spec) for blind spots into a shadow report grouped by category and severity. Use to find gaps or what is missing in a written artifact. Not for interactive Q&A or code review.
 argument-hint: detect | render-report | diff
 ---
 
@@ -16,14 +16,7 @@ Analytically scans a written artifact for gaps the author has not addressed. Unl
 | 02  | `render-report`  | Render markdown grouped by category and sorted by severity, write report | gap list from detect                     |
 | 03  | `diff`           | Load prior report, classify gaps as closed / still-open / newly-introduced | gap list from detect + prior report path |
 
-## Default flow
-
-Router dispatches by context:
-
-- No prior report present: `01-detect` then `02-render-report`
-- Prior report present: `01-detect` then `03-diff` then `02-render-report`
-
-The `02-render-report` action always runs last and writes `<source>-shadow-report.md` next to the source.
+Dispatch by context: with no prior report run `detect` then `render-report`; with one, run `detect` then `diff`.
 
 ## Transversal rules
 

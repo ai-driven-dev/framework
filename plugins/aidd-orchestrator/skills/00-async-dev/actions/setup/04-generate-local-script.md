@@ -2,23 +2,18 @@
 
 Renders the local poll script. The script wraps `claude -p` invocations of the run and review skills.
 
-## Inputs
-
+## Input
 - `answers` (required) -- config object from `02-ask-config`
 - `detection` (required) -- detection report from `01-detect-context`
 
-## Outputs
-
+## Output
 A file at `scripts/aidd-async-poll.sh` with mode `0755`.
 
-## Depends on
-
-- `02-ask-config`
 
 ## Process
 
 1. Skip this action when `answers.mode == "remote"`.
-2. Read `assets/local-poll-template.sh`.
+2. Read `assets/setup/local-poll-template.sh`.
 3. Substitute placeholders:
    - `__TO_IMPLEMENT_LABEL__` -> `answers.labels.to_implement`
    - `__TO_REVIEW_LABEL__` -> `answers.labels.to_review`

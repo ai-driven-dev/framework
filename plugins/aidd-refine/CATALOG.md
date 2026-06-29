@@ -43,7 +43,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [question-angles.md](skills/01-brainstorm/assets/question-angles.md) | - |
 | `-` | [README.md](skills/01-brainstorm/README.md) | - |
 | `references` | [probing.md](skills/01-brainstorm/references/probing.md) | - |
-| `-` | [SKILL.md](skills/01-brainstorm/SKILL.md) | `Clarify a vague idea through deep back-and-forth questioning until it is precise enough to act on. Works at any level, functional, technical, or mixed. Use when the user surfaces a half-formed idea, a fuzzy feature, a technical question, or an under-specified request, or asks to brainstorm, clarify, or refine before committing. Keeps probing and following each answer's threads until no real ambiguity remains or the user is satisfied. Not for analytically scanning a written artifact for gaps (use aidd-refine:04-shadow-areas), critiquing finished work (use aidd-refine:02-challenge), or any implementation, planning, or code.` |
+| `-` | [SKILL.md](skills/01-brainstorm/SKILL.md) | `Clarify a vague idea through deep questioning until it is precise enough to act on. Use when the user surfaces a half-formed idea or under-specified request, or asks to brainstorm or refine. Not for scanning an artifact for gaps or writing code.` |
 
 #### `skills/02-challenge`
 
@@ -53,7 +53,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [report-template.md](skills/02-challenge/assets/report-template.md) | - |
 | `-` | [README.md](skills/02-challenge/README.md) | - |
 | `references` | [confidence-rubric.md](skills/02-challenge/references/confidence-rubric.md) | - |
-| `-` | [SKILL.md](skills/02-challenge/SKILL.md) | `Rethink just-completed work against an agreed plan, classify findings as deal-breakers, suggestions, or correct, with a confidence score. Use to challenge a decision, criticize, or critically review recent work; not for line-by-line style review or writing code.` |
+| `-` | [SKILL.md](skills/02-challenge/SKILL.md) | `Rethink just-completed work against an agreed plan, classifying findings as deal-breaker, suggestion, or correct, with a confidence score. Use to challenge or critically review recent work. Not for line-by-line style review or writing code.` |
 
 #### `skills/03-condense`
 
@@ -63,7 +63,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-stats.md](skills/03-condense/actions/02-stats.md) | - |
 | `-` | [README.md](skills/03-condense/README.md) | - |
 | `references` | [intensity-levels.md](skills/03-condense/references/intensity-levels.md) | - |
-| `-` | [SKILL.md](skills/03-condense/SKILL.md) | `Toggle terse output mode (lite, full, ultra) that drops filler while code, errors, and warnings stay verbatim, and report token savings for the session. Use to condense output, shorten answers, switch intensity, or check savings; not for editing prose or compressing code.` |
+| `-` | [SKILL.md](skills/03-condense/SKILL.md) | `Toggle terse output mode (lite, full, ultra) that drops filler while code and errors stay verbatim, and report token savings. Use to condense output, switch intensity, or check savings. Not for editing prose or compressing code.` |
 
 #### `skills/04-shadow-areas`
 
@@ -78,7 +78,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [locked-sets.json](skills/04-shadow-areas/references/locked-sets.json) | - |
 | `references` | [probe-style.md](skills/04-shadow-areas/references/probe-style.md) | - |
 | `references` | [severity-rubric.md](skills/04-shadow-areas/references/severity-rubric.md) | - |
-| `-` | [SKILL.md](skills/04-shadow-areas/SKILL.md) | `Scan a markdown artifact (idea, user stories, PRD, spec) for blind spots and emit a structured shadow report grouped by category and sorted by severity. Use to find gaps, missing parts, or what's missing in a written artifact; not for interactive Q&A (use aidd-refine:01-brainstorm) or code review.` |
+| `-` | [SKILL.md](skills/04-shadow-areas/SKILL.md) | `Scan a markdown artifact (idea, stories, PRD, spec) for blind spots into a shadow report grouped by category and severity. Use to find gaps or what is missing in a written artifact. Not for interactive Q&A or code review.` |
 
 #### `skills/05-fact-check`
 
@@ -92,5 +92,5 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [claim-categories.md](skills/05-fact-check/references/claim-categories.md) | - |
 | `references` | [report-output-discipline.md](skills/05-fact-check/references/report-output-discipline.md) | - |
 | `references` | [verification-cascade.md](skills/05-fact-check/references/verification-cascade.md) | - |
-| `-` | [SKILL.md](skills/05-fact-check/SKILL.md) | `Verify factual claims in a text against authoritative sources and rewrite it with footnote citations, hedging anything unconfirmed. Use to fact-check, verify a claim, or cite sources on explicit request; not for judging code logic or clarifying vague requirements (use aidd-refine:01-brainstorm).` |
+| `-` | [SKILL.md](skills/05-fact-check/SKILL.md) | `Verify factual claims in a text against authoritative sources and rewrite it with footnote citations, hedging the unconfirmed. Use to fact-check, verify a claim, or cite sources on request. Not for judging code or clarifying requirements.` |
 

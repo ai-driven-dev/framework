@@ -16,9 +16,9 @@
 
 ## Steps
 
-1. 📋 **<First step>** — <imperative instruction.>
-2. 🔧 **<Next step>** — <imperative instruction.>
-3. ✅ **<Last step>** — <until the goal is reached.>
+1. 📋 **<First step>**: <imperative instruction.>
+2. 🔧 **<Next step>**: <imperative instruction.>
+3. ✅ **<Last step>**: <until the goal is reached.>
 
 ## Verify
 

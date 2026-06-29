@@ -2,16 +2,14 @@
 
 Emit a `run-result.json` artifact summarising the review loop's stop decision and iteration log. The workflow's post-job (CI YAML) reads this file and performs the lifecycle effects: append to the audit log, finalize the Check Run, post the summary comment, transition issue labels, post the completion marker.
 
-## Inputs
-
+## Input
 - `pr_number`
 - `stop_reason` -- one of `max_iterations`, `blocked_label`, `human_reviewer`, `no_comments`
 - `iteration_log` -- entries from `03-fix-iteration`; may be empty when `stop_reason = "no_comments"`
 - `trigger_comment_id` (optional)
 - `run_id`
 
-## Outputs
-
+## Output
 A single file at `$RUNNER_TEMP/run-result.json` (workflow-readable):
 
 ```json
@@ -30,9 +28,6 @@ A single file at `$RUNNER_TEMP/run-result.json` (workflow-readable):
 }
 ```
 
-## Depends on
-
-- `02-detect-stop` (when `decision = "stop"`)
 
 ## Process
 

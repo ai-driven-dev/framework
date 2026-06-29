@@ -14,7 +14,7 @@ A list of gaps, each with its category, severity, a probe question, and the quot
 
 1. **Load.** Read the locked categories and their definitions from `@../references/locked-sets.json` and `@../references/categories.md`.
 2. **Validate.** Check the source. Reject anything outside the working directory or already named `*-shadow-report.md`.
-3. **Handle edges.** An empty source emits one blocker gap asking what content the artifact should hold, then stops. A non-markdown source adds a warning that attribution may be imprecise, then continues.
+3. **Handle edges.** An empty source stops with a plain warning that there is nothing to scan, emitting no gap. A non-markdown source adds a warning that attribution may be imprecise, then continues.
 4. **Scan.** Walk the seven categories in their locked order. Emit one gap per distinct issue, set its severity from `@../references/severity-rubric.md`, and write its question per `@../references/probe-style.md`.
 5. **Dedupe.** Treat two gaps with the same category and snippet as one. A snippet-less gap falls back to its category plus severity.
 6. **Return.** Hand the gaps and warnings to the next action: `03-diff` when a prior report exists, else `02-render-report`. Sorting happens there.
@@ -22,7 +22,7 @@ A list of gaps, each with its category, severity, a probe question, and the quot
 ## Test
 
 - A path outside the working directory, or a file named `*-shadow-report.md`, is rejected with no gaps.
-- An empty source yields exactly one blocker gap about missing content.
+- An empty source stops with a warning and no gap.
 - A non-markdown source adds one warning and keeps scanning.
 - Every gap has a category and severity from the locked set and a question ending in `?`.
 - A repeated gap (same category and snippet) appears once.

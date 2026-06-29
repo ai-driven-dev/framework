@@ -4,11 +4,11 @@ Iterate until the frontend behaves as intended by inspecting the running UI, map
 
 ## Input
 
-The expected behavior, from `$ARGUMENTS`. The frontend's URL when the caller knows it, otherwise resolved at runtime.
+The expected behavior, from the arguments. The frontend's URL when the caller knows it, otherwise resolved at runtime.
 
 ## Output
 
-A pass or fail verdict, with the per-iteration attempts (hypothesis, fix, result) recorded in the tracking file.
+A pass or fail verdict, with the candidate causes and their fix attempts and results recorded in the tracking file.
 
 ## Process
 

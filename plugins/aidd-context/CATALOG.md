@@ -49,7 +49,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-act.md](skills/00-onboard/actions/03-act.md) | - |
 | `-` | [README.md](skills/00-onboard/README.md) | - |
 | `references` | [journey.md](skills/00-onboard/references/journey.md) | - |
-| `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Guide the user through the AIDD framework on the current project. Explain the flow in plain language and suggest the next logical step, adapted to what is already set up and which AIDD plugins are installed. Use when the user asks where to start, what to do next, how AIDD works, or to be onboarded. Not for listing every installed surface (the explore skill does that) or running a skill the user already knows they need (invoke it directly).` |
+| `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Guide the user through AIDD on the current project: explain the flow and the next step for what is set up. Use when the user asks where to start, what to do next, or how AIDD works. Not for listing installed surfaces or running a known skill.` |
 
 #### `skills/01-bootstrap`
 
@@ -64,7 +64,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [install-template.md](skills/01-bootstrap/assets/install-template.md) | - |
 | `-` | [README.md](skills/01-bootstrap/README.md) | - |
 | `references` | [stack-heuristics.md](skills/01-bootstrap/references/stack-heuristics.md) | - |
-| `-` | [SKILL.md](skills/01-bootstrap/SKILL.md) | `Imagine and validate the technical architecture of a new SaaS through interactive Q&A, candidate-stack comparison, multi-agent audit, and an INSTALL.md output. Use when starting a new SaaS project, choosing a stack, designing the architecture pattern (monolith vs microservices vs serverless), or producing a project's INSTALL.md. Do NOT use for editing an existing project's stack, database schema design, or scaffolding actual files (this skill produces docs only, no code).` |
+| `-` | [SKILL.md](skills/01-bootstrap/SKILL.md) | `Design and validate a new SaaS's architecture into an INSTALL.md via Q&A and stack comparison. Use when the user starts a project, chooses a stack, or picks an architecture pattern. Not for editing an existing stack or scaffolding code.` |
 
 #### `skills/02-project-memory`
 
@@ -82,14 +82,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `-` | [README.md](skills/02-project-memory/README.md) | - |
 | `references` | [capability-signals.md](skills/02-project-memory/references/capability-signals.md) | - |
 | `references` | [mapping-ai-context-file.md](skills/02-project-memory/references/mapping-ai-context-file.md) | - |
-| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Initialize or refresh the project memory bank. Not for updating one memory file after it exists (use the learn skill) or editing a single rule (edit it directly).` |
+| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Initialize or refresh the project memory bank. Use when the user wants to set up or regenerate the project's memory files. Not for updating one memory file after it exists or editing a single rule directly.` |
 
 #### `skills/03-context-generate`
 
 | File | Description |
 |------|---|
 | [README.md](skills/03-context-generate/README.md) | - |
-| [SKILL.md](skills/03-context-generate/SKILL.md) | `Route a request to generate a context artifact (skill, rule, agent, command, or hook) to its dedicated generator when the user has not named which kind. For a named kind, that generator triggers directly. Not for listing existing artifacts (use explore).` |
+| [SKILL.md](skills/03-context-generate/SKILL.md) | `Route a request to generate a context artifact (skill, rule, agent, command, or hook) to its generator when the kind is unnamed. A named kind triggers its generator directly. Not for listing existing artifacts.` |
 
 #### `skills/04-skill-generate`
 
@@ -101,7 +101,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [04-write-actions.md](skills/04-skill-generate/actions/04-write-actions.md) | - |
 | `actions` | [05-validate.md](skills/04-skill-generate/actions/05-validate.md) | - |
 | `assets` | [action-template.md](skills/04-skill-generate/assets/action-template.md) | - |
-| `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<What the skill does, third person, one clause>. Use when <explicit, slightly pushy trigger phrases users actually type; the model under-triggers, so over-list>. <Optional: "Not for <X>, use <Y>" only when a sibling skill could mis-trigger.> (<= 1024 chars, third person, no XML tags; all "when" lives here, not in the body.)` |
+| `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<Verb-led, what the skill produces, one clause>. Use when the user wants to <distinct intents>. <Optional: "Not for <X>" in plain words when a sibling could mis-trigger.> (Two lines max, ~240 chars, straight to the point. Third person, no XML. Never name another skill, never write a /command token. All "when" lives here, not in the body.)` |
 | `-` | [README.md](skills/04-skill-generate/README.md) | - |
 | `references` | [skill-authoring.md](skills/04-skill-generate/references/skill-authoring.md) | - |
 | `references` | [tool-paths.md](skills/04-skill-generate/references/tool-paths.md) | - |
@@ -118,7 +118,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `-` | [README.md](skills/05-rule-generate/README.md) | - |
 | `references` | [rule-authoring.md](skills/05-rule-generate/references/rule-authoring.md) | - |
 | `references` | [tool-paths.md](skills/05-rule-generate/references/tool-paths.md) | - |
-| `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Generate a coding rule that governs editor and agent behavior, across the host AI tools a project uses. Use when the user wants to write, add, or refactor a rule, a convention, or a coding standard, or to scan a codebase and propose rules. Not for other artifacts like skills, agents, commands, hooks.` |
+| `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Generate a coding rule that governs editor and agent behavior across the host AI tools. Use when the user wants to write, add, or refactor a rule, convention, or coding standard. Not for other artifacts like skills, agents, or hooks.` |
 
 #### `skills/06-agent-generate`
 
@@ -157,7 +157,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [hook-template.json](skills/08-hook-generate/assets/hook-template.json) | - |
 | `references` | [hook-authoring.md](skills/08-hook-generate/references/hook-authoring.md) | - |
 | `references` | [tool-paths.md](skills/08-hook-generate/references/tool-paths.md) | - |
-| `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Generate a hook (a handler that runs automatically at a lifecycle event) across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor a hook, or automate an action at a lifecycle point. Not for other artifacts like skills, rules, agents, commands.` |
+| `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Generate a hook, a handler that runs at a lifecycle event, across the host AI tools. Use when the user wants to create, scaffold, or refactor a hook, or automate an action at a lifecycle point. Not for other artifacts like skills or rules.` |
 
 #### `skills/09-mermaid`
 
@@ -166,7 +166,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-mermaid.md](skills/09-mermaid/actions/01-mermaid.md) | - |
 | `-` | [README.md](skills/09-mermaid/README.md) | - |
 | `references` | [mermaid-conventions.md](skills/09-mermaid/references/mermaid-conventions.md) | - |
-| `-` | [SKILL.md](skills/09-mermaid/SKILL.md) | `Generate a valid, high-quality Mermaid diagram from a written source through a plan, confirm, generate, review loop. Use when the user wants to turn an architecture, lifecycle, or flow description into a Mermaid diagram, or when another skill needs one. Not for other diagram formats like PlantUML or Graphviz, or for rendering a diagram to an image.` |
+| `-` | [SKILL.md](skills/09-mermaid/SKILL.md) | `Generate a valid Mermaid diagram from a written source through a plan, generate, review loop. Use when the user wants to turn an architecture, lifecycle, or flow into a Mermaid diagram. Not for other diagram formats or image rendering.` |
 
 #### `skills/10-learn`
 
@@ -178,7 +178,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [04-sync.md](skills/10-learn/actions/04-sync.md) | - |
 | `assets` | [decision-template.md](skills/10-learn/assets/decision-template.md) | - |
 | `-` | [README.md](skills/10-learn/README.md) | - |
-| `-` | [SKILL.md](skills/10-learn/SKILL.md) | `Capture durable project learnings from the conversation or the project's git history and route them to memory, a decision record, a rule, or a new skill. Use when the user asks to capture, record, or remember a decision, a convention, or a lesson, or to distill what recent work taught. Scores each candidate and confirms before writing. Not for personal or AI preferences, routine edits, or anything already captured.` |
+| `-` | [SKILL.md](skills/10-learn/SKILL.md) | `Capture durable project learnings from the conversation or git history into memory, a record, a rule, or a skill. Use when the user asks to capture, record, or remember a decision or lesson. Not for AI preferences or already-captured items.` |
 
 #### `skills/11-explore`
 
@@ -188,7 +188,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-drill.md](skills/11-explore/actions/02-drill.md) | - |
 | `-` | [README.md](skills/11-explore/README.md) | - |
 | `references` | [ai-mapping.md](skills/11-explore/references/ai-mapping.md) | - |
-| `-` | [SKILL.md](skills/11-explore/SKILL.md) | `Explore the current project across its tooling, context, and codebase. Use to survey what is installed and set up, see what is available, or find which installed skill, agent, or rule fits a goal. Not for the next step to take (onboard does that) or running an item (this skill only points).` |
+| `-` | [SKILL.md](skills/11-explore/SKILL.md) | `Explore the current project across its tooling, context, and codebase. Use to survey what is installed, see what is available, or find which skill, agent, or rule fits a goal. Not for choosing the next step or running an item; it only points.` |
 
 #### `skills/12-cook`
 

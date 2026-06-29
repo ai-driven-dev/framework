@@ -6,7 +6,7 @@ Consolidate every available source into the normalized contract consumed downstr
 
 ## Input
 
-The raw `$ARGUMENTS` (free-form text or a ticket URL), any available sources (ticket body, existing PRD, in-session conversation, prior checker findings), and the repo root.
+The raw arguments (free-form text or a ticket URL), any available sources (ticket body, existing PRD, in-session conversation, prior checker findings), and the repo root.
 
 ## Output
 

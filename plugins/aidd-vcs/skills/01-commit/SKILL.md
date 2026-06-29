@@ -1,40 +1,33 @@
 ---
 name: 01-commit
-description: Create an atomic git commit with a conventional message, optionally pushing. Use to commit changes ("commit", "/commit push"). Do NOT use to amend, rebase, open a PR, or tag a release.
+description: Create an atomic git commit with a conventional message, optionally pushing. Use when the user wants to commit changes, optionally pushing the branch. Not for amending, rebasing, opening a pull request, or tagging a release.
+argument-hint: collect | message | commit
 ---
 
 # Commit
 
-Runs interactive with split approval, or auto for agents.
+Stage the right changes, write the message, commit. `01 → 02 → 03`.
 
 ## Actions
 
-| #   | Action   | Role                                                          | Input                                       |
-| --- | -------- | ------------------------------------------------------------- | ------------------------------------------- |
-| 01  | `commit` | Stage, generate or accept a message, commit, optionally push   | mode, message, push, files                  |
+| #   | Action    | Step                                                  |
+| --- | --------- | ----------------------------------------------------- |
+| 01  | `collect` | Review the change and stage what belongs in one commit |
+| 02  | `message` | Write the conventional message                         |
+| 03  | `commit`  | Commit, and push when asked                            |
 
-## Default flow
-
-Single action skill. The router dispatches to `commit` whenever a commit phrase or slash command appears.
-
-## Inline arguments
-
-When invoked as a slash command, the trailing argument controls the push behavior:
-
-- `/commit` → commits only, stays local (`push: false`)
-- `/commit push` → commits then pushes the branch (`push: true`)
+Several concerns means several commits: repeat the chain, one concern at a time.
 
 ## Transversal rules
 
-- Project first: follow `aidd_docs/memory/vcs.md` when it exists (message convention, scopes, branch naming); the rules below and the template are the fallback.
-- Commits stay atomic and focused on a single concern.
-- Messages use imperative mood ("Add feature" not "Added feature").
-- Explain "why" not "what" in the body.
-- Never `--force` push. `--force-with-lease` is acceptable when explicitly required.
-- Follow the conventional commit format defined in `@assets/commit-template.md` when the project sets none.
-- Reference issues in the commit body when applicable.
-- `auto` mode never asks for confirmation. `interactive` mode requires user approval before staging and before committing splits.
+- Follow the project's convention in `aidd_docs/memory/vcs.md` when set, else `assets/commit-template.md`.
+- One concern per commit. Imperative mood. The body says why, not what.
+- Reference the issue in the body when there is one.
+- Never `--force` push; `--force-with-lease` only when explicitly asked.
+- A hook that rejects the commit is not this skill's job: report which hook and why, then stop. Re-stage only files a hook auto-formatted.
+- `auto` never prompts. `interactive` confirms before staging and before each split.
+- Commits locally by default; pushes as well only when the push option is set.
 
 ## Assets
 
-- `@assets/commit-template.md`: Conventional commit format reference.
+- `assets/commit-template.md`: Conventional commit format reference.

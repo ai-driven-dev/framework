@@ -2,13 +2,11 @@
 
 Installs the orchestrator plugin and an SDLC-providing plugin at user scope so the local poll script can invoke them via `claude -p` from any cwd. Skips entirely when the plugins are already loaded (project scope or user scope).
 
-## Inputs
-
+## Input
 - `answers` (required) -- config object from `02-ask-config`
 - `detection` (required) -- detection report from `01-detect-context`
 
-## Outputs
-
+## Output
 ```json
 {
   "skipped": true,
@@ -22,9 +20,6 @@ Installs the orchestrator plugin and an SDLC-providing plugin at user scope so t
 
 When `skipped == false`, the response contains `marketplace_added` and `plugins_installed` instead of `found_at`.
 
-## Depends on
-
-- `06-bootstrap-labels`
 
 ## Process
 

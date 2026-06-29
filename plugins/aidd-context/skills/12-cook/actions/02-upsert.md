@@ -1,10 +1,14 @@
 # 02 - Upsert recipe
 
-Create or update one recipe at `recipes/<slug>.md`, scaffolded from `@assets/recipe-template.md`.
+Create or update one recipe at `recipes/<slug>.md`, scaffolded from `@../assets/recipe-template.md`.
 
 ## Input
 
 The recipe topic. Ask for any missing field (level, time, prerequisites, steps, verify, related) before writing.
+
+## Output
+
+The recipe file at `recipes/<slug>.md`, filled from the template, with its row added or refreshed in `recipes/README.md`.
 
 ## Process
 
@@ -15,3 +19,4 @@ The recipe topic. Ask for any missing field (level, time, prerequisites, steps, 
 ## Test
 
 - `recipes/<slug>.md` exists and matches the template, every section present, no `<...>` placeholder left.
+- `recipes/README.md` carries a row for `<slug>`: its title linked, plus the goal and level.

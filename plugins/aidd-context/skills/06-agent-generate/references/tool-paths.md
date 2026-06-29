@@ -30,7 +30,7 @@ The canonical agent carries `name`, `description`, `model`. Emit those a row acc
 
 Codex agents are TOML, not markdown. Convert:
 
-- Each frontmatter field becomes a top-level TOML key. Quote every string value with `'single quotes'` so a quote or apostrophe in the description stays valid TOML.
+- Each frontmatter field becomes a top-level TOML key. Quote every string value with `"double quotes"` (a TOML basic string) and escape any embedded `"` or backslash, so a quote or apostrophe in the description stays valid TOML.
 - The body becomes `developer_instructions`, wrapped in `'''` literal delimiters (no escaping of the markdown).
 - Drop `model`.
 

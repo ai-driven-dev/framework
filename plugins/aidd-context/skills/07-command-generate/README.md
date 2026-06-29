@@ -1,6 +1,6 @@
 ← [aidd-framework](../../../../README.md) / [aidd-context](../../README.md)
 
-# 10 - command-generate
+# 07 - command-generate
 
 Write one canonical slash command from intent and render it once per host AI tool that supports commands. A sibling of `04-skill-generate` for the command artifact.
 

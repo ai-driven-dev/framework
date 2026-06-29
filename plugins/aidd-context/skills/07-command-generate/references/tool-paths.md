@@ -6,8 +6,6 @@ The per-tool command path and write targets. Command slice only, nothing about s
 
 | Tool           | Path                                        | Supported                            |
 | -------------- | ------------------------------------------- | ------------------------------------ |
-| Tool           | Path                                      | Supported                            |
-| -------------- | ----------------------------------------- | ------------------------------------ |
 | Claude Code    | `.claude/commands/<location>/<slug>.md`   | yes                                  |
 | Cursor         | `.cursor/commands/<location>/<slug>.md`   | yes (plain markdown, no frontmatter) |
 | OpenCode       | `.opencode/commands/<location>/<slug>.md` | yes                                  |

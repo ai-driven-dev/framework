@@ -1,57 +1,31 @@
 # 05 - Write INSTALL.md
 
-Produce `aidd_docs/INSTALL.md` from the filled checklist, folder tree, diagram, and audit summary. This is the only file this skill writes to disk.
+Produce `aidd_docs/INSTALL.md` from the filled checklist, folder tree, diagram, and audit summary. The only file this skill writes to disk.
 
-## Inputs
+## Input
 
-- Filled checklist (from action 04).
-- Folder structure code block (from action 04).
-- Mermaid diagram (from action 04).
-- Augmented audit table (from action 03).
+The filled checklist, folder-structure code block, and Mermaid diagram from action 04, and the augmented audit table from action 03.
 
-## Outputs
+## Output
 
-A new file at `aidd_docs/INSTALL.md` filled from `@../assets/install-template.md`.
-
-```markdown
-# INSTALL.md - acme-invoicing
-
-Technical vision and installation guide.
-
-## Vision
-...
-## Decisions
-...
-## Stack summary
-...
-## Architecture
-...
-## Folder structure
-...
-## Install steps
-...
-## Audit summary
-...
-```
-
-## Depends on
-
-- `04-pick-and-design`
+A new `aidd_docs/INSTALL.md` filled from `@../assets/install-template.md`, with its Vision, Decisions, Stack summary, Architecture, Folder structure, Install steps, and Audit summary sections.
 
 ## Process
 
-1. Read `@../assets/install-template.md`. This is the skeleton.
-2. Fill each placeholder from upstream artifacts:
-   - **Vision**: project name + one-liner from block 1
-   - **Decisions table**: each row from block 4 paired with a one-line `Why` derived from block 2-3 constraints
-   - **Stack summary**: concrete versions / SaaS plans where known
-   - **Architecture**: paste the Mermaid diagram from action 04 + 2-3 sentences explaining module boundaries
-   - **Folder structure**: paste the tree from action 04 verbatim
-   - **Install steps**: 3-7 imperative steps the user runs to bring up the empty project (init repo, install runtimes, create cloud accounts, set env vars). No code generation - this is a checklist, not a script.
-   - **Audit summary**: paste the augmented table from action 03, keep verdicts + one-line notes
-3. Write the filled content to `aidd_docs/INSTALL.md` in the user's project root. If the file already exists, ask before overwriting.
-4. Print the relative path of the written file and a short summary (which sections were filled, total length).
+1. **Load.** Read `@../assets/install-template.md` as the skeleton.
+2. **Fill.** Fill each placeholder from the upstream artifacts:
+   - **Vision**: project name and one-liner from block 1.
+   - **Decisions**: each block-4 row paired with a one-line why from the block 2 and 3 constraints.
+   - **Stack summary**: concrete versions or SaaS plans where known.
+   - **Architecture**: the action 04 Mermaid diagram plus two or three sentences on module boundaries.
+   - **Folder structure**: the action 04 tree verbatim.
+   - **Install steps**: 3 to 7 imperative steps to bring up the empty project (init repo, install runtimes, create cloud accounts, set env vars). A checklist, not a script, with no code generation.
+   - **Audit summary**: the action 03 augmented table, keeping verdicts and one-line notes.
+3. **Write.** Write the filled content to `aidd_docs/INSTALL.md` in the project root. When the file already exists, ask before overwriting.
+4. **Report.** Print the written file's relative path and a short summary of the sections filled and total length.
 
 ## Test
 
-`aidd_docs/INSTALL.md` exists and parses as markdown; it contains exactly these `## ` H2 headings in order: `Vision`, `Decisions`, `Stack summary`, `Architecture`, `Folder structure`, `Install steps`, `Audit summary`; the `Architecture` section contains a fenced ` ```mermaid ` block; the `Folder structure` section contains a fenced code block with at least 5 lines.
+- `aidd_docs/INSTALL.md` exists and parses as markdown.
+- It contains these H2 headings in order: Vision, Decisions, Stack summary, Architecture, Folder structure, Install steps, Audit summary.
+- The Architecture section contains a fenced `mermaid` block, and the Folder structure section a fenced code block of at least five lines.

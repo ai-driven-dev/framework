@@ -2,13 +2,11 @@
 
 Walks the user through adding the GitHub Action secrets the workflow needs. For each required secret, prints inline a short "what / why / how" block with two or three concrete ways to generate the value, then reads the value from stdin and stores it via `gh secret set`.
 
-## Inputs
-
+## Input
 - `answers` (required) -- config object from `02-ask-config`
 - `detection` (required) -- detection report from `01-detect-context`
 
-## Outputs
-
+## Output
 ```json
 {
   "secrets_set": ["CLAUDE_CODE_OAUTH_TOKEN"],
@@ -16,9 +14,6 @@ Walks the user through adding the GitHub Action secrets the workflow needs. For 
 }
 ```
 
-## Depends on
-
-- `06-bootstrap-labels`
 
 ## Process
 
@@ -66,7 +61,7 @@ Paste the key when prompted.
 Used by the GitHub Action to clone the marketplace repository so plugins can install at runtime. Read-only is enough.
 
 Three ways to obtain:
-- **A. Fine-grained PAT (recommended)**: `https://github.com/settings/personal-access-tokens/new`. Resource owner = the marketplace repo's owner. Repository access = "Only select repositories" -> the marketplace repo. Permissions = `Repository -> Contents: Read-only`. Expiration: 90 days minimum (set a calendar reminder to rotate).
+- **A. Fine-grained PAT (recommended)**: `https://github.com/settings/personal-access-tokens/new`. Resource owner = the marketplace repo's owner. Repository access = "Only select repositories" → the marketplace repo. Permissions = `Repository -> Contents: Read-only`. Expiration: 90 days minimum (set a calendar reminder to rotate).
 - **B. Classic PAT (fallback)**: `https://github.com/settings/tokens/new`. Scope = `repo` (read). Less granular; rotate every 90 days.
 - **C. GitHub App installation token**: install a dedicated GitHub App on the org with "Contents: Read" on the marketplace repo. Mint short-lived tokens via the App's private key (rotates automatically). Heaviest setup, best for org compliance.
 
@@ -80,7 +75,7 @@ How to obtain (recommended):
 
 - `https://github.com/settings/personal-access-tokens/new`
 - **Resource owner**: the target repo's owner.
-- **Repository access**: "Only select repositories" -> the target repo.
+- **Repository access**: "Only select repositories" → the target repo.
 - **Repository permissions** (all under "Repository permissions"):
   - `Contents`: Read and Write
   - `Pull requests`: Read and Write

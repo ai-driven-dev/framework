@@ -1,6 +1,6 @@
 ---
 name: 02-project-memory
-description: Initialize or refresh the project memory bank. Not for updating one memory file after it exists (use the learn skill) or editing a single rule (edit it directly).
+description: Initialize or refresh the project memory bank. Use when the user wants to set up or regenerate the project's memory files. Not for updating one memory file after it exists or editing a single rule directly.
 argument-hint: init-context-file | scaffold-docs | generate-memory | review-memory | sync-memory
 ---
 
@@ -13,7 +13,7 @@ Bootstraps the project's context layer: the AI context files with a memory block
 | #   | Action              | Role                                                | Input             |
 | --- | ------------------- | --------------------------------------------------- | ----------------- |
 | 01  | `init-context-file` | Resolve the tools, then upsert the memory block     | project root      |
-| 02  | `scaffold-docs`     | Create the `aidd_docs/` structure                   | project root      |
+| 02  | `scaffold-docs`     | Create the `aidd_docs/` folder structure            | project root      |
 | 03  | `generate-memory`   | Detect the capabilities, generate the memory files  | the memory dir    |
 | 04  | `review-memory`     | Review the memory files for consistency             | the memory dir    |
 | 05  | `sync-memory`       | Fill the memory block in every context file         | the context files |

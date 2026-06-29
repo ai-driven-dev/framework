@@ -2,23 +2,18 @@
 
 Renders the GitHub Actions workflow that triggers the async pipeline.
 
-## Inputs
-
+## Input
 - `answers` (required) -- config object from `02-ask-config`
 - `detection` (required) -- detection report from `01-detect-context`
 
-## Outputs
-
+## Output
 A file at `.github/workflows/aidd-async.yml`.
 
-## Depends on
-
-- `02-ask-config`
 
 ## Process
 
 1. Skip this action when `answers.mode == "local"`.
-2. Read `assets/workflow-template.yml`.
+2. Read `assets/setup/workflow-template.yml`.
 3. Substitute placeholders:
    - `__TO_IMPLEMENT_LABEL__` -> `answers.labels.to_implement`
    - `__TO_REVIEW_LABEL__` -> `answers.labels.to_review`

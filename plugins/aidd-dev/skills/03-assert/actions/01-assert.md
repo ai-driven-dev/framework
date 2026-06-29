@@ -4,7 +4,7 @@ Iterate the project's coding assertions until the work passes every one, fixing 
 
 ## Input
 
-The work to assert, named or described, from `$ARGUMENTS` or the context.
+The work to assert, named or described, from the arguments or the context.
 
 ## Output
 

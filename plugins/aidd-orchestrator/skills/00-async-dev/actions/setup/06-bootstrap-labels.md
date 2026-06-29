@@ -2,12 +2,10 @@
 
 Creates the 5 lifecycle labels declared in the config if they do not already exist on the repo.
 
-## Inputs
-
+## Input
 - `answers` (required) -- config object from `02-ask-config`
 
-## Outputs
-
+## Output
 ```json
 {
   "created": ["to-implement", "claude/working"],
@@ -15,9 +13,6 @@ Creates the 5 lifecycle labels declared in the config if they do not already exi
 }
 ```
 
-## Depends on
-
-- `04-write-config`
 
 ## Process
 

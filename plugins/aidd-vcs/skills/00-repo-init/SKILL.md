@@ -1,6 +1,6 @@
 ---
 name: 00-repo-init
-description: Initialize a project's repository - resolve the default branch and VCS provider, run git init with a bootstrap commit, write CONTRIBUTING.md, and on request create the remote repository and push. Use when the user says "init a repo", "git init", "initialize version control", "set up a new repo", "start a project", "create the remote and push", or "publish this repo". Do NOT use for committing changes (use 01-commit), opening pull requests (use 02-pull-request), tagging releases (use 03-release-tag), or cloning an existing remote.
+description: Initialize a project repository: git init, default branch, bootstrap commit, CONTRIBUTING.md, optionally the remote. Use when the user wants to init or set up a new repo, or publish to a remote. Not for committing, opening a PR, or tagging.
 argument-hint: init | publish
 ---
 
@@ -8,16 +8,14 @@ argument-hint: init | publish
 
 Initializes a project's repository locally and, on request, on the remote host, then returns the remote URL.
 
-## Available actions
+## Actions
 
 | #   | Action    | Role                                                                                              | Input                           |
 | --- | --------- | ------------------------------------------------------------------------------------------------- | ------------------------------- |
 | 01  | `init`    | Resolve VCS config, `git init`, set the default branch, write `CONTRIBUTING.md`, bootstrap commit | cwd, default_branch, remote_url |
 | 02  | `publish` | Create the remote repo on the resolved host and push, return its URL                              | cwd, non_interactive            |
 
-## Default flow
-
-Chain `01 → 02`, testing each before the next. The router runs `init` alone for a local-only request, and runs `publish` after an `init` when asked to create the remote.
+Run `01 → 02`. `init` alone for local-only; `publish` after it to create the remote.
 
 ## Transversal rules
 
@@ -29,7 +27,3 @@ Chain `01 → 02`, testing each before the next. The router runs `init` alone fo
 ## Assets
 
 - `assets/CONTRIBUTING.md`: the project-root `CONTRIBUTING.md` template.
-
-## External data
-
-- `aidd_docs/memory/vcs.md`: the project's VCS config (default branch, provider), read by both actions when present and pointed to, never copied.

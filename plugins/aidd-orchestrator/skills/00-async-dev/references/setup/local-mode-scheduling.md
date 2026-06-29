@@ -92,7 +92,7 @@ The daemon is fully decoupled from Claude Code's Tasks system; cancel it by kill
 
 Convenient when the backlog is small and you want everything inside Claude Code. **Counts against your Tasks quota; one tick = one task slot consumed**, so a 5-minute cadence may exhaust a daily/weekly limit faster than you expect.
 
-1. Open Claude Code Desktop -> Scheduled tasks -> New task.
+1. Open Claude Code Desktop → Scheduled tasks → New task.
 2. Working directory: the absolute path of this repo.
 3. Schedule: choose a cadence; remember the quota.
 4. Prompt: `Run ./scripts/aidd-async-poll.sh and report what was processed.`

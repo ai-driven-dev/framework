@@ -1,9 +1,8 @@
 # 05 -- Delegate SDLC
 
-Invoke the SDLC capability with the issue request, then verify the outcome by observing the real state of git and the VCS host — never by parsing the SDLC's return shape.
+Invoke the SDLC capability with the issue request, then verify the outcome by observing the real state of git and the VCS host, never by parsing the SDLC's return shape.
 
-## Inputs
-
+## Input
 - `issue` -- the locked issue object
 - `run_id` -- identifier from `03-acquire-lock`
 - `discovered_skill` -- skill name from `04-check-sdlc`
@@ -11,8 +10,7 @@ Invoke the SDLC capability with the issue request, then verify the outcome by ob
 - `trigger_kind` (optional) -- `label` or `comment`
 - `trigger_comment_url` (optional) -- when `trigger_kind = comment`
 
-## Outputs
-
+## Output
 ```json
 {
   "default_before": "<sha>",
@@ -30,9 +28,6 @@ Invoke the SDLC capability with the issue request, then verify the outcome by ob
 
 Every field is the result of an observation against git or the VCS host. None is parsed from the SDLC's return text.
 
-## Depends on
-
-- `04-check-sdlc`
 
 ## Process
 

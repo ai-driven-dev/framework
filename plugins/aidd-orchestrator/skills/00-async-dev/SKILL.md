@@ -1,6 +1,6 @@
 ---
 name: 00-async-dev
-description: Single entry point for the async-dev pipeline (setup, run, review). Hybrid router decides which sub-flow to execute from $ARGUMENTS keyword (`setup` / `run` / `review`), trigger source (label `to-implement` / `to-review`, comment `@claude /implement` / `/review`), repo state (workflow + config presence, PR linked to issue), or natural-language intent. Use when the user says "set up async dev", "run async dev on issue #N", "address review on PR #N", "/async-dev", "claude on issues", or when triggered by a webhook with the matching labels or comments. Do NOT use for plain status checks on the async pipeline or for SDLC orchestration unrelated to issue/PR automation.
+description: Drive the async-dev pipeline from one entry point: setup, run, or review. Use when the user wants to install async dev, run a ready issue, or address PR review comments, or on a webhook trigger. Not for plain status checks.
 argument-hint: collect-comments | detect-stop | fix-iteration | finalize | poll-ready | resolve-deps | acquire-lock | check-sdlc | delegate-sdlc | write-audit | detect-context | ask-config | generate-workflow | generate-local-script | write-config | bootstrap-labels | install-user-scope-plugins | configure-remote-secrets | bootstrap-scheduling | commit-and-push | smoke-test
 ---
 
@@ -18,11 +18,11 @@ Single skill that drives the async development pipeline end to end. Three sub-fl
 
 **You are the router until you commit to a sub-flow. Once committed, run that sub-flow's actions in order; do not jump back to routing mid-flow.**
 
-## Routing — hybrid contract
+## Routing: hybrid contract
 
 Walk in order. First match wins.
 
-1. **`$ARGUMENTS` keyword override.** If `$ARGUMENTS` contains exactly `setup`, `run`, or `review` (case-insensitive, standalone token), route there immediately. This is the explicit override the CI workflow uses.
+1. **Argument override.** If the arguments contain exactly `setup`, `run`, or `review` (case-insensitive, standalone token), route there immediately. This is the explicit override the CI workflow uses.
 2. **Trigger env.** When invoked from CI (`GITHUB_EVENT_NAME` set):
    - Label payload `to-implement` → `run`.
    - Label payload `to-review` → `review`.
@@ -43,7 +43,7 @@ Walk in order. First match wins.
 
 **If repo state contradicts intent** (e.g. user says "run" but `.claude/aidd-orchestrator.json` is absent), surface the conflict before delegating; never silently switch.
 
-See `@references/routing.md` for the full decision tree, signal precedence, and edge cases.
+See `references/routing.md` for the full decision tree, signal precedence, and edge cases.
 
 ## Sub-flows
 
@@ -55,9 +55,9 @@ Sets up async-dev in a repo. Detects context, asks for runtime parameters, gener
 | --- | --------------------------------- | --------------------------------------------------------------------------------------------- |
 | 01  | `detect-context`                  | Identify repo, default branch, existing config, CI permissions                                |
 | 02  | `ask-config`                      | Collect runtime parameters (mode, auth, labels, schedule, agents)                             |
-| 03  | `generate-workflow`               | Emit `.github/workflows/aidd-async.yml` from `@assets/setup/workflow-template.yml`             |
-| 04  | `generate-local-script`           | Emit poll/daemon scripts (local mode only) from `@assets/setup/local-*-template.sh`            |
-| 05  | `write-config`                    | Persist `.claude/aidd-orchestrator.json` from `@assets/setup/config-template.json`             |
+| 03  | `generate-workflow`               | Emit `.github/workflows/aidd-async.yml` from `assets/setup/workflow-template.yml`             |
+| 04  | `generate-local-script`           | Emit poll/daemon scripts (local mode only) from `assets/setup/local-*-template.sh`            |
+| 05  | `write-config`                    | Persist `.claude/aidd-orchestrator.json` from `assets/setup/config-template.json`             |
 | 06  | `bootstrap-labels`                | Create `to-implement` / `to-review` / `claude/*` labels via `gh`                              |
 | 07  | `install-user-scope-plugins`      | Install `aidd-orchestrator` + `aidd-dev` at user scope (local mode)                           |
 | 08  | `configure-remote-secrets`        | Sync `CLAUDE_CODE_OAUTH_TOKEN`, `AIDD_BOT_TOKEN`, etc. (remote mode)                          |
@@ -65,7 +65,7 @@ Sets up async-dev in a repo. Detects context, asks for runtime parameters, gener
 | 10  | `commit-and-push`                 | Stage generated files, conventional-commit, push                                              |
 | 11  | `smoke-test`                      | Label a throwaway issue with `to-implement`; verify the pipeline reacts                       |
 
-Files: `@actions/setup/01-detect-context.md` ... `@actions/setup/11-smoke-test.md`.
+Files: `actions/setup/01-detect-context.md` ... `actions/setup/11-smoke-test.md`.
 
 Default flow: `01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11`. Actions self-skip when their preconditions are not met (e.g. `07` skips in remote mode, `08` skips in local mode).
 
@@ -82,7 +82,7 @@ Executes one orchestration cycle on a fresh issue. Reads ready issues, resolves 
 | 05  | `delegate-sdlc`   | Hand the issue to the SDLC capability; observe outcome                                         |
 | 06  | `write-audit`     | Emit `run-result.json` for the workflow's post-job                                             |
 
-Files: `@actions/run/01-poll-ready.md` ... `@actions/run/06-write-audit.md`.
+Files: `actions/run/01-poll-ready.md` ... `actions/run/06-write-audit.md`.
 
 Default flow: `01 → 02 → 03 → 04 → 05 → 06`. One cycle per ready issue.
 
@@ -93,13 +93,13 @@ Closes the loop after a PR is opened by the run flow. Detects when to keep auto-
 | #   | Action               | Role                                                                                       |
 | --- | -------------------- | ------------------------------------------------------------------------------------------ |
 | 01  | `collect-comments`   | Read all PR + linked-issue comments newer than the last bot activity                       |
-| 02  | `detect-stop`        | Decide stop vs continue using `@references/review/stop-conditions.md`                       |
+| 02  | `detect-stop`        | Decide stop vs continue using `references/review/stop-conditions.md`                       |
 | 03  | `fix-iteration`      | Delegate fixes to the SDLC capability; reply to each addressed comment                     |
 | 04  | `finalize`           | Resolve threads, post the structured summary, set `claude/awaiting-review` or `blocked`    |
 
-Files: `@actions/review/01-collect-comments.md` ... `@actions/review/04-finalize.md`.
+Files: `actions/review/01-collect-comments.md` ... `actions/review/04-finalize.md`.
 
-Default flow: `01 → 02 → (03 → 01 loop if continue) → 04`. Stop conditions in `@references/review/stop-conditions.md`.
+Default flow: `01 → 02 → (03 → 01 loop if continue) → 04`. Stop conditions in `references/review/stop-conditions.md`.
 
 ## Rules
 
@@ -111,20 +111,20 @@ Default flow: `01 → 02 → (03 → 01 loop if continue) → 04`. Stop conditio
 
 ## References
 
-- `@references/routing.md` - full decision tree, signal precedence, conflict resolution.
-- `@references/setup/auth-modes.md` - local vs remote auth contracts.
-- `@references/setup/claude-action-auth.md` - `claude-code-action` token setup.
-- `@references/setup/local-mode-scheduling.md` - poll routine options.
-- `@references/review/stop-conditions.md` - when the review loop hands off to a human.
+- `references/routing.md` - full decision tree, signal precedence, conflict resolution.
+- `references/setup/auth-modes.md` - local vs remote auth contracts.
+- `references/setup/claude-action-auth.md` - `claude-code-action` token setup.
+- `references/setup/local-mode-scheduling.md` - poll routine options.
+- `references/review/stop-conditions.md` - when the review loop hands off to a human.
 
 ## Assets
 
 Setup-only templates copied into the target repo by the setup sub-flow:
 
-- `@assets/setup/workflow-template.yml` - `.github/workflows/aidd-async.yml` skeleton.
-- `@assets/setup/local-poll-template.sh` - local-mode poll script.
-- `@assets/setup/local-daemon-template.sh` - local-mode daemon script.
-- `@assets/setup/config-template.json` - `.claude/aidd-orchestrator.json` skeleton.
+- `assets/setup/workflow-template.yml` - `.github/workflows/aidd-async.yml` skeleton.
+- `assets/setup/local-poll-template.sh` - local-mode poll script.
+- `assets/setup/local-daemon-template.sh` - local-mode daemon script.
+- `assets/setup/config-template.json` - `.claude/aidd-orchestrator.json` skeleton.
 
 ## Test
 

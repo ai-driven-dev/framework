@@ -1,6 +1,6 @@
 ---
 name: 05-review
-description: Read-only review of a diff on three axes, code, behavior versus the plan, and relevancy, into one verdict report. Use before shipping a change. Do NOT use to fix findings or audit a codebase.
+description: Review a diff read-only on three axes, code, behavior versus the plan, and relevancy, into one verdict report. Use before shipping a change. Not for fixing findings or auditing a codebase.
 argument-hint: review-code | review-functional | review-relevancy
 model: opus
 ---
@@ -24,9 +24,9 @@ Run all three by default, composing one report. Run a single axis only when the 
 - Read-only: surface each finding with its fix described, never patch.
 - Output: always write `review.md` to disk; the file is the deliverable, never an inline-only verdict.
 - Folder: write into the reviewed work's feature folder (`aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, beside `plan.md`), or one resolved from the change when it has none.
-- Sections: fill `review.md` from `@assets/review-template.md`, each axis its own section, an unrun axis marked "Not run".
+- Sections: fill `review.md` from `assets/review-template.md`, each axis its own section, an unrun axis marked "Not run".
 - Re-run: overwrite `review.md` with the current review. It is a snapshot of the current diff, not a history; a later review of the same work replaces the earlier one.
-- Verdict: one overall verdict, the strictest across the axes run, per `@references/review-rubric.md`.
+- Verdict: one overall verdict, the strictest across the axes run, per `references/review-rubric.md`.
 
 ## References
 

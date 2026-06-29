@@ -8,7 +8,7 @@ argument-hint: N/A
 
 AI instructions:
 
-- be focused on creating clear, concise, and actionable GitHub issues.
+- be focused on creating clear, concise, and actionable issues in the configured tracker.
 - no over-thinking nor over-complicating.
 
  -->

@@ -31,8 +31,9 @@ Or via the slash command:
 - `/commit` - stage, commit, stay local (`push: false`).
 - `/commit push` - stage, commit, then push the branch (`push: true`).
 
-The skill runs a single action (`commit`) that stages, generates or accepts a
-message, commits, and optionally pushes.
+The skill chains three actions, collect then message then commit, that run
+end to end: stage one concern, write the conventional message, commit, and
+optionally push.
 
 ## Outputs
 

@@ -15,7 +15,7 @@ A report of the repo root, the resolved default branch and provider, and whether
 ## Process
 
 1. **Guard.** If `cwd` is already a git work tree, skip and report `created: false`.
-2. **Resolve.** Read the default branch and provider from the project's VCS memory. If absent, infer the provider from the environment (an installed VCS CLI, a configured MCP, or an existing remote URL). Fall back to `main` when nothing resolves. An explicit `default_branch` wins.
+2. **Resolve.** Resolve the default branch and provider; an explicit `default_branch` wins.
 3. **Init.** Run `git init -b <default_branch> <cwd>`.
 4. **Contribute.** Write `CONTRIBUTING.md` at the repo root from the template, filling `{{PROJECT_NAME}}`. Leave no raw `{{...}}`.
 

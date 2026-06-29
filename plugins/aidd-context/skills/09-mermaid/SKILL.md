@@ -1,6 +1,6 @@
 ---
 name: 09-mermaid
-description: Generate a valid, high-quality Mermaid diagram from a written source through a plan, confirm, generate, review loop. Use when the user wants to turn an architecture, lifecycle, or flow description into a Mermaid diagram, or when another skill needs one. Not for other diagram formats like PlantUML or Graphviz, or for rendering a diagram to an image.
+description: Generate a valid Mermaid diagram from a written source through a plan, generate, review loop. Use when the user wants to turn an architecture, lifecycle, or flow into a Mermaid diagram. Not for other diagram formats or image rendering.
 ---
 
 # Mermaid

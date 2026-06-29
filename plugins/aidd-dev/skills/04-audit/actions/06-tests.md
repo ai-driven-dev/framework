@@ -1,34 +1,31 @@
 # 06 - Tests audit
 
-Read-only audit of the `tests` pillar: coverage gaps, test quality, and test suite health. Reports findings, never edits code.
+Read-only audit of the `tests` pillar, coverage gaps, test quality, and suite health. Reports findings, never edits code.
 
-## Inputs
+## Input
 
-```yaml
-scope: <directory or file glob>    # optional; defaults to the entire codebase
-```
+An optional scope, a directory or file glob. Defaults to the entire codebase.
 
-## Outputs
+## Output
 
-```yaml
-audit_path: aidd_docs/tasks/audits/<yyyy>_<mm>_tests.md   # or <yyyy>_<mm>_full.md in a full run
-pillar: tests
-findings_count: <int>
-```
+The `tests` findings, written to `tests.md` in the run's audit folder.
 
 ## Process
 
-1. **Load scope.** Default to the full codebase when `scope` is absent; otherwise restrict scanning to the provided glob or directory.
-2. **Scan the tests lens** below, preferring a coverage report when available. Stay in this pillar - whether a feature behaves correctly belongs to `aidd-dev:03-assert`; runtime cost to `05-performance`.
-   - **Critical-path coverage gaps**: identify code paths (auth flows, data mutations, error handling) that have no corresponding test; use a coverage report when available, degrade to static inspection of test-file presence when absent.
-   - **Tests asserting implementation instead of behavior**: flag tests that couple to internal method names, private state, or implementation details rather than observable outputs.
+1. **Scope.** Default to the full codebase when no scope is given. Otherwise restrict scanning to the provided glob or directory.
+2. **Scan.** Prefer a coverage report when available. Stay in this pillar: whether a feature behaves correctly is a separate concern, runtime cost belongs to `05-performance`.
+   - **Critical-path coverage gaps**: identify code paths (auth flows, data mutations, error handling) with no test. Use a coverage report when available, degrade to static inspection of test-file presence when absent.
+   - **Tests asserting implementation, not behavior**: flag tests coupled to internal method names, private state, or implementation details rather than observable outputs.
    - **Flaky tests**: flag tests that use arbitrary `sleep` calls, rely on timing, or have known intermittent failures recorded in CI history or inline comments.
-   - **Skipped or xfail tests without a recorded reason**: flag `skip`, `xit`, `xfail`, `.todo`, or equivalent markers that lack an explanatory comment or issue reference.
-   - **Test pyramid imbalance**: flag suites with disproportionately many end-to-end or integration tests and few unit tests, raising maintenance cost and feedback speed.
-   - When no coverage tool is available, record "no coverage tool - static inspection only" in Coverage > Skipped and limit findings to structurally observable issues. Do not invent coverage numbers.
-3. **Rate each finding.** Severity (🔴 / 🟡 / 🟢) and effort (S/M/L) per `@../assets/audit-template.md` legend. Quote a concrete `file:line` for every finding. Category is always `tests`.
-4. **Write the report** using `@../assets/audit-template.md`: fill the Findings table (one row per issue, severity-first), ranked Top actions (hand off new or fixed tests to `aidd-dev:06-test`), and the Coverage section. In a full audit run, contribute these finding rows to the single merged report per the skill output contract instead of writing a separate file. Read-only: emit the report and stop; do not edit code.
+   - **Skipped tests without a reason**: flag `skip`, `xit`, `xfail`, `.todo`, or equivalent markers that lack an explanatory comment or issue reference.
+   - **Test pyramid imbalance**: flag suites with disproportionately many end-to-end or integration tests and few unit tests, raising maintenance cost and slowing feedback.
+   - When no coverage tool is available, record "no coverage tool, static inspection only" in `Coverage > Skipped` and limit findings to structurally observable issues. Do not invent coverage numbers.
+3. **Rate.** Give each finding a severity and an effort per the `@../assets/audit-template.md` legend, with a concrete `file:line`. The category is always `tests`.
+4. **Write.** Fill `@../assets/audit-template.md` into the pillar file: the Findings table (one row per issue, severity-first), the ranked Top actions, and the Coverage section. In a full run, also add the rows to the merged `report.md` in the same folder. Emit the report and stop.
 
 ## Test
 
-The output file exists at `audit_path`; it has the `## Findings`, `## Top actions`, `## Coverage` sections; every Findings row has a severity, category `tests`, a concrete `file:line`, and an effort; Coverage lists `tests` as scanned. No abstract "the codebase has..." sentences, no code changes made.
+- The output file exists at the reported path.
+- It has the `## Findings`, `## Top actions`, and `## Coverage` sections.
+- Every Findings row carries a severity, category `tests`, a concrete `file:line`, and an effort.
+- Coverage lists `tests` as scanned, and no code was changed.

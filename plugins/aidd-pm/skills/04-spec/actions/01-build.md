@@ -12,7 +12,7 @@ The path to `spec.md` in the feature folder, drafted from the template, with the
 
 ## Process
 
-1. **Source.** From a PRD path, lift its target, hard constraints, non-goals, and done-when into the template, dropping any implementation detail. From a request, map it onto the template sections directly. Do not explore the codebase or name any file, component, or API: the spec stays solution-agnostic, intent only.
+1. **Source.** From a PRD path, lift its target, hard constraints, non-goals, and done-when into the template, dropping any implementation detail. From a request, map it onto the template sections directly. Do not explore the codebase.
 2. **Gaps.** Replace any missing required field with `TBD: <precise question>`. Never guess.
 3. **Check.** Confirm every section the validator requires is present.
 4. **Write.** Resolve the feature folder, reusing it when it exists, and save the spec there as `spec.md`.
@@ -21,5 +21,5 @@ The path to `spec.md` in the feature folder, drafted from the template, with the
 ## Test
 
 - `spec.md` exists in the feature folder.
-- It contains every section listed in `@../assets/spec-validator.yml`.
+- It contains every section the validator marks required in `@../assets/spec-validator.yml`.
 - It carries no library name, framework pattern, or source-file layout.

@@ -1,6 +1,6 @@
 ---
 name: 05-fact-check
-description: Verify factual claims in a text against authoritative sources and rewrite it with footnote citations, hedging anything unconfirmed. Use to fact-check, verify a claim, or cite sources on explicit request; not for judging code logic or clarifying vague requirements (use aidd-refine:01-brainstorm).
+description: Verify factual claims in a text against authoritative sources and rewrite it with footnote citations, hedging the unconfirmed. Use to fact-check, verify a claim, or cite sources on request. Not for judging code or clarifying requirements.
 argument-hint: identify-claims | verify | report
 ---
 
@@ -16,9 +16,7 @@ Verifies the factual claims inside a target text and rewrites it grounded in evi
 | 02  | `verify`          | Run the verification cascade per claim, produce a verdict and sources         | claim list from 01          |
 | 03  | `report`          | Rewrite the text with footnote citations, hedge unverified, surface conflicts | verdict list from 02        |
 
-## Default flow
-
-Sequential skill: `01 → 02 → 03`. No skipping. The router materializes the three actions as a task list on entry and closes each task only when its `## Test` passes.
+Run `01 → 02 → 03`; pass each `## Test` before the next.
 
 ## Transversal rules
 
@@ -30,7 +28,7 @@ Sequential skill: `01 → 02 → 03`. No skipping. The router materializes the t
 - An unverified claim is never deleted and never asserted as fact: it is kept and marked `(unverified - no source found)`.
 - Caching a verified fact is opt-in: propose it with a recommendation, never cache silently. The skill persists nothing; the mechanics live in action 03.
 - The final report is reader-facing prose: the corrected text, `## Sources`, and `## Unverified claims`, nothing else. Internal mechanics never appear in the output: no cascade or tier trace (`Cascade:`, `tier 1/2/3`, `miss`, `resolved`), no category labels, no raw verdict words. State conclusions, not the process. Action 03 holds the exhaustive forbidden list.
-- The report is rendered in plain prose and is never restyled by an active session output mode (terse, caveman, condensed). The skill's output format is fixed by action 03 alone.
+- The report is rendered in plain prose and is never restyled by an active output mode. The skill's output format is fixed by action 03 alone.
 
 ## References
 

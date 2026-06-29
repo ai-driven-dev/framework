@@ -17,7 +17,7 @@ A Mermaid diagram in a fenced block, plus an optional review note. On the first 
 3. **Confirm.** Ask the user to confirm the plan. Block on the answer.
 4. **Generate.** Produce a valid Mermaid diagram from the confirmed plan, following the conventions and defaults in `@../references/mermaid-conventions.md`.
 5. **Offer a review.** Ask whether the user wants a review, and wait.
-6. **Review on confirm.** Check the syntax, look for an empty or misplaced node, and suggest improvements. Never add an element that was not in the confirmed plan.
+6. **Review on confirm.** Check the syntax, look for an empty or misplaced node, and suggest improvements.
 
 ## Test
 
