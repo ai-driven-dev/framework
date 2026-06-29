@@ -1,6 +1,6 @@
 # 02 - Upsert recipe
 
-Create or update one recipe at `recipes/<slug>.md`, scaffolded from `@assets/recipe-template.md`.
+Create or update one recipe at `recipes/<slug>.md`, scaffolded from `@../assets/recipe-template.md`.
 
 ## Input
 

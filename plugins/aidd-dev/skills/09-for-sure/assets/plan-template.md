@@ -1,7 +1,4 @@
 ---
-name: for-sure-tracking
-description: For Sure autonomous-loop tracking file. Extends the 01-plan format with `success_condition` and `iteration` (For-Sure-only), which the loop runs and increments.
-argument-hint: N/A
 objective: "{What must be true when done. One sentence.}"
 success_condition: "{Runnable command that proves done. Example: 'npm test exits 0 AND coverage > 80%'}"
 iteration: 0

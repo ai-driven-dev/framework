@@ -21,7 +21,7 @@ User's requirement.
    2. Implement the refined todo.
    3. Return a one-line output summary.
    ```
-4. **Report.** Print exactly one table, nothing else:
+4. **Report.** Print exactly one table, nothing else.
 
 ## Test
 
