@@ -220,6 +220,11 @@ describe("PluginAddUseCase", () => {
       it("fetches and materializes flat files", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
         await initAndInstall(deps, PROJECT_ROOT, "opencode");
+        // OpenCode now copies its per-target flat BUILT tree (namespaced <plugin>-<name>).
+        deps.fs.setFile(
+          "/built/opencode/.opencode/skills/sample-plugin-demo/SKILL.md",
+          "# Demo skill"
+        );
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
@@ -460,6 +465,11 @@ describe("PluginAddUseCase", () => {
       it("materializes flat files even when source is local marketplace", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
         await initAndInstall(deps, PROJECT_ROOT, "opencode");
+        // OpenCode now copies its per-target flat BUILT tree (namespaced <plugin>-<name>).
+        deps.fs.setFile(
+          "/built/opencode/.opencode/skills/sample-plugin-demo/SKILL.md",
+          "# Demo skill"
+        );
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         const registry = new InMemoryMarketplaceRegistry();
         await registry.save(

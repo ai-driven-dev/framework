@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BuiltTreeMaterializationTranslator } from "../../../../../src/application/use-cases/plugin/translator/built-tree-materialization-translator.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/application/use-cases/plugin/translator/mode-a-marketplace-translator.js";
-import { ModeBFlatMaterializationTranslator } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-translator.js";
 import { resolveTranslator } from "../../../../../src/application/use-cases/plugin/translator/plugin-translator-factory.js";
 import { PluginsCapability } from "../../../../../src/domain/capabilities/plugins-capability.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -61,14 +60,14 @@ describe("resolveTranslator", () => {
   });
 
   describe("when translationMode is flat", () => {
-    it("returns ModeBFlatMaterializationTranslator", () => {
+    it("returns BuiltTreeMaterializationTranslator", () => {
       const deps = buildDeps();
       const plugins = new PluginsCapability({
         mode: "flat",
         flatNamespacePrefix: "aidd-",
       });
       const adapter = resolveTranslator(plugins, deps);
-      expect(adapter).toBeInstanceOf(ModeBFlatMaterializationTranslator);
+      expect(adapter).toBeInstanceOf(BuiltTreeMaterializationTranslator);
       expect(adapter?.mode).toBe("flat");
     });
   });

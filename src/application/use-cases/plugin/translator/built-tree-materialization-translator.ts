@@ -61,45 +61,31 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
         previousMcpEntries
       );
     }
+    const mode = toolId === "opencode" ? "flat" : "marketplace";
     const { builtDir } = await this.ensureBuilt.execute({
       projectRoot,
       marketplace: resolved,
       target: toolId,
-      mode: "marketplace",
+      mode,
     });
-    await this.materializeUserScope(
-      dist,
-      toolId,
-      source,
-      projectRoot,
-      manifest,
-      marketplace,
-      builtDir
-    );
-    return { skipped: [] };
-  }
-
-  private async materializeUserScope(
-    dist: PluginDistribution,
-    toolId: AiToolId,
-    source: PluginSource,
-    projectRoot: string,
-    manifest: Manifest,
-    marketplace: string,
-    builtDir: string
-  ): Promise<void> {
-    const pluginSrc = join(builtDir, "plugins", dist.manifest.name);
-    const files = await this.readBuiltFiles(pluginSrc, dist.manifest.name);
-    const baseDir = this.resolveBaseDir(toolId, projectRoot);
+    const files =
+      mode === "flat"
+        ? await this.readFlatFiles(builtDir, dist.manifest.name)
+        : await this.readBuiltFiles(
+            join(builtDir, "plugins", dist.manifest.name),
+            dist.manifest.name
+          );
+    const baseDir = mode === "flat" ? projectRoot : this.resolveBaseDir(toolId, projectRoot);
     await writePluginFiles(files, baseDir, this.fs);
     manifest.addPlugin(
       toolId,
       Plugin.fromDistribution(dist, source, files, new Map(), marketplace)
     );
+    return { skipped: [] };
   }
 
-  // Build emits plugins/<name>/<rel>; cursor installs at <baseDir>/<name>/<rel>, so the
-  // manifest relativePath keeps the <name>/ prefix to match the on-disk layout.
+  // Marketplace build emits plugins/<name>/<rel>; user-scope tools install at
+  // <baseDir>/<name>/<rel>, so the manifest relativePath keeps the <name>/ prefix.
   private async readBuiltFiles(pluginSrc: string, name: string): Promise<InstallationFile[]> {
     const absPaths = await this.fs.listFilesRecursive(pluginSrc);
     return Promise.all(
@@ -112,6 +98,29 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
           hash: this.hasher.hash(content),
         });
       })
+    );
+  }
+
+  // Flat build emits the whole marketplace into one workspace, namespaced by
+  // .opencode/<section>/<plugin>-<name>/...; install copies only this plugin's files.
+  private async readFlatFiles(builtDir: string, name: string): Promise<InstallationFile[]> {
+    const absPaths = await this.fs.listFilesRecursive(builtDir);
+    const files: InstallationFile[] = [];
+    for (const abs of absPaths) {
+      const rel = abs.slice(builtDir.length + 1);
+      if (!this.belongsToPlugin(rel, name)) continue;
+      const content = await this.fs.readFile(abs);
+      files.push(
+        new InstallationFile({ relativePath: rel, content, hash: this.hasher.hash(content) })
+      );
+    }
+    return files;
+  }
+
+  private belongsToPlugin(rel: string, name: string): boolean {
+    const segments = rel.split("/");
+    return (
+      segments[0] === ".opencode" && segments.length >= 3 && segments[2].startsWith(`${name}-`)
     );
   }
 

@@ -6,7 +6,6 @@ import type { MarketplaceRegistry } from "../../../../domain/ports/marketplace-r
 import type { EnsureBuiltMarketplaceUseCase } from "../../shared/ensure-built-marketplace-use-case.js";
 import { BuiltTreeMaterializationTranslator } from "./built-tree-materialization-translator.js";
 import { ModeAMarketplaceTranslator } from "./mode-a-marketplace-translator.js";
-import { ModeBFlatMaterializationTranslator } from "./mode-b-flat-materialization-translator.js";
 import type { PluginTranslator } from "./plugin-translator.js";
 
 export interface TranslatorDeps {
@@ -21,19 +20,19 @@ export interface TranslatorDeps {
  * Resolves the appropriate translation adapter for a given PluginsCapability.
  *
  * Routing priority:
- * 1. `installScope === "user"` → BuiltTreeMaterializationTranslator (user-scope tools like Cursor)
+ * 1. `installScope === "user"` or `translationMode === "flat"` → BuiltTreeMaterializationTranslator
+ *    (user-scope tools like Cursor; project-scope flat tools like OpenCode)
  * 2. `translationMode === "marketplace"` → ModeAMarketplaceTranslator (Mode A: register in native config)
- * 3. `translationMode === "flat"` → ModeBFlatMaterializationTranslator (project-scope flat tools like OpenCode)
- * 4. otherwise → null (neutral native or unsupported; no translation strategy applies)
+ * 3. otherwise → null (neutral native or unsupported; no translation strategy applies)
  *
- * User-scope tools copy the per-target BUILT tree verbatim so installed bytes match
+ * Materializing tools copy the per-target BUILT tree verbatim so installed bytes match
  * `framework build` output; raw local-path installs fall back to flat materialization.
  */
 export function resolveTranslator(
   plugins: PluginsCapability,
   deps: TranslatorDeps
 ): PluginTranslator | null {
-  if (plugins.installScope === "user") {
+  if (plugins.installScope === "user" || plugins.translationMode === "flat") {
     return new BuiltTreeMaterializationTranslator(
       deps.fs,
       deps.hasher,
@@ -44,9 +43,6 @@ export function resolveTranslator(
   }
   if (plugins.translationMode === "marketplace") {
     return new ModeAMarketplaceTranslator();
-  }
-  if (plugins.translationMode === "flat") {
-    return new ModeBFlatMaterializationTranslator(deps.fs, deps.hasher, deps.homedir);
   }
   return null;
 }
