@@ -4,11 +4,11 @@ Detect the ticketing tool, gather a thorough problem description, fill the issue
 
 ## Input
 
-A problem description (required), plus optional labels, a type (bug, feature, task, docs), projects, a milestone, and a repo URL (inferred from the remote when omitted).
+A problem description (required), plus optional labels, projects, a milestone, and a repo URL (inferred from the remote when omitted).
 
 ## Output
 
-The created issue's URL and number, with its title, labels, and type.
+The created issue's URL and number, with its title and labels.
 
 ## Process
 
@@ -16,8 +16,8 @@ The created issue's URL and number, with its title, labels, and type.
 2. **Context.** Load `@../assets/CONTRIBUTING.md` and `@../assets/issue-template.md`, and skim existing open issues via the tool to avoid duplicates.
 3. **Gather.** Combine the problem description with technical context (stack, repro steps, environment). Ask follow-up questions when required fields are missing.
 4. **Research.** Look up official documentation that backs the issue when applicable (linked errors, framework changelog).
-5. **Fill.** Write a concise title and body matching the template, and pick a type when none was given.
-6. **Validate.** Show the title, body, labels, type, projects, and milestone. Wait for explicit approval.
+5. **Fill.** Write a concise title and body matching the template.
+6. **Validate.** Show the title, body, labels, projects, and milestone. Wait for explicit approval.
 7. **Create.** Invoke the configured tool to open the issue, passing the title, body, labels, projects, and milestone, then capture the returned URL and number.
 
 ## Test
