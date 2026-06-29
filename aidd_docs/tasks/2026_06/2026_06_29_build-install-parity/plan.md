@@ -1,6 +1,6 @@
 ---
 objective: "Installing a plugin yields byte-identical content to building that plugin for the same target, for all 5 AI tools."
-status: in-progress
+status: implemented
 ---
 
 # Plan: Build/Install content parity for all AI tools

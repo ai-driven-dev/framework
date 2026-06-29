@@ -1,8 +1,19 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Cleanup dead path + parity tests
+
+> **Scope change (user-directed):** the materialized-tool parity makes sync
+> plugin-propagation unworkable for cursor/opencode (built-transformed paths can't
+> map back to source). Per the user's decision, the **sync feature was deleted**
+> instead of preserving `componentPaths`: removed the `sync`/`ai sync` commands,
+> SyncUseCase, SyncFilePropagation, SyncSourceResolver, SyncAll, SyncPlugins,
+> sync-transform, sync-policy, and their tests. Kept `SyncConflictResolverUseCase`
+> (used by `update`). Per-translator byte-parity tests cover cursor + opencode; the
+> golden baseline was regenerated (sync gone, built-cache artifact, `<BUILT_CACHE>`
+> path normalization). `ModeBFlatMaterializationTranslator` is retained as the
+> raw-local-path fallback (not dead).
 
 Part of [`plan.md`](./plan.md).
 

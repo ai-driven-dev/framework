@@ -20,9 +20,6 @@ import { MarketplaceSyncSettingsUseCase } from "../../../src/application/use-cas
 import { ResolveUpdateDecisionUseCase } from "../../../src/application/use-cases/shared/resolve-update-decision-use-case.js";
 import { UpdateOneToolUseCase } from "../../../src/application/use-cases/shared/update-one-tool-use-case.js";
 import { SyncConflictResolverUseCase } from "../../../src/application/use-cases/sync/sync-conflict-resolver-use-case.js";
-import { SyncFilePropagationUseCase } from "../../../src/application/use-cases/sync/sync-file-propagation-use-case.js";
-import { SyncSourceResolverUseCase } from "../../../src/application/use-cases/sync/sync-source-resolver-use-case.js";
-import { SyncUseCase } from "../../../src/application/use-cases/sync/sync-use-case.js";
 import { Manifest } from "../../../src/domain/models/manifest.js";
 import { isIdeToolId, type ToolId } from "../../../src/domain/tools/registry.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
@@ -73,8 +70,6 @@ export async function buildUnitDeps(_projectRoot: string) {
   const currentVersionProvider = new FakeCurrentVersion();
 
   const syncConflictResolver = new SyncConflictResolverUseCase(fs);
-  const syncFilePropagation = new SyncFilePropagationUseCase(fs, syncConflictResolver, logger);
-  const syncSourceResolver = new SyncSourceResolverUseCase(fs);
   const marketplaceSyncSettings = new MarketplaceSyncSettingsUseCase(
     fs,
     manifestRepo,
@@ -104,8 +99,6 @@ export async function buildUnitDeps(_projectRoot: string) {
     installIdeConfigUseCase,
     currentVersionProvider,
     syncConflictResolver,
-    syncFilePropagation,
-    syncSourceResolver,
   };
 }
 
@@ -164,20 +157,6 @@ export function buildUpdateOneToolUseCase(
     deps.syncConflictResolver,
     resolveUpdateDecision,
     deps.fs
-  );
-}
-
-export function buildSyncUseCase(
-  deps: Awaited<ReturnType<typeof buildUnitDeps>>,
-  syncPluginsUseCase?: ConstructorParameters<typeof SyncUseCase>[5]
-): SyncUseCase {
-  return new SyncUseCase(
-    deps.fs,
-    deps.manifestRepo,
-    deps.hasher,
-    deps.syncSourceResolver,
-    deps.syncFilePropagation,
-    syncPluginsUseCase
   );
 }
 

@@ -46,7 +46,9 @@ interface CommandEntry {
 function normalize(text: string): string {
   return (
     text
-      // Absolute paths → placeholder
+      // Absolute paths → placeholder. The built-cache path is the project temp dir,
+      // which varies per run; strip it before the fixture/root rules.
+      .replace(/\/[^\s",'\\]+\/\.aidd\/cache\/built/g, "<BUILT_CACHE>")
       .replace(/\/[^\s",'\\]+\/tests\/fixtures\/framework/g, "<FRAMEWORK_FIXTURE>")
       .replace(/\/[^\s",'\\]+\/aidd\/cli/g, "<ROOT>")
       // Version strings like 4.5.0 or 4.10.2 in manifest / stdout
