@@ -4,7 +4,7 @@ Verify the diff matches the plan's acceptance criteria, flows, and edge cases, a
 
 ## Input
 
-The plan path holding the acceptance criteria, from the arguments or the prompt, and the diff to trace (a git ref range; defaults to `git diff main`).
+The plan path holding the acceptance criteria, from the arguments or the prompt, and the diff to trace (a git ref range; defaults to the diff against the repository default branch).
 
 ## Output
 
