@@ -21,7 +21,6 @@ Run them in order, `01 → 04`. The plan is the culmination. Skip `03` when ther
 
 ## References
 
-- `references/mermaid-conventions.md`: conventions for the Mermaid diagrams a phase embeds.
 - `references/wireframe-conventions.md`: how to draw the ASCII wireframe a screen needs.
 - `references/plan-status.md`: the plan lifecycle `status` values and who writes each.
 

@@ -29,9 +29,9 @@ Use skill aidd-vcs:02-pull-request
 
 Or via the slash command: `/pull-request`.
 
-The skill runs a single action (`pull-request`) that detects the base
-branch, fills the template, validates the title / body / base with the user,
-then opens the request as a draft.
+The skill chains three actions, collect then draft then create: collect
+resolves the base and gathers the commits, draft writes and validates the
+title and body, create opens the request as a draft.
 
 ## Outputs
 
