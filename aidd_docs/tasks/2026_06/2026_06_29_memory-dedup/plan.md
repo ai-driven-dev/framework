@@ -24,7 +24,7 @@ status: pending
 | Source                                                       | Verified                                                          |
 | ------------------------------------------------------------ | ----------------------------------------------------------------- |
 | docs Anthropic skills + agentskills.io                       | `@` = import CLAUDE.md, pas le standard skill (chemins relatifs)  |
-| `aidd framework build --target codex` (test scratchpad)      | le build convertit `@../x` → `[x](../x)` ; la dup est structurelle |
+| `aidd framework build --target codex` (test scratchpad)      | le build convertit `@../x` → un lien `x` vers `../x` ; la dup est structurelle |
 | Les 22 templates `assets/templates/memory/`                  | matrice des faits dupliqués, table de dominance réduite           |
 
 ## Decisions

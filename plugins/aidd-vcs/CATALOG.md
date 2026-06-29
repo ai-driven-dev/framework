@@ -13,7 +13,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/02-pull-request`](#skills02-pull-request)
   - [`skills/03-release-tag`](#skills03-release-tag)
   - [`skills/04-issue-create`](#skills04-issue-create)
-  - [`skills/05-pull-request-list`](#skills05-pull-request-list)
 
 ---
 
@@ -76,12 +75,4 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [issue-template.md](skills/04-issue-create/assets/issue-template.md) | `VCS issue/ticket template` |
 | `-` | [README.md](skills/04-issue-create/README.md) | - |
 | `-` | [SKILL.md](skills/04-issue-create/SKILL.md) | `Create an issue in the configured ticketing tool. Use when the user wants to file a bug, open an issue, or report a problem. Not for committing, opening a pull request, or commenting on an existing issue.` |
-
-#### `skills/05-pull-request-list`
-
-| Group | File | Description |
-|-------|------|---|
-| `actions` | [01-pull-request-list.md](skills/05-pull-request-list/actions/01-pull-request-list.md) | - |
-| `-` | [README.md](skills/05-pull-request-list/README.md) | - |
-| `-` | [SKILL.md](skills/05-pull-request-list/SKILL.md) | `List the open pull or merge requests for the current repository as a table, in whatever VCS tool the project uses. Use when the user wants to see, list, or review the open PRs or MRs awaiting action. Not for creating, commenting on, or merging a request.` |
 

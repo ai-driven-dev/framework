@@ -26,5 +26,5 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-greet.md](skills/01-hello/actions/01-greet.md) | - |
 | `-` | [README.md](skills/01-hello/README.md) | - |
-| `-` | [SKILL.md](skills/01-hello/SKILL.md) | `Smoke-test skill that confirms the aidd-ui plugin loads. Use when the user wants to verify the alpha aidd-ui plugin is installed and reachable. Do NOT use for real UI or UX design work.` |
+| `-` | [SKILL.md](skills/01-hello/SKILL.md) | `Smoke-test that confirms the aidd-ui plugin loads. Use when the user wants to verify the alpha aidd-ui plugin is installed and reachable. Not for real UI or UX design work.` |
 

@@ -61,7 +61,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [phase-template.md](skills/01-plan/assets/phase-template.md) | - |
 | `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | - |
 | `-` | [README.md](skills/01-plan/README.md) | - |
-| `references` | [mermaid-conventions.md](skills/01-plan/references/mermaid-conventions.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` |
 | `references` | [plan-status.md](skills/01-plan/references/plan-status.md) | `Plan lifecycle status field - values, meaning, who writes each, and when.` |
 | `references` | [wireframe-conventions.md](skills/01-plan/references/wireframe-conventions.md) | - |
 | `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Turn a request, ticket, or file into a phased implementation plan. Use to plan a feature before building, or to turn a ticket into phases. Do NOT use to write code or review a diff.` |
@@ -113,7 +112,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [review-template.md](skills/05-review/assets/review-template.md) | - |
 | `-` | [README.md](skills/05-review/README.md) | - |
 | `references` | [review-rubric.md](skills/05-review/references/review-rubric.md) | - |
-| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Read-only review of a diff on three axes, code, behavior versus the plan, and relevancy, into one verdict report. Use before shipping a change. Do NOT use to fix findings or audit a codebase.` |
+| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Review a diff read-only on three axes, code, behavior versus the plan, and relevancy, into one verdict report. Use before shipping a change. Not for fixing findings or auditing a codebase.` |
 
 #### `skills/06-test`
 
@@ -155,7 +154,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-auto-accept.md](skills/09-for-sure/actions/02-auto-accept.md) | - |
 | `actions` | [03-autonomous-loop.md](skills/09-for-sure/actions/03-autonomous-loop.md) | - |
 | `assets` | [autonomous-loop-worker-prompt.md](skills/09-for-sure/assets/autonomous-loop-worker-prompt.md) | - |
-| `assets` | [plan-template.md](skills/09-for-sure/assets/plan-template.md) | `For Sure autonomous-loop tracking file. Extends the 01-plan format with `success_condition` and `iteration` (For-Sure-only), which the loop runs and increments.` |
+| `assets` | [plan-template.md](skills/09-for-sure/assets/plan-template.md) | - |
 | `-` | [README.md](skills/09-for-sure/README.md) | - |
 | `references` | [autonomous-loop-log-format.md](skills/09-for-sure/references/autonomous-loop-log-format.md) | - |
 | `-` | [SKILL.md](skills/09-for-sure/SKILL.md) | `Run an iterative agent loop that retries until a runnable success condition passes. Use when the user says "for sure", "keep trying until", or wants guaranteed completion against a success command. Not for one-shot tasks or uncheckable goals.` |

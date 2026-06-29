@@ -14,7 +14,7 @@ n'arrive pas à l'initialiser. Deux symptômes investigués séparément.
 - Le `@` n'est PAS le standard Agent Skills. Standard = chemin relatif depuis
   la racine du skill (`reference/guide.md`, lien md `[x](x)`). Le `@` = import
   CLAUDE.md. Source : docs Anthropic + agentskills.io.
-- **`aidd framework build --target codex` CONVERTIT** `@../x` → `[x](../x)`
+- **`aidd framework build --target codex` CONVERTIT** `@../x` → un lien `x` vers `../x`
   (lien md, `@` retiré). → Codex reçoit des chemins résolvables. OK.
 - **`aidd plugin install <source brute>` + `aidd ai install`** copie le `@`
   **verbatim** → non résolvable sur Codex.
