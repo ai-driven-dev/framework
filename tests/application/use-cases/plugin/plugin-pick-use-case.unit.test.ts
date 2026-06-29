@@ -11,6 +11,7 @@ import { Marketplace } from "../../../../src/domain/models/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";
+import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-built-marketplace.js";
 import type { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { KeepPrompter } from "../../../helpers/ports/scripted-prompter.js";
@@ -40,7 +41,8 @@ async function buildUseCase() {
     new PluginDistributionReaderAdapter(deps.fs),
     deps.hasher,
     deps.logger,
-    registry
+    registry,
+    fakeEnsureBuiltMarketplace()
   );
   const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(deps.pluginFetcher);
   const useCase = new PluginPickUseCase(

@@ -10,6 +10,7 @@ import { OPENCODE_HOOKS_SKIP_REASON } from "../../../../src/domain/models/plugin
 import { PluginDistributionReaderAdapter } from "../../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
+import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
 
@@ -31,7 +32,8 @@ describe("PluginAddUseCase OpenCode hooks skip (Phase 3)", () => {
       new PluginDistributionReaderAdapter(deps.fs),
       deps.hasher,
       capturingLogger,
-      registry
+      registry,
+      fakeEnsureBuiltMarketplace()
     );
 
     await useCase.execute({
@@ -59,7 +61,8 @@ describe("PluginAddUseCase OpenCode hooks skip (Phase 3)", () => {
       new PluginDistributionReaderAdapter(deps.fs),
       deps.hasher,
       capturingLogger,
-      registry
+      registry,
+      fakeEnsureBuiltMarketplace()
     );
 
     await useCase.execute({

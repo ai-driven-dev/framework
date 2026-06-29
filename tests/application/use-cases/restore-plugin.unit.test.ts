@@ -5,6 +5,7 @@ import { RestorePluginUseCase } from "../../../src/application/use-cases/restore
 import { PluginNotFoundError } from "../../../src/domain/errors.js";
 import { PluginDistributionReaderAdapter } from "../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
+import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -26,7 +27,8 @@ describe("RestorePluginUseCase", () => {
         pluginReader,
         deps.hasher,
         deps.logger,
-        deps.marketplaceRegistry
+        deps.marketplaceRegistry,
+        fakeEnsureBuiltMarketplace()
       ).execute({
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: ["claude"],

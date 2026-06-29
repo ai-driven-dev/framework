@@ -490,7 +490,8 @@ export async function createDeps(
     pluginDistributionReader,
     hasher,
     logger,
-    marketplaceRegistry
+    marketplaceRegistry,
+    ensureBuiltMarketplaceUseCase
   );
   const frameworkBuildUseCase = new FrameworkBuildUseCase(
     fs,

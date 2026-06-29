@@ -1,15 +1,24 @@
 import { describe, expect, it } from "vitest";
+import { BuiltTreeMaterializationTranslator } from "../../../../../src/application/use-cases/plugin/translator/built-tree-materialization-translator.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/application/use-cases/plugin/translator/mode-a-marketplace-translator.js";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/application/use-cases/plugin/translator/mode-b-flat-materialization-translator.js";
 import { resolveTranslator } from "../../../../../src/application/use-cases/plugin/translator/plugin-translator-factory.js";
 import { PluginsCapability } from "../../../../../src/domain/capabilities/plugins-capability.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 
 function buildDeps(homedir = "/stub-home") {
   const fs = new InMemoryFileAdapter();
   const hasher = new DeterministicHasher();
-  return { fs, hasher, homedir: () => homedir };
+  return {
+    fs,
+    hasher,
+    homedir: () => homedir,
+    ensureBuilt: fakeEnsureBuiltMarketplace(),
+    marketplaceRegistry: new InMemoryMarketplaceRegistry(),
+  };
 }
 
 const MARKETPLACE_SETTINGS = {
@@ -32,6 +41,22 @@ describe("resolveTranslator", () => {
       const adapter = resolveTranslator(plugins, deps);
       expect(adapter).toBeInstanceOf(ModeAMarketplaceTranslator);
       expect(adapter?.mode).toBe("marketplace");
+    });
+  });
+
+  describe("when installScope is user", () => {
+    it("returns BuiltTreeMaterializationTranslator", () => {
+      const deps = buildDeps();
+      const plugins = new PluginsCapability({
+        mode: "native",
+        pluginsDir: "",
+        pluginManifestRelativePath: null,
+        installScope: "user",
+        userPluginsDir: (h) => `${h}/.cursor/plugins/local`,
+      });
+      const adapter = resolveTranslator(plugins, deps);
+      expect(adapter).toBeInstanceOf(BuiltTreeMaterializationTranslator);
+      expect(adapter?.mode).toBe("flat");
     });
   });
 

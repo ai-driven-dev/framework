@@ -8,6 +8,7 @@ import {
   buildUnitDeps,
   initAndInstall,
 } from "../../helpers/ports/build-unit-deps.js";
+import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -27,7 +28,8 @@ describe("SyncUseCase — plugin scope", () => {
       reader,
       deps.hasher,
       deps.logger,
-      deps.marketplaceRegistry
+      deps.marketplaceRegistry,
+      fakeEnsureBuiltMarketplace()
     ).execute({
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: ["claude"],

@@ -23,6 +23,7 @@ import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-regi
 import type { PluginDistributionReader } from "../../../domain/ports/plugin-distribution-reader.js";
 import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
+import type { EnsureBuiltMarketplaceUseCase } from "../shared/ensure-built-marketplace-use-case.js";
 import { loadPluginManifest, resolvePluginToolIds, writePluginFiles } from "./plugin-helpers.js";
 import { resolveTranslator } from "./translator/plugin-translator-factory.js";
 
@@ -46,7 +47,8 @@ export class PluginAddUseCase {
     private readonly pluginDistributionReader: PluginDistributionReader,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
-    private readonly marketplaceRegistry: MarketplaceRegistry
+    private readonly marketplaceRegistry: MarketplaceRegistry,
+    private readonly ensureBuilt: EnsureBuiltMarketplaceUseCase
   ) {}
 
   async execute(options: PluginAddOptions): Promise<void> {
@@ -304,6 +306,8 @@ export class PluginAddUseCase {
       fs: this.fs,
       hasher: this.hasher,
       homedir: nodeHomedir,
+      ensureBuilt: this.ensureBuilt,
+      marketplaceRegistry: this.marketplaceRegistry,
     });
   }
 }

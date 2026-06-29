@@ -4,6 +4,7 @@ import { PluginAddUseCase } from "../../../../src/application/use-cases/plugin/p
 import { PluginUpdateUseCase } from "../../../../src/application/use-cases/plugin/plugin-update-use-case.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";
+import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -19,7 +20,8 @@ async function setup(deps: Awaited<ReturnType<typeof buildUnitDeps>>) {
     reader,
     deps.hasher,
     deps.logger,
-    deps.marketplaceRegistry
+    deps.marketplaceRegistry,
+    fakeEnsureBuiltMarketplace()
   );
   const updateUseCase = new PluginUpdateUseCase(
     deps.fs,
