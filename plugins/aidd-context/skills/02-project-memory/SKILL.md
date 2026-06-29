@@ -13,7 +13,7 @@ Bootstraps the project's context layer: the AI context files with a memory block
 | #   | Action              | Role                                                | Input             |
 | --- | ------------------- | --------------------------------------------------- | ----------------- |
 | 01  | `init-context-file` | Resolve the tools, then upsert the memory block     | project root      |
-| 02  | `scaffold-docs`     | Create the `folder structure                        | project root      |
+| 02  | `scaffold-docs`     | Create the `aidd_docs/` folder structure            | project root      |
 | 03  | `generate-memory`   | Detect the capabilities, generate the memory files  | the memory dir    |
 | 04  | `review-memory`     | Review the memory files for consistency             | the memory dir    |
 | 05  | `sync-memory`       | Fill the memory block in every context file         | the context files |
