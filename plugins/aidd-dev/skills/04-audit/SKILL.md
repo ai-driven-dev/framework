@@ -27,7 +27,7 @@ Run the one pillar named, or offer all seven when the request is unscoped.
 
 - Read-only: diagnose and rank, never edit code.
 - Scope: run the one named pillar, or for an unscoped request ask once "all seven pillars, or one?" before running. Never silently default to one pillar, never blind-run all without offering the choice.
-- One folder per run, `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_audit/`, like a feature folder. Each pillar writes `<pillar>.md` there. A full run also writes a merged `report.md`: one Findings table (category = pillar, severity-first), one Top-actions list, and one Coverage section over all seven pillars.
+- One folder per run, `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_audit/`, like a feature folder. Every pillar that runs always writes its own `<pillar>.md` there, alone or in a full run. A full run additionally writes a merged `report.md`: one Findings table (category = pillar, severity-first), one Top-actions list, and one Coverage section over all seven pillars.
 - Unscannable pillar: skip it, record it under `Coverage > Skipped` with the reason, and never invent findings for it.
 - Every finding row carries a severity, its pillar, a concrete `file:line`, the issue, a suggested fix, and an effort.
 
