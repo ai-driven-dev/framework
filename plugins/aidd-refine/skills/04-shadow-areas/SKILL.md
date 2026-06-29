@@ -16,7 +16,7 @@ Analytically scans a written artifact for gaps the author has not addressed. Unl
 | 02  | `render-report`  | Render markdown grouped by category and sorted by severity, write report | gap list from detect                     |
 | 03  | `diff`           | Load prior report, classify gaps as closed / still-open / newly-introduced | gap list from detect + prior report path |
 
-Dispatch by context: with no prior report run `detect` then `render-report`; with one, run `diff`.
+Dispatch by context: with no prior report run `detect` then `render-report`; with one, run `detect` then `diff`.
 
 ## Transversal rules
 

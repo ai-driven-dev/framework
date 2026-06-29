@@ -22,7 +22,7 @@ Run the actions in order, `01 → 05`, and run each action's `## Test` before th
 
 ## References
 
-- `references/skill-authoring.md`: the contract (R1-R11, action anatomy, naming).
+- `references/skill-authoring.md`: the contract (R1-R13, action anatomy, naming).
 - `references/tool-paths.md`: per-tool skills path, frontmatter, resolution + write-safety gate.
 
 ## Assets

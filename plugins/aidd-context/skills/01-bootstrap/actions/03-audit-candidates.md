@@ -25,12 +25,11 @@ The action 02 table augmented with a verdict column, plus a three-bullet rationa
 
    Return:
    - Verdict: ✅ (no blocker) / ⚠️ (minor concerns) / ❌ (deal-breaker)
-   - Three bullets justifying the verdict, concrete, citing specific tech facts
-   - Cost estimate: agree or disagree with the proposed monthly cost
+   - Three bullets justifying the verdict, concrete, citing specific tech facts, one of them stating whether the proposed monthly cost is realistic
    ```
 
 2. **Aggregate.** Wait for every agent to return, then aggregate the verdicts into the table.
-3. **Gate.** When every candidate returns ❌, print the verdicts, surface the common blocker, and loop back to action 02 with explicit guidance. Do not proceed to action 04.
+3. **Gate.** When every candidate returns ❌, print the verdicts, surface the common blocker, and loop back to action 02, or to 01 when the needs themselves are the blocker, with explicit guidance. Do not proceed to action 04.
 4. **Pass.** When at least one candidate is ✅ or ⚠️, print the augmented table and per-candidate rationale, then pass control to action 04.
 
 ## Test

@@ -51,5 +51,5 @@ title and body, create opens the request as a draft.
 ## Technical details
 
 See [`SKILL.md`](SKILL.md) for the action contract. Templates ship in
-[`assets/`](assets/): `pull_request.md` (request body), `branch.md` (naming
-conventions), `CONTRIBUTING.md`, and `README.md`.
+[`assets/`](assets/): `pull_request.md` (request body) and `branch.md` (naming
+conventions).

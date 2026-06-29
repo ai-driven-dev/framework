@@ -21,33 +21,12 @@ Total gaps: <total_count> | Blocker: <blocker_count> | Major: <major_count> | Mi
 
 ## Gaps by Category
 
+<!-- Plain mode: one heading per category that has a gap, in locked order. A category with no gap is omitted. -->
+
 ### unstated assumption
 
-No gaps in this category.
-
-### ambiguous term
-
-No gaps in this category.
-
-### missing edge case
-
-No gaps in this category.
-
-### missing actor
-
-No gaps in this category.
-
-### missing failure mode
-
-No gaps in this category.
-
-### missing acceptance criterion
-
-No gaps in this category.
-
-### missing dependency
-
-No gaps in this category.
+**[blocker]** What happens when the upstream service returns 429 with no Retry-After header?
+> retry_limit = env.get("RETRY_LIMIT", 3)
 
 <!-- DIFF-MODE EXAMPLE (rendered only when 03-diff output is passed to 02-render-report)
 

@@ -8,7 +8,7 @@ From 01: the name, domain, what it produces, the invocation mode, the confirmed 
 
 ## Output
 
-One SKILL.md per confirmed tool, and the list of files written.
+One SKILL.md per target (each confirmed host tool, or the plugin source tree), and the list of files written.
 
 ## Process
 

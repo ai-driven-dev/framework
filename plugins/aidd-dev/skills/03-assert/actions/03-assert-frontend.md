@@ -8,7 +8,7 @@ The expected behavior, from the arguments. The frontend's URL when the caller kn
 
 ## Output
 
-A pass or fail verdict, with the per-iteration attempts (hypothesis, fix, result) recorded in the tracking file.
+A pass or fail verdict, with the candidate causes and their fix attempts and results recorded in the tracking file.
 
 ## Process
 

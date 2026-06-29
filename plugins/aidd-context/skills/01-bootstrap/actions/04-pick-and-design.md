@@ -12,7 +12,7 @@ Three artifacts held in conversation context: the checklist with block 4 filled 
 
 ## Process
 
-1. **Pick.** Print the action 03 augmented table and ask the user to pick a candidate by letter.
+1. **Pick.** Print the action 03 augmented table and ask the user to pick a candidate by name.
 2. **Vet.** On a ⚠️ pick, surface the audit concerns, ask for a mitigation plan, and loop until satisfied or the pick changes. On a ❌ pick, refuse and loop back; never proceed with a known-broken stack.
 3. **Fill.** Fill block 4 with the picked candidate's concrete choices, show the full checklist, and wait for the user to confirm "go".
 4. **Tree.** Generate the folder-structure tree following the picked stack's conventions: a monorepo (`apps/`, `packages/`) for a modular monolith, a flat `src/` for a monolith, `services/` per service for microservices, `functions/` for serverless. Reflect every block-4 component.
