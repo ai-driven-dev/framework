@@ -17,7 +17,6 @@ The behaviors found and, per behavior, a passing test with its file path, or a `
 3. **Generate.** Write the initial test for the highest-priority behavior, applying current testing practices and project conventions.
 4. **Iterate.** Run the test. On failure, analyze it, improve the test, and repeat. On pass, check it against the quality criteria and improve when it falls short.
 5. **Next.** Move to the next behavior and repeat from Generate until the list is exhausted.
-6. **Boundary.** One test at a time, functional behavior only. Never compromise quality for speed.
 
 ## Test
 
