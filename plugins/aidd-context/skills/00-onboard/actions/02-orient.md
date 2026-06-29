@@ -22,7 +22,7 @@ A short, plain briefing the user can act on. No internal variable names, no raw 
 4. **Write the briefing** in plain language: the one-line project, where it sits, and the suggested step with a short why. Explain any AIDD term the first time it appears.
 5. **Offer choices.** A short, stable numbered list with plain labels: run the suggested step, explain that step first, explain this project from its memory (only when the memory is filled), see the whole AIDD flow and the installed skills, go to a different step, stop.
 6. **Wait for a reply.** Free text re-renders the same choices with a one-line reminder to reply with a number. Never auto-advance.
-7. **On a different step**, show the flow steps from `@../references/journey.md` in plain language, let the user pick one, and resolve it to a skill or a gap. This is the step `03-act` hands back here for.
+7. **On a different step**, show the flow steps from `@../references/journey.md` in plain language, let the user pick one, and resolve it to a skill or a gap.
 8. **Hand the choice to `03-act`**, with the resolved skill (or gap) and what the user picked. Acting on the choice belongs to `03-act`, not here.
 
 ## Test
