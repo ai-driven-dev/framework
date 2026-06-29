@@ -33,7 +33,7 @@ Category (the audit pillar, one of): `code-quality`, `architecture`, `security`,
 | 🟡  | code-quality | `src/views/login.tsx:45`  | Toast logic copy-pasted across 3 views | Extract a `useToast` helper          | M      |
 | 🟢  | code-quality | `src/legacy/utils.ts:120` | Unused export `formatLegacyDate`       | Delete the function and its imports  | S      |
 
-## Top actions (ranked by impact)
+## Top actions
 
 Highest impact first. Each action names the finding rows it resolves and, when a fix is wanted, the act-skill to hand off to (refactor, test, impeccable - the audit itself never edits code).
 

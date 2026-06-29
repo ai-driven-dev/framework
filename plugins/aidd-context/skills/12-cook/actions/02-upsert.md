@@ -19,3 +19,4 @@ The recipe file at `recipes/<slug>.md`, filled from the template, with its row a
 ## Test
 
 - `recipes/<slug>.md` exists and matches the template, every section present, no `<...>` placeholder left.
+- `recipes/README.md` carries a row for `<slug>`: its title linked, plus the goal and level.

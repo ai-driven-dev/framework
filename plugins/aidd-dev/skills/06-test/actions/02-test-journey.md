@@ -20,5 +20,5 @@ A per-step report, each step recording its action, expected and actual result, a
 
 ## Test
 
-- The report has one entry per parsed step, each with a screenshot path and a recorded pass or fail.
+- The report has one entry per parsed step, each recording its action, expected and actual result, a screenshot path, and a pass or fail.
 - A failed step carries a downstream-impact note for the steps it affects.

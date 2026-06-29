@@ -14,7 +14,7 @@ Each memory block lists the current memory files, and the memory index is refres
 
 1. **Run.** Execute the memory-sync script (`update_memory.js` in the plugin's `hooks/`) to inject the references and refresh the memory index.
 2. **Guard.** On a non-zero exit, print the error and stop. Tell the user to confirm the memory bank holds a file and that `node` is available.
-3. **Report.** Print how many context files were updated and how many references went into each block.
+3. **Report.** Print which context files were updated and the references that went into each block.
 
 ## Test
 

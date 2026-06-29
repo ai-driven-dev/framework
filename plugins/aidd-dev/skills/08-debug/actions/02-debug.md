@@ -28,4 +28,5 @@ A one-line root cause, the 3 to 5 hypotheses with their confidence and validated
 
 - The hypotheses list has 3 to 5 entries, each with a validated or invalidated status.
 - A validated hypothesis has non-empty evidence and a one-line root cause consistent with it.
+- The output includes a Mermaid action-path flowchart and a confidence score per hypothesis.
 - When every hypothesis is invalidated, the next steps cite the `reflect-issue` action.

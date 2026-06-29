@@ -25,4 +25,4 @@ Run the one axis named, or offer all applicable when the request is unscoped.
 - Behavior-preserving for cleanup, performance, and architecture: public inputs and outputs stay identical, verified by tests, type checks, or a side-by-side run. Security may alter behavior to close a vulnerability, and must call that out explicitly.
 - Audit-fed, optional: when the caller pushes an audit report (a path under `aidd_docs/tasks/audits/` or pasted findings), take its findings for this axis as the fix list and skip the scan. The bridge is the report artifact; this skill never loads or calls another skill. The audit `code-quality` pillar feeds the `cleanup` axis; the other axes map by name.
 - Severity uses the shared 3-level scale: 🔴 critical, 🟡 warning, 🟢 minor.
-- Stay inside the axis: dependency upgrades, test creation, and UI redesign are out of scope.
+- Stay inside the axis: dependency upgrades and UI redesign are out of scope. Add tests only as a regression for a security fix, never otherwise.

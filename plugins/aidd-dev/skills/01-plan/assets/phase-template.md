@@ -8,7 +8,7 @@ Part of [`plan.md`](./plan.md).
 
 ## Architecture projection
 
-<!-- Tree of the final architecture: ❌ deleted, ✅ created, 🔁 renamed. -->
+<!-- Tree of the final architecture: ❌ deleted, ✅ created, ✏️ modified. -->
 
 ```txt
 .
