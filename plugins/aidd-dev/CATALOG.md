@@ -132,7 +132,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-cleanup.md](skills/07-refactor/actions/03-cleanup.md) | - |
 | `actions` | [04-architecture.md](skills/07-refactor/actions/04-architecture.md) | - |
 | `-` | [README.md](skills/07-refactor/README.md) | - |
-| `-` | [SKILL.md](skills/07-refactor/SKILL.md) | `Improve code across four axes (cleanup, performance, security, architecture) by scanning and fixing, or applying a pushed audit report. Use when the user wants to refactor, optimize, or harden code. Not for read-only diagnosis or adding tests.` |
+| `-` | [SKILL.md](skills/07-refactor/SKILL.md) | `Improve code across four axes (cleanup, performance, security, architecture) by scanning and fixing, or applying a pushed audit report. Use when the user wants to refactor, optimize, harden, or remove code. Not for read-only diagnosis or adding tests.` |
 
 #### `skills/08-debug`
 

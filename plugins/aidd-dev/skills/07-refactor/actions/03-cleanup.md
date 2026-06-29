@@ -21,7 +21,7 @@ The changes applied (file, one-line summary, severity, clean-code or tech-debt),
    - Replace magic numbers and inline strings with named constants.
    - Remove dead, misleading, or out-of-date comments, adding one only where intent is genuinely non-obvious.
 3. **Debt.** Apply the tech-debt fixes from the list:
-   - Delete dead code and unused exports.
+   - Delete dead code and unused exports, sweeping for the orphaned references a deletion leaves behind.
    - Reduce cyclomatic complexity with early returns, guard clauses, and helper functions.
    - Shorten oversized files and functions to a single responsibility.
    - Flatten excessive nesting.
