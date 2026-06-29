@@ -9,7 +9,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 - [`.claude-plugin`](#claude-plugin)
 - [`skills`](#skills)
   - [`skills/01-ticket-info`](#skills01-ticket-info)
-  - [`skills/02-user-stories-create`](#skills02-user-stories-create)
+  - [`skills/02-user-stories`](#skills02-user-stories)
   - [`skills/03-prd`](#skills03-prd)
   - [`skills/04-spec`](#skills04-spec)
 
@@ -29,26 +29,32 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-ticket-info.md](skills/01-ticket-info/actions/01-ticket-info.md) | - |
 | `-` | [README.md](skills/01-ticket-info/README.md) | - |
-| `-` | [SKILL.md](skills/01-ticket-info/SKILL.md) | `Retrieve and display ticket information from the configured ticketing tool. Use when the user says "ticket info", "show ticket", "get ticket", "ticket details", "what's <id>", or invokes `/ticket-info`. Do NOT use for creating issues, commenting on tickets, changing status, or reassigning.` |
+| `-` | [SKILL.md](skills/01-ticket-info/SKILL.md) | `Retrieve and display a ticket from the configured ticketing tool. Use when the user wants to see, show, or look up a ticket's details. Not for creating a ticket, or commenting on, transitioning, or reassigning one.` |
 
-#### `skills/02-user-stories-create`
+#### `skills/02-user-stories`
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-create-user-stories.md](skills/02-user-stories-create/actions/01-create-user-stories.md) | - |
-| `assets` | [user-story-template.md](skills/02-user-stories-create/assets/user-story-template.md) | `Template for defining user stories with estimation and acceptance criteria` |
-| `-` | [README.md](skills/02-user-stories-create/README.md) | - |
-| `-` | [SKILL.md](skills/02-user-stories-create/SKILL.md) | `Generate INVEST-compliant user stories from a feature description. Use when the user says "user stories", "create user stories", "write user stories for X", "INVEST stories", "draft stories", or invokes `/user-stories-create`. Do NOT use for writing code, drafting a full PRD, refining a single existing story, or copying ready text into a tracker.` |
+| `actions` | [01-clarify-scope.md](skills/02-user-stories/actions/01-clarify-scope.md) | - |
+| `actions` | [02-split-epic.md](skills/02-user-stories/actions/02-split-epic.md) | - |
+| `actions` | [03-draft-stories.md](skills/02-user-stories/actions/03-draft-stories.md) | - |
+| `actions` | [04-estimate-impact.md](skills/02-user-stories/actions/04-estimate-impact.md) | - |
+| `actions` | [05-prioritize.md](skills/02-user-stories/actions/05-prioritize.md) | - |
+| `actions` | [06-sync-tracker.md](skills/02-user-stories/actions/06-sync-tracker.md) | - |
+| `assets` | [user-story-template.md](skills/02-user-stories/assets/user-story-template.md) | - |
+| `-` | [README.md](skills/02-user-stories/README.md) | - |
+| `references` | [rating.md](skills/02-user-stories/references/rating.md) | - |
+| `-` | [SKILL.md](skills/02-user-stories/SKILL.md) | `Turn a feature or epic into a prioritized, estimated, INVEST-compliant user-story backlog in the tracker. Use when the user wants to create, split, estimate, or prioritize user stories. Not for source code or a PRD.` |
 
 #### `skills/03-prd`
 
 | Group | File | Description |
 |-------|------|---|
 | `actions` | [01-prd.md](skills/03-prd/actions/01-prd.md) | - |
-| `assets` | [prd-template.md](skills/03-prd/assets/prd-template.md) | `Product Requirements Document template (15 sections)` |
+| `assets` | [prd-template.md](skills/03-prd/assets/prd-template.md) | - |
 | `assets` | [task-template.md](skills/03-prd/assets/task-template.md) | `Task tracking system to ensure all tasks are categorized and addressed` |
 | `-` | [README.md](skills/03-prd/README.md) | - |
-| `-` | [SKILL.md](skills/03-prd/SKILL.md) | `Generate a structured Product Requirements Document from a feature description or user stories, validated with the user before save. Use when the user says "prd", "draft prd", "write prd", "product requirements for X", "generate a prd", or invokes `/prd`. Do NOT use for writing user stories, drafting a technical implementation plan, or writing source code.` |
+| `-` | [SKILL.md](skills/03-prd/SKILL.md) | `Generate a structured Product Requirements Document from a need, idea, or brainstorm, confirmed before save. Use when the user wants to draft or generate a PRD or product requirements. Not for user stories or a technical plan.` |
 
 #### `skills/04-spec`
 

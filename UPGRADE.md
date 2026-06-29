@@ -95,7 +95,7 @@ Invocation in v4 is `plugin:NN-action`. Where a column says "sub-flow", the old 
 |---|---|
 | `/brainstorm` | `aidd-refine:01-brainstorm` |
 | `/challenge` | `aidd-refine:02-challenge` |
-| `/create_user_stories` | `aidd-pm:02-user-stories-create` |
+| `/create_user_stories` | `aidd-pm:02-user-stories` |
 | `/ticket_info` | `aidd-pm:01-ticket-info` |
 
 ### plan

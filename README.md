@@ -178,7 +178,7 @@ SDLC loop: sdlc, plan, implement, assert, audit, review, test, refactor, debug, 
 
 ### 🌿 [aidd-vcs](plugins/aidd-vcs/README.md)
 
-`5 skills` · stable
+`6 skills` · stable
 
 Commits, pull / merge requests, release tags, issue creation.
 
@@ -189,7 +189,7 @@ Commits, pull / merge requests, release tags, issue creation.
 
 ### 📋 [aidd-pm](plugins/aidd-pm/README.md)
 
-`5 skills` · stable
+`4 skills` · stable
 
 Ticket info, user stories, PRD, spec drafting.
 
