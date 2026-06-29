@@ -86,8 +86,9 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const settingsPath = resolve(PROJECT_ROOT, ".github/copilot/settings.json");
     const settings = JSON.parse(await fs.readFile(settingsPath)) as Record<string, unknown>;
     expect(settings.extraKnownMarketplaces).toBeDefined();
+    // Settings reference the BUILT copilot tree, not the raw github source.
     expect((settings.extraKnownMarketplaces as Record<string, unknown>)[MARKETPLACE_NAME]).toEqual({
-      source: { source: "github", repo: "ai-driven-dev/framework" },
+      source: { source: "directory", path: "/built/copilot" },
     });
     expect(settings.enabledPlugins).toBeDefined();
   });

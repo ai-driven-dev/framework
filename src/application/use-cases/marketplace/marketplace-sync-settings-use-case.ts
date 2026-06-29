@@ -171,6 +171,21 @@ export class MarketplaceSyncSettingsUseCase {
     }
   }
 
+  // Settings entries must reference the BUILT tree (claude reads plugins from it;
+  // copilot surfaces them as recommendations) so settings match the native CLI install.
+  private async builtSourcesForTool(
+    toolId: ToolId,
+    marketplaces: readonly Marketplace[],
+    projectRoot: string
+  ): Promise<ReadonlyMap<string, PluginSource>> {
+    const result = new Map<string, PluginSource>();
+    for (const m of marketplaces) {
+      const builtDir = await this.buildForTool(toolId, m, projectRoot);
+      if (builtDir !== null) result.set(m.name, { kind: "local", path: builtDir });
+    }
+    return result;
+  }
+
   private async syncTool(
     toolId: ToolId,
     projectRoot: string,
@@ -232,7 +247,17 @@ export class MarketplaceSyncSettingsUseCase {
   ): Promise<boolean> {
     const absPath = resolve(projectRoot, settings.settingsPath);
     const json = await this.loadSettings(absPath);
-    if (!this.mergeMarketplaces(json, settings, marketplaces, versionByName, projectRoot))
+    const builtSources = await this.builtSourcesForTool(toolId, marketplaces, projectRoot);
+    if (
+      !this.mergeMarketplaces(
+        json,
+        settings,
+        marketplaces,
+        versionByName,
+        projectRoot,
+        builtSources
+      )
+    )
       return false;
     const content = JSON.stringify(json, null, 2);
     await this.fs.writeFile(absPath, content);
@@ -266,12 +291,27 @@ export class MarketplaceSyncSettingsUseCase {
     settings: MarketplaceSettings,
     marketplaces: readonly Marketplace[],
     versionByName: Map<string, string | undefined>,
-    projectRoot: string
+    projectRoot: string,
+    builtSources: ReadonlyMap<string, PluginSource>
   ): boolean {
     if (settings.valueShape === "array") {
-      return this.mergeMarketplacesArray(json, settings, marketplaces, versionByName, projectRoot);
+      return this.mergeMarketplacesArray(
+        json,
+        settings,
+        marketplaces,
+        versionByName,
+        projectRoot,
+        builtSources
+      );
     }
-    return this.mergeMarketplacesMap(json, settings, marketplaces, versionByName, projectRoot);
+    return this.mergeMarketplacesMap(
+      json,
+      settings,
+      marketplaces,
+      versionByName,
+      projectRoot,
+      builtSources
+    );
   }
 
   private mergeMarketplacesArray(
@@ -279,12 +319,16 @@ export class MarketplaceSyncSettingsUseCase {
     settings: MarketplaceSettings,
     marketplaces: readonly Marketplace[],
     versionByName: Map<string, string | undefined>,
-    projectRoot: string
+    projectRoot: string,
+    builtSources: ReadonlyMap<string, PluginSource>
   ): boolean {
     const existing = this.existingArray(json, settings.settingsKey);
     const toAdd: string[] = [];
     for (const m of marketplaces) {
-      const source = this.resolveSourceForSettings(m.source, projectRoot);
+      const source = this.resolveSourceForSettings(
+        builtSources.get(m.name) ?? m.source,
+        projectRoot
+      );
       const entry = settings.toEntry({ name: m.name, source, version: versionByName.get(m.name) });
       if (entry === null || entry.valueShape !== "array") continue;
       if (!existing.includes(entry.value) && !toAdd.includes(entry.value)) {
@@ -301,12 +345,16 @@ export class MarketplaceSyncSettingsUseCase {
     settings: MarketplaceSettings,
     marketplaces: readonly Marketplace[],
     versionByName: Map<string, string | undefined>,
-    projectRoot: string
+    projectRoot: string,
+    builtSources: ReadonlyMap<string, PluginSource>
   ): boolean {
     const existing = this.existingRecord(json, settings.settingsKey);
     const toMerge: Record<string, Record<string, unknown>> = {};
     for (const m of marketplaces) {
-      const source = this.resolveSourceForSettings(m.source, projectRoot);
+      const source = this.resolveSourceForSettings(
+        builtSources.get(m.name) ?? m.source,
+        projectRoot
+      );
       const entry = settings.toEntry({ name: m.name, source, version: versionByName.get(m.name) });
       if (entry === null || entry.valueShape !== "map" || entry.key in toMerge) continue;
       if (

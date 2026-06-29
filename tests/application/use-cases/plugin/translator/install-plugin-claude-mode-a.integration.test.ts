@@ -79,8 +79,9 @@ describe("install claude plugin via Mode A (integration)", () => {
     const settingsPath = resolve(PROJECT_ROOT, ".claude/settings.json");
     const settings = JSON.parse(await fs.readFile(settingsPath)) as Record<string, unknown>;
     expect(settings.extraKnownMarketplaces).toBeDefined();
+    // Settings reference the BUILT claude tree, not the raw source.
     expect((settings.extraKnownMarketplaces as Record<string, unknown>)[MARKETPLACE_NAME]).toEqual({
-      source: { source: "directory", path: "/marketplace-source" },
+      source: { source: "directory", path: "/built/claude" },
     });
     expect(settings.enabledPlugins).toBeDefined();
     expect(
