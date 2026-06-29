@@ -15,7 +15,7 @@ A conformance report listing each violation, grouped macro and micro, with sever
 1. **Load.** Read the architecture sources: the architecture memory, the micro diagrams for an in-scope module, and the decision records. Extract the expected project tree.
 2. **Macro.** Compare the code structure against the documented tree. Flag files outside their boundary and direct imports between independent services.
 3. **Micro.** For each in-scope module, check import directions against the layer constraints. The domain layer imports nothing external. The application layer reaches the domain only through ports. No circular dependencies. Adapters implement their interfaces.
-4. **Report.** One entry per violation, grouped macro and micro, each with severity (`critical` or `warning`), file, constraint, and a one-line fix. Never fix, only report.
+4. **Report.** One entry per violation, grouped macro and micro, each with severity (`critical` or `warning`), file, constraint, and a one-line fix.
 5. **Summarize.** The total violations, the critical count, and the recommended next actions.
 
 ## Test

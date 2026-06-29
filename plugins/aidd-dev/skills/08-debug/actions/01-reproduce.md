@@ -17,7 +17,7 @@ The opened pull request (its URL), the fix branch, the failing test added before
 3. **Reproduce.** Confirm the symptom, capture the minimal trigger, and pin down the root-cause hypothesis.
 4. **Test.** Write a test that demonstrates the bug.
 5. **Commit.** Commit the failing test, linking the issue id.
-6. **Fix.** Implement the minimal fix, scoped to the bug, with no drive-by refactors.
+6. **Fix.** Implement the minimal fix, scoped to the bug.
 7. **Verify.** Confirm the new test passes, then run the full suite.
 8. **Commit.** Commit the fix, linking the issue id.
 9. **Scope.** Review for scope creep. When the diff drifted, split or revert and commit again.

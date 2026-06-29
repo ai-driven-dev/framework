@@ -16,7 +16,7 @@ The `Relevancy` section of the feature folder's `review.md`, filled with misfit 
 2. **Fit.** Check the change against the need: does it serve the actual intent end to end, or only the literal criteria? Flag any drift between intent and result.
 3. **Conform.** Check the change against the declared rules and the surrounding conventions. Flag each violation with the rule or pattern it breaks.
 4. **Rot.** Scan for duplication (an existing helper reinvented), over-engineering (speculative generality, unused abstraction), and incoherence (naming, docs versus code). Cite the site.
-5. **Record.** Write each finding into the `Relevancy` section of `review.md`, rated and placed under its lens per `@../references/review-rubric.md`. A bare opinion is not a finding: tie each to a declared rule, a duplication site, an over-engineering smell, or a named need-gap. Describe the fix, never patch.
+5. **Record.** Write each finding into the `Relevancy` section of `review.md`, rated and placed under its lens per `@../references/review-rubric.md`. A bare opinion is not a finding: tie each to a declared rule, a duplication site, an over-engineering smell, or a named need-gap.
 
 ## Test
 
