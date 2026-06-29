@@ -16,7 +16,7 @@ Stays at the "what and why" level; never crosses into implementation detail.
 
 ## When NOT to use
 
-- To write user stories → use `02-user-stories-create`.
+- To write user stories → use `02-user-stories`.
 - To draft a technical implementation plan (libraries, file layout,
   algorithms) - those belong to the planning skill in your dev capability.
 - To write source code.
