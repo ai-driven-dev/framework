@@ -19,7 +19,7 @@ Collect the change, draft the request, create it as a draft. `01 → 02 → 03`.
 ## Transversal rules
 
 - Follow the project's request practices in `aidd_docs/memory/vcs.md` and the repo's own request template when set, else the bundled `assets/pull_request.md`.
-- Resolve the base from the branch prefix (project memory, e.g. `feat/` → `next`), else repo state. Never assume `main`.
+- Resolve the base from the branch's prefix per the project's convention (`vcs.md`), else the repo's default branch. Never assume `main`.
 - The request is always a draft; the user promotes it.
 - Apply only the triage label the branch prefix maps to, when it exists. Labels never change the base.
 - Read the VCS tool from project memory, else infer it from the remote URL.

@@ -12,7 +12,7 @@ The commit message, conventional unless the project sets another convention.
 
 ## Process
 
-1. **Source.** Use an imposed message as-is. Otherwise follow `aidd_docs/memory/vcs.md` when set, else `@../assets/commit-template.md`.
+1. **Source.** Use an imposed message as-is, else write a conventional message following the project's convention.
 2. **Write.** Draft from the staged diff: imperative subject, a body that says why when it is not obvious.
 3. **Confirm.** In `interactive`, show it and wait for approval. In `auto`, proceed.
 
