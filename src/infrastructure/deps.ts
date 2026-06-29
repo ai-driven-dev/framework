@@ -63,6 +63,10 @@ import { SetupMarketplaceSourceUseCase } from "../application/use-cases/setup/se
 import { SetupPluginsPromptUseCase } from "../application/use-cases/setup/setup-plugins-prompt-use-case.js";
 import { SetupToolsPromptUseCase } from "../application/use-cases/setup/setup-tools-prompt-use-case.js";
 import { SetupToolsUseCase } from "../application/use-cases/setup/setup-tools-use-case.js";
+import {
+  EnsureBuiltMarketplaceUseCase,
+  type FrameworkBuildFor,
+} from "../application/use-cases/shared/ensure-built-marketplace-use-case.js";
 import { FetchMarketplaceSourceUseCase } from "../application/use-cases/shared/fetch-marketplace-source-use-case.js";
 import { ResolveMarketplaceUseCase } from "../application/use-cases/shared/resolve-marketplace-use-case.js";
 import { ResolveUpdateDecisionUseCase } from "../application/use-cases/shared/resolve-update-decision-use-case.js";
@@ -160,6 +164,7 @@ interface Deps {
   marketplaceCheckUseCase: MarketplaceCheckUseCase;
   pluginInstallFromMarketplaceUseCase: PluginInstallFromMarketplaceUseCase;
   resolveMarketplaceUseCase: ResolveMarketplaceUseCase;
+  ensureBuiltMarketplaceUseCase: EnsureBuiltMarketplaceUseCase;
   installRuntimeConfigUseCase: InstallRuntimeConfigUseCase;
   installAiToolUseCase: InstallAiToolUseCase;
   installIdeConfigUseCase: InstallIdeConfigUseCase;
@@ -216,12 +221,18 @@ export interface FrameworkBuildContext {
   readonly force: boolean;
 }
 
-type FrameworkBuildFactory = (deps: Deps, ctx: FrameworkBuildContext) => FrameworkBuildUseCase;
+/** The subset of Deps the framework build pipeline reads — lets EnsureBuilt build any target. */
+export type FrameworkBuildDeps = Pick<Deps, "fs" | "assetProvider" | "logger">;
+
+type FrameworkBuildFactory = (
+  deps: FrameworkBuildDeps,
+  ctx: FrameworkBuildContext
+) => FrameworkBuildUseCase;
 
 function buildFrameworkUseCase(
-  deps: Deps,
+  deps: FrameworkBuildDeps,
   makeStrategy: (
-    deps: Deps,
+    deps: FrameworkBuildDeps,
     av: AjvSchemaValidatorAdapter
   ) => MarketplaceBuildStrategy | FlatBuildStrategy
 ): FrameworkBuildUseCase {
@@ -335,7 +346,7 @@ const FRAMEWORK_BUILD_REGISTRY: Record<string, FrameworkBuildFactory> = {
 };
 
 export function createFrameworkBuildUseCase(
-  deps: Deps,
+  deps: FrameworkBuildDeps,
   ctx: FrameworkBuildContext
 ): FrameworkBuildUseCase | undefined {
   const key = `${ctx.target}:${ctx.mode}`;
@@ -397,24 +408,6 @@ export async function createDeps(
     ["codex", new CodexCliAdapter()],
     ["copilot", new CopilotCliAdapter()],
   ]);
-  const marketplaceSyncSettingsUseCase = new MarketplaceSyncSettingsUseCase(
-    fs,
-    manifestRepo,
-    marketplaceRegistry,
-    pluginCatalogRepository,
-    hasher,
-    logger,
-    nativePluginActivators
-  );
-  const pluginAddUseCase = new PluginAddUseCase(
-    fs,
-    manifestRepo,
-    pluginFetcher,
-    pluginDistributionReader,
-    hasher,
-    logger,
-    marketplaceRegistry
-  );
   const pluginRemoveUseCase = new PluginRemoveUseCase(fs, manifestRepo);
   const pluginListUseCase = new PluginListUseCase(manifestRepo);
   const pluginUpdateUseCase = new PluginUpdateUseCase(
@@ -469,6 +462,35 @@ export async function createDeps(
   );
   const assetProvider = new BundledAssetProviderAdapter();
   const jsonSchemaValidator = new AjvSchemaValidatorAdapter();
+  const frameworkBuildFor: FrameworkBuildFor = (target, mode, outDir) =>
+    createFrameworkBuildUseCase(
+      { fs, assetProvider, logger },
+      { target, mode, outDir, force: true }
+    );
+  const ensureBuiltMarketplaceUseCase = new EnsureBuiltMarketplaceUseCase(
+    fs,
+    resolveMarketplaceUseCase,
+    frameworkBuildFor,
+    currentVersionProvider
+  );
+  const marketplaceSyncSettingsUseCase = new MarketplaceSyncSettingsUseCase(
+    fs,
+    manifestRepo,
+    marketplaceRegistry,
+    pluginCatalogRepository,
+    hasher,
+    logger,
+    nativePluginActivators
+  );
+  const pluginAddUseCase = new PluginAddUseCase(
+    fs,
+    manifestRepo,
+    pluginFetcher,
+    pluginDistributionReader,
+    hasher,
+    logger,
+    marketplaceRegistry
+  );
   const frameworkBuildUseCase = new FrameworkBuildUseCase(
     fs,
     jsonSchemaValidator,
@@ -697,6 +719,7 @@ export async function createDeps(
     marketplaceCheckUseCase,
     pluginInstallFromMarketplaceUseCase,
     resolveMarketplaceUseCase,
+    ensureBuiltMarketplaceUseCase,
     installRuntimeConfigUseCase,
     installAiToolUseCase,
     installIdeConfigUseCase,
