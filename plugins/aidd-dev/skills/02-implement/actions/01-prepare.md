@@ -19,5 +19,5 @@ The resolved plan on a feature branch with its frontmatter `status: in-progress`
 ## Test
 
 - A missing or unreadable plan with no inline content stops with `plan not found at <path>`, and no plan is fabricated.
-- `git rev-parse --abbrev-ref HEAD` is not the default branch.
+- The current branch is not the default branch.
 - The plan frontmatter reads `status: in-progress`.

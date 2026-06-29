@@ -15,12 +15,7 @@ Toggles a terse output mode with three intensity levels (lite, full, ultra). Str
 | 01  | `condense` | Toggle terse mode and apply intensity rules                           | current state + requested level      |
 | 02  | `stats`    | Report real token usage and estimated savings for the current session | session messages + level timeline    |
 
-## Default flow
-
-Router dispatches by intent:
-
-- Toggle phrase or intensity command (`condense`, `/condense full`, `stop condense`, `normal mode`, ...) → `01-condense`
-- Stats query (`/condense-stats`, `how much have we saved`, `token savings`, ...) → `02-stats`
+Dispatch by intent: a toggle phrase → `condense`, a savings query → `stats`.
 
 ## Transversal rules
 

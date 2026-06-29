@@ -18,9 +18,7 @@ Plays the role of technical architect for a new SaaS project. Walks the user thr
 | 04  | `pick-and-design`     | User picks winner; generate folder tree + Mermaid diagram      | audit report       |
 | 05  | `write-install-md`    | Produce `aidd_docs/INSTALL.md`                                 | design + decisions |
 
-## Default flow
-
-`01 → 02 → 03 → 04 → 05`. Sequential. The audit (03) is a gate: if every candidate returns `❌`, loop back to 02 to revise candidates or 01 to revisit needs.
+Run `01 → 02 → 03 → 04 → 05`. The audit (03) gates: if every candidate fails, loop back to 02 or 01.
 
 ## Transversal rules
 

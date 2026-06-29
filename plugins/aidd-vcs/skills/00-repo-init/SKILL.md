@@ -15,9 +15,7 @@ Initializes a project's repository locally and, on request, on the remote host, 
 | 01  | `init`    | Resolve VCS config, `git init`, set the default branch, write `CONTRIBUTING.md`, bootstrap commit | cwd, default_branch, remote_url |
 | 02  | `publish` | Create the remote repo on the resolved host and push, return its URL                              | cwd, non_interactive            |
 
-## Default flow
-
-Chain `01 → 02`, testing each before the next. The router runs `init` alone for a local-only request, and runs `publish` after an `init` when asked to create the remote.
+Run `01 → 02`. `init` alone for local-only; `publish` after it to create the remote.
 
 ## Transversal rules
 

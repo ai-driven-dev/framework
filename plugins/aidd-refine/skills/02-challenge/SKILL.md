@@ -13,10 +13,6 @@ Rethink prior work and surface what is wrong, missing, or duplicated. Output a s
 | --- | ----------- | ------------------------------------------------------------- | ------------------------------ |
 | 01  | `challenge` | Rethink prior work, classify findings, score confidence       | the work + agreed reference    |
 
-## Default flow
-
-Single action skill. The router dispatches to `challenge` whenever the trigger phrases above appear.
-
 ## Transversal rules
 
 - Reason from first principles, no logical gaps.

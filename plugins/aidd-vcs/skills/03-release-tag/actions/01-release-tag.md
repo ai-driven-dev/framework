@@ -21,7 +21,7 @@ The created `v<semver>` tag, its bump commit sha, and the release URL, with the 
 7. **Bump.** Stage only version-manager files and create a `chore: bump version to v<semver>` commit.
 8. **Tag.** Run `git tag -a v<semver> -m <notes title>`.
 9. **Push.** Push the commit, then push the tag with `git push origin v<semver>`.
-10. **URL.** Capture the release URL from the configured VCS tool's release view when it has one, else compose it from `git remote get-url origin` and the tag.
+10. **URL.** Capture the release URL from the configured VCS tool's release view when it has one, else compose it from the remote URL and the tag.
 
 ## Test
 

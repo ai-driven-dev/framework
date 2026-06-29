@@ -16,9 +16,7 @@ Verifies the factual claims inside a target text and rewrites it grounded in evi
 | 02  | `verify`          | Run the verification cascade per claim, produce a verdict and sources         | claim list from 01          |
 | 03  | `report`          | Rewrite the text with footnote citations, hedge unverified, surface conflicts | verdict list from 02        |
 
-## Default flow
-
-Sequential skill: `01 → 02 → 03`. No skipping. The router materializes the three actions as a task list on entry and closes each task only when its `## Test` passes.
+Run `01 → 02 → 03`; pass each `## Test` before the next.
 
 ## Transversal rules
 

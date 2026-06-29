@@ -4,7 +4,7 @@ Detect the ticketing tool, gather a thorough problem description, fill the issue
 
 ## Input
 
-A problem description (required), plus optional labels, a type (bug, feature, task, docs), projects, a milestone, and a repo URL (derived from `git remote get-url origin` when omitted).
+A problem description (required), plus optional labels, a type (bug, feature, task, docs), projects, a milestone, and a repo URL (inferred from the remote when omitted).
 
 ## Output
 
@@ -12,7 +12,7 @@ The created issue's URL and number, with its title, labels, and type.
 
 ## Process
 
-1. **Tool.** Use the ticketing tool declared in project memory. Otherwise map `git remote get-url origin` to the matching configured tool.
+1. **Tool.** Use the ticketing tool declared in project memory. Otherwise infer it from the remote URL.
 2. **Context.** Load `@../assets/CONTRIBUTING.md` and `@../assets/issue-template.md`, and skim existing open issues via the tool to avoid duplicates.
 3. **Gather.** Combine the problem description with technical context (stack, repro steps, environment). Ask follow-up questions when required fields are missing.
 4. **Research.** Look up official documentation that backs the issue when applicable (linked errors, framework changelog).

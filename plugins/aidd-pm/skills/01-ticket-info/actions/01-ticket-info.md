@@ -13,7 +13,7 @@ The ticket's title, description, status, assignee, priority, and URL, displayed 
 ## Process
 
 1. **Tool.** Use the ticketing tool declared in project memory. Otherwise inspect the repo configuration or environment for the configured tool.
-2. **Identifier.** Use the provided ticket id when given. Otherwise extract it from `git rev-parse --abbrev-ref HEAD` per project convention.
+2. **Identifier.** Use the provided ticket id when given. Otherwise take it from the current branch name, per project convention.
 3. **Format.** Apply the project ticketing convention to the identifier (prefix, separator, casing).
 4. **Query.** Invoke the configured ticketing tool to fetch the ticket record.
 5. **Display.** Render the title, description, status, assignee, priority, and URL.

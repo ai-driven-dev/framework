@@ -13,13 +13,9 @@ Files well-formed issues in the configured tracker after gathering enough contex
 | --- | --------------- | -------------------------------------------------------------------------- | -------------------------------------- |
 | 01  | `issue-create`  | Detect tool, fill template, validate, open the issue                        | problem_description, labels, type      |
 
-## Default flow
-
-Single action skill. The router dispatches to `issue-create` whenever an issue or bug-report phrase appears.
-
 ## Transversal rules
 
-- Detect the ticketing tool from project memory first, then fall back to inspecting `git remote get-url origin`.
+- Detect the ticketing tool from project memory first, then fall back to inferring it from the remote URL.
 - Tool-agnostic: invoke whichever ticketing tool is configured for the project.
 - Always wait for explicit user approval of title, body, labels, type, projects, and milestones before creating.
 - Issue body follows `assets/issue-template.md`.

@@ -17,9 +17,7 @@ Turns a vague idea into a precise one through a deep, natural conversation. Each
 | 03  | `integrate` | Fold answers in, judge if real ambiguity remains           | answers + the idea  |
 | 04  | `finalize`  | Consolidate, flag open assumptions, offer to persist       | the clarified idea  |
 
-## Default flow
-
-`capture` once, then loop `probe → integrate` until no real ambiguity remains or the user is satisfied, then `finalize`. There is no fixed round count, the idea is done when it is clear, not on a timer. Run each action's `## Test` before the next.
+Run `capture`, loop `probe → integrate` until the idea is clear, then `finalize`.
 
 ## Transversal rules
 

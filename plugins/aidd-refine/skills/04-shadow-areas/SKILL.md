@@ -16,14 +16,7 @@ Analytically scans a written artifact for gaps the author has not addressed. Unl
 | 02  | `render-report`  | Render markdown grouped by category and sorted by severity, write report | gap list from detect                     |
 | 03  | `diff`           | Load prior report, classify gaps as closed / still-open / newly-introduced | gap list from detect + prior report path |
 
-## Default flow
-
-Router dispatches by context:
-
-- No prior report present: `01-detect` then `02-render-report`
-- Prior report present: `01-detect` then `03-diff` then `02-render-report`
-
-The `02-render-report` action always runs last and writes `<source>-shadow-report.md` next to the source.
+Dispatch by context: with no prior report run `detect` then `render-report`; with one, run `diff`.
 
 ## Transversal rules
 
