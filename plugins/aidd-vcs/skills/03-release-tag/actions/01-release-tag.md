@@ -18,7 +18,7 @@ The created `v<semver>` tag, its bump commit sha, and the release URL, with the 
 4. **Compute.** Use the provided version when given. Otherwise bump major on a `BREAKING CHANGE`, minor on any `feat`, else patch.
 5. **Draft.** Fill `@../assets/release-template.md` with the change list, applying any note overrides.
 6. **Validate.** Show the full notes, the computed version, and the version-manager files about to change. Wait for explicit approval.
-7. **Bump.** Stage only version-manager files and create a `chore: bump version to v<semver>` commit.
+7. **Bump.** Stage the version-manager files and create a `chore: bump version to v<semver>` commit.
 8. **Tag.** Run `git tag -a v<semver> -m <notes title>`.
 9. **Push.** Push the commit, then push the tag with `git push origin v<semver>`.
 10. **URL.** Capture the release URL from the configured VCS tool's release view when it has one, else compose it from the remote URL and the tag.
