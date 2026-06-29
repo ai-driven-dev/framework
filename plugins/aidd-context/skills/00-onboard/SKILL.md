@@ -1,6 +1,6 @@
 ---
 name: 00-onboard
-description: Guide the user through the AIDD framework on the current project. Explain the flow in plain language and suggest the next logical step, adapted to what is already set up and which AIDD plugins are installed. Use when the user asks where to start, what to do next, how AIDD works, or to be onboarded. Not for listing every installed surface, or running a skill the user already knows they need.
+description: Guide the user through AIDD on the current project: explain the flow and the next step for what is set up. Use when the user asks where to start, what to do next, or how AIDD works. Not for listing installed surfaces or running a known skill.
 argument-hint: read-project | orient | act
 ---
 

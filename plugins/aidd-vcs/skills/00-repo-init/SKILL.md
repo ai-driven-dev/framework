@@ -1,6 +1,6 @@
 ---
 name: 00-repo-init
-description: Initialize a project's repository: git init, default branch, a bootstrap commit, CONTRIBUTING.md, and optionally the remote. Use when the user wants to init a repo, set up a new repo, or publish a project to a remote. Not for committing, opening a pull request, or tagging a release.
+description: Initialize a project repository: git init, default branch, bootstrap commit, CONTRIBUTING.md, optionally the remote. Use when the user wants to init or set up a new repo, or publish to a remote. Not for committing, opening a PR, or tagging.
 argument-hint: init | publish
 ---
 

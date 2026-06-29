@@ -1,6 +1,6 @@
 ---
 name: 03-condense
-description: Toggle terse output mode (lite, full, ultra) that drops filler while code, errors, and warnings stay verbatim, and report token savings for the session. Use to condense output, shorten answers, switch intensity, or check savings; not for editing prose or compressing code.
+description: Toggle terse output mode (lite, full, ultra) that drops filler while code and errors stay verbatim, and report token savings. Use to condense output, switch intensity, or check savings. Not for editing prose or compressing code.
 argument-hint: condense | stats
 ---
 

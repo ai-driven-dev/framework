@@ -1,6 +1,6 @@
 ---
 name: 03-prd
-description: Generate a structured Product Requirements Document from a need, idea, or brainstorm, confirmed before save. Use when the user wants to draft, write, or generate a PRD or product requirements from a problem or idea. Not for breaking requirements into user stories or a technical implementation plan.
+description: Generate a structured Product Requirements Document from a need, idea, or brainstorm, confirmed before save. Use when the user wants to draft or generate a PRD or product requirements. Not for user stories or a technical plan.
 ---
 
 # PRD
