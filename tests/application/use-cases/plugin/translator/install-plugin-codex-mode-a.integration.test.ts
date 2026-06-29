@@ -13,6 +13,7 @@ import type { PluginSource } from "../../../../../src/domain/models/plugin-sourc
 import { PluginCatalogRepositoryAdapter } from "../../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -112,17 +113,21 @@ describe("install codex plugin via Mode A (integration)", () => {
       catalog,
       hasher,
       new CapturingLogger(),
-      new Map([["codex", activator]])
+      new Map([["codex", activator]]),
+      fakeEnsureBuiltMarketplace()
     );
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    expect(activator.addedMarketplaces).toEqual([resolve(PROJECT_ROOT, "/marketplace-source")]);
+    // Registers the BUILT (transformed) tree, not the raw source, and removes any
+    // stale same-name registration first so existing users switch off the raw source.
+    expect(activator.removedMarketplaces).toEqual([MARKETPLACE_NAME]);
+    expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
     expect(activator.upgradeCount).toBe(1);
     expect(activator.enabledPlugins).toEqual([`aidd-context@${MARKETPLACE_NAME}`]);
     expect(await fs.fileExists(resolve(PROJECT_ROOT, ".codex/config.json"))).toBe(false);
   });
 
-  it("maps a github marketplace source to an owner/repo argument", async () => {
+  it("builds a github marketplace locally and registers the built tree", async () => {
     const fs = new InMemoryFileAdapter();
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
@@ -139,11 +144,12 @@ describe("install codex plugin via Mode A (integration)", () => {
       new PluginCatalogRepositoryAdapter(fs),
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["codex", activator]])
+      new Map([["codex", activator]]),
+      fakeEnsureBuiltMarketplace()
     );
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    expect(activator.addedMarketplaces).toEqual(["ai-driven-dev/framework"]);
+    expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
     expect(activator.enabledPlugins).toEqual([`aidd-context@${MARKETPLACE_NAME}`]);
   });
 
@@ -165,7 +171,8 @@ describe("install codex plugin via Mode A (integration)", () => {
       new PluginCatalogRepositoryAdapter(fs),
       new DeterministicHasher(),
       logger,
-      new Map([["codex", activator]])
+      new Map([["codex", activator]]),
+      fakeEnsureBuiltMarketplace()
     );
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
@@ -187,7 +194,8 @@ describe("install codex plugin via Mode A (integration)", () => {
       new PluginCatalogRepositoryAdapter(fs),
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["codex", activator]])
+      new Map([["codex", activator]]),
+      fakeEnsureBuiltMarketplace()
     );
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 

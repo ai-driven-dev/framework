@@ -480,7 +480,8 @@ export async function createDeps(
     pluginCatalogRepository,
     hasher,
     logger,
-    nativePluginActivators
+    nativePluginActivators,
+    ensureBuiltMarketplaceUseCase
   );
   const pluginAddUseCase = new PluginAddUseCase(
     fs,

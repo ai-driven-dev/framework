@@ -10,6 +10,7 @@ import type { NativePluginActivator } from "../../../src/domain/ports/native-plu
 export class FakeNativePluginActivator implements NativePluginActivator {
   available: boolean;
   readonly addedMarketplaces: string[] = [];
+  readonly removedMarketplaces: string[] = [];
   readonly enabledPlugins: string[] = [];
   upgradeCount = 0;
   private readonly failOnPlugins: ReadonlySet<string>;
@@ -25,6 +26,10 @@ export class FakeNativePluginActivator implements NativePluginActivator {
 
   addMarketplace(source: string): void {
     this.addedMarketplaces.push(source);
+  }
+
+  removeMarketplace(name: string): void {
+    this.removedMarketplaces.push(name);
   }
 
   upgradeMarketplaces(): void {

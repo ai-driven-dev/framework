@@ -31,6 +31,7 @@ import { SilentPrompterAdapter } from "../../../src/infrastructure/adapters/prom
 import { BundledAssetProviderAdapter } from "../../../src/infrastructure/assets/asset-loader.js";
 import { DeterministicHasher } from "./deterministic-hasher.js";
 import { FakeCurrentVersion } from "./fake-current-version.js";
+import { fakeEnsureBuiltMarketplace } from "./fake-ensure-built-marketplace.js";
 import { FakeNativePluginActivator } from "./fake-native-plugin-activator.js";
 import { FixturePluginFetcher } from "./fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "./in-memory-file-adapter.js";
@@ -81,7 +82,8 @@ export async function buildUnitDeps(_projectRoot: string) {
     pluginCatalogRepository,
     hasher,
     logger,
-    new Map([["codex", new FakeNativePluginActivator()]])
+    new Map([["codex", new FakeNativePluginActivator()]]),
+    fakeEnsureBuiltMarketplace()
   );
 
   // Seed the framework fixture content so the install use-case can read it

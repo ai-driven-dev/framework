@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import type { MarketplaceSettings } from "../../../domain/capabilities/plugins-capability.js";
 import { NativePluginCliError } from "../../../domain/errors.js";
+import type { FrameworkBuildTarget } from "../../../domain/models/framework-build.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { Marketplace } from "../../../domain/models/marketplace.js";
 import { marketplaceCacheDir } from "../../../domain/models/paths.js";
@@ -15,6 +16,7 @@ import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-regi
 import type { NativePluginActivator } from "../../../domain/ports/native-plugin-activator.js";
 import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
 import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
+import type { EnsureBuiltMarketplaceUseCase } from "../shared/ensure-built-marketplace-use-case.js";
 
 export interface MarketplaceSyncSettingsOptions {
   projectRoot: string;
@@ -34,7 +36,8 @@ export class MarketplaceSyncSettingsUseCase {
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     /** Native plugin CLI activators keyed by `NativeActivation.binary` (e.g. "codex", "copilot"). */
-    private readonly activators: ReadonlyMap<string, NativePluginActivator>
+    private readonly activators: ReadonlyMap<string, NativePluginActivator>,
+    private readonly ensureBuilt: EnsureBuiltMarketplaceUseCase
   ) {}
 
   async execute(options: MarketplaceSyncSettingsOptions): Promise<MarketplaceSyncSettingsResult> {
@@ -50,20 +53,20 @@ export class MarketplaceSyncSettingsUseCase {
       if (updated) updatedTools.push(toolId);
     }
     if (updatedTools.length > 0) await this.manifestRepo.save(manifest);
-    this.activateNativeTools(projectRoot, manifest, marketplaces);
+    await this.activateNativeTools(projectRoot, manifest, marketplaces);
     return { updatedTools };
   }
 
-  private activateNativeTools(
+  private async activateNativeTools(
     projectRoot: string,
     manifest: Manifest,
     marketplaces: readonly Marketplace[]
-  ): void {
+  ): Promise<void> {
     for (const toolId of manifest.getInstalledToolIds()) {
       const binary = this.nativeActivationBinary(toolId);
       const activator = binary === undefined ? undefined : this.activators.get(binary);
       if (binary === undefined || activator === undefined) continue;
-      this.activateTool(toolId, binary, activator, projectRoot, manifest, marketplaces);
+      await this.activateTool(toolId, binary, activator, projectRoot, manifest, marketplaces);
     }
   }
 
@@ -76,14 +79,14 @@ export class MarketplaceSyncSettingsUseCase {
     return caps.plugins?.nativeActivation?.binary ?? undefined;
   }
 
-  private activateTool(
+  private async activateTool(
     toolId: ToolId,
     binary: string,
     activator: NativePluginActivator,
     projectRoot: string,
     manifest: Manifest,
     marketplaces: readonly Marketplace[]
-  ): void {
+  ): Promise<void> {
     const { refs, marketplaces: used } = this.pluginActivation(toolId, manifest, marketplaces);
     if (refs.length === 0) return;
     if (!activator.isAvailable()) {
@@ -93,7 +96,7 @@ export class MarketplaceSyncSettingsUseCase {
     // Each step is independently best-effort: one failing plugin or marketplace
     // must warn and let the others through, never abort the whole activation.
     for (const marketplace of used)
-      this.registerMarketplace(activator, binary, marketplace, projectRoot);
+      await this.registerMarketplace(activator, toolId, marketplace, projectRoot);
     this.bestEffort(() => activator.upgradeMarketplaces(), "upgrade marketplaces");
     for (const ref of refs) {
       this.bestEffort(() => activator.enablePlugin(ref), `enable plugin '${ref}'`);
@@ -126,30 +129,46 @@ export class MarketplaceSyncSettingsUseCase {
     return { refs, marketplaces: [...used.values()] };
   }
 
-  private registerMarketplace(
+  // Native tools must read the BUILT (transformed) tree, not the raw Claude-format
+  // source. The CLI rejects `add` when the name exists from a different source, so
+  // remove-then-add is required to switch existing users off the stale raw source.
+  private async registerMarketplace(
     activator: NativePluginActivator,
-    binary: string,
+    toolId: ToolId,
     marketplace: Marketplace,
     projectRoot: string
-  ): void {
-    const source = this.marketplaceSourceArg(marketplace.source, projectRoot);
-    if (source === null) {
-      this.logger.warn(
-        `${binary}: unsupported marketplace source for '${marketplace.name}' — skipped.`
-      );
-      return;
-    }
+  ): Promise<void> {
+    const builtDir = await this.buildForTool(toolId, marketplace, projectRoot);
+    if (builtDir === null) return;
     this.bestEffort(
-      () => activator.addMarketplace(source),
+      () => activator.removeMarketplace(marketplace.name),
+      `unregister stale marketplace '${marketplace.name}'`
+    );
+    this.bestEffort(
+      () => activator.addMarketplace(builtDir),
       `register marketplace '${marketplace.name}'`
     );
   }
 
-  private marketplaceSourceArg(source: PluginSource, projectRoot: string): string | null {
-    if (source.kind === "local") return resolve(projectRoot, source.path);
-    if (source.kind === "github") return source.ref ? `${source.repo}@${source.ref}` : source.repo;
-    if (source.kind === "url") return source.url;
-    return null;
+  private async buildForTool(
+    toolId: ToolId,
+    marketplace: Marketplace,
+    projectRoot: string
+  ): Promise<string | null> {
+    try {
+      const { builtDir } = await this.ensureBuilt.execute({
+        projectRoot,
+        marketplace,
+        target: toolId as FrameworkBuildTarget,
+        mode: "marketplace",
+      });
+      return builtDir;
+    } catch (error) {
+      this.logger.warn(
+        `Native plugin activation — build '${marketplace.name}' for ${toolId} skipped: ${(error as Error).message}`
+      );
+      return null;
+    }
   }
 
   private async syncTool(
