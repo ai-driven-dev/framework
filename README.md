@@ -171,17 +171,6 @@ aidd ai restore rules/naming.md          # restore specific files
 
 Restore uses the version pinned in the manifest. It does not touch untracked files. Top-level `aidd restore` covers all tools; per-tool/per-file restore lives under `aidd ai restore` / `aidd ide restore`.
 
-### Syncing changes across tools
-
-```bash
-aidd sync                                      # interactive sync (TTY): pick source, propagate to others
-aidd ai sync --source claude                   # non-interactive: propagate claude changes to all other AI tools
-aidd ai sync --source claude --target cursor   # propagate to a specific tool only
-aidd ai sync --source claude --force           # overwrite conflicting target files
-```
-
-Top-level `aidd sync` is interactive (TTY only); use `aidd ai sync --source <tool>` for scripts/CI. Excluded from sync: memory bank files, MCP configs, VS Code settings, docs.
-
 ### Managing plugins
 
 ```bash
@@ -221,7 +210,6 @@ aidd ide uninstall vscode       # remove VS Code integration only
 | `aidd ai list`                  | List installed AI tools                                                              | —                                                                 |
 | `aidd ai status`                | Show drift for AI tools                                                              | —                                                                 |
 | `aidd ai update [tool]`         | Re-install AI tool configs from bundled CLI assets; prompts on conflicts in TTY, exits 1 in non-TTY | `--force`                                                |
-| `aidd ai sync`                  | Propagate local modifications from one AI tool to others                             | `--source` (required), `--target`, `--force`, `--no-plugins`      |
 | `aidd ai restore [files...]`    | Restore AI tool tracked files to their installed version                             | `--force`, `--tool`                                               |
 | `aidd ai doctor`                | Check AI tool installation health and detect issues                                  | —                                                                 |
 | `aidd ide install <tool>`       | Install an IDE integration from bundled assets                                       | `--force`                                                         |
@@ -233,7 +221,6 @@ aidd ide uninstall vscode       # remove VS Code integration only
 | `aidd status`                   | Show drift across all tools (AI + IDE)                                               | —                                                                 |
 | `aidd doctor`                   | Structural integrity check — exits 1 on errors or warnings                           | —                                                                 |
 | `aidd restore [files...]`       | Revert modified/deleted files to the manifest-pinned version                         | `--force`, `--tool`                                               |
-| `aidd sync`                     | Propagate local changes from one tool to the others                                  | `--source` (required), `--target`, `--force`                      |
 | `aidd plugin`                   | Manage plugins for AI tools                                                          | `create`, `remove`, `list`, `install`, `search`, `update`, `doctor` |
 | `aidd marketplace`              | Manage plugin marketplaces                                                           | `add`, `list`, `remove`, `refresh`, `check`                       |
 | `aidd framework build`          | Build a Claude-format framework into a tool-native plugin marketplace tree or flat workspace | `--source`, `--target`, `--out`, `--flat`, `--force`     |
@@ -283,7 +270,7 @@ aidd setup --ai claude,cursor --ide vscode              # mix AI and IDE tools
 
 ### `aidd ai`
 
-Manages AI tools (install, uninstall, list, status, update, sync, restore, doctor).
+Manages AI tools (install, uninstall, list, status, update, restore, doctor).
 
 ```bash
 aidd ai install claude                      # install Claude Code runtime config
@@ -294,8 +281,6 @@ aidd ai status                             # show drift for all AI tools
 aidd ai update                             # re-install all AI tool configs (prompts on conflicts)
 aidd ai update claude                      # re-install a specific AI tool
 aidd ai update --force                     # overwrite modified files without prompting
-aidd ai sync --source claude               # propagate claude changes to all other AI tools
-aidd ai sync --source claude --target cursor --force  # to a specific target
 aidd ai restore --tool claude              # restore modified Claude files
 aidd ai doctor                             # check AI tool installation health
 ```
@@ -351,10 +336,6 @@ Per-file conflict guard: unmodified files are always updated silently. Modified 
 ### `aidd restore`
 
 Reverts modified or deleted files to the version pinned in the manifest. See [Restoring modified files](#restoring-modified-files) for examples.
-
-### `aidd sync`
-
-Propagates local modifications from one tool's files to the others via reverse + forward content rewriting. See [Syncing changes across tools](#syncing-changes-across-tools) for examples.
 
 ### `aidd plugin`
 
@@ -571,7 +552,7 @@ The following commands and flags were removed in v4.1.0. Do not use them in new 
 | `aidd cache list` | removed — caches are internal; inspect via `aidd marketplace list` |
 | `aidd cache clear` | `aidd marketplace refresh --force` (clears cache before re-fetch) |
 | `aidd config list\|get\|set` | removed — manifest fields `docsDir`/`repo` dropped |
-| `aidd sync --source <tool>` | `aidd ai sync --source <tool>` |
+| `aidd sync` / `aidd ai sync` | removed — install rebuilds each tool from the marketplace; re-install to refresh |
 | `aidd restore <tool> [file]` (tool/file args) | `aidd ai restore [files...] --tool <tool>` (top-level `aidd restore` still exists, force-only, all tools) |
 | `--repo` global flag | `aidd marketplace add` |
 | `--mode` on setup/install | `--source local\|remote` on `aidd setup` |
