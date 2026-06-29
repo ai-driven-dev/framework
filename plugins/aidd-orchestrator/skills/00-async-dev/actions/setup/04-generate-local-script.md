@@ -13,7 +13,7 @@ A file at `scripts/aidd-async-poll.sh` with mode `0755`.
 ## Process
 
 1. Skip this action when `answers.mode == "remote"`.
-2. Read `assets/local-poll-template.sh`.
+2. Read `assets/setup/local-poll-template.sh`.
 3. Substitute placeholders:
    - `__TO_IMPLEMENT_LABEL__` -> `answers.labels.to_implement`
    - `__TO_REVIEW_LABEL__` -> `answers.labels.to_review`

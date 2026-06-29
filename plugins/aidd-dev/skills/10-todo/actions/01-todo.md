@@ -17,7 +17,7 @@ User's requirement.
 2. **Categorize.** Split the prompt into distinct, independent todos (category + task). Inline, no agent.
 3. **Launch.** Spawn one `executor` agent per todo, all in parallel (one message, multiple Task calls). Each agent prompt mandates, in order:
    ```markdown
-   1. Refine the todo first - discover at runtime a skill whose description covers refining or clarifying a request (never a hardcoded plugin name) and run it on the todo.
+   1. Refine the todo first: run a non-interactive refine capability if one is available (discovered at runtime, never a hardcoded plugin name); otherwise restate the todo clearly and resolve obvious ambiguity inline. Never block on the user.
    2. Implement the refined todo.
    3. Return a one-line output summary.
    ```

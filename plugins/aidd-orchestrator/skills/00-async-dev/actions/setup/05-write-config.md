@@ -11,7 +11,7 @@ A file at `.claude/aidd-orchestrator.json`.
 
 ## Process
 
-1. Read `assets/config-template.json`.
+1. Read `assets/setup/config-template.json`.
 2. Merge `answers` into the template, preserving template defaults for fields the user did not override.
 3. Add a top-level `version` (the plugin version) and an ISO 8601 `created_at` timestamp.
 4. If `.claude/aidd-orchestrator.json` already exists, diff against the new config and ask the user to confirm overwrite.

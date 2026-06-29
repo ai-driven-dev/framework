@@ -13,7 +13,7 @@ A file at `.github/workflows/aidd-async.yml`.
 ## Process
 
 1. Skip this action when `answers.mode == "local"`.
-2. Read `assets/workflow-template.yml`.
+2. Read `assets/setup/workflow-template.yml`.
 3. Substitute placeholders:
    - `__TO_IMPLEMENT_LABEL__` -> `answers.labels.to_implement`
    - `__TO_REVIEW_LABEL__` -> `answers.labels.to_review`
