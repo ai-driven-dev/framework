@@ -1,4 +1,5 @@
 import { stat } from "node:fs/promises";
+import { homedir } from "node:os";
 import "../domain/tools/ai/claude.js";
 import "../domain/tools/ai/codex.js";
 import "../domain/tools/ai/copilot.js";
@@ -594,6 +595,13 @@ export async function createDeps(
   const setupToolsPromptUseCase = new SetupToolsPromptUseCase(prompter);
   const projectContextDetector = new ProjectContextDetectorUseCase(fs);
   const statusUseCase = new StatusUseCase(fs, manifestRepo, hasher);
+  // Lets restore re-materialize cursor/opencode plugins via the build pipeline,
+  // matching what install wrote (otherwise restore rewrites raw content → drift).
+  const builtMaterializationDeps = {
+    ensureBuilt: ensureBuiltMarketplaceUseCase,
+    marketplaceRegistry,
+    homedir,
+  };
   const restoreUseCase = new RestoreUseCase(
     fs,
     manifestRepo,
@@ -603,7 +611,8 @@ export async function createDeps(
     prompter,
     pluginFetcher,
     pluginDistributionReader,
-    assetProvider
+    assetProvider,
+    builtMaterializationDeps
   );
   const uninstallUseCase = new UninstallUseCase(fs, manifestRepo, logger);
   const statusAllUseCase = new StatusAllUseCase(fs, manifestRepo, hasher);
@@ -616,7 +625,8 @@ export async function createDeps(
     prompter,
     pluginFetcher,
     pluginDistributionReader,
-    assetProvider
+    assetProvider,
+    builtMaterializationDeps
   );
   const resolveUpdateDecisionUseCase = new ResolveUpdateDecisionUseCase(prompter);
   const updateOneToolUseCase = new UpdateOneToolUseCase(

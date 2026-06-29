@@ -90,7 +90,9 @@ run() {
 }
 
 new_project() { local p; p=$(mktemp -d "$TMPROOT/proj.XXXXXX"); (cd "$p" && git init -q); echo "$p"; }
-cache_catalog() { find "$1/.aidd/cache" -path "*marketplace.json" 2>/dev/null | head -1; }
+# Only the marketplaces catalog — NOT the per-target built-marketplace cache
+# (.aidd/cache/built/.../marketplace.json), which also matches a bare *marketplace.json glob.
+cache_catalog() { find "$1/.aidd/cache/marketplaces" -path "*marketplace.json" 2>/dev/null | head -1; }
 
 # ── build ───────────────────────────────────────────────────────
 echo "Building dist…"
