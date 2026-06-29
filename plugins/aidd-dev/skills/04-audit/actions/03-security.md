@@ -8,7 +8,7 @@ An optional scope, a directory or file glob. Defaults to the entire codebase.
 
 ## Output
 
-The `security` findings, written to `aidd_docs/tasks/audits/<yyyy>_<mm>_security.md`, or contributed to the merged `<yyyy>_<mm>_full.md` in a full run.
+The `security` findings, written to `security.md` in the run's audit folder.
 
 ## Process
 
@@ -22,7 +22,7 @@ The `security` findings, written to `aidd_docs/tasks/audits/<yyyy>_<mm>_security
    - **Insecure defaults**: missing TLS enforcement, overly permissive CORS, disabled security headers, debug flags left on in non-dev code.
    - Use a static-analysis tool when available. Flag only findings supported by code evidence, never inferred from naming alone.
 3. **Rate.** Give each finding a severity and an effort per the `@../assets/audit-template.md` legend, with a concrete `file:line`. The category is always `security`.
-4. **Write.** Fill `@../assets/audit-template.md`: the Findings table (one row per issue, severity-first), the ranked Top actions, and the Coverage section. In a full run, contribute these rows to the single merged report instead of writing a separate file. Emit the report and stop.
+4. **Write.** Fill `@../assets/audit-template.md` into the pillar file: the Findings table (one row per issue, severity-first), the ranked Top actions, and the Coverage section. In a full run, also add the rows to the merged `report.md` in the same folder. Emit the report and stop.
 
 ## Test
 

@@ -13,6 +13,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/02-pull-request`](#skills02-pull-request)
   - [`skills/03-release-tag`](#skills03-release-tag)
   - [`skills/04-issue-create`](#skills04-issue-create)
+  - [`skills/05-pull-request-list`](#skills05-pull-request-list)
 
 ---
 
@@ -32,26 +33,30 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-publish.md](skills/00-repo-init/actions/02-publish.md) | - |
 | `assets` | [CONTRIBUTING.md](skills/00-repo-init/assets/CONTRIBUTING.md) | - |
 | `-` | [README.md](skills/00-repo-init/README.md) | - |
-| `-` | [SKILL.md](skills/00-repo-init/SKILL.md) | `Initialize a project's repository: resolve the default branch and VCS provider, run git init with a bootstrap commit, write CONTRIBUTING.md, and on request create and push the remote. Use when the user says "init a repo", "git init", "initialize version control", "set up a new repo", "start a project", or "publish this repo". Do NOT use to commit changes, open a pull request, tag a release, or clone an existing remote.` |
+| `-` | [SKILL.md](skills/00-repo-init/SKILL.md) | `Initialize a project repository: git init, default branch, bootstrap commit, CONTRIBUTING.md, optionally the remote. Use when the user wants to init or set up a new repo, or publish to a remote. Not for committing, opening a PR, or tagging.` |
 
 #### `skills/01-commit`
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-commit.md](skills/01-commit/actions/01-commit.md) | - |
+| `actions` | [01-collect.md](skills/01-commit/actions/01-collect.md) | - |
+| `actions` | [02-message.md](skills/01-commit/actions/02-message.md) | - |
+| `actions` | [03-commit.md](skills/01-commit/actions/03-commit.md) | - |
 | `assets` | [commit-template.md](skills/01-commit/assets/commit-template.md) | `VCS commit message template` |
 | `-` | [README.md](skills/01-commit/README.md) | - |
-| `-` | [SKILL.md](skills/01-commit/SKILL.md) | `Create an atomic git commit with a conventional message, optionally pushing. Use to commit changes ("commit", "/commit push"). Do NOT use to amend, rebase, open a PR, or tag a release.` |
+| `-` | [SKILL.md](skills/01-commit/SKILL.md) | `Create an atomic git commit with a conventional message, optionally pushing. Use when the user wants to commit changes, optionally pushing the branch. Not for amending, rebasing, opening a pull request, or tagging a release.` |
 
 #### `skills/02-pull-request`
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-pull-request.md](skills/02-pull-request/actions/01-pull-request.md) | - |
+| `actions` | [01-collect.md](skills/02-pull-request/actions/01-collect.md) | - |
+| `actions` | [02-draft.md](skills/02-pull-request/actions/02-draft.md) | - |
+| `actions` | [03-create.md](skills/02-pull-request/actions/03-create.md) | - |
 | `assets` | [branch.md](skills/02-pull-request/assets/branch.md) | `VCS branch naming convention template` |
 | `assets` | [pull_request.md](skills/02-pull-request/assets/pull_request.md) | `VCS pull/merge request template` |
 | `-` | [README.md](skills/02-pull-request/README.md) | - |
-| `-` | [SKILL.md](skills/02-pull-request/SKILL.md) | `Create a draft pull or merge request from the current branch, in whatever VCS tool the project uses. Use to open a PR/MR ("open a pr", `/pull-request`). Do NOT use to commit, push, or merge a branch.` |
+| `-` | [SKILL.md](skills/02-pull-request/SKILL.md) | `Create a draft pull or merge request from the current branch, in whatever VCS tool the project uses. Use when the user wants to open a pull or merge request. Not for committing, pushing, or merging a branch.` |
 
 #### `skills/03-release-tag`
 
@@ -60,7 +65,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-release-tag.md](skills/03-release-tag/actions/01-release-tag.md) | - |
 | `assets` | [release-template.md](skills/03-release-tag/assets/release-template.md) | `VCS release notes template` |
 | `-` | [README.md](skills/03-release-tag/README.md) | - |
-| `-` | [SKILL.md](skills/03-release-tag/SKILL.md) | `Cut a semver release with annotated tag and release notes. Use when the user says "release", "tag", "tag this release", "bump version", "release v1.2.0", "cut a release", or invokes `/release-tag`. Do NOT use for plain commits without a tag, opening pull requests, pushing a branch only, or amending existing tags.` |
+| `-` | [SKILL.md](skills/03-release-tag/SKILL.md) | `Cut a semver release with an annotated tag and release notes. Use when the user wants to release, tag a release, bump the version, or cut a version. Not for a plain commit, a pull request, or amending an existing tag.` |
 
 #### `skills/04-issue-create`
 
@@ -70,5 +75,13 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [CONTRIBUTING.md](skills/04-issue-create/assets/CONTRIBUTING.md) | `Project contribution guidelines template` |
 | `assets` | [issue-template.md](skills/04-issue-create/assets/issue-template.md) | `VCS issue/ticket template` |
 | `-` | [README.md](skills/04-issue-create/README.md) | - |
-| `-` | [SKILL.md](skills/04-issue-create/SKILL.md) | `Create an issue in the configured ticketing tool. Use when the user says "new issue", "create an issue", "file a bug", "file an issue", "report bug", "open an issue", or invokes `/issue-create`. Do NOT use for committing changes, opening pull requests, tagging releases, or commenting on existing issues.` |
+| `-` | [SKILL.md](skills/04-issue-create/SKILL.md) | `Create an issue in the configured ticketing tool. Use when the user wants to file a bug, open an issue, or report a problem. Not for committing, opening a pull request, or commenting on an existing issue.` |
+
+#### `skills/05-pull-request-list`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-pull-request-list.md](skills/05-pull-request-list/actions/01-pull-request-list.md) | - |
+| `-` | [README.md](skills/05-pull-request-list/README.md) | - |
+| `-` | [SKILL.md](skills/05-pull-request-list/SKILL.md) | `List the open pull or merge requests for the current repository as a table, in whatever VCS tool the project uses. Use when the user wants to see, list, or review the open PRs or MRs awaiting action. Not for creating, commenting on, or merging a request.` |
 

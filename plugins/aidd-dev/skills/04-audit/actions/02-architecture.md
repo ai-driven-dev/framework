@@ -8,7 +8,7 @@ An optional scope, a directory or file glob. Defaults to the entire codebase.
 
 ## Output
 
-The `architecture` findings, written to `aidd_docs/tasks/audits/<yyyy>_<mm>_architecture.md`, or contributed to the merged `<yyyy>_<mm>_full.md` in a full run.
+The `architecture` findings, written to `architecture.md` in the run's audit folder.
 
 ## Process
 
@@ -19,7 +19,7 @@ The `architecture` findings, written to `aidd_docs/tasks/audits/<yyyy>_<mm>_arch
    - **God-modules**: detect modules with an abnormally large surface area, too many exports or responsibilities, that signal architectural erosion.
    - When ADRs or C4 diagrams are absent, note "no architecture docs found, conformance check skipped" in `Coverage > Skipped` and limit the scan to observable coupling heuristics.
 3. **Rate.** Give each finding a severity and an effort per the `@../assets/audit-template.md` legend, with a concrete `file:line`. The category is always `architecture`.
-4. **Write.** Fill `@../assets/audit-template.md`: the Findings table (one row per issue, severity-first), the ranked Top actions, and the Coverage section. In a full run, contribute these rows to the single merged report instead of writing a separate file. Emit the report and stop.
+4. **Write.** Fill `@../assets/audit-template.md` into the pillar file: the Findings table (one row per issue, severity-first), the ranked Top actions, and the Coverage section. In a full run, also add the rows to the merged `report.md` in the same folder. Emit the report and stop.
 
 ## Test
 
