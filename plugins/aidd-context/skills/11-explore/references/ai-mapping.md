@@ -2,6 +2,10 @@
 
 Where to look for each artifact type per AI tool. Scan-only: the paths and formats the survey and drill actions read. This is explore's own minimal map, the single source of per-tool surfaces. Actions never hardcode a tool.
 
+## Presence signal
+
+A tool is present only when one of its own mapped surfaces below holds a file. A shared parent directory is never a signal by itself.
+
 ## AI quick map - content artifacts
 
 | AI             | Agents                      | Commands / Prompts                            | Rules                                    | Skills                                | Context file                      |

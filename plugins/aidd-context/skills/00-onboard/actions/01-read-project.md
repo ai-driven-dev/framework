@@ -26,7 +26,7 @@ The notes answer a handful of plain questions:
 1. **Check the setup.** `test -d aidd_docs/memory`, list its `*.md`, and judge whether any file is filled rather than an untouched template. When a file is filled, read the project brief and the architecture so the briefing speaks from the project's own context, not a guess. `grep -l '<aidd_project_memory>' CLAUDE.md AGENTS.md .github/copilot-instructions.md` for the context block.
 2. **Check the work.** Look for source files outside `aidd_docs/`, a stack manifest, a spec or plan under `aidd_docs/`, and an open pull request on the branch. If nothing is built at all, note the repo as empty.
 3. **List what is installed.** Use the AI tool's native plugin and skill discovery to gather the enabled AIDD plugins and the skills they expose, each with its description. This is how onboard adapts to what the user actually has.
-4. **Hold, do not print.** Keep the notes in context. Hand directly to `02-orient`.
+4. **Hold, do not print.** Keep the notes in context and hand directly to `02-orient`. Emit nothing, even in a single turn; the user's first words come from `02-orient`.
 
 ## Test
 
