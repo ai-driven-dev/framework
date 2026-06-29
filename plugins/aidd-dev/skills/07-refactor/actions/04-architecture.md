@@ -12,7 +12,7 @@ The changes applied (file, one-line summary, severity), a verification summary, 
 
 ## Process
 
-1. **Source.** When an audit report is pushed, take its architecture-axis findings as the fix list and skip the scan. Otherwise scan the scope against documented boundaries (C4 diagrams or ADRs in `aidd_docs/memory/`), identify wrong-direction dependencies, god-modules, missing layer abstractions, and violated isolation contracts, and rate each with the shared severity scale.
+1. **Source.** When an audit report is pushed, take its architecture findings as the fix list and skip the scan. Otherwise scan against the documented boundaries (C4 diagrams, ADRs in `aidd_docs/memory/`) for wrong-direction dependencies, god-modules, missing layers, and broken isolation, rating each with the shared severity scale.
 2. **Triage.** Separate changes safe to apply atomically now from those needing broad coordinated moves. Defer the latter, flagged as needing a plan first.
 3. **Apply.** Make the safe changes in small, independently verifiable steps:
    - Extract or restore layers (separate domain, infrastructure, and presentation concerns).
