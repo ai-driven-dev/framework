@@ -20,11 +20,11 @@ A plain-language guide to the AIDD framework for the current project. It reads t
 
 Three actions, in a loop:
 
-1. `read-project`: **silently** read a few plain facts about the project and the installed skills. Prints nothing.
-2. `orient`: explain where the project sits in the AIDD flow and suggest the next step, in plain language, then offer choices.
-3. `act`: run the suggestion, explain it, walk the whole flow, switch to a different step, hand off, or stop. Then loop back to `01`.
+1. `read-project`: **silently** read the project once into a reusable snapshot — the signals plus a session ledger of what you have run or skipped. Prints nothing.
+2. `orient`: place the project in the AIDD flow and offer a project-adapted menu — the recommended next step plus the tools that fit, in plain language.
+3. `act`: run the suggestion, explain it, walk the whole flow, switch to a different step, hand off, or stop. Then refresh the snapshot and loop.
 
-It suggests by **function**, then resolves that to whatever skill is actually installed. A step with no installed skill is named as a gap, never an invented recommendation. The suggested step is always a hint, never a forced choice.
+It suggests by **function**, then resolves that to whatever skill is actually installed. A step with no installed skill is named as a gap, never an invented recommendation. The recommended step is always skippable, never a forced choice, and once run or skipped it is not suggested again.
 
 ## Requires
 
@@ -32,4 +32,4 @@ Only the `aidd-context` plugin installed and enabled, and a working directory ro
 
 ## Details
 
-See [`SKILL.md`](SKILL.md) for the action contract, [`actions/`](actions/) for the three actions, and [`references/journey.md`](references/journey.md) for the AIDD flow stages and how each resolves to an installed skill.
+See [`SKILL.md`](SKILL.md) for the action contract and [`actions/`](actions/) for the three actions. The detail lives in [`references/journey.md`](references/journey.md) (flow stages and placement), [`references/signals.md`](references/signals.md) (project signals and the capability map), and [`assets/menu.md`](assets/menu.md) (the menu shape).
