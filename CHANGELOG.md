@@ -1,5 +1,49 @@
 # Changelog
 
+## [5.1.0](https://github.com/ai-driven-dev/framework/compare/v5.0.3...v5.1.0) (2026-06-30)
+
+
+### Features
+
+* **aidd-dev:** route deletions to refactor cleanup with orphan sweep ([#328](https://github.com/ai-driven-dev/framework/issues/328)) ([2c75d0d](https://github.com/ai-driven-dev/framework/commit/2c75d0d7924b1b249c25fc121091387f0c373a7f))
+* **aidd-ui:** scaffold alpha plugin (0.1.0-alpha.0) ([#319](https://github.com/ai-driven-dev/framework/issues/319)) ([a56792a](https://github.com/ai-driven-dev/framework/commit/a56792afb6584ba17115011721823a2439fb7759))
+* **aidd-vcs:** add repo-init skill (init + publish a repository) ([#269](https://github.com/ai-driven-dev/framework/issues/269)) ([81115da](https://github.com/ai-driven-dev/framework/commit/81115da3420f068ba81da8591dfff34555005680))
+* **framework:** add markdown link checker ([#307](https://github.com/ai-driven-dev/framework/issues/307)) ([efbc759](https://github.com/ai-driven-dev/framework/commit/efbc75936211f3ffdd2d14815db6762b42261407))
+* **onboard:** phase 1 — read-once loop with a session ledger ([c17d38c](https://github.com/ai-driven-dev/framework/commit/c17d38cd46b9d80ba8112687178433309b75e6b0))
+* **onboard:** phase 2 — foundation gate, skippable ([2712c17](https://github.com/ai-driven-dev/framework/commit/2712c1764027fb1a42fa994805da756ec7c865cf))
+* **onboard:** phases 3-4 — capability map + project-adapted menu ([8ec202b](https://github.com/ai-driven-dev/framework/commit/8ec202b796a3fb36191456c134cc42ea51d42497))
+* **skills:** sync argument hints ([#296](https://github.com/ai-driven-dev/framework/issues/296)) ([5aa9216](https://github.com/ai-driven-dev/framework/commit/5aa92166cc80d74c79a1dab183224517c3fb1f49))
+
+
+### Bug Fixes
+
+* **aidd-vcs:** sync pull-request skill contract with prefix routing ([#326](https://github.com/ai-driven-dev/framework/issues/326)) ([2db0005](https://github.com/ai-driven-dev/framework/commit/2db0005400c821a96481e990e22bea40c404912e))
+
+
+### Miscellaneous
+
+* **deps:** target next instead of main for dependabot ([#324](https://github.com/ai-driven-dev/framework/issues/324)) ([06c1e93](https://github.com/ai-driven-dev/framework/commit/06c1e9315979cd043d45221e1177ef49b57ce262))
+
+
+### Documentation
+
+* **aidd-context:** unify and trim agent instruction template ([#329](https://github.com/ai-driven-dev/framework/issues/329)) ([d3fe2ac](https://github.com/ai-driven-dev/framework/commit/d3fe2ac4600858195300518cb2b5db9ab57bbc69))
+* **framework:** add dominance checks to review and rules ([#313](https://github.com/ai-driven-dev/framework/issues/313)) ([80daf0d](https://github.com/ai-driven-dev/framework/commit/80daf0d5e6276417a1b61fadf63a3d5025d6fc32))
+* **framework:** unify change taxonomy into one source of truth ([#325](https://github.com/ai-driven-dev/framework/issues/325)) ([a42cc5b](https://github.com/ai-driven-dev/framework/commit/a42cc5b1bd0018e964de64f8098f09769f70fda0))
+* **onboard:** brainstorm + validated plan for the onboard refactor ([a409d49](https://github.com/ai-driven-dev/framework/commit/a409d49c05206538c78103b28655edd7dbae7b66))
+* **onboard:** refresh README for the snapshot+ledger+menu flow ([7bf212b](https://github.com/ai-driven-dev/framework/commit/7bf212b586c6ca4a5c0b5a9f81ba95d0483e5a1b))
+
+
+### Refactoring
+
+* **aidd-context:** dedupe project-memory templates and lighten actions ([#347](https://github.com/ai-driven-dev/framework/issues/347)) ([f2a252b](https://github.com/ai-driven-dev/framework/commit/f2a252ba6f0129d17bb71802bc40bdcf121a63c3))
+* **aidd-dev:** redesign 01-plan into gather/explore/wireframe/plan ([#271](https://github.com/ai-driven-dev/framework/issues/271)) ([dba017e](https://github.com/ai-driven-dev/framework/commit/dba017e8e4c6ef9bc80325791495f1b5fe8c350b)), closes [#292](https://github.com/ai-driven-dev/framework/issues/292) [#265](https://github.com/ai-driven-dev/framework/issues/265) [#276](https://github.com/ai-driven-dev/framework/issues/276)
+* **aidd-refine:** align skills with skill contract ([#327](https://github.com/ai-driven-dev/framework/issues/327)) ([bc69310](https://github.com/ai-driven-dev/framework/commit/bc693100ce14d4ce6de0ebecaa7883e67bccef5d))
+* conform remaining skills to the authoring contract ([#334](https://github.com/ai-driven-dev/framework/issues/334)) ([dcc232a](https://github.com/ai-driven-dev/framework/commit/dcc232a5a7a7bcdf0c477b36399fd4d412685022))
+* **framework:** executor/checker agents + SDLC orchestration redesign ([#314](https://github.com/ai-driven-dev/framework/issues/314)) ([7df7a34](https://github.com/ai-driven-dev/framework/commit/7df7a34dab251cd4190f76bb1cb031584bdea5bd))
+* **onboard:** slim 03-act, drop colon from the description ([71e09ff](https://github.com/ai-driven-dev/framework/commit/71e09ff66962bb69adcd6285bf151e80fbd0dff1))
+* **skills:** forbid colon and em dash in descriptions, codify in R5 ([1407a9a](https://github.com/ai-driven-dev/framework/commit/1407a9a996b4d705d8586512c533659d8c44d445))
+
 ## [5.0.3](https://github.com/ai-driven-dev/framework/compare/v5.0.2...v5.0.3) (2026-06-23)
 
 
