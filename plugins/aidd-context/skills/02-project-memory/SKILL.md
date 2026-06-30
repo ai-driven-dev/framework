@@ -20,22 +20,27 @@ Bootstraps the project's context layer: the AI context files with a memory block
 
 Run the actions in order, `01 → 05`, and run each action's `## Test` before the next.
 
-## Transversal rules
+## Memory rules
 
-- Capture the macro picture and the non-derivable: decisions, conventions, gotchas, the why. Never restate derivable detail (a full schema, a file tree). Prefer a pointer to the code over a copy.
-- Keep each memory file small. Bullets stay short, code in backticks, no version number in a tech name (`React`, not `React 19`).
-- Memory files document the user's project, never AIDD's own scaffold.
-- Reflect the current state only. Drop an unused section, no empty placeholder survives.
-- Ask the user before including or excluding anything ambiguous. Never decide silently.
-- Write files, never display their content.
+Govern the content of every memory file.
 
-## Loading
+- Capture the macro and the non-derivable: decisions, conventions, gotchas, the why. Never restate a schema or a file tree. Point to the code over a copy.
+- One fact, one file: define it in its home, elsewhere reference it. Naming a shared lib in its own concern is fine.
+- Keep each file small. Short bullets, code in backticks, no version in a tech name (`React`, not `React 19`).
+- Reflect the current state only. Drop an unused section, never leave a placeholder.
 
-The core concerns load always. The `internal/` and `external/` directories are listed for on-demand reading, never auto-loaded.
+## Action rules
+
+Govern how every action runs.
+
+- Read an asset or reference relative to this skill. If one can't be read, stop and say so, never invent.
+- Ask before anything ambiguous. Never default silently.
+- End with a short report of what changed.
 
 ## References
 
 - `references/mapping-ai-context-file.md`: the per-tool context-file path.
+- `references/memory-block.md`: the context-file memory block and its upsert cases.
 - `references/capability-signals.md`: the capabilities, their signals, and the concerns each gates.
 
 ## Assets

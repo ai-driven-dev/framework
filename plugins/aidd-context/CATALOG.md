@@ -82,6 +82,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `-` | [README.md](skills/02-project-memory/README.md) | - |
 | `references` | [capability-signals.md](skills/02-project-memory/references/capability-signals.md) | - |
 | `references` | [mapping-ai-context-file.md](skills/02-project-memory/references/mapping-ai-context-file.md) | - |
+| `references` | [memory-block.md](skills/02-project-memory/references/memory-block.md) | - |
 | `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Initialize or refresh the project memory bank. Use when the user wants to set up or regenerate the project's memory files. Not for updating one memory file after it exists or editing a single rule directly.` |
 
 #### `skills/03-context-generate`

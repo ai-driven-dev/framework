@@ -23,12 +23,3 @@ A capability holds when a concrete fact in the repo matches the capability's **d
 | `cli`        | is run as a command-line tool                          | a `bin` field, or a CLI-parser dependency (commander, yargs, oclif, clap, click)                | cli                         |
 | `data`       | processes data or trains models                        | notebooks, a data-versioning or ML tool, or pipeline and model files                            | data                        |
 | `monorepo`   | hosts several packages in one repo                     | workspaces, or a monorepo tool (Turborepo, Nx, Lerna)                                            | enriches `core/codebase-map` (the Packages section), no folder |
-
-## How the action uses this
-
-- Always generate every template in `core/`.
-- For each capability that holds, generate every template in its folder.
-- Fire a capability on a concrete fact that matches its definition, whether or not the fact is in the Evidence column. Never fire on an inferred domain.
-- A capability with no concrete fact produces no file.
-- A monorepo fills the Packages section of `codebase-map`, it has no folder of its own.
-- In a monorepo, gather facts across every workspace, not the root manifest alone. A capability holds when any one workspace shows it (a React app in `packages/web` means `ui` holds for the project).

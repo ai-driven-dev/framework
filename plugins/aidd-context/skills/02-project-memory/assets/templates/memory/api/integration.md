@@ -1,10 +1,6 @@
 # Integration
 
-How this system talks to others: internal communication and external services.
-
-## Internal
-
-- <How services or modules communicate (HTTP, events, gRPC)>
+How this system integrates with external/third-party services.
 
 ## External services
 
@@ -12,10 +8,10 @@ How this system talks to others: internal communication and external services.
 
 ```mermaid
 flowchart LR
-    A[TODO: macro communication between this system and its services]
+    A[TODO: macro map of this system and its external services]
 ```
 
 <!--
-Capture: the macro communication map and the external integrations.
-Skip: implementation detail. Keep the diagram macro. Remove this comment when filled.
+Capture: the external integrations and the macro map to them.
+Skip: internal module flow (that lives in architecture). Keep the diagram macro. Remove this comment when filled.
 -->

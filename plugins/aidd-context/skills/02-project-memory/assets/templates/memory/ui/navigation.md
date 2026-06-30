@@ -4,7 +4,7 @@ How the user moves through the app: routing and the page structure.
 
 ## Routing
 
-- <The router and where routes are defined>
+- <Client routing: the router and where client routes are defined>
 - <Public versus protected route handling>
 
 ## Structure

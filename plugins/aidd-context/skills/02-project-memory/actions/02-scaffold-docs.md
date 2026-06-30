@@ -1,6 +1,6 @@
 # 02 - Scaffold docs
 
-Create the `aidd_docs/` structure with its root docs and empty memory subdirectories.
+Create the `aidd_docs/` structure: root docs and empty memory subdirectories.
 
 ## Input
 
@@ -12,10 +12,9 @@ The project root.
 
 ## Process
 
-1. **Docs.** For each of `README.md`, `GUIDELINES.md`, `CONTRIBUTING.md`: write it from the matching `@../assets/` template if absent, or update it in place while preserving the user's customizations.
+1. **Docs.** Write each of `README.md`, `GUIDELINES.md`, `CONTRIBUTING.md` from its `@../assets/` template if absent, else update in place preserving the user's edits.
 2. **Memory dirs.** Ensure `aidd_docs/memory/internal/` and `aidd_docs/memory/external/` exist, each with a `.gitkeep`.
-3. **Memory readme.** Write `aidd_docs/memory/README.md` from `@../assets/templates/memory/README.md` if absent, leaving an existing one untouched.
-4. **Report.** Print a table: path, action taken (created, updated, or skipped).
+3. **Memory readme.** Write `aidd_docs/memory/README.md` from `@../assets/templates/memory/README.md` if absent; leave an existing one.
 
 ## Test
 

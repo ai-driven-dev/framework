@@ -4,7 +4,7 @@ The HTTP API surface: its style, the main resources, and the contracts.
 
 ## Style
 
-- <REST, GraphQL, or RPC, the framework, where routes are defined>
+- <Server/RPC surface: REST, GraphQL, or RPC, the framework, where server routes are defined>
 - <Versioning and base path>
 
 ## Resources

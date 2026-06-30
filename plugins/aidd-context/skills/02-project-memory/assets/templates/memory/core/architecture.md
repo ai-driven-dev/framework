@@ -5,12 +5,7 @@ The macro technical shape: the stack, how the pieces fit, and the decisions behi
 ## Stack
 
 - <Language and runtime, the main framework, the one-line why>
-- <Key libraries that shape the codebase, and what each is for>
-
-## Structure
-
-- <The few top-level modules or layers, and each one's responsibility>
-- <Where the entry point lives>
+- <Cross-cutting libraries only; a capability's own library (ORM, test runner) lives in its file>
 
 ## How it fits together
 

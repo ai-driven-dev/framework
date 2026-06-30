@@ -1,6 +1,6 @@
 # 04 - Review memory
 
-Review every memory file together for cross-file consistency, and fix what is safe.
+Review every memory file together for cross-file consistency and duplication, fixing what is safe.
 
 ## Input
 
@@ -8,14 +8,15 @@ The `aidd_docs/memory/` directory with the generated files.
 
 ## Output
 
-The memory files, corrected in place where needed, and a status table.
+The memory files, corrected in place where safe, and a status report.
 
 ## Process
 
 1. **Read.** Load every `.md` under `aidd_docs/memory/`, recursively.
-2. **Review.** In one pass with all files in context, check consistency and accuracy across them. Fix a safe inconsistency in place. Flag one that needs a human.
-3. **Report.** A table: file, status (clean, fixed with reason, or needs review).
+2. **Review.** In one pass, check cross-file consistency and accuracy. Fix a safe issue in place, flag one that needs a human.
+3. **Deduplicate.** Keep each fact in one file, drop the copies (judge by meaning, not wording). May be handed to an independent checker subagent.
 
 ## Test
 
-- The status table covers every memory file, and each flagged file carries a reason a human can act on.
+- Every memory file is covered by the report, each flagged file with a reason a human can act on.
+- No fact's definition is duplicated across files.

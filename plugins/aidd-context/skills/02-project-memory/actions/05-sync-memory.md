@@ -12,9 +12,8 @@ Each `<aidd_project_memory>` block lists the generated memory files as reference
 
 ## Process
 
-1. **Run.** Execute the memory-sync script (`update_memory.js` in the plugin's `hooks/`) to inject the references.
-2. **Guard.** On a non-zero exit, print the error and stop. Tell the user to confirm `aidd_docs/memory/` holds a `.md` file and that `node` is available.
-3. **Report.** Print how many context files were updated and how many references went into each block, then list the references per file.
+1. **Run.** Execute the memory-sync script (`update_memory.js` in the plugin's `hooks/`) to fill each block (the block: `@../references/memory-block.md`).
+2. **Guard.** On a non-zero exit, print the error and stop; tell the user to check that `aidd_docs/memory/` holds a `.md` file and that `node` is available.
 
 ## Test
 
