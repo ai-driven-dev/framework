@@ -401,13 +401,6 @@ export async function createDeps(
   ]);
   const pluginRemoveUseCase = new PluginRemoveUseCase(fs, manifestRepo);
   const pluginListUseCase = new PluginListUseCase(manifestRepo);
-  const pluginUpdateUseCase = new PluginUpdateUseCase(
-    fs,
-    manifestRepo,
-    pluginFetcher,
-    pluginDistributionReader,
-    hasher
-  );
   const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(
     pluginFetcher,
     rawCatalogFetcher,
@@ -602,6 +595,14 @@ export async function createDeps(
     marketplaceRegistry,
     homedir,
   };
+  const pluginUpdateUseCase = new PluginUpdateUseCase(
+    fs,
+    manifestRepo,
+    pluginFetcher,
+    pluginDistributionReader,
+    hasher,
+    builtMaterializationDeps
+  );
   const restoreUseCase = new RestoreUseCase(
     fs,
     manifestRepo,

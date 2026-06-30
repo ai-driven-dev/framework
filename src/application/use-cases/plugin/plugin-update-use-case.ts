@@ -8,13 +8,17 @@ import type { PluginDistribution } from "../../../domain/models/plugin-distribut
 import { PluginTranslator } from "../../../domain/models/plugin-translator.js";
 import { compareSemver } from "../../../domain/models/semver.js";
 import type { AiToolId } from "../../../domain/models/tool-ids.js";
+import type { FileReader } from "../../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../../domain/ports/file-writer.js";
 import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { PluginDistributionReader } from "../../../domain/ports/plugin-distribution-reader.js";
 import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
-import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
+import { getToolConfig, isAiTool, type ToolConfig } from "../../../domain/tools/registry.js";
+import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files-use-case.js";
 import { loadPluginManifest, resolvePluginToolIds, writePluginFiles } from "./plugin-helpers.js";
+import { BuiltTreeMaterializationTranslator } from "./translator/built-tree-materialization-translator.js";
+import { resolveTranslator } from "./translator/plugin-translator-factory.js";
 
 export interface PluginUpdateOptions {
   pluginNames?: string[];
@@ -24,11 +28,12 @@ export interface PluginUpdateOptions {
 
 export class PluginUpdateUseCase {
   constructor(
-    private readonly fs: FileWriter,
+    private readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository,
     private readonly pluginFetcher: PluginFetcher,
     private readonly pluginDistributionReader: PluginDistributionReader,
-    private readonly hasher: Hasher
+    private readonly hasher: Hasher,
+    private readonly builtDeps?: BuiltMaterializationDeps
   ) {}
 
   async execute(options: PluginUpdateOptions): Promise<string[]> {
@@ -108,6 +113,20 @@ export class PluginUpdateUseCase {
     const baseDir = this.resolveBaseDir(toolId, projectRoot);
     await this.deleteOldFiles(plugin.files, baseDir);
     const toolConfig = getToolConfig(toolId);
+    const builtTree = this.builtTreeTranslator(toolConfig);
+    if (builtTree !== null && plugin.marketplace !== undefined) {
+      manifest.removePlugin(toolId, plugin.name);
+      await builtTree.addPlugin(
+        dist,
+        toolId,
+        plugin.source,
+        projectRoot,
+        manifest,
+        plugin.marketplace,
+        docsDir
+      );
+      return;
+    }
     const { files: newFiles, componentPaths } = new PluginTranslator(
       this.hasher
     ).translateWithComponentPaths(dist, toolConfig, docsDir);
@@ -128,6 +147,22 @@ export class PluginUpdateUseCase {
     for (const relativePath of files.keys()) {
       await this.fs.deleteFile(join(baseDir, relativePath));
     }
+  }
+
+  // Materializing tools (cursor/opencode) re-materialize from the BUILT tree so an
+  // update writes the same content install did — not the raw source transform.
+  private builtTreeTranslator(toolConfig: ToolConfig): BuiltTreeMaterializationTranslator | null {
+    if (this.builtDeps === undefined || !isAiTool(toolConfig)) return null;
+    const caps = toolConfig.capabilities as { plugins?: PluginsCapability };
+    if (caps.plugins === undefined) return null;
+    const translator = resolveTranslator(caps.plugins, {
+      fs: this.fs,
+      hasher: this.hasher,
+      homedir: this.builtDeps.homedir,
+      ensureBuilt: this.builtDeps.ensureBuilt,
+      marketplaceRegistry: this.builtDeps.marketplaceRegistry,
+    });
+    return translator instanceof BuiltTreeMaterializationTranslator ? translator : null;
   }
 
   private resolveBaseDir(toolId: AiToolId, projectRoot: string): string {
