@@ -1,0 +1,49 @@
+name: Promote next to main
+
+# One intuitive button to ship `next` to `main` the RIGHT way: a rebase-merge
+# that preserves every conventional commit, so commitlint passes per commit and
+# release-please reads the scopes to bump each plugin. A squash here collapses
+# the commits into one (often non-conventional) message and breaks both, which
+# is exactly the failure this workflow prevents.
+#
+# Run it from the Actions tab (Run workflow). It opens the next -> main PR and
+# enables rebase auto-merge; CI gates it, then it merges itself.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: promote
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  promote:
+    name: Open and rebase-merge next into main
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: app-token
+        with:
+          app-id: ${{ secrets.AIDD_BOT_APP_ID }}
+          private-key: ${{ secrets.AIDD_BOT_PRIVATE_KEY }}
+
+      - name: Open or reuse the promote PR, enable rebase auto-merge
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # Reuse an open next -> main PR if one exists, else open one with a
+          # conventional, squash-safe title.
+          PR=$(gh pr list --repo "$REPO" --base main --head next --state open --json number --jq '.[0].number' || true)
+          if [ -z "$PR" ]; then
+            PR=$(gh pr create --repo "$REPO" --base main --head next \
+              --title "chore: promote next to main" \
+              --body "Automated promotion of \`next\` to \`main\`. Merged by **rebase** to preserve conventional commits for release-please. Do not squash." \
+              | grep -oE '[0-9]+$')
+          fi
+          echo "Promote PR: #$PR"
+          # Rebase auto-merge: GitHub merges it once CI is green. Never squash.
+          gh pr merge "$PR" --repo "$REPO" --rebase --auto
