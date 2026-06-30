@@ -8,7 +8,10 @@ import type { Hasher } from "../../../domain/ports/hasher.js";
 import type { PluginDistributionReader } from "../../../domain/ports/plugin-distribution-reader.js";
 import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import { getToolConfig, isAiTool, type ToolConfig } from "../../../domain/tools/registry.js";
-import { ApplyPluginFilesUseCase } from "../shared/apply-plugin-files-use-case.js";
+import {
+  ApplyPluginFilesUseCase,
+  type BuiltMaterializationDeps,
+} from "../shared/apply-plugin-files-use-case.js";
 
 interface RestoreAllPluginsOptions {
   projectRoot: string;
@@ -23,7 +26,8 @@ export class RestoreAllPluginsUseCase {
     private readonly fs: FileReader & FileWriter,
     private readonly hasher: Hasher,
     private readonly pluginFetcher: PluginFetcher,
-    private readonly pluginDistributionReader: PluginDistributionReader
+    private readonly pluginDistributionReader: PluginDistributionReader,
+    private readonly builtDeps?: BuiltMaterializationDeps
   ) {}
 
   async execute(options: RestoreAllPluginsOptions): Promise<number> {
@@ -67,7 +71,8 @@ export class RestoreAllPluginsUseCase {
         this.fs,
         this.hasher,
         this.pluginFetcher,
-        this.pluginDistributionReader
+        this.pluginDistributionReader,
+        this.builtDeps
       ).execute({
         toolId,
         plugin,

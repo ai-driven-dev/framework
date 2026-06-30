@@ -14,6 +14,7 @@ import type { Prompter } from "../../../domain/ports/prompter.js";
 import { NoManifestError } from "../../errors.js";
 import { RestorePluginUseCase } from "../restore/restore-plugin-use-case.js";
 import { RestoreUseCase } from "../restore/restore-use-case.js";
+import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files-use-case.js";
 import { StatusUseCase } from "../status-use-case.js";
 import type { GlobalExecutionError } from "./update-all-use-case.js";
 
@@ -34,7 +35,8 @@ export class RestoreAllUseCase {
     private readonly prompter: Prompter,
     private readonly pluginFetcher: PluginFetcher,
     private readonly pluginDistributionReader: PluginDistributionReader,
-    private readonly assetProvider?: AssetProvider
+    private readonly assetProvider?: AssetProvider,
+    private readonly builtDeps?: BuiltMaterializationDeps
   ) {}
 
   async execute(projectRoot: string, interactive: boolean): Promise<RestoreAllResult> {
@@ -105,7 +107,8 @@ export class RestoreAllUseCase {
         this.prompter,
         this.pluginFetcher,
         this.pluginDistributionReader,
-        this.assetProvider
+        this.assetProvider,
+        this.builtDeps
       );
       if (manifest === null) return { totalRestored: 0, totalKept: 0 };
       const result = await restoreUseCase.execute({
@@ -138,7 +141,8 @@ export class RestoreAllUseCase {
       this.manifestRepo,
       this.pluginFetcher,
       this.pluginDistributionReader,
-      this.hasher
+      this.hasher,
+      this.builtDeps
     );
     const allPluginNames = this.collectAllPluginNames(manifest);
     for (const name of allPluginNames) {

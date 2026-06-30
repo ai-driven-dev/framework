@@ -35,6 +35,10 @@ export abstract class AbstractNativePluginCliAdapter implements NativePluginActi
     this.run(["plugin", "marketplace", "add", source], `marketplace add ${source}`);
   }
 
+  removeMarketplace(name: string): void {
+    this.run(["plugin", "marketplace", "remove", name], `marketplace remove ${name}`);
+  }
+
   abstract upgradeMarketplaces(): void;
   abstract enablePlugin(pluginRef: string): void;
 

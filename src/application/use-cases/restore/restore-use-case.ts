@@ -18,6 +18,7 @@ import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import type { Prompter } from "../../../domain/ports/prompter.js";
 import type { ToolId } from "../../../domain/tools/registry.js";
 import { NoManifestError } from "../../errors.js";
+import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files-use-case.js";
 import { RestoreAllPluginsUseCase } from "./restore-all-plugins-use-case.js";
 import {
   type RestoreToolFilesResult,
@@ -76,7 +77,8 @@ export class RestoreUseCase {
     private readonly prompter: Prompter,
     private readonly pluginFetcher?: PluginFetcher,
     private readonly pluginDistributionReader?: PluginDistributionReader,
-    private readonly assetProvider?: AssetProvider
+    private readonly assetProvider?: AssetProvider,
+    private readonly builtDeps?: BuiltMaterializationDeps
   ) {}
 
   async execute(options: RestoreOptions): Promise<RestoreResult> {
@@ -137,7 +139,8 @@ export class RestoreUseCase {
       this.fs,
       this.hasher,
       this.pluginFetcher,
-      this.pluginDistributionReader
+      this.pluginDistributionReader,
+      this.builtDeps
     ).execute({
       projectRoot: ctx.projectRoot,
       manifest: ctx.manifest,

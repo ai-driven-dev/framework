@@ -12,7 +12,10 @@ import type { PluginDistributionReader } from "../../../domain/ports/plugin-dist
 import type { PluginFetcher } from "../../../domain/ports/plugin-fetcher.js";
 import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
 import { NoManifestError } from "../../errors.js";
-import { ApplyPluginFilesUseCase } from "../shared/apply-plugin-files-use-case.js";
+import {
+  ApplyPluginFilesUseCase,
+  type BuiltMaterializationDeps,
+} from "../shared/apply-plugin-files-use-case.js";
 
 export interface RestorePluginOptions {
   pluginName: string;
@@ -29,7 +32,8 @@ export class RestorePluginUseCase {
     private readonly manifestRepo: ManifestRepository,
     private readonly pluginFetcher: PluginFetcher,
     private readonly pluginDistributionReader: PluginDistributionReader,
-    private readonly hasher: Hasher
+    private readonly hasher: Hasher,
+    private readonly builtDeps?: BuiltMaterializationDeps
   ) {}
 
   async execute(options: RestorePluginOptions): Promise<RestorePluginResult> {
@@ -71,7 +75,8 @@ export class RestorePluginUseCase {
       this.fs,
       this.hasher,
       this.pluginFetcher,
-      this.pluginDistributionReader
+      this.pluginDistributionReader,
+      this.builtDeps
     ).execute({ toolId, plugin, toolConfig, projectRoot, cacheDir, manifest, docsDir });
   }
 }

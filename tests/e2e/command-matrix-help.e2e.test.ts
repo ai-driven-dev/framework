@@ -247,14 +247,13 @@ describe.concurrent("Command Matrix: Globals", () => {
     }
   });
 
-  it("sync exits 1 in non-interactive mode with usage hint", async () => {
-    // Non-TTY mode (runCli is not a TTY)
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("global-sync-noninteractive");
+  it("sync exits 1 with unknown command error (sync feature removed)", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("global-sync-removed");
     try {
       await seedWithClaude(projectDir, fakeHome);
       const { stderr, exitCode } = await runCli(["sync"], projectDir, fakeHome);
       expect(exitCode).toBe(1);
-      expect(stderr).toMatch(/[Nn]on-interactive|interactive terminal/);
+      expect(stderr).toMatch(/unknown command/i);
     } finally {
       await cleanup();
     }

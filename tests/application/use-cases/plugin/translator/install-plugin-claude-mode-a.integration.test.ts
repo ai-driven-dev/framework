@@ -9,6 +9,7 @@ import { PluginDistribution } from "../../../../../src/domain/models/plugin-dist
 import { PluginCatalogRepositoryAdapter } from "../../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
@@ -69,7 +70,8 @@ describe("install claude plugin via Mode A (integration)", () => {
       catalog,
       hasher,
       new CapturingLogger(),
-      new Map()
+      new Map(),
+      fakeEnsureBuiltMarketplace()
     );
     const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
@@ -77,8 +79,9 @@ describe("install claude plugin via Mode A (integration)", () => {
     const settingsPath = resolve(PROJECT_ROOT, ".claude/settings.json");
     const settings = JSON.parse(await fs.readFile(settingsPath)) as Record<string, unknown>;
     expect(settings.extraKnownMarketplaces).toBeDefined();
+    // Settings reference the BUILT claude tree, not the raw source.
     expect((settings.extraKnownMarketplaces as Record<string, unknown>)[MARKETPLACE_NAME]).toEqual({
-      source: { source: "directory", path: "/marketplace-source" },
+      source: { source: "directory", path: "/built/claude" },
     });
     expect(settings.enabledPlugins).toBeDefined();
     expect(

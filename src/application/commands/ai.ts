@@ -32,7 +32,6 @@ export function registerAiCommand(program: Command): void {
       { name: "List installed AI tools", value: "list" },
       { name: "Show AI tool status", value: "status" },
       { name: "Update AI tools", value: "update" },
-      { name: "Sync AI tools", value: "sync", description: "requires --source" },
       { name: "Restore AI tool files", value: "restore" },
       { name: "Doctor AI tools", value: "doctor" },
     ]);
@@ -179,64 +178,6 @@ export function registerAiCommand(program: Command): void {
         errorHandler.handle(error);
       }
     });
-
-  ai.command("sync")
-    .description("Propagate local modifications from one AI tool to others")
-    .option("--source <tool>", "Source tool to sync from")
-    .option("--target <tool>", "Target tool to sync to (default: all other installed tools)")
-    .option("--plugin <name>", "Sync hashes for a specific plugin only")
-    .option("-f, --force", "Overwrite conflicting files without prompting", false)
-    .option("--include-user-files", "Also sync user-created files not tracked in manifest", false)
-    .option("--no-plugins", "Skip plugin propagation (sync configs only)")
-    .action(
-      async (cmdOptions: {
-        source?: string;
-        target?: string;
-        plugin?: string;
-        force: boolean;
-        includeUserFiles: boolean;
-        plugins: boolean;
-      }) => {
-        const { verbose, output, projectRoot } = parseGlobalOptions(program);
-        const errorHandler = new ErrorHandler(output);
-        if (!cmdOptions.source && !process.stdout.isTTY) {
-          output.error("--source <tool> is required in non-interactive mode.");
-          process.exit(1);
-        }
-        try {
-          if (cmdOptions.source !== undefined) {
-            assertAiToolId(cmdOptions.source);
-          }
-          if (cmdOptions.target !== undefined) {
-            assertAiToolId(cmdOptions.target);
-          }
-          const deps = await createDeps(projectRoot, { verbose }, output);
-          const result = await deps.syncUseCase.execute({
-            projectRoot,
-            sourceTool: cmdOptions.source as ToolId | undefined,
-            targetTools: cmdOptions.target ? [cmdOptions.target as ToolId] : undefined,
-            force: cmdOptions.force,
-            includeUserFiles: cmdOptions.includeUserFiles,
-            interactive: process.stdout.isTTY,
-            includePlugins: cmdOptions.plugins,
-            pluginName: cmdOptions.plugin,
-          });
-          const { totalWritten, totalDeleted, totalConflicts } = result;
-          if (totalWritten === 0 && totalDeleted === 0 && totalConflicts === 0) {
-            output.success("Nothing to sync.");
-            return;
-          }
-          if (totalConflicts > 0) {
-            output.warn(`${totalConflicts} conflict(s) skipped. Use --force to overwrite.`);
-          }
-          output.success(
-            `Synced ${totalWritten} ${totalWritten === 1 ? "file" : "files"}, deleted ${totalDeleted} from ${result.sourceTool}`
-          );
-        } catch (error) {
-          errorHandler.handle(error);
-        }
-      }
-    );
 
   ai.command("restore [files...]")
     .description("Restore AI tool tracked files to their installed version")

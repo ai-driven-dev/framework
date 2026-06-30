@@ -9,6 +9,7 @@ import { PluginDistribution } from "../../../../../src/domain/models/plugin-dist
 import { PluginCatalogRepositoryAdapter } from "../../../../../src/infrastructure/adapters/plugin-catalog-repository-adapter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -76,7 +77,8 @@ describe("install copilot plugin via Mode A (integration)", () => {
       catalog,
       hasher,
       new CapturingLogger(),
-      new Map()
+      new Map(),
+      fakeEnsureBuiltMarketplace()
     );
     const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
@@ -84,8 +86,9 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const settingsPath = resolve(PROJECT_ROOT, ".github/copilot/settings.json");
     const settings = JSON.parse(await fs.readFile(settingsPath)) as Record<string, unknown>;
     expect(settings.extraKnownMarketplaces).toBeDefined();
+    // Settings reference the BUILT copilot tree, not the raw github source.
     expect((settings.extraKnownMarketplaces as Record<string, unknown>)[MARKETPLACE_NAME]).toEqual({
-      source: { source: "github", repo: "ai-driven-dev/framework" },
+      source: { source: "directory", path: "/built/copilot" },
     });
     expect(settings.enabledPlugins).toBeDefined();
   });
@@ -104,11 +107,15 @@ describe("install copilot plugin via Mode A (integration)", () => {
       new PluginCatalogRepositoryAdapter(fs),
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["copilot", activator]])
+      new Map([["copilot", activator]]),
+      fakeEnsureBuiltMarketplace()
     );
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    expect(activator.addedMarketplaces).toEqual(["ai-driven-dev/framework"]);
+    // Registers the BUILT copilot tree (not the raw github source), removing the
+    // stale same-name registration first.
+    expect(activator.removedMarketplaces).toEqual([MARKETPLACE_NAME]);
+    expect(activator.addedMarketplaces).toEqual(["/built/copilot"]);
     expect(activator.enabledPlugins).toEqual([`aidd-context@${MARKETPLACE_NAME}`]);
     expect(await fs.fileExists(resolve(PROJECT_ROOT, ".github/copilot/settings.json"))).toBe(true);
   });

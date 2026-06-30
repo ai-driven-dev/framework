@@ -26,7 +26,7 @@ describe.concurrent("E2E: aidd framework build", () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-build-install");
     try {
       await initProject(projectDir, FRAMEWORK_PATH);
-      await runCli(["ai", "install", "copilot"], projectDir, fakeHome);
+      await runCli(["ai", "install", "claude"], projectDir, fakeHome);
 
       const outDir = join(tempDir, "dist");
       const build = await runCli(
@@ -42,15 +42,19 @@ describe.concurrent("E2E: aidd framework build", () => {
       const marketplacePath = join(outDir, ".plugin", "marketplace.json");
       expect(existsSync(marketplacePath)).toBe(true);
 
+      // Install consumes the Claude-format marketplace; the per-target tree is built
+      // from it on install (build is the single source of truth).
       const addMarket = await runCli(
-        ["marketplace", "add", "fw-test", outDir, "--yes"],
+        ["marketplace", "add", "fw-test", FRAMEWORK_PATH, "--yes"],
         projectDir,
         fakeHome
       );
       expect(addMarket.exitCode).toBe(0);
 
+      // Install onto claude (native settings-file, no external CLI) to keep the e2e
+      // deterministic; copilot/codex native activation shells out to their own binary.
       const install = await runCli(
-        ["plugin", "install", "aidd-test", "--tool", "copilot", "--yes"],
+        ["plugin", "install", "aidd-test", "--tool", "claude", "--yes"],
         projectDir,
         fakeHome
       );

@@ -10,6 +10,7 @@ import type { ReadonlySkipList } from "../../../../src/domain/models/plugin-tran
 import { PluginDistributionReaderAdapter } from "../../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
+import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
 
@@ -31,7 +32,8 @@ describe("PluginAddUseCase skip warnings", () => {
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
         capturingLogger,
-        registry
+        registry,
+        fakeEnsureBuiltMarketplace()
       );
       await useCase.execute({
         source: { kind: "local", path: PLUGIN_FIXTURE },
@@ -56,7 +58,8 @@ describe("PluginAddUseCase skip warnings", () => {
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
         capturingLogger,
-        registry
+        registry,
+        fakeEnsureBuiltMarketplace()
       );
       await useCase.execute({
         source: { kind: "local", path: PLUGIN_FIXTURE },

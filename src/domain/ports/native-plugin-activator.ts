@@ -11,6 +11,8 @@ export interface NativePluginActivator {
   isAvailable(): boolean;
   /** Registers a marketplace source (local path, `owner/repo[@ref]`, or git URL). Idempotent. */
   addMarketplace(source: string): void;
+  /** Unregisters a marketplace by name. May throw when absent — callers wrap it best-effort. */
+  removeMarketplace(name: string): void;
   /** Refreshes marketplace snapshots so plugin installs pick up new versions. */
   upgradeMarketplaces(): void;
   /** Installs and enables a plugin referenced as `<plugin>@<marketplace>`. Idempotent. */

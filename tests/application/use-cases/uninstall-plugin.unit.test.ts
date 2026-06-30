@@ -6,6 +6,7 @@ import { UninstallUseCase } from "../../../src/application/use-cases/uninstall/u
 import { PluginNotFoundError } from "../../../src/domain/errors.js";
 import { PluginDistributionReaderAdapter } from "../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
+import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -27,7 +28,8 @@ describe("UninstallUseCase — plugin scope", () => {
       reader,
       deps.hasher,
       deps.logger,
-      deps.marketplaceRegistry
+      deps.marketplaceRegistry,
+      fakeEnsureBuiltMarketplace()
     ).execute({
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: ["claude"],

@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import type { MarketplaceSettings } from "../../../domain/capabilities/plugins-capability.js";
 import { NativePluginCliError } from "../../../domain/errors.js";
+import type { FrameworkBuildTarget } from "../../../domain/models/framework-build.js";
 import type { Manifest } from "../../../domain/models/manifest.js";
 import type { Marketplace } from "../../../domain/models/marketplace.js";
 import { marketplaceCacheDir } from "../../../domain/models/paths.js";
@@ -15,6 +16,7 @@ import type { MarketplaceRegistry } from "../../../domain/ports/marketplace-regi
 import type { NativePluginActivator } from "../../../domain/ports/native-plugin-activator.js";
 import type { PluginCatalogRepository } from "../../../domain/ports/plugin-catalog-repository.js";
 import { getToolConfig, isAiTool } from "../../../domain/tools/registry.js";
+import type { EnsureBuiltMarketplaceUseCase } from "../shared/ensure-built-marketplace-use-case.js";
 
 export interface MarketplaceSyncSettingsOptions {
   projectRoot: string;
@@ -34,7 +36,8 @@ export class MarketplaceSyncSettingsUseCase {
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     /** Native plugin CLI activators keyed by `NativeActivation.binary` (e.g. "codex", "copilot"). */
-    private readonly activators: ReadonlyMap<string, NativePluginActivator>
+    private readonly activators: ReadonlyMap<string, NativePluginActivator>,
+    private readonly ensureBuilt: EnsureBuiltMarketplaceUseCase
   ) {}
 
   async execute(options: MarketplaceSyncSettingsOptions): Promise<MarketplaceSyncSettingsResult> {
@@ -50,20 +53,20 @@ export class MarketplaceSyncSettingsUseCase {
       if (updated) updatedTools.push(toolId);
     }
     if (updatedTools.length > 0) await this.manifestRepo.save(manifest);
-    this.activateNativeTools(projectRoot, manifest, marketplaces);
+    await this.activateNativeTools(projectRoot, manifest, marketplaces);
     return { updatedTools };
   }
 
-  private activateNativeTools(
+  private async activateNativeTools(
     projectRoot: string,
     manifest: Manifest,
     marketplaces: readonly Marketplace[]
-  ): void {
+  ): Promise<void> {
     for (const toolId of manifest.getInstalledToolIds()) {
       const binary = this.nativeActivationBinary(toolId);
       const activator = binary === undefined ? undefined : this.activators.get(binary);
       if (binary === undefined || activator === undefined) continue;
-      this.activateTool(toolId, binary, activator, projectRoot, manifest, marketplaces);
+      await this.activateTool(toolId, binary, activator, projectRoot, manifest, marketplaces);
     }
   }
 
@@ -76,14 +79,14 @@ export class MarketplaceSyncSettingsUseCase {
     return caps.plugins?.nativeActivation?.binary ?? undefined;
   }
 
-  private activateTool(
+  private async activateTool(
     toolId: ToolId,
     binary: string,
     activator: NativePluginActivator,
     projectRoot: string,
     manifest: Manifest,
     marketplaces: readonly Marketplace[]
-  ): void {
+  ): Promise<void> {
     const { refs, marketplaces: used } = this.pluginActivation(toolId, manifest, marketplaces);
     if (refs.length === 0) return;
     if (!activator.isAvailable()) {
@@ -93,7 +96,7 @@ export class MarketplaceSyncSettingsUseCase {
     // Each step is independently best-effort: one failing plugin or marketplace
     // must warn and let the others through, never abort the whole activation.
     for (const marketplace of used)
-      this.registerMarketplace(activator, binary, marketplace, projectRoot);
+      await this.registerMarketplace(activator, toolId, marketplace, projectRoot);
     this.bestEffort(() => activator.upgradeMarketplaces(), "upgrade marketplaces");
     for (const ref of refs) {
       this.bestEffort(() => activator.enablePlugin(ref), `enable plugin '${ref}'`);
@@ -126,30 +129,61 @@ export class MarketplaceSyncSettingsUseCase {
     return { refs, marketplaces: [...used.values()] };
   }
 
-  private registerMarketplace(
+  // Native tools must read the BUILT (transformed) tree, not the raw Claude-format
+  // source. The CLI rejects `add` when the name exists from a different source, so
+  // remove-then-add is required to switch existing users off the stale raw source.
+  private async registerMarketplace(
     activator: NativePluginActivator,
-    binary: string,
+    toolId: ToolId,
     marketplace: Marketplace,
     projectRoot: string
-  ): void {
-    const source = this.marketplaceSourceArg(marketplace.source, projectRoot);
-    if (source === null) {
-      this.logger.warn(
-        `${binary}: unsupported marketplace source for '${marketplace.name}' — skipped.`
-      );
-      return;
-    }
+  ): Promise<void> {
+    const builtDir = await this.buildForTool(toolId, marketplace, projectRoot);
+    if (builtDir === null) return;
     this.bestEffort(
-      () => activator.addMarketplace(source),
+      () => activator.removeMarketplace(marketplace.name),
+      `unregister stale marketplace '${marketplace.name}'`
+    );
+    this.bestEffort(
+      () => activator.addMarketplace(builtDir),
       `register marketplace '${marketplace.name}'`
     );
   }
 
-  private marketplaceSourceArg(source: PluginSource, projectRoot: string): string | null {
-    if (source.kind === "local") return resolve(projectRoot, source.path);
-    if (source.kind === "github") return source.ref ? `${source.repo}@${source.ref}` : source.repo;
-    if (source.kind === "url") return source.url;
-    return null;
+  private async buildForTool(
+    toolId: ToolId,
+    marketplace: Marketplace,
+    projectRoot: string
+  ): Promise<string | null> {
+    try {
+      const { builtDir } = await this.ensureBuilt.execute({
+        projectRoot,
+        marketplace,
+        target: toolId as FrameworkBuildTarget,
+        mode: "marketplace",
+      });
+      return builtDir;
+    } catch (error) {
+      this.logger.warn(
+        `Native plugin activation — build '${marketplace.name}' for ${toolId} skipped: ${(error as Error).message}`
+      );
+      return null;
+    }
+  }
+
+  // Settings entries must reference the BUILT tree (claude reads plugins from it;
+  // copilot surfaces them as recommendations) so settings match the native CLI install.
+  private async builtSourcesForTool(
+    toolId: ToolId,
+    marketplaces: readonly Marketplace[],
+    projectRoot: string
+  ): Promise<ReadonlyMap<string, PluginSource>> {
+    const result = new Map<string, PluginSource>();
+    for (const m of marketplaces) {
+      const builtDir = await this.buildForTool(toolId, m, projectRoot);
+      if (builtDir !== null) result.set(m.name, { kind: "local", path: builtDir });
+    }
+    return result;
   }
 
   private async syncTool(
@@ -213,7 +247,17 @@ export class MarketplaceSyncSettingsUseCase {
   ): Promise<boolean> {
     const absPath = resolve(projectRoot, settings.settingsPath);
     const json = await this.loadSettings(absPath);
-    if (!this.mergeMarketplaces(json, settings, marketplaces, versionByName, projectRoot))
+    const builtSources = await this.builtSourcesForTool(toolId, marketplaces, projectRoot);
+    if (
+      !this.mergeMarketplaces(
+        json,
+        settings,
+        marketplaces,
+        versionByName,
+        projectRoot,
+        builtSources
+      )
+    )
       return false;
     const content = JSON.stringify(json, null, 2);
     await this.fs.writeFile(absPath, content);
@@ -247,12 +291,27 @@ export class MarketplaceSyncSettingsUseCase {
     settings: MarketplaceSettings,
     marketplaces: readonly Marketplace[],
     versionByName: Map<string, string | undefined>,
-    projectRoot: string
+    projectRoot: string,
+    builtSources: ReadonlyMap<string, PluginSource>
   ): boolean {
     if (settings.valueShape === "array") {
-      return this.mergeMarketplacesArray(json, settings, marketplaces, versionByName, projectRoot);
+      return this.mergeMarketplacesArray(
+        json,
+        settings,
+        marketplaces,
+        versionByName,
+        projectRoot,
+        builtSources
+      );
     }
-    return this.mergeMarketplacesMap(json, settings, marketplaces, versionByName, projectRoot);
+    return this.mergeMarketplacesMap(
+      json,
+      settings,
+      marketplaces,
+      versionByName,
+      projectRoot,
+      builtSources
+    );
   }
 
   private mergeMarketplacesArray(
@@ -260,12 +319,16 @@ export class MarketplaceSyncSettingsUseCase {
     settings: MarketplaceSettings,
     marketplaces: readonly Marketplace[],
     versionByName: Map<string, string | undefined>,
-    projectRoot: string
+    projectRoot: string,
+    builtSources: ReadonlyMap<string, PluginSource>
   ): boolean {
     const existing = this.existingArray(json, settings.settingsKey);
     const toAdd: string[] = [];
     for (const m of marketplaces) {
-      const source = this.resolveSourceForSettings(m.source, projectRoot);
+      const source = this.resolveSourceForSettings(
+        builtSources.get(m.name) ?? m.source,
+        projectRoot
+      );
       const entry = settings.toEntry({ name: m.name, source, version: versionByName.get(m.name) });
       if (entry === null || entry.valueShape !== "array") continue;
       if (!existing.includes(entry.value) && !toAdd.includes(entry.value)) {
@@ -282,12 +345,16 @@ export class MarketplaceSyncSettingsUseCase {
     settings: MarketplaceSettings,
     marketplaces: readonly Marketplace[],
     versionByName: Map<string, string | undefined>,
-    projectRoot: string
+    projectRoot: string,
+    builtSources: ReadonlyMap<string, PluginSource>
   ): boolean {
     const existing = this.existingRecord(json, settings.settingsKey);
     const toMerge: Record<string, Record<string, unknown>> = {};
     for (const m of marketplaces) {
-      const source = this.resolveSourceForSettings(m.source, projectRoot);
+      const source = this.resolveSourceForSettings(
+        builtSources.get(m.name) ?? m.source,
+        projectRoot
+      );
       const entry = settings.toEntry({ name: m.name, source, version: versionByName.get(m.name) });
       if (entry === null || entry.valueShape !== "map" || entry.key in toMerge) continue;
       if (

@@ -3,8 +3,17 @@
     "command": "setup --source local --path <FRAMEWORK_FIXTURE> --ai claude --plugins none --yes",
     "exitCode": 0,
     "stdout": "Fetching marketplace 'aidd-framework'...\nProject initialized.\nInstalled claude (1 files)\n",
-    "stderr": "",
+    "stderr": "Warning: Skipping commands/ in plugin 'aidd-test' (out of scope for MVP1).\nWarning: Skipping rules/ in plugin 'aidd-test' (out of scope for MVP1).\n",
     "filesWritten": [
+      ".aidd/cache/built/aidd-framework/claude/.build-version",
+      ".aidd/cache/built/aidd-framework/claude/.claude-plugin/marketplace.json",
+      ".aidd/cache/built/aidd-framework/claude/plugins/aidd-test/.claude-plugin/plugin.json",
+      ".aidd/cache/built/aidd-framework/claude/plugins/aidd-test/.mcp.json",
+      ".aidd/cache/built/aidd-framework/claude/plugins/aidd-test/agents/code-reviewer.md",
+      ".aidd/cache/built/aidd-framework/claude/plugins/aidd-test/hooks/check.sh",
+      ".aidd/cache/built/aidd-framework/claude/plugins/aidd-test/hooks/hooks.json",
+      ".aidd/cache/built/aidd-framework/claude/plugins/aidd-test/skills/commit/SKILL.md",
+      ".aidd/cache/built/aidd-framework/claude/plugins/aidd-test/skills/hello.md",
       ".aidd/manifest.json",
       ".aidd/marketplaces.json",
       ".claude/settings.json",
@@ -19,7 +28,7 @@
           "files": [
             {
               "relativePath": ".claude/settings.json",
-              "hash": "649e4d11beb54c6763ee7880f5227564"
+              "hash": "b7669b899b9a72e8ef129510a7da6d62"
             }
           ],
           "mergeFiles": []
@@ -42,7 +51,7 @@
           "files": [
             {
               "relativePath": ".claude/settings.json",
-              "hash": "649e4d11beb54c6763ee7880f5227564"
+              "hash": "b7669b899b9a72e8ef129510a7da6d62"
             }
           ],
           "mergeFiles": []
@@ -65,7 +74,7 @@
           "files": [
             {
               "relativePath": ".claude/settings.json",
-              "hash": "649e4d11beb54c6763ee7880f5227564"
+              "hash": "b7669b899b9a72e8ef129510a7da6d62"
             }
           ],
           "mergeFiles": []

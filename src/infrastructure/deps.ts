@@ -1,4 +1,5 @@
 import { stat } from "node:fs/promises";
+import { homedir } from "node:os";
 import "../domain/tools/ai/claude.js";
 import "../domain/tools/ai/codex.js";
 import "../domain/tools/ai/copilot.js";
@@ -32,7 +33,6 @@ import {
 import { DoctorAllUseCase } from "../application/use-cases/global/doctor-all-use-case.js";
 import { RestoreAllUseCase } from "../application/use-cases/global/restore-all-use-case.js";
 import { StatusAllUseCase } from "../application/use-cases/global/status-all-use-case.js";
-import { SyncAllUseCase } from "../application/use-cases/global/sync-all-use-case.js";
 import { UpdateAiToolsUseCase } from "../application/use-cases/global/update-ai-tools-use-case.js";
 import { UpdateAllUseCase } from "../application/use-cases/global/update-all-use-case.js";
 import { UpdateIdeToolsUseCase } from "../application/use-cases/global/update-ide-tools-use-case.js";
@@ -63,16 +63,16 @@ import { SetupMarketplaceSourceUseCase } from "../application/use-cases/setup/se
 import { SetupPluginsPromptUseCase } from "../application/use-cases/setup/setup-plugins-prompt-use-case.js";
 import { SetupToolsPromptUseCase } from "../application/use-cases/setup/setup-tools-prompt-use-case.js";
 import { SetupToolsUseCase } from "../application/use-cases/setup/setup-tools-use-case.js";
+import {
+  EnsureBuiltMarketplaceUseCase,
+  type FrameworkBuildFor,
+} from "../application/use-cases/shared/ensure-built-marketplace-use-case.js";
 import { FetchMarketplaceSourceUseCase } from "../application/use-cases/shared/fetch-marketplace-source-use-case.js";
 import { ResolveMarketplaceUseCase } from "../application/use-cases/shared/resolve-marketplace-use-case.js";
 import { ResolveUpdateDecisionUseCase } from "../application/use-cases/shared/resolve-update-decision-use-case.js";
 import { UpdateOneToolUseCase } from "../application/use-cases/shared/update-one-tool-use-case.js";
 import { StatusUseCase } from "../application/use-cases/status-use-case.js";
 import { SyncConflictResolverUseCase } from "../application/use-cases/sync/sync-conflict-resolver-use-case.js";
-import { SyncFilePropagationUseCase } from "../application/use-cases/sync/sync-file-propagation-use-case.js";
-import { SyncPluginsUseCase } from "../application/use-cases/sync/sync-plugins-use-case.js";
-import { SyncSourceResolverUseCase } from "../application/use-cases/sync/sync-source-resolver-use-case.js";
-import { SyncUseCase } from "../application/use-cases/sync/sync-use-case.js";
 import { UninstallIdeUseCase } from "../application/use-cases/uninstall/uninstall-ide-use-case.js";
 import { UninstallUseCase } from "../application/use-cases/uninstall/uninstall-use-case.js";
 import type { AssetProvider } from "../domain/ports/asset-provider.js";
@@ -160,6 +160,7 @@ interface Deps {
   marketplaceCheckUseCase: MarketplaceCheckUseCase;
   pluginInstallFromMarketplaceUseCase: PluginInstallFromMarketplaceUseCase;
   resolveMarketplaceUseCase: ResolveMarketplaceUseCase;
+  ensureBuiltMarketplaceUseCase: EnsureBuiltMarketplaceUseCase;
   installRuntimeConfigUseCase: InstallRuntimeConfigUseCase;
   installAiToolUseCase: InstallAiToolUseCase;
   installIdeConfigUseCase: InstallIdeConfigUseCase;
@@ -172,8 +173,6 @@ interface Deps {
   pluginInstallUseCase: PluginInstallUseCase;
   marketplaceSyncSettingsUseCase: MarketplaceSyncSettingsUseCase;
   syncConflictResolverUseCase: SyncConflictResolverUseCase;
-  syncFilePropagationUseCase: SyncFilePropagationUseCase;
-  syncSourceResolverUseCase: SyncSourceResolverUseCase;
   doctorUseCase: DoctorUseCase;
   releaseResolver: LatestReleaseResolver;
   setupMarketplaceSourceUseCase: SetupMarketplaceSourceUseCase;
@@ -186,14 +185,11 @@ interface Deps {
   statusUseCase: StatusUseCase;
   restoreUseCase: RestoreUseCase;
   uninstallUseCase: UninstallUseCase;
-  syncPluginsUseCase: SyncPluginsUseCase;
-  syncUseCase: SyncUseCase;
   statusAllUseCase: StatusAllUseCase;
   restoreAllUseCase: RestoreAllUseCase;
   updateAllUseCase: UpdateAllUseCase;
   updateAiToolsUseCase: UpdateAiToolsUseCase;
   updateIdeToolsUseCase: UpdateIdeToolsUseCase;
-  syncAllUseCase: SyncAllUseCase;
   cleanUseCase: CleanUseCase;
   doctorAllUseCase: DoctorAllUseCase;
   checkUpdateUseCase: CheckUpdateUseCase;
@@ -216,12 +212,18 @@ export interface FrameworkBuildContext {
   readonly force: boolean;
 }
 
-type FrameworkBuildFactory = (deps: Deps, ctx: FrameworkBuildContext) => FrameworkBuildUseCase;
+/** The subset of Deps the framework build pipeline reads — lets EnsureBuilt build any target. */
+export type FrameworkBuildDeps = Pick<Deps, "fs" | "assetProvider" | "logger">;
+
+type FrameworkBuildFactory = (
+  deps: FrameworkBuildDeps,
+  ctx: FrameworkBuildContext
+) => FrameworkBuildUseCase;
 
 function buildFrameworkUseCase(
-  deps: Deps,
+  deps: FrameworkBuildDeps,
   makeStrategy: (
-    deps: Deps,
+    deps: FrameworkBuildDeps,
     av: AjvSchemaValidatorAdapter
   ) => MarketplaceBuildStrategy | FlatBuildStrategy
 ): FrameworkBuildUseCase {
@@ -335,7 +337,7 @@ const FRAMEWORK_BUILD_REGISTRY: Record<string, FrameworkBuildFactory> = {
 };
 
 export function createFrameworkBuildUseCase(
-  deps: Deps,
+  deps: FrameworkBuildDeps,
   ctx: FrameworkBuildContext
 ): FrameworkBuildUseCase | undefined {
   const key = `${ctx.target}:${ctx.mode}`;
@@ -397,33 +399,8 @@ export async function createDeps(
     ["codex", new CodexCliAdapter()],
     ["copilot", new CopilotCliAdapter()],
   ]);
-  const marketplaceSyncSettingsUseCase = new MarketplaceSyncSettingsUseCase(
-    fs,
-    manifestRepo,
-    marketplaceRegistry,
-    pluginCatalogRepository,
-    hasher,
-    logger,
-    nativePluginActivators
-  );
-  const pluginAddUseCase = new PluginAddUseCase(
-    fs,
-    manifestRepo,
-    pluginFetcher,
-    pluginDistributionReader,
-    hasher,
-    logger,
-    marketplaceRegistry
-  );
   const pluginRemoveUseCase = new PluginRemoveUseCase(fs, manifestRepo);
   const pluginListUseCase = new PluginListUseCase(manifestRepo);
-  const pluginUpdateUseCase = new PluginUpdateUseCase(
-    fs,
-    manifestRepo,
-    pluginFetcher,
-    pluginDistributionReader,
-    hasher
-  );
   const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(
     pluginFetcher,
     rawCatalogFetcher,
@@ -469,6 +446,37 @@ export async function createDeps(
   );
   const assetProvider = new BundledAssetProviderAdapter();
   const jsonSchemaValidator = new AjvSchemaValidatorAdapter();
+  const frameworkBuildFor: FrameworkBuildFor = (target, mode, outDir) =>
+    createFrameworkBuildUseCase(
+      { fs, assetProvider, logger },
+      { target, mode, outDir, force: true }
+    );
+  const ensureBuiltMarketplaceUseCase = new EnsureBuiltMarketplaceUseCase(
+    fs,
+    resolveMarketplaceUseCase,
+    frameworkBuildFor,
+    currentVersionProvider
+  );
+  const marketplaceSyncSettingsUseCase = new MarketplaceSyncSettingsUseCase(
+    fs,
+    manifestRepo,
+    marketplaceRegistry,
+    pluginCatalogRepository,
+    hasher,
+    logger,
+    nativePluginActivators,
+    ensureBuiltMarketplaceUseCase
+  );
+  const pluginAddUseCase = new PluginAddUseCase(
+    fs,
+    manifestRepo,
+    pluginFetcher,
+    pluginDistributionReader,
+    hasher,
+    logger,
+    marketplaceRegistry,
+    ensureBuiltMarketplaceUseCase
+  );
   const frameworkBuildUseCase = new FrameworkBuildUseCase(
     fs,
     jsonSchemaValidator,
@@ -548,12 +556,6 @@ export async function createDeps(
     logger
   );
   const syncConflictResolverUseCase = new SyncConflictResolverUseCase(fs);
-  const syncFilePropagationUseCase = new SyncFilePropagationUseCase(
-    fs,
-    syncConflictResolverUseCase,
-    logger
-  );
-  const syncSourceResolverUseCase = new SyncSourceResolverUseCase(fs, prompter);
   const doctorTrackedFilesUseCase = new DoctorTrackedFilesUseCase(fs);
   const doctorMergeFilesUseCase = new DoctorMergeFilesUseCase(fs, hasher);
   const doctorPluginUseCase = new DoctorPluginUseCase(fs);
@@ -586,6 +588,21 @@ export async function createDeps(
   const setupToolsPromptUseCase = new SetupToolsPromptUseCase(prompter);
   const projectContextDetector = new ProjectContextDetectorUseCase(fs);
   const statusUseCase = new StatusUseCase(fs, manifestRepo, hasher);
+  // Lets restore re-materialize cursor/opencode plugins via the build pipeline,
+  // matching what install wrote (otherwise restore rewrites raw content → drift).
+  const builtMaterializationDeps = {
+    ensureBuilt: ensureBuiltMarketplaceUseCase,
+    marketplaceRegistry,
+    homedir,
+  };
+  const pluginUpdateUseCase = new PluginUpdateUseCase(
+    fs,
+    manifestRepo,
+    pluginFetcher,
+    pluginDistributionReader,
+    hasher,
+    builtMaterializationDeps
+  );
   const restoreUseCase = new RestoreUseCase(
     fs,
     manifestRepo,
@@ -595,22 +612,10 @@ export async function createDeps(
     prompter,
     pluginFetcher,
     pluginDistributionReader,
-    assetProvider
+    assetProvider,
+    builtMaterializationDeps
   );
   const uninstallUseCase = new UninstallUseCase(fs, manifestRepo, logger);
-  const syncPluginsUseCase = new SyncPluginsUseCase(
-    manifestRepo,
-    pluginInstallFromMarketplaceUseCase,
-    logger
-  );
-  const syncUseCase = new SyncUseCase(
-    fs,
-    manifestRepo,
-    hasher,
-    syncSourceResolverUseCase,
-    syncFilePropagationUseCase,
-    syncPluginsUseCase
-  );
   const statusAllUseCase = new StatusAllUseCase(fs, manifestRepo, hasher);
   const restoreAllUseCase = new RestoreAllUseCase(
     fs,
@@ -621,7 +626,8 @@ export async function createDeps(
     prompter,
     pluginFetcher,
     pluginDistributionReader,
-    assetProvider
+    assetProvider,
+    builtMaterializationDeps
   );
   const resolveUpdateDecisionUseCase = new ResolveUpdateDecisionUseCase(prompter);
   const updateOneToolUseCase = new UpdateOneToolUseCase(
@@ -651,15 +657,6 @@ export async function createDeps(
     manifestRepo,
     currentVersionProvider,
     updateOneToolUseCase
-  );
-  const syncAllUseCase = new SyncAllUseCase(
-    fs,
-    manifestRepo,
-    hasher,
-    logger,
-    syncSourceResolverUseCase,
-    syncFilePropagationUseCase,
-    pluginInstallFromMarketplaceUseCase
   );
   const cleanUseCase = new CleanUseCase(fs, manifestRepo, logger, prompter);
   const doctorAllUseCase = new DoctorAllUseCase(doctorUseCase);
@@ -697,6 +694,7 @@ export async function createDeps(
     marketplaceCheckUseCase,
     pluginInstallFromMarketplaceUseCase,
     resolveMarketplaceUseCase,
+    ensureBuiltMarketplaceUseCase,
     installRuntimeConfigUseCase,
     installAiToolUseCase,
     installIdeConfigUseCase,
@@ -709,8 +707,6 @@ export async function createDeps(
     pluginInstallUseCase,
     marketplaceSyncSettingsUseCase,
     syncConflictResolverUseCase,
-    syncFilePropagationUseCase,
-    syncSourceResolverUseCase,
     doctorUseCase,
     releaseResolver,
     setupMarketplaceSourceUseCase,
@@ -723,14 +719,11 @@ export async function createDeps(
     statusUseCase,
     restoreUseCase,
     uninstallUseCase,
-    syncPluginsUseCase,
-    syncUseCase,
     statusAllUseCase,
     restoreAllUseCase,
     updateAllUseCase,
     updateAiToolsUseCase,
     updateIdeToolsUseCase,
-    syncAllUseCase,
     cleanUseCase,
     doctorAllUseCase,
     checkUpdateUseCase,

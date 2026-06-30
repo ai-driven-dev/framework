@@ -24,8 +24,8 @@ IDE_TOOLS=(vscode)
 
 # Canonical leaf-command surface. Coverage = exercised / total.
 ALL_COMMANDS=(
-  "setup" "status" "restore" "update" "doctor" "clean" "self-update" "sync"
-  "ai install" "ai uninstall" "ai list" "ai status" "ai update" "ai sync" "ai restore" "ai doctor"
+  "setup" "status" "restore" "update" "doctor" "clean" "self-update"
+  "ai install" "ai uninstall" "ai list" "ai status" "ai update" "ai restore" "ai doctor"
   "ide install" "ide uninstall" "ide list" "ide status" "ide update" "ide restore" "ide doctor"
   "plugin create" "plugin remove" "plugin list" "plugin install" "plugin search" "plugin update" "plugin doctor"
   "marketplace add" "marketplace list" "marketplace remove" "marketplace refresh" "marketplace check"
@@ -90,7 +90,9 @@ run() {
 }
 
 new_project() { local p; p=$(mktemp -d "$TMPROOT/proj.XXXXXX"); (cd "$p" && git init -q); echo "$p"; }
-cache_catalog() { find "$1/.aidd/cache" -path "*marketplace.json" 2>/dev/null | head -1; }
+# Only the marketplaces catalog — NOT the per-target built-marketplace cache
+# (.aidd/cache/built/.../marketplace.json), which also matches a bare *marketplace.json glob.
+cache_catalog() { find "$1/.aidd/cache/marketplaces" -path "*marketplace.json" 2>/dev/null | head -1; }
 
 # ── build ───────────────────────────────────────────────────────
 echo "Building dist…"
@@ -171,10 +173,6 @@ else
   # the silent-exit guard above still rejects an exit 1 that prints nothing.
   run "doctor" "0|1" "" "$BASE" -- doctor
   run "update" 0 "" "$BASE" -- update
-  # Top-level `sync` is interactive-only by design: it takes NO --source/--force
-  # (those belong to `ai sync`) and refuses non-TTY with exit 1 + guidance. The
-  # working non-TTY path is `ai sync` (pinned below). Assert the guard contract.
-  run "sync (non-TTY guard)" 1 "Non-interactive" "$BASE" -- sync
 
   section "global restore"
   tgt=$(find "$BASE/.claude" -name "*.md" | head -1)
@@ -186,7 +184,6 @@ else
   run "ai status" 0 "" "$BASE" -- ai status
   run "ai doctor" "0|1" "" "$BASE" -- ai doctor
   run "ai update (all)" 0 "" "$BASE" -- ai update
-  run "ai sync from claude" 0 "" "$BASE" -- ai sync --source claude --force
   d=$(find "$BASE/.cursor" -name "*.md" 2>/dev/null | head -1); [[ -n "$d" ]] && printf '\nX\n' >> "$d"
   run "ai restore --force" 0 "" "$BASE" -- ai restore --force
   for t in "${AI_TOOLS[@]}"; do

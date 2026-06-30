@@ -7,6 +7,7 @@ import { PluginDistribution } from "../../../../src/domain/models/plugin-distrib
 import type { PluginDistributionReader } from "../../../../src/domain/ports/plugin-distribution-reader.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/infrastructure/adapters/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";
+import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
 
@@ -22,7 +23,8 @@ async function makeUseCase(deps: Awaited<ReturnType<typeof buildUnitDeps>>) {
     new PluginDistributionReaderAdapter(deps.fs),
     deps.hasher,
     deps.logger,
-    deps.marketplaceRegistry
+    deps.marketplaceRegistry,
+    fakeEnsureBuiltMarketplace()
   );
 }
 
@@ -91,7 +93,8 @@ describe("PluginAddUseCase", () => {
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
         deps.logger,
-        registry
+        registry,
+        fakeEnsureBuiltMarketplace()
       );
       await useCase.execute({
         source: {
@@ -133,7 +136,8 @@ describe("PluginAddUseCase", () => {
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
         deps.logger,
-        registry
+        registry,
+        fakeEnsureBuiltMarketplace()
       );
       await expect(
         useCase.execute({
@@ -172,7 +176,8 @@ describe("PluginAddUseCase", () => {
         new PluginDistributionReaderAdapter(deps.fs),
         deps.hasher,
         deps.logger,
-        registry
+        registry,
+        fakeEnsureBuiltMarketplace()
       );
       await useCase.execute({
         source: { kind: "local", path: PLUGIN_FIXTURE },
@@ -215,6 +220,11 @@ describe("PluginAddUseCase", () => {
       it("fetches and materializes flat files", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
         await initAndInstall(deps, PROJECT_ROOT, "opencode");
+        // OpenCode now copies its per-target flat BUILT tree (namespaced <plugin>-<name>).
+        deps.fs.setFile(
+          "/built/opencode/.opencode/skills/sample-plugin-demo/SKILL.md",
+          "# Demo skill"
+        );
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
@@ -226,7 +236,8 @@ describe("PluginAddUseCase", () => {
           new PluginDistributionReaderAdapter(deps.fs),
           deps.hasher,
           deps.logger,
-          registry
+          registry,
+          fakeEnsureBuiltMarketplace()
         );
         await useCase.execute({
           source: GIT_SUBDIR_SOURCE,
@@ -253,6 +264,8 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
+        // Cursor now copies the per-target BUILT tree verbatim; seed it.
+        deps.fs.setFile("/built/cursor/plugins/sample-plugin/skills/demo/SKILL.md", "# Demo skill");
         const useCase = new PluginAddUseCase(
           deps.fs,
           deps.manifestRepo,
@@ -260,7 +273,8 @@ describe("PluginAddUseCase", () => {
           new PluginDistributionReaderAdapter(deps.fs),
           deps.hasher,
           deps.logger,
-          registry
+          registry,
+          fakeEnsureBuiltMarketplace()
         );
         await useCase.execute({
           source: GIT_SUBDIR_SOURCE,
@@ -294,7 +308,8 @@ describe("PluginAddUseCase", () => {
           new PluginDistributionReaderAdapter(deps.fs),
           deps.hasher,
           deps.logger,
-          registry
+          registry,
+          fakeEnsureBuiltMarketplace()
         );
         await useCase.execute({
           source: GIT_SUBDIR_SOURCE,
@@ -325,7 +340,8 @@ describe("PluginAddUseCase", () => {
           new PluginDistributionReaderAdapter(deps.fs),
           deps.hasher,
           deps.logger,
-          registry
+          registry,
+          fakeEnsureBuiltMarketplace()
         );
         await useCase.execute({
           source: GIT_SUBDIR_SOURCE,
@@ -358,7 +374,8 @@ describe("PluginAddUseCase", () => {
           new PluginDistributionReaderAdapter(deps.fs),
           deps.hasher,
           deps.logger,
-          registry
+          registry,
+          fakeEnsureBuiltMarketplace()
         );
         await useCase.execute({
           source: GIT_SUBDIR_SOURCE,
@@ -388,7 +405,8 @@ describe("PluginAddUseCase", () => {
           new PluginDistributionReaderAdapter(deps.fs),
           deps.hasher,
           deps.logger,
-          registry
+          registry,
+          fakeEnsureBuiltMarketplace()
         );
         await useCase.execute({
           source: GIT_SUBDIR_SOURCE,
@@ -421,7 +439,8 @@ describe("PluginAddUseCase", () => {
           new PluginDistributionReaderAdapter(deps.fs),
           deps.hasher,
           deps.logger,
-          registry
+          registry,
+          fakeEnsureBuiltMarketplace()
         );
         await useCase.execute({
           source: GIT_SUBDIR_SOURCE,
@@ -446,6 +465,11 @@ describe("PluginAddUseCase", () => {
       it("materializes flat files even when source is local marketplace", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
         await initAndInstall(deps, PROJECT_ROOT, "opencode");
+        // OpenCode now copies its per-target flat BUILT tree (namespaced <plugin>-<name>).
+        deps.fs.setFile(
+          "/built/opencode/.opencode/skills/sample-plugin-demo/SKILL.md",
+          "# Demo skill"
+        );
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         const registry = new InMemoryMarketplaceRegistry();
         await registry.save(
@@ -465,7 +489,8 @@ describe("PluginAddUseCase", () => {
           new PluginDistributionReaderAdapter(deps.fs),
           deps.hasher,
           deps.logger,
-          registry
+          registry,
+          fakeEnsureBuiltMarketplace()
         );
         await useCase.execute({
           source: { kind: "local", path: PLUGIN_FIXTURE },
@@ -518,7 +543,8 @@ describe("PluginAddUseCase", () => {
         zeroFilesReader,
         deps.hasher,
         deps.logger,
-        registry
+        registry,
+        fakeEnsureBuiltMarketplace()
       );
       await useCase.execute({
         source: { kind: "local", path: "/some-plugin" },
