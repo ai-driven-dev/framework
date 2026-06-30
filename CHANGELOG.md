@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.1](https://github.com/ai-driven-dev/framework/compare/v5.1.0...v5.1.1) (2026-06-30)
+
+
+### Miscellaneous
+
+* **aidd-ui:** reset version to 0.1.0-alpha.0 ([726a8a0](https://github.com/ai-driven-dev/framework/commit/726a8a04ac692616915c65160e5d255c14ef2ea1))
+
 ## [5.1.0](https://github.com/ai-driven-dev/framework/compare/v5.0.3...v5.1.0) (2026-06-30)
 
 
