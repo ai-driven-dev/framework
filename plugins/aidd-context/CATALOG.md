@@ -202,5 +202,5 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-upsert.md](skills/12-cook/actions/02-upsert.md) | - |
 | `assets` | [recipe-template.md](skills/12-cook/assets/recipe-template.md) | - |
 | `-` | [README.md](skills/12-cook/README.md) | - |
-| `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manage the project's recipes/ how-to sheets: list them as a table, or create and update one from the canonical template. Use for "list recipes", "new recipe", "update a recipe", "cook a recipe".` |
+| `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manage the project's recipes and how-to sheets. List them as a table, or create and update one from the canonical template. Use when the user wants to list, create, update, or cook a recipe.` |
 

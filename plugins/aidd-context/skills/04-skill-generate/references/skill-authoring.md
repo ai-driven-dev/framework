@@ -15,6 +15,7 @@ The contract every generated skill must satisfy. These rules govern the CLIENT s
   - Optionally one short `Not for <X>` clause to fend off a sibling that could mis-trigger, describing the overlap in plain words.
   - Never name another skill, and never include a `/command` token: slash commands are tool-native, the host generates them.
   - Parentheses for an inline definition, not dashes.
+  - Never use a colon or an em dash in the description. Split the thought into two sentences instead.
 - **R6.** Zero duplication. One fact, one home. Actions cite a shared file via `@<path>` instead of restating it.
 - **R7.** `references/` = documents to READ and apply in place. `assets/` = files to COPY, INJECT, or fill in per run. A template, checklist, or form is an asset, not a reference, because each run instantiates it.
 - **R8.** Every action follows the action anatomy (below) and carries a `## Test`.
