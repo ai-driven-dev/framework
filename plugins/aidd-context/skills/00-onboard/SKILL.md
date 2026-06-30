@@ -21,7 +21,7 @@ Run `01 → 02 → 03`, then loop back to `01` after each step until the user st
 ## Transversal rules
 
 - Teach, do not assume. The user may be new to AIDD. Explain a term the first time it appears (the memory bank is the project memory the AI loads each session), never assume framework literacy.
-- Suggest, never force. Show where the project seems to stand and the next logical step, and always let the user choose another.
+- Suggest, never force. Show where the project seems to stand and the next logical step, and always let the user choose another. A foundation step (architect a stack, set up the memory bank) may be the loud, pre-selected default, but it is always skippable, and a skipped step is remembered for the session.
 - Plain language only. No internal state names, no raw phase labels, no signal dump reaches the user. The user reads guidance, not a state machine.
 - Adapt to what is installed. Suggest by function and resolve it to a skill that is actually installed. If none is installed, name the missing capability by function, never invent a skill.
 - Silent read. `01-read-project` prints nothing. The first visible output is the plain briefing from `02-orient`.
