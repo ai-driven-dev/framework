@@ -21,8 +21,8 @@ importers:
         specifier: 3.0.1
         version: 3.0.1(ajv@8.20.0)
       js-yaml:
-        specifier: 4.2.0
-        version: 4.2.0
+        specifier: 5.0.0
+        version: 5.0.0
       lefthook:
         specifier: ^2.1.9
         version: 2.1.9
@@ -267,6 +267,10 @@ packages:
 
   js-yaml@4.2.0:
     resolution: {integrity: sha512-ePWsvanv0DWuDRsW8dnt+R4jQ31SCRCQ7hhNcPXZPsoBZiemuZNYGf7adZdqX2D86j6rvKp3RpCxVTSb8WQlOw==}
+    hasBin: true
+
+  js-yaml@5.0.0:
+    resolution: {integrity: sha512-GSvaPUbk1U+FMZ7rJzF+F8e5YVtu7KnD40et/5rBXXRBv2jCO9L3qCewvIDDdudC0QycTFlf6EAA+h3kxBsuUw==}
     hasBin: true
 
   json-parse-even-better-errors@2.3.1:
@@ -651,6 +655,10 @@ snapshots:
   js-tokens@4.0.0: {}
 
   js-yaml@4.2.0:
+    dependencies:
+      argparse: 2.0.1
+
+  js-yaml@5.0.0:
     dependencies:
       argparse: 2.0.1
 
