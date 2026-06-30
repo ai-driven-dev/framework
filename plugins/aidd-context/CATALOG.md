@@ -50,8 +50,9 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [menu.md](skills/00-onboard/assets/menu.md) | - |
 | `-` | [README.md](skills/00-onboard/README.md) | - |
 | `references` | [journey.md](skills/00-onboard/references/journey.md) | - |
+| `references` | [outcomes.md](skills/00-onboard/references/outcomes.md) | - |
 | `references` | [signals.md](skills/00-onboard/references/signals.md) | - |
-| `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Guide the user through AIDD on the current project: explain the flow and the next step for what is set up. Use when the user asks where to start, what to do next, or how AIDD works. Not for listing installed surfaces or running a known skill.` |
+| `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Guide the user through AIDD on the current project, explaining the flow and the next step for what is set up. Use when the user asks where to start, what to do next, or how AIDD works. Not for listing installed surfaces or running a known skill.` |
 
 #### `skills/01-bootstrap`
 
