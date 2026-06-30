@@ -25,7 +25,7 @@ Run `01 → 02 → 03`, then loop back to `01` after each step until the user st
 - Plain language only. No internal state names, no raw phase labels, no signal dump reaches the user. The user reads guidance, not a state machine.
 - Adapt to what is installed. Suggest by function and resolve it to a skill that is actually installed. If none is installed, name the missing capability by function, never invent a skill.
 - Silent read. `01-read-project` prints nothing. The first visible output is the plain briefing from `02-orient`.
-- Re-read after each step. The project changes, so read again before suggesting again.
+- Read once, then refresh on action. Read the project once into a reusable snapshot; after the user runs a step, re-derive the changed facts and mark that step done in the session ledger; a read-only choice reuses the snapshot. The ledger is how onboard knows a step is done even when it leaves no file behind.
 - Wait for an explicit reply between prompts. Never auto-advance.
 
 ## References

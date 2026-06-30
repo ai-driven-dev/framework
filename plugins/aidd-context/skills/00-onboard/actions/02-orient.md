@@ -17,7 +17,7 @@ A short, plain briefing the user can act on. No internal variable names, no raw 
 ## Process
 
 1. **Read the notes from 01.** Print nothing from them directly.
-2. **Place the project.** Using `@../references/journey.md`, find the earliest unmet stage for these facts. That is the suggestion. Treat it as a hint, never a verdict.
+2. **Place the project.** Using `@../references/journey.md`, find the earliest **unmet** stage, where a stage counts as met if a disk fact satisfies it **or** the session ledger marks it done or skipped this session. Excluding the ledger's done and skipped stages is what stops a just-run or just-declined step being suggested again. That earliest remaining stage is the suggestion, a hint never a verdict.
 3. **Resolve the suggestion** to an installed skill (`@../references/journey.md`, Resolving). If no installed skill fits, the step is a gap: name the missing capability by function, never a skill or plugin id.
 4. **Write the briefing** in plain language: the one-line project, where it sits, and the suggested step with a short why. Explain any AIDD term the first time it appears.
 5. **Offer choices.** A short, stable numbered list with plain labels: run the suggested step, run it in a fresh session instead, explain that step first, explain this project from its memory (only when the memory is filled), see the whole AIDD flow and the installed skills, go to a different step, stop.

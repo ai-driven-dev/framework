@@ -23,6 +23,8 @@ Then, per piece of work:
 
 Read a few plain facts (action 01), then suggest the earliest unmet step. The suggestion is a hint, never a verdict.
 
+This table places by disk facts only. A stage is **also** met when the session ledger marks it done or skipped this session, so `02-orient` excludes those before picking the earliest unmet step (it owns that definition; this table does not repeat it).
+
 | What the project looks like                                  | Suggest        |
 | ----------------------------------------------------------- | -------------- |
 | Empty repo, nothing built yet                                | Context (architect a stack first) |
