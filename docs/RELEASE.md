@@ -50,9 +50,11 @@ To force a package to a chosen version on the next cut, set `release-as` for it
 in `release-please-config.json` (deterministic, overrides any `Release-As:`
 commit footer). Remove the pin afterwards so automatic bumps resume.
 
-## Back-merge failures
+## Back-merge and drift
 
-If the back-merge cannot push `next`, it opens an issue labelled
-`back-merge-failed`. Resync by opening a `main -> next` PR. The root cause is the
-bot app needing an `always` bypass on the `next` ruleset; align that and the
-back-merge runs unattended.
+The back-merge runs unattended (the bot app has an `always` bypass on the `next`
+ruleset). After each release it either realigns `next` onto `main` (when `next`
+holds no unreleased work, the normal case) or keeps a merge (when it does), so
+the rebase-promote hash drift never accumulates. If it ever cannot push, it
+opens an issue labelled `back-merge-failed`; resync by opening a `main -> next`
+PR.
