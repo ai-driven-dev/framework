@@ -1,9 +1,11 @@
 name: Back-merge
 
 # After a release on main, sync main back into next so its changelog, manifest,
-# and version bumps do not drift. No conflict -> push next directly (the App is
-# an "always" bypass actor on next). Conflict -> open a PR for a human.
-# Any other failure -> open a tracking issue so the drift is never silent.
+# and version bumps do not drift. When next holds no unreleased work, realign it
+# onto main's hashes (force-push, the App is an "always" bypass actor on next)
+# so the rebase-promote hash drift cannot accumulate. When next has real work,
+# keep the merge. Conflict -> open a PR for a human. Any other failure -> open a
+# tracking issue so the drift is never silent.
 
 on:
   release:
@@ -40,7 +42,17 @@ jobs:
           git config user.email "aidd-bot[bot]@users.noreply.github.com"
           git fetch origin main
           if git merge --no-edit origin/main; then
-            git push origin next
+            # Promotes to main are rebase-merged, so main carries new commit
+            # hashes and next drifts even though the content matches. When the
+            # merge result is content-identical to main (next held no unreleased
+            # work), realign next onto main's clean hashes so the drift cannot
+            # accumulate into a giant conflicting promote later. Otherwise next
+            # has real unreleased work, so keep the merge and push normally.
+            if git diff --quiet origin/main HEAD; then
+              git push --force origin "origin/main:refs/heads/next"
+            else
+              git push origin next
+            fi
           else
             git merge --abort
             BRANCH="back-merge/main-to-next-${{ github.run_id }}"
