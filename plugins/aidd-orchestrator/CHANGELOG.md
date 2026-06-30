@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.1.0](https://github.com/ai-driven-dev/framework/compare/aidd-orchestrator-v2.0.0...aidd-orchestrator-v2.1.0) (2026-06-30)
+
+
+### Features
+
+* **skills:** sync argument hints ([#296](https://github.com/ai-driven-dev/framework/issues/296)) ([5aa9216](https://github.com/ai-driven-dev/framework/commit/5aa92166cc80d74c79a1dab183224517c3fb1f49))
+
+
+### Refactoring
+
+* conform remaining skills to the authoring contract ([#334](https://github.com/ai-driven-dev/framework/issues/334)) ([dcc232a](https://github.com/ai-driven-dev/framework/commit/dcc232a5a7a7bcdf0c477b36399fd4d412685022))
+* **skills:** forbid colon and em dash in descriptions, codify in R5 ([1407a9a](https://github.com/ai-driven-dev/framework/commit/1407a9a996b4d705d8586512c533659d8c44d445))
+
 ## [2.0.0](https://github.com/ai-driven-dev/framework/compare/aidd-orchestrator-v1.0.3...aidd-orchestrator-v2.0.0) (2026-06-19)
 
 

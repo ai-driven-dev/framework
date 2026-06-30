@@ -1,5 +1,30 @@
 # Changelog
 
+## [2.1.0](https://github.com/ai-driven-dev/framework/compare/aidd-vcs-v2.0.0...aidd-vcs-v2.1.0) (2026-06-30)
+
+
+### Features
+
+* **aidd-vcs:** add repo-init skill (init + publish a repository) ([#269](https://github.com/ai-driven-dev/framework/issues/269)) ([81115da](https://github.com/ai-driven-dev/framework/commit/81115da3420f068ba81da8591dfff34555005680))
+* **skills:** sync argument hints ([#296](https://github.com/ai-driven-dev/framework/issues/296)) ([5aa9216](https://github.com/ai-driven-dev/framework/commit/5aa92166cc80d74c79a1dab183224517c3fb1f49))
+
+
+### Bug Fixes
+
+* **aidd-vcs:** sync pull-request skill contract with prefix routing ([#326](https://github.com/ai-driven-dev/framework/issues/326)) ([2db0005](https://github.com/ai-driven-dev/framework/commit/2db0005400c821a96481e990e22bea40c404912e))
+
+
+### Documentation
+
+* **framework:** unify change taxonomy into one source of truth ([#325](https://github.com/ai-driven-dev/framework/issues/325)) ([a42cc5b](https://github.com/ai-driven-dev/framework/commit/a42cc5b1bd0018e964de64f8098f09769f70fda0))
+
+
+### Refactoring
+
+* conform remaining skills to the authoring contract ([#334](https://github.com/ai-driven-dev/framework/issues/334)) ([dcc232a](https://github.com/ai-driven-dev/framework/commit/dcc232a5a7a7bcdf0c477b36399fd4d412685022))
+* **framework:** executor/checker agents + SDLC orchestration redesign ([#314](https://github.com/ai-driven-dev/framework/issues/314)) ([7df7a34](https://github.com/ai-driven-dev/framework/commit/7df7a34dab251cd4190f76bb1cb031584bdea5bd))
+* **skills:** forbid colon and em dash in descriptions, codify in R5 ([1407a9a](https://github.com/ai-driven-dev/framework/commit/1407a9a996b4d705d8586512c533659d8c44d445))
+
 ## [2.0.0](https://github.com/ai-driven-dev/framework/compare/aidd-vcs-v1.0.2...aidd-vcs-v2.0.0) (2026-06-19)
 
 

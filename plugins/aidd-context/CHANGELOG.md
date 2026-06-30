@@ -1,5 +1,31 @@
 # Changelog
 
+## [2.1.0](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.0.1...aidd-context-v2.1.0) (2026-06-30)
+
+
+### Features
+
+* **onboard:** phase 1 — read-once loop with a session ledger ([c17d38c](https://github.com/ai-driven-dev/framework/commit/c17d38cd46b9d80ba8112687178433309b75e6b0))
+* **onboard:** phase 2 — foundation gate, skippable ([2712c17](https://github.com/ai-driven-dev/framework/commit/2712c1764027fb1a42fa994805da756ec7c865cf))
+* **onboard:** phases 3-4 — capability map + project-adapted menu ([8ec202b](https://github.com/ai-driven-dev/framework/commit/8ec202b796a3fb36191456c134cc42ea51d42497))
+* **skills:** sync argument hints ([#296](https://github.com/ai-driven-dev/framework/issues/296)) ([5aa9216](https://github.com/ai-driven-dev/framework/commit/5aa92166cc80d74c79a1dab183224517c3fb1f49))
+
+
+### Documentation
+
+* **aidd-context:** unify and trim agent instruction template ([#329](https://github.com/ai-driven-dev/framework/issues/329)) ([d3fe2ac](https://github.com/ai-driven-dev/framework/commit/d3fe2ac4600858195300518cb2b5db9ab57bbc69))
+* **framework:** add dominance checks to review and rules ([#313](https://github.com/ai-driven-dev/framework/issues/313)) ([80daf0d](https://github.com/ai-driven-dev/framework/commit/80daf0d5e6276417a1b61fadf63a3d5025d6fc32))
+* **onboard:** refresh README for the snapshot+ledger+menu flow ([7bf212b](https://github.com/ai-driven-dev/framework/commit/7bf212b586c6ca4a5c0b5a9f81ba95d0483e5a1b))
+
+
+### Refactoring
+
+* **aidd-context:** dedupe project-memory templates and lighten actions ([#347](https://github.com/ai-driven-dev/framework/issues/347)) ([f2a252b](https://github.com/ai-driven-dev/framework/commit/f2a252ba6f0129d17bb71802bc40bdcf121a63c3))
+* conform remaining skills to the authoring contract ([#334](https://github.com/ai-driven-dev/framework/issues/334)) ([dcc232a](https://github.com/ai-driven-dev/framework/commit/dcc232a5a7a7bcdf0c477b36399fd4d412685022))
+* **framework:** executor/checker agents + SDLC orchestration redesign ([#314](https://github.com/ai-driven-dev/framework/issues/314)) ([7df7a34](https://github.com/ai-driven-dev/framework/commit/7df7a34dab251cd4190f76bb1cb031584bdea5bd))
+* **onboard:** slim 03-act, drop colon from the description ([71e09ff](https://github.com/ai-driven-dev/framework/commit/71e09ff66962bb69adcd6285bf151e80fbd0dff1))
+* **skills:** forbid colon and em dash in descriptions, codify in R5 ([1407a9a](https://github.com/ai-driven-dev/framework/commit/1407a9a996b4d705d8586512c533659d8c44d445))
+
 ## [2.0.1](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.0.0...aidd-context-v2.0.1) (2026-06-22)
 
 
