@@ -32,7 +32,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-publish.md](skills/00-repo-init/actions/02-publish.md) | - |
 | `assets` | [CONTRIBUTING.md](skills/00-repo-init/assets/CONTRIBUTING.md) | - |
 | `-` | [README.md](skills/00-repo-init/README.md) | - |
-| `-` | [SKILL.md](skills/00-repo-init/SKILL.md) | `Initialize a project repository: git init, default branch, bootstrap commit, CONTRIBUTING.md, optionally the remote. Use when the user wants to init or set up a new repo, or publish to a remote. Not for committing, opening a PR, or tagging.` |
+| `-` | [SKILL.md](skills/00-repo-init/SKILL.md) | `Initialize a project repository with git init, a default branch, a bootstrap commit, CONTRIBUTING.md, and optionally the remote. Use when the user wants to init or set up a new repo, or publish to a remote. Not for committing, opening a PR, or tagging.` |
 
 #### `skills/01-commit`
 
