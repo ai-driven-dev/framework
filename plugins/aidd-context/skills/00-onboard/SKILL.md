@@ -12,8 +12,8 @@ A plain-language guide to the AIDD framework for the current project. It reads t
 
 | #   | Action         | Role                                                              | Input             |
 | --- | -------------- | ---------------------------------------------------------------- | ----------------- |
-| 01  | `read-project` | Lightly and silently read the project and the installed skills    | project root      |
-| 02  | `orient`       | Explain where the project sits and suggest the next step, in plain language | the read from 01  |
+| 01  | `read-project` | Read the project once into a silent snapshot: signals, ledger, installed skills | project root      |
+| 02  | `orient`       | Place the project, then offer a project-adapted, plain-language menu | the snapshot from 01 |
 | 03  | `act`          | Run the suggestion, explain it, teach the flow, switch step, or stop | the user's choice |
 
 Run `01 → 02 → 03`, then loop back to `01` after each step until the user stops. Run each action's `## Test` before the next.
@@ -30,4 +30,9 @@ Run `01 → 02 → 03`, then loop back to `01` after each step until the user st
 
 ## References
 
-- `references/journey.md`: the AIDD flow stages, what each unblocks, and how a step resolves to an installed skill.
+- `references/journey.md`: the AIDD flow stages, their order, and how a stage resolves to an installed skill.
+- `references/signals.md`: the project signals `01` captures and the capability map (signal → stage-gated secondary tool).
+
+## Assets
+
+- `assets/menu.md`: the menu shape `02` renders — default, ranked secondary tools, footer, and the cap and hedge rules.

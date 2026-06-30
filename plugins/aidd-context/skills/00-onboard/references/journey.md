@@ -35,15 +35,15 @@ This table places by disk facts only. A stage is **also** met when the session l
 | A plan is ready, no code against it                          | Build          |
 | Code in progress, nothing reviewed                           | Build, or Review if it looks done |
 | The build looks done                                         | Review           |
-| An open pull request                                        | Ship (carry it through, release on merge) |
+| An open pull request, nothing reviewed                      | Review, then Ship (carry it through, release on merge) |
 
-Having code never proves the build is finished, so onboard always lets the user pick the step rather than declaring one done.
+Place at the earliest stage still unmet, reading the table top-down. Stages are cumulative: a downstream artifact implies the upstream stages are met — a plan means the need is clarified and tracked, so a project with a plan places at Build, not Clarify. Build is the exception: having code never proves it is reviewed or shipped, so onboard hedges there (see `assets/menu.md`) and lets the user pick rather than declaring one done. Clarify and Track have no disk signal, so they are the place only when no downstream artifact exists, and never a loud default.
 
 ## Beyond the steps, by discovery
 
 The steps are the spine, and they never name a specific skill. Onboard reads the installed skills (action 01) and fills each step with whatever fits.
 
-Most setups also have skills that are not a step but a tool for when the work needs one: fixing a bug, cleaning up code, finding technical debt, adding tests, capturing a lesson, drawing a diagram. Onboard does **not** hardcode these. It reads every installed skill, places the ones that fit a step, and surfaces the rest grouped by what their own description says they do. A skill added to any plugin later shows up on its own, with no change to this file. This file describes the flow, never the catalogue of skills.
+Most setups also have skills that are a tool for when the work needs one, not a step: fixing a bug, cleaning up code, adding tests, drawing a diagram. Onboard does **not** hardcode these — it ranks the relevant ones by the project signals (the capability map in `signals.md`) and resolves each to an installed skill. A skill added to any plugin later shows up on its own. This file describes the flow, never the catalogue of skills.
 
 ## Resolving a step to an installed skill
 
