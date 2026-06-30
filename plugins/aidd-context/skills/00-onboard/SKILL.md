@@ -1,6 +1,6 @@
 ---
 name: 00-onboard
-description: Guide the user through AIDD on the current project: explain the flow and the next step for what is set up. Use when the user asks where to start, what to do next, or how AIDD works. Not for listing installed surfaces or running a known skill.
+description: Guide the user through AIDD on the current project, explaining the flow and the next step for what is set up. Use when the user asks where to start, what to do next, or how AIDD works. Not for listing installed surfaces or running a known skill.
 argument-hint: read-project | orient | act
 ---
 
@@ -32,6 +32,7 @@ Run `01 → 02 → 03`, then loop back to `01` after each step until the user st
 
 - `references/journey.md`: the AIDD flow stages, their order, and how a stage resolves to an installed skill.
 - `references/signals.md`: the project signals `01` captures and the capability map (signal → stage-gated secondary tool).
+- `references/outcomes.md`: the per-choice outcome `03` carries out and whether it loops back.
 
 ## Assets
 
