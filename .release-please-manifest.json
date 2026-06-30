@@ -1,10 +1,10 @@
 {
-  ".": "5.0.3",
-  "plugins/aidd-context": "2.0.1",
-  "plugins/aidd-dev": "2.0.0",
-  "plugins/aidd-vcs": "2.0.0",
-  "plugins/aidd-pm": "2.0.0",
-  "plugins/aidd-orchestrator": "2.0.0",
-  "plugins/aidd-refine": "2.0.0",
-  "plugins/aidd-ui": "0.1.0-alpha.0"
+  ".": "5.1.0",
+  "plugins/aidd-context": "2.1.0",
+  "plugins/aidd-dev": "2.1.0",
+  "plugins/aidd-vcs": "2.1.0",
+  "plugins/aidd-pm": "2.1.0",
+  "plugins/aidd-orchestrator": "2.1.0",
+  "plugins/aidd-refine": "2.1.0",
+  "plugins/aidd-ui": "4.0.0"
 }

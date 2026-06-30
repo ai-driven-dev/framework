@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.1.0](https://github.com/ai-driven-dev/framework/compare/aidd-dev-v2.0.0...aidd-dev-v2.1.0) (2026-06-30)
+
+
+### Features
+
+* **aidd-dev:** route deletions to refactor cleanup with orphan sweep ([#328](https://github.com/ai-driven-dev/framework/issues/328)) ([2c75d0d](https://github.com/ai-driven-dev/framework/commit/2c75d0d7924b1b249c25fc121091387f0c373a7f))
+* **skills:** sync argument hints ([#296](https://github.com/ai-driven-dev/framework/issues/296)) ([5aa9216](https://github.com/ai-driven-dev/framework/commit/5aa92166cc80d74c79a1dab183224517c3fb1f49))
+
+
+### Documentation
+
+* **framework:** add dominance checks to review and rules ([#313](https://github.com/ai-driven-dev/framework/issues/313)) ([80daf0d](https://github.com/ai-driven-dev/framework/commit/80daf0d5e6276417a1b61fadf63a3d5025d6fc32))
+
+
+### Refactoring
+
+* **aidd-dev:** redesign 01-plan into gather/explore/wireframe/plan ([#271](https://github.com/ai-driven-dev/framework/issues/271)) ([dba017e](https://github.com/ai-driven-dev/framework/commit/dba017e8e4c6ef9bc80325791495f1b5fe8c350b)), closes [#292](https://github.com/ai-driven-dev/framework/issues/292) [#265](https://github.com/ai-driven-dev/framework/issues/265) [#276](https://github.com/ai-driven-dev/framework/issues/276)
+* conform remaining skills to the authoring contract ([#334](https://github.com/ai-driven-dev/framework/issues/334)) ([dcc232a](https://github.com/ai-driven-dev/framework/commit/dcc232a5a7a7bcdf0c477b36399fd4d412685022))
+* **framework:** executor/checker agents + SDLC orchestration redesign ([#314](https://github.com/ai-driven-dev/framework/issues/314)) ([7df7a34](https://github.com/ai-driven-dev/framework/commit/7df7a34dab251cd4190f76bb1cb031584bdea5bd))
+* **skills:** forbid colon and em dash in descriptions, codify in R5 ([1407a9a](https://github.com/ai-driven-dev/framework/commit/1407a9a996b4d705d8586512c533659d8c44d445))
+
 ## [2.0.0](https://github.com/ai-driven-dev/framework/compare/aidd-dev-v1.2.1...aidd-dev-v2.0.0) (2026-06-19)
 
 
