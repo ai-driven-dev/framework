@@ -57,4 +57,5 @@ ruleset). After each release it either realigns `next` onto `main` (when `next`
 holds no unreleased work, the normal case) or keeps a merge (when it does), so
 the rebase-promote hash drift never accumulates. If it ever cannot push, it
 opens an issue labelled `back-merge-failed`; resync by opening a `main -> next`
-PR.
+PR. If `next` is missing entirely (it must not be — head branches are not
+auto-deleted), recreate it from `main` first: `git push origin main:next`.
