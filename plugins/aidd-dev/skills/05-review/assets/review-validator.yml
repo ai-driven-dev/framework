@@ -1,0 +1,5 @@
+# review.md has exactly these sections. Any other is invalid: remove it, never add or rename.
+sections:
+  - Phases        # required: one block per plan phase, a box per criterion
+  - Findings      # required: one table, all axes, by Kind
+  - Verification  # required: the summary table
