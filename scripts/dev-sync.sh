@@ -76,7 +76,30 @@ sync_one() {
   fi
   if [ "$HAVE_CLAUDE" = 1 ]; then
     rm -rf "$CLAUDE_CACHE/$MKT/$name"
-    claude plugin install "$name@$MKT" --scope user >/dev/null 2>&1 && printf ' claude:ok' || printf ' claude:FAIL'
+    if claude plugin install "$name@$MKT" --scope user >/dev/null 2>&1; then
+      printf ' claude:ok'
+      # Claude loads agents ONLY from the installed installPath, and `claude plugin install`
+      # copies them there implicitly - which fails silently (still prints ok) if the copy is
+      # skipped, dropping executor/checker. Pin it like the Codex net above: force-sync every
+      # declared agent into the freshly installed version dir and report the count so a miss
+      # is never silent. Drop this once the install is a trusted source of bundled agents.
+      if [ -d "$FW/plugins/$name/agents" ]; then
+        local dest src n=0 fixed=0
+        dest="$(ls -d "$CLAUDE_CACHE/$MKT/$name"/*/ 2>/dev/null | head -1)"
+        if [ -n "$dest" ]; then
+          mkdir -p "${dest}agents"
+          for src in "$FW/plugins/$name/agents/"*.md; do
+            n=$((n + 1))
+            cmp -s "$src" "${dest}agents/$(basename "$src")" 2>/dev/null || { cp -f "$src" "${dest}agents/"; fixed=$((fixed + 1)); }
+          done
+          [ "$fixed" -gt 0 ] && printf '(+%d agents, repaired %d)' "$n" "$fixed" || printf '(+%d agents)' "$n"
+        else
+          printf '(agents:NO-INSTALLPATH)'
+        fi
+      fi
+    else
+      printf ' claude:FAIL'
+    fi
   fi
   echo
 }
