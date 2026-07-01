@@ -26,7 +26,7 @@ Run all three by default, composing one report. Run a single axis only when the 
 - Folder: write into the reviewed work's feature folder (`aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, beside `plan.md`), or one resolved from the change when it has none.
 - Report: fill `review.md` from `assets/review-template.md`. One shared `Findings` table for every axis: functional writes the `Phases` boxes and the `Verification` table, and appends a `functional` row to `Findings` for each unmet criterion tagged `fix`; code and relevancy append rows to `Findings` under their `Kind`. Tables and boxes, no prose, no per-axis sections. The Phase column ties a finding to the plan when one is in scope, `-` otherwise.
 - Sections: the report has exactly the sections in `assets/review-validator.yml`. Before returning, verify against it and remove any section not listed.
-- Not run: every required section always exists. An axis that did not run marks the sections it owns "Not run" (functional owns `Phases` and `Verification`); it never leaves a placeholder or invents data.
+- Not run: every required section always exists. The header `Axes run` lists which axes ran, so a skipped code or relevancy axis is visible even though `Findings` is shared. An axis that did not run marks the sections it owns "Not run" (functional owns `Phases` and `Verification`); it never leaves a placeholder or invents data.
 - Re-run: overwrite `review.md` with the current review. It is a snapshot of the current diff, not a history; a later review of the same work replaces the earlier one.
 - Verdict: one overall verdict, the strictest across the axes run, per `references/review-rubric.md`.
 

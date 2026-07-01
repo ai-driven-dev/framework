@@ -4,6 +4,7 @@
 
 - **Verdict**: {{approve | changes-requested | blocked}}
 - **Diff**: `{{base}}...{{head}}`
+- **Axes run**: {{the axes that ran, from code, functional, relevancy}}
 - **Date**: {{yyyy_mm_dd}}
 - **Findings**: {{n_critical}} critical, {{n_warning}} warning, {{n_minor}} minor
 
