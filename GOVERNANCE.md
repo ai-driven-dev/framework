@@ -84,9 +84,9 @@ a PR with ≥1 Habilité (CODEOWNERS) approval, passing checks (`lefthook
 form: [`.github/rulesets/main.json`](.github/rulesets/main.json) (enforced once
 the repo is public / on a paid plan).
 
-`next` is the integration branch: PRs and passing checks, no direct push or
-deletion, but no required review so the week's work batches quickly. The release
-bot bypasses to push the automated back-merge. Machine-readable form:
+`next` is the integration branch: PRs with ≥1 review and passing checks, no
+direct push or deletion. The release bot bypasses to push the automated
+back-merge, and the `admin` team may merge without a second review. Machine-readable form:
 [`.github/rulesets/next.json`](.github/rulesets/next.json). The release flow is in
 [`RELEASE.md`](RELEASE.md).
 
