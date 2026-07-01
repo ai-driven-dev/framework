@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.2.1](https://github.com/ai-driven-dev/framework/compare/aidd-dev-v2.2.0...aidd-dev-v2.2.1) (2026-07-01)
+
+
+### Bug Fixes
+
+* **dev:** close review report contract gaps ([29d99c6](https://github.com/ai-driven-dev/framework/commit/29d99c68f8b519a6d0a828005feb76fc1a0034e8))
+* **dev:** critical functional severity and skipped-axis visibility ([810be09](https://github.com/ai-driven-dev/framework/commit/810be0978023509d8742af59d1967436d4d653d8))
+* **dev:** make functional findings and verdict rules consistent ([4c0ac84](https://github.com/ai-driven-dev/framework/commit/4c0ac845ec4d6ab3793a604bc61f52a5e237b742))
+
 ## [2.2.0](https://github.com/ai-driven-dev/framework/compare/aidd-dev-v2.1.0...aidd-dev-v2.2.0) (2026-07-01)
 
 
