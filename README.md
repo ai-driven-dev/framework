@@ -13,9 +13,7 @@
 
 # AI-Driven Dev Framework
 
-### Vibe Coding for professional developers — focused on 100% quality on AI-generated code.
-
-<p><b>🇫🇷 The first French open-source framework for AI-driven development.</b></p>
+### A French framework for AI-Driven Developer to produce high code quality.
 
 <p>
   <!--counts:start--><kbd>7 plugins</kbd> · <kbd>40 skills</kbd> · <kbd>2 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
