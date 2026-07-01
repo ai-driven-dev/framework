@@ -14,7 +14,7 @@ One overall verdict, the strictest across the axes run:
 
 - `approve`: no critical finding, and no criterion left unchecked and tagged `fix`, ship it. A `not-applicable` or `fixed` criterion does not block.
 - `changes-requested`: warnings, a fixable critical, or any unchecked criterion tagged `fix`.
-- `blocked`: a critical that must not merge, or an unchecked critical criterion.
+- `blocked`: a critical that must not merge, or an unchecked critical criterion tagged `fix`. A `not-applicable` or `fixed` criterion never blocks, whatever its severity.
 
 An unchecked criterion tagged `fix` is a functional finding: it appears as a `functional` row in `Findings` (so it counts) and cannot yield `approve`. A `not-applicable` criterion is neither a finding nor a blocker.
 
