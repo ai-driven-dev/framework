@@ -1,4 +1,4 @@
-<!-- Review report for a diff. Fill the placeholders, drop this comment. Tables and boxes, never prose. Fill or omit these sections; never add, rename, or reorder one. -->
+<!-- Review report for a diff. Fill the placeholders, drop this comment. Tables and boxes, never prose. Sections are fixed by assets/review-validator.yml. -->
 
 # Review: {{feature}}
 
