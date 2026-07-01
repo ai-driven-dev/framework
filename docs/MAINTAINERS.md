@@ -86,8 +86,8 @@ Dependabot labels its PRs `dependencies` only (ecosystem sub-labels were dropped
 
 release-please opens/updates a `chore: release main` PR on each push to `main`.
 
-1. Review the version bumps + changelog in the release PR (it is authored by the **aidd-bot** App, so its checks run normally).
-2. Merge it: `gh pr merge <n> --squash`. No admin needed - the App is a ruleset bypass actor, so its PRs merge once checks pass.
+1. (Optional) Review the version bumps + changelog. The PR is authored by the **aidd-bot** App, so its checks run normally.
+2. CI **auto-merges** it with the App token (`--squash --admin`); no human step is needed. `--admin` is required because a plain `gh pr merge` is refused even for the bypass App.
 3. CI tags each bumped package, creates the GitHub Releases, and attaches the bundles:
    - `aidd-framework-marketplace-X.Y.Z.zip` (`.claude-plugin/` + `plugins/`)
    - `<plugin>-vX.Y.Z.zip`
@@ -109,7 +109,9 @@ Two bypass actors (both `pull_request` mode, so neither can push directly to `ma
 
 The App: ID in secret `AIDD_BOT_APP_ID`, key in `AIDD_BOT_PRIVATE_KEY`. If the App is broken/uninstalled, release and Dependabot PRs stop merging - fix the App rather than re-adding an admin bypass.
 
-To change protection, edit `.github/rulesets/main.json`, then apply it live:
+Head branches are **not** auto-deleted on merge (`delete_branch_on_merge: false`): the promote PR merges `next` into `main` without deleting `next`, so the back-merge that realigns `next` afterwards never hits a missing branch. Do not re-enable the setting.
+
+To change protection, edit `.github/rulesets/main.json` (or `next.json`), then apply it live:
 ```bash
 gh api -X PUT repos/ai-driven-dev/framework/rulesets/<id> --input .github/rulesets/main.json
 ```
