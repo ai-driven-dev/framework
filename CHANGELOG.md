@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.2.2](https://github.com/ai-driven-dev/framework/compare/v5.2.1...v5.2.2) (2026-07-01)
+
+
+### Miscellaneous
+
+* **framework:** require one review on next ([3279df3](https://github.com/ai-driven-dev/framework/commit/3279df36f4a229942e2b65fa1601d02830c18b2d))
+
+
+### Documentation
+
+* **framework:** sync release-flow docs with reality ([34a3d1f](https://github.com/ai-driven-dev/framework/commit/34a3d1f39cc6646bea1963bf430416394081ab3b))
+
 ## [5.2.1](https://github.com/ai-driven-dev/framework/compare/v5.2.0...v5.2.1) (2026-07-01)
 
 
