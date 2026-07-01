@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/ai-driven-dev/framework/compare/aidd-pm-v2.1.0...aidd-pm-v2.1.1) (2026-07-01)
+
+
+### Refactoring
+
+* **framework:** strict anti-slop templates and review redesign ([153ba42](https://github.com/ai-driven-dev/framework/commit/153ba42faff9177c66ebb97de4ea8d7512fc5b85))
+
 ## [2.1.0](https://github.com/ai-driven-dev/framework/compare/aidd-pm-v2.0.0...aidd-pm-v2.1.0) (2026-06-30)
 
 

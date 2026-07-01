@@ -1,5 +1,22 @@
 # Changelog
 
+## [5.2.0](https://github.com/ai-driven-dev/framework/compare/v5.1.1...v5.2.0) (2026-07-01)
+
+
+### Features
+
+* **dev:** enforce the review report section set with a validator ([befe416](https://github.com/ai-driven-dev/framework/commit/befe416ae8dc36cdb0f49f546d2a194bfa5fb9a8))
+
+
+### Bug Fixes
+
+* **framework:** guarantee and report Claude agent copy on reload ([#375](https://github.com/ai-driven-dev/framework/issues/375)) ([2f37bab](https://github.com/ai-driven-dev/framework/commit/2f37babadcb9736f507a1a84d5745d1affdf9bae))
+
+
+### Refactoring
+
+* **framework:** strict anti-slop templates and review redesign ([153ba42](https://github.com/ai-driven-dev/framework/commit/153ba42faff9177c66ebb97de4ea8d7512fc5b85))
+
 ## [5.1.1](https://github.com/ai-driven-dev/framework/compare/v5.1.0...v5.1.1) (2026-06-30)
 
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.2.0](https://github.com/ai-driven-dev/framework/compare/aidd-dev-v2.1.0...aidd-dev-v2.2.0) (2026-07-01)
+
+
+### Features
+
+* **dev:** enforce the review report section set with a validator ([befe416](https://github.com/ai-driven-dev/framework/commit/befe416ae8dc36cdb0f49f546d2a194bfa5fb9a8))
+
+
+### Refactoring
+
+* **framework:** strict anti-slop templates and review redesign ([153ba42](https://github.com/ai-driven-dev/framework/commit/153ba42faff9177c66ebb97de4ea8d7512fc5b85))
+
 ## [2.1.0](https://github.com/ai-driven-dev/framework/compare/aidd-dev-v2.0.0...aidd-dev-v2.1.0) (2026-06-30)
 
 
