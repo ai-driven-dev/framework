@@ -1,43 +1,33 @@
-<!-- Review report for a diff, all three axes in one file. Fill the placeholders; do not copy this comment. -->
+<!-- Review report for a diff. Fill the placeholders, drop this comment. Tables and boxes, never prose. Fill or omit these sections; never add, rename, or reorder one. -->
 
 # Review: {{feature}}
 
-{{one_line_summary}}
-
 - **Verdict**: {{approve | changes-requested | blocked}}
-- **Diff scope**: `{{base}}...{{head}}`
-- **Axes run**: {{code, functional, relevancy}}
+- **Diff**: `{{base}}...{{head}}`
 - **Date**: {{yyyy_mm_dd}}
 - **Findings**: {{n_critical}} critical, {{n_warning}} warning, {{n_minor}} minor
 
-Verdict: `approve` = ship it; `changes-requested` = fix the warnings or fixable criticals first; `blocked` = a critical that must not merge. The overall verdict is the strictest across the axes run.
+## Phases
 
-## Code
+<!-- One block per plan phase, [x]/[ ] per acceptance criterion. Mark "Not run" when no plan was given. -->
 
-Clean-code findings on the changed lines (or "Not run").
+### Phase {{n}} — {{phase-name}}
 
-| Sev | Category | Location | Issue | Suggested fix |
-| --- | -------- | -------- | ----- | ------------- |
+- [x] {{criterion met}} — {{file:line}}
+- [ ] {{criterion unmet}} — {{gap}}
 
-## Functional
+## Findings
 
-Each acceptance criterion traced to the diff (or "Not run").
+<!-- One table for every axis. Kind is `code`, `fit`, `conform`, or `rot`. Phase ties the row to the plan, or `-` with no plan. Each axis appends its own rows. Write "None." when a run found nothing. -->
 
-| Criterion | Met | Evidence / gap |
-| --------- | --- | -------------- |
+| Sev | Kind | Phase | Location | Issue | Fix |
+| --- | ---- | ----- | -------- | ----- | --- |
 
-- **Missing behaviors**: {{criteria with no trace, or "none"}}
-- **Unplanned behaviors**: {{diff changes tracing to no criterion, or "none"}}
-- **Edge-case gaps**: {{gaps, or "none"}}
+## Verification
 
-## Relevancy
-
-Does the change belong (or "Not run"). Every finding ties to evidence, never an opinion.
-
-| Sev | Lens | Location / rule | Misfit | Suggested fix |
-| --- | ---- | --------------- | ------ | ------------- |
-
-## Follow-up
-
-- **Top fixes** (ranked): {{top_fixes}}
-- **Notes**: {{additional_notes}}
+| Metric        | Value                                             |
+| ------------- | ------------------------------------------------- |
+| Verified      | {{pct}}% ({{n_checked}}/{{n_total}})              |
+| Files checked | {{files, comma-separated}}                        |
+| Unchecked     | {{criterion — fix / not-applicable / fixed}}, or none |
+| Unplanned     | {{change tracing to no criterion}}, or none       |

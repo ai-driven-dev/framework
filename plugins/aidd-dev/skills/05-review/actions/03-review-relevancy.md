@@ -1,24 +1,20 @@
 # 03 - Review Relevancy
 
-Judge whether the diff belongs, coherent with the codebase, its conventions and declared rules, serving the real need, with nothing duplicated or over-built, and record the misfits in the review report.
+Judge whether the diff belongs (serves the need, conforms to the rules, no rot) and record the misfits in the review report.
 
 ## Input
 
-The diff to review (a git ref range or path; defaults to the diff against the repository default branch), the need it serves (the plan objective or the ticket), and the project's declared rules and conventions, discovered at runtime.
-
-## Output
-
-The `Relevancy` section of the feature folder's `review.md`, filled with misfit findings under the lenses `fit`, `conform`, and `rot`, each tied to evidence.
+The diff to review (a git ref range or path; defaults to the diff against the repository default branch), the need it serves (the plan objective or the ticket), the project's declared rules discovered at runtime, and the plan when in scope.
 
 ## Process
 
-1. **Gather.** Resolve the diff from the arguments, otherwise the diff against the repository default branch. Capture the need from the plan objective or the ticket. Discover the project's declared rules and conventions at runtime, never hardcoded. Fall back cleanly when a source is absent.
-2. **Fit.** Check the change against the need: does it serve the actual intent end to end, or only the literal criteria? Flag any drift between intent and result.
-3. **Conform.** Check the change against the declared rules and the surrounding conventions. Flag each violation with the rule or pattern it breaks.
-4. **Rot.** Scan for duplication (an existing helper reinvented), over-engineering (speculative generality, unused abstraction), and incoherence (naming, docs versus code). Cite the site.
-5. **Record.** Write each finding into the `Relevancy` section of `review.md`, rated and placed under its lens per `@../references/review-rubric.md`. A bare opinion is not a finding: tie each to a declared rule, a duplication site, an over-engineering smell, or a named need-gap.
+1. **Gather.** Resolve the diff, otherwise the diff against the repository default branch. Capture the need from the plan objective or the ticket. Discover the declared rules at runtime, never hardcoded. Fall back cleanly when a source is absent.
+2. **Fit.** Does the change serve the real intent end to end, not only the literal criteria? Flag drift. Lens `fit`.
+3. **Conform.** Does it hold to the declared rules and conventions? Flag each violation with the rule it breaks. Lens `conform`.
+4. **Rot.** Scan for duplication, over-engineering, and incoherence. Cite the site. Lens `rot`.
+5. **Record.** Append each misfit to the `Findings` table: kind the lens (`fit`, `conform`, `rot`), Phase the plan phase the file falls in or `-`. A bare opinion is not a finding: tie each to a rule, a duplication site, a smell, or a named need-gap. Write "None." when clean.
 
 ## Test
 
-- The `Relevancy` section of `review.md` is filled, every finding under a lens and tied to a `file:line`, a declared rule, a duplication site, or a named need-gap.
+- Each misfit is a `Findings` row, kind `fit`, `conform`, or `rot`, tied to a `file:line`, a rule, a duplication site, or a need-gap.
 - No finding is a bare opinion, and no code is patched.

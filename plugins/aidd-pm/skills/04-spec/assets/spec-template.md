@@ -1,3 +1,5 @@
+<!-- Fill or omit these sections; never add, rename, or reorder one. -->
+
 # <Project / Feature Name>
 
 ## Target
@@ -22,10 +24,10 @@
 
 ## Done-when
 
-<Verifiable conditions. The run is complete when ALL of these are true. Each condition specifies how it's verified (a check, a test, a metric - not a feeling).>
+<Observable conditions, each something a user or the system can be seen doing. ALL must hold. State the outcome, not the command that checks it, and not a feeling.>
 
-- <Condition 1, with how it's verified>
-- <Condition 2, with how it's verified>
+- <Observable condition 1>
+- <Observable condition 2>
 
 ## Stakeholders (optional)
 

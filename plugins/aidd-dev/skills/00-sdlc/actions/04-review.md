@@ -8,12 +8,12 @@ The working diff or paths produced by `03`, the validator (the plan path and acc
 
 ## Output
 
-A `ship` or `iterate` verdict with the reviewed items, the findings, the completion and quality scores, and the reviewed `HEAD` SHA (the commit the checker actually saw). The plan reaches `status: reviewed` on ship, and stays `implemented` on iterate.
+A `ship` or `iterate` verdict with the reviewed items, findings, completion and quality scores, and the reviewed `HEAD` SHA (the commit the checker saw), from `05-review`. The plan reaches `status: reviewed` on ship, and stays `implemented` on iterate.
 
 ## Process
 
 1. **Capture.** Record the current `HEAD` sha as the reviewed SHA. This is the exact code the checker judges, and the anchor `05-ship` checks against.
-2. **Spawn.** Spawn the `checker` agent with the inputs above. Brief it to run `aidd-dev:05-review`, code, functional, and relevancy, on that diff, and return its verdict.
+2. **Spawn.** Spawn the `checker` agent with the inputs above. Brief it to run `aidd-dev:05-review` on that diff, let that skill write and own its report, and return the verdict and findings.
 3. **Map.** When every check passes, the verdict is `ship`. On any blocking finding, the verdict is `iterate`.
 4. **Mark.** On `ship`, set the plan frontmatter `status: reviewed` and commit it. Carry the reviewed SHA in the verdict. On `iterate`, leave the plan `implemented`: the loop fixes the diff, not the plan.
 5. **Iterate.** On `iterate`, return the findings as the fix list for `03`. The next `04` re-captures the SHA on the fixed diff; ship is reached only when a review of the current diff passes.

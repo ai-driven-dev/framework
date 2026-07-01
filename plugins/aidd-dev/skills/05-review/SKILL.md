@@ -14,7 +14,7 @@ Read-only review of a diff along three axes, code quality, feature behavior, and
 | #   | Action              | Axis                                                              |
 | --- | ------------------- | ---------------------------------------------------------------- |
 | 01  | `review-code`       | Clean-code quality on the changed lines                          |
-| 02  | `review-functional` | The diff against the plan's acceptance criteria                  |
+| 02  | `review-functional` | The diff against the plan's phases and their acceptance criteria |
 | 03  | `review-relevancy`  | Does the change belong: fit to the need, rule conformance, no rot |
 
 Run all three by default, composing one report. Run a single axis only when the caller names it; if it is unclear whether they want all or one, ask.
@@ -24,7 +24,7 @@ Run all three by default, composing one report. Run a single axis only when the 
 - Read-only: surface each finding with its fix described, never patch.
 - Output: always write `review.md` to disk; the file is the deliverable, never an inline-only verdict.
 - Folder: write into the reviewed work's feature folder (`aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, beside `plan.md`), or one resolved from the change when it has none.
-- Sections: fill `review.md` from `assets/review-template.md`, each axis its own section, an unrun axis marked "Not run".
+- Report: fill `review.md` from `assets/review-template.md`. One shared `Findings` table for every axis: functional writes the `Phases` boxes and the `Verification` table, code and relevancy append rows to `Findings` under their `Kind`. Tables and boxes, no prose, no per-axis sections. The Phase column ties a finding to the plan when one is in scope, `-` otherwise.
 - Re-run: overwrite `review.md` with the current review. It is a snapshot of the current diff, not a history; a later review of the same work replaces the earlier one.
 - Verdict: one overall verdict, the strictest across the axes run, per `references/review-rubric.md`.
 

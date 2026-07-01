@@ -2,13 +2,13 @@
 status: pending
 ---
 
-# Instruction: {title}
+<!-- Fill or omit these sections; never add, rename, or reorder one. -->
 
-Part of [`plan.md`](./plan.md).
+# Instruction: {title}
 
 ## Architecture projection
 
-<!-- Tree of the final architecture: ❌ deleted, ✅ created, ✏️ modified. -->
+> Tree of the final files. ✅ create · ✏️ modify · ❌ delete
 
 ```txt
 .
@@ -23,8 +23,10 @@ flowchart TD
 
 ## Wireframe
 
+<!-- UI phase only. No UI => omit the section, don't invent one. -->
+
 ```txt
-{the confirmed wireframe, or omit this section when the phase has no UI}
+{the confirmed wireframe}
 ```
 
 ## Tasks to do
@@ -38,6 +40,8 @@ flowchart TD
 
 ## Test acceptance criteria
 
-| Task | Acceptance criteria                  |
-| ---- | ------------------------------------ |
-| 1... | {focused deterministic verification} |
+<!-- Each criterion is an observable behavior, not a command. -->
+
+| Task | Acceptance criteria              |
+| ---- | -------------------------------- |
+| 1... | {observable behavior of the task} |

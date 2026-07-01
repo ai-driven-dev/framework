@@ -35,8 +35,8 @@ The skill exposes 3 axes, run together by default or one when named:
 
 1. `review-code` - grade the diff against clean-code principles; surface
    violations with file and line.
-2. `review-functional` - verify the feature against the plan's acceptance
-   criteria; per-criterion trace plus missing / unplanned / edge-case gaps.
+2. `review-functional` - trace the feature against the plan's phases; each
+   acceptance criterion a checked or unchecked box, plus a verification summary.
 3. `review-relevancy` - judge whether the change belongs: fit to the need,
    conformance to the project's declared rules, and no duplication or
    over-engineering.
@@ -45,15 +45,16 @@ The skill exposes 3 axes, run together by default or one when named:
 
 - One read-only `review.md` in the reviewed work's feature folder, beside
   `plan.md`, never patches the code:
-  - Header: the overall verdict (`approve` / `changes-requested` / `blocked`,
-    the strictest across the axes run), scope, axes run, findings count.
-  - `Code` section: severity-rated findings (🔴 / 🟡 / 🟢) with `file:line`;
-    fixes hand off to [07-refactor](../07-refactor/README.md).
-  - `Functional` section: per-criterion matrix plus the gap lists; fixes hand
-    off to [02-implement](../02-implement/README.md) / [08-debug](../08-debug/README.md).
-  - `Relevancy` section: misfits by lens (`fit` / `conform` / `rot`), each
-    tied to a rule, a duplication site, a smell, or a named need-gap.
-  - An axis not run is marked "Not run".
+  - Header: the overall verdict (`approve` / `changes-requested` / `blocked`),
+    scope, and findings count.
+  - `Phases`: plan phases with a checked or unchecked box per acceptance
+    criterion (functional axis).
+  - `Findings`: one table for every axis (🔴 / 🟡 / 🟢), Kind (`code` / `fit` /
+    `conform` / `rot`), a Phase column, and `file:line`; code and relevancy
+    append their rows here.
+  - `Verification`: percent verified, files checked, a tag on each unchecked
+    criterion, and the unplanned changes.
+  - Each axis runs independently, appending to the shared report.
 
 ## Prerequisites
 

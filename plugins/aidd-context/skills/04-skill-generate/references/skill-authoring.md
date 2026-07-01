@@ -19,7 +19,7 @@ The contract every generated skill must satisfy. These rules govern the CLIENT s
 - **R6.** Zero duplication. One fact, one home. Actions cite a shared file via `@<path>` instead of restating it.
 - **R7.** `references/` = documents to READ and apply in place. `assets/` = files to COPY, INJECT, or fill in per run. A template, checklist, or form is an asset, not a reference, because each run instantiates it.
 - **R8.** Every action follows the action anatomy (below) and carries a `## Test`.
-- **R9.** Omit any optional section that would be empty. Never write a placeholder like `## External data` + `None.`.
+- **R9.** A section earns its content or is omitted. State each section's qualify bar and describe the behavior it captures, not a slot to fill. An entry that fails the bar is dropped, never invented to occupy the row. Never write `## External data` + `None.`, nor mint a decision, criterion, or resource just because the template offers it. A template's section set is closed: an instance fills or omits the defined sections and never adds, renames, or reorders one.
 - **R10.** Generated skills are English only (frontmatter, body, actions, references, assets), regardless of conversation language.
 - **R11.** One idea per sentence. Split a sentence that runs past one line. Exceptions: the single-line `description` and table rows.
 - **R12.** One file = one artifact. A reference or asset holds a single coherent thing: one checklist, one template, one criteria set. When a file accumulates several independently reusable artifacts, split them so each is cited and reused alone. Prefer this split over bundling, even when the combined file is short.
