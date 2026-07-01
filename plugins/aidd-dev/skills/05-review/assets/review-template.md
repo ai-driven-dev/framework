@@ -9,7 +9,7 @@
 
 ## Phases
 
-<!-- One block per plan phase, [x]/[ ] per acceptance criterion. Mark "Not run" when no plan was given. -->
+<!-- One block per plan phase, [x]/[ ] per acceptance criterion. Mark "Not run" when no plan was given or the functional axis did not run. -->
 
 ### Phase {{n}} — {{phase-name}}
 
@@ -18,12 +18,14 @@
 
 ## Findings
 
-<!-- One table for every axis. Kind is `code`, `fit`, `conform`, or `rot`. Phase ties the row to the plan, or `-` with no plan. Each axis appends its own rows. Write "None." when a run found nothing. -->
+<!-- One table for every axis. Kind is `code`, `fit`, `conform`, `rot`, or `functional`. An unmet acceptance criterion tagged `fix` appears here as a `functional` row so the header count matches the verdict. Phase ties the row to the plan, or `-` with no plan. Each axis appends its own rows. Write "None." when a run found nothing. -->
 
 | Sev | Kind | Phase | Location | Issue | Fix |
 | --- | ---- | ----- | -------- | ----- | --- |
 
 ## Verification
+
+<!-- Mark "Not run" when the functional axis did not run. -->
 
 | Metric        | Value                                             |
 | ------------- | ------------------------------------------------- |

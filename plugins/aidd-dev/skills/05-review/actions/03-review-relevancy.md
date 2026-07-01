@@ -6,6 +6,10 @@ Judge whether the diff belongs (serves the need, conforms to the rules, no rot) 
 
 The diff to review (a git ref range or path; defaults to the diff against the repository default branch), the need it serves (the plan objective or the ticket), the project's declared rules discovered at runtime, and the plan when in scope.
 
+## Output
+
+Misfit rows in the `Findings` table of the feature folder's `review.md`, each under a lens (`fit`, `conform`, `rot`), tied to evidence.
+
 ## Process
 
 1. **Gather.** Resolve the diff, otherwise the diff against the repository default branch. Capture the need from the plan objective or the ticket. Discover the declared rules at runtime, never hardcoded. Fall back cleanly when a source is absent.
