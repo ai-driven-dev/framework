@@ -1,5 +1,31 @@
 # Changelog
 
+## [5.1.0](https://github.com/ai-driven-dev/aidd-cli/compare/v5.0.2...v5.1.0) (2026-07-01)
+
+
+### Features
+
+* **copilot:** activate plugins via native copilot CLI ([#306](https://github.com/ai-driven-dev/aidd-cli/issues/306)) ([e0de6d7](https://github.com/ai-driven-dev/aidd-cli/commit/e0de6d76d23a9c15ec241ab1a61fdf08e861943c))
+* **install:** add per-target built-marketplace cache foundation ([de21e21](https://github.com/ai-driven-dev/aidd-cli/commit/de21e21634cc1cf4fb2c3faf8775d474b3552d24))
+* **install:** cursor materializes from the built tree ([da0e852](https://github.com/ai-driven-dev/aidd-cli/commit/da0e8522ac3d7c8934fc3f34135ec496a67fba8d))
+* **install:** delete sync feature; finalize build/install parity ([2995f52](https://github.com/ai-driven-dev/aidd-cli/commit/2995f52a3ea19267d96ac3862832147b4321c2c3))
+* **install:** native tools (codex/copilot) register the built tree ([e9ef8a4](https://github.com/ai-driven-dev/aidd-cli/commit/e9ef8a451512b4a64ff8aa82bee628fc92935b29))
+* **install:** opencode materializes from the flat built tree ([83c500f](https://github.com/ai-driven-dev/aidd-cli/commit/83c500f873a6189b61f38e08eaf823ae9f8ad37f))
+* **install:** point settings-file tools at the built tree ([ab2c770](https://github.com/ai-driven-dev/aidd-cli/commit/ab2c770825794c20c344a0d4b4b5db8090fc8b53))
+
+
+### Bug Fixes
+
+* **cli:** [#286](https://github.com/ai-driven-dev/aidd-cli/issues/286) conflict guard + working --force on update commands ([#299](https://github.com/ai-driven-dev/aidd-cli/issues/299)) ([109d08a](https://github.com/ai-driven-dev/aidd-cli/commit/109d08a4a90c63609c286054ae4759c57ac60fc7))
+* **codex:** enable plugins via native codex CLI so skills are discovered ([#302](https://github.com/ai-driven-dev/aidd-cli/issues/302)) ([3d9dcd5](https://github.com/ai-driven-dev/aidd-cli/commit/3d9dcd5564fa5c9ce0b904a589a26cd2e9db3aa0))
+* **install:** restore re-materializes built tree for cursor/opencode ([162888f](https://github.com/ai-driven-dev/aidd-cli/commit/162888fe311d182773161d8597b62f06d40863f2))
+* **install:** update re-materializes built tree for cursor/opencode ([6e7dc11](https://github.com/ai-driven-dev/aidd-cli/commit/6e7dc11b0be61d23cea3cd6079f0855a690478ea))
+
+
+### Documentation
+
+* **cli:** drop sync references from README and smoke surface ([77a67c7](https://github.com/ai-driven-dev/aidd-cli/commit/77a67c7330fb6e3eebbeae036363a72ea3fe7141))
+
 ## [5.0.2](https://github.com/ai-driven-dev/aidd-cli/compare/v5.0.1...v5.0.2) (2026-06-19)
 
 
