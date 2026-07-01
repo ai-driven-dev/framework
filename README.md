@@ -24,7 +24,7 @@
 [![CI](https://github.com/ai-driven-dev/framework/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ai-driven-dev/framework/actions/workflows/ci.yml)
 [![Made in France](https://img.shields.io/badge/made%20in-France-0055A4?labelColor=EF4135)](https://www.ai-driven-dev.fr/)
 
-<p>🗺️ <a href="https://github.com/orgs/ai-driven-dev/projects/8/views/1"><b>Live roadmap</b></a> — what's shipping Now / Next / Later</p>
+<p>🗺️ <a href="https://github.com/orgs/ai-driven-dev/projects/8"><b>Live roadmap</b></a> — what's shipping Now / Next / Later</p>
 
 </div>
 
@@ -236,7 +236,7 @@ Task-oriented how-to sheets. **[Browse all recipes →](recipes/)**
 
 > ⭐ **Free & open-source (MIT), built by the AIDD community.** If AIDD saves you time, [**a star**](https://github.com/ai-driven-dev/framework/stargazers) genuinely helps the project grow and helps other developers find it.
 
-> Actively maintained — the [roadmap](https://github.com/orgs/ai-driven-dev/projects/8/views/1) is public; help shape what comes after.
+> Actively maintained — the [roadmap](https://github.com/orgs/ai-driven-dev/projects/8) is public; help shape what comes after.
 
 Got an idea or hit a bug? **[Open an issue](https://github.com/ai-driven-dev/framework/issues)** or **[start a discussion](https://github.com/ai-driven-dev/framework/discussions)**. For everything else, **[join the Discord](https://discord.gg/EWySJSpjWs)**.
 

@@ -14,7 +14,7 @@ Take a request from idea to shipped code, delegating every step. Interactive by 
 | --- | ----------- | ------------------------------------- | --------------------------------------- |
 | 01  | `spec`      | Consolidate sources into the contract | a spec capability                       |
 | 02  | `plan`      | Produce the plan file                 | self, via `aidd-dev:01-plan`            |
-| 03  | `implement` | Build the plan's code                 | `executor`, via `aidd-dev:02-implement` |
+| 03  | `implement` | Build the plan's code, gating on the assertions | `executor`, via `aidd-dev:02-implement` |
 | 04  | `review`    | Verdict `ship` or `iterate`           | `checker`, via `aidd-dev:05-review`     |
 | 05  | `ship`      | Open the change request               | a commit and change-request capability  |
 

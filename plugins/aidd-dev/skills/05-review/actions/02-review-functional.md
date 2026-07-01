@@ -1,24 +1,24 @@
 # 02 - Review Functional
 
-Verify the diff matches the plan's acceptance criteria, flows, and edge cases, and record the result in the review report.
+Trace the diff against the plan's phases and their acceptance criteria, recording each as a checked or unchecked box.
 
 ## Input
 
-The plan path holding the acceptance criteria, from the arguments or the prompt, and the diff to trace (a git ref range; defaults to the diff against the repository default branch).
+The plan path holding the phases and their acceptance criteria, from the arguments or the prompt, and the diff to trace (a git ref range; defaults to the diff against the repository default branch).
 
 ## Output
 
-The `Functional` section of the feature folder's `review.md`: one row per acceptance criterion traced to the diff, plus the missing, unplanned, and edge-case gaps.
+The `Phases` and `Verification` sections of the feature folder's `review.md`: one block per plan phase with a box per acceptance criterion, and the verification summary.
 
 ## Process
 
-1. **Read.** Take the plan from the arguments; if absent, ask for the acceptance criteria, and mark this axis "Not run" when none are available. Static review only, no app execution or browser.
-2. **Trace.** Fetch the diff, then trace each acceptance criterion to it, one matrix row per criterion: met, partial, or unmet, with evidence or the gap.
-3. **Gaps.** List missing behaviors (criteria with no trace), unplanned behaviors (diff changes tracing to no criterion), and flow or edge-case gaps. An empty list reads "none", never omitted.
-4. **Record.** Write the matrix and the gaps into the `Functional` section of `review.md`, each with the missing or broken behavior named.
+1. **Read.** Take the plan from the arguments; if absent, ask for the acceptance criteria, and mark the `Phases` section "Not run" when none are available. Static review only, no app execution or browser.
+2. **Trace.** Fetch the diff, then walk each phase in plan order. For every acceptance criterion, check the box `[x]` only when the diff shows evidence, citing the `file:line`; leave it `[ ]` when unmet or partial, naming the gap.
+3. **Summarize.** Fill `Verification`: the percent and count of checked criteria, the files checked, every unchecked criterion tagged `fix`, `not-applicable`, or `fixed`, and any unplanned change in the diff that traces to no criterion. Write "none" for an empty list.
+4. **Record.** Write the phase blocks and the verification summary into `review.md`. No prose paragraphs, boxes and the summary only.
 
 ## Test
 
-- The `Functional` section of `review.md` holds exactly one row per acceptance criterion.
-- The missing, unplanned, and edge-case lists are present, each reading "none" when empty.
+- The `Phases` section holds one block per plan phase, every acceptance criterion a checked or unchecked box citing evidence or a gap.
+- The `Verification` section reports the verified percent, the files checked, a tag on each unchecked criterion, and the unplanned changes (or "none").
 - No code is patched.

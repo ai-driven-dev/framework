@@ -12,9 +12,11 @@ Shared definitions for the three review axes. The actions and the report templat
 
 One overall verdict, the strictest across the axes run:
 
-- `approve`: no critical finding, ship it.
-- `changes-requested`: warnings, or a fixable critical to address first.
-- `blocked`: a critical that must not merge.
+- `approve`: no critical finding, and every acceptance criterion checked, ship it.
+- `changes-requested`: warnings, a fixable critical, or any unchecked criterion tagged `fix`.
+- `blocked`: a critical that must not merge, or an unchecked critical criterion.
+
+An unchecked criterion in the `Phases` section is a functional finding: one tagged `fix` cannot yield `approve`.
 
 ## Code categories
 

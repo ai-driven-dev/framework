@@ -3,6 +3,8 @@ objective: "{What must be true when done. One sentence.}"
 status: pending
 ---
 
+<!-- Fill or omit these sections; never add, rename, or reorder one. -->
+
 # Plan: {title}
 
 ## Overview
@@ -21,12 +23,16 @@ status: pending
 
 ## Resources
 
-| Source        | Verified                    |
-| ------------- | --------------------------- |
-| {url or path} | {what it settled, one line} |
+<!-- External sources only (URLs, docs), not code files. Omit if none consulted. -->
+
+| Source | Verified          |
+| ------ | ----------------- |
+| {url}  | {what it settled} |
 
 ## Decisions
 
-| Decision   | Why            |
-| ---------- | -------------- |
-| {decision} | {one-line why} |
+<!-- Architecture-magnitude only, one you'd regret reversing. Omit if none qualify. -->
+
+| Decision   | Why   |
+| ---------- | ----- |
+| {decision} | {why} |
