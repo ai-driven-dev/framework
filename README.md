@@ -34,7 +34,19 @@ A marketplace of **skills, agents, commands, rules, and recipes** that drive you
 
 ## ✅ Prerequisites
 
-- **[Claude Code](https://claude.com/claude-code)** — the native host (other tools below).
+- **An AI tool we support** — AIDD runs inside your tool:
+
+  | Tool | Status | Formats |
+  | --- | --- | --- |
+  | **Claude Code** | ✅ Native · recommended | built-in marketplace |
+  | **Cursor** | ✅ Supported | marketplace\* · flat |
+  | **GitHub Copilot** | ✅ Supported | marketplace\* · flat |
+  | **Codex** | ✅ Supported | marketplace\* · flat |
+  | **OpenCode** | ✅ Supported | flat |
+  | **Gemini · Mistral** | 🚧 In progress | — |
+
+  <sub>\*The marketplace format needs the `aidd` CLI (on the way); the flat archive works today.</sub>
+
 - **[Node](https://nodejs.org)** on your `PATH` — some plugins run small Node hooks automatically ([what they do](docs/ARCHITECTURE.md#bundled-hooks)).
 
 ## 📦 Install
@@ -53,54 +65,54 @@ Register the marketplace, then install the plugins (slash commands, not shell):
 /plugin install aidd-orchestrator@aidd-framework
 ```
 
-Update anytime: `/plugin marketplace update aidd-framework`. Install scopes and versioning → [`MARKETPLACE.md`](docs/MARKETPLACE.md).
+Update anytime: `/plugin marketplace update aidd-framework`.
 
 ### Other tools
 
-| Tool | Status | Install |
-| --- | --- | --- |
-| **Claude Code** | ✅ Native · recommended | commands above |
-| **Cursor** | ✅ Supported | flat archive ↓ |
-| **GitHub Copilot** | ✅ Supported | flat archive ↓ |
-| **Codex** | ✅ Supported | flat archive ↓ |
-| **OpenCode** | ✅ Supported | flat archive ↓ |
-| **Gemini · Mistral** | 🚧 In progress | — |
-
-Every [release](https://github.com/ai-driven-dev/framework/releases/latest) attaches a **flat** archive per tool — unzip, no extra tooling. (A CLI that registers AIDD as a native marketplace on these tools is on the way.)
+Each tool ships two archives on every [release](https://github.com/ai-driven-dev/framework/releases/latest): a **flat** one that works today (unzip, no tooling) and a **marketplace** one for when the `aidd` CLI lands.
 
 <details>
 <summary><strong>Cursor</strong></summary>
 
-1. Download `aidd-framework-cursor-flat-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest).
-2. Unzip it into your project root — it materializes `.cursor/`, ready to use.
+- **Flat** (works today) — download `aidd-framework-cursor-flat-<version>.zip`, unzip into your project root → materializes `.cursor/`.
+- **Marketplace** (needs the `aidd` CLI, coming) — `aidd marketplace add aidd-framework ./aidd-framework-cursor-marketplace-<version>`, then install the same plugin names as Claude Code.
 
 </details>
 
 <details>
 <summary><strong>GitHub Copilot</strong></summary>
 
-1. Download `aidd-framework-copilot-flat-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest).
-2. Unzip it into your project root — it materializes the Copilot config, ready to use.
+- **Flat** (works today) — download `aidd-framework-copilot-flat-<version>.zip`, unzip into your project root.
+- **Marketplace** (needs the `aidd` CLI, coming) — `aidd marketplace add aidd-framework ./aidd-framework-copilot-marketplace-<version>`, then install the plugins.
 
 </details>
 
 <details>
 <summary><strong>Codex</strong></summary>
 
-1. Download `aidd-framework-codex-flat-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest).
-2. Unzip it into your project root — it materializes the Codex config, ready to use.
+- **Flat** (works today) — download `aidd-framework-codex-flat-<version>.zip`, unzip into your project root.
+- **Marketplace** (needs the `aidd` CLI, coming) — `aidd marketplace add aidd-framework ./aidd-framework-codex-marketplace-<version>`, then install the plugins.
 
 </details>
 
 <details>
 <summary><strong>OpenCode</strong></summary>
 
-1. Download `aidd-framework-opencode-flat-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest).
-2. Unzip it into your project root — it materializes `.opencode/`, ready to use.
+- **Flat** — download `aidd-framework-opencode-flat-<version>.zip`, unzip into your project root → materializes `.opencode/`. (Flat only for now.)
 
 </details>
 
 ## 🚀 Quick start
+
+Three ways in — pick one:
+
+| Start with | Command | When |
+| --- | --- | --- |
+| 🧭 **Guided onboarding** | `/aidd-context:00-onboard` | First time, or unsure what to run — it inspects the project and routes you. |
+| 🧠 **Project memory** | `/aidd-context:02-project-memory` | Build the project memory bank by hand. |
+| ⚙️ **Feature flow** | `/aidd-dev:00-sdlc` | Ship a feature end to end (plan → implement → review → PR). |
+
+The full loop, and how onboarding sets it up:
 
 ```mermaid
 flowchart LR
@@ -122,12 +134,6 @@ flowchart LR
     class Onboard hub;
     class PR done;
 ```
-
-Three ways in — pick one:
-
-- **Guided** (recommended) — `/aidd-context:00-onboard` inspects your project and routes you to the next step.
-- **Set up memory by hand** — `/aidd-context:02-project-memory` builds the project memory bank directly.
-- **Jump into a feature** — run the loop above, or `/aidd-dev:00-sdlc` to drive plan → implement → review → ship in one command.
 
 ## 🧩 Plugins
 
@@ -214,8 +220,8 @@ Full catalog → [`CATALOG.md`](docs/CATALOG.md).
 | 🍳 **[Recipes](recipes/)** | Task-oriented how-to sheets (e.g. [MCP installations](recipes/mcp-installation.md)). |
 | 🏛️ **[Architecture](docs/ARCHITECTURE.md)** | How the framework composes: plugins, skills, hooks, agents. |
 | 🧩 **[Create a plugin](docs/CREATE_PLUGIN.md)** | Build and publish your own. |
-| ❓ **[FAQ](docs/FAQ.md)** · **[Troubleshooting](docs/TROUBLESHOOTING.md)** | Install, update, limits, and fixes. |
-| 📖 **[Glossary](docs/GLOSSARY.md)** · **[Marketplace](docs/MARKETPLACE.md)** | Terms, scopes, versioning, LLM tiers. |
+| 🛒 **[Marketplace](docs/MARKETPLACE.md)** | Install scopes, versioning, LLM tiers. |
+| ❓ **[FAQ](docs/FAQ.md)** · **[Troubleshooting](docs/TROUBLESHOOTING.md)** · **[Glossary](docs/GLOSSARY.md)** | Common questions, fixes, and terms. |
 
 ## 🔒 Trust and safety
 
@@ -228,7 +234,7 @@ Before installing any plugin, skim its `README`, `hooks/`, and `.mcp.json`. Foun
 Free and open-source (MIT), built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community. If it saves you time, [a ⭐](https://github.com/ai-driven-dev/framework/stargazers) helps others find it.
 
 - **Idea or bug?** [Open an issue](https://github.com/ai-driven-dev/framework/issues) or [start a discussion](https://github.com/ai-driven-dev/framework/discussions).
-- **Contribute code** → [`CONTRIBUTING.md`](CONTRIBUTING.md) (PR rights: certified Core Team, see [`GOVERNANCE.md`](GOVERNANCE.md)).
+- **Contribute code** → [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - **Chat & roadmap** → [Discord](https://discord.gg/EWySJSpjWs) · [train your team](https://www.ai-driven-dev.fr/entreprise).
 
 ---
