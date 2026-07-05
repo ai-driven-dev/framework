@@ -49,7 +49,7 @@ Two sub-scopes:
 - No edge cases (those belong in integration)
 
 E2E files live in `tests/e2e/*.e2e.test.ts` — one per journey (persona, greenfield setup,
-clean, plugin install/create, sync, update, command-surface matrices,
+clean, plugin install/create, update, command-surface matrices,
 framework build). List them live: `ls tests/e2e/*.e2e.test.ts`. Each new command journey
 adds one file here.
 

@@ -45,7 +45,7 @@
 |---|---|
 | `aidd ai install <tool> [--force]` | Install AI tool runtime config |
 | `aidd ai uninstall <tool>` | Remove tool config |
-| `aidd ai list / status / update / sync / restore / doctor` | Per-tool ops |
+| `aidd ai list / status / update / restore / doctor` | Per-tool ops |
 
 ### IDE tools (vscode)
 | Command | Purpose |
@@ -79,11 +79,12 @@
 ### Globals (chain unitaries)
 | Command | Purpose |
 |---|---|
-| `aidd update / status / sync / restore / doctor` | Run across AI + IDE + plugins |
+| `aidd update / status / restore / doctor` | Run across AI + IDE + plugins (`status --json` for a machine-readable report) |
 | `aidd clean [--force]` | Nuke .aidd + tracked files |
 | `aidd self-update` | Update CLI binary |
 
 ### Removed (architecture cleanup; current manifest = v6)
+- `aidd sync` / `aidd ai sync` — removed with the build/install parity rework; `update` now re-materializes each tool from the built tree, so a separate sync step is gone (`sync-conflict-resolver` survives, reused by the update flow)
 - `aidd cache list/clear` — removed; cache cleared via `aidd marketplace refresh --force`
 - `aidd config list/get/set` — no remaining writable fields
 - `aidd install [category] [tool]` — replaced by `aidd ai/ide install`

@@ -10,13 +10,13 @@ src/
 │   ├── use-cases/            # Business orchestration
 │   │   ├── auth/             # login / logout / status / require-auth
 │   │   ├── doctor/           # orchestrator + layout / merge-files / plugin / references / tracked-files
-│   │   ├── global/           # cross-tool chains: update-all / status-all / sync-all / restore-all / doctor-all
+│   │   ├── global/           # cross-tool chains: update-all / status-all / restore-all / doctor-all
 │   │   ├── install/          # capability sub-use-cases: runtime-config / ide-config / agents / commands / rules / skills / config
 │   │   ├── marketplace/      # marketplace lifecycle: add / list / remove / refresh / check / register-framework / sync-settings
 │   │   ├── plugin/           # create / add / install / install-from-marketplace / remove / list / update / search / pick
 │   │   ├── restore/          # orchestrator + tool-files / all-plugins / plugin
 │   │   ├── setup/            # sub-use-cases: marketplace-source / tools / plugins-prompt
-│   │   ├── sync/             # orchestrator + source-resolver / conflict-resolver / file-propagation / plugins / status
+│   │   ├── sync/             # conflict-resolver only — drift/conflict resolution reused by the update flow
 │   │   ├── uninstall/        # orchestrator + tools / plugin / mcp-exclusion / ide
 │   │   └── shared/           # helpers called by use-cases only (never by commands)
 │   ├── error-handler.ts      # central error handling
@@ -43,12 +43,11 @@ src/
 
 | Domain | Orchestrator | Sub-use-cases |
 |---|---|---|
-| sync | `sync-use-case.ts` | source-resolver, conflict-resolver, file-propagation, plugins, status |
 | doctor | `doctor-use-case.ts` | layout, merge-files, plugin, references, tracked-files |
 | restore | `restore-use-case.ts` | tool-files, all-plugins, plugin (shared: restore-merge-files, restore-regular-files) |
 | uninstall | `uninstall-use-case.ts` | tools, plugin, mcp-exclusion, ide |
 | setup | `setup-use-case.ts` | marketplace-source, tools, plugins-prompt |
-| global | — | update-all, status-all, sync-all, restore-all, doctor-all (5 chain orchestrators) |
+| global | — | update-all, status-all, restore-all, doctor-all (4 chain orchestrators) + update-ai-tools / update-ide-tools helpers |
 
 ## Where to Add Things
 
@@ -88,6 +87,7 @@ tests/
 | `domain/tools/contracts.ts` | All tool/capability interfaces |
 | `domain/tools/registry.ts` | Tool lookup, guards, signal detection |
 | `application/use-cases/shared/post-install-pipeline-use-case.ts` | Mandatory post-write sequence |
+| `application/use-cases/shared/ensure-built-marketplace-use-case.ts` | Per-target built-tree cache — install/update materialize tools from it (build/install parity) |
 | `domain/models/manifest.ts` | Aggregate root — all installed file tracking + schema migration (v1→v6) on load |
 | `domain/models/normalized-plugin.ts` | Internal AST for foreign-format plugin ingestion |
 | `domain/models/setup-flow.ts` | Aggregate — setup orchestration state |

@@ -4,10 +4,10 @@ The `aidd` command-line tool: its command surface, I/O conventions, and distribu
 
 ## Commands
 
-Grouped surface (39 leaf commands). Authoritative list + flags in `project-brief.md`; live help is the source of truth (`aidd --help`, `aidd <group> --help`).
+Grouped surface. Authoritative list + flags in `project-brief.md`; live help is the source of truth (`aidd --help`, `aidd <group> --help`).
 
-- **Top-level**: `setup`, `status`, `update`, `sync`, `restore`, `doctor`, `clean`, `self-update`
-- **`ai <tool>`**: install / uninstall / list / status / update / sync / restore / doctor
+- **Top-level**: `setup`, `status`, `update`, `restore`, `doctor`, `clean`, `self-update`
+- **`ai <tool>`**: install / uninstall / list / status / update / restore / doctor
 - **`ide <tool>`**: install / uninstall / list / status / update / doctor
 - **`plugin`**: install / create / remove / list / update / search / doctor
 - **`marketplace`**: add / list / remove / refresh / check
@@ -18,8 +18,8 @@ Grouped surface (39 leaf commands). Authoritative list + flags in `project-brief
 
 - Parser: `commander` (`src/cli.ts`). `preAction` hook builds the dep graph once per `projectRoot` (memoized).
 - Global flags: `--version`, `--verbose`. Interactive by default (`@inquirer/prompts`).
-- Non-TTY needs explicit flags (`--yes`, `ai sync --source <tool>`, …). Top-level `sync` is interactive-only: non-TTY → exit 1 with guidance to use `aidd ai sync`.
-- Output: text on stdout, errors on stderr via `application/output.ts`. Typed exceptions thrown inward, caught only at the command layer (`error-handler.ts`) — no silent failures.
+- Non-TTY needs explicit flags (`setup --yes`, …); an interactive-only command with no flag in non-TTY exits 1 with guidance.
+- Output: text on stdout, errors on stderr via `application/output.ts`. `status --json` emits the full report as machine-readable JSON on stdout. Typed exceptions thrown inward, caught only at the command layer (`error-handler.ts`) — no silent failures.
 - Exit codes: `0` ok; `1` on error, unhealthy `doctor`, or a non-interactive guard.
 
 ## Distribution
