@@ -44,15 +44,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-read-project.md](skills/00-onboard/actions/01-read-project.md) | - |
-| `actions` | [02-orient.md](skills/00-onboard/actions/02-orient.md) | - |
-| `actions` | [03-act.md](skills/00-onboard/actions/03-act.md) | - |
-| `assets` | [menu.md](skills/00-onboard/assets/menu.md) | - |
+| `actions` | [01-scan.md](skills/00-onboard/actions/01-scan.md) | - |
+| `actions` | [02-report.md](skills/00-onboard/actions/02-report.md) | - |
+| `actions` | [03-run.md](skills/00-onboard/actions/03-run.md) | - |
+| `assets` | [report.md](skills/00-onboard/assets/report.md) | - |
 | `-` | [README.md](skills/00-onboard/README.md) | - |
-| `references` | [journey.md](skills/00-onboard/references/journey.md) | - |
-| `references` | [outcomes.md](skills/00-onboard/references/outcomes.md) | - |
-| `references` | [signals.md](skills/00-onboard/references/signals.md) | - |
-| `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Guide the user through AIDD on the current project, explaining the flow and the next step for what is set up. Use when the user asks where to start, what to do next, or how AIDD works. Not for listing installed surfaces or running a known skill.` |
+| `references` | [checks.md](skills/00-onboard/references/checks.md) | - |
+| `references` | [run-tiers.md](skills/00-onboard/references/run-tiers.md) | - |
+| `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Scan an AIDD project into a diagnostic of what is set up and missing, then run the recommended next commands in order. Use when the user asks where to start, what to do next, how the project stands, or to onboard onto AIDD. Not for listing every installed surface.` |
 
 #### `skills/01-bootstrap`
 
