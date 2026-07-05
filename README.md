@@ -13,7 +13,7 @@
 
 # AI-Driven Dev Framework
 
-### A French framework for AI-Driven Developer to produce high code quality.
+### A French framework for AI-Driven Developers to ship high-quality code.
 
 <p>
   <!--counts:start--><kbd>7 plugins</kbd> · <kbd>40 skills</kbd> · <kbd>2 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
@@ -30,42 +30,13 @@
 
 ---
 
-The **AI-Driven Dev Framework** is a marketplace — **skills, agents, commands, rules, prompts, templates, recipes…** — that helps you ship **high-quality features to production**.
+A marketplace of **skills, agents, commands, rules, prompts, templates, and recipes** that orchestrate your SDLC (Software Development Life Cycle) the agentic-engineering way — from idea to a tested, shipped PR.
 
-> Orchestrate your SDLC (Software Development Life Cycle) at scale, the agentic engineering way.
+## 📦 Install
 
-## 🧑‍💻 The AI-Driven Dev
+Built for **Claude Code** (native). Other tools install from a per-release archive — see [another tool](#another-tool).
 
-Built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: 3 years of R&D, 500+ developers trained in English 🇬🇧 and French 🇫🇷, shipping production software with 100% AI-generated code.
-
-- **[Join the Discord 🇫🇷](https://discord.gg/EWySJSpjWs)** — public [roadmap](./ROADMAP.md) decisions every Thursday morning.
-- **Want to train your team?** [See the programme](https://www.ai-driven-dev.fr/entreprise).
-- **AI is important to you?** [Join the ecosystem](https://www.ai-driven-dev.fr/ecosysteme).
-
-## ✅ Compatibility
-
-> Primarily built on **Claude Code** (they set the standards), but compatibility with the other tools is ensured.
-
-| Tool | Status |
-| --- | --- |
-| **Claude Code** | ✅ Native · **recommended** |
-| **GitHub Copilot** | ✅ Supported |
-| **Codex** | ✅ Supported |
-| **Cursor** | ✅ Supported |
-| **OpenCode** | ✅ Supported |
-| **Gemini** | 🚧 In progress |
-| **Mistral** | 🚧 In progress |
-
-## 📦 Installation
-
-Two install formats, depending on your tool:
-
-1. **Marketplace** *(recommended)* — register once, then install and update plugins on demand. Native in Claude Code; for Copilot and Codex, grab the `-marketplace-` archive and run `aidd marketplace add`.
-2. **Flat** — unzip a `-flat-` archive straight into your project (it materializes `.cursor/`, `.opencode/`, …). For tools without marketplace support.
-
-All builds are attached to each [GitHub release](https://github.com/ai-driven-dev/framework/releases) → [latest release](https://github.com/ai-driven-dev/framework/releases/latest).
-
-**Claude Code** — register the marketplace and install the plugins (slash commands, not shell):
+Register the marketplace, then install the plugins (these are slash commands, not shell):
 
 ```text
 /plugin marketplace add ai-driven-dev/framework
@@ -77,47 +48,26 @@ All builds are attached to each [GitHub release](https://github.com/ai-driven-de
 /plugin install aidd-orchestrator@aidd-framework
 ```
 
-**Other tools** — every release attaches a per-tool archive. Grab yours from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest):
+Update anytime with `/plugin marketplace update aidd-framework`. Scopes and versioning: [`MARKETPLACE.md`](docs/MARKETPLACE.md).
 
-<details>
-<summary><strong>GitHub Copilot</strong> — marketplace</summary>
+### Another tool
 
-1. Download [`aidd-framework-copilot-marketplace-<version>.zip`](https://github.com/ai-driven-dev/framework/releases/latest) and unzip it.
-2. Register the marketplace:
-   ```bash
-   aidd marketplace add aidd-framework ./aidd-framework-copilot-marketplace-<version>
-   ```
-3. Install the plugins from the registered `aidd-framework` marketplace (same plugin names as Claude Code).
+Every [release](https://github.com/ai-driven-dev/framework/releases/latest) attaches a per-tool archive in one of two formats:
 
-</details>
+- **Marketplace** — register once, install and update on demand: `aidd marketplace add aidd-framework ./<unzipped-dir>`, then install the same plugin names as Claude Code.
+- **Flat** — unzip straight into your project root; it materializes `.cursor/`, `.opencode/`, … ready to use.
 
-<details>
-<summary><strong>Codex</strong> — marketplace</summary>
+| Tool | Status | Format |
+| --- | --- | --- |
+| **Claude Code** | ✅ Native · **recommended** | native |
+| **GitHub Copilot** | ✅ Supported | marketplace |
+| **Codex** | ✅ Supported | marketplace |
+| **Cursor** | ✅ Supported | flat |
+| **OpenCode** | ✅ Supported | flat |
+| **Gemini** | 🚧 In progress | — |
+| **Mistral** | 🚧 In progress | — |
 
-1. Download [`aidd-framework-codex-marketplace-<version>.zip`](https://github.com/ai-driven-dev/framework/releases/latest) and unzip it.
-2. Register the marketplace:
-   ```bash
-   aidd marketplace add aidd-framework ./aidd-framework-codex-marketplace-<version>
-   ```
-3. Install the plugins from the registered `aidd-framework` marketplace (same plugin names as Claude Code).
-
-</details>
-
-<details>
-<summary><strong>Cursor</strong> — flat</summary>
-
-1. Download [`aidd-framework-cursor-flat-<version>.zip`](https://github.com/ai-driven-dev/framework/releases/latest).
-2. Unzip it into your project root — it materializes `.cursor/`, ready to use.
-
-</details>
-
-<details>
-<summary><strong>OpenCode</strong> — flat</summary>
-
-1. Download [`aidd-framework-opencode-flat-<version>.zip`](https://github.com/ai-driven-dev/framework/releases/latest).
-2. Unzip it into your project root — it materializes `.opencode/`, ready to use.
-
-</details>
+Grab `aidd-framework-<tool>-<format>-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). Private repo? `/plugin marketplace add` needs GitHub read access (`gh auth login` or a PAT).
 
 ## 🚀 Quick start
 
@@ -178,7 +128,7 @@ SDLC loop: sdlc, plan, implement, assert, audit, review, test, refactor, debug, 
 
 `5 skills` · stable
 
-Commits, pull / merge requests, release tags, issue creation.
+Repo init, commits, pull / merge requests, release tags, issue creation.
 
 </td>
 </tr>
@@ -224,6 +174,8 @@ UI and UX: design, review, and improve frontend interfaces. ⚠️ Alpha (`0.1.0
 </tr>
 </table>
 
+Full skills catalog: [`CATALOG.md`](docs/CATALOG.md).
+
 ## 📖 Recipes
 
 Task-oriented how-to sheets. **[Browse all recipes →](recipes/)**
@@ -232,17 +184,23 @@ Task-oriented how-to sheets. **[Browse all recipes →](recipes/)**
 | --- | --- |
 | [MCP installations](recipes/mcp-installation.md) | Choose CLI vs MCP, and wire up the recommended servers (GitHub, Atlassian, Figma, Notion…) |
 
+## 🧑‍💻 The AIDD community
+
+Built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: 3 years of R&D, 500+ developers trained in English 🇬🇧 and French 🇫🇷, shipping production software with 100% AI-generated code.
+
+- **[Join the Discord 🇫🇷](https://discord.gg/EWySJSpjWs)** — public [roadmap](./ROADMAP.md) decisions every Thursday morning.
+- **Want to train your team?** [See the programme](https://www.ai-driven-dev.fr/entreprise).
+- **AI is important to you?** [Join the ecosystem](https://www.ai-driven-dev.fr/ecosysteme).
+
 ## 🤝 Contributing
 
 > ⭐ **Free & open-source (MIT), built by the AIDD community.** If AIDD saves you time, [**a star**](https://github.com/ai-driven-dev/framework/stargazers) genuinely helps the project grow and helps other developers find it.
-
-> Actively maintained — the [roadmap](https://github.com/orgs/ai-driven-dev/projects/8) is public; help shape what comes after.
 
 Got an idea or hit a bug? **[Open an issue](https://github.com/ai-driven-dev/framework/issues)** or **[start a discussion](https://github.com/ai-driven-dev/framework/discussions)**. For everything else, **[join the Discord](https://discord.gg/EWySJSpjWs)**.
 
 > **Note** — code (pull-request) rights on this repo are reserved for **certified Core Team members** ([`GOVERNANCE.md`](./GOVERNANCE.md)). Everyone else can open issues, join discussions, and shape the roadmap.
 
-## 🔒 Trust & safety
+## 🔒 Trust and safety
 
 Plugins can run commands, edit files, and call external services on your behalf. Before installing any plugin from any marketplace, including this one: read its `README` and `SKILL.md`, inspect its actions, and check the permissions in its hooks and MCP servers. Spot a vulnerability? Report it privately via [`SECURITY.md`](./SECURITY.md).
 

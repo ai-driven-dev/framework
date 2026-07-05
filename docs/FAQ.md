@@ -5,9 +5,9 @@ Most "how do I…" answers live in the README; this page covers what isn't docum
 ## Install, update, other tools
 
 - **Install / first run** → [Quick start](../README.md#quick-start).
-- **Update plugins** → [Versioning and updates](../README.md#versioning-and-updates).
+- **Update plugins** → `/plugin marketplace update aidd-framework`, or see [Versioning & updates](MARKETPLACE.md#versioning--updates).
 - **Private repo?** Yes - `/plugin marketplace add` just needs GitHub read access (via `gh auth login` or a PAT).
-- **Cursor / Copilot / Codex / OpenCode?** This repo is the Claude Code distribution; for another tool, grab the per-release archive (`aidd-framework-<tool>-<mode>-<version>.zip`) attached to each [release](https://github.com/ai-driven-dev/framework/releases/latest), unzip, and install per the [Another AI tool?](../README.md#another-ai-tool) table.
+- **Cursor / Copilot / Codex / OpenCode?** This repo is the Claude Code distribution; for another tool, grab the per-release archive (`aidd-framework-<tool>-<mode>-<version>.zip`) attached to each [release](https://github.com/ai-driven-dev/framework/releases/latest), unzip, and install per the [Another tool](../README.md#another-tool) table.
 
 ## Cost and quotas
 
@@ -24,8 +24,8 @@ Most "how do I…" answers live in the README; this page covers what isn't docum
 
 - **Write your own plugin** → [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md).
 - **File a bug / request a feature** → [issue templates](https://github.com/ai-driven-dev/framework/issues/new/choose).
-- **Community** → [Discord](https://discord.gg/EWySJSpjWs) · [website](https://www.ai-driven-dev.fr/) (more links in the [README](../README.md#what-is-the-aidd-framework)).
+- **Community** → [Discord](https://discord.gg/EWySJSpjWs) · [website](https://www.ai-driven-dev.fr/) (more links in the [README](../README.md#the-aidd-community)).
 
 ## Troubleshooting
 
-Install failures (cache, name mismatch, reload) → [Troubleshooting](../README.md#troubleshooting).
+Install failures (cache, name mismatch, reload) → [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).

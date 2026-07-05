@@ -26,7 +26,3 @@ See the [skill README](skills/00-async-dev/README.md) for the sub-flow inventory
 |----------|-----------|
 | `agentic-orchestration` | Multi-agent coordination - sub-agents, hand-offs, supervision. |
 | `flow-orchestration` | Conditional / branching pipelines - human gates, fallbacks, retries. |
-
-## Install
-
-See the [framework quick start](../../README.md#quick-start).

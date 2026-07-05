@@ -8,6 +8,7 @@ The exhaustive list of AIDD plugins, skills, and actions. Skills are invoked thr
 - [aidd-refine](#aidd-refine) - meta-cognition
 - [aidd-vcs](#aidd-vcs) - version control workflows
 - [aidd-orchestrator](#aidd-orchestrator) - async orchestration (optional)
+- [aidd-ui](#aidd-ui) - UI / UX (🚧 alpha, not ready)
 
 ---
 
@@ -74,15 +75,15 @@ Meta-cognition: brainstorm, challenge, condense, blind-spot scan, fact-check.
 
 ## aidd-vcs
 
-Version-control workflows: commit, pull/merge request, release tag, issue.
+Version-control workflows: repo init, commit, pull/merge request, release tag, issue.
 
-| Skill                  | Role                                                | Actions                 |
-| ---------------------- | --------------------------------------------------- | ----------------------- |
-| `01-commit`            | Create an atomic conventional commit                | `01-commit`             |
-| `02-pull-request`      | Create a draft pull or merge request                | `01-pull-request`       |
-| `03-release-tag`       | Cut a semver release with annotated tag and notes   | `01-release-tag`        |
-| `04-issue-create`      | Create an issue in the configured ticketing tool    | `01-issue-create`       |
-| `05-pull-request-list` | List the open pull or merge requests                | `01-pull-request-list`  |
+| Skill             | Role                                                                            | Actions                 |
+| ----------------- | ------------------------------------------------------------------------------- | ----------------------- |
+| `00-repo-init`    | Initialize a repo: git init, default branch, bootstrap commit, optional remote  | `01-init`, `02-publish` |
+| `01-commit`       | Create an atomic conventional commit                                            | `01-commit`             |
+| `02-pull-request` | Create a draft pull or merge request                                            | `01-pull-request`       |
+| `03-release-tag`  | Cut a semver release with annotated tag and notes                              | `01-release-tag`        |
+| `04-issue-create` | Create an issue in the configured ticketing tool                               | `01-issue-create`       |
 
 ## aidd-orchestrator
 
@@ -91,3 +92,11 @@ Optional. Runs the SDLC asynchronously on labeled issues (webhook or cron). Most
 | Skill            | Role                                                  | Sub-flows                 |
 | ---------------- | ----------------------------------------------------- | ------------------------- |
 | `00-async-dev`   | Single entry point for the async-dev pipeline         | `setup`, `run`, `review`  |
+
+## aidd-ui
+
+🚧 **Alpha — not ready for use.** UI / UX: design, review, and improve frontend interfaces. Currently a smoke-test only.
+
+| Skill      | Role                                      | Actions    |
+| ---------- | ----------------------------------------- | ---------- |
+| `01-hello` | Smoke-test that confirms the plugin loads | `01-greet` |

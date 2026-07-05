@@ -25,6 +25,7 @@ flowchart TB
     Pm["aidd-pm"]
     Orchestrator["aidd-orchestrator"]
     Refine["aidd-refine"]
+    Ui["aidd-ui 🚧"]
   end
 
   subgraph SkillUnit["A plugin may ship (Claude Code surfaces)"]
@@ -45,6 +46,7 @@ flowchart TB
   Pm --> SkillUnit
   Orchestrator --> SkillUnit
   Refine --> SkillUnit
+  Ui --> SkillUnit
   Editor -->|"/plugin install"| Plugins
   Editor -->|invokes| Skills
 ```
@@ -90,6 +92,9 @@ Every capability lives in exactly one plugin, chosen by **concern**. This taxono
 | `aidd-dev`          | Code transformation  | Execution    |
 | `aidd-vcs`          | Version control      | External     |
 | `aidd-orchestrator` | Orchestration        | Coordination |
+| `aidd-ui` 🚧        | UI/UX design         | Execution    |
+
+`aidd-ui` ships but is **alpha** (smoke-test only, off the curated install path); it is listed here for completeness.
 
 Three rules follow:
 

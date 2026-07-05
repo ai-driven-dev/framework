@@ -89,11 +89,8 @@ One scope per commit (split cross-plugin changes). The types, the scopes, and th
 
 How releases flow (the `main`/`next` model, weekly cadence, hotfix, auto-merge) is in [`RELEASE.md`](./RELEASE.md); the release tooling is in [`aidd_docs/memory/vcs.md`](aidd_docs/memory/vcs.md). What a release produces, for contributors:
 
-- **7 independently-versioned packages** (root `aidd-framework` + the 6 plugins).
-- On release, CI attaches the bundles:
-  - `aidd-framework-marketplace-X.Y.Z.zip` - the Claude Code marketplace (`.claude-plugin/` + `plugins/`); kept as the legacy Claude alias of `aidd-framework-claude-marketplace-X.Y.Z.zip`.
-  - `<plugin>-vX.Y.Z.zip` - per released plugin.
-  - `aidd-framework-<tool>-<mode>-X.Y.Z.zip` - **per-tool distributions** built by `aidd-cli` (`framework build`) on the root release: 4 marketplace (claude/cursor/copilot/codex) + 5 flat (+opencode, flat-only) = 9 archives. Produced by the `build-per-tool` matrix job in `.github/workflows/ci.yml`, pinned to a specific `@ai-driven-dev/cli` version.
+- **8 independently-versioned packages** - root `aidd-framework` + the 7 plugins (`aidd-ui` is alpha).
+- On release, CI attaches the marketplace bundle, one archive per released plugin, and the per-tool distributions the `aidd-cli` builds. Full archive breakdown: [`MAINTAINERS.md`](docs/MAINTAINERS.md#releases).
 
 ## Reporting issues
 
