@@ -14,7 +14,7 @@ The marketplace name must match the `name` field in this repo's `.claude-plugin/
 
 ### A private repo won't add as a marketplace
 
-`/plugin marketplace add <owner>/<repo>` needs read access to the repo - authenticate with `gh auth login` or a PAT on the machine running your AI tool.
+`/plugin marketplace add <owner>/<repo>` needs read access to the repo. On the machine running your AI tool, authenticate with `gh auth login` or a personal access token (PAT).
 
 ### My new plugin's actions don't load
 
@@ -22,9 +22,9 @@ Run `/reload-plugins` in the same session, or restart the tool if a hook config 
 
 ## Limitations (what AIDD does not do)
 
-- **Not autonomous by default.** Skills run under human supervision; you drive each step.
-- **Authored for Claude Code.** Other tools get a per-release archive built by the `aidd-cli` (download → unzip → install; see [Another AI tool?](../README.md#another-ai-tool)); native parity is a roadmap item, not a guarantee today.
-- **Plugins assume their own context.** A skill that expects a git repo, a `package.json`, or a ticketing tool will not work without it - check the plugin's README.
+- **Not autonomous by default.** Skills run under human supervision. You drive each step.
+- **Authored for Claude Code.** Other tools get a per-release archive built by the `aidd-cli`: download it, unzip it, install it. See [Other tools](../README.md#other-tools). Full native support for other tools is on the roadmap, not guaranteed today.
+- **Plugins assume their own context.** A skill may expect a git repo, a `package.json` file, or a ticketing tool to be present. If it isn't, the skill will not work. Check the plugin's README for what it needs.
 - **No hosted service.** AIDD is prompt content you install into your own tool; there is no AIDD server, account, or telemetry.
 
 ## Still stuck?

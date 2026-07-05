@@ -1,6 +1,6 @@
 # Contributing
 
-Guidelines for adding skills, agents, rules, and templates inside your AIDD-equipped project.
+Guidelines for adding skills, agents, rules, and templates inside your AIDD-equipped project. Unfamiliar terms (skill, agent, rule, action) are defined in [`docs/GLOSSARY.md`](../docs/GLOSSARY.md).
 
 ## Creating New Content
 
@@ -8,7 +8,7 @@ Use the generator skills to scaffold new content that follows the framework stru
 
 | Skill                              | Creates              |
 | ---------------------------------- | -------------------- |
-| `aidd-context:03-context-generate` | New skill, agent, or rule (router-based, with actions) |
+| `aidd-context:03-context-generate` | New skill, agent, or rule ([router-based](../docs/GLOSSARY.md#router-based-skill), with actions) |
 | `aidd-context:10-learn`            | New memory or rule capturing a learning                          |
 
 Generator skills consume the templates inside their `assets/` folder and write the output to the correct location for your AI tool (Claude Code, Cursor, Copilot, Codex, OpenCode).
@@ -30,9 +30,11 @@ All templates live alongside the skill that owns them, under `plugins/<plugin>/s
 
 ## Syncing Across Tools
 
-If the project uses multiple AI tools (e.g. Claude Code plus Cursor), the same content must be available to each. The memory bank is shared automatically via the `<aidd_project_memory>` block kept in sync by `aidd-context:02-project-memory`. Skills are loaded per-plugin by the runtime, so any skill installed via the marketplace is available across tools that support skills.
+If your project uses more than one AI tool (e.g. Claude Code plus Cursor), the same content must be available to each.
 
-When tools differ in syntax (frontmatter, slash command name, references), follow the IDE mapping reference shipped with each plugin.
+- The memory bank syncs automatically, through the `<aidd_project_memory>` block that `aidd-context:02-project-memory` keeps up to date.
+- Skills sync automatically too: the runtime loads skills per plugin, so any skill installed via the marketplace is available in every tool that supports skills.
+- Where tools differ in syntax (frontmatter, slash command name, references), follow the IDE mapping reference shipped with each plugin.
 
 ## Recommended Workflow
 

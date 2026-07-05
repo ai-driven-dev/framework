@@ -39,10 +39,9 @@ How a developer should operate AI coding assistants to maximize quality, speed, 
 ## 3) Planning before coding
 
 - Ask AI for a short implementation plan first.
-- Validate 100% of plan before execution.
-- Split large tasks into small increments.
-- Keep one behavior per increment.
-- Refuse execution if plan has ambiguity.
+- Review and approve the full plan before execution starts.
+- Split large tasks into small increments, one behavior per increment.
+- Reject the plan if anything in it is ambiguous.
 
 ## 4) Implementation loop
 
@@ -64,19 +63,17 @@ For each increment:
 
 ## 6) Prompting hygiene
 
-- Give context, constraints, and expected output format.
+- Give context, constraints, and the expected output format.
 - Request concrete file paths and commands.
-- Ask for assumptions explicitly.
-- Ask for tradeoffs when options exist.
-- Keep prompts scoped; avoid multi-objective prompts.
-- If output quality drops, reset with a fresh focused prompt.
+- Ask the AI to state its assumptions and tradeoffs.
+- Keep each prompt scoped to one objective.
+- If output quality drops, reset with a fresh, focused prompt.
 
 ## 7) Context hygiene
 
 - Keep rules concise and non-conflicting.
-- Avoid duplicate sources of truth.
+- Avoid duplicate sources of truth: reference canonical docs by path instead of repeating them.
 - Keep project memory updated (`architecture`, `testing`, `vcs`, `decisions`).
-- Prefer canonical docs referenced by path.
 - Remove stale instructions quickly.
 
 ## 8) Quality discipline

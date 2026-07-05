@@ -27,9 +27,9 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 | `07-command-generate`  | Generate a flat slash command across the host AI tool(s)                       | `01-capture-command`, `02-write-command`, `03-validate`                                                  |
 | `08-hook-generate`     | Generate a lifecycle hook across the host AI tool(s)                           | `01-capture-hook`, `02-write-hook`, `03-validate`                                                        |
 | `09-mermaid`           | Generate Mermaid diagrams via a plan-validate workflow                        | `01-mermaid`                                                                                             |
-| `10-learn`             | Capture learnings, conventions, and decisions into memory, decisions, rules   | `01-gather`, `02-assess`, `03-write`, `04-sync`                                                          |
-| `11-explore`           | Survey the project across tooling, context, and codebase, then drill into one axis | `01-survey`, `02-drill`                                                                                  |
-| `12-cook`              | Manage the project's recipes/ how-to sheets: list, create, or update one      | `01-list`, `02-upsert`                                                                                   |
+| `10-learn`             | Capture learnings and decisions into memory and rules                        | `01-gather`, `02-assess`, `03-write`, `04-sync`                                                          |
+| `11-explore`           | Survey the project, then drill into one axis (tooling, context, or codebase) | `01-survey`, `02-drill`                                                                                  |
+| `12-cook`              | Manage the project's recipe sheets: list, create, or update one              | `01-list`, `02-upsert`                                                                                   |
 
 ## aidd-dev
 
@@ -38,7 +38,7 @@ The development SDLC: plan, implement, assert, audit, review, test, refactor, de
 | Skill           | Role                                                                       | Actions                                                                         |
 | --------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `00-sdlc`       | Pure orchestrator driving the full dev flow end to end                     | `01-spec`, `02-plan`, `03-implement`, `04-review`, `05-ship`                     |
-| `01-plan`       | Turn a request, ticket, or file into a phased implementation plan: gather, explore, wireframe, plan | `01-gather`, `02-explore`, `03-wireframe`, `04-plan`          |
+| `01-plan`       | Turn a request, ticket, or file into a phased implementation plan          | `01-gather`, `02-explore`, `03-wireframe`, `04-plan`          |
 | `02-implement`  | Execute a plan phase by phase until 100% complete                          | `01-implement`                                                                   |
 | `03-assert`     | Assert features work - general, architecture, frontend UI                  | `01-assert`, `02-assert-architecture`, `03-assert-frontend`                      |
 | `04-audit`      | Read-only codebase audit across quality pillars                            | `01-code-quality`, `02-architecture`, `03-security`, `04-dependencies`, `05-performance`, `06-tests`, `07-ui` |
@@ -47,7 +47,7 @@ The development SDLC: plan, implement, assert, audit, review, test, refactor, de
 | `07-refactor`   | Improve code without changing behavior across four axes                    | `01-performance`, `02-security`, `03-cleanup`, `04-architecture`                 |
 | `08-debug`      | Reproduce and fix bugs with a test-driven workflow                         | `01-reproduce`, `02-debug`, `03-reflect-issue`                                   |
 | `09-for-sure`   | Iterative loop that retries until a success condition is met               | `01-init-tracking`, `02-auto-accept`, `03-autonomous-loop`                       |
-| `10-todo`       | Split the prompt into independent todos, run one implementer agent per todo in parallel | `01-todo`                                                            |
+| `10-todo`       | Split the request into independent todos, one implementer agent per todo, run in parallel | `01-todo`                                                            |
 
 ## aidd-pm
 
@@ -66,7 +66,7 @@ Meta-cognition: brainstorm, challenge, condense, blind-spot scan, fact-check.
 
 | Skill              | Role                                                        | Actions                                                                                       |
 | ------------------ | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `01-brainstorm`    | Clarify a vague request through a bounded convergence loop of targeted questions | `01-capture`, `02-probe`, `03-integrate`, `04-finalize` |
+| `01-brainstorm`    | Clarify a vague request by asking a bounded set of targeted questions | `01-capture`, `02-probe`, `03-integrate`, `04-finalize` |
 | `02-challenge`     | Rethink prior work to verify correctness against a plan    | `01-challenge`                                                                                |
 | `03-condense`      | Toggle terse output mode and report token savings          | `01-condense`, `02-stats`                                                                     |
 | `04-shadow-areas`  | Scan a markdown artifact for blind spots                   | `01-detect`, `02-render-report`, `03-diff`                                                    |

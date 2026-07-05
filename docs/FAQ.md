@@ -1,6 +1,6 @@
 # Frequently asked questions
 
-Most "how do I…" answers live in the README; this page covers what isn't documented elsewhere and points to the rest.
+Most "how do I..." answers live in the README. This page covers what isn't documented elsewhere and links to the rest.
 
 ## Install, update, other tools
 
@@ -11,21 +11,21 @@ Most "how do I…" answers live in the README; this page covers what isn't docum
 
 ## Cost and quotas
 
-**Does running plugins cost money?** The plugins are MIT-licensed and free; the Claude calls they make consume your Anthropic plan or API balance (per-invocation on a plan, per-token on an API key).
+**Does running plugins cost money?** The plugins themselves are free (MIT license). But each time one calls Claude, that call uses your Anthropic plan or API balance, the same as any other Claude usage.
 
-**Disable a plugin without uninstalling?** Run `/plugin` and toggle it off in the **Installed** tab, or remove its entry from `.claude/settings.json` `enabledPlugins` (project scope) or `~/.claude/plugins/` (user scope).
+**Disable a plugin without uninstalling?** Run `/plugin` and toggle it off in the **Installed** tab. Or remove it by hand: delete its entry from `enabledPlugins` in `.claude/settings.json` (project scope), or from `~/.claude/plugins/` (user scope).
 
 ## Security
 
-- **What can a plugin do? Is it safe?** → [Trust and safety](../README.md#trust-and-safety) and [`SECURITY.md`](../SECURITY.md). Plugins run commands, edit files, and call services through your AI tool - inspect a plugin's `actions/`, `hooks/hooks.json`, and `.mcp.json` before installing. Claude Code asks before tool calls by default.
+- **What can a plugin do? Is it safe?** → [Trust & safety](../README.md#-trust--safety) and [`SECURITY.md`](../SECURITY.md). A plugin can run commands, edit files, and call services through your AI tool. Before installing one, check its `actions/`, `hooks/hooks.json`, and `.mcp.json`. Claude Code still asks for your approval before each tool call by default.
 - **Report a vulnerability** → [`SECURITY.md`](../SECURITY.md) (GitHub Security Advisories; never a public issue).
 
 ## Contributing
 
 - **Write your own plugin** → [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md).
 - **File a bug / request a feature** → [issue templates](https://github.com/ai-driven-dev/framework/issues/new/choose).
-- **Community** → [Discord](https://discord.gg/EWySJSpjWs) · [website](https://www.ai-driven-dev.fr/) (more links in the [README](../README.md#what-is-the-aidd-framework)).
+- **Community** → [Discord](https://discord.gg/EWySJSpjWs) · [website](https://www.ai-driven-dev.fr/) (more links in the [README](../README.md#-what-is-aidd)).
 
 ## Troubleshooting
 
-Install failures (cache, name mismatch, reload) → [Troubleshooting](../README.md#troubleshooting).
+Install failures (cache, name mismatch, reload) → [Troubleshooting](TROUBLESHOOTING.md).

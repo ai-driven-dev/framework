@@ -12,7 +12,7 @@
 
 > **Prefer the CLI over MCP. It is more efficient.**
 
-An MCP server loads its full tool schema into **every** turn — that bloats the context window and is less optimised. A CLI call costs a few tokens and returns only what you ask for.
+An MCP server loads its full tool schema into **every** turn. That bloats the context window. A CLI call costs a few tokens and returns only what you ask for.
 
 **Reach for MCP only when no CLI covers the service.**
 
@@ -22,15 +22,15 @@ An MCP server loads its full tool schema into **every** turn — that bloats the
 
 | Service | Official MCP | CLI alternative | Recommended |
 | --- | --- | --- | --- |
-| **GitHub** | [`api.githubcopilot.com/mcp/`](https://github.com/github/github-mcp-server) | [`gh`](https://cli.github.com/) | **CLI** — `gh` covers issues, PRs, releases, API at a fraction of the context |
+| **GitHub** | [`api.githubcopilot.com/mcp/`](https://github.com/github/github-mcp-server) | [`gh`](https://cli.github.com/) | **CLI**: `gh` covers issues, PRs, releases, and the API at a fraction of the context |
 | **Atlassian** (Jira / Confluence) | [`mcp.atlassian.com/v1/mcp`](https://www.atlassian.com/platform/remote-mcp-server) | [`acli`](https://developer.atlassian.com/cloud/acli/guides/introduction/) (Jira only at GA) | **CLI** for Jira · **MCP** for Confluence (no CLI yet) |
-| **Playwright** | [`@playwright/mcp`](https://github.com/microsoft/playwright-mcp) | [`npx playwright`](https://playwright.dev/docs/test-cli) + [official skill](https://claude.com/plugins/playwright) | **CLI** — drives a real browser (`playwright open`, `codegen`, `--headed`). The skill wraps it |
+| **Playwright** | [`@playwright/mcp`](https://github.com/microsoft/playwright-mcp) | [`npx playwright`](https://playwright.dev/docs/test-cli) + [official skill](https://claude.com/plugins/playwright) | **CLI**: drives a real browser (`playwright open`, `codegen`, `--headed`). The skill wraps it |
 | **Figma** | [`mcp.figma.com/mcp`](https://developers.figma.com/docs/figma-mcp-server/remote-server-installation/) | none for design data | **MCP** |
 | **Notion** | [`mcp.notion.com/mcp`](https://developers.notion.com/guides/mcp/get-started-with-mcp) | none official | **MCP** |
 
 ## Steps
 
-1. 🔎 **Check for a CLI first** — if the service has one (GitHub → `gh`, Jira → `acli`), install and authenticate it instead of an MCP server.
+1. 🔎 **Check for a CLI first.** If the service has one (GitHub → `gh`, Jira → `acli`), install and authenticate it instead of an MCP server.
 2. 🔌 **If MCP is the only option**, add the server to your `.mcp.json`:
    ```json
    {
@@ -39,7 +39,7 @@ An MCP server loads its full tool schema into **every** turn — that bloats the
      }
    }
    ```
-3. 🛡️ **Audit the server** before connecting — read its docs and the permissions it requests.
+3. 🛡️ **Audit the server** before connecting: read its docs and the permissions it requests.
 4. ✅ **Restart** your assistant so it picks up the new configuration.
 
 ## Verify
@@ -49,5 +49,5 @@ An MCP server loads its full tool schema into **every** turn — that bloats the
 
 ## Related
 
-- [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) — how the framework is structured
-- [Anthropic — discover plugins](https://code.claude.com/docs/en/discover-plugins)
+- [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md): how the framework is structured
+- [Anthropic: discover plugins](https://code.claude.com/docs/en/discover-plugins)
