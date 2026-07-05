@@ -4,7 +4,7 @@
 
 UI and UX concern for the AI-Driven Development framework.
 
-> ⚠️ **ALPHA — NOT READY FOR USE.** `0.1.0-alpha.0`. This plugin ships a single smoke-test skill and no real UI/UX capability yet. Do not install it expecting to use it; it exists only to validate the scaffold. APIs, skills, and naming may change or be removed without notice.
+> ⚠️ **ALPHA: NOT READY FOR USE.** `0.1.0-alpha.0`. This plugin ships a single smoke-test skill and no real UI/UX capability yet. Do not install it expecting to use it; it exists only to validate the scaffold. APIs, skills, and naming may change or be removed without notice.
 
 > Status: alpha (experimental).
 
