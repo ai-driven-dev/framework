@@ -397,7 +397,7 @@
     "plugins/aidd-async-dev/hooks/hooks.json": "78922a784ee78e9e50587e93628cd3b9d4dfbe49087adc4514e6781cea38cbb9",
     "plugins/aidd-async-dev/codex-agents/async-orchestrator.toml": "7490eb79d3d7b8c1f506ff1b15d03066213b08ba7a3d638befae1289bf272240",
     "plugins/aidd-async-dev/.codex-plugin/plugin.json": "19dbd85f9970a03d6e9370d1decbb9feb56451165add642440a6569af15a6233",
-    ".claude-plugin/marketplace.json": "d660f4eb03d90f2b2384c9ff61626d6ded7ede5664816681991ddebe622e099f"
+    ".agents/plugins/marketplace.json": "0f1e54dd48bb811d1b4bac2a0a0d80186573d0052e2bdec022bbd11b029e875f"
   },
   "claude": {
     "plugins/aidd-vcs/skills/04-issue-create/SKILL.md": "41fb7f904c88a07eb3ab94c6137c130166fa44069ed76322fc6eb78b81a7b5a4",

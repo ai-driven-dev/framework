@@ -27,6 +27,7 @@ import { AssetNotFoundError } from "../errors.js";
 const SCHEMA_FILE = "claude-code-plugin-manifest.json";
 const MARKETPLACE_SCHEMA_FILE = "copilot-plugin-marketplace.json";
 const CLAUDE_MARKETPLACE_SCHEMA_FILE = "claude-marketplace-manifest.json";
+const CODEX_MARKETPLACE_SCHEMA_FILE = "codex-marketplace-manifest.json";
 const CODEX_PLUGIN_MANIFEST_SCHEMA_FILE = "codex-plugin-manifest.json";
 
 const CONFIG_ASSETS: Readonly<Record<ToolId, Readonly<Record<string, ConfigAsset>>>> = {
@@ -46,6 +47,7 @@ const SCHEMA_FILES: Record<SchemaName, string> = {
   "plugin-manifest": SCHEMA_FILE,
   marketplace: MARKETPLACE_SCHEMA_FILE,
   "claude-marketplace": CLAUDE_MARKETPLACE_SCHEMA_FILE,
+  "codex-marketplace": CODEX_MARKETPLACE_SCHEMA_FILE,
   "codex-plugin-manifest": CODEX_PLUGIN_MANIFEST_SCHEMA_FILE,
 };
 

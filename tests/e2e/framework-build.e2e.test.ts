@@ -439,7 +439,7 @@ describe.concurrent("E2E: aidd framework build", () => {
       expect(build.stdout).toContain("Built");
       expect(build.stdout).toContain("files written to");
 
-      expect(existsSync(join(outDir, ".claude-plugin", "marketplace.json"))).toBe(true);
+      expect(existsSync(join(outDir, ".agents", "plugins", "marketplace.json"))).toBe(true);
       expect(existsSync(join(outDir, "plugins", "aidd-test", ".codex-plugin", "plugin.json"))).toBe(
         true
       );

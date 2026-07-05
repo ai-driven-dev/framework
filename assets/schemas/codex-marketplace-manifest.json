@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "Codex marketplace catalog schema. Shape verified 2026-07-05 against https://github.com/openai/plugins .agents/plugins/marketplace.json and https://developers.openai.com/codex/plugins/build. Validates the .agents/plugins/marketplace.json emitted by the codex build target, consumed by `codex plugin marketplace add`.",
+  "type": "object",
+  "required": ["name", "interface", "plugins"],
+  "additionalProperties": true,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Marketplace identifier."
+    },
+    "interface": {
+      "type": "object",
+      "required": ["displayName"],
+      "additionalProperties": true,
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "description": "User-visible marketplace name shown in the Codex plugins UI."
+        }
+      }
+    },
+    "plugins": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "source", "policy", "category"],
+        "additionalProperties": true,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "source": {
+            "type": "object",
+            "required": ["source", "path"],
+            "additionalProperties": true,
+            "properties": {
+              "source": {
+                "type": "string",
+                "description": "Source type, e.g. 'local' or 'git'."
+              },
+              "path": {
+                "type": "string",
+                "description": "Repo-root-relative path to the plugin directory (e.g. './plugins/aidd-dev')."
+              }
+            }
+          },
+          "policy": {
+            "type": "object",
+            "required": ["installation", "authentication"],
+            "additionalProperties": true,
+            "properties": {
+              "installation": {
+                "type": "string"
+              },
+              "authentication": {
+                "type": "string"
+              }
+            }
+          },
+          "category": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

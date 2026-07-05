@@ -38,5 +38,9 @@ export default defineConfig({
       "dist/claude-marketplace-manifest.json"
     );
     copyFileSync("assets/schemas/codex-plugin-manifest.json", "dist/codex-plugin-manifest.json");
+    copyFileSync(
+      "assets/schemas/codex-marketplace-manifest.json",
+      "dist/codex-marketplace-manifest.json"
+    );
   },
 });

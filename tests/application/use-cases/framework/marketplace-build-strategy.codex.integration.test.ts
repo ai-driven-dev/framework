@@ -64,10 +64,10 @@ describe("CodexOutputStrategy", () => {
       fs = await makeSeededFsFromReal();
     });
 
-    it("emits .claude-plugin/marketplace.json in output root", async () => {
+    it("emits .agents/plugins/marketplace.json in output root", async () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
-      expect(fs.has(`${OUT_DIR}/.claude-plugin/marketplace.json`)).toBe(true);
+      expect(fs.has(`${OUT_DIR}/.agents/plugins/marketplace.json`)).toBe(true);
     });
 
     it("emits .codex-plugin/plugin.json for each plugin", async () => {
@@ -148,25 +148,48 @@ describe("CodexOutputStrategy", () => {
   });
 
   describe("marketplace schema valid (AC #4)", () => {
-    it("emitted marketplace.json validates against bundled claude-marketplace-manifest.json schema", async () => {
+    it("emitted marketplace.json validates against bundled codex-marketplace-manifest.json schema", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
-      const raw = fs.getFile(`${OUT_DIR}/.claude-plugin/marketplace.json`) ?? "{}";
+      const raw = fs.getFile(`${OUT_DIR}/.agents/plugins/marketplace.json`) ?? "{}";
       const parsed = JSON.parse(raw) as unknown;
       const av = new AjvSchemaValidatorAdapter();
-      const schema = new BundledAssetProviderAdapter().loadSchema("claude-marketplace");
+      const schema = new BundledAssetProviderAdapter().loadSchema("codex-marketplace");
       expect(() => av.validate(schema, parsed)).not.toThrow();
     });
 
-    it("emitted marketplace.json has Claude-shape plugins with source: ./plugins/<name>", async () => {
+    it("emitted marketplace.json has Codex-native root: name + interface.displayName", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
-      const raw = fs.getFile(`${OUT_DIR}/.claude-plugin/marketplace.json`) ?? "{}";
-      const parsed = JSON.parse(raw) as { plugins: { name: string; source: string }[] };
+      const raw = fs.getFile(`${OUT_DIR}/.agents/plugins/marketplace.json`) ?? "{}";
+      const parsed = JSON.parse(raw) as {
+        name: string;
+        interface: { displayName: string };
+      };
+      expect(typeof parsed.name).toBe("string");
+      expect(typeof parsed.interface.displayName).toBe("string");
+    });
+
+    it("emitted marketplace.json has Codex-native plugin entries (source object + policy + category)", async () => {
+      const fs = await makeSeededFsFromReal();
+      const uc = makeUseCase(fs);
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      const raw = fs.getFile(`${OUT_DIR}/.agents/plugins/marketplace.json`) ?? "{}";
+      const parsed = JSON.parse(raw) as {
+        plugins: {
+          name: string;
+          source: { source: string; path: string };
+          policy: { installation: string; authentication: string };
+          category: string;
+        }[];
+      };
       const devPlugin = parsed.plugins.find((p) => p.name === "aidd-dev");
-      expect(devPlugin?.source).toBe("./plugins/aidd-dev");
+      expect(devPlugin?.source).toEqual({ source: "local", path: "./plugins/aidd-dev" });
+      expect(devPlugin?.policy.installation).toBe("AVAILABLE");
+      expect(typeof devPlugin?.policy.authentication).toBe("string");
+      expect(typeof devPlugin?.category).toBe("string");
     });
   });
 

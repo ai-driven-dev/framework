@@ -12,6 +12,7 @@ export type SchemaName =
   | "plugin-manifest"
   | "marketplace"
   | "claude-marketplace"
+  | "codex-marketplace"
   | "codex-plugin-manifest";
 
 export interface AssetProvider {

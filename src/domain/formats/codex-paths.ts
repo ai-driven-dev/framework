@@ -11,10 +11,12 @@
 export const OUTPUT_CODEX_MANIFEST_RELATIVE = ".codex-plugin/plugin.json";
 
 /**
- * Relative path for the Claude-shaped marketplace catalog in the codex output tree.
- * Codex auto-discovers this path at the repo root (legacy compat per docs).
+ * Relative path for the Codex-native marketplace catalog in the codex output tree.
+ * This is the official repo-scoped path `codex plugin marketplace add owner/repo`
+ * discovers (https://developers.openai.com/codex/plugins/build). The legacy
+ * `.claude-plugin/marketplace.json` fallback is intentionally not emitted.
  */
-export const OUTPUT_CODEX_MARKETPLACE_RELATIVE = ".claude-plugin/marketplace.json";
+export const OUTPUT_CODEX_MARKETPLACE_RELATIVE = ".agents/plugins/marketplace.json";
 
 /** Subdirectory name inside each plugin output for staged Codex agent TOML files. */
 export const OUTPUT_CODEX_AGENTS_DIR = "codex-agents";

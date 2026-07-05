@@ -63,6 +63,8 @@ import type { PluginPresence, ToolBuildContract } from "../../../../domain/tools
 import {
   buildClaudeStyleMarketplace,
   buildClaudeStyleMarketplaceEntry,
+  buildCodexMarketplace,
+  buildCodexMarketplaceEntry,
   resolveDescription,
   resolveVersion,
   synthesizeClaudeStyleManifest,
@@ -368,15 +370,15 @@ export function buildCodexContract(): ToolBuildContract {
       commands: { supported: false },
     },
     buildMarketplaceCatalog: async (source, entries, _fs) => ({
-      catalog: buildClaudeStyleMarketplace(
-        source as Parameters<typeof buildClaudeStyleMarketplace>[0],
+      catalog: buildCodexMarketplace(
+        source as Parameters<typeof buildCodexMarketplace>[0],
         entries
       ),
-      schemaName: "claude-marketplace",
+      schemaName: "codex-marketplace",
       destRelPath: marketplaceRelative,
     }),
-    buildMarketplaceEntry: async (name, _src, outDir, srcEntry, fs) =>
-      buildClaudeStyleEntry(name, outDir, srcEntry, manifestRelative, fs),
+    buildMarketplaceEntry: async (name, _src, _outDir, srcEntry, _fs) =>
+      buildCodexMarketplaceEntry(name, srcEntry as Record<string, unknown> | undefined),
   };
 }
 
