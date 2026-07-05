@@ -29,4 +29,4 @@ See the [skill README](skills/00-async-dev/README.md) for the sub-flow inventory
 
 ## Install
 
-See the [framework quick start](../../README.md#quick-start).
+See the [framework quick start](../../README.md#-quick-start).

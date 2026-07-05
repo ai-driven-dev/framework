@@ -106,5 +106,3 @@ is documented in [`RELEASE.md`](RELEASE.md).
 
 All interactions follow the [Code of Conduct](./CODE_OF_CONDUCT.md). Changes
 to this document follow the explicit-consensus rule described above.
-</content>
-</invoke>

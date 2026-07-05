@@ -71,14 +71,14 @@ Prerequisites:
 
 A skill is referenced by `plugin:NN-name`, for example `aidd-dev:02-implement`. The separator inside the name is a **hyphen**, not a colon (`02-implement`, never `02:implement`). Two ways to run it:
 
-- **Auto-trigger**: describe what you want in plain language; Claude Code routes to the matching skill.
+- **Auto-trigger**: describe what you want in plain language. Claude Code routes you to the matching skill.
 - **Explicit**: name the skill (for example "run `aidd-dev:02-implement`").
 
 ---
 
 ## 4. Command to skill mapping (all 37 v3 commands)
 
-Invocation in v4 is `plugin:NN-action`. Where a column says "sub-flow", the old command is now one branch of a router skill; invoke the parent skill and it routes to that branch from your input.
+Invocation in v4 is `plugin:NN-action`. Where a column says "sub-flow", the old command is now one branch of a router skill. Invoke the parent skill, and it routes to that branch based on your input.
 
 ### onboarding and context generation
 
@@ -171,10 +171,10 @@ Invocation in v4 is `plugin:NN-action`. Where a column says "sub-flow", the old 
 ## 5. Step-by-step migration of an existing project
 
 1. **Back up your v3 customisations.** Note any commands you added yourself under `commands/`. They do not migrate automatically.
-2. **Delete the legacy framework folders** that the v3 CLI copied into your project: `commands/`, and any framework-managed `agents/`, `config/` copies. Your project's own `aidd_docs/` (memory, templates, tasks) stays. The memory bank format is unchanged.
-3. **Add the marketplace and install plugins** (section 3). Most users start with `aidd-context` + `aidd-dev` + `aidd-vcs` + `aidd-refine`.
+2. **Delete the legacy framework folders** that the v3 CLI copied into your project: `commands/`, plus any framework-managed copies of `agents/` and `config/`. Your project's own `aidd_docs/` (memory, templates, tasks) stays as-is. The memory bank format is unchanged.
+3. **Add the marketplace and install plugins** (section 3). Most users start with `aidd-context`, `aidd-dev`, `aidd-vcs`, and `aidd-refine`.
 4. **Re-wire the project.** Run `aidd-context:02-project-memory` to set up the new layout in `.claude/` and ensure the project memory block is present in your AI context files. Run `aidd-context:00-onboard` if you want a guided walkthrough of what to do next.
-5. **Translate each custom command into a skill.** Use the built-in `skill-creator` (or `aidd-context:03-context-generate`), put the result in your own local plugin, and load it through `.claude/settings.json`.
+5. **Translate each custom command into a skill.** Use the built-in `skill-creator` (or `aidd-context:03-context-generate`) to generate it. Put the result in your own local plugin and load it through `.claude/settings.json`.
 6. **Update CI and scripts.** Anywhere CI called `/some_command`, switch to the new skill (auto-trigger by intent, or name `plugin:NN-action`). For `aidd-orchestrator`, see section 7.
 7. **Verify.** Run `aidd-context:11-explore` to confirm the installed skills, agents, rules and hooks match what you expect.
 
@@ -184,7 +184,7 @@ Invocation in v4 is `plugin:NN-action`. Where a column says "sub-flow", the old 
 
 **Will v3 keep working?** Yes, but it is no longer maintained. Pin to `v3.9.1` if you cannot migrate yet.
 
-**Do I need all 6 plugins?** No. Each is independent. Install only what you use; a common starting set is `aidd-context`, `aidd-dev`, `aidd-vcs`, `aidd-refine`.
+**Do I need all 6 plugins?** No. Each is independent. Install only what you use. A common starting set is `aidd-context`, `aidd-dev`, `aidd-vcs`, and `aidd-refine`.
 
 **Where did my custom hooks go?** Framework hooks now live in the plugin that owns them, under `plugins/<plugin>/hooks/`. Your own project hooks stay in your project.
 
