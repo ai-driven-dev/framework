@@ -1,6 +1,6 @@
 # Upgrade guide - v3.9.1 to v4.x
 
-> **Historical, frozen document.** This is the one-time v3 → v4 migration. If you are already on v4+, you can ignore it. It is not kept in sync with ongoing changes - for those, see [`CHANGELOG.md`](CHANGELOG.md).
+> **Historical, frozen document.** This covers the one-time move from v3 to v4. If you are already on v4 or later, skip it. It is not updated for later changes - see [`CHANGELOG.md`](CHANGELOG.md) for those.
 
 This release is a full architecture rewrite. The legacy flat repo (`commands/`, `agents/`, `skills/`, `rules/`, `config/`, `dist/`) was replaced by a Claude Code **plugin marketplace** organised around skills.
 
@@ -21,7 +21,7 @@ This guide tells you exactly what disappears, what each old command becomes, and
 1. **Delivery: marketplace, not clone.** In `v3` an external CLI copied the whole repo into each project and generated per-tool copies (Claude Code, Cursor, Copilot). In `v4` you point Claude Code at the marketplace and install plugins on demand.
 2. **Split into 6 plugins.** Each plugin owns one slice of the SDLC and ships its own version.
 3. **Commands became skills.** Every former `/command` is a skill with structured frontmatter, references, and assets. A skill can auto-trigger from your intent or be invoked by name.
-4. **Many commands were merged into routers.** Related v3 commands (the three `assert_*`, the two `review_*`, `performance` + `security_refactor`, the three debug-family commands, the five `generate_*`) collapsed into a single skill that routes to the right sub-action. See the mapping in section 4.
+4. **Many commands were merged into routers.** Groups of related v3 commands collapsed into a single skill that routes to the right sub-action: the three `assert_*` commands, the two `review_*` commands, `performance` and `security_refactor`, the three debug-family commands, and the five `generate_*` commands. See the mapping in section 4.
 5. **Agents, hooks, templates moved into their owning plugin** (for example `plugins/aidd-dev/agents/`).
 
 ---
@@ -60,7 +60,12 @@ Type these inside a Claude Code session (they are slash commands, not shell comm
 
 Install `aidd-pm` and `aidd-orchestrator` only if you use them. Each plugin is independent.
 
-Prerequisites: a recent Claude Code that supports `/plugin marketplace add`; an Anthropic plan or `ANTHROPIC_API_KEY`; `gh` authenticated if you use the GitHub-facing plugins (`aidd-vcs`, `aidd-orchestrator`, `aidd-pm`). If the marketplace repo is private, you must have read access on the machine running Claude Code (`gh auth login` or a PAT).
+Prerequisites:
+
+- A recent Claude Code that supports `/plugin marketplace add`.
+- An Anthropic plan or `ANTHROPIC_API_KEY`.
+- `gh` authenticated, if you use the GitHub-facing plugins (`aidd-vcs`, `aidd-orchestrator`, `aidd-pm`).
+- Read access to the marketplace repo on the machine running Claude Code, if that repo is private (`gh auth login` or a PAT).
 
 ### How to invoke a skill
 
