@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-If you discover a security vulnerability in the AI-Driven Dev framework or any of its plugins, please report it privately via [GitHub Security Advisories](https://github.com/ai-driven-dev/framework/security/advisories/new).
+If you discover a security vulnerability in the AI-Driven Dev framework or any of its plugins, report it privately through [GitHub Security Advisories](https://github.com/ai-driven-dev/framework/security/advisories/new).
 
 If GitHub Security Advisories are unreachable, email `security@ai-driven-dev.fr` instead. PGP-encrypted reports are accepted on request to the same address.
 
@@ -32,7 +32,7 @@ Do not file public issues for security problems. Public disclosure before a fix 
 
 ## Operational note
 
-Installing this marketplace lets its plugins run `SKILL.md` actions, hooks, and any MCP servers they declare through your AI tool. Review a plugin's artifacts before installing it. Any plugin that runs in CI or with elevated permissions documents its own risks and required secrets in **that plugin's README** - read it before enabling such a plugin on a repo that accepts community input.
+Installing this marketplace lets its plugins run `SKILL.md` actions, hooks, and any MCP servers they declare, through your AI tool. Review a plugin's artifacts before installing it. Any plugin that runs in CI or with elevated permissions documents its own risks and required secrets in **that plugin's README**. Read that README before enabling such a plugin on a repo that accepts community input.
 
 ## Out of scope
 
