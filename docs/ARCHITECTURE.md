@@ -83,6 +83,44 @@ Two checks keep manifests honest:
 - A `lefthook` pre-commit hook validates each `plugin.json` against the [`claude-code-plugin-manifest`](https://www.schemastore.org/claude-code-plugin-manifest.json) schema, and `marketplace.json` against [`claude-code-marketplace`](https://www.schemastore.org/claude-code-marketplace.json). This needs the JSON-schema validator (`pipx`/`check-jsonschema`) installed.
 - The `validate` GitHub workflow re-runs the same checks on every push and PR.
 
+## Registering a marketplace, step by step
+
+1. You run `/plugin marketplace add <owner>/<repo>`.
+2. Claude Code clones that repo.
+3. It reads the repo's `.claude-plugin/marketplace.json`, which lists the plugins on offer.
+4. Those plugins now show up when you run `/plugin install`.
+
+`aidd-framework` is one such marketplace: community-maintained, built around the AI-Driven Development methodology. Anthropic also runs its own [official marketplace](https://github.com/anthropics/claude-plugins-official) of broadly useful plugins. The two aren't exclusive: register both and install from either.
+
+> **Private repo?** `/plugin marketplace add` needs read access to it (`gh auth login` or a personal access token). See [Discover and install plugins](https://code.claude.com/docs/en/discover-plugins).
+
+**Install scopes** control where an installed plugin is remembered, and so who else can see it and how long it lasts:
+
+| Scope | Stored in | Lifetime | Best for |
+| --- | --- | --- | --- |
+| `user` | `~/.claude/plugins/` | Every project you open, on this machine | Your personal toolbelt |
+| `project` | `enabledPlugins` in the repo's `.claude/settings.json` | Only this repo, shared with teammates who pull it | A setup the whole team should use |
+| `local` | A local directory you point to | Only this machine | Developing a plugin before publishing it |
+
+Pick the scope in the `/plugin` UI at install time, or by editing `enabledPlugins` in `.claude/settings.json` directly.
+
+## Versioning & updates
+
+- Each plugin versions independently via `release-please`. Tags look like `aidd-<plugin>-vX.Y.Z`.
+- The root marketplace (`marketplace.json`) versions independently as `vX.Y.Z`.
+- Pull updates inside Claude Code with `/plugin marketplace update aidd-framework`.
+- Full history: [`CHANGELOG.md`](../CHANGELOG.md).
+
+## LLM tier reference
+
+Some skills ask for a model **tier** instead of a specific model, since different steps need different amounts of reasoning. AIDD is authored against Claude; on another tool, use its closest equivalent for each tier.
+
+| Tier | Best for | Claude | Other tools (examples) |
+| ---- | -------- | ------ | ---------------------- |
+| **T1 Fast** | Mechanical, deterministic tasks, templates, git ops | Haiku 4.5 | GPT-5.5 mini, Gemini Flash, Grok fast |
+| **T2 Balanced** | Implementation, validation, code generation | Sonnet 4.6 | GPT-5.5, Gemini Pro |
+| **T3 Thinking** | Deep reasoning, synthesis, planning, onboarding | Opus 4.8 | GPT-5.5 (thinking), Gemini Pro thinking |
+
 ## Plugin concerns and layers
 
 Every capability lives in exactly one plugin. Which plugin is decided by its **concern**: the kind of problem it solves. This table is the canonical source for that mapping; each `plugin.json` only implies it.

@@ -33,15 +33,13 @@ flowchart LR
 
 ## Roadmap voting
 
-- **Public** reacts with a 👍 / upvote. This is a **signal**, not a counted
-  vote. Enough signal promotes an item to a formal vote.
-- **Core Team, Certifié, and Habilité** members each cast **one equal vote**.
-  This vote is a benefit of AIDD membership, since the programme is a paid
-  training / community / coaching offering. Membership is what turns a signal
-  into a counted vote.
+The live roadmap is the [AIDD Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8) (Now / Next / Later). Shipped work is in [`CHANGELOG.md`](./CHANGELOG.md). To influence what lands on it:
+
+- Open a `feat:` issue, or post an idea in [GitHub Discussions](https://github.com/ai-driven-dev/framework/discussions), and react 👍 to what you want. This is a **signal**, not a counted vote, but enough signal promotes an item to a formal vote.
+- Discuss it on [Discord](https://discord.gg/EWySJSpjWs). Sponsored work has its own path: [`.github/FUNDING.yml`](./.github/FUNDING.yml).
+- **Core Team, Certifié, and Habilité** members each cast **one equal vote** once an item reaches a formal vote. This vote is a benefit of AIDD membership, since the programme is a paid training / community / coaching offering. Membership is what turns a signal into a counted vote.
 - **Habilité** holds the tiebreak vote and a **quality veto**, as the top rung.
-- A poll runs for **≥ 7 days**. Accepted items land on the
-  [AIDD Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8).
+- A poll runs for **≥ 7 days**. Accepted items land on the board above.
 
 ## Code decisions (merging)
 
@@ -100,7 +98,7 @@ no direct push or deletion. The release bot may bypass this to push its
 automated back-merge, and the `admin` team may merge without a second review.
 The machine-readable rules are in
 [`.github/rulesets/next.json`](.github/rulesets/next.json). The release flow
-is documented in [`RELEASE.md`](RELEASE.md).
+is documented in [`docs/MAINTAINERS.md`](docs/MAINTAINERS.md#releasing).
 
 ## Code of Conduct & amendments
 

@@ -20,7 +20,7 @@ Discussions.
   [Bug Report](https://github.com/ai-driven-dev/framework/issues/new/choose).
 - **Feature request** - open a Feature Request issue or an idea in Discussions;
   the community votes on priority (see
-  [`ROADMAP.md`](../ROADMAP.md#how-to-influence)).
+  [`GOVERNANCE.md`](../GOVERNANCE.md#roadmap-voting)).
 - **Security vulnerability** - do not open a public issue. Follow
   [`SECURITY.md`](../SECURITY.md).
 

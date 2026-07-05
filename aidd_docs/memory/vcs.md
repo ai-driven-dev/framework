@@ -53,7 +53,7 @@ docs/update-api-examples
 chore/release-please-config
 ```
 
-`next` is the day-to-day branch: branch from it, target it. `main` is production and only takes promotions from `next` plus `hotfix/*`. The release flow is in [`RELEASE.md`](../../RELEASE.md).
+`next` is the day-to-day branch: branch from it, target it. `main` is production and only takes promotions from `next` plus `hotfix/*`. The release flow is in [`docs/MAINTAINERS.md`](../../docs/MAINTAINERS.md#releasing).
 
 ## Commit Convention
 
@@ -124,7 +124,7 @@ BREAKING CHANGE: plugin.json now requires a `strict` field.
 
 ## Release Management
 
-The release flow (main/next model, weekly cadence, hotfix) lives in [`RELEASE.md`](../../RELEASE.md). This section is the tooling only.
+The release flow (main/next model, weekly cadence, hotfix) lives in [`docs/MAINTAINERS.md`](../../docs/MAINTAINERS.md#releasing). This section is the tooling only.
 
 - Automated via `release-please`, in `.github/workflows/ci.yml` on push to `main`.
 - The Release PR is auto-merged in that workflow (AIDD bot App token, a bypass actor on `main`).

@@ -8,7 +8,7 @@ body:
       value: |
         Have an idea? You can also post and upvote it in
         [Discussions](https://github.com/ai-driven-dev/framework/discussions) -
-        popular ideas get promoted to a roadmap vote (see [ROADMAP.md](https://github.com/ai-driven-dev/framework/blob/main/ROADMAP.md)).
+        popular ideas get promoted to a roadmap vote (see [GOVERNANCE.md](https://github.com/ai-driven-dev/framework/blob/main/GOVERNANCE.md#roadmap-voting)).
   - type: textarea
     id: problem
     attributes:

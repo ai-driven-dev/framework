@@ -76,7 +76,7 @@ Format: `<type>(<scope>): description`.
 git commit -m "feat(aidd-dev): add for-sure skill"
 ```
 
-Use one scope per commit; split cross-plugin changes into separate commits. Types, scopes, and rules live in [`aidd_docs/memory/vcs.md`](aidd_docs/memory/vcs.md#commit-convention), which mirrors `commitlint.config.cjs` (the source of truth). The commit **type** drives the release: see [`RELEASE.md`](./RELEASE.md) for what each type produces.
+Use one scope per commit; split cross-plugin changes into separate commits. Types, scopes, and rules live in [`aidd_docs/memory/vcs.md`](aidd_docs/memory/vcs.md#commit-convention), which mirrors `commitlint.config.cjs` (the source of truth). The commit **type** drives the release: see [`docs/MAINTAINERS.md`](docs/MAINTAINERS.md#releasing) for what each type produces.
 
 ## 3. Open a pull request
 
@@ -89,7 +89,21 @@ Use one scope per commit; split cross-plugin changes into separate commits. Type
 
 ## Releases
 
-See [`RELEASE.md`](./RELEASE.md) for how releases flow: the `main`/`next` model, weekly cadence, hotfix process, and auto-merge. The release tooling lives in [`aidd_docs/memory/vcs.md`](aidd_docs/memory/vcs.md). What a release produces, for contributors:
+See [`docs/MAINTAINERS.md`](docs/MAINTAINERS.md#releasing) for how releases flow: the `main`/`next` model, weekly cadence, hotfix process, and auto-merge. The release tooling lives in [`aidd_docs/memory/vcs.md`](aidd_docs/memory/vcs.md). Almost every change ships in the weekly release from `next`; only a `hotfix/*` (urgent production fix) branches from `main` and ships out of cycle.
+
+Your commit's **type** decides both the version bump and the changelog section it lands under:
+
+| Commit type | Changelog section | Version bump |
+| ----------- | ------------------ | ------------- |
+| `feat`      | Features            | minor (major with `!` or `BREAKING CHANGE`) |
+| `fix`       | Bug Fixes           | patch (major with `!` or `BREAKING CHANGE`) |
+| `perf`      | Performance         | rides along |
+| `refactor`  | Refactoring         | rides along |
+| `docs`      | Documentation       | rides along |
+| `chore`     | Miscellaneous       | rides along |
+| `revert`    | Reverts             | rides along |
+
+What a release produces, for contributors:
 
 - **7 independently-versioned packages**: the root `aidd-framework` plus the 6 plugins.
 - On release, CI attaches the bundles:

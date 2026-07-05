@@ -16,7 +16,7 @@ How to operate this repository day to day. For **who** may do what and the decis
 ## Daily
 
 - **Triage issues.** New issues auto-add to board #8. Set `Status` / `Area` / `Priority`, and link under an epic (native sub-issues) if relevant. **Type** is the issue/PR label, not a board field (see [Project board layout](#project-board-project-8)).
-- **Roadmap.** Priority is set by community vote (mechanism in `GOVERNANCE.md`). Accepted items live on board #8. Keep `ROADMAP.md` as a pointer only; do not maintain a second list.
+- **Roadmap.** Priority is set by community vote (mechanism in [`GOVERNANCE.md`](../GOVERNANCE.md#roadmap-voting)). Board #8 is the only backlog; don't maintain a second one.
 - **Review PRs.** Every PR needs a Habilité (CODEOWNERS) approval, and `lefthook` and `Commitlint` checks must pass. Squash-merge.
 
 ## Project board (Project 8)
@@ -82,18 +82,50 @@ gh label delete "github-actions" --yes
 
 Dependabot labels its PRs `dependencies` only (ecosystem sub-labels were dropped); confirm `.github/dependabot.yml` does not re-add a deleted label before deleting it.
 
-## Releases
+## Releasing
 
-release-please opens/updates a `chore: release main` PR on each push to `main`.
+The pipeline is automated; a human only triggers the promotion step:
 
-1. (Optional) Review the version bumps and changelog. The PR is authored by the **aidd-bot** App, so its checks run normally.
-2. CI **auto-merges** it with the App token (`--squash --admin`). No human step is needed. `--admin` is required because a plain `gh pr merge` is refused even for the bypass App.
-3. CI tags each bumped package, creates the GitHub Releases, and attaches the bundles:
+```text
+next  --(promote)-->  main  --(release-please)-->  version PR --(auto-merge)--> tags + GitHub releases
+                       |
+                       '--(back-merge)--> next   (keeps next in sync)
+```
+
+1. **Work lands on `next`** through normal PRs.
+2. **Promote `next` to `main`.** Run the **Promote next to main** workflow (Actions tab -> Run workflow). It opens a `next -> main` PR and rebase-merges it.
+3. **release-please** runs on the push to `main` and opens a `chore: release main` version PR (bumps + changelogs), authored by the **aidd-bot** App. CI **auto-merges** it with the App token (`--squash --admin`; `--admin` is required because a plain `gh pr merge` is refused even for the bypass App). No human step needed.
+4. CI tags each bumped package, creates the GitHub Releases, and attaches the bundles:
    - `aidd-framework-marketplace-X.Y.Z.zip` (`.claude-plugin/` + `plugins/`)
    - `<plugin>-vX.Y.Z.zip`
    - `aidd-framework-<tool>-<mode>-X.Y.Z.zip`: per-tool distributions (9 archives: 4 marketplace for claude/cursor/copilot/codex, plus 5 flat including opencode), built by the `build-per-tool` matrix job in `ci.yml` via `aidd-cli framework build`. **Pinned** to a specific `@ai-driven-dev/cli` version; bump it deliberately when adopting CLI build changes.
+5. **Back-merge** fires on `release: published` and syncs `main` back into `next`, so changelog and version files never drift.
 
-Versions live in `.release-please-manifest.json`. Forcing a version / pre-release: `release-as` in `release-please-config.json` (remove it after the release ships).
+Versions live in `.release-please-manifest.json`. To force a version or pre-release, set `release-as` in `release-please-config.json` (remove the pin once the release ships).
+
+### Hotfix: skipping the queue
+
+An urgent production fix skips `next` entirely: branch `hotfix/*` from `main`, PR straight back to `main`. release-please cuts a dedicated patch release, then the usual back-merge syncs `main` into `next` automatically.
+
+### Always promote by rebase, never squash
+
+`next -> main` carries many conventional commits (`feat(scope):`, `fix(scope):`). Two things need them intact:
+
+- **commitlint** checks every commit message on `main`. A squash collapses them into one subject taken from the PR title. If that title isn't a valid conventional type (e.g. `release:`), commitlint fails and **release-please gets skipped**: no release happens.
+- **release-please** reads each commit's type and scope to bump the right plugin by the right amount. A squash hides those commits, so it can't compute versions.
+
+In practice: always use the **Promote** workflow (it rebase-merges automatically). If you ever merge the promotion PR by hand, pick **Rebase and merge**, never **Squash**. The version PR release-please opens later is a single automated commit and is fine to squash.
+
+### If a release breaks
+
+Symptom: after a promote, `main` CI is red on **Commitlint** and **Release Please** is skipped. Usually a squashed, non-conventional promote commit.
+
+1. An admin temporarily disables the `main protection` ruleset (Settings -> Rules), force-pushes `main` back to the commit before the bad merge, then re-enables the ruleset.
+2. Re-run the **Promote** workflow (rebase). release-please then cuts the release normally.
+
+### Back-merge and drift
+
+The back-merge runs unattended (the bot app has an `always` bypass on the `next` ruleset). After each release it either realigns `next` onto `main` (the normal case, when `next` holds no unreleased work) or keeps a merge commit (when it does), so rebase-promote hash drift never accumulates. If it can't push, it opens an issue labelled `back-merge-failed`; resync with a `main -> next` PR. If `next` is missing entirely (it must not be: head branches are not auto-deleted), recreate it: `git push origin main:next`.
 
 ## Dependencies (Dependabot)
 

@@ -32,23 +32,11 @@
 
 ## ✨ What is AIDD?
 
-AIDD adds ready-made AI workflows to your coding assistant, so it follows a consistent, reviewed process instead of improvising. Install it, and your assistant gains **skills** (step-by-step routines like "plan a feature" or "review this diff"), plus the agents, rules, and templates those routines need.
-
-Use it if you build software with an AI assistant and want a repeatable path from an idea to a tested, shipped pull request. See it in action in [Quick start](#-quick-start) below.
+AIDD gives your AI coding assistant ready-made **skills** (step-by-step routines like "plan a feature" or "review this diff"), so it follows a consistent, reviewed process instead of improvising. Use it if you want a repeatable path from an idea to a tested, shipped pull request. See it in [Quick start](#-quick-start) below.
 
 ## ✅ Compatibility
 
-> Built first for **Claude Code** (they set the standards). The other tools below are supported too.
-
-| Tool | Status |
-| --- | --- |
-| **Claude Code** | ✅ Native · **recommended** |
-| **GitHub Copilot** | ✅ Supported |
-| **Codex** | ✅ Supported |
-| **Cursor** | ✅ Supported |
-| **OpenCode** | ✅ Supported |
-| **Gemini** | 🚧 In progress |
-| **Mistral** | 🚧 In progress |
+Built first for **Claude Code** ✅ (native, recommended). Also supported: **GitHub Copilot** ✅ · **Codex** ✅ · **Cursor** ✅ · **OpenCode** ✅. In progress: **Gemini** 🚧 · **Mistral** 🚧.
 
 ## 📦 Installation
 
@@ -230,21 +218,9 @@ Short, task-oriented how-tos. **[Browse all recipes →](recipes/)**
 | --- | --- |
 | [MCP installations](recipes/mcp-installation.md) | Choose CLI vs MCP, and wire up the recommended servers (GitHub, Atlassian, Figma, Notion, ...) |
 
-## 🧑‍💻 Built by a community
+## 🧑‍💻 Community & contributing
 
-AIDD comes from the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: 3 years of R&D, 500+ developers trained in French and English, shipping production software written by AI.
-
-- **[Join the Discord](https://discord.gg/EWySJSpjWs)** (French-speaking) - the public [roadmap](./ROADMAP.md) is discussed every Thursday morning.
-- **Want to train your team?** [See the programme](https://www.ai-driven-dev.fr/entreprise).
-- **Want to go further?** [Join the ecosystem](https://www.ai-driven-dev.fr/ecosysteme).
-
-## 🤝 Contributing
-
-Free and open-source (MIT). If AIDD saves you time, [**starring the repo**](https://github.com/ai-driven-dev/framework/stargazers) genuinely helps other developers find it.
-
-Got an idea or hit a bug? **[Open an issue](https://github.com/ai-driven-dev/framework/issues)** or **[start a discussion](https://github.com/ai-driven-dev/framework/discussions)**. For everything else, **[join the Discord](https://discord.gg/EWySJSpjWs)**.
-
-Writing code (pull requests) is reserved for certified Core Team members - see [`GOVERNANCE.md`](./GOVERNANCE.md). Everyone else can open issues, join discussions, and shape the [roadmap](https://github.com/orgs/ai-driven-dev/projects/8).
+Free and open-source (MIT), built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community (3 years of R&D, 500+ developers trained). Got an idea or hit a bug? [Open an issue](https://github.com/ai-driven-dev/framework/issues), [start a discussion](https://github.com/ai-driven-dev/framework/discussions), or [join the Discord](https://discord.gg/EWySJSpjWs) (French-speaking). Writing code is reserved for certified Core Team members, see [`GOVERNANCE.md`](./GOVERNANCE.md); everyone else can open issues, discuss, and shape the [roadmap](https://github.com/orgs/ai-driven-dev/projects/8). [Starring the repo](https://github.com/ai-driven-dev/framework/stargazers) helps others find it. [Training your team?](https://www.ai-driven-dev.fr/entreprise)
 
 ## 🔒 Trust & safety
 
@@ -255,13 +231,11 @@ Plugins can run commands, edit files, and call external services on your behalf.
 | Doc | What's inside |
 | --- | --- |
 | [`GLOSSARY.md`](docs/GLOSSARY.md) | Every term used in this framework, defined in one line |
-| [`FAQ.md`](docs/FAQ.md) | Common questions, answered fast |
-| [`TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Install issues, loading problems, current limits |
+| [`FAQ.md`](docs/FAQ.md) | Common questions, install issues, current limits |
 | [`CATALOG.md`](docs/CATALOG.md) | Every skill and action, in one table |
-| [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) | How plugins, skills, and agents fit together |
-| [`MARKETPLACE.md`](docs/MARKETPLACE.md) | Install scopes, versioning, updates |
+| [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) | How plugins, skills, and agents fit together; scopes, versioning |
 | [`CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md) | Build your own plugin |
-| [`MAINTAINERS.md`](docs/MAINTAINERS.md) | Maintainer playbook |
+| [`MAINTAINERS.md`](docs/MAINTAINERS.md) | Maintainer and release playbook |
 
 ## 📈 Star history
 
