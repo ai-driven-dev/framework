@@ -4,10 +4,10 @@ Most "how do I…" answers live in the README; this page covers what isn't docum
 
 ## Install, update, other tools
 
-- **Install / first run** → [Quick start](../README.md#quick-start).
+- **Install / first run** → [Quick start](../README.md#-quick-start).
 - **Update plugins** → `/plugin marketplace update aidd-framework`, or see [Versioning & updates](MARKETPLACE.md#versioning--updates).
 - **Private repo?** Yes - `/plugin marketplace add` just needs GitHub read access (via `gh auth login` or a PAT).
-- **Cursor / Copilot / Codex / OpenCode?** This repo is the Claude Code distribution; for another tool, grab the per-release archive (`aidd-framework-<tool>-<mode>-<version>.zip`) attached to each [release](https://github.com/ai-driven-dev/framework/releases/latest), unzip, and install per the [Another tool](../README.md#another-tool) table.
+- **Cursor / Copilot / Codex / OpenCode?** This repo is the Claude Code distribution; for another tool, download the flat archive (`aidd-framework-<tool>-flat-<version>.zip`) from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest) and unzip it into your project root. See [Other tools](../README.md#other-tools).
 
 ## Cost and quotas
 
@@ -17,14 +17,14 @@ Most "how do I…" answers live in the README; this page covers what isn't docum
 
 ## Security
 
-- **What can a plugin do? Is it safe?** → [Trust and safety](../README.md#trust-and-safety) and [`SECURITY.md`](../SECURITY.md). Plugins run commands, edit files, and call services through your AI tool - inspect a plugin's `actions/`, `hooks/hooks.json`, and `.mcp.json` before installing. Claude Code asks before tool calls by default.
+- **What can a plugin do? Is it safe?** → [Trust and safety](../README.md#-trust-and-safety) and [`SECURITY.md`](../SECURITY.md). Plugins run commands, edit files, and call services through your AI tool - inspect a plugin's `actions/`, `hooks/hooks.json`, and `.mcp.json` before installing. Claude Code asks before tool calls by default.
 - **Report a vulnerability** → [`SECURITY.md`](../SECURITY.md) (GitHub Security Advisories; never a public issue).
 
 ## Contributing
 
 - **Write your own plugin** → [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md).
 - **File a bug / request a feature** → [issue templates](https://github.com/ai-driven-dev/framework/issues/new/choose).
-- **Community** → [Discord](https://discord.gg/EWySJSpjWs) · [website](https://www.ai-driven-dev.fr/) (more links in the [README](../README.md#the-aidd-community)).
+- **Community** → [Discord](https://discord.gg/EWySJSpjWs) · [website](https://www.ai-driven-dev.fr/) (more links in the [README](../README.md#-community--contributing)).
 
 ## Troubleshooting
 

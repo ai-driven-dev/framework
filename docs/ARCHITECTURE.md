@@ -80,6 +80,15 @@ A plugin bundles **any subset** of the Claude Code surfaces (skills, agents, com
 
 The `plugin.json` is validated against [`claude-code-plugin-manifest`](https://www.schemastore.org/claude-code-plugin-manifest.json) by the `lefthook` pre-commit hook (when the JSON-schema validator, `pipx`/`check-jsonschema`, is available); the same hook validates `marketplace.json` against [`claude-code-marketplace`](https://www.schemastore.org/claude-code-marketplace.json). The `validate` workflow re-runs the hooks on every push and PR.
 
+## Bundled hooks
+
+Two plugins ship Claude Code hooks (declared in `plugins/<plugin>/hooks/hooks.json`). Both run Node, so users need `node` on their `PATH`:
+
+| Plugin         | Event             | Runs                      | Purpose                                                        |
+| -------------- | ----------------- | ------------------------- | ------------------------------------------------------------- |
+| `aidd-context` | `SessionStart`    | `hooks/update_memory.js`  | Refresh the project memory block in the AI context files      |
+| `aidd-refine`  | `UserPromptSubmit`| `hooks/condense-stats.js` | Report token savings while condensed output mode is on        |
+
 ## Plugin concerns and layers
 
 Every capability lives in exactly one plugin, chosen by **concern**. This taxonomy decides placement; it is only implicit in each `plugin.json`, so it is canonical here.
