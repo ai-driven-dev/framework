@@ -1,32 +1,32 @@
 # Build your own plugin
 
-This guide walks through building a new plugin for the AI-Driven Dev marketplace, from a blank directory to a merged PR.
+This guide takes you from a blank directory to a merged PR for a new plugin in the AI-Driven Dev marketplace.
 
-For broader OSS contribution rules (commit scopes, release flow), see [`../CONTRIBUTING.md`](../CONTRIBUTING.md). For the framework's architecture, see [`ARCHITECTURE.md`](ARCHITECTURE.md).
+For general OSS contribution rules (commit scopes, release flow), see [`../CONTRIBUTING.md`](../CONTRIBUTING.md). For how the framework fits together, see [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Adding a skill to an existing plugin
 
-Most contributions add a *skill* to an existing plugin, not a new plugin. Decide two things first:
+Most contributions add a [skill](GLOSSARY.md#skill) to an existing plugin, not a new plugin. Decide two things first:
 
-- **Which plugin** - the owning concern decides; see the [concern taxonomy](ARCHITECTURE.md#plugin-concerns-and-layers). A capability owned by another concern goes in that plugin and you delegate to it. A skill that sequences across several concerns goes in `aidd-orchestrator`.
-- **Which number** - `<NN>-<name>` encodes the plugin's logical pipeline order, not a next-free counter. Inserting mid-flow means renumbering downstream folders, their `skills[]` entries, and every `<plugin>:<NN>-name` invocation token - so weigh appending against inserting.
+- **Which plugin.** The owning concern decides; see the [concern taxonomy](ARCHITECTURE.md#plugin-concerns-and-layers). If another concern already owns the capability, put your skill there and delegate to it instead. A skill that sequences across several concerns goes in `aidd-orchestrator`.
+- **Which number.** `<NN>-<name>` encodes the plugin's pipeline order, not a next-free counter. Inserting mid-flow means renumbering downstream folders, their `skills[]` entries, and every `<plugin>:<NN>-name` invocation token. Prefer appending over inserting when you can.
 
-The rest of this guide applies to the skill directory; skip the plugin-registration steps (the plugin already exists - you only edit its `plugin.json` `skills[]`).
+The rest of this guide covers the skill directory itself. Skip the plugin-registration steps below: the plugin already exists, so you only add an entry to its `plugin.json` `skills[]`.
 
 ## Prerequisites
 
-The same toolchain as any framework contribution:
+Same toolchain as any framework contribution:
 
 - Node 20+, pnpm, jq, python3, pipx (`gh` CLI optional). See `Development setup` in [`../CONTRIBUTING.md`](../CONTRIBUTING.md).
-- A clear, scannable use case the plugin solves (one or two sentences).
+- A clear, one- or two-sentence use case the plugin solves.
 
 ## Step 1 - decide what the plugin does
 
 A good plugin in this marketplace is:
 
-- **Scoped to one phase or one concern.** "Generate user stories", "audit a codebase for tech debt", "rename a Claude Code prompt safely". If you can't say it in one sentence, split it.
-- **Composable with siblings.** Avoid duplicating skills already in `aidd-context`, `aidd-dev`, `aidd-vcs`, `aidd-pm`, `aidd-orchestrator`, or `aidd-refine`. Discovery-by-description means your plugin can pull on theirs at runtime.
-- **Independent of specific other plugins.** Never reference a sibling plugin by name in skill descriptions or READMEs. The discovery rule keeps the marketplace forkable.
+- **Scoped to one phase or one concern.** For example: "generate user stories", "audit a codebase for tech debt", "rename a Claude Code prompt safely". If you can't describe it in one sentence, split it into two plugins.
+- **Composable with siblings.** Don't duplicate skills already in `aidd-context`, `aidd-dev`, `aidd-vcs`, `aidd-pm`, `aidd-orchestrator`, or `aidd-refine`. Discovery-by-description lets your plugin pull on theirs at runtime.
+- **Independent of specific other plugins.** Never name a sibling plugin in a skill description or README. This discovery rule keeps the marketplace forkable.
 
 ## Step 2 - scaffold the directory
 
@@ -51,7 +51,7 @@ plugins/aidd-example/
 └── .mcp.json             # optional (MCP servers)
 ```
 
-A plugin can bundle any of the Claude Code surfaces above; only the manifest and `skills/` are required. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the surface model and real examples.
+A plugin can bundle any of the surfaces above; only the manifest and `skills/` are required. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the surface model and real examples.
 
 ### `plugin.json`
 
@@ -70,7 +70,7 @@ A plugin can bundle any of the Claude Code surfaces above; only the manifest and
 }
 ```
 
-The `skills` array registers each skill directory - a skill that is not listed will not load. The pre-commit hook validates this file against the Claude Code plugin manifest schema; run `pnpm exec lefthook run pre-commit` to confirm.
+The `skills` array registers each skill directory. A skill not listed here will not load. The pre-commit hook validates this file against the Claude Code plugin manifest schema; run `pnpm exec lefthook run pre-commit` to check it.
 
 ### `README.md` (plugin-level)
 
@@ -134,14 +134,14 @@ Greets the caller.
 }
 ```
 
-`source` is required (without it the plugin won't resolve); `recommended: false` keeps it off the curated install path until it stabilises. The hook validates `marketplace.json` against the marketplace schema on commit.
+`source` is required, otherwise the plugin won't resolve. `recommended: false` keeps it off the curated install path until it stabilises. The hook validates `marketplace.json` against the marketplace schema on commit.
 
-**b. Release config** - so `release-please` versions the plugin, add it to both:
+**b. Release config** - add the plugin to both files, so `release-please` versions it:
 
-- `release-please-config.json` → `packages` (with `package-name` + the `plugin.json` `extra-files` entry, copy a sibling block).
+- `release-please-config.json` → `packages` (with `package-name` + the `plugin.json` `extra-files` entry; copy a sibling block).
 - `.release-please-manifest.json` → `"plugins/aidd-example": "0.1.0"`.
 
-Skip this and the plugin will never get a release.
+Skip this and the plugin never gets a release.
 
 ## Step 4 - try it locally
 
@@ -151,16 +151,16 @@ Skip this and the plugin will never get a release.
 Use skill aidd-example:01-hello
 ```
 
-When you change SKILL.md or actions, run `/reload-plugins` in the same Claude Code session.
+When you change SKILL.md or an action, run `/reload-plugins` in the same Claude Code session.
 
 ## Step 5 - document, test, ship
 
-- Run `pnpm exec lefthook run pre-commit` to confirm JSON validity, YAML validity, and SKILL.md frontmatter checks pass. The pre-commit hook also regenerates your `plugins/aidd-example/CATALOG.md` automatically.
-- Open a PR using the project template and pick the right commit scope (`feat(aidd-example): ...`). Listing the scope in `commitlint.config.cjs` is encouraged (an unlisted scope warns but does not block).
+- Run `pnpm exec lefthook run pre-commit`. It checks JSON validity, YAML validity, and SKILL.md frontmatter, and regenerates `plugins/aidd-example/CATALOG.md` for you.
+- Open a PR using the project template, with the right commit scope (`feat(aidd-example): ...`). Add the scope to `commitlint.config.cjs` too - an unlisted scope only warns, but listing it is preferred.
 
 ## Step 6 - release
 
-Once the PR merges to `main`, `release-please` will propose a release PR for your plugin tagged `aidd-example-v0.1.0` (per-plugin tags). Merge the release PR to publish.
+Once the PR merges to `main`, `release-please` proposes a release PR for your plugin, tagged `aidd-example-v0.1.0` (plugins are tagged individually). Merge that PR to publish.
 
 ## Style guardrails
 

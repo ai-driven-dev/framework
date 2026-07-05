@@ -1,151 +1,124 @@
 # AI-Driven Dev Docs
 
-AIDD structures your AI coding assistant with skills, agents, rules, and a memory bank so it produces consistent, high-quality work, regardless of which AI tool you use (Claude Code, Cursor, Copilot, Codex, OpenCode).
+This folder is AIDD's memory for *this* project. It holds the context your AI assistant reads before it does any work, so it stays consistent across Claude Code, Cursor, Copilot, Codex, or OpenCode.
 
-- [What You Get](#what-you-get)
-  - [Concepts](#concepts)
-  - [Plugins](#plugins)
-  - [Framework Structure](#framework-structure)
-  - [Memory Block Lifecycle](#memory-block-lifecycle)
-- [Installation](#installation)
-- [Typical Workflow](#typical-workflow)
-- [Optional: Async Automation](#optional-async-automation)
-- [Validation Rules](#validation-rules)
+New here? Run `aidd-context:00-onboard` - it reads your project and tells you exactly what to do next. The rest of this page is reference material for later.
+
+- [What's in this folder](#whats-in-this-folder)
+- [Key terms](#key-terms)
+- [The plugins](#the-plugins)
+- [How the memory block stays in sync](#how-the-memory-block-stays-in-sync)
+- [A typical feature, step by step](#a-typical-feature-step-by-step)
+- [Optional: running the loop unattended](#optional-running-the-loop-unattended)
+- [Rules for writing a skill](#rules-for-writing-a-skill)
 - [References](#references)
 
 ---
 
-## What You Get
-
-A plugin marketplace of skills, agents, rules, templates, and a memory system. You invoke skills through your AI tool (slash command, MCP, or natural language trigger) and the AI follows structured workflows instead of guessing.
-
-### Concepts
-
-| Block     | Location                                          | What it does                                                                          |
-| --------- | ------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Memory    | `aidd_docs/memory/`                               | Project context the AI reads on every conversation                                    |
-| Skills    | plugin `skills/` folders                          | Router-based workflows triggered by user phrases or slashes                           |
-| Commands  | tool-specific commands dir (when supported)       | Plain slash commands (no router); used for shortcuts and simple flows. None currently shipped by AIDD; reserved for future plugins or your own additions |
-| Agents    | plugin `agents/` folders                          | Specialized AI personas for focused tasks                                             |
-| Rules     | tool-specific rules dir (see your AI tool docs)   | Coding standards the AI follows automatically                                         |
-| Templates | plugin `assets/` folders                          | Scaffolding for new skills, rules, agents                                             |
-
-### Plugins
-
-Skills are grouped into plugins by domain. Install only the plugins you need.
-
-| Plugin            | Purpose                                                                            | Example skills                                              |
-| ----------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| aidd-context      | Bootstrap, project init, generation of context artifacts (skills, agents, rules, commands, hooks, plugins, marketplaces), mermaid diagrams, learn, discovery | `02-project-memory`, `03-context-generate`, `09-mermaid`      |
-| aidd-refine       | Meta-cognition: brainstorm, challenge prior work, condensed communication mode     | `01-brainstorm`, `02-challenge`, `03-condense`              |
-| aidd-pm           | Product management: ticket info, user stories, PRD, spec                            | `01-ticket-info`, `02-user-stories`, `03-prd`, `04-spec` |
-| aidd-dev          | Code transformation: Dev SDLC orchestrator, plan, implement, assert, audit, review, test, refactor, debug, for-sure | `00-sdlc`, `01-plan`, `02-implement`, `05-review`, `06-test` |
-| aidd-vcs          | VCS workflows: commit, pull/merge request, release tag, issue creation             | `01-commit`, `02-pull-request`, `04-issue-create`           |
-| aidd-orchestrator | Async orchestration of the SDLC on labeled issues (optional, extra)                | `00-async-dev` (router with setup / run / review sub-flows) |
-
-> See the [CATALOG](../docs/CATALOG.md) for the exhaustive list of skills and actions.
-
-### Framework Structure
-
-AIDD installs alongside your code. Each AI tool's configuration directory holds the skills, agents, and rules it can load. Shared docs and memory live under `aidd_docs/`.
+## What's in this folder
 
 ```text
 my-project/
-├── .claude/                     # Claude Code: skills, agents, rules, hooks
-├── .cursor/                     # Cursor: skills, agents, rules
+├── .claude/                          # Claude Code: skills, agents, rules, hooks
+├── .cursor/                          # Cursor: skills, agents, rules
 ├── .github/copilot-instructions.md   # GitHub Copilot
-├── AGENTS.md                    # Cursor, Codex, OpenCode (shared)
-├── CLAUDE.md                    # Claude Code
+├── AGENTS.md                         # Cursor, Codex, OpenCode (shared)
+├── CLAUDE.md                         # Claude Code
 ├── aidd_docs/
-│   ├── memory/                  # Project context (loaded each conversation)
-│   │   ├── internal/            #   AIDD workflow traces (learn captures, audit notes)
-│   │   ├── external/            #   External documentation references
+│   ├── memory/                       # What the AI knows about this project (read every conversation)
 │   │   ├── architecture.md
 │   │   ├── codebase-map.md
 │   │   ├── coding-assertions.md
 │   │   ├── deployment.md
 │   │   ├── project-brief.md
 │   │   ├── testing.md
-│   │   └── vcs.md
-│   ├── internal/
-│   │   └── decisions/           # Decision records written by aidd-context:10-learn
-│   ├── tasks/                   # Specs, plans, run summaries
-│   ├── ADR.md                   # Architecture decision log (aidd-context:10-learn)
-│   ├── README.md                # This file
-│   ├── GUIDELINES.md            # Developer operating guidelines
-│   └── CONTRIBUTING.md          # How to add or modify skills, agents, rules
-├── src/                         # Your application code
+│   │   ├── vcs.md
+│   │   ├── internal/                 #   traces the AI writes about its own work (learn, audits)
+│   │   └── external/                 #   docs you point the AI at
+│   ├── internal/decisions/           # Decision records (written by aidd-context:10-learn)
+│   ├── tasks/                        # Specs, plans, run summaries
+│   ├── ADR.md                        # Architecture decision log
+│   ├── README.md                     # This file
+│   ├── GUIDELINES.md                 # How to work with an AI assistant day to day
+│   └── CONTRIBUTING.md               # How to add or change a skill, agent, or rule
+├── src/                               # Your application code
 └── tests/
 ```
 
-### Memory Block Lifecycle
+You will rarely touch anything above except `aidd_docs/memory/`: add or edit a file there when you want the AI to know something new about the project.
 
-Each AI context file (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, etc.) contains an `<aidd_project_memory>` block. It is:
+## Key terms
 
-1. **Seeded** the first time by `aidd-context:02-project-memory` (the skill creates the block if absent).
-2. **Kept in sync** automatically by a session-start hook (`aidd-context/hooks/update_memory.js`) that scans `aidd_docs/memory/` and writes the current list of `.md` files into the block.
+One line each. Full definitions: [Glossary](../docs/GLOSSARY.md).
 
-You never edit the block by hand. To change what the AI sees, add or remove files under `aidd_docs/memory/`; the hook picks them up at the next session.
+| Term | Where it lives | In one line |
+| --- | --- | --- |
+| Skill | plugin `skills/` folders | A workflow you trigger by name or by describing what you want |
+| Agent | plugin `agents/` folders | A worker a skill dispatches for one isolated sub-task |
+| Rule | tool's rules folder | A coding standard the AI applies automatically |
+| Hook | plugin `hooks/` folder | Automation that fires on an event (like after a commit) |
+| Memory | `aidd_docs/memory/` | Project facts the AI reads every conversation |
+| Command | tool's commands folder | A plain slash command with no routing logic. None ship with AIDD today; reserved for your own additions |
+| Template | plugin `assets/` folders | The scaffold a generator skill fills in |
 
----
+## The plugins
 
-## Installation
+Skills are grouped into plugins by topic. Install only what you need.
 
-AIDD is delivered as a plugin marketplace. Pick what you need; do not install everything.
+| Plugin | What it's for | Try this skill first |
+| --- | --- | --- |
+| `aidd-context` | Set up the project, its memory, and its AI config (skills, agents, rules, diagrams) | `00-onboard` |
+| `aidd-refine` | Sharpen a request or double-check prior work | `01-brainstorm` |
+| `aidd-pm` | Turn a request into tickets, user stories, a PRD, or a spec | `01-ticket-info` |
+| `aidd-dev` | Plan, write, test, review, refactor, and debug code | `01-plan` |
+| `aidd-vcs` | Commit, open a PR, tag a release, file an issue | `01-commit` |
+| `aidd-orchestrator` | Run the whole loop unattended from a labeled issue (optional) | `00-async-dev` |
 
-- **Remote marketplace** (default): add the AIDD marketplace via your AI tool's plugin manager, then install only the plugins your project actually uses (e.g. `aidd-context` + `aidd-dev` + `aidd-vcs`).
-- **Local marketplace**: clone the AIDD framework repo and point your AI tool's plugin manager at the local folder. Useful for offline work, custom forks, or contributing to the framework.
+See the [full catalog](../docs/CATALOG.md) for every skill and action.
 
-| Plugin       | Skills                                                                                                              |
-| ------------ | ------------------------------------------------------------------------------------------------------------------- |
-| aidd-context | 00-onboard, 01-bootstrap, 02-project-memory, 03-context-generate, 09-mermaid, 10-learn, 11-explore                    |
-| aidd-refine  | 01-brainstorm, 02-challenge, 03-condense, 04-shadow-areas, 05-fact-check                                            |
-| aidd-dev     | 00-sdlc, 01-plan, 02-implement, 03-assert, 04-audit, 05-review, 06-test, 07-refactor, 08-debug, 09-for-sure         |
-| aidd-vcs     | 01-commit, 02-pull-request, 03-release-tag, 04-issue-create                                                         |
-| aidd-pm      | 01-ticket-info, 02-user-stories, 03-prd, 04-spec                                                                    |
+## How the memory block stays in sync
 
-Each plugin is independently installable; install incrementally. Smaller surface, fewer triggers competing.
+Each AI context file (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, ...) contains one `<aidd_project_memory>` block. You never edit it by hand:
 
-## Typical Workflow
+1. `aidd-context:02-project-memory` creates it the first time.
+2. A session-start hook refreshes it automatically, scanning `aidd_docs/memory/` and listing the current files.
 
-A typical change cycles through skills from several plugins. The order below is indicative; skip what you do not need and loop back as the work demands.
+To change what the AI sees, add or remove a file under `aidd_docs/memory/` - the hook picks it up next session.
 
-1. **Bootstrap** (only for a brand-new project): `aidd-context:01-bootstrap` imagines the stack and architecture, comparing candidate stacks and writing an `INSTALL.md`. Skip this step on an existing project.
-2. **Project init** (once per project, re-runnable to refresh): `aidd-context:02-project-memory` scaffolds `aidd_docs/`, the memory bank, and the AI context files for the tools you use. Re-running later refreshes the scaffold without overwriting your customizations.
-3. **Frame the request**: `aidd-refine:01-brainstorm` to clarify, `aidd-pm:01-ticket-info` to pull tracker data, `aidd-pm:02-user-stories` and `aidd-pm:03-prd` or `aidd-pm:04-spec` to formalize scope.
-4. **Plan**: `aidd-dev:01-plan` produces the technical plan, component behavior model, or design-image extraction.
-5. **Implement and assert**: `aidd-dev:02-implement` writes code against the plan; `aidd-dev:03-assert` verifies the result.
-6. **Review**: `aidd-dev:05-review` for code and functional review; `aidd-refine:02-challenge` to stress-test the result.
-7. **Test**: `aidd-dev:06-test` adds or runs tests and validates user journeys.
-8. **Document and learn**: `aidd-context:09-mermaid` for diagrams; `aidd-context:10-learn` to feed insights back into the memory bank or rules.
-9. **Ship**: `aidd-vcs:01-commit`, `aidd-vcs:02-pull-request`, then `aidd-vcs:03-release-tag` when the work is in production. File issues with `aidd-vcs:04-issue-create`.
-10. **Refactor and maintain**: `aidd-dev:07-refactor` for performance or security, `aidd-dev:04-audit` for technical-debt sweeps, `aidd-dev:08-debug` to reproduce and fix bugs.
+## A typical feature, step by step
 
-When you want the whole synchronous pipeline run in one go (spec, plan, implementation, finalize), invoke `aidd-dev:00-sdlc`.
+Skip what you don't need; loop back as the work demands.
 
----
+1. **New project?** `aidd-context:01-bootstrap` proposes a stack and architecture, then writes an `INSTALL.md`. Skip this on an existing project.
+2. **Set up once** (safe to re-run): `aidd-context:02-project-memory` scaffolds `aidd_docs/` and your AI config files.
+3. **Frame the request**: `aidd-refine:01-brainstorm` to clarify it, then `aidd-pm:02-user-stories`, `03-prd`, or `04-spec` to write it down.
+4. **Plan**: `aidd-dev:01-plan` turns the request into a phased plan.
+5. **Build**: `aidd-dev:02-implement` writes the code; `aidd-dev:03-assert` checks it matches the plan.
+6. **Review**: `aidd-dev:05-review` for the diff; `aidd-refine:02-challenge` to stress-test it.
+7. **Test**: `aidd-dev:06-test` adds tests and validates the user journey.
+8. **Capture learnings**: `aidd-context:09-mermaid` for diagrams, `aidd-context:10-learn` to update memory or rules.
+9. **Ship**: `aidd-vcs:01-commit`, then `02-pull-request`; tag with `03-release-tag` once it's live.
+10. **Maintain**: `aidd-dev:07-refactor`, `aidd-dev:04-audit`, `aidd-dev:08-debug` as needed.
 
-## Optional: Async Automation
+Want one command for the whole loop instead? Run `aidd-dev:00-sdlc`.
 
-Beyond the synchronous path above, `aidd-orchestrator` runs the SDLC asynchronously on labeled issues (webhook or cron). This is extra: most projects do not need it. Use only when you want the AI to pick up `to-implement` issues without a human pressing a key.
+## Optional: running the loop unattended
 
-Inside the synchronous path, `aidd-dev:00-sdlc` is the Dev SDLC orchestrator that drives spec, plan, implementation, finalize in one go when you want the whole pipeline at once.
+`aidd-orchestrator` runs the same loop automatically on labeled GitHub issues, on a webhook or a schedule. Most projects don't need this - only add it if you want the AI to pick up `to-implement` issues without anyone pressing a key.
 
----
+## Rules for writing a skill
 
-## Validation Rules
+Building your own skill? Follow [`CONTRIBUTING.md`](CONTRIBUTING.md). Every skill needs:
 
-- Skills must have an `## Available actions` table, `## Default flow`, `## Transversal rules`.
-- Actions must contain only `## Inputs`, `## Outputs`, `## Process`, `## Test`.
-- Tests must be observable: command, artifact check, or side effect.
-
----
+- An `## Available actions` table, a `## Default flow`, and `## Transversal rules` in its `SKILL.md`.
+- Actions with only `## Inputs`, `## Outputs`, `## Process`, `## Test`.
+- Tests that are observable: a command to run, a file to check, or a visible side effect.
 
 ## References
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for adding or modifying skills, agents, and rules.
+[`CONTRIBUTING.md`](CONTRIBUTING.md) covers adding or changing skills, agents, and rules.
 
-External:
+External reading:
 
 - Anthropic, Prompt engineering overview: <https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview>
 - Anthropic, Claude Code memory: <https://docs.claude.com/en/docs/claude-code/memory>

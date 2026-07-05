@@ -1,6 +1,6 @@
 # Skill Catalog
 
-The exhaustive list of AIDD plugins, skills, and actions. Skills are invoked through your AI tool by their `plugin:NN-slug` name (slash command, MCP, or natural-language trigger). Actions are the internal steps a skill runs; you do not call them directly.
+The exhaustive list of AIDD plugins, skills, and actions. Invoke a skill by its `plugin:NN-slug` name: as a slash command, through MCP, or by describing what you want in plain language. Actions are the internal steps a skill runs; you never call them directly. See [`GLOSSARY.md`](GLOSSARY.md) for term definitions.
 
 - [aidd-context](#aidd-context) - knowledge production
 - [aidd-dev](#aidd-dev) - code transformation
@@ -20,7 +20,7 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 | `00-onboard`           | Detect project state and open a hub of project actions                        | `01-detect-state`, `02-recommend-next`, `03-execute-or-handoff`                                          |
 | `01-bootstrap`         | Imagine and validate a new SaaS architecture, output an `INSTALL.md`          | `01-gather-needs`, `02-propose-candidates`, `03-audit-candidates`, `04-pick-and-design`, `05-write-install-md` |
 | `02-project-memory`      | Initialize or refresh the memory bank and AI context files                    | `01-init-context-file`, `02-scaffold-docs`, `03-generate-memory`, `04-review-memory`, `05-sync-memory`  |
-| `03-context-generate`  | Router that dispatches an artifact-generation request to the dedicated generator below | delegates to `04`–`08` (and plugins / marketplaces)                                            |
+| `03-context-generate`  | Routes an artifact-generation request to the right generator skill below      | delegates to `04`–`08` (and plugins / marketplaces)                                            |
 | `04-skill-generate`    | Generate a router-based skill across the host AI tool(s)                       | `01-capture-intent`, `02-decompose-actions`, `03-draft-skill`, `04-write-actions`, `05-validate`        |
 | `05-rule-generate`     | Generate a coding rule that governs editor and agent behavior                 | `01-capture-rule`, `02-write-rule`, `03-validate`                                                        |
 | `06-agent-generate`    | Generate an agent across the host AI tool(s)                                   | `01-capture-agent`, `02-write-agent`, `03-validate`                                                      |

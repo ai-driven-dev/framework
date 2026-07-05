@@ -1,48 +1,48 @@
 # Glossary
 
-Definitions for the terms the framework uses without re-explaining each time. One paragraph per term, ordered for reading top to bottom.
+Plain definitions for the words used across this framework. Read this once - every other doc assumes you know these terms and links back here instead of re-explaining them.
 
 ## Plugin
 
-A `plugins/<name>/` directory installable from this marketplace into Claude Code. Each plugin owns one domain (context, dev, vcs, pm, orchestrator, refine), ships its own README, CATALOG, and skills, and may add any Claude Code surface: agents, commands, hooks, rules, and MCP servers (`.mcp.json`). Plugins version independently via `release-please`.
+A folder of related features you install into your AI tool, like an app from an app store. Example: `aidd-dev` bundles everything for planning, writing, and reviewing code. Each plugin updates and versions on its own.
 
 ## Marketplace
 
-The Git repository that publishes plugins. When you run `/plugin marketplace add <owner>/<repo>` Claude Code reads `.claude-plugin/marketplace.json` and offers the listed plugins for install. This repo (`aidd-framework`) is one such marketplace and versions independently of the plugins it ships.
-
-## Memory bank
-
-Per-project context files under `aidd_docs/memory/` (architecture, conventions, decisions, and similar) that give the AI durable knowledge of your codebase. Built or refreshed by `aidd-context` (the onboard / project-memory skills) and read by skills that need project context. "Onboard builds the memory bank" in the Quick start refers to this.
+A GitHub repository that lists installable plugins. Running `/plugin marketplace add ai-driven-dev/framework` tells Claude Code to read this repo's plugin list, so you can install from it. This repo (`aidd-framework`) is one marketplace among possibly several you register.
 
 ## Skill
 
-A self-contained workflow under `plugins/<plugin>/skills/<NN-name>/`. Triggered by a user phrase, a slash command, or an explicit `Use skill <id>` invocation. A skill owns a `SKILL.md` router, one or more atomic actions, and optional `assets/` and `references/`. The `SKILL.md` `name:` is the folder slug (`00-onboard`); the invocation id is `<plugin>:<folder>`, for example `aidd-context:00-onboard`.
-
-## Router-based skill
-
-The shape every skill in this framework follows. `SKILL.md` is a pure router: it lists triggers, declares `## Available actions`, and dispatches to one of them. It carries no business logic. The logic lives in the action files. This split keeps triggering predictable and keeps each step independently testable.
+One workflow inside a plugin, for example "write a commit message" or "review this diff." You trigger it by describing what you want in plain language, or by naming it directly, for example `aidd-vcs:01-commit` (format: `plugin:NN-name`).
 
 ## Action
 
-A single atomic step inside a skill, stored at `plugins/<plugin>/skills/<NN-name>/actions/NN-name.md`. Each action file contains only `## Inputs`, `## Outputs`, `## Process`, `## Test`, and optionally `## Depends on`. Tests must be observable: a command to run, an artifact to check, or a side effect to verify.
+A single step inside a skill. You never call an action directly - the skill picks the right one(s) for your request.
 
 ## Agent
 
-A specialized AI persona under `plugins/<plugin>/agents/<name>.md`. Agents are scoped (for example `executor`, `checker`) and spawned by an orchestrator when a step needs isolation in a dedicated role rather than the main thread. Currently agents ship only in `aidd-dev`.
+A separate AI worker that a skill can dispatch for one focused sub-task, for example writing the code for one part of a plan. It works in its own space and reports back only a result. Today, agents ship only in `aidd-dev`.
 
 ## Rule
 
-A coding standard the AI loads automatically on relevant files. Rules live under each tool's rules directory (Claude Code uses `.claude/rules/`) and can be scoped via `paths:` glob frontmatter. Rules without `paths` apply to all files. Rules describe how to write code; skills describe what to do.
+A coding standard your AI tool applies automatically while it writes code, for example "always add tests for new functions." Rules describe *how* to write code; skills describe *what* to do.
 
 ## Hook
 
-A program declared in `plugins/<plugin>/hooks/hooks.json` that Claude Code runs at lifecycle events (pre-commit, post-tool, etc.). Hooks are how a plugin triggers deterministic side effects rather than asking the model to remember.
+Automation that runs at a specific moment, like right after a commit, without the AI needing to remember to trigger it.
+
+## Memory bank
+
+Project-specific files under `aidd_docs/memory/` (architecture, conventions, decisions) that your AI tool reads at the start of every conversation, so it always has the right context. Built and refreshed by the `aidd-context` plugin.
+
+## Router-based skill
+
+The technical pattern behind every skill here: a small entry file (`SKILL.md`) reads your request and picks which action(s) to run, carrying no logic itself. You do not need this to *use* the framework - it matters when you build your own skill; see [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md).
 
 ## Bracket ID
 
-The short identifier in each plugin's Skills table, for example `[2.1]` for `aidd-dev:01-plan`. The first digit is the plugin ordinal; the second is the skill position inside the plugin. Bracket IDs are the stable references the per-plugin Skills tables use to point at a skill without spelling out the full id.
+A short tag like `[2.1]` used in a plugin's Skills table to reference a specific skill (here, `aidd-dev:01-plan`) without spelling out the full name each time.
 
 ## See also
 
-- [`../README.md`](../README.md) for the marketplace overview, plugin catalog, and install flow.
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) for the composition model and skill router pattern.
+- [`../README.md`](../README.md) - overview, plugin list, install steps.
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) - how plugins, skills, and agents fit together.
