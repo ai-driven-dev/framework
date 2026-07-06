@@ -157,7 +157,7 @@ jobs:
           # path contains the other. Stage under RUNNER_TEMP, not the repo tree.
           OUT="${RUNNER_TEMP}/dist/${{ matrix.tool }}/${{ matrix.mode }}"
           mkdir -p "$OUT"
-          npx --yes @ai-driven-dev/cli@5.0.2 framework build \
+          npx --yes @ai-driven-dev/cli@5.1.1 framework build \
             --source . --target ${{ matrix.tool }} --out "$OUT" ${{ matrix.flag }}
           STAGE="$(mktemp -d)/${NAME}"
           mkdir -p "$STAGE"
