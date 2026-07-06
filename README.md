@@ -69,56 +69,45 @@ Update anytime: `/plugin marketplace update aidd-framework`.
 
 ### Other tools
 
-Each [release](https://github.com/ai-driven-dev/framework/releases/latest) attaches archives per tool. Until AIDD is published on each tool's public marketplace, install from those archives with the tool's native mechanism:
+Each tool has its own plugin marketplace or config — use its native commands, same plugin names as Claude Code:
 
 <details>
-<summary><strong>Cursor</strong> — local plugins</summary>
-
-Local plugins work on every plan (only *team-shared* marketplaces need Teams/Enterprise).
-
-1. Download `aidd-framework-cursor-marketplace-<version>.zip` and unzip it.
-2. Copy each `plugins/aidd-*` folder into `~/.cursor/plugins/local/` (each already carries its `.cursor-plugin/plugin.json`).
-3. Reload: **Developer: Reload Window**.
-
-Docs → [Cursor plugins](https://cursor.com/docs/plugins).
-
-</details>
-
-<details>
-<summary><strong>GitHub Copilot</strong> — <code>.github/</code> files</summary>
-
-Copilot auto-detects customization files under `.github/` in the IDE, CLI, and cloud agent.
-
-1. Download `aidd-framework-copilot-flat-<version>.zip`.
-2. Unzip it into your project root → `.github/skills/`, `.github/agents/`. Commit them.
-
-The Copilot CLI also has a plugin marketplace (`copilot plugin marketplace add …`) → [docs](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/plugins-finding-installing).
-
-</details>
-
-<details>
-<summary><strong>Codex</strong> — <code>codex plugin</code> or skills</summary>
-
-Codex has a native plugin marketplace:
+<summary><strong>Codex</strong></summary>
 
 ```bash
 codex plugin marketplace add ai-driven-dev/framework
 codex plugin add aidd-context@aidd-framework   # repeat per plugin
 ```
 
-Or skills only — unzip `aidd-framework-codex-flat-<version>.zip` into your project root; Codex reads `.codex/skills/<name>/SKILL.md`.
-
 Docs → [Codex plugins](https://developers.openai.com/codex/plugins/build).
 
 </details>
 
 <details>
-<summary><strong>OpenCode</strong> — <code>.opencode/</code> files</summary>
+<summary><strong>GitHub Copilot</strong></summary>
 
-OpenCode is file-based (no install command).
+```bash
+copilot plugin marketplace add ai-driven-dev/framework
+copilot plugin install aidd-context@aidd-framework   # repeat per plugin
+```
 
-1. Download `aidd-framework-opencode-flat-<version>.zip`.
-2. Unzip it into your project root → `.opencode/skills/`, `.opencode/agents/`. Auto-loaded at startup.
+Docs → [Copilot CLI plugins](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/plugins-finding-installing).
+
+</details>
+
+<details>
+<summary><strong>Cursor</strong></summary>
+
+Open **Customize → Plugins** and add the AIDD marketplace, then install the plugins. On a plan without team marketplaces, install locally: unzip `aidd-framework-cursor-marketplace-<version>.zip` and copy each `plugins/aidd-*` folder into `~/.cursor/plugins/local/`, then reload the window.
+
+Docs → [Cursor plugins](https://cursor.com/docs/plugins).
+
+</details>
+
+<details>
+<summary><strong>OpenCode</strong></summary>
+
+File-based (no marketplace): unzip `aidd-framework-opencode-flat-<version>.zip` into your project root → `.opencode/skills/`, `.opencode/agents/`. Auto-loaded at startup.
 
 Docs → [OpenCode config](https://opencode.ai/docs/config/).
 
