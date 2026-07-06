@@ -1,6 +1,6 @@
 ---
 objective: "Every per-skill README.md that mirrors its SKILL.md is gone, and no link, doc, or generator points at a removed file."
-status: implemented
+status: reviewed
 ---
 
 # Plan: Remove per-skill README.md
