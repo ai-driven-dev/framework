@@ -74,20 +74,15 @@ Same plugin names as Claude Code. Archives → [latest release](https://github.c
 <details>
 <summary><strong>Cursor</strong></summary>
 
-**Marketplace**
+**Marketplace** — unzip the `cursor-marketplace` archive, then:
 
 ```bash
-# all plans (team marketplaces need Teams/Enterprise)
-# unzip aidd-framework-cursor-marketplace-<version>.zip
 cp -r plugins/aidd-* ~/.cursor/plugins/local/
-# reload: Developer → Reload Window
 ```
 
-**Flat**
+Reload: **Developer → Reload Window**. All plans (team marketplaces need Teams/Enterprise).
 
-```bash
-# unzip aidd-framework-cursor-flat-<version>.zip → .cursor/
-```
+**Flat** — unzip the `cursor-flat` archive into your project root → `.cursor/`.
 
 Also reads Claude format: `.claude/skills/`.
 
@@ -98,19 +93,14 @@ Also reads Claude format: `.claude/skills/`.
 <details>
 <summary><strong>GitHub Copilot</strong></summary>
 
-**Marketplace**
+**Marketplace** — unzip the `copilot-marketplace` archive, then:
 
 ```bash
-# unzip aidd-framework-copilot-marketplace-<version>.zip
 copilot plugin marketplace add ./aidd-framework-copilot-marketplace-<version>
 copilot plugin install aidd-context@aidd-framework   # per plugin
 ```
 
-**Flat**
-
-```bash
-# unzip aidd-framework-copilot-flat-<version>.zip → .github/
-```
+**Flat** — unzip the `copilot-flat` archive into your project root → `.github/`.
 
 Also reads Claude format: `.claude/skills/`, `.claude/agents/`.
 
@@ -121,19 +111,14 @@ Also reads Claude format: `.claude/skills/`, `.claude/agents/`.
 <details>
 <summary><strong>Codex</strong></summary>
 
-**Marketplace**
+**Marketplace** — unzip the `codex-marketplace` archive, then:
 
 ```bash
-# unzip aidd-framework-codex-marketplace-<version>.zip
 codex plugin marketplace add ./aidd-framework-codex-marketplace-<version>
 codex plugin add aidd-context@aidd-framework   # per plugin
 ```
 
-**Flat**
-
-```bash
-# unzip aidd-framework-codex-flat-<version>.zip → .codex/
-```
+**Flat** — unzip the `codex-flat` archive into your project root → `.codex/`.
 
 [Docs](https://developers.openai.com/codex/plugins/build)
 
@@ -142,9 +127,7 @@ codex plugin add aidd-context@aidd-framework   # per plugin
 <details>
 <summary><strong>OpenCode</strong> — Flat only</summary>
 
-```bash
-# unzip aidd-framework-opencode-flat-<version>.zip → .opencode/
-```
+Unzip the `opencode-flat` archive into your project root → `.opencode/`.
 
 [Docs](https://opencode.ai/docs/config/)
 
