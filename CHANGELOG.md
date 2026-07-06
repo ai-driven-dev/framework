@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.3.0](https://github.com/ai-driven-dev/framework/compare/v5.2.2...v5.3.0) (2026-07-06)
+
+
+### Features
+
+* **aidd-context:** rebuild onboard as an AIDD project linter + runner ([fdf7ba5](https://github.com/ai-driven-dev/framework/commit/fdf7ba568c549c76033f3d0a30782904ddd588a5))
+* **framework:** read action files before running, across all skills ([#389](https://github.com/ai-driven-dev/framework/issues/389)) ([9d592a6](https://github.com/ai-driven-dev/framework/commit/9d592a6d8c1ca3d0ac8f8aaf54e30e7186a8eb48))
+
 ## [5.2.2](https://github.com/ai-driven-dev/framework/compare/v5.2.1...v5.2.2) (2026-07-01)
 
 
