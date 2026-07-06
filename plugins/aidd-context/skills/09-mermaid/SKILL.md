@@ -14,6 +14,7 @@ Produces a valid, structured Mermaid diagram from a written source by planning i
 | 01  | `mermaid` | Plan, confirm, generate, and review one diagram         | a written source |
 
 Run action `01` and run its `## Test` before trusting the result.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

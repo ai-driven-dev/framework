@@ -17,6 +17,7 @@ Builds one hook: an entry merged into the chosen scope for each supported tool, 
 | 03  | `validate`     | Check the file, the merge, and the moment fit      | files written     |
 
 Run the actions in order, `01 → 03`, and run each action's `## Test` before the next.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## References
 

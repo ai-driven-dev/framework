@@ -18,6 +18,7 @@ The act-side of code improvement: it changes code to make it better. Behavior-pr
 | 04  | `architecture` | architecture | extract layers, fix coupling, enforce boundaries            |
 
 Run the one axis named, or offer all applicable when the request is unscoped.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

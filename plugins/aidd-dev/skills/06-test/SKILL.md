@@ -17,6 +17,7 @@ Find untested behavior and iterate tests until they pass, or drive a full user j
 | 02  | `test-journey` | Validate a full user journey end-to-end in the browser         |
 
 Pick the one action matching the intent; never default to `01`. Triggers like "write tests" or "what's untested" route to `01`, "test the user journey" or "end-to-end" to `02`. Ask one question when the intent is ambiguous.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

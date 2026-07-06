@@ -17,6 +17,7 @@ Write one canonical agent from intent and render it per confirmed host tool, or 
 | 03  | `validate`      | Check each agent file                          | the files    |
 
 Run the actions in order, `01 → 03`, and run each action's `## Test` before the next.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## References
 

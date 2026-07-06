@@ -17,7 +17,7 @@ Turns a vague idea into a precise one through a deep, natural conversation. Each
 | 03  | `integrate` | Fold answers in, judge if real ambiguity remains           | answers + the idea  |
 | 04  | `finalize`  | Consolidate, flag open assumptions, offer to persist       | the clarified idea  |
 
-Run `capture`, loop `probe → integrate` until the idea is clear, then `finalize`.
+Run `capture`, loop `probe → integrate` until the idea is clear, then `finalize`. Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

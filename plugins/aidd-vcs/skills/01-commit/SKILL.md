@@ -17,6 +17,7 @@ Stage the right changes, write the message, commit. `01 → 02 → 03`.
 | 03  | `commit`  | Commit, and push when asked                            |
 
 Several concerns means several commits: repeat the chain, one concern at a time.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

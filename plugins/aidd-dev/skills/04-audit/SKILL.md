@@ -22,6 +22,7 @@ Diagnose a codebase against quality pillars and emit one ranked findings report.
 | 07  | `ui`           | ui           | Loading/error/empty states, visual hierarchy, design-system drift, responsive, a11y |
 
 Run the one pillar named, or offer all seven when the request is unscoped.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

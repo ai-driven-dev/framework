@@ -17,6 +17,7 @@ Verifies the factual claims inside a target text and rewrites it grounded in evi
 | 03  | `report`          | Rewrite the text with footnote citations, hedge unverified, surface conflicts | verdict list from 02        |
 
 Run `01 → 02 → 03`; pass each `## Test` before the next.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

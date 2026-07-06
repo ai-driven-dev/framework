@@ -17,7 +17,7 @@ Read-only review of a diff along three axes, code quality, feature behavior, and
 | 02  | `review-functional` | The diff against the plan's phases and their acceptance criteria |
 | 03  | `review-relevancy`  | Does the change belong: fit to the need, rule conformance, no rot |
 
-Run all three by default, composing one report. Run a single axis only when the caller names it; if it is unclear whether they want all or one, ask.
+Run all three by default, composing one report. Run a single axis only when the caller names it; if it is unclear whether they want all or one, ask. Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

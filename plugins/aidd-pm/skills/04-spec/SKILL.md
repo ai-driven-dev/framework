@@ -16,6 +16,7 @@ Generate or refine the immutable contract for a feature: its target, hard constr
 | 02  | `refine` | Rewrite an existing spec to address review findings  | a spec path and the findings |
 
 Dispatch by input: a spec path with findings runs `refine`; a request or PRD path runs `build`.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

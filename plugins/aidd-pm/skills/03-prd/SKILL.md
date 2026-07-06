@@ -13,6 +13,8 @@ Drafts a structured Product Requirements Document covering scope, goals, and acc
 | --- | ------- | ---------------------------------------------------- | ----------------------------------------------- |
 | 01  | `prd`   | Parse input, draft per template, validate, save      | feature_description, user_stories (optional)    |
 
+Before running an action, read its file in `actions/`, not only the table or assets.
+
 ## Transversal rules
 
 - Focus on what and why; never include technical implementation detail.

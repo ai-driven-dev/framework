@@ -16,6 +16,7 @@ Maintains the project's `recipes/` how-to sheets, the short runbooks that live a
 | 02  | `upsert` | Create or update one recipe from the template | recipe topic + fields |
 
 Run `list` to survey recipes, `upsert` to author one. Run `list` first when the user wants to update a recipe but hasn't named which.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Assets
 

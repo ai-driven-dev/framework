@@ -13,6 +13,8 @@ Files well-formed issues in the configured tracker after gathering enough contex
 | --- | --------------- | -------------------------------------------------------------------------- | -------------------------------------- |
 | 01  | `issue-create`  | Detect tool, fill template, validate, open the issue                        | problem_description, labels, type      |
 
+Before running an action, read its file in `actions/`, not only the table or assets.
+
 ## Transversal rules
 
 - Detect the ticketing tool from project memory first, then fall back to inferring it from the remote URL.
