@@ -41,7 +41,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-integrate.md](skills/01-brainstorm/actions/03-integrate.md) | - |
 | `actions` | [04-finalize.md](skills/01-brainstorm/actions/04-finalize.md) | - |
 | `assets` | [question-angles.md](skills/01-brainstorm/assets/question-angles.md) | - |
-| `-` | [README.md](skills/01-brainstorm/README.md) | - |
 | `references` | [probing.md](skills/01-brainstorm/references/probing.md) | - |
 | `-` | [SKILL.md](skills/01-brainstorm/SKILL.md) | `Clarify a vague idea through deep questioning until it is precise enough to act on. Use when the user surfaces a half-formed idea or under-specified request, or asks to brainstorm or refine. Not for scanning an artifact for gaps or writing code.` |
 
@@ -51,7 +50,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-challenge.md](skills/02-challenge/actions/01-challenge.md) | - |
 | `assets` | [report-template.md](skills/02-challenge/assets/report-template.md) | - |
-| `-` | [README.md](skills/02-challenge/README.md) | - |
 | `references` | [confidence-rubric.md](skills/02-challenge/references/confidence-rubric.md) | - |
 | `-` | [SKILL.md](skills/02-challenge/SKILL.md) | `Rethink just-completed work against an agreed plan, classifying findings as deal-breaker, suggestion, or correct, with a confidence score. Use to challenge or critically review recent work. Not for line-by-line style review or writing code.` |
 
@@ -61,7 +59,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-condense.md](skills/03-condense/actions/01-condense.md) | - |
 | `actions` | [02-stats.md](skills/03-condense/actions/02-stats.md) | - |
-| `-` | [README.md](skills/03-condense/README.md) | - |
 | `references` | [intensity-levels.md](skills/03-condense/references/intensity-levels.md) | - |
 | `-` | [SKILL.md](skills/03-condense/SKILL.md) | `Toggle terse output mode (lite, full, ultra) that drops filler while code and errors stay verbatim, and report token savings. Use to condense output, switch intensity, or check savings. Not for editing prose or compressing code.` |
 
@@ -73,7 +70,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-render-report.md](skills/04-shadow-areas/actions/02-render-report.md) | - |
 | `actions` | [03-diff.md](skills/04-shadow-areas/actions/03-diff.md) | - |
 | `assets` | [report-template.md](skills/04-shadow-areas/assets/report-template.md) | - |
-| `-` | [README.md](skills/04-shadow-areas/README.md) | - |
 | `references` | [categories.md](skills/04-shadow-areas/references/categories.md) | - |
 | `references` | [locked-sets.json](skills/04-shadow-areas/references/locked-sets.json) | - |
 | `references` | [probe-style.md](skills/04-shadow-areas/references/probe-style.md) | - |
@@ -88,7 +84,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-verify.md](skills/05-fact-check/actions/02-verify.md) | - |
 | `actions` | [03-report.md](skills/05-fact-check/actions/03-report.md) | - |
 | `assets` | [report-template.md](skills/05-fact-check/assets/report-template.md) | - |
-| `-` | [README.md](skills/05-fact-check/README.md) | - |
 | `references` | [claim-categories.md](skills/05-fact-check/references/claim-categories.md) | - |
 | `references` | [report-output-discipline.md](skills/05-fact-check/references/report-output-discipline.md) | - |
 | `references` | [verification-cascade.md](skills/05-fact-check/references/verification-cascade.md) | - |

@@ -47,7 +47,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-implement.md](skills/00-sdlc/actions/03-implement.md) | - |
 | `actions` | [04-review.md](skills/00-sdlc/actions/04-review.md) | - |
 | `actions` | [05-ship.md](skills/00-sdlc/actions/05-ship.md) | - |
-| `-` | [README.md](skills/00-sdlc/README.md) | - |
 | `-` | [SKILL.md](skills/00-sdlc/SKILL.md) | `Orchestrate the full dev flow, a free-form request to shipped code, every step delegated. Use to take a request end to end, not a single step. Interactive by default; say auto for unattended.` |
 
 #### `skills/01-plan`
@@ -60,7 +59,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [04-plan.md](skills/01-plan/actions/04-plan.md) | - |
 | `assets` | [phase-template.md](skills/01-plan/assets/phase-template.md) | - |
 | `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | - |
-| `-` | [README.md](skills/01-plan/README.md) | - |
 | `references` | [plan-status.md](skills/01-plan/references/plan-status.md) | `Plan lifecycle status field - values, meaning, who writes each, and when.` |
 | `references` | [wireframe-conventions.md](skills/01-plan/references/wireframe-conventions.md) | - |
 | `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Turn a request, ticket, or file into a phased implementation plan. Use to plan a feature before building, or to turn a ticket into phases. Do NOT use to write code or review a diff.` |
@@ -72,7 +70,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-prepare.md](skills/02-implement/actions/01-prepare.md) | - |
 | `actions` | [02-execute.md](skills/02-implement/actions/02-execute.md) | - |
 | `actions` | [03-finalize.md](skills/02-implement/actions/03-finalize.md) | - |
-| `-` | [README.md](skills/02-implement/README.md) | - |
 | `references` | [blocked.md](skills/02-implement/references/blocked.md) | `Conditions that make a plan blocked (needs a human).` |
 | `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Write an existing plan's code, phase by phase, until every acceptance criterion holds. Use when a plan exists and needs implementing. Do NOT use to write a plan, review a diff.` |
 
@@ -84,7 +81,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-assert-architecture.md](skills/03-assert/actions/02-assert-architecture.md) | - |
 | `actions` | [03-assert-frontend.md](skills/03-assert/actions/03-assert-frontend.md) | - |
 | `assets` | [task-template.md](skills/03-assert/assets/task-template.md) | - |
-| `-` | [README.md](skills/03-assert/README.md) | - |
 | `-` | [SKILL.md](skills/03-assert/SKILL.md) | `Assert the work behaves by iterating the project's coding assertions until they pass, plus optional architecture and frontend facets. Use to validate an implementation. Not for reviewing or writing tests.` |
 
 #### `skills/04-audit`
@@ -99,7 +95,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [06-tests.md](skills/04-audit/actions/06-tests.md) | - |
 | `actions` | [07-ui.md](skills/04-audit/actions/07-ui.md) | - |
 | `assets` | [audit-template.md](skills/04-audit/assets/audit-template.md) | `Codebase audit report template` |
-| `-` | [README.md](skills/04-audit/README.md) | - |
 | `-` | [SKILL.md](skills/04-audit/SKILL.md) | `Audit a codebase read-only across seven quality pillars into one ranked report. Use when the user wants to assess, health-check, or audit a codebase or one pillar. Not for fixing findings, reviewing a change, or checking a feature works.` |
 
 #### `skills/05-review`
@@ -110,7 +105,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-review-functional.md](skills/05-review/actions/02-review-functional.md) | - |
 | `actions` | [03-review-relevancy.md](skills/05-review/actions/03-review-relevancy.md) | - |
 | `assets` | [review-template.md](skills/05-review/assets/review-template.md) | - |
-| `-` | [README.md](skills/05-review/README.md) | - |
 | `references` | [review-rubric.md](skills/05-review/references/review-rubric.md) | - |
 | `-` | [SKILL.md](skills/05-review/SKILL.md) | `Review a diff read-only on three axes, code, behavior versus the plan, and relevancy, into one verdict report. Use before shipping a change. Not for fixing findings or auditing a codebase.` |
 
@@ -120,7 +114,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-test.md](skills/06-test/actions/01-test.md) | - |
 | `actions` | [02-test-journey.md](skills/06-test/actions/02-test-journey.md) | - |
-| `-` | [README.md](skills/06-test/README.md) | - |
 | `-` | [SKILL.md](skills/06-test/SKILL.md) | `Write and iterate tests until they pass, or validate a user journey end to end in the browser. Use when the user wants to add coverage, find what's untested, or walk a flow. Not for auditing test health or debugging a failure.` |
 
 #### `skills/07-refactor`
@@ -131,7 +124,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-security.md](skills/07-refactor/actions/02-security.md) | - |
 | `actions` | [03-cleanup.md](skills/07-refactor/actions/03-cleanup.md) | - |
 | `actions` | [04-architecture.md](skills/07-refactor/actions/04-architecture.md) | - |
-| `-` | [README.md](skills/07-refactor/README.md) | - |
 | `-` | [SKILL.md](skills/07-refactor/SKILL.md) | `Improve code across four axes (cleanup, performance, security, architecture) by scanning and fixing, or applying a pushed audit report. Use when the user wants to refactor, optimize, harden, or remove code. Not for read-only diagnosis or adding tests.` |
 
 #### `skills/08-debug`
@@ -142,7 +134,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-debug.md](skills/08-debug/actions/02-debug.md) | - |
 | `actions` | [03-reflect-issue.md](skills/08-debug/actions/03-reflect-issue.md) | - |
 | `assets` | [task-template.md](skills/08-debug/assets/task-template.md) | `Task tracking system to ensure all tasks are categorized and addressed` |
-| `-` | [README.md](skills/08-debug/README.md) | - |
 | `references` | [mermaid-conventions.md](skills/08-debug/references/mermaid-conventions.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` |
 | `-` | [SKILL.md](skills/08-debug/SKILL.md) | `Reproduce and fix a known bug, or find an unknown root cause by hypothesis validation. Use when the user wants to fix a bug, find why something breaks, or reopen a stuck investigation. Not for building a feature or reviewing a diff.` |
 
@@ -155,7 +146,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-autonomous-loop.md](skills/09-for-sure/actions/03-autonomous-loop.md) | - |
 | `assets` | [autonomous-loop-worker-prompt.md](skills/09-for-sure/assets/autonomous-loop-worker-prompt.md) | - |
 | `assets` | [plan-template.md](skills/09-for-sure/assets/plan-template.md) | - |
-| `-` | [README.md](skills/09-for-sure/README.md) | - |
 | `references` | [autonomous-loop-log-format.md](skills/09-for-sure/references/autonomous-loop-log-format.md) | - |
 | `-` | [SKILL.md](skills/09-for-sure/SKILL.md) | `Run an iterative agent loop that retries until a runnable success condition passes. Use when the user says "for sure", "keep trying until", or wants guaranteed completion against a success command. Not for one-shot tasks or uncheckable goals.` |
 
@@ -164,6 +154,5 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description |
 |-------|------|---|
 | `actions` | [01-todo.md](skills/10-todo/actions/01-todo.md) | - |
-| `-` | [README.md](skills/10-todo/README.md) | - |
 | `-` | [SKILL.md](skills/10-todo/SKILL.md) | `Split the user prompt into independent todos and run one executor agent per todo in parallel, then report a minimal table. Use when the user says "todo" or asks to fan out a multi-part request into parallel implementations.` |
 

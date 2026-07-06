@@ -41,7 +41,6 @@ plugins/aidd-example/
 ├── skills/
 │   └── 01-hello/
 │       ├── SKILL.md
-│       ├── README.md
 │       └── actions/
 │           └── 01-greet.md
 ├── agents/               # optional
@@ -94,10 +93,6 @@ description: One-sentence summary. Use when ... Do NOT use for ...
 
 Run action `01-greet` and return its message.
 ```
-
-### `skills/01-hello/README.md`
-
-Mirror the sibling pattern: title, paragraph, When to use, When NOT to use, How to invoke, Outputs, Prerequisites, Technical details (link to SKILL.md). ~30-50 lines.
 
 ### `skills/01-hello/actions/01-greet.md`
 

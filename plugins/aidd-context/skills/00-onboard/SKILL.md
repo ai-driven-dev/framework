@@ -33,6 +33,7 @@ Run `01 → 02 → 03`, then loop back to `01` after each run until the user sto
 - Name real commands only. Never name a command whose skill `01` did not find installed; name a missing one as a gap by function.
 - Never run a GUIDED step unattended, and never test a plugin version against a registry.
 - Re-scan after a run, never trust a stale status. Wait for an explicit reply before running anything.
+- Requires only the `aidd-context` plugin installed and a working directory rooted in the target project. The `aidd_docs/` memory bank is not a prerequisite: on a project without it, the first recommendation is to set it up. Onboard is the entry point, so it works before anything else exists.
 
 Detail lives in the references: the check catalogue and ranking in `checks.md`, the run tiers and `OK` walk in `run-tiers.md`, the render shape and glyphs in `assets/report.md`.
 
