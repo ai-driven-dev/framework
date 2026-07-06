@@ -18,7 +18,7 @@ Bootstraps the project's context layer: the AI context files with a memory block
 | 04  | `review-memory`     | Review the memory files for consistency             | the memory dir    |
 | 05  | `sync-memory`       | Fill the memory block in every context file         | the context files |
 
-Run the actions in order, `01 → 05`, and run each action's `## Test` before the next.
+Run the actions in order, `01 → 05`, and run each action's `## Test` before the next. Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Memory rules
 

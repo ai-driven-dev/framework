@@ -17,6 +17,7 @@ Analytically scans a written artifact for gaps the author has not addressed. Unl
 | 03  | `diff`           | Load prior report, classify gaps as closed / still-open / newly-introduced | gap list from detect + prior report path |
 
 Dispatch by context: with no prior report run `detect` then `render-report`; with one, run `detect` then `diff`.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

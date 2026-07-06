@@ -16,6 +16,8 @@ Collect the change, draft the request, create it as a draft. `01 → 02 → 03`.
 | 02  | `draft`   | Write the title and body from the template                   |
 | 03  | `create`  | Open the draft request, label it, return the URL             |
 
+Before running an action, read its file in `actions/`, not only the table or assets.
+
 ## Transversal rules
 
 - Follow the project's request practices in `aidd_docs/memory/vcs.md` and the repo's own request template when set, else the bundled `assets/pull_request.md`.

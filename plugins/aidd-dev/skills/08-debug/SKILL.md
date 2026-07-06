@@ -17,7 +17,7 @@ Diagnose and fix issues through structured hypothesis validation, root-cause ana
 | 02  | `debug`         | Root cause unknown: enumerate hypotheses, validate each, confirm the cause     |
 | 03  | `reflect-issue` | Stuck or prior fixes failed: reopen the search space, instrument logs first    |
 
-Pick the one action matching the intent; never default to `01`. Triggers like "reproduce and fix" route to `01`, "why does this happen" to `02`, "I'm stuck" or "previous fixes didn't work" to `03`. Ask one question when the intent is ambiguous.
+Pick the one action matching the intent; never default to `01`. Triggers like "reproduce and fix" route to `01`, "why does this happen" to `02`, "I'm stuck" or "previous fixes didn't work" to `03`. Ask one question when the intent is ambiguous. Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

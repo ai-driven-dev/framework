@@ -16,7 +16,7 @@ Scans the current project against the AIDD framework, reports what is present, d
 | 02  | `report` | Render the loud diagnostic plus one ordered command list, foundations then dev flow       | the 01 snapshot  |
 | 03  | `run`    | Run the user's pick per its tier, `OK` walks the whole list pausing at each GUIDED step, then re-scan | the user's reply |
 
-Run `01 → 02 → 03`, then loop back to `01` after each run until the user stops. Run each action's `## Test` before the next.
+Run `01 → 02 → 03`, then loop back to `01` after each run until the user stops. Run each action's `## Test` before the next. Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## References
 

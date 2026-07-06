@@ -19,6 +19,7 @@ Take a request from idea to shipped code, delegating every step. Interactive by 
 | 05  | `ship`      | Open the change request               | a commit and change-request capability  |
 
 Run `01 → 02 → 03 → 04 → 05`. On `04 = iterate`, loop to `03` then re-run `04`.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

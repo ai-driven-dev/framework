@@ -19,6 +19,7 @@ Builds one canonical skill from intent and renders it per confirmed host tool, o
 | 05  | `validate`          | Run each action's Test, aggregate pass/fail    | the skill path    |
 
 Run the actions in order, `01 → 05`, and run each action's `## Test` before the next. In modify mode the tool is fixed by the existing skill's location, so the resolution gate is skipped.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## References
 

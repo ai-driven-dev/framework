@@ -18,6 +18,7 @@ Validate that the work behaves as intended: run the project's assertions, iterat
 | 03  | `assert-frontend`     | Inspect the running UI, fixing until the behavior is right   |
 
 Run every applicable facet by default, or one when named. Coding (`01`) always applies; add `03` when the work has a UI and a frontend is running, the facet resolving the URL itself; run `02` only when architecture conformance is asked for. Skip a facet whose precondition is absent, with a noted reason. Ask only when the intent is genuinely ambiguous.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 
