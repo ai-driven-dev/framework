@@ -82,6 +82,16 @@
           "jsonpath": "$.version"
         }
       ]
+    },
+    "plugins/aidd-ui": {
+      "package-name": "aidd-ui",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": ".claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
     }
   }
 }
