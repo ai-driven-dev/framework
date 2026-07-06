@@ -7,6 +7,18 @@
 
 * **framework:** read action files before running, across all skills ([#389](https://github.com/ai-driven-dev/framework/issues/389)) ([9d592a6](https://github.com/ai-driven-dev/framework/commit/9d592a6d8c1ca3d0ac8f8aaf54e30e7186a8eb48))
 
+
+### Miscellaneous
+
+* release main ([#392](https://github.com/ai-driven-dev/framework/issues/392)) ([484928c](https://github.com/ai-driven-dev/framework/commit/484928c8429999194cbe163782099b26c89e4105))
+
+## [0.1.0-alpha.0](https://github.com/ai-driven-dev/framework/compare/aidd-ui-v0.1.0-alpha.0...aidd-ui-v0.1.0-alpha.0) (2026-07-06)
+
+
+### Features
+
+* **framework:** read action files before running, across all skills ([#389](https://github.com/ai-driven-dev/framework/issues/389)) ([9d592a6](https://github.com/ai-driven-dev/framework/commit/9d592a6d8c1ca3d0ac8f8aaf54e30e7186a8eb48))
+
 ## [0.1.0-alpha.0](https://github.com/ai-driven-dev/framework/compare/aidd-ui-v0.1.0-alpha.0...aidd-ui-v0.1.0-alpha.0) (2026-06-30)
 
 
