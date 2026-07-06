@@ -53,7 +53,7 @@ A marketplace of **skills, agents, commands, rules, and recipes** that drive you
 
 ### Claude Code
 
-Register the marketplace, then install the plugins (slash commands, not shell):
+**In the session** (slash commands)
 
 ```text
 /plugin marketplace add ai-driven-dev/framework
@@ -63,6 +63,13 @@ Register the marketplace, then install the plugins (slash commands, not shell):
 /plugin install aidd-vcs@aidd-framework
 /plugin install aidd-pm@aidd-framework
 /plugin install aidd-orchestrator@aidd-framework
+```
+
+**Command line** (same, prefixed with `claude`)
+
+```bash
+claude plugin marketplace add ai-driven-dev/framework
+claude plugin install aidd-context@aidd-framework   # then aidd-refine, aidd-dev, aidd-vcs, aidd-pm, aidd-orchestrator
 ```
 
 Update anytime: `/plugin marketplace update aidd-framework`.
