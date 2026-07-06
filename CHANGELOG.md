@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.1.1](https://github.com/ai-driven-dev/aidd-cli/compare/v5.1.0...v5.1.1) (2026-07-05)
+
+
+### Bug Fixes
+
+* **codex:** emit official marketplace dist for `codex plugin marketplace add` ([#311](https://github.com/ai-driven-dev/aidd-cli/issues/311)) ([6f60351](https://github.com/ai-driven-dev/aidd-cli/commit/6f60351942687fe9d948083db48708ccbb9ffb84))
+
+
+### Documentation
+
+* restructure project docs and memory bank ([c46f87b](https://github.com/ai-driven-dev/aidd-cli/commit/c46f87b4a48476226cf3ad8ada57eb3b51f0f31e))
+
 ## [5.1.0](https://github.com/ai-driven-dev/aidd-cli/compare/v5.0.2...v5.1.0) (2026-07-01)
 
 
