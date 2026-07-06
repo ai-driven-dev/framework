@@ -2,11 +2,12 @@
 
 # Recipe contract
 
-Rules for every `recipes/<kebab-slug>.md` the skill writes.
+Rules for every recipe file the skill writes.
 
 ## File
 
-- Path: `recipes/<kebab-slug>.md`.
+- Project path: `aidd_docs/recipes/<kebab-slug>.md`.
+- Bundled path, only for explicit framework-source edits: `plugins/aidd-context/skills/12-cook/assets/recipes/<kebab-slug>.md`.
 - The recipe opens with the H1 title, then one plain sentence of description — no "Goal:" label, no blockquote, no metadata table.
 - Sections: the description, `## Why`, then the steps. `## Verify` is optional — omit it when it adds little. End with an optional short conclusion. Never add a `## Related` section: links live inline where they are used.
 

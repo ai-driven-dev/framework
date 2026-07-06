@@ -4,7 +4,7 @@ Refine the target recipe with a checklist, scout for the highest-value insights,
 
 ## Input
 
-The recipe or topic to modernize. If a recipe, its `recipes/<slug>.md` holds the current approach and coverage.
+The recipe or topic to modernize, named by number from the latest `list`, slug, title, or topic. If a recipe exists, resolve it from project recipes first, then bundled recipes.
 
 ## Output
 
@@ -14,11 +14,11 @@ Three parts, then a recommendation:
 2. A coverage-gaps list: important sub-topics the recipe omits, each with why it matters.
 3. A counter-intuitive wins list: surprising tips, each with the result it produces.
 
-Every presented item is confirmed to exist, with its latest state and official link. Ephemeral: nothing is written under `recipes/`.
+Every presented item is confirmed to exist, with its latest state and official link. Ephemeral: nothing is written to either recipe home.
 
 ## Process
 
-1. **Refine.** Fill the goal checklist with the user until the target is precise: outcome, level, scope, grouping. Read `recipes/<slug>.md` first when the recipe exists. Run `list` when it is unnamed.
+1. **Refine.** Fill the goal checklist with the user until the target is precise: outcome, level, scope, grouping. Resolve and read the recipe with `@../references/recipe-locations.md` when it exists. Run `list` when it is unnamed.
 
 ```md
 @../assets/research-goal-checklist.md

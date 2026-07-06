@@ -74,7 +74,7 @@ Your instruction file ships every turn, so each cut line saves on every message.
 
 1. Open `CLAUDE.md` (or `.github/copilot-instructions.md`).
 2. Cut it to essentials and add explicit conciseness rules.
-3. Model it on a real concise instruction file: [AGENTS.md](../plugins/aidd-context/skills/02-project-memory/assets/AGENTS.md).
+3. Model it on a real concise instruction file: [AGENTS.md](../../../02-project-memory/assets/AGENTS.md).
 
 ```md
 # CLAUDE.md — keep it terse (see AGENTS.md for the full example)
