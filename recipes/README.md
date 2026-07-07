@@ -4,10 +4,12 @@ Task-oriented how-to sheets for the AIDD Framework. Each recipe is a self-contai
 
 | Recipe | Goal | Level |
 | --- | --- | --- |
+| [Start a project](start-a-project.md) | Set up a greenfield project and its AIDD context | Beginner |
+| [Ship a feature](ship-a-feature.md) | Take a feature from idea to a reviewed, shipped PR | Beginner |
 | [MCP installations](mcp-installation.md) | Decide when to use an MCP server vs a CLI, and wire up the recommended ones | Beginner |
 
 > More coming — token optimisation, custom plugins, and others.
 
 ## Contributing a recipe
 
-Recipes follow a shared template (title · goal · level · time · prerequisites · steps · verify · related). A `/cook` skill to `list` and `upsert` recipes from a canonical template is on the way; until then, copy the shape of [`mcp-installation.md`](mcp-installation.md) and open a PR. See [`CONTRIBUTING.md`](../CONTRIBUTING.md).
+Recipes follow a shared template (title · goal · level · time · prerequisites · steps · verify · related). Use [`/aidd-context:12-cook`](../plugins/aidd-context/skills/12-cook/README.md) to `list` or `upsert` a recipe from the canonical template, then open a PR. See [`CONTRIBUTING.md`](../CONTRIBUTING.md).
