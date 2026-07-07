@@ -2,24 +2,26 @@
 
 # Start a project (greenfield)
 
-> **Goal:** Set up a brand-new project and its AIDD context, ready for the first feature.
+> **Goal:** Take a greenfield idea to a set-up project with its AIDD context, ready for the first feature.
 
-|                   |                                       |
-| ----------------- | ------------------------------------- |
-| **Level**         | Beginner                              |
-| **Time**          | ~15 min                               |
-| **Prerequisites** | AIDD installed in your AI tool        |
+|                   |                                |
+| ----------------- | ------------------------------ |
+| **Level**         | Beginner                       |
+| **Time**          | ~30 min                        |
+| **Prerequisites** | AIDD installed in your AI tool |
 
 ## Why
 
-The greenfield sequence, at a glance — from an empty idea to a project the AIDD flow can build on.
+The greenfield sequence, at a glance — from a raw idea to a project the AIDD flow can build on.
 
 ## Steps
 
-1. 🏗️ **Design the architecture**: `/aidd-context:01-bootstrap` — validate a stack through Q&A; outputs an `INSTALL.md`.
-2. 🧠 **Build project memory**: `/aidd-context:02-project-memory` — create the memory bank and AI context files.
-3. 🧭 **Onboard**: `/aidd-context:00-onboard` — confirm the setup and get guided to the next step.
-4. 🚀 **Ship the first feature**: follow [Ship a feature](ship-a-feature.md).
+1. 💡 **Brainstorm the idea**: `/aidd-refine:01-brainstorm` — sharpen the raw idea into a precise request.
+2. 📄 **Draft the PRD**: `/aidd-pm:03-prd` — turn the idea into a structured product requirements document.
+3. 🏗️ **Design the architecture**: `/aidd-context:01-bootstrap` — validate a stack through Q&A; outputs an `INSTALL.md`.
+4. 🧠 **Build project memory**: `/aidd-context:02-project-memory` — create the memory bank and AI context files.
+5. 🧭 **Onboard**: `/aidd-context:00-onboard` — confirm the setup and get guided to the next step.
+6. 🚀 **Ship the first feature**: follow [Ship a feature](ship-a-feature.md).
 
 ## Verify
 

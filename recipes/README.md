@@ -4,7 +4,7 @@ Task-oriented how-to sheets for the AIDD Framework. Each recipe is a self-contai
 
 | Recipe | Goal | Level |
 | --- | --- | --- |
-| [Start a project](start-a-project.md) | Set up a greenfield project and its AIDD context | Beginner |
+| [Start a project](start-a-project.md) | Take a greenfield idea to a set-up project with its AIDD context | Beginner |
 | [Ship a feature](ship-a-feature.md) | Take a feature from idea to a reviewed, shipped PR | Beginner |
 | [MCP installations](mcp-installation.md) | Decide when to use an MCP server vs a CLI, and wire up the recommended ones | Beginner |
 
