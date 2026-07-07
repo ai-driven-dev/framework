@@ -25,4 +25,4 @@ One starter skill today; real UI and UX skills land as the concern stabilises.
 
 | Bracket ID | Skill | Description |
 | ---------- | ----- | ----------- |
-| [7.1] | [hello](skills/01-hello/README.md) | Smoke-test skill that confirms the plugin loads. |
+| [7.1] | [hello](skills/01-hello/SKILL.md) | Smoke-test skill that confirms the plugin loads. |
