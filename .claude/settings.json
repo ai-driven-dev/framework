@@ -12,5 +12,17 @@
     "aidd-pm@aidd-framework": true,
     "aidd-orchestrator@aidd-framework": true,
     "aidd-refine@aidd-framework": true
+  },
+  "hooks": {
+    "WorktreeCreate": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/worktree-create.js\""
+          }
+        ]
+      }
+    ]
   }
 }
