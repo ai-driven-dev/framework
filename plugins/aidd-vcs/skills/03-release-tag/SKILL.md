@@ -13,6 +13,8 @@ Cuts annotated semver releases with notes derived from recent commits.
 | --- | -------------- | -------------------------------------------------------------------------- | ---------------------------------- |
 | 01  | `release-tag`  | Compute version, draft notes, validate, bump, tag, push                    | version (optional), notes_overrides|
 
+Before running an action, read its file in `actions/`, not only the table or assets.
+
 ## Transversal rules
 
 - Versions follow semver `major.minor.patch` strictly. No suffixes unless explicitly requested.

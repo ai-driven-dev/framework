@@ -19,6 +19,7 @@ Plays the role of technical architect for a new SaaS project. Walks the user thr
 | 05  | `write-install-md`    | Produce `aidd_docs/INSTALL.md`                                 | design + decisions |
 
 Run `01 → 02 → 03 → 04 → 05`. The audit (03) gates: if every candidate fails, loop back to 02 or 01.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

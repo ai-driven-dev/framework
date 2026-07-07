@@ -18,7 +18,7 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 
 | Skill                  | Role                                                                          | Actions                                                                                                  |
 | ---------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `00-onboard`           | Detect project state and open a hub of project actions                        | `01-detect-state`, `02-recommend-next`, `03-execute-or-handoff`                                          |
+| `00-onboard`           | Scan the project into a diagnostic of what's set up and missing, then run the recommended next commands | `01-scan`, `02-report`, `03-run`                                                                          |
 | `01-bootstrap`         | Imagine and validate a new SaaS architecture, output an `INSTALL.md`          | `01-gather-needs`, `02-propose-candidates`, `03-audit-candidates`, `04-pick-and-design`, `05-write-install-md` |
 | `02-project-memory`      | Initialize or refresh the memory bank and AI context files                    | `01-init-context-file`, `02-scaffold-docs`, `03-generate-memory`, `04-review-memory`, `05-sync-memory`  |
 | `03-context-generate`  | Router that dispatches an artifact-generation request to the dedicated generator below | delegates to `04`–`08` (and plugins / marketplaces)                                            |

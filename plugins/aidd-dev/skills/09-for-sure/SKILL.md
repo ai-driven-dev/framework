@@ -17,6 +17,7 @@ Run an autonomous loop until a success condition is verified. An interactive pre
 | 03  | `autonomous-loop` | autonomous             | spawn one worker per step, verify, retry, evaluate the success condition   |
 
 Run `01` interactively; it spawns `03`, which runs unattended under the `02` auto-accept rules until the success condition passes.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

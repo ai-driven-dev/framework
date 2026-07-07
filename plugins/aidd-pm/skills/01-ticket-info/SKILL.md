@@ -13,6 +13,8 @@ Reads ticket details from the configured ticketing tool. Read-only and tool-agno
 | --- | -------------- | ------------------------------------------------------------- | ---------------------------------- |
 | 01  | `ticket-info`  | Resolve ticket id, query the configured tool, display fields   | ticket_id (optional)               |
 
+Before running an action, read its file in `actions/`, not only the table or assets.
+
 ## Transversal rules
 
 - Read the configured ticketing tool from project memory first; otherwise inspect repo configuration or environment.

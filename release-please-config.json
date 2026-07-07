@@ -85,7 +85,6 @@
     },
     "plugins/aidd-ui": {
       "package-name": "aidd-ui",
-      "release-as": "0.1.0-alpha.0",
       "extra-files": [
         {
           "type": "json",

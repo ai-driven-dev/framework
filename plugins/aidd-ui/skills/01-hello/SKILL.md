@@ -14,3 +14,8 @@ Confirm the aidd-ui plugin loads and is reachable.
 | 01  | `greet` | Greet the user and confirm the skill works  |
 
 Single action skill: run `greet` and return its message.
+Before running an action, read its file in `actions/`, not only the table or assets.
+
+## Prerequisites
+
+- The plugin loaded locally (`claude --plugin-dir plugins/aidd-ui`, or installed from the marketplace).

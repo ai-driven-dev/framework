@@ -17,6 +17,7 @@ argument-hint: <action-name-1 | action-name-2> # omit when the skill has only on
 | 01  | `<slug>` | <one-line role> | <input> |
 
 <Flow line, one concise sentence: a chain (`01 → 02 → 03`, test each before the next), or independent actions (the router runs the one matching the intent, or several together when asked).>
+Before running an action, read its file in `actions/`, not only the table or assets.
 <Optional, if it delegates: `Spawn the `<agent>` agent to run this skill.`>
 
 <!--

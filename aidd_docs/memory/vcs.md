@@ -5,6 +5,7 @@
 - Platform: `github`
 - CLI: `gh`
 - Ticketing Tool: GitHub Issues
+- Pull request Template : `.github/PULL_REQUEST_TEMPLATE.md`
 
 ## Branch Naming Convention
 

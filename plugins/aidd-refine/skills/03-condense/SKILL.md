@@ -16,6 +16,7 @@ Toggles a terse output mode with three intensity levels (lite, full, ultra). Str
 | 02  | `stats`    | Report real token usage and estimated savings for the current session | session messages + level timeline    |
 
 Dispatch by intent: a toggle phrase → `condense`, a savings query → `stats`.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

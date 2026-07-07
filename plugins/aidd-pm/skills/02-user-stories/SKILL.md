@@ -20,6 +20,7 @@ Produces a prioritized backlog of INVEST-compliant user stories, each estimated 
 | 06  | `sync-tracker`    | Gate on Definition of Ready, get explicit approval, save to the tracker | ranked backlog from 05                 |
 
 Run `01 → 02 → 03 → 04 → 05 → 06`, passing each `## Test` first. A single story skips the epic split.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

@@ -1,39 +1,42 @@
 ---
 name: 00-onboard
-description: Guide the user through AIDD on the current project, explaining the flow and the next step for what is set up. Use when the user asks where to start, what to do next, or how AIDD works. Not for listing installed surfaces or running a known skill.
-argument-hint: read-project | orient | act
+description: Scan an AIDD project into a diagnostic of what is set up and missing, then run the recommended next commands in order. Use when the user asks where to start, what to do next, how the project stands, or to onboard onto AIDD. Not for listing every installed surface.
+argument-hint: scan | report | run
 ---
 
 # Onboard
 
-A plain-language guide to the AIDD framework for the current project. It reads the project lightly, explains where the project sits in the AIDD flow, and suggests the next logical step using only the plugins that are installed. It loops until the user stops.
+Scans the current project against the AIDD framework, reports what is present, drifting, or missing as an explicit checklist, hands back a single ordered list of the commands to run next, and runs them on request.
 
 ## Actions
 
-| #   | Action         | Role                                                              | Input             |
-| --- | -------------- | ---------------------------------------------------------------- | ----------------- |
-| 01  | `read-project` | Read the project once into a silent snapshot: signals, ledger, installed skills | project root      |
-| 02  | `orient`       | Place the project, then offer a project-adapted, plain-language menu | the snapshot from 01 |
-| 03  | `act`          | Run the suggestion, explain it, teach the flow, switch step, or stop | the user's choice |
+| #   | Action   | Role                                                                                     | Input            |
+| --- | -------- | ---------------------------------------------------------------------------------------- | ---------------- |
+| 01  | `scan`   | Read the project once, silently, into a snapshot: every check in `checks.md`, status per zone | project root     |
+| 02  | `report` | Render the loud diagnostic plus one ordered command list, foundations then dev flow       | the 01 snapshot  |
+| 03  | `run`    | Run the user's pick per its tier, `OK` walks the whole list pausing at each GUIDED step, then re-scan | the user's reply |
 
-Run `01 → 02 → 03`, then loop back to `01` after each step until the user stops. Run each action's `## Test` before the next.
-
-## Transversal rules
-
-- Teach, do not assume. The user may be new to AIDD. Explain a term the first time it appears (the memory bank is the project memory the AI loads each session), never assume framework literacy.
-- Suggest, never force. Show where the project seems to stand and the next logical step, and always let the user choose another. A foundation step (architect a stack, set up the memory bank) may be the loud, pre-selected default, but it is always skippable, and a skipped step is remembered for the session.
-- Plain language only. No internal state names, no raw phase labels, no signal dump reaches the user. The user reads guidance, not a state machine.
-- Adapt to what is installed. Suggest by function and resolve it to a skill that is actually installed. If none is installed, name the missing capability by function, never invent a skill.
-- Silent read. `01-read-project` prints nothing. The first visible output is the plain briefing from `02-orient`.
-- Read once, then refresh on action. Read the project once into a reusable snapshot; after the user runs a step, re-derive the changed facts and mark that step done in the session ledger; a read-only choice reuses the snapshot. The ledger is how onboard knows a step is done even when it leaves no file behind.
-- Wait for an explicit reply between prompts. Never auto-advance.
+Run `01 → 02 → 03`, then loop back to `01` after each run until the user stops. Run each action's `## Test` before the next. Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## References
 
-- `references/journey.md`: the AIDD flow stages, their order, and how a stage resolves to an installed skill.
-- `references/signals.md`: the project signals `01` captures and the capability map (signal → stage-gated secondary tool).
-- `references/outcomes.md`: the per-choice outcome `03` carries out and whether it loops back.
+- `references/checks.md`: the diagnostic catalogue, four zones ordered, each check with its met rule, drift rule, deliverable, command, and run tier.
+- `references/run-tiers.md`: the AUTO, GUIDED, and MANUAL run tiers, how `OK` chains them, the loop, and explain-on-demand.
 
 ## Assets
 
-- `assets/menu.md`: the menu shape `02` renders — default, ranked secondary tools, footer, and the cap and hedge rules.
+- `assets/report.md`: the report shape action 02 renders.
+
+## Transversal rules
+
+- Report, do not lecture. State status as glyphs, never a raw label or snapshot. A plain-language explanation of a step appears only when the user asks for it.
+- Name real commands only. Never name a command whose skill `01` did not find installed; name a missing one as a gap by function.
+- Never run a GUIDED step unattended, and never test a plugin version against a registry.
+- Re-scan after a run, never trust a stale status. Wait for an explicit reply before running anything.
+- Requires only the `aidd-context` plugin installed and a working directory rooted in the target project. The `aidd_docs/` memory bank is not a prerequisite: on a project without it, the first recommendation is to set it up. Onboard is the entry point, so it works before anything else exists.
+
+Detail lives in the references: the check catalogue and ranking in `checks.md`, the run tiers and `OK` walk in `run-tiers.md`, the render shape and glyphs in `assets/report.md`.
+
+## External data
+
+- `../02-project-memory/references/memory-block.md`: the canonical `<aidd_project_memory>` block shape the form-drift check compares against.

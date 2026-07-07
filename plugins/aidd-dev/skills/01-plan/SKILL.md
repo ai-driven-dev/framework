@@ -18,6 +18,7 @@ Turn a gathered source into an implementation plan and its phase files. Never wr
 | 04  | `plan`      | Break into phases, write the plan and phase files    | explore output + wireframe |
 
 Run them in order, `01 → 04`. The plan is the culmination. Skip `03` when there is no UI.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## References
 

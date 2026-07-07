@@ -18,6 +18,7 @@ Turns what a piece of work taught into the project's lasting context. It reads a
 | 04  | `sync`   | Refresh the memory block in every context file          | the written files |
 
 Order: `01 → 02 → 03 → 04`. Run each action's `## Test` before the next. When nothing is worth learning, `01` exits and the rest is skipped.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Destinations
 

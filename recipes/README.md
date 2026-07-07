@@ -12,4 +12,4 @@ Task-oriented how-to sheets for the AIDD Framework. Each recipe is a self-contai
 
 ## Contributing a recipe
 
-Recipes follow a shared template (title · goal · level · time · prerequisites · steps · verify · related). Use [`/aidd-context:12-cook`](../plugins/aidd-context/skills/12-cook/README.md) to `list` or `upsert` a recipe from the canonical template, then open a PR. See [`CONTRIBUTING.md`](../CONTRIBUTING.md).
+Recipes follow a shared template (title · goal · level · time · prerequisites · steps · verify · related). Use [`/aidd-context:12-cook`](../plugins/aidd-context/skills/12-cook/SKILL.md) to `list` or `upsert` a recipe from the canonical template, then open a PR. See [`CONTRIBUTING.md`](../CONTRIBUTING.md).

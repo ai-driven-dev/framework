@@ -13,6 +13,8 @@ Rethink prior work and surface what is wrong, missing, or duplicated. Output a s
 | --- | ----------- | ------------------------------------------------------------- | ------------------------------ |
 | 01  | `challenge` | Rethink prior work, classify findings, score confidence       | the work + agreed reference    |
 
+Before running an action, read its file in `actions/`, not only the table or assets.
+
 ## Transversal rules
 
 - Reason from first principles, no logical gaps.

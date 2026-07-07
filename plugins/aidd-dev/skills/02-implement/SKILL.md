@@ -17,6 +17,7 @@ Run an existing plan to write its code, one phase at a time, until every accepta
 | 03  | `finalize` | Verify and mark the plan implemented            | coded phases  |
 
 Run them in order, `01 → 03`.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## Transversal rules
 

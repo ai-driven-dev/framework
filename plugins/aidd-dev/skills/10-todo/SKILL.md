@@ -12,3 +12,5 @@ Turn one prompt into N independent todos, implement them in parallel, report a t
 ```markdown
 actions/01-todo.md
 ```
+
+Before running an action, read its file in `actions/`, not only the table or assets.
