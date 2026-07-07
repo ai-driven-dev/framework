@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.3.1](https://github.com/ai-driven-dev/framework/compare/v5.3.0...v5.3.1) (2026-07-07)
+
+
+### Miscellaneous
+
+* release main ([#393](https://github.com/ai-driven-dev/framework/issues/393)) ([426c604](https://github.com/ai-driven-dev/framework/commit/426c604dba9f5f1c586ade768e55c90f914a4562))
+
 ## [5.3.0](https://github.com/ai-driven-dev/framework/compare/v5.2.2...v5.3.0) (2026-07-06)
 
 
