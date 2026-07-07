@@ -20,61 +20,27 @@ How to operate this repository day to day. This file is the **Habilité** (maint
 
 - **Triage issues.** New issues auto-add to board #8. Set `Status` / `Area` / `Priority`; link under an epic (native sub-issues) if relevant. **Type** is the issue/PR label, not a board field (see [Project board layout](#-project-board-project-8)).
 - **Roadmap.** Priority = the community vote (mechanism in `GOVERNANCE.md`). Accepted items live on board #8 — keep `ROADMAP.md` a pointer, don't maintain a second list.
-- **Review PRs.** Every PR needs a Habilité (CODEOWNERS) approval; `lefthook` + `Commitlint` must pass; squash-merge.
+- **Review PRs.** Approve as CODEOWNERS, then squash-merge (merge policy → [`GOVERNANCE.md`](../GOVERNANCE.md#-code-decisions-merging)).
 
 ## 📋 Project board (Project 8)
 
-The board is a **view** of the taxonomy the docs define — it never invents its own. Each property answers one question:
+The board is a **view** of the taxonomy the docs define, never its own. Each property answers one question: **Type** = the label · **Priority** = urgency · **Status** = flow position · **When** = Timeline. Routing (`next`/`main`) is *not* a board property — it derives from the branch prefix ([routing table](../aidd_docs/memory/vcs.md#types)).
 
-- **Type** = the label · **Priority** = how urgent · **Status** = where in the flow · **When** = the Timeline.
-- Routing (`next` vs `main`) is *not* a board property — it derives from the branch prefix ([routing table](../aidd_docs/memory/vcs.md#types)).
+One-time layout (org-admin / board-write; get field IDs via `gh project field-list 8 --owner ai-driven-dev`):
 
-Apply this layout once (org-admin or board-write needed). Read field IDs first:
+- **Drop** `Work type` (duplicates Type) and `Phases` (duplicates Status) — `gh project field-delete --id <ID>`.
+- **Keep** `Priority` (P0 · P1 · P2) and `Area`.
+- **`Status`** options, in order: `Todo · In progress · In review · Ready · Done` (built-in field — edit its values in the UI).
+- **Timeline view** — new view, date = Milestone/target; use it as the roadmap horizon.
 
-```bash
-gh project field-list 8 --owner ai-driven-dev   # note the IDs you need below
-```
+Status automation (Project → ⋯ → Workflows); `In progress` is the one manual move:
 
-### Fields
-
-- **Drop `Work type`** — duplicates the Type label. **Drop `Phases`** — duplicates Status/Milestone (and no milestone exists, so it is noise):
-  ```bash
-  gh project field-delete --id <WORK_TYPE_FIELD_ID>
-  gh project field-delete --id <PHASES_FIELD_ID>
-  ```
-- **Keep `Priority`** (P0 · P1 · P2) and `Area`. No action.
-- **`Status`** — single-select options, in order: `Todo` · `In progress` · `In review` · `Ready` · `Done`. `Status` is a built-in field; edit its options in the UI (Board → `Status` field header → Edit values). The CLI only *creates* fields, so use it only if you are rebuilding from scratch:
-  ```bash
-  # from-scratch alternative only — NOT for editing the existing Status field
-  gh project field-create 8 --owner ai-driven-dev --name Status \
-    --data-type SINGLE_SELECT \
-    --single-select-options "Todo,In progress,In review,Ready,Done"
-  ```
-
-### Status automation (UI: Project → ⋯ → Workflows)
-
-GitHub built-in workflows drive most transitions; `In progress` is the one manual move.
-
-| Trigger (built-in) | Set `Status` to |
-| ------------------ | --------------- |
-| Item added to project | `Todo` |
-| Pull request linked / ready for review | `In review` |
+| Trigger (built-in) | Status |
+| --- | --- |
+| Item added | `Todo` |
+| PR linked / ready for review | `In review` |
 | Code review approved | `Ready` |
-| Pull request merged · item closed | `Done` |
-| *(manual — picked up by a maintainer)* | `In progress` |
-
-### Timeline view
-
-Replaces the old "Phases". UI: **New view → Timeline**, date field = the Milestone / target date. Use it as the roadmap horizon (`this week` / `next` / `later`).
-
-### Apply checklist
-
-- [ ] `Work type` field deleted
-- [ ] `Phases` field deleted
-- [ ] `Priority` kept
-- [ ] `Status` options = Todo · In progress · In review · Ready · Done
-- [ ] Built-in Status workflows enabled (added→Todo, ready→In review, approved→Ready, merged/closed→Done)
-- [ ] Timeline view present
+| PR merged · item closed | `Done` |
 
 ## 🏷️ Labels
 
@@ -171,4 +137,4 @@ Roles, promotion, and inactivity rules → [`GOVERNANCE.md`](../GOVERNANCE.md#-r
 
 ## 🧱 Build your own plugin
 
-See [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md). New plugins must also be registered in `release-please-config.json` + `.release-please-manifest.json`, or they never release.
+See [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md).
