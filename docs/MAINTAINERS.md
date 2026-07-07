@@ -137,4 +137,4 @@ Roles, promotion, and inactivity rules → [`GOVERNANCE.md`](../GOVERNANCE.md#-r
 
 ## 🧱 Build your own plugin
 
-See [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md).
+See [Add a plugin](../CONTRIBUTING.md#-add-a-plugin).

@@ -165,6 +165,6 @@ The rule is social (PR template checklist), not yet mechanically enforced — a 
 
 ## 🔎 See also
 
-- [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md) - build and publish your own plugin.
+- [Add a plugin](../CONTRIBUTING.md#-add-a-plugin) - scaffold, register, and release your own.
 - [`GLOSSARY.md`](GLOSSARY.md) - terminology used across the framework.
 - [`../CONTRIBUTING.md`](../CONTRIBUTING.md) - contribution flow.

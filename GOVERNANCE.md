@@ -59,7 +59,7 @@ flowchart LR
 
 ## 🧩 Plugins, breaking changes, conflicts
 
-- **New plugin**: lands via PR following [`docs/CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md)
+- **New plugin**: lands via PR following [Add a plugin](CONTRIBUTING.md#-add-a-plugin)
   (description on every skill, registered in
   `marketplace.json` + `release-please-config.json`, a Habilité owner). Starts
   `experimental` → `release candidate` (one external success) → `stable` (Habilité

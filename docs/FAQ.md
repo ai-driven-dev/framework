@@ -21,7 +21,7 @@ Most "how do I…" answers live in the README; this page covers what isn't docum
 
 ## 🤝 Contributing
 
-- **Write your own plugin** → [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md).
+- **Write your own plugin** → [Add a plugin](../CONTRIBUTING.md#-add-a-plugin).
 - **File a bug / request a feature** → [issue templates](https://github.com/ai-driven-dev/framework/issues/new/choose).
 - **Community** → [Discord](https://discord.gg/EWySJSpjWs) · [website](https://www.ai-driven-dev.fr/) (more in the [README](../README.md#-the-ai-driven-dev)).
 

@@ -42,6 +42,18 @@ make setup   # deps + git hooks, registers a local marketplace, installs plugins
 - **Label** follows your branch kind (the PR skill applies it automatically); add `security` when relevant.
 - **A Habilité review gates every merge** ([`CODEOWNERS`](./.github/CODEOWNERS)) — Certifié contributors cannot self-merge. PRs squash-merge on the conventional title. Decision rules → [`GOVERNANCE.md`](./GOVERNANCE.md#-code-decisions-merging).
 
+## 🧩 Add a plugin
+
+Adding a **skill / agent / rule / command / hook**? Generate it with `/aidd-context:03-context-generate`, then edit the owning plugin's `plugin.json` `skills[]`.
+
+A **new plugin** (anatomy → [`ARCHITECTURE.md`](docs/ARCHITECTURE.md#-anatomy-of-a-plugin)):
+
+1. **Scaffold** `plugins/aidd-<x>/` — `.claude-plugin/plugin.json` + `skills/<NN>-<name>/` (with `SKILL.md` + `actions/`).
+2. **Register** — append to `.claude-plugin/marketplace.json` (`name`, `source`, `recommended: false`) **and** add the package to `release-please-config.json` + `.release-please-manifest.json`, or it never releases.
+3. **Try it** — `/plugin marketplace add .` then `/plugin install aidd-<x>@aidd-framework`.
+
+Guardrails: English prose, hyphens not em-dashes, no cross-plugin references, skill `name:` is the folder slug.
+
 ## 🚀 Releases
 
 The `main`/`next` model, weekly cadence, and hotfix flow → [`RELEASE.md`](./RELEASE.md). A release ships **8 independently-versioned packages** (root `aidd-framework` + the 7 plugins; `aidd-ui` is alpha) plus per-tool archives; full breakdown → [`MAINTAINERS.md`](docs/MAINTAINERS.md#-releases).
@@ -52,7 +64,6 @@ The `main`/`next` model, weekly cadence, and hotfix flow → [`RELEASE.md`](./RE
 
 ## 📚 Reference
 
-- **Build a plugin** → [`docs/CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md)
 - **Architecture & terms** → [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/GLOSSARY.md`](docs/GLOSSARY.md)
 - **Patterns to follow** → a minimal plugin [`aidd-refine`](plugins/aidd-refine/), a router skill [`00-onboard`](plugins/aidd-context/skills/00-onboard/), agents [`aidd-dev/agents`](plugins/aidd-dev/agents/)
 - **Per-tool builds** → source files use Claude Code syntax; the `aidd-cli` maps each surface to its per-tool equivalent at release. `name` / `description` / `argument-hint` are universal; other frontmatter keys (`model`, `color`, `paths`, …) are tool-specific and ignored where unsupported.

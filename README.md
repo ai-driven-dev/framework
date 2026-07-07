@@ -277,7 +277,7 @@ Full catalog → [`CATALOG.md`](docs/CATALOG.md).
 | --- | --- |
 | 🍳 **[Recipes](recipes/)** | How-to sheets: [start a project](recipes/start-a-project.md), [ship a feature](recipes/ship-a-feature.md), [MCP installations](recipes/mcp-installation.md). |
 | 🏛️ **[Architecture](docs/ARCHITECTURE.md)** | How the framework composes: plugins, skills, hooks, agents. |
-| 🧩 **[Create a plugin](docs/CREATE_PLUGIN.md)** | Build and publish your own. |
+| 🧩 **[Add a plugin](CONTRIBUTING.md#-add-a-plugin)** | Scaffold, register, and release your own. |
 | 🛒 **[Marketplace](docs/MARKETPLACE.md)** | Install scopes, versioning, LLM tiers. |
 | ❓ **[FAQ & Troubleshooting](docs/FAQ.md)** · **[Glossary](docs/GLOSSARY.md)** | Common questions, fixes, and terms. |
 
