@@ -287,13 +287,20 @@ Plugins act with **your permissions**, and some run **Node hooks automatically**
 
 Before installing any plugin, skim its `README`, `hooks/`, and `.mcp.json`. Found a vulnerability? Report it privately → [`SECURITY.md`](SECURITY.md).
 
-## 🤝 Community & contributing
+## 🧑‍💻 The AI-Driven Dev
 
-Free and open-source (MIT), built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community. If it saves you time, [a ⭐](https://github.com/ai-driven-dev/framework/stargazers) helps others find it.
+Built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: 3 years of R&D, 500+ developers trained in English 🇬🇧 and French 🇫🇷, shipping production software with 100% AI-generated code.
+
+- **[Join the Discord 🇫🇷](https://discord.gg/EWySJSpjWs)** — public [roadmap](ROADMAP.md) decisions every Thursday morning.
+- **Want to train your team?** [See the programme](https://www.ai-driven-dev.fr/entreprise).
+- **AI is important to you?** [Join the ecosystem](https://www.ai-driven-dev.fr/ecosysteme).
+
+## 🤝 Contributing
+
+Free and open-source (MIT). If it saves you time, [a ⭐](https://github.com/ai-driven-dev/framework/stargazers) helps others find it.
 
 - **Idea or bug?** [Open an issue](https://github.com/ai-driven-dev/framework/issues) or [start a discussion](https://github.com/ai-driven-dev/framework/discussions).
 - **Contribute code** → [`CONTRIBUTING.md`](CONTRIBUTING.md).
-- **Chat & roadmap** → [Discord](https://discord.gg/EWySJSpjWs) · [train your team](https://www.ai-driven-dev.fr/entreprise).
 
 ---
 

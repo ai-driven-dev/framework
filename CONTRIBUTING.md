@@ -4,28 +4,16 @@ Source of truth for AIDD skills, agents, rules, and templates — authored in Cl
 
 ## Who can contribute
 
-```mermaid
----
-title: Contribution by profile
----
-flowchart TD
-    Start["Anyone: open an issue, idea or question"]
-    Who{"Your profile?"}
-    Pub["Public - discuss, react, upvote"]
-    Core["Core Team - vote on roadmap priority"]
-    Cert["Certifie AIDD - branch, commit, open PR"]
-    Rev["Habilite AIDD - review (CODEOWNERS)"]
-    Merge["Habilite AIDD - merge, release-please ships"]
+Roles and their rights are defined in [`GOVERNANCE.md`](./GOVERNANCE.md#roles). Where each starts:
 
-    Start --> Who
-    Who -->|Public| Pub
-    Who -->|Core Team| Core
-    Who -->|Certifie| Cert
-    Cert --> Rev
-    Rev --> Merge
-```
+| Role | Start here |
+| --- | --- |
+| 👤 **Public** | [Open an issue](https://github.com/ai-driven-dev/framework/issues) or [discussion](https://github.com/ai-driven-dev/framework/discussions) |
+| 🗳️ **Core Team** | Vote on roadmap priority |
+| 🌱 **Certifié** | Open a pull request → [Set up](#1-set-up) |
+| 🛡️ **Habilité** | Review and merge |
 
-**Pull-request rights are held by Certifié and Habilité only** — Certifié via [certification](https://www.ai-driven-dev.fr/), Habilité by promotion. Everyone else can open issues, join discussions, and shape the roadmap. Full role ladder, voting weights, and promotion → [`GOVERNANCE.md`](./GOVERNANCE.md#roles).
+The rest of this guide is the *how* for those opening PRs.
 
 ## 1. Set up
 
