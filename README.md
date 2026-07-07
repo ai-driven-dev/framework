@@ -191,6 +191,8 @@ flowchart TD
     class PR done;
 ```
 
+> 🍳 **More flows** → the [recipes](recipes/): [start a project](recipes/start-a-project.md), [ship a feature](recipes/ship-a-feature.md), and more.
+
 ## 🧩 Plugins
 
 Seven plugins covering the whole SDLC — **install all of them**; they work together. (`aidd-ui` is 🚧 **alpha**, off the curated path.)
