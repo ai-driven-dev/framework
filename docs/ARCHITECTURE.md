@@ -1,8 +1,8 @@
-# Architecture
+# 🏛️ Architecture
 
 How the AI-Driven Dev Framework composes inside Claude Code.
 
-## High-level
+## 🗺️ High-level
 
 ```mermaid
 ---
@@ -51,7 +51,7 @@ flowchart TB
   Editor -->|invokes| Skills
 ```
 
-## Anatomy of a plugin
+## 🧩 Anatomy of a plugin
 
 Every plugin under `plugins/<plugin>/` follows the same shape:
 
@@ -78,9 +78,14 @@ plugins/<plugin>/
 
 A plugin bundles **any subset** of the Claude Code surfaces (skills, agents, commands, hooks, rules, MCP servers); only `skills/` and the manifest are universal. Browse the [plugins](../plugins/) to see which surfaces each one ships.
 
-The `plugin.json` is validated against [`claude-code-plugin-manifest`](https://www.schemastore.org/claude-code-plugin-manifest.json) by the `lefthook` pre-commit hook (when the JSON-schema validator, `pipx`/`check-jsonschema`, is available); the same hook validates `marketplace.json` against [`claude-code-marketplace`](https://www.schemastore.org/claude-code-marketplace.json). The `validate` workflow re-runs the hooks on every push and PR.
+Validation:
 
-## Bundled hooks
+- `plugin.json` against [`claude-code-plugin-manifest`](https://www.schemastore.org/claude-code-plugin-manifest.json).
+- `marketplace.json` against [`claude-code-marketplace`](https://www.schemastore.org/claude-code-marketplace.json).
+
+Both run in the `lefthook` pre-commit hook (when the validator `pipx`/`check-jsonschema` is available). The `validate` workflow re-runs the hooks on every push and PR.
+
+## 🪝 Bundled hooks
 
 Two plugins ship Claude Code hooks (declared in `plugins/<plugin>/hooks/hooks.json`). Both run Node, so users need `node` on their `PATH`:
 
@@ -89,7 +94,7 @@ Two plugins ship Claude Code hooks (declared in `plugins/<plugin>/hooks/hooks.js
 | `aidd-context` | `SessionStart`    | `hooks/update_memory.js`  | Refresh the project memory block in the AI context files      |
 | `aidd-refine`  | `UserPromptSubmit`| `hooks/condense-stats.js` | Report token savings while condensed output mode is on        |
 
-## Plugin concerns and layers
+## 🧠 Plugin concerns and layers
 
 Every capability lives in exactly one plugin, chosen by **concern**. This taxonomy decides placement; it is only implicit in each `plugin.json`, so it is canonical here.
 
@@ -109,9 +114,9 @@ Three rules follow:
 
 - **Knowledge vs execution is a firewall.** Knowledge plugins produce artifacts you *read* (docs, plans, memory) and never write or run application source - `aidd-context`'s bootstrap deliberately creates no `package.json` or source files. Real code belongs to `aidd-dev` or an orchestrator's own setup actions.
 - **Concern decides placement, not existence.** A missing capability goes in the plugin whose concern owns it, then the caller delegates. Never reimplement it in the calling plugin because the right home lacks it today.
-- **Orchestration = sequencing across multiple concerns** with little domain logic. Any skill may delegate a sub-step ([Cross-plugin orthogonality](#cross-plugin-orthogonality)); doing so once does not make it an orchestrator. The orchestrator owns only glue and delegates the depth, handing off through a seam artifact (e.g. an `INSTALL.md` one plugin produces and another consumes).
+- **Orchestration = sequencing across multiple concerns** with little domain logic. Any skill may delegate a sub-step ([Cross-plugin orthogonality](#-cross-plugin-orthogonality)); doing so once does not make it an orchestrator. The orchestrator owns only glue and delegates the depth, handing off through a seam artifact (e.g. an `INSTALL.md` one plugin produces and another consumes).
 
-## Skills are routers
+## 🔀 Skills are routers
 
 A skill's `SKILL.md` is a manifest plus an actions table. Claude Code loads the SKILL.md when the skill is invoked; the body decides which action(s) to run.
 
@@ -138,7 +143,7 @@ flowchart LR
 
 Each action is a self-contained markdown file with inputs, outputs, depends-on, process steps, and a test checklist. Actions can call other skills via the `Skill` tool, so a skill discovers a capability it needs at runtime (by matching skill descriptions, never by hardcoded plugin name) and delegates to it.
 
-## Skills and agents
+## 🤖 Skills and agents
 
 - A **skill** is a caller-agnostic recipe; it runs in the context of whoever invokes it.
 - An **agent** is an isolated executor; it runs in its own context and returns only a result.
@@ -152,13 +157,13 @@ Composition rules:
 - An agent invokes only the recipe skills it declares under `# Skills you may invoke`, never an orchestrator skill, and never reads a skill's files. It names a same-plugin skill by its `plugin:folder` address (deterministic); it names a cross-plugin skill by capability, per cross-plugin orthogonality.
 - An agent never delegates flow work to another agent and never invokes an orchestrator skill. It may spawn a read-only recon helper (for example `Explore`) that mutates nothing and spawns nothing. So the write path stays two layers deep and delegation can never cycle.
 
-## Cross-plugin orthogonality
+## 🔗 Cross-plugin orthogonality
 
 Plugins do not reference each other by name. When skill A needs a capability owned by skill B, it discovers a candidate at runtime through description matching. This rule keeps the marketplace forkable, the plugins swappable, and the docs maintainable.
 
 The rule is enforced both socially (PR template checklist) and mechanically (lefthook hooks could be extended to grep for cross-plugin literal references).
 
-## See also
+## 🔎 See also
 
 - [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md) - build and publish your own plugin.
 - [`GLOSSARY.md`](GLOSSARY.md) - terminology used across the framework.

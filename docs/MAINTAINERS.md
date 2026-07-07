@@ -1,8 +1,11 @@
 # Maintainers guide
 
-How to operate this repository day to day. For **who** may do what and the decision rules, see [`GOVERNANCE.md`](../GOVERNANCE.md); for how contributors work, see [`CONTRIBUTING.md`](../CONTRIBUTING.md). This file is the **Habilité** (maintainer) playbook and does not restate those.
+How to operate this repository day to day. This file is the **Habilité** (maintainer) playbook — it does not restate the others:
 
-## The moving parts
+- **Who** may do what + decision rules → [`GOVERNANCE.md`](../GOVERNANCE.md).
+- **How contributors work** → [`CONTRIBUTING.md`](../CONTRIBUTING.md).
+
+## 🧩 The moving parts
 
 | Thing | Where | Note |
 | ----- | ----- | ---- |
@@ -13,15 +16,18 @@ How to operate this repository day to day. For **who** may do what and the decis
 | Releases | release-please (`ci.yml`) + `release-please-config.json` | 8 packages (root + 7 plugins), auto |
 | Pre-commit checks | `lefthook.yml` + `scripts/` | json/yaml/schema/frontmatter/catalogs/counts |
 
-## Daily
+## 📅 Daily
 
-- **Triage issues.** New issues auto-add to board #8. Set `Status` / `Area` / `Priority`; link under an epic (native sub-issues) if relevant. **Type** is the issue/PR label, not a board field (see [Project board layout](#project-board-project-8)).
-- **Roadmap.** Priority is set by the community vote (mechanism in `GOVERNANCE.md`). Accepted items live on board #8 - keep `ROADMAP.md` as a pointer, do not maintain a second list.
-- **Review PRs.** Every PR needs a Habilité (CODEOWNERS) approval; checks `lefthook`, `Commitlint` must pass; squash-merge.
+- **Triage issues.** New issues auto-add to board #8. Set `Status` / `Area` / `Priority`; link under an epic (native sub-issues) if relevant. **Type** is the issue/PR label, not a board field (see [Project board layout](#-project-board-project-8)).
+- **Roadmap.** Priority = the community vote (mechanism in `GOVERNANCE.md`). Accepted items live on board #8 — keep `ROADMAP.md` a pointer, don't maintain a second list.
+- **Review PRs.** Every PR needs a Habilité (CODEOWNERS) approval; `lefthook` + `Commitlint` must pass; squash-merge.
 
-## Project board (Project 8)
+## 📋 Project board (Project 8)
 
-The board is a **view** of the same taxonomy the docs define — it never invents its own. Each property answers one question: **Type** = the label, **Priority** = how urgent, **Status** = where in the flow, **When** = the Timeline. Routing (`next` vs `main`) is *not* a board property — it derives from the branch prefix ([routing table](../aidd_docs/memory/vcs.md#types)).
+The board is a **view** of the taxonomy the docs define — it never invents its own. Each property answers one question:
+
+- **Type** = the label · **Priority** = how urgent · **Status** = where in the flow · **When** = the Timeline.
+- Routing (`next` vs `main`) is *not* a board property — it derives from the branch prefix ([routing table](../aidd_docs/memory/vcs.md#types)).
 
 Apply this layout once (org-admin or board-write needed). Read field IDs first:
 
@@ -70,9 +76,9 @@ Replaces the old "Phases". UI: **New view → Timeline**, date field = the Miles
 - [ ] Built-in Status workflows enabled (added→Todo, ready→In review, approved→Ready, merged/closed→Done)
 - [ ] Timeline view present
 
-## Labels
+## 🏷️ Labels
 
-[`.github/labels.yml`](../.github/labels.yml) is the canonical set (triage only — routing is by branch prefix). The documented sync loop **creates/updates** from the file; it does **not** delete. So when you remove a label from the file, also delete it on GitHub:
+[`.github/labels.yml`](../.github/labels.yml) is the canonical set (triage only — routing is by branch prefix). The sync loop **creates/updates** from the file; it does **not** delete. So when you remove a label from the file, also delete it on GitHub:
 
 ```bash
 gh label delete "help wanted" --yes
@@ -82,12 +88,12 @@ gh label delete "github-actions" --yes
 
 Dependabot labels its PRs `dependencies` only (ecosystem sub-labels were dropped); confirm `.github/dependabot.yml` does not re-add a deleted label before deleting it.
 
-## Releases
+## 🚀 Releases
 
 release-please opens/updates a `chore: release main` PR on each push to `main`.
 
-1. (Optional) Review the version bumps + changelog. The PR is authored by the **aidd-bot** App, so its checks run normally.
-2. CI **auto-merges** it with the App token (`--squash --admin`); no human step is needed. `--admin` is required because a plain `gh pr merge` is refused even for the bypass App.
+1. (Optional) Review the version bumps + changelog. Authored by the **aidd-bot** App, so its checks run normally.
+2. CI **auto-merges** it with the App token (`--squash --admin`); no human step needed. `--admin` is required because a plain `gh pr merge` is refused even for the bypass App.
 3. CI tags each bumped package, creates the GitHub Releases, and attaches the bundles:
    - `aidd-framework-marketplace-X.Y.Z.zip` (`.claude-plugin/` + `plugins/`)
    - `<plugin>-vX.Y.Z.zip`
@@ -95,19 +101,30 @@ release-please opens/updates a `chore: release main` PR on each push to `main`.
 
 Versions live in `.release-please-manifest.json`. Forcing a version / pre-release: `release-as` in `release-please-config.json` (remove it after the release ships).
 
-## Promotion & recovery
+## 🔄 Promotion & recovery
 
-The weekly `next` → `main` promotion **must rebase, never squash**. A squash collapses the batch's conventional commits into one subject taken from the PR title; if that title is not a valid conventional type, `Commitlint` fails on `main` and **release-please is skipped** — no release. release-please also reads each commit's type/scope to bump the right package, which a squash hides. Use the **Promote next to main** workflow (it rebase-merges); merging by hand, pick **Rebase and merge**. The Release PR release-please opens is its own single commit and is fine to squash.
+The weekly `next` → `main` promotion **must rebase, never squash**:
 
-If a bad squashed promote turns `main` red on `Commitlint` and skips **Release Please**: an admin temporarily disables the `main protection` ruleset (Settings → Rules), force-pushes `main` back to the commit before the bad merge, re-enables the ruleset, then re-runs **Promote**.
+- A squash collapses the batch's conventional commits into one subject from the PR title. If that title isn't a valid conventional type, `Commitlint` fails on `main` and **release-please is skipped** — no release.
+- release-please also reads each commit's type/scope to bump the right package, which a squash hides.
+- Use the **Promote next to main** workflow (it rebase-merges); merging by hand, pick **Rebase and merge**.
+- The Release PR release-please opens is its own single commit and is fine to squash.
 
-## Dependencies (Dependabot)
+**Recovery** — a bad squashed promote turns `main` red on `Commitlint` and skips **Release Please**. An admin:
 
-**Patch + minor bumps auto-merge** once their checks pass (`.github/workflows/dependabot-auto-merge.yml`, via the aidd-bot App). **Major bumps stay manual** - review, then `gh pr merge <n> --squash`. If several lockfile bumps queue up, the first merges and the rest re-base automatically (or comment `@dependabot rebase`).
+1. Temporarily disables the `main protection` ruleset (Settings → Rules).
+2. Force-pushes `main` back to the commit before the bad merge.
+3. Re-enables the ruleset, then re-runs **Promote**.
 
-## Branch protection & the bot bypass
+## 📦 Dependencies (Dependabot)
 
-The protection policy (PR-only, CODEOWNERS review, required checks) is defined in [`GOVERNANCE.md`](../GOVERNANCE.md#code-decisions-merging); this is the ops.
+- **Patch + minor bumps auto-merge** once checks pass (`.github/workflows/dependabot-auto-merge.yml`, via the aidd-bot App).
+- **Major bumps stay manual** — review, then `gh pr merge <n> --squash`.
+- Several lockfile bumps queued: the first merges and the rest re-base automatically (or comment `@dependabot rebase`).
+
+## 🔒 Branch protection & the bot bypass
+
+The protection policy (PR-only, CODEOWNERS review, required checks) is defined in [`GOVERNANCE.md`](../GOVERNANCE.md#-code-decisions-merging); this is the ops.
 
 Two bypass actors (both `pull_request` mode, so neither can push directly to `main`):
 - the **aidd-bot GitHub App** (`Integration`) - release-please and the Dependabot auto-merge mint a token from it (`actions/create-github-app-token`), so their PRs trigger the required checks *and* the App merges them past the human-review rule.
@@ -118,7 +135,7 @@ The App: ID in secret `AIDD_BOT_APP_ID`, key in `AIDD_BOT_PRIVATE_KEY`. If the A
 Head branches are **not** auto-deleted on merge (`delete_branch_on_merge: false`):
 
 - The promote PR merges `next` into `main` without deleting `next`, so the back-merge that realigns `next` never hits a missing branch. **Do not re-enable** the setting.
-- The back-merge runs unattended (bot App `always` bypass on the `next` ruleset). If it cannot push, it opens an issue labelled `back-merge-failed` — resync with a `main` → `next` PR.
+- The back-merge runs unattended (bot App `always` bypass on the `next` ruleset). If it can't push, it opens an issue labelled `back-merge-failed` — resync with a `main` → `next` PR.
 - If `next` is ever missing, recreate it: `git push origin main:next`.
 
 To change protection, edit `.github/rulesets/main.json` (or `next.json`), then apply it live:
@@ -127,26 +144,31 @@ gh api -X PUT repos/ai-driven-dev/framework/rulesets/<id> --input .github/rulese
 ```
 Keep the file and the live ruleset in sync.
 
-## People
+## 👥 People
 
-Roles, promotion, and inactivity rules → [`GOVERNANCE.md`](../GOVERNANCE.md#roles). Team mechanics only: Habilité ↔ `habilitated` team + `CODEOWNERS`; Core Team / Certifié ↔ `core-team` / `certified` teams.
+Roles, promotion, and inactivity rules → [`GOVERNANCE.md`](../GOVERNANCE.md#-roles). Team mechanics only:
 
-## Security
+- Habilité ↔ `habilitated` team + `CODEOWNERS`.
+- Core Team / Certifié ↔ `core-team` / `certified` teams.
+
+## 🛡️ Security
 
 - Vulnerabilities: GitHub Security Advisories (see `SECURITY.md`); never a public issue.
 - Secret scanning + push protection + Dependabot alerts are enabled. Push protection blocks new secret commits; it does not scan history, so never paste tokens.
 - Plugin-specific runtime risks (CI permissions, MCP servers) belong in that plugin's README, not here.
 
-## Do NOT hand-edit
+## ✋ Do NOT hand-edit
 
-- **README counts** - the hero `N plugins · N skills · N agents` block (between the `counts:start`/`counts:end` markers) and each per-plugin `N skills` span - auto-generated by `scripts/sync-readme-counts.mjs` via lefthook.
-- **Per-plugin `CATALOG.md`** - auto-generated by `scripts/summarize-markdown.js` via lefthook.
-- **`CONTRIBUTORS.md` mosaic** - the contrib.rocks image updates itself.
+- **README counts** — the hero `N plugins · N skills · N agents` block (between the `counts:start`/`counts:end` markers) and each per-plugin `N skills` span — auto-generated by `scripts/sync-readme-counts.mjs` via lefthook.
+- **Per-plugin `CATALOG.md`** — auto-generated by `scripts/summarize-markdown.js` via lefthook.
+- **`CONTRIBUTORS.md` mosaic** — the contrib.rocks image updates itself.
 
-## Multi-tool
+## 🛠️ Multi-tool
 
-The marketplace is Claude Code native. Other tools are served by per-release archives the `aidd-cli` builds; this repo stays Claude-authored and tool-agnostic in its prose. Keep tool-specific detail in plugin READMEs.
+- The marketplace is Claude Code native.
+- Other tools are served by per-release archives the `aidd-cli` builds; this repo stays Claude-authored and tool-agnostic in its prose.
+- Keep tool-specific detail in plugin READMEs.
 
-## Build your own plugin
+## 🧱 Build your own plugin
 
 See [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md). New plugins must also be registered in `release-please-config.json` + `.release-please-manifest.json`, or they never release.

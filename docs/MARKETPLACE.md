@@ -2,23 +2,23 @@
 
 Reference for how the `aidd-framework` marketplace is registered, scoped, and versioned, plus the LLM tier mapping used by skills.
 
-## How marketplaces work
+## 🛒 How marketplaces work
 
-A marketplace is a Git repo that publishes plugins. When you run `/plugin marketplace add <owner>/<repo>`, Claude Code clones the repo, reads its `.claude-plugin/marketplace.json`, and offers the listed plugins for install.
+A marketplace is a Git repo that publishes plugins. Run `/plugin marketplace add <owner>/<repo>` and Claude Code clones the repo, reads its `.claude-plugin/marketplace.json`, and offers the listed plugins.
 
-`aidd-framework` is a community marketplace that complements Anthropic's [official one](https://github.com/anthropics/claude-plugins-official) — register both and install from either.
+`aidd-framework` is a community marketplace. It complements Anthropic's [official one](https://github.com/anthropics/claude-plugins-official) — register both, install from either.
 
 Official Anthropic docs:
 
-- [Discover and install plugins](https://code.claude.com/docs/en/discover-plugins) — the user-facing flow
+- [Discover and install plugins](https://code.claude.com/docs/en/discover-plugins) — user-facing flow
 - [Plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces) — host your own
 - [Plugins reference](https://code.claude.com/docs/en/plugins-reference) — manifest + marketplace.json schemas
 
 > **Private repo?** `/plugin marketplace add` needs read access (`gh auth login` or a PAT) — see the [install docs](https://code.claude.com/docs/en/discover-plugins).
 
-## Install scopes
+## 🔧 Install scopes
 
-Plugins can be installed at three scopes:
+Three scopes:
 
 | Scope | Stored in | Lifetime | Best for |
 | --- | --- | --- | --- |
@@ -26,18 +26,17 @@ Plugins can be installed at three scopes:
 | `project` | `.claude/settings.json` (`enabledPlugins`) in the repo | This repo only | Team-shared setup |
 | `local` | A local directory | This machine | Plugin development |
 
-Set scope at install time with the `/plugin` UI, or by editing `enabledPlugins` directly in `.claude/settings.json`.
+Set scope at install time via the `/plugin` UI, or edit `enabledPlugins` directly in `.claude/settings.json`.
 
-## Versioning & updates
+## 🔖 Versioning & updates
 
-- Each plugin and the root marketplace version independently via `release-please` (tags `<plugin>-vX.Y.Z`, root `vX.Y.Z`); the tooling lives in [`vcs.md`](../aidd_docs/memory/vcs.md#release-management).
-- Pull updates inside Claude Code with `/plugin marketplace update aidd-framework`.
+- Each plugin and the root marketplace version independently via `release-please` (tags `<plugin>-vX.Y.Z`, root `vX.Y.Z`). Tooling → [`vcs.md`](../aidd_docs/memory/vcs.md#release-management).
+- Pull updates inside Claude Code: `/plugin marketplace update aidd-framework`.
+- Full history → [`CHANGELOG.md`](../CHANGELOG.md).
 
-See [`CHANGELOG.md`](../CHANGELOG.md) for the full history.
+## 🧠 LLM tier reference
 
-## LLM tier reference
-
-Some skills target a model **tier** when they need a particular capability. The framework is authored against Claude; on another AI tool, map each tier to that tool's nearest model.
+Some skills target a model **tier** for a needed capability. The framework is authored against Claude; on another AI tool, map each tier to its nearest model.
 
 | Tier | Best for | Claude | Other tools (examples) |
 | ---- | -------- | ------ | ---------------------- |

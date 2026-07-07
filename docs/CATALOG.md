@@ -2,17 +2,17 @@
 
 The exhaustive list of AIDD plugins, skills, and actions. Skills are invoked through your AI tool by their `plugin:NN-slug` name (slash command, MCP, or natural-language trigger). Actions are the internal steps a skill runs; you do not call them directly.
 
-- [aidd-context](#aidd-context) - knowledge production
-- [aidd-dev](#aidd-dev) - code transformation
-- [aidd-pm](#aidd-pm) - product management
-- [aidd-refine](#aidd-refine) - meta-cognition
-- [aidd-vcs](#aidd-vcs) - version control workflows
-- [aidd-orchestrator](#aidd-orchestrator) - async orchestration (optional)
-- [aidd-ui](#aidd-ui) - UI / UX (🚧 alpha, not ready)
+- [aidd-context](#-aidd-context) - knowledge production
+- [aidd-dev](#-aidd-dev) - code transformation
+- [aidd-pm](#-aidd-pm) - product management
+- [aidd-refine](#-aidd-refine) - meta-cognition
+- [aidd-vcs](#-aidd-vcs) - version control workflows
+- [aidd-orchestrator](#-aidd-orchestrator) - async orchestration (optional)
+- [aidd-ui](#-aidd-ui) - UI / UX (🚧 alpha, not ready)
 
 ---
 
-## aidd-context
+## 🧭 aidd-context
 
 Bootstrap, project init, context-artifact generation, diagrams, learning, and exploration.
 
@@ -32,7 +32,7 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 | `11-explore`           | Survey the project across tooling, context, and codebase, then drill into one axis | `01-survey`, `02-drill`                                                                                  |
 | `12-cook`              | Manage the project's recipes/ how-to sheets: list, create, or update one      | `01-list`, `02-upsert`                                                                                   |
 
-## aidd-dev
+## 💻 aidd-dev
 
 The development SDLC: plan, implement, assert, audit, review, test, refactor, debug, for-sure, todo.
 
@@ -50,7 +50,7 @@ The development SDLC: plan, implement, assert, audit, review, test, refactor, de
 | `09-for-sure`   | Iterative loop that retries until a success condition is met               | `01-init-tracking`, `02-auto-accept`, `03-autonomous-loop`                       |
 | `10-todo`       | Split the prompt into independent todos, run one implementer agent per todo in parallel | `01-todo`                                                            |
 
-## aidd-pm
+## 📋 aidd-pm
 
 Product management: ticket retrieval, user stories, PRD, spec.
 
@@ -61,7 +61,7 @@ Product management: ticket retrieval, user stories, PRD, spec.
 | `03-prd`                  | Generate a structured Product Requirements Document        | `01-prd`                         |
 | `04-spec`                 | Generate or refine a normalized project spec               | `01-build`, `02-refine`          |
 
-## aidd-refine
+## 🪞 aidd-refine
 
 Meta-cognition: brainstorm, challenge, condense, blind-spot scan, fact-check.
 
@@ -73,7 +73,7 @@ Meta-cognition: brainstorm, challenge, condense, blind-spot scan, fact-check.
 | `04-shadow-areas`  | Scan a markdown artifact for blind spots                   | `01-detect`, `02-render-report`, `03-diff`                                                    |
 | `05-fact-check`    | Verify factual claims against sources and cite them        | `01-identify-claims`, `02-verify`, `03-report`                                                |
 
-## aidd-vcs
+## 🌿 aidd-vcs
 
 Version-control workflows: repo init, commit, pull/merge request, release tag, issue.
 
@@ -85,7 +85,7 @@ Version-control workflows: repo init, commit, pull/merge request, release tag, i
 | `03-release-tag`  | Cut a semver release with annotated tag and notes                              | `01-release-tag`        |
 | `04-issue-create` | Create an issue in the configured ticketing tool                               | `01-issue-create`       |
 
-## aidd-orchestrator
+## 🎼 aidd-orchestrator
 
 Optional. Runs the SDLC asynchronously on labeled issues (webhook or cron). Most projects do not need it.
 
@@ -93,7 +93,7 @@ Optional. Runs the SDLC asynchronously on labeled issues (webhook or cron). Most
 | ---------------- | ----------------------------------------------------- | ------------------------- |
 | `00-async-dev`   | Single entry point for the async-dev pipeline         | `setup`, `run`, `review`  |
 
-## aidd-ui
+## 🎨 aidd-ui
 
 🚧 **Alpha — not ready for use.** UI / UX: design, review, and improve frontend interfaces. Currently a smoke-test only.
 

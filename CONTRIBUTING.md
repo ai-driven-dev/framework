@@ -2,20 +2,20 @@
 
 Source of truth for AIDD skills, agents, rules, and templates — authored in Claude Code syntax; the CLI adapts an archive per tool at release. This file covers contributing to **this repository**; the wider community, roles, and training programme live at [ai-driven-dev.fr](https://www.ai-driven-dev.fr/).
 
-## Who can contribute
+## 👥 Who can contribute
 
-Roles and their rights are defined in [`GOVERNANCE.md`](./GOVERNANCE.md#roles). Where each starts:
+Roles and their rights are defined in [`GOVERNANCE.md`](./GOVERNANCE.md#-roles). Where each starts:
 
 | Role | Start here |
 | --- | --- |
 | 👤 **Public** | [Open an issue](https://github.com/ai-driven-dev/framework/issues) or [discussion](https://github.com/ai-driven-dev/framework/discussions) |
 | 🗳️ **Core Team** | Vote on roadmap priority |
-| 🌱 **Certifié** | Open a pull request → [Set up](#1-set-up) |
+| 🌱 **Certifié** | Open a pull request → [Set up](#-1-set-up) |
 | 🛡️ **Habilité** | Review and merge |
 
 The rest of this guide is the *how* for those opening PRs.
 
-## 1. Set up
+## 🔧 1. Set up
 
 Requires **Node 22.12+**, **pnpm**, **jq**, **python3**, and **pipx** (`gh` and the Claude/Codex CLI optional).
 
@@ -25,27 +25,27 @@ make setup   # deps + git hooks, registers a local marketplace, installs plugins
 
 `make` lists every target; `make doctor` and `make check` verify the environment and run the pre-commit checks (including the Markdown link checker).
 
-## 2. Make your change
+## ✏️ 2. Make your change
 
 - **Test locally** — neither tool hot-reloads the checkout (both serve a cached copy). After editing, run `make reload` (or `PLUGIN="aidd-refine aidd-pm"` for a subset), then restart the session — `/reload-plugins` covers a Claude-only edit to an existing skill.
 - **Commit** — `<type>(<scope>): description`, one scope per commit (split cross-plugin changes). The types, scopes, and rules live in [`aidd_docs/memory/vcs.md`](aidd_docs/memory/vcs.md#commit-convention) (mirrors `commitlint.config.cjs`); the **type** drives the release → [`RELEASE.md`](./RELEASE.md).
 
-## 3. Open a pull request
+## 🔀 3. Open a pull request
 
 - **Branch off `next`, target `next`** — only `hotfix/*` branches off `main` for urgent production fixes. The branch prefix alone decides the target → [routing table](aidd_docs/memory/vcs.md#types).
 - **Fill the PR template** — explain *what* changed and *how* you solved it; skip re-asserting the conventional title and hooks (CI already enforces them).
 - **Label** follows your branch kind (the PR skill applies it automatically); add `security` when relevant.
-- **A Habilité review gates every merge** ([`CODEOWNERS`](./.github/CODEOWNERS)) — Certifié contributors cannot self-merge. PRs squash-merge on the conventional title. Decision rules → [`GOVERNANCE.md`](./GOVERNANCE.md#code-decisions-merging).
+- **A Habilité review gates every merge** ([`CODEOWNERS`](./.github/CODEOWNERS)) — Certifié contributors cannot self-merge. PRs squash-merge on the conventional title. Decision rules → [`GOVERNANCE.md`](./GOVERNANCE.md#-code-decisions-merging).
 
-## Releases
+## 🚀 Releases
 
-The `main`/`next` model, weekly cadence, and hotfix flow → [`RELEASE.md`](./RELEASE.md). A release ships **8 independently-versioned packages** (root `aidd-framework` + the 7 plugins; `aidd-ui` is alpha) plus per-tool archives; full breakdown → [`MAINTAINERS.md`](docs/MAINTAINERS.md#releases).
+The `main`/`next` model, weekly cadence, and hotfix flow → [`RELEASE.md`](./RELEASE.md). A release ships **8 independently-versioned packages** (root `aidd-framework` + the 7 plugins; `aidd-ui` is alpha) plus per-tool archives; full breakdown → [`MAINTAINERS.md`](docs/MAINTAINERS.md#-releases).
 
-## Reporting issues
+## 🐛 Reporting issues
 
 [Open an issue](https://github.com/ai-driven-dev/framework/issues/new/choose) (🐛 Bug or ✨ Feature) — auto-added to the [Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8). For usage questions use [Discussions](https://github.com/ai-driven-dev/framework/discussions), not issues (see [`SUPPORT.md`](./.github/SUPPORT.md)).
 
-## Reference
+## 📚 Reference
 
 - **Build a plugin** → [`docs/CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md)
 - **Architecture & terms** → [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/GLOSSARY.md`](docs/GLOSSARY.md)

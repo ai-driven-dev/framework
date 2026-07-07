@@ -5,7 +5,7 @@ Most "how do I…" answers live in the README; this page covers what isn't docum
 ## Install, update, other tools
 
 - **Install / first run** → [Quick start](../README.md#-quick-start).
-- **Update plugins** → `/plugin marketplace update aidd-framework`, or see [Versioning & updates](MARKETPLACE.md#versioning--updates).
+- **Update plugins** → `/plugin marketplace update aidd-framework`, or see [Versioning & updates](MARKETPLACE.md#-versioning--updates).
 - **Private repo?** Yes - `/plugin marketplace add` just needs GitHub read access (via `gh auth login` or a PAT).
 - **Cursor / Copilot / Codex / OpenCode?** This repo is the Claude Code distribution; each other tool installs via its own native mechanism (project files, local plugins, or a plugin command) from the [release](https://github.com/ai-driven-dev/framework/releases/latest) archives. Steps per tool → [Other tools](../README.md#other-tools).
 

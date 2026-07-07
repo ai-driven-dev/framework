@@ -37,7 +37,7 @@ The **AI-Driven Dev Framework** is a marketplace — **skills, agents, commands,
 ## ✅ Prerequisites
 
 - **An AI coding tool** — Claude Code (native), or Cursor / Copilot / Codex / OpenCode (see [Compatibility](#-compatibility)).
-- **[Node](https://nodejs.org)** on your `PATH` — for the plugins that ship hooks ([what they do](docs/ARCHITECTURE.md#bundled-hooks)).
+- **[Node](https://nodejs.org)** on your `PATH` — for the plugins that ship hooks ([what they do](docs/ARCHITECTURE.md#-bundled-hooks)).
 
 ## 🔌 Compatibility
 
@@ -283,7 +283,7 @@ Full catalog → [`CATALOG.md`](docs/CATALOG.md).
 
 ## 🔒 Trust and safety
 
-Plugins act with **your permissions**, and some run **Node hooks automatically** at session events ([the list](docs/ARCHITECTURE.md#bundled-hooks)).
+Plugins act with **your permissions**, and some run **Node hooks automatically** at session events ([the list](docs/ARCHITECTURE.md#-bundled-hooks)).
 
 Before installing any plugin, skim its `README`, `hooks/`, and `.mcp.json`. Found a vulnerability? Report it privately → [`SECURITY.md`](SECURITY.md).
 
