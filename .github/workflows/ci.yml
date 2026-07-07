@@ -88,6 +88,22 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: gh pr merge "${{ fromJSON(steps.release.outputs.pr).number }}" --squash --admin --repo "${{ github.repository }}"
 
+      # Pin GitHub's "Latest" badge to the umbrella marketplace release.
+      # release-please creates the umbrella + every plugin release in one run
+      # with no ordering guarantee, and GitHub marks whichever release is created
+      # last as "Latest" (the create API defaults make_latest to true). That
+      # lets a plugin release (e.g. aidd-dev-v2.3.0) outrank the marketplace
+      # version whenever a cycle ships plugins alongside the umbrella. Bare
+      # `tag_name` is the root "." package tag (the umbrella `v*`, the tag that
+      # carries the marketplace bundle); forcing it latest auto-unsets the plugin
+      # release that held the badge. The umbrella bumps every cycle, so a
+      # release run always has a root tag to pin.
+      - name: Pin umbrella release as latest
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: gh release edit "${{ steps.release.outputs.tag_name }}" --latest --repo "${{ github.repository }}"
+
   build-and-attach:
     name: Build and attach marketplace
     needs: [release-please]
