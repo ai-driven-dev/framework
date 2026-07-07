@@ -4,7 +4,7 @@ The live roadmap - **Now / Next / Later** with per-item status across the framew
 
 ## How to influence
 
-Priority is set by a community vote - full mechanism (who votes, weighting, polls) in [`GOVERNANCE.md`](./GOVERNANCE.md#roadmap-voting). To influence it:
+Priority is set by a community vote - full mechanism (who votes, weighting, polls) in [`GOVERNANCE.md`](./GOVERNANCE.md#-roadmap-voting). To influence it:
 
 - Open a `feat:` issue or an idea in [GitHub Discussions](https://github.com/ai-driven-dev/framework/discussions), and 👍 / upvote what you want - the signal that promotes an item to a vote.
 - Discuss on [Discord](https://discord.gg/EWySJSpjWs).
