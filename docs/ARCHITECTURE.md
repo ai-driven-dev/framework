@@ -159,11 +159,9 @@ Composition rules:
 
 ## 🔗 Cross-plugin orthogonality
 
-Recipe skills delegate by **capability, not name**: when skill A needs something skill B owns, it discovers a candidate at runtime through description matching, never a hardcoded plugin name. This keeps the marketplace forkable, the plugins swappable, and the docs maintainable.
+Plugins never reference each other by name — **orchestrators included**. When skill A needs a capability skill B owns, it discovers a candidate at runtime through description matching, never a hardcoded `aidd-<plugin>:…` address. This keeps the marketplace forkable, the plugins swappable, and the docs maintainable.
 
-The deliberate exception is an **orchestrator**: `aidd-orchestrator` names the `aidd-dev` pipeline it drives, because sequencing a known flow is its whole job. Everywhere else, no cross-plugin literal references.
-
-The rule is social (PR template checklist), not yet mechanically enforced — a lefthook grep for cross-plugin literals could be added.
+The rule is social (PR template checklist), not yet mechanically enforced — a lefthook grep for cross-plugin literals would catch violations (an orchestrator hardcoding a sibling skill name still slips through today).
 
 ## 🔎 See also
 
