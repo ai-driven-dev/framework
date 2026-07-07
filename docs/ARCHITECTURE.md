@@ -76,7 +76,7 @@ plugins/<plugin>/
 └── .mcp.json               # MCP server configuration (optional)
 ```
 
-A plugin bundles **any subset** of the Claude Code surfaces (skills, agents, commands, hooks, rules, MCP servers); only `skills/` and the manifest are universal. Browse the [plugins](../plugins/) to see which surfaces each one ships.
+A plugin bundles **any subset** of the Claude Code surfaces (skills, agents, commands, hooks, rules, MCP servers); only `skills/` and the manifest are universal. Today the bundled plugins use skills, agents, and hooks — commands, rules, and MCP servers are supported but not yet shipped by any. Browse the [plugins](../plugins/) to see which surfaces each one ships.
 
 Validation:
 
@@ -159,9 +159,11 @@ Composition rules:
 
 ## 🔗 Cross-plugin orthogonality
 
-Plugins do not reference each other by name. When skill A needs a capability owned by skill B, it discovers a candidate at runtime through description matching. This rule keeps the marketplace forkable, the plugins swappable, and the docs maintainable.
+Recipe skills delegate by **capability, not name**: when skill A needs something skill B owns, it discovers a candidate at runtime through description matching, never a hardcoded plugin name. This keeps the marketplace forkable, the plugins swappable, and the docs maintainable.
 
-The rule is enforced both socially (PR template checklist) and mechanically (lefthook hooks could be extended to grep for cross-plugin literal references).
+The deliberate exception is an **orchestrator**: `aidd-orchestrator` names the `aidd-dev` pipeline it drives, because sequencing a known flow is its whole job. Everywhere else, no cross-plugin literal references.
+
+The rule is social (PR template checklist), not yet mechanically enforced — a lefthook grep for cross-plugin literals could be added.
 
 ## 🔎 See also
 
