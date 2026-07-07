@@ -6,7 +6,7 @@ Reference for how the `aidd-framework` marketplace is registered, scoped, and ve
 
 A marketplace is a Git repo that publishes plugins. When you run `/plugin marketplace add <owner>/<repo>`, Claude Code clones the repo, reads its `.claude-plugin/marketplace.json`, and offers the listed plugins for install.
 
-`aidd-framework` is a **community-maintained, methodology-driven complement** to Anthropic's [official marketplace](https://github.com/anthropics/claude-plugins-official). The official catalog covers broadly useful plugins curated by Anthropic; AIDD ships plugins that materialise a specific way of working (the AI-Driven Development flow). The two are designed to coexist — register both and install from either.
+`aidd-framework` is a community marketplace that complements Anthropic's [official one](https://github.com/anthropics/claude-plugins-official) — register both and install from either.
 
 Official Anthropic docs:
 
@@ -30,8 +30,7 @@ Set scope at install time with the `/plugin` UI, or by editing `enabledPlugins` 
 
 ## Versioning & updates
 
-- Each plugin versions independently via `release-please`. Tags look like `aidd-<plugin>-vX.Y.Z`.
-- The root marketplace (`marketplace.json`) versions independently as `vX.Y.Z`.
+- Each plugin and the root marketplace version independently via `release-please` (tags `<plugin>-vX.Y.Z`, root `vX.Y.Z`); the tooling lives in [`vcs.md`](../aidd_docs/memory/vcs.md#release-management).
 - Pull updates inside Claude Code with `/plugin marketplace update aidd-framework`.
 
 See [`CHANGELOG.md`](../CHANGELOG.md) for the full history.

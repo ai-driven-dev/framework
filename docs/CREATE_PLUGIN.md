@@ -15,9 +15,7 @@ The rest of this guide applies to the skill directory; skip the plugin-registrat
 
 ## Prerequisites
 
-The same toolchain as any framework contribution:
-
-- Node 20+, pnpm, jq, python3, pipx (`gh` CLI optional). See `Development setup` in [`../CONTRIBUTING.md`](../CONTRIBUTING.md).
+- The framework contribution toolchain (Node, pnpm, jq, python3, pipx) — see [Set up](../CONTRIBUTING.md#1-set-up).
 - A clear, scannable use case the plugin solves (one or two sentences).
 
 ## Step 1 - decide what the plugin does
@@ -26,7 +24,7 @@ A good plugin in this marketplace is:
 
 - **Scoped to one phase or one concern.** "Generate user stories", "audit a codebase for tech debt", "rename a Claude Code prompt safely". If you can't say it in one sentence, split it.
 - **Composable with siblings.** Avoid duplicating skills already in `aidd-context`, `aidd-dev`, `aidd-vcs`, `aidd-pm`, `aidd-orchestrator`, or `aidd-refine`. Discovery-by-description means your plugin can pull on theirs at runtime.
-- **Independent of specific other plugins.** Never reference a sibling plugin by name in skill descriptions or READMEs. The discovery rule keeps the marketplace forkable.
+- **Independent of specific other plugins.** Never reference a sibling by name in skill descriptions or READMEs — see [Cross-plugin orthogonality](ARCHITECTURE.md#cross-plugin-orthogonality).
 
 ## Step 2 - scaffold the directory
 

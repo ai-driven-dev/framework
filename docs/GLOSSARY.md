@@ -4,7 +4,7 @@ Definitions for the terms the framework uses without re-explaining each time. On
 
 ## Plugin
 
-A `plugins/<name>/` directory installable from this marketplace into Claude Code. Each plugin owns one domain (context, dev, vcs, pm, orchestrator, refine), ships its own README, CATALOG, and skills, and may add any Claude Code surface: agents, commands, hooks, rules, and MCP servers (`.mcp.json`). Plugins version independently via `release-please`.
+A `plugins/<name>/` directory installable from this marketplace into Claude Code. Each plugin owns one domain (context, dev, vcs, pm, orchestrator, refine, ui), ships its own README, CATALOG, and skills, and may add any Claude Code surface: agents, commands, hooks, rules, and MCP servers (`.mcp.json`). Plugins version independently via `release-please`.
 
 ## Marketplace
 

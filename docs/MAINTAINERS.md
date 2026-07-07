@@ -107,7 +107,7 @@ If a bad squashed promote turns `main` red on `Commitlint` and skips **Release P
 
 ## Branch protection & the bot bypass
 
-`main` accepts only PRs (no direct push, no force-push, no deletion) with a CODEOWNERS review and passing `lefthook` / `Commitlint`.
+The protection policy (PR-only, CODEOWNERS review, required checks) is defined in [`GOVERNANCE.md`](../GOVERNANCE.md#code-decisions-merging); this is the ops.
 
 Two bypass actors (both `pull_request` mode, so neither can push directly to `main`):
 - the **aidd-bot GitHub App** (`Integration`) - release-please and the Dependabot auto-merge mint a token from it (`actions/create-github-app-token`), so their PRs trigger the required checks *and* the App merges them past the human-review rule.
@@ -115,7 +115,11 @@ Two bypass actors (both `pull_request` mode, so neither can push directly to `ma
 
 The App: ID in secret `AIDD_BOT_APP_ID`, key in `AIDD_BOT_PRIVATE_KEY`. If the App is broken/uninstalled, release and Dependabot PRs stop merging - fix the App rather than re-adding an admin bypass.
 
-Head branches are **not** auto-deleted on merge (`delete_branch_on_merge: false`): the promote PR merges `next` into `main` without deleting `next`, so the back-merge that realigns `next` afterwards never hits a missing branch. Do not re-enable the setting. The back-merge runs unattended (bot App `always` bypass on the `next` ruleset); if it cannot push it opens an issue labelled `back-merge-failed` — resync with a `main` → `next` PR. If `next` is ever missing, recreate it: `git push origin main:next`.
+Head branches are **not** auto-deleted on merge (`delete_branch_on_merge: false`):
+
+- The promote PR merges `next` into `main` without deleting `next`, so the back-merge that realigns `next` never hits a missing branch. **Do not re-enable** the setting.
+- The back-merge runs unattended (bot App `always` bypass on the `next` ruleset). If it cannot push, it opens an issue labelled `back-merge-failed` — resync with a `main` → `next` PR.
+- If `next` is ever missing, recreate it: `git push origin main:next`.
 
 To change protection, edit `.github/rulesets/main.json` (or `next.json`), then apply it live:
 ```bash
@@ -125,9 +129,7 @@ Keep the file and the live ruleset in sync.
 
 ## People
 
-- **Promote to Habilité**: a Habilité nominates a Certifié with a track record; majority of Habilité approves; add them to the `habilitated` team and `CODEOWNERS`.
-- **Core Team / Certifié**: managed via the `core-team` / `certified` teams (Core Team = paid AIDD programme members; Certifié = passed certification).
-- Inactivity 6 months -> emeritus by Habilité majority.
+Roles, promotion, and inactivity rules → [`GOVERNANCE.md`](../GOVERNANCE.md#roles). Team mechanics only: Habilité ↔ `habilitated` team + `CODEOWNERS`; Core Team / Certifié ↔ `core-team` / `certified` teams.
 
 ## Security
 
