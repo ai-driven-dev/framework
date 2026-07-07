@@ -30,24 +30,27 @@
 
 ---
 
-A marketplace of **skills, agents, commands, rules, and recipes** that drive your SDLC — from idea to a tested, shipped PR — the agentic-engineering way.
+The **AI-Driven Dev Framework** is a marketplace — **skills, agents, commands, rules, prompts, templates, recipes…** — that helps you ship **high-quality features to production**.
+
+> Orchestrate your SDLC (Software Development Life Cycle) at scale, the agentic-engineering way.
 
 ## ✅ Prerequisites
 
-- **An AI tool we support** — AIDD runs inside your tool:
+- **An AI coding tool** — Claude Code (native), or Cursor / Copilot / Codex / OpenCode (see [Compatibility](#-compatibility)).
+- **[Node](https://nodejs.org)** on your `PATH` — for the plugins that ship hooks ([what they do](docs/ARCHITECTURE.md#bundled-hooks)).
 
-  | Tool | Status | Release dist |
-  | --- | --- | --- |
-  | **Claude Code** | ✅ Native · recommended | Marketplace |
-  | **Cursor** | ✅ Supported | Marketplace · Flat |
-  | **GitHub Copilot** | ✅ Supported | Marketplace · Flat |
-  | **Codex** | ✅ Supported | Marketplace · Flat |
-  | **OpenCode** | ✅ Supported | Flat |
-  | **Gemini · Mistral** | 🚧 In progress | — |
+## 🔌 Compatibility
 
-  <sub>Install steps per tool → [Other tools](#other-tools).</sub>
+| Tool | Status | Release dist |
+| --- | --- | --- |
+| **Claude Code** | ✅ Native · recommended | Marketplace |
+| **Cursor** | ✅ Supported | Marketplace · Flat |
+| **GitHub Copilot** | ✅ Supported | Marketplace · Flat |
+| **Codex** | ✅ Supported | Marketplace · Flat |
+| **OpenCode** | ✅ Supported | Flat |
+| **Gemini · Mistral** | 🚧 In progress | — |
 
-- **[Node](https://nodejs.org)** on your `PATH` — some plugins run small Node hooks automatically ([what they do](docs/ARCHITECTURE.md#bundled-hooks)).
+<sub>Install steps per tool → [Other tools](#other-tools).</sub>
 
 ## 📦 Install
 
@@ -76,7 +79,9 @@ Update anytime: `/plugin marketplace update aidd-framework`.
 
 ### Other tools
 
-Same plugin names as Claude Code. Archives → [latest release](https://github.com/ai-driven-dev/framework/releases/latest). Pick your tool:
+Same plugin names as Claude Code.
+
+Download your tool's bundle from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest), then follow its steps:
 
 <details>
 <summary><strong>Cursor</strong></summary>
@@ -166,7 +171,7 @@ Three ways in — pick one:
 The full loop, and how onboarding sets it up:
 
 ```mermaid
-flowchart LR
+flowchart TD
     Onboard(["<b>/aidd-context:00-onboard</b><br/><i>inspect · guide</i>"])
 
     subgraph setup["① Set up — once"]
