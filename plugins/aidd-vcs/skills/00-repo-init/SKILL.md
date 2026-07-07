@@ -6,6 +6,8 @@ argument-hint: init | publish
 
 # Repo Init
 
+> Status: experimental.
+
 Initializes a project's repository locally and, on request, on the remote host, then returns the remote URL.
 
 ## Actions
@@ -24,6 +26,10 @@ Before running an action, read its file in `actions/`, not only the table or ass
 - `init` makes one bootstrap commit (`--allow-empty`) so `HEAD` exists and is pushable. The project's real first commit stays the commit skill's job.
 - `publish` is outward-facing. It confirms before creating the remote unless `non_interactive` is set.
 - The provider is open. Resolve the host and how to reach it (CLI, MCP, or API) from the VCS memory when present, else from the VCS tooling available in the environment. Never restrict to a fixed list or a fixed mechanism. `main` is the default-branch fallback.
+
+## Prerequisites
+
+- `git` on the PATH. For `publish`, the resolved host's tooling (CLI, MCP, or API) available and authenticated.
 
 ## Assets
 
