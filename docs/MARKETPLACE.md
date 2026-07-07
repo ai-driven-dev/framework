@@ -6,6 +6,11 @@ Reference for how the `aidd-framework` marketplace is registered, scoped, and ve
 
 A marketplace is a Git repo that publishes plugins. Run `/plugin marketplace add <owner>/<repo>` and Claude Code clones the repo, reads its `.claude-plugin/marketplace.json`, and offers the listed plugins.
 
+```mermaid
+flowchart LR
+    Add["/plugin marketplace add owner/repo"] --> Clone["Claude Code clones the repo"] --> Read["reads .claude-plugin/marketplace.json"] --> Offer["offers the listed plugins"] --> Install["/plugin install → user · project · local scope"]
+```
+
 `aidd-framework` is a community marketplace. It complements Anthropic's [official one](https://github.com/anthropics/claude-plugins-official) — register both, install from either.
 
 Official Anthropic docs:

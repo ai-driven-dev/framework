@@ -2,6 +2,11 @@
 
 Source of truth for AIDD skills, agents, rules, and templates — authored in Claude Code syntax; the CLI adapts an archive per tool at release. This file covers contributing to **this repository**; the wider community, roles, and training programme live at [ai-driven-dev.fr](https://www.ai-driven-dev.fr/).
 
+```mermaid
+flowchart LR
+    Issue["💡 Issue / idea"] --> Branch["🌿 Branch off next"] --> PR["🔀 Open PR"] --> Review["🛡️ Habilité review"] --> Merge["✅ Squash-merge → next"] --> Release["🚀 Weekly promote → release-please ships"]
+```
+
 ## 👥 Who can contribute
 
 Roles and their rights are defined in [`GOVERNANCE.md`](./GOVERNANCE.md#-roles). Where each starts:

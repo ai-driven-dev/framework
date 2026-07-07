@@ -5,6 +5,11 @@ Build a new plugin for the AI-Driven Dev marketplace, from a blank directory to 
 - OSS contribution rules (commit scopes, release flow) → [`../CONTRIBUTING.md`](../CONTRIBUTING.md).
 - Framework architecture → [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
+```mermaid
+flowchart LR
+    Scaffold["🏗️ Scaffold plugin dir"] --> Register["📝 Register in marketplace.json + release config"] --> Test["🧪 Try locally"] --> PR["🔀 PR + review"] --> Release["🚀 release-please tags & publishes"]
+```
+
 ## 🧩 Adding a skill to an existing plugin
 
 Most contributions add a *skill* to an existing plugin, not a new plugin. Decide two things first:
