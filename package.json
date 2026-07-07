@@ -31,7 +31,7 @@
     "prepare": "lefthook install || true"
   },
   "devDependencies": {
-    "@commitlint/cli": "^21.0.2",
+    "@commitlint/cli": "^21.2.0",
     "@commitlint/config-conventional": "^21.0.2",
     "ajv": "8.20.0",
     "ajv-formats": "3.0.1",
