@@ -14,14 +14,15 @@
 
 The greenfield sequence, at a glance — from a raw idea to a project the AIDD flow can build on.
 
+> Prefer a guided walkthrough? `/aidd-context:00-onboard` inspects your project and routes you step by step instead of running the sequence by hand.
+
 ## Steps
 
 1. 💡 **Brainstorm the idea**: `/aidd-refine:01-brainstorm` — sharpen the raw idea into a precise request.
 2. 📄 **Draft the PRD**: `/aidd-pm:03-prd` — turn the idea into a structured product requirements document.
 3. 🏗️ **Design the architecture**: `/aidd-context:01-bootstrap` — validate a stack through Q&A; outputs an `INSTALL.md`.
 4. 🧠 **Build project memory**: `/aidd-context:02-project-memory` — create the memory bank and AI context files.
-5. 🧭 **Onboard**: `/aidd-context:00-onboard` — confirm the setup and get guided to the next step.
-6. 🚀 **Ship the first feature**: follow [Ship a feature](ship-a-feature.md).
+5. 🚀 **Ship the first feature**: follow [Ship a feature](ship-a-feature.md).
 
 ## Verify
 

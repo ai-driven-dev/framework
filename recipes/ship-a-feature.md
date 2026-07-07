@@ -8,11 +8,13 @@
 | ----------------- | ------------------------------------------------------------ |
 | **Level**         | Beginner                                                     |
 | **Time**          | ~varies with the feature                                     |
-| **Prerequisites** | AIDD installed; project onboarded (`/aidd-context:00-onboard`) |
+| **Prerequisites** | AIDD installed; project set up ([Start a project](start-a-project.md)) |
 
 ## Why
 
 The common loop, at a glance — the exact commands to run so you never wonder what comes next.
+
+> Prefer a guided walkthrough? `/aidd-context:00-onboard` inspects your project and routes you step by step instead of running the sequence by hand.
 
 ## Steps
 
