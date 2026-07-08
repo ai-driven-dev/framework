@@ -1,20 +1,20 @@
 ---
 name: 00-onboard
-description: Scan an AIDD project into a diagnostic of what is set up and missing, then run the recommended next commands in order. Use when the user asks where to start, what to do next, how the project stands, or to onboard onto AIDD. Not for listing every installed surface.
+description: Onboard onto an AIDD project by scanning what is set up and missing, then guiding the single next action to run. Use when the user says onboard me, onboard this project, get me started, where do I start, what should I do next, or how does this project stand. Not for listing every installed surface.
 argument-hint: scan | report | run
 ---
 
 # Onboard
 
-Scans the current project against the AIDD framework, reports what is present, drifting, or missing as an explicit checklist, hands back a single ordered list of the commands to run next, and runs them on request.
+Scans the current project against the AIDD framework, tells the user in plain words where it stands, points to the single clearest next action, and runs it on request.
 
 ## Actions
 
 | #   | Action   | Role                                                                                     | Input            |
 | --- | -------- | ---------------------------------------------------------------------------------------- | ---------------- |
 | 01  | `scan`   | Read the project once, silently, into a snapshot: every check in `checks.md`, status per zone | project root     |
-| 02  | `report` | Render the loud diagnostic plus one ordered command list, foundations then dev flow       | the 01 snapshot  |
-| 03  | `run`    | Run the user's pick per its tier, `OK` walks the whole list pausing at each GUIDED step, then re-scan | the user's reply |
+| 02  | `report` | Lead with one plain state sentence and one recommended action a first-timer can act on, dashboard demoted | the 01 snapshot  |
+| 03  | `run`    | Run the user's pick per its tier, `OK` walks the pending steps pausing at each interactive one, then re-scan | the user's reply |
 
 Run `01 → 02 → 03`, then loop back to `01` after each run until the user stops. Run each action's `## Test` before the next. Before running an action, read its file in `actions/`, not only the table or assets.
 
@@ -29,12 +29,10 @@ Run `01 → 02 → 03`, then loop back to `01` after each run until the user sto
 
 ## Transversal rules
 
-- Report, do not lecture. State status as glyphs, never a raw label or snapshot. A plain-language explanation of a step appears only when the user asks for it.
+- Guide, do not lecture or dump. Lead with where the project stands and the single clearest next action, and keep the rest on demand. The render shape is `assets/report.md`.
 - Name real commands only. Never name a command whose skill `01` did not find installed; name a missing one as a gap by function.
 - Never run a GUIDED step unattended, and never test a plugin version against a registry.
 - Re-scan after a run, never trust a stale status. Wait for an explicit reply before running anything.
-
-Detail lives in the references: the check catalogue and ranking in `checks.md`, the run tiers and `OK` walk in `run-tiers.md`, the render shape and glyphs in `assets/report.md`.
 
 ## External data
 

@@ -51,7 +51,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `-` | [README.md](skills/00-onboard/README.md) | - |
 | `references` | [checks.md](skills/00-onboard/references/checks.md) | - |
 | `references` | [run-tiers.md](skills/00-onboard/references/run-tiers.md) | - |
-| `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Scan an AIDD project into a diagnostic of what is set up and missing, then run the recommended next commands in order. Use when the user asks where to start, what to do next, how the project stands, or to onboard onto AIDD. Not for listing every installed surface.` |
+| `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Onboard onto an AIDD project by scanning what is set up and missing, then guiding the single next action to run. Use when the user says onboard me, onboard this project, get me started, where do I start, what should I do next, or how does this project stand. Not for listing every installed surface.` |
 
 #### `skills/01-bootstrap`
 
