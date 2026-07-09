@@ -1,6 +1,6 @@
 ---
 objective: "onboard is rebuilt as a token-optimized guided tutorial over a granular, conditional-load file tree that teaches the AIDD flow, every current behavior preserved, and the skill-authoring contract updated to sanction the new structure."
-status: in-progress
+status: implemented
 ---
 
 <!-- Fill or omit these sections; never add, rename, or reorder one. -->
