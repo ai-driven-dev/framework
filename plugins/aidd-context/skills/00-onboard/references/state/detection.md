@@ -14,13 +14,8 @@
 
 ## Wiring status per detected tool
 
-Wired = the tool's own context file carries the `<aidd_project_memory>` block on canonical shape (claude => `CLAUDE.md`, codex => `AGENTS.md`, cursor => `.cursor/rules/`, and so on per tool).
+Wired = the tool's own context file carries the `<aidd_project_memory>` block on canonical shape (claude => `CLAUDE.md`, codex => `AGENTS.md`, cursor => `.cursor/rules/`, and so on per tool). Each detected tool is either **wired** or **used, not wired**. The render maps that to a glyph (legend in `assets/report.md`).
 
-| Glyph | Means                       |
-| ----- | --------------------------- |
-| `✓`   | used AND memory wired       |
-| `⚠`   | used, memory not wired      |
-
-- Render a **detected** tool only. An unused optional tool is omitted, never crossed with `✗`.
-- A `⚠` always carries its cause and fix in the render, e.g. "codex installed, no `AGENTS.md` block => wire it".
-- `✗` belongs to a required foundation that is missing (memory absent), not to a tool row. See `zones.md`.
+- Render a **detected** tool only. An unused optional tool is omitted, never crossed.
+- A not-wired tool always carries its cause and fix in the render, e.g. "codex installed, no `AGENTS.md` block => wire it".
+- A missing required foundation (memory absent) is a foundation status, not a tool row. See `zones.md`.

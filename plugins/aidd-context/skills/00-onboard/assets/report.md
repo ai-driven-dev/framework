@@ -3,7 +3,7 @@
 <!--
 Glyphs, only in the state block: ✅ done · ⚠️ present, not wired · ❌ required, missing. Unused optional tools are omitted, never crossed.
 Keys: the user replies with a bracketed token. [1] [2]… act, [OK] walks pending steps, [m] map, [?] detail. State keys inline, never a standalone "type N and press Enter" line.
-Tier is a plain clause, only in [?]: AUTO "(runs on its own)", GUIDED "(it will ask you a few questions)", MANUAL "(you run this one yourself)".
+Tier is a plain clause, shown only in [?]; the AUTO/GUIDED/MANUAL wording lives in references/run/tiers.md.
 -->
 
 ## Entry screen (greenfield · existing · idle · drift)

@@ -1,18 +1,18 @@
 # State zones
 
-Disk/VCS checks that place the project. `01-scan` reads this. Glyphs: `✓` met · `⚠` drift · `✗` missing.
+Disk/VCS checks that place the project. `01-scan` reads this. Each check is met, drift (present but off canonical shape), or missing. The render maps those to glyphs; the display legend lives in `assets/report.md`.
 
 ## Foundations
 
 State-aware order: existing repo (code present) => memory first, bootstrap skipped. Greenfield empty => stack, then memory, then wire.
 
-| Check         | Met `✓`                                                        | Drift `⚠`                          | Deliverable               | Command                          |
+| Check         | Met when                                                       | Drift when                         | Deliverable               | Command                          |
 | ------------- | -------------------------------------------------------------- | ---------------------------------- | ------------------------- | -------------------------------- |
 | tech stack    | `INSTALL.md` exists OR repo established (code or synced memory) | —                                  | tech stack                | `aidd-context:01-bootstrap`      |
 | project memory| `aidd_docs/memory/` has real content                           | files empty or placeholder         | project knowledge saved   | `aidd-context:02-project-memory` |
 | memory wiring | `<aidd_project_memory>` block on canonical shape in each used tool's context file | block present but off shape | knowledge loaded by the AI | `aidd-context:02-project-memory` |
 
-- tech stack is `✗` only on a truly greenfield repo (no code AND no synced memory). Established => `✓`, never bootstrap.
+- tech stack is missing only on a truly greenfield repo (no code AND no synced memory). Established => met, never bootstrap.
 - memory wiring: an absent block or no context file is `✗`, not `⚠`. `01-scan` loads the canonical block shape to judge drift.
 
 ## Dev flow
@@ -34,8 +34,8 @@ brainstorm → spec* → plan → implement → assert → review → commit →
 | commit     | reviewed, uncommitted or unpushed                  |
 | PR         | current branch has an open PR                      |
 
-- `review` and `PR` read cheap VCS state, **current branch only**: the PR whose head is this branch. Ignore repo-wide open PRs and review queues — another branch's PR is another dev's work, never the pin.
-- `brainstorm` and `spec` have no hard disk signal; they are the pin only when no downstream artifact exists.
+- Disk/VCS-detectable pins: `spec`, `plan`, `implement`, `review`, `PR`. `review` and `PR` read cheap VCS state, **current branch only**: the PR whose head is this branch. Ignore repo-wide open PRs and review queues — another branch's PR is another dev's work, never the pin.
+- Inferred pins, no cheap signal: `brainstorm`, `assert`, `commit`. Do not disk-pin them. `brainstorm` is the pin only when no downstream artifact exists; `assert` and `commit` are placed by the plan-status hedge and the cumulative state, not detected directly.
 - The plan's `status:` refines the pin: see `hedge.md`.
 
 ## Health
