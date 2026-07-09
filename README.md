@@ -73,16 +73,26 @@ Installs the 6 stable plugins (`aidd-ui` is 🚧 alpha, install separately — s
 /plugin install aidd-vcs@aidd-framework
 /plugin install aidd-pm@aidd-framework
 /plugin install aidd-orchestrator@aidd-framework
+/plugin install aidd-ui@aidd-framework # 🚧 alpha, install separately
 ```
 
-**Command line** (same, prefixed with `claude`)
+
+<details>
+<summary><strong>Command line</strong> (same, prefixed with `claude`)</summary>
 
 ```bash
 claude plugin marketplace add ai-driven-dev/framework
-claude plugin install aidd-context@aidd-framework   # then aidd-refine, aidd-dev, aidd-vcs, aidd-pm, aidd-orchestrator
+claude plugin install aidd-context@aidd-framework
+claude plugin install aidd-refine@aidd-framework
+claude plugin install aidd-dev@aidd-framework
+claude plugin install aidd-vcs@aidd-framework
+claude plugin install aidd-pm@aidd-framework
+claude plugin install aidd-orchestrator@aidd-framework
+claude plugin install aidd-ui@aidd-framework # 🚧 alpha, install separately
 ```
+</details
 
-Update anytime: `/plugin marketplace update aidd-framework`.
+<br/>Update anytime: `/plugin marketplace update aidd-framework`.
 
 ### Other tools
 
@@ -273,8 +283,6 @@ Async dev: label an issue → get a PR.
 UI / UX design — smoke-test only, not ready for use.
 
 </td>
-<td width="33%" valign="top"></td>
-<td width="33%" valign="top"></td>
 </tr>
 </table>
 
