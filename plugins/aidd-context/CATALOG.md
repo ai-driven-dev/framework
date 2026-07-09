@@ -45,12 +45,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description |
 |-------|------|---|
 | `actions` | [01-scan.md](skills/00-onboard/actions/01-scan.md) | - |
-| `actions` | [02-report.md](skills/00-onboard/actions/02-report.md) | - |
-| `actions` | [03-run.md](skills/00-onboard/actions/03-run.md) | - |
+| `actions` | [02-assess.md](skills/00-onboard/actions/02-assess.md) | - |
+| `actions` | [03-present.md](skills/00-onboard/actions/03-present.md) | - |
+| `actions` | [04-run.md](skills/00-onboard/actions/04-run.md) | - |
 | `assets` | [report.md](skills/00-onboard/assets/report.md) | - |
 | `-` | [README.md](skills/00-onboard/README.md) | - |
 | `references` | [checks.md](skills/00-onboard/references/checks.md) | - |
-| `references` | [run-tiers.md](skills/00-onboard/references/run-tiers.md) | - |
 | `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Onboard onto an AIDD project by scanning what is set up and missing, then guiding the single next action to run. Use when the user says onboard me, onboard this project, get me started, where do I start, what should I do next, or how does this project stand. Not for listing every installed surface.` |
 
 #### `skills/01-bootstrap`

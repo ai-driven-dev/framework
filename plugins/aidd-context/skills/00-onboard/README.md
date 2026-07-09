@@ -36,4 +36,4 @@ Only the `aidd-context` plugin installed and enabled, and a working directory ro
 
 ## Details
 
-See [`SKILL.md`](SKILL.md) for the action contract and [`actions/`](actions/) for the three actions. The catalogue lives in [`references/checks.md`](references/checks.md) (the four zones and their checks) and [`references/run-tiers.md`](references/run-tiers.md) (the tiers and the `OK` chain); the report shape is [`assets/report.md`](assets/report.md).
+See [`SKILL.md`](SKILL.md) for the action contract and [`actions/`](actions/) for the four actions. The references live under [`references/`](references/) (state, order, run, and the flow curriculum); the render shape is [`assets/report.md`](assets/report.md).

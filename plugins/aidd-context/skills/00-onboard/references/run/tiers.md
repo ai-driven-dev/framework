@@ -1,0 +1,13 @@
+# Tiers
+
+How `04-run` carries out a step. The tier is a default, overridable.
+
+| Tier   | What                    | How onboard runs it                                        |
+| ------ | ----------------------- | ---------------------------------------------------------- |
+| AUTO   | non-interactive         | invoke, run to completion, continue                        |
+| GUIDED | interactive Q&A         | launch, hand to the user, resume on return (see `return.md`) |
+| MANUAL | side-effecting, outward | show the command, run nothing, leave it for the user       |
+
+- Rendered as a plain clause, never a glyph: AUTO `(runs on its own)`, GUIDED `(it will ask you a few questions)`, MANUAL `(you run this one yourself)`.
+- The tier is the step's default. A skill that runs either way (interactive by default, unattended on request, e.g. `aidd-dev:00-sdlc`) runs the other way when the user asks and the skill supports it.
+- The `OK` walk: AUTO runs to completion, GUIDED pauses for input then resumes, MANUAL is shown and left. State up front how many steps it covers and which need input.
