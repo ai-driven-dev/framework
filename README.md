@@ -30,9 +30,14 @@
 
 ---
 
-The **AI-Driven Dev Framework** is a marketplace — **skills, agents, commands, rules, prompts, templates, recipes…** — that helps you ship **high-quality features to production**.
+The **AI-Driven Dev Framework** installs a working SDLC (Software Development Life Cycle) into your AI coding tool — **skills, agents, commands, rules** — that turns a rough idea into a reviewed, shipped pull request:
 
-> Orchestrate your SDLC (Software Development Life Cycle) at scale, the agentic-engineering way.
+```text
+/aidd-dev:00-sdlc "add rate limiting to the /login endpoint"
+→ spec → plan → implement → review → ship (commit + PR opened)
+```
+
+Why not just write your own commands? → [FAQ](docs/FAQ.md#-why-aidd-instead-of-your-own-skills).
 
 ## ✅ Prerequisites
 
@@ -50,11 +55,13 @@ The **AI-Driven Dev Framework** is a marketplace — **skills, agents, commands,
 | **OpenCode** | ✅ Supported | Flat |
 | **Gemini · Mistral** | 🚧 In progress | — |
 
-<sub>Install steps per tool → [Other tools](#other-tools).</sub>
+<sub>**Marketplace** = installed and updated through your tool's plugin manager. **Flat** = files copied directly into your project, no plugin manager involved. Install steps per tool → [Other tools](#other-tools).</sub>
 
 ## 📦 Install
 
 ### Claude Code
+
+Installs the 6 stable plugins (`aidd-ui` is 🚧 alpha, install separately — see [Plugins](#-plugins)).
 
 **In the session** (slash commands)
 
@@ -266,6 +273,8 @@ Async dev: label an issue → get a PR.
 UI / UX design — smoke-test only, not ready for use.
 
 </td>
+<td width="33%" valign="top"></td>
+<td width="33%" valign="top"></td>
 </tr>
 </table>
 

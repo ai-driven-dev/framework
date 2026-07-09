@@ -2,6 +2,10 @@
 
 Most "how do I…" answers live in the README; this page covers what isn't documented elsewhere, plus common install issues and the framework's limits.
 
+## 🤔 Why AIDD instead of your own skills?
+
+You can write your own Claude Code skills — nothing stops you. AIDD exists because that setup is work every team repeats and re-debugs alone: the router/action split ([Skill](GLOSSARY.md#-skill) glossary entry), the plan → implement → review gating, the plugin packaging and versioning, the multi-tool support (Cursor, Copilot, Codex, OpenCode). AIDD ships that scaffolding pre-built and maintained, so you start from a working SDLC loop and only author the skill content specific to your project. If your workflow doesn't match the framework's shape, [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md) shows how to build on the same scaffolding instead of replacing it.
+
 ## 📦 Install, update, other tools
 
 - **Install / first run** → [Quick start](../README.md#-quick-start).
