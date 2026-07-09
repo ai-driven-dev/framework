@@ -4,9 +4,9 @@ The contract every generated skill must satisfy. These rules govern the CLIENT s
 
 ## Rules
 
-- **R1.** SKILL.md is a pure router: description + action table + transversal rules. Zero business logic.
+- **R1.** SKILL.md is a pure router: a tiny title, the chaining schema, the action table, and transversal rules (see `## SKILL.md`). Zero business logic.
 - **R2.** One skill = one domain. A tool domain uses a singular noun (`slack`). An activity domain uses an action verb (`review`). See `## Naming`.
-- **R3.** References one level deep. A reference never `@`-chains another reference.
+- **R3.** References may nest in sub-folders (`references/<group>/`) so a step loads only what it needs. A reference still never `@`-chains another reference. Split a file from another only when some execution path needs one without the other; content that always co-loads stays one file.
 - **R4.** SKILL.md <= 500 lines. If exceeded, split into references.
 - **R5.** `description` states what + when. Third person, no XML. Conventions:
   - **Two lines max, straight to the point.** Target ~240 characters; never more than a short paragraph. Length serves recall, not completeness. The hard ceiling is 1024 chars, not a goal.
@@ -23,7 +23,8 @@ The contract every generated skill must satisfy. These rules govern the CLIENT s
 - **R10.** Generated skills are English only (frontmatter, body, actions, references, assets), regardless of conversation language.
 - **R11.** One idea per sentence. Split a sentence that runs past one line. Exceptions: the single-line `description` and table rows.
 - **R12.** One file = one artifact. A reference or asset holds a single coherent thing: one checklist, one template, one criteria set. When a file accumulates several independently reusable artifacts, split them so each is cited and reused alone. Prefer this split over bundling, even when the combined file is short.
-- **R13.** Includes are explicit and scoped. Cite an include with its `@<path>` alone inside a fenced ```<lang> block, never inline in prose. Naming: a global include (imported from SKILL.md, used skill-wide) takes no prefix; an include used by only one action is prefixed with that action's slug (e.g. `research-checklist.md`). SKILL.md lists only the global includes; an action-specific include is cited only from its own action.
+- **R13.** Includes are explicit and scoped. An **import** (content pulled into context) is cited with its `@<path>` alone inside a fenced ```<lang> block. A **pointer** (read-this-reference in a step) may cite `@<path>` inline in prose. Either uses the reference's full path, including a nested `references/<group>/file.md`. Naming: a global include (imported from SKILL.md, used skill-wide) takes no prefix; an include used by only one action is prefixed with that action's slug (e.g. `research-checklist.md`). SKILL.md lists only the global includes; an action-specific include is cited only from its own action.
+- **R14.** Bodies use telegraphic notation: tables, `→` for a linear chain, fragments over sentences, no filler. Never at the cost of a load-bearing condition. A branch, edge case, or if/then stays precise. Use a Mermaid diagram only for branching logic, never for a linear chain.
 
 ## Action anatomy
 
@@ -48,7 +49,11 @@ The router: YAML frontmatter + markdown body.
 - `description`: per R5.
 - `argument-hint` when supported or in plugin source and the skill has two or more actions: action names only, joined with ` | `, matching the files in `actions/`. Omit it for one-action skills.
 - A manual-only flag makes the skill user-only. The exact frontmatter key is per tool.
-- Body: pure router. The action table maps each `#` and slug to a role and input. State the flow (a sequential chain or a trigger-to-action map). Self-skips stated explicitly.
+- Frontmatter carries official keys only (`name`, `description`, `argument-hint`, the host manual-only flag). Never invent a flag the model must interpret; the body carries mode, not a made-up key.
+- Body order: a tiny `# Title`, the chaining schema, the action table, then the transversal rules. No restated intro sentence; the `description` already states the what.
+  - **Chaining schema.** A pipeline shows a one-line arrow schema, `a → b → c ↺` (`↺` marks a loop back). A menu shows the line `Pick one per request.` and no schema. The mode reads itself; no field states it.
+  - **Action table.** Columns `# | Action | Does`; `Does` is verb-led and telegraphic (verb + object). A menu drops the `#` column. No `Input` column: an action's input lives in its own `## Input`.
+- Standing rule for every skill: read an action's file just before running it, not only the router table. Stated here once, never repeated in a SKILL.md body.
 
 The `name` field is NOT the invocation token. The host builds the address from the plugin and folder, each in its own scheme. A colon or prefix in `name` breaks loading on some hosts. In prose, refer to a skill as `plugin:folder`, never `plugin:folder:action`.
 
