@@ -7,6 +7,10 @@ Carry out the user's reply, then loop back to scanning.
 - The reply from `03-present`: a number, `OK`, `?`, `back`, `recap`, `explain`, `skip`, or `stop`.
 - The decision from `02-assess`: the resolved commands, or a gap when no installed skill fits.
 
+## Output
+
+The reply carried out: the step run (or a MANUAL step shown and left), the session ledger updated, and a re-scan (`→ 01`) unless the reply was read-only or an umbrella pick.
+
 ## Process
 
 1. **Route.** Carry out the reply per `@../references/run/replies.md`.

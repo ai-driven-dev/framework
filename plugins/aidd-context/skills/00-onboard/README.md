@@ -23,11 +23,11 @@ Four actions in a loop: `scan → assess → present → run ↺`.
 1. `scan`: silently read the project into a snapshot — the checks, the detected AI tools and their wiring, the installed skills. Prints nothing.
 2. `assess`: turn the snapshot into one decision — the state, the single next action, and the screen to show.
 3. `present`: render that screen and wait for your reply.
-4. `run`: carry out the reply, then loop back to `scan`.
+4. `run`: carry out the reply. A run or handoff re-scans and loops; a read-only reply (`?`, `back`, `recap`, `explain`) reuses the snapshot; `stop` ends.
 
 ## What it shows
 
-- **Your AIDD setup.** AI tools (detected from `.claude`, `.codex`, `.cursor`, `.opencode`, `.github` config), the installed plugins, and the memory bank — each with `✅` set, `⚠️` present-but-not-wired (carries a fix), or `❌` required-but-missing. Unused tools are simply omitted.
+- **Your AIDD setup.** AI tools (detected from `.claude`, `.codex`, `.cursor`, `.opencode`, `.github` config), the installed plugins, and the memory bank — each shown as set, present-but-not-wired (with its fix), or required-but-missing. Unused tools are simply omitted.
 - **Foundations, state-aware.** An existing project starts with project memory (the stack already exists). A greenfield project designs the stack first.
 - **The feature flow.** `brainstorm → spec* → plan → implement → assert → review → commit → PR`. Walk it one command at a time, or hand the whole thing to `aidd-dev:00-sdlc`.
 
