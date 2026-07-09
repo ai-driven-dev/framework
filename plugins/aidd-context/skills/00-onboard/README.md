@@ -2,12 +2,12 @@
 
 # 00 - Onboard
 
-A linter for an AIDD project. It scans the working directory against the framework, reports what is present, drifting, or missing as an explicit `✅ ⚠️ ❌` checklist, and hands back a single ordered list of the exact commands to run next. Reply `OK` and it walks the whole list for you, pausing at each step that needs your input.
+A guided tutorial for an AIDD project. It announces itself, shows your AIDD setup up front (AI tools, plugins, memory), then walks you through the framework one step at a time: lay the foundations, then build a feature through the official flow. Nothing runs until you reply.
 
 ## When to use
 
-- "Where do I start?" / "Onboard me to this project."
-- "What should I do next?"
+- "Onboard me to this project." / "Get me started."
+- "Where do I start?" / "What should I do next?"
 - "How does this project stand against AIDD?"
 - After a partial setup, to see what is still missing.
 
@@ -18,22 +18,27 @@ A linter for an AIDD project. It scans the working directory against the framewo
 
 ## Flow
 
-Three actions, in a loop:
+Four actions in a loop: `scan → assess → present → run ↺`.
 
-1. `scan`: **silently** read the project once into a snapshot of every check across four zones. Prints nothing.
-2. `report`: render the loud diagnostic plus one ordered command list, foundations first, then the dev flow, each line naming a concrete installed command and its run tier.
-3. `run`: carry out the reply. `OK` walks the whole list, running the unattended steps and pausing at each interactive one; a number runs one step; then re-scan and refresh.
+1. `scan`: silently read the project into a snapshot — the checks, the detected AI tools and their wiring, the installed skills. Prints nothing.
+2. `assess`: turn the snapshot into one decision — the state, the single next action, and the screen to show.
+3. `present`: render that screen and wait for your reply.
+4. `run`: carry out the reply, then loop back to `scan`.
 
-It scans four zones: AIDD context (memory, the `<aidd_project_memory>` block, architecture), context-gen artifacts (rules, agents, skills, hooks, commands), the dev flow (code, tests, spec or plan, PR), and health (bug markers, messy code). A check is met by a disk fact and flagged `⚠` on form drift. It never checks a plugin version against a registry.
+## What it shows
 
-## Run tiers
+- **Your AIDD setup.** AI tools (detected from `.claude`, `.codex`, `.cursor`, `.opencode`, `.github` config), the installed plugins, and the memory bank — each with `✅` set, `⚠️` present-but-not-wired (carries a fix), or `❌` required-but-missing. Unused tools are simply omitted.
+- **Foundations, state-aware.** An existing project starts with project memory (the stack already exists). A greenfield project designs the stack first.
+- **The feature flow.** `brainstorm → spec* → plan → implement → assert → review → commit → PR`. Walk it one command at a time, or hand the whole thing to `aidd-dev:00-sdlc`.
 
-Each recommended step is one of three: **AUTO** (spawn and run to completion), **GUIDED** (an interactive skill onboard launches and hands to you), or **MANUAL** (a side-effecting command it shows but never runs). `OK` walks all three in order, running AUTO steps, pausing at each GUIDED step for your input, and leaving MANUAL commands for you to run.
+## Replies
+
+Reply with a bracketed key: a number `[1]` to run a step, `[OK]` to walk the pending steps, `[m]` for the flow map, `[?]` for detail, `recap`, `explain <n>`, or `stop`. A step that launches an interactive skill tells you to re-run onboard to come back.
 
 ## Requires
 
-Only the `aidd-context` plugin installed and enabled, and a working directory rooted in the target project. The `aidd_docs/` memory bank is **not** required: on a project without it, the first recommendation is to set it up. Onboard is the entry point, so it works before anything else exists.
+Only the `aidd-context` plugin installed and enabled, and a working directory in the target project. The memory bank is not required — on a project without it, the first step is to set it up. Onboard is the entry point, so it works before anything else exists.
 
 ## Details
 
-See [`SKILL.md`](SKILL.md) for the action contract and [`actions/`](actions/) for the four actions. The references live under [`references/`](references/) (state, order, run, and the flow curriculum); the render shape is [`assets/report.md`](assets/report.md).
+See [`SKILL.md`](SKILL.md) for the router and [`actions/`](actions/) for the four actions. The references live under [`references/`](references/) (`state/`, `order/`, `run/`, and the flow curriculum); the screen shapes are [`assets/report.md`](assets/report.md) with the banner in [`assets/banner.txt`](assets/banner.txt).
