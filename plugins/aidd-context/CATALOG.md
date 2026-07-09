@@ -48,9 +48,10 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-assess.md](skills/00-onboard/actions/02-assess.md) | - |
 | `actions` | [03-present.md](skills/00-onboard/actions/03-present.md) | - |
 | `actions` | [04-run.md](skills/00-onboard/actions/04-run.md) | - |
+| `assets` | [banner.txt](skills/00-onboard/assets/banner.txt) | - |
 | `assets` | [report.md](skills/00-onboard/assets/report.md) | - |
 | `-` | [README.md](skills/00-onboard/README.md) | - |
-| `references` | [checks.md](skills/00-onboard/references/checks.md) | - |
+| `references` | [flow.md](skills/00-onboard/references/flow.md) | - |
 | `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Onboard onto an AIDD project by scanning what is set up and missing, then guiding the single next action to run. Use when the user says onboard me, onboard this project, get me started, where do I start, what should I do next, or how does this project stand. Not for listing every installed surface.` |
 
 #### `skills/01-bootstrap`

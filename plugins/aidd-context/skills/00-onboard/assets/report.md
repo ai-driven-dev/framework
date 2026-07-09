@@ -1,28 +1,76 @@
-<!-- Onboard report shape. Emoji-anchored state on top, one recommended action with its key, compact options, full detail only on demand. Render top to bottom. -->
-
-<framing line>   <!-- first report of the session only, dropped on re-scans: "Interactive checkup — nothing runs until you reply." -->
-
-🔍  <state sentence>   <!-- one plain line naming where the project stands; see State -->
-
-🏗️  Foundations   <compact status; per-check ✅/⚠️/❌ only when it fits, else in [?]>
-🚦  Progress       <the dev-flow path with the current stage in [brackets], or a plain setup/idle note>
-
-👉  Next: <plain action>   [1]
-    <compact options line: remaining steps as key-labelled chips, then [OK] when it walks, then [?]>
+<!-- Onboard screen shapes. 03-present fills the one 02-assess chose. Match the mockup gallery in the plan folder. -->
 
 <!--
-Keys: the user replies with a bracketed token. [1] [2]… run a step, [OK] walks the pending steps in order, [?] expands the full detail. State the keys inline; never a standalone "type N and press Enter" line.
-
-Glyphs, only in the dashboard rows: ✅ done · ⚠️ needs fixing · ❌ missing. Progress marks the current stage with [brackets], never 📍/◦/➖.
-
-Tier shows only inside [?], as a plain clause: AUTO "(runs on its own)", GUIDED "(it will ask you a few questions)", MANUAL "(you run this one yourself)". It is the step's default, overridable (see run-tiers.md).
-
-Rules:
-- Framing: the first report of the session only, then dropped on re-scans, so the user knows it is an interactive checkup they drive.
-- State (🔍): one plain sentence, no jargon. Greenfield → "Not set up yet — let's lay the foundations." A foundation off-shape → "Almost set up — one thing needs fixing." Mid-work → "Healthy — unsaved changes in progress." (or "…ready to review" / "…ready to ship" per the stage). Idle → "Healthy — ready for new work."
-- Foundations (🏗️): a compact status ("✅ all set" · "❌ 0 of 3 done" · "⚠️ needs attention: <which>"). Move the per-check ✅/⚠️/❌ into [?] when it would crowd the line.
-- Progress (🚦): the dev-flow path with the current stage in [brackets] (spec → plan → [build] → review → ship); "[setup] → dev flow opens after" while foundations are unmet; "nothing in progress" when idle.
-- Next (👉): the single top-ranked step per checks.md in plain words with its key [1]. The rest on one compact line as key-labelled chips, then [OK] when it walks the pending steps, then [?]. Command ids never appear here.
-- Idle menu (checks.md rank 4): "Next: start new work [1]", then "improve the project [2] · customize the AI [3] · explore [?]". Slots 2 and 3 are umbrellas: picking one re-renders its installed member sub-list to pick from. No [OK] when the list is only the idle menu.
-- [?] detail: on request, the full view — each step's command id and tier clause, the per-check foundation reasons, and the read-only extras (explain project only when memory is filled, recap only when a prior conversation exists, stop).
+Glyphs, only in the state block: ✅ done · ⚠️ present, not wired · ❌ required, missing. Unused optional tools are omitted, never crossed.
+Keys: the user replies with a bracketed token. [1] [2]… act, [OK] walks pending steps, [m] map, [?] detail. State keys inline, never a standalone "type N and press Enter" line.
+Tier is a plain clause, only in [?]: AUTO "(runs on its own)", GUIDED "(it will ask you a few questions)", MANUAL "(you run this one yourself)".
 -->
+
+## Entry screen (greenfield · existing · idle · drift)
+
+```txt
+<banner.txt injected>
+
+👋  <framing: first report of the session only, e.g. "I'll walk you through AIDD step by step — nothing runs until you reply." / "Welcome back.">
+
+Your AIDD setup:
+  AI tools   <detected tools, each with ✅/⚠️>
+  Plugins    <installed AIDD plugins>   ✅
+  Memory     <aidd_docs/ · N files synced ✅  |  ❌ not set up yet>
+
+<state sentence, or a ⚠️ warning line that carries its cause + the fix, per Warnings>
+
+👉  <the top action>   [1]
+    <other keyed options>   ·   see the flow [m]
+```
+
+- Framing shows on the first report of the session only, then drops on re-scans.
+- The banner is injected from `banner.txt` on entry screens only.
+- Idle: the flow (from `flow.md`) and `[1] Walk it with me · [2] Let SDLC drive it`, or the idle menu when the user opens it.
+
+## Foundations step
+
+```txt
+Foundations — step <n> of <total>
+
+  <deliverable>     <what it does, plain>
+                    (<why it matters>)
+
+👉  Type [1] to start.   skip [s] · what's this [?]
+```
+
+- `<total>` is 2 for an existing repo (memory first, stack skipped) or 3 for greenfield, per `flow.md`.
+
+## Where you are (mid-work)
+
+```txt
+🔍  <state sentence, e.g. "Healthy — unsaved changes in progress.">
+
+  Flow:  <the 8-step path with the current stage in [brackets], done stages marked ✅>
+
+👉  Next: <the step>   [1]
+    <other keyed options>
+```
+
+## Warnings that carry a fix
+
+A `⚠️` never stands alone. Render its plain cause, then the fix as a keyed action:
+
+```txt
+⚠️  <what is wrong, plain: e.g. "codex is installed but its memory isn't wired (no AGENTS.md).">
+   → Type [1] to <fix>.
+```
+
+## [?] detail
+
+On `[?]`, expand the decision: each step's command id and tier clause, the per-check foundation reasons, and the read-only extras.
+
+```txt
+Details —
+  1. <step>   <command-id>   (<tier clause>)
+  ...
+  <per-check foundation lines with ✅/⚠️/❌>
+  explain <n> · recap · stop · back [<]
+```
+
+- `recap` only when a prior conversation exists; `explain project` only when memory is filled.
