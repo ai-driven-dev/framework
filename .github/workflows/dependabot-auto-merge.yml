@@ -25,6 +25,15 @@ jobs:
         id: meta
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
 
+      - name: Approve non-major updates
+        # Required-review rulesets (e.g. on `next`) block auto-merge until a
+        # review approves. Dependabot never gets one, so the app approves here.
+        # The app identity differs from the PR author, so the approval counts.
+        if: steps.meta.outputs.update-type != 'version-update:semver-major'
+        run: gh pr review --approve "${{ github.event.pull_request.html_url }}"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+
       - name: Enable auto-merge for non-major updates
         if: steps.meta.outputs.update-type != 'version-update:semver-major'
         run: gh pr merge --auto --squash "${{ github.event.pull_request.html_url }}"

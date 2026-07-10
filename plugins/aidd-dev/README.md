@@ -8,22 +8,23 @@ Code transformation plugin for the AI-Driven Development framework.
 
 First time? Install with `/plugin install aidd-dev@aidd-framework`, then run `aidd-dev:00-sdlc`.
 
-Covers the full SDLC coding loop: orchestrator, planning, implementation, assertions, audits, code review, testing, refactoring, debugging, and the for-sure workflow. Also hosts AI agents.
+Covers the full SDLC coding loop: orchestrator, planning, implementation, assertions, audits, code review, testing, refactoring, debugging, for-sure, and parallel todo fan-out. Also hosts AI agents.
 
 ## Skills
 
 | Bracket ID | Skill | Description |
 |---|---|---|
-| [2.0] | [sdlc](skills/00-sdlc/README.md) | Dev SDLC orchestrator (code-shipping pipeline): spec, plan, implement, test, review, commit, PR. |
-| [2.1] | [plan](skills/01-plan/README.md) | Turn a request, ticket, or file into a phased implementation plan, gathering the source first and optionally wireframing a screen before planning. |
-| [2.2] | [implement](skills/02-implement/README.md) | Execute an implementation plan phase by phase, recipe-style, iterating until 100% completeness. |
-| [2.3] | [assert](skills/03-assert/README.md) | Assert features work as intended - general assertions, architecture conformance, and frontend UI validation. |
-| [2.4] | [audit](skills/04-audit/README.md) | Perform deep codebase analysis to identify technical debt, dead code, and improvement opportunities. |
-| [2.5] | [review](skills/05-review/README.md) | Review a diff along three axes: code quality, feature behavior against the plan, and relevancy (fit to the need, declared-rule conformance, no rot). |
-| [2.6] | [test](skills/06-test/README.md) | Write and iterate on tests until they pass, and validate user journeys end-to-end in the browser. |
-| [2.7] | [refactor](skills/07-refactor/README.md) | Optimize code for performance and fix security vulnerabilities following OWASP guidelines. |
-| [2.8] | [debug](skills/08-debug/README.md) | Reproduce and fix bugs systematically using test-driven workflow, root cause analysis, and hypothesis validation. |
-| [2.9] | [for-sure](skills/09-for-sure/README.md) | Iterative agent loop that tracks attempts and retries until a success condition is met. |
+| [2.0] | [sdlc](skills/00-sdlc/SKILL.md) | Dev SDLC orchestrator (code-shipping pipeline): spec, plan, implement, test, review, commit, PR. |
+| [2.1] | [plan](skills/01-plan/SKILL.md) | Turn a request, ticket, or file into a phased implementation plan, gathering the source first and optionally wireframing a screen before planning. |
+| [2.2] | [implement](skills/02-implement/SKILL.md) | Execute an implementation plan phase by phase, recipe-style, iterating until 100% completeness. |
+| [2.3] | [assert](skills/03-assert/SKILL.md) | Assert features work as intended - general assertions, architecture conformance, and frontend UI validation. |
+| [2.4] | [audit](skills/04-audit/SKILL.md) | Perform deep codebase analysis to identify technical debt, dead code, and improvement opportunities. |
+| [2.5] | [review](skills/05-review/SKILL.md) | Review a diff along three axes: code quality, feature behavior against the plan, and relevancy (fit to the need, declared-rule conformance, no rot). |
+| [2.6] | [test](skills/06-test/SKILL.md) | Write and iterate on tests until they pass, and validate user journeys end-to-end in the browser. |
+| [2.7] | [refactor](skills/07-refactor/SKILL.md) | Optimize code for performance and fix security vulnerabilities following OWASP guidelines. |
+| [2.8] | [debug](skills/08-debug/SKILL.md) | Reproduce and fix bugs systematically using test-driven workflow, root cause analysis, and hypothesis validation. |
+| [2.9] | [for-sure](skills/09-for-sure/SKILL.md) | Iterative agent loop that tracks attempts and retries until a success condition is met. |
+| [2.10] | [todo](skills/10-todo/SKILL.md) | Split the prompt into independent todos, run one executor agent per todo in parallel, then report a minimal table. |
 
 ## Agents
 

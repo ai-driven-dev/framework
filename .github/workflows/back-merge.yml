@@ -74,6 +74,5 @@ jobs:
           gh issue create \
             --repo "${{ github.repository }}" \
             --title "Back-merge main into next failed (run ${{ github.run_id }})" \
-            --label "back-merge-failed" \
             --body "The automated back-merge of \`main\` into \`next\` failed, so \`next\` is drifting from the latest release. Resync manually by opening a PR from \`main\` into \`next\`. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
           || echo "issue creation failed; check the run logs"
