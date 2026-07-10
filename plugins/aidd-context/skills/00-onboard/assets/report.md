@@ -14,7 +14,7 @@ Your AIDD setup:
 
 <state sentence, or a ⚠️ warning line>
 
-👉  <top action>   [1]
+<the one action line: a warning's fix, a foundations step, or 👉 <top action> [1]>
     <other keyed options>   ·   flow [m]
 ```
 

@@ -14,7 +14,7 @@ The rendered screen, and the user's reply.
 
 1. **Shape.** Fill the chosen screen from `@../assets/report.md`.
    - Framing line on the first report of the session only.
-   - One `👉` action line per screen. A screen carrying a foundations step uses that step's line, never both.
+   - One action line per screen, carrying the key once. A warning's fix or a foundations step already is that line, so render the `👉` line only when neither does.
    - Glyphs: ✅ met · ⚠️ present, not wired · ❌ missing. Each `⚠️` shows its cause and a keyed fix.
    - Command ids and tier clauses only under `[?]`.
 2. **Inject.** Entry screen takes `@../assets/banner.txt`. Flow or walk screen loads `@../references/flow.md`.
