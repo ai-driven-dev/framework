@@ -18,7 +18,8 @@ The rendered screen, and the user's reply.
    - Glyphs: ✅ met · ⚠️ present, not wired · ❌ missing.
    - A used tool that lacks the block is `⚠️`, never `❌`. Only a missing required foundation takes `❌`.
    - Every `⚠️` shows its cause and a keyed fix.
-   - Short lines. The screen ends at the options line.
+   - Short lines.
+   - The options line is the last line. Print nothing after it, no detail block, no state snapshot, no hint about what comes next.
    - Command ids, tier clauses, and lookahead only under `[?]`.
 2. **Inject.**
    - Entry screen takes `@../assets/banner.txt`.
