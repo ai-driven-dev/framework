@@ -1,0 +1,376 @@
+<title>AIDD Onboard — Tutorial Mockups</title>
+<style>
+  :root{
+    --bg:#eef0f3; --fg:#1c2128; --muted:#5b6470; --line:#d7dbe0;
+    --accent:#0f9c8a; --card:#ffffff;
+    /* terminal is a fixed dark world in both themes */
+    --t-bg:#0d1117; --t-fg:#c9d1d9; --t-dim:#7d8590; --t-line:#232a33;
+    --t-ok:#3fb950; --t-warn:#d29922; --t-bad:#f85149; --t-accent:#35c9b5; --t-brand:#39d0bd;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#08090c; --fg:#c9d1d9; --muted:#7d8590; --line:#20262e; --accent:#35c9b5; --card:#0f1319; }
+  }
+  :root[data-theme="light"]{ --bg:#eef0f3; --fg:#1c2128; --muted:#5b6470; --line:#d7dbe0; --accent:#0f9c8a; --card:#ffffff; }
+  :root[data-theme="dark"]{ --bg:#08090c; --fg:#c9d1d9; --muted:#7d8590; --line:#20262e; --accent:#35c9b5; --card:#0f1319; }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:900px; margin:0 auto; padding:64px 24px 96px}
+
+  header.masthead{margin-bottom:56px}
+  .kicker{font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); font-weight:600}
+  h1{font-size:clamp(28px,4.5vw,42px); line-height:1.1; margin:14px 0 12px; text-wrap:balance; letter-spacing:-.01em}
+  .lede{color:var(--muted); font-size:16px; max-width:62ch; margin:0}
+  .lede code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.9em; background:color-mix(in srgb,var(--accent) 12%,transparent); padding:1px 5px; border-radius:4px}
+
+  section{margin-top:52px}
+  .eyebrow{display:flex; align-items:baseline; gap:12px; margin-bottom:18px; padding-bottom:10px; border-bottom:1px solid var(--line)}
+  .eyebrow h2{font-size:15px; letter-spacing:.14em; text-transform:uppercase; margin:0; font-weight:600}
+  .eyebrow .num{font-family:ui-monospace,Menlo,monospace; color:var(--accent); font-size:13px; font-weight:600}
+  .eyebrow p{margin:0 0 0 auto; color:var(--muted); font-size:13px}
+
+  .grid{display:flex; flex-direction:column; gap:26px}
+
+  figure.term{margin:0; border-radius:10px; overflow:hidden; border:1px solid var(--t-line);
+    background:var(--t-bg); box-shadow:0 1px 0 rgba(255,255,255,.02),0 12px 30px -18px rgba(0,0,0,.5)}
+  .bar{display:flex; align-items:center; gap:8px; padding:10px 14px; background:#161b22; border-bottom:1px solid var(--t-line)}
+  .dot{width:11px; height:11px; border-radius:50%; background:#30363d}
+  .dot.r{background:#ec6a5e}.dot.y{background:#f4bf4f}.dot.g{background:#61c554}
+  .bar .label{margin-left:8px; font-family:ui-monospace,Menlo,monospace; font-size:12px; color:var(--t-dim); letter-spacing:.02em}
+  .screen{margin:0; padding:20px 22px; overflow-x:auto;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    font-size:13px; line-height:1.55; color:var(--t-fg); white-space:pre; tab-size:2}
+  .screen .brand{color:var(--t-brand)}
+  .screen .ok{color:var(--t-ok); font-weight:600}
+  .screen .warn{color:var(--t-warn); font-weight:600}
+  .screen .bad{color:var(--t-bad); font-weight:600}
+  .screen .accent{color:var(--t-accent)}
+  .screen .dim{color:var(--t-dim)}
+  .screen b{color:#e6edf3; font-weight:600}
+
+  .note{margin-top:12px; color:var(--muted); font-size:13px; padding-left:14px; border-left:2px solid var(--line)}
+
+  footer{margin-top:64px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:13px}
+  .legend{display:flex; flex-wrap:wrap; gap:8px 20px; margin:10px 0 0; font-family:ui-monospace,Menlo,monospace; font-size:12.5px}
+  .legend span b{font-weight:600}
+  .lg-ok{color:var(--t-ok)}.lg-warn{color:var(--t-warn)}.lg-bad{color:var(--t-bad)}.lg-acc{color:var(--accent)}
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="kicker">AIDD · onboard skill</div>
+    <h1>Onboard as a guided tutorial</h1>
+    <p class="lede">Every screen the reworked <code>onboard</code> shows a user, from a bare repo to shipping a feature. It announces itself, shows the project's AIDD setup up front, then walks the official flow one step at a time. Mockups for review — not final wording.</p>
+    <div class="legend">
+      <span class="lg-ok"><b>✓</b> present &amp; wired</span>
+      <span class="lg-warn"><b>⚠</b> present, not wired — carries a fix</span>
+      <span class="lg-bad"><b>✗</b> required, missing</span>
+      <span class="lg-acc"><b>[k]</b> reply key</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="eyebrow"><span class="num">01</span><h2>Existing project · adopting AIDD</h2><p>the common case — code already here, so memory comes first</p></div>
+    <div class="grid">
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">existing repo · launch</span></div>
+<pre class="screen"><span class="brand"> █████╗ ██╗██████╗ ██████╗
+██╔══██╗██║██╔══██╗██╔══██╗
+███████║██║██║  ██║██║  ██║
+██╔══██║██║██║  ██║██║  ██║
+██║  ██║██║██████╔╝██████╔╝
+╚═╝  ╚═╝╚═╝╚═════╝ ╚═════╝ </span>
+ AI-Driven Development
+
+👋  I'll walk you through AIDD step by step — nothing runs until you reply.
+
+Your AIDD setup:
+  AI tools   claude <span class="warn">⚠</span>
+  Plugins    aidd-context · pm · refine · dev · vcs   <span class="ok">✓</span>
+  Memory     <span class="bad">✗</span> not set up yet
+
+You already have code — AIDD just has no memory of it yet.
+
+<span class="warn">⚠</span>  Let's teach the AI about your project first. Every command relies on it.
+   <span class="accent">→</span> Type <span class="accent">[1]</span> to generate your project memory.   see the flow <span class="accent">[m]</span></pre>
+      </figure>
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">foundations · step 1 of 2</span></div>
+<pre class="screen">Foundations — step 1 of 2
+
+  <b>project memory</b>     scan your existing code into a memory bank the AI reads
+                     (architecture, testing, conventions — so commands don't guess)
+
+👉  Type <span class="accent">[1]</span> to start.   what's this <span class="accent">[?]</span>
+
+<span class="dim">No "design the stack" step — your stack already exists, so it's skipped.</span></pre>
+      </figure>
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">foundations · step 2 of 2</span></div>
+<pre class="screen"><span class="ok">✓</span>  Project memory saved.
+
+Foundations — step 2 of 2
+
+  <b>connect it to the AI</b>     wire the memory into claude's context file (CLAUDE.md)
+                           so it loads automatically every session
+
+👉  Type <span class="accent">[1]</span> to start.   skip <span class="accent">[s]</span></pre>
+      </figure>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow"><span class="num">02</span><h2>Brand-new project · greenfield</h2><p>empty repo — design the stack first, then memory</p></div>
+    <div class="grid">
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">greenfield · launch</span></div>
+<pre class="screen"><span class="brand"> █████╗ ██╗██████╗ ██████╗
+██╔══██╗██║██╔══██╗██╔══██╗
+███████║██║██║  ██║██║  ██║
+██╔══██║██║██║  ██║██║  ██║
+██║  ██║██║██████╔╝██████╔╝
+╚═╝  ╚═╝╚═╝╚═════╝ ╚═════╝ </span>
+ AI-Driven Development
+
+👋  I'll walk you through AIDD step by step — nothing runs until you reply.
+
+Your AIDD setup:
+  AI tools   claude <span class="warn">⚠</span>   codex <span class="warn">⚠</span>
+  Plugins    aidd-context · pm · refine · dev · vcs   <span class="ok">✓</span>
+  Memory     <span class="bad">✗</span> not set up yet
+
+<span class="warn">⚠</span>  Your AI tools have no project memory yet.
+   <span class="accent">→</span> Type <span class="accent">[1]</span> to set up the foundations.   see the flow <span class="accent">[m]</span></pre>
+      </figure>
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">foundations · step 1 of 3</span></div>
+<pre class="screen">Foundations — step 1 of 3
+
+  <b>design your tech stack</b>     pick your technologies &amp; architecture
+                             (saved to INSTALL.md — everything builds on it)
+
+👉  Type <span class="accent">[1]</span> to start (asks you a few questions).   skip <span class="accent">[s]</span> · what's this <span class="accent">[?]</span></pre>
+      </figure>
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">foundations · step 2 of 3</span></div>
+<pre class="screen"><span class="ok">✓</span>  Tech stack set.
+
+Foundations — step 2 of 3
+
+  <b>save project knowledge</b>     generate the memory files the AI reads
+                             (so commands work with real context, not guesses)
+
+👉  Type <span class="accent">[1]</span> to start.   skip <span class="accent">[s]</span></pre>
+      </figure>
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">foundations · step 3 of 3</span></div>
+<pre class="screen"><span class="ok">✓</span>  Project knowledge saved.
+
+Foundations — step 3 of 3
+
+  <b>connect it to the AI</b>       wire the memory into each AI tool's context file
+                             (CLAUDE.md, AGENTS.md — so it loads automatically)
+
+👉  Type <span class="accent">[1]</span> to start.   skip <span class="accent">[s]</span></pre>
+      </figure>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow"><span class="num">03</span><h2>Coming back to build</h2><p>foundations ready — the official flow</p></div>
+    <div class="grid">
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">established · welcome back · the flow</span></div>
+<pre class="screen"><span class="brand"> █████╗ ██╗██████╗ ██████╗
+██╔══██╗██║██╔══██╗██╔══██╗
+███████║██║██║  ██║██║  ██║
+██╔══██║██║██║  ██║██║  ██║
+██║  ██║██║██████╔╝██████╔╝
+╚═╝  ╚═╝╚═╝╚═════╝ ╚═════╝ </span>
+ AI-Driven Development
+
+👋  Welcome back.
+
+Your AIDD setup:
+  AI tools   claude <span class="ok">✓</span>
+  Plugins    aidd-context · pm · refine · dev · vcs   <span class="ok">✓</span>
+  Memory     aidd_docs/ · 8 files synced   <span class="ok">✓</span>
+
+All set. Build your next feature — the AIDD flow:
+
+  <b>brainstorm</b>      turn a vague idea into something precise
+      │
+  <b>spec</b>            the contract of what to build          <span class="dim">(optional)</span>
+      │
+  <b>plan</b>            break it into phases
+      │
+  <b>implement</b>       build it, phase by phase
+      │
+  <b>assert</b>          check it behaves
+      │
+  <b>review</b>          verdict before shipping
+      │
+  <b>commit</b>          save the work
+      │
+  <b>pull request</b>    ship it
+
+Run it:
+   <span class="accent">[1]</span>  Walk it with me — one step at a time, I explain each.
+   <span class="accent">[2]</span>  Let SDLC drive the whole flow from one request.
+   map <span class="accent">[m]</span> · explore all commands <span class="accent">[?]</span> · stop <span class="accent">[x]</span></pre>
+      </figure>
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">walk · step 1 of 8</span></div>
+<pre class="screen">Your first feature — step 1 of 8: <b>Brainstorm</b>.
+
+  What:  turn your rough idea into something precise enough to build.
+  Why:   a fuzzy idea makes every next step guess.
+
+👉  Type <span class="accent">[1]</span> to start.   whole flow <span class="accent">[m]</span> · skip to spec <span class="accent">[s]</span></pre>
+      </figure>
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">walk · step 4 of 8</span></div>
+<pre class="screen">Feature flow — step 4 of 8: <b>Implement</b>.   <span class="dim">(brainstorm <span class="ok">✓</span> · spec <span class="ok">✓</span> · plan <span class="ok">✓</span>)</span>
+
+  What:  build the plan, phase by phase.
+  Why:   small verified phases beat one big leap.
+
+👉  Type <span class="accent">[1]</span> to start.   whole flow <span class="accent">[m]</span> · back <span class="accent">[&lt;]</span></pre>
+      </figure>
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">map · the flow at a glance</span></div>
+<pre class="screen">AIDD feature flow:
+
+  <b>brainstorm</b> <span class="dim">→</span> <b>spec</b>* <span class="dim">→</span> <b>plan</b> <span class="dim">→</span> <b>implement</b> <span class="dim">→</span> <b>assert</b> <span class="dim">→</span> <b>review</b> <span class="dim">→</span> <b>commit</b> <span class="dim">→</span> <b>PR</b>
+  <span class="dim">(* optional)</span>
+
+  back <span class="accent">[&lt;]</span></pre>
+      </figure>
+
+    </div>
+    <p class="note">The <code>map</code> view is the same canonical sequence shown as a standalone cookbook — one source, two doors.</p>
+  </section>
+
+  <section>
+    <div class="eyebrow"><span class="num">04</span><h2>Where you are, mid-work</h2><p>the flow tracks your progress</p></div>
+    <div class="grid">
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">building · unsaved changes</span></div>
+<pre class="screen">🔍  Healthy — unsaved changes in progress.
+
+  Flow:  brainstorm <span class="ok">✓</span> · spec <span class="ok">✓</span> · plan <span class="ok">✓</span> · <b>[implement]</b> · assert · review · commit · PR
+
+👉  Next: <b>finish your changes</b>   <span class="accent">[1]</span>
+    review them <span class="accent">[2]</span> · both <span class="accent">[OK]</span> · more <span class="accent">[?]</span></pre>
+      </figure>
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">ready to review</span></div>
+<pre class="screen">🔍  Healthy — changes ready to review.
+
+  Flow:  brainstorm <span class="ok">✓</span> · spec <span class="ok">✓</span> · plan <span class="ok">✓</span> · implement <span class="ok">✓</span> · assert <span class="ok">✓</span> · <b>[review]</b> · commit · PR
+
+👉  Next: <b>review your changes</b>   <span class="accent">[1]</span>
+    ship them <span class="accent">[2]</span> · both <span class="accent">[OK]</span> · more <span class="accent">[?]</span></pre>
+      </figure>
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">ready to ship</span></div>
+<pre class="screen">🔍  Healthy — reviewed, ready to ship.
+
+  Flow:  brainstorm <span class="ok">✓</span> · … · review <span class="ok">✓</span> · commit <span class="ok">✓</span> · <b>[pull request]</b>
+
+👉  Next: <b>open a pull request</b>   <span class="accent">[1]</span>   <span class="dim">(you run this one yourself)</span>
+    more <span class="accent">[?]</span></pre>
+      </figure>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow"><span class="num">05</span><h2>Warnings that carry a fix</h2><p>every ⚠ says what's wrong and the next action</p></div>
+    <div class="grid">
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">tool installed, not wired</span></div>
+<pre class="screen">👋  Welcome back.
+
+Your AIDD setup:
+  AI tools   claude <span class="ok">✓</span>   codex <span class="warn">⚠</span>
+  Plugins    aidd-context · pm · refine · dev · vcs   <span class="ok">✓</span>
+  Memory     aidd_docs/ · 8 files synced   <span class="ok">✓</span>
+
+<span class="warn">⚠</span>  codex is installed but its memory isn't wired (no AGENTS.md).
+   <span class="accent">→</span> Type <span class="accent">[1]</span> to wire it.   build a feature instead <span class="accent">[m]</span></pre>
+      </figure>
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">memory block drifted</span></div>
+<pre class="screen">👋  Welcome back.
+
+Your AIDD setup:
+  AI tools   claude <span class="warn">⚠</span>
+  Plugins    aidd-context · pm · refine · dev · vcs   <span class="ok">✓</span>
+  Memory     aidd_docs/ · 8 files synced   <span class="ok">✓</span>
+
+<span class="warn">⚠</span>  claude's memory block drifted from the canonical shape.
+   <span class="accent">→</span> Type <span class="accent">[1]</span> to re-wire it.</pre>
+      </figure>
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">healthy, but no tests</span></div>
+<pre class="screen">🔍  Healthy — but no tests yet.
+
+  Flow:  ready for new work.
+
+<span class="warn">⚠</span>  This project has no tests, so changes aren't protected.
+   <span class="accent">→</span> Next: <b>add tests</b>   <span class="accent">[1]</span>
+      start new work <span class="accent">[2]</span> · improve the project <span class="accent">[3]</span> · explore <span class="accent">[?]</span></pre>
+      </figure>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow"><span class="num">06</span><h2>Detail on demand</h2><p>[?] opens the full view — ids, tiers, reasons</p></div>
+    <div class="grid">
+
+      <figure class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="label">[?] expanded</span></div>
+<pre class="screen">Details —
+
+  <span class="accent">1.</span> finish your changes   <span class="dim">aidd-dev:02-implement</span>   (it will ask you a few questions)
+  <span class="accent">2.</span> review your changes   <span class="dim">aidd-dev:05-review</span>      (runs on its own)
+
+  AI tools   claude <span class="ok">✓</span>
+  Plugins    aidd-context · pm · refine · dev · vcs   <span class="ok">✓</span>
+  Memory     aidd_docs/ · 8 files synced   <span class="ok">✓</span>
+
+  explain <span class="accent">&lt;n&gt;</span> · recap · stop · back <span class="accent">[&lt;]</span></pre>
+      </figure>
+
+    </div>
+  </section>
+
+  <footer>
+    <p>Reworked <code>onboard</code> · greenfield → foundations → build a feature. The state block (AI tools / plugins / memory) sits up front on every entry screen. Detection roots: <code>.claude .codex .cursor .opencode .github/copilot-instructions.md .github/{instructions,agents,skills,prompts}</code>. Unused tools are omitted, never crossed out.</p>
+  </footer>
+</div>

@@ -1,6 +1,6 @@
 # aidd-context catalog
 
-Auto-generated index of skills, agents, references and assets shipped by the `aidd-context` plugin.
+Auto-generated framework content: agents, commands, rules, skills, and templates.
 
 > This file is automatically updated by the `scripts/summarize-markdown.js` script.
 
@@ -45,12 +45,13 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description |
 |-------|------|---|
 | `actions` | [01-scan.md](skills/00-onboard/actions/01-scan.md) | - |
-| `actions` | [02-report.md](skills/00-onboard/actions/02-report.md) | - |
-| `actions` | [03-run.md](skills/00-onboard/actions/03-run.md) | - |
+| `actions` | [02-assess.md](skills/00-onboard/actions/02-assess.md) | - |
+| `actions` | [03-present.md](skills/00-onboard/actions/03-present.md) | - |
+| `actions` | [04-run.md](skills/00-onboard/actions/04-run.md) | - |
+| `assets` | [banner.txt](skills/00-onboard/assets/banner.txt) | - |
 | `assets` | [report.md](skills/00-onboard/assets/report.md) | - |
-| `references` | [checks.md](skills/00-onboard/references/checks.md) | - |
-| `references` | [run-tiers.md](skills/00-onboard/references/run-tiers.md) | - |
-| `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Scan an AIDD project into a diagnostic of what is set up and missing, then run the recommended next commands in order. Use when the user asks where to start, what to do next, how the project stands, or to onboard onto AIDD. Not for listing every installed surface.` |
+| `references` | [flow.md](skills/00-onboard/references/flow.md) | - |
+| `-` | [SKILL.md](skills/00-onboard/SKILL.md) | `Guide a project's journey through AIDD, from first setup to shipping a feature. Use when the user says onboard me, where do I start, or what to do next. Not for listing every installed surface.` |
 
 #### `skills/01-bootstrap`
 
