@@ -14,10 +14,9 @@ The rendered screen, and the user's reply.
 
 1. **Shape.** Fill the chosen screen from `@../assets/report.md`.
    - Framing line on the first report of the session only.
-   - One action line per screen, carrying its key once.
-   - A warning's fix or a foundations step is that line.
-   - Render `👉` only when neither is.
+   - Exactly one action block per screen, carrying its key once.
    - Glyphs: ✅ met · ⚠️ present, not wired · ❌ missing.
+   - A used tool that lacks the block is `⚠️`, never `❌`. Only a missing required foundation takes `❌`.
    - Every `⚠️` shows its cause and a keyed fix.
    - Short lines. The screen ends at the options line.
    - Command ids, tier clauses, and lookahead only under `[?]`.

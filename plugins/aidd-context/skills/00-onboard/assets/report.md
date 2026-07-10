@@ -12,13 +12,13 @@ Your AIDD setup:
   Plugins    <installed>   ✅
   Memory     <aidd_docs · N synced ✅ | ❌ not set up yet>
 
-<state sentence, or a ⚠️ warning line>
+<state sentence>
 
-<the one action line: a warning's fix, a foundations step, or 👉 <top action> [1]>
+<exactly one action block, from the three below>
     <other keyed options>   ·   flow [m]
 ```
 
-## Foundations step
+## Action block — foundations step
 
 ```txt
 Foundations — step <n> of <total>
@@ -28,7 +28,20 @@ Foundations — step <n> of <total>
 
   <each remaining step, one line: step <i>   <deliverable> — <what>>
 
-👉  Type [1] to start.   skip [s] · what's this [?]   ·   OK walks all <total>   ·   flow [m]
+👉  Type [1] to start.   skip [s]
+```
+
+## Action block — warning with a fix
+
+```txt
+⚠️  <what is wrong, plain>
+   → Type [1] to <fix>.
+```
+
+## Action block — next action
+
+```txt
+👉  <top action>   [1]
 ```
 
 ## Where you are — mid-work
@@ -40,13 +53,6 @@ Foundations — step <n> of <total>
 
 👉  Next: <step>   [1]
     <other keyed options>
-```
-
-## Warning line
-
-```txt
-⚠️  <what is wrong, plain>
-   → Type [1] to <fix>.
 ```
 
 ## [?] detail

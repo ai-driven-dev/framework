@@ -53,7 +53,7 @@ The router: YAML frontmatter + markdown body.
 - Body order: a tiny `# Title`, the chaining schema, the action table, then the transversal rules. No restated intro sentence; the `description` already states the what.
   - **Chaining schema.** A pipeline shows its chain: a one-line arrow schema `a → b → c` for a straight run, or a small Mermaid flowchart when the flow loops back (a cycle is not a linear chain, so R14 permits Mermaid here). A menu shows the line `Pick one per request.` and no schema. The mode reads itself; no field states it.
   - **Action table.** Columns `# | Action | Does`; `Does` is verb-led and telegraphic (verb + object). A menu drops the `#` column. No `Input` column: an action's input lives in its own `## Input`.
-- Standing rule for every skill: read an action's file just before running it, not only the router table. Stated here once, never repeated in a SKILL.md body.
+- The body MUST carry the operative line: run the actions in the schema's order, and read an action's file before running it. This contract is authoring guidance that no executing host ever reads, so a rule left only here reaches nobody at runtime. Codex proved it: given a router without that line, it read SKILL.md and stopped.
 
 The `name` field is NOT the invocation token. The host builds the address from the plugin and folder, each in its own scheme. A colon or prefix in `name` breaks loading on some hosts. In prose, refer to a skill as `plugin:folder`, never `plugin:folder:action`.
 

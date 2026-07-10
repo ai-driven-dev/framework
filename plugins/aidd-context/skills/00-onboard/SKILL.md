@@ -11,6 +11,8 @@ flowchart LR
   scan --> assess --> present --> run --> scan
 ```
 
+Run the actions in that order, looping. Read an action's file in `actions/` before running it.
+
 ## Actions
 
 | #  | Action  | Does                 |
