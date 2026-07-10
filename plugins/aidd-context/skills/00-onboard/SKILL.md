@@ -13,16 +13,18 @@ flowchart LR
 
 ## Actions
 
-| #  | Action  | Does                                          |
-| -- | ------- | --------------------------------------------- |
-| 01 | scan    | reads project state into a snapshot           |
-| 02 | assess  | picks the state, the next action, and the screen |
-| 03 | present | renders the screen, waits for a reply         |
-| 04 | run     | runs the reply, then loops to scan            |
+| #  | Action  | Does                 |
+| -- | ------- | -------------------- |
+| 01 | scan    | read the project     |
+| 02 | assess  | decide the next step |
+| 03 | present | show the screen      |
+| 04 | run     | act on the reply     |
 
 ## Transversal rules
 
-- Guide, do not lecture or dump. Lead with where the project stands and the single clearest next action; keep the rest on demand.
-- Name real commands only. A command whose skill `01` did not find installed is a gap named by function, never invented.
-- Never run a GUIDED step unattended, and never test a plugin version against a registry.
-- Re-scan after a run, never trust a stale status. Wait for an explicit reply before running anything.
+- Guide, do not lecture or dump. 
+- Name real commands only, never invented ones.
+- Never run a GUIDED step unattended.
+- Never test a plugin version against a registry.
+- Never trust a stale status. 
+- Wait for an explicit reply before running anything.
