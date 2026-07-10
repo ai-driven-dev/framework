@@ -13,7 +13,7 @@ State-aware order: existing repo (code) => memory first, stack skipped. Greenfie
 | memory wiring  | `<aidd_project_memory>` block on canonical shape in each used tool's context file | block present, off shape | knowledge loaded by the AI | `aidd-context:02-project-memory` |
 
 - tech stack missing only on greenfield (no code AND no synced memory); established = met, never bootstrap.
-- memory wiring: absent block or no context file = missing, not drift. `01-scan` loads the canonical shape to judge drift.
+- memory wiring: absent block or no context file = missing (not drift); drift = the block is present but not the standard `<aidd_project_memory>` block that imports the memory files.
 
 ## Dev flow
 

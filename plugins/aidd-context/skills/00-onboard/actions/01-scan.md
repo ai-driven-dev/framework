@@ -16,14 +16,8 @@ One silent snapshot: check statuses, detected AI tools with wiring, installed sk
 2. **Detect.** Resolve AI tools and wiring per `@../references/state/detection.md`.
 3. **Ledger.** Drop done steps per `@../references/state/done-rule.md`.
 4. **Hedge.** If a plan exists, pin the build-to-ship stage per `@../references/state/hedge.md`.
-5. **Drift.** Judge memory wiring against the canonical block:
-
-   ```md
-   @../../02-project-memory/references/memory-block.md
-   ```
-
-6. **List.** Gather installed AIDD plugins and skills via native discovery.
-7. **Hold.** Hand the snapshot to `02-assess`, printing nothing.
+5. **List.** Gather installed AIDD plugins and skills via native discovery.
+6. **Hold.** Hand the snapshot to `02-assess`, printing nothing.
 
 ## Test
 
