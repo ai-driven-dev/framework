@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1](https://github.com/ai-driven-dev/framework/compare/aidd-pm-v2.2.0...aidd-pm-v2.2.1) (2026-07-10)
+
+
+### Refactoring
+
+* remove per-skill README.md mirrors ([#302](https://github.com/ai-driven-dev/framework/issues/302)) ([#396](https://github.com/ai-driven-dev/framework/issues/396)) ([1b94c3c](https://github.com/ai-driven-dev/framework/commit/1b94c3c0108c21eacfacf63f55fa7a24dc79d8dd))
+
 ## [2.2.0](https://github.com/ai-driven-dev/framework/compare/aidd-pm-v2.1.1...aidd-pm-v2.2.0) (2026-07-06)
 
 

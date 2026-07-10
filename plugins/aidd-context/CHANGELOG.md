@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.3.0](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.2.0...aidd-context-v2.3.0) (2026-07-10)
+
+
+### Features
+
+* **aidd-context:** rebuild onboard as a token-lean guided tutorial ([#425](https://github.com/ai-driven-dev/framework/issues/425)) ([5038985](https://github.com/ai-driven-dev/framework/commit/5038985fbda2f52a3066732d2e19df83b6e79cc1))
+
+
+### Refactoring
+
+* remove per-skill README.md mirrors ([#302](https://github.com/ai-driven-dev/framework/issues/302)) ([#396](https://github.com/ai-driven-dev/framework/issues/396)) ([1b94c3c](https://github.com/ai-driven-dev/framework/commit/1b94c3c0108c21eacfacf63f55fa7a24dc79d8dd))
+
 ## [2.2.0](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.1.1...aidd-context-v2.2.0) (2026-07-06)
 
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.1.1](https://github.com/ai-driven-dev/framework/compare/aidd-orchestrator-v2.1.0...aidd-orchestrator-v2.1.1) (2026-07-10)
+
+
+### Documentation
+
+* **framework:** rework the documentation — install-first, concise, emoji-styled ([#407](https://github.com/ai-driven-dev/framework/issues/407)) ([6c0914a](https://github.com/ai-driven-dev/framework/commit/6c0914ad507ba2930a2bcc502e99825ae780747c))
+
+
+### Refactoring
+
+* remove per-skill README.md mirrors ([#302](https://github.com/ai-driven-dev/framework/issues/302)) ([#396](https://github.com/ai-driven-dev/framework/issues/396)) ([1b94c3c](https://github.com/ai-driven-dev/framework/commit/1b94c3c0108c21eacfacf63f55fa7a24dc79d8dd))
+
 ## [2.1.0](https://github.com/ai-driven-dev/framework/compare/aidd-orchestrator-v2.0.0...aidd-orchestrator-v2.1.0) (2026-06-30)
 
 

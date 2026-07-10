@@ -1,5 +1,36 @@
 # Changelog
 
+## [5.4.0](https://github.com/ai-driven-dev/framework/compare/v5.3.1...v5.4.0) (2026-07-10)
+
+
+### Features
+
+* **aidd-context:** rebuild onboard as a token-lean guided tutorial ([#425](https://github.com/ai-driven-dev/framework/issues/425)) ([5038985](https://github.com/ai-driven-dev/framework/commit/5038985fbda2f52a3066732d2e19df83b6e79cc1))
+* **hooks:** base new worktrees on next ([#402](https://github.com/ai-driven-dev/framework/issues/402)) ([70d8046](https://github.com/ai-driven-dev/framework/commit/70d8046a0946677309274a5452fd940988c5d961))
+
+
+### Miscellaneous
+
+* **commitlint:** declare the aidd-ui scope, long and short ([#423](https://github.com/ai-driven-dev/framework/issues/423)) ([abbcbc6](https://github.com/ai-driven-dev/framework/commit/abbcbc6c4e2c8a0d9727d09fc3b273bda2f902a4))
+* **deps-dev:** bump @commitlint/cli from 21.0.2 to 21.2.0 ([#361](https://github.com/ai-driven-dev/framework/issues/361)) ([3374194](https://github.com/ai-driven-dev/framework/commit/3374194b248b26bedee4722d06688c587b69ff5c))
+* **deps-dev:** bump @commitlint/config-conventional ([#362](https://github.com/ai-driven-dev/framework/issues/362)) ([ecc0e55](https://github.com/ai-driven-dev/framework/commit/ecc0e550ee2facc2c8cbb29053305463824181ff))
+* **deps-dev:** bump js-yaml from 5.0.0 to 5.2.1 ([#401](https://github.com/ai-driven-dev/framework/issues/401)) ([c0b57d3](https://github.com/ai-driven-dev/framework/commit/c0b57d3bb8183cc957a6beaccafcfbdfc94ffae9))
+* **framework:** type issues instead of labelling them ([#422](https://github.com/ai-driven-dev/framework/issues/422)) ([9b6651e](https://github.com/ai-driven-dev/framework/commit/9b6651e09b5388f286efd469e7acd1ed70739d3a))
+* release main ([#405](https://github.com/ai-driven-dev/framework/issues/405)) ([4d9412c](https://github.com/ai-driven-dev/framework/commit/4d9412cbe4ef3a7b3852d842f0e4f1e82b74c718))
+
+
+### Documentation
+
+* **framework:** clarify README pitch, terms, and install list ([#409](https://github.com/ai-driven-dev/framework/issues/409)) ([4fadaed](https://github.com/ai-driven-dev/framework/commit/4fadaed80b4d44e4b3750fe36edf8e7e9c263bc0))
+* **framework:** clarify README pitch, terms, and install list ([#410](https://github.com/ai-driven-dev/framework/issues/410)) ([8d250b6](https://github.com/ai-driven-dev/framework/commit/8d250b65c2871167e558e4461acaac2522e6d436))
+* **framework:** describe the board we actually run ([#424](https://github.com/ai-driven-dev/framework/issues/424)) ([df6c032](https://github.com/ai-driven-dev/framework/commit/df6c0326e448ce00d4eef49cf2c4bbc924c57f67))
+* **framework:** rework the documentation — install-first, concise, emoji-styled ([#407](https://github.com/ai-driven-dev/framework/issues/407)) ([6c0914a](https://github.com/ai-driven-dev/framework/commit/6c0914ad507ba2930a2bcc502e99825ae780747c))
+
+
+### Refactoring
+
+* remove per-skill README.md mirrors ([#302](https://github.com/ai-driven-dev/framework/issues/302)) ([#396](https://github.com/ai-driven-dev/framework/issues/396)) ([1b94c3c](https://github.com/ai-driven-dev/framework/commit/1b94c3c0108c21eacfacf63f55fa7a24dc79d8dd))
+
 ## [5.3.1](https://github.com/ai-driven-dev/framework/compare/v5.3.0...v5.3.1) (2026-07-07)
 
 
