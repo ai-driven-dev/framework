@@ -8,7 +8,7 @@
 👋  <framing, or "Welcome back.">
 
 Your AIDD setup:
-  AI tools   <detected, each ✅/⚠️>
+  AI tools   <detected, each ✅/⚠️, or "none yet" when none>
   Plugins    <installed>   ✅
   Memory     <aidd_docs · N synced ✅ | ❌ not set up yet>
 
@@ -26,7 +26,9 @@ Foundations — step <n> of <total>
   <deliverable>     <what>
                     (<why>)
 
-👉  Type [1] to start.   skip [s] · what's this [?]
+  <each remaining step, one line: step <i>   <deliverable> — <what>>
+
+👉  Type [1] to start.   skip [s] · what's this [?]   ·   OK walks all <total>   ·   flow [m]
 ```
 
 ## Where you are — mid-work
