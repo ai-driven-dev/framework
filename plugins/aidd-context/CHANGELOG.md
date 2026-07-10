@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.3.0...aidd-context-v2.3.1) (2026-07-10)
+
+
+### Bug Fixes
+
+* **aidd-context:** onboard shows the stack, and its keys are pressable ([#428](https://github.com/ai-driven-dev/framework/issues/428)) ([3719204](https://github.com/ai-driven-dev/framework/commit/371920437cd931feab0ba9e3f889f7b3df8028f0))
+
 ## [2.3.0](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.2.0...aidd-context-v2.3.0) (2026-07-10)
 
 
