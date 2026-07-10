@@ -56,11 +56,11 @@ Foundations — step <n> of <total>
     <other keyed options>
 ```
 
-## [?] detail
+## [d] detail
 
 ```txt
 Details —
   1. <step>   <command-id>   (<tier clause>)
   <foundation lines, ✅/⚠️/❌>
-  explain <n> · explain project · recap · stop · back [<]
+  explain <n> · explain project · recap · stop · back [b]
 ```

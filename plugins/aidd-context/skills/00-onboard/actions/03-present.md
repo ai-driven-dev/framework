@@ -22,7 +22,8 @@ The rendered screen, and the user's reply.
    - Every `⚠️` shows its cause and a keyed fix.
    - Short lines.
    - The options line is the last line. Print nothing after it, no detail block, no state snapshot, no hint about what comes next.
-   - Command ids, tier clauses, and lookahead only under `[?]`.
+   - Command ids, tier clauses, and lookahead only under `[d]`.
+   - Keys are letters or digits. Never `?`, `!`, `/`, `@`, `#`: the host takes those.
 2. **Inject.**
    - Entry screen takes `@../assets/banner.txt`.
    - Flow or walk screen loads `@../references/flow.md`.
