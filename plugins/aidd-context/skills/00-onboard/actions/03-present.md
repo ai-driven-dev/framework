@@ -14,11 +14,15 @@ The rendered screen, and the user's reply.
 
 1. **Shape.** Fill the chosen screen from `@../assets/report.md`.
    - Framing line on the first report of the session only.
-   - One action line per screen, carrying the key once. A warning's fix or a foundations step already is that line, so render the `👉` line only when neither does.
-   - Glyphs: ✅ met · ⚠️ present, not wired · ❌ missing. Each `⚠️` shows its cause and a keyed fix.
-   - Command ids and tier clauses only under `[?]`.
-   - Short lines. Nothing after the options line. Lookahead and detail live under `[?]`.
-2. **Inject.** Entry screen takes `@../assets/banner.txt`. Flow or walk screen loads `@../references/flow.md`.
+   - One action line per screen, carrying its key once.
+   - A warning's fix or a foundations step is that line. Render `👉` only when neither is.
+   - Glyphs: ✅ met · ⚠️ present, not wired · ❌ missing.
+   - Every `⚠️` shows its cause and a keyed fix.
+   - Short lines. The screen ends at the options line.
+   - Command ids, tier clauses, and lookahead only under `[?]`.
+2. **Inject.**
+   - Entry screen takes `@../assets/banner.txt`.
+   - Flow or walk screen loads `@../references/flow.md`.
 3. **Wait.** Offer the screen, take the reply.
 
 ## Test
@@ -27,4 +31,6 @@ The rendered screen, and the user's reply.
 - An existing repo renders memory as step 1 of 2.
 - A greenfield repo renders the stack first.
 - The banner shows on entry screens only.
-- Each `⚠️` carries a keyed fix, its id and tier clause only under `[?]`.
+- Every `⚠️` carries a keyed fix.
+- The key appears once per screen.
+- Nothing renders after the options line.
