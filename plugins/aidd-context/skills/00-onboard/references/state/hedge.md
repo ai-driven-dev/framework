@@ -9,4 +9,4 @@ The plan's `status:` frontmatter refines the build-to-ship pin, so review is nev
 | `implemented`                | Review                                |
 | `reviewed`                   | Ship (commit, pull request)           |
 | `blocked`                    | surface the blocker, not a normal pin |
-| the field is missing or unreadable | Implement, then Review           |
+| the field is missing or unreadable | surface the plan as broken, not a normal pin |
