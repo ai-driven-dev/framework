@@ -17,6 +17,7 @@ The rendered screen, and the user's reply.
    - One action line per screen, carrying the key once. A warning's fix or a foundations step already is that line, so render the `👉` line only when neither does.
    - Glyphs: ✅ met · ⚠️ present, not wired · ❌ missing. Each `⚠️` shows its cause and a keyed fix.
    - Command ids and tier clauses only under `[?]`.
+   - Short lines. Nothing after the options line. Lookahead and detail live under `[?]`.
 2. **Inject.** Entry screen takes `@../assets/banner.txt`. Flow or walk screen loads `@../references/flow.md`.
 3. **Wait.** Offer the screen, take the reply.
 
