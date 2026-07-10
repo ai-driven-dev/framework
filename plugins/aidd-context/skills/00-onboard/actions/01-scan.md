@@ -8,7 +8,7 @@ The project root.
 
 ## Output
 
-One silent snapshot: check statuses, detected AI tools with wiring, installed skills, and the project brief when memory is synced.
+The project snapshot, printed nowhere, for `02-assess`.
 
 ## Process
 

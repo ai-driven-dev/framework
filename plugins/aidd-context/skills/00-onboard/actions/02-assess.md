@@ -8,14 +8,14 @@ The snapshot from `01-scan`.
 
 ## Output
 
-A decision for `03-present`: state class, top next action or idle menu, and the screen.
+The decision for `03-present`.
 
 ## Process
 
 1. **Classify.** State class per `@../references/order/screen-map.md`.
 2. **Rank.** Top next action per `@../references/order/ranking.md`.
    - Idle: build the menu per `@../references/order/idle-menu.md`.
-3. **Resolve.** Match each command to an installed skill; an absent one is a gap by function.
+3. **Resolve.** Match each command to an installed skill, or name a gap by function when absent.
 4. **Hand.** Pass the decision to `03-present`.
 
 ## Test

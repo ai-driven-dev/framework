@@ -9,20 +9,24 @@ Carry out the reply.
 
 ## Output
 
-The reply carried out and the ledger updated; a re-scan unless the reply was read-only.
+The reply carried out and the ledger updated, then a re-scan unless the reply was read-only.
 
 ## Process
 
 1. **Route.** Carry out the reply per `@../references/run/replies.md`.
-2. **Guard.** Run only installed skills; a gap invokes nothing; a MANUAL step is shown, not run.
-3. **Tier.** Running a step, apply `@../references/run/tiers.md`; the tier is a default, overridable.
+2. **Guard.**
+   - Run only installed skills.
+   - A gap invokes nothing.
+   - A MANUAL step is shown, not run.
+3. **Tier.** Running a step, apply `@../references/run/tiers.md`. The tier is a default, overridable.
 4. **Return.** On a GUIDED handoff, emit the return line per `@../references/run/return.md`.
 5. **Record.** Write the handled step to the ledger per `@../references/state/done-rule.md`.
-6. **Loop.** After a run or `OK` walk, re-scan; a read-only reply or umbrella pick does not.
+6. **Loop.** After a run or `OK` walk, re-scan. A read-only reply or umbrella pick does not.
 
 ## Test
 
 - `OK` runs AUTO unattended and pauses at each GUIDED.
-- A MANUAL step is shown, never run; a gap invokes nothing.
+- A MANUAL step is shown, never run.
+- A gap invokes nothing.
 - `?`/`back` re-render via `03-present` with no re-scan.
 - A GUIDED handoff emits the return line.
