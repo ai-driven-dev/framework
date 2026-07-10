@@ -12,6 +12,3 @@
 | `skip`        | record the step left in the ledger, it does not re-fire                              |
 | `stop`        | one-line close, end the loop                                                         |
 | a gap         | no installed skill, say it needs a plugin by function, offer explain or stop         |
-
-- Read-only replies (`?`, `back`, `recap`, `explain`, `stop`) and umbrella picks do not re-scan.
-- After a step or the `OK` walk runs, re-scan and re-render.

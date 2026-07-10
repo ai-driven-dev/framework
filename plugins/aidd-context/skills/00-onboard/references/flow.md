@@ -1,7 +1,5 @@
 # AIDD flow curriculum
 
-Source of the `[map]` view.
-
 ## Foundations (state-aware)
 
 - Existing (code present): memory first, stack skipped. `project memory` → `connect to the AI`.
@@ -22,7 +20,7 @@ Source of the `[map]` view.
 
 `[map]`: `brainstorm → spec* → plan → implement → assert → review → commit → PR`
 
-`*`: is optional
+`*`: optional
 
 ## Run it
 

@@ -22,9 +22,9 @@ flowchart LR
 
 ## Transversal rules
 
-- Guide, do not lecture or dump. 
+- Guide, do not lecture or dump.
 - Name real commands only, never invented ones.
 - Never run a GUIDED step unattended.
 - Never test a plugin version against a registry.
-- Never trust a stale status. 
+- Never trust a stale status.
 - Wait for an explicit reply before running anything.
