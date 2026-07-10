@@ -16,12 +16,14 @@ The rendered screen, and the user's reply.
    - Framing line on the first report of the session only.
    - Exactly one action block per screen, carrying its key once.
    - The idle menu is a next-action block. Slot 1 is the action line, slots 2 to 4 join the options line. Never a list.
+   - The state block carries every foundation, so the foundations step count reads off it.
    - Glyphs: ✅ met · ⚠️ present, not wired · ❌ missing.
    - A used tool that lacks the block is `⚠️`, never `❌`. Only a missing required foundation takes `❌`.
    - Every `⚠️` shows its cause and a keyed fix.
    - Short lines.
    - The options line is the last line. Print nothing after it, no detail block, no state snapshot, no hint about what comes next.
-   - Command ids, tier clauses, and lookahead only under `[?]`.
+   - Command ids, tier clauses, and lookahead only under `[d]`.
+   - Keys are letters or digits. Never `?`, `!`, `/`, `@`, `#`: the host takes those.
 2. **Inject.**
    - Entry screen takes `@../assets/banner.txt`.
    - Flow or walk screen loads `@../references/flow.md`.

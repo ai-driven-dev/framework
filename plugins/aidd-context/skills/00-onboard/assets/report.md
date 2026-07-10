@@ -8,9 +8,10 @@
 👋  <framing, or "Welcome back.">
 
 Your AIDD setup:
-  AI tools   <detected, each ✅/⚠️, or "none yet" when none>
-  Plugins    <installed>   ✅
-  Memory     <aidd_docs · N synced ✅ | ❌ not set up yet>
+  AI tools    <detected, each ✅/⚠️, or "none yet" when none>
+  Plugins     <installed>   ✅
+  Tech stack  <✅ established | ❌ not chosen yet>
+  Memory      <aidd_docs · N synced ✅ | ❌ not set up yet>
 
 <state sentence>
 
@@ -55,11 +56,11 @@ Foundations — step <n> of <total>
     <other keyed options>
 ```
 
-## [?] detail
+## [d] detail
 
 ```txt
 Details —
   1. <step>   <command-id>   (<tier clause>)
   <foundation lines, ✅/⚠️/❌>
-  explain <n> · explain project · recap · stop · back [<]
+  explain <n> · explain project · recap · stop · back [b]
 ```
