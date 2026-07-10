@@ -6,7 +6,10 @@ argument-hint: scan | assess | present | run
 
 # Onboard
 
-scan → assess → present → run ↺
+```mermaid
+flowchart LR
+  scan --> assess --> present --> run --> scan
+```
 
 ## Actions
 
