@@ -15,6 +15,7 @@ The rendered screen, and the user's reply.
 1. **Shape.** Fill the chosen screen from `@../assets/report.md`.
    - Framing line on the first report of the session only.
    - Exactly one action block per screen, carrying its key once.
+   - The idle menu is a next-action block. Slot 1 is the action line, slots 2 to 4 join the options line. Never a list.
    - Glyphs: ✅ met · ⚠️ present, not wired · ❌ missing.
    - A used tool that lacks the block is `⚠️`, never `❌`. Only a missing required foundation takes `❌`.
    - Every `⚠️` shows its cause and a keyed fix.
