@@ -1,7 +1,5 @@
 # Screen map
 
-The state class picks the screen.
-
 | State class | When                         | Screen                                              |
 | ----------- | ---------------------------- | --------------------------------------------------- |
 | greenfield  | no code, no memory           | welcome + foundations, stack first (3 steps)        |

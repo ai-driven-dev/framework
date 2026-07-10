@@ -1,10 +1,8 @@
 # Replies
 
-The user's reply and its effect.
-
 | Reply         | Effect                                                                            |
 | ------------- | --------------------------------------------------------------------------------- |
-| a number `[n]`| run that step per its tier, or re-render an idle-menu umbrella's members             |
+| a number `[n]`| run that step, or open an idle-menu umbrella                                         |
 | `OK`          | walk the pending steps (ranks 1-3) in order, never the idle menu                     |
 | `?`           | expand the full detail (command ids, tier clauses, per-check reasons), read-only     |
 | `back` / `<`  | re-render the prior screen, read-only, no re-scan                                    |

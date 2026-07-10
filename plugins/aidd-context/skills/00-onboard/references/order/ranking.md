@@ -1,8 +1,8 @@
 # Next-action order
 
-The next-action order. First match wins.
+First match wins.
 
-1. Unmet foundation, in `zones.md` order (memory first for an existing repo, stack first for greenfield).
+1. Unmet foundation, in `zones.md` order.
 2. Earliest unmet dev-flow stage, hedged by `state/hedge.md`.
 3. A fired health tool.
 4. Idle menu (see `idle-menu.md`) — only when 1-3 are all clear.

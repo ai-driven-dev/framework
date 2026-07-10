@@ -1,6 +1,6 @@
 # AIDD flow curriculum
 
-The feature flow curriculum. Source of the `[map]` view.
+Source of the `[map]` view.
 
 ## Foundations (state-aware)
 
@@ -8,8 +8,6 @@ The feature flow curriculum. Source of the `[map]` view.
 - Greenfield (empty): `design tech stack` → `project memory` → `connect to the AI`.
 
 ## Feature flow — 8 steps
-
-This table is the vertical annotated screen. The compact `[map]` is the line below.
 
 | Step         | What                        | Why                            |
 | ------------ | --------------------------- | ------------------------------ |
