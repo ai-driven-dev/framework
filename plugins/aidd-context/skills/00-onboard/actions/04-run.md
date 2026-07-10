@@ -4,8 +4,8 @@ Carry out the reply.
 
 ## Input
 
-- The reply from `03-present`: a number, `OK`, `?`, `back`, `recap`, `explain`, `skip`, or `stop`.
-- The decision from `02-assess`: the resolved commands, or a gap.
+- The user's reply, per `@../references/run/replies.md`.
+- The current decision, its resolved commands or a gap.
 
 ## Output
 

@@ -4,11 +4,11 @@ Render the screen `02-assess` chose.
 
 ## Input
 
-The decision from `02-assess`.
+The current decision.
 
 ## Output
 
-The rendered screen, and the reply for `04-run`.
+The rendered screen, and the user's reply.
 
 ## Process
 
@@ -16,7 +16,7 @@ The rendered screen, and the reply for `04-run`.
 2. **Inject.**
    - Entry screen: the banner from `@../assets/banner.txt`.
    - Flow or walk screen: the curriculum from `@../references/flow.md`.
-3. **Wait.** Offer the screen, hand the reply to `04-run`.
+3. **Wait.** Offer the screen, take the reply.
 
 ## Test
 

@@ -4,11 +4,11 @@ Turn the snapshot into one decision.
 
 ## Input
 
-The snapshot from `01-scan`.
+The project snapshot.
 
 ## Output
 
-The decision for `03-present`.
+The decision, ready to render.
 
 ## Process
 
@@ -16,7 +16,6 @@ The decision for `03-present`.
 2. **Rank.** Top next action per `@../references/order/ranking.md`.
    - Idle: build the menu per `@../references/order/idle-menu.md`.
 3. **Resolve.** Match each command to an installed skill, or name a gap by function when absent.
-4. **Hand.** Pass the decision to `03-present`.
 
 ## Test
 

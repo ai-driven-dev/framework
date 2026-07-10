@@ -8,7 +8,7 @@ The project root.
 
 ## Output
 
-The project snapshot, printed nowhere, for `02-assess`.
+The project snapshot, printed nowhere.
 
 ## Process
 
@@ -17,7 +17,7 @@ The project snapshot, printed nowhere, for `02-assess`.
 3. **Ledger.** Drop done steps per `@../references/state/done-rule.md`.
 4. **Hedge.** If a plan exists, pin the build-to-ship stage per `@../references/state/hedge.md`.
 5. **List.** Gather installed AIDD plugins and skills via native discovery.
-6. **Hold.** Hand the snapshot to `02-assess`, printing nothing.
+6. **Hold.** Keep the snapshot in context. Print nothing.
 
 ## Test
 
