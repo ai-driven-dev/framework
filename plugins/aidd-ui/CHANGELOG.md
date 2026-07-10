@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.2.0-alpha.0](https://github.com/ai-driven-dev/framework/compare/aidd-ui-v0.1.0-alpha.0...aidd-ui-v0.2.0-alpha.0) (2026-07-10)
+
+
+### Features
+
+* **framework:** read action files before running, across all skills ([#389](https://github.com/ai-driven-dev/framework/issues/389)) ([9d592a6](https://github.com/ai-driven-dev/framework/commit/9d592a6d8c1ca3d0ac8f8aaf54e30e7186a8eb48))
+
+
+### Miscellaneous
+
+* release main ([#392](https://github.com/ai-driven-dev/framework/issues/392)) ([484928c](https://github.com/ai-driven-dev/framework/commit/484928c8429999194cbe163782099b26c89e4105))
+* release main ([#393](https://github.com/ai-driven-dev/framework/issues/393)) ([426c604](https://github.com/ai-driven-dev/framework/commit/426c604dba9f5f1c586ade768e55c90f914a4562))
+* release main ([#404](https://github.com/ai-driven-dev/framework/issues/404)) ([5f6d84f](https://github.com/ai-driven-dev/framework/commit/5f6d84f3a7cad604c45ee7b4831c77f7cf281717))
+* release main ([#405](https://github.com/ai-driven-dev/framework/issues/405)) ([4d9412c](https://github.com/ai-driven-dev/framework/commit/4d9412cbe4ef3a7b3852d842f0e4f1e82b74c718))
+
+
+### Refactoring
+
+* remove per-skill README.md mirrors ([#302](https://github.com/ai-driven-dev/framework/issues/302)) ([#396](https://github.com/ai-driven-dev/framework/issues/396)) ([1b94c3c](https://github.com/ai-driven-dev/framework/commit/1b94c3c0108c21eacfacf63f55fa7a24dc79d8dd))
+
 ## [0.1.0-alpha.0](https://github.com/ai-driven-dev/framework/compare/aidd-ui-v0.1.0-alpha.0...aidd-ui-v0.1.0-alpha.0) (2026-07-07)
 
 
