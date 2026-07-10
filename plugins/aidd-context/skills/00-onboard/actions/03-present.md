@@ -1,6 +1,6 @@
 # 03 - Present
 
-Render the screen `02-assess` chose.
+Render the screen the decision names.
 
 ## Input
 
@@ -13,9 +13,10 @@ The rendered screen, and the user's reply.
 ## Process
 
 1. **Shape.** Fill the chosen screen from `@../assets/report.md`.
-2. **Inject.**
-   - Entry screen: the banner from `@../assets/banner.txt`.
-   - Flow or walk screen: the curriculum from `@../references/flow.md`.
+   - Framing line on the first report of the session only.
+   - Glyphs: ✅ met · ⚠️ present, not wired · ❌ missing. Each `⚠️` shows its cause and a keyed fix.
+   - Command ids and tier clauses only under `[?]`.
+2. **Inject.** Entry screen takes `@../assets/banner.txt`. Flow or walk screen loads `@../references/flow.md`.
 3. **Wait.** Offer the screen, take the reply.
 
 ## Test
