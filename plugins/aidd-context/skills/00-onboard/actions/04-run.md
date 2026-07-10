@@ -29,5 +29,5 @@ The reply carried out.
 - `OK` runs AUTO unattended and pauses at each GUIDED.
 - A MANUAL step is shown, never run.
 - A gap invokes nothing.
-- `?`/`back` re-render with no re-scan.
+- `d`/`back` re-render with no re-scan.
 - A GUIDED handoff emits the return line.
