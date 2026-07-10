@@ -1,6 +1,6 @@
 # Roadmap
 
-The live roadmap - **Now / Next / Later** with per-item status across the framework and CLI - is the [AIDD Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8). That board is the single source of truth; this file deliberately does not duplicate it. Shipped reality lives in [`CHANGELOG.md`](./CHANGELOG.md).
+The live roadmap is the [AIDD Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8): a milestone is a theme, due on a Friday, and everything without one is the backlog, ordered by priority. That board is the single source of truth; this file deliberately does not duplicate it. Shipped reality lives in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## How to influence
 
