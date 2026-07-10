@@ -1,6 +1,6 @@
 # Done rule (session ledger)
 
-A step is done when a disk signal proves it OR the session ledger recorded it run or left this session. A done step never re-enters the next-action list. In-context session state, no file.
+Stops onboard from re-recommending a step already handled this session. In-context state, no file.
 
-- Kills the re-nag for off-disk completions a disk scan cannot see: a read-only review, a MANUAL step left for the user, an explicit skip.
-- The ledger is re-read every scan, so a step recorded since the last scan drops out. Disk and VCS facts refresh on change, not every loop.
+- Done = a disk signal proves it, OR the ledger recorded it run or left (a read-only review, a MANUAL step left, a skip).
+- Re-read every scan, so a step recorded since drops out. Disk and VCS facts refresh on change, not every loop.

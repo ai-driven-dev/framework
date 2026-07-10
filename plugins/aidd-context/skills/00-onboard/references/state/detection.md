@@ -1,20 +1,22 @@
 # AI tool detection
 
-AI-tool roots and per-tool wiring, for the state block's AI-tools line.
+Which AI tools the project uses, and whether each has its memory wired. For the state block's AI-tools line.
 
-## Root => tool
+## Detect by the tool's own dir
 
-| Tool     | Root present                                                                          |
-| -------- | ------------------------------------------------------------------------------------- |
-| claude   | `.claude/` or `CLAUDE.md`                                                              |
-| codex    | `.codex/` or `AGENTS.md`                                                               |
-| cursor   | `.cursor/` or `.cursorrules`                                                           |
-| opencode | `.opencode/`                                                                           |
-| copilot  | `.github/copilot-instructions.md` or `.github/{instructions,agents,skills,prompts}/`  |
+A tool is used when its dedicated root exists. Shared context files (`AGENTS.md`, `CLAUDE.md`) are wiring targets, never detection signals.
 
-## Wiring status per detected tool
+| Tool     | Used when                                                                            |
+| -------- | ------------------------------------------------------------------------------------ |
+| claude   | `.claude/`                                                                           |
+| codex    | `.codex/`                                                                            |
+| cursor   | `.cursor/`                                                                           |
+| opencode | `.opencode/`                                                                         |
+| copilot  | `.github/copilot-instructions.md` or `.github/{instructions,agents,skills,prompts}/` |
 
-Wired = the tool's context file carries the `<aidd_project_memory>` block on canonical shape (claude `CLAUDE.md`, codex `AGENTS.md`, cursor `.cursor/rules/`, ...). A detected tool is **wired** or **used, not wired**.
+## Wiring
+
+Wired = the tool's context file carries the `<aidd_project_memory>` block on canonical shape. `AGENTS.md` is the shared target for codex, cursor, and opencode. `CLAUDE.md` is claude's. A detected tool is **wired** or **used, not wired**.
 
 - Detected tools only. An unused optional tool is omitted, never crossed.
 - A not-wired tool needs its memory wired, e.g. "codex, no `AGENTS.md`".
