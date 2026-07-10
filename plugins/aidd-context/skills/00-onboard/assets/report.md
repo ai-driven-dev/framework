@@ -53,5 +53,5 @@ Foundations — step <n> of <total>
 Details —
   1. <step>   <command-id>   (<tier clause>)
   <foundation lines, ✅/⚠️/❌>
-  explain <n> · recap · stop · back [<]
+  explain <n> · explain project · recap · stop · back [<]
 ```

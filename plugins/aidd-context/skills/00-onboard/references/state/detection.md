@@ -17,5 +17,5 @@ AI-tool roots and per-tool wiring, for the state block's AI-tools line.
 Wired = the tool's context file carries the `<aidd_project_memory>` block on canonical shape (claude `CLAUDE.md`, codex `AGENTS.md`, cursor `.cursor/rules/`, ...). A detected tool is **wired** or **used, not wired**.
 
 - Detected tools only. An unused optional tool is omitted, never crossed.
-- A not-wired tool carries its cause + fix in the render, e.g. "codex, no `AGENTS.md` => wire it".
+- A not-wired tool needs its memory wired, e.g. "codex, no `AGENTS.md`".
 - Missing memory is a foundation status, not a tool row (see `zones.md`).

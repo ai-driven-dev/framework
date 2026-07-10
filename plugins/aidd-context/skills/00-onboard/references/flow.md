@@ -7,7 +7,7 @@ The feature flow curriculum. Source of the `[map]` view.
 - Existing (code present): memory first, stack skipped. `project memory` → `connect to the AI`.
 - Greenfield (empty): `design tech stack` → `project memory` → `connect to the AI`.
 
-## Feature flow — 8 steps (`spec` optional)
+## Feature flow — 8 steps
 
 This table is the vertical annotated screen. The compact `[map]` is the line below.
 
@@ -23,6 +23,8 @@ This table is the vertical annotated screen. The compact `[map]` is the line bel
 | pull request | ship it                     | open for merge                 |
 
 `[map]`: `brainstorm → spec* → plan → implement → assert → review → commit → PR`
+
+`*`: is optional
 
 ## Run it
 

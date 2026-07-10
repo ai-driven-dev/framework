@@ -9,7 +9,7 @@ Carry out the reply.
 
 ## Output
 
-The reply carried out and the ledger updated, then a re-scan unless the reply was read-only.
+The reply carried out and the ledger updated, then a re-scan unless the reply was read-only or an umbrella pick.
 
 ## Process
 

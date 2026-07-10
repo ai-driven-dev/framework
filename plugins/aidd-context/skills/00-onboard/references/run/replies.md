@@ -10,6 +10,7 @@ The user's reply and its effect.
 | `back` / `<`  | re-render the prior screen, read-only, no re-scan                                    |
 | `recap`       | summarize this session's conversation, read-only, only when a prior conversation exists |
 | `explain <n>` | describe a step in two or three plain lines, read-only                               |
+| `explain project` | summarize the project from its memory bank, read-only, only when memory is filled |
 | `skip`        | record the step left in the ledger, it does not re-fire                              |
 | `stop`        | one-line close, end the loop                                                         |
 | a gap         | no installed skill, say it needs a plugin by function, offer explain or stop         |
