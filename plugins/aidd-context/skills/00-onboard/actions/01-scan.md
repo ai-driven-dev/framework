@@ -22,5 +22,6 @@ The project snapshot, printed nowhere.
 ## Test
 
 - Scan prints nothing.
-- The snapshot carries a status per check, the detected AI tools with wiring, and the installed skills.
+- The snapshot carries a status per check.
+- It carries the detected AI tools with wiring, and the installed skills.
 - A ledgered step and a cross-branch PR never enter the snapshot's actionable set.

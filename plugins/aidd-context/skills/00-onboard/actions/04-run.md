@@ -21,7 +21,8 @@ The reply carried out.
 3. **Tier.** Running a step, apply `@../references/run/tiers.md`.
 4. **Return.** On a GUIDED handoff, emit the return line per `@../references/run/return.md`.
 5. **Record.** Write the handled step to the ledger per `@../references/state/done-rule.md`.
-6. **Loop.** After a run or `OK` walk, re-scan. A read-only reply or umbrella pick does not.
+6. **Loop.** After a run or `OK` walk, re-scan.
+   - A read-only reply or umbrella pick does not.
 
 ## Test
 
