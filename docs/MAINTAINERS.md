@@ -18,41 +18,46 @@ How to operate this repository day to day. This file is the **Habilité** (maint
 
 ## 📅 Daily
 
-- **Triage issues.** New issues auto-add to board #8. Set `Status` / `Area` / `Priority`; link under an epic (native sub-issues) if relevant. **Type** is the issue/PR label, not a board field (see [Project board layout](#-project-board-project-8)).
+- **Triage issues.** New issues auto-add to board #8. The form already stamped the type. You give the issue a **milestone** or a **priority**, never both.
 - **Roadmap.** Priority = the community vote (mechanism in `GOVERNANCE.md`). Accepted items live on board #8 — keep `ROADMAP.md` a pointer, don't maintain a second list.
 - **Review PRs.** Approve as CODEOWNERS, then squash-merge (merge policy → [`GOVERNANCE.md`](../GOVERNANCE.md#-code-decisions-merging)).
 
-## 📋 Project board (Project 8)
+## 📋 Four axes, one board
 
-The board is a **view** of the taxonomy the docs define, never its own. Each property answers one question: **Type** = the label · **Priority** = urgency · **Status** = flow position · **When** = Timeline. Routing (`next`/`main`) is *not* a board property — it derives from the branch prefix ([routing table](../aidd_docs/memory/vcs.md#types)).
+Each axis answers one question, and only `Status` lives on the board. Routing (`next`/`main`) is not an axis — it derives from the branch prefix ([routing table](../aidd_docs/memory/vcs.md#types)).
 
-One-time layout (org-admin / board-write; get field IDs via `gh project field-list 8 --owner ai-driven-dev`):
+| Axis | Lives in | Answers | Values |
+| --- | --- | --- | --- |
+| **Type** | issue type, stamped by the form | what kind of work | `Bug` · `Feature` · `Task` |
+| **Milestone** | repo milestone | *when* it ships | one theme, due a Friday |
+| **Priority** | org issue field | *in what order*, among what has no *when* | `Urgent` · `High` · `Medium` · `Low` |
+| **Status** | board field | where the work stands | `Ideation` · `Todo` · `In Progress` · `In review` · `Done` |
 
-- **Drop** `Work type` (duplicates Type) and `Phases` (duplicates Status) — `gh project field-delete --id <ID>`.
-- **Keep** `Priority` (P0 · P1 · P2) and `Area`.
-- **`Status`** options, in order: `Todo · In progress · In review · Ready · Done` (built-in field — edit its values in the UI).
-- **Timeline view** — new view, date = Milestone/target; use it as the roadmap horizon.
+Two rules keep the axes orthogonal:
 
-Status automation (Project → ⋯ → Workflows); `In progress` is the one manual move:
+- **A milestone or a priority, never both.** The milestone decided when; the order no longer matters.
+- **The scope lives in the title**, conventional and queryable: `feat(aidd-pm): …`. No `Area` field, no scope label. Find work with `gh issue list --search 'aidd-pm in:title'`.
+
+Status automation (Project → ⋯ → Workflows); `In Progress` is the one manual move:
 
 | Trigger (built-in) | Status |
 | --- | --- |
 | Item added | `Todo` |
 | PR linked / ready for review | `In review` |
-| Code review approved | `Ready` |
 | PR merged · item closed | `Done` |
+
+The roadmap layout cannot read a milestone as a date, so the milestone view is a **Table view grouped by `Milestone`**. Its `No milestone` group is the backlog, ordered by `Priority`.
 
 ## 🏷️ Labels
 
-[`.github/labels.yml`](../.github/labels.yml) is the canonical set (triage only — routing is by branch prefix). The sync loop **creates/updates** from the file; it does **not** delete. So when you remove a label from the file, also delete it on GitHub:
+Labels categorize nothing: the **issue type** does. A label in [`.github/labels.yml`](../.github/labels.yml) exists only when a bot or a human reads it — `good first issue`, `dependencies` (dependabot), `autorelease: *` (release-please).
+
+Nothing syncs the file to GitHub. Create and delete by hand, then check they agree:
 
 ```bash
-gh label delete "help wanted" --yes
-gh label delete npm --yes
-gh label delete "github-actions" --yes
+diff <(gh label list --repo ai-driven-dev/framework | cut -f1 | sort) \
+     <(yq e '.[].name' .github/labels.yml | sort)
 ```
-
-Dependabot labels its PRs `dependencies` only (ecosystem sub-labels were dropped); confirm `.github/dependabot.yml` does not re-add a deleted label before deleting it.
 
 ## 🚀 Releases
 
@@ -101,7 +106,7 @@ The App: ID in secret `AIDD_BOT_APP_ID`, key in `AIDD_BOT_PRIVATE_KEY`. If the A
 Head branches are **not** auto-deleted on merge (`delete_branch_on_merge: false`):
 
 - The promote PR merges `next` into `main` without deleting `next`, so the back-merge that realigns `next` never hits a missing branch. **Do not re-enable** the setting.
-- The back-merge runs unattended (bot App `always` bypass on the `next` ruleset). If it can't push, it opens an issue labelled `back-merge-failed` — resync with a `main` → `next` PR.
+- The back-merge runs unattended (bot App `always` bypass on the `next` ruleset). If it can't push, it opens a tracking issue — resync with a `main` → `next` PR.
 - If `next` is ever missing, recreate it: `git push origin main:next`.
 
 To change protection, edit `.github/rulesets/main.json` (or `next.json`), then apply it live:
