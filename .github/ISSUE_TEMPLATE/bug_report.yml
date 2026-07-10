@@ -1,7 +1,7 @@
 name: 🐛 Bug Report
 description: Report a bug or unexpected behaviour in the framework
-title: "fix: "
-labels: ["bug"]
+title: "fix(<scope>): "
+type: Bug
 body:
   - type: markdown
     attributes:
