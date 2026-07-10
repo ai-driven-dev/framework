@@ -1,7 +1,7 @@
 name: ✨ Feature Request
 description: Propose new content or an improvement to the framework
-title: "feat: "
-labels: ["enhancement"]
+title: "feat(<scope>): "
+type: Feature
 body:
   - type: markdown
     attributes:
