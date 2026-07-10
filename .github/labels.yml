@@ -1,8 +1,12 @@
 # Canonical issue and PR label list for ai-driven-dev/framework.
 #
-# Labels are TRIAGE ONLY: they categorize an issue or PR. They never decide
-# where a PR targets — routing is by branch prefix (see aidd_docs/memory/vcs.md).
-# Keep one triage label per change.
+# Labels do NOT categorize an issue. Issue types (Bug, Feature, Task) and the
+# org issue fields (Priority, Effort) do that, and the issue forms set the type.
+# A label here exists only when a bot or a human reads it, and nothing else can
+# carry the signal.
+#
+# Labels never decide where a PR targets — routing is by branch prefix
+# (see aidd_docs/memory/vcs.md).
 #
 # This file is the source of truth. When the GitHub label set drifts from
 # this file, sync manually with:
@@ -13,35 +17,19 @@
 # job). Plugins may create their own labels on install; those are documented in
 # the plugin, not here.
 
-# --- Triage --------------------------------------------------------------
-
-- name: bug
-  description: Something isn't working
-  color: d73a4a
-
-- name: enhancement
-  description: New feature or request
-  color: a2eeef
-
-- name: documentation
-  description: Improvements or additions to documentation
-  color: 0075ca
-
-- name: security
-  description: Security-sensitive issue or fix (cross-cutting, add to any kind)
-  color: B60205
+# --- Read by a human -----------------------------------------------------
 
 - name: good first issue
   description: Good for newcomers
   color: 7057ff
 
-# --- Dependencies --------------------------------------------------------
+# --- Applied by dependabot (.github/dependabot.yml) ----------------------
 
 - name: dependencies
   description: Dependency update (dependabot)
   color: 0366d6
 
-# --- Release tooling -----------------------------------------------------
+# --- Applied by release-please -------------------------------------------
 
 - name: "autorelease: pending"
   description: Release Please release PR awaiting merge
