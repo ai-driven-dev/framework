@@ -1,6 +1,6 @@
 # AIDD flow curriculum
 
-`03-present` loads this on a flow or walk screen. Source of the `[map]` view.
+The feature flow curriculum. Source of the `[map]` view.
 
 ## Foundations (state-aware)
 
@@ -9,7 +9,7 @@
 
 ## Feature flow — 8 steps (`spec` optional)
 
-`03-present` renders this table as the vertical annotated screen; the `[map]` is the compact line below.
+This table is the vertical annotated screen. The compact `[map]` is the line below.
 
 | Step         | What                        | Why                            |
 | ------------ | --------------------------- | ------------------------------ |

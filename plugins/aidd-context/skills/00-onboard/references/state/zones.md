@@ -1,6 +1,6 @@
 # State zones
 
-Disk/VCS checks that place the project. `01-scan` reads this. Each check is met, drift (present, off canonical shape), or missing. Render glyphs: see `assets/report.md`.
+Disk/VCS checks that place the project. Each check is met, drift (present, off canonical shape), or missing.
 
 ## Foundations
 
@@ -12,8 +12,8 @@ State-aware order: existing repo (code) => memory first, stack skipped. Greenfie
 | project memory | `aidd_docs/memory/` has real content                          | files empty/placeholder | project knowledge saved   | `aidd-context:02-project-memory` |
 | memory wiring  | `<aidd_project_memory>` block on canonical shape in each used tool's context file | block present, off shape | knowledge loaded by the AI | `aidd-context:02-project-memory` |
 
-- tech stack missing only on greenfield (no code AND no synced memory); established = met, never bootstrap.
-- memory wiring: absent block or no context file = missing (not drift); drift = the block is present but not the standard `<aidd_project_memory>` block that imports the memory files.
+- tech stack missing only on greenfield (no code AND no synced memory). Established = met, never bootstrap.
+- memory wiring: absent block or no context file = missing, not drift. Drift = the block present but not the standard `<aidd_project_memory>` block that imports the memory files.
 
 ## Dev flow
 
@@ -36,7 +36,7 @@ Cumulative: a downstream artifact implies the upstream stages met.
 
 ## Health
 
-Beside-the-flow tools, surfaced only when their signal fires. Scan project source only; exclude templates, fixtures, examples, generated output, installed-plugin trees.
+Beside-the-flow tools, surfaced only when their signal fires. Scan project source only, excluding templates, fixtures, examples, generated output, and installed-plugin trees.
 
 | Signal      | Fires when                                  | Command             |
 | ----------- | ------------------------------------------- | ------------------- |

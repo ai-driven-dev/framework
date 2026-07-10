@@ -1,6 +1,6 @@
 # Next-action order
 
-`02-assess` ranks the next action from the snapshot. First match wins.
+The next-action order. First match wins.
 
 1. Unmet foundation, in `zones.md` order (memory first for an existing repo, stack first for greenfield).
 2. Earliest unmet dev-flow stage, hedged by `state/hedge.md`.

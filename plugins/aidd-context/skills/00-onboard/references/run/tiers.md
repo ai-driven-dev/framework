@@ -1,6 +1,6 @@
 # Tiers
 
-How `04-run` carries out a step. The tier is a default, overridable.
+How a step runs. The tier is a default, overridable.
 
 | Tier   | What                    | How onboard runs it                                        |
 | ------ | ----------------------- | ---------------------------------------------------------- |

@@ -1,6 +1,6 @@
 # Idle menu
 
-Ranks 1-3 clear => `02-assess` offers three umbrellas plus explore.
+When ranks 1-3 are clear, the idle menu: three umbrellas plus explore.
 
 | Slot | Umbrella            | Opens (installed members)                                             |
 | ---- | ------------------- | -------------------------------------------------------------------- |
@@ -10,5 +10,5 @@ Ranks 1-3 clear => `02-assess` offers three umbrellas plus explore.
 | ?    | explore             | `aidd-context:11-explore` + anything not in 1-3                       |
 
 - Slots 2-3 are umbrellas: a pick re-renders the member sub-list, a member pick runs. Slot 1 runs directly.
-- Installed members only; drop an empty umbrella.
+- Installed members only. Drop an empty umbrella.
 - Choices, not a chain: `OK` never walks the idle menu.

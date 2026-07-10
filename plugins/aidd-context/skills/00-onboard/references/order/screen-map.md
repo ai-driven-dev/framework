@@ -1,6 +1,6 @@
 # Screen map
 
-`02-assess` picks the screen from the state class.
+The state class picks the screen.
 
 ```mermaid
 stateDiagram-v2
