@@ -14,7 +14,7 @@ Covers project bootstrap, the project memory bank, generation of context artifac
 
 | Bracket ID | Skill          | Description                                                                                                                                                     |
 | ---------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [1.0]      | [onboard](skills/00-onboard/README.md)                 | Guide the user through the AIDD flow on the current project, in plain language, and suggest the next logical step, adapted to the installed plugins.            |
+| [1.0]      | [onboard](skills/00-onboard/README.md)                 | Guide a project's journey through AIDD, from first setup to shipping a feature, one clear next action at a time.                                                |
 | [1.1]      | [bootstrap](skills/01-bootstrap/README.md)             | Imagine and validate the technical architecture of a new SaaS through interactive Q&A, candidate-stack comparison, multi-agent audit, and an INSTALL.md output. |
 | [1.2]      | [project-memory](skills/02-project-memory/README.md)       | Initialize or refresh the project memory bank from a capability-based model, and carry the memory block into the AI context files.                              |
 | [1.3]      | [context-generate](skills/03-context-generate/README.md) | Generate context artifacts: router-based skills, agents, rules, slash commands, hooks, plugin scaffolds, and plugin marketplaces.                               |
