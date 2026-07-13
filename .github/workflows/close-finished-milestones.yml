@@ -1,0 +1,51 @@
+name: Close finished milestones
+
+# A milestone whose last issue just closed should close too, so its due date
+# stops reading as "overdue" and the roadmap view drops the finished group.
+# GitHub has no native rule for this. This closes any OPEN milestone that has
+# at least one closed issue and zero open ones. An empty milestone (no issues
+# at all) is left untouched — it is a freshly created bucket, not finished work.
+#
+# Runs when an issue closes (the moment a milestone can become finished) and on
+# a weekly safety net for anything the event missed. Reopening a milestone by
+# hand is safe: this only ever acts on milestones that have become empty of open
+# issues, so it will not re-close one you deliberately reopened to add work.
+
+on:
+  issues:
+    types: [closed]
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: close-finished-milestones
+  cancel-in-progress: false
+
+permissions:
+  issues: write
+
+jobs:
+  close-finished-milestones:
+    name: Close milestones with no open issues
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close finished milestones
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh api --paginate "repos/$REPO/milestones?state=open&per_page=100" \
+            --jq '.[] | select(.closed_issues > 0 and .open_issues == 0) | "\(.number)\t\(.title)"' \
+            > finished.tsv || true
+
+          if [ ! -s finished.tsv ]; then
+            echo "No finished milestone to close."
+            exit 0
+          fi
+
+          while IFS=$'\t' read -r number title; do
+            echo "Closing milestone #$number ($title)"
+            gh api -X PATCH "repos/$REPO/milestones/$number" -f state=closed >/dev/null
+          done < finished.tsv
