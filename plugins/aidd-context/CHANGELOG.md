@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.2](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.3.1...aidd-context-v2.3.2) (2026-07-13)
+
+
+### Documentation
+
+* **vcs:** add commit cycle guidelines for AI auto commits ([#397](https://github.com/ai-driven-dev/framework/issues/397)) ([5a70cce](https://github.com/ai-driven-dev/framework/commit/5a70cce7ab2aee9ea29953b5bc1711f6025a2ef0))
+
 ## [2.3.1](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.3.0...aidd-context-v2.3.1) (2026-07-10)
 
 

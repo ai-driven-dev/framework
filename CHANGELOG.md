@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.4.2](https://github.com/ai-driven-dev/framework/compare/v5.4.1...v5.4.2) (2026-07-13)
+
+
+### Documentation
+
+* **vcs:** add commit cycle guidelines for AI auto commits ([#397](https://github.com/ai-driven-dev/framework/issues/397)) ([5a70cce](https://github.com/ai-driven-dev/framework/commit/5a70cce7ab2aee9ea29953b5bc1711f6025a2ef0))
+
 ## [5.4.1](https://github.com/ai-driven-dev/framework/compare/v5.4.0...v5.4.1) (2026-07-10)
 
 
