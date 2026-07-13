@@ -15,11 +15,13 @@ flowchart LR
 
 Run the actions in that order. Read an action's file in `actions/` before running it.
 
-| #  | Action   | Does                            |
-| -- | -------- | ------------------------------- |
-| 01 | scan     | read the project, take the pick |
-| 02 | generate | write the memory                |
-| 03 | sync     | wire it into the tools          |
+| #  | Action   | Does                       |
+| -- | -------- | -------------------------- |
+| 01 | scan     | read the project           |
+| 02 | generate | write the memory           |
+| 03 | sync     | pick the tools, wire it in |
+
+Sync runs alone when the memory already exists and a tool needs wiring.
 
 ## Memory rules
 

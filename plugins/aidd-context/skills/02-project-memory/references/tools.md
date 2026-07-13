@@ -1,6 +1,6 @@
 # Tools
 
-The AI tools a project can use. `scan` reads the detection column, `sync` reads the context file.
+The AI tools a project can use. `sync` reads both columns.
 
 | Tool     | Detected when                                                                        | Context file                      |
 | -------- | ------------------------------------------------------------------------------------ | --------------------------------- |
@@ -12,5 +12,6 @@ The AI tools a project can use. `scan` reads the detection column, `sync` reads 
 
 - A tool is detected by its own dir, or by a file only it reads.
 - A shared `AGENTS.md` is a wiring target, never a detection signal.
-- A tool with no signal is still offered, unticked. The user may pick it.
+- A detected tool is offered ticked. Unticking it leaves its block to go stale.
+- An undetected tool is offered unticked. Picking it is how a new tool joins.
 - A picked tool whose context file is absent gets it created (see `memory-block.md`).

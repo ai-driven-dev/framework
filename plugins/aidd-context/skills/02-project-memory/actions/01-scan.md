@@ -1,6 +1,6 @@
 # 01 - Scan
 
-Read the project, take the user's pick.
+Read the project.
 
 ## Input
 
@@ -8,19 +8,20 @@ The project root.
 
 ## Output
 
-The confirmed tools and capabilities, printed nowhere.
+The confirmed capabilities, printed nowhere.
 
 ## Process
 
-1. **Tools.** Detect the AI tools present per `@../references/tools.md`.
-2. **Pick.** Show the detected tools. Let the user pick one or several. Wait for the pick, never default to all.
-3. **Capabilities.** Detect the project's capabilities per `@../references/capability-signals.md`, each with its repo evidence.
-4. **Confirm.** Show each capability with its evidence. Let the user add or drop one. Block on the answer.
-5. **Hold.** Keep the confirmed tools and capabilities in context.
+1. **Ground.** Memory records what exists. Find what there is to record: source code, an `INSTALL.md`, or a PRD or spec under `aidd_docs/`.
+   - None of them: stop, and say the project has nothing to remember yet.
+   - Point at `aidd-context:01-bootstrap` to choose a stack, or `aidd-pm:03-prd` to state what the project is.
+2. **Detect.** Find the project's capabilities per `@../references/capability-signals.md`, each with its repo evidence.
+3. **Confirm.** Show each with its evidence. Let the user add or drop one. Block on the answer.
+4. **Hold.** Keep the confirmed capabilities in context.
 
 ## Test
 
 - Scan writes no file.
-- A tool is offered only when a signal detects it.
-- No tool is picked without the user saying so.
+- An empty project stops at Ground, named a real command, and generated nothing.
 - Every shown capability carries the repo fact that fired it.
+- Scan never asks about AI tools. Sync does, when the answer is used.
