@@ -1,8 +1,12 @@
 # Capability signals
 
-The memory bank is shaped by the concerns the project genuinely has, not by a single project type. The templates live in one folder per capability under `assets/templates/memory/`. The folder is the gate: generate `core/` always, plus the folder of each capability the project has.
+Which concerns the project genuinely has, so the memory bank is shaped by them and not by a project type.
 
-A capability holds when a concrete fact in the repo matches the capability's **definition**. The listed signals are canonical evidence, not a closed set: an equivalent concrete fact (a dedicated module, a set of ports) counts too. What never counts is an inferred dominant domain ("it is a web app, so it probably has auth"). There is no fallback type and no `unknown`. Every fire is shown to the user with its evidence at the Confirm step, so a judged match is never silent.
+- A capability holds on a concrete repo fact, never an inferred domain ("a web app, so probably auth").
+- The listed evidence is canonical, not closed. An equivalent concrete fact counts.
+- No fallback type, no `unknown`.
+- Every fire is shown with its evidence. A judged match is never silent.
+- The folder gates which templates generate. It is never part of an output path (see `memory-destinations.md`).
 
 ## Capability, definition, and folder
 

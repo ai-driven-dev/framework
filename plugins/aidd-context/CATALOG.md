@@ -72,6 +72,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description |
 |-------|------|---|
 | `actions` | [01-init-context-file.md](skills/02-project-memory/actions/01-init-context-file.md) | - |
+| `actions` | [01-scan.md](skills/02-project-memory/actions/01-scan.md) | - |
 | `actions` | [02-scaffold-docs.md](skills/02-project-memory/actions/02-scaffold-docs.md) | - |
 | `actions` | [03-generate-memory.md](skills/02-project-memory/actions/03-generate-memory.md) | - |
 | `actions` | [04-review-memory.md](skills/02-project-memory/actions/04-review-memory.md) | - |
@@ -83,7 +84,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [capability-signals.md](skills/02-project-memory/references/capability-signals.md) | - |
 | `references` | [mapping-ai-context-file.md](skills/02-project-memory/references/mapping-ai-context-file.md) | - |
 | `references` | [memory-block.md](skills/02-project-memory/references/memory-block.md) | - |
-| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Initialize or refresh the project memory bank. Use when the user wants to set up or regenerate the project's memory files. Not for updating one memory file after it exists or editing a single rule directly.` |
+| `references` | [tools.md](skills/02-project-memory/references/tools.md) | - |
+| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Give the AI a memory of the project, wired into the tools you use. Use when the user wants to set up or refresh the project memory. Not for editing a single memory file that already exists.` |
 
 #### `skills/03-context-generate`
 
