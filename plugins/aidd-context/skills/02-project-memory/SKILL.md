@@ -1,7 +1,7 @@
 ---
 name: 02-project-memory
 description: Give the AI a memory of the project, wired into the tools you use. Use when the user wants to set up or refresh the project memory. Not for editing a single memory file that already exists.
-argument-hint: init-context-file | scan | scaffold-docs | generate-memory | review-memory | sync-memory
+argument-hint: init-context-file | scan | generate | scaffold-docs | generate-memory | review-memory | sync-memory
 ---
 
 # Project Memory
