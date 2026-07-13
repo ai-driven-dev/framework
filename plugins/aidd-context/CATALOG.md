@@ -71,20 +71,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-init-context-file.md](skills/02-project-memory/actions/01-init-context-file.md) | - |
 | `actions` | [01-scan.md](skills/02-project-memory/actions/01-scan.md) | - |
 | `actions` | [02-generate.md](skills/02-project-memory/actions/02-generate.md) | - |
-| `actions` | [02-scaffold-docs.md](skills/02-project-memory/actions/02-scaffold-docs.md) | - |
-| `actions` | [03-generate-memory.md](skills/02-project-memory/actions/03-generate-memory.md) | - |
 | `actions` | [03-sync.md](skills/02-project-memory/actions/03-sync.md) | - |
-| `actions` | [04-review-memory.md](skills/02-project-memory/actions/04-review-memory.md) | - |
-| `actions` | [05-sync-memory.md](skills/02-project-memory/actions/05-sync-memory.md) | - |
 | `assets` | [AGENTS.md](skills/02-project-memory/assets/AGENTS.md) | - |
 | `assets` | [CONTRIBUTING.md](skills/02-project-memory/assets/CONTRIBUTING.md) | - |
 | `assets` | [GUIDELINES.md](skills/02-project-memory/assets/GUIDELINES.md) | - |
 | `assets` | [README.md](skills/02-project-memory/assets/README.md) | - |
 | `references` | [capability-signals.md](skills/02-project-memory/references/capability-signals.md) | - |
-| `references` | [mapping-ai-context-file.md](skills/02-project-memory/references/mapping-ai-context-file.md) | - |
 | `references` | [memory-block.md](skills/02-project-memory/references/memory-block.md) | - |
 | `references` | [memory-destinations.md](skills/02-project-memory/references/memory-destinations.md) | - |
 | `references` | [review-protocol.md](skills/02-project-memory/references/review-protocol.md) | - |

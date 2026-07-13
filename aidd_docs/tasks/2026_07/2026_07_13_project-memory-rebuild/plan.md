@@ -1,6 +1,6 @@
 ---
 objective: "02-project-memory is a three-action skill (scan, generate, sync) on the onboard anatomy, writing every core memory file flat and wiring the block into each chosen tool's context file, created when missing."
-status: in-progress
+status: implemented
 ---
 
 <!-- Fill or omit these sections; never add, rename, or reorder one. -->
@@ -38,3 +38,4 @@ status: in-progress
 | Memory templates under `assets/templates/` are untouched                 | They are user-facing content; telegraphing them degrades what the reader reads.                  |
 | `update_memory.js` takes an optional picked-tool list, no-arg unchanged  | sync must fill only the tools the user picked; the same script also runs as an auto hook with no such context, so the tool list is optional and absence keeps today's fill-all-present behavior. |
 | `skill-authoring.md` stays untouched on this branch                      | Same standing constraint as the onboard rework; the authoring contract is a separate ticket.     |
+| Nesting is prevented and surfaced, never auto-remediated                | A file already nested by an older run is the user's file now. Generate writes the flat one, reports the orphan, and deletes nothing. Silently moving a file the user may have edited is worse than the drift. |

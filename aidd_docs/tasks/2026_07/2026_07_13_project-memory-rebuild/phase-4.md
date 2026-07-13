@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 <!-- Fill or omit these sections; never add, rename, or reorder one. -->
@@ -45,10 +45,12 @@ plugins/aidd-context/skills/02-project-memory/
 
 > Prove it runs, not just that it reads.
 
-1. Build fixtures: a greenfield repo, an existing repo with a stack and no memory, a repo whose tool wrote memory into `internal/`.
-2. Run `02-project-memory` headless on Claude across the fixtures, capture each output.
-3. Run the same on Codex, capture each output, confirm the review degrades to a fresh-context pass and says so.
-4. Assert every run writes core files flat and wires the picked tool's context file.
+1. Build fixtures: an existing repo with a stack and no memory, a repo whose tool wrote memory into `internal/`, and one for Codex whose `AGENTS.md` carries no block.
+2. Sync this checkout into both tools' caches with `scripts/dev-sync.sh`, so the run tests the branch and not the released version.
+3. Run `02-project-memory` headless on Claude across the fixtures, capture each output.
+4. Run the same on Codex, capture its output.
+5. Assert on disk, never on the report: core files flat, the picked tool's block filled, an unpicked tool's file untouched.
+6. Record which review path ran. Both hosts have subagents today, so the no-subagent fallback stays unexercised and must not be reported as verified.
 
 ## Test acceptance criteria
 
@@ -58,5 +60,6 @@ plugins/aidd-context/skills/02-project-memory/
 | ---- | ------------------------------------------------------------------------------------------ |
 | 1    | The five old actions and `mapping-ai-context-file.md` are gone, no reference dangles.       |
 | 2    | The link checker reports zero broken links across the skill.                                |
-| 3    | Claude and Codex both run the skill end to end on every fixture, outputs captured.          |
-| 4    | Every fixture run writes core memory flat and leaves the picked tool's block filled.        |
+| 3    | Claude and Codex both run the three-action flow end to end, each output naming scan, generate, and sync. |
+| 4    | Disk shows core memory flat, the picked tool's block filled, and an unpicked tool's file untouched. |
+| 5    | The review ran with reviewers that did not write what they read, and the report names them. |
