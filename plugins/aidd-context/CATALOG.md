@@ -76,6 +76,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-generate.md](skills/02-project-memory/actions/02-generate.md) | - |
 | `actions` | [02-scaffold-docs.md](skills/02-project-memory/actions/02-scaffold-docs.md) | - |
 | `actions` | [03-generate-memory.md](skills/02-project-memory/actions/03-generate-memory.md) | - |
+| `actions` | [03-sync.md](skills/02-project-memory/actions/03-sync.md) | - |
 | `actions` | [04-review-memory.md](skills/02-project-memory/actions/04-review-memory.md) | - |
 | `actions` | [05-sync-memory.md](skills/02-project-memory/actions/05-sync-memory.md) | - |
 | `assets` | [AGENTS.md](skills/02-project-memory/assets/AGENTS.md) | - |

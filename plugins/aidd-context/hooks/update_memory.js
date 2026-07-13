@@ -10,6 +10,17 @@
  * Reference syntax for the always-loaded tier:
  *   CLAUDE.md / AGENTS.md        -> @aidd_docs/memory/file.md
  *   .github/copilot-instructions -> [aidd_docs/memory/file.md](../aidd_docs/memory/file.md)
+ *
+ * Usage:
+ *   node update_memory.js                  every context file already present
+ *   node update_memory.js claude codex     only those tools' context files
+ *
+ * The auto hook calls it with no argument. The project-memory skill passes the
+ * tools the user picked, so a context file the user did not choose is left
+ * alone even when it exists.
+ *
+ * It only ever fills a block that is already there. Creating the file, or the
+ * block inside it, is the skill's job.
  */
 
 // ── Constants ─────────────────────────────────────────────────────
@@ -33,6 +44,15 @@ const TARGET_FILES = [
   { path: "AGENTS.md", syntax: "at" },
   { path: ".github/copilot-instructions.md", syntax: "link" },
 ];
+
+// Which context file each tool reads. Mirrors the skill's references/tools.md.
+const TOOL_FILES = {
+  claude: "CLAUDE.md",
+  codex: "AGENTS.md",
+  cursor: "AGENTS.md",
+  opencode: "AGENTS.md",
+  copilot: ".github/copilot-instructions.md",
+};
 
 // ── Helpers ───────────────────────────────────────────────────────
 
@@ -132,6 +152,23 @@ function buildToc(rootFiles, onDemandFiles, path) {
   return `\n${lines.join("\n")}\n`;
 }
 
+// The context files to fill. No tool named: every target already present, which
+// is what the auto hook wants. Tools named: only theirs, so an AGENTS.md the
+// user never picked keeps its block untouched.
+function resolveTargets(tools) {
+  if (tools.length === 0) return TARGET_FILES;
+
+  const unknown = tools.filter((t) => !(t in TOOL_FILES));
+  if (unknown.length > 0) {
+    const known = Object.keys(TOOL_FILES).join(", ");
+    console.error(`update_memory: unknown tool ${unknown.join(", ")} (known: ${known})`);
+    process.exit(1);
+  }
+
+  const wanted = new Set(tools.map((t) => TOOL_FILES[t]));
+  return TARGET_FILES.filter((target) => wanted.has(target.path));
+}
+
 function gitAdd(childProcess, files) {
   try {
     childProcess.execSync(`git add ${files.map((f) => `"${f}"`).join(" ")}`, {
@@ -151,11 +188,14 @@ function gitAdd(childProcess, files) {
 
   if (!fs.existsSync(DOCS_DIR)) process.exit(0);
 
+  const tools = process.argv.slice(2).map((arg) => arg.toLowerCase());
+  const targets = resolveTargets(tools);
+
   const rootFiles = scanRootFiles(fs, path);
   const onDemandFiles = ON_DEMAND_DIRS.flatMap((sub) => scanSubdir(fs, path, sub));
   const changed = [];
 
-  for (const target of TARGET_FILES) {
+  for (const target of targets) {
     const original = readTextOrNull(fs, target.path);
     if (original === null) continue;
 
