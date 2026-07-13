@@ -23,6 +23,7 @@ The memory bank, flat in `aidd_docs/memory/`, reviewed.
    - Drop a section the project has nothing for. Strip the guidance comment.
 4. **Update.** On an existing memory bank, refresh a file from current reality and keep the user's edits.
    - A concern whose capability is gone stays, flagged. Never delete it.
+   - A section the template has and the file lacks: report it when the project has something to put there, stay quiet otherwise. Never inject it.
 5. **Review.** Run `@../references/review-protocol.md`. Apply the confirmed fixes.
 6. **Report.** Say what was written, what was flagged, and whether the review had independent reviewers.
 
@@ -31,4 +32,6 @@ The memory bank, flat in `aidd_docs/memory/`, reviewed.
 - Every written file sits flat in `aidd_docs/memory/`, none under a subfolder.
 - Every core destination in the table exists.
 - No fact is defined in two files.
+- A file on an older template shape is reported, never rewritten to the new one.
+- A section left out because the project has nothing for it is not reported.
 - The review ran, and its report names its reviewers.
