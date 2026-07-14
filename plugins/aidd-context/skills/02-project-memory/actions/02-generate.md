@@ -27,9 +27,7 @@ The memory bank, flat in `aidd_docs/memory/`, reviewed.
 
 ## Test
 
-- Every written file sits flat in `aidd_docs/memory/`, none under a subfolder.
-- Every core destination in the table exists.
-- No fact is defined in two files.
-- A file on an older template shape is reported, never rewritten to the new one.
-- A section left out because the project has nothing for it is not reported.
-- The review ran, and its report names its reviewers.
+- `find aidd_docs/memory -mindepth 2 -name '*.md'` lists nothing outside `internal/` and `external/`.
+- Every `core` destination in the table exists at that exact path.
+- No `TODO` and no `<placeholder>` survives in a written file.
+- The report names one reviewer per file, and each section it flagged as missing is still missing.

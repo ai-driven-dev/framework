@@ -24,8 +24,7 @@ Each picked tool's context file, present and carrying the filled block.
 
 ## Test
 
-- Sync runs on its own, against a memory bank it did not write.
-- A detected tool is offered ticked, an undetected one unticked.
-- A picked tool with no context file ends up with one, block filled.
-- A tool that was not picked keeps its file byte for byte.
-- A non-zero exit stops the action, never a half-wired project.
+- The script exited `0`.
+- Each picked tool's context file exists, and its block holds one line per memory file.
+- `git diff` shows no change to an unpicked tool's file.
+- `git status` shows the memory files unstaged: the skill reports, the user stages.

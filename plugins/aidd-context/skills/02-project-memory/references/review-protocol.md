@@ -6,7 +6,7 @@ Generated memory is reviewed by readers who did not write it. A writer cannot ju
 
 - One reviewer per memory file, run in parallel.
 - Each reviewer reads the file, the codebase it claims to describe, and the other memory files' names.
-- Use the `aidd-dev:checker` agent when the host has subagents.
+- A reviewer is an agent that did not write what it reads. Prefer a checker agent when the project has one.
 
 ## What each reviewer returns
 
