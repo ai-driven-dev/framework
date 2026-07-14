@@ -220,5 +220,9 @@ function gitAdd(childProcess, files) {
     }
   }
 
-  if (changed.length > 0) gitAdd(childProcess, changed);
+  // Stage only when running as the auto hook, which owns no other change. Called
+  // by the skill, generate has just written files this script knows nothing about,
+  // so staging its own two would leave a partial index that reads like the whole
+  // change. The skill reports instead, and the user stages what they mean to commit.
+  if (changed.length > 0 && tools.length === 0) gitAdd(childProcess, changed);
 })();

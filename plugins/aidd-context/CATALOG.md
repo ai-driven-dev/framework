@@ -81,6 +81,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [capability-signals.md](skills/02-project-memory/references/capability-signals.md) | - |
 | `references` | [memory-block.md](skills/02-project-memory/references/memory-block.md) | - |
 | `references` | [memory-destinations.md](skills/02-project-memory/references/memory-destinations.md) | - |
+| `references` | [memory-rules.md](skills/02-project-memory/references/memory-rules.md) | - |
 | `references` | [review-protocol.md](skills/02-project-memory/references/review-protocol.md) | - |
 | `references` | [tools.md](skills/02-project-memory/references/tools.md) | - |
 | `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Give the AI a memory of the project, wired into the tools you use. Use when the user wants to set up or refresh the project memory. Not for editing a single memory file that already exists.` |

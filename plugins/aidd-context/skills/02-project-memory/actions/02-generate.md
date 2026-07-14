@@ -16,11 +16,9 @@ The memory bank, flat in `aidd_docs/memory/`, reviewed.
    - `README.md`, `GUIDELINES.md`, `CONTRIBUTING.md`, and `memory/README.md`.
    - `memory/internal/` and `memory/external/`, each with a `.gitkeep`.
 2. **Select.** Take the `core` rows of `@../references/memory-destinations.md`, plus the rows of each confirmed capability.
-3. **Fill.** For each selected row, read the template and write its destination.
+3. **Fill.** For each selected row, read the template and write its destination, against `@../references/memory-rules.md`.
    - The destination is the one the table names. Never derive a path.
-   - Capture what the code cannot show: the decisions, the conventions, the gotchas.
-   - Never repeat a fact an earlier file captured. Point to that file.
-   - Drop a section the project has nothing for. Strip the guidance comment.
+   - Strip the guidance comment.
 4. **Update.** On an existing memory bank, refresh a file from current reality and keep the user's edits.
    - A concern whose capability is gone stays, flagged. Never delete it.
    - A section the template has and the file lacks: report it when the project has something to put there, stay quiet otherwise. Never inject it.

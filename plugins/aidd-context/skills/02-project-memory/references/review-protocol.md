@@ -10,12 +10,8 @@ Generated memory is reviewed by readers who did not write it. A writer cannot ju
 
 ## What each reviewer returns
 
-| Axis        | Question                                              |
-| ----------- | ----------------------------------------------------- |
-| accuracy    | does the code back every claim                         |
-| duplication | is a fact here already defined in another file         |
-| derivable   | is this a schema or a tree the code already shows      |
-| gap         | is a decision, convention, or gotcha missing           |
+- Every breach of `memory-rules.md`, the rules the file was written against.
+- Every claim the code does not back.
 
 ## Settle
 

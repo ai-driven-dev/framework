@@ -23,20 +23,7 @@ Run the actions in that order. Read an action's file in `actions/` before runnin
 
 Sync runs alone when the memory already exists and a tool needs wiring.
 
-## Memory rules
-
-Govern what a memory file holds.
-
-- Capture the macro and the non-derivable: decisions, conventions, gotchas, the why.
-- Never restate a schema or a file tree. Point to the code over a copy.
-- One fact, one file. Define it in its home, reference it elsewhere.
-- Keep each file small. Short bullets, code in backticks.
-- No version in a tech name (`React`, not `React 19`).
-- Reflect the current state only. Drop an unused section, never leave a placeholder.
-
-## Action rules
-
-Govern how an action runs.
+## Transversal rules
 
 - Read an asset or reference relative to this skill.
 - If one cannot be read, stop and say so. Never invent.
