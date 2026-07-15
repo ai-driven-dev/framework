@@ -1,29 +1,50 @@
-<!-- Recipe contract: file is recipes/<kebab-slug>.md · Level ∈ {Beginner, Intermediate, Advanced} · Time prefixed with ~ · one idea per sentence, prefer removing over adding. -->
-
 # <Recipe title>
 
-> **Goal:** <one line stating the outcome the reader achieves>
-
-|                   |                                          |
-| ----------------- | ---------------------------------------- |
-| **Level**         | <Beginner \| Intermediate \| Advanced>   |
-| **Time**          | ~<N> min                                 |
-| **Prerequisites** | <what the reader needs first, or "None"> |
+<One sentence describing what this recipe gets the reader.>
 
 ## Why
 
-<One short paragraph: the problem this recipe solves and when to reach for it.>
+<Short and benefit-first, one idea per line. Lead with the keywords a reader would search, **bold** the key terms.>
 
-## Steps
+## Steps to <the outcome the reader achieves>
 
-1. 📋 **<First step>**: <imperative instruction.>
-2. 🔧 **<Next step>**: <imperative instruction.>
-3. ✅ **<Last step>**: <until the goal is reached.>
+### 🟢 Beginner
+
+#### 1) <emoji> <First step title>
+
+<One benefit-focused line of what and why, in prose.>
+
+1. <where it is, then install it from its URL>
+2. <how to invoke it — its real command or slash>
+
+```bash
+$ <command the reader runs>
+<the useful output it prints, trimmed to what matters>
+```
+
+### 🟡 Intermediate
+
+#### 2) <emoji> <Next step title>
+
+<Benefit-focused what and why, in prose.>
+
+1. <action>
+2. <action>
+
+```<lang>
+<a config or snippet the reader can copy>
+```
+
+### 🔴 Expert
+
+#### 3) <emoji> <Last step title — until the goal is reached>
+
+<Benefit-focused what and why, in prose.>
+
+1. <action>
+
+![<what this screenshot or video shows>](<path-or-url>)
 
 ## Verify
 
-- <An observable check that proves it worked: a command, a UI state, a file that now exists.>
-
-## Related
-
-- <Link to a sibling recipe, a skill, or a doc the reader needs next.>
+- <Optional. An observable check that proves it worked: a command, a UI state, a file that now exists.>

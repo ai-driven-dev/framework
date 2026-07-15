@@ -5,6 +5,7 @@ Structured context the AI assistant reads to work on this project, so it does no
 ## What lives here
 
 - `memory/`: the project memory bank loaded each session. See [`memory/README.md`](memory/README.md).
+- `recipes/`: project-specific how-to recipes created or updated by the cook skill.
 - `GUIDELINES.md`: how this team operates the AI on this project.
 - `CONTRIBUTING.md`: how to add or change project context.
 - `tasks/`: specs, plans, and run summaries, created as work happens.
