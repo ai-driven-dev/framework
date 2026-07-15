@@ -12,11 +12,7 @@ The created or updated files, and a summary table.
 
 ## Process
 
-1. **Write by destination:**
-   - **Memory.** Update the matching memory file at the root of the bank. Touch only the relevant section, and replace an entry the lesson supersedes rather than adding a contradicting one.
-   - **Decision.** Write a record in `aidd_docs/memory/internal/decisions/` from `@../assets/decision-template.md`, named by a short slug. Create the folder if absent.
-   - **Rule.** Hand the convention to the rule generator. Never write a rule file here.
-   - **Skill.** Hand the intent to the skill generator. Never write a skill file here.
+1. **Write.** Send each approved lesson to its home per `@../references/destinations.md`. Write a decision from `@../assets/decision-template.md`, named by a short slug, creating `aidd_docs/memory/internal/decisions/` if absent. Preserve the user's edits, and write files rather than display them.
 2. **Report.** A table: lesson, destination, action taken (created, updated, or handed off).
 
 ## Test

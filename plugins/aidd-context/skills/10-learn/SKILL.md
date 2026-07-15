@@ -6,35 +6,18 @@ argument-hint: gather | assess | write | sync
 
 # Learn
 
-Turns what a piece of work taught into the project's lasting context. It reads a source, scores each lesson, asks the user what to do with each, and writes only what the user approves.
-
 ## Actions
 
-| #   | Action   | Role                                                   | Input             |
-| --- | -------- | ------------------------------------------------------ | ----------------- |
-| 01  | `gather` | Pick a source and collect candidate lessons             | the trigger       |
-| 02  | `assess` | Score each lesson, propose a destination, ask the user  | the candidates    |
-| 03  | `write`  | Write the approved lessons to their destinations        | the approved plan |
-| 04  | `sync`   | Refresh the memory block in every context file          | the written files |
+`gather → assess → write → sync`. Run each action's `## Test` before the next, and read its file in `actions/` first. When nothing is worth learning, gather ends the skill.
 
-Order: `01 → 02 → 03 → 04`. Run each action's `## Test` before the next. When nothing is worth learning, `01` exits and the rest is skipped.
-Before running an action, read its file in `actions/`, not only the table or assets.
-
-## Destinations
-
-- **Memory.** A fact or convention. Update the matching memory file.
-- **Decision.** A choice with a rationale. A record in `aidd_docs/memory/internal/decisions/`, written from the decision template.
-- **Rule.** A convention to enforce. Handed to the rule generator, never written here.
-- **Skill.** A reusable workflow. Handed to the skill generator, never written here.
+| #   | Action   | Does                           |
+| --- | -------- | ------------------------------ |
+| 01  | `gather` | pick a source, collect lessons |
+| 02  | `assess` | score, propose a home, ask     |
+| 03  | `write`  | write the approved lessons     |
+| 04  | `sync`   | refresh the memory block       |
 
 ## Transversal rules
 
-- Ask before you write. For every lesson, show its score and proposed destination, and let the user keep it, move it, or skip it. Write nothing anywhere until the user answers.
-- Default to not capturing. The score is the brake. Recommend the bar at 6 of 10.
-- Learn needs an existing memory bank. If `aidd_docs/memory/` is absent, route to the project-memory skill, do not scaffold here.
+- Ask before you write. Show each lesson's score and home, let the user keep, move, or skip it, and write nothing until they answer.
 - Capture the user's project, never AIDD's own scaffold.
-- Touch only what a lesson affects. Preserve the user's edits. Write files, never display their content.
-
-## Assets
-
-- `assets/decision-template.md`: the decision record format.
