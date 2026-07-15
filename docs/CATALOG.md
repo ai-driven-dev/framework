@@ -18,9 +18,9 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 
 | Skill                  | Role                                                                          | Actions                                                                                                  |
 | ---------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `00-onboard`           | Scan the project into a diagnostic of what's set up and missing, then run the recommended next commands | `01-scan`, `02-report`, `03-run`                                                                          |
+| `00-onboard`           | Guide the project's journey through AIDD, from first setup to shipping a feature | `01-scan`, `02-assess`, `03-present`, `04-run`                                                            |
 | `01-bootstrap`         | Imagine and validate a new SaaS architecture, output an `INSTALL.md`          | `01-gather-needs`, `02-propose-candidates`, `03-audit-candidates`, `04-pick-and-design`, `05-write-install-md` |
-| `02-project-memory`      | Initialize or refresh the memory bank and AI context files                    | `01-init-context-file`, `02-scaffold-docs`, `03-generate-memory`, `04-review-memory`, `05-sync-memory`  |
+| `02-project-memory`    | Give the AI a memory of the project, wired into the tools you use              | `01-scan`, `02-generate`, `03-sync`                                                                      |
 | `03-context-generate`  | Router that dispatches an artifact-generation request to the dedicated generator below | delegates to `04`–`08` (and plugins / marketplaces)                                            |
 | `04-skill-generate`    | Generate a router-based skill across the host AI tool(s)                       | `01-capture-intent`, `02-decompose-actions`, `03-draft-skill`, `04-write-actions`, `05-validate`        |
 | `05-rule-generate`     | Generate a coding rule that governs editor and agent behavior                 | `01-capture-rule`, `02-write-rule`, `03-validate`                                                        |
