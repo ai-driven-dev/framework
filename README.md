@@ -11,9 +11,9 @@
 
 <img src="docs/assets/logo.png" alt="AIDD" width="140" />
 
-# AI-Driven Dev Framework
+# The AI-Driven Dev Framework (🇫🇷)
 
-### A French framework for AI-Driven Developers to ship high-quality code.
+### An `Agnostic` & `Token Optimized` Framework for developers who want to produce HIGH QUALITY code (even on `Legacy`)
 
 <p>
   <!--counts:start--><kbd>7 plugins</kbd> · <kbd>40 skills</kbd> · <kbd>2 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
