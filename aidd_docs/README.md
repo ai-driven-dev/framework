@@ -24,6 +24,7 @@ A plugin marketplace of skills, agents, rules, templates, and a memory system. Y
 | Block     | Location                                          | What it does                                                                          |
 | --------- | ------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | Memory    | `aidd_docs/memory/`                               | Project context the AI reads on every conversation                                    |
+| Recipes   | `aidd_docs/recipes/`                              | Project-specific how-to sheets created by the cook skill                              |
 | Skills    | plugin `skills/` folders                          | Router-based workflows triggered by user phrases or slashes                           |
 | Commands  | tool-specific commands dir (when supported)       | Plain slash commands (no router); used for shortcuts and simple flows. None currently shipped by AIDD; reserved for future plugins or your own additions |
 | Agents    | plugin `agents/` folders                          | Specialized AI personas for focused tasks                                             |
@@ -70,6 +71,7 @@ my-project/
 │   ├── internal/
 │   │   └── decisions/           # Decision records written by aidd-context:10-learn
 │   ├── tasks/                   # Specs, plans, run summaries
+│   ├── recipes/                 # Project-specific cook recipes
 │   ├── ADR.md                   # Architecture decision log (aidd-context:10-learn)
 │   ├── README.md                # This file
 │   ├── GUIDELINES.md            # Developer operating guidelines
