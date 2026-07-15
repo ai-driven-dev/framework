@@ -40,6 +40,10 @@ When tools differ in syntax (frontmatter, slash command name, references), follo
 - Keep skills router-pure: SKILL.md holds no business logic; everything lives inside actions.
 - Stay within 5 to 10 percent deviation from a template structure. Beyond that, update the template first, then derive the new content from it.
 
+## Recipes
+
+Project recipes live under `aidd_docs/recipes/`. Bundled framework recipes live in the cook skill and should only be changed when contributing to the framework itself.
+
 ## Conventions
 
 - Skill names: `<plugin>:<NN>-<slug>`. Slug is kebab-case verb for activity domains, singular noun for tool domains.
