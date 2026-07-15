@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.2](https://github.com/ai-driven-dev/aidd-cli/compare/v5.1.1...v5.1.2) (2026-07-15)
+
+
+### Bug Fixes
+
+* **opencode:** emit opencode.json unconditionally in flat build ([#313](https://github.com/ai-driven-dev/aidd-cli/issues/313)) ([66e2e4c](https://github.com/ai-driven-dev/aidd-cli/commit/66e2e4c9ba007f527079b4116473f4352bbac6f4))
+
 ## [5.1.1](https://github.com/ai-driven-dev/aidd-cli/compare/v5.1.0...v5.1.1) (2026-07-05)
 
 
