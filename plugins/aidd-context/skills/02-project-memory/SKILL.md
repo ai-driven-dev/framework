@@ -1,31 +1,30 @@
 ---
 name: 02-project-memory
-description: Give the AI a memory of the project, wired into the tools you use. Use when the user wants to set up or refresh the project memory. Not for editing a single memory file that already exists.
-argument-hint: scan | generate | sync
+description: Build the project's memory of its architecture, conventions, and decisions, and wire it into the tools you use. Use to set up or refresh project memory. Not for editing one existing memory file.
+argument-hint: setup | refresh | rewire
 ---
 
 # Project Memory
 
 ```mermaid
 flowchart LR
-  scan --> generate --> sync
+  build([setup or refresh]) --> scan --> generate --> sync
+  rewire([rewire only]) --> sync
 ```
 
 ## Actions
 
-Run the actions in that order. Read an action's file in `actions/` before running it.
+Run the flow above. No argument, `setup`, or `refresh` starts at scan. `rewire` runs sync alone. Read an action's file in `actions/` before running it.
 
-| #  | Action   | Does                       |
-| -- | -------- | -------------------------- |
-| 01 | scan     | read the project           |
-| 02 | generate | write the memory           |
-| 03 | sync     | pick the tools, wire it in |
-
-Sync runs alone when the memory already exists and a tool needs wiring.
+| Action   | Does                       |
+| -------- | -------------------------- |
+| scan     | read the project           |
+| generate | write the memory           |
+| sync     | pick the tools, wire it in |
 
 ## Transversal rules
 
-- Read an asset or reference relative to this skill.
-- If one cannot be read, stop and say so. Never invent.
+- If a referenced file cannot be read, stop and say so. Never invent its content.
 - Ask before anything ambiguous. Never default silently.
+- Create or revise a file, keeping the user's edits. Delete one only when the user asks.
 - End with a short report of what changed.

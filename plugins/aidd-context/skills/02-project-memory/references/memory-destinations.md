@@ -1,6 +1,6 @@
 # Memory destinations
 
-Where each template lands. Read the destination, never derive it.
+Where each template lands: flat under `aidd_docs/memory/`, read from this table, never derived.
 
 | Capability | Template                    | Write to                                 |
 | ---------- | --------------------------- | ---------------------------------------- |
@@ -26,10 +26,3 @@ Where each template lands. Read the destination, never derive it.
 | ui         | `ui/design.md`              | `aidd_docs/memory/design.md`             |
 | ui         | `ui/forms.md`               | `aidd_docs/memory/forms.md`              |
 | ui         | `ui/navigation.md`          | `aidd_docs/memory/navigation.md`         |
-
-## Invariants
-
-- The capability column gates which rows generate. It is never part of a path.
-- Every destination is flat. Never create a subfolder under `aidd_docs/memory/`.
-- `internal/` and `external/` hold the user's own notes. A generated file never lands there.
-- A flat file is auto-loaded by the AI. A nested one is not, so nesting silently costs the project its memory.

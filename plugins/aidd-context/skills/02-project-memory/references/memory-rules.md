@@ -1,10 +1,11 @@
 # Memory rules
 
-What a memory file holds. Generate writes against these. The reviewers judge against them.
+A memory file:
 
-- Capture the macro and the non-derivable: decisions, conventions, gotchas, the why.
-- Never restate a schema or a file tree. Point to the code over a copy.
-- One fact, one file. Define it in its home, reference it elsewhere.
-- Keep each file small. Short bullets, code in backticks.
-- No version in a tech name (`React`, not `React 19`).
-- Reflect the current state only. Drop an unused section, never leave a placeholder.
+- Captures the macro and the non-derivable: decisions, conventions, gotchas, the why.
+- Never restates a schema or a file tree.
+- Points to the code over a copy.
+- Holds one fact in one home, referenced elsewhere.
+- Stays small: short bullets, code in backticks.
+- Names a tech without its version (`React`, not `React 19`).
+- Reflects the current state only: no unused section, no placeholder.

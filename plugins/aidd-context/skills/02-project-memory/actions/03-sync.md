@@ -8,23 +8,26 @@ The memory bank in `aidd_docs/memory/`.
 
 ## Output
 
-Each picked tool's context file, present and carrying the filled block.
+Each picked tool's context file, carrying the filled block.
 
 ## Process
 
-1. **Detect.** Find the AI tools present per `@../references/tools.md`.
-2. **Pick.** Show every tool, the detected ones ticked. Let the user pick one or several. Wait for the pick.
-3. **Upsert.** Put an empty `<aidd_project_memory>` block in each picked tool's context file, per `@../references/memory-block.md`.
-   - Missing file: create it from `@../assets/AGENTS.md`, titled for the tool.
-   - Never touch a file whose tool was not picked.
-4. **Fill.** Run the plugin's `hooks/update_memory.js` from the project root, naming the picked tools.
-5. **Guard.** On a non-zero exit, print the error and stop.
-   - Check `aidd_docs/memory/` holds a `.md` file, and that `node` runs.
-6. **Verify.** Read each picked tool's block back. An empty one means the fill did not land.
+1. **Require.** Stop unless `aidd_docs/memory/` holds a `.md` file. Send the user to generate first.
+2. **Detect.** Find the AI tools present per `@../references/tools.md`.
+3. **Pick.** Show every tool, the detected ones ticked. Let the user pick one or several. Wait for the pick.
+4. **Upsert.** Ensure each picked tool's context file carries the block, shaped like `@../assets/AGENTS.md`.
+   - Absent file: create it from that template.
+   - Existing file: add only the missing `## Memory Management` section or block, leaving the rest untouched.
+   - If its AIDD structure differs from `@../assets/AGENTS.md`, offer to reconcile it, applying only what the user approves.
+   - Touch no file a picked tool does not resolve to.
+5. **Fill.** Run `hooks/update_memory.js` from the project root, naming the picked tools.
+6. **Guard.** On a non-zero script exit, show the error and stop.
+7. **Verify.** Read each picked tool's block back. An empty one means the fill did not land.
 
 ## Test
 
-- The script exited `0`.
-- Each picked tool's context file exists, and its block holds one line per memory file.
-- `git diff` shows no change to an unpicked tool's file.
-- `git status` shows the memory files unstaged: the skill reports, the user stages.
+- With no `.md` under `aidd_docs/memory/`, sync creates no context file and stops.
+- The script exits `0`.
+- Each picked tool's context file exists, its block listing every file in `aidd_docs/memory/`.
+- A context file for a tool the user did not pick is unchanged.
+- `git diff --cached` is empty: sync stages nothing.

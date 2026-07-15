@@ -78,13 +78,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [CONTRIBUTING.md](skills/02-project-memory/assets/CONTRIBUTING.md) | - |
 | `assets` | [GUIDELINES.md](skills/02-project-memory/assets/GUIDELINES.md) | - |
 | `assets` | [README.md](skills/02-project-memory/assets/README.md) | - |
+| `assets` | [report.md](skills/02-project-memory/assets/report.md) | - |
 | `references` | [capability-signals.md](skills/02-project-memory/references/capability-signals.md) | - |
-| `references` | [memory-block.md](skills/02-project-memory/references/memory-block.md) | - |
 | `references` | [memory-destinations.md](skills/02-project-memory/references/memory-destinations.md) | - |
 | `references` | [memory-rules.md](skills/02-project-memory/references/memory-rules.md) | - |
 | `references` | [review-protocol.md](skills/02-project-memory/references/review-protocol.md) | - |
+| `references` | [structure.md](skills/02-project-memory/references/structure.md) | - |
 | `references` | [tools.md](skills/02-project-memory/references/tools.md) | - |
-| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Give the AI a memory of the project, wired into the tools you use. Use when the user wants to set up or refresh the project memory. Not for editing a single memory file that already exists.` |
+| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Build the project's memory of its architecture, conventions, and decisions, and wire it into the tools you use. Use to set up or refresh project memory. Not for editing one existing memory file.` |
 
 #### `skills/03-context-generate`
 

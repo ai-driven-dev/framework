@@ -1,6 +1,6 @@
 # 02 - Generate
 
-Write the memory the project deserves, then have it reviewed.
+Write the memory the project deserves.
 
 ## Input
 
@@ -8,26 +8,26 @@ The confirmed capabilities from `01-scan`.
 
 ## Output
 
-The memory bank, flat in `aidd_docs/memory/`, reviewed.
+The written memory bank, and a report of what changed.
 
 ## Process
 
-1. **Scaffold.** Create `aidd_docs/` from `@../assets/`, keeping any edit the user already made.
-   - `README.md`, `GUIDELINES.md`, `CONTRIBUTING.md`, and `memory/README.md`.
-   - `memory/internal/` and `memory/external/`, each with a `.gitkeep`.
-2. **Select.** Take the `core` rows of `@../references/memory-destinations.md`, plus the rows of each confirmed capability.
-3. **Fill.** For each selected row, read the template and write its destination, against `@../references/memory-rules.md`.
+1. **Scaffold.** Create the tree in `@../references/structure.md`.
+2. **Select.** Take the rows to write from `@../references/memory-destinations.md`.
+3. **Write.** Write each selected row to its destination, against `@../references/memory-rules.md`.
    - The destination is the one the table names. Never derive a path.
-   - Strip the guidance comment.
-4. **Update.** On an existing memory bank, refresh a file from current reality and keep the user's edits.
-   - A concern whose capability is gone stays, flagged. Never delete it.
-   - A section the template has and the file lacks: report it when the project has something to put there, stay quiet otherwise. Never inject it.
-5. **Review.** Run `@../references/review-protocol.md`. Apply the confirmed fixes.
-6. **Report.** Say what was written, what was flagged, and whether the review had independent reviewers.
+   - Absent file: fill the template, strip its guidance comment.
+   - Existing file: revise it in place.
+   - Report a template section the file now lacks when the project has something for it. Never inject it.
+4. **Prune.** A file on disk whose capability is no longer selected: flag it, offer to remove it, delete only on the user's word.
+5. **Review.** Have each memory file reviewed against `@../references/review-protocol.md` by an independent agent, a checker agent if the project has one, in parallel. Without subagents, make one fresh pass per file yourself, and say so in the report.
+6. **Fix.** Apply the safe findings. On a duplicated fact, keep its home and drop the copy.
+7. **Report.** Fill `@../assets/report.md`.
 
 ## Test
 
-- `find aidd_docs/memory -mindepth 2 -name '*.md'` lists nothing outside `internal/` and `external/`.
-- Every `core` destination in the table exists at that exact path.
-- No `TODO` and no `<placeholder>` survives in a written file.
-- The report names one reviewer per file, and each section it flagged as missing is still missing.
+- `find aidd_docs/memory -mindepth 2 -name '*.md'` returns nothing outside `internal/` and `external/`.
+- Every `core` destination and every `@../references/structure.md` path exists at its exact place.
+- `internal/` and `external/` exist, each with a `.gitkeep` and no memory file.
+- No `TODO` or `<placeholder>` remains in a written file.
+- A line the user added survives a re-run, and a flagged missing section is never injected.
