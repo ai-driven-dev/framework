@@ -16,7 +16,7 @@ The contract every generated skill must satisfy. These rules govern the CLIENT s
   - Never name another skill, and never include a `/command` token: slash commands are tool-native, the host generates them.
   - Parentheses for an inline definition, not dashes.
   - Never use a colon or an em dash in the description. Split the thought into two sentences instead.
-- **R6.** Zero duplication. One fact, one home. Actions cite a shared file via `@<path>` instead of restating it.
+- **R6.** Zero duplication, one fact one home. An action never restates a rule the router already carries, it acts within it. An action never restates a shared reference, it cites it with `@<path>`. A router self-skip names the early exit in the flow line, never the condition and report an action already owns.
 - **R7.** `references/` = documents to READ and apply in place. `assets/` = files to COPY, INJECT, or fill in per run. A template, checklist, or form is an asset, not a reference, because each run instantiates it.
 - **R8.** Every action follows the action anatomy (below) and carries a `## Test`.
 - **R9.** A section earns its content or is omitted. State each section's qualify bar and describe the behavior it captures, not a slot to fill. An entry that fails the bar is dropped, never invented to occupy the row. Never write `## External data` + `None.`, nor mint a decision, criterion, or resource just because the template offers it. A template's section set is closed: an instance fills or omits the defined sections and never adds, renames, or reorders one.
@@ -48,7 +48,7 @@ The router: YAML frontmatter + markdown body.
 
 - `name` (kebab-case, <= 64 chars) MUST equal the skill's folder name. No colon, slash, dot, plugin prefix, or namespace. Reserved words forbidden: `anthropic`, `claude`. Regex `^[a-z0-9]+(-[a-z0-9]+)*$`.
 - `description`: per R5.
-- `argument-hint` when supported or in plugin source and the skill has two or more actions: the action slugs joined with ` | `, matching the files in `actions/`. When the actions are not all independent entry points, name the user's cases instead (project-memory's `setup | refresh | rewire`), which the hook leaves hand-written. Omit it for one-action skills.
+- `argument-hint`, required once the skill has two or more actions (when the tool supports it or in plugin source). Independent actions, a tool skill called one at a time: the action slugs joined with ` | `, matching `actions/`. A pipeline or loop, where each action feeds the next and entry is always the first: the user's cases (project-memory's `setup | refresh | rewire`), or omit it when there is a single case. Never the internal stage slugs of a pipeline. Omit entirely for a one-action skill.
 - A manual-only flag makes the skill user-only. The exact frontmatter key is per tool.
 - Body: pure router. A flow schema (a mermaid diagram for a loop or branch, a one-line chain when strictly sequential), then an action table mapping each `#` and slug to what it does. An action's input lives in its own `## Input`, never a router column. Self-skips stated explicitly.
 
