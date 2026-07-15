@@ -44,6 +44,18 @@ function createWorktree() {
 
   git("worktree", "add", worktreePath, "-b", newBranch, baseBranch);
 
+  // A fresh worktree has no node_modules, so its first commit fails the
+  // commit-msg hook (commitlint not found). Install deps best-effort: never
+  // let a failed install block the worktree the user asked for.
+  try {
+    execFileSync("pnpm", ["install", "--frozen-lockfile"], {
+      cwd: worktreePath,
+      stdio: ["ignore", "inherit", "inherit"],
+    });
+  } catch {
+    process.stderr.write("worktree-create: pnpm install skipped or failed; run it manually before committing\n");
+  }
+
   process.stdout.write(worktreePath + "\n");
 }
 
