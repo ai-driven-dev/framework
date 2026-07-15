@@ -92,8 +92,14 @@ function syncArgumentHint(content, hint) {
   return `---\n${lines.join("\n")}${parts.body}`;
 }
 
+// Skills whose argument-hint is written by hand, because it names the user's
+// cases (set up, refresh, re-wire) rather than one token per action. The hook
+// leaves these untouched. This is the base pattern for a case-based router.
+const MANUAL_ARGUMENT_HINT = new Set(["02-project-memory"]);
+
 const stale = [];
 for (const dir of await skillDirs()) {
+  if (MANUAL_ARGUMENT_HINT.has(path.basename(dir))) continue;
   const skillPath = path.join(dir, "SKILL.md");
   const actionFiles = await collectMarkdownFiles(path.join(dir, "actions"));
   const names = [...new Set(actionFiles.map(actionName))];
