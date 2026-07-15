@@ -122,10 +122,14 @@ function buildBlockContent(rootFiles, onDemandFiles, syntax) {
 }
 
 // Replace the text between an open and close marker, leaving the rest intact.
+// Anchor on the close, then take the nearest open before it: a bare marker
+// quoted in hand-written prose above the real block must not become the cut
+// point and splice out everything between it and the block.
 function updateMarkers(content, open, close, innerContent) {
-  const openIdx = content.indexOf(open);
   const closeIdx = content.indexOf(close);
-  if (openIdx === -1 || closeIdx === -1 || closeIdx < openIdx) return null;
+  if (closeIdx === -1) return null;
+  const openIdx = content.lastIndexOf(open, closeIdx);
+  if (openIdx === -1) return null;
   return content.slice(0, openIdx + open.length) + innerContent + content.slice(closeIdx);
 }
 
