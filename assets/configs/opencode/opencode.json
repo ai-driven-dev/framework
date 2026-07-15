@@ -1,4 +1,4 @@
 {
-  "instructions": [".opencode/rules/**/*.md"],
-  "mcp": {}
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [".opencode/rules/**/*.md"]
 }

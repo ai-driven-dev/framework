@@ -1565,7 +1565,7 @@
     ".agents/skills/aidd-async-dev-01-setup/actions/skills/05-bootstrap-labels.md": "f53177ce1c58767f1bdfcfa3e72f7d4cc5e3d4fd782c35c3998815317be108b1"
   },
   "opencode:flat": {
-    "opencode.json": "57f58d810b01116174acdca521283efc0a81cd058ae8780f18e8cad7b3fd25ff",
+    "opencode.json": "367de453f03357abefedfbba6cda3a4e57b476bf64bbd77c902b9ca0bf972300",
     ".opencode/skills/aidd-vcs-04-issue-create/SKILL.md": "3983ed1c71124786fdf737ec5447637a31b1cc146eff43003978cec50c2ddc67",
     ".opencode/skills/aidd-vcs-04-issue-create/evals/scenarios.json": "d113c62aae4867e425737948c39c9f687f56c3d37234eca345a2f65f1a234c30",
     ".opencode/skills/aidd-vcs-04-issue-create/assets/CONTRIBUTING.md": "1372c7512c02c26e21643ae523a98d7c90ff92c03633532a8c417b4ca8d9e75f",

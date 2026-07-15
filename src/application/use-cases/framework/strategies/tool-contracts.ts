@@ -42,7 +42,7 @@ import {
   genericFlatSkillPath,
 } from "../../../../domain/formats/flat-paths.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../domain/formats/markdown.js";
-import { mergeOpencodeJsonAdditive } from "../../../../domain/formats/opencode-mcp-merge.js";
+import { buildOpencodeFlatConfig } from "../../../../domain/formats/opencode-mcp-merge.js";
 import { rewriteRelativeLinks } from "../../../../domain/formats/relative-link-rewrite.js";
 import { stringifyToml } from "../../../../domain/formats/toml.js";
 import { mergeVscodeMcp } from "../../../../domain/formats/vscode-mcp-merge.js";
@@ -750,6 +750,27 @@ async function resolveOpencodeJsonPath(outDir: string, fs: FsType): Promise<stri
   return `${outDir}/opencode.json`;
 }
 
+async function collectOpencodeMcp(
+  builtPlugins: readonly string[],
+  sourceDir: string,
+  fs: FsType
+): Promise<Record<string, unknown>> {
+  const incoming: Record<string, unknown> = {};
+  for (const plugin of builtPlugins) {
+    const mcpSrc = `${sourceDir}/plugins/${plugin}/.mcp.json`;
+    if (!(await fs.fileExists(mcpSrc))) continue;
+    const raw = await fs.readFile(mcpSrc);
+    const transformed = JSON.parse(transformMcpToOpencode(raw)) as {
+      mcp?: Record<string, unknown>;
+    };
+    const prefix = flatMcpKeyPrefix(plugin);
+    for (const [k, v] of Object.entries(transformed.mcp ?? {})) {
+      incoming[`${prefix}${k}`] = v;
+    }
+  }
+  return incoming;
+}
+
 export function buildOpencodeFlatContract(): ToolBuildContract {
   return {
     manifestDir: null,
@@ -777,24 +798,13 @@ export function buildOpencodeFlatContract(): ToolBuildContract {
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,
-    emitConfigArtifact: async (builtPlugins, outDir, sourceDir, fs) => {
+    emitConfigArtifact: async (builtPlugins, outDir, sourceDir, fs, _validator, assetProvider) => {
       const configPath = await resolveOpencodeJsonPath(outDir, fs);
       const existing = (await fs.fileExists(configPath)) ? await fs.readFile(configPath) : null;
-      const incoming: Record<string, unknown> = {};
-      for (const plugin of builtPlugins) {
-        const mcpSrc = `${sourceDir}/plugins/${plugin}/.mcp.json`;
-        if (!(await fs.fileExists(mcpSrc))) continue;
-        const raw = await fs.readFile(mcpSrc);
-        const transformed = JSON.parse(transformMcpToOpencode(raw)) as {
-          mcp?: Record<string, unknown>;
-        };
-        const prefix = flatMcpKeyPrefix(plugin);
-        for (const [k, v] of Object.entries(transformed.mcp ?? {})) {
-          incoming[`${prefix}${k}`] = v;
-        }
-      }
-      if (Object.keys(incoming).length === 0) return 0;
-      await fs.writeFile(configPath, mergeOpencodeJsonAdditive(existing, incoming));
+      const incoming = await collectOpencodeMcp(builtPlugins, sourceDir, fs);
+      const baseAsset = assetProvider.loadConfigAsset("opencode", "opencode.json");
+      const base = typeof baseAsset === "string" ? baseAsset : JSON.stringify(baseAsset);
+      await fs.writeFile(configPath, buildOpencodeFlatConfig(base, existing, incoming));
       return 1;
     },
   };

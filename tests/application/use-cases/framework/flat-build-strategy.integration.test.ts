@@ -51,7 +51,13 @@ function makeValidator(fail = false): JsonSchemaValidator {
 
 function makeAssetProvider(): AssetProvider {
   return {
-    loadConfigAsset: () => {
+    loadConfigAsset: (_toolId, fileName) => {
+      if (fileName === "opencode.json") {
+        return {
+          $schema: "https://opencode.ai/config.json",
+          instructions: [".opencode/rules/**/*.md"],
+        };
+      }
       throw new Error("not used");
     },
     loadDefaultMarketplace: () => {
@@ -317,6 +323,53 @@ describe("FlatOutputStrategy integration", () => {
       await expect(strategy.writeMcp(PLUGIN, pluginSrc)).rejects.toBeInstanceOf(
         FlatTargetExistsError
       );
+    });
+  });
+
+  describe("opencode.json config emission", () => {
+    function makeOpencodeUseCase(fs: InMemoryFileAdapter, force = false): FrameworkBuildUseCase {
+      const ap = makeAssetProvider();
+      const strategy = new FlatBuildStrategy(
+        fs,
+        new AjvSchemaValidatorAdapter(),
+        ap,
+        buildOpencodeFlatContract(),
+        force,
+        ABS_OUT,
+        makeIsDirectory(fs)
+      );
+      return new FrameworkBuildUseCase(fs, makeValidator(), ap, new CapturingLogger(), strategy);
+    }
+
+    it("emits opencode.json with $schema + instructions and no mcp when no plugin ships MCP", async () => {
+      await memFs.deleteFile(`${FIXTURE_DIR}/plugins/${PLUGIN}/.mcp.json`);
+      await makeOpencodeUseCase(memFs).execute({
+        sourceDir: FIXTURE_DIR,
+        outDir: ABS_OUT,
+        target: "opencode",
+      });
+      const raw = memFs.getFile(`${ABS_OUT}/opencode.json`);
+      expect(raw, "opencode.json must be emitted even with zero MCP servers").toBeDefined();
+      const config = JSON.parse(raw ?? "{}") as Record<string, unknown>;
+      expect(config.$schema).toBe("https://opencode.ai/config.json");
+      expect(config.instructions).toEqual([".opencode/rules/**/*.md"]);
+      expect(config).not.toHaveProperty("mcp");
+    });
+
+    it("emits opencode.json with $schema + instructions + mcp when a plugin ships MCP", async () => {
+      await makeOpencodeUseCase(memFs).execute({
+        sourceDir: FIXTURE_DIR,
+        outDir: ABS_OUT,
+        target: "opencode",
+      });
+      const config = JSON.parse(memFs.getFile(`${ABS_OUT}/opencode.json`) ?? "{}") as {
+        $schema: string;
+        instructions: string[];
+        mcp: Record<string, unknown>;
+      };
+      expect(config.$schema).toBe("https://opencode.ai/config.json");
+      expect(config.instructions).toEqual([".opencode/rules/**/*.md"]);
+      expect(Object.keys(config.mcp).length).toBeGreaterThan(0);
     });
   });
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  mergeOpencodeJsonAdditive,
+  buildOpencodeFlatConfig,
   mergeOpencodeMcp,
   unmergeOpencodeMcp,
 } from "../../../src/domain/formats/opencode-mcp-merge.js";
@@ -152,10 +152,14 @@ describe("tolerates a JSONC user-owned opencode.json", () => {
 }`;
 
   it("merges into JSONC content without throwing, preserving user keys", () => {
+    const base = JSON.stringify({
+      $schema: "https://opencode.ai/config.json",
+      instructions: [".opencode/rules/**/*.md"],
+    });
     const incoming = { "aidd-context__server": LOCAL_SERVER };
     let merged = "";
     expect(() => {
-      merged = mergeOpencodeJsonAdditive(JSONC_EXISTING, incoming);
+      merged = buildOpencodeFlatConfig(base, JSONC_EXISTING, incoming);
     }).not.toThrow();
     const parsed = JSON.parse(merged) as {
       $schema: string;
@@ -171,6 +175,50 @@ describe("tolerates a JSONC user-owned opencode.json", () => {
   it("unmerges from JSONC content without throwing", () => {
     const entries = new Map([["aidd-context__server", "hash"]]);
     expect(() => unmergeOpencodeMcp(JSONC_EXISTING, entries)).not.toThrow();
+  });
+});
+
+describe("buildOpencodeFlatConfig", () => {
+  const BASE = JSON.stringify({
+    $schema: "https://opencode.ai/config.json",
+    instructions: [".opencode/rules/**/*.md"],
+  });
+
+  it("emits the base ($schema + instructions) with no mcp key when there are zero servers", () => {
+    const config = JSON.parse(buildOpencodeFlatConfig(BASE, null, {})) as Record<string, unknown>;
+    expect(config).toEqual({
+      $schema: "https://opencode.ai/config.json",
+      instructions: [".opencode/rules/**/*.md"],
+    });
+    expect(config).not.toHaveProperty("mcp");
+  });
+
+  it("includes the mcp key only when servers are contributed", () => {
+    const config = JSON.parse(
+      buildOpencodeFlatConfig(BASE, null, { "aidd-dev-server": LOCAL_SERVER })
+    ) as { $schema: string; instructions: string[]; mcp: Record<string, unknown> };
+    expect(config.$schema).toBe("https://opencode.ai/config.json");
+    expect(config.instructions).toEqual([".opencode/rules/**/*.md"]);
+    expect(config.mcp["aidd-dev-server"]).toEqual(LOCAL_SERVER);
+  });
+
+  it("lets base framework keys win over stale existing copies, preserving user extras", () => {
+    const existing = JSON.stringify({
+      $schema: "https://stale.example/schema.json",
+      instructions: ["user-owned.md"],
+      theme: "dark",
+      mcp: { user: REMOTE_SERVER },
+    });
+    const config = JSON.parse(buildOpencodeFlatConfig(BASE, existing, {})) as {
+      $schema: string;
+      instructions: string[];
+      theme: string;
+      mcp: Record<string, unknown>;
+    };
+    expect(config.$schema).toBe("https://opencode.ai/config.json");
+    expect(config.instructions).toEqual([".opencode/rules/**/*.md"]);
+    expect(config.theme).toBe("dark");
+    expect(config.mcp.user).toEqual(REMOTE_SERVER);
   });
 });
 

@@ -686,6 +686,9 @@ describe.concurrent("E2E: aidd framework build", () => {
       const opencode = JSON.parse(
         await readFile(join(projRoot, "opencode.json"), "utf-8")
       ) as Record<string, unknown>;
+      // Aligned with the install-path base asset (single source of truth).
+      expect(opencode.$schema).toBe("https://opencode.ai/config.json");
+      expect(opencode.instructions).toEqual([".opencode/rules/**/*.md"]);
       expect(opencode.mcp).toBeDefined();
     } finally {
       await cleanup();

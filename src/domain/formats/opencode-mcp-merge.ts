@@ -37,22 +37,41 @@ export function mergeOpencodeMcp(
 }
 
 /**
- * Additive merge for flat-build mode (no tracking manifest, no hasher).
+ * Builds the opencode.json emitted by the flat framework build.
  *
- * Merges incoming prefixed MCP servers into the existing opencode.json content.
- * Incoming entries win on collision (last-write-wins, suitable for flat install).
- * Any malformed existing content throws — no silent discard.
+ * Written unconditionally (even with zero MCP servers), so the archive always
+ * ships a config — matching every sibling flat target (codex config.toml,
+ * claude settings.json).
  *
- * @param existing - Raw content of the existing opencode.json (or null if absent)
- * @param incoming - Already-prefixed MCP server entries to merge in
+ * The framework-owned keys ($schema, instructions) come from `baseConfig`: the
+ * same bundled `assets/configs/opencode/opencode.json` the install path writes,
+ * so both paths emit an identical shape from a single source of truth.
+ *
+ * - `baseConfig` keys are framework-owned and win over stale existing copies.
+ * - Any other top-level keys in an existing config are preserved (user-owned).
+ * - Incoming prefixed MCP servers merge into `mcp` (incoming wins); the `mcp`
+ *   key is omitted entirely when neither existing nor incoming contribute one.
+ * - Malformed `existing` content throws — no silent discard.
+ *
+ * @param baseConfig - Canonical base config (bundled opencode.json asset), as JSON
+ * @param existing   - Raw content of the existing opencode.json (or null if absent)
+ * @param incoming   - Already-prefixed MCP server entries to merge in
  */
-export function mergeOpencodeJsonAdditive(
+export function buildOpencodeFlatConfig(
+  baseConfig: string,
   existing: string | null,
   incoming: Record<string, unknown>
 ): string {
+  const base = JSON.parse(baseConfig) as Record<string, unknown>;
   const { full, mcp } = parseExisting(existing);
-  const merged = { ...mcp, ...incoming };
-  return JSON.stringify({ ...full, mcp: merged }, null, 2);
+  const userKeys = { ...full };
+  for (const key of Object.keys(base)) delete userKeys[key];
+  delete userKeys.mcp;
+  const mergedMcp = { ...mcp, ...incoming };
+  const result: Record<string, unknown> = { ...base, ...userKeys };
+  delete result.mcp;
+  if (Object.keys(mergedMcp).length > 0) result.mcp = mergedMcp;
+  return JSON.stringify(result, null, 2);
 }
 
 /**
