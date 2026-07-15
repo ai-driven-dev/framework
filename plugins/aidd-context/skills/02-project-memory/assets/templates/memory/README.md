@@ -4,23 +4,28 @@ Structured context the AI assistant reads at the start of a session, so it does 
 
 ## How it loads
 
-- The files at the root of `memory/` are referenced by the `<aidd_project_memory>` block in the AI context file and load every session.
-- `internal/` and `external/` are listed there too, but load on demand, only when relevant.
+```mermaid
+flowchart LR
+    bank["memory/*.md"] -->|every session| ai(["AI context"])
+    notes["internal/ · external/"] -.->|on demand| ai
+```
+
+The root files load every session through the `<aidd_project_memory>` block in each AI context file. `internal/` and `external/` load only when relevant.
 
 ## Files
 
-The list below is refreshed automatically by the memory hook. Do not edit it by hand.
+Refreshed automatically by the memory hook. Do not edit by hand.
 
 <!-- files:start -->
 <!-- files:end -->
 
-## How to maintain it
+## Maintaining it
+
+The AI writes and refreshes these files. When you edit one by hand:
 
 - One file per concern (architecture, database, vcs, ...).
-- Capture the macro and the non-derivable. Point to the code, do not copy it.
-- Keep each file small, well under 200 lines.
-- Update a file when the underlying reality changes.
-- Current state only. Never personal notes or future TODOs.
+- Capture the macro and the non-derivable. Point to the code, never copy it.
+- Current state only, kept small. No personal notes, no future TODOs.
 
 ## Subdirectories
 
