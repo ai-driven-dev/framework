@@ -8,18 +8,22 @@ argument-hint: capture-intent | decompose-actions | draft-skill | write-actions 
 
 Builds one canonical skill from intent and renders it per confirmed host tool, or once as a plugin source.
 
+```mermaid
+flowchart LR
+  capture-intent --> decompose-actions --> draft-skill --> write-actions --> validate
+```
+
 ## Actions
 
-| #   | Action              | Role                                          | Input             |
-| --- | ------------------- | --------------------------------------------- | ----------------- |
-| 01  | `capture-intent`    | Clarify intent + tools, inventory overlaps    | user request      |
-| 02  | `decompose-actions` | Break the skill into atomic testable actions  | what it produces  |
-| 03  | `draft-skill`       | Write the SKILL.md router                      | intent + plan     |
-| 04  | `write-actions`     | Write each action file from the template       | the plan          |
-| 05  | `validate`          | Run each action's Test, aggregate pass/fail    | the skill path    |
+Run the flow above, and run each action's `## Test` before the next. Read an action's file in `actions/` before running it. In modify mode the tool is fixed by the existing skill's location, so the resolution gate is skipped.
 
-Run the actions in order, `01 → 05`, and run each action's `## Test` before the next. In modify mode the tool is fixed by the existing skill's location, so the resolution gate is skipped.
-Before running an action, read its file in `actions/`, not only the table or assets.
+| #   | Action              | Does                                        |
+| --- | ------------------- | ------------------------------------------- |
+| 01  | `capture-intent`    | clarify intent and tools, inventory overlaps |
+| 02  | `decompose-actions` | break the skill into atomic testable actions |
+| 03  | `draft-skill`       | write the SKILL.md router                    |
+| 04  | `write-actions`     | write each action file from the template     |
+| 05  | `validate`          | run each action's Test, aggregate pass/fail  |
 
 ## References
 

@@ -30,5 +30,5 @@ One SKILL.md per target (each confirmed host tool, or the plugin source tree), a
 ## Test
 
 - Each SKILL.md exists and starts with `---` frontmatter.
-- Each is 500 lines or fewer and sits under the target base.
-- The action-table slugs match the plan. `argument-hint` is omitted for one-action skills; when emitted, its action names match the plan.
+- Each router carries only the flow schema, the action table, and the transversal rules (R1), and is the leanest file on any path (R4).
+- The action-table slugs match the plan. `argument-hint` is omitted for one-action skills; when emitted, it matches the plan's slugs or the named cases.

@@ -12,8 +12,8 @@
 
 ## Process
 
-1. <Imperative action-verb step.>
-2. <Next step.>
+1. **<Label>.** <Imperative step, short sentences. Sub-bullet for a branch, a condition, or a loop back.>
+2. **<Label>.** <Next step.>
 
 ## Test
 

@@ -4,10 +4,10 @@ The contract every generated skill must satisfy. These rules govern the CLIENT s
 
 ## Rules
 
-- **R1.** SKILL.md is a pure router: description + action table + transversal rules. Zero business logic.
+- **R1.** SKILL.md is a pure router: the flow schema, the action table, the transversal rules, and the line telling the host to read an action's file before running it. Zero business logic. Every destination, criterion, or per-case rule lives in an action or a reference, never here.
 - **R2.** One skill = one domain. A tool domain uses a singular noun (`slack`). An activity domain uses an action verb (`review`). See `## Naming`.
-- **R3.** References one level deep. A reference never `@`-chains another reference.
-- **R4.** SKILL.md <= 500 lines. If exceeded, split into references.
+- **R3.** References may nest one directory deep when the group is a load boundary, the files one path pulls together (onboard's `state/`, `order/`, `run/`). Flat when there is no boundary to draw. No deeper, and a reference still never `@`-chains another reference.
+- **R4.** Budget what one run reads, not a file's size. The always-on surface is the `description` alone (R14). A given invocation reads SKILL.md plus the actions and references its path pulls in, nothing more. Measure a path by running its files through a tokenizer. The router sits on every path, so it stays the leanest file, not the heaviest.
 - **R5.** `description` states what + when. Third person, no XML. Conventions:
   - **Two lines max, straight to the point.** Target ~240 characters; never more than a short paragraph. Length serves recall, not completeness. The hard ceiling is 1024 chars, not a goal.
   - Lead with a verb naming what the skill produces (`Generate a rule...`, `Audit a codebase...`), not a noun phrase.
@@ -24,6 +24,8 @@ The contract every generated skill must satisfy. These rules govern the CLIENT s
 - **R11.** One idea per sentence. Split a sentence that runs past one line. Exceptions: the single-line `description` and table rows.
 - **R12.** One file = one artifact. A reference or asset holds a single coherent thing: one checklist, one template, one criteria set. When a file accumulates several independently reusable artifacts, split them so each is cited and reused alone. Prefer this split over bundling, even when the combined file is short.
 - **R13.** Includes are explicit and scoped. Cite an include with its `@<path>` alone inside a fenced ```<lang> block, never inline in prose. Naming: a global include (imported from SKILL.md, used skill-wide) takes no prefix; an include used by only one action is prefixed with that action's slug (e.g. `research-checklist.md`). SKILL.md lists only the global includes; an action-specific include is cited only from its own action.
+- **R14.** The `description` is the only content loaded when the skill is not invoked. Nothing else may earn a place there. The body, actions, references, and assets are all on demand, read only on a path that needs them.
+- **R15.** Split a file from another only when some path needs one without the other, or a part is reused elsewhere. Content that always loads together, used in one place, stays one file. This bounds R12: split for independent reuse, never split what a single path always reads as a whole.
 
 ## Action anatomy
 
@@ -46,9 +48,9 @@ The router: YAML frontmatter + markdown body.
 
 - `name` (kebab-case, <= 64 chars) MUST equal the skill's folder name. No colon, slash, dot, plugin prefix, or namespace. Reserved words forbidden: `anthropic`, `claude`. Regex `^[a-z0-9]+(-[a-z0-9]+)*$`.
 - `description`: per R5.
-- `argument-hint` when supported or in plugin source and the skill has two or more actions: action names only, joined with ` | `, matching the files in `actions/`. Omit it for one-action skills.
+- `argument-hint` when supported or in plugin source and the skill has two or more actions: the action slugs joined with ` | `, matching the files in `actions/`. When the actions are not all independent entry points, name the user's cases instead (project-memory's `setup | refresh | rewire`), which the hook leaves hand-written. Omit it for one-action skills.
 - A manual-only flag makes the skill user-only. The exact frontmatter key is per tool.
-- Body: pure router. The action table maps each `#` and slug to a role and input. State the flow (a sequential chain or a trigger-to-action map). Self-skips stated explicitly.
+- Body: pure router. A flow schema (a mermaid diagram for a loop or branch, a one-line chain when strictly sequential), then an action table mapping each `#` and slug to what it does. An action's input lives in its own `## Input`, never a router column. Self-skips stated explicitly.
 
 The `name` field is NOT the invocation token. The host builds the address from the plugin and folder, each in its own scheme. A colon or prefix in `name` breaks loading on some hosts. In prose, refer to a skill as `plugin:folder`, never `plugin:folder:action`.
 
