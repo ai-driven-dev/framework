@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1-alpha.0](https://github.com/ai-driven-dev/framework/compare/aidd-ui-v0.2.0-alpha.0...aidd-ui-v0.2.1-alpha.0) (2026-07-16)
+
+
+### Miscellaneous
+
+* **aidd-ui:** sync changelog from next ([9764179](https://github.com/ai-driven-dev/framework/commit/9764179679d69da498100d1f5b8698cf03dfe871))
+
 ## [0.2.0-alpha.0](https://github.com/ai-driven-dev/framework/compare/aidd-ui-v0.1.0-alpha.0...aidd-ui-v0.2.0-alpha.0) (2026-07-10)
 
 
