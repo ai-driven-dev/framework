@@ -178,7 +178,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-write.md](skills/10-learn/actions/03-write.md) | - |
 | `actions` | [04-sync.md](skills/10-learn/actions/04-sync.md) | - |
 | `assets` | [decision-template.md](skills/10-learn/assets/decision-template.md) | - |
-| `references` | [destinations.md](skills/10-learn/references/destinations.md) | - |
 | `-` | [SKILL.md](skills/10-learn/SKILL.md) | `Capture durable project learnings from the conversation or git history into memory, a record, a rule, or a skill. Use when the user asks to capture, record, or remember a decision or lesson. Not for AI preferences or already-captured items.` |
 
 #### `skills/11-explore`
