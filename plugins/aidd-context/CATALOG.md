@@ -97,15 +97,19 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-capture-intent.md](skills/04-skill-generate/actions/01-capture-intent.md) | - |
-| `actions` | [02-decompose-actions.md](skills/04-skill-generate/actions/02-decompose-actions.md) | - |
-| `actions` | [03-draft-skill.md](skills/04-skill-generate/actions/03-draft-skill.md) | - |
-| `actions` | [04-write-actions.md](skills/04-skill-generate/actions/04-write-actions.md) | - |
-| `actions` | [05-validate.md](skills/04-skill-generate/actions/05-validate.md) | - |
+| `actions` | [01-scope.md](skills/04-skill-generate/actions/01-scope.md) | - |
+| `actions` | [02-plan.md](skills/04-skill-generate/actions/02-plan.md) | - |
+| `actions` | [03-write.md](skills/04-skill-generate/actions/03-write.md) | - |
+| `actions` | [04-validate.md](skills/04-skill-generate/actions/04-validate.md) | - |
 | `assets` | [action-template.md](skills/04-skill-generate/assets/action-template.md) | - |
-| `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<Verb-led, what the skill produces, one clause>. Use when the user wants to <distinct intents>. <Optional: "Not for <X>" in plain words when a sibling could mis-trigger.> (Two lines max, ~240 chars, straight to the point. Third person, no XML. Never name another skill, never write a /command token. All "when" lives here, not in the body.)` |
+| `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<what it produces>. Use when the user wants to <intents>. <Not for X when needed.>` |
+| `references` | [naming.md](skills/04-skill-generate/references/naming.md) | - |
+| `references` | [review-protocol.md](skills/04-skill-generate/references/review-protocol.md) | - |
+| `references` | [scope-frame.md](skills/04-skill-generate/references/scope-frame.md) | - |
 | `references` | [skill-authoring.md](skills/04-skill-generate/references/skill-authoring.md) | - |
-| `references` | [tool-paths.md](skills/04-skill-generate/references/tool-paths.md) | - |
+| `references` | [skill-tree.md](skills/04-skill-generate/references/skill-tree.md) | - |
+| `references` | [tool-detect.md](skills/04-skill-generate/references/tool-detect.md) | - |
+| `references` | [tool-write.md](skills/04-skill-generate/references/tool-write.md) | - |
 | `-` | [SKILL.md](skills/04-skill-generate/SKILL.md) | `Generate a router-based skill across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor a skill, or turn a workflow into one. Not for other artifacts like rules, agents, commands, hooks.` |
 
 #### `skills/05-rule-generate`

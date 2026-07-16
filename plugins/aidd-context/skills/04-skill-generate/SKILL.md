@@ -1,36 +1,32 @@
 ---
 name: 04-skill-generate
 description: Generate a router-based skill across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor a skill, or turn a workflow into one. Not for other artifacts like rules, agents, commands, hooks.
-argument-hint: capture-intent | decompose-actions | draft-skill | write-actions | validate
+argument-hint: create | modify
 ---
 
 # Skill Generate
 
-Builds one canonical skill from intent and renders it per confirmed host tool, or once as a plugin source.
-
 ```mermaid
 flowchart LR
-  capture-intent --> decompose-actions --> draft-skill --> write-actions --> validate
+  new([create]) --> scope --> plan --> write --> validate
+  edit([modify]) --> plan
 ```
+
+Default to `create`; follow `modify` when asked.
 
 ## Actions
 
-Run the flow above, and run each action's `## Test` before the next. Read an action's file in `actions/` before running it. In modify mode the tool is fixed by the existing skill's location, so the resolution gate is skipped.
+Read only the next action's file before running it.
 
-| #   | Action              | Does                                        |
-| --- | ------------------- | ------------------------------------------- |
-| 01  | `capture-intent`    | clarify intent and tools, inventory overlaps |
-| 02  | `decompose-actions` | break the skill into atomic testable actions |
-| 03  | `draft-skill`       | write the SKILL.md router                    |
-| 04  | `write-actions`     | write each action file from the template     |
-| 05  | `validate`          | run each action's Test, aggregate pass/fail  |
+| #  | Action   | Does                       |
+| -- | -------- | -------------------------- |
+| 01 | scope    | frame the skill and target |
+| 02 | plan     | break it into actions      |
+| 03 | write    | write the router and files |
+| 04 | validate | review the files and fix   |
 
-## References
+## Transversal rules
 
-- `references/skill-authoring.md`: the contract (R1-R13, action anatomy, naming).
-- `references/tool-paths.md`: per-tool skills path, frontmatter, resolution + write-safety gate.
-
-## Assets
-
-- `assets/skill-template.md`: SKILL.md scaffold.
-- `assets/action-template.md`: canonical action scaffold.
+- If a cited reference cannot be read, stop and report the missing file.
+- Confirm every target and name with the user.
+- Never write silently.
