@@ -117,15 +117,19 @@ sync_one() {
   echo
 }
 
-if [ "$HAVE_CODEX" = 0 ] && [ "$HAVE_CLAUDE" = 0 ]; then
-  echo "Neither Claude nor Codex CLI found - nothing to install."; exit 0
-fi
-
 targets=()
 if [ $# -eq 0 ] || [ "${1:-}" = "all" ]; then
   for d in "$FW"/plugins/*/; do targets+=("$(basename "$d")"); done
 else
   targets=("$@")
+fi
+
+for t in "${targets[@]}"; do
+  [ "$t" = "aidd-dev" ] && install_aidd_dev_worktree_setup
+done
+
+if [ "$HAVE_CODEX" = 0 ] && [ "$HAVE_CLAUDE" = 0 ]; then
+  echo "Neither Claude nor Codex CLI found - user hook installed; plugin caches unchanged."; exit 0
 fi
 
 # Codex needs a native build (md -> toml); register against it. Claude installs from the raw
@@ -140,7 +144,6 @@ fi
 
 for t in "${targets[@]}"; do
   sync_one "$t"
-  [ "$t" = "aidd-dev" ] && install_aidd_dev_worktree_setup
 done
 
 echo "Done. Restart the Claude/Codex session to load the refreshed files."
