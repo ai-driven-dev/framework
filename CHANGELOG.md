@@ -1,5 +1,30 @@
 # Changelog
 
+## [5.5.0](https://github.com/ai-driven-dev/framework/compare/v5.4.2...v5.5.0) (2026-07-16)
+
+
+### Features
+
+* **aidd-context:** cook research and apply actions ([#439](https://github.com/ai-driven-dev/framework/issues/439)) ([b6cadaf](https://github.com/ai-driven-dev/framework/commit/b6cadaf9fb476203ceb91b8593785a01cd4d87d2))
+* **aidd-context:** rebuild project-memory as three actions, verified on both hosts ([#442](https://github.com/ai-driven-dev/framework/issues/442)) ([90b41ed](https://github.com/ai-driven-dev/framework/commit/90b41ed00804982983099d925eacb31ad0b34633))
+
+
+### Bug Fixes
+
+* **framework:** worktree-create installs deps so the first commit works ([#441](https://github.com/ai-driven-dev/framework/issues/441)) ([70645f7](https://github.com/ai-driven-dev/framework/commit/70645f7ac54a44954d843978d69d6805f9a09540))
+
+
+### Miscellaneous
+
+* **aidd-ui:** sync changelog from next ([9764179](https://github.com/ai-driven-dev/framework/commit/9764179679d69da498100d1f5b8698cf03dfe871))
+* **deps-dev:** bump @commitlint/cli from 21.2.0 to 21.2.1 ([#438](https://github.com/ai-driven-dev/framework/issues/438)) ([fa469bc](https://github.com/ai-driven-dev/framework/commit/fa469bcb64697529f64f861611a07ac988c81a3e))
+* **deps-dev:** bump lefthook from 2.1.9 to 2.1.10 ([#436](https://github.com/ai-driven-dev/framework/issues/436)) ([70a41b2](https://github.com/ai-driven-dev/framework/commit/70a41b23b997a1481edfa48b66c59f9ca37a3ed5))
+
+
+### Refactoring
+
+* **aidd-context:** lighten skill authoring flows ([#444](https://github.com/ai-driven-dev/framework/issues/444)) ([3cf5928](https://github.com/ai-driven-dev/framework/commit/3cf59289ff12fef44888d42eac9c54cbe52cd997))
+
 ## [5.4.2](https://github.com/ai-driven-dev/framework/compare/v5.4.1...v5.4.2) (2026-07-13)
 
 
