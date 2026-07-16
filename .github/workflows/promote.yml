@@ -6,8 +6,9 @@ name: Promote next to main
 # the commits into one (often non-conventional) message and breaks both, which
 # is exactly the failure this workflow prevents.
 #
-# Run it from the Actions tab (Run workflow). It opens the next -> main PR and
-# enables rebase auto-merge; CI gates it, then it merges itself.
+# Run it from the Actions tab (Run workflow). It creates a linear promotion
+# branch from main, opens a PR to main, and enables rebase auto-merge. CI gates
+# it, then it merges itself.
 
 on:
   workflow_dispatch:
@@ -29,19 +30,55 @@ jobs:
           app-id: ${{ secrets.AIDD_BOT_APP_ID }}
           private-key: ${{ secrets.AIDD_BOT_PRIVATE_KEY }}
 
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
       - name: Open or reuse the promote PR, enable rebase auto-merge
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          # Reuse an open next -> main PR if one exists, else open one with a
+
+          git config user.name "aidd-bot[bot]"
+          git config user.email "aidd-bot[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
+          git fetch origin main next --prune
+
+          BRANCH="promote/next-to-main-linear"
+          git switch -C "$BRANCH" origin/main
+
+          mapfile -t MERGES < <(git rev-list --first-parent --merges --reverse origin/main..origin/next)
+          if [ "${#MERGES[@]}" -ge 2 ]; then
+            START="${MERGES[$((${#MERGES[@]} - 2))]}"
+          else
+            START="origin/main"
+          fi
+
+          mapfile -t COMMITS < <(git rev-list --first-parent --reverse --no-merges "${START}..origin/next")
+          if [ "${#COMMITS[@]}" -eq 0 ]; then
+            echo "No commits to promote."
+            exit 0
+          fi
+
+          git cherry-pick "${COMMITS[@]}"
+          if [ "$(git rev-parse HEAD^{tree})" != "$(git rev-parse origin/next^{tree})" ]; then
+            echo "Linear promotion branch does not match origin/next."
+            git diff --stat HEAD origin/next
+            exit 1
+          fi
+
+          git push --force-with-lease origin "HEAD:refs/heads/${BRANCH}"
+
+          # Reuse an open linear promote PR if one exists, else open one with a
           # conventional, squash-safe title.
-          PR=$(gh pr list --repo "$REPO" --base main --head next --state open --json number --jq '.[0].number' || true)
+          PR=$(gh pr list --repo "$REPO" --base main --head "$BRANCH" --state open --json number --jq '.[0].number' || true)
           if [ -z "$PR" ]; then
-            PR=$(gh pr create --repo "$REPO" --base main --head next \
+            PR=$(gh pr create --repo "$REPO" --base main --head "$BRANCH" \
               --title "chore: promote next to main" \
-              --body "Automated promotion of \`next\` to \`main\`. Merged by **rebase** to preserve conventional commits for release-please. Do not squash." \
+              --body "Automated linear promotion of \`next\` to \`main\`. Merged by **rebase** to preserve conventional commits for release-please. Do not squash." \
               | grep -oE '[0-9]+$')
           fi
           echo "Promote PR: #$PR"
