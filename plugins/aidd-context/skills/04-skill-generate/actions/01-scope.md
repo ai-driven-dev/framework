@@ -10,14 +10,14 @@ A free-form request to create a skill.
 
 ## Process
 
-1. **Detect.** Detect the installed tools per `@../references/tool-detect.md`.
-2. **Fill.** For each field in `@../references/scope-frame.md`, propose a value or ask one question.
-3. **Check.** Check the name per `@../references/naming.md` and surface any overlap.
+1. **Detect.** Detect the installed tools per [tool-detect.md](../references/tool-detect.md).
+2. **Fill.** For each field in [scope-frame.md](../references/scope-frame.md), propose a value or ask one question.
+3. **Check.** Check the name per [naming.md](../references/naming.md) and surface any overlap.
 4. **Confirm.** Hand the confirmed frame to plan.
 
 ## Output
 
-The confirmed frame, written nowhere, per `@../references/scope-frame.md`.
+The confirmed frame, written nowhere, per [scope-frame.md](../references/scope-frame.md).
 
 ## Test
 
