@@ -26,6 +26,8 @@ BUILD="${BUILD:-$HOME/.cache/aidd-framework-dev}"  # per-tool native trees the m
 CODEX_CACHE="${CODEX_CACHE:-$HOME/.codex/plugins/cache}"
 CLAUDE_CACHE="${CLAUDE_CACHE:-$HOME/.claude/plugins/cache}"
 CODEX_AGENTS="${CODEX_AGENTS:-$HOME/.codex/agents}"
+AIDD_HOME="${AIDD_HOME:-$HOME/.aidd}"
+AIDD_HOOKS="${AIDD_HOOKS:-$AIDD_HOME/hooks}"
 
 HAVE_CODEX=0;  command -v codex  >/dev/null 2>&1 && HAVE_CODEX=1
 HAVE_CLAUDE=0; command -v claude >/dev/null 2>&1 && HAVE_CLAUDE=1
@@ -52,6 +54,17 @@ register_marketplace() { # tool
       claude plugin marketplace remove "$MKT" --scope user >/dev/null 2>&1 || true
       claude plugin marketplace add "$FW" --scope user >/dev/null 2>&1 ;;
   esac
+}
+
+install_aidd_dev_worktree_setup() {
+  local source="$FW/plugins/aidd-dev/hooks/pre-init-worktree.sh"
+  local destination="$AIDD_HOOKS/pre-init-worktree.sh"
+
+  [ -f "$source" ] || { echo "aidd-dev worktree setup: MISSING" >&2; return 1; }
+  mkdir -p "$AIDD_HOOKS"
+  cp -f "$source" "$destination"
+  chmod 755 "$destination"
+  printf 'aidd-dev worktree setup: %s\n' "$destination"
 }
 
 sync_one() {
@@ -125,6 +138,9 @@ if [ "$HAVE_CLAUDE" = 1 ]; then
   register_marketplace claude
 fi
 
-for t in "${targets[@]}"; do sync_one "$t"; done
+for t in "${targets[@]}"; do
+  sync_one "$t"
+  [ "$t" = "aidd-dev" ] && install_aidd_dev_worktree_setup
+done
 
 echo "Done. Restart the Claude/Codex session to load the refreshed files."

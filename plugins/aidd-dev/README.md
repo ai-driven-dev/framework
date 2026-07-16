@@ -10,6 +10,14 @@ First time? Install with `/plugin install aidd-dev@aidd-framework`, then run `ai
 
 Covers the full SDLC coding loop: orchestrator, planning, implementation, assertions, audits, code review, testing, refactoring, debugging, for-sure, and parallel todo fan-out. Also hosts AI agents.
 
+## Préparation de worktree Codex
+
+`scripts/dev-sync.sh aidd-dev` installe aussi `pre-init-worktree.sh` dans
+`~/.aidd/hooks/` (ou `$AIDD_HOME/hooks/`). Les environnements Codex peuvent alors
+l’appeler avant le démarrage de la tâche. Le manifeste Codex ne fournit pas de
+lifecycle `post-install` : cette copie est donc effectuée par l’installateur AIDD
+pour un checkout Framework, pas par `codex plugin add` seul.
+
 ## Skills
 
 | Bracket ID | Skill | Description |
