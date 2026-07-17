@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.3](https://github.com/ai-driven-dev/aidd-cli/compare/v5.1.2...v5.1.3) (2026-07-17)
+
+
+### Bug Fixes
+
+* **self-update:** resolve version from npm registry, not private GitHub repo ([#316](https://github.com/ai-driven-dev/aidd-cli/issues/316)) ([34fc0a1](https://github.com/ai-driven-dev/aidd-cli/commit/34fc0a123a10bf31325d5886aa7a507847e84431))
+
 ## [5.1.2](https://github.com/ai-driven-dev/aidd-cli/compare/v5.1.1...v5.1.2) (2026-07-15)
 
 
