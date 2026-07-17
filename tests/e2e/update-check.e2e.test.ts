@@ -17,12 +17,21 @@ interface FakeRelease {
   close: () => Promise<void>;
 }
 
-/** Local stand-in for GitHub's releases/latest endpoint. Counts every hit. */
+/**
+ * Local stand-in for both upstreams the updater queries: the npm registry
+ * (source of truth for the version) and GitHub (best-effort changelog).
+ * Counts every hit.
+ */
 function startFakeRelease(tag: string): Promise<FakeRelease> {
   let hits = 0;
-  const server: Server = createServer((_req, res) => {
+  const server: Server = createServer((req, res) => {
     hits += 1;
     res.writeHead(200, { "content-type": "application/json" });
+    // npm dist-tags carries the version; GitHub release-by-tag carries the changelog.
+    if ((req.url ?? "").includes("/dist-tags")) {
+      res.end(JSON.stringify({ latest: tag.replace(/^v/, "") }));
+      return;
+    }
     res.end(JSON.stringify({ tag_name: tag, body: "" }));
   });
   return new Promise((resolveReady) => {
@@ -64,6 +73,7 @@ async function setupEnv(prefix: string): Promise<TestEnv> {
       HOME: tempDir,
       AIDD_USER_CONFIG_DIR: configDir,
       AIDD_SELF_UPDATE_API_BASE: server.baseUrl,
+      AIDD_SELF_UPDATE_NPM_BASE: server.baseUrl,
       AIDD_SKIP_MARKETPLACE_REFRESH: "1",
     },
     server,

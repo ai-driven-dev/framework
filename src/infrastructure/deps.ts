@@ -386,6 +386,8 @@ export async function createDeps(
   const cliUpdater = new SelfUpdaterAdapter(http, {
     tokenProvider: authReader,
     githubApiBase: process.env.AIDD_SELF_UPDATE_API_BASE,
+    npmRegistryBase: process.env.AIDD_SELF_UPDATE_NPM_BASE,
+    logger,
   });
   const currentVersionProvider = new CurrentVersionAdapter();
   const requireAuthUseCase = new RequireAuthUseCase(authReader);

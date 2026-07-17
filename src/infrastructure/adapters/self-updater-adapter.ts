@@ -6,6 +6,7 @@ import {
   PackageManagerDetectionError,
   UpdateError,
 } from "../../domain/errors.js";
+import type { Logger } from "../../domain/ports/logger.js";
 import type { CliRelease, SelfUpdater } from "../../domain/ports/self-updater.js";
 import type { TokenProvider } from "../../domain/ports/token-provider.js";
 import type { HttpClient } from "../http/http-client.js";
@@ -13,6 +14,7 @@ import type { HttpClient } from "../http/http-client.js";
 const CLI_REPO = "ai-driven-dev/aidd-cli";
 const CLI_PACKAGE = "@ai-driven-dev/cli";
 const DEFAULT_GITHUB_API_BASE = "https://api.github.com";
+const DEFAULT_NPM_REGISTRY_BASE = "https://registry.npmjs.org";
 
 type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
 
@@ -46,31 +48,24 @@ function detectPackageManager(): { pm: PackageManager; binaryPath: string } {
   return { pm: "npm", binaryPath };
 }
 
-interface CliReleaseResponse {
-  tag_name: string;
-  body: string;
-}
-
-function parseCliRelease(body: unknown, url: string): CliReleaseResponse {
-  if (
-    body === null ||
-    typeof body !== "object" ||
-    !("tag_name" in body) ||
-    typeof (body as Record<string, unknown>).tag_name !== "string"
-  ) {
-    throw new FrameworkResolutionError(`Unexpected GitHub API response from ${url}`);
-  }
-  return body as CliReleaseResponse;
+/** Read a string property from a parsed JSON body, or null when absent or not a string. */
+function readString(body: unknown, key: string): string | null {
+  const value = (body as Record<string, unknown> | null | undefined)?.[key];
+  return typeof value === "string" ? value : null;
 }
 
 interface SelfUpdaterAdapterConfig {
   tokenProvider?: TokenProvider;
   githubApiBase?: string;
+  npmRegistryBase?: string;
+  logger?: Logger;
 }
 
 export class SelfUpdaterAdapter implements SelfUpdater {
   private readonly tokenProvider: TokenProvider | undefined;
   private readonly githubApiBase: string;
+  private readonly npmRegistryBase: string;
+  private readonly logger: Logger | undefined;
 
   constructor(
     private readonly http: HttpClient,
@@ -78,17 +73,49 @@ export class SelfUpdaterAdapter implements SelfUpdater {
   ) {
     this.tokenProvider = config.tokenProvider;
     this.githubApiBase = config.githubApiBase ?? DEFAULT_GITHUB_API_BASE;
+    this.npmRegistryBase = config.npmRegistryBase ?? DEFAULT_NPM_REGISTRY_BASE;
+    this.logger = config.logger;
   }
 
   async fetchLatestRelease(): Promise<CliRelease> {
-    const url = `${this.githubApiBase}/repos/${CLI_REPO}/releases/latest`;
+    const version = await this.resolveLatestVersion();
+    return { version, changelog: await this.fetchChangelog(version) };
+  }
+
+  // Version comes from npm — the registry `npm install -g` actually pulls from,
+  // reachable without a token whether the GitHub repo is public or private.
+  private async resolveLatestVersion(): Promise<string> {
+    const url = `${this.npmRegistryBase}/-/package/${CLI_PACKAGE}/dist-tags`;
+    try {
+      // npm returns 406 for the client's default GitHub Accept — request plain JSON.
+      const response = await this.http.get(url, { accept: "application/json" });
+      const latest = readString(response.body, "latest");
+      if (latest === null) {
+        throw new FrameworkResolutionError(`Unexpected npm registry response from ${url}`);
+      }
+      return latest;
+    } catch (err) {
+      if (err instanceof FrameworkResolutionError) throw err;
+      const detail = err instanceof Error ? err.message : String(err);
+      throw new FrameworkResolutionError(
+        `Could not resolve the latest CLI version from ${url}: ${detail}`
+      );
+    }
+  }
+
+  // Changelog is best-effort: the GitHub release body enriches the update notice
+  // but is optional. A private repo without a token 404s here — swallow it.
+  private async fetchChangelog(version: string): Promise<string | null> {
+    const url = `${this.githubApiBase}/repos/${CLI_REPO}/releases/tags/v${version}`;
     const token = (await this.tokenProvider?.resolve()) ?? undefined;
-    const response = await this.http.get(url, { token });
-    const release = parseCliRelease(response.body, url);
-    return {
-      version: release.tag_name.replace(/^v/, ""),
-      changelog: release.body ?? "",
-    };
+    try {
+      const response = await this.http.get(url, { token });
+      return readString(response.body, "body");
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      this.logger?.debug(`Changelog unavailable from ${url}: ${detail}`);
+      return null;
+    }
   }
 
   install(): string {

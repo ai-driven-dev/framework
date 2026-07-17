@@ -15,6 +15,11 @@
   - GitHub Packages — `pnpm publish --no-git-checks`
   - public npm — `registry.npmjs.org`, `pnpm publish --access public`, via OIDC trusted publishing (`id-token: write` + `NPM_TOKEN`).
 
+## Self-update
+
+- `aidd self-update` reads the latest version from the **public npm registry** dist-tags (`registry.npmjs.org/-/package/@ai-driven-dev/cli/dist-tags`), not GitHub releases — see `internal/decisions/self-update-version-source-npm.md`. Changelog is best-effort from GitHub.
+- npm registry reads must send `Accept: application/json`. The shared HTTP client defaults `Accept` to `application/vnd.github+json`; npm answers that with **HTTP 406**.
+
 ## Tooling facts
 
 - **Biome** is the sole linter + formatter — no ESLint, no Prettier. Config at repo root (`biome.json`). Fix with `biome check --write`.

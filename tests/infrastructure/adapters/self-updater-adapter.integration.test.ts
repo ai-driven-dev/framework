@@ -1,8 +1,43 @@
 import { execSync } from "node:child_process";
 import { platform } from "node:os";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { FrameworkResolutionError } from "../../../src/domain/errors.js";
 import { SelfUpdaterAdapter } from "../../../src/infrastructure/adapters/self-updater-adapter.js";
+import { HttpNotFoundError } from "../../../src/infrastructure/errors.js";
 import { HttpClient } from "../../../src/infrastructure/http/http-client.js";
+
+interface HttpResponse {
+  body: Buffer | unknown;
+  statusCode: number;
+  contentType: string;
+}
+
+interface GetCall {
+  url: string;
+  accept?: string;
+}
+
+/** Fake HttpClient routing GET by URL so fetchLatestRelease can be exercised offline. */
+function fakeHttp(
+  routes: Record<string, () => HttpResponse | Promise<HttpResponse>>,
+  calls: GetCall[] = []
+): HttpClient {
+  return {
+    get: async (url: string, options?: { accept?: string }) => {
+      calls.push({ url, accept: options?.accept });
+      const route = routes[url];
+      if (!route) throw new HttpNotFoundError(url);
+      return route();
+    },
+  } as unknown as HttpClient;
+}
+
+function jsonResponse(body: unknown): HttpResponse {
+  return { body, statusCode: 200, contentType: "application/json" };
+}
+
+const NPM_DIST_TAGS_URL = "https://registry.npmjs.org/-/package/@ai-driven-dev/cli/dist-tags";
+const GH_TAG_URL = "https://api.github.com/repos/ai-driven-dev/aidd-cli/releases/tags/v5.1.2";
 
 vi.mock("node:child_process", () => ({ execSync: vi.fn() }));
 vi.mock("node:os", () => ({ platform: vi.fn() }));
@@ -20,6 +55,59 @@ function mockInstall(whichOutput: string, os: "win32" | "linux" | "darwin" = "li
     .mockReturnValueOnce(whichOutput as unknown as ReturnType<typeof execSync>)
     .mockReturnValue(undefined as unknown as ReturnType<typeof execSync>);
 }
+
+describe("self-updater-adapter — fetchLatestRelease", () => {
+  it("resolves the version from the npm registry, not the GitHub repo", async () => {
+    const http = fakeHttp({
+      [NPM_DIST_TAGS_URL]: () => jsonResponse({ latest: "5.1.2" }),
+      [GH_TAG_URL]: () => jsonResponse({ tag_name: "v5.1.2", body: "## changes" }),
+    });
+    const release = await new SelfUpdaterAdapter(http).fetchLatestRelease();
+    expect(release).toEqual({ version: "5.1.2", changelog: "## changes" });
+  });
+
+  it("requests plain JSON from npm so the registry does not 406 on the GitHub Accept default", async () => {
+    const calls: GetCall[] = [];
+    const http = fakeHttp(
+      {
+        [NPM_DIST_TAGS_URL]: () => jsonResponse({ latest: "5.1.2" }),
+        [GH_TAG_URL]: () => jsonResponse({ body: "" }),
+      },
+      calls
+    );
+    await new SelfUpdaterAdapter(http).fetchLatestRelease();
+    expect(calls.find((c) => c.url === NPM_DIST_TAGS_URL)?.accept).toBe("application/json");
+  });
+
+  it("returns the version with a null changelog when the GitHub release 404s (private repo, no token)", async () => {
+    const http = fakeHttp({
+      [NPM_DIST_TAGS_URL]: () => jsonResponse({ latest: "5.1.2" }),
+      // GH_TAG_URL absent => fakeHttp throws HttpNotFoundError, mirroring the private-repo 404
+    });
+    const release = await new SelfUpdaterAdapter(http).fetchLatestRelease();
+    expect(release).toEqual({ version: "5.1.2", changelog: null });
+  });
+
+  it("traces the reason on the debug channel when the changelog fetch fails", async () => {
+    const debug = vi.fn();
+    const http = fakeHttp({
+      [NPM_DIST_TAGS_URL]: () => jsonResponse({ latest: "5.1.2" }),
+      // GH_TAG_URL absent => changelog fetch 404s
+    });
+    const logger = { debug, info: vi.fn(), warn: vi.fn() };
+    await new SelfUpdaterAdapter(http, { logger }).fetchLatestRelease();
+    expect(debug).toHaveBeenCalledWith(expect.stringContaining("Changelog unavailable"));
+  });
+
+  it("throws a domain error when the npm registry response is unusable", async () => {
+    const http = fakeHttp({
+      [NPM_DIST_TAGS_URL]: () => jsonResponse({ unexpected: true }),
+    });
+    await expect(new SelfUpdaterAdapter(http).fetchLatestRelease()).rejects.toBeInstanceOf(
+      FrameworkResolutionError
+    );
+  });
+});
 
 describe("self-updater-adapter — package manager detection", () => {
   beforeEach(() => {

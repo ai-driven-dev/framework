@@ -13,7 +13,7 @@ export type SelfUpdateResult =
   | { kind: "check-available"; latestVersion: string; currentVersion: string }
   | { kind: "check-current"; version: string }
   | { kind: "dry-run"; latestVersion: string }
-  | { kind: "updated"; latestVersion: string; changelog?: string; binaryPath?: string };
+  | { kind: "updated"; latestVersion: string; changelog?: string | null; binaryPath?: string };
 
 export class SelfUpdateUseCase {
   constructor(

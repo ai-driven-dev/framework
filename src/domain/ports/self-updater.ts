@@ -1,6 +1,7 @@
 export interface CliRelease {
   version: string;
-  changelog: string;
+  /** Release notes, or null when no changelog is available (e.g. private repo, no token). */
+  changelog: string | null;
 }
 
 export interface SelfUpdater {
