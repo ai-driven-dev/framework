@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.5.1](https://github.com/ai-driven-dev/framework/compare/v5.5.0...v5.5.1) (2026-07-19)
+
+
+### Documentation
+
+* **framework:** update README title and tagline ([653de28](https://github.com/ai-driven-dev/framework/commit/653de289c5cfb7fc733a80e59d1b955cdaf9e6ac))
+
 ## [5.5.0](https://github.com/ai-driven-dev/framework/compare/v5.4.2...v5.5.0) (2026-07-16)
 
 
