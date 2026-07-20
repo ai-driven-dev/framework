@@ -173,12 +173,20 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-gather.md](skills/10-learn/actions/01-gather.md) | - |
-| `actions` | [02-assess.md](skills/10-learn/actions/02-assess.md) | - |
-| `actions` | [03-write.md](skills/10-learn/actions/03-write.md) | - |
-| `actions` | [04-sync.md](skills/10-learn/actions/04-sync.md) | - |
-| `assets` | [decision-template.md](skills/10-learn/assets/decision-template.md) | - |
-| `-` | [SKILL.md](skills/10-learn/SKILL.md) | `Capture durable project learnings from the conversation or git history into memory, a record, a rule, or a skill. Use when the user asks to capture, record, or remember a decision or lesson. Not for AI preferences or already-captured items.` |
+| `actions` | [01-source.md](skills/10-learn/actions/01-source.md) | - |
+| `actions` | [02-gather.md](skills/10-learn/actions/02-gather.md) | - |
+| `actions` | [03-assess.md](skills/10-learn/actions/03-assess.md) | - |
+| `actions` | [04-write.md](skills/10-learn/actions/04-write.md) | - |
+| `actions` | [05-sync.md](skills/10-learn/actions/05-sync.md) | - |
+| `assets` | [adr-template.md](skills/10-learn/assets/adr-template.md) | - |
+| `assets` | [learning-packet.md](skills/10-learn/assets/learning-packet.md) | - |
+| `references` | [assessment.md](skills/10-learn/references/assessment.md) | - |
+| `references` | [destinations.md](skills/10-learn/references/destinations.md) | - |
+| `references` | [gather-protocol.md](skills/10-learn/references/gather-protocol.md) | - |
+| `references` | [review-protocol.md](skills/10-learn/references/review-protocol.md) | - |
+| `references` | [sources.md](skills/10-learn/references/sources.md) | - |
+| `references` | [sync-arguments.md](skills/10-learn/references/sync-arguments.md) | - |
+| `-` | [SKILL.md](skills/10-learn/SKILL.md) | `Capture durable project learnings. Use when the user asks to remember, record, or formalize a decision, convention, lesson, pitfall, reusable workflow, or review finding. Not for preferences or temporary notes.` |
 
 #### `skills/11-explore`
 
