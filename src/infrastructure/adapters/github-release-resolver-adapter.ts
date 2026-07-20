@@ -54,6 +54,19 @@ export class GitHubReleaseResolverAdapter implements LatestReleaseResolver {
     }
   }
 
+  async isRepoPublic(repo: string): Promise<boolean> {
+    // No token — probe unauthenticated reachability. A private/absent repo returns
+    // 404; only that unambiguously means "auth required". Any other error resolves
+    // true so a rate-limited or offline public user is not wrongly sent to login.
+    const url = `${GITHUB_API_BASE}/repos/${repo}`;
+    try {
+      await this.http.get(url);
+      return true;
+    } catch (err) {
+      return !(err instanceof HttpNotFoundError);
+    }
+  }
+
   private handleError(err: unknown, url: string): never | null {
     if (err instanceof HttpNotFoundError) return null;
     if (err instanceof AuthenticationError) throw new CatalogFetchAuthError(url);

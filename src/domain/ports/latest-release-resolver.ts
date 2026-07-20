@@ -8,4 +8,11 @@ export interface LatestReleaseResolver {
    * correct install unit.
    */
   listRootReleases(repo: string): Promise<string[]>;
+  /**
+   * True when the repo is reachable without authentication (public). A private or
+   * non-existent repo returns 404 to an unauthenticated request; any other failure
+   * (network, rate-limit) resolves true so a public user is never wrongly gated.
+   * Used to skip the remote-auth requirement for a public framework source.
+   */
+  isRepoPublic(repo: string): Promise<boolean>;
 }

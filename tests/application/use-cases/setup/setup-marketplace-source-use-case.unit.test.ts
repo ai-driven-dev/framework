@@ -12,6 +12,7 @@ function makeResolver(rootReleases: string[]): LatestReleaseResolver {
   return {
     resolveLatest: vi.fn().mockResolvedValue(rootReleases[0] ?? null),
     listRootReleases: vi.fn().mockResolvedValue(rootReleases),
+    isRepoPublic: vi.fn().mockResolvedValue(true),
   };
 }
 

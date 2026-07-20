@@ -6,6 +6,7 @@ import type { SetupFlow } from "../../domain/models/setup-flow.js";
 import type { AiToolId, IdeToolId } from "../../domain/models/tool-ids.js";
 import type { FileReader } from "../../domain/ports/file-reader.js";
 import type { FileWriter } from "../../domain/ports/file-writer.js";
+import type { LatestReleaseResolver } from "../../domain/ports/latest-release-resolver.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { TokenProvider } from "../../domain/ports/token-provider.js";
 import type { VersionReader } from "../../domain/ports/version-reader.js";
@@ -42,7 +43,8 @@ export class SetupUseCase {
     private readonly currentVersionProvider: VersionReader,
     private readonly tokenProvider?: TokenProvider,
     private readonly setupToolsPromptUseCase?: SetupToolsPromptUseCase,
-    private readonly projectContextDetector?: ProjectContextDetectorUseCase
+    private readonly projectContextDetector?: ProjectContextDetectorUseCase,
+    private readonly releaseResolver?: LatestReleaseResolver
   ) {}
 
   async execute(flow: SetupFlow): Promise<SetupResult> {
@@ -87,13 +89,20 @@ export class SetupUseCase {
     return true;
   }
 
+  // Auth is only required to fetch a PRIVATE framework. A token can reach either;
+  // without one, allow public repos through and gate only private/unreachable ones.
   private async guardRemoteAuth(source: MarketplaceSourceMode): Promise<void> {
     if (source.kind !== "remote") return;
     if (this.tokenProvider === undefined) return;
     const token = await this.tokenProvider.resolve();
-    if (token === null) {
-      throw new CatalogFetchAuthError(`https://github.com/${source.repo}`);
+    if (token !== null) return;
+    if (
+      this.releaseResolver !== undefined &&
+      (await this.releaseResolver.isRepoPublic(source.repo))
+    ) {
+      return;
     }
+    throw new CatalogFetchAuthError(`https://github.com/${source.repo}`);
   }
 
   private async registerMarketplace(flow: SetupFlow, source: MarketplaceSourceMode): Promise<void> {

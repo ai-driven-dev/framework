@@ -14,6 +14,15 @@ function makeNoOpLatestResolver() {
   return {
     resolveLatest: vi.fn().mockResolvedValue(null),
     listRootReleases: vi.fn().mockResolvedValue([]),
+    isRepoPublic: vi.fn().mockResolvedValue(true),
+  } as never;
+}
+
+function makeReleaseResolver(isPublic: boolean) {
+  return {
+    resolveLatest: vi.fn().mockResolvedValue(null),
+    listRootReleases: vi.fn().mockResolvedValue([]),
+    isRepoPublic: vi.fn().mockResolvedValue(isPublic),
   } as never;
 }
 
@@ -27,7 +36,7 @@ function makeTokenProvider(token: string | null): TokenProvider {
 
 const PROJECT_ROOT = "/test-project";
 
-async function buildSetupUseCase(tokenProvider: TokenProvider) {
+async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = false) {
   const deps = await buildUnitDeps(PROJECT_ROOT);
   const prompter = new OverwritePrompter();
   const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
@@ -55,13 +64,16 @@ async function buildSetupUseCase(tokenProvider: TokenProvider) {
     setupToolsUseCase,
     setupPluginsPromptUseCase,
     deps.currentVersionProvider,
-    tokenProvider
+    tokenProvider,
+    undefined,
+    undefined,
+    makeReleaseResolver(isRepoPublic)
   );
 }
 
 describe("SetupUseCase — auth guard for remote source", () => {
-  it("throws CatalogFetchAuthError when source is remote and no token is resolved", async () => {
-    const useCase = await buildSetupUseCase(makeTokenProvider(null));
+  it("throws CatalogFetchAuthError when source is remote, no token, and repo is private", async () => {
+    const useCase = await buildSetupUseCase(makeTokenProvider(null), false);
 
     const flow = new SetupFlow({
       projectRoot: PROJECT_ROOT,
@@ -70,6 +82,18 @@ describe("SetupUseCase — auth guard for remote source", () => {
     });
 
     await expect(useCase.execute(flow)).rejects.toThrow(CatalogFetchAuthError);
+  });
+
+  it("proceeds when source is remote, no token, but repo is public", async () => {
+    const useCase = await buildSetupUseCase(makeTokenProvider(null), true);
+
+    const flow = new SetupFlow({
+      projectRoot: PROJECT_ROOT,
+      source: MarketplaceSourceMode.remote(),
+      interactive: false,
+    });
+
+    await expect(useCase.execute(flow)).resolves.toBeDefined();
   });
 
   it("proceeds without error when source is remote and a token is present", async () => {

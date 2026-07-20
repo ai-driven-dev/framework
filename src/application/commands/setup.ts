@@ -157,7 +157,8 @@ export function registerSetupCommand(program: Command): void {
           deps.currentVersionProvider,
           deps.authReader,
           deps.setupToolsPromptUseCase,
-          deps.projectContextDetector
+          deps.projectContextDetector,
+          deps.releaseResolver
         ).execute(flow);
 
         if (interactive && result.context !== undefined) {

@@ -17,6 +17,7 @@ function makeNoOpLatestResolver() {
   return {
     resolveLatest: vi.fn().mockResolvedValue(null),
     listRootReleases: vi.fn().mockResolvedValue([]),
+    isRepoPublic: vi.fn().mockResolvedValue(true),
   } as never;
 }
 

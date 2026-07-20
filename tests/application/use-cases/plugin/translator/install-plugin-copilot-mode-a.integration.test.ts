@@ -112,11 +112,70 @@ describe("install copilot plugin via Mode A (integration)", () => {
     );
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    // Registers the BUILT copilot tree (not the raw github source), removing the
-    // stale same-name registration first.
-    expect(activator.removedMarketplaces).toEqual([MARKETPLACE_NAME]);
+    // Registers the BUILT copilot tree (not the raw github source). A fresh add
+    // succeeds outright — no pre-emptive remove.
+    expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.addedMarketplaces).toEqual(["/built/copilot"]);
     expect(activator.enabledPlugins).toEqual([`aidd-context@${MARKETPLACE_NAME}`]);
     expect(await fs.fileExists(resolve(PROJECT_ROOT, ".github/copilot/settings.json"))).toBe(true);
+  });
+
+  it("removes then re-adds when the name is registered from a different source", async () => {
+    const fs = new InMemoryFileAdapter();
+    const manifestRepo = new InMemoryManifestRepository();
+    const registry = new InMemoryMarketplaceRegistry();
+    const activator = new FakeNativePluginActivator({ available: true, conflictOnAdd: true });
+    await seedCopilotPlugin(manifestRepo, registry);
+
+    const useCase = new MarketplaceSyncSettingsUseCase(
+      fs,
+      manifestRepo,
+      registry,
+      new PluginCatalogRepositoryAdapter(fs),
+      new DeterministicHasher(),
+      new CapturingLogger(),
+      new Map([["copilot", activator]]),
+      fakeEnsureBuiltMarketplace()
+    );
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    // First add hits the different-source conflict → remove, then re-add succeeds.
+    expect(activator.removedMarketplaces).toEqual([MARKETPLACE_NAME]);
+    expect(activator.addedMarketplaces).toEqual(["/built/copilot"]);
+    expect(activator.enabledPlugins).toEqual([`aidd-context@${MARKETPLACE_NAME}`]);
+  });
+
+  it("traces the speculative remove at debug and surfaces the real error when add did not fail on a conflict", async () => {
+    const fs = new InMemoryFileAdapter();
+    const manifestRepo = new InMemoryManifestRepository();
+    const registry = new InMemoryMarketplaceRegistry();
+    // add keeps failing and the name is absent (remove throws): not a recoverable conflict.
+    const activator = new FakeNativePluginActivator({
+      available: true,
+      conflictOnAdd: true,
+      throwOnRemove: true,
+    });
+    const logger = new CapturingLogger();
+    await seedCopilotPlugin(manifestRepo, registry);
+
+    const useCase = new MarketplaceSyncSettingsUseCase(
+      fs,
+      manifestRepo,
+      registry,
+      new PluginCatalogRepositoryAdapter(fs),
+      new DeterministicHasher(),
+      logger,
+      new Map([["copilot", activator]]),
+      fakeEnsureBuiltMarketplace()
+    );
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    // The speculative remove failure is a debug trace, never a scary warn...
+    expect(logger.warnMessages.some((m) => m.includes("unregister stale"))).toBe(false);
+    expect(logger.debugMessages.some((m) => m.includes("not unregistered before re-add"))).toBe(
+      true
+    );
+    // ...and the real re-add failure is surfaced (best-effort warn), not swallowed.
+    expect(logger.warnMessages.some((m) => m.includes("register marketplace"))).toBe(true);
   });
 });

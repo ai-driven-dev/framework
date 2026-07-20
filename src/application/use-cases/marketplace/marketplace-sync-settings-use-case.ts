@@ -130,8 +130,11 @@ export class MarketplaceSyncSettingsUseCase {
   }
 
   // Native tools must read the BUILT (transformed) tree, not the raw Claude-format
-  // source. The CLI rejects `add` when the name exists from a different source, so
-  // remove-then-add is required to switch existing users off the stale raw source.
+  // source. `add` is idempotent for a fresh or same-source registration; the CLI only
+  // rejects it when the name is already registered from a DIFFERENT source (e.g. a
+  // stale raw-source dir left by an older CLI). So add first, and only on that
+  // conflict remove-then-re-add — never a pre-emptive remove that warns on every
+  // clean install where there is nothing to unregister.
   private async registerMarketplace(
     activator: NativePluginActivator,
     toolId: ToolId,
@@ -140,14 +143,33 @@ export class MarketplaceSyncSettingsUseCase {
   ): Promise<void> {
     const builtDir = await this.buildForTool(toolId, marketplace, projectRoot);
     if (builtDir === null) return;
-    this.bestEffort(
-      () => activator.removeMarketplace(marketplace.name),
-      `unregister stale marketplace '${marketplace.name}'`
-    );
-    this.bestEffort(
-      () => activator.addMarketplace(builtDir),
-      `register marketplace '${marketplace.name}'`
-    );
+    try {
+      activator.addMarketplace(builtDir);
+    } catch (error) {
+      if (!(error instanceof NativePluginCliError)) throw error;
+      this.reregisterFromDifferentSource(activator, marketplace.name, builtDir);
+    }
+  }
+
+  // `add` failed: the name is likely registered from a different source, so swap
+  // it in place. The remove is speculative — if `add` failed for another reason the
+  // name may be absent, making a failed remove expected — so trace it at debug, not
+  // warn. The re-add carries the real signal: it warns with the actual message when
+  // this was not a recoverable conflict.
+  private reregisterFromDifferentSource(
+    activator: NativePluginActivator,
+    name: string,
+    builtDir: string
+  ): void {
+    try {
+      activator.removeMarketplace(name);
+    } catch (error) {
+      if (!(error instanceof NativePluginCliError)) throw error;
+      this.logger.debug(
+        `marketplace '${name}' not unregistered before re-add (likely absent): ${error.message}`
+      );
+    }
+    this.bestEffort(() => activator.addMarketplace(builtDir), `register marketplace '${name}'`);
   }
 
   private async buildForTool(

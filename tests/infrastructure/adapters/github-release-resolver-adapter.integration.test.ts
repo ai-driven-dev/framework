@@ -121,4 +121,27 @@ describe("GitHubReleaseResolverAdapter", () => {
       await expect(adapter.listRootReleases(REPO)).rejects.toThrow(CatalogFetchAuthError);
     });
   });
+
+  describe("isRepoPublic", () => {
+    it("returns true when the unauthenticated repo request succeeds (public)", async () => {
+      const http = makeHttp({ full_name: REPO, private: false });
+      const adapter = new GitHubReleaseResolverAdapter(http as never);
+      expect(await adapter.isRepoPublic(REPO)).toBe(true);
+      expect(http.get).toHaveBeenCalledWith("https://api.github.com/repos/owner/repo");
+    });
+
+    it("returns false on 404 (private or non-existent repo)", async () => {
+      const http = makeHttpThrowing(
+        new HttpNotFoundError("https://api.github.com/repos/owner/repo")
+      );
+      const adapter = new GitHubReleaseResolverAdapter(http as never);
+      expect(await adapter.isRepoPublic(REPO)).toBe(false);
+    });
+
+    it("returns true on non-404 errors so a rate-limited public user is not gated", async () => {
+      const http = makeHttpThrowing(new AuthenticationError("HTTP 403 rate limit"));
+      const adapter = new GitHubReleaseResolverAdapter(http as never);
+      expect(await adapter.isRepoPublic(REPO)).toBe(true);
+    });
+  });
 });
