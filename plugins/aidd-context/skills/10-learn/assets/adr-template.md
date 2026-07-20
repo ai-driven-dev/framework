@@ -1,7 +1,11 @@
-# <Decision title>
+<!-- Fill placeholders, drop unused optional lines, then strip this comment. -->
+
+# <ADR title>
 
 - Date: <YYYY-MM-DD>
 - Status: Accepted
+- Supersedes: <ADR path>
+- Superseded by: <ADR path>
 
 ## Context
 
