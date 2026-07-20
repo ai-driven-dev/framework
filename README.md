@@ -11,9 +11,9 @@
 
 <img src="docs/assets/logo.png" alt="AIDD" width="140" />
 
-# The AI-Driven Dev Framework (🇫🇷)
+# AI-Driven Dev Framework 🇫🇷
 
-### An `Agnostic` & `Token Optimized` Framework for developers who want to produce HIGH QUALITY code (even on `Legacy`)
+## Agentic framework for software engineers to produce 100% quality code with IA, agonistically.
 
 <p>
   <!--counts:start--><kbd>7 plugins</kbd> · <kbd>40 skills</kbd> · <kbd>2 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
