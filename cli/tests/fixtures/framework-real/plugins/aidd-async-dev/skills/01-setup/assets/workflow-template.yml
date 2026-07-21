@@ -1,0 +1,53 @@
+name: aidd-async
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+  projects_v2_item:
+    types: [edited]
+
+concurrency:
+  group: aidd-async-issue-${{ github.event.issue.number || github.event.projects_v2_item.id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  checks: write
+
+jobs:
+  run:
+    if: |
+      (github.event_name == 'issues' && github.event.label.name == '__READY_LABEL__') ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '__MENTION__')) ||
+      (github.event_name == 'projects_v2_item')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: __DEFAULT_BRANCH__
+          fetch-depth: 0
+
+      - name: Acquire lock label
+        run: gh issue edit "$ISSUE" --add-label "__RUNNING_LABEL__" --remove-label "__READY_LABEL__"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE: ${{ github.event.issue.number }}
+
+      - name: Run aidd-async-dev pipeline
+        uses: anthropics/claude-code-action@v1
+        with:
+          prompt: "Use skill aidd-async-dev:02:run on issue #${{ github.event.issue.number }}"
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Project board column filter
+        if: github.event_name == 'projects_v2_item'
+        run: |
+          if [ "${{ github.event.projects_v2_item.column_name }}" != "__PROJECT_COLUMN__" ]; then
+            echo "Not in target column, skipping"
+            exit 78
+          fi

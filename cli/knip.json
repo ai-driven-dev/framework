@@ -1,0 +1,20 @@
+{
+  "entry": [
+    "src/cli.ts",
+    "scripts/check-bundle-size.mjs",
+    "scripts/pre-release-check.mjs",
+    "scripts/benchmark.mjs",
+    "scripts/check-perf-regression.mjs"
+  ],
+  "ignore": [
+    ".aidd/**",
+    "config/vitest-text-loader.ts",
+    "tests/**/helpers.ts",
+    "tests/helpers/**",
+    "tests/fixtures/**",
+    "tmp/**",
+    "src/domain/models/marketplace-entry.ts"
+  ],
+  "ignoreBinaries": ["gh"],
+  "ignoreExportsUsedInFile": true
+}

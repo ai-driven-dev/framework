@@ -1,0 +1,28 @@
+{
+  "version": "0.1.0",
+  "mode": "both",
+  "labels": {
+    "ready": "ai:ready",
+    "running": "ai:running",
+    "blocked": "ai:blocked"
+  },
+  "auth": {
+    "source": "gh-cli",
+    "fallback": "pat",
+    "pat_env_var": "GITHUB_TOKEN",
+    "github_app": null
+  },
+  "webhook_url": null,
+  "max_iterations": 3,
+  "monorepo_scope": "codeowners",
+  "trigger_mention": "@claude /implement",
+  "project_board_column": "Ready",
+  "audit": {
+    "log_dir": "aidd_docs/async-runs",
+    "github_check_run": true
+  },
+  "tool_allowlist": {
+    "deny_in_async": ["Bash:rm -rf", "Bash:curl"],
+    "allow": ["Read", "Write", "Edit", "Bash:git", "Bash:gh"]
+  }
+}

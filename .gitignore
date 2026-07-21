@@ -42,3 +42,14 @@ Thumbs.db
 .playwright-mcp/
 # Impeccable tool cache
 .impeccable/
+
+# cli/ (mutation testing, local scratch)
+reports/
+.stryker-tmp/
+stryker.log
+.aidd/cache/
+*.local.md
+temp/
+tmp/
+setup-test/
+tmp-test/

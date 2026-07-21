@@ -1,0 +1,17 @@
+{
+  "extraKnownMarketplaces": {
+    "aidd-framework": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "aidd-context@aidd-framework": true,
+    "aidd-dev@aidd-framework": true,
+    "aidd-vcs@aidd-framework": true,
+    "aidd-pm@aidd-framework": true,
+    "aidd-refine@aidd-framework": true
+  }
+}

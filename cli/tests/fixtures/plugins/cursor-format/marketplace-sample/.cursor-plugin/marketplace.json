@@ -1,0 +1,16 @@
+{
+  "plugins": [
+    {
+      "name": "cursor-dev-tools",
+      "version": "1.2.0",
+      "description": "Developer tools for Cursor"
+    },
+    {
+      "name": "cursor-testing",
+      "description": "Testing utilities"
+    },
+    {
+      "name": "cursor-minimal"
+    }
+  ]
+}

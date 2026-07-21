@@ -1,0 +1,17 @@
+{
+  "name": "local-example-plugins",
+  "plugins": [
+    {
+      "name": "codex-dev-tools",
+      "version": "1.2.0",
+      "description": "Developer tools for Codex"
+    },
+    {
+      "name": "codex-testing",
+      "description": "Testing utilities"
+    },
+    {
+      "name": "codex-minimal"
+    }
+  ]
+}
