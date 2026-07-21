@@ -36,7 +36,6 @@ Hooks run this repo's own checks directly (no parent-monorepo delegation):
 ## CI/CD
 
 - `.github/workflows/ci.yml` — "CI & Publish", on push to `main`: commitlint → (typecheck, lint, test, build & bundle budget, knip, jscpd) → release-please → publish.
-- `.github/workflows/perf-regression.yml` — perf baseline check (separate workflow).
 - No containerization, no monitoring infrastructure.
 
 ## Scripts
@@ -52,11 +51,4 @@ Hooks run this repo's own checks directly (no parent-monorepo delegation):
 | `pnpm pack:local` | build + pack to dist/ |
 | `pnpm install:local` | pack + npm install -g (`--force`) |
 | `pnpm build:check-size` | run bundle size check only (no rebuild) |
-| `pnpm bench:check` | run perf regression check against baseline |
 | `pnpm test:mutation` | Stryker mutation testing (slow; CI gate) |
-
-## Perf Regression
-
-- Baseline: `scripts/perf-baseline.json` — 4 commands tracked (`--version`, `--help`, `status`, `ai list`).
-- Checker: `scripts/check-perf-regression.mjs` — fails build if median exceeds baseline by threshold.
-- Update baseline with `scripts/benchmark.mjs`.

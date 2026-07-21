@@ -27,8 +27,6 @@
   "scripts": {
     "build": "tsup && node scripts/check-bundle-size.mjs",
     "build:check-size": "node scripts/check-bundle-size.mjs",
-    "bench": "node scripts/benchmark.mjs",
-    "bench:check": "node scripts/check-perf-regression.mjs",
     "dev": "tsup --watch",
     "test": "pnpm build && vitest run",
     "test:unit": "vitest run --project=unit",

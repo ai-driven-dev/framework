@@ -1,11 +1,5 @@
 {
-  "entry": [
-    "src/cli.ts",
-    "scripts/check-bundle-size.mjs",
-    "scripts/pre-release-check.mjs",
-    "scripts/benchmark.mjs",
-    "scripts/check-perf-regression.mjs"
-  ],
+  "entry": ["src/cli.ts", "scripts/check-bundle-size.mjs", "scripts/pre-release-check.mjs"],
   "ignore": [
     ".aidd/**",
     "config/vitest-text-loader.ts",

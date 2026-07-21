@@ -18,6 +18,12 @@ Code contributions are open to certified **Obsidian+** members using the AIDD de
 
 ---
 
+## Repository history
+
+This directory used to be its own repo (`ai-driven-dev/aidd-cli`), merged into `framework` via `git subtree`. The pre-merge history is preserved but `git log --follow -- <path>` won't reach it — use `git log <merge-commit>^2 -- <path>` (the pre-merge path, no `cli/` prefix) instead.
+
+---
+
 ## Architecture
 
 3-layer clean architecture — understand this before contributing code.
@@ -114,31 +120,6 @@ pnpm test -- --coverage      # same + coverage report with thresholds
 
 All CI checks must pass locally before pushing.
 
-### 5b. Performance regression check
-
-CLI boot time and key command durations are tracked via a committed baseline snapshot.
-
-```bash
-pnpm bench            # run benchmark, writes reports/benchmark/latest.json
-pnpm bench:check      # compare latest vs scripts/perf-baseline.json
-```
-
-Thresholds:
-- >20% slower than baseline → warning (exit 0)
-- >50% slower than baseline → hard failure (exit 1)
-- >5% faster than baseline → note (suggests baseline update)
-
-**When to update the baseline:**
-If you make an intentional performance improvement, regenerate the baseline in the same PR:
-
-```bash
-pnpm bench
-cp reports/benchmark/latest.json scripts/perf-baseline.json
-# commit scripts/perf-baseline.json alongside your changes
-```
-
-CI runs the benchmark on every PR and push to `main` (`.github/workflows/perf-regression.yml`).
-
 #### Network E2E tests (opt-in)
 
 Network E2E tests exercise the real GitHub fetch path (`ai-driven-dev/framework`). They are skipped in the default `pnpm test` run and require opt-in:
@@ -210,7 +191,6 @@ Every PR triggers:
 | Test & Coverage | `pnpm test -- --coverage` | Yes |
 | Dead code | `pnpm knip:production` | No |
 | Duplication | `pnpm jscpd` | No |
-| Perf regression | `pnpm bench && pnpm bench:check` | Yes (>50% regression) |
 
 All blocking jobs must pass before merge.
 

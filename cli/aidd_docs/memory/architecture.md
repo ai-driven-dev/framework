@@ -115,7 +115,6 @@ Runtime configs and IDE configs ship inside the CLI binary (tsup bundles them):
 
 - Budget: 500 KB (`bundleBudgetKB` in `package.json`)
 - Enforced at build time: `scripts/check-bundle-size.mjs` runs after `tsup`
-- Perf regression tracker: `scripts/check-perf-regression.mjs` + `scripts/perf-baseline.json` (4 commands: `--version`, `--help`, `status`, `ai list`)
 
 ## Key Design Decisions
 
