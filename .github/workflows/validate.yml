@@ -30,13 +30,9 @@ jobs:
           node-version: "22"
 
       - name: Install pnpm
-        # Pinned to match cli/package.json's packageManager field — this job
-        # also installs cli/'s deps below, and corepack silently re-resolves
-        # to that pin the moment a command runs inside cli/. Same version
-        # everywhere a workflow touches cli/, not just here.
         run: |
           corepack enable
-          corepack prepare pnpm@10.14.0 --activate
+          corepack prepare pnpm@latest --activate
 
       - name: Cache pnpm store
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

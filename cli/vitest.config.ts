@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { defineConfig } from "vitest/config";
-import { textLoader } from "./config/vitest-text-loader.js";
+import { textLoader } from "./tests/helpers/vitest-text-loader.js";
 
 export default defineConfig({
   plugins: [textLoader([".md", ".toml"])],

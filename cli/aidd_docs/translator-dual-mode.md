@@ -164,4 +164,4 @@ Mismatch raises `InvalidPluginScopeError` with a clear message including the sup
 
 ---
 
-← [Back to CONTRIBUTING.md](../CONTRIBUTING.md)
+← [Back to CONTRIBUTING.md](../../CONTRIBUTING.md)

@@ -566,7 +566,7 @@ See [MIGRATION.md](MIGRATION.md) for the full migration guide from v4.0.x to v4.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide.
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for the full contribution guide.
 
 Code contributions are open to certified **Obsidian+** members.
 

@@ -42,8 +42,7 @@
     "pack:local": "pnpm build && pnpm pack --pack-destination ./dist",
     "install:local": "pnpm run pack:local && npm install -g ./dist/ai-driven-dev-cli-$(node -p \"require('./package.json').version\").tgz --force",
     "test:mutation": "stryker run",
-    "prepare": "lefthook install",
-    "fixture:refresh": "bash scripts/refresh-framework-fixture.sh"
+    "prepare": "lefthook install"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.0.0",

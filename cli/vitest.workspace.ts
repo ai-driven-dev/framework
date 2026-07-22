@@ -1,5 +1,5 @@
 import { defineWorkspace } from "vitest/config";
-import { textLoader } from "./config/vitest-text-loader.js";
+import { textLoader } from "./tests/helpers/vitest-text-loader.js";
 
 const TEXT_EXTENSIONS = [".md", ".toml"] as const;
 
