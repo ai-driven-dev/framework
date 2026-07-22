@@ -2,6 +2,18 @@
   "name": "@ai-driven-dev/cli",
   "version": "5.1.3",
   "description": "AI-Driven Development CLI — install AI tool configs and plugins from the AIDD marketplace",
+  "license": "MIT",
+  "keywords": [
+    "cli",
+    "ai-driven-development",
+    "claude-code",
+    "cursor",
+    "github-copilot",
+    "codex",
+    "opencode",
+    "developer-tools",
+    "ai-coding-assistant"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/ai-driven-dev/framework.git",
