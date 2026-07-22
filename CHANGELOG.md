@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.5.6](https://github.com/ai-driven-dev/framework/compare/v5.5.5...v5.5.6) (2026-07-22)
+
+
+### Bug Fixes
+
+* **docs:** resolve real broken markdown links, drop temporary link-check excludes ([#500](https://github.com/ai-driven-dev/framework/issues/500)) ([c6103e6](https://github.com/ai-driven-dev/framework/commit/c6103e636ede5c66667fd0e6ebe9eccee87a6e3d))
+
 ## [5.5.5](https://github.com/ai-driven-dev/framework/compare/v5.5.4...v5.5.5) (2026-07-22)
 
 
