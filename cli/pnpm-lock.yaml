@@ -59,7 +59,7 @@ importers:
         version: 4.9.0
       jscpd:
         specifier: ^5.0.0
-        version: 5.0.7
+        version: 5.0.12
       knip:
         specifier: ^6.0.0
         version: 6.27.0
@@ -1609,36 +1609,6 @@ packages:
       typescript:
         optional: true
 
-  cpd-darwin-arm64@5.0.7:
-    resolution: {integrity: sha512-yfqUd+y1lqCp0Oso462SxYmaLhnkZRumhvZB+Noz/jg4+AvQDZcsVnb7gbjr7Wu3+Te8Jz41mZs+ka2XDJ257g==}
-    cpu: [arm64]
-    os: [darwin]
-
-  cpd-darwin-x64@5.0.7:
-    resolution: {integrity: sha512-RFT71RYdfuejaRY5K0jxEg/hIb/lDX7DK3+Y8SvQixrQi4Epo5EMhtiechCYlIcuDkbq4b2htpldipqssEcc/g==}
-    cpu: [x64]
-    os: [darwin]
-
-  cpd-linux-arm64-gnu@5.0.7:
-    resolution: {integrity: sha512-SBkIVIgH+oqsPJCh89PzOA8EJ0URF97FP9JgGgQrYogfQ3AmNyjJIGpgTClj9IyTb5jTomJVpwa75FYqERXVIQ==}
-    cpu: [arm64]
-    os: [linux]
-
-  cpd-linux-x64-gnu@5.0.7:
-    resolution: {integrity: sha512-UE+BGxcJSYJPNGD01vPZcIFNFKOc3lgMGpe717JppCCSjyjXd8fKO3FXDePcy3MRTZymC67i2rg6IZkLVsmBWQ==}
-    cpu: [x64]
-    os: [linux]
-
-  cpd-linux-x64-musl@5.0.7:
-    resolution: {integrity: sha512-1Lv5BXw5AHTb5x5quL813UryKmbzJAJ2uG2lonnanEarWA+j/D0jKNJjY7k3+rnKaeAugiMltmeF6Rf9PAFSIw==}
-    cpu: [x64]
-    os: [linux]
-
-  cpd-windows-x64-msvc@5.0.7:
-    resolution: {integrity: sha512-rISkx5Vfl9Chl6kIuOJrf03pDtV4xBGqPaXcS32RE5t65JlAO+AEt0uVpjMWDPm9SKS6onyBKHdRoQkiluqW/Q==}
-    cpu: [x64]
-    os: [win32]
-
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
@@ -1947,8 +1917,38 @@ packages:
     resolution: {integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==}
     hasBin: true
 
-  jscpd@5.0.7:
-    resolution: {integrity: sha512-V2YemuWeT7qOF6TeNG1zkKavamuDJJQppdHOQjG8dR2bzWNEJacaPgi/ALQPTlNbtXoL/rsQGhPQC8ASN+WzMQ==}
+  jscpd-darwin-arm64@5.0.12:
+    resolution: {integrity: sha512-CQCDYhQY9yOGGeauzkRGYW/QtXurPCjfDkEhUoM/M5UdmpzxfG3i9mnNsaheJ0RdFRf73mL7JaLVRP8U2l5/kA==}
+    cpu: [arm64]
+    os: [darwin]
+
+  jscpd-darwin-x64@5.0.12:
+    resolution: {integrity: sha512-7XNCDfChP9fPkIWLepd0zGnTov7/5mR7rJ5Utc1MdWFdgkN//qz6FAJ1FhQA0E/qjFedy9XTucfUCgLybSBsjw==}
+    cpu: [x64]
+    os: [darwin]
+
+  jscpd-linux-arm64-gnu@5.0.12:
+    resolution: {integrity: sha512-i/usHD0/8twzb2Qo4vFWcnuAD4IDLS6K/mTXwYy1CiJZDw4gmjfH45jtjdKUyoutTAiNs+ZWZgx1gIRljUbFuA==}
+    cpu: [arm64]
+    os: [linux]
+
+  jscpd-linux-x64-gnu@5.0.12:
+    resolution: {integrity: sha512-TqaeSTaGawcqyXSrQvYJFtLRn4aQeHgphGGsq2ZtVAg+lPeuMmh81c3bl0yi2dL3gDX1RGBQKBVul1XQknOuoA==}
+    cpu: [x64]
+    os: [linux]
+
+  jscpd-linux-x64-musl@5.0.12:
+    resolution: {integrity: sha512-WelugY1/rdoo0Y0sqJ2XQOIvyIZTfRe+vP3MJe4XvEUwPF0v+9SQoS34FnfblRhsddVixyNkgl7x/sHid9UMJw==}
+    cpu: [x64]
+    os: [linux]
+
+  jscpd-windows-x64-msvc@5.0.12:
+    resolution: {integrity: sha512-01x1klKjvfzI6Of5tI9u72x7TIQZQLLG6kMdsEPJKl/BXbskdknrfCepeTXRBbdFPKs25jfcd0klZ4OdDvww5w==}
+    cpu: [x64]
+    os: [win32]
+
+  jscpd@5.0.12:
+    resolution: {integrity: sha512-87dC+akj2mCywlt8p3xnRlDg0B55u4GDbfE9cuwOOeIxbEuWuIoNqGoYi65A0516aJ4EzAjGwBj1Qb/Ahc8WAQ==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -4045,24 +4045,6 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.3
 
-  cpd-darwin-arm64@5.0.7:
-    optional: true
-
-  cpd-darwin-x64@5.0.7:
-    optional: true
-
-  cpd-linux-arm64-gnu@5.0.7:
-    optional: true
-
-  cpd-linux-x64-gnu@5.0.7:
-    optional: true
-
-  cpd-linux-x64-musl@5.0.7:
-    optional: true
-
-  cpd-windows-x64-msvc@5.0.7:
-    optional: true
-
   cross-spawn@7.0.6:
     dependencies:
       path-key: 3.1.1
@@ -4394,14 +4376,32 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  jscpd@5.0.7:
+  jscpd-darwin-arm64@5.0.12:
+    optional: true
+
+  jscpd-darwin-x64@5.0.12:
+    optional: true
+
+  jscpd-linux-arm64-gnu@5.0.12:
+    optional: true
+
+  jscpd-linux-x64-gnu@5.0.12:
+    optional: true
+
+  jscpd-linux-x64-musl@5.0.12:
+    optional: true
+
+  jscpd-windows-x64-msvc@5.0.12:
+    optional: true
+
+  jscpd@5.0.12:
     optionalDependencies:
-      cpd-darwin-arm64: 5.0.7
-      cpd-darwin-x64: 5.0.7
-      cpd-linux-arm64-gnu: 5.0.7
-      cpd-linux-x64-gnu: 5.0.7
-      cpd-linux-x64-musl: 5.0.7
-      cpd-windows-x64-msvc: 5.0.7
+      jscpd-darwin-arm64: 5.0.12
+      jscpd-darwin-x64: 5.0.12
+      jscpd-linux-arm64-gnu: 5.0.12
+      jscpd-linux-x64-gnu: 5.0.12
+      jscpd-linux-x64-musl: 5.0.12
+      jscpd-windows-x64-msvc: 5.0.12
 
   jsesc@3.1.0: {}
 
