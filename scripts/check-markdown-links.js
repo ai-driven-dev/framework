@@ -19,6 +19,8 @@ Ignored / excluded forms:
   - HTML angle-bracket links and HTML attributes
   - .git and node_modules directories
   - Runtime variables, glob patterns, and bare words
+  - cli/tests/fixtures/** (synthetic mock trees) and cli/aidd_docs/tasks/**
+    (historical task records), always, on top of any --ignore given
 
 How to fix broken links:
   | Need | Use |
@@ -35,6 +37,12 @@ Examples:
 
 const SKIPPED_DIRS = new Set([".git", "node_modules", "worktrees", ".specstory"]);
 const SKIPPED_DIR_PREFIXES = [".tmp-check-markdown-links-"];
+// Always-ignored, not just a CLI --ignore convenience: cli/tests/fixtures/**
+// holds synthetic mock trees that intentionally don't materialize every file
+// they reference, and cli/aidd_docs/tasks/** is a historical record whose
+// @path references and inline rewrite-rule examples are expected to drift as
+// the codebase evolves after the fact.
+const DEFAULT_IGNORES = ["cli/tests/fixtures", "cli/aidd_docs/tasks"];
 const MARKDOWN_EXTENSIONS = new Set([".md", ".mdx"]);
 function normalizePathForDisplay(filePath) {
   const relative = path.relative(ROOT, filePath).replaceAll(path.sep, "/");
@@ -424,7 +432,7 @@ function runCli(argv = process.argv.slice(2)) {
   }
 
   try {
-    const { files, problems } = checkMarkdownLinks(parsed.paths, parsed.ignores);
+    const { files, problems } = checkMarkdownLinks(parsed.paths, [...DEFAULT_IGNORES, ...parsed.ignores]);
     reportProblems(problems, files.length);
     return problems.length === 0 ? 0 : 1;
   } catch (error) {

@@ -25,14 +25,14 @@
 
 | Part | Scope | Branch | Depends on |
 |------|-------|--------|-----------|
-| [Part 1](2026_04_27-#260-plugin-architecture-part-1.md) | Plugin domain model + manifest v3 + migration | `feat/260-plugin-architecture-part-1` | none |
-| [Part 2](2026_04_27-#260-plugin-architecture-part-2.md) | Plugin format detection + PluginManifestReader + PluginTranslator | `feat/260-plugin-architecture-part-2` | Part 1 |
-| [Part 3](2026_04_27-#260-plugin-architecture-part-3.md) | Framework loader plugin-aware + marketplace.json catalog | `feat/260-plugin-architecture-part-3` | Part 2 |
-| [Part 4](2026_04_27-#260-plugin-architecture-part-4.md) | Plugin fetch pipeline + install adapters | `feat/260-plugin-architecture-part-4` | Part 3 |
-| [Part 5](2026_04_27-#260-plugin-architecture-part-5.md) | `aidd plugin` command (add/remove/list/update) | `feat/260-plugin-architecture-part-5` | Part 4 |
-| [Part 6](2026_04_27-#260-plugin-architecture-part-6.md) | Install wizard plugin selection step | `feat/260-plugin-architecture-part-6` | Part 5 |
-| [Part 7](2026_04_27-#260-plugin-architecture-part-7.md) | Read/Write commands plugin-aware | `feat/260-plugin-architecture-part-7` | Part 6 |
-| [Part 8](2026_04_27-#260-plugin-architecture-part-8.md) | Framework repo — Claude marketplace layout | `feat/260-plugin-architecture-part-8` | Part 7 validated |
+| [Part 1](2026_04_27-%23260-plugin-architecture-part-1.md) | Plugin domain model + manifest v3 + migration | `feat/260-plugin-architecture-part-1` | none |
+| [Part 2](2026_04_27-%23260-plugin-architecture-part-2.md) | Plugin format detection + PluginManifestReader + PluginTranslator | `feat/260-plugin-architecture-part-2` | Part 1 |
+| [Part 3](2026_04_27-%23260-plugin-architecture-part-3.md) | Framework loader plugin-aware + marketplace.json catalog | `feat/260-plugin-architecture-part-3` | Part 2 |
+| [Part 4](2026_04_27-%23260-plugin-architecture-part-4.md) | Plugin fetch pipeline + install adapters | `feat/260-plugin-architecture-part-4` | Part 3 |
+| [Part 5](2026_04_27-%23260-plugin-architecture-part-5.md) | `aidd plugin` command (add/remove/list/update) | `feat/260-plugin-architecture-part-5` | Part 4 |
+| [Part 6](2026_04_27-%23260-plugin-architecture-part-6.md) | Install wizard plugin selection step | `feat/260-plugin-architecture-part-6` | Part 5 |
+| [Part 7](2026_04_27-%23260-plugin-architecture-part-7.md) | Read/Write commands plugin-aware | `feat/260-plugin-architecture-part-7` | Part 6 |
+| [Part 8](2026_04_27-%23260-plugin-architecture-part-8.md) | Framework repo — Claude marketplace layout | `feat/260-plugin-architecture-part-8` | Part 7 validated |
 
 ## User Journey
 
