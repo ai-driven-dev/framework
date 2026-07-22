@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.5.4](https://github.com/ai-driven-dev/framework/compare/v5.5.3...v5.5.4) (2026-07-22)
+
+
+### Bug Fixes
+
+* **cli:** restore correct version again after second regression, re-anchor for release-please ([#493](https://github.com/ai-driven-dev/framework/issues/493)) ([22171ed](https://github.com/ai-driven-dev/framework/commit/22171ed8997a28fb695168353b0541401e3272b7))
+
 ## [5.5.3](https://github.com/ai-driven-dev/framework/compare/v5.5.2...v5.5.3) (2026-07-22)
 
 

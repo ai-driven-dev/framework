@@ -1,5 +1,22 @@
 # Changelog
 
+## [5.1.4](https://github.com/ai-driven-dev/framework/compare/cli-v5.1.3...cli-v5.1.4) (2026-07-22)
+
+
+### Bug Fixes
+
+* **cli:** add license and keywords for the npm package page ([691c1c3](https://github.com/ai-driven-dev/framework/commit/691c1c3d30f572e9f13a83f9997d9780b2205914))
+* **cli:** migrate aidd-cli into framework as cli/, full history preserved ([daeef56](https://github.com/ai-driven-dev/framework/commit/daeef56aa3002142a1f2fbed048769e959ab60fe))
+* **cli:** repoint self-references from aidd-cli to framework ([601c30c](https://github.com/ai-driven-dev/framework/commit/601c30c84d2adb04e3c6327a1a7778a894db3b33))
+* **cli:** restore correct version after release-please regression ([#488](https://github.com/ai-driven-dev/framework/issues/488)) ([047bcb2](https://github.com/ai-driven-dev/framework/commit/047bcb29e5729d13dd7d27b0921ecc3cbb7eb9d3))
+* **cli:** restore correct version again after second regression, re-anchor for release-please ([#493](https://github.com/ai-driven-dev/framework/issues/493)) ([22171ed](https://github.com/ai-driven-dev/framework/commit/22171ed8997a28fb695168353b0541401e3272b7))
+
+
+### Miscellaneous
+
+* release main ([#485](https://github.com/ai-driven-dev/framework/issues/485)) ([be7195b](https://github.com/ai-driven-dev/framework/commit/be7195b0978d729a1de39826d771511d15f03331))
+* release main ([#489](https://github.com/ai-driven-dev/framework/issues/489)) ([c84fc3d](https://github.com/ai-driven-dev/framework/commit/c84fc3d8fee6e93cee4ea0c5d0d7fe68eac990ea))
+
 ## [5.1.3](https://github.com/ai-driven-dev/aidd-cli/compare/v5.1.2...v5.1.3) (2026-07-17)
 
 
