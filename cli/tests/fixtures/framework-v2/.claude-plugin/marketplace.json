@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "aidd-framework-v2",
+  "version": "0.2.0",
+  "description": "Test marketplace v2",
+  "owner": { "name": "Test" },
+  "plugins": [
+    {
+      "name": "aidd-test",
+      "source": "./plugins/aidd-test",
+      "description": "Test plugin",
+      "strict": true,
+      "recommended": true
+    }
+  ]
+}

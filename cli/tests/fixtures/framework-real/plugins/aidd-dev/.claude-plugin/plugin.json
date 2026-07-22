@@ -1,0 +1,7 @@
+{
+  "name": "aidd-dev",
+  "version": "1.0.0",
+  "description": "Code transformation: SDLC orchestrator, plan, assert, audit, review, test, refactor, debug, for-sure. Hosts agents.",
+  "author": { "name": "AI-Driven Dev" },
+  "strict": true
+}

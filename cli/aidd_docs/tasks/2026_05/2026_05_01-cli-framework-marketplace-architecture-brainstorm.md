@@ -1,0 +1,206 @@
+# CLI ↔ Framework Architecture — Marketplace-Only Brainstorm
+
+> Date: 2026-05-01
+> Status: Approved (brainstorm phase)
+> Next: implementation plan
+
+## Vision
+
+Framework = pure marketplace (plugins only). CLI = multi-tool orchestrator (runtime configs + plugin translation + lifecycle). Strict separation between framework distribution and tool installation.
+
+## Architecture Pillars
+
+### 1. Framework = marketplace
+
+- Contains: `marketplace.json` + `plugins/` (aidd-context, aidd-dev, aidd-vcs, aidd-pm)
+- Distributed via Git repo (remote URL) or local path
+- No more tarball with bundled configs/scaffold/memory files
+- Pre-registered as default marketplace on `aidd setup`
+
+### 2. CLI assets = runtime configs
+
+Tool runtime configs ship with CLI release:
+
+- `.claude/settings.json`
+- `opencode.json`
+- `.codex/config.toml`
+- `.github/` Copilot configs
+- `.vscode/{settings,keybindings,extensions}.json`
+
+Memory file stubs (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`) ship as templates.
+
+Written via `aidd install ai <tool>` and `aidd install ide <tool>`.
+
+### 3. Plugins = canonical Claude format
+
+- Single source of truth: `.claude-plugin/plugin.json` + `skills/agents/commands/rules/hooks/.mcp.json`
+- CLI translates to target tool format at install (paths, extensions, format conversions)
+- 5 supported targets:
+  - **claude** (native)
+  - **cursor** (native)
+  - **copilot** (native)
+  - **codex** (native partial — no hooks)
+  - **opencode** (flat, full adaptation)
+
+### 4. MCP = plugin-owned
+
+- Each plugin declares `.mcp.json`
+- CLI merges into target tool's MCP location at install
+- Removed when plugin uninstalled
+
+### 5. Memory files = CLI stub + skill enrichment (Owner C)
+
+- CLI writes minimal stub on `install ai <tool>`
+- aidd-context `01-project-init` skill enriches with project-aware content
+- Manifest tracks stub → skip if user-edited (drift preserves edits)
+
+### 6. ide-mapping = aidd-context skill, no CLI dependency
+
+- `plugins/aidd-context/skills/.../references/ide-mapping.{tool}.md`
+- Skill detects active tool, generates accordingly
+- Self-sufficient, zero CLI dependency
+
+## Removed from CLI
+
+- Framework tarball fetching
+- Bundled plugin distribution
+- Rules scaffold creation (10 empty folders)
+- `aidd_docs/` framework docs install
+- Memory file rich generation (kept as stub only)
+- Generated `CATALOG.md` (each plugin self-documents via README; marketplace.json lists plugins)
+
+## Final Command Surface
+
+13 top-level commands, ~28 sub-commands.
+
+```text
+# Bootstrap
+aidd setup                              # init manifest + register default marketplace + select tools
+aidd migrate                            # interactive one-time migration from old structure
+
+# Tool runtime (kept verb form: install/uninstall ai|ide)
+aidd install ai <tool>                  # claude|cursor|copilot|opencode|codex — runtime config + memory stub
+aidd install ide <tool>                 # vscode (others later)
+aidd uninstall ai <tool>
+aidd uninstall ide <tool>
+
+# Marketplace
+aidd marketplace add <url|path>         # remote URL or local path
+aidd marketplace list
+aidd marketplace remove <name>
+aidd marketplace refresh
+aidd marketplace browse
+
+# Plugins (always from marketplace)
+aidd plugin install <name>              # interactive prompt: target tools (Option B)
+aidd plugin remove <name>
+aidd plugin list
+aidd plugin update
+aidd plugin search <query>
+aidd plugin pick
+
+# Lifecycle
+aidd sync                               # cross-tool propagation
+aidd update                             # update everything (configs + plugins)
+aidd restore                            # restore drifted files
+aidd status                             # drift detection
+aidd doctor                             # health check
+
+# Maintenance
+aidd config                             # manifest field read/write
+aidd auth                               # GitHub auth
+aidd cache                              # marketplace + plugin cache
+aidd clean                              # full project cleanup
+aidd self-update                        # CLI binary update
+aidd menu                               # interactive TUI
+```
+
+## Tool Format Compatibility Matrix
+
+| Tool | Native plugin format | Memory file | Notes |
+|---|---|---|---|
+| claude | Full native | `CLAUDE.md` | Reference impl |
+| cursor | Native | `AGENTS.md` | Rules → `.mdc`, MCP path: `.cursor/mcp.json` |
+| copilot | Native | `.github/copilot-instructions.md` | Agents → `.agent.md`, prompts/instructions split |
+| codex | Native partial | `AGENTS.md` | No hooks support, MCP via `.toml` |
+| opencode | NOT native | `AGENTS.md` | Flat mode, `aidd-` prefix, full adaptation |
+
+## Tarball Contents — Before vs After
+
+| Category | Today (in tarball) | New |
+|---|---|---|
+| Tool configs | `.claude/settings.json`, `.mcp.json`, `.vscode/*`, copilot, opencode | **MOVED to CLI assets** |
+| Skills/agents/rules at framework root | Empty (already) | Removed |
+| Memory files (`CLAUDE.md` etc.) | Generated by CLI | **CLI stub + skill enrichment** |
+| Rules scaffold (10 folders) | Created by CLI | **REMOVED** |
+| Plugin manifests bundled | Bundled in tarball | **MOVED to marketplace flow** |
+| Docs files (`aidd_docs/`) | Copied by CLI | **REMOVED** |
+| Manifest (`.aidd/manifest.json`) | Created on install | **STAYS** (created by `aidd setup`) |
+| Gitignore entry | Added by CLI | **STAYS** |
+
+## User Journeys
+
+### Greenfield (new project)
+
+```text
+aidd setup                              # manifest + default marketplace + tools=[claude,cursor]
+aidd install ai claude                  # .claude/settings.json + CLAUDE.md stub
+aidd install ai cursor                  # .cursor/settings.json + AGENTS.md stub
+aidd install ide vscode                 # .vscode/{settings,keybindings,extensions}.json
+aidd plugin install aidd-context        # prompts tools → installs to claude+cursor
+aidd plugin install aidd-dev            # prompts tools → installs to claude+cursor
+# user opens Claude, runs aidd-context init skill → enriches CLAUDE.md/AGENTS.md
+```
+
+### Brownfield (existing project)
+
+```text
+aidd migrate                            # interactive: detects old manifest, plugins, scaffold
+                                        # prompts: confirm marketplace registration
+                                        # rewires bundled plugins → marketplace plugins
+                                        # leaves user-edited memory files alone
+                                        # cleans obsolete framework artifacts
+```
+
+## Responsibilities Split
+
+### CLI
+
+- Manifest creation, tracking, drift detection
+- Marketplace registry (multi-source, trust)
+- Plugin format adaptation (Claude → tool target)
+- Cross-tool sync
+- Tool runtime config management (ships configs as built-in assets)
+- Memory file stub bootstrap
+- Lifecycle commands (install/update/uninstall/restore/sync/status/doctor/clean)
+
+### Framework
+
+- `marketplace.json` registry
+- 4 plugins (aidd-context, aidd-dev, aidd-vcs, aidd-pm) in canonical Claude format
+- Plugin docs (README.md per plugin)
+
+## Decision Log
+
+| # | Decision | Rationale |
+|---|---|---|
+| 1 | Framework = pure marketplace, no tarball with bundled settings | Strict separation of concerns |
+| 2 | Tool runtime configs (settings.json, opencode.json, etc.) = CLI assets | Low-variance infrastructure, ships with CLI release |
+| 3 | Plugins = canonical Claude format, CLI translates to other tools | 4/5 tools native or near-native |
+| 4 | MCP stays in plugins, CLI merges per-tool | Plugin owns its MCP requirements |
+| 5 | Memory files: CLI stub + skill enrichment (Owner C) | Bootstrap immediately, AI enrichment optional |
+| 6 | ide-mapping in aidd-context skill, no CLI dependency | Self-sufficient, no coupling |
+| 7 | Default marketplace pre-registered, override-able (local/remote) | UX simplicity + flexibility |
+| 8 | Plugin install prompts target tools per install (Option B) | Explicit user control |
+| 9 | Keep OpenCode (full adapter complexity accepted) | User base value |
+| 10 | Generated `CATALOG.md` removed; per-plugin README + marketplace.json suffice | Less runtime artifacts |
+| 11 | Rules scaffold removed (10 empty folders) | User-owned, framework shouldn't dictate |
+| 12 | Migration via dedicated interactive `aidd migrate` command | Safe one-shot transition |
+| 13 | `install ai|ide <tool>` verb form kept | Backwards-compatible, clear |
+
+## Open Items (deferred)
+
+- VSCode integration: only IDE tool today; expand later if needed
+- Trust/security model for arbitrary remote marketplaces
+- Plugin versioning across marketplaces (semver, channels)
+- Default marketplace URL final value (likely `github.com/ai-driven-dev/framework`)

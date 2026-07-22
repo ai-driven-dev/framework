@@ -12,6 +12,8 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
+  packages: write
+  id-token: write
 
 jobs:
   commitlint:
@@ -239,3 +241,46 @@ jobs:
           gh release upload "${TAG}" \
             "/tmp/${PLUGIN}-v${VERSION}.zip" \
             --clobber
+
+  publish-cli:
+    name: Publish cli
+    needs: [release-please]
+    if: needs.release-please.outputs.paths_released != '' && contains(fromJSON(needs.release-please.outputs.paths_released), 'cli')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "22"
+      - run: cd cli && pnpm install --frozen-lockfile
+      - run: cd cli && pnpm build
+
+      - name: Publish to GitHub Packages
+        continue-on-error: true
+        working-directory: cli
+        run: |
+          printf '%s\n%s\n' "@ai-driven-dev:registry=https://npm.pkg.github.com" "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > .npmrc
+          pnpm publish --no-git-checks
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Real OIDC trusted publishing (npm CLI >= 11.5.1, Node >= 22.14.0), not a
+      # token — matches the npmjs.com trusted-publisher entry for
+      # ai-driven-dev/framework, workflow ci.yml. No NPM_TOKEN secret needed.
+      # `npm publish`, not `pnpm publish`: pnpm's OIDC support is unverified/
+      # buggy as of this writing (pnpm/pnpm#9812, #11513) — npm's own CLI is
+      # the reference implementation for its own feature.
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+      - name: Publish to npm
+        working-directory: cli
+        run: |
+          rm -f .npmrc
+          npm install -g npm@latest
+          npm publish --access public
