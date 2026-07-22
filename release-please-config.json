@@ -21,7 +21,8 @@
           "path": ".claude-plugin/marketplace.json",
           "jsonpath": "$.version"
         }
-      ]
+      ],
+      "exclude-paths": [".release-please-manifest.json"]
     },
     "plugins/aidd-context": {
       "package-name": "aidd-context",
