@@ -47,7 +47,6 @@ Thumbs.db
 reports/
 .stryker-tmp/
 stryker.log
-.aidd/
 *.local.md
 temp/
 tmp/

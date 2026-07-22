@@ -29,4 +29,6 @@ temp/
 setup-test/
 tmp-test/
 tmp/
+.aidd/manifest.json
+.aidd/marketplaces.json
 .aidd/cache/
