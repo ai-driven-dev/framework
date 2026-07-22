@@ -3,6 +3,8 @@ pre-commit:
   commands:
     json-validity:
       glob: "**/*.json"
+      exclude:
+        - "cli/tests/fixtures/**"
       run: |
         if ! command -v node >/dev/null 2>&1; then
           echo "❌ node not available; cannot validate JSON"
