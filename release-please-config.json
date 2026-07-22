@@ -92,6 +92,10 @@
           "jsonpath": "$.version"
         }
       ]
+    },
+    "cli": {
+      "release-type": "node",
+      "package-name": "@ai-driven-dev/cli"
     }
   }
 }

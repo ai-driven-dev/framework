@@ -1,0 +1,9 @@
+[
+  { "prompt": "Open a pull request", "expect_action": "pull-request" },
+  { "prompt": "/pull-request", "expect_action": "pull-request" },
+  { "prompt": "Create a merge request from this branch", "expect_action": "pull-request" },
+  { "prompt": "Draft a PR for the current branch", "expect_action": "pull-request" },
+  { "prompt": "Commit my changes", "expect_action": null },
+  { "prompt": "Push the current branch", "expect_action": null },
+  { "prompt": "Tag this release v1.2.0", "expect_action": null }
+]

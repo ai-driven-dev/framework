@@ -1,0 +1,12 @@
+{
+  "entry": ["src/cli.ts", "scripts/check-bundle-size.mjs"],
+  "ignore": [
+    "tests/**/helpers.ts",
+    "tests/helpers/**",
+    "tests/fixtures/**",
+    "tmp/**",
+    "src/domain/models/marketplace-entry.ts"
+  ],
+  "ignoreBinaries": ["gh"],
+  "ignoreExportsUsedInFile": true
+}

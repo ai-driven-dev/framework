@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "aidd-test-server": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/server.js",
+      "args": []
+    }
+  }
+}

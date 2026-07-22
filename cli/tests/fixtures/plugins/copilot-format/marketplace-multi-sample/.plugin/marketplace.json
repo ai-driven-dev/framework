@@ -1,0 +1,25 @@
+{
+  "name": "aidd-framework",
+  "metadata": {
+    "description": "Multi-plugin framework for testing",
+    "version": "1.0.0",
+    "pluginRoot": "./plugins"
+  },
+  "owner": {
+    "name": "Test Org"
+  },
+  "plugins": [
+    {
+      "name": "aidd-dev",
+      "source": "aidd-dev",
+      "description": "Development tools plugin",
+      "version": "2.0.0"
+    },
+    {
+      "name": "aidd-pm",
+      "source": "aidd-pm",
+      "description": "Project management plugin",
+      "version": "1.5.0"
+    }
+  ]
+}

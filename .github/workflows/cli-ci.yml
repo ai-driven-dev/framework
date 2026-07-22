@@ -1,0 +1,115 @@
+name: cli CI
+
+# Native path-filtered isolation: this whole workflow is skipped when nothing
+# under cli/ changed — no third-party paths-filter action needed.
+
+on:
+  push:
+    branches: [main, next]
+    paths:
+      - "cli/**"
+  pull_request:
+    paths:
+      - "cli/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  cli-typecheck:
+    name: cli / Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "22"
+      - run: cd cli && pnpm install --frozen-lockfile
+      - run: cd cli && pnpm typecheck
+
+  cli-lint:
+    name: cli / Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "22"
+      - run: cd cli && pnpm install --frozen-lockfile
+      - run: cd cli && pnpm lint
+
+  cli-test:
+    name: cli / Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install expect (TTY persona tests)
+        run: sudo apt-get update && sudo apt-get install -y expect
+      - name: Install pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "22"
+      - run: cd cli && pnpm install --frozen-lockfile
+      - run: cd cli && pnpm test
+
+  cli-build:
+    name: cli / Build & Bundle Budget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "22"
+      - run: cd cli && pnpm install --frozen-lockfile
+      - run: cd cli && pnpm build
+
+  cli-knip:
+    name: cli / Knip (dead code)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "22"
+      - run: cd cli && pnpm install --frozen-lockfile
+      - run: cd cli && pnpm knip:production
+
+  cli-jscpd:
+    name: cli / JSCPD (duplication)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "22"
+      - run: cd cli && pnpm install --frozen-lockfile
+      - run: cd cli && pnpm jscpd

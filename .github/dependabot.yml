@@ -28,3 +28,16 @@ updates:
       include: "scope"
     labels:
       - "dependencies"
+
+  - package-ecosystem: "npm"
+    directory: "cli"
+    target-branch: "next"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
