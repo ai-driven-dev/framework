@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.5.5](https://github.com/ai-driven-dev/framework/compare/v5.5.4...v5.5.5) (2026-07-22)
+
+
+### Bug Fixes
+
+* **release-please:** exclude manifest file from root path tracking ([#497](https://github.com/ai-driven-dev/framework/issues/497)) ([ec50488](https://github.com/ai-driven-dev/framework/commit/ec50488c3a02214224569a61dc590456f4054350))
+
 ## [5.5.4](https://github.com/ai-driven-dev/framework/compare/v5.5.3...v5.5.4) (2026-07-22)
 
 
