@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+.specstory/
+.pnp/
+.pnp.js
+
+# Build output
+dist/
+
+# Test coverage
+coverage/
+
+# Mutation testing
+reports/
+.stryker-tmp/
+stryker.log
+
+# AI conversation history
+.specstory/
+
+# AIDD framework cache (downloaded framework versions)
+
+# Local overrides (e.g. .claude/ralph-loop.local.md)
+*.local.md
+temp/projects/
+temp/
+.claude/worktrees/
+.claude/plugins/
+setup-test/
+tmp-test/
+tmp/
+.aidd/manifest.json
+.aidd/marketplaces.json
+.aidd/cache/

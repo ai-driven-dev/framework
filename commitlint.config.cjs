@@ -24,6 +24,8 @@ module.exports = {
         "refine",
         "orchestrator",
         "ui",
+        // CLI scope
+        "cli",
         // Root scopes (touching marketplace.json or framework-wide config)
         "framework",
         "marketplace",

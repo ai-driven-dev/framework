@@ -1,0 +1,2 @@
+model = "gpt-5"
+approval_policy = "on-request"

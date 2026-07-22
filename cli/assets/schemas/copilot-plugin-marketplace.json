@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "Hand-crafted Copilot-native marketplace schema. Derived empirically from github/awesome-copilot on 2026-05-25. Key evidence files: /.github/plugin/marketplace.json (top-level structure with metadata.pluginRoot), /plugins/ai-team-orchestration/.github/plugin/plugin.json (agents array form, skills array). No published Copilot marketplace JSON schema exists as of this date.",
+  "type": "object",
+  "required": ["name", "metadata", "owner", "plugins"],
+  "additionalProperties": true,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of the marketplace collection."
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["pluginRoot"],
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "pluginRoot": {
+          "type": "string",
+          "description": "Relative path from the marketplace root to the plugins directory (e.g. './plugins')."
+        }
+      }
+    },
+    "owner": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "plugins": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "source", "description", "version"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Plugin identifier — must match the subdirectory name under pluginRoot."
+          },
+          "source": {
+            "type": "string",
+            "description": "Simple subdirectory name resolved against metadata.pluginRoot. No object form for local plugins."
+          },
+          "description": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

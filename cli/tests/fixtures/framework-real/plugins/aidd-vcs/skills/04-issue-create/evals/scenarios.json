@@ -1,0 +1,9 @@
+[
+  { "prompt": "File a bug for the auth flow", "expect_action": "issue-create" },
+  { "prompt": "/issue-create", "expect_action": "issue-create" },
+  { "prompt": "Create an issue: login fails on Safari", "expect_action": "issue-create" },
+  { "prompt": "Open an issue in the tracker for this regression", "expect_action": "issue-create" },
+  { "prompt": "Commit my changes", "expect_action": null },
+  { "prompt": "Open a pull request", "expect_action": null },
+  { "prompt": "Tag this release v1.2.0", "expect_action": null }
+]

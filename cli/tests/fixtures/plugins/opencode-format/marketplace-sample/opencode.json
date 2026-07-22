@@ -1,0 +1,9 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {},
+  "plugin": [
+    "opencode-dev-tools",
+    "@my-org/opencode-testing",
+    ["opencode-minimal", { "debug": true }]
+  ]
+}

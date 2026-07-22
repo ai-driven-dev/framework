@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "aidd-codex-test",
+  "version": "1.0.0",
+  "description": "Codex build target test fixture",
+  "owner": { "name": "Test" },
+  "plugins": [
+    {
+      "name": "aidd-codex-fixture",
+      "version": "1.0.0",
+      "source": "./plugins/aidd-codex-fixture",
+      "description": "Fixture plugin for codex build target tests",
+      "strict": true,
+      "recommended": true
+    }
+  ]
+}

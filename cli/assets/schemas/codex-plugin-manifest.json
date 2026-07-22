@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "Hand-crafted Codex plugin manifest schema. Derived from https://developers.openai.com/codex/plugins/build on 2026-05-26. Required fields: name only. additionalProperties: false to catch unknown keys (regressions surface loud via AJV).",
+  "type": "object",
+  "required": ["name"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Plugin identifier."
+    },
+    "version": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "author": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "email": { "type": "string" },
+            "url": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "homepage": {
+      "type": "string"
+    },
+    "repository": {
+      "type": "string"
+    },
+    "license": {
+      "type": "string"
+    },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "skills": {
+      "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }],
+      "description": "Relative path to the skills directory (string, e.g. './skills' — the form Codex `plugin add` requires) or array of skill-dir paths."
+    },
+    "hooks": {
+      "type": "string",
+      "description": "Relative path to hooks.json."
+    },
+    "mcpServers": {
+      "type": "string",
+      "description": "Relative path to .mcp.json."
+    },
+    "apps": {
+      "type": "string",
+      "description": "Relative path to apps config."
+    },
+    "interface": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Codex interface configuration object."
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "copilot-dev-tools",
+  "description": "Developer tools for Copilot",
+  "version": "2.0.0",
+  "author": {
+    "name": "Copilot Community"
+  },
+  "repository": "https://github.com/example/copilot-dev-tools",
+  "license": "MIT",
+  "keywords": ["copilot", "dev-tools"],
+  "agents": ["./agents"],
+  "skills": ["./skills/debug"]
+}
