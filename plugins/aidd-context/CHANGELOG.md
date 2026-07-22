@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.4.1](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.4.0...aidd-context-v2.4.1) (2026-07-22)
+
+
+### Documentation
+
+* **framework:** reposition readme as agnostic token-optimized framework ([#440](https://github.com/ai-driven-dev/framework/issues/440)) ([cfaf61b](https://github.com/ai-driven-dev/framework/commit/cfaf61ba2933c32b43393b819c9976ba0105ffe3))
+
+
+### Refactoring
+
+* **aidd-context:** action citations use markdown links, not @ ([7661980](https://github.com/ai-driven-dev/framework/commit/766198003bdd18c2f07564dcd8d2762d5c88bba4))
+* **aidd-context:** restructure 10-learn into a 5-action router ([#455](https://github.com/ai-driven-dev/framework/issues/455)) ([8062400](https://github.com/ai-driven-dev/framework/commit/806240058e20b60bd417a23c0ca83829fc159414)), closes [#278](https://github.com/ai-driven-dev/framework/issues/278) [#419](https://github.com/ai-driven-dev/framework/issues/419)
+
 ## [2.4.0](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.3.2...aidd-context-v2.4.0) (2026-07-16)
 
 

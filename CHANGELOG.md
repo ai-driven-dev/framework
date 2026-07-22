@@ -1,5 +1,46 @@
 # Changelog
 
+## [5.5.5](https://github.com/ai-driven-dev/framework/compare/v5.5.4...v5.5.5) (2026-07-22)
+
+
+### Bug Fixes
+
+* **release-please:** exclude manifest file from root path tracking ([#497](https://github.com/ai-driven-dev/framework/issues/497)) ([ec50488](https://github.com/ai-driven-dev/framework/commit/ec50488c3a02214224569a61dc590456f4054350))
+
+## [5.5.4](https://github.com/ai-driven-dev/framework/compare/v5.5.3...v5.5.4) (2026-07-22)
+
+
+### Bug Fixes
+
+* **cli:** restore correct version again after second regression, re-anchor for release-please ([#493](https://github.com/ai-driven-dev/framework/issues/493)) ([22171ed](https://github.com/ai-driven-dev/framework/commit/22171ed8997a28fb695168353b0541401e3272b7))
+
+## [5.5.3](https://github.com/ai-driven-dev/framework/compare/v5.5.2...v5.5.3) (2026-07-22)
+
+
+### Bug Fixes
+
+* **cli:** restore correct version after release-please regression ([#488](https://github.com/ai-driven-dev/framework/issues/488)) ([047bcb2](https://github.com/ai-driven-dev/framework/commit/047bcb29e5729d13dd7d27b0921ecc3cbb7eb9d3))
+
+## [5.5.2](https://github.com/ai-driven-dev/framework/compare/v5.5.1...v5.5.2) (2026-07-22)
+
+
+### Bug Fixes
+
+* **cli:** add license and keywords for the npm package page ([691c1c3](https://github.com/ai-driven-dev/framework/commit/691c1c3d30f572e9f13a83f9997d9780b2205914))
+* **cli:** migrate aidd-cli into framework as cli/, full history preserved ([daeef56](https://github.com/ai-driven-dev/framework/commit/daeef56aa3002142a1f2fbed048769e959ab60fe))
+* **cli:** repoint self-references from aidd-cli to framework ([601c30c](https://github.com/ai-driven-dev/framework/commit/601c30c84d2adb04e3c6327a1a7778a894db3b33))
+
+
+### Documentation
+
+* **framework:** reposition readme as agnostic token-optimized framework ([#440](https://github.com/ai-driven-dev/framework/issues/440)) ([cfaf61b](https://github.com/ai-driven-dev/framework/commit/cfaf61ba2933c32b43393b819c9976ba0105ffe3))
+
+
+### Refactoring
+
+* **aidd-context:** action citations use markdown links, not @ ([7661980](https://github.com/ai-driven-dev/framework/commit/766198003bdd18c2f07564dcd8d2762d5c88bba4))
+* **aidd-context:** restructure 10-learn into a 5-action router ([#455](https://github.com/ai-driven-dev/framework/issues/455)) ([8062400](https://github.com/ai-driven-dev/framework/commit/806240058e20b60bd417a23c0ca83829fc159414)), closes [#278](https://github.com/ai-driven-dev/framework/issues/278) [#419](https://github.com/ai-driven-dev/framework/issues/419)
+
 ## [5.5.1](https://github.com/ai-driven-dev/framework/compare/v5.5.0...v5.5.1) (2026-07-19)
 
 
