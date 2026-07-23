@@ -34,7 +34,7 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 
 ## 💻 aidd-dev
 
-The development SDLC: plan, implement, assert, audit, review, test, refactor, debug, for-sure, todo.
+The development SDLC: plan, implement, assert, audit, review, test, refactor, debug, for-sure, todo. Standalone QA records UI evidence.
 
 | Skill           | Role                                                                       | Actions                                                                         |
 | --------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -49,6 +49,7 @@ The development SDLC: plan, implement, assert, audit, review, test, refactor, de
 | `08-debug`      | Reproduce and fix bugs with a test-driven workflow                         | `01-reproduce`, `02-debug`, `03-reflect-issue`                                   |
 | `09-for-sure`   | Iterative loop that retries until a success condition is met               | `01-init-tracking`, `02-auto-accept`, `03-autonomous-loop`                       |
 | `10-todo`       | Split the prompt into independent todos, run one implementer agent per todo in parallel | `01-todo`                                                            |
+| `11-qa`         | Run post-review UI QA and save reviewer evidence                           | `01-load-scope`, `02-choose-video`, `03-run-scope`, `04-save-evidence`, `05-offer-pr-upload` |
 
 ## 📋 aidd-pm
 

@@ -20,6 +20,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/08-debug`](#skills08-debug)
   - [`skills/09-for-sure`](#skills09-for-sure)
   - [`skills/10-todo`](#skills10-todo)
+  - [`skills/11-qa`](#skills11-qa)
 
 ---
 
@@ -155,4 +156,17 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-todo.md](skills/10-todo/actions/01-todo.md) | - |
 | `-` | [SKILL.md](skills/10-todo/SKILL.md) | `Split the user prompt into independent todos and run one executor agent per todo in parallel, then report a minimal table. Use when the user says "todo" or asks to fan out a multi-part request into parallel implementations.` |
+
+#### `skills/11-qa`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-load-scope.md](skills/11-qa/actions/01-load-scope.md) | - |
+| `actions` | [02-choose-video.md](skills/11-qa/actions/02-choose-video.md) | - |
+| `actions` | [03-run-scope.md](skills/11-qa/actions/03-run-scope.md) | - |
+| `actions` | [04-save-evidence.md](skills/11-qa/actions/04-save-evidence.md) | - |
+| `actions` | [05-offer-pr-upload.md](skills/11-qa/actions/05-offer-pr-upload.md) | - |
+| `assets` | [save-evidence-qa-report-template.md](skills/11-qa/assets/save-evidence-qa-report-template.md) | - |
+| `references` | [run-scope-playwright-cli.md](skills/11-qa/references/run-scope-playwright-cli.md) | - |
+| `-` | [SKILL.md](skills/11-qa/SKILL.md) | `Run post-review QA for a planned UI feature and produce reviewer evidence. Use when the user wants to validate a happy path, exercise edge cases, record QA video, or prepare QA evidence for a pull request. Not for writing automated tests, reviewing a diff, or fixing the application.` |
 
