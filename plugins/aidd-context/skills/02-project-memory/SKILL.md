@@ -1,7 +1,7 @@
 ---
 name: 02-project-memory
 description: Build the project's memory of its architecture, conventions, and decisions, and wire it into the tools you use. Use to set up or refresh project memory. Not for editing one existing memory file.
-argument-hint: setup | refresh | rewire
+argument-hint: setup | refresh | rewire | test
 ---
 
 # Project Memory
@@ -10,17 +10,19 @@ argument-hint: setup | refresh | rewire
 flowchart LR
   build([setup or refresh]) --> scan --> generate --> sync
   rewire([rewire only]) --> sync
+  test([test communication]) --> evaluate
 ```
 
 ## Actions
 
-Run the flow above. No argument, `setup`, or `refresh` starts at scan. `rewire` runs sync alone. Read an action's file in `actions/` before running it.
+Run the flow above. No argument, `setup`, or `refresh` starts at scan. `rewire` runs sync alone. `test` runs evaluate alone. Read an action's file in `actions/` before running it.
 
-| Action   | Does                       |
-| -------- | -------------------------- |
-| scan     | read the project           |
-| generate | write the memory           |
-| sync     | pick the tools, wire it in |
+| Action   | Does                                               |
+| -------- | -------------------------------------------------- |
+| scan     | read the project                                   |
+| generate | write the memory                                   |
+| sync     | pick the tools, wire it in                         |
+| evaluate | test the communication contract in fresh context  |
 
 ## Transversal rules
 
