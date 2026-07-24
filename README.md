@@ -100,13 +100,16 @@ Same plugin names as Claude Code.
 
 Download your tool's bundle from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest), then follow its steps:
 
+> [!NOTE]
+> Installing the framework host-wide for several tools can make the same command appear more than once in a tool's list (e.g. Cursor shows duplicate commands). This happens when one tool reads another tool's settings, and is harmless. In Cursor, disable **Include Third-Party Plugins, Skills, and Other Configs** under **Settings → Rules, Skills, Subagents** to hide the duplicates.
+
 <details>
 <summary><strong>Cursor</strong></summary>
 
 **Marketplace**
 
 1. Unzip the `cursor-marketplace` archive.
-2. Copy the plugins, then reload (**Developer → Reload Window**):
+2. Copy the plugins (Cursor reloads them automatically):
 
 ```bash
 cp -r plugins/aidd-* ~/.cursor/plugins/local/
