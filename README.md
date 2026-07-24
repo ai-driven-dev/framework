@@ -16,7 +16,7 @@
 ## Agentic framework for software engineers to produce 100% quality code with IA, agonistically.
 
 <p>
-  <!--counts:start--><kbd>7 plugins</kbd> · <kbd>40 skills</kbd> · <kbd>2 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
+  <!--counts:start--><kbd>7 plugins</kbd> · <kbd>41 skills</kbd> · <kbd>2 agents</kbd><!--counts:end--> · <kbd>MIT</kbd>
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -229,9 +229,9 @@ Project init, memory bank, context-artifact generation, diagrams, learning, expl
 
 ### ⚙️ [aidd-dev](plugins/aidd-dev/README.md)
 
-`11 skills` · stable
+`12 skills` · stable
 
-SDLC loop: plan, implement, assert, audit, review, test, refactor, debug.
+SDLC loop: plan, implement, assert, audit, review, test, refactor, debug. Standalone QA records short UI evidence.
 
 </td>
 <td width="33%" valign="top">
