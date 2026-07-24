@@ -75,6 +75,7 @@ import { StatusUseCase } from "../application/use-cases/status-use-case.js";
 import { SyncConflictResolverUseCase } from "../application/use-cases/sync/sync-conflict-resolver-use-case.js";
 import { UninstallIdeUseCase } from "../application/use-cases/uninstall/uninstall-ide-use-case.js";
 import { UninstallUseCase } from "../application/use-cases/uninstall/uninstall-use-case.js";
+import type { FrameworkBuildTarget } from "../domain/models/framework-build.js";
 import type { AssetProvider } from "../domain/ports/asset-provider.js";
 import type { CredentialStore } from "../domain/ports/credential-store.js";
 import type { FileMerger } from "../domain/ports/file-merger.js";
@@ -335,6 +336,13 @@ const FRAMEWORK_BUILD_REGISTRY: Record<string, FrameworkBuildFactory> = {
         )
     ),
 };
+
+/** Every target with at least one supported build mode — derived so it can't drift from the registry. */
+export const SUPPORTED_BUILD_TARGETS: readonly FrameworkBuildTarget[] = [
+  ...new Set(
+    Object.keys(FRAMEWORK_BUILD_REGISTRY).map((key) => key.split(":")[0] as FrameworkBuildTarget)
+  ),
+];
 
 export function createFrameworkBuildUseCase(
   deps: FrameworkBuildDeps,

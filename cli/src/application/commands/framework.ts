@@ -4,11 +4,13 @@ import type {
   FrameworkBuildMode,
   FrameworkBuildTarget,
 } from "../../domain/models/framework-build.js";
-import { createDeps, createFrameworkBuildUseCase } from "../../infrastructure/deps.js";
+import {
+  createDeps,
+  createFrameworkBuildUseCase,
+  SUPPORTED_BUILD_TARGETS,
+} from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
-
-const SUPPORTED_TARGETS: readonly string[] = ["claude", "cursor", "copilot", "codex", "opencode"];
 
 export function registerFrameworkCommand(program: Command): void {
   const framework = program
@@ -36,9 +38,9 @@ export function registerFrameworkCommand(program: Command): void {
         const { verbose, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
 
-        if (!SUPPORTED_TARGETS.includes(cmdOptions.target)) {
+        if (!(SUPPORTED_BUILD_TARGETS as readonly string[]).includes(cmdOptions.target)) {
           output.error(
-            `Unsupported target '${cmdOptions.target}'. Supported targets: ${SUPPORTED_TARGETS.join(", ")}.`
+            `Unsupported target '${cmdOptions.target}'. Supported targets: ${SUPPORTED_BUILD_TARGETS.join(", ")}.`
           );
           process.exit(1);
         }
