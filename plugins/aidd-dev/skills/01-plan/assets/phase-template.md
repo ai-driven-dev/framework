@@ -23,27 +23,16 @@ flowchart TD
 
 ## Test Scope
 
-<!-- UI phase only. Define the happy path and edge cases as Mermaid user journeys. Every task states `action => observable expected outcome`; every edge case also names its trigger. No UI => omit the section. -->
-
-### Happy Path
+<!-- Required for every phase. Define the happy path and edge cases in one Mermaid user journey. Every task states `action => observable expected outcome`; every edge case also names its trigger. -->
 
 ```mermaid
 ---
-title: Happy path
+title: Test scope
 ---
 journey
-  section {journey stage}
+  section Happy path
     {action} => {observable expected outcome}: 5: {actor}
-```
-
-### Edge Cases
-
-```mermaid
----
-title: Edge cases
----
-journey
-  section {edge-case scenario}
+  section Edge case - {scenario}
     {trigger} => {action} => {observable expected outcome}: 1: {actor}
 ```
 
