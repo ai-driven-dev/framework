@@ -1,14 +1,11 @@
 import { resolve } from "node:path";
 import type { Command } from "commander";
-import type {
-  FrameworkBuildMode,
-  FrameworkBuildTarget,
-} from "../../domain/models/framework-build.js";
 import {
-  createDeps,
-  createFrameworkBuildUseCase,
+  type FrameworkBuildMode,
+  type FrameworkBuildTarget,
   SUPPORTED_BUILD_TARGETS,
-} from "../../infrastructure/deps.js";
+} from "../../domain/models/framework-build.js";
+import { createDeps, createFrameworkBuildUseCase } from "../../infrastructure/deps.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
 

@@ -10,31 +10,34 @@ status: done
 
 ```txt
 .
-└── cli/src/
-    ├── infrastructure/deps.ts        ✏️ modify (export SUPPORTED_BUILD_TARGETS)
-    └── application/commands/
-        └── framework.ts               ✏️ modify (import it, drop the hand-copied array)
+└── cli/
+    ├── src/
+    │   ├── domain/models/framework-build.ts    ✏️ modify (add FRAMEWORK_BUILD_TARGET_MODES + SUPPORTED_BUILD_TARGETS)
+    │   ├── infrastructure/deps.ts               ✏️ modify (drop the export added then reverted — see plan.md)
+    │   └── application/commands/
+    │       └── framework.ts                     ✏️ modify (import from domain, not infrastructure)
+    └── tests/infrastructure/
+        └── framework-build-registry.unit.test.ts  ✅ create (registry ↔ domain list drift guard)
 ```
+
+> Revised after review feedback — see plan.md's Decisions for why the target list moved to `domain/` instead of staying in `deps.ts`.
 
 ## Tasks to do
 
-### `1)` Export a derived target list from `deps.ts`
+### `1)` Add the canonical target/mode list to domain
 
-1. Right after `FRAMEWORK_BUILD_REGISTRY`'s declaration (`deps.ts:240-337`), add:
-   ```ts
-   export const SUPPORTED_BUILD_TARGETS: readonly FrameworkBuildTarget[] = [
-     ...new Set(
-       Object.keys(FRAMEWORK_BUILD_REGISTRY).map((key) => key.split(":")[0] as FrameworkBuildTarget)
-     ),
-   ];
-   ```
-   (`FrameworkBuildTarget` is already imported in `deps.ts` — confirm, add the import if not.)
+1. In `domain/models/framework-build.ts`, add `FRAMEWORK_BUILD_TARGET_MODES` (the 9 known pairs, pure data) and `SUPPORTED_BUILD_TARGETS` (derived from it) — no imports beyond what the file already has.
 
-### `2)` Use it in `framework.ts`
+### `2)` Use it in `framework.ts`, remove the `deps.ts` detour
 
 1. Delete the hand-copied `const SUPPORTED_TARGETS: readonly string[] = [...]` (`framework.ts:11`).
-2. Import `SUPPORTED_BUILD_TARGETS` from `../../infrastructure/deps.js` instead.
-3. Update the two usages (`framework.ts:39,41`) to the new name — behavior identical, just sourced from the registry.
+2. Import `SUPPORTED_BUILD_TARGETS` from `../../domain/models/framework-build.js`.
+3. Update the two usages (`framework.ts:39,41`) — behavior identical, sourced from domain.
+4. Remove the (short-lived) `SUPPORTED_BUILD_TARGETS` export from `deps.ts` and its now-unused `FrameworkBuildTarget` import.
+
+### `3)` Guard against the registry and the domain list silently diverging
+
+1. Add `tests/infrastructure/framework-build-registry.unit.test.ts`: for the full cartesian product of targets × modes, assert `createFrameworkBuildUseCase(...)` is defined exactly for the pairs `FRAMEWORK_BUILD_TARGET_MODES` lists, and undefined for every other pair.
 
 ## Test acceptance criteria
 
@@ -42,4 +45,5 @@ status: done
 | ---- | ------------------------------------------------------------------------------------------------------------------------- |
 | 1, 2 | `aidd framework build --target <unknown>` still fails with the same clear error message as before. |
 | 1, 2 | `aidd framework build --target <known> [--flat]` still works for all 9 existing target:mode combinations, identical output to before. |
-| all  | `tsc --noEmit` clean, existing framework-build tests (unit + e2e) pass with zero assertion changes. |
+| 3    | The new test fails if `deps.ts`'s `FRAMEWORK_BUILD_REGISTRY` ever adds or drops a key without updating `FRAMEWORK_BUILD_TARGET_MODES` to match, in either direction. |
+| all  | `grep -rn "application/\|infrastructure/" src/domain/` finds nothing — domain still imports from neither. `tsc --noEmit` clean, full test suite passes. |
