@@ -1,29 +1,28 @@
 ---
 name: 11-qa
-description: Run post-review QA for a planned UI feature and produce reviewer evidence. Use when the user wants to validate a happy path, exercise edge cases, record QA video, or prepare QA evidence for a pull request. Not for writing automated tests, reviewing a diff, or fixing the application.
-argument-hint: load-scope | choose-video | run-scope | save-evidence | offer-pr-upload
+description: Run post-review browser QA and produce short named videos for a locked happy path and sourced edge cases. Use when the user wants concise reviewer evidence for a UI feature. Not for writing automated tests, reviewing a diff, or fixing the application.
+argument-hint: load-scope | prepare-run | run-scenarios
 ---
 
 # QA
 
-Validate a reviewed UI feature through its planned test scope and produce evidence for reviewers.
+```mermaid
+flowchart LR
+  scope["load-scope"] --> prepare["prepare-run"] --> run["run-scenarios"]
+```
 
 ## Actions
 
-| #   | Action            | Role                                                     | Input                         |
-| --- | ----------------- | -------------------------------------------------------- | ----------------------------- |
-| 01  | `load-scope`      | Load and show the planned happy path and edge cases     | plan path                     |
-| 02  | `choose-video`    | Confirm happy-path or full-scope video coverage         | displayed QA scope            |
-| 03  | `run-scope`       | Execute every confirmed scenario and record its verdict | scope and video choice        |
-| 04  | `save-evidence`   | Save QA media and the report in the feature folder      | execution results             |
-| 05  | `offer-pr-upload` | Offer to add the main video to an existing pull request | saved evidence and pull request |
+Read only the next action's file before running it.
 
-Run `01 → 02 → 03 → 04 → 05` for a QA run. Run `05` alone only when saved QA evidence and an existing pull request are supplied. Run each action's Test before the next.
-Before running an action, read its file in `actions/`, not only the table or assets.
+| #   | Action          | Does                                                       |
+| --- | --------------- | ---------------------------------------------------------- |
+| 01  | `load-scope`    | Lock one happy path and a bounded set of sourced edge cases |
+| 02  | `prepare-run`   | Resolve the shortest deterministic path to executable runs |
+| 03  | `run-scenarios` | Record, normalize, verify, reset, and report every scenario |
 
 ## Transversal rules
 
-- Run against a reviewed change. A failed scenario returns findings to the implementation loop. It never patches the application.
-- Take the happy path and edge cases only from the plan's test scope. Propose additional edge cases only for the user to confirm.
-- Save all evidence in the feature folder beside the plan and phases.
-- An external pull request update requires an existing request and the user's approval.
+- Run against a reviewed change and never patch the application.
+- Never spawn agents. Batch independent reads and tool checks, but keep state-changing browser work sequential.
+- Do not narrate action transitions, searches, fixtures, selectors, or successful checks. Report only a blocker, a required decision, or the final verdict and paths.

@@ -162,11 +162,9 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description |
 |-------|------|---|
 | `actions` | [01-load-scope.md](skills/11-qa/actions/01-load-scope.md) | - |
-| `actions` | [02-choose-video.md](skills/11-qa/actions/02-choose-video.md) | - |
-| `actions` | [03-run-scope.md](skills/11-qa/actions/03-run-scope.md) | - |
-| `actions` | [04-save-evidence.md](skills/11-qa/actions/04-save-evidence.md) | - |
-| `actions` | [05-offer-pr-upload.md](skills/11-qa/actions/05-offer-pr-upload.md) | - |
-| `assets` | [save-evidence-qa-report-template.md](skills/11-qa/assets/save-evidence-qa-report-template.md) | - |
+| `actions` | [02-prepare-run.md](skills/11-qa/actions/02-prepare-run.md) | - |
+| `actions` | [03-run-scenarios.md](skills/11-qa/actions/03-run-scenarios.md) | - |
+| `assets` | [qa-report-template.md](skills/11-qa/assets/qa-report-template.md) | - |
 | `references` | [run-scope-playwright-cli.md](skills/11-qa/references/run-scope-playwright-cli.md) | - |
-| `-` | [SKILL.md](skills/11-qa/SKILL.md) | `Run post-review QA for a planned UI feature and produce reviewer evidence. Use when the user wants to validate a happy path, exercise edge cases, record QA video, or prepare QA evidence for a pull request. Not for writing automated tests, reviewing a diff, or fixing the application.` |
+| `-` | [SKILL.md](skills/11-qa/SKILL.md) | `Run post-review browser QA and produce short named videos for a locked happy path and sourced edge cases. Use when the user wants concise reviewer evidence for a UI feature. Not for writing automated tests, reviewing a diff, or fixing the application.` |
 

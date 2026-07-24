@@ -231,7 +231,7 @@ Project init, memory bank, context-artifact generation, diagrams, learning, expl
 
 `12 skills` · stable
 
-SDLC loop: plan, implement, assert, audit, review, test, refactor, debug. Standalone QA records UI evidence.
+SDLC loop: plan, implement, assert, audit, review, test, refactor, debug. Standalone QA records short UI evidence.
 
 </td>
 <td width="33%" valign="top">

@@ -1,23 +1,31 @@
 # 01 - Load Scope
 
-Load the planned QA scope and show it to the user before execution.
+Lock the smallest defensible browser QA scope before execution.
 
 ## Input
 
-The feature folder or plan path.
+The user request, plus a feature folder, plan path, or implementation artifact.
 
 ## Output
 
-A QA scope table with one happy path, planned edge cases, proposed edge cases, and expected outcomes.
+One locked happy path, a bounded set of sourced edge cases, a source label, and a resolved evidence folder.
 
 ## Process
 
-1. **Resolve.** Find the feature folder, its plan, and its phase files.
-2. **Read.** Extract the happy path, edge cases, and expected outcomes from the test scope.
-3. **Propose.** Identify additional observable edge cases from untested boundaries or failures in the planned behavior. Label each as proposed and name its source.
-4. **Show.** Display one table covering the happy path and every edge case. Ask the user to confirm the scenarios that will run.
-5. **Stop.** Return a scope gap when the plan has no ordered happy path with expected outcomes. Never invent execution steps.
+1. **Resolve.** Resolve the exact requested feature and batch-read its plan plus directly referenced implementation artifacts.
+2. **Lock.** Lock one happy path from the explicit user journey, then the plan Test Scope, then observable acceptance criteria in the implementation artifact. Ask one concise question only when those sources conflict or expose multiple journeys.
+3. **Collect.** Include every planned edge case. Collect candidates from explicit validation, error, empty-state, permission, boundary, or recovery branches already visible in the implementation artifact. Search directly related tests only when the plan contains no edge case.
+4. **Bound.** Deduplicate candidates against planned edges. Keep at most three proposed edges, ranked by user impact, browser observability, determinism, and proximity to the requested journey.
+5. **Decide.** Automatically include a proposed edge only when it is deterministic, browser-observable, in scope, and non-destructive. Require a decision only for an external or destructive action.
+6. **Validate.** Reject a scenario without a source, trigger, observable outcome, or executable teardown when it changes state.
+7. **Locate.** Use the existing AIDD feature folder when the source belongs to one. Otherwise use `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slug>/`.
+8. **Show.** Emit `Happy path: locked (<source>)` and one compact `Edge case | Source | Decision` table. Do not repeat scenario steps.
 
 ## Test
 
-- The QA scope contains one ordered happy path and zero or more named edge cases with expected outcomes.
+- Exactly one happy path is locked with a source and observable outcome.
+- Every planned edge case is included.
+- At most three proposed edges remain; each has a distinct source, trigger, observable outcome, and decision.
+- Every state-changing scenario has an executable teardown or reset.
+- The source label and evidence folder are resolved whether the source is a plan, implementation artifact, or user request.
+- The user-facing output contains one lock line and one edge-case table only.

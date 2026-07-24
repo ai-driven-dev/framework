@@ -8,7 +8,7 @@ Code transformation plugin for the AI-Driven Development framework.
 
 First time? Install with `/plugin install aidd-dev@aidd-framework`, then run `aidd-dev:00-sdlc`.
 
-Covers the full SDLC coding loop: orchestrator, planning, implementation, assertions, audits, code review, testing, refactoring, debugging, for-sure, and parallel todo fan-out. Standalone QA records UI evidence. Also hosts AI agents.
+Covers the full SDLC coding loop: orchestrator, planning, implementation, assertions, audits, code review, testing, refactoring, debugging, for-sure, and parallel todo fan-out. Standalone QA records short UI evidence. Also hosts AI agents.
 
 ## Skills
 
@@ -25,7 +25,7 @@ Covers the full SDLC coding loop: orchestrator, planning, implementation, assert
 | [2.8] | [debug](skills/08-debug/SKILL.md) | Reproduce and fix bugs systematically using test-driven workflow, root cause analysis, and hypothesis validation. |
 | [2.9] | [for-sure](skills/09-for-sure/SKILL.md) | Iterative agent loop that tracks attempts and retries until a success condition is met. |
 | [2.10] | [todo](skills/10-todo/SKILL.md) | Split the prompt into independent todos, run one executor agent per todo in parallel, then report a minimal table. |
-| [2.11] | [qa](skills/11-qa/SKILL.md) | Run post-review UI QA from the planned happy path and edge cases, then save reviewer evidence. |
+| [2.11] | [qa](skills/11-qa/SKILL.md) | Record one short named video for a locked happy path and each sourced edge case. |
 
 ## Agents
 

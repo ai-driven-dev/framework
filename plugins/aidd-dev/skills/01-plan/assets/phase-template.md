@@ -23,17 +23,21 @@ flowchart TD
 
 ## Test Scope
 
-<!-- Required for every phase. Define the happy path and edge cases in one Mermaid user journey. Every task states `action => observable expected outcome`; every edge case also names its trigger. -->
+<!-- Required for every phase. Define deterministic setup, happy path, edge cases, and teardown in one Mermaid journey. Every scenario task states `action => observable expected outcome`; every edge case also names its trigger. Omit Teardown only when no scenario changes state. -->
 
 ```mermaid
 ---
 title: Test scope
 ---
 journey
+  section Setup
+    {deterministic precondition or fixture} => {ready state}: 5: {actor}
   section Happy path
     {action} => {observable expected outcome}: 5: {actor}
   section Edge case - {scenario}
     {trigger} => {action} => {observable expected outcome}: 1: {actor}
+  section Teardown
+    {cleanup or reset action} => {baseline restored}: 5: {actor}
 ```
 
 ## Wireframe
