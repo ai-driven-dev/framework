@@ -4,7 +4,7 @@ Execute every confirmed QA scenario and record actual behavior.
 
 ## Input
 
-The confirmed QA scope, the application URL, the recording choice, and a pinned Playwright CLI version.
+The confirmed QA scope, the application URL, and the recording choice.
 
 ## Output
 

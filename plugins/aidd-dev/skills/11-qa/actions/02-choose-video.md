@@ -14,7 +14,6 @@ One confirmed video coverage choice: `happy-path` for the happy path only, or `f
 
 1. **Present.** Show the `happy-path` and `full-scope` recording choices and name the scenarios each includes.
 2. **Confirm.** Ask the user to choose `happy-path` or `full-scope`.
-3. **Record.** Carry the confirmed choice into execution. Do not start browser recording before the choice is known.
 
 ## Test
 

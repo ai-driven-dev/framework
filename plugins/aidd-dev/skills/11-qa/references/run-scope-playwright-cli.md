@@ -4,7 +4,7 @@ Run browser QA through the Playwright Agent CLI. It produces human-viewable WebM
 
 ## Invocation
 
-Use the exact package version supplied to the QA run. The current framework pin is `0.1.17`.
+Use the framework pin below. The current version is `0.1.17`.
 
 ```bash
 npx --yes @playwright/cli@0.1.17 -s=qa-<run-id> <command>
