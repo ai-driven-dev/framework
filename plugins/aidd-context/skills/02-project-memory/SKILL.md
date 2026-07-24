@@ -22,7 +22,7 @@ Run the flow above. No argument, `setup`, or `refresh` starts at scan. `rewire` 
 | scan     | read the project                                   |
 | generate | write the memory                                   |
 | sync     | pick the tools, wire it in                         |
-| evaluate | test the communication contract in fresh context  |
+| evaluate | run one communication prompt for user judgment    |
 
 ## Transversal rules
 
