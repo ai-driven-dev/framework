@@ -18,7 +18,8 @@ A plugin carries six artifact kinds: `skills`, `agents`, `mcp`, `hooks`, `rules`
 contract exposes ONE `ArtifactContract` per kind — never a kind-specific field (no
 `transformAgent`). Each kind is either:
 
-- `{ supported: false }` → warn-and-skip (no native concept in this tool), or
+- `{ supported: false, skipReason? }` → warn-and-skip (no native concept in this tool). `skipReason`
+  replaces the default parenthetical when the tool has hooks in another format rather than none, or
 - `{ supported: true, source, path, ext?, transform?, merge?, mergeDest?, mcpServersKey?, hooksMerge?, hooksMergeDest? }`.
 
 The orchestrators contain **zero** `if (tool === …)` and **zero** `if (kind === "agents")`
@@ -29,6 +30,7 @@ field to the contract — never a branch in an orchestrator.
 
 | Field | Role |
 |---|---|
+| `skipReason?` | on `{ supported: false }` only: parenthetical in the skip warning; default is `hooks not supported for this target` |
 | `source` | where input files come from: `filteredTree` (e.g. agents `.md`), `fullTree` (skills), `configFile` (mcp `.mcp.json`), `hooksBundle` (hooks.json + scripts) |
 | `path(plugin, relPath)` | output path for one file — reuse the profile's own `buildInstallPath`; the orchestrator adds the per-plugin namespace in flat mode |
 | `ext?` | output extension override (e.g. `.agent.md`, `.toml`); absent means preserve source ext |

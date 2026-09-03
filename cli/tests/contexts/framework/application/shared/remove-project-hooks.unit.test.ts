@@ -1,4 +1,5 @@
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../../../src/contexts/tools/domain/profiles/mistral/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { createHash } from "node:crypto";
 import { join } from "node:path";

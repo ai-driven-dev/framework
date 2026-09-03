@@ -12,7 +12,7 @@ export type ArtifactSource =
   | { readonly kind: "hooksBundle"; readonly jsonPath: string; readonly scriptDir: string };
 
 export type ArtifactContract =
-  | { readonly supported: false }
+  | { readonly supported: false; readonly skipReason?: string }
   | {
       readonly supported: true;
       readonly source: ArtifactSource;

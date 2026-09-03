@@ -242,6 +242,20 @@
         "cache_read_tokens": 2000,
         "cache_creation_tokens": 0
       }
+    },
+    {
+      "tool": "mistral",
+      "coverage": "not-covered",
+      "reason": "Vibe has no local session transcript AIDD can read.",
+      "capability": {
+        "local_read": null,
+        "export": null,
+        "journal_attributable": false,
+        "task_attributable": false
+      },
+      "totals": {
+        "requests": 0
+      }
     }
   ],
   "by_project": [

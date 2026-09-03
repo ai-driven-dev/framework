@@ -3,6 +3,7 @@ import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/mistral/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { InitUseCase } from "../../../../src/contexts/framework/application/init-use-case.js";

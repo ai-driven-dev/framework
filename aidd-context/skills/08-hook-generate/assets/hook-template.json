@@ -1,0 +1,10 @@
+{
+  "<EventName>": [
+    {
+      "matcher": "<pattern, or drop this line for match-all>",
+      "hooks": [
+        { "type": "command", "command": "<absolute path or ${VAR} to the script>" }
+      ]
+    }
+  ]
+}

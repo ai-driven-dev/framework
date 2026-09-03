@@ -19,8 +19,16 @@ const SNAPSHOT_FILE = join(ROOT, "tests/golden/snapshots/framework-build/golden.
 type TargetSnapshot = Record<string, string>; // rel-path → sha256
 type GoldenSnapshot = Record<string, TargetSnapshot>; // key → files
 
-const MARKETPLACE_TARGETS = ["copilot", "codex", "claude", "cursor"] as const;
-const FLAT_TARGETS = ["claude", "cursor", "copilot", "codex", "opencode", "kilo"] as const;
+const MARKETPLACE_TARGETS = ["copilot", "codex", "claude", "cursor", "mistral"] as const;
+const FLAT_TARGETS = [
+  "claude",
+  "cursor",
+  "copilot",
+  "codex",
+  "opencode",
+  "kilo",
+  "mistral",
+] as const;
 
 const FROZEN_CELLS = new Set<string>([
   ...MARKETPLACE_TARGETS,

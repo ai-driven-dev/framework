@@ -9,6 +9,7 @@ import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/mistral/profile.js";
 import {
   buildCostReport,
   type CostReport,

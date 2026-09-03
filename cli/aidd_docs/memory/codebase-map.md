@@ -53,6 +53,7 @@ src/
 │   │   │       ├── copilot/
 │   │   │       ├── cursor/
 │   │   │       ├── kilo/
+│   │   │       ├── mistral/
 │   │   │       ├── opencode/
 │   │   │       └── vscode/
 │   │   └── infrastructure/

@@ -12,6 +12,7 @@ import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 // AI_TOOL_IDS entry, so every profile must be registered here too.
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/mistral/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { CleanUseCase } from "../../../../src/contexts/framework/application/clean-use-case.js";

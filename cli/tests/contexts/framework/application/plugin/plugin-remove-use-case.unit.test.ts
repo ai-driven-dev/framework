@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../../../src/contexts/tools/domain/profiles/mistral/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";

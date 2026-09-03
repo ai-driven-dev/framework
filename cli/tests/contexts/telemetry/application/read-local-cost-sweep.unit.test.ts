@@ -5,6 +5,7 @@ import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/mistral/profile.js";
 import {
   type LocalCostToolReport,
   ReadLocalCostUseCase,
@@ -79,6 +80,15 @@ const KILO_NOT_COVERED: LocalCostToolReport = {
   recordsStored: 0,
   sessionsFailed: 0,
   reason: "Kilo OpenTelemetry is experimental and not yet supported by AIDD.",
+};
+
+const MISTRAL_NOT_COVERED: LocalCostToolReport = {
+  tool: "mistral",
+  status: "not-covered",
+  recordsFound: 0,
+  recordsStored: 0,
+  sessionsFailed: 0,
+  reason: "Vibe has no local session transcript AIDD can read.",
 };
 
 function sessionJournal(vendorId: string, host = "claude-code"): RunJournal {
@@ -179,6 +189,7 @@ describe("which sessions a sweep reads", () => {
         notAsked("opencode"),
         notAsked("kilo"),
         notAsked("codex"),
+        notAsked("mistral"),
       ],
     });
   });
@@ -205,6 +216,7 @@ describe("which sessions a sweep reads", () => {
         notAsked("opencode"),
         notAsked("kilo"),
         notAsked("codex"),
+        notAsked("mistral"),
       ],
       refusedReason:
         "measurement is refused — AIDD_TELEMETRY=0 or the project switch is off; nothing read, " +
@@ -230,6 +242,7 @@ describe("one session's answers, tool by tool", () => {
           notAsked("opencode"),
           KILO_NOT_COVERED,
           notAsked("codex"),
+          MISTRAL_NOT_COVERED,
         ],
       },
     ]);

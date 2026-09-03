@@ -66,11 +66,11 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/contexts/tools/domain/capabilities/config-refs.ts", named: 1 },
   { path: "src/contexts/tools/domain/capabilities/plugins-capability.ts", named: 3 },
   { path: "src/presentation/commands/setup.ts", named: 2 },
-  { path: "src/presentation/commands/translate.ts", named: 6 },
-  { path: "src/presentation/prompts/menu-use-case.ts", named: 7 },
-  { path: "src/runtime/assets/asset-loader.ts", named: 7 },
+  { path: "src/presentation/commands/translate.ts", named: 7 },
+  { path: "src/presentation/prompts/menu-use-case.ts", named: 8 },
+  { path: "src/runtime/assets/asset-loader.ts", named: 8 },
   { path: "src/runtime/wiring/framework.ts", named: 7 },
-  { path: "src/runtime/wiring/tools.ts", named: 7 },
+  { path: "src/runtime/wiring/tools.ts", named: 8 },
   { path: "src/runtime/wiring/translate.ts", named: 7 },
   // A profile cannot name the adapter reading its transcripts without putting infrastructure
   // in the domain, so the tool-to-reader map lives at the composition root instead.

@@ -41,6 +41,18 @@ describe("parseFrontmatter()", () => {
     const { frontmatter } = parseFrontmatter(content);
     expect(frontmatter.name).toBe("my agent");
   });
+
+  it("parses CRLF frontmatter keys that a LF-only regex would drop", () => {
+    const content =
+      "---\r\nname: 03-assert\r\ndescription: iterating the project's assertions\r\nargument-hint: work | scope\r\n---\r\n# Skill\r\n";
+    const { frontmatter, body } = parseFrontmatter(content);
+    expect(frontmatter).toEqual({
+      name: "03-assert",
+      description: "iterating the project's assertions",
+      "argument-hint": "work | scope",
+    });
+    expect(body).toBe("# Skill\n");
+  });
 });
 
 describe("serializeFrontmatter()", () => {

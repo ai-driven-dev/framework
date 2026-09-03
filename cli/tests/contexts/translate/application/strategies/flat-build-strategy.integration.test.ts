@@ -1,11 +1,14 @@
-import { basename, resolve } from "node:path";
-import { beforeEach, describe, expect, it } from "vitest";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { basename, join, resolve } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type {
   ArtifactContract,
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/domain/build-contract.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/tools/domain/ports/schema-validator.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
+import { buildMistralFlatContract } from "../../../../../src/contexts/tools/domain/profiles/mistral/build.js";
 import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
 import { FrameworkBuildUseCase } from "../../../../../src/contexts/translate/application/translate-source.js";
@@ -17,6 +20,8 @@ import {
   OutDirNotDirectoryError,
 } from "../../../../../src/kernel/errors.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
+import { FileAdapter } from "../../../../../src/runtime/filesystem/file-adapter.js";
+import { HasherAdapter } from "../../../../../src/runtime/filesystem/hasher-adapter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
@@ -398,6 +403,166 @@ describe("FlatOutputStrategy integration", () => {
         .listAll()
         .filter((p) => p.startsWith(ABS_OUT) && p.includes("hooks"));
       expect(hooksFiles).toHaveLength(0);
+    });
+  });
+
+  describe("mistral flat skills layout", () => {
+    it("maps a skill entry to .vibe/skills/<plugin>-<name>/SKILL.md instead of nested skill/skill.md", () => {
+      const skills = buildMistralFlatContract().artifacts.skills;
+      expect(skills.supported).toBe(true);
+      if (!skills.supported) return;
+      expect(skills.path("aidd-dev", "skills/01-plan/SKILL.md")).toBe(
+        ".vibe/skills/aidd-dev-01-plan/SKILL.md"
+      );
+      expect(skills.path("aidd-dev", "skills/01-plan/actions/01-gather.md")).toBe(
+        ".vibe/skills/aidd-dev-01-plan/actions/01-gather.md"
+      );
+    });
+
+    it("writes SKILL.md at the skill-folder root and keeps action files beside it", async () => {
+      memFs.setFile(
+        `${FIXTURE_DIR}/plugins/${PLUGIN}/skills/01-plan/SKILL.md`,
+        "---\nname: 01-plan\ndescription: Plan a change\nargument-hint: request\n---\n# Plan\n"
+      );
+      memFs.setFile(
+        `${FIXTURE_DIR}/plugins/${PLUGIN}/skills/01-plan/actions/01-gather.md`,
+        "# Gather\n"
+      );
+      const strategy = new FlatBuildStrategy(
+        memFs,
+        new AjvSchemaValidatorAdapter(),
+        makeAssetProvider(),
+        buildMistralFlatContract(),
+        true,
+        ABS_OUT,
+        makeIsDirectory(memFs)
+      );
+      await strategy.writeSkills(PLUGIN, `${FIXTURE_DIR}/plugins/${PLUGIN}`);
+      expect(memFs.has(`${ABS_OUT}/.vibe/skills/${PLUGIN}-01-plan/SKILL.md`)).toBe(true);
+      expect(memFs.has(`${ABS_OUT}/.vibe/skills/${PLUGIN}-01-plan/skill/skill.md`)).toBe(false);
+      expect(memFs.has(`${ABS_OUT}/.vibe/skills/${PLUGIN}-01-plan/actions/01-gather.md`)).toBe(
+        true
+      );
+      expect(
+        memFs.has(`${ABS_OUT}/.vibe/skills/${PLUGIN}-01-plan/actions/01-gather/skill.md`)
+      ).toBe(false);
+      const skill = memFs.getFile(`${ABS_OUT}/.vibe/skills/${PLUGIN}-01-plan/SKILL.md`);
+      expect(skill).toContain("user-invocable: true");
+      expect(skill).toContain(`${PLUGIN}-01-plan`);
+      expect(skill).toContain("description: 'Plan a change'");
+      expect(skill).not.toContain("argument-hint");
+    });
+
+    it("keeps description when the source SKILL.md is CRLF", async () => {
+      memFs.setFile(
+        `${FIXTURE_DIR}/plugins/${PLUGIN}/skills/01-plan/SKILL.md`,
+        "---\r\nname: 01-plan\r\ndescription: Plan a change\r\nargument-hint: request\r\n---\r\n# Plan\r\n"
+      );
+      const strategy = new FlatBuildStrategy(
+        memFs,
+        new AjvSchemaValidatorAdapter(),
+        makeAssetProvider(),
+        buildMistralFlatContract(),
+        true,
+        ABS_OUT,
+        makeIsDirectory(memFs)
+      );
+      await strategy.writeSkills(PLUGIN, `${FIXTURE_DIR}/plugins/${PLUGIN}`);
+      const skill = memFs.getFile(`${ABS_OUT}/.vibe/skills/${PLUGIN}-01-plan/SKILL.md`);
+      expect(skill).toContain("user-invocable: true");
+      expect(skill).toContain("description: 'Plan a change'");
+      expect(skill).toContain(`${PLUGIN}-01-plan`);
+    });
+
+    describe("when dest is a leftover directory from a previous wrap", () => {
+      let tmpRoot: string | undefined;
+
+      afterEach(async () => {
+        if (tmpRoot !== undefined) await rm(tmpRoot, { recursive: true, force: true });
+      });
+
+      async function seedLeftoverBannerWrap(): Promise<{
+        pluginSrc: string;
+        outDir: string;
+        dest: string;
+      }> {
+        tmpRoot = await mkdtemp(join(tmpdir(), "aidd-force-dir-"));
+        const pluginSrc = join(tmpRoot, "plugins", PLUGIN);
+        const assetDir = join(pluginSrc, "skills", "01-plan", "assets");
+        await mkdir(assetDir, { recursive: true });
+        await writeFile(join(assetDir, "banner.txt"), "BANNER\n", "utf-8");
+        const outDir = join(tmpRoot, "out");
+        const dest = join(outDir, ".vibe", "skills", `${PLUGIN}-01-plan`, "assets", "banner.txt");
+        await mkdir(dest, { recursive: true });
+        await writeFile(join(dest, "skill.md"), "old wrap\n", "utf-8");
+        return { pluginSrc, outDir, dest };
+      }
+
+      async function realIsDirectory(path: string): Promise<boolean> {
+        try {
+          return (await stat(path)).isDirectory();
+        } catch {
+          return false;
+        }
+      }
+
+      function makeRealStrategy(outDir: string, force: boolean): FlatBuildStrategy {
+        return new FlatBuildStrategy(
+          new FileAdapter(new HasherAdapter()),
+          new AjvSchemaValidatorAdapter(),
+          makeAssetProvider(),
+          buildMistralFlatContract(),
+          force,
+          outDir,
+          realIsDirectory
+        );
+      }
+
+      it("throws FlatTargetExistsError without force", async () => {
+        const { pluginSrc, outDir, dest } = await seedLeftoverBannerWrap();
+        const strategy = makeRealStrategy(outDir, false);
+        await expect(strategy.writeSkills(PLUGIN, pluginSrc)).rejects.toBeInstanceOf(
+          FlatTargetExistsError
+        );
+        expect((await stat(dest)).isDirectory()).toBe(true);
+      });
+
+      it("replaces the leftover directory with the asset file when force is set", async () => {
+        const { pluginSrc, outDir, dest } = await seedLeftoverBannerWrap();
+        const strategy = makeRealStrategy(outDir, true);
+        await strategy.writeSkills(PLUGIN, pluginSrc);
+        expect((await stat(dest)).isFile()).toBe(true);
+        expect(await readFile(dest, "utf-8")).toBe("BANNER\n");
+      });
+    });
+  });
+
+  describe("mistral flat hooks skip reason", () => {
+    it("warns that Vibe hooks.toml has no SessionStart equivalent instead of claiming hooks are unsupported", async () => {
+      const captLogger = new CapturingLogger();
+      const contract = buildMistralFlatContract();
+      const strategy = new FlatBuildStrategy(
+        memFs,
+        new AjvSchemaValidatorAdapter(),
+        makeAssetProvider(),
+        contract,
+        false,
+        ABS_OUT,
+        makeIsDirectory(memFs),
+        captLogger
+      );
+      const pluginSrc = `${FIXTURE_DIR}/plugins/${PLUGIN}`;
+      memFs.setFile(`${FIXTURE_DIR}/plugins/${PLUGIN}/hooks/hooks.json`, '{"hooks":{}}');
+      await strategy.writeHooks(PLUGIN, pluginSrc);
+      const hooks = contract.artifacts.hooks;
+      expect(hooks.supported).toBe(false);
+      if (hooks.supported) return;
+      expect(hooks.skipReason).toMatch(/hooks\.toml/);
+      expect(hooks.skipReason).toMatch(/SessionStart/);
+      expect(captLogger.warnMessages).toEqual([
+        `Skipping hooks/ in plugin '${PLUGIN}' (${hooks.skipReason}).`,
+      ]);
+      expect(captLogger.warnMessages[0]).not.toContain("hooks not supported for this target");
     });
   });
 });

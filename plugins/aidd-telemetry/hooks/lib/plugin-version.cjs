@@ -21,6 +21,7 @@ const MANIFEST_DIRS = Object.freeze([
   ".cursor-plugin",
   ".codex-plugin",
   ".plugin",
+  ".vibe-plugin",
 ]);
 
 // A constant rather than a derivation: after a flat install no fixed number of parent hops

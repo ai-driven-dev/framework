@@ -10,6 +10,7 @@ import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/mistral/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import type { PluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import { getAiToolConfig } from "../../../../src/contexts/tools/domain/registry.js";

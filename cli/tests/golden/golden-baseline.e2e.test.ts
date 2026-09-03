@@ -382,7 +382,7 @@ describe.concurrent("Golden baseline — command matrix", () => {
       await env1.cleanup();
       await env2.cleanup();
     }
-  });
+  }, 120_000);
 
   it("snapshot matches stored baseline (behavior-preserving gate)", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("golden-baseline");

@@ -4,6 +4,7 @@
  */
 
 import { execFile } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -15,6 +16,7 @@ const execFileAsync = promisify(execFile);
 
 const REAL_FW = resolve(process.cwd(), "tests/fixtures/framework-real");
 const EXPECT_BIN = "/usr/bin/expect";
+const HAS_EXPECT = existsSync(EXPECT_BIN);
 const AIDD_DIR = ".aidd";
 
 /** Runs an expect(1) script that emulates TTY interaction with the CLI. */
@@ -47,13 +49,15 @@ ${script}
 }
 
 describe.concurrent("E2E: persona journeys", () => {
-  it("Persona 1 — fresh user: aidd alone shows banner and setup prompt", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("persona-fresh");
-    try {
-      const { stdout, exitCode } = await runInteractive(
-        projectDir,
-        fakeHome,
-        `
+  it.skipIf(!HAS_EXPECT)(
+    "Persona 1 — fresh user: aidd alone shows banner and setup prompt",
+    async () => {
+      const { projectDir, fakeHome, cleanup } = await createTestEnv("persona-fresh");
+      try {
+        const { stdout, exitCode } = await runInteractive(
+          projectDir,
+          fakeHome,
+          `
 spawn ${process.execPath} ${cliPath()}
 expect {
   -re {AI-Driven Development CLI} { puts "BANNER_OK" }
@@ -67,15 +71,16 @@ expect {
 expect eof
 exit 0
 `
-      );
+        );
 
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("BANNER_OK");
-      expect(stdout).toContain("PROMPT_OK");
-    } finally {
-      await cleanup();
+        expect(exitCode).toBe(0);
+        expect(stdout).toContain("BANNER_OK");
+        expect(stdout).toContain("PROMPT_OK");
+      } finally {
+        await cleanup();
+      }
     }
-  });
+  );
 
   it("Persona 2 — setup from local fixture: tools and marketplace written", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("persona-setup");
@@ -218,29 +223,31 @@ exit 0
     }
   });
 
-  it("Persona 5 — returning user: aidd alone with manifest shows full menu", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("persona-returning");
-    try {
-      await mkdir(join(projectDir, AIDD_DIR), { recursive: true });
-      await writeFile(
-        join(projectDir, AIDD_DIR, "manifest.json"),
-        JSON.stringify({
-          version: 8,
-          tools: {
-            claude: {
-              toolId: "claude",
-              version: "4.1.0-beta.18",
-              files: [],
-              mergeFiles: [],
+  it.skipIf(!HAS_EXPECT)(
+    "Persona 5 — returning user: aidd alone with manifest shows full menu",
+    async () => {
+      const { projectDir, fakeHome, cleanup } = await createTestEnv("persona-returning");
+      try {
+        await mkdir(join(projectDir, AIDD_DIR), { recursive: true });
+        await writeFile(
+          join(projectDir, AIDD_DIR, "manifest.json"),
+          JSON.stringify({
+            version: 8,
+            tools: {
+              claude: {
+                toolId: "claude",
+                version: "4.1.0-beta.18",
+                files: [],
+                mergeFiles: [],
+              },
             },
-          },
-        })
-      );
+          })
+        );
 
-      const { stdout, exitCode } = await runInteractive(
-        projectDir,
-        fakeHome,
-        `
+        const { stdout, exitCode } = await runInteractive(
+          projectDir,
+          fakeHome,
+          `
 spawn bash -c "cd '${projectDir}' && ${process.execPath} ${cliPath()}"
 expect {
   -re {AI-Driven Development CLI} { puts "BANNER_OK" }
@@ -258,14 +265,15 @@ expect {
 }
 exit 0
 `
-      );
+        );
 
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("BANNER_OK");
-      expect(stdout).toContain("MENU_OK");
-      expect(stdout).toContain("INSPECT_OK");
-    } finally {
-      await cleanup();
+        expect(exitCode).toBe(0);
+        expect(stdout).toContain("BANNER_OK");
+        expect(stdout).toContain("MENU_OK");
+        expect(stdout).toContain("INSPECT_OK");
+      } finally {
+        await cleanup();
+      }
     }
-  });
+  );
 });

@@ -7,6 +7,7 @@ import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/mistral/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import type { ToolBuildContract } from "../../../../src/contexts/tools/domain/build-contract.js";
@@ -141,6 +142,7 @@ describe("telemetryLocalRead — exact declarations, phase 2 of local-cost-read"
     copilot: { kind: "declared" },
     cursor: { kind: "unsupported", reason: "token count" },
     kilo: { kind: "unsupported", reason: "OpenTelemetry is experimental" },
+    mistral: { kind: "unsupported", reason: "no local session transcript" },
   };
 
   it.each(Object.entries(EXPECTED))("%s", (toolId, expected) => {
@@ -395,6 +397,7 @@ describe("every tool says where its own installed rules live", () => {
     copilot: { directory: ".github/instructions/", extension: ".instructions.md" },
     cursor: { directory: ".cursor/rules/", extension: ".mdc" },
     kilo: { directory: ".kilo/rules/", extension: ".md" },
+    mistral: { directory: ".vibe/rules/", extension: ".md" },
     opencode: { directory: ".opencode/rules/", extension: ".md" },
   };
 

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import { MISTRAL_HOOKS_SKIP_REASON } from "../../../../src/contexts/tools/domain/profiles/mistral/mistral-paths.js";
+import { mistral } from "../../../../src/contexts/tools/domain/profiles/mistral/profile.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
@@ -77,6 +79,20 @@ describe("PluginContentTranslator skip list", () => {
       // Never OpenCode's own scanned plugin directory: a plain hook script there is
       // imported in-process and kills the host.
       expect(paths).not.toContain(".opencode/plugin/pre.js");
+    });
+  });
+
+  describe("flat mode (mistral)", () => {
+    it("skips hooks with the Vibe hooks.toml reason, not the OpenCode reason", () => {
+      const dist = buildDistWithHooks("aidd-context");
+      const result = translator.translateWithComponentPaths(dist, mistral);
+      expect(result.skipped).toHaveLength(1);
+      expect(result.skipped[0]).toMatchObject({
+        pluginName: "aidd-context",
+        component: "hooks",
+        toolId: "mistral",
+      });
+      expect(result.skipped[0]?.reason).toBe(MISTRAL_HOOKS_SKIP_REASON);
     });
   });
 

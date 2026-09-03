@@ -618,6 +618,29 @@ describe.concurrent("E2E: aidd translate", () => {
     }
   });
 
+  it("--target mistral --flat writes .vibe/skills/<plugin>-<name>/SKILL.md as a Vibe slash skill", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-mistral");
+    try {
+      const projRoot = join(tempDir, "proj");
+      await mkdir(projRoot, { recursive: true });
+      const result = await runCli(
+        ["translate", FRAMEWORK_PATH, "--to", "mistral", "--as", "flat", "--out", projRoot],
+        projectDir,
+        fakeHome
+      );
+      expect(result.exitCode).toBe(0);
+      const skillPath = join(projRoot, ".vibe", "skills", "aidd-test-commit", "SKILL.md");
+      expect(existsSync(skillPath)).toBe(true);
+      expect(
+        existsSync(join(projRoot, ".vibe", "skills", "aidd-test-commit", "skill", "skill.md"))
+      ).toBe(false);
+      const skill = await readFile(skillPath, "utf-8");
+      expect(skill).toContain("user-invocable: true");
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("AC #7: --target opencode (non-flat) exits 1 with unsupported error", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-opencode-no-flat");
     try {

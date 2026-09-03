@@ -4,6 +4,7 @@ import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/mistral/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { UninstallUseCase } from "../../../../src/contexts/framework/application/uninstall/uninstall-use-case.js";
@@ -184,7 +185,7 @@ describe("uninstall — refusals", () => {
       })
     ).rejects.toThrow(
       new InputRequiredError(
-        "At least one tool ID is required. Valid tools: claude, cursor, copilot, opencode, kilo, codex, vscode"
+        "At least one tool ID is required. Valid tools: claude, cursor, copilot, opencode, kilo, codex, mistral, vscode"
       )
     );
   });

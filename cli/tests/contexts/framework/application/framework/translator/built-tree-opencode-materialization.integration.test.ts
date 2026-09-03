@@ -1,5 +1,6 @@
 import "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import "../../../../../../src/contexts/tools/domain/profiles/mistral/profile.js";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../../src/contexts/distribution/domain/marketplace.js";
 import { BuiltTreeMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/built-tree-materialization-translator.js";

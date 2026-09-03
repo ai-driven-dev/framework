@@ -14,6 +14,7 @@ import {
   PLUGIN_AGENT_INPUT_EXT,
   PLUGIN_HOOKS_RELATIVE,
   PLUGIN_MCP_RELATIVE,
+  PLUGIN_SKILL_ENTRY_FILE,
 } from "../../domain/build-target.js";
 import { assertNoToolsPlaceholder } from "../shared-plugin-helpers.js";
 import type { BuildOutputStrategy, SourceMarketplace } from "./build-output-strategy.js";
@@ -74,9 +75,8 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     if (!artifact.supported) {
       const hooksSrc = join(pluginSrc, PLUGIN_HOOKS_RELATIVE);
       if (await this.fs.fileExists(hooksSrc)) {
-        this.logger?.warn(
-          `Skipping hooks/ in plugin '${pluginName}' (hooks not supported for this target).`
-        );
+        const reason = artifact.skipReason ?? "hooks not supported for this target";
+        this.logger?.warn(`Skipping hooks/ in plugin '${pluginName}' (${reason}).`);
       }
       return 0;
     }
@@ -163,10 +163,13 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
       currentFilePluginRelative: flatRelPath,
       resolveTargetPath: (rel) => this.resolveTargetForMd(pluginName, rel),
     });
+    const transformed = artifact.transform
+      ? artifact.transform(rewritten, pluginName, basename(absPath))
+      : rewritten;
     const outContent =
-      artifact.rewriteSkillName && basename(absPath) === "SKILL.md"
-        ? this.rewriteSkillNameFrontmatter(rewritten, flatRelPath)
-        : rewritten;
+      artifact.rewriteSkillName && basename(absPath) === PLUGIN_SKILL_ENTRY_FILE
+        ? this.rewriteSkillNameFrontmatter(transformed, flatRelPath)
+        : transformed;
     await this.fs.writeFile(destPath, outContent);
     return 1;
   }
@@ -340,8 +343,10 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
   }
 
   private async checkCollision(destPath: string, pluginName: string): Promise<void> {
-    if (!this.force && (await this.fs.fileExists(destPath))) {
-      throw new FlatTargetExistsError(destPath, pluginName);
+    if (!(await this.fs.fileExists(destPath))) return;
+    if (!this.force) throw new FlatTargetExistsError(destPath, pluginName);
+    if (await this.isDirectory(destPath)) {
+      await this.fs.deleteDirectory(destPath);
     }
   }
 
