@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "aidd-refine",
   "version": "3.0.0",
-  "description": "Meta-cognition: refine input through brainstorming, refine output through challenge, blind-spot scanning, and fact-checking.",
+  "description": "Meta-cognition: refine input through brainstorming, refine output through challenge, inspect blind spots and facts, and improve conversation efficiency.",
   "author": {
     "name": "AI-Driven Dev",
     "url": "https://github.com/ai-driven-dev"
@@ -11,12 +11,14 @@
     "./skills/01-brainstorm",
     "./skills/02-challenge",
     "./skills/03-shadow-areas",
-    "./skills/04-fact-check"
+    "./skills/04-fact-check",
+    "./skills/05-improve"
   ],
   "keywords": [
     "brainstorm",
     "challenge",
     "fact-check",
+    "improve",
     "meta-cognition",
     "refinement"
   ],

@@ -11,7 +11,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 🧱 **IDE agnostic** · 🏗️ **Legacy systems** · 🌱 **Token-optimized** · 🇫🇷 **Made in France**
 
 <p>
-  <!--counts:start--><kbd>8 plugins</kbd> · <kbd>50 skills</kbd> · <kbd>2 agents</kbd><!--counts:end-->
+  <!--counts:start--><kbd>8 plugins</kbd> · <kbd>51 skills</kbd> · <kbd>2 agents</kbd><!--counts:end-->
 </p>
 
 [![Open Source](https://img.shields.io/badge/Open_Source-Yes-yellow?logo=open-source-initiative&logoColor=white)](https://opensource.org/)
@@ -277,9 +277,9 @@ Three Amigos refinement, Product Briefs, Epics, User Stories, Tasks, Spikes, Def
 
 ### 🪞 [aidd-refine](plugins/aidd-refine/README.md)
 
-`4 skills` · stable
+`5 skills` · stable
 
-Brainstorm, challenge, shadow-areas, fact-check.
+Brainstorm, challenge, shadow-areas, fact-check, improve.
 
 </td>
 <td width="33%" valign="top">

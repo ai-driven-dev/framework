@@ -12,6 +12,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/02-challenge`](#skills02-challenge)
   - [`skills/03-shadow-areas`](#skills03-shadow-areas)
   - [`skills/04-fact-check`](#skills04-fact-check)
+  - [`skills/05-improve`](#skills05-improve)
 
 ---
 
@@ -76,4 +77,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [report-output-discipline.md](skills/04-fact-check/references/report-output-discipline.md) | - |
 | `references` | [verification-cascade.md](skills/04-fact-check/references/verification-cascade.md) | - |
 | `-` | [SKILL.md](skills/04-fact-check/SKILL.md) | `Verify factual claims in a text against authoritative sources and rewrite it with footnote citations, hedging the unconfirmed. Use to fact-check, verify a claim, or cite sources on request. Not for judging code or clarifying requirements.` |
+
+#### `skills/05-improve`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-read-conversation.md](skills/05-improve/actions/01-read-conversation.md) | - |
+| `actions` | [02-recommend.md](skills/05-improve/actions/02-recommend.md) | - |
+| `actions` | [03-target-edits.md](skills/05-improve/actions/03-target-edits.md) | - |
+| `assets` | [conversation-sources.md](skills/05-improve/assets/conversation-sources.md) | - |
+| `-` | [SKILL.md](skills/05-improve/SKILL.md) | `Reads complete conversation evidence, recommends targeted improvements, and proposes minimal edits. Use when the user wants to improve a past or current conversation, reduce wasted time or tokens, or choose files to revise. Not for delivery review or automatic edits.` |
 
