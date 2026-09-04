@@ -53,11 +53,16 @@ async function skillDirs() {
   return dirs.sort((a, b) => a.localeCompare(b));
 }
 
+function normalizeNewlines(content) {
+  return content.replaceAll("\r\n", "\n").replaceAll("\r", "\n");
+}
+
 function argumentHint(content) {
-  if (!content.startsWith("---\n")) return null;
-  const end = content.indexOf("\n---", 4);
+  const text = normalizeNewlines(content);
+  if (!text.startsWith("---\n")) return null;
+  const end = text.indexOf("\n---", 4);
   if (end === -1) return null;
-  const line = content
+  const line = text
     .slice(4, end)
     .split("\n")
     .find((value) => value.startsWith("argument-hint:"));
@@ -66,7 +71,7 @@ function argumentHint(content) {
 
 async function takesInput(actionFiles) {
   for (const file of actionFiles) {
-    const body = await readFile(file, "utf8");
+    const body = normalizeNewlines(await readFile(file, "utf8"));
     if (/^## Input$/m.test(body)) return true;
   }
   return actionFiles.length === 0;

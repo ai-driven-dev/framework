@@ -39,7 +39,8 @@ const path = require("node:path");
 const NON_TABLE_FRONTMATTER_KEYS = new Set(["argument-hint"]);
 
 function parseFrontmatter(content) {
-	const lines = content.split("\n");
+	const text = content.replaceAll("\r\n", "\n").replaceAll("\r", "\n");
+	const lines = text.split("\n");
 
 	if (lines[0] !== "---") {
 		return { frontmatter: {}, content: content };

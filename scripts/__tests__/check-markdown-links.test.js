@@ -80,7 +80,8 @@ test("--help documents supported links, exclusions, fixes, and examples", () => 
   assert.match(result.stdout, /mailto:/u);
   assert.match(result.stdout, /tel:/u);
   assert.match(result.stdout, /HTML angle-bracket/u);
-  assert.match(result.stdout, /\.git and node_modules/u);
+  assert.match(result.stdout, /\.git and node_modules directories, plus \.stryker-tmp and \.e2e-build/u);
+  assert.match(result.stdout, /\.aidd with \.vibe/u);
   assert.match(result.stdout, /Runtime variables, glob patterns, and bare words/u);
   assert.match(result.stdout, /\| Need \| Use \|/u);
   assert.match(result.stdout, /\| Include\/import a file in agent context \| @path\/to\/file\.md \|/u);
@@ -184,6 +185,25 @@ test("CLI fails when an explicit input path does not exist", () => {
 
   assert.equal(result.status, 1);
   assert.match(result.stderr, /❌ Path not found: DOES_NOT_EXIST\.md/u);
+});
+
+test("repository scan skips .aidd cache trees", () => {
+  const probeDir = path.join(root, ".aidd", ".tmp-markdown-links-probe");
+  fs.mkdirSync(probeDir, { recursive: true });
+  fs.writeFileSync(path.join(probeDir, "broken.md"), "[Missing](./nope.md)\n", "utf8");
+
+  try {
+    const result = spawnSync(process.execPath, [script], {
+      cwd: root,
+      encoding: "utf8",
+    });
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.doesNotMatch(result.stderr, /nope\.md/u);
+    assert.match(result.stdout, /✅ Links: 0 broken in \d+ files/u);
+  } finally {
+    fs.rmSync(probeDir, { recursive: true, force: true });
+  }
 });
 
 test("repository scan ignores interrupted test temp directories", () => {
