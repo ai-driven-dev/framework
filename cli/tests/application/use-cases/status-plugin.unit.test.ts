@@ -33,6 +33,7 @@ function makeManifest(pluginFileHash: string): Manifest {
 function makeFs(fileExists: boolean, diskHash: string): FileReader {
   return {
     fileExists: async () => fileExists,
+    isExecutable: async () => false,
     readFileHash: async () => new FileHash(diskHash),
     readFile: async () => "",
     listDirectory: async () => [],
@@ -41,7 +42,12 @@ function makeFs(fileExists: boolean, diskHash: string): FileReader {
 }
 
 function makeManifestRepo(manifest: Manifest): ManifestRepository {
-  return { load: async () => manifest, save: async () => {}, delete: async () => {} };
+  return {
+    path: "/proj/.aidd/manifest.json",
+    load: async () => manifest,
+    save: async () => {},
+    delete: async () => {},
+  };
 }
 
 const noopHasher: Hasher = {
