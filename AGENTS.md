@@ -32,6 +32,23 @@
 - **Before adding any instruction, finding, or rule, check whether an existing one already covers or contradicts it.** If so, don't add a parallel: delete it, merge it into the stronger one, or rewrite with explicit scope and priority.
 - **Name by intention, not mechanism:** describe the goal or responsibility, not the tool or file format.
 
+## Implementation loop
+
+The main agent owns every transition, spawns agents using the `executor`
+and `checker` roles, and preserves the agreed requirements. For follow-ups,
+resume the existing executor session when possible; otherwise spawn a
+replacement with the relevant context.
+
+```mermaid
+flowchart TD
+  Request[Implementation request] --> Executor[Executor: implement and validate]
+  Executor --> Checker[Independent checker: verify]
+  Checker -->|approved| Result[Report result to user]
+  Checker -->|findings + context, confident to continue| Executor
+  Executor -->|unsure how to proceed| Alert[Alert user]
+  Checker -->|unsure how to proceed| Alert
+```
+
 ## Memory Management
 
 Project docs, memory, specs, and plans live in `aidd_docs/`.
