@@ -3,7 +3,7 @@
   "scopes": {
     "kernel": {
       "mutate": "src/kernel/**/*.ts",
-      "break": 71
+      "break": 95
     },
     "tools": {
       "mutate": [
@@ -38,7 +38,7 @@
     },
     "runtime": {
       "mutate": "src/runtime/**/*.ts",
-      "break": 67
+      "break": 90
     },
     "tools-claude": {
       "mutate": "src/contexts/tools/domain/profiles/claude/**/*.ts",

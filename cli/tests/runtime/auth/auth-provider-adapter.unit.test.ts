@@ -146,7 +146,7 @@ describe("what `auth status` reports", () => {
         PROJECT_ROOT
       );
 
-      await expect(adapter.status()).rejects.toThrow(AuthenticationError);
+      await expect(adapter.status()).rejects.toThrow(new AuthenticationError("invalid config"));
     });
   });
 
