@@ -21,14 +21,20 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
+  actions: read
   contents: read
 
 jobs:
   changes:
     name: cli / changes
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
     runs-on: ubuntu-latest
     outputs:
       relevant: ${{ steps.filter.outputs.relevant }}
+      trusted_promotion: ${{ steps.promotion.outputs.trusted }}
       mutation_scopes: ${{ steps.mutation.outputs.scopes }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -81,25 +87,120 @@ jobs:
 
           echo "relevant=$relevant" >> "$GITHUB_OUTPUT"
 
+      # A promotion branch is a snapshot of next, not the live next branch. Reuse only proves
+      # a tree already gated on next: every missing Git or API proof falls back to mutations.
+      - name: Check whether a promotion snapshot or main merge passed next
+        id: promotion
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REF: ${{ github.ref }}
+          CURRENT_SHA: ${{ github.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          set -euo pipefail
+          trusted=false
+          reason="not a reusable promotion snapshot"
+
+          has_successful_next_gate() {
+            local run_ids run_id gate
+            reason="no successful cli CI push run found for the snapshot SHA"
+            if run_ids="$(gh api --paginate "/repos/$REPO/actions/workflows/cli-ci.yml/runs?branch=next&event=push&status=completed&head_sha=$HEAD_SHA&per_page=100" \
+              --jq '.workflow_runs[] | select(.conclusion == "success") | .id' 2>/dev/null)"; then
+              while IFS= read -r run_id; do
+                [[ -z "$run_id" ]] && continue
+                if gate="$(gh api "/repos/$REPO/actions/runs/$run_id/jobs?filter=latest&per_page=100" \
+                  --jq 'any(.jobs[]; .name == "cli / gate" and .conclusion == "success")' 2>/dev/null)"; then
+                  if [[ "$gate" == "true" ]]; then
+                    reason="reusing the successful cli CI gate from next run $run_id"
+                    return 0
+                  fi
+                  reason="cli / gate did not pass in next run $run_id"
+                else
+                  reason="could not inspect cli CI run $run_id"
+                fi
+              done <<< "$run_ids"
+            else
+              reason="could not list successful cli CI push runs"
+            fi
+            return 1
+          }
+
+          # GitHub tests pull requests at a synthetic merge ref. The source gate may be reused
+          # only if main is already in the snapshot and that merge ref has the same file tree.
+          if [[ "$EVENT_NAME" == "pull_request" && "$BASE_REF" == "main" && "$HEAD_REF" =~ ^promote/next-to-main-[0-9]+$ && "$HEAD_REPO" == "$REPO" ]]; then
+            if ! git merge-base --is-ancestor "$BASE_SHA" "$HEAD_SHA" 2>/dev/null; then
+              reason="main base is not an ancestor of the promotion snapshot"
+            elif ! snapshot_tree="$(git rev-parse "$HEAD_SHA^{tree}" 2>/dev/null)" || ! merge_tree="$(git rev-parse "$CURRENT_SHA^{tree}" 2>/dev/null)"; then
+              reason="could not prove the promotion merge tree"
+            elif [[ "$merge_tree" != "$snapshot_tree" ]]; then
+              reason="promotion merge tree differs from the snapshot"
+            elif has_successful_next_gate; then
+              trusted=true
+            fi
+          # A main push is reusable only for the exact merge of a numbered, same-repository
+          # promotion PR. Parent two is its source snapshot; neither a squash nor an unrelated
+          # merge can satisfy this proof.
+          elif [[ "$EVENT_NAME" == "push" && "$GITHUB_REF" == "refs/heads/main" ]]; then
+            if ! parents="$(git rev-list --parents -n 1 "$CURRENT_SHA" 2>/dev/null)" || ! read -r merge_sha first_parent snapshot_sha extra_parent <<< "$parents" || [[ "$merge_sha" != "$CURRENT_SHA" || -z "$first_parent" || -z "$snapshot_sha" || -n "${extra_parent:-}" ]]; then
+              reason="main commit is not a two-parent merge"
+            elif ! snapshot_tree="$(git rev-parse "$snapshot_sha^{tree}" 2>/dev/null)" || ! main_tree="$(git rev-parse "$CURRENT_SHA^{tree}" 2>/dev/null)"; then
+              reason="could not read the main merge or snapshot tree"
+            elif [[ "$main_tree" != "$snapshot_tree" ]]; then
+              reason="main merge tree differs from the promotion snapshot"
+            elif ! prs="$(gh api "/repos/$REPO/commits/$CURRENT_SHA/pulls" \
+              --jq '.[] | select(.base.ref == "main" and (.head.ref | test("^promote/next-to-main-[0-9]+$")) and .merged_at != null) | [.base.repo.full_name, .head.repo.full_name, .head.ref, .head.sha, .merged_at, .merge_commit_sha] | @tsv' 2>/dev/null)"; then
+              reason="could not inspect pull requests associated with the main commit"
+            else
+              matching_prs=0
+              while IFS=$'\t' read -r base_repo head_repo head_ref pr_head_sha merged_at merge_commit_sha; do
+                if [[ "$base_repo" == "$REPO" && "$head_repo" == "$REPO" && "$head_ref" =~ ^promote/next-to-main-[0-9]+$ && "$pr_head_sha" == "$snapshot_sha" && -n "$merged_at" && "$merge_commit_sha" == "$CURRENT_SHA" ]]; then
+                  ((matching_prs += 1))
+                fi
+              done <<< "$prs"
+
+              if [[ "$matching_prs" -ne 1 ]]; then
+                reason="no unique matching promotion pull request proved this main merge"
+              else
+                HEAD_SHA="$snapshot_sha"
+                if has_successful_next_gate; then
+                  trusted=true
+                fi
+              fi
+            fi
+          fi
+
+          echo "promotion mutation reuse: $reason"
+          echo "trusted=$trusted" >> "$GITHUB_OUTPUT"
+
       - name: Decide which mutation scopes a change can move
         id: mutation
         run: |
           set -euo pipefail
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            BASE="${{ github.event.pull_request.base.sha }}"
-            HEAD="${{ github.event.pull_request.head.sha }}"
+          if [[ "${{ steps.promotion.outputs.trusted }}" == "true" ]]; then
+            scopes='[]'
           else
-            BASE="${{ github.event.before }}"
-            HEAD="${{ github.sha }}"
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              BASE="${{ github.event.pull_request.base.sha }}"
+              HEAD="${{ github.event.pull_request.head.sha }}"
+            else
+              BASE="${{ github.event.before }}"
+              HEAD="${{ github.sha }}"
+            fi
+            if [[ -z "$BASE" || "$BASE" =~ ^0+$ ]]; then
+              changed=""
+              all=true
+            else
+              changed="$(git diff --name-only "$BASE" "$HEAD")"
+              all=false
+            fi
+            scopes="$(ALL="$all" CHANGED="$changed" node cli/scripts/mutation-scopes-to-run.mjs)"
           fi
-          if [[ -z "$BASE" || "$BASE" =~ ^0+$ ]]; then
-            changed=""
-            all=true
-          else
-            changed="$(git diff --name-only "$BASE" "$HEAD")"
-            all=false
-          fi
-          scopes="$(ALL="$all" CHANGED="$changed" node cli/scripts/mutation-scopes-to-run.mjs)"
           echo "mutation scopes: $scopes"
           echo "scopes=$scopes" >> "$GITHUB_OUTPUT"
 
