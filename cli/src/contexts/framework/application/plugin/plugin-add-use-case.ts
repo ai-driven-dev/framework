@@ -28,7 +28,11 @@ import type { PluginTranslator } from "../framework/translator/plugin-translator
 import { resolvePluginTranslator } from "../framework/translator/resolve-plugin-translator.js";
 import type { EnsureBuiltMarketplace } from "../shared/ensure-built-marketplace-use-case.js";
 import { loadPluginManifest, writePluginFiles } from "./plugin-helpers.js";
-import { resolvePluginToolIds, resolveScopeForInstall } from "./plugin-target-resolution.js";
+import {
+  resolveBaseDirFromRecord,
+  resolvePluginToolIds,
+  resolveScopeForInstall,
+} from "./plugin-target-resolution.js";
 
 export interface PluginAddOptions {
   source: PluginSource;
@@ -62,10 +66,18 @@ export class PluginAddUseCase implements PluginAdd {
     const { source, toolIds, projectRoot, marketplace } = options;
     const manifest = await loadPluginManifest(this.manifestRepo);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest);
+    const installedBefore = pluginsInstalledBefore(manifest, resolvedToolIds);
     if (marketplace !== undefined && (await this.isGithubMarketplace(marketplace, projectRoot))) {
-      await this.addGithubMarketplacePlugin(options, resolvedToolIds, manifest);
+      await this.addGithubMarketplacePlugin(options, resolvedToolIds, manifest, installedBefore);
     } else {
-      await this.addLocalPlugin(options, resolvedToolIds, manifest, source, projectRoot);
+      await this.addLocalPlugin(
+        options,
+        resolvedToolIds,
+        manifest,
+        source,
+        projectRoot,
+        installedBefore
+      );
     }
     await this.manifestRepo.save(manifest);
   }
@@ -79,7 +91,8 @@ export class PluginAddUseCase implements PluginAdd {
   private async addGithubMarketplacePlugin(
     options: PluginAddOptions,
     toolIds: AiToolId[],
-    manifest: Manifest
+    manifest: Manifest,
+    installedBefore: PluginsInstalledBefore
   ): Promise<void> {
     const { pluginMetadata } = options;
     if (pluginMetadata === undefined) throw new MissingPluginMetadataError();
@@ -94,7 +107,8 @@ export class PluginAddUseCase implements PluginAdd {
         flatToolIds,
         manifest,
         options.source,
-        options.projectRoot
+        options.projectRoot,
+        installedBefore
       );
     }
     await this.registerNativeGithubPlugins(options, nativeToolIds, manifest);
@@ -156,7 +170,8 @@ export class PluginAddUseCase implements PluginAdd {
     resolvedToolIds: AiToolId[],
     manifest: Manifest,
     source: PluginSource,
-    projectRoot: string
+    projectRoot: string,
+    installedBefore: PluginsInstalledBefore
   ): Promise<void> {
     const { marketplace, requiredVersion, replace, pluginMetadata } = options;
     const read = await this.readDistribution(source, projectRoot);
@@ -171,7 +186,8 @@ export class PluginAddUseCase implements PluginAdd {
       projectRoot,
       manifest,
       marketplace,
-      prevMcpMap
+      prevMcpMap,
+      installedBefore
     );
   }
 
@@ -197,11 +213,24 @@ export class PluginAddUseCase implements PluginAdd {
     projectRoot: string,
     manifest: Manifest,
     marketplace: string | undefined,
-    prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>>
+    prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>>,
+    installedBefore: PluginsInstalledBefore
   ): Promise<void> {
     const allSkipped: ReadonlySkipList[] = [];
     const allNotices: ReadonlyNoticeList[] = [];
     for (const toolId of toolIds) {
+      const foreignDir = await this.userScopeDirNotInstalledHere(
+        dist.manifest.name,
+        toolId,
+        projectRoot,
+        installedBefore
+      );
+      if (foreignDir !== undefined) {
+        this.logger.warn(
+          `${toolId}: ${foreignDir} was already there and this project did not install it — left as found and not tracked, so this project's clean will not delete it.`
+        );
+        continue;
+      }
       const prev = prevMcpMap.get(toolId) ?? new Map();
       const { skipped, notices } = await this.addPluginForTool(
         dist,
@@ -217,6 +246,22 @@ export class PluginAddUseCase implements PluginAdd {
     }
     this.emitSkipWarnings(allSkipped.flat());
     this.emitInstallNotices(allNotices.flat());
+  }
+
+  private async userScopeDirNotInstalledHere(
+    pluginName: string,
+    toolId: AiToolId,
+    projectRoot: string,
+    installedBefore: PluginsInstalledBefore
+  ): Promise<string | undefined> {
+    if (resolveScopeForInstall(toolId) !== "user") return undefined;
+    if (installedBefore.has(installedKey(toolId, pluginName))) return undefined;
+    const dir = join(
+      resolveBaseDirFromRecord("user", toolId, projectRoot, nodeHomedir),
+      pluginName
+    );
+    const present = await this.fs.listFilesRecursive(dir);
+    return present.length > 0 ? dir : undefined;
   }
 
   private collectPreviousMcpEntries(
@@ -367,4 +412,21 @@ export class PluginAddUseCase implements PluginAdd {
       marketplaceRegistry: this.marketplaceRegistry,
     });
   }
+}
+
+type PluginsInstalledBefore = ReadonlySet<string>;
+
+function pluginsInstalledBefore(
+  manifest: Manifest,
+  toolIds: readonly AiToolId[]
+): PluginsInstalledBefore {
+  return new Set(
+    toolIds.flatMap((toolId) =>
+      manifest.getPlugins(toolId).map((p) => installedKey(toolId, p.name))
+    )
+  );
+}
+
+function installedKey(toolId: AiToolId, pluginName: string): string {
+  return `${toolId}/${pluginName}`;
 }

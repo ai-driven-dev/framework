@@ -1,7 +1,9 @@
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../../../../../src/contexts/framework/domain/ports/plugin-distribution-reader.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
@@ -80,7 +82,7 @@ function localAdd(toolId: "claude" | "opencode", path = PLUGIN_FIXTURE, replace?
   };
 }
 
-function pluginNames(deps: Deps, toolId: "claude" | "opencode" | "codex"): string[] {
+function pluginNames(deps: Deps, toolId: "claude" | "opencode" | "codex" | "cursor"): string[] {
   return (deps.manifestRepo.getCurrent()?.getPlugins(toolId) ?? []).map((p) => p.name).sort();
 }
 
@@ -381,6 +383,74 @@ describe("PluginAddUseCase", () => {
         const installed = plugins.find((p) => p.name === "sample-plugin");
         expect(installed).toBeDefined();
         expect(installed?.files.size).toBeGreaterThan(0);
+      });
+
+      const CURSOR_SKILL = "sample-plugin/skills/demo/SKILL.md";
+
+      function cursorSkillAt(): string {
+        return join(homedir(), ".cursor/plugins/local", CURSOR_SKILL);
+      }
+
+      async function addForCursor(deps: Deps, logger: Logger, replace?: boolean): Promise<void> {
+        await buildAddUseCase(deps, await makeGithubRegistry(PROJECT_ROOT), logger).execute({
+          source: GIT_SUBDIR_SOURCE,
+          toolIds: ["cursor"],
+          projectRoot: PROJECT_ROOT,
+          marketplace: "aidd-framework",
+          interactive: false,
+          pluginMetadata: PLUGIN_METADATA,
+          replace,
+        });
+      }
+
+      async function cursorDeps(): Promise<Deps> {
+        const deps = await buildUnitDeps(PROJECT_ROOT);
+        await initAndInstall(deps, PROJECT_ROOT, "cursor");
+        await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
+        deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
+        deps.fs.setFile(`/built/cursor/plugins/${CURSOR_SKILL}`, "# Demo skill");
+        return deps;
+      }
+
+      it("leaves a plugin dir it finds already there as it was, and tracks none of it", async () => {
+        const deps = await cursorDeps();
+        deps.fs.setFile(cursorSkillAt(), "# Their own skill");
+        const logger = new CapturingLogger();
+
+        await addForCursor(deps, logger);
+
+        expect(deps.fs.getFile(cursorSkillAt())).toBe("# Their own skill");
+        expect(pluginNames(deps, "cursor")).toEqual([]);
+        expect(logger.warnMessages.join("\n")).toContain(
+          join(homedir(), ".cursor/plugins/local", "sample-plugin")
+        );
+      });
+
+      it("leaves a found plugin dir alone even when this project installed another plugin", async () => {
+        const deps = await cursorDeps();
+        const manifest = await deps.manifestRepo.load();
+        manifest?.addPlugin(
+          "cursor",
+          InstalledPlugin.fromMetadata("other-plugin", "1.0.0", GIT_SUBDIR_SOURCE, false, "user")
+        );
+        if (manifest) await deps.manifestRepo.save(manifest);
+        deps.fs.setFile(cursorSkillAt(), "# Their own skill");
+
+        await addForCursor(deps, deps.logger);
+
+        expect(deps.fs.getFile(cursorSkillAt())).toBe("# Their own skill");
+        expect(pluginNames(deps, "cursor")).toEqual(["other-plugin"]);
+      });
+
+      it("still overwrites and tracks its own plugin dir when re-installed with replace", async () => {
+        const deps = await cursorDeps();
+        await addForCursor(deps, deps.logger);
+        deps.fs.setFile(`/built/cursor/plugins/${CURSOR_SKILL}`, "# Demo skill v2");
+
+        await addForCursor(deps, deps.logger, true);
+
+        expect(deps.fs.getFile(cursorSkillAt())).toBe("# Demo skill v2");
+        expect(pluginNames(deps, "cursor")).toEqual(["sample-plugin"]);
       });
     });
 

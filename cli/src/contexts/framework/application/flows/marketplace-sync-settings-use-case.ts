@@ -25,6 +25,7 @@ import {
   pluginSetDifference,
 } from "../../../tools/domain/marketplace-source-conflict.js";
 import type { HostMarketplaceRegistryReader } from "../../../tools/domain/ports/host-marketplace-registry-reader.js";
+import type { HostPluginRegistryReader } from "../../../tools/domain/ports/host-plugin-registry-reader.js";
 import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
 import { nativeActivationOf, resolvePluginsCapability } from "../../../tools/domain/registry.js";
 import type { FrameworkBuildTarget } from "../../../translate/domain/build-target.js";
@@ -143,7 +144,11 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
      * Absent keeps the silent no-op instead of guessing what to register. */
     private readonly marketplaceRegisterFrameworkUseCase?: MarketplaceRegisterFramework,
     private readonly userSourceReferences?: UserSourceReferences,
-    private readonly currentVersionProvider?: VersionReader
+    private readonly currentVersionProvider?: VersionReader,
+    private readonly hostPluginRegistries: ReadonlyMap<
+      AiToolId,
+      HostPluginRegistryReader
+    > = new Map()
   ) {}
 
   async execute(options: MarketplaceSyncSettingsOptions): Promise<MarketplaceSyncSettingsResult> {
@@ -455,11 +460,35 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       return { marketplaces: registeredMarketplaces, pluginRefs: [], buildFailed };
     this.bestEffort(() => activator.upgradeMarketplaces(), "upgrade marketplaces", warnings);
     const hostNameByAlias = new Map(registeredMarketplaces.map((m) => [m.alias, m.hostName]));
-    const refs = this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias);
+    const refs = await this.refsThisProjectEnables(
+      toolId,
+      this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias),
+      manifest,
+      projectRoot
+    );
     for (const ref of refs) {
       this.bestEffort(() => activator.enablePlugin(ref, scope), `enable plugin '${ref}'`, warnings);
     }
     return { marketplaces: registeredMarketplaces, pluginRefs: refs, buildFailed };
+  }
+
+  private async refsThisProjectEnables(
+    toolId: ToolId,
+    refs: string[],
+    manifest: Manifest,
+    projectRoot: string
+  ): Promise<string[]> {
+    const hostRegistry = isAiToolId(toolId) ? this.hostPluginRegistries.get(toolId) : undefined;
+    if (hostRegistry === undefined) return refs;
+    const ownRefs = manifest.getNativeRegistrations(toolId)?.pluginRefs;
+    const onHost = (await hostRegistry.read(projectRoot)).refs;
+    return refs.filter((ref) => {
+      if (ownRefs?.includes(ref) === true || onHost?.get(ref)?.enabled !== true) return true;
+      this.logger.info(
+        `${toolId}: '${ref}' was already enabled before this project asked for it — left as it is, and this project's clean will leave it enabled.`
+      );
+      return false;
+    });
   }
 
   private bestEffort(action: () => void, label: string, warnings: string[]): void {

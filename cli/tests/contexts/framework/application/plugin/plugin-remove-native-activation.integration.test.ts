@@ -197,7 +197,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     manifest.setNativeRegistrations("claude", {
       binary: "claude",
       marketplaces: [{ alias: "local", hostName: "upstream" }],
-      pluginRefs: [],
+      pluginRefs: [`${PLUGIN_NAME}@upstream`],
     });
     await manifestRepo.save(manifest);
 
@@ -247,7 +247,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     manifest.setNativeRegistrations("claude", {
       binary: "claude",
       marketplaces: [{ alias: "local", hostName: "upstream" }],
-      pluginRefs: [],
+      pluginRefs: [`${PLUGIN_NAME}@upstream`],
     });
     await manifestRepo.save(manifest);
 
@@ -361,7 +361,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     manifest.setNativeRegistrations("claude", {
       binary: "claude",
       marketplaces: [{ alias: MARKETPLACE_NAME, hostName: "upstream" }],
-      pluginRefs: [],
+      pluginRefs: [`${PLUGIN_NAME}@upstream`],
     });
     await manifestRepo.save(manifest);
 
@@ -414,5 +414,44 @@ describe("PluginRemoveUseCase undoes native activation", () => {
         projectRoot: PROJECT_ROOT,
       })
     ).rejects.toThrow("activator crashed uninstalling a plugin");
+  });
+});
+
+describe("PluginRemoveUseCase undoes only the activation this project made", () => {
+  async function removeWithRecordedRefs(pluginRefs: readonly string[]) {
+    const activator = new FakeNativePluginActivator({ available: true });
+    const logger = new CapturingLogger();
+    const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
+    const manifest = Manifest.create();
+    manifest.addTool("claude", "test", []);
+    await installViaModeA(manifest);
+    manifest.setNativeRegistrations("claude", {
+      binary: "claude",
+      marketplaces: [{ alias: MARKETPLACE_NAME, hostName: MARKETPLACE_NAME }],
+      pluginRefs,
+    });
+    await manifestRepo.save(manifest);
+
+    await removeUseCase.execute({
+      pluginName: PLUGIN_NAME,
+      toolIds: ["claude"],
+      projectRoot: PROJECT_ROOT,
+    });
+    return { activator, logger, manifestRepo };
+  }
+
+  it("leaves enabled, and names, a ref the host already had before this project", async () => {
+    const { activator, logger, manifestRepo } = await removeWithRecordedRefs([]);
+
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(logger.warnMessages.join("\n")).toContain(REF);
+    const loaded = await manifestRepo.load();
+    expect(loaded?.getPlugins("claude").some((p) => p.name === PLUGIN_NAME)).toBe(false);
+  });
+
+  it("uninstalls a ref this project's own activation enabled", async () => {
+    const { activator } = await removeWithRecordedRefs([REF]);
+
+    expect(activator.uninstalledPlugins).toEqual([REF]);
   });
 });

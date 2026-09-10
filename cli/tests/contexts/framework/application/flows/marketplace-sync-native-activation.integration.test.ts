@@ -695,3 +695,86 @@ describe("what reclaiming a dead registration says", () => {
     expect(result.errors).toStrictEqual([]);
   });
 });
+
+function hostReadingOf(refs: readonly string[], enabled = true): HostPluginRegistryReading {
+  return {
+    location: "/home/dev/.claude/plugins/installed_plugins.json",
+    refs: new Map(refs.map((ref) => [ref, { enabled }])),
+  };
+}
+
+function buildSyncReadingHost(
+  activator: FakeNativePluginActivator,
+  hostRegistry: HostPluginRegistryReader
+) {
+  const registry = new InMemoryMarketplaceRegistry();
+  const manifestRepo = manifestWithPlugin();
+  const logger = new CapturingLogger();
+  const useCase = new MarketplaceSyncSettingsUseCase(
+    seededBuiltCatalog(),
+    manifestRepo,
+    registry,
+    new DeterministicHasher(),
+    logger,
+    new Map([["claude", activator]]),
+    fakeEnsureBuiltMarketplace(),
+    new Map(),
+    () => "",
+    undefined,
+    undefined,
+    undefined,
+    new Map([["claude", hostRegistry]])
+  );
+  return { useCase, registry, manifestRepo, logger };
+}
+
+describe("a ref the host had enabled before this project asked belongs to the person", () => {
+  it("is neither enabled again nor recorded, so clean has nothing of it to undo", async () => {
+    const activator = new FakeNativePluginActivator({ available: true });
+    const { useCase, registry, manifestRepo, logger } = buildSyncReadingHost(activator, {
+      read: async () => hostReadingOf([REF]),
+    });
+    await registry.save(PROJECT_ROOT, marketplace());
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(activator.enabledPlugins).toEqual([]);
+    expect(logger.infoMessages.join("\n")).toContain(REF);
+    const recorded = (await manifestRepo.load())?.getNativeRegistrations("claude");
+    expect(recorded?.pluginRefs).toEqual([]);
+  });
+
+  it("stays this project's own on the next sync, once the host reports the enable it made", async () => {
+    const activator = new FakeNativePluginActivator({ available: true });
+    const { useCase, registry, manifestRepo } = buildSyncReadingHost(activator, {
+      read: async () => hostReadingOf(activator.enabledPlugins),
+    });
+    await registry.save(PROJECT_ROOT, marketplace());
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    const recorded = (await manifestRepo.load())?.getNativeRegistrations("claude");
+    expect(recorded?.pluginRefs).toEqual([REF]);
+  });
+
+  it.each([
+    [
+      "cannot be read",
+      { location: "/home/dev/.claude/plugins/installed_plugins.json", unreadable: "ENOENT" },
+    ],
+    ["lists it disabled", hostReadingOf([REF], false)],
+  ])("is this project's to enable when the host registry %s", async (_case, reading) => {
+    const activator = new FakeNativePluginActivator({ available: true });
+    const { useCase, registry, manifestRepo } = buildSyncReadingHost(activator, {
+      read: async () => reading,
+    });
+    await registry.save(PROJECT_ROOT, marketplace());
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(activator.enabledPlugins).toEqual([REF]);
+    const recorded = (await manifestRepo.load())?.getNativeRegistrations("claude");
+    expect(recorded?.pluginRefs).toEqual([REF]);
+  });
+});

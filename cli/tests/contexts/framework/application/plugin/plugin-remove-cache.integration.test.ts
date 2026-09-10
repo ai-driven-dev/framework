@@ -154,7 +154,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     manifest.setNativeRegistrations("claude", {
       binary: "claude",
       marketplaces: [{ alias: ALIAS, hostName: evilHostName }],
-      pluginRefs: [`${PLUGIN_NAME}@${ALIAS}`],
+      pluginRefs: [`${PLUGIN_NAME}@${evilHostName}`],
     });
     const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
     const activator = new FakeNativePluginActivator({ available: true });
