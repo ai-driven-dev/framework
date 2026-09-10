@@ -615,6 +615,46 @@ else
   skip "opencode bridge check (opencode not installed)"
 fi
 
+section "opencode: a real session under aidd-telemetry writes a journal line"
+# The bridge check above installs the smoke fixture, which journals nothing, so it passed while
+# every OpenCode session recorded nothing (#812). This installs the repository's own
+# aidd-telemetry on the layout a user gets, and asks the journal itself.
+if [[ -n "${PRESENT[opencode]:-}" ]]; then
+  PROJ_T=$(mktemp -d "$TMPROOT/proj-telemetry.XXXXXX"); (cd "$PROJ_T" && git init -q)
+  PROJECTS+=("$PROJ_T")
+  MKT_T="$MKT-telemetry"
+  run "setup (opencode, files only)" 0 "" "$PROJ_T" -- \
+    node "$CLI" setup --source local --path "$FRAMEWORK_FIXTURE" --ai opencode \
+    --no-default-marketplace --plugins none --yes
+  run "marketplace add $MKT_T (this repository)" 0 "" "$PROJ_T" -- \
+    node "$CLI" marketplace add "$MKT_T" "$ROOT/.." --scope project --yes
+  run "plugin install aidd-telemetry -> opencode" 0 "" "$PROJ_T" -- \
+    node "$CLI" plugin install aidd-telemetry --tool opencode --from "$MKT_T" --yes
+  run "telemetry on" 0 "" "$PROJ_T" -- node "$CLI" telemetry on --yes
+
+  tel_out=$(mktemp)
+  ( cd "$PROJ_T" && exec perl -e 'alarm shift; exec @ARGV' 90 opencode run "say ok" ) </dev/null >"$tel_out" 2>&1
+  tel_rc=$?
+  cat "$tel_out" >> "$LOGFILE"
+  # The session opens on its first call, so only a turn that completed can prove an empty
+  # journal: exit 0 with no line is #812 itself, a model that never answered proves nothing.
+  if grep -qsE '"type":"session_start".*"tool":"opencode"' "$PROJ_T"/aidd_docs/runs/*.jsonl; then
+    ok "opencode: the run journal holds a session_start line from opencode"
+  elif [[ "$tel_rc" -eq 0 ]]; then
+    bad "opencode: the turn completed and the run journal holds no session_start line" \
+      "$(ls -la "$PROJ_T/aidd_docs/runs" 2>&1; cat "$tel_out")"
+  elif [[ "$tel_rc" -eq 142 ]]; then
+    skip "opencode journal: the model never answered within 90s, so the journal proves nothing"
+  elif grep -qiE "auth|api key|provider|not logged in|credential" "$tel_out"; then
+    skip "opencode journal: needs provider auth on this machine — exit $tel_rc"
+  else
+    bad "opencode: exit $tel_rc and the run journal holds no session_start line" "$(cat "$tel_out")"
+  fi
+  rm -f "$tel_out"
+else
+  skip "opencode journal check (opencode not installed)"
+fi
+
 # --- Phase C1: the guard refuses a genuinely different catalog under the same name ---
 # Identity is a catalog's declared name plus its plugin set, never a path and never a version
 # (`marketplace-source-conflict.ts`), so this fixture keeps the name `$MKT` and drops its one
