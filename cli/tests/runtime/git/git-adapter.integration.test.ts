@@ -366,7 +366,8 @@ describe("GitAdapter", () => {
       });
     });
 
-    it("reports a hook git would refuse to run", async () => {
+    // A mode bit is POSIX: on Windows `access(X_OK)` answers like `F_OK`.
+    it.skipIf(process.platform === "win32")("reports a hook git would refuse to run", async () => {
       await mkdir(hooksDir, { recursive: true });
       await writeFile(join(hooksDir, "prepare-commit-msg"), "#!/bin/sh\n", { mode: 0o644 });
 
@@ -379,14 +380,18 @@ describe("GitAdapter", () => {
       });
     });
 
-    it("tells a delegate that is there but not executable from one that is missing", async () => {
-      await mkdir(hooksDir, { recursive: true });
-      await writeFile(join(hooksDir, DELEGATE), SCRIPT, { mode: 0o644 });
+    // A mode bit is POSIX: on Windows `access(X_OK)` answers like `F_OK`.
+    it.skipIf(process.platform === "win32")(
+      "tells a delegate that is there but not executable from one that is missing",
+      async () => {
+        await mkdir(hooksDir, { recursive: true });
+        await writeFile(join(hooksDir, DELEGATE), SCRIPT, { mode: 0o644 });
 
-      expect((await adapter.readCommitTrailerSetup(root, DELEGATE, "X", 1)).delegate).toBe(
-        "not-executable"
-      );
-    });
+        expect((await adapter.readCommitTrailerSetup(root, DELEGATE, "X", 1)).delegate).toBe(
+          "not-executable"
+        );
+      }
+    );
 
     it("does not count the header the CLI writes as somebody else's content", async () => {
       await mkdir(hooksDir, { recursive: true });
