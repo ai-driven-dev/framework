@@ -27,6 +27,7 @@ export default defineConfig({
           include: ["tests/**/*.unit.test.ts"],
           globals: false,
           environment: "node",
+          globalSetup: ["./tests/helpers/throwaway-profile.ts"],
         },
       },
       {
@@ -36,6 +37,7 @@ export default defineConfig({
           include: ["tests/**/*.integration.test.ts"],
           globals: false,
           environment: "node",
+          globalSetup: ["./tests/helpers/throwaway-profile.ts"],
           testTimeout: 60000,
         },
       },
