@@ -102,12 +102,8 @@ export function telemetrySinkRecordDayKey(record: TelemetrySinkRecord): string |
   // casts the rest, so a number here would parse as epoch milliseconds, land outside every
   // real period and go missing from the read without being counted as undated.
   if (typeof at !== "string") return undefined;
-  // The parse is checked first, always: the slice below is a faster way to read a moment
-  // already known to parse, never a substitute for checking it does. Slicing first lets a
-  // string merely shaped like a moment ("not-a-momentZ") answer a calendar fragment.
   const parsed = new Date(at);
   if (Number.isNaN(parsed.getTime())) return undefined;
-  if (at.length >= DAY_KEY_LENGTH && at.endsWith("Z")) return at.slice(0, DAY_KEY_LENGTH);
   return parsed.toISOString().slice(0, DAY_KEY_LENGTH);
 }
 
