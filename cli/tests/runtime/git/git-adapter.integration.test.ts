@@ -15,6 +15,8 @@ import { environmentWithoutGitVariables } from "../../../src/runtime/git/git-env
 
 const DELEGATE = "aidd-session-trailer.sh";
 const SCRIPT = "#!/bin/sh\necho delegate\n";
+/** A mode bit is POSIX: on Windows `access(X_OK)` answers like `F_OK`. */
+const MODE_BITS_UNOBSERVABLE = process.platform === "win32";
 
 function git(cwd: string, ...args: string[]): string {
   const result = spawnSync(
@@ -285,9 +287,7 @@ describe("GitAdapter", () => {
         "#!/bin/sh\necho mine\n"
       );
     });
-
-    // A mode bit is POSIX: on Windows `access(X_OK)` answers like `F_OK`.
-    it.skipIf(process.platform === "win32")(
+    it.skipIf(MODE_BITS_UNOBSERVABLE)(
       "leaves a hook that was not executable as it found it",
       async () => {
         await mkdir(hooksDir, { recursive: true });
@@ -365,9 +365,7 @@ describe("GitAdapter", () => {
         hooksDirMissing: "no-repository",
       });
     });
-
-    // A mode bit is POSIX: on Windows `access(X_OK)` answers like `F_OK`.
-    it.skipIf(process.platform === "win32")("reports a hook git would refuse to run", async () => {
+    it.skipIf(MODE_BITS_UNOBSERVABLE)("reports a hook git would refuse to run", async () => {
       await mkdir(hooksDir, { recursive: true });
       await writeFile(join(hooksDir, "prepare-commit-msg"), "#!/bin/sh\n", { mode: 0o644 });
 
@@ -379,9 +377,7 @@ describe("GitAdapter", () => {
         hooksDir,
       });
     });
-
-    // A mode bit is POSIX: on Windows `access(X_OK)` answers like `F_OK`.
-    it.skipIf(process.platform === "win32")(
+    it.skipIf(MODE_BITS_UNOBSERVABLE)(
       "tells a delegate that is there but not executable from one that is missing",
       async () => {
         await mkdir(hooksDir, { recursive: true });
