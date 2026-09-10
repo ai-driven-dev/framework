@@ -18,7 +18,7 @@
     },
     "telemetry": {
       "mutate": "src/contexts/telemetry/**/*.ts",
-      "break": 75
+      "break": 93
     },
     "translate": {
       "mutate": "src/contexts/translate/**/*.ts",

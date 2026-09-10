@@ -149,6 +149,71 @@ describe("TaskBacklogAdapter — reads a declaration without ever writing one", 
     await expect(adapter.read(TASK_FOLDER)).resolves.toEqual({ kind: "unreadable" });
   });
 
+  it("answers unreadable for valid JSON missing written_at alone", async () => {
+    const root = await freshProject();
+    await writeLink(
+      root,
+      JSON.stringify({ backlog: "ai-driven-dev/framework#617", written_by: "aidd-pm:04-spec" })
+    );
+
+    await expect(new TaskBacklogAdapter(root).read(TASK_FOLDER)).resolves.toStrictEqual({
+      kind: "unreadable",
+    });
+  });
+
+  it("answers unreadable for valid JSON missing written_by alone", async () => {
+    const root = await freshProject();
+    await writeLink(
+      root,
+      JSON.stringify({ backlog: "ai-driven-dev/framework#617", written_at: "2026-08-21T09:00:00Z" })
+    );
+
+    await expect(new TaskBacklogAdapter(root).read(TASK_FOLDER)).resolves.toStrictEqual({
+      kind: "unreadable",
+    });
+  });
+
+  it("answers unreadable for an empty backlog reference", async () => {
+    const root = await freshProject();
+    await writeLink(
+      root,
+      JSON.stringify({
+        backlog: "",
+        written_at: "2026-08-21T09:00:00Z",
+        written_by: "aidd-pm:04-spec",
+      })
+    );
+
+    await expect(new TaskBacklogAdapter(root).read(TASK_FOLDER)).resolves.toStrictEqual({
+      kind: "unreadable",
+    });
+  });
+
+  it("answers unreadable for a backlog reference that is not a string", async () => {
+    const root = await freshProject();
+    await writeLink(
+      root,
+      JSON.stringify({
+        backlog: 617,
+        written_at: "2026-08-21T09:00:00Z",
+        written_by: "aidd-pm:04-spec",
+      })
+    );
+
+    await expect(new TaskBacklogAdapter(root).read(TASK_FOLDER)).resolves.toStrictEqual({
+      kind: "unreadable",
+    });
+  });
+
+  it("answers unreadable when the file is there but cannot be read, distinct from none", async () => {
+    const root = await freshProject();
+    await mkdir(join(root, "aidd_docs", "tasks", "t", "backlog-link.json"), { recursive: true });
+
+    await expect(new TaskBacklogAdapter(root).read("aidd_docs/tasks/t/")).resolves.toStrictEqual({
+      kind: "unreadable",
+    });
+  });
+
   it("answers unreadable for a declaration missing its provenance", async () => {
     const root = await freshProject();
     await writeLink(root, JSON.stringify({ backlog: "ai-driven-dev/framework#617" }));

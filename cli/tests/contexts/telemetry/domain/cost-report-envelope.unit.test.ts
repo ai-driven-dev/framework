@@ -10,6 +10,7 @@ import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import {
   buildCostReport,
+  type CostReport,
   type CostReportInput,
   type CostReportToolDeclaration,
 } from "../../../../src/contexts/telemetry/domain/cost-report.js";
@@ -309,6 +310,217 @@ describe("toCostReportEnvelope", () => {
     );
 
     expect(contract).toContain(`currently \`${COST_REPORT_ENVELOPE_VERSION}\``);
+  });
+});
+
+const CAPABILITY = {
+  localRead: null,
+  export: null,
+  journalAttributable: false,
+  taskAttributable: false,
+} as const;
+
+const BARE_REPORT: CostReport = {
+  fromDay: "2026-08-17",
+  toDay: "2026-08-17",
+  sessions: 1,
+  totals: { requests: 1 },
+  bySteps: [{ attribution: "unattributed", totals: { requests: 1 } }],
+  byModels: [{ totals: { requests: 1 } }],
+  byAgents: [{ attribution: "not-stated", totals: { requests: 1 } }],
+  byPrompts: [{ totals: { requests: 1 } }],
+  byTools: [
+    { tool: "codex", coverage: "covered", capability: CAPABILITY, totals: { requests: 1 } },
+  ],
+  byProjects: [{ totals: { requests: 1 } }],
+  byTasks: [{ totals: { requests: 1 } }],
+  byBacklog: [{ totals: { requests: 1 } }],
+  byFlows: [{ attribution: "unattributed", totals: { requests: 1 } }],
+  byDays: [{ day: "2026-08-17", totals: { requests: 1 } }],
+  byPeople: [{ resolution: "none", identities: [], totals: { requests: 1 } }],
+  attributionMix: [{ attribution: "unattributed", totals: { requests: 1 } }],
+  undatedRecords: 0,
+  unreadableLines: 0,
+  measurementEnabled: true,
+};
+
+const FULL_TOTALS = {
+  requests: 2,
+  costMicroUsd: 1500000,
+  inputTokens: 10,
+  outputTokens: 20,
+  cacheReadTokens: 30,
+  cacheCreationTokens: 40,
+} as const;
+
+const FULL_TOTALS_RENDERED = {
+  requests: 2,
+  cost_micro_usd: 1500000,
+  input_tokens: 10,
+  output_tokens: 20,
+  cache_read_tokens: 30,
+  cache_creation_tokens: 40,
+} as const;
+
+const FULL_REPORT: CostReport = {
+  fromDay: "2026-08-17",
+  toDay: "2026-08-18",
+  task: "2026_08/widgets",
+  filters: { project: "acme/widgets", model: "opus" },
+  emptySelection: { filter: "model", value: "opus", known: true, combination: true },
+  sessions: 2,
+  totals: FULL_TOTALS,
+  activeTimeSeconds: 754,
+  bySteps: [{ step: "implement", attribution: "tool-stated", totals: FULL_TOTALS }],
+  byModels: [{ model: "opus", totals: FULL_TOTALS }],
+  byAgents: [{ agent: "Explore", attribution: "tool-stated", totals: FULL_TOTALS }],
+  byPrompts: [{ prompt: "p-1", startedAt: "2026-08-17T09:00:00Z", totals: FULL_TOTALS }],
+  byTools: [
+    {
+      tool: "copilot",
+      coverage: "not-covered",
+      reason: "A session total only.",
+      capability: CAPABILITY,
+      totals: FULL_TOTALS,
+      sessionTotals: { requests: 0, outputTokens: 5 },
+    },
+  ],
+  byProjects: [{ project: "acme/widgets", totals: FULL_TOTALS }],
+  byTasks: [
+    { task: "2026_08/widgets", attribution: "declared", totals: FULL_TOTALS },
+    { reason: "no-declaration", totals: FULL_TOTALS },
+  ],
+  byBacklog: [
+    { backlog: "STORY-7", totals: FULL_TOTALS },
+    { declaration: "unreadable", totals: FULL_TOTALS },
+    { reason: "no-journal", totals: FULL_TOTALS },
+  ],
+  byFlows: [
+    {
+      flow: "aidd-orchestrator:01-sdlc",
+      attribution: "journal-interval",
+      startedAt: "2026-08-17T08:00:00Z",
+      totals: FULL_TOTALS,
+    },
+  ],
+  byDays: [{ day: "2026-08-17", totals: FULL_TOTALS }],
+  byPeople: [
+    {
+      resolution: "mapped",
+      person: "ada",
+      displayName: "Ada L.",
+      identities: ["ada@example.test"],
+      totals: FULL_TOTALS,
+    },
+  ],
+  attributionMix: [{ attribution: "tool-stated", totals: FULL_TOTALS }],
+  taskAttributionMix: [{ attribution: "declared", totals: FULL_TOTALS }],
+  undatedRecords: 3,
+  unreadableLines: 4,
+  identityUnusableCause: "unreadable",
+  measurementEnabled: false,
+};
+
+describe("toCostReportEnvelope renders a report value field for field", () => {
+  it("leaves every optional field out entirely, never present as undefined, when the report has none", () => {
+    expect(toCostReportEnvelope(BARE_REPORT)).toStrictEqual({
+      cost_report_version: COST_REPORT_ENVELOPE_VERSION,
+      period: { from_day: "2026-08-17", to_day: "2026-08-17" },
+      measurement_enabled: true,
+      sessions: 1,
+      totals: { requests: 1 },
+      by_step: [{ attribution: "unattributed", totals: { requests: 1 } }],
+      by_model: [{ totals: { requests: 1 } }],
+      by_tool: [
+        {
+          tool: "codex",
+          coverage: "covered",
+          capability: {
+            local_read: null,
+            export: null,
+            journal_attributable: false,
+            task_attributable: false,
+          },
+          totals: { requests: 1 },
+        },
+      ],
+      by_project: [{ totals: { requests: 1 } }],
+      by_task: [{ totals: { requests: 1 } }],
+      by_backlog: [{ totals: { requests: 1 } }],
+      by_flow: [{ attribution: "unattributed", totals: { requests: 1 } }],
+      by_agent: [{ attribution: "not-stated", totals: { requests: 1 } }],
+      by_prompt: [{ totals: { requests: 1 } }],
+      by_day: [{ day: "2026-08-17", totals: { requests: 1 } }],
+      by_person: [{ resolution: "none", identities: [], totals: { requests: 1 } }],
+      attribution: [{ attribution: "unattributed", totals: { requests: 1 } }],
+      read: { undated_records: 0, unreadable_lines: 0 },
+    });
+  });
+
+  it("carries every optional field under its snake_case name when the report has them all", () => {
+    expect(toCostReportEnvelope(FULL_REPORT)).toStrictEqual({
+      cost_report_version: COST_REPORT_ENVELOPE_VERSION,
+      period: { from_day: "2026-08-17", to_day: "2026-08-18" },
+      measurement_enabled: false,
+      task: "2026_08/widgets",
+      filters: { project: "acme/widgets", model: "opus" },
+      empty_selection: { filter: "model", value: "opus", known: true, combination: true },
+      sessions: 2,
+      totals: FULL_TOTALS_RENDERED,
+      active_time_s: 754,
+      by_step: [{ step: "implement", attribution: "tool-stated", totals: FULL_TOTALS_RENDERED }],
+      by_model: [{ model: "opus", totals: FULL_TOTALS_RENDERED }],
+      by_tool: [
+        {
+          tool: "copilot",
+          coverage: "not-covered",
+          reason: "A session total only.",
+          capability: {
+            local_read: null,
+            export: null,
+            journal_attributable: false,
+            task_attributable: false,
+          },
+          totals: FULL_TOTALS_RENDERED,
+          session_totals: { requests: 0, output_tokens: 5 },
+        },
+      ],
+      by_project: [{ project: "acme/widgets", totals: FULL_TOTALS_RENDERED }],
+      by_task: [
+        { task: "2026_08/widgets", attribution: "declared", totals: FULL_TOTALS_RENDERED },
+        { reason: "no-declaration", totals: FULL_TOTALS_RENDERED },
+      ],
+      by_backlog: [
+        { backlog: "STORY-7", totals: FULL_TOTALS_RENDERED },
+        { declaration: "unreadable", totals: FULL_TOTALS_RENDERED },
+        { reason: "no-journal", totals: FULL_TOTALS_RENDERED },
+      ],
+      by_flow: [
+        {
+          flow: "aidd-orchestrator:01-sdlc",
+          attribution: "journal-interval",
+          started_at: "2026-08-17T08:00:00Z",
+          totals: FULL_TOTALS_RENDERED,
+        },
+      ],
+      by_agent: [{ agent: "Explore", attribution: "tool-stated", totals: FULL_TOTALS_RENDERED }],
+      by_prompt: [
+        { prompt: "p-1", started_at: "2026-08-17T09:00:00Z", totals: FULL_TOTALS_RENDERED },
+      ],
+      by_day: [{ day: "2026-08-17", totals: FULL_TOTALS_RENDERED }],
+      by_person: [
+        {
+          resolution: "mapped",
+          person: "ada",
+          display_name: "Ada L.",
+          identities: ["ada@example.test"],
+          totals: FULL_TOTALS_RENDERED,
+        },
+      ],
+      attribution: [{ attribution: "tool-stated", totals: FULL_TOTALS_RENDERED }],
+      task_attribution: [{ attribution: "declared", totals: FULL_TOTALS_RENDERED }],
+      read: { undated_records: 3, unreadable_lines: 4, identity_unusable: "unreadable" },
+    });
   });
 });
 

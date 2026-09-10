@@ -892,3 +892,278 @@ describe("a report that catches the sink up first", () => {
     expect(reads).toBe(0);
   });
 });
+
+class RecordingTaskBacklogReader extends InMemoryTaskBacklogReader {
+  readonly asked: string[] = [];
+
+  override async read(taskFolderPath: string) {
+    this.asked.push(taskFolderPath);
+    return super.read(taskFolderPath);
+  }
+}
+
+describe("ReportCostUseCase — what it assembles for the report", () => {
+  const SESSION_AT = "2026-08-18T09:00:00Z";
+  const NO_CAPABILITY_SUPPLY = { tokenCounters: true, amount: false } as const;
+
+  let sink: InMemoryTelemetrySink;
+  let journals: InMemoryRunJournalReader;
+  let taskBacklog: RecordingTaskBacklogReader;
+  let logger: CapturingLogger;
+
+  beforeEach(() => {
+    sink = new InMemoryTelemetrySink();
+    journals = new InMemoryRunJournalReader();
+    taskBacklog = new RecordingTaskBacklogReader();
+    logger = new CapturingLogger();
+  });
+
+  function report(read?: ReadLocalCostUseCase): ReportCostUseCase {
+    return new ReportCostUseCase(
+      sink,
+      journals,
+      new InMemoryPersonIdentityStore(),
+      new StubTelemetryEvidenceReader(),
+      taskBacklog,
+      logger,
+      read
+    );
+  }
+
+  function sessionJournal(vendorId: string, lines: Partial<RunJournal>): RunJournal {
+    return {
+      boundaries: [],
+      filesWritten: [],
+      taskDeclarations: [],
+      session: {
+        type: "session_start",
+        at: SESSION_AT,
+        run_id: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        tool: "claude-code",
+        vendor_id: vendorId,
+      },
+      ...lines,
+    };
+  }
+
+  it("declares every tool exactly as its profile does, limitation and refusal included", async () => {
+    const built = await report().execute({ ...BASE_OPTIONS, period: PERIOD });
+
+    const declarations = built.byTools.map(({ totals: _totals, ...declaration }) => declaration);
+    expect(declarations).toStrictEqual([
+      {
+        tool: "claude",
+        coverage: "covered",
+        capability: {
+          localRead: { ...NO_CAPABILITY_SUPPLY, toolStatedStep: true, agentName: true },
+          export: null,
+          journalAttributable: true,
+          taskAttributable: true,
+        },
+      },
+      {
+        tool: "cursor",
+        coverage: "not-covered",
+        reason: "It writes no token count in any file it produces.",
+        capability: {
+          localRead: null,
+          export: null,
+          journalAttributable: true,
+          taskAttributable: true,
+        },
+      },
+      {
+        tool: "copilot",
+        coverage: "covered",
+        reason:
+          "Its own file names outputTokens per turn, but session.shutdown carries all four " +
+          "counters for the whole session — a session total, never a sum of requests. Its four " +
+          "counters are measured disjoint, cached prompt included.",
+        capability: {
+          localRead: { ...NO_CAPABILITY_SUPPLY, toolStatedStep: false, agentName: false },
+          export: null,
+          journalAttributable: true,
+          taskAttributable: true,
+        },
+      },
+      {
+        tool: "opencode",
+        coverage: "covered",
+        reason:
+          "Its four counters are measured disjoint for the anthropic provider and for one " +
+          "OpenAI-compatible provider whose cache was exercised — not confirmed for a " +
+          "provider that reports prompt tokens inclusive of the cached ones, which none " +
+          "captured here does.",
+        capability: {
+          localRead: { ...NO_CAPABILITY_SUPPLY, toolStatedStep: false, agentName: false },
+          export: null,
+          journalAttributable: true,
+          taskAttributable: true,
+        },
+      },
+      {
+        tool: "codex",
+        coverage: "covered",
+        capability: {
+          localRead: { ...NO_CAPABILITY_SUPPLY, toolStatedStep: false, agentName: false },
+          export: null,
+          journalAttributable: true,
+          taskAttributable: true,
+        },
+      },
+    ]);
+  });
+
+  it("hands the generic filters to the report, which narrows to the value asked for", async () => {
+    await sink.appendRecord(record({ vendor_id: "s-1", model: "opus" }), STORED_ON);
+    await sink.appendRecord(record({ vendor_id: "s-2", model: "sonnet" }), STORED_ON);
+
+    const built = await report().execute({
+      ...BASE_OPTIONS,
+      period: PERIOD,
+      filters: { model: "opus" },
+    });
+
+    expect(built.filters).toStrictEqual({ model: "opus" });
+    expect(built.totals).toStrictEqual({ requests: 1 });
+  });
+
+  it("reports through a journal whose session_start line is torn away", async () => {
+    journals.set("torn", { boundaries: [], filesWritten: [], taskDeclarations: [] });
+    await sink.appendRecord(record({ vendor_id: "s-1" }), STORED_ON);
+
+    const built = await report().execute({ ...BASE_OPTIONS, period: PERIOD });
+
+    expect(built.totals).toStrictEqual({ requests: 1 });
+  });
+
+  it("catches up past a journal whose session_start line is torn away", async () => {
+    journals.set("torn", { boundaries: [], filesWritten: [], taskDeclarations: [] });
+    const read = new ReadLocalCostUseCase(
+      sink,
+      new Map([["claude", { read: async () => ({ records: [], sessionFound: false }) }]]),
+      journals,
+      NULL_PERSON_IDENTITY_READER,
+      new StubTelemetryEvidenceReader()
+    );
+
+    const built = await report(read).execute({ ...BASE_OPTIONS, period: PERIOD });
+
+    expect(built.totals).toStrictEqual({ requests: 0 });
+  });
+
+  it("witnesses a moment through the session_start line alone when no other line is dated", async () => {
+    journals.set(
+      "s-1",
+      sessionJournal("s-1", {
+        filesWritten: [
+          { type: "file_written", at: "not a moment", path: `aidd_docs/tasks/${TASK}/plan.md` },
+        ],
+      })
+    );
+    await sink.appendRecord(
+      record({ vendor_id: "s-1", event_timestamp: "2026-08-18T09:00:00.500Z" }),
+      STORED_ON
+    );
+
+    const built = await report().execute({ ...BASE_OPTIONS, period: PERIOD });
+
+    expect(built.byTasks).toStrictEqual([
+      { task: TASK, attribution: "inferred", totals: { requests: 1 } },
+    ]);
+  });
+
+  it("witnesses nothing from a journal whose every line is undated, rather than everything", async () => {
+    journals.set(
+      "s-1",
+      sessionJournal("s-1", {
+        session: {
+          type: "session_start",
+          at: "not a moment",
+          run_id: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+          tool: "claude-code",
+          vendor_id: "s-1",
+        },
+      })
+    );
+    await sink.appendRecord(record({ vendor_id: "s-1" }), STORED_ON);
+
+    const built = await report().execute({ ...BASE_OPTIONS, period: PERIOD });
+
+    expect(built.byTasks).toStrictEqual([{ reason: "no-declaration", totals: { requests: 1 } }]);
+  });
+
+  it("asks the backlog once per task folder, never per written file and never for a path outside a task", async () => {
+    journals.set(
+      "s-1",
+      sessionJournal("s-1", {
+        filesWritten: [
+          { type: "file_written", at: SESSION_AT, path: `aidd_docs/tasks/${TASK}/plan.md` },
+          { type: "file_written", at: SESSION_AT, path: `aidd_docs/tasks/${TASK}/spec.md` },
+          { type: "file_written", at: SESSION_AT, path: "src/index.ts" },
+        ],
+      })
+    );
+
+    await report().execute({ ...BASE_OPTIONS, period: PERIOD });
+
+    expect(taskBacklog.asked).toStrictEqual([taskFolderPathFromIdentity(TASK)]);
+  });
+
+  it("asks the backlog about a task the journal only declared, with no file written into it", async () => {
+    journals.set(
+      "s-1",
+      sessionJournal("s-1", {
+        boundaries: [{ type: "turn_end", at: "2026-08-18T10:00:00Z" }],
+        taskDeclarations: [
+          { type: "task_declared", at: SESSION_AT, path: `aidd_docs/tasks/${TASK}/spec.md` },
+        ],
+      })
+    );
+
+    await report().execute({ ...BASE_OPTIONS, period: PERIOD });
+
+    expect(taskBacklog.asked).toStrictEqual([taskFolderPathFromIdentity(TASK)]);
+  });
+
+  it("warns nothing when every reader answered", async () => {
+    journals.set("s-1", sessionJournal("s-1", {}));
+    const read = new ReadLocalCostUseCase(
+      sink,
+      new Map([["claude", { read: async () => ({ records: [], sessionFound: true }) }]]),
+      journals,
+      NULL_PERSON_IDENTITY_READER,
+      new StubTelemetryEvidenceReader()
+    );
+
+    await report(read).execute({ ...BASE_OPTIONS, period: PERIOD });
+
+    expect(logger.warnMessages).toStrictEqual([]);
+  });
+
+  it("names the tool, the session and the reader's own reason in one warning", async () => {
+    journals.set("s-1", sessionJournal("s-1", {}));
+    const read = new ReadLocalCostUseCase(
+      sink,
+      new Map([
+        [
+          "claude",
+          {
+            read: async () => {
+              throw new Error("the transcript directory is unreadable");
+            },
+          },
+        ],
+      ]),
+      journals,
+      NULL_PERSON_IDENTITY_READER,
+      new StubTelemetryEvidenceReader()
+    );
+
+    await report(read).execute({ ...BASE_OPTIONS, period: PERIOD });
+
+    expect(logger.warnMessages).toStrictEqual([
+      "telemetry report: claude could not be read for session s-1 - the transcript directory is unreadable",
+    ]);
+  });
+});
