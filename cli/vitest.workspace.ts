@@ -11,7 +11,10 @@ export default defineWorkspace([
       include: ["tests/**/*.unit.test.ts"],
       globals: false,
       environment: "node",
-      globalSetup: ["./tests/helpers/sweep-stale-temp-dirs.ts"],
+      globalSetup: [
+        "./tests/helpers/sweep-stale-temp-dirs.ts",
+        "./tests/helpers/throwaway-profile.ts",
+      ],
     },
   },
   {
@@ -31,7 +34,10 @@ export default defineWorkspace([
       globals: false,
       environment: "node",
       testTimeout: 60000,
-      globalSetup: ["./tests/helpers/sweep-stale-temp-dirs.ts"],
+      globalSetup: [
+        "./tests/helpers/sweep-stale-temp-dirs.ts",
+        "./tests/helpers/throwaway-profile.ts",
+      ],
     },
   },
   {
