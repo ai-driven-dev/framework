@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join, posix } from "node:path";
 import { describe, expect, it } from "vitest";
 import type {
   ArtifactContract,
@@ -8,6 +10,12 @@ import {
   transformMcpToOpencode,
 } from "../../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
+import { REPOSITORY_ROOT } from "../../../../../helpers/repository-root.js";
+
+const OPENCODE_PLUGIN_MODULE = readFileSync(
+  join(REPOSITORY_ROOT, "plugins/aidd-telemetry/hooks/opencode-plugin.js"),
+  "utf8"
+);
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
@@ -167,6 +175,20 @@ describe("buildOpencodeFlatContract()", () => {
       bridgePath: ".opencode/plugin/aidd-dev-hooks.js",
       skipIfSourceHas: "opencode-plugin.js",
     });
+  });
+
+  it("delivers journal.cjs where the shipped plugin module resolves it, not beside the loader", () => {
+    const hooks = supported(buildOpencodeFlatContract().artifacts.hooks);
+    const named =
+      /JOURNAL_SCRIPT = fileURLToPath\(\s*new URL\("([^"]+)", import\.meta\.url\)/u.exec(
+        OPENCODE_PLUGIN_MODULE
+      )?.[1];
+    const loaderEntry = hooks.path("aidd-telemetry", "hooks/opencode-plugin.js");
+
+    expect(named).toBeDefined();
+    expect(posix.normalize(posix.join(posix.dirname(loaderEntry), named ?? ""))).toBe(
+      hooks.path("aidd-telemetry", "hooks/journal.cjs")
+    );
   });
 
   it("generates no bridge for a plugin whose hooks name no event OpenCode delivers", () => {
