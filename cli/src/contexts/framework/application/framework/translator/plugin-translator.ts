@@ -23,6 +23,7 @@ export interface PluginTranslator {
     projectRoot: string,
     manifest: Manifest,
     marketplace: string | undefined,
-    previousMcpEntries?: ReadonlyMap<string, string>
+    previousMcpEntries?: ReadonlyMap<string, string>,
+    userScopeDirTaken?: boolean
   ): Promise<{ skipped: ReadonlySkipList; written?: number }>;
 }

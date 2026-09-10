@@ -51,7 +51,8 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     projectRoot: string,
     manifest: Manifest,
     marketplace: string | undefined,
-    previousMcpEntries: ReadonlyMap<string, string> = new Map()
+    previousMcpEntries: ReadonlyMap<string, string> = new Map(),
+    userScopeDirTaken = false
   ): Promise<{ skipped: ReadonlySkipList; written?: number }> {
     const resolved =
       marketplace === undefined ? null : await this.findMarketplace(marketplace, projectRoot);
@@ -63,7 +64,8 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
         projectRoot,
         manifest,
         marketplace,
-        previousMcpEntries
+        previousMcpEntries,
+        userScopeDirTaken
       );
     }
     const mode = frameworkBuildModeFor(toolId);
@@ -95,10 +97,11 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
       mode === "flat"
         ? projectRoot
         : resolveBaseDirFromRecord(scope, toolId, projectRoot, this.homedir);
-    const written = await this.writeChangedFiles(files, baseDir);
+    const owned = userScopeDirTaken ? [] : files;
+    const written = await this.writeChangedFiles(owned, baseDir);
     manifest.addPlugin(
       toolId,
-      InstalledPlugin.fromDistribution(dist, source, files, scope, new Map(), marketplace)
+      InstalledPlugin.fromDistribution(dist, source, owned, scope, new Map(), marketplace)
     );
     return { skipped: hooksSkips, written };
   }

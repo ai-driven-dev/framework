@@ -229,7 +229,6 @@ export class PluginAddUseCase implements PluginAdd {
         this.logger.warn(
           `${toolId}: ${foreignDir} was already there and this project did not install it — left as found and not tracked, so this project's clean will not delete it.`
         );
-        continue;
       }
       const prev = prevMcpMap.get(toolId) ?? new Map();
       const { skipped, notices } = await this.addPluginForTool(
@@ -239,7 +238,8 @@ export class PluginAddUseCase implements PluginAdd {
         projectRoot,
         manifest,
         marketplace,
-        prev
+        prev,
+        foreignDir !== undefined
       );
       allSkipped.push(skipped);
       allNotices.push(notices);
@@ -309,7 +309,8 @@ export class PluginAddUseCase implements PluginAdd {
     projectRoot: string,
     manifest: Manifest,
     marketplace: string | undefined,
-    previousMcpEntries: ReadonlyMap<string, string> = new Map()
+    previousMcpEntries: ReadonlyMap<string, string>,
+    userScopeDirTaken: boolean
   ): Promise<{ skipped: ReadonlySkipList; notices: ReadonlyNoticeList }> {
     const toolConfig = getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return { skipped: [], notices: [] };
@@ -322,7 +323,8 @@ export class PluginAddUseCase implements PluginAdd {
         projectRoot,
         manifest,
         marketplace,
-        previousMcpEntries
+        previousMcpEntries,
+        userScopeDirTaken
       );
       return { ...result, notices: [] };
     }

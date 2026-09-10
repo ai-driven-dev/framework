@@ -420,7 +420,9 @@ describe("PluginAddUseCase", () => {
         await addForCursor(deps, logger);
 
         expect(deps.fs.getFile(cursorSkillAt())).toBe("# Their own skill");
-        expect(pluginNames(deps, "cursor")).toEqual([]);
+        const entry = deps.manifestRepo.getCurrent()?.getPlugins("cursor")[0];
+        expect(entry?.name).toBe("sample-plugin");
+        expect(entry?.files.size).toBe(0);
         expect(logger.warnMessages.join("\n")).toContain(
           join(homedir(), ".cursor/plugins/local", "sample-plugin")
         );
@@ -439,7 +441,33 @@ describe("PluginAddUseCase", () => {
         await addForCursor(deps, deps.logger);
 
         expect(deps.fs.getFile(cursorSkillAt())).toBe("# Their own skill");
-        expect(pluginNames(deps, "cursor")).toEqual(["other-plugin"]);
+        expect(pluginNames(deps, "cursor")).toEqual(["other-plugin", "sample-plugin"]);
+      });
+
+      it("still delivers the plugin's project hooks when its user-scope dir is someone else's", async () => {
+        const deps = await cursorDeps();
+        deps.fs.setFile(cursorSkillAt(), "# Their own skill");
+
+        await addForCursor(deps, deps.logger);
+
+        expect(deps.fs.getFile(join(PROJECT_ROOT, ".cursor/hooks.json"))).toContain(
+          "update_memory"
+        );
+      });
+
+      it("leaves a found plugin dir alone on a local install with no marketplace", async () => {
+        const deps = await cursorDeps();
+        deps.fs.setFile(cursorSkillAt(), "# Their own skill");
+
+        await buildAddUseCase(deps).execute({
+          source: { kind: "local", path: PLUGIN_FIXTURE },
+          toolIds: ["cursor"],
+          projectRoot: PROJECT_ROOT,
+          interactive: false,
+        });
+
+        expect(deps.fs.getFile(cursorSkillAt())).toBe("# Their own skill");
+        expect(deps.manifestRepo.getCurrent()?.getPlugins("cursor")[0]?.files.size).toBe(0);
       });
 
       it("still overwrites and tracks its own plugin dir when re-installed with replace", async () => {
