@@ -3,7 +3,7 @@
   "scopes": {
     "kernel": {
       "mutate": "src/kernel/**/*.ts",
-      "break": 71
+      "break": 95
     },
     "tools": {
       "mutate": [
