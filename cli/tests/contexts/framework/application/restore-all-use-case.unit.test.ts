@@ -136,6 +136,34 @@ describe("RestoreAllUseCase — the --force flag", () => {
   });
 });
 
+describe("RestoreAllUseCase — an interactive run that ticks nothing", () => {
+  it("restores nothing: an empty selection is a decision, not the absence of one", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    const manifest = await deps.manifestRepo.load();
+    const tracked = manifest?.getToolFiles("claude") ?? [];
+    const trackedPath = join(PROJECT_ROOT, tracked[0].relativePath);
+    await deps.fs.writeFile(trackedPath, "EDITED OUTSIDE THE CLI");
+    const prompter = new ScriptedPrompter([ScriptedPrompter.answer.checkbox([])]);
+
+    const result = await makeRestoreAllUseCase(
+      deps,
+      new PluginDistributionReaderAdapter(deps.fs),
+      prompter
+    ).execute(PROJECT_ROOT, false, true);
+
+    expect(deps.fs.getFile(trackedPath)).toBe("EDITED OUTSIDE THE CLI");
+    expect(result).toStrictEqual({
+      totalRestored: 0,
+      totalKept: 0,
+      pluginNamesRestored: [],
+      errors: [],
+      unrestorable: [],
+      nativeOnlyToolIds: [],
+    });
+  });
+});
+
 describe("RestoreAllUseCase — plugin materialization", () => {
   it("restores a corrupted plugin file with exactly one materialization call (translate-mode: claude)", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
