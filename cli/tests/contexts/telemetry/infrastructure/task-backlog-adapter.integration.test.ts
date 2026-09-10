@@ -207,12 +207,11 @@ describe("TaskBacklogAdapter — reads a declaration without ever writing one", 
 
   it("answers unreadable when the file is there but cannot be read, distinct from none", async () => {
     const root = await freshProject();
-    await mkdir(join(root, "aidd_docs", "tasks"), { recursive: true });
-    await writeFile(join(root, "aidd_docs", "tasks", "not-a-folder"), "");
+    await mkdir(join(root, "aidd_docs", "tasks", "t", "backlog-link.json"), { recursive: true });
 
-    await expect(
-      new TaskBacklogAdapter(root).read("aidd_docs/tasks/not-a-folder/")
-    ).resolves.toStrictEqual({ kind: "unreadable" });
+    await expect(new TaskBacklogAdapter(root).read("aidd_docs/tasks/t/")).resolves.toStrictEqual({
+      kind: "unreadable",
+    });
   });
 
   it("answers unreadable for a declaration missing its provenance", async () => {

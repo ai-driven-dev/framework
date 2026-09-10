@@ -5,19 +5,29 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { PersonIdentityAdapter } from "../../../../src/contexts/telemetry/infrastructure/person-identity-adapter.js";
 import { IdentityWriteError, UnreadableIdentityFileError } from "../../../../src/kernel/errors.js";
 
+/** Windows reads `%APPDATA%`, never `HOME`: a sandbox that moved `HOME` alone wrote the real profile. */
+function relocateProfile(home: string): void {
+  process.env.HOME = home;
+  process.env.APPDATA = join(home, ".config");
+}
+
 /** On real disk: every write here goes through the file and is read back through it, since
  * what this adapter stores is what decides whose records are whose. */
 describe("PersonIdentityAdapter.forget — resolved once, acts on the path it is handed", () => {
   let previousHome: string | undefined;
+  let previousAppData: string | undefined;
   const homes: string[] = [];
 
   beforeEach(() => {
     previousHome = process.env.HOME;
+    previousAppData = process.env.APPDATA;
   });
 
   afterEach(async () => {
     if (previousHome === undefined) delete process.env.HOME;
     else process.env.HOME = previousHome;
+    if (previousAppData === undefined) delete process.env.APPDATA;
+    else process.env.APPDATA = previousAppData;
     for (const home of homes.splice(0)) await rm(home, { recursive: true, force: true });
   });
 
@@ -29,7 +39,7 @@ describe("PersonIdentityAdapter.forget — resolved once, acts on the path it is
 
   it("removes the identity file it was constructed against", async () => {
     const home = await freshHome();
-    process.env.HOME = home;
+    relocateProfile(home);
     const adapter = new PersonIdentityAdapter();
     await adapter.mint();
 
@@ -41,7 +51,7 @@ describe("PersonIdentityAdapter.forget — resolved once, acts on the path it is
 
   it("is a no-op, not a failure, when the path is already gone", async () => {
     const home = await freshHome();
-    process.env.HOME = home;
+    relocateProfile(home);
     const adapter = new PersonIdentityAdapter();
 
     await expect(adapter.forget(adapter.filePath)).resolves.toBe(false);
@@ -51,7 +61,7 @@ describe("PersonIdentityAdapter.forget — resolved once, acts on the path it is
   // relocation between the preview and the removal cannot redirect it.
   it("acts on the path it is handed, immune to HOME being relocated afterwards", async () => {
     const realHome = await freshHome();
-    process.env.HOME = realHome;
+    relocateProfile(realHome);
     const adapter = new PersonIdentityAdapter();
     await adapter.mint();
     const shownPath = adapter.filePath; // what a preview would have shown
@@ -61,7 +71,7 @@ describe("PersonIdentityAdapter.forget — resolved once, acts on the path it is
     const victimPath = join(elsewhereHome, ".config", "aidd", "identity.json");
     await writeFile(victimPath, '{"person_id":"victim"}\n');
 
-    process.env.HOME = elsewhereHome; // relocated AFTER the path was shown
+    relocateProfile(elsewhereHome); // relocated AFTER the path was shown
 
     await adapter.forget(shownPath);
 
@@ -72,15 +82,19 @@ describe("PersonIdentityAdapter.forget — resolved once, acts on the path it is
 
 describe("PersonIdentityAdapter — what it writes, and what it reads back", () => {
   let previousHome: string | undefined;
+  let previousAppData: string | undefined;
   const homes: string[] = [];
 
   beforeEach(() => {
     previousHome = process.env.HOME;
+    previousAppData = process.env.APPDATA;
   });
 
   afterEach(async () => {
     if (previousHome === undefined) delete process.env.HOME;
     else process.env.HOME = previousHome;
+    if (previousAppData === undefined) delete process.env.APPDATA;
+    else process.env.APPDATA = previousAppData;
     for (const home of homes.splice(0)) await rm(home, { recursive: true, force: true });
   });
 
@@ -89,7 +103,7 @@ describe("PersonIdentityAdapter — what it writes, and what it reads back", () 
   async function adapterInFreshHome(): Promise<PersonIdentityAdapter> {
     const home = await mkdtemp(join(tmpdir(), "aidd-identity-rw-"));
     homes.push(home);
-    process.env.HOME = home;
+    relocateProfile(home);
     await mkdir(join(home, ".config", "aidd"), { recursive: true });
     return new PersonIdentityAdapter();
   }
@@ -281,40 +295,48 @@ describe("PersonIdentityAdapter — what it writes, and what it reads back", () 
     );
   });
 
-  it("reports a write that could not go out, naming the file", async () => {
-    const home = await mkdtemp(join(tmpdir(), "aidd-identity-rw-"));
-    homes.push(home);
-    process.env.HOME = home;
-    await writeFile(join(home, ".config"), "");
-    const adapter = new PersonIdentityAdapter();
+  // POSIX errno: Windows answers ENOENT where a path runs through a file.
+  it.skipIf(process.platform === "win32")(
+    "reports a write that could not go out, naming the file",
+    async () => {
+      const home = await mkdtemp(join(tmpdir(), "aidd-identity-rw-"));
+      homes.push(home);
+      relocateProfile(home);
+      await writeFile(join(home, ".config"), "");
+      const adapter = new PersonIdentityAdapter();
 
-    const minted = adapter.mint();
+      const minted = adapter.mint();
 
-    await expect(minted).rejects.toBeInstanceOf(IdentityWriteError);
-    await expect(minted).rejects.toThrow(
-      `Could not write the identity file at ${adapter.filePath} (ENOTDIR`
-    );
-  });
+      await expect(minted).rejects.toBeInstanceOf(IdentityWriteError);
+      await expect(minted).rejects.toThrow(
+        `Could not write the identity file at ${adapter.filePath} (ENOTDIR`
+      );
+    }
+  );
 });
 
 describe("PersonIdentityAdapter.forget — what it removes and what it reports", () => {
   let previousHome: string | undefined;
+  let previousAppData: string | undefined;
   const homes: string[] = [];
 
   beforeEach(() => {
     previousHome = process.env.HOME;
+    previousAppData = process.env.APPDATA;
   });
 
   afterEach(async () => {
     if (previousHome === undefined) delete process.env.HOME;
     else process.env.HOME = previousHome;
+    if (previousAppData === undefined) delete process.env.APPDATA;
+    else process.env.APPDATA = previousAppData;
     for (const home of homes.splice(0)) await rm(home, { recursive: true, force: true });
   });
 
   async function adapterInFreshHome(): Promise<PersonIdentityAdapter> {
     const home = await mkdtemp(join(tmpdir(), "aidd-identity-forget-"));
     homes.push(home);
-    process.env.HOME = home;
+    relocateProfile(home);
     await mkdir(join(home, ".config", "aidd"), { recursive: true });
     return new PersonIdentityAdapter();
   }
@@ -328,16 +350,20 @@ describe("PersonIdentityAdapter.forget — what it removes and what it reports",
     await expect(readFile(adapter.filePath, "utf8")).rejects.toThrow();
   });
 
-  it("reports a removal that failed for a reason other than being gone, as a removal", async () => {
-    const adapter = await adapterInFreshHome();
-    await adapter.mint();
-    const unreachable = join(adapter.filePath, "child");
+  // POSIX errno: Windows answers ENOENT where a path runs through a file.
+  it.skipIf(process.platform === "win32")(
+    "reports a removal that failed for a reason other than being gone, as a removal",
+    async () => {
+      const adapter = await adapterInFreshHome();
+      await adapter.mint();
+      const unreachable = join(adapter.filePath, "child");
 
-    const forgotten = adapter.forget(unreachable);
+      const forgotten = adapter.forget(unreachable);
 
-    await expect(forgotten).rejects.toBeInstanceOf(IdentityWriteError);
-    await expect(forgotten).rejects.toThrow(
-      `Could not remove the identity file at ${unreachable} (ENOTDIR`
-    );
-  });
+      await expect(forgotten).rejects.toBeInstanceOf(IdentityWriteError);
+      await expect(forgotten).rejects.toThrow(
+        `Could not remove the identity file at ${unreachable} (ENOTDIR`
+      );
+    }
+  );
 });
