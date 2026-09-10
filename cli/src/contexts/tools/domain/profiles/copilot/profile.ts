@@ -109,12 +109,6 @@ const commandsHandler = {
     const flat = flattenFileName(fileName, EXT_PROMPT);
     return `${DIRECTORY}prompts/${flat}`;
   },
-  convertFrontmatter(
-    fm: Record<string, unknown>,
-    relativeFileName: string
-  ): Record<string, unknown> {
-    return convertCommandFrontmatter(fm, relativeFileName);
-  },
 };
 
 const rulesHandler = {
