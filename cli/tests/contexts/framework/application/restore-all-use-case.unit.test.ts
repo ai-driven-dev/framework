@@ -580,7 +580,7 @@ describe("RestoreAllUseCase — the interactive file picker", () => {
     expect(asked.map((o) => o.files)).toStrictEqual([[KEYBINDINGS]]);
   });
 
-  it("forwards an empty selection as no file at all", async () => {
+  it("never delegates when the user ticked nothing: an empty selection is a decision", async () => {
     const deps = await vscodeProject();
     await deps.fs.writeFile(join(PROJECT_ROOT, KEYBINDINGS), "[]");
     const { asked, delegate } = recordingDelegate();
@@ -591,10 +591,10 @@ describe("RestoreAllUseCase — the interactive file picker", () => {
       true
     );
 
-    expect(asked.map((o) => o.files)).toStrictEqual([[]]);
+    expect(asked).toStrictEqual([]);
   });
 
-  it("asks nothing and selects nothing when no tracked entry drifted", async () => {
+  it("asks nothing and delegates with no selection when no tracked entry drifted", async () => {
     const deps = await vscodeProject();
     const prompter = new CheckboxRecordingPrompter([KEYBINDINGS]);
     const { asked, delegate } = recordingDelegate();
@@ -602,6 +602,6 @@ describe("RestoreAllUseCase — the interactive file picker", () => {
     await restoreAllDelegatingTo(deps, prompter, delegate).execute(PROJECT_ROOT, false, true);
 
     expect(prompter.asks).toStrictEqual([]);
-    expect(asked.map((o) => o.files)).toStrictEqual([[]]);
+    expect(asked.map((o) => o.files)).toStrictEqual([undefined]);
   });
 });
