@@ -6,6 +6,9 @@ import { PersonIdentityAdapter } from "../../../../src/contexts/telemetry/infras
 import { IdentityWriteError, UnreadableIdentityFileError } from "../../../../src/kernel/errors.js";
 
 /** Windows reads `%APPDATA%`, never `HOME`: a sandbox that moved `HOME` alone wrote the real profile. */
+/** POSIX errno: Windows answers ENOENT where a path runs through a file. */
+const POSIX_ERRNO_ONLY = process.platform === "win32";
+
 function relocateProfile(home: string): void {
   process.env.HOME = home;
   process.env.APPDATA = join(home, ".config");
@@ -294,9 +297,7 @@ describe("PersonIdentityAdapter — what it writes, and what it reads back", () 
       `Could not read the identity file at ${adapter.filePath} (EISDIR`
     );
   });
-
-  // POSIX errno: Windows answers ENOENT where a path runs through a file.
-  it.skipIf(process.platform === "win32")(
+  it.skipIf(POSIX_ERRNO_ONLY)(
     "reports a write that could not go out, naming the file",
     async () => {
       const home = await mkdtemp(join(tmpdir(), "aidd-identity-rw-"));
@@ -349,9 +350,7 @@ describe("PersonIdentityAdapter.forget — what it removes and what it reports",
     expect(await adapter.forget(adapter.filePath)).toBe(true);
     await expect(readFile(adapter.filePath, "utf8")).rejects.toThrow();
   });
-
-  // POSIX errno: Windows answers ENOENT where a path runs through a file.
-  it.skipIf(process.platform === "win32")(
+  it.skipIf(POSIX_ERRNO_ONLY)(
     "reports a removal that failed for a reason other than being gone, as a removal",
     async () => {
       const adapter = await adapterInFreshHome();
