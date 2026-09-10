@@ -92,6 +92,12 @@ describe("opencode", () => {
       });
       expect(result).toEqual({ description: "Apply when editing command files." });
     });
+
+    it("writes no description key when alwaysApply is false and there is no description", () => {
+      expect(opencode.capabilities.rules?.convertFrontmatter({ alwaysApply: false })).toStrictEqual(
+        {}
+      );
+    });
   });
 
   describe("capabilities.skills.buildInstallPath()", () => {
@@ -121,6 +127,11 @@ describe("opencode", () => {
 
     it("uses framework-prime merge strategy", () => {
       expect(opencode.capabilities.mcp.params.mergeStrategy).toBe("framework-prime");
+    });
+
+    it("writes its config as JSON, under the mcp key", () => {
+      const { format, entrySection } = opencode.capabilities.mcp.params;
+      expect({ format, entrySection }).toStrictEqual({ format: "json", entrySection: "mcp" });
     });
   });
 
@@ -337,5 +348,17 @@ describe("opencode", () => {
       expect(b).toBe(".opencode/hooks/plugin-b/x.js");
       expect(a).not.toBe(b);
     });
+  });
+});
+
+describe("opencode.rewriteContent()", () => {
+  it("routes a numbered command folder under commands/aidd/<phase>/, with or without the @ prefix", () => {
+    expect(
+      opencode.rewriteContent(
+        "Run .opencode/commands/04_code/implement.md, then @.opencode/commands/02-plan/plan.md.\n"
+      )
+    ).toBe(
+      "Run .opencode/commands/aidd/04/implement.md, then @.opencode/commands/aidd/02/plan.md.\n"
+    );
   });
 });

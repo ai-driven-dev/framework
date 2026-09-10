@@ -80,6 +80,11 @@ describe("transformMcpToOpencode()", () => {
     expect(() => transformMcpToOpencode("[]")).toThrow("MCP config must be a JSON object");
     expect(() => transformMcpToOpencode("{ not json")).toThrow(/Cannot parse MCP config/);
   });
+
+  it("refuses a config that is null or a bare value", () => {
+    expect(() => transformMcpToOpencode("null")).toThrow("MCP config must be a JSON object");
+    expect(() => transformMcpToOpencode("42")).toThrow("MCP config must be a JSON object");
+  });
 });
 
 describe("buildOpencodeFlatContract()", () => {
@@ -156,6 +161,16 @@ describe("buildOpencodeFlatContract()", () => {
         "Run [journal.cjs](../../hooks/journal.cjs)",
         "",
       ].join("\n")
+    );
+  });
+
+  it("drops only the trailing .md from the name it gives a flat agent", () => {
+    const transform = supported(buildOpencodeFlatContract().artifacts.agents).transform;
+
+    expect(
+      transform?.("---\ndescription: Helps\n---\nBody.\n", "aidd-dev", "notes.md-helper.md")
+    ).toBe(
+      "---\ndescription: 'Helps'\nname: 'aidd-dev-notes.md-helper'\nmode: 'subagent'\n---\nBody.\n"
     );
   });
 
@@ -255,5 +270,50 @@ describe("buildOpencodeFlatContract()", () => {
       jsonc: fs.has("/out/opencode.jsonc"),
       json: fs.has("/out/opencode.json"),
     }).toStrictEqual({ jsonc: true, json: false });
+  });
+
+  it("builds opencode.json on opencode's own bundled base config", async () => {
+    const fs = new InMemoryFileAdapter();
+
+    await buildOpencodeFlatContract().emitConfigArtifact?.(
+      [],
+      "/out",
+      "/src",
+      fs,
+      { validate: () => undefined },
+      {
+        loadConfigAsset: (tool, name) => {
+          if (tool !== "opencode" || name !== "opencode.json") {
+            throw new Error(`no bundled asset ${tool}/${name}`);
+          }
+          return { $schema: "https://opencode.ai/config.json" };
+        },
+        loadSchema: () => ({}),
+      }
+    );
+
+    expect(JSON.parse(fs.getFile("/out/opencode.json") ?? "null")).toStrictEqual({
+      $schema: "https://opencode.ai/config.json",
+    });
+  });
+
+  it("takes a bundled base config that comes as text as written", async () => {
+    const fs = new InMemoryFileAdapter();
+
+    await buildOpencodeFlatContract().emitConfigArtifact?.(
+      [],
+      "/out",
+      "/src",
+      fs,
+      { validate: () => undefined },
+      {
+        loadConfigAsset: () => '{"$schema":"https://opencode.ai/config.json"}',
+        loadSchema: () => ({}),
+      }
+    );
+
+    expect(JSON.parse(fs.getFile("/out/opencode.json") ?? "null")).toStrictEqual({
+      $schema: "https://opencode.ai/config.json",
+    });
   });
 });

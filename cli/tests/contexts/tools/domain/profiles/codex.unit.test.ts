@@ -54,6 +54,11 @@ describe("codex", () => {
       const path = codex.capabilities.skills.buildInstallPath("my-skill");
       expect(path).toBe(".agents/skills/aidd-my-skill/SKILL.md");
     });
+
+    it("keeps a skill folder's name whole, even one ending in .md", () => {
+      const path = codex.capabilities.skills.buildInstallPath("notes.md/SKILL.md");
+      expect(path).toBe(".agents/skills/aidd-notes.md/SKILL.md");
+    });
   });
 
   it("names the one config file Codex reads, and where it goes", () => {
@@ -268,6 +273,21 @@ describe("mergeCodexHooksJson()", () => {
     expect(mergeCodexHooksJson(once)).toBe(once);
   });
 
+  it("finds its own hook inside any group of a user's SessionStart, and adds no second one", () => {
+    const existing = JSON.stringify(
+      {
+        SessionStart: [
+          { hooks: [{ type: "command", command: "user-start.sh" }] },
+          { hooks: [{ type: "command", command: "user-two.sh" }, AIDD_ENTRY.hooks[0]] },
+        ],
+      },
+      null,
+      2
+    );
+
+    expect(mergeCodexHooksJson(existing)).toBe(existing);
+  });
+
   it("starts over from a file it cannot read rather than failing the install", () => {
     expect(mergeCodexHooksJson("{ not json")).toBe(
       JSON.stringify({ SessionStart: [AIDD_ENTRY] }, null, 2)
@@ -360,6 +380,42 @@ enabled = true
     const result = mergeCodexConfigToml(existing, MCP_PAYLOAD);
     expect(result).toContain(".agents/skills");
   });
+
+  it("starts over from a config it cannot parse rather than failing the install", () => {
+    expect(mergeCodexConfigToml("not = [valid", '[mcp_servers.ctx]\ncommand = "node"\n')).toBe(
+      'project_doc_max_bytes = 262144\n\n[mcp_servers.ctx]\ncommand = "node"\n\n[features]\nhooks = true\n'
+    );
+  });
+
+  it("adds only its defaults when the payload names no mcp server", () => {
+    expect(mergeCodexConfigToml('[mcp_servers.mine]\ncommand = "x"\n', "")).toBe(
+      'project_doc_max_bytes = 262144\n\n[mcp_servers.mine]\ncommand = "x"\n\n[features]\nhooks = true\n'
+    );
+  });
+
+  it("raises project_doc_max_bytes to what the payload asks when that is above the floor", () => {
+    expect(mergeCodexConfigToml("", "project_doc_max_bytes = 500000\n")).toBe(
+      "project_doc_max_bytes = 500000\n\n[features]\nhooks = true\n"
+    );
+  });
+
+  it("leaves a user's project_doc_max_bytes already at the floor untouched, whatever the payload asks", () => {
+    expect(
+      mergeCodexConfigToml("project_doc_max_bytes = 262144\n", "project_doc_max_bytes = 500000\n")
+    ).toBe("project_doc_max_bytes = 262144\n\n[features]\nhooks = true\n");
+  });
+
+  it("keeps a user's own hooks = false rather than turning hooks on", () => {
+    expect(mergeCodexConfigToml("[features]\nhooks = false\n", "")).toBe(
+      "project_doc_max_bytes = 262144\n\n[features]\nhooks = false\n"
+    );
+  });
+
+  it("turns hooks on beside a user's other features, keeping them", () => {
+    expect(mergeCodexConfigToml("[features]\nweb_search = true\n", "")).toBe(
+      "project_doc_max_bytes = 262144\n\n[features]\nweb_search = true\nhooks = true\n"
+    );
+  });
 });
 
 /**
@@ -390,6 +446,10 @@ describe("a skill's frontmatter, rewritten for Codex", () => {
 
   it("omits a field the source never set", () => {
     expect(stripCodexSkillFrontmatter({ description: "d" })).toEqual({ description: "d" });
+  });
+
+  it("writes no description key for a skill that has none", () => {
+    expect(stripCodexSkillFrontmatter({ name: "n" })).toStrictEqual({ name: "n" });
   });
 
   it("quotes a value whose colon would otherwise make the frontmatter unreadable", () => {
