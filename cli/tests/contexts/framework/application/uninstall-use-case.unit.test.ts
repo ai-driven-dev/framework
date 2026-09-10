@@ -7,7 +7,6 @@ import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { UninstallUseCase } from "../../../../src/contexts/framework/application/uninstall/uninstall-use-case.js";
-import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import {
   InputRequiredError,
   NoManifestError,
@@ -15,10 +14,6 @@ import {
 } from "../../../../src/kernel/errors.js";
 import type { ToolId } from "../../../../src/kernel/tool.js";
 import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/build-unit-deps.js";
-import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -32,7 +27,6 @@ describe("uninstall", () => {
     await useCase.execute({
       toolIds: ["claude" as ToolId],
       projectRoot: PROJECT_ROOT,
-      mcpFilter: [],
     });
 
     const manifest = await deps.manifestRepo.load();
@@ -51,7 +45,7 @@ describe("uninstall", () => {
 
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
     await expect(
-      useCase.execute({ toolIds: ["claude" as ToolId], projectRoot: PROJECT_ROOT, mcpFilter: [] })
+      useCase.execute({ toolIds: ["claude" as ToolId], projectRoot: PROJECT_ROOT })
     ).resolves.not.toThrow();
   });
 
@@ -68,7 +62,6 @@ describe("uninstall", () => {
     await useCase.execute({
       toolIds: ["claude" as ToolId],
       projectRoot: PROJECT_ROOT,
-      mcpFilter: [],
     });
 
     expect(deps.fs.has(sharedFile)).toBe(true);
@@ -87,7 +80,6 @@ describe("uninstall", () => {
       await useCase.execute({
         toolIds: ["vscode" as ToolId],
         projectRoot: PROJECT_ROOT,
-        mcpFilter: [],
       });
 
       expect(deps.fs.has(settingsPath)).toBe(false);
@@ -105,28 +97,9 @@ describe("uninstall", () => {
       await useCase.execute({
         toolIds: ["vscode" as ToolId],
         projectRoot: PROJECT_ROOT,
-        mcpFilter: [],
       });
 
       expect(deps.fs.has(keybindingsPath)).toBe(false);
-    });
-  });
-
-  describe("MCP removal", () => {
-    it("full tool removal still works without mcpFilter", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "claude" as ToolId);
-
-      const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
-      await useCase.execute({
-        toolIds: ["claude" as ToolId],
-        projectRoot: PROJECT_ROOT,
-        mcpFilter: [],
-      });
-
-      const manifest = await deps.manifestRepo.load();
-      expect(manifest?.getInstalledToolIds()).not.toContain("claude");
     });
   });
 });
@@ -140,7 +113,6 @@ describe("uninstall — refusals", () => {
       new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
         toolIds: [],
         projectRoot: PROJECT_ROOT,
-        mcpFilter: [],
       })
     ).rejects.toThrow(
       new InputRequiredError(
@@ -156,7 +128,6 @@ describe("uninstall — refusals", () => {
       new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
-        mcpFilter: [],
       })
     ).rejects.toThrow(NoManifestError);
   });
@@ -169,45 +140,7 @@ describe("uninstall — refusals", () => {
       new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
-        mcpFilter: [],
       })
     ).rejects.toThrow(ToolNotInstalledError);
-  });
-});
-
-describe("uninstall — an MCP filter", () => {
-  it("strips the named entries and leaves the tool installed", async () => {
-    const hasher = new DeterministicHasher();
-    const servers = { github: { command: "gh" }, playwright: { command: "npx" } };
-    const fs = new InMemoryFileAdapter(
-      { [join(PROJECT_ROOT, ".mcp.json")]: JSON.stringify({ mcpServers: servers }) },
-      hasher
-    );
-    const manifest = Manifest.create();
-    manifest.addTool(
-      "claude",
-      "test",
-      [],
-      [
-        {
-          relativePath: ".mcp.json",
-          sectionKey: "mcpServers",
-          entries: {
-            github: hasher.hash(JSON.stringify(servers.github)),
-            playwright: hasher.hash(JSON.stringify(servers.playwright)),
-          },
-        },
-      ]
-    );
-    const repo = new InMemoryManifestRepository(manifest);
-
-    const results = await new UninstallUseCase(fs, repo, new CapturingLogger()).execute({
-      toolIds: ["claude"],
-      projectRoot: PROJECT_ROOT,
-      mcpFilter: ["github"],
-    });
-
-    expect(results).toStrictEqual([{ toolId: "claude", fileCount: 1, deletedFiles: ["github"] }]);
-    expect(repo.getCurrent()?.hasTool("claude")).toBe(true);
   });
 });

@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  mcpExclusionEquals,
-  transformFor,
-} from "../../../../src/contexts/tools/domain/mcp-exclusion.js";
+import { transformFor } from "../../../../src/contexts/tools/domain/mcp-exclusion.js";
 
 function makeConfig(servers: Record<string, object>): string {
   return JSON.stringify({ mcpServers: servers }, null, 2);
@@ -92,15 +89,5 @@ describe("the win32 transform on a config without servers", () => {
     expect(transform('{"other":{"command":"npx"}}')).toBe(
       JSON.stringify({ other: { command: "npx" } }, null, 2)
     );
-  });
-});
-
-describe("mcpExclusionEquals", () => {
-  it("is equal only when both the config path and the entry key match", () => {
-    const one = { configPath: ".mcp.json", entryKey: "a" };
-
-    expect(mcpExclusionEquals(one, { configPath: ".mcp.json", entryKey: "a" })).toBe(true);
-    expect(mcpExclusionEquals(one, { configPath: ".mcp.json", entryKey: "b" })).toBe(false);
-    expect(mcpExclusionEquals(one, { configPath: "other.json", entryKey: "a" })).toBe(false);
   });
 });

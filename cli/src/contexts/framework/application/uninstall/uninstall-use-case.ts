@@ -10,14 +10,12 @@ import type { ToolId } from "../../../../kernel/tool.js";
 import { VALID_TOOL_IDS } from "../../../../kernel/tool.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
-import { UninstallMcpExclusionUseCase } from "./uninstall-mcp-exclusion-use-case.js";
 import { UninstallPluginUseCase } from "./uninstall-plugin-use-case.js";
 import { UninstallToolsUseCase } from "./uninstall-tools-use-case.js";
 
 interface UninstallOptions {
   toolIds: ToolId[];
   projectRoot: string;
-  mcpFilter: string[];
   pluginName?: string;
 }
 
@@ -30,7 +28,6 @@ interface UninstallToolResult {
 export class UninstallUseCase {
   private readonly pluginUninstall: UninstallPluginUseCase;
   private readonly toolsUninstall: UninstallToolsUseCase;
-  private readonly mcpExclusion: UninstallMcpExclusionUseCase;
 
   constructor(
     fs: FileReader & FileWriter,
@@ -39,11 +36,10 @@ export class UninstallUseCase {
   ) {
     this.pluginUninstall = new UninstallPluginUseCase(fs, manifestRepo);
     this.toolsUninstall = new UninstallToolsUseCase(fs, logger);
-    this.mcpExclusion = new UninstallMcpExclusionUseCase(fs, logger);
   }
 
   async execute(options: UninstallOptions): Promise<UninstallToolResult[]> {
-    const { toolIds, projectRoot, mcpFilter, pluginName } = options;
+    const { toolIds, projectRoot, pluginName } = options;
 
     if (pluginName !== undefined) {
       return this.pluginUninstall.execute({ pluginName, toolIds, projectRoot });
@@ -57,10 +53,7 @@ export class UninstallUseCase {
 
     const manifest = await this.loadAndValidate(toolIds);
 
-    const results =
-      mcpFilter.length > 0
-        ? await this.runMcpExclusions(toolIds, manifest, projectRoot, mcpFilter)
-        : await this.toolsUninstall.execute({ toolIds, manifest, projectRoot });
+    const results = await this.toolsUninstall.execute({ toolIds, manifest, projectRoot });
 
     await this.manifestRepo.save(manifest);
     return results;
@@ -73,18 +66,5 @@ export class UninstallUseCase {
       if (!manifest.hasTool(toolId)) throw new ToolNotInstalledError(toolId);
     }
     return manifest;
-  }
-
-  private async runMcpExclusions(
-    toolIds: ToolId[],
-    manifest: Manifest,
-    projectRoot: string,
-    mcpFilter: string[]
-  ): Promise<UninstallToolResult[]> {
-    const results: UninstallToolResult[] = [];
-    for (const toolId of toolIds) {
-      results.push(await this.mcpExclusion.execute({ toolId, manifest, projectRoot, mcpFilter }));
-    }
-    return results;
   }
 }

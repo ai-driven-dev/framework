@@ -2,13 +2,7 @@ import { DuplicatePluginError, PluginNotFoundError } from "../../../../kernel/er
 import type { InstallationFile } from "../../../../kernel/file.js";
 import type { MergeFileEntry } from "../../../../kernel/merge.js";
 import type { ToolId } from "../../../../kernel/tool.js";
-import type { McpExclusion } from "../../../tools/domain/mcp-exclusion.js";
 import { InstalledPlugin, type PluginEntryData } from "../plugins/installed-plugin.js";
-import {
-  type McpExclusionData,
-  parseMcpExclusionData,
-  toMcpExclusionData,
-} from "./mcp-exclusions.js";
 import {
   type MergeFileEntryData,
   parseMergeFileEntries,
@@ -33,7 +27,6 @@ export interface ToolEntry {
   readonly version: string;
   readonly files: readonly TrackedFile[];
   readonly mergeFiles: readonly MergeFileEntry[];
-  readonly excludedMcp: readonly McpExclusion[];
   readonly plugins: readonly InstalledPlugin[];
   /** What this tool's own CLI was asked to register, or `undefined` for a tool with
    * no `nativeActivation` — see {@link NativeRegistrations}. */
@@ -45,7 +38,6 @@ export interface ToolEntryData {
   version: string;
   files: TrackedFileData[];
   mergeFiles?: MergeFileEntryData[];
-  excludedMcp?: McpExclusionData[];
   plugins?: PluginEntryData[];
   nativeRegistrations?: NativeRegistrationsData;
 }
@@ -55,7 +47,6 @@ export function createToolEntry(params: {
   version: string;
   files: InstallationFile[];
   mergeFiles: readonly MergeFileEntry[];
-  excludedMcp: readonly McpExclusion[];
   existingPlugins: readonly InstalledPlugin[];
 }): ToolEntry {
   return {
@@ -63,7 +54,6 @@ export function createToolEntry(params: {
     version: params.version,
     files: toTrackedFiles(params.files),
     mergeFiles: params.mergeFiles,
-    excludedMcp: params.excludedMcp,
     plugins: params.existingPlugins,
   };
 }
@@ -104,7 +94,6 @@ export function serializeToolEntry(entry: ToolEntry): ToolEntryData {
     version: entry.version,
     files: toTrackedFileData(entry.files),
     mergeFiles: toMergeFileEntryData(entry.mergeFiles),
-    ...(entry.excludedMcp.length > 0 && { excludedMcp: toMcpExclusionData(entry.excludedMcp) }),
     ...(entry.plugins.length > 0 && { plugins: entry.plugins.map((p) => p.toJSON()) }),
     ...(entry.nativeRegistrations !== undefined && {
       nativeRegistrations: toNativeRegistrationsData(entry.nativeRegistrations),
@@ -118,7 +107,6 @@ export function parseToolEntry(toolId: ToolId, data: ToolEntryData): ToolEntry {
     version: data.version,
     files: parseTrackedFiles(data.files),
     mergeFiles: parseMergeFileEntries(data.mergeFiles ?? []),
-    excludedMcp: parseMcpExclusionData(data.excludedMcp ?? []),
     plugins: (data.plugins ?? []).map((p) => InstalledPlugin.fromJSON(p)),
     nativeRegistrations: parseNativeRegistrations(data.nativeRegistrations),
   };
