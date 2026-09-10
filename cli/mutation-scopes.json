@@ -58,7 +58,7 @@
     },
     "tools-opencode": {
       "mutate": "src/contexts/tools/domain/profiles/opencode/**/*.ts",
-      "break": 81
+      "break": 94
     }
   },
   "excluded": {
