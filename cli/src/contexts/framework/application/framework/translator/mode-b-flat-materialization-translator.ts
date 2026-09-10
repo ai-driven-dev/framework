@@ -51,7 +51,8 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     projectRoot: string,
     manifest: Manifest,
     marketplace: string | undefined,
-    previousMcpEntries: ReadonlyMap<string, string> = new Map()
+    previousMcpEntries: ReadonlyMap<string, string> = new Map(),
+    userScopeDirTaken = false
   ): Promise<{ skipped: ReadonlySkipList }> {
     const ctx = this.resolveFlatToolContext(toolId, dist, projectRoot);
     if (ctx === null) return { skipped: [] };
@@ -63,7 +64,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       dist,
       toolId,
       source,
-      ctx.files,
+      userScopeDirTaken ? [] : ctx.files,
       mcp.mcpEntries,
       ctx.componentPaths,
       marketplace,

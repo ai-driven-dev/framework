@@ -302,7 +302,8 @@ export async function createDeps(
     userConfigDir,
     marketplaceRegisterFrameworkUseCase,
     userSourceReferences,
-    currentVersionProvider
+    currentVersionProvider,
+    hostPluginRegistries
   );
   const pluginAddUseCase = new PluginAddUseCase(
     fs,

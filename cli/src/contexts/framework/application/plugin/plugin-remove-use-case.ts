@@ -133,6 +133,14 @@ export class PluginRemoveUseCase {
     }
     const hostName = registeredHostName ?? alias;
     const ref = `${plugin.name}@${hostName}`;
+    if (
+      registeredHostName !== undefined &&
+      activator.enablesPlugins() &&
+      registrations?.pluginRefs.includes(ref) !== true
+    ) {
+      this.logger.warn(`${toolId}: '${ref}' is not a ref this project enabled — left enabled.`);
+      return undefined;
+    }
     const guardMessage = await this.describeGuardedPluginRef(
       nativeActivation.binary,
       toolId,

@@ -25,14 +25,14 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
     path: "src/contexts/framework/application/restore/generate-tool-distribution-use-case.ts",
     injected: 9,
   },
+  { path: "src/contexts/framework/application/restore/restore-use-case.ts", injected: 12 },
+  // Both carry `hostPluginRegistries`, the host's own registry per `AiToolId`: clean asks it the
+  // scope a ref was registered at, sync whether the host enabled a ref before this project did.
+  { path: "src/contexts/framework/application/clean-use-case.ts", injected: 11 },
   {
     path: "src/contexts/framework/application/flows/marketplace-sync-settings-use-case.ts",
-    injected: 12,
+    injected: 13,
   },
-  { path: "src/contexts/framework/application/restore/restore-use-case.ts", injected: 12 },
-  // Carries `hostPluginRegistries`, the host's own registry reader per `AiToolId`, so the
-  // scope asked for when uninstalling a ref is the one the host actually registered it at.
-  { path: "src/contexts/framework/application/clean-use-case.ts", injected: 11 },
   // The machine-scope counterpart of `clean-use-case.ts`, same shape and same reason.
   {
     path: "src/contexts/framework/application/clean/clean-user-scope-use-case.ts",
