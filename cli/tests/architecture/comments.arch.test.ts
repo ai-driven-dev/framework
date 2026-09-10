@@ -21,7 +21,7 @@ const EXTERNAL_REFERENCE: readonly { readonly name: string; readonly pattern: Re
 ];
 
 /** Comment lines under `src/` and `tests/` may only decrease; a raise needs its reason here: tests/ 2960 to 2984, four guard files and their probes; 2984 to 2987, the reason the display folder is baselined over the size limit. */
-const MAX_COMMENT_LINES = { src: 4474, tests: 2987 };
+const MAX_COMMENT_LINES = { src: 4471, tests: 2987 };
 
 function testFiles(): string[] {
   const out: string[] = [];
