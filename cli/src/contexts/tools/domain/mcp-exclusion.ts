@@ -28,12 +28,3 @@ function transformMcpForWin32(content: string): string {
 export function transformFor(platform: string): ((content: string) => string) | undefined {
   return platform === "win32" ? transformMcpForWin32 : undefined;
 }
-
-export interface McpExclusion {
-  readonly configPath: string;
-  readonly entryKey: string;
-}
-
-export function mcpExclusionEquals(a: McpExclusion, b: McpExclusion): boolean {
-  return a.configPath === b.configPath && a.entryKey === b.entryKey;
-}

@@ -102,7 +102,6 @@ async function runFrameworkRemove(
     const results = await deps.uninstallUseCase.execute({
       toolIds: [toolId],
       projectRoot,
-      mcpFilter: [],
     });
     const totalFileCount = results.reduce((sum, r) => sum + r.fileCount, 0);
     printToolRemoved(output, results[0].toolId, totalFileCount);

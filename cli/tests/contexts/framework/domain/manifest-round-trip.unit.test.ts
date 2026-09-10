@@ -28,7 +28,6 @@ describe("Manifest round-trip: every fixture rewrites byte-identical", () => {
     const names = fixtureNames();
     expect(names).toContain("multi-tool.json");
     expect(names).toContain("merge-files.json");
-    expect(names).toContain("mcp-exclusions.json");
     expect(names).toContain("plugins.json");
     expect(names).toContain("full.json");
   });

@@ -48,7 +48,6 @@ describe("UninstallUseCase — plugin scope", () => {
     await new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
       toolIds: [],
       projectRoot: PROJECT_ROOT,
-      mcpFilter: [],
       pluginName: "sample-plugin",
     });
 
@@ -65,7 +64,6 @@ describe("UninstallUseCase — plugin scope", () => {
       new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
         toolIds: [],
         projectRoot: PROJECT_ROOT,
-        mcpFilter: [],
         pluginName: "nonexistent",
       })
     ).rejects.toThrow(PluginNotFoundError);

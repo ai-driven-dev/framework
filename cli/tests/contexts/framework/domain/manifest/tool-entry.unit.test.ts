@@ -34,7 +34,6 @@ const makeEntry = (plugins: InstalledPlugin[]): ToolEntry =>
       }),
     ],
     mergeFiles: [{ relativePath: ".mcp.json", sectionKey: "mcpServers", entries: {} }],
-    excludedMcp: [],
     existingPlugins: plugins,
   });
 
