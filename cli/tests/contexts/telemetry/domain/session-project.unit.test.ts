@@ -57,4 +57,19 @@ describe("resolveSessionProject", () => {
   it("names no project for a session with no journal at all", () => {
     expect(resolveSessionProject(null)).toBeNull();
   });
+
+  it("reads an empty remote as none, falling back to the directory-name field", () => {
+    const journal = journalOf(sessionOf({ project_id: "acme-widgets", project_remote: "" }));
+
+    expect(resolveSessionProject(journal)).toStrictEqual({
+      projectId: "acme-widgets",
+      projectField: "project_id",
+    });
+  });
+
+  it("names no project when both fields are empty strings", () => {
+    expect(
+      resolveSessionProject(journalOf(sessionOf({ project_id: "", project_remote: "" })))
+    ).toBeNull();
+  });
 });

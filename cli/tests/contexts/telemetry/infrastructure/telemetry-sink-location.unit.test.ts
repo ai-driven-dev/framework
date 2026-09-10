@@ -1,4 +1,12 @@
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -66,6 +74,76 @@ describe("where the figures land by default", () => {
     delete process.env.APPDATA;
 
     expect(withPlatform("win32", defaultConfigDir)).toBe(join(home, ".config", "aidd"));
+  });
+
+  it("a Windows machine that already journalled under .config keeps landing there", () => {
+    const home = freshHome();
+    process.env.APPDATA = join("C:", "Users", "someone", "AppData", "Roaming");
+    mkdirSync(join(home, ".config", "aidd", "telemetry"), { recursive: true });
+    writeFileSync(join(home, ".config", "aidd", "telemetry", "notes.txt"), "");
+    writeFileSync(join(home, ".config", "aidd", "telemetry", "2026-08-17.jsonl"), "");
+
+    expect(withPlatform("win32", defaultConfigDir)).toBe(join(home, ".config", "aidd"));
+  });
+
+  it("a Windows machine whose .config holds no day file is a fresh one", () => {
+    const home = freshHome();
+    process.env.APPDATA = join("C:", "Users", "someone", "AppData", "Roaming");
+    mkdirSync(join(home, ".config", "aidd", "telemetry"), { recursive: true });
+    writeFileSync(join(home, ".config", "aidd", "telemetry", "notes.jsonl.txt"), "");
+
+    expect(withPlatform("win32", defaultConfigDir)).toBe(join(process.env.APPDATA, "aidd"));
+  });
+
+  it("a POSIX machine ignores APPDATA even when it is set", () => {
+    const home = freshHome();
+    process.env.APPDATA = join("C:", "Users", "someone", "AppData", "Roaming");
+
+    expect(withPlatform("linux", defaultConfigDir)).toBe(join(home, ".config", "aidd"));
+  });
+});
+
+describe("which variable located the figures", () => {
+  const previousTelemetryDir = process.env.AIDD_TELEMETRY_DIR;
+  const previousUserConfigDir = process.env.AIDD_USER_CONFIG_DIR;
+
+  afterEach(() => {
+    for (const [key, value] of [
+      ["AIDD_TELEMETRY_DIR", previousTelemetryDir],
+      ["AIDD_USER_CONFIG_DIR", previousUserConfigDir],
+    ] as const) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  });
+
+  it("is the figures' own name when AIDD_TELEMETRY_DIR is set, whatever else is", () => {
+    process.env.AIDD_TELEMETRY_DIR = join(tmpdir(), "figures");
+    process.env.AIDD_USER_CONFIG_DIR = join(tmpdir(), "older");
+
+    expect(new TelemetrySinkAdapter().locatedBy).toBe("telemetry-dir");
+  });
+
+  it("is the older config variable when only that one is set", () => {
+    delete process.env.AIDD_TELEMETRY_DIR;
+    process.env.AIDD_USER_CONFIG_DIR = join(tmpdir(), "older");
+
+    expect(new TelemetrySinkAdapter().locatedBy).toBe("user-config-dir");
+  });
+
+  it("is the older config variable when the constructor names the directory", () => {
+    delete process.env.AIDD_TELEMETRY_DIR;
+    delete process.env.AIDD_USER_CONFIG_DIR;
+
+    expect(new TelemetrySinkAdapter(join(tmpdir(), "older")).locatedBy).toBe("user-config-dir");
+  });
+
+  it("is the default when nothing names a location", () => {
+    freshHome();
+    delete process.env.AIDD_TELEMETRY_DIR;
+    delete process.env.AIDD_USER_CONFIG_DIR;
+
+    expect(new TelemetrySinkAdapter().locatedBy).toBe("default");
   });
 
   it("the plugin README states the exact default the code writes", () => {

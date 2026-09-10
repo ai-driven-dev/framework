@@ -188,3 +188,13 @@ describe("buildTelemetrySwitchFile", () => {
     });
   });
 });
+
+describe("parseTelemetrySwitchFile — an endpoint that is not a string", () => {
+  it("reads no endpoint from a number, rather than carrying the number", () => {
+    const config = parseTelemetrySwitchFile(
+      JSON.stringify({ telemetry: { enabled: true, endpoint: 42 } })
+    );
+
+    expect(config).toStrictEqual({ enabled: true, endpoint: undefined });
+  });
+});

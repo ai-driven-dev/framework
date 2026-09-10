@@ -1,4 +1,4 @@
-import { appendFile, chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { appendFile, chmod, mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -112,6 +112,52 @@ describe("TelemetrySinkAdapter", () => {
 
     const records = await adapter.readRecordsForVendor("s-1");
     expect(records).toHaveLength(1);
+  });
+
+  it.skipIf(process.platform === "win32")(
+    "writes a day file readable by this person alone",
+    async () => {
+      const adapter = new TelemetrySinkAdapter(userConfigDir);
+      await adapter.ensureWritable();
+
+      const { filePath } = await adapter.appendRecord(RECORD, new Date("2026-08-17T10:00:00Z"));
+
+      expect(((await stat(filePath)).mode & 0o777).toString(8)).toBe("600");
+    }
+  );
+
+  it("lists day files only, leaving any other entry of the directory out", async () => {
+    const adapter = new TelemetrySinkAdapter(userConfigDir);
+    await adapter.ensureWritable();
+    await adapter.appendRecord(RECORD, new Date("2026-08-17T10:00:00Z"));
+    await writeFile(join(adapter.rootDir, "notes.txt"), "");
+    await writeFile(join(adapter.rootDir, "2026-08-16.jsonl.bak"), "");
+
+    expect(await adapter.listDayFiles()).toStrictEqual(["2026-08-17.jsonl"]);
+  });
+
+  it("lists nothing, rather than failing, before the directory exists", async () => {
+    const adapter = new TelemetrySinkAdapter(userConfigDir);
+
+    expect(await adapter.listDayFiles()).toStrictEqual([]);
+    expect(await adapter.readRecordsForVendor("s-1")).toStrictEqual([]);
+  });
+
+  it("names the file and the directory it refused to delete outside of", async () => {
+    const adapter = new TelemetrySinkAdapter(userConfigDir);
+
+    await expect(adapter.deleteDayFile(adapter.rootDir, "../VICTIM.txt")).rejects.toThrow(
+      `refusing to delete "../VICTIM.txt" — not a day file name inside ${adapter.rootDir}`
+    );
+  });
+
+  it("deletes a day file that is already gone without complaint", async () => {
+    const adapter = new TelemetrySinkAdapter(userConfigDir);
+    await adapter.ensureWritable();
+
+    await expect(
+      adapter.deleteDayFile(adapter.rootDir, "2026-08-01.jsonl")
+    ).resolves.toBeUndefined();
   });
 
   // chmod blocks no write for root or behind Windows ACLs, where this would pass without
@@ -261,6 +307,62 @@ describe("TelemetrySinkAdapter.readRecordsInPeriod", () => {
     );
 
     expect(backwards).toEqual(forwards);
+  });
+
+  it("collects every project, step and model any record names, whatever its period", async () => {
+    await adapter.appendRecord(
+      {
+        ...RECORD,
+        vendor_id: "full",
+        event_timestamp: "2026-08-17T10:00:00.000Z",
+        project_id: "p-1",
+        step: "aidd-dev:01-plan",
+        model: "claude-opus-5",
+      },
+      STORED_ON
+    );
+    await adapter.appendRecord(
+      {
+        ...RECORD,
+        vendor_id: "outside",
+        event_timestamp: "2026-07-01T10:00:00.000Z",
+        project_id: "p-2",
+        step: "aidd-dev:02-implement",
+        model: "gpt-5",
+      },
+      STORED_ON
+    );
+    await append("bare", "2026-08-17");
+
+    const read = await period("2026-08-17", "2026-08-17");
+
+    expect(read.records.map((record) => record.vendor_id)).toStrictEqual(["full", "bare"]);
+    expect(read.knownValues).toStrictEqual({
+      projects: new Set(["p-1", "p-2"]),
+      steps: new Set(["aidd-dev:01-plan", "aidd-dev:02-implement"]),
+      models: new Set(["claude-opus-5", "gpt-5"]),
+    });
+  });
+
+  it("tolerates a day file that cannot be read, counting nothing for it", async () => {
+    await append("whole", "2026-08-17");
+    await mkdir(join(adapter.rootDir, "2026-08-22.jsonl"));
+
+    const read = await period("2026-08-17", "2026-08-17");
+
+    expect(read.records.map((record) => record.vendor_id)).toStrictEqual(["whole"]);
+    expect(read.undated).toStrictEqual([]);
+    expect(read.skippedLines).toBe(0);
+  });
+
+  it("counts a line of nothing but whitespace as blank, not as skipped", async () => {
+    await append("whole", "2026-08-17");
+    await appendFile(join(adapter.rootDir, "2026-08-21.jsonl"), "   \n\t\n");
+
+    const read = await period("2026-08-17", "2026-08-17");
+
+    expect(read.records.map((record) => record.vendor_id)).toStrictEqual(["whole"]);
+    expect(read.skippedLines).toBe(0);
   });
 
   it("answers an empty period with no records and nothing skipped, never an error", async () => {

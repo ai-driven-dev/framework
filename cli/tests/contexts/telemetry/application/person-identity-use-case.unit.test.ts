@@ -449,3 +449,88 @@ describe("what the errors tell a person to run", () => {
     }
   });
 });
+
+class AddCountingStore extends InMemoryPersonIdentityStore {
+  addAlsoMeCalls = 0;
+
+  override async addAlsoMe(identity: string) {
+    this.addAlsoMeCalls += 1;
+    return super.addAlsoMe(identity);
+  }
+}
+
+describe("PersonIdentityUseCase — the exact shape of what it answers", () => {
+  it("names the verb in the refusal of an empty identifier to use", async () => {
+    await expect(
+      useCase(new InMemoryPersonIdentityStore(null)).use({ identifier: " " })
+    ).rejects.toThrow("`aidd telemetry identity use` needs a non-empty value.");
+  });
+
+  it("names the verb in the refusal of an empty identifier to link", async () => {
+    const store = new InMemoryPersonIdentityStore({
+      personId: "person-a",
+      origin: "minted",
+      alsoMe: [],
+    });
+
+    await expect(useCase(store).link(" ")).rejects.toThrow(
+      "`aidd telemetry identity link` needs a non-empty value."
+    );
+  });
+
+  it("answers a minted identifier with no replaced identifier and no display name set", async () => {
+    const store = new InMemoryPersonIdentityStore(null, "fresh-id");
+
+    const result = await useCase(store).use({});
+
+    expect(result).toStrictEqual({
+      filePath: "/fake/home/.config/aidd/identity.json",
+      identity: { personId: "fresh-id", origin: "minted", alsoMe: [] },
+      outcome: "minted",
+    });
+  });
+
+  it("writes no display name key at all when none was asked for", async () => {
+    const store = new InMemoryPersonIdentityStore(null, "fresh-id");
+
+    await useCase(store).use({});
+
+    expect(await store.read()).toStrictEqual({
+      personId: "fresh-id",
+      origin: "minted",
+      alsoMe: [],
+    });
+  });
+
+  it("writes onto alsoMe exactly once for a new identifier, and never for one already listed", async () => {
+    const store = new AddCountingStore({
+      personId: "person-a",
+      origin: "minted",
+      alsoMe: ["machine-2"],
+    });
+    const uc = useCase(store);
+
+    await uc.link("machine-2");
+    await uc.link("person-a");
+    await uc.link("machine-3");
+
+    expect(store.addAlsoMeCalls).toBe(1);
+  });
+
+  it("answers a clean withdrawal as not discarding anything damaged", async () => {
+    const store = new InMemoryPersonIdentityStore({
+      personId: "person-1",
+      origin: "minted",
+      alsoMe: ["a-second-machine"],
+    });
+
+    const result = await useCase(store).off();
+
+    expect(result).toStrictEqual({
+      filePath: "/fake/home/.config/aidd/identity.json",
+      removed: true,
+      discardedDamaged: false,
+      addedIdentifiersRemoved: 1,
+    });
+  });
+});

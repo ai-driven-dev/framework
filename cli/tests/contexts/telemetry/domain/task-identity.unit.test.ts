@@ -119,3 +119,13 @@ describe("taskIdentitiesFromWrittenPaths", () => {
     }
   });
 });
+
+describe("taskIdentityFromWrittenPath — where a single-file task must start and end", () => {
+  it("names no task for a single file whose name only begins with .md", () => {
+    expect(taskIdentityFromWrittenPath("aidd_docs/tasks/2026_08/2026_08_21_x.md.bak")).toBeNull();
+  });
+
+  it("names no task for a single-file task path nested under another directory", () => {
+    expect(taskIdentityFromWrittenPath("docs/aidd_docs/tasks/2026_08/2026_08_21_x.md")).toBeNull();
+  });
+});

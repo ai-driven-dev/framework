@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildClosedIntervals,
   type IntervalClosure,
+  momentFallsWithin,
   timed,
 } from "../../../../src/contexts/telemetry/domain/journal-intervals.js";
 
@@ -112,5 +113,28 @@ describe("IntervalClosure — the three ways an interval's end is reached", () =
         closedBy: "journal-end",
       },
     ]);
+  });
+});
+
+describe("momentFallsWithin — over more than one interval", () => {
+  const FIRST = {
+    startMs: Date.parse("2026-01-01T00:00:00.000Z"),
+    endMs: Date.parse("2026-01-02T00:00:00.000Z"),
+  };
+  const SECOND = {
+    startMs: Date.parse("2026-01-05T00:00:00.000Z"),
+    endMs: Date.parse("2026-01-06T00:00:00.000Z"),
+  };
+
+  it("holds for a moment inside one interval alone", () => {
+    expect(momentFallsWithin([FIRST, SECOND], "2026-01-05T12:00:00.000Z")).toBe(true);
+  });
+
+  it("holds for a moment at the very instant an interval opens", () => {
+    expect(momentFallsWithin([FIRST, SECOND], "2026-01-05T00:00:00.000Z")).toBe(true);
+  });
+
+  it("fails for a moment in the gap between two intervals", () => {
+    expect(momentFallsWithin([FIRST, SECOND], "2026-01-03T00:00:00.000Z")).toBe(false);
   });
 });

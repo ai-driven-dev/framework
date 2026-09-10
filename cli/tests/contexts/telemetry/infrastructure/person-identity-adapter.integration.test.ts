@@ -1,8 +1,9 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { PersonIdentityAdapter } from "../../../../src/contexts/telemetry/infrastructure/person-identity-adapter.js";
+import { IdentityWriteError, UnreadableIdentityFileError } from "../../../../src/kernel/errors.js";
 
 /** On real disk: every write here goes through the file and is read back through it, since
  * what this adapter stores is what decides whose records are whose. */
@@ -181,5 +182,162 @@ describe("PersonIdentityAdapter — what it writes, and what it reads back", () 
 
     expect(JSON.parse(raw)).toMatchObject({ person_id: minted.personId, origin: "minted" });
     expect(raw.endsWith("\n")).toBe(true);
+  });
+
+  it("writes the quietest shape: no also_me key until an identifier is added", async () => {
+    const adapter = await adapterInFreshHome();
+    const minted = await adapter.mint();
+
+    expect(JSON.parse(await readFile(adapter.filePath, "utf8"))).toStrictEqual({
+      person_id: minted.personId,
+      origin: "minted",
+    });
+  });
+
+  it.skipIf(process.platform === "win32")(
+    "writes a file readable by this person alone",
+    async () => {
+      const adapter = await adapterInFreshHome();
+
+      await adapter.mint();
+
+      expect(((await stat(adapter.filePath)).mode & 0o777).toString(8)).toBe("600");
+    }
+  );
+
+  it("reads an empty person_id as nobody having chosen", async () => {
+    const adapter = await adapterInFreshHome();
+    await writeFile(adapter.filePath, '{"person_id":""}\n');
+
+    expect(await adapter.read()).toBeNull();
+    expect(await adapter.readStrict()).toBeNull();
+  });
+
+  it("reads a person_id that is not a string as nobody having chosen", async () => {
+    const adapter = await adapterInFreshHome();
+    await writeFile(adapter.filePath, '{"person_id":42}\n');
+
+    expect(await adapter.readStrict()).toBeNull();
+  });
+
+  it("keeps only the strings among the identifiers added onto a person", async () => {
+    const adapter = await adapterInFreshHome();
+    await writeFile(adapter.filePath, '{"person_id":"p-1","also_me":["machine-2",3,null]}\n');
+
+    expect(await adapter.readStrict()).toStrictEqual({
+      personId: "p-1",
+      origin: "minted",
+      alsoMe: ["machine-2"],
+    });
+  });
+
+  it("reads an empty display name as none at all", async () => {
+    const adapter = await adapterInFreshHome();
+    await writeFile(adapter.filePath, '{"person_id":"p-1","display_name":""}\n');
+
+    expect(await adapter.readStrict()).toStrictEqual({
+      personId: "p-1",
+      origin: "minted",
+      alsoMe: [],
+    });
+  });
+
+  it("reads a display name that is not a string as none at all", async () => {
+    const adapter = await adapterInFreshHome();
+    await writeFile(adapter.filePath, '{"person_id":"p-1","display_name":7}\n');
+
+    expect(await adapter.readStrict()).toStrictEqual({
+      personId: "p-1",
+      origin: "minted",
+      alsoMe: [],
+    });
+  });
+
+  it("says what it was asked to add onto when no identity exists", async () => {
+    const adapter = await adapterInFreshHome();
+
+    await expect(adapter.addAlsoMe("machine-2")).rejects.toThrow(
+      `Could not write the identity file at ${adapter.filePath} (no identity exists to add an identifier onto).`
+    );
+  });
+
+  it("says what it was asked to remove from when no identity exists", async () => {
+    const adapter = await adapterInFreshHome();
+
+    await expect(adapter.removeAlsoMe("machine-2")).rejects.toThrow(
+      `Could not write the identity file at ${adapter.filePath} (no identity exists to remove an identifier onto).`
+    );
+  });
+
+  it("refuses strictly a file that is there but cannot be read as a file", async () => {
+    const adapter = await adapterInFreshHome();
+    await mkdir(adapter.filePath);
+
+    const strict = adapter.readStrict();
+
+    await expect(strict).rejects.toBeInstanceOf(UnreadableIdentityFileError);
+    await expect(strict).rejects.toThrow(
+      `Could not read the identity file at ${adapter.filePath} (EISDIR`
+    );
+  });
+
+  it("reports a write that could not go out, naming the file", async () => {
+    const home = await mkdtemp(join(tmpdir(), "aidd-identity-rw-"));
+    homes.push(home);
+    process.env.HOME = home;
+    await writeFile(join(home, ".config"), "");
+    const adapter = new PersonIdentityAdapter();
+
+    const minted = adapter.mint();
+
+    await expect(minted).rejects.toBeInstanceOf(IdentityWriteError);
+    await expect(minted).rejects.toThrow(
+      `Could not write the identity file at ${adapter.filePath} (ENOTDIR`
+    );
+  });
+});
+
+describe("PersonIdentityAdapter.forget — what it removes and what it reports", () => {
+  let previousHome: string | undefined;
+  const homes: string[] = [];
+
+  beforeEach(() => {
+    previousHome = process.env.HOME;
+  });
+
+  afterEach(async () => {
+    if (previousHome === undefined) delete process.env.HOME;
+    else process.env.HOME = previousHome;
+    for (const home of homes.splice(0)) await rm(home, { recursive: true, force: true });
+  });
+
+  async function adapterInFreshHome(): Promise<PersonIdentityAdapter> {
+    const home = await mkdtemp(join(tmpdir(), "aidd-identity-forget-"));
+    homes.push(home);
+    process.env.HOME = home;
+    await mkdir(join(home, ".config", "aidd"), { recursive: true });
+    return new PersonIdentityAdapter();
+  }
+
+  it("removes a damaged identity that is a directory, not a file", async () => {
+    const adapter = await adapterInFreshHome();
+    await mkdir(adapter.filePath);
+    await writeFile(join(adapter.filePath, "stray"), "");
+
+    expect(await adapter.forget(adapter.filePath)).toBe(true);
+    await expect(readFile(adapter.filePath, "utf8")).rejects.toThrow();
+  });
+
+  it("reports a removal that failed for a reason other than being gone, as a removal", async () => {
+    const adapter = await adapterInFreshHome();
+    await adapter.mint();
+    const unreachable = join(adapter.filePath, "child");
+
+    const forgotten = adapter.forget(unreachable);
+
+    await expect(forgotten).rejects.toBeInstanceOf(IdentityWriteError);
+    await expect(forgotten).rejects.toThrow(
+      `Could not remove the identity file at ${unreachable} (ENOTDIR`
+    );
   });
 });

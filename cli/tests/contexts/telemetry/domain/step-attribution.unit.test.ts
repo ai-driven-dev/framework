@@ -406,3 +406,70 @@ describe("buildStepIntervals — a step the session never closed", () => {
     });
   });
 });
+
+describe("buildStepIntervals — an orchestration starting while a plain step runs", () => {
+  it("closes the plain step at the orchestrating step_start, not at the journal's end", () => {
+    const intervals = buildStepIntervals(
+      journalWith(
+        [
+          A_START,
+          { type: "step_start", at: "2026-08-20T10:05:00Z", skill: "aidd-orchestrator:01-sdlc" },
+        ],
+        [{ type: "file_written", at: "2026-08-20T11:00:00Z", path: "aidd_docs/note.md" }]
+      )
+    );
+
+    expect(intervals.find((interval) => interval.skill === A_START.skill)).toStrictEqual({
+      skill: A_START.skill,
+      startMs: Date.parse(A_START.at),
+      endMs: Date.parse("2026-08-20T10:05:00Z"),
+      closedBy: "boundary",
+    });
+  });
+});
+
+describe("attributeMoment — two intervals opened at the same second", () => {
+  const SDLC_AT_TEN = {
+    type: "step_start",
+    at: "2026-08-20T10:00:00Z",
+    skill: "aidd-orchestrator:01-sdlc",
+  } as const;
+  const SPEC_AT_TEN = {
+    type: "step_start",
+    at: "2026-08-20T10:00:00Z",
+    skill: "aidd-pm:04-spec",
+  } as const;
+  const LATER_TURN_END = { type: "turn_end", at: "2026-08-20T11:00:00Z" } as const;
+
+  it("answers the orchestration when it is the one that closes first", () => {
+    const intervals = buildStepIntervals(
+      journalOf(
+        SDLC_AT_TEN,
+        SPEC_AT_TEN,
+        { type: "step_end", at: "2026-08-20T10:20:00Z", skill: "aidd-orchestrator:01-sdlc" },
+        LATER_TURN_END
+      )
+    );
+
+    expect(attributeMoment(intervals, "2026-08-20T10:05:00Z")).toStrictEqual({
+      source: "journal-interval",
+      step: "aidd-orchestrator:01-sdlc",
+    });
+  });
+
+  it("answers the invoked step when it is the one that closes first", () => {
+    const intervals = buildStepIntervals(
+      journalOf(
+        SDLC_AT_TEN,
+        SPEC_AT_TEN,
+        { type: "step_end", at: "2026-08-20T10:10:00Z", skill: "aidd-pm:04-spec" },
+        LATER_TURN_END
+      )
+    );
+
+    expect(attributeMoment(intervals, "2026-08-20T10:05:00Z")).toStrictEqual({
+      source: "journal-interval",
+      step: "aidd-pm:04-spec",
+    });
+  });
+});

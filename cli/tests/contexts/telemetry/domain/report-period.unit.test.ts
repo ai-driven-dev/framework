@@ -80,6 +80,21 @@ describe("resolveReportPeriod", () => {
     expect(() => resolveReportPeriod({ from: "notaday" }, TODAY)).toThrow(/--from.*YYYY-MM-DD/u);
   });
 
+  it("refuses a well-shaped day no calendar has as an invalid day, never as a date routine's own error", () => {
+    expect(() => resolveReportPeriod({ from: "2026-13-01" }, TODAY)).toThrow(InvalidReportDayError);
+  });
+
+  it("names --to when the end is not a day", () => {
+    expect(() => resolveReportPeriod({ to: "notaday" }, TODAY)).toThrow(/--to.*YYYY-MM-DD/u);
+  });
+
+  it("accepts the longest span, ten years, and counts it back from the end", () => {
+    expect(resolveReportPeriod({ to: "2026-08-21", days: "3650" }, TODAY)).toEqual({
+      fromDay: "2016-08-24",
+      toDay: "2026-08-21",
+    });
+  });
+
   it("refuses a span that is not a whole number of days", () => {
     for (const value of ["0", "-1", "1.5", "many", "4000"]) {
       expect(() => resolveReportPeriod({ days: value }, TODAY), value).toThrow(
