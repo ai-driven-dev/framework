@@ -50,7 +50,7 @@
     },
     "tools-copilot": {
       "mutate": "src/contexts/tools/domain/profiles/copilot/**/*.ts",
-      "break": 80
+      "break": 93
     },
     "tools-cursor": {
       "mutate": "src/contexts/tools/domain/profiles/cursor/**/*.ts",

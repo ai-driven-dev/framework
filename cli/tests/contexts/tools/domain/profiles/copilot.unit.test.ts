@@ -29,6 +29,39 @@ describe("copilot", () => {
       const result = copilot.capabilities.agents.convertFrontmatter(fm);
       expect(result).toEqual({ name: "alexia", description: "Agent" });
     });
+
+    it("names an unnamed agent after its own file, whatever folders it sits in", () => {
+      expect(
+        copilot.capabilities.agents.convertFrontmatter(
+          { description: "Reviews code" },
+          "team/reviews/code-reviewer.md"
+        )
+      ).toStrictEqual({ name: "code-reviewer", description: "Reviews code" });
+    });
+
+    it("drops only the trailing .md from the file it names an agent after", () => {
+      expect(
+        copilot.capabilities.agents.convertFrontmatter(
+          { description: "Helps" },
+          "notes.md-helper.md"
+        )
+      ).toStrictEqual({ name: "notes.md-helper", description: "Helps" });
+    });
+
+    it("leaves an agent unnamed when neither its frontmatter nor a file name gives one", () => {
+      expect(
+        copilot.capabilities.agents.convertFrontmatter({ description: "Helps" })
+      ).toStrictEqual({
+        name: undefined,
+        description: "Helps",
+      });
+    });
+
+    it("drops a name that is not a string rather than writing it", () => {
+      expect(
+        copilot.capabilities.agents.convertFrontmatter({ name: 42, description: "Helps" }, "x.md")
+      ).toStrictEqual({ name: undefined, description: "Helps" });
+    });
   });
 
   describe("capabilities.mcp", () => {
@@ -38,6 +71,28 @@ describe("copilot", () => {
 
     it("consumes the mcp config name", () => {
       expect(copilot.capabilities.mcp.consumes).toContain("mcp");
+    });
+  });
+
+  describe("capabilities.mcp.params.transformContent()", () => {
+    const transform = (content: string): string | undefined =>
+      copilot.capabilities.mcp.params.transformContent?.(content);
+
+    it("renames mcpServers to the servers key VS Code reads, keeping every other key", () => {
+      const content = JSON.stringify({ mcpServers: { ctx: { command: "node" } }, inputs: [] });
+      expect(transform(content)).toBe(
+        JSON.stringify({ inputs: [], servers: { ctx: { command: "node" } } }, null, 2)
+      );
+    });
+
+    it("returns a config already keyed by servers byte for byte", () => {
+      const content = JSON.stringify({ servers: { ctx: { command: "node" } } });
+      expect(transform(content)).toBe(content);
+    });
+
+    it("renames nothing when a config carries both keys, rather than overwriting servers", () => {
+      const content = JSON.stringify({ servers: { a: {} }, mcpServers: { b: {} } });
+      expect(transform(content)).toBe(content);
     });
   });
 
@@ -83,6 +138,26 @@ describe("copilot", () => {
       const path = copilot.capabilities.commands?.buildInstallPath("commit.md");
       expect(path).toBe(".github/prompts/commit.prompt.md");
     });
+
+    it("prefixes a command nested two folders deep with both folders' phase numbers", () => {
+      const path = copilot.capabilities.commands?.buildInstallPath("01_plan/02_steps/review.md");
+      expect(path).toBe(".github/prompts/01-02-review.prompt.md");
+    });
+
+    it("keeps a folder name whole when it does not start with a phase number", () => {
+      const path = copilot.capabilities.commands?.buildInstallPath("v2-tools/x.md");
+      expect(path).toBe(".github/prompts/v2-tools-x.prompt.md");
+    });
+
+    it("does not add the prompt extension twice to a file that already carries it", () => {
+      const path = copilot.capabilities.commands?.buildInstallPath("review.prompt.md");
+      expect(path).toBe(".github/prompts/review.prompt.md");
+    });
+
+    it("adds the prompt extension to a file that carries no extension at all", () => {
+      const path = copilot.capabilities.commands?.buildInstallPath("commit");
+      expect(path).toBe(".github/prompts/commit.prompt.md");
+    });
   });
 
   describe("capabilities.rules.buildInstallPath()", () => {
@@ -94,6 +169,16 @@ describe("copilot", () => {
     it("flattens rules: no numeric prefix in filename — unchanged", () => {
       const path = copilot.capabilities.rules?.buildInstallPath("01-standards/naming.md");
       expect(path).toBe(".github/instructions/01-naming.instructions.md");
+    });
+
+    it("strips a numeric prefix of several digits from a rule's file name", () => {
+      const path = copilot.capabilities.rules?.buildInstallPath("01-standards/10-mermaid.md");
+      expect(path).toBe(".github/instructions/01-mermaid.instructions.md");
+    });
+
+    it("keeps a number inside a rule's file name, stripping only a leading one", () => {
+      const path = copilot.capabilities.rules?.buildInstallPath("01-standards/naming-2-rules.md");
+      expect(path).toBe(".github/instructions/01-naming-2-rules.instructions.md");
     });
 
     it("flattens rules: strips .copilot tool suffix from filename", () => {
@@ -117,6 +202,16 @@ describe("copilot", () => {
     it("returns null for .gitkeep files", () => {
       expect(copilot.capabilities.agents.buildInstallPath(".gitkeep")).toBeNull();
     });
+
+    it("names a nested agent after its own file, not the folders above it", () => {
+      const path = copilot.capabilities.agents.buildInstallPath("team/sub/code-reviewer.md");
+      expect(path).toBe(".github/agents/code-reviewer.agent.md");
+    });
+
+    it("keeps a file that is not markdown under its own name", () => {
+      const path = copilot.capabilities.agents.buildInstallPath("helper.txt");
+      expect(path).toBe(".github/agents/helper.txt");
+    });
   });
 
   describe("capabilities.skills.buildInstallPath()", () => {
@@ -138,6 +233,24 @@ describe("copilot", () => {
           alwaysApply: false,
         })
       ).toEqual({ description: "Apply when editing command files." });
+    });
+
+    it("joins several path patterns into one comma-separated applyTo", () => {
+      expect(
+        copilot.capabilities.rules?.convertFrontmatter({ paths: ["src/**/*.ts", "tests/**/*.ts"] })
+      ).toStrictEqual({ applyTo: "src/**/*.ts,tests/**/*.ts" });
+    });
+
+    it("writes no description key when alwaysApply is false and there is no description", () => {
+      expect(copilot.capabilities.rules?.convertFrontmatter({ alwaysApply: false })).toStrictEqual(
+        {}
+      );
+    });
+
+    it("drops the description of a rule that always applies", () => {
+      expect(
+        copilot.capabilities.rules?.convertFrontmatter({ description: "Always on." })
+      ).toStrictEqual({});
     });
 
     it("converts globs + alwaysApply: false from framework to applyTo", () => {
@@ -275,6 +388,54 @@ describe("a reference to another framework file, installed for Copilot", () => {
       expect(rewrite("Everything under @{{TOOLS}}/agents/ applies")).toBe(
         "Everything under [.github/agents/](../../.github/agents/) applies"
       );
+    });
+
+    it("resolves every other section's directory reference to its installed directory", () => {
+      expect(rewrite("@{{TOOLS}}/commands/ @{{TOOLS}}/rules/ @{{TOOLS}}/skills/")).toBe(
+        "[.github/prompts/](../../.github/prompts/) " +
+          "[.github/instructions/](../../.github/instructions/) " +
+          "[.github/skills/](../../.github/skills/)"
+      );
+    });
+
+    it("keeps a nested directory reference's folder rather than flattening it", () => {
+      expect(
+        rewrite(
+          "@{{TOOLS}}/agents/team/ @{{TOOLS}}/commands/01-plan/ @{{TOOLS}}/rules/01-standards/"
+        )
+      ).toBe(
+        "[.github/agents/team/](../../.github/agents/team/) " +
+          "[.github/prompts/01-plan/](../../.github/prompts/01-plan/) " +
+          "[.github/instructions/01-standards/](../../.github/instructions/01-standards/)"
+      );
+    });
+
+    it("keeps a reference to a section's .gitkeep under its own section path", () => {
+      expect(
+        rewrite(
+          "@{{TOOLS}}/agents/.gitkeep @{{TOOLS}}/commands/.gitkeep @{{TOOLS}}/rules/.gitkeep @{{TOOLS}}/skills/.gitkeep"
+        )
+      ).toBe(
+        "[.github/agents/.gitkeep](../../.github/agents/.gitkeep) " +
+          "[.github/commands/.gitkeep](../../.github/commands/.gitkeep) " +
+          "[.github/rules/.gitkeep](../../.github/rules/.gitkeep) " +
+          "[.github/skills/.gitkeep](../../.github/skills/.gitkeep)"
+      );
+    });
+
+    it("rewrites every reference in the content, not only the first", () => {
+      expect(
+        rewrite("@{{TOOLS}}/agents/a.md @{{TOOLS}}/agents/b.md @{{DOCS}}/a.md @{{DOCS}}/b.md")
+      ).toBe(
+        "[.github/agents/a.agent.md](../../.github/agents/a.agent.md) " +
+          "[.github/agents/b.agent.md](../../.github/agents/b.agent.md) " +
+          "[aidd_docs/a.md](../../aidd_docs/a.md) " +
+          "[aidd_docs/b.md](../../aidd_docs/b.md)"
+      );
+    });
+
+    it("leaves alone a placeholder that only resembles {{TOOLS}}", () => {
+      expect(rewrite("See @{{TOOLX}}/agents/x.md")).toBe("See @{{TOOLX}}/agents/x.md");
     });
   });
 
