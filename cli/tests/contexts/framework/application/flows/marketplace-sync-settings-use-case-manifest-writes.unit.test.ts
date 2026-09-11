@@ -336,21 +336,99 @@ describe("when a recorded registration is replaced", () => {
     });
   });
 
-  it("records a marketplace whose build failed under its own alias", async () => {
+  it("records no marketplace whose build failed, this run having registered nothing for it", async () => {
     const { useCase, manifest } = await build({
       marketplaceNames: [MARKETPLACE, "broken"],
       failingBuilds: ["broken"],
+      existingRegistrations: {
+        binary: "claude",
+        marketplaces: [{ alias: "retired", hostName: "retired-catalog" }],
+        pluginRefs: [],
+      },
     });
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    expect(recorded(manifest)).toStrictEqual({
-      binary: "claude",
-      marketplaces: [
-        { alias: MARKETPLACE, hostName: MARKETPLACE },
-        { alias: "broken", hostName: "broken" },
-      ],
-      pluginRefs: [],
+    expect(recorded(manifest)?.marketplaces).toStrictEqual([
+      { alias: MARKETPLACE, hostName: MARKETPLACE },
+    ]);
+  });
+
+  it("keeps a marketplace an earlier run registered when its build now fails", async () => {
+    const { useCase, manifest } = await build({
+      marketplaceNames: [MARKETPLACE, "broken"],
+      failingBuilds: ["broken"],
+      existingRegistrations: {
+        binary: "claude",
+        marketplaces: [{ alias: "broken", hostName: "broken-catalog" }],
+        pluginRefs: [],
+      },
     });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(recorded(manifest)?.marketplaces).toStrictEqual([
+      { alias: MARKETPLACE, hostName: MARKETPLACE },
+      { alias: "broken", hostName: "broken-catalog" },
+    ]);
+  });
+});
+
+describe("a marketplace the host refused is not this project's to remove", () => {
+  function refusingHost(registrationState: "live" | "dead"): FakeNativePluginActivator {
+    return new FakeNativePluginActivator({
+      available: true,
+      conflictOnAdd: true,
+      registrationState,
+    });
+  }
+
+  it("records no marketplace the host kept under another registration", async () => {
+    const { useCase, manifest } = await build({ activator: refusingHost("live") });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(recorded(manifest)?.marketplaces).toStrictEqual([]);
+  });
+
+  it("keeps a marketplace an earlier run registered when the host now refuses it", async () => {
+    const { useCase, manifest } = await build({
+      activator: refusingHost("live"),
+      existingRegistrations: {
+        binary: "claude",
+        marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
+        pluginRefs: [],
+      },
+    });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(recorded(manifest)?.marketplaces).toStrictEqual([
+      { alias: MARKETPLACE, hostName: MARKETPLACE },
+    ]);
+  });
+
+  it("records no marketplace it failed to take back from a dead registration", async () => {
+    const activator = new FakeNativePluginActivator({
+      available: true,
+      conflictOnAdd: true,
+      registrationState: "dead",
+      throwOnRemove: true,
+    });
+    const { useCase, manifest } = await build({ activator });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(recorded(manifest)?.marketplaces).toStrictEqual([]);
+  });
+
+  it("records a marketplace this run took back from a dead registration", async () => {
+    const { useCase, manifest } = await build({ activator: refusingHost("dead") });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(recorded(manifest)?.marketplaces).toStrictEqual([
+      { alias: MARKETPLACE, hostName: MARKETPLACE },
+    ]);
   });
 });
