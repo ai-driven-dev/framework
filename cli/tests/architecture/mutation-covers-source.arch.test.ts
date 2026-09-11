@@ -3,7 +3,7 @@
  * have died were never generated. `mutation-scopes.json` declares the globs, the floor each
  * scope must hold, and what is left out, so a directory belonging to neither fails by name.
  */
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { HARNESS, scopesToRun } from "../../scripts/mutation-scopes-to-run.mjs";
@@ -47,6 +47,12 @@ function isCovered(path: string, { scopes, excluded }: ScopeDeclaration): boolea
   );
 }
 
+function fixtureFiles(): string[] {
+  return readdirSync(join(REPO_ROOT, "cli/tests/fixtures"), { recursive: true, encoding: "utf8" })
+    .filter((entry) => entry.endsWith(".ts"))
+    .map((entry) => `tests/fixtures/${entry.replaceAll("\\", "/")}`);
+}
+
 describe("mutation covers every source file", () => {
   it("no file under src/ falls outside both the scopes and the exclusions", () => {
     const declared = declaration();
@@ -71,7 +77,7 @@ describe("mutation covers every source file", () => {
     }
     for (const [name, { mutate }] of Object.entries(scopes)) {
       expect(
-        files.some((file) => scopeMatches(mutate, file)),
+        [...files, ...fixtureFiles()].some((file) => scopeMatches(mutate, file)),
         `scope "${name}" (${mutate}) matches no file — it would score an empty set`
       ).toBe(true);
     }
