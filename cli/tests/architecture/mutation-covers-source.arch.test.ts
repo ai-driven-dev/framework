@@ -9,9 +9,12 @@ import { describe, expect, it } from "vitest";
 import { HARNESS, scopesToRun } from "../../scripts/mutation-scopes-to-run.mjs";
 import {
   breakVerdict,
+  changedArgs,
+  changedRanges,
   pruneIncremental,
   scoreOf,
   strykerArgs,
+  survivorsOf,
 } from "../../scripts/run-mutation.mjs";
 import { matchesGlob, REPO_ROOT, read, sourceFiles } from "./helpers.js";
 
@@ -221,6 +224,52 @@ describe("the guard itself", () => {
       },
     });
     expect(pruned.files?.["a.ts"]?.mutants).toEqual([{ status: "Killed" }]);
+  });
+
+  it("mutates only the lines a diff adds or changes under src/, never a deletion or another file", () => {
+    const diff = [
+      "diff --git a/src/a.ts b/src/a.ts",
+      "--- a/src/a.ts",
+      "+++ b/src/a.ts",
+      "@@ -10,2 +10,3 @@ function a() {",
+      "@@ -20 +21 @@ function b() {",
+      "@@ -30,4 +31,0 @@ function c() {",
+      "diff --git a/src/b.ts b/src/b.ts",
+      "--- /dev/null",
+      "+++ b/src/b.ts",
+      "@@ -0,0 +1,5 @@",
+      "diff --git a/README.md b/README.md",
+      "+++ b/README.md",
+      "@@ -1 +1 @@",
+    ].join("\n");
+    expect(changedRanges(diff)).toEqual(["src/a.ts:10-12", "src/a.ts:21-21", "src/b.ts:1-5"]);
+    expect(changedArgs(["src/a.ts:10-12", "src/b.ts:1-5"])).toEqual([
+      "run",
+      "--mutate",
+      "src/a.ts:10-12,src/b.ts:1-5",
+    ]);
+  });
+
+  it("names each mutant a test left alive, with its file and line", () => {
+    const report = {
+      files: {
+        "src/a.ts": {
+          mutants: [
+            { status: "Killed", mutatorName: "BooleanLiteral", location: { start: { line: 3 } } },
+            { status: "Survived", mutatorName: "StringLiteral", location: { start: { line: 7 } } },
+            {
+              status: "NoCoverage",
+              mutatorName: "BlockStatement",
+              location: { start: { line: 9 } },
+            },
+          ],
+        },
+      },
+    };
+    expect(survivorsOf(report)).toEqual([
+      "src/a.ts:7 StringLiteral (Survived)",
+      "src/a.ts:9 BlockStatement (NoCoverage)",
+    ]);
   });
 
   it("fails a score under the floor and passes one on it", () => {
