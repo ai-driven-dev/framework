@@ -3,9 +3,24 @@ import { describe, expect, it } from "vitest";
 import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 
 describe("claude", () => {
+  it("has .claude/ directory", () => {
+    expect(claude.directory).toBe(".claude/");
+  });
+
+  it("writes agents as markdown", () => {
+    expect(claude.capabilities.agents.params.format).toBe("markdown");
+  });
+
   describe("capabilities.mcp", () => {
     it("outputs to .mcp.json", () => {
       expect(claude.capabilities.mcp.params.outputPath).toBe(".mcp.json");
+    });
+
+    it("writes its servers as JSON under `mcpServers`", () => {
+      expect(claude.capabilities.mcp.params).toMatchObject({
+        format: "json",
+        entrySection: "mcpServers",
+      });
     });
 
     it("consumes the mcp config name", () => {

@@ -56,9 +56,7 @@ export function pruneIncremental(report) {
   for (const [name, file] of Object.entries(report.files ?? {})) {
     files[name] = {
       ...file,
-      mutants: file.mutants.filter(
-        (mutant) => !mutant.static && (mutant.status === "Killed" || mutant.status === "Timeout")
-      ),
+      mutants: file.mutants.filter((mutant) => !mutant.static && mutant.status === "Killed"),
     };
   }
   return { ...report, files };

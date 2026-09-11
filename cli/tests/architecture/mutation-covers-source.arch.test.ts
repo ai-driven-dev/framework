@@ -220,7 +220,7 @@ describe("the guard itself", () => {
         },
       },
     });
-    expect(pruned.files?.["a.ts"]?.mutants).toEqual([{ status: "Killed" }, { status: "Timeout" }]);
+    expect(pruned.files?.["a.ts"]?.mutants).toEqual([{ status: "Killed" }]);
   });
 
   it("fails a score under the floor and passes one on it", () => {
