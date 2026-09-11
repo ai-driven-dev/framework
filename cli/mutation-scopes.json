@@ -42,7 +42,7 @@
     },
     "tools-claude": {
       "mutate": "src/contexts/tools/domain/profiles/claude/**/*.ts",
-      "break": 92
+      "break": 94
     },
     "tools-codex": {
       "mutate": "src/contexts/tools/domain/profiles/codex/**/*.ts",
@@ -50,11 +50,11 @@
     },
     "tools-copilot": {
       "mutate": "src/contexts/tools/domain/profiles/copilot/**/*.ts",
-      "break": 93
+      "break": 95
     },
     "tools-cursor": {
       "mutate": "src/contexts/tools/domain/profiles/cursor/**/*.ts",
-      "break": 94
+      "break": 97
     },
     "tools-opencode": {
       "mutate": "src/contexts/tools/domain/profiles/opencode/**/*.ts",
