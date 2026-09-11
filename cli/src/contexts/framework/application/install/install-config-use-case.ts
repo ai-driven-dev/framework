@@ -8,7 +8,7 @@ import type { Platform } from "../../../../runtime/platform/platform.js";
 import { CONFIG_MCP, type ConfigRef } from "../../../tools/domain/capabilities/config-refs.js";
 import { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
-import { transformFor as transformMcpForPlatform } from "../../../tools/domain/mcp-exclusion.js";
+import { transformFor as transformMcpForPlatform } from "../../../tools/domain/mcp-launch-command.js";
 import type { ConfigCapability } from "../../domain/config-capability.js";
 
 interface InstallConfigOptions {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { transformFor } from "../../../../src/contexts/tools/domain/mcp-exclusion.js";
+import { transformFor } from "../../../../src/contexts/tools/domain/mcp-launch-command.js";
 
 function makeConfig(servers: Record<string, object>): string {
   return JSON.stringify({ mcpServers: servers }, null, 2);
