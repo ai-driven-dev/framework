@@ -62,6 +62,47 @@ export function pruneIncremental(report) {
   return { ...report, files };
 }
 
+const HUNK = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/;
+
+/** The lines a `git diff -U0` adds or changes under `src/`, as stryker `file:start-end` ranges.
+ * A pure deletion adds no line to mutate, and a file outside `src/` belongs to no scope. */
+export function changedRanges(diff) {
+  const ranges = [];
+  let file = null;
+  for (const line of diff.split("\n")) {
+    if (line.startsWith("+++ ")) {
+      const target = line.slice(4);
+      file = target.startsWith("b/") ? target.slice(2) : null;
+      continue;
+    }
+    const hunk = HUNK.exec(line);
+    if (hunk === null || file === null || !file.startsWith("src/") || !file.endsWith(".ts"))
+      continue;
+    const start = Number(hunk[1]);
+    const count = hunk[2] === undefined ? 1 : Number(hunk[2]);
+    if (count > 0) ranges.push(`${file}:${start}-${start + count - 1}`);
+  }
+  return ranges;
+}
+
+/** No scope, no incremental file and no floor: a check on a branch must never move a gate. */
+export function changedArgs(ranges) {
+  return ["run", "--mutate", ranges.join(",")];
+}
+
+export function survivorsOf(report) {
+  const survivors = [];
+  for (const [name, file] of Object.entries(report.files ?? {})) {
+    for (const mutant of file.mutants) {
+      if (mutant.status !== "Survived" && mutant.status !== "NoCoverage") continue;
+      survivors.push(
+        `${name}:${mutant.location.start.line} ${mutant.mutatorName} (${mutant.status})`
+      );
+    }
+  }
+  return survivors;
+}
+
 /** Below the declared floor is a failure the run itself raises; stryker's own `thresholds`
  * would need a config file per scope to say the same thing. */
 export function breakVerdict(score, declared) {
@@ -84,14 +125,56 @@ function pruneIncrementalFile(path) {
 }
 
 function usage(problem, scopes) {
-  console.error(`${problem}\n\nUsage: node scripts/run-mutation.mjs <scope> [--force]`);
+  console.error(
+    `${problem}\n\nUsage: node scripts/run-mutation.mjs <scope> [--force]\n       node scripts/run-mutation.mjs --changed [<base>]`
+  );
   console.error(`Scopes: ${Object.keys(scopes).join(", ")}`);
   process.exit(1);
+}
+
+function git(args) {
+  const result = spawnSync("git", args, { cwd: CLI_ROOT, encoding: "utf8" });
+  if (result.status !== 0) throw new Error(`git ${args.join(" ")} failed: ${result.stderr}`);
+  return result.stdout.trim();
+}
+
+function fileReports(dir) {
+  for (const name of WRITTEN_REPORTS) {
+    const written = join(REPORT_ROOT, name);
+    if (existsSync(written)) renameSync(written, join(dir, name));
+  }
+}
+
+function mainChanged(base = "origin/next") {
+  const mergeBase = git(["merge-base", base, "HEAD"]);
+  const ranges = changedRanges(git(["diff", "-U0", "--relative", mergeBase, "--", "src"]));
+  if (ranges.length === 0) {
+    console.log(`No line under src/ changed since ${base}: nothing to mutate.`);
+    return;
+  }
+  const dir = join(REPORT_ROOT, "changed");
+  mkdirSync(dir, { recursive: true });
+  const result = spawnSync(join(CLI_ROOT, "node_modules", ".bin", "stryker"), changedArgs(ranges), {
+    cwd: CLI_ROOT,
+    stdio: "inherit",
+  });
+  rmSync(join(CLI_ROOT, ".stryker-tmp"), { recursive: true, force: true });
+  fileReports(dir);
+  if (result.status !== 0) process.exit(result.status ?? 1);
+  const report = JSON.parse(readFileSync(join(dir, "mutation.json"), "utf8"));
+  const mutants = Object.values(report.files ?? {}).flatMap((file) => file.mutants).length;
+  const measured =
+    mutants === 0 ? "no mutant on those lines" : `score ${scoreOf(report).toFixed(1)}`;
+  console.log(
+    `\nReport: reports/mutation/changed/ (${measured}, ${ranges.length} changed range(s) since ${base})`
+  );
+  for (const survivor of survivorsOf(report)) console.log(`  survived: ${survivor}`);
 }
 
 function main() {
   const scopes = loadScopes();
   const [scope, ...flags] = process.argv.slice(2);
+  if (scope === "--changed") return mainChanged(flags[0]);
   if (scope === undefined) usage("No scope given.", scopes);
   if (!Object.hasOwn(scopes, scope)) usage(`Unknown scope "${scope}".`, scopes);
   const force = flags.includes("--force");
@@ -109,10 +192,7 @@ function main() {
   // A sandbox survives an interrupted run and they grow to hundreds of megabytes.
   rmSync(join(CLI_ROOT, ".stryker-tmp"), { recursive: true, force: true });
 
-  for (const name of WRITTEN_REPORTS) {
-    const written = join(REPORT_ROOT, name);
-    if (existsSync(written)) renameSync(written, join(scopeDir, name));
-  }
+  fileReports(scopeDir);
 
   if (result.status !== 0) process.exit(result.status ?? 1);
 
