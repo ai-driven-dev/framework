@@ -1,5 +1,6 @@
 const assert = require("node:assert/strict");
 const { execFileSync, spawnSync } = require("node:child_process");
+const { createHash } = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -23,15 +24,19 @@ function repo() {
   return { dir, git, runs };
 }
 
-function gate(r, script, name = "suite") {
-  return spawnSync(process.execPath, [WITNESS, name, "--", process.execPath, "-e", script, r.runs], {
-    cwd: r.dir,
-    env: CLEAN_ENV,
-    encoding: "utf8",
-  });
+function witness(r, commandLine, name = "suite") {
+  return spawnSync(process.execPath, [WITNESS, name, "--", commandLine], { cwd: r.dir, env: CLEAN_ENV, encoding: "utf8" });
 }
 
-const COUNT = "require('fs').appendFileSync(process.argv[1], 'x')";
+function commandLine(r, script) {
+  const file = path.join(path.dirname(r.runs), `${createHash("sha256").update(script).digest("hex")}.js`);
+  fs.writeFileSync(file, script);
+  return [process.execPath, file, r.runs].map((part) => `"${part}"`).join(" ");
+}
+
+const gate = (r, script, name) => witness(r, commandLine(r, script), name);
+
+const COUNT = "require('fs').appendFileSync(process.argv[2], 'x')";
 const runsOf = (r) => fs.readFileSync(r.runs, "utf8").length;
 
 test("skips a gate on a tree that already passed it, and says so", () => {
@@ -68,7 +73,7 @@ test("runs again after a file is added, left untracked, or removed", () => {
 
 test("stamps nothing when the tree changed while the gate ran, even once it changes back", () => {
   const r = repo();
-  const editsOnItsFirstRun = `${COUNT}; if (require('fs').readFileSync(process.argv[1], 'utf8') === 'x') require('fs').writeFileSync('a.txt', 'edited during the run')`;
+  const editsOnItsFirstRun = `${COUNT}; if (require('fs').readFileSync(process.argv[2], 'utf8') === 'x') require('fs').writeFileSync('a.txt', 'edited during the run')`;
   assert.equal(gate(r, editsOnItsFirstRun).status, 0);
   fs.writeFileSync(path.join(r.dir, "a.txt"), "a\n");
   gate(r, editsOnItsFirstRun);
@@ -86,5 +91,12 @@ test("keeps one stamp per gate, so another gate still runs", () => {
   const r = repo();
   gate(r, COUNT, "knip");
   gate(r, COUNT, "suite");
+  assert.equal(runsOf(r), 2);
+});
+
+test("runs what follows -- as one shell command line, on every platform", () => {
+  const r = repo();
+  const count = commandLine(r, COUNT);
+  assert.equal(witness(r, `${count} && ${count}`).status, 0);
   assert.equal(runsOf(r), 2);
 });

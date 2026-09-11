@@ -6,6 +6,10 @@
  * only when the run is green and the tree is still the one it was taken on, so an edit made
  * while the gate ran is never signed off. The command's own exit code passes through.
  *
+ * What follows `--` is one shell command line, run by the platform's shell everywhere: on
+ * Windows only a shell can start `pnpm`, and a shell given separate arguments would re-split
+ * them unquoted, so the caller quotes once and every platform reads the same line.
+ *
  * Usage:
  *   node scripts/gate-witness.js <name> -- <command...>
  */
@@ -63,10 +67,7 @@ function main() {
     console.log(`✓ ${name}: skipped, this exact tree already passed it.`);
     return 0;
   }
-  const result = spawnSync(command[0], command.slice(1), {
-    stdio: "inherit",
-    shell: process.platform === "win32",
-  });
+  const result = spawnSync(command.join(" "), { stdio: "inherit", shell: true });
   if (result.status !== 0) return result.status ?? 1;
   if (treeKey(root, command) !== before) {
     console.log(`${name}: passed, but the tree changed while it ran, so it is not stamped.`);
