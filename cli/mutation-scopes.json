@@ -1,5 +1,5 @@
 {
-  "$comment": "The one declaration of what mutation testing covers and the floor each scope must hold. scripts/run-mutation.mjs runs a scope by name and fails below its break; tests/architecture/mutation-covers-source.arch.test.ts checks no source file falls outside both maps, that every scope declares a floor, and that package.json has a script per scope. Globs, never file lists: a list goes stale the day a file is added, and the score does not drop, because the mutants that would have died were never generated. A floor is raised to the measured score after a run, never lowered without the reason here. A scope's mutate is one glob or a list where a leading ! excludes; tools is split one scope per tool profile: a profile is a static declaration whose every mutant reruns each test that loads it, and the five together outlasted every other scope on a two-core runner; vscode's single file stays with the rest.",
+  "$comment": "The one declaration of what mutation testing covers and the floor each scope must hold. scripts/run-mutation.mjs runs a scope by name and fails below its break; tests/architecture/mutation-covers-source.arch.test.ts checks no source file falls outside both maps, that every scope declares a floor, and that package.json has a script per scope. Globs, never file lists: a list goes stale the day a file is added, and the score does not drop, because the mutants that would have died were never generated. A floor is raised to the measured score after a run, never lowered without the reason here. A scope's mutate is one glob or a list where a leading ! excludes; tools is split one scope per tool profile: a profile is a static declaration whose every mutant reruns each test that loads it, and the five together outlasted every other scope on a two-core runner; vscode's single file stays with the rest. canary mutates a fixture, not the product: its one mutant stops a module from loading, which Stryker's vitest runner scores as survived on its own; at 100 the scope fails the day that happens again, so a Stryker or vitest upgrade cannot quietly bypass tests/helpers/unloadable-file-as-failed-test.ts.",
   "scopes": {
     "kernel": {
       "mutate": "src/kernel/**/*.ts",
@@ -59,6 +59,13 @@
     "tools-opencode": {
       "mutate": "src/contexts/tools/domain/profiles/opencode/**/*.ts",
       "break": 94
+    },
+    "canary": {
+      "mutate": [
+        "tests/fixtures/stryker-canary/**/*.ts",
+        "!tests/fixtures/stryker-canary/**/*.test.ts"
+      ],
+      "break": 100
     }
   },
   "excluded": {
