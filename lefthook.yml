@@ -175,10 +175,10 @@ pre-push:
   commands:
     cli-knip:
       glob: "cli/**"
-      run: cd cli && pnpm knip
+      run: node scripts/gate-witness.js cli-knip -- pnpm --dir cli knip
     cli-test:
       glob: "cli/**"
-      run: cd cli && pnpm test
+      run: node scripts/gate-witness.js cli-test -- pnpm --dir cli test
 
 commit-msg:
   commands:
