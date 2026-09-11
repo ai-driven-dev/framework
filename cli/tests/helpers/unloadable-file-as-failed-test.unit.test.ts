@@ -15,7 +15,7 @@ function testFile(state: "pass" | "fail", tasks: RunnerTestFile["tasks"] = []): 
     mode: "run",
     meta: {},
     type: "suite",
-    filepath: "/cli/tests/cursor.unit.test.ts",
+    filepath: "/repo/cli/tests/contexts/tools/domain/profiles/cursor.unit.test.ts",
     projectName: "unit",
     tasks,
     result: { state, errors: state === "fail" ? [LOAD_ERROR] : [] },
