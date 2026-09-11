@@ -444,6 +444,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     // Each step is independently best-effort: one failing plugin or marketplace must warn and
     // let the others through, never abort the whole activation.
     const registeredMarketplaces: NativeMarketplaceRegistration[] = [];
+    const ownMarketplaces: NativeMarketplaceRegistration[] = [];
+    const recorded = manifest.getNativeRegistrations(toolId)?.marketplaces;
     let buildFailed = false;
     for (const marketplace of marketplaces) {
       const registration = await this.registerMarketplace(
@@ -453,11 +455,15 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         projectRoot,
         warnings
       );
-      if (!registration.registered) buildFailed = true;
-      registeredMarketplaces.push({ alias: marketplace.name, hostName: registration.hostName });
+      if (registration.outcome === "build-failed") buildFailed = true;
+      const entry = { alias: marketplace.name, hostName: registration.hostName };
+      registeredMarketplaces.push(entry);
+      const earlier = recorded?.find((m) => m.alias === marketplace.name);
+      if (registration.outcome === "registered") ownMarketplaces.push(entry);
+      else if (earlier !== undefined) ownMarketplaces.push(earlier);
     }
     if (!activator.enablesPlugins())
-      return { marketplaces: registeredMarketplaces, pluginRefs: [], buildFailed };
+      return { marketplaces: ownMarketplaces, pluginRefs: [], buildFailed };
     this.bestEffort(() => activator.upgradeMarketplaces(), "upgrade marketplaces", warnings);
     const hostNameByAlias = new Map(registeredMarketplaces.map((m) => [m.alias, m.hostName]));
     const refs = await this.refsThisProjectEnables(
@@ -469,7 +475,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     for (const ref of refs) {
       this.bestEffort(() => activator.enablePlugin(ref, scope), `enable plugin '${ref}'`, warnings);
     }
-    return { marketplaces: registeredMarketplaces, pluginRefs: refs, buildFailed };
+    return { marketplaces: ownMarketplaces, pluginRefs: refs, buildFailed };
   }
 
   private async refsThisProjectEnables(
@@ -491,14 +497,16 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     });
   }
 
-  private bestEffort(action: () => void, label: string, warnings: string[]): void {
+  private bestEffort(action: () => void, label: string, warnings: string[]): boolean {
     try {
       action();
+      return true;
     } catch (error) {
       if (!(error instanceof NativePluginCliError)) throw error;
       const message = `Native plugin activation — ${label} skipped: ${error.message}`;
       this.logger.warn(message);
       warnings.push(message);
+      return false;
     }
   }
 
@@ -532,9 +540,9 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     marketplace: Marketplace,
     projectRoot: string,
     warnings: string[]
-  ): Promise<{ hostName: string; registered: boolean }> {
+  ): Promise<{ hostName: string; outcome: "registered" | "refused" | "build-failed" }> {
     const builtDir = await this.buildForTool(toolId, marketplace, projectRoot);
-    if (builtDir === null) return { hostName: marketplace.name, registered: false };
+    if (builtDir === null) return { hostName: marketplace.name, outcome: "build-failed" };
     const requestedIdentity = await readMarketplaceCatalogIdentity(this.fs, toolId, builtDir);
     if (requestedIdentity === undefined) {
       throw new UnreadableBuiltCatalogError(
@@ -552,14 +560,23 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     );
     // A "skip" is a host already following a newer shared build, never this project's own
     // pre-migration cache, so it counts as registered.
-    if (decision === "skip") return { hostName, registered: true };
+    if (decision === "skip") return { hostName, outcome: "registered" };
     try {
       activator.addMarketplace(builtDir, marketplace.scope);
     } catch (error) {
       if (!(error instanceof NativePluginCliError)) throw error;
-      this.reclaimOrReport(toolId, activator, marketplace, hostName, builtDir, error, warnings);
+      const reclaimed = this.reclaimOrReport(
+        toolId,
+        activator,
+        marketplace,
+        hostName,
+        builtDir,
+        error,
+        warnings
+      );
+      return { hostName, outcome: reclaimed ? "registered" : "refused" };
     }
-    return { hostName, registered: true };
+    return { hostName, outcome: "registered" };
   }
 
   /**
@@ -653,7 +670,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     builtDir: string,
     addError: NativePluginCliError,
     warnings: string[]
-  ): void {
+  ): boolean {
     const state = activator.registrationState(hostName);
     const isUnguardedFrameworkMarketplace =
       marketplace.name === FRAMEWORK_MARKETPLACE_NAME &&
@@ -663,7 +680,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       const message = `Native plugin activation — register marketplace '${hostName}' skipped: ${addError.message}`;
       this.logger.warn(message);
       warnings.push(message);
-      return;
+      return false;
     }
     const reclaimMessage =
       state === "dead"
@@ -676,7 +693,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       `unregister stale marketplace '${hostName}'`,
       warnings
     );
-    this.bestEffort(
+    return this.bestEffort(
       () => activator.addMarketplace(builtDir, marketplace.scope),
       `register marketplace '${hostName}'`,
       warnings
