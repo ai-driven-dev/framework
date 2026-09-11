@@ -52,6 +52,7 @@
     "smoke": "pnpm build && bash scripts/smoke-tools.sh",
     "smoke:full": "pnpm build && SMOKE_REMOTE=1 bash scripts/smoke-tools.sh",
     "smoke:real": "pnpm build && bash scripts/smoke-real.sh",
+    "smoke:collision": "pnpm build && bash scripts/smoke-collision.sh",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "format": "biome format --write .",
