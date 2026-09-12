@@ -208,6 +208,20 @@
       }
     },
     {
+      "tool": "kilo",
+      "coverage": "not-covered",
+      "reason": "Kilo OpenTelemetry is experimental and not yet supported by AIDD.",
+      "capability": {
+        "local_read": null,
+        "export": null,
+        "journal_attributable": false,
+        "task_attributable": false
+      },
+      "totals": {
+        "requests": 0
+      }
+    },
+    {
       "tool": "codex",
       "coverage": "covered",
       "capability": {

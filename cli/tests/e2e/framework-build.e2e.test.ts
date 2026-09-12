@@ -593,6 +593,32 @@ describe.concurrent("E2E: aidd translate", () => {
     }
   });
 
+  it("--target kilo --flat emits its agents, skills, generated hooks bridge and kilo.json", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-kilo");
+    try {
+      const projRoot = join(tempDir, "proj");
+      await mkdir(projRoot, { recursive: true });
+      const result = await runCli(
+        ["translate", FRAMEWORK_PATH, "--to", "kilo", "--as", "flat", "--out", projRoot],
+        projectDir,
+        fakeHome
+      );
+      expect(result.exitCode).toBe(0);
+      expect(existsSync(join(projRoot, ".kilo", "agents"))).toBe(true);
+      expect(existsSync(join(projRoot, ".kilo", "skills"))).toBe(true);
+      expect(existsSync(join(projRoot, ".kilo", "plugin", "aidd-test-hooks.js"))).toBe(true);
+      const kilo = JSON.parse(await readFile(join(projRoot, "kilo.json"), "utf-8")) as Record<
+        string,
+        unknown
+      >;
+      expect(kilo.$schema).toBe("https://app.kilo.ai/config.json");
+      expect(kilo.instructions).toEqual([".kilo/rules/**/*.md"]);
+      expect(kilo.mcp).toBeDefined();
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("AC #7: --target opencode (non-flat) exits 1 with unsupported error", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-opencode-no-flat");
     try {

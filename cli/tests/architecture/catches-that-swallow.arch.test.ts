@@ -22,6 +22,10 @@ const BASELINE: Readonly<Record<string, { readonly count: number; readonly reaso
     reason:
       "the bridge text shipped into OpenCode: a hook that fails must never surface as a thrown error inside the host",
   },
+  "src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.ts": {
+    count: 1,
+    reason: "the generated Kilo session hook must never interrupt session creation",
+  },
   "tests/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.unit.test.ts": {
     count: 2,
     reason: "asserts that same bridge text byte for byte",

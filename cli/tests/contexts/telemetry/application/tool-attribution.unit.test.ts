@@ -8,6 +8,7 @@ import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { ReadLocalCostUseCase } from "../../../../src/contexts/telemetry/application/read-local-cost-use-case.js";
 import { mapClaudeCodeTranscriptToSinkRecords } from "../../../../src/contexts/telemetry/domain/formats/claude-code-transcript.js";
 import type { SessionCostReader } from "../../../../src/contexts/telemetry/domain/ports/session-cost-reader.js";

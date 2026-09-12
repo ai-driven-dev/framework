@@ -5,6 +5,7 @@ import "../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import "../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/domain/build-target.js";
@@ -208,7 +209,11 @@ describe("aidd translate — the help surface", () => {
         option.defaultValue,
       ])
     ).toEqual([
-      ["--to <target>", "Conversion target (claude, cursor, copilot, codex, opencode)", undefined],
+      [
+        "--to <target>",
+        "Conversion target (claude, cursor, copilot, codex, opencode, kilo)",
+        undefined,
+      ],
       ["--out <dir>", "Output directory (marketplace dist or project root)", undefined],
       ["--as <marketplace|flat>", "Output layout", "marketplace"],
       ["--force", "Overwrite existing files at canonical paths under --out", undefined],
