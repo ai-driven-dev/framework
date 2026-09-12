@@ -4,6 +4,7 @@ import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import {
   type LocalCostToolReport,
   ReadLocalCostUseCase,
@@ -69,6 +70,15 @@ const CURSOR_NOT_COVERED: LocalCostToolReport = {
   recordsStored: 0,
   sessionsFailed: 0,
   reason: "It writes no token count in any file it produces.",
+};
+
+const KILO_NOT_COVERED: LocalCostToolReport = {
+  tool: "kilo",
+  status: "not-covered",
+  recordsFound: 0,
+  recordsStored: 0,
+  sessionsFailed: 0,
+  reason: "Kilo telemetry has not been measured.",
 };
 
 function sessionJournal(vendorId: string, host = "claude-code"): RunJournal {
@@ -167,6 +177,7 @@ describe("which sessions a sweep reads", () => {
         notAsked("cursor"),
         notAsked("copilot"),
         notAsked("opencode"),
+        notAsked("kilo"),
         notAsked("codex"),
       ],
     });
@@ -192,6 +203,7 @@ describe("which sessions a sweep reads", () => {
         notAsked("cursor"),
         notAsked("copilot"),
         notAsked("opencode"),
+        notAsked("kilo"),
         notAsked("codex"),
       ],
       refusedReason:
@@ -216,6 +228,7 @@ describe("one session's answers, tool by tool", () => {
           CURSOR_NOT_COVERED,
           notAsked("copilot"),
           notAsked("opencode"),
+          KILO_NOT_COVERED,
           notAsked("codex"),
         ],
       },

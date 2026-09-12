@@ -37,7 +37,7 @@ Why not just write your own commands? → [FAQ](docs/FAQ.md#-why-aidd-instead-of
 
 ## ✅ Prerequisites
 
-- **An AI coding tool** — Claude Code (native), or Cursor / Copilot / Codex / OpenCode (see [Compatibility](#-compatibility)).
+- **An AI coding tool** — Claude Code (native), or Cursor / Copilot / Codex / OpenCode / Kilo Code (see [Compatibility](#-compatibility)).
 - **[Node](https://nodejs.org) 22 or later** on your `PATH`, only for the plugin that ships hooks ([what they do](docs/ARCHITECTURE.md#-bundled-hooks)); the workflows themselves are markdown and need nothing.
 
 ## 🔌 Compatibility
@@ -49,6 +49,7 @@ Why not just write your own commands? → [FAQ](docs/FAQ.md#-why-aidd-instead-of
 | **GitHub Copilot** | ✅ Supported | Marketplace · Flat |
 | **Codex** | ✅ Supported | Marketplace · Flat |
 | **OpenCode** | ✅ Supported | Flat |
+| **Kilo Code** | ✅ Supported | Flat |
 | **Gemini · Mistral** | 🚧 In progress | — |
 
 <sub>**Marketplace** = installed and updated through your tool's plugin manager. **Flat** = files copied directly into your project, no plugin manager involved. Install steps per tool → [Other tools](#other-tools).</sub>
@@ -171,6 +172,16 @@ codex plugin add aidd-context@aidd-framework   # per plugin
 1. Unzip the `opencode-flat` archive into your project root → `.opencode/`.
 
 [Docs](https://opencode.ai/docs/config/)
+
+</details>
+
+<details>
+<summary><strong>Kilo Code</strong> — Flat only</summary>
+
+1. Unzip the `kilo-flat` archive into your project root → `.kilo/` and `kilo.json`.
+2. Start a new Kilo session so it loads the generated project plugin.
+
+[Plugins documentation](https://kilo.ai/docs/automate/extending/plugins)
 
 </details>
 
