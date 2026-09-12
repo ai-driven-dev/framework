@@ -1,7 +1,10 @@
 :root {
-  --red: oklch(0.52 0.22 25);
-  --red-dark: oklch(0.39 0.17 25);
-  --red-soft: oklch(0.96 0.025 25);
+  --red: #dd5475;
+  --red-dark: color-mix(in oklch, var(--red) 72%, black);
+  --red-soft: color-mix(in oklch, var(--red) 12%, white);
+  --green: #66cc99;
+  --green-dark: color-mix(in oklch, var(--green) 62%, black);
+  --green-soft: color-mix(in oklch, var(--green) 15%, white);
   --ink: oklch(0.16 0.01 25);
   --ink-soft: oklch(0.38 0.01 25);
   --muted: oklch(0.53 0.008 25);
@@ -9,10 +12,10 @@
   --line-strong: oklch(0.72 0.01 25);
   --surface: oklch(1 0 0);
   --surface-soft: oklch(0.975 0.003 25);
-  --add-bg: oklch(0.96 0.03 145);
-  --add-ink: oklch(0.31 0.10 145);
-  --del-bg: oklch(0.96 0.03 25);
-  --del-ink: oklch(0.40 0.16 25);
+  --add-bg: var(--green-soft);
+  --add-ink: var(--green-dark);
+  --del-bg: var(--red-soft);
+  --del-ink: var(--red-dark);
   --focus: oklch(0.64 0.18 250);
   --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 }
@@ -213,6 +216,8 @@ h1 { max-width: 16ch; margin: 0; font-size: 44px; line-height: 1.08; letter-spac
 .diff-line b { display: inline-block; width: 18px; user-select: none; }
 .diff-del { background: var(--del-bg); color: var(--del-ink); }
 .diff-add { background: var(--add-bg); color: var(--add-ink); }
+.diff-del b { color: var(--red-dark); }
+.diff-add b { color: var(--green-dark); }
 .diff-context { color: var(--muted); }
 .empty-state { margin: 0; padding: 48px 0; border-bottom: 1px solid var(--ink); color: var(--muted); text-align: center; }
 
