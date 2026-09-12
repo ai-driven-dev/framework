@@ -86,5 +86,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-recommend.md](skills/05-improve/actions/02-recommend.md) | - |
 | `actions` | [03-target-edits.md](skills/05-improve/actions/03-target-edits.md) | - |
 | `assets` | [conversation-sources.md](skills/05-improve/assets/conversation-sources.md) | - |
-| `-` | [SKILL.md](skills/05-improve/SKILL.md) | `Reads complete conversation evidence, recommends targeted improvements, and proposes minimal edits. Use when the user wants to improve a past or current conversation, reduce wasted time or tokens, or choose files to revise. Not for delivery review or automatic edits.` |
+| `assets` | [report.js](skills/05-improve/assets/report.js) | - |
+| `-` | [SKILL.md](skills/05-improve/SKILL.md) | `Reads complete conversation evidence, measures visible cost, and recommends minimal improvements. Use when the user wants to improve a conversation, reduce wasted time or tokens, or choose files to revise. Not for delivery review or automatic edits.` |
 

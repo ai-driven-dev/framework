@@ -1,6 +1,6 @@
 ---
 name: 05-improve
-description: Reads complete conversation evidence, recommends targeted improvements, and proposes minimal edits. Use when the user wants to improve a past or current conversation, reduce wasted time or tokens, or choose files to revise. Not for delivery review or automatic edits.
+description: Reads complete conversation evidence, measures visible cost, and recommends minimal improvements. Use when the user wants to improve a conversation, reduce wasted time or tokens, or choose files to revise. Not for delivery review or automatic edits.
 argument-hint: conversation | export
 ---
 # Improve
@@ -8,8 +8,12 @@ argument-hint: conversation | export
 ```mermaid
 flowchart LR
   start([conversation ID or export]) --> read-conversation
-  read-conversation -->|complete| recommend --> target-edits
+  read-conversation -->|complete| scopes{two or more scopes?}
   read-conversation -->|unavailable| unavailable([stop])
+  scopes -->|no| recommend-local[recommend locally] --> target-edits
+  scopes -->|yes| isolation{isolated artifact context?}
+  isolation -->|yes| recommend-parallel[recommend in parallel] --> target-edits
+  isolation -->|no| recommend-local
   target-edits --> question([ask next intent]) --> stop([stop])
 ```
 
@@ -19,9 +23,9 @@ Run the flow above. Read only the next action file.
 
 | Action | Does |
 | --- | --- |
-| read-conversation | load complete evidence and profile its cost |
-| recommend | answer every improvement question with evidence |
-| target-edits | map recommendations to minimal file edits and ask for the next intent |
+| read-conversation | freeze complete evidence and measure visible cost |
+| recommend | analyze relevant scopes and merge grounded findings |
+| target-edits | render minimal edits and an executable prompt |
 
 ## Transversal rules
 
