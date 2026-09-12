@@ -319,6 +319,32 @@ jobs:
       # token and no network. `smoke:full` adds the remote-fetch section on demand.
       - run: cd cli && pnpm smoke
 
+  cli-kilo-runtime:
+    name: cli / Kilo runtime smoke
+    needs: [changes]
+    if: needs.changes.outputs.relevant == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install pnpm
+        run: corepack enable
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      - name: Cache pnpm store
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ runner.os }}-${{ hashFiles('cli/pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+      - run: cd cli && pnpm install --frozen-lockfile
+      # The test starts Kilo's local server and asks it to load the generated project plugin.
+      # No model or account is needed for this protocol-level smoke.
+      - name: Install Kilo Code CLI
+        run: npm install -g @kilocode/cli@7.7.5
+      - run: cd cli && pnpm test:e2e:kilo
+
   cli-build:
     name: cli / Build & Bundle Budget
     needs: [changes]
@@ -591,6 +617,7 @@ jobs:
       - cli-architecture
       - cli-coverage
       - cli-smoke
+      - cli-kilo-runtime
       - cli-build
       - cli-knip
       - identifier-join
@@ -611,6 +638,7 @@ jobs:
             "${{ needs.cli-architecture.result }}" \
             "${{ needs.cli-coverage.result }}" \
             "${{ needs.cli-smoke.result }}" \
+            "${{ needs.cli-kilo-runtime.result }}" \
             "${{ needs.cli-build.result }}" \
             "${{ needs.cli-knip.result }}" \
             "${{ needs.identifier-join.result }}" \

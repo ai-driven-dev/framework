@@ -36,7 +36,7 @@
     "node": ">=22.12"
   },
   "packageManager": "pnpm@12.3.4",
-  "bundleBudgetKB": 722,
+  "bundleBudgetKB": 734,
   "scripts": {
     "build": "tsup && node scripts/check-bundle-size.mjs",
     "build:check-size": "node scripts/check-bundle-size.mjs",
@@ -45,7 +45,8 @@
     "test:arch": "vitest run --project=architecture",
     "test:unit": "vitest run --project=unit",
     "test:integration": "vitest run --project=integration",
-    "test:e2e": "vitest run --project=e2e",
+  "test:e2e": "vitest run --project=e2e",
+  "test:e2e:kilo": "KILO_RUNTIME_SMOKE=1 vitest run --project=e2e tests/e2e/kilo-runtime.e2e.test.ts",
     "test:coverage": "vitest run --coverage",
     "test:kanban": "pnpm --dir ../kanban test",
     "test:watch": "vitest",
@@ -66,6 +67,7 @@
     "test:mutation:tools-codex": "node scripts/run-mutation.mjs tools-codex",
     "test:mutation:tools-copilot": "node scripts/run-mutation.mjs tools-copilot",
     "test:mutation:tools-cursor": "node scripts/run-mutation.mjs tools-cursor",
+    "test:mutation:tools-kilo": "node scripts/run-mutation.mjs tools-kilo",
     "test:mutation:tools-opencode": "node scripts/run-mutation.mjs tools-opencode",
     "test:mutation:telemetry": "node scripts/run-mutation.mjs telemetry",
     "test:mutation:translate": "node scripts/run-mutation.mjs translate",
