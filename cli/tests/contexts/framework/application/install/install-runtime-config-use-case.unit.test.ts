@@ -157,6 +157,42 @@ describe("InstallRuntimeConfigUseCase", () => {
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(".claude/settings.json"));
   });
 
+  it("writes Kilo's project-local JSONC config on a fresh install", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initProject(deps, PROJECT_ROOT);
+    const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+
+    await buildUseCase(deps).execute({
+      toolId: "kilo",
+      projectRoot: PROJECT_ROOT,
+      manifest,
+      force: false,
+      version: "1.0.0",
+    });
+
+    expect(deps.fs.has(join(PROJECT_ROOT, ".kilo/kilo.jsonc"))).toBe(true);
+    expect(deps.fs.has(join(PROJECT_ROOT, "kilo.json"))).toBe(false);
+  });
+
+  it("reuses Kilo's existing root JSONC config instead of creating a project-local config", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initProject(deps, PROJECT_ROOT);
+    await deps.fs.writeFile(join(PROJECT_ROOT, "kilo.jsonc"), '{"user": true}');
+    const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+
+    await buildUseCase(deps).execute({
+      toolId: "kilo",
+      projectRoot: PROJECT_ROOT,
+      manifest,
+      force: false,
+      version: "1.0.0",
+    });
+
+    expect(deps.fs.has(join(PROJECT_ROOT, "kilo.json"))).toBe(false);
+    expect(deps.fs.getFile(join(PROJECT_ROOT, "kilo.jsonc"))).toBe('{"user": true}');
+    expect(deps.fs.has(join(PROJECT_ROOT, ".kilo/kilo.jsonc"))).toBe(false);
+  });
+
   describe("copilot requiresTool gate", () => {
     it("does not create .vscode/settings.json when vscode is not installed", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);

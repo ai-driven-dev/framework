@@ -52,6 +52,7 @@
       "cache/built/<VERSION>/aidd-framework/claude/plugins/aidd-test/agents/code-reviewer.md",
       "cache/built/<VERSION>/aidd-framework/claude/plugins/aidd-test/hooks/check.sh",
       "cache/built/<VERSION>/aidd-framework/claude/plugins/aidd-test/hooks/hooks.json",
+      "cache/built/<VERSION>/aidd-framework/claude/plugins/aidd-test/hooks/session-start.js",
       "cache/built/<VERSION>/aidd-framework/claude/plugins/aidd-test/skills/commit/SKILL.md",
       "cache/built/<VERSION>/aidd-framework/claude/plugins/aidd-test/skills/hello.md",
       "manifest.json",
@@ -244,6 +245,7 @@
     "filesWritten": [
       ".cursor/hooks.json",
       ".cursor/hooks/aidd-test/check.sh",
+      ".cursor/hooks/aidd-test/session-start.js",
       ".cursor/settings.json"
     ],
     "manifest": {
@@ -311,7 +313,7 @@
   {
     "command": "doctor",
     "exitCode": 0,
-    "stdout": "\nAI tools:\n  claude (v<VERSION>): 1 files, 0 merge files\n  cursor (v<VERSION>): 1 files, 0 merge files\n\nDrift:\nAI tools:\n  claude (v<VERSION>): in sync\n  cursor (v<VERSION>):\n    + .cursor/hooks/aidd-test/check.sh\n    + .cursor/hooks.json\n  0 modified, 0 deleted, 2 added\nIDE tools:\n  (none installed)\nPlugins:\n  (all in sync)\n\nAI:\n\nInstallation is healthy\n",
+    "stdout": "\nAI tools:\n  claude (v<VERSION>): 1 files, 0 merge files\n  cursor (v<VERSION>): 1 files, 0 merge files\n\nDrift:\nAI tools:\n  claude (v<VERSION>): in sync\n  cursor (v<VERSION>):\n    + .cursor/hooks/aidd-test/check.sh\n    + .cursor/hooks/aidd-test/session-start.js\n    + .cursor/hooks.json\n  0 modified, 0 deleted, 3 added\nIDE tools:\n  (none installed)\nPlugins:\n  (all in sync)\n\nAI:\n\nInstallation is healthy\n",
     "stderr": "Warning:   <HOME>/.claude/plugins/installed_plugins.json could not be read — ENOENT\n    Fix: The plugin does not load until claude's own CLI has run and answered this.\n",
     "filesWritten": [],
     "manifest": {
@@ -379,7 +381,7 @@
   {
     "command": "doctor",
     "exitCode": 1,
-    "stdout": "\nAI tools:\n  claude (v<VERSION>): 1 files, 0 merge files\n  cursor (v<VERSION>): 1 files, 0 merge files\n\nDrift:\nAI tools:\n  claude (v<VERSION>):\n    ~ .claude/settings.json\n  1 modified, 0 deleted, 0 added\n  cursor (v<VERSION>):\n    + .cursor/hooks/aidd-test/check.sh\n    + .cursor/hooks.json\n  0 modified, 0 deleted, 2 added\nIDE tools:\n  (none installed)\nPlugins:\n  (all in sync)\n\nAI:\n",
+    "stdout": "\nAI tools:\n  claude (v<VERSION>): 1 files, 0 merge files\n  cursor (v<VERSION>): 1 files, 0 merge files\n\nDrift:\nAI tools:\n  claude (v<VERSION>):\n    ~ .claude/settings.json\n  1 modified, 0 deleted, 0 added\n  cursor (v<VERSION>):\n    + .cursor/hooks/aidd-test/check.sh\n    + .cursor/hooks/aidd-test/session-start.js\n    + .cursor/hooks.json\n  0 modified, 0 deleted, 3 added\nIDE tools:\n  (none installed)\nPlugins:\n  (all in sync)\n\nAI:\n",
     "stderr": "Warning:   <HOME>/.claude/plugins/installed_plugins.json could not be read — ENOENT\n    Fix: The plugin does not load until claude's own CLI has run and answered this.\nWarning:   Modified tracked file: .claude/settings.json\n    Fix: Run `aidd sync --force` to revert to the framework version.\n",
     "filesWritten": [],
     "manifest": {
@@ -515,7 +517,7 @@
   {
     "command": "doctor",
     "exitCode": 0,
-    "stdout": "\nAI tools:\n  claude (v<VERSION>): 1 files, 0 merge files\n  cursor (v<VERSION>): 1 files, 0 merge files\n\nDrift:\nAI tools:\n  claude (v<VERSION>): in sync\n  cursor (v<VERSION>):\n    + .cursor/hooks/aidd-test/check.sh\n    + .cursor/hooks.json\n  0 modified, 0 deleted, 2 added\nIDE tools:\n  (none installed)\nPlugins:\n  (all in sync)\n\nAI:\n\nInstallation is healthy\n",
+    "stdout": "\nAI tools:\n  claude (v<VERSION>): 1 files, 0 merge files\n  cursor (v<VERSION>): 1 files, 0 merge files\n\nDrift:\nAI tools:\n  claude (v<VERSION>): in sync\n  cursor (v<VERSION>):\n    + .cursor/hooks/aidd-test/check.sh\n    + .cursor/hooks/aidd-test/session-start.js\n    + .cursor/hooks.json\n  0 modified, 0 deleted, 3 added\nIDE tools:\n  (none installed)\nPlugins:\n  (all in sync)\n\nAI:\n\nInstallation is healthy\n",
     "stderr": "Warning:   <HOME>/.claude/plugins/installed_plugins.json could not be read — ENOENT\n    Fix: The plugin does not load until claude's own CLI has run and answered this.\n",
     "filesWritten": [],
     "manifest": {
@@ -629,6 +631,7 @@
       "cache/built/<VERSION>/aidd-framework/claude/plugins/aidd-test/agents/code-reviewer.md",
       "cache/built/<VERSION>/aidd-framework/claude/plugins/aidd-test/hooks/check.sh",
       "cache/built/<VERSION>/aidd-framework/claude/plugins/aidd-test/hooks/hooks.json",
+      "cache/built/<VERSION>/aidd-framework/claude/plugins/aidd-test/hooks/session-start.js",
       "cache/built/<VERSION>/aidd-framework/claude/plugins/aidd-test/skills/commit/SKILL.md",
       "cache/built/<VERSION>/aidd-framework/claude/plugins/aidd-test/skills/hello.md",
       "cache/built/<VERSION>/aidd-framework/cursor/.build-version",
@@ -638,6 +641,7 @@
       "cache/built/<VERSION>/aidd-framework/cursor/plugins/aidd-test/agents/code-reviewer.md",
       "cache/built/<VERSION>/aidd-framework/cursor/plugins/aidd-test/hooks/check.sh",
       "cache/built/<VERSION>/aidd-framework/cursor/plugins/aidd-test/hooks/hooks.json",
+      "cache/built/<VERSION>/aidd-framework/cursor/plugins/aidd-test/hooks/session-start.js",
       "cache/built/<VERSION>/aidd-framework/cursor/plugins/aidd-test/skills/commit/SKILL.md",
       "cache/built/<VERSION>/aidd-framework/cursor/plugins/aidd-test/skills/hello.md",
       "manifest.json",
@@ -692,7 +696,7 @@
     "command": "[errors] framework install --tool not-a-tool",
     "exitCode": 1,
     "stdout": "",
-    "stderr": "Error: Unknown tool: not-a-tool. Valid tools: claude, cursor, copilot, opencode, codex, vscode\n",
+    "stderr": "Error: Unknown tool: not-a-tool. Valid tools: claude, cursor, copilot, opencode, kilo, codex, vscode\n",
     "filesWritten": [],
     "manifest": null
   },

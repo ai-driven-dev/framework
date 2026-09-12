@@ -6,11 +6,13 @@ import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import { kilo } from "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { getAiToolConfig } from "../../../../src/contexts/tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
@@ -77,7 +79,7 @@ describe("installing the plugin carries a skill's own script, on every tool", ()
     });
   }
 
-  for (const tool of [claude, codex, copilot, cursor, opencode]) {
+  for (const tool of [claude, codex, copilot, cursor, kilo, opencode]) {
     it(`${tool.toolId} installs it byte for byte`, () => {
       const installed = translator
         .translate(distributionOf(), tool)

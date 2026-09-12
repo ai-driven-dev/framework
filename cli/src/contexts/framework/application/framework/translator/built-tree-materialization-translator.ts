@@ -15,6 +15,7 @@ import type { AiToolId } from "../../../../../kernel/tool.js";
 import type { MarketplaceRegistry } from "../../../../distribution/domain/ports/marketplace-registry.js";
 import {
   frameworkBuildModeFor,
+  getAiToolConfig,
   resolvePluginsCapability,
 } from "../../../../tools/domain/registry.js";
 import type { PluginDistribution } from "../../../../translate/domain/plugin-distribution.js";
@@ -158,7 +159,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     const files: InstallationFile[] = [];
     for (const abs of absPaths) {
       const rel = posixRelative(builtDir, abs);
-      if (!this.belongsToPlugin(rel, name) && !hookPaths.has(rel)) continue;
+      if (!this.belongsToPlugin(rel, name, toolId) && !hookPaths.has(rel)) continue;
       const content = await this.fs.readFile(abs);
       files.push(
         new InstallationFile({ relativePath: rel, content, hash: this.hasher.hash(content) })
@@ -167,9 +168,10 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     return files;
   }
 
-  private belongsToPlugin(rel: string, name: string): boolean {
+  private belongsToPlugin(rel: string, name: string, toolId: AiToolId): boolean {
     const segments = rel.split("/");
-    if (segments[0] !== ".opencode" || segments.length < 3) return false;
+    const toolDirectory = getAiToolConfig(toolId).directory.replace(/\/$/, "");
+    if (segments[0] !== toolDirectory || segments.length < 3) return false;
     // `skills/` nests the whole plugin under one exactly-named segment; every other flat section
     // hyphen-prefixes the leaf segment.
     if (segments[1] === "skills") return segments[2] === name;
@@ -181,7 +183,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     const flatHooksDir = plugins?.flatHooksDir;
     if (plugins === null || flatHooksDir === null || flatHooksDir === undefined) return new Set();
     const name = dist.manifest.name;
-    return new Set(
+    const paths = new Set(
       dist.components.hooks
         .filter((f) => f.relativePath !== "hooks/hooks.json")
         .map((f) =>
@@ -193,6 +195,15 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
           )
         )
     );
+    const bridge = plugins.flatHooksBridge;
+    const hooksJson = dist.components.hooks.find((f) => f.relativePath === "hooks/hooks.json");
+    const hasOwnBridge =
+      bridge !== null &&
+      dist.components.hooks.some((f) => f.relativePath.endsWith(`/${bridge.skipIfSourceHas}`));
+    if (bridge !== null && hooksJson !== undefined && !hasOwnBridge) {
+      if (bridge.generate(hooksJson.content, name) !== null) paths.add(bridge.path(name));
+    }
+    return paths;
   }
 
   private async findMarketplace(name: string, projectRoot: string) {

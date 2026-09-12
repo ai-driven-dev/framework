@@ -69,3 +69,5 @@ temp/
 tmp/
 setup-test/
 tmp-test/
+.aidd/cache/
+aidd_docs/runs/

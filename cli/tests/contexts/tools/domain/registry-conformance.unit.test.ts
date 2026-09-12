@@ -6,6 +6,7 @@ import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import type { ToolBuildContract } from "../../../../src/contexts/tools/domain/build-contract.js";
@@ -139,6 +140,7 @@ describe("telemetryLocalRead — exact declarations, phase 2 of local-cost-read"
     opencode: { kind: "declared" },
     copilot: { kind: "declared" },
     cursor: { kind: "unsupported", reason: "token count" },
+    kilo: { kind: "unsupported", reason: "telemetry has not been measured" },
   };
 
   it.each(Object.entries(EXPECTED))("%s", (toolId, expected) => {
@@ -392,6 +394,7 @@ describe("every tool says where its own installed rules live", () => {
     codex: { directory: ".codex/rules/", extension: ".md" },
     copilot: { directory: ".github/instructions/", extension: ".instructions.md" },
     cursor: { directory: ".cursor/rules/", extension: ".mdc" },
+    kilo: { directory: ".kilo/rules/", extension: ".md" },
     opencode: { directory: ".opencode/rules/", extension: ".md" },
   };
 

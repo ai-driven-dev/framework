@@ -6,6 +6,7 @@ import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { ReadLocalCostUseCase } from "../../../../src/contexts/telemetry/application/read-local-cost-use-case.js";
 import { ReportCostUseCase } from "../../../../src/contexts/telemetry/application/report-cost-use-case.js";
 import { toMicroUsd } from "../../../../src/contexts/telemetry/domain/cost-report.js";
@@ -999,6 +1000,17 @@ describe("ReportCostUseCase — what it assembles for the report", () => {
           export: null,
           journalAttributable: true,
           taskAttributable: true,
+        },
+      },
+      {
+        tool: "kilo",
+        coverage: "not-covered",
+        reason: "Kilo OpenTelemetry is experimental and not yet supported by AIDD.",
+        capability: {
+          localRead: null,
+          export: null,
+          journalAttributable: false,
+          taskAttributable: false,
         },
       },
       {

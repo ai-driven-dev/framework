@@ -1,4 +1,5 @@
 import "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import "../../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../../src/contexts/distribution/domain/marketplace.js";
 import { BuiltTreeMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/built-tree-materialization-translator.js";
@@ -11,6 +12,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-mem
 
 const PROJECT_ROOT = "/proj";
 const BUILT = "/built/opencode";
+const KILO_BUILT = "/built/kilo";
 
 function dist(): PluginDistribution {
   return new PluginDistribution({
@@ -192,3 +194,64 @@ describe("BuiltTreeMaterializationTranslator — what the opencode flat tree nev
     ]);
   });
 });
+
+describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
+  it("copies Kilo's namespaced flat files and the generated bridge", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(`${KILO_BUILT}/.kilo/skills/aidd-vcs/01-commit/SKILL.md`, "skill");
+    fs.setFile(`${KILO_BUILT}/.kilo/agents/aidd-vcs-helper.md`, "agent");
+    fs.setFile(`${KILO_BUILT}/.kilo/hooks/aidd-vcs/update_memory.js`, "hook");
+    fs.setFile(`${KILO_BUILT}/.kilo/plugin/aidd-vcs-hooks.js`, "bridge");
+    fs.setFile(`${KILO_BUILT}/.kilo/agents/aidd-dev-helper.md`, "other");
+
+    const manifest = Manifest.create();
+    manifest.addTool("kilo", "test", []);
+    const translator = new BuiltTreeMaterializationTranslator(
+      fs,
+      new DeterministicHasher(),
+      () => "/home/u",
+      fakeEnsureBuiltMarketplace(),
+      await makeRegistry()
+    );
+    const distribution = new PluginDistribution({
+      manifest: { name: "aidd-vcs", version: "1.0.0" },
+      format: "claude",
+      files: [],
+      components: {
+        commands: [],
+        agents: [],
+        rules: [],
+        skills: [],
+        mcp: [],
+        hooks: [
+          { relativePath: "hooks/hooks.json", content: sessionStartHooksJson() },
+          { relativePath: "hooks/update_memory.js", content: "hook" },
+        ],
+      },
+    });
+
+    await translator.addPlugin(
+      distribution,
+      "kilo",
+      { kind: "local", path: "/plugin-source" },
+      PROJECT_ROOT,
+      manifest,
+      "aidd-framework"
+    );
+
+    expect(fs.getFile(`${PROJECT_ROOT}/.kilo/skills/aidd-vcs/01-commit/SKILL.md`)).toBe("skill");
+    expect(fs.getFile(`${PROJECT_ROOT}/.kilo/agents/aidd-vcs-helper.md`)).toBe("agent");
+    expect(fs.getFile(`${PROJECT_ROOT}/.kilo/hooks/aidd-vcs/update_memory.js`)).toBe("hook");
+    expect(fs.getFile(`${PROJECT_ROOT}/.kilo/plugin/aidd-vcs-hooks.js`)).toBe("bridge");
+    expect(fs.has(`${PROJECT_ROOT}/.kilo/agents/aidd-dev-helper.md`)).toBe(false);
+  });
+});
+
+function sessionStartHooksJson(): string {
+  const root = "$" + "{CLAUDE_PLUGIN_ROOT}";
+  return JSON.stringify({
+    hooks: {
+      SessionStart: [{ hooks: [{ command: `node ${root}/hooks/update_memory.js` }] }],
+    },
+  });
+}

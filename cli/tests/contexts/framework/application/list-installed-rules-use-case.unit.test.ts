@@ -6,6 +6,7 @@ import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { ListInstalledRulesUseCase } from "../../../../src/contexts/framework/application/list-installed-rules-use-case.js";
 import type { FileReader } from "../../../../src/kernel/ports/file-reader.js";
@@ -40,6 +41,7 @@ describe("ListInstalledRulesUseCase — every tool's installed rules, in one ans
         [at(".cursor/rules/1-naming.mdc")]: "---\n---\n",
         [at(".github/instructions/01-naming.instructions.md")]: "---\n---\n",
         [at(".codex/rules/1-naming.md")]: "---\n---\n",
+        [at(".kilo/rules/1-naming.md")]: "---\n---\n",
         [at(".opencode/rules/1-naming.md")]: "---\n---\n",
       })
     );
@@ -51,6 +53,7 @@ describe("ListInstalledRulesUseCase — every tool's installed rules, in one ans
       "codex",
       "copilot",
       "cursor",
+      "kilo",
       "opencode",
     ]);
   });
