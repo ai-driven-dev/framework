@@ -102,7 +102,10 @@ export async function materializeViaTranslator(
     plugin.source,
     projectRoot,
     manifest,
-    plugin.marketplace
+    plugin.marketplace,
+    plugin.mcpEntries,
+    false,
+    plugin.projectHooks
   );
   return written ?? 0;
 }

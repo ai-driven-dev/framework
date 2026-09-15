@@ -4,7 +4,12 @@ import {
   NativePluginCliError,
   UnreadableBuiltCatalogError,
 } from "../../../../kernel/errors.js";
-import { BUILT_CACHE_SUBDIR } from "../../../../kernel/paths.js";
+import {
+  BUILT_CACHE_SUBDIR,
+  parseBuiltMarketplaceDir,
+  parseUserBuiltMarketplaceDir,
+  samePathSegment,
+} from "../../../../kernel/paths.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
@@ -26,6 +31,10 @@ import {
 } from "../../../tools/domain/marketplace-source-conflict.js";
 import type { HostMarketplaceRegistryReader } from "../../../tools/domain/ports/host-marketplace-registry-reader.js";
 import type { HostPluginRegistryReader } from "../../../tools/domain/ports/host-plugin-registry-reader.js";
+import type {
+  NativeMarketplaceSource,
+  NativeMarketplaceSourceReader,
+} from "../../../tools/domain/ports/native-marketplace-source-reader.js";
 import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
 import {
   nativeActivationOf,
@@ -40,6 +49,10 @@ import type {
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
+import {
+  inspectNativeMarketplaceSource,
+  sameNativeMarketplaceSource,
+} from "../ownership/native-marketplace-source-proof.js";
 import type { EnsureBuiltMarketplace } from "../shared/ensure-built-marketplace-use-case.js";
 import {
   hostMarketplaceSourceConflict,
@@ -85,10 +98,22 @@ export interface MarketplaceSyncSettingsOptions {
 
 interface ActivationOutcome {
   marketplaces: readonly NativeMarketplaceRegistration[];
+  preservedMarketplaces: readonly NativeMarketplaceRegistration[];
+  catalogClaims: readonly NativeMarketplaceRegistration[];
   pluginRefs: readonly string[];
   /** A marketplace whose build failed was warned about and left unregistered this run — the
    * host's own registration for it is wherever it was before. */
   buildFailed: boolean;
+}
+
+interface NativeCatalogProof {
+  readonly canonical: boolean;
+  readonly hostReadable: boolean;
+  readonly sourceStatus: "absent" | "owned" | "unproven";
+  readonly source?: NativeMarketplaceSource;
+  readonly sourceReason?: string;
+  readonly foreignRef?: string;
+  readonly unreadable?: string;
 }
 
 export interface MarketplaceSyncSettingsResult {
@@ -153,7 +178,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       AiToolId,
       HostPluginRegistryReader
     > = new Map(),
-    private readonly userManifestRepo?: ManifestRepository
+    private readonly userManifestRepo?: ManifestRepository,
+    private readonly nativeSources: ReadonlyMap<AiToolId, NativeMarketplaceSourceReader> = new Map()
   ) {}
 
   async execute(options: MarketplaceSyncSettingsOptions): Promise<MarketplaceSyncSettingsResult> {
@@ -185,14 +211,16 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         ? recreatedMarketplaces
         : recreatedMarketplaces.filter((m) => options.marketplaceNames?.includes(m.name));
     if (marketplaces.length === 0) return EMPTY_RESULT;
-    // A user-scope run has no project-scope manifest for a later `clean` to decrement this
-    // claim from.
-    if (scope !== "user") await this.recordSharedSourceReference(projectRoot, marketplaces);
     const toolIds = this.selectToolIds(manifest, options.toolIds);
     let anyToolUpdated = false;
     // A user-scope run lands nothing under `projectRoot`, so no project settings file mirrors it.
     if (scope === "project") {
       for (const toolId of toolIds) {
+        if (
+          resolvePluginsCapability(toolId)?.marketplaceSettings
+            ?.declarativePluginActivationRequiresNativeProof === true
+        )
+          continue;
         if (await this.syncTool(toolId, projectRoot, manifest, marketplaces)) anyToolUpdated = true;
       }
     }
@@ -204,6 +232,35 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       toolIds,
       scope
     );
+    let declarativeChanged = false;
+    if (scope === "project") {
+      for (const [toolId, outcome] of activation.outcomes) {
+        const settings = resolvePluginsCapability(toolId)?.marketplaceSettings;
+        if (settings?.declarativePluginActivationRequiresNativeProof !== true) continue;
+        const hostNames = new Set(outcome.marketplaces.map((entry) => entry.hostName));
+        const provenRefs = outcome.pluginRefs.filter((ref) =>
+          [...hostNames].some((hostName) => ref.endsWith(`@${hostName}`))
+        );
+        if (
+          provenRefs.length > 0 &&
+          (await this.syncEnabledPluginsFile(
+            toolId,
+            projectRoot,
+            manifest,
+            marketplaces,
+            settings,
+            provenRefs
+          ))
+        )
+          declarativeChanged = true;
+      }
+    }
+    if (declarativeChanged) await manifestRepo.save(manifest);
+    // A refused or unproven host registration cannot establish a new shared-source claim.
+    // User-scope runs have no project manifest for a later `clean` to decrement it.
+    if (scope !== "user") {
+      await this.recordSharedSourceReference(projectRoot, marketplaces, activation.outcomes);
+    }
     const wroteHashes = await this.recordWhatActivationWrote(projectRoot, manifest, [
       ...activation.outcomes.keys(),
     ]);
@@ -295,18 +352,24 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   }
 
   /**
-   * Refreshed on every run that finds the shared source registered, not only the one that had to
-   * recreate it: this project's own reference is still missing the first time its `sync` runs here.
+   * Refreshed only after native activation proves that the host uses the shared source.
    */
   private async recordSharedSourceReference(
     projectRoot: string,
-    marketplaces: readonly Marketplace[]
+    marketplaces: readonly Marketplace[],
+    outcomes: ReadonlyMap<ToolId, ActivationOutcome>
   ): Promise<void> {
     if (this.userSourceReferences === undefined || this.currentVersionProvider === undefined) {
       return;
     }
     const framework = marketplaces.find((m) => frameworkSourceIsShared(m.name, m.scope));
     if (framework === undefined) return;
+    if (
+      ![...outcomes.values()].some((outcome) =>
+        outcome.marketplaces.some((registration) => registration.alias === framework.name)
+      )
+    )
+      return;
     await this.recordReferenceForRoot(projectRoot);
   }
 
@@ -387,8 +450,9 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       const binary = this.nativeActivationBinary(toolId);
       if (binary === undefined) continue;
       const existing = manifest.getNativeRegistrations(toolId);
-      const touchedAliases = new Set(outcome.marketplaces.map((m) => m.alias));
-      const touchedHostNames = new Set(outcome.marketplaces.map((m) => m.hostName));
+      const projected = [...outcome.marketplaces, ...outcome.preservedMarketplaces];
+      const touchedAliases = new Set(projected.map((m) => m.alias));
+      const touchedHostNames = new Set(projected.map((m) => m.hostName));
       const retainedMarketplaces = narrowed
         ? (existing?.marketplaces ?? []).filter((m) => !touchedAliases.has(m.alias))
         : [];
@@ -401,10 +465,14 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
               )
           )
         : [];
+      const preservedHostNames = new Set(outcome.preservedMarketplaces.map((m) => m.hostName));
+      const preservedRefs = (existing?.pluginRefs ?? []).filter((ref) =>
+        [...preservedHostNames].some((hostName) => ref.endsWith(`@${hostName}`))
+      );
       const registrations: NativeRegistrations = {
         binary,
-        marketplaces: [...retainedMarketplaces, ...outcome.marketplaces],
-        pluginRefs: [...new Set([...retainedRefs, ...outcome.pluginRefs])],
+        marketplaces: [...retainedMarketplaces, ...projected],
+        pluginRefs: [...new Set([...retainedRefs, ...preservedRefs, ...outcome.pluginRefs])],
         ...(existing?.pluginClaims === undefined ? {} : { pluginClaims: existing.pluginClaims }),
       };
       if (nativeRegistrationsEqual(existing, registrations)) continue;
@@ -468,8 +536,10 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     //
     // Each step is independently best-effort: one failing plugin or marketplace must warn and
     // let the others through, never abort the whole activation.
-    const registeredMarketplaces: NativeMarketplaceRegistration[] = [];
     const ownMarketplaces: NativeMarketplaceRegistration[] = [];
+    const preservedMarketplaces: NativeMarketplaceRegistration[] = [];
+    const catalogClaims: NativeMarketplaceRegistration[] = [];
+    const addedHostNames = new Set<string>();
     const recorded = manifest.getNativeRegistrations(toolId)?.marketplaces;
     let buildFailed = false;
     for (const marketplace of marketplaces) {
@@ -478,19 +548,65 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         toolId,
         marketplace,
         projectRoot,
-        warnings
+        warnings,
+        catalogClaims
       );
       if (registration.outcome === "build-failed") buildFailed = true;
-      const entry = { alias: marketplace.name, hostName: registration.hostName };
-      registeredMarketplaces.push(entry);
+      if (registration.addedThisRun === true) addedHostNames.add(registration.hostName);
+      const entry = {
+        alias: marketplace.name,
+        hostName: registration.hostName,
+        ...(registration.provenance === undefined ? {} : { provenance: registration.provenance }),
+      };
       const earlier = recorded?.find((m) => m.alias === marketplace.name);
-      if (registration.outcome === "registered") ownMarketplaces.push(entry);
-      else if (earlier !== undefined) ownMarketplaces.push(earlier);
+      if (registration.outcome === "registered" && registration.claimable)
+        ownMarketplaces.push(entry);
+      if (registration.claimable) catalogClaims.push(entry);
+      else if (earlier !== undefined) {
+        const proof = await this.nativeCatalogProof(toolId, earlier.hostName, projectRoot);
+        if (
+          proof.canonical &&
+          proof.hostReadable &&
+          proof.sourceStatus === "owned" &&
+          proof.foreignRef === undefined
+        )
+          ownMarketplaces.push(earlier);
+        else preservedMarketplaces.push(earlier);
+      }
     }
     if (!activator.enablesPlugins())
-      return { marketplaces: ownMarketplaces, pluginRefs: [], buildFailed };
-    this.bestEffort(() => activator.upgradeMarketplaces(), "upgrade marketplaces", warnings);
-    const hostNameByAlias = new Map(registeredMarketplaces.map((m) => [m.alias, m.hostName]));
+      return {
+        marketplaces: ownMarketplaces,
+        preservedMarketplaces,
+        catalogClaims,
+        pluginRefs: [],
+        buildFailed,
+      };
+    const stillProven: NativeMarketplaceRegistration[] = [];
+    for (const registration of ownMarketplaces) {
+      const fresh = catalogClaims.find((claim) => claim.hostName === registration.hostName);
+      const proof = await this.nativeCatalogProof(
+        toolId,
+        registration.hostName,
+        projectRoot,
+        fresh
+      );
+      if (
+        !proof.canonical ||
+        !proof.hostReadable ||
+        proof.sourceStatus !== "owned" ||
+        proof.foreignRef !== undefined
+      )
+        continue;
+      stillProven.push(registration);
+      if (!addedHostNames.has(registration.hostName))
+        this.bestEffort(
+          () => activator.upgradeMarketplaces(registration.hostName),
+          `upgrade marketplace '${registration.hostName}'`,
+          warnings
+        );
+    }
+    const hostNameByAlias = new Map(stillProven.map((m) => [m.alias, m.hostName]));
     const { refsToEnable, alreadyOwnedRefs } = await this.refsThisProjectEnables(
       toolId,
       this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias),
@@ -509,7 +625,13 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         enabledRefs.push(ref);
       }
     }
-    return { marketplaces: ownMarketplaces, pluginRefs: enabledRefs, buildFailed };
+    return {
+      marketplaces: ownMarketplaces,
+      preservedMarketplaces,
+      catalogClaims,
+      pluginRefs: enabledRefs,
+      buildFailed,
+    };
   }
 
   private async refsThisProjectEnables(
@@ -536,7 +658,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         continue;
       }
       if (ownRefs?.includes(ref) === true) {
-        if (this.userManifestRepo === undefined) alreadyOwnedRefs.push(ref);
+        if (!pluginEnablementIsMachineGlobal(toolId) || this.userManifestRepo === undefined)
+          alreadyOwnedRefs.push(ref);
         continue;
       }
       this.logger.info(
@@ -560,9 +683,11 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     for (const [toolId, outcome] of outcomes) {
       const machineRefs =
         scope === "user" || pluginEnablementIsMachineGlobal(toolId) ? outcome.pluginRefs : [];
-      const machineMarketplaces = outcome.marketplaces.filter((registration) =>
+      const machineMarketplaces = outcome.catalogClaims.filter((registration) =>
         marketplaces.some(
-          (marketplace) => marketplace.name === registration.alias && marketplace.scope === "user"
+          (marketplace) =>
+            marketplace.name === registration.alias &&
+            (marketplace.scope === "user" || pluginEnablementIsMachineGlobal(toolId))
         )
       );
       if (machineRefs.length === 0 && machineMarketplaces.length === 0) continue;
@@ -574,14 +699,18 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       const existing = machine.getNativeRegistrations(toolId);
       const registered = [...(existing?.marketplaces ?? [])];
       for (const registration of machineMarketplaces) {
-        if (
-          registered.some(
-            (entry) =>
-              entry.alias === registration.alias && entry.hostName === registration.hostName
+        const index = registered.findIndex(
+          (entry) => entry.alias === registration.alias && entry.hostName === registration.hostName
+        );
+        if (index >= 0) {
+          if (
+            registration.provenance === undefined ||
+            (registered[index].provenance !== undefined &&
+              sameNativeMarketplaceSource(registered[index].provenance, registration.provenance))
           )
-        )
-          continue;
-        registered.push(registration);
+            continue;
+          registered[index] = registration;
+        } else registered.push(registration);
         changed = true;
       }
       const claims = [...(existing?.pluginClaims ?? [])].map((claim) => ({
@@ -643,6 +772,61 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     return refs;
   }
 
+  private async nativeCatalogProof(
+    toolId: ToolId,
+    hostName: string,
+    projectRoot: string,
+    fresh?: NativeMarketplaceRegistration
+  ): Promise<NativeCatalogProof> {
+    if (!isAiToolId(toolId))
+      return { canonical: false, hostReadable: false, sourceStatus: "unproven" };
+    const machine = await this.userManifestRepo?.load();
+    const registrations = machine?.getNativeRegistrations(toolId);
+    const project = await this.manifestRepo.load();
+    const localRegistration = pluginEnablementIsMachineGlobal(toolId)
+      ? undefined
+      : project
+          ?.getNativeRegistrations(toolId)
+          ?.marketplaces.find((entry) => entry.hostName === hostName);
+    const canonical =
+      fresh !== undefined ||
+      registrations?.marketplaces.some((entry) => entry.hostName === hostName) === true ||
+      localRegistration !== undefined;
+    const registration = fresh ??
+      registrations?.marketplaces.find((entry) => entry.hostName === hostName) ??
+      localRegistration ?? {
+        alias: hostName,
+        hostName,
+      };
+    const sourceProof = await inspectNativeMarketplaceSource(
+      this.nativeSources.get(toolId),
+      projectRoot,
+      registration
+    );
+    const reader = this.hostPluginRegistries.get(toolId);
+    const base = {
+      canonical,
+      sourceStatus: sourceProof.status,
+      ...(sourceProof.current === undefined ? {} : { source: sourceProof.current }),
+      ...(sourceProof.reason === undefined ? {} : { sourceReason: sourceProof.reason }),
+    };
+    if (reader === undefined) return { ...base, hostReadable: false };
+    const reading = await reader.read(projectRoot);
+    if (reading.absent === true) return { ...base, hostReadable: true };
+    if (reading.refs === undefined)
+      return { ...base, hostReadable: false, unreadable: reading.unreadable ?? reading.location };
+    const claimed = new Set([
+      ...(registrations?.pluginClaims ?? []).map((claim) => claim.ref),
+      ...(pluginEnablementIsMachineGlobal(toolId)
+        ? []
+        : (project?.getNativeRegistrations(toolId)?.pluginRefs ?? [])),
+    ]);
+    const foreignRef = [...reading.refs.keys()].find(
+      (ref) => ref.endsWith(`@${hostName}`) && !claimed.has(ref)
+    );
+    return { ...base, hostReadable: true, ...(foreignRef === undefined ? {} : { foreignRef }) };
+  }
+
   // Returns the host's own catalog name, never this project's local alias: a catalog this
   // project just built and cannot read back is not registered at all (see the throw below).
   private async registerMarketplace(
@@ -650,10 +834,18 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     toolId: ToolId,
     marketplace: Marketplace,
     projectRoot: string,
-    warnings: string[]
-  ): Promise<{ hostName: string; outcome: "registered" | "refused" | "build-failed" }> {
+    warnings: string[],
+    freshClaims: readonly NativeMarketplaceRegistration[]
+  ): Promise<{
+    hostName: string;
+    outcome: "registered" | "refused" | "build-failed";
+    claimable: boolean;
+    addedThisRun?: boolean;
+    provenance?: NativeMarketplaceSource;
+  }> {
     const builtDir = await this.buildForTool(toolId, marketplace, projectRoot);
-    if (builtDir === null) return { hostName: marketplace.name, outcome: "build-failed" };
+    if (builtDir === null)
+      return { hostName: marketplace.name, outcome: "build-failed", claimable: false };
     const requestedIdentity = await readMarketplaceCatalogIdentity(this.fs, toolId, builtDir);
     if (requestedIdentity === undefined) {
       throw new UnreadableBuiltCatalogError(
@@ -661,6 +853,80 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       );
     }
     const hostName = requestedIdentity.name;
+    const proof = await this.nativeCatalogProof(
+      toolId,
+      hostName,
+      projectRoot,
+      freshClaims.find((claim) => claim.hostName === hostName)
+    );
+    if (
+      proof.sourceStatus === "unproven" ||
+      (proof.sourceStatus === "owned" && proof.source === undefined)
+    ) {
+      if (isAiToolId(toolId) && nativeActivationOf(toolId)?.marketplaceRegistry !== undefined) {
+        const existing = await this.hostMarketplaceRegistries.get(toolId)?.read();
+        if (existing?.entries?.has(hostName) === true)
+          await this.guardAgainstConflict(
+            toolId,
+            builtDir,
+            requestedIdentity,
+            marketplace,
+            projectRoot,
+            warnings
+          );
+      }
+      const message = `${toolId}: catalogue '${hostName}' host source unproven (${proof.sourceReason ?? "unknown"}); registration left untouched.`;
+      this.logger.warn(message);
+      warnings.push(message);
+      return { hostName, outcome: "refused", claimable: false };
+    }
+    const hostMarketplaceReading =
+      isAiToolId(toolId) && nativeActivationOf(toolId)?.marketplaceRegistry !== undefined
+        ? await this.hostMarketplaceRegistries.get(toolId)?.read()
+        : undefined;
+    if (hostMarketplaceReading?.entries?.has(hostName) === true && !proof.canonical) {
+      await this.guardAgainstConflict(
+        toolId,
+        builtDir,
+        requestedIdentity,
+        marketplace,
+        projectRoot,
+        warnings
+      );
+      const message = `${toolId}: catalogue '${hostName}' is already registered on the host without a canonical AIDD claim; same-name collision left untouched.`;
+      this.logger.warn(message);
+      warnings.push(message);
+      return { hostName, outcome: "refused", claimable: false };
+    }
+    if (
+      hostMarketplaceReading !== undefined &&
+      hostMarketplaceReading.entries === undefined &&
+      hostMarketplaceReading.absent !== true
+    ) {
+      const message = `${toolId}: catalogue '${hostName}' host registry is unreadable; ownership unproven and registration left untouched.`;
+      this.logger.warn(message);
+      warnings.push(message);
+      return { hostName, outcome: "refused", claimable: false };
+    }
+    if (!proof.hostReadable || proof.foreignRef !== undefined || proof.unreadable !== undefined) {
+      const message =
+        proof.foreignRef === undefined
+          ? `${toolId}: catalogue '${hostName}' collides with unreadable host plugin registry (${proof.unreadable}); registration left untouched.`
+          : `${toolId}: catalogue '${hostName}' carries foreign host ref '${proof.foreignRef}'; registration left untouched.`;
+      this.logger.warn(message);
+      warnings.push(message);
+      return { hostName, outcome: "refused", claimable: false };
+    }
+    const requestedSource = await this.fs.realpath(builtDir).catch(() => builtDir);
+    if (
+      proof.sourceStatus === "owned" &&
+      proof.source?.source === requestedSource &&
+      (proof.source.kind === "registry" ||
+        (proof.source.kind === "effective-list" &&
+          proof.source.root === requestedSource &&
+          proof.source.sourceType === "local"))
+    )
+      return { hostName, outcome: "registered", claimable: true, provenance: proof.source };
     const decision = await this.guardAgainstConflict(
       toolId,
       builtDir,
@@ -671,23 +937,75 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     );
     // A "skip" is a host already following a newer shared build, never this project's own
     // pre-migration cache, so it counts as registered.
-    if (decision === "skip") return { hostName, outcome: "registered" };
+    if (decision === "skip")
+      return {
+        hostName,
+        outcome: "registered",
+        claimable: proof.sourceStatus === "owned",
+        provenance: proof.source,
+      };
     try {
       activator.addMarketplace(builtDir, marketplace.scope);
     } catch (error) {
       if (!(error instanceof NativePluginCliError)) throw error;
-      const reclaimed = this.reclaimOrReport(
+      const reclaimed = await this.reclaimOrReport(
         toolId,
         activator,
         marketplace,
         hostName,
         builtDir,
+        projectRoot,
         error,
         warnings
       );
-      return { hostName, outcome: reclaimed ? "registered" : "refused" };
+      if (!reclaimed) return { hostName, outcome: "refused", claimable: false };
+      const afterReclaim = await this.proveAddedSource(
+        toolId,
+        hostName,
+        builtDir,
+        projectRoot,
+        warnings
+      );
+      return {
+        hostName,
+        outcome: afterReclaim === undefined ? "refused" : "registered",
+        claimable: afterReclaim !== undefined,
+        addedThisRun: afterReclaim !== undefined,
+        provenance: afterReclaim,
+      };
     }
-    return { hostName, outcome: "registered" };
+    const afterAdd = await this.proveAddedSource(toolId, hostName, builtDir, projectRoot, warnings);
+    return {
+      hostName,
+      outcome: afterAdd === undefined ? "refused" : "registered",
+      claimable: afterAdd !== undefined,
+      addedThisRun: afterAdd !== undefined,
+      provenance: afterAdd,
+    };
+  }
+
+  private async proveAddedSource(
+    toolId: ToolId,
+    hostName: string,
+    builtDir: string,
+    projectRoot: string,
+    warnings: string[]
+  ): Promise<NativeMarketplaceSource | undefined> {
+    if (!isAiToolId(toolId)) return undefined;
+    const reading = await this.nativeSources.get(toolId)?.read(projectRoot);
+    const current = reading?.entries?.get(hostName);
+    const expected = await this.fs.realpath(builtDir).catch(() => builtDir);
+    const sourceMatches =
+      current?.source === expected &&
+      (current.kind === "registry" ||
+        (current.kind === "effective-list" &&
+          current.sourceType === "local" &&
+          current.root === expected));
+    if (sourceMatches) return current;
+    const message = `${toolId}: catalogue '${hostName}' add returned but effective host source could not be proven as '${expected}'; no AIDD claim or enablement recorded. Reconcile manually.`;
+    this.logger.warn(message);
+    warnings.push(message);
+    return undefined;
   }
 
   /**
@@ -731,29 +1049,23 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       `Marketplace '${check.name}' is already registered from a different catalog: ` +
         `${check.registeredSource} differs from the one requested, ${check.requestedSource} ` +
         `— plugins ${describePluginDiff(diff)}, per ${check.location}. ` +
-        `Run \`claude plugin marketplace remove ${check.name}\`, then \`aidd sync\` again ` +
-        `to re-register it for this project.`
+        `Do not remove a catalogue another user or project may depend on. ` +
+        `Reconcile the host source manually before retrying \`aidd sync\`.`
     );
   }
 
   /**
    * A host already following a newer build is never written backward — warned, not thrown, so a
    * caller iterating several tools still proceeds. A host tracking *another* project's
-   * pre-migration cache is no refusal: the repoint completes that migration and its claim is
-   * recorded alongside this project's, but only once that root is proven to still exist —
-   * `resolveProjectRootForReferences` falls back to the path as given on `ENOENT`.
+   * pre-migration cache can proceed only through the separate host-source proof; discovering a
+   * path here never creates a shared-source claim before registration succeeds.
    */
   private async decideOnDrift(
     toolId: ToolId,
     found: MarketplaceSourceDriftFound,
     warnings: string[]
   ): Promise<"proceed" | "skip"> {
-    if (found.drift.kind === "unmigrated-foreign-project-source") {
-      if (await this.fs.fileExists(found.drift.projectRoot)) {
-        await this.recordReferenceForRoot(found.drift.projectRoot);
-      }
-      return "proceed";
-    }
+    if (found.drift.kind === "unmigrated-foreign-project-source") return "proceed";
     if (found.drift.kind !== "version-behind") return "proceed";
     const { registeredVersion, requestedVersion } = found.drift;
     const message =
@@ -766,44 +1078,85 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     return "skip";
   }
 
-  // `add` refused, which for a global registry means the name is already held. A registration that
-  // still resolves belongs to a live project and taking it would break that project; one whose
-  // source is gone belongs to nobody. `hostName`, never `marketplace.name`, drives every host-facing
-  // call below: the alias would answer "dead" for a live registration whenever the two differ. The
-  // reserved framework name at `"user"` scope is reclaimed on any refusal, not only a proven-dead
-  // one — codex answers `"unknown"` for every name, copilot `"live"` — safe only because every
-  // registration under that name is this CLI's own packaged catalog.
-  private reclaimOrReport(
+  // Reclaim only a dead Claude registration whose current source is recognisably AIDD-owned.
+  // `hostName`, never the project's alias, names every host-facing call.
+  private async reclaimOrReport(
     toolId: ToolId,
     activator: NativePluginActivator,
     marketplace: Marketplace,
     hostName: string,
     builtDir: string,
+    projectRoot: string,
     addError: NativePluginCliError,
     warnings: string[]
-  ): boolean {
-    const state = activator.registrationState(hostName);
-    const isUnguardedFrameworkMarketplace =
-      marketplace.name === FRAMEWORK_MARKETPLACE_NAME &&
-      marketplace.scope === "user" &&
-      (!isAiToolId(toolId) || nativeActivationOf(toolId)?.marketplaceRegistry === undefined);
-    if (state !== "dead" && !isUnguardedFrameworkMarketplace) {
+  ): Promise<boolean> {
+    const proof = await this.nativeCatalogProof(toolId, hostName, projectRoot);
+    if (
+      !proof.canonical ||
+      !proof.hostReadable ||
+      proof.sourceStatus !== "owned" ||
+      proof.foreignRef !== undefined
+    ) {
+      const message =
+        `Native plugin activation — catalogue '${hostName}' collides with unproven AIDD ownership` +
+        `${proof.foreignRef === undefined ? "" : ` and foreign ref '${proof.foreignRef}'`}; host registration left untouched. ${addError.message}`;
+      this.logger.warn(message);
+      warnings.push(message);
+      return false;
+    }
+    const registeredSource = isAiToolId(toolId)
+      ? (await this.hostMarketplaceRegistries.get(toolId)?.read())?.entries?.get(hostName)
+      : undefined;
+    const source =
+      registeredSource === undefined
+        ? undefined
+        : await this.fs.realpath(registeredSource).catch(() => registeredSource);
+    const projectSource =
+      source === undefined
+        ? undefined
+        : parseBuiltMarketplaceDir(
+            await this.fs.realpath(projectRoot).catch(() => projectRoot),
+            source
+          );
+    const userRoot = this.userCacheRoot();
+    const userSource =
+      source === undefined || userRoot === ""
+        ? undefined
+        : parseUserBuiltMarketplaceDir(
+            await this.fs.realpath(userRoot).catch(() => userRoot),
+            source
+          );
+    const provenSource = [projectSource, userSource].some(
+      (location) =>
+        location !== undefined &&
+        samePathSegment(location.marketplaceName, marketplace.name) &&
+        samePathSegment(location.target, toolId)
+    );
+    if (!provenSource) {
+      const message =
+        `Native plugin activation — catalogue '${hostName}' host catalogue source is unproven; ` +
+        `host registration left untouched. ${addError.message}`;
+      this.logger.warn(message);
+      warnings.push(message);
+      return false;
+    }
+    if (activator.registrationState(hostName) !== "dead") {
       const message = `Native plugin activation — register marketplace '${hostName}' skipped: ${addError.message}`;
       this.logger.warn(message);
       warnings.push(message);
       return false;
     }
-    const reclaimMessage =
-      state === "dead"
-        ? `Marketplace '${hostName}' was registered to a directory that no longer exists; re-registering it for this project. Plugins installed from it are removed and the ones this CLI manages are put back.`
-        : `Marketplace '${hostName}' is registered from a different source and ${toolId} refuses to overwrite it in place; removing and re-registering it from the shared, machine-scope build. Plugins installed from it are removed and the ones this CLI manages are put back.`;
+    const reclaimMessage = `Marketplace '${hostName}' was registered to a directory that no longer exists; re-registering it for this project. Plugins installed from it are removed and the ones this CLI manages are put back.`;
     this.logger.warn(reclaimMessage);
     warnings.push(reclaimMessage);
-    this.bestEffort(
-      () => activator.removeMarketplace(hostName, marketplace.scope, { force: true }),
-      `unregister stale marketplace '${hostName}'`,
-      warnings
-    );
+    if (
+      !this.bestEffort(
+        () => activator.removeMarketplace(hostName, marketplace.scope, { force: true }),
+        `unregister stale marketplace '${hostName}'`,
+        warnings
+      )
+    )
+      return false;
     return this.bestEffort(
       () => activator.addMarketplace(builtDir, marketplace.scope),
       `register marketplace '${hostName}'`,
@@ -916,11 +1269,13 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     projectRoot: string,
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
-    settings: MarketplaceSettings
+    settings: MarketplaceSettings,
+    provenRefs?: readonly string[]
   ): Promise<boolean> {
     const pluginsPath = resolve(projectRoot, settings.settingsPath);
     const json = await this.loadSettings(pluginsPath);
-    if (!this.mergeEnabledPlugins(json, settings, toolId, manifest, marketplaces)) return false;
+    if (!this.mergeEnabledPlugins(json, settings, toolId, manifest, marketplaces, provenRefs))
+      return false;
     const content = JSON.stringify(json, null, 2);
     await this.fs.writeFile(pluginsPath, content);
     manifest.updateTrackedFileHash(toolId, settings.settingsPath, this.hasher.hash(content));
@@ -932,12 +1287,19 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     settings: MarketplaceSettings,
     toolId: ToolId,
     manifest: Manifest,
-    marketplaces: readonly Marketplace[]
+    marketplaces: readonly Marketplace[],
+    provenRefs?: readonly string[]
   ): boolean {
     const pluginsKey = settings.enabledPluginsKey;
     if (pluginsKey == null) return false;
     const existing = this.existingRecord(json, pluginsKey);
     const toAdd: Record<string, boolean> = {};
+    if (provenRefs !== undefined) {
+      for (const ref of provenRefs) if (!(ref in existing)) toAdd[ref] = true;
+      if (Object.keys(toAdd).length === 0) return false;
+      json[pluginsKey] = { ...existing, ...toAdd };
+      return true;
+    }
     const marketplaceByName = new Map(marketplaces.map((m) => [m.name, m]));
     for (const plugin of manifest.getPlugins(toolId)) {
       if (plugin.marketplace == null) continue;
@@ -1007,9 +1369,14 @@ function marketplaceRegistrationsEqual(
 ): boolean {
   return (
     a.length === b.length &&
-    a.every(
-      (value, index) => value.alias === b[index]?.alias && value.hostName === b[index]?.hostName
-    )
+    a.every((value, index) => {
+      const other = b[index];
+      if (other === undefined || value.alias !== other.alias || value.hostName !== other.hostName)
+        return false;
+      if (value.provenance === undefined || other.provenance === undefined)
+        return value.provenance === other.provenance;
+      return sameNativeMarketplaceSource(value.provenance, other.provenance);
+    })
   );
 }
 

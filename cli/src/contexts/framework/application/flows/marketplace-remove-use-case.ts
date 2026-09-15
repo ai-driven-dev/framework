@@ -110,6 +110,10 @@ export class MarketplaceRemoveUseCase {
     projectRoot: string
   ): Promise<number> {
     for (const { toolId, plugin } of orphans) {
+      await this.cleanup.assertLocalIntegrationRemovable(toolId, plugin, projectRoot);
+    }
+    for (const { toolId, plugin } of orphans) {
+      await this.cleanup.removeLocalIntegration(toolId, plugin, projectRoot);
       await this.cleanup.deleteLocalFiles(toolId, plugin, projectRoot);
       const registrations = manifest.getNativeRegistrations(toolId);
       const hostName = registrations?.marketplaces.find(

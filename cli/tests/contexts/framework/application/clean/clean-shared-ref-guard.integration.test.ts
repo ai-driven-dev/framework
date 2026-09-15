@@ -12,8 +12,10 @@ import { GitignoreUseCase } from "../../../../../src/contexts/framework/applicat
 import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/framework/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
+import type { NativeMarketplaceSourceReader } from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -22,6 +24,54 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 const PROJECT_ROOT = "/test-project";
 const OTHER_PROJECT = "/other-project";
 const USER_CONFIG_DIR = "/fake-home/.config/aidd";
+const OTHER_PROJECT_BYTES = "B still uses these bytes";
+
+function provenRegistration(
+  toolId: "codex" | "claude",
+  alias: string,
+  hostName: string
+): NativeMarketplaceRegistration {
+  const source = hostName === "other-mkt" ? "/other/built/path" : "/some/built/path";
+  return {
+    alias,
+    hostName,
+    provenance:
+      toolId === "claude"
+        ? { kind: "registry", source }
+        : { kind: "effective-list", root: source, sourceType: "local", source },
+  };
+}
+
+/** A separate, literal host snapshot: not assembled from the machine claim. */
+function currentHostSource(toolId: "codex" | "claude"): NativeMarketplaceSourceReader {
+  return {
+    read: async () => ({
+      location: "fixture native host",
+      entries: new Map([
+        [
+          "aidd-framework",
+          toolId === "claude"
+            ? { kind: "registry" as const, source: "/some/built/path" }
+            : {
+                kind: "effective-list" as const,
+                root: "/some/built/path",
+                sourceType: "local",
+                source: "/some/built/path",
+              },
+        ],
+        [
+          "other-mkt",
+          {
+            kind: "effective-list" as const,
+            root: "/other/built/path",
+            sourceType: "local",
+            source: "/other/built/path",
+          },
+        ],
+      ]),
+    }),
+  };
+}
 
 function seedManifest(
   toolId: "codex" | "claude",
@@ -38,7 +88,9 @@ function seedManifest(
   return manifest;
 }
 
-function seedSharedMarketplaceRegistry(): InMemoryMarketplaceRegistry {
+function seedSharedMarketplaceRegistry(
+  withOtherProjectCatalogue = false
+): InMemoryMarketplaceRegistry {
   const registry = new InMemoryMarketplaceRegistry();
   registry.save(
     PROJECT_ROOT,
@@ -49,6 +101,17 @@ function seedSharedMarketplaceRegistry(): InMemoryMarketplaceRegistry {
       addedAt: "2026-01-01T00:00:00.000Z",
     })
   );
+  if (withOtherProjectCatalogue) {
+    registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: "other-mkt",
+        source: { kind: "local", path: "/other/built/path" },
+        scope: "project",
+        addedAt: "2026-01-01T00:00:00.000Z",
+      })
+    );
+  }
   return registry;
 }
 
@@ -60,14 +123,14 @@ function seedReferences(fs: InMemoryFileAdapter, roots: readonly string[]): void
   // `listAllReferencingProjects` filters by `fs.fileExists(root)`, so every root seeded here
   // needs a marker of its own or it reads back as no project at all.
   fs.setFile(`${PROJECT_ROOT}/marker`, "");
-  for (const root of roots) fs.setFile(`${root}/marker`, "");
+  for (const root of roots) fs.setFile(`${root}/marker`, OTHER_PROJECT_BYTES);
 }
 
 function buildUseCase(deps: {
   fs: InMemoryFileAdapter;
   manifest: Manifest;
   activator: FakeNativePluginActivator;
-  binary: string;
+  binary: "codex" | "claude";
   logger: CapturingLogger;
   aiddMarketplaceRegistry: InMemoryMarketplaceRegistry;
 }): CleanUseCase {
@@ -84,7 +147,20 @@ function buildUseCase(deps: {
     new Map(),
     undefined,
     userSourceReferences,
-    new Map()
+    new Map([
+      [
+        deps.binary,
+        new FakeHostPluginRegistryReader({
+          location: "fixture host installed-plugin registry",
+          refs: new Map([
+            ["aidd-vcs@aidd-framework", { enabled: true }],
+            ["plugin-b@other-mkt", { enabled: true }],
+          ]),
+        }),
+      ],
+    ]),
+    undefined,
+    new Map([[deps.binary, currentHostSource(deps.binary)]])
   );
 }
 
@@ -99,7 +175,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
       fs,
       manifest: seedManifest(
         "codex",
-        [{ alias: "aidd-framework", hostName: "aidd-framework" }],
+        [provenRegistration("codex", "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
       ),
       activator,
@@ -111,12 +187,14 @@ describe("clean guards a ref another project on this machine still needs", () =>
     await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
     expect(activator.uninstalledPlugins).not.toContain("aidd-vcs@aidd-framework");
+    expect(fs.getFile(`${USER_CONFIG_DIR}/references.json`)).toContain(OTHER_PROJECT);
+    expect(fs.getFile(`${OTHER_PROJECT}/marker`)).toBe(OTHER_PROJECT_BYTES);
     expect(
       logger.warnMessages.some((m) => m.includes("left enabled") && m.includes(OTHER_PROJECT))
     ).toBe(true);
   });
 
-  it("disables codex's ref once this project holds the last reference to the shared source", async () => {
+  it("leaves an unclaimed machine-global Codex ref enabled after the last local reference", async () => {
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     seedReferences(fs, []);
     const activator = new FakeNativePluginActivator({ available: true });
@@ -125,7 +203,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
       fs,
       manifest: seedManifest(
         "codex",
-        [{ alias: "aidd-framework", hostName: "aidd-framework" }],
+        [provenRegistration("codex", "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
       ),
       activator,
@@ -136,7 +214,11 @@ describe("clean guards a ref another project on this machine still needs", () =>
 
     await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
-    expect(activator.uninstalledPlugins).toContain("aidd-vcs@aidd-framework");
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(
+      await new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR).listAllReferencingProjects()
+    ).not.toContain(PROJECT_ROOT);
   });
 
   it("still disables claude's ref even with another project referencing the shared source", async () => {
@@ -148,7 +230,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
       fs,
       manifest: seedManifest(
         "claude",
-        [{ alias: "aidd-framework", hostName: "aidd-framework" }],
+        [provenRegistration("claude", "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
       ),
       activator,
@@ -160,9 +242,10 @@ describe("clean guards a ref another project on this machine still needs", () =>
     await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
     expect(activator.uninstalledPlugins).toContain("aidd-vcs@aidd-framework");
+    expect(fs.getFile(`${OTHER_PROJECT}/marker`)).toBe(OTHER_PROJECT_BYTES);
   });
 
-  it("still disables a ref from a marketplace that is not the shared source, in the same run", async () => {
+  it("leaves both unclaimed Codex refs enabled despite a distinct project catalogue", async () => {
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     seedReferences(fs, [OTHER_PROJECT]);
     const activator = new FakeNativePluginActivator({ available: true });
@@ -172,24 +255,26 @@ describe("clean guards a ref another project on this machine still needs", () =>
       manifest: seedManifest(
         "codex",
         [
-          { alias: "aidd-framework", hostName: "aidd-framework" },
-          { alias: "other-mkt", hostName: "other-mkt" },
+          provenRegistration("codex", "aidd-framework", "aidd-framework"),
+          provenRegistration("codex", "other-mkt", "other-mkt"),
         ],
         ["aidd-vcs@aidd-framework", "plugin-b@other-mkt"]
       ),
       activator,
       binary: "codex",
       logger: new CapturingLogger(),
-      aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
+      aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(true),
     });
 
     await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
-    expect(activator.uninstalledPlugins).not.toContain("aidd-vcs@aidd-framework");
-    expect(activator.uninstalledPlugins).toContain("plugin-b@other-mkt");
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(fs.getFile(`${USER_CONFIG_DIR}/references.json`)).toContain(OTHER_PROJECT);
+    expect(fs.getFile(`${OTHER_PROJECT}/marker`)).toBe(OTHER_PROJECT_BYTES);
   });
 
-  it("still disables a ref from another marketplace when that marketplace is recorded before the shared source", async () => {
+  it("leaves both unclaimed Codex refs enabled when the project catalogue is listed first", async () => {
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     seedReferences(fs, [OTHER_PROJECT]);
     const activator = new FakeNativePluginActivator({ available: true });
@@ -199,23 +284,26 @@ describe("clean guards a ref another project on this machine still needs", () =>
       manifest: seedManifest(
         "codex",
         [
-          { alias: "other-mkt", hostName: "other-mkt" },
-          { alias: "aidd-framework", hostName: "aidd-framework" },
+          provenRegistration("codex", "other-mkt", "other-mkt"),
+          provenRegistration("codex", "aidd-framework", "aidd-framework"),
         ],
         ["plugin-b@other-mkt", "aidd-vcs@aidd-framework"]
       ),
       activator,
       binary: "codex",
       logger: new CapturingLogger(),
-      aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
+      aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(true),
     });
 
     await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
-    expect(activator.uninstalledPlugins).toStrictEqual(["plugin-b@other-mkt"]);
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(fs.getFile(`${USER_CONFIG_DIR}/references.json`)).toContain(OTHER_PROJECT);
+    expect(fs.getFile(`${OTHER_PROJECT}/marker`)).toBe(OTHER_PROJECT_BYTES);
   });
 
-  it("disables codex's ref when no claim was ever recorded for this project, and no other project references it either", async () => {
+  it("leaves an unclaimed global Codex ref enabled even without a recorded project reference", async () => {
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     // No references.json at all: no claim of this project's own to drop, and nothing else
     // referencing the source to guard on either.
@@ -225,7 +313,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
       fs,
       manifest: seedManifest(
         "codex",
-        [{ alias: "aidd-framework", hostName: "aidd-framework" }],
+        [provenRegistration("codex", "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
       ),
       activator,
@@ -236,7 +324,8 @@ describe("clean guards a ref another project on this machine still needs", () =>
 
     await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
-    expect(activator.uninstalledPlugins).toContain("aidd-vcs@aidd-framework");
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
   });
 
   // "This project's own claim was never recorded" and "no other project references it" are
@@ -244,7 +333,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
   it("keeps codex's ref enabled when this project's own claim was never recorded but another project's still is", async () => {
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     fs.setFile(`${USER_CONFIG_DIR}/references.json`, JSON.stringify({ "1.0.0": [OTHER_PROJECT] }));
-    fs.setFile(`${OTHER_PROJECT}/marker`, "");
+    fs.setFile(`${OTHER_PROJECT}/marker`, OTHER_PROJECT_BYTES);
     const activator = new FakeNativePluginActivator({ available: true });
     const logger = new CapturingLogger();
 
@@ -252,7 +341,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
       fs,
       manifest: seedManifest(
         "codex",
-        [{ alias: "aidd-framework", hostName: "aidd-framework" }],
+        [provenRegistration("codex", "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
       ),
       activator,
@@ -264,6 +353,8 @@ describe("clean guards a ref another project on this machine still needs", () =>
     await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
     expect(activator.uninstalledPlugins).not.toContain("aidd-vcs@aidd-framework");
+    expect(fs.getFile(`${USER_CONFIG_DIR}/references.json`)).toContain(OTHER_PROJECT);
+    expect(fs.getFile(`${OTHER_PROJECT}/marker`)).toBe(OTHER_PROJECT_BYTES);
     expect(
       logger.warnMessages.some((m) => m.includes("left enabled") && m.includes(OTHER_PROJECT))
     ).toBe(true);

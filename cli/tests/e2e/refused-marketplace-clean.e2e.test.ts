@@ -13,6 +13,7 @@ async function writeCopilotThatRefusesMarketplaceAdd(binDir: string, logFile: st
     [
       "#!/bin/sh",
       `echo "$@" >> "${logFile}"`,
+      'case "$*" in *"marketplace list --json"*) echo "error: unknown option --json" >&2; exit 1;; esac',
       'case "$*" in *"marketplace add"*) echo "marketplace is already registered" >&2; exit 1;; esac',
       "exit 0",
       "",
@@ -28,6 +29,13 @@ describe("E2E: clean leaves a marketplace the host refused to register for this 
       const logFile = join(test.tempDir, "copilot-invocations.log");
       const binDir = join(test.tempDir, "bin");
       await writeCopilotThatRefusesMarketplaceAdd(binDir, logFile);
+      const hostSettings = join(test.fakeHome, ".copilot", "settings.json");
+      const hostCache = join(test.fakeHome, ".copilot", "plugins", "probe", "foreign.txt");
+      const foreignSettings = '{"enabledPlugins":{"foreign@probe":true}}';
+      const foreignCache = "foreign cache bytes";
+      await mkdir(join(test.fakeHome, ".copilot", "plugins", "probe"), { recursive: true });
+      await writeFile(hostSettings, foreignSettings);
+      await writeFile(hostCache, foreignCache);
       const env = { PATH: `${binDir}${delimiter}${pathWithoutAidd()}` };
       const run = (args: string[]) => runCli(args, test.projectDir, test.fakeHome, { env });
 
@@ -54,13 +62,16 @@ describe("E2E: clean leaves a marketplace the host refused to register for this 
         "--yes",
       ]);
       expect(add.exitCode).toBe(0);
-      expect(await readFile(logFile, "utf-8")).toContain("marketplace add");
+      expect(await readFile(logFile, "utf-8")).toContain("marketplace list --json");
+      expect(await readFile(logFile, "utf-8")).not.toContain("marketplace add");
 
       await writeFile(logFile, "");
       const clean = await run(["clean", "--force"]);
       expect(clean.exitCode).toBe(0);
 
       expect(await readFile(logFile, "utf-8")).not.toContain("marketplace remove");
+      expect(await readFile(hostSettings, "utf-8")).toBe(foreignSettings);
+      expect(await readFile(hostCache, "utf-8")).toBe(foreignCache);
     } finally {
       await test.cleanup();
     }

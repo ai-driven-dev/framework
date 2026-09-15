@@ -295,6 +295,18 @@
               "strict": true,
               "files": {},
               "scope": "user",
+              "projectHooks": {
+                "entries": [
+                  {
+                    "event": "preToolUse",
+                    "command": "./.cursor/hooks/aidd-test/check.sh",
+                    "digest": "a2f1a3d6f4ae24d6e7011f435e0f223c"
+                  }
+                ],
+                "scripts": {
+                  ".cursor/hooks/aidd-test/check.sh": "d3cb6c174a3ae1041a087fef46f9b70e"
+                }
+              },
               "marketplace": "aidd-framework"
             }
           ]
@@ -357,6 +369,18 @@
               "strict": true,
               "files": {},
               "scope": "user",
+              "projectHooks": {
+                "entries": [
+                  {
+                    "event": "preToolUse",
+                    "command": "./.cursor/hooks/aidd-test/check.sh",
+                    "digest": "a2f1a3d6f4ae24d6e7011f435e0f223c"
+                  }
+                ],
+                "scripts": {
+                  ".cursor/hooks/aidd-test/check.sh": "d3cb6c174a3ae1041a087fef46f9b70e"
+                }
+              },
               "marketplace": "aidd-framework"
             }
           ]
@@ -419,6 +443,18 @@
               "strict": true,
               "files": {},
               "scope": "user",
+              "projectHooks": {
+                "entries": [
+                  {
+                    "event": "preToolUse",
+                    "command": "./.cursor/hooks/aidd-test/check.sh",
+                    "digest": "a2f1a3d6f4ae24d6e7011f435e0f223c"
+                  }
+                ],
+                "scripts": {
+                  ".cursor/hooks/aidd-test/check.sh": "d3cb6c174a3ae1041a087fef46f9b70e"
+                }
+              },
               "marketplace": "aidd-framework"
             }
           ]
@@ -481,6 +517,18 @@
               "strict": true,
               "files": {},
               "scope": "user",
+              "projectHooks": {
+                "entries": [
+                  {
+                    "event": "preToolUse",
+                    "command": "./.cursor/hooks/aidd-test/check.sh",
+                    "digest": "a2f1a3d6f4ae24d6e7011f435e0f223c"
+                  }
+                ],
+                "scripts": {
+                  ".cursor/hooks/aidd-test/check.sh": "d3cb6c174a3ae1041a087fef46f9b70e"
+                }
+              },
               "marketplace": "aidd-framework"
             }
           ]
@@ -543,6 +591,18 @@
               "strict": true,
               "files": {},
               "scope": "user",
+              "projectHooks": {
+                "entries": [
+                  {
+                    "event": "preToolUse",
+                    "command": "./.cursor/hooks/aidd-test/check.sh",
+                    "digest": "a2f1a3d6f4ae24d6e7011f435e0f223c"
+                  }
+                ],
+                "scripts": {
+                  ".cursor/hooks/aidd-test/check.sh": "d3cb6c174a3ae1041a087fef46f9b70e"
+                }
+              },
               "marketplace": "aidd-framework"
             }
           ]
@@ -554,7 +614,7 @@
     "command": "plugin remove aidd-test",
     "exitCode": 0,
     "stdout": "Plugin 'aidd-test' removed.\n",
-    "stderr": "Warning: claude CLI not found on PATH — 'aidd-test@aidd-framework' was not uninstalled from claude's own plugin registry and may still be enabled there.\nWarning: claude CLI not found on PATH — skipping native plugin activation.\n",
+    "stderr": "Warning: claude CLI not found on PATH — 'aidd-test@aidd-framework' was not uninstalled from the host; its ref may remain enabled after local removal.\nWarning: claude CLI not found on PATH — skipping native plugin activation.\n",
     "filesWritten": [],
     "manifest": {
       "version": 8,
@@ -645,6 +705,18 @@
                 "aidd-test/skills/hello.md": "f00ea16a97341b9314df0da073633624"
               },
               "scope": "user",
+              "projectHooks": {
+                "entries": [
+                  {
+                    "event": "preToolUse",
+                    "command": "./.cursor/hooks/aidd-test/check.sh",
+                    "digest": "a2f1a3d6f4ae24d6e7011f435e0f223c"
+                  }
+                ],
+                "scripts": {
+                  ".cursor/hooks/aidd-test/check.sh": "d3cb6c174a3ae1041a087fef46f9b70e"
+                }
+              },
               "marketplace": "aidd-framework"
             }
           ]

@@ -10,8 +10,8 @@ import { isStrictlyWithinUserScope } from "../../domain/plugins/user-scope-conta
 /**
  * The files of a user-scope plugin that are actually safe to delete: safe only once the real,
  * `realpath`-resolved location still sits strictly inside the tool's own declared user-scope
- * directory. A `..` segment a corrupted manifest entry carries, or a plugin directory that became a
- * symlink after install, both fail this and are left in place and named.
+ * directory and its current content still matches the recorded install digest. A `..` segment,
+ * symlink escape, unreadable file, or user edit refuses a destructive operation before claim detach.
  */
 export async function userScopeFilesSafeToDelete(
   fs: FileReader,
@@ -31,6 +31,17 @@ export async function userScopeFilesSafeToDelete(
       resolvedCandidate !== null &&
       isStrictlyWithinUserScope(resolvedCandidate, resolvedBoundary)
     ) {
+      if (!/^[0-9a-f]{32}$/.test(hash)) {
+        throw new Error(
+          `${toolId}: '${plugin.name}' file '${relativePath}' has an unproven install digest; removal refused.`
+        );
+      }
+      const current = await fs.readFileHash(join(boundary, relativePath));
+      if (current.value !== hash) {
+        throw new Error(
+          `${toolId}: '${plugin.name}' file '${relativePath}' was edited after install; removal refused.`
+        );
+      }
       allowed.set(relativePath, hash);
       continue;
     }

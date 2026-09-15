@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -7,12 +8,15 @@ import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { CleanUseCase } from "../../../../src/contexts/framework/application/clean-use-case.js";
+import { CleanUserScopeUseCase } from "../../../../src/contexts/framework/application/clean/clean-user-scope-use-case.js";
+import { CleanUseCase as ProductionCleanUseCase } from "../../../../src/contexts/framework/application/clean-use-case.js";
 import { GitignoreUseCase } from "../../../../src/contexts/framework/application/gitignore-use-case.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
 import { cursorProjectHooksScriptDir } from "../../../../src/contexts/tools/domain/formats/cursor-hooks-project-merge.js";
+import type { HostPluginRegistryReader } from "../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
+import type { NativeMarketplaceSourceReader } from "../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import type { NativePluginActivator } from "../../../../src/contexts/tools/domain/ports/native-plugin-activator.js";
 import { FileHash, InstallationFile } from "../../../../src/kernel/file.js";
 import type { AiToolId, ToolId } from "../../../../src/kernel/tool.js";
@@ -26,6 +30,75 @@ import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-ma
 import { RecordingPrompter } from "../../../helpers/ports/recording-prompter.js";
 
 const PROJECT_ROOT = "/test-project";
+const md5 = (content: string): string => createHash("md5").update(content, "utf-8").digest("hex");
+
+/** Test-double host catalogues, deliberately seeded without consulting the manifest claim. */
+function nativeSourcesOnHost(): ReadonlyMap<AiToolId, NativeMarketplaceSourceReader> {
+  const codexLike: NativeMarketplaceSourceReader = {
+    read: async () => ({
+      location: "fixture native host catalogue",
+      entries: new Map(
+        ["aidd-framework", "user-mkt", "other-host"].map((name) => [
+          name,
+          {
+            kind: "effective-list" as const,
+            root: "/some/built/path",
+            sourceType: "local",
+            source: "/some/built/path",
+          },
+        ])
+      ),
+    }),
+  };
+  const claude: NativeMarketplaceSourceReader = {
+    read: async () => ({
+      location: "fixture Claude host registry",
+      entries: new Map([
+        ["aidd-framework", { kind: "registry" as const, source: "/some/built/path" }],
+      ]),
+    }),
+  };
+  return new Map([
+    ["codex", codexLike],
+    ["copilot", codexLike],
+    ["cursor", codexLike],
+    ["claude", claude],
+  ]);
+}
+
+/** Independently parsed test registry: no foreign refs unless a test seeds them explicitly. */
+function nativeRefsOnHost(): ReadonlyMap<AiToolId, HostPluginRegistryReader> {
+  const empty = new FakeHostPluginRegistryReader({
+    location: "fixture native plugin registry",
+    refs: new Map(),
+  });
+  return new Map([
+    ["codex", empty],
+    ["copilot", empty],
+    ["claude", empty],
+    ["cursor", empty],
+  ]);
+}
+
+class CleanWithKnownHostSource extends ProductionCleanUseCase {
+  constructor(...args: ConstructorParameters<typeof ProductionCleanUseCase>) {
+    super(
+      args[0],
+      args[1],
+      args[2],
+      args[3],
+      args[4],
+      args[5],
+      args[6],
+      args[7],
+      args[8],
+      args[9],
+      args[10]?.size ? args[10] : nativeRefsOnHost(),
+      args[11],
+      args[12] ?? nativeSourcesOnHost()
+    );
+  }
+}
 
 /** Records every path `deleteFile` is called with, so a test can prove where a plugin's
  * file actually got deleted from without inspecting private use-case state. */
@@ -50,7 +123,7 @@ describe("clean", () => {
     const gitignorePath = join(PROJECT_ROOT, ".gitignore");
     await deps.fs.writeFile(gitignorePath, "node_modules/\n.aidd/cache/\ndist/\n");
 
-    const useCase = new CleanUseCase(
+    const useCase = new CleanWithKnownHostSource(
       deps.fs,
       deps.manifestRepo,
       deps.logger,
@@ -71,7 +144,7 @@ describe("clean", () => {
     const gitignorePath = join(PROJECT_ROOT, ".gitignore");
     await deps.fs.writeFile(gitignorePath, "node_modules/\n.aidd/cache/\naidd_docs/runs/\ndist/\n");
 
-    const useCase = new CleanUseCase(
+    const useCase = new CleanWithKnownHostSource(
       deps.fs,
       deps.manifestRepo,
       deps.logger,
@@ -93,7 +166,7 @@ describe("clean", () => {
     const gitignorePath = join(PROJECT_ROOT, ".gitignore");
     await deps.fs.writeFile(gitignorePath, "node_modules/\n");
 
-    const useCase = new CleanUseCase(
+    const useCase = new CleanWithKnownHostSource(
       deps.fs,
       deps.manifestRepo,
       deps.logger,
@@ -112,7 +185,7 @@ describe("clean", () => {
     const userFile = join(PROJECT_ROOT, "my-custom-file.txt");
     await deps.fs.writeFile(userFile, "user content");
 
-    const useCase = new CleanUseCase(
+    const useCase = new CleanWithKnownHostSource(
       deps.fs,
       deps.manifestRepo,
       deps.logger,
@@ -132,7 +205,7 @@ describe("clean", () => {
     await deps.fs.writeFile(configPath, '{"telemetry":{"enabled":true}}');
     await deps.fs.writeFile(cacheFile, "{}");
 
-    const useCase = new CleanUseCase(
+    const useCase = new CleanWithKnownHostSource(
       deps.fs,
       deps.manifestRepo,
       deps.logger,
@@ -152,7 +225,7 @@ describe("clean", () => {
     const pluginCacheFile = join(PROJECT_ROOT, ".aidd", "plugin-cache", "some-plugin", "x.json");
     await deps.fs.writeFile(pluginCacheFile, "{}");
 
-    const useCase = new CleanUseCase(
+    const useCase = new CleanWithKnownHostSource(
       deps.fs,
       deps.manifestRepo,
       deps.logger,
@@ -171,7 +244,7 @@ describe("clean", () => {
     const cacheFile = join(PROJECT_ROOT, ".aidd", "cache", "built", "leftover.json");
     await deps.fs.writeFile(cacheFile, "{}");
 
-    const useCase = new CleanUseCase(
+    const useCase = new CleanWithKnownHostSource(
       deps.fs,
       deps.manifestRepo,
       deps.logger,
@@ -190,7 +263,7 @@ describe("clean", () => {
     const registry = join(PROJECT_ROOT, ".aidd", "marketplaces.json");
     await deps.fs.writeFile(registry, JSON.stringify({ version: 1, marketplaces: [] }));
 
-    const useCase = new CleanUseCase(
+    const useCase = new CleanWithKnownHostSource(
       deps.fs,
       deps.manifestRepo,
       deps.logger,
@@ -213,7 +286,7 @@ describe("clean", () => {
     await deps.fs.writeFile(config, JSON.stringify({ telemetry: { enabled: true } }));
     await deps.fs.writeFile(registry, JSON.stringify({ version: 1, marketplaces: [] }));
 
-    const useCase = new CleanUseCase(
+    const useCase = new CleanWithKnownHostSource(
       deps.fs,
       deps.manifestRepo,
       deps.logger,
@@ -242,7 +315,7 @@ describe("clean", () => {
 
     const fs = new RecordingFileAdapter();
     const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-    const useCase = new CleanUseCase(
+    const useCase = new CleanWithKnownHostSource(
       fs,
       manifestRepo,
       new CapturingLogger(),
@@ -274,7 +347,7 @@ describe("clean", () => {
 
     const fs = new RecordingFileAdapter();
     const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-    const useCase = new CleanUseCase(
+    const useCase = new CleanWithKnownHostSource(
       fs,
       manifestRepo,
       new CapturingLogger(),
@@ -298,10 +371,55 @@ describe("clean", () => {
       manifest.addTool("codex", "1.0.0", []);
       manifest.setNativeRegistrations("codex", {
         binary: BINARY,
-        marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
+        marketplaces: [
+          {
+            alias: MARKETPLACE,
+            hostName: MARKETPLACE,
+            provenance: {
+              kind: "effective-list",
+              root: "/some/built/path",
+              sourceType: "local",
+              source: "/some/built/path",
+            },
+          },
+        ],
         pluginRefs: [REF],
       });
       return manifest;
+    }
+
+    function seedClaudeNativeRegistrations(): Manifest {
+      const manifest = Manifest.create();
+      manifest.addTool("claude", "1.0.0", []);
+      manifest.setNativeRegistrations("claude", {
+        binary: "claude",
+        marketplaces: [
+          {
+            alias: MARKETPLACE,
+            hostName: MARKETPLACE,
+            provenance: { kind: "registry", source: "/some/built/path" },
+          },
+        ],
+        pluginRefs: [REF],
+      });
+      return manifest;
+    }
+
+    /** Explicit host ref evidence for Claude positives, separate from the AIDD manifest. */
+    function claudeRefOnHost(
+      scope?: "project" | "user"
+    ): ReadonlyMap<AiToolId, HostPluginRegistryReader> {
+      return new Map([
+        [
+          "claude",
+          new FakeHostPluginRegistryReader({
+            location: "fixture Claude installed-plugin registry",
+            refs: new Map([
+              [REF, scope === undefined ? { enabled: true } : { enabled: true, scope }],
+            ]),
+          }),
+        ],
+      ]);
     }
 
     function seedMarketplaceRegistry(): InMemoryMarketplaceRegistry {
@@ -318,12 +436,139 @@ describe("clean", () => {
       return registry;
     }
 
-    it("uninstalls the registered plugin ref and removes the marketplace it came from", async () => {
+    it("refuses a repointed native catalogue before shared reference or local deletion", async () => {
+      const manifest = Manifest.create();
+      manifest.addTool("codex", "1.0.0", []);
+      manifest.setNativeRegistrations("codex", {
+        binary: BINARY,
+        marketplaces: [
+          {
+            alias: MARKETPLACE,
+            hostName: MARKETPLACE,
+            provenance: {
+              kind: "effective-list",
+              root: "/aidd/built",
+              sourceType: "local",
+              source: "/aidd/built",
+            },
+          },
+        ],
+        pluginRefs: [REF],
+      });
+      const fs = new InMemoryFileAdapter();
+      fs.setFile(join(PROJECT_ROOT, "marker"), "keep");
+      fs.setFile("/other-project/marker", "keep");
+      const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
+      await references.addReference("1.0.0", PROJECT_ROOT);
+      await references.addReference("1.0.0", "/other-project");
+      const activator = new FakeNativePluginActivator({ available: true });
+      const sourceReader: NativeMarketplaceSourceReader = {
+        read: async () => ({
+          location: "fake codex host",
+          entries: new Map([
+            [
+              MARKETPLACE,
+              {
+                kind: "effective-list" as const,
+                root: "/foreign/built",
+                sourceType: "local",
+                source: "/foreign/built",
+              },
+            ],
+          ]),
+        }),
+      };
+      const useCase = new CleanWithKnownHostSource(
+        fs,
+        new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+        new CapturingLogger(),
+        new GitignoreUseCase(fs),
+        new Map([[BINARY, activator]]),
+        seedMarketplaceRegistry(),
+        undefined,
+        new Map(),
+        () => "/fake-home",
+        references,
+        new Map(),
+        undefined,
+        new Map([["codex", sourceReader]])
+      );
+
+      await expect(useCase.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
+        "differs"
+      );
+
+      expect(await references.listAllReferencingProjects()).toContain(PROJECT_ROOT);
+      expect(await references.listAllReferencingProjects()).toContain("/other-project");
+      expect(activator.uninstalledPlugins).toEqual([]);
+      expect(activator.removedMarketplaces).toEqual([]);
+      expect(fs.getFile(join(PROJECT_ROOT, "marker"))).toBe("keep");
+    });
+
+    it("refuses a foreign enabled ref inside an otherwise AIDD-owned catalogue", async () => {
+      const manifest = Manifest.create();
+      manifest.addTool("codex", "1.0.0", []);
+      manifest.setNativeRegistrations("codex", {
+        binary: BINARY,
+        marketplaces: [
+          {
+            alias: MARKETPLACE,
+            hostName: MARKETPLACE,
+            provenance: {
+              kind: "effective-list",
+              root: "/some/built/path",
+              sourceType: "local",
+              source: "/some/built/path",
+            },
+          },
+        ],
+        pluginRefs: [REF],
+      });
+      const fs = new InMemoryFileAdapter();
+      fs.setFile(join(PROJECT_ROOT, "marker"), "keep");
+      fs.setFile("/other-project/marker", "keep");
+      const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
+      await references.addReference("1.0.0", PROJECT_ROOT);
+      await references.addReference("1.0.0", "/other-project");
+      const activator = new FakeNativePluginActivator({ available: true });
+      const hostRefs = new FakeHostPluginRegistryReader({
+        location: "fake codex plugins",
+        refs: new Map([
+          [REF, { enabled: true }],
+          ["foreign@aidd-framework", { enabled: true }],
+        ]),
+      });
+      const useCase = new CleanWithKnownHostSource(
+        fs,
+        new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+        new CapturingLogger(),
+        new GitignoreUseCase(fs),
+        new Map([[BINARY, activator]]),
+        seedMarketplaceRegistry(),
+        undefined,
+        new Map(),
+        () => "/fake-home",
+        references,
+        new Map([["codex", hostRefs]])
+      );
+
+      await expect(useCase.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
+        "foreign"
+      );
+
+      expect(await references.listAllReferencingProjects()).toContain(PROJECT_ROOT);
+      expect(await references.listAllReferencingProjects()).toContain("/other-project");
+      expect(activator.uninstalledPlugins).toEqual([]);
+      expect(activator.removedMarketplaces).toEqual([]);
+      expect(fs.getFile(join(PROJECT_ROOT, "marker"))).toBe("keep");
+    });
+
+    it("leaves an unclaimed machine-global ref enabled while removing its empty project catalogue", async () => {
       const manifest = seedManifestWithNativeRegistrations();
       const fs = new InMemoryFileAdapter();
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeNativePluginActivator({ available: true });
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         fs,
         manifestRepo,
         new CapturingLogger(),
@@ -334,11 +579,12 @@ describe("clean", () => {
 
       await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
-      expect(activator.uninstalledPlugins).toEqual([REF]);
+      expect(activator.uninstalledPlugins).toEqual([]);
       expect(activator.removedMarketplaces).toEqual([MARKETPLACE]);
+      expect(manifestRepo.getCurrent()).toBeNull();
     });
 
-    it("leaves a machine-scope marketplace registered — every other project on this machine shares it — while still uninstalling this project's own plugin ref", async () => {
+    it("leaves both an unclaimed machine-global ref and its shared catalogue registered", async () => {
       const manifest = seedManifestWithNativeRegistrations();
       const fs = new InMemoryFileAdapter();
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
@@ -355,7 +601,7 @@ describe("clean", () => {
       );
       const logger = new CapturingLogger();
       const HOME = "/fake-home";
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         fs,
         manifestRepo,
         logger,
@@ -369,8 +615,9 @@ describe("clean", () => {
 
       await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
-      expect(activator.uninstalledPlugins).toEqual([REF]);
+      expect(activator.uninstalledPlugins).toEqual([]);
       expect(activator.removedMarketplaces).toEqual([]);
+      expect(logger.warnMessages.join("\n")).toContain("no canonical machine claim");
       // The message must name all three survivors: the host's own registration,
       // `userConfigDir()/marketplaces.json`, and the tool's own plugin cache.
       const message = logger.warnMessages.find(
@@ -402,7 +649,13 @@ describe("clean", () => {
         );
         manifest.setNativeRegistrations("claude", {
           binary: CLAUDE_BINARY,
-          marketplaces: [{ alias: CLAUDE_MARKETPLACE, hostName: CLAUDE_MARKETPLACE }],
+          marketplaces: [
+            {
+              alias: CLAUDE_MARKETPLACE,
+              hostName: CLAUDE_MARKETPLACE,
+              provenance: { kind: "registry", source: "/some/built/path" },
+            },
+          ],
           pluginRefs: [CLAUDE_REF],
         });
         return manifest;
@@ -432,7 +685,7 @@ describe("clean", () => {
           available: true,
           installedAtScope: new Map([[CLAUDE_REF, "user"]]),
         });
-        const useCase = new CleanUseCase(
+        const useCase = new CleanWithKnownHostSource(
           fs,
           manifestRepo,
           new CapturingLogger(),
@@ -464,7 +717,7 @@ describe("clean", () => {
             }),
           ],
         ]);
-        const useCase = new CleanUseCase(
+        const useCase = new CleanWithKnownHostSource(
           fs,
           manifestRepo,
           new CapturingLogger(),
@@ -514,7 +767,7 @@ describe("clean", () => {
         const userSourceReferences = seedReferences(fs, [PROJECT_ROOT, OTHER_PROJECT_ROOT]);
         await userSourceReferences.addReference("1.0.0", PROJECT_ROOT);
         await userSourceReferences.addReference("1.0.0", OTHER_PROJECT_ROOT);
-        const useCase = new CleanUseCase(
+        const useCase = new CleanWithKnownHostSource(
           fs,
           manifestRepo,
           new CapturingLogger(),
@@ -540,6 +793,62 @@ describe("clean", () => {
         expect((await registry.list(OTHER_PROJECT_ROOT)).map((m) => m.name)).toContain(MARKETPLACE);
       });
 
+      it("keeps its shared source claim when gitignore cleanup fails", async () => {
+        const manifest = seedManifestWithNativeRegistrations();
+        const fs = new InMemoryFileAdapter();
+        const registry = new InMemoryMarketplaceRegistry();
+        await registry.save(
+          PROJECT_ROOT,
+          Marketplace.create({
+            name: MARKETPLACE,
+            source: { kind: "local", path: "/shared/built/path" },
+            scope: "user",
+            addedAt: "2026-01-01T00:00:00.000Z",
+          })
+        );
+        const references = seedReferences(fs, [PROJECT_ROOT, OTHER_PROJECT_ROOT]);
+        await references.addReference("1.0.0", PROJECT_ROOT);
+        await references.addReference("1.0.0", OTHER_PROJECT_ROOT);
+        const gitignore = new GitignoreUseCase(fs);
+        gitignore.remove = async () => {
+          throw new Error("gitignore cleanup failed");
+        };
+        const useCase = new CleanWithKnownHostSource(
+          fs,
+          new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+          new CapturingLogger(),
+          gitignore,
+          new Map([[BINARY, new FakeNativePluginActivator({ available: true })]]),
+          registry,
+          undefined,
+          new Map(),
+          () => "/fake-home",
+          references
+        );
+
+        await expect(useCase.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
+          "gitignore cleanup failed"
+        );
+        expect(await references.listAllReferencingProjects()).toEqual([
+          PROJECT_ROOT,
+          OTHER_PROJECT_ROOT,
+        ]);
+        const userClean = new CleanUserScopeUseCase(
+          fs,
+          new InMemoryManifestRepository(),
+          new CapturingLogger(),
+          registry,
+          () => "/fake-home/.config/aidd",
+          new Map(),
+          new Map(),
+          () => "/fake-home",
+          references
+        );
+        await expect(userClean.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
+          "the shared framework source"
+        );
+      });
+
       it("names how many other projects still reference the source", async () => {
         const manifest = seedManifestWithNativeRegistrations();
         const fs = new InMemoryFileAdapter();
@@ -559,7 +868,7 @@ describe("clean", () => {
         await userSourceReferences.addReference("1.0.0", PROJECT_ROOT);
         await userSourceReferences.addReference("1.0.0", OTHER_PROJECT_ROOT);
         const logger = new CapturingLogger();
-        const useCase = new CleanUseCase(
+        const useCase = new CleanWithKnownHostSource(
           fs,
           manifestRepo,
           logger,
@@ -606,7 +915,7 @@ describe("clean", () => {
         await userSourceReferences.addReference("1.0.0", OTHER_PROJECT_ROOT);
         await userSourceReferences.addReference("1.0.0", THIRD_PROJECT_ROOT);
         const logger = new CapturingLogger();
-        const useCase = new CleanUseCase(
+        const useCase = new CleanWithKnownHostSource(
           fs,
           manifestRepo,
           logger,
@@ -644,7 +953,7 @@ describe("clean", () => {
         const userSourceReferences = seedReferences(fs, [PROJECT_ROOT]);
         await userSourceReferences.addReference("1.0.0", PROJECT_ROOT);
         const logger = new CapturingLogger();
-        const useCase = new CleanUseCase(
+        const useCase = new CleanWithKnownHostSource(
           fs,
           manifestRepo,
           logger,
@@ -684,7 +993,7 @@ describe("clean", () => {
         const userSourceReferences = seedReferences(fs, [PROJECT_ROOT, OTHER_PROJECT_ROOT]);
         await userSourceReferences.addReference("1.0.0", PROJECT_ROOT);
         await userSourceReferences.addReference("1.0.0", OTHER_PROJECT_ROOT);
-        const useCase = new CleanUseCase(
+        const useCase = new CleanWithKnownHostSource(
           fs,
           manifestRepo,
           new CapturingLogger(),
@@ -727,7 +1036,7 @@ describe("clean", () => {
         const userSourceReferences = seedReferences(fs, [PROJECT_ROOT, OTHER_PROJECT_ROOT]);
         await userSourceReferences.addReference("1.0.0", PROJECT_ROOT);
         await userSourceReferences.addReference("2.0.0", OTHER_PROJECT_ROOT);
-        const useCase = new CleanUseCase(
+        const useCase = new CleanWithKnownHostSource(
           fs,
           manifestRepo,
           new CapturingLogger(),
@@ -769,7 +1078,7 @@ describe("clean", () => {
         await userSourceReferences.addReference("0.9.0", PROJECT_ROOT);
         await userSourceReferences.addReference("0.9.0", OTHER_PROJECT_ROOT);
         const logger = new CapturingLogger();
-        const useCase = new CleanUseCase(
+        const useCase = new CleanWithKnownHostSource(
           fs,
           manifestRepo,
           logger,
@@ -816,7 +1125,7 @@ describe("clean", () => {
           () => "/fake-home/.config/aidd"
         );
         const logger = new CapturingLogger();
-        const useCase = new CleanUseCase(
+        const useCase = new CleanWithKnownHostSource(
           fs,
           manifestRepo,
           logger,
@@ -857,7 +1166,7 @@ describe("clean", () => {
           () => "/fake-home/.config/aidd"
         );
         const logger = new CapturingLogger();
-        const useCase = new CleanUseCase(
+        const useCase = new CleanWithKnownHostSource(
           fs,
           manifestRepo,
           logger,
@@ -883,7 +1192,7 @@ describe("clean", () => {
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeNativePluginActivator({ available: false });
       const logger = new CapturingLogger();
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         fs,
         manifestRepo,
         logger,
@@ -909,18 +1218,23 @@ describe("clean", () => {
     });
 
     it("uninstalls the plugin ref before removing the marketplace, for the same tool", async () => {
-      const manifest = seedManifestWithNativeRegistrations();
+      const manifest = seedClaudeNativeRegistrations();
       const fs = new InMemoryFileAdapter();
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const calls: string[] = [];
       const activator = new OrderRecordingActivator(calls);
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         fs,
         manifestRepo,
         new CapturingLogger(),
         new GitignoreUseCase(fs),
-        new Map([[BINARY, activator]]),
-        seedMarketplaceRegistry()
+        new Map([["claude", activator]]),
+        seedMarketplaceRegistry(),
+        undefined,
+        new Map(),
+        undefined,
+        undefined,
+        claudeRefOnHost("project")
       );
 
       await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
@@ -946,7 +1260,7 @@ describe("clean", () => {
       const activator = new AssertingActivator(async () => {
         builtTreeExistedAtRemoveMarketplace = fs.has(builtPath);
       });
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         fs,
         manifestRepo,
         new CapturingLogger(),
@@ -965,7 +1279,7 @@ describe("clean", () => {
       const fs = new InMemoryFileAdapter();
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeNativePluginActivator({ available: true });
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         fs,
         manifestRepo,
         new CapturingLogger(),
@@ -997,7 +1311,18 @@ describe("clean", () => {
       manifest.addTool("codex", "1.0.0", []);
       manifest.setNativeRegistrations("codex", {
         binary: BINARY,
-        marketplaces: [{ alias: ALIAS, hostName: HOST_NAME }],
+        marketplaces: [
+          {
+            alias: ALIAS,
+            hostName: HOST_NAME,
+            provenance: {
+              kind: "effective-list",
+              root: "/some/built/path",
+              sourceType: "local",
+              source: "/some/built/path",
+            },
+          },
+        ],
         pluginRefs: [],
       });
       const fs = new InMemoryFileAdapter();
@@ -1013,7 +1338,7 @@ describe("clean", () => {
           addedAt: "2026-01-01T00:00:00.000Z",
         })
       );
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         fs,
         manifestRepo,
         new CapturingLogger(),
@@ -1044,8 +1369,9 @@ describe("clean", () => {
         logger: CapturingLogger;
         activators: ReadonlyMap<string, NativePluginActivator>;
         registry: InMemoryMarketplaceRegistry | undefined;
-      }): CleanUseCase {
-        return new CleanUseCase(
+        hostPluginRegistries?: ReadonlyMap<AiToolId, HostPluginRegistryReader>;
+      }): CleanWithKnownHostSource {
+        return new CleanWithKnownHostSource(
           deps.fs,
           new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT),
           deps.logger,
@@ -1054,7 +1380,9 @@ describe("clean", () => {
           deps.registry,
           undefined,
           new Map(),
-          () => HOME
+          () => HOME,
+          undefined,
+          deps.hostPluginRegistries
         );
       }
 
@@ -1077,7 +1405,7 @@ describe("clean", () => {
         ]);
       });
 
-      it("leaves a registration in place when its alias is no longer registered here, still uninstalling the plugin ref", async () => {
+      it("leaves a lost-alias registration and its unclaimed machine-global ref untouched", async () => {
         const fs = new InMemoryFileAdapter();
         fs.setFile(join(CODEX_CACHE, MARKETPLACE, "leftover.json"), "{}");
         const logger = new CapturingLogger();
@@ -1102,9 +1430,10 @@ describe("clean", () => {
 
         await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
-        expect(activator.uninstalledPlugins).toStrictEqual([REF]);
+        expect(activator.uninstalledPlugins).toStrictEqual([]);
         expect(activator.removedMarketplaces).toStrictEqual([]);
         expect(logger.warnMessages).toStrictEqual([
+          `codex: '${REF}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.`,
           `codex: '${MARKETPLACE}' is no longer a registered marketplace here, so its scope cannot be resolved — its codex registration was left in place.`,
           `codex: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: ${join(CODEX_CACHE, MARKETPLACE)}`,
         ]);
@@ -1124,8 +1453,10 @@ describe("clean", () => {
 
         await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
+        expect(activator.uninstalledPlugins).toStrictEqual([]);
         expect(activator.removedMarketplaces).toStrictEqual([]);
         expect(logger.warnMessages).toStrictEqual([
+          `codex: '${REF}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.`,
           `codex: '${MARKETPLACE}' is no longer a registered marketplace here, so its scope cannot be resolved — its codex registration was left in place.`,
           `codex: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: ${join(CODEX_CACHE, MARKETPLACE)}`,
         ]);
@@ -1145,7 +1476,9 @@ describe("clean", () => {
 
         await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
+        expect(activator.uninstalledPlugins).toStrictEqual([]);
         expect(logger.warnMessages).toStrictEqual([
+          `codex: '${REF}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.`,
           `codex marketplace remove '${MARKETPLACE}' failed: marketplace remove ${MARKETPLACE} failed: '${MARKETPLACE}' is not configured or installed`,
           `codex: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: ${join(CODEX_CACHE, MARKETPLACE)}`,
         ]);
@@ -1159,29 +1492,31 @@ describe("clean", () => {
           failOnUninstall: [REF],
         });
         const useCase = buildUseCase({
-          manifest: seedManifestWithNativeRegistrations(),
+          manifest: seedClaudeNativeRegistrations(),
           fs,
           logger,
-          activators: new Map([[BINARY, activator]]),
+          activators: new Map([["claude", activator]]),
           registry: seedMarketplaceRegistry(),
+          hostPluginRegistries: claudeRefOnHost(),
         });
 
         await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
         expect(activator.uninstalledPluginScopes).toStrictEqual(["project", "user"]);
         expect(logger.warnMessages).toStrictEqual([
-          `codex plugin uninstall '${REF}' failed: plugin \`${REF}\` is not installed`,
+          `claude plugin uninstall '${REF}' failed: plugin \`${REF}\` is not installed`,
         ]);
       });
 
       it("propagates an activator failure that is not the host refusing", async () => {
         const fs = new InMemoryFileAdapter();
         const useCase = buildUseCase({
-          manifest: seedManifestWithNativeRegistrations(),
+          manifest: seedClaudeNativeRegistrations(),
           fs,
           logger: new CapturingLogger(),
-          activators: new Map([[BINARY, new CrashingUninstallActivator()]]),
+          activators: new Map([["claude", new CrashingUninstallActivator()]]),
           registry: seedMarketplaceRegistry(),
+          hostPluginRegistries: claudeRefOnHost("project"),
         });
 
         await expect(useCase.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
@@ -1208,7 +1543,18 @@ describe("clean", () => {
         manifest.addTool(toolId, "1.0.0", []);
         manifest.setNativeRegistrations(toolId, {
           binary,
-          marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
+          marketplaces: [
+            {
+              alias: MARKETPLACE,
+              hostName: MARKETPLACE,
+              provenance: {
+                kind: "effective-list",
+                root: "/some/built/path",
+                sourceType: "local",
+                source: "/some/built/path",
+              },
+            },
+          ],
           pluginRefs: [],
         });
         return manifest;
@@ -1230,6 +1576,115 @@ describe("clean", () => {
         expect(logger.warnMessages).toStrictEqual([
           `copilot: '${MARKETPLACE}' is shared by every project on this machine — left registered. Its entry survives at userConfigDir()/marketplaces.json.`,
         ]);
+      });
+
+      it("detaches project A without host mutation when a shared Copilot source is unreadable", async () => {
+        const fs = new InMemoryFileAdapter();
+        fs.setFile(join(PROJECT_ROOT, "marker"), "");
+        fs.setFile(join("/other-project", "marker"), "");
+        const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
+        await references.addReference("1.0.0", PROJECT_ROOT);
+        await references.addReference("1.0.0", "/other-project");
+        const activator = new FakeNativePluginActivator({ available: true });
+        const useCase = new CleanWithKnownHostSource(
+          fs,
+          new InMemoryManifestRepository(seedRegistrations("copilot", "copilot"), PROJECT_ROOT),
+          new CapturingLogger(),
+          new GitignoreUseCase(fs),
+          new Map([["copilot", activator]]),
+          seedSharedRegistry(),
+          undefined,
+          new Map(),
+          () => "/fake-home",
+          references,
+          undefined,
+          undefined,
+          new Map()
+        );
+
+        const result = await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+
+        expect(result.manifestFound).toBe(true);
+        expect(activator.removedMarketplaces).toEqual([]);
+        expect(activator.uninstalledPlugins).toEqual([]);
+        expect(await references.listAllReferencingProjects()).toEqual(["/other-project"]);
+      });
+
+      it("does not uninstall an unclaimed shared ref when its current source is unreadable", async () => {
+        const fs = new InMemoryFileAdapter();
+        fs.setFile(join(PROJECT_ROOT, "marker"), "");
+        const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
+        await references.addReference("1.0.0", PROJECT_ROOT);
+        const manifest = seedRegistrations("copilot", "copilot");
+        manifest.setNativeRegistrations("copilot", {
+          binary: "copilot",
+          marketplaces: manifest.getNativeRegistrations("copilot")?.marketplaces ?? [],
+          pluginRefs: [`demo@${MARKETPLACE}`],
+        });
+        const activator = new FakeNativePluginActivator({ available: true });
+        const useCase = new CleanWithKnownHostSource(
+          fs,
+          new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+          new CapturingLogger(),
+          new GitignoreUseCase(fs),
+          new Map([["copilot", activator]]),
+          seedSharedRegistry(),
+          undefined,
+          new Map(),
+          () => "/fake-home",
+          references,
+          undefined,
+          undefined,
+          new Map()
+        );
+
+        await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+
+        expect(activator.uninstalledPlugins).toEqual([]);
+        expect(activator.removedMarketplaces).toEqual([]);
+        expect(await references.listAllReferencingProjects()).toEqual([]);
+      });
+
+      it("leaves a machine-global ref enabled without a canonical claim even when host source is proven", async () => {
+        const fs = new InMemoryFileAdapter();
+        fs.setFile(join(PROJECT_ROOT, "marker"), "");
+        const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
+        await references.addReference("1.0.0", PROJECT_ROOT);
+        const manifest = seedRegistrations("codex", "codex");
+        manifest.setNativeRegistrations("codex", {
+          binary: "codex",
+          marketplaces: manifest.getNativeRegistrations("codex")?.marketplaces ?? [],
+          pluginRefs: [`demo@${MARKETPLACE}`],
+        });
+        const activator = new FakeNativePluginActivator({ available: true });
+        const hostRefs = new Map<AiToolId, HostPluginRegistryReader>([
+          [
+            "codex",
+            new FakeHostPluginRegistryReader({
+              location: "Codex user-global registry",
+              refs: new Map([[`demo@${MARKETPLACE}`, { enabled: true }]]),
+            }),
+          ],
+        ]);
+        const useCase = new CleanWithKnownHostSource(
+          fs,
+          new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+          new CapturingLogger(),
+          new GitignoreUseCase(fs),
+          new Map([["codex", activator]]),
+          seedSharedRegistry(),
+          undefined,
+          new Map(),
+          () => "/fake-home",
+          references,
+          hostRefs
+        );
+
+        await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+
+        expect(activator.uninstalledPlugins).toEqual([]);
+        expect(activator.removedMarketplaces).toEqual([]);
+        expect(await references.listAllReferencingProjects()).toEqual([]);
       });
 
       it("names no cache for a shared marketplace at a tool that drives no native CLI (cursor)", async () => {
@@ -1361,18 +1816,18 @@ describe("clean", () => {
       });
     });
 
-    describe("the scope the manifest recorded for a plugin ref, at cursor, the one host admitting a user-scope record", () => {
-      const CURSOR_REF = "aidd-context@aidd-framework";
+    describe("the scope Claude asks for a project-owned plugin ref", () => {
+      const CLAUDE_REF = "aidd-context@aidd-framework";
 
-      function seedCursorManifest(
+      function seedClaudeScopeManifest(
         marketplaces: ReadonlyArray<{ alias: string; hostName: string }>,
         plugins: ReadonlyArray<{ name: string; scope: "project" | "user"; marketplace: string }>
       ): Manifest {
         const manifest = Manifest.create();
-        manifest.addTool("cursor", "1.0.0", []);
+        manifest.addTool("claude", "1.0.0", []);
         for (const plugin of plugins) {
           manifest.addPlugin(
-            "cursor",
+            "claude",
             InstalledPlugin.fromMetadata(
               plugin.name,
               "1.0.0",
@@ -1383,10 +1838,14 @@ describe("clean", () => {
             )
           );
         }
-        manifest.setNativeRegistrations("cursor", {
-          binary: "cursor",
-          marketplaces: [...marketplaces],
-          pluginRefs: [CURSOR_REF],
+        manifest.setNativeRegistrations("claude", {
+          binary: "claude",
+          marketplaces: marketplaces.map(({ alias, hostName }) => ({
+            alias,
+            hostName,
+            provenance: { kind: "registry", source: "/some/built/path" },
+          })),
+          pluginRefs: [CLAUDE_REF],
         });
         return manifest;
       }
@@ -1395,14 +1854,14 @@ describe("clean", () => {
         const fs = new InMemoryFileAdapter();
         const activator = new FakeNativePluginActivator({
           available: true,
-          installedAtScope: new Map([[CURSOR_REF, "user"]]),
+          installedAtScope: new Map([[CLAUDE_REF, "user"]]),
         });
-        const useCase = new CleanUseCase(
+        const useCase = new CleanWithKnownHostSource(
           fs,
           new InMemoryManifestRepository(manifest, PROJECT_ROOT),
           new CapturingLogger(),
           new GitignoreUseCase(fs),
-          new Map([["cursor", activator]]),
+          new Map([["claude", activator]]),
           seedMarketplaceRegistry()
         );
         await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
@@ -1411,7 +1870,7 @@ describe("clean", () => {
 
       it("tries the user scope first when that is what the manifest recorded for the plugin behind the ref, found by its own alias among several", async () => {
         const scopes = await uninstallScopesFor(
-          seedCursorManifest(
+          seedClaudeScopeManifest(
             [
               { alias: "other", hostName: "other-host" },
               { alias: MARKETPLACE, hostName: MARKETPLACE },
@@ -1428,7 +1887,7 @@ describe("clean", () => {
 
       it("tries the project scope first when the plugin's alias matches no recorded marketplace", async () => {
         const scopes = await uninstallScopesFor(
-          seedCursorManifest(
+          seedClaudeScopeManifest(
             [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
             [{ name: "aidd-context", scope: "user", marketplace: "unknown-alias" }]
           )
@@ -1439,7 +1898,7 @@ describe("clean", () => {
 
       it("tries the project scope first when the manifest records no plugin at all for the ref", async () => {
         const scopes = await uninstallScopesFor(
-          seedCursorManifest([{ alias: MARKETPLACE, hostName: MARKETPLACE }], [])
+          seedClaudeScopeManifest([{ alias: MARKETPLACE, hostName: MARKETPLACE }], [])
         );
 
         expect(scopes).toStrictEqual(["project", "user"]);
@@ -1448,7 +1907,7 @@ describe("clean", () => {
 
     it("previews no shared-source fact when the references port is wired in but no marketplace registry is", async () => {
       const fs = new InMemoryFileAdapter();
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         fs,
         new InMemoryManifestRepository(seedManifestWithNativeRegistrations(), PROJECT_ROOT),
         new CapturingLogger(),
@@ -1492,7 +1951,7 @@ describe("clean", () => {
       const settingsLocalPath = join(PROJECT_ROOT, ".claude", "settings.local.json");
       await deps.fs.writeFile(settingsLocalPath, "{}");
 
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         deps.fs,
         deps.manifestRepo,
         deps.logger,
@@ -1505,6 +1964,9 @@ describe("clean", () => {
 
     it("deletes .cursor/hooks.json entirely once unmerging leaves it empty, and its script directory", async () => {
       const pluginName = "aidd-context";
+      const scriptMarker = cursorProjectHooksScriptDir(pluginName);
+      const command = `./${scriptMarker}run.js`;
+      const scriptContent = "// hook script";
       const manifest = Manifest.create();
       manifest.addTool("cursor", "1.0.0", []);
       manifest.addPlugin(
@@ -1516,23 +1978,26 @@ describe("clean", () => {
           strict: false,
           files: {},
           scope: "project",
+          projectHooks: {
+            entries: [{ event: "PreToolUse", command, digest: md5(JSON.stringify({ command })) }],
+            scripts: { [`${scriptMarker}run.js`]: md5(scriptContent) },
+          },
         })
       );
       const fs = new InMemoryFileAdapter();
       const hooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
-      const scriptMarker = cursorProjectHooksScriptDir(pluginName);
       await fs.writeFile(
         hooksPath,
         JSON.stringify({
           version: 1,
-          hooks: { PreToolUse: [{ command: `./${scriptMarker}run.js` }] },
+          hooks: { PreToolUse: [{ command }] },
         })
       );
       const scriptPath = join(PROJECT_ROOT, scriptMarker, "run.js");
-      await fs.writeFile(scriptPath, "// hook script");
+      await fs.writeFile(scriptPath, scriptContent);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
 
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         fs,
         manifestRepo,
         new CapturingLogger(),
@@ -1547,6 +2012,8 @@ describe("clean", () => {
     it("keeps .cursor/hooks.json when another plugin's entries remain in it", async () => {
       const pluginName = "aidd-context";
       const otherPluginName = "aidd-dev";
+      const scriptMarker = cursorProjectHooksScriptDir(pluginName);
+      const command = `./${scriptMarker}run.js`;
       const manifest = Manifest.create();
       manifest.addTool("cursor", "1.0.0", []);
       manifest.addPlugin(
@@ -1558,21 +2025,21 @@ describe("clean", () => {
           strict: false,
           files: {},
           scope: "project",
+          projectHooks: {
+            entries: [{ event: "PreToolUse", command, digest: md5(JSON.stringify({ command })) }],
+            scripts: {},
+          },
         })
       );
       const fs = new InMemoryFileAdapter();
       const hooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
-      const scriptMarker = cursorProjectHooksScriptDir(pluginName);
       const otherScriptMarker = cursorProjectHooksScriptDir(otherPluginName);
       await fs.writeFile(
         hooksPath,
         JSON.stringify({
           version: 1,
           hooks: {
-            PreToolUse: [
-              { command: `./${scriptMarker}run.js` },
-              { command: `./${otherScriptMarker}run.js` },
-            ],
+            PreToolUse: [{ command }, { command: `./${otherScriptMarker}run.js` }],
           },
         })
       );
@@ -1583,7 +2050,7 @@ describe("clean", () => {
       );
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
 
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         fs,
         manifestRepo,
         new CapturingLogger(),
@@ -1597,6 +2064,153 @@ describe("clean", () => {
       expect(remainingHooks).toContain(otherScriptMarker);
       expect(fs.has(otherScriptPath)).toBe(true);
     });
+
+    it("rejects an edited Cursor hook before dropping a shared source reference or touching native state", async () => {
+      const pluginName = "aidd-context";
+      const scriptMarker = cursorProjectHooksScriptDir(pluginName);
+      const command = `./${scriptMarker}run.js`;
+      const scriptPath = join(PROJECT_ROOT, scriptMarker, "run.js");
+      const installedScript = "// installed hook";
+      const editedScript = "// edited by the user";
+      const manifest = Manifest.create();
+      manifest.addTool("cursor", "1.0.0", []);
+      manifest.addPlugin(
+        "cursor",
+        InstalledPlugin.fromJSON({
+          name: pluginName,
+          source: { kind: "local", path: "/some/path" },
+          version: "1.0.0",
+          strict: false,
+          files: {},
+          scope: "project",
+          projectHooks: {
+            entries: [{ event: "PreToolUse", command, digest: md5(JSON.stringify({ command })) }],
+            scripts: { [`${scriptMarker}run.js`]: md5(installedScript) },
+          },
+        })
+      );
+      manifest.addTool("codex", "1.0.0", []);
+      manifest.setNativeRegistrations("codex", {
+        binary: "codex",
+        marketplaces: [
+          {
+            alias: "aidd-framework",
+            hostName: "aidd-framework",
+            provenance: {
+              kind: "effective-list",
+              root: "/some/built/path",
+              sourceType: "local",
+              source: "/some/built/path",
+            },
+          },
+        ],
+        pluginRefs: ["aidd-context@aidd-framework"],
+      });
+      const fs = new InMemoryFileAdapter();
+      const hooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
+      await fs.writeFile(
+        hooksPath,
+        JSON.stringify({ version: 1, hooks: { PreToolUse: [{ command }] } })
+      );
+      await fs.writeFile(scriptPath, editedScript);
+      fs.setFile(join(PROJECT_ROOT, "marker"), "");
+      fs.setFile("/other-project/marker", "");
+      const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
+      await references.addReference("1.0.0", PROJECT_ROOT);
+      await references.addReference("1.0.0", "/other-project");
+      const activator = new FakeNativePluginActivator({ available: true });
+      const useCase = new CleanWithKnownHostSource(
+        fs,
+        new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+        new CapturingLogger(),
+        new GitignoreUseCase(fs),
+        new Map([["codex", activator]]),
+        undefined,
+        undefined,
+        new Map(),
+        () => "/fake-home",
+        references
+      );
+
+      await expect(useCase.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
+        "edited after install"
+      );
+
+      expect(await references.listAllReferencingProjects()).toContain(PROJECT_ROOT);
+      expect(await references.listAllReferencingProjects()).toContain("/other-project");
+      expect(activator.uninstalledPlugins).toEqual([]);
+      expect(activator.removedMarketplaces).toEqual([]);
+      expect(fs.getFile(scriptPath)).toBe(editedScript);
+      expect(fs.has(hooksPath)).toBe(true);
+      expect(fs.has(join(PROJECT_ROOT, "marker"))).toBe(true);
+    });
+  });
+
+  it("rejects an edited OpenCode MCP entry before dropping the shared source reference", async () => {
+    const originalServer = { type: "local" };
+    const editedConfig = JSON.stringify({ mcp: { mine: { type: "remote" } } });
+    const manifest = Manifest.create();
+    manifest.addTool("opencode", "1.0.0", []);
+    manifest.addPlugin(
+      "opencode",
+      InstalledPlugin.fromJSON({
+        name: "aidd-context",
+        source: { kind: "local", path: "/some/path" },
+        version: "1.0.0",
+        strict: false,
+        files: {},
+        mcpEntries: { mine: md5(JSON.stringify(originalServer)) },
+        scope: "project",
+      })
+    );
+    manifest.addTool("codex", "1.0.0", []);
+    manifest.setNativeRegistrations("codex", {
+      binary: "codex",
+      marketplaces: [
+        {
+          alias: "aidd-framework",
+          hostName: "aidd-framework",
+          provenance: {
+            kind: "effective-list",
+            root: "/some/built/path",
+            sourceType: "local",
+            source: "/some/built/path",
+          },
+        },
+      ],
+      pluginRefs: ["aidd-context@aidd-framework"],
+    });
+    const fs = new InMemoryFileAdapter();
+    const configPath = join(PROJECT_ROOT, "opencode.json");
+    await fs.writeFile(configPath, editedConfig);
+    fs.setFile(join(PROJECT_ROOT, "marker"), "");
+    fs.setFile("/other-project/marker", "");
+    const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
+    await references.addReference("1.0.0", PROJECT_ROOT);
+    await references.addReference("1.0.0", "/other-project");
+    const activator = new FakeNativePluginActivator({ available: true });
+    const useCase = new CleanWithKnownHostSource(
+      fs,
+      new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+      new CapturingLogger(),
+      new GitignoreUseCase(fs),
+      new Map([["codex", activator]]),
+      undefined,
+      undefined,
+      new Map(),
+      () => "/fake-home",
+      references
+    );
+
+    await expect(useCase.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
+      "edited"
+    );
+
+    expect(await references.listAllReferencingProjects()).toContain(PROJECT_ROOT);
+    expect(await references.listAllReferencingProjects()).toContain("/other-project");
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(fs.getFile(configPath)).toBe(editedConfig);
   });
 
   describe("user-scope files belong to machine cleanup", () => {
@@ -1620,7 +2234,12 @@ describe("clean", () => {
       const fs = new RecordingFileAdapter();
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const logger = new CapturingLogger();
-      const useCase = new CleanUseCase(fs, manifestRepo, logger, new GitignoreUseCase(fs));
+      const useCase = new CleanWithKnownHostSource(
+        fs,
+        manifestRepo,
+        logger,
+        new GitignoreUseCase(fs)
+      );
 
       await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
@@ -1650,7 +2269,12 @@ describe("clean", () => {
       fs.setSymlink(join(boundary, "aidd-context"), "/tmp/evil-aidd-context");
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const logger = new CapturingLogger();
-      const useCase = new CleanUseCase(fs, manifestRepo, logger, new GitignoreUseCase(fs));
+      const useCase = new CleanWithKnownHostSource(
+        fs,
+        manifestRepo,
+        logger,
+        new GitignoreUseCase(fs)
+      );
 
       await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
@@ -1665,7 +2289,7 @@ describe("clean", () => {
   describe("without a manifest", () => {
     it("reports nothing found and nothing to preview", async () => {
       const fs = new InMemoryFileAdapter();
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         fs,
         new InMemoryManifestRepository(null, PROJECT_ROOT),
         new CapturingLogger(),
@@ -1688,7 +2312,7 @@ describe("clean", () => {
       fs: InMemoryFileAdapter,
       prompter: RecordingPrompter | undefined
     ) {
-      return new CleanUseCase(
+      return new CleanWithKnownHostSource(
         fs,
         new InMemoryManifestRepository(seedTrackedFiles(fs, ["a.md"]), PROJECT_ROOT),
         new CapturingLogger(),
@@ -1781,7 +2405,7 @@ describe("clean", () => {
         [{ relativePath: ".claude/settings.json", sectionKey: null, entries: { owned: hash() } }]
       );
       manifest.addTool("codex", "1.0.0", [fileEntry("c.md")]);
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         fs,
         new InMemoryManifestRepository(manifest, PROJECT_ROOT),
         new CapturingLogger(),
@@ -1810,7 +2434,7 @@ describe("clean", () => {
         pluginRefs: ["aidd-context@aidd-framework"],
       });
       const fs = new InMemoryFileAdapter();
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         fs,
         new InMemoryManifestRepository(manifest, PROJECT_ROOT),
         new CapturingLogger(),
@@ -1839,7 +2463,7 @@ describe("clean", () => {
         pluginRefs: [],
       });
       const fs = new InMemoryFileAdapter();
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         fs,
         new InMemoryManifestRepository(manifest, PROJECT_ROOT),
         new CapturingLogger(),
@@ -1866,7 +2490,7 @@ describe("clean", () => {
       manifest: Manifest,
       logger = new CapturingLogger()
     ) {
-      return new CleanUseCase(
+      return new CleanWithKnownHostSource(
         fs,
         new InMemoryManifestRepository(manifest, PROJECT_ROOT),
         logger,
@@ -1908,25 +2532,31 @@ describe("clean", () => {
 
     it("counts the project hooks file a cursor plugin was unmerged from", async () => {
       const pluginName = "aidd-context";
+      const scriptMarker = cursorProjectHooksScriptDir(pluginName);
+      const command = `./${scriptMarker}run.js`;
       const manifest = Manifest.create();
       manifest.addTool("cursor", "1.0.0", []);
       manifest.addPlugin(
         "cursor",
-        InstalledPlugin.fromMetadata(
-          pluginName,
-          "1.0.0",
-          { kind: "local", path: "/p" },
-          false,
-          "project"
-        )
+        InstalledPlugin.fromJSON({
+          name: pluginName,
+          source: { kind: "local", path: "/p" },
+          version: "1.0.0",
+          strict: false,
+          files: {},
+          scope: "project",
+          projectHooks: {
+            entries: [{ event: "PreToolUse", command, digest: md5(JSON.stringify({ command })) }],
+            scripts: {},
+          },
+        })
       );
       const fs = new InMemoryFileAdapter();
-      const scriptMarker = cursorProjectHooksScriptDir(pluginName);
       fs.setFile(
         join(PROJECT_ROOT, ".cursor", "hooks.json"),
         JSON.stringify({
           version: 1,
-          hooks: { PreToolUse: [{ command: `./${scriptMarker}run.js` }] },
+          hooks: { PreToolUse: [{ command }] },
         })
       );
       const useCase = buildCountingUseCase(fs, manifest);
@@ -2029,7 +2659,7 @@ describe("clean", () => {
       const fs = new InMemoryFileAdapter();
       fs.setFile(join(PROJECT_ROOT, ".aidd", "config.json"), "{}");
       const logger = new CapturingLogger();
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         fs,
         new InMemoryManifestRepository(seedTrackedFiles(fs, ["a.md"]), PROJECT_ROOT),
         logger,
@@ -2048,7 +2678,7 @@ describe("clean", () => {
       const fs = new InMemoryFileAdapter();
       fs.setFile(join(PROJECT_ROOT, ".aidd", "auth.json"), "{}");
       const logger = new CapturingLogger();
-      const useCase = new CleanUseCase(
+      const useCase = new CleanWithKnownHostSource(
         fs,
         new InMemoryManifestRepository(seedTrackedFiles(fs, ["a.md"]), PROJECT_ROOT),
         logger,

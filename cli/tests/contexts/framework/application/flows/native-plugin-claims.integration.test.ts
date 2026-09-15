@@ -15,8 +15,10 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import type { HostPluginRegistryReader } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
+import type { NativeMarketplaceSourceReader } from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import { nativeActivationOf } from "../../../../../src/contexts/tools/domain/registry.js";
 import { resolveHomeDir } from "../../../../../src/kernel/reading/home-dir.js";
+import type { AiToolId } from "../../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -30,6 +32,23 @@ for (const [toolId, catalogPath] of [
   ["codex", ".agents/plugins/marketplace.json"],
   ["copilot", ".plugin/marketplace.json"],
 ] as const) {
+  const effectiveSource = (hostName: string, source: string) =>
+    new Map<AiToolId, NativeMarketplaceSourceReader>([
+      [
+        toolId,
+        {
+          read: async (projectRoot) => ({
+            location: `/host/${toolId}/catalogue (cwd ${projectRoot})`,
+            entries: new Map([
+              [
+                hostName,
+                { kind: "effective-list" as const, root: source, sourceType: "local", source },
+              ],
+            ]),
+          }),
+        },
+      ],
+    ]);
   describe(`${toolId} machine plugin claims`, () => {
     it("global clean refuses live plugin dependents and preserves claims if host unregister fails", async () => {
       const ref = "test-plugin@real-catalog";
@@ -37,14 +56,39 @@ for (const [toolId, catalogPath] of [
       machine.addTool(toolId, "1.0.0", []);
       machine.setNativeRegistrations(toolId, {
         binary: toolId,
-        marketplaces: [{ alias: "local-alias", hostName: "real-catalog" }],
+        marketplaces: [
+          {
+            alias: "local-alias",
+            hostName: "real-catalog",
+            provenance: {
+              kind: "effective-list",
+              root: `/built/${toolId}`,
+              sourceType: "local",
+              source: `/built/${toolId}`,
+            },
+          },
+        ],
         pluginRefs: [ref],
         pluginClaims: [{ ref, dependents: ["/B"] }],
       });
       const repo = new InMemoryManifestRepository(machine);
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({
+        [`/built/${toolId}/${catalogPath}`]: JSON.stringify({ name: "real-catalog", plugins: [] }),
+      });
       const registry = new InMemoryMarketplaceRegistry();
       const failing = new FakeNativePluginActivator({ available: true, failOnUninstall: [ref] });
+      const sources = effectiveSource("real-catalog", `/built/${toolId}`);
+      const hostPlugins = new Map<AiToolId, HostPluginRegistryReader>([
+        [
+          toolId,
+          {
+            read: async () => ({
+              location: `/host/${toolId}/plugins`,
+              refs: new Map([[ref, { enabled: true, scope: "user" as const }]]),
+            }),
+          },
+        ],
+      ]);
       const clean = new CleanUserScopeUseCase(
         fs,
         repo,
@@ -53,7 +97,11 @@ for (const [toolId, catalogPath] of [
         () => "/machine",
         new Map([[toolId, failing]]),
         new Map(),
-        () => "/home"
+        () => "/home",
+        undefined,
+        undefined,
+        sources,
+        hostPlugins
       );
       await expect(clean.execute({ projectRoot: "/B", force: true })).rejects.toThrow(
         /active projects.*\/B/
@@ -62,8 +110,10 @@ for (const [toolId, catalogPath] of [
       expect(
         repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims?.[0]?.dependents
       ).toEqual(["/B"]);
+      const registrations = machine.getNativeRegistrations(toolId);
+      if (registrations === undefined) throw new Error("seeded machine claim missing");
       machine.setNativeRegistrations(toolId, {
-        ...machine.getNativeRegistrations(toolId)!,
+        ...registrations,
         pluginClaims: [{ ref, dependents: [] }],
       });
       await repo.save(machine);
@@ -82,7 +132,11 @@ for (const [toolId, catalogPath] of [
         () => "/machine",
         new Map([[toolId, working]]),
         new Map(),
-        () => "/home"
+        () => "/home",
+        undefined,
+        undefined,
+        sources,
+        hostPlugins
       );
       await finish.execute({ projectRoot: "/B", force: true });
       expect(working.uninstalledPlugins).toEqual([ref]);
@@ -104,7 +158,7 @@ for (const [toolId, catalogPath] of [
           addedAt: "2026-01-01T00:00:00Z",
         })
       );
-      const project = (root: string) => {
+      const project = () => {
         const manifest = Manifest.create();
         manifest.addTool(toolId, "1.0.0", []);
         manifest.addPlugin(
@@ -120,11 +174,31 @@ for (const [toolId, catalogPath] of [
         );
         return new InMemoryManifestRepository(manifest);
       };
-      const a = project("/A");
-      const b = project("/B");
-      const foreign = project("/foreign");
-      const user = new InMemoryManifestRepository(Manifest.create());
+      const a = project();
+      const b = project();
+      const foreign = project();
+      const machine = Manifest.create();
+      machine.addTool(toolId, "1.0.0", []);
+      machine.setNativeRegistrations(toolId, {
+        binary: toolId,
+        marketplaces: [
+          {
+            alias,
+            hostName,
+            provenance: {
+              kind: "effective-list",
+              root: builtDir,
+              sourceType: "local",
+              source: builtDir,
+            },
+          },
+        ],
+        pluginRefs: [],
+        pluginClaims: [],
+      });
+      const user = new InMemoryManifestRepository(machine);
       const activator = new FakeNativePluginActivator({ available: true });
+      const sources = effectiveSource(hostName, builtDir);
       let enabled = false;
       const hostReader: HostPluginRegistryReader = {
         read: async () => ({
@@ -152,7 +226,8 @@ for (const [toolId, catalogPath] of [
         undefined,
         undefined,
         new Map([[toolId, hostReader]]),
-        user
+        user,
+        sources
       );
 
       await useCase.execute({ projectRoot: "/A", manifestRepo: a, toolIds: [toolId] });
@@ -177,7 +252,8 @@ for (const [toolId, catalogPath] of [
         new CapturingLogger(),
         new NativeHostRegistrationGate(
           new Map([[toolId, activator]]),
-          new Map([[toolId, hostReader]])
+          new Map([[toolId, hostReader]]),
+          sources
         )
       );
       if (toolId === "copilot") {
@@ -204,7 +280,8 @@ for (const [toolId, catalogPath] of [
           new CapturingLogger(),
           new NativeHostRegistrationGate(
             new Map([[toolId, failed]]),
-            new Map([[toolId, hostReader]])
+            new Map([[toolId, hostReader]]),
+            sources
           )
         );
         await expect(
@@ -235,7 +312,8 @@ for (const [toolId, catalogPath] of [
         registry,
         new NativeHostRegistrationGate(
           new Map([[toolId, activator]]),
-          new Map([[toolId, hostReader]])
+          new Map([[toolId, hostReader]]),
+          sources
         )
       );
       await expect(
@@ -268,7 +346,8 @@ for (const [toolId, catalogPath] of [
         undefined,
         undefined,
         new Map([[toolId, hostReader]]),
-        foreignUser
+        foreignUser,
+        sources
       );
       await foreignUseCase.execute({
         projectRoot: "/foreign",
@@ -294,7 +373,8 @@ for (const [toolId, catalogPath] of [
           new Map([[toolId, hostReader]]),
           undefined,
           registry,
-          user
+          user,
+          sources
         );
       await remove(a).execute({ pluginName: "test-plugin", toolIds: [toolId], projectRoot: "/A" });
       expect(activator.uninstalledPlugins).toEqual([]);

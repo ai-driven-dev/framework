@@ -9,12 +9,61 @@ import type { HostPluginRegistryReader } from "../../../../../src/contexts/tools
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { FakeHostMarketplaceRegistryReader } from "../../../../helpers/ports/fake-host-marketplace-registry-reader.js";
+import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
+import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 
 describe("native plugin ownership follows the host's activation scope", () => {
+  const freshNativeSources = (
+    toolId: "claude" | "codex",
+    activator: FakeNativePluginActivator,
+    identities: ReadonlyMap<string, string>
+  ) =>
+    new Map([
+      [
+        toolId,
+        new FakeNativeMarketplaceSourceReader(
+          activator,
+          toolId === "claude" ? "registry" : "effective-list",
+          (path) => identities.get(path),
+          new Map()
+        ),
+      ],
+    ]);
+  const readablePlugins = (toolId: "claude" | "codex") =>
+    new Map([
+      [
+        toolId,
+        new FakeHostPluginRegistryReader({
+          location: `/home/${toolId}/plugins/installed_plugins.json`,
+          refs: new Map(),
+        }),
+      ],
+    ]);
+  const freshHostCatalogs = () =>
+    new Map([
+      [
+        "claude" as const,
+        new FakeHostMarketplaceRegistryReader({
+          location: "/home/.claude/plugins/known_marketplaces.json",
+          entries: new Map(),
+        }),
+      ],
+    ]);
+  const readableHostPlugins = () =>
+    new Map([
+      [
+        "claude" as const,
+        new FakeHostPluginRegistryReader({
+          location: "/home/.claude/plugins/installed_plugins.json",
+          refs: new Map(),
+        }),
+      ],
+    ]);
   it("records a user-scope Claude marketplace without claiming its project-local plugin", async () => {
     const projectRoot = "/project";
     const marketplaceName = "local-catalog";
@@ -60,13 +109,14 @@ describe("native plugin ownership follows the host's activation scope", () => {
       new CapturingLogger(),
       new Map([["claude", activator]]),
       fakeEnsureBuiltMarketplace(),
-      new Map(),
+      freshHostCatalogs(),
       () => "",
       undefined,
       undefined,
       undefined,
-      new Map(),
-      machineRepo
+      readableHostPlugins(),
+      machineRepo,
+      freshNativeSources("claude", activator, new Map([["/built/claude", marketplaceName]]))
     );
 
     const result = await sync.execute({ projectRoot });
@@ -76,7 +126,11 @@ describe("native plugin ownership follows the host's activation scope", () => {
     expect(activator.enabledPluginScopes).toEqual(["project"]);
     expect(projectRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginRefs).toEqual([ref]);
     expect(machineRepo.getCurrent()?.getNativeRegistrations("claude")?.marketplaces).toEqual([
-      { alias: marketplaceName, hostName: marketplaceName },
+      {
+        alias: marketplaceName,
+        hostName: marketplaceName,
+        provenance: { kind: "registry", source: "/built/claude" },
+      },
     ]);
     expect(machineRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims ?? []).toEqual(
       []
@@ -128,13 +182,14 @@ describe("native plugin ownership follows the host's activation scope", () => {
       new CapturingLogger(),
       new Map([["claude", activator]]),
       fakeEnsureBuiltMarketplace(),
-      new Map(),
+      freshHostCatalogs(),
       () => "",
       undefined,
       undefined,
       undefined,
-      new Map(),
-      userRepo
+      readablePlugins("claude"),
+      userRepo,
+      freshNativeSources("claude", activator, new Map([["/built/claude", "real-catalog"]]))
     );
 
     const result = await sync.execute({ projectRoot, scope: "user", manifestRepo: userRepo });
@@ -143,7 +198,11 @@ describe("native plugin ownership follows the host's activation scope", () => {
     expect(activator.enabledPlugins).toEqual([ref]);
     expect(activator.enabledPluginScopes).toEqual(["user"]);
     expect(userRepo.getCurrent()?.getNativeRegistrations("claude")?.marketplaces).toEqual([
-      { alias, hostName: "real-catalog" },
+      {
+        alias,
+        hostName: "real-catalog",
+        provenance: { kind: "registry", source: "/built/claude" },
+      },
     ]);
     expect(userRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims).toEqual([
       { ref, dependents: [] },
@@ -199,13 +258,21 @@ describe("native plugin ownership follows the host's activation scope", () => {
           rebuilt: true,
         }),
       },
-      new Map(),
+      freshHostCatalogs(),
       () => "",
       undefined,
       undefined,
       undefined,
-      new Map(),
-      machineRepo
+      readableHostPlugins(),
+      machineRepo,
+      freshNativeSources(
+        "claude",
+        activator,
+        new Map([
+          ["/built/user-alias", "real-user"],
+          ["/built/project-alias", "real-project"],
+        ])
+      )
     );
 
     const result = await sync.execute({ projectRoot });
@@ -217,12 +284,24 @@ describe("native plugin ownership follows the host's activation scope", () => {
     expect(projectMarketplaces).toHaveLength(2);
     expect(projectMarketplaces).toEqual(
       expect.arrayContaining([
-        { alias: "user-alias", hostName: "real-user" },
-        { alias: "project-alias", hostName: "real-project" },
+        {
+          alias: "user-alias",
+          hostName: "real-user",
+          provenance: { kind: "registry", source: "/built/user-alias" },
+        },
+        {
+          alias: "project-alias",
+          hostName: "real-project",
+          provenance: { kind: "registry", source: "/built/project-alias" },
+        },
       ])
     );
     expect(machineRepo.getCurrent()?.getNativeRegistrations("claude")?.marketplaces).toEqual([
-      { alias: "user-alias", hostName: "real-user" },
+      {
+        alias: "user-alias",
+        hostName: "real-user",
+        provenance: { kind: "registry", source: "/built/user-alias" },
+      },
     ]);
   });
 
@@ -277,8 +356,9 @@ describe("native plugin ownership follows the host's activation scope", () => {
       undefined,
       undefined,
       undefined,
-      new Map(),
-      machineRepo
+      readablePlugins("codex"),
+      machineRepo,
+      freshNativeSources("codex", activator, new Map([["/built/codex", "real-catalog"]]))
     );
 
     const result = await sync.execute({ projectRoot });
@@ -359,8 +439,16 @@ describe("native plugin ownership follows the host's activation scope", () => {
       undefined,
       undefined,
       undefined,
-      new Map(),
-      machineRepo
+      readablePlugins("codex"),
+      machineRepo,
+      freshNativeSources(
+        "codex",
+        activator,
+        new Map([
+          ["/built/market-a", "real-a"],
+          ["/built/market-b", "real-b"],
+        ])
+      )
     );
 
     await sync.execute({ projectRoot, marketplaceNames: ["market-b"] });
@@ -438,8 +526,9 @@ describe("native plugin ownership follows the host's activation scope", () => {
       undefined,
       undefined,
       undefined,
-      new Map(),
-      machineRepo
+      readablePlugins("codex"),
+      machineRepo,
+      freshNativeSources("codex", activator, new Map([["/built/codex", "real-catalog"]]))
     );
 
     const result = await sync.execute({ projectRoot });

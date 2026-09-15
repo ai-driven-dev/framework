@@ -1,6 +1,7 @@
 import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -11,6 +12,10 @@ import { UserMarketplaceRemoveUseCase } from "../../../../../src/contexts/framew
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { HostPluginRegistryReader } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
+import type {
+  NativeMarketplaceSource,
+  NativeMarketplaceSourceReader,
+} from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -21,7 +26,25 @@ const HOST = "real-catalog";
 const REF = `test-plugin@${HOST}`;
 const OPTIONS = { name: ALIAS, projectRoot: "/A", autoConfirm: true, scope: "user" as const };
 
-for (const toolId of ["codex", "copilot"] as const) {
+function proofFor(): NativeMarketplaceSource {
+  return {
+    kind: "effective-list",
+    root: "/exact/host/root",
+    sourceType: "github",
+    source: "ai-driven-dev/framework",
+  };
+}
+
+function sourceReader(): NativeMarketplaceSourceReader {
+  return {
+    read: async () => ({
+      location: "/host/catalogues",
+      entries: new Map([[HOST, proofFor()]]),
+    }),
+  };
+}
+
+for (const toolId of ["codex"] as const) {
   describe(`${toolId} targeted user marketplace removal`, () => {
     async function fixture(
       refs: ReadonlyMap<string, { enabled: boolean; scope?: "project" | "user" }>,
@@ -36,7 +59,7 @@ for (const toolId of ["codex", "copilot"] as const) {
       machine.addTool(toolId, "1.0.0", []);
       machine.setNativeRegistrations(toolId, {
         binary: toolId,
-        marketplaces: [{ alias: ALIAS, hostName: HOST }],
+        marketplaces: [{ alias: ALIAS, hostName: HOST, provenance: proofFor() }],
         pluginRefs: [REF],
         pluginClaims: [{ ref: REF, dependents: [...(options.dependents ?? [])] }],
       });
@@ -63,7 +86,11 @@ for (const toolId of ["codex", "copilot"] as const) {
         new InMemoryFileAdapter(),
         repo,
         registry,
-        new NativeHostRegistrationGate(new Map([[toolId, activator]]), new Map([[toolId, reader]]))
+        new NativeHostRegistrationGate(
+          new Map([[toolId, activator]]),
+          new Map([[toolId, reader]]),
+          new Map([[toolId, sourceReader()]])
+        )
       );
       return { repo, registry, activator, useCase };
     }
@@ -171,7 +198,8 @@ for (const toolId of ["codex", "copilot"] as const) {
             toolId,
             { read: async () => ({ location: "/host/registry", unreadable: "permission denied" }) },
           ],
-        ])
+        ]),
+        new Map([[toolId, sourceReader()]])
       );
       const useCase = new UserMarketplaceRemoveUseCase(
         new InMemoryFileAdapter(),
@@ -179,7 +207,7 @@ for (const toolId of ["codex", "copilot"] as const) {
         f.registry,
         unreadable
       );
-      await expect(useCase.execute(OPTIONS)).rejects.toThrow(/Cannot read.*host registry/);
+      await expect(useCase.execute(OPTIONS)).rejects.toThrow(/host plugin registry unreadable/);
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref: REF, dependents: [] },
@@ -258,7 +286,8 @@ for (const toolId of ["codex", "copilot"] as const) {
           new Map([[toolId, f.activator]]),
           new Map([
             [toolId, { read: async () => ({ location: "/host/registry", refs: enabled() }) }],
-          ])
+          ]),
+          new Map([[toolId, sourceReader()]])
         )
       );
       await expect(useCase.execute(OPTIONS)).rejects.toThrow(/registry delete failed/);
@@ -321,6 +350,70 @@ for (const toolId of ["codex", "copilot"] as const) {
   });
 }
 
+describe("Copilot 1.0.83 targeted user marketplace removal", () => {
+  it("refuses an otherwise claimed and enabled catalogue without a verified current source, preserving settings and claims", async () => {
+    const machine = Manifest.create();
+    machine.addTool("copilot", "1.0.83", []);
+    machine.setNativeRegistrations("copilot", {
+      binary: "copilot",
+      marketplaces: [
+        {
+          alias: ALIAS,
+          hostName: HOST,
+          provenance: { kind: "registry", source: "/previous/aidd/source" },
+        },
+      ],
+      pluginRefs: [REF],
+      pluginClaims: [{ ref: REF, dependents: [] }],
+    });
+    const repo = new InMemoryManifestRepository(machine);
+    const registry = new InMemoryMarketplaceRegistry();
+    const marketplace = Marketplace.create({
+      name: ALIAS,
+      source: { kind: "github", repo: "ai-driven-dev/framework" },
+      scope: "user",
+      addedAt: "2026-09-01T00:00:00.000Z",
+    });
+    await registry.save("/A", marketplace);
+    const fs = new InMemoryFileAdapter();
+    fs.setFile("/A/copilot-user-note.md", "user bytes");
+    const activator = new FakeNativePluginActivator({ available: true });
+    const gate = new NativeHostRegistrationGate(
+      new Map([["copilot", activator]]),
+      new Map([
+        [
+          "copilot",
+          {
+            read: async () => ({
+              location: "/host/registry",
+              refs: new Map([[REF, { enabled: true, scope: "user" as const }]]),
+            }),
+          },
+        ],
+      ])
+    );
+    const useCase = new UserMarketplaceRemoveUseCase(fs, repo, registry, gate);
+
+    await expect(useCase.execute(OPTIONS)).rejects.toThrow(/host source reader unavailable/);
+
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(repo.saveCount).toBe(0);
+    expect(repo.getCurrent()?.getNativeRegistrations("copilot")?.pluginClaims).toEqual([
+      { ref: REF, dependents: [] },
+    ]);
+    expect(repo.getCurrent()?.getNativeRegistrations("copilot")?.marketplaces).toEqual([
+      {
+        alias: ALIAS,
+        hostName: HOST,
+        provenance: { kind: "registry", source: "/previous/aidd/source" },
+      },
+    ]);
+    expect(await registry.list("/A")).toEqual([marketplace]);
+    expect(fs.getFile("/A/copilot-user-note.md")).toBe("user bytes");
+  });
+});
+
 describe("Cursor targeted user marketplace removal", () => {
   async function fixture(
     options: { claim?: boolean; dependents?: readonly string[]; escape?: boolean } = {}
@@ -336,7 +429,7 @@ describe("Cursor targeted user marketplace removal", () => {
           source: { kind: "local", path: "/fixture" },
           version: "1.0.0",
           strict: false,
-          files: { [path]: "abc" },
+          files: { [path]: createHash("md5").update("bytes").digest("hex") },
           scope: "user",
           marketplace: ALIAS,
           dependents: [...(options.dependents ?? [])],
@@ -432,5 +525,15 @@ describe("Cursor targeted user marketplace removal", () => {
     expect(f.fs.getFile(join(f.pluginDir, "skills/demo/SKILL.md"))).toBeUndefined();
     expect(f.repo.getCurrent()?.getPlugins("cursor")).toEqual([]);
     expect((await f.registry.list("/A")).find((entry) => entry.name === ALIAS)).toBeUndefined();
+  });
+
+  it("refuses to remove a user-edited script and leaves marketplace and machine claim retryable", async () => {
+    const f = await fixture();
+    const path = join(f.pluginDir, "skills/demo/SKILL.md");
+    f.fs.setFile(path, "user-edited bytes");
+    await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(/edited.*SKILL.md|SKILL.md.*edited/);
+    expect(f.fs.getFile(path)).toBe("user-edited bytes");
+    expect(f.repo.getCurrent()?.getPlugins("cursor")).toHaveLength(1);
+    expect((await f.registry.list("/A")).find((entry) => entry.name === ALIAS)).toBeDefined();
   });
 });

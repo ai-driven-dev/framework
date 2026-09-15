@@ -20,11 +20,14 @@ import type {
   HostMarketplaceRegistryReader,
   HostMarketplaceRegistryReading,
 } from "../../../../src/contexts/tools/domain/ports/host-marketplace-registry-reader.js";
+import type { NativeMarketplaceSourceReader } from "../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import { hostMarketplaceRegistryReaders } from "../../../../src/contexts/tools/infrastructure/host-marketplace-registry-reader-adapter.js";
+import { HostRegistryMarketplaceSourceReaderAdapter } from "../../../../src/contexts/tools/infrastructure/native-marketplace-source-reader-adapter.js";
 import { AIDD_DIR } from "../../../../src/kernel/paths.js";
 import type { AiToolId } from "../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { FakeHostMarketplaceRegistryReader } from "../../../helpers/ports/fake-host-marketplace-registry-reader.js";
+import { FakeHostPluginRegistryReader } from "../../../helpers/ports/fake-host-plugin-registry-reader.js";
 import { FakeNativePluginActivator } from "../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
@@ -38,6 +41,26 @@ const CLAUDE_CACHE_ROOT = join(HOME, ".claude", "plugins", "cache");
 const CODEX_CACHE_ROOT = join(HOME, ".codex", "plugins", "cache");
 const MARKETPLACE = "probe-mkt";
 const REF = "plugin-a@probe-mkt";
+
+/** Codex's current catalogue is a literal host snapshot, not derived from the machine claim. */
+function codexHostSource(): NativeMarketplaceSourceReader {
+  return {
+    read: async () => ({
+      location: "fixture Codex effective catalogue",
+      entries: new Map(
+        ["probe-mkt", "aidd-framework"].map((name) => [
+          name,
+          {
+            kind: "effective-list" as const,
+            root: "/some/built/path",
+            sourceType: "local",
+            source: "/some/built/path",
+          },
+        ])
+      ),
+    }),
+  };
+}
 
 /** Records every `deleteDirectory` call, so a test can prove containment refused one
  * without ever letting it run. */
@@ -139,20 +162,37 @@ function seedManifest(toolId: "claude" | "codex", hostName: string, alias: strin
   manifest.addTool(toolId, "1.0.0", []);
   manifest.setNativeRegistrations(toolId, {
     binary: toolId,
-    marketplaces: [{ alias, hostName }],
+    marketplaces: [
+      {
+        alias,
+        hostName,
+        provenance:
+          toolId === "claude"
+            ? { kind: "registry", source: "/resolved/source" }
+            : {
+                kind: "effective-list",
+                root: "/some/built/path",
+                sourceType: "local",
+                source: "/some/built/path",
+              },
+      },
+    ],
     pluginRefs: [REF],
   });
   return manifest;
 }
 
-function seedAiddMarketplaceRegistry(alias: string): InMemoryMarketplaceRegistry {
+function seedAiddMarketplaceRegistry(
+  alias: string,
+  scope: "project" | "user" = "project"
+): InMemoryMarketplaceRegistry {
   const registry = new InMemoryMarketplaceRegistry();
   registry.save(
     PROJECT_ROOT,
     Marketplace.create({
       name: alias,
       source: { kind: "local", path: "/some/built/path" },
-      scope: "project",
+      scope,
       addedAt: "2026-01-01T00:00:00.000Z",
     })
   );
@@ -163,7 +203,7 @@ function buildUseCase(deps: {
   fs: InMemoryFileAdapter;
   manifest: Manifest;
   activator: FakeNativePluginActivator;
-  binary: string;
+  binary: AiToolId;
   logger: CapturingLogger;
   aiddMarketplaceRegistry: InMemoryMarketplaceRegistry;
   hostMarketplaceRegistries?: ReadonlyMap<AiToolId, HostMarketplaceRegistryReader>;
@@ -171,6 +211,13 @@ function buildUseCase(deps: {
   userManifestRepo?: InMemoryManifestRepository;
 }): CleanUseCase {
   const manifestRepo = new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT);
+  const claudeHostRegistry = deps.hostMarketplaceRegistries?.get("claude");
+  const nativeReader: NativeMarketplaceSourceReader | undefined =
+    deps.binary === "codex"
+      ? codexHostSource()
+      : deps.binary === "claude" && claudeHostRegistry !== undefined
+        ? new HostRegistryMarketplaceSourceReaderAdapter(claudeHostRegistry)
+        : undefined;
   return new CleanUseCase(
     deps.fs,
     manifestRepo,
@@ -182,8 +229,17 @@ function buildUseCase(deps: {
     deps.hostMarketplaceRegistries ?? new Map(),
     deps.homeDir ?? (() => HOME),
     undefined,
-    new Map(),
-    deps.userManifestRepo
+    new Map([
+      [
+        deps.binary,
+        new FakeHostPluginRegistryReader({
+          location: "fixture host plugin registry",
+          refs: new Map(),
+        }),
+      ],
+    ]),
+    deps.userManifestRepo,
+    nativeReader === undefined ? new Map() : new Map([[deps.binary, nativeReader]])
   );
 }
 
@@ -197,7 +253,7 @@ describe("clean purges a host's own plugin cache", () => {
       PROJECT_ROOT,
       Marketplace.create({
         name: MARKETPLACE,
-        source: { kind: "local", path: "/source" },
+        source: { kind: "local", path: "/some/built/path" },
         scope: "user",
         addedAt: "2026-01-01T00:00:00Z",
       })
@@ -239,7 +295,7 @@ describe("clean purges a host's own plugin cache", () => {
       PROJECT_ROOT,
       Marketplace.create({
         name: MARKETPLACE,
-        source: { kind: "local", path: "/source" },
+        source: { kind: "local", path: "/some/built/path" },
         scope: "project",
         addedAt: "2026-01-01T00:00:00Z",
       })
@@ -275,7 +331,18 @@ describe("clean purges a host's own plugin cache", () => {
     project.addTool("codex", "1.0.0", []);
     project.setNativeRegistrations("codex", {
       binary: "codex",
-      marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
+      marketplaces: [
+        {
+          alias: MARKETPLACE,
+          hostName: MARKETPLACE,
+          provenance: {
+            kind: "effective-list",
+            root: "/some/built/path",
+            sourceType: "local",
+            source: "/some/built/path",
+          },
+        },
+      ],
       pluginRefs: [],
     });
     const machine = Manifest.create();
@@ -304,7 +371,7 @@ describe("clean purges a host's own plugin cache", () => {
       PROJECT_ROOT,
       Marketplace.create({
         name: MARKETPLACE,
-        source: { kind: "local", path: "/source" },
+        source: { kind: "local", path: "/some/built/path" },
         scope: "project",
         addedAt: "2026-01-01T00:00:00Z",
       })
@@ -391,7 +458,7 @@ describe("clean purges a host's own plugin cache", () => {
       PROJECT_ROOT,
       Marketplace.create({
         name: MARKETPLACE,
-        source: { kind: "local", path: "/source" },
+        source: { kind: "local", path: "/some/built/path" },
         scope: "project",
         addedAt: "2026-01-01T00:00:00Z",
       })
@@ -484,7 +551,8 @@ describe("clean purges a host's own plugin cache", () => {
 
     expect(await fs.fileExists(cacheEntry)).toBe(false);
     expect(activator.removedMarketplaces).toContain(MARKETPLACE);
-    expect(reader.reads).toBe(1);
+    // Source preflight, native undo recheck, then post-removal cache confirmation.
+    expect(reader.reads).toBe(3);
   });
 
   it("leaves claude's cache in place, and names it, when the claude CLI is not on PATH", async () => {
@@ -549,11 +617,12 @@ describe("clean purges a host's own plugin cache", () => {
     await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
     expect(await fs.fileExists(cacheEntry)).toBe(true);
-    expect(reader.reads).toBe(0);
+    // Source preflight and undo recheck ran; failed removal never reached cache confirmation.
+    expect(reader.reads).toBe(2);
     expect(logger.warnMessages.some((m) => m.includes("removal was not confirmed"))).toBe(true);
   });
 
-  it("purges claude's cache when its registry does not exist at all", async () => {
+  it("refuses project clean when Claude's current registry does not exist", async () => {
     const fs = new RecordingFileAdapter();
     const cacheEntry = join(CLAUDE_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
@@ -573,12 +642,16 @@ describe("clean purges a host's own plugin cache", () => {
       hostMarketplaceRegistries: new Map([["claude", reader]]),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await expect(useCase.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
+      "absent on the host"
+    );
 
-    expect(await fs.fileExists(cacheEntry)).toBe(false);
+    expect(fs.getFile(cacheEntry)).toBe("{}");
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
   });
 
-  it("leaves claude's cache in place, and says so, when its registry could not be read", async () => {
+  it("refuses project clean without deleting cache when Claude's registry is unreadable", async () => {
     const fs = new RecordingFileAdapter();
     const cacheEntry = join(CLAUDE_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
@@ -599,19 +672,17 @@ describe("clean purges a host's own plugin cache", () => {
       hostMarketplaceRegistries: new Map([["claude", reader]]),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await expect(useCase.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
+      "EACCES"
+    );
 
-    expect(await fs.fileExists(cacheEntry)).toBe(true);
-    expect(
-      logger.warnMessages.some(
-        (m) =>
-          m.includes("claude: plugin cache left in place, its registry could not be read") &&
-          m.includes("known_marketplaces.json")
-      )
-    ).toBe(true);
+    expect(fs.getFile(cacheEntry)).toBe("{}");
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(fs.deletedDirectories).toEqual([]);
   });
 
-  it("purges the cache under the same HOME its own registry reader resolves its file from", async () => {
+  it("refuses project clean under the same HOME its registry reader proves absent", async () => {
     // A sentinel, never this machine's real home: a cache root composed from `os.homedir()`
     // directly ignores the injected `homeDir` and looks under the real home instead.
     const SENTINEL_HOME = "/sentinel-home-clean-cache-parity";
@@ -645,14 +716,17 @@ describe("clean purges a host's own plugin cache", () => {
       homeDir: () => SENTINEL_HOME,
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await expect(useCase.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
+      "absent on the host"
+    );
 
-    // The real reader finds no known_marketplaces.json under a sentinel home that does not
-    // exist on disk — absent, not unreadable — so purging proves both halves used it.
-    expect(await fs.fileExists(cacheEntry)).toBe(false);
+    // The real reader resolves the sentinel HOME, not the user's real registry.
+    expect(fs.getFile(cacheEntry)).toBe("{}");
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
   });
 
-  it("refuses a '..' segment in a manifest's own hostName, never consulting the registry", async () => {
+  it("refuses a '..' cache path after proving the current host source", async () => {
     const hostName = "../../../evil";
     const fs = new RecordingFileAdapter();
     const witness = join(CLAUDE_CACHE_ROOT, hostName);
@@ -681,7 +755,7 @@ describe("clean purges a host's own plugin cache", () => {
 
     expect(await fs.fileExists(join(witness, "keep-me.txt"))).toBe(true);
     expect(fs.deletedDirectories).not.toContain(witness);
-    expect(reader.reads).toBe(0);
+    expect(reader.reads).toBe(1);
     expect(logger.warnMessages.some((m) => m.includes("does not resolve inside"))).toBe(true);
   });
 
@@ -745,7 +819,7 @@ describe("clean purges a host's own plugin cache", () => {
     expect(fs.deletedDirectories).toContain(join(PROJECT_ROOT, AIDD_DIR, "cache"));
   });
 
-  it("touches nothing under HOME for a tool whose profile declares no pluginCacheDir", async () => {
+  it("detaches a shared Copilot claim locally without a host source reader or HOME deletion", async () => {
     const fs = new RecordingFileAdapter();
     const activator = new FakeNativePluginActivator({ available: true });
     const manifest = Manifest.create();
@@ -761,12 +835,14 @@ describe("clean purges a host's own plugin cache", () => {
       activator,
       binary: "copilot",
       logger: new CapturingLogger(),
-      aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
+      aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE, "user"),
     });
 
     await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
     expect(fs.deletedDirectories.some((p) => p.startsWith(HOME))).toBe(false);
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
   });
 
   it("purges under the catalog's own hostName, never the project's local alias", async () => {

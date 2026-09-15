@@ -23,6 +23,7 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../distribution/domain/marketplac
 import type { MarketplaceRegistry } from "../../distribution/domain/ports/marketplace-registry.js";
 import type { HostMarketplaceRegistryReader } from "../../tools/domain/ports/host-marketplace-registry-reader.js";
 import type { HostPluginRegistryReader } from "../../tools/domain/ports/host-plugin-registry-reader.js";
+import type { NativeMarketplaceSourceReader } from "../../tools/domain/ports/native-marketplace-source-reader.js";
 import type { NativePluginActivator } from "../../tools/domain/ports/native-plugin-activator.js";
 import {
   machineLocalFilesOf,
@@ -38,9 +39,14 @@ import type { ManifestRepository } from "../domain/ports/manifest-repository.js"
 import type { UserSourceReferences } from "../domain/ports/user-source-references.js";
 import type { GitignoreUseCase } from "./gitignore-use-case.js";
 import {
+  assertNoForeignNativeRefs,
+  inspectNativeMarketplaceSource,
+} from "./ownership/native-marketplace-source-proof.js";
+import {
   detachNativePluginRefs,
   machineNativePluginClaim,
 } from "./ownership/native-plugin-ownership.js";
+import { assertProjectMcpEntriesRemovable } from "./ownership/project-plugin-cleanup.js";
 import { detachUserPlugin } from "./ownership/user-plugin-ownership.js";
 import { deletePluginFilesForTool } from "./plugin/plugin-helpers.js";
 import { bestEffortNativeCall } from "./shared/best-effort-native-call.js";
@@ -48,7 +54,7 @@ import {
   purgeAllNativeCaches,
   type UndoneToolRegistrations,
 } from "./shared/purge-native-marketplace-cache.js";
-import { removeProjectHooks } from "./shared/remove-project-hooks.js";
+import { assertProjectHooksRemovable, removeProjectHooks } from "./shared/remove-project-hooks.js";
 import { resolveUninstallScopeOrder } from "./shared/resolve-uninstall-scope.js";
 import {
   describeGuardedPluginRefMessage,
@@ -60,7 +66,7 @@ import {
 } from "./shared/shared-source-reference-support.js";
 import { userScopeFilesSafeToDelete } from "./shared/user-scope-plugin-files.js";
 
-/** What dropping this project's own reference to the shared source found — `undefined` only
+/** What reading this project's shared source reference found — `undefined` only
  * when there is nothing to guard on at all: the port is absent, or no shared, machine-scope
  * marketplace is registered locally. `otherProjects` is read regardless of whether this
  * project's own claim was there to drop, since another project's claim is a fact worth
@@ -68,6 +74,7 @@ import { userScopeFilesSafeToDelete } from "./shared/user-scope-plugin-files.js"
  * per tool into that tool's `hostName` — never the alias, which a host never learns. */
 interface SharedSourceReferenceOutcome {
   readonly alias: string;
+  readonly resolvedRoot: string;
   readonly otherProjects: readonly string[];
 }
 
@@ -141,7 +148,8 @@ export class CleanUseCase {
       AiToolId,
       HostPluginRegistryReader
     > = new Map(),
-    private readonly userManifestRepo?: ManifestRepository
+    private readonly userManifestRepo?: ManifestRepository,
+    private readonly nativeSources: ReadonlyMap<AiToolId, NativeMarketplaceSourceReader> = new Map()
   ) {}
 
   async execute(options: CleanOptions): Promise<CleanResult> {
@@ -154,10 +162,26 @@ export class CleanUseCase {
     const preview = await this.buildPreview(manifest, home, options.projectRoot);
     const dryRunResult = await this.confirmOrDryRun(options, preview);
     if (dryRunResult !== null) return dryRunResult;
-    // Decremented exactly once per run, before the per-tool loop: the shared source's reference
-    // count is a project-level fact, and claude, codex and copilot can each carry their own ref,
-    // so decrementing inside that loop would drop this project's claim once per tool.
-    const sharedSourceOutcome = await this.dropSharedSourceReference(options.projectRoot);
+    await this.assertNativeSourcesUnchanged(manifest, options.projectRoot);
+    for (const toolId of manifest.getInstalledToolIds()) {
+      if (!isAiToolId(toolId)) continue;
+      for (const plugin of manifest.getPlugins(toolId)) {
+        if (projectHooksFileOf(toolId) !== undefined) {
+          await assertProjectHooksRemovable(this.fs, plugin, toolId, options.projectRoot);
+        }
+        await assertProjectMcpEntriesRemovable(this.fs, plugin, toolId, options.projectRoot);
+      }
+    }
+    // Read the other projects before host cleanup, but keep this project's claim until every
+    // local cleanup step succeeds. A failed file or gitignore cleanup must not free the source.
+    const sharedSourceOutcome = await this.withSharedSourceClaims(
+      options.projectRoot,
+      async (references, alias, resolvedRoot) => ({
+        alias,
+        resolvedRoot,
+        otherProjects: await otherProjectsReferencing(references, resolvedRoot),
+      })
+    );
     // Undoing a host's own registration must happen before any of the rest: the tool's CLI
     // resolves the marketplace name against the built tree under `.aidd/cache/`, which
     // `removeAiddState` deletes next, and a host may refuse to unregister a source that is gone.
@@ -176,6 +200,8 @@ export class CleanUseCase {
     await this.removeAiddState(options.projectRoot);
     // Exactly what the pipeline added on install, never a subset of it.
     await this.gitignoreUseCase.remove(options.projectRoot, aiddGitignoreEntries(manifest));
+    // One project-level decrement, only after the local projection has been cleaned successfully.
+    await this.dropSharedSourceReference(sharedSourceOutcome?.resolvedRoot);
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const toolId of manifest.getInstalledToolIds()) {
       const refs = manifest.getNativeRegistrations(toolId)?.pluginRefs;
@@ -197,6 +223,51 @@ export class CleanUseCase {
       }
     }
     return { dryRun: false, manifestFound: true, preview, fileCount: deleted };
+  }
+
+  /** A project clean must not decrement shared claims before proving the host names it may undo. */
+  private async assertNativeSourcesUnchanged(
+    manifest: Manifest,
+    projectRoot: string
+  ): Promise<void> {
+    const projectMarketplaces = (await this.marketplaceRegistry?.list(projectRoot)) ?? [];
+    const machineManifest = await this.userManifestRepo?.load();
+    for (const toolId of manifest.getInstalledToolIds()) {
+      if (!isAiToolId(toolId)) continue;
+      const registrations = manifest.getNativeRegistrations(toolId);
+      if (registrations === undefined) continue;
+      const activator = this.activators.get(registrations.binary);
+      if (activator === undefined || !activator.isAvailable()) continue;
+      for (const registration of registrations.marketplaces) {
+        if (
+          projectMarketplaces.find((marketplace) => marketplace.name === registration.alias)
+            ?.scope !== "project"
+        ) {
+          continue;
+        }
+        const proof = await inspectNativeMarketplaceSource(
+          this.nativeSources.get(toolId),
+          projectRoot,
+          registration
+        );
+        if (proof.status !== "owned") {
+          throw new Error(
+            proof.reason ??
+              `${toolId}: catalogue '${registration.hostName}' is absent on the host; clean refused until manual reconciliation.`
+          );
+        }
+        const machineRefs =
+          machineManifest
+            ?.getNativeRegistrations(toolId)
+            ?.pluginClaims?.map((claim) => claim.ref) ?? [];
+        await assertNoForeignNativeRefs(
+          this.hostPluginRegistries.get(toolId),
+          registration.hostName,
+          new Set([...registrations.pluginRefs, ...machineRefs]),
+          projectRoot
+        );
+      }
+    }
   }
 
   // `config.json` is the committed telemetry switch: a file clean did not write, so clean never
@@ -373,29 +444,17 @@ export class CleanUseCase {
       : this.userManifestRepo.withExclusiveAccess(removeProjectRegistration);
   }
 
-  /** Decrements this project's own claim exactly once per `clean` run, independent of how many
-   * tools' registrations name it: the count in `references.json` is per project, never per tool.
-   * Never reads a "current" CLI version to decide which key to touch, so a self-update between
-   * the `sync` that wrote the reference and this `clean` cannot strand it. `undefined` only when
-   * the port was never wired in, or no shared marketplace is registered locally — never merely
-   * because this project's own claim was already missing. */
-  private async dropSharedSourceReference(
-    projectRoot: string
-  ): Promise<SharedSourceReferenceOutcome | undefined> {
-    return this.withSharedSourceClaims(
-      projectRoot,
-      async (userSourceReferences, alias, resolvedRoot) => {
-        // A no-op when this project's own registry never held the shared entry, which must never
-        // collapse into "no other projects": another project's claim is worth guarding on
-        // regardless, so `otherProjects` is always read in full.
-        await userSourceReferences.removeReference(resolvedRoot);
-        const otherProjects = await otherProjectsReferencing(userSourceReferences, resolvedRoot);
-        return { alias, otherProjects };
-      }
+  /** Decrements this project's claim exactly once after local cleanup. The resolved root was
+   * captured before `.aidd/` and its local marketplace registry were deleted. */
+  private async dropSharedSourceReference(resolvedRoot: string | undefined): Promise<void> {
+    const references = this.userSourceReferences;
+    if (references === undefined || resolvedRoot === undefined) return;
+    await toleratingUnreadableSourceReferences(this.logger, undefined, () =>
+      references.removeReference(resolvedRoot)
     );
   }
 
-  /** Shared preamble behind `dropSharedSourceReference` and `previewSharedSourceOtherProjects`:
+  /** Shared preamble behind the cleanup read and `previewSharedSourceOtherProjects`:
    * `undefined` when the port was never wired in or no shared, machine-scope registration exists
    * to act on. `action` alone decides whether the run only reads or also writes. */
   private async withSharedSourceClaims<T>(
@@ -485,6 +544,19 @@ export class CleanUseCase {
       );
       return;
     }
+    if (pluginEnablementIsMachineGlobal(toolId)) {
+      const sharedHostName = registrations.marketplaces.find(
+        (registration) => registration.alias === sharedSourceOutcome?.alias
+      )?.hostName;
+      const otherProjects =
+        sharedHostName !== undefined && ref.endsWith(`@${sharedHostName}`)
+          ? (sharedSourceOutcome?.otherProjects ?? [])
+          : [];
+      this.logger.warn(
+        `${binary}: '${ref}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.${otherProjects.length > 0 ? ` Still needed by ${otherProjects.join(", ")}.` : ""}`
+      );
+      return;
+    }
     const guardMessage = this.describeGuardedPluginRef(
       binary,
       toolId,
@@ -496,7 +568,40 @@ export class CleanUseCase {
       this.logger.warn(guardMessage);
       return;
     }
+    const sourceRegistration = registrations.marketplaces.find((registration) =>
+      ref.endsWith(`@${registration.hostName}`)
+    );
+    if (sourceRegistration === undefined) {
+      this.logger.warn(`${binary}: '${ref}' has no recorded host catalogue — left enabled.`);
+      return;
+    }
+    const proof = await inspectNativeMarketplaceSource(
+      isAiToolId(toolId) ? this.nativeSources.get(toolId) : undefined,
+      projectRoot,
+      sourceRegistration
+    );
+    if (proof.status !== "owned") {
+      this.logger.warn(
+        `${binary}: '${ref}' left enabled because its current host catalogue is unproven. ${proof.reason ?? "Reconcile manually."}`
+      );
+      return;
+    }
     const reader = isAiToolId(toolId) ? this.hostPluginRegistries.get(toolId) : undefined;
+    const machineRefs =
+      (await this.userManifestRepo?.load())
+        ?.getNativeRegistrations(toolId)
+        ?.pluginClaims?.map((machineClaim) => machineClaim.ref) ?? [];
+    try {
+      await assertNoForeignNativeRefs(
+        reader,
+        sourceRegistration.hostName,
+        new Set([...registrations.pluginRefs, ...machineRefs]),
+        projectRoot
+      );
+    } catch (error) {
+      this.logger.warn(`${binary}: '${ref}' left enabled; ${String(error)}`);
+      return;
+    }
     const manifestScope = this.manifestScopeForRef(manifest, toolId, registrations, ref);
     const order = await resolveUninstallScopeOrder(reader, ref, projectRoot, manifestScope);
     let lastMessage = "";
@@ -603,7 +708,7 @@ export class CleanUseCase {
     if (projectHooksFileOf(toolId) === undefined || !isAiToolId(toolId)) return 0;
     let count = 0;
     for (const plugin of manifest.getPlugins(toolId)) {
-      if (await removeProjectHooks(this.fs, plugin.name, toolId, projectRoot)) count++;
+      if (await removeProjectHooks(this.fs, plugin, toolId, projectRoot)) count++;
     }
     return count;
   }

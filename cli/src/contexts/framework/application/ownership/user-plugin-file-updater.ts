@@ -1,4 +1,5 @@
 import { homedir as nodeHomedir } from "node:os";
+import { join } from "node:path";
 import type { InstallationFile } from "../../../../kernel/file.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
@@ -28,6 +29,16 @@ import {
 } from "../shared/user-scope-plugin-files.js";
 import type { UserPluginDistributionLoader } from "./user-plugin-distribution-loader.js";
 
+export interface PlannedUserPluginFileUpdate {
+  readonly plugin: InstalledPlugin;
+  readonly toolId: AiToolId;
+  readonly home: string;
+  readonly baseDir: string;
+  readonly files: readonly InstallationFile[];
+  readonly oldSafe: ReadonlyMap<string, string>;
+  readonly next: InstalledPlugin;
+}
+
 export class UserPluginFileUpdater {
   constructor(
     private readonly fs: FileReader & FileWriter,
@@ -42,6 +53,16 @@ export class UserPluginFileUpdater {
     projectRoot: string,
     logger: Logger
   ): Promise<InstalledPlugin | null> {
+    const plan = await this.planUpdate(plugin, toolId, projectRoot, logger);
+    return plan === null ? null : this.applyUpdate(plan, logger);
+  }
+
+  async planUpdate(
+    plugin: InstalledPlugin,
+    toolId: AiToolId,
+    projectRoot: string,
+    logger: Logger
+  ): Promise<PlannedUserPluginFileUpdate | null> {
     const dist = await this.loader.loadLatest(plugin, projectRoot);
     if (compareSemver(dist.manifest.version, plugin.version) <= 0) return null;
     const { files, componentPaths } = await this.materializeFiles(
@@ -59,21 +80,70 @@ export class UserPluginFileUpdater {
     }
     await assertUserScopeWriteBoundary(this.fs, toolId, plugin.name, files, home);
     const baseDir = resolveBaseDirFromRecord("user", toolId, projectRoot, () => home);
-    await writePluginFiles(files, baseDir, this.fs);
-    const newPaths = new Set(files.map((file) => file.relativePath));
-    await deleteOldFiles(
-      new Map([...oldSafe].filter(([path]) => !newPaths.has(path))),
+    await this.assertNewFilesDoNotCollide(plugin, toolId, baseDir, files);
+    return {
+      plugin,
+      toolId,
+      home,
       baseDir,
+      files,
+      oldSafe,
+      next: InstalledPlugin.fromDistribution(
+        dist,
+        plugin.source,
+        files,
+        "user",
+        componentPaths,
+        plugin.marketplace
+      ).withDependents(plugin.dependents),
+    };
+  }
+
+  async applyUpdate(plan: PlannedUserPluginFileUpdate, logger: Logger): Promise<InstalledPlugin> {
+    const oldSafe = await userScopeFilesSafeToDelete(
+      this.fs,
+      logger,
+      plan.plugin,
+      plan.toolId,
+      plan.home
+    );
+    if (oldSafe.size !== plan.plugin.files.size || oldSafe.size !== plan.oldSafe.size) {
+      throw new Error(
+        `${plan.toolId}: '${plan.plugin.name}' has unsafe recorded files since preflight; update refused before writing.`
+      );
+    }
+    await assertUserScopeWriteBoundary(
+      this.fs,
+      plan.toolId,
+      plan.plugin.name,
+      [...plan.files],
+      plan.home
+    );
+    await this.assertNewFilesDoNotCollide(plan.plugin, plan.toolId, plan.baseDir, plan.files);
+    await writePluginFiles([...plan.files], plan.baseDir, this.fs);
+    const newPaths = new Set(plan.files.map((file) => file.relativePath));
+    await deleteOldFiles(
+      new Map([...plan.oldSafe].filter(([path]) => !newPaths.has(path))),
+      plan.baseDir,
       this.fs
     );
-    return InstalledPlugin.fromDistribution(
-      dist,
-      plugin.source,
-      files,
-      "user",
-      componentPaths,
-      plugin.marketplace
-    ).withDependents(plugin.dependents);
+    return plan.next;
+  }
+
+  private async assertNewFilesDoNotCollide(
+    plugin: InstalledPlugin,
+    toolId: AiToolId,
+    baseDir: string,
+    files: readonly InstallationFile[]
+  ): Promise<void> {
+    for (const file of files) {
+      if (plugin.files.has(file.relativePath)) continue;
+      if (await this.fs.fileExists(join(baseDir, file.relativePath))) {
+        throw new Error(
+          `${toolId}: '${plugin.name}' has untracked existing file '${file.relativePath}'; update refused without overwriting user content or changing its machine claim.`
+        );
+      }
+    }
   }
 
   private async materializeFiles(

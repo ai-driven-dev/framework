@@ -22,8 +22,7 @@ export interface NativePluginActivator {
    * the tool offers no way to tell, which callers must read as "leave it alone": a registration
    * that might belong to a live project elsewhere is not one to take over. */
   registrationState(name: string): "live" | "dead" | "unknown";
-  /** Refreshes marketplace snapshots so plugin installs pick up new versions. No-op when unsupported. */
-  upgradeMarketplaces(): void;
+  upgradeMarketplaces(name: string): void;
   /**
    * Installs and enables a plugin referenced as `<plugin>@<marketplace>`. Idempotent.
    *
@@ -34,7 +33,6 @@ export interface NativePluginActivator {
    * copilot) ignores it.
    */
   enablePlugin(pluginRef: string, scope?: MarketplaceScope): void;
-  /** Optional: only a profile with a verified per-ref update command may expose this. */
   updatePlugin?(pluginRef: string): void;
   /**
    * Uninstalls a plugin referenced as `<plugin>@<marketplace>`, the counterpart of

@@ -1,6 +1,7 @@
 import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -9,6 +10,7 @@ import { userScopeFilesSafeToDelete } from "../../../../../src/contexts/framewor
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { HostPluginRegistryReader } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
+import type { NativeMarketplaceSource } from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import { resolveHomeDir } from "../../../../../src/kernel/reading/home-dir.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
@@ -19,6 +21,17 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 const REF = "test-plugin@real-catalog";
 const OTHER = "test-plugin@other-catalog";
 
+function sourceFor(toolId: "codex" | "copilot", catalogue: string): NativeMarketplaceSource {
+  return toolId === "codex"
+    ? {
+        kind: "effective-list",
+        root: `/host/${catalogue}`,
+        sourceType: "github",
+        source: `ai-driven-dev/${catalogue}`,
+      }
+    : { kind: "registry", source: `https://github.com/ai-driven-dev/${catalogue}.git` };
+}
+
 for (const toolId of ["codex", "copilot"] as const) {
   describe(`${toolId} targeted user plugin removal`, () => {
     function fixture(
@@ -28,6 +41,9 @@ for (const toolId of ["codex", "copilot"] as const) {
         hostRefs?: ReadonlyMap<string, { enabled: boolean; scope?: "user" | "project" }>;
         available?: boolean;
         failOnUninstall?: boolean;
+        sourceMismatch?: boolean;
+        sourceUnavailable?: boolean;
+        legacy?: boolean;
       } = {}
     ) {
       const refs = options.refs ?? [REF];
@@ -38,6 +54,7 @@ for (const toolId of ["codex", "copilot"] as const) {
         marketplaces: refs.map((ref) => ({
           alias: ref.split("@")[1],
           hostName: ref.split("@")[1],
+          ...(options.legacy ? {} : { provenance: sourceFor(toolId, ref.split("@")[1]) }),
         })),
         pluginRefs: [...refs],
         pluginClaims: refs.map((ref) => ({ ref, dependents: [...(options.dependents ?? [])] })),
@@ -54,6 +71,22 @@ for (const toolId of ["codex", "copilot"] as const) {
       const reader: HostPluginRegistryReader = {
         read: async () => ({ location: "/host/registry", refs: hostRefs }),
       };
+      const sources = {
+        read: async () => ({
+          location: "/host/catalogues",
+          entries: new Map(
+            refs.map((ref) => {
+              const catalogue = ref.split("@")[1];
+              return [
+                catalogue,
+                options.sourceMismatch && ref === REF
+                  ? sourceFor(toolId, "foreign-source")
+                  : sourceFor(toolId, catalogue),
+              ] as const;
+            })
+          ),
+        }),
+      };
       const remove = new PluginRemoveUseCase(
         fs,
         new InMemoryManifestRepository(Manifest.create()),
@@ -62,7 +95,8 @@ for (const toolId of ["codex", "copilot"] as const) {
         new Map([[toolId, reader]]),
         undefined,
         new InMemoryMarketplaceRegistry(),
-        repo
+        repo,
+        options.sourceUnavailable ? new Map() : new Map([[toolId, sources]])
       );
       return { repo, fs, activator, remove };
     }
@@ -127,6 +161,28 @@ for (const toolId of ["codex", "copilot"] as const) {
       ]);
     });
 
+    it("refuses to uninstall an enabled native ref when its host catalogue source changed", async () => {
+      const f = fixture({ sourceMismatch: true });
+      await expect(execute(f.remove, REF)).rejects.toThrow(/source differs|source.*changed/);
+      expect(f.activator.uninstalledPlugins).toEqual([]);
+      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
+        { ref: REF, dependents: [] },
+      ]);
+    });
+
+    it("refuses no source reader and legacy unproven source instead of trusting an enabled ref", async () => {
+      for (const options of [{ sourceUnavailable: true }, { legacy: true }]) {
+        const f = fixture(options);
+        await expect(execute(f.remove, REF)).rejects.toThrow(
+          /source reader unavailable|legacy claim/
+        );
+        expect(f.activator.uninstalledPlugins).toEqual([]);
+        expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
+          { ref: REF, dependents: [] },
+        ]);
+      }
+    });
+
     it("unregisters only the exact host ref and removes only its machine projection", async () => {
       const f = fixture({ refs: [REF, OTHER] });
       await execute(f.remove, REF);
@@ -161,14 +217,16 @@ describe("Cursor user plugin boundary", () => {
         source: { kind: "local", path: "/fixture" },
         version: "1.0.0",
         strict: false,
-        files: { "sample-plugin/skills/demo/SKILL.md": "abc" },
+        files: {
+          "sample-plugin/plugin.json": createHash("md5").update("owned bytes").digest("hex"),
+        },
         scope: "user",
         dependents: [],
       })
     );
     const repo = new InMemoryManifestRepository(machine);
     const fs = new InMemoryFileAdapter();
-    const path = join(homedir(), ".cursor/plugins/local/sample-plugin/skills/demo/SKILL.md");
+    const path = join(homedir(), ".cursor/plugins/local/sample-plugin/plugin.json");
     fs.setFile(path, "owned bytes");
     const remove = new PluginRemoveUseCase(
       fs,
@@ -180,6 +238,18 @@ describe("Cursor user plugin boundary", () => {
       new InMemoryMarketplaceRegistry(),
       repo
     );
+    fs.setFile(path, "user-edited plugin.json");
+    await expect(
+      remove.execute({
+        pluginName: "sample-plugin",
+        toolIds: ["cursor"],
+        projectRoot: "/A",
+        scope: "user",
+      })
+    ).rejects.toThrow(/edited.*plugin.json|plugin.json.*edited/);
+    expect(fs.getFile(path)).toBe("user-edited plugin.json");
+    expect(repo.getCurrent()?.getPlugins("cursor")).toHaveLength(1);
+    fs.setFile(path, "owned bytes");
     await remove.execute({
       pluginName: "sample-plugin",
       toolIds: ["cursor"],

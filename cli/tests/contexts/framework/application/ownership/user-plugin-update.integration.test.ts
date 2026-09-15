@@ -34,7 +34,11 @@ function fixture(
   machine.addTool(toolId, "1.0.0", []);
   machine.setNativeRegistrations(toolId, {
     binary: toolId,
-    marketplaces: refs.map((ref) => ({ alias: ref.split("@")[1], hostName: ref.split("@")[1] })),
+    marketplaces: refs.map((ref) => ({
+      alias: ref.split("@")[1],
+      hostName: ref.split("@")[1],
+      provenance: { kind: "registry" as const, source: "/previous/aidd/source" },
+    })),
     pluginRefs: [...refs],
     pluginClaims: refs.map((ref) => ({ ref, dependents: [...(options.dependents ?? [])] })),
   });
@@ -76,16 +80,15 @@ function fixture(
 }
 
 describe("targeted machine native plugin update", () => {
-  it("Copilot updates the exact AIDD-owned ref and names all dependent projects", async () => {
+  it("Copilot retains exact AIDD claims when its installed binary cannot prove the source", async () => {
     const f = fixture("copilot", { refs: [REF, OTHER], dependents: ["/A", "/B"] });
-    expect(await f.execute(REF)).toEqual([REF]);
-    expect(f.activator.updatedPlugins).toEqual([REF]);
+    await expect(f.execute(REF)).rejects.toThrow(/host source reader unavailable/);
+    expect(f.activator.updatedPlugins).toEqual([]);
     expect(f.repo.getCurrent()?.getNativeRegistrations("copilot")?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/A", "/B"] },
       { ref: OTHER, dependents: ["/A", "/B"] },
     ]);
-    expect(f.logger.warnMessages.join(" ")).toContain("/B");
-    expect(f.repo.saveCount).toBe(1);
+    expect(f.repo.saveCount).toBe(0);
   });
 
   it("refuses ambiguous catalogue names before updating any ref", async () => {
@@ -94,11 +97,13 @@ describe("targeted machine native plugin update", () => {
     expect(f.activator.updatedPlugins).toEqual([]);
   });
 
-  it("resolves a bare native plugin name only when one owned catalogue matches", async () => {
+  it("resolves a bare native plugin name but refuses update without current source proof", async () => {
     const f = fixture("copilot", { refs: [REF], dependents: ["/B"] });
-    expect(await f.execute("test-plugin")).toEqual([REF]);
-    expect(f.activator.updatedPlugins).toEqual([REF]);
-    expect(f.logger.warnMessages.join("\n")).toContain(`${REF}' affects /B`);
+    await expect(f.execute("test-plugin")).rejects.toThrow(/host source reader unavailable/);
+    expect(f.activator.updatedPlugins).toEqual([]);
+    expect(f.repo.getCurrent()?.getNativeRegistrations("copilot")?.pluginClaims).toEqual([
+      { ref: REF, dependents: ["/B"] },
+    ]);
   });
 
   it("does not adopt a foreign enabled host ref without a machine claim", async () => {
@@ -139,7 +144,7 @@ describe("targeted machine native plugin update", () => {
     ]);
   });
 
-  it("updates exactly selected Copilot catalogues, excluding foreign machine records", async () => {
+  it("does not touch a project-scope record when selected Copilot source is unproved", async () => {
     const f = fixture("copilot", { refs: [REF, OTHER] });
     const machine = f.repo.getCurrent();
     if (machine === null) throw new Error("fixture missing machine manifest");
@@ -153,15 +158,15 @@ describe("targeted machine native plugin update", () => {
         "project"
       )
     );
-    expect(await f.execute(REF)).toEqual([REF]);
-    expect(f.activator.updatedPlugins).toEqual([REF]);
+    await expect(f.execute(REF)).rejects.toThrow(/host source reader unavailable/);
+    expect(f.activator.updatedPlugins).toEqual([]);
     expect(machine.getPlugins("copilot").map((plugin) => plugin.name)).toEqual(["project-plugin"]);
   });
 
-  it("updates both exact claimed refs only when both are named", async () => {
+  it("refuses two selected Copilot refs before updating either without current source proof", async () => {
     const f = fixture("copilot", { refs: [REF, OTHER] });
-    expect(await f.execute([REF, OTHER])).toEqual([REF, OTHER]);
-    expect(f.activator.updatedPlugins).toEqual([REF, OTHER]);
+    await expect(f.execute([REF, OTHER])).rejects.toThrow(/host source reader unavailable/);
+    expect(f.activator.updatedPlugins).toEqual([]);
   });
 
   it("preflights every selected host ref before the first update", async () => {
@@ -177,7 +182,7 @@ describe("targeted machine native plugin update", () => {
     expect(f.repo.saveCount).toBe(0);
   });
 
-  it("all-target update excludes a project-scope machine record", async () => {
+  it("all-target Copilot update refuses an unproved catalogue and preserves project records", async () => {
     const f = fixture("copilot");
     const machine = f.repo.getCurrent();
     if (machine === null) throw new Error("fixture missing machine manifest");
@@ -191,14 +196,15 @@ describe("targeted machine native plugin update", () => {
         "project"
       ).withFiles(new Map([["skills/project/SKILL.md", "hash"]]))
     );
-    expect(await f.executeAll()).toEqual([REF]);
-    expect(f.activator.updatedPlugins).toEqual([REF]);
+    await expect(f.executeAll()).rejects.toThrow(/host source reader unavailable/);
+    expect(f.activator.updatedPlugins).toEqual([]);
     expect(machine.getPlugins("copilot").map((plugin) => plugin.name)).toEqual(["project-plugin"]);
   });
 
-  it("retains canonical claims if Copilot refuses the targeted update", async () => {
+  it("does not reach Copilot's update verb when its current source cannot be proven", async () => {
     const f = fixture("copilot", { failOnUpdate: true });
-    await expect(f.execute(REF)).rejects.toThrow(/plugin update.*failed/);
+    await expect(f.execute(REF)).rejects.toThrow(/host source reader unavailable/);
+    expect(f.activator.updatedPlugins).toEqual([]);
     expect(f.repo.saveCount).toBe(0);
     expect(f.repo.getCurrent()?.getNativeRegistrations("copilot")?.pluginClaims).toEqual([
       { ref: REF, dependents: [] },

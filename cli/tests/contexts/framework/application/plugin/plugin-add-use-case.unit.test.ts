@@ -498,14 +498,22 @@ describe("PluginAddUseCase", () => {
         expect(deps.manifestRepo.getCurrent()?.getPlugins("cursor")[0]?.files.size).toBe(0);
       });
 
-      it("project replace does not rewrite its shared machine-owned plugin directory", async () => {
+      it("project replace refuses legacy hooks without an install digest and preserves shared files", async () => {
         const deps = await cursorDeps();
         await addForCursor(deps, deps.logger);
+        const hooksBefore = deps.fs.getFile(join(PROJECT_ROOT, ".cursor/hooks.json"));
+        const savesBefore = deps.manifestRepo.saveCount;
+        const machineSavesBefore = deps.userManifestRepo.saveCount;
         deps.fs.setFile(`/built/cursor/plugins/${CURSOR_SKILL}`, "# Demo skill v2");
 
-        await addForCursor(deps, deps.logger, true);
+        await expect(addForCursor(deps, deps.logger, true)).rejects.toThrow(
+          /legacy install digest/
+        );
 
         expect(deps.fs.getFile(cursorSkillAt())).toBe("# Demo skill");
+        expect(deps.fs.getFile(join(PROJECT_ROOT, ".cursor/hooks.json"))).toBe(hooksBefore);
+        expect(deps.manifestRepo.saveCount).toBe(savesBefore);
+        expect(deps.userManifestRepo.saveCount).toBe(machineSavesBefore);
         expect(pluginNames(deps, "cursor")).toEqual(["sample-plugin"]);
         expect(deps.userManifestRepo.getCurrent()?.getPlugins("cursor")[0]?.dependents).toEqual([
           PROJECT_ROOT,

@@ -44,10 +44,11 @@ export class NativePluginCliAdapter extends AbstractNativePluginCliAdapter {
     return this.succeeds(["plugin", "marketplace", verb, name]) ? "live" : "dead";
   }
 
-  upgradeMarketplaces(): void {
+  upgradeMarketplaces(name: string): void {
     const verb = this.shape.upgradeVerb;
     if (verb === undefined) return;
-    this.run(["plugin", "marketplace", verb], `marketplace ${verb}`);
+    if (name.length === 0) throw new Error("A named marketplace is required for native refresh.");
+    this.run(["plugin", "marketplace", verb, name], `marketplace ${verb} ${name}`);
   }
 
   enablePlugin(pluginRef: string, scope: MarketplaceScope = "project"): void {

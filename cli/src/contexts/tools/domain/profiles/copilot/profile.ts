@@ -293,9 +293,8 @@ export const copilot: AiTool<
       pluginRootToken: PLUGIN_ROOT_TOKEN,
       acceptsMcp: true,
       translationMode: "marketplace",
-      // Copilot treats enabledPlugins in settings.json as a recommendation, not an auto-install,
-      // and a project marketplace is not installable from project scope: `copilot plugin install`
-      // is what actually loads a plugin, while the settings file below surfaces recommendations.
+      // Copilot auto-installs repo-level enabledPlugins; a foreign catalogue at the same name
+      // must therefore never receive a declarative true entry before native source proof.
       // Its registry is global to the user and keyed by name, so a name held by a project that
       // no longer exists breaks every other project's installs — measured; `update` exits 1 on a
       // local path that is gone and 0 otherwise, which is what lets a dead name be reclaimed with
@@ -312,18 +311,14 @@ export const copilot: AiTool<
         // binary. Never written by aidd; named here for a diagnostic alone.
         userSettingsPath: (h) => join(h, ".copilot", "settings.json"),
       },
-      // VS Code Copilot reads this file, not the `copilot` CLI, which writes
-      // ~/.copilot/settings.json and leaves this one untouched. `chat.plugins.marketplaces`
-      // cannot stand in for it: it has application scope and VS Code rejects it in a workspace
-      // .vscode/settings.json. This file is a shared, committed recommendation, so
-      // `enabledPlugins`, which names plugins, belongs in it, while a marketplace registration
-      // naming an absolute path on one machine does not — hence `null`, with the registration
-      // driven through `copilot plugin install` instead.
+      // Copilot CLI and cloud agent read this repository file; enabledPlugins auto-installs.
+      // Keep machine-local marketplace paths out and project only proven native refs.
       marketplaceSettings: {
         settingsPath: ".github/copilot/settings.json",
         settingsKey: "extraKnownMarketplaces",
         marketplacesSettingsPath: null,
         enabledPluginsKey: "enabledPlugins",
+        declarativePluginActivationRequiresNativeProof: true,
         toEntryKey: claudeStyleMarketplaceKey,
       },
     }),

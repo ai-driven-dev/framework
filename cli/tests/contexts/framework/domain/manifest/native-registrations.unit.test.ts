@@ -12,6 +12,30 @@ const registrations: NativeRegistrations = {
 };
 
 describe("native registrations — what a tool's own CLI was asked to register", () => {
+  it("round-trips the exact effective Codex source while legacy entries remain unproven", () => {
+    const proven: NativeRegistrations = {
+      binary: "codex",
+      marketplaces: [
+        {
+          alias: "local",
+          hostName: "declared",
+          provenance: {
+            kind: "effective-list",
+            root: "/home/.codex/plugins/marketplaces/declared",
+            sourceType: "local",
+            source: "/project-a/.aidd/cache/built",
+          },
+        },
+      ],
+      pluginRefs: [],
+    };
+
+    expect(parseNativeRegistrations(toNativeRegistrationsData(proven))).toStrictEqual(proven);
+    expect(parseNativeRegistrations(toNativeRegistrationsData(registrations))).toStrictEqual(
+      registrations
+    );
+  });
+
   describe("serialized", () => {
     it("carries the binary, every marketplace pair and every plugin ref", () => {
       expect(toNativeRegistrationsData(registrations)).toStrictEqual({

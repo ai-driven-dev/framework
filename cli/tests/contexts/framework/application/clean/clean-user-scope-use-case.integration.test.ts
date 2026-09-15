@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
@@ -12,11 +13,13 @@ import { CleanUserScopeUseCase } from "../../../../../src/contexts/framework/app
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
+import type { NativeMarketplaceSourceReader } from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import type { NativePluginActivator } from "../../../../../src/contexts/tools/domain/ports/native-plugin-activator.js";
 import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
 import type { ToolId } from "../../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { FakeHostMarketplaceRegistryReader } from "../../../../helpers/ports/fake-host-marketplace-registry-reader.js";
+import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -114,11 +117,53 @@ function manifestWithClaude(): Manifest {
   manifest.addTool("claude", "1.0.0", []);
   manifest.setNativeRegistrations("claude", {
     binary: "claude",
-    marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework" }],
+    marketplaces: [
+      {
+        alias: "aidd-framework",
+        hostName: "aidd-framework",
+        provenance: { kind: "registry", source: "/built/claude" },
+      },
+    ],
     pluginRefs: ["aidd-context@aidd-framework"],
     pluginClaims: [{ ref: "aidd-context@aidd-framework", dependents: [] }],
   });
   return manifest;
+}
+
+function provenClaudeSources(
+  source = "/built/claude"
+): ReadonlyMap<"claude", NativeMarketplaceSourceReader> {
+  return new Map([
+    [
+      "claude",
+      {
+        read: async () => ({
+          location: "known_marketplaces.json",
+          entries: new Map([["aidd-framework", { kind: "registry" as const, source }]]),
+        }),
+      },
+    ],
+  ]);
+}
+
+function provenHostPlugins(
+  manifest: Manifest
+): ReadonlyMap<"claude" | "codex", FakeHostPluginRegistryReader> {
+  const readers = new Map<"claude" | "codex", FakeHostPluginRegistryReader>();
+  for (const toolId of ["claude", "codex"] as const) {
+    const registrations = manifest.getNativeRegistrations(toolId);
+    if (registrations === undefined) continue;
+    readers.set(
+      toolId,
+      new FakeHostPluginRegistryReader({
+        location: `${toolId} installed plugins`,
+        refs: new Map(
+          (registrations.pluginClaims ?? []).map(({ ref }) => [ref, { enabled: true }])
+        ),
+      })
+    );
+  }
+  return readers;
 }
 
 /** Seeds the cache path claude's own profile declares with a marker file: an empty or absent
@@ -130,6 +175,160 @@ function seedClaudeCache(fs: InMemoryFileAdapter, hostName = "aidd-framework"): 
 }
 
 describe("clean --scope user", () => {
+  it("refuses an owned catalogue with a foreign enabled plugin ref before any global clean effect", async () => {
+    const machine = manifestWithClaude();
+    const repo = new InMemoryManifestRepository(machine);
+    const fs = new RecordingFileAdapter();
+    const foreignCache = join(CLAUDE_CACHE, "aidd-framework", "foreign-payload", "bytes");
+    fs.setFile(foreignCache, "foreign bytes");
+    const activator = new RecordingActivator([]);
+    const hostPlugins = new FakeHostPluginRegistryReader({
+      location: "installed_plugins.json",
+      refs: new Map([
+        ["aidd-context@aidd-framework", { enabled: true }],
+        ["foreign@aidd-framework", { enabled: true }],
+      ]),
+    });
+    const useCase = new CleanUserScopeUseCase(
+      fs,
+      repo,
+      new CapturingLogger(),
+      new InMemoryMarketplaceRegistry(),
+      () => USER_CONFIG_DIR,
+      new Map([["claude", activator]]),
+      new Map(),
+      () => HOME,
+      undefined,
+      undefined,
+      provenClaudeSources(),
+      new Map([["claude", hostPlugins]])
+    );
+    await expect(useCase.execute({ projectRoot: "/A", force: true })).rejects.toThrow(
+      /foreign.*ref.*foreign@aidd-framework/
+    );
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(await fs.readFile(foreignCache)).toBe("foreign bytes");
+    expect(repo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims).toHaveLength(1);
+  });
+  it("preflights every native source before uninstalling any other catalogue", async () => {
+    const machine = manifestWithClaude();
+    machine.addTool("codex", "1.0.0", []);
+    machine.setNativeRegistrations("codex", {
+      binary: "codex",
+      marketplaces: [
+        {
+          alias: "foreign-alias",
+          hostName: "foreign-name",
+          provenance: { kind: "effective-list", root: "/old", sourceType: "local", source: "/old" },
+        },
+      ],
+      pluginRefs: ["plugin@foreign-name"],
+      pluginClaims: [{ ref: "plugin@foreign-name", dependents: [] }],
+    });
+    const claude = new RecordingActivator([]);
+    const codex = new RecordingActivator([]);
+    const repo = new InMemoryManifestRepository(machine);
+    const fs = new RecordingFileAdapter();
+    const claudeSource = provenClaudeSources().get("claude");
+    if (claudeSource === undefined) throw new Error("fixture missing Claude source reader");
+    const sources = new Map<"claude" | "codex", NativeMarketplaceSourceReader>([
+      ["claude", claudeSource],
+      [
+        "codex",
+        {
+          read: async () => ({
+            location: "host",
+            entries: new Map([
+              [
+                "foreign-name",
+                {
+                  kind: "effective-list",
+                  root: "/foreign",
+                  sourceType: "local",
+                  source: "/foreign",
+                },
+              ],
+            ]),
+          }),
+        },
+      ],
+    ]);
+    const useCase = new CleanUserScopeUseCase(
+      fs,
+      repo,
+      new CapturingLogger(),
+      new InMemoryMarketplaceRegistry(),
+      () => USER_CONFIG_DIR,
+      new Map([
+        ["claude", claude],
+        ["codex", codex],
+      ]),
+      new Map(),
+      () => HOME,
+      undefined,
+      undefined,
+      sources,
+      provenHostPlugins(machine)
+    );
+    await expect(useCase.execute({ projectRoot: "/A", force: true })).rejects.toThrow(
+      /current host source differs.*reconcile manually/
+    );
+    expect(claude.uninstalledPlugins).toEqual([]);
+    expect(claude.removedMarketplaces).toEqual([]);
+    expect(codex.uninstalledPlugins).toEqual([]);
+    expect(codex.removedMarketplaces).toEqual([]);
+    expect(repo.getCurrent()?.getNativeRegistrations("claude")).toBeDefined();
+  });
+  it("refuses all native host mutations when a stale canonical source points at a foreign Codex catalogue", async () => {
+    const machine = Manifest.create();
+    machine.addTool("codex", "1.0.0", []);
+    machine.setNativeRegistrations("codex", {
+      binary: "codex",
+      marketplaces: [
+        {
+          alias: "alias",
+          hostName: "foreign-name",
+          provenance: { kind: "effective-list", root: "/old", sourceType: "local", source: "/old" },
+        },
+      ],
+      pluginRefs: ["plugin@foreign-name"],
+      pluginClaims: [{ ref: "plugin@foreign-name", dependents: [] }],
+    });
+    const repo = new InMemoryManifestRepository(machine);
+    const fs = new RecordingFileAdapter();
+    const activator = new RecordingActivator([]);
+    const source: NativeMarketplaceSourceReader = {
+      read: async () => ({
+        location: "host",
+        entries: new Map([
+          [
+            "foreign-name",
+            { kind: "effective-list", root: "/foreign", sourceType: "local", source: "/foreign" },
+          ],
+        ]),
+      }),
+    };
+    const useCase = new CleanUserScopeUseCase(
+      fs,
+      repo,
+      new CapturingLogger(),
+      new InMemoryMarketplaceRegistry(),
+      () => USER_CONFIG_DIR,
+      new Map([["codex", activator]]),
+      new Map(),
+      () => HOME,
+      undefined,
+      undefined,
+      new Map([["codex", source]])
+    );
+    await expect(useCase.execute({ projectRoot: "/A", force: true })).rejects.toThrow(
+      /current host source differs.*reconcile manually/
+    );
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(repo.getCurrent()?.getNativeRegistrations("codex")?.marketplaces).toHaveLength(1);
+  });
   it("refuses an active B native ref even with force, then succeeds only after B detaches", async () => {
     const machine = manifestWithClaude();
     const registrations = machine.getNativeRegistrations("claude");
@@ -157,7 +356,11 @@ describe("clean --scope user", () => {
           }),
         ],
       ]),
-      () => HOME
+      () => HOME,
+      undefined,
+      undefined,
+      provenClaudeSources(),
+      provenHostPlugins(machine)
     );
     await expect(useCase.execute({ projectRoot: "/A", force: true })).rejects.toThrow(
       /active projects.*\/B/
@@ -192,7 +395,9 @@ describe("clean --scope user", () => {
       false,
       "user"
     )
-      .withFiles(new Map([["shared/skills/x.md", "hash"]]))
+      .withFiles(
+        new Map([["shared/skills/x.md", createHash("md5").update("shared bytes").digest("hex")]])
+      )
       .withDependents(["/B"]);
     machine.addPlugin("cursor", shared);
     machine.addPlugin(
@@ -337,7 +542,11 @@ describe("clean --scope user", () => {
             }),
           ],
         ]),
-        () => HOME
+        () => HOME,
+        undefined,
+        undefined,
+        provenClaudeSources(),
+        provenHostPlugins(manifestWithClaude())
       );
 
       await useCase.execute({ projectRoot: "/wherever", force: true });
@@ -736,7 +945,11 @@ describe("clean --scope user", () => {
             }),
           ],
         ]),
-        () => HOME
+        () => HOME,
+        undefined,
+        undefined,
+        provenClaudeSources(),
+        provenHostPlugins(manifestWithClaude())
       );
     }
 
@@ -907,18 +1120,24 @@ describe("clean --scope user", () => {
       fs: InMemoryFileAdapter;
       logger: CapturingLogger;
       manifest?: Manifest;
+      repo?: InMemoryManifestRepository;
       binary?: string;
+      nativeSources?: ReadonlyMap<"claude" | "codex", NativeMarketplaceSourceReader>;
       activator: NativePluginActivator;
     }) {
       return new CleanUserScopeUseCase(
         deps.fs,
-        new InMemoryManifestRepository(deps.manifest ?? manifestWithClaude()),
+        deps.repo ?? new InMemoryManifestRepository(deps.manifest ?? manifestWithClaude()),
         deps.logger,
         new InMemoryMarketplaceRegistry(),
         () => USER_CONFIG_DIR,
         new Map([[deps.binary ?? "claude", deps.activator]]),
         new Map(),
-        () => HOME
+        () => HOME,
+        undefined,
+        undefined,
+        deps.nativeSources ?? provenClaudeSources(),
+        provenHostPlugins(deps.manifest ?? manifestWithClaude())
       );
     }
 
@@ -934,6 +1153,123 @@ describe("clean --scope user", () => {
 
       expect(activator.uninstalledPlugins).toStrictEqual(["aidd-context@aidd-framework"]);
       expect(activator.uninstalledPluginScopes).toStrictEqual(["user"]);
+    });
+
+    it("refuses a second missing native binary before uninstalling the first tool", async () => {
+      const manifest = manifestWithClaude();
+      manifest.addTool("copilot", "1.0.0", []);
+      manifest.setNativeRegistrations("copilot", {
+        binary: "copilot",
+        marketplaces: [
+          {
+            alias: "copilot-catalog",
+            hostName: "copilot-catalog",
+            provenance: {
+              kind: "effective-list",
+              root: "/built/copilot",
+              sourceType: "local",
+              source: "/built/copilot",
+            },
+          },
+        ],
+        pluginRefs: [],
+      });
+      const repo = new InMemoryManifestRepository(manifest);
+      const fs = new InMemoryFileAdapter();
+      const cacheMarker = join(seedClaudeCache(fs), "marker.json");
+      const before = await fs.readFile(cacheMarker);
+      const claude = new FakeNativePluginActivator({ available: true });
+      const useCase = buildUseCase({
+        fs,
+        logger: new CapturingLogger(),
+        manifest,
+        repo,
+        activator: claude,
+      });
+
+      await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
+        /copilot CLI is not on the PATH.*claims retained/
+      );
+      expect(claude.uninstalledPlugins).toEqual([]);
+      expect(claude.removedMarketplaces).toEqual([]);
+      expect(await fs.readFile(cacheMarker)).toBe(before);
+      expect(repo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims).toEqual(
+        manifest.getNativeRegistrations("claude")?.pluginClaims
+      );
+    });
+
+    it.each(["claim", "projection"] as const)(
+      "refuses an orphan machine %s before uninstalling a proven catalogue's own ref",
+      async (placement) => {
+        const manifest = manifestWithClaude();
+        const registrations = manifest.getNativeRegistrations("claude");
+        if (registrations === undefined) throw new Error("fixture missing native registration");
+        manifest.setNativeRegistrations("claude", {
+          ...registrations,
+          pluginRefs: [...registrations.pluginRefs, "x@B"],
+          pluginClaims:
+            placement === "claim"
+              ? [...(registrations.pluginClaims ?? []), { ref: "x@B", dependents: [] }]
+              : registrations.pluginClaims,
+        });
+        const repo = new InMemoryManifestRepository(manifest);
+        const fs = new InMemoryFileAdapter();
+        const cacheMarker = join(seedClaudeCache(fs), "marker.json");
+        const before = await fs.readFile(cacheMarker);
+        const activator = new FakeNativePluginActivator({ available: true });
+        const useCase = buildUseCase({
+          fs,
+          logger: new CapturingLogger(),
+          manifest,
+          repo,
+          activator,
+        });
+
+        await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
+          /x@B.*canonical catalogue/
+        );
+        expect(activator.uninstalledPlugins).toEqual([]);
+        expect(activator.removedMarketplaces).toEqual([]);
+        expect(await fs.readFile(cacheMarker)).toBe(before);
+        expect(repo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims).toEqual(
+          manifest.getNativeRegistrations("claude")?.pluginClaims
+        );
+      }
+    );
+
+    it("refuses duplicate host catalogue registrations before uninstall or cache purge", async () => {
+      const manifest = manifestWithClaude();
+      const registrations = manifest.getNativeRegistrations("claude");
+      if (registrations === undefined) throw new Error("fixture missing native registration");
+      manifest.setNativeRegistrations("claude", {
+        ...registrations,
+        marketplaces: [
+          ...registrations.marketplaces,
+          { ...registrations.marketplaces[0], alias: "second-alias" },
+        ],
+      });
+      const repo = new InMemoryManifestRepository(manifest);
+      const fs = new InMemoryFileAdapter();
+      const cacheMarker = join(seedClaudeCache(fs), "marker.json");
+      const before = await fs.readFile(cacheMarker);
+      const activator = new FakeNativePluginActivator({ available: true });
+      const useCase = buildUseCase({
+        fs,
+        logger: new CapturingLogger(),
+        manifest,
+        repo,
+        activator,
+      });
+
+      await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
+        /ambiguous.*aidd-framework/
+      );
+      expect(activator.uninstalledPlugins).toEqual([]);
+      expect(activator.removedMarketplaces).toEqual([]);
+      expect(await fs.readFile(cacheMarker)).toBe(before);
+      expect(repo.getCurrent()?.getNativeRegistrations("claude")?.marketplaces).toEqual(
+        manifest.getNativeRegistrations("claude")?.marketplaces
+      );
     });
 
     it("aborts before marketplace removal when the host refuses plugin uninstall", async () => {
@@ -990,7 +1326,18 @@ describe("clean --scope user", () => {
       manifest.addTool("codex", "1.0.0", []);
       manifest.setNativeRegistrations("codex", {
         binary: "codex",
-        marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework" }],
+        marketplaces: [
+          {
+            alias: "aidd-framework",
+            hostName: "aidd-framework",
+            provenance: {
+              kind: "effective-list",
+              root: "/built/codex",
+              sourceType: "local",
+              source: "/built/codex",
+            },
+          },
+        ],
         pluginRefs: [],
       });
       const fs = new InMemoryFileAdapter();
@@ -1002,6 +1349,27 @@ describe("clean --scope user", () => {
         logger,
         manifest,
         binary: "codex",
+        nativeSources: new Map([
+          [
+            "codex",
+            {
+              read: async () => ({
+                location: "host",
+                entries: new Map([
+                  [
+                    "aidd-framework",
+                    {
+                      kind: "effective-list" as const,
+                      root: "/built/codex",
+                      sourceType: "local",
+                      source: "/built/codex",
+                    },
+                  ],
+                ]),
+              }),
+            },
+          ],
+        ]),
         activator: new FakeNativePluginActivator({ available: true, throwOnRemove: true }),
       });
 

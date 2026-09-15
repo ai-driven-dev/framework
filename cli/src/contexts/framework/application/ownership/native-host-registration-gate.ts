@@ -1,5 +1,6 @@
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { HostPluginRegistryReader } from "../../../tools/domain/ports/host-plugin-registry-reader.js";
+import type { NativeMarketplaceSourceReader } from "../../../tools/domain/ports/native-marketplace-source-reader.js";
 import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
 import { nativeActivationOf } from "../../../tools/domain/registry.js";
 import type {
@@ -7,17 +8,23 @@ import type {
   NativePluginClaim,
   NativeRegistrations,
 } from "../../domain/manifest/native-registrations.js";
+import {
+  assertNoForeignNativeRefs,
+  inspectNativeMarketplaceSource,
+} from "./native-marketplace-source-proof.js";
 
 export class NativeHostRegistrationGate {
   constructor(
     private readonly activators: ReadonlyMap<string, NativePluginActivator>,
-    private readonly registries: ReadonlyMap<AiToolId, HostPluginRegistryReader>
+    private readonly registries: ReadonlyMap<AiToolId, HostPluginRegistryReader>,
+    private readonly sources: ReadonlyMap<AiToolId, NativeMarketplaceSourceReader> = new Map()
   ) {}
 
   async requireTargetedUpdate(
     toolId: AiToolId,
     claim: NativePluginClaim,
-    projectRoot: string
+    projectRoot: string,
+    registrations?: NativeRegistrations
   ): Promise<NativePluginActivator> {
     const activation = nativeActivationOf(toolId);
     if (activation?.updateVerb === undefined) {
@@ -42,6 +49,20 @@ export class NativeHostRegistrationGate {
         `${toolId}: ref '${claim.ref}' is not provably enabled on the host; update refused.`
       );
     }
+    const registration = registrations?.marketplaces.find((marketplace) =>
+      claim.ref.endsWith(`@${marketplace.hostName}`)
+    );
+    if (registration === undefined)
+      throw new Error(
+        `${toolId}: ref '${claim.ref}' has no canonical catalogue source proof; update refused.`
+      );
+    const proof = await inspectNativeMarketplaceSource(
+      this.sources.get(toolId),
+      projectRoot,
+      registration
+    );
+    if (proof.status !== "owned")
+      throw new Error(proof.reason ?? `${toolId}: catalogue source unproven.`);
     return activator;
   }
 
@@ -62,24 +83,25 @@ export class NativeHostRegistrationGate {
         `Cannot prove/remove AIDD-owned catalogue '${registration.hostName}': ${registrations.binary} CLI or host registry unavailable.`
       );
     }
-    const reading = await reader.read(projectRoot);
-    if (reading.refs === undefined)
-      throw new Error(
-        `Cannot read ${registrations.binary} host registry for '${registration.hostName}'; no host mutation made.`
-      );
-    const owned = new Set((registrations.pluginClaims ?? []).map((claim) => claim.ref));
-    const foreign = [...reading.refs.keys()].find(
-      (ref) => ref.endsWith(`@${registration.hostName}`) && !owned.has(ref)
+    const proof = await inspectNativeMarketplaceSource(
+      this.sources.get(toolId),
+      projectRoot,
+      registration
     );
-    if (foreign !== undefined)
-      throw new Error(
-        `Catalogue '${registration.hostName}' includes foreign host ref '${foreign}'; refusing user-scope removal.`
-      );
+    if (proof.status !== "owned")
+      throw new Error(proof.reason ?? `${toolId}: catalogue source unproven.`);
+    const owned = new Set((registrations.pluginClaims ?? []).map((claim) => claim.ref));
+    const hostRefs = await assertNoForeignNativeRefs(
+      reader,
+      registration.hostName,
+      owned,
+      projectRoot
+    );
     const refs = (registrations.pluginClaims ?? []).filter((claim) =>
       claim.ref.endsWith(`@${registration.hostName}`)
     );
     for (const claim of refs) {
-      if (reading.refs.get(claim.ref)?.enabled !== true)
+      if (hostRefs.get(claim.ref)?.enabled !== true)
         throw new Error(
           `Cannot prove AIDD-owned host ref '${claim.ref}' is still enabled; refusing user-scope removal.`
         );
@@ -87,7 +109,7 @@ export class NativeHostRegistrationGate {
     return {
       activator,
       refs,
-      scopes: new Map([...reading.refs].map(([ref, state]) => [ref, state.scope])),
+      scopes: new Map([...hostRefs].map(([ref, state]) => [ref, state.scope])),
     };
   }
 }

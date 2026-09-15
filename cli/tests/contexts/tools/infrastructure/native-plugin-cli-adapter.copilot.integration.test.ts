@@ -83,17 +83,17 @@ describe("CopilotCliAdapter", () => {
     );
   });
 
-  it("refreshes marketplaces via `copilot plugin marketplace update`", () => {
+  it("refreshes only the named marketplace via `copilot plugin marketplace update <name>`", () => {
     mockSpawnSync.mockReturnValue(makeResult({}));
 
     new NativePluginCliAdapter("copilot", {
       upgradeVerb: "update",
       enableVerb: "install",
-    }).upgradeMarketplaces();
+    }).upgradeMarketplaces("owned-catalog");
 
     expect(mockSpawnSync).toHaveBeenCalledWith(
       "copilot",
-      ["plugin", "marketplace", "update"],
+      ["plugin", "marketplace", "update", "owned-catalog"],
       expect.anything()
     );
   });

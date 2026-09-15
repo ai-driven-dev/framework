@@ -2,16 +2,62 @@
  * Codex enables a plugin machine-wide (no `NativeActivation.scopeArgs`), so a `clean` here
  * must not disable it. `--plugins none` records no `pluginRefs`, so a real name is passed.
  */
-import { readFile, realpath } from "node:fs/promises";
+import { mkdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { delimiter, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, pathWithoutAidd, runCli, writeFakeToolBinary } from "./helpers.js";
+import { createTestEnv, pathWithoutAidd, runCli } from "./helpers.js";
 
 const FRAMEWORK_REAL_PATH = resolve(process.cwd(), "tests/fixtures/framework-real");
 const PLUGIN_NAME = "aidd-vcs";
 
 async function readJson(path: string): Promise<Record<string, unknown>> {
   return JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+}
+
+async function writeCodexWithEffectiveSource(
+  binDir: string,
+  logFile: string,
+  stateFile: string,
+  configFile: string
+): Promise<void> {
+  await mkdir(binDir, { recursive: true });
+  const script = join(binDir, "codex-fake.mjs");
+  await writeFile(
+    script,
+    [
+      'import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";',
+      'import { dirname } from "node:path";',
+      `const logFile = ${JSON.stringify(logFile)};`,
+      `const stateFile = ${JSON.stringify(stateFile)};`,
+      `const configFile = ${JSON.stringify(configFile)};`,
+      "const args = process.argv.slice(2);",
+      'writeFileSync(logFile, args.join(" ") + "\\n", { flag: "a" });',
+      'if (args[0] === "plugin" && args[1] === "marketplace" && args[2] === "list" && args[3] === "--json") {',
+      '  const path = existsSync(stateFile) ? readFileSync(stateFile, "utf-8") : undefined;',
+      '  process.stdout.write(JSON.stringify({ marketplaces: path ? [{ name: "aidd-framework", root: path, marketplaceSource: { sourceType: "local", source: path } }] : [] }));',
+      '} else if (args[0] === "plugin" && args[1] === "marketplace" && args[2] === "add") {',
+      "  writeFileSync(stateFile, realpathSync(args[3]));",
+      '} else if (args[0] === "plugin" && args[1] === "add") {',
+      "  mkdirSync(dirname(configFile), { recursive: true });",
+      `  if (!existsSync(configFile)) writeFileSync(configFile, ${JSON.stringify('[plugins."')} + args[2] + ${JSON.stringify('"]\nenabled = true\n')});`,
+      "}",
+      "",
+    ].join("\n")
+  );
+  if (process.platform === "win32") {
+    await writeFile(
+      join(binDir, "codex.cmd"),
+      `@echo off\r\n"${process.execPath}" "${script}" %*\r\n`
+    );
+  } else {
+    await writeFile(
+      join(binDir, "codex"),
+      `#!/bin/sh\nexec "${process.execPath}" "${script}" "$@"\n`,
+      {
+        mode: 0o755,
+      }
+    );
+  }
 }
 
 describe("E2E: clean leaves a codex ref enabled while another project still shares it", () => {
@@ -21,7 +67,12 @@ describe("E2E: clean leaves a codex ref enabled while another project still shar
     try {
       const logFile = join(first.tempDir, "codex-invocations.log");
       const binDir = join(first.tempDir, "bin");
-      await writeFakeToolBinary(binDir, "codex", logFile);
+      await writeCodexWithEffectiveSource(
+        binDir,
+        logFile,
+        join(first.tempDir, "codex-marketplace-source.txt"),
+        join(first.fakeHome, ".codex", "config.toml")
+      );
       const env = { PATH: `${binDir}${delimiter}${pathWithoutAidd()}` };
 
       const setupArgs = [
@@ -41,10 +92,21 @@ describe("E2E: clean leaves a codex ref enabled while another project still shar
       // `second.fakeHome`.
       const firstSetup = await runCli(setupArgs, first.projectDir, first.fakeHome, { env });
       expect(firstSetup.exitCode).toBe(0);
+      expect(firstSetup.stderr).toBe("");
       const secondSetup = await runCli(setupArgs, second.projectDir, first.fakeHome, { env });
       expect(secondSetup.exitCode).toBe(0);
 
       const secondRoot = await realpath(second.projectDir);
+      const activationLog = await readFile(logFile, "utf-8");
+      expect(activationLog).toContain("plugin marketplace add");
+      expect(activationLog).toContain("plugin add");
+      expect(await readFile(join(first.fakeHome, ".codex", "config.toml"), "utf-8")).toContain(
+        `aidd-vcs@aidd-framework`
+      );
+      const machineManifest = await readJson(
+        join(first.fakeHome, ".config", "aidd", "manifest.json")
+      );
+      expect(JSON.stringify(machineManifest)).toContain(secondRoot);
       const referencesBefore = await readJson(
         join(first.fakeHome, ".config", "aidd", "references.json")
       );

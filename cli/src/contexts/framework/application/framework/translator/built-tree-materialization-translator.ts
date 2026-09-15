@@ -20,7 +20,10 @@ import {
 import type { PluginDistribution } from "../../../../translate/domain/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../translate/domain/plugin-translation-skip.js";
 import type { Manifest } from "../../../domain/manifest.js";
-import { InstalledPlugin } from "../../../domain/plugins/installed-plugin.js";
+import {
+  InstalledPlugin,
+  type ProjectHooksProvenance,
+} from "../../../domain/plugins/installed-plugin.js";
 import { isPluginFileAtDesiredState } from "../../plugin/plugin-helpers.js";
 import {
   resolveBaseDirFromRecord,
@@ -52,7 +55,8 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     manifest: Manifest,
     marketplace: string | undefined,
     previousMcpEntries: ReadonlyMap<string, string> = new Map(),
-    userScopeDirTaken = false
+    userScopeDirTaken = false,
+    previousProjectHooks?: ProjectHooksProvenance
   ): Promise<{ skipped: ReadonlySkipList; written?: number }> {
     const resolved =
       marketplace === undefined ? null : await this.findMarketplace(marketplace, projectRoot);
@@ -65,7 +69,8 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
         manifest,
         marketplace,
         previousMcpEntries,
-        userScopeDirTaken
+        userScopeDirTaken,
+        previousProjectHooks
       );
     }
     const mode = frameworkBuildModeFor(toolId);
@@ -83,9 +88,14 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     // `hooksDestination: "project"` — dropped here and materialized through the same project-hooks
     // side channel the local-source route uses, so both land where the tool's own declaration says.
     const deliversHooksToProject = resolvePluginsCapability(toolId)?.hooksDestination === "project";
-    const hooksSkips = deliversHooksToProject
-      ? await this.projectHooks.materialize(dist, toolId, projectRoot)
-      : [];
+    const hooks = deliversHooksToProject
+      ? await this.projectHooks.materializeWithProvenance(
+          dist,
+          toolId,
+          projectRoot,
+          previousProjectHooks
+        )
+      : { skipped: [] as ReadonlySkipList };
     const files = deliversHooksToProject
       ? withoutHooksPrefix(builtFiles, dist.manifest.name)
       : builtFiles;
@@ -98,9 +108,12 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     const written = await this.writeChangedFiles(owned, baseDir);
     manifest.addPlugin(
       toolId,
-      InstalledPlugin.fromDistribution(dist, source, owned, scope, new Map(), marketplace)
+      InstalledPlugin.withProjectHooks(
+        InstalledPlugin.fromDistribution(dist, source, owned, scope, new Map(), marketplace),
+        hooks.projectHooks
+      )
     );
-    return { skipped: hooksSkips, written };
+    return { skipped: hooks.skipped, written };
   }
 
   // Skips a file already matching the built content on disk, so a no-op restore reports (and

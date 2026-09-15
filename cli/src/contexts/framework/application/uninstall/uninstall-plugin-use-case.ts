@@ -6,6 +6,7 @@ import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { detachNativePluginRefs } from "../ownership/native-plugin-ownership.js";
+import { ProjectPluginCleanup } from "../ownership/project-plugin-cleanup.js";
 import { detachUserPlugin } from "../ownership/user-plugin-ownership.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 
@@ -37,8 +38,11 @@ export class UninstallPluginUseCase {
       manifest.getPlugins(toolId).some((p) => p.name === pluginName && p.scope === "user")
     );
     const nativeRefs = new Map<ToolId, readonly string[]>();
+    const cleanup = new ProjectPluginCleanup(this.fs, this.userManifestRepo);
     for (const toolId of scope) {
       const plugin = manifest.getPlugins(toolId).find((candidate) => candidate.name === pluginName);
+      if (plugin !== undefined)
+        await cleanup.assertLocalIntegrationRemovable(toolId, plugin, projectRoot);
       const hostName = manifest
         .getNativeRegistrations(toolId)
         ?.marketplaces.find((m) => m.alias === plugin?.marketplace)?.hostName;
@@ -66,9 +70,11 @@ export class UninstallPluginUseCase {
     manifest: Manifest
   ): Promise<UninstallPluginResult[]> {
     const results: UninstallPluginResult[] = [];
+    const cleanup = new ProjectPluginCleanup(this.fs, this.userManifestRepo);
     for (const toolId of toolIds) {
       const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
       if (plugin === undefined) continue;
+      await cleanup.removeLocalIntegration(toolId, plugin, projectRoot);
       const registrations = manifest.getNativeRegistrations(toolId);
       const hostName = registrations?.marketplaces.find(
         (m) => m.alias === plugin.marketplace

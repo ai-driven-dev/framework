@@ -1,5 +1,6 @@
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -17,7 +18,8 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 
 const HOME = "/home/u";
 const BOUNDARY = join(HOME, ".cursor", "plugins", "local");
-const HASH = "abc123abc123abc123abc123abc123ab";
+const CONTENT = "owned bytes";
+const HASH = createHash("md5").update(CONTENT).digest("hex");
 
 function plugin(files: Record<string, string>): InstalledPlugin {
   return InstalledPlugin.fromJSON({
@@ -84,6 +86,7 @@ describe("userScopeFilesSafeToDelete", () => {
     const fs = new FaultingFileAdapter();
     fs.failOn("realpath", join(BOUNDARY, "aidd-test", "gone.md"), errnoError("ENOENT"));
     const logger = new CapturingLogger();
+    fs.setFile(join(BOUNDARY, "aidd-test", "a.md"), CONTENT);
 
     const safe = await userScopeFilesSafeToDelete(
       fs,
@@ -112,6 +115,46 @@ describe("userScopeFilesSafeToDelete", () => {
         HOME
       )
     ).rejects.toThrow("EACCES: planted by the test");
+  });
+
+  it("refuses a user-edited file even though its path remains within the scope", async () => {
+    const path = join(BOUNDARY, "aidd-test", "plugin.json");
+    const fs = new InMemoryFileAdapter({ [path]: "user-edited bytes" });
+    await expect(
+      userScopeFilesSafeToDelete(
+        fs,
+        new CapturingLogger(),
+        plugin({ "aidd-test/plugin.json": HASH }),
+        "cursor",
+        HOME
+      )
+    ).rejects.toThrow(/edited.*plugin.json|plugin.json.*edited/);
+    expect(fs.getFile(path)).toBe("user-edited bytes");
+  });
+
+  it("refuses an unproven legacy digest and a failed content read", async () => {
+    const path = join(BOUNDARY, "aidd-test", "script.js");
+    const fs = new FaultingFileAdapter();
+    fs.setFile(path, CONTENT);
+    await expect(
+      userScopeFilesSafeToDelete(
+        fs,
+        new CapturingLogger(),
+        plugin({ "aidd-test/script.js": "" }),
+        "cursor",
+        HOME
+      )
+    ).rejects.toThrow(/unproven.*script.js|script.js.*unproven/);
+    fs.failOn("readFile", path, errnoError("EACCES"));
+    await expect(
+      userScopeFilesSafeToDelete(
+        fs,
+        new CapturingLogger(),
+        plugin({ "aidd-test/script.js": HASH }),
+        "cursor",
+        HOME
+      )
+    ).rejects.toThrow(/EACCES/);
   });
 });
 

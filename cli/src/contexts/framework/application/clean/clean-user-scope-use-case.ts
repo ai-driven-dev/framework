@@ -10,12 +10,18 @@ import { type AiToolId, isAiToolId, type ToolId } from "../../../../kernel/tool.
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
 import type { HostMarketplaceRegistryReader } from "../../../tools/domain/ports/host-marketplace-registry-reader.js";
+import type { HostPluginRegistryReader } from "../../../tools/domain/ports/host-plugin-registry-reader.js";
+import type { NativeMarketplaceSourceReader } from "../../../tools/domain/ports/native-marketplace-source-reader.js";
 import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
 import { nativeActivationOf } from "../../../tools/domain/registry.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
+import {
+  assertNoForeignNativeRefs,
+  inspectNativeMarketplaceSource,
+} from "../ownership/native-marketplace-source-proof.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 import { bestEffortNativeCall } from "../shared/best-effort-native-call.js";
 import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
@@ -81,7 +87,15 @@ export class CleanUserScopeUseCase {
     private readonly homeDir: () => string = resolveHomeDir,
     /** Absent reports no referencing project at all rather than guessing one. */
     private readonly userSourceReferences?: UserSourceReferences,
-    private readonly prompter?: Prompter
+    private readonly prompter?: Prompter,
+    private readonly nativeSources: ReadonlyMap<
+      AiToolId,
+      NativeMarketplaceSourceReader
+    > = new Map(),
+    private readonly hostPluginRegistries: ReadonlyMap<
+      AiToolId,
+      HostPluginRegistryReader
+    > = new Map()
   ) {}
 
   async execute(options: CleanUserScopeOptions): Promise<CleanUserScopeResult> {
@@ -113,6 +127,8 @@ export class CleanUserScopeUseCase {
 
     if (manifest !== null) {
       await this.assertTrackedUserPluginFilesSafe(manifest);
+      this.assertNativeActivatorsAvailable(manifest);
+      await this.assertNativeSourcesProven(manifest, options.projectRoot);
       // Undoing a host's own registration must happen before any purge: a host's own CLI resolves
       // what it is unregistering against the built tree still on disk, and the purge below removes
       // exactly that tree. Absent a manifest there is nothing recorded to undo.
@@ -248,6 +264,79 @@ export class CleanUserScopeUseCase {
       if (removedHostNames !== undefined) undone.set(toolId, { registrations, removedHostNames });
     }
     return undone;
+  }
+
+  private assertNativeActivatorsAvailable(manifest: Manifest): void {
+    for (const toolId of manifest.getInstalledToolIds()) {
+      const registrations = manifest.getNativeRegistrations(toolId);
+      if (registrations === undefined) continue;
+      const activator = this.activators.get(registrations.binary);
+      if (activator === undefined || !activator.isAvailable())
+        throw new Error(
+          `${this.describeBinaryAbsent(toolId, registrations)} User clean refused; canonical claims retained.`
+        );
+    }
+  }
+
+  private async assertNativeSourcesProven(manifest: Manifest, projectRoot: string): Promise<void> {
+    for (const toolId of manifest.getInstalledToolIds()) {
+      const registrations = manifest.getNativeRegistrations(toolId);
+      if (registrations === undefined) continue;
+      if (
+        !isAiToolId(toolId) ||
+        ((registrations.pluginClaims?.length ?? 0) > 0 && registrations.marketplaces.length === 0)
+      )
+        throw new Error(
+          `${toolId}: native refs lack a canonical catalogue source; user clean refused.`
+        );
+      const hostNames = new Set<string>();
+      for (const { hostName } of registrations.marketplaces) {
+        if (hostNames.has(hostName))
+          throw new Error(
+            `${toolId}: ambiguous canonical host catalogue '${hostName}'; user clean refused.`
+          );
+        hostNames.add(hostName);
+      }
+      const claims = registrations.pluginClaims ?? [];
+      const claimRefs = new Set(claims.map((claim) => claim.ref));
+      if (claimRefs.size !== claims.length)
+        throw new Error(`${toolId}: duplicate canonical native ref claims; user clean refused.`);
+      const refsByHost = new Map<string, Set<string>>(
+        [...hostNames].map((hostName) => [hostName, new Set<string>()])
+      );
+      for (const ref of new Set([...registrations.pluginRefs, ...claimRefs])) {
+        const matches = [...hostNames].filter((hostName) => ref.endsWith(`@${hostName}`));
+        if (matches.length !== 1)
+          throw new Error(
+            `${toolId}: native ref '${ref}' lacks exactly one canonical catalogue; user clean refused.`
+          );
+        refsByHost.get(matches[0])?.add(ref);
+      }
+      for (const registration of registrations.marketplaces) {
+        const proof = await inspectNativeMarketplaceSource(
+          this.nativeSources.get(toolId),
+          projectRoot,
+          registration
+        );
+        if (proof.status !== "owned")
+          throw new Error(proof.reason ?? `${toolId}: catalogue source unproven.`);
+        const owned = new Set(
+          [...claimRefs].filter((ref) => ref.endsWith(`@${registration.hostName}`))
+        );
+        const hostRefs = await assertNoForeignNativeRefs(
+          this.hostPluginRegistries.get(toolId),
+          registration.hostName,
+          owned,
+          projectRoot
+        );
+        for (const ref of refsByHost.get(registration.hostName) ?? []) {
+          if (hostRefs.get(ref)?.enabled !== true)
+            throw new Error(
+              `${toolId}: owned host ref '${ref}' is not enabled; user clean refused.`
+            );
+        }
+      }
+    }
   }
 
   private async undoToolNativeRegistrations(

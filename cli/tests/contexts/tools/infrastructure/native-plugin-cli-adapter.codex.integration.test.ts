@@ -91,17 +91,17 @@ describe("CodexCliAdapter", () => {
     );
   });
 
-  it("upgrades marketplaces via `codex plugin marketplace upgrade`", () => {
+  it("upgrades only the named marketplace via `codex plugin marketplace upgrade <name>`", () => {
     mockSpawnSync.mockReturnValue(makeResult({}));
 
     new NativePluginCliAdapter("codex", {
       upgradeVerb: "upgrade",
       enableVerb: "add",
-    }).upgradeMarketplaces();
+    }).upgradeMarketplaces("owned-catalog");
 
     expect(mockSpawnSync).toHaveBeenCalledWith(
       "codex",
-      ["plugin", "marketplace", "upgrade"],
+      ["plugin", "marketplace", "upgrade", "owned-catalog"],
       expect.anything()
     );
   });

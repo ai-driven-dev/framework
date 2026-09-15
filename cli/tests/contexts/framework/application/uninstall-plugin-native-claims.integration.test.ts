@@ -1,8 +1,13 @@
+import { createHash } from "node:crypto";
+import { homedir } from "node:os";
 import { join } from "node:path";
+import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { describe, expect, it } from "vitest";
 import { UninstallPluginUseCase } from "../../../../src/contexts/framework/application/uninstall/uninstall-plugin-use-case.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+import { errnoError, FaultingFileAdapter } from "../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 
@@ -48,6 +53,139 @@ function fixture(scope: "project" | "user" = "project") {
 }
 
 describe("project plugin uninstall against shared native host ownership", () => {
+  it("retains A's Cursor projection and shared claim when local hooks are unreadable", async () => {
+    const pluginName = "sample-plugin";
+    const hooksPath = join("/A", ".cursor/hooks.json");
+    const hooks = JSON.stringify({
+      version: 1,
+      hooks: { preToolUse: [{ command: `node ./.cursor/hooks/${pluginName}/pre.js` }] },
+    });
+    const fs = new FaultingFileAdapter();
+    fs.setFile(hooksPath, hooks);
+    fs.setFile(join("/A", `.cursor/hooks/${pluginName}/pre.js`), "A's hook");
+    fs.setFile(join("/B", ".cursor/hooks.json"), hooks);
+    const globalMcp = join(homedir(), `.cursor/plugins/local/${pluginName}/mcp.json`);
+    fs.setFile(globalMcp, "B's MCP");
+    fs.failOn("readFile", hooksPath, errnoError("EACCES"));
+    const project = Manifest.create();
+    project.addTool("cursor", "1.0.0", []);
+    project.addPlugin(
+      "cursor",
+      InstalledPlugin.fromJSON({
+        name: pluginName,
+        source: { kind: "local", path: "/fixture" },
+        version: "1.0.0",
+        strict: false,
+        files: {},
+        scope: "user",
+      })
+    );
+    const machine = Manifest.create();
+    machine.addTool("cursor", "1.0.0", []);
+    machine.addPlugin(
+      "cursor",
+      InstalledPlugin.fromJSON({
+        name: pluginName,
+        source: { kind: "local", path: "/fixture" },
+        version: "1.0.0",
+        strict: false,
+        files: {},
+        scope: "user",
+        dependents: ["/A", "/B"],
+      })
+    );
+    const projectRepo = new InMemoryManifestRepository(project);
+    const machineRepo = new InMemoryManifestRepository(machine);
+    const useCase = new UninstallPluginUseCase(fs, projectRepo, machineRepo);
+
+    await expect(
+      useCase.execute({ pluginName, toolIds: ["cursor"], projectRoot: "/A" })
+    ).rejects.toThrow(/EACCES/);
+
+    expect(projectRepo.saveCount).toBe(0);
+    expect(projectRepo.getCurrent()?.getPlugins("cursor")).toHaveLength(1);
+    expect(machineRepo.getCurrent()?.getPlugins("cursor")[0]?.dependents).toEqual(["/A", "/B"]);
+    expect(fs.getFile(hooksPath)).toBe(hooks);
+    expect(fs.getFile(globalMcp)).toBe("B's MCP");
+  });
+
+  it("removes only A's Cursor project hooks before detaching A, preserving B and the global MCP", async () => {
+    const pluginName = "sample-plugin";
+    const hooks = JSON.stringify({
+      version: 1,
+      hooks: { preToolUse: [{ command: `node ./.cursor/hooks/${pluginName}/pre.js` }] },
+    });
+    const aHooks = join("/A", ".cursor/hooks.json");
+    const bHooks = join("/B", ".cursor/hooks.json");
+    const aScript = join("/A", `.cursor/hooks/${pluginName}/pre.js`);
+    const bScript = join("/B", `.cursor/hooks/${pluginName}/pre.js`);
+    const globalMcp = join(homedir(), `.cursor/plugins/local/${pluginName}/mcp.json`);
+    const fs = new InMemoryFileAdapter({
+      [aHooks]: hooks,
+      [bHooks]: hooks,
+      [aScript]: "A's hook",
+      [bScript]: "B's hook",
+      [globalMcp]: "B's MCP",
+    });
+    const project = Manifest.create();
+    project.addTool("cursor", "1.0.0", []);
+    project.addPlugin(
+      "cursor",
+      InstalledPlugin.fromJSON({
+        name: pluginName,
+        source: { kind: "local", path: "/fixture" },
+        version: "1.0.0",
+        strict: false,
+        files: {},
+        scope: "user",
+        marketplace: "project-alias",
+        projectHooks: {
+          entries: [
+            {
+              event: "preToolUse",
+              command: `node ./.cursor/hooks/${pluginName}/pre.js`,
+              digest: createHash("md5")
+                .update(JSON.stringify({ command: `node ./.cursor/hooks/${pluginName}/pre.js` }))
+                .digest("hex"),
+            },
+          ],
+          scripts: {
+            [`.cursor/hooks/${pluginName}/pre.js`]: createHash("md5")
+              .update("A's hook")
+              .digest("hex"),
+          },
+        },
+      })
+    );
+    const machine = Manifest.create();
+    machine.addTool("cursor", "1.0.0", []);
+    machine.addPlugin(
+      "cursor",
+      InstalledPlugin.fromJSON({
+        name: pluginName,
+        source: { kind: "local", path: "/fixture" },
+        version: "1.0.0",
+        strict: false,
+        files: {},
+        scope: "user",
+        dependents: ["/A", "/B"],
+      })
+    );
+    const projectRepo = new InMemoryManifestRepository(project);
+    const machineRepo = new InMemoryManifestRepository(machine);
+    const useCase = new UninstallPluginUseCase(fs, projectRepo, machineRepo);
+
+    await useCase.execute({ pluginName, toolIds: ["cursor"], projectRoot: "/A" });
+
+    expect(fs.getFile(aHooks)).toBeUndefined();
+    expect(fs.getFile(aScript)).toBeUndefined();
+    expect(fs.getFile(bHooks)).toBe(hooks);
+    expect(fs.getFile(bScript)).toBe("B's hook");
+    expect(fs.getFile(globalMcp)).toBe("B's MCP");
+    expect(projectRepo.getCurrent()?.getPlugins("cursor")).toEqual([]);
+    expect(machineRepo.getCurrent()?.getPlugins("cursor")[0]?.dependents).toEqual(["/B"]);
+  });
+
   it("does not detach a same-name Cursor user claim for a project-scope plugin", async () => {
     const project = Manifest.create();
     project.addTool("cursor", "1.0.0", []);

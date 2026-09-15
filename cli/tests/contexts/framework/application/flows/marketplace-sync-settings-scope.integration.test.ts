@@ -9,6 +9,8 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { FakeCurrentVersion } from "../../../../helpers/ports/fake-current-version.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
+import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -42,11 +44,37 @@ function seededBuiltCatalog(): InMemoryFileAdapter {
   });
 }
 
+function freshHostProof(activator: FakeNativePluginActivator) {
+  return {
+    plugins: new Map([
+      [
+        "claude" as const,
+        new FakeHostPluginRegistryReader({
+          location: "/host/installed_plugins.json",
+          refs: new Map(),
+        }),
+      ],
+    ]),
+    sources: new Map([
+      [
+        "claude" as const,
+        new FakeNativeMarketplaceSourceReader(
+          activator,
+          "registry",
+          (path) => (path === "/built/claude" ? MARKETPLACE : undefined),
+          new Map()
+        ),
+      ],
+    ]),
+  };
+}
+
 describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks for", () => {
   it("enables at project scope by default, never claude's own implicit default", async () => {
     const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
+    const proof = freshHostProof(activator);
     const useCase = new MarketplaceSyncSettingsUseCase(
       seededBuiltCatalog(),
       manifestWithTool(),
@@ -54,7 +82,15 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       new DeterministicHasher(),
       new CapturingLogger(),
       new Map([["claude", activator]]),
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      new Map(),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      proof.plugins,
+      undefined,
+      proof.sources
     );
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
@@ -91,6 +127,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
         plugins: [{ name: "aidd-telemetry" }],
       }),
     });
+    const proof = freshHostProof(activator);
     const useCase = new MarketplaceSyncSettingsUseCase(
       catalog,
       new InMemoryManifestRepository(manifest),
@@ -98,7 +135,15 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       new DeterministicHasher(),
       new CapturingLogger(),
       new Map([["claude", activator]]),
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      new Map(),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      proof.plugins,
+      undefined,
+      proof.sources
     );
 
     await useCase.execute({ projectRoot: PROJECT_ROOT, scope: "user" });
@@ -244,6 +289,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
 
   it("still records a shared-source reference at project scope, unaffected", async () => {
     const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+    const proof = freshHostProof(activator);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const added: Array<{ version: string; projectRoot: string }> = [];
@@ -266,7 +312,10 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       () => "",
       undefined,
       userSourceReferences,
-      new FakeCurrentVersion()
+      new FakeCurrentVersion(),
+      proof.plugins,
+      undefined,
+      proof.sources
     );
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
