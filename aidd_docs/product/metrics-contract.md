@@ -391,6 +391,23 @@ plugin alongside the step name; a journal interval never carries a plugin at
 all, so `step_plugin` is absent whenever `step_attribution` is
 `"journal-interval"`, even though `step` itself is present there.
 
+**A journal interval ends where the journal says, and only a skill can say it.** The
+interval runs from the `step_start` a skill's invocation wrote to the first of: a `step_end`
+line naming that same skill, another `step_start`, or a `turn_end`. Only the first of those
+is the end itself; the other two stand in for it. That matters because a `turn_end` is a
+**pause** — a skill working across three prompts is credited with its first turn and nothing
+after — and nothing any host emits says when a skill's work finished. Measured: a `Skill`
+tool call's own `tool_result` returns about a tenth of a second after the call, which is the
+dispatch, not the completion. So a skill declares its own end through a tool call it makes,
+carrying `aidd:step-end <skill>` in that call's arguments, and the hook writes the line. An
+end naming a skill the session never started closes nothing, and an end never closes a step
+other than the one it names — a skill invoking another must not end it.
+
+A step whose interval was closed by a stated `step_end` still reads `"journal-interval"`, not
+a stronger value: the record was still placed by its moment falling inside a span, which is
+the inference that value names. What the end changes is the span, never how the record met
+it.
+
 **`step_attribution: "unattributed"` does not mean "this request ran outside any
 step."** Claude Code's own attribution field is omitted from its transcript both
 when no skill was running and when the running Claude Code version predates the
@@ -695,6 +712,60 @@ ignores it exactly as it would any other field it does not recognize.
   subagent's. For every other tool measured so far, this field is never set at
   all — its route does not name subagents as a concept, so its absence there
   says nothing about whether one ran.
+
+#### `prompt_id`
+- **Type**: string.
+- **Present**: conditional — Claude Code only, and only where its transcript
+  lets the prompt be resolved.
+- **Meaning**: the prompt this billed call belongs to. A billed call and the
+  prompt that caused it never share a transcript line: measured on a real
+  810-record session, zero lines carry both `requestId` and `promptId`, only
+  `type: "user"` lines carry the second, and all 209 lines bearing counters
+  reach one by following `parentUuid` — three hops in the median. The reader
+  walks that chain and stores what it finds.
+- **Why it exists**: the run journal writes the same identifier on `step_start`
+  (Claude Code hands its hooks `prompt_id`, stored there under the name
+  `turn_id`). Matching the two joins a step to a record exactly, rather than
+  inferring it from which interval each moment happens to fall in — the only
+  route that stays true when two tasks advance at once, since two prompts remain
+  two prompts however their moments overlap. Two tasks inside **one** prompt stay
+  indivisible: a billed amount cannot be split without inventing a ratio.
+- **If absent**: the chain reached no line naming a prompt — a transcript
+  truncated mid-write, or a host whose files carry no such identifier, which is
+  every tool but Claude Code today. Never read as "no prompt ran".
+
+#### `prompt_skill`
+- **Type**: string.
+- **Present**: conditional — Claude Code only, and only where a `Skill` call was
+  made inside the record's own prompt.
+- **Meaning**: the skill that call invoked. The same fact the run journal writes
+  as `step_start`'s `turn_id`, read from the transcript instead of from a hook.
+  The first call wins where a prompt made several: a prompt that invokes two
+  skills invoked the second from inside the first, and it is named for the work
+  it began.
+- **Why it exists**: the report never re-reads a transcript — it reads this sink
+  and the journals beside it — so an observation only a transcript holds has to
+  be written down when it is read or it is gone. It names a step for a session
+  the journal never saw, which is every session that ran before the hook was
+  installed. Measured on one machine: 28 such prompts across 22 days, 318 records
+  named by that route and by nothing else.
+- **Scoped to one transcript**: Claude Code writes a session's subagents to their
+  own files, and a prompt is often spread across several — measured on one
+  machine, 1,038 of 5,564 prompts appear in more than one file. A record names the
+  first skill invoked inside its prompt *in the file it sits in*. A subagent that
+  invoked its own skill did that work under that skill; merging the files first
+  would have to pick one answer for both, and neither is true of both.
+- **Not a duplicate of `step`**: that one reads `attributionSkill`, which Claude
+  Code writes per message — exact where it appears and sparse where it does not.
+  Measured inside the window one skill demonstrably ran: 142 lines carry counters
+  and 20 carry that field. Its absence is therefore not the tool saying no skill
+  ran, and naming the skill a prompt invoked contradicts nothing it states.
+- **Never a judgement**: which step a record belongs to is derived fresh on every
+  report, from this and from the journal together. The journal wins where both
+  name a skill for the same prompt — it was written by a hook the host fired,
+  where this is read back afterwards.
+- **If absent**: the record's prompt invoked no skill, the chain reached no
+  prompt at all, or the tool is not Claude Code. Never read as "no skill ran".
 
 #### `duration_ms`
 - **Type**: number.
