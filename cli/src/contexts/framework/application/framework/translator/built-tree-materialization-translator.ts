@@ -78,10 +78,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     const builtFiles =
       mode === "flat"
         ? await this.readFlatFiles(builtDir, dist, toolId)
-        : await this.readBuiltFiles(
-            join(builtDir, "plugins", dist.manifest.name),
-            dist.manifest.name
-          );
+        : await readBuiltUserPluginFiles(this.fs, this.hasher, builtDir, dist.manifest.name);
     // The built tree still carries a plugin-scoped `hooks/hooks.json` for a capability declaring
     // `hooksDestination: "project"` — dropped here and materialized through the same project-hooks
     // side channel the local-source route uses, so both land where the tool's own declaration says.
@@ -119,26 +116,6 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
       written++;
     }
     return written;
-  }
-
-  // Marketplace build emits plugins/<name>/<rel>; user-scope tools install at
-  // <baseDir>/<name>/<rel>, so the manifest relativePath keeps the <name>/ prefix.
-  private async readBuiltFiles(pluginSrc: string, name: string): Promise<InstallationFile[]> {
-    const absPaths = await this.fs.listFilesRecursive(pluginSrc);
-    return Promise.all(
-      absPaths.map(async (abs) => {
-        const rel = posixRelative(pluginSrc, abs);
-        const content = await this.fs.readFile(abs);
-        return new InstallationFile({
-          // relativePath is always "/"-separated (see withoutHooksPrefix and
-          // belongsToPlugin below, both string-matching on "/") - node:path's platform
-          // `join` would answer with "\" on win32, breaking both.
-          relativePath: posix.join(name, rel),
-          content,
-          hash: this.hasher.hash(content),
-        });
-      })
-    );
   }
 
   // Flat build emits the whole marketplace into one workspace. Agents are namespaced by
@@ -205,9 +182,33 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
   }
 }
 
+export async function readBuiltUserPluginFiles(
+  fs: FileReader,
+  hasher: Hasher,
+  builtDir: string,
+  name: string
+): Promise<InstallationFile[]> {
+  const pluginSrc = join(builtDir, "plugins", name);
+  const absPaths = await fs.listFilesRecursive(pluginSrc);
+  return Promise.all(
+    absPaths.map(async (abs) => {
+      const rel = posixRelative(pluginSrc, abs);
+      const content = await fs.readFile(abs);
+      return new InstallationFile({
+        relativePath: posix.join(name, rel),
+        content,
+        hash: hasher.hash(content),
+      });
+    })
+  );
+}
+
 // `readBuiltFiles` prefixes every path with `<name>/`, so a built-tree hooks file always reads
 // `<name>/hooks/<rest>`.
-function withoutHooksPrefix(files: InstallationFile[], pluginName: string): InstallationFile[] {
+export function withoutHooksPrefix(
+  files: InstallationFile[],
+  pluginName: string
+): InstallationFile[] {
   const hooksPrefix = `${pluginName}/hooks/`;
   return files.filter((f) => !f.relativePath.startsWith(hooksPrefix));
 }

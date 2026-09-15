@@ -28,10 +28,10 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
   { path: "src/contexts/framework/application/restore/restore-use-case.ts", injected: 12 },
   // Both carry `hostPluginRegistries`, the host's own registry per `AiToolId`: clean asks it the
   // scope a ref was registered at, sync whether the host enabled a ref before this project did.
-  { path: "src/contexts/framework/application/clean-use-case.ts", injected: 11 },
+  { path: "src/contexts/framework/application/clean-use-case.ts", injected: 12 },
   {
     path: "src/contexts/framework/application/flows/marketplace-sync-settings-use-case.ts",
-    injected: 13,
+    injected: 14,
   },
   // The machine-scope counterpart of `clean-use-case.ts`, same shape and same reason.
   {
@@ -47,7 +47,7 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
     path: "src/contexts/framework/application/shared/setup-marketplace-registration-use-case.ts",
     injected: 10,
   },
-  { path: "src/contexts/framework/application/plugin/plugin-add-use-case.ts", injected: 8 },
+  { path: "src/contexts/framework/application/plugin/plugin-add-use-case.ts", injected: 9 },
   { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", injected: 8 },
   {
     path: "src/contexts/framework/application/doctor/doctor-registration-use-case.ts",
@@ -95,7 +95,7 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
   { path: "src/contexts/translate/application/translate-source.ts", injected: 5 },
   // Carries `clean`'s own shared-source guard as well, so `plugin remove` in one project
   // cannot disable a plugin another project on the same machine still needs.
-  { path: "src/contexts/framework/application/plugin/plugin-remove-use-case.ts", injected: 7 },
+  { path: "src/contexts/framework/application/plugin/plugin-remove-use-case.ts", injected: 8 },
 ];
 
 /**

@@ -32,7 +32,7 @@ class RecordingFileAdapter extends InMemoryFileAdapter {
 const PLUGIN_KEY = "aidd-context/commands/hello.md";
 
 describe("UninstallToolsUseCase — cursor plugin file (user-scope)", () => {
-  it("deletes the plugin's file from its resolved home directory, not projectRoot", async () => {
+  it("does not delete a machine-owned user-scope plugin while uninstalling a project tool", async () => {
     const manifest = Manifest.create();
     manifest.addTool("cursor", "1.0.0", []);
     manifest.addPlugin(
@@ -53,7 +53,7 @@ describe("UninstallToolsUseCase — cursor plugin file (user-scope)", () => {
 
     expect(
       fs.deletedPaths.some((p) => p.endsWith(join(".cursor", "plugins", "local", PLUGIN_KEY)))
-    ).toBe(true);
+    ).toBe(false);
     expect(fs.deletedPaths).not.toContain(join(PROJECT_ROOT, PLUGIN_KEY));
   });
 });

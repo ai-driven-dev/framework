@@ -48,6 +48,17 @@ describe("purgeAllNativeCaches", () => {
 });
 
 describe("purgeNativeMarketplaceCache", () => {
+  it("keeps a machine-global catalogue's bytes when project clean did not unregister it, even if a registry reader says absent", async () => {
+    const path = join(CANDIDATE, "plugin.json");
+    const fs = new InMemoryFileAdapter({ [path]: "B still needs these bytes" });
+    const logger = new CapturingLogger();
+    const reader = new FakeHostMarketplaceRegistryReader({
+      location: "/host/registry",
+      absent: true,
+    });
+    await purgeNativeMarketplaceCache(fs, logger, reader, CACHE_ROOT, "claude", HOST_NAME, false);
+    expect(fs.getFile(path)).toBe("B still needs these bytes");
+  });
   it("names the cache path when its real location escapes the cache root", async () => {
     const fs = new InMemoryFileAdapter();
     fs.setSymlink(CANDIDATE, "/elsewhere");

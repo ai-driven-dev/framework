@@ -87,7 +87,7 @@
   {
     "invocation": "aidd marketplace remove",
     "exitCode": 0,
-    "help": "Usage: aidd marketplace remove [options] <name>\n\nRemove a registered plugin marketplace\n\nOptions:\n  --yes       Skip the orphan-cleanup prompt\n  -h, --help  display help for command"
+    "help": "Usage: aidd marketplace remove [options] <name>\n\nRemove a registered plugin marketplace\n\nOptions:\n  --yes                   Skip the orphan-cleanup prompt\n  --scope <project|user>  Remove from project or user scope (default: \"project\")\n  -h, --help              display help for command"
   },
   {
     "invocation": "aidd plugin",
@@ -107,7 +107,7 @@
   {
     "invocation": "aidd plugin remove",
     "exitCode": 0,
-    "help": "Usage: aidd plugin remove [options] <name>\n\nRemove a plugin from one or all AI tools\n\nOptions:\n  --tool <toolId>  Target AI tool (default: all installed)\n  -h, --help       display help for command"
+    "help": "Usage: aidd plugin remove [options] <name>\n\nRemove a plugin from one or all AI tools\n\nOptions:\n  --tool <toolId>         Target AI tool (default: all installed)\n  --scope <user|project>  Removal scope (default: project)\n  -h, --help              display help for command"
   },
   {
     "invocation": "aidd plugin search",
@@ -117,7 +117,7 @@
   {
     "invocation": "aidd plugin update",
     "exitCode": 0,
-    "help": "Usage: aidd plugin update [options] [name]\n\nUpdate one or all plugins for one or all AI tools\n\nOptions:\n  --tool <toolId>  Target AI tool (default: all installed)\n  -h, --help       display help for command"
+    "help": "Usage: aidd plugin update [options] [name]\n\nUpdate one or all plugins for one or all AI tools\n\nOptions:\n  --tool <toolId>         Target AI tool (default: all installed)\n  --scope <user|project>  Update scope (default: project)\n  -h, --help              display help for command"
   },
   {
     "invocation": "aidd setup",

@@ -34,6 +34,8 @@ export interface NativePluginActivator {
    * copilot) ignores it.
    */
   enablePlugin(pluginRef: string, scope?: MarketplaceScope): void;
+  /** Optional: only a profile with a verified per-ref update command may expose this. */
+  updatePlugin?(pluginRef: string): void;
   /**
    * Uninstalls a plugin referenced as `<plugin>@<marketplace>`, the counterpart of
    * {@link enablePlugin}. May throw when the plugin is already absent from the tool's own

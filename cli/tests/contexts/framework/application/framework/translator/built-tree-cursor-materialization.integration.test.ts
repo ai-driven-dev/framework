@@ -78,6 +78,36 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
     expect(installed?.files.size).toBe(4);
   });
 
+  it("does not rewrite or claim an occupied Cursor user plugin directory", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built bytes");
+    const occupied = `${HOME}/.cursor/plugins/local/sample-plugin/skills/demo/SKILL.md`;
+    fs.setFile(occupied, "foreign bytes");
+    const manifest = Manifest.create();
+    manifest.addTool("cursor", "test", []);
+    const translator = new BuiltTreeMaterializationTranslator(
+      fs,
+      new DeterministicHasher(),
+      () => HOME,
+      fakeEnsureBuiltMarketplace(),
+      await makeRegistry()
+    );
+
+    const result = await translator.addPlugin(
+      dist(),
+      "cursor",
+      { kind: "local", path: "/plugin-source" },
+      PROJECT_ROOT,
+      manifest,
+      "aidd-framework",
+      new Map(),
+      true
+    );
+    expect(result.written).toBe(0);
+    expect(fs.getFile(occupied)).toBe("foreign bytes");
+    expect(manifest.getPlugins("cursor")[0]?.files.size).toBe(0);
+  });
+
   it("falls back to flat materialization when no marketplace is given (raw local install)", async () => {
     const fs = new InMemoryFileAdapter();
     const manifest = Manifest.create();

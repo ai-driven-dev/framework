@@ -2,8 +2,8 @@ import {
   InvalidMarketplaceNameError,
   MarketplaceNotFoundError,
 } from "../../../../kernel/errors.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Prompter } from "../../../../kernel/ports/prompter.js";
+import type { ToolId } from "../../../../kernel/tool.js";
 import { AI_TOOL_IDS, type AiToolId } from "../../../../kernel/tool.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
@@ -13,12 +13,13 @@ import type { MarketplaceRegistry } from "../../../distribution/domain/ports/mar
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
-import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
+import type { ProjectPluginCleanup } from "../ownership/project-plugin-cleanup.js";
 
 export interface MarketplaceRemoveOptions {
   name: string;
   projectRoot: string;
   autoConfirm: boolean;
+  scope?: "project" | "user";
 }
 
 export interface MarketplaceRemoveResult {
@@ -34,7 +35,7 @@ interface OrphanRef {
 
 export class MarketplaceRemoveUseCase {
   constructor(
-    private readonly fs: FileWriter,
+    private readonly cleanup: ProjectPluginCleanup,
     private readonly manifestRepo: ManifestRepository,
     private readonly registry: MarketplaceRegistry,
     private readonly prompter: Prompter
@@ -49,21 +50,40 @@ export class MarketplaceRemoveUseCase {
         `"${FRAMEWORK_MARKETPLACE_NAME}" is shared by every project on this machine and is not removed with \`aidd marketplace remove\` — it is removed with the framework itself, by \`aidd clean\`, once machine scope lands there.`
       );
     }
-    const marketplace = await this.findOrThrow(options.projectRoot, options.name);
+    if (options.scope === "user")
+      throw new Error("User-scope marketplace removal requires UserMarketplaceRemoveUseCase.");
+    const marketplace = await this.findOrThrow(options.projectRoot, options.name, "project");
     const manifest = await this.manifestRepo.load();
     const orphans = manifest ? this.collectOrphans(manifest, options.name) : [];
+    const nativeRefs = new Map<ToolId, readonly string[]>();
+    if (manifest !== null) {
+      for (const { toolId, plugin } of orphans) {
+        const hostName = manifest
+          .getNativeRegistrations(toolId)
+          ?.marketplaces.find((m) => m.alias === plugin.marketplace)?.hostName;
+        if (hostName !== undefined)
+          nativeRefs.set(toolId, [...(nativeRefs.get(toolId) ?? []), `${plugin.name}@${hostName}`]);
+      }
+    }
     const cleanup = await this.shouldCleanup(orphans.length, options.autoConfirm);
     let removed = 0;
     if (cleanup && manifest) {
       removed = await this.removeOrphans(manifest, orphans, options.projectRoot);
     }
     await this.registry.delete(options.projectRoot, marketplace.name, marketplace.scope);
+    if (cleanup) {
+      await this.cleanup.detachClaims(options.projectRoot, nativeRefs, orphans);
+    }
     return { marketplace, removedPluginCount: removed, orphanCount: orphans.length };
   }
 
-  private async findOrThrow(projectRoot: string, name: string): Promise<Marketplace> {
+  private async findOrThrow(
+    projectRoot: string,
+    name: string,
+    scope: "project" | "user"
+  ): Promise<Marketplace> {
     const list = await this.registry.list(projectRoot);
-    const found = list.find((m) => m.name === name);
+    const found = list.find((m) => m.name === name && m.scope === scope);
     if (!found) throw new MarketplaceNotFoundError(name);
     return found;
   }
@@ -90,7 +110,18 @@ export class MarketplaceRemoveUseCase {
     projectRoot: string
   ): Promise<number> {
     for (const { toolId, plugin } of orphans) {
-      await deletePluginFilesForTool(plugin.files, plugin.scope, toolId, projectRoot, this.fs);
+      await this.cleanup.deleteLocalFiles(toolId, plugin, projectRoot);
+      const registrations = manifest.getNativeRegistrations(toolId);
+      const hostName = registrations?.marketplaces.find(
+        (m) => m.alias === plugin.marketplace
+      )?.hostName;
+      if (registrations !== undefined && hostName !== undefined)
+        manifest.setNativeRegistrations(toolId, {
+          ...registrations,
+          pluginRefs: registrations.pluginRefs.filter(
+            (ref) => ref !== `${plugin.name}@${hostName}`
+          ),
+        });
       manifest.removePlugin(toolId, plugin.name);
     }
     await this.manifestRepo.save(manifest);

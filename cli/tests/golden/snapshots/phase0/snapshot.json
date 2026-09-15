@@ -293,13 +293,7 @@
               },
               "version": "<VERSION>",
               "strict": true,
-              "files": {
-                "aidd-test/.cursor-plugin/plugin.json": "af3965dc3bb38289cd5501b7244926fa",
-                "aidd-test/.mcp.json": "8d5f495dc98074770f3390b2271ddf4a",
-                "aidd-test/agents/code-reviewer.md": "3085f2108f7b9448d523f1555a802bb2",
-                "aidd-test/skills/commit/SKILL.md": "01c4b6a281146776eb7304577c56bb79",
-                "aidd-test/skills/hello.md": "f00ea16a97341b9314df0da073633624"
-              },
+              "files": {},
               "scope": "user",
               "marketplace": "aidd-framework"
             }
@@ -361,13 +355,7 @@
               },
               "version": "<VERSION>",
               "strict": true,
-              "files": {
-                "aidd-test/.cursor-plugin/plugin.json": "af3965dc3bb38289cd5501b7244926fa",
-                "aidd-test/.mcp.json": "8d5f495dc98074770f3390b2271ddf4a",
-                "aidd-test/agents/code-reviewer.md": "3085f2108f7b9448d523f1555a802bb2",
-                "aidd-test/skills/commit/SKILL.md": "01c4b6a281146776eb7304577c56bb79",
-                "aidd-test/skills/hello.md": "f00ea16a97341b9314df0da073633624"
-              },
+              "files": {},
               "scope": "user",
               "marketplace": "aidd-framework"
             }
@@ -429,13 +417,7 @@
               },
               "version": "<VERSION>",
               "strict": true,
-              "files": {
-                "aidd-test/.cursor-plugin/plugin.json": "af3965dc3bb38289cd5501b7244926fa",
-                "aidd-test/.mcp.json": "8d5f495dc98074770f3390b2271ddf4a",
-                "aidd-test/agents/code-reviewer.md": "3085f2108f7b9448d523f1555a802bb2",
-                "aidd-test/skills/commit/SKILL.md": "01c4b6a281146776eb7304577c56bb79",
-                "aidd-test/skills/hello.md": "f00ea16a97341b9314df0da073633624"
-              },
+              "files": {},
               "scope": "user",
               "marketplace": "aidd-framework"
             }
@@ -496,14 +478,8 @@
                 "path": "<FRAMEWORK_FIXTURE>/plugins/aidd-test"
               },
               "version": "<VERSION>",
-              "strict": false,
-              "files": {
-                "aidd-test/.cursor-plugin/plugin.json": "af3965dc3bb38289cd5501b7244926fa",
-                "aidd-test/.mcp.json": "8d5f495dc98074770f3390b2271ddf4a",
-                "aidd-test/agents/code-reviewer.md": "3085f2108f7b9448d523f1555a802bb2",
-                "aidd-test/skills/commit/SKILL.md": "01c4b6a281146776eb7304577c56bb79",
-                "aidd-test/skills/hello.md": "f00ea16a97341b9314df0da073633624"
-              },
+              "strict": true,
+              "files": {},
               "scope": "user",
               "marketplace": "aidd-framework"
             }
@@ -564,14 +540,8 @@
                 "path": "<FRAMEWORK_FIXTURE>/plugins/aidd-test"
               },
               "version": "<VERSION>",
-              "strict": false,
-              "files": {
-                "aidd-test/.cursor-plugin/plugin.json": "af3965dc3bb38289cd5501b7244926fa",
-                "aidd-test/.mcp.json": "8d5f495dc98074770f3390b2271ddf4a",
-                "aidd-test/agents/code-reviewer.md": "3085f2108f7b9448d523f1555a802bb2",
-                "aidd-test/skills/commit/SKILL.md": "01c4b6a281146776eb7304577c56bb79",
-                "aidd-test/skills/hello.md": "f00ea16a97341b9314df0da073633624"
-              },
+              "strict": true,
+              "files": {},
               "scope": "user",
               "marketplace": "aidd-framework"
             }
@@ -652,6 +622,32 @@
           "version": "<VERSION>",
           "files": [],
           "mergeFiles": []
+        },
+        "cursor": {
+          "toolId": "cursor",
+          "version": "<VERSION>",
+          "files": [],
+          "mergeFiles": [],
+          "plugins": [
+            {
+              "name": "aidd-test",
+              "source": {
+                "kind": "local",
+                "path": "<FRAMEWORK_FIXTURE>/plugins/aidd-test"
+              },
+              "version": "<VERSION>",
+              "strict": true,
+              "files": {
+                "aidd-test/.cursor-plugin/plugin.json": "af3965dc3bb38289cd5501b7244926fa",
+                "aidd-test/.mcp.json": "8d5f495dc98074770f3390b2271ddf4a",
+                "aidd-test/agents/code-reviewer.md": "3085f2108f7b9448d523f1555a802bb2",
+                "aidd-test/skills/commit/SKILL.md": "01c4b6a281146776eb7304577c56bb79",
+                "aidd-test/skills/hello.md": "f00ea16a97341b9314df0da073633624"
+              },
+              "scope": "user",
+              "marketplace": "aidd-framework"
+            }
+          ]
         }
       }
     }

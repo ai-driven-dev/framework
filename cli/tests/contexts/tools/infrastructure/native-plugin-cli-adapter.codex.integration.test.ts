@@ -106,6 +106,14 @@ describe("CodexCliAdapter", () => {
     );
   });
 
+  it("refuses a targeted plugin update when Codex declares no verified update verb", () => {
+    mockSpawnSync.mockClear();
+    expect(() =>
+      new NativePluginCliAdapter("codex", {}).updatePlugin("aidd-context@real-catalog")
+    ).toThrow(/does not support targeted native plugin update/);
+    expect(mockSpawnSync).not.toHaveBeenCalled();
+  });
+
   it("enables a plugin via `codex plugin add <ref>`", () => {
     mockSpawnSync.mockReturnValue(makeResult({}));
 

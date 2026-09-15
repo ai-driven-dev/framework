@@ -2,8 +2,12 @@ import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { userScopeFilesSafeToDelete } from "../../../../../src/contexts/framework/application/shared/user-scope-plugin-files.js";
+import {
+  assertUserScopeWriteBoundary,
+  userScopeFilesSafeToDelete,
+} from "../../../../../src/contexts/framework/application/shared/user-scope-plugin-files.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+import { FileHash, InstallationFile } from "../../../../../src/kernel/file.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import {
   errnoError,
@@ -108,5 +112,87 @@ describe("userScopeFilesSafeToDelete", () => {
         HOME
       )
     ).rejects.toThrow("EACCES: planted by the test");
+  });
+});
+
+describe("assertUserScopeWriteBoundary", () => {
+  const file = (relativePath: string) =>
+    new InstallationFile({
+      relativePath,
+      content: "new bytes",
+      hash: new FileHash("a".repeat(32)),
+    });
+
+  it("allows a new file only within the owned plugin directory", async () => {
+    const fs = new InMemoryFileAdapter();
+    await expect(
+      assertUserScopeWriteBoundary(
+        fs,
+        "cursor",
+        "aidd-test",
+        [file("aidd-test/skills/demo/SKILL.md")],
+        HOME
+      )
+    ).resolves.toBeUndefined();
+  });
+
+  it.each([
+    "../escape.md",
+    "aidd-test/../escape.md",
+    "other-plugin/SKILL.md",
+    "aidd-test\\skills\\SKILL.md",
+    "/absolute/escape.md",
+  ])("refuses the untrusted machine update path %s", async (relativePath) => {
+    await expect(
+      assertUserScopeWriteBoundary(
+        new InMemoryFileAdapter(),
+        "cursor",
+        "aidd-test",
+        [file(relativePath)],
+        HOME
+      )
+    ).rejects.toThrow(/escapes its plugin directory/);
+  });
+
+  it("refuses a plugin directory symlink that resolves outside its user-scope base", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setSymlink(join(BOUNDARY, "aidd-test"), "/foreign/aidd-test");
+    await expect(
+      assertUserScopeWriteBoundary(
+        fs,
+        "cursor",
+        "aidd-test",
+        [file("aidd-test/skills/demo/SKILL.md")],
+        HOME
+      )
+    ).rejects.toThrow(/directory is not safely inside/);
+  });
+
+  it("refuses a nested parent symlink before writing new bytes", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setSymlink(join(BOUNDARY, "aidd-test/skills"), "/foreign/skills");
+    await expect(
+      assertUserScopeWriteBoundary(
+        fs,
+        "cursor",
+        "aidd-test",
+        [file("aidd-test/skills/demo/SKILL.md")],
+        HOME
+      )
+    ).rejects.toThrow(/update parent.*escapes/);
+  });
+
+  it("refuses an absent plugin directory rather than inventing a safe write base", async () => {
+    const fs = new FaultingFileAdapter();
+    fs.failOn("realpath", join(BOUNDARY, "aidd-test"), errnoError("ENOENT"));
+    await expect(
+      assertUserScopeWriteBoundary(
+        fs,
+        "cursor",
+        "aidd-test",
+        [file("aidd-test/skills/demo/SKILL.md")],
+        HOME
+      )
+    ).rejects.toThrow(/directory is not safely inside/);
   });
 });

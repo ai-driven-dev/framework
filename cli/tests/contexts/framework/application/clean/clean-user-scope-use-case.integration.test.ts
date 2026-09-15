@@ -116,6 +116,7 @@ function manifestWithClaude(): Manifest {
     binary: "claude",
     marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework" }],
     pluginRefs: ["aidd-context@aidd-framework"],
+    pluginClaims: [{ ref: "aidd-context@aidd-framework", dependents: [] }],
   });
   return manifest;
 }
@@ -129,6 +130,134 @@ function seedClaudeCache(fs: InMemoryFileAdapter, hostName = "aidd-framework"): 
 }
 
 describe("clean --scope user", () => {
+  it("refuses an active B native ref even with force, then succeeds only after B detaches", async () => {
+    const machine = manifestWithClaude();
+    const registrations = machine.getNativeRegistrations("claude");
+    if (registrations === undefined) throw new Error("fixture missing native registration");
+    machine.setNativeRegistrations("claude", {
+      ...registrations,
+      pluginClaims: [{ ref: "aidd-context@aidd-framework", dependents: ["/B"] }],
+    });
+    const repo = new InMemoryManifestRepository(machine);
+    const fs = new RecordingFileAdapter();
+    const activator = new RecordingActivator([]);
+    const useCase = new CleanUserScopeUseCase(
+      fs,
+      repo,
+      new CapturingLogger(),
+      new InMemoryMarketplaceRegistry(),
+      () => USER_CONFIG_DIR,
+      new Map([["claude", activator]]),
+      new Map([
+        [
+          "claude",
+          new FakeHostMarketplaceRegistryReader({
+            location: "known_marketplaces.json",
+            entries: new Map(),
+          }),
+        ],
+      ]),
+      () => HOME
+    );
+    await expect(useCase.execute({ projectRoot: "/A", force: true })).rejects.toThrow(
+      /active projects.*\/B/
+    );
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(repo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims).toEqual([
+      { ref: "aidd-context@aidd-framework", dependents: ["/B"] },
+    ]);
+    machine.setNativeRegistrations("claude", {
+      ...registrations,
+      pluginClaims: [{ ref: "aidd-context@aidd-framework", dependents: [] }],
+    });
+    await useCase.execute({ projectRoot: "/A", force: true });
+    expect(activator.uninstalledPlugins).toEqual(["aidd-context@aidd-framework"]);
+    expect(activator.removedMarketplaces).toEqual(["aidd-framework"]);
+    expect(repo.getCurrent()).toBeNull();
+  });
+
+  it("refuses an active B Cursor user plugin but never treats project files as machine-owned", async () => {
+    const userFile = join(HOME, ".cursor", "plugins", "local", "shared", "skills", "x.md");
+    const projectFile = "/A/skills/local.md";
+    const fs = new RecordingFileAdapter();
+    fs.setFile(userFile, "shared bytes");
+    fs.setFile(projectFile, "project bytes");
+    const machine = Manifest.create();
+    machine.addTool("cursor", "1.0.0", []);
+    const shared = InstalledPlugin.fromMetadata(
+      "shared",
+      "1.0.0",
+      { kind: "local", path: "/source" },
+      false,
+      "user"
+    )
+      .withFiles(new Map([["shared/skills/x.md", "hash"]]))
+      .withDependents(["/B"]);
+    machine.addPlugin("cursor", shared);
+    machine.addPlugin(
+      "cursor",
+      InstalledPlugin.fromMetadata(
+        "local",
+        "1.0.0",
+        { kind: "local", path: "/source" },
+        false,
+        "project"
+      )
+        .withFiles(new Map([["skills/local.md", "hash"]]))
+        .withDependents(["/project-foreign"])
+    );
+    const repo = new InMemoryManifestRepository(machine);
+    const useCase = new CleanUserScopeUseCase(
+      fs,
+      repo,
+      new CapturingLogger(),
+      new InMemoryMarketplaceRegistry(),
+      () => USER_CONFIG_DIR,
+      new Map(),
+      new Map(),
+      () => HOME
+    );
+
+    expect(
+      (await useCase.execute({ projectRoot: "/A", force: false })).preview.activePluginDependents
+    ).toEqual(["/B"]);
+    await expect(useCase.execute({ projectRoot: "/A", force: true })).rejects.toThrow(/\/B/);
+    expect(fs.has(userFile)).toBe(true);
+    expect(fs.has(projectFile)).toBe(true);
+    expect(
+      repo
+        .getCurrent()
+        ?.getPlugins("cursor")
+        .find((plugin) => plugin.name === "shared")?.dependents
+    ).toEqual(["/B"]);
+
+    machine.updatePlugin("cursor", shared.withDependents([]));
+    await useCase.execute({ projectRoot: "/A", force: true });
+    expect(repo.getCurrent()).toBeNull();
+    expect(fs.has(projectFile)).toBe(true);
+  });
+
+  it("retains canonical claims if the user catalogue registry refuses the final delete", async () => {
+    class RefusingRegistry extends InMemoryMarketplaceRegistry {
+      override async delete(_root: string, _name: string, _scope: MarketplaceScope): Promise<void> {
+        throw new Error("registry delete failed");
+      }
+    }
+    const repo = new InMemoryManifestRepository(Manifest.create());
+    const useCase = new CleanUserScopeUseCase(
+      new RecordingFileAdapter(),
+      repo,
+      new CapturingLogger(),
+      new RefusingRegistry(),
+      () => USER_CONFIG_DIR
+    );
+    await expect(useCase.execute({ projectRoot: "/A", force: true })).rejects.toThrow(
+      /registry delete failed/
+    );
+    expect(repo.getCurrent()).not.toBeNull();
+  });
+
   describe("no user manifest, machine state from a project-scope setup", () => {
     it("still purges the whitelist and touches no host, naming the referencing projects", async () => {
       const order: string[] = [];
@@ -164,11 +293,10 @@ describe("clean --scope user", () => {
         userSourceReferences
       );
 
-      const result = await useCase.execute({ projectRoot: "/wherever", force: true });
-
-      expect(result.manifestFound).toBe(false);
-      // The whitelist purge runs regardless of the manifest — it reads nothing from it.
-      expect(fs.order).toContain(`deleteDirectory:${join(USER_CONFIG_DIR, "cache", "built")}`);
+      await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
+        /active projects.*\/project-a/
+      );
+      expect(fs.order).not.toContain(`deleteDirectory:${join(USER_CONFIG_DIR, "cache", "built")}`);
       // No manifest means no `nativeRegistrations` to drive a host's own CLI through —
       // the activator that would have recorded a real call never sees one.
       expect(activator.removedMarketplaces).toEqual([]);
@@ -251,7 +379,7 @@ describe("clean --scope user", () => {
       );
       const userSourceReferences = new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR);
       await userSourceReferences.addReference("1.0.0", "/project-a");
-      fs.setFile("/project-a/marker", "");
+      await userSourceReferences.removeReference("/project-a");
       const useCase = new CleanUserScopeUseCase(
         fs,
         manifestRepo,
@@ -365,7 +493,9 @@ describe("clean --scope user", () => {
         () => HOME
       );
 
-      await useCase.execute({ projectRoot: "/wherever", force: true });
+      await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
+        /tracked file.*escaped/
+      );
 
       expect(await fs.fileExists(join(escapeTarget, "evil.md"))).toBe(true);
       expect(logger.warnMessages.some((m) => m.includes("does not resolve inside"))).toBe(true);
@@ -388,15 +518,9 @@ describe("clean --scope user", () => {
         () => HOME
       );
 
-      await useCase.execute({ projectRoot: "/wherever", force: true });
-
-      const warning = logger.warnMessages.find(
-        (m) => m.includes("claude") && m.includes("not on the PATH")
+      await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
+        /claude.*not on the PATH.*1 marketplace.*1 plugin ref/s
       );
-      expect(warning).toBeDefined();
-      expect(warning).toContain("1 marketplace(s)");
-      expect(warning).toContain("1 plugin ref(s)");
-      expect(warning).toContain(claudeCachePath);
       // The whitelist step still purges userConfigDir()'s own cache/built/, unrelated
       // to this host's own cache — only claude's own directory must survive untouched.
       expect(fs.order).not.toContain(`deleteDirectory:${claudeCachePath}`);
@@ -454,7 +578,7 @@ describe("clean --scope user", () => {
       expect(result.preview.referencingProjects).toEqual([]);
     });
 
-    it("--force skips confirmation and proceeds even when projects still reference it", async () => {
+    it("--force cannot remove a shared source still referenced by a project", async () => {
       const fs = new InMemoryFileAdapter();
       fs.setFile("/project-a/marker", "");
       const userSourceReferences = new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR);
@@ -472,10 +596,10 @@ describe("clean --scope user", () => {
         userSourceReferences
       );
 
-      const result = await useCase.execute({ projectRoot: "/wherever", force: true });
-
-      expect(result.dryRun).toBe(false);
-      expect(manifestRepo.getCurrent()).toBeNull();
+      await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
+        /active projects.*\/project-a/
+      );
+      expect(manifestRepo.getCurrent()).not.toBeNull();
     });
   });
 
@@ -626,7 +750,12 @@ describe("clean --scope user", () => {
       expect(result).toStrictEqual({
         dryRun: false,
         manifestFound: true,
-        preview: { toolIds: ["claude"], builtVersions: [], referencingProjects: [] },
+        preview: {
+          toolIds: ["claude"],
+          activePluginDependents: [],
+          builtVersions: [],
+          referencingProjects: [],
+        },
       });
       expect(await fs.fileExists(join(claudeCachePath, "marker.json"))).toBe(false);
     });
@@ -664,7 +793,12 @@ describe("clean --scope user", () => {
       expect(result).toStrictEqual({
         dryRun: false,
         manifestFound: false,
-        preview: { toolIds: [], builtVersions: [], referencingProjects: [] },
+        preview: {
+          toolIds: [],
+          activePluginDependents: [],
+          builtVersions: [],
+          referencingProjects: [],
+        },
       });
       expect(logger.infoMessages).toStrictEqual([
         "No host registration was undone: nothing was registered at user scope.",
@@ -701,7 +835,7 @@ describe("clean --scope user", () => {
       ]);
     });
 
-    it("reports no referencing project, and warns, when references.json cannot be read", async () => {
+    it("refuses to interpret an unreadable references.json as no dependent project", async () => {
       const fs = new InMemoryFileAdapter();
       fs.setFile(join(USER_CONFIG_DIR, "references.json"), "not json");
       const logger = new CapturingLogger();
@@ -717,10 +851,10 @@ describe("clean --scope user", () => {
         new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR)
       );
 
-      const result = await useCase.execute({ projectRoot: "/wherever", force: false });
-
-      expect(result.preview.referencingProjects).toStrictEqual([]);
-      expect(logger.warnMessages.some((m) => m.includes("references.json"))).toBe(true);
+      await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
+        /Cannot read.*references.json/
+      );
+      expect(await fs.fileExists(join(USER_CONFIG_DIR, "references.json"))).toBe(true);
     });
   });
 
@@ -802,7 +936,7 @@ describe("clean --scope user", () => {
       expect(activator.uninstalledPluginScopes).toStrictEqual(["user"]);
     });
 
-    it("names a refused plugin uninstall by the host's own words and still unregisters the marketplace", async () => {
+    it("aborts before marketplace removal when the host refuses plugin uninstall", async () => {
       const activator = new FakeNativePluginActivator({
         available: true,
         failOnUninstall: ["aidd-context@aidd-framework"],
@@ -810,12 +944,14 @@ describe("clean --scope user", () => {
       const logger = new CapturingLogger();
       const useCase = buildUseCase({ fs: new InMemoryFileAdapter(), logger, activator });
 
-      await useCase.execute({ projectRoot: "/wherever", force: true });
+      await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
+        /plugin uninstall.*failed.*claims retained/
+      );
 
       expect(logger.warnMessages).toStrictEqual([
         "claude plugin uninstall 'aidd-context@aidd-framework' failed: plugin `aidd-context@aidd-framework` is not installed",
       ]);
-      expect(activator.removedMarketplaces).toStrictEqual(["aidd-framework"]);
+      expect(activator.removedMarketplaces).toStrictEqual([]);
     });
 
     it("unregisters every marketplace at the user scope", async () => {
@@ -840,11 +976,12 @@ describe("clean --scope user", () => {
         activator: new FakeNativePluginActivator({ available: true, throwOnRemove: true }),
       });
 
-      await useCase.execute({ projectRoot: "/wherever", force: true });
+      await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
+        /marketplace remove.*failed.*claims retained/
+      );
 
       expect(logger.warnMessages).toStrictEqual([
         "claude marketplace remove 'aidd-framework' failed: marketplace remove aidd-framework failed: 'aidd-framework' is not configured or installed",
-        `claude: cache for 'aidd-framework' left in place, its own removal was not confirmed: ${join(CLAUDE_CACHE, "aidd-framework")}`,
       ]);
     });
 
@@ -868,12 +1005,13 @@ describe("clean --scope user", () => {
         activator: new FakeNativePluginActivator({ available: true, throwOnRemove: true }),
       });
 
-      await useCase.execute({ projectRoot: "/wherever", force: true });
+      await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
+        /marketplace remove.*failed.*claims retained/
+      );
 
       expect(fs.has(leftover)).toBe(true);
       expect(logger.warnMessages).toStrictEqual([
         "codex marketplace remove 'aidd-framework' failed: marketplace remove aidd-framework failed: 'aidd-framework' is not configured or installed",
-        `codex: cache for 'aidd-framework' left in place, its own removal was not confirmed: ${join(CODEX_CACHE, "aidd-framework")}`,
       ]);
     });
   });
@@ -890,11 +1028,12 @@ describe("clean --scope user", () => {
         binary: toolId,
         marketplaces: [...marketplaces],
         pluginRefs: [...pluginRefs],
+        pluginClaims: pluginRefs.map((ref) => ({ ref, dependents: [] })),
       });
       return manifest;
     }
 
-    async function warningsFor(manifest: Manifest): Promise<readonly string[]> {
+    async function errorsFor(manifest: Manifest): Promise<readonly string[]> {
       const logger = new CapturingLogger();
       const useCase = new CleanUserScopeUseCase(
         new InMemoryFileAdapter(),
@@ -906,12 +1045,16 @@ describe("clean --scope user", () => {
         new Map(),
         () => HOME
       );
-      await useCase.execute({ projectRoot: "/wherever", force: true });
-      return logger.warnMessages;
+      try {
+        await useCase.execute({ projectRoot: "/wherever", force: true });
+        throw new Error("expected a fail-closed binary refusal");
+      } catch (error) {
+        return [(error as Error).message];
+      }
     }
 
     it("names no cache for a host whose profile declares no cache directory (copilot)", async () => {
-      const warnings = await warningsFor(
+      const warnings = await errorsFor(
         seedRegistrations(
           "copilot",
           [{ alias: "aidd-framework", hostName: "aidd-framework" }],
@@ -920,32 +1063,32 @@ describe("clean --scope user", () => {
       );
 
       expect(warnings).toStrictEqual([
-        "copilot: registration left in place, the copilot CLI is not on the PATH. It would have unregistered 1 marketplace(s) and 1 plugin ref(s).",
+        "copilot: registration left in place, the copilot CLI is not on the PATH. It would have unregistered 1 marketplace(s) and 1 plugin ref(s). User clean refused; canonical claims retained.",
       ]);
     });
 
     it("names no cache for a tool that drives no native CLI (cursor)", async () => {
-      const warnings = await warningsFor(
+      const warnings = await errorsFor(
         seedRegistrations("cursor", [{ alias: "aidd-framework", hostName: "aidd-framework" }], [])
       );
 
       expect(warnings).toStrictEqual([
-        "cursor: registration left in place, the cursor CLI is not on the PATH. It would have unregistered 1 marketplace(s) and 0 plugin ref(s).",
+        "cursor: registration left in place, the cursor CLI is not on the PATH. It would have unregistered 1 marketplace(s) and 0 plugin ref(s). User clean refused; canonical claims retained.",
       ]);
     });
 
     it("names no cache when the binary registered no marketplace", async () => {
-      const warnings = await warningsFor(
+      const warnings = await errorsFor(
         seedRegistrations("codex", [], ["aidd-context@aidd-framework"])
       );
 
       expect(warnings).toStrictEqual([
-        "codex: registration left in place, the codex CLI is not on the PATH. It would have unregistered 0 marketplace(s) and 1 plugin ref(s).",
+        "codex: registration left in place, the codex CLI is not on the PATH. It would have unregistered 0 marketplace(s) and 1 plugin ref(s). User clean refused; canonical claims retained.",
       ]);
     });
 
     it("names every surviving cache, one path per marketplace", async () => {
-      const warnings = await warningsFor(
+      const warnings = await errorsFor(
         seedRegistrations(
           "codex",
           [
@@ -957,7 +1100,7 @@ describe("clean --scope user", () => {
       );
 
       expect(warnings).toStrictEqual([
-        `codex: registration left in place, the codex CLI is not on the PATH. It would have unregistered 2 marketplace(s) and 0 plugin ref(s). Its cache survives at: ${join(CODEX_CACHE, "mkt-a")}, ${join(CODEX_CACHE, "mkt-b")}.`,
+        `codex: registration left in place, the codex CLI is not on the PATH. It would have unregistered 2 marketplace(s) and 0 plugin ref(s). Its cache survives at: ${join(CODEX_CACHE, "mkt-a")}, ${join(CODEX_CACHE, "mkt-b")}. User clean refused; canonical claims retained.`,
       ]);
     });
   });

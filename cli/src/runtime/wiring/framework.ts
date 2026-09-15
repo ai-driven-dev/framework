@@ -35,6 +35,12 @@ import { InstallIdeToolUseCase } from "../../contexts/framework/application/inst
 import { InstallRuntimeConfigUseCase } from "../../contexts/framework/application/install/install-runtime-config-use-case.js";
 import { PostInstallPipelineUseCase } from "../../contexts/framework/application/install/post-install-pipeline-use-case.js";
 import { ListInstalledRulesUseCase } from "../../contexts/framework/application/list-installed-rules-use-case.js";
+import { NativeHostRegistrationGate } from "../../contexts/framework/application/ownership/native-host-registration-gate.js";
+import { ProjectPluginCleanup } from "../../contexts/framework/application/ownership/project-plugin-cleanup.js";
+import { UserMarketplaceRemoveUseCase } from "../../contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
+import { UserPluginDistributionLoader } from "../../contexts/framework/application/ownership/user-plugin-distribution-loader.js";
+import { UserPluginFileUpdater } from "../../contexts/framework/application/ownership/user-plugin-file-updater.js";
+import { UserPluginUpdateUseCase } from "../../contexts/framework/application/ownership/user-plugin-update-use-case.js";
 import { PluginAddUseCase } from "../../contexts/framework/application/plugin/plugin-add-use-case.js";
 import { PluginInstallFromMarketplaceUseCase } from "../../contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { PluginInstallUseCase } from "../../contexts/framework/application/plugin/plugin-install-use-case.js";
@@ -85,6 +91,7 @@ import { AuthStorage } from "../auth/auth-storage.js";
 import { GhCliAdapter } from "../auth/gh-cli-adapter.js";
 import { GhTokenAdapter } from "../auth/gh-token-adapter.js";
 import type { CredentialStore } from "../auth/ports/credential-store.js";
+import { atomicWriteFile } from "../filesystem/atomic-write.js";
 import { FileAdapter } from "../filesystem/file-adapter.js";
 import { HasherAdapter } from "../filesystem/hasher-adapter.js";
 import { GitAdapter } from "../git/git-adapter.js";
@@ -126,9 +133,11 @@ interface Deps extends TelemetryDeps {
   pluginRemoveUseCase: PluginRemoveUseCase;
   pluginListUseCase: PluginListUseCase;
   pluginUpdateUseCase: PluginUpdateUseCase;
+  userPluginUpdateUseCase: UserPluginUpdateUseCase;
   marketplaceAddUseCase: MarketplaceAddUseCase;
   marketplaceListUseCase: MarketplaceListUseCase;
   marketplaceRemoveUseCase: MarketplaceRemoveUseCase;
+  userMarketplaceRemoveUseCase: UserMarketplaceRemoveUseCase;
   marketplaceRefreshUseCase: MarketplaceRefreshUseCase;
   marketplaceCheckUseCase: MarketplaceCheckUseCase;
   userSourceReferences: UserSourceReferences;
@@ -191,7 +200,7 @@ export async function createDeps(
   const fs = new FileAdapter(hasher, logger);
   const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
-  const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir);
+  const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir, atomicWriteFile);
   const http = new HttpClient();
   const authStorage = new AuthStorage();
   const ghCliAdapter = new GhCliAdapter();
@@ -244,14 +253,25 @@ export async function createDeps(
     nativePluginActivators,
     hostPluginRegistries,
     userSourceReferences,
-    marketplaceRegistry
+    marketplaceRegistry,
+    userManifestRepo
   );
   const pluginListUseCase = new PluginListUseCase(manifestRepo);
+  const nativeHostRegistrationGate = new NativeHostRegistrationGate(
+    nativePluginActivators,
+    hostPluginRegistries
+  );
   const marketplaceRemoveUseCase = new MarketplaceRemoveUseCase(
-    fs,
+    new ProjectPluginCleanup(fs, userManifestRepo),
     manifestRepo,
     marketplaceRegistry,
     prompter
+  );
+  const userMarketplaceRemoveUseCase = new UserMarketplaceRemoveUseCase(
+    fs,
+    userManifestRepo,
+    marketplaceRegistry,
+    nativeHostRegistrationGate
   );
   // `marketplace add --overwrite` removes before it adds, and removing deletes installed
   // plugin files — framework work — so the orchestration belongs here rather than pulling
@@ -261,7 +281,12 @@ export async function createDeps(
     marketplaceTrustStore,
     resolveMarketplaceUseCase,
     prompter,
-    marketplaceRemoveUseCase
+    {
+      execute: (options) =>
+        options.scope === "user"
+          ? userMarketplaceRemoveUseCase.execute(options)
+          : marketplaceRemoveUseCase.execute(options),
+    }
   );
   const marketplaceCheckUseCase = new MarketplaceCheckUseCase(
     manifestRepo,
@@ -303,7 +328,8 @@ export async function createDeps(
     marketplaceRegisterFrameworkUseCase,
     userSourceReferences,
     currentVersionProvider,
-    hostPluginRegistries
+    hostPluginRegistries,
+    userManifestRepo
   );
   const pluginAddUseCase = new PluginAddUseCase(
     fs,
@@ -313,7 +339,8 @@ export async function createDeps(
     hasher,
     logger,
     marketplaceRegistry,
-    ensureBuiltMarketplaceUseCase
+    ensureBuiltMarketplaceUseCase,
+    userManifestRepo
   );
   const gitignoreUseCase = new GitignoreUseCase(fs);
   const git = new GitAdapter(fs);
@@ -455,6 +482,17 @@ export async function createDeps(
     hasher,
     builtMaterializationDeps
   );
+  const userPluginUpdateUseCase = new UserPluginUpdateUseCase(
+    userManifestRepo,
+    new UserPluginFileUpdater(
+      fs,
+      new UserPluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+      hasher,
+      builtMaterializationDeps
+    ),
+    logger,
+    nativeHostRegistrationGate
+  );
   const restoreUseCase = new RestoreUseCase(
     fs,
     manifestRepo,
@@ -467,7 +505,7 @@ export async function createDeps(
     assetProvider,
     builtMaterializationDeps
   );
-  const uninstallUseCase = new UninstallUseCase(fs, manifestRepo, logger);
+  const uninstallUseCase = new UninstallUseCase(fs, manifestRepo, logger, userManifestRepo);
   const statusAllUseCase = new StatusAllUseCase(statusUseCase);
   const restoreAllUseCase = new RestoreAllUseCase(
     manifestRepo,
@@ -504,7 +542,8 @@ export async function createDeps(
     hostMarketplaceRegistries,
     undefined,
     userSourceReferences,
-    hostPluginRegistries
+    hostPluginRegistries,
+    userManifestRepo
   );
   const cleanUserScopeUseCase = new CleanUserScopeUseCase(
     fs,
@@ -545,9 +584,11 @@ export async function createDeps(
     pluginRemoveUseCase,
     pluginListUseCase,
     pluginUpdateUseCase,
+    userPluginUpdateUseCase,
     marketplaceAddUseCase,
     marketplaceListUseCase,
     marketplaceRemoveUseCase,
+    userMarketplaceRemoveUseCase,
     marketplaceRefreshUseCase,
     marketplaceCheckUseCase,
     userSourceReferences,

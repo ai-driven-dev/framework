@@ -19,6 +19,7 @@ import { resolveHomeDir } from "../../../kernel/reading/home-dir.js";
 import type { MarketplaceScope } from "../../../kernel/scope.js";
 import type { AiToolId, ToolId } from "../../../kernel/tool.js";
 import { isAiToolId } from "../../../kernel/tool.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../distribution/domain/ports/marketplace-registry.js";
 import type { HostMarketplaceRegistryReader } from "../../tools/domain/ports/host-marketplace-registry-reader.js";
 import type { HostPluginRegistryReader } from "../../tools/domain/ports/host-plugin-registry-reader.js";
@@ -36,6 +37,11 @@ import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../domain/ports/user-source-references.js";
 import type { GitignoreUseCase } from "./gitignore-use-case.js";
+import {
+  detachNativePluginRefs,
+  machineNativePluginClaim,
+} from "./ownership/native-plugin-ownership.js";
+import { detachUserPlugin } from "./ownership/user-plugin-ownership.js";
 import { deletePluginFilesForTool } from "./plugin/plugin-helpers.js";
 import { bestEffortNativeCall } from "./shared/best-effort-native-call.js";
 import {
@@ -134,7 +140,8 @@ export class CleanUseCase {
     private readonly hostPluginRegistries: ReadonlyMap<
       AiToolId,
       HostPluginRegistryReader
-    > = new Map()
+    > = new Map(),
+    private readonly userManifestRepo?: ManifestRepository
   ) {}
 
   async execute(options: CleanOptions): Promise<CleanResult> {
@@ -169,6 +176,26 @@ export class CleanUseCase {
     await this.removeAiddState(options.projectRoot);
     // Exactly what the pipeline added on install, never a subset of it.
     await this.gitignoreUseCase.remove(options.projectRoot, aiddGitignoreEntries(manifest));
+    const nativeRefs = new Map<ToolId, readonly string[]>();
+    for (const toolId of manifest.getInstalledToolIds()) {
+      const refs = manifest.getNativeRegistrations(toolId)?.pluginRefs;
+      if (refs !== undefined && refs.length > 0) nativeRefs.set(toolId, refs);
+    }
+    await detachNativePluginRefs(this.userManifestRepo, this.fs, options.projectRoot, nativeRefs);
+    for (const toolId of manifest.getInstalledToolIds()) {
+      if (!isAiToolId(toolId)) continue;
+      for (const plugin of manifest.getPlugins(toolId)) {
+        if (plugin.scope === "user") {
+          await detachUserPlugin(
+            this.userManifestRepo,
+            this.fs,
+            toolId,
+            plugin.name,
+            options.projectRoot
+          );
+        }
+      }
+    }
     return { dryRun: false, manifestFound: true, preview, fileCount: deleted };
   }
 
@@ -306,11 +333,44 @@ export class CleanUseCase {
       );
       return false;
     }
-    return bestEffortNativeCall(
-      this.logger,
-      () => activator.removeMarketplace(hostName, marketplace.scope),
-      `${binary} marketplace remove '${hostName}'`
-    );
+    const removeProjectRegistration = async (): Promise<boolean> => {
+      if (pluginEnablementIsMachineGlobal(toolId)) {
+        const machine = await this.userManifestRepo?.load();
+        if (machine === undefined || machine === null) {
+          if (marketplace.name !== FRAMEWORK_MARKETPLACE_NAME) {
+            this.logger.warn(
+              `${binary}: '${hostName}' is machine-global but no user manifest can prove no other project still uses it — left registered for manual cleanup.`
+            );
+            return false;
+          }
+        }
+        const claims =
+          machine
+            ?.getNativeRegistrations(toolId)
+            ?.pluginClaims?.filter((claim) => claim.ref.endsWith(`@${hostName}`)) ?? [];
+        if (claims.length > 0) {
+          const others = [
+            ...new Set(
+              claims.flatMap((claim) =>
+                claim.dependents.filter((dependent) => dependent !== projectRoot)
+              )
+            ),
+          ];
+          this.logger.warn(
+            `${binary}: '${hostName}' carries AIDD-owned machine plugin refs — left registered for explicit user-scope removal.${others.length > 0 ? ` Still needed by ${others.join(", ")}.` : ""}`
+          );
+          return false;
+        }
+      }
+      return bestEffortNativeCall(
+        this.logger,
+        () => activator.removeMarketplace(hostName, marketplace.scope),
+        `${binary} marketplace remove '${hostName}'`
+      );
+    };
+    return this.userManifestRepo?.withExclusiveAccess === undefined
+      ? removeProjectRegistration()
+      : this.userManifestRepo.withExclusiveAccess(removeProjectRegistration);
   }
 
   /** Decrements this project's own claim exactly once per `clean` run, independent of how many
@@ -417,6 +477,14 @@ export class CleanUseCase {
     registrations: NativeRegistrations,
     sharedSourceOutcome: SharedSourceReferenceOutcome | undefined
   ): Promise<void> {
+    const claim = await machineNativePluginClaim(this.userManifestRepo, toolId, ref);
+    if (claim !== undefined) {
+      const others = claim.dependents.filter((dependent) => dependent !== projectRoot);
+      this.logger.warn(
+        `${binary}: '${ref}' is an AIDD-owned machine plugin ref — left enabled; project claim detached after local clean.${others.length > 0 ? ` Still needed by ${others.join(", ")}.` : ""}`
+      );
+      return;
+    }
     const guardMessage = this.describeGuardedPluginRef(
       binary,
       toolId,
@@ -624,6 +692,7 @@ export class CleanUseCase {
   ): Promise<number> {
     let count = 0;
     for (const plugin of manifest.getPlugins(toolId)) {
+      if (plugin.scope === "user") continue;
       const files = await this.filesSafeToDelete(plugin, toolId);
       const deleted = await deletePluginFilesForTool(
         files,

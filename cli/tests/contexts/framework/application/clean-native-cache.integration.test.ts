@@ -31,8 +31,8 @@ import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-man
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
-// Not injectable: CleanUseCase.execute() resolves `nodeHomedir()` itself, so the same real
-// function here — never a fixed literal — is what keeps every path below in sync with it.
+// Resolve once for this in-memory fixture, then inject it into CleanUseCase: Stryker reuses
+// runners while globalSetup changes HOME, so load-time cache paths and runtime paths must agree.
 const HOME = homedir();
 const CLAUDE_CACHE_ROOT = join(HOME, ".claude", "plugins", "cache");
 const CODEX_CACHE_ROOT = join(HOME, ".codex", "plugins", "cache");
@@ -47,6 +47,50 @@ class RecordingFileAdapter extends InMemoryFileAdapter {
   override async deleteDirectory(path: string): Promise<void> {
     this.deletedDirectories.push(path);
     return super.deleteDirectory(path);
+  }
+}
+
+/** In-memory files have implicit directories; expose one real empty cache directory to prove
+ * a skipped host unregister cannot still make clean delete its cache shell. */
+class EmptyNativeCacheFileAdapter extends RecordingFileAdapter {
+  constructor(private readonly emptyCacheDir: string) {
+    super();
+  }
+
+  override async fileExists(path: string): Promise<boolean> {
+    return path === this.emptyCacheDir || super.fileExists(path);
+  }
+
+  override async listDirectory(path: string): Promise<string[]> {
+    return path === this.emptyCacheDir ? [] : super.listDirectory(path);
+  }
+}
+
+class LockTrackingManifestRepository extends InMemoryManifestRepository {
+  locked = false;
+  lockCalls = 0;
+
+  async withExclusiveAccess<T>(action: () => Promise<T>): Promise<T> {
+    this.lockCalls += 1;
+    this.locked = true;
+    try {
+      return await action();
+    } finally {
+      this.locked = false;
+    }
+  }
+}
+
+class LockAwareActivator extends FakeNativePluginActivator {
+  readonly removalsUnderLock: boolean[] = [];
+
+  constructor(private readonly machineRepo: LockTrackingManifestRepository) {
+    super({ available: true });
+  }
+
+  override removeMarketplace(name: string, scope?: unknown, options?: { force?: boolean }): void {
+    this.removalsUnderLock.push(this.machineRepo.locked);
+    super.removeMarketplace(name, scope, options);
   }
 }
 
@@ -124,6 +168,7 @@ function buildUseCase(deps: {
   aiddMarketplaceRegistry: InMemoryMarketplaceRegistry;
   hostMarketplaceRegistries?: ReadonlyMap<AiToolId, HostMarketplaceRegistryReader>;
   homeDir?: () => string;
+  userManifestRepo?: InMemoryManifestRepository;
 }): CleanUseCase {
   const manifestRepo = new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT);
   return new CleanUseCase(
@@ -135,11 +180,281 @@ function buildUseCase(deps: {
     deps.aiddMarketplaceRegistry,
     undefined,
     deps.hostMarketplaceRegistries ?? new Map(),
-    deps.homeDir
+    deps.homeDir ?? (() => HOME),
+    undefined,
+    new Map(),
+    deps.userManifestRepo
   );
 }
 
 describe("clean purges a host's own plugin cache", () => {
+  it("project A clean keeps a non-framework Codex catalogue cache and B's exact native claim", async () => {
+    const fs = new RecordingFileAdapter();
+    const cacheEntry = join(CODEX_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");
+    fs.setFile(cacheEntry, "B still uses these bytes");
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: MARKETPLACE,
+        source: { kind: "local", path: "/source" },
+        scope: "user",
+        addedAt: "2026-01-01T00:00:00Z",
+      })
+    );
+    const machine = Manifest.create();
+    machine.addTool("codex", "1.0.0", []);
+    machine.setNativeRegistrations("codex", {
+      binary: "codex",
+      marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
+      pluginRefs: [REF],
+      pluginClaims: [{ ref: REF, dependents: [PROJECT_ROOT, "/project-b"] }],
+    });
+    const userRepo = new InMemoryManifestRepository(machine);
+    const activator = new FakeNativePluginActivator({ available: true });
+    const logger = new CapturingLogger();
+    const useCase = buildUseCase({
+      fs,
+      manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
+      activator,
+      binary: "codex",
+      logger,
+      aiddMarketplaceRegistry: registry,
+      userManifestRepo: userRepo,
+    });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+
+    expect(fs.getFile(cacheEntry)).toBe("B still uses these bytes");
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+      { ref: REF, dependents: ["/project-b"] },
+    ]);
+    expect(logger.warnMessages.join("\n")).toContain("Still needed by /project-b");
+  });
+  it("removes a project-labelled Codex catalogue when machine refs belong only to another host catalogue", async () => {
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: MARKETPLACE,
+        source: { kind: "local", path: "/source" },
+        scope: "project",
+        addedAt: "2026-01-01T00:00:00Z",
+      })
+    );
+    const machine = Manifest.create();
+    machine.addTool("codex", "1.0.0", []);
+    machine.setNativeRegistrations("codex", {
+      binary: "codex",
+      marketplaces: [{ alias: "other-alias", hostName: "other-catalog" }],
+      pluginRefs: ["other-plugin@other-catalog"],
+      pluginClaims: [{ ref: "other-plugin@other-catalog", dependents: ["/project-b"] }],
+    });
+    const userRepo = new InMemoryManifestRepository(machine);
+    const activator = new FakeNativePluginActivator({ available: true });
+    const useCase = buildUseCase({
+      fs: new RecordingFileAdapter(),
+      manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
+      activator,
+      binary: "codex",
+      logger: new CapturingLogger(),
+      aiddMarketplaceRegistry: registry,
+      userManifestRepo: userRepo,
+    });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    expect(activator.removedMarketplaces).toEqual([MARKETPLACE]);
+    expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+      { ref: "other-plugin@other-catalog", dependents: ["/project-b"] },
+    ]);
+  });
+  it("holds the machine lock through native catalogue removal after checking its claims", async () => {
+    const project = Manifest.create();
+    project.addTool("codex", "1.0.0", []);
+    project.setNativeRegistrations("codex", {
+      binary: "codex",
+      marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
+      pluginRefs: [],
+    });
+    const machine = Manifest.create();
+    machine.addTool("codex", "1.0.0", []);
+    const userRepo = new LockTrackingManifestRepository(machine);
+    const activator = new LockAwareActivator(userRepo);
+    const useCase = buildUseCase({
+      fs: new RecordingFileAdapter(),
+      manifest: project,
+      activator,
+      binary: "codex",
+      logger: new CapturingLogger(),
+      aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
+      userManifestRepo: userRepo,
+    });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    expect(activator.removedMarketplaces).toEqual([MARKETPLACE]);
+    expect(activator.removalsUnderLock).toEqual([true]);
+    expect(userRepo.lockCalls).toBe(1);
+    expect(userRepo.locked).toBe(false);
+  });
+  it("leaves a project-labelled machine-global catalogue when no user manifest can prove it unshared", async () => {
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: MARKETPLACE,
+        source: { kind: "local", path: "/source" },
+        scope: "project",
+        addedAt: "2026-01-01T00:00:00Z",
+      })
+    );
+    const activator = new FakeNativePluginActivator({ available: true });
+    const logger = new CapturingLogger();
+    const emptyCache = join(CODEX_CACHE_ROOT, MARKETPLACE);
+    const fs = new EmptyNativeCacheFileAdapter(emptyCache);
+    const useCase = buildUseCase({
+      fs,
+      manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
+      activator,
+      binary: "codex",
+      logger,
+      aiddMarketplaceRegistry: registry,
+      userManifestRepo: new InMemoryManifestRepository(),
+    });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(fs.deletedDirectories).not.toContain(emptyCache);
+    expect(logger.warnMessages.join("\n")).toContain(
+      "no user manifest can prove no other project still uses it"
+    );
+
+    const noRepoActivator = new FakeNativePluginActivator({ available: true });
+    const noRepoLogger = new CapturingLogger();
+    const noRepoFs = new EmptyNativeCacheFileAdapter(emptyCache);
+    const noRepoUseCase = buildUseCase({
+      fs: noRepoFs,
+      manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
+      activator: noRepoActivator,
+      binary: "codex",
+      logger: noRepoLogger,
+      aiddMarketplaceRegistry: registry,
+    });
+    await noRepoUseCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    expect(noRepoActivator.removedMarketplaces).toEqual([]);
+    expect(noRepoFs.deletedDirectories).not.toContain(emptyCache);
+    expect(noRepoLogger.warnMessages.join("\n")).toContain(
+      "no user manifest can prove no other project still uses it"
+    );
+  });
+  it("keeps a project-labelled framework catalogue when B still has an exact native machine claim", async () => {
+    const framework = "aidd-framework";
+    const ref = `plugin-a@${framework}`;
+    const project = seedManifest("codex", framework, framework);
+    const projectRegistrations = project.getNativeRegistrations("codex");
+    if (projectRegistrations === undefined) throw new Error("fixture missing project native state");
+    project.setNativeRegistrations("codex", { ...projectRegistrations, pluginRefs: [ref] });
+    const machine = Manifest.create();
+    machine.addTool("codex", "1.0.0", []);
+    machine.setNativeRegistrations("codex", {
+      binary: "codex",
+      marketplaces: [{ alias: framework, hostName: framework }],
+      pluginRefs: [ref],
+      pluginClaims: [{ ref, dependents: [PROJECT_ROOT, "/project-b"] }],
+    });
+    const userRepo = new InMemoryManifestRepository(machine);
+    const activator = new FakeNativePluginActivator({ available: true });
+    const useCase = buildUseCase({
+      fs: new RecordingFileAdapter(),
+      manifest: project,
+      activator,
+      binary: "codex",
+      logger: new CapturingLogger(),
+      aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(framework),
+      userManifestRepo: userRepo,
+    });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+      { ref, dependents: ["/project-b"] },
+    ]);
+  });
+  it("project A clean never unregisters a project-labelled Codex catalogue still carrying B's machine ref", async () => {
+    const fs = new RecordingFileAdapter();
+    const cacheEntry = join(CODEX_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");
+    fs.setFile(cacheEntry, "B still uses these bytes");
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: MARKETPLACE,
+        source: { kind: "local", path: "/source" },
+        scope: "project",
+        addedAt: "2026-01-01T00:00:00Z",
+      })
+    );
+    const machine = Manifest.create();
+    machine.addTool("codex", "1.0.0", []);
+    machine.setNativeRegistrations("codex", {
+      binary: "codex",
+      marketplaces: [],
+      pluginRefs: [REF],
+      pluginClaims: [{ ref: REF, dependents: [PROJECT_ROOT, "/project-b"] }],
+    });
+    const userRepo = new InMemoryManifestRepository(machine);
+    const activator = new FakeNativePluginActivator({ available: true });
+    const logger = new CapturingLogger();
+    const useCase = buildUseCase({
+      fs,
+      manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
+      activator,
+      binary: "codex",
+      logger,
+      aiddMarketplaceRegistry: registry,
+      userManifestRepo: userRepo,
+    });
+    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(fs.getFile(cacheEntry)).toBe("B still uses these bytes");
+    expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+      { ref: REF, dependents: ["/project-b"] },
+    ]);
+    expect(logger.warnMessages.join("\n")).toContain("Still needed by /project-b");
+  });
+  it("does not purge B's empty Codex cache shell when a machine claim blocked host unregister", async () => {
+    const emptyCache = join(CODEX_CACHE_ROOT, MARKETPLACE);
+    const fs = new EmptyNativeCacheFileAdapter(emptyCache);
+    const machine = Manifest.create();
+    machine.addTool("codex", "1.0.0", []);
+    machine.setNativeRegistrations("codex", {
+      binary: "codex",
+      marketplaces: [],
+      pluginRefs: [REF],
+      pluginClaims: [{ ref: REF, dependents: [PROJECT_ROOT, "/project-b"] }],
+    });
+    const userRepo = new InMemoryManifestRepository(machine);
+    const activator = new FakeNativePluginActivator({ available: true });
+    const useCase = buildUseCase({
+      fs,
+      manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
+      activator,
+      binary: "codex",
+      logger: new CapturingLogger(),
+      aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
+      userManifestRepo: userRepo,
+    });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(fs.deletedDirectories).not.toContain(emptyCache);
+    expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+      { ref: REF, dependents: ["/project-b"] },
+    ]);
+  });
   it("purges claude's cache once undoing the registration actually frees the name", async () => {
     const fs = new RecordingFileAdapter();
     const cacheEntry = join(CLAUDE_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");
@@ -207,7 +522,7 @@ describe("clean purges a host's own plugin cache", () => {
     ).toBe(true);
   });
 
-  it("leaves claude's cache in place when a fresh read still names it", async () => {
+  it("leaves claude's cache in place without trusting a registry read after host removal fails", async () => {
     // `removeMarketplace` throws (host refused, or the call failed for any other
     // reason `bestEffort` swallows), so the registry mirror never drops the name.
     const fs = new RecordingFileAdapter();
@@ -234,8 +549,8 @@ describe("clean purges a host's own plugin cache", () => {
     await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
 
     expect(await fs.fileExists(cacheEntry)).toBe(true);
-    expect(reader.reads).toBe(1);
-    expect(logger.warnMessages.some((m) => m.includes("still names it"))).toBe(true);
+    expect(reader.reads).toBe(0);
+    expect(logger.warnMessages.some((m) => m.includes("removal was not confirmed"))).toBe(true);
   });
 
   it("purges claude's cache when its registry does not exist at all", async () => {
@@ -495,6 +810,7 @@ describe("clean purges a host's own plugin cache", () => {
       binary: "codex",
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
+      userManifestRepo: new InMemoryManifestRepository(Manifest.create()),
     });
 
     await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
@@ -516,6 +832,7 @@ describe("clean purges a host's own plugin cache", () => {
       binary: "codex",
       logger,
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
+      userManifestRepo: new InMemoryManifestRepository(Manifest.create()),
     });
 
     await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
@@ -540,6 +857,7 @@ describe("clean purges a host's own plugin cache", () => {
       binary: "codex",
       logger,
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
+      userManifestRepo: new InMemoryManifestRepository(Manifest.create()),
     });
 
     await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });

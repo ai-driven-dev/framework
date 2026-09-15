@@ -34,7 +34,8 @@ describe("UninstallUseCase — plugin scope", () => {
       deps.hasher,
       deps.logger,
       deps.marketplaceRegistry,
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      deps.userManifestRepo
     ).execute({
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: ["claude"],

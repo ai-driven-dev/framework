@@ -73,7 +73,8 @@ async function installGithubPlugin(
     deps.hasher,
     deps.logger,
     registry,
-    fakeEnsureBuiltMarketplace()
+    fakeEnsureBuiltMarketplace(),
+    deps.userManifestRepo
   ).execute({
     source: GIT_SUBDIR_SOURCE,
     toolIds: ["claude"],

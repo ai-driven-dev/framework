@@ -50,8 +50,10 @@ export async function deletePluginFilesForTool(
   scope: PluginScope,
   toolId: AiToolId,
   projectRoot: string,
-  fs: FileWriter
+  fs: FileWriter,
+  ownerScope: "project" | "user" = "project"
 ): Promise<string[]> {
+  if (scope === "user" && ownerScope !== "user") return [];
   const baseDir = resolveBaseDirFromRecord(scope, toolId, projectRoot, nodeHomedir);
   const deleted: string[] = [];
   for (const relativePath of files.keys()) {

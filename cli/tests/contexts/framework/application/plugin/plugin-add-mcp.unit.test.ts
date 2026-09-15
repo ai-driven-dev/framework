@@ -43,7 +43,8 @@ async function buildOpencodeProject(): Promise<{
     deps.hasher,
     logger,
     deps.marketplaceRegistry,
-    fakeEnsureBuiltMarketplace()
+    fakeEnsureBuiltMarketplace(),
+    deps.userManifestRepo
   );
   return { deps, logger, useCase };
 }

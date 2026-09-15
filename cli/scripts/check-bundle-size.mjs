@@ -22,6 +22,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 625 KB: 612.56 KB, `--scope user` on `setup`, `doctor` and `sync`.
 // 641 KB: 628.26 KB, `clean --scope user` and sync's migration of a pre-shared-source project.
 // 654 KB: 641.0 KB, the shared-plugin, narrowing, hook and Windows-lookup passes.
+// 682 KB: 675.5 KB, canonical per-plugin machine claims, scoped user operations and
+// inter-process ownership guards for Cursor, Codex and Copilot (+31.3 KB over next's 644.2).
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

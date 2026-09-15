@@ -65,6 +65,8 @@ export interface PluginEntryData {
   componentPaths?: Record<string, string>;
   mcpEntries?: Record<string, string>;
   marketplace?: string;
+  /** Canonical project roots using machine-owned user-scope files. Only the user manifest owns this list. */
+  dependents?: string[];
 }
 
 export class InstalledPlugin {
@@ -77,6 +79,7 @@ export class InstalledPlugin {
   readonly componentPaths: ComponentPathMap;
   readonly mcpEntries: McpDigestMap;
   readonly marketplace?: string;
+  readonly dependents: readonly string[];
 
   private constructor(params: {
     name: string;
@@ -88,6 +91,7 @@ export class InstalledPlugin {
     componentPaths: ComponentPathMap;
     mcpEntries: McpDigestMap;
     marketplace?: string;
+    dependents: readonly string[];
   }) {
     this.name = params.name;
     this.source = params.source;
@@ -98,6 +102,7 @@ export class InstalledPlugin {
     this.componentPaths = params.componentPaths;
     this.mcpEntries = params.mcpEntries;
     this.marketplace = params.marketplace;
+    this.dependents = params.dependents;
   }
 
   static fromMetadata(
@@ -134,6 +139,7 @@ export class InstalledPlugin {
       componentPaths: plugin.componentPaths,
       mcpEntries: asMcpDigestMap(mcpEntries),
       marketplace: plugin.marketplace,
+      dependents: plugin.dependents,
     });
   }
 
@@ -210,6 +216,7 @@ export class InstalledPlugin {
       componentPaths: asComponentPathMap(componentPaths),
       mcpEntries: asMcpDigestMap(mcpEntries),
       marketplace: data.marketplace,
+      dependents: data.dependents ?? [],
     });
   }
 
@@ -225,6 +232,7 @@ export class InstalledPlugin {
     if (this.componentPaths.size > 0) data.componentPaths = mapToRecord(this.componentPaths);
     if (this.mcpEntries.size > 0) data.mcpEntries = mapToRecord(this.mcpEntries);
     if (this.marketplace !== undefined) data.marketplace = this.marketplace;
+    if (this.dependents.length > 0) data.dependents = [...this.dependents];
     return data;
   }
 
@@ -243,6 +251,7 @@ export class InstalledPlugin {
       componentPaths: this.componentPaths,
       mcpEntries: this.mcpEntries,
       marketplace: this.marketplace,
+      dependents: this.dependents,
     });
   }
 
@@ -257,6 +266,22 @@ export class InstalledPlugin {
       componentPaths: this.componentPaths,
       mcpEntries: this.mcpEntries,
       marketplace: this.marketplace,
+      dependents: this.dependents,
+    });
+  }
+
+  withDependents(dependents: readonly string[]): InstalledPlugin {
+    return new InstalledPlugin({
+      name: this.name,
+      source: this.source,
+      version: this.version,
+      strict: this.strict,
+      files: this.files,
+      scope: this.scope,
+      componentPaths: this.componentPaths,
+      mcpEntries: this.mcpEntries,
+      marketplace: this.marketplace,
+      dependents: [...new Set(dependents)],
     });
   }
 }

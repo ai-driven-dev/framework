@@ -12,12 +12,19 @@ export interface NativeRegistrations {
   readonly binary: string;
   readonly marketplaces: readonly NativeMarketplaceRegistration[];
   readonly pluginRefs: readonly string[];
+  readonly pluginClaims?: readonly NativePluginClaim[];
+}
+
+export interface NativePluginClaim {
+  readonly ref: string;
+  readonly dependents: readonly string[];
 }
 
 export interface NativeRegistrationsData {
   binary: string;
   marketplaces: NativeMarketplaceRegistration[];
   pluginRefs: string[];
+  pluginClaims?: NativePluginClaim[];
 }
 
 export function toNativeRegistrationsData(
@@ -27,6 +34,14 @@ export function toNativeRegistrationsData(
     binary: registrations.binary,
     marketplaces: registrations.marketplaces.map((m) => ({ ...m })),
     pluginRefs: [...registrations.pluginRefs],
+    ...(registrations.pluginClaims === undefined
+      ? {}
+      : {
+          pluginClaims: registrations.pluginClaims.map((claim) => ({
+            ref: claim.ref,
+            dependents: [...claim.dependents],
+          })),
+        }),
   };
 }
 
@@ -38,5 +53,13 @@ export function parseNativeRegistrations(
     binary: data.binary,
     marketplaces: data.marketplaces.map((m) => ({ alias: m.alias, hostName: m.hostName })),
     pluginRefs: [...data.pluginRefs],
+    ...(data.pluginClaims === undefined
+      ? {}
+      : {
+          pluginClaims: data.pluginClaims.map((claim) => ({
+            ref: claim.ref,
+            dependents: [...claim.dependents],
+          })),
+        }),
   };
 }

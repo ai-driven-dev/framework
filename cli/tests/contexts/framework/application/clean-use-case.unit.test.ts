@@ -225,7 +225,7 @@ describe("clean", () => {
     expect(deps.fs.has(config)).toBe(true);
   });
 
-  it("deletes a user-scope (cursor) plugin's file from its resolved home directory, not projectRoot", async () => {
+  it("leaves a user-scope Cursor plugin's files to explicit user cleanup", async () => {
     const manifest = Manifest.create();
     manifest.addTool("cursor", "1.0.0", []);
     manifest.addPlugin(
@@ -252,7 +252,7 @@ describe("clean", () => {
 
     expect(
       fs.deletedPaths.some((p) => p.endsWith(join(".cursor", "plugins", "local", PLUGIN_KEY)))
-    ).toBe(true);
+    ).toBe(false);
     expect(fs.deletedPaths).not.toContain(join(PROJECT_ROOT, PLUGIN_KEY));
   });
 
@@ -1019,7 +1019,13 @@ describe("clean", () => {
         new CapturingLogger(),
         new GitignoreUseCase(fs),
         new Map([[BINARY, activator]]),
-        registry
+        registry,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        new InMemoryManifestRepository(Manifest.create())
       );
 
       await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
@@ -1593,8 +1599,8 @@ describe("clean", () => {
     });
   });
 
-  describe("user-scope containment for a plugin's own files", () => {
-    it("refuses to delete a manifest entry whose relative path escapes the user-scope directory via `..`, while still deleting its legitimate sibling", async () => {
+  describe("user-scope files belong to machine cleanup", () => {
+    it("leaves both legitimate and escaping user paths untouched", async () => {
       const manifest = Manifest.create();
       manifest.addTool("cursor", "1.0.0", []);
       manifest.addPlugin(
@@ -1620,9 +1626,9 @@ describe("clean", () => {
 
       expect(
         fs.deletedPaths.some((p) => p.endsWith(join(".cursor", "plugins", "local", PLUGIN_KEY)))
-      ).toBe(true);
+      ).toBe(false);
       expect(fs.deletedPaths.some((p) => p.includes(join(".ssh", "id_rsa")))).toBe(false);
-      expect(logger.warnMessages.some((m) => m.includes("id_rsa"))).toBe(true);
+      expect(logger.warnMessages.some((m) => m.includes("id_rsa"))).toBe(false);
     });
 
     it("refuses to delete a plugin whose own directory is a symlink resolving outside the user-scope directory", async () => {
@@ -1652,7 +1658,7 @@ describe("clean", () => {
       expect(
         fs.deletedPaths.some((p) => p.endsWith(join(".cursor", "plugins", "local", PLUGIN_KEY)))
       ).toBe(false);
-      expect(logger.warnMessages.some((m) => m.includes(PLUGIN_KEY))).toBe(true);
+      expect(logger.warnMessages.some((m) => m.includes(PLUGIN_KEY))).toBe(false);
     });
   });
 

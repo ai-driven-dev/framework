@@ -303,6 +303,7 @@ export const copilot: AiTool<
       nativeActivation: {
         binary: "copilot",
         upgradeVerb: "update",
+        updateVerb: "update",
         enableVerb: "install",
         disableVerb: "uninstall",
         sourceCheckVerb: "update",
