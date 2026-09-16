@@ -84,7 +84,7 @@ rather than reporting an empty figure.
 
 | Ask your tool for | It runs | You get |
 | --- | --- | --- |
-| `00-init` | `aidd telemetry on`, then `check` | measurement allowed for this project, and proof the switch took |
+| `00-init` | `aidd telemetry on`, then reads a run file back | measurement allowed for this project, and proof a session is journalled |
 | `01-cost` | `aidd telemetry report` | what a period or one task consumed, by step, model, task, flow, tool or person |
 | `02-check` | `aidd telemetry check` | whether the chain is actually recording, and what to fix if not |
 
@@ -94,7 +94,7 @@ rather than reporting an empty figure.
 | --- | --- | --- | --- |
 | **Claude Code** | ✅ proven on live sessions | ✅ stated by the tool, and by interval | ✅ |
 | **Codex** | ✅ on captured rollouts | ✅ by interval | ✅ |
-| **OpenCode** | ✅ | ✅ through its own plugin API | ✅ |
+| **OpenCode** | ✅ | ❌ no skill call reaches its plugin | ✅ |
 | **Copilot** | ⚠️ session total only, no per-request figure (one cumulative total at shutdown) | ✅ by interval | ✅ |
 | **Cursor** | ❌ no token count in any file it writes | ✅ | ✅ |
 
@@ -107,6 +107,8 @@ A limit a reader has to look up gets read as a zero, so each one is named here:
   opens it, under the directory that call was going to use. What is lost: on a server
   serving several directories, a session it never announced is
   journalled under the plugin's own init-time directory.
+- **OpenCode never names a step.** Its plugin forwards task paths and nothing else, so no
+  skill invocation reaches the journal and every OpenCode request is unattributed by step.
 - **These are raw counters, not your tool's usage screen.** A vendor's page weights a cached
   token by what it charges for it; these are the counts the tool wrote down. The two
   disagree on cache lines by construction, and neither is wrong.
