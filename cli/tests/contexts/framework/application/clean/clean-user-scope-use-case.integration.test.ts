@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
@@ -175,6 +176,54 @@ function seedClaudeCache(fs: InMemoryFileAdapter, hostName = "aidd-framework"): 
 }
 
 describe("clean --scope user", () => {
+  it("reads canonical dependents after acquiring the machine lock", async () => {
+    const machine = manifestWithClaude();
+    class LockedRepository extends InMemoryManifestRepository {
+      async withExclusiveAccess<T>(action: () => Promise<T>): Promise<T> {
+        // A concurrent install completed while clean was waiting for the lock.
+        const registration = machine.getNativeRegistrations("claude");
+        if (registration === undefined) throw new Error("fixture missing native registration");
+        machine.setNativeRegistrations("claude", {
+          ...registration,
+          pluginClaims: [{ ref: "aidd-context@aidd-framework", dependents: ["/project-b"] }],
+        });
+        return action();
+      }
+    }
+    const repo = new LockedRepository(machine);
+    const fs = new RecordingFileAdapter();
+    const cacheMarker = join(seedClaudeCache(fs), "marker.json");
+    const sourceMarker = join(USER_CONFIG_DIR, "cache", "built", "1.0.0", "catalogue.json");
+    fs.setFile(sourceMarker, "source");
+    const activator = new FakeNativePluginActivator({ available: true });
+    const useCase = new CleanUserScopeUseCase(
+      fs,
+      repo,
+      new CapturingLogger(),
+      new InMemoryMarketplaceRegistry(),
+      () => USER_CONFIG_DIR,
+      new Map([["claude", activator]]),
+      new Map(),
+      () => HOME,
+      undefined,
+      undefined,
+      provenClaudeSources(),
+      provenHostPlugins(machine)
+    );
+
+    await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
+      /user-scope plugin files.*active projects.*\/project-b/
+    );
+
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(fs.getFile(sourceMarker)).toBe("source");
+    expect(fs.getFile(cacheMarker)).toBe("{}");
+    expect(repo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims).toEqual([
+      { ref: "aidd-context@aidd-framework", dependents: ["/project-b"] },
+    ]);
+  });
+
   it("refuses an owned catalogue with a foreign enabled plugin ref before any global clean effect", async () => {
     const machine = manifestWithClaude();
     const repo = new InMemoryManifestRepository(machine);
@@ -381,7 +430,7 @@ describe("clean --scope user", () => {
   });
 
   it("refuses an active B Cursor user plugin but never treats project files as machine-owned", async () => {
-    const userFile = join(HOME, ".cursor", "plugins", "local", "shared", "skills", "x.md");
+    const userFile = join(homedir(), ".cursor", "plugins", "local", "shared", "skills", "x.md");
     const projectFile = "/A/skills/local.md";
     const fs = new RecordingFileAdapter();
     fs.setFile(userFile, "shared bytes");
@@ -421,7 +470,7 @@ describe("clean --scope user", () => {
       () => USER_CONFIG_DIR,
       new Map(),
       new Map(),
-      () => HOME
+      homedir
     );
 
     expect(
@@ -440,6 +489,8 @@ describe("clean --scope user", () => {
     machine.updatePlugin("cursor", shared.withDependents([]));
     await useCase.execute({ projectRoot: "/A", force: true });
     expect(repo.getCurrent()).toBeNull();
+    expect(fs.has(userFile)).toBe(false);
+    expect(fs.order).toContain(`deleteFile:${userFile}`);
     expect(fs.has(projectFile)).toBe(true);
   });
 
@@ -499,7 +550,7 @@ describe("clean --scope user", () => {
       );
 
       await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
-        /active projects.*\/project-a/
+        /the shared framework source.*active projects.*\/project-a/
       );
       expect(fs.order).not.toContain(`deleteDirectory:${join(USER_CONFIG_DIR, "cache", "built")}`);
       // No manifest means no `nativeRegistrations` to drive a host's own CLI through —
@@ -1123,6 +1174,7 @@ describe("clean --scope user", () => {
       repo?: InMemoryManifestRepository;
       binary?: string;
       nativeSources?: ReadonlyMap<"claude" | "codex", NativeMarketplaceSourceReader>;
+      hostPlugins?: ReadonlyMap<"claude" | "codex", FakeHostPluginRegistryReader>;
       activator: NativePluginActivator;
     }) {
       return new CleanUserScopeUseCase(
@@ -1137,7 +1189,7 @@ describe("clean --scope user", () => {
         undefined,
         undefined,
         deps.nativeSources ?? provenClaudeSources(),
-        provenHostPlugins(deps.manifest ?? manifestWithClaude())
+        deps.hostPlugins ?? provenHostPlugins(deps.manifest ?? manifestWithClaude())
       );
     }
 
@@ -1154,6 +1206,176 @@ describe("clean --scope user", () => {
       expect(activator.uninstalledPlugins).toStrictEqual(["aidd-context@aidd-framework"]);
       expect(activator.uninstalledPluginScopes).toStrictEqual(["user"]);
     });
+
+    it("cleans an empty native registration without inventing any plugin uninstall", async () => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude", "1.0.0", []);
+      manifest.setNativeRegistrations("claude", {
+        binary: "claude",
+        marketplaces: [],
+        pluginRefs: [],
+      });
+      const repo = new InMemoryManifestRepository(manifest);
+      const fs = new InMemoryFileAdapter();
+      const sourceMarker = join(USER_CONFIG_DIR, "cache", "built", "1.0.0", "catalogue.json");
+      fs.setFile(sourceMarker, "source");
+      const activator = new FakeNativePluginActivator({ available: true });
+
+      const result = await buildUseCase({
+        fs,
+        manifest,
+        repo,
+        activator,
+        logger: new CapturingLogger(),
+        nativeSources: new Map(),
+        hostPlugins: new Map(),
+      }).execute({ projectRoot: "/wherever", force: true });
+
+      expect(result).toEqual({
+        dryRun: false,
+        manifestFound: true,
+        preview: {
+          toolIds: ["claude"],
+          activePluginDependents: [],
+          builtVersions: ["1.0.0"],
+          referencingProjects: [],
+        },
+      });
+      expect(repo.getCurrent()).toBeNull();
+      expect(fs.has(sourceMarker)).toBe(false);
+      expect(activator.uninstalledPlugins).toEqual([]);
+      expect(activator.removedMarketplaces).toEqual([]);
+    });
+
+    it("retains canonical state when the recorded host catalogue is absent", async () => {
+      const manifest = manifestWithClaude();
+      const repo = new InMemoryManifestRepository(manifest);
+      const fs = new RecordingFileAdapter();
+      const marker = join(seedClaudeCache(fs), "marker.json");
+      const activator = new FakeNativePluginActivator({ available: true });
+      const source: NativeMarketplaceSourceReader = {
+        read: async () => ({ location: "Claude source registry", entries: new Map() }),
+      };
+
+      await expect(
+        buildUseCase({
+          fs,
+          manifest,
+          repo,
+          activator,
+          logger: new CapturingLogger(),
+          nativeSources: new Map([["claude", source]]),
+        }).execute({ projectRoot: "/wherever", force: true })
+      ).rejects.toThrow("claude: catalogue source unproven.");
+
+      expect(fs.order).toEqual([]);
+      expect(fs.getFile(marker)).toBe("{}");
+      expect(repo.getCurrent()?.toJSON()).toEqual(manifest.toJSON());
+      expect(activator.uninstalledPlugins).toEqual([]);
+      expect(activator.removedMarketplaces).toEqual([]);
+    });
+
+    it("retains canonical state if the binary disappears after source preflight", async () => {
+      let available = true;
+      class DisappearingActivator extends FakeNativePluginActivator {
+        override isAvailable(): boolean {
+          return available;
+        }
+      }
+      const manifest = manifestWithClaude();
+      const repo = new InMemoryManifestRepository(manifest);
+      const fs = new RecordingFileAdapter();
+      const marker = join(seedClaudeCache(fs), "marker.json");
+      const activator = new DisappearingActivator({ available: true });
+      const source: NativeMarketplaceSourceReader = {
+        read: async () => {
+          available = false;
+          return {
+            location: "Claude source registry",
+            entries: new Map([
+              ["aidd-framework", { kind: "registry" as const, source: "/built/claude" }],
+            ]),
+          };
+        },
+      };
+
+      await expect(
+        buildUseCase({
+          fs,
+          manifest,
+          repo,
+          activator,
+          logger: new CapturingLogger(),
+          nativeSources: new Map([["claude", source]]),
+        }).execute({ projectRoot: "/wherever", force: true })
+      ).rejects.toThrow(
+        `claude: registration left in place, the claude CLI is not on the PATH. It would have unregistered 1 marketplace(s) and 1 plugin ref(s). Its cache survives at: ${join(CLAUDE_CACHE, "aidd-framework")}. User clean refused; canonical claims retained.`
+      );
+
+      expect(fs.order).toEqual([]);
+      expect(fs.getFile(marker)).toBe("{}");
+      expect(repo.getCurrent()?.toJSON()).toEqual(manifest.toJSON());
+      expect(activator.uninstalledPlugins).toEqual([]);
+      expect(activator.removedMarketplaces).toEqual([]);
+    });
+
+    it.each(["missing catalogue", "duplicate claim", "disabled ref", "missing ref"] as const)(
+      "refuses %s before native or cache cleanup and retains the canonical manifest",
+      async (fault) => {
+        const manifest = manifestWithClaude();
+        const registration = manifest.getNativeRegistrations("claude");
+        if (registration === undefined) throw new Error("fixture missing registration");
+        if (fault === "missing catalogue")
+          manifest.setNativeRegistrations("claude", { ...registration, marketplaces: [] });
+        if (fault === "duplicate claim")
+          manifest.setNativeRegistrations("claude", {
+            ...registration,
+            pluginClaims: [
+              ...(registration.pluginClaims ?? []),
+              {
+                ref: "aidd-context@aidd-framework",
+                dependents: [],
+              },
+            ],
+          });
+        const before = manifest.toJSON();
+        const repo = new InMemoryManifestRepository(manifest);
+        const fs = new InMemoryFileAdapter();
+        const cacheMarker = join(seedClaudeCache(fs), "marker.json");
+        const cacheBytes = fs.getFile(cacheMarker);
+        const activator = new FakeNativePluginActivator({ available: true });
+        const hostPlugins = new Map([
+          [
+            "claude" as const,
+            new FakeHostPluginRegistryReader({
+              location: "literal host plugin registry",
+              refs: new Map(
+                fault === "missing ref"
+                  ? []
+                  : [["aidd-context@aidd-framework", { enabled: fault !== "disabled ref" }]]
+              ),
+            }),
+          ],
+        ]);
+
+        await expect(
+          buildUseCase({
+            fs,
+            manifest,
+            repo,
+            activator,
+            hostPlugins,
+            logger: new CapturingLogger(),
+          }).execute({ projectRoot: "/wherever", force: true })
+        ).rejects.toThrow(/canonical catalogue source|duplicate canonical native ref|not enabled/);
+
+        expect(activator.uninstalledPlugins).toEqual([]);
+        expect(activator.removedMarketplaces).toEqual([]);
+        expect(fs.getFile(cacheMarker)).toBe(cacheBytes);
+        expect(repo.getCurrent()?.toJSON()).toEqual(before);
+        expect(repo.saveCount).toBe(0);
+      }
+    );
 
     it("refuses a second missing native binary before uninstalling the first tool", async () => {
       const manifest = manifestWithClaude();
@@ -1509,6 +1731,55 @@ describe("clean --scope user", () => {
   });
 
   describe("the cache/ shell around the whitelist", () => {
+    it("tolerates a cache shell already absent while still removing later whitelist files", async () => {
+      const fs = new StrictListingFileAdapter();
+      const marker = join(USER_CONFIG_DIR, "update-check.json");
+      fs.setFile(marker, "legacy cache");
+      const logger = new CapturingLogger();
+      const repo = new InMemoryManifestRepository(Manifest.create());
+      const useCase = new CleanUserScopeUseCase(
+        fs,
+        repo,
+        logger,
+        new InMemoryMarketplaceRegistry(),
+        () => USER_CONFIG_DIR
+      );
+
+      const result = await useCase.execute({ projectRoot: "/wherever", force: true });
+
+      expect(result.dryRun).toBe(false);
+      expect(fs.has(marker)).toBe(false);
+      expect(repo.getCurrent()).toBeNull();
+      expect(logger.infoMessages).not.toContain(
+        `user scope: cache purged: ${join(USER_CONFIG_DIR, "cache")}`
+      );
+    });
+
+    it("propagates an unreadable cache shell and retains canonical state and later whitelist files", async () => {
+      const fs = new StrictListingFileAdapter(join(USER_CONFIG_DIR, "cache"));
+      const source = join(USER_CONFIG_DIR, "cache", "built", "1.0.0", "catalogue.json");
+      const legacy = join(USER_CONFIG_DIR, "update-check.json");
+      fs.setFile(source, "built source");
+      fs.setFile(legacy, "legacy cache");
+      const machine = Manifest.create();
+      const repo = new InMemoryManifestRepository(machine);
+      const useCase = new CleanUserScopeUseCase(
+        fs,
+        repo,
+        new CapturingLogger(),
+        new InMemoryMarketplaceRegistry(),
+        () => USER_CONFIG_DIR
+      );
+
+      await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
+        "permission denied"
+      );
+
+      expect(fs.has(source)).toBe(false);
+      expect(fs.getFile(legacy)).toBe("legacy cache");
+      expect(repo.getCurrent()).toBe(machine);
+    });
+
     it("leaves cache/ and everything under it in place, naming each, once cache/ resolves outside userConfigDir()", async () => {
       const fs = new RecordingFileAdapter();
       const cacheDir = join(USER_CONFIG_DIR, "cache");

@@ -44,6 +44,8 @@ for (const toolId of ["codex", "copilot"] as const) {
         sourceMismatch?: boolean;
         sourceUnavailable?: boolean;
         legacy?: boolean;
+        hostRegistryUnavailable?: boolean;
+        hostRegistryUnreadable?: boolean;
       } = {}
     ) {
       const refs = options.refs ?? [REF];
@@ -69,7 +71,10 @@ for (const toolId of ["codex", "copilot"] as const) {
         options.hostRefs ??
         new Map(refs.map((ref) => [ref, { enabled: true, scope: "user" as const }]));
       const reader: HostPluginRegistryReader = {
-        read: async () => ({ location: "/host/registry", refs: hostRefs }),
+        read: async () =>
+          options.hostRegistryUnreadable
+            ? { location: "/host/registry", unreadable: "invalid host registry" }
+            : { location: "/host/registry", refs: hostRefs },
       };
       const sources = {
         read: async () => ({
@@ -92,17 +97,110 @@ for (const toolId of ["codex", "copilot"] as const) {
         new InMemoryManifestRepository(Manifest.create()),
         new CapturingLogger(),
         new Map([[toolId, activator]]),
-        new Map([[toolId, reader]]),
+        options.hostRegistryUnavailable ? new Map() : new Map([[toolId, reader]]),
         undefined,
         new InMemoryMarketplaceRegistry(),
         repo,
         options.sourceUnavailable ? new Map() : new Map([[toolId, sources]])
       );
-      return { repo, fs, activator, remove };
+      return { machine, repo, fs, activator, remove };
     }
 
     const execute = (remove: PluginRemoveUseCase, pluginName: string) =>
       remove.execute({ pluginName, toolIds: [toolId], projectRoot: "/A", scope: "user" });
+
+    it.each([{ hostRegistryUnavailable: true }, { hostRegistryUnreadable: true }])(
+      "retains all ownership data when the host registry cannot be measured: %j",
+      async (options) => {
+        const f = fixture(options);
+        const before = f.machine.toJSON();
+
+        await expect(execute(f.remove, REF)).rejects.toThrow(/unavailable|still enabled/);
+
+        expect(f.activator.uninstalledPlugins).toStrictEqual([]);
+        expect(f.repo.saveCount).toBe(0);
+        expect(f.machine.toJSON()).toStrictEqual(before);
+      }
+    );
+
+    it.each(["missing", "duplicate"] as const)(
+      "refuses a %s exact catalogue proof before unregistering",
+      async (mode) => {
+        const f = fixture();
+        f.machine.setNativeRegistrations(toolId, {
+          binary: toolId,
+          marketplaces:
+            mode === "missing"
+              ? []
+              : [
+                  {
+                    alias: "first",
+                    hostName: "real-catalog",
+                    provenance: sourceFor(toolId, "real-catalog"),
+                  },
+                  {
+                    alias: "second",
+                    hostName: "real-catalog",
+                    provenance: sourceFor(toolId, "real-catalog"),
+                  },
+                ],
+          pluginRefs: [REF],
+          pluginClaims: [{ ref: REF, dependents: [] }],
+        });
+        const before = f.machine.toJSON();
+
+        await expect(execute(f.remove, REF)).rejects.toThrow(
+          /exact canonical catalogue source proof/
+        );
+
+        expect(f.activator.uninstalledPlugins).toStrictEqual([]);
+        expect(f.repo.saveCount).toBe(0);
+        expect(f.machine.toJSON()).toStrictEqual(before);
+      }
+    );
+
+    it("reads dependents inside the repository's exclusive-access boundary", async () => {
+      const f = fixture();
+      let acquired = false;
+      Object.assign(f.repo, {
+        withExclusiveAccess: async (operation: () => Promise<void>) => {
+          acquired = true;
+          f.machine.setNativeRegistrations(toolId, {
+            binary: toolId,
+            marketplaces: [
+              {
+                alias: "real-catalog",
+                hostName: "real-catalog",
+                provenance: sourceFor(toolId, "real-catalog"),
+              },
+            ],
+            pluginRefs: [REF],
+            pluginClaims: [{ ref: REF, dependents: ["/B"] }],
+          });
+          return operation();
+        },
+      });
+
+      await expect(execute(f.remove, REF)).rejects.toThrow(/active projects.*\/B/);
+
+      expect(acquired).toBe(true);
+      expect(f.activator.uninstalledPlugins).toStrictEqual([]);
+      expect(f.repo.saveCount).toBe(0);
+      expect(f.machine.getNativeRegistrations(toolId)?.pluginClaims).toStrictEqual([
+        { ref: REF, dependents: ["/B"] },
+      ]);
+    });
+
+    it("uses user scope when the enabled host ref has no scope label", async () => {
+      const f = fixture({ hostRefs: new Map([[REF, { enabled: true }]]) });
+
+      await execute(f.remove, REF);
+
+      expect(f.activator.uninstalledPlugins).toStrictEqual([REF]);
+      expect(f.activator.uninstalledPluginScopes).toStrictEqual(["user"]);
+      expect(f.machine.getNativeRegistrations(toolId)?.pluginClaims).toStrictEqual([]);
+      expect(f.repo.saveCount).toBe(1);
+    });
 
     it("refuses B's live exact claim before contacting the host", async () => {
       const f = fixture({ dependents: ["/B"] });

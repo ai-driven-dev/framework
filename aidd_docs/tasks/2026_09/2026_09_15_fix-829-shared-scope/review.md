@@ -1,10 +1,10 @@
 # Review: #829 shared user-scope plugin safety
 
 - **Verdict**: blocked
-- **Diff**: `origin/next...codex/fix-829-shared-scope` (staged candidate)
+- **Diff**: `origin/next...codex/fix-829-shared-scope` plus uncommitted working-tree test hardening
 - **Axes run**: code, functional, relevancy
-- **Date**: 2026_09_15
-- **Findings**: 3 critical, 1 warning, 0 minor
+- **Date**: 2026_09_16
+- **Findings**: 1 critical, 2 warnings, 0 minor
 
 ## Phases
 
@@ -23,7 +23,7 @@
 - [x] Native readers use verified structured shapes and refuse unsupported outputs — `cli/src/contexts/tools/infrastructure/native-marketplace-source-reader-adapter.ts:45`.
 - [x] User clean rejects orphan/unclaimed machine-global refs and project clean leaves another user's ref enabled — `cli/src/contexts/framework/application/clean/clean-user-scope-use-case.ts:316`, `cli/src/contexts/framework/application/clean-use-case.ts:248`.
 - [x] Multi-tool user clean checks required binary availability before the first host mutation — `cli/tests/contexts/framework/application/clean/clean-user-scope-use-case.integration.test.ts:1158`.
-- [ ] Required mutation scopes are incomplete: `framework` scored 86.7% below 93% on the pre-remedy source tree; 13 scopes remain unrun — `cli/mutation-scopes.json:31`.
+- [ ] Required mutation scopes are incomplete: the latest local `framework` run passed at 93.5837%, above its 93% floor; 13 other scopes remain unrun — `cli/mutation-scopes.json:31`.
 
 ### Phase 4 — Preserve edited local integration
 
@@ -31,7 +31,7 @@
 - [x] Failed local cleanup preserves A's reference and blocks shared user clean — `cli/tests/contexts/framework/application/clean-use-case.unit.test.ts:796`.
 - [x] Hook preflight precedes source-claim detachment and host changes — `cli/src/contexts/framework/application/clean-use-case.ts:204`.
 - [x] Symlinked project integration outside the canonical root is refused without changing external bytes — `cli/tests/contexts/framework/application/shared/remove-project-hooks.unit.test.ts:62`.
-- [ ] Targeted tests and full functional gates pass, but destructive mutation witnesses do not meet the required final scope floor — `cli/mutation-scopes.json:31`.
+- [x] Targeted behavior tests, full functional gates, and the whole-framework mutation floor pass at 93.5837% — `cli/reports/mutation/framework/mutation.json`.
 
 ### Phase 5 — Guard user-scope files
 
@@ -40,23 +40,40 @@
 - [x] A mixed native/file collision prevents host call, file writes, and claim movement — `cli/tests/contexts/framework/application/plugin/plugin-update-built-tree.unit.test.ts:305`.
 - [x] A substituted symlink is rechecked before file I/O; external bytes survive deterministic tested cases — `cli/tests/contexts/framework/application/plugin/plugin-update-built-tree.unit.test.ts:332`.
 - [x] Partial update failure retains truthful claims for manual reconciliation — `cli/tests/contexts/framework/application/plugin/plugin-update-built-tree.unit.test.ts:380`.
-- [ ] Targeted tests and integrated functional gates pass, but final mutation coverage remains below the required floor — `cli/mutation-scopes.json:31`.
+- [x] Targeted behavior tests, integrated functional gates, and the whole-framework mutation floor pass at 93.5837% — `cli/reports/mutation/framework/mutation.json`.
 
 ## Findings
 
 | Sev | Kind | Phase | Location | Issue | Fix |
 | --- | --- | --- | --- | --- | --- |
-| 🔴 critical | functional | 3 | `cli/mutation-scopes.json:31` | `framework` mutation 86.7% is below 93%; 13 other scopes are unrun and the report predates a wording-only source change. This draft is not merge-ready. | Add branch-distinguishing witnesses or simplify proof flow, then rerun every scope on one frozen source SHA. |
+| 🔴 critical | functional | 3 | `cli/mutation-scopes.json:31` | Latest local `framework` score passes at 93.5837%; all 115 reported source files match the working tree. Test changes remain uncommitted and 13 other scopes are unrun. This draft is not merge-ready. | Verify the remaining scope gates on the final tree before a merge-ready verdict. |
 | 🟡 warning | functional | 3 | `cli/src/contexts/tools/domain/profiles/copilot/native-marketplace-source.ts:4` | Copilot 1.0.83 safely refuses even fresh native activation; #829's preservation need is met, but end-to-end Copilot install is partial. | Verify a structured source reader on a supported binary in a separate follow-up before claiming full support. |
-| 🔴 critical | functional | 4 | `cli/mutation-scopes.json:31` | Destructive-hook guards have passing behavior tests but their required mutation witness is not certified by the below-floor framework report. | Strengthen targeted negative/positive tests, then repeat the full framework mutation gate. |
-| 🔴 critical | functional | 5 | `cli/mutation-scopes.json:31` | User-file guards have passing behavior tests but their required mutation witness is not certified by the below-floor framework report. | Strengthen targeted negative/positive tests, then repeat the full framework mutation gate. |
+| 🟡 warning | functional | 5 | `cli/src/contexts/framework/application/plugin/plugin-helpers.ts:58` | User clean validates paths with an injected home, but deletion resolves OS home. Normal OS-home deletion passes; custom injected-home deletion is not certified. | Align validation and deletion home resolution in a bounded follow-up with a custom-home witness. |
 
 ## Verification
 
 | Metric | Value |
 | --- | --- |
-| Verified | 78.9% (15/19) |
+| Verified | 89.5% (17/19) |
 | Files checked | `cli/src/contexts/framework/application/{flows,clean,plugin,ownership,shared,uninstall}`, `cli/src/contexts/tools/{domain,infrastructure}`, relevant E2E/integration tests, `cli/scripts/smoke-collision.sh`, task plan and issue #829 |
-| Unchecked | Phase 3 fresh Copilot — fix; Phase 3 mutation — fix; Phase 4 mutation — fix; Phase 5 mutation — fix |
+| Unchecked | Phase 3 fresh Copilot — follow-up; Phase 3 remaining thirteen mutation scopes — verification pending. Custom-home cleanup is a separate diagnostic finding. |
 | Unplanned | Measured bundle-budget increase and smoke harness adaptation support delivery verification; no unrelated feature found. |
 | Draft disposition | User-authorized partial draft only; do not merge or close #829 until the strict gates and Copilot scope decision are resolved. |
+
+## Incremental local test hardening — 2026_09_16
+
+- Tests only: 236 additional cases since the 6,464-test snapshot; production source is unchanged during these lots. No commit or push.
+- Latest functional run: `pnpm exec vitest run --reporter=dot` passed 524 files / 6,700 tests in 35.16s. Coverage was last measured before the 143 latest tests: 99.09% lines, 96.80% branches, 99.68% functions, with 6,557 tests passing in 74.95s. `pnpm typecheck`, `pnpm lint`, and `git diff --check` passed; lint retains only the existing unused constructor-property warning at `uninstall-use-case.ts:33`.
+- Twenty-one targeted reports under `cli/reports/mutation/829-*/mutation.json` show 465 unique additional detections against the original baseline, without double counting overlapping campaigns. The original full report and incremental state are preserved under `cli/reports/mutation/framework-baseline-829/`; the preceding 90.0595% snapshot is preserved under `cli/reports/mutation/framework-90-before93/`.
+- The final whole-framework incremental run used the existing runner's exported scope arguments, pruning, scoring, and floor check, with concurrency limited to two. It reused 5,954 results, replayed 2,275 mutants, and finished in 9m01s: 7,688 killed, 13 timed out, 465 survived, 63 uncovered; score 93.5836675173168% on 8,229 mutants. The declared 93% gate passed. All 115 reported source files match the frozen working tree; production source, mutation configuration, exclusions, and scripts were unchanged during hardening.
+- Exact comparison with the original baseline gives 563 additional detections and no detection regression. Two unmatched mutation keys concern the previously documented sync warning wording. Against the preceding 90.0595% snapshot, 291 newly detected mutants and one detection loss give a net gain of 290. The retained loss is a static empty-string mutant in `plugin-distribution-reader-adapter.ts:20`; it was also undetected in the original baseline. Its status is not replaced with an earlier favorable result. The framework gate is passed, but the strict overall delivery verdict remains blocked by the other thirteen scopes and the documented partial Copilot verification.
+- Covered additions: post-add source/root/type mismatches and unreadable proof, local alias versus host identity, project versus machine catalogue proof, exact attachment to an already-enabled machine ref while preserving B, exclusive-access update preflight, affected-project warnings, and original I/O error causes.
+- Runtime bottleneck: in the final run Stryker estimated that 91 static mutants (4% of mutants scheduled for replay) would account for 61% of execution time. None were ignored. Harness optimization must preserve their witness coverage and sound cache invalidation.
+- Marketplace-removal additions cover reserved shared-catalogue refusal before registry access, exact user-catalogue selection among competing entries, exact native scope and host name, implicit host ref scope, a proven empty catalogue without plugin claims, missing canonical ledger, and project cleanup without a native mapping or orphan. The two targeted campaigns took 17s and 21s; the final report contains 202 killed / 10 survived across 212 mutants. The surviving empty file-scope literal still resolves to the same user directory; no invalid runtime scope was introduced just to distinguish it.
+- Synchronization additions in `cli/tests/contexts/framework/application/flows/marketplace-sync-settings-scope.integration.test.ts` and `marketplace-sync-source-provenance.integration.test.ts` cover implicit/explicit project synchronization inside the machine lock, user-scope non-reentrancy, lock failure before project reads or host writes, missing/unreadable plugin registries with and without a diagnostic, explicitly absent plugin registries followed by post-add source proof, and Claude catalogue absence versus late unreadability or a newly appearing same-name foreign catalogue. The two targeted campaigns took 50s and 53s; the latest report contains 96 killed / 16 survived / 0 uncovered across 112 mutants. Their overlapping gains were counted once.
+- Late-refusal/projection additions in `cli/tests/contexts/framework/application/flows/marketplace-sync-native-provenance.integration.test.ts` cover a transient source-read refusal followed by recovered proof, foreign/missing source, foreign refs or unreadable refs, for Codex and the future-supported Copilot test double. Existing project references and B's machine claims survive invalid proof; recovered proof attaches only this project. Narrowed sync drops obsolete target references only after valid proof and retains references when another alias still owns the same host catalogue. The Claude late-collision test also explicitly asserts an empty project projection. `829-sync-late-refusal-projections/mutation.json` matches current source: 130 killed / 17 survived / 1 uncovered across 148 mutants, in 44s; 19 detections beyond the complete snapshot, of which two overlap the preceding registry-proof lot, so the net addition is 17. No claim of real Copilot support follows from these doubles.
+- Catalogue-versus-plugin additions in `cli/tests/contexts/framework/application/flows/marketplace-sync-source-provenance.integration.test.ts` cover project/user Claude catalogue refusal without phantom machine claims, a catalogue containing an undeclared plugin without enabling or claiming that plugin, scope-specific machine catalogue ownership for Claude/Codex, idempotent ownership saves, preservation of B's existing claims and tool version, another alias pointing at the same host, and fresh machine tool/version initialization. `829-sync-catalogue-plugin-claims/mutation.json` matches current source: 109 killed / 13 survived / 0 uncovered across 122 mutants, in 41s; 14 detections beyond the complete snapshot, of which five overlap preceding lots, so the net addition is nine.
+- The first threshold-93 batch, `829-threshold93-native-recovery/mutation.json`, measured 152 novel detections beyond every preceding targeted lot: clean 39, sync 32, plugin removal 27, hooks 28, plugin add 7, init 7, native registration gate 7, file updater 5. It completed in 2m58s across 1,034 mutants. Fourteen formerly detected mutations survived in this narrower run; these discrepancies are retained for the whole-framework replay, not omitted from the verdict. Added witnesses assert preflight state preservation, native cache retention on binary loss, exact host diagnostics, recovery races and scope, public upgrade/no-op behavior, and hook contribution ownership. The test skill's behavioral contract ruled out contrived invalid inputs for unreachable branches.
+- Separate diagnostic finding: `CleanUserScopeUseCase` checks user files with its injected home directory, but `deletePluginFilesForTool` resolves deletion through OS `nodeHomedir` (`cli/src/contexts/framework/application/plugin/plugin-helpers.ts:58`). The truthful OS-home test proves normal user-file deletion; it does not certify custom injected-home deletion. No production workaround was added to raise the mutation score.
+- The final targeted batch, `829-threshold93-final-contracts/mutation.json`, added another 61 novel detections: user clean 21, sync 17, native source proof 5, cache purge 6, built materialization 3, runtime settings 3, plugin removal 2, tool uninstall 4. It completed in 1m45s across 508 mutants. All narrow-run discrepancies were left for the complete replay; the reported final global score, not the sum or average of targeted scores, is the certified result.
+- Threshold-93 objective complete. Remaining delivery work: verification of the other thirteen scope gates and the existing Copilot follow-up; custom-home cleanup is separately documented. No legacy migration, commit, or push was performed.

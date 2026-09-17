@@ -48,6 +48,66 @@ describe("purgeAllNativeCaches", () => {
 });
 
 describe("purgeNativeMarketplaceCache", () => {
+  it("keeps the cache and names the registry that still owns its tenant after a confirmed removal", async () => {
+    const path = join(CANDIDATE, "plugin.json");
+    const fs = new InMemoryFileAdapter({ [path]: "still registered" });
+    const logger = new CapturingLogger();
+    const location = "/host/known_marketplaces.json";
+    const reader = new FakeHostMarketplaceRegistryReader({
+      location,
+      entries: new Map([[HOST_NAME, "/another-project/marketplace"]]),
+    });
+
+    await purgeNativeMarketplaceCache(fs, logger, reader, CACHE_ROOT, "claude", HOST_NAME, true);
+
+    expect(fs.getFile(path)).toBe("still registered");
+    expect(reader.reads).toBe(1);
+    expect(logger.infoMessages).toStrictEqual([]);
+    expect(logger.warnMessages).toStrictEqual([
+      `claude: cache for '${HOST_NAME}' left in place, ${location} still names it: ${CANDIDATE}`,
+    ]);
+  });
+
+  it("purges only its tenant once a readable registry no longer names it", async () => {
+    const neighborPath = join(CACHE_ROOT, "another-marketplace", "plugin.json");
+    const fs = new InMemoryFileAdapter({
+      [join(CANDIDATE, "plugin.json")]: "removed tenant",
+      [neighborPath]: "other tenant",
+    });
+    const logger = new CapturingLogger();
+    const reader = new FakeHostMarketplaceRegistryReader({
+      location: "/host/known_marketplaces.json",
+      entries: new Map([["another-marketplace", "/other-project/marketplace"]]),
+    });
+
+    await purgeNativeMarketplaceCache(fs, logger, reader, CACHE_ROOT, "claude", HOST_NAME, true);
+
+    expect(fs.listAll()).toStrictEqual([neighborPath]);
+    expect(fs.getFile(neighborPath)).toBe("other tenant");
+    expect(reader.reads).toBe(1);
+    expect(logger.warnMessages).toStrictEqual([]);
+    expect(logger.infoMessages).toStrictEqual([
+      `claude: cache for '${HOST_NAME}' purged: ${CANDIDATE}`,
+    ]);
+  });
+
+  it("keeps its cache and reports the unreadable registry instead of treating it as empty", async () => {
+    const path = join(CANDIDATE, "plugin.json");
+    const fs = new InMemoryFileAdapter({ [path]: "unproven ownership" });
+    const logger = new CapturingLogger();
+    const location = "/host/known_marketplaces.json";
+    const reader = new FakeHostMarketplaceRegistryReader({ location, unreadable: "EACCES" });
+
+    await purgeNativeMarketplaceCache(fs, logger, reader, CACHE_ROOT, "claude", HOST_NAME, true);
+
+    expect(fs.getFile(path)).toBe("unproven ownership");
+    expect(reader.reads).toBe(1);
+    expect(logger.infoMessages).toStrictEqual([]);
+    expect(logger.warnMessages).toStrictEqual([
+      `claude: plugin cache left in place, its registry could not be read: ${location}`,
+    ]);
+  });
+
   it("keeps a machine-global catalogue's bytes when project clean did not unregister it, even if a registry reader says absent", async () => {
     const path = join(CANDIDATE, "plugin.json");
     const fs = new InMemoryFileAdapter({ [path]: "B still needs these bytes" });

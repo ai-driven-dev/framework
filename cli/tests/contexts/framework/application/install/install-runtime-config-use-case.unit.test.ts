@@ -5,6 +5,7 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import { SettingsCapability } from "../../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { registerTool } from "../../../../../src/contexts/tools/domain/registry.js";
+import { InstallationFile } from "../../../../../src/kernel/file.js";
 import { extractMergeEntries } from "../../../../../src/kernel/merge.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
 import {
@@ -30,6 +31,37 @@ function buildUseCase(
 }
 
 describe("InstallRuntimeConfigUseCase", () => {
+  it("writes a text config asset verbatim and records its content hash without warnings", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initProject(deps, PROJECT_ROOT);
+    const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+    const content = '{ "custom": true }\n';
+    const assets = new StubAssetProvider({ "claude/settings.json": content }, deps.assetProvider);
+
+    const result = await buildUseCase(deps, assets).execute({
+      toolId: "claude",
+      projectRoot: PROJECT_ROOT,
+      manifest,
+      force: false,
+      version: "1.0.0",
+    });
+
+    expect(deps.fs.getFile(join(PROJECT_ROOT, ".claude/settings.json"))).toBe(content);
+    expect(result.files).toStrictEqual([
+      new InstallationFile({
+        relativePath: ".claude/settings.json",
+        content,
+        hash: deps.hasher.hash(content),
+      }),
+    ]);
+    expect(result.fileCount).toBe(1);
+    expect(result.skipped).toBe(false);
+    expect(result.warnings).toStrictEqual([]);
+    expect(manifest.getToolFiles("claude")).toStrictEqual([
+      { relativePath: ".claude/settings.json", hash: deps.hasher.hash(content) },
+    ]);
+  });
+
   it("writes config on fresh install", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
@@ -244,6 +276,38 @@ describe("InstallRuntimeConfigUseCase", () => {
 
     afterEach(() => {
       registerTool(cursor);
+    });
+
+    it("merges a single declared settings capability and records its keys", async () => {
+      const deps = await buildUnitDeps(PROJECT_ROOT);
+      await initProject(deps, PROJECT_ROOT);
+      registerTool({ ...cursor, capabilities: { ...cursor.capabilities, settings: inline } });
+      const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+      deps.fs.setFile(join(PROJECT_ROOT, ".cursor/aidd-static.json"), '{"user.setting": 7}');
+
+      const result = await buildUseCase(deps).execute({
+        toolId: "cursor",
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        force: false,
+        version: "1.0.0",
+      });
+
+      expect(
+        JSON.parse(deps.fs.getFile(join(PROJECT_ROOT, ".cursor/aidd-static.json")) ?? "null")
+      ).toStrictEqual({ "user.setting": 7, static: true });
+      expect(result.files.map((file) => file.relativePath)).toStrictEqual([
+        ".cursor/settings.json",
+        ".cursor/aidd-static.json",
+      ]);
+      expect(result.warnings).toStrictEqual([]);
+      expect(manifest.getMergeFiles("cursor")).toStrictEqual([
+        {
+          relativePath: ".cursor/aidd-static.json",
+          sectionKey: null,
+          entries: extractMergeEntries('{"user.setting":7,"static":true}', null, deps.hasher),
+        },
+      ]);
     });
 
     it("writes inline content and passes over a capability that only consumes", async () => {

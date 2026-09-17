@@ -436,6 +436,323 @@ describe("clean", () => {
       return registry;
     }
 
+    describe("machine claims survive project cleanup", () => {
+      it("names shared-source dependents only on refs belonging to that source", async () => {
+        const manifest = seedManifestWithNativeRegistrations();
+        manifest.setNativeRegistrations("codex", {
+          binary: BINARY,
+          marketplaces: [
+            ...(manifest.getNativeRegistrations("codex")?.marketplaces ?? []),
+            {
+              alias: "other",
+              hostName: "other-host",
+              provenance: {
+                kind: "effective-list",
+                root: "/some/built/path",
+                sourceType: "local",
+                source: "/some/built/path",
+              },
+            },
+          ],
+          pluginRefs: [REF, "unclaimed@other-host"],
+        });
+        const fs = new InMemoryFileAdapter();
+        for (const root of [PROJECT_ROOT, "/project-b", "/project-c"])
+          fs.setFile(join(root, "marker"), "project");
+        const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
+        for (const root of [PROJECT_ROOT, "/project-b", "/project-c"])
+          await references.addReference("1.0.0", root);
+        const registry = new InMemoryMarketplaceRegistry();
+        await registry.save(
+          PROJECT_ROOT,
+          Marketplace.create({
+            name: MARKETPLACE,
+            source: { kind: "local", path: "/some/built/path" },
+            scope: "user",
+            addedAt: "2026-01-01T00:00:00.000Z",
+          })
+        );
+        await registry.save(
+          PROJECT_ROOT,
+          Marketplace.create({
+            name: "other",
+            source: { kind: "local", path: "/some/built/path" },
+            scope: "project",
+            addedAt: "2026-01-01T00:00:00.000Z",
+          })
+        );
+        const activator = new FakeNativePluginActivator({ available: true });
+        const logger = new CapturingLogger();
+        const useCase = new CleanWithKnownHostSource(
+          fs,
+          new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+          logger,
+          new GitignoreUseCase(fs),
+          new Map([[BINARY, activator]]),
+          registry,
+          undefined,
+          new Map(),
+          () => "/fake-home",
+          references,
+          undefined,
+          new InMemoryManifestRepository(Manifest.create(), "/fake-home")
+        );
+
+        await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+
+        expect(activator.uninstalledPlugins).toEqual([]);
+        expect(activator.removedMarketplaces).toEqual(["other-host"]);
+        expect(await references.listAllReferencingProjects()).toEqual(["/project-b", "/project-c"]);
+        expect(logger.warnMessages.slice(0, 2)).toEqual([
+          `codex: '${REF}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean. Still needed by /project-b, /project-c.`,
+          "codex: 'unclaimed@other-host' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.",
+        ]);
+      });
+
+      it.each([
+        { others: [], suffix: "" },
+        {
+          others: ["/project-b", "/project-c"],
+          suffix: " Still needed by /project-b, /project-c.",
+        },
+      ])(
+        "keeps canonical refs and reports remaining dependents: $others",
+        async ({ others, suffix }) => {
+          const manifest = seedManifestWithNativeRegistrations();
+          const fs = new InMemoryFileAdapter();
+          fs.setFile(join(PROJECT_ROOT, "marker"), "project");
+          const cachePath = "/fake-home/.codex/plugins/cache/aidd-framework/plugin.json";
+          fs.setFile(cachePath, "cache");
+          const extraRef = "another@aidd-framework";
+          const machine = Manifest.create();
+          machine.addTool("codex", "1.0.0", []);
+          machine.setNativeRegistrations("codex", {
+            binary: BINARY,
+            marketplaces: manifest.getNativeRegistrations("codex")?.marketplaces ?? [],
+            pluginRefs: [REF, extraRef],
+            pluginClaims: [
+              { ref: REF, dependents: [PROJECT_ROOT, ...others] },
+              { ref: extraRef, dependents: [PROJECT_ROOT, ...others] },
+              { ref: "unrelated@other-host", dependents: ["/unrelated"] },
+            ],
+          });
+          const machineRepo = new InMemoryManifestRepository(machine, "/fake-home");
+          const projectRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+          const activator = new FakeNativePluginActivator({ available: true });
+          const logger = new CapturingLogger();
+          const hostRefs = new FakeHostPluginRegistryReader({
+            location: "Codex machine refs",
+            refs: new Map([
+              [REF, { enabled: true }],
+              [extraRef, { enabled: true }],
+            ]),
+          });
+          const useCase = new CleanWithKnownHostSource(
+            fs,
+            projectRepo,
+            logger,
+            new GitignoreUseCase(fs),
+            new Map([[BINARY, activator]]),
+            seedMarketplaceRegistry(),
+            undefined,
+            new Map(),
+            () => "/fake-home",
+            undefined,
+            new Map([["codex", hostRefs]]),
+            machineRepo
+          );
+
+          await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+
+          expect(activator.uninstalledPlugins).toEqual([]);
+          expect(activator.removedMarketplaces).toEqual([]);
+          expect(fs.getFile(cachePath)).toBe("cache");
+          expect(projectRepo.getCurrent()).toBeNull();
+          expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+            { ref: REF, dependents: others },
+            { ref: extraRef, dependents: [PROJECT_ROOT, ...others] },
+            { ref: "unrelated@other-host", dependents: ["/unrelated"] },
+          ]);
+          expect(logger.warnMessages).toEqual([
+            `codex: '${REF}' is an AIDD-owned machine plugin ref — left enabled; project claim detached after local clean.${suffix}`,
+            `codex: '${MARKETPLACE}' carries AIDD-owned machine plugin refs — left registered for explicit user-scope removal.${suffix}`,
+            `codex: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: /fake-home/.codex/plugins/cache/aidd-framework`,
+          ]);
+        }
+      );
+
+      it.each([undefined, { binary: BINARY, marketplaces: [], pluginRefs: [] }])(
+        "removes an empty project catalogue when the machine has no matching claims: %j",
+        async (machineRegistrations) => {
+          const machine = Manifest.create();
+          machine.addTool("codex", "1.0.0", []);
+          if (machineRegistrations !== undefined)
+            machine.setNativeRegistrations("codex", machineRegistrations);
+          const fs = new InMemoryFileAdapter();
+          const logger = new CapturingLogger();
+          const activator = new FakeNativePluginActivator({ available: true });
+          const useCase = new CleanWithKnownHostSource(
+            fs,
+            new InMemoryManifestRepository(seedManifestWithNativeRegistrations(), PROJECT_ROOT),
+            logger,
+            new GitignoreUseCase(fs),
+            new Map([[BINARY, activator]]),
+            seedMarketplaceRegistry(),
+            undefined,
+            new Map(),
+            () => "/fake-home",
+            undefined,
+            undefined,
+            new InMemoryManifestRepository(machine, "/fake-home")
+          );
+
+          await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+
+          expect(activator.removedMarketplaces).toEqual([MARKETPLACE]);
+          expect(logger.warnMessages).toEqual([
+            `codex: '${REF}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.`,
+          ]);
+        }
+      );
+    });
+
+    describe("unproven Claude refs in a shared source", () => {
+      async function sharedClaudeRegistry(): Promise<InMemoryMarketplaceRegistry> {
+        const registry = new InMemoryMarketplaceRegistry();
+        await registry.save(
+          PROJECT_ROOT,
+          Marketplace.create({
+            name: MARKETPLACE,
+            source: { kind: "local", path: "/some/built/path" },
+            scope: "user",
+            addedAt: "2026-01-01T00:00:00.000Z",
+          })
+        );
+        return registry;
+      }
+
+      it.each([
+        { entries: new Map(), reason: "Reconcile manually." },
+        {
+          entries: new Map([[MARKETPLACE, { kind: "registry" as const, source: "/foreign" }]]),
+          reason: `Catalogue '${MARKETPLACE}': current host source differs from AIDD's recorded source; reconcile manually.`,
+        },
+      ])(
+        "leaves the ref enabled when its host source is unproven: $reason",
+        async ({ entries, reason }) => {
+          const fs = new InMemoryFileAdapter();
+          const logger = new CapturingLogger();
+          const activator = new FakeNativePluginActivator({ available: true });
+          const source: NativeMarketplaceSourceReader = {
+            read: async () => ({ location: "Claude source fixture", entries }),
+          };
+          const useCase = new CleanWithKnownHostSource(
+            fs,
+            new InMemoryManifestRepository(seedClaudeNativeRegistrations(), PROJECT_ROOT),
+            logger,
+            new GitignoreUseCase(fs),
+            new Map([["claude", activator]]),
+            await sharedClaudeRegistry(),
+            undefined,
+            new Map(),
+            () => "/fake-home",
+            undefined,
+            claudeRefOnHost("project"),
+            undefined,
+            new Map([["claude", source]])
+          );
+
+          await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+
+          expect(activator.uninstalledPlugins).toEqual([]);
+          expect(activator.removedMarketplaces).toEqual([]);
+          expect(logger.warnMessages[0]).toBe(
+            `claude: '${REF}' left enabled because its current host catalogue is unproven. ${reason}`
+          );
+        }
+      );
+
+      it("warns about a ref whose host catalogue was not recorded", async () => {
+        const manifest = seedClaudeNativeRegistrations();
+        manifest.setNativeRegistrations("claude", {
+          binary: "claude",
+          marketplaces: manifest.getNativeRegistrations("claude")?.marketplaces ?? [],
+          pluginRefs: ["orphan@unrecorded"],
+        });
+        const fs = new InMemoryFileAdapter();
+        const logger = new CapturingLogger();
+        const activator = new FakeNativePluginActivator({ available: true });
+        const useCase = new CleanWithKnownHostSource(
+          fs,
+          new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+          logger,
+          new GitignoreUseCase(fs),
+          new Map([["claude", activator]]),
+          await sharedClaudeRegistry()
+        );
+
+        await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+
+        expect(activator.uninstalledPlugins).toEqual([]);
+        expect(logger.warnMessages[0]).toBe(
+          "claude: 'orphan@unrecorded' has no recorded host catalogue — left enabled."
+        );
+      });
+
+      it.each([false, true])(
+        "only uninstalls when all other host refs have canonical machine claims: %s",
+        async (claimed) => {
+          const extraRef = "machine-plugin@aidd-framework";
+          const fs = new InMemoryFileAdapter();
+          fs.setFile(join(PROJECT_ROOT, "marker"), "project");
+          const machine = Manifest.create();
+          machine.addTool("claude", "1.0.0", []);
+          machine.setNativeRegistrations("claude", {
+            binary: "claude",
+            marketplaces: [],
+            pluginRefs: [extraRef],
+            pluginClaims: claimed ? [{ ref: extraRef, dependents: ["/other-project"] }] : [],
+          });
+          const hostRefs = new FakeHostPluginRegistryReader({
+            location: "Claude refs fixture",
+            refs: new Map([
+              [REF, { enabled: true, scope: "project" }],
+              [extraRef, { enabled: true, scope: "user" }],
+            ]),
+          });
+          const logger = new CapturingLogger();
+          const activator = new FakeNativePluginActivator({ available: true });
+          const useCase = new CleanWithKnownHostSource(
+            fs,
+            new InMemoryManifestRepository(seedClaudeNativeRegistrations(), PROJECT_ROOT),
+            logger,
+            new GitignoreUseCase(fs),
+            new Map([["claude", activator]]),
+            await sharedClaudeRegistry(),
+            undefined,
+            new Map(),
+            () => "/fake-home",
+            undefined,
+            new Map([["claude", hostRefs]]),
+            new InMemoryManifestRepository(machine, "/fake-home")
+          );
+
+          await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+
+          expect(activator.uninstalledPlugins).toEqual(claimed ? [REF] : []);
+          expect(activator.removedMarketplaces).toEqual([]);
+          if (claimed)
+            expect(
+              logger.warnMessages.some((message) => message.includes("foreign host ref"))
+            ).toBe(false);
+          else
+            expect(logger.warnMessages[0]).toBe(
+              `claude: '${REF}' left enabled; Error: Catalogue '${MARKETPLACE}' includes foreign host ref '${extraRef}'; no host mutation made.`
+            );
+        }
+      );
+    });
+
     it("refuses a repointed native catalogue before shared reference or local deletion", async () => {
       const manifest = Manifest.create();
       manifest.addTool("codex", "1.0.0", []);
@@ -2103,6 +2420,16 @@ describe("clean", () => {
               source: "/some/built/path",
             },
           },
+          {
+            alias: "project-native",
+            hostName: "other-host",
+            provenance: {
+              kind: "effective-list",
+              root: "/some/built/path",
+              sourceType: "local",
+              source: "/some/built/path",
+            },
+          },
         ],
         pluginRefs: ["aidd-context@aidd-framework"],
       });
@@ -2113,23 +2440,45 @@ describe("clean", () => {
         JSON.stringify({ version: 1, hooks: { PreToolUse: [{ command }] } })
       );
       await fs.writeFile(scriptPath, editedScript);
+      const cachePath = join(PROJECT_ROOT, ".aidd", "cache", "built.json");
+      const gitignorePath = join(PROJECT_ROOT, ".gitignore");
+      fs.setFile(cachePath, "built source");
+      fs.setFile(gitignorePath, ".aidd/cache/\n");
       fs.setFile(join(PROJECT_ROOT, "marker"), "");
       fs.setFile("/other-project/marker", "");
       const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
       await references.addReference("1.0.0", PROJECT_ROOT);
       await references.addReference("1.0.0", "/other-project");
+      const registry = new InMemoryMarketplaceRegistry();
+      for (const [name, scope] of [
+        ["aidd-framework", "user"],
+        ["project-native", "project"],
+      ] as const) {
+        await registry.save(
+          PROJECT_ROOT,
+          Marketplace.create({
+            name,
+            source: { kind: "local", path: "/some/built/path" },
+            scope,
+            addedAt: "2026-01-01T00:00:00.000Z",
+          })
+        );
+      }
+      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeNativePluginActivator({ available: true });
       const useCase = new CleanWithKnownHostSource(
         fs,
-        new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+        manifestRepo,
         new CapturingLogger(),
         new GitignoreUseCase(fs),
         new Map([["codex", activator]]),
-        undefined,
+        registry,
         undefined,
         new Map(),
         () => "/fake-home",
-        references
+        references,
+        undefined,
+        new InMemoryManifestRepository(Manifest.create(), "/fake-home")
       );
 
       await expect(useCase.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
@@ -2141,6 +2490,9 @@ describe("clean", () => {
       expect(activator.uninstalledPlugins).toEqual([]);
       expect(activator.removedMarketplaces).toEqual([]);
       expect(fs.getFile(scriptPath)).toBe(editedScript);
+      expect(fs.getFile(cachePath)).toBe("built source");
+      expect(fs.getFile(gitignorePath)).toBe(".aidd/cache/\n");
+      expect(manifestRepo.getCurrent()).toBe(manifest);
       expect(fs.has(hooksPath)).toBe(true);
       expect(fs.has(join(PROJECT_ROOT, "marker"))).toBe(true);
     });

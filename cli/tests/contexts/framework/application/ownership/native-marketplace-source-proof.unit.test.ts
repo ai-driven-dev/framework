@@ -29,6 +29,41 @@ function reader(
 }
 
 describe("current native marketplace source proof", () => {
+  it.each([new Error("source permission denied"), "source permission denied"])(
+    "reports host source read failures as unproven without throwing",
+    async (error) => {
+      const sourceReader: NativeMarketplaceSourceReader = {
+        read: async () => {
+          throw error;
+        },
+      };
+      expect(await inspectNativeMarketplaceSource(sourceReader, "/project-b", claim)).toEqual({
+        status: "unproven",
+        reason:
+          "Catalogue 'real-catalog': host source read failed (source permission denied); reconcile manually.",
+      });
+    }
+  );
+
+  it.each([
+    { location: "/host/catalogue", unreadable: "permission denied", reason: "permission denied" },
+    { location: "/host/catalogue", reason: "host source unreadable at /host/catalogue" },
+  ])(
+    "reports the exact unreadable host source diagnostic",
+    async ({ location, unreadable, reason }) => {
+      expect(
+        await inspectNativeMarketplaceSource(
+          { read: async () => ({ location, unreadable }) },
+          "/project-b",
+          claim
+        )
+      ).toEqual({
+        status: "unproven",
+        reason: `Catalogue 'real-catalog': ${reason}; reconcile manually.`,
+      });
+    }
+  );
+
   it("refuses foreign same-catalogue refs even when a canonical owned ref is enabled", async () => {
     let requestedRoot = "";
     const host: HostPluginRegistryReader = {

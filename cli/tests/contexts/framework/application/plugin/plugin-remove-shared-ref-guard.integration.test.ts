@@ -154,19 +154,47 @@ describe("plugin remove guards a ref another project on this machine still needs
   it("detaches only A's canonical claim while B's machine-global host ref remains enabled", async () => {
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     seedReferences(fs, [OTHER_PROJECT]);
+    const siblingRef = `aidd-dev@${FRAMEWORK_MARKETPLACE_NAME}`;
+    const otherCatalogueRef = `${PLUGIN_NAME}@other-mkt`;
+    const untouchedRefs = [siblingRef, otherCatalogueRef];
+    const project = seedManifest();
+    project.addPlugin(
+      "codex",
+      InstalledPlugin.fromJSON({
+        name: "aidd-dev",
+        source: { kind: "local", path: "/plugin-source" },
+        version: "1.0.0",
+        strict: true,
+        files: {},
+        scope: "project",
+        marketplace: FRAMEWORK_MARKETPLACE_NAME,
+      })
+    );
+    const marketplaces = [
+      { alias: "other-mkt", hostName: "other-mkt", provenance: proof() },
+      {
+        alias: FRAMEWORK_MARKETPLACE_NAME,
+        hostName: FRAMEWORK_MARKETPLACE_NAME,
+        provenance: proof(),
+      },
+    ];
+    project.setNativeRegistrations("codex", {
+      binary: "codex",
+      marketplaces,
+      pluginRefs: [REF, ...untouchedRefs],
+    });
+    fs.setFile(`${OTHER_PROJECT}/plugin-content.md`, "B's plugin bytes");
+    fs.setFile(`${PROJECT_ROOT}/user-note.md`, "user bytes");
     const machine = Manifest.create();
     machine.addTool("codex", "1.0.0", []);
     machine.setNativeRegistrations("codex", {
       binary: "codex",
-      marketplaces: [
-        {
-          alias: FRAMEWORK_MARKETPLACE_NAME,
-          hostName: FRAMEWORK_MARKETPLACE_NAME,
-          provenance: proof(),
-        },
-      ],
-      pluginRefs: [REF],
-      pluginClaims: [{ ref: REF, dependents: [PROJECT_ROOT, OTHER_PROJECT] }],
+      marketplaces,
+      pluginRefs: [REF, ...untouchedRefs],
+      pluginClaims: [REF, ...untouchedRefs].map((ref) => ({
+        ref,
+        dependents: [PROJECT_ROOT, OTHER_PROJECT],
+      })),
     });
     const userRepo = new InMemoryManifestRepository(machine);
     const activator = new FakeNativePluginActivator({ available: true });
@@ -174,7 +202,7 @@ describe("plugin remove guards a ref another project on this machine still needs
       fs,
       activator,
       new CapturingLogger(),
-      seedManifest(),
+      project,
       seedSharedMarketplaceRegistry(),
       userRepo
     );
@@ -186,11 +214,31 @@ describe("plugin remove guards a ref another project on this machine still needs
     });
 
     expect(activator.uninstalledPlugins).toEqual([]);
-    expect(manifestRepo.getCurrent()?.getPlugins("codex")).toEqual([]);
+    expect(
+      manifestRepo
+        .getCurrent()
+        ?.getPlugins("codex")
+        .map((plugin) => plugin.name)
+    ).toEqual(["aidd-dev"]);
+    expect(manifestRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual(
+      untouchedRefs
+    );
+    expect(manifestRepo.getCurrent()?.getNativeRegistrations("codex")?.marketplaces).toEqual(
+      marketplaces
+    );
     expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
       { ref: REF, dependents: [OTHER_PROJECT] },
+      ...untouchedRefs.map((ref) => ({ ref, dependents: [PROJECT_ROOT, OTHER_PROJECT] })),
     ]);
-    expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual([REF]);
+    expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual([
+      REF,
+      ...untouchedRefs,
+    ]);
+    expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.marketplaces).toEqual(
+      marketplaces
+    );
+    expect(fs.getFile(`${OTHER_PROJECT}/plugin-content.md`)).toBe("B's plugin bytes");
+    expect(fs.getFile(`${PROJECT_ROOT}/user-note.md`)).toBe("user bytes");
   });
 
   it("refuses an unclaimed machine-global ref by hostName even when its alias is shared", async () => {

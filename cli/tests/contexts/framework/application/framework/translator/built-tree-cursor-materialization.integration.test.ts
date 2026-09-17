@@ -1,5 +1,5 @@
 import "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../../src/contexts/distribution/domain/marketplace.js";
 import { BuiltTreeMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/built-tree-materialization-translator.js";
 import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
@@ -37,6 +37,43 @@ async function makeRegistry(): Promise<InMemoryMarketplaceRegistry> {
 }
 
 describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
+  it("counts changed files and skips byte-identical files on repeated materialization", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
+    const translator = new BuiltTreeMaterializationTranslator(
+      fs,
+      new DeterministicHasher(),
+      () => HOME,
+      fakeEnsureBuiltMarketplace(),
+      await makeRegistry()
+    );
+    const install = () => {
+      const restored = Manifest.create();
+      restored.addTool("cursor", "test", []);
+      return translator.addPlugin(
+        dist(),
+        "cursor",
+        { kind: "local", path: "/source" },
+        PROJECT_ROOT,
+        restored,
+        "aidd-framework"
+      );
+    };
+    const first = await install();
+    expect(first.written).toBe(1);
+    const writes = vi.spyOn(fs, "writeFile");
+    expect((await install()).written).toBe(0);
+    expect(writes).not.toHaveBeenCalled();
+    fs.setFile(
+      `${HOME}/.cursor/plugins/local/sample-plugin/skills/demo/SKILL.md`,
+      "changed by user"
+    );
+    expect((await install()).written).toBe(1);
+    expect(
+      await fs.readFile(`${HOME}/.cursor/plugins/local/sample-plugin/skills/demo/SKILL.md`)
+    ).toBe("built skill");
+  });
+
   it("copies the built plugin subtree verbatim into the user plugin dir", async () => {
     const fs = new InMemoryFileAdapter();
     // Built cursor tree (transformed content already): @ expanded, .mdc rule, dotted .mcp.json.

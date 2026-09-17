@@ -22,7 +22,7 @@ const REF = "sample-plugin@real-catalog";
 const OTHER = "other-plugin@other-catalog";
 const NAME = "project-alias";
 
-async function fixture() {
+async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {}) {
   const project = Manifest.create();
   project.addTool("codex", "1.0.0", []);
   project.addPlugin(
@@ -36,14 +36,17 @@ async function fixture() {
       NAME
     )
   );
-  project.setNativeRegistrations("codex", {
-    binary: "codex",
-    marketplaces: [
-      { alias: NAME, hostName: "real-catalog" },
-      { alias: "other-alias", hostName: "other-catalog" },
-    ],
-    pluginRefs: [REF, OTHER],
-  });
+  if (options.nativeMapping !== "absent")
+    project.setNativeRegistrations("codex", {
+      binary: "codex",
+      marketplaces: [
+        ...(options.nativeMapping === "unrelated"
+          ? []
+          : [{ alias: NAME, hostName: "real-catalog" }]),
+        { alias: "other-alias", hostName: "other-catalog" },
+      ],
+      pluginRefs: [REF, OTHER],
+    });
   const machine = Manifest.create();
   machine.addTool("codex", "1.0.0", []);
   machine.setNativeRegistrations("codex", {
@@ -75,6 +78,40 @@ async function fixture() {
 }
 
 describe("project marketplace removal against machine native claims", () => {
+  it.each(["absent", "unrelated"] as const)(
+    "removes a local orphan with %s native mapping without guessing or detaching machine refs",
+    async (nativeMapping) => {
+      const f = await fixture({ nativeMapping });
+      const before = f.projectRepo.getCurrent()?.getNativeRegistrations("codex");
+      expect(
+        await f.useCase.execute({ name: NAME, projectRoot: "/A", autoConfirm: true })
+      ).toMatchObject({ removedPluginCount: 1, orphanCount: 1 });
+      expect(f.projectRepo.getCurrent()?.getPlugins("codex")).toEqual([]);
+      expect(f.projectRepo.getCurrent()?.getNativeRegistrations("codex")).toEqual(before);
+      expect(f.machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+        { ref: REF, dependents: ["/A", "/B"] },
+      ]);
+      expect(f.machineRepo.saveCount).toBe(0);
+      expect(await f.registry.list("/A")).toEqual([]);
+    }
+  );
+
+  it("does not detach machine claims when removing a project catalogue without orphans", async () => {
+    const f = await fixture();
+    f.projectRepo.getCurrent()?.removePlugin("codex", "sample-plugin");
+    const before = f.projectRepo.getCurrent()?.getNativeRegistrations("codex");
+    expect(
+      await f.useCase.execute({ name: NAME, projectRoot: "/A", autoConfirm: true })
+    ).toMatchObject({ removedPluginCount: 0, orphanCount: 0 });
+    expect(f.projectRepo.getCurrent()?.getNativeRegistrations("codex")).toEqual(before);
+    expect(f.projectRepo.saveCount).toBe(0);
+    expect(f.machineRepo.saveCount).toBe(0);
+    expect(f.machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+      { ref: REF, dependents: ["/A", "/B"] },
+    ]);
+    expect(await f.registry.list("/A")).toEqual([]);
+  });
+
   it("retains A's projection and machine claim when its Cursor hooks cannot be read", async () => {
     const hooksPath = join("/A", ".cursor/hooks.json");
     const hooks = JSON.stringify({

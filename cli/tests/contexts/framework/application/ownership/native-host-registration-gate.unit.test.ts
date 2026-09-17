@@ -19,6 +19,100 @@ const registrations: NativeRegistrations = {
 };
 
 describe("native host registration gate", () => {
+  it.each([undefined, { ...registrations, marketplaces: [{ alias: "other", hostName: "other" }] }])(
+    "requires a canonical catalogue matching the exact target ref",
+    async (recorded) => {
+      const activator = new FakeNativePluginActivator({ available: true });
+      const gate = new NativeHostRegistrationGate(
+        new Map([["copilot", activator]]),
+        new Map([
+          [
+            "copilot",
+            {
+              read: async () => ({
+                location: "/registry",
+                refs: new Map([[REF, { enabled: true }]]),
+              }),
+            },
+          ],
+        ])
+      );
+      await expect(gate.requireTargetedUpdate("copilot", claim, "/A", recorded)).rejects.toThrow(
+        `copilot: ref '${REF}' has no canonical catalogue source proof; update refused.`
+      );
+      expect(activator.updatedPlugins).toEqual([]);
+    }
+  );
+
+  it.each(["update", "removal"])(
+    "refuses %s when the canonical catalogue is absent on the host",
+    async (operation) => {
+      const activator = new FakeNativePluginActivator({ available: true });
+      const gate = new NativeHostRegistrationGate(
+        new Map([["copilot", activator]]),
+        new Map([
+          [
+            "copilot",
+            {
+              read: async () => ({
+                location: "/registry",
+                refs: new Map([[REF, { enabled: true }]]),
+              }),
+            },
+          ],
+        ]),
+        new Map([
+          ["copilot", { read: async () => ({ location: "/catalogue", entries: new Map() }) }],
+        ])
+      );
+      const promise =
+        operation === "update"
+          ? gate.requireTargetedUpdate("copilot", claim, "/A", registrations)
+          : gate.planMarketplaceRemoval(
+              "copilot",
+              registrations,
+              registrations.marketplaces[0],
+              "/A"
+            );
+      await expect(promise).rejects.toThrow("copilot: catalogue source unproven.");
+      expect(activator.updatedPlugins).toEqual([]);
+      expect(activator.removedMarketplaces).toEqual([]);
+    }
+  );
+
+  it("plans removal of an owned empty catalogue without inventing plugin claims", async () => {
+    const registration = {
+      alias: "alias",
+      hostName: HOST,
+      provenance: { kind: "registry" as const, source: "/owned/source" },
+    };
+    const activator = new FakeNativePluginActivator({ available: true });
+    const gate = new NativeHostRegistrationGate(
+      new Map([["copilot", activator]]),
+      new Map([["copilot", { read: async () => ({ location: "/registry", refs: new Map() }) }]]),
+      new Map([
+        [
+          "copilot",
+          {
+            read: async () => ({
+              location: "/catalogue",
+              entries: new Map([[HOST, registration.provenance]]),
+            }),
+          },
+        ],
+      ])
+    );
+    const plan = await gate.planMarketplaceRemoval(
+      "copilot",
+      { binary: "copilot", marketplaces: [registration], pluginRefs: [] },
+      registration,
+      "/A"
+    );
+    expect(plan.refs).toEqual([]);
+    expect(plan.scopes).toEqual(new Map());
+    expect(plan.activator).toBe(activator);
+  });
+
   const provenCodex = {
     binary: "codex",
     marketplaces: [

@@ -7,6 +7,7 @@ import { UserPluginDistributionLoader } from "../../../../../src/contexts/framew
 import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { UserPluginUpdateUseCase } from "../../../../../src/contexts/framework/application/ownership/user-plugin-update-use-case.js";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import type { EnsureBuiltMarketplace } from "../../../../../src/contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
@@ -50,7 +51,8 @@ async function makeRegistry(): Promise<InMemoryMarketplaceRegistry> {
 function makeUpdateUseCase(
   deps: Deps,
   registry: InMemoryMarketplaceRegistry,
-  nativeHost: NativeHostRegistrationGate = new NativeHostRegistrationGate(new Map(), new Map())
+  nativeHost: NativeHostRegistrationGate = new NativeHostRegistrationGate(new Map(), new Map()),
+  ensureBuilt: EnsureBuiltMarketplace = fakeEnsureBuiltMarketplace()
 ): UserPluginUpdateUseCase {
   return new UserPluginUpdateUseCase(
     deps.userManifestRepo,
@@ -62,7 +64,7 @@ function makeUpdateUseCase(
       ),
       deps.hasher,
       {
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
+        ensureBuilt,
         marketplaceRegistry: registry,
         homedir: () => HOME,
       }
@@ -167,6 +169,301 @@ function attachFutureSupportedNativeClaim(deps: Deps) {
 }
 
 describe("PluginUpdateUseCase — built-tree materialization", () => {
+  it("refuses an absent machine manifest before touching user files", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const registry = await makeRegistry();
+    await deps.userManifestRepo.delete();
+    const path = join(USER_PLUGINS_DIR, "sample-plugin/skills/demo/SKILL.md");
+    deps.fs.setFile(path, "user bytes");
+    const savesBefore = deps.userManifestRepo.saveCount;
+
+    await expect(
+      makeUpdateUseCase(deps, registry).execute({
+        toolIds: ["cursor"],
+        projectRoot: PROJECT_ROOT,
+        scope: "user",
+      })
+    ).rejects.toThrow(/No machine manifest.*ownership/);
+
+    expect(deps.userManifestRepo.getCurrent()).toBeNull();
+    expect(deps.userManifestRepo.saveCount).toBe(savesBefore);
+    expect(deps.fs.getFile(path)).toBe("user bytes");
+  });
+
+  it("checks current user bytes inside the machine repository's exclusive-access boundary", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initAndInstall(deps, PROJECT_ROOT, "cursor");
+    const registry = await makeRegistry();
+    await installStalePlugin(deps, registry);
+    const path = join(USER_PLUGINS_DIR, "sample-plugin/skills/demo/SKILL.md");
+    const before = deps.userManifestRepo.getCurrent()?.toJSON();
+    const savesBefore = deps.userManifestRepo.saveCount;
+    let acquired = false;
+    Object.assign(deps.userManifestRepo, {
+      withExclusiveAccess: async (operation: () => Promise<string[]>) => {
+        acquired = true;
+        deps.fs.setFile(path, "user edit at lock acquisition");
+        return operation();
+      },
+    });
+
+    await expect(
+      makeUpdateUseCase(deps, registry).execute({
+        toolIds: ["cursor"],
+        projectRoot: PROJECT_ROOT,
+        scope: "user",
+      })
+    ).rejects.toThrow(/edited after install/);
+
+    expect(acquired).toBe(true);
+    expect(deps.fs.getFile(path)).toBe("user edit at lock acquisition");
+    expect(deps.userManifestRepo.getCurrent()?.toJSON()).toStrictEqual(before);
+    expect(deps.userManifestRepo.saveCount).toBe(savesBefore);
+  });
+
+  it.each([{ dependents: [] }, { dependents: [PROJECT_ROOT, "/B"] }])(
+    "warns only for actual dependent projects when updating shared native and file plugins: $dependents",
+    async ({ dependents }) => {
+      const deps = await buildUnitDeps(PROJECT_ROOT);
+      await initAndInstall(deps, PROJECT_ROOT, "cursor");
+      const registry = await makeRegistry();
+      await installStalePlugin(deps, registry);
+      const { machine, activator, nativeHost } = attachFutureSupportedNativeClaim(deps);
+      const owned = machine.getPlugins("cursor").find((plugin) => plugin.name === "sample-plugin");
+      const native = machine.getNativeRegistrations("copilot");
+      if (owned === undefined || native === undefined)
+        throw new Error("fixture missing selected claims");
+      machine.updatePlugin("cursor", owned.withDependents(dependents));
+      machine.setNativeRegistrations("copilot", {
+        ...native,
+        pluginClaims: [{ ref: "native-plugin@aidd-catalog", dependents }],
+      });
+      const warnings = vi.spyOn(deps.logger, "warn").mockImplementation(() => {});
+
+      expect(
+        await makeUpdateUseCase(deps, registry, nativeHost).execute({
+          toolIds: ["copilot", "cursor"],
+          projectRoot: PROJECT_ROOT,
+          scope: "user",
+        })
+      ).toStrictEqual(["native-plugin@aidd-catalog", "sample-plugin"]);
+
+      expect(warnings.mock.calls).toStrictEqual(
+        dependents.length === 0
+          ? []
+          : [
+              [
+                `copilot: updating native ref 'native-plugin@aidd-catalog' affects ${PROJECT_ROOT}, /B; projects must refresh their local integrations afterward.`,
+              ],
+              [
+                `cursor: updating user-scope 'sample-plugin' affects ${PROJECT_ROOT}, /B; each project must refresh its own integration afterward.`,
+              ],
+            ]
+      );
+      expect(activator.updatedPlugins).toStrictEqual(["native-plugin@aidd-catalog"]);
+      const after = deps.userManifestRepo.getCurrent();
+      expect(after?.getNativeRegistrations("copilot")?.pluginClaims).toStrictEqual([
+        { ref: "native-plugin@aidd-catalog", dependents },
+      ]);
+      expect(
+        after?.getPlugins("cursor").find((plugin) => plugin.name === "sample-plugin")?.dependents
+      ).toStrictEqual(dependents);
+      expect(
+        after?.getPlugins("cursor").find((plugin) => plugin.name === "sample-plugin")?.version
+      ).toBe("1.0.0");
+    }
+  );
+
+  it("updates only the selected user plugin and exact native ref, preserving unrelated claims and project records", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initAndInstall(deps, PROJECT_ROOT, "cursor");
+    const registry = await makeRegistry();
+    await installStalePlugin(deps, registry);
+    const { machine, activator, nativeHost } = attachFutureSupportedNativeClaim(deps);
+    const native = machine.getNativeRegistrations("copilot");
+    if (native === undefined) throw new Error("fixture missing native registrations");
+    const otherRef = "native-plugin@other-catalog";
+    machine.setNativeRegistrations("copilot", {
+      ...native,
+      pluginClaims: [...(native.pluginClaims ?? []), { ref: otherRef, dependents: ["/B"] }],
+    });
+    const unselected = InstalledPlugin.fromMetadata(
+      "unselected-plugin",
+      "0.0.1",
+      { kind: "local", path: "/unselected/source" },
+      false,
+      "user"
+    ).withDependents([PROJECT_ROOT, "/B"]);
+    const projectOnly = InstalledPlugin.fromMetadata(
+      "project-only",
+      "0.0.1",
+      { kind: "local", path: "/project/source" },
+      false,
+      "project"
+    );
+    machine.addPlugin("cursor", unselected);
+    machine.addPlugin("cursor", projectOnly);
+    const owned = machine.getPlugins("cursor").find((plugin) => plugin.name === "sample-plugin");
+    if (owned === undefined) throw new Error("fixture missing user plugin");
+    machine.updatePlugin("cursor", owned.withDependents([PROJECT_ROOT, "/B"]));
+    const claimsBefore = machine.getNativeRegistrations("copilot")?.pluginClaims;
+    deps.fs.setFile(BUILT_SKILL, "# Selected update");
+    const otherPath = join(USER_PLUGINS_DIR, "unselected-plugin/skills/demo/SKILL.md");
+    deps.fs.setFile(otherPath, "unselected user bytes");
+
+    expect(
+      await makeUpdateUseCase(deps, registry, nativeHost).execute({
+        pluginNames: ["native-plugin@aidd-catalog", "sample-plugin"],
+        toolIds: ["copilot", "cursor"],
+        projectRoot: PROJECT_ROOT,
+        scope: "user",
+      })
+    ).toEqual(["native-plugin@aidd-catalog", "sample-plugin"]);
+
+    expect(activator.updatedPlugins).toEqual(["native-plugin@aidd-catalog"]);
+    const after = deps.userManifestRepo.getCurrent();
+    expect(after?.getNativeRegistrations("copilot")?.pluginClaims).toEqual(claimsBefore);
+    expect(
+      after?.getPlugins("cursor").find((plugin) => plugin.name === "unselected-plugin")
+    ).toEqual(unselected);
+    expect(after?.getPlugins("cursor").find((plugin) => plugin.name === "project-only")).toEqual(
+      projectOnly
+    );
+    expect(
+      after?.getPlugins("cursor").find((plugin) => plugin.name === "sample-plugin")?.dependents
+    ).toEqual([PROJECT_ROOT, "/B"]);
+    expect(deps.fs.getFile(join(USER_PLUGINS_DIR, "sample-plugin/skills/demo/SKILL.md"))).toBe(
+      "# Selected update"
+    );
+    expect(deps.fs.getFile(otherPath)).toBe("unselected user bytes");
+  });
+
+  it("refuses one ambiguous native name among several selected plugins before any file or host update", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initAndInstall(deps, PROJECT_ROOT, "cursor");
+    const registry = await makeRegistry();
+    await installStalePlugin(deps, registry);
+    const { machine, activator, nativeHost } = attachFutureSupportedNativeClaim(deps);
+    const native = machine.getNativeRegistrations("copilot");
+    if (native === undefined) throw new Error("fixture missing native registrations");
+    machine.setNativeRegistrations("copilot", {
+      ...native,
+      pluginClaims: [
+        ...(native.pluginClaims ?? []),
+        {
+          ref: "native-plugin@other-catalog",
+          dependents: ["/B"],
+        },
+      ],
+    });
+    const before = machine.toJSON();
+    const path = join(USER_PLUGINS_DIR, "sample-plugin/skills/demo/SKILL.md");
+    const bytes = deps.fs.getFile(path);
+    const savesBefore = deps.userManifestRepo.saveCount;
+    deps.fs.setFile(BUILT_SKILL, "# Must not be delivered");
+
+    await expect(
+      makeUpdateUseCase(deps, registry, nativeHost).execute({
+        pluginNames: ["sample-plugin", "native-plugin"],
+        toolIds: ["cursor", "copilot"],
+        projectRoot: PROJECT_ROOT,
+        scope: "user",
+      })
+    ).rejects.toThrow(/Multiple native catalogues.*exact/);
+
+    expect(activator.updatedPlugins).toEqual([]);
+    expect(deps.fs.getFile(path)).toBe(bytes);
+    expect(deps.userManifestRepo.saveCount).toBe(savesBefore);
+    expect(deps.userManifestRepo.getCurrent()?.toJSON()).toEqual(before);
+  });
+
+  it("excludes built Cursor hooks from the updated user plugin and leaves both projects' hooks unchanged", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initAndInstall(deps, PROJECT_ROOT, "cursor");
+    const registry = await makeRegistry();
+    await installStalePlugin(deps, registry);
+    deps.fs.setFile(BUILT_SKILL, "# Updated skill");
+    const builtHooks = JSON.stringify({ hooks: { preToolUse: [{ command: "node pre.js" }] } });
+    deps.fs.setFile("/built/cursor/plugins/sample-plugin/hooks/hooks.json", builtHooks);
+    deps.fs.setFile("/built/cursor/plugins/sample-plugin/hooks/pre.js", "built hook script");
+    const hookConfig = (timeout: number) =>
+      JSON.stringify({
+        version: 1,
+        hooks: { preToolUse: [{ command: "node ./.cursor/hooks/sample-plugin/pre.js", timeout }] },
+      });
+    const projectFiles = new Map([
+      [join(PROJECT_ROOT, ".cursor/hooks.json"), hookConfig(10)],
+      [join(PROJECT_ROOT, ".cursor/hooks/sample-plugin/pre.js"), "A's adapted script"],
+      ["/B/.cursor/hooks.json", hookConfig(20)],
+      ["/B/.cursor/hooks/sample-plugin/pre.js", "B's adapted script"],
+    ]);
+    for (const [path, content] of projectFiles) deps.fs.setFile(path, content);
+
+    expect(
+      await makeUpdateUseCase(deps, registry).execute({
+        toolIds: ["cursor"],
+        projectRoot: PROJECT_ROOT,
+        scope: "user",
+      })
+    ).toEqual(["sample-plugin"]);
+
+    expect(deps.fs.getFile(join(USER_PLUGINS_DIR, "sample-plugin/skills/demo/SKILL.md"))).toBe(
+      "# Updated skill"
+    );
+    expect(
+      deps.fs.getFile(join(USER_PLUGINS_DIR, "sample-plugin/hooks/hooks.json"))
+    ).toBeUndefined();
+    expect(deps.fs.getFile(join(USER_PLUGINS_DIR, "sample-plugin/hooks/pre.js"))).toBeUndefined();
+    expect(
+      [...(deps.userManifestRepo.getCurrent()?.getPlugins("cursor")[0]?.files.keys() ?? [])].some(
+        (path) => path.startsWith("sample-plugin/hooks/")
+      )
+    ).toBe(false);
+    for (const [path, content] of projectFiles) expect(deps.fs.getFile(path)).toBe(content);
+  });
+
+  it("uses the plugin's named marketplace build rather than the first registered catalogue", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initAndInstall(deps, PROJECT_ROOT, "cursor");
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: "unrelated-first",
+        source: { kind: "local", path: "/unrelated" },
+        scope: "project",
+        addedAt: "2026-05-01T00:00:00.000Z",
+      })
+    );
+    for (const marketplace of await (await makeRegistry()).list(PROJECT_ROOT))
+      await registry.save(PROJECT_ROOT, marketplace);
+    await installStalePlugin(deps, registry);
+    deps.fs.setFile("/built/right/plugins/sample-plugin/skills/demo/SKILL.md", "# Right catalogue");
+    deps.fs.setFile("/built/wrong/plugins/sample-plugin/skills/demo/SKILL.md", "# Wrong catalogue");
+    const ensureBuilt: EnsureBuiltMarketplace = {
+      execute: async ({ marketplace }) => ({
+        builtDir: marketplace.name === "aidd-framework" ? "/built/right" : "/built/wrong",
+        version: "test",
+        rebuilt: true,
+      }),
+    };
+
+    expect(
+      await makeUpdateUseCase(deps, registry, undefined, ensureBuilt).execute({
+        toolIds: ["cursor"],
+        projectRoot: PROJECT_ROOT,
+        scope: "user",
+      })
+    ).toEqual(["sample-plugin"]);
+
+    expect(deps.fs.getFile(join(USER_PLUGINS_DIR, "sample-plugin/skills/demo/SKILL.md"))).toBe(
+      "# Right catalogue"
+    );
+    expect(deps.userManifestRepo.getCurrent()?.getPlugins("cursor")[0]?.marketplace).toBe(
+      "aidd-framework"
+    );
+  });
+
   it("re-materializes from the built tree for a marketplace plugin", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, "cursor");
@@ -387,19 +684,22 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     const destination = join(USER_PLUGINS_DIR, newRelativePath);
     deps.fs.setFile(join("/built/cursor/plugins", newRelativePath), "# Built v2\n");
     const writeFile = deps.fs.writeFile.bind(deps.fs);
+    const writeFailure = new Error("EACCES: injected destination write failure");
     vi.spyOn(deps.fs, "writeFile").mockImplementation(async (path, content) => {
-      if (path === destination) throw new Error("EACCES: injected destination write failure");
+      if (path === destination) throw writeFailure;
       return writeFile(path, content);
     });
     const savesBefore = deps.userManifestRepo.saveCount;
 
-    await expect(
-      makeUpdateUseCase(deps, registry, nativeHost).execute({
-        toolIds: ["copilot", "cursor"],
-        projectRoot: PROJECT_ROOT,
-        scope: "user",
-      })
-    ).rejects.toThrow(/native ref may already have been updated.*reconcile manually/);
+    const operation = makeUpdateUseCase(deps, registry, nativeHost).execute({
+      toolIds: ["copilot", "cursor"],
+      projectRoot: PROJECT_ROOT,
+      scope: "user",
+    });
+    await expect(operation).rejects.toThrow(
+      /native ref may already have been updated.*reconcile manually/
+    );
+    await expect(operation).rejects.toMatchObject({ cause: writeFailure });
 
     expect(activator.updatedPlugins).toEqual(["native-plugin@aidd-catalog"]);
     expect(deps.userManifestRepo.saveCount).toBe(savesBefore);

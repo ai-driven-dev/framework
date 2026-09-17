@@ -5,6 +5,8 @@ import { Marketplace } from "../../../../../src/contexts/distribution/domain/mar
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+import type { HostPluginRegistryReader } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
+import type { NativeMarketplaceSourceReader } from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import type { AiToolId } from "../../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -40,6 +42,8 @@ function makeSync(
     hostRefs?: ReadonlyMap<string, { enabled: boolean }>;
     conflictOnAdd?: boolean;
     projectNativePluginRefs?: readonly string[];
+    hostReader?: HostPluginRegistryReader;
+    sourceReader?: NativeMarketplaceSourceReader;
   } = {}
 ) {
   const builtDir = `/built/${toolId}`;
@@ -118,38 +122,40 @@ function makeSync(
     new Map([
       [
         toolId as AiToolId,
-        new FakeHostPluginRegistryReader({
-          location: `/fake-home/${toolId}/registry`,
-          refs: hostRefs,
-        }),
+        options.hostReader ??
+          new FakeHostPluginRegistryReader({
+            location: `/fake-home/${toolId}/registry`,
+            refs: hostRefs,
+          }),
       ],
     ]),
     machineRepo,
     new Map([
       [
         toolId as AiToolId,
-        new FakeNativeMarketplaceSourceReader(
-          activator,
-          "effective-list",
-          (path) => (path === builtDir ? CATALOG : undefined),
-          currentSource === undefined
-            ? new Map()
-            : new Map([
-                [
-                  CATALOG,
-                  {
-                    kind: "effective-list",
-                    root: currentSource,
-                    sourceType: "local",
-                    source: currentSource,
-                  },
-                ],
-              ])
-        ),
+        options.sourceReader ??
+          new FakeNativeMarketplaceSourceReader(
+            activator,
+            "effective-list",
+            (path) => (path === builtDir ? CATALOG : undefined),
+            currentSource === undefined
+              ? new Map()
+              : new Map([
+                  [
+                    CATALOG,
+                    {
+                      kind: "effective-list",
+                      root: currentSource,
+                      sourceType: "local",
+                      source: currentSource,
+                    },
+                  ],
+                ])
+          ),
       ],
     ])
   );
-  return { useCase, fs, projectRepo, machineRepo, activator, logger, hostCatalogBytes };
+  return { useCase, fs, projectRepo, machineRepo, registry, activator, logger, hostCatalogBytes };
 }
 
 function canonicallyOwned(toolId: "codex" | "copilot"): Manifest {
@@ -176,6 +182,141 @@ function canonicallyOwned(toolId: "codex" | "copilot"): Manifest {
 }
 
 describe.each(["codex", "copilot"] as const)("%s native marketplace provenance", (toolId) => {
+  it.each([
+    "recovered proof",
+    "recovered proof with a shared host alias",
+    "foreign source",
+    "missing source",
+    "foreign ref",
+    "unreadable refs",
+  ] as const)(
+    "preserves existing projections after an initial source-read refusal followed by %s",
+    async (change) => {
+      const recovered = change.startsWith("recovered proof");
+      const sharedAlias = change === "recovered proof with a shared host alias";
+      const machine = canonicallyOwned(toolId);
+      const target = machine.getNativeRegistrations(toolId)?.marketplaces[0];
+      if (target === undefined) throw new Error("fixture lacks canonical catalogue");
+      const otherRef = sharedAlias ? `sibling-plugin@${CATALOG}` : "aidd-dev@other-catalog";
+      const staleRef = `obsolete-plugin@${CATALOG}`;
+      const otherRoot = sharedAlias ? `/built/${toolId}` : "/other";
+      const other = {
+        alias: "other-alias",
+        hostName: sharedAlias ? CATALOG : "other-catalog",
+        provenance: {
+          kind: "effective-list" as const,
+          root: otherRoot,
+          sourceType: "local",
+          source: otherRoot,
+        },
+      };
+      machine.setNativeRegistrations(toolId, {
+        binary: toolId,
+        marketplaces: [other, target],
+        pluginRefs: [otherRef],
+        pluginClaims: [
+          { ref: otherRef, dependents: ["/B"] },
+          { ref: PLUGIN_REF, dependents: ["/B"] },
+        ],
+      });
+      let sourceReads = 0;
+      const sourceReader: NativeMarketplaceSourceReader = {
+        read: async () => {
+          sourceReads += 1;
+          if (sourceReads === 1)
+            return { location: "host catalogue list", unreadable: "transient permissions error" };
+          if (change === "missing source")
+            return { location: "host catalogue list", entries: new Map() };
+          const root = change === "foreign source" ? "/foreign/catalogue" : `/built/${toolId}`;
+          return {
+            location: "host catalogue list",
+            entries: new Map([
+              [CATALOG, { kind: "effective-list", root, sourceType: "local", source: root }],
+            ]),
+          };
+        },
+      };
+      let registryReads = 0;
+      const hostReader: HostPluginRegistryReader = {
+        read: async () => {
+          registryReads += 1;
+          if (registryReads > 1 && change === "unreadable refs")
+            return { location: "host plugin registry", unreadable: "permission denied" };
+          const refs = new Map([
+            [PLUGIN_REF, { enabled: true }],
+            [otherRef, { enabled: true }],
+          ]);
+          if (registryReads > 1 && change === "foreign ref")
+            refs.set(FOREIGN_REF, { enabled: true });
+          return { location: "host plugin registry", refs };
+        },
+      };
+      const f = makeSync(toolId, { machine, sourceReader, hostReader });
+      if (sharedAlias) {
+        await f.registry.save(
+          PROJECT_ROOT,
+          Marketplace.create({
+            name: other.alias,
+            source: { kind: "local", path: "/framework" },
+            scope: "user",
+            addedAt: "2026-09-15T00:00:00Z",
+          })
+        );
+        f.projectRepo
+          .getCurrent()
+          ?.addPlugin(
+            toolId,
+            InstalledPlugin.fromMetadata(
+              "sibling-plugin",
+              "1.0.0",
+              { kind: "local", path: "/framework" },
+              true,
+              "project",
+              other.alias
+            )
+          );
+      }
+      f.projectRepo.getCurrent()?.setNativeRegistrations(toolId, {
+        binary: toolId,
+        marketplaces: [other, target],
+        pluginRefs: [otherRef, PLUGIN_REF, staleRef],
+      });
+
+      const result = await f.useCase.execute({
+        projectRoot: PROJECT_ROOT,
+        marketplaceNames: [CATALOG],
+      });
+
+      expect(result.errors).toEqual([]);
+      expect(result.warnings.join(" ")).toContain("transient permissions error");
+      expect(f.activator.addedMarketplaces).toEqual([]);
+      expect(f.activator.removedMarketplaces).toEqual([]);
+      expect(f.activator.enabledPlugins).toEqual([]);
+      expect(f.activator.refreshedCatalogs).toEqual(recovered ? [CATALOG] : []);
+      expect(f.projectRepo.getCurrent()?.getNativeRegistrations(toolId)).toEqual({
+        binary: toolId,
+        marketplaces: [other, target],
+        pluginRefs:
+          recovered && !sharedAlias ? [otherRef, PLUGIN_REF] : [otherRef, PLUGIN_REF, staleRef],
+      });
+      expect(f.machineRepo.getCurrent()?.getNativeRegistrations(toolId)).toEqual({
+        binary: toolId,
+        marketplaces: [other, target],
+        pluginRefs: [otherRef],
+        pluginClaims: [
+          { ref: otherRef, dependents: ["/B"] },
+          {
+            ref: PLUGIN_REF,
+            dependents: recovered ? ["/B", PROJECT_ROOT] : ["/B"],
+          },
+        ],
+      });
+      expect(f.machineRepo.saveCount).toBe(recovered ? 1 : 0);
+      expect(f.fs.getFile(CACHE_WITNESS)).toBe("foreign bytes stay byte-for-byte");
+      expect(f.fs.getFile(HOST_CATALOG_WITNESS)).toBe(f.hostCatalogBytes);
+    }
+  );
+
   it("leaves a foreign same-name catalogue, ref, and cache untouched", async () => {
     const fixture = makeSync(toolId, {
       conflictOnAdd: true,
@@ -219,6 +360,139 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
     expect(await fixture.fs.readFile(CACHE_WITNESS)).toBe("foreign bytes stay byte-for-byte");
     expect(await fixture.fs.readFile(HOST_CATALOG_WITNESS)).toBe(fixture.hostCatalogBytes);
   });
+
+  it("attaches A to the exact already-enabled machine claim without re-enabling or changing B's other claim", async () => {
+    const machine = canonicallyOwned(toolId);
+    const otherRef = "aidd-dev@other-catalog";
+    const targetRegistration = {
+      alias: CATALOG,
+      hostName: CATALOG,
+      provenance: {
+        kind: "effective-list" as const,
+        root: `/built/${toolId}`,
+        sourceType: "local",
+        source: `/built/${toolId}`,
+      },
+    };
+    const otherRegistration = {
+      alias: "other-alias",
+      hostName: "other-catalog",
+      provenance: {
+        kind: "effective-list" as const,
+        root: "/other",
+        sourceType: "local",
+        source: "/other",
+      },
+    };
+    machine.setNativeRegistrations(toolId, {
+      binary: toolId,
+      marketplaces: [otherRegistration, targetRegistration],
+      pluginRefs: [otherRef],
+      pluginClaims: [
+        { ref: otherRef, dependents: ["/B"] },
+        { ref: PLUGIN_REF, dependents: ["/B"] },
+      ],
+    });
+    const fixture = makeSync(toolId, {
+      machine,
+      hostRefs: new Map([
+        [PLUGIN_REF, { enabled: true }],
+        [otherRef, { enabled: true }],
+        ["user-plugin@external-catalog", { enabled: true }],
+      ]),
+    });
+
+    const result = await fixture.useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(result.errors).toStrictEqual([]);
+    expect(result.warnings).toStrictEqual([]);
+    expect(fixture.activator.enabledPlugins).toStrictEqual([]);
+    expect(fixture.activator.addedMarketplaces).toStrictEqual([]);
+    expect(fixture.activator.removedMarketplaces).toStrictEqual([]);
+    expect(fixture.activator.refreshedCatalogs).toStrictEqual([CATALOG]);
+    expect(
+      fixture.projectRepo.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs
+    ).toStrictEqual([PLUGIN_REF]);
+    expect(fixture.machineRepo.getCurrent()?.getNativeRegistrations(toolId)).toStrictEqual({
+      binary: toolId,
+      marketplaces: [otherRegistration, targetRegistration],
+      pluginRefs: [otherRef],
+      pluginClaims: [
+        { ref: otherRef, dependents: ["/B"] },
+        { ref: PLUGIN_REF, dependents: ["/B", PROJECT_ROOT] },
+      ],
+    });
+    expect(fixture.fs.getFile(CACHE_WITNESS)).toBe("foreign bytes stay byte-for-byte");
+    expect(fixture.fs.getFile(HOST_CATALOG_WITNESS)).toBe(fixture.hostCatalogBytes);
+  });
+
+  it.each(["foreign source", "unreadable source", "foreign ref", "unreadable refs"] as const)(
+    "does not refresh or enable after the host changes to %s during sync",
+    async (change) => {
+      let sourceReads = 0;
+      let registryReads = 0;
+      const sourceReader: NativeMarketplaceSourceReader = {
+        read: async () => {
+          sourceReads += 1;
+          if (sourceReads > 1 && change === "unreadable source")
+            return { location: "host catalogue list", unreadable: "permission denied" };
+          const root =
+            sourceReads > 1 && change === "foreign source"
+              ? "/someone-elses/catalogue"
+              : `/built/${toolId}`;
+          return {
+            location: "host catalogue list",
+            entries: new Map([
+              [
+                CATALOG,
+                {
+                  kind: "effective-list" as const,
+                  root,
+                  sourceType: "local",
+                  source: root,
+                },
+              ],
+            ]),
+          };
+        },
+      };
+      const hostReader: HostPluginRegistryReader = {
+        read: async () => {
+          registryReads += 1;
+          if (registryReads > 1 && change === "unreadable refs")
+            return { location: "host plugin registry", unreadable: "permission denied" };
+          return {
+            location: "host plugin registry",
+            refs: new Map(
+              registryReads > 1 && change === "foreign ref"
+                ? [[FOREIGN_REF, { enabled: true }]]
+                : []
+            ),
+          };
+        },
+      };
+      const fixture = makeSync(toolId, {
+        machine: canonicallyOwned(toolId),
+        sourceReader,
+        hostReader,
+      });
+
+      await fixture.useCase.execute({ projectRoot: PROJECT_ROOT });
+
+      expect(fixture.activator.addedMarketplaces).toEqual([]);
+      expect(fixture.activator.removedMarketplaces).toEqual([]);
+      expect(fixture.activator.refreshedCatalogs).toEqual([]);
+      expect(fixture.activator.enabledPlugins).toEqual([]);
+      expect(fixture.machineRepo.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs).toEqual(
+        []
+      );
+      expect(
+        fixture.machineRepo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims ?? []
+      ).toEqual([{ ref: PLUGIN_REF, dependents: [PROJECT_ROOT] }]);
+      expect(await fixture.fs.readFile(HOST_CATALOG_WITNESS)).toBe(fixture.hostCatalogBytes);
+      expect(await fixture.fs.readFile(CACHE_WITNESS)).toBe("foreign bytes stay byte-for-byte");
+    }
+  );
 
   it("refuses refresh when a foreign ref shares an AIDD-owned catalogue name", async () => {
     const fixture = makeSync(toolId, {

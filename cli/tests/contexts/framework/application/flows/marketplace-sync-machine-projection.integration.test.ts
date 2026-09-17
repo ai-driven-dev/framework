@@ -6,6 +6,7 @@ import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/fram
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { HostPluginRegistryReader } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
+import type { NativeMarketplaceSource } from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -21,7 +22,8 @@ describe("native plugin ownership follows the host's activation scope", () => {
   const freshNativeSources = (
     toolId: "claude" | "codex",
     activator: FakeNativePluginActivator,
-    identities: ReadonlyMap<string, string>
+    identities: ReadonlyMap<string, string>,
+    initial: ReadonlyMap<string, NativeMarketplaceSource> = new Map()
   ) =>
     new Map([
       [
@@ -30,7 +32,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
           activator,
           toolId === "claude" ? "registry" : "effective-list",
           (path) => identities.get(path),
-          new Map()
+          initial
         ),
       ],
     ]);
@@ -64,78 +66,152 @@ describe("native plugin ownership follows the host's activation scope", () => {
         }),
       ],
     ]);
-  it("records a user-scope Claude marketplace without claiming its project-local plugin", async () => {
-    const projectRoot = "/project";
-    const marketplaceName = "local-catalog";
-    const ref = "test-plugin@local-catalog";
-    const project = Manifest.create();
-    project.addTool("claude", "1.0.0", []);
-    project.addPlugin(
-      "claude",
-      InstalledPlugin.fromMetadata(
-        "test-plugin",
-        "1.0.0",
-        { kind: "local", path: "/source" },
-        true,
-        "project",
-        marketplaceName
-      )
-    );
-    const projectRepo = new InMemoryManifestRepository(project);
-    const machineRepo = new InMemoryManifestRepository(Manifest.create());
-    const registry = new InMemoryMarketplaceRegistry();
-    await registry.save(
-      projectRoot,
-      Marketplace.create({
-        name: marketplaceName,
-        source: { kind: "local", path: "/source" },
-        scope: "user",
-        addedAt: "2026-09-15T00:00:00Z",
-      })
-    );
-    const activator = new FakeNativePluginActivator({ available: true });
-    const fs = new InMemoryFileAdapter({
-      "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
-        name: marketplaceName,
-        version: "1.0.0",
-        plugins: [{ name: "test-plugin" }],
-      }),
-    });
-    const sync = new MarketplaceSyncSettingsUseCase(
-      fs,
-      projectRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([["claude", activator]]),
-      fakeEnsureBuiltMarketplace(),
-      freshHostCatalogs(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      readableHostPlugins(),
-      machineRepo,
-      freshNativeSources("claude", activator, new Map([["/built/claude", marketplaceName]]))
-    );
-
-    const result = await sync.execute({ projectRoot });
-
-    expect(result.activated).toEqual(["claude"]);
-    expect(activator.enabledPlugins).toEqual([ref]);
-    expect(activator.enabledPluginScopes).toEqual(["project"]);
-    expect(projectRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginRefs).toEqual([ref]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations("claude")?.marketplaces).toEqual([
-      {
+  it.each(["fresh", "existing project proof", "existing machine proof"] as const)(
+    "records a user-scope Claude catalogue without claiming its project-local plugin: %s",
+    async (mode) => {
+      const projectRoot = "/project";
+      const marketplaceName = "local-catalog";
+      const hostName = "real-catalog";
+      const ref = `test-plugin@${hostName}`;
+      const otherRef = "owned-other@other-catalog";
+      const otherRegistration = {
+        alias: "other",
+        hostName: "other-catalog",
+        provenance: { kind: "registry" as const, source: "/other/claude" },
+      };
+      const registration = {
         alias: marketplaceName,
-        hostName: marketplaceName,
-        provenance: { kind: "registry", source: "/built/claude" },
-      },
-    ]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims ?? []).toEqual(
-      []
-    );
-  });
+        hostName,
+        provenance: { kind: "registry" as const, source: "/built/claude" },
+      };
+      const project = Manifest.create();
+      project.addTool("claude", "1.0.0", []);
+      project.addPlugin(
+        "claude",
+        InstalledPlugin.fromMetadata(
+          "test-plugin",
+          "1.0.0",
+          { kind: "local", path: "/source" },
+          true,
+          "project",
+          marketplaceName
+        )
+      );
+      const machine = Manifest.create();
+      if (mode !== "fresh") {
+        project.setNativeRegistrations("claude", {
+          binary: "claude",
+          marketplaces: mode === "existing project proof" ? [otherRegistration, registration] : [],
+          pluginRefs: [ref],
+        });
+        machine.addTool("claude", "1.0.0", []);
+        machine.setNativeRegistrations("claude", {
+          binary: "claude",
+          marketplaces:
+            mode === "existing machine proof"
+              ? [otherRegistration, registration]
+              : [otherRegistration],
+          pluginRefs: [otherRef],
+          pluginClaims: [{ ref: otherRef, dependents: ["/B"] }],
+        });
+      }
+      const projectRepo = new InMemoryManifestRepository(project);
+      const machineRepo = new InMemoryManifestRepository(machine);
+      const registry = new InMemoryMarketplaceRegistry();
+      await registry.save(
+        projectRoot,
+        Marketplace.create({
+          name: marketplaceName,
+          source: { kind: "local", path: "/source" },
+          scope: "user",
+          addedAt: "2026-09-15T00:00:00Z",
+        })
+      );
+      const activator = new FakeNativePluginActivator({ available: true });
+      const fs = new InMemoryFileAdapter({
+        "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
+          name: hostName,
+          version: "1.0.0",
+          plugins: [{ name: "test-plugin" }],
+        }),
+      });
+      const sync = new MarketplaceSyncSettingsUseCase(
+        fs,
+        projectRepo,
+        registry,
+        new DeterministicHasher(),
+        new CapturingLogger(),
+        new Map([["claude", activator]]),
+        fakeEnsureBuiltMarketplace(),
+        mode === "fresh"
+          ? freshHostCatalogs()
+          : new Map([
+              [
+                "claude",
+                new FakeHostMarketplaceRegistryReader({
+                  location: "/home/.claude/plugins/known_marketplaces.json",
+                  entries: new Map([
+                    [hostName, "/built/claude"],
+                    ["other-catalog", "/other/claude"],
+                  ]),
+                }),
+              ],
+            ]),
+        () => "",
+        undefined,
+        undefined,
+        undefined,
+        mode === "fresh"
+          ? readableHostPlugins()
+          : new Map([
+              [
+                "claude",
+                new FakeHostPluginRegistryReader({
+                  location: "/home/.claude/plugins/installed_plugins.json",
+                  refs: new Map([
+                    [ref, { enabled: true, scope: "project" }],
+                    [otherRef, { enabled: true, scope: "user" }],
+                    ["test-plugin@external-catalog", { enabled: true, scope: "user" }],
+                  ]),
+                }),
+              ],
+            ]),
+        machineRepo,
+        freshNativeSources(
+          "claude",
+          activator,
+          new Map([["/built/claude", hostName]]),
+          mode === "fresh"
+            ? new Map()
+            : new Map([
+                [hostName, registration.provenance],
+                ["other-catalog", otherRegistration.provenance],
+              ])
+        )
+      );
+
+      const result = await sync.execute({ projectRoot });
+
+      expect(result.activated).toEqual(["claude"]);
+      expect(result.errors).toStrictEqual([]);
+      expect(result.warnings).toStrictEqual([]);
+      expect(activator.enabledPlugins).toEqual(mode === "fresh" ? [ref] : []);
+      expect(activator.enabledPluginScopes).toEqual(mode === "fresh" ? ["project"] : []);
+      expect(activator.addedMarketplaces).toStrictEqual(mode === "fresh" ? ["/built/claude"] : []);
+      expect(activator.removedMarketplaces).toStrictEqual([]);
+      expect(projectRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginRefs).toEqual([ref]);
+      expect(machineRepo.getCurrent()?.getNativeRegistrations("claude")?.marketplaces).toEqual(
+        mode === "fresh" ? [registration] : [otherRegistration, registration]
+      );
+      expect(
+        machineRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims ?? []
+      ).toEqual(mode === "fresh" ? [] : [{ ref: otherRef, dependents: ["/B"] }]);
+      if (mode !== "fresh")
+        expect(
+          machineRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginRefs
+        ).toStrictEqual([otherRef]);
+    }
+  );
 
   it("claims a Claude plugin enabled at user scope without inventing a project dependent", async () => {
     const projectRoot = "/project";
@@ -323,7 +399,29 @@ describe("native plugin ownership follows the host's activation scope", () => {
       )
     );
     const projectRepo = new InMemoryManifestRepository(project);
-    const machineRepo = new InMemoryManifestRepository(Manifest.create());
+    const machine = Manifest.create();
+    machine.addTool("codex", "1.0.0", []);
+    const older = {
+      alias: marketplaceName,
+      hostName: "older-catalog",
+      provenance: {
+        kind: "effective-list" as const,
+        root: "/older",
+        sourceType: "local",
+        source: "/older",
+      },
+    };
+    const otherRef = "unrelated-plugin@older-catalog";
+    machine.setNativeRegistrations("codex", {
+      binary: "codex",
+      marketplaces: [older],
+      pluginRefs: [otherRef],
+      pluginClaims: [
+        { ref: otherRef, dependents: ["/B"] },
+        { ref, dependents: ["/B"] },
+      ],
+    });
+    const machineRepo = new InMemoryManifestRepository(machine);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(
       projectRoot,
@@ -367,12 +465,30 @@ describe("native plugin ownership follows the host's activation scope", () => {
     expect(activator.enabledPlugins).toEqual([ref]);
     expect(projectRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual([ref]);
     expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
-      { ref, dependents: ["/resolved-codex-project"] },
+      { ref: otherRef, dependents: ["/B"] },
+      { ref, dependents: ["/B", "/resolved-codex-project"] },
+    ]);
+    expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual([
+      otherRef,
+    ]);
+    expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.marketplaces).toEqual([
+      older,
+      {
+        alias: marketplaceName,
+        hostName: "real-catalog",
+        provenance: {
+          kind: "effective-list",
+          root: "/built/codex",
+          sourceType: "local",
+          source: "/built/codex",
+        },
+      },
     ]);
 
     await sync.execute({ projectRoot });
     expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
-      { ref, dependents: ["/resolved-codex-project"] },
+      { ref: otherRef, dependents: ["/B"] },
+      { ref, dependents: ["/B", "/resolved-codex-project"] },
     ]);
   });
 

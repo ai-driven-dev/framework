@@ -2,7 +2,7 @@ import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   assertUserScopeWriteBoundary,
   userScopeFilesSafeToDelete,
@@ -165,6 +165,68 @@ describe("assertUserScopeWriteBoundary", () => {
       content: "new bytes",
       hash: new FileHash("a".repeat(32)),
     });
+
+  it("refuses a tool without a declared user plugins directory", async () => {
+    await expect(
+      assertUserScopeWriteBoundary(
+        new InMemoryFileAdapter(),
+        "claude",
+        "aidd-test",
+        [file("aidd-test/a.md")],
+        HOME
+      )
+    ).rejects.toThrow(/no user plugins directory/);
+  });
+
+  it.each([BOUNDARY, join(BOUNDARY, "aidd-test")])(
+    "propagates an unreadable write boundary at %s",
+    async (path) => {
+      const fs = new FaultingFileAdapter();
+      const error = errnoError("EACCES");
+      fs.failOn("realpath", path, error);
+
+      await expect(
+        assertUserScopeWriteBoundary(fs, "cursor", "aidd-test", [file("aidd-test/a.md")], HOME)
+      ).rejects.toBe(error);
+    }
+  );
+
+  it("allows missing nested parents only after resolving an existing safe ancestor", async () => {
+    const fs = new FaultingFileAdapter();
+    fs.failOn("realpath", join(BOUNDARY, "aidd-test/skills/new"), errnoError("ENOENT"));
+    fs.failOn("realpath", join(BOUNDARY, "aidd-test/skills"), errnoError("ENOENT"));
+
+    await expect(
+      assertUserScopeWriteBoundary(
+        fs,
+        "cursor",
+        "aidd-test",
+        [file("aidd-test/skills/new/SKILL.md")],
+        HOME
+      )
+    ).resolves.toBeUndefined();
+  });
+
+  it("refuses a plugin directory that disappears after the initial boundary check", async () => {
+    const fs = new InMemoryFileAdapter();
+    const pluginDir = join(BOUNDARY, "aidd-test");
+    let pluginReads = 0;
+    vi.spyOn(fs, "realpath").mockImplementation(async (path) => {
+      if (path === BOUNDARY) return path;
+      if (path === pluginDir && ++pluginReads === 1) return path;
+      throw errnoError("ENOENT");
+    });
+
+    await expect(
+      assertUserScopeWriteBoundary(
+        fs,
+        "cursor",
+        "aidd-test",
+        [file("aidd-test/skills/new/SKILL.md")],
+        HOME
+      )
+    ).rejects.toThrow(/directory disappeared during update/);
+  });
 
   it("allows a new file only within the owned plugin directory", async () => {
     const fs = new InMemoryFileAdapter();

@@ -4,8 +4,11 @@ import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
+import { describe, expect, it, vi } from "vitest";
+import {
+  FRAMEWORK_MARKETPLACE_NAME,
+  Marketplace,
+} from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../../../src/contexts/distribution/domain/ports/marketplace-registry.js";
 import { NativeHostRegistrationGate } from "../../../../../src/contexts/framework/application/ownership/native-host-registration-gate.js";
 import { UserMarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
@@ -97,9 +100,87 @@ for (const toolId of ["codex"] as const) {
 
     const enabled = () => new Map([[REF, { enabled: true, scope: "user" as const }]]);
 
+    it("refuses the shared framework catalogue before any registry or host access", async () => {
+      const f = await fixture(enabled());
+      const list = vi.spyOn(f.registry, "list");
+      await expect(
+        f.useCase.execute({ ...OPTIONS, name: FRAMEWORK_MARKETPLACE_NAME })
+      ).rejects.toThrow(/shared by every project.*aidd clean --scope user/);
+      expect(list).not.toHaveBeenCalled();
+      expect(f.activator.uninstalledPlugins).toEqual([]);
+      expect(f.activator.removedMarketplaces).toEqual([]);
+      expect(f.repo.saveCount).toBe(0);
+    });
+
+    it("selects the requested user catalogue rather than the first unrelated catalogue", async () => {
+      const f = await fixture(enabled());
+      const target = (await f.registry.list("/A"))[0];
+      if (target === undefined) throw new Error("fixture lacks target catalogue");
+      await f.registry.delete("/A", ALIAS, "user");
+      const other = Marketplace.create({
+        name: "other-alias",
+        source: { kind: "github", repo: "other/catalogue" },
+        scope: "user",
+        addedAt: "2026-09-02T00:00:00.000Z",
+      });
+      await f.registry.save("/A", other);
+      await f.registry.save("/A", target);
+      expect((await f.registry.list("/A"))[0]).toEqual(other);
+      const deletion = vi.spyOn(f.registry, "delete");
+      const hostRemoval = vi.spyOn(f.activator, "removeMarketplace");
+
+      expect(await f.useCase.execute(OPTIONS)).toMatchObject({
+        marketplace: { name: ALIAS, scope: "user" },
+        removedPluginCount: 1,
+      });
+      expect(deletion).toHaveBeenCalledExactlyOnceWith("/A", ALIAS, "user");
+      expect(hostRemoval).toHaveBeenCalledExactlyOnceWith(HOST, "user");
+      expect(await f.registry.list("/A")).toEqual([other]);
+      expect(f.repo.saveCount).toBe(1);
+    });
+
+    it("defaults native uninstall to user only when the proven host ref has no scope", async () => {
+      const f = await fixture(new Map([[REF, { enabled: true }]]));
+      await f.useCase.execute(OPTIONS);
+      expect(f.activator.uninstalledPlugins).toEqual([REF]);
+      expect(f.activator.uninstalledPluginScopes).toEqual(["user"]);
+      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([]);
+    });
+
+    it("removes a proven empty catalogue without inventing missing plugin claims", async () => {
+      const f = await fixture(new Map());
+      f.repo.getCurrent()?.setNativeRegistrations(toolId, {
+        binary: toolId,
+        marketplaces: [{ alias: ALIAS, hostName: HOST, provenance: proofFor() }],
+        pluginRefs: [],
+      });
+      expect(await f.useCase.execute(OPTIONS)).toMatchObject({ removedPluginCount: 0 });
+      expect(f.activator.uninstalledPlugins).toEqual([]);
+      expect(f.activator.removedMarketplaces).toEqual([HOST]);
+      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)).toMatchObject({
+        marketplaces: [],
+        pluginRefs: [],
+        pluginClaims: [],
+      });
+      expect(await f.registry.list("/A")).toEqual([]);
+    });
+
+    it("refuses catalogue deletion when the canonical user ledger is missing", async () => {
+      const f = await fixture(enabled());
+      const before = await f.registry.list("/A");
+      await f.repo.delete();
+      await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(/no user manifest/);
+      expect(f.activator.uninstalledPlugins).toEqual([]);
+      expect(f.activator.removedMarketplaces).toEqual([]);
+      expect(await f.registry.list("/A")).toEqual(before);
+      expect(f.repo.saveCount).toBe(0);
+    });
+
     it("refuses B's live claim, including with autoConfirm", async () => {
       const f = await fixture(enabled(), { dependents: ["/B"] });
-      await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(/active projects.*\/B/);
+      await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(
+        /user-scope marketplace 'project-alias'.*active projects.*\/B/
+      );
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(
         f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims?.[0]?.dependents

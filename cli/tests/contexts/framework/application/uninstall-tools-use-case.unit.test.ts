@@ -100,6 +100,35 @@ function remove(
 }
 
 describe("UninstallToolsUseCase — regular files", () => {
+  it("removes all project-scoped plugin files while preserving unrelated plugin content", async () => {
+    const first = ".claude/plugins/project-plugin/skills/demo/SKILL.md";
+    const second = ".claude/plugins/project-plugin/commands/demo.md";
+    const neighbor = ".codex/plugins/other-plugin/skills/demo/SKILL.md";
+    const target = project({ [first]: "skill", [second]: "command", [neighbor]: "other plugin" });
+    target.manifest.addTool("claude", "test", []);
+    target.manifest.addTool("codex", "test", []);
+    target.manifest.addPlugin(
+      "claude",
+      InstalledPlugin.fromJSON({
+        name: "project-plugin",
+        source: { kind: "local", path: "/plugins/project-plugin" },
+        version: "1.0.0",
+        strict: false,
+        scope: "project",
+        files: { [first]: hasher.hash("skill").value, [second]: hasher.hash("command").value },
+      })
+    );
+
+    const result = await remove(target, ["claude"]);
+
+    expect(target.fs.getFile(join(PROJECT_ROOT, first))).toBeUndefined();
+    expect(target.fs.getFile(join(PROJECT_ROOT, second))).toBeUndefined();
+    expect(target.fs.getFile(join(PROJECT_ROOT, neighbor))).toBe("other plugin");
+    expect(target.manifest.hasTool("claude")).toBe(false);
+    expect(target.manifest.hasTool("codex")).toBe(true);
+    expect(result).toStrictEqual([{ toolId: "claude", fileCount: 0, deletedFiles: [] }]);
+  });
+
   it("announces each tool it removes", async () => {
     const target = project({});
     target.manifest.addTool("claude", "test", []);

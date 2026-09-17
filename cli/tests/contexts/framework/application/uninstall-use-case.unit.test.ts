@@ -7,6 +7,8 @@ import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { UninstallUseCase } from "../../../../src/contexts/framework/application/uninstall/uninstall-use-case.js";
+import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
+import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import {
   InputRequiredError,
   NoManifestError,
@@ -18,6 +20,72 @@ import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/
 const PROJECT_ROOT = "/test-project";
 
 describe("uninstall", () => {
+  it.each(["cursor", "codex"] as const)(
+    "detaches only the selected %s tool's shared claims after local removal",
+    async (selected) => {
+      const deps = await buildUnitDeps(PROJECT_ROOT);
+      await initProject(deps, PROJECT_ROOT);
+      for (const toolId of ["cursor", "codex"] as const)
+        await installTool(deps, PROJECT_ROOT, toolId);
+      const project = deps.manifestRepo.getCurrent();
+      if (project === null) throw new Error("fixture missing project");
+      const record = (name: string, scope: "user" | "project") =>
+        InstalledPlugin.fromMetadata(
+          name,
+          "1.0.0",
+          { kind: "local", path: "/shared" },
+          false,
+          scope
+        );
+      project.addPlugin("cursor", record("shared", "user"));
+      project.addPlugin("cursor", record("local-only", "project"));
+      const registration = {
+        binary: "codex",
+        marketplaces: [{ alias: "aidd", hostName: "aidd" }],
+        pluginRefs: ["native@aidd"],
+      };
+      project.setNativeRegistrations("codex", registration);
+      const machine = Manifest.create();
+      machine.addTool("cursor", "1.0.0", []);
+      for (const name of ["shared", "local-only"])
+        machine.addPlugin("cursor", record(name, "user").withDependents([PROJECT_ROOT, "/B"]));
+      machine.addTool("codex", "1.0.0", []);
+      machine.setNativeRegistrations("codex", {
+        ...registration,
+        pluginClaims: [{ ref: "native@aidd", dependents: [PROJECT_ROOT, "/B"] }],
+      });
+      await deps.userManifestRepo.save(machine);
+      const retainedTool = selected === "cursor" ? "codex" : "cursor";
+
+      await new UninstallUseCase(
+        deps.fs,
+        deps.manifestRepo,
+        deps.logger,
+        deps.userManifestRepo
+      ).execute({ toolIds: [selected], projectRoot: PROJECT_ROOT });
+
+      expect(deps.manifestRepo.getCurrent()?.hasTool(selected)).toBe(false);
+      expect(deps.manifestRepo.getCurrent()?.hasTool(retainedTool)).toBe(true);
+      expect(
+        deps.userManifestRepo
+          .getCurrent()
+          ?.getPlugins("cursor")
+          .map((plugin) => ({
+            name: plugin.name,
+            dependents: plugin.dependents,
+          }))
+      ).toEqual([
+        { name: "shared", dependents: selected === "cursor" ? ["/B"] : [PROJECT_ROOT, "/B"] },
+        { name: "local-only", dependents: [PROJECT_ROOT, "/B"] },
+      ]);
+      expect(
+        deps.userManifestRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims
+      ).toEqual([
+        { ref: "native@aidd", dependents: selected === "codex" ? ["/B"] : [PROJECT_ROOT, "/B"] },
+      ]);
+    }
+  );
+
   it("no longer tracks removed tool files", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);

@@ -2,6 +2,7 @@
  * copilot), a ref is left enabled while another project still references its shared source. */
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { describe, expect, it } from "vitest";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
@@ -11,6 +12,7 @@ import { CleanUseCase } from "../../../../../src/contexts/framework/application/
 import { GitignoreUseCase } from "../../../../../src/contexts/framework/application/gitignore-use-case.js";
 import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/framework/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
+import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
 import type { NativeMarketplaceSourceReader } from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
@@ -133,6 +135,8 @@ function buildUseCase(deps: {
   binary: "codex" | "claude";
   logger: CapturingLogger;
   aiddMarketplaceRegistry: InMemoryMarketplaceRegistry;
+  userManifestRepo?: InMemoryManifestRepository;
+  gitignore?: GitignoreUseCase;
 }): CleanUseCase {
   const manifestRepo = new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT);
   const userSourceReferences = new UserSourceReferencesAdapter(deps.fs, () => USER_CONFIG_DIR);
@@ -140,12 +144,12 @@ function buildUseCase(deps: {
     deps.fs,
     manifestRepo,
     deps.logger,
-    new GitignoreUseCase(deps.fs),
+    deps.gitignore ?? new GitignoreUseCase(deps.fs),
     new Map([[deps.binary, deps.activator]]),
     deps.aiddMarketplaceRegistry,
     undefined,
     new Map(),
-    undefined,
+    () => "/fake-home",
     userSourceReferences,
     new Map([
       [
@@ -159,12 +163,110 @@ function buildUseCase(deps: {
         }),
       ],
     ]),
-    undefined,
+    deps.userManifestRepo,
     new Map([[deps.binary, currentHostSource(deps.binary)]])
   );
 }
 
 describe("clean guards a ref another project on this machine still needs", () => {
+  it.each(["succeeds", "fails"] as const)(
+    "releases A's native and user-plugin claims only when local cleanup %s",
+    async (outcome) => {
+      const fs = new InMemoryFileAdapter();
+      seedReferences(fs, [OTHER_PROJECT]);
+      const ref = "aidd-vcs@aidd-framework";
+      const otherRef = "plugin-b@other-mkt";
+      const registration = provenRegistration("codex", "aidd-framework", "aidd-framework");
+      const project = seedManifest("codex", [registration], [ref]);
+      project.addTool("cursor", "1.0.0", []);
+      const record = (name: string, scope: "project" | "user" = "user") =>
+        InstalledPlugin.fromJSON({
+          name,
+          source: { kind: "local", path: "/shared/plugins" },
+          version: "1.0.0",
+          strict: false,
+          scope,
+          files: {},
+          dependents: [PROJECT_ROOT, OTHER_PROJECT],
+        });
+      project.addPlugin("cursor", record("shared").withDependents([]));
+      project.addPlugin("cursor", record("local-only", "project").withDependents([]));
+      const machine = Manifest.create();
+      machine.addTool("codex", "1.0.0", []);
+      machine.setNativeRegistrations("codex", {
+        binary: "codex",
+        marketplaces: [registration, provenRegistration("codex", "other-mkt", "other-mkt")],
+        pluginRefs: [ref, otherRef],
+        pluginClaims: [ref, otherRef].map((ref) => ({
+          ref,
+          dependents: [PROJECT_ROOT, OTHER_PROJECT],
+        })),
+      });
+      machine.addTool("cursor", "1.0.0", []);
+      for (const name of ["shared", "local-only", "unrelated"])
+        machine.addPlugin("cursor", record(name));
+      const machineRepo = new InMemoryManifestRepository(machine);
+      const gitignore = new GitignoreUseCase(fs);
+      if (outcome === "fails")
+        gitignore.remove = async () => {
+          throw new Error("gitignore cleanup failed");
+        };
+      fs.setFile(`${OTHER_PROJECT}/plugin-content.md`, OTHER_PROJECT_BYTES);
+      const sharedPath = "/fake-home/.cursor/plugins/local/shared/skills/demo.md";
+      fs.setFile(sharedPath, "shared plugin bytes");
+      const activator = new FakeNativePluginActivator({ available: true });
+      const useCase = buildUseCase({
+        fs,
+        manifest: project,
+        activator,
+        binary: "codex",
+        logger: new CapturingLogger(),
+        aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
+        userManifestRepo: machineRepo,
+        gitignore,
+      });
+
+      if (outcome === "fails")
+        await expect(useCase.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
+          "gitignore cleanup failed"
+        );
+      else await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+
+      const dependents = outcome === "succeeds" ? [OTHER_PROJECT] : [PROJECT_ROOT, OTHER_PROJECT];
+      expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+        { ref, dependents },
+        { ref: otherRef, dependents: [PROJECT_ROOT, OTHER_PROJECT] },
+      ]);
+      expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual([
+        ref,
+        otherRef,
+      ]);
+      expect(
+        machineRepo
+          .getCurrent()
+          ?.getPlugins("cursor")
+          .map((plugin) => ({
+            name: plugin.name,
+            dependents: plugin.dependents,
+          }))
+      ).toEqual([
+        { name: "shared", dependents },
+        { name: "local-only", dependents: [PROJECT_ROOT, OTHER_PROJECT] },
+        { name: "unrelated", dependents: [PROJECT_ROOT, OTHER_PROJECT] },
+      ]);
+      expect(
+        await new UserSourceReferencesAdapter(
+          fs,
+          () => USER_CONFIG_DIR
+        ).listAllReferencingProjects()
+      ).toEqual(dependents);
+      expect(fs.getFile(`${OTHER_PROJECT}/plugin-content.md`)).toBe(OTHER_PROJECT_BYTES);
+      expect(fs.getFile(sharedPath)).toBe("shared plugin bytes");
+      expect(activator.uninstalledPlugins).toEqual([]);
+      expect(activator.removedMarketplaces).toEqual([]);
+    }
+  );
+
   it("keeps codex's ref enabled and names the other project still referencing the shared source", async () => {
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     seedReferences(fs, [OTHER_PROJECT]);

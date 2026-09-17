@@ -4,15 +4,22 @@ import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/framework/application/framework/translator/mode-a-marketplace-translator.js";
 import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
+import type {
+  HostPluginRegistryReader,
+  HostPluginRegistryReading,
+} from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { UnreadableUserSourceReferencesError } from "../../../../../src/kernel/errors.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
@@ -102,6 +109,280 @@ function buildRemoveUseCase(
 }
 
 describe("PluginRemoveUseCase undoes native activation", () => {
+  it.each(["unrecorded activation", "absent catalogue"])(
+    "refuses %s without changing project state",
+    async (missing) => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude", "test", []);
+      await installViaModeA(manifest);
+      if (missing === "unrecorded activation") {
+        const registrations = manifest.getNativeRegistrations("claude");
+        if (registrations === undefined) throw new Error("Expected native registration");
+        manifest.setNativeRegistrations("claude", { ...registrations, pluginRefs: [] });
+      }
+      const before = manifest.toJSON();
+      const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+      const repo = new InMemoryManifestRepository(manifest);
+      const remove = new PluginRemoveUseCase(
+        new InMemoryFileAdapter(),
+        repo,
+        new CapturingLogger(),
+        new Map([["claude", activator]]),
+        new Map(),
+        undefined,
+        undefined,
+        undefined,
+        new Map([
+          ["claude", { read: async () => ({ location: "/host/catalogue", entries: new Map() }) }],
+        ])
+      );
+      await expect(
+        remove.execute({ pluginName: PLUGIN_NAME, toolIds: ["claude"], projectRoot: PROJECT_ROOT })
+      ).rejects.toThrow(
+        missing === "unrecorded activation"
+          ? `claude: '${REF}' is not a ref this project enabled; reconcile manually before removal.`
+          : `claude: catalogue '${MARKETPLACE_NAME}' has unproven host source; reconcile manually.`
+      );
+      expect(manifest.toJSON()).toEqual(before);
+      expect(repo.saveCount).toBe(0);
+      expect(activator.uninstalledPlugins).toEqual([]);
+    }
+  );
+
+  it("preserves the native ref and cache when Claude disappears after preflight", async () => {
+    const fs = new InMemoryFileAdapter();
+    const manifest = Manifest.create();
+    manifest.addTool("claude", "test", []);
+    await installViaModeA(manifest);
+    const repo = new InMemoryManifestRepository(manifest);
+    const activator = new FakeNativePluginActivator({ available: true });
+    const logger = new CapturingLogger();
+    const source = verifiedSourceReader();
+    let reads = 0;
+    const cacheFile = join(
+      homedir(),
+      ".claude/plugins/cache",
+      MARKETPLACE_NAME,
+      PLUGIN_NAME,
+      "1.0.0/plugin.json"
+    );
+    await fs.writeFile(cacheFile, "keep cache");
+    const remove = new PluginRemoveUseCase(
+      fs,
+      repo,
+      logger,
+      new Map([["claude", activator]]),
+      new Map([
+        [
+          "claude",
+          new FakeHostPluginRegistryReader({
+            location: "/host/registry",
+            refs: new Map([[REF, { enabled: true, scope: "project" }]]),
+          }),
+        ],
+      ]),
+      undefined,
+      undefined,
+      undefined,
+      new Map([
+        [
+          "claude",
+          {
+            read: async () => {
+              if (++reads === 2) activator.available = false;
+              return source.read();
+            },
+          },
+        ],
+      ])
+    );
+
+    await remove.execute({
+      pluginName: PLUGIN_NAME,
+      toolIds: ["claude"],
+      projectRoot: PROJECT_ROOT,
+    });
+
+    expect(activator.uninstalledPlugins).toEqual([]);
+    expect(manifest.getPlugins("claude")).toEqual([]);
+    expect(manifest.getNativeRegistrations("claude")?.pluginRefs).toEqual([REF]);
+    expect(await fs.readFile(cacheFile)).toBe("keep cache");
+    expect(logger.warnMessages).toContain(
+      `claude CLI not found on PATH — '${REF}' was not uninstalled from claude's own plugin registry and may still be enabled there.`
+    );
+  });
+
+  it.each([
+    { name: MARKETPLACE_NAME, scope: "user" as const, readsLedger: true },
+    { name: MARKETPLACE_NAME, scope: "project" as const, readsLedger: false },
+    { name: "unrelated", scope: "user" as const, readsLedger: false },
+  ])(
+    "checks the shared-source ledger only for $name/$scope without blocking project-scoped uninstall",
+    async ({ name, scope, readsLedger }) => {
+      const manifest = Manifest.create();
+      manifest.addTool("claude", "test", []);
+      await installViaModeA(manifest);
+      const repo = new InMemoryManifestRepository(manifest);
+      const activator = new FakeNativePluginActivator({ available: true });
+      const logger = new CapturingLogger();
+      const registry = new InMemoryMarketplaceRegistry();
+      await registry.save(
+        PROJECT_ROOT,
+        Marketplace.create({
+          name,
+          scope,
+          source: { kind: "local", path: "/plugin-source" },
+          addedAt: "2026-09-16T00:00:00Z",
+        })
+      );
+      const ledgerError = new UnreadableUserSourceReferencesError(
+        "/references.json",
+        "invalid JSON"
+      );
+      const list = vi.fn(async (): Promise<readonly string[]> => {
+        throw ledgerError;
+      });
+      const remove = new PluginRemoveUseCase(
+        new InMemoryFileAdapter(),
+        repo,
+        logger,
+        new Map([["claude", activator]]),
+        new Map([
+          [
+            "claude",
+            new FakeHostPluginRegistryReader({
+              location: "/host/registry",
+              refs: new Map([[REF, { enabled: true, scope: "project" }]]),
+            }),
+          ],
+        ]),
+        {
+          addReference: async () => {},
+          removeReference: async () => {},
+          listAllReferencingProjects: list,
+        },
+        registry,
+        undefined,
+        new Map([["claude", verifiedSourceReader()]])
+      );
+
+      await remove.execute({
+        pluginName: PLUGIN_NAME,
+        toolIds: ["claude"],
+        projectRoot: PROJECT_ROOT,
+      });
+
+      expect(list).toHaveBeenCalledTimes(readsLedger ? 1 : 0);
+      expect(logger.warnMessages).toEqual(readsLedger ? [ledgerError.message] : []);
+      expect(activator.uninstalledPlugins).toEqual([REF]);
+      expect(activator.uninstalledPluginScopes).toEqual(["project"]);
+      expect(manifest.getNativeRegistrations("claude")?.pluginRefs).toEqual([]);
+    }
+  );
+
+  describe("host registry preflight preserves project state", () => {
+    const invalidReadings: {
+      name: string;
+      reading: HostPluginRegistryReading;
+      diagnostic: string;
+    }[] = [
+      {
+        name: "missing registry",
+        reading: { location: "/host/registry", absent: true },
+        diagnostic: "/host/registry",
+      },
+      {
+        name: "unreadable registry",
+        reading: { location: "/host/registry", unreadable: "permission denied" },
+        diagnostic: "permission denied",
+      },
+      {
+        name: "empty registry",
+        reading: { location: "/host/registry", refs: new Map() },
+        diagnostic: "/host/registry",
+      },
+      {
+        name: "disabled activation",
+        reading: {
+          location: "/host/registry",
+          refs: new Map([[REF, { enabled: false, scope: "project" }]]),
+        },
+        diagnostic: "/host/registry",
+      },
+      {
+        name: "unscoped activation",
+        reading: { location: "/host/registry", refs: new Map([[REF, { enabled: true }]]) },
+        diagnostic: "/host/registry",
+      },
+    ];
+    const registryFailures: { name: string; reader?: HostPluginRegistryReader; message: string }[] =
+      [
+        {
+          name: "no reader",
+          message: `claude: '${REF}' has no readable host plugin registry; uninstall refused before project changes.`,
+        },
+        ...[new Error("registry unavailable"), "registry unavailable"].map((error, index) => ({
+          name: `reader throws ${index === 0 ? "Error" : "string"}`,
+          reader: {
+            read: async (): Promise<HostPluginRegistryReading> => {
+              throw error;
+            },
+          },
+          message: `claude: '${REF}' host plugin registry read failed (registry unavailable); uninstall refused.`,
+        })),
+        ...invalidReadings.map(({ name, reading, diagnostic }) => ({
+          name,
+          reader: new FakeHostPluginRegistryReader(reading),
+          message: `claude: '${REF}' is not provably enabled with an exact host scope (${diagnostic}); uninstall refused.`,
+        })),
+      ];
+
+    it.each(registryFailures)(
+      "refuses $name before native or local changes",
+      async ({ reader, message }) => {
+        const fs = new InMemoryFileAdapter();
+        const manifest = Manifest.create();
+        manifest.addTool("claude", "test", []);
+        await installViaModeA(manifest);
+        const manifestRepo = new InMemoryManifestRepository(manifest);
+        const before = manifest.toJSON();
+        const cacheFile = join(
+          homedir(),
+          ".claude/plugins/cache",
+          MARKETPLACE_NAME,
+          PLUGIN_NAME,
+          "1.0.0/plugin.json"
+        );
+        await fs.writeFile(cacheFile, "cached plugin");
+        const activator = new FakeNativePluginActivator({ available: true });
+        const remove = new PluginRemoveUseCase(
+          fs,
+          manifestRepo,
+          new CapturingLogger(),
+          new Map([["claude", activator]]),
+          reader === undefined ? new Map() : new Map([["claude", reader]]),
+          undefined,
+          undefined,
+          undefined,
+          new Map([["claude", verifiedSourceReader()]])
+        );
+
+        await expect(
+          remove.execute({
+            pluginName: PLUGIN_NAME,
+            toolIds: ["claude"],
+            projectRoot: PROJECT_ROOT,
+          })
+        ).rejects.toThrow(message);
+
+        expect(activator.uninstalledPlugins).toEqual([]);
+        expect(manifestRepo.saveCount).toBe(0);
+        expect(manifest.toJSON()).toEqual(before);
+        expect(await fs.readFile(cacheFile)).toBe("cached plugin");
+      }
+    );
+  });
+
   it("removes only the local projection when Claude CLI is unavailable and no native catalogue source was recorded", async () => {
     const fs = new InMemoryFileAdapter();
     const manifest = Manifest.create();
